@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     memory.c                                                   *
+ * File name:     src/memory.c                                               *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.4 2003/04/18 20:04:58 hampa Exp $ */
+/* $Id: memory.c,v 1.5 2003/04/22 17:58:18 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -87,16 +87,13 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
 }
 
 
-unsigned char mem_get_uint8 (void *obj, unsigned long addr)
+unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
 {
   unsigned  i;
-  memory_t  *mem;
   mem_blk_t *blk;
 
-  mem = (memory_t *) obj;
-
-  for (i = 0; i < mem->blk_cnt; i++) {
-    blk = mem->blk[i];
+  for (i = 0; i < mem->cnt; i++) {
+    blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->get_uint8 != NULL) {
@@ -111,16 +108,13 @@ unsigned char mem_get_uint8 (void *obj, unsigned long addr)
   return (mem->def_val);
 }
 
-unsigned short mem_get_uint16_le (void *obj, unsigned long addr)
+unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
 {
   unsigned  i;
-  memory_t  *mem;
   mem_blk_t *blk;
 
-  mem = (memory_t *) obj;
-
-  for (i = 0; i < mem->blk_cnt; i++) {
-    blk = mem->blk[i];
+  for (i = 0; i < mem->cnt; i++) {
+    blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->get_uint16 != NULL) {
@@ -141,16 +135,13 @@ unsigned short mem_get_uint16_le (void *obj, unsigned long addr)
   return ((mem->def_val << 8) | mem->def_val);
 }
 
-void mem_set_uint8 (void *obj, unsigned long addr, unsigned char val)
+void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
 {
   unsigned  i;
-  memory_t  *mem;
   mem_blk_t *blk;
 
-  mem = (memory_t *) obj;
-
-  for (i = 0; i < mem->blk_cnt; i++) {
-    blk = mem->blk[i];
+  for (i = 0; i < mem->cnt; i++) {
+    blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->flags & MEM_FLAG_RO) {
@@ -166,16 +157,13 @@ void mem_set_uint8 (void *obj, unsigned long addr, unsigned char val)
   }
 }
 
-void mem_set_uint16_le (void *obj, unsigned long addr, unsigned short val)
+void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
 {
   unsigned  i;
-  memory_t  *mem;
   mem_blk_t *blk;
 
-  mem = (memory_t *) obj;
-
-  for (i = 0; i < mem->blk_cnt; i++) {
-    blk = mem->blk[i];
+  for (i = 0; i < mem->cnt; i++) {
+    blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->flags & MEM_FLAG_RO) {
@@ -204,8 +192,8 @@ memory_t *mem_new (void)
     return (NULL);
   }
 
-  mem->blk_cnt = 0;
-  mem->blk = NULL;
+  mem->cnt = 0;
+  mem->lst = NULL;
 
   mem->def_val = 0xaa;
 
@@ -214,20 +202,28 @@ memory_t *mem_new (void)
 
 void mem_del (memory_t *mem)
 {
+  unsigned i;
+
   if (mem != NULL) {
-    free (mem->blk);
+    for (i = 0; i < mem->cnt; i++) {
+      if (mem->lst[i].del) {
+        mem_blk_del (mem->lst[i].blk);
+      }
+    }
+    free (mem->lst);
     free (mem);
   }
 }
 
-void mem_add_blk (memory_t *mem, mem_blk_t *blk)
+void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 {
-  mem->blk = (mem_blk_t **) realloc (mem->blk, mem->blk_cnt + 1);
-  if (mem->blk == NULL) {
+  mem->lst = (mem_lst_t *) realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
+  if (mem->lst == NULL) {
     return;
   }
 
-  mem->blk[mem->blk_cnt] = blk;
+  mem->lst[mem->cnt].blk = blk;
+  mem->lst[mem->cnt].del = del;
 
-  mem->blk_cnt += 1;
+  mem->cnt += 1;
 }
