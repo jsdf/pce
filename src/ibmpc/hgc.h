@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.h                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.2 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: hgc.h,v 1.3 2003/08/30 01:09:27 hampa Exp $ */
 
 
 #ifndef PCE_HGC_H
@@ -41,6 +41,9 @@ typedef struct {
   unsigned char enable_graph;
 
   int           crs_on;
+
+  unsigned long rgb_fg;
+  unsigned long rgb_hi;
 
   unsigned      mode;
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.4 2003/08/29 13:29:52 hampa Exp $ */
+/* $Id: hgc.c,v 1.5 2003/08/30 01:09:27 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -40,8 +40,9 @@ static unsigned hgclines2[348];
 
 hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
 {
-  unsigned i, n;
-  hgc_t    *hgc;
+  unsigned      i, n;
+  unsigned char r, g, b;
+  hgc_t         *hgc;
 
   hgc = (hgc_t *) malloc (sizeof (hgc_t));
   if (hgc == NULL) {
@@ -51,6 +52,9 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
   for (i = 0; i < 16; i++) {
     hgc->crtc_reg[i] = 0;
   }
+
+  ini_get_ulng (ini, "color7", &hgc->rgb_fg, 0xe89050);
+  ini_get_ulng (ini, "color15", &hgc->rgb_hi, 0xfff0c8);
 
   hgc->trm = trm;
 
@@ -77,6 +81,17 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
   hgc->crs_on = 1;
 
   hgc->mode = 0;
+
+  r = (hgc->rgb_fg >> 16) & 0xff;
+  g = (hgc->rgb_fg >> 8) & 0xff;
+  b = hgc->rgb_fg & 0xff;
+  trm_set_map (trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+
+  r = (hgc->rgb_hi >> 16) & 0xff;
+  g = (hgc->rgb_hi >> 8) & 0xff;
+  b = hgc->rgb_hi & 0xff;
+  trm_set_map (trm, 15, r | (r << 8), g | (g << 8), b | (b << 8));
+
   trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
   n = 0;

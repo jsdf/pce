@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.8 2003/08/29 21:15:08 hampa Exp $
+# $Id: pce.cfg.in,v 1.9 2003/08/30 01:09:27 hampa Exp $
 
 section pc {
 	section cpu {
@@ -54,6 +54,8 @@ section pc {
 	}
 
 	section hgc {
+		color7 = 0xe89050
+		color15 = 0xfff0c8
 	}
 
 	section mda {
