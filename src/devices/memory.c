@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -627,7 +627,7 @@ void mem_del (memory_t *mem)
 void mem_set_default (memory_t *mem, unsigned char val)
 {
   mem->def_val8 = val;
-  mem->def_val16 = (val << 16) | val;
+  mem->def_val16 = ((unsigned) val << 8) | val;
   mem->def_val32 = ((unsigned long) val << 8) | val;
   mem->def_val32 = (mem->def_val32 << 16) | mem->def_val32;
 }
