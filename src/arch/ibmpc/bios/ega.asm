@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/ega.asm                                *
 ;* Created:       2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-06-26 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -1041,7 +1041,7 @@ int_10_00_03:
 
   mov     ax, 0x0720
   xor     di, di
-  mov     cx, 8192
+  mov     cx, 16384
   call    ega_clear_cga
 
   pop     di
