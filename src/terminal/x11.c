@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.4 2003/09/15 01:15:59 hampa Exp $ */
+/* $Id: x11.c,v 1.5 2003/09/17 04:20:05 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -106,8 +106,14 @@ int xt_init_pointer (xterm_t *xt)
   Pixmap               mask;
   static unsigned char map[16] = { 0 };
 
-  mask = XCreatePixmapFromBitmapData (xt->display, xt->wdw, map, 1, 1, 0, 0, 1);
-  xt->crs_none = XCreatePixmapCursor (xt->display, mask, mask, (XColor *) map, (XColor *) map, 0, 0);
+  mask = XCreatePixmapFromBitmapData (xt->display, xt->wdw, map,
+    1, 1, 0, 0, 1
+  );
+
+  xt->crs_none = XCreatePixmapCursor (xt->display, mask, mask,
+    (XColor *) map, (XColor *) map, 0, 0
+  );
+
   XFreePixmap (xt->display, mask);
 
   return (0);
