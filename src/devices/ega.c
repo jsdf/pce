@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -71,10 +71,6 @@ static void ega_set_latches_cga_txt (ega_t *cga, unsigned long addr, unsigned ch
 
 static void ega_set_uint8_odd_even (ega_t *ega, unsigned long addr, unsigned char val);
 static unsigned char ega_get_uint8_odd_even (ega_t *ega, unsigned long addr);
-
-
-static
-unsigned char ega_rgbtab[4] = { 0x00, 0x80, 0xc0, 0xff };
 
 
 video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
@@ -268,16 +264,11 @@ mem_blk_t *ega_get_reg (ega_t *ega)
 
 void ega_get_rgb (ega_t *ega, unsigned idx, unsigned char rgb[3])
 {
-  idx = ega->atc_reg[idx];
+  idx = ega->atc_reg[idx & 0x3f];
 
-  rgb[0] = ((idx & 0x04) ? 0x02 : 0x00) | ((idx & 0x20) ? 0x01 : 0x00);
-  rgb[0] = ega_rgbtab[rgb[0]];
-
-  rgb[1] = ((idx & 0x02) ? 0x02 : 0x00) | ((idx & 0x10) ? 0x01 : 0x00);
-  rgb[1] = ega_rgbtab[rgb[1]];
-
-  rgb[2] = ((idx & 0x01) ? 0x02 : 0x00) | ((idx & 0x08) ? 0x01 : 0x00);
-  rgb[2] = ega_rgbtab[rgb[2]];
+  rgb[0] = ((idx & 0x04) ? 0xaa : 0x00) + ((idx & 0x20) ? 0x55 : 0x00);
+  rgb[1] = ((idx & 0x02) ? 0xaa : 0x00) + ((idx & 0x10) ? 0x55 : 0x00);
+  rgb[2] = ((idx & 0x01) ? 0xaa : 0x00) + ((idx & 0x08) ? 0x55 : 0x00);
 }
 
 
