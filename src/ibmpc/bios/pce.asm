@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.12 2003/09/06 13:48:27 hampa Exp $
+; $Id: pce.asm,v 1.13 2003/09/08 17:16:59 hampa Exp $
 
 
 %include "config.inc"
@@ -51,6 +51,7 @@ start:
 
   sti
 
+  call    init_rom
   call    init_video
   call    init_mem
   call    init_misc
@@ -91,6 +92,11 @@ msg_cga:
 msg_video:
   db      " video adapter initialized", 13, 10, 0
 
+msg_rom1       db "ROM[", 0
+msg_rom2       db "]:", 0
+msg_cksmok     db " checksum ok", 0
+msg_cksmbad    db " bad checksum", 0
+
 
 ;-----------------------------------------------------------------------------
 
@@ -121,6 +127,14 @@ init_int:
   mov     ax, 0xf000
   stosw
   loop    .next
+
+  mov     ax, [es:4 * 0x10]
+  mov     [es:4 * 0x42], ax
+  mov     ax, [es:4 * 0x10 + 2]
+  mov     [es:4 * 0x42 + 2], ax
+
+  mov     word [es:4 * 0x10], 0x07bd
+  mov     word [es:4 * 0x10 + 2], 0xc000
 
   pop     ds
   pop     es
@@ -223,6 +237,108 @@ init_misc:
   mov     [0x000c], ax
   mov     [0x000e], ax
 
+  ret
+
+
+; check rom checksum at ES:0000
+; returns ah=00 if ok
+check_rom:
+  push    cx
+  push    bx
+
+  mov     ch, [es:0x0002]
+  shl     ch, 1
+  mov     cl, 0
+
+  xor     bx, bx
+  mov     ah, 0
+
+.cksum:
+  add     ah, [es:bx]
+  inc     bx
+  loop    .cksum
+
+  pop     bx
+  pop     cx
+  ret
+
+
+; start rom at ES:0000
+start_rom:
+  push    cs
+  mov     ax, .romret
+  push    ax
+  push    es
+  mov     ax, 3
+  push    ax
+  retf
+
+.romret:
+  ret
+
+
+init_rom:
+;  db 0x66, 0x66, 0x00, 0x00
+
+  push    ax
+  push    dx
+  push    si
+  push    es
+
+  mov     dx, 0xc000
+
+.next:
+  mov     es, dx
+  cmp     word [es:0x0000], 0xaa55
+  jne     .norom
+
+  mov     ah, [es:0x0002]
+  mov     al, 0
+  shr     ax, 1
+  shr     ax, 1
+  shr     ax, 1
+  add     dx, ax
+  jz      .norom
+
+  mov     si, msg_rom1
+  call    prt_string
+  mov     ax, es
+  call    prt_uint16
+  mov     si, msg_rom2
+  call    prt_string
+
+  call    check_rom
+  or      ah, ah
+  jz      .romok
+
+  mov     si, msg_cksmbad
+  call    prt_string
+
+  call    prt_nl
+
+  jmp     .skiprom
+
+.romok:
+  mov     si, msg_cksmok
+  call    prt_string
+
+  push    dx
+  call    start_rom
+  pop     dx
+
+  call    prt_nl
+
+.norom:
+  add     dx, 0x0080
+
+.skiprom:
+  cmp     dx, 0xc800
+  jb      .next
+
+  pop     es
+  pop     si
+  pop     dx
+  pop     ax
   ret
 
 
@@ -455,6 +571,7 @@ set_bios_ds:
   dw      0x0040
 
 
+; print string at CS:SI
 prt_string:
   push    ax
   push    bx
@@ -479,6 +596,7 @@ prt_string:
   ret
 
 
+; print newline
 prt_nl:
   push    ax
   push    bx
@@ -495,6 +613,7 @@ prt_nl:
   ret
 
 
+; print a 16 bit unsigned integer in ax
 prt_uint16:
   push    ax
   push    cx
