@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/memory.c                                         *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: memory.c,v 1.2 2003/04/24 12:24:19 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -39,7 +39,7 @@ mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
   }
 
   if (alloc) {
-    blk->data = (unsigned char *) malloc (size);
+    blk->data = (unsigned char *) malloc (size + 16);
     if (blk->data == NULL) {
       free (blk);
       return (NULL);
@@ -122,13 +122,8 @@ unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
         return (blk->get_uint16 (blk->ext, addr - blk->base));
       }
       else {
-        if (addr < blk->end) {
-          addr -= blk->base;
-          return (blk->data[addr] + (blk->data[addr + 1] << 8));
-        }
-        else {
-          return (blk->data[addr - blk->base] | mem->def_val);
-        }
+        addr -= blk->base;
+        return (blk->data[addr] + (blk->data[addr + 1] << 8));
       }
     }
   }
@@ -175,10 +170,7 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
       }
       else {
         blk->data[addr - blk->base] = val & 0xff;
-
-        if (addr < blk->end) {
-          blk->data[addr - blk->base + 1] = (val >> 8) & 0xff;
-        }
+        blk->data[addr - blk->base + 1] = (val >> 8) & 0xff;
       }
     }
   }
