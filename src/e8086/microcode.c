@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     microcode.c                                                *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,14 +20,84 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.6 2003/04/17 14:15:07 hampa Exp $ */
+/* $Id: microcode.c,v 1.7 2003/04/18 20:10:53 hampa Exp $ */
 
-
-#include <pce.h>
 
 #include "e8086.h"
 #include "internal.h"
 
+
+void e86_push (e8086_t *c, unsigned short val)
+{
+  e86_set_sp (c, e86_get_sp (c) - 2);
+
+  e86_set_mem16 (c, e86_get_ss (c), e86_get_sp (c), val);
+}
+
+unsigned short e86_pop (e8086_t *c)
+{
+  unsigned short sp;
+
+  sp = e86_get_sp (c);
+
+  e86_set_sp (c, sp + 2);
+
+  return (e86_get_mem16 (c, e86_get_ss (c), sp));
+}
+
+void e86_trap (e8086_t *c, unsigned n)
+{
+  unsigned short ofs;
+
+  e86_push (c, c->flg);
+  e86_push (c, c->sreg[E86_REG_CS]);
+  e86_push (c, c->ip);
+
+  ofs = (unsigned short) (n & 0xff) << 2;
+
+  c->ip = e86_get_mem16 (c, 0, ofs);
+  c->sreg[E86_REG_CS] = e86_get_mem16 (c, 0, ofs + 2);
+  c->flg &= ~(E86_FLG_I | E86_FLG_T);
+
+  e86_pq_init (c);
+}
+
+
+/*************************************************************************
+ * Prefetch queue functions
+ *************************************************************************/
+
+void e86_pq_init (e8086_t *c)
+{
+  c->pq_cnt = 0;
+}
+
+void e86_pq_fill (e8086_t *c)
+{
+  unsigned i, j;
+
+  j = 0;
+
+  for (i = c->pq_cnt; i < E86_PQ_SIZE; i++) {
+    c->pq[i] = e86_get_mem8 (c, c->sreg[E86_REG_CS], c->ip + i);
+  }
+}
+
+void e86_pq_adjust (e8086_t *c, unsigned cnt)
+{
+  unsigned i;
+
+  if (cnt >= c->pq_cnt) {
+    c->pq_cnt = 0;
+    return;
+  }
+
+  for (i = cnt; i < c->pq_cnt; i++) {
+    c->pq[i - cnt] = c->pq[i];
+  }
+
+  c->pq_cnt -= cnt;
+}
 
 /**************************************************************************
  * Microcode functions
@@ -56,7 +126,7 @@ unsigned op_00 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags (c, 8, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_8 (c, s1, s2);
   e86_set_clk_ea (c, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -76,7 +146,7 @@ unsigned op_01 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags (c, 16, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_16 (c, s1, s2);
   e86_set_clk_ea (clk, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -99,7 +169,7 @@ unsigned op_02 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags (c, 8, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_8 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -122,7 +192,7 @@ unsigned op_03 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags (c, 16, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_16 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -140,7 +210,7 @@ unsigned op_04 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_al (c, d);
-  e86_set_flags (c, 8, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_8 (c, s1, s2);
   e86_set_clk (c, 4);
 
   return (2);
@@ -158,7 +228,7 @@ unsigned op_05 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ax (c, d);
-  e86_set_flags (c, 16, DEFFLG, d, s1, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_16 (c, s1, s2);
   e86_set_clk (c, 4);
 
   return (3);
@@ -196,8 +266,7 @@ unsigned op_08 (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags (c, 8, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_8 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -216,8 +285,7 @@ unsigned op_09 (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags (c, 16, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_16 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -239,8 +307,7 @@ unsigned op_0a (e8086_t *c)
   d = s1 | s2;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags (c, 8, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_8 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -262,8 +329,7 @@ unsigned op_0b (e8086_t *c)
   d = s1 | s2;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags (c, 16, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_16 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -280,8 +346,7 @@ unsigned op_0c (e8086_t *c)
   d = s1 | s2;
 
   e86_set_al (c, d);
-  e86_set_flags (c, 8, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_8 (c, d);
 
   return (2);
 }
@@ -298,8 +363,7 @@ unsigned op_0d (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ax (c, d);
-  e86_set_flags (c, 16, E86_FLG_Z | E86_FLG_S | E86_FLG_P, d, s1, 0);
-  e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  e86_set_flg_log_16 (c, d);
 
   return (3);
 }
@@ -338,7 +402,7 @@ unsigned op_10 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ea8 (c, d);
-  e86_set_flags (c, 8, DEFFLG, d, s1, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_8 (c, s1, s2, s3);
   e86_set_clk_ea (c, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -359,8 +423,7 @@ unsigned op_11 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_16 (c, s1, s2, s3);
   e86_set_clk_ea (c, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -384,8 +447,7 @@ unsigned op_12 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_8 (c, s1, s2, s3);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -409,8 +471,7 @@ unsigned op_13 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_16 (c, s1, s2, s3);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -429,8 +490,7 @@ unsigned op_14 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_al (c, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_8 (c, s1, s2, s3);
   e86_set_clk (c, 4);
 
   return (2);
@@ -449,8 +509,7 @@ unsigned op_15 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ax (c, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_16 (c, s1, s2, s3);
   e86_set_clk (c, 4);
 
   return (3);
@@ -491,8 +550,7 @@ unsigned op_18 (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_8 (c, s1, s2, s3);
 
   return (c->ea.cnt + 1);
 }
@@ -512,8 +570,7 @@ unsigned op_19 (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_16 (c, s1, s2, s3);
 
   return (c->ea.cnt + 1);
 }
@@ -536,8 +593,7 @@ unsigned op_1a (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_8 (c, s1, s2, s3);
 
   return (c->ea.cnt + 1);
 }
@@ -560,8 +616,7 @@ unsigned op_1b (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_16 (c, s1, s2, s3);
 
   return (c->ea.cnt + 1);
 }
@@ -572,17 +627,14 @@ unsigned op_1c (e8086_t *c)
 {
   unsigned short s1, s2, s3, d;
 
-  s1 = c->dreg[E86_REG_AX] & 0xff;
+  s1 = e86_get_al (c);
   s2 = c->pq[1];
   s3 = e86_get_cf (c);
 
   d = s1 - s2 - s3;
 
-  c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= (d & 0xff);
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_al (c, d);
+  e86_set_flg_sbb_8 (c, s1, s2, s3);
 
   return (2);
 }
@@ -593,16 +645,14 @@ unsigned op_1d (e8086_t *c)
 {
   unsigned long s1, s2, s3, d;
 
-  s1 = c->dreg[E86_REG_AX];
+  s1 = e86_get_ax (c);
   s2 = e86_mk_uint16 (c->pq[1], c->pq[2]);
   s3 = e86_get_cf (c);
 
   d = s1 - s2 - s3;
 
-  c->dreg[E86_REG_AX] = d;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_ax (c, d);
+  e86_set_flg_sbb_16 (c, s1, s2, s3);
 
   return (3);
 }
@@ -641,8 +691,7 @@ unsigned op_20 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_8 (c, d);
   e86_set_clk_ea (c, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -662,8 +711,7 @@ unsigned op_21 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_16 (c, d);
   e86_set_clk_ea (c, 3, 16);
 
   return (c->ea.cnt + 1);
@@ -685,8 +733,7 @@ static unsigned op_22 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_8 (c, d);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -709,8 +756,7 @@ unsigned op_23 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_16 (c, d);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -728,8 +774,7 @@ unsigned op_24 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_al (c, d);
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_8 (c, d);
   e86_set_clk (c, 4);
 
   return (2);
@@ -747,8 +792,7 @@ unsigned op_25 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ax (c, d);
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f (c, E86_FLG_O | E86_FLG_C, 0);
+  e86_set_flg_log_16 (c, d);
   e86_set_clk (c, 4);
 
   return (3);
@@ -811,8 +855,7 @@ unsigned op_28 (e8086_t *c)
   d = s1 - s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
 
   return (c->ea.cnt + 1);
 }
@@ -831,8 +874,7 @@ unsigned op_29 (e8086_t *c)
   d = s1 - s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
 
   return (c->ea.cnt + 1);
 }
@@ -854,8 +896,7 @@ unsigned op_2a (e8086_t *c)
   d = s1 - s2;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
 
   return (c->ea.cnt + 1);
 }
@@ -877,8 +918,7 @@ unsigned op_2b (e8086_t *c)
   d = s1 - s2;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
 
   return (c->ea.cnt + 1);
 }
@@ -889,16 +929,13 @@ unsigned op_2c (e8086_t *c)
 {
   unsigned short s1, s2, d;
 
-  s1 = c->dreg[E86_REG_AX] & 0xff;
+  s1 = e86_get_al (c);
   s2 = c->pq[1];
 
   d = s1 - s2;
 
-  c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= (d & 0xff);
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_al (c, d);
+  e86_set_flg_sub_8 (c, s1, s2);
 
   return (2);
 }
@@ -909,15 +946,13 @@ unsigned op_2d (e8086_t *c)
 {
   unsigned long s1, s2, d;
 
-  s1 = c->dreg[E86_REG_AX];
+  s1 = e86_get_ax (c);
   s2 = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   d = s1 - s2;
 
-  c->dreg[E86_REG_AX] = d;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_ax (c, d);
+  e86_set_flg_sub_16 (c, s1, s2);
 
   return (3);
 }
@@ -979,8 +1014,7 @@ unsigned op_30 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_8 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -999,8 +1033,7 @@ unsigned op_31 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -1022,8 +1055,7 @@ unsigned op_32 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_reg8 (c, reg, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_8 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -1045,8 +1077,7 @@ unsigned op_33 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_reg16 (c, reg, d);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (c->ea.cnt + 1);
 }
@@ -1057,16 +1088,13 @@ unsigned op_34 (e8086_t *c)
 {
   unsigned short s1, s2, d;
 
-  s1 = c->dreg[E86_REG_AX] & 0xff;
+  s1 = e86_get_al (c);
   s2 = c->pq[1];
 
   d = s1 ^ s2;
 
-  c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= (d & 0xff);
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_al (c, d);
+  e86_set_flg_log_8 (c, d);
 
   return (2);
 }
@@ -1077,15 +1105,13 @@ unsigned op_35 (e8086_t *c)
 {
   unsigned long s1, s2, d;
 
-  s1 = c->dreg[E86_REG_AX];
+  s1 = e86_get_ax (c);
   s2 = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   d = s1 ^ s2;
 
-  c->dreg[E86_REG_AX] = d;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_ax (c, d);
+  e86_set_flg_log_16 (c, d);
 
   return (3);
 }
@@ -1130,17 +1156,14 @@ unsigned op_37 (e8086_t *c)
 static
 unsigned op_38 (e8086_t *c)
 {
-  unsigned short s1, s2, d;
+  unsigned short s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_ea8 (c);
   s2 = e86_get_reg8 (c, (c->pq[1] >> 3) & 7);
 
-  d = s1 - s2;
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -1150,17 +1173,14 @@ unsigned op_38 (e8086_t *c)
 static
 unsigned op_39 (e8086_t *c)
 {
-  unsigned long s1, s2, d;
+  unsigned long s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_ea16 (c);
   s2 = e86_get_reg16 (c, (c->pq[1] >> 3) & 7);
 
-  d = s1 - s2;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -1169,17 +1189,14 @@ unsigned op_39 (e8086_t *c)
 /* OP 3A: CMP reg8, r/m8 */
 static unsigned op_3a (e8086_t *c)
 {
-  unsigned short s1, s2, d;
+  unsigned short s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_reg8 (c, (c->pq[1] >> 3) & 7);
   s2 = e86_get_ea8 (c);
 
-  d = s1 - s2;
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -1189,17 +1206,14 @@ static unsigned op_3a (e8086_t *c)
 static
 unsigned op_3b (e8086_t *c)
 {
-  unsigned long s1, s2, d;
+  unsigned long s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_reg16 (c, (c->pq[1] >> 3) & 7);
   s2 = e86_get_ea16 (c);
 
-  d = s1 - s2;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
   e86_set_clk_ea (c, 3, 9);
 
   return (c->ea.cnt + 1);
@@ -1209,15 +1223,12 @@ unsigned op_3b (e8086_t *c)
 static
 unsigned op_3c (e8086_t *c)
 {
-  unsigned short s1, s2, d;
+  unsigned short s1, s2;
 
   s1 = e86_get_al (c);
   s2 = c->pq[1];
 
-  d = s1 - s2;
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
   e86_set_clk (c, 4);
 
   return (2);
@@ -1227,15 +1238,12 @@ unsigned op_3c (e8086_t *c)
 static
 unsigned op_3d (e8086_t *c)
 {
-  unsigned long s1, s2, d;
+  unsigned long s1, s2;
 
   s1 = e86_get_ax (c);
   s2 = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
-  d = s1 - s2;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
   e86_set_clk (c, 4);
 
   return (3);
@@ -1281,16 +1289,18 @@ unsigned op_3f (e8086_t *c)
 static
 unsigned op_40 (e8086_t *c)
 {
-  unsigned      r;
-  unsigned long s, d;
+  unsigned       r;
+  unsigned short cf;
+  unsigned long  s;
 
   r = c->pq[0] & 7;
   s = c->dreg[r];
-  d = s + 1;
-  c->dreg[r] = d & 0xffff;
+  c->dreg[r] = (s + 1) & 0xffff;
 
-  e86_set_flags16 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_flags_af (c, e86_add_uint4 (s, 1));
+  cf = c->flg;
+  e86_set_flg_add_16 (c, s, 1);
+  c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
   e86_set_clk (c, 3);
 
   return (1);
@@ -1300,16 +1310,18 @@ unsigned op_40 (e8086_t *c)
 static
 unsigned op_48 (e8086_t *c)
 {
-  unsigned      r;
-  unsigned long s, d;
+  unsigned       r;
+  unsigned short cf;
+  unsigned long  s;
 
   r = c->pq[0] & 7;
   s = c->dreg[r];
-  d = s - 1;
-  c->dreg[r] = d & 0xffff;
+  c->dreg[r] = (s - 1) & 0xffff;
 
-  e86_set_flags16 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_flags_af (c, e86_sub_uint4 (s, 1));
+  cf = c->flg;
+  e86_set_flg_sub_16 (c, s, 1);
+  c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
   e86_set_clk (c, 3);
 
   return (1);
@@ -1618,8 +1630,7 @@ unsigned op_80_00 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_8 (c, s1, s2);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -1639,8 +1650,7 @@ unsigned op_80_01 (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_8 (c, d);
 
   return (2 + c->ea.cnt);
 }
@@ -1660,8 +1670,7 @@ unsigned op_80_02 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_8 (c, s1, s2, s3);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -1682,8 +1691,7 @@ unsigned op_80_03 (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_8 (c, s1, s2, s3);
 
   return (2 + c->ea.cnt);
 }
@@ -1702,8 +1710,7 @@ unsigned op_80_04 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_8 (c, d);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -1723,8 +1730,7 @@ unsigned op_80_05 (e8086_t *c)
   d = s1 - s2;
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
 
   return (2 + c->ea.cnt);
 }
@@ -1743,8 +1749,7 @@ unsigned op_80_06 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_8 (c, d);
 
   return (2 + c->ea.cnt);
 }
@@ -1753,17 +1758,14 @@ unsigned op_80_06 (e8086_t *c)
 static
 unsigned op_80_07 (e8086_t *c)
 {
-  unsigned short s1, s2, d;
+  unsigned short s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_ea8 (c);
   s2 = c->pq[c->ea.cnt + 1];
 
-  d = s1 - s2;
-
-  e86_set_flags8 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_8 (c, s1, s2);
   e86_set_clk_ea (c, 4, 10);
 
   return (2 + c->ea.cnt);
@@ -1800,8 +1802,7 @@ unsigned op_81_00 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_16 (c, s1, s2);
   e86_set_clk_ea (c, 4, 17);
 
   return (3 + c->ea.cnt);
@@ -1821,8 +1822,7 @@ unsigned op_81_01 (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (3 + c->ea.cnt);
 }
@@ -1842,8 +1842,7 @@ unsigned op_81_02 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_16 (c, s1, s2, s3);
   e86_set_clk_ea (c, 4, 17);
 
   return (3 + c->ea.cnt);
@@ -1864,8 +1863,7 @@ unsigned op_81_03 (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_16 (c, s1, s2, s3);
 
   return (3 + c->ea.cnt);
 }
@@ -1884,8 +1882,7 @@ unsigned op_81_04 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_16 (c, d);
   e86_set_clk_ea (c, 4, 17);
 
   return (3 + c->ea.cnt);
@@ -1905,8 +1902,7 @@ unsigned op_81_05 (e8086_t *c)
   d = s1 - s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
 
   return (3 + c->ea.cnt);
 }
@@ -1925,8 +1921,7 @@ unsigned op_81_06 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (3 + c->ea.cnt);
 }
@@ -1935,17 +1930,14 @@ unsigned op_81_06 (e8086_t *c)
 static
 unsigned op_81_07 (e8086_t *c)
 {
-  unsigned long s1, s2, d;
+  unsigned long s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_ea16 (c);
   s2 = e86_mk_uint16 (c->pq[c->ea.cnt + 1], c->pq[c->ea.cnt + 2]);
 
-  d = s1 - s2;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
   e86_set_clk_ea (c, 4, 10);
 
   return (3 + c->ea.cnt);
@@ -1982,8 +1974,7 @@ unsigned op_83_00 (e8086_t *c)
   d = s1 + s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2));
+  e86_set_flg_add_16 (c, s1, s2);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -2003,8 +1994,7 @@ unsigned op_83_01 (e8086_t *c)
   d = s1 | s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (2 + c->ea.cnt);
 }
@@ -2024,8 +2014,7 @@ unsigned op_83_02 (e8086_t *c)
   d = s1 + s2 + s3;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_add_uint4 (s1, s2) + s3);
+  e86_set_flg_adc_16 (c, s1, s2, s3);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -2046,8 +2035,7 @@ unsigned op_83_03 (e8086_t *c)
   d = s1 - s2 - s3;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2) - s3);
+  e86_set_flg_sbb_16 (c, s1, s2, s3);
 
   return (2 + c->ea.cnt);
 }
@@ -2066,8 +2054,7 @@ unsigned op_83_04 (e8086_t *c)
   d = s1 & s2;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_16 (c, d);
   e86_set_clk_ea (c, 4, 17);
 
   return (2 + c->ea.cnt);
@@ -2087,8 +2074,7 @@ unsigned op_83_05 (e8086_t *c)
   d = s1 - s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
 
   return (2 + c->ea.cnt);
 }
@@ -2107,8 +2093,7 @@ unsigned op_83_06 (e8086_t *c)
   d = s1 ^ s2;
 
   e86_set_ea16 (c, d & 0xffff);
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  c->flg &= ~E86_FLG_O;
+  e86_set_flg_log_16 (c, d);
 
   return (2 + c->ea.cnt);
 }
@@ -2117,17 +2102,14 @@ unsigned op_83_06 (e8086_t *c)
 static
 unsigned op_83_07 (e8086_t *c)
 {
-  unsigned long s1, s2, d;
+  unsigned long s1, s2;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
   s1 = e86_get_ea16 (c);
   s2 = e86_mk_sint16 (c->pq[c->ea.cnt + 1]);
 
-  d = s1 - s2;
-
-  e86_set_flags16 (c, DEFFLG, d, s1);
-  e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+  e86_set_flg_sub_16 (c, s1, s2);
   e86_set_clk_ea (c, 4, 10);
 
   return (2 + c->ea.cnt);
@@ -2163,8 +2145,7 @@ unsigned op_84 (e8086_t *c)
   s1 = e86_get_ea8 (c);
   s2 = e86_get_reg8 (c, (c->pq[1] >> 3) & 7);
 
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_8 (c, s1 & s2);
 
   return (c->ea.cnt + 1);
 }
@@ -2180,8 +2161,7 @@ unsigned op_85 (e8086_t *c)
   s1 = e86_get_ea16 (c);
   s2 = e86_get_reg16 (c, (c->pq[1] >> 3) & 7);
 
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_16 (c, s1 & s2);
 
   return (c->ea.cnt + 1);
 }
@@ -2297,6 +2277,7 @@ unsigned op_8d (e8086_t *c)
 
   if (c->ea.is_mem) {
     e86_set_reg16 (c, (c->pq[1] >> 3) & 7, c->ea.ofs);
+    e86_set_clk (c, 2);
   }
 
   return (c->ea.cnt + 1);
@@ -2496,28 +2477,31 @@ unsigned op_a4 (e8086_t *c)
   unsigned short seg1, seg2;
   unsigned short inc;
 
-  seg1 = (c->prefix & E86_PREFIX_SEG) ? c->seg_override : c->sreg[E86_REG_DS];
-  seg2 = c->sreg[E86_REG_ES];
+  seg1 = e86_get_seg (c, E86_REG_DS);
+  seg2 = e86_get_es (c);
 
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & E86_PREFIX_REPN) {
-    fprintf (stderr, "movsb with repn\n");
+    e86_log_op (c, "movsb with repnz");
   }
-  if (c->prefix & E86_PREFIX_REP) {
-    while (c->dreg[E86_REG_CX] > 0) {
-      val = e86_get_mem8 (c, seg1, c->dreg[E86_REG_SI]);
-      e86_set_mem8 (c, seg2, c->dreg[E86_REG_DI], val);
-      c->dreg[E86_REG_SI] += inc;
-      c->dreg[E86_REG_DI] += inc;
-      c->dreg[E86_REG_CX] -= 1;
+
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_cx (c) > 0) {
+      val = e86_get_mem8 (c, seg1, e86_get_si (c));
+      e86_set_mem8 (c, seg2, e86_get_di (c), val);
+
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
     }
   }
   else {
-    val = e86_get_mem8 (c, seg1, c->dreg[E86_REG_SI]);
-    e86_set_mem8 (c, seg2, c->dreg[E86_REG_DI], val);
-    c->dreg[E86_REG_SI] += inc;
-    c->dreg[E86_REG_DI] += inc;
+    val = e86_get_mem8 (c, seg1, e86_get_si (c));
+    e86_set_mem8 (c, seg2, e86_get_di (c), val);
+
+    e86_set_si (c, e86_get_si (c) + inc);
+    e86_set_di (c, e86_get_di (c) + inc);
   }
 
   return (1);
@@ -2585,8 +2569,7 @@ unsigned op_a6 (e8086_t *c)
       c->dreg[E86_REG_DI] += inc;
       c->dreg[E86_REG_CX] -= 1;
 
-      e86_set_flags8 (c, DEFFLG, s1 - s2, s1);
-      e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+      e86_set_flg_sub_8 (c, s1, s2);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2600,8 +2583,8 @@ unsigned op_a6 (e8086_t *c)
     e86_set_si (c, e86_get_si (c) + inc);
     e86_set_di (c, e86_get_di (c) + inc);
 
-    e86_set_flags8 (c, DEFFLG, s1 - s2, s1);
-    e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+    e86_set_flg_sub_8 (c, s1, s2);
+
     e86_set_clk (c, 22);
   }
 
@@ -2628,12 +2611,12 @@ unsigned op_a7 (e8086_t *c)
     while (c->dreg[E86_REG_CX] > 0) {
       s1 = e86_get_mem16 (c, seg1, c->dreg[E86_REG_SI]);
       s2 = e86_get_mem16 (c, seg2, c->dreg[E86_REG_DI]);
+
       c->dreg[E86_REG_SI] += inc;
       c->dreg[E86_REG_DI] += inc;
       c->dreg[E86_REG_CX] -= 1;
 
-      e86_set_flags16 (c, DEFFLG, s1 - s2, s1);
-      e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+      e86_set_flg_sub_16 (c, s1, s2);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2647,8 +2630,8 @@ unsigned op_a7 (e8086_t *c)
     e86_set_si (c, e86_get_si (c) + inc);
     e86_set_di (c, e86_get_di (c) + inc);
 
-    e86_set_flags16 (c, DEFFLG, s1 - s2, s1);
-    e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+    e86_set_flg_sub_16 (c, s1, s2);
+
     e86_set_clk (c, 22);
   }
 
@@ -2664,8 +2647,7 @@ unsigned op_a8 (e8086_t *c)
   s1 = e86_get_al (c);
   s2 = c->pq[1];
 
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_8 (c, s1 & s2);
 
   return (2);
 }
@@ -2679,8 +2661,7 @@ unsigned op_a9 (e8086_t *c)
   s1 = e86_get_ax (c);
   s2 = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_16 (c, s1 & s2);
 
   return (3);
 }
@@ -2762,18 +2743,21 @@ unsigned op_ac (e8086_t *c)
   unsigned short seg;
   unsigned short inc;
 
-  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    fprintf (stderr, "lodsb with rep\n");
-  }
-
-  seg = (c->prefix & E86_PREFIX_SEG) ? c->seg_override : c->sreg[E86_REG_DS];
-
+  seg = e86_get_seg (c, E86_REG_DS);
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
-  c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= e86_get_mem8 (c, seg, c->dreg[E86_REG_SI]);
-
-  c->dreg[E86_REG_SI] += inc;
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_dx (c) > 0) {
+      e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+    }
+  }
+  else {
+    e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
+    e86_set_si (c, e86_get_si (c) + inc);
+    e86_set_clk (c, 12);
+  }
 
   return (1);
 }
@@ -2785,17 +2769,21 @@ unsigned op_ad (e8086_t *c)
   unsigned short seg;
   unsigned short inc;
 
-  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    fprintf (stderr, "lodsw with rep\n");
-  }
-
-  seg = (c->prefix & E86_PREFIX_SEG) ? c->seg_override : c->sreg[E86_REG_DS];
-
+  seg = e86_get_seg (c, E86_REG_DS);
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
-  c->dreg[E86_REG_AX] = e86_get_mem16 (c, seg, c->dreg[E86_REG_SI]);
-
-  c->dreg[E86_REG_SI] += inc;
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_dx (c) > 0) {
+      e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+    }
+  }
+  else {
+    e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
+    e86_set_si (c, e86_get_si (c) + inc);
+    e86_set_clk (c, 12);
+  }
 
   return (1);
 }
@@ -2827,8 +2815,7 @@ unsigned op_ae (e8086_t *c)
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
 
-      e86_set_flags8 (c, DEFFLG, s1 - s2, s1);
-      e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+      e86_set_flg_sub_8 (c, s1, s2);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2841,8 +2828,7 @@ unsigned op_ae (e8086_t *c)
 
     e86_set_di (c, e86_get_di (c) + inc);
 
-    e86_set_flags8 (c, DEFFLG, s1 - s2, s1);
-    e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+    e86_set_flg_sub_8 (c, s1, s2);
   }
 
   return (1);
@@ -2875,8 +2861,7 @@ unsigned op_af (e8086_t *c)
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
 
-      e86_set_flags16 (c, DEFFLG, s1 - s2, s1);
-      e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+      e86_set_flg_sub_16 (c, s1, s2);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2889,8 +2874,7 @@ unsigned op_af (e8086_t *c)
 
     e86_set_di (c, e86_get_di (c) + inc);
 
-    e86_set_flags16 (c, DEFFLG, s1 - s2, s1);
-    e86_set_flags_af (c, e86_sub_uint4 (s1, s2));
+    e86_set_flg_sub_16 (c, s1, s2);
   }
 
   return (1);
@@ -3225,39 +3209,46 @@ unsigned op_d0 (e8086_t *c)
     case 0: /* ROL r/m8, 1 */
       d = (s << 1) | (s >> 7);
       e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 1: /* ROR r/m8, 1 */
       d = (s >> 1) | (s << 7);
       e86_set_cf (c, d & 0x80);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
       break;
 
     case 2: /* RCL r/m8, 1 */
       d = (s << 1) | e86_get_cf (c);
       e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 3: /* RCR r/m8, 1 */
       d = (s >> 1) | (e86_get_cf (c) << 7);
       e86_set_cf (c, s & 1);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
       break;
 
     case 4: /* SHL r/m8, 1 */
       d = s << 1;
+      e86_set_flg_szp_8 (c, d);
       e86_set_cf (c, d & 0x100);
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 5: /* SHR r/m8, 1 */
       d = s >> 1;
+      e86_set_flg_szp_8 (c, d);
       e86_set_cf (c, s & 1);
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, s & 0x80);
       break;
 
     case 7: /* SAR r/m8, 1 */
       d = (s & 0x80) ? ((s >> 1) | 0x80) : (s >> 1);
+      e86_set_flg_szp_8 (c, d);
       e86_set_cf (c, s & 1);
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, 0);
       break;
 
     default:
@@ -3267,8 +3258,6 @@ unsigned op_d0 (e8086_t *c)
   }
 
   e86_set_ea8 (c, d & 0xff);
-
-  e86_set_of (c, (s ^ d) & 0x80);
 
   return (c->ea.cnt + 1);
 }
@@ -3289,39 +3278,46 @@ unsigned op_d1 (e8086_t *c)
     case 0: /* ROL r/m16, 1 */
       d = (s << 1) | (s >> 15);
       e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 1: /* ROR r/m16, 1 */
       d = (s >> 1) | (s << 15);
       e86_set_cf (c, s & 1);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
       break;
 
     case 2: /* RCL r/m16, 1 */
       d = (s << 1) | e86_get_cf (c);
       e86_set_cf (c, s & 0x8000);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 3: /* RCR r/m16, 1 */
       d = (s >> 1) | (e86_get_cf (c) << 15);
       e86_set_cf (c, s & 1);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
       break;
 
     case 4: /* SHL r/m16, 1 */
       d = s << 1;
+      e86_set_flg_szp_16 (c, d);
       e86_set_cf (c, d & 0x10000);
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 5: /* SHR r/m16, 1 */
       d = s >> 1;
+      e86_set_flg_szp_16 (c, d);
       e86_set_cf (c, s & 1);
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, s & 0x8000);
       break;
 
     case 7: /* SAR r/m16, 1 */
       d = (s & 0x8000) ? ((s >> 1) | 0x8000) : (s >> 1);
+      e86_set_flg_szp_16 (c, d);
       e86_set_cf (c, s & 1);
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, 0);
       break;
 
     default:
@@ -3331,8 +3327,6 @@ unsigned op_d1 (e8086_t *c)
   }
 
   e86_set_ea16 (c, d & 0xffff);
-
-  e86_set_of (c, (s ^ d) & 0x0080);
 
   return (c->ea.cnt + 1);
 }
@@ -3350,7 +3344,8 @@ unsigned op_d2 (e8086_t *c)
   e86_get_ea_ptr (c, c->pq + 1);
   s = e86_get_ea8 (c);
 
-  cnt = c->dreg[E86_REG_CX] & 0xff;
+  cnt = e86_get_cl (c);
+
   if (cnt == 0) {
     return (c->ea.cnt + 1);
   }
@@ -3359,29 +3354,34 @@ unsigned op_d2 (e8086_t *c)
     case 0: /* ROL r/m8, CL */
       d = (s << (cnt & 7)) | (s >> (8 - (cnt & 7)));
       e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 1: /* ROR r/m8, CL */
       d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
       e86_set_cf (c, d & 0x80);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
       break;
 
     case 2: /* RCL r/m8, CL */
       s |= e86_get_cf (c) << 8;
       d = (s << (cnt % 9)) | (s >> (9 - (cnt % 9)));
       e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 3: /* RCR r/m8, CL */
       s |= e86_get_cf (c) << 8;
       d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
       e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
       break;
 
     case 4: /* SHL r/m8, CL */
       d = (cnt > 8) ? 0 : (s << cnt);
+      e86_set_flg_szp_8 (c, d);
       e86_set_cf (c, d & 0x100);
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
       break;
 
     case 5: /* SHR r/m8, CL */
@@ -3389,7 +3389,8 @@ unsigned op_d2 (e8086_t *c)
       d = (cnt > 8) ? 0 : (s >> (cnt - 1));
       e86_set_cf (c, d & 1);
       d = d >> 1;
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_flg_szp_8 (c, d);
+      e86_set_of (c, s & 0x80);
       break;
 
     case 7: /* SAR r/m8, CL */
@@ -3397,7 +3398,8 @@ unsigned op_d2 (e8086_t *c)
       d = s >> ((cnt >= 8) ? 7 : (cnt - 1));
       e86_set_cf (c, d & 1);
       d = (d >> 1) & 0xff;
-      e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_flg_szp_8 (c, d);
+      e86_set_of (c, 0);
       break;
 
     default:
@@ -3407,9 +3409,6 @@ unsigned op_d2 (e8086_t *c)
   }
 
   e86_set_ea8 (c, d & 0xff);
-
-  /* OF is undefined if cnt != 1 */
-  e86_set_of (c, (s ^ d) & 0x80);
 
   return (c->ea.cnt + 1);
 }
@@ -3427,7 +3426,7 @@ unsigned op_d3 (e8086_t *c)
   e86_get_ea_ptr (c, c->pq + 1);
   s = e86_get_ea16 (c);
 
-  cnt = c->dreg[E86_REG_CX] & 0xff;
+  cnt = e86_get_cl (c);
   if (cnt == 0) {
     return (c->ea.cnt + 1);
   }
@@ -3436,29 +3435,34 @@ unsigned op_d3 (e8086_t *c)
     case 0: /* ROL r/m16, CL */
       d = (s << (cnt & 15)) | (s >> (16 - (cnt & 15)));
       e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 1: /* ROR r/m16, CL */
       d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
       e86_set_cf (c, d & 0x8000);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
       break;
 
     case 2: /* RCL r/m16, CL */
       s |= e86_get_cf (c) << 16;
       d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 3: /* RCR r/m16, CL */
       s |= e86_get_cf (c) << 16;
       d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
       break;
 
     case 4: /* SHL r/m16, CL */
       d = (cnt > 16) ? 0 : (s << cnt);
+      e86_set_flg_szp_16 (c, d);
       e86_set_cf (c, d & 0x10000);
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
       break;
 
     case 5: /* SHR r/m16, CL */
@@ -3466,7 +3470,8 @@ unsigned op_d3 (e8086_t *c)
       d = (cnt > 16) ? 0 : (s >> (cnt - 1));
       e86_set_cf (c, d & 1);
       d = d >> 1;
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_flg_szp_16 (c, d);
+      e86_set_of (c, s & 0x8000);
       break;
 
     case 7: /* SAR r/m16, CL */
@@ -3474,7 +3479,8 @@ unsigned op_d3 (e8086_t *c)
       d = s >> ((cnt >= 16) ? 15 : (cnt - 1));
       e86_set_cf (c, d & 1);
       d = (d >> 1) & 0xffff;
-      e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
+      e86_set_flg_szp_16 (c, d);
+      e86_set_of (c, 0);
       break;
 
     default:
@@ -3484,9 +3490,6 @@ unsigned op_d3 (e8086_t *c)
   }
 
   e86_set_ea16 (c, d & 0xffff);
-
-  /* OF is undefined if cnt != 1 */
-  e86_set_of (c, (s ^ d) & 0x8000);
 
   return (c->ea.cnt + 1);
 }
@@ -3512,7 +3515,7 @@ unsigned op_d4 (e8086_t *c)
 
   e86_set_ax (c, d);
 
-  e86_set_flags16 (c, DEFFLG, d, s);
+  e86_set_flg_szp_16 (c, d);
   e86_set_clk (c, 83);
 
   return (2);
@@ -3533,9 +3536,7 @@ unsigned op_d5 (e8086_t *c)
   d = mul * s1 + s2;
 
   e86_set_ax (c, d & 0xff);
-
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, d, 0);
-
+  e86_set_flg_szp_16 (c, d);
   e86_set_clk (c, 60);
 
   return (2);
@@ -3550,10 +3551,19 @@ unsigned op_d7 (e8086_t *c)
   seg = e86_get_seg (c, E86_REG_DS);
   ofs = (c->dreg[E86_REG_BX] + (c->dreg[E86_REG_AX] & 0xff)) & 0xffff;
 
-  c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= e86_get_mem8 (c, seg, ofs);
+  e86_set_al (c, e86_get_mem8 (c, seg, ofs));
 
   return (1);
+}
+
+/* OP D8: ESC */
+static
+unsigned op_d8 (e8086_t *c)
+{
+  e86_get_ea_ptr (c, c->pq + 1);
+  e86_set_clk (c, 2);
+
+  return (1 + c->ea.cnt);
 }
 
 /* OP E0: LOOPNZ imm8 */
@@ -3757,6 +3767,8 @@ unsigned op_f0 (e8086_t *c)
 {
   c->prefix |= (E86_PREFIX_NEW | E86_PREFIX_LOCK);
 
+  e86_set_clk (c, 2);
+
   return (1);
 }
 
@@ -3809,8 +3821,7 @@ unsigned op_f6_00 (e8086_t *c)
   s1 = e86_get_ea8 (c);
   s2 = c->pq[c->ea.cnt + 1];
 
-  e86_set_flags8 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_8 (c, s1 & s2);
 
   return (c->ea.cnt + 2);
 }
@@ -3843,8 +3854,7 @@ unsigned op_f6_03 (e8086_t *c)
   d = (~s + 1) & 0xff;
 
   e86_set_ea8 (c, d);
-  e86_set_flags8 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_cf (c, d != 0);
+  e86_set_flg_sub_8 (c, 0, s);
 
   return (c->ea.cnt + 1);
 }
@@ -4009,8 +4019,7 @@ unsigned op_f7_00 (e8086_t *c)
   s1 = e86_get_ea16 (c);
   s2 = e86_mk_uint16 (c->pq[c->ea.cnt + 1], c->pq[c->ea.cnt + 2]);
 
-  e86_set_flags16 (c, E86_FLG_S | E86_FLG_Z | E86_FLG_P, s1 & s2, s1);
-  e86_set_f0 (c, E86_FLG_O | E86_FLG_C);
+  e86_set_flg_log_16 (c, s1 & s2);
 
   return (c->ea.cnt + 3);
 }
@@ -4043,8 +4052,7 @@ unsigned op_f7_03 (e8086_t *c)
   d = (~s + 1) & 0xffff;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_cf (c, d != 0);
+  e86_set_flg_sub_16 (c, 0, s);
 
   return (c->ea.cnt + 1);
 }
@@ -4264,8 +4272,9 @@ unsigned op_fd (e8086_t *c)
 static
 unsigned op_fe (e8086_t *c)
 {
-  unsigned xop;
-  unsigned short   d, s;
+  unsigned       xop;
+  unsigned short d, s;
+  unsigned short cf;
 
   xop = (c->pq[1] >> 3) & 7;
 
@@ -4277,8 +4286,11 @@ unsigned op_fe (e8086_t *c)
       d = s + 1;
 
       e86_set_ea8 (c, d);
-      e86_set_flags8 (c, DEFFLG & ~E86_FLG_C, d, s);
-      e86_set_flags_af (c, e86_add_uint4 (s, 1));
+
+      cf = c->flg;
+      e86_set_flg_add_8 (c, s, 1);
+      c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
       e86_set_clk_ea (c, 3, 15);
 
       return (c->ea.cnt + 1);
@@ -4290,8 +4302,11 @@ unsigned op_fe (e8086_t *c)
       d = s - 1;
 
       e86_set_ea8 (c, d);
-      e86_set_flags8 (c, DEFFLG & ~E86_FLG_C, d, s);
-      e86_set_flags_af (c, e86_sub_uint4 (s, 1));
+
+      cf = c->flg;
+      e86_set_flg_sub_8 (c, s, 1);
+      c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
       e86_set_clk_ea (c, 3, 15);
 
       return (c->ea.cnt + 1);
@@ -4307,7 +4322,8 @@ unsigned op_fe (e8086_t *c)
 static
 unsigned op_ff_00 (e8086_t *c)
 {
-  unsigned long s, d;
+  unsigned long  s, d;
+  unsigned short cf;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
@@ -4315,8 +4331,11 @@ unsigned op_ff_00 (e8086_t *c)
   d = s + 1;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_flags_af (c, e86_add_uint4 (s, 1));
+
+  cf = c->flg;
+  e86_set_flg_add_16 (c, s, 1);
+  c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
   e86_set_clk_ea (c, 3, 15);
 
   return (c->ea.cnt + 1);
@@ -4326,7 +4345,8 @@ unsigned op_ff_00 (e8086_t *c)
 static
 unsigned op_ff_01 (e8086_t *c)
 {
-  unsigned long s, d;
+  unsigned long  s, d;
+  unsigned short cf;
 
   e86_get_ea_ptr (c, c->pq + 1);
 
@@ -4334,8 +4354,11 @@ unsigned op_ff_01 (e8086_t *c)
   d = s - 1;
 
   e86_set_ea16 (c, d);
-  e86_set_flags16 (c, DEFFLG & ~E86_FLG_C, d, s);
-  e86_set_flags_af (c, e86_sub_uint4 (s, 1));
+
+  cf = c->flg;
+  e86_set_flg_sub_16 (c, s, 1);
+  c->flg ^= (c->flg ^ cf) & E86_FLG_C;
+
   e86_set_clk_ea (c, 3, 15);
 
   return (c->ea.cnt + 1);
@@ -4473,7 +4496,7 @@ e86_opcode_f e86_opcodes[256] = {
   &op_ud, &op_ud, &op_c2, &op_c3, &op_c4, &op_c5, &op_c6, &op_c7, /* C0 */
   &op_ud, &op_ud, &op_ca, &op_cb, &op_cc, &op_cd, &op_ce, &op_cf,
   &op_d0, &op_d1, &op_d2, &op_d3, &op_d4, &op_d5, &op_ud, &op_d7, /* D0 */
-  &op_ud, &op_ud, &op_ud, &op_ud, &op_ud, &op_ud, &op_ud, &op_ud,
+  &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8,
   &op_e0, &op_e1, &op_e2, &op_e3, &op_e4, &op_e5, &op_e6, &op_e7, /* E0 */
   &op_e8, &op_e9, &op_ea, &op_eb, &op_ec, &op_ed, &op_ee, &op_ef,
   &op_f0, &op_ud, &op_f2, &op_f3, &op_f4, &op_f5, &op_f6, &op_f7, /* F0 */

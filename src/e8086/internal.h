@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     internal.h                                                 *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.4 2003/04/17 14:15:07 hampa Exp $ */
+/* $Id: internal.h,v 1.5 2003/04/18 20:10:53 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -35,17 +35,6 @@
 #define E86_PREFIX_REP  0x0004
 #define E86_PREFIX_REPN 0x0008
 #define E86_PREFIX_LOCK 0x0010
-
-
-#define DEFFLG (E86_FLG_C | E86_FLG_O | E86_FLG_Z | E86_FLG_S | E86_FLG_A | E86_FLG_P)
-
-
-#define e86_set_flags(c, size, mask, dst, src, aux) \
-  do { \
-    if ((size) == 8) { e86_set_flags8 (c, mask, dst, src) ; } \
-    else { e86_set_flags16 (c, mask, dst, src); } \
-    if ((mask) & E86_FLG_A) { e86_set_flags_af (c, aux); } \
-  } while (0)
 
 
 #define e86_mk_uint16(lo, hi) \
@@ -89,6 +78,9 @@ extern e86_opcode_f e86_opcodes[256];
 extern e86_ea_f e86_ea[32];
 
 
+void e86_log_op (e8086_t *c, const char *str, ...);
+
+
 void e86_get_ea_ptr (e8086_t *c, unsigned char *ea);
 unsigned char e86_get_ea8 (e8086_t *c);
 unsigned short e86_get_ea16 (e8086_t *c);
@@ -96,19 +88,29 @@ void e86_set_ea8 (e8086_t *c, unsigned char val);
 void e86_set_ea16 (e8086_t *c, unsigned short val);
 
 
-void e86_pq_init (e8086_t *c);
-void e86_pq_fill (e8086_t *c);
-void e86_pq_adjust (e8086_t *c, unsigned cnt);
-
-void e86_set_flags8 (e8086_t *c, unsigned short mask, unsigned short dst, unsigned short src);
-void e86_set_flags16 (e8086_t *c, unsigned short mask, unsigned long dst, unsigned long src);
-void e86_set_flags_af (e8086_t *c, unsigned d);
-
 void e86_push (e8086_t *c, unsigned short val);
 unsigned short e86_pop (e8086_t *c);
 void e86_trap (e8086_t *c, unsigned n);
 
-void e86_log_op (e8086_t *c, const char *str, ...);
+
+void e86_pq_init (e8086_t *c);
+void e86_pq_fill (e8086_t *c);
+void e86_pq_adjust (e8086_t *c, unsigned cnt);
+
+
+void e86_set_flg_szp_8 (e8086_t *c, unsigned char val);
+void e86_set_flg_szp_16 (e8086_t *c, unsigned short val);
+void e86_set_flg_log_8 (e8086_t *c, unsigned char val);
+void e86_set_flg_log_16 (e8086_t *c, unsigned short val);
+void e86_set_flg_adc_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3);
+void e86_set_flg_adc_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3);
+void e86_set_flg_sbb_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3);
+void e86_set_flg_sbb_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3);
+
+#define e86_set_flg_add_8(c, s1, s2) e86_set_flg_adc_8 (c, s1, s2, 0)
+#define e86_set_flg_add_16(c, s1, s2) e86_set_flg_adc_16 (c, s1, s2, 0)
+#define e86_set_flg_sub_8(c, s1, s2) e86_set_flg_sbb_8 (c, s1, s2, 0)
+#define e86_set_flg_sub_16(c, s1, s2) e86_set_flg_sbb_16 (c, s1, s2, 0)
 
 
 #endif

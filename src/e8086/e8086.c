@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.c                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.6 2003/04/17 14:15:06 hampa Exp $ */
+/* $Id: e8086.c,v 1.7 2003/04/18 20:10:53 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 
 static unsigned char e86_get_mem_uint8 (void *mem, unsigned long addr);
@@ -104,6 +105,45 @@ void e86_prt_state (e8086_t *c, FILE *fp)
     ft[(c->flg & E86_FLG_I) != 0],
     ft[(c->flg & E86_FLG_D) != 0]
   );
+}
+
+void e86_log_op (e8086_t *c, const char *str, ...)
+{
+  va_list     va;
+  static char ft[2] = { '-', '+' };
+
+  fprintf (stderr, "E86: %04X:%04X  [%02X %02X %02X %02X %02X %02X] ",
+    e86_get_cs (c), e86_get_ip (c),
+    c->pq[0], c->pq[1], c->pq[2], c->pq[3], c->pq[4], c->pq[5]
+  );
+
+  if (str != NULL) {
+    va_start (va, str);
+    vfprintf (stderr, str, va);
+    va_end (va);
+  }
+
+  fputs ("\n", stderr);
+
+  fprintf (stderr,
+    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
+    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
+  );
+
+  fprintf (stderr, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
+    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
+    e86_get_ip (c), c->flg
+  );
+
+  fprintf (stderr, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
+    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
+    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
+    ft[(c->flg & E86_FLG_I) != 0],
+    ft[(c->flg & E86_FLG_D) != 0]
+  );
+
+  fflush (stderr);
 }
 
 void e86_reset (e8086_t *c)
