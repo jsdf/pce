@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.3 2003/04/17 11:47:27 hampa Exp $
+# $Id: configure.in,v 1.4 2003/04/19 03:29:00 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -43,6 +43,13 @@ AC_DEFINE_UNQUOTED(PCE_VERSION_MIN, $PCE_VERSION_MIN)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIC, $PCE_VERSION_MIC)
 AC_DEFINE_UNQUOTED(PCE_VERSION_STR, "$PCE_VERSION_STR")
 AC_MSG_RESULT($PCE_VERSION_STR)
+
+PCE_CFG_DATE=`date +%Y-%m-%d`
+PCE_CFG_TIME=`date +%T`
+AC_SUBST(PCE_CFG_DATE)
+AC_SUBST(PCE_CFG_TIME)
+AC_DEFINE_UNQUOTED(PCE_CFG_DATE, "$PCE_CFG_DATE")
+AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
 
 
 dnl -----------------------------------------------------------------------
