@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -96,6 +96,16 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     }
     else {
       return (1);
+    }
+
+    return (0);
+  }
+  else if (strcmp (msg, "pit.realtime") == 0) {
+    if (strcmp (val, "0") == 0) {
+      pc->pit_real = 0;
+    }
+    else {
+      pc->pit_real = 1;
     }
 
     return (0);

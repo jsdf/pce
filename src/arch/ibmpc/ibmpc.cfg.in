@@ -51,6 +51,7 @@ section pc {
 	# 8253 PIT
 	section pit {
 		address = 0x40
+		realtime = 1
 	}
 
 	section ems {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -246,12 +246,16 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
   ini_sct_t     *sct;
   mem_blk_t     *blk;
   unsigned long addr;
+  int           rt;
 
   sct = ini_sct_find_sct (ini, "pit");
 
   addr = ini_get_lng_def (sct, "address", 0x40);
+  rt = (ini_get_lng_def (sct, "realtime", 0) != 0);
 
-  pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x\n", addr, 4);
+  pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x realtime=%d\n",
+    addr, 4, rt
+  );
 
   e8253_init (&pc->pit);
 
@@ -271,6 +275,10 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 
   e8253_set_out_f (&pc->pit, 0, (e8253_out_f) &e8259_set_irq0, &pc->pic);
   e8253_set_out_f (&pc->pit, 1, (e8253_out_f) &e8237_set_dreq0, &pc->dma);
+
+  pc->pit_real = rt;
+  pc->pit_clk = 0;
+  pc->pit_clkdiv = 0;
 }
 
 static
@@ -1042,6 +1050,42 @@ void pc_del (ibmpc_t *pc)
   free (pc);
 }
 
+void pc_clock_pit (ibmpc_t *pc, unsigned n)
+{
+  unsigned long  clk0, clk1;
+  struct timeval tv;
+
+  if (pc->pit_real == 0) {
+    e8253_clock (&pc->pit, n);
+    return;
+  }
+
+  pc->pit_clkdiv += n;
+
+  if (pc->pit_clkdiv < 256) {
+    return;
+  }
+
+  pc->pit_clkdiv &= 255;
+
+  if (gettimeofday (&tv, NULL)) {
+    e8253_clock (&pc->pit, n);
+    return;
+  }
+
+  clk0 = (1000000UL * tv.tv_sec + tv.tv_usec) & 0xffffffffUL;
+  clk0 += clk0 / 8;
+  clk1 = (clk0 - pc->pit_clk) & 0xffffffffUL;
+
+  pc->pit_clk = clk0;
+
+  if (clk1 > 1190000UL) {
+    clk1 = 1190000UL;
+  }
+
+  e8253_clock (&pc->pit, clk1);
+}
+
 void pc_clock (ibmpc_t *pc)
 {
   unsigned long n;
@@ -1056,7 +1100,13 @@ void pc_clock (ibmpc_t *pc)
   if (pc->clk_div[0] >= 32) {
     e8237_clock (&pc->dma, 1);
     e8259_clock (&pc->pic);
-    e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
+
+    if (pc->pit_real) {
+      pc_clock_pit (pc, 4 * (pc->clk_div[0] / 32));
+    }
+    else {
+      e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
+    }
 
     pc->clk_div[1] += pc->clk_div[0];
 
