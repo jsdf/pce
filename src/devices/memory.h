@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -121,7 +121,8 @@ void mem_blk_clear (mem_blk_t *blk, unsigned char val);
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
-unsigned long mem_blk_get_size (mem_blk_t *blk);
+unsigned long mem_blk_get_addr (const mem_blk_t *blk);
+unsigned long mem_blk_get_size (const mem_blk_t *blk);
 unsigned char *mem_blk_get_data (mem_blk_t *blk);
 
 
