@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.c                                                    *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.2 2003/04/16 02:26:39 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.3 2003/04/16 14:14:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ ibmpc_t *pc_new (void)
   pc->cpu->prt = pc->prt;
 
   pc->ram = mem_blk_new (0, 512 * 1024, 1);
+  mem_blk_init (pc->ram, 0x00);
   mem_add_blk (pc->mem, pc->ram);
 
   pc->bios = mem_blk_new (0xf0000, 64 * 1024, 1);
