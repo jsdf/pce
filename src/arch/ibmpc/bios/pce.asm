@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-01-28 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -118,6 +118,12 @@ init_int:
   mov     ax, 0xf000
   stosw
   loop    .next
+
+  ; set int 0x40 == int 0x13
+  mov     ax, [es:4 * 0x13 + 0]
+  mov     cx, [es:4 * 0x13 + 2]
+  mov     [es:4 * 0x40 + 0], ax
+  mov     [es:4 * 0x40 + 2], cx
 
   pop     ds
   pop     es
