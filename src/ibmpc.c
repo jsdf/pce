@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc.c                                                *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,17 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.16 2003/04/22 17:59:54 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.17 2003/04/23 11:07:35 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <time.h>
-#include <stdarg.h>
 
 #include <pce.h>
-
-
-static FILE *log_fp = NULL;
 
 
 void pc_load_bios (ibmpc_t *pc, char *fname);
@@ -43,35 +39,13 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 void pc_break (ibmpc_t *pc, unsigned char val);
 
 
-void pc_log_set_fp (FILE *fp)
-{
-  log_fp = fp;
-}
-
-void pc_log (ibmpc_t *pc, const char *str, ...)
-{
-  va_list     va;
-
-  if (log_fp == NULL) {
-    log_fp = stdout;
-  }
-
-  if (str != NULL) {
-    va_start (va, str);
-    vfprintf (log_fp, str, va);
-    va_end (va);
-  }
-
-  fflush (log_fp);
-}
-
 void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 {
   unsigned ram;
 
   ram = ini_get_def_long (ini, "ram", 640);
 
-  pc_log (pc, "RAM: %uKB\n", ram);
+  pce_log (0, "RAM: %uKB\n", ram);
 
   pc->ram = mem_blk_new (0, 1024 * ram, 1);
   mem_blk_init (pc->ram, 0x00);
@@ -93,11 +67,11 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     base = ini_get_def_long (sct, "base", 0);
     size = ini_get_def_long (sct, "size", 64 * 1024);
 
-    pc_log (pc, "ROM: %05X %04X %s\n", base, size, fname);
+    pce_log (0, "ROM: %05X %04X %s\n", base, size, fname);
 
     fp = fopen (fname, "rb");
     if (fp == NULL) {
-      pc_log (pc, "loading rom failed (%s)\n", fname);
+      pce_log (0, "loading rom failed (%s)\n", fname);
     }
     else {
       rom = mem_blk_new (base, size, 1);
@@ -106,7 +80,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
       mem_add_blk (pc->mem, rom, 1);
 
       if (fread (rom->data, 1, size, fp) != size) {
-        pc_log (pc, "loading rom data failed (%s)\n", fname);
+        pce_log (0, "loading rom data failed (%s)\n", fname);
       }
 
       fclose (fp);
@@ -261,7 +235,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     dsk = dsk_new (drive);
 
-    pc_log (pc, "disk: %s:%s %u/%u/%u ro=%d\n",
+    pce_log (0, "disk: %s:%s %u/%u/%u ro=%d\n",
       (fname != NULL) ? fname : "", type, c, h, s, ro
     );
 
@@ -279,7 +253,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (r) {
-      pc_log (pc, "loading drive %02X failed\n", drive);
+      pce_log (0, "loading drive %02X failed\n", drive);
       dsk_del (dsk);
       dsk = NULL;
     }

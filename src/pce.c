@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/pce.c                                                  *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,10 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.14 2003/04/22 17:59:54 hampa Exp $ */
+/* $Id: pce.c,v 1.15 2003/04/23 11:07:35 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -43,6 +44,10 @@ typedef struct breakpoint_t {
   unsigned            pass;
   unsigned            reset;
 } breakpoint_t;
+
+
+static FILE *log_fp = NULL;
+static int  log_fp_close = 0;
 
 
 static unsigned     bp_cnt = 0;
@@ -86,6 +91,34 @@ void prt_version (void)
   );
 
   fflush (stdout);
+}
+
+void pce_log_set_fp (FILE *fp, int close)
+{
+  log_fp = fp;
+  log_fp_close = close;
+}
+
+void pce_log_set_fname (const char *fname)
+{
+  if (log_fp_close) {
+    fclose (log_fp);
+  }
+
+  log_fp = fopen (fname, "wb");
+}
+
+void pce_log (unsigned level, const char *str, ...)
+{
+  va_list     va;
+
+  if ((log_fp != NULL) && (str != NULL)) {
+    va_start (va, str);
+    vfprintf (log_fp, str, va);
+    va_end (va);
+
+    fflush (log_fp);
+  }
 }
 
 #ifdef PCE_HAVE_TSC
@@ -1526,6 +1559,39 @@ int do_cmd (void)
   return (0);
 }
 
+ini_sct_t *pce_load_config (const char *fname)
+{
+  ini_sct_t *ini;
+  char      *home;
+  char      buf[1024];
+
+  if (fname != NULL) {
+    ini = ini_read (fname);
+    if (ini != NULL) {
+      printf ("using config file '%s'\n", fname);
+      return (ini);
+    }
+  }
+
+  home = getenv ("HOME");
+  if (home != NULL) {
+    sprintf (buf, "%s/.pce.cfg", home);
+    ini = ini_read (buf);
+    if (ini != NULL) {
+      printf ("using config file '%s'\n", buf);
+      return (ini);
+    }
+  }
+
+  ini = ini_read ("/etc/pce.cfg");
+  if (ini != NULL) {
+    printf ("using config file '/etc/pce.cfg'\n");
+    return (ini);
+  }
+
+  return (NULL);
+}
+
 int str_isarg1 (const char *str, const char *arg)
 {
   if (strcmp (str, arg) == 0) {
@@ -1551,7 +1617,7 @@ int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 int main (int argc, char *argv[])
 {
   int       i;
-  char      *cfg;
+  char      *cfg, *log;
   ini_sct_t *ini, *sct;
 
   if (argc == 2) {
@@ -1566,6 +1632,7 @@ int main (int argc, char *argv[])
   }
 
   cfg = NULL;
+  log = "/dev/null";
 
   i = 1;
   while (i < argc) {
@@ -1576,6 +1643,13 @@ int main (int argc, char *argv[])
       }
       cfg = argv[i];
     }
+    else if (str_isarg2 (argv[i], "-l", "--log")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+      log = argv[i];
+    }
     else {
       printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
       return (1);
@@ -1584,13 +1658,11 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
-  if (cfg == NULL) {
-    cfg = "pce.cfg";
-  }
+  pce_log_set_fp (stdout, 0);
 
-  ini = ini_read (cfg);
+  ini = pce_load_config (cfg);
   if (ini == NULL) {
-    printf ("%s: loading config file failed (%s)\n", argv[0], cfg);
+    printf ("%s: loading config file failed\n", argv[0]);
     return (1);
   }
 
@@ -1604,15 +1676,13 @@ int main (int argc, char *argv[])
     ops_cnt[i] = 0;
   }
 
-  pc_log_set_fp (stdout);
-
   pc = pc_new (sct);
 
   pc->cpu->opstat = &pc_opstat;
 
   e86_reset (pc->cpu);
 
-  pc_log_set_fp (stderr);
+  pce_log_set_fname (log);
 
   do_cmd();
 

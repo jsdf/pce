@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc.h                                                *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.10 2003/04/22 17:59:54 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.11 2003/04/23 11:07:35 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -56,9 +56,6 @@ typedef struct {
 
   int           brk;
 } ibmpc_t;
-
-
-void pc_log_set_fp (FILE *fp);
 
 
 ibmpc_t *pc_new (ini_sct_t *ini);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/floppy.c                                               *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.9 2003/04/21 19:10:59 hampa Exp $ */
+/* $Id: floppy.c,v 1.10 2003/04/23 11:07:34 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -150,7 +150,7 @@ int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *
 
   dsk->readonly = ro;
 
-  fprintf (stderr, "drive %u: image %s c=%u h=%u s=%u b=%lu\n",
+  pce_log (0, "drive %u: image %s c=%u h=%u s=%u b=%lu\n",
     dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
   );
 
@@ -190,7 +190,7 @@ int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
 
   dsk->readonly = ro;
 
-  fprintf (stderr, "drive %u: hdimage %s c=%u h=%u s=%u b=%lu\n",
+  pce_log (0, "drive %u: hdimage %s c=%u h=%u s=%u b=%lu\n",
     dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
   );
 
@@ -504,7 +504,7 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
 
 void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
 {
-  fprintf (fp,
+  pce_log (0,
     "int 13 func %02X: %04X:%04X  AX=%04X  BX=%04X  CX=%04X  DX=%04X  ES=%04X\n",
     e86_get_reg8 (cpu, E86_REG_AH),
     e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu) + 2),
