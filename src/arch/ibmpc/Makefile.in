@@ -45,6 +45,7 @@ OBJ_EXT	:= \
 HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/e8086/e8086.h \
+	chipset/e8250.h \
 	chipset/e8253.h \
 	chipset/e8255.h \
 	chipset/e8259.h \

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 

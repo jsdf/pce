@@ -63,11 +63,12 @@
 #define E8250_LCR_STOP   0x04
 #define E8250_LCR_DATA   0x03
 
-#define E8250_LCR_PARITY_N 0x00
-#define E8250_LCR_PARITY_O 0x01
-#define E8250_LCR_PARITY_E 0x03
-#define E8250_LCR_PARITY_M 0x05
-#define E8250_LCR_PARITY_S 0x07
+/* parity codes */
+#define E8250_PARITY_N 0x00
+#define E8250_PARITY_O 0x01
+#define E8250_PARITY_E 0x03
+#define E8250_PARITY_M 0x05
+#define E8250_PARITY_S 0x07
 
 /* Line Status Register */
 #define E8250_LSR_TXE 0x40

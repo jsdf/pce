@@ -52,7 +52,7 @@ void ser_init (serial_t *ser, unsigned long base)
   ser->bps = 2400;
   ser->databits = 8;
   ser->stopbits = 1;
-  ser->parity = E8250_LCR_PARITY_N;
+  ser->parity = E8250_PARITY_N;
 
   ser->dtr = 0;
   ser->rts = 0;
