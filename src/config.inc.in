@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: config.inc.in,v 1.1 2003/09/02 11:43:03 hampa Exp $
+; $Id: config.inc.in,v 1.2 2003/10/13 01:53:29 hampa Exp $
 
 
 %ifndef PCE_CONFIG_INC
@@ -31,6 +31,7 @@
 %define PCE_VERSION_MIN @PCE_VERSION_MIN@
 %define PCE_VERSION_MIC @PCE_VERSION_MIC@
 %define PCE_VERSION_STR "@PCE_VERSION_STR@"
+%define PCE_VERSION_REL @PCE_VERSION_REL@
 
 %define PCE_CFG_DATE "@PCE_CFG_DATE@"
 %define PCE_CFG_TIME "@PCE_CFG_TIME@"

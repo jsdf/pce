@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.7 2003/09/15 07:53:48 hampa Exp $
+# $Id: Makefile.inc.in,v 1.8 2003/10/13 01:53:29 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -55,6 +55,7 @@ PCE_VERSION_MAJ := @PCE_VERSION_MAJ@
 PCE_VERSION_MIN := @PCE_VERSION_MIN@
 PCE_VERSION_MIC := @PCE_VERSION_MIC@
 PCE_VERSION_STR := @PCE_VERSION_STR@
+PCE_VERSION_REL := @PCE_VERSION_REL@
 
 
 VPATH = $(srcdir)
