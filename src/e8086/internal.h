@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     internal.h                                                 *
+ * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.5 2003/04/18 20:10:53 hampa Exp $ */
+/* $Id: internal.h,v 1.6 2003/04/23 13:08:39 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -76,9 +76,6 @@ typedef void (*e86_ea_f) (e8086_t *c);
 
 extern e86_opcode_f e86_opcodes[256];
 extern e86_ea_f e86_ea[32];
-
-
-void e86_log_op (e8086_t *c, const char *str, ...);
 
 
 void e86_get_ea_ptr (e8086_t *c, unsigned char *ea);

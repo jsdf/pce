@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.9 2003/04/21 13:33:35 hampa Exp $ */
+/* $Id: e8086.h,v 1.10 2003/04/23 13:08:39 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -87,13 +87,13 @@ typedef struct {
   void          *inta_ext;
   unsigned char (*inta) (void *ext);
 
-  void (*hook) (void *ext, unsigned char op1, unsigned char op2);
-
-  void (*opstat) (void *ext, unsigned char op1, unsigned char op2);
+  void *op_ext;
+  void (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
+  void (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
+  void (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
 
   void *mem;
   void *prt;
-  void *ext;
 
   unsigned short dreg[8];
   unsigned short sreg[4];

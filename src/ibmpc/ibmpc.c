@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.2 2003/04/23 13:08:39 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -94,10 +94,11 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
   pc->cpu = e86_new ();
 
-  pc->cpu->hook = &pc_e86_hook;
   pc->cpu->mem = pc->mem;
   pc->cpu->prt = pc->prt;
-  pc->cpu->ext = pc;
+
+  pc->cpu->op_ext = pc;
+  pc->cpu->op_hook = &pc_e86_hook;
 
   pc->cpu->mem_get_uint8 = (geta_uint8_f) &mem_get_uint8;
   pc->cpu->mem_get_uint16 = (geta_uint16_f) &mem_get_uint16_le;

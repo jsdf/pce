@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     microcode.c                                                *
+ * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.10 2003/04/20 20:36:16 hampa Exp $ */
+/* $Id: microcode.c,v 1.11 2003/04/23 13:08:39 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -107,7 +107,9 @@ void e86_pq_adjust (e8086_t *c, unsigned cnt)
 static
 unsigned op_ud (e8086_t *c)
 {
-  e86_log_op (c, "undefined operation");
+  if (c->op_undef != NULL) {
+    c->op_undef (c->op_ext, c->pq[0], c->pq[1]);
+  }
 
   return (1);
 }
@@ -1382,8 +1384,8 @@ unsigned op_66 (e8086_t *c)
     return (op_ud (c));
   }
 
-  if (c->hook != NULL) {
-    c->hook (c->ext, c->pq[2], c->pq[3]);
+  if (c->op_hook != NULL) {
+    c->op_hook (c->op_ext, c->pq[2], c->pq[3]);
   }
 
   return (4);
@@ -3575,7 +3577,6 @@ unsigned op_d4 (e8086_t *c)
 
   /* check for division by zero */
   if (div == 0) {
-    e86_log_op (c, "division by zero (AAM)");
     e86_trap (c, 0);
     return (0);
   }
@@ -3873,7 +3874,6 @@ unsigned op_f3 (e8086_t *c)
 static
 unsigned op_f4 (e8086_t *c)
 {
-  e86_log_op (c, "halt");
   e86_set_clk (c, 2);
 
   return (1);
@@ -4000,7 +4000,6 @@ unsigned op_f6_06 (e8086_t *c)
 
   /* check for division by zero */
   if (s == 0) {
-    e86_log_op (c, "division by zero");
     e86_trap (c, 0);
     return (0);
   }
@@ -4009,7 +4008,6 @@ unsigned op_f6_06 (e8086_t *c)
 
   /* check for overflow */
   if (d & 0xff00) {
-    e86_log_op (c, "division overflow");
     e86_trap (c, 0);
     return (0);
   }
@@ -4035,7 +4033,6 @@ unsigned op_f6_07 (e8086_t *c)
 
   /* check for division by zero */
   if (s2 == 0) {
-    e86_log_op (c, "division by zero");
     e86_trap (c, 0);
     return (0);
   }
@@ -4050,7 +4047,6 @@ unsigned op_f6_07 (e8086_t *c)
 
   /* check for overflow */
   if (d1 & 0xff00) {
-    e86_log_op (c, "division overflow");
     e86_trap (c, 0);
     return (0);
   }
@@ -4198,7 +4194,6 @@ unsigned op_f7_06 (e8086_t *c)
 
   /* check for division by zero */
   if (s2 == 0) {
-    e86_log_op (c, "division by zero");
     e86_trap (c, 0);
     return (0);
   }
@@ -4209,7 +4204,6 @@ unsigned op_f7_06 (e8086_t *c)
 
   /* check for overflow */
   if (d & 0xffff0000) {
-    e86_log_op (c, "division overflow");
     e86_trap (c, 0);
     return (0);
   }
@@ -4236,7 +4230,6 @@ unsigned op_f7_07 (e8086_t *c)
   s2 = (s2 & 0x8000) ? (s2 | 0xffff0000) : s2;
 
   if (s2 == 0) {
-    e86_log_op (c, "division by zero");
     e86_trap (c, 0);
     return (0);
   }
@@ -4251,7 +4244,6 @@ unsigned op_f7_07 (e8086_t *c)
 
   /* check for overflow */
   if (d1 & 0xffff0000) {
-    e86_log_op (c, "division overflow");
     e86_trap (c, 0);
     return (0);
   }

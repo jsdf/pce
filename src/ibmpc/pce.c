@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.1 2003/04/23 12:48:43 hampa Exp $ */
+/* $Id: pce.c,v 1.2 2003/04/23 13:08:39 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1646,7 +1646,7 @@ int main (int argc, char *argv[])
 
   pc = pc_new (sct);
 
-  pc->cpu->opstat = &pc_opstat;
+  pc->cpu->op_stat = &pc_opstat;
 
   e86_reset (pc->cpu);
 
