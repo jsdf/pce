@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.18 2003/08/23 12:35:42 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.19 2003/08/29 09:46:26 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -134,6 +134,8 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
+  e186_enable();
+
   pc->cpu = e86_new ();
 
   e86_set_mem (pc->cpu, pc->mem,
@@ -669,11 +671,13 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
   pc = (ibmpc_t *) ext;
 
-  if ((op1 == 0xcd) && (op2 == 0x13)) {
-    dsk_int13 (pc->dsk, pc->cpu);
-  }
-  else if ((op1 == 0xcd) && (op2 == 0x1a)) {
-    pc_int_1a (pc);
+  if (op1 == 0xcd) {
+   if (op2 == 0x13) {
+      dsk_int13 (pc->dsk, pc->cpu);
+    }
+    else if (op2 == 0x1a) {
+      pc_int_1a (pc);
+    }
   }
   else if ((op1 == 0x00) && (op2 == 0x00)) {
     pc->brk = 1;
