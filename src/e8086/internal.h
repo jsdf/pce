@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.9 2003/08/29 21:14:49 hampa Exp $ */
+/* $Id: internal.h,v 1.10 2003/08/29 22:45:59 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -30,8 +30,10 @@
 #include "e8086.h"
 
 
-#define E86_CPU_REP_BUG    1
-#define E86_CPU_MASK_SHIFT 2
+#define E86_CPU_REP_BUG    1            /* enable rep/seg bug */
+#define E86_CPU_MASK_SHIFT 2            /* mask shift count */
+#define E86_CPU_PUSH_FIRST 4            /* push sp before decrementing it */
+#define E86_CPU_INT6       8            /* throw illegal opcode exception */
 
 
 #define e86_mk_uint16(lo, hi) \

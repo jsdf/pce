@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e80186.c                                         *
  * Created:       2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.3 2003/08/29 21:14:48 hampa Exp $ */
+/* $Id: e80186.c,v 1.4 2003/08/29 22:45:59 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -106,6 +106,264 @@ unsigned op_62 (e8086_t *c)
   return (c->ea.cnt + 1);
 }
 
+/* OP 68: PUSH imm16 */
+static
+unsigned op_68 (e8086_t *c)
+{
+  e86_push (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 3);
+
+  return (3);
+}
+
+/* OP 69: IMUL r16, r/m16, imm16 */
+static
+unsigned op_69 (e8086_t *c)
+{
+  unsigned long  s1, s2, d;
+
+  e86_get_ea_ptr (c, c->pq + 1);
+
+  s1 = e86_get_ea16 (c);
+  s2 = e86_mk_uint16 (c->pq[c->ea.cnt + 1], c->pq[c->ea.cnt + 2]);
+
+  s1 = (s1 & 0x8000) ? (s1 | 0xffff0000) : s1;
+  s2 = (s2 & 0x8000) ? (s2 | 0xffff0000) : s2;
+
+  d = (s1 * s2) & 0xffffffff;
+
+  e86_set_reg16 (c, (c->pq[1] >> 3) & 7, d & 0xffff);
+
+  d &= 0xffff8000;
+  if ((d == 0xffff8000) || (d == 0x00000000)) {
+    e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  }
+  else {
+    e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
+  }
+
+  e86_set_f (c, E86_FLG_Z, d == 0);
+
+  e86_set_clk_ea (c, 20, 20); /* ?? */
+
+  return (c->ea.cnt + 3);
+}
+
+/* OP 6A: PUSH imm8 */
+static
+unsigned op_6a (e8086_t *c)
+{
+  e86_push (c, e86_mk_sint16 (c->pq[1]));
+  e86_set_clk (c, 3);
+
+  return (2);
+}
+
+/* OP 6B: IMUL r16, r/m16, imm8 */
+static
+unsigned op_6b (e8086_t *c)
+{
+  unsigned long  s1, s2, d;
+
+  e86_get_ea_ptr (c, c->pq + 1);
+
+  s1 = e86_get_ea16 (c);
+  s2 = e86_mk_sint16 (c->pq[c->ea.cnt + 1]);
+
+  s1 = (s1 & 0x8000) ? (s1 | 0xffff0000) : s1;
+  s2 = (s2 & 0x8000) ? (s2 | 0xffff0000) : s2;
+
+  d = (s1 * s2) & 0xffffffff;
+
+  e86_set_reg16 (c, (c->pq[1] >> 3) & 7, d & 0xffff);
+
+  d &= 0xffff8000;
+  if ((d == 0xffff8000) || (d == 0x00000000)) {
+    e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
+  }
+  else {
+    e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
+  }
+
+  e86_set_f (c, E86_FLG_Z, d == 0);
+
+  e86_set_clk_ea (c, 20, 20); /* ?? */
+
+  return (c->ea.cnt + 2);
+}
+
+/* OP C0: ROL, ROR, RCL, RCR, SHL, SHR, SAR r/m8, imm8 */
+static
+unsigned op_c0 (e8086_t *c)
+{
+  unsigned       xop;
+  unsigned       cnt;
+  unsigned short d, s;
+
+  xop = (c->pq[1] >> 3) & 7;
+
+  e86_get_ea_ptr (c, c->pq + 1);
+  s = e86_get_ea8 (c);
+
+  cnt = c->pq[c->ea.cnt + 1];
+
+  if (c->cpu & E86_CPU_MASK_SHIFT) {
+    cnt &= 0x1f;
+  }
+
+  if (cnt == 0) {
+    return (c->ea.cnt + 1);
+  }
+
+  switch (xop) {
+    case 0: /* ROL r/m8, imm8 */
+      d = (s << (cnt & 7)) | (s >> (8 - (cnt & 7)));
+      e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      break;
+
+    case 1: /* ROR r/m8, imm8 */
+      d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
+      e86_set_cf (c, d & 0x80);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      break;
+
+    case 2: /* RCL r/m8, imm8 */
+      s |= e86_get_cf (c) << 8;
+      d = (s << (cnt % 9)) | (s >> (9 - (cnt % 9)));
+      e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      break;
+
+    case 3: /* RCR r/m8, imm8 */
+      s |= e86_get_cf (c) << 8;
+      d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
+      e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      break;
+
+    case 4: /* SHL r/m8, imm8 */
+      d = (cnt > 8) ? 0 : (s << cnt);
+      e86_set_flg_szp_8 (c, d);
+      e86_set_cf (c, d & 0x100);
+      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      break;
+
+    case 5: /* SHR r/m8, imm8 */
+      /* c > 0 */
+      d = (cnt > 8) ? 0 : (s >> (cnt - 1));
+      e86_set_cf (c, d & 1);
+      d = d >> 1;
+      e86_set_flg_szp_8 (c, d);
+      e86_set_of (c, s & 0x80);
+      break;
+
+    case 7: /* SAR r/m8, imm8 */
+      s |= (s & 0x80) ? 0xff00 : 0x0000;
+      d = s >> ((cnt >= 8) ? 7 : (cnt - 1));
+      e86_set_cf (c, d & 1);
+      d = (d >> 1) & 0xff;
+      e86_set_flg_szp_8 (c, d);
+      e86_set_of (c, 0);
+      break;
+
+    default:
+      d = 0; /* To avoid compiler warning */
+      break;
+  }
+
+  e86_set_ea8 (c, d & 0xff);
+  e86_set_clk_ea (c, 5 + cnt, 8 + cnt);
+
+  return (c->ea.cnt + 2);
+}
+
+/* OP C1: ROL, ROR, RCL, RCR, SHL, SHR, SAR r/m16, imm8 */
+static
+unsigned op_c1 (e8086_t *c)
+{
+  unsigned      xop;
+  unsigned      cnt;
+  unsigned long d, s;
+
+  xop = (c->pq[1] >> 3) & 7;
+
+  e86_get_ea_ptr (c, c->pq + 1);
+  s = e86_get_ea16 (c);
+
+  cnt = c->pq[c->ea.cnt + 1];
+
+  if (c->cpu & E86_CPU_MASK_SHIFT) {
+    cnt &= 0x1f;
+  }
+
+  if (cnt == 0) {
+    return (c->ea.cnt + 1);
+  }
+
+  switch (xop) {
+    case 0: /* ROL r/m16, imm8 */
+      d = (s << (cnt & 15)) | (s >> (16 - (cnt & 15)));
+      e86_set_cf (c, d & 1);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      break;
+
+    case 1: /* ROR r/m16, imm8 */
+      d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
+      e86_set_cf (c, d & 0x8000);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      break;
+
+    case 2: /* RCL r/m16, imm8 */
+      s |= e86_get_cf (c) << 16;
+      d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
+      e86_set_cf (c, d & 0x10000);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      break;
+
+    case 3: /* RCR r/m16, imm8 */
+      s |= e86_get_cf (c) << 16;
+      d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
+      e86_set_cf (c, d & 0x10000);
+      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      break;
+
+    case 4: /* SHL r/m16, imm8 */
+      d = (cnt > 16) ? 0 : (s << cnt);
+      e86_set_flg_szp_16 (c, d);
+      e86_set_cf (c, d & 0x10000);
+      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      break;
+
+    case 5: /* SHR r/m16, imm8 */
+      /* c > 0 */
+      d = (cnt > 16) ? 0 : (s >> (cnt - 1));
+      e86_set_cf (c, d & 1);
+      d = d >> 1;
+      e86_set_flg_szp_16 (c, d);
+      e86_set_of (c, s & 0x8000);
+      break;
+
+    case 7: /* SAR r/m16, imm8 */
+      s |= (s & 0x8000) ? 0xffff0000 : 0x00000000;
+      d = s >> ((cnt >= 16) ? 15 : (cnt - 1));
+      e86_set_cf (c, d & 1);
+      d = (d >> 1) & 0xffff;
+      e86_set_flg_szp_16 (c, d);
+      e86_set_of (c, 0);
+      break;
+
+    default:
+      d = 0; /* To avoid compiler warning */
+      break;
+  }
+
+  e86_set_ea16 (c, d);
+  e86_set_clk_ea (c, 5 + cnt, 8 + cnt);
+
+  return (c->ea.cnt + 2);
+}
+
 /* OP C8: ENTER imm16, imm8 */
 static
 unsigned op_c8 (e8086_t *c)
@@ -168,11 +426,17 @@ unsigned op_c9 (e8086_t *c)
 void e86_enable_186 (e8086_t *c)
 {
   c->cpu &= ~E86_CPU_REP_BUG;
-  c->cpu |= E86_CPU_MASK_SHIFT;
+  c->cpu |= E86_CPU_MASK_SHIFT | E86_CPU_PUSH_FIRST | E86_CPU_INT6;
 
   e86_opcodes[0x60] = &op_60;
   e86_opcodes[0x61] = &op_61;
   e86_opcodes[0x62] = &op_62;
+  e86_opcodes[0x68] = &op_68;
+  e86_opcodes[0x69] = &op_69;
+  e86_opcodes[0x6a] = &op_6a;
+  e86_opcodes[0x6b] = &op_6b;
+  e86_opcodes[0xc0] = &op_c0;
+  e86_opcodes[0xc1] = &op_c1;
   e86_opcodes[0xc8] = &op_c8;
   e86_opcodes[0xc9] = &op_c9;
 }

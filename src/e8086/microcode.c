@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.17 2003/08/29 21:14:49 hampa Exp $ */
+/* $Id: microcode.c,v 1.18 2003/08/29 22:45:59 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -121,6 +121,11 @@ unsigned op_ud (e8086_t *c)
 {
   if (c->op_undef != NULL) {
     c->op_undef (c->op_ext, c->pq[0], c->pq[1]);
+  }
+
+  if (c->cpu & E86_CPU_INT6) {
+    e86_trap (c, 6);
+    return (0);
   }
 
   return (1);
@@ -1376,7 +1381,7 @@ unsigned op_50 (e8086_t *c)
 
   reg = c->pq[0] & 7;
 
-  if (reg == E86_REG_SP) {
+  if ((reg == E86_REG_SP) && ((c->cpu & E86_CPU_PUSH_FIRST) == 0)) {
     e86_push (c, e86_get_sp (c) - 2);
   }
   else {
@@ -4591,7 +4596,7 @@ unsigned op_ff_06 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
 
-  if ((c->ea.is_mem == 0) && (c->ea.ofs == E86_REG_SP)) {
+  if ((c->ea.is_mem == 0) && (c->ea.ofs == E86_REG_SP) && ((c->cpu & E86_CPU_PUSH_FIRST) == 0)) {
     e86_push (c, e86_get_sp (c) - 2);
   }
   else {
