@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.16 2003/08/23 12:35:42 hampa Exp $ */
+/* $Id: pce.c,v 1.17 2003/08/29 13:31:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1691,15 +1691,21 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
+  pce_log (MSG_INF,
+    "pce version " PCE_VERSION_STR
+    " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+    "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n"
+  );
+
   ini = pce_load_config (cfg);
   if (ini == NULL) {
-    printf ("%s: loading config file failed\n", argv[0]);
+    pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
     return (1);
   }
 
   sct = ini_sct_find_sct (ini, "pc");
   if (sct == NULL) {
-    printf ("%s: section pc not found\n", argv[0]);
+    pce_log (MSG_ERR, "section 'pc' not found\n");
     return (1);
   }
 
