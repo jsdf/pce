@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.5 2003/09/19 23:20:23 hampa Exp $
+# $Id: Makefile.in,v 1.6 2003/10/07 16:05:09 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -9,9 +9,9 @@ reldir := ../..
 include $(reldir)/Makefile.inc
 
 
-SRC	:= disasm.c e8086.c e80186.c flags.c ea.c microcode.c pqueue.c
+SRC	:= disasm.c e8086.c e80186.c e80286r.c flags.c ea.c microcode.c pqueue.c
 
-OBJ	:= disasm.o e8086.o e80186.o flags.o ea.o microcode.o pqueue.o
+OBJ	:= disasm.o e8086.o e80186.o e80286r.o flags.o ea.o microcode.o pqueue.o
 
 HDR	:= e8086.h internal.h
 HDR_EXT	:=
@@ -39,6 +39,7 @@ e8086.a: $(OBJ)
 disasm.o:	disasm.c $(SDP)
 e8086.o:	e8086.c $(SDP)
 e80186.o:	e80186.c $(SDP)
+e80286r.o:	e80286r.c $(SDP)
 ea.o:		ea.c $(SDP)
 flags.o:	flags.c $(SDP)
 microcode.o:	microcode.c $(SDP)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.20 2003/10/05 21:47:18 hampa Exp $ */
+/* $Id: microcode.c,v 1.21 2003/10/07 16:05:10 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -73,14 +73,7 @@ void e86_trap (e8086_t *c, unsigned n)
 static
 unsigned op_ud (e8086_t *c)
 {
-  if (c->op_undef != NULL) {
-    c->op_undef (c->op_ext, c->pq[0], c->pq[1]);
-  }
-
-  if (c->cpu & E86_CPU_INT6) {
-    e86_trap (c, 6);
-    return (0);
-  }
+  e86_undefined (c);
 
   return (1);
 }

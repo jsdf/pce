@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.22 2003/10/05 21:47:18 hampa Exp $ */
+/* $Id: e8086.c,v 1.23 2003/10/07 16:05:09 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -108,13 +108,6 @@ void e86_enable_v30 (e8086_t *c)
   e86_enable_86 (c);
 
   c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
-}
-
-void e86_enable_286 (e8086_t *c)
-{
-  e86_enable_186 (c);
-
-  c->cpu |= (E86_CPU_INT6 | E86_CPU_FLAGS286);
 }
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)
@@ -205,6 +198,17 @@ int e86_interrupt (e8086_t *cpu, unsigned n)
   }
 
   return (1);
+}
+
+void e86_undefined (e8086_t *c)
+{
+  if (c->op_undef != NULL) {
+    c->op_undef (c->op_ext, c->pq[0], c->pq[1]);
+  }
+
+  if (c->cpu & E86_CPU_INT6) {
+    e86_trap (c, 6);
+  }
 }
 
 unsigned long long e86_get_clock (e8086_t *c)

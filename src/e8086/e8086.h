@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.18 2003/10/05 21:47:18 hampa Exp $ */
+/* $Id: e8086.h,v 1.19 2003/10/07 16:05:09 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -341,6 +341,8 @@ void e86_set_prt (e8086_t *c, void *prt,
 void e86_irq (e8086_t *cpu, unsigned val);
 
 int e86_interrupt (e8086_t *cpu, unsigned n);
+
+void e86_undefined (e8086_t *c);
 
 unsigned long long e86_get_clock (e8086_t *c);
 
