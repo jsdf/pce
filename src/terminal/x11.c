@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.8 2003/10/06 12:35:24 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -139,9 +139,9 @@ int xt_init_display (xterm_t *xt)
 
 int xt_init_font (xterm_t *xt, ini_sct_t *ini)
 {
-  char *fname;
+  const char *fname;
 
-  ini_get_string (ini, "font", &fname, "vga");
+  fname = ini_get_str_def (ini, "font", "vga");
 
   xt->font = XLoadQueryFont (xt->display, fname);
 

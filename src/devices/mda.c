@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.2 2003/12/23 03:08:59 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -34,22 +34,23 @@
 static
 void mda_get_colors (mda_t *mda, ini_sct_t *sct)
 {
-  ini_get_ulng (sct, "color0", &mda->rgb[0], 0x000000);
-  ini_get_ulng (sct, "color1", &mda->rgb[1], 0xe89050);
-  ini_get_ulng (sct, "color2", &mda->rgb[2], 0xe89050);
-  ini_get_ulng (sct, "color3", &mda->rgb[3], 0xe89050);
-  ini_get_ulng (sct, "color4", &mda->rgb[4], 0xe89050);
-  ini_get_ulng (sct, "color5", &mda->rgb[5], 0xe89050);
-  ini_get_ulng (sct, "color6", &mda->rgb[6], 0xe89050);
-  ini_get_ulng (sct, "color7", &mda->rgb[7], 0xe89050);
-  ini_get_ulng (sct, "color8", &mda->rgb[8], 0xfff0c8);
-  ini_get_ulng (sct, "color9", &mda->rgb[9], 0xfff0c8);
-  ini_get_ulng (sct, "color10", &mda->rgb[10], 0xfff0c8);
-  ini_get_ulng (sct, "color11", &mda->rgb[11], 0xfff0c8);
-  ini_get_ulng (sct, "color12", &mda->rgb[12], 0xfff0c8);
-  ini_get_ulng (sct, "color13", &mda->rgb[13], 0xfff0c8);
-  ini_get_ulng (sct, "color14", &mda->rgb[14], 0xfff0c8);
-  ini_get_ulng (sct, "color15", &mda->rgb[15], 0xfff0c8);
+  mda->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
+  mda->rgb[1] = ini_get_lng_def (sct, "color0", 0x000000);
+  mda->rgb[2] = ini_get_lng_def (sct, "color1", 0xe89050);
+  mda->rgb[3] = ini_get_lng_def (sct, "color2", 0xe89050);
+  mda->rgb[4] = ini_get_lng_def (sct, "color3", 0xe89050);
+  mda->rgb[5] = ini_get_lng_def (sct, "color4", 0xe89050);
+  mda->rgb[6] = ini_get_lng_def (sct, "color5", 0xe89050);
+  mda->rgb[7] = ini_get_lng_def (sct, "color6", 0xe89050);
+  mda->rgb[8] = ini_get_lng_def (sct, "color7", 0xe89050);
+  mda->rgb[9] = ini_get_lng_def (sct, "color8", 0xfff0c8);
+  mda->rgb[10] = ini_get_lng_def (sct, "color9", 0xfff0c8);
+  mda->rgb[11] = ini_get_lng_def (sct, "color10", 0xfff0c8);
+  mda->rgb[12] = ini_get_lng_def (sct, "color11", 0xfff0c8);
+  mda->rgb[13] = ini_get_lng_def (sct, "color12", 0xfff0c8);
+  mda->rgb[14] = ini_get_lng_def (sct, "color13", 0xfff0c8);
+  mda->rgb[15] = ini_get_lng_def (sct, "color14", 0xfff0c8);
+  mda->rgb[16] = ini_get_lng_def (sct, "color15", 0xfff0c8);
 }
 
 static
@@ -91,11 +92,13 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
     mda->crtc_reg[i] = 0;
   }
 
-  ini_get_uint (sct, "io", &iobase, 0x3b4);
-  ini_get_uint (sct, "membase", &membase, 0xb0000);
-  ini_get_uint (sct, "memsize", &memsize, 4096);
+  iobase = ini_get_lng_def (sct, "io", 0x3b4L);
+  membase = ini_get_lng_def (sct, "membase", 0xb0000);
+  memsize = ini_get_lng_def (sct, "memsize", 4096);
 
-  memsize = (memsize < 4096) ? 4096 : memsize;
+  if (memsize < 4096) {
+    memsize = 4096;
+  }
 
   mda_get_colors (mda, sct);
 

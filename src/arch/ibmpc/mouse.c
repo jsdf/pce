@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -79,10 +79,10 @@ mouse_t *mse_new (unsigned short base, ini_sct_t *sct)
   mse->reg->data[5] = (MSE_SSR_TXE | MSE_SSR_TBE);
   mse->reg->data[6] = 0x00;
 
-  ini_get_sint (sct, "speed_x_mul", &mse->fct_x[0], 1);
-  ini_get_sint (sct, "speed_x_div", &mse->fct_x[1], 1);
-  ini_get_sint (sct, "speed_y_mul", &mse->fct_y[0], 1);
-  ini_get_sint (sct, "speed_y_div", &mse->fct_y[1], 1);
+  mse->fct_x[0] = ini_get_lng_def (sct, "speed_x_mul", 1);
+  mse->fct_x[1] = ini_get_lng_def (sct, "speed_x_div", 1);
+  mse->fct_y[0] = ini_get_lng_def (sct, "speed_y_mul", 1);
+  mse->fct_y[1] = ini_get_lng_def (sct, "speed_y_div", 1);
 
   mse->divisor = 1;
 

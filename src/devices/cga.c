@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.4 2003/12/23 03:08:58 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -79,16 +79,18 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
     cga->crtc_reg[i] = 0;
   }
 
-  ini_get_uint (sct, "mode_320x200_w", &cga->mode1_w, 640);
-  ini_get_uint (sct, "mode_320x200_h", &cga->mode1_h, 400);
-  ini_get_uint (sct, "mode_640x200_w", &cga->mode2_w, 640);
-  ini_get_uint (sct, "mode_640x200_h", &cga->mode2_h, 400);
+  cga->mode1_w = ini_get_lng_def (sct, "mode_320x200_w", 640);
+  cga->mode1_h = ini_get_lng_def (sct, "mode_320x200_h", 400);
+  cga->mode2_w = ini_get_lng_def (sct, "mode_640x200_w", 640);
+  cga->mode2_h = ini_get_lng_def (sct, "mode_640x200_h", 400);
 
-  ini_get_ulng (sct, "io", &iobase, 0x3d4);
-  ini_get_ulng (sct, "membase", &membase, 0xb8000);
-  ini_get_ulng (sct, "memsize", &memsize, 16384);
+  iobase = ini_get_lng_def (sct, "io", 0x3d4L);
+  membase = ini_get_lng_def (sct, "membase", 0xb8000L);
+  memsize = ini_get_lng_def (sct, "memsize", 16384L);
 
-  memsize = (memsize < 16384) ? 16384 : memsize;
+  if (memsize < 16384) {
+    memsize = 16384;
+  }
 
   pce_log (MSG_INF, "video:\tCGA io=0x%04lx membase=0x%05lx memsize=0x%05lx\n",
     iobase, membase, memsize

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -62,7 +62,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
   mem_blk_t     *ram;
-  char          *fname;
+  const char    *fname;
   unsigned long base, size;
 
   pc->ram = NULL;
@@ -70,18 +70,12 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "ram");
 
   while (sct != NULL) {
-    ini_get_string (sct, "file", &fname, NULL);
-    ini_get_ulng (sct, "base", &base, 0);
-
-    if (ini_get_ulng (sct, "sizek", &size, 640)) {
-      ini_get_ulng (sct, "size", &size, 640 * 1024);
-    }
-    else {
-      size *= 1024;
-    }
+    fname = ini_get_str (sct, "file");
+    base = ini_get_lng_def (sct, "base", 0);
+    size = ini_get_lng_def (sct, "size", 655360L);
 
     pce_log (MSG_INF, "RAM:\tbase=0x%05x size=%lu file=%s\n",
-      base, size, (fname == NULL) ? "<>" : fname
+      base, size, (fname == NULL) ? "<none>" : fname
     );
 
     ram = mem_blk_new (base, size, 1);
@@ -108,15 +102,15 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
   mem_blk_t     *rom;
-  char          *fname;
+  const char    *fname;
   unsigned long base, size;
 
   sct = ini_sct_find_sct (ini, "rom");
 
   while (sct != NULL) {
-    ini_get_string (sct, "file", &fname, "default.rom");
-    ini_get_ulng (sct, "base", &base, 0);
-    ini_get_ulng (sct, "size", &size, 64UL * 1024);
+    fname = ini_get_str_def (sct, "file", "default.rom");
+    base = ini_get_lng_def (sct, "base", 0);
+    size = ini_get_lng_def (sct, "size", 65536L);
 
     pce_log (MSG_INF, "ROM:\tbase=0x%05x size=%lu file=%s\n", base, size, fname);
 
@@ -137,7 +131,7 @@ static
 void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
-  char          *fname;
+  const char    *fname;
   unsigned long base, size;
 
   pc->nvr = NULL;
@@ -147,9 +141,9 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
     return;
   }
 
-  ini_get_string (sct, "file", &fname, NULL);
-  ini_get_ulng (sct, "base", &base, 0);
-  ini_get_ulng (sct, "size", &size, 65536UL);
+  fname = ini_get_str (sct, "file");
+  base = ini_get_lng_def (sct, "base", 0);
+  size = ini_get_lng_def (sct, "size", 65536L);
 
   pce_log (MSG_INF, "NVRAM:\tbase=0x%08x size=%lu file=%s\n",
     base, size, (fname == NULL) ? "<>" : fname
@@ -175,15 +169,14 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
-  ini_sct_t *sct;
-  char      *model;
+  ini_sct_t  *sct;
+  const char *model;
 
   sct = ini_sct_find_sct (ini, "cpu");
 
-  if (par_cpu == NULL) {
-    ini_get_string (sct, "model", &model, "8086");
-  }
-  else {
+  model = ini_get_str_def (sct, "model", (par_cpu != NULL) ? par_cpu : "8086");
+
+  if (par_cpu != NULL) {
     model = par_cpu;
   }
 
@@ -259,7 +252,8 @@ void pc_setup_dma (ibmpc_t *pc)
   blk->get_uint32 = (mem_get_uint32_f) &e8237_get_uint32;
   mem_add_blk (pc->prt, blk, 1);
 
-  /* This is a hack. HLDA should be connected to the CPU core. */
+  /* This is a hack. HLDA should be connected to the CPU core. Instead,
+     this will keep it permanently at high. */
   e8237_set_hlda (&pc->dma, 1);
 }
 
@@ -289,13 +283,17 @@ void pc_setup_pit (ibmpc_t *pc)
 }
 
 static
-void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
+void pc_setup_ppi (ibmpc_t *pc)
 {
   mem_blk_t *blk;
   unsigned  ram;
 
-  ini_get_uint (ini, "ram", &ram, 640);
-  ram = ram / 32;
+  if (pc->ram != NULL) {
+    ram = mem_blk_get_size (pc->ram) / 32;
+  }
+  else {
+    ram = 1;
+  }
 
   e8255_init (&pc->ppi);
 
@@ -344,18 +342,18 @@ void pc_setup_pic (ibmpc_t *pc)
 static
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
-  char      *driver;
-  ini_sct_t *sct;
+  const char *driver;
+  ini_sct_t  *sct;
 
   pc->trm = NULL;
 
   sct = ini_sct_find_sct (ini, "terminal");
-  ini_get_string (sct, "driver", &driver, "vt100");
+  driver = ini_get_str_def (sct, "driver", "null");
 
   if (par_terminal != NULL) {
     while ((sct != NULL) && (strcmp (par_terminal, driver) != 0)) {
       sct = ini_sct_find_next (sct, "terminal");
-      ini_get_string (sct, "driver", &driver, "vt100");
+      driver = ini_get_str_def (sct, "driver", "null");
     }
 
     if (sct == NULL) {
@@ -369,40 +367,40 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 #ifdef PCE_X11_USE
     pc->trm = xt_new (sct);
     if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up x11 terminal failed\n");
+      pce_log (MSG_ERR, "*** setting up x11 terminal failed\n");
     }
 #else
-    pce_log (MSG_ERR, "terminal driver 'x11' not supported\n");
+    pce_log (MSG_ERR, "*** terminal driver 'x11' not supported\n");
 #endif
   }
   else if (strcmp (driver, "sdl") == 0) {
 #ifdef PCE_SDL_USE
     pc->trm = sdl_new (sct);
     if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up sdl terminal failed\n");
+      pce_log (MSG_ERR, "*** setting up sdl terminal failed\n");
     }
 #else
-    pce_log (MSG_ERR, "terminal driver 'sdl' not supported\n");
+    pce_log (MSG_ERR, "*** terminal driver 'sdl' not supported\n");
 #endif
   }
   else if (strcmp (driver, "null") == 0) {
     pc->trm = null_new (sct);
     if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up null terminal failed\n");
+      pce_log (MSG_ERR, "*** setting up null terminal failed\n");
     }
   }
   else if (strcmp (driver, "vt100") == 0) {
     pc->trm = vt100_new (sct, 0, 1);
     if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up vt100 terminal failed\n");
+      pce_log (MSG_ERR, "*** setting up vt100 terminal failed\n");
     }
   }
   else {
-    pce_log (MSG_ERR, "unknown terminal driver: %s\n", driver);
+    pce_log (MSG_ERR, "*** unknown terminal driver: %s\n", driver);
   }
 
   if (pc->trm == NULL) {
-    pce_log (MSG_ERR, "no terminal found\n");
+    pce_log (MSG_ERR, "*** no terminal found\n");
     return;
   }
 
@@ -458,18 +456,18 @@ void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 static
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
-  char      *dev;
-  ini_sct_t *sct;
+  const char *dev;
+  ini_sct_t  *sct;
 
   pc->video = NULL;
 
   sct = ini_sct_find_sct (ini, "video");
-  ini_get_string (sct, "device", &dev, "mda");
+  dev = ini_get_str_def (sct, "device", "cga");
 
   if (par_video != NULL) {
     while ((sct != NULL) && (strcmp (par_video, dev) != 0)) {
       sct = ini_sct_find_next (sct, "video");
-      ini_get_string (sct, "device", &dev, "cga");
+      dev = ini_get_str_def (sct, "device", "cga");
     }
 
     if (sct == NULL) {
@@ -492,38 +490,49 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
     pc_setup_mda (pc, sct);
   }
   else {
-    pce_log (MSG_ERR, "unknown video device (%s)\n", dev);
+    pce_log (MSG_ERR, "*** unknown video device (%s)\n", dev);
   }
 }
 
 static
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
-  ini_sct_t *sct;
-  disk_t    *dsk;
-  unsigned  drive;
-  unsigned  c, h, s;
-  unsigned  vc, vh, vs;
-  int       ro;
-  char      *fname, *type;
+  ini_sct_t  *sct;
+  disk_t     *dsk;
+  unsigned   drive;
+  unsigned   c, h, s;
+  unsigned   vc, vh, vs;
+  int        ro;
+  const char *type, *fname;
 
   pc->dsk = dsks_new();
 
   sct = ini_sct_find_sct (ini, "disk");
 
   while (sct != NULL) {
-    ini_get_uint (sct, "drive", &drive, 0);
-    ini_get_string (sct, "type", &type, "auto");
-    ini_get_string (sct, "file", &fname, NULL);
+    drive = ini_get_lng_def (sct, "drive", 0);
+    type = ini_get_str_def (sct, "type", "auto");
 
-    ini_get_uint (sct, "c", &c, 80);
-    ini_get_uint (sct, "h", &h, 2);
-    ini_get_uint (sct, "s", &s, 18);
-    ini_get_uint (sct, "visible_c", &vc, 0);
-    ini_get_uint (sct, "visible_h", &vh, 0);
-    ini_get_uint (sct, "visible_s", &vs, 0);
+    fname = ini_get_str (sct, "file");
 
-    ini_get_sint (sct, "readonly", &ro, 0);
+    if ((strcmp (type, "ram") == 0) || (strcmp (type, "image") == 0)) {
+      c = ini_get_lng_def (sct, "c", 80);
+      h = ini_get_lng_def (sct, "h", 2);
+      s = ini_get_lng_def (sct, "s", 18);
+      vc = ini_get_lng_def (sct, "visible_c", 0);
+      vh = ini_get_lng_def (sct, "visible_h", 0);
+      vs = ini_get_lng_def (sct, "visible_s", 0);
+    }
+    else {
+      c = 0;
+      h = 0;
+      s = 0;
+      vc = 0;
+      vh = 0;
+      vs = 0;
+    }
+
+    ro = ini_get_lng_def (sct, "readonly", 0);
 
     if (strcmp (type, "ram") == 0) {
       dsk = dsk_ram_new (drive, c, h, s, fname, ro);
@@ -542,7 +551,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (dsk == NULL) {
-      pce_log (MSG_ERR, "loading drive %02X failed\n", drive);
+      pce_log (MSG_ERR, "*** loading drive %02X failed\n", drive);
     }
     else {
       vc = (vc == 0) ? dsk->c : vc;
@@ -580,18 +589,19 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 {
-  ini_sct_t *sct;
-  unsigned  base, irq;
+  ini_sct_t     *sct;
+  unsigned long base;
+  unsigned      irq;
 
   sct = ini_sct_find_sct (ini, "mouse");
   if (sct == NULL) {
     return;
   }
 
-  ini_get_uint (sct, "io", &base, 0x03f8);
-  ini_get_uint (sct, "irq", &irq, 4);
+  base = ini_get_lng_def (sct, "io", 0x03f8);
+  irq = ini_get_lng_def (sct, "irq", 4);
 
-  pce_log (MSG_INF, "mouse:\tio=0x%04x irq=%u\n", base, irq);
+  pce_log (MSG_INF, "mouse:\tio=0x%04lx irq=%u\n", base, irq);
 
   pc->mse = mse_new (base, sct);
   pc->mse->intr_ext = &pc->pic;
@@ -607,8 +617,8 @@ static
 void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 {
   unsigned        i;
-  unsigned        base;
-  char            *fname;
+  unsigned long   base;
+  const char      *fname;
   ini_sct_t       *sct;
   static unsigned defbase[4] = { 0x378, 0x278, 0x3bc, 0x2bc };
 
@@ -620,8 +630,9 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "parport");
 
   while ((i < 4) && (sct != NULL)) {
-    ini_get_uint (sct, "io", &base, defbase[i]);
-    ini_get_string (sct, "file", &fname, NULL);
+    base = ini_get_lng_def (sct, "io", defbase[i]);
+
+    fname = ini_get_str (sct, "file");
 
     pce_log (MSG_INF, "LPT%u:\tio=0x%04x file=%s\n",
       i + 1, base, (fname == NULL) ? "<none>" : fname
@@ -629,13 +640,15 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 
     pc->parport[i] = parport_new (base);
     if (pc->parport[i] == NULL) {
-      pce_log (MSG_ERR, "parport setup failed [%04X -> %s]\n",
+      pce_log (MSG_ERR, "*** parport setup failed [%04X -> %s]\n",
         base, (fname == NULL) ? "<none>" : fname
       );
     }
     else {
       if (fname != NULL) {
-        parport_set_fname (pc->parport[i], fname);
+        if (parport_set_fname (pc->parport[i], fname)) {
+          pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+        }
       }
 
       mem_add_blk (pc->prt, parport_get_reg (pc->parport[i]), 0);
@@ -653,7 +666,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   unsigned      i;
   unsigned long base;
   unsigned      irq;
-  char          *fname;
+  const char    *fname;
   ini_sct_t     *sct;
 
   static unsigned long defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
@@ -667,9 +680,10 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "serial");
 
   while ((i < 4) && (sct != NULL)) {
-    ini_get_ulng (sct, "io", &base, defbase[i]);
-    ini_get_uint (sct, "irq", &irq, defirq[i]);
-    ini_get_string (sct, "file", &fname, NULL);
+    base = ini_get_lng_def (sct, "io", defbase[i]);
+    irq = ini_get_lng_def (sct, "irq", defirq[i]);
+
+    fname = ini_get_str (sct, "file");
 
     pce_log (MSG_INF, "COM%u:\tio=0x%04x irq=%u file=%s\n",
       i + 1, base, irq, (fname == NULL) ? "<none>" : fname
@@ -677,14 +691,14 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 
     pc->serport[i] = ser_new (base);
     if (pc->serport[i] == NULL) {
-      pce_log (MSG_ERR, "serial port setup failed [%04X/%u -> %s]\n",
+      pce_log (MSG_ERR, "*** serial port setup failed [%04X/%u -> %s]\n",
         base, irq, (fname == NULL) ? "<none>" : fname
       );
     }
     else {
       if (fname != NULL) {
         if (ser_set_fname (pc->serport[i], fname)) {
-          pce_log (MSG_ERR, "can't open file (%s)\n", fname);
+          pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
         }
       }
 
@@ -785,7 +799,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_cpu (pc, ini);
   pc_setup_pic (pc);
   pc_setup_pit (pc);
-  pc_setup_ppi (pc, ini);
+  pc_setup_ppi (pc);
   pc_setup_dma (pc);
 
   pc_setup_terminal (pc, ini);

@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     read.c                                                     *
+ * File name:     src/libini/read.c                                          *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -272,7 +272,7 @@ ini_val_t *parse_value (scanner_t *scn)
 {
   ini_val_t *val;
 
-  val = ini_val_new (scn_str (scn), INI_VAL_LNG);
+  val = ini_val_new (scn_str (scn));
   if (val == NULL) {
     return (NULL);
   }

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.12 2003/11/18 00:31:38 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -469,13 +469,14 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
   vt100_set_key (vt, "\x1b\x5b\x33\x7e", 4, "\x53\xd3", 2); // Del
 
   if (ini != NULL) {
-    char      *str;
-    ini_val_t *val;
+    const char *str;
+    ini_val_t  *val;
 
     val = ini_sct_find_val (ini, "keymap");
 
     while (val != NULL) {
-      if (ini_val_get_str (val, &str) == 0) {
+      str = ini_val_get_str (val);
+      if (str != NULL) {
         if (vt100_set_key_str (vt, str)) {
           fprintf (stderr, "vt100: bad keymap (%s)\n", str);
         }

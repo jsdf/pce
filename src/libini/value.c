@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     value.c                                                    *
- * Created:       2001-08-24 by Hampa Hug <hhug@student.ethz.ch>             *
- * Last modified: 2002-08-27 by Hampa Hug <hhug@student.ethz.ch>             *
- * Copyright:     (C) 2001-2002 by Hampa Hug <hhug@student.ethz.ch>          *
+ * File name:     src/libini/value.c                                         *
+ * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,13 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: value.c,v 1.2 2003/08/19 00:52:10 hampa Exp $ */
+/* $Id$ */
 
 
 #include "libini.h"
 
 
-ini_val_t *ini_val_new (const char *name, ini_type_t type)
+ini_val_t *ini_val_new (const char *name)
 {
   ini_val_t *val;
 
@@ -44,12 +44,13 @@ ini_val_t *ini_val_new (const char *name, ini_type_t type)
   strcpy (val->name, name);
 
   val->next = NULL;
-  val->type = type;
-  val->val.str = NULL;
+  val->type = INI_VAL_LNG;
+  val->val.lng = 0;
 
   return (val);
 }
 
+static
 void ini_val_del_val (ini_val_t *val)
 {
   if (val->type == INI_VAL_STR) {
@@ -72,6 +73,11 @@ void ini_val_del (ini_val_t *val)
   }
 }
 
+const char *ini_val_get_name (const ini_val_t *val)
+{
+  return (val->name);
+}
+
 ini_type_t ini_val_get_type (const ini_val_t *val)
 {
   return (val->type);
@@ -80,11 +86,6 @@ ini_type_t ini_val_get_type (const ini_val_t *val)
 ini_val_t *ini_val_get_next (const ini_val_t *val)
 {
   return (val->next);
-}
-
-char *ini_val_get_name (const ini_val_t *val)
-{
-  return (val->name);
 }
 
 ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name)
@@ -104,65 +105,63 @@ ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name)
   return (NULL);
 }
 
-void ini_val_set_lng (ini_val_t *val, long lng)
+void ini_val_set_lng (ini_val_t *val, long v)
 {
   ini_val_del_val (val);
 
   val->type = INI_VAL_LNG;
-  val->val.lng = lng;
+  val->val.lng = v;
 }
 
-void ini_val_set_dbl (ini_val_t *val, double dbl)
+void ini_val_set_dbl (ini_val_t *val, double v)
 {
   ini_val_del_val (val);
 
   val->type = INI_VAL_DBL;
-  val->val.dbl = dbl;
+  val->val.dbl = v;
 }
 
-void ini_val_set_str (ini_val_t *val, char *str)
+void ini_val_set_str (ini_val_t *val, const char *v)
 {
   ini_val_del_val (val);
 
   val->type = INI_VAL_STR;
 
-  val->val.str = (char *) malloc (strlen (str) + 1);
+  val->val.str = malloc (strlen (v) + 1);
   if (val->val.str == NULL) {
     return;
   }
 
-  strcpy (val->val.str, str);
+  strcpy (val->val.str, v);
 }
 
-int ini_val_get_lng (const ini_val_t *val, long *lng)
+int ini_val_get_lng (const ini_val_t *val, long *v)
 {
   if (val->type != INI_VAL_LNG) {
     return (1);
   }
 
-  *lng = val->val.lng;
+  *v = val->val.lng;
 
   return (0);
 }
 
-int ini_val_get_dbl (const ini_val_t *val, double *dbl)
+int ini_val_get_dbl (const ini_val_t *val, double *v)
 {
   if (val->type != INI_VAL_DBL) {
     return (1);
   }
 
-  *dbl = val->val.dbl;
+  *v = val->val.dbl;
 
   return (0);
 }
 
-int ini_val_get_str (const ini_val_t *val, char **str)
+const char *ini_val_get_str (const ini_val_t *val)
 {
   if (val->type != INI_VAL_STR) {
-    return (1);
+    return (NULL);
   }
 
-  *str = val->val.str;
-
-  return (0);
+  return (val->val.str);
 }

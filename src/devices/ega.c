@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -121,14 +121,14 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   memset (ega->gdc_reg, 0, 9 * sizeof (unsigned char));
   memset (ega->atc_reg, 0, 21 * sizeof (unsigned char));
 
-  ini_get_uint (sct, "mode_320x200_w", &ega->mode_320x200_w, 640);
-  ini_get_uint (sct, "mode_320x200_h", &ega->mode_320x200_h, 400);
-  ini_get_uint (sct, "mode_640x200_w", &ega->mode_640x200_w, 640);
-  ini_get_uint (sct, "mode_640x200_h", &ega->mode_640x200_h, 400);
-  ini_get_uint (sct, "mode_640x350_w", &ega->mode_640x350_w, 640);
-  ini_get_uint (sct, "mode_640x350_h", &ega->mode_640x350_h, 480);
-  ini_get_uint (sct, "mode_640x480_w", &ega->mode_640x480_w, 640);
-  ini_get_uint (sct, "mode_640x480_h", &ega->mode_640x480_h, 480);
+  ega->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", 640);
+  ega->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", 400);
+  ega->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", 640);
+  ega->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", 400);
+  ega->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", 640);
+  ega->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", 480);
+  ega->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", 640);
+  ega->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", 480);
 
   pce_log (MSG_INF, "video:\tEGA io=0x03b0 membase=0xa000 memsize=262144\n");
 

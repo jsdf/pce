@@ -54,6 +54,8 @@ unsigned long             par_int28 = 10000;
 
 ibmpc_t                   *par_pc = NULL;
 
+ini_sct_t                 *par_cfg = NULL;
+
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
 
@@ -1082,6 +1084,11 @@ void do_dump (cmd_t *cmd)
       prt_error ("dumping video failed\n");
     }
   }
+  else if (strcmp (what, "config") == 0) {
+    if (ini_write_fp (par_cfg, fp)) {
+      prt_error ("dumping configuration failed\n");
+    }
+  }
   else {
     prt_error ("dump: don't know what to dump (%s)\n", what);
   }
@@ -1887,7 +1894,7 @@ int main (int argc, char *argv[])
   int       i;
   int       run;
   char      *cfg;
-  ini_sct_t *ini, *sct;
+  ini_sct_t *sct;
 
   if (argc == 2) {
     if (str_isarg1 (argv[1], "--help")) {
@@ -1978,13 +1985,13 @@ int main (int argc, char *argv[])
     "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n"
   );
 
-  ini = pce_load_config (cfg);
-  if (ini == NULL) {
+  par_cfg = pce_load_config (cfg);
+  if (par_cfg == NULL) {
     pce_log (MSG_ERR, "loading config file failed\n");
     return (1);
   }
 
-  sct = ini_sct_find_sct (ini, "pc");
+  sct = ini_sct_find_sct (par_cfg, "pc");
   if (sct == NULL) {
     pce_log (MSG_ERR, "section 'pc' not found in config file\n");
     return (1);

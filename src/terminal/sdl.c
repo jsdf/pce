@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -118,7 +118,7 @@ int sdl_set_mode (sdl_t *sdl, unsigned w, unsigned h)
 terminal_t *sdl_new (ini_sct_t *sct)
 {
   sdl_t               *sdl;
-  char                *str;
+  const char          *str;
   const SDL_VideoInfo *inf;
 
   sdl = (sdl_t *) malloc (sizeof (sdl_t));
@@ -155,8 +155,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
 
   sdl->font = NULL;
 
-  ini_get_string (sct, "font", &str, NULL);
-
+  str = ini_get_str (sct, "font");
   if (str != NULL) {
     if (sdl_set_font_psf (sdl, str)) {
       fprintf (stderr, "sdl: loading PSF font %s failed\n", str);
@@ -191,9 +190,9 @@ terminal_t *sdl_new (ini_sct_t *sct)
 
   sdl->grab = 0;
 
-  ini_get_uint (sct, "update_delay", &sdl->upd_freq, 100);
+  sdl->upd_freq = ini_get_lng_def (sct, "update_delay", 100);
 
-  ini_get_string (sct, "update_text", &str, "now");
+  str = ini_get_str_def (sct, "update_text", "now");
   if (strcmp (str, "now") == 0) {
     sdl->upd_text = PCESDL_UPDATE_NOW;
   }
@@ -201,7 +200,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
     sdl->upd_text = PCESDL_UPDATE_DELAY;
   }
 
-  ini_get_string (sct, "update_graph", &str, "delay");
+  str = ini_get_str_def (sct, "update_graph", "delay");
   if (strcmp (str, "now") == 0) {
     sdl->upd_graph = PCESDL_UPDATE_NOW;
   }

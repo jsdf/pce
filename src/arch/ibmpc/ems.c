@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ems.c                                            *
+ * File name:     src/arch/ibmpc/ems.c                                       *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ems.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
 #include "pce.h"
@@ -65,10 +65,10 @@ ems_t *ems_new (ini_sct_t *sct)
   unsigned      segm;
   ems_t         *ems;
 
-  ini_get_ulng (sct, "size", &pages, 0);
+  pages = ini_get_lng_def (sct, "size", 0);
   pages = (pages + 15) / 16;
 
-  ini_get_uint (sct, "segment", &segm, 0xe000);
+  segm = ini_get_lng_def (sct, "segment", 0xe000);
 
   ems = (ems_t *) malloc (sizeof (ems_t));
   if (ems == NULL) {

@@ -30,21 +30,25 @@ all: $(BIN) $(OBJ)
 disk.o:		disk.c disk.h $(SDP)
 
 cga.o:		cga.c cga.h video.h memory.h \
+		libini/libini.h \
 		terminal/terminal.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
 ega.o:		ega.c ega.h video.h memory.h \
+		libini/libini.h \
 		terminal/terminal.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
 hgc.o:		hgc.c hgc.h video.h memory.h \
+		libini/libini.h \
 		terminal/terminal.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
-mga.o:		mga.c mga.h video.h memory.h \
+mda.o:		mda.c mda.h video.h memory.h \
+		libini/libini.h \
 		terminal/terminal.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)

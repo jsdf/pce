@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
+/* $Id$ */
 
 
 #include "pce.h"
@@ -68,22 +68,21 @@ xms_t *xms_new (ini_sct_t *sct)
   int           hma;
   xms_t         *xms;
 
-  ini_get_ulng (sct, "xms_size", &emb_size, 0);
-  emb_size *= 1024UL;
+  emb_size = 1024UL * ini_get_lng_def (sct, "xms_size", 0);
 
   if (emb_size >= 64UL * 1024UL * 1024UL) {
     emb_size = 64UL * 1024UL * 1024UL - 1;
   }
 
-  ini_get_ulng (sct, "umb_size", &umb_size, 0);
-  ini_get_ulng (sct, "umb_segm", &umb_segm, 0xd000);
+  umb_size = ini_get_lng_def (sct, "umb_size", 0);
+  umb_segm = ini_get_lng_def (sct, "umb_segm", 0xd000L);
 
-  ini_get_sint (sct, "hma", &hma, 0);
+  hma = ini_get_lng_def (sct, "hma", 0);
 
   umb_size = umb_size / 16;
   umb_segm = (umb_segm + 15) & ~0x0f;
 
-  xms = (xms_t *) malloc (sizeof (xms_t));
+  xms = malloc (sizeof (xms_t));
   if (xms == NULL) {
     return (NULL);
   }

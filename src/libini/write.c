@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     write.c                                                    *
+ * File name:     src/libini/write.c                                         *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: write.c,v 1.1 2003/04/22 17:56:20 hampa Exp $ */
+/* $Id$ */
 
 
 #include "libini.h"
@@ -44,9 +44,9 @@ int ini_write_indent (FILE *fp, unsigned level)
 static
 int ini_write_val (ini_val_t *val, FILE *fp)
 {
-  long   lng;
-  double dbl;
-  char   *str;
+  long       lng;
+  double     dbl;
+  const char *str;
 
   fprintf (fp, "%s = ", val->name);
 
@@ -62,7 +62,7 @@ int ini_write_val (ini_val_t *val, FILE *fp)
       break;
 
     case INI_VAL_STR:
-      ini_val_get_str (val, &str);
+      str = ini_val_get_str (val);
       fprintf (fp, "\"%s\"", str);
       break;
 
@@ -76,8 +76,6 @@ int ini_write_val (ini_val_t *val, FILE *fp)
 static
 int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
 {
-  fputs ("\n", fp);
-
   if (ini_write_indent (fp, indent)) {
     return (1);
   }
@@ -100,8 +98,6 @@ int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned inden
 static
 int ini_write_section2 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
 {
-  fputs ("\n", fp);
-
   if (ini_write_indent (fp, indent)) {
     return (1);
   }
@@ -121,19 +117,25 @@ int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
   ini_val_t *val;
   ini_sct_t *down;
 
-  val = sct->val_head;
-  while (val != NULL) {
-    if (ini_write_indent (fp, indent)) {
-      return (1);
+  if (sct->val_head != NULL) {
+    val = sct->val_head;
+    while (val != NULL) {
+      if (ini_write_indent (fp, indent)) {
+        return (1);
+      }
+
+      if (ini_write_val (val, fp)) {
+        return (1);
+      }
+
+      fputs ("\n", fp);
+
+      val = val->next;
     }
 
-    if (ini_write_val (val, fp)) {
-      return (1);
+    if (sct->head != NULL) {
+      fputs ("\n", fp);
     }
-
-    fputs ("\n", fp);
-
-    val = val->next;
   }
 
   down = sct->head;
@@ -150,6 +152,10 @@ int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
     }
 
     down = down->next;
+
+    if (down != NULL) {
+      fputs ("\n", fp);
+    }
   }
 
   return (0);
