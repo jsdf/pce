@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/opcodes.c                                    *
  * Created:       2004-05-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -178,7 +178,7 @@ void e6502_op_cmp (e6502_t *c, unsigned char s)
   d = (a - s) & 0xff;
 
   e6502_set_nf (c, d & 0x80);
-  e6502_set_cf (c, s > a);
+  e6502_set_cf (c, s <= a);
   e6502_set_zf (c, d == 0);
 }
 
@@ -191,7 +191,7 @@ void e6502_op_cpx (e6502_t *c, unsigned char s)
   d = (x - s) & 0xff;
 
   e6502_set_nf (c, d & 0x80);
-  e6502_set_cf (c, s > x);
+  e6502_set_cf (c, s <= x);
   e6502_set_zf (c, d == 0);
 }
 
@@ -204,7 +204,7 @@ void e6502_op_cpy (e6502_t *c, unsigned char s)
   d = (y - s) & 0xff;
 
   e6502_set_nf (c, d & 0x80);
-  e6502_set_cf (c, s > y);
+  e6502_set_cf (c, s <= y);
   e6502_set_zf (c, d == 0);
 }
 
