@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.h                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -53,6 +53,7 @@ int cmd_match_eol (cmd_t *cmd);
 int cmd_match_end (cmd_t *cmd);
 int cmd_match (cmd_t *cmd, const char *str);
 int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base);
+int cmd_match_uint (cmd_t *cmd, unsigned *val, unsigned base);
 int cmd_match_uint16b (cmd_t *cmd, unsigned short *val, unsigned base);
 int cmd_match_uint16 (cmd_t *cmd, unsigned short *val);
 int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base);

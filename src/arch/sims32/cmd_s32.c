@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/cmd_s32.c                                  *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -35,9 +35,9 @@ int ss32_match_reg (cmd_t *cmd, sims32_t *sim, uint32_t **reg)
   cmd_match_space (cmd);
 
   if (cmd_match (cmd, "%r")) {
-    unsigned short n;
+    unsigned n;
 
-    if (!cmd_match_uint16b (cmd, &n, 10)) {
+    if (!cmd_match_uint (cmd, &n, 10)) {
       cmd_error (cmd, "missing register number");
       return (0);
     }

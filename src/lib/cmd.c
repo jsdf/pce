@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.c                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -34,6 +34,9 @@ static FILE *cmd_fpo = NULL;
 
 
 static cmd_match_sym_f cmd_match_sym = NULL;
+
+
+int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
 
 
 static
@@ -153,7 +156,7 @@ int cmd_match_space (cmd_t *cmd)
 
 void cmd_error (cmd_t *cmd, const char *str)
 {
-  fprintf (cmd_fpo, "** %s [%s]\n", str, cmd->str + cmd->i);
+  fprintf (cmd_fpo, "*** %s [%s]\n", str, cmd->str + cmd->i);
   fflush (cmd_fpo);
 }
 
@@ -249,19 +252,13 @@ int cmd_match (cmd_t *cmd, const char *str)
   return (1);
 }
 
-int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
+int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 {
   unsigned       i;
   unsigned       cnt;
   unsigned long  ret;
 
   cmd_match_space (cmd);
-
-  if (cmd_match_sym != NULL) {
-    if (cmd_match_sym (cmd, val)) {
-      return (1);
-    }
-  }
 
   i = cmd->i;
 
@@ -288,7 +285,7 @@ int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
       break;
     }
 
-    ret = base * ret + dig;
+    ret = (base * ret + dig) & 0xffffffffUL;
 
     cnt += 1;
     i += 1;
@@ -304,12 +301,538 @@ int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
   return (1);
 }
 
+int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned i;
+
+  cmd_match_space (cmd);
+
+  i = cmd->i;
+
+  if (cmd_match_sym != NULL) {
+    if (cmd_match_sym (cmd, val)) {
+      *val &= 0xffffffffUL;
+      return (1);
+    }
+  }
+
+  if (cmd_match (cmd, "(")) {
+    if (cmd_match_expr (cmd, val, base)) {
+      if (cmd_match (cmd, ")")) {
+        return (1);
+      }
+    }
+
+    cmd->i = i;
+
+    return (0);
+  }
+
+  if (cmd_match_expr_const (cmd, val, base)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_neg (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned i;
+  unsigned op;
+
+  i = cmd->i;
+
+  if (cmd_match (cmd, "!")) {
+    op = 1;
+  }
+  else if (cmd_match (cmd, "~")) {
+    op = 2;
+  }
+  else if (cmd_match (cmd, "+")) {
+    op = 3;
+  }
+  else if (cmd_match (cmd, "-")) {
+    op = 4;
+  }
+  else {
+    op = 0;
+  }
+
+  if (cmd_match_expr_literal (cmd, val, base) == 0) {
+    cmd->i = i;
+    return (0);
+  }
+
+  if (op == 1) {
+    *val = !*val;
+  }
+  else if (op == 2) {
+    *val = ~*val & 0xffffffffUL;
+  }
+  else if (op == 3) {
+    ;
+  }
+  else if (op == 4) {
+    *val = -*val & 0xffffffffUL;
+  }
+
+  return (1);
+}
+
+int cmd_match_expr_product (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_neg (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "*")) {
+      op = 1;
+    }
+    else if (cmd_match (cmd, "/")) {
+      op = 2;
+    }
+    else if (cmd_match (cmd, "%")) {
+      op = 3;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_neg (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = (*val * val2) & 0xffffffffUL;
+    }
+    else if (op == 2) {
+      *val = (val2 == 0) ? 0xffffffffUL : (*val / val2);
+    }
+    else {
+      *val = (val2 == 0) ? 0 : (*val % val2);
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_sum (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_product (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "+")) {
+      op = 1;
+    }
+    else if (cmd_match (cmd, "-")) {
+      op = 2;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_product (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = (*val + val2) & 0xffffffffUL;
+    }
+    else {
+      *val = (*val - val2) & 0xffffffffUL;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_shift (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_sum (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "<<<")) {
+      op = 1;
+    }
+    else if (cmd_match (cmd, ">>>")) {
+      op = 2;
+    }
+    else if (cmd_match (cmd, "<<")) {
+      op = 3;
+    }
+    else if (cmd_match (cmd, ">>")) {
+      op = 4;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_sum (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    val2 &= 0x1f;
+
+    if (op == 1) {
+      *val = ((*val << val2) | (*val >> (32 - val2))) & 0xffffffffUL;
+    }
+    else if (op == 2) {
+      *val = ((*val >> val2) | (*val << (32 - val2))) & 0xffffffffUL;
+    }
+    else if (op == 3) {
+      *val = (*val << val2) & 0xffffffffUL;
+    }
+    else if (op == 4) {
+      *val = (*val >> val2) & 0xffffffffUL;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_cmp (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_shift (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "<=")) {
+      op = 1;
+    }
+    else if (cmd_match (cmd, "<")) {
+      op = 2;
+    }
+    else if (cmd_match (cmd, ">=")) {
+      op = 3;
+    }
+    else if (cmd_match (cmd, ">")) {
+      op = 4;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_shift (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val <= val2;
+    }
+    else if (op == 2) {
+      *val = *val < val2;
+    }
+    else if (op == 3) {
+      *val = *val >= val2;
+    }
+    else if (op == 4) {
+      *val = *val > val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_equ (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_cmp (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "==")) {
+      op = 1;
+    }
+    else if (cmd_match (cmd, "!=")) {
+      op = 2;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_cmp (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val == val2;
+    }
+    else if (op == 2) {
+      *val = *val != val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_band (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_equ (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "&")) {
+      op = 1;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_equ (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val & val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_bxor (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_band (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "^")) {
+      op = 1;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_band (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val ^ val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_bor (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_bxor (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "|")) {
+      op = 1;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_bxor (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val | val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_land (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_bor (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "&&")) {
+      op = 1;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_bor (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val && val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr_lor (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned      op;
+  unsigned long val2;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_land (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  while (1) {
+    if (cmd_match (cmd, "||")) {
+      op = 1;
+    }
+    else {
+      return (1);
+    }
+
+    if (cmd_match_expr_land (cmd, &val2, base) == 0) {
+      cmd->i = i;
+      return (0);
+    }
+
+    if (op == 1) {
+      *val = *val || val2;
+    }
+  }
+
+  return (0);
+}
+
+int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  unsigned      i;
+  unsigned long val2, val3;
+
+  i = cmd->i;
+
+  if (cmd_match_expr_lor (cmd, val, base) == 0) {
+    return (0);
+  }
+
+  if (cmd_match (cmd, "?") == 0) {
+    return (1);
+  }
+
+  if (cmd_match_expr_lor (cmd, &val2, base) == 0) {
+    cmd->i = i;
+    return (0);
+  }
+
+  if (cmd_match (cmd, ":") == 0) {
+    cmd->i = i;
+    return (0);
+  }
+
+  if (cmd_match_expr_lor (cmd, &val3, base) == 0) {
+    cmd->i = i;
+    return (0);
+  }
+
+  *val = *val ? val2 : val3;
+
+  return (1);
+}
+
+int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  if (cmd_match_expr_const (cmd, val, base)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int cmd_match_uint (cmd_t *cmd, unsigned *val, unsigned base)
+{
+  unsigned long tmp;
+
+  if (cmd_match_expr_const (cmd, &tmp, base)) {
+    *val = tmp;
+    return (1);
+  }
+
+  return (0);
+}
+
 int cmd_match_uint16b (cmd_t *cmd, unsigned short *val, unsigned base)
 {
   unsigned long tmp;
 
-  if (cmd_match_ulng (cmd, &tmp, base)) {
-    *val = tmp;
+  if (cmd_match_expr (cmd, &tmp, base)) {
+    *val = tmp & 0xffffU;
     return (1);
   }
 
@@ -323,7 +846,7 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
 
 int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base)
 {
-  return (cmd_match_ulng (cmd, val, base));
+  return (cmd_match_expr (cmd, val, base));
 }
 
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val)
