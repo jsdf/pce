@@ -20,7 +20,11 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pceexit.asm,v 1.1 2003/08/23 12:35:29 hampa Exp $
+; $Id: pceexit.asm,v 1.2 2003/09/18 19:08:08 hampa Exp $
+
+
+%include "hook.inc"
+
 
 section text
 
@@ -29,7 +33,7 @@ section text
 ;  jmp     start
 
 start:
-  db      0x66, 0x66, 0x00, 0x01
+  pcehook PCEH_ABORT
 
   mov     ax, 0x4c00
   int     0x21

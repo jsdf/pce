@@ -20,9 +20,13 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pceboot.asm,v 1.1 2003/09/01 13:17:18 hampa Exp $
+; $Id: pceboot.asm,v 1.2 2003/09/18 19:08:08 hampa Exp $
 
 ; pceboot drive [r]
+
+
+%include "hook.inc"
+
 
 section .text
 
@@ -73,7 +77,7 @@ nextdigit:
 
 digitdone:
   mov     al, dl
-  db      0x66, 0x66, 0x01, 0x00        ; set boot drive
+  pcehook PCEH_SET_BOOT
 
 skipspace2:
   jcxz    done
