@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/flags.c                                      *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-01-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,7 +115,7 @@ void e86_set_flg_adc_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned
     set |= E86_FLG_C;
   }
 
-  if ((dst ^ s1) & (dst ^ (s2 + s3)) & 0x80) {
+  if ((dst ^ s1) & (dst ^ s2) & 0x80) {
     set |= E86_FLG_O;
   }
 
@@ -142,7 +142,7 @@ void e86_set_flg_adc_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsig
     set |= E86_FLG_C;
   }
 
-  if ((dst ^ s1) & (dst ^ (s2 + s3)) & 0x8000) {
+  if ((dst ^ s1) & (dst ^ s2) & 0x8000) {
     set |= E86_FLG_O;
   }
 
@@ -169,7 +169,7 @@ void e86_set_flg_sbb_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned
     set |= E86_FLG_C;
   }
 
-  if ((s1 ^ (s2 + s3)) & (s1 ^ dst) & 0x80) {
+  if ((s1 ^ dst) & (s1 ^ s2) & 0x80) {
     set |= E86_FLG_O;
   }
 
@@ -196,7 +196,7 @@ void e86_set_flg_sbb_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsig
     set |= E86_FLG_C;
   }
 
-  if ((s1 ^ (s2 + s3)) & (s1 ^ dst) & 0x8000) {
+  if ((s1 ^ dst) & (s1 ^ s2) & 0x8000) {
     set |= E86_FLG_O;
   }
 
