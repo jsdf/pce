@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.19 2003/09/19 23:20:23 hampa Exp $ */
+/* $Id: microcode.c,v 1.20 2003/10/05 21:47:18 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -2402,7 +2402,13 @@ unsigned op_9b (e8086_t *c)
 static
 unsigned op_9c (e8086_t *c)
 {
-  e86_push (c, (c->flg & 0x0fd5) | 0xf002);
+  if (c->cpu & E86_CPU_FLAGS286) {
+    e86_push (c, c->flg & 0x8fd5);
+  }
+  else {
+    e86_push (c, (c->flg & 0x0fd5) | 0xf002);
+  }
+
   e86_set_clk (c, 10);
 
   return (1);

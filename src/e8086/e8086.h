@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.17 2003/10/04 17:52:45 hampa Exp $ */
+/* $Id: e8086.h,v 1.18 2003/10/05 21:47:18 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -321,6 +321,7 @@ void e86_del (e8086_t *c);
 
 void e86_enable_86 (e8086_t *c);
 void e86_enable_186 (e8086_t *c);
+void e86_enable_286 (e8086_t *c);
 void e86_enable_v30 (e8086_t *c);
 
 void e86_reset (e8086_t *c);

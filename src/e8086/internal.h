@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.11 2003/10/04 17:52:45 hampa Exp $ */
+/* $Id: internal.h,v 1.12 2003/10/05 21:47:18 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -30,10 +30,11 @@
 #include "e8086.h"
 
 
-#define E86_CPU_REP_BUG    1            /* enable rep/seg bug */
-#define E86_CPU_MASK_SHIFT 2            /* mask shift count */
-#define E86_CPU_PUSH_FIRST 4            /* push sp before decrementing it */
-#define E86_CPU_INT6       8            /* throw illegal opcode exception */
+#define E86_CPU_REP_BUG    0x01         /* enable rep/seg bug */
+#define E86_CPU_MASK_SHIFT 0x02         /* mask shift count */
+#define E86_CPU_PUSH_FIRST 0x04         /* push sp before decrementing it */
+#define E86_CPU_INT6       0x08         /* throw illegal opcode exception */
+#define E86_CPU_FLAGS286   0x10         /* Allow clearing flags 12-15 */
 
 
 #define e86_mk_uint16(lo, hi) \
