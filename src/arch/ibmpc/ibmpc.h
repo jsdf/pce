@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -75,6 +75,9 @@ typedef struct ibmpc_t {
   unsigned           cpu_model;
 
   unsigned           bootdrive;
+
+  unsigned long      pit_clk;
+  unsigned long      pit_div;
 
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -220,6 +220,8 @@ void pc_setup_dma (ibmpc_t *pc)
 {
   mem_blk_t *blk;
 
+  pce_log (MSG_INF, "DMAC:\taddr=0x%08x size=0x%04x\n", 0x00, 16);
+
   e8237_init (&pc->dma);
 
   blk = mem_blk_new (0x00, 16, 0);
@@ -237,14 +239,27 @@ void pc_setup_dma (ibmpc_t *pc)
   e8237_set_hlda (&pc->dma, 1);
 }
 
+
 static
-void pc_setup_pit (ibmpc_t *pc)
+void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 {
-  mem_blk_t *blk;
+  ini_sct_t     *sct;
+  mem_blk_t     *blk;
+  unsigned long addr, clkdiv;
+
+  sct = ini_sct_find_sct (ini, "pit");
+
+  addr = ini_get_lng_def (sct, "address", 0x40);
+  clkdiv = ini_get_lng_def (sct, "divisor", 4);
+  if (clkdiv == 0) {
+    clkdiv = 1;
+  }
+
+  pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x div=%lu\n", addr, 4, clkdiv);
 
   e8253_init (&pc->pit);
 
-  blk = mem_blk_new (0x40, 4, 0);
+  blk = mem_blk_new (addr, 4, 0);
   blk->ext = &pc->pit;
   blk->set_uint8 = (mem_set_uint8_f) &e8253_set_uint8;
   blk->get_uint8 = (mem_get_uint8_f) &e8253_get_uint8;
@@ -260,6 +275,9 @@ void pc_setup_pit (ibmpc_t *pc)
 
   e8253_set_out_f (&pc->pit, 0, (e8253_out_f) &e8259_set_irq0, &pc->pic);
   e8253_set_out_f (&pc->pit, 1, (e8253_out_f) &e8237_set_dreq0, &pc->dma);
+
+  pc->pit_clk = 0;
+  pc->pit_div = clkdiv;
 }
 
 static
@@ -301,6 +319,8 @@ static
 void pc_setup_pic (ibmpc_t *pc)
 {
   mem_blk_t *blk;
+
+  pce_log (MSG_INF, "PIC:\taddr=0x%08x size=0x%04x\n", 0x20, 2);
 
   e8259_init (&pc->pic);
 
@@ -924,7 +944,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_nvram (pc, ini);
   pc_setup_cpu (pc, ini);
   pc_setup_pic (pc);
-  pc_setup_pit (pc);
+  pc_setup_pit (pc, ini);
   pc_setup_ppi (pc);
   pc_setup_dma (pc);
 
@@ -1027,56 +1047,57 @@ void pc_clock (ibmpc_t *pc)
 
   n = e86_get_delay (pc->cpu);
 
-  if (pc->clk_div[0] >= 4) {
-    e8253_clock (&pc->pit, pc->clk_div[0] / 4);
-
-    pc->clk_div[0] &= 0x03;
-
-    if (pc->clk_div[1] >= 16) {
-      e8259_clock (&pc->pic);
-      e8237_clock (&pc->dma, 1);
-
-      pc->clk_div[1] &= 0x0f;
-
-      if (pc->clk_div[2] >= 4096) {
-        unsigned      i;
-        unsigned long clk;
-
-        clk = pc->clk_div[2] & ~4095;
-
-        pce_video_clock (pc->video, clk);
-
-        trm_check (pc->trm);
-
-        for (i = 0; i < 4; i++) {
-          if (pc->serport[i] != NULL) {
-            ser_clock (pc->serport[i], clk);
-          }
-        }
-
-        if (pc->key_i < pc->key_j) {
-          pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
-          e8259_set_irq1 (&pc->pic, 1);
-          pc->key_i += 1;
-
-          if (pc->key_i == pc->key_j) {
-            pc->key_i = 0;
-            pc->key_j = 0;
-          }
-        }
-
-        pc->clk_div[2] &= 4095;
-      }
-    }
-  }
-
   e86_clock (pc->cpu, n);
+
+  pc->pit_clk += n;
+
+  if (pc->pit_clk >= (4 * pc->pit_div)) {
+    e8253_clock (&pc->pit, pc->pit_clk / pc->pit_div);
+    pc->pit_clk = pc->pit_clk % pc->pit_div;
+  }
 
   pc->clk_cnt += n;
   pc->clk_div[0] += n;
   pc->clk_div[1] += n;
-  pc->clk_div[2] += n;
+/*  pc->clk_div[2] += n; */
 /*  pc->clk_div[3] += n; */
+
+  if (pc->clk_div[0] >= 16) {
+    e8259_clock (&pc->pic);
+    e8237_clock (&pc->dma, 1);
+
+    pc->clk_div[0] &= 0x0f;
+
+    if (pc->clk_div[1] >= 4096) {
+      unsigned      i;
+      unsigned long clk;
+
+      clk = pc->clk_div[1] & ~4095;
+
+      pce_video_clock (pc->video, clk);
+
+      trm_check (pc->trm);
+
+      for (i = 0; i < 4; i++) {
+        if (pc->serport[i] != NULL) {
+          ser_clock (pc->serport[i], clk);
+        }
+      }
+
+      if (pc->key_i < pc->key_j) {
+        pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
+        e8259_set_irq1 (&pc->pic, 1);
+        pc->key_i += 1;
+
+        if (pc->key_i == pc->key_j) {
+          pc->key_i = 0;
+          pc->key_j = 0;
+        }
+      }
+
+      pc->clk_div[1] &= 4095;
+    }
+  }
 }
 
 void pc_screenshot (ibmpc_t *pc, const char *fname)

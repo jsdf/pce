@@ -48,6 +48,12 @@ section pc {
 		size = 65536
 	}
 
+	# 8253 PIT
+	section pit {
+		address = 0x40
+		divisor = 4
+	}
+
 	section ems {
 		# The EMS size in KB
 		size = 8192
