@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1018,6 +1018,7 @@ void do_h (cmd_t *cmd)
     "m [msg [val]]             send a message\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "par i fname               set parport output file\n"
+    "pq [c|f|s]                prefetch queue clear/fill/status\n"
     "p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
     "q                         quit\n"
     "r reg val                 set a register\n"
@@ -1251,6 +1252,64 @@ void do_par (cmd_t *cmd)
   if (parport_set_fname (pc->parport[port], fname)) {
     prt_error ("setting new file failed\n");
     return;
+  }
+}
+
+static
+void do_pqc (cmd_t *cmd)
+{
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  e86_pq_init (pc->cpu);
+}
+
+static
+void do_pqs (cmd_t *cmd)
+{
+  unsigned i;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  fputs ("PQ:", stdout);
+
+  for (i = 0; i < pc->cpu->pq_cnt; i++) {
+    printf (" %02X", pc->cpu->pq[i]);
+  }
+
+  fputs ("\n", stdout);
+}
+
+static
+void do_pqf (cmd_t *cmd)
+{
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  e86_pq_fill (pc->cpu);
+}
+
+static
+void do_pq (cmd_t *cmd)
+{
+  if (cmd_match (cmd, "c")) {
+    do_pqc (cmd);
+  }
+  else if (cmd_match (cmd, "f")) {
+    do_pqf (cmd);
+  }
+  else if (cmd_match (cmd, "s")) {
+    do_pqs (cmd);
+  }
+  else if (cmd_match_eol (cmd)) {
+    do_pqs (cmd);
+  }
+  else {
+    prt_error ("pq: unknown command (%s)\n", cmd->str + cmd->i);
   }
 }
 
@@ -1576,6 +1635,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "o")) {
       do_o (&cmd);
+    }
+    else if (cmd_match (&cmd, "pq")) {
+      do_pq (&cmd);
     }
     else if (cmd_match (&cmd, "p")) {
       do_p (&cmd);
