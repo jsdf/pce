@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.3 2003/04/26 23:36:20 hampa Exp $ */
+/* $Id: disk.c,v 1.4 2003/05/01 07:11:33 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -292,6 +292,8 @@ int dsk_write_lba (disk_t *dsk, const void *buf,
     if (fwrite (buf, 512, blk_n, dsk->fp) != blk_n) {
       return (1);
     }
+
+    fflush (dsk->fp);
   }
   else {
     return (1);
