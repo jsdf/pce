@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.3 2003/04/16 07:05:22 hampa Exp $ */
+/* $Id: pce.c,v 1.4 2003/04/16 14:16:07 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -41,11 +41,15 @@ typedef struct breakpoint_t {
   unsigned short      seg;
   unsigned short      ofs;
   unsigned            pass;
+  unsigned            reset;
 } breakpoint_t;
 
 
 static unsigned     bp_cnt = 0;
 static breakpoint_t *breakpoint = NULL;
+
+static unsigned long ops_cnt[256];
+
 static ibmpc_t      *pc;
 
 
@@ -114,6 +118,11 @@ char *str_rtrim (char *str)
   return (str);
 }
 
+void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
+{
+  ops_cnt[op1 & 0xff] += 1;
+}
+
 void cmd_get (cmd_t *cmd)
 {
   fgets (cmd->str, 256, stdin);
@@ -143,22 +152,26 @@ void cmd_error (cmd_t *cmd, const char *str)
   fflush (stdout);
 }
 
-void cmd_match_str (cmd_t *cmd, char *str)
+int cmd_match_str (cmd_t *cmd, char *str)
 {
-  unsigned i;
+  unsigned i, n;
 
   cmd_match_space (cmd);
 
   i = cmd->i;
+  n = 0;
 
   while ((cmd->str[i] != 0) && !str_is_space (cmd->str[i])) {
     *(str++) = cmd->str[i];
-    i++;
+    i += 1;
+    n += 1;
   }
 
   *str = 0;
 
   cmd->i = i;
+
+  return (n > 0);
 }
 
 int cmd_match_eol (cmd_t *cmd)
@@ -375,7 +388,7 @@ breakpoint_t *bp_get (unsigned short seg, unsigned short ofs)
   return (NULL);
 }
 
-void bp_add (unsigned short seg, unsigned short ofs, unsigned pass)
+void bp_add (unsigned short seg, unsigned short ofs, unsigned pass, unsigned reset)
 {
   breakpoint_t *bp;
 
@@ -383,33 +396,40 @@ void bp_add (unsigned short seg, unsigned short ofs, unsigned pass)
 
   if (bp != NULL) {
     bp->pass = pass;
+    bp->reset = reset;
     return;
   }
 
   bp = (breakpoint_t *) malloc (sizeof (breakpoint_t));
-  if (bp == NULL) return;
+  if (bp == NULL) {
+    return;
+  }
 
-  bp->next = breakpoint;
   bp->seg = seg;
   bp->ofs = ofs;
   bp->pass = pass;
+  bp->reset = reset;
+
+  bp->next = breakpoint;
   breakpoint = bp;
 
-  bp_cnt++;
+  bp_cnt += 1;
 }
 
-void bp_clear (unsigned short seg, unsigned short ofs)
+int bp_clear (unsigned short seg, unsigned short ofs)
 {
   breakpoint_t *bp1, *bp2;
 
   bp1 = breakpoint;
-  if (bp1 == NULL) return;
+  if (bp1 == NULL) {
+    return (1);
+  }
 
   if ((bp1->seg == seg) && (bp1->ofs == ofs)) {
     breakpoint = bp1->next;
     free (bp1);
     bp_cnt--;
-    return;
+    return (0);
   }
 
   bp2 = bp1->next;
@@ -418,12 +438,14 @@ void bp_clear (unsigned short seg, unsigned short ofs)
       bp1->next = bp2->next;
       free (bp2);
       bp_cnt--;
-      return;
+      return (0);
     }
 
     bp1 = bp2;
     bp2 = bp2->next;
   }
+
+  return (1);
 }
 
 void bp_clear_all (void)
@@ -439,6 +461,15 @@ void bp_clear_all (void)
   bp_cnt--;
 }
 
+void bp_print (breakpoint_t *bp, char *str)
+{
+  printf ("%s%04X:%04X  %04X  %04X\n",
+    str,
+    (unsigned) bp->seg, (unsigned) bp->ofs,
+    (unsigned) bp->pass, (unsigned) bp->reset
+  );
+}
+
 void bp_list (void)
 {
   breakpoint_t *bp;
@@ -448,16 +479,10 @@ void bp_list (void)
   if (bp == NULL) {
     printf ("No breakpoints defined\n");
   }
-  else {
-    printf ("%u breakpoints:\n", bp_cnt);
-  }
 
   while (bp != NULL) {
-    printf ("  %04X:%04X (%u)\n",
-      (unsigned)bp->seg,
-      (unsigned)bp->ofs,
-      bp->pass
-    );
+    bp_print (bp, "  ");
+
     bp = bp->next;
   }
 }
@@ -571,14 +596,14 @@ void do_bg (cmd_t *cmd)
 
   key_set_fd (pc->key, 0);
 
-  do {
+  while (1) {
     old = pc->cpu->instructions;
     while (pc->cpu->instructions == old) {
       pc_clock (pc);
     }
 
-    seg = pc->cpu->sreg[E86_REG_CS];
-    ofs = pc->cpu->ip;
+    seg = e86_get_cs (pc->cpu);
+    ofs = e86_get_ip (pc->cpu);
 
     bp = bp_get (seg, ofs);
 
@@ -586,14 +611,20 @@ void do_bg (cmd_t *cmd)
       if (bp->pass > 0) {
         bp->pass--;
       }
+
       if (bp->pass == 0) {
-        bp_clear (seg, ofs);
-      }
-      else {
-        bp = NULL;
+        if (bp->reset == 0) {
+          bp_clear (seg, ofs);
+        }
+        else {
+          bp->pass = bp->reset;
+          bp_print (bp, "brk: ");
+        }
+
+        break;
       }
     }
-  } while (bp == NULL);
+  }
 
   key_set_fd (pc->key, -1);
 
@@ -611,11 +642,12 @@ void do_bl (cmd_t *cmd)
 
 void do_bs (cmd_t *cmd)
 {
-  unsigned short seg, ofs, pass;
+  unsigned short seg, ofs, pass, reset;
 
   seg = pc->cpu->sreg[E86_REG_CS];
   ofs = 0;
   pass = 1;
+  reset = 0;
 
   if (!cmd_match_addr (cmd, &seg, &ofs)) {
     cmd_error (cmd, "expecting address");
@@ -623,19 +655,41 @@ void do_bs (cmd_t *cmd)
   }
 
   cmd_match_uint16 (cmd, &pass);
+  cmd_match_uint16 (cmd, &reset);
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
   if (pass > 0) {
-    printf ("Breakpoint at %04X:%04X (%u)\n",
+    printf ("Breakpoint at %04X:%04X  %04X  %04X\n",
       (unsigned)seg,
       (unsigned)ofs,
-      pass
+      pass, reset
     );
 
-    bp_add (seg, ofs, pass);
+    bp_add (seg, ofs, pass, reset);
+  }
+}
+
+void do_bc (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+
+  seg = e86_get_cs (pc->cpu);
+  ofs = e86_get_ip (pc->cpu);
+
+  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+    cmd_error (cmd, "expecting address");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (bp_clear (seg, ofs)) {
+    printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
   }
 }
 
@@ -649,6 +703,9 @@ void do_b (cmd_t *cmd)
   }
   else if (cmd_match (cmd, "s")) {
     do_bs (cmd);
+  }
+  else if (cmd_match (cmd, "c")) {
+    do_bc (cmd);
   }
   else {
     prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
@@ -892,13 +949,113 @@ void do_r (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_ic (cmd_t *cmd)
+{
+  unsigned i;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  for (i = 0; i < 256; i++) {
+    ops_cnt[i] = 0;
+  }
+}
+
+void do_id (cmd_t *cmd)
+{
+  unsigned short        i;
+  unsigned short        op1, op2;
+  static unsigned short sop = 0;
+
+  op1 = sop;
+  cmd_match_uint16 (cmd, &op1);
+  op1 &= 0xff;
+
+  op2 = op1;
+  cmd_match_uint16 (cmd, &op2);
+  op2 &= 0xff;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (op2 < op1) {
+    return;
+  }
+
+  sop = (op2 + 1) & 0xff;
+
+  op2 = op2 - op1 + 1;
+  for (i = 0; i < op2; i++) {
+    if (((i % 5) == 4) || ((i + 1) == op2)) {
+      printf ("%02X: %08lX\n", op1, ops_cnt[op1]);
+    }
+    else {
+      printf ("%02X: %08lX  ", op1, ops_cnt[op1]);
+    }
+
+    op1 += 1;
+  }
+}
+
+void do_iw (cmd_t *cmd)
+{
+  unsigned i;
+  FILE     *fp;
+  char     fname[256];
+
+  if (!cmd_match_str (cmd, fname)) {
+    strcpy (fname, "opstat.txt");
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    prt_error ("can't open file (%s)\n", fname);
+    return;
+  }
+
+  for (i = 0; i < 256; i++) {
+    fprintf (fp, "%02X: %08lX\n", i, ops_cnt[i]);
+  }
+
+  fclose (fp);
+}
+
+void do_i (cmd_t *cmd)
+{
+  if (cmd_match (cmd, "c")) {
+    do_ic (cmd);
+  }
+  else if (cmd_match (cmd, "d")) {
+    do_id (cmd);
+  }
+  else if (cmd_match (cmd, "w")) {
+    do_iw (cmd);
+  }
+  else {
+    cmd_error (cmd, "syntax");
+  }
+}
+
 int main (int argc, char *argv[])
 {
-  cmd_t cmd;
+  unsigned i;
+  cmd_t    cmd;
 
   printf ("8086 CPU emulator by Hampa '99\n\n");
 
+  for (i = 0; i < 256; i++) {
+    ops_cnt[i] = 0;
+  }
+
   pc = pc_new ();
+  pc->cpu->opstat = &pc_opstat;
+
   e86_reset (pc->cpu);
 
   while (1) {
@@ -915,6 +1072,9 @@ int main (int argc, char *argv[])
     }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
+    }
+    else if (cmd_match (&cmd, "i")) {
+      do_i (&cmd);
     }
     else if (cmd_match (&cmd, "p")) {
       do_p (&cmd);
