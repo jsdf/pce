@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-31 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,6 +115,11 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
 unsigned long mem_blk_get_size (mem_blk_t *blk)
 {
   return (blk->size);
+}
+
+unsigned char *mem_blk_get_data (mem_blk_t *blk)
+{
+  return (blk->data);
 }
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val)
