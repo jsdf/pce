@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.6 2003/09/15 07:53:49 hampa Exp $ */
+/* $Id: terminal.c,v 1.7 2003/09/19 14:47:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -48,7 +48,6 @@ void trm_init (terminal_t *trm)
   trm->set_pos = NULL;
   trm->set_chr = NULL;
   trm->set_pxl = NULL;
-  trm->flush = NULL;
   trm->check = NULL;
 }
 
@@ -109,20 +108,6 @@ void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned 
 {
   if (trm->set_pxl != NULL) {
     trm->set_pxl (trm->ext, x, y, w, h);
-  }
-}
-
-void trm_set_upd (terminal_t *trm, int upd)
-{
-  if (trm->set_upd != NULL) {
-    trm->set_upd (trm->ext, upd);
-  }
-}
-
-void trm_flush (terminal_t *trm)
-{
-  if (trm->flush != NULL) {
-    trm->flush (trm->ext);
   }
 }
 

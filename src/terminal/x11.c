@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.5 2003/09/17 04:20:05 hampa Exp $ */
+/* $Id: x11.c,v 1.6 2003/09/19 14:47:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -266,7 +266,6 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt->trm.set_pos = (trm_set_pos_f) &xt_set_pos;
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
   xt->trm.set_pxl = (trm_set_pxl_f) &xt_set_pxl;
-  xt->trm.flush = (trm_flush_f) &xt_flush;
   xt->trm.check = (trm_check_f) &xt_check;
 
   xt->init_display = 0;
@@ -329,8 +328,6 @@ terminal_t *xt_new (ini_sct_t *ini)
     free (xt);
     return (NULL);
   }
-
-  xt_flush (xt);
 
   return (&xt->trm);
 }
@@ -580,11 +577,6 @@ void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
   if ((y + h) > xt->flush_y2) {
     xt->flush_y2 = y + h - 1;
   }
-}
-
-void xt_flush (xterm_t *xt)
-{
-//  XFlush (xt->display);
 }
 
 void xt_clear (xterm_t *xt)

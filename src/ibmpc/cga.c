@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.12 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: cga.c,v 1.13 2003/09/19 14:47:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -232,8 +232,6 @@ void cga_mode0_update (cga_t *cga)
       i = (i + 2) & 0x3fff;
     }
   }
-
-  trm_flush (cga->trm);
 }
 
 void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
@@ -271,7 +269,6 @@ void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 
   trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
   trm_set_chr (cga->trm, x, y, c);
-  trm_flush (cga->trm);
 }
 
 void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
@@ -314,7 +311,6 @@ void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
   trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
   trm_set_chr (cga->trm, x, y, c);
-  trm_flush (cga->trm);
 }
 
 
@@ -389,8 +385,6 @@ void cga_mode1_update (cga_t *cga)
     mem0 += 80;
     mem1 += 80;
   }
-
-  trm_flush (cga->trm);
 }
 
 void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
@@ -435,8 +429,6 @@ void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
     old <<= 2;
     val <<= 2;
   }
-
-  trm_flush (cga->trm);
 }
 
 
@@ -514,8 +506,6 @@ void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
     old <<= 1;
     val <<= 1;
   }
-
-  trm_flush (cga->trm);
 }
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.h                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.h,v 1.3 2003/09/14 21:27:40 hampa Exp $ */
+/* $Id: x11.h,v 1.4 2003/09/19 14:47:51 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_X11_H
@@ -113,7 +113,6 @@ void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2);
 void xt_set_pos (xterm_t *xt, unsigned x, unsigned y);
 void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c);
 void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h);
-void xt_flush (xterm_t *xt);
 void xt_clear (xterm_t *xt);
 void xt_check (xterm_t *xt);
 

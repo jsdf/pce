@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.10 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: hgc.c,v 1.11 2003/09/19 14:47:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -230,8 +230,6 @@ void hgc_mode0_update (hgc_t *hgc)
       i = (i + 2) & 0x7fff;
     }
   }
-
-  trm_flush (hgc->trm);
 }
 
 static
@@ -274,7 +272,6 @@ void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
-  trm_flush (hgc->trm);
 }
 
 static
@@ -322,7 +319,6 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
-  trm_flush (hgc->trm);
 }
 
 
@@ -401,8 +397,6 @@ void hgc_mode1_update (hgc_t *hgc)
     mem[2] += 90;
     mem[3] += 90;
   }
-
-  trm_flush (hgc->trm);
 }
 
 static
@@ -441,8 +435,6 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
     old <<= 1;
     val <<= 1;
   }
-
-  trm_flush (hgc->trm);
 }
 
 
