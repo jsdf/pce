@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/opcodes.c                                    *
  * Created:       2004-05-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -200,7 +200,7 @@ void e6502_op_cpy (e6502_t *c, unsigned char s)
 {
   unsigned char d, y;
 
-  y = e6502_get_x (c);
+  y = e6502_get_y (c);
   d = (y - s) & 0xff;
 
   e6502_set_nf (c, d & 0x80);
