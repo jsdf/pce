@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.inc,v 1.1 2003/09/22 05:14:19 hampa Exp $
+; $Id: pce.inc,v 1.2 2003/10/05 21:48:12 hampa Exp $
 
 
 %ifndef PCE_INC
@@ -41,6 +41,7 @@
 %define PCE_CPU_V20   3
 %define PCE_CPU_80186 4
 %define PCE_CPU_80188 5
+%define PCE_CPU_80286 6
 
 
 %define PCE_VIDEO_NONE 0

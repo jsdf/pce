@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.h                                          *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.14 2003/09/22 05:15:25 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.15 2003/10/05 21:48:12 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -33,6 +33,7 @@
 #define PCE_CPU_V20   3
 #define PCE_CPU_80186 4
 #define PCE_CPU_80188 5
+#define PCE_CPU_80286 6
 
 
 typedef struct ibmpc_t {

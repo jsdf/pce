@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.38 2003/10/04 17:54:53 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.39 2003/10/05 21:48:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -169,6 +169,9 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
   }
   else if ((strcmp (model, "80188") == 0) || (strcmp (model, "188") == 0)) {
     pc_set_cpu_model (pc, PCE_CPU_80188);
+  }
+  else if ((strcmp (model, "80286") == 0) || (strcmp (model, "286") == 0)) {
+    pc_set_cpu_model (pc, PCE_CPU_80286);
   }
   else {
     pce_log (MSG_ERR, "unknown cpu model (%s)\n", model);
@@ -847,6 +850,10 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
     case PCE_CPU_80186:
     case PCE_CPU_80188:
       e86_enable_186 (pc->cpu);
+      break;
+
+    case PCE_CPU_80286:
+      e86_enable_286 (pc->cpu);
       break;
 
     default:
