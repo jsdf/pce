@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.9 2003/11/11 23:48:08 hampa Exp $ */
+/* $Id: disasm.c,v 1.10 2003/11/12 00:07:05 hampa Exp $ */
 
 
 #include <string.h>
@@ -1664,10 +1664,12 @@ static char *d_tab_e0[4] = {
   "LOOPNZ", "LOOPZ", "LOOP", "JCXZ"
 };
 
-/* DOP E0: LOOPNZ imm8 */
+/* DOP E0-E3: LOOPxx imm8 */
 static void dop_e0 (e86_disasm_t *op, unsigned char *src)
 {
   unsigned short t;
+
+  op->flags |= E86_DFLAGS_LOOP;
 
   op->dat_n = 2;
   op->arg_n = 1;
