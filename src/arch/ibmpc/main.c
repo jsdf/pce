@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1006,7 +1006,7 @@ void do_h (cmd_t *cmd)
     "bc [addr]                 clear a breakpoint or all\n"
     "bl                        list breakpoints\n"
     "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
-    "c [cnt]                   clock\n"
+    "c [cnt]                   clock [1]\n"
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
     "far                       run until cs changes\n"
@@ -1021,7 +1021,7 @@ void do_h (cmd_t *cmd)
     "pq [c|f|s]                prefetch queue clear/fill/status\n"
     "p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
     "q                         quit\n"
-    "r reg val                 set a register\n"
+    "r [reg val]               set a register\n"
     "s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
     "t [cnt]                   execute cnt instructions [1]\n"
     "u [addr [cnt]]            disassemble\n"
@@ -1386,6 +1386,11 @@ void do_r (cmd_t *cmd)
   unsigned short val;
   unsigned short *reg;
 
+  if (cmd_match_eol (cmd)) {
+    prt_state_cpu (pc->cpu, stdout);
+    return;
+  }
+
   if (!cmd_match_reg (cmd, &reg)) {
     prt_error ("missing register\n");
     return;
@@ -1593,7 +1598,7 @@ void do_v (cmd_t *cmd)
 }
 
 static
-int do_cmd (void)
+int do_cmd (ibmpc_t *pc)
 {
   cmd_t  cmd;
 
@@ -1602,6 +1607,10 @@ int do_cmd (void)
     fflush (stdout);
 
     cmd_get (&cmd);
+
+    if (pc->trm != NULL) {
+      trm_check (pc->trm);
+    }
 
     if (cmd_match (&cmd, "boot")) {
       do_boot (&cmd);
@@ -1681,7 +1690,7 @@ int do_cmd (void)
     else if (cmd_match (&cmd, "v")) {
       do_v (&cmd);
     }
-    else if (cmd.str[cmd.i] == 0) {
+    else if (cmd_match_eol (&cmd)) {
       ;
     }
     else {
@@ -1822,11 +1831,11 @@ int main (int argc, char *argv[])
     pce_run();
     if (pc->brk != 2) {
       fputs ("\n", stdout);
-      do_cmd();
+      do_cmd (pc);
     }
   }
   else {
-    do_cmd();
+    do_cmd (pc);
   }
 
   pc_del (pc);
