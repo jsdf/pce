@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -261,11 +261,6 @@ unsigned long long e86_get_clock (e8086_t *c)
 unsigned long long e86_get_opcnt (e8086_t *c)
 {
   return (c->instructions);
-}
-
-unsigned long e86_get_delay (e8086_t *c)
-{
-  return (c->delay);
 }
 
 void e86_execute (e8086_t *c)

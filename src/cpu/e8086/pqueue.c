@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8086/pqueue.c                                         *
+ * File name:     src/cpu/e8086/pqueue.c                                     *
  * Created:       2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -53,30 +53,22 @@ void e86_pq_fill (e8086_t *c)
     }
     else {
       i = c->pq_cnt;
-      while (i < (E86_PQ_FILL - 1)) {
+      while (i < E86_PQ_FILL) {
         val = c->mem_get_uint16 (c->mem, addr + i);
         c->pq[i] = val & 0xff;
         c->pq[i + 1] = (val >> 8) & 0xff;
         i += 2;
       }
-
-      if (i < E86_PQ_FILL) {
-        c->pq[i] = c->mem_get_uint8 (c->mem, addr + i);
-      }
     }
   }
   else {
     i = c->pq_cnt;
-    while (i < (E86_PQ_FILL - 1)) {
+    while (i < E86_PQ_FILL) {
       val = e86_get_mem16 (c, seg, ofs + i);
       c->pq[i] = val & 0xff;
       c->pq[i + 1] = (val >> 8) & 0xff;
 
       i += 2;
-    }
-
-    if (i < E86_PQ_FILL) {
-      c->pq[i] = e86_get_mem8 (c, e86_get_cs (c), e86_get_ip (c) + i);
     }
   }
 
@@ -85,15 +77,21 @@ void e86_pq_fill (e8086_t *c)
 
 void e86_pq_adjust (e8086_t *c, unsigned cnt)
 {
-  unsigned i;
+  unsigned      n;
+  unsigned char *d, *s;
 
   if (cnt >= c->pq_cnt) {
     c->pq_cnt = 0;
     return;
   }
 
-  for (i = cnt; i < c->pq_cnt; i++) {
-    c->pq[i - cnt] = c->pq[i];
+  n = c->pq_cnt - cnt;
+  s = c->pq + cnt;
+  d = c->pq;
+
+  while (n > 0) {
+    *(d++) = *(s++);
+    n -= 1;
   }
 
   c->pq_cnt -= cnt;
