@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     pce.asm                                                    *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.6 2003/04/18 20:09:31 hampa Exp $
+; $Id: pce.asm,v 1.7 2003/04/19 02:03:07 hampa Exp $
 
 
 %macro set_pos 1
@@ -38,25 +38,29 @@ start:
   mov     ax, 0x0050
   mov     ss, ax
   mov     sp, 1024
+
+  call    init_int
+
   sti
 
   call    set_bios_ds
 
-;  call    pce_test
-
   call    init_ppi
-  call    init_int
-  call    init_misc
-  call    init_keyboard
 
   mov     ax, 0x0003
   int     0x10
 
-  push    cs
-  pop     ds
-
   mov     si, msg_init
   call    prt_string
+
+  call    init_mem
+  call    init_misc
+  call    init_keyboard
+
+  call    prt_nl
+
+  push    cs
+  pop     ds
 
   int     0x19
 ;  int     0x18
@@ -65,10 +69,14 @@ done:
   jmp     done
 
 
-testdiv   dw 13
-
 msg_init:
   db      "PC BIOS (hacked up version for PCE)", 13, 10, 13, 10, 0
+
+msg_memchk1:
+  db      "Memory check... ", 0
+
+msg_memchk2:
+  db      "KB", 13, 0
 
 
 ;-----------------------------------------------------------------------------
@@ -113,22 +121,80 @@ init_int:
 init_misc:
   xor     ax, ax
 
-;  mov     [0x0010], word 0x017d         ; equipment word
-  mov     [0x0013], word 512            ; ram size
-
   mov     [0x006c], ax
   mov     [0x006e], ax
   mov     [0x0070], al
 
   mov     [0x0000], ax                  ; COM1
-  mov     [0x0000], ax
-  mov     [0x0000], ax
-  mov     [0x0000], ax
-  mov     [0x0000], ax                  ; LPT1
-  mov     [0x0000], ax
-  mov     [0x0000], ax
-  mov     [0x0000], ax
+  mov     [0x0002], ax
+  mov     [0x0004], ax
+  mov     [0x0006], ax
+  mov     [0x0008], ax                  ; LPT1
+  mov     [0x000a], ax
+  mov     [0x000c], ax
+  mov     [0x000e], ax
 
+  ret
+
+
+init_mem:
+  push    ax
+  push    cx
+  push    bx
+  push    si
+  push    es
+
+  mov     cx, 64
+  mov     bx, 0x1000
+
+.next:
+  mov     es, bx
+
+  mov     ax, 0xaa55
+
+  xchg    [es:0], al
+  xchg    [es:0], al
+  xchg    [es:0], ah
+  xchg    [es:0], ah
+
+  cmp     ax, 0xaa55
+  jne     .done
+
+  xchg    [es:0x7fff], al
+  xchg    [es:0x7fff], al
+  xchg    [es:0x7fff], ah
+  xchg    [es:0x7fff], ah
+
+  cmp     ax, 0xaa55
+  jne     .done
+
+  add     cx, 32
+  add     bx, 0x800
+
+  mov     si, msg_memchk1
+  call    prt_string
+
+  mov     ax, cx
+  call    prt_uint16
+
+  mov     si, msg_memchk2
+  call    prt_string
+
+  cmp     cx, 704
+  jae     .done
+
+  jmp     .next
+
+.done:
+  call    prt_nl
+
+  mov     [0x0013], cx
+
+  pop     es
+  pop     si
+  pop     bx
+  pop     cx
+  pop     ax
   ret
 
 
@@ -155,12 +221,88 @@ init_ppi:
 
   ret
 
+
 set_bios_ds:
   mov     ds, [cs:.bios_ds]
   ret
 
 .bios_ds:
   dw      0x0040
+
+
+prt_string:
+  push    ax
+  push    bx
+  push    si
+
+  xor     bx, bx
+
+.next
+  cs      lodsb
+  or      al, al
+  jz      .done
+
+  mov     ah, 0x0e
+  int     0x10
+
+  jmp     short .next
+
+.done
+  pop     si
+  pop     bx
+  pop     ax
+  ret
+
+
+prt_nl:
+  push    ax
+  push    bx
+
+  mov     ax, 0x0e0d
+  xor     bx, bx
+  int     0x10
+
+  mov     ax, 0x0e0a
+  int     0x10
+
+  pop     bx
+  pop     ax
+  ret
+
+
+prt_uint16:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+
+  mov     bx, 10
+  xor     cx, cx
+
+.next1:
+  xor     dx, dx
+
+  div     bx
+  add     dl, '0'
+  push    dx
+  inc     cx
+
+  or      ax, ax
+  jnz     .next1
+
+.next2:
+  pop     ax
+  mov     ah, 0x0e
+  xor     bx, bx
+  int     0x10
+  loop    .next2
+
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
+  ret
+
 
 inttab:
   dw      int_00, 0xf000
@@ -348,25 +490,6 @@ int_19:
 .boot:
   jmp     0x0000:0x7c00
 
-
-prt_string:
-  push    ax
-  push    si
-
-.next
-  lodsb
-  or      al, al
-  jz      .done
-
-  mov     ah, 0x0e
-  int     0x10
-
-  jmp     short .next
-
-.done
-  pop     si
-  pop     ax
-  ret
 
 ;-----------------------------------------------------------------------------
 
