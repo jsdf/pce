@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.26 2003/10/05 21:49:33 hampa Exp $
+# $Id: configure.in,v 1.27 2003/10/06 11:13:18 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -177,7 +177,14 @@ AC_ARG_WITH(sdl,
 )
 if test $PCE_SDL_USE -ne 0 ; then
 	PCE_SDL_CCF=`sdl-config --cflags`
-	PCE_SDL_LDF=`sdl-config --libs`
+	case "$LDFLAGS" in
+	*-static*)
+		PCE_SDL_LDF=`sdl-config --static-libs`
+		;;
+	*)
+		PCE_SDL_LDF=`sdl-config --libs`
+		;;
+	esac
 	AC_DEFINE(PCE_SDL_USE)
 fi
 AC_SUBST(PCE_SDL_USE)
