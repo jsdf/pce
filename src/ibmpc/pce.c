@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.27 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: pce.c,v 1.28 2003/09/23 01:32:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1321,10 +1321,23 @@ void do_e (cmd_t *cmd)
 
 void do_g (cmd_t *cmd)
 {
+  int            run;
   breakpoint_t   *bp;
   unsigned short seg, ofs;
 
+  if (cmd_match (cmd, "b")) {
+    run = 0;
+  }
+  else {
+    run = 1;
+  }
+
   if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (run) {
+    pce_run();
     return;
   }
 
@@ -1372,7 +1385,19 @@ void do_h (cmd_t *cmd)
   fputs (
     "bc addr                 clear a breakpoint\n"
     "bl                      list breakpoints\n"
-    "bs addr [pass [reset]]  set a breakpoint\n",
+    "bs addr [pass [reset]]  set a breakpoint\n"
+    "c [cnt]                 clock\n"
+    "d [addr [cnt]]          dump memory\n"
+    "e addr [val...]         enter bytes into memory\n"
+    "dump what fname         dump to file (ram|video)\n"
+    "g [b]                   run with or without breakpoints\n"
+    "int28 [on|off|val]      turn int28 sleeping on/off\n"
+    "i [b|w] port            input a byte or word from a port\n"
+    "last [i [n]]            print last instruction addresses\n"
+    "o [b|w] port val        output a byte or word to a port\n"
+    "parport i fname         set parport output file\n"
+    "r reg val               set a register\n"
+    "time [c]                print or clear time statistics\n",
     stdout
   );
 }
@@ -1411,6 +1436,38 @@ void do_int28 (cmd_t *cmd)
   );
 }
 
+void do_i (cmd_t *cmd)
+{
+  int            word;
+  unsigned short port;
+
+  if (cmd_match (cmd, "w")) {
+    word = 1;
+  }
+  else if (cmd_match (cmd, "b")) {
+    word = 0;
+  }
+  else {
+    word = 0;
+  }
+
+  if (!cmd_match_uint16 (cmd, &port)) {
+    cmd_error (cmd, "need a port address");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (word) {
+    printf ("%04X: %04X\n", port, e86_get_prt16 (pc->cpu, port));
+  }
+  else {
+    printf ("%04X: %02X\n", port, e86_get_prt8 (pc->cpu, port));
+  }
+}
+
 void do_last (cmd_t *cmd)
 {
   unsigned short i, j, n;
@@ -1430,6 +1487,43 @@ void do_last (cmd_t *cmd)
       pce_last[idx][0], pce_last[idx][1]
     );
     idx = (idx + 1) % PCE_LAST_MAX;
+  }
+}
+
+void do_o (cmd_t *cmd)
+{
+  int            word;
+  unsigned short port, val;
+
+  if (cmd_match (cmd, "w")) {
+    word = 1;
+  }
+  else if (cmd_match (cmd, "b")) {
+    word = 0;
+  }
+  else {
+    word = 0;
+  }
+
+  if (!cmd_match_uint16 (cmd, &port)) {
+    cmd_error (cmd, "need a port address");
+    return;
+  }
+
+  if (!cmd_match_uint16 (cmd, &val)) {
+    cmd_error (cmd, "need a value");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (word) {
+    e86_set_prt16 (pc->cpu, port, val);
+  }
+  else {
+    e86_set_prt8 (pc->cpu, port, val);
   }
 }
 
@@ -1719,11 +1813,17 @@ int do_cmd (void)
     else if (cmd_match (&cmd, "int28")) {
       do_int28 (&cmd);
     }
+    else if (cmd_match (&cmd, "i")) {
+      do_i (&cmd);
+    }
     else if (cmd_match (&cmd, "last")) {
       do_last (&cmd);
     }
     else if (cmd_match (&cmd, "parport")) {
       do_parport (&cmd);
+    }
+    else if (cmd_match (&cmd, "o")) {
+      do_o (&cmd);
     }
     else if (cmd_match (&cmd, "p")) {
       do_p (&cmd);
