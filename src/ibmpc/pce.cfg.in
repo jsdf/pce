@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.2 2003/05/01 07:11:43 hampa Exp $
+# $Id: pce.cfg.in,v 1.3 2003/08/19 00:54:10 hampa Exp $
 
 section pc {
 	# RAM size in KB
@@ -13,11 +13,17 @@ section pc {
 		size = 65536
 	}
 
-	section term_x11 {
+	section terminal {
+		driver = "x11"
+		font = "vga"
+#		font = "-*-courier-regular-r-*-*-12-*-*-*-*-*-*-*"
 	}
 
-#	section term_vt100 {
-#	}
+	section terminal {
+		driver = "vt100"
+		keymap = "\x1b\x5b\x44=\x4b\xcb"	# Left
+		keymap = "\x1b\x5b\x43=\x4d\xcd"	# Right
+	}
 
 	section cga {
 	}
@@ -40,8 +46,17 @@ section pc {
 	}
 
 	section disk {
+		drive = 1
+		type = "ram"
+		c = 80
+		h = 2
+		s = 18
+	}
+
+	section disk {
 		drive = 128
 		type = "dosemu"
 		file = "pce_80.img"
+		readonly = 1
 	}
 }
