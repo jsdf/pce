@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.28 2003/09/23 01:32:28 hampa Exp $ */
+/* $Id: pce.c,v 1.29 2003/09/24 08:09:09 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -57,6 +57,7 @@ unsigned                  par_boot = 128;
 char                      *par_cpu = NULL;
 unsigned long             par_int28 = 10000;
 
+ibmpc_t                   *par_pc = NULL;
 
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
@@ -114,6 +115,14 @@ void prt_version (void)
 void sig_int (int s)
 {
   /* hmm... */
+}
+
+void sig_segv (int s)
+{
+  fprintf (stderr, "pce: segmentation fault\n");
+  fflush (stderr);
+
+  exit (1);
 }
 
 #ifdef PCE_HAVE_TSC
@@ -2028,6 +2037,7 @@ int main (int argc, char *argv[])
   }
 
   pc = pc_new (sct);
+  par_pc = pc;
 
   pc->cpu->op_stat = &pce_op_stat;
   pc->cpu->op_undef = &pce_op_undef;
@@ -2035,6 +2045,7 @@ int main (int argc, char *argv[])
   e86_reset (pc->cpu);
 
   signal (SIGINT, &sig_int);
+  signal (SIGSEGV, &sig_segv);
 
   if (run) {
     pce_run();
