@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.27 2003/10/06 11:13:18 hampa Exp $
+# $Id: configure.in,v 1.28 2003/10/06 12:25:05 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -38,11 +38,19 @@ if test ! -r "$srcdir/version" ; then
 	AC_MSG_RESULT([file 'version' not found in source directory])
 	exit 1
 fi
-read PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC t r < "$srcdir/version"
-PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
-if test "x$t" = "xcvs" ; then
-	dstr=`date +%Y%m%d`
-	PCE_VERSION_STR="$PCE_VERSION_STR-$dstr"
+oldifs=$IFS
+IFS="$IFS."
+read p PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC dstr r < "$srcdir/version"
+IFS=$oldifs
+if test "x$dstr" != "x" ; then
+	if test "x$dstr" = "xcvs" ; then
+		dstr=`date +%Y%m%d`
+		PCE_VERSION_STR="cvs-$dstr"
+	else
+		PCE_VERSION_STR="$dstr"
+	fi
+else
+	PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 fi
 AC_SUBST(PCE_VERSION_MAJ)
 AC_SUBST(PCE_VERSION_MIN)
@@ -109,21 +117,6 @@ AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
 
 dnl -----------------------------------------------------------------------
 dnl Checks for libraries
-
-
-eval "pce_etcdir=$sysconfdir"
-eval "pce_etcdir=$pce_etcdir"
-
-eval "pce_datdir=$datadir"
-eval "pce_datdir=$pce_datdir"
-
-PCE_DIR_ETC=$pce_etcdir
-PCE_DIR_DATA=$pce_datdir
-
-AC_SUBST(PCE_DIR_ETC)
-AC_SUBST(PCE_DIR_DATA)
-AC_DEFINE_UNQUOTED(PCE_DIR_ETC, "$pce_etcdir")
-AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
 
 AC_MSG_CHECKING([for X11])
@@ -237,6 +230,21 @@ AC_SUBST(PCE_HAVE_TSC)
 if test $PCE_HAVE_TSC -eq 1 ; then
 	AC_DEFINE(PCE_HAVE_TSC)
 fi
+
+
+eval "pce_etcdir=$sysconfdir"
+eval "pce_etcdir=$pce_etcdir"
+
+eval "pce_datdir=$datadir"
+eval "pce_datdir=$pce_datdir"
+
+PCE_DIR_ETC=$pce_etcdir
+PCE_DIR_DATA=$pce_datdir
+
+AC_SUBST(PCE_DIR_ETC)
+AC_SUBST(PCE_DIR_DATA)
+AC_DEFINE_UNQUOTED(PCE_DIR_ETC, "$pce_etcdir")
+AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
 
 dnl --------------------------------------------------------------------------
