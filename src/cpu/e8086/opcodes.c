@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -2407,10 +2407,7 @@ unsigned op_9e (e8086_t *c)
 {
   c->flg &= 0xff00;
   c->flg |= e86_get_ah (c) & 0xd5;
-
-  if (c->cpu & E86_CPU_FLAGS286) {
-    c->flg |= 0x02;
-  }
+  c->flg |= 0x02;
 
   e86_set_clk (c, 4);
 
@@ -2421,15 +2418,7 @@ unsigned op_9e (e8086_t *c)
 static
 unsigned op_9f (e8086_t *c)
 {
-  unsigned short val;
-
-  val = c->flg & 0xdf;
-
-  if (c->cpu & E86_CPU_FLAGS286) {
-    c->flg |= 0x02;
-  }
-
-  e86_set_ah (c, val);
+  e86_set_ah (c, (c->flg & 0xd5) | 0x02);
   e86_set_clk (c, 4);
 
   return (1);
