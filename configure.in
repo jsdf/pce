@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.32 2003/11/08 14:54:55 hampa Exp $
+# $Id: configure.in,v 1.33 2003/11/20 03:28:21 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -98,6 +98,13 @@ dnl Checks for programs.
 
 AC_PROG_CC
 AC_PROG_INSTALL
+case "$INSTALL" in
+.*)
+	d=`dirname "$INSTALL"`
+	f=`basename "$INSTALL"`
+	INSTALL=`cd "$d" && pwd`/"$f"
+	;;
+esac
 AC_PATH_PROG(AR, ar, ar)
 AC_PATH_PROG(NASM, nasm,)
 AC_PROG_MAKE_SET
