@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.23 2003/10/07 16:05:09 hampa Exp $ */
+/* $Id: e8086.c,v 1.24 2003/10/13 01:53:55 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -63,6 +63,8 @@ e8086_t *e86_new (void)
 
   c->ram = NULL;
   c->ram_cnt = 0;
+
+  c->addr_mask = 0xfffff;
 
   c->inta_ext = NULL;
   c->inta = NULL;
@@ -108,6 +110,16 @@ void e86_enable_v30 (e8086_t *c)
   e86_enable_86 (c);
 
   c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
+}
+
+void e86_set_addr_mask (e8086_t *c, unsigned long msk)
+{
+  c->addr_mask = msk;
+}
+
+unsigned long e86_get_addr_mask (e8086_t *c)
+{
+  return (c->addr_mask);
 }
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)

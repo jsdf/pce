@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.20 2003/10/11 23:57:55 hampa Exp $ */
+/* $Id: e8086.h,v 1.21 2003/10/13 01:53:55 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -91,6 +91,11 @@ typedef unsigned (*e86_opcode_f) (struct e8086_t *c);
 typedef struct e8086_t {
   unsigned         cpu;
 
+  unsigned short   dreg[8];
+  unsigned short   sreg[4];
+  unsigned short   ip;
+  unsigned short   flg;
+
   void             *mem;
   e86_get_uint8_f  mem_get_uint8;
   e86_set_uint8_f  mem_set_uint8;
@@ -103,36 +108,33 @@ typedef struct e8086_t {
   e86_get_uint16_f prt_get_uint16;
   e86_set_uint16_f prt_set_uint16;
 
-  unsigned char *ram;
-  unsigned long ram_cnt;
+  unsigned char    *ram;
+  unsigned long    ram_cnt;
 
-  void          *inta_ext;
-  unsigned char (*inta) (void *ext);
+  unsigned long    addr_mask;
 
-  void *op_ext;
-  void (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
-  void (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
-  void (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
+  void             *inta_ext;
+  unsigned char    (*inta) (void *ext);
 
-  unsigned short dreg[8];
-  unsigned short sreg[4];
-  unsigned short ip;
-  unsigned short flg;
+  void             *op_ext;
+  void             (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
+  void             (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
+  void             (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
 
-  unsigned short cur_ip;
+  unsigned short   cur_ip;
 
-  unsigned       pq_cnt;
-  unsigned char  pq[E86_PQ_FILL];
+  unsigned         pq_cnt;
+  unsigned char    pq[E86_PQ_FILL];
 
-  unsigned       prefix;
+  unsigned         prefix;
 
-  unsigned short seg_override;
+  unsigned short   seg_override;
 
-  int            irq;
+  int              irq;
 
-  unsigned       last_interrupt;
+  unsigned         last_interrupt;
 
-  e86_opcode_f   op[256];
+  e86_opcode_f     op[256];
 
   struct {
     int            is_mem;
@@ -143,7 +145,7 @@ typedef struct e8086_t {
     unsigned long  delay;
   } ea;
 
-  unsigned long  delay;
+  unsigned long    delay;
 
   unsigned long long clocks;
   unsigned long long instructions;
@@ -261,14 +263,15 @@ typedef struct e8086_t {
 static inline
 unsigned char e86_get_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
+  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
   return ((addr < c->ram_cnt) ? c->ram[addr] : c->mem_get_uint8 (c->mem, addr));
 }
 
 static inline
 void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned char val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
+  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+
   if (addr < c->ram_cnt) {
     c->ram[addr] = val;
   }
@@ -280,8 +283,9 @@ void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned 
 static inline
 unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
-  if (addr < c->ram_cnt) {
+  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+
+  if ((addr + 1) < c->ram_cnt) {
     return (c->ram[addr] + (c->ram[addr + 1] << 8));
   }
   else {
@@ -292,8 +296,9 @@ unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs
 static inline
 void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
-  if (addr < c->ram_cnt) {
+  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+
+  if ((addr + 1) < c->ram_cnt) {
     c->ram[addr] = val & 0xff;
     c->ram[addr + 1] = (val >> 8) & 0xff;
   }
@@ -323,6 +328,9 @@ void e86_enable_86 (e8086_t *c);
 void e86_enable_186 (e8086_t *c);
 void e86_enable_286 (e8086_t *c);
 void e86_enable_v30 (e8086_t *c);
+
+void e86_set_addr_mask (e8086_t *c, unsigned long msk);
+unsigned long e86_get_addr_mask (e8086_t *c);
 
 void e86_reset (e8086_t *c);
 
