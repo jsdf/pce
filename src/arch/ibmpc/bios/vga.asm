@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/vga.asm                                *
 ;* Created:       2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-03-27 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2004-03-28 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
 ;*****************************************************************************
 
@@ -771,6 +771,16 @@ dac_get_colors:
 
 ;-----------------------------------------------------------------------------
 
+; get mode in AH
+get_modemap:
+  push    bx
+  mov     bl, [BIOS_MODE]
+  and     bx, 0x007f
+  mov     ah, [cs:bx + modemap]
+  pop     bx
+  ret
+
+
 ; get video mem segment in AX
 get_segm:
   mov     ax, 0xb800
@@ -780,16 +790,6 @@ get_segm:
   mov     ah, 0xb0
 
 .done:
-  ret
-
-
-; get mode in AH
-get_modemap:
-  push    bx
-  mov     bl, [BIOS_MODE]
-  and     bx, 0x007f
-  mov     ah, [cs:bx + modemap]
-  pop     bx
   ret
 
 
