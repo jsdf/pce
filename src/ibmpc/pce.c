@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.22 2003/09/04 20:14:15 hampa Exp $ */
+/* $Id: pce.c,v 1.23 2003/09/06 13:52:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -769,13 +769,45 @@ void prt_state_pic (e8259_t *pic, FILE *fp)
 
 void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 {
+  char p;
+
+  switch (e8250_get_parity (uart)) {
+    case E8250_PARITY_N:
+      p = 'N';
+      break;
+
+    case E8250_PARITY_E:
+      p = 'E';
+      break;
+
+    case E8250_PARITY_O:
+      p = 'O';
+      break;
+
+    case E8250_PARITY_M:
+      p = 'M';
+      break;
+
+    case E8250_PARITY_S:
+      p = 'S';
+      break;
+
+    default:
+      p = '?';
+      break;
+  }
+
   fputs ("-8250-UART-------------------------------------------------------------------\n", fp);
   fprintf (stderr,
-    "TxD=%02X%c RxD=%02X%c  SCR=%02X  DIV=%04X  IO=%04X\n"
-    "IER=%02X IIR=%02X  LCR=%02X LSR=%02X  MCR=%02X MSR=%02X\n",
+    "IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
+    "TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
+    "IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
+    base,
+    e8250_get_bps (uart), e8250_get_databits (uart), p, e8250_get_stopbits (uart),
+    e8250_get_dtr (uart), e8250_get_rts (uart),
     uart->txd[0], uart->txd[1] ? '*' : ' ',
     uart->rxd[0], uart->rxd[1] ? '*' : ' ',
-    uart->scratch, uart->divisor, base,
+    uart->scratch, uart->divisor,
     uart->ier, uart->iir, uart->lcr, uart->lsr, uart->mcr, uart->msr
   );
 }
