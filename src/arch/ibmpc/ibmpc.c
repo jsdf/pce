@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1035,6 +1035,10 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
 
 void pc_break (ibmpc_t *pc, unsigned char val)
 {
+  if (pc == NULL) {
+    pc = par_pc;
+  }
+
   if ((val == PCE_BRK_STOP) || (val == PCE_BRK_ABORT)) {
     pc->brk = val;
   }

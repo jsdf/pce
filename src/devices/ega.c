@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -264,7 +264,19 @@ mem_blk_t *ega_get_reg (ega_t *ega)
 
 void ega_get_rgb (ega_t *ega, unsigned idx, unsigned char rgb[3])
 {
-  idx = ega->atc_reg[idx & 0x3f];
+  idx = ega->atc_reg[idx & 0x0f] & 0x3f;
+
+  if (ega->mode_h == 200) {
+    /* in 200 line modes only 16 colors are available and bit 4 controls
+       the intensity */
+
+    if (idx & 0x10) {
+      idx |= 0x38;
+    }
+    else {
+      idx &= 0x07;
+    }
+  }
 
   rgb[0] = ((idx & 0x04) ? 0xaa : 0x00) + ((idx & 0x20) ? 0x55 : 0x00);
   rgb[1] = ((idx & 0x02) ? 0xaa : 0x00) + ((idx & 0x10) ? 0x55 : 0x00);

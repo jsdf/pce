@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_IBMPC_EGA_H
