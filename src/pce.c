@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.8 2003/04/19 02:41:52 hampa Exp $ */
+/* $Id: pce.c,v 1.9 2003/04/19 03:29:33 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -53,6 +53,34 @@ static unsigned long ops_cnt[256];
 
 static ibmpc_t      *pc;
 
+
+static
+void prt_help (void)
+{
+  fputs (
+    "usage: pce [options]\n"
+    "  --help                 Print usage information\n"
+    "  --version              Print version information\n"
+    "  -r, --ram int          Set RAM size in KB\n"
+    "  -d, --display  string  Set video adapter type [mda|cga]\n",
+    stdout
+  );
+
+  fflush (stdout);
+}
+
+static
+void prt_version (void)
+{
+  fputs (
+    "pce version " PCE_VERSION_STR
+    " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+    "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
+    stdout
+  );
+
+  fflush (stdout);
+}
 
 int str_is_space (char c)
 {
@@ -697,6 +725,86 @@ void do_c (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_d (cmd_t *cmd)
+{
+  unsigned              i, j;
+  unsigned short        cnt;
+  unsigned short        seg, ofs1, ofs2;
+  static int            first = 1;
+  static unsigned short sseg = 0;
+  static unsigned short sofs = 0;
+  unsigned short        p, p1, p2;
+  char                  buf[256];
+
+  if (first) {
+    first = 0;
+    sseg = e86_get_ds (pc->cpu);
+    sofs = 0;
+  }
+
+  seg = sseg;
+  ofs1 = sofs;
+  cnt = 256;
+
+  if (cmd_match_addr (cmd, &seg, &ofs1)) {
+    cmd_match_uint16 (cmd, &cnt);
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  ofs2 = (ofs1 + cnt - 1) & 0xffff;
+  if (ofs2 < ofs1) {
+    ofs2 = 0xffff;
+    cnt = ofs2 - ofs1 + 1;
+  }
+
+  sseg = seg;
+  sofs = ofs1 + cnt;
+
+  p1 = ofs1 / 16;
+  p2 = ofs2 / 16 + 1;
+
+  for (p = p1; p < p2; p++) {
+    j = 16 * p;
+
+    sprintf (buf,
+      "%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
+      seg, j
+    );
+
+    for (i = 0; i < 16; i++) {
+      if ((j >= ofs1) && (j <= ofs2)) {
+        unsigned val, val1, val2;
+
+        val = e86_get_mem8 (pc->cpu, seg, j);
+        val1 = (val >> 4) & 0x0f;
+        val2 = val & 0x0f;
+
+        buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
+        buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
+
+        if ((val >= 32) && (val <= 127)) {
+          buf[60 + i] = val;
+        }
+        else {
+          buf[60 + i] = '.';
+        }
+      }
+      else {
+        buf[11 + 3 * i] = ' ';
+        buf[11 + 3 * i + 1] = ' ';
+        buf[60 + i] = ' ';
+      }
+
+      j += 1;
+    }
+
+    fputs (buf, stdout);
+  }
+}
+
 void do_e (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -820,8 +928,16 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "ppi")) {
       e8255_prt_state (pc->ppi, stdout);
     }
-    else if (cmd_match (cmd, "cga")) {
-      cga_prt_state (pc->cga, stdout);
+    else if (cmd_match (cmd, "video")) {
+      if (pc->cga != NULL) {
+        cga_prt_state (pc->cga, stdout);
+      }
+      else if (pc->mda != NULL) {
+        mda_prt_state (pc->mda, stdout);
+      }
+      else {
+        printf ("no video adapter installed\n");
+      }
     }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
@@ -893,86 +1009,6 @@ void do_u (cmd_t *cmd)
 
   sseg = seg;
   sofs = ofs;
-}
-
-void do_d (cmd_t *cmd)
-{
-  unsigned              i, j;
-  unsigned short        cnt;
-  unsigned short        seg, ofs1, ofs2;
-  static int            first = 1;
-  static unsigned short sseg = 0;
-  static unsigned short sofs = 0;
-  unsigned short        p, p1, p2;
-  char                  buf[256];
-
-  if (first) {
-    first = 0;
-    sseg = e86_get_ds (pc->cpu);
-    sofs = 0;
-  }
-
-  seg = sseg;
-  ofs1 = sofs;
-  cnt = 256;
-
-  if (cmd_match_addr (cmd, &seg, &ofs1)) {
-    cmd_match_uint16 (cmd, &cnt);
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  ofs2 = (ofs1 + cnt - 1) & 0xffff;
-  if (ofs2 < ofs1) {
-    ofs2 = 0xffff;
-    cnt = ofs2 - ofs1 + 1;
-  }
-
-  sseg = seg;
-  sofs = ofs1 + cnt;
-
-  p1 = ofs1 / 16;
-  p2 = ofs2 / 16 + 1;
-
-  for (p = p1; p < p2; p++) {
-    j = 16 * p;
-
-    sprintf (buf,
-      "%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-      seg, j
-    );
-
-    for (i = 0; i < 16; i++) {
-      if ((j >= ofs1) && (j <= ofs2)) {
-        unsigned val, val1, val2;
-
-        val = e86_get_mem8 (pc->cpu, seg, j);
-        val1 = (val >> 4) & 0x0f;
-        val2 = val & 0x0f;
-
-        buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-        buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
-
-        if ((val >= 32) && (val <= 127)) {
-          buf[60 + i] = val;
-        }
-        else {
-          buf[60 + i] = '.';
-        }
-      }
-      else {
-        buf[11 + 3 * i] = ' ';
-        buf[11 + 3 * i + 1] = ' ';
-        buf[60 + i] = ' ';
-      }
-
-      j += 1;
-    }
-
-    fputs (buf, stdout);
-  }
 }
 
 void do_r (cmd_t *cmd)
@@ -1152,6 +1188,15 @@ int do_cmd (void)
   return (0);
 }
 
+int str_isarg1 (const char *str, const char *arg)
+{
+  if (strcmp (str, arg) == 0) {
+    return (1);
+  }
+
+  return (0);
+}
+
 int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 {
   if (strcmp (str, arg1) == 0) {
@@ -1169,10 +1214,23 @@ int main (int argc, char *argv[])
 {
   int      i;
   unsigned ramsize;
+  unsigned dsp;
+
+  if (argc == 2) {
+    if (str_isarg1 (argv[1], "--help")) {
+      prt_help();
+      return (0);
+    }
+    else if (str_isarg1 (argv[1], "--version")) {
+      prt_version();
+      return (0);
+    }
+  }
 
   printf ("8086 CPU emulator by Hampa 1995-2003\n\n");
 
   ramsize = 640;
+  dsp = 1;
 
   i = 1;
   while (i < argc) {
@@ -1182,6 +1240,22 @@ int main (int argc, char *argv[])
         return (1);
       }
       ramsize = (unsigned) strtoul (argv[i], NULL, 0);
+    }
+    else if (str_isarg2 (argv[i], "-d", "--display")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+      if (strcmp (argv[i], "mda") == 0) {
+        dsp = 0;
+      }
+      else if (strcmp (argv[i], "cga") == 0) {
+        dsp = 1;
+      }
+      else {
+        printf ("%s: unknown display (%s)\n", argv[0], argv[i]);
+        return (1);
+      }
     }
     else {
       printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
@@ -1195,7 +1269,7 @@ int main (int argc, char *argv[])
     ops_cnt[i] = 0;
   }
 
-  pc = pc_new (ramsize);
+  pc = pc_new (ramsize, dsp);
   pc->cpu->opstat = &pc_opstat;
 
   e86_reset (pc->cpu);
