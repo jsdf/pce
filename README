@@ -16,7 +16,7 @@ The most important options for configure are:
 Set the installation prefix. Default is /usr/local.
 
 --with-x11
-Build the X11 based terminal.
+Build the X11 based terminal. This is not yet autodetected.
 
 --with-sdl
 Build the SDL based terminal.
