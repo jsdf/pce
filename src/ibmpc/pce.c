@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.23 2003/09/06 13:52:16 hampa Exp $ */
+/* $Id: pce.c,v 1.24 2003/09/18 19:07:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -55,6 +55,8 @@ char                      *par_terminal = NULL;
 char                      *par_video = NULL;
 unsigned                  par_boot = 128;
 char                      *par_cpu = NULL;
+int                       pce_int28 = 1;
+
 
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
@@ -71,8 +73,6 @@ static unsigned long long pce_hclk_last = 0;
 #define PCE_LAST_MAX 1024
 static unsigned short     pce_last_i = 0;
 static unsigned short     pce_last[PCE_LAST_MAX][2];
-
-static int                pce_int28 = 1;
 
 static ibmpc_t            *pc;
 
