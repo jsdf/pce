@@ -111,61 +111,6 @@ void pce_set_fd (int fd, int interactive)
 #endif
 }
 
-int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
-{
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  fread (blk->data, 1, blk->size, fp);
-
-  fclose (fp);
-
-  return (0);
-}
-
-int pce_load_mem_hex (memory_t *mem, const char *fname)
-{
-  int  r;
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  r = ihex_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
-
-  fclose (fp);
-
-  return (r);
-}
-
-int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
-{
-  int  c;
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  c = fgetc (fp);
-  while (c != EOF) {
-    mem_set_uint8 (mem, base, c & 0xff);
-    base += 1;
-    c = fgetc (fp);
-  }
-
-  fclose (fp);
-
-  return (0);
-}
-
 ini_sct_t *pce_load_config (const char *fname)
 {
   ini_sct_t *ini;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -31,23 +31,6 @@ static void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val);
 
 void s405_break (sim405_t *sim, unsigned char val);
 
-
-static
-int s405_load_ram (mem_blk_t *blk, const char *fname)
-{
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  fread (blk->data, 1, blk->size, fp);
-
-  fclose (fp);
-
-  return (0);
-}
 
 static
 void s405_setup_ram (sim405_t *sim, ini_sct_t *ini)
@@ -80,7 +63,7 @@ void s405_setup_ram (sim405_t *sim, ini_sct_t *ini)
     }
 
     if (fname != NULL) {
-      if (s405_load_ram (ram, fname)) {
+      if (pce_load_blk_bin (ram, fname)) {
         pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
       }
     }
@@ -100,19 +83,23 @@ void s405_setup_rom (sim405_t *sim, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "rom");
 
   while (sct != NULL) {
-    fname = ini_get_str_def (sct, "file", "default.rom");
+    fname = ini_get_str (sct, "file");
     base = ini_get_lng_def (sct, "base", 0);
     size = ini_get_lng_def (sct, "size", 65536L);
 
-    pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n", base, size, fname);
+    pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
+      base, size, (fname != NULL) ? fname : "<none>"
+    );
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
     mem_blk_set_ro (rom, 1);
     mem_add_blk (sim->mem, rom, 1);
 
-    if (s405_load_ram (rom, fname)) {
-      pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+    if (fname != NULL) {
+      if (pce_load_blk_bin (rom, fname)) {
+        pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+      }
     }
 
     sct = ini_sct_find_next (sct, "rom");
@@ -257,6 +244,49 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
   }
 }
 
+static
+void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
+{
+  ini_sct_t  *sct;
+  const char *fmt;
+  const char *fname;
+
+  sct = ini_sct_find_sct (ini, "load");
+
+  while (sct != NULL) {
+    fmt = ini_get_str_def (sct, "format", "binary");
+    fname = ini_get_str (sct, "file");
+
+    pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
+      fmt, (fname != NULL) ? fname : "<none>"
+    );
+
+    if (strcmp (fmt, "ihex") == 0) {
+      if (fname != NULL) {
+        if (pce_load_mem_hex (sim->mem, fname)) {
+          pce_log (MSG_ERR, "*** loading ihex failed (%s)\n", fname);
+        }
+      }
+    }
+    else if (strcmp (fmt, "binary") == 0) {
+      unsigned long base;
+
+      base = ini_get_lng_def (sct, "base", 0);
+
+      if (fname != NULL) {
+        if (pce_load_mem_bin (sim->mem, fname, base)) {
+          pce_log (MSG_ERR, "*** loading binary failed (%s)\n", fname);
+        }
+      }
+    }
+    else {
+      pce_log (MSG_ERR, "*** unknown format (%s)\n", fmt);
+    }
+
+    sct = ini_sct_find_next (ini, "load");
+  }
+}
+
 sim405_t *s405_new (ini_sct_t *ini)
 {
   unsigned i;
@@ -286,6 +316,8 @@ sim405_t *s405_new (ini_sct_t *ini)
 
   sim->cpc0_cr1 = 0x00000000UL;
   sim->cpc0_psr = 0x00000400UL;
+
+  s405_load_mem (sim, ini);
 
   return (sim);
 }
@@ -434,9 +466,9 @@ void s405_clock (sim405_t *sim, unsigned n)
 
   sim->clk_cnt += n;
   sim->clk_div[0] += n;
-//  sim->clk_div[1] += n;
-//  sim->clk_div[2] += n;
-//  sim->clk_div[3] += n;
+/*  sim->clk_div[1] += n; */
+/*  sim->clk_div[2] += n; */
+/*  sim->clk_div[3] += n; */
 }
 
 void s405_set_msg (sim405_t *sim, const char *msg, const char *val)

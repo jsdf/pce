@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.h                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -79,6 +79,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <lib/log.h>
 #include <lib/brkpt.h>
+#include <lib/load.h>
 
 
 #define SIM405_DCRN_CPC0_CR1 0xb2

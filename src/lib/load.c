@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/util.h                                      *
- * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/load.c                                             *
+ * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,17 +23,64 @@
 /* $Id$ */
 
 
-#ifndef PCE_IBMPC_UTIL_H
-#define PCE_IBMPC_UTIL_H 1
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "ihex.h"
+#include "load.h"
 
 
-int str_istail (const char *str, const char *tail);
-int str_isarg (const char *str, const char *arg1, const char *arg2);
+int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
+{
+  FILE *fp;
 
-void prt_error (const char *str, ...);
-void pce_set_fd (int fd, int interactive);
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
 
-ini_sct_t *pce_load_config (const char *fname);
+  fread (blk->data, 1, blk->size, fp);
 
+  fclose (fp);
 
-#endif
+  return (0);
+}
+
+int pce_load_mem_hex (memory_t *mem, const char *fname)
+{
+  int  r;
+  FILE *fp;
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  r = ihex_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
+
+  fclose (fp);
+
+  return (r);
+}
+
+int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
+{
+  int  c;
+  FILE *fp;
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  c = fgetc (fp);
+  while (c != EOF) {
+    mem_set_uint8 (mem, base, c & 0xff);
+    base += 1;
+    c = fgetc (fp);
+  }
+
+  fclose (fp);
+
+  return (0);
+}

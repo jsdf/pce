@@ -36,6 +36,12 @@ section pc {
 		file = "ibmpc.ihex"
 	}
 
+	section load {
+		format = "binary"
+		file = "rom.bin"
+		base = 0xf0000
+	}
+
 	section nvram {
 		file = "nvram.dat"
 		base = 0xa0000

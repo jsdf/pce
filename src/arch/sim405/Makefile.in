@@ -32,6 +32,8 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
+	$(pcedst)/lib/ihex.o \
+	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/libini/libini.a
 
@@ -47,6 +49,8 @@ HDR_EXT	:= \
 	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
+	lib/ihex.h \
+	lib/load.h \
 	lib/log.h \
 	libini/libini.h
 

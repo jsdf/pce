@@ -28,6 +28,18 @@ section sim6502 {
 		file = "sim6502.rom"
 	}
 
+	# load sections are processed after the emulator is set up.
+	section load {
+		format = "ihex"
+		file = "sim6502.ihex"
+	}
+
+	section load {
+		format = "binary"
+		file = "rom.bin"
+		base = 0xf000
+	}
+
 	section console {
 		io = 0xe000
 	}

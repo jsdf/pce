@@ -32,6 +32,18 @@ section sim405 {
 		size = 65536
 	}
 
+	# load sections are processed after the emulator is set up.
+	section load {
+		format = "ihex"
+		file = "sim405.ihex"
+	}
+
+	section load {
+		format = "binary"
+		file = "rom.bin"
+		base = 0xffff0000
+	}
+
 	# The nvram is not used yet but can be configured all the same
         section nvram {
 		base = 0xf0000000
