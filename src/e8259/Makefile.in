@@ -1,0 +1,39 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/21 13:34:16 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= e8259.c
+
+OBJ	:= e8259.o
+
+HDR	:= e8259.h
+HDR_EXT	:=
+
+MAN	:=
+
+BIN	:= e8259.a
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(BIN)
+
+
+clean:
+	rm -f $(BIN) $(OBJ)
+
+
+e8259.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+e8259.o:	e8259.c $(SDP)

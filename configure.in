@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.5 2003/04/19 03:40:38 hampa Exp $
+# $Id: configure.in,v 1.6 2003/04/21 13:34:16 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -52,6 +52,41 @@ AC_DEFINE_UNQUOTED(PCE_CFG_DATE, "$PCE_CFG_DATE")
 AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
 
 
+AC_ARG_WITH(host-clock,
+  AC_HELP_STRING([--with-host-clock=clock], [Set the host clock speed in Hz]),
+  [
+  	PCE_HOST_FOSC="$withval"
+  ],
+  [
+  	PCE_HOST_FOSC=4772393
+  ]
+)
+AC_SUBST(PCE_HOST_FOSC)
+AC_DEFINE_UNQUOTED(PCE_HOST_FOSC, $PCE_HOST_FOSC)
+
+
+PCE_HAVE_TSC=0
+AC_ARG_ENABLE(tsc,
+  AC_HELP_STRING([--enable-tsc], [Use Pentium TSC]),
+  [
+  	if test "x$enableval" = "xyes" ; then
+  		PCE_HAVE_TSC=1
+  	fi
+  ],
+  [
+	case "`uname -m`" in
+	i?86)
+		PCE_HAVE_TSC=1
+		;;
+	esac
+  ]
+)
+AC_SUBST(PCE_HAVE_TSC)
+if test $PCE_HAVE_TSC -eq 1 ; then
+	AC_DEFINE(PCE_HAVE_TSC)
+fi
+
+
 dnl -----------------------------------------------------------------------
 dnl Checks for programs.
 
@@ -81,6 +116,7 @@ AC_OUTPUT(
   src/bios/Makefile
   src/e8086/Makefile
   src/e8255/Makefile
+  src/e8259/Makefile
 )
 
 
@@ -106,3 +142,6 @@ echo "  prefix:                $prefix"
 echo "  bindir:                $pce_bindir"
 echo "  libdir:                $pce_libdir"
 echo "  mandir:                $pce_mandir"
+echo ""
+echo "  Host clock:            $PCE_HOST_FOSC"
+echo "  Use Pentium TSC:       $PCE_HAVE_TSC"
