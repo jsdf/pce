@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.7 2003/04/25 14:01:44 hampa Exp $ */
+/* $Id: pce.c,v 1.8 2003/04/26 16:35:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -54,12 +54,18 @@ static breakpoint_t       *breakpoint = NULL;
 
 static unsigned long      ops_cnt[256];
 
-static unsigned long long pce_opcnt = 0;
+static unsigned long long pce_eops = 0;
+static unsigned long long pce_eops_last = 0;
 static unsigned long long pce_eclk = 0;
 static unsigned long long pce_eclk_base = PCE_EMU_FOSC;
+static unsigned long long pce_eclk_last = 0;
 static unsigned long long pce_hclk = 0;
 static unsigned long long pce_hclk_base = PCE_HOST_FOSC;
 static unsigned long long pce_hclk_last = 0;
+
+#define PCE_LAST_MAX 1024
+static unsigned short     pce_last_i = 0;
+static unsigned short     pce_last[PCE_LAST_MAX][2];
 
 static ibmpc_t      *pc;
 
@@ -633,8 +639,36 @@ void prt_state_time (FILE *fp)
     "EOPS=%016llX @ %8.4fMHz\n",
     pce_hclk, 1.0E-6 * pce_hclk_base, (double) pce_hclk / (double) pce_hclk_base,
     pce_eclk, 1.0E-6 * pce_eclk_base, (double) pce_eclk / (double) pce_eclk_base,
-    pce_opcnt, ratio
+    pce_eops, ratio
   );
+}
+
+void prt_state_pit (e8253_t *pit, FILE *fp)
+{
+  unsigned        i;
+  e8253_counter_t *cnt;
+
+  fprintf (fp, "-8253-PIT--------------------------------------------------------------------\n");
+
+  for (i = 0; i < 3; i++) {
+    cnt = &pit->counter[i];
+
+    fprintf (fp,
+      "C%d: SR=%02X M=%u CE=%04X CR0=%02X%c CR1=%02X%c OL0=%02X%c OL1=%02X%c "
+      "G=%u O=%u R=%d\n",
+      i,
+      cnt->sr,
+      cnt->mode,
+      cnt->val,
+      cnt->cr[0], (cnt->cr_wr & 1) ? '*' : ' ',
+      cnt->cr[1], (cnt->cr_wr & 2) ? '*' : ' ',
+      cnt->ol[0], (cnt->ol_rd & 1) ? '*' : ' ',
+      cnt->ol[1], (cnt->ol_rd & 2) ? '*' : ' ',
+      (unsigned) cnt->gate,
+      (unsigned) cnt->out_val,
+      cnt->counting
+    );
+  }
 }
 
 void prt_state_ppi (e8255_t *ppi, FILE *fp)
@@ -785,16 +819,20 @@ void prt_error (const char *str, ...)
 
 void cpu_start()
 {
+  pce_eclk_last = e86_get_clock (pc->cpu);
+  pce_eops_last = e86_get_opcnt (pc->cpu);
   pce_hclk_last = read_tsc();
 }
 
 void cpu_end()
 {
   pce_hclk_last = read_tsc() - pce_hclk_last;
+  pce_eclk_last = e86_get_clock (pc->cpu) - pce_eclk_last;
+  pce_eops_last = e86_get_opcnt (pc->cpu) - pce_eops_last;
 
-  pce_eclk = e86_get_clock (pc->cpu);
+  pce_eclk += pce_eclk_last;
   pce_hclk += pce_hclk_last;
-  pce_opcnt = e86_get_opcnt (pc->cpu);
+  pce_eops += pce_eops_last;
 }
 
 void cpu_exec (void)
@@ -829,19 +867,38 @@ void pce_run (void)
   key_set_fd (pc->key, -1);
 }
 
-void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
+void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
 
   pc = (ibmpc_t *) ext;
 
+  pce_last_i = (pce_last_i + 1) % PCE_LAST_MAX;
+  pce_last[pce_last_i][0] = e86_get_cs (pc->cpu);
+  pce_last[pce_last_i][1] = e86_get_ip (pc->cpu);
+
   ops_cnt[op1 & 0xff] += 1;
+
+  if (e86_get_cs (pc->cpu) == 0xf0dc) {
+    pc->brk = 1;
+  }
 
   if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
     cpu_end();
     usleep (10000);
     cpu_start();
   }
+}
+
+void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
+{
+  ibmpc_t *pc;
+
+  pc = (ibmpc_t *) ext;
+
+  pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
+    e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
+  );
 }
 
 void do_bl (cmd_t *cmd)
@@ -1226,6 +1283,28 @@ void do_g (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_last (cmd_t *cmd)
+{
+  unsigned short i, j, n;
+  unsigned       idx;
+
+  i = 0;
+  n = 16;
+
+  cmd_match_uint16 (cmd, &n);
+  cmd_match_uint16 (cmd, &i);
+
+  idx = (pce_last_i + PCE_LAST_MAX - i - n + 1) % PCE_LAST_MAX;
+
+  for (j = 0; j < n; j++) {
+    printf ("%d: %04X:%04X\n",
+      (int) j - (int) n - (int) i,
+      pce_last[idx][0], pce_last[idx][1]
+    );
+    idx = (idx + 1) % PCE_LAST_MAX;
+  }
+}
+
 void do_p (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -1283,6 +1362,9 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "cpu")) {
       prt_state_cpu (pc->cpu, stdout);
     }
+    else if (cmd_match (cmd, "pit")) {
+      prt_state_pit (pc->pit, stdout);
+    }
     else if (cmd_match (cmd, "ppi")) {
       prt_state_ppi (pc->ppi, stdout);
     }
@@ -1313,7 +1395,7 @@ void do_s (cmd_t *cmd)
 void do_time (cmd_t *cmd)
 {
   if (cmd_match (cmd, "c")) {
-    pce_opcnt = 0;
+    pce_eops = 0;
     pce_eclk = 0;
     pce_hclk = 0;
   }
@@ -1529,6 +1611,9 @@ int do_cmd (void)
     else if (cmd_match (&cmd, "disk")) {
       do_disk (&cmd);
     }
+    else if (cmd_match (&cmd, "last")) {
+      do_last (&cmd);
+    }
     else if (cmd_match (&cmd, "time")) {
       do_time (&cmd);
     }
@@ -1707,7 +1792,8 @@ int main (int argc, char *argv[])
 
   pc = pc_new (sct);
 
-  pc->cpu->op_stat = &pc_opstat;
+  pc->cpu->op_stat = &pce_op_stat;
+  pc->cpu->op_undef = &pce_op_undef;
 
   e86_reset (pc->cpu);
 

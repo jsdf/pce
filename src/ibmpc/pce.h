@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.2 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: pce.h,v 1.3 2003/04/26 16:35:28 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -61,8 +61,9 @@ void pce_log (unsigned level, const char *str, ...);
 
 
 #include <e8086/e8086.h>
-#include <e8255/e8255.h>
-#include <e8259/e8259.h>
+#include <chipset/e8253.h>
+#include <chipset/e8255.h>
+#include <chipset/e8259.h>
 
 #include <libini/libini.h>
 

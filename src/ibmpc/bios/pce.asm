@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.3 2003/04/25 02:29:56 hampa Exp $
+; $Id: pce.asm,v 1.4 2003/04/26 16:35:28 hampa Exp $
 
 
 %macro set_pos 1
@@ -42,8 +42,9 @@ start:
   call    set_bios_ds
 
   call    init_int
-  call    init_ppi
   call    init_pic
+  call    init_pit
+  call    init_ppi
 
   sti
 
@@ -123,6 +124,29 @@ init_int:
   ret
 
 
+init_pic:
+  mov     al, 0x13
+  out     0x20, al
+
+  mov     al, 0x08
+  out     0x21, al
+
+  mov     al, 0x01
+  out     0x21, al
+
+  mov     al, 0x00
+  out     0x21, al
+  ret
+
+
+init_pit:
+  mov     al, 0x34
+  out     0x43, al
+  mov     al, 0
+  out     0x40, al
+  out     0x40, al
+  ret
+
 init_ppi:
   push    ax
   mov     al, 0x99
@@ -141,21 +165,6 @@ init_ppi:
 
   pop     ax
   ret
-
-init_pic:
-  mov     al, 0x13
-  out     0x20, al
-
-  mov     al, 0x08
-  out     0x21, al
-
-  mov     al, 0x01
-  out     0x21, al
-
-  mov     al, 0x00
-  out     0x21, al
-  ret
-
 
 init_video:
   push    ax

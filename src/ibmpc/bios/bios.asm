@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.2 2003/04/24 12:23:52 hampa Exp $
+; $Id: bios.asm,v 1.3 2003/04/26 16:35:28 hampa Exp $
 
 
 CPU 8086
@@ -207,7 +207,10 @@ L_E0AE:
   jmp    L_EC4C                        ; Add up bytes from DS:E000 to DS:FFFF
 
 L_E0D1:
-  jnz    halt_cpu                      ; Verify checksum
+;  jnz    halt_cpu                      ; Verify checksum
+  nop
+  nop
+; **** patch ****
 
   mov    al, 0x04
   out    0x08, al

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8259/e8259.c                                          *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.c,v 1.1 2003/04/21 13:34:16 hampa Exp $ */
+/* $Id: e8259.c,v 1.1 2003/04/26 16:35:28 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -160,49 +160,60 @@ void e8259_set_ocw3 (e8259_t *pic, unsigned char val)
   }
 }
 
-void e8259_set_irq (e8259_t *pic, unsigned char val)
-{
-  pic->irr |= (1 << val) & ~pic->imr;
-}
-
 void e8259_set_irq0 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x01 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x01 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq1 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x02 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x02 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq2 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x04 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x04 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq3 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x08 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x08 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq4 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x10 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x10 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq5 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x20 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x20 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq6 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x40 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x40 & ~pic->imr;
+  }
 }
 
 void e8259_set_irq7 (e8259_t *pic, unsigned char val)
 {
-  pic->irr |= 0x80 & ~pic->imr;
+  if (val) {
+    pic->irr |= 0x80 & ~pic->imr;
+  }
 }
 
 unsigned char e8259_inta (e8259_t *pic)
@@ -235,6 +246,10 @@ unsigned char e8259_inta (e8259_t *pic)
 void e8259_clock (e8259_t *pic)
 {
   unsigned char irr, isr;
+
+  if (pic->irr == 0) {
+    return;
+  }
 
   irr = pic->irr ^ (pic->irr & (pic->irr - 1));
   isr = pic->isr ^ (pic->isr & (pic->isr - 1));

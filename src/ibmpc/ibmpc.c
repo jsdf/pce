@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.6 2003/04/25 14:01:43 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.7 2003/04/26 16:35:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -115,6 +115,45 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
   pc->cpu->op_hook = &pc_e86_hook;
 }
 
+void pc_setup_pic (ibmpc_t *pc)
+{
+  mem_blk_t *blk;
+
+  pc->pic = e8259_new();
+
+  blk = mem_blk_new (0x20, 2, 0);
+  blk->ext = pc->pic;
+  blk->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
+  blk->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
+  mem_add_blk (pc->prt, blk, 1);
+
+  pc->pic->irq_ext = pc->cpu;
+  pc->pic->irq = (set_uint8_f) &e86_irq;
+
+  pc->cpu->inta_ext = pc->pic;
+  pc->cpu->inta = (get_uint8_f) &e8259_inta;
+}
+
+void pc_setup_pit (ibmpc_t *pc)
+{
+  mem_blk_t *blk;
+
+  pc->pit = e8253_new();
+
+  blk = mem_blk_new (0x40, 4, 0);
+  blk->ext = pc->pit;
+  blk->set_uint8 = (seta_uint8_f) &e8253_set_uint8;
+  blk->get_uint8 = (geta_uint8_f) &e8253_get_uint8;
+  mem_add_blk (pc->prt, blk, 1);
+
+  e8253_cnt_set_gate (&pc->pit->counter[0], 1);
+  e8253_cnt_set_gate (&pc->pit->counter[1], 1);
+  e8253_cnt_set_gate (&pc->pit->counter[2], 1);
+
+  pc->pit->counter[0].out_ext = pc->pic;
+  pc->pit->counter[0].out = (set_uint8_f) &e8259_set_irq0;
+}
+
 void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 {
   e8255_t   *ppi;
@@ -144,25 +183,6 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   blk->set_uint8 = (seta_uint8_f) &e8255_set_port8;
   blk->get_uint8 = (geta_uint8_f) &e8255_get_port8;
   mem_add_blk (pc->prt, blk, 1);
-}
-
-void pc_setup_pic (ibmpc_t *pc)
-{
-  mem_blk_t *blk;
-
-  pc->pic = e8259_new();
-
-  blk = mem_blk_new (0x20, 2, 0);
-  blk->ext = pc->pic;
-  blk->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
-  blk->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
-  mem_add_blk (pc->prt, blk, 1);
-
-  pc->pic->irq_ext = pc->cpu;
-  pc->pic->irq = (set_uint8_f) &e86_irq;
-
-  pc->cpu->inta_ext = pc->pic;
-  pc->cpu->inta = (get_uint8_f) &e8259_inta;
 }
 
 void pc_setup_keyboard (ibmpc_t *pc)
@@ -338,8 +358,9 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_ram (pc, ini);
   pc_setup_rom (pc, ini);
   pc_setup_cpu (pc, ini);
-  pc_setup_ppi (pc, ini);
   pc_setup_pic (pc);
+  pc_setup_pit (pc);
+  pc_setup_ppi (pc, ini);
   pc_setup_terminal (pc, ini);
   pc_setup_keyboard (pc);
   pc_setup_video (pc, ini);
@@ -362,11 +383,10 @@ void pc_del (ibmpc_t *pc)
 
   trm_del (pc->trm);
 
-  e86_del (pc->cpu);
-
-  e8259_del (pc->pic);
-
   e8255_del (pc->ppi);
+  e8253_del (pc->pit);
+  e8259_del (pc->pic);
+  e86_del (pc->cpu);
 
   mem_del (pc->mem);
   mem_del (pc->prt);
@@ -382,9 +402,16 @@ void pc_clock (ibmpc_t *pc)
 
   e86_clock (pc->cpu, n);
 
-  if (pc->clk_div[0] >= (4 * 65536)) {
-    e8259_set_irq0 (pc->pic, 1);
-    pc->clk_div[0] -= (4 * 65536);
+  if (pc->clk_div[0] >= 16) {
+    e8259_clock (pc->pic);
+    e8253_clock (pc->pit, pc->clk_div[0] >> 2);
+    pc->clk_div[0] &= 3;
+  }
+
+  if (pc->clk_div[2] >= 1024) {
+    cga_clock (pc->cga);
+    trm_check (pc->trm);
+    pc->clk_div[2] -= 1024;
   }
 
   if (pc->key_clk > 0) {
@@ -396,7 +423,7 @@ void pc_clock (ibmpc_t *pc)
       pc->key_i += 1;
 
       if (pc->key_i < pc->key_j) {
-        pc->key_clk = 10000;
+        pc->key_clk = 1000;
       }
       else {
         pc->key_i = 0;
@@ -405,22 +432,11 @@ void pc_clock (ibmpc_t *pc)
     }
   }
 
-  if (pc->clk_div[1] >= 16) {
-    e8259_clock (pc->pic);
-    pc->clk_div[1] -= 16;
-  }
-
-  if (pc->clk_div[2] >= 256) {
-    cga_clock (pc->cga);
-//    key_clock (pc->key);
-    trm_check (pc->trm);
-    pc->clk_div[2] -= 256;
-  }
-
   pc->clk_cnt += n;
   pc->clk_div[0] += n;
-  pc->clk_div[1] += n;
+//  pc->clk_div[1] += n;
   pc->clk_div[2] += n;
+//  pc->clk_div[3] += n;
 }
 
 void pc_break (ibmpc_t *pc, unsigned char val)
@@ -530,6 +546,8 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 {
   pc->ppi_port_b = val;
+
+  e8253_cnt_set_gate (&pc->pit->counter[2], val & 0x01);
 }
 
 void pc_set_keycode (ibmpc_t *pc, unsigned char val)
