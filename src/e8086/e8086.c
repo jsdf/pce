@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.9 2003/04/20 19:07:51 hampa Exp $ */
+/* $Id: e8086.c,v 1.10 2003/04/20 20:36:16 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -211,6 +211,11 @@ unsigned long long e86_get_opcnt (e8086_t *c)
   return (c->instructions);
 }
 
+unsigned long e86_get_delay (e8086_t *c)
+{
+  return (c->delay);
+}
+
 void e86_execute (e8086_t *c)
 {
   unsigned cnt, op;
@@ -239,15 +244,15 @@ void e86_execute (e8086_t *c)
   c->instructions += 1;
 }
 
-void e86_clock (e8086_t *c)
+void e86_clock (e8086_t *c, unsigned n)
 {
-  if (c->delay > 0) {
-    c->delay--;
-  }
-
-  if (c->delay == 0) {
+  while (n >= c->delay) {
+    n -= c->delay;
+    c->clocks += c->delay;
+    c->delay = 0;
     e86_execute (c);
   }
 
-  c->clocks += 1;
+  c->delay -= n;
+  c->clocks += n;
 }

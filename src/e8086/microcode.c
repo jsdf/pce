@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.9 2003/04/20 19:07:51 hampa Exp $ */
+/* $Id: microcode.c,v 1.10 2003/04/20 20:36:16 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -2524,7 +2524,6 @@ unsigned op_a4 (e8086_t *c)
 
   seg1 = e86_get_seg (c, E86_REG_DS);
   seg2 = e86_get_es (c);
-
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
@@ -2535,6 +2534,9 @@ unsigned op_a4 (e8086_t *c)
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 18);
     }
   }
   else {
@@ -2543,6 +2545,8 @@ unsigned op_a4 (e8086_t *c)
 
     e86_set_si (c, e86_get_si (c) + inc);
     e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 18);
   }
 
   return (1);
@@ -2558,29 +2562,29 @@ unsigned op_a5 (e8086_t *c)
 
   seg1 = e86_get_seg (c, E86_REG_DS);
   seg2 = e86_get_es (c);
-
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
-  if (c->prefix & E86_PREFIX_REPN) {
-    e86_log_op (c, "movsw with repnz");
-  }
-
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (c->dreg[E86_REG_CX] > 0) {
-      val = e86_get_mem16 (c, seg1, c->dreg[E86_REG_SI]);
-      e86_set_mem16 (c, seg2, c->dreg[E86_REG_DI], val);
+    while (e86_get_cx (c) > 0) {
+      val = e86_get_mem16 (c, seg1, e86_get_si (c));
+      e86_set_mem16 (c, seg2, e86_get_di (c), val);
 
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 18);
     }
   }
   else {
-    val = e86_get_mem16 (c, seg1, c->dreg[E86_REG_SI]);
-    e86_set_mem16 (c, seg2, c->dreg[E86_REG_DI], val);
+    val = e86_get_mem16 (c, seg1, e86_get_si (c));
+    e86_set_mem16 (c, seg2, e86_get_di (c), val);
 
     e86_set_si (c, e86_get_si (c) + inc);
     e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 18);
   }
 
   return (1);
@@ -2603,14 +2607,18 @@ unsigned op_a6 (e8086_t *c)
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (c->dreg[E86_REG_CX] > 0) {
-      s1 = e86_get_mem8 (c, seg1, c->dreg[E86_REG_SI]);
-      s2 = e86_get_mem8 (c, seg2, c->dreg[E86_REG_DI]);
-      c->dreg[E86_REG_SI] += inc;
-      c->dreg[E86_REG_DI] += inc;
-      c->dreg[E86_REG_CX] -= 1;
+    while (e86_get_cx (c) > 0) {
+      s1 = e86_get_mem8 (c, seg1, e86_get_si (c));
+      s2 = e86_get_mem8 (c, seg2, e86_get_di (c));
+
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
 
       e86_set_flg_sub_8 (c, s1, s2);
+
+      c->instructions += 1;
+      e86_set_clk (c, 22);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2649,15 +2657,18 @@ unsigned op_a7 (e8086_t *c)
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (c->dreg[E86_REG_CX] > 0) {
-      s1 = e86_get_mem16 (c, seg1, c->dreg[E86_REG_SI]);
-      s2 = e86_get_mem16 (c, seg2, c->dreg[E86_REG_DI]);
+    while (e86_get_cx (c) > 0) {
+      s1 = e86_get_mem16 (c, seg1, e86_get_si (c));
+      s2 = e86_get_mem16 (c, seg2, e86_get_di (c));
 
-      c->dreg[E86_REG_SI] += inc;
-      c->dreg[E86_REG_DI] += inc;
-      c->dreg[E86_REG_CX] -= 1;
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
 
       e86_set_flg_sub_16 (c, s1, s2);
+
+      c->instructions += 1;
+      e86_set_clk (c, 22);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2717,28 +2728,22 @@ unsigned op_aa (e8086_t *c)
 
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
-  if (c->prefix & E86_PREFIX_REPN) {
-    fprintf (stderr, "stosb with repn\n");
-  }
-
-  if (c->prefix & E86_PREFIX_SEG) {
-    fprintf (stderr, "stosb with seg\n");
-  }
-
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (c->dreg[E86_REG_CX] > 0) {
-      e86_set_mem8 (c, c->sreg[E86_REG_ES], c->dreg[E86_REG_DI],
-        c->dreg[E86_REG_AX] & 0xff
-      );
-      c->dreg[E86_REG_DI] += inc;
-      c->dreg[E86_REG_CX] -= 1;
+    while (e86_get_cx (c) > 0) {
+      e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_al (c));
+
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 11);
     }
   }
   else {
-    e86_set_mem8 (c, c->sreg[E86_REG_ES], c->dreg[E86_REG_DI],
-      c->dreg[E86_REG_AX] & 0xff
-    );
-    c->dreg[E86_REG_DI] += inc;
+    e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_al (c));
+    e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 11);
   }
 
   return (1);
@@ -2752,28 +2757,22 @@ unsigned op_ab (e8086_t *c)
 
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
-  if (c->prefix & E86_PREFIX_REPN) {
-    fprintf (stderr, "stosw with repn\n");
-  }
-
-  if (c->prefix & E86_PREFIX_SEG) {
-    fprintf (stderr, "stosw with seg\n");
-  }
-
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (c->dreg[E86_REG_CX] > 0) {
-      e86_set_mem16 (c, c->sreg[E86_REG_ES], c->dreg[E86_REG_DI],
-        c->dreg[E86_REG_AX]
-      );
-      c->dreg[E86_REG_DI] += inc;
-      c->dreg[E86_REG_CX] -= 1;
+    while (e86_get_cx (c) > 0) {
+      e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_ax (c));
+
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 11);
     }
   }
   else {
-    e86_set_mem16 (c, c->sreg[E86_REG_ES], c->dreg[E86_REG_DI],
-      c->dreg[E86_REG_AX]
-    );
-    c->dreg[E86_REG_DI] += inc;
+    e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_ax (c));
+    e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 11);
   }
 
   return (1);
@@ -2794,6 +2793,8 @@ unsigned op_ac (e8086_t *c)
       e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
+      c->instructions += 1;
+      e86_set_clk (c, 12);
     }
   }
   else {
@@ -2820,6 +2821,8 @@ unsigned op_ad (e8086_t *c)
       e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
+      c->instructions += 1;
+      e86_set_clk (c, 12);
     }
   }
   else {
@@ -2840,18 +2843,13 @@ unsigned op_ae (e8086_t *c)
   unsigned short inc;
   int            z;
 
-  if (c->prefix & E86_PREFIX_SEG) {
-    e86_log_op (c, "scasb with seg override");
-  }
-
   seg = e86_get_es (c);
-
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (c->dreg[E86_REG_CX] > 0) {
+    while (e86_get_cx (c) > 0) {
       s1 = e86_get_al (c);
       s2 = e86_get_mem8 (c, seg, e86_get_di (c));
 
@@ -2859,6 +2857,9 @@ unsigned op_ae (e8086_t *c)
       e86_set_cx (c, e86_get_cx (c) - 1);
 
       e86_set_flg_sub_8 (c, s1, s2);
+
+      c->instructions += 1;
+      e86_set_clk (c, 15);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2872,6 +2873,7 @@ unsigned op_ae (e8086_t *c)
     e86_set_di (c, e86_get_di (c) + inc);
 
     e86_set_flg_sub_8 (c, s1, s2);
+    e86_set_clk (c, 15);
   }
 
   return (1);
@@ -2886,25 +2888,23 @@ unsigned op_af (e8086_t *c)
   unsigned short inc;
   int            z;
 
-  if (c->prefix & E86_PREFIX_SEG) {
-    e86_log_op (c, "scasw with seg override");
-  }
-
   seg = e86_get_es (c);
-
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (c->dreg[E86_REG_CX] > 0) {
-      s1 = c->dreg[E86_REG_AX];
-      s2 = e86_get_mem16 (c, seg, c->dreg[E86_REG_DI]);
+    while (e86_get_cx (c) > 0) {
+      s1 = e86_get_ax (c);
+      s2 = e86_get_mem16 (c, seg, e86_get_di (c));
 
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
 
       e86_set_flg_sub_16 (c, s1, s2);
+
+      c->instructions += 1;
+      e86_set_clk (c, 15);
 
       if (e86_get_zf (c) != z) {
         break;
@@ -2912,12 +2912,13 @@ unsigned op_af (e8086_t *c)
     }
   }
   else {
-    s1 = c->dreg[E86_REG_AX];
-    s2 = e86_get_mem16 (c, seg, c->dreg[E86_REG_DI]);
+    s1 = e86_get_ax (c);
+    s2 = e86_get_mem16 (c, seg, e86_get_di (c));
 
     e86_set_di (c, e86_get_di (c) + inc);
 
     e86_set_flg_sub_16 (c, s1, s2);
+    e86_set_clk (c, 15);
   }
 
   return (1);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.h                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.7 2003/04/20 00:22:51 hampa Exp $ */
+/* $Id: e8086.h,v 1.8 2003/04/20 20:36:16 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -272,9 +272,11 @@ unsigned long long e86_get_clock (e8086_t *c);
 
 unsigned long long e86_get_opcnt (e8086_t *c);
 
+unsigned long e86_get_delay (e8086_t *c);
+
 void e86_execute (e8086_t *c);
 
-void e86_clock (e8086_t *c);
+void e86_clock (e8086_t *c, unsigned n);
 
 
 
