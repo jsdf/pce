@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     floppy.c                                                   *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.2 2003/04/16 02:26:38 hampa Exp $ */
+/* $Id: floppy.c,v 1.3 2003/04/16 07:05:39 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -129,7 +129,7 @@ void flp_int13_read (floppy_t *flp, e8086_t *cpu)
     n -= 1;
     ofs = (ofs + 1) & 0xffff;
 
-    if (ofs == 0) {
+    if ((ofs == 0) && (n > 0)) {
       fprintf (stderr, "int13: wrap around on read\n");
     }
   }
