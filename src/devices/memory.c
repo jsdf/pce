@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.8 2003/12/23 03:08:59 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdlib.h>
@@ -117,6 +117,105 @@ unsigned long mem_blk_get_size (mem_blk_t *blk)
   return (blk->size);
 }
 
+void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val)
+{
+  unsigned char *tmp = (unsigned char *) buf;
+
+  tmp[addr] = val;
+}
+
+void buf_set_uint16_be (void *buf, unsigned long addr, unsigned short val)
+{
+  unsigned char *tmp = (unsigned char *) buf;
+
+  tmp[addr] = (val >> 8) & 0xff;
+  tmp[addr + 1] = val & 0xff;
+}
+
+void buf_set_uint16_le (void *buf, unsigned long addr, unsigned short val)
+{
+  unsigned char *tmp = (unsigned char *) buf;
+
+  tmp[addr] = val & 0xff;
+  tmp[addr + 1] = (val >> 8) & 0xff;
+}
+
+void buf_set_uint32_be (void *buf, unsigned long addr, unsigned long val)
+{
+  unsigned char *tmp = (unsigned char *) buf;
+
+  tmp[addr] = (val >> 24) & 0xff;
+  tmp[addr + 1] = (val >> 16) & 0xff;
+  tmp[addr + 2] = (val >> 8) & 0xff;
+  tmp[addr + 3] = val & 0xff;
+}
+
+void buf_set_uint32_le (void *buf, unsigned long addr, unsigned long val)
+{
+  unsigned char *tmp = (unsigned char *) buf;
+
+  tmp[addr] = val & 0xff;
+  tmp[addr + 1] = (val >> 8) & 0xff;
+  tmp[addr + 2] = (val >> 16) & 0xff;
+  tmp[addr + 3] = (val >> 24) & 0xff;
+}
+
+unsigned char buf_get_uint8 (const void *buf, unsigned long addr)
+{
+  const unsigned char *tmp = (const unsigned char *) buf;
+
+  return (tmp[addr]);
+}
+
+unsigned short buf_get_uint16_be (const void *buf, unsigned long addr)
+{
+  const unsigned char *tmp = (const unsigned char *) buf;
+  unsigned short      ret;
+
+  ret = tmp[addr + 1];
+  ret = (ret << 8) | tmp[addr];
+
+  return (ret);
+}
+
+unsigned short buf_get_uint16_le (const void *buf, unsigned long addr)
+{
+  const unsigned char *tmp = (const unsigned char *) buf;
+  unsigned short      ret;
+
+  ret = tmp[addr];
+  ret = (ret << 8) | tmp[addr + 1];
+
+  return (ret);
+}
+
+unsigned long buf_get_uint32_be (const void *buf, unsigned long addr)
+{
+  const unsigned char *tmp = (const unsigned char *) buf;
+  unsigned long       ret;
+
+  ret = tmp[addr + 3];
+  ret = (ret << 8) | tmp[addr + 2];
+  ret = (ret << 8) | tmp[addr + 1];
+  ret = (ret << 8) | tmp[addr];
+
+  return (ret);
+}
+
+unsigned long buf_get_uint32_le (const void *buf, unsigned long addr)
+{
+  const unsigned char *tmp = (const unsigned char *) buf;
+  unsigned long       ret;
+
+  ret = tmp[addr];
+  ret = (ret << 8) | tmp[addr + 1];
+  ret = (ret << 8) | tmp[addr + 2];
+  ret = (ret << 8) | tmp[addr + 3];
+
+  return (ret);
+}
+
+
 void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val)
 {
   blk->data[addr] = val;
@@ -150,12 +249,12 @@ void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long va
   blk->data[addr + 3] = (val >> 24) & 0xff;
 }
 
-unsigned char mem_blk_get_uint8 (mem_blk_t *blk, unsigned long addr)
+unsigned char mem_blk_get_uint8 (const mem_blk_t *blk, unsigned long addr)
 {
   return (blk->data[addr]);
 }
 
-unsigned short mem_blk_get_uint16_be (mem_blk_t *blk, unsigned long addr)
+unsigned short mem_blk_get_uint16_be (const mem_blk_t *blk, unsigned long addr)
 {
   unsigned short ret;
 
@@ -165,7 +264,7 @@ unsigned short mem_blk_get_uint16_be (mem_blk_t *blk, unsigned long addr)
   return (ret);
 }
 
-unsigned short mem_blk_get_uint16_le (mem_blk_t *blk, unsigned long addr)
+unsigned short mem_blk_get_uint16_le (const mem_blk_t *blk, unsigned long addr)
 {
   unsigned short ret;
 
@@ -175,7 +274,7 @@ unsigned short mem_blk_get_uint16_le (mem_blk_t *blk, unsigned long addr)
   return (ret);
 }
 
-unsigned long mem_blk_get_uint32_be (mem_blk_t *blk, unsigned long addr)
+unsigned long mem_blk_get_uint32_be (const mem_blk_t *blk, unsigned long addr)
 {
   unsigned long ret;
 
@@ -187,7 +286,7 @@ unsigned long mem_blk_get_uint32_be (mem_blk_t *blk, unsigned long addr)
   return (ret);
 }
 
-unsigned long mem_blk_get_uint32_le (mem_blk_t *blk, unsigned long addr)
+unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr)
 {
   unsigned long ret;
 

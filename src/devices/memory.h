@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.6 2003/12/23 03:08:59 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_MEMORY_H
@@ -39,6 +39,11 @@ typedef void (*mem_set_uint16_f) (void *blk, unsigned long addr, unsigned short 
 typedef void (*mem_set_uint32_f) (void *blk, unsigned long addr, unsigned long val);
 
 
+/*!***************************************************************************
+ * @short The memory block structure
+ *
+ * The access functions are used if data is NULL.
+ *****************************************************************************/
 typedef struct {
   mem_get_uint8_f  get_uint8;
   mem_get_uint16_f get_uint16;
@@ -118,17 +123,31 @@ void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
 unsigned long mem_blk_get_size (mem_blk_t *blk);
 
+
+void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val);
+void buf_set_uint16_be (void *buf, unsigned long addr, unsigned short val);
+void buf_set_uint16_le (void *buf, unsigned long addr, unsigned short val);
+void buf_set_uint32_be (void *buf, unsigned long addr, unsigned long val);
+void buf_set_uint32_le (void *buf, unsigned long addr, unsigned long val);
+
+unsigned char buf_get_uint8 (const void *buf, unsigned long addr);
+unsigned short buf_get_uint16_be (const void *buf, unsigned long addr);
+unsigned short buf_get_uint16_le (const void *buf, unsigned long addr);
+unsigned long buf_get_uint32_be (const void *buf, unsigned long addr);
+unsigned long buf_get_uint32_le (const void *buf, unsigned long addr);
+
+
 void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val);
 void mem_blk_set_uint16_be (mem_blk_t *blk, unsigned long addr, unsigned short val);
 void mem_blk_set_uint16_le (mem_blk_t *blk, unsigned long addr, unsigned short val);
 void mem_blk_set_uint32_be (mem_blk_t *blk, unsigned long addr, unsigned long val);
 void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long val);
 
-unsigned char mem_blk_get_uint8 (mem_blk_t *blk, unsigned long addr);
-unsigned short mem_blk_get_uint16_be (mem_blk_t *blk, unsigned long addr);
-unsigned short mem_blk_get_uint16_le (mem_blk_t *blk, unsigned long addr);
-unsigned long mem_blk_get_uint32_be (mem_blk_t *blk, unsigned long addr);
-unsigned long mem_blk_get_uint32_le (mem_blk_t *blk, unsigned long addr);
+unsigned char mem_blk_get_uint8 (const mem_blk_t *blk, unsigned long addr);
+unsigned short mem_blk_get_uint16_be (const mem_blk_t *blk, unsigned long addr);
+unsigned short mem_blk_get_uint16_le (const mem_blk_t *blk, unsigned long addr);
+unsigned long mem_blk_get_uint32_be (const mem_blk_t *blk, unsigned long addr);
+unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr);
 
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
