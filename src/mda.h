@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     mda.h                                                      *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.3 2003/04/18 20:05:50 hampa Exp $ */
+/* $Id: mda.h,v 1.4 2003/04/19 03:27:36 hampa Exp $ */
 
 
 #ifndef PCE_MDA_H
@@ -37,20 +37,19 @@ typedef struct {
 
   unsigned char crtc_reg[16];
 
-  unsigned      cur_pos;
+  unsigned      crtc_mode;
+  unsigned      crtc_pos;
 
-  unsigned      scn_x;
-  unsigned      scn_y;
-  unsigned      scn_a;
-
-  FILE          *fp;
+  term_t        trm;
 } mda_t;
 
 
-mda_t *mda_new (void);
+mda_t *mda_new (FILE *fp);
 void mda_del (mda_t *mda);
 
 void mda_clock (mda_t *mda);
+
+void mda_prt_state (mda_t *mda, FILE *fp);
 
 void mda_set_pos (mda_t *mda, unsigned pos);
 
