@@ -1,24 +1,22 @@
-.TH PCE 1 "2003-10-17" "pce" "HH"
-
+.TH PCE 1 "2003-12-24" "HH" "pce"
+\
 .SH NAME
 pce \- IBM PC emulator
-
+\
 .SH SYNOPSIS
-
 .BI pce " [options]"
-
+.PP
 .BI pce " --help"
-
+.PP
 .BI pce " --version"
-
+\
 .SH DESCRIPTION
 .BR pce (1)
 is an IBM PC hardware emulator. It emulates most of
 the hardware of an IBM PC 5150. The emulation is complete enough to
 boot DOS and run most DOS applications.
-
+\
 .SH OPTIONS
-
 .TP
 .B --help
 Print usage information
@@ -37,19 +35,32 @@ Set the config file name.
 \
 .TP
 .BI "-g, --video " string
-Set the video device. Possible devices are 'mda', 'cga', 'hgc' and 'ega'.
+Set the video device. Possible devices are
+.BR mda ", "
+.BR cga ", "
+.BR hgc " and "
+.BR ega "."
 There must be an entry for the selected device in the config file.
 \
 .TP
 .BI "-t, --terminal " string
-Set the terminal device. Possible devices are 'vt100', 'x11 and 'sdl'.
+Set the terminal device. Possible devices are
+.BR null ", "
+.BR vt100 ", "
+.BR x11 " and "
+.BR sdl "."
 There must be an entry for the selected device in the config file.
 \
 .TP
 .BI "-p, --cpu " model
-Select the CPU model to be emulated. Possible values are '8086',
-'8088', '80186', '80188', 'v20' and 'v30'. This overrides the
-cpu model specified in the config file.
+Select the CPU model to be emulated. Possible values are
+.BR 8086 ", "
+.BR 8088 ", "
+.BR 80186 ", "
+.BR 80188 ", "
+.BR v20 " and "
+.BR v30 "."
+This overrides the cpu model specified in the config file.
 \
 .TP
 .B "-v, --verbose"
@@ -62,10 +73,9 @@ Write log messages to the file specified instead of stdout.
 .TP
 .B "-r, --run"
 Start running immediately
-
-
+\
 .SH SEE ALSO
-.BR bochs (1), mtools (1)
-
+.BR bochs "(1), " mtools (1)
+\
 .SH AUTHOR
 Hampa Hug <hampa@hampa.ch>
