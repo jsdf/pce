@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.h                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.4 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: ega.h,v 1.5 2003/09/24 01:09:55 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_EGA_H
@@ -74,8 +74,6 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct);
 
 void ega_del (ega_t *ega);
 
-void ega_clock (ega_t *ega);
-
 void ega_prt_state (ega_t *ega, FILE *fp);
 
 int ega_dump (ega_t *ega, FILE *fp);
@@ -94,6 +92,8 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val);
 void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val);
 unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr);
 unsigned short ega_reg_get_uint16 (ega_t *ega, unsigned long addr);
+
+void ega_clock (ega_t *ega, unsigned long cnt);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.35 2003/09/22 05:15:25 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.36 2003/09/24 01:09:55 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -767,15 +767,18 @@ void pc_clock (ibmpc_t *pc)
   }
 
   if (pc->clk_div[2] >= 4096) {
-    unsigned i;
+    unsigned      i;
+    unsigned long clk;
 
-    if (pc->trm != NULL) {
-      trm_check (pc->trm);
-    }
+    clk = pc->clk_div[2] & ~4095;
+
+    pce_video_clock (pc->video, clk);
+
+    trm_check (pc->trm);
 
     for (i = 0; i < 4; i++) {
       if (pc->serport[i] != NULL) {
-        ser_clock (pc->serport[i], pc->clk_div[2] >> 12);
+        ser_clock (pc->serport[i], clk);
       }
     }
 
@@ -791,7 +794,7 @@ void pc_clock (ibmpc_t *pc)
       pc->key_i += 1;
 
       if (pc->key_i < pc->key_j) {
-        pc->key_clk = 1000;
+        pc->key_clk = 4096;
       }
       else {
         pc->key_i = 0;

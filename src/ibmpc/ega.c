@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.8 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: ega.c,v 1.9 2003/09/24 01:09:55 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -90,6 +90,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->vid.prt_state = (pce_video_prt_state_f) &ega_prt_state;
   ega->vid.dump = (pce_video_dump_f) &ega_dump;
   ega->vid.screenshot = (pce_video_screenshot_f) &ega_screenshot;
+  ega->vid.clock = (pce_video_clock_f) &ega_clock;
 
   pce_smap_init (&ega->smap, 320, 200, 320, 200);
 
@@ -147,10 +148,6 @@ void ega_del (ega_t *ega)
     free (ega->data);
     free (ega);
   }
-}
-
-void ega_clock (ega_t *ega)
-{
 }
 
 void ega_prt_state (ega_t *ega, FILE *fp)
@@ -1289,4 +1286,18 @@ unsigned short ega_reg_get_uint16 (ega_t *ega, unsigned long addr)
   ret |= ega_reg_get_uint8 (ega, addr + 1) << 8;
 
   return (ret);
+}
+
+void ega_clock (ega_t *ega, unsigned long cnt)
+{
+  static unsigned upd_cnt = 0;
+
+  if (ega->update) {
+    upd_cnt += 1;
+
+    if (upd_cnt > 16) {
+      upd_cnt = 0;
+      ega_update (ega);
+    }
+  }
 }
