@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.19 2003/09/19 14:46:48 hampa Exp $ */
+/* $Id: pce.h,v 1.20 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -72,6 +72,11 @@ extern unsigned long par_int28;
 void pce_log_set_fp (FILE *fp, int close);
 void pce_log_set_fname (const char *fname);
 void pce_log (unsigned level, const char *str, ...);
+
+
+void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
+  unsigned long addr, unsigned cols, char *prefix, int ascii
+);
 
 
 #include <e8086/e8086.h>

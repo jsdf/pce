@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.26 2003/09/21 21:11:18 hampa Exp $ */
+/* $Id: pce.c,v 1.27 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -655,6 +655,66 @@ void prt_uint8_bin (FILE *fp, unsigned char val)
   }
 }
 
+void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
+  unsigned long addr, unsigned cols, char *prefix, int ascii)
+{
+  unsigned long i;
+  unsigned      col;
+  unsigned char *data;
+  unsigned char line[256];
+
+  col = 0;
+  data = (unsigned char *) buf;
+
+  for (i = 0; i < n; i++) {
+    fputs ((col == 0) ? prefix : " ", fp);
+
+    fprintf (fp, "%02X", data[i]);
+
+    if ((data[i] >= 0x20) && (data[i] <= 0x7f)) {
+      line[col] = data[i];
+    }
+    else {
+      line[col] = '.';
+    }
+
+    col += 1;
+    if (col >= cols) {
+      fprintf (fp, "\t# %08lX", addr + i - (i % cols));
+
+      if (ascii) {
+        fputs ("  ", fp);
+        fwrite (line, 1, col, fp);
+      }
+
+      fputs ("\n", fp);
+
+      col = 0;
+    }
+  }
+
+  if (col > 0) {
+    unsigned col1, col2;
+
+    col1 = strlen (prefix) + 3 * col - 1;
+    col2 = (strlen (prefix) + 3 * cols - 1 + 8) & ~7;
+
+    do {
+      fputs ("\t", fp);
+      col1 = (col1 + 8) & ~7;
+    } while (col1 < col2);
+
+    fprintf (fp, "# %08lX", addr + i - (i % cols));
+
+    if (ascii) {
+      fputs ("  ", fp);
+      fwrite (line, 1, col, fp);
+    }
+
+    fputs ("\n", fp);
+  }
+}
+
 void prt_state_time (FILE *fp)
 {
   double ratio;
@@ -1122,17 +1182,41 @@ void do_c (cmd_t *cmd)
 void do_dump (cmd_t *cmd)
 {
   FILE *fp;
+  char what[256];
+  char fname[256];
+
+  if (!cmd_match_str (cmd, what)) {
+    cmd_error (cmd, "don't know what to dump");
+    return;
+  }
+
+  if (!cmd_match_str (cmd, fname)) {
+    cmd_error (cmd, "need a file name");
+    return;
+  }
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
-  fp = fopen ("memory.dat", "wb");
+  fp = fopen (fname, "wb");
   if (fp == NULL) {
+    prt_error ("dump: can't open file (%s)\n", fname);
     return;
   }
 
-  fwrite (pc->ram->data, 1, pc->ram->size, fp);
+  if (strcmp (what, "ram") == 0) {
+    fprintf (fp, "# RAM dump\n\n");
+    pce_dump_hex (fp, pc->ram->data, pc->ram->size, 0, 16, "", 1);
+  }
+  else if (strcmp (what, "video") == 0) {
+    if (pce_video_dump (pc->video, fp)) {
+      prt_error ("dumping video failed\n");
+    }
+  }
+  else {
+    prt_error ("dump: don't know what to dump (%s)\n", what);
+  }
 
   fclose (fp);
 }

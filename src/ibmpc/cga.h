@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.h                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.9 2003/09/13 18:11:17 hampa Exp $ */
+/* $Id: cga.h,v 1.10 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -63,6 +63,8 @@ void cga_del (cga_t *cga);
 void cga_clock (cga_t *cga);
 
 void cga_prt_state (cga_t *cga, FILE *fp);
+
+int cga_dump (cga_t *cga, FILE *fp);
 
 mem_blk_t *cga_get_mem (cga_t *cga);
 mem_blk_t *cga_get_reg (cga_t *cga);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/video.h                                          *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.h,v 1.4 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: video.h,v 1.5 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #ifndef PCE_VIDEO_H
@@ -41,6 +41,7 @@ typedef void (*pce_video_del_f) (void *ext);
 typedef mem_blk_t *(*pce_video_get_mem_f) (void *ext);
 typedef mem_blk_t *(*pce_video_get_reg_f) (void *ext);
 typedef void (*pce_video_prt_state_f) (void *ext, FILE *fp);
+typedef int (*pce_video_dump_f) (void *ext, FILE *fp);
 typedef int (*pce_video_screenshot_f) (void *ext, FILE *fp, unsigned mode);
 
 
@@ -65,6 +66,7 @@ typedef struct {
   pce_video_get_mem_f    get_mem;
   pce_video_get_reg_f    get_reg;
   pce_video_prt_state_f  prt_state;
+  pce_video_dump_f       dump;
   pce_video_screenshot_f screenshot;
 
   void     *ext;
@@ -80,6 +82,8 @@ mem_blk_t *pce_video_get_mem (video_t *vid);
 mem_blk_t *pce_video_get_reg (video_t *vid);
 
 void pce_video_prt_state (video_t *vid, FILE *fp);
+
+int pce_video_dump (video_t *vid, FILE *fp);
 
 int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 

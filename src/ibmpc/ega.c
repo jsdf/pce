@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.7 2003/09/22 23:03:10 hampa Exp $ */
+/* $Id: ega.c,v 1.8 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -88,6 +88,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->vid.get_mem = (pce_video_get_mem_f) &ega_get_mem;
   ega->vid.get_reg = (pce_video_get_reg_f) &ega_get_reg;
   ega->vid.prt_state = (pce_video_prt_state_f) &ega_prt_state;
+  ega->vid.dump = (pce_video_dump_f) &ega_dump;
   ega->vid.screenshot = (pce_video_screenshot_f) &ega_screenshot;
 
   pce_smap_init (&ega->smap, 320, 200, 320, 200);
@@ -205,6 +206,31 @@ void ega_prt_state (ega_t *ega, FILE *fp)
   fputs ("]\n", fp);
 
   fflush (fp);
+}
+
+int ega_dump (ega_t *ega, FILE *fp)
+{
+  fprintf (fp, "# EGA dump\n");
+
+  fprintf (fp, "\n# REGS:\n");
+  pce_dump_hex (fp, ega->reg->data, ega->reg->size, ega->reg->base, 16, "# ", 0);
+
+  fprintf (fp, "\n# CRTC:\n");
+  pce_dump_hex (fp, ega->crtc_reg, 24, 0, 16, "# ", 0);
+
+  fprintf (fp, "\n# TS:\n");
+  pce_dump_hex (fp, ega->ts_reg, 5, 0, 16, "# ", 0);
+
+  fprintf (fp, "\n# GDC:\n");
+  pce_dump_hex (fp, ega->gdc_reg, 9, 0, 16, "# ", 0);
+
+  fprintf (fp, "\n# ATC:\n");
+  pce_dump_hex (fp, ega->atc_reg, 21, 0, 16, "# ", 0);
+
+  fputs ("\n\n# RAM:\n", fp);
+  pce_dump_hex (fp, ega->data, 256 * 1024, 0, 16, "", 1);
+
+  return (0);
 }
 
 mem_blk_t *ega_get_mem (ega_t *ega)

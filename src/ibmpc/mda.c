@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.11 2003/09/22 02:38:14 hampa Exp $ */
+/* $Id: mda.c,v 1.12 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -81,9 +81,10 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
   mda->vid.get_mem = (pce_video_get_mem_f) &mda_get_mem;
   mda->vid.get_reg = (pce_video_get_reg_f) &mda_get_reg;
   mda->vid.prt_state = (pce_video_prt_state_f) &mda_prt_state;
+  mda->vid.dump = (pce_video_dump_f) &mda_dump;
   mda->vid.screenshot = (pce_video_screenshot_f) &mda_screenshot;
 
-  for (i = 0; i < 16; i++) {
+  for (i = 0; i < 18; i++) {
     mda->crtc_reg[i] = 0;
   }
 
@@ -163,6 +164,22 @@ void mda_prt_state (mda_t *mda, FILE *fp)
   fputs ("]\n", fp);
 
   fflush (fp);
+}
+
+int mda_dump (mda_t *mda, FILE *fp)
+{
+  fprintf (fp, "# MDA dump\n");
+
+  fprintf (fp, "\n# REGS:\n");
+  pce_dump_hex (fp, mda->reg->data, mda->reg->size, mda->reg->base, 16, "# ", 0);
+
+  fprintf (fp, "\n# CRTC:\n");
+  pce_dump_hex (fp, mda->crtc_reg, 18, 0, 16, "# ", 0);
+
+  fputs ("\n\n# RAM:\n", fp);
+  pce_dump_hex (fp, mda->mem->data, mda->mem->size, mda->mem->base, 16, "", 1);
+
+  return (0);
 }
 
 mem_blk_t *mda_get_mem (mda_t *mda)

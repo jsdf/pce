@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.14 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: cga.c,v 1.15 2003/09/23 00:39:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -67,6 +67,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->vid.get_mem = (pce_video_get_mem_f) &cga_get_mem;
   cga->vid.get_reg = (pce_video_get_reg_f) &cga_get_reg;
   cga->vid.prt_state = (pce_video_prt_state_f) &cga_prt_state;
+  cga->vid.dump = (pce_video_dump_f) &cga_dump;
   cga->vid.screenshot = (pce_video_screenshot_f) &cga_screenshot;
 
   pce_smap_init (&cga->smap, 320, 200, 320, 200);
@@ -175,6 +176,22 @@ void cga_prt_state (cga_t *cga, FILE *fp)
   fputs ("]\n", fp);
 
   fflush (fp);
+}
+
+int cga_dump (cga_t *cga, FILE *fp)
+{
+  fprintf (fp, "# CGA dump\n");
+
+  fprintf (fp, "\n# REGS:\n");
+  pce_dump_hex (fp, cga->reg->data, cga->reg->size, cga->reg->base, 16, "# ", 0);
+
+  fprintf (fp, "\n# CRTC:\n");
+  pce_dump_hex (fp, cga->crtc_reg, 18, 0, 16, "# ", 0);
+
+  fputs ("\n\n# RAM:\n", fp);
+  pce_dump_hex (fp, cga->mem->data, cga->mem->size, cga->mem->base, 16, "", 1);
+
+  return (0);
 }
 
 mem_blk_t *cga_get_mem (cga_t *cga)
