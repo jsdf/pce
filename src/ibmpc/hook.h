@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ibmpc.h                                          *
- * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/ibmpc/hook.h                                           *
+ * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,61 +20,26 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.11 2003/09/02 11:46:01 hampa Exp $ */
+/* $Id: hook.h,v 1.1 2003/09/02 11:46:01 hampa Exp $ */
 
 
-#ifndef PCE_IBMPC_H
-#define PCE_IBMPC_H 1
+#ifndef PCE_HOOK_H
+#define PCE_HOOK_H 1
 
 
-typedef struct {
-  e8086_t       *cpu;
-  video_t       *video;
-  disks_t       *dsk;
-  mouse_t       *mse;
-
-  memory_t      *mem;
-  mem_blk_t     *ram;
-
-  memory_t      *prt;
-
-  e8253_t       *pit;
-  mem_blk_t     *pit_prt;
-
-  e8255_t       *ppi;
-  mem_blk_t     *ppi_prt;
-  unsigned char ppi_port_a[2];
-  unsigned char ppi_port_b;
-  unsigned char ppi_port_c[2];
-
-  unsigned      key_i;
-  unsigned      key_j;
-  unsigned long key_clk;
-  unsigned char key_buf[256];
-
-  e8259_t       *pic;
-  mem_blk_t     *pic_prt;
-
-  xms_t         *xms;
-
-  terminal_t    *trm;
-
-  parport_t     *parport[4];
-
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
-
-  unsigned           brk;
-} ibmpc_t;
+#define PCEH_STOP     0x0000
+#define PCEH_ABORT    0x0100
+#define PCEH_SET_BOOT 0x0001
+#define PCEH_GET_BOOT 0x0002
+#define PCEH_XMS      0x0003
+#define PCEH_XMS_INFO 0x0103
+#define PCEH_INT      0x00cd
 
 
-ibmpc_t *pc_new (ini_sct_t *ini);
+void pc_int_15 (ibmpc_t *pc);
+void pc_int_1a (ibmpc_t *pc);
 
-void pc_del (ibmpc_t *pc);
-
-void pc_clock (ibmpc_t *pc);
-
-void pc_break (ibmpc_t *pc, unsigned char val);
+void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.26 2003/09/01 13:17:18 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.27 2003/09/02 11:46:01 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -528,6 +528,36 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t     *sct;
+  unsigned long size;
+
+  pc->xms = NULL;
+
+  sct = ini_sct_find_sct (ini, "xms");
+  if (sct == NULL) {
+    return;
+  }
+
+  size = 16UL * 1024UL * 1024UL;
+  ini_get_ulng (sct, "size", &size, size);
+  if (ini_get_ulng (sct, "sizek", &size, size) == 0) {
+    size *= 1024;
+  }
+  if (ini_get_ulng (sct, "sizem", &size, size) == 0) {
+    size *= 1024 * 1024;
+  }
+
+  if (size >= 64UL * 1024UL * 1024UL) {
+    size = 64UL * 1024UL * 1024UL - 1;
+  }
+
+  pce_log (MSG_INF, "xms:\tsize=%lu (%luM)\n", size, size / (1024 * 1024));
+
+  pc->xms = xms_new (size);
+}
+
 ibmpc_t *pc_new (ini_sct_t *ini)
 {
   unsigned  i;
@@ -570,8 +600,15 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_disks (pc, ini);
   pc_setup_mouse (pc, ini);
   pc_setup_parport (pc, ini);
+  pc_setup_xms (pc, ini);
 
   return (pc);
+}
+
+void pc_del_xms (ibmpc_t *pc)
+{
+  xms_del (pc->xms);
+  pc->xms = NULL;
 }
 
 void pc_del_mouse (ibmpc_t *pc)
@@ -599,6 +636,7 @@ void pc_del (ibmpc_t *pc)
     return;
   }
 
+  pc_del_xms (pc);
   pc_del_parport (pc);
   pc_del_mouse (pc);
 
@@ -687,98 +725,6 @@ void pc_break (ibmpc_t *pc, unsigned char val)
   }
   else if (val == PCE_BRK_SNAP) {
     pc_screenshot (pc);
-  }
-}
-
-unsigned get_bcd_8 (unsigned n)
-{
-  return ((n % 10) + 16 * ((n / 10) % 10));
-}
-
-void pc_int_1a (ibmpc_t *pc)
-{
-  time_t    tm;
-  struct tm *tval;
-
-  switch (e86_get_ah (pc->cpu)) {
-    case 0x00:
-      e86_set_dx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6c));
-      e86_set_cx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6e));
-      e86_set_al (pc->cpu, e86_get_mem8 (pc->cpu, 0x40, 0x70));
-      e86_set_mem8 (pc->cpu, 0x40, 0x70, 0);
-      e86_set_cf (pc->cpu, 0);
-      break;
-
-    case 0x01:
-      e86_set_mem16 (pc->cpu, 0x40, 0x6c, e86_get_dx (pc->cpu));
-      e86_set_mem16 (pc->cpu, 0x40, 0x6e, e86_get_cx (pc->cpu));
-      e86_set_cf (pc->cpu, 0);
-      break;
-
-    case 0x02:
-      tm = time (NULL);
-      tval = localtime (&tm);
-      e86_set_ch (pc->cpu, get_bcd_8 (tval->tm_hour));
-      e86_set_cl (pc->cpu, get_bcd_8 (tval->tm_min));
-      e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_sec));
-      e86_set_cf (pc->cpu, 0);
-      break;
-
-    case 0x03:
-      break;
-
-    case 0x04:
-      tm = time (NULL);
-      tval = localtime (&tm);
-      e86_set_ch (pc->cpu, get_bcd_8 ((1900 + tval->tm_year) / 100));
-      e86_set_cl (pc->cpu, get_bcd_8 (1900 + tval->tm_year));
-      e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_mon + 1));
-      e86_set_dl (pc->cpu, get_bcd_8 (tval->tm_mday));
-      e86_set_cf (pc->cpu, 0);
-      break;
-
-    case 0x05:
-      break;
-
-    default:
-      e86_set_cf (pc->cpu, 1);
-      break;
-  }
-}
-
-void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
-{
-  ibmpc_t *pc;
-
-  pc = (ibmpc_t *) ext;
-
-  if (op1 == 0xcd) {
-   if (op2 == 0x13) {
-      dsk_int13 (pc->dsk, pc->cpu);
-    }
-    else if (op2 == 0x1a) {
-      pc_int_1a (pc);
-    }
-  }
-  else if ((op1 == 0x00) && (op2 == 0x00)) {
-    pc->brk = 1;
-  }
-  else if ((op1 == 0x00) && (op2 == 0x01)) {
-    pc->brk = 2;
-  }
-  else if (op1 == 0x01) {
-    if (op2 == 0x00) {
-      pce_log (MSG_INF, "set boot drive to %u\n", e86_get_al (pc->cpu));
-      par_boot = e86_get_al (pc->cpu);
-    }
-  }
-  else if (op1 == 0x02) {
-    if (op2 == 0x00) {
-      e86_set_al (pc->cpu, par_boot);
-    }
-  }
-  else {
-    fprintf (stderr, "hook: %02X %02X\n", op1, op2);
   }
 }
 
