@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -425,9 +425,25 @@ int p405_set_xlat16 (p405_t *c, uint32_t addr, unsigned xlat, uint16_t val);
 int p405_set_xlat32 (p405_t *c, uint32_t addr, unsigned xlat, uint32_t val);
 
 
+/*!***************************************************************************
+ * @short Initialize a PowerPC 405 context struct
+ *****************************************************************************/
 void p405_init (p405_t *c);
+
+/*!***************************************************************************
+ * @short  Create and initialize a PowerPC 405 context struct
+ * @return The ppc405 struct or NULL on error
+ *****************************************************************************/
 p405_t *p405_new (void);
+
+/*!***************************************************************************
+ * @short Free the resources used by a ppc405 struct
+ *****************************************************************************/
 void p405_free (p405_t *c);
+
+/*!***************************************************************************
+ * @short Delete a ppc405 struct
+ *****************************************************************************/
 void p405_del (p405_t *c);
 
 void p405_set_mem_fct (p405_t *c, void *ext,
@@ -443,8 +459,19 @@ unsigned long long p405_get_opcnt (p405_t *c);
 unsigned long long p405_get_clkcnt (p405_t *c);
 unsigned long p405_get_delay (p405_t *c);
 
+/*!***************************************************************************
+ * @short Get a byte from a physical address
+ *****************************************************************************/
 uint8_t p405_get_mem8 (p405_t *c, uint32_t addr);
+
+/*!***************************************************************************
+ * @short Get a 16 bit word from a physical address
+ *****************************************************************************/
 uint16_t p405_get_mem16 (p405_t *c, uint32_t addr);
+
+/*!***************************************************************************
+ * @short Get a 32 bit word from a physical address
+ *****************************************************************************/
 uint32_t p405_get_mem32 (p405_t *c, uint32_t addr);
 
 void p405_set_mem8 (p405_t *c, uint32_t addr, uint8_t val);
@@ -456,6 +483,9 @@ void p405_set_dcr (p405_t *c, unsigned long dcrn, unsigned long val);
 
 void p405_undefined (p405_t *c);
 
+/*!***************************************************************************
+ * @short The external interrupt input signal
+ *****************************************************************************/
 void p405_interrupt (p405_t *c, unsigned char val);
 
 void p405_reset (p405_t *c);

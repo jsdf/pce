@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.1 2003/12/20 01:01:37 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
