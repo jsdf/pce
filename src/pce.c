@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.4 2003/04/16 14:16:07 hampa Exp $ */
+/* $Id: pce.c,v 1.5 2003/04/17 11:47:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -797,6 +797,9 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "cpu")) {
       e86_prt_state (pc->cpu, stdout);
     }
+    else if (cmd_match (cmd, "ppi")) {
+      e8255_prt_state (pc->ppi, stdout);
+    }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
       return;
@@ -1053,7 +1056,7 @@ int main (int argc, char *argv[])
     ops_cnt[i] = 0;
   }
 
-  pc = pc_new ();
+  pc = pc_new (512);
   pc->cpu->opstat = &pc_opstat;
 
   e86_reset (pc->cpu);
