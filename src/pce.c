@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.5 2003/04/17 11:47:57 hampa Exp $ */
+/* $Id: pce.c,v 1.6 2003/04/18 20:08:26 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -553,7 +553,7 @@ void prt_state (ibmpc_t *pc, FILE *fp)
 
 void prt_prompt (FILE *fp)
 {
-  fputs ("-", fp);
+  fputs ("\x1b[0;37;40m-", fp);
   fflush (fp);
 }
 
@@ -564,6 +564,16 @@ void prt_error (const char *str, ...)
   va_start (va, str);
   vfprintf (stderr, str, va);
   va_end (va);
+}
+
+void cpu_exec (void)
+{
+  unsigned long old;
+
+  old = pc->cpu->instructions;
+  while (pc->cpu->instructions == old) {
+    pc_clock (pc);
+  }
 }
 
 void do_dump (cmd_t *cmd)
@@ -582,53 +592,6 @@ void do_dump (cmd_t *cmd)
   fwrite (pc->ram->data, 1, pc->ram->size, fp);
 
   fclose (fp);
-}
-
-void do_bg (cmd_t *cmd)
-{
-  breakpoint_t   *bp;
-  unsigned short seg, ofs;
-  unsigned long  old;
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  key_set_fd (pc->key, 0);
-
-  while (1) {
-    old = pc->cpu->instructions;
-    while (pc->cpu->instructions == old) {
-      pc_clock (pc);
-    }
-
-    seg = e86_get_cs (pc->cpu);
-    ofs = e86_get_ip (pc->cpu);
-
-    bp = bp_get (seg, ofs);
-
-    if (bp != NULL) {
-      if (bp->pass > 0) {
-        bp->pass--;
-      }
-
-      if (bp->pass == 0) {
-        if (bp->reset == 0) {
-          bp_clear (seg, ofs);
-        }
-        else {
-          bp->pass = bp->reset;
-          bp_print (bp, "brk: ");
-        }
-
-        break;
-      }
-    }
-  }
-
-  key_set_fd (pc->key, -1);
-
-  prt_state (pc, stdout);
 }
 
 void do_bl (cmd_t *cmd)
@@ -698,9 +661,6 @@ void do_b (cmd_t *cmd)
   if (cmd_match (cmd, "l")) {
     do_bl (cmd);
   }
-  else if (cmd_match (cmd, "g")) {
-    do_bg (cmd);
-  }
   else if (cmd_match (cmd, "s")) {
     do_bs (cmd);
   }
@@ -710,57 +670,6 @@ void do_b (cmd_t *cmd)
   else {
     prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
   }
-}
-
-void do_p (cmd_t *cmd)
-{
-  unsigned short seg, ofs;
-  e86_disasm_t   op;
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  e86_disasm_cur (pc->cpu, &op);
-
-  seg = e86_get_cs (pc->cpu);
-  ofs = e86_get_ip (pc->cpu) + op.dat_n;
-
-  key_set_fd (pc->key, 0);
-
-  while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
-    pc_clock (pc);
-  }
-
-  while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs)) {
-    pc_clock (pc);
-  }
-
-  key_set_fd (pc->key, -1);
-
-  prt_state (pc, stdout);
-}
-
-void do_g (cmd_t *cmd)
-{
-  unsigned long cnt;
-  unsigned long inst;
-
-  cnt = 1;
-
-  cmd_match_uint32 (cmd, &cnt);
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  inst = pc->cpu->instructions + cnt;
-
-  while (pc->cpu->instructions < inst) {
-    pc_clock (pc);
-  }
-
-  prt_state (pc, stdout);
 }
 
 void do_c (cmd_t *cmd)
@@ -783,6 +692,112 @@ void do_c (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_e (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+  unsigned short val;
+
+  seg = 0;
+  ofs = 0;
+
+  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+    cmd_error (cmd, "need an address");
+  }
+
+  while (cmd_match_uint16 (cmd, &val)) {
+    mem_set_uint8 (pc->mem, (seg << 4) + ofs, val);
+    ofs = (ofs + 1) & 0xffff;
+  }
+}
+
+void do_g (cmd_t *cmd)
+{
+  breakpoint_t   *bp;
+  unsigned short seg, ofs;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  key_set_fd (pc->key, 0);
+
+  while (1) {
+    cpu_exec();
+
+    seg = e86_get_cs (pc->cpu);
+    ofs = e86_get_ip (pc->cpu);
+
+    bp = bp_get (seg, ofs);
+
+    if (bp != NULL) {
+      if (bp->pass > 0) {
+        bp->pass--;
+      }
+
+      if (bp->pass == 0) {
+        if (bp->reset == 0) {
+          bp_clear (seg, ofs);
+        }
+        else {
+          bp->pass = bp->reset;
+          bp_print (bp, "brk: ");
+        }
+
+        break;
+      }
+    }
+
+    if (pc->brk) {
+      pc->brk = 0;
+      break;
+    }
+  }
+
+  key_set_fd (pc->key, -1);
+
+  fputs ("\n", stdout);
+  prt_state (pc, stdout);
+}
+
+void do_p (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+  e86_disasm_t   op;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  e86_disasm_cur (pc->cpu, &op);
+
+  seg = e86_get_cs (pc->cpu);
+  ofs = e86_get_ip (pc->cpu) + op.dat_n;
+
+  key_set_fd (pc->key, 0);
+
+  pc->brk = 0;
+
+  while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
+    pc_clock (pc);
+
+    if (pc->brk) {
+      break;
+    }
+  }
+
+  while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs)) {
+    pc_clock (pc);
+
+    if (pc->brk) {
+      break;
+    }
+  }
+
+  key_set_fd (pc->key, -1);
+
+  prt_state (pc, stdout);
+}
+
 void do_s (cmd_t *cmd)
 {
   if (cmd_match_eol (cmd)) {
@@ -800,11 +815,38 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "ppi")) {
       e8255_prt_state (pc->ppi, stdout);
     }
+    else if (cmd_match (cmd, "cga")) {
+      cga_prt_state (pc->cga, stdout);
+    }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
       return;
     }
   }
+}
+
+void do_t (cmd_t *cmd)
+{
+  unsigned long cnt;
+  unsigned long inst;
+
+  cnt = 1;
+
+  cmd_match_uint32 (cmd, &cnt);
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  inst = pc->cpu->instructions + cnt;
+
+  pc->brk = 0;
+
+  while ((pc->cpu->instructions < inst) && (pc->brk == 0)) {
+    pc_clock (pc);
+  }
+
+  prt_state (pc, stdout);
 }
 
 void do_u (cmd_t *cmd)
@@ -1045,21 +1087,9 @@ void do_i (cmd_t *cmd)
   }
 }
 
-int main (int argc, char *argv[])
+int do_cmd (void)
 {
-  unsigned i;
-  cmd_t    cmd;
-
-  printf ("8086 CPU emulator by Hampa '99\n\n");
-
-  for (i = 0; i < 256; i++) {
-    ops_cnt[i] = 0;
-  }
-
-  pc = pc_new (512);
-  pc->cpu->opstat = &pc_opstat;
-
-  e86_reset (pc->cpu);
+  cmd_t  cmd;
 
   while (1) {
     prt_prompt (stdout);
@@ -1067,11 +1097,20 @@ int main (int argc, char *argv[])
 
     cmd_get (&cmd);
 
-    if (cmd_match (&cmd, "b")) {
+    if (cmd_match (&cmd, "dump")) {
+      do_dump (&cmd);
+    }
+    else if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
     }
     else if (cmd_match (&cmd, "c")) {
       do_c (&cmd);
+    }
+    else if (cmd_match (&cmd, "d")) {
+      do_d (&cmd);
+    }
+    else if (cmd_match (&cmd, "e")) {
+      do_e (&cmd);
     }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
@@ -1085,20 +1124,17 @@ int main (int argc, char *argv[])
     else if (cmd_match (&cmd, "q")) {
       break;
     }
-    else if (cmd_match (&cmd, "s")) {
-      do_s (&cmd);
-    }
-    else if (cmd_match (&cmd, "u")) {
-      do_u (&cmd);
-    }
-    else if (cmd_match (&cmd, "d")) {
-      do_d (&cmd);
-    }
     else if (cmd_match (&cmd, "r")) {
       do_r (&cmd);
     }
-    else if (cmd_match (&cmd, "dump")) {
-      do_dump (&cmd);
+    else if (cmd_match (&cmd, "s")) {
+      do_s (&cmd);
+    }
+    else if (cmd_match (&cmd, "t")) {
+      do_t (&cmd);
+    }
+    else if (cmd_match (&cmd, "u")) {
+      do_u (&cmd);
     }
     else if (cmd.str[cmd.i] == 0) {
       ;
@@ -1107,6 +1143,28 @@ int main (int argc, char *argv[])
       printf ("unknown command (%s)\n", cmd.str);
     }
   };
+
+  return (0);
+}
+
+int main (int argc, char *argv[])
+{
+  unsigned i;
+
+  printf ("8086 CPU emulator by Hampa 1995-2003\n\n");
+
+  for (i = 0; i < 256; i++) {
+    ops_cnt[i] = 0;
+  }
+
+  pc = pc_new (512);
+  pc->cpu->opstat = &pc_opstat;
+
+  e86_reset (pc->cpu);
+
+  do_cmd();
+
+  pc_del (pc);
 
   return (0);
 }
