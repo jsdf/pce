@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.4 2003/12/23 05:04:10 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.5 2003/12/24 05:52:55 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -40,11 +40,28 @@ void pc_break (ibmpc_t *pc, unsigned char val);
 void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
 
+static
+int pc_load_ram (mem_blk_t *blk, const char *fname)
+{
+  FILE *fp;
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  fread (blk->data, 1, blk->size, fp);
+
+  fclose (fp);
+
+  return (0);
+}
+
+static
 void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
   mem_blk_t     *ram;
-  FILE          *fp;
   char          *fname;
   unsigned long base, size;
 
@@ -77,28 +94,20 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (fname != NULL) {
-      fp = fopen (fname, "rb");
-      if (fp == NULL) {
-        pce_log (MSG_ERR, "loading ram failed (%s)\n", fname);
+      if (pc_load_ram (ram, fname)) {
+        pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
       }
-      else {
-        if (fread (ram->data, 1, size, fp) != size) {
-          pce_log (MSG_ERR, "loading ram data failed (%s)\n", fname);
-        }
-      }
-
-      fclose (fp);
     }
 
     sct = ini_sct_find_next (sct, "ram");
   }
 }
 
+static
 void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
   mem_blk_t     *rom;
-  FILE          *fp;
   char          *fname;
   unsigned long base, size;
 
@@ -111,22 +120,13 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 
     pce_log (MSG_INF, "ROM:\tbase=0x%05x size=%lu file=%s\n", base, size, fname);
 
-    fp = fopen (fname, "rb");
-    if (fp == NULL) {
-      pce_log (MSG_ERR, "loading rom failed (%s)\n", fname);
-    }
-    else {
-      rom = mem_blk_new (base, size, 1);
-      mem_blk_clear (rom, 0x00);
-      mem_blk_set_ro (rom, 1);
-      mem_add_blk (pc->mem, rom, 1);
+    rom = mem_blk_new (base, size, 1);
+    mem_blk_clear (rom, 0x00);
+    mem_blk_set_ro (rom, 1);
+    mem_add_blk (pc->mem, rom, 1);
 
-      fread (rom->data, 1, size, fp);
-//      if (fread (rom->data, 1, size, fp) != size) {
-//        pce_log (MSG_ERR, "loading rom data failed (%s)\n", fname);
-//      }
-
-      fclose (fp);
+    if (pc_load_ram (rom, fname)) {
+      pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
     }
 
     sct = ini_sct_find_next (sct, "rom");
@@ -156,7 +156,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 
   pc->nvr = nvr_new (base, size);
   if (pc->nvr == NULL) {
-    pce_log (MSG_ERR, "creating nvram failed\n");
+    pce_log (MSG_ERR, "*** creating nvram failed\n");
     return;
   }
 
@@ -166,7 +166,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 
   if (fname != NULL) {
     if (nvr_set_fname (pc->nvr, fname)) {
-      pce_log (MSG_ERR, "loading nvram failed (%s)\n", fname);
+      pce_log (MSG_ERR, "*** loading nvram failed (%s)\n", fname);
     }
   }
 }
@@ -212,7 +212,7 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
     pc_set_cpu_model (pc, PCE_CPU_80286);
   }
   else {
-    pce_log (MSG_ERR, "unknown cpu model (%s)\n", model);
+    pce_log (MSG_ERR, "*** unknown cpu model (%s)\n", model);
   }
 
   e86_set_mem (pc->cpu, pc->mem,
