@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.c                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.7 2003/04/18 20:10:53 hampa Exp $ */
+/* $Id: e8086.c,v 1.8 2003/04/20 00:22:51 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -82,7 +82,7 @@ void e86_prt_state (e8086_t *c, FILE *fp)
 
   cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
   mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
-  fprintf (fp, "CLK=%08lX  OP=%08lX  DLY=%03lX  CPI=%.4f  MIPS=%.4f\n",
+  fprintf (fp, "CLK=%016llX  OP=%016llX  DLY=%03lX  CPI=%.4f  MIPS=%.4f\n",
     c->clocks, c->instructions,
     c->delay,
     cpi, mips
@@ -199,6 +199,16 @@ int e86_interrupt (e8086_t *cpu, unsigned n)
   }
 
   return (1);
+}
+
+unsigned long long e86_get_clock (e8086_t *c)
+{
+  return (c->clocks);
+}
+
+unsigned long long e86_get_opcnt (e8086_t *c)
+{
+  return (c->instructions);
 }
 
 void e86_execute (e8086_t *c)

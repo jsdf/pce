@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.h                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.6 2003/04/17 14:15:07 hampa Exp $ */
+/* $Id: e8086.h,v 1.7 2003/04/20 00:22:51 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -115,8 +115,8 @@ typedef struct {
 
   unsigned long  delay;
 
-  unsigned long  clocks;
-  unsigned long  instructions;
+  unsigned long long clocks;
+  unsigned long long instructions;
 } e8086_t;
 
 
@@ -267,6 +267,10 @@ void e86_prt_state (e8086_t *c, FILE *fp);
 void e86_reset (e8086_t *c);
 
 int e86_interrupt (e8086_t *cpu, unsigned n);
+
+unsigned long long e86_get_clock (e8086_t *c);
+
+unsigned long long e86_get_opcnt (e8086_t *c);
 
 void e86_execute (e8086_t *c);
 

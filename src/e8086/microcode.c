@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     microcode.c                                                *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.7 2003/04/18 20:10:53 hampa Exp $ */
+/* $Id: microcode.c,v 1.8 2003/04/20 00:22:51 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -2211,8 +2211,8 @@ static
 unsigned op_88 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-
   e86_set_ea8 (c, e86_get_reg8 (c, (c->pq[1] >> 3) & 7));
+  e86_set_clk_ea (c, 2, 9);
 
   return (c->ea.cnt + 1);
 }
@@ -2222,8 +2222,8 @@ static
 unsigned op_89 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-
   e86_set_ea16 (c, e86_get_reg16 (c, (c->pq[1] >> 3) & 7));
+  e86_set_clk_ea (c, 2, 9);
 
   return (c->ea.cnt + 1);
 }
@@ -2232,13 +2232,9 @@ unsigned op_89 (e8086_t *c)
 static
 unsigned op_8a (e8086_t *c)
 {
-  unsigned reg;
-
-  reg = (c->pq[1] >> 3) & 7;
-
   e86_get_ea_ptr (c, c->pq + 1);
-
-  e86_set_reg8 (c, reg, e86_get_ea8 (c));
+  e86_set_reg8 (c, (c->pq[1] >> 3) & 7, e86_get_ea8 (c));
+  e86_set_clk_ea (c, 2, 8);
 
   return (c->ea.cnt + 1);
 }
@@ -2247,13 +2243,9 @@ unsigned op_8a (e8086_t *c)
 static
 unsigned op_8b (e8086_t *c)
 {
-  unsigned reg;
-
-  reg = (c->pq[1] >> 3) & 7;
-
   e86_get_ea_ptr (c, c->pq + 1);
-
-  e86_set_reg16 (c, reg, e86_get_ea16 (c));
+  e86_set_reg16 (c, (c->pq[1] >> 3) & 7, e86_get_ea16 (c));
+  e86_set_clk_ea (c, 2, 8);
 
   return (c->ea.cnt + 1);
 }
@@ -2263,8 +2255,8 @@ static
 unsigned op_8c (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-
   e86_set_ea16 (c, c->sreg[(c->pq[1] >> 3) & 3]);
+  e86_set_clk_ea (c, 2, 9);
 
   return (c->ea.cnt + 1);
 }
@@ -2292,8 +2284,8 @@ unsigned op_8e (e8086_t *c)
   reg = (c->pq[1] >> 3) & 3;
 
   e86_get_ea_ptr (c, c->pq + 1);
-
-  c->sreg[reg] = e86_get_ea16 (c);
+  e86_set_sreg (c, reg, e86_get_ea16 (c));
+  e86_set_clk_ea (c, 2, 8);
 
   if (reg == E86_REG_CS) {
     e86_pq_init (c);
@@ -2423,6 +2415,7 @@ unsigned op_a0 (e8086_t *c)
   ofs = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   e86_set_al (c, e86_get_mem8 (c, seg, ofs));
+  e86_set_clk (c, 10);
 
   return (3);
 }
@@ -2437,6 +2430,7 @@ unsigned op_a1 (e8086_t *c)
   ofs = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   e86_set_ax (c, e86_get_mem16 (c, seg, ofs));
+  e86_set_clk (c, 10);
 
   return (3);
 }
@@ -2451,6 +2445,7 @@ unsigned op_a2 (e8086_t *c)
   ofs = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   e86_set_mem8 (c, seg, ofs, c->dreg[E86_REG_AX] & 0xff);
+  e86_set_clk (c, 10);
 
   return (3);
 }
@@ -2465,6 +2460,7 @@ unsigned op_a3 (e8086_t *c)
   ofs = e86_mk_uint16 (c->pq[1], c->pq[2]);
 
   e86_set_mem16 (c, seg, ofs, c->dreg[E86_REG_AX]);
+  e86_set_clk (c, 10);
 
   return (3);
 }
@@ -2885,6 +2881,7 @@ static
 unsigned op_b0 (e8086_t *c)
 {
   e86_set_al (c, c->pq[1]);
+  e86_set_clk (c, 4);
 
   return (2);
 }
@@ -2893,8 +2890,9 @@ unsigned op_b0 (e8086_t *c)
 static
 unsigned op_b1 (e8086_t *c)
 {
-  c->dreg[E86_REG_CX] &= 0xff00;
-  c->dreg[E86_REG_CX] |= c->pq[1];
+  e86_set_cl (c, c->pq[1]);
+  e86_set_clk (c, 4);
+
   return (2);
 }
 
@@ -2903,6 +2901,7 @@ static
 unsigned op_b2 (e8086_t *c)
 {
   e86_set_dl (c, c->pq[1]);
+  e86_set_clk (c, 4);
 
   return (2);
 }
@@ -2912,6 +2911,7 @@ static
 unsigned op_b3 (e8086_t *c)
 {
   e86_set_bl (c, c->pq[1]);
+  e86_set_clk (c, 4);
 
   return (2);
 }
@@ -2920,8 +2920,9 @@ unsigned op_b3 (e8086_t *c)
 static
 unsigned op_b4 (e8086_t *c)
 {
-  c->dreg[E86_REG_AX] &= 0x00ff;
-  c->dreg[E86_REG_AX] |= c->pq[1] << 8;
+  e86_set_ah (c, c->pq[1]);
+  e86_set_clk (c, 4);
+
   return (2);
 }
 
@@ -2930,6 +2931,7 @@ static
 unsigned op_b5 (e8086_t *c)
 {
   e86_set_ch (c, c->pq[1]);
+  e86_set_clk (c, 4);
 
   return (2);
 }
@@ -2938,8 +2940,9 @@ unsigned op_b5 (e8086_t *c)
 static
 unsigned op_b6 (e8086_t *c)
 {
-  c->dreg[E86_REG_DX] &= 0x00ff;
-  c->dreg[E86_REG_DX] |= c->pq[1] << 8;
+  e86_set_dh (c, c->pq[1]);
+  e86_set_clk (c, 4);
+
   return (2);
 }
 
@@ -2947,8 +2950,9 @@ unsigned op_b6 (e8086_t *c)
 static
 unsigned op_b7 (e8086_t *c)
 {
-  c->dreg[E86_REG_BX] &= 0x00ff;
-  c->dreg[E86_REG_BX] |= c->pq[1] << 8;
+  e86_set_bh (c, c->pq[1]);
+  e86_set_clk (c, 4);
+
   return (2);
 }
 
@@ -2956,7 +2960,9 @@ unsigned op_b7 (e8086_t *c)
 static
 unsigned op_b8 (e8086_t *c)
 {
-  c->dreg[E86_REG_AX] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_ax (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -2964,7 +2970,9 @@ unsigned op_b8 (e8086_t *c)
 static
 unsigned op_b9 (e8086_t *c)
 {
-  c->dreg[E86_REG_CX] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_cx (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -2972,7 +2980,9 @@ unsigned op_b9 (e8086_t *c)
 static
 unsigned op_ba (e8086_t *c)
 {
-  c->dreg[E86_REG_DX] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_dx (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -2980,7 +2990,9 @@ unsigned op_ba (e8086_t *c)
 static
 unsigned op_bb (e8086_t *c)
 {
-  c->dreg[E86_REG_BX] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_bx (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -2988,7 +3000,9 @@ unsigned op_bb (e8086_t *c)
 static
 unsigned op_bc (e8086_t *c)
 {
-  c->dreg[E86_REG_SP] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_sp (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -2996,7 +3010,9 @@ unsigned op_bc (e8086_t *c)
 static
 unsigned op_bd (e8086_t *c)
 {
-  c->dreg[E86_REG_BP] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_bp (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -3004,7 +3020,9 @@ unsigned op_bd (e8086_t *c)
 static
 unsigned op_be (e8086_t *c)
 {
-  c->dreg[E86_REG_SI] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_si (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -3012,7 +3030,9 @@ unsigned op_be (e8086_t *c)
 static
 unsigned op_bf (e8086_t *c)
 {
-  c->dreg[E86_REG_DI] = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  e86_set_di (c, e86_mk_uint16 (c->pq[1], c->pq[2]));
+  e86_set_clk (c, 4);
+
   return (3);
 }
 
@@ -3087,8 +3107,8 @@ static
 unsigned op_c6 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-
   e86_set_ea8 (c, c->pq[c->ea.cnt + 1]);
+  e86_set_clk_ea (c, 4, 10);
 
   return (c->ea.cnt + 2);
 }
@@ -3098,8 +3118,8 @@ static
 unsigned op_c7 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-
   e86_set_ea16 (c, e86_mk_uint16 (c->pq[c->ea.cnt + 1], c->pq[c->ea.cnt + 2]));
+  e86_set_clk_ea (c, 4, 10);
 
   return (c->ea.cnt + 3);
 }
@@ -3570,15 +3590,17 @@ unsigned op_d8 (e8086_t *c)
 static
 unsigned op_e0 (e8086_t *c)
 {
-  c->dreg[E86_REG_CX] = (c->dreg[E86_REG_CX] - 1) & 0xffff;
+  e86_set_cx (c, e86_get_cx (c) - 1);
 
-  if ((c->dreg[E86_REG_CX] != 0) && ((c->flg & E86_FLG_Z) == 0)) {
-    c->ip = e86_add_sint8 (c->ip + 2, c->pq[1]);
-
+  if ((e86_get_cx (c) != 0) && (e86_get_zf (c) == 0)) {
+    e86_set_ip (c, e86_add_sint8 (c->ip, c->pq[1]) + 2);
     e86_pq_init (c);
+    e86_set_clk (c, 19);
 
     return (0);
   }
+
+  e86_set_clk (c, 5);
 
   return (2);
 }
@@ -3587,15 +3609,17 @@ unsigned op_e0 (e8086_t *c)
 static
 unsigned op_e1 (e8086_t *c)
 {
-  c->dreg[E86_REG_CX] = (c->dreg[E86_REG_CX] - 1) & 0xffff;
+  e86_set_cx (c, e86_get_cx (c) - 1);
 
-  if ((c->dreg[E86_REG_CX] != 0) && ((c->flg & E86_FLG_Z) != 0)) {
-    c->ip = e86_add_sint8 (c->ip + 2, c->pq[1]);
-
+  if ((e86_get_cx (c) != 0) && (e86_get_zf (c) != 0)) {
+    e86_set_ip (c, e86_add_sint8 (c->ip, c->pq[1]) + 2);
     e86_pq_init (c);
+    e86_set_clk (c, 18);
 
     return (0);
   }
+
+  e86_set_clk (c, 5);
 
   return (2);
 }
@@ -3604,15 +3628,17 @@ unsigned op_e1 (e8086_t *c)
 static
 unsigned op_e2 (e8086_t *c)
 {
-  c->dreg[E86_REG_CX] = (c->dreg[E86_REG_CX] - 1) & 0xffff;
+  e86_set_cx (c, e86_get_cx (c) - 1);
 
-  if (c->dreg[E86_REG_CX] != 0) {
-    c->ip = e86_add_sint8 (c->ip + 2, c->pq[1]);
-
+  if (e86_get_cx (c) != 0) {
+    e86_set_ip (c, e86_add_sint8 (c->ip, c->pq[1]) + 2);
     e86_pq_init (c);
+    e86_set_clk (c, 18);
 
     return (0);
   }
+
+  e86_set_clk (c, 5);
 
   return (2);
 }
