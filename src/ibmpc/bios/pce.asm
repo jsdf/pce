@@ -20,10 +20,11 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.15 2003/09/14 21:27:40 hampa Exp $
+; $Id: pce.asm,v 1.16 2003/09/21 00:41:04 hampa Exp $
 
 
 %include "config.inc"
+%include "hook.inc"
 
 
 %macro set_pos 1
@@ -803,7 +804,7 @@ int_18:
 
 int_19:
   ; get boot drive in AL
-  db      0x66, 0x66, 0x02, 0x00
+  pcehook PCEH_GET_BOOT
   mov     dl, al
 
   xor     bx, bx
@@ -819,6 +820,9 @@ int_19:
   cmp     [es:0x7dfe], word 0xaa55
   jne     .fail
 
+  xor     ax, ax
+  mov     ds, ax
+  mov     es, ax
   jmp     0x0000:0x7c00
 
 .fail:
