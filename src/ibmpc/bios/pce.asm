@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.18 2003/09/22 05:15:25 hampa Exp $
+; $Id: pce.asm,v 1.19 2003/10/04 17:56:27 hampa Exp $
 
 
 %include "pce.inc"
@@ -812,7 +812,7 @@ int_19:
   jc      .fail
 
   cmp     [es:0x7dfe], word 0xaa55
-  jne     .fail
+;  jne     .fail
 
   xor     ax, ax
   mov     ds, ax
