@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.10 2003/09/13 18:27:40 hampa Exp $
+; $Id: bios.asm,v 1.11 2003/10/01 16:58:19 hampa Exp $
 
 
 CPU 8086
@@ -736,19 +736,22 @@ L_E37C:
   jl      L_E366
 
   mov     dx, 0x210                     ; expansion card port
-db 0xB8, 0x55, 0x55                     ; E385 mov ax,0x5555
-db 0xEE                                 ; E388 out dx,al
-db 0xB0, 0x01                           ; E389 mov al,0x1
-db 0xEC                                 ; E38B in al,dx
-db 0x3A, 0xC4                           ; E38C cmp al,ah
-db 0x75, 0x34                           ; E38E jnz 0xe3c4
-db 0xF7, 0xD0                           ; E390 not ax
-db 0xEE                                 ; E392 out dx,al
-db 0xB0, 0x01                           ; E393 mov al,0x1
-db 0xEC                                 ; E395 in al,dx
-db 0x3A, 0xC4                           ; E396 cmp al,ah
-db 0x75, 0x2A                           ; E398 jnz 0xe3c4
-db 0x8B, 0xD8                           ; E39A mov bx,ax
+  mov     ax, 0x5555
+  out     dx, al
+  mov     al, 0x01
+  in      al, dx
+  cmp     al, ah
+  jne     L_E3C4
+
+  not     ax
+  out     dx, al
+  mov     al, 0x01
+  in      al, dx
+  cmp     al, ah
+  jne     L_E3C4
+
+L_E39A:
+  mov     bx, ax
 db 0xBA, 0x14, 0x02                     ; E39C mov dx,0x214
 db 0x2E, 0x88, 0x07                     ; E39F mov [cs:bx],al
 db 0xEE                                 ; E3A2 out dx,al
@@ -768,6 +771,7 @@ db 0xF7, 0xD0                           ; E3B5 not ax
 db 0x3C, 0xAA                           ; E3B7 cmp al,0xaa
 db 0x74, 0x09                           ; E3B9 jz 0xe3c4
 db 0xEB, 0xDD                           ; E3BB jmp short 0xe39a
+L_E3BD:
 db 0xBE, 0xED, 0xFE                     ; E3BD mov si,0xfeed
 db 0x90                                 ; E3C0 nop
 db 0xE8, 0xF6, 0x02                     ; E3C1 call 0xe6ba
