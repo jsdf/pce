@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.9 2003/04/26 18:17:44 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.10 2003/04/26 23:36:47 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -143,6 +143,8 @@ void pc_setup_pit (ibmpc_t *pc)
   blk->ext = pc->pit;
   blk->set_uint8 = (seta_uint8_f) &e8253_set_uint8;
   blk->get_uint8 = (geta_uint8_f) &e8253_get_uint8;
+  blk->set_uint16 = (seta_uint16_f) &e8253_set_uint16;
+  blk->get_uint16 = (geta_uint16_f) &e8253_get_uint16;
   mem_add_blk (pc->prt, blk, 1);
 
   e8253_set_gate (pc->pit, 0, 1);

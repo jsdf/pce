@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.9 2003/04/26 18:17:44 hampa Exp $ */
+/* $Id: pce.c,v 1.10 2003/04/26 23:36:47 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -53,8 +53,6 @@ typedef struct breakpoint_t {
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
 
-static unsigned long      ops_cnt[256];
-
 static unsigned long long pce_eops = 0;
 static unsigned long long pce_eops_last = 0;
 static unsigned long long pce_eclk = 0;
@@ -68,7 +66,9 @@ static unsigned long long pce_hclk_last = 0;
 static unsigned short     pce_last_i = 0;
 static unsigned short     pce_last[PCE_LAST_MAX][2];
 
-static ibmpc_t      *pc;
+static int                pce_int28 = 1;
+
+static ibmpc_t            *pc;
 
 
 static
@@ -79,7 +79,8 @@ void prt_help (void)
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
     "  -c, --config string    Set the config file\n"
-    "  -l, --log string       Set the log file\n",
+    "  -l, --log string       Set the log file\n"
+    "  -r, --run              Start running immediately\n",
     stdout
   );
 
@@ -204,8 +205,9 @@ void cmd_get (cmd_t *cmd)
   trm_check (pc->trm);
 }
 
-void cmd_match_space (cmd_t *cmd)
+int cmd_match_space (cmd_t *cmd)
 {
+  int      r;
   unsigned i;
 
   i = cmd->i;
@@ -214,7 +216,11 @@ void cmd_match_space (cmd_t *cmd)
     i++;
   }
 
+  r = (i > cmd->i);
+
   cmd->i = i;
+
+  return (r);
 }
 
 void cmd_error (cmd_t *cmd, const char *str)
@@ -655,16 +661,15 @@ void prt_state_pit (e8253_t *pit, FILE *fp)
     cnt = &pit->counter[i];
 
     fprintf (fp,
-      "C%d: SR=%02X M=%u CE=%04X CR0=%02X%c CR1=%02X%c OL0=%02X%c OL1=%02X%c "
+      "C%d: SR=%02X M=%u RW=%d  CE=%04X  %s=%02X %s=%02X  %s=%02X %s=%02X  "
       "G=%u O=%u R=%d\n",
       i,
-      cnt->sr,
-      cnt->mode,
+      cnt->sr, cnt->mode, cnt->rw,
       cnt->val,
-      cnt->cr[0], (cnt->cr_wr & 1) ? '*' : ' ',
-      cnt->cr[1], (cnt->cr_wr & 2) ? '*' : ' ',
-      cnt->ol[0], (cnt->ol_rd & 1) ? '*' : ' ',
-      cnt->ol[1], (cnt->ol_rd & 2) ? '*' : ' ',
+      (cnt->cr_wr & 2) ? "cr1" : "CR1", cnt->cr[1],
+      (cnt->cr_wr & 1) ? "cr0" : "CR0", cnt->cr[0],
+      (cnt->ol_rd & 2) ? "ol1" : "OL1", cnt->ol[1],
+      (cnt->ol_rd & 1) ? "ol0" : "OL0", cnt->ol[0],
       (unsigned) cnt->gate,
       (unsigned) cnt->out_val,
       cnt->counting
@@ -761,9 +766,10 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
   );
 
   fprintf (fp,
-    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
+    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
     e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
-    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
+    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
+    e86_get_last_int (c)
   );
 
   fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
@@ -771,17 +777,18 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
     e86_get_ip (c), c->flg
   );
 
-  fprintf (fp, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
-    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
-    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
-    ft[(c->flg & E86_FLG_I) != 0],
-    ft[(c->flg & E86_FLG_D) != 0]
+  fprintf (fp, "  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
+    ft[e86_get_if (c)], ft[e86_get_df (c)],
+    ft[e86_get_of (c)], ft[e86_get_sf (c)],
+    ft[e86_get_zf (c)], ft[e86_get_af (c)],
+    ft[e86_get_pf (c)], ft[e86_get_cf (c)]
   );
 }
 
 void prt_state_pc (ibmpc_t *pc, FILE *fp)
 {
   prt_state_ppi (pc->ppi, fp);
+  prt_state_pit (pc->pit, fp);
   prt_state_pic (pc->pic, fp);
   prt_state_cpu (pc->cpu, fp);
 }
@@ -872,13 +879,22 @@ void cpu_exec (void)
   }
 }
 
-void pce_run (void)
+void pce_start (void)
 {
   pce_set_fd (0, 0);
-
-  cpu_start();
-
   pc->brk = 0;
+  cpu_start();
+}
+
+void pce_stop (void)
+{
+  cpu_end();
+  pce_set_fd (0, 1);
+}
+
+void pce_run (void)
+{
+  pce_start();
 
   while (1) {
     cpu_exec();
@@ -888,9 +904,7 @@ void pce_run (void)
     }
   }
 
-  cpu_end();
-
-  pce_set_fd (0, 1);
+  pce_stop();
 }
 
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
@@ -903,16 +917,14 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
   pce_last[pce_last_i][0] = e86_get_cs (pc->cpu);
   pce_last[pce_last_i][1] = e86_get_ip (pc->cpu);
 
-  ops_cnt[op1 & 0xff] += 1;
+//  pce_log (MSG_DEB, "%04X:%04X\n", e86_get_cs (pc->cpu), e86_get_ip (pc->cpu));
 
-  if (e86_get_cs (pc->cpu) == 0xf0dc) {
-    pc->brk = 1;
-  }
-
-  if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
-    cpu_end();
-    usleep (10000);
-    cpu_start();
+  if (pce_int28) {
+    if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
+      cpu_end();
+      usleep (10000);
+      cpu_start();
+    }
   }
 }
 
@@ -925,6 +937,28 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
   pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
     e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
   );
+}
+
+
+void do_bc (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+
+  seg = e86_get_cs (pc->cpu);
+  ofs = e86_get_ip (pc->cpu);
+
+  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+    cmd_error (cmd, "expecting address");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (bp_clear (seg, ofs)) {
+    printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
+  }
 }
 
 void do_bl (cmd_t *cmd)
@@ -968,27 +1002,6 @@ void do_bs (cmd_t *cmd)
   }
 }
 
-void do_bc (cmd_t *cmd)
-{
-  unsigned short seg, ofs;
-
-  seg = e86_get_cs (pc->cpu);
-  ofs = e86_get_ip (pc->cpu);
-
-  if (!cmd_match_addr (cmd, &seg, &ofs)) {
-    cmd_error (cmd, "expecting address");
-    return;
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  if (bp_clear (seg, ofs)) {
-    printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
-  }
-}
-
 void do_b (cmd_t *cmd)
 {
   if (cmd_match (cmd, "l")) {
@@ -1023,120 +1036,6 @@ void do_c (cmd_t *cmd)
   }
 
   prt_state (pc, stdout);
-}
-
-void do_disk_a (cmd_t *cmd)
-{
-  int            r;
-  unsigned short drive, type;
-  unsigned short c, h, s;
-  char           fname[256];
-  int            ro;
-  disk_t         *dsk;
-
-  drive = 0;
-  type = 0;
-  c = 80;
-  h = 2;
-  s = 18;
-  ro = 0;
-
-  if (!cmd_match_uint16 (cmd, &drive)) {
-    cmd_error (cmd, "need a drive number");
-    return;
-  }
-
-  if (cmd_match (cmd, "ram")) {
-    type = 1;
-  }
-  else if (cmd_match (cmd, "image")) {
-    type = 2;
-  }
-  else if (cmd_match (cmd, "hdimage")) {
-    type = 3;
-  }
-  else {
-    cmd_error (cmd, "need image type");
-    return;
-  }
-
-  if (!cmd_match_str (cmd, fname)) {
-    sprintf (fname, "disk_%02x.img", drive);
-  }
-
-  cmd_match_uint16 (cmd, &c);
-  cmd_match_uint16 (cmd, &h);
-  cmd_match_uint16 (cmd, &s);
-
-  if (cmd_match (cmd, "ro")) {
-    ro = 1;
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  dsk = dsk_new (drive);
-
-  if (type == 1) {
-    r = dsk_set_mem (dsk, c, h, s, fname, ro);
-  }
-  else if (type == 2) {
-    r = dsk_set_image (dsk, c, h, s, fname, ro);
-  }
-  else {
-    r = dsk_set_hdimage (dsk, fname, ro);
-  }
-
-  if (r) {
-    cmd_error (cmd, "reading image failed");
-    dsk_del (dsk);
-    return;
-  }
-
-  if (dsks_add_disk (pc->dsk, dsk)) {
-    cmd_error (cmd, "adding disk failed");
-    dsk_del (dsk);
-    return;
-  }
-}
-
-void do_disk_r (cmd_t *cmd)
-{
-  unsigned short drive;
-  disk_t         *dsk;
-
-  drive = 0;
-
-  if (!cmd_match_uint16 (cmd, &drive)) {
-    cmd_error (cmd, "drive number expected");
-    return;
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  dsk = dsks_get_disk (pc->dsk, drive);
-  if (dsk == 0) {
-    return;
-  }
-
-  dsks_rmv_disk (pc->dsk, dsk);
-  dsk_del (dsk);
-}
-
-void do_disk (cmd_t *cmd)
-{
-  if (cmd_match (cmd, "a")) {
-    do_disk_a (cmd);
-  }
-  else if (cmd_match (cmd, "r")) {
-    do_disk_r (cmd);
-  }
-  else {
-    cmd_error (cmd, "syntax");
-  }
 }
 
 void do_dump (cmd_t *cmd)
@@ -1257,18 +1156,14 @@ void do_e (cmd_t *cmd)
 
 void do_g (cmd_t *cmd)
 {
-  breakpoint_t       *bp;
-  unsigned short     seg, ofs;
+  breakpoint_t   *bp;
+  unsigned short seg, ofs;
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
-  pce_set_fd (0, 0);
-
-  cpu_start();
-
-  pc->brk = 0;
+  pce_start();
 
   while (1) {
     cpu_exec();
@@ -1301,12 +1196,40 @@ void do_g (cmd_t *cmd)
     }
   }
 
-  cpu_end();
-
-  pce_set_fd (0, 1);
+  pce_stop();
 
   fputs ("\n", stdout);
   prt_state (pc, stdout);
+}
+
+void do_int28 (cmd_t *cmd)
+{
+  int c;
+
+  c = 0;
+
+  if (cmd_match (cmd, "on")) {
+    c = 1;
+  }
+  else if (cmd_match (cmd, "off")) {
+    c = 2;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  switch (c) {
+    case 1:
+      pce_int28 = 1;
+      break;
+
+    case 2:
+      pce_int28 = 0;
+      break;
+  }
+
+  printf ("int 28h sleeping is %s\n", pce_int28 ? "on" : "off");
 }
 
 void do_last (cmd_t *cmd)
@@ -1345,11 +1268,7 @@ void do_p (cmd_t *cmd)
   seg = e86_get_cs (pc->cpu);
   ofs = e86_get_ip (pc->cpu) + op.dat_n;
 
-  pce_set_fd (0, 0);
-
-  pc->brk = 0;
-
-  cpu_start();
+  pce_start();
 
   while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
     pc_clock (pc);
@@ -1367,9 +1286,31 @@ void do_p (cmd_t *cmd)
     }
   }
 
-  cpu_end();
+  pce_stop();
 
-  pce_set_fd (0, 1);
+  prt_state (pc, stdout);
+}
+
+void do_r (cmd_t *cmd)
+{
+  unsigned short val;
+  unsigned short *reg;
+
+  if (!cmd_match_reg (cmd, &reg)) {
+    prt_error ("missing register\n");
+    return;
+  }
+
+  if (!cmd_match_uint16 (cmd, &val)) {
+    prt_error ("missing value\n");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  *reg = val;
 
   prt_state (pc, stdout);
 }
@@ -1442,15 +1383,13 @@ void do_t (cmd_t *cmd)
     return;
   }
 
-  pc->brk = 0;
-
-  cpu_start();
+  pce_start();
 
   for (i = 0; i < n; i++) {
     cpu_exec();
   }
 
-  cpu_end();
+  pce_stop();
 
   prt_state (pc, stdout);
 }
@@ -1496,123 +1435,6 @@ void do_u (cmd_t *cmd)
   sofs = ofs;
 }
 
-void do_r (cmd_t *cmd)
-{
-  unsigned short val;
-  unsigned short *reg;
-
-  if (!cmd_match_reg (cmd, &reg)) {
-    prt_error ("missing register\n");
-    return;
-  }
-
-  if (!cmd_match_uint16 (cmd, &val)) {
-    prt_error ("missing value\n");
-    return;
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  *reg = val;
-
-  prt_state (pc, stdout);
-}
-
-void do_ic (cmd_t *cmd)
-{
-  unsigned i;
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  for (i = 0; i < 256; i++) {
-    ops_cnt[i] = 0;
-  }
-}
-
-void do_id (cmd_t *cmd)
-{
-  unsigned short        i;
-  unsigned short        op1, op2;
-  static unsigned short sop = 0;
-
-  op1 = sop;
-  cmd_match_uint16 (cmd, &op1);
-  op1 &= 0xff;
-
-  op2 = op1;
-  cmd_match_uint16 (cmd, &op2);
-  op2 &= 0xff;
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  if (op2 < op1) {
-    return;
-  }
-
-  sop = (op2 + 1) & 0xff;
-
-  op2 = op2 - op1 + 1;
-  for (i = 0; i < op2; i++) {
-    if (((i % 5) == 4) || ((i + 1) == op2)) {
-      printf ("%02X: %08lX\n", op1, ops_cnt[op1]);
-    }
-    else {
-      printf ("%02X: %08lX  ", op1, ops_cnt[op1]);
-    }
-
-    op1 += 1;
-  }
-}
-
-void do_iw (cmd_t *cmd)
-{
-  unsigned i;
-  FILE     *fp;
-  char     fname[256];
-
-  if (!cmd_match_str (cmd, fname)) {
-    strcpy (fname, "opstat.txt");
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    prt_error ("can't open file (%s)\n", fname);
-    return;
-  }
-
-  for (i = 0; i < 256; i++) {
-    fprintf (fp, "%02X: %08lX\n", i, ops_cnt[i]);
-  }
-
-  fclose (fp);
-}
-
-void do_i (cmd_t *cmd)
-{
-  if (cmd_match (cmd, "c")) {
-    do_ic (cmd);
-  }
-  else if (cmd_match (cmd, "d")) {
-    do_id (cmd);
-  }
-  else if (cmd_match (cmd, "w")) {
-    do_iw (cmd);
-  }
-  else {
-    cmd_error (cmd, "syntax");
-  }
-}
-
 int do_cmd (void)
 {
   cmd_t  cmd;
@@ -1626,8 +1448,8 @@ int do_cmd (void)
     if (cmd_match (&cmd, "dump")) {
       do_dump (&cmd);
     }
-    else if (cmd_match (&cmd, "disk")) {
-      do_disk (&cmd);
+    else if (cmd_match (&cmd, "int28")) {
+      do_int28 (&cmd);
     }
     else if (cmd_match (&cmd, "last")) {
       do_last (&cmd);
@@ -1649,9 +1471,6 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
-    }
-    else if (cmd_match (&cmd, "i")) {
-      do_i (&cmd);
     }
     else if (cmd_match (&cmd, "p")) {
       do_p (&cmd);
@@ -1804,10 +1623,6 @@ int main (int argc, char *argv[])
     return (1);
   }
 
-  for (i = 0; i < 256; i++) {
-    ops_cnt[i] = 0;
-  }
-
   pc = pc_new (sct);
 
   pc->cpu->op_stat = &pce_op_stat;
@@ -1818,7 +1633,6 @@ int main (int argc, char *argv[])
   pce_log_set_stderr (0);
 
   signal (SIGINT, &sig_int);
-//  signal (SIGTERM, &sig_int);
 
   if (run) {
     pce_run();
