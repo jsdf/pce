@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8250.h,v 1.2 2003/09/05 13:37:16 hampa Exp $ */
+/* $Id: e8250.h,v 1.3 2003/09/05 14:43:36 hampa Exp $ */
 
 
 /* UART 8250/16450/16550 */
@@ -88,6 +88,8 @@ e8250_t *e8250_new (void);
 void e8250_free (e8250_t *uart);
 void e8250_del (e8250_t *uart);
 
+void e8250_clock (e8250_t *uart, unsigned long clk);
+
 unsigned e8250_get_divisor (e8250_t *uart);
 unsigned long e8250_get_bps (e8250_t *uart);
 unsigned e8250_get_databits (e8250_t *uart);
@@ -100,10 +102,6 @@ int e8250_inp_full (e8250_t *uart);
 
 int e8250_set_out (e8250_t *uart, unsigned char val);
 int e8250_get_out (e8250_t *uart, unsigned char *val);
-
-void e8250_check_txd (e8250_t *uart);
-void e8250_check_rxd (e8250_t *uart);
-void e8250_check (e8250_t *uart);
 
 void e8250_set_uint8 (e8250_t *uart, unsigned long addr, unsigned char val);
 void e8250_set_uint16 (e8250_t *uart, unsigned long addr, unsigned short val);

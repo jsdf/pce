@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8250.c,v 1.3 2003/09/05 13:37:16 hampa Exp $ */
+/* $Id: e8250.c,v 1.4 2003/09/05 14:43:36 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -135,6 +135,105 @@ void e8250_del (e8250_t *uart)
   }
 }
 
+static
+void e8250_set_int_cond (e8250_t *uart, unsigned char c)
+{
+  unsigned char val, irq;
+
+  uart->ipr |= c;
+
+  val = uart->ipr & uart->ier;
+  irq = 0;
+
+  if ((val & E8250_IER_RRD) && (uart->iir < E8250_IIR_RRD)) {
+    uart->iir = E8250_IIR_RRD;
+    irq = 1;
+  }
+  else if ((val & E8250_IER_TBE) && (uart->iir < E8250_IIR_TBE)) {
+    uart->iir = E8250_IIR_TBE;
+    irq = 1;
+  }
+
+  if (irq) {
+    if ((uart->mcr & E8250_MCR_OUT2) && (uart->irq != NULL)) {
+      uart->irq (uart->irq_ext, 1);
+    }
+  }
+}
+
+static
+void e8250_clr_int_cond (e8250_t *uart, unsigned char c)
+{
+  uart->ipr &= ~c;
+
+  if ((c & E8250_IER_RRD) && (uart->iir == E8250_IIR_RRD)) {
+    uart->iir = E8250_IIR_PND;
+  }
+  if ((c & E8250_IER_TBE) && (uart->iir == E8250_IIR_TBE)) {
+    uart->iir = E8250_IIR_PND;
+  }
+
+  e8250_set_int_cond (uart, 0);
+}
+
+static
+void e8250_check_rxd (e8250_t *uart)
+{
+  if (uart->rxd[1]) {
+    return;
+  }
+
+  if (e8250_get_inp (uart, &uart->rxd[0])) {
+    return;
+  }
+
+  uart->rxd[1] = 1;
+  uart->lsr |= E8250_LSR_RRD;
+
+  if (uart->recv != NULL) {
+    uart->recv (uart->recv_ext, 1);
+  }
+
+  e8250_set_int_cond (uart, E8250_IER_RRD);
+}
+
+static
+void e8250_check_txd (e8250_t *uart)
+{
+  if (uart->txd[1] == 0) {
+    return;
+  }
+
+  if (uart->mcr & E8250_MCR_LOOP) {
+    e8250_set_inp (uart, uart->txd[0]);
+  }
+  else {
+    if (e8250_set_out (uart, uart->txd[0])) {
+      return;
+    }
+  }
+
+  uart->txd[1] = 0;
+  uart->lsr |= E8250_LSR_TBE;
+
+  if (uart->mcr & E8250_MCR_LOOP) {
+    e8250_check_rxd (uart);
+  }
+  else {
+    if (uart->send != NULL) {
+      uart->send (uart->send_ext, 1);
+    }
+  }
+
+  e8250_set_int_cond (uart, E8250_IER_TBE);
+}
+
+void e8250_clock (e8250_t *uart, unsigned long clk)
+{
+  e8250_check_rxd (uart);
+  e8250_check_txd (uart);
+}
+
 unsigned e8250_get_divisor (e8250_t *uart)
 {
   return (uart->divisor);
@@ -238,101 +337,6 @@ int e8250_get_out (e8250_t *uart, unsigned char *val)
   }
 
   return (0);
-}
-
-void e8250_set_int_cond (e8250_t *uart, unsigned char c)
-{
-  unsigned char val, irq;
-
-  uart->ipr |= c;
-
-  val = uart->ipr & uart->ier;
-  irq = 0;
-
-  if ((val & E8250_IER_RRD) && (uart->iir < E8250_IIR_RRD)) {
-    uart->iir = E8250_IIR_RRD;
-    irq = 1;
-  }
-  else if ((val & E8250_IER_TBE) && (uart->iir < E8250_IIR_TBE)) {
-    uart->iir = E8250_IIR_TBE;
-    irq = 1;
-  }
-
-  if (irq) {
-    if ((uart->mcr & E8250_MCR_OUT2) && (uart->irq != NULL)) {
-      uart->irq (uart->irq_ext, 1);
-    }
-  }
-}
-
-void e8250_clr_int_cond (e8250_t *uart, unsigned char c)
-{
-  uart->ipr &= ~c;
-
-  if ((c & E8250_IER_RRD) && (uart->iir == E8250_IIR_RRD)) {
-    uart->iir = E8250_IIR_PND;
-  }
-  if ((c & E8250_IER_TBE) && (uart->iir == E8250_IIR_TBE)) {
-    uart->iir = E8250_IIR_PND;
-  }
-
-  e8250_set_int_cond (uart, 0);
-}
-
-void e8250_check_txd (e8250_t *uart)
-{
-  if (uart->txd[1] == 0) {
-    return;
-  }
-
-  if (uart->mcr & E8250_MCR_LOOP) {
-    e8250_set_inp (uart, uart->txd[0]);
-  }
-  else {
-    if (e8250_set_out (uart, uart->txd[0])) {
-      return;
-    }
-  }
-
-  uart->txd[1] = 0;
-  uart->lsr |= E8250_LSR_TBE;
-
-  if (uart->mcr & E8250_MCR_LOOP) {
-    e8250_check_rxd (uart);
-  }
-  else {
-    if (uart->send != NULL) {
-      uart->send (uart->send_ext, 1);
-    }
-  }
-
-  e8250_set_int_cond (uart, E8250_IER_TBE);
-}
-
-void e8250_check_rxd (e8250_t *uart)
-{
-  if (uart->rxd[1]) {
-    return;
-  }
-
-  if (e8250_get_inp (uart, &uart->rxd[0])) {
-    return;
-  }
-
-  uart->rxd[1] = 1;
-  uart->lsr |= E8250_LSR_RRD;
-
-  if (uart->recv != NULL) {
-    uart->recv (uart->recv_ext, 1);
-  }
-
-  e8250_set_int_cond (uart, E8250_IER_RRD);
-}
-
-void e8250_check (e8250_t *uart)
-{
-  e8250_check_txd (uart);
-  e8250_check_rxd (uart);
 }
 
 void e8250_set_divisor (e8250_t *uart, unsigned short div)

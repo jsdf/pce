@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.29 2003/09/04 20:14:15 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.30 2003/09/05 14:43:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -741,7 +741,7 @@ void pc_clock (ibmpc_t *pc)
 
     for (i = 0; i < 4; i++) {
       if (pc->serport[i] != NULL) {
-        ser_check (pc->serport[i]);
+        ser_clock (pc->serport[i], 1024);
       }
     }
 

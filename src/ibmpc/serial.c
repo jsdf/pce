@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.c,v 1.3 2003/09/05 14:08:00 hampa Exp $ */
+/* $Id: serial.c,v 1.4 2003/09/05 14:43:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -313,7 +313,7 @@ void ser_recv (serial_t *ser, unsigned char val)
 {
 }
 
-void ser_check (serial_t *ser)
+void ser_clock (serial_t *ser, unsigned long clk)
 {
   int           r;
   unsigned char c;
@@ -324,11 +324,10 @@ void ser_check (serial_t *ser)
   }
 
   ser_send (ser, 1);
-  e8250_check_txd (&ser->uart);
 
   while (1) {
     if (e8250_inp_full (&ser->uart)) {
-      return;
+      break;
     }
 
     pfd[0].fd = ser->fd;
@@ -336,19 +335,19 @@ void ser_check (serial_t *ser)
 
     r = poll (pfd, 1, 0);
     if (r < 0) {
-      return;
+      break;
     }
 
     if ((pfd[0].revents & POLLIN) == 0) {
-      return;
+      break;
     }
 
     read (ser->fd, &c, 1);
 
     if (e8250_set_inp (&ser->uart, c)) {
-      return;
+      break;
     }
-
-    e8250_check_rxd (&ser->uart);
   }
+
+  e8250_clock (&ser->uart, clk);
 }
