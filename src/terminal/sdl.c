@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -154,6 +154,10 @@ static
 int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h)
 {
   if (sdl->scr != NULL) {
+    if ((sdl->wdw_w == w) && (sdl->wdw_h == h)) {
+      return (0);
+    }
+
     SDL_FreeSurface (sdl->scr);
   }
 
