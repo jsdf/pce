@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -35,22 +35,22 @@ static
 void mda_get_colors (mda_t *mda, ini_sct_t *sct)
 {
   mda->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
-  mda->rgb[1] = ini_get_lng_def (sct, "color0", 0x000000);
-  mda->rgb[2] = ini_get_lng_def (sct, "color1", 0xe89050);
-  mda->rgb[3] = ini_get_lng_def (sct, "color2", 0xe89050);
-  mda->rgb[4] = ini_get_lng_def (sct, "color3", 0xe89050);
-  mda->rgb[5] = ini_get_lng_def (sct, "color4", 0xe89050);
-  mda->rgb[6] = ini_get_lng_def (sct, "color5", 0xe89050);
-  mda->rgb[7] = ini_get_lng_def (sct, "color6", 0xe89050);
-  mda->rgb[8] = ini_get_lng_def (sct, "color7", 0xe89050);
-  mda->rgb[9] = ini_get_lng_def (sct, "color8", 0xfff0c8);
-  mda->rgb[10] = ini_get_lng_def (sct, "color9", 0xfff0c8);
-  mda->rgb[11] = ini_get_lng_def (sct, "color10", 0xfff0c8);
-  mda->rgb[12] = ini_get_lng_def (sct, "color11", 0xfff0c8);
-  mda->rgb[13] = ini_get_lng_def (sct, "color12", 0xfff0c8);
-  mda->rgb[14] = ini_get_lng_def (sct, "color13", 0xfff0c8);
-  mda->rgb[15] = ini_get_lng_def (sct, "color14", 0xfff0c8);
-  mda->rgb[16] = ini_get_lng_def (sct, "color15", 0xfff0c8);
+  mda->rgb[1] = ini_get_lng_def (sct, "color1", 0x000000);
+  mda->rgb[2] = ini_get_lng_def (sct, "color2", 0xe89050);
+  mda->rgb[3] = ini_get_lng_def (sct, "color3", 0xe89050);
+  mda->rgb[4] = ini_get_lng_def (sct, "color4", 0xe89050);
+  mda->rgb[5] = ini_get_lng_def (sct, "color5", 0xe89050);
+  mda->rgb[6] = ini_get_lng_def (sct, "color6", 0xe89050);
+  mda->rgb[7] = ini_get_lng_def (sct, "color7", 0xe89050);
+  mda->rgb[8] = ini_get_lng_def (sct, "color8", 0xfff0c8);
+  mda->rgb[9] = ini_get_lng_def (sct, "color9", 0xfff0c8);
+  mda->rgb[10] = ini_get_lng_def (sct, "color10", 0xfff0c8);
+  mda->rgb[11] = ini_get_lng_def (sct, "color11", 0xfff0c8);
+  mda->rgb[12] = ini_get_lng_def (sct, "color12", 0xfff0c8);
+  mda->rgb[13] = ini_get_lng_def (sct, "color13", 0xfff0c8);
+  mda->rgb[14] = ini_get_lng_def (sct, "color14", 0xfff0c8);
+  mda->rgb[15] = ini_get_lng_def (sct, "color15", 0xfff0c8);
+  mda->rgb[16] = ini_get_lng_def (sct, "color16", 0xfff0c8);
 }
 
 static
@@ -86,6 +86,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
   mda->vid.get_mem = (pce_video_get_mem_f) &mda_get_mem;
   mda->vid.get_reg = (pce_video_get_reg_f) &mda_get_reg;
   mda->vid.prt_state = (pce_video_prt_state_f) &mda_prt_state;
+  mda->vid.update = (pce_video_update_f) &mda_update;
   mda->vid.dump = (pce_video_dump_f) &mda_dump;
   mda->vid.screenshot = (pce_video_screenshot_f) &mda_screenshot;
 
@@ -237,6 +238,27 @@ int mda_screenshot (mda_t *mda, FILE *fp, unsigned mode)
   }
 
   return (0);
+}
+
+void mda_update (mda_t *mda)
+{
+  unsigned i;
+  unsigned x, y;
+  unsigned fg, bg;
+
+  i = 0;
+
+  for (y = 0; y < 25; y++) {
+    for (x = 0; x < 80; x++) {
+      fg = mda->mem->data[i + 1] & 0x0f;
+      bg = (mda->mem->data[i + 1] & 0xf0) >> 4;
+
+      trm_set_col (mda->trm, fg, bg);
+      trm_set_chr (mda->trm, x, y, mda->mem->data[i]);
+
+      i = (i + 2) & 0x3fff;
+    }
+  }
 }
 
 static

@@ -78,6 +78,8 @@ mem_blk_t *hgc_get_reg (hgc_t *hgc);
 
 int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode);
 
+void hgc_update (hgc_t *hgc);
+
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
 void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);
 

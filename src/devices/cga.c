@@ -71,6 +71,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->vid.get_mem = (pce_video_get_mem_f) &cga_get_mem;
   cga->vid.get_reg = (pce_video_get_reg_f) &cga_get_reg;
   cga->vid.prt_state = (pce_video_prt_state_f) &cga_prt_state;
+  cga->vid.update = (pce_video_update_f) &cga_update;
   cga->vid.dump = (pce_video_dump_f) &cga_dump;
   cga->vid.screenshot = (pce_video_screenshot_f) &cga_screenshot;
 

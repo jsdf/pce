@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/mda.h                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -64,6 +64,8 @@ mem_blk_t *mda_get_mem (mda_t *mda);
 mem_blk_t *mda_get_reg (mda_t *mda);
 
 int mda_screenshot (mda_t *hgc, FILE *fp, unsigned mode);
+
+void mda_update (mda_t *mda);
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
 void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);

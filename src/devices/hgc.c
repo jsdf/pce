@@ -101,6 +101,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
   hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
   hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
   hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
+  hgc->vid.update = (pce_video_update_f) &hgc_update;
   hgc->vid.dump = (pce_video_dump_f) &hgc_dump;
   hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
 

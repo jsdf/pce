@@ -76,6 +76,8 @@ mem_blk_t *cga_get_reg (cga_t *cga);
 
 int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode);
 
+void cga_update (cga_t *cga);
+
 void cga_set_pos (cga_t *cga, unsigned pos);
 
 void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
