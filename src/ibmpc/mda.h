@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.h                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.5 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: mda.h,v 1.6 2003/09/22 02:38:14 hampa Exp $ */
 
 
 #ifndef PCE_MDA_H
@@ -35,10 +35,10 @@ typedef struct {
 
   unsigned char crtc_reg[16];
 
+  unsigned long rgb[16];
+
   unsigned      crtc_pos;
 
-  unsigned long rgb_fg;
-  unsigned long rgb_hi;
   terminal_t    *trm;
 } mda_t;
 

@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.18 2003/09/19 15:09:19 hampa Exp $
+# $Id: pce.cfg.in,v 1.19 2003/09/22 02:38:14 hampa Exp $
 
 section pc {
 	section cpu {
@@ -93,6 +93,10 @@ section pc {
 	section hgc {
 		color7 = 0xe89050
 		color15 = 0xfff0c8
+
+		gcolor0 = 0x000000
+		gcolor1 = 0xf0f0f0
+
 		io = 0x3b4
 		membase = 0xb0000
 		memsize = 65536
@@ -103,8 +107,12 @@ section pc {
 	}
 
 	section mda {
-		color7 = 0xe89050
-		color15 = 0xfff0c8
+		color0 = 0x000000
+		color1 = 0xc0c000
+		color7 = 0x00c000
+		color9 = 0xc0f000
+		color15 = 0x00f000
+
 		io = 0x3b4
 		membase = 0xb0000
 		memsize = 4096

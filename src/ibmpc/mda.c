@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.10 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: mda.c,v 1.11 2003/09/22 02:38:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -29,18 +29,45 @@
 
 
 static
-unsigned char coltab[16] = {
- 0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
- 0x00, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-};
+void mda_get_colors (mda_t *mda, ini_sct_t *sct)
+{
+  ini_get_ulng (sct, "color0", &mda->rgb[0], 0x000000);
+  ini_get_ulng (sct, "color1", &mda->rgb[1], 0xe89050);
+  ini_get_ulng (sct, "color2", &mda->rgb[2], 0xe89050);
+  ini_get_ulng (sct, "color3", &mda->rgb[3], 0xe89050);
+  ini_get_ulng (sct, "color4", &mda->rgb[4], 0xe89050);
+  ini_get_ulng (sct, "color5", &mda->rgb[5], 0xe89050);
+  ini_get_ulng (sct, "color6", &mda->rgb[6], 0xe89050);
+  ini_get_ulng (sct, "color7", &mda->rgb[7], 0xe89050);
+  ini_get_ulng (sct, "color8", &mda->rgb[8], 0xfff0c8);
+  ini_get_ulng (sct, "color9", &mda->rgb[9], 0xfff0c8);
+  ini_get_ulng (sct, "color10", &mda->rgb[10], 0xfff0c8);
+  ini_get_ulng (sct, "color11", &mda->rgb[11], 0xfff0c8);
+  ini_get_ulng (sct, "color12", &mda->rgb[12], 0xfff0c8);
+  ini_get_ulng (sct, "color13", &mda->rgb[13], 0xfff0c8);
+  ini_get_ulng (sct, "color14", &mda->rgb[14], 0xfff0c8);
+  ini_get_ulng (sct, "color15", &mda->rgb[15], 0xfff0c8);
+}
 
+static
+void mda_set_colors (mda_t *mda)
+{
+  unsigned i;
+  unsigned r, g, b;
+
+  for (i = 0; i < 16; i++) {
+    r = (mda->rgb[i] >> 16) & 0xff;
+    g = (mda->rgb[i] >> 8) & 0xff;
+    b = mda->rgb[i] & 0xff;
+    trm_set_map (mda->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+  }
+}
 
 video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 {
-  unsigned      i;
-  unsigned      iobase, membase, memsize;
-  unsigned char r, g, b;
-  mda_t         *mda;
+  unsigned i;
+  unsigned iobase, membase, memsize;
+  mda_t    *mda;
 
   mda = (mda_t *) malloc (sizeof (mda_t));
   if (mda == NULL) {
@@ -60,14 +87,13 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
     mda->crtc_reg[i] = 0;
   }
 
-  ini_get_ulng (sct, "color7", &mda->rgb_fg, 0xe89050);
-  ini_get_ulng (sct, "color15", &mda->rgb_hi, 0xfff0c8);
-
   ini_get_uint (sct, "io", &iobase, 0x3b4);
   ini_get_uint (sct, "membase", &membase, 0xb0000);
   ini_get_uint (sct, "memsize", &memsize, 4096);
 
   memsize = (memsize < 4096) ? 4096 : memsize;
+
+  mda_get_colors (mda, sct);
 
   pce_log (MSG_INF, "video:\tMDA io=0x%04x membase=0x%05x memsize=0x%05x\n",
     iobase, membase, memsize
@@ -91,15 +117,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 
   mda->trm = trm;
 
-  r = (mda->rgb_fg >> 16) & 0xff;
-  g = (mda->rgb_fg >> 8) & 0xff;
-  b = mda->rgb_fg & 0xff;
-  trm_set_map (trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
-
-  r = (mda->rgb_hi >> 16) & 0xff;
-  g = (mda->rgb_hi >> 8) & 0xff;
-  b = mda->rgb_hi & 0xff;
-  trm_set_map (trm, 15, r | (r << 8), g | (g << 8), b | (b << 8));
+  mda_set_colors (mda);
 
   trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
@@ -219,7 +237,6 @@ void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
   unsigned      x, y;
   unsigned char c, a;
-  unsigned      fg, bg;
 
   if (mda->mem->data[addr] == val) {
     return;
@@ -243,10 +260,7 @@ void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
-
-  trm_set_col (mda->trm, fg, bg);
+  trm_set_col (mda->trm, a & 0x0f, (a >> 4) & 0x0f);
   trm_set_chr (mda->trm, x, y, c);
 }
 
@@ -254,7 +268,6 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
   unsigned      x, y;
   unsigned char c, a;
-  unsigned      fg, bg;
 
   if (addr & 1) {
     mda_mem_set_uint8 (mda, addr, val & 0xff);
@@ -283,10 +296,7 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
-
-  trm_set_col (mda->trm, fg, bg);
+  trm_set_col (mda->trm, a & 0x0f, (a >> 4) & 0x0f);
   trm_set_chr (mda->trm, x, y, c);
 }
 

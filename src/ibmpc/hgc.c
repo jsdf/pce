@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.12 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: hgc.c,v 1.13 2003/09/22 02:38:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -29,18 +29,60 @@
 
 
 static
-unsigned char coltab[16] = {
- 0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
- 0x00, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-};
+void hgc_get_colors (hgc_t *hgc, ini_sct_t *sct)
+{
+  ini_get_ulng (sct, "color0", &hgc->rgb[0], 0x000000);
+  ini_get_ulng (sct, "color1", &hgc->rgb[1], 0xe89050);
+  ini_get_ulng (sct, "color2", &hgc->rgb[2], 0xe89050);
+  ini_get_ulng (sct, "color3", &hgc->rgb[3], 0xe89050);
+  ini_get_ulng (sct, "color4", &hgc->rgb[4], 0xe89050);
+  ini_get_ulng (sct, "color5", &hgc->rgb[5], 0xe89050);
+  ini_get_ulng (sct, "color6", &hgc->rgb[6], 0xe89050);
+  ini_get_ulng (sct, "color7", &hgc->rgb[7], 0xe89050);
+  ini_get_ulng (sct, "color8", &hgc->rgb[8], 0xfff0c8);
+  ini_get_ulng (sct, "color9", &hgc->rgb[9], 0xfff0c8);
+  ini_get_ulng (sct, "color10", &hgc->rgb[10], 0xfff0c8);
+  ini_get_ulng (sct, "color11", &hgc->rgb[11], 0xfff0c8);
+  ini_get_ulng (sct, "color12", &hgc->rgb[12], 0xfff0c8);
+  ini_get_ulng (sct, "color13", &hgc->rgb[13], 0xfff0c8);
+  ini_get_ulng (sct, "color14", &hgc->rgb[14], 0xfff0c8);
+  ini_get_ulng (sct, "color15", &hgc->rgb[15], 0xfff0c8);
 
+  ini_get_ulng (sct, "gcolor0", &hgc->rgb[16], 0x000000);
+  ini_get_ulng (sct, "gcolor1", &hgc->rgb[17], 0xfff0c8);
+}
+
+static
+void hgc_set_colors (hgc_t *hgc, unsigned mode)
+{
+  unsigned i;
+  unsigned r, g, b;
+
+  for (i = 0; i < 16; i++) {
+    r = (hgc->rgb[i] >> 16) & 0xff;
+    g = (hgc->rgb[i] >> 8) & 0xff;
+    b = hgc->rgb[i] & 0xff;
+    trm_set_map (hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+  }
+
+  if (mode == 1) {
+    r = (hgc->rgb[16] >> 16) & 0xff;
+    g = (hgc->rgb[16] >> 8) & 0xff;
+    b = hgc->rgb[16] & 0xff;
+    trm_set_map (hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
+
+    r = (hgc->rgb[17] >> 16) & 0xff;
+    g = (hgc->rgb[17] >> 8) & 0xff;
+    b = hgc->rgb[17] & 0xff;
+    trm_set_map (hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+  }
+}
 
 video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 {
-  unsigned      i;
-  unsigned char r, g, b;
-  unsigned      iobase, membase, memsize;
-  hgc_t         *hgc;
+  unsigned i;
+  unsigned iobase, membase, memsize;
+  hgc_t    *hgc;
 
   hgc = (hgc_t *) malloc (sizeof (hgc_t));
   if (hgc == NULL) {
@@ -65,14 +107,13 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
   ini_get_uint (sct, "mode_720x348_w", &hgc->mode1_w, 720);
   ini_get_uint (sct, "mode_720x348_h", &hgc->mode1_h, 540);
 
-  ini_get_ulng (sct, "color7", &hgc->rgb_fg, 0xe89050);
-  ini_get_ulng (sct, "color15", &hgc->rgb_hi, 0xfff0c8);
-
   ini_get_uint (sct, "io", &iobase, 0x3b4);
   ini_get_uint (sct, "membase", &membase, 0xb0000);
   ini_get_uint (sct, "memsize", &memsize, 65536);
 
   memsize = (memsize < 32768) ? 32768 : 65536;
+
+  hgc_get_colors (hgc, sct);
 
   pce_log (MSG_INF, "video:\tHGC io=0x%04x membase=0x%05x memsize=0x%05x\n",
     iobase, membase, memsize
@@ -104,15 +145,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 
   hgc->mode = 0;
 
-  r = (hgc->rgb_fg >> 16) & 0xff;
-  g = (hgc->rgb_fg >> 8) & 0xff;
-  b = hgc->rgb_fg & 0xff;
-  trm_set_map (trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
-
-  r = (hgc->rgb_hi >> 16) & 0xff;
-  g = (hgc->rgb_hi >> 8) & 0xff;
-  b = hgc->rgb_hi & 0xff;
-  trm_set_map (trm, 15, r | (r << 8), g | (g << 8), b | (b << 8));
+  hgc_set_colors (hgc, 0);
 
   trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
@@ -221,9 +254,6 @@ void hgc_mode0_update (hgc_t *hgc)
       fg = hgc->mem->data[i + 1] & 0x0f;
       bg = (hgc->mem->data[i + 1] & 0xf0) >> 4;
 
-      fg = coltab[fg];
-      bg = coltab[bg];
-
       trm_set_col (hgc->trm, fg, bg);
       trm_set_chr (hgc->trm, x, y, hgc->mem->data[i]);
 
@@ -267,8 +297,8 @@ void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
+  fg = a & 0x0f;
+  bg = (a & 0xf0) >> 4;
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
@@ -314,8 +344,8 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
+  fg = a & 0x0f;
+  bg = (a & 0xf0) >> 4;
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
@@ -362,6 +392,7 @@ void hgc_mode1_update (hgc_t *hgc)
 {
   unsigned      x, y, i, j;
   unsigned      val[4];
+  unsigned      col1, col2;
   unsigned      sx, sy, sw, sh;
   unsigned char *mem[4];
 
@@ -375,6 +406,9 @@ void hgc_mode1_update (hgc_t *hgc)
   mem[2] = mem[0] + 2 * 8192;
   mem[3] = mem[0] + 3 * 8192;
 
+  trm_set_col (hgc->trm, 7, 0);
+  col2 = 7;
+
   for (y = 0; y < 87; y++) {
     for (x = 0; x < 90; x++) {
       val[0] = mem[0][x];
@@ -384,7 +418,12 @@ void hgc_mode1_update (hgc_t *hgc)
 
       for (i = 0; i < 8; i++) {
         for (j = 0; j < 4; j++) {
-          trm_set_col (hgc->trm, (val[j] & 0x80) ? 7 : 0, 0);
+          col1 = (val[j] & 0x80) ? 7 : 0;
+          if (col1 != col2) {
+            trm_set_col (hgc->trm, col1, 0);
+            col1 = col2;
+          }
+
           pce_smap_get_pixel (&hgc->smap, 8 * x + i, 4 * y + j, &sx, &sy, &sw, &sh);
           trm_set_pxl (hgc->trm, sx, sy, sw, sh);
           val[j] <<= 1;
@@ -546,6 +585,8 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 
   if (newmode != hgc->mode) {
     hgc->mode = newmode;
+
+    hgc_set_colors (hgc, newmode);
 
     switch (newmode) {
       case 0:
