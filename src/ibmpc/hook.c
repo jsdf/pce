@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.7 2003/09/22 05:14:19 hampa Exp $ */
+/* $Id: hook.c,v 1.8 2003/10/13 01:54:36 hampa Exp $ */
 
 
 #include "pce.h"
@@ -175,6 +175,14 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       }
       break;
 
+    case PCEH_SET_AMSK:
+      {
+        unsigned long msk;
+        msk = (e86_get_dx (pc->cpu) << 16) + e86_get_ax (pc->cpu);
+        e86_set_addr_mask (pc->cpu, msk);
+      }
+      break;
+
     case PCEH_GET_BOOT:
       e86_set_al (pc->cpu, par_boot);
       break;
@@ -203,6 +211,20 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
     case PCEH_GET_CPU:
       e86_set_ax (pc->cpu, pc->cpu_model);
+      break;
+
+    case PCEH_GET_AMSK:
+      {
+        unsigned long msk;
+        msk = e86_get_addr_mask (pc->cpu);
+        e86_set_ax (pc->cpu, msk & 0xffff);
+        e86_set_dx (pc->cpu, (msk >> 16) & 0xffff);
+      }
+      break;
+
+    case PCEH_GET_VERS:
+      e86_set_ax (pc->cpu, (PCE_VERSION_MAJ << 8) | PCE_VERSION_MIN);
+      e86_set_dx (pc->cpu, (PCE_VERSION_MIC << 8) | PCE_VERSION_REL);
       break;
 
     case PCEH_XMS:

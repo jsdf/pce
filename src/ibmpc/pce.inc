@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.inc,v 1.2 2003/10/05 21:48:12 hampa Exp $
+; $Id: pce.inc,v 1.3 2003/10/13 01:54:37 hampa Exp $
 
 
 %ifndef PCE_INC
@@ -57,6 +57,7 @@
 %define PCEH_SET_BOOT  0x0001
 %define PCEH_SET_INT28 0x0401
 %define PCEH_SET_CPU   0x0501
+%define PCEH_SET_AMSK  0x0601
 
 %define PCEH_GET_BOOT  0x0002
 %define PCEH_GET_COM   0x0102
@@ -64,6 +65,8 @@
 %define PCEH_GET_VIDEO 0x0302
 %define PCEH_GET_INT28 0x0402
 %define PCEH_GET_CPU   0x0502
+%define PCEH_GET_AMSK  0x0602
+%define PCEH_GET_VERS  0x0702
 
 %define PCEH_XMS       0x0003
 %define PCEH_XMS_INFO  0x0103
