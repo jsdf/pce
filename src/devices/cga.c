@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -124,7 +124,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->palette[3] = 15;
 
   cga->mode = 0;
-  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
 
   return (&cga->vid);
 }
@@ -661,17 +661,17 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
 
   switch (newmode) {
     case 0:
-      trm_set_size (cga->trm, TERM_MODE_TEXT, 80, 25);
+      trm_set_mode (cga->trm, TERM_MODE_TEXT, 80, 25);
       break;
 
     case 1:
-      trm_set_size (cga->trm, TERM_MODE_GRAPH, cga->mode1_w, cga->mode1_h);
+      trm_set_mode (cga->trm, TERM_MODE_GRAPH, cga->mode1_w, cga->mode1_h);
       pce_smap_free (&cga->smap);
       pce_smap_init (&cga->smap, 320, 200, cga->mode1_w, cga->mode1_h);
       break;
 
     case 2:
-      trm_set_size (cga->trm, TERM_MODE_GRAPH, cga->mode2_w, cga->mode2_h);
+      trm_set_mode (cga->trm, TERM_MODE_GRAPH, cga->mode2_w, cga->mode2_h);
       pce_smap_free (&cga->smap);
       pce_smap_init (&cga->smap, 640, 200, cga->mode2_w, cga->mode2_h);
       break;

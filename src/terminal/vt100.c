@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -256,7 +256,7 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
   vt->trm.ext = vt;
 
   vt->trm.del = (trm_del_f) &vt100_del;
-  vt->trm.set_size = (trm_set_size_f) &vt100_set_size;
+  vt->trm.set_mode = (trm_set_mode_f) &vt100_set_mode;
   vt->trm.set_col = (trm_set_col_f) &vt100_set_col;
   vt->trm.set_crs = (trm_set_crs_f) &vt100_set_crs;
   vt->trm.set_pos = (trm_set_pos_f) &vt100_set_pos;
@@ -598,7 +598,7 @@ unsigned vt100_str_int (unsigned char *buf, unsigned n)
   return (ret);
 }
 
-void vt100_set_size (vt100_t *vt, unsigned m, unsigned w, unsigned h)
+void vt100_set_mode (vt100_t *vt, unsigned m, unsigned w, unsigned h)
 {
 }
 

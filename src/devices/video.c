@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/video.c                                        *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -109,61 +109,60 @@ void pce_video_clock (video_t *vid, unsigned long cnt)
   }
 }
 
-void pce_smap_init (scrmap_t *smap,
-  unsigned w, unsigned h, unsigned sw, unsigned sh)
+
+int pce_smap_init (scrmap_t *smap, unsigned w, unsigned h, unsigned sw, unsigned sh)
 {
-  unsigned long i, n;
-  unsigned      x, y;
-  unsigned      px, pw, tx;
-  unsigned      py, ph, ty;
+  unsigned long i;
+  unsigned      pos, cnt, tmp;
 
   smap->w = w;
   smap->h = h;
   smap->sw = sw;
   smap->sh = sh;
 
-  n = (unsigned long) w * (unsigned long) h;
-
-  smap->pxl = (scrmap_pixel_t *) malloc (n * sizeof (scrmap_pixel_t));
-  if (smap->pxl == NULL) {
-    return;
+  smap->mapx = (unsigned *) malloc (2 * (w + h) * sizeof (unsigned));
+  if (smap->mapx == NULL) {
+    return (1);
   }
 
-  i = 0;
-  py = 0;
-  ty = 0;
+  smap->mapy = smap->mapx + w;
+  smap->mapw = smap->mapy + h;
+  smap->maph = smap->mapw + w;
 
-  for (y = 0; y < h; y++) {
-    ty += sh;
-    ph = ty / h;
-    ty = ty % h;
+  pos = 0;
+  tmp = 0;
+  for (i = 0; i < w; i++) {
+    tmp += sw;
+    cnt = tmp / w;
+    tmp = tmp % w;
 
-    px = 0;
-    tx = 0;
+    smap->mapx[i] = pos;
+    smap->mapw[i] = cnt;
 
-    for (x = 0; x < w; x++) {
-      tx += sw;
-      pw = tx / w;
-      tx = tx % w;
-
-      smap->pxl[i].x = px;
-      smap->pxl[i].y = py;
-      smap->pxl[i].w = pw;
-      smap->pxl[i].h = ph;
-
-      i += 1;
-      px += pw;
-    }
-
-    py += ph;
+    pos += cnt;
   }
+
+  pos = 0;
+  tmp = 0;
+  for (i = 0; i < h; i++) {
+    tmp += sh;
+    cnt = tmp / h;
+    tmp = tmp % h;
+
+    smap->mapy[i] = pos;
+    smap->maph[i] = cnt;
+
+    pos += cnt;
+  }
+
+  return (0);
 }
 
 void pce_smap_free (scrmap_t *smap)
 {
   if (smap != NULL) {
-    free (smap->pxl);
-    smap->pxl = NULL;
+    free (smap->mapx);
+    smap->mapx = NULL;
   }
 }
 
@@ -182,8 +181,8 @@ void pce_smap_get_pixel (scrmap_t *smap, unsigned x, unsigned y,
 
   i = (unsigned long) smap->w * y + x;
 
-  *sx = smap->pxl[i].x;
-  *sy = smap->pxl[i].y;
-  *sw = smap->pxl[i].w;
-  *sh = smap->pxl[i].h;
+  *sx = smap->mapx[x];
+  *sy = smap->mapy[y];
+  *sw = smap->mapw[x];
+  *sh = smap->maph[y];
 }

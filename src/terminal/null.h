@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/null.h                                        *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: null.h,v 1.1 2003/10/18 19:30:32 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_NULL_H
@@ -44,7 +44,8 @@ terminal_t *null_new (ini_sct_t *ini);
 void null_free (null_t *vt);
 void null_del (null_t *vt);
 
-void null_set_size (null_t *vt, unsigned m, unsigned w, unsigned h);
+void null_set_mode (null_t *vt, unsigned m, unsigned w, unsigned h);
+void null_set_size (null_t *vt, unsigned w, unsigned h);
 void null_set_col (null_t *vt, unsigned fg, unsigned bg);
 void null_set_crs (null_t *vt, unsigned y1, unsigned y2, int show);
 void null_set_pos (null_t *vt, unsigned x, unsigned y);

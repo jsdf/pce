@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.h                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.h,v 1.5 2003/09/21 04:04:23 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_X11_H
@@ -107,7 +107,7 @@ terminal_t *xt_new (ini_sct_t *ini);
 void xt_free (xterm_t *xt);
 void xt_del (xterm_t *xt);
 
-void xt_set_size (xterm_t *xt, unsigned m, unsigned w, unsigned h);
+void xt_set_mode (xterm_t *xt, unsigned m, unsigned w, unsigned h);
 void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b);
 void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg);
 void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2, int show);

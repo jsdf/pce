@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -126,7 +126,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 
   mda_set_colors (mda);
 
-  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
 
   return (&mda->vid);
 }

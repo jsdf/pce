@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -261,7 +261,7 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt->trm.ext = xt;
 
   xt->trm.del = (trm_del_f) &xt_del;
-  xt->trm.set_size = (trm_set_size_f) &xt_set_size;
+  xt->trm.set_mode = (trm_set_mode_f) &xt_set_mode;
   xt->trm.set_map = (trm_set_map_f) &xt_set_map;
   xt->trm.set_col = (trm_set_col_f) &xt_set_col;
   xt->trm.set_crs = (trm_set_crs_f) &xt_set_crs;
@@ -408,7 +408,7 @@ void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
   );
 }
 
-void xt_set_size (xterm_t *xt, unsigned m, unsigned w, unsigned h)
+void xt_set_mode (xterm_t *xt, unsigned m, unsigned w, unsigned h)
 {
   XSizeHints size;
 

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -41,6 +41,7 @@ void trm_init (terminal_t *trm)
   trm->set_brk = NULL;
 
   trm->del = NULL;
+  trm->set_mode = NULL;
   trm->set_size = NULL;
   trm->set_map = NULL;
   trm->set_col = NULL;
@@ -62,10 +63,17 @@ void trm_del (terminal_t *trm)
   }
 }
 
-void trm_set_size (terminal_t *trm, unsigned m, unsigned w, unsigned h)
+void trm_set_mode (terminal_t *trm, unsigned m, unsigned w, unsigned h)
+{
+  if (trm->set_mode != NULL) {
+    trm->set_mode (trm->ext, m, w, h);
+  }
+}
+
+void trm_set_size (terminal_t *trm, unsigned w, unsigned h)
 {
   if (trm->set_size != NULL) {
-    trm->set_size (trm->ext, m, w, h);
+    trm->set_size (trm->ext, w, h);
   }
 }
 

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/video.h                                        *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -50,18 +50,16 @@ typedef void (*pce_video_clock_f) (void *ext, unsigned long cnt);
 
 
 typedef struct {
-  unsigned x;
-  unsigned y;
   unsigned w;
   unsigned h;
-} scrmap_pixel_t;
 
-typedef struct {
-  unsigned       w;
-  unsigned       h;
-  unsigned       sw;
-  unsigned       sh;
-  scrmap_pixel_t *pxl;
+  unsigned sw;
+  unsigned sh;
+
+  unsigned *mapx;
+  unsigned *mapw;
+  unsigned *mapy;
+  unsigned *maph;
 } scrmap_t;
 
 
@@ -98,7 +96,7 @@ int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 void pce_video_clock (video_t *vid, unsigned long cnt);
 
 
-void pce_smap_init (scrmap_t *smap,
+int pce_smap_init (scrmap_t *smap,
   unsigned w, unsigned h, unsigned sw, unsigned sh
 );
 

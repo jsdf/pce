@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -152,7 +152,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 
   hgc_set_colors (hgc, 0);
 
-  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
 
   return (&hgc->vid);
 }
@@ -611,11 +611,11 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 
     switch (newmode) {
       case 0:
-        trm_set_size (hgc->trm, TERM_MODE_TEXT, 80, 25);
+        trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
         break;
 
       case 1:
-        trm_set_size (hgc->trm, TERM_MODE_GRAPH, hgc->mode1_w, hgc->mode1_h);
+        trm_set_mode (hgc->trm, TERM_MODE_GRAPH, hgc->mode1_w, hgc->mode1_h);
         pce_smap_free (&hgc->smap);
         pce_smap_init (&hgc->smap, 720, 348, hgc->mode1_w, hgc->mode1_h);
         break;

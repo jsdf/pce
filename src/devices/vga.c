@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/vga.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -214,7 +214,7 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
   vga->mode = 0;
 
-  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
 
   return (&vga->vid);
 }
@@ -1220,7 +1220,7 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
 
   switch (mode) {
     case 0:
-      trm_set_size (vga->trm, TERM_MODE_TEXT, w, h);
+      trm_set_mode (vga->trm, TERM_MODE_TEXT, w, h);
       break;
 
     case 16:
@@ -1246,7 +1246,7 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
         sh = h;
       }
 
-      trm_set_size (vga->trm, TERM_MODE_GRAPH, sw, sh);
+      trm_set_mode (vga->trm, TERM_MODE_GRAPH, sw, sh);
       pce_smap_free (&vga->smap);
       pce_smap_init (&vga->smap, w, h, sw, sh);
       break;

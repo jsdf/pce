@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -90,7 +90,7 @@ int sdl_set_font_psf (sdl_t *sdl, const char *fname)
   return (0);
 }
 
-int sdl_set_mode (sdl_t *sdl, unsigned w, unsigned h)
+int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h)
 {
   sdl->scr = NULL;
 
@@ -131,6 +131,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->trm.ext = sdl;
 
   sdl->trm.del = (trm_del_f) &sdl_del;
+  sdl->trm.set_mode = (trm_set_mode_f) &sdl_set_mode;
   sdl->trm.set_size = (trm_set_size_f) &sdl_set_size;
   sdl->trm.set_map = (trm_set_map_f) &sdl_set_map;
   sdl->trm.set_col = (trm_set_col_f) &sdl_set_col;
@@ -211,7 +212,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
   inf = SDL_GetVideoInfo();
   sdl->dsp_bpp = inf->vfmt->BytesPerPixel;
 
-  if (sdl_set_mode (sdl, sdl->pxl_w, sdl->pxl_h)) {
+  if (sdl_set_window_size (sdl, sdl->pxl_w, sdl->pxl_h)) {
     free (sdl);
     return (NULL);
   }
@@ -391,7 +392,7 @@ void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h,
   }
 }
 
-void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
+void sdl_set_mode (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
 {
   if (sdl->scr != NULL) {
     SDL_FreeSurface (sdl->scr);
@@ -418,12 +419,16 @@ void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
     sdl->crs_on = 0;
   }
 
-  sdl_set_mode (sdl, sdl->pxl_w, sdl->pxl_h);
+  sdl_set_window_size (sdl, sdl->pxl_w, sdl->pxl_h);
 
   sdl->upd_x1 = sdl->pxl_w;
   sdl->upd_y1 = sdl->pxl_h;
   sdl->upd_x2 = 0;
   sdl->upd_y2 = 0;
+}
+
+void sdl_set_size (sdl_t *sdl, unsigned w, unsigned h)
+{
 }
 
 void sdl_set_map (sdl_t *sdl, unsigned i, unsigned r, unsigned g, unsigned b)

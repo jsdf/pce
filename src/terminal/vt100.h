@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -75,7 +75,7 @@ terminal_t *vt100_new (ini_sct_t *ini, int inp, int out);
 void vt100_free (vt100_t *vt);
 void vt100_del (vt100_t *vt);
 
-void vt100_set_size (vt100_t *vt, unsigned m, unsigned w, unsigned h);
+void vt100_set_mode (vt100_t *vt, unsigned m, unsigned w, unsigned h);
 void vt100_set_col (vt100_t *vt, unsigned fg, unsigned bg);
 void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2, int show);
 void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -154,7 +154,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
   ega->mode = 0;
 
-  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
 
   return (&ega->vid);
 }
@@ -1019,7 +1019,7 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
 
   switch (mode) {
     case 0:
-      trm_set_size (ega->trm, TERM_MODE_TEXT, w, h);
+      trm_set_mode (ega->trm, TERM_MODE_TEXT, w, h);
       break;
 
     case 16:
@@ -1044,7 +1044,7 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
         sh = h;
       }
 
-      trm_set_size (ega->trm, TERM_MODE_GRAPH, sw, sh);
+      trm_set_mode (ega->trm, TERM_MODE_GRAPH, sw, sh);
       pce_smap_free (&ega->smap);
       pce_smap_init (&ega->smap, w, h, sw, sh);
       break;

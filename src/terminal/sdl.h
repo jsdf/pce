@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.h                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -86,7 +86,8 @@ typedef struct {
 terminal_t *sdl_new (ini_sct_t *ini);
 void sdl_del (sdl_t *sdl);
 
-void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h);
+void sdl_set_mode (sdl_t *sdl, unsigned m, unsigned w, unsigned h);
+void sdl_set_size (sdl_t *sdl, unsigned w, unsigned h);
 void sdl_set_map (sdl_t *sdl, unsigned i, unsigned r, unsigned g, unsigned b);
 void sdl_set_col (sdl_t *sdl, unsigned fg, unsigned bg);
 void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show);

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,7 +36,8 @@
 
 typedef void (*trm_del_f) (void *ext);
 typedef void (*trm_set_mse_f) (void *ext, int dx, int dy, unsigned b);
-typedef void (*trm_set_size_f) (void *ext, unsigned m, unsigned w, unsigned h);
+typedef void (*trm_set_mode_f) (void *ext, unsigned m, unsigned w, unsigned h);
+typedef void (*trm_set_size_f) (void *ext, unsigned w, unsigned h);
 typedef void (*trm_set_map_f) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
 typedef void (*trm_set_col_f) (void *ext, unsigned fg, unsigned bg);
 typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2, int show);
@@ -57,6 +58,7 @@ typedef struct {
 
   void (*set_brk) (void *ext, unsigned char val);
 
+  trm_set_mode_f set_mode;
   trm_set_size_f set_size;
 
   trm_set_map_f  set_map;
@@ -78,7 +80,9 @@ void trm_free (terminal_t *trm);
 
 void trm_del (terminal_t *trm);
 
-void trm_set_size (terminal_t *trm, unsigned m, unsigned w, unsigned h);
+void trm_set_mode (terminal_t *trm, unsigned m, unsigned w, unsigned h);
+void trm_set_size (terminal_t *trm, unsigned w, unsigned h);
+
 void trm_set_map (terminal_t *trm, unsigned i, unsigned r, unsigned g, unsigned b);
 void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg);
 
