@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: config.h.in,v 1.4 2003/04/23 12:48:40 hampa Exp $ */
+/* $Id: config.h.in,v 1.5 2003/04/24 23:18:15 hampa Exp $ */
 
 
 #ifndef PCE_CONFIG_H
@@ -46,5 +46,6 @@
 #undef PCE_DIR_ETC
 #undef PCE_DIR_DATA
 
+#undef PCE_X11_USE
 
 #endif

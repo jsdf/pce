@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.h                                          *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.2 2003/04/24 23:18:15 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -45,8 +45,15 @@ typedef struct {
   unsigned char ppi_port_b;
   unsigned char ppi_port_c[2];
 
+  unsigned      key_i;
+  unsigned      key_j;
+  unsigned long key_clk;
+  unsigned char key_buf[256];
+
   e8259_t       *pic;
   mem_blk_t     *pic_prt;
+
+  terminal_t    *trm;
 
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];

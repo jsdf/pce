@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.h                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: mda.h,v 1.2 2003/04/24 23:18:16 hampa Exp $ */
 
 
 #ifndef PCE_MDA_H
@@ -36,11 +36,11 @@ typedef struct {
   unsigned      crtc_mode;
   unsigned      crtc_pos;
 
-  term_t        trm;
+  terminal_t    *trm;
 } mda_t;
 
 
-mda_t *mda_new (FILE *fp);
+mda_t *mda_new (terminal_t *trm);
 void mda_del (mda_t *mda);
 
 void mda_clock (mda_t *mda);
@@ -55,6 +55,7 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
 void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
 void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
 unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr);
+unsigned short mda_crtc_get_uint16 (mda_t *mda, unsigned long addr);
 
 
 #endif

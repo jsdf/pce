@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/term.h                                           *
+ * File name:     src/terminal/vt100.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,42 +20,62 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: term.h,v 1.2 2003/04/23 16:30:11 hampa Exp $ */
+/* $Id: vt100.h,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
 
 
-#ifndef PCE_TERM_H
-#define PCE_TERM_H 1
+#ifndef PCE_TERMINAL_VT100_H
+#define PCE_TERMINAL_VT100_H 1
 
 
 #include <stdio.h>
 
+#include <terminal/terminal.h>
+
+
+typedef struct vt100_keymap_t {
+  unsigned      key_cnt;
+  unsigned char key[8];
+
+  unsigned      seq_cnt;
+  unsigned char seq[8];
+} vt100_keymap_t;
+
 
 typedef struct {
-  unsigned x;
-  unsigned y;
+  terminal_t     trm;
 
-  unsigned fg;
-  unsigned bg;
+  unsigned       fg;
+  unsigned       bg;
 
-  unsigned crs_x;
-  unsigned crs_y;
+  unsigned       scn_x;
+  unsigned       scn_y;
 
-  int      col_chg;
+  unsigned       crs_x;
+  unsigned       crs_y;
 
-  FILE     *fp;
-} term_t;
+  unsigned       crs_y1;
+  unsigned       crs_y2;
+
+  unsigned       key_cnt;
+  vt100_keymap_t *keymap;
+
+  int            fd_inp;
+  int            fd_out;
+} vt100_t;
 
 
-void trm_init (term_t *trm, FILE *fp);
-void trm_free (term_t *trm);
+void vt100_init (vt100_t *vt, int inp, int out);
+terminal_t *vt100_new (int inp, int out);
 
-void trm_clr_scn (term_t *trm);
-void trm_set_pos (term_t *trm, unsigned x, unsigned y);
-void trm_set_crs (term_t *trm);
-void trm_set_col (term_t *trm, unsigned fg, unsigned bg);
-void trm_set_attr_mono (term_t *trm, unsigned char a);
-void trm_set_attr_col (term_t *trm, unsigned char a);
-void trm_set_chr_xy (term_t *trm, unsigned x, unsigned y, unsigned char c);
+void vt100_free (vt100_t *vt);
+void vt100_del (vt100_t *vt);
+
+void vt100_set_size (vt100_t *vt, unsigned w, unsigned h);
+void vt100_set_col (vt100_t *vt, unsigned fg, unsigned bg);
+void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2);
+void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y);
+void vt100_set_chr (vt100_t *vt, unsigned x, unsigned y, unsigned char c);
+void vt100_check (vt100_t *vt);
 
 
 #endif

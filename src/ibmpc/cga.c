@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.3 2003/04/24 12:22:27 hampa Exp $ */
+/* $Id: cga.c,v 1.4 2003/04/24 23:18:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -28,7 +28,7 @@
 #include "pce.h"
 
 
-cga_t *cga_new (FILE *fp)
+cga_t *cga_new (terminal_t *trm)
 {
   unsigned i;
   cga_t    *cga;
@@ -42,7 +42,7 @@ cga_t *cga_new (FILE *fp)
     cga->crtc_reg[i] = 0;
   }
 
-  trm_init (&cga->trm, fp);
+  cga->trm = trm;
 
   cga->mem = mem_blk_new (0xb8000, 16384, 1);
   cga->mem->ext = cga;
@@ -68,7 +68,6 @@ cga_t *cga_new (FILE *fp)
 void cga_del (cga_t *cga)
 {
   if (cga != NULL) {
-    trm_free (&cga->trm);
     mem_blk_del (cga->mem);
     mem_blk_del (cga->crtc);
     free (cga);
@@ -117,15 +116,18 @@ void cga_update (cga_t *cga)
 {
   unsigned i;
   unsigned x, y;
-
-  trm_clr_scn (&cga->trm);
+  unsigned fg, bg;
 
   i = (cga->crtc_ofs << 1) & 0x3ffff;
 
   for (y = 0; y < 25; y++) {
     for (x = 0; x < 80; x++) {
-      trm_set_attr_col (&cga->trm, cga->mem->data[i + 1]);
-      trm_set_chr_xy (&cga->trm, x, y, cga->mem->data[i]);
+      fg = cga->mem->data[i + 1] & 0x0f;
+      bg = (cga->mem->data[i + 1] & 0xf0) >> 4;
+
+      trm_set_col (cga->trm, fg, bg);
+      trm_set_chr (cga->trm, x, y, cga->mem->data[i]);
+
       i = (i + 2) & 0x3fff;
     }
   }
@@ -134,10 +136,6 @@ void cga_update (cga_t *cga)
 void cga_set_pos (cga_t *cga, unsigned pos)
 {
   cga->crtc_pos = pos;
-
-  if (!cga->crs_on) {
-    return;
-  }
 
   if (pos < cga->crtc_ofs) {
     return;
@@ -149,17 +147,17 @@ void cga_set_pos (cga_t *cga, unsigned pos)
     return;
   }
 
-  trm_set_pos (&cga->trm, pos % 80, pos / 80);
+  trm_set_pos (cga->trm, pos % 80, pos / 80);
 }
 
-void cga_set_crs (cga_t *cga, int on)
+void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 {
-  if (on && !cga->crs_on) {
-    cga->crs_on = 1;
-    cga_set_pos (cga, cga->crtc_pos);
+  if ((y1 > 7) || (y2 > 7)) {
+    y1 = 0;
+    y2 = 7;
   }
 
-  cga->crs_on = on;
+  trm_set_crs (cga->trm, 7 - y1, 7 - y2);
 }
 
 void cga_set_page_ofs (cga_t *cga, unsigned ofs)
@@ -208,8 +206,8 @@ void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  trm_set_attr_col (&cga->trm, a);
-  trm_set_chr_xy (&cga->trm, x, y, c);
+  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+  trm_set_chr (cga->trm, x, y, c);
 }
 
 void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
@@ -250,8 +248,8 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  trm_set_attr_col (&cga->trm, a);
-  trm_set_chr_xy (&cga->trm, x, y, c);
+  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+  trm_set_chr (cga->trm, x, y, c);
 }
 
 void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
@@ -265,11 +263,11 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x0a:
     case 0x0b:
-      cga_set_crs (cga, cga->crtc_reg[0x0a] < cga->crtc_reg[0x0b]);
+      cga_set_crs (cga, cga->crtc_reg[0x0b], cga->crtc_reg[0x0a]);
       break;
 
     case 0x0c:
-      cga_set_page_ofs (cga, (val << 8) | (cga->crtc_reg[0x0d] & 0xff));
+      cga_set_page_ofs (cga, (cga->crtc_reg[0x0c] << 8) | val);
       break;
 
     case 0x0d:

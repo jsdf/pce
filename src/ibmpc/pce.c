@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.4 2003/04/23 23:40:09 hampa Exp $ */
+/* $Id: pce.c,v 1.5 2003/04/24 23:18:16 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -193,6 +193,8 @@ void cmd_get (cmd_t *cmd)
   str_rtrim (cmd->str);
 
   cmd->i = 0;
+
+  trm_check (pc->trm);
 }
 
 void cmd_match_space (cmd_t *cmd)
@@ -806,6 +808,26 @@ void cpu_exec (void)
   }
 }
 
+void pce_run (void)
+{
+  key_set_fd (pc->key, 0);
+
+  cpu_start();
+
+  while (1) {
+    cpu_exec();
+
+    if (pc->brk) {
+      pc->brk = 0;
+      break;
+    }
+  }
+
+  cpu_end();
+
+  key_set_fd (pc->key, -1);
+}
+
 void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -814,7 +836,7 @@ void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
 
   ops_cnt[op1 & 0xff] += 1;
 
-  if ((op1 == 0xcd) && (op2 == 0x28)) {
+  if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
     cpu_end();
     usleep (10000);
     cpu_start();
@@ -1613,6 +1635,7 @@ int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 int main (int argc, char *argv[])
 {
   int       i;
+  int       halt;
   char      *cfg;
   ini_sct_t *ini, *sct;
 
@@ -1628,6 +1651,7 @@ int main (int argc, char *argv[])
   }
 
   cfg = NULL;
+  halt = 0;
 
   pce_log_set_fp (NULL, 0);
   pce_log_set_stderr (1);
@@ -1647,6 +1671,9 @@ int main (int argc, char *argv[])
         return (1);
       }
       pce_log_set_fname (argv[i]);
+    }
+    else if (str_isarg2 (argv[i], "-m", "--monitor")) {
+      halt = 1;
     }
     else {
       printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
@@ -1683,7 +1710,12 @@ int main (int argc, char *argv[])
   signal (SIGINT, &sig_int);
 //  signal (SIGTERM, &sig_int);
 
-  do_cmd();
+  if (halt) {
+    do_cmd();
+  }
+  else {
+    pce_run();
+  }
 
   pc_del (pc);
 

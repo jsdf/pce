@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/cga.h                                            *
+ * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,46 +20,71 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.4 2003/04/24 23:18:15 hampa Exp $ */
+/* $Id: terminal.c,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
 
 
-#ifndef PCE_CGA_H
-#define PCE_CGA_H 1
+#include <stdio.h>
+
+#include <terminal/terminal.h>
 
 
-typedef struct {
-  mem_blk_t     *mem;
-  mem_blk_t     *crtc;
+void trm_init (terminal_t *trm)
+{
+  trm->ext = NULL;
+  trm->key_ext = NULL;
+  trm->set_key = NULL;
+  trm->set_brk = NULL;
+}
 
-  unsigned char crtc_reg[16];
+void trm_free (terminal_t *trm)
+{
+}
 
-  unsigned      crtc_mode;
-  unsigned      crtc_pos;
-  unsigned      crtc_ofs;
+void trm_del (terminal_t *trm)
+{
+  if (trm->del != NULL) {
+    trm->del (trm->ext);
+  }
+}
 
-  int           crs_on;
+void trm_set_size (terminal_t *trm, unsigned w, unsigned h)
+{
+  if (trm->set_size != NULL) {
+    trm->set_size (trm->ext, w, h);
+  }
+}
 
-  terminal_t    *trm;
-} cga_t;
+void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg)
+{
+  if (trm->set_col != NULL) {
+    trm->set_col (trm->ext, fg, bg);
+  }
+}
 
+void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2)
+{
+  if (trm->set_crs != NULL) {
+    trm->set_crs (trm->ext, y1, y2);
+  }
+}
 
-cga_t *cga_new (terminal_t *trm);
+void trm_set_pos (terminal_t *trm, unsigned x, unsigned y)
+{
+  if (trm->set_pos != NULL) {
+    trm->set_pos (trm->ext, x, y);
+  }
+}
 
-void cga_del (cga_t *cga);
+void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c)
+{
+  if (trm->set_chr != NULL) {
+    trm->set_chr (trm->ext, x, y, c);
+  }
+}
 
-void cga_clock (cga_t *cga);
-
-void cga_prt_state (cga_t *cga, FILE *fp);
-
-void cga_set_pos (cga_t *cga, unsigned pos);
-
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-
-void cga_crtc_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_crtc_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-unsigned char cga_crtc_get_uint8 (cga_t *cga, unsigned long addr);
-unsigned short cga_crtc_get_uint16 (cga_t *cga, unsigned long addr);
-
-
-#endif
+void trm_check (terminal_t *trm)
+{
+  if (trm->check != NULL) {
+    trm->check (trm->ext);
+  }
+}

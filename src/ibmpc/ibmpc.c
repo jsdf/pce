@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.3 2003/04/24 12:23:35 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.4 2003/04/24 23:18:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -37,6 +37,7 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 
 void pc_break (ibmpc_t *pc, unsigned char val);
+void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
 
 void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
@@ -172,9 +173,47 @@ void pc_setup_keyboard (ibmpc_t *pc)
   pc->key->brk = (set_uint8_f) &pc_break;
 }
 
+void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t *sct;
+
+  pc->trm = NULL;
+
+#ifdef PCE_X11_USE
+  sct = ini_sct_find_sct (ini, "term_x11");
+  if (sct != NULL) {
+    pce_log (MSG_INF, "setting up term_x11\n");
+
+    pc->trm = xt_new();
+    if (pc->trm == NULL) {
+      pce_log (MSG_ERR, "setting up term_x11 failed\n");
+    }
+  }
+#endif
+
+  sct = ini_sct_find_sct (ini, "term_vt100");
+  if (pc->trm == NULL) {
+    pce_log (MSG_INF, "setting up term_vt100\n");
+
+    pc->trm = vt100_new (0, 1);
+    if (pc->trm == NULL) {
+      pce_log (MSG_ERR, "setting up term_vt100 failed\n");
+    }
+  }
+
+  if (pc->trm == NULL) {
+    pce_log (MSG_ERR, "no terminal found\n");
+    return;
+  }
+
+  pc->trm->key_ext = pc;
+  pc->trm->set_key = (set_uint8_f) &pc_set_keycode;
+  pc->trm->set_brk = (set_uint8_f) &pc_break;
+}
+
 void pc_setup_mda (ibmpc_t *pc)
 {
-  pc->mda = mda_new (stdout);
+  pc->mda = mda_new (pc->trm);
   mem_add_blk (pc->mem, pc->mda->mem, 0);
   mem_add_blk (pc->prt, pc->mda->crtc, 0);
 
@@ -184,7 +223,7 @@ void pc_setup_mda (ibmpc_t *pc)
 
 void pc_setup_cga (ibmpc_t *pc)
 {
-  pc->cga = cga_new (stdout);
+  pc->cga = cga_new (pc->trm);
   mem_add_blk (pc->mem, pc->cga->mem, 0);
   mem_add_blk (pc->prt, pc->cga->crtc, 0);
 
@@ -279,6 +318,10 @@ ibmpc_t *pc_new (ini_sct_t *ini)
     return (NULL);
   }
 
+  pc->key_i = 0;
+  pc->key_j = 0;
+  pc->key_clk = 0;
+
   pc->brk = 0;
   pc->clk_cnt = 0;
 
@@ -296,6 +339,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_cpu (pc, ini);
   pc_setup_ppi (pc, ini);
   pc_setup_pic (pc);
+  pc_setup_terminal (pc, ini);
   pc_setup_keyboard (pc);
   pc_setup_video (pc, ini);
   pc_setup_disks (pc, ini);
@@ -314,6 +358,8 @@ void pc_del (ibmpc_t *pc)
 
   mda_del (pc->mda);
   cga_del (pc->cga);
+
+  trm_del (pc->trm);
 
   e86_del (pc->cpu);
 
@@ -340,6 +386,24 @@ void pc_clock (ibmpc_t *pc)
     pc->clk_div[0] -= (4 * 65536);
   }
 
+  if (pc->key_clk > 0) {
+    pc->key_clk = (n < pc->key_clk) ? (pc->key_clk - n) : 0;
+
+    if ((pc->key_clk == 0) && (pc->key_i < pc->key_j)) {
+      pc->ppi_port_a = pc->key_buf[pc->key_i];
+      e8259_set_irq1 (pc->pic, 1);
+      pc->key_i += 1;
+
+      if (pc->key_i < pc->key_j) {
+        pc->key_clk = 10000;
+      }
+      else {
+        pc->key_i = 0;
+        pc->key_j = 0;
+      }
+    }
+  }
+
   if (pc->clk_div[1] >= 16) {
     e8259_clock (pc->pic);
     pc->clk_div[1] -= 16;
@@ -347,7 +411,8 @@ void pc_clock (ibmpc_t *pc)
 
   if (pc->clk_div[2] >= 64) {
     cga_clock (pc->cga);
-    key_clock (pc->key);
+//    key_clock (pc->key);
+    trm_check (pc->trm);
     pc->clk_div[2] -= 64;
   }
 
@@ -461,4 +526,21 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 {
   pc->ppi_port_b = val;
+}
+
+void pc_set_keycode (ibmpc_t *pc, unsigned char val)
+{
+  if (pc->key_clk > 0) {
+    if (pc->key_j < 256) {
+      pc->key_buf[pc->key_j] = val;
+      pc->key_j += 1;
+    }
+    return;
+  }
+
+  pc->ppi_port_a = val;
+  e8259_set_irq1 (pc->pic, 1);
+  pc->key_clk = 10000;
+
+  pce_log (MSG_DEB, "keycode: %02X\n", val);
 }

@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.9 2003/04/23 12:48:40 hampa Exp $
+# $Id: configure.in,v 1.10 2003/04/24 23:18:15 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -50,6 +50,28 @@ AC_SUBST(PCE_CFG_DATE)
 AC_SUBST(PCE_CFG_TIME)
 AC_DEFINE_UNQUOTED(PCE_CFG_DATE, "$PCE_CFG_DATE")
 AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
+
+
+AC_ARG_WITH(x11,
+  AC_HELP_STRING([--with-x11], [Use the X11 terminal]),
+  [
+  	PCE_X11_USE="$withval"
+  ],
+  [
+  	PCE_X11_USE=no
+  ]
+)
+if test "x$PCE_X11_USE" = "xyes" ; then
+	PCE_X11_USE=1
+	PCE_X11_CCF="-I/usr/X11R6/include"
+	PCE_X11_LDF="-L/usr/X11R6/lib -lX11"
+	AC_DEFINE(PCE_X11_USE)
+else
+	PCE_X11_USE=0
+fi
+AC_SUBST(PCE_X11_USE)
+AC_SUBST(PCE_X11_CCF)
+AC_SUBST(PCE_X11_LDF)
 
 
 AC_ARG_WITH(host-clock,
@@ -130,6 +152,7 @@ AC_OUTPUT(
   src/ibmpc/bios/Makefile
   src/ibmpc/Makefile
   src/libini/Makefile
+  src/terminal/Makefile
 )
 
 

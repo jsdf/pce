@@ -1,0 +1,39 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/24 23:18:17 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+pcesrc	:= $(topdir)/src
+pcedst	:= ..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= terminal.c vt100.c
+OBJ	:= terminal.o vt100.o
+HDR	:= terminal.h vt100.h
+MAN	:=
+BIN	:=
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+ifeq "$(PCE_X11_USE)" "1"
+	SRC += xterm.c
+	OBJ += xterm.o
+	HDR += xterm.h
+	CC_FLG_EXTRA := $(PCE_X11_CCF)
+endif
+
+all: $(BIN) $(OBJ)
+
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+terminal.o:	terminal.c $(SDP)
+vt100.o:	vt100.c $(SDP)
+xterm.o:	xterm.c $(SDP)

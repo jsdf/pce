@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.1 2003/04/23 12:48:43 hampa Exp $ */
+/* $Id: pce.h,v 1.2 2003/04/24 23:18:17 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -66,8 +66,14 @@ void pce_log (unsigned level, const char *str, ...);
 
 #include <libini/libini.h>
 
+#include <terminal/terminal.h>
+#include <terminal/vt100.h>
+
+#ifdef PCE_X11_USE
+#include <terminal/xterm.h>
+#endif
+
 #include "log.h"
-#include "term.h"
 #include "memory.h"
 #include "keyboard.h"
 #include "disk.h"

@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.1 2003/04/23 12:48:45 hampa Exp $
+; $Id: pce.asm,v 1.2 2003/04/24 23:18:17 hampa Exp $
 
 
 %macro set_pos 1
@@ -430,7 +430,7 @@ inttab:
   dw      int_06, 0xf000
   dw      int_07, 0xf000
   dw      0xfea5, 0xf000 ;int_08, 0xf000
-  dw      int_09, 0xf000
+  dw      0xe987, 0xf000 ;int_09, 0xf000
   dw      int_0a, 0xf000
   dw      int_0b, 0xf000
   dw      int_0c, 0xf000

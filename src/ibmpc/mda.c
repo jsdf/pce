@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: mda.c,v 1.2 2003/04/24 23:18:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -28,7 +28,14 @@
 #include "pce.h"
 
 
-mda_t *mda_new (FILE *fp)
+static
+unsigned char coltab[16] = {
+ 0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+ 0x00, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+};
+
+
+mda_t *mda_new (terminal_t *trm)
 {
   unsigned i;
   mda_t    *mda;
@@ -55,8 +62,9 @@ mda_t *mda_new (FILE *fp)
   mda->crtc->set_uint8 = (seta_uint8_f) &mda_crtc_set_uint8;
   mda->crtc->set_uint16 = (seta_uint16_f) &mda_crtc_set_uint16;
   mda->crtc->get_uint8 = (geta_uint8_f) &mda_crtc_get_uint8;
+  mda->crtc->get_uint16 = (geta_uint16_f) &mda_crtc_get_uint16;
 
-  trm_init (&mda->trm, fp);
+  mda->trm = trm;
 
   return (mda);
 }
@@ -64,7 +72,6 @@ mda_t *mda_new (FILE *fp)
 void mda_del (mda_t *mda)
 {
   if (mda != NULL) {
-    trm_free (&mda->trm);
     mem_blk_del (mda->mem);
     mem_blk_del (mda->crtc);
     free (mda);
@@ -115,13 +122,24 @@ void mda_set_pos (mda_t *mda, unsigned pos)
   x = pos % 80;
   y = pos / 80;
 
-  trm_set_pos (&mda->trm, pos % 80, pos / 80);
+  trm_set_pos (mda->trm, pos % 80, pos / 80);
+}
+
+void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
+{
+  if ((y1 > 13) || (y2 > 13)) {
+    y1 = 0;
+    y2 = 7;
+  }
+
+  trm_set_crs (mda->trm, 13 - y1, 13 - y2);
 }
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
   unsigned      x, y;
   unsigned char c, a;
+  unsigned      fg, bg;
 
   if (mda->mem->data[addr] == val) {
     return;
@@ -145,14 +163,18 @@ void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  trm_set_attr_mono (&mda->trm, a);
-  trm_set_chr_xy (&mda->trm, x, y, c);
+  fg = coltab[a & 0x0f];
+  bg = coltab[(a & 0xf0) >> 4];
+
+  trm_set_col (mda->trm, fg, bg);
+  trm_set_chr (mda->trm, x, y, c);
 }
 
 void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
   unsigned      x, y;
   unsigned char c, a;
+  unsigned      fg, bg;
 
   if (addr & 1) {
     mda_mem_set_uint8 (mda, addr, val & 0xff);
@@ -181,8 +203,11 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
   x = (addr >> 1) % 80;
   y = (addr >> 1) / 80;
 
-  trm_set_attr_col (&mda->trm, a);
-  trm_set_chr_xy (&mda->trm, x, y, c);
+  fg = coltab[a & 0x0f];
+  bg = coltab[(a & 0xf0) >> 4];
+
+  trm_set_col (mda->trm, fg, bg);
+  trm_set_chr (mda->trm, x, y, c);
 }
 
 void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
@@ -194,6 +219,11 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
   mda->crtc_reg[reg] = val;
 
   switch (reg) {
+    case 0x0a:
+    case 0x0b:
+      mda_set_crs (mda, mda->crtc_reg[0x0b], mda->crtc_reg[0x0a]);
+      break;
+
     case 0x0e:
       mda_set_pos (mda, (val << 8) | (mda->crtc_reg[0x0f] & 0xff));
       break;
@@ -264,4 +294,17 @@ unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr)
     default:
       return (0xff);
   }
+}
+
+unsigned short mda_crtc_get_uint16 (mda_t *mda, unsigned long addr)
+{
+  unsigned short ret;
+
+  ret = mda_crtc_get_uint8 (mda, addr);
+
+  if (addr < mda->crtc->end) {
+    ret |= mda_crtc_get_uint8 (mda, addr + 1) << 8;
+  }
+
+  return (ret);
 }
