@@ -1,0 +1,211 @@
+# pce.cfg
+# Example config file
+
+# $Id: pce.cfg.in,v 1.1 2003/12/20 01:01:34 hampa Exp $
+
+section pc {
+	section cpu {
+		# 8086, 8088, V20, V30, 80186, 80188
+		model = "80186"
+	}
+
+	# Multiple "ram" sections may be present
+	section ram {
+		# The linear base address
+		base = 0x00000
+
+		# The size in bytes
+		size = 655360
+
+		# The size in KB
+		#sizek = 640
+	}
+
+	# Multiple "rom" sections may be present
+	section rom {
+		# The file from which the rom code is loaded
+		file = "PCE_DIR_DATA/pce/ibmpc.rom"
+
+		# The linear base address
+		base = 0xf0000
+
+		# The rom size in bytes
+		size = 65536
+	}
+
+	section ems {
+		# The EMS size in KB
+		size = 8192
+
+		# The page frame segment
+		segment = 0xe000
+	}
+
+	section xms {
+		# The maximum XMS memory used in KB
+		xms_size = 32768
+
+		# Define one UMB
+		umb_size = 65536
+		umb_segm = 0xd000
+
+		# Enable the HMA
+		hma = 1
+	}
+
+	# Multiple "terminal" sections may be present
+	section terminal {
+		driver = "sdl"
+
+		# Load a font. This must be a PSF font as used by
+		# console-tools
+		#font = "font.psf"
+
+		# Enable delayed update and set the update delay
+		# in milliseconds
+		update_delay = 50
+
+		# Update strategy in text modes (delay or now)
+		update_text = "delay"
+
+		# Update strategy in graphic modes (delay or now)
+		update_graph = "delay"
+	}
+
+	section terminal {
+		driver = "x11"
+
+		# Set the font. Any X11 font may be used, but proportional
+		# fonts look ugly.
+		font = "vga"
+		#font = "-*-courier-regular-r-*-*-12-*-*-*-*-*-*-*"
+	}
+
+	section terminal {
+		driver = "null"
+	}
+
+	section terminal {
+		driver = "vt100"
+
+		# Redefine keys. Syntax is
+		# <terminal escape sequence>=<scancode sequence>
+		#keymap = "=\x2a\xaa"			# Shift left
+		#keymap = "=\x38\xb8"			# Alt
+		#keymap = "=\x1d\x9d"			# Control
+		#keymap = "\x1b\x5b\x44=\x4b\xcb"	# Left
+		#keymap = "\x1b\x5b\x43=\x4d\xcd"	# Right
+		#keymap = "\x1b\x5b\x41=\x48\xc8"	# Up
+		#keymap = "\x1b\x5b\x42=\x50\xd0"	# Down
+		#keymap = "\x1b\x5b\x48=\x47\xc7"	# Home
+		#keymap = "\x1b\x5b\x46=\x4f\xcf"	# End
+		#keymap = "\x1b\x5b\x35\x7e=\x49\xc9"	# PgUp
+		#keymap = "\x1b\x5b\x36\x7e=\x51\xd1"	# PgDn
+		#keymap = "\x1b\x5b\x45=\x4c\xcc"	# KP-5
+		#keymap = "\x1b\x5b\x32\x7e=\x52\xd2"	# Insert
+		#keymap = "\x1b\x5b\x33\x7e=\x53\xd3"	# Delete
+	}
+
+	section ega {
+		mode_320x200_w = 640
+		mode_320x200_h = 480
+
+		mode_640x200_w = 640
+		mode_640x200_h = 480
+
+		mode_640x350_w = 640
+		mode_640x350_h = 480
+	}
+
+	section cga {
+		io = 0x3d4
+		membase = 0xb8000
+		memsize = 16384
+
+		# 320 * 200 * 4
+		mode_320x200_w = 640
+		mode_320x200_h = 480
+
+		# 640 * 200 * 2
+		mode_640x200_w = 640
+		mode_640x200_h = 480
+	}
+
+	section hgc {
+		io = 0x3b4
+		membase = 0xb0000
+		memsize = 65536
+
+		color7 = 0xe89050
+		color15 = 0xfff0c8
+
+		gcolor0 = 0x000000
+		gcolor1 = 0xf0f0f0
+
+		# 720 * 348 * 2
+		mode_720x348_w = 720
+		mode_720x348_h = 540
+	}
+
+	section mda {
+		io = 0x3b4
+		membase = 0xb0000
+		memsize = 4096
+
+		color0 = 0x000000
+		color1 = 0xc0c000
+		color7 = 0x00c000
+		color9 = 0xc0f000
+		color15 = 0x00f000
+	}
+
+	section serial {
+		io = 0x3f8
+		irq = 4
+		file = "/dev/ttyS0"
+	}
+
+	section mouse {
+		io = 0x2f8
+		irq = 3
+		speed_x_mul = 3
+		speed_x_div = 2
+		speed_y_mul = 3
+		speed_y_div = 2
+	}
+
+	section parport {
+		io = 0x378
+		file = "parport.out"
+	}
+
+	# Disk types are:
+	# "image"  A raw image file. "c", "h" and "s" must be specified.
+	# "dosemu" A DOSEMU style hard disk image file
+	# "ram"    A RAM disk. If a file name is specified, the contents
+	#          of that file are loaded into the RAM disk (but the file
+	#          is never altered.
+	section disk {
+		drive = 0
+		type = "image"
+		file = "pce_00.img"
+		c = 80
+		h = 2
+		s = 18
+	}
+
+	section disk {
+		drive = 1
+		type = "ram"
+		c = 80
+		h = 2
+		s = 18
+	}
+
+	section disk {
+		drive = 128
+		type = "dosemu"
+		file = "pce_80.img"
+		readonly = 1
+	}
+}

@@ -1,10 +1,10 @@
 # Makefile
-# $Id: Makefile.in,v 1.16 2003/12/20 01:01:33 hampa Exp $
+# $Id: Makefile.in,v 1.1 2003/12/20 01:01:33 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := lib libini cpu chipset devices terminal arch
-reldir := ..
+subdir := ibmpc
+reldir := ../..
 
 
 include $(reldir)/Makefile.inc

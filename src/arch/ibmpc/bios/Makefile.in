@@ -1,0 +1,73 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/12/20 01:01:34 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../../..
+
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= basic.asm bios.asm ega.asm pce.asm
+
+OBJ	:= basic.bin bios.bin ega.bin pce.bin
+OBJ_EXT	:=
+
+HDR	:=
+HDR_EXT	:= $(topdir)/src/arch/ibmpc/pce.inc
+
+MAN	:=
+
+BIN	:= ega.rom ibmpc.rom
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+BIOS_OBJ := basic.bin bios.bin pce.bin
+BIOS_SDP := Makefile $(HDR) $(HDR_EXT)
+BIOS_BDP := Makefile $(BIOS_OBJ)
+
+EGA_OBJ := ega.bin
+EGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc $(HDR) $(HDR_EXT)
+EGA_BDP := Makefile $(EGA_OBJ)
+
+
+all: $(BIN)
+
+
+clean:
+	rm -f $(OBJ) $(BIN) *.lst
+
+
+install:
+	$(INSTALL) -d -m 755 $(datdir)/pce
+	$(INSTALL) -m 644 $(BIN) $(datdir)/pce
+
+
+cmp:
+	fcmp $(topdir)/contrib/bios/ibmpc.cmp ibmpc.rom > ibmpc.diff
+
+
+ega.rom: $(EGA_BDP)
+	cat ega.bin > $@
+
+
+ibmpc.rom: $(BIOS_BDP)
+	cat pce.bin basic.bin bios.bin > $@
+
+
+
+pce.bin: pce.asm $(BIOS_SDP)
+	$(NASM) -I$(reldir)/src -I$(topdir)/src/arch/ibmpc -f bin -l pce.lst -o $@ $<
+
+bios.bin: bios.asm $(BIOS_SDP)
+	$(NASM) -I$(reldir)/src -I$(topdir)/src/arch/ibmpc -f bin -l bios.lst -o $@ $<
+
+basic.bin: basic.asm $(BIOS_SDP)
+	$(NASM) -I$(reldir)/src -I$(topdir)/src/arch/ibmpc -f bin -l basic.lst -o $@ $<
+
+ega.bin: ega.asm $(EGA_SDP)
+	$(NASM) -O2 -I$(srcdir) -I$(reldir)/src -I$(topdir)/src/arch/ibmpc -f bin -l ega.lst -o $@ $<
