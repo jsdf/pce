@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.c                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -139,6 +139,24 @@ void s6502_setup_cpu (sim6502_t *sim, ini_sct_t *ini)
   }
 }
 
+static
+void s6502_setup_console (sim6502_t *sim, ini_sct_t *ini)
+{
+  ini_sct_t *sct;
+
+  sct = ini_sct_find_sct (ini, "console");
+
+  con_init (&sim->console, sct);
+
+  mem_add_blk (sim->mem, sim->console.io, 0);
+
+  sim->console.irq_ext = sim->cpu;
+  sim->console.irq = (con_set_uint8_f) e6502_set_irq;
+
+  sim->console.brk_ext = sim;
+  sim->console.brk = (con_set_uint8_f) &s6502_break;
+}
+
 sim6502_t *s6502_new (ini_sct_t *ini)
 {
   sim6502_t *sim;
@@ -150,12 +168,14 @@ sim6502_t *s6502_new (ini_sct_t *ini)
 
   sim->brk = 0;
   sim->clk_cnt = 0;
+  sim->clk_div = 0;
 
   sim->mem = mem_new();
 
   s6502_setup_ram (sim, ini);
   s6502_setup_rom (sim, ini);
   s6502_setup_cpu (sim, ini);
+  s6502_setup_console (sim, ini);
 
   return (sim);
 }
@@ -165,6 +185,8 @@ void s6502_del (sim6502_t *sim)
   if (sim == NULL) {
     return;
   }
+
+  con_free (&sim->console);
 
   e6502_del (sim->cpu);
 
@@ -192,5 +214,12 @@ void s6502_reset (sim6502_t *sim)
 
 void s6502_clock (sim6502_t *sim, unsigned n)
 {
+  sim->clk_div += n;
+
+  if (sim->clk_div >= 4096) {
+    sim->clk_div -= 4096;
+    con_check (&sim->console);
+  }
+
   e6502_clock (sim->cpu, n);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.h                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -69,6 +69,8 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <lib/log.h>
 
+#include "console.h"
+
 
 /*****************************************************************************
  * @short The sim6502 context struct
@@ -79,7 +81,11 @@ typedef struct sim6502_s {
   memory_t           *mem;
   mem_blk_t          *ram;
 
+  console_t          console;
+
   unsigned long long clk_cnt;
+
+  unsigned long      clk_div;
 
   unsigned           brk;
 } sim6502_t;

@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := main sim6502
+FILES := console main sim6502
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -71,5 +71,6 @@ sim6502.cfg: sim6502.cfg.in
 	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
+console.o:	console.c $(SDP)
 main.o:		main.c $(SDP)
 sim6502.o:	sim6502.c $(SDP)

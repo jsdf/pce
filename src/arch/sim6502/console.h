@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim6502/main.h                                    *
- * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/arch/sim6502/console.h                                 *
+ * Created:       2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,20 +23,39 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIM6502_MAIN_H
-#define PCE_SIM6502_MAIN_H 1
+#ifndef PCE_SIM6502_CONSOLE_H
+#define PCE_SIM6502_CONSOLE_H 1
 
 
-#include "sim6502.h"
+#define CON_BUF_CNT 16
 
-#include <lib/cmd.h>
-#include <lib/brkpt.h>
+typedef void (*con_set_uint8_f) (void *ext, unsigned char val);
 
-extern int       par_verbose;
 
-extern sim6502_t *par_sim;
+typedef struct {
+  mem_blk_t       *io;
 
-extern unsigned  par_sig_int;
+  void            *irq_ext;
+  con_set_uint8_f irq;
+
+  void            *brk_ext;
+  con_set_uint8_f brk;
+
+  unsigned char   status;
+
+  unsigned        buf_i;
+  unsigned        buf_j;
+  unsigned char   buf[CON_BUF_CNT];
+} console_t;
+
+
+void con_init (console_t *con, ini_sct_t *sct);
+void con_free (console_t *con);
+
+unsigned char con_get_uint8 (console_t *con, unsigned long addr);
+void con_set_uint8 (console_t *con, unsigned long addr, unsigned char val);
+
+void con_check (console_t *con);
 
 
 #endif

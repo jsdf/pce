@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -346,26 +346,6 @@ void s6502_exec (sim6502_t *sim)
 }
 
 static
-void s6502_run_bp (sim6502_t *sim)
-{
-  pce_start();
-
-  while (1) {
-    s6502_exec (sim);
-
-    if (bp_check (&breakpoint, e6502_get_pc (sim->cpu), 0)) {
-      break;
-    }
-
-    if (sim->brk) {
-      break;
-    }
-  }
-
-  pce_stop();
-}
-
-static
 int s6502_exec_to (sim6502_t *sim, unsigned short addr)
 {
   while (e6502_get_pc (sim->cpu) != addr) {
@@ -391,6 +371,26 @@ int s6502_exec_off (sim6502_t *sim, unsigned short addr)
   }
 
   return (0);
+}
+
+static
+void s6502_run_bp (sim6502_t *sim)
+{
+  pce_start();
+
+  while (1) {
+    s6502_exec_off (sim, e6502_get_pc (sim->cpu));
+
+    if (bp_check (&breakpoint, e6502_get_pc (sim->cpu), 0)) {
+      break;
+    }
+
+    if (sim->brk) {
+      break;
+    }
+  }
+
+  pce_stop();
 }
 
 
@@ -866,7 +866,6 @@ int do_cmd (sim6502_t *sim)
     }
     else {
       printf ("unknown command (%s)\n", cmd_get_str (&cmd));
-      return (1);
     }
 
     if (sim->brk == PCE_BRK_ABORT) {
