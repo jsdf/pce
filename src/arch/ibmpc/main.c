@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -598,12 +598,8 @@ void pce_run (void)
 {
   pce_start();
 
-  while (1) {
-    cpu_exec();
-
-    if (pc->brk) {
-      break;
-    }
+  while (pc->brk == 0) {
+    pc_clock (pc);
   }
 
   pce_stop();
