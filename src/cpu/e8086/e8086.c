@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -210,9 +210,9 @@ void e86_trap (e8086_t *c, unsigned n)
     c->op_int (c->op_ext, n);
   }
 
-  e86_push (c, c->flg);
-  e86_push (c, c->sreg[E86_REG_CS]);
-  e86_push (c, c->ip);
+  e86_push (c, e86_get_flags (c));
+  e86_push (c, e86_get_cs (c));
+  e86_push (c, e86_get_ip (c));
 
   ofs = (unsigned short) (n & 0xff) << 2;
 
@@ -223,11 +223,9 @@ void e86_trap (e8086_t *c, unsigned n)
   e86_pq_init (c);
 }
 
-void e86_irq (e8086_t *cpu, unsigned val)
+void e86_irq (e8086_t *cpu, unsigned char val)
 {
-  if (val) {
-    cpu->irq = 1;
-  }
+  cpu->irq = (val != 0);
 }
 
 int e86_interrupt (e8086_t *cpu, unsigned n)
