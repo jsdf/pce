@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -278,8 +278,8 @@ void pc_setup_pit (ibmpc_t *pc)
   e8253_set_gate (&pc->pit, 1, 1);
   e8253_set_gate (&pc->pit, 2, 1);
 
-  e8253_set_out (&pc->pit, 0, &pc->pic, (e8253_set_out_f) &e8259_set_irq0);
-  e8253_set_out (&pc->pit, 1, &pc->dma, (e8253_set_out_f) &e8237_set_dreq0);
+  e8253_set_out_f (&pc->pit, 0, (e8253_out_f) &e8259_set_irq0, &pc->pic);
+  e8253_set_out_f (&pc->pit, 1, (e8253_out_f) &e8237_set_dreq0, &pc->dma);
 }
 
 static

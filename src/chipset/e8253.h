@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8253.h                                        *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,11 +30,14 @@
 #define PCE_E8253_H 1
 
 
-typedef void (*e8253_set_out_f) (void *ext, unsigned char val);
+typedef void (*e8253_out_f) (void *ext, unsigned char val);
 
 
+/*!***************************************************************************
+ * @short The PIT 8253 counter structure
+ *****************************************************************************/
 typedef struct {
-  /* couner register */
+  /* counter register */
   unsigned char   cr[2];
   unsigned char   cr_wr;
 
@@ -44,43 +47,73 @@ typedef struct {
   unsigned char   cnt_rd;
 
   unsigned char   sr;
-  unsigned short  rw;
-  unsigned short  mode;
-  unsigned short  bcd;
+  unsigned char   rw;
+  unsigned char   mode;
+  unsigned char   bcd;
 
-  short           counting;
+  unsigned char   counting;
 
   unsigned char   gate;
 
   void            *out_ext;
-  e8253_set_out_f out;
+  e8253_out_f     out;
   unsigned char   out_val;
 
   unsigned short val;
 } e8253_counter_t;
 
 
+/*!***************************************************************************
+ * @short The PIT 8253 structure
+ *****************************************************************************/
 typedef struct {
   e8253_counter_t counter[3];
 } e8253_t;
 
 
-unsigned char e8253_cnt_get_uint8 (e8253_counter_t *cnt);
-void e8253_cnt_set_uint8 (e8253_counter_t *cnt, unsigned char val);
-unsigned char e8253_cnt_get_out (e8253_counter_t *cnt);
-void e8253_cnt_set_gate (e8253_counter_t *cnt, unsigned char val);
-void e8253_counter_clock (e8253_counter_t *cnt, unsigned n);
-void e8253_counter_init (e8253_counter_t *cnt);
-
-
+/*!***************************************************************************
+ * @short Initialize a PIT structure
+ * @param pit The PIT structure
+ *****************************************************************************/
 void e8253_init (e8253_t *pit);
+
+/*!***************************************************************************
+ * @short  Create and initialize a PIT structure
+ * @return The PIT structure or NULL on error
+ *****************************************************************************/
 e8253_t *e8253_new (void);
+
+/*!***************************************************************************
+ * @short Free the resources used by a PIT structure
+ * @param pit The PIT structure
+ *****************************************************************************/
 void e8253_free (e8253_t *pit);
+
+/*!***************************************************************************
+ * @short Delete a PIT structure
+ * @param pit The PIT structure
+ *****************************************************************************/
 void e8253_del (e8253_t *pit);
 
-void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set);
 
+/*!***************************************************************************
+ * @short Set the output function for a PIT counter
+ * @param pit  The PIT structure
+ * @param cntr The counter index (0 <= cntr <= 2)
+ * @param fct  The function that is called to set the counter output signal
+ * @param ext  The transparent parameter for the output function
+ *****************************************************************************/
+void e8253_set_out_f (e8253_t *pit, unsigned cntr, e8253_out_f fct, void *ext);
+
+
+/*!***************************************************************************
+ * @short Set gate input for a PIT counter
+ * @param pit  The PIT structure
+ * @param cntr The counter index (0 <= cntr <= 2)
+ * @param val  The new gate value
+ *****************************************************************************/
 void e8253_set_gate (e8253_t *pit, unsigned cntr, unsigned char val);
+
 void e8253_set_gate0 (e8253_t *pit, unsigned char val);
 void e8253_set_gate1 (e8253_t *pit, unsigned char val);
 void e8253_set_gate2 (e8253_t *pit, unsigned char val);

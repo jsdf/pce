@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8253.c                                        *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -28,6 +28,8 @@
 
 #include "e8253.h"
 
+
+static void cnt_set_out (e8253_counter_t *cnt, unsigned char val);
 
 static void cnt_new_val_0 (e8253_counter_t *cnt);
 static void cnt_dec_val_0 (e8253_counter_t *cnt, unsigned n);
@@ -55,18 +57,6 @@ static struct cnt_mode_t tab_mode[6] = {
   { NULL, NULL, NULL }
 };
 
-
-static
-void cnt_set_out (e8253_counter_t *cnt, unsigned char val)
-{
-  if (cnt->out_val != val) {
-    cnt->out_val = val;
-
-    if (cnt->out != NULL) {
-      cnt->out (cnt->out_ext, val);
-    }
-  }
-}
 
 static
 void cnt_new_val_0 (e8253_counter_t *cnt)
@@ -212,6 +202,45 @@ void cnt_set_gate_3 (e8253_counter_t *cnt, unsigned char val)
 
 
 static
+void e8253_counter_init (e8253_counter_t *cnt)
+{
+  cnt->cr[0] = 0;
+  cnt->cr[1] = 0;
+  cnt->cr_wr = 0;
+
+  cnt->ol[0] = 0;
+  cnt->ol[1] = 0;
+  cnt->ol_rd = 0;
+  cnt->cnt_rd = 0;
+
+  cnt->rw = 3;
+  cnt->mode = 0;
+  cnt->bcd = 0;
+
+  cnt->counting = 0;
+
+  cnt->gate = 0;
+
+  cnt->out_ext = NULL;
+  cnt->out_val = 0;
+  cnt->out = NULL;
+
+  cnt->val = 0;
+}
+
+static
+void cnt_set_out (e8253_counter_t *cnt, unsigned char val)
+{
+  if (cnt->out_val != val) {
+    cnt->out_val = val;
+
+    if (cnt->out != NULL) {
+      cnt->out (cnt->out_ext, val);
+    }
+  }
+}
+
+static
 void cnt_new_val (e8253_counter_t *cnt)
 {
   if (cnt->mode < 6) {
@@ -231,6 +260,7 @@ void cnt_dec_val (e8253_counter_t *cnt, unsigned n)
   }
 }
 
+static
 unsigned char e8253_cnt_get_uint8 (e8253_counter_t *cnt)
 {
   if (cnt->ol_rd & 1) {
@@ -257,6 +287,7 @@ unsigned char e8253_cnt_get_uint8 (e8253_counter_t *cnt)
   return ((cnt->val >> 8) & 0xff);
 }
 
+static
 void e8253_cnt_set_uint8 (e8253_counter_t *cnt, unsigned char val)
 {
   if (cnt->cr_wr == 0) {
@@ -277,11 +308,7 @@ void e8253_cnt_set_uint8 (e8253_counter_t *cnt, unsigned char val)
   }
 }
 
-unsigned char e8253_cnt_get_out (e8253_counter_t *cnt)
-{
-  return (cnt->out_val);
-}
-
+static
 void e8253_cnt_set_gate (e8253_counter_t *cnt, unsigned char val)
 {
   if (val != cnt->gate) {
@@ -309,7 +336,7 @@ void cnt_latch (e8253_counter_t *cnt)
 static
 void cnt_set_control (e8253_counter_t *cnt, unsigned char val)
 {
-  unsigned short rw;
+  unsigned char rw;
 
   if ((val & 0xc0) == 0xc0) {
     /* read back in 8254 */
@@ -334,39 +361,6 @@ void cnt_set_control (e8253_counter_t *cnt, unsigned char val)
   cnt->rw = rw;
   cnt->mode = (val >> 1) & 7;
   cnt->bcd = (val & 1);
-}
-
-void e8253_counter_clock (e8253_counter_t *cnt, unsigned n)
-{
-  if (cnt->counting) {
-    cnt_dec_val (cnt, n);
-  }
-}
-
-void e8253_counter_init (e8253_counter_t *cnt)
-{
-  cnt->cr[0] = 0;
-  cnt->cr[1] = 0;
-  cnt->cr_wr = 0;
-
-  cnt->ol[0] = 0;
-  cnt->ol[1] = 0;
-  cnt->ol_rd = 0;
-  cnt->cnt_rd = 0;
-
-  cnt->rw = 3;
-  cnt->mode = 0;
-  cnt->bcd = 0;
-
-  cnt->counting = 0;
-
-  cnt->gate = 0;
-
-  cnt->out_ext = NULL;
-  cnt->out_val = 0;
-  cnt->out = NULL;
-
-  cnt->val = 0;
 }
 
 
@@ -403,11 +397,11 @@ void e8253_del (e8253_t *pit)
   }
 }
 
-void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set)
+void e8253_set_out_f (e8253_t *pit, unsigned cntr, e8253_out_f fct, void *ext)
 {
   if (cntr <= 2) {
     pit->counter[cntr].out_ext = ext;
-    pit->counter[cntr].out = set;
+    pit->counter[cntr].out = fct;
   }
 }
 
