@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8253.h,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
+/* $Id: e8253.h,v 1.3 2003/04/26 23:35:24 hampa Exp $ */
 
 
 /* PIT 8253 / 8254 */
@@ -82,7 +82,10 @@ void e8253_set_gate (e8253_t *pit, unsigned cntr, unsigned char val);
 void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set);
 
 unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr);
+unsigned short e8253_get_uint16 (e8253_t *pit, unsigned long addr);
 void e8253_set_uint8 (e8253_t *pit, unsigned long addr, unsigned char val);
+void e8253_set_uint16 (e8253_t *pit, unsigned long addr, unsigned short val);
+
 void e8253_clock (e8253_t *pit, unsigned n);
 
 

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8253.c,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
+/* $Id: e8253.c,v 1.3 2003/04/26 23:35:24 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -419,6 +419,11 @@ unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr)
   return (0xff);
 }
 
+unsigned short e8253_get_uint16 (e8253_t *pit, unsigned long addr)
+{
+  return (e8253_get_uint8 (pit, addr));
+}
+
 void e8253_set_uint8 (e8253_t *pit, unsigned long addr, unsigned char val)
 {
   unsigned cnt_i;
@@ -436,6 +441,11 @@ void e8253_set_uint8 (e8253_t *pit, unsigned long addr, unsigned char val)
       /* Read back for 8254 */
     }
   }
+}
+
+void e8253_set_uint16 (e8253_t *pit, unsigned long addr, unsigned short val)
+{
+  e8253_set_uint8 (pit, addr, val);
 }
 
 void e8253_clock (e8253_t *pit, unsigned n)
