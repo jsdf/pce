@@ -1,4 +1,4 @@
-0.0.5
+0.0.5	2003-04-23
 
 	* Completed instruction timings
 	* Added a PIC 8259A emulator
