@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.2 2003/04/22 18:01:30 hampa Exp $
+# $Id: Makefile.inc.in,v 1.3 2003/04/23 13:33:59 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -17,7 +17,7 @@ datdir		= @datadir@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
-CC_FLG		= $(CFLAGS) -I$(topdir)/src -I$(reldir)/src
+CC_FLG		= $(CFLAGS) -I$(reldir)/src
 
 NASM		= @NASM@
 
@@ -50,7 +50,7 @@ PCE_VERSION_STR := @PCE_VERSION_STR@
 VPATH = $(srcdir)
 
 
-ifneq "$(dstdir)" "$(topdir)"
+ifneq "$(reldir)" "$(topdir)"
 CC_FLG	+= -I$(topdir)/src
 endif
 
