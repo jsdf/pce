@@ -1,6 +1,12 @@
-0.0.7
+0.1.0	2003-08-20
 
 	* Added parallel port support
+
+	* Added hercules graphics card support
+
+	* Added graphic support to the X terminal
+
+	* CGA and HGC graphic modes are supported
 
 0.0.6	2003-04-27
 

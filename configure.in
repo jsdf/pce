@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
 #*****************************************************************************
 
@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.14 2003/05/01 08:19:32 hampa Exp $
+# $Id: configure.in,v 1.15 2003/08/20 16:07:47 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -33,8 +33,8 @@ dnl -----------------------------------------------------------------------
 
 AC_MSG_CHECKING([pce version])
 PCE_VERSION_MAJ=0
-PCE_VERSION_MIN=0
-PCE_VERSION_MIC=7
+PCE_VERSION_MIN=1
+PCE_VERSION_MIC=0
 PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 AC_SUBST($PCE_VERSION_MAJ)
 AC_SUBST($PCE_VERSION_MIN)
