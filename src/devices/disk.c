@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.c                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -33,6 +33,18 @@
 #define buf_get_uint32(buf) \
   (((((((buf)[3] << 8) | (buf)[2]) << 8) | (buf)[1]) << 8) | (buf)[0])
 
+
+static
+void fread_zero (void *buf, size_t size, size_t cnt, FILE *fp)
+{
+  size_t r;
+
+  r = fread (buf, size, cnt, fp);
+
+  if (r < cnt) {
+    memset ((unsigned char *) buf + size * r, 0x00, size * (cnt - r));
+  }
+}
 
 void dsk_init_chs (disk_t *dsk, unsigned d, unsigned c, unsigned h, unsigned s, int ro)
 {
@@ -188,9 +200,7 @@ int dsk_img_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
     return (1);
   }
 
-  if (fread (buf, 512, n, img->fp) != n) {
-    return (1);
-  }
+  fread_zero (buf, 512, n, img->fp);
 
   return (0);
 }
@@ -369,39 +379,87 @@ disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
 
 
 static
+int dsk_part_find (disk_t *dsk, unsigned long blk_i, unsigned *part)
+{
+  unsigned    i;
+  disk_part_t *p;
+
+  p = dsk->ext;
+
+  if (p->part_cnt == 0) {
+    return (1);
+  }
+
+  *part = 0;
+
+  for (i = 0; i < p->part_cnt; i++) {
+    if (p->part[i].block_i <= blk_i) {
+      if ((blk_i - p->part[i].block_i) < p->part[i].block_n) {
+        *part = i;
+        return (0);
+      }
+    }
+    else {
+      if (p->part[i].block_i < p->part[*part].block_i) {
+        *part = i;
+      }
+    }
+  }
+
+  if (p->part[*part].block_i <= blk_i) {
+    return (1);
+  }
+
+  return (0);
+}
+
+static
 int dsk_part_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 {
-  disk_part_t *p;
+  unsigned      pi;
+  unsigned long m;
+  disk_part_t   *p;
 
   if ((i + n) > dsk->blocks) {
     return (1);
   }
 
-  p = (disk_part_t *) dsk->ext;
+  p = dsk->ext;
 
   while (n > 0) {
-    if (i == 0) {
-      memcpy (buf, p->mbr, 512);
+    if (dsk_part_find (dsk, i, &pi)) {
+      memset (buf, 0xfe, 512UL * n);
+      return (0);
     }
-    else if (i < p->start_block) {
-      memset (buf, 0xfe, 512);
-    }
-    else if (i <= p->end_block) {
-      if (fseek (p->fp, p->start + 512UL * (i - p->start_block), SEEK_SET)) {
+
+    if (p->part[pi].block_i <= i) {
+      unsigned long j;
+
+      j = i - p->part[pi].block_i;
+      m = p->part[pi].block_n - j;
+
+      if (m > n) {
+        m = n;
+      }
+
+      if (fseek (p->part[pi].fp, p->part[pi].start + 512UL * j, SEEK_SET)) {
         return (1);
       }
 
-      if (fread (buf, 512, 1, p->fp) != 1) {
-        return (1);
-      }
+      fread_zero (buf, 512, m, p->part[pi].fp);
     }
     else {
-      memset (buf, 0xff, 512);
+      m = p->part[pi].block_i - i;
+      if (m > n) {
+        m = n;
+      }
+
+      memset (buf, 0xfe, 512UL * m);
     }
 
-    i += 1;
-    n -= 1;
-    buf = (unsigned char *) buf + 512;
+    i += m;
+    n -= m;
+    buf = (unsigned char *) buf + 512UL * m;
   }
 
   return (0);
@@ -410,44 +468,54 @@ int dsk_part_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 static
 int dsk_part_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
 {
-  disk_part_t *p;
-
-  if (dsk->readonly) {
-    return (1);
-  }
+  unsigned      pi;
+  unsigned long m;
+  disk_part_t   *p;
 
   if ((i + n) > dsk->blocks) {
     return (1);
   }
 
-  p = (disk_part_t *) dsk->ext;
+  p = dsk->ext;
 
   while (n > 0) {
-    if (i == 0) {
-      memcpy (p->mbr, buf, 512);
+    if (dsk_part_find (dsk, i, &pi)) {
+      return (0);
     }
-    else if (i < p->start_block) {
-      return (1);
-    }
-    else if (i <= p->end_block) {
-      if (fseek (p->fp, p->start + 512UL * (i - p->start_block), SEEK_SET)) {
+
+    if (p->part[pi].block_i <= i) {
+      unsigned long j;
+
+      if (p->part[pi].ro) {
         return (1);
       }
 
-      if (fwrite (buf, 512, 1, p->fp) != 1) {
+      j = i - p->part[pi].block_i;
+      m = p->part[pi].block_n - j;
+
+      if (m > n) {
+        m = n;
+      }
+
+      if (fseek (p->part[pi].fp, p->part[pi].start + 512UL * j, SEEK_SET)) {
+        return (1);
+      }
+
+      if (fwrite (buf, 512, m, p->part[pi].fp) != m) {
         return (1);
       }
     }
     else {
-      return (1);
+      m = p->part[pi].block_i - i;
+      if (m > n) {
+        m = n;
+      }
     }
 
-    i += 1;
-    n -= 1;
-    buf = (unsigned char *) buf + 512;
+    i += m;
+    n -= m;
+    buf = (unsigned char *) buf + 512UL * m;
   }
-
-  fflush (p->fp);
 
   return (0);
 }
@@ -455,98 +523,65 @@ int dsk_part_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long
 static
 void dsk_part_del (disk_t *dsk)
 {
+  unsigned    i;
   disk_part_t *p;
 
-  p = (disk_part_t *) dsk->ext;
+  p = dsk->ext;
 
-  fclose (p->fp);
+  for (i = 0; i < p->part_cnt; i++) {
+    if (p->part[i].close) {
+      fclose (p->part[i].fp);
+    }
+  }
+
   free (p);
 }
 
-int dsk_part_set_partition (disk_t *dsk,
-  unsigned idx, unsigned type, int boot,
-  unsigned c0, unsigned h0, unsigned s0,
-  unsigned c1, unsigned h1, unsigned s1)
+int dsk_part_add_partition_fp (disk_t *dsk, FILE *fp, int close,
+  unsigned long start, unsigned long blk_i, unsigned long blk_n, int ro)
 {
-  unsigned long tmp;
-  disk_part_t   *p;
+  disk_part_t *p;
 
-  p = (disk_part_t *) dsk->ext;
+  p = dsk->ext;
 
-  if (idx > 3) {
-    return (1);
-  }
+  p->part[p->part_cnt].block_i = blk_i;
+  p->part[p->part_cnt].block_n = blk_n;
+  p->part[p->part_cnt].start = start;
+  p->part[p->part_cnt].fp = fp;
+  p->part[p->part_cnt].close = (close != 0);
+  p->part[p->part_cnt].ro = (ro != 0);
 
-  if ((s0 < 1) || (s0 > dsk->s)) {
-    return (1);
-  }
-
-  if ((s1 < 1) || (s1 > dsk->s)) {
-    return (1);
-  }
-
-  if ((h0 >= dsk->h) || (h1 >= dsk->h)) {
-    return (1);
-  }
-
-  if ((c0 >= dsk->c) || (c1 >= dsk->c)) {
-    return (1);
-  }
-
-  p->start_block = (c0 * dsk->h + h0) * dsk->s + s0 - 1;
-  p->end_block = (c1 * dsk->h + h1) * dsk->s + s1 - 1;
-
-  if (p->end_block < p->start_block) {
-    return (1);
-  }
-
-  p->start_c = c0;
-  p->start_h = h0;
-  p->start_s = s0;
-
-  p->end_c = c1;
-  p->end_h = h1;
-  p->end_s = s1;
-
-  memset (p->mbr, 0, 512);
-
-  p->part_index = idx;
-  idx = 0x1be + 16 * idx;
-
-  c0 = (c0 <= 1023) ? c0 : 1023;
-  c1 = (c1 <= 1023) ? c1 : 1023;
-
-  p->mbr[idx + 0] = (boot) ? 0x80 : 0x00;
-  p->mbr[idx + 1] = h0;
-  p->mbr[idx + 2] = (s0 & 0x3f) | ((c0 >> 2) & 0xc0);
-  p->mbr[idx + 3] = c0 & 0xff;
-  p->mbr[idx + 4] = type;
-
-  p->mbr[idx + 5] = h1;
-  p->mbr[idx + 6] = (s1 & 0x3f) | ((c1 >> 2) & 0xc0);
-  p->mbr[idx + 7] = c1 & 0xff;
-
-  tmp = p->start_block;
-  p->mbr[idx + 8] = tmp & 0xff;
-  p->mbr[idx + 9] = (tmp >> 8) & 0xff;
-  p->mbr[idx + 10] = (tmp >> 16) & 0xff;
-  p->mbr[idx + 11] = (tmp >> 24) & 0xff;
-
-  tmp = p->end_block - p->start_block + 1;
-  p->mbr[idx + 12] = tmp & 0xff;
-  p->mbr[idx + 13] = (tmp >> 8) & 0xff;
-  p->mbr[idx + 14] = (tmp >> 16) & 0xff;
-  p->mbr[idx + 15] = (tmp >> 24) & 0xff;
-
-  p->mbr[510] = 0x55;
-  p->mbr[511] = 0xaa;
+  p->part_cnt += 1;
 
   return (0);
 }
 
-disk_t *dsk_part_new (unsigned d,
-  unsigned c, unsigned h, unsigned s,
-  unsigned long start, const char *fname, int ro)
+int dsk_part_add_partition (disk_t *dsk, const char *fname,
+  unsigned long start, unsigned long blk_i, unsigned long blk_n, int ro)
+{
+  int   r;
+  FILE *fp;
+
+  fp = fopen (fname, "r+b");
+  if (fp == NULL) {
+    fp = fopen (fname, "w+b");
+  }
+
+  if (fp == NULL) {
+    return (1);
+  }
+
+  r = dsk_part_add_partition_fp (dsk, fp, 1, start, blk_i, blk_n, ro);
+
+  if (r) {
+    fclose (fp);
+    return (1);
+  }
+
+  return (0);
+}
+
+disk_t *dsk_part_new (unsigned d, unsigned c, unsigned h, unsigned s, int ro)
 {
   disk_part_t *p;
 
@@ -562,26 +597,7 @@ disk_t *dsk_part_new (unsigned d,
   p->dsk.write = &dsk_part_write;
   p->dsk.ext = p;
 
-  p->start = start;
-
-  p->part_index = 0;
-
-  dsk_part_set_partition (&p->dsk, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-  if (ro) {
-    p->fp = fopen (fname, "rb");
-  }
-  else {
-    p->fp = fopen (fname, "r+b");
-    if (p->fp == NULL) {
-      p->fp = fopen (fname, "w+b");
-    }
-  }
-
-  if (p->fp == NULL) {
-    free (p);
-    return (NULL);
-  }
+  p->part_cnt = 0;
 
   return (&p->dsk);
 }

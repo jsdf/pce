@@ -278,6 +278,8 @@ section pc {
 	# "ram"    A RAM disk. If a file name is specified, the contents
 	#          of that file are loaded into the RAM disk (but the file
 	#          is never altered).
+	# "partition"  A partitioned disk that is patched together from
+	#              multiple raw images.
 	# The c, h, s parameters determine the actual image file layout, the
 	# visible_c, visible_h, visible_s parameters determine the disk size
 	# as reported by the BIOS.
@@ -320,19 +322,23 @@ section pc {
 	section disk {
 		drive = 129
                 type = "partition"
-                file = "/dev/hda3"
 
-                c = 4096
+                c = 1024
                 h = 128
                 s = 63
 
-                partition_type = 0x06
-
-                start_c = 0
-                start_h = 1
-                start_s = 1
-                end_c = 64
-                end_h = 127
-                end_s = 62
+		section partition {
+			block_start = 0
+			block_count = 63
+			file = "p0.img"
+			readonly = 0
+		}
+		
+		section partition {
+			block_start = 63
+			block_count = 8257473
+			file = "/dev/hda1"
+			readonly = 1
+		}
         }
 }

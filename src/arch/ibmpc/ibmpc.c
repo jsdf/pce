@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -572,26 +572,28 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       }
     }
     else if (strcmp (type, "partition") == 0) {
-      unsigned c0, h0, s0, c1, h1, s1;
-      unsigned idx, type, boot;
+      ini_sct_t     *p;
+      unsigned long start;
+      unsigned long blk_i, blk_n;
+      const char    *fname;
 
-      dsk = dsk_part_new (drive, c, h, s, 0, fname, ro);
+      dsk = dsk_part_new (drive, c, h, s, ro);
 
-      c0 = ini_get_lng_def (sct, "start_c", 0);
-      h0 = ini_get_lng_def (sct, "start_h", 0);
-      s0 = ini_get_lng_def (sct, "start_s", 1);
+      p = ini_sct_find_sct (sct, "partition");
+      while (p != NULL) {
+        start = ini_get_lng_def (p, "offset", 0);
+        blk_i = ini_get_lng_def (p, "block_start", 0);
+        blk_n = ini_get_lng_def (p, "block_count", 0);
+        fname = ini_get_str (p, "file");
+        ro = ini_get_lng_def (p, "readonly", 0);
 
-      c1 = ini_get_lng_def (sct, "end_c", 0);
-      h1 = ini_get_lng_def (sct, "end_h", 0);
-      s1 = ini_get_lng_def (sct, "end_s", 1);
+        if (fname != NULL) {
+          if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
+            pce_log (MSG_ERR, "*** adding partition failed\n");
+          }
+        }
 
-      type = ini_get_lng_def (sct, "partition_type", 0);
-      boot = ini_get_lng_def (sct, "boot", 1);
-      idx = ini_get_lng_def (sct, "partition", 0);
-
-      if (dsk_part_set_partition (dsk, idx, type, boot, c0, h0, s0, c1, h1, s1)) {
-        dsk_del (dsk);
-        dsk = NULL;
+        p = ini_sct_find_next (p, "partition");
       }
     }
     else if (strcmp (type, "auto") == 0) {
@@ -1173,6 +1175,11 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
 
 void pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 {
+  /* a hack, for debugging only */
+  if (pc == NULL) {
+    pc = par_pc;
+  }
+
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       pc->brk = PCE_BRK_STOP;
