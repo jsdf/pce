@@ -161,6 +161,21 @@ int dsk_pce_set_blk_next (disk_pce_t *img, uint64_t ofs)
 }
 
 static
+int dsk_pce_block_is_null (const void *buf, unsigned n)
+{
+  unsigned            i;
+  const unsigned char *tmp = buf;
+
+  for (i = 0; i < n; i++) {
+    if (tmp[i] != 0) {
+      return (0);
+    }
+  }
+
+  return (1);
+}
+
+static
 int dsk_pce_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 {
   disk_pce_t    *img;
@@ -222,19 +237,23 @@ int dsk_pce_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
     }
 
     if (ofs == 0) {
-      ofs = img->blk_next;
+      if (dsk_pce_block_is_null (t, 512) == 0) {
+        ofs = img->blk_next;
 
-      if (dsk_pce_set_blk_next (img, img->blk_next + img->blk_size)) {
-        return (1);
-      }
+        if (dsk_pce_set_blk_next (img, img->blk_next + img->blk_size)) {
+          return (1);
+        }
 
-      if (dsk_pce_set_blk_ofs (img, i, ofs)) {
-        return (1);
+        if (dsk_pce_set_blk_ofs (img, i, ofs)) {
+          return (1);
+        }
       }
     }
 
-    if (dsk_write (img->fp, t, ofs, 512)) {
-      return (1);
+    if (ofs != 0) {
+      if (dsk_write (img->fp, t, ofs, 512)) {
+        return (1);
+      }
     }
 
     t += 512;
