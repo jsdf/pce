@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.h,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: vt100.h,v 1.2 2003/08/19 00:53:41 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_VT100_H
@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 
+#include <libini/libini.h>
 #include <terminal/terminal.h>
 
 
@@ -64,8 +65,8 @@ typedef struct {
 } vt100_t;
 
 
-void vt100_init (vt100_t *vt, int inp, int out);
-terminal_t *vt100_new (int inp, int out);
+void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out);
+terminal_t *vt100_new (ini_sct_t *ini, int inp, int out);
 
 void vt100_free (vt100_t *vt);
 void vt100_del (vt100_t *vt);

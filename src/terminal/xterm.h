@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.h,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: xterm.h,v 1.3 2003/08/19 00:53:41 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_XTERM_H
@@ -36,6 +36,7 @@
 #include <X11/keysym.h>
 
 #include <terminal/terminal.h>
+#include <libini/libini.h>
 
 
 typedef struct {
@@ -81,8 +82,8 @@ typedef struct {
 } xterm_t;
 
 
-int xt_init (xterm_t *xt);
-terminal_t *xt_new (void);
+int xt_init (xterm_t *xt, ini_sct_t *ini);
+terminal_t *xt_new (ini_sct_t *ini);
 
 void xt_free (xterm_t *xt);
 void xt_del (xterm_t *xt);

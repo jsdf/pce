@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.4 2003/04/26 23:35:46 hampa Exp $ */
+/* $Id: xterm.c,v 1.5 2003/08/19 00:53:41 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -113,9 +113,13 @@ int xt_init_display (xterm_t *xt)
   return (0);
 }
 
-int xt_init_font (xterm_t *xt)
+int xt_init_font (xterm_t *xt, ini_sct_t *ini)
 {
-  xt->font = XLoadQueryFont (xt->display, "vga");
+  char *fname;
+
+  ini_get_string (ini, "font", &fname, "vga");
+
+  xt->font = XLoadQueryFont (xt->display, fname);
 
   if (xt->font == NULL) {
     xt->font = XLoadQueryFont (xt->display, "fixed");
@@ -214,7 +218,7 @@ int xt_init_gc (xterm_t *xt)
   return (0);
 }
 
-int xt_init (xterm_t *xt)
+int xt_init (xterm_t *xt, ini_sct_t *ini)
 {
   trm_init (&xt->trm);
 
@@ -238,7 +242,7 @@ int xt_init (xterm_t *xt)
     return (1);
   }
 
-  if (xt_init_font (xt)) {
+  if (xt_init_font (xt, ini)) {
     fprintf (stderr, "xt_init_font()\n");
     return (1);
   }
@@ -271,7 +275,7 @@ void xt_flush (xterm_t *xt)
   XFlush (xt->display);
 }
 
-terminal_t *xt_new (void)
+terminal_t *xt_new (ini_sct_t *ini)
 {
   xterm_t *xt;
 
@@ -280,7 +284,7 @@ terminal_t *xt_new (void)
     return (NULL);
   }
 
-  if (xt_init (xt)) {
+  if (xt_init (xt, ini)) {
     xt_free (xt);
     free (xt);
     return (NULL);

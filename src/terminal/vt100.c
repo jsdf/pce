@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.4 2003/04/26 16:34:42 hampa Exp $ */
+/* $Id: vt100.c,v 1.5 2003/08/19 00:53:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -131,7 +131,116 @@ void vt100_set_key (vt100_t *vt,
   map->seq_cnt = seq_cnt;
 }
 
-void vt100_init (vt100_t *vt, int inp, int out)
+static
+int get_key_byte_hex (unsigned char c, unsigned char *ret)
+{
+  if ((c >= '0') && (c <= '9')) {
+    *ret = c - '0';
+  }
+  else if ((c >= 'a') && (c <= 'f')) {
+    *ret = c - 'a' + 10;
+  }
+  else if ((c >= 'A') && (c <= 'F')) {
+    *ret = c - 'A' + 10;
+  }
+  else {
+    return (1);
+  }
+
+  return (0);
+}
+
+static
+int get_key_byte (const char **str, unsigned char *ret)
+{
+  const char *tmp;
+
+  tmp = *str;
+
+  if (*tmp == 0) {
+    return (1);
+  }
+
+  if (*tmp == '\\') {
+    if (tmp[1] == 0) {
+      return (1);
+    }
+    else if ((tmp[1] == 'x') || (tmp[1] == 'X')) {
+      unsigned char d1, d2;
+
+      if (get_key_byte_hex (tmp[2], &d1)) {
+        return (1);
+      }
+
+      if (get_key_byte_hex (tmp[3], &d2)) {
+        return (1);
+      }
+
+      *ret = (d1 << 4) | d2;
+      *str += 4;
+    }
+    else {
+      *ret = tmp[1];
+      *str += 2;
+    }
+
+    return (0);
+  }
+
+  *ret = *tmp;
+  *str += 1;
+
+  return (0);
+}
+
+void vt100_set_key_str (vt100_t *vt, const char *str)
+{
+  unsigned      i;
+  const char    *tmp;
+  unsigned      key_cnt, seq_cnt;
+  unsigned char key[256], seq[256];
+
+  key_cnt = 0;
+  seq_cnt = 0;
+
+  tmp = str;
+
+  while ((*tmp != 0) && (*tmp != '=')) {
+    if (get_key_byte (&tmp, &key[key_cnt])) {
+      return;
+    }
+
+    key_cnt += 1;
+  }
+
+  if (*tmp != '=') {
+    return;
+  }
+
+  tmp += 1;
+
+  while (*tmp != 0) {
+    if (get_key_byte (&tmp, &seq[seq_cnt])) {
+      return;
+    }
+
+    seq_cnt += 1;
+  }
+
+  fputs ("vt100: keymap:", stderr);
+  for (i = 0; i < key_cnt; i++) {
+    fprintf (stderr, " %02x", key[i]);
+  }
+  fputs (" ->", stderr);
+  for (i = 0; i < seq_cnt; i++) {
+    fprintf (stderr, " %02x", seq[i]);
+  }
+  fputs ("\n", stderr);
+
+  vt100_set_key (vt, key, key_cnt, seq, seq_cnt);
+}
+
+void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
 {
   unsigned i;
 
@@ -350,9 +459,24 @@ void vt100_init (vt100_t *vt, int inp, int out)
   vt100_set_key (vt, "\x1b\x5b\x36\x7e", 4, "\x51\xd1", 2); // PgDn
   vt100_set_key (vt, "\x1b\x5b\x32\x7e", 4, "\x52\xd2", 2); // Ins
   vt100_set_key (vt, "\x1b\x5b\x33\x7e", 4, "\x53\xd3", 2); // Del
+
+  if (ini != NULL) {
+    char      *str;
+    ini_val_t *val;
+
+    val = ini_sct_find_val (ini, "keymap");
+
+    while (val != NULL) {
+      if (ini_val_get_str (val, &str) == 0) {
+        vt100_set_key_str (vt, str);
+      }
+
+      val = ini_val_find_next (val, "keymap");
+    }
+  }
 }
 
-terminal_t *vt100_new (int inp, int out)
+terminal_t *vt100_new (ini_sct_t *ini, int inp, int out)
 {
   vt100_t *vt;
 
@@ -361,7 +485,7 @@ terminal_t *vt100_new (int inp, int out)
     return (NULL);
   }
 
-  vt100_init (vt, inp, out);
+  vt100_init (vt, ini, inp, out);
 
   return (&vt->trm);
 }

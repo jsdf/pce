@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.11 2003/04/29 00:51:54 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.12 2003/08/19 00:53:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -187,30 +187,34 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
+  char      *driver;
   ini_sct_t *sct;
 
   pc->trm = NULL;
 
-#ifdef PCE_X11_USE
-  sct = ini_sct_find_sct (ini, "term_x11");
-  if (sct != NULL) {
-    pce_log (MSG_INF, "setting up term_x11\n");
+  sct = ini_sct_find_sct (ini, "terminal");
+  ini_get_string (sct, "driver", &driver, "vt100");
 
-    pc->trm = xt_new();
+  pce_log (MSG_INF, "terminal: driver=%s\n", driver);
+
+  if (strcmp (driver, "x11") == 0) {
+#ifdef PCE_X11_USE
+    pc->trm = xt_new (sct);
     if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up term_x11 failed\n");
+      pce_log (MSG_ERR, "setting up x11 terminal failed\n");
+    }
+#else
+    pce_log (MSG_ERR, "terminal driver 'x11' not supported\n");
+#endif
+  }
+  else if (strcmp (driver, "vt100") == 0) {
+    pc->trm = vt100_new (sct, 0, 1);
+    if (pc->trm == NULL) {
+      pce_log (MSG_ERR, "setting up vt100 terminal failed\n");
     }
   }
-#endif
-
-  sct = ini_sct_find_sct (ini, "term_vt100");
-  if (pc->trm == NULL) {
-    pce_log (MSG_INF, "setting up term_vt100\n");
-
-    pc->trm = vt100_new (0, 1);
-    if (pc->trm == NULL) {
-      pce_log (MSG_ERR, "setting up term_vt100 failed\n");
-    }
+  else {
+    pce_log (MSG_ERR, "unknown terminal driver: %s\n", driver);
   }
 
   if (pc->trm == NULL) {
@@ -225,6 +229,8 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_mda (ibmpc_t *pc)
 {
+  pce_log (MSG_INF, "video: MDA\n");
+
   pc->mda = mda_new (pc->trm);
   mem_add_blk (pc->mem, pc->mda->mem, 0);
   mem_add_blk (pc->prt, pc->mda->crtc, 0);
@@ -235,6 +241,8 @@ void pc_setup_mda (ibmpc_t *pc)
 
 void pc_setup_cga (ibmpc_t *pc)
 {
+  pce_log (MSG_INF, "video: CGA\n");
+
   pc->cga = cga_new (pc->trm);
   mem_add_blk (pc->mem, pc->cga->mem, 0);
   mem_add_blk (pc->prt, pc->cga->crtc, 0);
@@ -290,8 +298,9 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     dsk = dsk_new (drive);
 
-    pce_log (0, "disk: %s:%s %u/%u/%u ro=%d\n",
-      (fname != NULL) ? fname : "", type, c, h, s, ro
+    pce_log (MSG_INF, "disk: drive=%u file=%s type=%s chs=%u/%u/%u ro=%d\n",
+      drive,
+      (fname != NULL) ? fname : "<>", type, c, h, s, ro
     );
 
     if (strcmp (type, "ram") == 0) {
@@ -339,7 +348,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_uint (sct, "base", &base, defbase[i]);
     ini_get_string (sct, "file", &fname, NULL);
 
-    pce_log (MSG_INF, "parport at %04X -> %s\n",
+    pce_log (MSG_INF, "parport: base=%04X file=%s\n",
       base, (fname == NULL) ? "<none>" : fname
     );
 
