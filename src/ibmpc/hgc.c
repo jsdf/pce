@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.1 2003/08/19 17:07:14 hampa Exp $ */
+/* $Id: hgc.c,v 1.2 2003/08/20 15:47:05 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
 
   hgc->trm = trm;
 
-  hgc->mem = mem_blk_new (0xb0000, 32768, 1);
+  hgc->mem = mem_blk_new (0xb0000, 65536, 1);
   hgc->mem->ext = hgc;
   hgc->mem->set_uint8 = (seta_uint8_f) &hgc_mem_set_uint8;
   hgc->mem->set_uint16 = (seta_uint16_f) &hgc_mem_set_uint16;
@@ -275,9 +275,23 @@ void hgc_set_page_ofs (hgc_t *hgc, unsigned ofs)
   }
 }
 
+void hgc_set_config (hgc_t *hgc, unsigned char val)
+{
+  hgc->enable_graph = ((val & 0x01) != 0);
+  hgc->enable_page1 = ((val & 0x02) != 0);
+}
+
 void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 {
   unsigned newmode, newofs;
+
+  if (hgc->enable_graph == 0) {
+    mode &= ~0x02;
+  }
+
+  if (hgc->enable_page1 == 0) {
+    mode &= ~0x80;
+  }
 
   newmode = (mode & 0x02) ? 1 : 0;
   newofs = (mode & 0x80) ? 32768 : 0;
@@ -516,7 +530,7 @@ void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
       break;
 
     case 0x0b:
-      // config
+      hgc_set_config (hgc, val);
       break;
   }
 }
