@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.1 2003/04/18 20:05:50 hampa Exp $ */
+/* $Id: cga.c,v 1.2 2003/04/19 02:00:43 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -137,7 +137,7 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 
   pos -= cga->crtc_ofs;
 
-  if (pos >= 4000) {
+  if (pos >= 2000) {
     return;
   }
 
@@ -205,10 +205,16 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
     if (addr < cga->mem->end) {
       cga_mem_set_uint8 (cga, addr + 1, val >> 8);
     }
+
+    return;
   }
 
   c = val & 0xff;
   a = (val >> 8) & 0xff;
+
+  if ((cga->mem->data[addr] == c) && (cga->mem->data[addr] == a)) {
+    return;
+  }
 
   cga->mem->data[addr] = c;
   cga->mem->data[addr + 1] = a;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     cga.h                                                      *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.1 2003/04/18 20:05:50 hampa Exp $ */
+/* $Id: cga.h,v 1.2 2003/04/19 02:00:43 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
