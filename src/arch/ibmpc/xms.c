@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -387,7 +387,7 @@ int xms_free_umb (xms_t *xms, unsigned short segm)
 void xms_00 (xms_t *xms, e8086_t *cpu)
 {
   e86_set_ax (cpu, 0x0300);
-  e86_set_bx (cpu, 0x0000);
+  e86_set_bx (cpu, 0x0300);
   e86_set_dx (cpu, (xms->hma != NULL));
 }
 
@@ -921,6 +921,7 @@ void xms_handler (xms_t *xms, e8086_t *cpu)
       break;
 
     default:
+      pce_log (MSG_DEB, "xms: unknown function (%x)\n", e86_get_ah (cpu));
       e86_set_ax (cpu, 0x0000);
       e86_set_bl (cpu, 0x80);
       break;
