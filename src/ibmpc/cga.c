@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.2 2003/04/23 23:39:48 hampa Exp $ */
+/* $Id: cga.c,v 1.3 2003/04/24 12:22:27 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -55,9 +55,12 @@ cga_t *cga_new (FILE *fp)
   cga->crtc->set_uint16 = (seta_uint16_f) &cga_crtc_set_uint16;
   cga->crtc->get_uint8 = (geta_uint8_f) &cga_crtc_get_uint8;
   cga->crtc->get_uint16 = (geta_uint16_f) &cga_crtc_get_uint16;
+
   cga->crtc_mode = 0;
   cga->crtc_pos = 0;
   cga->crtc_ofs = 0;
+
+  cga->crs_on = 1;
 
   return (cga);
 }
@@ -90,8 +93,9 @@ void cga_prt_state (cga_t *cga, FILE *fp)
     y = (cga->crtc_pos - cga->crtc_ofs) / 80;
   }
 
-  fprintf (fp, "CGA: MODE=%02X  OFS=%04X  POS=%04X[%u/%u]\n",
-    cga->crtc_mode, cga->crtc_ofs, cga->crtc_pos, x, y
+  fprintf (fp, "CGA: MODE=%02X  OFS=%04X  POS=%04X[%u/%u] CRS=%s\n",
+    cga->crtc_mode, cga->crtc_ofs, cga->crtc_pos, x, y,
+    (cga->crs_on) ? "ON" : "OFF"
   );
 
   fprintf (fp, "CRTC=[%02X", cga->crtc_reg[0]);
@@ -131,6 +135,10 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 {
   cga->crtc_pos = pos;
 
+  if (!cga->crs_on) {
+    return;
+  }
+
   if (pos < cga->crtc_ofs) {
     return;
   }
@@ -142,6 +150,16 @@ void cga_set_pos (cga_t *cga, unsigned pos)
   }
 
   trm_set_pos (&cga->trm, pos % 80, pos / 80);
+}
+
+void cga_set_crs (cga_t *cga, int on)
+{
+  if (on && !cga->crs_on) {
+    cga->crs_on = 1;
+    cga_set_pos (cga, cga->crtc_pos);
+  }
+
+  cga->crs_on = on;
 }
 
 void cga_set_page_ofs (cga_t *cga, unsigned ofs)
@@ -245,6 +263,11 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
   cga->crtc_reg[reg] = val;
 
   switch (reg) {
+    case 0x0a:
+    case 0x0b:
+      cga_set_crs (cga, cga->crtc_reg[0x0a] < cga->crtc_reg[0x0b]);
+      break;
+
     case 0x0c:
       cga_set_page_ofs (cga, (val << 8) | (cga->crtc_reg[0x0d] & 0xff));
       break;
