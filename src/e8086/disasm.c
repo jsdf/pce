@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     disasm.c                                                   *
+ * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.3 2003/04/16 14:14:12 hampa Exp $ */
+/* $Id: disasm.c,v 1.4 2003/04/23 23:38:56 hampa Exp $ */
 
 
 #include <string.h>
@@ -1571,6 +1571,17 @@ static void dop_ec (e86_disasm_t *op, unsigned char *src)
   strcpy (op->arg2, "DX");
 }
 
+/* DOP ED: IN AX, DX */
+static void dop_ed (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 2;
+
+  strcpy (op->op, "IN");
+  strcpy (op->arg1, "AX");
+  strcpy (op->arg2, "DX");
+}
+
 /* DOP EE: OUT DX, AL */
 static void dop_ee (e86_disasm_t *op, unsigned char *src)
 {
@@ -1846,7 +1857,7 @@ e86_disasm_f dop_list[256] = {
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_ud, &dop_e6, &dop_ud, /* E0 */
-  &dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ud, &dop_ee, &dop_ud,
+  &dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ed, &dop_ee, &dop_ud,
   &dop_ud, &dop_ud, &dop_f2, &dop_f3, &dop_ud, &dop_f5, &dop_f6, &dop_f7, /* F0 */
   &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_fe, &dop_ff
 };
