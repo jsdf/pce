@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.11 2003/09/28 08:31:29 hampa Exp $ */
+/* $Id: ega.c,v 1.12 2003/10/03 23:17:21 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -59,6 +59,16 @@
 #define ATC_OSCN     0x11
 
 
+static void ega_update (ega_t *ega);
+
+static void ega_update_cga_txt (ega_t *ega);
+static int ega_screenshot_cga_txt (ega_t *ega, FILE *fp);
+static void ega_set_latches_cga_txt (ega_t *cga, unsigned long addr, unsigned char val[4]);
+
+static void ega_set_uint8_odd_even (ega_t *ega, unsigned long addr, unsigned char val);
+static unsigned char ega_get_uint8_odd_even (ega_t *ega, unsigned long addr);
+
+
 static
 unsigned char ega_rgbtab[4] = { 0x00, 0x80, 0xc0, 0xff };
 
@@ -78,7 +88,14 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
     return (NULL);
   }
 
-  ega->segm = 0x18000;
+  ega->base = 0x18000;
+  ega->size = 0x08000;
+
+  ega->update = &ega_update_cga_txt;
+  ega->screenshot = &ega_screenshot_cga_txt;
+  ega->set_latches = &ega_set_latches_cga_txt;
+  ega->set_uint8 = &ega_set_uint8_odd_even;
+  ega->get_uint8 = &ega_get_uint8_odd_even;
 
   pce_video_init (&ega->vid);
 
@@ -88,6 +105,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->vid.get_mem = (pce_video_get_mem_f) &ega_get_mem;
   ega->vid.get_reg = (pce_video_get_reg_f) &ega_get_reg;
   ega->vid.prt_state = (pce_video_prt_state_f) &ega_prt_state;
+  ega->vid.update = (pce_video_update_f) &ega_update;
   ega->vid.dump = (pce_video_dump_f) &ega_dump;
   ega->vid.screenshot = (pce_video_screenshot_f) &ega_screenshot;
   ega->vid.clock = (pce_video_clock_f) &ega_clock;
@@ -105,6 +123,8 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ini_get_uint (sct, "mode_640x200_h", &ega->mode_640x200_h, 400);
   ini_get_uint (sct, "mode_640x350_w", &ega->mode_640x350_w, 640);
   ini_get_uint (sct, "mode_640x350_h", &ega->mode_640x350_h, 480);
+  ini_get_uint (sct, "mode_640x480_w", &ega->mode_640x480_w, 640);
+  ini_get_uint (sct, "mode_640x480_h", &ega->mode_640x480_h, 480);
 
   pce_log (MSG_INF, "video:\tEGA io=0x03b0 membase=0xa000 memsize=262144\n");
 
@@ -130,7 +150,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
   ega->crs_on = 1;
 
-  ega->update = 0;
+  ega->dirty = 0;
 
   ega->mode = 0;
 
@@ -170,8 +190,9 @@ void ega_prt_state (ega_t *ega, FILE *fp)
     ega->latch[0], ega->latch[1], ega->latch[2], ega->latch[3]
   );
 
-  fprintf (fp, "REGS: 3C2=%02x  3CC=%02x  3DA=%02x\n",
-    ega->reg->data[0x12], ega->reg->data[0x1c], ega->reg->data[0x2a]
+  fprintf (fp, "REGS: 3C2=%02x  3CC=%02x  3DA=%02x  BASE=%05lX  SIZE=%05lX\n",
+    ega->reg->data[0x12], ega->reg->data[0x1c], ega->reg->data[0x2a],
+    0xa0000 + ega->base, ega->size
   );
 
   fprintf (fp, "CRTC: [%02X", ega->crtc_reg[0]);
@@ -257,16 +278,20 @@ void ega_get_rgb (ega_t *ega, unsigned idx, unsigned char rgb[3])
 
 
 /*****************************************************************************
- * mode 0 (text 80 * 25 * 16)
+ * CGA text modes
  *****************************************************************************/
 
 static
-int ega_mode0_screenshot (ega_t *ega, FILE *fp)
+int ega_screenshot_cga_txt (ega_t *ega, FILE *fp)
 {
   unsigned i;
   unsigned x, y;
 
-  i = (ega->crtc_ofs << 1) & 0xffff;
+  i = (ega->crtc_ofs << 1) & 0xfffe;
+
+  if (ega->reg->data[0x1c] & 0x20) {
+    i |= 1;
+  }
 
   for (y = 0; y < 25; y++) {
     for (x = 0; x < 80; x++) {
@@ -281,161 +306,280 @@ int ega_mode0_screenshot (ega_t *ega, FILE *fp)
 }
 
 static
-void ega_mode0_update (ega_t *ega)
+void ega_update_cga_txt (ega_t *ega)
 {
-  unsigned i;
+  unsigned i, j;
   unsigned x, y;
   unsigned fg, bg;
+  unsigned rofs;
 
-  i = (ega->crtc_ofs << 1) & 0xffff;
+  i = (ega->crtc_ofs << 1) & 0xfffe;
+
+  rofs = 4 * ega->crtc_reg[0x13];
+
+  if (ega->reg->data[0x1c] & 0x20) {
+    i |= 1;
+  }
 
   for (y = 0; y < 25; y++) {
+    j = i;
     for (x = 0; x < 80; x++) {
-      fg = ega->data[i + 65537] & 0x0f;
-      bg = (ega->data[i + 65537] & 0xf0) >> 4;
+      fg = ega->data[j + 0x10000];
+      bg = (fg >> 4) & 0x0f;
+      fg = fg & 0x0f;
 
       trm_set_col (ega->trm, fg, bg);
-      trm_set_chr (ega->trm, x, y, ega->data[i]);
+      trm_set_chr (ega->trm, x, y, ega->data[j]);
 
-      i = (i + 2) & 0xffff;
+      j = (j + 2) & 0xffff;
     }
+
+    i += rofs;
   }
 }
 
-void ega_mode0_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
+static
+void ega_set_latches_cga_txt (ega_t *ega, unsigned long addr, unsigned char val[4])
 {
-  unsigned long i;
-  unsigned      x, y;
-  unsigned char c, a;
+  unsigned char wrpl, rofs;
 
-  if (addr < ega->segm) {
-    return;
+  addr &= 0xffff;
+
+  wrpl = ega->ts_reg[TS_WRPL];
+
+  if (wrpl & 0x03) {
+    unsigned      x, y;
+    unsigned char c, a;
+
+    if ((wrpl & 0x01) && (val[0] != ega->data[addr])) {
+      ega->data[addr] = val[0];
+    }
+
+    if ((wrpl & 0x02) && (val[1] != ega->data[addr + 0x10000])) {
+      ega->data[addr + 0x10000] = val[1];
+    }
+
+    addr &= ~0x0001;
+
+    if (addr < (ega->crtc_ofs << 1)) {
+      return;
+    }
+
+    addr -= (ega->crtc_ofs << 1);
+
+    if (addr >= 4000) {
+      return;
+    }
+
+    rofs = 2 * ega->crtc_reg[0x13];
+    if (rofs < ega->mode_w) {
+      rofs = ega->mode_w;
+    }
+
+    c = ega->data[addr];
+    a = ega->data[addr + 0x10000];
+
+    x = (addr >> 1) % rofs;
+    y = (addr >> 1) / rofs;
+
+    trm_set_col (ega->trm, a & 0x0f, (a & 0xf0) >> 4);
+    trm_set_chr (ega->trm, x, y, c);
   }
-
-  addr = (addr - ega->segm) & 0x7fff;
-
-  i = (addr & 0xffff) + ((addr & 1) ? 65536 : 0);
-
-  if (ega->data[i] == val) {
-    return;
-  }
-
-  ega->data[i] = val;
-
-  if (addr < (ega->crtc_ofs << 1)) {
-    return;
-  }
-
-  if (addr & 1) {
-    c = ega->data[addr - 1];
-    a = val;
-  }
-  else {
-    c = val;
-    a = ega->data[addr + 65537];
-  }
-
-  addr -= (ega->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-//  pce_log (MSG_DEB, "ega: set char at (%u,%u) c=%02x a=%02x\n", x, y, c, a);
-
-  trm_set_col (ega->trm, a & 0x0f, (a & 0xf0) >> 4);
-  trm_set_chr (ega->trm, x, y, c);
-}
-
-void ega_mode0_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
-{
-  unsigned      x, y;
-  unsigned char c, a;
-
-  if (addr < ega->segm) {
-    return;
-  }
-
-  if (addr & 1) {
-    ega_mem_set_uint8 (ega, addr, val & 0xff);
-    ega_mem_set_uint8 (ega, addr + 1, val >> 8);
-    return;
-  }
-
-  addr = (addr - ega->segm) & 0x3fff;
-
-  c = val & 0xff;
-  a = (val >> 8) & 0xff;
-
-  if ((ega->data[addr] == c) && (ega->data[addr + 65537] == a)) {
-    return;
-  }
-
-  ega->data[addr] = c;
-  ega->data[addr + 65537] = a;
-
-  if (addr < (ega->crtc_ofs << 1)) {
-    return;
-  }
-
-  addr -= (ega->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-  trm_set_col (ega->trm, a & 0x0f, (a & 0xf0) >> 4);
-  trm_set_chr (ega->trm, x, y, c);
-}
-
-unsigned char ega_mode0_get_uint8 (ega_t *ega, unsigned long addr)
-{
-  if (addr < ega->segm) {
-    return (0xff);
-  }
-
-  addr = (addr - ega->segm) & 0x7fff;
-
-  if (addr & 1) {
-    return (ega->data[addr + 65536]);
-  }
-
-  return (ega->data[addr]);
-}
-
-unsigned short ega_mode0_get_uint16 (ega_t *ega, unsigned long addr)
-{
-  unsigned short ret;
-
-  if (addr < ega->segm) {
-    return (0xff);
-  }
-
-  addr = (addr - ega->segm) & 0x7fff;
-
-  if (addr & 1) {
-    ret = ega->data[addr + 65536] | (ega->data[addr + 1] << 8);
-  }
-  else {
-    ret = ega->data[addr] | (ega->data[addr + 65537] << 8);
-  }
-
-  return (ret);
 }
 
 
 /*****************************************************************************
- * mode 16 (320 * 200 * 16)
+ * CGA 4 color graphic mode
  *****************************************************************************/
 
 static
-int ega_mode16_screenshot (ega_t *ega, FILE *fp)
+int ega_screenshot_cga4 (ega_t *ega, FILE *fp)
+{
+  unsigned      i, x, y, w;
+  unsigned      idx;
+  unsigned char rgb[3];
+  unsigned long addr, rofs;
+  unsigned char msk;
+
+  fprintf (fp, "P6\n%u %u\n255 ", ega->mode_w, ega->mode_h);
+
+  addr = ega->crtc_ofs;
+  rofs = 2 * ega->crtc_reg[0x13];
+
+  w = ega->mode_w / 4;
+
+  for (y = 0; y < ega->mode_h; y++) {
+    for (x = 0; x < w; x++) {
+      msk = 0x80;
+
+      for (i = 0; i < 4; i++) {
+        idx = (ega->data[addr + x + 0x00000] & (msk >> 1)) ? 0x01 : 0x00;
+        idx |= (ega->data[addr + x + 0x10000] & msk) ? 0x02 : 0x00;
+        idx |= (ega->data[addr + x + 0x20000] & msk) ? 0x04 : 0x00;
+        idx |= (ega->data[addr + x + 0x30000] & msk) ? 0x08 : 0x00;
+
+        idx &= ega->atc_reg[0x12];
+
+        ega_get_rgb (ega, idx, rgb);
+        fwrite (rgb, 1, 3, fp);
+
+        msk = msk >> 2;
+      }
+    }
+
+    if (addr & 0x2000) {
+      addr = (addr + rofs) & 0x1fff;
+    }
+    else {
+      addr |= 0x2000;
+    }
+  }
+
+  return (0);
+}
+
+static
+void ega_update_cga4 (ega_t *ega)
+{
+  unsigned      i, x, y, w;
+  unsigned      sx, sy, sw, sh;
+  unsigned      col1, col2;
+  unsigned      rofs;
+  unsigned long addr;
+  unsigned char msk;
+
+  addr = ega->crtc_ofs & 0xffff;
+  rofs = 2 * ega->crtc_reg[0x13];
+
+  w = ega->mode_w / 4;
+
+  col1 = 0;
+  trm_set_col (ega->trm, 0, 0);
+
+  for (y = 0; y < ega->mode_h; y++) {
+    for (x = 0; x < w; x++) {
+      msk = 0x80;
+      for (i = 0; i < 4; i++) {
+        col2 = (ega->data[addr + x + 0x00000] & (msk >> 1)) ? 0x01 : 0x00;
+        col2 |= (ega->data[addr + x + 0x10000] & msk) ? 0x02 : 0x00;
+        col2 |= (ega->data[addr + x + 0x20000] & msk) ? 0x04 : 0x00;
+        col2 |= (ega->data[addr + x + 0x30000] & msk) ? 0x08 : 0x00;
+
+        col2 &= ega->atc_reg[0x12];
+
+        if (col1 != col2) {
+          trm_set_col (ega->trm, col2, 0);
+          col1 = col2;
+        }
+
+        pce_smap_get_pixel (&ega->smap, 4 * x + i, y, &sx, &sy, &sw, &sh);
+        trm_set_pxl (ega->trm, sx, sy, sw, sh);
+
+        msk = msk >> 2;
+      }
+    }
+
+    if (addr & 0x2000) {
+      addr = (addr + rofs) & 0x1fff;
+    }
+    else {
+      addr |= 0x2000;
+    }
+  }
+
+  ega->dirty = 0;
+}
+
+static
+void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4])
+{
+  unsigned      i;
+  unsigned      sx, sy, sw, sh;
+  unsigned      x, y, c;
+  unsigned      rofs;
+  unsigned char msk;
+
+  addr &= 0xffff;
+
+  msk = 0;
+
+  if (ega->ts_reg[2] & 0x01) {
+    msk |= ega->data[addr + 0x00000] ^ latch[0];
+    ega->data[addr + 0x00000] = latch[0];
+  }
+
+  if (ega->ts_reg[2] & 0x02) {
+    msk |= ega->data[addr + 0x10000] ^ latch[1];
+    ega->data[addr + 0x10000] = latch[1];
+  }
+
+  if (ega->ts_reg[2] & 0x04) {
+    msk |= ega->data[addr + 0x20000] ^ latch[2];
+    ega->data[addr + 0x20000] = latch[2];
+  }
+
+  if (ega->ts_reg[2] & 0x08) {
+    msk |= ega->data[addr + 0x30000] ^ latch[3];
+    ega->data[addr + 0x30000] = latch[3];
+  }
+
+  if (msk == 0) {
+    return;
+  }
+
+  msk = (msk & 0xaa) | ((msk << 1) & 0xaa);
+
+  if (addr < ega->crtc_ofs) {
+    return;
+  }
+
+  if (ega->dirty) {
+    ega->update (ega);
+    ega->dirty = 0;
+    return;
+  }
+
+  rofs = 2 * ega->crtc_reg[0x13];
+
+  if ((4 * rofs) < ega->mode_w) {
+    rofs = ega->mode_w / 4;
+  }
+
+  y = ((addr - ega->crtc_ofs) & ~0x2000) / rofs;
+  y = (addr & 0x2000) ? (2 * y + 1) : (2 * y);
+  x = 4 * (((addr - ega->crtc_ofs) & 0x1fff) % rofs);
+
+  if ((x >= ega->mode_w) || (y >= ega->mode_h)) {
+    return;
+  }
+
+  for (i = 0; i < 4; i++) {
+    unsigned m;
+
+    m = 0x80 >> (2 * i);
+
+    if (msk & m) {
+      c = (ega->data[addr + 0x00000] & (m >> 1)) ? 0x01 : 0x00;
+      c |= (ega->data[addr + 0x10000] & m) ? 0x02 : 0x00;
+      c |= (ega->data[addr + 0x20000] & m) ? 0x04 : 0x00;
+      c |= (ega->data[addr + 0x30000] & m) ? 0x08 : 0x00;
+
+      c &= ega->atc_reg[0x12];
+
+      trm_set_col (ega->trm, c, 0);
+      pce_smap_get_pixel (&ega->smap, x + i, y, &sx, &sy, &sw, &sh);
+      trm_set_pxl (ega->trm, sx, sy, sw, sh);
+    }
+  }
+}
+
+
+/*****************************************************************************
+ * EGA 16 color graphic modes and CGA 2 color graphic mode
+ *****************************************************************************/
+
+static
+int ega_screenshot_ega16 (ega_t *ega, FILE *fp)
 {
   unsigned      i, x, y, w;
   unsigned      idx;
@@ -460,6 +604,8 @@ int ega_mode16_screenshot (ega_t *ega, FILE *fp)
         idx |= (ega->data[addr + x + 2 * 65536] & msk) ? 0x04 : 0x00;
         idx |= (ega->data[addr + x + 3 * 65536] & msk) ? 0x08 : 0x00;
 
+        idx &= ega->atc_reg[0x12];
+
         ega_get_rgb (ega, idx, rgb);
         fwrite (rgb, 1, 3, fp);
 
@@ -467,13 +613,24 @@ int ega_mode16_screenshot (ega_t *ega, FILE *fp)
       }
     }
 
-    addr = (addr + rofs) & 0xffff;
+    if (ega->crtc_reg[0x17] & 0x01) {
+      if (addr & 0x2000) {
+        addr = (addr + rofs) & 0x1fff;
+      }
+      else {
+        addr |= 0x2000;
+      }
+    }
+    else {
+      addr = (addr + rofs) & 0xffff;
+    }
   }
 
   return (0);
 }
 
-void ega_mode16_update (ega_t *ega)
+static
+void ega_update_ega16 (ega_t *ega)
 {
   unsigned      i, x, y, w;
   unsigned      sx, sy, sw, sh;
@@ -499,6 +656,8 @@ void ega_mode16_update (ega_t *ega)
         col2 |= (ega->data[addr + x + 2 * 65536] & msk) ? 0x04 : 0x00;
         col2 |= (ega->data[addr + x + 3 * 65536] & msk) ? 0x08 : 0x00;
 
+        col2 &= ega->atc_reg[0x12];
+
         if (col1 != col2) {
           trm_set_col (ega->trm, col2, 0);
           col1 = col2;
@@ -511,21 +670,30 @@ void ega_mode16_update (ega_t *ega)
       }
     }
 
-    addr = (addr + rofs) & 0xffff;
+    if (ega->crtc_reg[0x17] & 0x01) {
+      if (addr & 0x2000) {
+        addr = (addr + rofs) & 0x1fff;
+      }
+      else {
+        addr |= 0x2000;
+      }
+    }
+    else {
+      addr = (addr + rofs) & 0xffff;
+    }
   }
 
-  ega->update = 0;
+  ega->dirty = 0;
 }
 
-void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch[4])
+static
+void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
   unsigned      sx, sy, sw, sh;
   unsigned      x, y, c;
   unsigned      rofs;
   unsigned char msk;
-
-//  fprintf (stderr, "ega: latches -> %lu\n", addr);
 
   addr &= 0xffff;
 
@@ -551,9 +719,6 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     ega->data[addr + 3 * 65536] = latch[3];
   }
 
-  /* mask does not work if palette changed */
-  msk = 255;
-
   if (msk == 0) {
     return;
   }
@@ -562,8 +727,9 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     return;
   }
 
-  if (ega->update) {
-    ega_mode16_update (ega);
+  if (ega->dirty) {
+    ega->update (ega);
+    ega->dirty = 0;
     return;
   }
 
@@ -573,8 +739,15 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     rofs = ega->mode_w / 8;
   }
 
-  y = (addr - ega->crtc_ofs) / rofs;
-  x = 8 * ((addr - ega->crtc_ofs) % rofs);
+  if (ega->crtc_reg[0x17] & 0x01) {
+    y = ((addr - ega->crtc_ofs) & ~0x2000) / rofs;
+    y = (addr & 0x2000) ? (2 * y + 1) : (2 * y);
+    x = 8 * (((addr - ega->crtc_ofs) & 0x1fff) % rofs);
+  }
+  else {
+    y = (addr - ega->crtc_ofs) / rofs;
+    x = 8 * ((addr - ega->crtc_ofs) % rofs);
+  }
 
   if ((x >= ega->mode_w) || (y >= ega->mode_h)) {
     return;
@@ -587,6 +760,8 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
       c |= (ega->data[addr + 2 * 65536] & (0x80 >> i)) ? 0x04 : 0x00;
       c |= (ega->data[addr + 3 * 65536] & (0x80 >> i)) ? 0x08 : 0x00;
 
+      c &= ega->atc_reg[0x12];
+
       trm_set_col (ega->trm, c, 0);
       pce_smap_get_pixel (&ega->smap, x + i, y, &sx, &sy, &sw, &sh);
       trm_set_pxl (ega->trm, sx, sy, sw, sh);
@@ -594,7 +769,60 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
   }
 }
 
-void ega_mode16_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
+
+int ega_screenshot (ega_t *ega, FILE *fp, unsigned mode)
+{
+  return (ega->screenshot (ega, fp));
+}
+
+static
+void ega_set_uint8_odd_even (ega_t *ega, unsigned long addr, unsigned char val)
+{
+  unsigned char latches[4];
+  unsigned long tmp;
+
+  tmp = addr;
+
+  addr = (addr & 0xfffe);
+
+  if (ega->reg->data[0x1c] & 0x20) {
+    addr |= 1;
+  }
+
+  if (tmp & 1) {
+    latches[0] = ega->data[addr];
+    latches[1] = val;
+    latches[2] = ega->data[addr + 0x20000];
+    latches[3] = val;
+  }
+  else {
+    latches[0] = val;
+    latches[1] = ega->data[addr + 0x10000];
+    latches[2] = val;
+    latches[3] = ega->data[addr + 0x30000];
+  }
+
+  ega->set_latches (ega, addr, latches);
+}
+
+static
+unsigned char ega_get_uint8_odd_even (ega_t *ega, unsigned long addr)
+{
+  if (addr & 1) {
+    addr = (addr & 0xfffe) + 0x10000;
+  }
+  else {
+    addr = addr & 0xfffe;
+  }
+
+  if (ega->reg->data[0x1c] & 0x20) {
+    addr |= 1;
+  }
+
+  return (ega->data[addr]);
+}
+
+void ega_set_uint8_gdc (ega_t *ega, unsigned long addr, unsigned char val)
 {
   unsigned char col[4];
 
@@ -702,17 +930,18 @@ void ega_mode16_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       break;
   }
 
-  ega_mode16_set_latches (ega, addr, col);
+  ega->set_latches (ega, addr, col);
 }
 
-unsigned char ega_mode16_get_uint8 (ega_t *ega, unsigned long addr)
+static
+unsigned char ega_get_uint8_gdc (ega_t *ega, unsigned long addr)
 {
   addr &= 0xffff;
 
-  ega->latch[0] = ega->data[addr + 0 * 65536];
-  ega->latch[1] = ega->data[addr + 1 * 65536];
-  ega->latch[2] = ega->data[addr + 2 * 65536];
-  ega->latch[3] = ega->data[addr + 3 * 65536];
+  ega->latch[0] = ega->data[addr + 0x00000];
+  ega->latch[1] = ega->data[addr + 0x10000];
+  ega->latch[2] = ega->data[addr + 0x20000];
+  ega->latch[3] = ega->data[addr + 0x30000];
 
   switch (ega->gdc_reg[5] & 0x08) {
     case 0x00: /* read mode 0 */
@@ -741,30 +970,42 @@ unsigned char ega_mode16_get_uint8 (ega_t *ega, unsigned long addr)
   return (0xff);
 }
 
-
-int ega_screenshot (ega_t *ega, FILE *fp, unsigned mode)
+int ega_eval_mode (ega_t *ega)
 {
-  if ((ega->mode == 0) && ((mode == 1) || (mode == 0))) {
-    return (ega_mode0_screenshot (ega, fp));
+  if (ega->ts_reg[0x04] & 0x04) {
+    ega->set_uint8 = &ega_set_uint8_gdc;
+    ega->get_uint8 = &ega_get_uint8_gdc;
   }
-  else if ((ega->mode == 16) && ((mode == 2) || (mode == 0))) {
-    return (ega_mode16_screenshot (ega, fp));
+  else {
+    ega->set_uint8 = &ega_set_uint8_odd_even;
+    ega->get_uint8 = &ega_get_uint8_odd_even;
   }
 
-  return (1);
+  if (ega->atc_reg[0x10] & 0x01) {
+    if (ega->gdc_reg[0x05] & 0x20) {
+      ega->update = &ega_update_cga4;
+      ega->screenshot = &ega_screenshot_cga4;
+      ega->set_latches = &ega_set_latches_cga4;
+    }
+    else {
+      ega->update = &ega_update_ega16;
+      ega->screenshot = &ega_screenshot_ega16;
+      ega->set_latches = &ega_set_latches_ega16;
+    }
+  }
+  else {
+    ega->update = &ega_update_cga_txt;
+    ega->screenshot = &ega_screenshot_cga_txt;
+    ega->set_latches = &ega_set_latches_cga_txt;
+  }
+
+  return (0);
 }
 
+static
 void ega_update (ega_t *ega)
 {
-  switch (ega->mode) {
-    case 0:
-      ega_mode0_update (ega);
-      break;
-
-    case 16:
-      ega_mode16_update (ega);
-      break;
-  }
+  ega->update (ega);
 }
 
 void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
@@ -791,6 +1032,10 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
         sw = ega->mode_640x350_w;
         sh = ega->mode_640x350_h;
       }
+      else if ((w == 640) && (h == 480)) {
+        sw = ega->mode_640x480_w;
+        sh = ega->mode_640x480_h;
+      }
       else {
         sw = w;
         sh = h;
@@ -806,7 +1051,7 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
   ega->mode_w = w;
   ega->mode_h = h;
 
-  ega->update = 0;
+  ega->dirty = 1;
 }
 
 void ega_set_pos (ega_t *ega, unsigned pos)
@@ -855,70 +1100,57 @@ void ega_set_page_ofs (ega_t *ega, unsigned ofs)
 
   ega->crtc_ofs = ofs;
 
-  ega_update (ega);
+//  ega_update (ega);
 }
 
 void ega_mem_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 {
 //  pce_log (MSG_DEB, "ega: set mem %04lx = %02x\n", addr, val);
 
-  switch (ega->mode) {
-    case 0:
-      ega_mode0_set_uint8 (ega, addr, val);
-      break;
-
-    case 16:
-      ega_mode16_set_uint8 (ega, addr, val);
-      break;
+  if (addr < ega->base) {
+    return;
   }
+
+  addr -= ega->base;
+
+  if (addr >= ega->size) {
+    return;
+  }
+
+  ega->set_uint8 (ega, addr, val);
 }
 
 void ega_mem_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
 {
-  switch (ega->mode) {
-    case 0:
-      ega_mode0_set_uint16 (ega, addr, val);
-      break;
-
-    case 16:
-      ega_mode16_set_uint8 (ega, addr, val & 0xff);
-      ega_mode16_set_uint8 (ega, addr + 1, val >> 8);
-      break;
-  }
+  ega_mem_set_uint8 (ega, addr, val & 0xff);
+  ega_mem_set_uint8 (ega, addr + 1, val >> 8);
 }
 
 unsigned char ega_mem_get_uint8 (ega_t *ega, unsigned long addr)
 {
 //  pce_log (MSG_DEB, "ega: get mem %04lx\n", addr);
 
-  switch (ega->mode) {
-    case 0:
-      return (ega_mode0_get_uint8 (ega, addr));
-
-    case 16:
-      return (ega_mode16_get_uint8 (ega, addr));
+  if (addr < ega->base) {
+    return (0xff);
   }
 
-  return (0x00);
+  addr -= ega->base;
+
+  if (addr >= ega->size) {
+    return (0xff);
+  }
+
+  return (ega->get_uint8 (ega, addr));
 }
 
 unsigned short ega_mem_get_uint16 (ega_t *ega, unsigned long addr)
 {
-  switch (ega->mode) {
-    case 0:
-      return (ega_mode0_get_uint16 (ega, addr));
-      break;
+  unsigned short ret;
 
-    case 16: {
-        unsigned short ret;
-        ret = ega_mode16_get_uint8 (ega, addr + 1) << 8;
-        ret |= ega_mode16_get_uint8 (ega, addr);
-        return (ret);
-      }
-      break;
-  }
+  ret = ega_mem_get_uint8 (ega, addr) & 0xff;
+  ret |= (ega_mem_get_uint8 (ega, addr + 1) & 0xff) << 8;
 
-  return (0x0000);
+  return (ret);
 }
 
 
@@ -947,10 +1179,29 @@ void ega_gdc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
     case 0x05: /* gdc mode */
       ega->gdc_reg[0x05] = val & 0x3f;
+      ega_eval_mode (ega);
       break;
 
     case 0x06: /* misc */
       ega->gdc_reg[0x06] = val & 0x0f;
+      switch ((val >> 2) & 0x03) {
+        case 0x00:
+          ega->base = 0x00000;
+          ega->size = 0x20000;
+          break;
+        case 0x01:
+          ega->base = 0x00000;
+          ega->size = 0x10000;
+          break;
+        case 0x02:
+          ega->base = 0x10000;
+          ega->size = 0x08000;
+          break;
+        case 0x03:
+          ega->base = 0x18000;
+          ega->size = 0x08000;
+          break;
+      }
       break;
 
     case 0x07: /* color don't care */
@@ -993,7 +1244,7 @@ void ega_atc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
       trm_set_map (ega->trm, reg, r, g, b);
 
-      ega->update = 1;
+      ega->dirty = 1;
     }
     return;
   }
@@ -1001,6 +1252,7 @@ void ega_atc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x10: /* mode control */
       ega->atc_reg[reg] = val;
+      ega_eval_mode (ega);
       break;
 
     case 0x11: /* overscan color */
@@ -1061,6 +1313,7 @@ void ega_ts_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
     case 0x04: /* memory mode */
       ega->ts_reg[reg] = val & 0x0f;
+      ega_eval_mode (ega);
       break;
   }
 }
@@ -1141,8 +1394,9 @@ unsigned char ega_get_input_state_1 (ega_t *ega)
       val |= (0x80 | 0x08);
       val &= ~0x01;
 
-      if (ega->update) {
-        ega_update (ega);
+      if (ega->dirty) {
+        ega->update (ega);
+        ega->dirty = 0;
       }
     }
   }
@@ -1194,12 +1448,19 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
         case 0x02:
         case 0x03:
           ega_set_mode (ega, 0, 80, 25);
-          ega->segm = 0x18000;
+          break;
+
+        case 0x04:
+        case 0x05:
+          ega_set_mode (ega, 16, 320, 200);
+          break;
+
+        case 0x06:
+          ega_set_mode (ega, 16, 640, 200);
           break;
 
         case 0x07:
           ega_set_mode (ega, 0, 80, 25);
-          ega->segm = 0x10000;
           break;
 
         case 0x0d:
@@ -1210,8 +1471,14 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
           ega_set_mode (ega, 16, 640, 200);
           break;
 
+        case 0x0f:
         case 0x10:
           ega_set_mode (ega, 16, 640, 350);
+          break;
+
+        case 0x11:
+        case 0x12:
+          ega_set_mode (ega, 16, 640, 480);
           break;
 
         default:
@@ -1292,13 +1559,13 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 {
   static unsigned upd_cnt = 0;
 
-  if (ega->update) {
+  if (ega->dirty) {
     upd_cnt += 1;
 
     if (upd_cnt > 16) {
       upd_cnt = 0;
-      ega_update (ega);
-      ega->update = 0;
+      ega->update (ega);
+      ega->dirty = 0;
     }
   }
 }

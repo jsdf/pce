@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.h                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,14 +20,14 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.5 2003/09/24 01:09:55 hampa Exp $ */
+/* $Id: ega.h,v 1.6 2003/10/03 23:17:22 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_EGA_H
 #define PCE_IBMPC_EGA_H 1
 
 
-typedef struct {
+typedef struct ega_t {
   video_t       vid;
 
   scrmap_t      smap;
@@ -37,7 +37,8 @@ typedef struct {
 
   unsigned char *data;
 
-  unsigned long segm;
+  unsigned long base;
+  unsigned long size;
 
   unsigned      mode_320x200_w;
   unsigned      mode_320x200_h;
@@ -45,6 +46,8 @@ typedef struct {
   unsigned      mode_640x200_h;
   unsigned      mode_640x350_w;
   unsigned      mode_640x350_h;
+  unsigned      mode_640x480_w;
+  unsigned      mode_640x480_h;
 
   unsigned char crtc_reg[24];
   unsigned char ts_reg[5];
@@ -55,6 +58,12 @@ typedef struct {
 
   unsigned char latch[4];
 
+  void          (*update) (struct ega_t *ega);
+  int           (*screenshot) (struct ega_t *ega, FILE *fp);
+  void          (*set_latches) (struct ega_t *ega, unsigned long addr, unsigned char val[4]);
+  void          (*set_uint8) (struct ega_t *ega, unsigned long addr, unsigned char val);
+  unsigned char (*get_uint8) (struct ega_t *ega, unsigned long addr);
+
   unsigned      crtc_pos;
   unsigned      crtc_ofs;
 
@@ -64,7 +73,7 @@ typedef struct {
   unsigned      mode_w;
   unsigned      mode_h;
 
-  char          update;
+  char          dirty;
 
   terminal_t    *trm;
 } ega_t;

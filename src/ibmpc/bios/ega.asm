@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.14 2003/10/01 16:58:49 hampa Exp $
+; $Id: ega.asm,v 1.15 2003/10/03 23:17:22 hampa Exp $
 
 
 %include "pce.inc"
@@ -117,9 +117,9 @@ segb800   dw 0xb800
 
 cursor14  db 0, 2, 4, 6, 8, 10, 11, 13, 14
 
-modemap   db 0x00, 0x00, 0x00, 0x00, 0x04, 0x05, 0x06, 0x07
+modemap   db 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x06, 0x07
           db 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0d, 0x0d
-          db 0x0d
+          db 0x0d, 0x0d, 0x0d
 
 pal_default:
   db      0x00
@@ -171,7 +171,7 @@ mode00:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x0f, 0x00
   db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
   db      0x00
 
@@ -186,7 +186,7 @@ mode01:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x0f, 0x00
   db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
   db      0x00
 
@@ -201,7 +201,7 @@ mode02:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x0f, 0x00
   db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
   db      0x00
 
@@ -216,36 +216,54 @@ mode03:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x0f, 0x00
   db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
   db      0x00
 
 mode04:
   db      40, 24, 8
-  dw      16000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  dw      8192
+  db      0x00, 0x03, 0x00, 0x06                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+  db      0x00
+  db      0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06        ; atc
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x03, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00        ; gdc
+  db      0xff
 
 mode05:
-  db      80, 24, 8
-  dw      16000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  db      40, 24, 8
+  dw      8192
+  db      0x00, 0x03, 0x00, 0x06                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+  db      0x00
+  db      0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06        ; atc
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x03, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00        ; gdc
+  db      0xff
 
 mode06:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  db      80, 24, 8
+  dw      8192
+  db      0x00, 0x01, 0x00, 0x06                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+  db      0x00
+  db      0x00, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; atc
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x01, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00        ; gdc
+  db      0xff
 
 mode07:
   db      80, 24, 14
@@ -258,59 +276,29 @@ mode07:
   db      0x00
   db      0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07        ; atc
   db      0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x0f, 0x00
   db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xa3        ; gdc
   db      0x00
 
 mode08:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  times   64 db 0x00
 
 mode09:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  times   64 db 0x00
 
 mode0a:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  times   64 db 0x00
 
 mode0b:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  times   64 db 0x00
 
 mode0c:
-  db      80, 24, 14
-  dw      4000
-  db      0, 0, 0, 0 ; ts
-  db      0x43 ; misc out
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
-  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+  times   64 db 0x00
 
 mode0d:
   db      40, 24, 8
   dw      8192
-  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -318,14 +306,14 @@ mode0d:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x0f, 0x00
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
   db      0x00
 
 mode0e:
   db      80, 24, 8
   dw      16384
-  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -333,14 +321,14 @@ mode0e:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x0f, 0x00
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
   db      0x00
 
 mode0f:
   db      80, 24, 14
   dw      28000
-  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -348,14 +336,14 @@ mode0f:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x05, 0x00
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
   db      0x00
 
 mode10:
   db      80, 24, 14
   dw      28000
-  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -363,7 +351,39 @@ mode10:
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
-  db      0x00, 0x00, 0x00, 0x00
+  db      0x01, 0x00, 0x0f, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+
+mode11:
+  db      80, 24, 16
+  dw      38400
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x01, 0x00, 0x0f, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+
+mode12:
+  db      80, 24, 16
+  dw      38400
+  db      0x00, 0x00, 0x00, 0x06                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x01, 0x00, 0x0f, 0x00
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
   db      0x00
 
@@ -380,6 +400,7 @@ ptr00a8:
 
 %include "fnt8x8.inc"
 %include "fnt8x14.inc"
+%include "fnt8x16.inc"
 
 
 int_10_00_func:
@@ -400,6 +421,8 @@ int_10_00_func:
   dw      int_10_00_0e
   dw      int_10_00_0f
   dw      int_10_00_10
+  dw      int_10_00_11
+  dw      int_10_00_12
 int_10_00_funcend:
 
 
@@ -565,46 +588,6 @@ atc_set_regs:
   ret
 
 
-atc_set_palette_default:
-  push    ax
-  push    cx
-  push    si
-  push    ds
-
-  mov     al, 0
-  mov     cx, 16
-  push    cs
-  pop     ds
-  mov     si, pal_default
-  call    atc_set_regs
-
-  pop     ds
-  pop     si
-  pop     cx
-  pop     ax
-  ret
-
-
-atc_set_palette_mono:
-  push    ax
-  push    cx
-  push    si
-  push    ds
-
-  mov     al, 0
-  mov     cx, 16
-  push    cs
-  pop     ds
-  mov     si, pal_mono
-  call    atc_set_regs
-
-  pop     ds
-  pop     si
-  pop     cx
-  pop     ax
-  ret
-
-
 ; get video mem segment in AX
 get_segm:
   mov     ax, 0xb800
@@ -614,6 +597,16 @@ get_segm:
   mov     ah, 0xb0
 
 .done:
+  ret
+
+
+; get mode in AH
+get_modemap:
+  push    bx
+  mov     bl, [BIOS_MODE]
+  and     bx, 0x007f
+  mov     ah, [cs:bx + modemap]
+  pop     bx
   ret
 
 
@@ -937,6 +930,19 @@ txt_clear:
   ret
 
 
+; clear CX bytes at B800:DI with AL
+ega_clear_cga:
+  push    di
+  push    es
+
+  mov     es, [cs:segb800]
+  rep     stosb
+
+  pop     es
+  pop     di
+  ret
+
+
 ; clear CX bytes at A000:DI with color AL
 gra_clear:
   push    cx
@@ -1049,19 +1055,23 @@ int_10_init_mode:
   mov     al, [bx + 2]                  ; character height
 
   cmp     al, 8
-  jne     .not8x8
+  jbe     .fnt8x8
+
+  cmp     al, 14
+  jbe     .fnt8x14
+
+  jmp     .fnt8x16
+
+.fnt8x8:
   mov     ax, fnt_8x8
   jmp     .fntdone
 
-.not8x8:
-  cmp     al, 14
-  jne     .not8x14
+.fnt8x14:
   mov     ax, fnt_8x14
   jmp     .fntdone
 
-.not8x14:
-  xor     ax, ax
-  cwd
+.fnt8x16:
+  mov     ax, fnt_8x16
 
 .fntdone:
   mov     word [es:4 * 0x43], ax
@@ -1095,6 +1105,24 @@ int_10_00_03:
   ret
 
 
+int_10_00_04:
+int_10_00_05:
+int_10_00_06:
+  push    ax
+  push    cx
+  push    di
+
+  mov     al, 0x00
+  xor     di, di
+  mov     cx, 16384
+  call    ega_clear_cga
+
+  pop     di
+  pop     cx
+  pop     ax
+  ret
+
+
 int_10_00_07:
   push    ax
   push    cx
@@ -1113,9 +1141,6 @@ int_10_00_07:
   ret
 
 
-int_10_00_04:
-int_10_00_05:
-int_10_00_06:
 int_10_00_08:
 int_10_00_09:
 int_10_00_0a:
@@ -1129,6 +1154,8 @@ int_10_00_0d:
 int_10_00_0e:
 int_10_00_0f:
 int_10_00_10:
+int_10_00_11:
+int_10_00_12:
   push    ax
   push    cx
   push    dx
@@ -1164,7 +1191,7 @@ int_10_00:
 
   push    ax
   and     al, 0x7f
-  cmp     al, 0x10
+  cmp     al, 0x12
   pop     ax
   ja      .badfunc
 
@@ -1392,7 +1419,7 @@ int_10_05:
 ;*      DL = bottom right column
 ;*****************************************************************************
 
-int_10_06:
+int_10_06_cga_txt:
   push    ax
   push    cx
   push    dx
@@ -1401,8 +1428,6 @@ int_10_06:
   push    di
   push    bp
   push    es
-
-  mov     ds, [cs:seg0040]
 
   or      al, al
   jz      .clear
@@ -1503,6 +1528,36 @@ int_10_06:
   pop     ax
   ret
 
+int_10_06:
+  push    ax
+
+  mov     ds, [cs:seg0040]
+
+  call    get_modemap
+
+  cmp     ah, 0x00
+  je      .mode00
+
+  cmp     ah, 0x04
+  jb      .done
+  cmp     ah, 0x06
+  jbe     .mode04
+
+  jmp     .done
+
+.mode00:
+  call    int_10_06_cga_txt
+  jmp     .done
+
+.mode04:
+  pop     ax
+  int     0x42
+  ret
+
+.done:
+  pop     ax
+  ret
+
 
 ;*****************************************************************************
 ;* int 10 func 07 - scroll down
@@ -1514,7 +1569,7 @@ int_10_06:
 ;*      DL = bottom right column
 ;*****************************************************************************
 
-int_10_07:
+int_10_07_cga_txt:
   push    ax
   push    cx
   push    dx
@@ -1523,8 +1578,6 @@ int_10_07:
   push    di
   push    bp
   push    es
-
-  mov     ds, [cs:seg0040]
 
   or      al, al
   jz      .clear
@@ -1627,6 +1680,36 @@ int_10_07:
   pop     ax
   ret
 
+int_10_07:
+  push    ax
+
+  mov     ds, [cs:seg0040]
+
+  call    get_modemap
+
+  cmp     ah, 0x00
+  je      .mode00
+
+  cmp     ah, 0x04
+  jb      .done
+  cmp     ah, 0x06
+  jbe     .mode04
+
+  jmp     .done
+
+.mode00:
+  call    int_10_07_cga_txt
+  jmp     .done
+
+.mode04:
+  pop     ax
+  int     0x42
+  ret
+
+.done:
+  pop     ax
+  ret
+
 
 ;*****************************************************************************
 ;* int 10 func 08 - get character and attribute
@@ -1725,26 +1808,33 @@ int_10_09:
 
   mov     ds, [cs:seg0040]
 
-  push    bx
-  mov     bl, [BIOS_MODE]
-  and     bx, 0x007f
-  mov     ah, [cs:bx + modemap]
-  pop     bx
+  call    get_modemap
 
   cmp     ah, 0x00
-  jne     .not00
+  je      .mode00
 
+  cmp     ah, 0x0d
+  je      .mode0d
+
+  cmp     ah, 0x04
+  jb      .done
+  cmp     ah, 0x06
+  jbe     .mode04
+
+  jmp     .done
+
+.mode00:
   call    int_10_09_mode03
   jmp     .done
 
-.not00:
-  cmp      ah, 0x0d
-  jne      .not0d
+.mode0d:
+  call    int_10_09_mode0d
+  jmp     .done
 
-  call     int_10_09_mode0d
-  jmp      .done
-
-.not0d:
+.mode04:
+  pop     ax
+  int     0x42
+  ret
 
 .done:
   pop     ax
@@ -1758,7 +1848,7 @@ int_10_09:
 ;*      CX = count
 ;*****************************************************************************
 
-int_10_0a:
+int_10_0a_mode03:
   push    ax
   push    cx
   push    bx
@@ -1797,6 +1887,40 @@ int_10_0a:
   pop     di
   pop     bx
   pop     cx
+  pop     ax
+  ret
+
+int_10_0a:
+  push    ax
+
+  mov     ds, [cs:seg0040]
+
+  push    bx
+  mov     bl, [BIOS_MODE]
+  and     bx, 0x007f
+  mov     ah, [cs:bx + modemap]
+  pop     bx
+
+  cmp     ah, 0x00
+  jne     .not00
+
+  call    int_10_0a_mode03
+  jmp     .done
+
+.not00:
+  cmp     ah, 0x0d
+  jne     .not0d
+
+;  call    int_10_0e_mode0d
+  jmp     .done
+
+.not0d:
+  pop     ax
+  push    ax
+
+  int     0x42
+
+.done:
   pop     ax
   ret
 
@@ -2077,13 +2201,17 @@ int_10_0e:
   jmp     .done
 
 .not00:
-  cmp      ah, 0x0d
-  jne      .not0d
+  cmp     ah, 0x0d
+  jne     .not0d
 
-  call     int_10_0e_mode0d
-  jmp      .done
+  call    int_10_0e_mode0d
+  jmp     .done
 
 .not0d:
+  pop     ax
+  push    ax
+
+  int     0x42
 
 .done:
   pop     ax
