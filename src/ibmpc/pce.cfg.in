@@ -1,9 +1,14 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.7 2003/08/29 19:18:15 hampa Exp $
+# $Id: pce.cfg.in,v 1.8 2003/08/29 21:15:08 hampa Exp $
 
 section pc {
+	section cpu {
+		# 8086, 8088, V20, V30, 80186, 80188
+		model = "80186"
+	}
+
 	section ram {
 		base = 0x00000
 		size = 655360

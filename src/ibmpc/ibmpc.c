@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.20 2003/08/29 19:18:14 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.21 2003/08/29 21:15:08 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -134,9 +134,43 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
-  e186_enable();
+  ini_sct_t *sct;
+  char      *model;
+
+  sct = ini_sct_find_sct (ini, "cpu");
+
+  if (par_cpu == NULL) {
+    ini_get_string (sct, "model", &model, "8086");
+  }
+  else {
+    model = par_cpu;
+  }
+
+  pce_log (MSG_INF, "cpu: model=%s\n", model);
 
   pc->cpu = e86_new ();
+
+  if (strcmp (model, "8086") == 0) {
+    ;
+  }
+  else if (strcmp (model, "8088") == 0) {
+    ;
+  }
+  else if ((strcmp (model, "v20") == 0) || (strcmp (model, "V20") == 0)) {
+    e86_enable_v30 (pc->cpu);
+  }
+  else if ((strcmp (model, "v30") == 0) || (strcmp (model, "V30") == 0)) {
+    e86_enable_v30 (pc->cpu);
+  }
+  else if (strcmp (model, "80186") == 0) {
+    e86_enable_186 (pc->cpu);
+  }
+  else if (strcmp (model, "80188") == 0) {
+    e86_enable_186 (pc->cpu);
+  }
+  else {
+    pce_log (MSG_ERR, "unknown cpu model (%s)\n", model);
+  }
 
   e86_set_mem (pc->cpu, pc->mem,
     (e86_get_uint8_f) &mem_get_uint8,

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.10 2003/08/29 19:18:15 hampa Exp $ */
+/* $Id: pce.h,v 1.11 2003/08/29 21:15:08 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -61,6 +61,7 @@ typedef unsigned short (*get_uint16_f) (void *ext);
 extern char     *par_terminal;
 extern char     *par_video;
 extern unsigned par_boot;
+extern char     *par_cpu;
 
 
 void pce_log_set_fp (FILE *fp, int close);
