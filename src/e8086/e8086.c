@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.3 2003/04/16 07:04:41 hampa Exp $ */
+/* $Id: e8086.c,v 1.4 2003/04/16 14:14:12 hampa Exp $ */
 
 
 #include <pce.h>
@@ -243,15 +243,15 @@ void e86_log_op (e8086_t *c, const char *str, ...)
 
 void e86_prt_state (e8086_t *c, FILE *fp)
 {
-  double      cpi;
+  double      cpi, mips;
   static char ft[2] = { '-', '+' };
 
   cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
-
-  fprintf (fp, "clk=%lu  op=%lu  delay=%lu  cpi=%.2f  mips=%.4f\n",
+  mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
+  fprintf (fp, "CLK=%08lX  OP=%08lX  DLY=%03lX  CPI=%.4f  MIPS=%.4f\n",
     c->clocks, c->instructions,
     c->delay,
-    cpi, 4.77 / cpi
+    cpi, mips
   );
 
   fprintf (fp,
@@ -283,9 +283,13 @@ void e86_execute (e8086_t *c)
   do {
     e86_pq_fill (c);
 
-    op = c->pq[0];
-
     c->prefix &= ~E86_PREFIX_NEW;
+
+    if (c->opstat != NULL) {
+      c->opstat (c, c->pq[0], c->pq[1]);
+    }
+
+    op = c->pq[0];
 
     cnt = e86_opcodes[op] (c);
 
@@ -355,6 +359,7 @@ e8086_t *e86_new (void)
 
   c->hook = NULL;
   c->hook_ext = NULL;
+  c->opstat = NULL;
 
   c->clocks = 0;
   c->instructions = 0;

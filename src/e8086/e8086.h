@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.3 2003/04/16 07:04:42 hampa Exp $ */
+/* $Id: e8086.h,v 1.4 2003/04/16 14:14:12 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -90,6 +90,8 @@ typedef struct {
   void (*prt_set_uint16) (void *mem, unsigned long addr, unsigned short val);
 
   void (*hook) (void *ext, unsigned char op1, unsigned char op2);
+
+  void (*opstat) (void *ext, unsigned char op1, unsigned char op2);
 
   void *mem;
   void *prt;
@@ -216,6 +218,9 @@ typedef struct {
 #define e86_get_zf(cpu) (((cpu)->flg & E86_FLG_Z) != 0)
 #define e86_get_of(cpu) (((cpu)->flg & E86_FLG_O) != 0)
 #define e86_get_sf(cpu) (((cpu)->flg & E86_FLG_S) != 0)
+#define e86_get_df(cpu) (((cpu)->flg & E86_FLG_D) != 0)
+#define e86_get_if(cpu) (((cpu)->flg & E86_FLG_I) != 0)
+#define e86_get_tf(cpu) (((cpu)->flg & E86_FLG_T) != 0)
 
 
 #define e86_set_flg(cpu, f, v) \

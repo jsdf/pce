@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     disasm.c                                                   *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
+/* $Id: disasm.c,v 1.3 2003/04/16 14:14:12 hampa Exp $ */
 
 
 #include <string.h>
@@ -943,6 +943,20 @@ static void dop_83 (e86_disasm_t *op, unsigned char *src)
   op->arg_n = 2;
 }
 
+/* DOP 84: TEST r/m8, reg8 */
+static
+void dop_84 (e86_disasm_t *op, unsigned char *src)
+{
+  dop_ea8_reg8 (op, src, "TEST");
+}
+
+/* DOP 85: TEST r/m16, reg16 */
+static
+void dop_85 (e86_disasm_t *op, unsigned char *src)
+{
+  dop_ea16_reg16 (op, src, "TEST");
+}
+
 /* DOP 86: XCHG r/m8, reg8 */
 static void dop_86 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1819,7 +1833,7 @@ e86_disasm_f dop_list[256] = {
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, /* 70 */
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70,
-  &dop_80, &dop_81, &dop_80, &dop_83, &dop_ud, &dop_ud, &dop_86, &dop_87, /* 80 */
+  &dop_80, &dop_81, &dop_80, &dop_83, &dop_84, &dop_85, &dop_86, &dop_87, /* 80 */
   &dop_88, &dop_89, &dop_8a, &dop_8b, &dop_8c, &dop_8d, &dop_8e, &dop_8f,
   &dop_90, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, /* 90 */
   &dop_98, &dop_99, &dop_9a, &dop_ud, &dop_9c, &dop_9d, &dop_9e, &dop_9f,
