@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     memory.c                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.2 2003/04/16 14:15:17 hampa Exp $ */
+/* $Id: memory.c,v 1.3 2003/04/17 11:46:35 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -53,7 +53,7 @@ mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
   blk->set_uint8 = NULL;
   blk->set_uint16 = NULL;
 
-  blk->ext = NULL;
+  blk->ext = blk;
 
   blk->flags = 0;
   blk->base = base;
@@ -100,7 +100,7 @@ unsigned char mem_get_uint8 (void *obj, unsigned long addr)
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->get_uint8 != NULL) {
-        return (blk->get_uint8 (blk, addr - blk->base));
+        return (blk->get_uint8 (blk->ext, addr - blk->base));
       }
       else {
         return (blk->data[addr - blk->base]);
@@ -124,7 +124,7 @@ unsigned short mem_get_uint16_le (void *obj, unsigned long addr)
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
       if (blk->get_uint16 != NULL) {
-        return (blk->get_uint16 (blk, addr - blk->base));
+        return (blk->get_uint16 (blk->ext, addr - blk->base));
       }
       else {
         if (addr < blk->end) {
@@ -157,7 +157,7 @@ void mem_set_uint8 (void *obj, unsigned long addr, unsigned char val)
         return;
       }
       else if (blk->set_uint8 != NULL) {
-        blk->set_uint8 (blk, addr - blk->base, val);
+        blk->set_uint8 (blk->ext, addr - blk->base, val);
       }
       else {
         blk->data[addr - blk->base] = val;
@@ -182,7 +182,7 @@ void mem_set_uint16_le (void *obj, unsigned long addr, unsigned short val)
         return;
       }
       else if (blk->set_uint16 != NULL) {
-        blk->set_uint16 (blk, addr - blk->base, val);
+        blk->set_uint16 (blk->ext, addr - blk->base, val);
       }
       else {
         blk->data[addr - blk->base] = val & 0xff;

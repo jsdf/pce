@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     mda.c                                                      *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: mda.c,v 1.2 2003/04/17 11:46:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -46,14 +46,14 @@ mda_t *mda_new (void)
 
   mda->mem = mem_blk_new (0xb0000, 16384, 1);
   mda->mem->ext = mda;
-  mda->mem->set_uint8 = &mda_mem_set_uint8;
-  mda->mem->set_uint16 = &mda_mem_set_uint16;
+  mda->mem->set_uint8 = (seta_uint8_f) &mda_mem_set_uint8;
+  mda->mem->set_uint16 = (seta_uint16_f) &mda_mem_set_uint16;
 
   mda->crtc = mem_blk_new (0x3b4, 16, 1);
   mda->crtc->ext = mda;
-  mda->crtc->set_uint8 = &mda_crtc_set_uint8;
-  mda->crtc->set_uint16 = &mda_crtc_set_uint16;
-  mda->crtc->get_uint8 = &mda_crtc_get_uint8;
+  mda->crtc->set_uint8 = (seta_uint8_f) &mda_crtc_set_uint8;
+  mda->crtc->set_uint16 = (seta_uint16_f) &mda_crtc_set_uint16;
+  mda->crtc->get_uint8 = (geta_uint8_f) &mda_crtc_get_uint8;
 
   return (mda);
 }
@@ -114,21 +114,16 @@ void mda_print (mda_t *mda, unsigned x, unsigned y, unsigned char c, unsigned ch
   fflush (mda->fp);
 }
 
-void mda_mem_set_uint8 (void *obj, unsigned long addr, unsigned char val)
+void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
   unsigned      x, y;
   unsigned char c, a;
-  mda_t         *mda;
 
-  mem_blk_t *mem;
-
-  mem = (mem_blk_t *) obj;
-
-  if (mem->data[addr] == val) {
+  if (mda->mem->data[addr] == val) {
     return;
   }
 
-  mem->data[addr] = val;
+  mda->mem->data[addr] = val;
 
   if (addr >= 4000) {
     return;
@@ -138,29 +133,23 @@ void mda_mem_set_uint8 (void *obj, unsigned long addr, unsigned char val)
   y = (addr >> 1) / 80;
 
   if (addr & 1) {
-    c = mem->data[addr - 1];
+    c = mda->mem->data[addr - 1];
     a = val;
   }
   else {
     c = val;
-    a = mem->data[addr + 1];
+    a = mda->mem->data[addr + 1];
   }
-
-  mda = (mda_t *) mem->ext;
 
   mda_print (mda, x, y, c, a);
 }
 
-void mda_mem_set_uint16 (void *obj, unsigned long addr, unsigned short val)
+void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
-  mem_blk_t *mem;
+  mda_mem_set_uint8 (mda, addr, val & 0xff);
 
-  mem = (mem_blk_t *) obj;
-
-  mda_mem_set_uint8 (obj, addr, val & 0xff);
-
-  if (addr < mem->end) {
-    mda_mem_set_uint8 (obj, addr + 1, val >> 8);
+  if (addr < mda->mem->end) {
+    mda_mem_set_uint8 (mda, addr + 1, val >> 8);
   }
 }
 
@@ -183,47 +172,33 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
   }
 }
 
-void mda_crtc_set_uint8 (void *obj, unsigned long addr, unsigned char val)
+void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
-  mem_blk_t *blk;
-  mda_t     *mda;
-
-  blk = (mem_blk_t *) obj;
-  mda = (mda_t *) blk->ext;
-
   switch (addr) {
     case 0x00:
-      blk->data[addr] = val;
+      mda->crtc->data[addr] = val;
       break;
 
     case 0x01:
-      mda_crtc_set_reg (mda, blk->data[0], val);
+      mda_crtc_set_reg (mda, mda->crtc->data[0], val);
       break;
 
     default:
-      blk->data[addr] = val;
+      mda->crtc->data[addr] = val;
       break;
   }
 }
 
-void mda_crtc_set_uint16 (void *obj, unsigned long addr, unsigned short val)
+void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
-  mem_blk_t *mem;
+  mda_mem_set_uint8 (mda, addr, val & 0xff);
 
-  mem = (mem_blk_t *) obj;
-
-  mda_mem_set_uint8 (obj, addr, val & 0xff);
-
-  if (addr < mem->end) {
-    mda_mem_set_uint8 (obj, addr + 1, val >> 8);
+  if (addr < mda->crtc->end) {
+    mda_crtc_set_uint8 (mda, addr + 1, val >> 8);
   }
 }
 
-unsigned char mda_crtc_get_uint8 (void *obj, unsigned long addr)
+unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr)
 {
-  mem_blk_t *blk;
-
-  blk = (mem_blk_t *) obj;
-
-  return (blk->data[addr]);
+  return (mda->crtc->data[addr]);
 }
