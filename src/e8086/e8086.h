@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.21 2003/10/13 01:53:55 hampa Exp $ */
+/* $Id: e8086.h,v 1.22 2003/11/11 23:48:08 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -371,8 +371,8 @@ void e86_trap (e8086_t *c, unsigned n);
 
 
 
-#define E86_DFLAGS_186 0x0001
-
+#define E86_DFLAGS_186  0x0001
+#define E86_DFLAGS_CALL 0x0002
 
 typedef struct {
   unsigned       flags;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.8 2003/09/21 21:11:19 hampa Exp $ */
+/* $Id: disasm.c,v 1.9 2003/11/11 23:48:08 hampa Exp $ */
 
 
 #include <string.h>
@@ -1210,6 +1210,8 @@ static void dop_99 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_9a (e86_disasm_t *op, unsigned char *src)
 {
+  op->flags |= E86_DFLAGS_CALL;
+
   op->dat_n = 5;
   op->arg_n = 1;
 
@@ -1540,17 +1542,28 @@ static
 void dop_cc (e86_disasm_t *op, unsigned char *src)
 {
   dop_const (op, "INT3", 1);
+  op->flags |= E86_DFLAGS_CALL;
 }
 
 /* DOP CD: INT imm8 */
 static
 void dop_cd (e86_disasm_t *op, unsigned char *src)
 {
+  op->flags |= E86_DFLAGS_CALL;
+
   op->dat_n = 2;
   op->arg_n = 1;
 
   strcpy (op->op, "INT");
   disasm_imm8 (op->arg1, src + 1);
+}
+
+/* DOP CE: INTO */
+static
+void dop_ce (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "INTO", 1);
+  op->flags |= E86_DFLAGS_CALL;
 }
 
 /* DOP CF: IRET */
@@ -1714,6 +1727,8 @@ static
 void dop_e8 (e86_disasm_t *op, unsigned char *src)
 {
   unsigned short t;
+
+  op->flags |= E86_DFLAGS_CALL;
 
   op->dat_n = 3;
   op->arg_n = 1;
@@ -2029,10 +2044,12 @@ void dop_ff (e86_disasm_t *op, unsigned char *src)
 
     case 2:
       dop_ea16 (op, src, "CALL");
+      op->flags |= E86_DFLAGS_CALL;
       return;
 
     case 3:
       dop_ea16 (op, src, "CALLF");
+      op->flags |= E86_DFLAGS_CALL;
       return;
 
     case 4:
@@ -2087,7 +2104,7 @@ e86_disasm_f dop_list[256] = {
   &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, /* B0 */
   &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,
   &dop_c0, &dop_c1, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
-  &dop_c8, &dop_c9, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
+  &dop_c8, &dop_c9, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ce, &dop_cf,
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_e7, /* E0 */
