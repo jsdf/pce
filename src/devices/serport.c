@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/serial.c                                       *
+ * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,10 +26,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "serial.h"
+#include "serport.h"
 
 
-void ser_init (serial_t *ser, unsigned long base)
+void ser_init (serport_t *ser, unsigned long base)
 {
   ser->io = base;
 
@@ -42,12 +42,12 @@ void ser_init (serial_t *ser, unsigned long base)
   ser->uart.recv_ext = ser;
   ser->uart.recv = (e8250_recv_f) &ser_uart_inp;
 
-  ser->prt = mem_blk_new (base, 8, 0);
-  ser->prt->ext = &ser->uart;
-  ser->prt->get_uint8 = (mem_get_uint8_f) &e8250_get_uint8;
-  ser->prt->set_uint8 = (mem_set_uint8_f) &e8250_set_uint8;
-  ser->prt->get_uint16 = (mem_get_uint16_f) &e8250_get_uint16;
-  ser->prt->set_uint16 = (mem_set_uint16_f) &e8250_set_uint16;
+  mem_blk_init (&ser->port, base, 8, 0);
+  ser->port.ext = &ser->uart;
+  ser->port.get_uint8 = (mem_get_uint8_f) &e8250_get_uint8;
+  ser->port.set_uint8 = (mem_set_uint8_f) &e8250_set_uint8;
+  ser->port.get_uint16 = (mem_get_uint16_f) &e8250_get_uint16;
+  ser->port.set_uint16 = (mem_set_uint16_f) &e8250_set_uint16;
 
   ser->bps = 2400;
   ser->databits = 8;
@@ -65,11 +65,11 @@ void ser_init (serial_t *ser, unsigned long base)
   e8250_set_cts (&ser->uart, 1);
 }
 
-serial_t *ser_new (unsigned long base)
+serport_t *ser_new (unsigned long base)
 {
-  serial_t *ser;
+  serport_t *ser;
 
-  ser = (serial_t *) malloc (sizeof (serial_t));
+  ser = (serport_t *) malloc (sizeof (serport_t));
   if (ser == NULL) {
     return (NULL);
   }
@@ -79,17 +79,17 @@ serial_t *ser_new (unsigned long base)
   return (ser);
 }
 
-void ser_free (serial_t *ser)
+void ser_free (serport_t *ser)
 {
   e8250_free (&ser->uart);
-  mem_blk_del (ser->prt);
+  mem_blk_free (&ser->port);
 
   if (ser->fp_close) {
     fclose (ser->fp);
   }
 }
 
-void ser_del (serial_t *ser)
+void ser_del (serport_t *ser)
 {
   if (ser != NULL) {
     ser_free (ser);
@@ -97,7 +97,12 @@ void ser_del (serial_t *ser)
   }
 }
 
-int ser_set_fp (serial_t *ser, FILE *fp, int close)
+mem_blk_t *ser_get_reg (serport_t *ser)
+{
+  return (&ser->port);
+}
+
+int ser_set_fp (serport_t *ser, FILE *fp, int close)
 {
   if (ser->fp_close) {
     fclose (ser->fp);
@@ -109,7 +114,7 @@ int ser_set_fp (serial_t *ser, FILE *fp, int close)
   return (0);
 }
 
-int ser_set_fname (serial_t *ser, const char *fname)
+int ser_set_fname (serport_t *ser, const char *fname)
 {
   FILE *fp;
 
@@ -126,7 +131,7 @@ int ser_set_fname (serial_t *ser, const char *fname)
   return (0);
 }
 
-void ser_uart_setup (serial_t *ser, unsigned char val)
+void ser_uart_setup (serport_t *ser, unsigned char val)
 {
   int           chg;
   unsigned long bps;
@@ -183,7 +188,7 @@ void ser_uart_setup (serial_t *ser, unsigned char val)
 }
 
 /* 8250 output buffer is not empty */
-void ser_uart_out (serial_t *ser, unsigned char val)
+void ser_uart_out (serport_t *ser, unsigned char val)
 {
   unsigned char c;
 
@@ -203,11 +208,11 @@ void ser_uart_out (serial_t *ser, unsigned char val)
 }
 
 /* 8250 input buffer is not full */
-void ser_uart_inp (serial_t *ser, unsigned char val)
+void ser_uart_inp (serport_t *ser, unsigned char val)
 {
 }
 
-void ser_clock (serial_t *ser, unsigned n)
+void ser_clock (serport_t *ser, unsigned n)
 {
   e8250_clock (&ser->uart, n);
 }

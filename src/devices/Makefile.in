@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := cga disk ega hgc mda memory nvram serial video
+FILES := cga disk ega hgc mda memory nvram parport serport video
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -54,7 +54,8 @@ memory.o:	memory.c memory.h $(SDP)
 nvram.o:	nvram.c nvram.h memory.h \
 		lib/log.h $(SDP)
 
-serial.o:	serial.c serial.h memory.h \
-		chipset/e8250.h
+parport.o:	parport.c parport.h memory.h
+
+serport.o:	serport.c serport.h memory.h chipset/e8250.h
 
 video.o:	video.c video.h memory.h $(SDP)

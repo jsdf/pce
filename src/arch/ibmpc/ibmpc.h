@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.2 2003/12/23 03:48:30 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_IBMPC_H
@@ -71,7 +71,7 @@ typedef struct ibmpc_t {
 
   terminal_t    *trm;
 
-  serial_t      *serport[4];
+  serport_t     *serport[4];
   parport_t     *parport[4];
 
   unsigned           cpu_model;

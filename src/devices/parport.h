@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/parport.h                                        *
+ * File name:     src/devices/parport.h                                      *
  * Created:       2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,16 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: parport.h,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
-#ifndef PCE_IBMPC_PARPORT_H
-#define PCE_IBMPC_PARPORT_H 1
+#ifndef PCE_DEVICES_PARPORT_H
+#define PCE_DEVICES_PARPORT_H 1
 
 
 #include <stdio.h>
 
-#include "pce.h"
+#include "memory.h"
 
 
 #define PARPORT_STR 0x01
@@ -41,7 +41,7 @@
 
 
 typedef struct {
-  mem_blk_t     *prt;
+  mem_blk_t     port;
 
   unsigned long io;
 
@@ -54,9 +54,12 @@ typedef struct {
 } parport_t;
 
 
-
-parport_t *parport_new (unsigned base);
+void parport_init (parport_t *par, unsigned long base);
+parport_t *parport_new (unsigned long base);
+void parport_free (parport_t *par);
 void parport_del (parport_t *par);
+
+mem_blk_t *parport_get_reg (parport_t *par);
 
 void parport_set_fp (parport_t *par, FILE *fp, int close);
 int parport_set_fname (parport_t *par, const char *fname);

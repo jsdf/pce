@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/parport.c                                        *
+ * File name:     src/devices/parport.c                                      *
  * Created:       2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,15 +20,36 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: parport.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "pce.h"
+#include "memory.h"
+#include "parport.h"
 
 
-parport_t *parport_new (unsigned base)
+void parport_init (parport_t *par, unsigned long base)
+{
+  par->io = base;
+
+  mem_blk_init (&par->port, base, 4, 0);
+  par->port.ext = par;
+  par->port.get_uint8 = (mem_get_uint8_f) &parport_get_uint8;
+  par->port.set_uint8 = (mem_set_uint8_f) &parport_set_uint8;
+  par->port.get_uint16 = (mem_get_uint16_f) &parport_get_uint16;
+  par->port.set_uint16 = (mem_set_uint16_f) &parport_set_uint16;
+
+  par->status = 0;
+  par->control = 0;
+  par->data = 0;
+
+  par->fp = NULL;
+  par->close = 0;
+}
+
+parport_t *parport_new (unsigned long base)
 {
   parport_t *par;
 
@@ -37,36 +58,31 @@ parport_t *parport_new (unsigned base)
     return (NULL);
   }
 
-  par->io = base;
-
-  par->prt = mem_blk_new (base, 4, 0);
-  par->prt->ext = par;
-  par->prt->get_uint8 = (geta_uint8_f) &parport_get_uint8;
-  par->prt->set_uint8 = (seta_uint8_f) &parport_set_uint8;
-  par->prt->get_uint16 = (geta_uint16_f) &parport_get_uint16;
-  par->prt->set_uint16 = (seta_uint16_f) &parport_set_uint16;
-
-  par->status = 0;
-  par->control = 0;
-  par->data = 0;
-
-  par->fp = NULL;
-  par->close = 0;
+  parport_init (par, base);
 
   return (par);
+}
+
+void parport_free (parport_t *par)
+{
+  if (par->close) {
+    fclose (par->fp);
+  }
+
+  mem_blk_free (&par->port);
 }
 
 void parport_del (parport_t *par)
 {
   if (par != NULL) {
-    mem_blk_del (par->prt);
-
-    if (par->close && (par->fp != NULL)) {
-      fclose (par->fp);
-    }
-
+    parport_free (par);
     free (par);
   }
+}
+
+mem_blk_t *parport_get_reg (parport_t *par)
+{
+  return (&par->port);
 }
 
 void parport_set_fp (parport_t *par, FILE *fp, int close)

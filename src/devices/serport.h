@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/serial.h                                       *
+ * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,8 +39,8 @@
 #include "memory.h"
 
 
-typedef struct serial_s {
-  mem_blk_t     *prt;
+typedef struct serport_s {
+  mem_blk_t     port;
 
   e8250_t       uart;
 
@@ -56,22 +56,24 @@ typedef struct serial_s {
 
   FILE          *fp;
   int           fp_close;
-} serial_t;
+} serport_t;
 
 
-void ser_init (serial_t *ser, unsigned long base);
-serial_t *ser_new (unsigned long base);
-void ser_free (serial_t *ser);
-void ser_del (serial_t *ser);
+void ser_init (serport_t *ser, unsigned long base);
+serport_t *ser_new (unsigned long base);
+void ser_free (serport_t *ser);
+void ser_del (serport_t *ser);
 
-int ser_set_fp (serial_t *ser, FILE *fp, int close);
-int ser_set_fname (serial_t *ser, const char *fname);
+mem_blk_t *ser_get_reg (serport_t *ser);
 
-void ser_uart_setup (serial_t *ser, unsigned char val);
-void ser_uart_out (serial_t *ser, unsigned char val);
-void ser_uart_inp (serial_t *ser, unsigned char val);
+int ser_set_fp (serport_t *ser, FILE *fp, int close);
+int ser_set_fname (serport_t *ser, const char *fname);
 
-void ser_clock (serial_t *ser, unsigned n);
+void ser_uart_setup (serport_t *ser, unsigned char val);
+void ser_uart_out (serport_t *ser, unsigned char val);
+void ser_uart_inp (serport_t *ser, unsigned char val);
+
+void ser_clock (serport_t *ser, unsigned n);
 
 
 #endif

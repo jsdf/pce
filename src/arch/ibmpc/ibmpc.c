@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -577,7 +577,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
         parport_set_fname (pc->parport[i], fname);
       }
 
-      mem_add_blk (pc->prt, pc->parport[i]->prt, 0);
+      mem_add_blk (pc->prt, parport_get_reg (pc->parport[i]), 0);
 
       i += 1;
     }
@@ -629,7 +629,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
       pc->serport[i]->uart.irq_ext = pc->pic;
       pc->serport[i]->uart.irq = (e8250_irq_f) e8259_get_irq (pc->pic, irq);
 
-      mem_add_blk (pc->prt, pc->serport[i]->prt, 0);
+      mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);
 
       i += 1;
     }
