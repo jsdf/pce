@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.36 2003/09/24 01:09:55 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.37 2003/09/24 08:08:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -209,6 +209,8 @@ void pc_setup_pic (ibmpc_t *pc)
   blk->ext = pc->pic;
   blk->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
   blk->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
+  blk->set_uint16 = (seta_uint16_f) &e8259_set_uint16;
+  blk->get_uint16 = (geta_uint16_f) &e8259_get_uint16;
   mem_add_blk (pc->prt, blk, 1);
 
   e8259_set_irq (pc->pic, pc->cpu, (e8259_irq_f) &e86_irq);

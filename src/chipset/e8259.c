@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.c,v 1.3 2003/08/29 19:15:21 hampa Exp $ */
+/* $Id: e8259.c,v 1.4 2003/09/24 08:08:15 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -324,6 +324,11 @@ void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val)
   }
 }
 
+void e8259_set_uint16 (e8259_t *pic, unsigned long addr, unsigned short val)
+{
+  e8259_set_uint8 (pic, addr, val & 0xff);
+}
+
 unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr)
 {
   switch (addr) {
@@ -335,4 +340,9 @@ unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr)
   }
 
   return (0xff);
+}
+
+unsigned short e8259_get_uint16 (e8259_t *pic, unsigned long addr)
+{
+  return (e8259_get_uint8 (pic, addr));
 }

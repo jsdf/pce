@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.h                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.h,v 1.3 2003/08/29 19:15:21 hampa Exp $ */
+/* $Id: e8259.h,v 1.4 2003/09/24 08:08:16 hampa Exp $ */
 
 
 /* PIC 8259A */
@@ -100,7 +100,10 @@ unsigned char e8259_inta (e8259_t *pic);
 void e8259_clock (e8259_t *pic);
 
 void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val);
+void e8259_set_uint16 (e8259_t *pic, unsigned long addr, unsigned short val);
+
 unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr);
+unsigned short e8259_get_uint16 (e8259_t *pic, unsigned long addr);
 
 
 #endif
