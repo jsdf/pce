@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.25 2003/08/30 17:16:18 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.26 2003/09/01 13:17:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -766,8 +766,16 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
   else if ((op1 == 0x00) && (op2 == 0x01)) {
     pc->brk = 2;
   }
-  else if ((op1 == 0x02) && (op2 == 0x00)) {
-    e86_set_al (pc->cpu, par_boot);
+  else if (op1 == 0x01) {
+    if (op2 == 0x00) {
+      pce_log (MSG_INF, "set boot drive to %u\n", e86_get_al (pc->cpu));
+      par_boot = e86_get_al (pc->cpu);
+    }
+  }
+  else if (op1 == 0x02) {
+    if (op2 == 0x00) {
+      e86_set_al (pc->cpu, par_boot);
+    }
   }
   else {
     fprintf (stderr, "hook: %02X %02X\n", op1, op2);
