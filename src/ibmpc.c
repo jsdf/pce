@@ -20,11 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.13 2003/04/21 15:50:34 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.14 2003/04/21 16:31:48 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include <pce.h>
 
@@ -38,6 +39,19 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 
 void pc_break (ibmpc_t *pc, unsigned char val);
 
+
+void pc_log (ibmpc_t *pc, const char *str, ...)
+{
+  va_list     va;
+
+  if (str != NULL) {
+    va_start (va, str);
+    vfprintf (stderr, str, va);
+    va_end (va);
+  }
+
+  fflush (stderr);
+}
 
 void pc_setup_ppi (ibmpc_t *pc, unsigned ramsize)
 {
@@ -122,6 +136,7 @@ void pc_setup_disks (ibmpc_t *pc)
 
   dsk = dsk_new (0);
   if (dsk_set_mem (dsk, 80, 2, 18, "drive_a.img", 0)) {
+    pc_log (pc, "loading drive a failed\n");
     dsk_del (dsk);
   }
   else {
@@ -130,6 +145,7 @@ void pc_setup_disks (ibmpc_t *pc)
 
   dsk = dsk_new (1);
   if (dsk_set_image (dsk, 80, 2, 18, "drive_b.img", 0)) {
+    pc_log (pc, "loading drive b failed\n");
     dsk_del (dsk);
   }
   else {
@@ -138,6 +154,7 @@ void pc_setup_disks (ibmpc_t *pc)
 
   dsk = dsk_new (0x80);
   if (dsk_set_hdimage (dsk, "drive_c.img", 0)) {
+    pc_log (pc, "loading drive c failed\n");
     dsk_del (dsk);
   }
   else {
@@ -146,6 +163,7 @@ void pc_setup_disks (ibmpc_t *pc)
 
   dsk = dsk_new (0x81);
   if (dsk_set_hdimage (dsk, "/var/lib/dosemu/dos_c.img", 1)) {
+    pc_log (pc, "loading drive d failed\n");
     dsk_del (dsk);
   }
   else {
