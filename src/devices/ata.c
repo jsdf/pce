@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.c                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,6 +27,8 @@
 
 #include "ata.h"
 
+
+/* #define ATA_DEBUG 1 */
 
 #define ATA_REG_COMMAND       0x07
 #define ATA_REG_STATUS        0x07
@@ -81,6 +83,8 @@ void ata_ctl_set_uint32 (ata_chn_t *ata, unsigned long addr, unsigned long val);
 
 void ata_dev_init (ata_dev_t *dev)
 {
+  static unsigned serial = 0;
+
   dev->chn = NULL;
 
   dev->blk = NULL;
@@ -108,6 +112,11 @@ void ata_dev_init (ata_dev_t *dev)
   dev->buf_n = 0;
   dev->buf_mode = ATA_BUF_MODE_NONE;
   dev->callback = NULL;
+
+  strcpy (dev->model, "PCEDISK");
+  strcpy (dev->firmware, "0");
+  sprintf (dev->serial, "PD%u", serial);
+  serial += 1;
 }
 
 void ata_dev_free (ata_dev_t *dev)
@@ -197,18 +206,28 @@ void ata_set_block (ata_chn_t *ata, disk_t *blk, unsigned devi)
 
   dev->blk = blk;
 
-  dev->c = blk->c;
-  dev->h = blk->h;
-  dev->s = blk->s;
-
   dev->default_c = blk->c;
   dev->default_h = blk->h;
   dev->default_s = blk->s;
+
+  if (dev->default_h > 16) {
+    dev->default_s = 63;
+    dev->default_h = 16;
+    dev->default_c = dsk_get_block_cnt (blk) / (16UL * 63UL);
+  }
+
+  dev->c = dev->default_c;
+  dev->h = dev->default_h;
+  dev->s = dev->default_s;
 }
 
 static
 void ata_set_irq (ata_chn_t *ata, unsigned char val)
 {
+  if (ata->sel->reg_dev_ctl & 0x02) {
+    return;
+  }
+
   val = (val != 0);
 
   if (val != ata->irq_val) {
@@ -262,6 +281,33 @@ void ata_set_string (void *buf, unsigned i, const char *str, unsigned cnt)
     c1 = (*str == 0) ? ' ' : *(str++);
     tmp[1] = c1;
   }
+}
+
+
+static
+int ata_get_lba (ata_dev_t *dev, uint32_t *lba)
+{
+  uint32_t c, h, s;
+
+  if (dev->reg_head & 0x40) {
+    *lba = dev->reg_head & 0x0f;
+    *lba = (*lba << 8) | dev->reg_cyl_hi;
+    *lba = (*lba << 8) | dev->reg_cyl_lo;
+    *lba = (*lba << 8) | dev->reg_sec;
+  }
+  else {
+    c = (dev->reg_cyl_hi << 8) | dev->reg_cyl_lo;
+    h = dev->reg_head & 0x0f;
+    s = dev->reg_sec;
+
+    if ((c >= dev->c) || (h >= dev->h) || (s == 0) || (s > dev->s)) {
+      return (1);
+    }
+
+    *lba = (c * dev->h + h) * dev->s + s - 1;
+  }
+
+  return (0);
 }
 
 
@@ -320,14 +366,9 @@ void ata_cmd_read_cb (ata_dev_t *dev)
 static
 void ata_cmd_read (ata_dev_t *dev)
 {
-  uint32_t c, h, s;
   uint32_t idx;
 
-  c = (dev->reg_cyl_hi << 8) | dev->reg_cyl_lo;
-  h = dev->reg_head & 0x0f;
-  s = dev->reg_sec;
-
-  if (dsk_get_lba (dev->blk, c, h, s, &idx)) {
+  if (ata_get_lba (dev, &idx)) {
     ata_cmd_abort (dev);
     return;
   }
@@ -370,14 +411,9 @@ void ata_cmd_write_cb (ata_dev_t *dev)
 static
 void ata_cmd_write (ata_dev_t *dev)
 {
-  uint32_t c, h, s;
   uint32_t idx;
 
-  c = (dev->reg_cyl_hi << 8) | dev->reg_cyl_lo;
-  h = dev->reg_head & 0x0f;
-  s = dev->reg_sec;
-
-  if (dsk_get_lba (dev->blk, c, h, s, &idx)) {
+  if (ata_get_lba (dev, &idx)) {
     ata_cmd_abort (dev);
     return;
   }
@@ -423,19 +459,31 @@ void ata_cmd_set_geometry (ata_dev_t *dev)
 static
 void ata_cmd_identify (ata_dev_t *dev)
 {
+  uint32_t cnt1, cnt2;
+
   memset (dev->buf, 0, 512);
+
+  cnt1 = dev->c * dev->h * dev->s;
+  cnt2 = dsk_get_block_cnt (dev->blk);
 
   ata_set_uint16_le (dev->buf, 2 * 0, 0x0040);
   ata_set_uint16_le (dev->buf, 2 * 1, dev->default_c);
   ata_set_uint16_le (dev->buf, 2 * 3, dev->default_h);
   ata_set_uint16_le (dev->buf, 2 * 6, dev->default_s);
-  ata_set_uint16_le (dev->buf, 2 * 10, 0);
-  ata_set_string (dev->buf, 2 * 27, "PCEDISK", 40);
+  ata_set_string (dev->buf, 2 * 10, dev->serial, 20);
+  ata_set_uint16_le (dev->buf, 2 * 22, 0x0000); /* vendor specific bytes */
+  ata_set_string (dev->buf, 2 * 23, dev->firmware, 8);
+  ata_set_string (dev->buf, 2 * 27, dev->model, 40);
   ata_set_uint16_le (dev->buf, 2 * 47, 0x0000); /* multiple */
   ata_set_uint16_le (dev->buf, 2 * 49, 0x0200); /* lba */
+  ata_set_uint16_le (dev->buf, 2 * 53, 0x0001);
   ata_set_uint16_le (dev->buf, 2 * 54, dev->c);
   ata_set_uint16_le (dev->buf, 2 * 55, dev->h);
   ata_set_uint16_le (dev->buf, 2 * 56, dev->s);
+  ata_set_uint16_le (dev->buf, 2 * 57, cnt1 & 0xffff);
+  ata_set_uint16_le (dev->buf, 2 * 58, (cnt1 >> 16) & 0xffff);
+  ata_set_uint16_le (dev->buf, 2 * 60, cnt2 & 0xffff);
+  ata_set_uint16_le (dev->buf, 2 * 61, (cnt2 >> 16) & 0xffff);
 
   dev->buf_i = 0;
   dev->buf_n = 512;
@@ -570,8 +618,10 @@ unsigned char ata_cmd_get_uint8 (ata_chn_t *ata, unsigned long addr)
     break;
   }
 
-//  fprintf (stderr, "ata: get8 %08lX -> %02X\n", addr, val);
-//  fflush (stderr);
+#ifdef ATA_DEBUG
+  fprintf (stderr, "ata: get8 %08lX -> %02X\n", addr, val);
+  fflush (stderr);
+#endif
 
   return (val);
 }
@@ -619,8 +669,10 @@ void ata_set_data16 (ata_chn_t *ata, unsigned short val)
 
 void ata_cmd_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
-//  fprintf (stderr, "ata: set8 %08lX <- %02X\n", addr, val);
-//  fflush (stderr);
+#ifdef ATA_DEBUG
+  fprintf (stderr, "ata: set8 %08lX <- %02X\n", addr, val);
+  fflush (stderr);
+#endif
 
   switch (addr) {
   case 0x00: /* data */
@@ -677,15 +729,24 @@ void ata_cmd_set_uint32 (ata_chn_t *ata, unsigned long addr, unsigned long val)
 
 unsigned char ata_ctl_get_uint8 (ata_chn_t *ata, unsigned long addr)
 {
-//  fprintf (stderr, "ata: get ctl8 %08lX\n", addr);
-//  fflush (stderr);
+  unsigned char val;
 
   switch (addr) {
   case 0x02: /* alternate status */
-    return (ata->sel->reg_status);
+    val = ata->sel->reg_status;
+    break;
+
+  default:
+    val = 0;
+    break;
   }
 
-  return (0);
+#ifdef ATA_DEBUG
+  fprintf (stderr, "ata: get ctl8 %08lX -> %02X\n", addr, val);
+  fflush (stderr);
+#endif
+
+  return (val);
 }
 
 unsigned short ata_ctl_get_uint16 (ata_chn_t *ata, unsigned long addr)
@@ -700,6 +761,11 @@ unsigned long ata_ctl_get_uint32 (ata_chn_t *ata, unsigned long addr)
 
 void ata_ctl_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
+#ifdef ATA_DEBUG
+  fprintf (stderr, "ata: set ctl8 %08lX <- %02X\n", addr, val);
+  fflush (stderr);
+#endif
+
   switch (addr) {
   case 0x02:
     if ((ata->sel->reg_dev_ctl ^ val) & ~val & 0x04) {
@@ -718,7 +784,13 @@ void ata_ctl_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 
       ata->sel = &ata->dev[0];
     }
-    ata->sel->reg_dev_ctl = val;
+
+    if (val & 0x02) {
+      ata_set_irq (ata, 0);
+    }
+
+    ata->dev[0].reg_dev_ctl = val;
+    ata->dev[1].reg_dev_ctl = val;
     break;
   }
 }

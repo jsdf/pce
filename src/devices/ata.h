@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.h                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -65,6 +65,10 @@ typedef struct ata_dev_s {
   uint32_t         buf_blk_n;
   unsigned char    buf[512];
   void             (*callback) (struct ata_dev_s *dev);
+
+  char             model[64];
+  char             firmware[16];
+  char             serial[32];
 
   disk_t           *blk;
 } ata_dev_t;
