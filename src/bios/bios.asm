@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.5 2003/04/18 20:09:30 hampa Exp $
+; $Id: bios.asm,v 1.6 2003/04/21 16:31:56 hampa Exp $
 
 
 CPU 8086
@@ -392,13 +392,13 @@ L_E1A3:                                 ; clear memory, 32K at a time
 
 L_E1B4:
   ; PIC
-  mov     al, 0x13
+  mov     al, 0x13                      ; ICW1
   out     0x20, al
 
-  mov     al, 0x08
+  mov     al, 0x08                      ; ICW2 (base)
   out     0x21, al
 
-  mov     al, 0x09
+  mov     al, 0x09                      ; ICW4
   out     0x21, al
 
 
@@ -415,19 +415,22 @@ L_E1B4:
   sub     di, di
   mov     ds, di                        ; DS:DI = 0000:0000
 
-  mov     bx, 0x0024
+  mov     bx, 4 * 0x09
 ;  mov     [bx], word L_FF47
   db 0xc7, 0x07
   dw L_FF47
 
   inc     bx
   inc     bx
-  mov     [bx], cs                      ; INT 06 address = F000:FF47
+  mov     [bx], cs                      ; INT 09 address = F000:FF47
 
-  call    L_E643
-db 0x80, 0xFB, 0x65                     ; E1E4 cmp bl,0x65
-db 0x75, 0x0E                           ; E1E7 jnz 0xe1f7
-db 0xB2, 0xFF                           ; E1E9 mov dl,0xff
+  call    L_E643                        ; reset keyboard ?
+
+  cmp     bl, 0x65
+  jne     L_E1F7
+
+  mov     dl, 0xff
+
 L_E1EB:
 db 0xE8, 0x62, 0x04                     ; E1EB call 0xe650
 db 0x8A, 0xC3                           ; E1EE mov al,bl
@@ -435,43 +438,57 @@ db 0xAA                                 ; E1F0 stosb
 db 0xFE, 0xCA                           ; E1F1 dec dl
 db 0x75, 0xF6                           ; E1F3 jnz 0xe1eb
 db 0xCD, 0x3E                           ; E1F5 int 0x3e
+
 L_E1F7:
-db 0xB9, 0x20, 0x00                     ; E1F7 mov cx,0x20
-db 0x2B, 0xFF                           ; E1FA sub di,di
+  mov     cx, 0x20
+  sub     di, di
+
 L_E1FC:
-db 0xB8, 0x47, 0xFF                     ; E1FC mov ax,0xff47
-db 0xAB                                 ; E1FF stosw
-db 0x8C, 0xC8                           ; E200 mov ax,cs
-db 0xAB                                 ; E202 stosw
-db 0xE2, 0xF7                           ; E203 loop 0xe1fc
+  mov     ax, L_FF47
+  stosw
+  mov     ax, cs
+  stosw
+  loop    L_E1FC
+
 db 0xC7, 0x06, 0x08, 0x00, 0xC3, 0xE2   ; E205 mov word [0x8],0xe2c3
 db 0xC7, 0x06, 0x14, 0x00, 0x54, 0xFF   ; E20B mov word [0x14],0xff54
 db 0xC7, 0x06, 0x62, 0x00, 0x00, 0xF6   ; E211 mov word [0x62],0xf600
-db 0xBA, 0x21, 0x00                     ; E217 mov dx,0x21
-db 0xB0, 0x00                           ; E21A mov al,0x0
-db 0xEE                                 ; E21C out dx,al
-db 0xEC                                 ; E21D in al,dx
-db 0x0A, 0xC0                           ; E21E or al,al
-db 0x75, 0x15                           ; E220 jnz 0xe237
-db 0xB0, 0xFF                           ; E222 mov al,0xff
-db 0xEE                                 ; E224 out dx,al
-db 0xEC                                 ; E225 in al,dx
-db 0x04, 0x01                           ; E226 add al,0x1
-db 0x75, 0x0D                           ; E228 jnz 0xe237
-db 0x32, 0xE4                           ; E22A xor ah,ah
-db 0xFB                                 ; E22C sti
-db 0x2B, 0xC9                           ; E22D sub cx,cx
+
+  mov     dx, 0x0021
+  mov     al, 0x00
+  out     dx, al
+  in      al, dx
+  or      al, al
+  jnz     L_E237
+
+  mov     al, 0xff
+  out     dx, al
+  in      al, dx
+  add     al, 1
+  jnz     L_E237
+
+  xor     ah, ah
+  sti
+  sub     cx, cx
+
 L_E22F:
-db 0xE2, 0xFE                           ; E22F loop 0xe22f
+  loop    L_E22F
+
 L_E231:
-db 0xE2, 0xFE                           ; E231 loop 0xe231
-db 0x0A, 0xE4                           ; E233 or ah,ah
-db 0x74, 0x08                           ; E235 jz 0xe23f
-L_E737:
-db 0xBA, 0x01, 0x01                     ; E237 mov dx,0x101
-db 0xE8, 0x92, 0x03                     ; E23A call 0xe5cf
-db 0xFA                                 ; E23D cli
-db 0xF4                                 ; E23E hlt
+  loop    L_E231
+
+  or      ah, ah                        ; check if interrupt occurred
+  jz      L_E23F
+
+L_E237:
+  mov     dx, 0x101
+  call    L_E5CF
+
+  cli
+  hlt
+
+
+L_E23F:
 db 0xB0, 0xFE                           ; E23F mov al,0xfe
 db 0xEE                                 ; E241 out dx,al
 db 0xB0, 0x10                           ; E242 mov al,0x10
@@ -912,6 +929,8 @@ db 0x74, 0x06                           ; E5C5 jz 0xe5cd
 db 0xBA, 0x01, 0x00                     ; E5C7 mov dx,0x1
 db 0xE8, 0x02, 0x00                     ; E5CA call 0xe5cf
 db 0xCD, 0x19                           ; E5CD int 0x19
+
+L_E5CF:
 db 0x9C                                 ; E5CF pushf
 db 0xFA                                 ; E5D0 cli
 db 0x1E                                 ; E5D1 push ds
@@ -920,7 +939,10 @@ db 0x0A, 0xF6                           ; E5D5 or dh,dh
 db 0x74, 0x18                           ; E5D7 jz 0xe5f1
 db 0xB3, 0x06                           ; E5D9 mov bl,0x6
   call    beep
-db 0xE2, 0xFE                           ; E5DE loop 0xe5de
+
+L_E5DE:
+  loop    L_E5DE
+
 db 0xFE, 0xCE                           ; E5E0 dec dh
 db 0x75, 0xF5                           ; E5E2 jnz 0xe5d9
 db 0x80, 0x3E, 0x12, 0x00, 0x01         ; E5E4 cmp byte [0x12],0x1
@@ -928,6 +950,7 @@ db 0x75, 0x06                           ; E5E9 jnz 0xe5f1
 db 0xB0, 0xCD                           ; E5EB mov al,0xcd
 db 0xE6, 0x61                           ; E5ED out 0x61,al
 db 0xEB, 0xE8                           ; E5EF jmp short 0xe5d9
+L_E5F1:
 db 0xB3, 0x01                           ; E5F1 mov bl,0x1
   call    beep
 db 0xE2, 0xFE                           ; E5F6 loop 0xe5f6
@@ -937,7 +960,7 @@ db 0xE2, 0xFE                           ; E5FC loop 0xe5fc
 db 0xE2, 0xFE                           ; E5FE loop 0xe5fe
 db 0x1F                                 ; E600 pop ds
 db 0x9D                                 ; E601 popf
-db 0xC3                                 ; E602 ret
+  ret
 
 
 
@@ -4773,12 +4796,12 @@ set_bios_ds:                            ; FF3E
 
   db      0xff
 
-; int 06 handler
+; int 09 handler
 L_FF47:
   mov     ah, 1
   push    ax
   mov     al, 0xff
-  out     0x21, al
+  out     0x21, al                      ; mask all irqs
   mov     al, 0x20
   out     0x20, al
   pop     ax
