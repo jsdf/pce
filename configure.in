@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.6 2003/04/21 13:34:16 hampa Exp $
+# $Id: configure.in,v 1.7 2003/04/22 17:56:20 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -117,6 +117,7 @@ AC_OUTPUT(
   src/e8086/Makefile
   src/e8255/Makefile
   src/e8259/Makefile
+  src/libini/Makefile
 )
 
 

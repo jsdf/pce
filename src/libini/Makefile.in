@@ -1,0 +1,37 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/22 17:56:20 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+
+include $(reldir)/Makefile.inc
+
+SRC := read.c scanner.c section.c value.c write.c
+OBJ := read.o scanner.o section.o value.o write.o
+HDR := libini.h
+MAN :=
+BIN := libini.a
+
+SDP := Makefile $(HDR) scanner.h
+BDP := Makefile $(OBJ)
+
+
+all: $(BIN)
+
+
+libini.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+
+read.o:		read.c $(SDP)
+scanner.o:	scanner.c $(SDP)
+section.o:	section.c $(SDP)
+value.o:	value.c $(SDP)
+write.o:	write.c $(SDP)
