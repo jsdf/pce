@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.6 2003/04/26 23:34:00 hampa Exp $ */
+/* $Id: disasm.c,v 1.7 2003/08/29 21:13:50 hampa Exp $ */
 
 
 #include <string.h>
@@ -885,6 +885,33 @@ static char *d_tab_70[16] = {
 "JS", "JNS", "JPE", "JPO", "JL", "JGE", "JLE", "JG"
 };
 
+/* DOP 60: PUSHA */
+static
+void dop_60 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "PUSHA");
+}
+
+/* DOP 61: POPA */
+static
+void dop_61 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "POPA");
+}
+
+/* DOP 62: BOUND */
+static
+void dop_62 (e86_disasm_t *op, unsigned char *src)
+{
+  dop_reg16_ea16 (op, src, "BOUND");
+}
+
 /* DOP 7x: Jxx imm8 */
 static void dop_70 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1355,6 +1382,27 @@ static void dop_c7 (e86_disasm_t *op, unsigned char *src)
 
   op->dat_n += 3;
   op->arg_n = 2;
+}
+
+/* DOP C8: ENTER imm16, imm8 */
+static void dop_c8 (e86_disasm_t *op, unsigned char *src)
+{
+  strcpy (op->op, "ENTER");
+  disasm_imm16 (op->arg1, src + 1);
+  disasm_imm8 (op->arg2, src + 3);
+
+  op->dat_n = 4;
+  op->arg_n = 2;
+}
+
+/* DOP C9: LEAVE */
+static
+void dop_c9 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "LEAVE");
 }
 
 /* DOP CA: RETF imm16 */
@@ -1881,7 +1929,7 @@ e86_disasm_f dop_list[256] = {
   &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48,
   &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, /* 50 */
   &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58,
-  &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, /* 60 */
+  &dop_60, &dop_61, &dop_62, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, /* 60 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, /* 70 */
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70,
@@ -1894,7 +1942,7 @@ e86_disasm_f dop_list[256] = {
   &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, /* B0 */
   &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,
   &dop_ud, &dop_ud, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
-  &dop_ud, &dop_ud, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
+  &dop_c8, &dop_c9, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_ud, /* E0 */
