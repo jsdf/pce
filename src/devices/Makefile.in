@@ -11,7 +11,7 @@ include $(reldir)/config.inc
 
 
 FILES := blkcow blkdosem blkimg blkpart blkram \
-	cga disk ega hgc mda memory nvram parport serport vga video
+	cga disk ega hgc mda memory nvram parport pci serport vga video
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -76,6 +76,8 @@ nvram.o:	nvram.c nvram.h memory.h \
 		lib/log.h $(SDP)
 
 parport.o:	parport.c parport.h memory.h
+
+pci.o:		pci.c pci.h memory.h
 
 serport.o:	serport.c serport.h memory.h chipset/e8250.h
 
