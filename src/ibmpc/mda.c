@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.5 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: mda.c,v 1.6 2003/08/29 13:29:52 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -68,6 +68,7 @@ mda_t *mda_new (terminal_t *trm)
   mda->trm = trm;
 
 //  trm_set_map (trm, 7, 200 * 256, 104 * 256, 16 * 256);
+  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
   return (mda);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.6 2003/08/19 17:07:14 hampa Exp $ */
+/* $Id: cga.c,v 1.7 2003/08/29 13:29:52 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ cga_t *cga_new (terminal_t *trm)
   cga->palette[3] = 15;
 
   cga->mode = 0;
-  trm_set_size (trm, 0, 80, 25);
+  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
   return (cga);
 }
@@ -308,15 +308,15 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
 
   switch (newmode) {
     case 0:
-      trm_set_size (cga->trm, 0, 80, 25);
+      trm_set_size (cga->trm, TERM_MODE_TEXT, 80, 25);
       break;
 
     case 1:
-      trm_set_size (cga->trm, 1, 640, 400);
+      trm_set_size (cga->trm, TERM_MODE_GRAPH, 640, 400);
       break;
 
     case 2:
-      trm_set_size (cga->trm, 1, 640, 400);
+      trm_set_size (cga->trm, TERM_MODE_GRAPH, 640, 400);
       break;
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.3 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: hgc.c,v 1.4 2003/08/29 13:29:52 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -77,7 +77,7 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
   hgc->crs_on = 1;
 
   hgc->mode = 0;
-  trm_set_size (trm, 0, 80, 25);
+  trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
   n = 0;
   for (i = 0; i < 348; i++) {
@@ -329,11 +329,11 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 
     switch (newmode) {
       case 0:
-        trm_set_size (hgc->trm, 0, 80, 25);
+        trm_set_size (hgc->trm, TERM_MODE_TEXT, 80, 25);
         break;
 
       case 1:
-        trm_set_size (hgc->trm, 1, 720, 540);
+        trm_set_size (hgc->trm, TERM_MODE_GRAPH, 720, 540);
         break;
     }
   }
