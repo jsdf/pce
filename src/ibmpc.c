@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.c                                                    *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.7 2003/04/18 20:07:49 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.8 2003/04/19 02:02:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -102,17 +102,21 @@ void pc_setup_disks (ibmpc_t *pc)
   disk_t  *dsk;
 
   pc->dsk = dsks_new();
-  dsk = dsk_new (0, 80, 2, 18);
-  dsk_alloc (dsk);
-  dsk_load_img (dsk, "drive_a.img");
+
+  dsk = dsk_new (0);
+  dsk_set_mem (dsk, 80, 2, 18, "drive_a.img", 0);
   dsks_add_disk (pc->dsk, dsk);
 
-  dsk = dsk_new (1, 80, 2, 18);
-  dsk_set_file (dsk, "drive_b.img");
+  dsk = dsk_new (1);
+  dsk_set_image (dsk, 80, 2, 18, "drive_b.img", 0);
   dsks_add_disk (pc->dsk, dsk);
 
-  dsk = dsk_new (0x80, 256, 16, 16);
-  dsk_set_file (dsk, "drive_c.img");
+  dsk = dsk_new (0x80);
+  dsk_set_hdimage (dsk, "drive_c.img", 0);
+  dsks_add_disk (pc->dsk, dsk);
+
+  dsk = dsk_new (0x81);
+  dsk_set_hdimage (dsk, "/var/lib/dosemu/dos_c.img", 1);
   dsks_add_disk (pc->dsk, dsk);
 }
 
