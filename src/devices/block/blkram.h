@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/blkpart.h                                      *
+ * File name:     src/devices/block/blkram.h                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -23,52 +23,29 @@
 /* $Id$ */
 
 
-#ifndef PCE_DEVICES_BLKPART_H
-#define PCE_DEVICES_BLKPART_H 1
+#ifndef PCE_DEVICES_BLOCK_BLKRAM_H
+#define PCE_DEVICES_BLOCK_BLKRAM_H 1
 
 
 #include <config.h>
 
-#include <devices/disk.h>
+#include <devices/block/block.h>
 
 #include <stdio.h>
-
-
-#define DSK_PART_MAX 16
+#include <stdint.h>
 
 
 /*!***************************************************************************
- * @short The partitioned image file disk structure
+ * @short The ram disk structure
  *****************************************************************************/
 typedef struct {
   disk_t        dsk;
 
-  unsigned      part_cnt;
-
-  struct {
-    uint32_t block_i;
-    uint32_t block_n;
-    uint64_t start;
-    FILE     *fp;
-    int      close;
-    int      ro;
-  } part[DSK_PART_MAX];
-} disk_part_t;
+  unsigned char *data;
+} disk_ram_t;
 
 
-/*!***************************************************************************
- * @short Add a partition
- *****************************************************************************/
-int dsk_part_add_partition_fp (disk_t *dsk, FILE *fp, int close,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
-
-int dsk_part_add_partition (disk_t *dsk, const char *fname,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
-
-/*!***************************************************************************
- * @short Create a new partition image disk
- *****************************************************************************/
-disk_t *dsk_part_open (uint32_t c, uint32_t h, uint32_t s, int ro);
+disk_t *dsk_ram_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro);
 
 
 #endif

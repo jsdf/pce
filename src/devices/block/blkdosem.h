@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/blkimg.h                                       *
+ * File name:     src/devices/block/blkdosem.h                               *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,13 +23,13 @@
 /* $Id$ */
 
 
-#ifndef PCE_DEVICES_BLKIMG_H
-#define PCE_DEVICES_BLKIMG_H 1
+#ifndef PCE_DEVICES_BLOCK_BLKDOSEMU_H
+#define PCE_DEVICES_BLOCK_BLKDOSEMU_H 1
 
 
 #include <config.h>
 
-#include <devices/disk.h>
+#include <devices/block/block.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -44,16 +44,14 @@ typedef struct {
   FILE     *fp;
 
   uint64_t start;
-} disk_img_t;
+} disk_dosemu_t;
 
 
-disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s, int ro);
-disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro);
+disk_t *dsk_dosemu_open_fp (FILE *fp, int ro);
+disk_t *dsk_dosemu_open (const char *fname, int ro);
 
-void dsk_img_set_offset (disk_t *dsk, uint64_t ofs);
-
-int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
-int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
+int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
+int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
 
 
 #endif

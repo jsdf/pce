@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -102,13 +102,13 @@ extern unsigned long par_int28;
 #include <devices/ega.h>
 #include <devices/vga.h>
 
-#include <devices/disk.h>
-#include <devices/blkcow.h>
-#include <devices/blkdosem.h>
-#include <devices/blkimg.h>
-#include <devices/blkpart.h>
-#include <devices/blkpce.h>
-#include <devices/blkram.h>
+#include <devices/block/block.h>
+#include <devices/block/blkcow.h>
+#include <devices/block/blkdosem.h>
+#include <devices/block/blkpart.h>
+#include <devices/block/blkpce.h>
+#include <devices/block/blkram.h>
+#include <devices/block/blkraw.h>
 
 #include "util.h"
 #include "int13.h"

@@ -1,0 +1,44 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+FILES := blkcow blkdosem blkpart blkpce blkram blkraw block
+
+SRC := $(foreach f,$(FILES),$(f).c)
+HDR := $(foreach f,$(FILES),$(f).h)
+OBJ := $(foreach f,$(FILES),$(f).o)
+BIN := block.a
+
+SDP := Makefile $(HDR) $(HDR_EXT)
+BDP := Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN)
+
+
+block.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+blkcow.o:	blkcow.c $(SDP)
+blkdosem.o:	blkdosem.c $(SDP)
+blkimg.o:	blkimg.c $(SDP)
+blkpart.o:	blkpart.c $(SDP)
+blkpce.o:	blkpce.c $(SDP)
+blkram.o:	blkram.c $(SDP)
+block.o:	block.c $(SDP)

@@ -27,14 +27,8 @@ HDR := $(foreach f,$(FILES),$(f).h)
 OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
 	$(pcedst)/chipset/chipset.a \
+	$(pcedst)/devices/block/block.a \
 	$(pcedst)/devices/cga.o \
-	$(pcedst)/devices/disk.o \
-	$(pcedst)/devices/blkcow.o \
-	$(pcedst)/devices/blkdosem.o \
-	$(pcedst)/devices/blkimg.o \
-	$(pcedst)/devices/blkpart.o \
-	$(pcedst)/devices/blkpce.o \
-	$(pcedst)/devices/blkram.o \
 	$(pcedst)/devices/vga.o \
 	$(pcedst)/devices/ega.o \
 	$(pcedst)/devices/hgc.o \
@@ -61,14 +55,14 @@ HDR_EXT	:= \
 	chipset/e8253.h \
 	chipset/e8255.h \
 	chipset/e8259.h \
+	devices/block/block.h \
+	devices/block/blkcow.h \
+	devices/block/blkdosem.h \
+	devices/block/blkpart.h \
+	devices/block/blkpce.h \
+	devices/block/blkram.h \
+	devices/block/blkraw.h \
 	devices/cga.h \
-	devices/disk.h \
-	devices/blkcow.h \
-	devices/blkdosem.h \
-	devices/blkimg.h \
-	devices/blkpart.h \
-	devices/blkpce.h \
-	devices/blkram.h \
 	devices/vga.h \
 	devices/ega.h \
 	devices/hgc.h \

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/blkpce.h                                       *
- * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/devices/block/blkcow.h                                 *
+ * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -23,51 +23,37 @@
 /* $Id$ */
 
 
-#ifndef PCE_DEVICES_BLKPCE_H
-#define PCE_DEVICES_BLKPCE_H 1
+#ifndef PCE_DEVICES_BLOCK_BLKCOW_H
+#define PCE_DEVICES_BLOCK_BLKCOW_H 1
 
 
 #include <config.h>
 
-#include <devices/disk.h>
+#include <devices/block/block.h>
 
 #include <stdio.h>
 #include <stdint.h>
 
 
 /*!***************************************************************************
- * @short The pce image file disk structure
+ * @short The copy on write disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t   dsk;
+  disk_t        dsk;
 
-  FILE     *fp;
+  disk_t        *orig;
 
-  uint64_t blk_cnt;
+  FILE          *fp;
 
-  uint64_t dir_base;
-  uint64_t blk_next;
+  uint64_t      bitmap_offset;
+  uint64_t      data_offset;
 
-  uint32_t cylinders;
-  uint32_t heads;
-  uint32_t sectors;
-  uint32_t blk_size;
-
-  uint32_t dir_cnt;
-  uint32_t dir_size;
-  uint32_t dir_next;
-  uint32_t dir_alloc;
-
-  uint64_t **dir;
-  uint8_t  *dir_buf;
-} disk_pce_t;
+  unsigned char *bitmap;
+  uint32_t      bitmap_size;
+} disk_cow_t;
 
 
-disk_t *dsk_pce_open_fp (FILE *fp, int ro);
-disk_t *dsk_pce_open (const char *fname, int ro);
-
-int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
-int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
+disk_t *dsk_cow_new (disk_t *dsk, const char *fname);
 
 
 #endif

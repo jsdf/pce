@@ -3,15 +3,14 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir :=
+subdir := block
 reldir := ../..
 
 
 include $(reldir)/config.inc
 
 
-FILES := blkcow blkdosem blkimg blkpart blkpce blkram \
-	cga disk ega hgc mda memory nvram parport pci serport vga video
+FILES := cga ega hgc mda memory nvram parport pci serport vga video
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -27,20 +26,6 @@ include $(reldir)/rules.inc
 
 all: $(BIN) $(OBJ)
 
-
-disk.o:		disk.c disk.h blkpce.h blkdosem.h $(SDP)
-
-blkcow.o:	blkcow.c blkcow.h disk.h $(SDP)
-
-blkdosem.o:	blkdosem.c blkdosem.h disk.h $(SDP)
-
-blkimg.o:	blkimg.c blkimg.h disk.h $(SDP)
-
-blkpart.o:	blkpart.c blkpart.h disk.h $(SDP)
-
-blkpce.o:	blkpce.c blkpce.h disk.h $(SDP)
-
-blkram.o:	blkram.c blkram.h disk.h $(SDP)
 
 cga.o:		cga.c cga.h video.h memory.h \
 		libini/libini.h \
