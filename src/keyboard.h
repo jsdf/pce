@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     keyboard.h                                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.h,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: keyboard.h,v 1.2 2003/04/18 20:06:13 hampa Exp $ */
 
 
 #ifndef PCE_KEYBOARD_H
@@ -32,23 +32,26 @@
 
 
 typedef struct keymap_t {
-  unsigned        key[256];
+  unsigned long   key[256];
   struct keymap_t *map[256];
 } keymap_t;
 
 
 typedef struct {
-  keymap_t *map;
-  memory_t *mem;
+  keymap_t    *map;
+  memory_t    *mem;
 
-  int      fd;
+  void        *brk_ext;
+  set_uint8_f brk;
+
+  int         fd;
 } keyboard_t;
 
 
 keymap_t *keymap_new (void);
 void keymap_del (keymap_t *map);
-void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned key);
-unsigned keymap_get_key (keymap_t *map, unsigned char *seq, unsigned cnt);
+void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned long key);
+unsigned long keymap_get_key (keymap_t *map, unsigned char *seq, unsigned cnt);
 
 
 keyboard_t *key_new (void);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     keyboard.c                                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.2 2003/04/16 17:19:51 hampa Exp $ */
+/* $Id: keyboard.c,v 1.3 2003/04/18 20:06:13 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ void keymap_del (keymap_t *map)
   }
 }
 
-void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned key)
+void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned long key)
 {
   unsigned i;
   unsigned c;
@@ -77,7 +77,7 @@ void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned k
   cnt -= 1;
 
   for (i = 0; i < cnt; i++) {
-    c = seq[i];
+    c = seq[i] & 0xff;
     if (map->map[c] == NULL) {
       map->map[c] = keymap_new();
     }
@@ -88,7 +88,7 @@ void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned k
   map->key[seq[cnt]] = key;
 }
 
-unsigned keymap_get_key (keymap_t *map, unsigned char *seq, unsigned cnt)
+unsigned long keymap_get_key (keymap_t *map, unsigned char *seq, unsigned cnt)
 {
   unsigned i;
   unsigned c;
@@ -124,6 +124,9 @@ keyboard_t *key_new (void)
     return (NULL);
   }
 
+  key->brk_ext = NULL;
+  key->brk = NULL;
+
   key->map = keymap_new();
 
   for (i = 32; i < 128; i++) {
@@ -131,11 +134,15 @@ keyboard_t *key_new (void)
     keymap_set_key (key->map, &c, 1, i);
   }
 
+  keymap_set_key (key->map, "\x00", 1, 0x10000); // brk
+
   keymap_set_key (key->map, "\x1b", 1, 0x011b);
 
   keymap_set_key (key->map, "\x0a", 1, 0x1c0d);
   keymap_set_key (key->map, "\x08", 1, 0x0e08);
   keymap_set_key (key->map, "\x09", 1, 0x0f09);
+
+  keymap_set_key (key->map, "z", 1, 0x2c7a);
 
   keymap_set_key (key->map, "\x1b\x5b\x32\x7e", 4, 0x5200); // ins
   keymap_set_key (key->map, "\x1b\x5b\x33\x7e", 4, 0x5300); // del
@@ -159,6 +166,10 @@ keyboard_t *key_new (void)
   keymap_set_key (key->map, "\x1b\x5b\x31\x39\x7e", 5, 0x4200); // F8
   keymap_set_key (key->map, "\x1b\x5b\x32\x30\x7e", 5, 0x4300); // F9
   keymap_set_key (key->map, "\x1b\x5b\x32\x31\x7e", 5, 0x4400); // F10
+
+  keymap_set_key (key->map, "\xf1", 1, 0x1000); // Alt-Q
+  keymap_set_key (key->map, "\xf2", 1, 0x1300); // Alt-R
+  keymap_set_key (key->map, "\xf8", 1, 0x2d00); // Alt-X
 
   key->mem = NULL;
 
@@ -244,10 +255,10 @@ void key_add_key (keyboard_t *key, unsigned short val)
 
 void key_clock (keyboard_t *key)
 {
-  unsigned char  buf[256];
-  unsigned short val;
-  ssize_t        r;
-  unsigned       n;
+  unsigned char buf[256];
+  unsigned long val;
+  ssize_t       r;
+  unsigned      n;
 
   static unsigned long cnt = 0;
 
@@ -281,19 +292,27 @@ void key_clock (keyboard_t *key)
 
   val = keymap_get_key (key->map, buf, n);
 
+  if (val == 0x10000) {
+    if (key->brk != NULL) {
+      key->brk (key->brk_ext, 0);
+    }
+
+    return;
+  }
+
   if (val == 0) {
     unsigned i;
 
     fprintf (stderr, "unknown key:"); fflush (stderr);
 
     for (i = 0; i < n; i++) {
-      printf (" %02X", (unsigned) buf[i]);
+      fprintf (stderr, " %02X", (unsigned) buf[i]);
     }
 
-    fputs ("\n", stdout);
+    fputs ("\n", stderr);
   }
 
   if (val != 0) {
-    key_add_key (key, val);
+    key_add_key (key, val & 0xffff);
   }
 }
