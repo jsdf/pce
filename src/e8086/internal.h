@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.10 2003/08/29 22:45:59 hampa Exp $ */
+/* $Id: internal.h,v 1.11 2003/10/04 17:52:45 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -69,7 +69,6 @@
   } while (0)
 
 
-typedef unsigned (*e86_opcode_f) (e8086_t *c);
 typedef void (*e86_ea_f) (e8086_t *c);
 
 

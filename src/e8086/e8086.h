@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.16 2003/09/21 21:11:19 hampa Exp $ */
+/* $Id: e8086.h,v 1.17 2003/10/04 17:52:45 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -77,13 +77,18 @@
 #define E86_PQ_FILL 6
 
 
+struct e8086_t;
+
+
 typedef unsigned char (*e86_get_uint8_f) (void *ext, unsigned long addr);
 typedef unsigned short (*e86_get_uint16_f) (void *ext, unsigned long addr);
 typedef void (*e86_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
 typedef void (*e86_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 
+typedef unsigned (*e86_opcode_f) (struct e8086_t *c);
 
-typedef struct {
+
+typedef struct e8086_t {
   unsigned         cpu;
 
   void             *mem;
@@ -126,6 +131,8 @@ typedef struct {
   int            irq;
 
   unsigned       last_interrupt;
+
+  e86_opcode_f   op[256];
 
   struct {
     int            is_mem;
@@ -312,8 +319,9 @@ e8086_t *e86_new (void);
 
 void e86_del (e8086_t *c);
 
-void e86_enable_v30 (e8086_t *c);
+void e86_enable_86 (e8086_t *c);
 void e86_enable_186 (e8086_t *c);
+void e86_enable_v30 (e8086_t *c);
 
 void e86_reset (e8086_t *c);
 

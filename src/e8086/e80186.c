@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e80186.c                                         *
  * Created:       2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.7 2003/09/21 21:11:19 hampa Exp $ */
+/* $Id: e80186.c,v 1.8 2003/10/04 17:52:45 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -539,22 +539,24 @@ unsigned op_c9 (e8086_t *c)
 
 void e86_enable_186 (e8086_t *c)
 {
+  e86_enable_86 (c);
+
   c->cpu &= ~E86_CPU_REP_BUG;
   c->cpu |= E86_CPU_MASK_SHIFT | E86_CPU_PUSH_FIRST;
 
-  e86_opcodes[0x60] = &op_60;
-  e86_opcodes[0x61] = &op_61;
-  e86_opcodes[0x62] = &op_62;
-  e86_opcodes[0x68] = &op_68;
-  e86_opcodes[0x69] = &op_69;
-  e86_opcodes[0x6a] = &op_6a;
-  e86_opcodes[0x6b] = &op_6b;
-  e86_opcodes[0x6c] = &op_6c;
-  e86_opcodes[0x6d] = &op_6d;
-  e86_opcodes[0x6e] = &op_6e;
-  e86_opcodes[0x6f] = &op_6f;
-  e86_opcodes[0xc0] = &op_c0;
-  e86_opcodes[0xc1] = &op_c1;
-  e86_opcodes[0xc8] = &op_c8;
-  e86_opcodes[0xc9] = &op_c9;
+  c->op[0x60] = &op_60;
+  c->op[0x61] = &op_61;
+  c->op[0x62] = &op_62;
+  c->op[0x68] = &op_68;
+  c->op[0x69] = &op_69;
+  c->op[0x6a] = &op_6a;
+  c->op[0x6b] = &op_6b;
+  c->op[0x6c] = &op_6c;
+  c->op[0x6d] = &op_6d;
+  c->op[0x6e] = &op_6e;
+  c->op[0x6f] = &op_6f;
+  c->op[0xc0] = &op_c0;
+  c->op[0xc1] = &op_c1;
+  c->op[0xc8] = &op_c8;
+  c->op[0xc9] = &op_c9;
 }

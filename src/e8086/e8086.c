@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.20 2003/09/19 23:20:23 hampa Exp $ */
+/* $Id: e8086.c,v 1.21 2003/10/04 17:52:45 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -39,7 +39,8 @@ static void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short va
 
 e8086_t *e86_new (void)
 {
-  e8086_t *c;
+  unsigned i;
+  e8086_t  *c;
 
   c = (e8086_t *) malloc (sizeof (e8086_t));
   if (c == NULL) {
@@ -75,6 +76,10 @@ e8086_t *e86_new (void)
 
   c->last_interrupt = 0;
 
+  for (i = 0; i < 256; i++) {
+    c->op[i] = e86_opcodes[i];
+  }
+
   c->clocks = 0;
   c->instructions = 0;
   c->delay = 0;
@@ -87,8 +92,21 @@ void e86_del (e8086_t *c)
   free (c);
 }
 
+void e86_enable_86 (e8086_t *c)
+{
+  unsigned i;
+
+  c->cpu = E86_CPU_REP_BUG;
+
+  for (i = 0; i < 256; i++) {
+    c->op[i] = e86_opcodes[i];
+  }
+}
+
 void e86_enable_v30 (e8086_t *c)
 {
+  e86_enable_86 (c);
+
   c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
 }
 
@@ -224,7 +242,7 @@ void e86_execute (e8086_t *c)
 
     op = c->pq[0];
 
-    cnt = e86_opcodes[op] (c);
+    cnt = c->op[op] (c);
 
     if (cnt > 0) {
       c->ip = (c->ip + cnt) & 0xffff;
