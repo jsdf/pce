@@ -3,6 +3,7 @@
 	* Added HMA support
 	* Added EMS 3.2 support
 	* Switched from CVS to SVN
+	* Reverted to old file-only serial port
 
 0.1.3	2003-10-06	r287
 

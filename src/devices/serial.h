@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/serial.h                                         *
+ * File name:     src/devices/serial.h                                       *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-01-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,8 +20,14 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.h,v 1.1 2003/12/20 01:01:34 hampa Exp $ */
+/* $Id$ */
 
+
+/*
+  UART 8250 based serial port. This is very limited. Data sent out over
+  the wires by the UART are written to a file. No data is ever
+  received.
+*/
 
 #ifndef PCE_IBMPC_SERIAL_H
 #define PCE_IBMPC_SERIAL_H 1
@@ -29,10 +35,11 @@
 
 #include <stdio.h>
 
-#include "pce.h"
+#include <chipset/e8250.h>
+#include "memory.h"
 
 
-typedef struct {
+typedef struct serial_s {
   mem_blk_t     *prt;
 
   e8250_t       uart;
@@ -47,22 +54,24 @@ typedef struct {
   int           dtr;
   int           rts;
 
-  int           fd;
-  int           close;
+  FILE          *fp;
+  int           fp_close;
 } serial_t;
 
 
-serial_t *ser_new (unsigned base);
-void ser_del (serial_t *ser);;
+void ser_init (serial_t *ser, unsigned long base);
+serial_t *ser_new (unsigned long base);
+void ser_free (serial_t *ser);
+void ser_del (serial_t *ser);
 
-void ser_set_fd (serial_t *ser, int fd, int close);
+int ser_set_fp (serial_t *ser, FILE *fp, int close);
 int ser_set_fname (serial_t *ser, const char *fname);
 
-void ser_setup (serial_t *ser, unsigned char val);
-void ser_send (serial_t *ser, unsigned char val);
-void ser_recv (serial_t *ser, unsigned char val);
+void ser_uart_setup (serial_t *ser, unsigned char val);
+void ser_uart_out (serial_t *ser, unsigned char val);
+void ser_uart_inp (serial_t *ser, unsigned char val);
 
-void ser_clock (serial_t *ser, unsigned long clk);
+void ser_clock (serial_t *ser, unsigned n);
 
 
 #endif

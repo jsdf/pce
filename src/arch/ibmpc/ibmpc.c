@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -588,12 +588,14 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 {
-  unsigned        i;
-  unsigned        base, irq;
-  char            *fname;
-  ini_sct_t       *sct;
-  static unsigned defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-  static unsigned defirq[4] = { 4, 3, 4, 3 };
+  unsigned      i;
+  unsigned long base;
+  unsigned      irq;
+  char          *fname;
+  ini_sct_t     *sct;
+
+  static unsigned long defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+  static unsigned      defirq[4] = { 4, 3, 4, 3 };
 
   for (i = 0; i < 4; i++) {
     pc->serport[i] = NULL;
@@ -603,7 +605,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "serial");
 
   while ((i < 4) && (sct != NULL)) {
-    ini_get_uint (sct, "io", &base, defbase[i]);
+    ini_get_ulng (sct, "io", &base, defbase[i]);
     ini_get_uint (sct, "irq", &irq, defirq[i]);
     ini_get_string (sct, "file", &fname, NULL);
 

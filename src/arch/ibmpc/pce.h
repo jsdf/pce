@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -104,6 +104,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <devices/memory.h>
 #include <devices/nvram.h>
+#include <devices/serial.h>
 #include <devices/video.h>
 #include <devices/mda.h>
 #include <devices/hgc.h>
@@ -113,7 +114,6 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include "int13.h"
 #include "mouse.h"
-#include "serial.h"
 #include "parport.h"
 #include "ems.h"
 #include "xms.h"
