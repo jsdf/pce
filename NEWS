@@ -1,4 +1,4 @@
-0.1.6
+0.1.6	2005-02-28
 
 	* Added an ARM core emulator and a minimal system simulator
 	* Added a sparc32 core emulator and a minimal system simulator
