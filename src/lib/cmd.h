@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.h                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,11 +20,14 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cmd.h,v 1.3 2003/12/20 11:43:30 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_LIB_CMD_H
 #define PCE_LIB_CMD_H 1
+
+
+#include <stdio.h>
 
 
 #define PCE_CMD_MAX 256

@@ -10,12 +10,16 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-ifeq "$(PCE_BUILD_SIM6502)" "1"
-subdir += sim6502
-endif
-
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 subdir += ibmpc
+endif
+
+ifeq "$(PCE_BUILD_SIM405)" "1"
+subdir += sim405
+endif
+
+ifeq "$(PCE_BUILD_SIM6502)" "1"
+subdir += sim6502
 endif
 
 

@@ -1,0 +1,85 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+pcesrc := $(topdir)/src
+pcedst := $(reldir)/src
+
+
+include $(reldir)/config.inc
+
+
+CC_FLG += -I$(srcdir)
+
+
+FILES := cmd_ppc main sim405 sercons
+
+SRC := $(foreach f,$(FILES),$(f).c)
+OBJ := $(foreach f,$(FILES),$(f).o)
+HDR := $(foreach f,$(FILES),$(f).h)
+
+OBJ_EXT	:= \
+	$(pcedst)/cpu/ppc405/ppc405.a \
+	$(pcedst)/chipset/e8250.o \
+	$(pcedst)/chipset/ppc405/uic.o \
+	$(pcedst)/devices/memory.o \
+	$(pcedst)/devices/nvram.o \
+	$(pcedst)/devices/serport.o \
+	$(pcedst)/lib/brkpt.o \
+	$(pcedst)/lib/cmd.o \
+	$(pcedst)/lib/hexdump.o \
+	$(pcedst)/lib/log.o \
+	$(pcedst)/libini/libini.a
+
+
+HDR_EXT	:= \
+	$(pcedst)/config.h \
+	cpu/ppc405/ppc405.h \
+	chipset/e8250.h \
+	chipset/ppc405/uic.h \
+	devices/memory.h \
+	devices/nvram.h \
+	devices/serport.h \
+	lib/brkpt.h \
+	lib/cmd.h \
+	lib/hexdump.h \
+	lib/log.h \
+	libini/libini.h
+
+MAN1	:=
+
+BIN	:= sim405
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(BIN) $(OBJ) sim405.cfg
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN) $(OBJ) sim405.cfg
+
+
+install: install-bin sim405.cfg
+	$(INSTALL) -d -m 755 $(etcdir)
+	test -f $(etcdir)/sim405.cfg || $(INSTALL) -m 644 sim405.cfg $(etcdir)
+
+
+sim405: $(OBJ) $(OBJ_EXT)
+	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
+sim405.cfg: sim405.cfg.in
+	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+
+
+cmd_ppc.o:	cmd_ppc.c $(SDP)
+sim405.o:	sim405.c $(SDP)
+main.o:		main.c $(SDP)
+sercons.o:	sercons.c $(SDP)
