@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.16 2003/09/15 07:53:49 hampa Exp $
+# $Id: pce.cfg.in,v 1.17 2003/09/17 04:22:31 hampa Exp $
 
 section pc {
 	section cpu {
@@ -35,6 +35,7 @@ section pc {
 	section terminal {
 		driver = "sdl"
 		update = 100
+#		font = "font.psf"
 	}
 
 	section terminal {
@@ -115,6 +116,10 @@ section pc {
 	section mouse {
 		io = 0x2f8
 		irq = 3
+		speed_x_mul = 3
+		speed_x_div = 2
+		speed_y_mul = 3
+		speed_y_div = 2
 	}
 
 	section parport {

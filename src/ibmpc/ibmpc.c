@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.32 2003/09/15 07:53:49 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.33 2003/09/17 04:22:31 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -507,7 +507,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
   pce_log (MSG_INF, "mouse:\tio=0x%04x irq=%u\n", base, irq);
 
-  pc->mse = mse_new (base);
+  pc->mse = mse_new (base, sct);
   pc->mse->intr_ext = pc->pic;
   pc->mse->intr = (mse_intr_f) e8259_get_irq (pc->pic, irq);
 

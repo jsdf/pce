@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mouse.c                                          *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.c,v 1.2 2003/09/13 18:11:42 hampa Exp $ */
+/* $Id: mouse.c,v 1.3 2003/09/17 04:22:31 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -52,7 +52,7 @@
 #define MSE_SSR_RRD 0x01
 
 
-mouse_t *mse_new (unsigned short base)
+mouse_t *mse_new (unsigned short base, ini_sct_t *sct)
 {
   mouse_t *mse;
 
@@ -78,6 +78,11 @@ mouse_t *mse_new (unsigned short base)
   mse->reg->data[3] = 0x03;
   mse->reg->data[5] = (MSE_SSR_TXE | MSE_SSR_TBE);
   mse->reg->data[6] = 0x00;
+
+  ini_get_sint (sct, "speed_x_mul", &mse->fct_x[0], 1);
+  ini_get_sint (sct, "speed_x_div", &mse->fct_x[1], 1);
+  ini_get_sint (sct, "speed_y_mul", &mse->fct_y[0], 1);
+  ini_get_sint (sct, "speed_y_div", &mse->fct_y[1], 1);
 
   mse->divisor = 1;
 
@@ -237,6 +242,9 @@ void mse_accu_check (mouse_t *mse)
 
 void mse_set (mouse_t *mse, int dx, int dy, unsigned but)
 {
+  dx = (mse->fct_x[0] * dx) / mse->fct_x[1];
+  dy = (mse->fct_y[0] * dy) / mse->fct_y[1];
+
   if (mse->accu_ok) {
     if (mse->accu_b != but) {
       mse_accu_check (mse);
