@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.6 2003/04/18 20:08:26 hampa Exp $ */
+/* $Id: pce.c,v 1.7 2003/04/19 02:02:31 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1147,17 +1147,50 @@ int do_cmd (void)
   return (0);
 }
 
+int str_isarg2 (const char *str, const char *arg1, const char *arg2)
+{
+  if (strcmp (str, arg1) == 0) {
+    return (1);
+  }
+
+  if (strcmp (str, arg2) == 0) {
+    return (1);
+  }
+
+  return (0);
+}
+
 int main (int argc, char *argv[])
 {
-  unsigned i;
+  int      i;
+  unsigned ramsize;
 
   printf ("8086 CPU emulator by Hampa 1995-2003\n\n");
+
+  ramsize = 640;
+
+  i = 1;
+  while (i < argc) {
+    if (str_isarg2 (argv[i], "-r", "--ram")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+      ramsize = (unsigned) strtoul (argv[i], NULL, 0);
+    }
+    else {
+      printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
+      return (1);
+    }
+
+    i += 1;
+  }
 
   for (i = 0; i < 256; i++) {
     ops_cnt[i] = 0;
   }
 
-  pc = pc_new (512);
+  pc = pc_new (ramsize);
   pc->cpu->opstat = &pc_opstat;
 
   e86_reset (pc->cpu);
