@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.38 2003/11/11 23:48:41 hampa Exp $ */
+/* $Id: pce.c,v 1.39 2003/11/12 00:07:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -349,7 +349,7 @@ void disasm_str (char *dst, e86_disasm_t *op)
     dst[dst_i++] = ' ';
   }
 
-  if ((op->flags & ~E86_DFLAGS_CALL) != 0) {
+  if ((op->flags & ~(E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) != 0) {
     unsigned flg;
 
     flg = op->flags;
@@ -894,6 +894,11 @@ void do_bc (cmd_t *cmd)
 {
   unsigned short seg, ofs;
 
+  if (cmd_match_eol (cmd)) {
+    bp_clear_all();
+    return;
+  }
+
   seg = e86_get_cs (pc->cpu);
   ofs = e86_get_ip (pc->cpu);
 
@@ -1227,9 +1232,9 @@ void do_g (cmd_t *cmd)
 void do_h (cmd_t *cmd)
 {
   fputs (
-    "bc addr                   clear a breakpoint\n"
+    "bc [addr]                 clear a breakpoint or all\n"
     "bl                        list breakpoints\n"
-    "bs addr [pass [reset]]    set a breakpoint\n"
+    "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
     "c [cnt]                   clock\n"
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
@@ -1241,6 +1246,7 @@ void do_h (cmd_t *cmd)
     "last [i [n]]              print last instruction addresses\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "parport i fname           set parport output file\n"
+    "p [cnt]                   Execute cnt instructions, without trace in calls [1]\n"
     "q                         Quit\n"
     "r reg val                 set a register\n"
     "s [what]                  Print status (pc|cpu|pit|ppi|pic|time|uart|video|xms)\n"
@@ -1436,7 +1442,7 @@ void do_p (cmd_t *cmd)
       }
     }
 
-    if (op.flags & E86_DFLAGS_CALL) {
+    if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
       unsigned short ofs2 = ofs + op.dat_n;
 
       while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
@@ -1446,6 +1452,10 @@ void do_p (cmd_t *cmd)
           break;
         }
       }
+    }
+
+    if (pc->brk) {
+      break;
     }
   }
 
