@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.2 2003/09/19 14:48:36 hampa Exp $
+; $Id: ega.asm,v 1.3 2003/09/21 00:41:40 hampa Exp $
 
 
 %include "config.inc"
@@ -148,6 +148,16 @@ pal_mono:
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+
+
+ptr00a8:
+  dw      0, 0                          ; video parameter table
+  dw      pal_default, 0xc000
+;  dw      0, 0                          ; palette
+  dw      0, 0
+  dw      0, 0
+  dw      0, 0
+  dw      0, 0
 
 
 %include "fnt8x8.inc"
@@ -1498,26 +1508,49 @@ int_10_0f:
   ret
 
 
-int_10_10:
-  or      al, al
-  je      int_10_1000
+;*****************************************************************************
+;* int 10 func 10
+;*****************************************************************************
 
-  cmp     al, 0x02
-  je      int_10_1002
+int_10_10:
+  cmp     al, 0x01
+  jb      int_10_1000
+  je      int_10_1001
 
   cmp     al, 0x03
+  jb      int_10_1002
   je      int_10_1003
 
   pcehook PCEH_STOP
   ret
 
 
-; int 10 func 1000 - set palette register
+;*****************************************************************************
+;* int 10 func 1000 - set palette register
+;* BL = register index
+;* BH = new value
+;*****************************************************************************
+
 int_10_1000:
   push    ax
   mov     al, bh
   mov     ah, bl
+  mov     ax, bx
   call    atc_set_pal_reg
+
+  mov     ds, [cs:seg0040]
+  lds     si, [0x00a8]
+  lds     si, [si + 4]
+  mov     ax, ds
+  or      ax, si
+  jz      .done
+
+  mov     al, bl
+  mov     ah, 0
+  add     si, ax
+  mov     [si], bh
+
+.done:
   pop     ax
   ret
 
@@ -1538,6 +1571,7 @@ int_10_1002:
   push    cx
   push    si
 
+  pcehook PCEH_STOP
   mov     al, 0
   mov     cx, 16
   push    es
@@ -1624,37 +1658,15 @@ int_10_16:
 int_10_17:
 int_10_18:
 int_10_19:
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
   ret
 
 
 int_10_1a:
-  or      al, al
-  jz      int_10_1a00
-
-  cmp     al, 1
-  je      int_10_1a01
-
-  ret
-
-
-; int 10 func 1a00 - get video adapter
-int_10_1a00:
-  mov     al, 0x1a
-  mov     bl, 0x04
-  mov     bh, 0x00
-  ret
-
-
-; int 10 func 1a01 - set video adapter
-int_10_1a01:
-  mov     al, 0x1a
   ret
 
 
 int_10:
-;  pcehook PCEH_STOP
-
   push    si
   push    ds
 
@@ -1668,9 +1680,13 @@ int_10:
   pop     ax
 
   cmp     si, (int_10_funcend - int_10_func)
-  jae     .done
+  jae     .badfunc
 
   call    word [cs:si + int_10_func]
+  jmp     .done
+
+.badfunc:
+  pcehook PCEH_STOP
 
 .done:
   pop     ds
@@ -1687,8 +1703,16 @@ ega_init:
   mov     word [4 * 0x10], int_10
   mov     word [4 * 0x10 + 2], cs
 
+  mov     ds, [cs:seg0040]
+  mov     word [0x00a8], ptr00a8
+  mov     word [0x00a8 + 2], cs
+
   pop     ds
   ret
 
+
+  times 16383 - ($ - $$) db 0xff
+
+  db      0x00
 
 rom_end:
