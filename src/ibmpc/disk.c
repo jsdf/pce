@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.6 2003/08/29 21:35:57 hampa Exp $ */
+/* $Id: disk.c,v 1.7 2003/09/01 18:07:12 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -404,6 +404,21 @@ unsigned dsks_get_hd_cnt (disks_t *dsks)
   return (n);
 }
 
+void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
+{
+  pce_log (MSG_DEB,
+    "int 13 func %02X: %04X:%04X  AX=%04X  BX=%04X  CX=%04X  DX=%04X  ES=%04X\n",
+    e86_get_reg8 (cpu, E86_REG_AH),
+    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu) + 2),
+    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu)),
+    e86_get_reg16 (cpu, E86_REG_AX),
+    e86_get_reg16 (cpu, E86_REG_BX),
+    e86_get_reg16 (cpu, E86_REG_CX),
+    e86_get_reg16 (cpu, E86_REG_DX),
+    e86_get_sreg (cpu, E86_REG_ES)
+  );
+}
+
 void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
 {
   e86_set_ah (cpu, val);
@@ -512,6 +527,51 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   dsk_int13_set_status (dsks, cpu, 0);
 }
 
+void dsk_int13_05 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned       i, n;
+  unsigned       d, c, h;
+  unsigned char  fill;
+  unsigned char  buf[512];
+  unsigned short seg, ofs;
+  disk_t         *dsk;
+
+  d = e86_get_dl (cpu);
+
+  dsk = dsks_get_disk (dsks, d);
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  if (dsk->readonly) {
+    dsk_int13_set_status (dsks, cpu, 3);
+    return;
+  }
+
+  n = e86_get_al (cpu);
+  c = e86_get_ch (cpu);
+  if (d > 4) {
+    c |= ((e86_get_cl (cpu) & 0xc0) << 2);
+  }
+  h = e86_get_dh (cpu);
+
+  ofs = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e);
+  seg = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e + 2);
+  fill = e86_get_mem8 (cpu, seg, ofs + 8);
+
+  memset (buf, fill, 512);
+
+  for (i = 0; i < n; i++) {
+    if (dsk_write_chs (dsk, buf, c, h, i + 1, 1)) {
+      dsk_int13_set_status (dsks, cpu, 0x04);
+      return;
+    }
+  }
+
+  dsk_int13_set_status (dsks, cpu, 0);
+}
+
 void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned drive;
@@ -569,21 +629,6 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
   e86_set_cf (cpu, 0);
 }
 
-void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
-{
-  pce_log (MSG_DEB,
-    "int 13 func %02X: %04X:%04X  AX=%04X  BX=%04X  CX=%04X  DX=%04X  ES=%04X\n",
-    e86_get_reg8 (cpu, E86_REG_AH),
-    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu) + 2),
-    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu)),
-    e86_get_reg16 (cpu, E86_REG_AX),
-    e86_get_reg16 (cpu, E86_REG_BX),
-    e86_get_reg16 (cpu, E86_REG_CX),
-    e86_get_reg16 (cpu, E86_REG_DX),
-    e86_get_sreg (cpu, E86_REG_ES)
-  );
-}
-
 void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned func;
@@ -610,14 +655,19 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       break;
 
     case 0x04:
-    case 0x05:
-    case 0x0c:
-    case 0x18:
       dsk_int13_set_status (dsks, cpu, 0);
+      break;
+
+    case 0x05:
+      dsk_int13_05 (dsks, cpu);
       break;
 
     case 0x08:
       dsk_int13_08 (dsks, cpu);
+      break;
+
+    case 0x0c:
+      dsk_int13_set_status (dsks, cpu, 0);
       break;
 
     case 0x10:
@@ -628,7 +678,12 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 //      dsk_int13_15 (dsks, cpu);
 //      break;
 
+    case 0x18:
+      dsk_int13_set_status (dsks, cpu, 1);
+      break;
+
     default:
+//      dsk_int13_log (dsks, cpu, stderr);
       dsk_int13_set_status (dsks, cpu, 1);
       break;
   }
