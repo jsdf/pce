@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -56,22 +56,26 @@ typedef struct {
   void             *ext;
 
   unsigned short   flags;
-  unsigned long    base;
+  unsigned long    addr1;
+  unsigned long    addr2;
   unsigned long    size;
-  unsigned long    end;
   unsigned char    *data;
 } mem_blk_t;
 
 
 typedef struct {
-  mem_blk_t *blk;
-  int       del;
+  mem_blk_t     *blk;
+  unsigned long addr1;
+  unsigned long addr2;
+  int           del;
 } mem_lst_t;
 
 
 typedef struct {
-  unsigned      cnt;
-  mem_lst_t     *lst;
+  unsigned       cnt;
+  mem_lst_t      *lst;
+
+  mem_lst_t      *last;
 
   unsigned char  def_val8;
   unsigned short def_val16;

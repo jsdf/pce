@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -51,9 +51,9 @@ int mem_blk_init (mem_blk_t *blk, unsigned long base, unsigned long size, int al
   blk->ext = blk;
 
   blk->flags = 0;
-  blk->base = base;
+  blk->addr1 = base;
+  blk->addr2 = base + size - 1;
   blk->size = size;
-  blk->end = base + size - 1;
 
   return (0);
 }
@@ -114,7 +114,7 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
 
 unsigned long mem_blk_get_addr (const mem_blk_t *blk)
 {
-  return (blk->base);
+  return (blk->addr1);
 }
 
 unsigned long mem_blk_get_size (const mem_blk_t *blk)
@@ -126,6 +126,7 @@ unsigned char *mem_blk_get_data (mem_blk_t *blk)
 {
   return (blk->data);
 }
+
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val)
 {
@@ -309,17 +310,28 @@ unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr)
 }
 
 
+static
 mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 {
   unsigned  i;
-  mem_blk_t *blk;
+  mem_lst_t *lst;
+
+  if (mem->last != NULL) {
+    lst = mem->last;
+    if ((addr >= lst->addr1) && (addr <= lst->addr2)) {
+      return (lst->blk);
+    }
+  }
+
+  lst = mem->lst;
 
   for (i = 0; i < mem->cnt; i++) {
-    blk = mem->lst[i].blk;
-
-    if ((addr >= blk->base) && (addr <= blk->end)) {
-      return (blk);
+    if ((addr >= lst->addr1) && (addr <= lst->addr2)) {
+      mem->last = lst;
+      return (lst->blk);
     }
+
+    lst += 1;
   }
 
   return (NULL);
@@ -332,7 +344,7 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->get_uint8 != NULL) {
       return (blk->get_uint8 (blk->ext, addr));
@@ -353,13 +365,13 @@ unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 1) > blk->end) {
+    if ((addr + 1) > blk->addr2) {
       val = (unsigned short) mem_get_uint8 (mem, addr) << 8;
       val |= mem_get_uint8 (mem, addr + 1);
       return (val);
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->get_uint16 != NULL) {
       return (blk->get_uint16 (blk->ext, addr));
@@ -382,13 +394,13 @@ unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 1) > blk->end) {
+    if ((addr + 1) > blk->addr2) {
       val = mem_get_uint8 (mem, addr);
       val |= (unsigned short) mem_get_uint8 (mem, addr + 1) << 8;
       return (val);
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->get_uint16 != NULL) {
       return (blk->get_uint16 (blk->ext, addr));
@@ -411,7 +423,7 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 3) > blk->end) {
+    if ((addr + 3) > blk->addr2) {
       val = (unsigned long) mem_get_uint8 (mem, addr) << 24;
       val |= (unsigned long) mem_get_uint8 (mem, addr + 1) << 16;
       val |= (unsigned long) mem_get_uint8 (mem, addr + 2) << 8;
@@ -419,7 +431,7 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
       return (val);
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->get_uint32 != NULL) {
       return (blk->get_uint32 (blk->ext, addr));
@@ -447,7 +459,7 @@ void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
       return;
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->set_uint8 != NULL) {
       blk->set_uint8 (blk->ext, addr, val);
@@ -465,7 +477,7 @@ void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 1) > blk->end) {
+    if ((addr + 1) > blk->addr2) {
       mem_set_uint8 (mem, addr, (val >> 8) & 0xff);
       mem_set_uint8 (mem, addr + 1, val & 0xff);
       return;
@@ -475,7 +487,7 @@ void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val)
       return;
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->set_uint16 != NULL) {
       blk->set_uint16 (blk->ext, addr, val);
@@ -494,7 +506,7 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 1) > blk->end) {
+    if ((addr + 1) > blk->addr2) {
       mem_set_uint8 (mem, addr, val & 0xff);
       mem_set_uint8 (mem, addr + 1, (val >> 8) & 0xff);
       return;
@@ -504,7 +516,7 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
       return;
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->set_uint16 != NULL) {
       blk->set_uint16 (blk->ext, addr, val);
@@ -523,7 +535,7 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 3) > blk->end) {
+    if ((addr + 3) > blk->addr2) {
       mem_set_uint8 (mem, addr, (val >> 24) & 0xff);
       mem_set_uint8 (mem, addr + 1, (val >> 16) & 0xff);
       mem_set_uint8 (mem, addr + 2, (val >> 8) & 0xff);
@@ -535,7 +547,7 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
       return;
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->set_uint32 != NULL) {
       blk->set_uint32 (blk->ext, addr, val);
@@ -556,7 +568,7 @@ void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if ((addr + 3) > blk->end) {
+    if ((addr + 3) > blk->addr2) {
       mem_set_uint8 (mem, addr, val & 0xff);
       mem_set_uint8 (mem, addr + 1, (val >> 8) & 0xff);
       mem_set_uint8 (mem, addr + 2, (val >> 16) & 0xff);
@@ -568,7 +580,7 @@ void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
       return;
     }
 
-    addr -= blk->base;
+    addr -= blk->addr1;
 
     if (blk->set_uint32 != NULL) {
       blk->set_uint32 (blk->ext, addr, val);
@@ -586,6 +598,8 @@ void mem_init (memory_t *mem)
 {
   mem->cnt = 0;
   mem->lst = NULL;
+
+  mem->last = NULL;
 
   mem->def_val8 = 0xaa;
   mem->def_val16 = 0xaaaaU;
@@ -639,17 +653,24 @@ void mem_set_default (memory_t *mem, unsigned char val)
 
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 {
+  mem_lst_t *lst;
+
   if (blk == NULL) {
     return;
   }
 
-  mem->lst = (mem_lst_t *) realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
-  if (mem->lst == NULL) {
+  lst = (mem_lst_t *) realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
+  if (lst == NULL) {
     return;
   }
 
-  mem->lst[mem->cnt].blk = blk;
-  mem->lst[mem->cnt].del = del;
+  mem->lst = lst;
 
+  lst += mem->cnt;
   mem->cnt += 1;
+
+  lst->blk = blk;
+  lst->addr1 = blk->addr1;
+  lst->addr2 = blk->addr1 + blk->size - 1;
+  lst->del = (del != 0);
 }

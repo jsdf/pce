@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -215,13 +215,23 @@ int hgc_dump (hgc_t *hgc, FILE *fp)
   fprintf (fp, "# HGC dump\n");
 
   fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp, hgc->reg->data, hgc->reg->size, hgc->reg->base, 16, "# ", 0);
+  pce_dump_hex (fp,
+    mem_blk_get_data (hgc->reg),
+    mem_blk_get_size (hgc->reg),
+    mem_blk_get_addr (hgc->reg),
+    16, "# ", 0
+  );
 
   fprintf (fp, "\n# CRTC:\n");
   pce_dump_hex (fp, hgc->crtc_reg, 18, 0, 16, "# ", 0);
 
   fputs ("\n\n# RAM:\n", fp);
-  pce_dump_hex (fp, hgc->mem->data, hgc->mem->size, hgc->mem->base, 16, "", 1);
+  pce_dump_hex (fp,
+    mem_blk_get_data (hgc->mem),
+    mem_blk_get_size (hgc->mem),
+    mem_blk_get_addr (hgc->mem),
+    16, "", 1
+  );
 
   return (0);
 }
@@ -334,11 +344,7 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 
   if (addr & 1) {
     hgc_mem_set_uint8 (hgc, addr, val & 0xff);
-
-    if (addr < hgc->mem->end) {
-      hgc_mem_set_uint8 (hgc, addr + 1, val >> 8);
-    }
-
+    hgc_mem_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
     return;
   }
 

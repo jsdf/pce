@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -231,7 +231,12 @@ int ega_dump (ega_t *ega, FILE *fp)
   fprintf (fp, "# EGA dump\n");
 
   fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp, ega->reg->data, ega->reg->size, ega->reg->base, 16, "# ", 0);
+  pce_dump_hex (fp,
+    mem_blk_get_data (ega->reg),
+    mem_blk_get_size (ega->reg),
+    mem_blk_get_addr (ega->reg),
+    16, "# ", 0
+  );
 
   fprintf (fp, "\n# CRTC:\n");
   pce_dump_hex (fp, ega->crtc_reg, 24, 0, 16, "# ", 0);

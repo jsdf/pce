@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -188,13 +188,23 @@ int cga_dump (cga_t *cga, FILE *fp)
   fprintf (fp, "# CGA dump\n");
 
   fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp, cga->reg->data, cga->reg->size, cga->reg->base, 16, "# ", 0);
+  pce_dump_hex (fp,
+    mem_blk_get_data (cga->reg),
+    mem_blk_get_size (cga->reg),
+    mem_blk_get_addr (cga->reg),
+    16, "# ", 0
+  );
 
   fprintf (fp, "\n# CRTC:\n");
   pce_dump_hex (fp, cga->crtc_reg, 18, 0, 16, "# ", 0);
 
   fputs ("\n\n# RAM:\n", fp);
-  pce_dump_hex (fp, cga->mem->data, cga->mem->size, cga->mem->base, 16, "", 1);
+  pce_dump_hex (fp,
+    mem_blk_get_data (cga->mem),
+    mem_blk_get_size (cga->mem),
+    mem_blk_get_addr (cga->mem),
+    16, "", 1
+  );
 
   return (0);
 }
@@ -300,11 +310,7 @@ void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
   if (addr & 1) {
     cga_mem_set_uint8 (cga, addr, val & 0xff);
-
-    if (addr < cga->mem->end) {
-      cga_mem_set_uint8 (cga, addr + 1, val >> 8);
-    }
-
+    cga_mem_set_uint8 (cga, addr + 1, (val >> 8) & 0xff);
     return;
   }
 
@@ -706,16 +712,12 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
     case 1:
       cga_mode1_set_uint8 (cga, addr, val);
-      if (addr < cga->mem->end) {
-        cga_mode1_set_uint8 (cga, addr + 1, val >> 8);
-      }
+      cga_mode1_set_uint8 (cga, addr + 1, val >> 8);
       break;
 
     case 2:
       cga_mode2_set_uint8 (cga, addr, val);
-      if (addr < cga->mem->end) {
-        cga_mode2_set_uint8 (cga, addr + 1, val >> 8);
-      }
+      cga_mode2_set_uint8 (cga, addr + 1, val >> 8);
       break;
   }
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/vga.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -291,7 +291,12 @@ int vga_dump (vga_t *vga, FILE *fp)
   fprintf (fp, "# VGA dump\n");
 
   fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp, vga->reg->data, vga->reg->size, vga->reg->base, 16, "# ", 0);
+  pce_dump_hex (fp,
+    mem_blk_get_data (vga->reg),
+    mem_blk_get_size (vga->reg),
+    mem_blk_get_addr (vga->reg),
+    16, "# ", 0
+  );
 
   fprintf (fp, "\n# CRTC:\n");
   pce_dump_hex (fp, vga->crtc_reg, 24, 0, 16, "# ", 0);

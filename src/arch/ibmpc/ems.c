@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ems.c                                       *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -240,7 +240,7 @@ void ems_40 (ems_t *ems, e8086_t *cpu)
 void ems_41 (ems_t *ems, e8086_t *cpu)
 {
   e86_set_ah (cpu, 0x00);
-  e86_set_bx (cpu, ems->mem->base / 16);
+  e86_set_bx (cpu, mem_blk_get_addr (ems->mem) / 16);
 }
 
 /* 42: get page count */

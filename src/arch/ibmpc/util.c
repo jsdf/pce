@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/util.c                                      *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -122,7 +122,11 @@ int pce_load_mem_blk (mem_blk_t *blk, const char *fname)
   }
 
   if (str_istail (fname, ".hex")) {
-    r = ihex_load_fp (fp, blk->data, blk->base, blk->size);
+    r = ihex_load_fp (fp,
+      mem_blk_get_data (blk),
+      mem_blk_get_addr (blk),
+      mem_blk_get_size (blk)
+    );
   }
   else {
     fread (blk->data, 1, blk->size, fp);

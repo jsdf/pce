@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -177,13 +177,23 @@ int mda_dump (mda_t *mda, FILE *fp)
   fprintf (fp, "# MDA dump\n");
 
   fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp, mda->reg->data, mda->reg->size, mda->reg->base, 16, "# ", 0);
+  pce_dump_hex (fp,
+    mem_blk_get_data (mda->reg),
+    mem_blk_get_size (mda->reg),
+    mem_blk_get_addr (mda->reg),
+    16, "# ", 0
+  );
 
   fprintf (fp, "\n# CRTC:\n");
   pce_dump_hex (fp, mda->crtc_reg, 18, 0, 16, "# ", 0);
 
   fputs ("\n\n# RAM:\n", fp);
-  pce_dump_hex (fp, mda->mem->data, mda->mem->size, mda->mem->base, 16, "", 1);
+  pce_dump_hex (fp,
+    mem_blk_get_data (mda->mem),
+    mem_blk_get_size (mda->mem),
+    mem_blk_get_addr (mda->mem),
+    16, "", 1
+  );
 
   return (0);
 }
@@ -294,11 +304,7 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 
   if (addr & 1) {
     mda_mem_set_uint8 (mda, addr, val & 0xff);
-
-    if (addr < mda->mem->end) {
-      mda_mem_set_uint8 (mda, addr + 1, val >> 8);
-    }
-
+    mda_mem_set_uint8 (mda, addr + 1, (val >> 8) & 0xff);
     return;
   }
 
@@ -372,10 +378,7 @@ void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
   mda_reg_set_uint8 (mda, addr, val & 0xff);
-
-  if (addr < mda->reg->end) {
-    mda_reg_set_uint8 (mda, addr + 1, val >> 8);
-  }
+  mda_reg_set_uint8 (mda, addr + 1, val >> 8);
 }
 
 unsigned char mda_reg_get_uint8 (mda_t *mda, unsigned long addr)
@@ -408,10 +411,7 @@ unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr)
   unsigned short ret;
 
   ret = mda_reg_get_uint8 (mda, addr);
-
-  if (addr < mda->reg->end) {
-    ret |= mda_reg_get_uint8 (mda, addr + 1) << 8;
-  }
+  ret |= mda_reg_get_uint8 (mda, addr + 1) << 8;
 
   return (ret);
 }
