@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     cga.c                                                      *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.3 2003/04/19 03:27:36 hampa Exp $ */
+/* $Id: cga.c,v 1.4 2003/04/20 00:20:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -212,7 +212,7 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
   c = val & 0xff;
   a = (val >> 8) & 0xff;
 
-  if ((cga->mem->data[addr] == c) && (cga->mem->data[addr] == a)) {
+  if ((cga->mem->data[addr] == c) && (cga->mem->data[addr + 1] == a)) {
     return;
   }
 
