@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,34 +25,43 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
 #include "pce.h"
 
 
-#define MSE_IAR_SINP 0x08
-#define MSE_IAR_ERBK 0x04
-#define MSE_IAR_TBE  0x02
-#define MSE_IAR_RRD  0x01
+void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
+{
+  e8250_init (&mse->uart);
 
-#define MSE_IID_SINP (0x00 << 1)
-#define MSE_IID_TBE  (0x01 << 1)
-#define MSE_IID_RRD  (0x02 << 1)
-#define MSE_IID_ERBK (0x03 << 1)
-#define MSE_IID_PND  0x01
+  mse->uart.setup_ext = mse;
+  mse->uart.setup = (e8250_setup_f) &mse_uart_setup;
+  mse->uart.send_ext = mse;
+  mse->uart.send = (e8250_send_f) &mse_uart_out;
+  mse->uart.recv_ext = mse;
+  mse->uart.recv = (e8250_recv_f) &mse_uart_inp;
 
-#define MSE_DFR_DLAB 0x80
-#define MSE_DFR_BRK  0x40
+  mem_blk_init (&mse->port, base, 8, 0);
+  mse->port.ext = &mse->uart;
+  mse->port.get_uint8 = (mem_get_uint8_f) &e8250_get_uint8;
+  mse->port.set_uint8 = (mem_set_uint8_f) &e8250_set_uint8;
+  mse->port.get_uint16 = (mem_get_uint16_f) &e8250_get_uint16;
+  mse->port.set_uint16 = (mem_set_uint16_f) &e8250_set_uint16;
 
-#define MSE_MCR_RTS 0x02
-#define MSE_MCR_DTR 0x01
+  e8250_set_dsr (&mse->uart, 1);
+  e8250_set_cts (&mse->uart, 1);
 
-#define MSE_SSR_TXE 0x40
-#define MSE_SSR_TBE 0x20
-#define MSE_SSR_RRD 0x01
+  mse->fct_x[0] = ini_get_lng_def (sct, "speed_x_mul", 1);
+  mse->fct_x[1] = ini_get_lng_def (sct, "speed_x_div", 1);
+  mse->fct_y[0] = ini_get_lng_def (sct, "speed_y_mul", 1);
+  mse->fct_y[1] = ini_get_lng_def (sct, "speed_y_div", 1);
 
+  mse->dtr = 0;
+  mse->rts = 0;
 
-mouse_t *mse_new (unsigned short base, ini_sct_t *sct)
+  mse->accu_ok = 0;
+}
+
+mouse_t *mse_new (unsigned long base, ini_sct_t *sct)
 {
   mouse_t *mse;
 
@@ -61,123 +70,37 @@ mouse_t *mse_new (unsigned short base, ini_sct_t *sct)
     return (NULL);
   }
 
-  mse->reg = mem_blk_new (base, 8, 1);
-  mem_blk_set_ext (mse->reg, mse);
-  mse->reg->set_uint8 = (seta_uint8_f) &mse_reg_set_uint8;
-  mse->reg->set_uint16 = (seta_uint16_f) &mse_reg_set_uint16;
-  mse->reg->get_uint8 = (geta_uint8_f) &mse_reg_get_uint8;
-  mse->reg->get_uint16 = (geta_uint16_f) &mse_reg_get_uint16;
-  mem_blk_clear (mse->reg, 0x00);
-
-  mse->rcnt = 0;
-
-  mse->accu_ok = 0;
-
-  mse->reg->data[1] = 0x00;
-  mse->reg->data[2] = MSE_IID_PND;
-  mse->reg->data[3] = 0x03;
-  mse->reg->data[5] = (MSE_SSR_TXE | MSE_SSR_TBE);
-  mse->reg->data[6] = 0x00;
-
-  mse->fct_x[0] = ini_get_lng_def (sct, "speed_x_mul", 1);
-  mse->fct_x[1] = ini_get_lng_def (sct, "speed_x_div", 1);
-  mse->fct_y[0] = ini_get_lng_def (sct, "speed_y_mul", 1);
-  mse->fct_y[1] = ini_get_lng_def (sct, "speed_y_div", 1);
-
-  mse->divisor = 1;
+  mse_init (mse, base, sct);
 
   return (mse);
+}
+
+void mse_free (mouse_t *mse)
+{
+  mem_blk_free (&mse->port);
+  e8250_free (&mse->uart);
 }
 
 void mse_del (mouse_t *mse)
 {
   if (mse != NULL) {
-    mem_blk_del (mse->reg);
+    mse_free (mse);
     free (mse);
   }
 }
 
 mem_blk_t *mse_get_reg (mouse_t *mse)
 {
-  return (mse->reg);
+  return (&mse->port);
 }
 
-void mse_send_byte (mouse_t *mse, unsigned char val)
+static
+void mse_receive (mouse_t *mse, unsigned char val)
 {
-  mse->reg->data[2] = MSE_IID_PND;
-
-  if (mse->reg->data[1] & MSE_IAR_TBE) {
-    mse->reg->data[2] = MSE_IID_TBE;
-    if (mse->intr != NULL) {
-      mse->intr (mse->intr_ext, 1);
-    }
-  }
-
-  mse->reg->data[5] |= MSE_SSR_TXE | MSE_SSR_TBE;
+  e8250_receive (&mse->uart, val);
 }
 
-void mse_recv_intr (mouse_t *mse)
-{
-  if (mse->reg->data[1] & MSE_IAR_RRD) {
-    mse->reg->data[2] = MSE_IID_RRD;
-    if (mse->intr != NULL) {
-      mse->intr (mse->intr_ext, 1);
-    }
-  }
-}
-
-unsigned char mse_recv_get_byte (mouse_t *mse)
-{
-  unsigned      i;
-  unsigned char ret;
-
-  if (mse->rcnt == 0) {
-    return (mse->rbuf[0]);
-  }
-
-  ret = mse->rbuf[0];
-
-  for (i = 1; i < mse->rcnt; i++) {
-    mse->rbuf[i - 1] = mse->rbuf[i];
-  }
-
-  mse->rcnt -= 1;
-
-  if (mse->rcnt == 0) {
-    mse_accu_check (mse);
-  }
-
-  if (mse->rcnt == 0) {
-    mse->reg->data[5] &= ~MSE_SSR_RRD;
-    if (mse->reg->data[2] == MSE_IID_RRD) {
-      mse->reg->data[2] = MSE_IID_PND;
-    }
-  }
-  else {
-    mse->reg->data[5] |= MSE_SSR_RRD;
-    mse_recv_intr (mse);
-  }
-
-  return (ret);
-}
-
-void mse_recv_set_byte (mouse_t *mse, unsigned char val)
-{
-  if (mse->rcnt >= MSE_BUF) {
-    pce_log (MSG_INF, "mouse:\tRxRD buffer full\n");
-    return;
-  }
-
-  mse->rbuf[mse->rcnt] = val;
-  mse->rcnt += 1;
-
-  mse->reg->data[5] |= MSE_SSR_RRD;
-
-  if (mse->rcnt > 0) {
-    mse_recv_intr (mse);
-  }
-}
-
+static
 void mse_accu_check (mouse_t *mse)
 {
   unsigned char val;
@@ -230,9 +153,9 @@ void mse_accu_check (mouse_t *mse)
   val |= (y >> 4) & 0x0c;
   val |= (x >> 6) & 0x03;
 
-  mse_recv_set_byte (mse, val);
-  mse_recv_set_byte (mse, x & 0x3f);
-  mse_recv_set_byte (mse, y & 0x3f);
+  mse_receive (mse, val);
+  mse_receive (mse, x & 0x3f);
+  mse_receive (mse, y & 0x3f);
 
   mse->accu_dx -= dx;
   mse->accu_dy -= dy;
@@ -262,112 +185,51 @@ void mse_set (mouse_t *mse, int dx, int dy, unsigned but)
     mse->accu_b = but;
   }
 
-  if (mse->rcnt < 3) {
+  if (e8250_inp_empty (&mse->uart)) {
     mse_accu_check (mse);
   }
 }
 
-void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val)
+/* 8250 setup has changed */
+void mse_uart_setup (mouse_t *mse, unsigned char val)
 {
-  switch (addr) {
-    case 0x00:
-      if (mse->reg->data[3] & MSE_DFR_DLAB) {
-        mse->divisor &= 0xff00;
-        mse->divisor |= val & 0xff;
-      }
-      else {
-        mse_send_byte (mse, val);
-      }
-      break;
+  int dtr, rts;
 
-    case 0x01:
-      if (mse->reg->data[3] & MSE_DFR_DLAB) {
-        mse->divisor &= 0x00ff;
-        mse->divisor |= (val & 0xff) << 8;
-      }
-      else {
-        mse->reg->data[1] = val & 0x0f;
-      }
-      break;
+  dtr = e8250_get_dtr (&mse->uart);
+  rts = e8250_get_rts (&mse->uart);
 
-    case 0x02:
-      break;
+  if (rts != dtr) {
+    e8250_get_inp_all (&mse->uart);
+  }
+  else if (dtr == 0) {
+    e8250_get_inp_all (&mse->uart);
+  }
+  else if ((mse->dtr == 0) || (mse->rts == 0)) {
+    e8250_get_inp_all (&mse->uart);
 
-    case 0x03:
-      break;
+    /* this should not be necessary */
+    e8250_get_uint8 (&mse->uart, 0);
 
-    case 0x04:
-      if (val & MSE_MCR_DTR) {
-        pce_log (MSG_DEB, "mouse:\treset\n");
-        mse->accu_ok = 0;
-        mse->rcnt = 0;
-        mse->reg->data[5] &= ~MSE_SSR_RRD;
-        mse_recv_set_byte (mse, 'M');
-      }
-      mse->reg->data[4] = val & 0x1f;
-      break;
+    mse_receive (mse, 'M');
+  }
 
-    case 0x05:
-      break;
+  mse->dtr = dtr;
+  mse->rts = rts;
+}
 
-    case 0x06:
-      break;
+/* 8250 output buffer is not empty */
+void mse_uart_out (mouse_t *mse, unsigned char val)
+{
+  unsigned char c;
 
-    case 0x07:
-      mse->reg->data[7] = val;
+  while (1) {
+    if (e8250_get_out (&mse->uart, &c)) {
       break;
+    }
   }
 }
 
-void mse_reg_set_uint16 (mouse_t *mse, unsigned long addr, unsigned short val)
+/* 8250 input buffer is not full */
+void mse_uart_inp (mouse_t *mse, unsigned char val)
 {
-}
-
-unsigned char mse_reg_get_uint8 (mouse_t *mse, unsigned long addr)
-{
-  switch (addr) {
-    case 0x00:
-      if (mse->reg->data[3] & MSE_DFR_DLAB) {
-        return (mse->divisor & 0x00ff);
-      }
-      else {
-        return (mse_recv_get_byte (mse));
-      }
-      break;
-
-    case 0x01:
-      if (mse->reg->data[3] & MSE_DFR_DLAB) {
-        return ((mse->divisor & 0xff00) >> 8);
-      }
-      else {
-        return (0xff);
-      }
-      break;
-
-    case 0x02:
-      return (mse->reg->data[2]);
-
-    case 0x03:
-      return (0xff);
-
-    case 0x04:
-      return (0xff);
-
-    case 0x05:
-      return (mse->reg->data[5]);
-
-    case 0x06:
-      return (mse->reg->data[6]);
-
-    case 0x07:
-      return (mse->reg->data[7]);
-  }
-
-  return (mse->reg->data[addr]);
-  return (0xff);
-}
-
-unsigned short mse_reg_get_uint16 (mouse_t *mse, unsigned long addr)
-{
-  return (0xffff);
 }

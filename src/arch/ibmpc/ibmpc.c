@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -617,6 +617,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
   ini_sct_t     *sct;
   unsigned long base;
   unsigned      irq;
+  e8250_irq_f   irqf;
 
   sct = ini_sct_find_sct (ini, "mouse");
   if (sct == NULL) {
@@ -629,10 +630,11 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
   pce_log (MSG_INF, "mouse:\tio=0x%04lx irq=%u\n", base, irq);
 
   pc->mse = mse_new (base, sct);
-  pc->mse->intr_ext = &pc->pic;
-  pc->mse->intr = (mse_intr_f) e8259_get_irq_f (&pc->pic, irq);
 
-  mem_add_blk (pc->prt, pc->mse->reg, 0);
+  irqf = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
+  e8250_set_irq_f (&pc->mse->uart, irqf, &pc->pic);
+
+  mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
   pc->trm->mse_ext = pc->mse;
   pc->trm->set_mse = (trm_set_mse_f) &mse_set;

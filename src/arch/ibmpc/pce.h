@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -120,6 +120,9 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
+
+
+extern ibmpc_t *par_pc;
 
 
 #endif

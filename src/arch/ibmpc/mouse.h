@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/mouse.h                                          *
+ * File name:     src/arch/ibmpc/mouse.h                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,52 +20,42 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.h,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_MOUSE_H
 #define PCE_MOUSE_H 1
 
 
-#define MSE_BUF 32
-
-
-typedef void (*mse_intr_f) (void *ext, unsigned char val);
-
-
 typedef struct {
-  mem_blk_t *reg;
+  mem_blk_t port;
+  e8250_t   uart;
 
-  void *intr_ext;
-  void (*intr) (void *ext, unsigned char val);
+  int       dtr;
+  int       rts;
 
-  unsigned char rbuf[MSE_BUF];
-  unsigned      rcnt;
+  char      accu_ok;
+  int       accu_dx;
+  int       accu_dy;
+  unsigned  accu_b;
 
-  char           accu_ok;
-  int            accu_dx;
-  int            accu_dy;
-  unsigned       accu_b;
-
-  int            fct_x[2];
-  int            fct_y[2];
-
-  unsigned short divisor;
+  int       fct_x[2];
+  int       fct_y[2];
 } mouse_t;
 
 
-mouse_t *mse_new (unsigned short base, ini_sct_t *sct);
+void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct);
+mouse_t *mse_new (unsigned long base, ini_sct_t *sct);
+void mse_free (mouse_t *mse);
 void mse_del (mouse_t *mse);
 
 mem_blk_t *mse_get_reg (mouse_t *mse);
 
-void mse_accu_check (mouse_t *mse);
 void mse_set (mouse_t *mse, int dx, int dy, unsigned but);
 
-void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val);
-void mse_reg_set_uint16 (mouse_t *mse, unsigned long addr, unsigned short val);
-unsigned char mse_reg_get_uint8 (mouse_t *mse, unsigned long addr);
-unsigned short mse_reg_get_uint16 (mouse_t *mse, unsigned long addr);
+void mse_uart_setup (mouse_t *mse, unsigned char val);
+void mse_uart_out (mouse_t *mse, unsigned char val);
+void mse_uart_inp (mouse_t *mse, unsigned char val);
 
 
 #endif

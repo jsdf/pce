@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -2195,12 +2195,12 @@ int_13:                                 ; EC59
   call    L_EC85
 
   mov     bx, 4
-  call    L_EE6C
+  call    dpt_get_param                 ; EE6C
 
   mov     [0x0040], ah
   mov     ah, [0x0041]
   cmp     ah, 1
-  cmc
+  cmc                                   ; carry set if AH != 0
 
   pop     dx
   pop     bp
