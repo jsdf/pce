@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.h,v 1.5 2003/09/24 01:08:40 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_SDL_H

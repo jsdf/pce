@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.8 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
