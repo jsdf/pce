@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     flags.c                                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: flags.c,v 1.1 2003/04/18 20:15:24 hampa Exp $ */
+/* $Id: flags.c,v 1.2 2003/04/19 02:03:26 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -105,25 +105,23 @@ void e86_set_flg_log_16 (e8086_t *c, unsigned short val)
 void e86_set_flg_adc_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3)
 {
   unsigned short set;
-  unsigned short udst, sdst, adst;
+  unsigned short dst;
 
   e86_set_flg_szp_8 (c, s1 + s2 + s3);
 
   set = 0;
 
-  udst = s1 + s2 + s3;
-  sdst = (e86_mk_sint16 (s1) + e86_mk_sint16 (s2) + s3) & 0xffff;
-  adst = (s1 & 0x0f) + (s2 & 0x0f) + (s3 & 0x0f);
+  dst = (unsigned short) s1 + (unsigned short) s2 + (unsigned short) s3;
 
-  if (udst & 0xff00) {
+  if (dst & 0xff00) {
     set |= E86_FLG_C;
   }
 
-  if (((sdst >> 1) ^ sdst) & 0x80) {
+  if ((dst ^ s1) & (dst ^ (s2 + s3)) & 0x80) {
     set |= E86_FLG_O;
   }
 
-  if (adst & 0xfff0) {
+  if (((s1 & 0x0f) + (s2 & 0x0f) + (s3 & 0x0f)) & 0xfff0) {
     set |= E86_FLG_A;
   }
 
@@ -134,30 +132,23 @@ void e86_set_flg_adc_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned
 void e86_set_flg_adc_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3)
 {
   unsigned short set;
-  unsigned long  t1, t2, t3;
-  unsigned long  udst, sdst, adst;
+  unsigned long  dst;
 
   e86_set_flg_szp_16 (c, s1 + s2 + s3);
 
   set = 0;
 
-  t1 = (s1 & 0x8000) ? (0xffff0000UL | s1) : s1;
-  t2 = (s2 & 0x8000) ? (0xffff0000UL | s2) : s2;
-  t3 = s3;
+  dst = (unsigned long) s1 + (unsigned long) s2 + (unsigned long) s3;
 
-  udst = (unsigned long) s1 + (unsigned long) s2 + (unsigned long) s3;
-  sdst = (t1 + t2 + t3) & 0xffffffffUL;
-  adst = (s1 & 0x0f) + (s2 & 0x0f) + (s3 & 0x0f);
-
-  if (udst & 0xffff0000) {
+  if (dst & 0xffff0000) {
     set |= E86_FLG_C;
   }
 
-  if (((sdst >> 1) ^ sdst) & 0x8000) {
+  if ((dst ^ s1) & (dst ^ (s2 + s3)) & 0x8000) {
     set |= E86_FLG_O;
   }
 
-  if (adst & 0xfffffff0) {
+  if (((s1 & 0x0f) + (s2 & 0x0f) + (s3 & 0x0f)) & 0xfffffff0) {
     set |= E86_FLG_A;
   }
 
@@ -168,25 +159,23 @@ void e86_set_flg_adc_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsig
 void e86_set_flg_sbb_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3)
 {
   unsigned short set;
-  unsigned short udst, sdst, adst;
+  unsigned short dst;
 
   e86_set_flg_szp_8 (c, s1 - s2 - s3);
 
   set = 0;
 
-  udst = s1 - s2 - s3;
-  sdst = (e86_mk_sint16 (s1) - e86_mk_sint16 (s2) - s3) & 0xffff;
-  adst = (s1 & 0x0f) - (s2 & 0x0f) - (s3 & 0x0f);
+  dst = s1 - s2 - s3;
 
-  if (udst & 0xff00) {
+  if (dst & 0xff00) {
     set |= E86_FLG_C;
   }
 
-  if (((sdst >> 1) ^ sdst) & 0x80) {
+  if ((s1 ^ (s2 + s3)) & (s1 ^ dst) & 0x80) {
     set |= E86_FLG_O;
   }
 
-  if (adst & 0xfff0) {
+  if (((s1 & 0x0f) - (s2 & 0x0f) - (s3 & 0x0f)) & 0xfff0) {
     set |= E86_FLG_A;
   }
 
@@ -197,30 +186,23 @@ void e86_set_flg_sbb_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned
 void e86_set_flg_sbb_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3)
 {
   unsigned short set;
-  unsigned long  t1, t2, t3;
-  unsigned long  udst, sdst, adst;
+  unsigned long  dst;
 
   e86_set_flg_szp_16 (c, s1 - s2 - s3);
 
   set = 0;
 
-  t1 = (s1 & 0x8000) ? (0xffff0000UL | s1) : s1;
-  t2 = (s2 & 0x8000) ? (0xffff0000UL | s2) : s2;
-  t3 = s3;
+  dst = (unsigned long) s1 - (unsigned long) s2 - (unsigned long) s3;
 
-  udst = (unsigned long) s1 - (unsigned long) s2 - (unsigned long) s3;
-  sdst = (t1 - t2 - t3) & 0xffffffffUL;
-  adst = (s1 & 0x0f) - (s2 & 0x0f) - (s3 & 0x0f);
-
-  if (udst & 0xffff0000) {
+  if (dst & 0xffff0000) {
     set |= E86_FLG_C;
   }
 
-  if (((sdst >> 1) ^ sdst) & 0x8000) {
+  if ((s1 ^ (s2 + s3)) & (s1 ^ dst) & 0x8000) {
     set |= E86_FLG_O;
   }
 
-  if (adst & 0xfffffff0) {
+  if (((s1 & 0x0f) - (s2 & 0x0f) - (s3 & 0x0f)) & 0xfffffff0) {
     set |= E86_FLG_A;
   }
 
