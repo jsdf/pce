@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/memory.c                                       *
+ * File name:     memory.c                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.5 2003/11/16 03:44:25 hampa Exp $ */
+/* $Id: memory.c,v 1.6 2003/11/16 05:05:52 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -386,6 +386,10 @@ void mem_set_default (memory_t *mem, unsigned char val)
 
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 {
+  if (blk == NULL) {
+    return;
+  }
+
   mem->lst = (mem_lst_t *) realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
   if (mem->lst == NULL) {
     return;
