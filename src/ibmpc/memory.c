@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/memory.c                                         *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.2 2003/04/24 12:24:19 hampa Exp $ */
+/* $Id: memory.c,v 1.3 2003/08/29 19:17:07 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -75,6 +75,11 @@ void mem_blk_del (mem_blk_t *blk)
 void mem_blk_init (mem_blk_t *blk, unsigned char val)
 {
   memset (blk->data, val, blk->size);
+}
+
+void mem_blk_set_ext (mem_blk_t *blk, void *ext)
+{
+  blk->ext = ext;
 }
 
 void mem_blk_set_ro (mem_blk_t *blk, int ro)
