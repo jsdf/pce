@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/pce.c                                                  *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.13 2003/04/21 19:14:59 hampa Exp $ */
+/* $Id: pce.c,v 1.14 2003/04/22 17:59:54 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -28,7 +28,6 @@
 #include <unistd.h>
 
 #include "pce.h"
-#include "ibmpc.h"
 
 
 typedef struct {
@@ -1551,9 +1550,9 @@ int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 
 int main (int argc, char *argv[])
 {
-  int      i;
-  unsigned ramsize;
-  unsigned dsp;
+  int       i;
+  char      *cfg;
+  ini_sct_t *ini, *sct;
 
   if (argc == 2) {
     if (str_isarg1 (argv[1], "--help")) {
@@ -1566,35 +1565,16 @@ int main (int argc, char *argv[])
     }
   }
 
-  printf ("8086 CPU emulator by Hampa 1995-2003\n\n");
-
-  ramsize = 640;
-  dsp = 1;
+  cfg = NULL;
 
   i = 1;
   while (i < argc) {
-    if (str_isarg2 (argv[i], "-r", "--ram")) {
+    if (str_isarg2 (argv[i], "-c", "--config")) {
       i += 1;
       if (i >= argc) {
         return (1);
       }
-      ramsize = (unsigned) strtoul (argv[i], NULL, 0);
-    }
-    else if (str_isarg2 (argv[i], "-d", "--display")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
-      if (strcmp (argv[i], "mda") == 0) {
-        dsp = 0;
-      }
-      else if (strcmp (argv[i], "cga") == 0) {
-        dsp = 1;
-      }
-      else {
-        printf ("%s: unknown display (%s)\n", argv[0], argv[i]);
-        return (1);
-      }
+      cfg = argv[i];
     }
     else {
       printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
@@ -1604,14 +1584,35 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
+  if (cfg == NULL) {
+    cfg = "pce.cfg";
+  }
+
+  ini = ini_read (cfg);
+  if (ini == NULL) {
+    printf ("%s: loading config file failed (%s)\n", argv[0], cfg);
+    return (1);
+  }
+
+  sct = ini_sct_find_sct (ini, "pc");
+  if (sct == NULL) {
+    printf ("%s: section pc not found\n", argv[0]);
+    return (1);
+  }
+
   for (i = 0; i < 256; i++) {
     ops_cnt[i] = 0;
   }
 
-  pc = pc_new (ramsize, dsp);
+  pc_log_set_fp (stdout);
+
+  pc = pc_new (sct);
+
   pc->cpu->opstat = &pc_opstat;
 
   e86_reset (pc->cpu);
+
+  pc_log_set_fp (stderr);
 
   do_cmd();
 

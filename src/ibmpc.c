@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc.c                                                *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.15 2003/04/21 19:14:18 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.16 2003/04/22 17:59:54 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -28,6 +28,9 @@
 #include <stdarg.h>
 
 #include <pce.h>
+
+
+static FILE *log_fp = NULL;
 
 
 void pc_load_bios (ibmpc_t *pc, char *fname);
@@ -40,25 +43,107 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 void pc_break (ibmpc_t *pc, unsigned char val);
 
 
+void pc_log_set_fp (FILE *fp)
+{
+  log_fp = fp;
+}
+
 void pc_log (ibmpc_t *pc, const char *str, ...)
 {
   va_list     va;
 
+  if (log_fp == NULL) {
+    log_fp = stdout;
+  }
+
   if (str != NULL) {
     va_start (va, str);
-    vfprintf (stderr, str, va);
+    vfprintf (log_fp, str, va);
     va_end (va);
   }
 
-  fflush (stderr);
+  fflush (log_fp);
 }
 
-void pc_setup_ppi (ibmpc_t *pc, unsigned ramsize)
+void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
+{
+  unsigned ram;
+
+  ram = ini_get_def_long (ini, "ram", 640);
+
+  pc_log (pc, "RAM: %uKB\n", ram);
+
+  pc->ram = mem_blk_new (0, 1024 * ram, 1);
+  mem_blk_init (pc->ram, 0x00);
+  mem_add_blk (pc->mem, pc->ram, 1);
+}
+
+void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t     *sct;
+  mem_blk_t     *rom;
+  FILE          *fp;
+  char          *fname;
+  unsigned long base, size;
+
+  sct = ini_sct_find_sct (ini, "rom");
+
+  while (sct != NULL) {
+    fname = ini_get_def_string (sct, "file", "default.rom");
+    base = ini_get_def_long (sct, "base", 0);
+    size = ini_get_def_long (sct, "size", 64 * 1024);
+
+    pc_log (pc, "ROM: %05X %04X %s\n", base, size, fname);
+
+    fp = fopen (fname, "rb");
+    if (fp == NULL) {
+      pc_log (pc, "loading rom failed (%s)\n", fname);
+    }
+    else {
+      rom = mem_blk_new (base, size, 1);
+      mem_blk_init (rom, 0x00);
+      mem_blk_set_ro (rom, 1);
+      mem_add_blk (pc->mem, rom, 1);
+
+      if (fread (rom->data, 1, size, fp) != size) {
+        pc_log (pc, "loading rom data failed (%s)\n", fname);
+      }
+
+      fclose (fp);
+    }
+
+    sct = ini_sct_find_next (sct, "rom");
+  }
+}
+
+void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
+{
+  pc->cpu = e86_new ();
+
+  pc->cpu->hook = &pc_e86_hook;
+  pc->cpu->mem = pc->mem;
+  pc->cpu->prt = pc->prt;
+  pc->cpu->ext = pc;
+
+  pc->cpu->mem_get_uint8 = (geta_uint8_f) &mem_get_uint8;
+  pc->cpu->mem_get_uint16 = (geta_uint16_f) &mem_get_uint16_le;
+  pc->cpu->mem_set_uint8 = (seta_uint8_f) &mem_set_uint8;
+  pc->cpu->mem_set_uint16 = (seta_uint16_f) &mem_set_uint16_le;
+
+  pc->cpu->prt_get_uint8 = (geta_uint8_f) &mem_get_uint8;
+  pc->cpu->prt_get_uint16 = (geta_uint16_f) &mem_get_uint16_le;
+  pc->cpu->prt_set_uint8 = (seta_uint8_f) &mem_set_uint8;
+  pc->cpu->prt_set_uint16 = (seta_uint16_f) &mem_set_uint16_le;
+}
+
+void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 {
   e8255_t   *ppi;
   mem_blk_t *blk;
+  unsigned  ram;
 
-  ramsize = ramsize / 32;
+  ram = ini_get_def_long (ini, "ram", 640);
+  ram = ram / 32;
 
   ppi = e8255_new();
   ppi->port[0].read_ext = pc;
@@ -71,26 +156,27 @@ void pc_setup_ppi (ibmpc_t *pc, unsigned ramsize)
 
   pc->ppi_port_a = 0x40 | 0x30 | 0x0c | 0x01;
   pc->ppi_port_b = 0;
-  pc->ppi_port_c[0] = (ramsize & 0x0f);
-  pc->ppi_port_c[1] = (ramsize >> 4) & 0x01;
+  pc->ppi_port_c[0] = (ram & 0x0f);
+  pc->ppi_port_c[1] = (ram >> 4) & 0x01;
 
   blk = mem_blk_new (0x60, 4, 0);
   blk->ext = ppi;
   blk->set_uint8 = (seta_uint8_f) &e8255_set_port8;
   blk->get_uint8 = (geta_uint8_f) &e8255_get_port8;
-  mem_add_blk (pc->prt, blk);
-  pc->ppi_prt = blk;
+  mem_add_blk (pc->prt, blk, 1);
 }
 
 void pc_setup_pic (ibmpc_t *pc)
 {
+  mem_blk_t *blk;
+
   pc->pic = e8259_new();
 
-  pc->pic_prt = mem_blk_new (0x20, 2, 0);
-  pc->pic_prt->ext = pc->pic;
-  pc->pic_prt->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
-  pc->pic_prt->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
-  mem_add_blk (pc->prt, pc->pic_prt);
+  blk = mem_blk_new (0x20, 2, 0);
+  blk->ext = pc->pic;
+  blk->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
+  blk->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
+  mem_add_blk (pc->prt, blk, 1);
 
   pc->pic->irq_ext = pc->cpu;
   pc->pic->irq = (set_uint8_f) &e86_irq;
@@ -111,8 +197,8 @@ void pc_setup_keyboard (ibmpc_t *pc)
 void pc_setup_mda (ibmpc_t *pc)
 {
   pc->mda = mda_new (stdout);
-  mem_add_blk (pc->mem, pc->mda->mem);
-  mem_add_blk (pc->prt, pc->mda->crtc);
+  mem_add_blk (pc->mem, pc->mda->mem, 0);
+  mem_add_blk (pc->prt, pc->mda->crtc, 0);
 
   pc->ppi_port_a &= ~0x30;
   pc->ppi_port_a |= 0x30;
@@ -121,44 +207,94 @@ void pc_setup_mda (ibmpc_t *pc)
 void pc_setup_cga (ibmpc_t *pc)
 {
   pc->cga = cga_new (stdout);
-  mem_add_blk (pc->mem, pc->cga->mem);
-  mem_add_blk (pc->prt, pc->cga->crtc);
+  mem_add_blk (pc->mem, pc->cga->mem, 0);
+  mem_add_blk (pc->prt, pc->cga->crtc, 0);
 
   pc->ppi_port_a &= ~0x30;
   pc->ppi_port_a |= 0x20;
 }
 
-void pc_setup_disks (ibmpc_t *pc)
+void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
-  disk_t  *dsk;
+  ini_sct_t * sct;
 
-  pc->dsk = dsks_new();
+  pc->mda = NULL;
+  pc->cga = NULL;
 
-  dsk = dsk_new (0);
-  if (dsk_set_mem (dsk, 80, 2, 18, "drive_a.img", 0)) {
-    pc_log (pc, "loading drive a failed\n");
-    dsk_del (dsk);
-  }
-  else {
-    dsks_add_disk (pc->dsk, dsk);
+  sct = ini_sct_find_sct (ini, "cga");
+  if (sct != NULL) {
+    pc_setup_cga (pc);
+    return;
   }
 
-  dsk = dsk_new (0x80);
-  if (dsk_set_hdimage (dsk, "drive_c.img", 0)) {
-    pc_log (pc, "loading drive c failed\n");
-    dsk_del (dsk);
-  }
-  else {
-    dsks_add_disk (pc->dsk, dsk);
+  sct = ini_sct_find_sct (ini, "mda");
+  if (sct != NULL) {
+    pc_setup_mda (pc);
+    return;
   }
 }
 
-ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
+void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
-  unsigned i;
-  ibmpc_t  *pc;
+  int       r;
+  ini_sct_t *sct;
+  disk_t    *dsk;
+  unsigned  drive;
+  unsigned  c, h, s;
+  int       ro;
+  char      *fname, *type;
 
-  ramsize = (ramsize + 31) & ~31;
+  pc->dsk = dsks_new();
+
+  sct = ini_sct_find_sct (ini, "disk");
+
+  while (sct != NULL) {
+    drive = ini_get_def_long (sct, "drive", 0);
+    type = ini_get_def_string (sct, "type", "image");
+    fname = ini_get_def_string (sct, "file", NULL);
+
+    c = ini_get_def_long (sct, "c", 80);
+    h = ini_get_def_long (sct, "h", 2);
+    s = ini_get_def_long (sct, "s", 18);
+
+    ro = ini_get_def_long (sct, "readonly", 0);
+
+    dsk = dsk_new (drive);
+
+    pc_log (pc, "disk: %s:%s %u/%u/%u ro=%d\n",
+      (fname != NULL) ? fname : "", type, c, h, s, ro
+    );
+
+    if (strcmp (type, "ram") == 0) {
+      r = dsk_set_mem (dsk, c, h, s, fname, ro);
+    }
+    else if (strcmp (type, "image") == 0) {
+      r = dsk_set_image (dsk, c, h, s, fname, ro);
+    }
+    else if (strcmp (type, "dosemu") == 0) {
+      r = dsk_set_hdimage (dsk, fname, ro);
+    }
+    else {
+      r = 1;
+    }
+
+    if (r) {
+      pc_log (pc, "loading drive %02X failed\n", drive);
+      dsk_del (dsk);
+      dsk = NULL;
+    }
+    else {
+      dsks_add_disk (pc->dsk, dsk);
+    }
+
+    sct = ini_sct_find_next (sct, "disk");
+  }
+}
+
+ibmpc_t *pc_new (ini_sct_t *ini)
+{
+  unsigned  i;
+  ibmpc_t   *pc;
 
   pc = (ibmpc_t *) malloc (sizeof (ibmpc_t));
   if (pc == NULL) {
@@ -166,7 +302,6 @@ ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
   }
 
   pc->brk = 0;
-
   pc->clk_cnt = 0;
 
   for (i = 0; i < 4; i++) {
@@ -174,50 +309,18 @@ ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
   }
 
   pc->mem = mem_new();
-  pc->ram = mem_blk_new (0, 1024 * ramsize, 1);
-  mem_blk_init (pc->ram, 0x00);
-  mem_add_blk (pc->mem, pc->ram);
-
-  pc->bios = mem_blk_new (0xf0000, 64 * 1024, 1);
-  mem_blk_init (pc->bios, 0x00);
-  mem_blk_set_ro (pc->bios, 1);
-  mem_add_blk (pc->mem, pc->bios);
-  pc_load_bios (pc, "ibmpc.rom");
 
   pc->prt = mem_new();
   pc->prt->def_val = 0xff;
 
-  pc->cpu = e86_new ();
-  pc->cpu->hook = &pc_e86_hook;
-  pc->cpu->mem = pc->mem;
-  pc->cpu->prt = pc->prt;
-  pc->cpu->ext = pc;
-  pc->cpu->mem_get_uint8 = &mem_get_uint8;
-  pc->cpu->mem_get_uint16 = &mem_get_uint16_le;
-  pc->cpu->mem_set_uint8 = &mem_set_uint8;
-  pc->cpu->mem_set_uint16 = &mem_set_uint16_le;
-  pc->cpu->prt_get_uint8 = &mem_get_uint8;
-  pc->cpu->prt_get_uint16 = &mem_get_uint16_le;
-  pc->cpu->prt_set_uint8 = &mem_set_uint8;
-  pc->cpu->prt_set_uint16 = &mem_set_uint16_le;
-
-  pc_setup_ppi (pc, ramsize);
-
+  pc_setup_ram (pc, ini);
+  pc_setup_rom (pc, ini);
+  pc_setup_cpu (pc, ini);
+  pc_setup_ppi (pc, ini);
   pc_setup_pic (pc);
-
   pc_setup_keyboard (pc);
-
-  pc->mda = NULL;
-  pc->cga = NULL;
-
-  if (dsp == 0) {
-    pc_setup_mda (pc);
-  }
-  else {
-    pc_setup_cga (pc);
-  }
-
-  pc_setup_disks (pc);
+  pc_setup_video (pc, ini);
+  pc_setup_disks (pc, ini);
 
   return (pc);
 }
@@ -237,16 +340,11 @@ void pc_del (ibmpc_t *pc)
   e86_del (pc->cpu);
 
   e8259_del (pc->pic);
-  mem_blk_del (pc->pic_prt);
 
   e8255_del (pc->ppi);
-  mem_blk_del (pc->ppi_prt);
 
   mem_del (pc->mem);
   mem_del (pc->prt);
-
-  mem_blk_del (pc->ram);
-  mem_blk_del (pc->bios);
 
   free (pc);
 }
@@ -385,19 +483,4 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 {
   pc->ppi_port_b = val;
-}
-
-void pc_load_bios (ibmpc_t *pc, char *fname)
-{
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    fprintf (stderr, "loading bios failed (fopen)\n");
-    return;
-  }
-
-  if (fread (pc->bios->data, 1, 64 * 1024, fp) != (64 * 1024)) {
-    fprintf (stderr, "loading bios failed\n");
-  }
 }
