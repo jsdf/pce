@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.18 2003/08/29 21:15:08 hampa Exp $ */
+/* $Id: pce.c,v 1.19 2003/08/29 21:35:58 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -50,6 +50,7 @@ typedef struct breakpoint_t {
 } breakpoint_t;
 
 
+int                       par_verbose = 0;
 char                      *par_terminal = NULL;
 char                      *par_video = NULL;
 unsigned                  par_boot = 128;
@@ -83,6 +84,7 @@ void prt_help (void)
     "usage: pce [options]\n"
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
+    "  -v, --verbose          Verbose operation\n"
     "  -c, --config string    Set the config file\n"
     "  -l, --log string       Set the log file\n"
     "  -t, --terminal string  Set terminal\n"
@@ -1572,7 +1574,7 @@ ini_sct_t *pce_load_config (const char *fname)
   if (fname != NULL) {
     ini = ini_read (fname);
     if (ini != NULL) {
-      printf ("using config file '%s'\n", fname);
+      pce_log (MSG_INF, "pce:\tusing config file '%s'\n", fname);
       return (ini);
     }
   }
@@ -1582,14 +1584,14 @@ ini_sct_t *pce_load_config (const char *fname)
     sprintf (buf, "%s/.pce.cfg", home);
     ini = ini_read (buf);
     if (ini != NULL) {
-      printf ("using config file '%s'\n", buf);
+      pce_log (MSG_INF, "pce:\tusing config file '%s'\n", buf);
       return (ini);
     }
   }
 
   ini = ini_read (PCE_DIR_ETC "/pce.cfg");
   if (ini != NULL) {
-    printf ("using config file '" PCE_DIR_ETC "/pce.cfg'\n");
+    pce_log (MSG_INF, "pce:\tusing config file '" PCE_DIR_ETC "/pce.cfg'\n");
     return (ini);
   }
 
@@ -1640,11 +1642,14 @@ int main (int argc, char *argv[])
   run = 0;
 
   pce_log_set_fp (NULL, 0);
-  pce_log_set_stderr (1);
+  pce_log_set_stderr (0);
 
   i = 1;
   while (i < argc) {
-    if (str_isarg2 (argv[i], "-c", "--config")) {
+    if (str_isarg2 (argv[i], "-v", "--verbose")) {
+      par_verbose = 1;
+    }
+    else if (str_isarg2 (argv[i], "-c", "--config")) {
       i += 1;
       if (i >= argc) {
         return (1);
@@ -1701,6 +1706,10 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
+  if (par_verbose) {
+    pce_log_set_stderr (1);
+  }
+
   pce_log (MSG_INF,
     "pce version " PCE_VERSION_STR
     " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
@@ -1725,8 +1734,6 @@ int main (int argc, char *argv[])
   pc->cpu->op_undef = &pce_op_undef;
 
   e86_reset (pc->cpu);
-
-  pce_log_set_stderr (0);
 
   signal (SIGINT, &sig_int);
 

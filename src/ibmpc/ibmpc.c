@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.21 2003/08/29 21:15:08 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.22 2003/08/29 21:35:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -63,7 +63,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
       size *= 1024;
     }
 
-    pce_log (MSG_INF, "RAM: base=0x%05x size=%lu file=%s\n",
+    pce_log (MSG_INF, "RAM:\tbase=0x%05x size=%lu file=%s\n",
       base, size, (fname == NULL) ? "<>" : fname
     );
 
@@ -109,7 +109,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_ulng (sct, "base", &base, 0);
     ini_get_ulng (sct, "size", &size, 64 * 1024);
 
-    pce_log (MSG_INF, "ROM: base=0x%05x size=%lu file=%s\n", base, size, fname);
+    pce_log (MSG_INF, "ROM:\tbase=0x%05x size=%lu file=%s\n", base, size, fname);
 
     fp = fopen (fname, "rb");
     if (fp == NULL) {
@@ -146,7 +146,7 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
     model = par_cpu;
   }
 
-  pce_log (MSG_INF, "cpu: model=%s\n", model);
+  pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
 
   pc->cpu = e86_new ();
 
@@ -292,7 +292,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_string (sct, "driver", &driver, "vt100");
   }
 
-  pce_log (MSG_INF, "terminal: driver=%s\n", driver);
+  pce_log (MSG_INF, "term:\tdriver=%s\n", driver);
 
   if (strcmp (driver, "x11") == 0) {
 #ifdef PCE_X11_USE
@@ -326,7 +326,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_mda (ibmpc_t *pc)
 {
-  pce_log (MSG_INF, "video: MDA\n");
+  pce_log (MSG_INF, "video:\tMDA\n");
 
   pc->mda = mda_new (pc->trm);
   mem_add_blk (pc->mem, mda_get_mem (pc->mda), 0);
@@ -338,7 +338,7 @@ void pc_setup_mda (ibmpc_t *pc)
 
 void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *ini)
 {
-  pce_log (MSG_INF, "video: HGC\n");
+  pce_log (MSG_INF, "video:\tHGC\n");
 
   pc->hgc = hgc_new (pc->trm, ini);
   mem_add_blk (pc->mem, hgc_get_mem (pc->hgc), 0);
@@ -350,7 +350,7 @@ void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_cga (ibmpc_t *pc)
 {
-  pce_log (MSG_INF, "video: CGA\n");
+  pce_log (MSG_INF, "video:\tCGA\n");
 
   pc->cga = cga_new (pc->trm);
   mem_add_blk (pc->mem, pc->cga->mem, 0);
@@ -436,11 +436,6 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     dsk = dsk_new (drive);
 
-    pce_log (MSG_INF, "disk: drive=%u file=%s type=%s chs=%u/%u/%u ro=%d\n",
-      drive,
-      (fname != NULL) ? fname : "<>", type, c, h, s, ro
-    );
-
     if (strcmp (type, "ram") == 0) {
       r = dsk_set_mem (dsk, c, h, s, fname, ro);
     }
@@ -460,6 +455,12 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       dsk = NULL;
     }
     else {
+      pce_log (MSG_INF, "disk:\tdrive=%u type=%s chs=%u/%u/%u ro=%d file=%s\n",
+        drive, type,
+        dsk->geom.c, dsk->geom.h, dsk->geom.s, ro,
+        (fname != NULL) ? fname : "<>"
+      );
+
       dsks_add_disk (pc->dsk, dsk);
     }
 
@@ -480,7 +481,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
   ini_get_uint (sct, "base", &base, 0x03f8);
   ini_get_uint (sct, "irq", &irq, 4);
 
-  pce_log (MSG_INF, "mouse: base=%04x irq=%u\n", base, irq);
+  pce_log (MSG_INF, "mouse:\tbase=%04x irq=%u\n", base, irq);
 
   pc->mse = mse_new (base);
   pc->mse->intr_ext = pc->pic;
@@ -511,7 +512,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_uint (sct, "base", &base, defbase[i]);
     ini_get_string (sct, "file", &fname, NULL);
 
-    pce_log (MSG_INF, "parport: base=%04X file=%s\n",
+    pce_log (MSG_INF, "LPT:\tbase=%04X file=%s\n",
       base, (fname == NULL) ? "<none>" : fname
     );
 

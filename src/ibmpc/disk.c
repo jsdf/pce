@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.5 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: disk.c,v 1.6 2003/08/29 21:35:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -155,10 +155,6 @@ int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s,
 
   dsk->readonly = ro;
 
-  pce_log (MSG_DEB, "drive %u: image %s c=%u h=%u s=%u b=%lu\n",
-    dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
-  );
-
   return (0);
 }
 
@@ -194,10 +190,6 @@ int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
   dsk->blocks = dsk->geom.c * dsk->geom.h * dsk->geom.s;
 
   dsk->readonly = ro;
-
-  pce_log (MSG_DEB, "drive %u: hdimage %s c=%u h=%u s=%u b=%lu\n",
-    dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
-  );
 
   dsk->fp = fp;
   dsk->fp_close = 1;
