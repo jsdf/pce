@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/cga.c                                          *
+ * File name:     cga.c                                                      *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
+/* $Id: cga.c,v 1.2 2003/11/16 05:05:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -54,9 +54,9 @@ struct {  unsigned short r, g, b; } cga_col[16] = {
 
 video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 {
-  unsigned i;
-  unsigned iobase, membase, memsize;
-  cga_t    *cga;
+  unsigned      i;
+  unsigned long iobase, membase, memsize;
+  cga_t         *cga;
 
   cga = (cga_t *) malloc (sizeof (cga_t));
   if (cga == NULL) {
@@ -84,9 +84,9 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   ini_get_uint (sct, "mode_640x200_w", &cga->mode2_w, 640);
   ini_get_uint (sct, "mode_640x200_h", &cga->mode2_h, 400);
 
-  ini_get_uint (sct, "io", &iobase, 0x3d4);
-  ini_get_uint (sct, "membase", &membase, 0xb8000);
-  ini_get_uint (sct, "memsize", &memsize, 16384);
+  ini_get_ulng (sct, "io", &iobase, 0x3d4);
+  ini_get_ulng (sct, "membase", &membase, 0xb8000);
+  ini_get_ulng (sct, "memsize", &memsize, 16384);
 
   memsize = (memsize < 16384) ? 16384 : memsize;
 
