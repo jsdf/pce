@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.12 2003/08/19 00:53:40 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.13 2003/08/19 01:32:04 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -42,15 +42,56 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
 void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 {
-  unsigned ram;
+  ini_sct_t     *sct;
+  mem_blk_t     *ram;
+  FILE          *fp;
+  char          *fname;
+  unsigned long base, size;
 
-  ini_get_uint (ini, "ram", &ram, 640);
+  pc->ram = NULL;
 
-  pce_log (0, "RAM: %uKB\n", ram);
+  sct = ini_sct_find_sct (ini, "ram");
 
-  pc->ram = mem_blk_new (0, 1024 * ram, 1);
-  mem_blk_init (pc->ram, 0x00);
-  mem_add_blk (pc->mem, pc->ram, 1);
+  while (sct != NULL) {
+    ini_get_string (sct, "file", &fname, NULL);
+    ini_get_ulng (sct, "base", &base, 0);
+
+    if (ini_get_ulng (sct, "sizek", &size, 640)) {
+      ini_get_ulng (sct, "size", &size, 640 * 1024);
+    }
+    else {
+      size *= 1024;
+    }
+
+    pce_log (MSG_INF, "RAM: base=0x%05x size=%lu file=%s\n",
+      base, size, (fname == NULL) ? "<>" : fname
+    );
+
+    ram = mem_blk_new (base, size, 1);
+    mem_blk_init (ram, 0x00);
+    mem_blk_set_ro (ram, 0);
+    mem_add_blk (pc->mem, ram, 1);
+
+    if (base == 0) {
+      pc->ram = ram;
+    }
+
+    if (fname != NULL) {
+      fp = fopen (fname, "rb");
+      if (fp == NULL) {
+        pce_log (0, "loading ram failed (%s)\n", fname);
+      }
+      else {
+        if (fread (ram->data, 1, size, fp) != size) {
+          pce_log (MSG_ERR, "loading ram data failed (%s)\n", fname);
+        }
+      }
+
+      fclose (fp);
+    }
+
+    sct = ini_sct_find_next (sct, "ram");
+  }
 }
 
 void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
@@ -68,7 +109,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_ulng (sct, "base", &base, 0);
     ini_get_ulng (sct, "size", &size, 64 * 1024);
 
-    pce_log (0, "ROM: %05X %04X %s\n", base, size, fname);
+    pce_log (MSG_INF, "ROM: base=0x%05x size=%lu file=%s\n", base, size, fname);
 
     fp = fopen (fname, "rb");
     if (fp == NULL) {
@@ -81,7 +122,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
       mem_add_blk (pc->mem, rom, 1);
 
       if (fread (rom->data, 1, size, fp) != size) {
-        pce_log (0, "loading rom data failed (%s)\n", fname);
+        pce_log (MSG_ERR, "loading rom data failed (%s)\n", fname);
       }
 
       fclose (fp);
@@ -109,7 +150,12 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
     (e86_set_uint16_f) &mem_set_uint16_le
   );
 
-  e86_set_ram (pc->cpu, pc->ram->data, pc->ram->size);
+  if (pc->ram != NULL) {
+    e86_set_ram (pc->cpu, pc->ram->data, pc->ram->size);
+  }
+  else {
+    e86_set_ram (pc->cpu, NULL, 0);
+  }
 
   pc->cpu->op_ext = pc;
   pc->cpu->op_hook = &pc_e86_hook;
