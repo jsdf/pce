@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.13 2003/09/08 17:16:59 hampa Exp $
+; $Id: pce.asm,v 1.14 2003/09/13 18:28:26 hampa Exp $
 
 
 %include "config.inc"
@@ -51,7 +51,7 @@ start:
 
   sti
 
-  call    init_rom
+;  call    init_rom
   call    init_video
   call    init_mem
   call    init_misc
@@ -128,13 +128,13 @@ init_int:
   stosw
   loop    .next
 
-  mov     ax, [es:4 * 0x10]
-  mov     [es:4 * 0x42], ax
-  mov     ax, [es:4 * 0x10 + 2]
-  mov     [es:4 * 0x42 + 2], ax
+;  mov     ax, [es:4 * 0x10]
+;  mov     [es:4 * 0x42], ax
+;  mov     ax, [es:4 * 0x10 + 2]
+;  mov     [es:4 * 0x42 + 2], ax
 
-  mov     word [es:4 * 0x10], 0x07bd
-  mov     word [es:4 * 0x10 + 2], 0xc000
+;  mov     word [es:4 * 0x10], 0x07bd
+;  mov     word [es:4 * 0x10 + 2], 0xc000
 
   pop     ds
   pop     es
