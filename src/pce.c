@@ -20,11 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.7 2003/04/19 02:02:31 hampa Exp $ */
+/* $Id: pce.c,v 1.8 2003/04/19 02:41:52 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "pce.h"
 #include "ibmpc.h"
@@ -121,6 +122,10 @@ char *str_rtrim (char *str)
 void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
 {
   ops_cnt[op1 & 0xff] += 1;
+
+  if ((op1 == 0xcd) && (op2 == 0x28)) {
+    usleep (10000);
+  }
 }
 
 void cmd_get (cmd_t *cmd)
