@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.h                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -91,6 +91,12 @@ typedef struct e8259_s {
 
   /* select irr or isr for reading */
   int           read_irr;
+
+  /* highest priority irq */
+  unsigned      priority;
+
+  /* rotate on automatic EOI mode */
+  int           rot_on_aeoi;
 
   /* interrupt counts */
   unsigned long irq_cnt[8];

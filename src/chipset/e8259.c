@@ -59,6 +59,10 @@ void e8259_init (e8259_t *pic)
 
   pic->irq_inp = 0x00;
 
+  pic->priority = 0;
+
+  pic->rot_on_aeoi = 0;
+
   for (i = 0; i < 8; i++) {
     pic->irq_cnt[i] = 0;
   }
@@ -201,38 +205,58 @@ void e8259_set_irq7 (e8259_t *pic, unsigned char val)
   e8259_set_irq (pic, 7, val != 0);
 }
 
+static
+unsigned e8259_get_priority (e8259_t *pic, unsigned char val)
+{
+  unsigned ret, msk;
+
+  if (val == 0) {
+    return (16);
+  }
+
+  msk = (val << 8) | val;
+  ret = pic->priority & 7;
+
+  while ((msk & (1 << ret)) == 0) {
+    ret += 1;
+  }
+
+  return (ret);
+}
+
 unsigned char e8259_inta (e8259_t *pic)
 {
-  unsigned char irr, irq;
+  unsigned      irrp;
+  unsigned char irrb;
 
   e8259_set_int (pic, 0);
 
   /* highest priority interrupt */
-  irr = pic->irr & ~pic->imr;
-  irr = irr ^ (irr & (irr - 1));
+  irrp = e8259_get_priority (pic, pic->irr & ~pic->imr);
 
-  if (irr == 0) {
+  if (irrp >= 16) {
     /* should not happen */
     fprintf (stderr, "e8259: INTA without IRQ\n");
     return (pic->base + 7);
   }
 
-  pic->irr &= ~irr;
+  irrp &= 7;
+  irrb = 1 << irrp;
 
-  if ((pic->icw[3] & E8259_ICW4_AEOI) == 0) {
-    /* no automatic EOI */
-    pic->isr |= irr;
+  pic->irr &= ~irrb;
+
+  if (pic->icw[3] & E8259_ICW4_AEOI) {
+    if (pic->rot_on_aeoi) {
+      pic->priority = (irrp + 1) & 7;
+    }
+  }
+  else {
+    pic->isr |= irrb;
   }
 
-  irq = 0;
-  while ((irr & 1) == 0) {
-    irr = irr >> 1;
-    irq += 1;
-  }
+  pic->irq_cnt[irrp] += 1;
 
-  pic->irq_cnt[irq] += 1;
-
-  return (pic->base + irq);
+  return (pic->base + irrp);
 }
 
 unsigned char e8259_get_irr (e8259_t *pic)
@@ -287,6 +311,9 @@ void e8259_set_icw1 (e8259_t *pic, unsigned char val)
   pic->next_icw = 1;
   pic->read_irr = 1;
 
+  pic->priority = 0;
+  pic->rot_on_aeoi = 0;
+
   pic->irr = 0x00;
   pic->imr = 0xff;
   pic->isr = 0x00;
@@ -337,18 +364,50 @@ void e8259_set_ocw1 (e8259_t *pic, unsigned char val)
 static
 void e8259_set_ocw2 (e8259_t *pic, unsigned char val)
 {
+  unsigned      isrp;
+  unsigned char isrb;
+
   pic->ocw[1] = val;
 
-  switch (val & 0xf9) {
-    case 0x20: /* non-specific EOI */
-      pic->isr &= (pic->isr - 1);
+  isrp = e8259_get_priority (pic, pic->isr);
+  isrb = 1 << (isrp & 7);
+
+  switch ((val >> 5) & 7) {
+    case 0x00: /* rotate in AEOI mode clear */
+      pic->rot_on_aeoi = 0;
       break;
 
-    case 0x40: /* no operation */
+    case 0x01: /* non-specific EOI */
+      if (isrp < 16) {
+        pic->isr &= ~isrb;
+      }
       break;
 
-    case 0x60: /* specific EOI */
+    case 0x02: /* no operation */
+      break;
+
+    case 0x03: /* specific EOI */
       pic->isr &= ~(1 << (val & 7));
+      break;
+
+    case 0x04: /* rotate in AEOI mode set */
+      pic->rot_on_aeoi = 1;
+      break;
+
+    case 0x05: /* rotate on non-specific EOI */
+      if (isrp < 16) {
+        pic->isr &= ~isrb;
+        pic->priority = (isrp + 1) & 7;
+      }
+      break;
+
+    case 0x06: /* set priority */
+      pic->priority = ((val + 1) & 7);
+      break;
+
+    case 0x07: /* rotate on specific EOI */
+      pic->isr &= ~(1 << (val & 7));
+      pic->priority = ((val + 1) & 7);
       break;
   }
 }
@@ -364,6 +423,16 @@ void e8259_set_ocw3 (e8259_t *pic, unsigned char val)
     }
     else {
       pic->read_irr = 1;
+    }
+  }
+
+  if (val & E8259_OCW3_P) {
+    fprintf (stderr, "e8259: poll command\n");
+  }
+
+  if (val & E8259_OCW3_ESMM) {
+    if (val & E8259_OCW3_SMM) {
+      fprintf (stderr, "e8259: special mask mode enabled\n");
     }
   }
 }
@@ -429,19 +498,16 @@ unsigned long e8259_get_uint32 (e8259_t *pic, unsigned long addr)
 
 void e8259_clock (e8259_t *pic)
 {
-  unsigned char irr, isr;
+  unsigned irrp, isrp;
 
   if (pic->irr == 0) {
     return;
   }
 
-  irr = pic->irr & ~pic->imr;
-  isr = pic->isr & ~pic->isr;
+  irrp = e8259_get_priority (pic, pic->irr & ~pic->imr);
+  isrp = e8259_get_priority (pic, pic->isr & ~pic->imr);
 
-  irr = irr ^ (irr & (irr - 1));
-  isr = isr ^ (isr & (isr - 1));
-
-  if ((irr != 0) && ((isr == 0) || (irr < isr))) {
+  if (irrp < isrp) {
     e8259_set_int (pic, 1);
   }
 }
