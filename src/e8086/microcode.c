@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     microcode.c                                                *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: microcode.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #include <pce.h>
@@ -37,6 +37,8 @@ static inline
 void e86_push (e8086_t *c, unsigned short val)
 {
   c->dreg[E86_REG_SP] -= 2;
+  c->dreg[E86_REG_SP] &= 0xffff;
+
   e86_set_mem16 (c, c->sreg[E86_REG_SS], c->dreg[E86_REG_SP], val);
 }
 
@@ -44,6 +46,7 @@ static inline
 unsigned short e86_pop (e8086_t *c)
 {
   c->dreg[E86_REG_SP] += 2;
+  c->dreg[E86_REG_SP] &= 0xffff;
 
   return (e86_get_mem16 (c, c->sreg[E86_REG_SS], c->dreg[E86_REG_SP] - 2));
 }
@@ -972,6 +975,34 @@ unsigned op_2e (e8086_t *c)
 }
 
 /* OP 2F: DAS */
+static
+unsigned op_2f (e8086_t *c)
+{
+  unsigned al;
+
+  al = c->dreg[E86_REG_AX] & 0xff;
+
+  if (((al & 0x0f) > 9) || e86_get_flg (c, E86_FLG_A)) {
+    al -= 6;
+    c->flg |= E86_FLG_A;
+  }
+  else {
+    c->flg &= ~E86_FLG_A;
+  }
+
+  if ((al > 0x9f) || e86_get_cf (c)) {
+    al -= 0x60;
+    c->flg |= E86_FLG_C;
+  }
+  else {
+    c->flg &= ~E86_FLG_C;
+  }
+
+  c->dreg[E86_REG_AX] &= 0xff00;
+  c->dreg[E86_REG_AX] |= (al & 0xff);
+
+  return (1);
+}
 
 /* OP 30: XOR r/m8, reg8 */
 static
@@ -1110,6 +1141,27 @@ unsigned op_36 (e8086_t *c)
 }
 
 /* OP 37: AAA */
+static
+unsigned op_37 (e8086_t *c)
+{
+  unsigned ah, al;
+
+  al = c->dreg[E86_REG_AX] & 0xff;
+  ah = c->dreg[E86_REG_AX] >> 8;
+
+  if (((al & 0x0f) > 9) || e86_get_flg (c, E86_FLG_A)) {
+    al += 6;
+    ah += 1;
+    c->flg |= (E86_FLG_A | E86_FLG_C);
+  }
+  else {
+    c->flg &= ~(E86_FLG_A | E86_FLG_C);
+  }
+
+  c->dreg[E86_REG_AX] &= ((ah & 0xff) << 8) | (al & 0x0f);
+
+  return (1);
+}
 
 /* OP 38: CMP r/m8, reg8 */
 static
@@ -1232,6 +1284,27 @@ unsigned op_3e (e8086_t *c)
 }
 
 /* OP 3F: AAS */
+static
+unsigned op_3f (e8086_t *c)
+{
+  unsigned ah, al;
+
+  al = c->dreg[E86_REG_AX] & 0xff;
+  ah = c->dreg[E86_REG_AX] >> 8;
+
+  if (((al & 0x0f) > 9) || e86_get_flg (c, E86_FLG_A)) {
+    al -= 6;
+    ah -= 1;
+    c->flg |= (E86_FLG_A | E86_FLG_C);
+  }
+  else {
+    c->flg &= ~(E86_FLG_A | E86_FLG_C);
+  }
+
+  c->dreg[E86_REG_AX] &= ((ah & 0xff) << 8) | (al & 0x0f);
+
+  return (1);
+}
 
 /* OP 4x: INC reg16 */
 static
@@ -2581,6 +2654,10 @@ unsigned op_aa (e8086_t *c)
     fprintf (stderr, "stosb with repn\n");
   }
 
+  if (c->prefix & E86_PREFIX_SEG) {
+    fprintf (stderr, "stosb with seg\n");
+  }
+
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     while (c->dreg[E86_REG_CX] > 0) {
       e86_set_mem8 (c, c->sreg[E86_REG_ES], c->dreg[E86_REG_DI],
@@ -2610,6 +2687,10 @@ unsigned op_ab (e8086_t *c)
 
   if (c->prefix & E86_PREFIX_REPN) {
     fprintf (stderr, "stosw with repn\n");
+  }
+
+  if (c->prefix & E86_PREFIX_SEG) {
+    fprintf (stderr, "stosw with seg\n");
   }
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
@@ -2685,6 +2766,10 @@ unsigned op_ae (e8086_t *c)
   unsigned short inc;
   int            z;
 
+  if (c->prefix & E86_PREFIX_SEG) {
+    fprintf (stderr, "scasb with seg\n");
+  }
+
   seg = c->sreg[E86_REG_ES];
 
   inc = e86_get_flg (c, E86_FLG_D) ? 0xffff : 0x0001;
@@ -2727,6 +2812,9 @@ unsigned op_af (e8086_t *c)
   unsigned short inc;
   int            z;
 
+  if (c->prefix & E86_PREFIX_SEG) {
+    fprintf (stderr, "scasw with seg\n");
+  }
   seg = c->sreg[E86_REG_ES];
 
   inc = e86_get_flg (c, E86_FLG_D) ? 0xfffe : 0x0002;
@@ -2989,6 +3077,7 @@ unsigned op_ca (e8086_t *c)
   c->ip = e86_pop (c);
   c->sreg[E86_REG_CS] = e86_pop (c);
   c->dreg[E86_REG_SP] += e86_mk_uint16 (c->pq[1], c->pq[2]);
+  c->dreg[E86_REG_SP] &= 0xffff;
 
   return (0);
 }
@@ -3130,12 +3219,12 @@ unsigned op_d1 (e8086_t *c)
 
     case 1: /* ROR r/m16, 1 */
       d = (s >> 1) | (s << 15);
-      e86_set_cf (c, d & 0x8000);
+      e86_set_cf (c, s & 1);
       break;
 
     case 2: /* RCL r/m16, 1 */
       d = (s << 1) | e86_get_cf (c);
-      e86_set_cf (c, d & 0x10000);
+      e86_set_cf (c, s & 0x8000);
       break;
 
     case 3: /* RCR r/m16, 1 */
@@ -3155,7 +3244,7 @@ unsigned op_d1 (e8086_t *c)
       e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
       break;
 
-    case 7: /* SAR r/m8, 1 */
+    case 7: /* SAR r/m16, 1 */
       d = (s & 0x8000) ? ((s >> 1) | 0x8000) : (s >> 1);
       e86_set_cf (c, s & 1);
       e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
@@ -3233,7 +3322,7 @@ unsigned op_d2 (e8086_t *c)
       s |= (s & 0x80) ? 0xff00 : 0x0000;
       d = s >> ((cnt >= 8) ? 7 : (cnt - 1));
       e86_set_cf (c, d & 1);
-      d = d >> 1;
+      d = (d >> 1) & 0xff;
       e86_set_flags8 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
       break;
 
@@ -3281,7 +3370,7 @@ unsigned op_d3 (e8086_t *c)
       break;
 
     case 2: /* RCL r/m16, CL */
-      s |= e86_get_cf (c) << 8;
+      s |= e86_get_cf (c) << 16;
       d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
       break;
@@ -3310,7 +3399,7 @@ unsigned op_d3 (e8086_t *c)
       s |= (s & 0x8000) ? 0xffff0000 : 0x00000000;
       d = s >> ((cnt >= 16) ? 15 : (cnt - 1));
       e86_set_cf (c, d & 1);
-      d = d >> 1;
+      d = (d >> 1) & 0xffff;
       e86_set_flags16 (c, E86_FLG_Z | E86_FLG_P | E86_FLG_S, d, s);
       break;
 
@@ -3443,8 +3532,12 @@ unsigned op_e3 (e8086_t *c)
 static
 unsigned op_e4 (e8086_t *c)
 {
+  unsigned short val;
+
+  val = e86_get_prt8 (c, c->pq[1]);
+
   c->dreg[E86_REG_AX] &= 0xff00;
-  c->dreg[E86_REG_AX] |= e86_get_prt8 (c, c->pq[1]);
+  c->dreg[E86_REG_AX] |= val & 0xff;
 
   c->delay += 8;
 
@@ -4214,9 +4307,9 @@ e86_opcode_f e86_opcodes[256] = {
   &op_10, &op_11, &op_12, &op_13, &op_14, &op_15, &op_16, &op_17,
   &op_18, &op_19, &op_1a, &op_1b, &op_1c, &op_1d, &op_1e, &op_1f,
   &op_20, &op_21, &op_22, &op_23, &op_24, &op_25, &op_26, &op_27, /* 20 */
-  &op_28, &op_29, &op_2a, &op_2b, &op_2c, &op_2d, &op_2e, &op_ud,
-  &op_30, &op_31, &op_32, &op_33, &op_34, &op_35, &op_36, &op_ud, /* 30 */
-  &op_38, &op_39, &op_3a, &op_3b, &op_3c, &op_3d, &op_3e, &op_ud,
+  &op_28, &op_29, &op_2a, &op_2b, &op_2c, &op_2d, &op_2e, &op_2f,
+  &op_30, &op_31, &op_32, &op_33, &op_34, &op_35, &op_36, &op_37, /* 30 */
+  &op_38, &op_39, &op_3a, &op_3b, &op_3c, &op_3d, &op_3e, &op_3f,
   &op_40, &op_40, &op_40, &op_40, &op_40, &op_40, &op_40, &op_40, /* 40 */
   &op_48, &op_48, &op_48, &op_48, &op_48, &op_48, &op_48, &op_48,
   &op_50, &op_50, &op_50, &op_50, &op_50, &op_50, &op_50, &op_50, /* 50 */

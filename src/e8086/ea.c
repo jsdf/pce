@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ea.c                                                       *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ea.c,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: ea.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #include <pce.h>
@@ -336,6 +336,8 @@ void e86_get_ea_ptr (e8086_t *c, unsigned char *ea)
   fea = (ea[0] & 7) | ((ea[0] & 0xc0) >> 3);
 
   e86_ea[fea] (c);
+
+  c->ea.ofs &= 0xffff;
 
   if (c->prefix & E86_PREFIX_SEG) {
     c->ea.seg = c->seg_override;

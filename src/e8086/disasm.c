@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     disasm.c                                                   *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: disasm.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #include <string.h>
@@ -55,30 +55,30 @@ typedef struct {
 
 static
 d_tab_ea_t d_tab_ea8[32] = {
-  { 1, "[BYTE BX + SI]" },
-  { 1, "[BYTE BX + DI]" },
-  { 1, "[BYTE BP + SI]" },
-  { 1, "[BYTE BP + DI]" },
-  { 1, "[BYTE SI]" },
-  { 1, "[BYTE DI]" },
-  { 3, "[BYTE %02X%02X]" },
-  { 1, "[BYTE BX]" },
-  { 2, "[BYTE BX + SI + %02X]" },
-  { 2, "[BYTE BX + DI + %02X]" },
-  { 2, "[BYTE BP + SI + %02X]" },
-  { 2, "[BYTE BP + DI + %02X]" },
-  { 2, "[BYTE SI + %02X]" },
-  { 2, "[BYTE DI + %02X]" },
-  { 2, "[BYTE BP + %02X]" },
-  { 2, "[BYTE BX + %02X]" },
-  { 3, "[BYTE BX + SI + %02X%02X]" },
-  { 3, "[BYTE BX + DI + %02X%02X]" },
-  { 3, "[BYTE BP + SI + %02X%02X]" },
-  { 3, "[BYTE BP + DI + %02X%02X]" },
-  { 3, "[BYTE SI + %02X%02X]" },
-  { 3, "[BYTE DI + %02X%02X]" },
-  { 3, "[BYTE BP + %02X%02X]" },
-  { 3, "[BYTE BX + %02X%02X]" },
+  { 1, "BYTE [BX + SI]" },
+  { 1, "BYTE [BX + DI]" },
+  { 1, "BYTE [BP + SI]" },
+  { 1, "BYTE [BP + DI]" },
+  { 1, "BYTE [SI]" },
+  { 1, "BYTE [DI]" },
+  { 3, "BYTE [%02X%02X]" },
+  { 1, "BYTE [BX]" },
+  { 2, "BYTE [BX + SI + %02X]" },
+  { 2, "BYTE [BX + DI + %02X]" },
+  { 2, "BYTE [BP + SI + %02X]" },
+  { 2, "BYTE [BP + DI + %02X]" },
+  { 2, "BYTE [SI + %02X]" },
+  { 2, "BYTE [DI + %02X]" },
+  { 2, "BYTE [BP + %02X]" },
+  { 2, "BYTE [BX + %02X]" },
+  { 3, "BYTE [BX + SI + %02X%02X]" },
+  { 3, "BYTE [BX + DI + %02X%02X]" },
+  { 3, "BYTE [BP + SI + %02X%02X]" },
+  { 3, "BYTE [BP + DI + %02X%02X]" },
+  { 3, "BYTE [SI + %02X%02X]" },
+  { 3, "BYTE [DI + %02X%02X]" },
+  { 3, "BYTE [BP + %02X%02X]" },
+  { 3, "BYTE [BX + %02X%02X]" },
   { 1, "AL" },
   { 1, "CL" },
   { 1, "DL" },
@@ -91,30 +91,30 @@ d_tab_ea_t d_tab_ea8[32] = {
 
 static
 d_tab_ea_t d_tab_ea16[32] = {
-  { 1, "[WORD BX + SI]" },
-  { 1, "[WORD BX + DI]" },
-  { 1, "[WORD BP + SI]" },
-  { 1, "[WORD BP + DI]" },
-  { 1, "[WORD SI]" },
-  { 1, "[WORD DI]" },
-  { 3, "[WORD %02X%02X]" },
-  { 1, "[WORD BX]" },
-  { 2, "[WORD BX + SI + %02X]" },
-  { 2, "[WORD BX + DI + %02X]" },
-  { 2, "[WORD BP + SI + %02X]" },
-  { 2, "[WORD BP + DI + %02X]" },
-  { 2, "[WORD SI + %02X]" },
-  { 2, "[WORD DI + %02X]" },
-  { 2, "[WORD BP + %02X]" },
-  { 2, "[WORD BX + %02X]" },
-  { 3, "[WORD BX + SI + %02X%02X]" },
-  { 3, "[WORD BX + DI + %02X%02X]" },
-  { 3, "[WORD BP + SI + %02X%02X]" },
-  { 3, "[WORD BP + DI + %02X%02X]" },
-  { 3, "[WORD SI + %02X%02X]" },
-  { 3, "[WORD DI + %02X%02X]" },
-  { 3, "[WORD BP + %02X%02X]" },
-  { 3, "[WORD BX + %02X%02X]" },
+  { 1, "WORD [BX + SI]" },
+  { 1, "WORD [BX + DI]" },
+  { 1, "WORD [BP + SI]" },
+  { 1, "WORD [BP + DI]" },
+  { 1, "WORD [SI]" },
+  { 1, "WORD [DI]" },
+  { 3, "WORD [%02X%02X]" },
+  { 1, "WORD [BX]" },
+  { 2, "WORD [BX + SI + %02X]" },
+  { 2, "WORD [BX + DI + %02X]" },
+  { 2, "WORD [BP + SI + %02X]" },
+  { 2, "WORD [BP + DI + %02X]" },
+  { 2, "WORD [SI + %02X]" },
+  { 2, "WORD [DI + %02X]" },
+  { 2, "WORD [BP + %02X]" },
+  { 2, "WORD [BX + %02X]" },
+  { 3, "WORD [BX + SI + %02X%02X]" },
+  { 3, "WORD [BX + DI + %02X%02X]" },
+  { 3, "WORD [BP + SI + %02X%02X]" },
+  { 3, "WORD [BP + DI + %02X%02X]" },
+  { 3, "WORD [SI + %02X%02X]" },
+  { 3, "WORD [DI + %02X%02X]" },
+  { 3, "WORD [BP + %02X%02X]" },
+  { 3, "WORD [BX + %02X%02X]" },
   { 1, "AX" },
   { 1, "CX" },
   { 1, "DX" },
@@ -1011,6 +1011,12 @@ static void dop_8e (e86_disasm_t *op, unsigned char *src)
   op->arg_n = 2;
 }
 
+/* DOP 8F: POP r/m16 */
+static void dop_8f (e86_disasm_t *op, unsigned char *src)
+{
+  dop_ea16 (op, src, "POP");
+}
+
 /* DOP 90: NOP */
 static void dop_90 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1158,6 +1164,26 @@ void dop_a5 (e86_disasm_t *op, unsigned char *src)
   op->arg_n = 0;
 
   strcpy (op->op, "MOVSW");
+}
+
+/* DOP A6: CMPSB */
+static
+void dop_a6 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "CMPSB");
+}
+
+/* DOP A7: CMPSW */
+static
+void dop_a7 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "CMPSW");
 }
 
 /* DOP A8: TEST AL, data8 */
@@ -1794,10 +1820,10 @@ e86_disasm_f dop_list[256] = {
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, /* 70 */
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70,
   &dop_80, &dop_81, &dop_80, &dop_83, &dop_ud, &dop_ud, &dop_86, &dop_87, /* 80 */
-  &dop_88, &dop_89, &dop_8a, &dop_8b, &dop_8c, &dop_8d, &dop_8e, &dop_ud,
+  &dop_88, &dop_89, &dop_8a, &dop_8b, &dop_8c, &dop_8d, &dop_8e, &dop_8f,
   &dop_90, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, /* 90 */
   &dop_98, &dop_99, &dop_9a, &dop_ud, &dop_9c, &dop_9d, &dop_9e, &dop_9f,
-  &dop_a0, &dop_a1, &dop_a2, &dop_a3, &dop_a4, &dop_a5, &dop_ud, &dop_ud, /* A0 */
+  &dop_a0, &dop_a1, &dop_a2, &dop_a3, &dop_a4, &dop_a5, &dop_a6, &dop_a7, /* A0 */
   &dop_a8, &dop_a9, &dop_aa, &dop_ab, &dop_ac, &dop_ad, &dop_ud, &dop_ud,
   &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, /* B0 */
   &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.h                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: e8086.h,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -122,6 +122,60 @@ typedef struct {
   unsigned long  instructions;
 } e8086_t;
 
+
+#define e86_get_reg8(cpu, reg) \
+  ((((reg) & 4) ? ((cpu)->dreg[(reg) & 3] >> 8) : (cpu)->dreg[(reg) & 3]) & 0xff)
+
+#define e86_get_reg16(cpu, reg) \
+  ((cpu)->dreg[(reg) & 7])
+
+#define e86_get_sreg(cpu, reg) \
+  ((cpu)->sreg[(reg) & 3])
+
+#define e86_set_reg8(cpu, reg, val) \
+  do { \
+    if ((reg) & 4) { \
+      (cpu)->dreg[(reg) & 3] &= 0x00ff; \
+      (cpu)->dreg[(reg) & 3] |= ((val) & 0xff) << 8; \
+    } \
+    else { \
+      (cpu)->dreg[(reg) & 3] &= 0xff00; \
+      (cpu)->dreg[(reg) & 3] |= (val) & 0xff; \
+    } \
+  } while (0)
+
+#define e86_set_reg16(cpu, reg, val) \
+  do { \
+    (cpu)->dreg[(reg) & 7] = (val) & 0xffff; \
+  } while (0)
+
+#define e86_get_ip(cpu) ((cpu)->ip)
+#define e86_get_cs(cpu) ((cpu)->sreg[E86_REG_CS])
+#define e86_get_ds(cpu) ((cpu)->sreg[E86_REG_DS])
+#define e86_get_es(cpu) ((cpu)->sreg[E86_REG_ES])
+#define e86_get_ss(cpu) ((cpu)->sreg[E86_REG_SS])
+
+#define e86_get_ax(cpu) ((cpu)->dreg[E86_REG_AX])
+#define e86_get_sp(cpu) ((cpu)->dreg[E86_REG_SP])
+
+#define e86_get_linear(seg, ofs) \
+  ((((seg) & 0xffff) << 4) + ((ofs) & 0xffff))
+
+#define e86_get_mem8(cpu, seg, ofs) \
+  ((cpu)->mem_get_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff))
+
+#define e86_get_mem16(cpu, seg, ofs) \
+  ((cpu)->mem_get_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff))
+
+#define e86_set_mem8(cpu, seg, ofs, val) \
+  do { \
+    (cpu)->mem_set_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val); \
+  } while (0)
+
+#define e86_set_mem16(cpu, seg, ofs, val) \
+  do { \
+    (cpu)->mem_set_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val); \
+  } while (0)
 
 
 void e86_prt_state (e8086_t *c, FILE *fp);

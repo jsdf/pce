@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     internal.h                                                 *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: internal.h,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -33,9 +33,6 @@
 #define FLG_STD (E86_FLG_C | E86_FLG_O | E86_FLG_Z | E86_FLG_S | E86_FLG_P)
 
 
-#define e86_get_linear(seg, ofs) \
-  (((seg) << 4) + ((ofs) & 0xffff))
-
 #define e86_mk_uint16(lo, hi) \
   (((hi) << 8) | (lo))
 
@@ -44,18 +41,6 @@
 
 #define e86_add_sint8(w, b) \
   ((((b) & 0x80) ? ((w) + ((b) | 0xff00)) : ((w) + ((b) & 0xff))) & 0xffff)
-
-#define e86_get_mem8(cpu, seg, ofs) \
-  (cpu)->mem_get_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff)
-
-#define e86_get_mem16(cpu, seg, ofs) \
-  (cpu)->mem_get_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff)
-
-#define e86_set_mem8(cpu, seg, ofs, val) \
-  (cpu)->mem_set_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val)
-
-#define e86_set_mem16(cpu, seg, ofs, val) \
-  (cpu)->mem_set_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val)
 
 #define e86_get_prt8(cpu, ofs) \
   (cpu)->prt_get_uint8 ((cpu)->prt, ofs)
@@ -68,25 +53,6 @@
 
 #define e86_set_prt16(cpu, ofs, val) \
   (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val)
-
-#define e86_get_reg8(cpu, reg) \
-  ((((reg) & 4) ? ((cpu)->dreg[(reg) & 3] >> 8) : (cpu)->dreg[(reg) & 3]) & 0xff)
-
-#define e86_get_reg16(cpu, reg) \
-  ((cpu)->dreg[(reg) & 7])
-
-#define e86_set_reg8(cpu, reg, val) \
-  if (reg & 4) { \
-    (cpu)->dreg[(reg) & 3] &= 0x00ff; \
-    (cpu)->dreg[(reg) & 3] |= (val) << 8; \
-  } \
-  else { \
-    (cpu)->dreg[(reg) & 3] &= 0xff00; \
-    (cpu)->dreg[(reg) & 3] |= (val); \
-  }
-
-#define e86_set_reg16(cpu, reg, val) \
-  (cpu)->dreg[(reg) & 7] = (val);
 
 #define e86_get_flg(cpu, f) \
   (((cpu)->flg & (f)) != 0)

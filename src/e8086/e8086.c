@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.c                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.1 2003/04/15 04:03:58 hampa Exp $ */
+/* $Id: e8086.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
 
 
 #include <pce.h>
@@ -152,7 +152,7 @@ void e86_set_flags16 (e8086_t *c, unsigned short mask, unsigned long dst, unsign
   if (mask & E86_FLG_P) {
     unsigned i, n;
 
-    i = dst & 0xffff;
+    i = dst & 0xff;
     n = 0;
     while (i != 0) {
       n += 1;
@@ -204,7 +204,6 @@ void e86_prt_state (e8086_t *c, FILE *fp)
 {
   static char  ft[2] = { '-', '+' };
 
-  fprintf (fp, "-8086-state------------------------------------------------------------------\n");
   fprintf (fp, "clk=%lu  op=%lu  delay=%lu\n", c->clocks, c->instructions, c->delay);
 
   fprintf (fp,
