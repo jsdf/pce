@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/ihex.c                                             *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -227,15 +227,12 @@ void ihex_set_end (FILE *fp)
   ihex_set_record (fp, &rec);
 }
 
-int ihex_load_fp (FILE *fp, void *buf, unsigned long base, unsigned long size)
+int ihex_load_fp (FILE *fp, void *ext, ihex_set_f set)
 {
   unsigned      i;
   unsigned      mode;
   unsigned long addr, ulba;
-  unsigned char *mem;
   record_t      rec;
-
-  mem = (unsigned char *) buf;
 
   mode = 0;
   ulba = 0;
@@ -283,9 +280,7 @@ int ihex_load_fp (FILE *fp, void *buf, unsigned long base, unsigned long size)
           addr = ulba + ((rec.addr + i) & 0xffffU);
         }
 
-        if ((addr >= base) && ((addr - base) < size)) {
-          mem[addr - base] = rec.data[i];
-        }
+        set (ext, addr, rec.data[i]);
       }
     }
   }
@@ -293,7 +288,7 @@ int ihex_load_fp (FILE *fp, void *buf, unsigned long base, unsigned long size)
   return (0);
 }
 
-int ihex_load (const char *fname, void *buf, unsigned long base, unsigned long size)
+int ihex_load (const char *fname, void *ext, ihex_set_f set)
 {
   int  r;
   FILE *fp;
@@ -303,21 +298,19 @@ int ihex_load (const char *fname, void *buf, unsigned long base, unsigned long s
     return (1);
   }
 
-  r = ihex_load_fp (fp, buf, base, size);
+  r = ihex_load_fp (fp, ext, set);
 
   fclose (fp);
 
   return (r);
 }
 
-int ihex_save_linear (FILE *fp, void *buf, unsigned long base, unsigned long size)
+
+int ihex_save_linear (FILE *fp, unsigned long base, unsigned long size, void *ext, ihex_get_f get)
 {
   unsigned      i;
   unsigned long ulba, addr;
-  unsigned char *mem;
   record_t      rec;
-
-  mem = (unsigned char *) buf;
 
   ulba = 0;
   addr = base;
@@ -328,7 +321,7 @@ int ihex_save_linear (FILE *fp, void *buf, unsigned long base, unsigned long siz
     rec.cnt = (size < 16) ? size : 16;
 
     for (i = 0; i < rec.cnt; i++) {
-      rec.data[i] = mem[(addr - base) + i];
+      rec.data[i] = get (ext, addr + i);
     }
 
     if ((ulba & 0xffff0000UL) != (addr & 0xffff0000UL)) {

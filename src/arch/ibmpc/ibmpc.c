@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -64,7 +64,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (fname != NULL) {
-      if (pce_load_mem_blk (ram, fname)) {
+      if (pce_load_blk_bin (ram, fname)) {
         pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
       }
     }
@@ -84,19 +84,23 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "rom");
 
   while (sct != NULL) {
-    fname = ini_get_str_def (sct, "file", "default.rom");
+    fname = ini_get_str (sct, "file");
     base = ini_get_lng_def (sct, "base", 0);
     size = ini_get_lng_def (sct, "size", 65536L);
 
-    pce_log (MSG_INF, "ROM:\tbase=0x%05lx size=%lu file=%s\n", base, size, fname);
+    pce_log (MSG_INF, "ROM:\tbase=0x%05lx size=%lu file=%s\n",
+      base, size, (fname != NULL) ? fname : "<none>"
+    );
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
     mem_blk_set_ro (rom, 1);
     mem_add_blk (pc->mem, rom, 1);
 
-    if (pce_load_mem_blk (rom, fname)) {
-      pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+    if (fname != NULL) {
+      if (pce_load_blk_bin (rom, fname)) {
+        pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+      }
     }
 
     sct = ini_sct_find_next (sct, "rom");
@@ -822,6 +826,49 @@ void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
+void pc_load_ihex (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t  *sct;
+  const char *fmt;
+  const char *fname;
+
+  sct = ini_sct_find_sct (ini, "load");
+
+  while (sct != NULL) {
+    fmt = ini_get_str_def (sct, "format", "binary");
+    fname = ini_get_str (sct, "file");
+
+    pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
+      fmt, (fname != NULL) ? fname : "<none>"
+    );
+
+    if (strcmp (fmt, "ihex") == 0) {
+      if (fname != NULL) {
+        if (pce_load_mem_hex (pc->mem, fname)) {
+          pce_log (MSG_ERR, "*** loading ihex failed (%s)\n", fname);
+        }
+      }
+    }
+    else if (strcmp (fmt, "binary") == 0) {
+      unsigned long base;
+
+      base = ini_get_lng_def (sct, "base", 0);
+
+      if (fname != NULL) {
+        if (pce_load_mem_bin (pc->mem, fname, base)) {
+          pce_log (MSG_ERR, "*** loading binary failed (%s)\n", fname);
+        }
+      }
+    }
+    else {
+      pce_log (MSG_ERR, "*** unknown format (%s)\n", fmt);
+    }
+
+    sct = ini_sct_find_next (ini, "load");
+  }
+}
+
 ibmpc_t *pc_new (ini_sct_t *ini)
 {
   unsigned  i;
@@ -871,6 +918,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_parport (pc, ini);
   pc_setup_ems (pc, ini);
   pc_setup_xms (pc, ini);
+
+  pc_load_ihex (pc, ini);
 
   return (pc);
 }

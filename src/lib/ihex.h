@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/ihex.h                                             *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,10 +27,14 @@
 #define PCE_LIB_IHEX_H 1
 
 
-int ihex_load_fp (FILE *fp, void *buf, unsigned long base, unsigned long size);
-int ihex_load (const char *fname, void *buf, unsigned long base, unsigned long size);
+typedef void (*ihex_set_f) (void *ext, unsigned long addr, unsigned char val);
+typedef unsigned char (*ihex_get_f) (void *ext, unsigned long addr);
 
-int ihex_save_linear (FILE *fp, void *buf, unsigned long base, unsigned long size);
+
+int ihex_load_fp (FILE *fp, void *ext, ihex_set_f set);
+int ihex_load (const char *fname, void *ext, ihex_set_f set);
+
+int ihex_save_linear (FILE *fp, unsigned long base, unsigned long size, void *ext, ihex_get_f get);
 int ihex_save_done (FILE *fp);
 
 #endif

@@ -30,6 +30,12 @@ section pc {
 		size = 65536
 	}
 
+	# load sections are processed after the emulator is set up.
+	section load {
+		format = "ihex"
+		file = "ibmpc.ihex"
+	}
+
 	section nvram {
 		file = "nvram.dat"
 		base = 0xa0000
