@@ -660,7 +660,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 
     fname = ini_get_str (sct, "file");
 
-    pce_log (MSG_INF, "LPT%u:\tio=0x%04x file=%s\n",
+    pce_log (MSG_INF, "LPT%u:\tio=0x%04lx file=%s\n",
       i + 1, base, (fname == NULL) ? "<none>" : fname
     );
 
