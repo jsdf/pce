@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.h                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.8 2003/08/31 01:38:11 hampa Exp $ */
+/* $Id: cga.h,v 1.9 2003/09/13 18:11:17 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -30,8 +30,15 @@
 typedef struct {
   video_t       vid;
 
+  scrmap_t      smap;
+
   mem_blk_t     *mem;
   mem_blk_t     *reg;
+
+  unsigned      mode1_w;
+  unsigned      mode1_h;
+  unsigned      mode2_w;
+  unsigned      mode2_h;
 
   unsigned char crtc_reg[18];
 

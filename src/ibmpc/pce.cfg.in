@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.13 2003/09/04 20:26:48 hampa Exp $
+# $Id: pce.cfg.in,v 1.14 2003/09/13 18:11:17 hampa Exp $
 
 section pc {
 	section cpu {
@@ -60,6 +60,14 @@ section pc {
 		io = 0x3d4
 		membase = 0xb8000
 		memsize = 16384
+
+		# 320 * 200 * 4
+		mode1_width = 640
+		mode1_height = 480
+
+		# 640 * 200 * 2
+		mode2_width = 640
+		mode2_height = 480
 	}
 
 	section hgc {
@@ -68,6 +76,10 @@ section pc {
 		io = 0x3b4
 		membase = 0xb0000
 		memsize = 65536
+
+		# 720 * 348 * 2
+		mode1_width = 720
+		mode1_height = 540
 	}
 
 	section mda {
