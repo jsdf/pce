@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/blkcow.h                                       *
+ * File name:     src/devices/blkdosem.h                                     *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
@@ -23,8 +23,8 @@
 /* $Id$ */
 
 
-#ifndef PCE_DEVICES_BLKCOW_H
-#define PCE_DEVICES_BLKCOW_H 1
+#ifndef PCE_DEVICES_BLKDOSEMU_H
+#define PCE_DEVICES_BLKDOSEMU_H 1
 
 
 #include <config.h>
@@ -34,32 +34,23 @@
 #include <stdio.h>
 
 
-typedef struct cow_hash_t {
-  struct cow_hash_t *next;
-  unsigned long     block;
-  unsigned long     offset;
-} cow_hash_t;
-
-
 /*!***************************************************************************
- * @short The copy on write disk structure
+ * @short The image file disk structure
  *****************************************************************************/
 typedef struct {
   disk_t        dsk;
 
-  disk_t        *orig;
-
+  unsigned long start;
   FILE          *fp;
-  unsigned long offset;
-
-  unsigned long blkcnt;
-
-  unsigned      hash_cnt;
-  cow_hash_t    **hash;
-} disk_cow_t;
+} disk_dosemu_t;
 
 
-disk_t *dsk_cow_new (disk_t *dsk, const char *fname);
+disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro);
+
+disk_t *dsk_dosemu_create (unsigned d,
+  unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro
+);
 
 
 #endif

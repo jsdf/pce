@@ -108,9 +108,13 @@ extern unsigned long par_int28;
 #include <devices/cga.h>
 #include <devices/ega.h>
 #include <devices/vga.h>
+
 #include <devices/disk.h>
 #include <devices/blkcow.h>
+#include <devices/blkdosem.h>
+#include <devices/blkimg.h>
 #include <devices/blkpart.h>
+#include <devices/blkram.h>
 
 #include "util.h"
 #include "int13.h"

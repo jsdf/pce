@@ -26,7 +26,6 @@
 #include "blkcow.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 
 static
@@ -59,11 +58,11 @@ void cow_del_block (cow_hash_t *h)
 }
 
 static
-cow_hash_t *cow_get_block (cow_hash_t **hash, unsigned cnt, unsigned long blk)
+cow_hash_t *cow_get_block (disk_cow_t *cow, unsigned long blk)
 {
   cow_hash_t *h;
 
-  h = hash[blk & (cnt - 1)];
+  h = cow->hash[blk & (cow->hash_cnt - 1)];
 
   while (h != NULL) {
     if (h->block == blk) {
@@ -77,14 +76,16 @@ cow_hash_t *cow_get_block (cow_hash_t **hash, unsigned cnt, unsigned long blk)
 }
 
 static
-void cow_set_block (cow_hash_t **hash, unsigned cnt, cow_hash_t *h)
+void cow_set_block (disk_cow_t *cow, cow_hash_t *h)
 {
   unsigned i;
 
-  i = h->block & (cnt - 1);
+  i = h->block & (cow->hash_cnt - 1);
 
-  h->next = hash[i];
-  hash[i] = h;
+  h->next = cow->hash[i];
+  cow->hash[i] = h;
+
+  cow->blkcnt += 1;
 }
 
 
@@ -103,7 +104,7 @@ int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
       return (1);
     }
 
-    blk = cow_get_block (cow->hash, cow->hash_cnt, i);
+    blk = cow_get_block (cow, i);
 
     if (blk == NULL) {
       if (dsk_read_lba (cow->orig, tmp, i, 1)) {
@@ -145,12 +146,12 @@ int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
       return (1);
     }
 
-    h = cow_get_block (cow->hash, cow->hash_cnt, i);
+    h = cow_get_block (cow, i);
 
     if (h == NULL) {
       h = cow_new_block (i, cow->offset);
       cow->offset += 512;
-      cow_set_block (cow->hash, cow->hash_cnt, h);
+      cow_set_block (cow, h);
     }
 
     if (fseek (cow->fp, h->offset, SEEK_SET)) {
@@ -259,10 +260,12 @@ disk_t *dsk_cow_new (disk_t *dsk, const char *fname)
     return (NULL);
   }
 
+  cow->blkcnt = 0;
+
   cow->offset = 0;
 
-  cow->hash_cnt = 1024;
-  cow->hash = malloc (1024 * sizeof (cow_hash_t *));
+  cow->hash_cnt = 4096;
+  cow->hash = malloc (4096 * sizeof (cow_hash_t *));
 
   for (i = 0; i < cow->hash_cnt; i++) {
     cow->hash[i] = NULL;

@@ -74,27 +74,6 @@ typedef struct disk_s {
 
 
 /*!***************************************************************************
- * @short The ram disk structure
- *****************************************************************************/
-typedef struct {
-  disk_t        dsk;
-
-  unsigned char *data;
-} disk_ram_t;
-
-
-/*!***************************************************************************
- * @short The image file disk structure
- *****************************************************************************/
-typedef struct {
-  disk_t        dsk;
-
-  unsigned long start;
-  FILE          *fp;
-} disk_img_t;
-
-
-/*!***************************************************************************
  * @short The disk set structure
  *****************************************************************************/
 typedef struct {
@@ -105,51 +84,29 @@ typedef struct {
 
 void dsk_fread_zero (void *buf, size_t size, size_t cnt, FILE *fp);
 
-void dsk_init (disk_t *dsk, void *ext);
+/*!***************************************************************************
+ * @short Initialize a disk structure
+ *****************************************************************************/
+void dsk_init (disk_t *dsk, void *ext, unsigned d,
+  unsigned c, unsigned h, unsigned s, int ro
+);
 
-void dsk_init_chs (disk_t *dsk, unsigned d, unsigned c, unsigned h, unsigned s, int ro);
+/*!***************************************************************************
+ * @short Delete a disk
+ *****************************************************************************/
+void dsk_del (disk_t *dsk);
+
 
 /*!***************************************************************************
  * @short Set the visible geometry
  *****************************************************************************/
-void dsk_set_visible_geometry (disk_t *dsk, unsigned c, unsigned h, unsigned s);
-
-/*!***************************************************************************
- * @short Create a new ram disk
- *****************************************************************************/
-disk_t *dsk_ram_new (unsigned d, unsigned c, unsigned h, unsigned s,
-  const char *fname, int ro
-);
-
-/*!***************************************************************************
- * @short Create a new image file disk
- *****************************************************************************/
-disk_t *dsk_img_new (unsigned d, unsigned c, unsigned h, unsigned s,
-  unsigned long start, const char *fname, int ro
-);
-
-/*!***************************************************************************
- * @short Create a new dosemu disk
- *****************************************************************************/
-disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro);
-
-/*!***************************************************************************
- * @short Create a new dosemu disk
- *****************************************************************************/
-disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
-  const char *fname, int ro
-);
+void dsk_set_visible_chs (disk_t *dsk, unsigned c, unsigned h, unsigned s);
 
 
 /*!***************************************************************************
  * @short Create a new disk
  *****************************************************************************/
 disk_t *dsk_auto_new (unsigned d, const char *fname, int ro);
-
-/*!***************************************************************************
- * @short Delete a disk
- *****************************************************************************/
-void dsk_del (disk_t *dsk);
 
 
 /*!***************************************************************************
@@ -224,6 +181,8 @@ int dsks_rmv_disk (disks_t *dsks, disk_t *dsk);
  * @return The disk or NULL on error
  *****************************************************************************/
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
+
+int dsks_commit (disks_t *dsks);
 
 
 #endif

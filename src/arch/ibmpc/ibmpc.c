@@ -629,7 +629,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       vh = (vh == 0) ? dsk->h : vh;
       vs = (vs == 0) ? dsk->s : vs;
 
-      dsk_set_visible_geometry (dsk, vc, vh, vs);
+      dsk_set_visible_chs (dsk, vc, vh, vs);
 
       pce_log (MSG_INF,
         "disk:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u ro=%d file=%s\n",
@@ -1238,20 +1238,47 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     }
     return (0);
   }
-  else if (strcmp (msg, "disk.commit") == 0) {
-    unsigned d;
-    disk_t   *dsk;
+  else if (strcmp (msg, "video.setsize") == 0) {
+    unsigned w, h;
+    char     *tmp1, *tmp2;
 
-    d = strtoul (val, NULL, 0);
-    dsk = dsks_get_disk (pc->dsk, d);
-    if (dsk == NULL) {
-      pce_log (MSG_ERR, "no such disk (%s)\n", val);
+    w = strtoul (val, &tmp1, 0);
+    if ((w == 0) || (tmp1 == val) || (*tmp1 == 0)) {
       return (1);
     }
 
-    if (dsk_commit (dsk)) {
-      pce_log (MSG_ERR, "commit failed (%s)\n", val);
+    h = strtoul (tmp1, &tmp2, 0);
+    if ((h == 0) || (tmp2 == tmp1) || (*tmp2 != 0)) {
       return (1);
+    }
+
+    trm_set_size (pc->trm, w, h);
+    pce_video_update (pc->video);
+
+    return (0);
+  }
+  else if (strcmp (msg, "disk.commit") == 0) {
+    if (strcmp (val, "") == 0) {
+      if (dsks_commit (pc->dsk)) {
+        pce_log (MSG_ERR, "commit failed for at least one disk\n");
+        return (1);
+      }
+    }
+    else {
+      unsigned d;
+      disk_t   *dsk;
+
+      d = strtoul (val, NULL, 0);
+      dsk = dsks_get_disk (pc->dsk, d);
+      if (dsk == NULL) {
+        pce_log (MSG_ERR, "no such disk (%s)\n", val);
+        return (1);
+      }
+
+      if (dsk_commit (dsk)) {
+        pce_log (MSG_ERR, "commit failed (%s)\n", val);
+        return (1);
+      }
     }
 
     return (0);

@@ -26,7 +26,6 @@
 #include "blkpart.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 
 static
@@ -243,8 +242,7 @@ disk_t *dsk_part_new (unsigned d, unsigned c, unsigned h, unsigned s, int ro)
     return (NULL);
   }
 
-  dsk_init (&p->dsk, p);
-  dsk_init_chs (&p->dsk, d, c, h, s, ro);
+  dsk_init (&p->dsk, p, d, c, h, s, ro);
 
   p->dsk.del = &dsk_part_del;
   p->dsk.read = &dsk_part_read;
