@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -72,6 +72,8 @@ int ser_set_fname (serport_t *ser, const char *fname);
 void ser_uart_setup (serport_t *ser, unsigned char val);
 void ser_uart_out (serport_t *ser, unsigned char val);
 void ser_uart_inp (serport_t *ser, unsigned char val);
+
+void ser_receive (serport_t *ser, unsigned char val);
 
 void ser_clock (serport_t *ser, unsigned n);
 

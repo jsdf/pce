@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.h                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,10 @@
 #ifndef PCE_E8250_H
 #define PCE_E8250_H 1
 
+
+/* specific chip types */
+#define E8250_CHIP_8250  0
+#define E8250_CHIP_16450 1
 
 /* register offsets */
 #define E8250_RXD     0x00
@@ -103,6 +107,8 @@ typedef void (*e8250_setup_f) (void *ext, unsigned char val);
  * @short The UART 8250 structure
  *****************************************************************************/
 typedef struct {
+  unsigned       chip;
+
   /* input buffer. holds bytes that have not yet been received. */
   unsigned       inp_i;
   unsigned       inp_j;
@@ -125,10 +131,15 @@ typedef struct {
   unsigned char  msr;
   unsigned char  scratch;
 
+  /* enables or disables the scratch register */
+  unsigned char  have_scratch;
+
+  /* records pending interrupts */
   unsigned char  ipr;
 
   unsigned short divisor;
 
+  unsigned char  irq_val;
   void           *irq_ext;
   e8250_irq_f    irq;
 
@@ -146,26 +157,139 @@ typedef struct {
 } e8250_t;
 
 
+/*!***************************************************************************
+ * @short Initialize an UART
+ * @param uart The UART structure
+ *****************************************************************************/
 void e8250_init (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Create and initialize an UART
+ * @return A new UART structure or NULL on error
+ *****************************************************************************/
 e8250_t *e8250_new (void);
 
+/*!***************************************************************************
+ * @short Free the resources used by an UART structure
+ * @param uart The UART structure
+ *****************************************************************************/
 void e8250_free (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short Delete an UART structure
+ * @param uart The UART structure
+ *****************************************************************************/
 void e8250_del (e8250_t *uart);
 
-void e8250_clock (e8250_t *uart, unsigned long clk);
 
+/*!***************************************************************************
+ * @short Set the emulated chip type to 8250
+ * @param uart The UART structure
+ *****************************************************************************/
+void e8250_set_chip_8250 (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short Set the emulated chip type to 16450
+ * @param uart The UART structure
+ *****************************************************************************/
+void e8250_set_chip_16450 (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short Set the emulated chip type
+ * @param uart The UART structure
+ * @param chip The chip type
+ *****************************************************************************/
+int e8250_set_chip (e8250_t *uart, unsigned chip);
+
+/*!***************************************************************************
+ * @short Set the emulated chip type
+ * @param uart The UART structure
+ * @param str  The chip type as a string
+ *****************************************************************************/
+int e8250_set_chip_str (e8250_t *uart, const char *str);
+
+
+/*!***************************************************************************
+ * @short Set the IRQ function
+ * @param uart The UART structure
+ * @param fct  The function to be called on IRQ
+ * @param ext  The transparent parameter for fct
+ *****************************************************************************/
+void e8250_set_irq_f (e8250_t *uart, e8250_irq_f fct, void *ext);
+
+
+/*!***************************************************************************
+ * @short  Get the rate divisor
+ * @param  uart The UART structure
+ * @return The 16 bit divisor
+ *****************************************************************************/
 unsigned short e8250_get_divisor (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Get the data rate
+ * @param  uart The UART structure
+ * @return The data rate in bits per second
+ *****************************************************************************/
 unsigned long e8250_get_bps (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Get the number of data bits per word
+ * @param  uart The UART structure
+ * @return The number of data bits per word
+ *****************************************************************************/
 unsigned e8250_get_databits (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Get the number of stop bits
+ * @param  uart The UART structure
+ * @return The number of stop bits
+ *****************************************************************************/
 unsigned e8250_get_stopbits (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Get the parity
+ * @param  uart The UART structure
+ * @return The parity
+ *****************************************************************************/
 unsigned e8250_get_parity (e8250_t *uart);
 
+
+/*!***************************************************************************
+ * @short  Get the DTR output signal
+ * @param  uart The UART structure
+ * @return The state of the DTR signal
+ *****************************************************************************/
 int e8250_get_dtr (e8250_t *uart);
+
+/*!***************************************************************************
+ * @short  Get the RTS output signal
+ * @param  uart The UART structure
+ * @return The state of the RTS signal
+ *****************************************************************************/
 int e8250_get_rts (e8250_t *uart);
 
+
+/*!***************************************************************************
+ * @short  Get the DSR input signal
+ * @param  uart The UART structure
+ * @return The state of the DSR signal
+ *****************************************************************************/
 void e8250_set_dsr (e8250_t *uart, unsigned char val);
+
+/*!***************************************************************************
+ * @short  Get the CTS input signal
+ * @param  uart The UART structure
+ * @return The state of the CTS signal
+ *****************************************************************************/
 void e8250_set_cts (e8250_t *uart, unsigned char val);
+
+/*!***************************************************************************
+ * @short  Get the DCD input signal
+ * @param  uart The UART structure
+ * @return The state of the DCD signal
+ *****************************************************************************/
 void e8250_set_dcd (e8250_t *uart, unsigned char val);
+
 
 /*!***************************************************************************
  * @short  Add a byte to the input queue
@@ -206,10 +330,38 @@ int e8250_set_out (e8250_t *uart, unsigned char val);
  *****************************************************************************/
 int e8250_get_out (e8250_t *uart, unsigned char *val);
 
+/*!***************************************************************************
+ * @short  Receive a byte
+ * @param  uart The UART structure
+ * @param  val  The byte
+ * @return Nonzero on error (queue full)
+ *****************************************************************************/
+int e8250_receive (e8250_t *uart, unsigned char val);
+
+
+unsigned char e8250_get_div_lo (e8250_t *uart);
+unsigned char e8250_get_div_hi (e8250_t *uart);
+unsigned char e8250_get_rxd (e8250_t *uart);
+unsigned char e8250_get_ier (e8250_t *uart);
+unsigned char e8250_get_iir (e8250_t *uart);
+unsigned char e8250_get_lcr (e8250_t *uart);
+unsigned char e8250_get_mcr (e8250_t *uart);
+unsigned char e8250_get_lsr (e8250_t *uart);
+unsigned char e8250_get_msr (e8250_t *uart);
+unsigned char e8250_get_scratch (e8250_t *uart);
+
+void e8250_set_scratch (e8250_t *uart, unsigned char val);
+
+
 void e8250_set_uint8 (e8250_t *uart, unsigned long addr, unsigned char val);
 void e8250_set_uint16 (e8250_t *uart, unsigned long addr, unsigned short val);
+void e8250_set_uint32 (e8250_t *uart, unsigned long addr, unsigned long val);
+
 unsigned char e8250_get_uint8 (e8250_t *uart, unsigned long addr);
 unsigned short e8250_get_uint16 (e8250_t *uart, unsigned long addr);
+unsigned long e8250_get_uint32 (e8250_t *uart, unsigned long addr);
+
+void e8250_clock (e8250_t *uart, unsigned long clk);
 
 
 #endif

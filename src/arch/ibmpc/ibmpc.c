@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -667,7 +667,9 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   unsigned long base;
   unsigned      irq;
   const char    *fname;
+  const char    *chip;
   ini_sct_t     *sct;
+  e8250_irq_f   irqf;
 
   static unsigned long defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
   static unsigned      defirq[4] = { 4, 3, 4, 3 };
@@ -682,11 +684,11 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   while ((i < 4) && (sct != NULL)) {
     base = ini_get_lng_def (sct, "io", defbase[i]);
     irq = ini_get_lng_def (sct, "irq", defirq[i]);
-
+    chip = ini_get_str_def (sct, "uart", "8250");
     fname = ini_get_str (sct, "file");
 
-    pce_log (MSG_INF, "COM%u:\tio=0x%04x irq=%u file=%s\n",
-      i + 1, base, irq, (fname == NULL) ? "<none>" : fname
+    pce_log (MSG_INF, "COM%u:\tio=0x%04x irq=%u uart=%s file=%s\n",
+      i + 1, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
     pc->serport[i] = ser_new (base);
@@ -702,8 +704,12 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
         }
       }
 
-      pc->serport[i]->uart.irq_ext = &pc->pic;
-      pc->serport[i]->uart.irq = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
+      if (e8250_set_chip_str (&pc->serport[i]->uart, chip)) {
+        pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
+      }
+
+      irqf = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
+      e8250_set_irq_f (&pc->serport[i]->uart, irqf, &pc->pic);
 
       mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);
 

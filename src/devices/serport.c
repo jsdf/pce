@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -69,7 +69,7 @@ serport_t *ser_new (unsigned long base)
 {
   serport_t *ser;
 
-  ser = (serport_t *) malloc (sizeof (serport_t));
+  ser = malloc (sizeof (serport_t));
   if (ser == NULL) {
     return (NULL);
   }
@@ -210,6 +210,11 @@ void ser_uart_out (serport_t *ser, unsigned char val)
 /* 8250 input buffer is not full */
 void ser_uart_inp (serport_t *ser, unsigned char val)
 {
+}
+
+void ser_receive (serport_t *ser, unsigned char val)
+{
+  e8250_set_inp (&ser->uart, val);
 }
 
 void ser_clock (serport_t *ser, unsigned n)

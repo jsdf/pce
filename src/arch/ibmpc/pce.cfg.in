@@ -16,9 +16,6 @@ section pc {
 
 		# The size in bytes
 		size = 655360
-
-		# The size in KB
-		#sizek = 640
 	}
 
 	# Multiple "rom" sections may be present
@@ -177,7 +174,11 @@ section pc {
 	section serial {
 		io = 0x3f8
 		irq = 4
-		file = "/dev/ttyS0"
+
+		# Valid values for uart are: "8250", "16450"
+		uart = "8250"
+
+		file = "serport.out"
 	}
 
 	section mouse {
@@ -194,12 +195,17 @@ section pc {
 		file = "parport.out"
 	}
 
+
 	# Disk types are:
 	# "image"  A raw image file. "c", "h" and "s" must be specified.
 	# "dosemu" A DOSEMU style hard disk image file
 	# "ram"    A RAM disk. If a file name is specified, the contents
 	#          of that file are loaded into the RAM disk (but the file
 	#          is never altered.
+	# The c, h, s parameters determine the actual image file layout, the
+	# visible_c, visible_h, visible_s parameters determine the disk size
+	# as reported by the BIOS.
+
 	section disk {
 		drive = 0
 		type = "image"
@@ -212,9 +218,13 @@ section pc {
 	section disk {
 		drive = 1
 		type = "ram"
-		c = 80
+		c = 83
 		h = 2
 		s = 18
+		
+		visible_c = 80
+		visible_h = 2
+		visible_s = 18
 	}
 
 	section disk {
