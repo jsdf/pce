@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.c                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -32,9 +32,7 @@
 
 
 static unsigned char e6502_get_mem_uint8 (void *mem, unsigned long addr);
-static unsigned short e6502_get_mem_uint16 (void *mem, unsigned long addr);
 static void e6502_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val);
-static void e6502_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val);
 
 
 void e6502_init (e6502_t *c)
@@ -53,9 +51,7 @@ void e6502_init (e6502_t *c)
 
   c->mem = NULL;
   c->mem_get_uint8 = &e6502_get_mem_uint8;
-  c->mem_get_uint16 = &e6502_get_mem_uint16;
   c->mem_set_uint8 = &e6502_set_mem_uint8;
-  c->mem_set_uint16 = &e6502_set_mem_uint16;
 
   c->ram = NULL;
   c->ram_lo = 0xffffU;
@@ -108,14 +104,11 @@ void e6502_set_ram (e6502_t *c, unsigned char *ram, unsigned short lo, unsigned 
   c->ram_hi = hi;
 }
 
-void e6502_set_mem_f (e6502_t *c, void *mem,
-  void *get8, void *set8, void *get16, void *set16)
+void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8)
 {
   c->mem = mem;
   c->mem_get_uint8 = (e6502_get_uint8_f) get8;
   c->mem_set_uint8 = (e6502_set_uint8_f) set8;
-  c->mem_get_uint16 = (e6502_get_uint16_f) get16;
-  c->mem_set_uint16 = (e6502_set_uint16_f) set16;
 }
 
 static
@@ -125,18 +118,7 @@ unsigned char e6502_get_mem_uint8 (void *mem, unsigned long addr)
 }
 
 static
-unsigned short e6502_get_mem_uint16 (void *mem, unsigned long addr)
-{
-  return (0xaaaa);
-}
-
-static
 void e6502_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
-{
-}
-
-static
-void e6502_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
 }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -284,6 +284,9 @@ sim405_t *s405_new (ini_sct_t *ini)
   s405_setup_ppc (sim, ini);
   s405_setup_serport (sim, ini);
 
+  sim->cpc0_cr1 = 0x00000000UL;
+  sim->cpc0_psr = 0x00000400UL;
+
   return (sim);
 }
 
@@ -320,6 +323,12 @@ unsigned long s405_get_dcr (void *ext, unsigned long dcrn)
     case 0:
       s405_break (sim, PCE_BRK_STOP);
       break;
+
+    case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
+      return (sim->cpc0_cr1);
+
+    case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
+      return (sim->cpc0_psr);
 
     case SIM405_DCRN_UIC0_SR:
       return (p405uic_get_sr (&sim->uic));
@@ -358,6 +367,14 @@ void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val)
   sim = (sim405_t *) ext;
 
   switch (dcrn) {
+    case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
+      sim->cpc0_cr1 = val;
+      break;
+
+    case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
+      sim->cpc0_psr = val;
+      break;
+
     case SIM405_DCRN_UIC0_SR:
       p405uic_set_sr (&sim->uic, val);
       break;

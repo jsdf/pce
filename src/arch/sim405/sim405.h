@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.h                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -81,6 +81,10 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <lib/brkpt.h>
 
 
+#define SIM405_DCRN_CPC0_CR1 0xb2
+#define SIM405_DCRN_CPC0_PSR 0xb4
+#define SIM405_DCRN_CPC0_PSR_PAE 0x00000400UL
+
 #define SIM405_DCRN_UIC0_SR  0xc0
 #define SIM405_DCRN_UIC0_ER  0xc2
 #define SIM405_DCRN_UIC0_CR  0xc3
@@ -108,6 +112,9 @@ typedef struct sim405_s {
   serport_t          *serport[2];
 
   breakpoint_t       *brkpt;
+
+  uint32_t           cpc0_cr1;
+  uint32_t           cpc0_psr;
 
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];

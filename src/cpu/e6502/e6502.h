@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.h                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -45,9 +45,7 @@ struct e6502_t;
 
 
 typedef unsigned char (*e6502_get_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*e6502_get_uint16_f) (void *ext, unsigned long addr);
 typedef void (*e6502_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*e6502_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 
 typedef void (*e6502_opcode_f) (struct e6502_t *c);
 
@@ -73,8 +71,6 @@ typedef struct e6502_t {
   void               *mem;
   e6502_get_uint8_f  mem_get_uint8;
   e6502_set_uint8_f  mem_set_uint8;
-  e6502_get_uint16_f mem_get_uint16;
-  e6502_set_uint16_f mem_set_uint16;
 
   unsigned char      *ram;
   unsigned short     ram_lo;
@@ -187,9 +183,7 @@ void e6502_set_ram (e6502_t *c, unsigned char *ram,
   unsigned short lo, unsigned short hi
 );
 
-void e6502_set_mem_f (e6502_t *c, void *mem,
-  void *get8, void *set8, void *get16, void *set16
-);
+void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
 
 
 /*****************************************************************************

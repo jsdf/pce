@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -36,11 +36,11 @@
 #include "main.h"
 
 
-int             par_verbose = 0;
+int       par_verbose = 0;
 
-sim6502_t       *par_sim = NULL;
-
-unsigned        par_sig_int = 0;
+sim6502_t *par_sim = NULL;
+ini_sct_t *par_cfg = NULL;
+unsigned  par_sig_int = 0;
 
 
 static breakpoint_t *breakpoint = NULL;
@@ -513,6 +513,49 @@ void do_c (cmd_t *cmd, sim6502_t *sim)
 }
 
 static
+void do_dump (cmd_t *cmd, sim6502_t *sim)
+{
+  FILE *fp;
+  char what[256];
+  char fname[256];
+
+  if (!cmd_match_str (cmd, what, 256)) {
+    cmd_error (cmd, "don't know what to dump");
+    return;
+  }
+
+  if (!cmd_match_str (cmd, fname, 256)) {
+    cmd_error (cmd, "need a file name");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    prt_error ("dump: can't open file (%s)\n", fname);
+    return;
+  }
+
+  if (strcmp (what, "ram") == 0) {
+    fprintf (fp, "# RAM dump\n\n");
+    pce_dump_hex (fp, sim->ram->data, sim->ram->size, 0, 16, "", 1);
+  }
+  else if (strcmp (what, "config") == 0) {
+    if (ini_write_fp (par_cfg, fp)) {
+      prt_error ("dumping configuration failed\n");
+    }
+  }
+  else {
+    prt_error ("dump: don't know what to dump (%s)\n", what);
+  }
+
+  fclose (fp);
+}
+
+static
 void do_d (cmd_t *cmd, sim6502_t *sim)
 {
   unsigned short        i, j;
@@ -837,6 +880,9 @@ int do_cmd (sim6502_t *sim)
     else if (cmd_match (&cmd, "c")) {
       do_c (&cmd, sim);
     }
+    else if (cmd_match (&cmd, "dump")) {
+      do_dump (&cmd, sim);
+    }
     else if (cmd_match (&cmd, "d")) {
       do_d (&cmd, sim);
     }
@@ -983,6 +1029,8 @@ int main (int argc, char *argv[])
     pce_log (MSG_ERR, "loading config file failed\n");
     return (1);
   }
+
+  par_cfg = ini;
 
   sct = ini_sct_find_sct (ini, "sim6502");
   if (sct == NULL) {
