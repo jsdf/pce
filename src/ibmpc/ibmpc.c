@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.42 2003/10/18 03:28:11 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.43 2003/10/18 19:30:32 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -320,6 +320,12 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 #else
     pce_log (MSG_ERR, "terminal driver 'sdl' not supported\n");
 #endif
+  }
+  else if (strcmp (driver, "null") == 0) {
+    pc->trm = null_new (sct);
+    if (pc->trm == NULL) {
+      pce_log (MSG_ERR, "setting up null terminal failed\n");
+    }
   }
   else if (strcmp (driver, "vt100") == 0) {
     pc->trm = vt100_new (sct, 0, 1);

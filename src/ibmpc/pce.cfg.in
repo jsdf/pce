@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.21 2003/10/18 03:28:11 hampa Exp $
+# $Id: pce.cfg.in,v 1.22 2003/10/18 19:30:32 hampa Exp $
 
 section pc {
 	section cpu {
@@ -79,6 +79,10 @@ section pc {
 		# fonts look ugly.
 		font = "vga"
 		#font = "-*-courier-regular-r-*-*-12-*-*-*-*-*-*-*"
+	}
+
+	section terminal {
+		driver = "null"
 	}
 
 	section terminal {

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.21 2003/10/18 03:28:11 hampa Exp $ */
+/* $Id: pce.h,v 1.22 2003/10/18 19:30:32 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -88,6 +88,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <libini/libini.h>
 
 #include <terminal/terminal.h>
+#include <terminal/null.h>
 #include <terminal/vt100.h>
 
 #ifdef PCE_X11_USE
