@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.h                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -87,6 +87,30 @@ typedef struct {
 
 
 /*!***************************************************************************
+ * @short The partitioned image file disk structure
+ *****************************************************************************/
+typedef struct {
+  disk_t        dsk;
+
+  unsigned long start;
+  FILE          *fp;
+
+  unsigned      part_index;
+  unsigned char mbr[512];
+
+  unsigned long start_block;
+  unsigned      start_c;
+  unsigned      start_h;
+  unsigned      start_s;
+
+  unsigned long end_block;
+  unsigned      end_c;
+  unsigned      end_h;
+  unsigned      end_s;
+} disk_part_t;
+
+
+/*!***************************************************************************
  * @short The disk set structure
  *****************************************************************************/
 typedef struct {
@@ -124,6 +148,23 @@ disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro);
  *****************************************************************************/
 disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
   const char *fname, int ro
+);
+
+/*!***************************************************************************
+ * @short Set the partition size and position
+ *****************************************************************************/
+int dsk_part_set_partition (disk_t *dsk,
+  unsigned idx, unsigned type, int boot,
+  unsigned c0, unsigned h0, unsigned s0,
+  unsigned c1, unsigned h1, unsigned s1
+);
+
+/*!***************************************************************************
+ * @short Create a new partition image disk
+ *****************************************************************************/
+disk_t *dsk_part_new (unsigned d,
+  unsigned c, unsigned h, unsigned s,
+  unsigned long start, const char *fname, int ro
 );
 
 

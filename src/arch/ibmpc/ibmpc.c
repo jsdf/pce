@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -565,6 +565,29 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       dsk = dsk_dosemu_new (drive, fname, ro);
       if (dsk == NULL) {
         dsk = dsk_dosemu_create (drive, c, h, s, fname, ro);
+      }
+    }
+    else if (strcmp (type, "partition") == 0) {
+      unsigned c0, h0, s0, c1, h1, s1;
+      unsigned idx, type, boot;
+
+      dsk = dsk_part_new (drive, c, h, s, 0, fname, ro);
+
+      c0 = ini_get_lng_def (sct, "start_c", 0);
+      h0 = ini_get_lng_def (sct, "start_h", 0);
+      s0 = ini_get_lng_def (sct, "start_s", 1);
+
+      c1 = ini_get_lng_def (sct, "end_c", 0);
+      h1 = ini_get_lng_def (sct, "end_h", 0);
+      s1 = ini_get_lng_def (sct, "end_s", 1);
+
+      type = ini_get_lng_def (sct, "partition_type", 0);
+      boot = ini_get_lng_def (sct, "boot", 1);
+      idx = ini_get_lng_def (sct, "partition", 0);
+
+      if (dsk_part_set_partition (dsk, idx, type, boot, c0, h0, s0, c1, h1, s1)) {
+        dsk_del (dsk);
+        dsk = NULL;
       }
     }
     else if (strcmp (type, "auto") == 0) {
