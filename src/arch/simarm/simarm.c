@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-01-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -210,6 +210,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
   unsigned      i;
   unsigned long base;
   unsigned      irq;
+  unsigned      fifo;
   const char    *fname;
   const char    *chip;
   ini_sct_t     *sct;
@@ -226,6 +227,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
   while ((i < 2) && (sct != NULL)) {
     base = ini_get_lng_def (sct, "io", 0xc0030000UL);
     irq = ini_get_lng_def (sct, "irq", 2);
+    fifo = ini_get_lng_def (sct, "fifo", 16);
     chip = ini_get_str_def (sct, "uart", "8250");
     fname = ini_get_str (sct, "file");
 
@@ -248,6 +250,8 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
       else {
         ser_set_fp (sim->serport[i], stdout, 0);
       }
+
+      e8250_set_buf_size (ser_get_uart (sim->serport[i]), fifo, fifo);
 
       if (e8250_set_chip_str (&sim->serport[i]->uart, chip)) {
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);

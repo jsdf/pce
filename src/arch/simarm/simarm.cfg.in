@@ -59,7 +59,8 @@ section simarm {
 	section serial {
 		io = 0xc0030000
 		irq = 2
-		
+		fifo = 64
+
 		# The file that output is written to
 		file = "current/uart0.out"
 	}
