@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -55,7 +55,7 @@ void s405_setup_ram (sim405_t *sim, ini_sct_t *ini)
 
     ram = mem_blk_new (base, size, 1);
     mem_blk_clear (ram, 0x00);
-    mem_blk_set_ro (ram, 0);
+    mem_blk_set_readonly (ram, 0);
     mem_add_blk (sim->mem, ram, 1);
 
     if (base == 0) {
@@ -93,7 +93,7 @@ void s405_setup_rom (sim405_t *sim, ini_sct_t *ini)
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
-    mem_blk_set_ro (rom, 1);
+    mem_blk_set_readonly (rom, 1);
     mem_add_blk (sim->mem, rom, 1);
 
     if (fname != NULL) {
@@ -245,6 +245,79 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 }
 
 static
+void s405_setup_disks (sim405_t *sim, ini_sct_t *ini)
+{
+  sim->dsks = ini_get_disks (ini);
+}
+
+static
+void s405_setup_pci (sim405_t *sim, ini_sct_t *ini)
+{
+  sim->pci = s405_pci_new();
+
+  mem_add_blk (sim->mem, s405_pci_get_mem_ioa (sim->pci), 0);
+  mem_add_blk (sim->mem, s405_pci_get_mem_iob (sim->pci), 0);
+  mem_add_blk (sim->mem, s405_pci_get_mem_cfg (sim->pci), 0);
+  mem_add_blk (sim->mem, s405_pci_get_mem_special (sim->pci), 0);
+  mem_add_blk (sim->mem, s405_pci_get_mem_csr (sim->pci), 0);
+
+  pci_set_irq_f (&sim->pci->bus, p405uic_get_irq_f (&sim->uic, 31), &sim->uic);
+
+  pce_log (MSG_INF, "PCI:\tirq=%u\n", 31);
+}
+
+static
+void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
+{
+  unsigned  pcidev, pciirq;
+  unsigned  chn, dev, drv;
+  ini_sct_t *sct;
+  disk_t    *dsk;
+
+  pci_ata_init (&sim->pciata);
+
+  sct = ini_sct_find_sct (ini, "pci_ata");
+  if (sct == NULL) {
+    return;
+  }
+
+  pcidev = ini_get_lng_def (sct, "pci_device", 1);
+  pciirq = ini_get_lng_def (sct, "pci_irq", 31);
+
+  pce_log (MSG_INF, "PCI-ATA:\tpcidev=%u irq=%u\n", pcidev, pciirq);
+
+  pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
+  pci_dev_set_irq_f (&sim->pciata.pci, 0,
+    p405uic_get_irq_f (&sim->uic, pciirq), &sim->uic
+  );
+
+  sct = ini_sct_find_sct (sct, "device");
+
+  while (sct != NULL) {
+    chn = ini_get_lng_def (sct, "channel", 0);
+    dev = ini_get_lng_def (sct, "device", 0);
+    drv = ini_get_lng_def (sct, "drive", 0);
+
+    dsk = dsks_get_disk (sim->dsks, drv);
+    if (dsk == NULL) {
+      pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
+    }
+    else {
+      pce_log (MSG_INF, "PCI-ATA:\tchn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
+        chn, dev, drv,
+        (unsigned long) dsk->visible_c,
+        (unsigned long) dsk->visible_h,
+        (unsigned long) dsk->visible_s
+      );
+
+      pci_ata_set_block (&sim->pciata, dsk, 2 * chn + dev);
+    }
+
+    sct = ini_sct_find_next (sct, "device");
+  }
+}
+
+static
 void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
@@ -313,6 +386,9 @@ sim405_t *s405_new (ini_sct_t *ini)
   s405_setup_nvram (sim, ini);
   s405_setup_ppc (sim, ini);
   s405_setup_serport (sim, ini);
+  s405_setup_disks (sim, ini);
+  s405_setup_pci (sim, ini);
+  s405_setup_ata (sim, ini);
 
   sim->cpc0_cr1 = 0x00000000UL;
   sim->cpc0_psr = 0x00000400UL;
@@ -327,6 +403,11 @@ void s405_del (sim405_t *sim)
   if (sim == NULL) {
     return;
   }
+
+  pci_ata_free (&sim->pciata);
+  s405_pci_del (sim->pci);
+
+  dsks_del (sim->dsks);
 
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
@@ -473,6 +554,10 @@ void s405_clock (sim405_t *sim, unsigned n)
 
 void s405_set_msg (sim405_t *sim, const char *msg, const char *val)
 {
+  if (sim == NULL) {
+    sim = par_sim;
+  }
+
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       sim->brk = PCE_BRK_STOP;

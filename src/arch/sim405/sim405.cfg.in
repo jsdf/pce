@@ -67,4 +67,22 @@ section sim405 {
 		irq = 1
 		file = "current/uart1.out"
 	}
+
+	section disk {
+		drive = 0
+		type = "dosemu"
+		file = "hda.img"
+		readonly = 0
+	}
+
+	section pci_ata {
+		pci_device = 4
+		pci_irq = 31
+
+		section device {
+			channel = 0
+			device = 0
+			drive = 0
+		}
+	}
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -365,6 +365,21 @@ void prt_state_spr (p405_t *c, FILE *fp)
   fprintf (fp, "SPG7=%08lX\n",
     (unsigned long) p405_get_sprg (c, 7)
   );
+}
+
+void prt_state_uic (p405_uic_t *uic, FILE *fp)
+{
+  prt_sep (fp, "UIC");
+
+  fprintf (fp, "  L=%08lX\n", (unsigned long) p405uic_get_levels (uic));
+  fprintf (fp, " SR=%08lX\n", (unsigned long) p405uic_get_sr (uic));
+  fprintf (fp, " ER=%08lX\n", (unsigned long) p405uic_get_er (uic));
+  fprintf (fp, "MSR=%08lX\n", (unsigned long) p405uic_get_msr (uic));
+  fprintf (fp, " CR=%08lX\n", (unsigned long) p405uic_get_cr (uic));
+  fprintf (fp, " PR=%08lX\n", (unsigned long) p405uic_get_pr (uic));
+  fprintf (fp, " TR=%08lX\n", (unsigned long) p405uic_get_tr (uic));
+  fprintf (fp, "VCR=%08lX\n", (unsigned long) p405uic_get_vcr (uic));
+  fprintf (fp, " VR=%08lX\n", (unsigned long) p405uic_get_vr (uic));
 }
 
 

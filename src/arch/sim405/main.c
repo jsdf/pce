@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -138,6 +138,9 @@ void prt_state (sim405_t *sim, FILE *fp, const char *str)
     }
     else if (cmd_match (&cmd, "spr")) {
       prt_state_spr (sim->ppc, fp);
+    }
+    else if (cmd_match (&cmd, "uic")) {
+      prt_state_uic (&sim->uic, fp);
     }
     else {
       printf ("unknown component (%s)\n", cmd_get_str (&cmd));

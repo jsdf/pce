@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/main.h                                     *
- * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/arch/sim405/pci.h                                      *
+ * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,40 +23,39 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIM405_MAIN_H
-#define PCE_SIM405_MAIN_H 1
+#ifndef PCE_SIM405_PCI_H
+#define PCE_SIM405_PCI_H 1
 
 
-#include <lib/cmd.h>
-#include <devices/pci.h>
-
-#include "pci.h"
-#include "sim405.h"
-#include "sercons.h"
-#include "cmd_ppc.h"
+#define PCIID_INTEL_IXP2400 0x9001
+#define PCIID_INTEL_IXP2800 0x9004
 
 
-#define s405_br16(x) ((((x) & 0xff) << 8) | (((x) >> 8) & 0xff))
-#define s405_br32(x) ((((x) & 0xff) << 24) | ((((x) >> 8) & 0xff) << 16) \
- | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
+typedef struct {
+  memory_t  asio;
+
+  mem_blk_t pci_ioa;
+  mem_blk_t pci_iob;
+  mem_blk_t pci_cfg;
+  mem_blk_t pci_mem;
+  mem_blk_t pci_special;
+  mem_blk_t pci_csr;
+
+  pci_bus_t bus;
+} pci_405_t;
 
 
-extern int      par_verbose;
+void s405_pci_init (pci_405_t *pci);
+void s405_pci_free (pci_405_t *pci);
 
-extern unsigned par_xlat;
+pci_405_t *s405_pci_new (void);
+void s405_pci_del (pci_405_t *pci);
 
-extern sim405_t *par_sim;
-
-extern unsigned par_sig_int;
-
-
-void prt_sep (FILE *fp, const char *str, ...);
-
-void prt_state (sim405_t *sim, FILE *fp, const char *str);
-
-void pce_start (void);
-void pce_stop (void);
-void pce_run (void);
+mem_blk_t *s405_pci_get_mem_ioa (pci_405_t *pci);
+mem_blk_t *s405_pci_get_mem_iob (pci_405_t *pci);
+mem_blk_t *s405_pci_get_mem_cfg (pci_405_t *pci);
+mem_blk_t *s405_pci_get_mem_special (pci_405_t *pci);
+mem_blk_t *s405_pci_get_mem_csr (pci_405_t *pci);
 
 
 #endif

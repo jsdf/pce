@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := cmd_ppc main sim405 sercons
+FILES := cmd_ppc main pci sim405 sercons
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -26,15 +26,20 @@ OBJ_EXT	:= \
 	$(pcedst)/cpu/ppc405/ppc405.a \
 	$(pcedst)/chipset/e8250.o \
 	$(pcedst)/chipset/ppc405/uic.o \
+	$(pcedst)/devices/ata.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/nvram.o \
+	$(pcedst)/devices/pci.o \
+	$(pcedst)/devices/pci-ata.o \
 	$(pcedst)/devices/serport.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/ihex.o \
+	$(pcedst)/lib/inidsk.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(PCE_BLK_OBJ) \
 	$(pcedst)/libini/libini.a
 
 
@@ -43,6 +48,9 @@ HDR_EXT	:= \
 	cpu/ppc405/ppc405.h \
 	chipset/e8250.h \
 	chipset/ppc405/uic.h \
+	devices/ata.h \
+	devices/pci.h \
+	devices/pci-ata.h \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/serport.h \
@@ -50,8 +58,10 @@ HDR_EXT	:= \
 	lib/cmd.h \
 	lib/hexdump.h \
 	lib/ihex.h \
+	lib/inidsk.h \
 	lib/load.h \
 	lib/log.h \
+	$(PCE_BLK_HDR) \
 	libini/libini.h
 
 MAN1	:=
@@ -86,4 +96,5 @@ sim405.cfg: sim405.cfg.in
 cmd_ppc.o:	cmd_ppc.c $(SDP)
 sim405.o:	sim405.c $(SDP)
 main.o:		main.c $(SDP)
+pci.o:		pci.c $(SDP)
 sercons.o:	sercons.c $(SDP)
