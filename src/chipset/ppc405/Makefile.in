@@ -1,0 +1,37 @@
+# Makefile
+# $Id: Makefile.in 341 2004-01-02 12:04:48Z hampa $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+SRC := uic.c
+OBJ := uic.o
+HDR := uic.h
+MAN :=
+BIN := ppc405.a
+
+SDP := Makefile
+BDP := Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN)
+
+
+ppc405.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+uic.o:	uic.c uic.h $(SDP)

@@ -3,7 +3,7 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir :=
+subdir := ppc405
 reldir := ../..
 
 

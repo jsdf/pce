@@ -331,6 +331,7 @@ AC_OUTPUT(
   src/arch/ibmpc/bios/Makefile
   src/arch/ibmpc/pceutils/Makefile
   src/chipset/Makefile
+  src/chipset/ppc405/Makefile
   src/cpu/Makefile
   src/cpu/e8086/Makefile
   src/cpu/ppc405/Makefile
