@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.6 2003/09/24 01:08:40 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -223,10 +223,6 @@ terminal_t *sdl_new (ini_sct_t *sct)
   SDL_WM_SetCaption ("pce", "pce");
   SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
   SDL_EventState (SDL_MOUSEMOTION, SDL_ENABLE);
-
-  fprintf (stderr, "sdl: display bpp = %u  screen bpp = %u\n",
-    sdl->dsp_bpp, sdl->scr_bpp
-  );
 
   return (&sdl->trm);
 }
@@ -474,7 +470,6 @@ void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
 
   i = 3 * (sdl->txt_w * y + x);
   col = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
-  col = sdl_get_col (sdl, 7);
 
   x *= sdl->font_w;
   y = sdl->font_h * y + sdl->crs_y1;
