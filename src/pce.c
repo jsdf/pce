@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     pce.c                                                      *
+ * File name:     src/pce.c                                                  *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.11 2003/04/20 19:08:36 hampa Exp $ */
+/* $Id: pce.c,v 1.12 2003/04/21 13:36:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -577,6 +577,161 @@ void disasm_str (char *dst, e86_disasm_t *op)
   }
 }
 
+void prt_uint8_bin (FILE *fp, unsigned char val)
+{
+  unsigned      i;
+  unsigned char m;
+
+  m = 0x80;
+
+  for (i = 0; i < 8; i++) {
+    if (val & m) {
+      fputc ('1', fp);
+    }
+    else {
+      fputc ('0', fp);
+    }
+    m = m >> 1;
+  }
+}
+
+void prt_state_time (FILE *fp)
+{
+  double ratio;
+
+  fputs ("-time------------------------------------------------------------------------\n", fp);
+
+  if (pce_hclk > 0) {
+    ratio = 1.0E-6 * ((double) pce_eclk / (double) pce_hclk * pce_hclk_base);
+  }
+  else {
+    ratio = 0.0;
+  }
+
+  fprintf (fp,
+    "HCLK=%016llX @ %8.4fMHz [%.4fs]\n"
+    "ECLK=%016llX @ %8.4fMHz [%.4fs]\n"
+    "EOPS=%016llX @ %8.4fMHz\n",
+    pce_hclk, 1.0E-6 * pce_hclk_base, (double) pce_hclk / (double) pce_hclk_base,
+    pce_eclk, 1.0E-6 * pce_eclk_base, (double) pce_eclk / (double) pce_eclk_base,
+    pce_opcnt, ratio
+  );
+}
+
+void prt_state_ppi (e8255_t *ppi, FILE *fp)
+{
+  fputs ("-8255-PPI--------------------------------------------------------------------\n", fp);
+
+  fprintf (fp,
+    "MOD=%02X  MODA=%u  MODB=%u",
+    ppi->mode, ppi->group_a_mode, ppi->group_b_mode
+  );
+
+  if (ppi->port[0].inp != 0) {
+    fprintf (fp, "  A=I[%02X]", e8255_get_inp (ppi, 0));
+  }
+  else {
+    fprintf (fp, "  A=O[%02X]", e8255_get_out (ppi, 0));
+  }
+
+  if (ppi->port[1].inp != 0) {
+    fprintf (fp, "  B=I[%02X]", e8255_get_inp (ppi, 1));
+  }
+  else {
+    fprintf (fp, "  B=O[%02X]", e8255_get_out (ppi, 1));
+  }
+
+  switch (ppi->port[2].inp) {
+    case 0xff:
+      fprintf (fp, "  C=I[%02X]", e8255_get_inp (ppi, 2));
+      break;
+
+    case 0x00:
+      fprintf (fp, "  C=O[%02X]", e8255_get_out (ppi, 2));
+      break;
+
+    case 0x0f:
+      fprintf (fp, "  CH=O[%X]  CL=I[%X]",
+        (e8255_get_out (ppi, 2) >> 4) & 0x0f, e8255_get_inp (ppi, 2) & 0x0f
+      );
+      break;
+
+    case 0xf0:
+      fprintf (fp, "  CH=I[%X]  CL=O[%X]",
+        (e8255_get_inp (ppi, 2) >> 4) & 0x0f, e8255_get_out (ppi, 2) & 0x0f
+      );
+      break;
+  }
+
+  fputs ("\n", fp);
+  fflush (fp);
+}
+
+void prt_state_pic (e8259_t *pic, FILE *fp)
+{
+  unsigned i;
+
+  fputs ("-8259A-PIC-------------------------------------------------------------------\n", fp);
+  fputs ("IRR=", fp); prt_uint8_bin (fp, pic->irr);
+  fputs ("  IMR=", fp); prt_uint8_bin (fp, pic->imr);
+  fputs ("  ISR=", fp); prt_uint8_bin (fp, pic->isr);
+  fputs ("\n", fp);
+
+  fprintf (fp, "ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
+    pic->icw[0], pic->icw[1], pic->icw[2], pic->icw[3],
+    pic->ocw[0], pic->ocw[1], pic->ocw[2]
+  );
+
+  fprintf (fp, "N0=%04lX", pic->irq_cnt[0]);
+  for (i = 1; i < 8; i++) {
+    fprintf (fp, "  N%u=%04lX", i, pic->irq_cnt[i]);
+  }
+  fputs ("\n", fp);
+
+  fflush (fp);
+}
+
+void prt_state_cpu (e8086_t *c, FILE *fp)
+{
+  double      cpi, mips;
+  static char ft[2] = { '-', '+' };
+
+  fputs ("-8086------------------------------------------------------------------------\n", fp);
+
+  cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
+  mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
+  fprintf (fp, "CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
+    c->clocks, c->instructions,
+    c->delay,
+    cpi, mips
+  );
+
+  fprintf (fp,
+    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
+    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
+  );
+
+  fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
+    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
+    e86_get_ip (c), c->flg
+  );
+
+  fprintf (fp, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
+    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
+    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
+    ft[(c->flg & E86_FLG_I) != 0],
+    ft[(c->flg & E86_FLG_D) != 0]
+  );
+}
+
+void prt_state_pc (ibmpc_t *pc, FILE *fp)
+{
+  prt_state_ppi (pc->ppi, fp);
+  prt_state_pic (pc->pic, fp);
+  prt_state_cpu (pc->cpu, fp);
+}
+
 void prt_state (ibmpc_t *pc, FILE *fp)
 {
   e86_disasm_t op;
@@ -585,9 +740,7 @@ void prt_state (ibmpc_t *pc, FILE *fp)
   e86_disasm_cur (pc->cpu, &op);
   disasm_str (str, &op);
 
-  fprintf (fp, "-8086-state------------------------------------------------------------------\n");
-
-  e86_prt_state (pc->cpu, fp);
+  prt_state_cpu (pc->cpu, fp);
 
   fprintf (fp, "%04X:%04X  %s\n",
     (unsigned) pc->cpu->sreg[E86_REG_CS],
@@ -974,13 +1127,16 @@ void do_s (cmd_t *cmd)
 
   while (!cmd_match_eol (cmd)) {
     if (cmd_match (cmd, "pc")) {
-      pc_prt_state (pc, stdout);
+      prt_state_pc (pc, stdout);
     }
     else if (cmd_match (cmd, "cpu")) {
-      e86_prt_state (pc->cpu, stdout);
+      prt_state_cpu (pc->cpu, stdout);
     }
     else if (cmd_match (cmd, "ppi")) {
-      e8255_prt_state (pc->ppi, stdout);
+      prt_state_ppi (pc->ppi, stdout);
+    }
+    else if (cmd_match (cmd, "pic")) {
+      prt_state_pic (pc->pic, stdout);
     }
     else if (cmd_match (cmd, "video")) {
       if (pc->cga != NULL) {
@@ -994,22 +1150,7 @@ void do_s (cmd_t *cmd)
       }
     }
     else if (cmd_match (cmd, "time")) {
-#ifdef PCE_HAVE_TSC
-      printf (
-        "EOPS=%08llX  R=%.4fMHz\n"
-        "ECLK=%08llX[%.4fs] @ %.4fMHz\n"
-        "HCLK=%08llX[%.4fs] @ %.4fMHz\n",
-        pce_opcnt,
-        1.0E-6 * ((pce_hclk > 0) ?
-          ((double) pce_eclk / (double) pce_hclk * pce_hclk_base) : 0.0),
-        pce_eclk, (double) pce_eclk / (double) pce_eclk_base,
-        1.0E-6 * pce_eclk_base,
-        pce_hclk, (double) pce_hclk / (double) pce_hclk_base,
-        1.0E-6 * pce_hclk_base
-      );
-#else
-      ;
-#endif
+      prt_state_time (stdout);
     }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     pce.h                                                      *
+ * File name:     src/pce.h                                                  *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.4 2003/04/20 19:08:36 hampa Exp $ */
+/* $Id: pce.h,v 1.5 2003/04/21 13:36:15 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -57,6 +57,7 @@ typedef unsigned short (*get_uint16_f) (void *ext);
 
 #include <e8086/e8086.h>
 #include <e8255/e8255.h>
+#include <e8259/e8259.h>
 
 #include <term.h>
 #include <memory.h>
