@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/cmd_s32.c                                  *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -534,21 +534,18 @@ void do_h (cmd_t *cmd, sims32_t *sim)
     "bl                        list breakpoints\n"
     "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
     "c [cnt]                   clock\n"
-    "cth n                     switch to thread n (0 <= n <= 1f)\n"
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
     "g [b]                     run with or without breakpoints (ESC to stop)\n"
     "key [val...]              send keycodes to the serial console\n"
     "p [cnt]                   execute cnt instructions, skip calls [1]\n"
     "q                         quit\n"
-    "rfi                       execute to next rfi or rfci\n"
+    "rett                      execute to next rett\n"
     "r reg [val]               set a register\n"
     "s [what]                  print status (cpu)\n"
-    "tlb l [first [count]]     list TLB entries\n"
-    "tlb s addr                search the TLB\n"
     "t [cnt]                   execute cnt instructions [1]\n"
     "u [addr [cnt]]            disassemble\n"
-    "x [c|r|v]                 set the translation mode (cpu, real, virtual)\n",
+    "v [expr...]               evaluate expressions\n",
     stdout
   );
 }
@@ -761,6 +758,20 @@ void do_u (cmd_t *cmd, sims32_t *sim)
   saddr = addr;
 }
 
+static
+void do_v (cmd_t *cmd)
+{
+  unsigned long val;
+
+  while (cmd_match_uint32 (cmd, &val)) {
+    printf ("%lX\n", val);
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+}
+
 int ss32_do_cmd (cmd_t *cmd, sims32_t *sim)
 {
   if (cmd_match (cmd, "b")) {
@@ -801,6 +812,9 @@ int ss32_do_cmd (cmd_t *cmd, sims32_t *sim)
   }
   else if (cmd_match (cmd, "u")) {
     do_u (cmd, sim);
+  }
+  else if (cmd_match (cmd, "v")) {
+    do_v (cmd);
   }
   else {
     cmd_error (cmd, "unknown command");

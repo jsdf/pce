@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1024,7 +1024,8 @@ void do_h (cmd_t *cmd)
     "r reg val                 set a register\n"
     "s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
     "t [cnt]                   execute cnt instructions [1]\n"
-    "u [addr [cnt]]            disassemble\n",
+    "u [addr [cnt]]            disassemble\n"
+    "v [expr...]               evaluate expressions\n",
     stdout
   );
 }
@@ -1578,6 +1579,20 @@ void do_u (cmd_t *cmd)
 }
 
 static
+void do_v (cmd_t *cmd)
+{
+  unsigned long val;
+
+  while (cmd_match_uint32 (cmd, &val)) {
+    printf ("%lX\n", val);
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+}
+
+static
 int do_cmd (void)
 {
   cmd_t  cmd;
@@ -1662,6 +1677,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "u")) {
       do_u (&cmd);
+    }
+    else if (cmd_match (&cmd, "v")) {
+      do_v (&cmd);
     }
     else if (cmd.str[cmd.i] == 0) {
       ;

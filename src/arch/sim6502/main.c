@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -699,7 +699,8 @@ void do_h (cmd_t *cmd, sim6502_t *sim)
     "r reg [val]               set a register\n"
     "s [what]                  print status (ppc|cth|clp|dpp|epc)\n"
     "t [cnt]                   execute cnt instructions [1]\n"
-    "u [addr [cnt]]            disassemble\n",
+    "u [addr [cnt]]            disassemble\n"
+    "v [expr...]               evaluate expressions\n",
     stdout
   );
 }
@@ -856,6 +857,20 @@ void do_u (cmd_t *cmd, sim6502_t *sim)
   saddr = addr;
 }
 
+static
+void do_v (cmd_t *cmd)
+{
+  unsigned long val;
+
+  while (cmd_match_uint32 (cmd, &val)) {
+    printf ("%lX\n", val);
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+}
+
 int do_cmd (sim6502_t *sim)
 {
   cmd_t cmd;
@@ -907,6 +922,9 @@ int do_cmd (sim6502_t *sim)
     }
     else if (cmd_match (&cmd, "u")) {
       do_u (&cmd, sim);
+    }
+    else if (cmd_match (&cmd, "v")) {
+      do_v (&cmd);
     }
     else {
       printf ("unknown command (%s)\n", cmd_get_str (&cmd));

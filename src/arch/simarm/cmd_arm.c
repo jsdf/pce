@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -625,6 +625,7 @@ void do_h (cmd_t *cmd, simarm_t *sim)
     "s [what]                  print status (cpu)\n"
     "t [cnt]                   execute cnt instructions [1]\n"
     "u [addr [cnt]]            disassemble\n"
+    "v [expr...]               evaluate expressions\n"
     "x [c|r|v]                 set the translation mode (cpu, real, virtual)\n",
     stdout
   );
@@ -834,6 +835,20 @@ void do_u (cmd_t *cmd, simarm_t *sim)
 }
 
 static
+void do_v (cmd_t *cmd)
+{
+  unsigned long val;
+
+  while (cmd_match_uint32 (cmd, &val)) {
+    printf ("%lX\n", val);
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+}
+
+static
 void do_x (cmd_t *cmd, simarm_t *sim)
 {
   unsigned xlat;
@@ -943,6 +958,9 @@ int sarm_do_cmd (cmd_t *cmd, simarm_t *sim)
   }
   else if (cmd_match (cmd, "u")) {
     do_u (cmd, sim);
+  }
+  else if (cmd_match (cmd, "v")) {
+    do_v (cmd);
   }
   else if (cmd_match (cmd, "x")) {
     do_x (cmd, sim);
