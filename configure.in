@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.23 2003/09/15 07:53:48 hampa Exp $
+# $Id: configure.in,v 1.24 2003/09/21 00:39:17 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -169,7 +169,7 @@ dnl -----------------------------------------------------------------------
 dnl Checks for header files.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(limits.h unistd.h fcntl.h)
+AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
 
 
 dnl -----------------------------------------------------------------------

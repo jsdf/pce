@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/serial.c                                         *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,19 +20,25 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.c,v 1.5 2003/09/06 13:53:12 hampa Exp $ */
+/* $Id: serial.c,v 1.6 2003/09/21 00:39:17 hampa Exp $ */
 
 
 #include <stdio.h>
 
 #include "pce.h"
 
+/* fix this */
+#ifdef HAVE_SYS_POLL_H
 #include <unistd.h>
-#include <termios.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 #ifdef PCE_HOST_LINUX
 #include <sys/ioctl.h>
@@ -95,6 +101,8 @@ void ser_del (serial_t *ser)
     free (ser);
   }
 }
+
+#ifdef HAVE_TERMIOS_H
 
 int ser_line_setup (serial_t *ser)
 {
@@ -246,6 +254,15 @@ int ser_line_setup (serial_t *ser)
   return (0);
 }
 
+#else
+
+int ser_line_setup (serial_t *ser)
+{
+  return (0);
+}
+
+#endif
+
 
 #ifdef PCE_HOST_LINUX
 
@@ -360,24 +377,29 @@ void ser_send (serial_t *ser, unsigned char val)
 {
   int           r;
   unsigned char c;
-  struct pollfd pfd[1];
 
   if (ser->fd < 0) {
     return;
   }
 
   while (1) {
-    pfd[0].fd = ser->fd;
-    pfd[0].events = POLLOUT;
+#ifdef HAVE_SYS_POLL_H
+    {
+      struct pollfd pfd[1];
 
-    r = poll (pfd, 1, 0);
-    if (r < 0) {
-      return;
-    }
+      pfd[0].fd = ser->fd;
+      pfd[0].events = POLLOUT;
 
-    if ((pfd[0].revents & POLLOUT) == 0) {
-      return;
+      r = poll (pfd, 1, 0);
+      if (r < 0) {
+        return;
+      }
+
+      if ((pfd[0].revents & POLLOUT) == 0) {
+        return;
+      }
     }
+#endif
 
     if (e8250_get_out (&ser->uart, &c)) {
       return;
@@ -393,10 +415,6 @@ void ser_recv (serial_t *ser, unsigned char val)
 
 void ser_clock (serial_t *ser, unsigned long clk)
 {
-  int           r;
-  unsigned char c;
-  struct pollfd pfd[1];
-
   if (ser->fd < 0) {
     return;
   }
@@ -408,23 +426,33 @@ void ser_clock (serial_t *ser, unsigned long clk)
       break;
     }
 
-    pfd[0].fd = ser->fd;
-    pfd[0].events = POLLIN;
+#ifdef HAVE_SYS_POLL_H
+    {
+      int           r;
+      unsigned char c;
+      struct pollfd pfd[1];
 
-    r = poll (pfd, 1, 0);
-    if (r < 0) {
-      break;
+      pfd[0].fd = ser->fd;
+      pfd[0].events = POLLIN;
+
+      r = poll (pfd, 1, 0);
+      if (r < 0) {
+        break;
+      }
+
+      if ((pfd[0].revents & POLLIN) == 0) {
+        break;
+      }
+
+      read (ser->fd, &c, 1);
+
+      if (e8250_set_inp (&ser->uart, c)) {
+        break;
+      }
     }
-
-    if ((pfd[0].revents & POLLIN) == 0) {
-      break;
-    }
-
-    read (ser->fd, &c, 1);
-
-    if (e8250_set_inp (&ser->uart, c)) {
-      break;
-    }
+#else
+    break;
+#endif
   }
 
   e8250_clock (&ser->uart, clk);
