@@ -214,7 +214,7 @@ void ser_uart_inp (serport_t *ser, unsigned char val)
 
 void ser_receive (serport_t *ser, unsigned char val)
 {
-  e8250_set_inp (&ser->uart, val);
+  e8250_receive (&ser->uart, val);
 }
 
 void ser_clock (serport_t *ser, unsigned n)
