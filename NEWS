@@ -1,5 +1,9 @@
 0.0.5
 
+	* Completed instruction timings
+	* Added a PIC 8259A emulator
+	* Added config file parsing
+
 0.0.4	2003-04-19
 
 	* Added ESC opcodes
