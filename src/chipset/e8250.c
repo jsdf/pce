@@ -20,50 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8250.c,v 1.4 2003/09/05 14:43:36 hampa Exp $ */
+/* $Id: e8250.c,v 1.5 2003/09/06 13:52:51 hampa Exp $ */
 
 
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "e8250.h"
-
-
-#define E8250_IER_SINP 0x08
-#define E8250_IER_ERBK 0x04
-#define E8250_IER_TBE  0x02
-#define E8250_IER_RRD  0x01
-
-#define E8250_IIR_SINP (0x00 << 1)
-#define E8250_IIR_TBE  (0x01 << 1)
-#define E8250_IIR_RRD  (0x02 << 1)
-#define E8250_IIR_ERBK (0x03 << 1)
-#define E8250_IIR_PND  0x01
-
-#define E8250_LCR_DLAB   0x80
-#define E8250_LCR_BRK    0x40
-#define E8250_LCR_PARITY 0x38
-#define E8250_LCR_STOP   0x04
-#define E8250_LCR_DATA   0x03
-
-#define E8250_LSR_TXE 0x40
-#define E8250_LSR_TBE 0x20
-#define E8250_LSR_RRD 0x01
-
-#define E8250_MCR_LOOP 0x10
-#define E8250_MCR_OUT2 0x08
-#define E8250_MCR_OUT1 0x04
-#define E8250_MCR_RTS  0x02
-#define E8250_MCR_DTR  0x01
-
-#define E8250_MSR_DCD  0x80
-#define E8250_MSR_RI   0x40
-#define E8250_MSR_DSR  0x20
-#define E8250_MSR_CTS  0x10
-#define E8250_MSR_DDCD 0x08
-#define E8250_MSR_DRI  0x04
-#define E8250_MSR_DDSR 0x02
-#define E8250_MSR_DCTS 0x01
 
 
 void e8250_init (e8250_t *uart)
@@ -259,6 +222,16 @@ unsigned e8250_get_parity (e8250_t *uart)
   return ((uart->lcr & E8250_LCR_PARITY) >> 3);
 }
 
+int e8250_get_dtr (e8250_t *uart)
+{
+  return ((uart->mcr & E8250_MCR_DTR) != 0);
+}
+
+int e8250_get_rts (e8250_t *uart)
+{
+  return ((uart->mcr & E8250_MCR_RTS) != 0);
+}
+
 int e8250_set_inp (e8250_t *uart, unsigned char val)
 {
   unsigned t;
@@ -372,6 +345,10 @@ void e8250_set_mcr (e8250_t *uart, unsigned char val)
     uart->msr &= 0x0f;
 
     uart->msr |= ((msr ^ uart->msr) & ~(uart->msr & E8250_MSR_RI)) >> 4;
+
+    if (uart->setup != NULL) {
+      uart->setup (uart->setup_ext, 1);
+    }
   }
 
   uart->mcr = val & 0x1f;
@@ -395,6 +372,10 @@ void e8250_set_mcr (e8250_t *uart, unsigned char val)
     }
 
     uart->msr |= ((msr ^ uart->msr) & ~(uart->msr & E8250_MSR_RI)) >> 4;
+
+    if (uart->setup != NULL) {
+      uart->setup (uart->setup_ext, 1);
+    }
   }
 }
 
