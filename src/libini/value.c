@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: value.c,v 1.1 2003/04/22 17:56:20 hampa Exp $ */
+/* $Id: value.c,v 1.2 2003/08/19 00:52:10 hampa Exp $ */
 
 
 #include "libini.h"
@@ -85,6 +85,23 @@ ini_val_t *ini_val_get_next (const ini_val_t *val)
 char *ini_val_get_name (const ini_val_t *val)
 {
   return (val->name);
+}
+
+ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name)
+{
+  if (val != NULL) {
+    val = val->next;
+  }
+
+  while (val != NULL) {
+    if (strcmp (val->name, name) == 0) {
+      return ((ini_val_t *) val);
+    }
+
+    val = val->next;
+  }
+
+  return (NULL);
 }
 
 void ini_val_set_lng (ini_val_t *val, long lng)

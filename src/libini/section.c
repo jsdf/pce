@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     section.c                                                  *
+ * File name:     src/libini/section.c                                       *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: section.c,v 1.2 2003/04/29 00:51:24 hampa Exp $ */
+/* $Id: section.c,v 1.3 2003/08/19 00:52:10 hampa Exp $ */
 
 
 #include "libini.h"
@@ -162,6 +162,10 @@ ini_val_t *ini_sct_find_val (const ini_sct_t *sct, const char *name)
   unsigned  i, j;
   ini_val_t *val;
 
+  if (sct == NULL) {
+    return (NULL);
+  }
+
   i = 0;
 
   while ((name[i] != 0) && (name[i] != '.')) {
@@ -208,6 +212,10 @@ ini_sct_t *ini_sct_find_sct (ini_sct_t *sct, const char *name)
 {
   unsigned  i, j;
 
+  if (sct == NULL) {
+    return (NULL);
+  }
+
   i = 0;
 
   while ((name[i] != 0) && (name[i] != '.')) {
@@ -244,6 +252,10 @@ ini_sct_t *ini_sct_find_sct (ini_sct_t *sct, const char *name)
 
 ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name)
 {
+  if (sct == NULL) {
+    return (NULL);
+  }
+
   sct = sct->next;
 
   while (sct != NULL) {

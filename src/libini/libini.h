@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: libini.h,v 1.2 2003/04/29 00:51:24 hampa Exp $ */
+/* $Id: libini.h,v 1.3 2003/08/19 00:52:09 hampa Exp $ */
 
 
 #ifndef LIBINI_H
@@ -75,6 +75,15 @@ void ini_val_del (ini_val_t *val);
 ini_type_t ini_val_get_type (const ini_val_t *val);
 ini_val_t *ini_val_get_next (const ini_val_t *val);
 char *ini_val_get_name (const ini_val_t *val);
+
+/*!***************************************************************************
+ * @short  Find the next value by name
+ * @param  val  The current value
+ * @param  name The value name
+ * @return A pointer to the value or NULL if the value can't be found
+ *****************************************************************************/
+ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name);
+
 void ini_val_set_lng (ini_val_t *val, long lng);
 void ini_val_set_dbl (ini_val_t *val, double dbl);
 void ini_val_set_str (ini_val_t *val, char *str);
@@ -113,27 +122,30 @@ void ini_sct_add_val (ini_sct_t *sct, ini_val_t *val);
 
 
 /*!***************************************************************************
- * @short Find a value in an ini tree
- * @param sct The base section
- * @param name The value name (as in "sect1.sect2.valname")
+ * @short  Find a value in an ini tree
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
  * @return A pointer to the value or NULL if the value can't be found
+ *
+ * The first value of the given name is returned. Use ini_val_find_next()
+ * to find more values of the same name.
  *****************************************************************************/
 ini_val_t *ini_sct_find_val (const ini_sct_t *sct, const char *name);
 
 
 /*!***************************************************************************
- * @short Find a section in an ini tree
- * @param sct The base section
- * @param name The section name (as in "sect1.sect2")
- * @return A pointer to the section or NULL if the value can't be found
+ * @short  Find a section in an ini tree
+ * @param  sct  The base section
+ * @param  name The section name (as in "sect1.sect2")
+ * @return A pointer to the section or NULL if the section can't be found
  *****************************************************************************/
 ini_sct_t *ini_sct_find_sct (ini_sct_t *sct, const char *name);
 
 
 /*!***************************************************************************
- * @short Find the next section
- * @param sct The base section
- * @param name The section name (as in "sect1")
+ * @short  Find the next section
+ * @param  sct The base section
+ * @param  name The section name (as in "sect1")
  * @return A pointer to the section or NULL if the value can't be found
  *
  * This looks for the next section on the same level as the base section.
@@ -144,30 +156,54 @@ ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name);
 
 /*!***************************************************************************
  * @short  Get a long value
- * @param  sct The base section
+ * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
- * @retval ret The return value
- * @param  def The default value
+ * @retval ret  The return value
+ * @param  def  The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
 int ini_get_slng (const ini_sct_t *sct, const char *name,
   long *ret, long def);
 
+/*!***************************************************************************
+ * @short  Get an unsigned long value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @param  def  The default value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
 int ini_get_ulng (const ini_sct_t *sct, const char *name,
   unsigned long *ret, unsigned long def);
 
+/*!***************************************************************************
+ * @short  Get an integer value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @param  def  The default value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
 int ini_get_sint (const ini_sct_t *sct, const char *name,
   int *ret, int def);
 
+/*!***************************************************************************
+ * @short  Get an unsigned integer value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @param  def  The default value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
 int ini_get_uint (const ini_sct_t *sct, const char *name,
   unsigned *ret, unsigned def);
 
 /*!***************************************************************************
  * @short  Get a double value
- * @param  sct The base section
+ * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
- * @retval ret The return value
- * @param  def The default value
+ * @retval ret  The return value
+ * @param  def  The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
 int ini_get_sdbl (const ini_sct_t *sct, const char *name,
@@ -175,10 +211,10 @@ int ini_get_sdbl (const ini_sct_t *sct, const char *name,
 
 /*!***************************************************************************
  * @short  Get a string value
- * @param  sct The base section
+ * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
- * @retval ret The string. This must not be changed by the caller.
- * @param  def The default value
+ * @retval ret  The string. This must not be changed by the caller.
+ * @param  def  The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
 int ini_get_string (const ini_sct_t *sct, const char *name,
@@ -186,8 +222,8 @@ int ini_get_string (const ini_sct_t *sct, const char *name,
 
 
 /*!***************************************************************************
- * @short Read an ini tree from a file
- * @param fp A C style stream that must be open for reading
+ * @short  Read an ini tree from a file
+ * @param  fp A C style stream that must be open for reading
  * @return A pointer to the base section of the ini tree. NULL on error.
  *****************************************************************************/
 ini_sct_t *ini_read_fp (FILE *fp);
