@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -717,7 +717,7 @@ void vt100_check (vt100_t *vt)
   n = (unsigned) r;
 
   if ((n == 1) && (buf[0] == 0)) {
-    trm_set_msg (&vt->trm, "break", "stop");
+    trm_set_msg (&vt->trm, "emu.stop", "1");
     return;
   }
   else if ((n == 1) && (buf[0] == 0x80)) {
@@ -725,7 +725,7 @@ void vt100_check (vt100_t *vt)
     return;
   }
   else if ((n == 1) && (buf[0] == 0xe0)) {
-    trm_set_msg (&vt->trm, "break", "abort");
+    trm_set_msg (&vt->trm, "emu.exit", "1");
     return;
   }
 

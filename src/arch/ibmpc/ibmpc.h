@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,6 +70,8 @@ typedef struct ibmpc_t {
   serport_t          *serport[4];
   parport_t          *parport[4];
 
+  ini_sct_t          *cfg;
+
   breakpoint_t       *brkpt;
 
   unsigned           cpu_model;
@@ -84,6 +86,7 @@ typedef struct ibmpc_t {
   unsigned long      clk_div[4];
 
   unsigned           brk;
+  char               pause;
 } ibmpc_t;
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -601,6 +601,12 @@ void pce_run (void)
 
   while (pc->brk == 0) {
     pc_clock (pc);
+    pc_clock (pc);
+
+    while (pc->pause) {
+      usleep (250000UL);
+      trm_check (pc->trm);
+    }
   }
 
   pce_stop();
@@ -1015,7 +1021,7 @@ void do_h (cmd_t *cmd)
     "int28 [on|off|val]        turn int28 sleeping on/off\n"
     "i [b|w] port              input a byte or word from a port\n"
     "last [i [n]]              print last instruction addresses\n"
-    "m [msg [val]]             send a message\n"
+    "m[g|s] [msg [val]]        send a message\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "par i fname               set parport output file\n"
     "pq [c|f|s]                prefetch queue clear/fill/status\n"
@@ -1165,7 +1171,7 @@ void do_last (cmd_t *cmd)
 }
 
 static
-void do_m (cmd_t *cmd)
+void do_ms (cmd_t *cmd)
 {
   char msg[256];
   char val[256];
@@ -1184,6 +1190,45 @@ void do_m (cmd_t *cmd)
 
   if (pc_set_msg (pc, msg, val)) {
     printf ("error\n");
+  }
+}
+
+static
+void do_mg (cmd_t *cmd)
+{
+  char msg[256];
+  char val[256];
+
+  if (!cmd_match_str (cmd, msg, 256)) {
+    strcpy (msg, "");
+  }
+
+  if (!cmd_match_str (cmd, val, 256)) {
+    strcpy (val, "");
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (pc_get_msg (pc, msg, val, 256)) {
+    printf ("error\n");
+  }
+
+  printf ("%s\n", val);
+}
+
+static
+void do_m (cmd_t *cmd)
+{
+  if (cmd_match (cmd, "s")) {
+    do_ms (cmd);
+  }
+  else if (cmd_match (cmd, "g")) {
+    do_mg (cmd);
+  }
+  else {
+    do_ms (cmd);
   }
 }
 
@@ -1797,19 +1842,18 @@ int main (int argc, char *argv[])
   pce_log (MSG_MSG,
     "pce ibmpc version " PCE_VERSION_STR
     " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-    "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n"
+    "Copyright (C) 1995-2005 Hampa Hug <hampa@hampa.ch>\n"
   );
 
   par_cfg = pce_load_config (cfg);
   if (par_cfg == NULL) {
-    pce_log (MSG_ERR, "loading config file failed\n");
+    pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
     return (1);
   }
 
   sct = ini_sct_find_sct (par_cfg, "pc");
   if (sct == NULL) {
-    pce_log (MSG_ERR, "section 'pc' not found in config file\n");
-    return (1);
+    sct = par_cfg;
   }
 
   pc = pc_new (sct);

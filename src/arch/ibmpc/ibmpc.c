@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -936,12 +936,15 @@ ibmpc_t *pc_new (ini_sct_t *ini)
     return (NULL);
   }
 
+  pc->cfg = ini;
+
   pc->key_i = 0;
   pc->key_j = 0;
 
   pc->bootdrive = 128;
 
   pc->brk = 0;
+  pc->pause = 0;
   pc->clk_cnt = 0;
 
   pc->brkpt = NULL;
@@ -1055,6 +1058,8 @@ void pc_del (ibmpc_t *pc)
   mem_del (pc->mem);
   mem_del (pc->prt);
 
+  ini_sct_del (pc->cfg);
+
   free (pc);
 }
 
@@ -1114,13 +1119,13 @@ void pc_clock (ibmpc_t *pc)
 
 #if HAVE_SYS_TIME_H
     if (pc->pit_real) {
-      pc_clock_pit (pc, 4 * (pc->clk_div[0] / 32));
+      pc_clock_pit (pc, 8 * (pc->clk_div[0] / 32));
     }
     else {
-      e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
+      e8253_clock (&pc->pit, 8 * (pc->clk_div[0] / 32));
     }
 #else
-    e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
+    e8253_clock (&pc->pit, 8 * (pc->clk_div[0] / 32));
 #endif
 
     pc->clk_div[1] += pc->clk_div[0] & ~0x1fUL;

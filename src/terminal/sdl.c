@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -848,11 +848,14 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
 static
 void sdl_magic (sdl_t *sdl, SDLKey key)
 {
-  if (key == SDLK_i) {
-    trm_set_msg (&sdl->trm, "emu.idle", "-");
+  if (key == SDLK_c) {
+    trm_set_msg (&sdl->trm, "video.screenshot", "");
+  }
+  else if (key == SDLK_i) {
+    trm_set_msg (&sdl->trm, "emu.idle.toggle", "");
   }
   else if (key == SDLK_p) {
-    trm_set_msg (&sdl->trm, "video.screenshot", "");
+    trm_set_msg (&sdl->trm, "emu.pause.toggle", "");
   }
   else if (key == SDLK_q) {
     trm_set_msg (&sdl->trm, "emu.exit", "1");
@@ -864,7 +867,7 @@ void sdl_magic (sdl_t *sdl, SDLKey key)
     trm_set_msg (&sdl->trm, "emu.stop", "1");
   }
   else if (key == SDLK_t) {
-    trm_set_msg (&sdl->trm, "emu.realtime", "2");
+    trm_set_msg (&sdl->trm, "emu.realtime.toggle", "");
   }
 }
 
