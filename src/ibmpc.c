@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.3 2003/04/16 14:14:50 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.4 2003/04/16 17:19:51 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -35,6 +35,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 ibmpc_t *pc_new (void)
 {
   ibmpc_t *pc;
+  disk_t  *dsk;
 
   pc = (ibmpc_t *) malloc (sizeof (ibmpc_t));
   if (pc == NULL) {
@@ -42,20 +43,21 @@ ibmpc_t *pc_new (void)
   }
 
   pc->cpu = e86_new ();
-  pc->cpu->hook = &pc_e86_hook;
-  pc->cpu->hook_ext = pc;
-
   pc->mem = mem_new();
   pc->prt = mem_new();
 
+  pc->cpu->hook = &pc_e86_hook;
+
   pc->cpu->mem = pc->mem;
   pc->cpu->prt = pc->prt;
+  pc->cpu->ext = pc;
 
   pc->ram = mem_blk_new (0, 512 * 1024, 1);
   mem_blk_init (pc->ram, 0x00);
   mem_add_blk (pc->mem, pc->ram);
 
   pc->bios = mem_blk_new (0xf0000, 64 * 1024, 1);
+  mem_blk_init (pc->bios, 0x00);
   mem_blk_set_ro (pc->bios, 1);
   mem_add_blk (pc->mem, pc->bios);
   pc_load_bios (pc, "ibmpc.rom");
@@ -78,8 +80,20 @@ ibmpc_t *pc_new (void)
   pc->key = key_new();
   pc->key->mem = pc->mem;
 
-  pc->flp = flp_new (80, 2, 18);
-  flp_load_img (pc->flp, "floppy.img");
+  pc->dsk = dsks_new();
+  dsk = dsk_new (0, 80, 2, 18);
+  dsk_alloc (dsk);
+  dsk_load_img (dsk, "drive_a.img");
+  dsks_add_disk (pc->dsk, dsk);
+
+  dsk = dsk_new (1, 80, 2, 18);
+  dsk_alloc (dsk);
+  dsk_load_img (dsk, "drive_b.img");
+  dsks_add_disk (pc->dsk, dsk);
+
+  dsk = dsk_new (0x80, 255, 4, 17);
+  dsk_set_file (dsk, "drive_c.img");
+  dsks_add_disk (pc->dsk, dsk);
 
   return (pc);
 }
@@ -90,7 +104,7 @@ void pc_del (ibmpc_t *pc)
     return;
   }
 
-  flp_del (pc->flp);
+  dsks_del (pc->dsk);
   key_del (pc->key);
 
   mda_del (pc->mda);
@@ -121,7 +135,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
   pc = (ibmpc_t *) ext;
 
   if ((op1 == 0xcd) && (op2 == 0x13)) {
-    flp_int_13 (pc->flp, pc->cpu);
+    dsk_int13 (pc->dsk, pc->cpu);
   }
   else {
     fprintf (stderr, "hook: %02X %02X\n", op1, op2);

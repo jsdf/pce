@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.3 2003/04/16 07:05:39 hampa Exp $ */
+/* $Id: floppy.c,v 1.4 2003/04/16 17:19:51 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -34,147 +34,375 @@
 #include <sys/poll.h>
 
 
-floppy_t *flp_new (unsigned c, unsigned h, unsigned s)
+disk_t *dsk_new (unsigned drive, unsigned c, unsigned h, unsigned s)
 {
-  floppy_t *flp;
+  disk_t *dsk;
 
-  flp = (floppy_t *) malloc (sizeof (floppy_t));
-  if (flp == NULL) {
+  dsk = (disk_t *) malloc (sizeof (disk_t));
+  if (dsk == NULL) {
     return (NULL);
   }
 
-  flp->c = c;
-  flp->h = h;
-  flp->s = s;
-  flp->size = c * h * s * 512UL;
+  dsk->drive = drive;
+  dsk->geom.c = c;
+  dsk->geom.h = h;
+  dsk->geom.s = s;
+  dsk->start = 0;
+  dsk->size = c * h * s;
 
-  flp->data = (unsigned char *) malloc (flp->size);
-  if (flp->data == NULL) {
-    free (flp);
-    return (NULL);
-  }
+  dsk->data = NULL;
+  dsk->fp = NULL;
+  dsk->fp_close = 0;
 
-  return (flp);
+  return (dsk);
 }
 
-void flp_del (floppy_t *flp)
+void dsk_del (disk_t *dsk)
 {
-  if (flp != NULL) {
-    free (flp->data);
-    free (flp);
+  if (dsk != NULL) {
+    free (dsk->data);
+    if (dsk->fp_close && (dsk->fp != NULL)) {
+      fclose (dsk->fp);
+    }
+    free (dsk);
   }
 }
 
-int flp_load_img (floppy_t *flp, const char *fname)
+void dsk_set_drive (disk_t *dsk, unsigned drive)
+{
+  dsk->drive = drive;
+}
+
+int dsk_alloc (disk_t *dsk)
+{
+  if (dsk->data != NULL) {
+    return (0);
+  }
+
+  if (dsk->fp_close && (dsk->fp != NULL)) {
+    fclose (dsk->fp);
+  }
+
+  dsk->fp = NULL;
+  dsk->fp_close = 0;
+
+  dsk->data = (unsigned char *) malloc (512UL * dsk->size);
+  if (dsk->data == NULL) {
+    return (1);
+  }
+
+  memset (dsk->data, 0, 512UL * dsk->size);
+
+  return (0);
+}
+
+int dsk_set_file (disk_t *dsk, const char *fname)
+{
+  free (dsk->data);
+  dsk->data = NULL;
+
+  dsk->fp = fopen (fname, "r+");
+  if (dsk->fp == NULL) {
+    return (1);
+  }
+
+  dsk->fp_close = 1;
+
+  return (0);
+}
+
+int dsk_load_img (disk_t *dsk, const char *fname)
 {
   FILE *fp;
+
+  if (dsk_alloc (dsk)) {
+    return (1);
+  }
 
   fp = fopen (fname, "rb");
   if (fp == NULL) {
     return (1);
   }
 
-  if (fread (flp->data, 1, flp->size, fp) != flp->size) {
+  if (fread (dsk->data, 1, 512UL * dsk->size, fp) != 512UL * dsk->size) {
+    fclose (fp);
     return (1);
   }
+
+  fclose (fp);
 
   return (0);
 }
 
-void flp_int13_set_status (floppy_t *flp, e8086_t *cpu, unsigned val)
+disks_t *dsks_new (void)
 {
-  cpu->dreg[E86_REG_AX] &= 0x00ff;
-  cpu->dreg[E86_REG_AX] |= (val & 0xff) << 8;
+  disks_t *dsks;
 
-  e86_set_mem8 (cpu, 0x40, 0x41, val);
+  dsks = (disks_t *) malloc (sizeof (disks_t));
+  if (dsks == NULL) {
+    return (NULL);
+  }
 
-  if (val == 0) {
-    cpu->flg &= ~E86_FLG_C;
-  }
-  else {
-    cpu->flg |= E86_FLG_C;
-  }
+  dsks->cnt = 0;
+  dsks->last_status = 0;
+
+  return (dsks);
 }
 
-void flp_int13_read (floppy_t *flp, e8086_t *cpu)
+void dsks_del (disks_t *dsks)
 {
-  unsigned cnt;
-  unsigned drive;
-  unsigned c, h, s;
-  unsigned seg, ofs;
-  unsigned long i, n;
+  unsigned i;
 
-  drive = cpu->dreg[E86_REG_DX] & 0xff;
-
-  cnt = cpu->dreg[E86_REG_AX] & 0xff;
-  c = ((cpu->dreg[E86_REG_CX] >> 8) & 0xff);
-  c |= ((cpu->dreg[E86_REG_CX] >> 6) & 0x03) << 8;
-  h = (cpu->dreg[E86_REG_DX] >> 8) & 0xff;
-  s = cpu->dreg[E86_REG_CX] & 0x3f;
-
-  if ((s < 1) || (s > flp->s) || (h >= flp->h) || (c >= flp->c)) {
-    flp_int13_set_status (flp, cpu, 0x04);
+  if (dsks == NULL) {
     return;
   }
 
-  seg = cpu->sreg[E86_REG_ES];
-  ofs = cpu->dreg[E86_REG_BX];
+  for (i = 0; i < dsks->cnt; i++) {
+    dsk_del (dsks->dsk[i]);
+  }
 
-  i = 512UL * ((c * flp->h + h) * flp->s + s - 1);
-  n = 512UL * cnt;
+  free (dsks);
+}
 
-  while (n > 0) {
-    cpu->mem_set_uint8 (cpu->mem, (seg << 4) + ofs, flp->data[i]);
-    i += 1;
-    n -= 1;
-    ofs = (ofs + 1) & 0xffff;
+int dsks_add_disk (disks_t *dsks, disk_t *dsk)
+{
+  unsigned i;
 
-    if ((ofs == 0) && (n > 0)) {
-      fprintf (stderr, "int13: wrap around on read\n");
+  if (dsks->cnt >= PCE_MAX_DISKS) {
+    return (1);
+  }
+
+  for (i = 0; i < dsks->cnt; i++) {
+    if (dsks->dsk[i]->drive == dsk->drive) {
+      return (1);
     }
   }
 
-  flp_int13_set_status (flp, cpu, 0);
+  dsks->dsk[dsks->cnt] = dsk;
+  dsks->cnt += 1;
+
+  return (0);
 }
 
-void flp_int13_write (floppy_t *flp, e8086_t *cpu)
+disk_t *dsks_get_disk (disks_t *dsks, unsigned drive)
 {
-  unsigned cnt;
-  unsigned drive;
-  unsigned c, h, s;
-  unsigned seg, ofs;
-  unsigned long i, n;
+  unsigned i;
 
-  drive = cpu->dreg[E86_REG_DX] & 0xff;
+  for (i = 0; i < dsks->cnt; i++) {
+    if (dsks->dsk[i]->drive == drive) {
+      return (dsks->dsk[i]);
+    }
+  }
 
-  cnt = cpu->dreg[E86_REG_AX] & 0xff;
-  c = ((cpu->dreg[E86_REG_CX] >> 8) & 0xff);
-  c |= ((cpu->dreg[E86_REG_CX] >> 6) & 0x03) << 8;
-  h = (cpu->dreg[E86_REG_DX] >> 8) & 0xff;
-  s = cpu->dreg[E86_REG_CX] & 0x3f;
+  return (NULL);
+}
 
-  if ((s < 1) || (s > flp->s) || (h >= flp->h) || (c >= flp->c)) {
-    flp_int13_set_status (flp, cpu, 0x04);
+unsigned dsks_get_hd_cnt (disks_t *dsks)
+{
+  unsigned i, n;
+
+  n = 0;
+
+  for (i = 0; i < dsks->cnt; i++) {
+    if (dsks->dsk[i]->drive & 0x80) {
+      n += 1;
+    }
+  }
+
+  return (n);
+}
+
+void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
+{
+  e86_set_ah (cpu, val);
+  e86_set_mem8 (cpu, 0x40, 0x41, val);
+  e86_set_flg (cpu, E86_FLG_C, val != 0);
+
+  dsks->last_status = val;
+}
+
+void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned       drive;
+  unsigned       cnt;
+  unsigned       c, h, s;
+  unsigned short seg, ofs;
+  unsigned long  i, j, n;
+  disk_t         *dsk;
+
+  drive = e86_get_dl (cpu);
+
+  dsk = dsks_get_disk (dsks, drive);
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 1);
     return;
   }
 
-  seg = cpu->sreg[E86_REG_ES];
-  ofs = cpu->dreg[E86_REG_BX];
+  cnt = e86_get_al (cpu);
+  c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
+  h = e86_get_dh (cpu);
+  s = e86_get_cl (cpu) & 0x3f;
 
-  i = 512UL * ((c * flp->h + h) * flp->s + s - 1);
-  n = 512UL * cnt;
-
-  while (n > 0) {
-    flp->data[i] = cpu->mem_get_uint8 (cpu->mem, (seg << 4) + ofs);
-    i += 1;
-    n -= 1;
-    ofs = (ofs + 1) & 0xffff;
+  if ((s < 1) || (s > dsk->geom.s)) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
   }
 
-  flp_int13_set_status (flp, cpu, 0);
+  if ((h >= dsk->geom.h) || (c >= dsk->geom.c)) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
+  }
+
+  seg = e86_get_es (cpu);
+  ofs = e86_get_bx (cpu);
+
+  i = ((c * dsk->geom.h + h) * dsk->geom.s + s - 1);
+  n = cnt;
+
+  if ((i + n) > dsk->size) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
+  }
+
+  if (dsk->data != NULL) {
+    while (n > 0) {
+      for (j = 0; j < 512; j++) {
+        e86_set_mem8 (cpu, seg, ofs, dsk->data[512 * i + j]);
+        ofs = (ofs + 1) & 0xffff;
+      }
+      i += 1;
+      n -= 1;
+    }
+  }
+  else if (dsk->fp != NULL) {
+    unsigned char buf[512];
+
+    if (fseek (dsk->fp, 512 * i, SEEK_SET)) {
+      perror ("seek");
+      dsk_int13_set_status (dsks, cpu, 1);
+      return;
+    }
+
+    while (n > 0) {
+      fread (buf, 1, 512, dsk->fp);
+      for (j = 0; j < 512; j++) {
+        e86_set_mem8 (cpu, seg, ofs, buf[j]);
+        ofs = (ofs + 1) & 0xffff;
+      }
+      i += 1;
+      n -= 1;
+    }
+  }
+  else {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  dsk_int13_set_status (dsks, cpu, 0);
 }
 
-void flp_int13_log (floppy_t *flp, e8086_t *cpu, FILE *fp)
+void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned       drive;
+  unsigned       cnt;
+  unsigned       c, h, s;
+  unsigned short seg, ofs;
+  unsigned long  i, j, n;
+  disk_t         *dsk;
+
+  drive = e86_get_dl (cpu);
+
+  dsk = dsks_get_disk (dsks, drive);
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  cnt = e86_get_al (cpu);
+  c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
+  h = e86_get_dh (cpu);
+  s = e86_get_cl (cpu) & 0x3f;
+
+  if ((s < 1) || (s > dsk->geom.s)) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
+  }
+
+  if ((h >= dsk->geom.h) || (c >= dsk->geom.c)) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
+  }
+
+  seg = e86_get_es (cpu);
+  ofs = e86_get_bx (cpu);
+
+  i = (c * dsk->geom.h + h) * dsk->geom.s + s - 1;
+  n = cnt;
+
+  if ((i + n) > dsk->size) {
+    dsk_int13_set_status (dsks, cpu, 0x04);
+    return;
+  }
+
+  if (dsk->data != NULL) {
+    while (n > 0) {
+      for (j = 0; j < 512; j++) {
+        dsk->data[512 * i + j] = e86_get_mem8 (cpu, seg, ofs);
+        ofs = (ofs + 1) & 0xffff;
+      }
+      i += 1;
+      n -= 1;
+    }
+  }
+  else if (dsk->fp != NULL) {
+    unsigned char buf[512];
+
+    if (fseek (dsk->fp, 512 * i, SEEK_SET)) {
+      perror ("seek");
+      dsk_int13_set_status (dsks, cpu, 1);
+      return;
+    }
+
+    while (n > 0) {
+      for (j = 0; j < 512; j++) {
+        buf[j] = e86_get_mem8 (cpu, seg, ofs);
+        ofs = (ofs + 1) & 0xffff;
+      }
+      fwrite (buf, 1, 512, dsk->fp);
+      i += 1;
+      n -= 1;
+    }
+  }
+  else {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  dsk_int13_set_status (dsks, cpu, 0);
+}
+
+void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned drive;
+  disk_t   *dsk;
+
+  drive = e86_get_dl (cpu);
+  dsk = dsks_get_disk (dsks, drive);
+
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  e86_set_dl (cpu, dsks_get_hd_cnt (dsks));
+  e86_set_dh (cpu, dsk->geom.h - 1);
+  e86_set_ch (cpu, dsk->geom.c - 1);
+  e86_set_cl (cpu, dsk->geom.s | (((dsk->geom.c - 1) >> 2) & 0xc0));
+
+  dsk_int13_set_status (dsks, cpu, 0);
+}
+
+void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
 {
   fprintf (fp,
     "int 13 func %02X: %04X:%04X  AX=%04X  BX=%04X  CX=%04X  DX=%04X  ES=%04X\n",
@@ -189,53 +417,45 @@ void flp_int13_log (floppy_t *flp, e8086_t *cpu, FILE *fp)
   );
 }
 
-void flp_int_13 (floppy_t *flp, e8086_t *cpu)
+void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned func;
 
-  flp_int13_log (flp, cpu, stderr);
+  dsk_int13_log (dsks, cpu, stderr);
 
-  func = e86_get_reg8 (cpu, E86_REG_AH);
+  func = e86_get_ah (cpu);
 
   switch (func) {
     case 0x00:
-      flp_int13_set_status (flp, cpu, 0);
+      dsk_int13_set_status (dsks, cpu, 0);
       break;
 
     case 0x01:
-      flp_int13_set_status (flp, cpu, e86_get_mem8 (cpu, 0x40, 0x41));
+      dsk_int13_set_status (dsks, cpu, dsks->last_status);
       break;
 
     case 0x02:
-      flp_int13_read (flp, cpu);
+      dsk_int13_02 (dsks, cpu);
       break;
 
     case 0x03:
-      flp_int13_write (flp, cpu);
+      dsk_int13_03 (dsks, cpu);
       break;
 
     case 0x04:
-      flp_int13_set_status (flp, cpu, 0);
+      dsk_int13_set_status (dsks, cpu, 0);
       break;
 
     case 0x08:
-//      flp_int13_set_status (flp, cpu, 1);
-      if ((cpu->dreg[E86_REG_DX] & 0xff) > 0) {
-        flp_int13_set_status (flp, cpu, 1);
-        return;
-      }
-      cpu->dreg[E86_REG_CX] = (flp->c << 8) | flp->s;
-      cpu->dreg[E86_REG_DX] = (flp->h << 8);
-      flp_int13_set_status (flp, cpu, 0);
+      dsk_int13_08 (dsks, cpu);
       break;
 
     case 0x15:
-      flp_int13_set_status (flp, cpu, 1);
+      dsk_int13_set_status (dsks, cpu, 1);
       break;
 
     default:
-      fprintf (stderr, "int 13 func %02x\n", func);
-      flp_int13_set_status (flp, cpu, 1);
+      dsk_int13_set_status (dsks, cpu, 1);
       break;
   }
 }

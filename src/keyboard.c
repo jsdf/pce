@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     keyboard.c                                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: keyboard.c,v 1.2 2003/04/16 17:19:51 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -130,6 +130,8 @@ keyboard_t *key_new (void)
     c = i;
     keymap_set_key (key->map, &c, 1, i);
   }
+
+  keymap_set_key (key->map, "\x1b", 1, 0x011b);
 
   keymap_set_key (key->map, "\x0a", 1, 0x1c0d);
   keymap_set_key (key->map, "\x08", 1, 0x0e08);

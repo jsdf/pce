@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.h                                                    *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.2 2003/04/16 17:19:51 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -35,7 +35,7 @@ typedef struct {
   e8086_t       *cpu;
   mda_t         *mda;
   keyboard_t    *key;
-  floppy_t      *flp;
+  disks_t       *dsk;
 
   memory_t      *mem;
   mem_blk_t     *bios;
