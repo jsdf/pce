@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.h                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -97,6 +97,9 @@
 #define E8250_MSR_DCTS 0x01
 
 
+#define E8250_BUF_MAX 256
+
+
 typedef void (*e8250_irq_f) (void *ext, unsigned char val);
 typedef void (*e8250_recv_f) (void *ext, unsigned char val);
 typedef void (*e8250_send_f) (void *ext, unsigned char val);
@@ -113,13 +116,13 @@ typedef struct {
   unsigned       inp_i;
   unsigned       inp_j;
   unsigned       inp_n;
-  unsigned char  inp[16];
+  unsigned char  inp[E8250_BUF_MAX];
 
   /* output buffer. holds bytes that have been sent. */
   unsigned       out_i;
   unsigned       out_j;
   unsigned       out_n;
-  unsigned char  out[16];
+  unsigned char  out[E8250_BUF_MAX];
 
   unsigned char  txd[2];
   unsigned char  rxd[2];
@@ -300,12 +303,14 @@ void e8250_set_dcd (e8250_t *uart, unsigned char val);
 int e8250_set_inp (e8250_t *uart, unsigned char val);
 
 /*!***************************************************************************
- * @short  Remove a byte to the input queue
+ * @short  Remove a byte from the input queue
  * @param  uart The UART structure
  * @retval val  The byte
  * @return Nonzero on error (queue empty)
  *****************************************************************************/
 int e8250_get_inp (e8250_t *uart, unsigned char *val);
+
+void e8250_get_inp_all (e8250_t *uart);
 
 /*!***************************************************************************
  * @short  Check if the input queue is full
@@ -313,6 +318,9 @@ int e8250_get_inp (e8250_t *uart, unsigned char *val);
  * @return Nonzero if the queue is full
  *****************************************************************************/
 int e8250_inp_full (e8250_t *uart);
+
+int e8250_inp_empty (e8250_t *uart);
+
 
 /*!***************************************************************************
  * @short  Add a byte to the output queue
@@ -329,6 +337,8 @@ int e8250_set_out (e8250_t *uart, unsigned char val);
  * @return Nonzero on error (queue empty)
  *****************************************************************************/
 int e8250_get_out (e8250_t *uart, unsigned char *val);
+
+void e8250_get_out_all (e8250_t *uart);
 
 /*!***************************************************************************
  * @short  Receive a byte

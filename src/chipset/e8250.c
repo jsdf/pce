@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.c                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -36,11 +36,11 @@ void e8250_init (e8250_t *uart)
 
   uart->inp_i = 0;
   uart->inp_j = 0;
-  uart->inp_n = 2;
+  uart->inp_n = E8250_BUF_MAX;
 
   uart->out_i = 0;
   uart->out_j = 0;
-  uart->out_n = 2;
+  uart->out_n = E8250_BUF_MAX;
 
   uart->txd[0] = 0;
   uart->txd[1] = 0;
@@ -385,6 +385,12 @@ int e8250_get_inp (e8250_t *uart, unsigned char *val)
   return (0);
 }
 
+void e8250_get_inp_all (e8250_t *uart)
+{
+  uart->inp_i = 0;
+  uart->inp_j = 0;
+}
+
 int e8250_inp_full (e8250_t *uart)
 {
   unsigned t;
@@ -397,6 +403,11 @@ int e8250_inp_full (e8250_t *uart)
   }
 
   return (0);
+}
+
+int e8250_inp_empty (e8250_t *uart)
+{
+  return (uart->inp_i == uart->inp_j);
 }
 
 
@@ -431,6 +442,12 @@ int e8250_get_out (e8250_t *uart, unsigned char *val)
   }
 
   return (0);
+}
+
+void e8250_get_out_all (e8250_t *uart)
+{
+  uart->out_i = 0;
+  uart->out_j = 0;
 }
 
 int e8250_receive (e8250_t *uart, unsigned char val)
@@ -612,10 +629,6 @@ void e8250_write_mcr (e8250_t *uart, unsigned char val)
     uart->msr &= 0x0f;
 
     uart->msr |= ((msr ^ uart->msr) & ~(uart->msr & E8250_MSR_RI)) >> 4;
-
-    if (uart->setup != NULL) {
-      uart->setup (uart->setup_ext, 1);
-    }
   }
 
   uart->mcr = val & 0x1f;
@@ -639,10 +652,10 @@ void e8250_write_mcr (e8250_t *uart, unsigned char val)
     }
 
     uart->msr |= ((msr ^ uart->msr) & ~(uart->msr & E8250_MSR_RI)) >> 4;
+  }
 
-    if (uart->setup != NULL) {
-      uart->setup (uart->setup_ext, 1);
-    }
+  if (uart->setup != NULL) {
+    uart->setup (uart->setup_ext, 1);
   }
 }
 
