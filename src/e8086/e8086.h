@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.13 2003/05/01 07:10:36 hampa Exp $ */
+/* $Id: e8086.h,v 1.14 2003/08/29 09:45:42 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -310,6 +310,8 @@ e8086_t *e86_new (void);
 
 void e86_del (e8086_t *c);
 
+void e186_enable (void);
+
 void e86_reset (e8086_t *c);
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt);
@@ -339,6 +341,11 @@ unsigned e86_get_last_int (e8086_t *c);
 void e86_execute (e8086_t *c);
 
 void e86_clock (e8086_t *c, unsigned n);
+
+
+void e86_push (e8086_t *c, unsigned short val);
+unsigned short e86_pop (e8086_t *c);
+void e86_trap (e8086_t *c, unsigned n);
 
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.7 2003/04/26 23:34:02 hampa Exp $ */
+/* $Id: internal.h,v 1.8 2003/08/29 09:45:42 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -76,11 +76,6 @@ unsigned char e86_get_ea8 (e8086_t *c);
 unsigned short e86_get_ea16 (e8086_t *c);
 void e86_set_ea8 (e8086_t *c, unsigned char val);
 void e86_set_ea16 (e8086_t *c, unsigned short val);
-
-
-void e86_push (e8086_t *c, unsigned short val);
-unsigned short e86_pop (e8086_t *c);
-void e86_trap (e8086_t *c, unsigned n);
 
 
 void e86_pq_init (e8086_t *c);
