@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -844,16 +844,37 @@ void ega_set_uint8_gdc (ega_t *ega, unsigned long addr, unsigned char val)
 
   switch (ega->gdc_reg[5] & 0x03) {
     case 0x00: { /* write mode 0 */
-      unsigned char ena, set, msk;
+      unsigned char ena, set, msk, rot;
+
+      rot = ega->gdc_reg[3] & 0x07;
+      val = (val >> rot) | (val << (8 - rot));
 
       ena = ega->gdc_reg[0x01];
       set = ega->gdc_reg[0x00];
       msk = ega->gdc_reg[0x08];
 
-      col[0] = (ena & 0x01) ? ((set & 0x01) ? 0xff : 0x00) : val;
-      col[1] = (ena & 0x02) ? ((set & 0x02) ? 0xff : 0x00) : val;
-      col[2] = (ena & 0x04) ? ((set & 0x04) ? 0xff : 0x00) : val;
-      col[3] = (ena & 0x08) ? ((set & 0x08) ? 0xff : 0x00) : val;
+      switch (ena & 0x0f) {
+      case 0x00:
+        col[0] = val;
+        col[1] = val;
+        col[2] = val;
+        col[3] = val;
+        break;
+
+      case 0x0f:
+        col[0] = (set & 0x01) ? 0xff : 0x00;
+        col[1] = (set & 0x02) ? 0xff : 0x00;
+        col[2] = (set & 0x04) ? 0xff : 0x00;
+        col[3] = (set & 0x08) ? 0xff : 0x00;
+        break;
+
+      default:
+        col[0] = (ena & 0x01) ? ((set & 0x01) ? 0xff : 0x00) : val;
+        col[1] = (ena & 0x02) ? ((set & 0x02) ? 0xff : 0x00) : val;
+        col[2] = (ena & 0x04) ? ((set & 0x04) ? 0xff : 0x00) : val;
+        col[3] = (ena & 0x08) ? ((set & 0x08) ? 0xff : 0x00) : val;
+        break;
+      }
 
       switch (ega->gdc_reg[3] & 0x18) {
         case 0x00: /* copy */

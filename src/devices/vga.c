@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/vga.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -128,6 +128,7 @@ void vga_set_ega_dac (vga_t *vga)
 
 video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 {
+  unsigned w, h;
   vga_t    *vga;
 
   vga = (vga_t *) malloc (sizeof (vga_t));
@@ -177,14 +178,19 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
   vga_set_ega_dac (vga);
 
-  vga->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", 640);
-  vga->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", 400);
-  vga->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", 640);
-  vga->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", 400);
-  vga->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", 640);
-  vga->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", 480);
-  vga->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", 640);
-  vga->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", 480);
+  w = ini_get_lng_def (sct, "w", 640);
+  h = ini_get_lng_def (sct, "h", 400);
+
+  vga->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+  vga->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+  vga->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
+  vga->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
+  vga->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
+  vga->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
+  vga->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", w);
+  vga->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", h);
+  vga->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
+  vga->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
 
   pce_log (MSG_INF, "video:\tVGA io=0x03b0 membase=0xa000 memsize=262144\n");
 
@@ -213,6 +219,7 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
   vga->mode = 0;
 
   trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_size (trm, vga->mode_80x25_w, vga->mode_80x25_h);
 
   return (&vga->vid);
 }
@@ -1000,7 +1007,10 @@ void vga_set_uint8_gdc (vga_t *vga, unsigned long addr, unsigned char val)
 
   switch (vga->gdc_reg[5] & 0x03) {
     case 0x00: { /* write mode 0 */
-      unsigned char ena, set, msk;
+      unsigned char ena, set, msk, rot;
+
+      rot = vga->gdc_reg[3] & 0x07;
+      val = (val >> rot) | (val << (8 - rot));
 
       ena = vga->gdc_reg[0x01];
       set = vga->gdc_reg[0x00];
@@ -1172,7 +1182,7 @@ int vga_eval_mode (vga_t *vga)
     pce_log (MSG_DEB, "vga: cpu mode gdc\n");
   }
 
-  if (vga->atc_reg[0x10] & 0x01) {
+  if ((vga->atc_reg[0x10] & 0x01) || (vga->gdc_reg[0x06] & 0x01)) {
     if (vga->gdc_reg[0x05] & 0x40) {
       vga->update = &vga_update_vga256;
       vga->screenshot = &vga_screenshot_vga256;
