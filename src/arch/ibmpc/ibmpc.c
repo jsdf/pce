@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,10 +23,7 @@
 /* $Id$ */
 
 
-#include <stdio.h>
-#include <time.h>
-
-#include "pce.h"
+#include "main.h"
 
 
 void pc_load_bios (ibmpc_t *pc, char *fname);

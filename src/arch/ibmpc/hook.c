@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/hook.c                                           *
+ * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,12 +20,10 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
-#include "pce.h"
-
-#include <time.h>
+#include "main.h"
 
 
 static

@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2004-06-02 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -332,13 +332,13 @@ else
 	  	fi
 	  ],
 	  [
-	  	PCE_BUILD_SIM405=0
-		AC_MSG_RESULT([no (default)])
+	  	PCE_BUILD_SIM405=1
+		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
 fi
 AC_SUBST(PCE_BUILD_SIM405)
-if test $PCE_BUILD_SIM405 -eq 1 ; then
+if test "x$PCE_BUILD_SIM405" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_SIM405)
 fi
 
@@ -360,13 +360,13 @@ else
 	  	fi
 	  ],
 	  [
-	  	PCE_BUILD_SIM6502=0
-		AC_MSG_RESULT([no (default)])
+	  	PCE_BUILD_SIM6502=1
+		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
 fi
 AC_SUBST(PCE_BUILD_SIM6502)
-if test $PCE_BUILD_SIM6502 -eq 1 ; then
+if test "x$PCE_BUILD_SIM6502" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_SIM6502)
 fi
 

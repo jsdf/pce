@@ -18,7 +18,7 @@ subdir += bios pceutils
 endif
 
 
-FILES := ems hook ibmpc int13 mouse pce xms
+FILES := ems hook ibmpc int13 main mouse xms
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -84,31 +84,32 @@ ifeq "$(PCE_SDL_USE)" "1"
 	LD_FLG_EXTRA += $(PCE_SDL_LDF)
 endif
 
-MAN1 := pce.1
-BIN  := pce
+MAN1 := ibmpc.1
+BIN  := ibmpc
 
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(OBJ) $(BIN) pce.cfg
+CLN := $(OBJ) $(BIN) ibmpc.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) pce.cfg
+all: $(BIN) $(OBJ) ibmpc.cfg
 
 
-install: pce pce.cfg install-bin install-man
+install: ibmpc ibmpc.cfg install-bin install-man
+	( rm -f $(DESTDIR)$(bindir)/pce ; cd $(DESTDIR)$(bindir) && ln -s ibmpc pce ; )
 	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	test -f $(DESTDIR)$(etcdir)/pce.cfg || $(INSTALL) -m 644 pce.cfg $(DESTDIR)$(etcdir)
+	test -f $(DESTDIR)$(etcdir)/ibmpc.cfg || $(INSTALL) -m 644 ibmpc.cfg $(DESTDIR)$(etcdir)
 
 
-pce: $(OBJ) $(OBJ_EXT)
+ibmpc: $(OBJ) $(OBJ_EXT)
 	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
-pce.cfg: pce.cfg.in
+ibmpc.cfg: ibmpc.cfg.in
 	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
@@ -116,6 +117,6 @@ int13.o:	int13.c $(SDP)
 ems.o:		ems.c $(SDP)
 hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)
+main.o:		main.c $(SDP)
 mouse.o:	mouse.c $(SDP)
-pce.o:		pce.c $(SDP)
 xms.o:		xms.c $(SDP)

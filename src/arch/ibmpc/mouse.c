@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,10 +23,7 @@
 /* $Id$ */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "pce.h"
+#include "main.h"
 
 
 void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)

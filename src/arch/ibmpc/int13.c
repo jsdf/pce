@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,7 +23,7 @@
 /* $Id$ */
 
 
-#include "pce.h"
+#include "main.h"
 
 
 static
@@ -71,11 +71,11 @@ void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
 static
 void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 {
-  unsigned       i;
+  unsigned       i, n;
   unsigned long  blk_i, blk_n;
   unsigned       c, h, s;
   unsigned short seg, ofs;
-  unsigned char  buf[512];
+  unsigned char  buf[1024];
   disk_t         *dsk;
 
   dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -99,18 +99,21 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
   }
 
   while (blk_n > 0) {
-    if (dsk_read_lba (dsk, buf, blk_i, 1)) {
+    n = (blk_n < 2) ? 1 : 2;
+
+    if (dsk_read_lba (dsk, buf, blk_i, n)) {
       dsk_int13_set_status (dsks, cpu, 0x01);
       return;
     }
 
-    for (i = 0; i < 512; i++) {
-      e86_set_mem8 (cpu, seg, ofs, buf[i]);
-      ofs = (ofs + 1) & 0xffff;
-    }
+    blk_n -= n;
+    blk_i += n;
 
-    blk_n -= 1;
-    blk_i += 1;
+    n *= 512;
+    for (i = 0; i < n; i += 2) {
+      e86_set_mem16 (cpu, seg, ofs, buf[i] | (buf[i + 1] << 8));
+      ofs = (ofs + 2) & 0xffffU;
+    }
   }
 
   dsk_int13_set_status (dsks, cpu, 0x00);
@@ -122,7 +125,7 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   unsigned       i;
   unsigned long  blk_i, blk_n;
   unsigned       c, h, s;
-  unsigned short seg, ofs;
+  unsigned short seg, ofs, val;
   unsigned char  buf[512];
   disk_t         *dsk;
 
@@ -152,9 +155,11 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   }
 
   while (blk_n > 0) {
-    for (i = 0; i < 512; i++) {
-      buf[i] = e86_get_mem8 (cpu, seg, ofs);
-      ofs = (ofs + 1) & 0xffff;
+    for (i = 0; i < 256; i++) {
+      val = e86_get_mem16 (cpu, seg, ofs);
+      buf[2 * i] = val & 0xff;
+      buf[2 * i + 1] = (val >> 8) & 0xff;
+      ofs = (ofs + 2) & 0xffffU;
     }
 
     if (dsk_write_lba (dsk, buf, blk_i, 1)) {

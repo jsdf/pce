@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,7 +23,7 @@
 /* $Id$ */
 
 
-#include "pce.h"
+#include "main.h"
 
 
 xms_emb_t *emb_new (unsigned long size)
