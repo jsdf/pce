@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.5 2003/09/14 21:27:40 hampa Exp $ */
+/* $Id: terminal.c,v 1.6 2003/09/15 07:53:49 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -109,6 +109,13 @@ void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned 
 {
   if (trm->set_pxl != NULL) {
     trm->set_pxl (trm->ext, x, y, w, h);
+  }
+}
+
+void trm_set_upd (terminal_t *trm, int upd)
+{
+  if (trm->set_upd != NULL) {
+    trm->set_upd (trm->ext, upd);
   }
 }
 

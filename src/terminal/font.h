@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/config.h.in                                            *
- * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/terminal/font.h                                        *
+ * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,35 +20,14 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: config.h.in,v 1.7 2003/09/15 07:53:48 hampa Exp $ */
+/* $Id: font.h,v 1.1 2003/09/15 07:53:49 hampa Exp $ */
 
 
-#ifndef PCE_CONFIG_H
-#define PCE_CONFIG_H 1
+#ifndef PCE_TERMINAL_FONT_H
+#define PCE_TERMINAL_FONT_H 1
 
 
-#undef HAVE_LIMITS_H
-
-#undef HAVE_STDINT_H
-
-#undef PCE_VERSION_MAJ
-#undef PCE_VERSION_MIN
-#undef PCE_VERSION_MIC
-#undef PCE_VERSION_STR
-
-#undef PCE_CFG_DATE
-#undef PCE_CFG_TIME
-
-#undef PCE_HOST_LINUX
-#undef PCE_HOST_FOSC
-
-#undef PCE_HAVE_TSC
-
-#undef PCE_DIR_ETC
-#undef PCE_DIR_DATA
-
-#undef PCE_X11_USE
-#undef PCE_SDL_USE
+extern unsigned char fnt_8x16[256 * 16];
 
 
 #endif

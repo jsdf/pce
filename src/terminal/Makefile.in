@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.3 2003/09/02 11:43:41 hampa Exp $
+# $Id: Makefile.in,v 1.4 2003/09/15 07:53:49 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -11,9 +11,9 @@ pcedst	:= ..
 include $(reldir)/Makefile.inc
 
 
-SRC	:= terminal.c vt100.c
-OBJ	:= terminal.o vt100.o
-HDR	:= terminal.h vt100.h
+SRC	:= font.c terminal.c vt100.c
+OBJ	:= font.o terminal.o vt100.o
+HDR	:= font.h terminal.h vt100.h
 MAN	:=
 BIN	:=
 
@@ -21,8 +21,16 @@ ifeq "$(PCE_X11_USE)" "1"
 	SRC += x11.c
 	OBJ += x11.o
 	HDR += x11.h
-	CC_FLG_EXTRA := $(PCE_X11_CCF)
+	CC_FLG_EXTRA += $(PCE_X11_CCF)
 endif
+
+ifeq "$(PCE_SDL_USE)" "1"
+	SRC += sdl.c
+	OBJ += sdl.o
+	HDR += sdl.h
+	CC_FLG_EXTRA += $(PCE_SDL_CCF)
+endif
+
 
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
@@ -35,6 +43,8 @@ clean:
 	rm -f $(OBJ) $(BIN)
 
 
+font.o:		font.c $(SDP)
+sdl.o:		sdl.c $(SDP)
 terminal.o:	terminal.c $(SDP)
 vt100.o:	vt100.c $(SDP)
 x11.o:		x11.c $(SDP)

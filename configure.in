@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.22 2003/09/13 18:12:16 hampa Exp $
+# $Id: configure.in,v 1.23 2003/09/15 07:53:48 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -74,6 +74,28 @@ fi
 AC_SUBST(PCE_X11_USE)
 AC_SUBST(PCE_X11_CCF)
 AC_SUBST(PCE_X11_LDF)
+
+
+AC_ARG_WITH(sdl,
+  AC_HELP_STRING([--with-sdl], [Use the SDL terminal]),
+  [
+  	PCE_SDL_USE="$withval"
+  ],
+  [
+  	PCE_SDL_USE=no
+  ]
+)
+if test "x$PCE_SDL_USE" = "xyes" ; then
+	PCE_SDL_USE=1
+	PCE_SDL_CCF=`sdl-config --cflags`
+	PCE_SDL_LDF=`sdl-config --libs`
+	AC_DEFINE(PCE_SDL_USE)
+else
+	PCE_SDL_USE=0
+fi
+AC_SUBST(PCE_SDL_USE)
+AC_SUBST(PCE_SDL_CCF)
+AC_SUBST(PCE_SDL_LDF)
 
 
 AC_ARG_WITH(host-clock,
@@ -190,6 +212,10 @@ term="vt100"
 
 if test "x$PCE_X11_USE" = "x1" ; then
 	term="$term x11"
+fi
+
+if test "x$PCE_SDL_USE" = "x1" ; then
+	term="$term sdl"
 fi
 
 eval "pce_bindir=$bindir"

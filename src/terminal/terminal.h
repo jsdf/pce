@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.7 2003/09/14 21:27:40 hampa Exp $ */
+/* $Id: terminal.h,v 1.8 2003/09/15 07:53:49 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -43,6 +43,7 @@ typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2);
 typedef void (*trm_set_pos_f) (void *ext, unsigned x, unsigned y);
 typedef void (*trm_set_chr_f) (void *ext, unsigned x, unsigned y, unsigned char c);
 typedef void (*trm_set_pxl_f) (void *ext, unsigned x, unsigned y, unsigned w, unsigned h);
+typedef void (*trm_set_upd_f) (void *ext, int upd);
 typedef void (*trm_flush_f) (void *ext);
 typedef void (*trm_check_f) (void *ext);
 
@@ -67,6 +68,7 @@ typedef struct {
 
   trm_set_chr_f  set_chr;
   trm_set_pxl_f  set_pxl;
+  trm_set_upd_f  set_upd;
 
   trm_flush_f    flush;
 
@@ -101,6 +103,8 @@ void trm_set_pos (terminal_t *trm, unsigned x, unsigned y);
 void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c);
 
 void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h);
+
+void trm_set_upd (terminal_t *trm, int upd);
 
 void trm_flush (terminal_t *trm);
 

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.2 2003/09/15 01:15:59 hampa Exp $ */
+/* $Id: ega.c,v 1.3 2003/09/15 07:53:49 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -463,6 +463,8 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     return;
   }
 
+  trm_set_upd (ega->trm, 1);
+
   for (i = 0; i < 8; i++) {
     if (msk & (0x80 >> i)) {
       c = (ega->data[addr + 0 * 65536] & (0x80 >> i)) ? 0x01 : 0x00;
@@ -475,6 +477,8 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
       trm_set_pxl (ega->trm, sx, sy, sw, sh);
     }
   }
+
+  trm_set_upd (ega->trm, 1);
 }
 
 void ega_mode16_update (ega_t *ega)
@@ -490,6 +494,8 @@ void ega_mode16_update (ega_t *ega)
   rofs = 2 * ega->crtc_reg[0x13];
 
   w = ega->mode_w / 8;
+
+  trm_set_upd (ega->trm, 1);
 
   for (y = 0; y < ega->mode_h; y++) {
     for (x = 0; x < w; x++) {
@@ -510,6 +516,8 @@ void ega_mode16_update (ega_t *ega)
 
     addr = (addr + rofs) & 0xffff;
   }
+
+  trm_set_upd (ega->trm, 1);
 }
 
 void ega_mode16_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.31 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.32 2003/09/15 07:53:49 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -305,6 +305,16 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
     pce_log (MSG_ERR, "terminal driver 'x11' not supported\n");
 #endif
   }
+  else if (strcmp (driver, "sdl") == 0) {
+#ifdef PCE_SDL_USE
+    pc->trm = sdl_new (sct);
+    if (pc->trm == NULL) {
+      pce_log (MSG_ERR, "setting up sdl terminal failed\n");
+    }
+#else
+    pce_log (MSG_ERR, "terminal driver 'sdl' not supported\n");
+#endif
+  }
   else if (strcmp (driver, "vt100") == 0) {
     pc->trm = vt100_new (sct, 0, 1);
     if (pc->trm == NULL) {
@@ -362,7 +372,7 @@ void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
   mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
-  pc->ppi_port_a[0] |= 0x20;
+  pc->ppi_port_a[0] |= 0x00;
 }
 
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)

@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.6 2003/09/08 17:17:43 hampa Exp $
+# $Id: Makefile.inc.in,v 1.7 2003/09/15 07:53:48 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -42,6 +42,10 @@ MAKE_FLG	=
 PCE_X11_USE	:= @PCE_X11_USE@
 PCE_X11_CCF	:= @PCE_X11_CCF@
 PCE_X11_LDF	:= @PCE_X11_LDF@
+
+PCE_SDL_USE	:= @PCE_SDL_USE@
+PCE_SDL_CCF	:= @PCE_SDL_CCF@
+PCE_SDL_LDF	:= @PCE_SDL_LDF@
 
 
 # end of user editable section

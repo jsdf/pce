@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.15 2003/09/14 21:27:38 hampa Exp $
+# $Id: pce.cfg.in,v 1.16 2003/09/15 07:53:49 hampa Exp $
 
 section pc {
 	section cpu {
@@ -30,6 +30,11 @@ section pc {
 		xms_size = 32768
 		umb_size = 65536
 		umb_segm = 0xd000
+	}
+
+	section terminal {
+		driver = "sdl"
+		update = 100
 	}
 
 	section terminal {
