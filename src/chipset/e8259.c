@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -22,6 +22,13 @@
 
 /* $Id$ */
 
+
+/*****************************************************************************
+ * PIC 8259 eulator
+ *  - no dynamic priority support (irq 0 always has highest priority)
+ *  - no level sensitive inputs
+ *  - no nesting support
+ *****************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -198,13 +205,16 @@ unsigned char e8259_inta (e8259_t *pic)
 {
   unsigned char irr, irq;
 
+  e8259_set_int (pic, 0);
+
   /* highest priority interrupt */
-  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
+  irr = pic->irr & ~pic->imr;
+  irr = irr ^ (irr & (irr - 1));
 
   if (irr == 0) {
     /* should not happen */
     fprintf (stderr, "e8259: INTA without IRQ\n");
-    return (0);
+    return (pic->base + 7);
   }
 
   pic->irr &= ~irr;
@@ -221,8 +231,6 @@ unsigned char e8259_inta (e8259_t *pic)
   }
 
   pic->irq_cnt[irq] += 1;
-
-  e8259_set_int (pic, 0);
 
   return (pic->base + irq);
 }
@@ -427,8 +435,11 @@ void e8259_clock (e8259_t *pic)
     return;
   }
 
-  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
-  isr = pic->isr ^ (pic->isr & (pic->isr - 1));
+  irr = pic->irr & ~pic->imr;
+  isr = pic->isr & ~pic->isr;
+
+  irr = irr ^ (irr & (irr - 1));
+  isr = isr ^ (isr & (isr - 1));
 
   if ((irr != 0) && ((isr == 0) || (irr < isr))) {
     e8259_set_int (pic, 1);
