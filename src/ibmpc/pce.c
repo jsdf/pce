@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.21 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: pce.c,v 1.22 2003/09/04 20:14:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -767,6 +767,19 @@ void prt_state_pic (e8259_t *pic, FILE *fp)
   fflush (fp);
 }
 
+void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
+{
+  fputs ("-8250-UART-------------------------------------------------------------------\n", fp);
+  fprintf (stderr,
+    "TxD=%02X%c RxD=%02X%c  SCR=%02X  DIV=%04X  IO=%04X\n"
+    "IER=%02X IIR=%02X  LCR=%02X LSR=%02X  MCR=%02X MSR=%02X\n",
+    uart->txd[0], uart->txd[1] ? '*' : ' ',
+    uart->rxd[0], uart->rxd[1] ? '*' : ' ',
+    uart->scratch, uart->divisor, base,
+    uart->ier, uart->iir, uart->lcr, uart->lsr, uart->mcr, uart->msr
+  );
+}
+
 void prt_state_cpu (e8086_t *c, FILE *fp)
 {
   double      cpi, mips;
@@ -1396,6 +1409,15 @@ void do_s (cmd_t *cmd)
     }
     else if (cmd_match (cmd, "pic")) {
       prt_state_pic (pc->pic, stdout);
+    }
+    else if (cmd_match (cmd, "uart")) {
+      unsigned short i;
+      if (!cmd_match_uint16 (cmd, &i)) {
+        i = 0;
+      }
+      if ((i < 4) && (pc->serport[i] != NULL)) {
+        prt_state_uart (&pc->serport[i]->uart, pc->serport[i]->io, stdout);
+      }
     }
     else if (cmd_match (cmd, "video")) {
       prt_state_video (pc->video, stdout);

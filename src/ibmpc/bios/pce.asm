@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.9 2003/09/02 11:45:16 hampa Exp $
+; $Id: pce.asm,v 1.10 2003/09/04 20:14:16 hampa Exp $
 
 
 %include "config.inc"
@@ -55,6 +55,7 @@ start:
   call    init_mem
   call    init_misc
   call    init_keyboard
+  call    init_serport
   call    init_parport
   call    init_time
 
@@ -296,9 +297,47 @@ init_keyboard:
   ret
 
 
-init_parport:
-  mov     [0x0008], word 0x0378
+init_serport:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+
+  ; get com info
+  db      0x66, 0x66, 0x02, 0x01
+
+  mov     [0x0000], ax
+  mov     [0x0002], bx
+  mov     [0x0004], cx
+  mov     [0x0006], dx
+
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
   ret
+
+
+init_parport:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+
+  ; get lpt info
+  db      0x66, 0x66, 0x02, 0x02
+
+  mov     [0x0008], ax
+  mov     [0x000a], bx
+  mov     [0x000c], cx
+  mov     [0x000e], dx
+
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
+  ret
+
 
 get_bcd:
   push    dx

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.28 2003/09/02 14:56:24 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.29 2003/09/04 20:14:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -504,8 +504,8 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_uint (sct, "io", &base, defbase[i]);
     ini_get_string (sct, "file", &fname, NULL);
 
-    pce_log (MSG_INF, "LPT:\tio=0x%04x file=%s\n",
-      base, (fname == NULL) ? "<none>" : fname
+    pce_log (MSG_INF, "LPT%u:\tio=0x%04x file=%s\n",
+      i + 1, base, (fname == NULL) ? "<none>" : fname
     );
 
     pc->parport[i] = parport_new (base);
@@ -525,6 +525,56 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     sct = ini_sct_find_next (sct, "parport");
+  }
+}
+
+void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
+{
+  unsigned        i;
+  unsigned        base, irq;
+  char            *fname;
+  ini_sct_t       *sct;
+  static unsigned defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+  static unsigned defirq[4] = { 4, 3, 4, 3 };
+
+  for (i = 0; i < 4; i++) {
+    pc->serport[i] = NULL;
+  }
+
+  i = 0;
+  sct = ini_sct_find_sct (ini, "serial");
+
+  while ((i < 4) && (sct != NULL)) {
+    ini_get_uint (sct, "io", &base, defbase[i]);
+    ini_get_uint (sct, "irq", &irq, defirq[i]);
+    ini_get_string (sct, "file", &fname, NULL);
+
+    pce_log (MSG_INF, "COM%u:\tio=0x%04x irq=%u file=%s\n",
+      i + 1, base, irq, (fname == NULL) ? "<none>" : fname
+    );
+
+    pc->serport[i] = ser_new (base);
+    if (pc->serport[i] == NULL) {
+      pce_log (MSG_ERR, "serial port setup failed [%04X/%u -> %s]\n",
+        base, irq, (fname == NULL) ? "<none>" : fname
+      );
+    }
+    else {
+      if (fname != NULL) {
+        if (ser_set_fname (pc->serport[i], fname)) {
+          pce_log (MSG_ERR, "can't open file (%s)\n", fname);
+        }
+      }
+
+      pc->serport[i]->uart.irq_ext = pc->pic;
+      pc->serport[i]->uart.irq = (e8250_irq_f) e8259_get_irq (pc->pic, irq);
+
+      mem_add_blk (pc->prt, pc->serport[i]->prt, 0);
+
+      i += 1;
+    }
+
+    sct = ini_sct_find_next (sct, "serial");
   }
 }
 
@@ -600,6 +650,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
   pc_setup_disks (pc, ini);
   pc_setup_mouse (pc, ini);
+  pc_setup_serport (pc, ini);
   pc_setup_parport (pc, ini);
   pc_setup_xms (pc, ini);
 
@@ -631,6 +682,17 @@ void pc_del_parport (ibmpc_t *pc)
   }
 }
 
+void pc_del_serport (ibmpc_t *pc)
+{
+  unsigned i;
+
+  for (i = 0; i < 4; i++) {
+    if (pc->serport[i] != NULL) {
+      ser_del (pc->serport[i]);
+    }
+  }
+}
+
 void pc_del (ibmpc_t *pc)
 {
   if (pc == NULL) {
@@ -639,6 +701,7 @@ void pc_del (ibmpc_t *pc)
 
   pc_del_xms (pc);
   pc_del_parport (pc);
+  pc_del_serport (pc);
   pc_del_mouse (pc);
 
   dsks_del (pc->dsk);
@@ -673,7 +736,15 @@ void pc_clock (ibmpc_t *pc)
   }
 
   if (pc->clk_div[2] >= 1024) {
+    unsigned i;
     trm_check (pc->trm);
+
+    for (i = 0; i < 4; i++) {
+      if (pc->serport[i] != NULL) {
+        ser_check (pc->serport[i]);
+      }
+    }
+
     pc->clk_div[2] -= 1024;
   }
 
