@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     floppy.h                                                   *
+ * File name:     src/floppy.h                                               *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.h,v 1.3 2003/04/19 02:01:03 hampa Exp $ */
+/* $Id: floppy.h,v 1.4 2003/04/21 19:10:59 hampa Exp $ */
 
 
 #ifndef PCE_FLOPPY_H
@@ -75,6 +75,7 @@ void dsk_set_drive (disk_t *dsk, unsigned drive);
 disks_t *dsks_new (void);
 void dsks_del (disks_t *dsks);
 int dsks_add_disk (disks_t *dsks, disk_t *dsk);
+void dsks_rmv_disk (disks_t *dsks, disk_t *dsk);
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
 unsigned dsks_get_hd_cnt (disks_t *dsks);
 

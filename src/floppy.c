@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.8 2003/04/21 16:31:24 hampa Exp $ */
+/* $Id: floppy.c,v 1.9 2003/04/21 19:10:59 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -543,6 +543,7 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       break;
 
     case 0x04:
+    case 0x05:
     case 0x18:
       dsk_int13_set_status (dsks, cpu, 0);
       break;
