@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     flags.c                                                    *
+ * File name:     src/cpu/e8086/flags.c                                      *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: flags.c,v 1.1 2003/12/20 01:01:37 hampa Exp $ */
+/* $Id$ */
 
 
 #include "e8086.h"
@@ -46,15 +46,14 @@ void e86_set_flg_szp_8 (e8086_t *c, unsigned char val)
 
   set = 0;
 
-  if ((val & 0xff) == 0) {
+  val &= 0xff;
+
+  if (val == 0) {
     set |= E86_FLG_Z;
   }
-
-  if (val & 0x80) {
+  else if (val & 0x80) {
     set |= E86_FLG_S;
   }
-
-  val &= 0xff;
 
   if (parity[val >> 3] & (0x80 >> (val & 7))) {
     set |= E86_FLG_P;
@@ -73,8 +72,7 @@ void e86_set_flg_szp_16 (e8086_t *c, unsigned short val)
   if ((val & 0xffff) == 0) {
     set |= E86_FLG_Z;
   }
-
-  if (val & 0x8000) {
+  else if (val & 0x8000) {
     set |= E86_FLG_S;
   }
 

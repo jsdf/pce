@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8086/e8086.h                                          *
+ * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.1 2003/12/20 01:01:37 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_E8086_H
@@ -85,6 +85,8 @@ typedef unsigned short (*e86_get_uint16_f) (void *ext, unsigned long addr);
 typedef void (*e86_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
 typedef void (*e86_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 
+typedef unsigned char (*e86_inta_f) (void *ext);
+
 typedef unsigned (*e86_opcode_f) (struct e8086_t *c);
 
 
@@ -114,12 +116,13 @@ typedef struct e8086_t {
   unsigned long    addr_mask;
 
   void             *inta_ext;
-  unsigned char    (*inta) (void *ext);
+  e86_inta_f       inta;
 
   void             *op_ext;
   void             (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
   void             (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
   void             (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
+  void             (*op_int) (void *ext, unsigned char n);
 
   unsigned short   cur_ip;
 
@@ -131,8 +134,6 @@ typedef struct e8086_t {
   unsigned short   seg_override;
 
   int              irq;
-
-  unsigned         last_interrupt;
 
   e86_opcode_f     op[256];
 
@@ -231,6 +232,7 @@ typedef struct e8086_t {
 #define e86_set_ip(cpu, val) do { (cpu)->ip = (val) & 0xffff; } while (0)
 
 
+#define e86_get_flags(cpu) ((cpu)->flg)
 #define e86_get_f(cpu, f) (((cpu)->flg & (f)) != 0)
 #define e86_get_cf(cpu) (((cpu)->flg & E86_FLG_C) != 0)
 #define e86_get_pf(cpu) (((cpu)->flg & E86_FLG_P) != 0)
@@ -242,6 +244,8 @@ typedef struct e8086_t {
 #define e86_get_if(cpu) (((cpu)->flg & E86_FLG_I) != 0)
 #define e86_get_tf(cpu) (((cpu)->flg & E86_FLG_T) != 0)
 
+
+#define e86_set_flags(c, v) do { (c)->flg = (v) & 0xffffU; } while (0)
 
 #define e86_set_f(c, f, v) \
   do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
@@ -346,6 +350,8 @@ void e86_set_prt (e8086_t *c, void *prt,
   e86_get_uint16_f get16, e86_set_uint16_f set16
 );
 
+void e86_set_inta_f (e8086_t *c, void *ext, e86_inta_f inta);
+
 void e86_irq (e8086_t *cpu, unsigned val);
 
 int e86_interrupt (e8086_t *cpu, unsigned n);
@@ -357,8 +363,6 @@ unsigned long long e86_get_clock (e8086_t *c);
 unsigned long long e86_get_opcnt (e8086_t *c);
 
 unsigned long e86_get_delay (e8086_t *c);
-
-unsigned e86_get_last_int (e8086_t *c);
 
 void e86_execute (e8086_t *c);
 

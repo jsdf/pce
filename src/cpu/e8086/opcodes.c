@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: opcodes.c,v 1.1 2003/12/20 01:01:37 hampa Exp $ */
+/* $Id$ */
 
 
 #include "e8086.h"
@@ -43,25 +43,6 @@ unsigned short e86_pop (e8086_t *c)
   e86_set_sp (c, sp + 2);
 
   return (e86_get_mem16 (c, e86_get_ss (c), sp));
-}
-
-void e86_trap (e8086_t *c, unsigned n)
-{
-  unsigned short ofs;
-
-  c->last_interrupt = n;
-
-  e86_push (c, c->flg);
-  e86_push (c, c->sreg[E86_REG_CS]);
-  e86_push (c, c->ip);
-
-  ofs = (unsigned short) (n & 0xff) << 2;
-
-  e86_set_ip (c, e86_get_mem16 (c, 0, ofs));
-  e86_set_cs (c, e86_get_mem16 (c, 0, ofs + 2));
-  c->flg &= ~(E86_FLG_I | E86_FLG_T);
-
-  e86_pq_init (c);
 }
 
 

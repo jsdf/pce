@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8086/e8086.c                                          *
+ * File name:     src/cpu/e8086/e8086.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.1 2003/12/20 01:01:37 hampa Exp $ */
+/* $Id$ */
 
 
 #include "e8086.h"
@@ -73,10 +73,9 @@ e8086_t *e86_new (void)
   c->op_hook = NULL;
   c->op_stat = NULL;
   c->op_undef = NULL;
+  c->op_int = NULL;
 
   c->irq = 0;
-
-  c->last_interrupt = 0;
 
   for (i = 0; i < 256; i++) {
     c->op[i] = e86_opcodes[i];
@@ -150,6 +149,12 @@ void e86_set_prt (e8086_t *c, void *prt,
   c->prt_set_uint16 = set16;
 }
 
+void e86_set_inta_f (e8086_t *c, void *ext, e86_inta_f inta)
+{
+  c->inta_ext = ext;
+  c->inta = inta;
+}
+
 void e86_reset (e8086_t *c)
 {
   unsigned i;
@@ -166,7 +171,7 @@ void e86_reset (e8086_t *c)
 
   e86_set_cs (c, 0xf000);
   e86_set_ip (c, 0xfff0);
-  c->flg = 0x0000;
+  e86_set_flags (c, 0x0000);
 
   c->pq_cnt = 0;
 
@@ -195,6 +200,27 @@ void e86_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
 static
 void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
+}
+
+void e86_trap (e8086_t *c, unsigned n)
+{
+  unsigned short ofs;
+
+  if (c->op_int != NULL) {
+    c->op_int (c->op_ext, n);
+  }
+
+  e86_push (c, c->flg);
+  e86_push (c, c->sreg[E86_REG_CS]);
+  e86_push (c, c->ip);
+
+  ofs = (unsigned short) (n & 0xff) << 2;
+
+  e86_set_ip (c, e86_get_mem16 (c, 0, ofs));
+  e86_set_cs (c, e86_get_mem16 (c, 0, ofs + 2));
+  c->flg &= ~(E86_FLG_I | E86_FLG_T);
+
+  e86_pq_init (c);
 }
 
 void e86_irq (e8086_t *cpu, unsigned val)
@@ -238,11 +264,6 @@ unsigned long e86_get_delay (e8086_t *c)
   return (c->delay);
 }
 
-unsigned e86_get_last_int (e8086_t *c)
-{
-  return (c->last_interrupt);
-}
-
 void e86_execute (e8086_t *c)
 {
   unsigned cnt, op;
@@ -253,6 +274,8 @@ void e86_execute (e8086_t *c)
   tf = e86_get_tf (c);
 
   c->cur_ip = c->ip;
+
+  c->ea.delay = 0;
 
   do {
     e86_pq_fill (c);
@@ -272,6 +295,8 @@ void e86_execute (e8086_t *c)
       e86_pq_adjust (c, cnt);
     }
   } while (c->prefix & E86_PREFIX_NEW);
+
+  c->delay += c->ea.delay;
 
   c->instructions += 1;
 
