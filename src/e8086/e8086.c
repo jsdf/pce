@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     e8086.c                                                    *
+ * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.10 2003/04/20 20:36:16 hampa Exp $ */
+/* $Id: e8086.c,v 1.11 2003/04/21 13:33:35 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -56,12 +56,17 @@ e8086_t *e86_new (void)
   c->prt_set_uint8 = &e86_set_mem_uint8;
   c->prt_set_uint16 = &e86_set_mem_uint16;
 
+  c->inta_ext = NULL;
+  c->inta = NULL;
+
   c->hook = NULL;
   c->opstat = NULL;
 
   c->mem = NULL;
   c->prt = NULL;
   c->ext = NULL;
+
+  c->irq = 0;
 
   c->clocks = 0;
   c->instructions = 0;
@@ -73,38 +78,6 @@ e8086_t *e86_new (void)
 void e86_del (e8086_t *c)
 {
   free (c);
-}
-
-void e86_prt_state (e8086_t *c, FILE *fp)
-{
-  double      cpi, mips;
-  static char ft[2] = { '-', '+' };
-
-  cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
-  mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
-  fprintf (fp, "CLK=%016llX  OP=%016llX  DLY=%03lX  CPI=%.4f  MIPS=%.4f\n",
-    c->clocks, c->instructions,
-    c->delay,
-    cpi, mips
-  );
-
-  fprintf (fp,
-    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
-    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
-    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
-  );
-
-  fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
-    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
-    e86_get_ip (c), c->flg
-  );
-
-  fprintf (fp, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
-    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
-    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
-    ft[(c->flg & E86_FLG_I) != 0],
-    ft[(c->flg & E86_FLG_D) != 0]
-  );
 }
 
 void e86_log_op (e8086_t *c, const char *str, ...)
@@ -166,6 +139,8 @@ void e86_reset (e8086_t *c)
 
   c->pq_cnt = 0;
 
+  c->irq = 0;
+
   c->prefix = 0;
 }
 
@@ -189,6 +164,11 @@ void e86_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
 static
 void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
+}
+
+void e86_irq (e8086_t *cpu, unsigned val)
+{
+  cpu->irq = 1;
 }
 
 int e86_interrupt (e8086_t *cpu, unsigned n)
@@ -242,6 +222,18 @@ void e86_execute (e8086_t *c)
   } while (c->prefix & E86_PREFIX_NEW);
 
   c->instructions += 1;
+
+  if (e86_get_if (c) && c->irq) {
+    c->irq = 0;
+
+    if (c->inta != NULL) {
+      unsigned char irq;
+
+      irq = c->inta (c->inta_ext);
+
+      e86_trap (c, irq);
+    }
+  }
 }
 
 void e86_clock (e8086_t *c, unsigned n)

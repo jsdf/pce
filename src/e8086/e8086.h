@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     e8086.h                                                    *
+ * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.8 2003/04/20 20:36:16 hampa Exp $ */
+/* $Id: e8086.h,v 1.9 2003/04/21 13:33:35 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -84,6 +84,9 @@ typedef struct {
   void (*prt_set_uint8) (void *mem, unsigned long addr, unsigned char val);
   void (*prt_set_uint16) (void *mem, unsigned long addr, unsigned short val);
 
+  void          *inta_ext;
+  unsigned char (*inta) (void *ext);
+
   void (*hook) (void *ext, unsigned char op1, unsigned char op2);
 
   void (*opstat) (void *ext, unsigned char op1, unsigned char op2);
@@ -103,6 +106,8 @@ typedef struct {
   unsigned       prefix;
 
   unsigned short seg_override;
+
+  int            irq;
 
   struct {
     int            is_mem;
@@ -262,10 +267,9 @@ e8086_t *e86_new (void);
 
 void e86_del (e8086_t *c);
 
-void e86_prt_state (e8086_t *c, FILE *fp);
-
 void e86_reset (e8086_t *c);
 
+void e86_irq (e8086_t *cpu, unsigned val);
 int e86_interrupt (e8086_t *cpu, unsigned n);
 
 unsigned long long e86_get_clock (e8086_t *c);
