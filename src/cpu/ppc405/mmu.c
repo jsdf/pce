@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/mmu.c                                       *
  * Created:       2003-11-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -405,6 +405,23 @@ int p405_dload16 (p405_t *c, uint32_t addr, uint16_t *val)
   uint32_t vaddr = addr;
 #endif
 
+  if (addr & 1) {
+    if ((addr >> 10) != ((addr + 1) >> 10)) {
+      uint8_t tmp[2];
+
+      if (p405_dload8 (c, addr + 0, tmp + 0)) {
+        return (1);
+      }
+      if (p405_dload8 (c, addr + 1, tmp + 1)) {
+        return (1);
+      }
+
+      *val = (tmp[0] << 8) | tmp[1];
+
+      return (0);
+    }
+  }
+
   if (p405_translate_read (c, &addr, &e)) {
     return (1);
   }
@@ -444,6 +461,29 @@ int p405_dload32 (p405_t *c, uint32_t addr, uint32_t *val)
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
+
+  if (addr & 3) {
+    if ((addr >> 10) != ((addr + 3) >> 10)) {
+      uint8_t tmp[4];
+
+      if (p405_dload8 (c, addr + 0, tmp + 0)) {
+        return (1);
+      }
+      if (p405_dload8 (c, addr + 1, tmp + 1)) {
+        return (1);
+      }
+      if (p405_dload8 (c, addr + 2, tmp + 2)) {
+        return (1);
+      }
+      if (p405_dload8 (c, addr + 3, tmp + 3)) {
+        return (1);
+      }
+
+      *val = (tmp[0] << 24) | (tmp[1] << 16) | (tmp[2] << 8) | tmp[3];
+
+      return (0);
+    }
+  }
 
   if (p405_translate_read (c, &addr, &e)) {
     return (1);
@@ -512,6 +552,18 @@ int p405_dstore16 (p405_t *c, uint32_t addr, uint16_t val)
   uint32_t vaddr = addr;
 #endif
 
+  if (addr & 1) {
+    if ((addr >> 10) != ((addr + 1) >> 10)) {
+      if (p405_dstore8 (c, addr + 0, (val >> 8) & 0xff)) {
+        return (1);
+      }
+      if (p405_dstore8 (c, addr + 1, val & 0xff)) {
+        return (1);
+      }
+      return (0);
+    }
+  }
+
   if (p405_translate_write (c, &addr, &e)) {
     return (1);
   }
@@ -552,6 +604,24 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val)
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
+
+  if (addr & 3) {
+    if ((addr >> 10) != ((addr + 3) >> 10)) {
+      if (p405_dstore8 (c, addr + 0, (val >> 24) & 0xff)) {
+        return (1);
+      }
+      if (p405_dstore8 (c, addr + 1, (val >> 16) & 0xff)) {
+        return (1);
+      }
+      if (p405_dstore8 (c, addr + 2, (val >> 8) & 0xff)) {
+        return (1);
+      }
+      if (p405_dstore8 (c, addr + 3, val & 0xff)) {
+        return (1);
+      }
+      return (0);
+    }
+  }
 
   if (p405_translate_write (c, &addr, &e)) {
     return (1);

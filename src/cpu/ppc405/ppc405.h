@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -295,7 +295,7 @@ typedef struct {
 #define p405_set_msr_ir(c, v) p405_set_msr_bits (c, P405_MSR_IR, v)
 #define p405_set_msr_dr(c, v) p405_set_msr_bits (c, P405_MSR_DR, v)
 #define p405_set_pc(c, v) do { (c)->pc = (v); } while (0)
-#define p405_set_pid(c, v) do { (c)->pid = (v); } while (0)
+#define p405_set_pid(c, v) do { (c)->pid = (v) & 0xff; } while (0)
 #define p405_set_pit(c, n, v) do { (c)->pit[(n) & 0x01] = (v); } while (0)
 #define p405_set_pvr(c, v) do { (c)->pvr = (v); } while (0)
 #define p405_set_sprg(c, n, v) do { (c)->sprg[(n) & 0x07] = (v); } while (0)
