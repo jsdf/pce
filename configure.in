@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.35 2003/12/29 11:06:23 hampa Exp $
+# $Id$
 
 
 AC_PREREQ(2.50)
@@ -47,6 +47,29 @@ if test "x$dstr" != "x" ; then
 	if test "x$dstr" = "xcvs" ; then
 		dstr=`date +%Y%m%d`
 		PCE_VERSION_STR="cvs-$dstr"
+	elif test "x$dstr" = "xsvn" ; then
+		tmp=svninfo.$$.tmp
+		svn info "$srcdir" > "$tmp" 2> /dev/null
+
+		date=$(date "+%Y-%m-%d")
+		rev=""
+
+		while read a b c d e ; do
+			case "$a$b$c$d" in
+			"Revision:"*)
+				rev="$b"
+				;;
+			"LastChangedDate:"*)
+				date="$d"
+				;;
+			esac
+		done < "$tmp"
+
+		rm -f "$tmp"
+
+		test -n "$rev" && rev="-r$rev"
+		date=$(echo "$date" | sed -e "s/-//g")
+		PCE_VERSION_STR="$date$rev"
 	else
 		PCE_VERSION_STR="$dstr"
 	fi
