@@ -9,7 +9,7 @@ reldir := .
 include $(reldir)/config.inc
 
 
-DCL := Makefile config.inc config.log config.status rules.inc
+DCL := Makefile config.inc config.log config.status configure rules.inc
 
 
 include $(reldir)/rules.inc
