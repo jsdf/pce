@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.h                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-01-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -43,23 +43,13 @@ typedef struct {
 
   FILE     *fp;
 
-  uint64_t blk_cnt;
-
-  uint64_t dir_base;
-  uint64_t blk_next;
-
-  uint32_t cylinders;
-  uint32_t heads;
-  uint32_t sectors;
+  uint32_t blk_ofs;
+  uint32_t blk_cnt;
   uint32_t blk_size;
 
-  uint32_t dir_cnt;
-  uint32_t dir_size;
-  uint32_t dir_next;
-  uint32_t dir_alloc;
-
-  uint64_t **dir;
-  uint8_t  *dir_buf;
+  uint32_t c;
+  uint32_t h;
+  uint32_t s;
 } disk_pce_t;
 
 
