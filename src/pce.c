@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.10 2003/04/20 00:21:49 hampa Exp $ */
+/* $Id: pce.c,v 1.11 2003/04/20 19:08:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -53,9 +53,9 @@ static unsigned long ops_cnt[256];
 
 static unsigned long long pce_opcnt = 0;
 static unsigned long long pce_eclk = 0;
-static unsigned long long pce_eclk_base = 4770000;
+static unsigned long long pce_eclk_base = PCE_EMU_FOSC;
 static unsigned long long pce_hclk = 0;
-static unsigned long long pce_hclk_base = 266 * 1000 * 1000ULL;
+static unsigned long long pce_hclk_base = PCE_HOST_FOSC;
 static unsigned long long pce_hclk_last = 0;
 
 static ibmpc_t      *pc;
@@ -89,7 +89,7 @@ void prt_version (void)
   fflush (stdout);
 }
 
-#ifdef PCE_HAVE_RDTSC
+#ifdef PCE_HAVE_TSC
 static inline
 unsigned long long read_tsc (void)
 {
@@ -613,7 +613,7 @@ void prt_error (const char *str, ...)
 
 void cpu_start()
 {
-#ifdef PCE_HAVE_RDTSC
+#ifdef PCE_HAVE_TSC
   pce_hclk_last = read_tsc();
 #else
   pce_hclk_last = 0;
@@ -622,7 +622,7 @@ void cpu_start()
 
 void cpu_end()
 {
-#ifdef PCE_HAVE_RDTSC
+#ifdef PCE_HAVE_TSC
   pce_hclk_last = read_tsc() - pce_hclk_last;
 #else
   pce_hclk_last = 0;
@@ -994,11 +994,11 @@ void do_s (cmd_t *cmd)
       }
     }
     else if (cmd_match (cmd, "time")) {
-#ifdef PCE_HAVE_RDTSC
+#ifdef PCE_HAVE_TSC
       printf (
-        "OPS=%llX  R=%.4fMHz\n"
-        "ECLK=%llX[%.4fs] @ %.4fMHz\n"
-        "HCLK=%llX[%.4fs] @ %.4fMHz\n",
+        "EOPS=%08llX  R=%.4fMHz\n"
+        "ECLK=%08llX[%.4fs] @ %.4fMHz\n"
+        "HCLK=%08llX[%.4fs] @ %.4fMHz\n",
         pce_opcnt,
         1.0E-6 * ((pce_hclk > 0) ?
           ((double) pce_eclk / (double) pce_hclk * pce_hclk_base) : 0.0),
