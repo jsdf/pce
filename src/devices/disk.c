@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.c                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -306,6 +306,65 @@ disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro)
   }
 
   return (dsk_img_new (d, c, h, s, start, fname, ro));
+}
+
+disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro)
+{
+  unsigned long n;
+  unsigned char buf[512];
+  FILE          *fp;
+
+  /* make sure the file doesn't exist */
+  fp = fopen (fname, "rb");
+  if (fp != NULL) {
+    fclose (fp);
+    return (NULL);
+  }
+
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    return (NULL);
+  }
+
+  memset (buf, 0, 128);
+
+  memcpy (buf, "DOSEMU\x00", 7);
+
+  buf[7] = h & 0xff;
+  buf[8] = (h >> 8) & 0xff;
+  buf[9] = (h >> 16) & 0xff;
+  buf[10] = (h >> 24) & 0xff;
+
+  buf[11] = s & 0xff;
+  buf[12] = (s >> 8) & 0xff;
+  buf[13] = (s >> 16) & 0xff;
+  buf[14] = (s >> 24) & 0xff;
+
+  buf[15] = c & 0xff;
+  buf[16] = (c >> 8) & 0xff;
+  buf[17] = (c >> 16) & 0xff;
+  buf[18] = (c >> 24) & 0xff;
+
+  buf[19] = 128;
+  buf[20] = 0;
+  buf[21] = 0;
+  buf[22] = 0;
+
+  fwrite (buf, 1, 128, fp);
+
+  memset (buf, 0, 512);
+
+  n = (unsigned long) c * (unsigned long) h * (unsigned long) s;
+
+  while (n > 0) {
+    fwrite (buf, 1, 512, fp);
+    n -= 1;
+  }
+
+  fclose (fp);
+
+  return (dsk_dosemu_new (d, fname, ro));
 }
 
 

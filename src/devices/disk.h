@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.h                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -118,6 +118,14 @@ disk_t *dsk_img_new (unsigned d, unsigned c, unsigned h, unsigned s,
  * @short Create a new dosemu disk
  *****************************************************************************/
 disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro);
+
+/*!***************************************************************************
+ * @short Create a new dosemu disk
+ *****************************************************************************/
+disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro
+);
+
 
 /*!***************************************************************************
  * @short Create a new disk

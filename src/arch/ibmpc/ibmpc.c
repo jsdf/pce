@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -515,22 +515,12 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     fname = ini_get_str (sct, "file");
 
-    if ((strcmp (type, "ram") == 0) || (strcmp (type, "image") == 0)) {
-      c = ini_get_lng_def (sct, "c", 80);
-      h = ini_get_lng_def (sct, "h", 2);
-      s = ini_get_lng_def (sct, "s", 18);
-      vc = ini_get_lng_def (sct, "visible_c", 0);
-      vh = ini_get_lng_def (sct, "visible_h", 0);
-      vs = ini_get_lng_def (sct, "visible_s", 0);
-    }
-    else {
-      c = 0;
-      h = 0;
-      s = 0;
-      vc = 0;
-      vh = 0;
-      vs = 0;
-    }
+    c = ini_get_lng_def (sct, "c", 80);
+    h = ini_get_lng_def (sct, "h", 2);
+    s = ini_get_lng_def (sct, "s", 18);
+    vc = ini_get_lng_def (sct, "visible_c", 0);
+    vh = ini_get_lng_def (sct, "visible_h", 0);
+    vs = ini_get_lng_def (sct, "visible_s", 0);
 
     ro = ini_get_lng_def (sct, "readonly", 0);
 
@@ -542,6 +532,9 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
     else if (strcmp (type, "dosemu") == 0) {
       dsk = dsk_dosemu_new (drive, fname, ro);
+      if (dsk == NULL) {
+        dsk = dsk_dosemu_create (drive, c, h, s, fname, ro);
+      }
     }
     else if (strcmp (type, "auto") == 0) {
       dsk = dsk_auto_new (drive, fname, ro);
