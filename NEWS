@@ -1,5 +1,8 @@
 0.1.3
 
+	* EGA emulation is now much more complete
+	* CGA graphic modes are now supported on EGA
+
 0.1.2	2003-09-23
 
 	* Added an SDL terminal
