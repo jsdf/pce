@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.30 2003/10/03 23:16:23 hampa Exp $ */
+/* $Id: pce.c,v 1.31 2003/10/05 21:48:43 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -104,7 +104,7 @@ void prt_version (void)
 {
   fputs (
     "pce version " PCE_VERSION_STR
-    " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+    " (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
     "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
     stdout
   );
