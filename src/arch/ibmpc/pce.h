@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.1 2003/12/20 01:01:34 hampa Exp $ */
+/* $Id: pce.h,v 1.2 2003/12/23 03:48:30 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -103,6 +103,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #endif
 
 #include <devices/memory.h>
+#include <devices/nvram.h>
 #include <devices/video.h>
 #include <devices/mda.h>
 #include <devices/hgc.h>

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.2 2003/12/23 03:08:57 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.3 2003/12/23 03:48:30 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     if (fname != NULL) {
       fp = fopen (fname, "rb");
       if (fp == NULL) {
-        pce_log (0, "loading ram failed (%s)\n", fname);
+        pce_log (MSG_ERR, "loading ram failed (%s)\n", fname);
       }
       else {
         if (fread (ram->data, 1, size, fp) != size) {
@@ -107,13 +107,13 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
   while (sct != NULL) {
     ini_get_string (sct, "file", &fname, "default.rom");
     ini_get_ulng (sct, "base", &base, 0);
-    ini_get_ulng (sct, "size", &size, 64 * 1024);
+    ini_get_ulng (sct, "size", &size, 64UL * 1024);
 
     pce_log (MSG_INF, "ROM:\tbase=0x%05x size=%lu file=%s\n", base, size, fname);
 
     fp = fopen (fname, "rb");
     if (fp == NULL) {
-      pce_log (0, "loading rom failed (%s)\n", fname);
+      pce_log (MSG_ERR, "loading rom failed (%s)\n", fname);
     }
     else {
       rom = mem_blk_new (base, size, 1);
@@ -130,6 +130,42 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     sct = ini_sct_find_next (sct, "rom");
+  }
+}
+
+void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t     *sct;
+  char          *fname;
+  unsigned long base, size;
+
+  pc->nvr = NULL;
+
+  sct = ini_sct_find_sct (ini, "nvram");
+  if (sct == NULL) {
+    return;
+  }
+
+  ini_get_string (sct, "file", &fname, NULL);
+  ini_get_ulng (sct, "base", &base, 0);
+  ini_get_ulng (sct, "size", &size, 65536UL);
+
+  pce_log (MSG_INF, "NVRAM:\tbase=0x%08x size=%lu file=%s\n",
+    base, size, (fname == NULL) ? "<>" : fname
+  );
+
+  pc->nvr = nvr_new (base, size);
+  if (pc->nvr == NULL) {
+    pce_log (MSG_ERR, "creating nvram failed\n");
+    return;
+  }
+
+  mem_add_blk (pc->mem, nvr_get_mem (pc->nvr), 0);
+
+  if (fname != NULL) {
+    if (nvr_set_fname (pc->nvr, fname)) {
+      pce_log (MSG_ERR, "loading nvram failed (%s)\n", fname);
+    }
   }
 }
 
@@ -705,6 +741,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
   pc_setup_ram (pc, ini);
   pc_setup_rom (pc, ini);
+  pc_setup_nvram (pc, ini);
   pc_setup_cpu (pc, ini);
   pc_setup_pic (pc);
   pc_setup_pit (pc);
@@ -791,6 +828,7 @@ void pc_del (ibmpc_t *pc)
   e8259_del (pc->pic);
   e86_del (pc->cpu);
 
+  nvr_del (pc->nvr);
   mem_del (pc->mem);
   mem_del (pc->prt);
 

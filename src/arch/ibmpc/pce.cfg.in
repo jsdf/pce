@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.1 2003/12/20 01:01:34 hampa Exp $
+# $Id: pce.cfg.in,v 1.2 2003/12/23 03:48:30 hampa Exp $
 
 section pc {
 	section cpu {
@@ -30,6 +30,12 @@ section pc {
 		base = 0xf0000
 
 		# The rom size in bytes
+		size = 65536
+	}
+
+	section nvram {
+		file = "nvram.dat"
+		base = 0xa0000
 		size = 65536
 	}
 
