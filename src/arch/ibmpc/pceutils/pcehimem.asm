@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcehimem.asm,v 1.1 2003/12/20 01:01:36 hampa Exp $
+; $Id$
 
 
 %include "pce.inc"

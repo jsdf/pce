@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: font.h,v 1.1 2003/09/15 07:53:49 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_FONT_H

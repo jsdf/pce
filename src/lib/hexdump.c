@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hexdump.c,v 1.1 2003/11/16 03:44:26 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>

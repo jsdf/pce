@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: nvram.h,v 1.2 2003/12/23 03:48:09 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_DEVICES_NVRAM_H
