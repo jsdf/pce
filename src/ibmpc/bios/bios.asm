@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.11 2003/10/01 16:58:19 hampa Exp $
+; $Id: bios.asm,v 1.12 2003/10/04 17:55:17 hampa Exp $
 
 
 CPU 8086
@@ -2534,7 +2534,6 @@ int_17_done:                            ; EFF5
 ;* AL = character
 ;* DX = port
 ;*****************************************************************************
-; int17 func 00
 
 int_17_00:                              ; EFFB
   push    ax
@@ -2627,8 +2626,7 @@ L_F039:
 D_F041:
   dw      L_E162
 
-db 0xFF
-db 0xFF
+  db      0xff, 0xff
 
 
 int_10_func:
@@ -2905,6 +2903,7 @@ int_10_done:                            ; F1C5
   pop     di
   pop     si
   pop     bx
+
 int_10_done1:                           ; F1C8
   pop     cx
   pop     dx
@@ -3129,11 +3128,13 @@ int_10_06:                              ; F296
 
   jmp     L_F495
 
+; cga text modes
 L_F2A5:
   push    bx
-db 0x8B, 0xC1                           ; F2A6 mov ax,cx
-db 0xE8, 0x37, 0x00                     ; F2A8 call 0xf2e2
-db 0x74, 0x31                           ; F2AB jz 0xf2de
+  mov     ax, cx
+
+  call    L_F2E2
+  jz      L_F2DE
 db 0x03, 0xF0                           ; F2AD add si,ax
 db 0x8A, 0xE6                           ; F2AF mov ah,dh
 db 0x2A, 0xE3                           ; F2B1 sub ah,bl
@@ -3151,6 +3152,7 @@ db 0xE8, 0x6D, 0x00                     ; F2C1 call 0xf331
 db 0x03, 0xFD                           ; F2C4 add di,bp
 db 0xFE, 0xCB                           ; F2C6 dec bl
 db 0x75, 0xF7                           ; F2C8 jnz 0xf2c1
+L_F2CA:
 db 0xE8, 0x71, 0x0C                     ; F2CA call 0xff3e
 db 0x80, 0x3E, 0x49, 0x00, 0x07         ; F2CD cmp byte [0x49],0x7
 db 0x74, 0x07                           ; F2D2 jz 0xf2db
@@ -3162,27 +3164,35 @@ db 0xE9, 0xE7, 0xFE                     ; F2DB jmp 0xf1c5
 L_F2DE:
 db 0x8A, 0xDE                           ; F2DE mov bl,dh
 db 0xEB, 0xDC                           ; F2E0 jmp short 0xf2be
+
 L_F2E2:
-db 0x80, 0x3E, 0x49, 0x00, 0x02         ; F2E2 cmp byte [0x49],0x2
-;db 0x72, 0x18                           ; F2E7 jc 0xf301
+  cmp     byte [0x0049], 0x02
+;  jb      L_F301
 ; #### patch ####
+; don't wait for retrace
   jmp     short L_F301
-db 0x80, 0x3E, 0x49, 0x00, 0x03         ; F2E9 cmp byte [0x49],0x3
-db 0x77, 0x11                           ; F2EE ja 0xf301
-db 0x52                                 ; F2F0 push dx
-db 0xBA, 0xDA, 0x03                     ; F2F1 mov dx,0x3da
-db 0x50                                 ; F2F4 push ax
+
+  cmp     byte [0x0049], 0x03
+  ja      L_F301
+
+  push    dx
+  mov     dx, 0x03da
+  push    ax
+
 L_F2F5:
-db 0xEC                                 ; F2F5 in al,dx
-db 0xA8, 0x08                           ; F2F6 test al,0x8
-db 0x74, 0xFB                           ; F2F8 jz 0xf2f5
-db 0xB0, 0x25                           ; F2FA mov al,0x25
-db 0xB2, 0xD8                           ; F2FC mov dl,0xd8
-db 0xEE                                 ; F2FE out dx,al
-db 0x58                                 ; F2FF pop ax
-db 0x5A                                 ; F300 pop dx
+  in      al, dx
+  test    al, 0x08                      ; test if vertical retrace
+  jz      L_F2F5
+
+  mov     al, 0x25                      ; turn off video signal
+  mov     dl, 0xd8
+  out     dx, al
+
+  pop     ax
+  pop     dx
+
 L_F301:
-db 0xE8, 0x81, 0xFF                     ; F301 call 0xf285
+  call    L_F285
 db 0x03, 0x06, 0x4E, 0x00               ; F304 add ax,[0x4e]
 db 0x8B, 0xF8                           ; F308 mov di,ax
 db 0x8B, 0xF0                           ; F30A mov si,ax
@@ -3199,20 +3209,22 @@ db 0x06                                 ; F322 push es
 db 0x1F                                 ; F323 pop ds
 db 0x80, 0xFB, 0x00                     ; F324 cmp bl,0x0
 db 0xC3                                 ; F327 ret
+
 L_F328:
-db 0x8A, 0xCA                           ; F328 mov cl,dl
-db 0x56                                 ; F32A push si
-db 0x57                                 ; F32B push di
-db 0xF3, 0xA5                           ; F32C rep movsw
-db 0x5F                                 ; F32E pop di
-db 0x5E                                 ; F32F pop si
-db 0xC3                                 ; F330 ret
+  mov     cl, dl
+  push    si
+  push    di
+  rep     movsw
+  pop     di
+  pop     si
+  ret
+
 L_F331:
-db 0x8A, 0xCA                           ; F331 mov cl,dl
-db 0x57                                 ; F333 push di
-db 0xF3, 0xAB                           ; F334 rep stosw
-db 0x5F                                 ; F336 pop di
-db 0xC3                                 ; F337 ret
+  mov     cl, dl
+  push    di
+  rep     stosw
+  pop     di
+  ret
 
 
 ;*****************************************************************************
@@ -3227,33 +3239,51 @@ db 0xC3                                 ; F337 ret
 
 int_10_07:                              ; F338
   std
-db 0x8A, 0xD8                           ; F339 mov bl,al
-db 0x80, 0xFC, 0x04                     ; F33B cmp ah,0x4
-db 0x72, 0x08                           ; F33E jc 0xf348
-db 0x80, 0xFC, 0x07                     ; F340 cmp ah,0x7
-db 0x74, 0x03                           ; F343 jz 0xf348
-db 0xE9, 0xA6, 0x01                     ; F345 jmp 0xf4ee
-db 0x53                                 ; F348 push bx
-db 0x8B, 0xC2                           ; F349 mov ax,dx
-db 0xE8, 0x94, 0xFF                     ; F34B call 0xf2e2
-db 0x74, 0x20                           ; F34E jz 0xf370
-db 0x2B, 0xF0                           ; F350 sub si,ax
-db 0x8A, 0xE6                           ; F352 mov ah,dh
-db 0x2A, 0xE3                           ; F354 sub ah,bl
-db 0xE8, 0xCF, 0xFF                     ; F356 call 0xf328
-db 0x2B, 0xF5                           ; F359 sub si,bp
-db 0x2B, 0xFD                           ; F35B sub di,bp
-db 0xFE, 0xCC                           ; F35D dec ah
-db 0x75, 0xF5                           ; F35F jnz 0xf356
-db 0x58                                 ; F361 pop ax
-db 0xB0, 0x20                           ; F362 mov al,0x20
-db 0xE8, 0xCA, 0xFF                     ; F364 call 0xf331
-db 0x2B, 0xFD                           ; F367 sub di,bp
-db 0xFE, 0xCB                           ; F369 dec bl
-db 0x75, 0xF7                           ; F36B jnz 0xf364
-db 0xE9, 0x5A, 0xFF                     ; F36D jmp 0xf2ca
-db 0x8A, 0xDE                           ; F370 mov bl,dh
-db 0xEB, 0xED                           ; F372 jmp short 0xf361
+  mov     bl, al
+
+  cmp     ah, 0x04
+  jb      L_F348
+
+  cmp     ah, 0x07
+  je      L_F348
+
+  jmp     L_F4EE
+
+L_F348:
+  push    bx
+
+  mov     ax, dx
+  call    L_F2E2
+  jz      L_F370
+
+  sub     si, ax
+  mov     ah, dh
+  sub     ah, bl
+
+L_F356:
+  call    L_F328
+
+  sub     si, bp
+  sub     di, bp
+  dec     ah
+  jnz     L_F356
+
+L_F361:
+  pop     ax
+  mov     al, 0x20
+
+L_F364:
+  call    L_F331
+
+  sub     di, bp
+  dec     bl
+  jnz     L_F364
+
+  jmp     L_F2CA
+
+L_F370:
+  mov     bl, dh
+  jmp     short L_F361
 
 
 ;*****************************************************************************
@@ -3457,65 +3487,119 @@ L_F416:
   jmp     int_10_done
 
 
+;*****************************************************************************
+;* int 10 func 0d - get pixel
+;* inp: BH = page
+;*      CX = x
+;*      DX = y
+;* out: AL = color
+;*****************************************************************************
+
 int_10_0d:                              ; F41E
-db 0xE8, 0x31, 0x00                     ; F41E call 0xf452
-db 0x26, 0x8A, 0x04                     ; F421 mov al,[es:si]
-db 0x22, 0xC4                           ; F424 and al,ah
-db 0xD2, 0xE0                           ; F426 shl al,cl
-db 0x8A, 0xCE                           ; F428 mov cl,dh
-db 0xD2, 0xC0                           ; F42A rol al,cl
-db 0xE9, 0x96, 0xFD                     ; F42C jmp 0xf1c5
+  call    L_F452
+
+  mov     al, [es:si]
+  and     al, ah                        ; mask pixel
+  shl     al, cl                        ; move value to high bits
+  mov     cl, dh
+  rol     al, cl                        ; and back to low bits
+  jmp     int_10_done
+
+
+;*****************************************************************************
+;* int 10 func 0c - set pixel
+;* inp: AL = color
+;*      BH = page
+;*      CX = x
+;*      DX = y
+;*****************************************************************************
 
 int_10_0c:                              ; F42F
-db 0x50                                 ; F42F push ax
-db 0x50                                 ; F430 push ax
-db 0xE8, 0x1E, 0x00                     ; F431 call 0xf452
-db 0xD2, 0xE8                           ; F434 shr al,cl
-db 0x22, 0xC4                           ; F436 and al,ah
-db 0x26, 0x8A, 0x0C                     ; F438 mov cl,[es:si]
-db 0x5B                                 ; F43B pop bx
-db 0xF6, 0xC3, 0x80                     ; F43C test bl,0x80
-db 0x75, 0x0D                           ; F43F jnz 0xf44e
-db 0xF6, 0xD4                           ; F441 not ah
-db 0x22, 0xCC                           ; F443 and cl,ah
-db 0x0A, 0xC1                           ; F445 or al,cl
-db 0x26, 0x88, 0x04                     ; F447 mov [es:si],al
-db 0x58                                 ; F44A pop ax
-db 0xE9, 0x77, 0xFD                     ; F44B jmp 0xf1c5
-db 0x32, 0xC1                           ; F44E xor al,cl
-db 0xEB, 0xF5                           ; F450 jmp short 0xf447
-db 0x53                                 ; F452 push bx
-db 0x50                                 ; F453 push ax
-db 0xB0, 0x28                           ; F454 mov al,0x28
-db 0x52                                 ; F456 push dx
-db 0x80, 0xE2, 0xFE                     ; F457 and dl,0xfe
-db 0xF6, 0xE2                           ; F45A mul dl
-db 0x5A                                 ; F45C pop dx
-db 0xF6, 0xC2, 0x01                     ; F45D test dl,0x1
-db 0x74, 0x03                           ; F460 jz 0xf465
-db 0x05, 0x00, 0x20                     ; F462 add ax,0x2000
-db 0x8B, 0xF0                           ; F465 mov si,ax
-db 0x58                                 ; F467 pop ax
-db 0x8B, 0xD1                           ; F468 mov dx,cx
-db 0xBB, 0xC0, 0x02                     ; F46A mov bx,0x2c0
-db 0xB9, 0x02, 0x03                     ; F46D mov cx,0x302
-db 0x80, 0x3E, 0x49, 0x00, 0x06         ; F470 cmp byte [0x49],0x6
-db 0x72, 0x06                           ; F475 jc 0xf47d
-db 0xBB, 0x80, 0x01                     ; F477 mov bx,0x180
-db 0xB9, 0x03, 0x07                     ; F47A mov cx,0x703
-db 0x22, 0xEA                           ; F47D and ch,dl
-db 0xD3, 0xEA                           ; F47F shr dx,cl
-db 0x03, 0xF2                           ; F481 add si,dx
-db 0x8A, 0xF7                           ; F483 mov dh,bh
-db 0x2A, 0xC9                           ; F485 sub cl,cl
-db 0xD0, 0xC8                           ; F487 ror al,1
-db 0x02, 0xCD                           ; F489 add cl,ch
-db 0xFE, 0xCF                           ; F48B dec bh
-db 0x75, 0xF8                           ; F48D jnz 0xf487
-db 0x8A, 0xE3                           ; F48F mov ah,bl
-db 0xD2, 0xEC                           ; F491 shr ah,cl
-db 0x5B                                 ; F493 pop bx
-db 0xC3                                 ; F494 ret
+  push    ax
+  push    ax
+
+  call    L_F452
+
+  shr     al, cl
+  and     al, ah
+
+  mov     cl, [es:si]
+
+  pop     bx
+
+  test    bl, 0x80                      ; check if xor
+  jnz     L_F44E
+
+  not     ah
+  and     cl, ah
+  or      al, cl
+
+L_F447:
+  mov     [es:si], al
+
+  pop     ax
+
+  jmp     int_10_done
+
+L_F44E:
+  xor     al, cl
+  jmp     short L_F447
+
+
+; convert x/y to offset/index/mask
+L_F452:
+  push    bx
+  push    ax
+
+  mov     al, 0x28                      ; bytes per line
+
+  push    dx
+  and     dl, 0xfe
+  mul     dl                            ; get line offset
+  pop     dx
+
+  test    dl, 0x01                      ; check if odd line
+  jz      L_F465
+
+  add     ax, 0x2000
+
+L_F465:
+  mov     si, ax
+  pop     ax
+
+  mov     dx, cx                        ; column
+  mov     bx, 0x02c0
+  mov     cx, 0x0302
+
+  cmp     byte [0x0049], 0x06
+  jb      L_F47D
+
+  mov     bx, 0x0180
+  mov     cx, 0x0703
+
+L_F47D:
+  and     ch, dl                        ; get pixel index in byte
+
+  shr     dx, cl                        ; get byte index
+  add     si, dx
+
+  mov     dh, bh                        ; bits per pixel
+  sub     cl, cl
+
+L_F487:
+  ror     al, 1
+  add     cl, ch
+  dec     bh
+  jnz     L_F487
+
+  mov     ah, bl                        ; bit mask
+  shr     ah, cl                        ; align mask
+
+  pop     bx
+  ret
+
+
+; scroll up in graphic modes
 L_F495:
 db 0x8A, 0xD8                           ; F495 mov bl,al
 db 0x8B, 0xC1                           ; F497 mov ax,cx
@@ -3555,6 +3639,9 @@ db 0x75, 0xF5                           ; F4E5 jnz 0xf4dc
 db 0xE9, 0xDB, 0xFC                     ; F4E7 jmp 0xf1c5
 db 0x8A, 0xDE                           ; F4EA mov bl,dh
 db 0xEB, 0xEC                           ; F4EC jmp short 0xf4da
+
+; scroll down in graphic modes
+L_F4EE:
 db 0xFD                                 ; F4EE std
 db 0x8A, 0xD8                           ; F4EF mov bl,al
 db 0x8B, 0xC2                           ; F4F1 mov ax,dx
@@ -4075,13 +4162,8 @@ L_F832:
   pop     es
   iret
 
-db 0xFF                                 ; F83A db 0xFF
-db 0xFF                                 ; F83B db 0xFF
-db 0xFF                                 ; F83C db 0xFF
-db 0xFF                                 ; F83D db 0xFF
-db 0xFF                                 ; F83E db 0xFF
-db 0xFF                                 ; F83F db 0xFF
-db 0xFF                                 ; F840 db 0xFF
+
+  db      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 
 ;*****************************************************************************
