@@ -20,11 +20,13 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.15 2003/10/03 23:17:22 hampa Exp $
+; $Id: ega.asm,v 1.16 2003/10/04 17:56:06 hampa Exp $
 
 
 %include "pce.inc"
 
+
+%define EGA_BIOS_CS 0xc000
 
 %define BIOS_MODE 0x0049
 %define BIOS_COLS 0x004a
@@ -140,25 +142,6 @@ pal_default:
   db      (PAL_R1 + PAL_G1) + (PAL_R0 + PAL_G0)
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
 
-pal_mono:
-  db      0x00
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-  db      PAL_R1 + PAL_G1 + PAL_B1
-
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
-
 
 mode00:
   db      40, 24, 14
@@ -167,7 +150,7 @@ mode00:
   db      0x43                                                  ; misc out
   db      0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
+  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
@@ -182,7 +165,7 @@ mode01:
   db      0x43                                                  ; misc out
   db      0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
   db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
+  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
   db      0x00
   db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
   db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
@@ -389,9 +372,8 @@ mode12:
 
 
 ptr00a8:
-  dw      mode00, 0xc000                 ; video parameter table
-  dw      pal_default, 0xc000
-;  dw      0, 0                          ; palette
+  dw      mode00, EGA_BIOS_CS           ; video parameter table
+  dw      pal_default, EGA_BIOS_CS
   dw      0, 0
   dw      0, 0
   dw      0, 0
@@ -914,32 +896,17 @@ txt_clear_rect:
 
 
 ; clear CX words at B800:DI with AX
-txt_clear:
-  push    cx
-  push    es
-
-  push    ax
-  call    get_segm
-  mov     es, ax
-  pop     ax
-
-  rep     stosw
-
-  pop     es
-  pop     cx
-  ret
-
-
-; clear CX bytes at B800:DI with AL
 ega_clear_cga:
+  push    cx
   push    di
   push    es
 
   mov     es, [cs:segb800]
-  rep     stosb
+  rep     stosw
 
   pop     es
   pop     di
+  pop     cx
   ret
 
 
@@ -1096,8 +1063,8 @@ int_10_00_03:
 
   mov     ax, 0x0720
   xor     di, di
-  mov     cx, 8000
-  call    txt_clear
+  mov     cx, 8192
+  call    ega_clear_cga
 
   pop     di
   pop     cx
@@ -1112,9 +1079,9 @@ int_10_00_06:
   push    cx
   push    di
 
-  mov     al, 0x00
+  xor     ax, ax
   xor     di, di
-  mov     cx, 16384
+  mov     cx, 8192
   call    ega_clear_cga
 
   pop     di
@@ -1133,7 +1100,7 @@ int_10_00_07:
   mov     ax, 0x0720
   xor     di, di
   mov     cx, 8000
-  call    txt_clear
+;  call    txt_clear
 
   pop     di
   pop     cx
@@ -1207,6 +1174,9 @@ int_10_00:
   add     ax, mode00
   mov     si, ax
   pop     ax
+
+  cmp     byte [si], 0x00
+  je      .badfunc
 
   call    int_10_init_mode
 
