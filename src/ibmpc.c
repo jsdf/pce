@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.c                                                    *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.2 2003/04/16 02:26:39 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ ibmpc_t *pc_new (void)
   pc->bios = mem_blk_new (0xf0000, 64 * 1024, 1);
   mem_blk_set_ro (pc->bios, 1);
   mem_add_blk (pc->mem, pc->bios);
-  pc_load_bios (pc, "bios.rom");
+  pc_load_bios (pc, "ibmpc.rom");
 
   pc->cpu->mem_get_uint8 = &mem_get_uint8;
   pc->cpu->mem_get_uint16 = &mem_get_uint16_le;
@@ -121,6 +121,9 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
   if ((op1 == 0xcd) && (op2 == 0x13)) {
     flp_int_13 (pc->flp, pc->cpu);
+  }
+  else {
+    fprintf (stderr, "hook: %02X %02X\n", op1, op2);
   }
 }
 

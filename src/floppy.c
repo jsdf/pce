@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     floppy.c                                                   *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: floppy.c,v 1.2 2003/04/16 02:26:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -86,7 +86,7 @@ void flp_int13_set_status (floppy_t *flp, e8086_t *cpu, unsigned val)
   cpu->dreg[E86_REG_AX] &= 0x00ff;
   cpu->dreg[E86_REG_AX] |= (val & 0xff) << 8;
 
-  cpu->mem_set_uint8 (cpu->mem, 0x441, val);
+  e86_set_mem8 (cpu, 0x40, 0x41, val);
 
   if (val == 0) {
     cpu->flg &= ~E86_FLG_C;
@@ -123,13 +123,15 @@ void flp_int13_read (floppy_t *flp, e8086_t *cpu)
   i = 512UL * ((c * flp->h + h) * flp->s + s - 1);
   n = 512UL * cnt;
 
-  fprintf (stderr, "int13: read %u at %u/%u/%u (%lu)\n", cnt, c, h, s, i);
-
   while (n > 0) {
     cpu->mem_set_uint8 (cpu->mem, (seg << 4) + ofs, flp->data[i]);
     i += 1;
     n -= 1;
     ofs = (ofs + 1) & 0xffff;
+
+    if (ofs == 0) {
+      fprintf (stderr, "int13: wrap around on read\n");
+    }
   }
 
   flp_int13_set_status (flp, cpu, 0);
@@ -162,8 +164,6 @@ void flp_int13_write (floppy_t *flp, e8086_t *cpu)
   i = 512UL * ((c * flp->h + h) * flp->s + s - 1);
   n = 512UL * cnt;
 
-  fprintf (stderr, "int13: write %u at %u/%u/%u (%lu)\n", cnt, c, h, s, i);
-
   while (n > 0) {
     flp->data[i] = cpu->mem_get_uint8 (cpu->mem, (seg << 4) + ofs);
     i += 1;
@@ -174,11 +174,28 @@ void flp_int13_write (floppy_t *flp, e8086_t *cpu)
   flp_int13_set_status (flp, cpu, 0);
 }
 
+void flp_int13_log (floppy_t *flp, e8086_t *cpu, FILE *fp)
+{
+  fprintf (fp,
+    "int 13 func %02X: %04X:%04X  AX=%04X  BX=%04X  CX=%04X  DX=%04X  ES=%04X\n",
+    e86_get_reg8 (cpu, E86_REG_AH),
+    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu) + 2),
+    e86_get_mem16 (cpu, e86_get_ss (cpu), e86_get_sp (cpu)),
+    e86_get_reg16 (cpu, E86_REG_AX),
+    e86_get_reg16 (cpu, E86_REG_BX),
+    e86_get_reg16 (cpu, E86_REG_CX),
+    e86_get_reg16 (cpu, E86_REG_DX),
+    e86_get_sreg (cpu, E86_REG_ES)
+  );
+}
+
 void flp_int_13 (floppy_t *flp, e8086_t *cpu)
 {
   unsigned func;
 
-  func = (cpu->dreg[E86_REG_AX] >> 8) & 0xff;
+  flp_int13_log (flp, cpu, stderr);
+
+  func = e86_get_reg8 (cpu, E86_REG_AH);
 
   switch (func) {
     case 0x00:
@@ -186,7 +203,7 @@ void flp_int_13 (floppy_t *flp, e8086_t *cpu)
       break;
 
     case 0x01:
-      flp_int13_set_status (flp, cpu, cpu->mem_get_uint8 (cpu->mem, 0x441));
+      flp_int13_set_status (flp, cpu, e86_get_mem8 (cpu, 0x40, 0x41));
       break;
 
     case 0x02:
@@ -202,6 +219,7 @@ void flp_int_13 (floppy_t *flp, e8086_t *cpu)
       break;
 
     case 0x08:
+//      flp_int13_set_status (flp, cpu, 1);
       if ((cpu->dreg[E86_REG_DX] & 0xff) > 0) {
         flp_int13_set_status (flp, cpu, 1);
         return;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,10 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: pce.c,v 1.2 2003/04/16 02:26:39 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "pce.h"
 #include "ibmpc.h"
@@ -31,10 +32,7 @@
 
 typedef struct {
   unsigned i;
-  unsigned n;
   char     str[256];
-  char     cur[256];
-  short    err;
 } cmd_t;
 
 
@@ -51,6 +49,27 @@ static breakpoint_t *breakpoint = NULL;
 static ibmpc_t      *pc;
 
 
+int str_is_space (char c)
+{
+  if (c == ' ') {
+    return (1);
+  }
+
+  if (c == '\n') {
+    return (1);
+  }
+
+  if (c == '\r') {
+    return (1);
+  }
+
+  if (c == '\t') {
+    return (1);
+  }
+
+  return (0);
+}
+
 char *str_ltrim (char *str)
 {
   unsigned i, j;
@@ -58,15 +77,21 @@ char *str_ltrim (char *str)
   i = 0;
   j = 0;
 
-  while (str[i] != 0) {
-    if ((str[i] == ' ') || (str[i] == '\t') || (str[i] == '\n')) {
-      i++;
-    }
-    else {
-      strcpy (str, str + i);
-      return (str);
-    }
+  while ((str[i] != 0) && str_is_space (str[i])) {
+    i += 1;
   }
+
+  if (i == 0) {
+    return (str);
+  }
+
+  while (str[i] != 0) {
+    str[j] = str[i];
+    i += 1;
+    j += 1;
+  }
+
+  str[j] = 0;
 
   return (str);
 }
@@ -89,139 +114,203 @@ char *str_rtrim (char *str)
   return (str);
 }
 
-int cmd_is_space (char c)
+void cmd_get (cmd_t *cmd)
 {
-  if (c == ' ') {
-    return (1);
+  fgets (cmd->str, 256, stdin);
+
+  str_ltrim (cmd->str);
+  str_rtrim (cmd->str);
+
+  cmd->i = 0;
+}
+
+void cmd_match_space (cmd_t *cmd)
+{
+  unsigned i;
+
+  i = cmd->i;
+
+  while ((cmd->str[i] != 0) && str_is_space (cmd->str[i])) {
+    i++;
   }
 
-  if (c == '\n') {
-    return (1);
+  cmd->i = i;
+}
+
+void cmd_error (cmd_t *cmd, const char *str)
+{
+  printf ("** %s [%s]\n", str, cmd->str + cmd->i);
+  fflush (stdout);
+}
+
+void cmd_match_str (cmd_t *cmd, char *str)
+{
+  unsigned i;
+
+  cmd_match_space (cmd);
+
+  i = cmd->i;
+
+  while ((cmd->str[i] != 0) && !str_is_space (cmd->str[i])) {
+    *(str++) = cmd->str[i];
+    i++;
   }
 
-  if (c == '\t') {
+  *str = 0;
+
+  cmd->i = i;
+}
+
+int cmd_match_eol (cmd_t *cmd)
+{
+  cmd_match_space (cmd);
+
+  if (cmd->str[cmd->i] == 0) {
     return (1);
   }
 
   return (0);
 }
 
-void cmd_get (cmd_t *cmd)
+int cmd_match_end (cmd_t *cmd)
 {
-  unsigned i, j, k;
-  short    f;
-
-  fgets (cmd->str, 256, stdin);
-
-  i = 0;
-  j = 0;
-  k = 0;
-  f = 0;
-
-  while (cmd->str[i] != 0) {
-    if (cmd_is_space (cmd->str[i])) {
-      if (f == 0) {
-        cmd->str[j] = ' ';
-        j++;
-      }
-      f = 1;
-    }
-    else {
-      cmd->str[j] = cmd->str[i];
-      j++;
-      k = j;
-      f = 0;
-    }
-    i++;
+  if (cmd_match_eol (cmd)) {
+    return (1);
   }
 
-  cmd->i = 0;
-  cmd->n = k;
-  cmd->str[k] = 0;
-  cmd->cur[0] = 0;
+  cmd_error (cmd, "syntax error");
+
+  return (0);
 }
 
-void cmd_get_str (cmd_t *cmd)
+int cmd_match (cmd_t *cmd, const char *str)
 {
-  unsigned i, j;
+  unsigned i;
+
+  cmd_match_space (cmd);
 
   i = cmd->i;
-  j = 0;
 
-  while ((i < cmd->n) && cmd_is_space (cmd->str[i])) {
-    i++;
+  while ((*str != 0) && (cmd->str[i] == *str)) {
+    i += 1;
+    str += 1;
   }
 
-  while ((i < cmd->n) && !cmd_is_space (cmd->str[i])) {
-    cmd->cur[j] = cmd->str[i];
-    i++;
-    j++;
+  if (*str != 0) {
+    return (0);
   }
 
   cmd->i = i;
-  cmd->cur[j] = 0;
+
+  return (1);
 }
 
-unsigned cmd_get_uint16 (char *str)
+int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
 {
-  unsigned i, r;
+  unsigned i;
 
-  i = 0;
-  r = 0;
+  static char *dreg[8] = {
+    "ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
+  };
 
-  while (str[i] != 0) {
-    if ((str[i] >= '0') && (str[i] <= '9')) {
-      r = 16 * r + (unsigned)(str[i] - '0');
-    }
-    else if ((str[i] >= 'a') && (str[i] <= 'f')) {
-      r = 16 * r + (unsigned)(str[i] - 'a' + 10);
-    }
-    else if ((str[i] >= 'A') && (str[i] <= 'F')) {
-      r = 16 * r + (unsigned)(str[i] - 'A' + 10);
-    }
-    else {
-      return (r);
-    }
+  static char *sreg[4] = {
+    "es", "cs", "ss", "ds"
+  };
 
-    i++;
+  for (i = 0; i < 8; i++) {
+    if (cmd_match (cmd, dreg[i])) {
+      *reg = &pc->cpu->dreg[i];
+      return (1);
+    }
   }
 
-  return (r);
+  for (i = 0; i < 4; i++) {
+    if (cmd_match (cmd, sreg[i])) {
+      *reg = &pc->cpu->sreg[i];
+      return (1);
+    }
+  }
+
+  if (cmd_match (cmd, "ip")) {
+    *reg = &pc->cpu->ip;
+    return (1);
+  }
+
+  if (cmd_match (cmd, "flags")) {
+    *reg = &pc->cpu->flg;
+    return (1);
+  }
+
+  *reg = NULL;
+
+  return (0);
 }
 
-void cmd_get_addr (char *str, unsigned short *seg, unsigned short *ofs)
+int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
 {
-  unsigned i, s, o;
+  unsigned       i;
+  unsigned       cnt;
+  unsigned short ret;
+  unsigned short *reg;
 
-  i = 0;
-  s = *seg;
-  o = 0;
-
-  while (str[i] != 0) {
-    if ((str[i] >= '0') && (str[i] <= '9')) {
-      o = 16 * o + (unsigned)(str[i] - '0');
-    }
-    else if ((str[i] >= 'a') && (str[i] <= 'f')) {
-      o = 16 * o + (unsigned)(str[i] - 'a' + 10);
-    }
-    else if ((str[i] >= 'A') && (str[i] <= 'F')) {
-      o = 16 * o + (unsigned)(str[i] - 'A' + 10);
-    }
-    else if (str[i] == ':') {
-      s = o;
-      o = 0;
-    }
-    else {
-      *seg = s;
-      *ofs = o;
-      return;
-    }
-
-    i++;
+  if (cmd_match_reg (cmd, &reg)) {
+    *val = *reg;
+    return (1);
   }
 
-  *seg = s;
-  *ofs = o;
+  cmd_match_space (cmd);
+
+  i = cmd->i;
+
+  ret = 0;
+  cnt = 0;
+
+  while (cmd->str[i] != 0) {
+    if ((cmd->str[i] >= '0') && (cmd->str[i] <= '9')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - '0');
+    }
+    else if ((cmd->str[i] >= 'a') && (cmd->str[i] <= 'f')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'a' + 10);
+    }
+    else if ((cmd->str[i] >= 'A') && (cmd->str[i] <= 'F')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'A' + 10);
+    }
+    else {
+      break;
+    }
+
+    cnt += 1;
+    i += 1;
+  }
+
+  if (cnt == 0) {
+    return (0);
+  }
+
+  cmd->i = i;
+  *val = ret;
+
+  return (1);
+}
+
+int cmd_match_addr (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
+{
+  unsigned short val;
+
+  if (!cmd_match_uint16 (cmd, &val)) {
+    return (0);
+  }
+
+  if (!cmd_match (cmd, ":")) {
+    *ofs = val;
+    return (1);
+  }
+
+  *seg = val;
+
+  cmd_match_uint16 (cmd, ofs);
+
+  return (1);
 }
 
 breakpoint_t *bp_get (unsigned short seg, unsigned short ofs)
@@ -371,7 +460,7 @@ void disasm_str (char *dst, e86_disasm_t *op)
   }
 }
 
-void prt_prompt (FILE *fp)
+void prt_state (ibmpc_t *pc, FILE *fp)
 {
   e86_disasm_t op;
   char         str[256];
@@ -379,68 +468,39 @@ void prt_prompt (FILE *fp)
   e86_disasm_cur (pc->cpu, &op);
   disasm_str (str, &op);
 
-  fprintf (fp, "%04X:%04X(%lu) %s\n-",
+  fprintf (fp, "-8086-state------------------------------------------------------------------\n");
+
+  e86_prt_state (pc->cpu, fp);
+
+  fprintf (fp, "%04X:%04X  %s\n",
     (unsigned) pc->cpu->sreg[E86_REG_CS],
     (unsigned) pc->cpu->ip,
-    pc->clk_cnt,
     str
   );
 }
 
-unsigned parse_uint16 (char *str, unsigned short *val)
+void prt_prompt (FILE *fp)
 {
-  unsigned i;
-
-  i = 0;
-  *val = 0;
-
-  while (str[i] != 0) {
-    if ((str[i] >= '0') && (str[i] <= '9')) {
-      *val = 16 * *val + (unsigned short)(str[i] - '0');
-    }
-    else if ((str[i] >= 'a') && (str[i] <= 'f')) {
-      *val = 16 * *val + (unsigned short)(str[i] - 'a' + 10);
-    }
-    else if ((str[i] >= 'A') && (str[i] <= 'F')) {
-      *val = 16 * *val + (unsigned short)(str[i] - 'A' + 10);
-    }
-    else {
-      return (i);
-    }
-
-    i++;
-  }
-
-  return (i);
+  fputs ("-", fp);
+  fflush (fp);
 }
 
-unsigned parse_addr (char *str, unsigned short *seg, unsigned short *ofs)
+void prt_error (const char *str, ...)
 {
-  unsigned i, j;
+  va_list va;
 
-  i = parse_uint16 (str, ofs);
-  if (i == 0) {
-    printf ("Syntax error\n");
-    return (0);
-  }
-
-  if (str[i] == ':') {
-    i++;
-    *seg = *ofs;
-    j = parse_uint16 (str + i, ofs);
-    if (j == 0) {
-      printf ("Syntax error\n");
-      return (0);
-    }
-    i += j;
-  }
-
-  return (i);
+  va_start (va, str);
+  vfprintf (stderr, str, va);
+  va_end (va);
 }
 
 void do_dump (cmd_t *cmd)
 {
   FILE *fp;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
 
   fp = fopen ("memory.dat", "wb");
   if (fp == NULL) {
@@ -457,6 +517,10 @@ void do_bg (cmd_t *cmd)
   breakpoint_t   *bp;
   unsigned short seg, ofs;
   unsigned long  old;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
 
   key_set_fd (pc->key, 0);
 
@@ -486,11 +550,15 @@ void do_bg (cmd_t *cmd)
 
   key_set_fd (pc->key, -1);
 
-  pc_prt_state (pc, stdout);
+  prt_state (pc, stdout);
 }
 
 void do_bl (cmd_t *cmd)
 {
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
   bp_list ();
 }
 
@@ -498,19 +566,19 @@ void do_bs (cmd_t *cmd)
 {
   unsigned short seg, ofs, pass;
 
-  cmd_get_str (cmd);
-
   seg = pc->cpu->sreg[E86_REG_CS];
   ofs = 0;
-  cmd_get_addr (cmd->cur, &seg, &ofs);
+  pass = 1;
 
-  cmd_get_str (cmd);
-
-  if (cmd->cur[0] != 0) {
-    pass = (unsigned short) cmd_get_uint16 (cmd->cur);
+  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+    cmd_error (cmd, "expecting address");
+    return;
   }
-  else {
-    pass = 1;
+
+  cmd_match_uint16 (cmd, &pass);
+
+  if (!cmd_match_end (cmd)) {
+    return;
   }
 
   if (pass > 0) {
@@ -526,97 +594,132 @@ void do_bs (cmd_t *cmd)
 
 void do_b (cmd_t *cmd)
 {
-  cmd_get_str (cmd);
-
-  if (strcmp (cmd->cur, "l") == 0) {
+  if (cmd_match (cmd, "l")) {
     do_bl (cmd);
   }
-  else if (strcmp (cmd->cur, "g") == 0) {
+  else if (cmd_match (cmd, "g")) {
     do_bg (cmd);
   }
-  else if (strcmp (cmd->cur, "s") == 0) {
+  else if (cmd_match (cmd, "s")) {
     do_bs (cmd);
   }
   else {
-    printf ("b: unknown command (%s)\n", cmd->cur);
+    prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
   }
+}
+
+void do_p (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+  e86_disasm_t   op;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  e86_disasm_cur (pc->cpu, &op);
+
+  seg = e86_get_cs (pc->cpu);
+  ofs = e86_get_ip (pc->cpu) + op.dat_n;
+
+  key_set_fd (pc->key, 0);
+
+  while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
+    pc_clock (pc);
+  }
+
+  while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs)) {
+    pc_clock (pc);
+  }
+
+  key_set_fd (pc->key, -1);
+
+  prt_state (pc, stdout);
 }
 
 void do_g (cmd_t *cmd)
 {
-  unsigned long cnt;
+  unsigned short cnt;
+  unsigned long  inst;
 
-  cmd_get_str (cmd);
+  cnt = 1;
 
-  if (cmd->cur[0] == 0) {
-    cnt = 1;
+  cmd_match_uint16 (cmd, &cnt);
+
+  if (!cmd_match_end (cmd)) {
+    return;
   }
-  else {
-    cnt = cmd_get_uint16 (cmd->cur);
-  }
 
-  cnt += pc->cpu->instructions;
+  inst = pc->cpu->instructions + cnt;
 
-  while (pc->cpu->instructions < cnt) {
+  while (pc->cpu->instructions < inst) {
     pc_clock (pc);
   }
 
-  pc_prt_state (pc, stdout);
+  prt_state (pc, stdout);
 }
 
 void do_c (cmd_t *cmd)
 {
-  pc_clock (pc);
-  pc_prt_state (pc, stdout);
+  unsigned short cnt;
+
+  cnt = 1;
+
+  cmd_match_uint16 (cmd, &cnt);
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  while (cnt > 0) {
+    pc_clock (pc);
+    cnt -= 1;
+  }
+
+  prt_state (pc, stdout);
 }
 
 void do_s (cmd_t *cmd)
 {
-  cmd_get_str (cmd);
-
-  if (cmd->cur[0] == 0) {
-    pc_prt_state (pc, stdout);
+  if (cmd_match_eol (cmd)) {
+    prt_state (pc, stdout);
     return;
   }
 
-  while (cmd->cur[0] != 0) {
-    if (strcmp (cmd->cur, "pc") == 0) {
+  while (!cmd_match_eol (cmd)) {
+    if (cmd_match (cmd, "pc")) {
       pc_prt_state (pc, stdout);
     }
-    else if (strcmp (cmd->cur, "cpu") == 0) {
+    else if (cmd_match (cmd, "cpu")) {
       e86_prt_state (pc->cpu, stdout);
     }
     else {
-      printf ("unknown component (%s)\n", cmd->cur);
+      prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
+      return;
     }
-
-    cmd_get_str (cmd);
   }
 }
 
 void do_u (cmd_t *cmd)
 {
-  unsigned       i, n;
-  unsigned short seg, ofs;
+  unsigned       i;
+  unsigned short seg, ofs, cnt;
   e86_disasm_t   op;
   char           str[256];
 
-  cmd_get_str (cmd);
-
   seg = pc->cpu->sreg[E86_REG_CS];
   ofs = pc->cpu->ip;
-  n = 16;
+  cnt = 16;
 
-  if (cmd->cur[0] != 0) {
-    cmd_get_addr (cmd->cur, &seg, &ofs);
-
-    cmd_get_str (cmd);
-    if (cmd->cur[0] != 0) {
-      n = cmd_get_uint16 (cmd->cur);
-    }
+  if (cmd_match_addr (cmd, &seg, &ofs)) {
+    cmd_match_uint16 (cmd, &cnt);
   }
 
-  for (i = 0; i < n; i++) {
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  for (i = 0; i < cnt; i++) {
     e86_disasm_mem (pc->cpu, &op, seg, ofs);
     disasm_str (str, &op);
 
@@ -628,101 +731,99 @@ void do_u (cmd_t *cmd)
 
 void do_d (cmd_t *cmd)
 {
-  unsigned       i, n;
-  unsigned short seg, ofs;
-  unsigned char  val;
+  unsigned              i, j;
+  unsigned short        cnt;
+  unsigned short        seg, ofs1, ofs2;
+  static unsigned short sseg = 0;
+  static unsigned short sofs = 0;
+  unsigned short        p, p1, p2;
+  char                  buf[256];
 
-  cmd_get_str (cmd);
+  seg = sseg;
+  ofs1 = sofs;
+  cnt = 256;
 
-  seg = pc->cpu->sreg[E86_REG_DS];
-  ofs = 0;
-  n = 256;
-
-  if (cmd->cur[0] != 0) {
-    cmd_get_addr (cmd->cur, &seg, &ofs);
-
-    cmd_get_str (cmd);
-    if (cmd->cur[0] != 0) {
-      n = cmd_get_uint16 (cmd->cur);
-    }
+  if (cmd_match_addr (cmd, &seg, &ofs1)) {
+    cmd_match_uint16 (cmd, &cnt);
   }
 
-  for (i = 0; i < n; i++) {
-    if ((i & 15) == 0) {
-      if (i > 0) {
-        fputs ("\n", stdout);
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  ofs2 = (ofs1 + cnt - 1) & 0xffff;
+  if (ofs2 < ofs1) {
+    ofs2 = 0xffff;
+    cnt = ofs2 - ofs1 + 1;
+  }
+
+  sseg = seg;
+  sofs = ofs1 + cnt;
+
+  p1 = ofs1 / 16;
+  p2 = ofs2 / 16 + 1;
+
+  for (p = p1; p < p2; p++) {
+    j = 16 * p;
+
+    sprintf (buf,
+      "%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
+      seg, j
+    );
+
+    for (i = 0; i < 16; i++) {
+      if ((j >= ofs1) && (j <= ofs2)) {
+        unsigned val, val1, val2;
+
+        val = e86_get_mem8 (pc->cpu, seg, j);
+        val1 = (val >> 4) & 0x0f;
+        val2 = val & 0x0f;
+
+        buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
+        buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
+
+        if ((val >= 32) && (val <= 127)) {
+          buf[60 + i] = val;
+        }
+        else {
+          buf[60 + i] = '.';
+        }
       }
-      fprintf (stdout, "%04X:%04X  ", seg, ofs);
+      else {
+        buf[11 + 3 * i] = ' ';
+        buf[11 + 3 * i + 1] = ' ';
+        buf[60 + i] = ' ';
+      }
+
+      j += 1;
     }
 
-    val = mem_get_uint8 (pc->mem, (seg << 4) + ofs);
-
-    fprintf (stdout, " %02X", val);
-
-    ofs = (ofs + 1) & 0xffff;
+    fputs (buf, stdout);
   }
-
-  fputs ("\n", stdout);
-}
-
-unsigned short *pc_get_reg (const char *reg)
-{
-  unsigned i;
-
-  static char *dreg[8] = {
-    "ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
-  };
-
-  static char *sreg[4] = {
-    "es", "cs", "ss", "ds"
-  };
-
-  for (i = 0; i < 8; i++) {
-    if (strcmp (dreg[i], reg) == 0) {
-      return (&pc->cpu->dreg[i]);
-    }
-  }
-
-  for (i = 0; i < 4; i++) {
-    if (strcmp (sreg[i], reg) == 0) {
-      return (&pc->cpu->sreg[i]);
-    }
-  }
-
-  if (strcmp (reg, "ip") == 0) {
-    return (&pc->cpu->ip);
-  }
-
-  if (strcmp (reg, "flags") == 0) {
-    return (&pc->cpu->flg);
-  }
-
-  return (0);
 }
 
 void do_r (cmd_t *cmd)
 {
-  unsigned       val;
+  unsigned short val;
   unsigned short *reg;
 
-  cmd_get_str (cmd);
-
-  reg = pc_get_reg (cmd->cur);
-
-  if (reg == NULL) {
-    printf ("unknown register (%s)\n", cmd->cur);
+  if (!cmd_match_reg (cmd, &reg)) {
+    prt_error ("missing register\n");
     return;
   }
 
-  cmd_get_str (cmd);
-  if (cmd->cur[0] == 0) {
-    printf ("missing value\n");
+  if (!cmd_match_uint16 (cmd, &val)) {
+    prt_error ("missing value\n");
     return;
   }
 
-  val = cmd_get_uint16 (cmd->cur);
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
 
   *reg = val;
+
+  prt_state (pc, stdout);
 }
 
 int main (int argc, char *argv[])
@@ -739,36 +840,38 @@ int main (int argc, char *argv[])
     fflush (stdout);
 
     cmd_get (&cmd);
-    cmd_get_str (&cmd);
 
-    if (strcmp (cmd.cur, "b") == 0) {
+    if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
     }
-    else if (strcmp (cmd.cur, "c") == 0) {
+    else if (cmd_match (&cmd, "c")) {
       do_c (&cmd);
     }
-    else if (strcmp (cmd.cur, "g") == 0) {
+    else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
     }
-    else if (strcmp (cmd.str, "q") == 0) {
+    else if (cmd_match (&cmd, "p")) {
+      do_p (&cmd);
+    }
+    else if (cmd_match (&cmd, "q")) {
       break;
     }
-    else if (strcmp (cmd.cur, "s") == 0) {
+    else if (cmd_match (&cmd, "s")) {
       do_s (&cmd);
     }
-    else if (strcmp (cmd.cur, "u") == 0) {
+    else if (cmd_match (&cmd, "u")) {
       do_u (&cmd);
     }
-    else if (strcmp (cmd.cur, "d") == 0) {
+    else if (cmd_match (&cmd, "d")) {
       do_d (&cmd);
     }
-    else if (strcmp (cmd.cur, "r") == 0) {
+    else if (cmd_match (&cmd, "r")) {
       do_r (&cmd);
     }
-    else if (strcmp (cmd.cur, "dump") == 0) {
+    else if (cmd_match (&cmd, "dump")) {
       do_dump (&cmd);
     }
-    else if (cmd.cur[0] == 0) {
+    else if (cmd.str[cmd.i] == 0) {
       ;
     }
     else {
