@@ -20,10 +20,10 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcestop.asm,v 1.2 2003/09/18 19:08:08 hampa Exp $
+; $Id: pcestop.asm,v 1.3 2003/09/22 05:15:25 hampa Exp $
 
 
-%include "hook.inc"
+%include "pce.inc"
 
 
 section text
@@ -33,7 +33,7 @@ section text
 ;  jmp     start
 
 start:
-  pcehook PCEH_STOP
+  pceh    PCEH_STOP
 
   mov     ax, 0x4c00
   int     0x21

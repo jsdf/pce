@@ -3,9 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     pceint28.asm                                               *
-;* Created:       2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+;* File name:     pcecpu.asm                                                 *
+;* Created:       2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
@@ -20,9 +20,9 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pceint28.asm,v 1.3 2003/09/22 05:15:25 hampa Exp $
+; $Id: pcecpu.asm,v 1.1 2003/09/22 05:15:25 hampa Exp $
 
-; pceint28 [on|off]
+; pcecpu [cpu]
 
 
 %include "pce.inc"
@@ -35,14 +35,19 @@ section .text
   jmp     start
 
 
-msg_info       db "INT 28 sleeping is", 0
-msg_on         db " ON", 13, 10, 0
-msg_off        db " OFF", 13, 10, 0
-msg_help       db "usage: pceint28 [on|off]", 13, 10, 0
+msg_info1      db "current cpu type is ", 0
+msg_info2      db 13, 10, 0
+
+msg_help       db "usage: pcecpu [cpu]", 13, 10, 0
 
 str_empty      db 0
-str_on         db "on", 0
-str_off        db "off", 0
+str_8086       db "8086", 0
+str_8088       db "8088", 0
+str_v20        db "v20", 0
+str_v30        db "v30", 0
+str_80186      db "80186", 0
+str_80188      db "80188", 0
+str_unknown    db "unknown", 0
 
 
 prt_string:
@@ -124,15 +129,35 @@ start:
   call    is_param
   jcxz    do_info
 
-  mov     di, str_on
+  mov     di, str_8086
   call    is_param
   or      ax, ax
-  jnz     do_on
+  jnz     set_8086
 
-  mov     di, str_off
+  mov     di, str_8088
   call    is_param
   or      ax, ax
-  jnz     do_off
+  jnz     set_8088
+
+  mov     di, str_v20
+  call    is_param
+  or      ax, ax
+  jnz     set_v20
+
+  mov     di, str_v30
+  call    is_param
+  or      ax, ax
+  jnz     set_v30
+
+  mov     di, str_80186
+  call    is_param
+  or      ax, ax
+  jnz     set_80186
+
+  mov     di, str_80188
+  call    is_param
+  or      ax, ax
+  jnz     set_80188
 
 
 do_help:
@@ -141,31 +166,73 @@ do_help:
   jmp     done
 
 
-do_on:
-  mov     ax, 10
-  pceh    PCEH_SET_INT28
+set_8086:
+  mov     ax, PCE_CPU_8086
+  pceh    PCEH_SET_CPU
   jmp     done
 
+set_8088:
+  mov     ax, PCE_CPU_8088
+  pceh    PCEH_SET_CPU
+  jmp     done
 
-do_off:
-  xor     ax, ax
-  pceh    PCEH_SET_INT28
+set_v20:
+  mov     ax, PCE_CPU_V20
+  pceh    PCEH_SET_CPU
+  jmp     done
+
+set_v30:
+  mov     ax, PCE_CPU_V30
+  pceh    PCEH_SET_CPU
+  jmp     done
+
+set_80186:
+  mov     ax, PCE_CPU_80186
+  pceh    PCEH_SET_CPU
+  jmp     done
+
+set_80188:
+  mov     ax, PCE_CPU_80188
+  pceh    PCEH_SET_CPU
   jmp     done
 
 
 do_info:
-  mov     si, msg_info
+  mov     si, msg_info1
   call    prt_string
 
-  pceh    PCEH_GET_INT28
+  pceh    PCEH_GET_CPU
 
-  mov     si, msg_on
-  or      ax, ax
-  jnz     .on
+  mov     si, str_8086
+  cmp     ax, PCE_CPU_8086
+  je      .ok
 
-  mov     si, msg_off
+  mov     si, str_8088
+  cmp     ax, PCE_CPU_8088
+  je      .ok
 
-.on:
+  mov     si, str_v20
+  cmp     ax, PCE_CPU_V20
+  je      .ok
+
+  mov     si, str_v30
+  cmp     ax, PCE_CPU_V30
+  je      .ok
+
+  mov     si, str_80186
+  cmp     ax, PCE_CPU_80186
+  je      .ok
+
+  mov     si, str_80188
+  cmp     ax, PCE_CPU_80188
+  je      .ok
+
+  mov     si, str_unknown
+
+.ok:
+  call    prt_string
+
+  mov     si, msg_info2
   call    prt_string
 
 

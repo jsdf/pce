@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.34 2003/09/19 14:48:15 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.35 2003/09/22 05:15:25 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -150,24 +150,25 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
   pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
 
   pc->cpu = e86_new ();
+  pc->cpu_model = PCE_CPU_8086;
 
   if (strcmp (model, "8086") == 0) {
-    ;
+    pc_set_cpu_model (pc, PCE_CPU_8086);
   }
   else if (strcmp (model, "8088") == 0) {
-    ;
+    pc_set_cpu_model (pc, PCE_CPU_8088);
   }
   else if ((strcmp (model, "v20") == 0) || (strcmp (model, "V20") == 0)) {
-    e86_enable_v30 (pc->cpu);
+    pc_set_cpu_model (pc, PCE_CPU_V20);
   }
   else if ((strcmp (model, "v30") == 0) || (strcmp (model, "V30") == 0)) {
-    e86_enable_v30 (pc->cpu);
+    pc_set_cpu_model (pc, PCE_CPU_V30);
   }
   else if ((strcmp (model, "80186") == 0) || (strcmp (model, "186") == 0)) {
-    e86_enable_186 (pc->cpu);
+    pc_set_cpu_model (pc, PCE_CPU_80186);
   }
   else if ((strcmp (model, "80188") == 0) || (strcmp (model, "188") == 0)) {
-    e86_enable_186 (pc->cpu);
+    pc_set_cpu_model (pc, PCE_CPU_80188);
   }
   else {
     pce_log (MSG_ERR, "unknown cpu model (%s)\n", model);
@@ -823,6 +824,32 @@ void pc_screenshot (ibmpc_t *pc)
   pce_video_screenshot (pc->video, fp, 0);
 
   fclose (fp);
+}
+
+int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
+{
+  switch (model) {
+    case PCE_CPU_8086:
+    case PCE_CPU_8088:
+      break;
+
+    case PCE_CPU_V20:
+    case PCE_CPU_V30:
+      e86_enable_v30 (pc->cpu);
+      break;
+
+    case PCE_CPU_80186:
+    case PCE_CPU_80188:
+      e86_enable_186 (pc->cpu);
+      break;
+
+    default:
+      return (1);
+  }
+
+  pc->cpu_model = model;
+
+  return (0);
 }
 
 void pc_break (ibmpc_t *pc, unsigned char val)

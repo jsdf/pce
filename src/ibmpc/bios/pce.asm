@@ -20,22 +20,37 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.17 2003/09/22 02:37:56 hampa Exp $
+; $Id: pce.asm,v 1.18 2003/09/22 05:15:25 hampa Exp $
 
 
-%include "config.inc"
-%include "hook.inc"
-
-
-%macro set_pos 1
-  times %1 - ($ - $$) db 0
-%endmacro
+%include "pce.inc"
 
 
 section .text
 
 
 ;-----------------------------------------------------------------------------
+
+init:
+  jmp     start
+
+
+msg_init       db "PC BIOS version ", PCE_VERSION_STR
+               db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
+               db 13, 10, 13, 10, 0
+
+msg_memchk1    db "Memory check... ", 0
+msg_memchk2    db "KB", 13, 0
+
+msg_mda        db "MDA", 0
+msg_cga        db "CGA", 0
+msg_video      db " video adapter initialized", 13, 10, 0
+
+msg_rom1       db "ROM[", 0
+msg_rom2       db "]:", 0
+msg_cksmok     db " checksum ok", 0
+msg_cksmbad    db " bad checksum", 0
+
 
 start:
   cli
@@ -73,32 +88,6 @@ done:
   jmp     done
 
 
-msg_init:
-  db      "PC BIOS version ", PCE_VERSION_STR
-  db      " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
-  db      13, 10, 13, 10, 0
-
-msg_memchk1:
-  db      "Memory check... ", 0
-
-msg_memchk2:
-  db      "KB", 13, 0
-
-msg_mda:
-  db      "MDA", 0
-
-msg_cga:
-  db      "CGA", 0
-
-msg_video:
-  db      " video adapter initialized", 13, 10, 0
-
-msg_rom1       db "ROM[", 0
-msg_rom2       db "]:", 0
-msg_cksmok     db " checksum ok", 0
-msg_cksmbad    db " bad checksum", 0
-
-
 ;-----------------------------------------------------------------------------
 
 init_int:
@@ -128,14 +117,6 @@ init_int:
   mov     ax, 0xf000
   stosw
   loop    .next
-
-;  mov     ax, [es:4 * 0x10]
-;  mov     [es:4 * 0x42], ax
-;  mov     ax, [es:4 * 0x10 + 2]
-;  mov     [es:4 * 0x42 + 2], ax
-
-;  mov     word [es:4 * 0x10], 0x07bd
-;  mov     word [es:4 * 0x10 + 2], 0xc000
 
   pop     ds
   pop     es
@@ -169,6 +150,7 @@ init_pit:
   out     0x40, al
   ret
 
+
 init_ppi:
   push    ax
   mov     al, 0x99
@@ -187,6 +169,7 @@ init_ppi:
 
   pop     ax
   ret
+
 
 init_video:
   push    ax
@@ -232,6 +215,7 @@ init_video:
   pop     si
   pop     ax
   ret
+
 
 init_misc:
   xor     ax, ax
@@ -431,7 +415,7 @@ init_serport:
   push    bx
 
   ; get com info
-  db      0x66, 0x66, 0x02, 0x01
+  pceh    PCEH_GET_COM
 
   mov     [0x0000], ax
   mov     [0x0002], bx
@@ -477,7 +461,7 @@ init_parport:
   push    bx
 
   ; get lpt info
-  db      0x66, 0x66, 0x02, 0x02
+  pceh    PCEH_GET_LPT
 
   mov     [0x0008], ax
   mov     [0x000a], bx
@@ -701,121 +685,120 @@ int_default:
 ;-----------------------------------------------------------------------------
 
 int_00:
-  db      0x66, 0x66, 0xcd, 0x00
+  pceh    PCEH_INT, 0x00
   iret
 
 int_01:
-  db      0x66, 0x66, 0xcd, 0x01
+  pceh    PCEH_INT, 0x01
   iret
 
 int_02:
-  db      0x66, 0x66, 0xcd, 0x02
+  pceh    PCEH_INT, 0x02
   iret
 
 int_03:
-  db      0x66, 0x66, 0xcd, 0x03
+  pceh    PCEH_INT, 0x03
   iret
 
 int_04:
-  db      0x66, 0x66, 0xcd, 0x04
+  pceh    PCEH_INT, 0x04
   iret
 
 int_05:
-  db      0x66, 0x66, 0xcd, 0x05
+  pceh    PCEH_INT, 0x05
   iret
 
 int_06:
-  db      0x66, 0x66, 0xcd, 0x06
+  pceh    PCEH_INT, 0x06
   iret
 
 int_07:
-  db      0x66, 0x66, 0xcd, 0x07
+  pceh    PCEH_INT, 0x07
   iret
 
 int_09:
-  db      0x66, 0x66, 0xcd, 0x09
+  pceh    PCEH_INT, 0x09
   iret
 
 int_0a:
-  db      0x66, 0x66, 0xcd, 0x0a
+  pceh    PCEH_INT, 0x0a
   iret
 
 int_0b:
-  db      0x66, 0x66, 0xcd, 0x0b
+  pceh    PCEH_INT, 0x0b
   iret
 
 int_0c:
-  db      0x66, 0x66, 0xcd, 0x0c
+  pceh    PCEH_INT, 0x0c
   iret
 
 int_0d:
-  db      0x66, 0x66, 0xcd, 0x0d
+  pceh    PCEH_INT, 0x0d
   iret
 
 int_0e:
-  db      0x66, 0x66, 0xcd, 0x0e
+  pceh    PCEH_INT, 0x0e
   iret
 
 int_0f:
-  db      0x66, 0x66, 0xcd, 0x0f
+  pceh    PCEH_INT, 0x0f
   iret
 
 int_10:
-  db      0x66, 0x66, 0xcd, 0x10
+  pceh    PCEH_INT, 0x10
   iret
 
 int_11:
-  db      0x66, 0x66, 0xcd, 0x11
+  pceh    PCEH_INT, 0x11
   iret
 
 int_12:
-  db      0x66, 0x66, 0xcd, 0x12
+  pceh    PCEH_INT, 0x12
   iret
 
+int_13:
+  pceh    PCEH_INT, 0x13
+  retf    2
+
 int_14:
-  db      0x66, 0x66, 0xcd, 0x14
+  pceh    PCEH_INT, 0x14
   iret
 
 int_15:
-  db      0x66, 0x66, 0xcd, 0x15
+  pceh    PCEH_INT, 0x15
   iret
 
 int_17:
-  db      0x66, 0x66, 0xcd, 0x17
+  pceh    PCEH_INT, 0x17
   iret
-
-int_1b:
-  db      0x66, 0x66, 0xcd, 0x1b
-  iret
-
-int_1d:
-  db      0x66, 0x66, 0xcd, 0x1d
-  iret
-
-int_1e:
-  db      0x66, 0x66, 0xcd, 0x1e
-  iret
-
-int_1f:
-  db      0x66, 0x66, 0xcd, 0x1f
-  iret
-
-
-;-----------------------------------------------------------------------------
-
-int_13:
-  db      0x66, 0x66, 0xcd, 0x13
-  retf    2
-
 
 int_18:
   jmp     0xf600:0x0000
   iret
 
+int_1b:
+  pceh    PCEH_INT, 0x1b
+  iret
+
+int_1d:
+  pceh    PCEH_INT, 0x1d
+  iret
+
+int_1e:
+  pceh    PCEH_INT, 0x1e
+  iret
+
+int_1f:
+  pceh    PCEH_INT, 0x1f
+  iret
+
+
+;-----------------------------------------------------------------------------
+
 
 int_19:
   ; get boot drive in AL
-  pcehook PCEH_GET_BOOT
+  pceh    PCEH_GET_BOOT
   mov     dl, al
 
   xor     bx, bx
@@ -847,16 +830,10 @@ int_1a:
   jmp     0xf000:0xfe6e
 
 .hook:
-  db      0x66, 0x66, 0xcd, 0x1a
+  pceh    PCEH_INT, 0x1a
 
   retf    2
 
-
-;-----------------------------------------------------------------------------
-
-
-pce_test:
-  ret
 
 ;-----------------------------------------------------------------------------
 

@@ -20,16 +20,10 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.9 2003/09/22 02:37:56 hampa Exp $
+; $Id: ega.asm,v 1.10 2003/09/22 05:15:25 hampa Exp $
 
 
-%include "config.inc"
-%include "hook.inc"
-
-
-%macro set_pos 1
-  times %1 - ($ - $$) db 0
-%endmacro
+%include "pce.inc"
 
 
 %define BIOS_MODE 0x0049
@@ -93,7 +87,7 @@ rom_start:
 start:
   push    ax
 
-  pcehook PCEH_GET_VIDEO
+  pceh    PCEH_GET_VIDEO
   cmp     ax, 4
   jne     .done
 
@@ -1761,7 +1755,6 @@ int_10_10:
   jb      int_10_1002
   je      int_10_1003
 
-;  pcehook PCEH_STOP
   ret
 
 
@@ -1832,8 +1825,6 @@ int_10_1003:
 int_10_11:
   cmp     al, 0x30
   je      int_10_1130
-
-;  pcehook PCEH_STOP
   ret
 
 
@@ -1899,8 +1890,6 @@ int_10_1130:
 int_10_12:
   cmp     bl, 0x10
   je      int_10_12_10
-
-;  pcehook PCEH_STOP
   ret
 
 
@@ -1912,7 +1901,6 @@ int_10_12_10:
 
 
 int_10_13:
-;  pcehook PCEH_STOP
   ret
 
 
@@ -1922,7 +1910,6 @@ int_10_16:
 int_10_17:
 int_10_18:
 int_10_19:
-;  pcehook PCEH_STOP
   ret
 
 
@@ -1950,7 +1937,6 @@ int_10:
   jmp     .done
 
 .badfunc:
-;  pcehook PCEH_STOP
 
 .done:
   pop     ds

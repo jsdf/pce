@@ -20,10 +20,10 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcehimem.asm,v 1.3 2003/09/21 21:11:40 hampa Exp $
+; $Id: pcehimem.asm,v 1.4 2003/09/22 05:15:25 hampa Exp $
 
 
-%include "config.inc"
+%include "pce.inc"
 
 
 section text
@@ -81,7 +81,7 @@ xms_handler:
 
 .handler:
   ; xms hook
-  db      0x66, 0x66, 0x03, 0x00
+  pceh    PCEH_XMS
   retf
 
 
@@ -142,7 +142,7 @@ drv_init:
   call    prt_string
 
   ; xms info
-  db      0x66, 0x66, 0x03, 0x01
+  pceh    PCEH_XMS_INFO
 
   or      ax, ax
   jnz     .xmsok

@@ -20,7 +20,11 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcetime.asm,v 1.1 2003/08/23 12:35:29 hampa Exp $
+; $Id: pcetime.asm,v 1.2 2003/09/22 05:15:25 hampa Exp $
+
+
+%include "pce.inc"
+
 
 section text
 
