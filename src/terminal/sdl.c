@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.2 2003/09/17 04:20:23 hampa Exp $ */
+/* $Id: sdl.c,v 1.3 2003/09/17 04:22:12 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -129,7 +129,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
 
   sdl->font = NULL;
 
-  ini_get_string (sct, "font_psf", &font, NULL);
+  ini_get_string (sct, "font", &font, NULL);
 
   if (font != NULL) {
     if (sdl_set_font_psf (sdl, font)) {
