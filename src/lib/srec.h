@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/load.h                                             *
- * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/srec.h                                             *
+ * Created:       2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,20 +23,23 @@
 /* $Id$ */
 
 
-#ifndef PCE_LIB_LOAD_H
-#define PCE_LIB_LOAD_H 1
+#ifndef PCE_LIB_SREC_H
+#define PCE_LIB_SREC_H 1
 
 
-#include <devices/memory.h>
+#include <stdio.h>
 
 
-int pce_load_blk_bin (mem_blk_t *blk, const char *fname);
+typedef void (*srec_set_f) (void *ext, unsigned long addr, unsigned char val);
+typedef unsigned char (*srec_get_f) (void *ext, unsigned long addr);
 
-int pce_load_mem_ihex (memory_t *mem, const char *fname);
-int pce_load_mem_srec (memory_t *mem, const char *fname);
-int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base);
 
-int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr);
+int srec_load_fp (FILE *fp, void *ext, srec_set_f set);
+int srec_load (const char *fname, void *ext, srec_set_f set);
+
+int srec_save_start (FILE *fp, const char *name);
+int srec_save (FILE *fp, unsigned long base, unsigned long size, void *ext, srec_get_f get);
+int srec_save_done (FILE *fp);
 
 
 #endif

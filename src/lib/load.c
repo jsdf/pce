@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/load.c                                             *
  * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,8 +25,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ihex.h"
+#include "srec.h"
 #include "load.h"
 
 
@@ -46,7 +48,7 @@ int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
   return (0);
 }
 
-int pce_load_mem_hex (memory_t *mem, const char *fname)
+int pce_load_mem_ihex (memory_t *mem, const char *fname)
 {
   int  r;
   FILE *fp;
@@ -57,6 +59,23 @@ int pce_load_mem_hex (memory_t *mem, const char *fname)
   }
 
   r = ihex_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
+
+  fclose (fp);
+
+  return (r);
+}
+
+int pce_load_mem_srec (memory_t *mem, const char *fname)
+{
+  int  r;
+  FILE *fp;
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  r = srec_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
 
   fclose (fp);
 
@@ -83,4 +102,19 @@ int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
   fclose (fp);
 
   return (0);
+}
+
+int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr)
+{
+  if (strcmp (fmt, "binary") == 0) {
+    return (pce_load_mem_bin (mem, fname, addr));
+  }
+  else if (strcmp (fmt, "ihex") == 0) {
+    return (pce_load_mem_ihex (mem, fname));
+  }
+  else if (strcmp (fmt, "srec") == 0) {
+    return (pce_load_mem_srec (mem, fname));
+  }
+
+  return (1);
 }

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -196,43 +196,29 @@ void ss32_setup_serport (sims32_t *sim, ini_sct_t *ini)
 static
 void ss32_load_mem (sims32_t *sim, ini_sct_t *ini)
 {
-  ini_sct_t  *sct;
-  const char *fmt;
-  const char *fname;
+  ini_sct_t     *sct;
+  const char    *fmt;
+  const char    *fname;
+  unsigned long addr;
 
   sct = ini_sct_find_sct (ini, "load");
 
   while (sct != NULL) {
     fmt = ini_get_str_def (sct, "format", "binary");
     fname = ini_get_str (sct, "file");
+    addr = ini_get_lng_def (sct, "base", 0);
 
-    pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
-      fmt, (fname != NULL) ? fname : "<none>"
-    );
+    if (fname != NULL) {
+      pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
+        fmt, (fname != NULL) ? fname : "<none>"
+      );
 
-    if (strcmp (fmt, "ihex") == 0) {
-      if (fname != NULL) {
-        if (pce_load_mem_hex (sim->mem, fname)) {
-          pce_log (MSG_ERR, "*** loading ihex failed (%s)\n", fname);
-        }
+      if (pce_load_mem (sim->mem, fname, fmt, addr)) {
+        pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
       }
     }
-    else if (strcmp (fmt, "binary") == 0) {
-      unsigned long base;
 
-      base = ini_get_lng_def (sct, "base", 0);
-
-      if (fname != NULL) {
-        if (pce_load_mem_bin (sim->mem, fname, base)) {
-          pce_log (MSG_ERR, "*** loading binary failed (%s)\n", fname);
-        }
-      }
-    }
-    else {
-      pce_log (MSG_ERR, "*** unknown format (%s)\n", fmt);
-    }
-
-    sct = ini_sct_find_next (sct, "load");
+    sct = ini_sct_find_next (ini, "load");
   }
 }
 
