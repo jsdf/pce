@@ -1,4 +1,4 @@
-0.0.4
+0.0.4	2003-04-19
 
 	* Added ESC opcodes
 	* Added lots of instruction timings
@@ -7,6 +7,7 @@
 	* Added a PPI 8255 emulator
 	* Added a CGA emulator (text mode only)
 	* Added support for DOSEMU hdimages
+	* The main application now uses command line options
 	* Lots of small bugfixes
 
 0.0.3	2003-04-15
