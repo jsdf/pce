@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.h                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -122,7 +122,9 @@ void dsk_set_readonly (disk_t *dsk, int v);
  *****************************************************************************/
 void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s);
 
-uint32_t dsk_get_block_cnt (disk_t *dsk);
+unsigned dsk_get_drive (const disk_t *dsk);
+
+uint32_t dsk_get_block_cnt (const disk_t *dsk);
 
 
 /*!***************************************************************************
