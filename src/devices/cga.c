@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -497,6 +497,38 @@ int cga_mode2_screenshot (cga_t *cga, FILE *fp)
   return (0);
 }
 
+static
+void cga_mode2_update (cga_t *cga)
+{
+  unsigned      x, y, i;
+  unsigned      val0, val1;
+  unsigned char *mem0, *mem1;
+
+  mem0 = cga->mem->data;
+  mem1 = cga->mem->data + 8192;
+
+  for (y = 0; y < 100; y++) {
+    for (x = 0; x < 80; x++) {
+      val0 = mem0[x];
+      val1 = mem1[x];
+
+      for (i = 0; i < 8; i++) {
+        trm_set_col (cga->trm, (val0 & 0x80) ? 15 : 0, 0);
+        trm_set_pxl (cga->trm, 8 * x + i, 2 * y);
+
+        trm_set_col (cga->trm, (val1 & 0x80) ? 15 : 0, 0);
+        trm_set_pxl (cga->trm, 8 * x + i, 2 * y + 1);
+
+        val0 <<= 1;
+        val1 <<= 1;
+      }
+    }
+
+    mem0 += 80;
+    mem1 += 80;
+  }
+}
+
 void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
   unsigned      i;
@@ -559,6 +591,10 @@ void cga_update (cga_t *cga)
 
     case 1:
       cga_mode1_update (cga);
+      break;
+
+    case 2:
+      cga_mode2_update (cga);
       break;
   }
 }
