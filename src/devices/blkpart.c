@@ -26,6 +26,7 @@
 #include "blkpart.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 
 static
