@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/term.h                                                 *
+ * File name:     src/ibmpc/term.h                                           *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: term.h,v 1.1 2003/04/23 12:48:43 hampa Exp $ */
+/* $Id: term.h,v 1.2 2003/04/23 16:30:11 hampa Exp $ */
 
 
 #ifndef PCE_TERM_H
@@ -37,6 +37,9 @@ typedef struct {
   unsigned fg;
   unsigned bg;
 
+  unsigned crs_x;
+  unsigned crs_y;
+
   int      col_chg;
 
   FILE     *fp;
@@ -48,10 +51,10 @@ void trm_free (term_t *trm);
 
 void trm_clr_scn (term_t *trm);
 void trm_set_pos (term_t *trm, unsigned x, unsigned y);
+void trm_set_crs (term_t *trm);
 void trm_set_col (term_t *trm, unsigned fg, unsigned bg);
 void trm_set_attr_mono (term_t *trm, unsigned char a);
 void trm_set_attr_col (term_t *trm, unsigned char a);
-void trm_set_chr (term_t *trm, unsigned char chr);
 void trm_set_chr_xy (term_t *trm, unsigned x, unsigned y, unsigned char c);
 
 

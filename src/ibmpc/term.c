@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/term.c                                                 *
+ * File name:     src/ibmpc/term.c                                           *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: term.c,v 1.1 2003/04/23 12:48:43 hampa Exp $ */
+/* $Id: term.c,v 1.2 2003/04/23 16:30:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -73,8 +73,12 @@ void trm_init (term_t *trm, FILE *fp)
 {
   trm->x = ~0;
   trm->y = ~0;
+
   trm->fg = ~0;
   trm->bg = ~0;
+
+  trm->crs_x = 0;
+  trm->crs_y = 0;
 
   trm->col_chg = 1;
 
@@ -113,9 +117,24 @@ unsigned trm_str_int (unsigned char *buf, unsigned n)
 }
 
 static
-unsigned trm_str_pos (unsigned char *buf, unsigned x, unsigned y)
+unsigned trm_str_pos (term_t *trm, unsigned char *buf, unsigned x, unsigned y)
 {
   unsigned i;
+
+  if (trm->y == y) {
+    if (trm->x == x) {
+      return (0);
+    }
+    else if ((trm->x == (x + 1)) && (trm->x < 80)) {
+      buf[0] = '\x08';
+      return (1);
+    }
+    else if ((trm->x == (x + 2)) && (trm->x < 80)) {
+      buf[0] = '\x08';
+      buf[1] = '\x08';
+      return (2);
+    }
+  }
 
   buf[0] = 0x1b;
   buf[1] = 0x5b;
@@ -134,9 +153,13 @@ unsigned trm_str_pos (unsigned char *buf, unsigned x, unsigned y)
 }
 
 static
-unsigned trm_str_col (unsigned char *buf, unsigned fg, unsigned bg)
+unsigned trm_str_col (term_t *trm, unsigned char *buf, unsigned fg, unsigned bg)
 {
   unsigned i;
+
+  if (!trm->col_chg) {
+    return (0);
+  }
 
   buf[0] = 0x1b;
   buf[1] = 0x5b;
@@ -167,17 +190,30 @@ void trm_clr_scn (term_t *trm)
 
 void trm_set_pos (term_t *trm, unsigned x, unsigned y)
 {
+  trm->crs_x = x;
+  trm->crs_y = y;
+
+  trm_set_crs (trm);
+}
+
+void trm_set_crs (term_t *trm)
+{
   unsigned      n;
   unsigned char buf[256];
 
-  if ((x != trm->x) || (y != trm->y)) {
-    n = trm_str_pos (buf, x, y);
+  if ((trm->crs_x == trm->x) && (trm->crs_y == trm->y)) {
+    return;
+  }
+
+  n = trm_str_pos (trm, buf, trm->crs_x, trm->crs_y);
+
+  if (n > 0) {
     fwrite (buf, 1, n, trm->fp);
     fflush (trm->fp);
-
-    trm->x = x;
-    trm->y = y;
   }
+
+  trm->x = trm->crs_x;
+  trm->y = trm->crs_y;
 }
 
 void trm_set_col (term_t *trm, unsigned fg, unsigned bg)
@@ -214,50 +250,20 @@ void trm_set_attr_col (term_t *trm, unsigned char a)
   trm_set_col (trm, fg + it, bg);
 }
 
-void trm_set_chr (term_t *trm, unsigned char chr)
-{
-  unsigned      n;
-  unsigned char buf[256];
-
-  n = 0;
-
-  if (trm->col_chg) {
-    n += trm_str_col (buf + n, trm->fg, trm->bg);
-
-    trm->col_chg = 0;
-  }
-
-  buf[n++] = chrmap[chr & 0xff];
-
-  trm->x += 1;
-
-  fwrite (buf, 1, n, trm->fp);
-  fflush (trm->fp);
-}
-
 void trm_set_chr_xy (term_t *trm, unsigned x, unsigned y, unsigned char c)
 {
   unsigned      n;
   unsigned char buf[256];
 
   n = 0;
-
-  if ((x != trm->x) || (y != trm->y)) {
-    n += trm_str_pos (buf + n, x, y);
-
-    trm->x = x;
-    trm->y = y;
-  }
-
-  if (trm->col_chg) {
-    n += trm_str_col (buf + n, trm->fg, trm->bg);
-
-    trm->col_chg = 0;
-  }
+  n += trm_str_pos (trm, buf + n, x, y);
+  n += trm_str_col (trm, buf + n, trm->fg, trm->bg);
 
   buf[n++] = chrmap[c & 0xff];
 
-  trm->x += 1;
+  trm->col_chg = 0;
+  trm->x = x + 1;
+  trm->y = y;
 
   fwrite (buf, 1, n, trm->fp);
   fflush (trm->fp);
