@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.1 2003/09/15 07:53:49 hampa Exp $ */
+/* $Id: sdl.c,v 1.2 2003/09/17 04:20:23 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -31,6 +31,11 @@
 #include <terminal/terminal.h>
 #include <terminal/font.h>
 #include <terminal/sdl.h>
+
+
+#define PCESDL_UPDATE_NONE  0
+#define PCESDL_UPDATE_NOW   1
+#define PCESDL_UPDATE_DELAY 2
 
 
 static
@@ -53,9 +58,42 @@ unsigned char sdl_colmap[16][3] = {
   { 0xff, 0xff, 0xff }
 };
 
+
+int sdl_set_font_psf (sdl_t *sdl, const char *fname)
+{
+  FILE          *fp;
+  unsigned char buf[4];
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  if (fread (buf, 1, 4, fp) != 4) {
+    fclose (fp);
+    return (1);
+  }
+
+  if ((buf[0] != 0x36) || (buf[1] != 0x04)) {
+    fclose (fp);
+    return (1);
+  }
+
+  sdl->font_w = 8;
+  sdl->font_h = buf[3];
+  sdl->font = (unsigned char *) malloc (256 * sdl->font_h);
+
+  fread (sdl->font, 1, 256 * sdl->font_h, fp);
+
+  fclose (fp);
+
+  return (0);
+}
+
 terminal_t *sdl_new (ini_sct_t *sct)
 {
   sdl_t *sdl;
+  char  *font;
 
   sdl = (sdl_t *) malloc (sizeof (sdl_t));
   if (sdl == NULL) {
@@ -84,10 +122,33 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->scr_w = 80;
   sdl->scr_h = 25;
 
-  sdl->font_w = 8;
-  sdl->font_h = 16;
-  sdl->font = (unsigned char *) malloc (256 * 16);
-  memcpy (sdl->font, fnt_8x16, 256 * 16);
+  sdl->txt_w = 80;
+  sdl->txt_h = 25;
+  sdl->txt_buf = (unsigned char *) malloc (3 * 80 * 25);
+  memset (sdl->txt_buf, 0, 3 * 80 * 25);
+
+  sdl->font = NULL;
+
+  ini_get_string (sct, "font_psf", &font, NULL);
+
+  if (font != NULL) {
+    if (sdl_set_font_psf (sdl, font)) {
+      fprintf (stderr, "sdl: loading PSF font %s failed\n", font);
+    }
+  }
+
+  if (sdl->font == NULL) {
+    sdl->font_w = 8;
+    sdl->font_h = 16;
+    sdl->font = (unsigned char *) malloc (256 * 16);
+    memcpy (sdl->font, fnt_8x16, 256 * 16);
+  }
+
+  sdl->crs_x = 0;
+  sdl->crs_y = 0;
+  sdl->crs_y1 = (6 * 255) / 7;
+  sdl->crs_y2 = (7 * 255) / 7;
+  sdl->crs_on = 0;
 
   memcpy (sdl->colmap, sdl_colmap, 16 * 3);
 
@@ -132,11 +193,141 @@ void sdl_del (sdl_t *sdl)
       SDL_FreeSurface (sdl->scr);
     }
 
+    free (sdl->txt_buf);
     free (sdl->font);
     free (sdl);
   }
 
   SDL_Quit();
+}
+
+Uint32 sdl_get_col (sdl_t *sdl, unsigned idx)
+{
+  Uint32 col;
+
+  idx &= 0xff;
+
+  col = SDL_MapRGB (sdl->scr->format,
+    sdl->colmap[idx][0], sdl->colmap[idx][1], sdl->colmap[idx][2]
+  );
+
+  return (col);
+}
+
+void sdl_set_upd_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  if (x < sdl->upd_x1) {
+    sdl->upd_x1 = x;
+  }
+
+  if (y < sdl->upd_y1) {
+    sdl->upd_y1 = y;
+  }
+
+  if ((x + w) > sdl->upd_x2) {
+    sdl->upd_x2 = x + w - 1;
+  }
+
+  if ((y + h) > sdl->upd_y2) {
+    sdl->upd_y2 = y + h - 1;
+  }
+}
+
+void sdl_clr_upd_rct (sdl_t *sdl)
+{
+  sdl->upd_x1 = sdl->pxl_w;
+  sdl->upd_y1 = sdl->pxl_h;
+  sdl->upd_x2 = 0;
+  sdl->upd_y2 = 0;
+}
+
+void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
+  Uint32 fg, Uint32 bg, unsigned update)
+{
+  unsigned      i, j;
+  Uint8         *p;
+  unsigned char *fnt;
+
+  x *= sdl->font_w;
+  y *= sdl->font_h;
+
+  fnt = sdl->font + c * sdl->font_h;
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
+  for (j = 0; j < sdl->font_h; j++) {
+    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+      + x * sdl->scr->format->BytesPerPixel;
+
+    for (i = 0; i < sdl->font_w; i++) {
+      if (*fnt & (0x80 >> i)) {
+        *(Uint32 *)p = fg;
+      }
+      else {
+        *(Uint32 *)p = bg;
+      }
+
+      p += sdl->scr->format->BytesPerPixel;
+    }
+
+    fnt += 1;
+  }
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  switch (update) {
+    case PCESDL_UPDATE_NOW:
+      SDL_UpdateRect (sdl->scr, x, y, sdl->font_w, sdl->font_h);
+      break;
+
+    case PCESDL_UPDATE_DELAY:
+      sdl_set_upd_rct (sdl, x, y, sdl->font_w, sdl->font_h);
+      break;
+  }
+}
+
+void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h,
+  Uint32 col, unsigned update)
+{
+  unsigned i, j;
+  Uint8    *p;
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
+  for (j = 0; j < h; j++) {
+    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+      + x * sdl->scr->format->BytesPerPixel;
+
+    for (i = 0; i < w; i++) {
+      *(Uint32 *) p = col;
+
+      p += sdl->scr->format->BytesPerPixel;
+    }
+  }
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  switch (update) {
+    case PCESDL_UPDATE_NOW:
+      SDL_UpdateRect (sdl->scr, x, y, w, h);
+      break;
+
+    case PCESDL_UPDATE_DELAY:
+      sdl_set_upd_rct (sdl, x, y, w, h);
+      break;
+  }
 }
 
 void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
@@ -149,8 +340,13 @@ void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
     sdl->mode = TERM_MODE_TEXT;
     sdl->scr_w = w;
     sdl->scr_h = h;
+    sdl->txt_w = w;
+    sdl->txt_h = h;
     sdl->pxl_w = w * sdl->font_w;
     sdl->pxl_h = h * sdl->font_h;
+    sdl->txt_buf = (unsigned char *) realloc (sdl->txt_buf, 3 * w * h);
+    sdl->crs_x = 0;
+    sdl->crs_y = 0;
   }
   else {
     sdl->mode = TERM_MODE_GRAPH;
@@ -158,6 +354,7 @@ void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
     sdl->scr_h = h;
     sdl->pxl_w = w;
     sdl->pxl_h = h;
+    sdl->crs_on = 0;
   }
 
   sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_SWSURFACE);
@@ -179,133 +376,120 @@ void sdl_set_map (sdl_t *sdl, unsigned i, unsigned r, unsigned g, unsigned b)
   sdl->colmap[i][2] = (b >> 8) & 0xff;
 
   if (i == sdl->fgidx) {
-    r = sdl->colmap[i][0];
-    g = sdl->colmap[i][1];
-    b = sdl->colmap[i][2];
-    sdl->fg = SDL_MapRGB (sdl->scr->format, r, g, b);
+    sdl->fg = sdl_get_col (sdl, i);
   }
 
   if (i == sdl->bgidx) {
-    r = sdl->colmap[i][0];
-    g = sdl->colmap[i][1];
-    b = sdl->colmap[i][2];
-    sdl->bg = SDL_MapRGB (sdl->scr->format, r, g, b);
+    sdl->bg = sdl_get_col (sdl, i);
   }
 }
 
 void sdl_set_col (sdl_t *sdl, unsigned fg, unsigned bg)
 {
-  unsigned char r, g, b;
-
   sdl->fgidx = fg;
   sdl->bgidx = bg;
 
-  r = sdl->colmap[fg][0];
-  g = sdl->colmap[fg][1];
-  b = sdl->colmap[fg][2];
-  sdl->fg = SDL_MapRGB (sdl->scr->format, r, g, b);
+  sdl->fg = sdl_get_col (sdl, fg);
+  sdl->bg = sdl_get_col (sdl, bg);
+}
 
-  r = sdl->colmap[bg][0];
-  g = sdl->colmap[bg][1];
-  b = sdl->colmap[bg][2];
-  sdl->bg = SDL_MapRGB (sdl->scr->format, r, g, b);
+void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
+{
+  unsigned i, h;
+  Uint32   col;
+
+  if (sdl->crs_y2 < sdl->crs_y1) {
+    return;
+  }
+
+  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
+    return;
+  }
+
+  i = 3 * (sdl->txt_w * y + x);
+  col = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
+  col = sdl_get_col (sdl, 7);
+
+  x *= sdl->font_w;
+  y = sdl->font_h * (y + 1) - sdl->crs_y2 - 1;
+  h = sdl->crs_y2 - sdl->crs_y1 + 1;
+
+  sdl_set_rct (sdl, x, y, sdl->font_w, h, col, PCESDL_UPDATE_NOW);
+}
+
+void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
+{
+  unsigned i;
+  unsigned chr;
+  Uint32   fg, bg;
+
+  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
+    return;
+  }
+
+  i = 3 * (sdl->txt_w * y + x);
+
+  chr = sdl->txt_buf[i];
+  fg = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
+  bg = sdl_get_col (sdl, sdl->txt_buf[i + 2]);
+
+  sdl_set_chr_xyc (sdl, x, y, chr, fg, bg, PCESDL_UPDATE_NOW);
 }
 
 void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2)
 {
-  sdl->crs_y1 = y1;
-  sdl->crs_y2 = y2;
+  if (sdl->crs_on) {
+    sdl_crs_erase (sdl, sdl->crs_x, sdl->crs_y);
+  }
+
+  sdl->crs_y1 = (sdl->font_w * y1) / 255;
+  sdl->crs_y2 = (sdl->font_h * y2) / 255;
+
+  sdl->crs_on = (sdl->crs_y1 <= sdl->crs_y2);
+
+  if (sdl->crs_on) {
+    sdl_crs_draw (sdl, sdl->crs_x, sdl->crs_y);
+  }
 }
 
 void sdl_set_pos (sdl_t *sdl, unsigned x, unsigned y)
 {
+  if (sdl->crs_on) {
+    sdl_crs_erase (sdl, sdl->crs_x, sdl->crs_y);
+  }
+
   sdl->crs_x = x;
   sdl->crs_y = y;
+
+  if (sdl->crs_on) {
+    sdl_crs_draw (sdl, sdl->crs_x, sdl->crs_y);
+  }
 }
 
 void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c)
 {
-  unsigned      i, j;
-  Uint8         *p;
-  unsigned char *fnt;
+  unsigned i;
 
-  x *= sdl->font_w;
-  y *= sdl->font_h;
-
-  fnt = sdl->font + c * sdl->font_h;
-
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    if (SDL_LockSurface (sdl->scr) < 0) {
-      return;
-    }
+  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
+    return;
   }
 
-  for (j = 0; j < sdl->font_h; j++) {
-    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch + x * sdl->scr->format->BytesPerPixel;
+  i = 3 * (sdl->txt_w * y + x);
 
-    for (i = 0; i < sdl->font_w; i++) {
-      if (*fnt & (0x80 >> i)) {
-        *(Uint32 *)p = sdl->fg;
-      }
-      else {
-        *(Uint32 *)p = sdl->bg;
-      }
+  sdl->txt_buf[i] = c;
+  sdl->txt_buf[i + 1] = sdl->fgidx;
+  sdl->txt_buf[i + 2] = sdl->bgidx;
 
-      p += sdl->scr->format->BytesPerPixel;
-    }
+  sdl_set_chr_xyc (sdl, x, y, c, sdl->fg, sdl->bg, PCESDL_UPDATE_NOW);
 
-    fnt += 1;
+  if (sdl->crs_on && (sdl->crs_x == x) && (sdl->crs_y == y)) {
+    sdl_crs_draw (sdl, x, y);
   }
-
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    SDL_UnlockSurface (sdl->scr);
-  }
-
-  SDL_UpdateRect (sdl->scr, x, y, sdl->font_w, sdl->font_h);
 }
 
 void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
 {
-  unsigned i, j;
-  Uint8    *p;
-
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    if (SDL_LockSurface (sdl->scr) < 0) {
-      return;
-    }
-  }
-
-  for (j = 0; j < h; j++) {
-    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch + x * sdl->scr->format->BytesPerPixel;
-
-    for (i = 0; i < w; i++) {
-      *(Uint32 *) p = sdl->fg;
-
-      p += sdl->scr->format->BytesPerPixel;
-    }
-  }
-
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    SDL_UnlockSurface (sdl->scr);
-  }
-
-  if (x < sdl->upd_x1) {
-    sdl->upd_x1 = x;
-  }
-
-  if (y < sdl->upd_y1) {
-    sdl->upd_y1 = y;
-  }
-
-  if ((x + w) > sdl->upd_x2) {
-    sdl->upd_x2 = x + w - 1;
-  }
-
-  if ((y + h) > sdl->upd_y2) {
-    sdl->upd_y2 = y + h - 1;
-  }
-//  SDL_UpdateRect (sdl->scr, x, y, w, h);
-
+  sdl_set_rct (sdl, x, y, w, h, sdl->fg, PCESDL_UPDATE_DELAY);
 }
 
 void sdl_set_upd (sdl_t *sdl, int upd)
@@ -530,7 +714,6 @@ void sdl_check (sdl_t *sdl)
           else if (sdl->grab) {
             b = SDL_GetMouseState (NULL, NULL);
             b = ((b & SDL_BUTTON (1)) ? 0x01 : 0) | ((b & SDL_BUTTON (3)) ? 0x02 : 0);
-//            fprintf (stderr, "sdl: button=%u\n", b);
             sdl->trm.set_mse (sdl->trm.mse_ext, 0, 0, b);
           }
         }
@@ -548,7 +731,6 @@ void sdl_check (sdl_t *sdl)
         break;
 
       default:
-//        fprintf (stderr, "sdl: event = %02x\n", evt.type);
         break;
     }
   }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.h                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.h,v 1.1 2003/09/15 07:53:49 hampa Exp $ */
+/* $Id: sdl.h,v 1.2 2003/09/17 04:20:23 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_SDL_H
@@ -50,10 +50,15 @@ typedef struct {
   unsigned      font_h;
   unsigned char *font;
 
+  unsigned      txt_w;
+  unsigned      txt_h;
+  unsigned char *txt_buf;
+
   unsigned      crs_x;
   unsigned      crs_y;
   unsigned      crs_y1;
   unsigned      crs_y2;
+  char          crs_on;
 
   unsigned      upd_x1;
   unsigned      upd_y1;
