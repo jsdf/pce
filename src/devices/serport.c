@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -29,9 +29,41 @@
 #include "serport.h"
 
 
-void ser_init (serport_t *ser, unsigned long base)
+unsigned char ser_get_uint8 (serport_t *ser, unsigned long addr)
+{
+  return (e8250_get_uint8 (&ser->uart, addr >> ser->addr_shift));
+}
+
+unsigned short ser_get_uint16 (serport_t *ser, unsigned long addr)
+{
+  return (e8250_get_uint8 (&ser->uart, addr >> ser->addr_shift));
+}
+
+unsigned long ser_get_uint32 (serport_t *ser, unsigned long addr)
+{
+  return (e8250_get_uint8 (&ser->uart, addr >> ser->addr_shift));
+}
+
+void ser_set_uint8 (serport_t *ser, unsigned long addr, unsigned char val)
+{
+  e8250_set_uint8 (&ser->uart, addr >> ser->addr_shift, val);
+}
+
+void ser_set_uint16 (serport_t *ser, unsigned long addr, unsigned short val)
+{
+  e8250_set_uint8 (&ser->uart, addr >> ser->addr_shift, val & 0xff);
+}
+
+void ser_set_uint32 (serport_t *ser, unsigned long addr, unsigned long val)
+{
+  e8250_set_uint8 (&ser->uart, addr >> ser->addr_shift, val & 0xff);
+}
+
+void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 {
   ser->io = base;
+
+  ser->addr_shift = shift;
 
   e8250_init (&ser->uart);
 
@@ -42,12 +74,14 @@ void ser_init (serport_t *ser, unsigned long base)
   ser->uart.recv_ext = ser;
   ser->uart.recv = (e8250_recv_f) &ser_uart_inp;
 
-  mem_blk_init (&ser->port, base, 8, 0);
-  ser->port.ext = &ser->uart;
-  ser->port.get_uint8 = (mem_get_uint8_f) &e8250_get_uint8;
-  ser->port.set_uint8 = (mem_set_uint8_f) &e8250_set_uint8;
-  ser->port.get_uint16 = (mem_get_uint16_f) &e8250_get_uint16;
-  ser->port.set_uint16 = (mem_set_uint16_f) &e8250_set_uint16;
+  mem_blk_init (&ser->port, base, 8 << shift, 0);
+  ser->port.ext = ser;
+  ser->port.get_uint8 = (mem_get_uint8_f) ser_get_uint8;
+  ser->port.set_uint8 = (mem_set_uint8_f) ser_set_uint8;
+  ser->port.get_uint16 = (mem_get_uint16_f) ser_get_uint16;
+  ser->port.set_uint16 = (mem_set_uint16_f) ser_set_uint16;
+  ser->port.get_uint32 = (mem_get_uint32_f) ser_get_uint32;
+  ser->port.set_uint32 = (mem_set_uint32_f) ser_set_uint32;
 
   ser->bps = 2400;
   ser->databits = 8;
@@ -65,7 +99,7 @@ void ser_init (serport_t *ser, unsigned long base)
   e8250_set_cts (&ser->uart, 1);
 }
 
-serport_t *ser_new (unsigned long base)
+serport_t *ser_new (unsigned long base, unsigned shift)
 {
   serport_t *ser;
 
@@ -74,7 +108,7 @@ serport_t *ser_new (unsigned long base)
     return (NULL);
   }
 
-  ser_init (ser, base);
+  ser_init (ser, base, shift);
 
   return (ser);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -764,7 +764,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
       i + 1, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
-    pc->serport[i] = ser_new (base);
+    pc->serport[i] = ser_new (base, 0);
     if (pc->serport[i] == NULL) {
       pce_log (MSG_ERR, "*** serial port setup failed [%04X/%u -> %s]\n",
         base, irq, (fname == NULL) ? "<none>" : fname

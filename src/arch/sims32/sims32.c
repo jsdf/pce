@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -161,7 +161,7 @@ void ss32_setup_serport (sims32_t *sim, ini_sct_t *ini)
       i, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
-    sim->serport[i] = ser_new (base);
+    sim->serport[i] = ser_new (base, 0);
     if (sim->serport[i] == NULL) {
       pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
         base, irq, (fname == NULL) ? "<none>" : fname

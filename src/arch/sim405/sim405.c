@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -212,7 +212,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
       i, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
-    sim->serport[i] = ser_new (base);
+    sim->serport[i] = ser_new (base, 0);
     if (sim->serport[i] == NULL) {
       pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
         base, irq, (fname == NULL) ? "<none>" : fname

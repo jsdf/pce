@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -26,25 +26,33 @@
 /*
   UART 8250 based serial port. This is very limited. Data sent out over
   the wires by the UART are written to a file. No data is ever
-  received.
+  received unless ser_receive() is called.
 */
 
-#ifndef PCE_IBMPC_SERIAL_H
-#define PCE_IBMPC_SERIAL_H 1
+#ifndef PCE_DEVICES_SERPORT_H
+#define PCE_DEVICES_SERPORT_H 1
 
 
 #include <stdio.h>
 
 #include <chipset/e8250.h>
-#include "memory.h"
+#include <devices/memory.h>
 
 
+/*!***************************************************************************
+ * @short The serial port context
+ *****************************************************************************/
 typedef struct serport_s {
+  /* the 8250 I/O ports. size is (8 << addr_shift). */
   mem_blk_t     port;
 
   e8250_t       uart;
 
+  /* the I/O base address */
   unsigned long io;
+
+  /* the 8250 register address shift */
+  unsigned      addr_shift;
 
   unsigned      bps;
   unsigned      databits;
@@ -59,8 +67,15 @@ typedef struct serport_s {
 } serport_t;
 
 
-void ser_init (serport_t *ser, unsigned long base);
-serport_t *ser_new (unsigned long base);
+/*!***************************************************************************
+ * @short Initialize a serial port context
+ * @param ser   The serial port context
+ * @param base  The I/O base address
+ * @param shift The 8250 register address shift
+ *****************************************************************************/
+void ser_init (serport_t *ser, unsigned long base, unsigned shift);
+
+serport_t *ser_new (unsigned long base, unsigned shift);
 void ser_free (serport_t *ser);
 void ser_del (serport_t *ser);
 
