@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -160,6 +160,7 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr);
 unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr);
+unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr);
 
 void mem_set_uint8_rw (memory_t *mem, unsigned long addr, unsigned char val);
 void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val);

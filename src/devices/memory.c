@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -441,6 +441,39 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
       val |= (unsigned long) blk->data[addr + 1] << 16;
       val |= (unsigned long) blk->data[addr + 2] << 8;
       val |= blk->data[addr + 3];
+      return (val);
+    }
+  }
+
+  return (mem->def_val32);
+}
+
+unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr)
+{
+  unsigned long val;
+  mem_blk_t     *blk;
+
+  blk = mem_get_blk (mem, addr);
+
+  if (blk != NULL) {
+    if ((addr + 3) > blk->addr2) {
+      val = (unsigned long) mem_get_uint8 (mem, addr);
+      val |= (unsigned long) mem_get_uint8 (mem, addr + 1) << 8;
+      val |= (unsigned long) mem_get_uint8 (mem, addr + 2) << 16;
+      val |= (unsigned long) mem_get_uint8 (mem, addr + 3) << 24;
+      return (val);
+    }
+
+    addr -= blk->addr1;
+
+    if (blk->get_uint32 != NULL) {
+      return (blk->get_uint32 (blk->ext, addr));
+    }
+    else {
+      val = (unsigned long) blk->data[addr];
+      val |= (unsigned long) blk->data[addr + 1] << 8;
+      val |= (unsigned long) blk->data[addr + 2] << 16;
+      val |= (unsigned long) blk->data[addr + 3] << 24;
       return (val);
     }
   }
