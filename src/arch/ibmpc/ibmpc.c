@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -320,21 +320,17 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
   pc->trm = NULL;
 
   sct = ini_sct_find_sct (ini, "terminal");
-  if (sct == NULL) {
-    pce_log (MSG_ERR, "no terminal section in config file\n");
-    return;
-  }
-
   ini_get_string (sct, "driver", &driver, "vt100");
 
-  while ((par_terminal != NULL) && (strcmp (par_terminal, driver) != 0)) {
-    sct = ini_sct_find_next (sct, "terminal");
-    if (sct == NULL) {
-      pce_log (MSG_ERR, "requested terminal not found\n");
-      return;
+  if (par_terminal != NULL) {
+    while ((sct != NULL) && (strcmp (par_terminal, driver) != 0)) {
+      sct = ini_sct_find_next (sct, "terminal");
+      ini_get_string (sct, "driver", &driver, "vt100");
     }
 
-    ini_get_string (sct, "driver", &driver, "vt100");
+    if (sct == NULL) {
+      driver = par_terminal;
+    }
   }
 
   pce_log (MSG_INF, "term:\tdriver=%s\n", driver);
@@ -427,59 +423,41 @@ void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
+  char      *dev;
   ini_sct_t *sct;
 
   pc->video = NULL;
 
+  sct = ini_sct_find_sct (ini, "video");
+  ini_get_string (sct, "device", &dev, "mda");
+
   if (par_video != NULL) {
-    if (strcmp (par_video, "ega") == 0) {
-      sct = ini_sct_find_sct (ini, "ega");
-      pc_setup_ega (pc, sct);
-      return;
+    while ((sct != NULL) && (strcmp (par_video, dev) != 0)) {
+      sct = ini_sct_find_next (sct, "video");
+      ini_get_string (sct, "device", &dev, "cga");
     }
-    else if (strcmp (par_video, "cga") == 0) {
-      sct = ini_sct_find_sct (ini, "cga");
-      pc_setup_cga (pc, sct);
-      return;
-    }
-    else if (strcmp (par_video, "hgc") == 0) {
-      sct = ini_sct_find_sct (ini, "hgc");
-      pc_setup_hgc (pc, sct);
-      return;
-    }
-    else if (strcmp (par_video, "mda") == 0) {
-      sct = ini_sct_find_sct (ini, "mda");
-      pc_setup_mda (pc, sct);
-      return;
-    }
-    else {
-      pce_log (MSG_ERR, "unknown video device (%s)\n", par_video);
-      return;
+
+    if (sct == NULL) {
+      dev = par_video;
     }
   }
 
-  sct = ini_sct_find_sct (ini, "ega");
-  if (sct != NULL) {
+  pce_log (MSG_INF, "video:\tdevice=%s\n", dev);
+
+  if (strcmp (dev, "ega") == 0) {
     pc_setup_ega (pc, sct);
-    return;
   }
-
-  sct = ini_sct_find_sct (ini, "cga");
-  if (sct != NULL) {
+  else if (strcmp (dev, "cga") == 0) {
     pc_setup_cga (pc, sct);
-    return;
   }
-
-  sct = ini_sct_find_sct (ini, "hgc");
-  if (sct != NULL) {
+  else if (strcmp (dev, "hgc") == 0) {
     pc_setup_hgc (pc, sct);
-    return;
   }
-
-  sct = ini_sct_find_sct (ini, "mda");
-  if (sct != NULL) {
+  else if (strcmp (dev, "mda") == 0) {
     pc_setup_mda (pc, sct);
-    return;
+  }
+  else {
+    pce_log (MSG_ERR, "unknown video device (%s)\n", dev);
   }
 }
 

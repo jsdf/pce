@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.2 2003/12/23 03:48:30 hampa Exp $
+# $Id$
 
 section pc {
 	section cpu {
@@ -112,7 +112,10 @@ section pc {
 		#keymap = "\x1b\x5b\x33\x7e=\x53\xd3"	# Delete
 	}
 
-	section ega {
+	# Multiple "video" sections may be present
+	section video {
+		device = "ega"
+
 		mode_320x200_w = 640
 		mode_320x200_h = 480
 
@@ -123,7 +126,9 @@ section pc {
 		mode_640x350_h = 480
 	}
 
-	section cga {
+	section video {
+		device = "cga"
+
 		io = 0x3d4
 		membase = 0xb8000
 		memsize = 16384
@@ -137,7 +142,9 @@ section pc {
 		mode_640x200_h = 480
 	}
 
-	section hgc {
+	section video {
+		device = "hgc"
+
 		io = 0x3b4
 		membase = 0xb0000
 		memsize = 65536
@@ -153,7 +160,9 @@ section pc {
 		mode_720x348_h = 540
 	}
 
-	section mda {
+	section video {
+		device = "mda"
+
 		io = 0x3b4
 		membase = 0xb0000
 		memsize = 4096
