@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.2 2003/04/23 16:29:32 hampa Exp $ */
+/* $Id: disk.c,v 1.3 2003/04/26 23:36:20 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -539,6 +539,22 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
   dsk_int13_set_status (dsks, cpu, 0);
 }
 
+void dsk_int13_10 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned drive;
+  disk_t   *dsk;
+
+  drive = e86_get_dl (cpu);
+  dsk = dsks_get_disk (dsks, drive);
+
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 0x20);
+    return;
+  }
+
+  dsk_int13_set_status (dsks, cpu, 0);
+}
+
 void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned drive;
@@ -601,12 +617,17 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 
     case 0x04:
     case 0x05:
+    case 0x0c:
     case 0x18:
       dsk_int13_set_status (dsks, cpu, 0);
       break;
 
     case 0x08:
       dsk_int13_08 (dsks, cpu);
+      break;
+
+    case 0x10:
+      dsk_int13_10 (dsks, cpu);
       break;
 
 //    case 0x15:
