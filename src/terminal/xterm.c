@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.6 2003/08/19 17:06:20 hampa Exp $ */
+/* $Id: xterm.c,v 1.7 2003/08/20 10:31:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -389,9 +389,7 @@ void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
 {
   XSizeHints size;
 
-  if ((w == xt->scn_w) && (h == xt->scn_h)) {
-    return;
-  }
+  xt->mode = mode;
 
   if (mode == 0) {
     xt->scn_w = w;
@@ -407,8 +405,6 @@ void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
     xt->wdw_w = w;
     xt->wdw_h = h;
   }
-
-  xt->mode = mode;
 
   xt->scn = (unsigned char *) realloc (xt->scn, 2 * xt->scn_w * xt->scn_h);
 
