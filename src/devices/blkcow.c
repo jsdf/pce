@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkcow.c                                       *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-10-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -94,40 +94,105 @@ int cow_write_bitmap (disk_cow_t *cow)
 }
 
 static
-int cow_get_block (disk_cow_t *cow, unsigned long blk)
+int cow_get_block (disk_cow_t *cow, unsigned long blk, unsigned long *cnt)
 {
-  unsigned long i;
-  unsigned char m;
+  int           r;
+  unsigned long i, n;
+  unsigned char m, v;
 
   i = blk / 8;
+  n = *cnt;
   m = 0x80 >> (blk & 7);
 
-  return ((cow->bitmap[i] & m) != 0);
+  r = (cow->bitmap[i] & m) != 0;
+
+  *cnt = 1;
+
+  if (n <= 1) {
+    return (r);
+  }
+
+  n = n - 1;
+  v = r ? 0xff : 0x00;
+
+  while (n > 0) {
+    if (m == 0x01) {
+      i += 1;
+      m = 0x80;
+
+      while ((n >= 8) && (cow->bitmap[i] == v)) {
+        i += 1;
+        n -= 8;
+        *cnt += 8;
+      }
+    }
+    else {
+      m = m >> 1;
+    }
+
+    if (((cow->bitmap[i] & m) != 0) != r) {
+      return (r);
+    }
+
+    n -= 1;
+    *cnt += 1;
+  }
+
+  return (r);
 }
 
 static
-int cow_set_block (disk_cow_t *cow, unsigned long blk, int val)
+int cow_set_block (disk_cow_t *cow, unsigned long blk, unsigned long cnt, int val)
 {
   unsigned long i;
-  unsigned char m;
+  unsigned long i0, i1;
+  unsigned char m0, m1;
 
-  i = blk / 8;
-  m = 0x80 >> (blk & 7);
+  cnt = (blk + cnt - 1);
+
+  i0 = blk / 8;
+  i1 = cnt / 8;
+
+  m0 = 0x80 >> (blk & 7);
+  m1 = 0x80 >> (cnt & 7);
+
+  m0 |= (m0 - 1);
+  m1 |= (m1 - 1) ^ 0xff;
 
   if (val) {
-    cow->bitmap[i] |= m;
+    if (i0 == i1) {
+      cow->bitmap[i0] |= (m0 & m1);
+    }
+    else {
+      cow->bitmap[i0] |= m0;
+      cow->bitmap[i1] |= m1;
+      for (i = i0 + 1; i < i1; i++) {
+        cow->bitmap[i] = 0xff;
+      }
+    }
   }
   else {
-    cow->bitmap[i] &= ~m;
+    if (i0 == i1) {
+      cow->bitmap[i0] &= ~(m0 & m1);
+    }
+    else {
+      cow->bitmap[i0] &= ~m0;
+      cow->bitmap[i1] &= ~m1;
+      for (i = i0 + 1; i < i1; i++) {
+        cow->bitmap[i] = 0x00;
+      }
+    }
   }
 
-  if (fseek (cow->fp, cow->bitmap_offset + i, SEEK_SET)) {
+  i1 = i1 - i0 + 1;
+
+  if (fseek (cow->fp, cow->bitmap_offset + i0, SEEK_SET)) {
     return (1);
   }
 
-  fputc (cow->bitmap[i], cow->fp);
-
-  fflush (cow->fp);
+  if (fwrite (cow->bitmap + i0, 1, i1, cow->fp) != i1) {
+    return (1);
+  }
 
   return (0);
 }
@@ -136,6 +201,7 @@ static
 int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 {
   unsigned char *tmp;
+  unsigned long cnt;
   disk_cow_t    *cow;
 
   cow = dsk->ext;
@@ -146,22 +212,23 @@ int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
       return (1);
     }
 
-    if (cow_get_block (cow, i)) {
+    cnt = n;
+    if (cow_get_block (cow, i, &cnt)) {
       if (fseek (cow->fp, cow->data_offset + 512UL * i, SEEK_SET)) {
         return (1);
       }
 
-      dsk_fread_zero (tmp, 512, 1, cow->fp);
+      dsk_fread_zero (tmp, 512, cnt, cow->fp);
     }
     else {
-      if (dsk_read_lba (cow->orig, tmp, i, 1)) {
+      if (dsk_read_lba (cow->orig, tmp, i, cnt)) {
         return (1);
       }
     }
 
-    i += 1;
-    n -= 1;
-    tmp += 512;
+    i += cnt;
+    n -= cnt;
+    tmp += 512 * cnt;
   }
 
   return (0);
@@ -171,6 +238,7 @@ static
 int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
 {
   const unsigned char *tmp;
+  unsigned long       cnt;
   disk_cow_t          *cow;
 
   if (dsk->readonly) {
@@ -185,21 +253,22 @@ int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
       return (1);
     }
 
-    if (cow_get_block (cow, i) == 0) {
-      cow_set_block (cow, i, 1);
+    cnt = n;
+    if (cow_get_block (cow, i, &cnt) == 0) {
+      cow_set_block (cow, i, cnt, 1);
     }
 
     if (fseek (cow->fp, cow->data_offset + 512UL * i, SEEK_SET)) {
       return (1);
     }
 
-    if (fwrite (tmp, 512, 1, cow->fp) != 1) {
+    if (fwrite (tmp, 512, cnt, cow->fp) != cnt) {
       return (1);
     }
 
-    i += 1;
-    n -= 1;
-    tmp += 512;
+    i += cnt;
+    n -= cnt;
+    tmp += 512 * cnt;
   }
 
   fflush (cow->fp);
