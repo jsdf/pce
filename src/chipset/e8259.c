@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -162,7 +162,7 @@ void e8259_set_irq (e8259_t *pic, unsigned irq, unsigned char val)
     return;
   }
 
-  pic->irr |= msk & ~ pic->imr;
+  pic->irr |= msk;
 }
 
 void e8259_set_irq0 (e8259_t *pic, unsigned char val)
