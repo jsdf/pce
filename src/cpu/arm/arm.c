@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -138,10 +138,13 @@ void arm_init (arm_t *c, int be)
 
   c->exception_base = 0;
 
+  c->privileged = 1;
+
   c->bigendian = (be != 0);
 
   c->irq = 0;
   c->fiq = 0;
+  c->irq_or_fiq = 0;
 
   c->delay = 0;
   c->oprcnt = 0;
@@ -282,8 +285,11 @@ void arm_reset (arm_t *c)
 
   c->exception_base = 0;
 
+  c->privileged = 1;
+
   c->irq = 0;
   c->fiq = 0;
+  c->irq_or_fiq = 0;
 
   c->delay = 1;
 
@@ -355,11 +361,13 @@ void arm_exception_fiq (arm_t *c)
 void arm_set_irq (arm_t *c, unsigned char val)
 {
   c->irq = (val != 0);
+  c->irq_or_fiq = c->irq || c->fiq;
 }
 
 void arm_set_fiq (arm_t *c, unsigned char val)
 {
   c->fiq = (val != 0);
+  c->irq_or_fiq = c->irq || c->fiq;
 }
 
 void arm_execute (arm_t *c)
@@ -370,30 +378,43 @@ void arm_execute (arm_t *c)
     return;
   }
 
+#if 0
   if (c->log_opcode != NULL) {
     if (c->log_opcode (c->log_ext, c->ir)) {
       /* nop */
       c->ir = 0xe1a00000UL;
     }
   }
+#endif
 
-  if (arm_check_cond (c, arm_ir_cond (c->ir))) {
+  if (arm_check_cond_al (c->ir) || arm_check_cond (c, arm_ir_cond (c->ir))) {
     c->opcodes[(c->ir >> 20) & 0xff] (c);
   }
   else {
     arm_set_clk (c, 4, 1);
   }
 
-  if (c->fiq && (arm_get_cpsr_f (c) == 0)) {
-    arm_exception_fiq (c);
-  }
-  else if (c->irq && (arm_get_cpsr_i (c) == 0)) {
-    arm_exception_irq (c);
+  if (c->irq_or_fiq) {
+    if (c->fiq && (arm_get_cpsr_f (c) == 0)) {
+      arm_exception_fiq (c);
+    }
+    else if (c->irq && (arm_get_cpsr_i (c) == 0)) {
+      arm_exception_irq (c);
+    }
   }
 }
 
 void arm_clock (arm_t *c, unsigned long n)
 {
+  if (n == c->delay) {
+    c->clkcnt += n;
+    c->delay = 0;
+
+    arm_execute (c);
+
+    return;
+  }
+
   while (n >= c->delay) {
     n -= c->delay;
 

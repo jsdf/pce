@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -221,8 +221,12 @@ typedef struct arm_s {
 
   char               bigendian;
 
+  /* cpu is in a privileged mode */
+  char               privileged;
+
   unsigned char      irq;
   unsigned char      fiq;
+  unsigned char      irq_or_fiq;
 
   unsigned long      delay;
 

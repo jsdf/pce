@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -491,6 +491,8 @@ int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
 
 int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 {
+  uint32_t tmp;
+
   addr &= ~0x03UL;
 
   if (arm_translate_exec (c, &addr, arm_is_privileged (c))) {
@@ -501,21 +503,23 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
     unsigned char *p = &c->ram[addr];
 
     if (c->bigendian) {
-      *val = (uint32_t) p[0] << 24;
-      *val |= (uint32_t) p[1] << 16;
-      *val |= (uint32_t) p[2] << 8;
-      *val |= p[3];
+      tmp = (uint32_t) p[0] << 24;
+      tmp |= (uint32_t) p[1] << 16;
+      tmp |= (uint32_t) p[2] << 8;
+      tmp |= p[3];
     }
     else {
-      *val = p[0];
-      *val |= (uint32_t) p[1] << 8;
-      *val |= (uint32_t) p[2] << 16;
-      *val |= (uint32_t) p[3] << 24;
+      tmp = p[0];
+      tmp |= (uint32_t) p[1] << 8;
+      tmp |= (uint32_t) p[2] << 16;
+      tmp |= (uint32_t) p[3] << 24;
     }
   }
   else {
-    *val = c->get_uint32 (c->mem_ext, addr);
+    tmp = c->get_uint32 (c->mem_ext, addr);
   }
+
+  *val = tmp;
 
   return (0);
 }

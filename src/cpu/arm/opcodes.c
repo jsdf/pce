@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -50,6 +50,8 @@ int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk)
 
   arm_set_reg_map (c, val & 0x1f);
   arm_set_cpsr (c, val);
+
+  c->privileged = ((val & 0x1f) != ARM_MODE_USR);
 
   arm_tbuf_flush (c);
 
