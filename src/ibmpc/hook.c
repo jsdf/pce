@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.6 2003/09/19 14:46:48 hampa Exp $ */
+/* $Id: hook.c,v 1.7 2003/09/22 05:14:19 hampa Exp $ */
 
 
 #include "pce.h"
@@ -149,6 +149,8 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
   }
 
+  e86_set_cf (pc->cpu, 0);
+
   switch ((op2 << 8) | op1) {
     case PCEH_STOP:
       pc->brk = 1;
@@ -165,6 +167,12 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
     case PCEH_SET_INT28:
       par_int28 = 1000UL * e86_get_ax (pc->cpu);
+      break;
+
+    case PCEH_SET_CPU:
+      if (pc_set_cpu_model (pc, e86_get_ax (pc->cpu))) {
+        pce_log (MSG_ERR, "can't set cpu model to %u\n", e86_get_ax (pc->cpu));
+      }
       break;
 
     case PCEH_GET_BOOT:
@@ -193,6 +201,10 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       e86_set_ax (pc->cpu, par_int28 / 1000UL);
       break;
 
+    case PCEH_GET_CPU:
+      e86_set_ax (pc->cpu, pc->cpu_model);
+      break;
+
     case PCEH_XMS:
       xms_handler (pc->xms, pc->cpu);
       break;
@@ -202,6 +214,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     default:
+      e86_set_cf (pc->cpu, 1);
       pc_hook_log (pc, op1, op2);
       break;
   }
