@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd ihex hexdump load log
+FILES := brkpt cmd hexdump ihex inidsk load log
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -32,7 +32,8 @@ all: $(OBJ)
 
 brkpt.o:	brkpt.c brkpt.h $(SDP)
 cmd.o:		cmd.c cmd.h $(SDP)
-ihex.o:		ihex.c ihex.h $(SDP)
 hexdump.o:	hexdump.c hexdump.h $(SDP)
+ihex.o:		ihex.c ihex.h $(SDP)
+inidsk.o:	inidsk.c inidsk.h log.h $(PCE_BLK_HDR) $(SDP)
 load.o:		load.c load.h ihex.h devices/memory.h $(SDP)
 log.o:		log.c log.h $(SDP)
