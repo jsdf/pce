@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mouse.c                                          *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.c,v 1.1 2003/08/29 19:18:14 hampa Exp $ */
+/* $Id: mouse.c,v 1.2 2003/09/13 18:11:42 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -70,6 +70,8 @@ mouse_t *mse_new (unsigned short base)
   mem_blk_init (mse->reg, 0x00);
 
   mse->rcnt = 0;
+
+  mse->accu_ok = 0;
 
   mse->reg->data[1] = 0x00;
   mse->reg->data[2] = MSE_IID_PND;
@@ -137,6 +139,10 @@ unsigned char mse_recv_get_byte (mouse_t *mse)
   mse->rcnt -= 1;
 
   if (mse->rcnt == 0) {
+    mse_accu_check (mse);
+  }
+
+  if (mse->rcnt == 0) {
     mse->reg->data[5] &= ~MSE_SSR_RRD;
     if (mse->reg->data[2] == MSE_IID_RRD) {
       mse->reg->data[2] = MSE_IID_PND;
@@ -167,36 +173,90 @@ void mse_recv_set_byte (mouse_t *mse, unsigned char val)
   }
 }
 
-void mse_set (mouse_t *mse, int dx, int dy, unsigned but)
+void mse_accu_check (mouse_t *mse)
 {
   unsigned char val;
+  int           dx, dy;
   unsigned char x, y;
 
+  if (mse->accu_ok == 0) {
+    return;
+  }
+
+  if (mse->accu_dx < -127) {
+    dx = -127;
+  }
+  else if (mse->accu_dx > 127) {
+    dx = 127;
+  }
+  else {
+    dx = mse->accu_dx;
+  }
+
+  if (mse->accu_dy < -127) {
+    dy = -127;
+  }
+  else if (mse->accu_dy > 127) {
+    dy = 127;
+  }
+  else {
+    dy = mse->accu_dy;
+  }
+
   if (dx < 0) {
-    x = (dx > -128) ? -dx : 127;
+    x = -dx;
     x = (~x + 1) & 0xff;
   }
   else {
-    x = (dx < 128) ? dx : 127;
+    x = dx;
   }
 
   if (dy < 0) {
-    y = (dy > -128) ? -dy : 127;
+    y = -dy;
     y = (~y + 1) & 0xff;
   }
   else {
-    y = (dy < 128) ? dy : 127;
+    y = dy;
   }
 
   val = 0x40;
-  val |= (but & 0x01) ? 0x20 : 0x00;
-  val |= (but & 0x02) ? 0x10 : 0x00;
+  val |= (mse->accu_b & 0x01) ? 0x20 : 0x00;
+  val |= (mse->accu_b & 0x02) ? 0x10 : 0x00;
   val |= (y >> 4) & 0x0c;
   val |= (x >> 6) & 0x03;
 
   mse_recv_set_byte (mse, val);
   mse_recv_set_byte (mse, x & 0x3f);
   mse_recv_set_byte (mse, y & 0x3f);
+
+  mse->accu_dx -= dx;
+  mse->accu_dy -= dy;
+
+  mse->accu_ok = ((mse->accu_dx != 0) || (mse->accu_dy != 0));
+}
+
+void mse_set (mouse_t *mse, int dx, int dy, unsigned but)
+{
+  if (mse->accu_ok) {
+    if (mse->accu_b != but) {
+      mse_accu_check (mse);
+    }
+
+    mse->accu_ok = 1;
+    mse->accu_dx += dx;
+    mse->accu_dy += dy;
+    mse->accu_b = but;
+  }
+  else {
+    mse->accu_ok = 1;
+    mse->accu_dx = dx;
+    mse->accu_dy = dy;
+    mse->accu_b = but;
+  }
+
+  if (mse->rcnt < 3) {
+    mse_accu_check (mse);
+  }
 }
 
 void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val)
@@ -231,6 +291,7 @@ void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val)
     case 0x04:
       if (val & MSE_MCR_DTR) {
         pce_log (MSG_DEB, "mouse: reset\n");
+        mse->accu_ok = 0;
         mse->rcnt = 0;
         mse->reg->data[5] &= ~MSE_SSR_RRD;
         mse_recv_set_byte (mse, 'M');

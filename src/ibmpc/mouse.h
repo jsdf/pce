@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mouse.h                                          *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.h,v 1.1 2003/08/29 19:18:14 hampa Exp $ */
+/* $Id: mouse.h,v 1.2 2003/09/13 18:11:42 hampa Exp $ */
 
 
 #ifndef PCE_MOUSE_H
@@ -42,6 +42,11 @@ typedef struct {
   unsigned char rbuf[MSE_BUF];
   unsigned      rcnt;
 
+  char           accu_ok;
+  int            accu_dx;
+  int            accu_dy;
+  unsigned       accu_b;
+
   unsigned short divisor;
 } mouse_t;
 
@@ -51,6 +56,7 @@ void mse_del (mouse_t *mse);
 
 mem_blk_t *mse_get_reg (mouse_t *mse);
 
+void mse_accu_check (mouse_t *mse);
 void mse_set (mouse_t *mse, int dx, int dy, unsigned but);
 
 void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val);
