@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.h,v 1.5 2003/08/29 13:28:25 hampa Exp $ */
+/* $Id: xterm.h,v 1.6 2003/08/29 19:17:51 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_XTERM_H
@@ -61,6 +61,8 @@ typedef struct {
 
   GC            crs_gc;
 
+  Cursor        crs_none;
+
   unsigned      mode;
 
   XFontStruct   *font;
@@ -80,6 +82,8 @@ typedef struct {
   unsigned      crs_x;
   unsigned      crs_y;
   unsigned      crs_fg;
+
+  int           grab;
 
   int           mse_x;
   int           mse_y;

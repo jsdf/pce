@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.4 2003/08/29 13:28:24 hampa Exp $ */
+/* $Id: terminal.h,v 1.5 2003/08/29 19:17:51 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -35,6 +35,7 @@
 
 
 typedef void (*trm_del_f) (void *ext);
+typedef void (*trm_set_mse_f) (void *ext, int dx, int dy, unsigned b);
 typedef void (*trm_set_size_f) (void *ext, unsigned m, unsigned w, unsigned h);
 typedef void (*trm_set_map_f) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
 typedef void (*trm_set_col_f) (void *ext, unsigned fg, unsigned bg);

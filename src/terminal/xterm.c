@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.9 2003/08/29 13:28:25 hampa Exp $ */
+/* $Id: xterm.c,v 1.10 2003/08/29 19:17:51 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -97,6 +97,18 @@ int xt_init_cursor (xterm_t *xt)
 
   xt->crs_x = 0;
   xt->crs_y = 0;
+
+  return (0);
+}
+
+int xt_init_pointer (xterm_t *xt)
+{
+  Pixmap               mask;
+  static unsigned char map[16] = { 0 };
+
+  mask = XCreatePixmapFromBitmapData (xt->display, xt->wdw, map, 1, 1, 0, 0, 1);
+  xt->crs_none = XCreatePixmapCursor (xt->display, mask, mask, (XColor *) map, (XColor *) map, 0, 0);
+  XFreePixmap (xt->display, mask);
 
   return (0);
 }
@@ -188,7 +200,7 @@ int xt_init_window (xterm_t *xt)
 
   XSelectInput (xt->display, xt->wdw,
     ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-    StructureNotifyMask | ButtonPressMask | ButtonReleaseMask
+    StructureNotifyMask | ButtonPressMask | ButtonReleaseMask | EnterWindowMask
   );
 
   xt->back = XCreatePixmap (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h,
@@ -281,6 +293,7 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   }
 
   xt_init_cursor (xt);
+  xt_init_pointer (xt);
 
   XMapWindow (xt->display, xt->wdw);
 
@@ -750,17 +763,48 @@ void xt_check (xterm_t *xt)
           unsigned     b;
           XButtonEvent *evt = (XButtonEvent *) &event;
 
-          b = evt->state;
-          b = ((b & Button1Mask) ? 1 : 0) | ((b & Button2Mask) ? 2 : 0);
-          xt->trm.set_mse (xt->trm.mse_ext, 0, 0, b);
+          if ((evt->type == ButtonPress) && (evt->button == Button2)) {
+            if (xt->grab == 0) {
+              xt->grab = 1;
+              xt->mse_x = evt->x;
+              xt->mse_y = evt->y;
+              XDefineCursor (xt->display, xt->wdw, xt->crs_none);
+              XGrabPointer (xt->display, xt->wdw, True,
+                PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None,  None, CurrentTime
+              );
+            }
+            else {
+              xt->grab = 0;
+              XUngrabPointer (xt->display, CurrentTime);
+              XUndefineCursor (xt->display, xt->wdw);
+            }
+          }
+          else if (xt->grab) {
+            b = evt->state;
+            b = ((b & Button1Mask) ? 0x01 : 0) | ((b & Button3Mask) ? 0x02 : 0);
+            b ^= (evt->button == Button1) ? 0x01 : 0x00;
+            b ^= (evt->button == Button3) ? 0x02 : 0x00;
+            xt->trm.set_mse (xt->trm.mse_ext, 0, 0, b);
+          }
         }
         break;
 
       case MotionNotify:
-        if (xt->trm.set_mse != NULL) {
+        if ((xt->trm.set_mse != NULL) && (xt->grab)) {
+          int      cx, cy;
           int      dx, dy;
           unsigned b;
           XMotionEvent *evt = (XMotionEvent *) &event;
+
+          cx = xt->wdw_w / 2;
+          cy = xt->wdw_h / 2;
+
+          if ((evt->x == cx) && (evt->y == cy)) {
+            xt->mse_x = evt->x;
+            xt->mse_y = evt->y;
+            break;
+          }
 
           dx = xt->mse_x;
           dy = xt->mse_y;
@@ -772,6 +816,8 @@ void xt_check (xterm_t *xt)
           b = ((b & Button1Mask) ? 1 : 0) | ((b & Button2Mask) ? 2 : 0);
 
           xt->trm.set_mse (xt->trm.mse_ext, xt->mse_x - dx, xt->mse_y - dy, b);
+
+          XWarpPointer (xt->display, None, xt->wdw, 0, 0, 0, 0, cx, cy);
         }
         break;
 
