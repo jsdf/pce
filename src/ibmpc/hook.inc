@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************/
 
-; $Id: hook.inc,v 1.1 2003/09/15 01:35:23 hampa Exp $
+; $Id: hook.inc,v 1.2 2003/09/18 19:06:52 hampa Exp $
 
 
 %ifndef PCE_HOOK_INC
@@ -31,11 +31,13 @@
 %define PCEH_ABORT     0x0100
 
 %define PCEH_SET_BOOT  0x0001
+%define PCEH_SET_INT28 0x0401
 
 %define PCEH_GET_BOOT  0x0002
 %define PCEH_GET_COM   0x0102
 %define PCEH_GET_LPT   0x0202
 %define PCEH_GET_VIDEO 0x0302
+%define PCEH_GET_INT28 0x0402
 
 %define PCEH_XMS       0x0003
 %define PCEH_XMS_INFO  0x0103
