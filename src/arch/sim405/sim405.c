@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -283,7 +283,7 @@ void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
       pce_log (MSG_ERR, "*** unknown format (%s)\n", fmt);
     }
 
-    sct = ini_sct_find_next (ini, "load");
+    sct = ini_sct_find_next (sct, "load");
   }
 }
 
