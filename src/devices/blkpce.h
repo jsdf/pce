@@ -43,16 +43,15 @@ typedef struct {
 
   FILE     *fp;
 
-  uint32_t blk_size;
   uint64_t blk_cnt;
+
+  uint64_t dir_base;
+  uint64_t blk_next;
 
   uint32_t cylinders;
   uint32_t heads;
   uint32_t sectors;
-
-  uint64_t dir_base;
-  uint64_t blk_base;
-  uint64_t blk_last;
+  uint32_t blk_size;
 
   uint32_t dir_cnt;
   uint32_t dir_size;

@@ -30,22 +30,20 @@
 
 
 #define DSK_PCE_MAGIC 0x50494d47UL
-#define DSK_PCE_NULL  0
 
 
 /*
 PCE image file format
 
 0    4    Magic (PIMG)
-4    4    version
-8    8    blocks
-16   4    block size
-20   4    cylinders
-24   4    heads
-28   4    sectors
-32   8    directory offset
-40   8    blocks offset
-48   8    last offset
+4    4    version (0)
+8    8    block count
+16   8    directory offset
+24   8    next offset
+32   4    cylinders
+36   4    heads
+40   4    sectors
+44   4    block size
 */
 
 
@@ -60,7 +58,7 @@ int dsk_pce_get_dir (disk_pce_t *img, uint32_t idx)
     return (0);
   }
 
-  if (img->dir_alloc < 1024) {
+  if (img->dir_alloc < 256) {
     img->dir[idx] = malloc (img->dir_size * sizeof (uint64_t));
     if (img->dir[idx] != NULL) {
       img->dir_alloc += 1;
@@ -133,10 +131,6 @@ int dsk_pce_set_blk_ofs (disk_pce_t *img, uint64_t blk, uint64_t ofs)
     }
   }
 
-  if (img->dir[j][i] == ofs) {
-    return (0);
-  }
-
   img->dir[j][i] = ofs;
 
   dsk_set_uint64_be (buf, 0, ofs);
@@ -151,19 +145,15 @@ int dsk_pce_set_blk_ofs (disk_pce_t *img, uint64_t blk, uint64_t ofs)
 }
 
 static
-int dsk_pce_set_blk_last (disk_pce_t *img, uint64_t ofs)
+int dsk_pce_set_blk_next (disk_pce_t *img, uint64_t ofs)
 {
   unsigned char buf[8];
 
-  if (ofs == 0) {
-    ofs = img->blk_size;
-  }
-
-  img->blk_last = ofs;
+  img->blk_next = ofs;
 
   dsk_set_uint64_be (buf, 0, ofs);
 
-  if (dsk_write (img->fp, buf, 48, 8)) {
+  if (dsk_write (img->fp, buf, 24, 8)) {
     return (1);
   }
 
@@ -190,12 +180,10 @@ int dsk_pce_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
       return (1);
     }
 
-    if (ofs == DSK_PCE_NULL) {
+    if (ofs == 0) {
       memset (t, 0, 512);
     }
     else {
-      ofs += img->blk_base;
-
       if (dsk_read (img->fp, t, ofs, 512)) {
         return (1);
       }
@@ -214,7 +202,6 @@ int dsk_pce_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 {
   disk_pce_t          *img;
   uint64_t            ofs;
-  unsigned            z;
   const unsigned char *t;
 
   if (dsk->readonly) {
@@ -234,31 +221,20 @@ int dsk_pce_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
       return (1);
     }
 
-    if (ofs == DSK_PCE_NULL) {
-      z = 0;
-      while ((z < img->blk_size) && (t[z] == 0)) {
-        z += 1;
+    if (ofs == 0) {
+      ofs = img->blk_next;
+
+      if (dsk_pce_set_blk_next (img, img->blk_next + img->blk_size)) {
+        return (1);
       }
 
-      if (z < img->blk_size) {
-        ofs = img->blk_last;
-
-        if (dsk_pce_set_blk_last (img, img->blk_last + img->blk_size)) {
-          return (1);
-        }
-
-        if (dsk_pce_set_blk_ofs (img, i, ofs)) {
-          return (1);
-        }
+      if (dsk_pce_set_blk_ofs (img, i, ofs)) {
+        return (1);
       }
     }
 
-    if (ofs != DSK_PCE_NULL) {
-      ofs += img->blk_base;
-
-      if (dsk_write (img->fp, t, ofs, 512)) {
-        return (1);
-      }
+    if (dsk_write (img->fp, t, ofs, 512)) {
+      return (1);
     }
 
     t += 512;
@@ -311,13 +287,13 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
     return (NULL);
   }
 
-  if (dsk_get_uint32_be (buf, 16) != 512) {
+  if (dsk_get_uint32_be (buf, 44) != 512) {
     return (NULL);
   }
 
-  c = dsk_get_uint32_be (buf, 20);
-  h = dsk_get_uint32_be (buf, 24);
-  s = dsk_get_uint32_be (buf, 28);
+  c = dsk_get_uint32_be (buf, 32);
+  h = dsk_get_uint32_be (buf, 36);
+  s = dsk_get_uint32_be (buf, 40);
 
   img = malloc (sizeof (disk_pce_t));
   if (img == NULL) {
@@ -335,17 +311,11 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
   img->dsk.write = dsk_pce_write;
 
   img->blk_cnt = dsk_get_uint64_be (buf, 8);
-  img->blk_size = dsk_get_uint32_be (buf, 16);
+  img->dir_base = dsk_get_uint64_be (buf, 16);
+  img->blk_next = dsk_get_uint64_be (buf, 24);
+  img->blk_size = dsk_get_uint32_be (buf, 44);
 
-  img->dir_base = dsk_get_uint64_be (buf, 32);
-  img->blk_base = dsk_get_uint64_be (buf, 40);
-  img->blk_last = dsk_get_uint64_be (buf, 48);
-
-  if (img->blk_last == 0) {
-    img->blk_last = img->blk_size;
-  }
-
-  img->dir_size = 1024;
+  img->dir_size = 512;
   img->dir_cnt = (img->blk_cnt + img->dir_size - 1) / img->dir_size;
   img->dir_next = 0;
   img->dir_alloc = 0;
@@ -396,7 +366,7 @@ disk_t *dsk_pce_open (const char *fname, int ro)
 int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
 {
   uint64_t      n;
-  uint64_t      dir_base, blk_base;
+  uint64_t      dir_base, blk_next;
   unsigned char buf[64];
 
   n = (uint64_t) c * (uint64_t) h * (uint64_t) s;
@@ -405,25 +375,24 @@ int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
   }
 
   dir_base = 64;
-  blk_base = (dir_base + 8 * n + 511) & ~((uint64_t) 511);
+  blk_next = dir_base + 8 * n;
+  blk_next = (blk_next + 511) & ~((uint64_t) 511);
 
   dsk_set_uint32_be (buf, 0, DSK_PCE_MAGIC);
   dsk_set_uint32_be (buf, 4, 0);
   dsk_set_uint64_be (buf, 8, n);
-  dsk_set_uint32_be (buf, 16, 512);
-  dsk_set_uint32_be (buf, 20, c);
-  dsk_set_uint32_be (buf, 24, h);
-  dsk_set_uint32_be (buf, 28, s);
-  dsk_set_uint64_be (buf, 32, dir_base);
-  dsk_set_uint64_be (buf, 40, blk_base);
-  dsk_set_uint64_be (buf, 48, 512);
-  dsk_set_uint64_be (buf, 56, 0);
+  dsk_set_uint64_be (buf, 16, dir_base);
+  dsk_set_uint64_be (buf, 24, blk_next);
+  dsk_set_uint32_be (buf, 32, c);
+  dsk_set_uint32_be (buf, 36, h);
+  dsk_set_uint32_be (buf, 40, s);
+  dsk_set_uint32_be (buf, 44, 512);
 
-  if (dsk_write (fp, buf, 0, 64)) {
+  if (dsk_write (fp, buf, 0, 48)) {
     return (1);
   }
 
-  dsk_set_uint64_be (buf, 0, DSK_PCE_NULL);
+  dsk_set_uint64_be (buf, 0, 0);
 
   if (dsk_write (fp, buf, dir_base + 8 * n, 8)) {
     return (1);
