@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.33 2003/10/13 19:59:08 hampa Exp $ */
+/* $Id: pce.c,v 1.34 2003/10/17 05:42:55 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1488,8 +1488,12 @@ void do_h (cmd_t *cmd)
     "last [i [n]]              print last instruction addresses\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "parport i fname           set parport output file\n"
+    "q                         Quit\n"
     "r reg val                 set a register\n"
-    "time [c]                  print or clear time statistics\n",
+    "s [what]                  Print status (pc|cpu|pit|ppi|pic|time|uart|video|xms\n"
+    "time [c]                  print or clear time statistics\n"
+    "t [cnt]                   Execute cnt instructions [1]\n"
+    "u [addr [cnt]]            Disassemble\n",
     stdout
   );
 }
