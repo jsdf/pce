@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-01-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -80,14 +80,14 @@ void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
   arm_set_cc_log (c, d);
   arm_set_cc_c (c, (d < s1) || ((d == s1) && (s2 != 0)));
-  arm_set_cc_v (c, ~(s1 ^ s2) & (s1 ^ d) & 0x80000000UL);
+  arm_set_cc_v (c, (d ^ s1) & (d ^ s2) & 0x80000000UL);
 }
 
 void arm_set_cc_sub (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
   arm_set_cc_log (c, d);
   arm_set_cc_c (c, !((d > s1) || ((d == s1) && (s2 != 0))));
-  arm_set_cc_v (c, (s1 ^ s2) & (s1 ^ d) & 0x80000000UL);
+  arm_set_cc_v (c, (d ^ s1) & (s1 ^ s2) & 0x80000000UL);
 }
 
 uint32_t arm_set_psr_field (uint32_t psr, uint32_t val, unsigned fld)
@@ -244,9 +244,12 @@ uint32_t arm_get_sh (arm_t *c, uint32_t ir, uint32_t *cry)
       }
       else if (n < 32) {
         *cry = (v >> (n - 1)) & 0x01;
-        v = v >> n;
         if (v & 0x80000000UL) {
+          v = v >> n;
           v |= (0xffffffffUL << (32 - n)) & 0xffffffffUL;
+        }
+        else {
+          v = v >> n;
         }
       }
       else {
