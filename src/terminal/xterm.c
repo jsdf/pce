@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.3 2003/04/25 14:01:44 hampa Exp $ */
+/* $Id: xterm.c,v 1.4 2003/04/26 23:35:46 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -655,10 +655,6 @@ void xt_check (xterm_t *xt)
 
     switch (event.type) {
       case Expose:
-        fprintf (stderr, "expose: %d %d + %d %d (%d)\n",
-          event.xexpose.x, event.xexpose.y,
-          event.xexpose.width, event.xexpose.height, event.xexpose.count
-        );
         xt_update (xt);
         break;
 
@@ -691,7 +687,6 @@ void xt_check (xterm_t *xt)
         break;
 
       default:
-        fprintf (stderr, "X event: %04X\n", event.type);
         break;
     }
   }
