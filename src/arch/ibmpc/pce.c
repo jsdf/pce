@@ -586,15 +586,16 @@ void prt_state_pic (e8259_t *pic, FILE *fp)
 {
   unsigned i;
 
-  fputs ("-8259A-PIC-------------------------------------------------------------------\n", fp);
-  fputs ("IRR=", fp); prt_uint8_bin (fp, pic->irr);
-  fputs ("  IMR=", fp); prt_uint8_bin (fp, pic->imr);
-  fputs ("  ISR=", fp); prt_uint8_bin (fp, pic->isr);
+  prt_sep (fp, "8259A-PIC");
+  fputs ("IRR=", fp);   prt_uint8_bin (fp, e8259_get_irr (pic));
+  fputs ("  IMR=", fp); prt_uint8_bin (fp, e8259_get_imr (pic));
+  fputs ("  ISR=", fp); prt_uint8_bin (fp, e8259_get_isr (pic));
   fputs ("\n", fp);
 
   fprintf (fp, "ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
-    pic->icw[0], pic->icw[1], pic->icw[2], pic->icw[3],
-    pic->ocw[0], pic->ocw[1], pic->ocw[2]
+    e8259_get_icw (pic, 0), e8259_get_icw (pic, 1), e8259_get_icw (pic, 2),
+    e8259_get_icw (pic, 3),
+    e8259_get_ocw (pic, 0), e8259_get_ocw (pic, 1), e8259_get_ocw (pic, 2)
   );
 
   fprintf (fp, "N0=%04lX", pic->irq_cnt[0]);

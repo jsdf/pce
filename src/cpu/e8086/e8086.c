@@ -225,7 +225,9 @@ void e86_trap (e8086_t *c, unsigned n)
 
 void e86_irq (e8086_t *cpu, unsigned val)
 {
-  cpu->irq = 1;
+  if (val) {
+    cpu->irq = 1;
+  }
 }
 
 int e86_interrupt (e8086_t *cpu, unsigned n)

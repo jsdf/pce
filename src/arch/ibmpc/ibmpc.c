@@ -336,7 +336,7 @@ void pc_setup_pic (ibmpc_t *pc)
   blk->get_uint32 = (mem_get_uint32_f) &e8259_get_uint32;
   mem_add_blk (pc->prt, blk, 1);
 
-  e8259_set_irq (&pc->pic, pc->cpu, (e8259_irq_f) &e86_irq);
+  e8259_set_int_f (&pc->pic, pc->cpu, (e8259_int_f) &e86_irq);
 
   e86_set_inta_f (pc->cpu, &pc->pic, (e86_inta_f) &e8259_inta);
 }
@@ -595,7 +595,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
   pc->mse = mse_new (base, sct);
   pc->mse->intr_ext = &pc->pic;
-  pc->mse->intr = (mse_intr_f) e8259_get_irq (&pc->pic, irq);
+  pc->mse->intr = (mse_intr_f) e8259_get_irq_f (&pc->pic, irq);
 
   mem_add_blk (pc->prt, pc->mse->reg, 0);
 
@@ -689,7 +689,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
       }
 
       pc->serport[i]->uart.irq_ext = &pc->pic;
-      pc->serport[i]->uart.irq = (e8250_irq_f) e8259_get_irq (&pc->pic, irq);
+      pc->serport[i]->uart.irq = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
 
       mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);
 

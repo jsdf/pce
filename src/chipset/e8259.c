@@ -33,14 +33,13 @@ void e8259_init (e8259_t *pic)
 {
   unsigned i;
 
-  pic->icw[0] = 0;
-  pic->icw[1] = 0;
-  pic->icw[2] = 0;
-  pic->icw[3] = 0;
+  for (i = 0; i < 4; i++) {
+    pic->icw[i] = 0;
+  }
 
-  pic->ocw[0] = 0;
-  pic->ocw[1] = 0;
-  pic->ocw[2] = 0;
+  for (i = 0; i < 3; i++) {
+    pic->ocw[i] = 0;
+  }
 
   pic->base = 0;
 
@@ -51,12 +50,15 @@ void e8259_init (e8259_t *pic)
   pic->imr = 0xff;
   pic->isr = 0x00;
 
+  pic->irq_inp = 0x00;
+
   for (i = 0; i < 8; i++) {
     pic->irq_cnt[i] = 0;
   }
 
-  pic->irq_ext = NULL;
-  pic->irq = NULL;
+  pic->intr_ext = NULL;
+  pic->intr_val = 0;
+  pic->intr = NULL;
 }
 
 e8259_t *e8259_new (void)
@@ -85,43 +87,180 @@ void e8259_del (e8259_t *pic)
   }
 }
 
-e8259_irq_f e8259_get_irq (e8259_t *pic, unsigned irq)
+e8259_irq_f e8259_get_irq_f (e8259_t *pic, unsigned irq)
 {
-  switch (irq & 7) {
+  switch (irq & 0x07) {
     case 0:
-      return ((e8259_irq_f) &e8259_set_irq0);
+      return (&e8259_set_irq0);
 
     case 1:
-      return ((e8259_irq_f) &e8259_set_irq1);
+      return (&e8259_set_irq1);
 
     case 2:
-      return ((e8259_irq_f) &e8259_set_irq2);
+      return (&e8259_set_irq2);
 
     case 3:
-      return ((e8259_irq_f) &e8259_set_irq3);
+      return (&e8259_set_irq3);
 
     case 4:
-      return ((e8259_irq_f) &e8259_set_irq4);
+      return (&e8259_set_irq4);
 
     case 5:
-      return ((e8259_irq_f) &e8259_set_irq5);
+      return (&e8259_set_irq5);
 
     case 6:
-      return ((e8259_irq_f) &e8259_set_irq6);
+      return (&e8259_set_irq6);
 
     case 7:
-      return ((e8259_irq_f) &e8259_set_irq7);
+      return (&e8259_set_irq7);
   }
 
   return (NULL);
 }
 
-void e8259_set_irq (e8259_t *pic, void *ext, e8259_irq_f set)
+void e8259_set_int_f (e8259_t *pic, void *ext, e8259_int_f fct)
 {
-  pic->irq_ext = ext;
-  pic->irq = set;
+  pic->intr_ext = ext;
+  pic->intr = fct;
 }
 
+static
+void e8259_set_int (e8259_t *pic, unsigned char val)
+{
+  if (pic->intr_val != val) {
+    pic->intr_val = val;
+    if (pic->intr != NULL) {
+      pic->intr (pic->intr_ext, val);
+    }
+  }
+}
+
+void e8259_set_irq (e8259_t *pic, unsigned irq, unsigned char val)
+{
+  unsigned char msk;
+
+  msk = 0x01 << (irq & 0x07);
+
+  if (val == 0) {
+    pic->irq_inp &= ~msk;
+    return;
+  }
+
+  if (pic->irq_inp & msk) {
+    /* not an edge */
+    return;
+  }
+
+  pic->irr |= msk & ~ pic->imr;
+}
+
+void e8259_set_irq0 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 0, val != 0);
+}
+
+void e8259_set_irq1 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 1, val != 0);
+}
+
+void e8259_set_irq2 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 2, val != 0);
+}
+
+void e8259_set_irq3 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 3, val != 0);
+}
+
+void e8259_set_irq4 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 4, val != 0);
+}
+
+void e8259_set_irq5 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 5, val != 0);
+}
+
+void e8259_set_irq6 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 6, val != 0);
+}
+
+void e8259_set_irq7 (e8259_t *pic, unsigned char val)
+{
+  e8259_set_irq (pic, 7, val != 0);
+}
+
+unsigned char e8259_inta (e8259_t *pic)
+{
+  unsigned char irr, irq;
+
+  /* highest priority interrupt */
+  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
+
+  if (irr == 0) {
+    /* should not happen */
+    fprintf (stderr, "e8259: INTA without IRQ\n");
+    return (0);
+  }
+
+  pic->irr &= ~irr;
+
+  if ((pic->icw[3] & E8259_ICW4_AEOI) == 0) {
+    /* no automatic EOI */
+    pic->isr |= irr;
+  }
+
+  irq = 0;
+  while ((irr & 1) == 0) {
+    irr = irr >> 1;
+    irq += 1;
+  }
+
+  pic->irq_cnt[irq] += 1;
+
+  e8259_set_int (pic, 0);
+
+  return (pic->base + irq);
+}
+
+unsigned char e8259_get_irr (e8259_t *pic)
+{
+  return (pic->irr);
+}
+
+unsigned char e8259_get_imr (e8259_t *pic)
+{
+  return (pic->imr);
+}
+
+unsigned char e8259_get_isr (e8259_t *pic)
+{
+  return (pic->isr);
+}
+
+unsigned char e8259_get_icw (e8259_t *pic, unsigned i)
+{
+  if (i < 4) {
+    return (pic->icw[i]);
+  }
+
+  return (0);
+}
+
+unsigned char e8259_get_ocw (e8259_t *pic, unsigned i)
+{
+  if (i < 3) {
+    return (pic->ocw[i]);
+  }
+
+  return (0);
+}
+
+static
 void e8259_set_icw1 (e8259_t *pic, unsigned char val)
 {
   pic->icw[0] = val;
@@ -135,6 +274,8 @@ void e8259_set_icw1 (e8259_t *pic, unsigned char val)
 
   pic->base = 0;
 
+  pic->irq_inp = 0;
+
   pic->next_icw = 1;
   pic->read_irr = 1;
 
@@ -143,17 +284,18 @@ void e8259_set_icw1 (e8259_t *pic, unsigned char val)
   pic->isr = 0x00;
 }
 
+static
 void e8259_set_icwn (e8259_t *pic, unsigned char val)
 {
   switch (pic->next_icw) {
     case 1:
       pic->icw[1] = val;
       pic->base = val & ~7;
-      if (pic->icw[0] & 0x02) {
-        pic->next_icw = 3;
-      }
-      else if (pic->icw[0] & 0x01) {
+      if ((pic->icw[0] & E8259_ICW1_SNGL) == 0) {
         pic->next_icw = 2;
+      }
+      else if (pic->icw[0] & E8259_ICW1_IC4) {
+        pic->next_icw = 3;
       }
       else {
         pic->next_icw = 0;
@@ -162,7 +304,7 @@ void e8259_set_icwn (e8259_t *pic, unsigned char val)
 
     case 2:
       pic->icw[2] = val;
-      if (pic->icw[0] & 0x01) {
+      if (pic->icw[0] & E8259_ICW1_IC4) {
         pic->next_icw = 3;
       }
       else {
@@ -177,12 +319,14 @@ void e8259_set_icwn (e8259_t *pic, unsigned char val)
   }
 }
 
+static
 void e8259_set_ocw1 (e8259_t *pic, unsigned char val)
 {
   pic->ocw[0] = val;
   pic->imr = val;
 }
 
+static
 void e8259_set_ocw2 (e8259_t *pic, unsigned char val)
 {
   pic->ocw[1] = val;
@@ -192,115 +336,28 @@ void e8259_set_ocw2 (e8259_t *pic, unsigned char val)
       pic->isr &= (pic->isr - 1);
       break;
 
+    case 0x40: /* no operation */
+      break;
+
     case 0x60: /* specific EOI */
       pic->isr &= ~(1 << (val & 7));
       break;
   }
 }
 
+static
 void e8259_set_ocw3 (e8259_t *pic, unsigned char val)
 {
   pic->ocw[2] = val;
 
-  if ((val & 0x03) == 0x02) {
-    pic->read_irr = 1;
+  if (val & E8259_OCW3_RR) {
+    if (val & E8259_OCW3_RIS) {
+      pic->read_irr = 0;
+    }
+    else {
+      pic->read_irr = 1;
+    }
   }
-  else if ((val & 0x03) == 0x03) {
-    pic->read_irr = 0;
-  }
-}
-
-void e8259_set_irq0 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x01 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq1 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x02 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq2 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x04 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq3 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x08 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq4 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x10 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq5 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x20 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq6 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x40 & ~pic->imr;
-  }
-}
-
-void e8259_set_irq7 (e8259_t *pic, unsigned char val)
-{
-  if (val) {
-    pic->irr |= 0x80 & ~pic->imr;
-  }
-}
-
-unsigned char e8259_inta (e8259_t *pic)
-{
-  unsigned char irr, irq;
-
-  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
-  if (irr == 0) {
-    return (0);
-  }
-
-  pic->irr &= ~irr;
-
-  if ((pic->icw[3] & 0x02) == 0) {
-    /* no automatic EOI */
-    pic->isr |= irr;
-  }
-
-  irq = 0;
-  while ((irr & 1) == 0) {
-    irr = irr >> 1;
-    irq += 1;
-  }
-
-  pic->irq_cnt[irq] += 1;
-
-  return (pic->base + irq);
-}
-
-unsigned char e8259_get_isr (e8259_t *pic)
-{
-  return (pic->isr);
-}
-
-unsigned char e8259_get_irr (e8259_t *pic)
-{
-  return (pic->irr);
 }
 
 void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val)
@@ -374,8 +431,6 @@ void e8259_clock (e8259_t *pic)
   isr = pic->isr ^ (pic->isr & (pic->isr - 1));
 
   if ((irr != 0) && ((isr == 0) || (irr < isr))) {
-    if (pic->irq != NULL) {
-      pic->irq (pic->irq_ext, 1);
-    }
+    e8259_set_int (pic, 1);
   }
 }
