@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.6 2003/09/21 08:16:46 hampa Exp $
+; $Id: ega.asm,v 1.7 2003/09/21 10:06:33 hampa Exp $
 
 
 %include "config.inc"
@@ -1243,7 +1243,16 @@ int_10_05:
   ret
 
 
-; int 10 func 06 - scroll up
+;*****************************************************************************
+;* int 10 func 06 - scroll up
+;* inp: AL = row count
+;*      BH = attribute for new lines
+;*      CH = top left row
+;*      CL = top left column
+;*      DH = bottom right row
+;*      DL = bottom right column
+;*****************************************************************************
+
 int_10_06:
   push    ax
   push    cx
@@ -1356,6 +1365,10 @@ int_10_06:
   ret
 
 
+;*****************************************************************************
+;* int 10 func 07 - scroll down
+;* inp:
+;*****************************************************************************
 ; int 10 func 07 - scroll down
 int_10_07:
   push    ax
@@ -1399,6 +1412,8 @@ int_10_07:
   mov     di, ax
 
   mov     ax, cx
+  add     ah, dh
+  dec     ah
   call    get_cofs
   add     di, ax                        ; dest in DI
   pop     ax
@@ -1407,10 +1422,12 @@ int_10_07:
   shl     bp, 1
 
   push    ax
+  push    dx
   mov     ah, 0
   mul     bp
   mov     si, di
-  add     si, ax                        ; source in SI
+  sub     si, ax                        ; source in SI
+  pop     dx
   pop     ax
 
   mov     bl, dh
@@ -1433,8 +1450,8 @@ int_10_07:
   pop     di
   pop     si
 
-  add     si, bp
-  add     di, bp
+  sub     si, bp
+  sub     di, bp
 
   dec     bl
   jnz     .copy
@@ -1450,7 +1467,7 @@ int_10_07:
   rep     stosw
   pop     di
 
-  add     di, bp
+  sub     di, bp
 
   dec     bl
   jnz     .clearrow
