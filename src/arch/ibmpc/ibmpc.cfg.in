@@ -51,7 +51,6 @@ section pc {
 	# 8253 PIT
 	section pit {
 		address = 0x40
-		divisor = 4
 	}
 
 	section ems {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -245,17 +245,13 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
   mem_blk_t     *blk;
-  unsigned long addr, clkdiv;
+  unsigned long addr;
 
   sct = ini_sct_find_sct (ini, "pit");
 
   addr = ini_get_lng_def (sct, "address", 0x40);
-  clkdiv = ini_get_lng_def (sct, "divisor", 4);
-  if (clkdiv == 0) {
-    clkdiv = 1;
-  }
 
-  pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x div=%lu\n", addr, 4, clkdiv);
+  pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x\n", addr, 4);
 
   e8253_init (&pc->pit);
 
@@ -275,9 +271,6 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 
   e8253_set_out_f (&pc->pit, 0, (e8253_out_f) &e8259_set_irq0, &pc->pic);
   e8253_set_out_f (&pc->pit, 1, (e8253_out_f) &e8237_set_dreq0, &pc->dma);
-
-  pc->pit_clk = 0;
-  pc->pit_div = clkdiv;
 }
 
 static
@@ -292,6 +285,8 @@ void pc_setup_ppi (ibmpc_t *pc)
   else {
     ram = 1;
   }
+
+  pce_log (MSG_INF, "PPI:\taddr=0x%08x size=0x%04x\n", 0x60, 4);
 
   e8255_init (&pc->ppi);
 
@@ -943,10 +938,10 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_rom (pc, ini);
   pc_setup_nvram (pc, ini);
   pc_setup_cpu (pc, ini);
+  pc_setup_dma (pc);
   pc_setup_pic (pc);
   pc_setup_pit (pc, ini);
   pc_setup_ppi (pc);
-  pc_setup_dma (pc);
 
   pc_setup_terminal (pc, ini);
 
@@ -1049,24 +1044,17 @@ void pc_clock (ibmpc_t *pc)
 
   e86_clock (pc->cpu, n);
 
-  pc->pit_clk += n;
-
-  if (pc->pit_clk >= (4 * pc->pit_div)) {
-    e8253_clock (&pc->pit, pc->pit_clk / pc->pit_div);
-    pc->pit_clk = pc->pit_clk % pc->pit_div;
-  }
-
   pc->clk_cnt += n;
   pc->clk_div[0] += n;
-  pc->clk_div[1] += n;
-/*  pc->clk_div[2] += n; */
-/*  pc->clk_div[3] += n; */
 
-  if (pc->clk_div[0] >= 16) {
-    e8259_clock (&pc->pic);
+  if (pc->clk_div[0] >= 32) {
     e8237_clock (&pc->dma, 1);
+    e8259_clock (&pc->pic);
+    e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
 
-    pc->clk_div[0] &= 0x0f;
+    pc->clk_div[1] += pc->clk_div[0];
+
+    pc->clk_div[0] &= 0x1f;
 
     if (pc->clk_div[1] >= 4096) {
       unsigned      i;
