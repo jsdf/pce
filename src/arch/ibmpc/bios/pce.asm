@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2005-01-28 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -60,6 +60,7 @@ start:
 
   call    set_bios_ds
 
+  call    init_data
   call    init_int
   call    init_pic
   call    init_pit
@@ -90,6 +91,28 @@ done:
 
 
 ;-----------------------------------------------------------------------------
+
+init_data:
+  push    ax
+  push    cx
+  push    di
+  push    es
+
+  cld
+
+  push    ds
+  pop     es
+
+  xor     di, di
+  xor     ax, ax
+  mov     cx, 256 / 2
+  rep     stosw
+
+  pop     es
+  pop     di
+  pop     cx
+  pop     ax
+  ret
 
 init_int:
   push    ax
