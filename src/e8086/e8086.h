@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.19 2003/10/07 16:05:09 hampa Exp $ */
+/* $Id: e8086.h,v 1.20 2003/10/11 23:57:55 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -244,15 +244,15 @@ typedef struct e8086_t {
 #define e86_set_f(c, f, v) \
   do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
 
-#define e86_set_f0(cpu, f) do { (cpu)->flg &= ~(f); } while (0)
-#define e86_set_f1(cpu, f) do { (cpu)->flg |= (f); } while (0)
-
 #define e86_set_cf(c, v) e86_set_f (c, E86_FLG_C, v)
 #define e86_set_pf(c, v) e86_set_f (c, E86_FLG_P, v)
 #define e86_set_af(c, v) e86_set_f (c, E86_FLG_A, v)
 #define e86_set_zf(c, v) e86_set_f (c, E86_FLG_Z, v)
 #define e86_set_of(c, v) e86_set_f (c, E86_FLG_O, v)
 #define e86_set_sf(c, v) e86_set_f (c, E86_FLG_S, v)
+#define e86_set_df(c, v) e86_set_f (c, E86_FLG_D, v)
+#define e86_set_if(c, v) e86_set_f (c, E86_FLG_I, v)
+#define e86_set_tf(c, v) e86_set_f (c, E86_FLG_T, v)
 
 
 #define e86_get_linear(seg, ofs) \
@@ -261,14 +261,14 @@ typedef struct e8086_t {
 static inline
 unsigned char e86_get_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs);
+  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
   return ((addr < c->ram_cnt) ? c->ram[addr] : c->mem_get_uint8 (c->mem, addr));
 }
 
 static inline
 void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned char val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs);
+  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
   if (addr < c->ram_cnt) {
     c->ram[addr] = val;
   }
@@ -280,7 +280,7 @@ void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned 
 static inline
 unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs);
+  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
   if (addr < c->ram_cnt) {
     return (c->ram[addr] + (c->ram[addr + 1] << 8));
   }
@@ -292,7 +292,7 @@ unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs
 static inline
 void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs);
+  unsigned long addr = e86_get_linear (seg, ofs) & 0xfffff;
   if (addr < c->ram_cnt) {
     c->ram[addr] = val & 0xff;
     c->ram[addr + 1] = (val >> 8) & 0xff;

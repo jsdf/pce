@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e80186.c                                         *
  * Created:       2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.8 2003/10/04 17:52:45 hampa Exp $ */
+/* $Id: e80186.c,v 1.9 2003/10/11 23:57:55 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -135,13 +135,7 @@ unsigned op_69 (e8086_t *c)
   e86_set_reg16 (c, (c->pq[1] >> 3) & 7, d & 0xffff);
 
   d &= 0xffff8000;
-  if ((d == 0xffff8000) || (d == 0x00000000)) {
-    e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
-  }
-  else {
-    e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
-  }
-
+  e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff8000) && (d != 0x00000000));
   e86_set_f (c, E86_FLG_Z, d == 0);
 
   e86_set_clk_ea (c, (22 + 25) / 2, (29 + 32) / 2);
@@ -178,13 +172,7 @@ unsigned op_6b (e8086_t *c)
   e86_set_reg16 (c, (c->pq[1] >> 3) & 7, d & 0xffff);
 
   d &= 0xffff8000;
-  if ((d == 0xffff8000) || (d == 0x00000000)) {
-    e86_set_f0 (c, E86_FLG_C | E86_FLG_O);
-  }
-  else {
-    e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
-  }
-
+  e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff8000) && (d != 0x00000000));
   e86_set_f (c, E86_FLG_Z, d == 0);
 
   e86_set_clk_ea (c, (22 + 25) / 2, (29 + 32) / 2);
