@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.c                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-01-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -803,7 +803,7 @@ void e8250_set_uint32 (e8250_t *uart, unsigned long addr, unsigned long val)
   e8250_set_uint8 (uart, addr, val & 0xff);
 }
 
-void e8250_clock (e8250_t *uart, unsigned long clk)
+void e8250_clock (e8250_t *uart, unsigned clk)
 {
   e8250_check_rxd (uart);
   e8250_check_txd (uart);
