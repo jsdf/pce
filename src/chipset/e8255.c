@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8255/e8255.c                                          *
+ * File name:     src/chipset/e8255.c                                        *
  * Created:       2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8255.c,v 1.1 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdlib.h>
@@ -29,36 +29,49 @@
 #include "e8255.h"
 
 
-e8255_t *e8255_new (void)
+void e8255_init (e8255_t *ppi)
 {
   unsigned i;
-  e8255_t  *ret;
 
-  ret = (e8255_t *) malloc (sizeof (e8255_t));
-  if (ret == NULL) {
+  ppi->group_a_mode = 0;
+  ppi->group_b_mode = 0;
+  ppi->mode = 0x80;
+
+  for (i = 0; i < 3; i++) {
+    ppi->port[i].val_inp = 0;
+    ppi->port[i].val_out = 0;
+    ppi->port[i].inp = 0;
+    ppi->port[i].read_ext = NULL;
+    ppi->port[i].read = NULL;
+    ppi->port[i].write_ext = NULL;
+    ppi->port[i].write = NULL;
+  }
+}
+
+e8255_t *e8255_new (void)
+{
+  e8255_t *ppi;
+
+  ppi = malloc (sizeof (e8255_t));
+  if (ppi == NULL) {
     return (NULL);
   }
 
-  ret->group_a_mode = 0;
-  ret->group_b_mode = 0;
-  ret->mode = 0x80;
+  e8255_init (ppi);
 
-  for (i = 0; i < 3; i++) {
-    ret->port[i].val_inp = 0;
-    ret->port[i].val_out = 0;
-    ret->port[i].inp = 0;
-    ret->port[i].read_ext = NULL;
-    ret->port[i].read = NULL;
-    ret->port[i].write_ext = NULL;
-    ret->port[i].write = NULL;
-  }
+  return (ppi);
+}
 
-  return (ret);
+void e8255_free (e8255_t *ppi)
+{
 }
 
 void e8255_del (e8255_t *ppi)
 {
-  free (ppi);
+  if (ppi != NULL) {
+    e8255_free (ppi);
+    free (ppi);
+  }
 }
 
 void e8255_set_inp (e8255_t *ppi, unsigned p, unsigned char val)

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.h                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.h,v 1.4 2003/09/24 08:08:16 hampa Exp $ */
+/* $Id$ */
 
 
 /* PIC 8259A */
@@ -54,7 +54,9 @@ typedef struct {
 } e8259_t;
 
 
+void e8259_init (e8259_t *pic);
 e8259_t *e8259_new (void);
+void e8259_free (e8259_t *pic);
 void e8259_del (e8259_t *pic);
 
 /*!***************************************************************************
@@ -97,13 +99,18 @@ void e8259_set_irq7 (e8259_t *pic, unsigned char val);
  *****************************************************************************/
 unsigned char e8259_inta (e8259_t *pic);
 
-void e8259_clock (e8259_t *pic);
+unsigned char e8259_get_isr (e8259_t *pic);
+unsigned char e8259_get_irr (e8259_t *pic);
 
 void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val);
 void e8259_set_uint16 (e8259_t *pic, unsigned long addr, unsigned short val);
+void e8259_set_uint32 (e8259_t *pic, unsigned long addr, unsigned long val);
 
 unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr);
 unsigned short e8259_get_uint16 (e8259_t *pic, unsigned long addr);
+unsigned long e8259_get_uint32 (e8259_t *pic, unsigned long addr);
+
+void e8259_clock (e8259_t *pic);
 
 
 #endif

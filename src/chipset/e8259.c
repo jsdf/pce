@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.c,v 1.4 2003/09/24 08:08:15 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdlib.h>
@@ -29,47 +29,60 @@
 #include "e8259.h"
 
 
-e8259_t *e8259_new (void)
+void e8259_init (e8259_t *pic)
 {
   unsigned i;
-  e8259_t  *ret;
 
-  ret = (e8259_t *) malloc (sizeof (e8259_t));
-  if (ret == NULL) {
+  pic->icw[0] = 0;
+  pic->icw[1] = 0;
+  pic->icw[2] = 0;
+  pic->icw[3] = 0;
+
+  pic->ocw[0] = 0;
+  pic->ocw[1] = 0;
+  pic->ocw[2] = 0;
+
+  pic->base = 0;
+
+  pic->next_icw = 0;
+  pic->read_irr = 1;
+
+  pic->irr = 0x00;
+  pic->imr = 0xff;
+  pic->isr = 0x00;
+
+  for (i = 0; i < 8; i++) {
+    pic->irq_cnt[i] = 0;
+  }
+
+  pic->irq_ext = NULL;
+  pic->irq = NULL;
+}
+
+e8259_t *e8259_new (void)
+{
+  e8259_t *pic;
+
+  pic = malloc (sizeof (e8259_t));
+  if (pic == NULL) {
     return (NULL);
   }
 
-  ret->icw[0] = 0;
-  ret->icw[1] = 0;
-  ret->icw[2] = 0;
-  ret->icw[3] = 0;
+  e8259_init (pic);
 
-  ret->ocw[0] = 0;
-  ret->ocw[1] = 0;
-  ret->ocw[2] = 0;
+  return (pic);
+}
 
-  ret->base = 0;
-
-  ret->next_icw = 0;
-  ret->read_irr = 1;
-
-  ret->irr = 0x00;
-  ret->imr = 0xff;
-  ret->isr = 0x00;
-
-  for (i = 0; i < 8; i++) {
-    ret->irq_cnt[i] = 0;
-  }
-
-  ret->irq_ext = NULL;
-  ret->irq = NULL;
-
-  return (ret);
+void e8259_free (e8259_t *pic)
+{
 }
 
 void e8259_del (e8259_t *pic)
 {
-  free (pic);
+  if (pic != NULL) {
+    e8259_free (pic);
+    free (pic);
+  }
 }
 
 e8259_irq_f e8259_get_irq (e8259_t *pic, unsigned irq)
@@ -280,22 +293,14 @@ unsigned char e8259_inta (e8259_t *pic)
   return (pic->base + irq);
 }
 
-void e8259_clock (e8259_t *pic)
+unsigned char e8259_get_isr (e8259_t *pic)
 {
-  unsigned char irr, isr;
+  return (pic->isr);
+}
 
-  if (pic->irr == 0) {
-    return;
-  }
-
-  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
-  isr = pic->isr ^ (pic->isr & (pic->isr - 1));
-
-  if ((irr != 0) && ((isr == 0) || (irr < isr))) {
-    if (pic->irq != NULL) {
-      pic->irq (pic->irq_ext, 1);
-    }
-  }
+unsigned char e8259_get_irr (e8259_t *pic)
+{
+  return (pic->irr);
 }
 
 void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val)
@@ -329,6 +334,11 @@ void e8259_set_uint16 (e8259_t *pic, unsigned long addr, unsigned short val)
   e8259_set_uint8 (pic, addr, val & 0xff);
 }
 
+void e8259_set_uint32 (e8259_t *pic, unsigned long addr, unsigned long val)
+{
+  e8259_set_uint8 (pic, addr, val & 0xff);
+}
+
 unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr)
 {
   switch (addr) {
@@ -345,4 +355,27 @@ unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr)
 unsigned short e8259_get_uint16 (e8259_t *pic, unsigned long addr)
 {
   return (e8259_get_uint8 (pic, addr));
+}
+
+unsigned long e8259_get_uint32 (e8259_t *pic, unsigned long addr)
+{
+  return (e8259_get_uint8 (pic, addr));
+}
+
+void e8259_clock (e8259_t *pic)
+{
+  unsigned char irr, isr;
+
+  if (pic->irr == 0) {
+    return;
+  }
+
+  irr = pic->irr ^ (pic->irr & (pic->irr - 1));
+  isr = pic->isr ^ (pic->isr & (pic->isr - 1));
+
+  if ((irr != 0) && ((isr == 0) || (irr < isr))) {
+    if (pic->irq != NULL) {
+      pic->irq (pic->irq_ext, 1);
+    }
+  }
 }
