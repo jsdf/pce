@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.6 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: hgc.c,v 1.7 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -57,6 +57,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
   hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
   hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
   hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
+  hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
 
   for (i = 0; i < 16; i++) {
     hgc->crtc_reg[i] = 0;
@@ -186,6 +187,31 @@ mem_blk_t *hgc_get_reg (hgc_t *hgc)
   return (hgc->reg);
 }
 
+
+/*****************************************************************************
+ * mode 0 (text 80 * 25 * 2)
+ *****************************************************************************/
+
+static
+int hgc_mode0_screenshot (hgc_t *hgc, FILE *fp)
+{
+  unsigned i;
+  unsigned x, y;
+
+  i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
+
+  for (y = 0; y < 25; y++) {
+    for (x = 0; x < 80; x++) {
+      fputc (hgc->mem->data[i], fp);
+      i = (i + 2) & 0x7fff;
+    }
+
+    fputs ("\n", fp);
+  }
+
+  return (0);
+}
+
 static
 void hgc_mode0_update (hgc_t *hgc)
 {
@@ -209,6 +235,131 @@ void hgc_mode0_update (hgc_t *hgc)
       i = (i + 2) & 0x7fff;
     }
   }
+}
+
+static
+void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+{
+  unsigned      x, y;
+  unsigned char c, a;
+  unsigned      fg, bg;
+
+  if (hgc->mem->data[addr] == val) {
+    return;
+  }
+
+  hgc->mem->data[addr] = val;
+
+  if (addr & 1) {
+    c = hgc->mem->data[addr - 1];
+    a = val;
+  }
+  else {
+    c = val;
+    a = hgc->mem->data[addr + 1];
+  }
+
+  if (addr < (hgc->crtc_ofs << 1)) {
+    return;
+  }
+
+  addr -= (hgc->crtc_ofs << 1);
+
+  if (addr >= 4000) {
+    return;
+  }
+
+  x = (addr >> 1) % 80;
+  y = (addr >> 1) / 80;
+
+  fg = coltab[a & 0x0f];
+  bg = coltab[(a & 0xf0) >> 4];
+
+  trm_set_col (hgc->trm, fg, bg);
+  trm_set_chr (hgc->trm, x, y, c);
+}
+
+static
+void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
+{
+  unsigned      x, y;
+  unsigned char c, a;
+  unsigned      fg, bg;
+
+  if (addr & 1) {
+    hgc_mem_set_uint8 (hgc, addr, val & 0xff);
+
+    if (addr < hgc->mem->end) {
+      hgc_mem_set_uint8 (hgc, addr + 1, val >> 8);
+    }
+
+    return;
+  }
+
+  c = val & 0xff;
+  a = (val >> 8) & 0xff;
+
+  if ((hgc->mem->data[addr] == c) && (hgc->mem->data[addr + 1] == a)) {
+    return;
+  }
+
+  hgc->mem->data[addr] = c;
+  hgc->mem->data[addr + 1] = a;
+
+  if (addr < (hgc->crtc_ofs << 1)) {
+    return;
+  }
+
+  addr -= (hgc->crtc_ofs << 1);
+
+  if (addr >= 4000) {
+    return;
+  }
+
+  x = (addr >> 1) % 80;
+  y = (addr >> 1) / 80;
+
+  fg = coltab[a & 0x0f];
+  bg = coltab[(a & 0xf0) >> 4];
+
+  trm_set_col (hgc->trm, fg, bg);
+  trm_set_chr (hgc->trm, x, y, c);
+}
+
+
+/*****************************************************************************
+ * mode 1 (graphics 720 * 348 * 2)
+ *****************************************************************************/
+
+static
+int hgc_mode1_screenshot (hgc_t *hgc, FILE *fp)
+{
+  unsigned      x, y, i;
+  unsigned      val;
+  unsigned char *mem;
+
+  fprintf (fp, "P5\n720 348\n255 ");
+
+  for (y = 0; y < 348; y++) {
+    mem = (hgc->page_ofs) ? (hgc->mem->data + 32768) : hgc->mem->data;
+    mem += (y & 3) * 8192;
+    mem += 90 * (y / 4);
+
+    for (x = 0; x < 90; x++) {
+      val = mem[x];
+
+      for (i = 0; i < 8; i++) {
+        if (val & (0x80 >> i)) {
+          fputc (255, fp);
+        }
+        else {
+          fputc (0, fp);
+        }
+      }
+    }
+  }
+
+  return (0);
 }
 
 static
@@ -265,6 +416,61 @@ void hgc_mode1_update (hgc_t *hgc)
 }
 
 static
+void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+{
+  unsigned      i;
+  unsigned      x, y, sx, sy;
+  unsigned      bank;
+  unsigned char old;
+
+  old = hgc->mem->data[addr];
+
+  if (old == val) {
+    return;
+  }
+
+  hgc->mem->data[addr] = val;
+
+  if (addr > 32767) {
+    addr -= 32768;
+  }
+
+  bank = addr / 8192;
+
+  x = 8 * ((addr & 8191) % 90);
+  y = 4 * ((addr & 8191) / 90) + bank;
+
+  sx = x;
+  sy = hgclines2[y];
+
+  for (i = 0; i < 8; i++) {
+    if ((old ^ val) & 0x80) {
+      trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
+      trm_set_pxl (hgc->trm, sx, sy);
+      if (hgclines1[y] > 1) {
+        trm_set_pxl (hgc->trm, sx, sy + 1);
+      }
+    }
+
+    old <<= 1;
+    val <<= 1;
+    sx += 1;
+  }
+}
+
+
+int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode)
+{
+  if ((hgc->mode == 1) && ((mode == 2) || (mode == 0))) {
+    return (hgc_mode1_screenshot (hgc, fp));
+  }
+  else if ((hgc->mode == 0) && ((mode == 1) || (mode == 0))) {
+    return (hgc_mode0_screenshot (hgc, fp));
+  }
+
+  return (1);
+}
+
 void hgc_update (hgc_t *hgc)
 {
   switch (hgc->mode) {
@@ -377,138 +583,6 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
   }
 
   hgc_update (hgc);
-}
-
-static
-void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
-{
-  unsigned      x, y;
-  unsigned char c, a;
-  unsigned      fg, bg;
-
-  if (hgc->mem->data[addr] == val) {
-    return;
-  }
-
-  hgc->mem->data[addr] = val;
-
-  if (addr & 1) {
-    c = hgc->mem->data[addr - 1];
-    a = val;
-  }
-  else {
-    c = val;
-    a = hgc->mem->data[addr + 1];
-  }
-
-  if (addr < (hgc->crtc_ofs << 1)) {
-    return;
-  }
-
-  addr -= (hgc->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
-
-  trm_set_col (hgc->trm, fg, bg);
-  trm_set_chr (hgc->trm, x, y, c);
-}
-
-static
-void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
-{
-  unsigned      x, y;
-  unsigned char c, a;
-  unsigned      fg, bg;
-
-  if (addr & 1) {
-    hgc_mem_set_uint8 (hgc, addr, val & 0xff);
-
-    if (addr < hgc->mem->end) {
-      hgc_mem_set_uint8 (hgc, addr + 1, val >> 8);
-    }
-
-    return;
-  }
-
-  c = val & 0xff;
-  a = (val >> 8) & 0xff;
-
-  if ((hgc->mem->data[addr] == c) && (hgc->mem->data[addr + 1] == a)) {
-    return;
-  }
-
-  hgc->mem->data[addr] = c;
-  hgc->mem->data[addr + 1] = a;
-
-  if (addr < (hgc->crtc_ofs << 1)) {
-    return;
-  }
-
-  addr -= (hgc->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-  fg = coltab[a & 0x0f];
-  bg = coltab[(a & 0xf0) >> 4];
-
-  trm_set_col (hgc->trm, fg, bg);
-  trm_set_chr (hgc->trm, x, y, c);
-}
-
-static
-void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
-{
-  unsigned      i;
-  unsigned      x, y, sx, sy;
-  unsigned      bank;
-  unsigned char old;
-
-  old = hgc->mem->data[addr];
-
-  if (old == val) {
-    return;
-  }
-
-  hgc->mem->data[addr] = val;
-
-  if (addr > 32767) {
-    addr -= 32768;
-  }
-
-  bank = addr / 8192;
-
-  x = 8 * ((addr & 8191) % 90);
-  y = 4 * ((addr & 8191) / 90) + bank;
-
-  sx = x;
-  sy = hgclines2[y];
-
-  for (i = 0; i < 8; i++) {
-    if ((old ^ val) & 0x80) {
-      trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
-      trm_set_pxl (hgc->trm, sx, sy);
-      if (hgclines1[y] > 1) {
-        trm_set_pxl (hgc->trm, sx, sy + 1);
-      }
-    }
-
-    old <<= 1;
-    val <<= 1;
-    sx += 1;
-  }
 }
 
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)

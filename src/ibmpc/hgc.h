@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.4 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: hgc.h,v 1.5 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #ifndef PCE_HGC_H
@@ -63,6 +63,8 @@ void hgc_prt_state (hgc_t *cga, FILE *fp);
 
 mem_blk_t *hgc_get_mem (hgc_t *hgc);
 mem_blk_t *hgc_get_reg (hgc_t *hgc);
+
+int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode);
 
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
 void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.h,v 1.1 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: video.h,v 1.2 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #ifndef PCE_VIDEO_H
@@ -34,13 +34,15 @@ typedef void (*pce_video_del_f) (void *ext);
 typedef mem_blk_t *(*pce_video_get_mem_f) (void *ext);
 typedef mem_blk_t *(*pce_video_get_reg_f) (void *ext);
 typedef void (*pce_video_prt_state_f) (void *ext, FILE *fp);
+typedef int (*pce_video_screenshot_f) (void *ext, FILE *fp, unsigned mode);
 
 
 typedef struct {
-  pce_video_del_f       del;
-  pce_video_get_mem_f   get_mem;
-  pce_video_get_reg_f   get_reg;
-  pce_video_prt_state_f prt_state;
+  pce_video_del_f        del;
+  pce_video_get_mem_f    get_mem;
+  pce_video_get_reg_f    get_reg;
+  pce_video_prt_state_f  prt_state;
+  pce_video_screenshot_f screenshot;
 
   void *ext;
 } video_t;
@@ -53,6 +55,8 @@ mem_blk_t *pce_video_get_mem (video_t *vid);
 mem_blk_t *pce_video_get_reg (video_t *vid);
 
 void pce_video_prt_state (video_t *vid, FILE *fp);
+
+int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 
 
 #endif

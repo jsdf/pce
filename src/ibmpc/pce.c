@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.20 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: pce.c,v 1.21 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1410,6 +1410,46 @@ void do_s (cmd_t *cmd)
   }
 }
 
+void do_screenshot (cmd_t *cmd)
+{
+  char     fname[256];
+  unsigned mode;
+  FILE     *fp;
+
+  if (!cmd_match_str (cmd, fname)) {
+    cmd_error (cmd, "need a file name");
+    return;
+  }
+
+  if (cmd_match (cmd, "t")) {
+    mode = 1;
+  }
+  else if (cmd_match (cmd, "g")) {
+    mode = 2;
+  }
+  else {
+    if (!cmd_match_eol (cmd)) {
+      return;
+    }
+
+    mode = 0;
+  }
+
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    prt_error ("can't open file (%s)\n", fname);
+    return;
+  }
+
+  if (pce_video_screenshot (pc->video, fp, mode)) {
+    fclose (fp);
+    prt_error ("screenshot failed\n");
+    return;
+  }
+
+  fclose (fp);
+}
+
 void do_time (cmd_t *cmd)
 {
   if (cmd_match (cmd, "c")) {
@@ -1534,6 +1574,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "r")) {
       do_r (&cmd);
+    }
+    else if (cmd_match (&cmd, "screenshot")) {
+      do_screenshot (&cmd);
     }
     else if (cmd_match (&cmd, "s")) {
       do_s (&cmd);

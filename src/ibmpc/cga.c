@@ -20,12 +20,33 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.8 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: cga.c,v 1.9 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #include <stdio.h>
 
 #include "pce.h"
+
+
+static
+struct {  unsigned short r, g, b; } cga_col[16] = {
+  { 0x0000, 0x0000, 0x0000 },
+  { 0x0a0a, 0x0a0a, 0xb9b9 },
+  { 0x0a0a, 0xc3c3, 0x0a0a },
+  { 0x1414, 0xa0a0, 0xa0a0 },
+  { 0xa7a7, 0x0a0a, 0x0a0a },
+  { 0xa7a7, 0x0000, 0xa7a7 },
+  { 0xa5a5, 0xa5a5, 0x2828 },
+  { 0xc5c5, 0xc5c5, 0xc5c5 },
+  { 0x6464, 0x6464, 0x6464 },
+  { 0x0a0a, 0x0a0a, 0xffff },
+  { 0x0a0a, 0xffff, 0x0a0a },
+  { 0x0a0a, 0xffff, 0xffff },
+  { 0xffff, 0x0a0a, 0x0a0a },
+  { 0xffff, 0x0a0a, 0xffff },
+  { 0xffff, 0xffff, 0x0000 },
+  { 0xffff, 0xffff, 0xffff }
+};
 
 
 video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
@@ -46,6 +67,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->vid.get_mem = (pce_video_get_mem_f) &cga_get_mem;
   cga->vid.get_reg = (pce_video_get_reg_f) &cga_get_reg;
   cga->vid.prt_state = (pce_video_prt_state_f) &cga_prt_state;
+  cga->vid.screenshot = (pce_video_screenshot_f) &cga_screenshot;
 
   for (i = 0; i < 16; i++) {
     cga->crtc_reg[i] = 0;
@@ -157,6 +179,31 @@ mem_blk_t *cga_get_reg (cga_t *cga)
   return (cga->reg);
 }
 
+
+/*****************************************************************************
+ * mode 0 (text 80 * 25)
+ *****************************************************************************/
+
+static
+int cga_mode0_screenshot (cga_t *cga, FILE *fp)
+{
+  unsigned i;
+  unsigned x, y;
+
+  i = (cga->crtc_ofs << 1) & 0x3fff;
+
+  for (y = 0; y < 25; y++) {
+    for (x = 0; x < 80; x++) {
+      fputc (cga->mem->data[i], fp);
+      i = (i + 2) & 0x7fff;
+    }
+
+    fputs ("\n", fp);
+  }
+
+  return (0);
+}
+
 static
 void cga_mode0_update (cga_t *cga)
 {
@@ -177,6 +224,124 @@ void cga_mode0_update (cga_t *cga)
       i = (i + 2) & 0x3fff;
     }
   }
+}
+
+void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+{
+  unsigned      x, y;
+  unsigned char c, a;
+
+  if (cga->mem->data[addr] == val) {
+    return;
+  }
+
+  cga->mem->data[addr] = val;
+
+  if (addr & 1) {
+    c = cga->mem->data[addr - 1];
+    a = val;
+  }
+  else {
+    c = val;
+    a = cga->mem->data[addr + 1];
+  }
+
+  if (addr < (cga->crtc_ofs << 1)) {
+    return;
+  }
+
+  addr -= (cga->crtc_ofs << 1);
+
+  if (addr >= 4000) {
+    return;
+  }
+
+  x = (addr >> 1) % 80;
+  y = (addr >> 1) / 80;
+
+  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+  trm_set_chr (cga->trm, x, y, c);
+}
+
+void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
+{
+  unsigned      x, y;
+  unsigned char c, a;
+
+  if (addr & 1) {
+    cga_mem_set_uint8 (cga, addr, val & 0xff);
+
+    if (addr < cga->mem->end) {
+      cga_mem_set_uint8 (cga, addr + 1, val >> 8);
+    }
+
+    return;
+  }
+
+  c = val & 0xff;
+  a = (val >> 8) & 0xff;
+
+  if ((cga->mem->data[addr] == c) && (cga->mem->data[addr + 1] == a)) {
+    return;
+  }
+
+  cga->mem->data[addr] = c;
+  cga->mem->data[addr + 1] = a;
+
+  if (addr < (cga->crtc_ofs << 1)) {
+    return;
+  }
+
+  addr -= (cga->crtc_ofs << 1);
+
+  if (addr >= 4000) {
+    return;
+  }
+
+  x = (addr >> 1) % 80;
+  y = (addr >> 1) / 80;
+
+  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+  trm_set_chr (cga->trm, x, y, c);
+}
+
+
+/*****************************************************************************
+ * mode 1 (graphics 320 * 200 * 4)
+ *****************************************************************************/
+
+static
+int cga_mode1_screenshot (cga_t *cga, FILE *fp)
+{
+  unsigned      x, y, i;
+  unsigned      val, idx;
+  unsigned char *mem;
+
+  fputs ("P6\n320 200\n255 ", fp);
+
+  for (y = 0; y < 200; y++) {
+    mem = cga->mem->data + 80 * (y / 2);
+
+    if (y & 1) {
+      mem += 8192;
+    }
+
+    for (x = 0; x < 80; x++) {
+      val = mem[x];
+
+      for (i = 0; i < 4; i++) {
+        idx = (val >> 6) & 0x03;
+        idx = cga->palette[idx];
+        fputc (cga_col[idx].r >> 8, fp);
+        fputc (cga_col[idx].g >> 8, fp);
+        fputc (cga_col[idx].b >> 8, fp);
+
+        val <<= 2;
+      }
+    }
+  }
+
+  return (0);
 }
 
 static
@@ -221,6 +386,151 @@ void cga_mode1_update (cga_t *cga)
     mem1 += 80;
     sy += 4;
   }
+}
+
+void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+{
+  unsigned      i;
+  unsigned      x, y, sx, sy;
+  unsigned char old;
+
+  old = cga->mem->data[addr];
+
+  if (old == val) {
+    return;
+  }
+
+  cga->mem->data[addr] = val;
+
+  if (addr < 8192) {
+    x = 4 * (addr % 80);
+    y = 2 * (addr / 80);
+  }
+  else {
+    x = 4 * ((addr - 8192) % 80);
+    y = 2 * ((addr - 8192) / 80) + 1;
+  }
+
+  if (y >= 200) {
+    return;
+  }
+
+  sx = 2 * x;
+  sy = 2 * y;
+
+  for (i = 0; i < 4; i++) {
+    unsigned col;
+
+    if ((old ^ val) & 0xc0) {
+      col = (val >> 6) & 0x03;
+      trm_set_col (cga->trm, cga->palette[col], 0);
+
+      trm_set_pxl (cga->trm, sx, sy);
+      trm_set_pxl (cga->trm, sx + 1, sy);
+      trm_set_pxl (cga->trm, sx, sy + 1);
+      trm_set_pxl (cga->trm, sx + 1, sy + 1);
+    }
+
+    old <<= 2;
+    val <<= 2;
+    sx += 2;
+  }
+}
+
+
+/*****************************************************************************
+ * mode 2 (graphics 620 * 200 * 2)
+ *****************************************************************************/
+
+static
+int cga_mode2_screenshot (cga_t *cga, FILE *fp)
+{
+  unsigned      x, y, i;
+  unsigned      val;
+  unsigned char *mem;
+
+  fputs ("P5\n640 200\n255 ", fp);
+
+  for (y = 0; y < 200; y++) {
+    mem = cga->mem->data + 80 * (y / 2);
+
+    if (y & 1) {
+      mem += 8192;
+    }
+
+    for (x = 0; x < 80; x++) {
+      val = mem[x];
+
+      for (i = 0; i < 8; i++) {
+        if (val & (0x80 >> i)) {
+          fputc (0xff, fp);
+        }
+        else {
+          fputc (0x00, fp);
+        }
+      }
+    }
+  }
+
+  return (0);
+}
+
+void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+{
+  unsigned      i;
+  unsigned      x, y, sx, sy;
+  unsigned char old;
+
+  old = cga->mem->data[addr];
+
+  if (old == val) {
+    return;
+  }
+
+  cga->mem->data[addr] = val;
+
+  if (addr < 8192) {
+    x = 8 * (addr % 80);
+    y = 2 * (addr / 80);
+  }
+  else {
+    x = 8 * ((addr - 8192) % 80);
+    y = 2 * ((addr - 8192) / 80) + 1;
+  }
+
+  sx = x;
+  sy = 2 * y;
+
+  for (i = 0; i < 8; i++) {
+    unsigned col;
+
+    if ((old ^ val) & 0x80) {
+      col = (val >> 7) & 0x01;
+      trm_set_col (cga->trm, col ? 15 : 0, 0);
+      trm_set_pxl (cga->trm, sx, sy);
+      trm_set_pxl (cga->trm, sx, sy + 1);
+    }
+
+    old <<= 1;
+    val <<= 1;
+    sx += 1;
+  }
+}
+
+
+int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode)
+{
+  if ((cga->mode == 0) && ((mode == 1) || (mode == 0))) {
+    return (cga_mode0_screenshot (cga, fp));
+  }
+  else if ((cga->mode == 1) && ((mode == 2) || (mode == 0))) {
+    return (cga_mode1_screenshot (cga, fp));
+  }
+  else if ((cga->mode == 2) && ((mode == 2) || (mode == 0))) {
+    return (cga_mode2_screenshot (cga, fp));
+  }
+
+  return (1);
 }
 
 void cga_update (cga_t *cga)
@@ -352,176 +662,6 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
   }
 
   cga_update (cga);
-}
-
-void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-  unsigned      x, y;
-  unsigned char c, a;
-
-  if (cga->mem->data[addr] == val) {
-    return;
-  }
-
-  cga->mem->data[addr] = val;
-
-  if (addr & 1) {
-    c = cga->mem->data[addr - 1];
-    a = val;
-  }
-  else {
-    c = val;
-    a = cga->mem->data[addr + 1];
-  }
-
-  if (addr < (cga->crtc_ofs << 1)) {
-    return;
-  }
-
-  addr -= (cga->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-  trm_set_chr (cga->trm, x, y, c);
-}
-
-void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
-{
-  unsigned      x, y;
-  unsigned char c, a;
-
-  if (addr & 1) {
-    cga_mem_set_uint8 (cga, addr, val & 0xff);
-
-    if (addr < cga->mem->end) {
-      cga_mem_set_uint8 (cga, addr + 1, val >> 8);
-    }
-
-    return;
-  }
-
-  c = val & 0xff;
-  a = (val >> 8) & 0xff;
-
-  if ((cga->mem->data[addr] == c) && (cga->mem->data[addr + 1] == a)) {
-    return;
-  }
-
-  cga->mem->data[addr] = c;
-  cga->mem->data[addr + 1] = a;
-
-  if (addr < (cga->crtc_ofs << 1)) {
-    return;
-  }
-
-  addr -= (cga->crtc_ofs << 1);
-
-  if (addr >= 4000) {
-    return;
-  }
-
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
-
-  trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-  trm_set_chr (cga->trm, x, y, c);
-}
-
-void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-  unsigned      i;
-  unsigned      x, y, sx, sy;
-  unsigned char old;
-
-  old = cga->mem->data[addr];
-
-  if (old == val) {
-    return;
-  }
-
-  cga->mem->data[addr] = val;
-
-  if (addr < 8192) {
-    x = 4 * (addr % 80);
-    y = 2 * (addr / 80);
-  }
-  else {
-    x = 4 * ((addr - 8192) % 80);
-    y = 2 * ((addr - 8192) / 80) + 1;
-  }
-
-  if (y >= 200) {
-    return;
-  }
-
-  sx = 2 * x;
-  sy = 2 * y;
-
-  for (i = 0; i < 4; i++) {
-    unsigned col;
-
-    if ((old ^ val) & 0xc0) {
-      col = (val >> 6) & 0x03;
-      trm_set_col (cga->trm, cga->palette[col], 0);
-
-      trm_set_pxl (cga->trm, sx, sy);
-      trm_set_pxl (cga->trm, sx + 1, sy);
-      trm_set_pxl (cga->trm, sx, sy + 1);
-      trm_set_pxl (cga->trm, sx + 1, sy + 1);
-    }
-
-    old <<= 2;
-    val <<= 2;
-    sx += 2;
-  }
-}
-
-void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-  unsigned      i;
-  unsigned      x, y, sx, sy;
-  unsigned char old;
-
-  old = cga->mem->data[addr];
-
-  if (old == val) {
-    return;
-  }
-
-  cga->mem->data[addr] = val;
-
-  if (addr < 8192) {
-    x = 8 * (addr % 80);
-    y = 2 * (addr / 80);
-  }
-  else {
-    x = 8 * ((addr - 8192) % 80);
-    y = 2 * ((addr - 8192) / 80) + 1;
-  }
-
-  sx = x;
-  sy = 2 * y;
-
-  for (i = 0; i < 8; i++) {
-    unsigned col;
-
-    if ((old ^ val) & 0x80) {
-      col = (val >> 7) & 0x01;
-      trm_set_col (cga->trm, col ? 15 : 0, 0);
-      trm_set_pxl (cga->trm, sx, sy);
-      trm_set_pxl (cga->trm, sx, sy + 1);
-    }
-
-    old <<= 1;
-    val <<= 1;
-    sx += 1;
-  }
 }
 
 void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.4 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: mda.h,v 1.5 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #ifndef PCE_MDA_H
@@ -53,6 +53,8 @@ void mda_prt_state (mda_t *mda, FILE *fp);
 mem_blk_t *mda_get_mem (mda_t *mda);
 
 mem_blk_t *mda_get_reg (mda_t *mda);
+
+int mda_screenshot (mda_t *hgc, FILE *fp, unsigned mode);
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
 void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.c,v 1.1 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: video.c,v 1.2 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -68,4 +68,13 @@ void pce_video_prt_state (video_t *vid, FILE *fp)
   if (vid->prt_state != NULL) {
     vid->prt_state (vid->ext, fp);
   }
+}
+
+int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode)
+{
+  if (vid->screenshot != NULL) {
+    return (vid->screenshot (vid->ext, fp, mode));
+  }
+
+  return (1);
 }

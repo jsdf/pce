@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.6 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: cga.h,v 1.7 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -59,6 +59,8 @@ void cga_prt_state (cga_t *cga, FILE *fp);
 
 mem_blk_t *cga_get_mem (cga_t *cga);
 mem_blk_t *cga_get_reg (cga_t *cga);
+
+int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode);
 
 void cga_set_pos (cga_t *cga, unsigned pos);
 

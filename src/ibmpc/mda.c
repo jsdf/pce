@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.7 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: mda.c,v 1.8 2003/08/30 16:55:36 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
   mda->vid.get_mem = (pce_video_get_mem_f) &mda_get_mem;
   mda->vid.get_reg = (pce_video_get_reg_f) &mda_get_reg;
   mda->vid.prt_state = (pce_video_prt_state_f) &mda_prt_state;
+  mda->vid.screenshot = (pce_video_screenshot_f) &mda_screenshot;
 
   for (i = 0; i < 16; i++) {
     mda->crtc_reg[i] = 0;
@@ -154,6 +155,29 @@ mem_blk_t *mda_get_mem (mda_t *mda)
 mem_blk_t *mda_get_reg (mda_t *mda)
 {
   return (mda->reg);
+}
+
+int mda_screenshot (mda_t *mda, FILE *fp, unsigned mode)
+{
+  unsigned i;
+  unsigned x, y;
+
+  if ((mode != 0) && (mode != 1)) {
+    return (1);
+  }
+
+  i = 0;
+
+  for (y = 0; y < 25; y++) {
+    for (x = 0; x < 80; x++) {
+      fputc (mda->mem->data[i], fp);
+      i += 2;
+    }
+
+    fputs ("\n", fp);
+  }
+
+  return (0);
 }
 
 static
