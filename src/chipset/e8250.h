@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.h                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -211,7 +211,6 @@ int e8250_set_chip (e8250_t *uart, unsigned chip);
  *****************************************************************************/
 int e8250_set_chip_str (e8250_t *uart, const char *str);
 
-
 /*!***************************************************************************
  * @short Set the IRQ function
  * @param uart The UART structure
@@ -219,6 +218,14 @@ int e8250_set_chip_str (e8250_t *uart, const char *str);
  * @param ext  The transparent parameter for fct
  *****************************************************************************/
 void e8250_set_irq_f (e8250_t *uart, e8250_irq_f fct, void *ext);
+
+/*!***************************************************************************
+ * @short Set the input and output queue sizes
+ * @param uart The UART structure
+ * @param inp  The input queue size
+ * @param out  The output queue size
+ *****************************************************************************/
+void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out);
 
 
 /*!***************************************************************************
@@ -310,6 +317,10 @@ int e8250_set_inp (e8250_t *uart, unsigned char val);
  *****************************************************************************/
 int e8250_get_inp (e8250_t *uart, unsigned char *val);
 
+/*!***************************************************************************
+ * @short  Clear the input queue
+ * @param  uart The UART structure
+ *****************************************************************************/
 void e8250_get_inp_all (e8250_t *uart);
 
 /*!***************************************************************************
@@ -319,6 +330,11 @@ void e8250_get_inp_all (e8250_t *uart);
  *****************************************************************************/
 int e8250_inp_full (e8250_t *uart);
 
+/*!***************************************************************************
+ * @short  Check if the input queue is empty
+ * @param  uart The UART structure
+ * @return Nonzero if the queue is empty
+ *****************************************************************************/
 int e8250_inp_empty (e8250_t *uart);
 
 

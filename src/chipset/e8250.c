@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.c                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -150,6 +150,17 @@ void e8250_set_irq_f (e8250_t *uart, e8250_irq_f fct, void *ext)
 {
   uart->irq = fct;
   uart->irq_ext = ext;
+}
+
+void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
+{
+  uart->inp_i = 0;
+  uart->inp_j = 0;
+  uart->inp_n = (inp <= E8250_BUF_MAX) ? inp : E8250_BUF_MAX;
+
+  uart->out_i = 0;
+  uart->out_j = 0;
+  uart->out_n = (out <= E8250_BUF_MAX) ? out : E8250_BUF_MAX;
 }
 
 static
