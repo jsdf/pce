@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+;* Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -1070,14 +1070,16 @@ db 0x1E                                 ; E5D1 push ds
 db 0xE8, 0x69, 0x19                     ; E5D2 call 0xff3e
 db 0x0A, 0xF6                           ; E5D5 or dh,dh
 db 0x74, 0x18                           ; E5D7 jz 0xe5f1
-db 0xB3, 0x06                           ; E5D9 mov bl,0x6
+L_E5D9:
+  mov     bl, 0x06
   call    beep
 
 L_E5DE:
   loop    L_E5DE
 
-db 0xFE, 0xCE                           ; E5E0 dec dh
-db 0x75, 0xF5                           ; E5E2 jnz 0xe5d9
+  dec     dh
+  jnz     L_E5D9
+
 db 0x80, 0x3E, 0x12, 0x00, 0x01         ; E5E4 cmp byte [0x12],0x1
 db 0x75, 0x06                           ; E5E9 jnz 0xe5f1
 db 0xB0, 0xCD                           ; E5EB mov al,0xcd

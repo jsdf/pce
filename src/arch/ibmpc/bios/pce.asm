@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-01-10 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+;* Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -64,6 +64,7 @@ start:
   call    init_pic
   call    init_pit
   call    init_ppi
+  call    init_dma
 
   sti
 
@@ -166,6 +167,37 @@ init_ppi:
 
   mov     al, 0x7c
   out     0x61, al
+
+  pop     ax
+  ret
+
+
+init_dma:
+  push    ax
+
+  mov     al, 0
+  out     0x0d, al                      ; master clear
+
+  out     0x0c, al                      ; clear flip flop
+
+  out     0x00, al                      ; address
+  out     0x00, al
+
+  mov     al, 0xff
+  out     0x01, al                      ; count
+  out     0x01, al
+
+  mov     al, 0x58                      ; mode channel 0
+  out     0x0b, al
+
+  mov     al, 0x41
+  out     0x0b, al
+
+  inc     ax
+  out     0x0b, al
+
+  inc     ax
+  out     0x0b, al
 
   pop     ax
   ret

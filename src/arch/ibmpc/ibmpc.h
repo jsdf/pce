@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -37,42 +37,38 @@
 
 
 typedef struct ibmpc_t {
-  e8086_t       *cpu;
-  video_t       *video;
-  disks_t       *dsk;
-  mouse_t       *mse;
+  e8086_t            *cpu;
+  video_t            *video;
+  disks_t            *dsk;
+  mouse_t            *mse;
 
-  memory_t      *mem;
-  mem_blk_t     *ram;
+  memory_t           *mem;
+  mem_blk_t          *ram;
 
-  memory_t      *prt;
+  memory_t           *prt;
 
-  nvram_t       *nvr;
+  nvram_t            *nvr;
 
-  e8253_t       *pit;
-  mem_blk_t     *pit_prt;
+  e8237_t            dma;
+  e8253_t            pit;
+  e8255_t            ppi;
+  e8259_t            pic;
 
-  e8255_t       *ppi;
-  mem_blk_t     *ppi_prt;
-  unsigned char ppi_port_a[2];
-  unsigned char ppi_port_b;
-  unsigned char ppi_port_c[2];
+  unsigned char      ppi_port_a[2];
+  unsigned char      ppi_port_b;
+  unsigned char      ppi_port_c[2];
 
-  unsigned      key_i;
-  unsigned      key_j;
-  unsigned long key_clk;
-  unsigned char key_buf[256];
+  unsigned           key_i;
+  unsigned           key_j;
+  unsigned char      key_buf[256];
 
-  e8259_t       *pic;
-  mem_blk_t     *pic_prt;
+  ems_t              *ems;
+  xms_t              *xms;
 
-  ems_t         *ems;
-  xms_t         *xms;
+  terminal_t         *trm;
 
-  terminal_t    *trm;
-
-  serport_t     *serport[4];
-  parport_t     *parport[4];
+  serport_t          *serport[4];
+  parport_t          *parport[4];
 
   unsigned           cpu_model;
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -69,6 +69,8 @@ static unsigned long long pce_hclk_last = 0;
 #define PCE_LAST_MAX 1024
 static unsigned short     pce_last_i = 0;
 static unsigned short     pce_last[PCE_LAST_MAX][2];
+
+static unsigned           pce_last_int = 0;
 
 static ibmpc_t            *pc;
 
@@ -401,6 +403,26 @@ void prt_uint8_bin (FILE *fp, unsigned char val)
   }
 }
 
+void prt_sep (FILE *fp, const char *str, ...)
+{
+  unsigned i;
+  va_list  va;
+
+  fputs ("-", fp);
+  i = 1;
+
+  va_start (va, str);
+  i += vfprintf (fp, str, va);
+  va_end (va);
+
+  while (i < 78) {
+    fputc ('-', fp);
+    i += 1;
+  }
+
+  fputs ("\n", fp);
+}
+
 static
 void prt_state_time (FILE *fp)
 {
@@ -525,6 +547,41 @@ void prt_state_ppi (e8255_t *ppi, FILE *fp)
 }
 
 static
+void prt_state_dma (e8237_t *dma, FILE *fp)
+{
+  unsigned i;
+
+  prt_sep (fp, "8237-DMAC");
+
+  fprintf (fp, "CMD=%02X  PRI=%02X  CHK=%d\n",
+    e8237_get_command (dma),
+    e8237_get_priority (dma),
+    dma->check != 0
+  );
+
+  for (i = 0; i < 4; i++) {
+    unsigned short state;
+
+    state = e8237_get_state (dma, i);
+
+    fprintf (fp,
+      "CHN %u: MODE=%02X ADDR=%04X[%04X] CNT=%04X[%04X] DREQ=%d SREQ=%d MASK=%d\n",
+      i,
+      e8237_get_mode (dma, i) & 0xfcU,
+      e8237_get_addr (dma, i),
+      e8237_get_addr_base (dma, i),
+      e8237_get_cnt (dma, i),
+      e8237_get_cnt_base (dma, i),
+      (state & E8237_STATE_DREQ) != 0,
+      (state & E8237_STATE_SREQ) != 0,
+      (state & E8237_STATE_MASK) != 0
+    );
+  }
+
+  fflush (fp);
+}
+
+static
 void prt_state_pic (e8259_t *pic, FILE *fp)
 {
   unsigned i;
@@ -615,7 +672,7 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
     "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
     e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
     e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
-    e86_get_last_int (c)
+    pce_last_int
   );
 
   fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
@@ -635,9 +692,10 @@ static
 void prt_state_pc (ibmpc_t *pc, FILE *fp)
 {
   prt_state_video (pc->video, fp);
-  prt_state_ppi (pc->ppi, fp);
-  prt_state_pit (pc->pit, fp);
-  prt_state_pic (pc->pic, fp);
+  prt_state_ppi (&pc->ppi, fp);
+  prt_state_pit (&pc->pit, fp);
+  prt_state_pic (&pc->pic, fp);
+  prt_state_dma (&pc->dma, fp);
   prt_state_time (fp);
   prt_state_cpu (pc->cpu, fp);
 }
@@ -828,10 +886,14 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
   pce_last_i = (pce_last_i + 1) % PCE_LAST_MAX;
   pce_last[pce_last_i][0] = e86_get_cs (pc->cpu);
   pce_last[pce_last_i][1] = e86_get_ip (pc->cpu);
+}
 
-//  pce_log (MSG_DEB, "%04X:%04X\n", e86_get_cs (pc->cpu), e86_get_ip (pc->cpu));
+static
+void pce_op_int (void *ext, unsigned char n)
+{
+  pce_last_int = n;
 
-  if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
+  if (n == 0x28) {
     if (par_int28 > 0) {
       cpu_end();
       usleep (par_int28);
@@ -1284,6 +1346,22 @@ void do_last (cmd_t *cmd)
   unsigned short i, j, n;
   unsigned       idx;
 
+  if (cmd_match (cmd, "start")) {
+    if (!cmd_match_end (cmd)) {
+      return;
+    }
+    pc->cpu->op_stat = &pce_op_stat;
+    return;
+  }
+
+  if (cmd_match (cmd, "stop")) {
+    if (!cmd_match_end (cmd)) {
+      return;
+    }
+    pc->cpu->op_stat = NULL;
+    return;
+  }
+
   i = 0;
   n = 16;
 
@@ -1477,13 +1555,16 @@ void do_s (cmd_t *cmd)
       prt_state_cpu (pc->cpu, stdout);
     }
     else if (cmd_match (cmd, "pit")) {
-      prt_state_pit (pc->pit, stdout);
+      prt_state_pit (&pc->pit, stdout);
     }
     else if (cmd_match (cmd, "ppi")) {
-      prt_state_ppi (pc->ppi, stdout);
+      prt_state_ppi (&pc->ppi, stdout);
     }
     else if (cmd_match (cmd, "pic")) {
-      prt_state_pic (pc->pic, stdout);
+      prt_state_pic (&pc->pic, stdout);
+    }
+    else if (cmd_match (cmd, "dma")) {
+      prt_state_dma (&pc->dma, stdout);
     }
     else if (cmd_match (cmd, "time")) {
       prt_state_time (stdout);
@@ -1911,7 +1992,7 @@ int main (int argc, char *argv[])
   pc = pc_new (sct);
   par_pc = pc;
 
-  pc->cpu->op_stat = &pce_op_stat;
+  pc->cpu->op_int = &pce_op_int;
   pc->cpu->op_undef = &pce_op_undef;
 
   e86_reset (pc->cpu);

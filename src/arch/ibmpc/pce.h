@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -83,6 +83,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <lib/hexdump.h>
 
 #include <cpu/e8086/e8086.h>
+#include <chipset/e8237.h>
 #include <chipset/e8250.h>
 #include <chipset/e8253.h>
 #include <chipset/e8255.h>
