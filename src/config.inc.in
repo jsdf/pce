@@ -1,0 +1,48 @@
+;*****************************************************************************
+;* pce                                                                       *
+;*****************************************************************************
+
+;*****************************************************************************
+;* File name:     src/config.inc.in                                          *
+;* Created:       2003-09-03 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2003-09-03 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;*****************************************************************************
+
+;*****************************************************************************
+;* This program is free software. You can redistribute it and / or modify it *
+;* under the terms of the GNU General Public License version 2 as  published *
+;* by the Free Software Foundation.                                          *
+;*                                                                           *
+;* This program is distributed in the hope  that  it  will  be  useful,  but *
+;* WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
+;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+;* Public License for more details.                                          *
+;*****************************************************************************
+
+; $Id: config.inc.in,v 1.1 2003/09/02 11:43:03 hampa Exp $
+
+
+%ifndef PCE_CONFIG_INC
+%define PCE_CONFIG_INC 1
+
+
+%define PCE_VERSION_MAJ @PCE_VERSION_MAJ@
+%define PCE_VERSION_MIN @PCE_VERSION_MIN@
+%define PCE_VERSION_MIC @PCE_VERSION_MIC@
+%define PCE_VERSION_STR "@PCE_VERSION_STR@"
+
+%define PCE_CFG_DATE "@PCE_CFG_DATE@"
+%define PCE_CFG_TIME "@PCE_CFG_TIME@"
+
+%define PCE_HOST_FOSC @PCE_HOST_FOSC@
+
+%define PCE_HAVE_TSC @PCE_HAVE_TSC@
+
+%define PCE_DIR_ETC "@PCE_DIR_ETC@"
+%define PCE_DIR_DATA "@PCE_DIR_DATA@"
+
+%define PCE_X11_USE @PCE_X11_USE@
+
+
+%endif

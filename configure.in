@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.17 2003/08/23 12:35:29 hampa Exp $
+# $Id: configure.in,v 1.18 2003/09/02 11:43:03 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -36,10 +36,10 @@ PCE_VERSION_MAJ=0
 PCE_VERSION_MIN=1
 PCE_VERSION_MIC=1
 PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
-AC_SUBST($PCE_VERSION_MAJ)
-AC_SUBST($PCE_VERSION_MIN)
-AC_SUBST($PCE_VERSION_MIC)
-AC_SUBST($PCE_VERSION_STR)
+AC_SUBST(PCE_VERSION_MAJ)
+AC_SUBST(PCE_VERSION_MIN)
+AC_SUBST(PCE_VERSION_MIC)
+AC_SUBST(PCE_VERSION_STR)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MAJ, $PCE_VERSION_MAJ)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIN, $PCE_VERSION_MIN)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIC, $PCE_VERSION_MIC)
@@ -139,7 +139,11 @@ eval "pce_etcdir=$pce_etcdir"
 eval "pce_datdir=$datadir"
 eval "pce_datdir=$pce_datdir"
 
+PCE_DIR_ETC=$pce_etcdir
+PCE_DIR_DATA=$pce_datdir
 
+AC_SUBST(PCE_DIR_ETC)
+AC_SUBST(PCE_DIR_DATA)
 AC_DEFINE_UNQUOTED(PCE_DIR_ETC, "$pce_etcdir")
 AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
@@ -155,6 +159,7 @@ AC_OUTPUT(
   src/libini/Makefile
   src/pceutils/Makefile
   src/terminal/Makefile
+  src/config.inc
 )
 
 

@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.4 2003/04/24 23:18:15 hampa Exp $
+# $Id: Makefile.inc.in,v 1.5 2003/09/02 11:43:03 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -92,6 +92,3 @@ endif
 
 %.o: %.c
 	$(CC) -c $(CC_FLG) $(CC_FLG_EXTRA) -o $@ $<
-
-%.bin: %.asm
-	$(NASM) -f bin -l $*.lst -o $@ $<
