@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.6 2003/09/08 17:16:06 hampa Exp $ */
+/* $Id: memory.c,v 1.1 2003/11/08 14:54:55 hampa Exp $ */
 
 
 #include <stdlib.h>

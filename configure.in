@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.31 2003/11/08 14:20:19 hampa Exp $
+# $Id: configure.in,v 1.32 2003/11/08 14:54:55 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -248,6 +248,7 @@ AC_OUTPUT(
   Makefile
   src/Makefile
   src/chipset/Makefile
+  src/devices/Makefile
   src/e8086/Makefile
   src/ibmpc/bios/Makefile
   src/ibmpc/Makefile

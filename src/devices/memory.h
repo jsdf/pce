@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.3 2003/08/30 03:07:44 hampa Exp $ */
+/* $Id: memory.h,v 1.1 2003/11/08 14:54:55 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.23 2003/11/08 14:40:33 hampa Exp $ */
+/* $Id: pce.h,v 1.24 2003/11/08 14:54:55 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -101,7 +101,8 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <terminal/sdl.h>
 #endif
 
-#include "memory.h"
+#include <devices/memory.h>
+
 #include "disk.h"
 #include "video.h"
 #include "mda.h"
