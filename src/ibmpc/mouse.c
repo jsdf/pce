@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mouse.c                                          *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.c,v 1.3 2003/09/17 04:22:31 hampa Exp $ */
+/* $Id: mouse.c,v 1.4 2003/10/03 23:15:39 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -164,7 +164,7 @@ unsigned char mse_recv_get_byte (mouse_t *mse)
 void mse_recv_set_byte (mouse_t *mse, unsigned char val)
 {
   if (mse->rcnt >= MSE_BUF) {
-    pce_log (MSG_INF, "mouse: RxRD buffer full\n");
+    pce_log (MSG_INF, "mouse:\tRxRD buffer full\n");
     return;
   }
 
@@ -298,7 +298,7 @@ void mse_reg_set_uint8 (mouse_t *mse, unsigned long addr, unsigned char val)
 
     case 0x04:
       if (val & MSE_MCR_DTR) {
-        pce_log (MSG_DEB, "mouse: reset\n");
+        pce_log (MSG_DEB, "mouse:\treset\n");
         mse->accu_ok = 0;
         mse->rcnt = 0;
         mse->reg->data[5] &= ~MSE_SSR_RRD;
