@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.10 2003/08/30 17:16:18 hampa Exp $ */
+/* $Id: vt100.c,v 1.11 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -269,7 +269,8 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
   vt->crs_x = 0;
   vt->crs_y = 0;
 
-  vt->crs_y1 = 1;
+  vt->crs_on = 0;
+  vt->crs_y1 = 0;
   vt->crs_y2 = 0;
 
   vt->fd_inp = inp;
@@ -658,12 +659,13 @@ void vt100_set_col (vt100_t *vt, unsigned fg, unsigned bg)
   vt100_write (vt, buf, i);
 }
 
-void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2)
+void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2, int show)
 {
+  vt->crs_on = (show != 0);
   vt->crs_y1 = y1;
   vt->crs_y2 = y2;
 
-  if (vt->crs_y1 <= vt->crs_y2) {
+  if (vt->crs_on) {
     vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
   }
 }
@@ -673,7 +675,7 @@ void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y)
   vt->crs_x = x;
   vt->crs_y = y;
 
-  if (vt->crs_y1 <= vt->crs_y2) {
+  if (vt->crs_on) {
     vt100_set_pos_scn (vt, x, y);
   }
 }
@@ -690,7 +692,7 @@ void vt100_set_chr (vt100_t *vt, unsigned x, unsigned y, unsigned char c)
 
   vt->scn_x += 1;
 
-  if (vt->crs_y1 <= vt->crs_y2) {
+  if (vt->crs_on) {
     vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
   }
 }

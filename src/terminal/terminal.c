@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.7 2003/09/19 14:47:50 hampa Exp $ */
+/* $Id: terminal.c,v 1.8 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -83,10 +83,10 @@ void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg)
   }
 }
 
-void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2)
+void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2, int show)
 {
   if (trm->set_crs != NULL) {
-    trm->set_crs (trm->ext, y1, y2);
+    trm->set_crs (trm->ext, y1, y2, show);
   }
 }
 

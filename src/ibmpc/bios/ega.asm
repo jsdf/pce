@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.4 2003/09/21 01:08:50 hampa Exp $
+; $Id: ega.asm,v 1.5 2003/09/21 04:04:22 hampa Exp $
 
 
 %include "config.inc"
@@ -109,7 +109,7 @@ segb800   dw 0xb800
 
 bios_ds   dw 0x0040
 
-cursor14  db 0, 1, 2, 3, 4, 5, 11, 12
+cursor14  db 0, 2, 4, 6, 8, 10, 11, 13, 14
 
 pal_default:
   db      0x00
@@ -150,8 +150,44 @@ pal_mono:
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
 
 
+mode00:
+  db      40, 24, 14
+  dw      2000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode01:
+  db      40, 24, 14
+  dw      2000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode02:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode03:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
 ptr00a8:
-  dw      0, 0                          ; video parameter table
+  dw      mode00, 0xc000                 ; video parameter table
   dw      pal_default, 0xc000
 ;  dw      0, 0                          ; palette
   dw      0, 0
@@ -638,8 +674,8 @@ int_10_00_03:
   mov     ax, 0x0c0b
   out     dx, ax
 
-  mov     dx, 0x3c2
-  mov     al, 0xc2
+  mov     dx, 0x3cc
+  mov     al, 0x43
   out     dx, al
 
   mov     dx, CRTC_INDEX
@@ -877,7 +913,11 @@ int_10_00_10:
   ret
 
 
-; int 10 func 00 - set video mode
+;*****************************************************************************
+;* int 10 func 00 - set video mode
+;* inp: AL = video mode
+;*****************************************************************************
+
 int_10_00:
   push    si
 
@@ -901,16 +941,30 @@ int_10_00:
   ret
 
 
-; int 10 func 01 - set cursor size
+;*****************************************************************************
+;* int 10 func 01 - set cursor size
+;* inp: CH = start line
+;*      CL = end line
+;*****************************************************************************
+
 int_10_01:
   push    ax
   push    cx
   push    dx
   push    bx
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
-  and     cx, 0x0707
+  cmp     cl, 0x07
+  jbe     .clok
+  mov     cl, 0x08
+
+.clok:
+  cmp     ch, 0x07
+  jbe     .chok
+  mov     ch, 0x08
+
+.chok:
   mov     [BIOS_CSIZ], cx
 
   mov     bh, 0
@@ -935,13 +989,18 @@ int_10_01:
   ret
 
 
-; int 10 func 02 - set cursor position
+;*****************************************************************************
+;* int 10 func 01 - set cursor position
+;* inp: DH = row
+;*      DL = column
+;*****************************************************************************
+
 int_10_02:
   push    ax
   push    dx
   push    bx
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   mov     al, bh                        ; page
 
@@ -1499,7 +1558,13 @@ int_10_0e:
   ret
 
 
-; int 10 func 0f - get video mode
+;*****************************************************************************
+;* int 10 func 0f - get video mode
+;* out: AL = video mode
+;*      AH = columns
+;*      BH = current page
+;*****************************************************************************
+
 int_10_0f:
   mov     ds, [cs:bios_ds]
   mov     al, [BIOS_MODE]
@@ -1599,33 +1664,58 @@ int_10_11:
 
 ; int 10 func 1130 - get font information
 int_10_1130:
-  mov     es, [cs:seg0040]
   mov     cx, 14
-  mov     dl, [es:BIOS_COLS]
-  dec     dl
+  mov     dl, 24
 
   push    cs
   pop     es
 
-  cmp     bh, 2
-  jne     .not8x14
+  cmp     bh, 0x01
+  jb      .int1f
+  je      .int43
+
+  cmp     bh, 0x03
+  jb      .fnt8x14
+  je      .fnt8x8
+
+  cmp     bh, 0x05
+  jb      .fnt8x8_2
+  je      .fnt9x14
+
+  cmp     bh, 0x07
+  jb      .fnt8x16
+  je      .fnt9x16
+
+  jmp     .done
+
+.int1f:
+  xor     bp, bp
+  mov     es, bp
+  les     bp, [es:4 * 0x1f]
+  jmp     .done
+
+.int43:
+  xor     bp, bp
+  mov     es, bp
+  les     bp, [es:4 * 0x43]
+  jmp     .done
+
+.fnt8x14:
   mov     bp, fnt_8x14
   jmp     .done
 
-.not8x14
-  cmp     bh, 3
-  jne     .not8x8
+.fnt8x8:
   mov     bp, fnt_8x8
   jmp     .done
 
-.not8x8:
-  cmp     bh, 4
-  jne     .not8x8_2
+.fnt8x8_2:
   mov     bp, fnt_8x8 + 8 * 128
   jmp     .done
 
-.not8x8_2:
-  xor     bp, bp
+.fnt8x16:
+.fnt9x14:
+.fnt9x16:
+  jmp     .done
 
 .done:
   ret
@@ -1699,8 +1789,19 @@ ega_init:
   xor     ax, ax
   mov     ds, ax
 
+  mov     ax, [4 * 0x10]
+  mov     [4 * 0x42], ax
+  mov     ax, [4 * 0x10 + 2]
+  mov     [4 * 0x42 + 2], ax
+
   mov     word [4 * 0x10], int_10
   mov     word [4 * 0x10 + 2], cs
+
+  mov     word [4 * 0x1f], fnt_8x8 + 8 * 128
+  mov     word [4 * 0x1f + 2], cs
+
+  mov     word [4 * 0x43], fnt_8x8 + 8 * 128
+  mov     word [4 * 0x43 + 2], cs
 
   mov     ds, [cs:seg0040]
   mov     word [0x00a8], ptr00a8

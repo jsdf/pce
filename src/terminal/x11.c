@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.6 2003/09/19 14:47:50 hampa Exp $ */
+/* $Id: x11.c,v 1.7 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -92,7 +92,9 @@ int xt_init_cursor (xterm_t *xt)
 {
   xt->init_cursor = 1;
 
-  xt->crs_y1 = 32;
+  xt->crs_on = 0;
+
+  xt->crs_y1 = 0;
   xt->crs_y2 = 0;
 
   xt->crs_x = 0;
@@ -370,7 +372,7 @@ void xt_crs_restore (xterm_t *xt)
 {
   int x, y;
 
-  if (xt->crs_y1 <= xt->crs_y2) {
+  if (xt->crs_on) {
     x = xt->crs_x * xt->font_w;
     y = xt->crs_y * xt->font_h;
     XCopyArea (xt->display, xt->back, xt->wdw, xt->gc,
@@ -401,7 +403,7 @@ void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
   }
 
   XFillRectangle (xt->display, xt->wdw, xt->crs_gc,
-    x * xt->font_w, (y + 1) * xt->font_h - xt->crs_y2 - 1,
+    x * xt->font_w, y * xt->font_h + xt->crs_y1,
     xt->font_w, xt->crs_y2 - xt->crs_y1 + 1
   );
 }
@@ -425,6 +427,8 @@ void xt_set_size (xterm_t *xt, unsigned m, unsigned w, unsigned h)
 
     xt->wdw_w = w;
     xt->wdw_h = h;
+
+    xt->crs_on = 0;
   }
 
   xt->scn = (unsigned char *) realloc (xt->scn, 2 * xt->scn_w * xt->scn_h);
@@ -504,9 +508,14 @@ void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg)
   XSetBackground (xt->display, xt->back_gc, xt->col[xt->bg].pixel);
 }
 
-void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2)
+void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2, int show)
 {
   xt_crs_restore (xt);
+
+  xt->crs_on = (show != 0);
+
+  y1 = (y1 <= 255) ? y1 : 255;
+  y2 = (y2 <= 255) ? y2 : 255;
 
   xt->crs_y1 = (xt->font_h * y1) / 256;
   xt->crs_y2 = (xt->font_h * y2) / 256;

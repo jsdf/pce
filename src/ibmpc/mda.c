@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.9 2003/08/31 01:38:11 hampa Exp $ */
+/* $Id: mda.c,v 1.10 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -200,18 +200,19 @@ void mda_set_pos (mda_t *mda, unsigned pos)
 static
 void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
 {
-  if (y1 < y2) {
-    y1 = 0;
-    y2 = 13;
+  if (y1 > 13) {
+    trm_set_crs (mda->trm, 0, 0, 0);
+    return;
   }
 
-  y1 = (y1 <= 13) ? (13 - y1) : 0;
-  y2 = (y2 <= 13) ? (13 - y2) : 0;
+  if ((y2 < y1) || (y2 > 13)) {
+    y2 = 13;
+  }
 
   y1 = (255 * y1 + 6) / 13;
   y2 = (255 * y2 + 6) / 13;
 
-  trm_set_crs (mda->trm, y1, y2);
+  trm_set_crs (mda->trm, y1, y2, 1);
 }
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
@@ -301,7 +302,7 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x0a:
     case 0x0b:
-      mda_set_crs (mda, mda->crtc_reg[0x0b], mda->crtc_reg[0x0a]);
+      mda_set_crs (mda, mda->crtc_reg[0x0a], mda->crtc_reg[0x0b]);
       break;
 
     case 0x0e:

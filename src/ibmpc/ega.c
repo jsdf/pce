@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.4 2003/09/19 14:48:36 hampa Exp $ */
+/* $Id: ega.c,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -133,14 +133,14 @@ void ega_prt_state (ega_t *ega, FILE *fp)
     y = (ega->crtc_pos - ega->crtc_ofs) / 80;
   }
 
-  fprintf (fp, "EGA: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=%s  LATCH=[%02x %02x %02x %02x]\n",
+  fprintf (fp, "EGA: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=[%u-%u]  LATCH=[%02x %02x %02x %02x]\n",
     ega->mode, ega->crtc_ofs, ega->crtc_pos, x, y,
-    (ega->crtc_reg[0x0b] < ega->crtc_reg[0x0a]) ? "OFF" : "ON",
+    ega->crtc_reg[0x0a], ega->crtc_reg[0x0b],
     ega->latch[0], ega->latch[1], ega->latch[2], ega->latch[3]
   );
 
-  fprintf (fp, "REGS: 3CC=%02x  3DA=%02x\n",
-    ega->reg->data[0x1c], ega->reg->data[0x2a]
+  fprintf (fp, "REGS: 3C2=%02x  3CC=%02x  3DA=%02x\n",
+    ega->reg->data[0x12], ega->reg->data[0x1c], ega->reg->data[0x2a]
   );
 
   fprintf (fp, "CRTC: [%02X", ega->crtc_reg[0]);
@@ -759,18 +759,19 @@ void ega_set_pos (ega_t *ega, unsigned pos)
 void ega_set_crs (ega_t *ega, unsigned y1, unsigned y2)
 {
   if (ega->mode == 0) {
-    if (y1 < y2) {
-      y1 = 0;
-      y2 = 13;
+    if (y1 > 13) {
+      trm_set_crs (ega->trm, 0, 0, 0);
+      return;
     }
 
-    y1 = (y1 <= 13) ? (13 - y1) : 0;
-    y2 = (y2 <= 13) ? (13 - y2) : 0;
+    if ((y2 < y1) || (y2 > 13)) {
+      y2 = 13;
+    }
 
     y1 = (255 * y1 + 6) / 13;
     y2 = (255 * y2 + 6) / 13;
 
-    trm_set_crs (ega->trm, y1, y2);
+    trm_set_crs (ega->trm, y1, y2, 1);
   }
 }
 
@@ -1012,7 +1013,7 @@ void ega_crtc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x0a:
     case 0x0b:
-      ega_set_crs (ega, ega->crtc_reg[0x0b], ega->crtc_reg[0x0a]);
+      ega_set_crs (ega, ega->crtc_reg[0x0a], ega->crtc_reg[0x0b]);
       break;
 
     case 0x0c:
@@ -1059,6 +1060,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       break;
 
     case 0x12: /* 0x3c2: misc output register */
+    case 0x1c:
       ega->reg->data[0x1c] = val;
       break;
 
@@ -1104,12 +1106,12 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       }
       break;
 
-    case 0x04:
+//    case 0x04:
     case 0x24: /* 0x3d4: CRTC index */
       ega->reg->data[0x24] = val;
       break;
 
-    case 0x05:
+//    case 0x05:
     case 0x25: /* 0x3d5: CRTC data */
       ega_crtc_set_reg (ega, ega->reg->data[0x24], val);
       break;
@@ -1147,15 +1149,15 @@ unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
     case 0x1f: /* 0x3cf: GDC data */
       return (ega_gdc_get_reg (ega, ega->reg->data[0x1e]));
 
-    case 0x04:
+//    case 0x04:
     case 0x24: /* 0x3d4 CRTC index */
       return (ega->reg->data[0x24]);
 
-    case 0x05:
+//    case 0x05:
     case 0x25: /* 0x3d5 CRTC data */
       return (ega_crtc_get_reg (ega, ega->reg->data[0x24]));
 
-    case 0x0a:
+//    case 0x0a:
     case 0x2a: /* 0x3da */
       ega->atc_index = 1;
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.13 2003/09/19 14:47:50 hampa Exp $ */
+/* $Id: cga.c,v 1.14 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -559,18 +559,19 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 {
   if (cga->mode == 0) {
-    if (y1 < y2) {
-      y1 = 0;
-      y2 = 7;
+    if (y1 > 7) {
+      trm_set_crs (cga->trm, 0, 0, 0);
+      return;
     }
 
-    y1 = (y1 <= 7) ? (7 - y1) : 0;
-    y2 = (y2 <= 7) ? (7 - y2) : 0;
+    if ((y2 < y1) || (y2 > 7)) {
+      y2 = 7;
+    }
 
     y1 = (y1 << 5) | (y1 << 2) | (y1 >> 1);
     y2 = (y2 << 5) | (y2 << 2) | (y2 >> 1);
 
-    trm_set_crs (cga->trm, y1, y2);
+    trm_set_crs (cga->trm, y1, y2, 1);
   }
 }
 
@@ -710,7 +711,7 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x0a:
     case 0x0b:
-      cga_set_crs (cga, cga->crtc_reg[0x0b], cga->crtc_reg[0x0a]);
+      cga_set_crs (cga, cga->crtc_reg[0x0a], cga->crtc_reg[0x0b]);
       break;
 
     case 0x0c:

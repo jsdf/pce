@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.h,v 1.4 2003/08/29 13:28:25 hampa Exp $ */
+/* $Id: vt100.h,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_VT100_H
@@ -54,6 +54,7 @@ typedef struct {
   unsigned       crs_x;
   unsigned       crs_y;
 
+  char           crs_on;
   unsigned       crs_y1;
   unsigned       crs_y2;
 
@@ -73,7 +74,7 @@ void vt100_del (vt100_t *vt);
 
 void vt100_set_size (vt100_t *vt, unsigned m, unsigned w, unsigned h);
 void vt100_set_col (vt100_t *vt, unsigned fg, unsigned bg);
-void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2);
+void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2, int show);
 void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y);
 void vt100_set_chr (vt100_t *vt, unsigned x, unsigned y, unsigned char c);
 void vt100_check (vt100_t *vt);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.11 2003/09/19 14:47:50 hampa Exp $ */
+/* $Id: hgc.c,v 1.12 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -487,18 +487,19 @@ static
 void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
 {
   if (hgc->mode == 0) {
-    if (y1 < y2) {
-      y1 = 0;
-      y2 = 13;
+    if (y1 > 13) {
+      trm_set_crs (hgc->trm, 0, 0, 0);
+      return;
     }
 
-    y1 = (y1 <= 13) ? (13 - y1) : 0;
-    y2 = (y2 <= 13) ? (13 - y2) : 0;
+    if ((y2 < y1) || (y2 > 13)) {
+      y2 = 13;
+    }
 
     y1 = (255 * y1 + 6) / 13;
     y2 = (255 * y2 + 6) / 13;
 
-    trm_set_crs (hgc->trm, y1, y2);
+    trm_set_crs (hgc->trm, y1, y2, 1);
   }
 }
 
@@ -607,7 +608,7 @@ void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
   switch (reg) {
     case 0x0a:
     case 0x0b:
-      hgc_set_crs (hgc, hgc->crtc_reg[0x0b], hgc->crtc_reg[0x0a]);
+      hgc_set_crs (hgc, hgc->crtc_reg[0x0a], hgc->crtc_reg[0x0b]);
       break;
 
     case 0x0c:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.h                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.h,v 1.3 2003/09/19 15:09:19 hampa Exp $ */
+/* $Id: sdl.h,v 1.4 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_SDL_H
@@ -86,7 +86,7 @@ void sdl_del (sdl_t *sdl);
 void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h);
 void sdl_set_map (sdl_t *sdl, unsigned i, unsigned r, unsigned g, unsigned b);
 void sdl_set_col (sdl_t *sdl, unsigned fg, unsigned bg);
-void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2);
+void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show);
 void sdl_set_pos (sdl_t *sdl, unsigned x, unsigned y);
 void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c);
 void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h);

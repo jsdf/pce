@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.9 2003/09/19 14:47:50 hampa Exp $ */
+/* $Id: terminal.h,v 1.10 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -39,7 +39,7 @@ typedef void (*trm_set_mse_f) (void *ext, int dx, int dy, unsigned b);
 typedef void (*trm_set_size_f) (void *ext, unsigned m, unsigned w, unsigned h);
 typedef void (*trm_set_map_f) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
 typedef void (*trm_set_col_f) (void *ext, unsigned fg, unsigned bg);
-typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2);
+typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2, int show);
 typedef void (*trm_set_pos_f) (void *ext, unsigned x, unsigned y);
 typedef void (*trm_set_chr_f) (void *ext, unsigned x, unsigned y, unsigned char c);
 typedef void (*trm_set_pxl_f) (void *ext, unsigned x, unsigned y, unsigned w, unsigned h);
@@ -83,15 +83,16 @@ void trm_set_map (terminal_t *trm, unsigned i, unsigned r, unsigned g, unsigned 
 void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg);
 
 /*****************************************************************************
- * @short Set the cursor size
- * @param trm The terminal
- * @param y1  The first (lower) cursor line
- * @param y2  The second (higher) cursor line
+ * @short Set  the cursor size
+ * @param trm  The terminal
+ * @param y1   The cursor start line
+ * @param y2   The cursor end line
+ * @param show Turn cursor off if zero
  *
  * The lines y1 and y2 are a percentage in the range [0, 255] of the whole
  * character height.
  *****************************************************************************/
-void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2);
+void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2, int show);
 
 void trm_set_pos (terminal_t *trm, unsigned x, unsigned y);
 

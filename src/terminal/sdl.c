@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.4 2003/09/19 15:09:19 hampa Exp $ */
+/* $Id: sdl.c,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -146,8 +146,8 @@ terminal_t *sdl_new (ini_sct_t *sct)
 
   sdl->crs_x = 0;
   sdl->crs_y = 0;
-  sdl->crs_y1 = (6 * 255) / 7;
-  sdl->crs_y2 = (7 * 255) / 7;
+  sdl->crs_y1 = sdl->font_h - 2;
+  sdl->crs_y2 = sdl->font_h - 1;
   sdl->crs_on = 0;
 
   memcpy (sdl->colmap, sdl_colmap, 16 * 3);
@@ -426,7 +426,7 @@ void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
   col = sdl_get_col (sdl, 7);
 
   x *= sdl->font_w;
-  y = sdl->font_h * (y + 1) - sdl->crs_y2 - 1;
+  y = sdl->font_h * y + sdl->crs_y1;
   h = sdl->crs_y2 - sdl->crs_y1 + 1;
 
   sdl_set_rct (sdl, x, y, sdl->font_w, h, col, sdl->upd_text);
@@ -451,16 +451,19 @@ void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
   sdl_set_chr_xyc (sdl, x, y, chr, fg, bg, sdl->upd_text);
 }
 
-void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2)
+void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show)
 {
   if (sdl->crs_on) {
     sdl_crs_erase (sdl, sdl->crs_x, sdl->crs_y);
   }
 
-  sdl->crs_y1 = (sdl->font_w * y1) / 255;
-  sdl->crs_y2 = (sdl->font_h * y2) / 255;
+  y1 = (y1 <= 255) ? y1 : 255;
+  y2 = (y2 <= 255) ? y2 : 255;
 
-  sdl->crs_on = (sdl->crs_y1 <= sdl->crs_y2);
+  sdl->crs_y1 = (sdl->font_h * y1) / 256;
+  sdl->crs_y2 = (sdl->font_h * y2) / 256;
+
+  sdl->crs_on = (show != 0);
 
   if (sdl->crs_on) {
     sdl_crs_draw (sdl, sdl->crs_x, sdl->crs_y);
