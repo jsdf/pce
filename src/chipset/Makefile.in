@@ -30,8 +30,6 @@ all: $(BIN)
 
 
 chipset.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 e8237.o:	e8237.c e8237.h $(SDP)

@@ -62,49 +62,61 @@ cmp:
 
 
 ega.rom: $(EGA_BDP)
-	cat ega.bin > $@
+	$(QP)echo "  CAT    $@"
+	$(QR)cat ega.bin > $@
 
 vga.rom: $(VGA_BDP)
-	cat vga.bin > $@
+	$(QP)echo "  CAT    $@"
+	$(QR)cat vga.bin > $@
 
 ibmpc.rom: $(BIOS_BDP)
-	cat pce.bin basic.bin bios.bin > $@
+	$(QP)echo "  CAT    $@"
+	$(QR)cat pce.bin basic.bin bios.bin > $@
 
 
 # ihex is a custom utility, part of the misc-utils package
 ihex: ibmpc.ihex ibmpc-ega.ihex ega.ihex
 
 ibmpc.ihex: pce2.bin basic.bin bios.bin
-	$(IHEX) -e -o $@ \
+	$(QP)echo "  IHEX   $@"
+	$(QR)$(IHEX) -e -o $@ \
 	-a 0xf0000 -i pce2.bin \
 	-a 0xf6000 -i basic.bin \
 	-a 0xfe000 -i bios.bin
 
 ibmpc-ega.ihex: ega.bin pce2.bin basic.bin bios.bin
-	$(IHEX) -e -o $@ \
+	$(QP)echo "  IHEX   $@"
+	$(QR)$(IHEX) -e -o $@ \
 	-a 0xc0000 -i ega.bin \
 	-a 0xf0000 -i pce2.bin \
 	-a 0xf6000 -i basic.bin \
 	-a 0xfe000 -i bios.bin
 
 ega.ihex: ega.bin
-	$(IHEX) -e -o $@ -a 0xc0000 -i ega.bin
+	$(QP)echo "  IHEX   $@"
+	$(QR)$(IHEX) -e -o $@ -a 0xc0000 -i ega.bin
 
 
 pce.bin: pce.asm $(BIOS_SDP)
-	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -o $@ $<
 
 pce2.bin: pce.asm $(BIOS_SDP)
-	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -DNOFILL -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -DNOFILL -o $@ $<
 
 bios.bin: bios.asm $(BIOS_SDP)
-	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l bios.lst -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l bios.lst -o $@ $<
 
 basic.bin: basic.asm $(BIOS_SDP)
-	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l basic.lst -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l basic.lst -o $@ $<
 
 ega.bin: ega.asm $(EGA_SDP)
-	$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l ega.lst -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l ega.lst -o $@ $<
 
 vga.bin: vga.asm $(VGA_SDP)
-	$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l vga.lst -o $@ $<
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l vga.lst -o $@ $<

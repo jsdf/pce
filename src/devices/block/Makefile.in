@@ -31,8 +31,6 @@ all: $(BIN)
 
 
 block.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 blkcow.o:	blkcow.c $(SDP)

@@ -45,8 +45,6 @@ all: $(BIN)
 
 
 terminal.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 font.o:		font.c $(SDP)

@@ -94,10 +94,13 @@ install: install-bin sim405.cfg
 
 
 sim405: $(OBJ) $(OBJ_EXT)
-	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QP)echo "  LD     $@"
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
 
 sim405.cfg: sim405.cfg.in
-	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
 cmd_ppc.o:	cmd_ppc.c $(SDP)

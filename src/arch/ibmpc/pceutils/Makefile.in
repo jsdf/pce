@@ -40,10 +40,12 @@ install:
 
 
 %.com: %.asm
-	nasm -O5 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
+	$(QP)echo "  NASM   $@"
+	$(QR)nasm -O6 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
 
 %.sys: %.asm
-	nasm -O5 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
+	$(QP)echo "  NASM   $@"
+	$(QR)nasm -O6 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
 
 
 pceboot.com:	pceboot.asm $(SDP)

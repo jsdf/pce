@@ -98,10 +98,13 @@ install: install-bin simarm.cfg
 
 
 simarm: $(OBJ) $(OBJ_EXT)
-	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QP)echo "  LD     $@"
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
 
 simarm.cfg: simarm.cfg.in
-	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
 cmd_arm.o:	cmd_arm.c $(SDP)

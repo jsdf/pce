@@ -110,10 +110,13 @@ install: ibmpc ibmpc.cfg install-bin install-man
 
 
 ibmpc: $(OBJ) $(OBJ_EXT)
-	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QP)echo "  LD     $@"
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
 
 ibmpc.cfg: ibmpc.cfg.in
-	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
 int13.o:	int13.c $(SDP)

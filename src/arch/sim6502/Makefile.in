@@ -69,10 +69,13 @@ install: install-bin sim6502.cfg
 
 
 sim6502: $(OBJ) $(OBJ_EXT)
-	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QP)echo "  LD     $@"
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
 
 sim6502.cfg: sim6502.cfg.in
-	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
 console.o:	console.c $(SDP)

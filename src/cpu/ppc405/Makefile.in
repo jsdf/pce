@@ -33,8 +33,6 @@ all: $(BIN)
 
 
 ppc405.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 disasm.o:	disasm.c $(SDP)

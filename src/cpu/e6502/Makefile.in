@@ -13,7 +13,6 @@ include $(reldir)/config.inc
 SRC := disasm.c e6502.c ea.c opcodes.c
 OBJ := disasm.o e6502.o ea.o opcodes.o
 HDR := e6502.h internal.h
-MAN :=
 BIN := e6502.a
 
 SDP := Makefile $(HDR) $(HDR_EXT)
@@ -30,8 +29,6 @@ all: $(BIN)
 
 
 e6502.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 disasm.o:	disasm.c $(SDP)

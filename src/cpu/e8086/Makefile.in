@@ -13,7 +13,6 @@ include $(reldir)/config.inc
 SRC := disasm.c e8086.c e80186.c e80286r.c flags.c ea.c opcodes.c pqueue.c
 OBJ := disasm.o e8086.o e80186.o e80286r.o flags.o ea.o opcodes.o pqueue.o
 HDR := e8086.h internal.h
-MAN :=
 BIN := e8086.a
 
 SDP := Makefile $(HDR) $(HDR_EXT)
@@ -30,8 +29,6 @@ all: $(BIN)
 
 
 e8086.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 disasm.o:	disasm.c $(SDP)

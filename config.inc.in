@@ -14,6 +14,15 @@ incdir		= @includedir@
 datdir		= @datadir@
 
 
+ifeq "$(V)" "1"
+QP = @\#
+QR =
+else
+QP = @
+QR = @
+endif
+
+
 # Executables
 
 CC		= @CC@

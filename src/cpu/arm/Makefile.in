@@ -29,8 +29,6 @@ all: $(BIN)
 
 
 arm.a: $(OBJ)
-	rm -f $@
-	$(AR) $(AR_FLG) $@ $(OBJ)
 
 
 arm.o:		arm.c $(SDP)
