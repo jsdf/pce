@@ -196,7 +196,7 @@ AC_SUBST(PCE_HAVE_IHEX)
 # Checks for header files.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
+AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/time.h sys/poll.h)
 
 AC_CHECK_HEADER(stdint.h,
 	[AC_DEFINE(HAVE_STDINT_H)
