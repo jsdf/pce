@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -124,8 +124,28 @@ void mem_blk_del (mem_blk_t *blk);
 void mem_blk_clear (mem_blk_t *blk, unsigned char val);
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
+
+/*!***************************************************************************
+ * @short Set the read-only flag
+ * @param blk The memory block
+ * @param ro  Make block-read only if true, read-write otherwise
+ *****************************************************************************/
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
+
+/*!***************************************************************************
+ * @short  Get the base address
+ * @param  blk The memory block
+ * @return The memory block's base address
+ *****************************************************************************/
 unsigned long mem_blk_get_addr (const mem_blk_t *blk);
+
+/*!***************************************************************************
+ * @short Set the base address
+ * @param blk The memory block
+ * @param addr The memory block's new base address
+ *****************************************************************************/
+void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr);
+
 unsigned long mem_blk_get_size (const mem_blk_t *blk);
 unsigned char *mem_blk_get_data (mem_blk_t *blk);
 

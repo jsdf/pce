@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -115,6 +115,12 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
 unsigned long mem_blk_get_addr (const mem_blk_t *blk)
 {
   return (blk->addr1);
+}
+
+void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr)
+{
+  blk->addr1 = addr;
+  blk->addr2 = addr + blk->size - 1;
 }
 
 unsigned long mem_blk_get_size (const mem_blk_t *blk)
