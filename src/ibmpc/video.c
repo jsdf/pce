@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/video.c                                          *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.c,v 1.6 2003/09/24 01:09:55 hampa Exp $ */
+/* $Id: video.c,v 1.7 2003/10/03 23:15:58 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -38,6 +38,7 @@ void pce_video_init (video_t *vid)
   vid->get_mem = NULL;
   vid->get_reg = NULL;
   vid->prt_state = NULL;
+  vid->update = NULL;
   vid->dump = NULL;
   vid->screenshot = NULL;
   vid->clock = NULL;
@@ -72,6 +73,13 @@ void pce_video_prt_state (video_t *vid, FILE *fp)
 {
   if (vid->prt_state != NULL) {
     vid->prt_state (vid->ext, fp);
+  }
+}
+
+void pce_video_update (video_t *vid)
+{
+  if (vid->update != NULL) {
+    vid->update (vid->ext);
   }
 }
 
