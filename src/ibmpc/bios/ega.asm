@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.3 2003/09/21 00:41:40 hampa Exp $
+; $Id: ega.asm,v 1.4 2003/09/21 01:08:50 hampa Exp $
 
 
 %include "config.inc"
@@ -1521,7 +1521,7 @@ int_10_10:
   jb      int_10_1002
   je      int_10_1003
 
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
   ret
 
 
@@ -1571,7 +1571,6 @@ int_10_1002:
   push    cx
   push    si
 
-  pcehook PCEH_STOP
   mov     al, 0
   mov     cx, 16
   push    es
@@ -1594,7 +1593,7 @@ int_10_11:
   cmp     al, 0x30
   je      int_10_1130
 
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
   ret
 
 
@@ -1636,7 +1635,7 @@ int_10_12:
   cmp     bl, 0x10
   je      int_10_12_10
 
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
   ret
 
 
@@ -1648,7 +1647,7 @@ int_10_12_10:
 
 
 int_10_13:
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
   ret
 
 
@@ -1686,7 +1685,7 @@ int_10:
   jmp     .done
 
 .badfunc:
-  pcehook PCEH_STOP
+;  pcehook PCEH_STOP
 
 .done:
   pop     ds
