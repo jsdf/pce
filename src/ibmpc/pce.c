@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.40 2003/11/16 03:44:26 hampa Exp $ */
+/* $Id: pce.c,v 1.41 2003/11/18 00:32:01 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -830,6 +830,27 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 }
 
 
+void do_boot (cmd_t *cmd)
+{
+  unsigned short val;
+
+  if (cmd_match_eol (cmd)) {
+    printf ("boot drive is 0x%02x\n", par_boot);
+    return;
+  }
+
+  if (!cmd_match_uint16 (cmd, &val)) {
+    cmd_error (cmd, "expecting boot drive");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  par_boot = val;
+}
+
 void do_bc (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -1172,6 +1193,7 @@ void do_g (cmd_t *cmd)
 void do_h (cmd_t *cmd)
 {
   fputs (
+    "boot [drive]              Set the boot drive\n"
     "bc [addr]                 clear a breakpoint or all\n"
     "bl                        list breakpoints\n"
     "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
@@ -1614,7 +1636,10 @@ int do_cmd (void)
 
     cmd_get (&cmd);
 
-    if (cmd_match (&cmd, "b")) {
+    if (cmd_match (&cmd, "boot")) {
+      do_boot (&cmd);
+    }
+    else if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
     }
     else if (cmd_match (&cmd, "c")) {
