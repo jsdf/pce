@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -513,6 +513,8 @@ void sdl_set_mode (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
     sdl->pxl_h = h;
     sdl->crs_on = 0;
   }
+
+  trm_smap_set_map (&sdl->smap, sdl->pxl_w, sdl->pxl_h, sdl->wdw_w, sdl->wdw_h);
 
   sdl_clr_upd_rct (sdl);
 }
