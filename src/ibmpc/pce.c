@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.31 2003/10/05 21:48:43 hampa Exp $ */
+/* $Id: pce.c,v 1.32 2003/10/13 01:55:33 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1057,6 +1057,47 @@ void pce_run (void)
   pce_stop();
 }
 
+void pce_run_bp (void)
+{
+  breakpoint_t   *bp;
+  unsigned short seg, ofs;
+
+  pce_start();
+
+  while (1) {
+    cpu_exec();
+
+    seg = e86_get_cs (pc->cpu);
+    ofs = e86_get_ip (pc->cpu);
+
+    bp = bp_get (seg, ofs);
+
+    if (bp != NULL) {
+      if (bp->pass > 0) {
+        bp->pass--;
+      }
+
+      if (bp->pass == 0) {
+        if (bp->reset == 0) {
+          bp_clear (seg, ofs);
+        }
+        else {
+          bp->pass = bp->reset;
+          bp_print (bp, "brk: ");
+        }
+
+        break;
+      }
+    }
+
+    if (pc->brk) {
+      break;
+    }
+  }
+
+  pce_stop();
+}
+
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -1186,6 +1227,76 @@ void do_c (cmd_t *cmd)
   }
 
   prt_state (pc, stdout);
+}
+
+void do_disk_s (cmd_t *cmd)
+{
+  unsigned i;
+  disk_t   *dsk;
+
+  for (i = 0; i < pc->dsk->cnt; i++) {
+    dsk = pc->dsk->dsk[i];
+
+    printf ("%02X: c=%u h=%u s=%u ro=%d\n", dsk->drive,
+      dsk->geom.c, dsk->geom.h, dsk->geom.s,
+      (dsk->readonly) ? 1 : 0
+    );
+  }
+}
+
+void do_disk (cmd_t *cmd)
+{
+  disk_t         *dsk;
+  unsigned short d, c, h, s;
+  char           fname[256];
+  char           *type;
+
+  if (cmd_match (cmd, "s")) {
+    do_disk_s (cmd);
+    return;
+  }
+
+  if (!cmd_match_uint16 (cmd, &d)) {
+    cmd_error (cmd, "need a drive number");
+    return;
+  }
+
+  if (!cmd_match_str (cmd, fname)) {
+    return;
+  }
+
+  if (!cmd_match_uint16 (cmd, &c)) {
+    c = 80;
+  }
+
+  if (!cmd_match_uint16 (cmd, &h)) {
+    h = 2;
+  }
+
+  if (!cmd_match_uint16 (cmd, &s)) {
+    s = 18;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  dsk = dsks_get_disk (pc->dsk, d);
+  if (dsk == NULL) {
+    printf ("adding new drive 0x%02x\n", d);
+    dsk = dsk_new (d);
+    dsks_add_disk (pc->dsk, dsk);
+  }
+
+  type = "unknown";
+  if (dsk_set_auto (dsk, &type, c, h, s, fname, 0)) {
+    prt_error ("opening '%s' failed\n", fname);
+    return;
+  }
+
+  printf ("%02X: %s c=%u h=%u s=%u\n",
+    d, type, dsk->geom.c, dsk->geom.h, dsk->geom.s
+  );
 }
 
 void do_dump (cmd_t *cmd)
@@ -1330,9 +1441,7 @@ void do_e (cmd_t *cmd)
 
 void do_g (cmd_t *cmd)
 {
-  int            run;
-  breakpoint_t   *bp;
-  unsigned short seg, ofs;
+  int run;
 
   if (cmd_match (cmd, "b")) {
     run = 0;
@@ -1350,40 +1459,7 @@ void do_g (cmd_t *cmd)
     return;
   }
 
-  pce_start();
-
-  while (1) {
-    cpu_exec();
-
-    seg = e86_get_cs (pc->cpu);
-    ofs = e86_get_ip (pc->cpu);
-
-    bp = bp_get (seg, ofs);
-
-    if (bp != NULL) {
-      if (bp->pass > 0) {
-        bp->pass--;
-      }
-
-      if (bp->pass == 0) {
-        if (bp->reset == 0) {
-          bp_clear (seg, ofs);
-        }
-        else {
-          bp->pass = bp->reset;
-          bp_print (bp, "brk: ");
-        }
-
-        break;
-      }
-    }
-
-    if (pc->brk) {
-      break;
-    }
-  }
-
-  pce_stop();
+  pce_run_bp();
 
   fputs ("\n", stdout);
   prt_state (pc, stdout);
@@ -1392,21 +1468,22 @@ void do_g (cmd_t *cmd)
 void do_h (cmd_t *cmd)
 {
   fputs (
-    "bc addr                 clear a breakpoint\n"
-    "bl                      list breakpoints\n"
-    "bs addr [pass [reset]]  set a breakpoint\n"
-    "c [cnt]                 clock\n"
-    "d [addr [cnt]]          dump memory\n"
-    "e addr [val...]         enter bytes into memory\n"
-    "dump what fname         dump to file (ram|video)\n"
-    "g [b]                   run with or without breakpoints\n"
-    "int28 [on|off|val]      turn int28 sleeping on/off\n"
-    "i [b|w] port            input a byte or word from a port\n"
-    "last [i [n]]            print last instruction addresses\n"
-    "o [b|w] port val        output a byte or word to a port\n"
-    "parport i fname         set parport output file\n"
-    "r reg val               set a register\n"
-    "time [c]                print or clear time statistics\n",
+    "bc addr                   clear a breakpoint\n"
+    "bl                        list breakpoints\n"
+    "bs addr [pass [reset]]    set a breakpoint\n"
+    "c [cnt]                   clock\n"
+    "d [addr [cnt]]            dump memory\n"
+    "e addr [val...]           enter bytes into memory\n"
+    "disk drive fname [c h s]  Set a new disk image\n"
+    "dump what fname           dump to file (ram|video)\n"
+    "g [b]                     run with or without breakpoints\n"
+    "int28 [on|off|val]        turn int28 sleeping on/off\n"
+    "i [b|w] port              input a byte or word from a port\n"
+    "last [i [n]]              print last instruction addresses\n"
+    "o [b|w] port val          output a byte or word to a port\n"
+    "parport i fname           set parport output file\n"
+    "r reg val                 set a register\n"
+    "time [c]                  print or clear time statistics\n",
     stdout
   );
 }
@@ -1812,6 +1889,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "c")) {
       do_c (&cmd);
+    }
+    else if (cmd_match (&cmd, "disk")) {
+      do_disk (&cmd);
     }
     else if (cmd_match (&cmd, "dump")) {
       do_dump (&cmd);
