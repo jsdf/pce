@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -35,14 +35,13 @@
 #include "main.h"
 
 
-int             par_verbose = 0;
-char            *par_cpu = NULL;
+char     *par_cpu = NULL;
 
-unsigned        par_xlat = P405_XLAT_CPU;
+unsigned par_xlat = P405_XLAT_CPU;
 
-sim405_t        *par_sim = NULL;
+sim405_t *par_sim = NULL;
 
-unsigned        par_sig_int = 0;
+unsigned par_sig_int = 0;
 
 
 static
@@ -52,11 +51,12 @@ void prt_help (void)
     "usage: sim405 [options]\n"
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
-    "  -v, --verbose          Verbose operation\n"
     "  -c, --config string    Set the config file\n"
     "  -l, --log string       Set the log file\n"
     "  -p, --cpu string       Set the cpu model\n"
-    "  -r, --run              Start running immediately\n",
+    "  -q, --quiet            Quiet operation [no]\n"
+    "  -r, --run              Start running immediately\n"
+    "  -v, --verbose          Verbose operation [no]\n",
     stdout
   );
 
@@ -297,13 +297,16 @@ int main (int argc, char *argv[])
   cfg = NULL;
   run = 0;
 
-  pce_log_set_fp (NULL, 0);
-  pce_log_set_stderr (0);
+  pce_log_init();
+  pce_log_add_fp (stderr, 0, MSG_INF);
 
   i = 1;
   while (i < argc) {
     if (str_isarg2 (argv[i], "-v", "--verbose")) {
-      par_verbose = 1;
+      pce_log_set_level (stderr, MSG_DEB);
+    }
+    else if (str_isarg2 (argv[i], "-q", "--quiet")) {
+      pce_log_set_level (stderr, MSG_ERR);
     }
     else if (str_isarg2 (argv[i], "-c", "--config")) {
       i += 1;
@@ -317,7 +320,7 @@ int main (int argc, char *argv[])
       if (i >= argc) {
         return (1);
       }
-      pce_log_set_fname (argv[i]);
+      pce_log_add_fname (argv[i], MSG_DEB);
     }
     else if (str_isarg2 (argv[i], "-p", "--cpu")) {
       i += 1;
@@ -336,10 +339,6 @@ int main (int argc, char *argv[])
     }
 
     i += 1;
-  }
-
-  if (par_verbose) {
-    pce_log_set_stderr (1);
   }
 
   pce_log (MSG_INF,
@@ -383,6 +382,8 @@ int main (int argc, char *argv[])
   }
 
   s405_del (par_sim);
+
+  pce_log_done();
 
   return (0);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,7 +30,6 @@
 #include <signal.h>
 
 
-int                       par_verbose = 0;
 char                      *par_terminal = NULL;
 char                      *par_video = NULL;
 unsigned                  par_boot = 128;
@@ -57,14 +56,15 @@ void prt_help (void)
     "usage: ibmpc [options]\n"
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
-    "  -v, --verbose          Verbose operation\n"
-    "  -c, --config string    Set the config file\n"
-    "  -l, --log string       Set the log file\n"
-    "  -t, --terminal string  Set terminal\n"
-    "  -g, --video string     Set video device\n"
-    "  -p, --cpu string       Set the cpu model\n"
     "  -b, --boot int         Set boot drive [128]\n"
-    "  -r, --run              Start running immediately\n",
+    "  -c, --config string    Set the config file\n"
+    "  -g, --video string     Set video device\n"
+    "  -l, --log string       Set the log file\n"
+    "  -p, --cpu string       Set the cpu model\n"
+    "  -q, --quiet            Quiet operation [no]\n"
+    "  -r, --run              Start running immediately\n"
+    "  -t, --terminal string  Set terminal\n"
+    "  -v, --verbose          Verbose operation [no]\n",
     stdout
   );
 
@@ -1635,13 +1635,16 @@ int main (int argc, char *argv[])
   cfg = NULL;
   run = 0;
 
-  pce_log_set_fp (NULL, 0);
-  pce_log_set_stderr (0);
+  pce_log_init();
+  pce_log_add_fp (stderr, 0, MSG_INF);
 
   i = 1;
   while (i < argc) {
     if (str_isarg (argv[i], "v", "verbose")) {
-      par_verbose = 1;
+      pce_log_set_level (stderr, MSG_DEB);
+    }
+    else if (str_isarg (argv[i], "q", "quiet")) {
+      pce_log_set_level (stderr, MSG_ERR);
     }
     else if (str_isarg (argv[i], "c", "config")) {
       i += 1;
@@ -1655,7 +1658,7 @@ int main (int argc, char *argv[])
       if (i >= argc) {
         return (1);
       }
-      pce_log_set_fname (argv[i]);
+      pce_log_add_fname (argv[i], MSG_DEB);
     }
     else if (str_isarg (argv[i], "t", "terminal")) {
       i += 1;
@@ -1700,11 +1703,7 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
-  if (par_verbose) {
-    pce_log_set_stderr (1);
-  }
-
-  pce_log (MSG_INF,
+  pce_log (MSG_MSG,
     "pce ibmpc version " PCE_VERSION_STR
     " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
     "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n"
@@ -1747,6 +1746,8 @@ int main (int argc, char *argv[])
   }
 
   pc_del (pc);
+
+  pce_log_done();
 
   return (0);
 }

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/log.c                                              *
  * Created:       2003-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: log.c,v 1.1 2003/11/08 14:40:34 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -30,65 +30,126 @@
 #include "log.h"
 
 
-static unsigned log_level = MSG_DEB;
+typedef struct {
+  FILE     *fp;
+  int      close;
+  unsigned level;
+} pce_log_t;
 
-static FILE     *log_fp = NULL;
-static int       log_close_fp = 0;
-static int      log_stderr = 1;
+
+static unsigned  log_cnt = 0;
+static pce_log_t log[PCE_LOG_MAX];
 
 
-void pce_log_set_level (unsigned level)
+void pce_log_init (void)
 {
-  log_level = level;
+  log_cnt = 0;
 }
 
-unsigned pce_log_get_level (void)
+void pce_log_done (void)
 {
-  return (log_level);
-}
+  unsigned i;
 
-void pce_log_set_fp (FILE *fp, int close)
-{
-  if (log_close_fp) {
-    fclose (log_fp);
+  for (i = 0; i < log_cnt; i++) {
+    if (log[i].close) {
+      fclose (log[i].fp);
+    }
   }
 
-  log_fp = fp;
-  log_close_fp = (fp != NULL) && close;
+  log_cnt = 0;
 }
 
-void pce_log_set_fname (const char *fname)
+int pce_log_add_fp (FILE *fp, int close, unsigned level)
 {
-  if (log_close_fp) {
-    fclose (log_fp);
+  if (log_cnt >= PCE_LOG_MAX) {
+    return (1);
   }
 
-  log_fp = fopen (fname, "ab");
-  log_close_fp = (log_fp != NULL);
+  log[log_cnt].fp = fp;
+  log[log_cnt].close = (close != 0);
+  log[log_cnt].level = level;
+
+  log_cnt += 1;
+
+  return (0);
 }
 
-void pce_log_set_stderr (int f)
+int pce_log_add_fname (const char *fname, unsigned level)
 {
-  log_stderr = (f != 0);
+  FILE *fp;
+
+  fp = fopen (fname, "a");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  if (pce_log_add_fp (fp, 1, level)) {
+    fclose (fp);
+    return (1);
+  }
+
+  return (0);
+}
+
+void pce_log_rmv_fp (FILE *fp)
+{
+  unsigned i, j;
+
+  i = 0;
+  while (i < log_cnt) {
+    if (log[i].fp == fp) {
+      if (log[i].close) {
+        fclose (log[i].fp);
+      }
+
+      for (j = i + 1; j < log_cnt; j++) {
+        log[j - 1] = log[j];
+      }
+
+      log_cnt -= 1;
+    }
+    else {
+      i += 1;
+    }
+  }
+}
+
+void pce_log_set_level (FILE *fp, unsigned level)
+{
+  unsigned i;
+
+  for (i = 0; i < log_cnt; i++) {
+    if (log[i].fp == fp) {
+      log[i].level = level;
+      return;
+    }
+  }
+}
+
+unsigned pce_log_get_level (FILE *fp)
+{
+  unsigned i;
+
+  for (i = 0; i < log_cnt; i++) {
+    if (log[i].fp == fp) {
+      return (log[i].level);
+    }
+  }
+
+  return (MSG_DEB);
 }
 
 void pce_log (unsigned level, const char *msg, ...)
 {
+  unsigned i;
   va_list va;
 
-  if (level <= log_level) {
-    if (log_fp != NULL) {
+  for (i = 0; i < log_cnt; i++) {
+    if (level <= log[i].level) {
       va_start (va, msg);
-      vfprintf (log_fp, msg, va);
+      vfprintf (log[i].fp, msg, va);
       va_end (va);
-      fflush (log_fp);
-    }
-
-    if (log_stderr) {
-      va_start (va, msg);
-      vfprintf (stderr, msg, va);
-      va_end (va);
-      fflush (stderr);
+      fflush (log[i].fp);
     }
   }
 }

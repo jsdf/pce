@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -35,8 +35,6 @@
 #include "main.h"
 
 
-int       par_verbose = 0;
-
 sim6502_t *par_sim = NULL;
 ini_sct_t *par_cfg = NULL;
 unsigned  par_sig_int = 0;
@@ -52,10 +50,11 @@ void prt_help (void)
     "usage: sim6502 [options]\n"
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
-    "  -v, --verbose          Verbose operation\n"
     "  -c, --config string    Set the config file\n"
     "  -l, --log string       Set the log file\n"
-    "  -r, --run              Start running immediately\n",
+    "  -q, --quiet            Quiet operation [no]\n"
+    "  -r, --run              Start running immediately\n"
+    "  -v, --verbose          Verbose operation\n",
     stdout
   );
 
@@ -980,13 +979,16 @@ int main (int argc, char *argv[])
   cfg = NULL;
   run = 0;
 
-  pce_log_set_fp (NULL, 0);
-  pce_log_set_stderr (0);
+  pce_log_init();
+  pce_log_add_fp (stderr, 0, MSG_INF);
 
   i = 1;
   while (i < argc) {
     if (str_isarg2 (argv[i], "-v", "--verbose")) {
-      par_verbose = 1;
+      pce_log_set_level (stderr, MSG_DEB);
+    }
+    else if (str_isarg2 (argv[i], "-q", "--quiet")) {
+      pce_log_set_level (stderr, MSG_ERR);
     }
     else if (str_isarg2 (argv[i], "-c", "--config")) {
       i += 1;
@@ -1000,7 +1002,7 @@ int main (int argc, char *argv[])
       if (i >= argc) {
         return (1);
       }
-      pce_log_set_fname (argv[i]);
+      pce_log_add_fname (argv[i], MSG_DEB);
     }
     else if (str_isarg2 (argv[i], "-r", "--run")) {
       run = 1;
@@ -1013,10 +1015,6 @@ int main (int argc, char *argv[])
     i += 1;
   }
 
-  if (par_verbose) {
-    pce_log_set_stderr (1);
-  }
-
   pce_log (MSG_INF,
     "pce sim6502 version " PCE_VERSION_STR
     " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
@@ -1025,7 +1023,7 @@ int main (int argc, char *argv[])
 
   ini = pce_load_config (cfg);
   if (ini == NULL) {
-    pce_log (MSG_ERR, "loading config file failed\n");
+    pce_log (MSG_ERR, "*** loading config file failed\n");
     return (1);
   }
 
@@ -1033,7 +1031,7 @@ int main (int argc, char *argv[])
 
   sct = ini_sct_find_sct (ini, "sim6502");
   if (sct == NULL) {
-    pce_log (MSG_ERR, "section 'sim6502' not found in config file\n");
+    pce_log (MSG_ERR, "*** section 'sim6502' not found in config file\n");
     return (1);
   }
 
@@ -1062,6 +1060,8 @@ int main (int argc, char *argv[])
   }
 
   s6502_del (par_sim);
+
+  pce_log_done();
 
   return (0);
 }
