@@ -1,0 +1,26 @@
+PCE - PC Emulator
+=================
+
+Install
+=======
+
+To install do:
+
+./configure
+make
+make install
+
+The most important options for configure are:
+
+--prefix=path
+Set the installation prefix. Default is /usr/local.
+
+--with-x11
+Build the X11 based output terminal.
+
+--with-host-clock=clock
+Set the host clock speed in Hz. This value is used for display
+purposes only and has no impact on program execution.
+
+--enable-tsc
+Use the Pentium TSC to get precise instruction timings.
