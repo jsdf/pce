@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.11 2003/09/05 00:45:18 hampa Exp $
+; $Id: pce.asm,v 1.12 2003/09/06 13:48:27 hampa Exp $
 
 
 %include "config.inc"
@@ -332,7 +332,7 @@ init_serport:
   shl     ax, cl
 
   mov     dx, [0x0010]
-  and     dx, 0x0e00
+  and     dx, ~0x0e00
   or      dx, ax
   mov     [0x0010], dx
 
