@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.5 2003/12/24 05:52:55 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -485,7 +485,6 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
-  int       r;
   ini_sct_t *sct;
   disk_t    *dsk;
   unsigned  drive;
@@ -508,33 +507,29 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     ini_get_sint (sct, "readonly", &ro, 0);
 
-    dsk = dsk_new (drive);
-
     if (strcmp (type, "ram") == 0) {
-      r = dsk_set_mem (dsk, c, h, s, fname, ro);
+      dsk = dsk_ram_new (drive, c, h, s, fname, ro);
     }
     else if (strcmp (type, "image") == 0) {
-      r = dsk_set_image (dsk, c, h, s, fname, ro);
+      dsk = dsk_img_new (drive, c, h, s, 0, fname, ro);
     }
     else if (strcmp (type, "dosemu") == 0) {
-      r = dsk_set_hdimage (dsk, fname, ro);
+      dsk = dsk_dosemu_new (drive, fname, ro);
     }
     else if (strcmp (type, "auto") == 0) {
-      r = dsk_set_auto (dsk, &type, c, h, s, fname, ro);
+      dsk = dsk_auto_new (drive, fname, ro);
     }
     else {
-      r = 1;
+      dsk = NULL;
     }
 
-    if (r) {
+    if (dsk == NULL) {
       pce_log (MSG_ERR, "loading drive %02X failed\n", drive);
-      dsk_del (dsk);
-      dsk = NULL;
     }
     else {
       pce_log (MSG_INF, "disk:\tdrive=%u type=%s chs=%u/%u/%u ro=%d file=%s\n",
         drive, type,
-        dsk->geom.c, dsk->geom.h, dsk->geom.s, ro,
+        dsk->c, dsk->h, dsk->s, ro,
         (fname != NULL) ? fname : "<>"
       );
 

@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/pce.c                                            *
+ * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -954,76 +954,6 @@ void do_c (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
-void do_disk_s (cmd_t *cmd)
-{
-  unsigned i;
-  disk_t   *dsk;
-
-  for (i = 0; i < pc->dsk->cnt; i++) {
-    dsk = pc->dsk->dsk[i];
-
-    printf ("%02X: c=%u h=%u s=%u ro=%d\n", dsk->drive,
-      dsk->geom.c, dsk->geom.h, dsk->geom.s,
-      (dsk->readonly) ? 1 : 0
-    );
-  }
-}
-
-void do_disk (cmd_t *cmd)
-{
-  disk_t         *dsk;
-  unsigned short d, c, h, s;
-  char           fname[256];
-  char           *type;
-
-  if (cmd_match (cmd, "s")) {
-    do_disk_s (cmd);
-    return;
-  }
-
-  if (!cmd_match_uint16 (cmd, &d)) {
-    cmd_error (cmd, "need a drive number");
-    return;
-  }
-
-  if (!cmd_match_str (cmd, fname, 256)) {
-    return;
-  }
-
-  if (!cmd_match_uint16 (cmd, &c)) {
-    c = 80;
-  }
-
-  if (!cmd_match_uint16 (cmd, &h)) {
-    h = 2;
-  }
-
-  if (!cmd_match_uint16 (cmd, &s)) {
-    s = 18;
-  }
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  dsk = dsks_get_disk (pc->dsk, d);
-  if (dsk == NULL) {
-    printf ("adding new drive 0x%02x\n", d);
-    dsk = dsk_new (d);
-    dsks_add_disk (pc->dsk, dsk);
-  }
-
-  type = "unknown";
-  if (dsk_set_auto (dsk, &type, c, h, s, fname, 0)) {
-    prt_error ("opening '%s' failed\n", fname);
-    return;
-  }
-
-  printf ("%02X: %s c=%u h=%u s=%u\n",
-    d, type, dsk->geom.c, dsk->geom.h, dsk->geom.s
-  );
-}
-
 void do_dump (cmd_t *cmd)
 {
   FILE *fp;
@@ -1644,9 +1574,6 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "c")) {
       do_c (&cmd);
-    }
-    else if (cmd_match (&cmd, "disk")) {
-      do_disk (&cmd);
     }
     else if (cmd_match (&cmd, "dump")) {
       do_dump (&cmd);

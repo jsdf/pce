@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.2 2003/12/23 03:48:30 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_H
@@ -109,8 +109,9 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <devices/hgc.h>
 #include <devices/cga.h>
 #include <devices/ega.h>
+#include <devices/disk.h>
 
-#include "disk.h"
+#include "int13.h"
 #include "mouse.h"
 #include "serial.h"
 #include "parport.h"
