@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.14 2003/04/21 16:31:48 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.15 2003/04/21 19:14:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -143,27 +143,9 @@ void pc_setup_disks (ibmpc_t *pc)
     dsks_add_disk (pc->dsk, dsk);
   }
 
-  dsk = dsk_new (1);
-  if (dsk_set_image (dsk, 80, 2, 18, "drive_b.img", 0)) {
-    pc_log (pc, "loading drive b failed\n");
-    dsk_del (dsk);
-  }
-  else {
-    dsks_add_disk (pc->dsk, dsk);
-  }
-
   dsk = dsk_new (0x80);
   if (dsk_set_hdimage (dsk, "drive_c.img", 0)) {
     pc_log (pc, "loading drive c failed\n");
-    dsk_del (dsk);
-  }
-  else {
-    dsks_add_disk (pc->dsk, dsk);
-  }
-
-  dsk = dsk_new (0x81);
-  if (dsk_set_hdimage (dsk, "/var/lib/dosemu/dos_c.img", 1)) {
-    pc_log (pc, "loading drive d failed\n");
     dsk_del (dsk);
   }
   else {
