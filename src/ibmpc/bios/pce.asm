@@ -20,7 +20,10 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.8 2003/08/30 16:54:04 hampa Exp $
+; $Id: pce.asm,v 1.9 2003/09/02 11:45:16 hampa Exp $
+
+
+%include "config.inc"
 
 
 %macro set_pos 1
@@ -68,7 +71,9 @@ done:
 
 
 msg_init:
-  db      "PC BIOS (hacked up version for PCE)", 13, 10, 13, 10, 0
+  db      "PC BIOS version ", PCE_VERSION_STR
+  db      " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
+  db      13, 10, 13, 10, 0
 
 msg_memchk1:
   db      "Memory check... ", 0
@@ -459,7 +464,7 @@ inttab:
   dw      0xf841, 0xf000 ;int_12, 0xf000
   dw      int_13, 0xf000
   dw      0xe739, 0xf000 ;int_14, 0xf000
-  dw      0xf859, 0xf000 ;int_15, 0xf000
+  dw      int_15, 0xf000 ;0xf859, 0xf000
   dw      0xe82e, 0xf000 ;int_16, 0xf000
   dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
