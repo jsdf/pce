@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.3 2003/04/25 14:01:44 hampa Exp $ */
+/* $Id: vt100.c,v 1.4 2003/04/26 16:34:42 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -300,6 +300,7 @@ void vt100_init (vt100_t *vt, int inp, int out)
   vt100_set_key (vt, "\x7c", 1, "\x2a\x2b\xab\xaa", 4);
   vt100_set_key (vt, "\x7d", 1, "\x2a\x1b\x9b\xaa", 4);
   vt100_set_key (vt, "\x7e", 1, "\x2a\x29\xa9\xaa", 4);
+  vt100_set_key (vt, "\x7f", 1, "\x1d\x23\xa3\x9d", 4);
 
   vt100_set_key (vt, "\xe1", 1, "\x38\x1e\x9e\xb8", 4);
   vt100_set_key (vt, "\xe2", 1, "\x38\x30\xb0\xb8", 4);
