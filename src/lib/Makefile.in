@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd hexdump ihex inidsk load log tun
+FILES := brkpt cmd hexdump ihex inidsk load log
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 FILES += tun
