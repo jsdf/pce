@@ -1,0 +1,39 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/11/08 14:20:20 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= cmd.c
+
+OBJ	:= cmd.o
+
+HDR	:= cmd.h
+HDR_EXT	:=
+
+MAN	:=
+
+BIN	:=
+
+SDP	:= Makefile
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(OBJ)
+
+
+clean:
+	rm -f $(BIN) $(OBJ)
+
+
+chipset.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+cmd.o:	cmd.c cmd.h $(SDP)

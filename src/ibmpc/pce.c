@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.36 2003/10/28 13:42:35 hampa Exp $ */
+/* $Id: pce.c,v 1.37 2003/11/08 14:20:20 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -33,12 +33,7 @@
 #include <termios.h>
 
 #include "pce.h"
-
-
-typedef struct {
-  unsigned i;
-  char     str[256];
-} cmd_t;
+#include <lib/cmd.h>
 
 
 typedef struct breakpoint_t {
@@ -169,152 +164,6 @@ int str_is_space (char c)
   return (0);
 }
 
-char *str_ltrim (char *str)
-{
-  unsigned i, j;
-
-  i = 0;
-  j = 0;
-
-  while ((str[i] != 0) && str_is_space (str[i])) {
-    i += 1;
-  }
-
-  if (i == 0) {
-    return (str);
-  }
-
-  while (str[i] != 0) {
-    str[j] = str[i];
-    i += 1;
-    j += 1;
-  }
-
-  str[j] = 0;
-
-  return (str);
-}
-
-char *str_rtrim (char *str)
-{
-  unsigned i, j;
-
-  i = 0; j = 0;
-
-  while (str[i] != 0) {
-    if ((str[i] != ' ') && (str[i] != '\t') && (str[i] != '\n')) {
-      j = i + 1;
-    }
-    i++;
-  }
-
-  str[j] = 0;
-
-  return (str);
-}
-
-void cmd_get (cmd_t *cmd)
-{
-  fgets (cmd->str, 256, stdin);
-
-  str_ltrim (cmd->str);
-  str_rtrim (cmd->str);
-
-  cmd->i = 0;
-
-  trm_check (pc->trm);
-}
-
-int cmd_match_space (cmd_t *cmd)
-{
-  int      r;
-  unsigned i;
-
-  i = cmd->i;
-
-  while ((cmd->str[i] != 0) && str_is_space (cmd->str[i])) {
-    i++;
-  }
-
-  r = (i > cmd->i);
-
-  cmd->i = i;
-
-  return (r);
-}
-
-void cmd_error (cmd_t *cmd, const char *str)
-{
-  printf ("** %s [%s]\n", str, cmd->str + cmd->i);
-  fflush (stdout);
-}
-
-int cmd_match_str (cmd_t *cmd, char *str)
-{
-  unsigned i, n;
-
-  cmd_match_space (cmd);
-
-  i = cmd->i;
-  n = 0;
-
-  while ((cmd->str[i] != 0) && !str_is_space (cmd->str[i])) {
-    *(str++) = cmd->str[i];
-    i += 1;
-    n += 1;
-  }
-
-  *str = 0;
-
-  cmd->i = i;
-
-  return (n > 0);
-}
-
-int cmd_match_eol (cmd_t *cmd)
-{
-  cmd_match_space (cmd);
-
-  if (cmd->str[cmd->i] == 0) {
-    return (1);
-  }
-
-  return (0);
-}
-
-int cmd_match_end (cmd_t *cmd)
-{
-  if (cmd_match_eol (cmd)) {
-    return (1);
-  }
-
-  cmd_error (cmd, "syntax error");
-
-  return (0);
-}
-
-int cmd_match (cmd_t *cmd, const char *str)
-{
-  unsigned i;
-
-  cmd_match_space (cmd);
-
-  i = cmd->i;
-
-  while ((*str != 0) && (cmd->str[i] == *str)) {
-    i += 1;
-    str += 1;
-  }
-
-  if (*str != 0) {
-    return (0);
-  }
-
-  cmd->i = i;
-
-  return (1);
-}
-
 int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
 {
   unsigned i;
@@ -356,11 +205,8 @@ int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
   return (0);
 }
 
-int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
+int cmd_match_sym (cmd_t *cmd, unsigned long *val)
 {
-  unsigned       i;
-  unsigned       cnt;
-  unsigned short ret;
   unsigned short *reg;
 
   if (cmd_match_reg (cmd, &reg)) {
@@ -368,106 +214,7 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
     return (1);
   }
 
-  cmd_match_space (cmd);
-
-  i = cmd->i;
-
-  ret = 0;
-  cnt = 0;
-
-  while (cmd->str[i] != 0) {
-    if ((cmd->str[i] >= '0') && (cmd->str[i] <= '9')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - '0');
-    }
-    else if ((cmd->str[i] >= 'a') && (cmd->str[i] <= 'f')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'a' + 10);
-    }
-    else if ((cmd->str[i] >= 'A') && (cmd->str[i] <= 'F')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'A' + 10);
-    }
-    else {
-      break;
-    }
-
-    cnt += 1;
-    i += 1;
-  }
-
-  if (cnt == 0) {
-    return (0);
-  }
-
-  cmd->i = i;
-  *val = ret;
-
-  return (1);
-}
-
-int cmd_match_uint32 (cmd_t *cmd, unsigned long *val)
-{
-  unsigned       i;
-  unsigned       cnt;
-  unsigned long  ret;
-  unsigned short *reg;
-
-  if (cmd_match_reg (cmd, &reg)) {
-    *val = *reg;
-    return (1);
-  }
-
-  cmd_match_space (cmd);
-
-  i = cmd->i;
-
-  ret = 0;
-  cnt = 0;
-
-  while (cmd->str[i] != 0) {
-    if ((cmd->str[i] >= '0') && (cmd->str[i] <= '9')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - '0');
-    }
-    else if ((cmd->str[i] >= 'a') && (cmd->str[i] <= 'f')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'a' + 10);
-    }
-    else if ((cmd->str[i] >= 'A') && (cmd->str[i] <= 'F')) {
-      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'A' + 10);
-    }
-    else {
-      break;
-    }
-
-    cnt += 1;
-    i += 1;
-  }
-
-  if (cnt == 0) {
-    return (0);
-  }
-
-  cmd->i = i;
-  *val = ret;
-
-  return (1);
-}
-
-int cmd_match_addr (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
-{
-  unsigned short val;
-
-  if (!cmd_match_uint16 (cmd, &val)) {
-    return (0);
-  }
-
-  if (!cmd_match (cmd, ":")) {
-    *ofs = val;
-    return (1);
-  }
-
-  *seg = val;
-
-  cmd_match_uint16 (cmd, ofs);
-
-  return (1);
+  return (0);
 }
 
 breakpoint_t *bp_get (unsigned short seg, unsigned short ofs)
@@ -1150,7 +897,7 @@ void do_bc (cmd_t *cmd)
   seg = e86_get_cs (pc->cpu);
   ofs = e86_get_ip (pc->cpu);
 
-  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
     cmd_error (cmd, "expecting address");
     return;
   }
@@ -1182,7 +929,7 @@ void do_bs (cmd_t *cmd)
   pass = 1;
   reset = 0;
 
-  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
     cmd_error (cmd, "expecting address");
     return;
   }
@@ -1273,7 +1020,7 @@ void do_disk (cmd_t *cmd)
     return;
   }
 
-  if (!cmd_match_str (cmd, fname)) {
+  if (!cmd_match_str (cmd, fname, 256)) {
     return;
   }
 
@@ -1317,12 +1064,12 @@ void do_dump (cmd_t *cmd)
   char what[256];
   char fname[256];
 
-  if (!cmd_match_str (cmd, what)) {
+  if (!cmd_match_str (cmd, what, 256)) {
     cmd_error (cmd, "don't know what to dump");
     return;
   }
 
-  if (!cmd_match_str (cmd, fname)) {
+  if (!cmd_match_str (cmd, fname, 256)) {
     cmd_error (cmd, "need a file name");
     return;
   }
@@ -1374,7 +1121,7 @@ void do_d (cmd_t *cmd)
   ofs1 = sofs;
   cnt = 256;
 
-  if (cmd_match_addr (cmd, &seg, &ofs1)) {
+  if (cmd_match_uint16_16 (cmd, &seg, &ofs1)) {
     cmd_match_uint16 (cmd, &cnt);
   }
 
@@ -1441,7 +1188,7 @@ void do_e (cmd_t *cmd)
   seg = 0;
   ofs = 0;
 
-  if (!cmd_match_addr (cmd, &seg, &ofs)) {
+  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
     cmd_error (cmd, "need an address");
   }
 
@@ -1639,7 +1386,7 @@ void do_parport (cmd_t *cmd)
     return;
   }
 
-  if (!cmd_match_str (cmd, fname)) {
+  if (!cmd_match_str (cmd, fname, 256)) {
     cmd_error (cmd, "need a file name");
     return;
   }
@@ -1777,7 +1524,7 @@ void do_screenshot (cmd_t *cmd)
   unsigned mode;
   FILE     *fp;
 
-  if (!cmd_match_str (cmd, fname)) {
+  if (!cmd_match_str (cmd, fname, 256)) {
     cmd_error (cmd, "need a file name");
     return;
   }
@@ -1875,7 +1622,7 @@ void do_u (cmd_t *cmd)
   ofs = sofs;
   cnt = 16;
 
-  if (cmd_match_addr (cmd, &seg, &ofs)) {
+  if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
     cmd_match_uint16 (cmd, &cnt);
   }
 
@@ -2160,6 +1907,8 @@ int main (int argc, char *argv[])
 
   signal (SIGINT, &sig_int);
   signal (SIGSEGV, &sig_segv);
+
+  cmd_init (stdin, stdout, &cmd_match_sym);
 
   if (run) {
     pce_run();
