@@ -5,6 +5,7 @@
 	* Fixed a serious bug in the LDS/LES instructions
 	* The overflow flag is now set correctly
 	* Added a PPI 8255 emulator
+	* Added a CGA emulator (text mode only)
 	* Lots of small bugfixes
 
 0.0.3	2003-04-15
