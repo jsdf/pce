@@ -3,10 +3,10 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     bios.asm                                                   *
+;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -860,10 +860,11 @@ db 0x8A, 0xC6                           ; E410 mov al,dh
 db 0xE8, 0x10, 0x02                     ; E412 call 0xe625
 db 0x8A, 0xC5                           ; E415 mov al,ch
 db 0xE8, 0x0B, 0x02                     ; E417 call 0xe625
-db 0xBE, 0x67, 0xFA                     ; E41A mov si,0xfa67
-db 0x90                                 ; E41D nop
-db 0xE8, 0x99, 0x02                     ; E41E call 0xe6ba
-db 0xEB, 0x18                           ; E421 jmp short 0xe43b
+  mov     si, L_FA67                    ; " 201"
+  nop
+  call    L_E6BA                        ; print string
+  jmp     short L_E43B
+
 db 0x1F                                 ; E423 pop ds
 db 0x1E                                 ; E424 push ds
 db 0x8B, 0x16, 0x15, 0x00               ; E425 mov dx,[0x15]
@@ -1001,9 +1002,10 @@ db 0x89, 0x36, 0x82, 0x00               ; E54E mov [0x82],si
 db 0xE4, 0x21                           ; E552 in al,0x21
 db 0x24, 0xFC                           ; E554 and al,0xfc
 db 0xE6, 0x21                           ; E556 out 0x21,al
-db 0xBD, 0x3D, 0xE6                     ; E558 mov bp,0xe63d
-db 0x90                                 ; E55B nop
+  mov     bp, L_E63D
+  nop
 db 0x2B, 0xF6                           ; E55C sub si,si
+L_E55E:
 db 0x2E, 0x8B, 0x56, 0x00               ; E55E mov dx,[cs:bp+0x0]
 db 0xB0, 0xAA                           ; E562 mov al,0xaa
 db 0xEE                                 ; E564 out dx,al
@@ -1017,8 +1019,8 @@ db 0x46                                 ; E56F inc si
 db 0x46                                 ; E570 inc si
 db 0x45                                 ; E571 inc bp
 db 0x45                                 ; E572 inc bp
-db 0x81, 0xFD, 0x43, 0xE6               ; E573 cmp bp,0xe643
-db 0x75, 0xE5                           ; E577 jnz 0xe55e
+  cmp     bp, L_E63D_end                ; E643
+  jne     L_E55E
 db 0x2B, 0xDB                           ; E579 sub bx,bx
 db 0xBA, 0xFA, 0x03                     ; E57B mov dx,0x3fa
 db 0xEC                                 ; E57E in al,dx
@@ -1148,8 +1150,11 @@ prt_char:                               ; E636
   int     0x10
   ret
 
-db 0xBC, 0x03, 0x78                     ; E63D mov sp,0x7803
-db 0x03, 0x78, 0x02                     ; E640 add di,[bx+si+0x2]
+L_E63D:
+  dw      0x03bc                        ; parallel port addresses
+  dw      0x0378
+  dw      0x0278
+L_E63D_end:
 
 L_E643:
   mov     al, 0x0c
@@ -1322,13 +1327,18 @@ L_E726:
   int     0x18                          ; start rom basic
 
 
-db 0xFF, 0x17                           ; E728 call near [bx]
-db 0x04, 0x00                           ; E72A add al,0x0
-db 0x03, 0x80, 0x01, 0xC0               ; E72C add ax,[bx+si+0xc001]
-db 0x00, 0x60, 0x00                     ; E730 add [bx+si+0x0],ah
-db 0x30, 0x00                           ; E733 xor [bx+si],al
-db 0x18, 0x00                           ; E735 sbb [bx+si],al
-db 0x0C, 0x00                           ; E737 or al,0x0
+db 0xFF
+
+
+L_E729:
+  dw      0x0417                        ; 110 bps
+  dw      0x0300                        ; 150 bps
+  dw      0x0180                        ; 300 bps
+  dw      0x00c0                        ; 600 bps
+  dw      0x0060                        ; 1200 bps
+  dw      0x0030                        ; 2400 bps
+  dw      0x0018                        ; 4800 bps
+  dw      0x000c                        ; 9600 bps
 
 
 ;-----------------------------------------------------------------------------
@@ -1380,78 +1390,125 @@ L_E762:
 
 
 ;-----------------------------------------------------------------------------
-; int 14 func 00
+; int 14 func 00 - initialize port
+; inp: AL = parameters
+;      DX = port number
+; out: AL = modem status
+;
+; bits  description
+; 5-7   data rate (110, 150, 300, 600, 1200, 2400, 4800, 9600)
+; 3-4   parity (00 or 10 = none, 01 = odd, 11 = even)
+; 2     stop bits (0 = 1 bit, 1 = 2 bits)
+; 0-1   data bits (00 = 5, 01 = 6, 10 = 7, 11 = 8)
 ;-----------------------------------------------------------------------------
 
 int_14_00:                              ; E769
   mov     ah, al
-  add     dx, byte 0x03
-db 0xB0, 0x80                           ; E76E mov al,0x80
-db 0xEE                                 ; E770 out dx,al
-db 0x8A, 0xD4                           ; E771 mov dl,ah
-db 0xB1, 0x04                           ; E773 mov cl,0x4
-db 0xD2, 0xC2                           ; E775 rol dl,cl
-db 0x81, 0xE2, 0x0E, 0x00               ; E777 and dx,0xe
-db 0xBF, 0x29, 0xE7                     ; E77B mov di,0xe729
-db 0x03, 0xFA                           ; E77E add di,dx
-db 0x8B, 0x14                           ; E780 mov dx,[si]
-db 0x42                                 ; E782 inc dx
-db 0x2E, 0x8A, 0x45, 0x01               ; E783 mov al,[cs:di+0x1]
-db 0xEE                                 ; E787 out dx,al
-db 0x4A                                 ; E788 dec dx
-db 0x2E, 0x8A, 0x05                     ; E789 mov al,[cs:di]
-db 0xEE                                 ; E78C out dx,al
-db 0x83, 0xC2, 0x03                     ; E78D add dx,byte +0x3
-db 0x8A, 0xC4                           ; E790 mov al,ah
-db 0x24, 0x1F                           ; E792 and al,0x1f
-db 0xEE                                 ; E794 out dx,al
-db 0x4A                                 ; E795 dec dx
-db 0x4A                                 ; E796 dec dx
-db 0xB0, 0x00                           ; E797 mov al,0x0
-db 0xEE                                 ; E799 out dx,al
-db 0xEB, 0x49                           ; E79A jmp short 0xe7e5
+
+  add     dx, byte 0x03                 ; LCR
+  mov     al, 0x80                      ; DLAB
+  out     dx, al
+
+  mov     dl, ah
+  mov     cl, 0x04                      ; get rate in low bits
+  rol     dl, cl
+  and     dx, 0x000e
+  mov     di, L_E729
+  add     di, dx
+
+  mov     dx, [si]                      ; port base address
+  inc     dx
+  mov     al, [cs:di + 0x01]
+  out     dx, al                        ; divisor high
+
+  dec     dx
+  mov     al, [cs:di]
+  out     dx, al                        ; divisor low
+
+  add     dx, byte 0x03                 ; LCR
+  mov     al, ah
+  and     al, 0x1f
+  out     dx, al                        ; parity, stop bits, data bits
+
+  dec     dx
+  dec     dx                            ; IER
+  mov     al, 0x00
+  out     dx, al                        ; disable interrupt
+
+  jmp     short int_14_03
+
+
+;-----------------------------------------------------------------------------
+; int 14 func 01 - send character
+; inp: AL = character
+;      DX = port number
+; out: AH = status
+;-----------------------------------------------------------------------------
 
 int_14_01:                              ; E79C
-db 0x50                                 ; E79C push ax
-db 0x83, 0xC2, 0x04                     ; E79D add dx,byte +0x4
-db 0xB0, 0x03                           ; E7A0 mov al,0x3
-db 0xEE                                 ; E7A2 out dx,al
-db 0x42                                 ; E7A3 inc dx
-db 0x42                                 ; E7A4 inc dx
-db 0xB7, 0x30                           ; E7A5 mov bh,0x30
-db 0xE8, 0x48, 0x00                     ; E7A7 call 0xe7f2
-db 0x74, 0x08                           ; E7AA jz 0xe7b4
-db 0x59                                 ; E7AC pop cx
-db 0x8A, 0xC1                           ; E7AD mov al,cl
-db 0x80, 0xCC, 0x80                     ; E7AF or ah,0x80
-db 0xEB, 0xAE                           ; E7B2 jmp short 0xe762
-db 0x4A                                 ; E7B4 dec dx
-db 0xB7, 0x20                           ; E7B5 mov bh,0x20
-db 0xE8, 0x38, 0x00                     ; E7B7 call 0xe7f2
-db 0x75, 0xF0                           ; E7BA jnz 0xe7ac
-db 0x83, 0xEA, 0x05                     ; E7BC sub dx,byte +0x5
-db 0x59                                 ; E7BF pop cx
-db 0x8A, 0xC1                           ; E7C0 mov al,cl
-db 0xEE                                 ; E7C2 out dx,al
-db 0xEB, 0x9D                           ; E7C3 jmp short 0xe762
+  push    ax
 
+  add     dx, byte 0x04                 ; MCR
+  mov     al, 0x03
+  out     dx, al                        ; set DTR and RTS
+
+  inc     dx
+  inc     dx                            ; MSR
+  mov     bh, 0x30                      ; DSR / CTS
+  call    L_E7F2
+  jz      L_E7B4
+
+L_E7AC:
+  ; timeout
+  pop     cx
+  mov     al, cl
+
+L_E7AF:
+  or      ah, 0x80                      ; indicate error
+  jmp     short L_E762
+
+L_E7B4:
+  dec     dx                            ; LSR
+  mov     bh, 0x20                      ; TBE
+  call    L_E7F2
+  jnz     L_E7AC
+
+  sub     dx, byte 0x05                 ; TXR
+  pop     cx
+  mov     al, cl                        ; the character
+  out     dx, al
+
+  jmp     short L_E762
+
+
+;-----------------------------------------------------------------------------
+; int 14 func 02 - receive character
+; inp: DX = port number
+; out: AH = status
+;      AL = character
+;-----------------------------------------------------------------------------
 int_14_02:                              ; E7C5
-db 0x83, 0xC2, 0x04                     ; E7C5 add dx,byte +0x4
-db 0xB0, 0x01                           ; E7C8 mov al,0x1
-db 0xEE                                 ; E7CA out dx,al
-db 0x42                                 ; E7CB inc dx
-db 0x42                                 ; E7CC inc dx
-db 0xB7, 0x20                           ; E7CD mov bh,0x20
-db 0xE8, 0x20, 0x00                     ; E7CF call 0xe7f2
-db 0x75, 0xDB                           ; E7D2 jnz 0xe7af
-db 0x4A                                 ; E7D4 dec dx
-db 0xB7, 0x01                           ; E7D5 mov bh,0x1
-db 0xE8, 0x18, 0x00                     ; E7D7 call 0xe7f2
-db 0x75, 0xD3                           ; E7DA jnz 0xe7af
-db 0x80, 0xE4, 0x1E                     ; E7DC and ah,0x1e
-db 0x8B, 0x14                           ; E7DF mov dx,[si]
-db 0xEC                                 ; E7E1 in al,dx
-db 0xE9, 0x7D, 0xFF                     ; E7E2 jmp 0xe762
+  add     dx, byte 0x04                 ; MCR
+  mov     al, 0x01                      ; DTR
+  out     dx, al
+
+  inc     dx
+  inc     dx                            ; MSR
+  mov     bh, 0x20                      ; DSR
+  call    L_E7F2
+  jnz     L_E7AF
+
+  dec     dx                            ; LSR
+  mov     bh, 0x01                      ; RRD
+  call    L_E7F2
+  jnz     L_E7AF
+
+  and     ah, 0x1e
+  mov     dx, [si]                      ; RXD
+  in      al, dx                        ; read the character
+
+  jmp     L_E762
+
 
 int_14_03:                              ; E7E5
 db 0x8B, 0x14                           ; E7E5 mov dx,[si]
@@ -1461,18 +1518,30 @@ db 0x8A, 0xE0                           ; E7EB mov ah,al
 db 0x42                                 ; E7ED inc dx
 db 0xEC                                 ; E7EE in al,dx
 db 0xE9, 0x70, 0xFF                     ; E7EF jmp 0xe762
-db 0x8A, 0x5D, 0x7C                     ; E7F2 mov bl,[di+0x7c]
-db 0x2B, 0xC9                           ; E7F5 sub cx,cx
-db 0xEC                                 ; E7F7 in al,dx
-db 0x8A, 0xE0                           ; E7F8 mov ah,al
-db 0x22, 0xC7                           ; E7FA and al,bh
-db 0x3A, 0xC7                           ; E7FC cmp al,bh
-db 0x74, 0x08                           ; E7FE jz 0xe808
-db 0xE2, 0xF5                           ; E800 loop 0xe7f7
-db 0xFE, 0xCB                           ; E802 dec bl
-db 0x75, 0xEF                           ; E804 jnz 0xe7f5
-db 0x0A, 0xFF                           ; E806 or bh,bh
-db 0xC3                                 ; E808 ret
+
+
+L_E7F2:
+  mov     bl, [di + 0x007c]             ; port timeout value
+
+L_E7F5:
+  sub     cx, cx                        ; counter
+
+L_E7F7:
+  in      al, dx
+  mov     ah, al
+  and     al, bh
+  cmp     al, bh
+  je      L_E808
+  loop    L_E7F7
+
+  dec     bl
+  jnz     L_E7F5
+
+  or      bh, bh                        ; clear zero flag
+
+L_E808:
+  ret
+
 
 L_E809:
   push    dx
@@ -2724,7 +2793,7 @@ db 0xC3                                 ; EFC4 ret
 
 
 ;-----------------------------------------------------------------------------
-;* int 1E - diskette parameter table
+;* int 1e - diskette parameter table
 ;-----------------------------------------------------------------------------
 
 int_1e:                                 ; EFC7
@@ -4784,9 +4853,11 @@ L_FA60:
 
   ret
 
-db 0x20, 0x32                           ; FA67 and [bp+si],dh
-db 0x30, 0x31                           ; FA69 xor [bx+di],dh
-db 0x0D, 0x0A, 0xFF                     ; FA6B or ax,0xff0a
+L_FA67:
+  db      " 201", 0x0d, 0x0a
+
+  db      0xff
+
 
 ; CGA font char 00-7f
 L_FA6E:

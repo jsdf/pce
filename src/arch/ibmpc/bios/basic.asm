@@ -3,10 +3,10 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     basic.asm                                                  *
+;* File name:     src/arch/ibmpc/bios/basic.asm                              *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Last modified: 2004-01-10 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: basic.asm,v 1.1 2003/12/20 01:01:34 hampa Exp $
+; $Id$
 
 
 section .text
@@ -862,94 +862,73 @@ db 0x6E                                 ; 0691 outsb
 db 0x79, 0x20                           ; 0692 jns 0x6b4
 db 0x66, 0x69, 0x6C, 0x65, 0x73, 0x00
 
+
+%define DATA_COLS (basic_data.columns - basic_data)
+%define DATA_VMODE (basic_data.vmode - basic_data)
+%define DATA_CSIZE (basic_data.cursor_size - basic_data)
+
+
 ; 145 bytes get copied from here to 0060:0000
 L_069A:
+basic_data:                             ; 069A
+  db 0x00, 0x00, 0x00, 0xC3             ; 00
+  db 0x1E, 0x10, 0x00, 0x52
+  db 0xC7, 0x4F, 0x80, 0x52
+  db 0xC7, 0x4F, 0x80, 0xE4
+
+  db 0x00, 0xCB, 0xFF, 0xFF             ; 10
+  db 0xFF, 0xFF, 0xFF, 0xFF
+  db 0xFF, 0xFF, 0xFF, 0xFF
+  db 0xFF, 0xFF, 0xFF, 0xFF
+
+  db 0xFF, 0xFF, 0xFF, 0xFF             ; 20
+  db 0xFF, 0xFF, 0x01, 0x00
+  db 0x00
+
+.columns:
+  db      0x50
+
+  db 0x38, 0x00
+  db 0x72, 0x07, 0xFE, 0xFF
+
+  db 0x0F, 0x07, 0x0A, 0x04             ; 30
+  db 0x00, 0x00, 0x00, 0x00
+  db 0x00, 0x00, 0x00, 0x00
+  db 0x00, 0x00, 0x00, 0x00
+
+  db 0x00, 0x00, 0x00, 0x00             ; 40
+  db 0x00, 0x00, 0x00, 0x00
+
+.vmode:
+  db      0x00                          ; video mode at startup (0048)
+
+  db 0x00, 0x00, 0x07
+  db 0x00, 0x00, 0x07, 0x07
+
+  db 0x20, 0x00, 0x00, 0x00             ; 50
+  db 0x00, 0x00, 0x00, 0x00
+  db 0x00, 0x00, 0x00, 0x01
+  db 0x18, 0x18, 0x00, 0x00
+
+  db 0x00, 0x00, 0x50, 0x00             ; 60
+  db 0x01, 0x00, 0x00, 0x00
+
+.cursor_size:                           ; cursor size (0068)
+  db      0x07, 0x07
+
   db 0x00, 0x00
-  db 0x00, 0xC3
-db 0x1E                                 ; 069E push ds
-db 0x10, 0x00                           ; 069F adc [bx+si],al
-db 0x52                                 ; 06A1 push dx
-db 0xC7                                 ; 06A2 db 0xC7
-db 0x4F                                 ; 06A3 dec di
-db 0x80, 0x52, 0xC7, 0x4F               ; 06A4 adc byte [bp+si-0x39],0x4f
-db 0x80, 0xE4, 0x00                     ; 06A8 and ah,0x0
-db 0xCB                                 ; 06AB retf
-db 0xFF                                 ; 06AC db 0xFF
-db 0xFF                                 ; 06AD db 0xFF
-db 0xFF                                 ; 06AE db 0xFF
-db 0xFF                                 ; 06AF db 0xFF
-db 0xFF                                 ; 06B0 db 0xFF
-db 0xFF                                 ; 06B1 db 0xFF
-db 0xFF                                 ; 06B2 db 0xFF
-db 0xFF                                 ; 06B3 db 0xFF
-db 0xFF                                 ; 06B4 db 0xFF
-db 0xFF                                 ; 06B5 db 0xFF
-db 0xFF                                 ; 06B6 db 0xFF
-db 0xFF                                 ; 06B7 db 0xFF
-db 0xFF                                 ; 06B8 db 0xFF
-db 0xFF                                 ; 06B9 db 0xFF
-db 0xFF                                 ; 06BA db 0xFF
-db 0xFF                                 ; 06BB db 0xFF
-db 0xFF                                 ; 06BC db 0xFF
-db 0xFF                                 ; 06BD db 0xFF
-db 0xFF                                 ; 06BE db 0xFF
-db 0xFF, 0x01                           ; 06BF inc word [bx+di]
-db 0x00, 0x00                           ; 06C1 add [bx+si],al
-db 0x50                                 ; 06C3 push ax
-db 0x38, 0x00                           ; 06C4 cmp [bx+si],al
-db 0x72, 0x07                           ; 06C6 jc 0x6cf
-db 0xFE                                 ; 06C8 db 0xFE
-db 0xFF, 0x0F                           ; 06C9 dec word [bx]
-db 0x07                                 ; 06CB pop es
-db 0x0A, 0x04                           ; 06CC or al,[si]
-db 0x00, 0x00                           ; 06CE add [bx+si],al
-db 0x00, 0x00                           ; 06D0 add [bx+si],al
-db 0x00, 0x00                           ; 06D2 add [bx+si],al
-db 0x00, 0x00                           ; 06D4 add [bx+si],al
-db 0x00, 0x00                           ; 06D6 add [bx+si],al
-db 0x00, 0x00                           ; 06D8 add [bx+si],al
-db 0x00, 0x00                           ; 06DA add [bx+si],al
-db 0x00, 0x00                           ; 06DC add [bx+si],al
-db 0x00, 0x00                           ; 06DE add [bx+si],al
-db 0x00, 0x00                           ; 06E0 add [bx+si],al
-db 0x00, 0x00                           ; 06E2 add [bx+si],al
-db 0x00, 0x07                           ; 06E4 add [bx],al
-db 0x00, 0x00                           ; 06E6 add [bx+si],al
-db 0x07                                 ; 06E8 pop es
-db 0x07                                 ; 06E9 pop es
-db 0x20, 0x00                           ; 06EA and [bx+si],al
-db 0x00, 0x00                           ; 06EC add [bx+si],al
-db 0x00, 0x00                           ; 06EE add [bx+si],al
-db 0x00, 0x00                           ; 06F0 add [bx+si],al
-db 0x00, 0x00                           ; 06F2 add [bx+si],al
-db 0x00, 0x01                           ; 06F4 add [bx+di],al
-db 0x18, 0x18                           ; 06F6 sbb [bx+si],bl
-db 0x00, 0x00                           ; 06F8 add [bx+si],al
-db 0x00, 0x00                           ; 06FA add [bx+si],al
-db 0x50                                 ; 06FC push ax
-db 0x00, 0x01                           ; 06FD add [bx+di],al
-db 0x00, 0x00                           ; 06FF add [bx+si],al
-db 0x00, 0x07                           ; 0701 add [bx],al
-db 0x07                                 ; 0703 pop es
-db 0x00, 0x00                           ; 0704 add [bx+si],al
-db 0x00, 0x00                           ; 0706 add [bx+si],al
-db 0x00, 0x00                           ; 0708 add [bx+si],al
-db 0x00, 0x01                           ; 070A add [bx+di],al
-db 0x00, 0x00                           ; 070C add [bx+si],al
-db 0x01, 0x01                           ; 070E add [bx+di],ax
-db 0x01, 0x01                           ; 0710 add [bx+di],ax
-db 0x01, 0x01                           ; 0712 add [bx+di],ax
-db 0x01, 0x01                           ; 0714 add [bx+di],ax
-db 0x01, 0x01                           ; 0716 add [bx+di],ax
-db 0x01, 0x01                           ; 0718 add [bx+di],ax
-db 0x01, 0x01                           ; 071A add [bx+di],ax
-db 0x01, 0x01                           ; 071C add [bx+di],ax
-db 0x01, 0x01                           ; 071E add [bx+di],ax
-db 0x01, 0x01                           ; 0720 add [bx+di],ax
-db 0x01, 0x01                           ; 0722 add [bx+di],ax
-db 0x01, 0x01                           ; 0724 add [bx+di],ax
-db 0x01, 0x01                           ; 0726 add [bx+di],ax
-db 0x20, 0x69, 0x6E                     ; 0728 and [bx+di+0x6e],ch
+  db 0x00, 0x00, 0x00, 0x00
+
+  db 0x00, 0x01, 0x00, 0x00             ; 70
+  db 0x01, 0x01, 0x01, 0x01
+  db 0x01, 0x01, 0x01, 0x01
+  db 0x01, 0x01, 0x01, 0x01
+
+  db 0x01, 0x01, 0x01, 0x01             ; 80
+  db 0x01, 0x01, 0x01, 0x01
+  db 0x01, 0x01, 0x01, 0x01
+  db 0x01, 0x01, 0x20, 0x69
+  db 0x6E
 
 L_072B:
 db 0x20, 0x00                           ; 072B and [bx+si],al
@@ -5723,16 +5702,21 @@ db 0xA0, 0x36, 0x05                     ; 2DA6 mov al,[0x536]
 db 0x24, 0x01                           ; 2DA9 and al,0x1
 db 0x75, 0x03                           ; 2DAB jnz 0x2db0
 db 0xA2, 0x36, 0x05                     ; 2DAD mov [0x536],al
+
 L_2DB0:
-db 0x59                                 ; 2DB0 pop cx
-db 0x8B, 0x1E, 0x2C, 0x00               ; 2DB1 mov bx,[0x2c]
-db 0x4B                                 ; 2DB5 dec bx
-db 0x4B                                 ; 2DB6 dec bx
-db 0x89, 0x1E, 0x45, 0x03               ; 2DB7 mov [0x345],bx
-db 0x43                                 ; 2DBB inc bx
-db 0x43                                 ; 2DBC inc bx
-db 0xCD, 0xB1                           ; 2DBD int 0xb1
-db 0x8B, 0xE3                           ; 2DBF mov sp,bx
+  pop     cx
+
+  mov     bx, [0x002c]
+  dec     bx
+  dec     bx
+  mov     [0x0345], bx
+
+  inc     bx
+  inc     bx
+
+  int     0xb1
+
+  mov     sp, bx
 db 0xBB, 0x0E, 0x03                     ; 2DC1 mov bx,0x30e
 db 0x89, 0x1E, 0x0C, 0x03               ; 2DC4 mov [0x30c],bx
 db 0xE8, 0xF3, 0xF7                     ; 2DC8 call 0x25be
@@ -9466,21 +9450,21 @@ db 0x00
 L_4BFE:
   mov     ah, 0x0f
   int     0x10
-  mov     [0x0048], al                  ; Store old video mode
+  mov     [DATA_VMODE], al              ; Store old video mode (0048)
 
-  mov     ah, 40
+  mov     ah, 40                        ; 40 columns
   cmp     al, 2
   jb      L_4C18
 
-  mov     ah, 80
+  mov     ah, 80                        ; 80 columns
   cmp     al, 7
   jne     L_4C18
 
-  mov     cx, 0x0b0c
-  mov     [0x68], cx
+  mov     cx, 0x0b0c                    ; cursor size for mda
+  mov     [DATA_CSIZE], cx              ; 0068
 
 L_4C18:
-  mov     [0x29], ah                    ; Number of columns
+  mov     [DATA_COLS], ah               ; Number of columns (0029)
 
   cli
   mov     bx, ds
@@ -9490,12 +9474,15 @@ L_4C18:
   mov     dx, 0
   mov     ds, dx
   mov     [0x510], bx
+
   mov     bx, L_4D34
-  mov     [0x6c], bx                    ; int 1b address
+  mov     [4 * 0x1b], bx                ; int 1b address
+
   mov     bx, L_5744
-  mov     [0x70], bx                    ; int 1c address
-  mov     [0x6e], cs
-  mov     [0x72], cs
+  mov     [4 * 0x1c], bx                ; int 1c address
+
+  mov     [4 * 0x1b + 2], cs
+  mov     [4 * 0x1c + 2], cs
   pop     ds
 
   call    L_4C79                        ; copy strings to 60:653

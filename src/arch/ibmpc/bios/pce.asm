@@ -3,10 +3,10 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     pce.asm                                                    *
+;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Last modified: 2004-01-10 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -577,7 +577,7 @@ prt_string:
 
   xor     bx, bx
 
-.next
+.next:
   cs      lodsb
   or      al, al
   jz      .done
@@ -587,7 +587,7 @@ prt_string:
 
   jmp     short .next
 
-.done
+.done:
   pop     si
   pop     bx
   pop     ax
@@ -645,6 +645,8 @@ prt_uint16:
   pop     ax
   ret
 
+
+;-----------------------------------------------------------------------------
 
 inttab:
   dw      int_00, 0xf000
@@ -825,6 +827,8 @@ int_19:
 .fail:
   iret
 
+
+;-----------------------------------------------------------------------------
 
 int_1a:
   cmp     ah, 2
