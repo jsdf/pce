@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.11 2003/09/22 23:02:44 hampa Exp $
+; $Id: ega.asm,v 1.12 2003/09/23 06:59:10 hampa Exp $
 
 
 %include "pce.inc"
@@ -83,6 +83,12 @@ section .text
 rom_start:
   dw      0xaa55
   db      (rom_end - rom_start + 511) / 512
+
+init:
+  jmp     start
+
+  set_pos 0x1d
+  db      " IBM "
 
 start:
   push    ax
@@ -2020,6 +2026,7 @@ ega_init:
   mov     ds, [cs:seg0040]
 
   mov     byte [0x0087], 0x60
+  mov     byte [0x0088], 0x09           ; switches
 
   mov     word [0x00a8], ptr00a8
   mov     word [0x00a8 + 2], cs
