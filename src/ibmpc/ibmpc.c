@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.2 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.3 2003/04/24 12:23:35 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -94,21 +94,24 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
   pc->cpu = e86_new ();
 
-  pc->cpu->mem = pc->mem;
-  pc->cpu->prt = pc->prt;
+  e86_set_mem (pc->cpu, pc->mem,
+    (e86_get_uint8_f) &mem_get_uint8,
+    (e86_set_uint8_f) &mem_set_uint8,
+    (e86_get_uint16_f) &mem_get_uint16_le,
+    (e86_set_uint16_f) &mem_set_uint16_le
+  );
+
+  e86_set_prt (pc->cpu, pc->prt,
+    (e86_get_uint8_f) &mem_get_uint8,
+    (e86_set_uint8_f) &mem_set_uint8,
+    (e86_get_uint16_f) &mem_get_uint16_le,
+    (e86_set_uint16_f) &mem_set_uint16_le
+  );
+
+  e86_set_ram (pc->cpu, pc->ram->data, pc->ram->size);
 
   pc->cpu->op_ext = pc;
   pc->cpu->op_hook = &pc_e86_hook;
-
-  pc->cpu->mem_get_uint8 = (geta_uint8_f) &mem_get_uint8;
-  pc->cpu->mem_get_uint16 = (geta_uint16_f) &mem_get_uint16_le;
-  pc->cpu->mem_set_uint8 = (seta_uint8_f) &mem_set_uint8;
-  pc->cpu->mem_set_uint16 = (seta_uint16_f) &mem_set_uint16_le;
-
-  pc->cpu->prt_get_uint8 = (geta_uint8_f) &mem_get_uint8;
-  pc->cpu->prt_get_uint16 = (geta_uint16_f) &mem_get_uint16_le;
-  pc->cpu->prt_set_uint8 = (seta_uint8_f) &mem_set_uint8;
-  pc->cpu->prt_set_uint16 = (seta_uint16_f) &mem_set_uint16_le;
 }
 
 void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
