@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-10-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -2270,6 +2270,11 @@ unsigned op_8d (e8086_t *c)
   if (c->ea.is_mem) {
     e86_set_reg16 (c, (c->pq[1] >> 3) & 7, c->ea.ofs);
     e86_set_clk (c, 2);
+  }
+  else {
+    if (e86_undefined (c) == 0) {
+      return (0);
+    }
   }
 
   return (c->ea.cnt + 1);
