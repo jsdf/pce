@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -356,7 +356,7 @@ void e86_irq (e8086_t *cpu, unsigned char val);
 
 int e86_interrupt (e8086_t *cpu, unsigned n);
 
-void e86_undefined (e8086_t *c);
+unsigned e86_undefined (e8086_t *c);
 
 unsigned long long e86_get_clock (e8086_t *c);
 

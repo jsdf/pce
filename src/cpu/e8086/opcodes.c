@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -54,9 +54,7 @@ unsigned short e86_pop (e8086_t *c)
 static
 unsigned op_ud (e8086_t *c)
 {
-  e86_undefined (c);
-
-  return (1);
+  return (e86_undefined (c));
 }
 
 /* OP 00: ADD r/m8, reg8 */
@@ -2375,7 +2373,7 @@ static
 unsigned op_9c (e8086_t *c)
 {
   if (c->cpu & E86_CPU_FLAGS286) {
-    e86_push (c, c->flg & 0x8fd5);
+    e86_push (c, c->flg & 0x0fd5);
   }
   else {
     e86_push (c, (c->flg & 0x0fd5) | 0xf002);
