@@ -1,13 +1,16 @@
-0.1.1
+0.1.1	2003-09-04
+
+	* Added a UART 8250 emulator
+	* Added serial port support
+	* Added mouse support
+	* Added XMS 3.0 support, including UMB's and a DOS HIMEM driver
+	* Bugfixes
 
 0.1.0	2003-08-20
 
 	* Added parallel port support
-
 	* Added hercules graphics card support
-
 	* Added graphic support to the X terminal
-
 	* CGA and HGC graphic modes are supported
 
 0.0.6	2003-04-27

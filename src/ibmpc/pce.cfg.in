@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.12 2003/09/02 14:56:25 hampa Exp $
+# $Id: pce.cfg.in,v 1.13 2003/09/04 20:26:48 hampa Exp $
 
 section pc {
 	section cpu {
@@ -78,9 +78,15 @@ section pc {
 		memsize = 4096
 	}
 
-	section mouse {
+	section serial {
 		io = 0x3f8
 		irq = 4
+		file = "/dev/ttyS0"
+	}
+
+	section mouse {
+		io = 0x2f8
+		irq = 3
 	}
 
 	section parport {
