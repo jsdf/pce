@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.7 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.8 2003/04/26 16:58:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -127,8 +127,7 @@ void pc_setup_pic (ibmpc_t *pc)
   blk->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
   mem_add_blk (pc->prt, blk, 1);
 
-  pc->pic->irq_ext = pc->cpu;
-  pc->pic->irq = (set_uint8_f) &e86_irq;
+  e8259_set_irq (pc->pic, pc->cpu, (e8259_irq_f) &e86_irq);
 
   pc->cpu->inta_ext = pc->pic;
   pc->cpu->inta = (get_uint8_f) &e8259_inta;
@@ -146,12 +145,11 @@ void pc_setup_pit (ibmpc_t *pc)
   blk->get_uint8 = (geta_uint8_f) &e8253_get_uint8;
   mem_add_blk (pc->prt, blk, 1);
 
-  e8253_cnt_set_gate (&pc->pit->counter[0], 1);
-  e8253_cnt_set_gate (&pc->pit->counter[1], 1);
-  e8253_cnt_set_gate (&pc->pit->counter[2], 1);
+  e8253_set_gate (pc->pit, 0, 1);
+  e8253_set_gate (pc->pit, 1, 1);
+  e8253_set_gate (pc->pit, 1, 1);
 
-  pc->pit->counter[0].out_ext = pc->pic;
-  pc->pit->counter[0].out = (set_uint8_f) &e8259_set_irq0;
+  e8253_set_out (pc->pit, 0, pc->pic, (e8253_set_out_f) &e8259_set_irq0);
 }
 
 void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)

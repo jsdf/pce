@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8259/e8259.c                                          *
+ * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.c,v 1.1 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id: e8259.c,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -70,6 +70,12 @@ e8259_t *e8259_new (void)
 void e8259_del (e8259_t *pic)
 {
   free (pic);
+}
+
+void e8259_set_irq (e8259_t *pic, void *ext, e8259_irq_f set)
+{
+  pic->irq_ext = ext;
+  pic->irq = set;
 }
 
 void e8259_set_icw1 (e8259_t *pic, unsigned char val)

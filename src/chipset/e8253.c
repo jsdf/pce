@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8253/e8253.c                                          *
+ * File name:     src/chipset/e8253.c                                        *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8253.c,v 1.1 2003/04/26 16:35:27 hampa Exp $ */
+/* $Id: e8253.c,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -362,6 +362,54 @@ void e8253_counter_init (e8253_counter_t *cnt)
 }
 
 
+void e8253_init (e8253_t *pit)
+{
+  e8253_counter_init (&pit->counter[0]);
+  e8253_counter_init (&pit->counter[1]);
+  e8253_counter_init (&pit->counter[2]);
+}
+
+e8253_t *e8253_new (void)
+{
+  e8253_t *pit;
+
+  pit = (e8253_t *) malloc (sizeof (e8253_t));
+  if (pit == NULL) {
+    return (NULL);
+  }
+
+  e8253_init (pit);
+
+  return (pit);
+}
+
+void e8253_free (e8253_t *pit)
+{
+}
+
+void e8253_del (e8253_t *pit)
+{
+  if (pit != NULL) {
+    e8253_free (pit);
+    free (pit);
+  }
+}
+
+void e8253_set_gate (e8253_t *pit, unsigned cntr, unsigned char val)
+{
+  if (cntr <= 2) {
+    e8253_cnt_set_gate (&pit->counter[cntr], val);
+  }
+}
+
+void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set)
+{
+  if (cntr <= 2) {
+    pit->counter[cntr].out_ext = ext;
+    pit->counter[cntr].out = set;
+  }
+}
+
 unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr)
 {
   if (addr < 3) {
@@ -402,38 +450,5 @@ void e8253_clock (e8253_t *pit, unsigned n)
 
   if (pit->counter[2].counting) {
     cnt_dec_val (&pit->counter[2], n);
-  }
-}
-
-void e8253_init (e8253_t *pit)
-{
-  e8253_counter_init (&pit->counter[0]);
-  e8253_counter_init (&pit->counter[1]);
-  e8253_counter_init (&pit->counter[2]);
-}
-
-e8253_t *e8253_new (void)
-{
-  e8253_t *pit;
-
-  pit = (e8253_t *) malloc (sizeof (e8253_t));
-  if (pit == NULL) {
-    return (NULL);
-  }
-
-  e8253_init (pit);
-
-  return (pit);
-}
-
-void e8253_free (e8253_t *pit)
-{
-}
-
-void e8253_del (e8253_t *pit)
-{
-  if (pit != NULL) {
-    e8253_free (pit);
-    free (pit);
   }
 }
