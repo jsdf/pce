@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -130,6 +130,64 @@ disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int
   }
 
   dsk = dsk_img_open_fp (fp, c, h, s, ro);
+
+  if (dsk == NULL) {
+    fclose (fp);
+    return (NULL);
+  }
+
+  return (dsk);
+}
+
+disk_t *dsk_dosimg_open_fp (FILE *fp, int ro)
+{
+  unsigned char buf[512];
+  uint32_t      c, h, s, n;
+  disk_t        *dsk;
+
+  if (dsk_read (fp, buf, 0, 512)) {
+    return (NULL);
+  }
+
+  if ((buf[510] != 0x55) || (buf[511] != 0xaa)) {
+    return (NULL);
+  }
+
+  if (dsk_get_uint16_le (buf, 11) != 512) {
+    return (NULL);
+  }
+
+  n = dsk_get_uint16_le (buf, 19);
+  if (n == 0) {
+    n = dsk_get_uint32_le (buf, 32);
+  }
+
+  h = dsk_get_uint16_le (buf, 26);
+  s = dsk_get_uint16_le (buf, 24);
+  c = n / (h * s);
+
+  dsk = dsk_img_open_fp (fp, c, h, s, ro);
+
+  return (dsk);
+}
+
+disk_t *dsk_dosimg_open (const char *fname, int ro)
+{
+  disk_t *dsk;
+  FILE   *fp;
+
+  if (ro) {
+    fp = fopen (fname, "rb");
+  }
+  else {
+    fp = fopen (fname, "r+b");
+  }
+
+  if (fp == NULL) {
+    return (NULL);
+  }
+
+  dsk = dsk_dosimg_open_fp (fp, ro);
 
   if (dsk == NULL) {
     fclose (fp);

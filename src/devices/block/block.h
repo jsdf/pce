@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.h                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -87,6 +87,7 @@ void dsk_set_uint16_be (void *buf, unsigned i, uint16_t v);
 void dsk_set_uint32_be (void *buf, unsigned i, uint32_t v);
 void dsk_set_uint64_be (void *buf, unsigned i, uint64_t v);
 
+uint16_t dsk_get_uint16_le (const void *buf, unsigned i);
 uint32_t dsk_get_uint32_le (const void *buf, unsigned i);
 
 void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v);
@@ -122,13 +123,22 @@ void dsk_set_readonly (disk_t *dsk, int v);
  *****************************************************************************/
 void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s);
 
+/*!***************************************************************************
+ * @short Get the drive number
+ *****************************************************************************/
 unsigned dsk_get_drive (const disk_t *dsk);
 
+/*!***************************************************************************
+ * @short Get the number of blocks in a disk
+ *****************************************************************************/
 uint32_t dsk_get_block_cnt (const disk_t *dsk);
 
 
 /*!***************************************************************************
- * @short Create a new disk
+ * @short  Open a disk image
+ * @param  fname The disk image file name
+ * @param  ro Open read-only if true
+ * @return A new disk image structure
  *****************************************************************************/
 disk_t *dsk_auto_open (const char *fname, int ro);
 

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 
 #include "block.h"
 
+#include "blkraw.h"
 #include "blkpce.h"
 #include "blkdosem.h"
 
@@ -115,6 +116,19 @@ void dsk_set_uint64_be (void *buf, unsigned i, uint64_t v)
   tmp[5] = (v >> 16) & 0xff;
   tmp[6] = (v >> 8) & 0xff;
   tmp[7] = v & 0xff;
+}
+
+uint16_t dsk_get_uint16_le (const void *buf, unsigned i)
+{
+  const unsigned char *tmp;
+  uint16_t            v;
+
+  tmp = (const unsigned char *) buf + i;
+
+  v = tmp[1];
+  v = (v << 8) | tmp[0];
+
+  return (v);
 }
 
 uint32_t dsk_get_uint32_le (const void *buf, unsigned i)
@@ -250,6 +264,11 @@ disk_t *dsk_auto_open (const char *fname, int ro)
   }
 
   dsk = dsk_dosemu_open (fname, ro);
+  if (dsk != NULL) {
+    return (dsk);
+  }
+
+  dsk = dsk_dosimg_open (fname, ro);
   if (dsk != NULL) {
     return (dsk);
   }
