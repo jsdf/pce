@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.4 2003/04/19 02:01:51 hampa Exp $ */
+/* $Id: keyboard.c,v 1.5 2003/04/19 02:41:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -88,29 +88,31 @@ void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned l
   map->key[seq[cnt]] = key;
 }
 
-unsigned long keymap_get_key (keymap_t *map, unsigned char *seq, unsigned cnt)
+unsigned long keymap_get_key (keymap_t *map, unsigned char **seq, unsigned *cnt)
 {
-  unsigned i;
   unsigned c;
+  unsigned i;
 
-  if (cnt == 0) {
-    return (0);
-  }
+  i = 0;
 
-  cnt -= 1;
+  while (i < *cnt) {
+    c = *(*seq + i) & 0xff;
 
-  for (i = 0; i < cnt; i++) {
-    c = seq[i] & 0xff;
+    i += 1;
+
     if (map->map[c] == NULL) {
-      return (0);
+      if (map->key[c] != 0) {
+        *seq += i;
+        *cnt -= i;
+      }
+
+      return (map->key[c]);
     }
 
     map = map->map[c];
   }
 
-  c = seq[cnt] & 0xff;
-
-  return (map->key[c]);
+  return (0);
 }
 
 keyboard_t *key_new (void)
@@ -260,6 +262,7 @@ void key_add_key (keyboard_t *key, unsigned short val)
 void key_clock (keyboard_t *key)
 {
   unsigned char buf[256];
+  unsigned char *tmp;
   unsigned long val;
   ssize_t       r;
   unsigned      n;
@@ -268,7 +271,7 @@ void key_clock (keyboard_t *key)
 
   cnt += 1;
 
-  if (cnt < 16) {
+  if (cnt < 32) {
     return;
   }
 
@@ -294,29 +297,35 @@ void key_clock (keyboard_t *key)
     n += (unsigned) r;
   }
 
-  val = keymap_get_key (key->map, buf, n);
+  tmp = buf;
 
-  if (val == 0x10000) {
-    if (key->brk != NULL) {
-      key->brk (key->brk_ext, 0);
+  while (n > 0) {
+    val = keymap_get_key (key->map, &tmp, &n);
+
+    if (val == 0) {
+      unsigned i;
+
+      fprintf (stderr, "unknown key:"); fflush (stderr);
+
+      for (i = 0; i < n; i++) {
+        fprintf (stderr, " %02X", (unsigned) tmp[i]);
+      }
+
+      fputs ("\n", stderr);
+
+      return;
     }
 
-    return;
-  }
 
-  if (val == 0) {
-    unsigned i;
-
-    fprintf (stderr, "unknown key:"); fflush (stderr);
-
-    for (i = 0; i < n; i++) {
-      fprintf (stderr, " %02X", (unsigned) buf[i]);
+    if (val == 0x10000) {
+      if (key->brk != NULL) {
+        key->brk (key->brk_ext, 0);
+        return;
+      }
     }
 
-    fputs ("\n", stderr);
-  }
-
-  if (val != 0) {
-    key_add_key (key, val & 0xffff);
+    if (val != 0) {
+      key_add_key (key, val & 0xffff);
+    }
   }
 }
