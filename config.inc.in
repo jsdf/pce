@@ -75,6 +75,8 @@ PCE_BUILD_ARM		:= @PCE_BUILD_ARM@
 PCE_BUILD_PPC405	:= @PCE_BUILD_PPC405@
 PCE_BUILD_SPARC32	:= @PCE_BUILD_SPARC32@
 
+PCE_ENABLE_TUN := @PCE_ENABLE_TUN@
+
 
 # end of user editable section
 #--------------------------------------------------------------------------
