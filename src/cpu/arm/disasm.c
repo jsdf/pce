@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -1066,6 +1066,7 @@ static void opde0 (arm_dasm_t *da)
 {
   switch (da->ir & 0x00100010UL) {
   case 0x00000000UL:
+  case 0x00100000UL:
     opde0_00 (da);
     break;
 
