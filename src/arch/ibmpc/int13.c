@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -237,13 +237,14 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
   }
 
   e86_set_dl (cpu, dsks_get_hd_cnt (dsks));
-  e86_set_dh (cpu, dsk->h - 1);
-  e86_set_ch (cpu, dsk->c - 1);
-  e86_set_cl (cpu, dsk->s | (((dsk->c - 1) >> 2) & 0xc0));
+  e86_set_dh (cpu, dsk->visible_h - 1);
+  e86_set_ch (cpu, dsk->visible_c - 1);
+  e86_set_cl (cpu, dsk->visible_s | (((dsk->visible_c - 1) >> 2) & 0xc0));
 
   dsk_int13_set_status (dsks, cpu, 0x00);
 }
 
+static
 void dsk_int13_10 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned drive;
@@ -260,6 +261,8 @@ void dsk_int13_10 (disks_t *dsks, e8086_t *cpu)
   dsk_int13_set_status (dsks, cpu, 0x00);
 }
 
+#if 0
+static
 void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned drive;
@@ -279,6 +282,7 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
   e86_set_dx (cpu, dsk->blocks & 0xffff);
   e86_set_cf (cpu, 0);
 }
+#endif
 
 void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {

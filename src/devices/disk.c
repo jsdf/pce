@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/disk.c                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -48,6 +48,10 @@ void dsk_init_chs (disk_t *dsk, unsigned d, unsigned c, unsigned h, unsigned s, 
 
   dsk->blocks = c * h * s;
 
+  dsk->visible_c = c;
+  dsk->visible_h = h;
+  dsk->visible_s = s;
+
   dsk->readonly = ro;
 
   dsk->ext = NULL;
@@ -60,6 +64,13 @@ void dsk_del (disk_t *dsk)
   }
 }
 
+
+void dsk_set_visible_geometry (disk_t *dsk, unsigned c, unsigned h, unsigned s)
+{
+  dsk->visible_c = c;
+  dsk->visible_h = h;
+  dsk->visible_s = s;
+}
 
 static
 int dsk_ram_load (disk_ram_t *ram, const char *fname)
@@ -98,6 +109,10 @@ static
 int dsk_ram_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
 {
   disk_ram_t *ram;
+
+  if (dsk->readonly) {
+    return (1);
+  }
 
   ram = (disk_ram_t *) dsk->ext;
 
@@ -184,6 +199,10 @@ static
 int dsk_img_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
 {
   disk_img_t *img;
+
+  if (dsk->readonly) {
+    return (1);
+  }
 
   if ((i + n) > dsk->blocks) {
     return (1);
@@ -411,19 +430,26 @@ int dsks_add_disk (disks_t *dsks, disk_t *dsk)
   return (0);
 }
 
-void dsks_rmv_disk (disks_t *dsks, disk_t *dsk)
+int dsks_rmv_disk (disks_t *dsks, disk_t *dsk)
 {
+  int      r;
   unsigned i, j;
 
+  r = 0;
   j = 0;
   for (i = 0; i < dsks->cnt; i++) {
     if (dsks->dsk[i] != dsk) {
       dsks->dsk[j] = dsks->dsk[i];
       j += 1;
     }
+    else {
+      r = 1;
+    }
   }
 
   dsks->cnt = j;
+
+  return (r);
 }
 
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive)

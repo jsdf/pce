@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/disk.h                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -55,6 +55,10 @@ typedef struct disk_s {
   unsigned      s;
   unsigned long blocks;
 
+  unsigned      visible_c;
+  unsigned      visible_h;
+  unsigned      visible_s;
+
   int           readonly;
 
   void          *ext;
@@ -90,6 +94,11 @@ typedef struct {
   disk_t   **dsk;
 } disks_t;
 
+
+/*!***************************************************************************
+ * @short Set the visible geometry
+ *****************************************************************************/
+void dsk_set_visible_geometry (disk_t *dsk, unsigned c, unsigned h, unsigned s);
 
 /*!***************************************************************************
  * @short Create a new ram disk
@@ -162,10 +171,34 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
 );
 
 
+/*!***************************************************************************
+ * @short  Create a new disk set
+ * @return The new disk set or NULL on error
+ *****************************************************************************/
 disks_t *dsks_new (void);
+
+/*!***************************************************************************
+ * @short Delete a disk set and all included disks
+ *****************************************************************************/
 void dsks_del (disks_t *dsks);
+
+/*!***************************************************************************
+ * @short  Add a disk to a disk set
+ * @return Zero if successful
+ *****************************************************************************/
 int dsks_add_disk (disks_t *dsks, disk_t *dsk);
-void dsks_rmv_disk (disks_t *dsks, disk_t *dsk);
+
+/*!***************************************************************************
+ * @short  Remove a disk from a disk set
+ * @return Zero if the disk was not in the set
+ *****************************************************************************/
+int dsks_rmv_disk (disks_t *dsks, disk_t *dsk);
+
+/*!***************************************************************************
+ * @short  Get a disk from a disk set
+ * @param  drive The drive number
+ * @return The disk or NULL on error
+ *****************************************************************************/
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
 
 

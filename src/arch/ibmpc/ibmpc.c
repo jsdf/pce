@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -479,6 +479,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
   disk_t    *dsk;
   unsigned  drive;
   unsigned  c, h, s;
+  unsigned  vc, vh, vs;
   int       ro;
   char      *fname, *type;
 
@@ -494,6 +495,9 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     ini_get_uint (sct, "c", &c, 80);
     ini_get_uint (sct, "h", &h, 2);
     ini_get_uint (sct, "s", &s, 18);
+    ini_get_uint (sct, "visible_c", &vc, 0);
+    ini_get_uint (sct, "visible_h", &vh, 0);
+    ini_get_uint (sct, "visible_s", &vs, 0);
 
     ini_get_sint (sct, "readonly", &ro, 0);
 
@@ -517,9 +521,18 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       pce_log (MSG_ERR, "loading drive %02X failed\n", drive);
     }
     else {
-      pce_log (MSG_INF, "disk:\tdrive=%u type=%s chs=%u/%u/%u ro=%d file=%s\n",
+      vc = (vc == 0) ? dsk->c : vc;
+      vh = (vh == 0) ? dsk->h : vh;
+      vs = (vs == 0) ? dsk->s : vs;
+
+      dsk_set_visible_geometry (dsk, vc, vh, vs);
+
+      pce_log (MSG_INF,
+        "disk:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u ro=%d file=%s\n",
         drive, type,
-        dsk->c, dsk->h, dsk->s, ro,
+        dsk->c, dsk->h, dsk->s,
+        dsk->visible_c, dsk->visible_h, dsk->visible_s,
+        ro,
         (fname != NULL) ? fname : "<>"
       );
 
