@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     floppy.c                                                   *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.6 2003/04/18 20:07:22 hampa Exp $ */
+/* $Id: floppy.c,v 1.7 2003/04/19 02:01:03 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -34,7 +34,10 @@
 #include <sys/poll.h>
 
 
-disk_t *dsk_new (unsigned drive, unsigned c, unsigned h, unsigned s)
+#define buf_get_uint32(buf) \
+  (((((((buf)[3] << 8) | (buf)[2]) << 8) | (buf)[1]) << 8) | (buf)[0])
+
+disk_t *dsk_new (unsigned drive)
 {
   disk_t *dsk;
 
@@ -44,11 +47,13 @@ disk_t *dsk_new (unsigned drive, unsigned c, unsigned h, unsigned s)
   }
 
   dsk->drive = drive;
-  dsk->geom.c = c;
-  dsk->geom.h = h;
-  dsk->geom.s = s;
+  dsk->geom.c = 0;
+  dsk->geom.h = 0;
+  dsk->geom.s = 0;
   dsk->start = 0;
-  dsk->size = c * h * s;
+  dsk->blocks = 0;
+
+  dsk->readonly = 1;
 
   dsk->data = NULL;
   dsk->fp = NULL;
@@ -57,84 +62,148 @@ disk_t *dsk_new (unsigned drive, unsigned c, unsigned h, unsigned s)
   return (dsk);
 }
 
-void dsk_del (disk_t *dsk)
-{
-  if (dsk != NULL) {
-    free (dsk->data);
-    if (dsk->fp_close && (dsk->fp != NULL)) {
-      fclose (dsk->fp);
-    }
-    free (dsk);
-  }
-}
-
-void dsk_set_drive (disk_t *dsk, unsigned drive)
-{
-  dsk->drive = drive;
-}
-
-int dsk_alloc (disk_t *dsk)
-{
-  if (dsk->data != NULL) {
-    return (0);
-  }
-
-  if (dsk->fp_close && (dsk->fp != NULL)) {
-    fclose (dsk->fp);
-  }
-
-  dsk->fp = NULL;
-  dsk->fp_close = 0;
-
-  dsk->data = (unsigned char *) malloc (512UL * dsk->size);
-  if (dsk->data == NULL) {
-    return (1);
-  }
-
-  memset (dsk->data, 0, 512UL * dsk->size);
-
-  return (0);
-}
-
-int dsk_set_file (disk_t *dsk, const char *fname)
+void dsk_free (disk_t *dsk)
 {
   free (dsk->data);
   dsk->data = NULL;
 
-  dsk->fp = fopen (fname, "r+");
-  if (dsk->fp == NULL) {
-    dsk->fp = fopen (fname, "w+");
-    if (dsk->fp == NULL) {
-      return (1);
-    }
+  if ((dsk->fp_close) && (dsk->fp != NULL)) {
+    fclose (dsk->fp);
   }
 
+  dsk->fp = NULL;
+}
+
+void dsk_del (disk_t *dsk)
+{
+  if (dsk != NULL) {
+    dsk_free (dsk);
+    free (dsk);
+  }
+}
+
+int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro)
+{
+  dsk_free (dsk);
+
+  dsk->geom.c = c;
+  dsk->geom.h = h;
+  dsk->geom.s = s;
+  dsk->start = 0;
+  dsk->blocks = c * h * s;
+
+  dsk->readonly = ro;
+
+  dsk->data = (unsigned char *) malloc (512 * dsk->blocks);
+  if (dsk->data == NULL) {
+    return (1);
+  }
+
+  if (fname != NULL) {
+    FILE *fp;
+
+    fp = fopen (fname, "rb");
+    if (fp == NULL) {
+      fclose (fp);
+      return (1);
+    }
+
+    if (fread (dsk->data, 512, dsk->blocks, fp) != dsk->blocks) {
+      fclose (fp);
+      return (1);
+    }
+
+    fclose (fp);
+  }
+
+  return (0);
+}
+
+int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro)
+{
+  char *mode;
+
+  dsk_free (dsk);
+
+  if (ro) {
+    mode = "rb";
+  }
+  else {
+    mode = "r+b";
+  }
+
+  dsk->fp = fopen (fname, mode);
+  if ((dsk->fp == NULL) && (ro == 0)) {
+    dsk->fp = fopen (fname, "w+b");
+  }
+
+  if (dsk->fp == NULL) {
+    return (1);
+  }
+
+  dsk->fp_close = 1;
+
+  dsk->geom.c = c;
+  dsk->geom.h = h;
+  dsk->geom.s = s;
+  dsk->start = 0;
+  dsk->blocks = c * h * s;
+
+  dsk->readonly = ro;
+
+  fprintf (stderr, "drive %u: image %s c=%u h=%u s=%u b=%lu\n",
+    dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
+  );
+
+  return (0);
+}
+
+int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
+{
+  FILE          *fp;
+  char          *mode;
+  unsigned char buf[128];
+
+  dsk_free (dsk);
+
+  mode = (ro) ? "rb" : "r+b";
+
+  fp = fopen (fname, mode);
+  if (fp == NULL) {
+    return (1);
+  }
+
+  if (fread (buf, 1, 128, fp) != 128) {
+    fclose (fp);
+    return (1);
+  }
+
+  if (memcmp (buf, "DOSEMU\x00", 7) != 0) {
+    fclose (fp);
+    return (1);
+  }
+
+  dsk->geom.c = buf_get_uint32 (buf + 15);
+  dsk->geom.h = buf_get_uint32 (buf + 7);
+  dsk->geom.s = buf_get_uint32 (buf + 11);
+  dsk->start = 128;
+  dsk->blocks = dsk->geom.c * dsk->geom.h * dsk->geom.s;
+
+  dsk->readonly = ro;
+
+  fprintf (stderr, "drive %u: hdimage %s c=%u h=%u s=%u b=%lu\n",
+    dsk->drive, fname, dsk->geom.c, dsk->geom.h, dsk->geom.s, dsk->blocks
+  );
+
+  dsk->fp = fp;
   dsk->fp_close = 1;
 
   return (0);
 }
 
-int dsk_load_img (disk_t *dsk, const char *fname)
+void dsk_set_drive (disk_t *dsk, unsigned drive)
 {
-  FILE *fp;
-
-  if (dsk_alloc (dsk)) {
-    return (1);
-  }
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  if (fread (dsk->data, 1, 512UL * dsk->size, fp) != 512UL * dsk->size) {
-    fclose (fp);
-    return (1);
-  }
-
-  fclose (fp);
-
-  return (0);
+  dsk->drive = drive;
 }
 
 disks_t *dsks_new (void)
@@ -241,25 +310,24 @@ void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
 
 void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 {
-  unsigned       drive;
-  unsigned       cnt;
-  unsigned       c, h, s;
+  unsigned long  i, j;
+  unsigned long  blk_i;
+  unsigned       c, h, s, n;
   unsigned short seg, ofs;
-  unsigned long  i, j, n;
   disk_t         *dsk;
 
-  drive = e86_get_dl (cpu);
-
-  dsk = dsks_get_disk (dsks, drive);
+  dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
   if (dsk == NULL) {
     dsk_int13_set_status (dsks, cpu, 1);
     return;
   }
 
-  cnt = e86_get_al (cpu);
+  n = e86_get_al (cpu);
   c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
+  seg = e86_get_es (cpu);
+  ofs = e86_get_bx (cpu);
 
   if ((s < 1) || (s > dsk->geom.s)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
@@ -271,45 +339,40 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
     return;
   }
 
-  seg = e86_get_es (cpu);
-  ofs = e86_get_bx (cpu);
+  blk_i = ((c * dsk->geom.h + h) * dsk->geom.s + s - 1);
 
-  i = ((c * dsk->geom.h + h) * dsk->geom.s + s - 1);
-  n = cnt;
-
-  if ((i + n) > dsk->size) {
+  if ((blk_i + n) > dsk->blocks) {
     dsk_int13_set_status (dsks, cpu, 0x04);
     return;
   }
 
   if (dsk->data != NULL) {
-    while (n > 0) {
+    unsigned char *src;
+
+    src = dsk->data + 512UL * blk_i;
+
+    for (i = 0; i < n; i++) {
       for (j = 0; j < 512; j++) {
-        e86_set_mem8 (cpu, seg, ofs, dsk->data[512 * i + j]);
+        e86_set_mem8 (cpu, seg, ofs, *(src++));
         ofs = (ofs + 1) & 0xffff;
       }
-      i += 1;
-      n -= 1;
     }
   }
   else if (dsk->fp != NULL) {
     unsigned char buf[512];
 
-    if (fseek (dsk->fp, 512 * i, SEEK_SET)) {
-      perror ("seek");
+    if (fseek (dsk->fp, dsk->start + 512UL * blk_i, SEEK_SET)) {
       dsk_int13_set_status (dsks, cpu, 1);
       return;
     }
 
-    while (n > 0) {
+    for (i = 0; i < n; i++) {
       memset (buf, 0, 512);
       fread (buf, 1, 512, dsk->fp);
       for (j = 0; j < 512; j++) {
         e86_set_mem8 (cpu, seg, ofs, buf[j]);
         ofs = (ofs + 1) & 0xffff;
       }
-      i += 1;
-      n -= 1;
     }
   }
   else {
@@ -322,25 +385,29 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 
 void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 {
-  unsigned       drive;
-  unsigned       cnt;
-  unsigned       c, h, s;
+  unsigned long  i, j;
+  unsigned       c, h, s, n;
   unsigned short seg, ofs;
-  unsigned long  i, j, n;
+  unsigned long  blk_i;
   disk_t         *dsk;
 
-  drive = e86_get_dl (cpu);
-
-  dsk = dsks_get_disk (dsks, drive);
+  dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
   if (dsk == NULL) {
     dsk_int13_set_status (dsks, cpu, 1);
     return;
   }
 
-  cnt = e86_get_al (cpu);
+  if (dsk->readonly) {
+    dsk_int13_set_status (dsks, cpu, 3);
+    return;
+  }
+
+  n = e86_get_al (cpu);
   c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
+  seg = e86_get_es (cpu);
+  ofs = e86_get_bx (cpu);
 
   if ((s < 1) || (s > dsk->geom.s)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
@@ -352,44 +419,39 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
     return;
   }
 
-  seg = e86_get_es (cpu);
-  ofs = e86_get_bx (cpu);
+  blk_i = (c * dsk->geom.h + h) * dsk->geom.s + s - 1;
 
-  i = (c * dsk->geom.h + h) * dsk->geom.s + s - 1;
-  n = cnt;
-
-  if ((i + n) > dsk->size) {
+  if ((blk_i + n) > dsk->blocks) {
     dsk_int13_set_status (dsks, cpu, 0x04);
     return;
   }
 
   if (dsk->data != NULL) {
-    while (n > 0) {
+    unsigned char *dst;
+
+    dst = dsk->data + 512UL * blk_i;
+
+    for (i = 0; i < n; i++) {
       for (j = 0; j < 512; j++) {
-        dsk->data[512 * i + j] = e86_get_mem8 (cpu, seg, ofs);
+        *(dst++) = e86_get_mem8 (cpu, seg, ofs);
         ofs = (ofs + 1) & 0xffff;
       }
-      i += 1;
-      n -= 1;
     }
   }
   else if (dsk->fp != NULL) {
     unsigned char buf[512];
 
-    if (fseek (dsk->fp, 512 * i, SEEK_SET)) {
-      perror ("seek");
+    if (fseek (dsk->fp, dsk->start + 512UL * blk_i, SEEK_SET)) {
       dsk_int13_set_status (dsks, cpu, 1);
       return;
     }
 
-    while (n > 0) {
+    for (i = 0; i < n; i++) {
       for (j = 0; j < 512; j++) {
         buf[j] = e86_get_mem8 (cpu, seg, ofs);
         ofs = (ofs + 1) & 0xffff;
       }
       fwrite (buf, 1, 512, dsk->fp);
-      i += 1;
-      n -= 1;
     }
   }
   else {
@@ -436,8 +498,8 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
 
   dsk_int13_set_status (dsks, cpu, 0);
   e86_set_ah (cpu, 3);
-  e86_set_cx (cpu, (dsk->size >> 16) & 0xffff);
-  e86_set_dx (cpu, dsk->size & 0xffff);
+  e86_set_cx (cpu, (dsk->blocks >> 16) & 0xffff);
+  e86_set_dx (cpu, dsk->blocks & 0xffff);
   e86_set_cf (cpu, 0);
 }
 
