@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.11 2003/08/30 16:55:21 hampa Exp $ */
+/* $Id: xterm.c,v 1.12 2003/08/30 17:16:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -749,6 +749,11 @@ void xt_check (xterm_t *xt)
         else if (key == XK_Pause) {
           if (xt->trm.set_brk != NULL) {
             xt->trm.set_brk (xt->trm.key_ext, 2);
+          }
+        }
+        else if ((key == XK_Print) && (event.xkey.state == 0)) {
+          if (xt->trm.set_brk != NULL) {
+            xt->trm.set_brk (xt->trm.key_ext, 3);
           }
         }
         else {

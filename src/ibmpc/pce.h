@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.12 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: pce.h,v 1.13 2003/08/30 17:16:18 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -45,6 +45,7 @@
 
 #define PCE_BRK_STOP  1
 #define PCE_BRK_ABORT 2
+#define PCE_BRK_SNAP  3
 
 
 typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);

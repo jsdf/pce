@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.24 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.25 2003/08/30 17:16:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -663,9 +663,31 @@ void pc_clock (ibmpc_t *pc)
 //  pc->clk_div[3] += n;
 }
 
+void pc_screenshot (ibmpc_t *pc)
+{
+  static unsigned i = 0;
+  char            fname[256];
+  FILE            *fp;
+
+  sprintf (fname, "snap%04u.dat", i++);
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    return;
+  }
+
+  pce_video_screenshot (pc->video, fp, 0);
+
+  fclose (fp);
+}
+
 void pc_break (ibmpc_t *pc, unsigned char val)
 {
-  pc->brk = val;
+  if ((val == PCE_BRK_STOP) || (val == PCE_BRK_ABORT)) {
+    pc->brk = val;
+  }
+  else if (val == PCE_BRK_SNAP) {
+    pc_screenshot (pc);
+  }
 }
 
 unsigned get_bcd_8 (unsigned n)
