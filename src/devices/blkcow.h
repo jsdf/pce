@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkcow.h                                       *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -34,13 +34,6 @@
 #include <stdio.h>
 
 
-typedef struct cow_hash_t {
-  struct cow_hash_t *next;
-  unsigned long     block;
-  unsigned long     offset;
-} cow_hash_t;
-
-
 /*!***************************************************************************
  * @short The copy on write disk structure
  *****************************************************************************/
@@ -50,12 +43,12 @@ typedef struct {
   disk_t        *orig;
 
   FILE          *fp;
-  unsigned long offset;
 
-  unsigned long blkcnt;
+  unsigned long bitmap_offset;
+  unsigned long data_offset;
 
-  unsigned      hash_cnt;
-  cow_hash_t    **hash;
+  unsigned char *bitmap;
+  unsigned long bitmap_size;
 } disk_cow_t;
 
 
