@@ -1,0 +1,51 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+ifeq "$(PCE_HAVE_STDINT_H)" "1"
+CC_FLG_EXTRA := -DHAVE_STDINT_H
+else
+ifeq "$(PCE_HAVE_INTTYPES_H)" "1"
+CC_FLG_EXTRA := -DHAVE_INTTYPES_H
+endif
+endif
+
+ifeq "$(PCE_HOST_IA32)" "1"
+CC_FLG_EXTRA += -DPCE_HOST_IA32
+endif
+
+SRC := arm.c disasm.c mmu.c opcodes.c
+OBJ := arm.o disasm.o mmu.o opcodes.o
+HDR := arm.h internal.h
+BIN := arm.a
+
+SDP := Makefile $(HDR) $(HDR_EXT)
+BDP := Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(BIN) $(OBJ)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN)
+
+
+arm.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+arm.o:		arm.c $(SDP)
+disasm.o:	disasm.c $(SDP)
+mmu.o:		mmu.c $(SDP)
+opcodes.o:	opcodes.c $(SDP)

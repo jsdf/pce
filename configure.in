@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2004-09-29 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -276,9 +276,11 @@ AC_SUBST(PCE_SDL_LDF)
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
+if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
 if test -d "$srcdir/src/arch/sims32"; then have_sims32=1; else have_sims32=0; fi
 if test -d "$srcdir/src/cpu/e8086"; then have_e8086=1; else have_e8086=0; fi
 if test -d "$srcdir/src/cpu/e6502"; then have_e6502=1; else have_e6502=0; fi
+if test -d "$srcdir/src/cpu/arm"; then have_arm=1; else have_arm=0; fi
 if test -d "$srcdir/src/cpu/ppc405"; then have_ppc405=1; else have_ppc405=0; fi
 if test -d "$srcdir/src/cpu/sparc32"; then have_sparc32=1; else have_sparc32=0; fi
 
@@ -395,6 +397,34 @@ if test "x$PCE_BUILD_SIMS32" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to build the arm simulator])
+if test "x$have_simarm$have_arm" != "x11" ; then
+	PCE_BUILD_SIMARM=0
+	AC_MSG_RESULT([no (no source)])
+else
+	AC_ARG_ENABLE(simarm,
+	  AC_HELP_STRING([--enable-simarm], [Enable the arm simulator]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_SIMARM=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_SIMARM=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_SIMARM=1
+		AC_MSG_RESULT([yes (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_SIMARM)
+if test "x$PCE_BUILD_SIMARM" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_SIMARM)
+fi
+
+
 AC_MSG_CHECKING([whether to build the 6502 core])
 if test "x$have_e6502" != "x1" ; then
 	PCE_BUILD_6502=0
@@ -454,6 +484,37 @@ fi
 AC_SUBST(PCE_BUILD_8086)
 if test "x$PCE_BUILD_8086" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_8086)
+fi
+
+
+AC_MSG_CHECKING([whether to build the arm core])
+if test "x$have_arm" = "x0" ; then
+	PCE_BUILD_ARM=0
+	AC_MSG_RESULT([no (no source)])
+elif test "x$PCE_BUILD_SIMARM" = "x1" ; then
+	PCE_BUILD_ARM=1
+	AC_MSG_RESULT([yes (required by simarm)])
+else
+	AC_ARG_ENABLE(arm,
+	  AC_HELP_STRING([--enable-arm], [Enable the arm core]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_ARM=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_ARM=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_ARM=0
+		AC_MSG_RESULT([no (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_ARM)
+if test "x$PCE_BUILD_ARM" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_ARM)
 fi
 
 
@@ -565,6 +626,13 @@ else
 	emu2="$emu2 sim6502"
 fi
 
+if test "x$PCE_BUILD_SIMARM" = "x1" ; then
+	extra="$extra src/arch/simarm/Makefile"
+	emu1="$emu1 simarm"
+else
+	emu2="$emu2 simarm"
+fi
+
 if test "x$PCE_BUILD_SIMS32" = "x1" ; then
 	extra="$extra src/arch/sims32/Makefile"
 	emu1="$emu1 sims32"
@@ -584,6 +652,13 @@ if test "x$PCE_BUILD_8086" = "x1" ; then
 	core1="$core1 8086"
 else
 	core2="$core2 8086"
+fi
+
+if test "x$PCE_BUILD_ARM" = "x1" ; then
+	extra="$extra src/cpu/arm/Makefile"
+	core1="$core1 arm"
+else
+	core2="$core2 arm"
 fi
 
 if test "x$PCE_BUILD_PPC405" = "x1" ; then
