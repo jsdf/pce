@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcehimem.asm,v 1.1 2003/09/02 11:44:47 hampa Exp $
+; $Id: pcehimem.asm,v 1.2 2003/09/02 14:56:25 hampa Exp $
 
 
 %include "config.inc"
@@ -33,6 +33,10 @@ section text
   dw      strategy                      ; strategy offset
   dw      interrupt                     ; interrupt offset
   db      "XMSXXXX0"                    ; driver name
+
+msg_init       db "HIMEM: PCE XMS Driver version ", PCE_VERSION_STR
+               db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
+               db 0x0d, 0x0a, 0x00
 
 reqadr         dd 0
 
@@ -149,10 +153,20 @@ drv_init:
   jmp     .doneerr
 
 .xmsok:
-  mov     ax, dx
   mov     si, msg_himem
   call    prt_string
+
+  mov     ax, dx
   call    prt_uint16
+
+  mov     si, msg_plus
+  call    prt_string
+
+  mov     ax, cx
+  mov     cl, 6
+  shr     ax, cl
+  call    prt_uint16
+
   mov     si, msg_avail
   call    prt_string
 
@@ -195,6 +209,9 @@ drv_init:
 
   ; message flag
   mov     word [bx + 23], 0x0000
+
+  mov     si, msg_nl
+  call    prt_string
 
   pop     si
   ret
@@ -254,12 +271,12 @@ prt_uint16:
   ret
 
 
-msg_init       db "HIMEM: PCE XMS Driver version ", PCE_VERSION_STR
-               db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
-               db 0x0d, 0x0a, 0x00
-
 msg_noxms      db "HIMEM: Error: no XMS available", 0x0d, 0x0a, 0x00
 
 msg_himem      db "HIMEM: ", 0x00
 
-msg_avail     db "K XMS available", 0x0d, 0x0a, 0x00
+msg_plus       db "K XMS + ", 0x00
+
+msg_avail      db "K UMB available", 0x0d, 0x0a, 0x00
+
+msg_nl         db 0x0d, 0x0a, 0x00

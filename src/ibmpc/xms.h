@@ -20,30 +20,52 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.h,v 1.1 2003/09/02 11:44:47 hampa Exp $ */
+/* $Id: xms.h,v 1.2 2003/09/02 14:56:25 hampa Exp $ */
 
 
 #ifndef PCE_XMS_H
 #define PCE_XMS_H 1
 
 
+#define PCE_XMS_UMB_MAX 256
+
+
 typedef struct {
   unsigned long size;
   unsigned      lock;
   unsigned char *data;
-} xms_block_t;
+} xms_emb_t;
+
+
+typedef struct xms_umb_t {
+  unsigned short segm;
+  unsigned short size;
+  unsigned char  alloc;
+} xms_umb_t;
 
 
 typedef struct {
-  unsigned      cnt;
-  xms_block_t   **blk;
-  unsigned long used;
-  unsigned long max;
+  unsigned      emb_cnt;
+  xms_emb_t     **emb;
+  unsigned long emb_used;
+  unsigned long emb_max;
+
+  unsigned      umb_cnt;
+  xms_umb_t     *umb;
+  unsigned long umb_used;
+  unsigned long umb_max;
+
+  mem_blk_t     *umbmem;
 } xms_t;
 
 
-xms_t *xms_new (unsigned long max);
+xms_t *xms_new (unsigned long emb_size, unsigned long umb_size, unsigned long umb_seg);
+
 void xms_del (xms_t *xms);
+
+mem_blk_t *xms_get_umb_mem (xms_t *xms);
+
+void xms_info (xms_t *xms, e8086_t *cpu);
 
 void xms_handler (xms_t *xms, e8086_t *cpu);
 

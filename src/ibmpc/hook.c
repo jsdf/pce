@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.1 2003/09/02 11:46:01 hampa Exp $ */
+/* $Id: hook.c,v 1.2 2003/09/02 14:56:24 hampa Exp $ */
 
 
 #include "pce.h"
@@ -62,7 +62,9 @@ void pc_int_15 (ibmpc_t *pc)
 
     case 0x88:
       /* No extended memory. Only XMS. */
+      e86_set_cf (pc->cpu, 0);
       e86_set_ax (pc->cpu, 0x0000);
+      e86_set_cf (pc->cpu, 1);
       break;
   }
 }
@@ -170,13 +172,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     case PCEH_XMS_INFO:
-      if (pc->xms != NULL) {
-        e86_set_ax (pc->cpu, 0x0001);
-        e86_set_dx (pc->cpu, pc->xms->max / 1024UL);
-      }
-      else {
-        e86_set_ax (pc->cpu, 0x0000);
-      }
+      xms_info (pc->xms, pc->cpu);
       break;
 
     default:
