@@ -1,4 +1,4 @@
-0.1.5
+0.1.5	2004-08-03
 
 	* Added a 6502 emulator
 	* Added minimal architectures for the PowerPC 405 and 6502
@@ -7,6 +7,7 @@
 	* Fixed the EGA palette
 	* Improved the mouse emulation. More mouse drivers should
 	  work now.
+	* Cleaned up terminal handling
 	* Added support for intel hex files.
 
 0.1.4	2004-02-22	r387

@@ -65,12 +65,23 @@ ibmpc.rom: $(BIOS_BDP)
 
 
 # ihex is a custom utility, part of the misc-utils package
-ibmpc.ihex: ega.bin pce2.bin basic.bin bios.bin
+ihex: ibmpc.ihex ibmpc-ega.ihex ega.ihex
+
+ibmpc.ihex: pce2.bin basic.bin bios.bin
+	ihex -e -o $@ \
+	-a 0xf0000 -i pce2.bin \
+	-a 0xf6000 -i basic.bin \
+	-a 0xfe000 -i bios.bin
+
+ibmpc-ega.ihex: ega.bin pce2.bin basic.bin bios.bin
 	ihex -e -o $@ \
 	-a 0xc0000 -i ega.bin \
 	-a 0xf0000 -i pce2.bin \
 	-a 0xf6000 -i basic.bin \
 	-a 0xfe000 -i bios.bin
+
+ega.ihex: ega.bin
+	ihex -e -o $@ -a 0xc0000 -i ega.bin
 
 
 pce.bin: pce.asm $(BIOS_SDP)
