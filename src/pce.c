@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.2 2003/04/16 02:26:39 hampa Exp $ */
+/* $Id: pce.c,v 1.3 2003/04/16 07:05:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -251,6 +251,53 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
   unsigned       i;
   unsigned       cnt;
   unsigned short ret;
+  unsigned short *reg;
+
+  if (cmd_match_reg (cmd, &reg)) {
+    *val = *reg;
+    return (1);
+  }
+
+  cmd_match_space (cmd);
+
+  i = cmd->i;
+
+  ret = 0;
+  cnt = 0;
+
+  while (cmd->str[i] != 0) {
+    if ((cmd->str[i] >= '0') && (cmd->str[i] <= '9')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - '0');
+    }
+    else if ((cmd->str[i] >= 'a') && (cmd->str[i] <= 'f')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'a' + 10);
+    }
+    else if ((cmd->str[i] >= 'A') && (cmd->str[i] <= 'F')) {
+      ret = 16 * ret + (unsigned short) (cmd->str[i] - 'A' + 10);
+    }
+    else {
+      break;
+    }
+
+    cnt += 1;
+    i += 1;
+  }
+
+  if (cnt == 0) {
+    return (0);
+  }
+
+  cmd->i = i;
+  *val = ret;
+
+  return (1);
+}
+
+int cmd_match_uint32 (cmd_t *cmd, unsigned long *val)
+{
+  unsigned       i;
+  unsigned       cnt;
+  unsigned long  ret;
   unsigned short *reg;
 
   if (cmd_match_reg (cmd, &reg)) {
@@ -639,12 +686,12 @@ void do_p (cmd_t *cmd)
 
 void do_g (cmd_t *cmd)
 {
-  unsigned short cnt;
-  unsigned long  inst;
+  unsigned long cnt;
+  unsigned long inst;
 
   cnt = 1;
 
-  cmd_match_uint16 (cmd, &cnt);
+  cmd_match_uint32 (cmd, &cnt);
 
   if (!cmd_match_end (cmd)) {
     return;
@@ -661,11 +708,11 @@ void do_g (cmd_t *cmd)
 
 void do_c (cmd_t *cmd)
 {
-  unsigned short cnt;
+  unsigned long cnt;
 
   cnt = 1;
 
-  cmd_match_uint16 (cmd, &cnt);
+  cmd_match_uint32 (cmd, &cnt);
 
   if (!cmd_match_end (cmd)) {
     return;
@@ -702,13 +749,22 @@ void do_s (cmd_t *cmd)
 
 void do_u (cmd_t *cmd)
 {
-  unsigned       i;
-  unsigned short seg, ofs, cnt;
-  e86_disasm_t   op;
-  char           str[256];
+  unsigned              i;
+  unsigned short        seg, ofs, cnt;
+  static unsigned int   first = 1;
+  static unsigned short sseg = 0;
+  static unsigned short sofs = 0;
+  e86_disasm_t          op;
+  char                  str[256];
 
-  seg = pc->cpu->sreg[E86_REG_CS];
-  ofs = pc->cpu->ip;
+  if (first) {
+    first = 0;
+    sseg = e86_get_cs (pc->cpu);
+    sofs = e86_get_ip (pc->cpu);
+  }
+
+  seg = sseg;
+  ofs = sofs;
   cnt = 16;
 
   if (cmd_match_addr (cmd, &seg, &ofs)) {
@@ -727,6 +783,9 @@ void do_u (cmd_t *cmd)
 
     ofs = (ofs + op.dat_n) & 0xffff;
   }
+
+  sseg = seg;
+  sofs = ofs;
 }
 
 void do_d (cmd_t *cmd)
@@ -734,10 +793,17 @@ void do_d (cmd_t *cmd)
   unsigned              i, j;
   unsigned short        cnt;
   unsigned short        seg, ofs1, ofs2;
+  static int            first = 1;
   static unsigned short sseg = 0;
   static unsigned short sofs = 0;
   unsigned short        p, p1, p2;
   char                  buf[256];
+
+  if (first) {
+    first = 0;
+    sseg = e86_get_ds (pc->cpu);
+    sofs = 0;
+  }
 
   seg = sseg;
   ofs1 = sofs;
