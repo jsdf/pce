@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.17 2003/08/23 04:03:08 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.18 2003/08/23 12:35:42 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -678,7 +678,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
   else if ((op1 == 0x00) && (op2 == 0x00)) {
     pc->brk = 1;
   }
-  else if ((op1 == 0x01) && (op2 == 0x00)) {
+  else if ((op1 == 0x00) && (op2 == 0x01)) {
     pc->brk = 2;
   }
   else if ((op1 == 0x02) && (op2 == 0x00)) {

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.15 2003/08/23 04:03:08 hampa Exp $ */
+/* $Id: pce.c,v 1.16 2003/08/23 12:35:42 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1553,7 +1553,7 @@ int do_cmd (void)
       printf ("unknown command (%s)\n", cmd.str);
     }
 
-    if (pc->brk & 2) {
+    if (pc->brk == PCE_BRK_ABORT) {
       break;
     }
   };

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.8 2003/08/23 04:03:09 hampa Exp $ */
+/* $Id: pce.h,v 1.9 2003/08/23 12:35:42 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -42,6 +42,9 @@
 #endif
 
 #define PCE_EMU_FOSC 4772393
+
+#define PCE_BRK_STOP  1
+#define PCE_BRK_ABORT 2
 
 
 typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);
