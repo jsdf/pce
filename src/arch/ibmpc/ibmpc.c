@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-01-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -133,6 +133,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t     *sct;
@@ -171,6 +172,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -240,6 +242,7 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
   pc->cpu->op_hook = &pc_e86_hook;
 }
 
+static
 void pc_setup_pic (ibmpc_t *pc)
 {
   mem_blk_t *blk;
@@ -260,6 +263,7 @@ void pc_setup_pic (ibmpc_t *pc)
   pc->cpu->inta = (get_uint8_f) &e8259_inta;
 }
 
+static
 void pc_setup_pit (ibmpc_t *pc)
 {
   mem_blk_t *blk;
@@ -281,6 +285,7 @@ void pc_setup_pit (ibmpc_t *pc)
   e8253_set_out (pc->pit, 0, pc->pic, (e8253_set_out_f) &e8259_set_irq0);
 }
 
+static
 void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 {
   e8255_t   *ppi;
@@ -299,7 +304,7 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   ppi->port[2].read = (get_uint8_f) &pc_ppi_get_port_c;
   pc->ppi = ppi;
 
-  pc->ppi_port_a[0] = 0x40 | 0x30 | 0x0c | 0x01;
+  pc->ppi_port_a[0] = 0x30 | 0x0c;
   pc->ppi_port_a[1] = 0;
   pc->ppi_port_b = 0;
   pc->ppi_port_c[0] = (ram & 0x0f);
@@ -312,6 +317,7 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   mem_add_blk (pc->prt, blk, 1);
 }
 
+static
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
   char      *driver;
@@ -381,6 +387,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
   pc->trm->set_brk = (set_uint8_f) &pc_break;
 }
 
+static
 void pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = mda_new (pc->trm, sct);
@@ -391,6 +398,7 @@ void pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
   pc->ppi_port_a[0] |= 0x30;
 }
 
+static
 void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = hgc_new (pc->trm, sct);
@@ -401,6 +409,7 @@ void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
   pc->ppi_port_a[0] |= 0x30;
 }
 
+static
 void pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = cga_new (pc->trm, sct);
@@ -411,6 +420,7 @@ void pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
   pc->ppi_port_a[0] |= 0x20;
 }
 
+static
 void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = ega_new (pc->trm, sct);
@@ -421,6 +431,7 @@ void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
   pc->ppi_port_a[0] |= 0x00;
 }
 
+static
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
   char      *dev;
@@ -461,6 +472,7 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -512,12 +524,23 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       );
 
       dsks_add_disk (pc->dsk, dsk);
+
+      if (drive < 0x80) {
+        /* if floppy disk increase number of floppy disks in config word */
+        if (pc->ppi_port_a[0] & 0x01) {
+          pc->ppi_port_a[0] = (pc->ppi_port_a[0] + 0x40) & 0xff;
+        }
+        else {
+          pc->ppi_port_a[0] |= 0x01;
+        }
+      }
     }
 
     sct = ini_sct_find_next (sct, "disk");
   }
 }
 
+static
 void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -543,6 +566,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
   pc->trm->set_mse = (trm_set_mse_f) &mse_set;
 }
 
+static
 void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 {
   unsigned        i;
@@ -586,6 +610,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 {
   unsigned      i;
@@ -638,6 +663,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_ems (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -661,6 +687,7 @@ void pc_setup_ems (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+static
 void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
