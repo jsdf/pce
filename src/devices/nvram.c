@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: nvram.c,v 1.1 2003/12/23 03:08:59 hampa Exp $ */
+/* $Id: nvram.c,v 1.2 2003/12/23 03:48:09 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -35,12 +35,7 @@ void nvr_init (nvram_t *nvr, unsigned long base, unsigned long size)
 {
   nvr->mem = mem_blk_new (base, size, 1);
   nvr->mem->ext = nvr;
-  nvr->mem->set_uint8 = (mem_set_uint8_f) &nvr_set_uint8;
-  nvr->mem->set_uint16 = (mem_set_uint16_f) &nvr_set_uint16_be;
-  nvr->mem->set_uint32 = (mem_set_uint32_f) &nvr_set_uint32_be;
-  nvr->mem->get_uint8 = (mem_get_uint8_f) &mem_blk_get_uint8;
-  nvr->mem->get_uint16 = (mem_get_uint16_f) &mem_blk_get_uint16_be;
-  nvr->mem->get_uint32 = (mem_get_uint32_f) &mem_blk_get_uint32_be;
+  nvr_set_endian (nvr, 1);
   mem_blk_clear (nvr->mem, 0x00);
 
   nvr->fp = NULL;
@@ -57,8 +52,6 @@ nvram_t *nvr_new (unsigned long base, unsigned long size)
   }
 
   nvr_init (nvr, base, size);
-
-  pce_log (MSG_INF, "nvram:\tbase=0x%08x size=0x%08x\n", base, size);
 
   return (nvr);
 }
@@ -89,18 +82,18 @@ void nvr_set_endian (nvram_t *nvr, int big)
     nvr->mem->set_uint16 = (mem_set_uint16_f) &nvr_set_uint16_be;
     nvr->mem->set_uint32 = (mem_set_uint32_f) &nvr_set_uint32_be;
 
-    nvr->mem->get_uint8 = (mem_get_uint8_f) &mem_blk_get_uint8;
-    nvr->mem->get_uint16 = (mem_get_uint16_f) &mem_blk_get_uint16_be;
-    nvr->mem->get_uint32 = (mem_get_uint32_f) &mem_blk_get_uint32_be;
+    nvr->mem->get_uint8 = (mem_get_uint8_f) &nvr_get_uint8;
+    nvr->mem->get_uint16 = (mem_get_uint16_f) &nvr_get_uint16_be;
+    nvr->mem->get_uint32 = (mem_get_uint32_f) &nvr_get_uint32_be;
   }
   else {
     nvr->mem->set_uint8 = (mem_set_uint8_f) &nvr_set_uint8;
     nvr->mem->set_uint16 = (mem_set_uint16_f) &nvr_set_uint16_le;
     nvr->mem->set_uint32 = (mem_set_uint32_f) &nvr_set_uint32_le;
 
-    nvr->mem->get_uint8 = (mem_get_uint8_f) &mem_blk_get_uint8;
-    nvr->mem->get_uint16 = (mem_get_uint16_f) &mem_blk_get_uint16_le;
-    nvr->mem->get_uint32 = (mem_get_uint32_f) &mem_blk_get_uint32_le;
+    nvr->mem->get_uint8 = (mem_get_uint8_f) &nvr_get_uint8;
+    nvr->mem->get_uint16 = (mem_get_uint16_f) &nvr_get_uint16_le;
+    nvr->mem->get_uint32 = (mem_get_uint32_f) &nvr_get_uint32_le;
   }
 }
 
@@ -139,7 +132,11 @@ int nvr_set_fname (nvram_t *nvr, const char *fname)
 {
   FILE *fp;
 
-  fp = fopen (fname, "ab+");
+  fp = fopen (fname, "r+b");
+  if (fp == NULL) {
+    fp = fopen (fname, "w+b");
+  }
+
   if (fp == NULL) {
     return (1);
   }
@@ -198,4 +195,29 @@ void nvr_set_uint32_le (nvram_t *nvr, unsigned long addr, unsigned long val)
   nvr->mem->data[addr + 2] = (val >> 16) & 0xff;
   nvr->mem->data[addr + 3] = (val >> 24) & 0xff;
   nvr_write (nvr, addr, 4);
+}
+
+unsigned char nvr_get_uint8 (nvram_t *nvr, unsigned long addr)
+{
+  return (mem_blk_get_uint8 (nvr->mem, addr));
+}
+
+unsigned short nvr_get_uint16_be (nvram_t *nvr, unsigned long addr)
+{
+  return (mem_blk_get_uint16_be (nvr->mem, addr));
+}
+
+unsigned short nvr_get_uint16_le (nvram_t *nvr, unsigned long addr)
+{
+  return (mem_blk_get_uint16_le (nvr->mem, addr));
+}
+
+unsigned long nvr_get_uint32_be (nvram_t *nvr, unsigned long addr)
+{
+  return (mem_blk_get_uint32_be (nvr->mem, addr));
+}
+
+unsigned long nvr_get_uint32_le (nvram_t *nvr, unsigned long addr)
+{
+  return (mem_blk_get_uint32_le (nvr->mem, addr));
 }

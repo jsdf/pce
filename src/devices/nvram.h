@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: nvram.h,v 1.1 2003/12/23 03:08:59 hampa Exp $ */
+/* $Id: nvram.h,v 1.2 2003/12/23 03:48:09 hampa Exp $ */
 
 
 #ifndef PCE_DEVICES_NVRAM_H
@@ -55,6 +55,12 @@ void nvr_set_uint16_be (nvram_t *nvr, unsigned long addr, unsigned short val);
 void nvr_set_uint16_le (nvram_t *nvr, unsigned long addr, unsigned short val);
 void nvr_set_uint32_be (nvram_t *nvr, unsigned long addr, unsigned long val);
 void nvr_set_uint32_le (nvram_t *nvr, unsigned long addr, unsigned long val);
+
+unsigned char nvr_get_uint8 (nvram_t *nvr, unsigned long addr);
+unsigned short nvr_get_uint16_be (nvram_t *nvr, unsigned long addr);
+unsigned short nvr_get_uint16_le (nvram_t *nvr, unsigned long addr);
+unsigned long nvr_get_uint32_be (nvram_t *nvr, unsigned long addr);
+unsigned long nvr_get_uint32_le (nvram_t *nvr, unsigned long addr);
 
 
 #endif
