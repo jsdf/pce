@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.19 2003/08/29 21:14:48 hampa Exp $ */
+/* $Id: e8086.c,v 1.20 2003/09/19 23:20:23 hampa Exp $ */
 
 
 #include "e8086.h"

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.18 2003/08/29 22:45:59 hampa Exp $ */
+/* $Id: microcode.c,v 1.19 2003/09/19 23:20:23 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -64,52 +64,6 @@ void e86_trap (e8086_t *c, unsigned n)
   e86_pq_init (c);
 }
 
-
-/*************************************************************************
- * Prefetch queue functions
- *************************************************************************/
-
-void e86_pq_init (e8086_t *c)
-{
-  c->pq_cnt = 0;
-}
-
-void e86_pq_fill (e8086_t *c)
-{
-  unsigned       i;
-  unsigned short val;
-
-  i = c->pq_cnt;
-  while (i < (E86_PQ_FILL - 1)) {
-    val = e86_get_mem16 (c, e86_get_cs (c), e86_get_ip (c) + i);
-    c->pq[i] = val & 0xff;
-    c->pq[i + 1] = (val >> 8) & 0xff;
-
-    i += 2;
-  }
-
-  if (i < E86_PQ_FILL) {
-    c->pq[i] = e86_get_mem8 (c, e86_get_cs (c), e86_get_ip (c) + i);
-  }
-
-  c->pq_cnt = E86_PQ_SIZE;
-}
-
-void e86_pq_adjust (e8086_t *c, unsigned cnt)
-{
-  unsigned i;
-
-  if (cnt >= c->pq_cnt) {
-    c->pq_cnt = 0;
-    return;
-  }
-
-  for (i = cnt; i < c->pq_cnt; i++) {
-    c->pq[i - cnt] = c->pq[i];
-  }
-
-  c->pq_cnt -= cnt;
-}
 
 /**************************************************************************
  * Microcode functions
