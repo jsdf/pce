@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: rules.inc.in,v 1.1 2003/12/29 11:06:23 hampa Exp $
+# $Id$
 
 
 VPATH = $(srcdir) $(topdir)/src
@@ -87,7 +87,7 @@ ifneq "$(MAN1)" ""
 	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1
 	for f in $(MAN1) ; do \
 		rm -f $(DESTDIR)$(mandir)/man1/$$f.gz ; \
-		$(GZIP) -c $(GZIP_FLG) $(srcdir)/$$f > $(DESTDIR)$(mandir)/man1/$$f.gz ; \
+		$(GZ) -c $(GZ_FLG) $(srcdir)/$$f > $(DESTDIR)$(mandir)/man1/$$f.gz ; \
 	done
 endif
 

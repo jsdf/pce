@@ -30,8 +30,8 @@ LD_FLG          = $(LDFLAGS)
 AR		= @AR@
 AR_FLG		= -rs
 
-GZIP		= @GZIP@
-GZIP_FLG	= --best
+GZ		= @GZ@
+GZ_FLG		= --best
 
 LN_S		= @LN_S@
 LN_S_FLG	= -f
