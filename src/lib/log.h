@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/log.c                                            *
+ * File name:     src/lib/log.h                                              *
  * Created:       2003-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,75 +20,27 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: log.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: log.h,v 1.1 2003/11/08 14:40:34 hampa Exp $ */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
-#include "log.h"
+#ifndef PCE_LIB_LOG_H
+#define PCE_LIB_LOG_H 1
 
 
-static unsigned log_level = MSG_DEB;
+#define MSG_ERR 0
+#define MSG_MSG 1
+#define MSG_INF 2
+#define MSG_DEB 3
 
-static FILE     *log_fp = NULL;
-static int       log_close_fp = 0;
-static int      log_stderr = 1;
+
+void pce_log_set_level (unsigned level);
+unsigned pce_log_get_level (void);
+
+void pce_log_set_fp (FILE *fp, int close);
+void pce_log_set_fname (const char *fname);
+void pce_log_set_stderr (int f);
+
+void pce_log (unsigned level, const char *msg, ...);
 
 
-void pce_log_set_level (unsigned level)
-{
-  log_level = level;
-}
-
-unsigned pce_log_get_level (void)
-{
-  return (log_level);
-}
-
-void pce_log_set_fp (FILE *fp, int close)
-{
-  if (log_close_fp) {
-    fclose (log_fp);
-  }
-
-  log_fp = fp;
-  log_close_fp = (fp != NULL) && close;
-}
-
-void pce_log_set_fname (const char *fname)
-{
-  if (log_close_fp) {
-    fclose (log_fp);
-  }
-
-  log_fp = fopen (fname, "ab");
-  log_close_fp = (log_fp != NULL);
-}
-
-void pce_log_set_stderr (int f)
-{
-  log_stderr = (f != 0);
-}
-
-void pce_log (unsigned level, const char *msg, ...)
-{
-  va_list va;
-
-  if (level <= log_level) {
-    if (log_fp != NULL) {
-      va_start (va, msg);
-      vfprintf (log_fp, msg, va);
-      va_end (va);
-      fflush (log_fp);
-    }
-
-    if (log_stderr) {
-      va_start (va, msg);
-      vfprintf (stderr, msg, va);
-      va_end (va);
-      fflush (stderr);
-    }
-  }
-}
+#endif
