@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     memory.c                                                   *
+ * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.6 2003/11/16 05:05:52 hampa Exp $ */
+/* $Id: memory.c,v 1.7 2003/12/20 12:22:51 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -342,6 +342,16 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
   }
 }
 
+void mem_init (memory_t *mem)
+{
+  mem->cnt = 0;
+  mem->lst = NULL;
+
+  mem->def_val8 = 0xaa;
+  mem->def_val16 = 0xaaaaU;
+  mem->def_val32 = 0xaaaaaaaaUL;
+}
+
 memory_t *mem_new (void)
 {
   memory_t *mem;
@@ -351,17 +361,12 @@ memory_t *mem_new (void)
     return (NULL);
   }
 
-  mem->cnt = 0;
-  mem->lst = NULL;
-
-  mem->def_val8 = 0xaa;
-  mem->def_val16 = 0xaaaaU;
-  mem->def_val32 = 0xaaaaaaaaUL;
+  mem_init (mem);
 
   return (mem);
 }
 
-void mem_del (memory_t *mem)
+void mem_free (memory_t *mem)
 {
   unsigned i;
 
@@ -371,7 +376,15 @@ void mem_del (memory_t *mem)
         mem_blk_del (mem->lst[i].blk);
       }
     }
+
     free (mem->lst);
+  }
+}
+
+void mem_del (memory_t *mem)
+{
+  if (mem != NULL) {
+    mem_free (mem);
     free (mem);
   }
 }

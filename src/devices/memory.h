@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     memory.h                                                   *
+ * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.4 2003/11/11 16:33:57 hampa Exp $ */
+/* $Id: memory.h,v 1.5 2003/12/20 12:22:51 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -112,7 +112,9 @@ void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val);
 void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val);
 void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val);
 
+void mem_init (memory_t *mem);
 memory_t *mem_new (void);
+void mem_free (memory_t *mem);
 void mem_del (memory_t *mem);
 
 /*!***************************************************************************
