@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.1 2003/04/15 04:03:56 hampa Exp $
+# $Id: configure.in,v 1.2 2003/04/15 04:19:24 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -32,7 +32,7 @@ dnl -----------------------------------------------------------------------
 AC_MSG_CHECKING([pce version])
 PCE_VERSION_MAJ=0
 PCE_VERSION_MIN=0
-PCE_VERSION_MIC=3
+PCE_VERSION_MIC=4
 PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 AC_SUBST($PCE_VERSION_MAJ)
 AC_SUBST($PCE_VERSION_MIN)
