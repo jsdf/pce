@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: cga.c,v 1.2 2003/04/23 23:39:48 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ cga_t *cga_new (FILE *fp)
   cga->crtc->set_uint8 = (seta_uint8_f) &cga_crtc_set_uint8;
   cga->crtc->set_uint16 = (seta_uint16_f) &cga_crtc_set_uint16;
   cga->crtc->get_uint8 = (geta_uint8_f) &cga_crtc_get_uint8;
-
+  cga->crtc->get_uint16 = (geta_uint16_f) &cga_crtc_get_uint16;
   cga->crtc_mode = 0;
   cga->crtc_pos = 0;
   cga->crtc_ofs = 0;
@@ -313,13 +313,26 @@ unsigned char cga_crtc_get_uint8 (cga_t *cga, unsigned long addr)
 
     case 0x06:
       cnt += 1;
-      if (cnt > 16) {
+      if (cnt > 8) {
         cnt = 0;
-        return 0x01;
+        cga->crtc->data[6] ^= 1;
       }
-      return (0x00);
+      return (cga->crtc->data[addr]);
 
     default:
       return (0xff);
   }
+}
+
+unsigned short cga_crtc_get_uint16 (cga_t *cga, unsigned long addr)
+{
+  unsigned short ret;
+
+  ret = cga_crtc_get_uint8 (cga, addr);
+
+  if (addr < cga->crtc->end) {
+    ret |= cga_crtc_get_uint8 (cga, addr + 1) << 8;
+  }
+
+  return (ret);
 }

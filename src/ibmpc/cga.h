@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: cga.h,v 1.2 2003/04/23 23:39:48 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -56,6 +56,7 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
 void cga_crtc_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
 void cga_crtc_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
 unsigned char cga_crtc_get_uint8 (cga_t *cga, unsigned long addr);
+unsigned short cga_crtc_get_uint16 (cga_t *cga, unsigned long addr);
 
 
 #endif
