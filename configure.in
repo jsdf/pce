@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.20 2003/09/06 13:49:17 hampa Exp $
+# $Id: configure.in,v 1.21 2003/09/08 17:17:43 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -130,9 +130,17 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(AR, ar, ar)
-AC_PATH_PROG(NASM, nasm, nasm)
+AC_PATH_PROG(NASM, nasm,)
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
+
+
+if test -x "$NASM" ; then
+	PCE_HAVE_NASM=1
+else
+	PCE_HAVE_NASM=0
+fi
+AC_SUBST(PCE_HAVE_NASM)
 
 
 dnl -----------------------------------------------------------------------

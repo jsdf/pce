@@ -1,12 +1,18 @@
 # Makefile
-# $Id: Makefile.in,v 1.11 2003/08/23 12:35:29 hampa Exp $
+# $Id: Makefile.in,v 1.12 2003/09/08 17:17:44 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := libini terminal chipset e8086 ibmpc pceutils
+subdir := libini terminal chipset e8086 ibmpc
 reldir := ..
 
+
 include $(reldir)/Makefile.inc
+
+
+ifeq "$(PCE_HAVE_NASM)" "1"
+	srcdir += pceutils
+endif
 
 
 SRC	:=

@@ -1,14 +1,19 @@
 # Makefile
-# $Id: Makefile.in,v 1.12 2003/09/04 20:14:15 hampa Exp $
+# $Id: Makefile.in,v 1.13 2003/09/08 17:17:44 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := bios
+subdir :=
 reldir := ../..
 pcesrc	:= $(topdir)/src
 pcedst	:= ..
 
 include $(reldir)/Makefile.inc
+
+
+ifeq "$(PCE_HAVE_NASM)" "1"
+	srcdir += bios
+endif
 
 
 FILES	:= cga disk hgc hook ibmpc log mda memory mouse \
@@ -76,6 +81,7 @@ pce.cfg: pce.cfg.in
 
 cga.o:		cga.c $(SDP)
 disk.o:		disk.c $(SDP)
+ega.o:		ega.c $(SDP)
 hgc.o:		hgc.c $(SDP)
 hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)

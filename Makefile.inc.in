@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.5 2003/09/02 11:43:03 hampa Exp $
+# $Id: Makefile.inc.in,v 1.6 2003/09/08 17:17:43 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -20,6 +20,7 @@ CFLAGS		= @CFLAGS@
 CC_FLG		= $(CFLAGS) -I$(reldir)/src
 
 NASM		= @NASM@
+PCE_HAVE_NASM	:= @PCE_HAVE_NASM@
 
 LD              = @CC@
 LDFLAGS		= @LDFLAGS@
