@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
 #*****************************************************************************
 
@@ -20,22 +20,30 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.25 2003/09/23 07:07:23 hampa Exp $
+# $Id: configure.in,v 1.26 2003/10/05 21:49:33 hampa Exp $
 
 
 AC_PREREQ(2.50)
 
-AC_INIT(Makefile.in)
+AC_INIT(pce)
+AC_CONFIG_SRCDIR(Makefile.in)
 AC_CONFIG_HEADER(src/config.h)
 
 
-dnl -----------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# package version
 
 AC_MSG_CHECKING([pce version])
-PCE_VERSION_MAJ=0
-PCE_VERSION_MIN=1
-PCE_VERSION_MIC=3
+if test ! -r "$srcdir/version" ; then
+	AC_MSG_RESULT([file 'version' not found in source directory])
+	exit 1
+fi
+read PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC t r < "$srcdir/version"
 PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
+if test "x$t" = "xcvs" ; then
+	dstr=`date +%Y%m%d`
+	PCE_VERSION_STR="$PCE_VERSION_STR-$dstr"
+fi
 AC_SUBST(PCE_VERSION_MAJ)
 AC_SUBST(PCE_VERSION_MIN)
 AC_SUBST(PCE_VERSION_MIC)
@@ -44,93 +52,20 @@ AC_DEFINE_UNQUOTED(PCE_VERSION_MAJ, $PCE_VERSION_MAJ)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIN, $PCE_VERSION_MIN)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIC, $PCE_VERSION_MIC)
 AC_DEFINE_UNQUOTED(PCE_VERSION_STR, "$PCE_VERSION_STR")
-AC_MSG_RESULT($PCE_VERSION_STR)
+AC_MSG_RESULT([$PCE_VERSION_STR])
 
+
+#-----------------------------------------------------------------------------
+# build time
+
+AC_MSG_CHECKING([build time])
 PCE_CFG_DATE=`date +%Y-%m-%d`
 PCE_CFG_TIME=`date +%T`
 AC_SUBST(PCE_CFG_DATE)
 AC_SUBST(PCE_CFG_TIME)
 AC_DEFINE_UNQUOTED(PCE_CFG_DATE, "$PCE_CFG_DATE")
 AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
-
-
-AC_ARG_WITH(x11,
-  AC_HELP_STRING([--with-x11], [Use the X11 terminal]),
-  [
-  	PCE_X11_USE="$withval"
-  ],
-  [
-  	PCE_X11_USE=no
-  ]
-)
-if test "x$PCE_X11_USE" = "xyes" ; then
-	PCE_X11_USE=1
-	PCE_X11_CCF="-I/usr/X11R6/include"
-	PCE_X11_LDF="-L/usr/X11R6/lib -lX11"
-	AC_DEFINE(PCE_X11_USE)
-else
-	PCE_X11_USE=0
-fi
-AC_SUBST(PCE_X11_USE)
-AC_SUBST(PCE_X11_CCF)
-AC_SUBST(PCE_X11_LDF)
-
-
-AC_ARG_WITH(sdl,
-  AC_HELP_STRING([--with-sdl], [Use the SDL terminal]),
-  [
-  	PCE_SDL_USE="$withval"
-  ],
-  [
-  	PCE_SDL_USE=no
-  ]
-)
-if test "x$PCE_SDL_USE" = "xyes" ; then
-	PCE_SDL_USE=1
-	PCE_SDL_CCF=`sdl-config --cflags`
-	PCE_SDL_LDF=`sdl-config --libs`
-	AC_DEFINE(PCE_SDL_USE)
-else
-	PCE_SDL_USE=0
-fi
-AC_SUBST(PCE_SDL_USE)
-AC_SUBST(PCE_SDL_CCF)
-AC_SUBST(PCE_SDL_LDF)
-
-
-AC_ARG_WITH(host-clock,
-  AC_HELP_STRING([--with-host-clock=clock], [Set the host clock speed in Hz]),
-  [
-  	PCE_HOST_FOSC="$withval"
-  ],
-  [
-  	PCE_HOST_FOSC=4772393
-  ]
-)
-AC_SUBST(PCE_HOST_FOSC)
-AC_DEFINE_UNQUOTED(PCE_HOST_FOSC, $PCE_HOST_FOSC)
-
-
-PCE_HAVE_TSC=0
-AC_ARG_ENABLE(tsc,
-  AC_HELP_STRING([--enable-tsc], [Use Pentium TSC]),
-  [
-  	if test "x$enableval" = "xyes" ; then
-  		PCE_HAVE_TSC=1
-  	fi
-  ],
-  [
-	case "`uname -m`" in
-	i?86)
-		PCE_HAVE_TSC=1
-		;;
-	esac
-  ]
-)
-AC_SUBST(PCE_HAVE_TSC)
-if test $PCE_HAVE_TSC -eq 1 ; then
-	AC_DEFINE(PCE_HAVE_TSC)
-fi
+AC_MSG_RESULT([$PCE_CFG_DATE $PCE_CFG_TIME])
 
 
 AC_MSG_CHECKING([host OS])
@@ -191,6 +126,114 @@ AC_DEFINE_UNQUOTED(PCE_DIR_ETC, "$pce_etcdir")
 AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
 
+AC_MSG_CHECKING([for X11])
+AC_ARG_WITH(x11,
+  AC_HELP_STRING([--with-x11], [Use the X11 terminal]),
+  [
+	if test "x$withval" = "xno" ; then
+		PCE_X11_USE=0
+		AC_MSG_RESULT([no (forced)])
+	else
+		PCE_X11_USE=1
+		AC_MSG_RESULT([yes (forced)])
+	fi
+  ],
+  [
+	PCE_X11_USE=0
+	AC_MSG_RESULT([no (not yet autodeteced)])
+  ]
+)
+if test $PCE_X11_USE -ne 0 ; then
+	PCE_X11_CCF="-I/usr/X11R6/include"
+	PCE_X11_LDF="-L/usr/X11R6/lib -lX11"
+	AC_DEFINE(PCE_X11_USE)
+fi
+AC_SUBST(PCE_X11_USE)
+AC_SUBST(PCE_X11_CCF)
+AC_SUBST(PCE_X11_LDF)
+
+
+AC_MSG_CHECKING([for SDL])
+AC_ARG_WITH(sdl,
+  AC_HELP_STRING([--with-sdl], [Build the SDL terminal]),
+  [
+	if test "x$withval" = "xno" ; then
+		PCE_SDL_USE=0
+		AC_MSG_RESULT([no (forced)])
+	else
+		PCE_SDL_USE=1
+		AC_MSG_RESULT([yes (forced)])
+	fi
+  ],
+  [
+	if sdl-config --cflags > /dev/null 2>&1 ; then
+		PCE_SDL_USE=1
+		AC_MSG_RESULT([yes (detected)])
+	else
+		PCE_SDL_USE=0
+		AC_MSG_RESULT([no (detected)])
+	fi
+  ]
+)
+if test $PCE_SDL_USE -ne 0 ; then
+	PCE_SDL_CCF=`sdl-config --cflags`
+	PCE_SDL_LDF=`sdl-config --libs`
+	AC_DEFINE(PCE_SDL_USE)
+fi
+AC_SUBST(PCE_SDL_USE)
+AC_SUBST(PCE_SDL_CCF)
+AC_SUBST(PCE_SDL_LDF)
+
+
+AC_MSG_CHECKING([host clock])
+AC_ARG_WITH(host-clock,
+  AC_HELP_STRING([--with-host-clock=clock], [Set the host clock speed in Hz]),
+  [
+	PCE_HOST_FOSC="$withval"
+	AC_MSG_RESULT([$PCE_HOST_FOSC (forced)])
+  ],
+  [
+	PCE_HOST_FOSC=4772393
+	AC_MSG_RESULT([$PCE_HOST_FOSC (default)])
+  ]
+)
+AC_SUBST(PCE_HOST_FOSC)
+AC_DEFINE_UNQUOTED(PCE_HOST_FOSC, $PCE_HOST_FOSC)
+
+
+AC_MSG_CHECKING([whether to use the pentium TSC])
+AC_ARG_ENABLE(tsc,
+  AC_HELP_STRING([--enable-tsc], [Use Pentium TSC]),
+  [
+  	if test "x$enableval" = "xyes" ; then
+  		PCE_HAVE_TSC=1
+  		AC_MSG_RESULT([yes (forced)])
+  	else
+  		PCE_HAVE_TSC=0
+  		AC_MSG_RESULT([no (forced)])
+  	fi
+  ],
+  [
+	case "`uname -m`" in
+	i?86)
+		PCE_HAVE_TSC=1
+		AC_MSG_RESULT([yes (detected)])
+		;;
+	*)
+		PCE_HAVE_TSC=0
+		AC_MSG_RESULT([no (detected)])
+		;;
+	esac
+  ]
+)
+AC_SUBST(PCE_HAVE_TSC)
+if test $PCE_HAVE_TSC -eq 1 ; then
+	AC_DEFINE(PCE_HAVE_TSC)
+fi
+
+
+dnl --------------------------------------------------------------------------
+
 AC_OUTPUT(
   Makefile.inc
   Makefile
@@ -206,7 +249,7 @@ AC_OUTPUT(
 )
 
 
-dnl -----------------------------------------------------------------------
+dnl --------------------------------------------------------------------------
 
 term="vt100"
 
@@ -231,14 +274,12 @@ eval "pce_mandir=$pce_mandir"
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
 
-echo "  CC:                    $CC"
-echo "  CFLAGS:                \"$CFLAGS\""
-echo "  LDFLAGS:               \"$LDFLAGS\""
+echo "  CC:                    $CC $CFLAGS"
+echo "  LD:                    $CC $LDFLAGS"
 echo ""
 echo "  prefix:                $prefix"
 echo "  bindir:                $pce_bindir"
 echo "  etcdir:                $pce_etcdir"
-echo "  libdir:                $pce_libdir"
 echo "  mandir:                $pce_mandir"
 echo "  datadir:               $pce_datdir"
 echo ""
@@ -251,4 +292,9 @@ else
 fi
 
 echo "  Host clock:            $PCE_HOST_FOSC"
-echo "  Use Pentium TSC:       $PCE_HAVE_TSC"
+
+if test $PCE_HAVE_TSC -eq 0 ; then
+	echo "  Use Pentium TSC:       no"
+else
+	echo "  Use Pentium TSC:       yes"
+fi
