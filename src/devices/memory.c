@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -446,6 +446,24 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
   }
 
   return (mem->def_val32);
+}
+
+void mem_set_uint8_rw (memory_t *mem, unsigned long addr, unsigned char val)
+{
+  mem_blk_t *blk;
+
+  blk = mem_get_blk (mem, addr);
+
+  if (blk != NULL) {
+    addr -= blk->addr1;
+
+    if (blk->set_uint8 != NULL) {
+      blk->set_uint8 (blk->ext, addr, val);
+    }
+    else {
+      blk->data[addr] = val;
+    }
+  }
 }
 
 void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
