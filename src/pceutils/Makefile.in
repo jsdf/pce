@@ -1,0 +1,47 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/08/23 12:35:29 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= pceexit.asm pcestop.asm pcetime.asm
+
+OBJ	:= pceexit.asm pcestop.asm pcetime.asm
+OBJ_EXT	:=
+
+HDR	:=
+HDR_EXT	:=
+
+MAN	:=
+
+BIN	:= pceexit.com pcestop.com pcetime.com
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(BIN)
+
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+install:
+	$(INSTALL) -d -m 755 $(datdir)/pce/pceutils
+	$(INSTALL) -m 644 $(BIN) $(datdir)/pceutils
+
+
+%.com: %.asm
+	nasm -f bin $< -o $@
+
+
+pceexit.com:	pceexit.asm
+pcestop.com:	pcestop.asm
+pcetime.com:	pcetime.asm
