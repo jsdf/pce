@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/serial.c                                         *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.c,v 1.1 2003/09/04 20:20:45 hampa Exp $ */
+/* $Id: serial.c,v 1.2 2003/09/05 00:45:37 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -262,6 +262,8 @@ int ser_tios_set (serial_t *ser)
   if (tcsetattr (ser->fd, TCSANOW, &tio)) {
     return (1);
   }
+
+  tcflush (ser->fd, TCIOFLUSH);
 
   return (0);
 }
