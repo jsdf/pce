@@ -1,4 +1,4 @@
-0.1.5	2004-08-03
+0.1.5	2004-08-03	r439
 
 	* Added a 6502 emulator
 	* Added minimal architectures for the PowerPC 405 and 6502

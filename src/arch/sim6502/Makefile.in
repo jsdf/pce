@@ -64,8 +64,8 @@ all: $(BIN) $(OBJ) sim6502.cfg
 
 
 install: install-bin sim6502.cfg
-	$(INSTALL) -d -m 755 $(etcdir)
-	test -f $(etcdir)/sim6502.cfg || $(INSTALL) -m 644 sim6502.cfg $(etcdir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
+	test -f $(DESTDIR)$(etcdir)/sim6502.cfg || $(INSTALL) -m 644 sim6502.cfg $(DESTDIR)$(etcdir)
 
 
 sim6502: $(OBJ) $(OBJ_EXT)
