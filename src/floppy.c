@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     floppy.c                                                   *
+ * File name:     src/floppy.c                                               *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.7 2003/04/19 02:01:03 hampa Exp $ */
+/* $Id: floppy.c,v 1.8 2003/04/21 16:31:24 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -104,7 +104,6 @@ int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fn
 
     fp = fopen (fname, "rb");
     if (fp == NULL) {
-      fclose (fp);
       return (1);
     }
 
