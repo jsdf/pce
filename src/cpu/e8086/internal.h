@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/internal.h                                   *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -93,13 +93,12 @@ void e86_set_flg_log_8 (e8086_t *c, unsigned char val);
 void e86_set_flg_log_16 (e8086_t *c, unsigned short val);
 void e86_set_flg_adc_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3);
 void e86_set_flg_adc_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3);
+void e86_set_flg_add_8 (e8086_t *c, unsigned char s1, unsigned char s2);
+void e86_set_flg_add_16 (e8086_t *c, unsigned short s1, unsigned short s2);
 void e86_set_flg_sbb_8 (e8086_t *c, unsigned char s1, unsigned char s2, unsigned char s3);
 void e86_set_flg_sbb_16 (e8086_t *c, unsigned short s1, unsigned short s2, unsigned short s3);
-
-#define e86_set_flg_add_8(c, s1, s2) e86_set_flg_adc_8 (c, s1, s2, 0)
-#define e86_set_flg_add_16(c, s1, s2) e86_set_flg_adc_16 (c, s1, s2, 0)
-#define e86_set_flg_sub_8(c, s1, s2) e86_set_flg_sbb_8 (c, s1, s2, 0)
-#define e86_set_flg_sub_16(c, s1, s2) e86_set_flg_sbb_16 (c, s1, s2, 0)
+void e86_set_flg_sub_8 (e8086_t *c, unsigned char s1, unsigned char s2);
+void e86_set_flg_sub_16 (e8086_t *c, unsigned short s1, unsigned short s2);
 
 
 #endif

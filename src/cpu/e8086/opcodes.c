@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -2406,7 +2406,12 @@ static
 unsigned op_9e (e8086_t *c)
 {
   c->flg &= 0xff00;
-  c->flg |= e86_get_ah (c);
+  c->flg |= e86_get_ah (c) & 0xd5;
+
+  if (c->cpu & E86_CPU_FLAGS286) {
+    c->flg |= 0x02;
+  }
+
   e86_set_clk (c, 4);
 
   return (1);
@@ -2416,7 +2421,15 @@ unsigned op_9e (e8086_t *c)
 static
 unsigned op_9f (e8086_t *c)
 {
-  e86_set_ah (c, (c->flg & 0xd5) | 0x02);
+  unsigned short val;
+
+  val = c->flg & 0xdf;
+
+  if (c->cpu & E86_CPU_FLAGS286) {
+    c->flg |= 0x02;
+  }
+
+  e86_set_ah (c, val);
   e86_set_clk (c, 4);
 
   return (1);
@@ -2716,13 +2729,15 @@ unsigned op_a9 (e8086_t *c)
 static
 unsigned op_aa (e8086_t *c)
 {
+  unsigned short seg;
   unsigned short inc;
 
+  seg = e86_get_es (c);
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     while (e86_get_cx (c) > 0) {
-      e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_al (c));
+      e86_set_mem8 (c, seg, e86_get_di (c), e86_get_al (c));
 
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
@@ -2732,7 +2747,7 @@ unsigned op_aa (e8086_t *c)
     }
   }
   else {
-    e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_al (c));
+    e86_set_mem8 (c, seg, e86_get_di (c), e86_get_al (c));
     e86_set_di (c, e86_get_di (c) + inc);
 
     e86_set_clk (c, 11);
@@ -2745,13 +2760,15 @@ unsigned op_aa (e8086_t *c)
 static
 unsigned op_ab (e8086_t *c)
 {
+  unsigned short seg;
   unsigned short inc;
 
+  seg = e86_get_es (c);
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
     while (e86_get_cx (c) > 0) {
-      e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_ax (c));
+      e86_set_mem16 (c, seg, e86_get_di (c), e86_get_ax (c));
 
       e86_set_di (c, e86_get_di (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
@@ -2761,7 +2778,7 @@ unsigned op_ab (e8086_t *c)
     }
   }
   else {
-    e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_ax (c));
+    e86_set_mem16 (c, seg, e86_get_di (c), e86_get_ax (c));
     e86_set_di (c, e86_get_di (c) + inc);
 
     e86_set_clk (c, 11);
@@ -3285,7 +3302,7 @@ unsigned op_d0 (e8086_t *c)
     case 1: /* ROR r/m8, 1 */
       d = (s >> 1) | (s << 7);
       e86_set_cf (c, d & 0x80);
-      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d << 1) ^ d) & 0x01);
       break;
 
     case 2: /* RCL r/m8, 1 */
@@ -3297,7 +3314,7 @@ unsigned op_d0 (e8086_t *c)
     case 3: /* RCR r/m8, 1 */
       d = (s >> 1) | (e86_get_cf (c) << 7);
       e86_set_cf (c, s & 1);
-      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d << 1) ^ d) & 0x80);
       break;
 
     case 4: /* SHL r/m8, 1 */
@@ -3355,7 +3372,7 @@ unsigned op_d1 (e8086_t *c)
     case 1: /* ROR r/m16, 1 */
       d = (s >> 1) | (s << 15);
       e86_set_cf (c, s & 1);
-      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
       break;
 
     case 2: /* RCL r/m16, 1 */
@@ -3367,7 +3384,7 @@ unsigned op_d1 (e8086_t *c)
     case 3: /* RCR r/m16, 1 */
       d = (s >> 1) | (e86_get_cf (c) << 15);
       e86_set_cf (c, s & 1);
-      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
       break;
 
     case 4: /* SHL r/m16, 1 */
@@ -3436,7 +3453,7 @@ unsigned op_d2 (e8086_t *c)
     case 1: /* ROR r/m8, CL */
       d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
       e86_set_cf (c, d & 0x80);
-      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d << 1) ^ d) & 0x80);
       break;
 
     case 2: /* RCL r/m8, CL */
@@ -3450,7 +3467,7 @@ unsigned op_d2 (e8086_t *c)
       s |= e86_get_cf (c) << 8;
       d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
       e86_set_cf (c, d & 0x100);
-      e86_set_of (c, ((d << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d << 1) ^ d) & 0x80);
       break;
 
     case 4: /* SHL r/m8, CL */
@@ -3523,7 +3540,7 @@ unsigned op_d3 (e8086_t *c)
     case 1: /* ROR r/m16, CL */
       d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
       e86_set_cf (c, d & 0x8000);
-      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
       break;
 
     case 2: /* RCL r/m16, CL */
@@ -3537,7 +3554,7 @@ unsigned op_d3 (e8086_t *c)
       s |= e86_get_cf (c) << 16;
       d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
-      e86_set_of (c, ((d << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
       break;
 
     case 4: /* SHL r/m16, CL */
