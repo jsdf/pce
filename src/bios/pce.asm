@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.7 2003/04/19 02:03:07 hampa Exp $
+; $Id: pce.asm,v 1.8 2003/04/19 03:28:30 hampa Exp $
 
 
 %macro set_pos 1
@@ -46,13 +46,7 @@ start:
   call    set_bios_ds
 
   call    init_ppi
-
-  mov     ax, 0x0003
-  int     0x10
-
-  mov     si, msg_init
-  call    prt_string
-
+  call    init_video
   call    init_mem
   call    init_misc
   call    init_keyboard
@@ -77,6 +71,15 @@ msg_memchk1:
 
 msg_memchk2:
   db      "KB", 13, 0
+
+msg_mda:
+  db      "MDA", 0
+
+msg_cga:
+  db      "CGA", 0
+
+msg_video:
+  db      " video adapter initialized", 13, 10, 0
 
 
 ;-----------------------------------------------------------------------------
@@ -117,6 +120,57 @@ init_int:
   pop     ax
   ret
 
+
+init_ppi:
+  push    ax
+  mov     al, 0x99
+  out     0x63, al                      ; set up ppi ports
+
+  mov     al, 0xfc
+  out     0x61, al
+
+  in      al, 0x60                      ; get config word
+  mov     ah, 0
+
+  mov     [0x0010], ax                  ; equipment word
+
+  pop     ax
+  ret
+
+
+init_video:
+  push    ax
+  push    si
+
+  mov     ax, [0x0010]
+  and     al, 0x30
+
+  cmp     al, 0x30
+  je      .mda
+
+  mov     ax, 0x0003
+  int     0x10
+  mov     ax, msg_cga
+  jmp     .done
+
+.mda:
+  mov     ax, 0x0007
+  int     0x10
+  mov     ax, msg_mda
+
+.done:
+  mov     si, msg_init
+  call    prt_string
+
+  mov     si, ax
+  call    prt_string
+
+  mov     si, msg_video
+  call    prt_string
+
+  pop     si
+  pop     ax
+  ret
 
 init_misc:
   xor     ax, ax
@@ -204,20 +258,6 @@ init_keyboard:
 
   mov     [0x001a], word 0x001e
   mov     [0x001c], word 0x001e
-
-  ret
-
-init_ppi:
-  mov     al, 0x99
-  out     0x63, al                      ; set up ppi ports
-
-  mov     al, 0xfc
-  out     0x61, al
-
-  in      al, 0x60                      ; get config word
-  mov     ah, 0
-
-  mov     [0x0010], ax                  ; equipment word
 
   ret
 
