@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.19 2003/08/29 09:46:26 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.20 2003/08/29 19:18:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -421,7 +421,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (r) {
-      pce_log (0, "loading drive %02X failed\n", drive);
+      pce_log (MSG_ERR, "loading drive %02X failed\n", drive);
       dsk_del (dsk);
       dsk = NULL;
     }
@@ -431,6 +431,31 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
     sct = ini_sct_find_next (sct, "disk");
   }
+}
+
+void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t *sct;
+  unsigned  base, irq;
+
+  sct = ini_sct_find_sct (ini, "mouse");
+  if (sct == NULL) {
+    return;
+  }
+
+  ini_get_uint (sct, "base", &base, 0x03f8);
+  ini_get_uint (sct, "irq", &irq, 4);
+
+  pce_log (MSG_INF, "mouse: base=%04x irq=%u\n", base, irq);
+
+  pc->mse = mse_new (base);
+  pc->mse->intr_ext = pc->pic;
+  pc->mse->intr = (mse_intr_f) e8259_get_irq (pc->pic, irq);
+
+  mem_add_blk (pc->prt, pc->mse->reg, 0);
+
+  pc->trm->mse_ext = pc->mse;
+  pc->trm->set_mse = (trm_set_mse_f) &mse_set;
 }
 
 void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
@@ -516,9 +541,18 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   }
 
   pc_setup_disks (pc, ini);
+  pc_setup_mouse (pc, ini);
   pc_setup_parport (pc, ini);
 
   return (pc);
+}
+
+void pc_del_mouse (ibmpc_t *pc)
+{
+  if (pc->mse != NULL) {
+    mse_del (pc->mse);
+    pc->mse = NULL;
+  }
 }
 
 void pc_del_parport (ibmpc_t *pc)
@@ -539,6 +573,7 @@ void pc_del (ibmpc_t *pc)
   }
 
   pc_del_parport (pc);
+  pc_del_mouse (pc);
 
   dsks_del (pc->dsk);
 
