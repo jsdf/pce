@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -59,21 +59,21 @@ unsigned char chrmap[256] = {
   0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
   0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
   0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x2e,
-  0x2e, 0xfc, 0x2e, 0xe4, 0x2e, 0x2e, 0x2e, 0x2e, // 80
+  0x2e, 0xfc, 0x2e, 0xe4, 0x2e, 0x2e, 0x2e, 0x2e, /* 80 */
   0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
-  0x2e, 0x2e, 0x2e, 0x2e, 0xf6, 0x2e, 0x2e, 0x2e, // 90
+  0x2e, 0x2e, 0x2e, 0x2e, 0xf6, 0x2e, 0x2e, 0x2e, /* 90 */
   0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
-  0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, // A0
+  0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, /* A0 */
   0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0xab, 0xbb,
-   '#',  '#',  '#', 0x7c,  '+',  '+',  '+',  '+', // B0
+   '#',  '#',  '#', 0x7c,  '+',  '+',  '+',  '+', /* B0 */
    '+',  '+',  '|',  '+',  '+',  '+',  '+',  '+',
-   '+',  '+',  '+',  '+',  '-',  '+',  '+',  '+', // C0
+   '+',  '+',  '+',  '+',  '-',  '+',  '+',  '+', /* C0 */
    '+',  '+',  '+',  '+',  '+',  '-',  '+',  '+',
-   '+',  '+',  '+',  '+',  '+',  '+',  '+',  '+', // D0
+   '+',  '+',  '+',  '+',  '+',  '+',  '+',  '+', /* D0 */
    '+',  '+',  '+', 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
-  0x2e, 0xdf, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, // E0
+  0x2e, 0xdf, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, /* E0 */
   0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e,
-  0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0xf7, 0x2e, // F0
+  0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e, 0xf7, 0x2e, /* F0 */
   0xb0, 0xb7, 0xb7, 0x2e, 0x2e, 0x2e, 0x2e, 0x2e
 };
 
@@ -446,27 +446,27 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
   vt100_set_key (vt, "\xf9", 1, "\x38\x15\x95\xb8", 4);
   vt100_set_key (vt, "\xfa", 1, "\x38\x2c\xac\xb8", 4);
 
-  vt100_set_key (vt, "\x1b\x4f\x50", 3, "\x3b\xbb", 2); // F1
-  vt100_set_key (vt, "\x1b\x4f\x51", 3, "\x3c\xbc", 2); // F2
-  vt100_set_key (vt, "\x1b\x4f\x52", 3, "\x3d\xbd", 2); // F3
-  vt100_set_key (vt, "\x1b\x4f\x53", 3, "\x3e\xbe", 2); // F4
-  vt100_set_key (vt, "\x1b\x5b\x31\x35\x7e", 5, "\x3f\xbf", 2); // F5
-  vt100_set_key (vt, "\x1b\x5b\x31\x37\x7e", 5, "\x40\xc0", 2); // F6
-  vt100_set_key (vt, "\x1b\x5b\x31\x38\x7e", 5, "\x41\xc1", 2); // F7
-  vt100_set_key (vt, "\x1b\x5b\x32\x30\x7e", 5, "\x43\xc3", 2); // F9
-  vt100_set_key (vt, "\x1b\x5b\x32\x31\x7e", 5, "\x44\xc4", 2); // F10
+  vt100_set_key (vt, "\x1b\x4f\x50", 3, "\x3b\xbb", 2); /* F1 */
+  vt100_set_key (vt, "\x1b\x4f\x51", 3, "\x3c\xbc", 2); /* F2 */
+  vt100_set_key (vt, "\x1b\x4f\x52", 3, "\x3d\xbd", 2); /* F3 */
+  vt100_set_key (vt, "\x1b\x4f\x53", 3, "\x3e\xbe", 2); /* F4 */
+  vt100_set_key (vt, "\x1b\x5b\x31\x35\x7e", 5, "\x3f\xbf", 2); /* F5 */
+  vt100_set_key (vt, "\x1b\x5b\x31\x37\x7e", 5, "\x40\xc0", 2); /* F6 */
+  vt100_set_key (vt, "\x1b\x5b\x31\x38\x7e", 5, "\x41\xc1", 2); /* F7 */
+  vt100_set_key (vt, "\x1b\x5b\x32\x30\x7e", 5, "\x43\xc3", 2); /* F9 */
+  vt100_set_key (vt, "\x1b\x5b\x32\x31\x7e", 5, "\x44\xc4", 2); /* F10 */
 
-  vt100_set_key (vt, "\x1b\x5b\x48", 3, "\x47\xc7", 2); // Home
-  vt100_set_key (vt, "\x1b\x5b\x41", 3, "\x48\xc8", 2); // Up
-  vt100_set_key (vt, "\x1b\x5b\x35\x7e", 4, "\x49\xc9", 2); // PgUp
-  vt100_set_key (vt, "\x1b\x5b\x44", 3, "\x4b\xcb", 2); // Left
-  vt100_set_key (vt, "\x1b\x5b\x45", 3, "\x4c\xcc", 2); // KP-5
-  vt100_set_key (vt, "\x1b\x5b\x43", 3, "\x4d\xcd", 2); // Right
-  vt100_set_key (vt, "\x1b\x5b\x46", 3, "\x4f\xcf", 2); // End
-  vt100_set_key (vt, "\x1b\x5b\x42", 3, "\x50\xd0", 2); // Down
-  vt100_set_key (vt, "\x1b\x5b\x36\x7e", 4, "\x51\xd1", 2); // PgDn
-  vt100_set_key (vt, "\x1b\x5b\x32\x7e", 4, "\x52\xd2", 2); // Ins
-  vt100_set_key (vt, "\x1b\x5b\x33\x7e", 4, "\x53\xd3", 2); // Del
+  vt100_set_key (vt, "\x1b\x5b\x48", 3, "\x47\xc7", 2); /* Home */
+  vt100_set_key (vt, "\x1b\x5b\x41", 3, "\x48\xc8", 2); /* Up */
+  vt100_set_key (vt, "\x1b\x5b\x35\x7e", 4, "\x49\xc9", 2); /* PgUp */
+  vt100_set_key (vt, "\x1b\x5b\x44", 3, "\x4b\xcb", 2); /* Left */
+  vt100_set_key (vt, "\x1b\x5b\x45", 3, "\x4c\xcc", 2); /* KP-5 */
+  vt100_set_key (vt, "\x1b\x5b\x43", 3, "\x4d\xcd", 2); /* Right */
+  vt100_set_key (vt, "\x1b\x5b\x46", 3, "\x4f\xcf", 2); /* End */
+  vt100_set_key (vt, "\x1b\x5b\x42", 3, "\x50\xd0", 2); /* Down */
+  vt100_set_key (vt, "\x1b\x5b\x36\x7e", 4, "\x51\xd1", 2); /* PgDn */
+  vt100_set_key (vt, "\x1b\x5b\x32\x7e", 4, "\x52\xd2", 2); /* Ins */
+  vt100_set_key (vt, "\x1b\x5b\x33\x7e", 4, "\x53\xd3", 2); /* Del */
 
   if (ini != NULL) {
     const char *str;
@@ -704,8 +704,6 @@ void vt100_check (vt100_t *vt)
   unsigned char buf[8];
   ssize_t       r;
   vt100_keymap_t *key;
-
-//  fprintf (stderr, "vt100: check\n");
 
   if (!vt100_readable (vt, 0)) {
     return;

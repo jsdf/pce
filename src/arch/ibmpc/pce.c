@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -28,12 +28,22 @@
 #include <stdarg.h>
 #include <time.h>
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
 #include <signal.h>
+
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
 
 #include "pce.h"
 #include <lib/cmd.h>
+
+#ifdef PCE_HOST_DOS
+#define CLOCKS_PER_SEC 18.2
+#endif
 
 
 typedef struct breakpoint_t {
@@ -741,6 +751,7 @@ void prt_error (const char *str, ...)
 static
 void pce_set_fd (int fd, int interactive)
 {
+#ifdef HAVE_TERMIOS_H
   static int            sios_ok = 0;
   static struct termios sios;
   struct termios        tios;
@@ -762,6 +773,7 @@ void pce_set_fd (int fd, int interactive)
 
     tcsetattr (fd, TCSANOW, &tios);
   }
+#endif
 }
 
 static
@@ -896,6 +908,7 @@ void pce_op_int (void *ext, unsigned char n)
 {
   pce_last_int = n;
 
+#ifndef PCE_HOST_DOS
   if (n == 0x28) {
     if (par_int28 > 0) {
       cpu_end();
@@ -903,6 +916,7 @@ void pce_op_int (void *ext, unsigned char n)
       cpu_start();
     }
   }
+#endif
 }
 
 static

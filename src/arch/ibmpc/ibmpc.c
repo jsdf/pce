@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -74,7 +74,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     base = ini_get_lng_def (sct, "base", 0);
     size = ini_get_lng_def (sct, "size", 655360L);
 
-    pce_log (MSG_INF, "RAM:\tbase=0x%05x size=%lu file=%s\n",
+    pce_log (MSG_INF, "RAM:\tbase=0x%05lx size=%lu file=%s\n",
       base, size, (fname == NULL) ? "<none>" : fname
     );
 
@@ -112,7 +112,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     base = ini_get_lng_def (sct, "base", 0);
     size = ini_get_lng_def (sct, "size", 65536L);
 
-    pce_log (MSG_INF, "ROM:\tbase=0x%05x size=%lu file=%s\n", base, size, fname);
+    pce_log (MSG_INF, "ROM:\tbase=0x%05lx size=%lu file=%s\n", base, size, fname);
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
@@ -145,7 +145,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
   base = ini_get_lng_def (sct, "base", 0);
   size = ini_get_lng_def (sct, "size", 65536L);
 
-  pce_log (MSG_INF, "NVRAM:\tbase=0x%08x size=%lu file=%s\n",
+  pce_log (MSG_INF, "NVRAM:\tbase=0x%08lx size=%lu file=%s\n",
     base, size, (fname == NULL) ? "<>" : fname
   );
 
@@ -390,10 +390,14 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
     }
   }
   else if (strcmp (driver, "vt100") == 0) {
+#ifdef PCE_VT100_USE
     pc->trm = vt100_new (sct, 0, 1);
     if (pc->trm == NULL) {
       pce_log (MSG_ERR, "*** setting up vt100 terminal failed\n");
     }
+#else
+    pce_log (MSG_ERR, "*** terminal driver 'vt100' not supported\n");
+#endif
   }
   else {
     pce_log (MSG_ERR, "*** unknown terminal driver: %s\n", driver);
@@ -410,52 +414,77 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
-void pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
+int pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = mda_new (pc->trm, sct);
+  if (pc->video == NULL) {
+    return (1);
+  }
+
   mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
   mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;
+
+  return (0);
 }
 
 static
-void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
+int pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = hgc_new (pc->trm, sct);
+  if (pc->video == NULL) {
+    return (1);
+  }
+
   mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
   mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;
+
+  return (0);
 }
 
 static
-void pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
+int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = cga_new (pc->trm, sct);
+  if (pc->video == NULL) {
+    return (1);
+  }
+
   mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
   mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x20;
+
+  return (0);
 }
 
 static
-void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
+int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 {
   pc->video = ega_new (pc->trm, sct);
+  if (pc->video == NULL) {
+    return (1);
+  }
+
   mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
   mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x00;
+
+  return (0);
 }
 
 static
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
+  int        r;
   const char *dev;
   ini_sct_t  *sct;
 
@@ -491,6 +520,10 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
   }
   else {
     pce_log (MSG_ERR, "*** unknown video device (%s)\n", dev);
+  }
+
+  if (pc->video == NULL) {
+    pce_log (MSG_ERR, "*** setting up video device failed\n");
   }
 }
 
@@ -680,7 +713,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
     chip = ini_get_str_def (sct, "uart", "8250");
     fname = ini_get_str (sct, "file");
 
-    pce_log (MSG_INF, "COM%u:\tio=0x%04x irq=%u uart=%s file=%s\n",
+    pce_log (MSG_INF, "COM%u:\tio=0x%04lx irq=%u uart=%s file=%s\n",
       i + 1, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
@@ -945,7 +978,7 @@ void pc_clock (ibmpc_t *pc)
   pc->clk_div[0] += n;
   pc->clk_div[1] += n;
   pc->clk_div[2] += n;
-//  pc->clk_div[3] += n;
+/*  pc->clk_div[3] += n; */
 }
 
 void pc_screenshot (ibmpc_t *pc)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -682,7 +682,7 @@ void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
       break;
 
     case 0x0e:
-//      hgc_set_pos (hgc, (val << 8) | (hgc->crtc_reg[0x0f] & 0xff));
+/*      hgc_set_pos (hgc, (val << 8) | (hgc->crtc_reg[0x0f] & 0xff)); */
       break;
 
     case 0x0f:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1359,7 +1359,7 @@ void ega_crtc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
       break;
 
     case 0x0c:
-//      ega_set_page_ofs (ega, (ega->crtc_reg[0x0c] << 8) | val);
+/*      ega_set_page_ofs (ega, (ega->crtc_reg[0x0c] << 8) | val); */
       break;
 
     case 0x0d:
@@ -1367,7 +1367,7 @@ void ega_crtc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
       break;
 
     case 0x0e:
-//      ega_set_pos (ega, (val << 8) | (ega->crtc_reg[0x0f] & 0xff));
+/*      ega_set_pos (ega, (val << 8) | (ega->crtc_reg[0x0f] & 0xff)); */
       break;
 
     case 0x0f:
@@ -1425,8 +1425,6 @@ unsigned char ega_get_input_state_1 (ega_t *ega)
 
 void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 {
-//  pce_log (MSG_DEB, "ega: set reg %04lx = %02x\n", addr, val);
-
   switch (addr) {
     case 0x10: /* 0x3c0: ATC index/data */
       if (ega->atc_index) {
@@ -1509,12 +1507,10 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       }
       break;
 
-//    case 0x04:
     case 0x24: /* 0x3d4: CRTC index */
       ega->reg->data[0x24] = val;
       break;
 
-//    case 0x05:
     case 0x25: /* 0x3d5: CRTC data */
       ega_crtc_set_reg (ega, ega->reg->data[0x24], val);
       break;
@@ -1529,8 +1525,6 @@ void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
 
 unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
 {
-//  pce_log (MSG_DEB, "ega: get reg %04lx\n", addr);
-
   switch (addr) {
     case 0x12: /* 0x3c2: input state 0  */
       return (0x00);
@@ -1550,15 +1544,12 @@ unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
     case 0x1f: /* 0x3cf: GDC data */
       return (ega_gdc_get_reg (ega, ega->reg->data[0x1e]));
 
-//    case 0x04:
     case 0x24: /* 0x3d4 CRTC index */
       return (ega->reg->data[0x24]);
 
-//    case 0x05:
     case 0x25: /* 0x3d5 CRTC data */
       return (ega_crtc_get_reg (ega, ega->reg->data[0x24]));
 
-//    case 0x0a:
     case 0x2a: /* 0x3da: input state 1 */
       return (ega_get_input_state_1 (ega));
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -2120,8 +2120,6 @@ e86_opcode_f e86_opcodes_83[8] = {
   &op_83_00, &op_83_01, &op_83_02, &op_83_03,
   &op_83_04, &op_83_05, &op_83_06, &op_83_07,
 };
-
-//""
 
 /* OP 83: xxx r/m16, imm8 */
 static

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -553,10 +553,6 @@ void xms_0b (xms_t *xms, e8086_t *cpu)
   dsta = e86_get_mem16 (cpu, seg1, ofs1 + 12);
   dsta += e86_get_mem16 (cpu, seg1, ofs1 + 14) << 16;
 
-//  pce_log (MSG_DEB, "xms: move %04x:%08lx -> %04x:%08lx %04lx\n",
-//    srch, srca, dsth, dsta, cnt
-//  );
-
   if ((srch == 0) && (dsth == 0)) {
     seg1 = (srca >> 16) & 0xffff;
     ofs1 = srca & 0xffff;
@@ -850,8 +846,6 @@ void xms_handler (xms_t *xms, e8086_t *cpu)
     e86_set_ax (cpu, 0x0000);
     e86_set_bl (cpu, 0x80);
   }
-
-//  pce_log (MSG_DEB, "xms: AH=%02X\n", e86_get_ah (cpu));
 
   switch (e86_get_ah (cpu)) {
     case 0x00:

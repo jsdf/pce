@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.c                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -54,7 +54,7 @@ void e8250_init (e8250_t *uart)
   uart->lsr = E8250_LSR_TXE | E8250_LSR_TBE;
 
   uart->mcr = 0;
-  uart->msr = 0; //E8250_MSR_DCD | E8250_MSR_DSR | E8250_MSR_CTS;
+  uart->msr = 0; /* E8250_MSR_DCD | E8250_MSR_DSR | E8250_MSR_CTS; */
 
   uart->have_scratch = 1;
 

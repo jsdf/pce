@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -653,8 +653,6 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
     newmode = 2;
   }
 
-//  fprintf (stderr, "cga: set mode %u -> %u\n", cga->mode, newmode);
-
   if (newmode == cga->mode) {
     return;
   }
@@ -745,7 +743,7 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
       break;
 
     case 0x0e:
-//      cga_set_pos (cga, (val << 8) | (cga->crtc_reg[0x0f] & 0xff));
+/*      cga_set_pos (cga, (val << 8) | (cga->crtc_reg[0x0f] & 0xff)); */
       break;
 
     case 0x0f:
