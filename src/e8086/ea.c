@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     ea.c                                                       *
+ * File name:     src/e8086/ea.c                                             *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,10 +20,8 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ea.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
+/* $Id: ea.c,v 1.3 2003/04/23 12:48:06 hampa Exp $ */
 
-
-#include <pce.h>
 
 #include "e8086.h"
 #include "internal.h"
