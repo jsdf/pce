@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     memory.c                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.3 2003/11/08 18:20:55 hampa Exp $ */
+/* $Id: memory.c,v 1.4 2003/11/11 16:33:57 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -135,7 +135,7 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
     }
   }
 
-  return (mem->def_val);
+  return (mem->def_val8);
 }
 
 unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
@@ -164,7 +164,7 @@ unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
     }
   }
 
-  return (((unsigned short) mem->def_val << 8) | mem->def_val);
+  return (mem->def_val16);
 }
 
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
@@ -193,7 +193,7 @@ unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
     }
   }
 
-  return (((unsigned short) mem->def_val << 8) | mem->def_val);
+  return (mem->def_val16);
 }
 
 unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
@@ -226,7 +226,7 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
     }
   }
 
-  return (((unsigned short) mem->def_val << 8) | mem->def_val);
+  return (mem->def_val32);
 }
 
 void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
@@ -354,7 +354,9 @@ memory_t *mem_new (void)
   mem->cnt = 0;
   mem->lst = NULL;
 
-  mem->def_val = 0xaa;
+  mem->def_val8 = 0xaa;
+  mem->def_val16 = 0xaaaaU;
+  mem->def_val32 = 0xaaaaaaaaUL;
 
   return (mem);
 }
@@ -372,6 +374,14 @@ void mem_del (memory_t *mem)
     free (mem->lst);
     free (mem);
   }
+}
+
+void mem_set_default (memory_t *mem, unsigned char val)
+{
+  mem->def_val8 = val;
+  mem->def_val16 = (val << 16) | val;
+  mem->def_val32 = ((unsigned long) val << 8) | val;
+  mem->def_val32 = (mem->def_val32 << 16) | mem->def_val32;
 }
 
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)

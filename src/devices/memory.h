@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     memory.h                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.3 2003/11/08 18:20:55 hampa Exp $ */
+/* $Id: memory.h,v 1.4 2003/11/11 16:33:57 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -67,7 +67,9 @@ typedef struct {
   unsigned      cnt;
   mem_lst_t     *lst;
 
-  unsigned char def_val;
+  unsigned char  def_val8;
+  unsigned short def_val16;
+  unsigned long  def_val32;
 } memory_t;
 
 
@@ -112,6 +114,14 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val);
 
 memory_t *mem_new (void);
 void mem_del (memory_t *mem);
+
+/*!***************************************************************************
+ * @short Set the default value
+ * @param mem The memory structure
+ * @param val The default byte value
+ *****************************************************************************/
+void mem_set_default (memory_t *mem, unsigned char val);
+
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
 
 

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ibmpc.c                                          *
+ * File name:     ibmpc.c                                                    *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.43 2003/10/18 19:30:32 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.44 2003/11/11 16:33:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -698,9 +698,10 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   }
 
   pc->mem = mem_new();
+  mem_set_default (pc->mem, 0xff);
 
   pc->prt = mem_new();
-  pc->prt->def_val = 0xff;
+  mem_set_default (pc->prt, 0xff);
 
   pc_setup_ram (pc, ini);
   pc_setup_rom (pc, ini);
