@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.4 2003/04/16 14:14:13 hampa Exp $ */
+/* $Id: microcode.c,v 1.5 2003/04/16 17:19:17 hampa Exp $ */
 
 
 #include <pce.h>
@@ -1390,11 +1390,8 @@ unsigned op_66 (e8086_t *c)
     return (op_ud (c));
   }
 
-  if (c->hook == NULL) {
-    fprintf (stderr, "hook is NULL\n");
-  }
-  else {
-    c->hook (c->hook_ext, c->pq[2], c->pq[3]);
+  if (c->hook != NULL) {
+    c->hook (c->ext, c->pq[2], c->pq[3]);
   }
 
   return (4);

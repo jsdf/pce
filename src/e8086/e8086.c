@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.4 2003/04/16 14:14:12 hampa Exp $ */
+/* $Id: e8086.c,v 1.5 2003/04/16 17:19:16 hampa Exp $ */
 
 
 #include <pce.h>
@@ -286,7 +286,7 @@ void e86_execute (e8086_t *c)
     c->prefix &= ~E86_PREFIX_NEW;
 
     if (c->opstat != NULL) {
-      c->opstat (c, c->pq[0], c->pq[1]);
+      c->opstat (c->ext, c->pq[0], c->pq[1]);
     }
 
     op = c->pq[0];
@@ -358,8 +358,11 @@ e8086_t *e86_new (void)
   c->prt_set_uint16 = &e86_set_mem_uint16;
 
   c->hook = NULL;
-  c->hook_ext = NULL;
   c->opstat = NULL;
+
+  c->mem = NULL;
+  c->prt = NULL;
+  c->ext = NULL;
 
   c->clocks = 0;
   c->instructions = 0;

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.4 2003/04/16 14:14:12 hampa Exp $ */
+/* $Id: e8086.h,v 1.5 2003/04/16 17:19:17 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -95,7 +95,7 @@ typedef struct {
 
   void *mem;
   void *prt;
-  void *hook_ext;
+  void *ext;
 
   unsigned short dreg[8];
   unsigned short sreg[4];
@@ -223,25 +223,25 @@ typedef struct {
 #define e86_get_tf(cpu) (((cpu)->flg & E86_FLG_T) != 0)
 
 
-#define e86_set_flg(cpu, f, v) \
+#define e86_set_flg(c, f, v) \
   do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
 
-#define e86_set_cf(cpu, v) \
+#define e86_set_cf(c, v) \
   do { if (v) (c)->flg |= E86_FLG_C; else (c)->flg &= ~E86_FLG_C; } while (0)
 
-#define e86_set_pf(cpu, v) \
+#define e86_set_pf(c, v) \
   do { if (v) (c)->flg |= E86_FLG_P; else (c)->flg &= ~E86_FLG_P; } while (0)
 
-#define e86_set_af(cpu, v) \
+#define e86_set_af(c, v) \
   do { if (v) (c)->flg |= E86_FLG_A; else (c)->flg &= ~E86_FLG_A; } while (0)
 
-#define e86_set_zf(cpu, v) \
+#define e86_set_zf(c, v) \
   do { if (v) (c)->flg |= E86_FLG_Z; else (c)->flg &= ~E86_FLG_Z; } while (0)
 
-#define e86_set_of(cpu, v) \
+#define e86_set_of(c, v) \
   do { if (v) (c)->flg |= E86_FLG_O; else (c)->flg &= ~E86_FLG_O; } while (0)
 
-#define e86_set_sf(cpu, v) \
+#define e86_set_sf(c, v) \
   do { if (v) (c)->flg |= E86_FLG_S; else (c)->flg &= ~E86_FLG_S; } while (0)
 
 #define e86_set_flg0(cpu, f) do { (cpu)->flg &= ~(f); } while (0)
