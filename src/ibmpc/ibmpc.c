@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.33 2003/09/17 04:22:31 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.34 2003/09/19 14:48:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -759,25 +759,26 @@ void pc_clock (ibmpc_t *pc)
 
   n = e86_get_delay (pc->cpu);
 
-  e86_clock (pc->cpu, n);
-
   if (pc->clk_div[0] >= 16) {
     e8259_clock (pc->pic);
     e8253_clock (pc->pit, pc->clk_div[0] >> 2);
     pc->clk_div[0] &= 3;
   }
 
-  if (pc->clk_div[2] >= 1024) {
+  if (pc->clk_div[2] >= 4096) {
     unsigned i;
-    trm_check (pc->trm);
+
+    if (pc->trm != NULL) {
+      trm_check (pc->trm);
+    }
 
     for (i = 0; i < 4; i++) {
       if (pc->serport[i] != NULL) {
-        ser_clock (pc->serport[i], 1024);
+        ser_clock (pc->serport[i], pc->clk_div[2] >> 12);
       }
     }
 
-    pc->clk_div[2] -= 1024;
+    pc->clk_div[2] &= 4095;
   }
 
   if (pc->key_clk > 0) {
@@ -797,6 +798,8 @@ void pc_clock (ibmpc_t *pc)
       }
     }
   }
+
+  e86_clock (pc->cpu, n);
 
   pc->clk_cnt += n;
   pc->clk_div[0] += n;
