@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.22 2003/08/29 21:35:57 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.23 2003/08/29 22:45:23 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -162,10 +162,10 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
   else if ((strcmp (model, "v30") == 0) || (strcmp (model, "V30") == 0)) {
     e86_enable_v30 (pc->cpu);
   }
-  else if (strcmp (model, "80186") == 0) {
+  else if ((strcmp (model, "80186") == 0) || (strcmp (model, "186") == 0)) {
     e86_enable_186 (pc->cpu);
   }
-  else if (strcmp (model, "80188") == 0) {
+  else if ((strcmp (model, "80188") == 0) || (strcmp (model, "188") == 0)) {
     e86_enable_186 (pc->cpu);
   }
   else {
