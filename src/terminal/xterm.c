@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.8 2003/08/24 04:10:55 hampa Exp $ */
+/* $Id: xterm.c,v 1.9 2003/08/29 13:28:25 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -187,7 +187,7 @@ int xt_init_window (xterm_t *xt)
   );
 
   XSelectInput (xt->display, xt->wdw,
-    ExposureMask | KeyPressMask | KeyReleaseMask |
+    ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
     StructureNotifyMask | ButtonPressMask | ButtonReleaseMask
   );
 
@@ -386,13 +386,13 @@ void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
   );
 }
 
-void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
+void xt_set_size (xterm_t *xt, unsigned m, unsigned w, unsigned h)
 {
   XSizeHints size;
 
-  xt->mode = mode;
+  xt->mode = m;
 
-  if (mode == 0) {
+  if (m == TERM_MODE_TEXT) {
     xt->scn_w = w;
     xt->scn_h = h;
 
@@ -430,13 +430,17 @@ void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
 
 void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b)
 {
+  Colormap cmap;
+
   if (idx >= 256) {
     return;
   }
 
-//  if (col_alloc[idx]) {
-//    XFreeColor (xt->display, &xt->col[idx]);
-//  }
+  cmap = DefaultColormap (xt->display, xt->screen);
+
+  if (col_alloc[idx]) {
+    XFreeColors (xt->display, cmap, &xt->col[idx].pixel, 1, 0);
+  }
 
   xt->col[idx].flags = DoRed | DoGreen | DoBlue;
 
@@ -444,7 +448,7 @@ void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b)
   xt->col[idx].green = g;
   xt->col[idx].blue = b;
 
-  XAllocColor (xt->display, DefaultColormap (xt->display, xt->screen), &xt->col[idx]);
+  XAllocColor (xt->display, cmap, &xt->col[idx]);
 
   col_alloc[idx] = 1;
 }
@@ -738,6 +742,37 @@ void xt_check (xterm_t *xt)
         key = XLookupKeysym (&event.xkey, 0);
         code = xt_get_key_code (xt, key, 0);
         xt_send_key_code (xt, code);
+        break;
+
+      case ButtonPress:
+      case ButtonRelease:
+        if (xt->trm.set_mse != NULL) {
+          unsigned     b;
+          XButtonEvent *evt = (XButtonEvent *) &event;
+
+          b = evt->state;
+          b = ((b & Button1Mask) ? 1 : 0) | ((b & Button2Mask) ? 2 : 0);
+          xt->trm.set_mse (xt->trm.mse_ext, 0, 0, b);
+        }
+        break;
+
+      case MotionNotify:
+        if (xt->trm.set_mse != NULL) {
+          int      dx, dy;
+          unsigned b;
+          XMotionEvent *evt = (XMotionEvent *) &event;
+
+          dx = xt->mse_x;
+          dy = xt->mse_y;
+
+          xt->mse_x = evt->x;
+          xt->mse_y = evt->y;
+
+          b = evt->state;
+          b = ((b & Button1Mask) ? 1 : 0) | ((b & Button2Mask) ? 2 : 0);
+
+          xt->trm.set_mse (xt->trm.mse_ext, xt->mse_x - dx, xt->mse_y - dy, b);
+        }
         break;
 
       case NoExpose:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.7 2003/08/19 17:06:20 hampa Exp $ */
+/* $Id: vt100.c,v 1.8 2003/08/29 13:28:25 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -596,7 +596,7 @@ unsigned vt100_str_int (unsigned char *buf, unsigned n)
   return (ret);
 }
 
-void vt100_set_size (vt100_t *vt, unsigned mode, unsigned w, unsigned h)
+void vt100_set_size (vt100_t *vt, unsigned m, unsigned w, unsigned h)
 {
 }
 

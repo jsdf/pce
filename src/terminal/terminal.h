@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.3 2003/08/19 17:06:20 hampa Exp $ */
+/* $Id: terminal.h,v 1.4 2003/08/29 13:28:24 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -30,8 +30,12 @@
 #include <stdio.h>
 
 
+#define TERM_MODE_TEXT  0
+#define TERM_MODE_GRAPH 1
+
+
 typedef void (*trm_del_f) (void *ext);
-typedef void (*trm_set_size_f) (void *ext, unsigned mode, unsigned w, unsigned h);
+typedef void (*trm_set_size_f) (void *ext, unsigned m, unsigned w, unsigned h);
 typedef void (*trm_set_map_f) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
 typedef void (*trm_set_col_f) (void *ext, unsigned fg, unsigned bg);
 typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2);
@@ -46,9 +50,13 @@ typedef struct {
 
   void *key_ext;
   void (*set_key) (void *ext, unsigned char val);
+
+  void *mse_ext;
+  void (*set_mse) (void *ext, int dx, int dy, unsigned b);
+
   void (*set_brk) (void *ext, unsigned char val);
 
-  void (*set_size) (void *ext, unsigned mode, unsigned w, unsigned h);
+  void (*set_size) (void *ext, unsigned m, unsigned w, unsigned h);
 
   void (*set_map) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
   void (*set_col) (void *ext, unsigned fg, unsigned bg);
@@ -69,7 +77,7 @@ void trm_free (terminal_t *trm);
 
 void trm_del (terminal_t *trm);
 
-void trm_set_size (terminal_t *trm, unsigned mode, unsigned w, unsigned h);
+void trm_set_size (terminal_t *trm, unsigned m, unsigned w, unsigned h);
 void trm_set_map (terminal_t *trm, unsigned i, unsigned r, unsigned g, unsigned b);
 void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg);
 
