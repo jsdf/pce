@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -133,6 +133,7 @@ unsigned long long read_tsc (void)
   return (ret);
 }
 #else
+static
 unsigned long long read_tsc (void)
 {
   double sec;
@@ -143,27 +144,7 @@ unsigned long long read_tsc (void)
 }
 #endif
 
-int str_is_space (char c)
-{
-  if (c == ' ') {
-    return (1);
-  }
-
-  if (c == '\n') {
-    return (1);
-  }
-
-  if (c == '\r') {
-    return (1);
-  }
-
-  if (c == '\t') {
-    return (1);
-  }
-
-  return (0);
-}
-
+static
 int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
 {
   unsigned i;
@@ -205,6 +186,7 @@ int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
   return (0);
 }
 
+static
 int cmd_match_sym (cmd_t *cmd, unsigned long *val)
 {
   unsigned short *reg;
@@ -217,6 +199,7 @@ int cmd_match_sym (cmd_t *cmd, unsigned long *val)
   return (0);
 }
 
+static
 breakpoint_t *bp_get (unsigned short seg, unsigned short ofs)
 {
   breakpoint_t *bp;
@@ -232,6 +215,7 @@ breakpoint_t *bp_get (unsigned short seg, unsigned short ofs)
   return (NULL);
 }
 
+static
 void bp_add (unsigned short seg, unsigned short ofs, unsigned pass, unsigned reset)
 {
   breakpoint_t *bp;
@@ -260,6 +244,7 @@ void bp_add (unsigned short seg, unsigned short ofs, unsigned pass, unsigned res
   bp_cnt += 1;
 }
 
+static
 int bp_clear (unsigned short seg, unsigned short ofs)
 {
   breakpoint_t *bp1, *bp2;
@@ -292,6 +277,7 @@ int bp_clear (unsigned short seg, unsigned short ofs)
   return (1);
 }
 
+static
 void bp_clear_all (void)
 {
   breakpoint_t *bp;
@@ -305,6 +291,7 @@ void bp_clear_all (void)
   bp_cnt--;
 }
 
+static
 void bp_print (breakpoint_t *bp, char *str)
 {
   printf ("%s%04X:%04X  %04X  %04X\n",
@@ -314,6 +301,7 @@ void bp_print (breakpoint_t *bp, char *str)
   );
 }
 
+static
 void bp_list (void)
 {
   breakpoint_t *bp;
@@ -331,6 +319,7 @@ void bp_list (void)
   }
 }
 
+static
 void disasm_str (char *dst, e86_disasm_t *op)
 {
   unsigned     i;
@@ -393,6 +382,7 @@ void disasm_str (char *dst, e86_disasm_t *op)
   dst[dst_i] = 0;
 }
 
+static
 void prt_uint8_bin (FILE *fp, unsigned char val)
 {
   unsigned      i;
@@ -411,6 +401,7 @@ void prt_uint8_bin (FILE *fp, unsigned char val)
   }
 }
 
+static
 void prt_state_time (FILE *fp)
 {
   double ratio;
@@ -434,24 +425,28 @@ void prt_state_time (FILE *fp)
   );
 }
 
+static
 void prt_state_video (video_t *vid, FILE *fp)
 {
   fputs ("-video-----------------------------------------------------------------------\n", fp);
   pce_video_prt_state (vid, fp);
 }
 
+static
 void prt_state_ems (ems_t *ems, FILE *fp)
 {
   fputs ("-EMS-------------------------------------------------------------------------\n", fp);
   ems_prt_state (ems, fp);
 }
 
+static
 void prt_state_xms (xms_t *xms, FILE *fp)
 {
   fputs ("-XMS-------------------------------------------------------------------------\n", fp);
   xms_prt_state (xms, fp);
 }
 
+static
 void prt_state_pit (e8253_t *pit, FILE *fp)
 {
   unsigned        i;
@@ -479,6 +474,7 @@ void prt_state_pit (e8253_t *pit, FILE *fp)
   }
 }
 
+static
 void prt_state_ppi (e8255_t *ppi, FILE *fp)
 {
   fputs ("-8255-PPI--------------------------------------------------------------------\n", fp);
@@ -528,6 +524,7 @@ void prt_state_ppi (e8255_t *ppi, FILE *fp)
   fflush (fp);
 }
 
+static
 void prt_state_pic (e8259_t *pic, FILE *fp)
 {
   unsigned i;
@@ -552,6 +549,7 @@ void prt_state_pic (e8259_t *pic, FILE *fp)
   fflush (fp);
 }
 
+static
 void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 {
   char p;
@@ -597,6 +595,7 @@ void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
   );
 }
 
+static
 void prt_state_cpu (e8086_t *c, FILE *fp)
 {
   double      cpi, mips;
@@ -632,6 +631,7 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
   );
 }
 
+static
 void prt_state_pc (ibmpc_t *pc, FILE *fp)
 {
   prt_state_video (pc->video, fp);
@@ -642,6 +642,7 @@ void prt_state_pc (ibmpc_t *pc, FILE *fp)
   prt_state_cpu (pc->cpu, fp);
 }
 
+static
 void prt_state (ibmpc_t *pc, FILE *fp)
 {
   e86_disasm_t op;
@@ -659,12 +660,14 @@ void prt_state (ibmpc_t *pc, FILE *fp)
   );
 }
 
+static
 void prt_prompt (FILE *fp)
 {
   fputs ("\x1b[0;37;40m-", fp);
   fflush (fp);
 }
 
+static
 void prt_error (const char *str, ...)
 {
   va_list va;
@@ -674,6 +677,7 @@ void prt_error (const char *str, ...)
   va_end (va);
 }
 
+static
 void pce_set_fd (int fd, int interactive)
 {
   static int            sios_ok = 0;
@@ -699,6 +703,7 @@ void pce_set_fd (int fd, int interactive)
   }
 }
 
+static
 void cpu_start()
 {
   pce_eclk_last = e86_get_clock (pc->cpu);
@@ -706,6 +711,7 @@ void cpu_start()
   pce_hclk_last = read_tsc();
 }
 
+static
 void cpu_end()
 {
   pce_hclk_last = read_tsc() - pce_hclk_last;
@@ -717,6 +723,7 @@ void cpu_end()
   pce_eops += pce_eops_last;
 }
 
+static
 void cpu_exec (void)
 {
   unsigned long long old;
@@ -728,6 +735,43 @@ void cpu_exec (void)
   }
 }
 
+static
+int pce_check_break (ibmpc_t *pc)
+{
+  breakpoint_t   *bp;
+  unsigned short seg, ofs;
+
+  seg = e86_get_cs (pc->cpu);
+  ofs = e86_get_ip (pc->cpu);
+
+  bp = bp_get (seg, ofs);
+
+  if (bp != NULL) {
+    if (bp->pass > 0) {
+      bp->pass -= 1;
+    }
+
+    if (bp->pass == 0) {
+      if (bp->reset == 0) {
+        bp_clear (seg, ofs);
+      }
+      else {
+        bp->pass = bp->reset;
+        bp_print (bp, "brk: ");
+      }
+
+      return (1);
+    }
+  }
+
+  if (pc->brk) {
+    return (1);
+  }
+
+  return (0);
+}
+
+static
 void pce_start (void)
 {
   pce_set_fd (0, 0);
@@ -735,12 +779,14 @@ void pce_start (void)
   cpu_start();
 }
 
+static
 void pce_stop (void)
 {
   cpu_end();
   pce_set_fd (0, 1);
 }
 
+static
 void pce_run (void)
 {
   pce_start();
@@ -756,40 +802,15 @@ void pce_run (void)
   pce_stop();
 }
 
+static
 void pce_run_bp (void)
 {
-  breakpoint_t   *bp;
-  unsigned short seg, ofs;
-
   pce_start();
 
   while (1) {
     cpu_exec();
 
-    seg = e86_get_cs (pc->cpu);
-    ofs = e86_get_ip (pc->cpu);
-
-    bp = bp_get (seg, ofs);
-
-    if (bp != NULL) {
-      if (bp->pass > 0) {
-        bp->pass--;
-      }
-
-      if (bp->pass == 0) {
-        if (bp->reset == 0) {
-          bp_clear (seg, ofs);
-        }
-        else {
-          bp->pass = bp->reset;
-          bp_print (bp, "brk: ");
-        }
-
-        break;
-      }
-    }
-
-    if (pc->brk) {
+    if (pce_check_break (pc)) {
       break;
     }
   }
@@ -797,6 +818,7 @@ void pce_run_bp (void)
   pce_stop();
 }
 
+static
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -818,6 +840,7 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
   }
 }
 
+static
 void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -830,6 +853,7 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 }
 
 
+static
 void do_boot (cmd_t *cmd)
 {
   unsigned short val;
@@ -851,6 +875,7 @@ void do_boot (cmd_t *cmd)
   par_boot = val;
 }
 
+static
 void do_bc (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -877,6 +902,7 @@ void do_bc (cmd_t *cmd)
   }
 }
 
+static
 void do_bl (cmd_t *cmd)
 {
   if (!cmd_match_end (cmd)) {
@@ -886,6 +912,7 @@ void do_bl (cmd_t *cmd)
   bp_list ();
 }
 
+static
 void do_bs (cmd_t *cmd)
 {
   unsigned short seg, ofs, pass, reset;
@@ -918,6 +945,7 @@ void do_bs (cmd_t *cmd)
   }
 }
 
+static
 void do_b (cmd_t *cmd)
 {
   if (cmd_match (cmd, "l")) {
@@ -934,6 +962,7 @@ void do_b (cmd_t *cmd)
   }
 }
 
+static
 void do_c (cmd_t *cmd)
 {
   unsigned long cnt;
@@ -954,6 +983,7 @@ void do_c (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+static
 void do_dump (cmd_t *cmd)
 {
   FILE *fp;
@@ -996,6 +1026,7 @@ void do_dump (cmd_t *cmd)
   fclose (fp);
 }
 
+static
 void do_d (cmd_t *cmd)
 {
   unsigned              i, j;
@@ -1076,6 +1107,7 @@ void do_d (cmd_t *cmd)
   }
 }
 
+static
 void do_e (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -1094,6 +1126,33 @@ void do_e (cmd_t *cmd)
   }
 }
 
+static
+void do_far (cmd_t *cmd)
+{
+  unsigned short seg;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  seg = e86_get_cs (pc->cpu);
+
+  pce_start();
+
+  while (e86_get_cs (pc->cpu) == seg) {
+    cpu_exec();
+
+    if (pce_check_break (pc)) {
+      break;
+    }
+  }
+
+  pce_stop();
+
+  prt_state (pc, stdout);
+}
+
+static
 void do_g (cmd_t *cmd)
 {
   int run;
@@ -1120,6 +1179,7 @@ void do_g (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+static
 void do_h (cmd_t *cmd)
 {
   fputs (
@@ -1130,25 +1190,27 @@ void do_h (cmd_t *cmd)
     "c [cnt]                   clock\n"
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
-    "disk drive fname [c h s]  Set a new disk image\n"
+    "far                       run until cs changes\n"
+    "disk drive fname [c h s]  set a new disk image\n"
     "dump what fname           dump to file (ram|video)\n"
     "g [b]                     run with or without breakpoints\n"
     "int28 [on|off|val]        turn int28 sleeping on/off\n"
     "i [b|w] port              input a byte or word from a port\n"
     "last [i [n]]              print last instruction addresses\n"
     "o [b|w] port val          output a byte or word to a port\n"
-    "parport i fname           set parport output file\n"
-    "p [cnt]                   Execute cnt instructions, without trace in calls [1]\n"
-    "q                         Quit\n"
+    "par i fname               set parport output file\n"
+    "p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
+    "q                         quit\n"
     "r reg val                 set a register\n"
-    "s [what]                  Print status (pc|cpu|pit|ppi|pic|time|uart|video|xms)\n"
+    "s [what]                  print status (pc|cpu|pit|ppi|pic|time|uart|video|xms)\n"
     "time [c]                  print or clear time statistics\n"
-    "t [cnt]                   Execute cnt instructions [1]\n"
-    "u [addr [cnt]]            Disassemble\n",
+    "t [cnt]                   execute cnt instructions [1]\n"
+    "u [addr [cnt]]            disassemble\n",
     stdout
   );
 }
 
+static
 void do_int28 (cmd_t *cmd)
 {
   int            set;
@@ -1183,6 +1245,7 @@ void do_int28 (cmd_t *cmd)
   );
 }
 
+static
 void do_i (cmd_t *cmd)
 {
   int            word;
@@ -1215,6 +1278,7 @@ void do_i (cmd_t *cmd)
   }
 }
 
+static
 void do_last (cmd_t *cmd)
 {
   unsigned short i, j, n;
@@ -1237,6 +1301,7 @@ void do_last (cmd_t *cmd)
   }
 }
 
+static
 void do_o (cmd_t *cmd)
 {
   int            word;
@@ -1274,7 +1339,8 @@ void do_o (cmd_t *cmd)
   }
 }
 
-void do_parport (cmd_t *cmd)
+static
+void do_par (cmd_t *cmd)
 {
   unsigned short port;
   char           fname[256];
@@ -1304,10 +1370,12 @@ void do_parport (cmd_t *cmd)
   }
 }
 
+static
 void do_p (cmd_t *cmd)
 {
   unsigned short seg, ofs;
   unsigned long  i, n;
+  int            brk;
   e86_disasm_t   op;
 
   n = 1;
@@ -1317,6 +1385,8 @@ void do_p (cmd_t *cmd)
   if (!cmd_match_end (cmd)) {
     return;
   }
+
+  brk = 0;
 
   pce_start();
 
@@ -1329,9 +1399,14 @@ void do_p (cmd_t *cmd)
     while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
       pc_clock (pc);
 
-      if (pc->brk) {
+      if (pce_check_break (pc)) {
+        brk = 1;
         break;
       }
+    }
+
+    if (brk) {
+      break;
     }
 
     if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
@@ -1340,13 +1415,18 @@ void do_p (cmd_t *cmd)
       while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
         pc_clock (pc);
 
-        if (pc->brk) {
+        if (pce_check_break (pc)) {
+          brk = 1;
           break;
         }
       }
     }
 
-    if (pc->brk) {
+    if (brk) {
+      break;
+    }
+
+    if (pce_check_break (pc)) {
       break;
     }
   }
@@ -1356,6 +1436,7 @@ void do_p (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+static
 void do_r (cmd_t *cmd)
 {
   unsigned short val;
@@ -1380,6 +1461,7 @@ void do_r (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+static
 void do_s (cmd_t *cmd)
 {
   if (cmd_match_eol (cmd)) {
@@ -1431,6 +1513,7 @@ void do_s (cmd_t *cmd)
   }
 }
 
+static
 void do_screenshot (cmd_t *cmd)
 {
   char     fname[256];
@@ -1471,6 +1554,7 @@ void do_screenshot (cmd_t *cmd)
   fclose (fp);
 }
 
+static
 void do_time (cmd_t *cmd)
 {
   if (cmd_match (cmd, "c")) {
@@ -1483,6 +1567,7 @@ void do_time (cmd_t *cmd)
   }
 }
 
+static
 void do_t (cmd_t *cmd)
 {
   unsigned long i, n;
@@ -1499,6 +1584,10 @@ void do_t (cmd_t *cmd)
 
   for (i = 0; i < n; i++) {
     cpu_exec();
+
+    if (pce_check_break (pc)) {
+      break;
+    }
   }
 
   pce_stop();
@@ -1506,6 +1595,7 @@ void do_t (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+static
 void do_update (cmd_t *cmd)
 {
   if (!cmd_match_end (cmd)) {
@@ -1515,6 +1605,7 @@ void do_update (cmd_t *cmd)
   pce_video_update (pc->video);
 }
 
+static
 void do_u (cmd_t *cmd)
 {
   unsigned              i;
@@ -1556,6 +1647,7 @@ void do_u (cmd_t *cmd)
   sofs = ofs;
 }
 
+static
 int do_cmd (void)
 {
   cmd_t  cmd;
@@ -1584,6 +1676,9 @@ int do_cmd (void)
     else if (cmd_match (&cmd, "e")) {
       do_e (&cmd);
     }
+    else if (cmd_match (&cmd, "far")) {
+      do_far (&cmd);
+    }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
     }
@@ -1599,8 +1694,8 @@ int do_cmd (void)
     else if (cmd_match (&cmd, "last")) {
       do_last (&cmd);
     }
-    else if (cmd_match (&cmd, "parport")) {
-      do_parport (&cmd);
+    else if (cmd_match (&cmd, "par")) {
+      do_par (&cmd);
     }
     else if (cmd_match (&cmd, "o")) {
       do_o (&cmd);
@@ -1647,6 +1742,7 @@ int do_cmd (void)
   return (0);
 }
 
+static
 ini_sct_t *pce_load_config (const char *fname)
 {
   ini_sct_t *ini;
@@ -1680,6 +1776,7 @@ ini_sct_t *pce_load_config (const char *fname)
   return (NULL);
 }
 
+static
 int str_isarg1 (const char *str, const char *arg)
 {
   if (strcmp (str, arg) == 0) {
@@ -1689,6 +1786,7 @@ int str_isarg1 (const char *str, const char *arg)
   return (0);
 }
 
+static
 int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 {
   if (strcmp (str, arg1) == 0) {
