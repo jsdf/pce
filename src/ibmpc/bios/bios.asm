@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.8 2003/08/30 16:54:03 hampa Exp $
+; $Id: bios.asm,v 1.9 2003/09/01 18:06:56 hampa Exp $
 
 
 CPU 8086
@@ -4657,7 +4657,7 @@ bios_int_addr_10:                       ; FF03
   dw      int_10                        ; int 10 (F065)
   dw      int_11                        ; int 11 (F84D)
   dw      int_12                        ; int 12 (F841)
-  dw      0xec59                        ; int 13
+  dw      int_13                        ; int 13
   dw      0xe739                        ; int 14
   dw      int_15                        ; int 15 (F859)
   dw      int_16                        ; int 16 (E82E)
