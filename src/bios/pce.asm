@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.8 2003/04/19 03:28:30 hampa Exp $
+; $Id: pce.asm,v 1.9 2003/04/20 19:09:20 hampa Exp $
 
 
 %macro set_pos 1
@@ -50,6 +50,7 @@ start:
   call    init_mem
   call    init_misc
   call    init_keyboard
+  call    init_time
 
   call    prt_nl
 
@@ -262,6 +263,66 @@ init_keyboard:
   ret
 
 
+get_bcd:
+  push    dx
+  xor     dx, dx
+  mov     ah, al
+  and     ax, 0xf00f
+  shr     ah, 1
+  add     dl, ah
+  shr     ah, 1
+  shr     ah, 1
+  add     dl, ah
+  add     dl, al
+  xchg    ax, dx
+  pop     dx
+  ret
+
+init_time:
+  push    ax
+  push    dx
+  push    si
+  push    di
+
+  mov     ah, 2
+  int     0x1a
+
+  ; 18 * seconds
+  mov     al, dh
+  call    get_bcd
+  mov     dx, 18
+  mul     dx
+  mov     si, ax
+  mov     di, dx
+
+  ; 1092 * minutes
+  mov     al, cl
+  call    get_bcd
+  mov     dx, 1092
+  mul     dx
+  add     si, ax
+  adc     di, dx
+
+  ; 65539 * hours
+  mov     al, ch
+  call    get_bcd
+  add     di, ax
+  mov     dx, ax
+  shl     ax, 1
+  add     ax, dx
+  add     si, ax
+  adc     di, 0
+
+  mov     [0x006c], si
+  mov     [0x006e], di
+  mov     [0x0070], byte 0
+
+  pop     di
+  pop     si
+  pop     dx
+  pop     ax
+  ret
+
 set_bios_ds:
   mov     ds, [cs:.bios_ds]
   ret
@@ -371,7 +432,7 @@ inttab:
   dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
   dw      int_19, 0xf000 ;0xe6f2, 0xf000
-  dw      0xfe6e, 0xf000 ;int_1a, 0xf000
+  dw      int_1a, 0xf000 ;0xfe6e, 0xf000
   dw      int_1b, 0xf000
   dw      int_default, 0xf000
   dw      0xf0a4, 0xf000 ;int_1d, 0xf000
@@ -529,6 +590,18 @@ int_19:
 
 .boot:
   jmp     0x0000:0x7c00
+
+
+int_1a:
+  cmp     ah, 2
+  jae     .hook
+
+  jmp     0xf000:0xfe6e
+
+.hook:
+  db      0x66, 0x66, 0xcd, 0x1a
+
+  retf    2
 
 
 ;-----------------------------------------------------------------------------

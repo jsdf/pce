@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.c                                                    *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,10 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.9 2003/04/19 03:28:05 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.10 2003/04/20 19:09:20 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <time.h>
 
 #include <pce.h>
 
@@ -229,6 +230,62 @@ void pc_break (ibmpc_t *pc, unsigned char val)
   pc->brk = 1;
 }
 
+unsigned get_bcd_8 (unsigned n)
+{
+  return ((n % 10) + 16 * ((n / 10) % 10));
+}
+
+void pc_int_1a (ibmpc_t *pc)
+{
+  time_t    tm;
+  struct tm *tval;
+
+  switch (e86_get_ah (pc->cpu)) {
+    case 0x00:
+      e86_set_dx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6c));
+      e86_set_cx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6e));
+      e86_set_al (pc->cpu, e86_get_mem8 (pc->cpu, 0x40, 0x70));
+      e86_set_mem8 (pc->cpu, 0x40, 0x70, 0);
+      e86_set_cf (pc->cpu, 0);
+      break;
+
+    case 0x01:
+      e86_set_mem16 (pc->cpu, 0x40, 0x6c, e86_get_dx (pc->cpu));
+      e86_set_mem16 (pc->cpu, 0x40, 0x6e, e86_get_cx (pc->cpu));
+      e86_set_cf (pc->cpu, 0);
+      break;
+
+    case 0x02:
+      tm = time (NULL);
+      tval = localtime (&tm);
+      e86_set_ch (pc->cpu, get_bcd_8 (tval->tm_hour));
+      e86_set_cl (pc->cpu, get_bcd_8 (tval->tm_min));
+      e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_sec));
+      e86_set_cf (pc->cpu, 0);
+      break;
+
+    case 0x03:
+      break;
+
+    case 0x04:
+      tm = time (NULL);
+      tval = localtime (&tm);
+      e86_set_ch (pc->cpu, get_bcd_8 ((1900 + tval->tm_year) / 100));
+      e86_set_cl (pc->cpu, get_bcd_8 (1900 + tval->tm_year));
+      e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_mon + 1));
+      e86_set_dl (pc->cpu, get_bcd_8 (tval->tm_mday));
+      e86_set_cf (pc->cpu, 0);
+      break;
+
+    case 0x05:
+      break;
+
+    default:
+      e86_set_cf (pc->cpu, 1);
+      break;
+  }
+}
+
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -237,6 +294,12 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
   if ((op1 == 0xcd) && (op2 == 0x13)) {
     dsk_int13 (pc->dsk, pc->cpu);
+  }
+  else if ((op1 == 0xcd) && (op2 == 0x1a)) {
+    pc_int_1a (pc);
+  }
+  else if ((op1 == 0x00) && (op2 == 0x00)) {
+    pc->brk = 1;
   }
   else {
     fprintf (stderr, "hook: %02X %02X\n", op1, op2);
