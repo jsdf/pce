@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.11 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: microcode.c,v 1.12 2003/04/23 23:38:27 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -2419,7 +2419,7 @@ unsigned op_9b (e8086_t *c)
 static
 unsigned op_9c (e8086_t *c)
 {
-  e86_push (c, c->flg);
+  e86_push (c, c->flg | 0xf000);
   e86_set_clk (c, 10);
 
   return (1);
@@ -2791,7 +2791,7 @@ unsigned op_ac (e8086_t *c)
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_dx (c) > 0) {
+    while (e86_get_cx (c) > 0) {
       e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
@@ -2819,7 +2819,7 @@ unsigned op_ad (e8086_t *c)
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_dx (c) > 0) {
+    while (e86_get_cx (c) > 0) {
       e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
