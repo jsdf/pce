@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.h                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,7 +29,9 @@
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val);
 
-int pc_set_msg_uint (ibmpc_t *pc, const char *msg, unsigned val);
+int pc_set_msgul (ibmpc_t *pc, const char *msg, unsigned long val);
+
+int pc_get_msgul (ibmpc_t *pc, const char *msg, unsigned long *val);
 
 
 #endif

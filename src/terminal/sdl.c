@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -189,6 +189,47 @@ int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h)
   return (0);
 }
 
+static
+void sdl_grab_mouse (sdl_t *sdl, int grab)
+{
+  if (grab) {
+    if (sdl->grab == 0) {
+      sdl->grab = 1;
+      SDL_ShowCursor (0);
+      SDL_WM_GrabInput (SDL_GRAB_ON);
+    }
+  }
+  else {
+    if (sdl->grab) {
+      sdl->grab = 0;
+      SDL_ShowCursor (1);
+      SDL_WM_GrabInput (SDL_GRAB_OFF);
+    }
+  }
+}
+
+static
+void sdl_init_font (sdl_t *sdl, ini_sct_t *sct)
+{
+  const char *str;
+
+  sdl->font = NULL;
+
+  str = ini_get_str (sct, "font");
+  if (str != NULL) {
+    if (sdl_set_font_psf (sdl, str)) {
+      fprintf (stderr, "sdl: loading PSF font %s failed\n", str);
+    }
+  }
+
+  if (sdl->font == NULL) {
+    sdl->font_w = 8;
+    sdl->font_h = 16;
+    sdl->font = (unsigned char *) malloc (256 * 16);
+    memcpy (sdl->font, fnt_8x16, 256 * 16);
+  }
+}
+
 terminal_t *sdl_new (ini_sct_t *sct)
 {
   sdl_t               *sdl;
@@ -228,21 +269,7 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->txt_buf = (unsigned char *) malloc (3 * 80 * 25);
   memset (sdl->txt_buf, 0, 3 * 80 * 25);
 
-  sdl->font = NULL;
-
-  str = ini_get_str (sct, "font");
-  if (str != NULL) {
-    if (sdl_set_font_psf (sdl, str)) {
-      fprintf (stderr, "sdl: loading PSF font %s failed\n", str);
-    }
-  }
-
-  if (sdl->font == NULL) {
-    sdl->font_w = 8;
-    sdl->font_h = 16;
-    sdl->font = (unsigned char *) malloc (256 * 16);
-    memcpy (sdl->font, fnt_8x16, 256 * 16);
-  }
+  sdl_init_font (sdl, sct);
 
   sdl->crs_x = 0;
   sdl->crs_y = 0;
@@ -264,6 +291,8 @@ terminal_t *sdl_new (ini_sct_t *sct)
   trm_smap_init (&sdl->smap);
 
   sdl_clr_upd_rct (sdl);
+
+  sdl->magic = 0;
 
   sdl->grab = 0;
 
@@ -306,6 +335,8 @@ terminal_t *sdl_new (ini_sct_t *sct)
 void sdl_del (sdl_t *sdl)
 {
   if (sdl != NULL) {
+    sdl_grab_mouse (sdl, 0);
+
     if (sdl->scr != NULL) {
       SDL_FreeSurface (sdl->scr);
     }
@@ -688,6 +719,7 @@ void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
   }
 }
 
+static
 void sdl_send_key_code (sdl_t *sdl, unsigned long code)
 {
   if (sdl->trm.set_key == NULL) {
@@ -700,6 +732,7 @@ void sdl_send_key_code (sdl_t *sdl, unsigned long code)
   }
 }
 
+static
 unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
 {
   unsigned long ret, tmp, msk;
@@ -812,6 +845,29 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
   return (ret);
 }
 
+static
+void sdl_magic (sdl_t *sdl, SDLKey key)
+{
+  if (key == SDLK_i) {
+    trm_set_msg (&sdl->trm, "emu.idle", "-");
+  }
+  else if (key == SDLK_p) {
+    trm_set_msg (&sdl->trm, "video.screenshot", "");
+  }
+  else if (key == SDLK_q) {
+    trm_set_msg (&sdl->trm, "emu.exit", "1");
+  }
+  else if (key == SDLK_r) {
+    trm_set_msg (&sdl->trm, "video.redraw", "1");
+  }
+  else if (key == SDLK_s) {
+    trm_set_msg (&sdl->trm, "emu.stop", "1");
+  }
+  else if (key == SDLK_t) {
+    trm_set_msg (&sdl->trm, "emu.realtime", "2");
+  }
+}
+
 void sdl_check (sdl_t *sdl)
 {
   SDL_Event     evt;
@@ -837,17 +893,27 @@ void sdl_check (sdl_t *sdl)
         mod = SDL_GetModState();
         key = evt.key.keysym.sym;
 
-        if (key == SDLK_PAUSE) {
-          trm_set_msg (&sdl->trm, "break", "abort");
+        if ((sdl->magic & 0x03) == 0x03) {
+          sdl_magic (sdl, key);
+          break;
         }
-        else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LALT)) {
-          trm_set_msg (&sdl->trm, "break", "abort");
+
+        if (key == SDLK_LCTRL) {
+          sdl->magic |= 0x01;
+        }
+        else if (key == SDLK_LALT) {
+          sdl->magic |= 0x02;
+        }
+
+        if ((sdl->magic & 0x03) == 0x03) {
+          sdl_grab_mouse (sdl, 0);
+        }
+
+        if (key == SDLK_PAUSE) {
+          trm_set_msg (&sdl->trm, "emu.exit", "1");
         }
         else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
-          trm_set_msg (&sdl->trm, "break", "stop");
-        }
-        else if ((key == SDLK_PRINT) && (mod == 0)) {
-          trm_set_msg (&sdl->trm, "video.screenshot", "");
+          trm_set_msg (&sdl->trm, "emu.stop", "1");
         }
         else {
           unsigned long code;
@@ -864,6 +930,20 @@ void sdl_check (sdl_t *sdl)
 
       case SDL_KEYUP: {
         unsigned long code;
+        SDLKey        key;
+
+        key = evt.key.keysym.sym;
+
+        if (key == SDLK_LCTRL) {
+          sdl->magic &= ~0x01;
+        }
+        else if (key == SDLK_LALT) {
+          sdl->magic &= ~0x02;
+        }
+
+        if ((sdl->magic & 0x03) == 0x03) {
+          break;
+        }
 
         code = sdl_get_key_code (sdl, evt.key.keysym.sym, 0);
         if (code != 0) {
@@ -876,26 +956,17 @@ void sdl_check (sdl_t *sdl)
       case SDL_MOUSEBUTTONUP:
         if (sdl->trm.set_mse != NULL) {
           unsigned b;
-          SDLMod mod;
+          SDLMod   mod;
 
           mod = SDL_GetModState();
 
-          if ((evt.type == SDL_MOUSEBUTTONDOWN) && (evt.button.button == SDL_BUTTON_MIDDLE) && (mod & KMOD_LCTRL)) {
-            if (sdl->grab == 0) {
-              sdl->grab = 1;
-              SDL_ShowCursor (0);
-              SDL_WM_GrabInput (SDL_GRAB_ON);
-            }
-            else {
-              sdl->grab = 0;
-              SDL_ShowCursor (1);
-              SDL_WM_GrabInput (SDL_GRAB_OFF);
-            }
-          }
-          else if (sdl->grab) {
+          if (sdl->grab) {
             b = SDL_GetMouseState (NULL, NULL);
             b = ((b & SDL_BUTTON (1)) ? 0x01 : 0) | ((b & SDL_BUTTON (3)) ? 0x02 : 0);
             sdl->trm.set_mse (sdl->trm.mse_ext, 0, 0, b);
+          }
+          else {
+            sdl_grab_mouse (sdl, 1);
           }
         }
         break;

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -68,8 +68,32 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-  if (strcmp (msg, "cpu.int28") == 0) {
-    par_int28 = 1000UL * strtoul (val, NULL, 0);
+  if (strcmp (msg, "emu.idle") == 0) {
+    if (strcmp (val, "-") == 0) {
+      par_int28 = (par_int28 == 0) ? 10000UL : 0UL;
+    }
+    else {
+      par_int28 = 1000UL * strtoul (val, NULL, 0);
+    }
+    return (0);
+  }
+  else if (strcmp (msg, "emu.realtime") == 0) {
+    if (strcmp (val, "0") == 0) {
+      pc->pit_real = 0;
+    }
+    else if (strcmp (val, "1") == 0) {
+      pc->pit_real = 1;
+    }
+    else if (strcmp (val, "") == 0) {
+      pc->pit_real = 1;
+    }
+    else if (strcmp (val, "-") == 0) {
+      pc->pit_real = !pc->pit_real;
+    }
+    else {
+      return (1);
+    }
+
     return (0);
   }
   else if (strcmp (msg, "cpu.model") == 0) {
@@ -96,16 +120,6 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     }
     else {
       return (1);
-    }
-
-    return (0);
-  }
-  else if (strcmp (msg, "pit.realtime") == 0) {
-    if (strcmp (val, "0") == 0) {
-      pc->pit_real = 0;
-    }
-    else {
-      pc->pit_real = 1;
     }
 
     return (0);
@@ -178,11 +192,25 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
   return (1);
 }
 
-int pc_set_msg_uint (ibmpc_t *pc, const char *msg, unsigned val)
+int pc_set_msgul (ibmpc_t *pc, const char *msg, unsigned long val)
 {
   char buf[256];
 
-  sprintf (buf, "%u", val);
+  sprintf (buf, "%lu", val);
 
   return (pc_set_msg (pc, msg, buf));
+}
+
+int pc_get_msgul (ibmpc_t *pc, const char *msg, unsigned long *val)
+{
+  if ((msg == NULL) || (val == NULL)) {
+    return (1);
+  }
+
+  if (strcmp (msg, "pit.realtime") == 0) {
+    *val = (pc->pit_real != 0);
+    return (0);
+  }
+
+  return (1);
 }
