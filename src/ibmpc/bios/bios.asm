@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.9 2003/09/01 18:06:56 hampa Exp $
+; $Id: bios.asm,v 1.10 2003/09/13 18:27:40 hampa Exp $
 
 
 CPU 8086
@@ -201,11 +201,11 @@ L_E0AE:
   mov    ss, ax
   mov    ds, ax
 
-  mov    bh, 0xe0                      ; BX = E000
+  mov    bh, 0xe0                       ; BX = E000
   mov    sp, L_E016
 
   ; This call returns to E0D1
-  jmp    L_EC4C                        ; Add up bytes from DS:E000 to DS:FFFF
+  jmp    L_EC4C                         ; Add up bytes from DS:E000 to DS:FFFF
 
 L_E0D1:
 ;  jnz    halt_cpu                      ; Verify checksum
@@ -214,23 +214,23 @@ L_E0D1:
 ; **** patch **** (bios is modifed -> incorrect checksum)
 
   mov    al, 0x04
-  out    0x08, al
+  out    0x08, al                       ; deactivate DMAC
 
-  mov    al, 0x54                      ; 01010100b
-  out    0x43, al                      ; Set up counter 1
+  mov    al, 0x54                       ; 01010100b
+  out    0x43, al                       ; Set up counter 1
 
-  mov    al, cl                        ; CX = 0000
-  out    0x41, al                      ; Set counter low byte
+  mov    al, cl                         ; CX = 0000
+  out    0x41, al                       ; Set counter low byte
 
   ; this is a quick test of PIT counter 1
 L_E0DF:
   mov    al, 0x40
-  out    0x43, al                      ; Counter latch for counter 1
+  out    0x43, al                       ; Counter latch for counter 1
 
   cmp    bl, 0xff
   je     L_E0EF
 
-  in     al, 0x41                      ; Get counter low byte
+  in     al, 0x41                       ; Get counter low byte
   or     bl, al
 
   loop   L_E0DF
@@ -264,7 +264,7 @@ L_E104:
   out    0x41, al                       ; Set counter 1 low byte
 
   ; DMAC
-  out    0x0d, al                       ; master clear temp register
+  out    0x0d, al                       ; DMAC master clear
 
   mov    al, 0xff
 
@@ -304,16 +304,17 @@ L_E124:
   out    0x01, al
 
   mov    dl, 0x0b
-  mov    al, 0x58
+  mov    al, 0x58                       ; read mode, autoinit, single transfer
   out    dx, al                         ; DMA mode register
 
   mov    al, 0x00
-  out    0x08, al                       ; DMA status/command register
+  out    0x08, al                       ; enable DMAC
+
   push   ax
   out    0x0a, al                       ; DMA mask register
 
   mov    cl, 0x03
-  mov    al, 0x41
+  mov    al, 0x41                       ; write mode, demand transfer
 
 L_E146:
   out    dx, al
