@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     memory.h                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.2 2003/04/16 14:15:17 hampa Exp $ */
+/* $Id: memory.h,v 1.3 2003/04/18 20:04:58 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -50,8 +50,10 @@ typedef struct {
 
 
 typedef struct {
-  unsigned  blk_cnt;
-  mem_blk_t **blk;
+  unsigned      blk_cnt;
+  mem_blk_t     **blk;
+
+  unsigned char def_val;
 } memory_t;
 
 
