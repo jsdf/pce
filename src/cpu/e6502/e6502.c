@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.c                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -46,9 +46,9 @@ void e6502_init (e6502_t *c)
   c->ea = 0;
   c->ea_page = 0;
 
-  c->rst_val = 0;
-  c->irq_val = 1;
-  c->nmi_val = 1;
+  c->rst_val = 1;
+  c->irq_val = 0;
+  c->nmi_val = 0;
   c->nmi_pnd = 0;
 
   c->mem = NULL;
@@ -157,7 +157,7 @@ unsigned long e6502_get_delay (e6502_t *c)
 
 void e6502_set_reset (e6502_t *c, unsigned char val)
 {
-  if ((c->rst_val == 0) && (val != 0)) {
+  if ((c->rst_val != 0) && (val == 0)) {
     e6502_reset (c);
   }
 
@@ -171,7 +171,7 @@ void e6502_set_irq (e6502_t *c, unsigned char val)
 
 void e6502_set_nmi (e6502_t *c, unsigned char val)
 {
-  if ((c->nmi_val != 0) && (val == 0)) {
+  if ((c->nmi_val == 0) && (val != 0)) {
     c->nmi_pnd = 1;
   }
 
@@ -189,7 +189,7 @@ void e6502_undefined (e6502_t *c)
 void e6502_reset (e6502_t *c)
 {
   c->delay = 7;
-  c->rst_val = 1;
+  c->rst_val = 0;
   c->nmi_pnd = 0;
 
   e6502_set_a (c, 0x00);
@@ -208,7 +208,7 @@ void e6502_execute (e6502_t *c)
     return;
   }
 
-  if ((c->irq_val == 0) && (e6502_get_if (c) == 0)) {
+  if ((c->irq_val != 0) && (e6502_get_if (c) == 0)) {
     e6502_trap (c, 0xfffeU);
     return;
   }
@@ -230,7 +230,7 @@ void e6502_execute (e6502_t *c)
 
 void e6502_clock (e6502_t *c, unsigned n)
 {
-  if (c->rst_val == 0) {
+  if (c->rst_val) {
     return;
   }
 
