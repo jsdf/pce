@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.h                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.5 2003/04/16 17:19:17 hampa Exp $ */
+/* $Id: e8086.h,v 1.6 2003/04/17 14:15:07 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -67,11 +67,6 @@
 #define E86_REG_SS 2
 #define E86_REG_DS 3
 
-#define E86_PREFIX_NEW  0x0001
-#define E86_PREFIX_SEG  0x0002
-#define E86_PREFIX_REP  0x0004
-#define E86_PREFIX_REPN 0x0008
-#define E86_PREFIX_LOCK 0x0010
 
 #define E86_PQ_SIZE 6
 
@@ -138,9 +133,7 @@ typedef struct {
 #define e86_get_dh(cpu) (((cpu)->dreg[E86_REG_DX] >> 8) & 0xff)
 
 
-#define e86_get_reg16(cpu, reg) \
-  ((cpu)->dreg[(reg) & 7])
-
+#define e86_get_reg16(cpu, reg) ((cpu)->dreg[(reg) & 7])
 #define e86_get_ax(cpu) ((cpu)->dreg[E86_REG_AX])
 #define e86_get_bx(cpu) ((cpu)->dreg[E86_REG_BX])
 #define e86_get_cx(cpu) ((cpu)->dreg[E86_REG_CX])
@@ -151,9 +144,7 @@ typedef struct {
 #define e86_get_di(cpu) ((cpu)->dreg[E86_REG_DI])
 
 
-#define e86_get_sreg(cpu, reg) \
-  ((cpu)->sreg[(reg) & 3])
-
+#define e86_get_sreg(cpu, reg) ((cpu)->sreg[(reg) & 3])
 #define e86_get_cs(cpu) ((cpu)->sreg[E86_REG_CS])
 #define e86_get_ds(cpu) ((cpu)->sreg[E86_REG_DS])
 #define e86_get_es(cpu) ((cpu)->sreg[E86_REG_ES])
@@ -183,9 +174,7 @@ typedef struct {
 
 
 #define e86_set_reg16(cpu, reg, val) \
-  do { \
-    (cpu)->dreg[(reg) & 7] = (val) & 0xffff; \
-  } while (0)
+  do { (cpu)->dreg[(reg) & 7] = (val) & 0xffff; } while (0)
 
 #define e86_set_ax(cpu, val) do { (cpu)->dreg[E86_REG_AX] = (val) & 0xffff; } while (0)
 #define e86_set_bx(cpu, val) do { (cpu)->dreg[E86_REG_BX] = (val) & 0xffff; } while (0)
@@ -198,20 +187,19 @@ typedef struct {
 
 
 #define e86_set_sreg(cpu, reg, val) \
-  do { \
-    (cpu)->sreg[(reg) & 3] = (val) & 0xffff; \
-  } while (0)
+  do { (cpu)->sreg[(reg) & 3] = (val) & 0xffff; } while (0)
 
 #define e86_set_cs(cpu, val) do { (cpu)->sreg[E86_REG_CS] = (val) & 0xffff; } while (0)
 #define e86_set_ds(cpu, val) do { (cpu)->sreg[E86_REG_DS] = (val) & 0xffff; } while (0)
 #define e86_set_es(cpu, val) do { (cpu)->sreg[E86_REG_ES] = (val) & 0xffff; } while (0)
 #define e86_set_ss(cpu, val) do { (cpu)->sreg[E86_REG_SS] = (val) & 0xffff; } while (0)
 
+
 #define e86_get_ip(cpu) ((cpu)->ip)
 #define e86_set_ip(cpu, val) do { (cpu)->ip = (val) & 0xffff; } while (0)
 
 
-#define e86_get_flg(cpu, f) (((cpu)->flg & (f)) != 0)
+#define e86_get_f(cpu, f) (((cpu)->flg & (f)) != 0)
 #define e86_get_cf(cpu) (((cpu)->flg & E86_FLG_C) != 0)
 #define e86_get_pf(cpu) (((cpu)->flg & E86_FLG_P) != 0)
 #define e86_get_af(cpu) (((cpu)->flg & E86_FLG_A) != 0)
@@ -223,29 +211,18 @@ typedef struct {
 #define e86_get_tf(cpu) (((cpu)->flg & E86_FLG_T) != 0)
 
 
-#define e86_set_flg(c, f, v) \
+#define e86_set_f(c, f, v) \
   do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
 
-#define e86_set_cf(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_C; else (c)->flg &= ~E86_FLG_C; } while (0)
+#define e86_set_f0(cpu, f) do { (cpu)->flg &= ~(f); } while (0)
+#define e86_set_f1(cpu, f) do { (cpu)->flg |= (f); } while (0)
 
-#define e86_set_pf(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_P; else (c)->flg &= ~E86_FLG_P; } while (0)
-
-#define e86_set_af(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_A; else (c)->flg &= ~E86_FLG_A; } while (0)
-
-#define e86_set_zf(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_Z; else (c)->flg &= ~E86_FLG_Z; } while (0)
-
-#define e86_set_of(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_O; else (c)->flg &= ~E86_FLG_O; } while (0)
-
-#define e86_set_sf(c, v) \
-  do { if (v) (c)->flg |= E86_FLG_S; else (c)->flg &= ~E86_FLG_S; } while (0)
-
-#define e86_set_flg0(cpu, f) do { (cpu)->flg &= ~(f); } while (0)
-#define e86_set_flg1(cpu, f) do { (cpu)->flg |= (f); } while (0)
+#define e86_set_cf(c, v) e86_set_f (c, E86_FLG_C, v)
+#define e86_set_pf(c, v) e86_set_f (c, E86_FLG_P, v)
+#define e86_set_af(c, v) e86_set_f (c, E86_FLG_A, v)
+#define e86_set_zf(c, v) e86_set_f (c, E86_FLG_Z, v)
+#define e86_set_of(c, v) e86_set_f (c, E86_FLG_O, v)
+#define e86_set_sf(c, v) e86_set_f (c, E86_FLG_S, v)
 
 
 #define e86_get_linear(seg, ofs) \
@@ -268,16 +245,33 @@ typedef struct {
   } while (0)
 
 
-void e86_prt_state (e8086_t *c, FILE *fp);
+#define e86_get_prt8(cpu, ofs) \
+  (cpu)->prt_get_uint8 ((cpu)->prt, ofs)
 
-void e86_execute (e8086_t *c);
-void e86_clock (e8086_t *c);
+#define e86_get_prt16(cpu, ofs) \
+  (cpu)->prt_get_uint16 ((cpu)->prt, ofs)
 
-void e86_reset (e8086_t *c);
+#define e86_set_prt8(cpu, ofs, val) \
+  do { (cpu)->prt_set_uint8 ((cpu)->prt, ofs, val); } while (0)
+
+#define e86_set_prt16(cpu, ofs, val) \
+  do { (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val); } while (0)
+
 
 e8086_t *e86_new (void);
 
 void e86_del (e8086_t *c);
+
+void e86_prt_state (e8086_t *c, FILE *fp);
+
+void e86_reset (e8086_t *c);
+
+int e86_interrupt (e8086_t *cpu, unsigned n);
+
+void e86_execute (e8086_t *c);
+
+void e86_clock (e8086_t *c);
+
 
 
 typedef struct {
