@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/memory.c                                         *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.3 2003/08/29 19:17:07 hampa Exp $ */
+/* $Id: memory.c,v 1.4 2003/08/30 03:07:44 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -90,6 +90,11 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
   else {
     blk->flags &= ~MEM_FLAG_RO;
   }
+}
+
+unsigned long mem_blk_get_size (mem_blk_t *blk)
+{
+  return (blk->size);
 }
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/memory.h                                         *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.2 2003/08/29 19:17:07 hampa Exp $ */
+/* $Id: memory.h,v 1.3 2003/08/30 03:07:44 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -66,6 +66,7 @@ void mem_blk_del (mem_blk_t *blk);
 void mem_blk_init (mem_blk_t *blk, unsigned char val);
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
+unsigned long mem_blk_get_size (mem_blk_t *blk);
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr);
