@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.1 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: ega.c,v 1.2 2003/09/15 01:15:59 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -131,9 +131,10 @@ void ega_prt_state (ega_t *ega, FILE *fp)
     y = (ega->crtc_pos - ega->crtc_ofs) / 80;
   }
 
-  fprintf (fp, "EGA: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
+  fprintf (fp, "EGA: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=%s  LATCH=[%02x %02x %02x %02x]\n",
     ega->mode, ega->crtc_ofs, ega->crtc_pos, x, y,
-    (ega->crtc_reg[0x0b] < ega->crtc_reg[0x0a]) ? "OFF" : "ON"
+    (ega->crtc_reg[0x0b] < ega->crtc_reg[0x0a]) ? "OFF" : "ON",
+    ega->latch[0], ega->latch[1], ega->latch[2], ega->latch[3]
   );
 
   fprintf (fp, "REGS: 3CC=%02x  3DA=%02x\n",
@@ -414,6 +415,8 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
 
 //  fprintf (stderr, "ega: latches -> %lu\n", addr);
 
+  addr &= 0xffff;
+
   msk = 0;
 
   if (ega->ts_reg[2] & 0x01) {
@@ -435,6 +438,9 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     msk |= ega->data[addr + 3 * 65536] ^ latch[3];
     ega->data[addr + 3 * 65536] = latch[3];
   }
+
+  /* mask does not work if palette changed */
+  msk = 255;
 
   if (msk == 0) {
     return;
@@ -480,7 +486,7 @@ void ega_mode16_update (ega_t *ega)
   unsigned long addr;
   unsigned char msk;
 
-  addr = ega->crtc_ofs;
+  addr = ega->crtc_ofs & 0xffff;
   rofs = 2 * ega->crtc_reg[0x13];
 
   w = ega->mode_w / 8;
@@ -502,7 +508,7 @@ void ega_mode16_update (ega_t *ega)
       }
     }
 
-    addr += rofs;
+    addr = (addr + rofs) & 0xffff;
   }
 }
 
@@ -764,9 +770,7 @@ void ega_set_page_ofs (ega_t *ega, unsigned ofs)
 
   ega->crtc_ofs = ofs;
 
-//  if (ega->mode == 0) {
-    ega_update (ega);
-//  }
+  ega_update (ega);
 }
 
 void ega_mem_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
