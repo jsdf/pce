@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     libini.h                                                   *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: libini.h,v 1.3 2003/08/19 00:52:09 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef LIBINI_H

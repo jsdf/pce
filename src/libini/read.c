@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     read.c                                                     *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-01-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: read.c,v 1.1 2003/04/22 17:56:20 hampa Exp $ */
+/* $Id$ */
 
 
 #include "libini.h"
@@ -45,7 +45,7 @@ void ini_scn_scan (scanner_t *scn)
 
   scn_scan (scn);
 
-  while (scn_tok_is_chr (scn, '#')) {
+  while (scn_chr (scn, '#')) {
     c = scn_get_chr (scn, 0);
     while ((c != 10) && (c != 13)) {
       if (c == SCN_EOF) {
@@ -61,7 +61,7 @@ void ini_scn_scan (scanner_t *scn)
     scn_scan (scn);
   }
 
-  if (scn_tok_is_chr (scn, '"')) {
+  if (scn_chr (scn, '"')) {
     i = 0;
     c = scn_get_chr (scn, 0);
 
