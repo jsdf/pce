@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     cga.c                                                      *
+ * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.3 2003/11/17 23:57:21 hampa Exp $ */
+/* $Id: cga.c,v 1.4 2003/12/23 03:08:58 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -98,7 +98,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->mem->ext = cga;
   cga->mem->set_uint8 = (mem_set_uint8_f) &cga_mem_set_uint8;
   cga->mem->set_uint16 = (mem_set_uint16_f) &cga_mem_set_uint16;
-  mem_blk_init (cga->mem, 0x00);
+  mem_blk_clear (cga->mem, 0x00);
 
   cga->reg = mem_blk_new (iobase, 16, 1);
   cga->reg->ext = cga;
@@ -106,7 +106,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->reg->set_uint16 = (mem_set_uint16_f) &cga_reg_set_uint16;
   cga->reg->get_uint8 = (mem_get_uint8_f) &cga_reg_get_uint8;
   cga->reg->get_uint16 = (mem_get_uint16_f) &cga_reg_get_uint16;
-  mem_blk_init (cga->reg, 0x00);
+  mem_blk_clear (cga->reg, 0x00);
 
   cga->trm = trm;
 

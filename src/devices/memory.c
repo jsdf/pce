@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.7 2003/12/20 12:22:51 hampa Exp $ */
+/* $Id: memory.c,v 1.8 2003/12/23 03:08:59 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -29,20 +29,12 @@
 #include "memory.h"
 
 
-mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
+int mem_blk_init (mem_blk_t *blk, unsigned long base, unsigned long size, int alloc)
 {
-  mem_blk_t *blk;
-
-  blk = (mem_blk_t *) malloc (sizeof (mem_blk_t));
-  if (blk == NULL) {
-    return (NULL);
-  }
-
   if (alloc) {
     blk->data = (unsigned char *) malloc (size + 16);
     if (blk->data == NULL) {
-      free (blk);
-      return (NULL);
+      return (1);
     }
   }
   else {
@@ -63,18 +55,42 @@ mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
   blk->size = size;
   blk->end = base + size - 1;
 
+  return (0);
+}
+
+mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
+{
+  mem_blk_t *blk;
+
+  blk = (mem_blk_t *) malloc (sizeof (mem_blk_t));
+  if (blk == NULL) {
+    return (NULL);
+  }
+
+  if (mem_blk_init (blk, base, size, alloc)) {
+    free (blk);
+    return (NULL);
+  }
+
   return (blk);
+}
+
+void mem_blk_free (mem_blk_t *blk)
+{
+  if (blk != NULL) {
+    free (blk->data);
+  }
 }
 
 void mem_blk_del (mem_blk_t *blk)
 {
   if (blk != NULL) {
-    free (blk->data);
+    mem_blk_free (blk);
     free (blk);
   }
 }
 
-void mem_blk_init (mem_blk_t *blk, unsigned char val)
+void mem_blk_clear (mem_blk_t *blk, unsigned char val)
 {
   if (blk->data != NULL) {
     memset (blk->data, val, blk->size);
@@ -99,6 +115,88 @@ void mem_blk_set_ro (mem_blk_t *blk, int ro)
 unsigned long mem_blk_get_size (mem_blk_t *blk)
 {
   return (blk->size);
+}
+
+void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val)
+{
+  blk->data[addr] = val;
+}
+
+void mem_blk_set_uint16_be (mem_blk_t *blk, unsigned long addr, unsigned short val)
+{
+  blk->data[addr] = (val >> 8) & 0xff;
+  blk->data[addr + 1] = val & 0xff;
+}
+
+void mem_blk_set_uint16_le (mem_blk_t *blk, unsigned long addr, unsigned short val)
+{
+  blk->data[addr] = val & 0xff;
+  blk->data[addr + 1] = (val >> 8) & 0xff;
+}
+
+void mem_blk_set_uint32_be (mem_blk_t *blk, unsigned long addr, unsigned long val)
+{
+  blk->data[addr] = (val >> 24) & 0xff;
+  blk->data[addr + 1] = (val >> 16) & 0xff;
+  blk->data[addr + 2] = (val >> 8) & 0xff;
+  blk->data[addr + 3] = val & 0xff;
+}
+
+void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long val)
+{
+  blk->data[addr] = val & 0xff;
+  blk->data[addr + 1] = (val >> 8) & 0xff;
+  blk->data[addr + 2] = (val >> 16) & 0xff;
+  blk->data[addr + 3] = (val >> 24) & 0xff;
+}
+
+unsigned char mem_blk_get_uint8 (mem_blk_t *blk, unsigned long addr)
+{
+  return (blk->data[addr]);
+}
+
+unsigned short mem_blk_get_uint16_be (mem_blk_t *blk, unsigned long addr)
+{
+  unsigned short ret;
+
+  ret = blk->data[addr];
+  ret = (ret << 8) | blk->data[addr + 1];
+
+  return (ret);
+}
+
+unsigned short mem_blk_get_uint16_le (mem_blk_t *blk, unsigned long addr)
+{
+  unsigned short ret;
+
+  ret = blk->data[addr + 1];
+  ret = (ret << 8) | blk->data[addr];
+
+  return (ret);
+}
+
+unsigned long mem_blk_get_uint32_be (mem_blk_t *blk, unsigned long addr)
+{
+  unsigned long ret;
+
+  ret = blk->data[addr];
+  ret = (ret << 8) | blk->data[addr + 1];
+  ret = (ret << 8) | blk->data[addr + 2];
+  ret = (ret << 8) | blk->data[addr + 3];
+
+  return (ret);
+}
+
+unsigned long mem_blk_get_uint32_le (mem_blk_t *blk, unsigned long addr)
+{
+  unsigned long ret;
+
+  ret = blk->data[addr + 3];
+  ret = (ret << 8) | blk->data[addr + 2];
+  ret = (ret << 8) | blk->data[addr + 1];
+  ret = (ret << 8) | blk->data[addr];
+
+  return (ret);
 }
 
 
@@ -338,6 +436,39 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
       blk->data[addr + 1] = (val >> 16) & 0xff;
       blk->data[addr + 2] = (val >> 8) & 0xff;
       blk->data[addr + 3] = val & 0xff;
+    }
+  }
+}
+
+void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
+{
+  mem_blk_t *blk;
+
+  blk = mem_get_blk (mem, addr);
+
+  if (blk != NULL) {
+    if ((addr + 3) > blk->end) {
+      mem_set_uint8 (mem, addr, val & 0xff);
+      mem_set_uint8 (mem, addr + 1, (val >> 8) & 0xff);
+      mem_set_uint8 (mem, addr + 2, (val >> 16) & 0xff);
+      mem_set_uint8 (mem, addr + 3, (val >> 24) & 0xff);
+      return;
+    }
+
+    if (blk->flags & MEM_FLAG_RO) {
+      return;
+    }
+
+    addr -= blk->base;
+
+    if (blk->set_uint32 != NULL) {
+      blk->set_uint32 (blk->ext, addr, val);
+    }
+    else {
+      blk->data[addr] = val & 0xff;
+      blk->data[addr + 1] = (val >> 8) & 0xff;
+      blk->data[addr + 2] = (val >> 16) & 0xff;
+      blk->data[addr + 3] = (val >> 24) & 0xff;
     }
   }
 }

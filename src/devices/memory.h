@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.5 2003/12/20 12:22:51 hampa Exp $ */
+/* $Id: memory.h,v 1.6 2003/12/23 03:08:59 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -63,6 +63,7 @@ typedef struct {
   int       del;
 } mem_lst_t;
 
+
 typedef struct {
   unsigned      cnt;
   mem_lst_t     *lst;
@@ -75,6 +76,15 @@ typedef struct {
 
 
 /*!***************************************************************************
+ * @short  Initialize a static memory block structure
+ * @param  base  The linear base address
+ * @param  size  The block size in bytes
+ * @param  alloc If true then backing store is allocated
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int mem_blk_init (mem_blk_t *blk, unsigned long base, unsigned long size, int alloc);
+
+/*!***************************************************************************
  * @short  Create a new memory block
  * @param  base  The linear base address
  * @param  size  The block size in bytes
@@ -82,6 +92,12 @@ typedef struct {
  * @return The memory block or NULL on error
  *****************************************************************************/
 mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc);
+
+/*!***************************************************************************
+ * @short Free the resources used by a static memory block structure
+ * @param blk The memory block
+ *****************************************************************************/
+void mem_blk_free (mem_blk_t *blk);
 
 /*!***************************************************************************
  * @short Delete a memory block
@@ -92,15 +108,28 @@ mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc);
 void mem_blk_del (mem_blk_t *blk);
 
 /*!***************************************************************************
- * @short Initialize a memory block
+ * @short Clear a memory block
  * @param blk The memory block
  * @param val The byte value with which the block is initialized
  *****************************************************************************/
-void mem_blk_init (mem_blk_t *blk, unsigned char val);
+void mem_blk_clear (mem_blk_t *blk, unsigned char val);
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
 unsigned long mem_blk_get_size (mem_blk_t *blk);
+
+void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val);
+void mem_blk_set_uint16_be (mem_blk_t *blk, unsigned long addr, unsigned short val);
+void mem_blk_set_uint16_le (mem_blk_t *blk, unsigned long addr, unsigned short val);
+void mem_blk_set_uint32_be (mem_blk_t *blk, unsigned long addr, unsigned long val);
+void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long val);
+
+unsigned char mem_blk_get_uint8 (mem_blk_t *blk, unsigned long addr);
+unsigned short mem_blk_get_uint16_be (mem_blk_t *blk, unsigned long addr);
+unsigned short mem_blk_get_uint16_le (mem_blk_t *blk, unsigned long addr);
+unsigned long mem_blk_get_uint32_be (mem_blk_t *blk, unsigned long addr);
+unsigned long mem_blk_get_uint32_le (mem_blk_t *blk, unsigned long addr);
+
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);
@@ -111,10 +140,29 @@ void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val);
 void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val);
 void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val);
 void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val);
+void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val);
 
+
+/*!***************************************************************************
+ * @short Initialize a static memory structure
+ * @param mem The memory structure
+ *****************************************************************************/
 void mem_init (memory_t *mem);
+
+/*!***************************************************************************
+ * @short  Create a new memory structure
+ * @return The new memory structure or NULL on error
+ *****************************************************************************/
 memory_t *mem_new (void);
+
+/*!***************************************************************************
+ * @short Free the resources used by a static memory structure
+ *****************************************************************************/
 void mem_free (memory_t *mem);
+
+/*!***************************************************************************
+ * @short Delete a memory structure
+ *****************************************************************************/
 void mem_del (memory_t *mem);
 
 /*!***************************************************************************
@@ -124,6 +172,13 @@ void mem_del (memory_t *mem);
  *****************************************************************************/
 void mem_set_default (memory_t *mem, unsigned char val);
 
+/*!***************************************************************************
+ * @short Add a memory block to a memory structure
+ * @param mem The memory structure
+ * @param blk The memory block
+ * @param del If true then the block will be deleted when the memory
+ *            structure is deleted.
+ *****************************************************************************/
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
 
 

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     ibmpc.c                                                    *
+ * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.2 2003/12/23 03:08:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -68,7 +68,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     );
 
     ram = mem_blk_new (base, size, 1);
-    mem_blk_init (ram, 0x00);
+    mem_blk_clear (ram, 0x00);
     mem_blk_set_ro (ram, 0);
     mem_add_blk (pc->mem, ram, 1);
 
@@ -117,7 +117,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     }
     else {
       rom = mem_blk_new (base, size, 1);
-      mem_blk_init (rom, 0x00);
+      mem_blk_clear (rom, 0x00);
       mem_blk_set_ro (rom, 1);
       mem_add_blk (pc->mem, rom, 1);
 

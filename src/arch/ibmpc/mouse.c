@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/mouse.c                                          *
+ * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mouse.c,v 1.1 2003/12/20 01:01:33 hampa Exp $ */
+/* $Id: mouse.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -67,7 +67,7 @@ mouse_t *mse_new (unsigned short base, ini_sct_t *sct)
   mse->reg->set_uint16 = (seta_uint16_f) &mse_reg_set_uint16;
   mse->reg->get_uint8 = (geta_uint8_f) &mse_reg_get_uint8;
   mse->reg->get_uint16 = (geta_uint16_f) &mse_reg_get_uint16;
-  mem_blk_init (mse->reg, 0x00);
+  mem_blk_clear (mse->reg, 0x00);
 
   mse->rcnt = 0;
 

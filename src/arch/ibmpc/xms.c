@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/xms.c                                            *
+ * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.c,v 1.1 2003/12/20 01:01:34 hampa Exp $ */
+/* $Id: xms.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
 
 
 #include "pce.h"
@@ -96,7 +96,7 @@ xms_t *xms_new (ini_sct_t *sct)
   if (umb_size > 0) {
     xms->umbmem = mem_blk_new (16UL * umb_segm, 16UL * umb_size, 1);
     xms->umbmem->ext = xms;
-    mem_blk_init (xms->umbmem, 0x00);
+    mem_blk_clear (xms->umbmem, 0x00);
   }
   else {
     xms->umbmem = NULL;

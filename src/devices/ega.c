@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
+/* $Id: ega.c,v 1.2 2003/12/23 03:08:58 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -145,7 +145,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->reg->set_uint16 = (mem_set_uint16_f) &ega_reg_set_uint16;
   ega->reg->get_uint8 = (mem_get_uint8_f) &ega_reg_get_uint8;
   ega->reg->get_uint16 = (mem_get_uint16_f) &ega_reg_get_uint16;
-  mem_blk_init (ega->reg, 0x00);
+  mem_blk_clear (ega->reg, 0x00);
 
   ega->trm = trm;
 
