@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -707,7 +707,7 @@ void vt100_check (vt100_t *vt)
 
 //  fprintf (stderr, "vt100: check\n");
 
-  if (!vt100_readable (vt, vt->fd_inp)) {
+  if (!vt100_readable (vt, 0)) {
     return;
   }
 
