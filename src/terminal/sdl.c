@@ -399,6 +399,7 @@ void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
   unsigned      i, j;
   unsigned char val;
   unsigned char *fnt;
+  Uint8         *p;
 
   x *= sdl->font_w;
   y *= sdl->font_h;
@@ -406,6 +407,32 @@ void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
   fnt = sdl->font + c * sdl->font_h;
 
   val = 0;
+
+  if ((sdl->pxl_w == sdl->wdw_w) && (sdl->pxl_h == sdl->wdw_h)) {
+    if (sdl->scr_bpp == 2) {
+      p = (Uint8 *) sdl->scr->pixels + y * sdl->scr->pitch
+        + x * sdl->scr->format->BytesPerPixel;
+
+      for (j = 0; j < sdl->font_h; j++) {
+        for (i = 0; i < sdl->font_w; i++) {
+          if ((i & 7) == 0) {
+            val = *(fnt++);
+          }
+
+          *(Uint16 *)p = (val & 0x80) ? fg : bg;
+          p += 2;
+
+          val = (val & 0x7f) << 1;
+        }
+
+        p += sdl->scr->pitch - (sdl->font_w << 1);
+      }
+
+      sdl_set_upd_rct (sdl, x, y, sdl->font_w, sdl->font_h);
+
+      return;
+    }
+  }
 
   for (j = 0; j < sdl->font_h; j++) {
     for (i = 0; i < sdl->font_w; i++) {
