@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -50,7 +50,7 @@ void ss32_setup_ram (sims32_t *sim, ini_sct_t *ini)
 
     ram = mem_blk_new (base, size, 1);
     mem_blk_clear (ram, 0x00);
-    mem_blk_set_ro (ram, 0);
+    mem_blk_set_readonly (ram, 0);
     mem_add_blk (sim->mem, ram, 1);
 
     if (fname != NULL) {
@@ -84,7 +84,7 @@ void ss32_setup_rom (sims32_t *sim, ini_sct_t *ini)
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
-    mem_blk_set_ro (rom, 1);
+    mem_blk_set_readonly (rom, 1);
     mem_add_blk (sim->mem, rom, 1);
 
     if (fname != NULL) {

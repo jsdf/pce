@@ -27,7 +27,7 @@ HDR := $(foreach f,$(FILES),$(f).h)
 OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
 	$(pcedst)/chipset/chipset.a \
-	$(pcedst)/devices/block/block.a \
+	$(PCE_BLK_OBJ) \
 	$(pcedst)/devices/cga.o \
 	$(pcedst)/devices/vga.o \
 	$(pcedst)/devices/ega.o \
@@ -45,7 +45,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/libini/libini.a \
-	$(pcedst)/terminal/terminal.a
+	$(PCE_TERM_OBJ)
 
 HDR_EXT	:= \
 	$(pcedst)/config.h \
@@ -55,13 +55,7 @@ HDR_EXT	:= \
 	chipset/e8253.h \
 	chipset/e8255.h \
 	chipset/e8259.h \
-	devices/block/block.h \
-	devices/block/blkcow.h \
-	devices/block/blkdosem.h \
-	devices/block/blkpart.h \
-	devices/block/blkpce.h \
-	devices/block/blkram.h \
-	devices/block/blkraw.h \
+	$(PCE_BLK_HDR) \
 	devices/cga.h \
 	devices/vga.h \
 	devices/ega.h \
@@ -79,11 +73,7 @@ HDR_EXT	:= \
 	lib/load.h \
 	lib/log.h \
 	libini/libini.h \
-	terminal/terminal.h \
-	terminal/scrmap.h \
-	terminal/vt100.h \
-	terminal/null.h \
-	terminal/font.h
+	$(PCE_TERM_HDR)
 
 ifeq "$(PCE_X11_USE)" "1"
 	HDR_EXT += terminal/x11.h

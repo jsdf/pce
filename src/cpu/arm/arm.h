@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,16 +27,7 @@
 #define ARM_H 1
 
 
-#if defined (HAVE_STDINT_H)
 #include <stdint.h>
-#elif defined (HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
-#endif
 
 
 /*****************************************************************************

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -56,7 +56,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 
     ram = mem_blk_new (base, size, 1);
     mem_blk_clear (ram, 0x00);
-    mem_blk_set_ro (ram, 0);
+    mem_blk_set_readonly (ram, 0);
     mem_add_blk (pc->mem, ram, 1);
 
     if (base == 0) {
@@ -94,7 +94,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
-    mem_blk_set_ro (rom, 1);
+    mem_blk_set_readonly (rom, 1);
     mem_add_blk (pc->mem, rom, 1);
 
     if (fname != NULL) {
@@ -553,59 +553,55 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
-void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
+disk_t *pc_setup_disk (ini_sct_t *sct)
 {
-  ini_sct_t  *sct;
   disk_t     *dsk, *cow;
+  ini_val_t  *val;
   unsigned   drive;
   unsigned   c, h, s;
   unsigned   vc, vh, vs;
   int        ro;
   const char *type, *fname, *cowname;
 
-  pc->dsk = dsks_new();
+  drive = ini_get_lng_def (sct, "drive", 0);
+  type = ini_get_str_def (sct, "type", "auto");
 
-  sct = ini_sct_find_sct (ini, "disk");
+  fname = ini_get_str (sct, "file");
+  cowname = ini_get_str (sct, "cow");
 
-  while (sct != NULL) {
-    drive = ini_get_lng_def (sct, "drive", 0);
-    type = ini_get_str_def (sct, "type", "auto");
+  c = ini_get_lng_def (sct, "c", 80);
+  h = ini_get_lng_def (sct, "h", 2);
+  s = ini_get_lng_def (sct, "s", 18);
+  vc = ini_get_lng_def (sct, "visible_c", 0);
+  vh = ini_get_lng_def (sct, "visible_h", 0);
+  vs = ini_get_lng_def (sct, "visible_s", 0);
 
-    fname = ini_get_str (sct, "file");
-    cowname = ini_get_str (sct, "cow");
+  ro = ini_get_lng_def (sct, "readonly", 0);
 
-    c = ini_get_lng_def (sct, "c", 80);
-    h = ini_get_lng_def (sct, "h", 2);
-    s = ini_get_lng_def (sct, "s", 18);
-    vc = ini_get_lng_def (sct, "visible_c", 0);
-    vh = ini_get_lng_def (sct, "visible_h", 0);
-    vs = ini_get_lng_def (sct, "visible_s", 0);
-
-    ro = ini_get_lng_def (sct, "readonly", 0);
-
-    if (strcmp (type, "ram") == 0) {
-      dsk = dsk_ram_open (fname, c, h, s, ro);
+  if (strcmp (type, "ram") == 0) {
+    dsk = dsk_ram_open (fname, c, h, s, ro);
+  }
+  else if (strcmp (type, "image") == 0) {
+    dsk = dsk_img_open (fname, c, h, s, ro);
+    if (dsk != NULL) {
+      dsk_img_set_offset (dsk, ini_get_lng_def (sct, "offset", 0));
     }
-    else if (strcmp (type, "image") == 0) {
-      dsk = dsk_img_open (fname, c, h, s, ro);
-      if (dsk != NULL) {
-        dsk_img_set_offset (dsk, ini_get_lng_def (sct, "offset", 0));
-      }
-    }
-    else if (strcmp (type, "dosemu") == 0) {
-      dsk = dsk_dosemu_open (fname, ro);
-    }
-    else if (strcmp (type, "pce") == 0) {
-      dsk = dsk_pce_open (fname, ro);
-    }
-    else if (strcmp (type, "partition") == 0) {
-      ini_sct_t     *p;
-      unsigned long start;
-      unsigned long blk_i, blk_n;
-      const char    *fname;
+  }
+  else if (strcmp (type, "dosemu") == 0) {
+    dsk = dsk_dosemu_open (fname, ro);
+  }
+  else if (strcmp (type, "pce") == 0) {
+    dsk = dsk_pce_open (fname, ro);
+  }
+  else if (strcmp (type, "partition") == 0) {
+    ini_sct_t     *p;
+    unsigned long start;
+    unsigned long blk_i, blk_n;
+    const char    *fname;
 
-      dsk = dsk_part_open (c, h, s, ro);
+    dsk = dsk_part_open (c, h, s, ro);
 
+    if (dsk != NULL) {
       p = ini_sct_find_sct (sct, "partition");
       while (p != NULL) {
         start = ini_get_lng_def (p, "offset", 0);
@@ -623,51 +619,80 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
         p = ini_sct_find_next (p, "partition");
       }
     }
-    else if (strcmp (type, "auto") == 0) {
-      dsk = dsk_auto_open (fname, ro);
+  }
+  else if (strcmp (type, "auto") == 0) {
+    dsk = dsk_auto_open (fname, ro);
+  }
+  else {
+    dsk = NULL;
+  }
+
+  if (dsk == NULL) {
+    pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
+    return (NULL);
+  }
+
+  dsk_set_drive (dsk, drive);
+
+  val = ini_sct_find_val (sct, "cow");
+  while (val != NULL) {
+    const char *cname;
+
+    cname = ini_val_get_str (val);
+    if (cname == NULL) {
+      dsk_del (dsk);
+      return (NULL);
+    }
+
+    cow = dsk_cow_new (dsk, cowname);
+
+    if (cow == NULL) {
+      pce_log (MSG_ERR, "*** loading drive 0x%02x failed (cow)\n", drive);
+      dsk_del (dsk);
+      return (NULL);
     }
     else {
-      dsk = NULL;
+      dsk = cow;
     }
 
-    if (dsk != NULL) {
-      dsk_set_drive (dsk, drive);
-    }
+    val = ini_val_find_next (val, "cow");
+  }
+
+  vc = (vc == 0) ? dsk->c : vc;
+  vh = (vh == 0) ? dsk->h : vh;
+  vs = (vs == 0) ? dsk->s : vs;
+
+  dsk_set_visible_chs (dsk, vc, vh, vs);
+
+  pce_log (MSG_INF,
+    "disk:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u ro=%d file=%s\n",
+    drive, type,
+    dsk->c, dsk->h, dsk->s,
+    dsk->visible_c, dsk->visible_h, dsk->visible_s,
+    ro,
+    (fname != NULL) ? fname : "<>"
+  );
+
+  return (dsk);
+}
+
+static
+void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t  *sct;
+  disk_t     *dsk;
+
+  pc->dsk = dsks_new();
+
+  sct = ini_sct_find_sct (ini, "disk");
+
+  while (sct != NULL) {
+    dsk = pc_setup_disk (sct);
 
     if (dsk != NULL) {
-      if (cowname != NULL) {
-        cow = dsk_cow_new (dsk, cowname);
-
-        if (cow == NULL) {
-          pce_log (MSG_ERR, "*** loading drive 0x%02x failed (cow)\n", drive);
-          dsk_del (dsk);
-          dsk = NULL;
-        }
-        else {
-          dsk = cow;
-        }
-      }
-    }
-
-    if (dsk != NULL) {
-      vc = (vc == 0) ? dsk->c : vc;
-      vh = (vh == 0) ? dsk->h : vh;
-      vs = (vs == 0) ? dsk->s : vs;
-
-      dsk_set_visible_chs (dsk, vc, vh, vs);
-
-      pce_log (MSG_INF,
-        "disk:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u ro=%d file=%s\n",
-        drive, type,
-        dsk->c, dsk->h, dsk->s,
-        dsk->visible_c, dsk->visible_h, dsk->visible_s,
-        ro,
-        (fname != NULL) ? fname : "<>"
-      );
-
       dsks_add_disk (pc->dsk, dsk);
 
-      if (drive < 0x80) {
+      if (dsk_get_drive (dsk) < 0x80) {
         /* if floppy disk increase number of floppy disks in config word */
         if (pc->ppi_port_a[0] & 0x01) {
           pc->ppi_port_a[0] = (pc->ppi_port_a[0] + 0x40) & 0xff;
@@ -677,9 +702,8 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
         }
       }
     }
-
-    if (dsk == NULL) {
-      pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
+    else {
+      pce_log (MSG_ERR, "*** loading drive failed\n");
     }
 
     sct = ini_sct_find_next (sct, "disk");

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.c                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -69,7 +69,7 @@ void s6502_setup_ram (sim6502_t *sim, ini_sct_t *ini)
 
     ram = mem_blk_new (base, size, 1);
     mem_blk_clear (ram, 0x00);
-    mem_blk_set_ro (ram, 0);
+    mem_blk_set_readonly (ram, 0);
     mem_add_blk (sim->mem, ram, 1);
 
     if (base == 0) {
@@ -105,7 +105,7 @@ void s6502_setup_rom (sim6502_t *sim, ini_sct_t *ini)
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
-    mem_blk_set_ro (rom, 1);
+    mem_blk_set_readonly (rom, 1);
     mem_add_blk (sim->mem, rom, 1);
 
     if (s6502_load_ram (rom, fname)) {

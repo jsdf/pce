@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/sparc32.h                                  *
  * Created:       2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-10-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,16 +27,7 @@
 #define SPARC32_H 1
 
 
-#if defined (HAVE_STDINT_H)
 #include <stdint.h>
-#elif defined (HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
-#endif
 
 
 struct sparc32_s;

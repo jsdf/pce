@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.h                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,20 +27,42 @@
 #define PCE_SIMARM_PCI_H 1
 
 
+#define PCIID_INTEL_IXP2400 0x9001
+#define PCIID_INTEL_IXP2800 0x9004
+
+
 typedef struct {
-  mem_blk_t mem;
+  memory_t  asio;
 
-  pci_bus_t pci;
-} ixp_pci_t;
+  mem_blk_t pci_cfg;
+  mem_blk_t pci_io;
+  mem_blk_t pci_mem;
+  mem_blk_t pci_special;
+  mem_blk_t pci_pcicfg;
+  mem_blk_t pci_csr;
+
+  pci_bus_t bus;
+
+  pci_dev_t dev;
+
+  uint32_t  pci_control;
+  uint32_t  pci_addr_ext;
+  uint32_t  xscale_int_enable;
+} pci_ixp_t;
 
 
-void ixppci_init (ixp_pci_t *pci, unsigned long base);
-void ixppci_free (ixp_pci_t *pci);
+void pci_ixp_init (pci_ixp_t *ixp);
+void pci_ixp_free (pci_ixp_t *ixp);
 
-ixp_pci_t *ixppci_new (unsigned long base);
-void ixppci_del (ixp_pci_t *pci);
+pci_ixp_t *pci_ixp_new (void);
+void pci_ixp_del (pci_ixp_t *ixp);
 
-mem_blk_t *ixppci_get_mem (ixp_pci_t *pci, unsigned i);
+mem_blk_t *pci_ixp_get_mem_io (pci_ixp_t *ixp);
+mem_blk_t *pci_ixp_get_mem_cfg (pci_ixp_t *ixp);
+mem_blk_t *pci_ixp_get_mem_special (pci_ixp_t *ixp);
+mem_blk_t *pci_ixp_get_mem_pcicfg (pci_ixp_t *ixp);
+mem_blk_t *pci_ixp_get_mem_csr (pci_ixp_t *ixp);
+mem_blk_t *pci_ixp_get_mem_mem (pci_ixp_t *ixp);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -50,11 +50,11 @@ void sarm_setup_ram (simarm_t *sim, ini_sct_t *ini)
 
     ram = mem_blk_new (base, size, 1);
     mem_blk_clear (ram, 0x00);
-    mem_blk_set_ro (ram, 0);
+    mem_blk_set_readonly (ram, 0);
     mem_add_blk (sim->mem, ram, 1);
 
     if (base == 0) {
-      arm_set_ram (sim->cpu, mem_blk_get_data (ram), mem_blk_get_size (ram));
+      sim->ram = ram;
     }
 
     if (fname != NULL) {
@@ -88,7 +88,7 @@ void sarm_setup_rom (simarm_t *sim, ini_sct_t *ini)
 
     rom = mem_blk_new (base, size, 1);
     mem_blk_clear (rom, 0x00);
-    mem_blk_set_ro (rom, 1);
+    mem_blk_set_readonly (rom, 1);
     mem_add_blk (sim->mem, rom, 1);
 
     if (fname != NULL) {
@@ -126,6 +126,10 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
     &mem_set_uint16_le,
     &mem_set_uint32_le
   );
+
+  if (sim->ram != NULL) {
+    arm_set_ram (sim->cpu, mem_blk_get_data (sim->ram), mem_blk_get_size (sim->ram));
+  }
 }
 
 static
@@ -249,9 +253,30 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 static
 void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 {
-  sim->pci = ixppci_new (0xda000000UL);
+  sim->pci = pci_ixp_new();
 
-  mem_add_blk (sim->mem, ixppci_get_mem (sim->pci, 0), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_io (sim->pci), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_cfg (sim->pci), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_special (sim->pci), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_pcicfg (sim->pci), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_csr (sim->pci), 0);
+  mem_add_blk (sim->mem, pci_ixp_get_mem_mem (sim->pci), 0);
+
+  pci_set_irq_f (&sim->pci->bus, NULL, NULL);
+
+  pce_log (MSG_INF, "PCI:\tinitialized\n");
+}
+
+static
+void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
+{
+  pci_ata_init (&sim->pciata);
+
+  pci_dev_set_irq_f (&sim->pciata.pci, 0, pci_set_intr_a, &sim->pci->bus);
+
+  pci_set_device (&sim->pci->bus, &sim->pciata.pci, 4);
+
+  pce_log (MSG_INF, "PCI0:\tATA\n");
 }
 
 static
@@ -307,6 +332,7 @@ simarm_t *sarm_new (ini_sct_t *ini)
     return (NULL);
   }
 
+  sim->ram = NULL;
   sim->brk = 0;
   sim->clk_cnt = 0;
 
@@ -325,6 +351,7 @@ simarm_t *sarm_new (ini_sct_t *ini)
   sarm_setup_timer (sim, ini);
   sarm_setup_serport (sim, ini);
   sarm_setup_pci (sim, ini);
+  sarm_setup_ata (sim, ini);
 
   sarm_load_mem (sim, ini);
 
@@ -337,10 +364,12 @@ void sarm_del (simarm_t *sim)
     return;
   }
 
+  pci_ata_free (&sim->pciata);
+  pci_ixp_del (sim->pci);
+
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
 
-  ixppci_del (sim->pci);
   tmr_del (sim->timer);
   ict_del (sim->intc);
 
