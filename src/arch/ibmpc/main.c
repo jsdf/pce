@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -658,6 +658,10 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
   pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
     e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
   );
+
+#ifndef PCE_HOST_DOS
+  usleep (100000UL);
+#endif
 
   trm_check (pc->trm);
 }
