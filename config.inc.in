@@ -23,6 +23,9 @@ CC_FLG		= $(CFLAGS) -I$(reldir)/src
 NASM		= @NASM@
 PCE_HAVE_NASM	:= @PCE_HAVE_NASM@
 
+IHEX		= @IHEX@
+PCE_HAVE_IHEX	:= @PCE_HAVE_IHEX@
+
 LD              = @CC@
 LDFLAGS		= @LDFLAGS@
 LD_FLG          = $(LDFLAGS)

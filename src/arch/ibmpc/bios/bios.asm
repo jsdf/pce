@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2004-09-26 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -2561,6 +2561,7 @@ L_EE64:
 
 
 ; get dpt parameter (bx / 2) in AH.
+; if (bx & 1) send that parameter to fdc
 dpt_get_param:                          ; EE6C
 L_EE6C:
   push    ds
@@ -2680,42 +2681,59 @@ L_EEE0:
 
 
 L_EF12:
-  call    L_EF33
+  call    L_EF33                        ; wait for floppy interrupt
   jc      L_EF2B
-db 0xB4, 0x08                           ; EF17 mov ah,0x8
-db 0xE8, 0x25, 0xFF                     ; EF19 call 0xee41
-db 0xE8, 0x4A, 0x00                     ; EF1C call 0xef69
-db 0x72, 0x0A                           ; EF1F jc 0xef2b
-db 0xA0, 0x42, 0x00                     ; EF21 mov al,[0x42]
-db 0x24, 0x60                           ; EF24 and al,0x60
-db 0x3C, 0x60                           ; EF26 cmp al,0x60
-db 0x74, 0x02                           ; EF28 jz 0xef2c
-db 0xF8                                 ; EF2A clc
+
+  mov     ah, 0x08
+  call    L_EE41                        ; send ah to fdc
+
+  call    L_EF69                        ; read result bytes from fdc
+  jc      L_EF2B
+
+  mov     al, [0x0042]
+  and     al, 0x60
+  cmp     al, 0x60
+  je      L_EF2C
+
+  clc
+
 L_EF2B:
   ret
-db 0x80, 0x0E, 0x41, 0x00, 0x40         ; EF2C or byte [0x41],0x40
-db 0xF9                                 ; EF31 stc
-db 0xC3                                 ; EF32 ret
 
+L_EF2C:
+  or      byte [0x0041], 0x40
+  stc
+  ret
+
+
+; wait for floppy interrupt
 L_EF33:
-db 0xFB                                 ; EF33 sti
-db 0x53                                 ; EF34 push bx
-db 0x51                                 ; EF35 push cx
-db 0xB3, 0x02                           ; EF36 mov bl,0x2
-db 0x33, 0xC9                           ; EF38 xor cx,cx
-db 0xF6, 0x06, 0x3E, 0x00, 0x80         ; EF3A test byte [0x3e],0x80
-db 0x75, 0x0C                           ; EF3F jnz 0xef4d
-db 0xE2, 0xF7                           ; EF41 loop 0xef3a
-db 0xFE, 0xCB                           ; EF43 dec bl
-db 0x75, 0xF3                           ; EF45 jnz 0xef3a
-db 0x80, 0x0E, 0x41, 0x00, 0x80         ; EF47 or byte [0x41],0x80
-db 0xF9                                 ; EF4C stc
-db 0x9C                                 ; EF4D pushf
-db 0x80, 0x26, 0x3E, 0x00, 0x7F         ; EF4E and byte [0x3e],0x7f
-db 0x9D                                 ; EF53 popf
-db 0x59                                 ; EF54 pop cx
-db 0x5B                                 ; EF55 pop bx
-db 0xC3                                 ; EF56 ret
+  sti
+  push    bx
+  push    cx
+
+  mov     bl, 0x02
+  xor     cx, cx
+
+L_EF3A:
+  test    byte [0x003e], 0x80           ; check for floppy interrupt
+  jnz     L_EF4D
+  loop    L_EF3A
+
+  dec     bl
+  jnz     L_EF3A
+
+  or      byte [0x0041], 0x80           ; timeout
+  stc
+
+L_EF4D:
+  pushf
+  and     byte [0x003e], 0x7f           ; clear floppy interrupt flag
+  popf
+
+  pop     cx
+  pop     bx
+  ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2739,46 +2757,71 @@ int_0e:                                 ; EF57
   iret
 
 
-db 0xFC                                 ; EF69 cld
-db 0xBF, 0x42, 0x00                     ; EF6A mov di,0x42
-db 0x51                                 ; EF6D push cx
-db 0x52                                 ; EF6E push dx
-db 0x53                                 ; EF6F push bx
-db 0xB3, 0x07                           ; EF70 mov bl,0x7
-db 0x33, 0xC9                           ; EF72 xor cx,cx
-db 0xBA, 0xF4, 0x03                     ; EF74 mov dx,0x3f4
-db 0xEC                                 ; EF77 in al,dx
-db 0xA8, 0x80                           ; EF78 test al,0x80
-db 0x75, 0x0C                           ; EF7A jnz 0xef88
-db 0xE2, 0xF9                           ; EF7C loop 0xef77
-db 0x80, 0x0E, 0x41, 0x00, 0x80         ; EF7E or byte [0x41],0x80
-db 0xF9                                 ; EF83 stc
-db 0x5B                                 ; EF84 pop bx
-db 0x5A                                 ; EF85 pop dx
-db 0x59                                 ; EF86 pop cx
-db 0xC3                                 ; EF87 ret
-db 0xEC                                 ; EF88 in al,dx
-db 0xA8, 0x40                           ; EF89 test al,0x40
-db 0x75, 0x07                           ; EF8B jnz 0xef94
-db 0x80, 0x0E, 0x41, 0x00, 0x20         ; EF8D or byte [0x41],0x20
-db 0xEB, 0xEF                           ; EF92 jmp short 0xef83
-db 0x42                                 ; EF94 inc dx
-db 0xEC                                 ; EF95 in al,dx
-db 0x88, 0x05                           ; EF96 mov [di],al
-db 0x47                                 ; EF98 inc di
-db 0xB9, 0x0A, 0x00                     ; EF99 mov cx,0xa
-db 0xE2, 0xFE                           ; EF9C loop 0xef9c
-db 0x4A                                 ; EF9E dec dx
-db 0xEC                                 ; EF9F in al,dx
-db 0xA8, 0x10                           ; EFA0 test al,0x10
-db 0x74, 0x06                           ; EFA2 jz 0xefaa
-db 0xFE, 0xCB                           ; EFA4 dec bl
-db 0x75, 0xCA                           ; EFA6 jnz 0xef72
-db 0xEB, 0xE3                           ; EFA8 jmp short 0xef8d
-db 0x5B                                 ; EFAA pop bx
-db 0x5A                                 ; EFAB pop dx
-db 0x59                                 ; EFAC pop cx
-db 0xC3                                 ; EFAD ret
+L_EF69:
+  cld
+  mov     di, 0x0042
+
+  push    cx
+  push    dx
+  push    bx
+
+  mov     bl, 0x07                      ; maximum number of bytes
+
+L_EF72:
+  xor     cx, cx
+  mov     dx, 0x03f4
+
+L_EF77:
+  in      al, dx
+  test    al, 0x80
+  jnz     L_EF88
+  loop    L_EF77
+
+  or      byte [0x0041], 0x80           ; timeout
+
+L_EF83:
+  stc
+
+  pop     bx
+  pop     dx
+  pop     cx
+  ret
+
+L_EF88:
+  in      al, dx
+  test    al, 0x40
+  jnz     L_EF94
+
+L_EF8D:
+  or      byte [0x0041], 0x20
+  jmp     short L_EF83
+
+L_EF94:
+  inc     dx
+  in      al, dx                        ; read result byte
+  mov     [di], al                      ; store byte
+  inc     di
+
+  mov     cx, 0x000a
+L_EF9C:
+  loop    L_EF9C
+
+  dec     dx
+  in      al, dx
+  test    al, 0x10
+  jz      L_EFAA
+
+  dec     bl
+  jnz     L_EF72
+
+  jmp     short L_EF8D
+
+L_EFAA:
+  pop     bx
+  pop     dx
+  pop     cx
+  ret
+
 db 0xA0, 0x45, 0x00                     ; EFAE mov al,[0x45]
 db 0x3A, 0xC5                           ; EFB1 cmp al,ch
 db 0xA0, 0x47, 0x00                     ; EFB3 mov al,[0x47]

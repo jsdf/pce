@@ -168,18 +168,25 @@ case "$INSTALL" in
 	;;
 esac
 AC_PATH_PROG(AR, ar, ar)
-AC_PATH_PROG(NASM, nasm,)
 AC_PATH_PROG(GZ, gzip, gzip)
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 
-
+AC_PATH_PROG(NASM, nasm,)
 if test -x "$NASM" ; then
 	PCE_HAVE_NASM=1
 else
 	PCE_HAVE_NASM=0
 fi
 AC_SUBST(PCE_HAVE_NASM)
+
+AC_PATH_PROG(IHEX, ihex,)
+if test -x "$IHEX" ; then
+	PCE_HAVE_IHEX=1
+else
+	PCE_HAVE_IHEX=0
+fi
+AC_SUBST(PCE_HAVE_IHEX)
 
 
 #-----------------------------------------------------------------------------
