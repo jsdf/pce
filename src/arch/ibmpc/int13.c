@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -293,7 +293,7 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
   dsk = dsks_get_disk (dsks, drive);
 
   if (dsk == NULL) {
-    dsk_int13_set_status (dsks, cpu, 0x01);
+    dsk_int13_set_status (dsks, cpu, 0x0c);
     return;
   }
 
@@ -304,6 +304,35 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
   e86_set_cf (cpu, 0);
 }
 #endif
+
+static
+void dsk_int13_18 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned drive;
+  unsigned c, s;
+  disk_t   *dsk;
+
+  drive = e86_get_dl (cpu);
+  dsk = dsks_get_disk (dsks, drive);
+
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 0x01);
+    return;
+  }
+
+  c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
+  s = e86_get_cl (cpu) & 0x3f;
+
+  if ((c <= dsk->visible_c) && (s <= dsk->visible_s)) {
+    /* this is a hack: return current int 0x1e as drive parameter table */
+    e86_set_es (cpu, e86_get_mem16 (cpu, 0x0000, 0x007a));
+    e86_set_di (cpu, e86_get_mem16 (cpu, 0x0000, 0x0078));
+    dsk_int13_set_status (dsks, cpu, 0x00);
+  }
+  else {
+    dsk_int13_set_status (dsks, cpu, 0x0c);
+  }
+}
 
 void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {
@@ -353,8 +382,10 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       break;
 
     case 0x17:
-    case 0x18:
       dsk_int13_set_status (dsks, cpu, 0x00);
+
+    case 0x18:
+      dsk_int13_18 (dsks, cpu);
       break;
 
     default:
