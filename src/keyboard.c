@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     keyboard.c                                                 *
+ * File name:     src/keyboard.c                                             *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.6 2003/04/20 20:36:28 hampa Exp $ */
+/* $Id: keyboard.c,v 1.7 2003/04/21 13:34:51 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -90,29 +90,26 @@ void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned l
 
 unsigned long keymap_get_key (keymap_t *map, unsigned char **seq, unsigned *cnt)
 {
-  unsigned c;
-  unsigned i;
+  unsigned      i, c;
+  unsigned long ret;
+
+  ret = 0;
 
   i = 0;
 
-  while (i < *cnt) {
+  while ((i < *cnt) && (map != NULL)) {
     c = *(*seq + i) & 0xff;
 
     i += 1;
 
-    if (map->map[c] == NULL) {
-      if (map->key[c] != 0) {
-        *seq += i;
-        *cnt -= i;
-      }
-
-      return (map->key[c]);
-    }
-
+    ret = map->key[c];
     map = map->map[c];
   }
 
-  return (0);
+  *seq += i;
+  *cnt -= i;
+
+  return (ret);
 }
 
 keyboard_t *key_new (void)
