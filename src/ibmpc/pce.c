@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.12 2003/08/19 17:07:15 hampa Exp $ */
+/* $Id: pce.c,v 1.13 2003/08/20 15:47:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -49,6 +49,9 @@ typedef struct breakpoint_t {
   unsigned            reset;
 } breakpoint_t;
 
+
+char                      *par_terminal = NULL;
+char                      *par_video = NULL;
 
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
@@ -80,6 +83,8 @@ void prt_help (void)
     "  --version              Print version information\n"
     "  -c, --config string    Set the config file\n"
     "  -l, --log string       Set the log file\n"
+    "  -t, --terminal string  Set terminal\n"
+    "  -g, --video string     Set video device\n"
     "  -r, --run              Start running immediately\n",
     stdout
   );
@@ -1645,6 +1650,22 @@ int main (int argc, char *argv[])
         return (1);
       }
       pce_log_set_fname (argv[i]);
+    }
+    else if (str_isarg2 (argv[i], "-t", "--terminal")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+
+      par_terminal = argv[i];
+    }
+    else if (str_isarg2 (argv[i], "-g", "--video")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+
+      par_video = argv[i];
     }
     else if (str_isarg2 (argv[i], "-r", "--run")) {
       run = 1;

@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.5 2003/08/19 17:07:15 hampa Exp $
+# $Id: pce.cfg.in,v 1.6 2003/08/20 15:47:28 hampa Exp $
 
 section pc {
 	section ram {
@@ -48,8 +48,11 @@ section pc {
 	section cga {
 	}
 
-#	section mda {
-#	}
+	section hgc {
+	}
+
+	section mda {
+	}
 
 	section parport {
 		base = 0x378
