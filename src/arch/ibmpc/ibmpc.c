@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1222,10 +1222,20 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (1);
   }
+  else if (strcmp (msg, "emu.stop") == 0) {
+    pc->brk = PCE_BRK_STOP;
+  }
+  else if (strcmp (msg, "emu.exit") == 0) {
+    pc->brk = PCE_BRK_ABORT;
+  }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-  if (strcmp (msg, "video.redraw") == 0) {
+  if (strcmp (msg, "cpu.int28") == 0) {
+    par_int28 = 1000UL * strtoul (val, NULL, 0);
+    return (0);
+  }
+  else if (strcmp (msg, "video.redraw") == 0) {
     pce_video_update (pc->video);
     return (0);
   }
@@ -1255,6 +1265,10 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     trm_set_size (pc->trm, w, h);
     pce_video_update (pc->video);
 
+    return (0);
+  }
+  else if (strcmp (msg, "disk.boot") == 0) {
+    par_boot = strtoul (val, NULL, 0);
     return (0);
   }
   else if (strcmp (msg, "disk.commit") == 0) {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1005,7 +1005,6 @@ void do_h (cmd_t *cmd)
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
     "far                       run until cs changes\n"
-    "disk drive fname [c h s]  set a new disk image\n"
     "dump what fname           dump to file (ram|video)\n"
     "g [b]                     run with or without breakpoints\n"
     "int28 [on|off|val]        turn int28 sleeping on/off\n"
