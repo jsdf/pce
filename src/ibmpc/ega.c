@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.10 2003/09/24 08:09:34 hampa Exp $ */
+/* $Id: ega.c,v 1.11 2003/09/28 08:31:29 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1298,6 +1298,7 @@ void ega_clock (ega_t *ega, unsigned long cnt)
     if (upd_cnt > 16) {
       upd_cnt = 0;
       ega_update (ega);
+      ega->update = 0;
     }
   }
 }
