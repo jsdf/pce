@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -115,6 +115,9 @@ void arm_init (arm_t *c)
   c->set_uint16 = NULL;
   c->set_uint32 = NULL;
 
+  c->ram = NULL;
+  c->ram_cnt = 0;
+
   c->log_ext = NULL;
   c->log_opcode = NULL;
   c->log_undef = NULL;
@@ -183,6 +186,12 @@ void arm_set_mem_fct (arm_t *c, void *ext,
   c->set_uint8 = set8;
   c->set_uint16 = set16;
   c->set_uint32 = set32;
+}
+
+void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt)
+{
+  c->ram = ram;
+  c->ram_cnt = cnt;
 }
 
 unsigned long long arm_get_opcnt (arm_t *c)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -52,6 +52,10 @@ void sarm_setup_ram (simarm_t *sim, ini_sct_t *ini)
     mem_blk_clear (ram, 0x00);
     mem_blk_set_ro (ram, 0);
     mem_add_blk (sim->mem, ram, 1);
+
+    if (base == 0) {
+      arm_set_ram (sim->cpu, mem_blk_get_data (ram), mem_blk_get_size (ram));
+    }
 
     if (fname != NULL) {
       if (pce_load_blk_bin (ram, fname)) {
@@ -243,6 +247,14 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 }
 
 static
+void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
+{
+  sim->pci = ixppci_new (0xda000000UL);
+
+  mem_add_blk (sim->mem, ixppci_get_mem (sim->pci, 0), 0);
+}
+
+static
 void sarm_load_mem (simarm_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
@@ -312,6 +324,7 @@ simarm_t *sarm_new (ini_sct_t *ini)
   sarm_setup_intc (sim, ini);
   sarm_setup_timer (sim, ini);
   sarm_setup_serport (sim, ini);
+  sarm_setup_pci (sim, ini);
 
   sarm_load_mem (sim, ini);
 
@@ -327,8 +340,8 @@ void sarm_del (simarm_t *sim)
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
 
+  ixppci_del (sim->pci);
   tmr_del (sim->timer);
-
   ict_del (sim->intc);
 
   arm_del (sim->cpu);

@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -201,6 +200,9 @@ typedef struct arm_s {
   arm_set_uint16_f   set_uint16;
   arm_set_uint32_f   set_uint32;
 
+  unsigned char      *ram;
+  unsigned long      ram_cnt;
+
   void               *log_ext;
   int                (*log_opcode) (void *ext, unsigned long ir);
   void               (*log_undef) (void *ext, unsigned long ir);
@@ -283,6 +285,8 @@ void arm_set_mem_fct (arm_t *c, void *ext,
   void *get8, void *get16, void *get32,
   void *set8, void *set16, void *set32
 );
+
+void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt);
 
 /*!***************************************************************************
  * @short Get the number of executed instructions

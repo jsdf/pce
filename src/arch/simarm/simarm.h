@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.h                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -91,8 +91,8 @@ typedef struct simarm_s {
   nvram_t            *nvr;
 
   ixp_intc_t         *intc;
-
   ixp_timer_t        *timer;
+  ixp_pci_t          *pci;
 
   serport_t          *serport[2];
 

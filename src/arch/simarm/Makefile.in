@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := cmd_arm intc main sercons simarm timer
+FILES := cmd_arm intc main pci sercons simarm timer
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -26,6 +26,7 @@ OBJ_EXT	:= \
 	$(pcedst)/cpu/arm/arm.a \
 	$(pcedst)/chipset/e8250.o \
 	$(pcedst)/devices/memory.o \
+	$(pcedst)/devices/pci.o \
 	$(pcedst)/devices/serport.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
@@ -41,6 +42,7 @@ HDR_EXT	:= \
 	cpu/arm/arm.h \
 	chipset/e8250.h \
 	devices/memory.h \
+	devices/pci.h \
 	devices/serport.h \
 	lib/brkpt.h \
 	lib/cmd.h \
@@ -82,6 +84,7 @@ simarm.cfg: simarm.cfg.in
 cmd_arm.o:	cmd_arm.c $(SDP)
 intc.o:		intc.c $(SDP)
 main.o:		main.c $(SDP)
+pci.o:		pci.c $(SDP)
 sercons.o:	sercons.c $(SDP)
 simarm.o:	simarm.c $(SDP)
 timer.o:	timer.c $(SDP)

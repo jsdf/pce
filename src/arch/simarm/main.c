@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -139,6 +139,9 @@ void prt_state (simarm_t *sim, FILE *fp, const char *str)
     }
     else if (cmd_match (&cmd, "mmu")) {
       sarm_prt_state_mmu (sim->cpu, fp);
+    }
+    else if (cmd_match (&cmd, "timer")) {
+      sarm_prt_state_timer (sim->timer, fp);
     }
     else {
       printf ("unknown component (%s)\n", cmd_get_str (&cmd));

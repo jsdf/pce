@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -204,6 +204,29 @@ void sarm_prt_state_mmu (arm_t *c, FILE *fp)
     (unsigned long) p->reg[11],
     (unsigned long) p->reg[15]
   );
+}
+
+void sarm_prt_state_timer (ixp_timer_t *tmr, FILE *fp)
+{
+  unsigned            i;
+  ixp_timer_counter_t *cnt;
+
+  prt_sep (fp, "IXP TIMER");
+
+  fprintf (fp, "ADDR=%08lX\n", tmr->base);
+
+  for (i = 0; i < 4; i++) {
+    cnt = &tmr->cntr[i];
+
+    fprintf (fp, "T%u: %c VAL=%08lX LOAD=%08lX CTL=%08lX IRQ=%d\n",
+      i,
+      tmr_get_active (tmr, i) ? 'R' : 'S',
+      (unsigned long) cnt->status,
+      (unsigned long) cnt->load,
+      (unsigned long) cnt->ctrl,
+      cnt->irq_val != 0
+    );
+  }
 }
 
 

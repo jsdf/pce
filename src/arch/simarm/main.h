@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.h                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -31,8 +31,12 @@
 
 #include <cpu/arm/arm.h>
 
+#include <devices/memory.h>
+#include <devices/pci.h>
+
 #include "timer.h"
 #include "intc.h"
+#include "pci.h"
 #include "simarm.h"
 #include "sercons.h"
 #include "cmd_arm.h"

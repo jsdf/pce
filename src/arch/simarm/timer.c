@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.c                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -204,6 +204,15 @@ mem_blk_t *tmr_get_io (ixp_timer_t *tmr, unsigned i)
   }
 
   return (NULL);
+}
+
+int tmr_get_active (ixp_timer_t *tmr, unsigned i)
+{
+  if (tmr->cntr[3].ctrl & IXP_TIMER_ACT) {
+    return (1);
+  }
+
+  return (0);
 }
 
 void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext)

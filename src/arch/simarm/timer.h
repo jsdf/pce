@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.h                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -25,9 +25,6 @@
 
 #ifndef PCE_SIMARM_TIMER_H
 #define PCE_SIMARM_TIMER_H 1
-
-
-#include <devices/memory.h>
 
 
 typedef struct {
@@ -64,6 +61,8 @@ void tmr_free (ixp_timer_t *tmr);
 void tmr_del (ixp_timer_t *tmr);
 
 mem_blk_t *tmr_get_io (ixp_timer_t *tmr, unsigned i);
+
+int tmr_get_active (ixp_timer_t *tmr, unsigned i);
 
 void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext);
 
