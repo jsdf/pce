@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.10 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: e8086.h,v 1.11 2003/04/24 12:22:06 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -71,18 +71,27 @@
 #define E86_PQ_SIZE 6
 
 
+typedef unsigned char (*e86_get_uint8_f) (void *ext, unsigned long addr);
+typedef unsigned short (*e86_get_uint16_f) (void *ext, unsigned long addr);
+typedef void (*e86_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
+typedef void (*e86_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
+
+
 typedef struct {
-  unsigned char (*mem_get_uint8) (void *mem, unsigned long addr);
-  unsigned short (*mem_get_uint16) (void *mem, unsigned long addr);
+  void             *mem;
+  e86_get_uint8_f  mem_get_uint8;
+  e86_set_uint8_f  mem_set_uint8;
+  e86_get_uint16_f mem_get_uint16;
+  e86_set_uint16_f mem_set_uint16;
 
-  void (*mem_set_uint8) (void *mem, unsigned long addr, unsigned char val);
-  void (*mem_set_uint16) (void *mem, unsigned long addr, unsigned short val);
+  void             *prt;
+  e86_get_uint8_f  prt_get_uint8;
+  e86_set_uint8_f  prt_set_uint8;
+  e86_get_uint16_f prt_get_uint16;
+  e86_set_uint16_f prt_set_uint16;
 
-  unsigned char (*prt_get_uint8) (void *mem, unsigned long addr);
-  unsigned short (*prt_get_uint16) (void *mem, unsigned long addr);
-
-  void (*prt_set_uint8) (void *mem, unsigned long addr, unsigned char val);
-  void (*prt_set_uint16) (void *mem, unsigned long addr, unsigned short val);
+  unsigned char *ram;
+  unsigned long ram_cnt;
 
   void          *inta_ext;
   unsigned char (*inta) (void *ext);
@@ -91,9 +100,6 @@ typedef struct {
   void (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
   void (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
   void (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
-
-  void *mem;
-  void *prt;
 
   unsigned short dreg[8];
   unsigned short sreg[4];
@@ -233,22 +239,49 @@ typedef struct {
 #define e86_get_linear(seg, ofs) \
   ((((seg) & 0xffff) << 4) + ((ofs) & 0xffff))
 
-#define e86_get_mem8(cpu, seg, ofs) \
-  ((cpu)->mem_get_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff))
+static inline
+unsigned char e86_get_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs)
+{
+  unsigned long addr = e86_get_linear (seg, ofs);
+  return ((addr < c->ram_cnt) ? c->ram[addr] : c->mem_get_uint8 (c->mem, addr));
+}
 
-#define e86_get_mem16(cpu, seg, ofs) \
-  ((cpu)->mem_get_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff))
+static inline
+void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned char val)
+{
+  unsigned long addr = e86_get_linear (seg, ofs);
+  if (addr < c->ram_cnt) {
+    c->ram[addr] = val;
+  }
+  else {
+    c->mem_set_uint8 (c->mem, addr, val);
+  }
+}
 
-#define e86_set_mem8(cpu, seg, ofs, val) \
-  do { \
-    (cpu)->mem_set_uint8 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val); \
-  } while (0)
+static inline
+unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs)
+{
+  unsigned long addr = e86_get_linear (seg, ofs);
+  if (addr < c->ram_cnt) {
+    return (c->ram[addr] + (c->ram[addr + 1] << 8));
+  }
+  else {
+    return (c->mem_get_uint16 (c->mem, addr));
+  }
+}
 
-#define e86_set_mem16(cpu, seg, ofs, val) \
-  do { \
-    (cpu)->mem_set_uint16 ((cpu)->mem, e86_get_linear (seg, ofs) & 0xfffff, val); \
-  } while (0)
-
+static inline
+void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
+{
+  unsigned long addr = e86_get_linear (seg, ofs);
+  if (addr < c->ram_cnt) {
+    c->ram[addr] = val & 0xff;
+    c->ram[addr + 1] = (val >> 8) & 0xff;
+  }
+  else {
+    c->mem_set_uint16 (c->mem, addr, val);
+  }
+}
 
 #define e86_get_prt8(cpu, ofs) \
   (cpu)->prt_get_uint8 ((cpu)->prt, ofs)
@@ -269,7 +302,20 @@ void e86_del (e8086_t *c);
 
 void e86_reset (e8086_t *c);
 
+void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt);
+
+void e86_set_mem (e8086_t *c, void *mem,
+  e86_get_uint8_f get8, e86_set_uint8_f set8,
+  e86_get_uint16_f get16, e86_set_uint16_f set16
+);
+
+void e86_set_prt (e8086_t *c, void *prt,
+  e86_get_uint8_f get8, e86_set_uint8_f set8,
+  e86_get_uint16_f get16, e86_set_uint16_f set16
+);
+
 void e86_irq (e8086_t *cpu, unsigned val);
+
 int e86_interrupt (e8086_t *cpu, unsigned n);
 
 unsigned long long e86_get_clock (e8086_t *c);

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.13 2003/04/23 23:39:16 hampa Exp $ */
+/* $Id: e8086.c,v 1.14 2003/04/24 12:22:05 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -46,15 +46,20 @@ e8086_t *e86_new (void)
     return (NULL);
   }
 
+  c->mem = NULL;
   c->mem_get_uint8 = &e86_get_mem_uint8;
   c->mem_get_uint16 = &e86_get_mem_uint16;
   c->mem_set_uint8 = &e86_set_mem_uint8;
   c->mem_set_uint16 = &e86_set_mem_uint16;
 
+  c->prt = NULL;
   c->prt_get_uint8 = &e86_get_mem_uint8;
   c->prt_get_uint16 = &e86_get_mem_uint16;
   c->prt_set_uint8 = &e86_set_mem_uint8;
   c->prt_set_uint16 = &e86_set_mem_uint16;
+
+  c->ram = NULL;
+  c->ram_cnt = 0;
 
   c->inta_ext = NULL;
   c->inta = NULL;
@@ -63,9 +68,6 @@ e8086_t *e86_new (void)
   c->op_hook = NULL;
   c->op_stat = NULL;
   c->op_undef = NULL;
-
-  c->mem = NULL;
-  c->prt = NULL;
 
   c->irq = 0;
 
@@ -79,6 +81,34 @@ e8086_t *e86_new (void)
 void e86_del (e8086_t *c)
 {
   free (c);
+}
+
+void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)
+{
+  c->ram = ram;
+  c->ram_cnt = cnt;
+}
+
+void e86_set_mem (e8086_t *c, void *mem,
+  e86_get_uint8_f get8, e86_set_uint8_f set8,
+  e86_get_uint16_f get16, e86_set_uint16_f set16)
+{
+  c->mem = mem;
+  c->mem_get_uint8 = get8;
+  c->mem_set_uint8 = set8;
+  c->mem_get_uint16 = get16;
+  c->mem_set_uint16 = set16;
+}
+
+void e86_set_prt (e8086_t *c, void *prt,
+  e86_get_uint8_f get8, e86_set_uint8_f set8,
+  e86_get_uint16_f get16, e86_set_uint16_f set16)
+{
+  c->prt = prt;
+  c->prt_get_uint8 = get8;
+  c->prt_set_uint8 = set8;
+  c->prt_get_uint16 = get16;
+  c->prt_set_uint16 = set16;
 }
 
 void e86_reset (e8086_t *c)
@@ -95,8 +125,8 @@ void e86_reset (e8086_t *c)
     c->sreg[i] = 0;
   }
 
-  c->sreg[E86_REG_CS] = 0xf000;
-  c->ip = 0xfff0;
+  e86_set_cs (c, 0xf000);
+  e86_set_ip (c, 0xfff0);
   c->flg = 0x0000;
 
   c->pq_cnt = 0;
