@@ -140,8 +140,8 @@ sparc* | sun4*)
 esac
 
 
-dnl -----------------------------------------------------------------------
-dnl Checks for programs.
+#-----------------------------------------------------------------------------
+# Checks for programs.
 
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -167,8 +167,8 @@ fi
 AC_SUBST(PCE_HAVE_NASM)
 
 
-dnl -----------------------------------------------------------------------
-dnl Checks for header files.
+#-----------------------------------------------------------------------------
+# Checks for header files.
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
@@ -188,8 +188,8 @@ AC_CHECK_HEADER(inttypes.h,
 AC_SUBST(PCE_HAVE_INTTYPES_H)
 
 
-dnl -----------------------------------------------------------------------
-dnl Checks for libraries
+#-----------------------------------------------------------------------------
+# Checks for libraries
 
 
 AC_PATH_X
@@ -230,7 +230,7 @@ AC_ARG_WITH(sdl,
 	fi
   ]
 )
-if test $PCE_SDL_USE -ne 0 ; then
+if test "x$PCE_SDL_USE" != "x0" ; then
 	PCE_SDL_CCF=`sdl-config --cflags`
 	case "$LDFLAGS" in
 	*-static*)
@@ -251,41 +251,13 @@ AC_SUBST(PCE_SDL_LDF)
 dnl -----------------------------------------------------------------------
 dnl Checks for options
 
-if test -d "$srcdir/src/arch/ibmpc" ; then
-	have_ibmpc=1
-else
-	have_ibmpc=0
-fi
+if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
+if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
+if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
+if test -d "$srcdir/src/cpu/e8086"; then have_e8086=1; else have_e8086=0; fi
+if test -d "$srcdir/src/cpu/e6502"; then have_e6502=1; else have_e6502=0; fi
+if test -d "$srcdir/src/cpu/ppc405"; then have_ppc405=1; else have_ppc405=0; fi
 
-if test -d "$srcdir/src/arch/sim6502" ; then
-	have_sim6502=1
-else
-	have_sim6502=0
-fi
-
-if test -d "$srcdir/src/arch/sim405" ; then
-	have_sim405=1
-else
-	have_sim405=0
-fi
-
-if test -d "$srcdir/src/cpu/e8086" ; then
-	have_e8086=1
-else
-	have_e8086=0
-fi
-
-if test -d "$srcdir/src/cpu/e6502" ; then
-	have_e6502=1
-else
-	have_e6502=0
-fi
-
-if test -d "$srcdir/src/cpu/ppc405" ; then
-	have_ppc405=1
-else
-	have_ppc405=0
-fi
 
 AC_MSG_CHECKING([whether to build the IBM PC emulator])
 if test "x$have_ibmpc$have_e8086" != "x11" ; then
@@ -397,7 +369,7 @@ else
 	)
 fi
 AC_SUBST(PCE_BUILD_6502)
-if test $PCE_BUILD_6502 -eq 1 ; then
+if test "x$PCE_BUILD_6502" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_6502)
 fi
 
@@ -434,7 +406,7 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the ppc405 core])
-if test "x$have_ppc405" != "x1" ; then
+if test "x$have_ppc405" = "x0" ; then
 	PCE_BUILD_PPC405=0
 	AC_MSG_RESULT([no (no source)])
 elif test "x$PCE_BUILD_SIM405" = "x1" ; then
@@ -464,53 +436,6 @@ if test "x$PCE_BUILD_PPC405" = "x1" ; then
 fi
 
 
-AC_MSG_CHECKING([host clock])
-AC_ARG_WITH(host-clock,
-  AC_HELP_STRING([--with-host-clock=clock], [Set the host clock speed in Hz]),
-  [
-	PCE_HOST_FOSC="$withval"
-	AC_MSG_RESULT([$PCE_HOST_FOSC (forced)])
-  ],
-  [
-	PCE_HOST_FOSC=4772393
-	AC_MSG_RESULT([$PCE_HOST_FOSC (default)])
-  ]
-)
-AC_SUBST(PCE_HOST_FOSC)
-AC_DEFINE_UNQUOTED(PCE_HOST_FOSC, $PCE_HOST_FOSC)
-
-
-AC_MSG_CHECKING([whether to use the pentium TSC])
-AC_ARG_ENABLE(tsc,
-  AC_HELP_STRING([--enable-tsc], [Use Pentium TSC]),
-  [
-  	if test "x$enableval" = "xyes" ; then
-  		PCE_HAVE_TSC=1
-  		AC_MSG_RESULT([yes (forced)])
-  	else
-  		PCE_HAVE_TSC=0
-  		AC_MSG_RESULT([no (forced)])
-  	fi
-  ],
-  [
-	case "`uname -m`" in
-	i?86)
-		PCE_HAVE_TSC=1
-		AC_MSG_RESULT([yes (detected)])
-		;;
-	*)
-		PCE_HAVE_TSC=0
-		AC_MSG_RESULT([no (detected)])
-		;;
-	esac
-  ]
-)
-AC_SUBST(PCE_HAVE_TSC)
-if test $PCE_HAVE_TSC -eq 1 ; then
-	AC_DEFINE(PCE_HAVE_TSC)
-fi
-
-
 eval "pce_etcdir=$sysconfdir"
 eval "pce_etcdir=$pce_etcdir"
 
@@ -529,40 +454,71 @@ AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 dnl --------------------------------------------------------------------------
 
 extra=""
-cores=""
-emus=""
+core1=""
+core2=""
+emu1=""
+emu2=""
 
 if test "x$PCE_BUILD_IBMPC" = "x1" ; then
 	extra="$extra src/arch/ibmpc/Makefile"
 	extra="$extra src/arch/ibmpc/bios/Makefile"
 	extra="$extra src/arch/ibmpc/pceutils/Makefile"
-	emus="$emus ibmpc"
+	emu1="$emu1 ibmpc"
+else
+	emu2="$emu2 ibmpc"
 fi
 
 if test "x$PCE_BUILD_SIM405" = "x1" ; then
 	extra="$extra src/arch/sim405/Makefile"
-	emus="$emus sim405"
+	emu1="$emu1 sim405"
+else
+	emu2="$emu2 sim405"
 fi
 
 if test "x$PCE_BUILD_SIM6502" = "x1" ; then
 	extra="$extra src/arch/sim6502/Makefile"
-	emus="$emus sim6502"
+	emu1="$emu1 sim6502"
+else
+	emu2="$emu2 sim6502"
 fi
 
 if test "x$PCE_BUILD_6502" = "x1" ; then
 	extra="$extra src/cpu/e6502/Makefile"
-	cores="$cores 6502"
+	core1="$core1 6502"
+else
+	core2="$core2 6502"
 fi
 
 if test "x$PCE_BUILD_8086" = "x1" ; then
 	extra="$extra src/cpu/e8086/Makefile"
-	cores="$cores 8086"
+	core1="$core1 8086"
+else
+	core2="$core2 8086"
 fi
 
 if test "x$PCE_BUILD_PPC405" = "x1" ; then
 	extra="$extra src/cpu/ppc405/Makefile"
-	cores="$cores PPC405"
+	core1="$core1 PPC405"
+else
+	core2="$core2 PPC405"
 fi
+
+
+term1=" null vt100"
+term2=""
+
+if test "x$PCE_X11_USE" = "x1" ; then
+	term1="$term1 x11"
+else
+	term2="$term2 x11"
+fi
+
+if test "x$PCE_SDL_USE" = "x1" ; then
+	term1="$term1 sdl"
+else
+	term2="$term2 sdl"
+fi
+
 
 AC_OUTPUT(
   Makefile
@@ -583,32 +539,8 @@ AC_OUTPUT(
 )
 
 
-dnl --------------------------------------------------------------------------
-
-term="null vt100"
-noterm=""
-
-if test "x$PCE_X11_USE" = "x1" ; then
-	term="$term x11"
-else
-	noterm="$noterm x11"
-fi
-
-if test "x$PCE_SDL_USE" = "x1" ; then
-	term="$term sdl"
-else
-	noterm="$noterm sdl"
-fi
-
-eval "pce_bindir=$bindir"
-eval "pce_bindir=$pce_bindir"
-
-eval "pce_libdir=$libdir"
-eval "pce_libdir=$pce_libdir"
-
-eval "pce_mandir=$mandir"
-eval "pce_mandir=$pce_mandir"
-
+#-----------------------------------------------------------------------------
+# info
 
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
@@ -617,26 +549,16 @@ echo "  CC:                    $CC $CFLAGS"
 echo "  LD:                    $CC $LDFLAGS"
 echo ""
 echo "  prefix:                $prefix"
-echo "  bindir:                $pce_bindir"
-echo "  etcdir:                $pce_etcdir"
-echo "  mandir:                $pce_mandir"
-echo "  datadir:               $pce_datdir"
 echo ""
-echo "  Emulators:            $emus"
-echo "  CPU cores:            $cores"
-echo "  Terminals built:       $term"
-echo "  Terminals skipped:    $noterm"
+echo "  Emulators built:      $emu1"
+echo "  Emulators not built:  $emu2"
+echo "  CPU cores built:      $core1"
+echo "  CPU cores not built:  $core2"
+echo "  Terminals built:      $term1"
+echo "  Terminals not built:  $term2"
 
-if test $PCE_HAVE_NASM -eq 0 ; then
+if test "x$PCE_HAVE_NASM" = "x0" ; then
 	echo "  Build PC BIOS:         no"
 else
 	echo "  Build PC BIOS:         yes"
-fi
-
-echo "  Host clock:            $PCE_HOST_FOSC"
-
-if test $PCE_HAVE_TSC -eq 0 ; then
-	echo "  Use Pentium TSC:       no"
-else
-	echo "  Use Pentium TSC:       yes"
 fi

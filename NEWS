@@ -1,9 +1,13 @@
 0.1.5
 
-	* Added a VGA emulator. Functional but not yet complete.
+	* Added a 6502 emulator
+	* Added minimal architectures for the PowerPC 405 and 6502
+	  emulators.
+	* Added a VGA emulator. Partially functional but not yet complete.
 	* Fixed the EGA palette
 	* Improved the mouse emulation. More mouse drivers should
 	  work now.
+	* Added support for intel hex files.
 
 0.1.4	2004-02-22	r387
 

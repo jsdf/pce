@@ -65,20 +65,13 @@ Build the X11 based terminal. The default for path is /usr/X11R6
 --with-sdl
 Build the SDL based terminal.
 
---with-host-clock=clock
-Set the host clock speed in Hz. This value is used for display
-purposes only and has no impact on program execution.
-
---enable-tsc
-Use the Pentium TSC to get precise instruction timings. Again,
-this value is used for display purposes only.
 
 
 Configuration
 =============
 
 PCE is configured by means of a config file. An example config
-file is installed in $(prefix)/etc/pce.cfg.
+file is installed in $(prefix)/etc/ibmpc.cfg.
 
 (note to self: one of these days you really need to document
 this stuff properly...)
