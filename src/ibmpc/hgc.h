@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.h                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.1 2003/08/19 17:07:14 hampa Exp $ */
+/* $Id: hgc.h,v 1.2 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #ifndef PCE_HGC_H
@@ -56,7 +56,8 @@ void hgc_clock (hgc_t *cga);
 
 void hgc_prt_state (hgc_t *cga, FILE *fp);
 
-void hgc_set_pos (hgc_t *cga, unsigned pos);
+mem_blk_t *hgc_get_mem (hgc_t *hgc);
+mem_blk_t *hgc_get_reg (hgc_t *hgc);
 
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
 void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);

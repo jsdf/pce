@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.2 2003/08/20 15:47:05 hampa Exp $ */
+/* $Id: hgc.c,v 1.3 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -117,13 +117,14 @@ void hgc_prt_state (hgc_t *hgc, FILE *fp)
     y = (hgc->crtc_pos - hgc->crtc_ofs) / 80;
   }
 
-  fprintf (fp, "HGC: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
-    hgc->mode, hgc->crtc_ofs, hgc->crtc_pos, x, y,
+  fprintf (fp, "HGC: MODE=%u  PAGE=%04X  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
+    hgc->mode, hgc->page_ofs, hgc->crtc_ofs, hgc->crtc_pos, x, y,
     (hgc->crs_on) ? "ON" : "OFF"
   );
 
-  fprintf (fp, "REG: 3B8=%02X  3BA=%02X  3DF=%02X\n",
-    hgc->reg->data[4], hgc->reg->data[6], hgc->reg->data[11]
+  fprintf (fp, "REG: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  3BF=%02X\n",
+    hgc->reg->data[0], hgc->reg->data[1], hgc->reg->data[4],
+    hgc->reg->data[6], hgc->reg->data[11]
   );
 
   fprintf (fp, "CRTC=[%02X", hgc->crtc_reg[0]);
@@ -141,6 +142,17 @@ void hgc_prt_state (hgc_t *hgc, FILE *fp)
   fflush (fp);
 }
 
+mem_blk_t *hgc_get_mem (hgc_t *hgc)
+{
+  return (hgc->mem);
+}
+
+mem_blk_t *hgc_get_reg (hgc_t *hgc)
+{
+  return (hgc->reg);
+}
+
+static
 void hgc_mode0_update (hgc_t *hgc)
 {
   unsigned i;
@@ -165,6 +177,7 @@ void hgc_mode0_update (hgc_t *hgc)
   }
 }
 
+static
 void hgc_mode1_update (hgc_t *hgc)
 {
   unsigned      x, y, i, j;
@@ -174,6 +187,11 @@ void hgc_mode1_update (hgc_t *hgc)
   unsigned char *mem[4];
 
   mem[0] = hgc->mem->data;
+
+  if (hgc->page_ofs) {
+    mem[0] += 32768;
+  }
+
   mem[1] = mem[0] + 1 * 8192;
   mem[2] = mem[0] + 2 * 8192;
   mem[3] = mem[0] + 3 * 8192;
@@ -212,6 +230,7 @@ void hgc_mode1_update (hgc_t *hgc)
   }
 }
 
+static
 void hgc_update (hgc_t *hgc)
 {
   switch (hgc->mode) {
@@ -225,6 +244,7 @@ void hgc_update (hgc_t *hgc)
   }
 }
 
+static
 void hgc_set_pos (hgc_t *hgc, unsigned pos)
 {
   hgc->crtc_pos = pos;
@@ -244,6 +264,7 @@ void hgc_set_pos (hgc_t *hgc, unsigned pos)
   }
 }
 
+static
 void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
 {
   if (hgc->mode == 0) {
@@ -255,13 +276,14 @@ void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
     y1 = (y1 <= 13) ? (13 - y1) : 0;
     y2 = (y2 <= 13) ? (13 - y2) : 0;
 
-    y1 = (255 * y1) / 13;
-    y2 = (255 * y2) / 13;
+    y1 = (255 * y1 + 6) / 13;
+    y2 = (255 * y2 + 6) / 13;
 
     trm_set_crs (hgc->trm, y1, y2);
   }
 }
 
+static
 void hgc_set_page_ofs (hgc_t *hgc, unsigned ofs)
 {
   if (hgc->crtc_ofs == ofs) {
@@ -275,12 +297,14 @@ void hgc_set_page_ofs (hgc_t *hgc, unsigned ofs)
   }
 }
 
+static
 void hgc_set_config (hgc_t *hgc, unsigned char val)
 {
   hgc->enable_graph = ((val & 0x01) != 0);
   hgc->enable_page1 = ((val & 0x02) != 0);
 }
 
+static
 void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 {
   unsigned newmode, newofs;
@@ -321,6 +345,7 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
   hgc_update (hgc);
 }
 
+static
 void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
   unsigned      x, y;
@@ -362,6 +387,7 @@ void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
   trm_set_chr (hgc->trm, x, y, c);
 }
 
+static
 void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
   unsigned      x, y;
@@ -408,6 +434,7 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
   trm_set_chr (hgc->trm, x, y, c);
 }
 
+static
 void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
   unsigned      i;
@@ -422,6 +449,10 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
   }
 
   hgc->mem->data[addr] = val;
+
+  if (addr > 32767) {
+    addr -= 32768;
+  }
 
   bank = addr / 8192;
 
@@ -475,6 +506,7 @@ void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
   }
 }
 
+static
 void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
 {
   if (reg > 15) {
@@ -507,6 +539,7 @@ void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
   }
 }
 
+static
 unsigned char hgc_crtc_get_reg (hgc_t *hgc, unsigned reg)
 {
   if (reg > 15) {

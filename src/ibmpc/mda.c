@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.4 2003/08/19 17:07:15 hampa Exp $ */
+/* $Id: mda.c,v 1.5 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -49,24 +49,25 @@ mda_t *mda_new (terminal_t *trm)
     mda->crtc_reg[i] = 0;
   }
 
-  mda->crtc_mode = 0;
   mda->crtc_pos = 0;
 
   mda->mem = mem_blk_new (0xb0000, 4096, 1);
   mda->mem->ext = mda;
   mda->mem->set_uint8 = (seta_uint8_f) &mda_mem_set_uint8;
   mda->mem->set_uint16 = (seta_uint16_f) &mda_mem_set_uint16;
+  mem_blk_init (mda->mem, 0x00);
 
-  mda->crtc = mem_blk_new (0x3b4, 16, 1);
-  mda->crtc->ext = mda;
-  mda->crtc->set_uint8 = (seta_uint8_f) &mda_crtc_set_uint8;
-  mda->crtc->set_uint16 = (seta_uint16_f) &mda_crtc_set_uint16;
-  mda->crtc->get_uint8 = (geta_uint8_f) &mda_crtc_get_uint8;
-  mda->crtc->get_uint16 = (geta_uint16_f) &mda_crtc_get_uint16;
+  mda->reg = mem_blk_new (0x3b4, 16, 1);
+  mda->reg->ext = mda;
+  mda->reg->set_uint8 = (seta_uint8_f) &mda_reg_set_uint8;
+  mda->reg->set_uint16 = (seta_uint16_f) &mda_reg_set_uint16;
+  mda->reg->get_uint8 = (geta_uint8_f) &mda_reg_get_uint8;
+  mda->reg->get_uint16 = (geta_uint16_f) &mda_reg_get_uint16;
+  mem_blk_init (mda->reg, 0x00);
 
   mda->trm = trm;
 
-  trm_set_map (trm, 7, 200 * 256, 104 * 256, 16 * 256);
+//  trm_set_map (trm, 7, 200 * 256, 104 * 256, 16 * 256);
 
   return (mda);
 }
@@ -75,7 +76,7 @@ void mda_del (mda_t *mda)
 {
   if (mda != NULL) {
     mem_blk_del (mda->mem);
-    mem_blk_del (mda->crtc);
+    mem_blk_del (mda->reg);
     free (mda);
   }
 }
@@ -92,8 +93,9 @@ void mda_prt_state (mda_t *mda, FILE *fp)
   x = mda->crtc_pos % 80;
   y = mda->crtc_pos / 80;
 
-  fprintf (fp, "MDA: MODE=%02X  POS=%04X[%u/%u]\n",
-    mda->crtc_mode, mda->crtc_pos, x, y
+  fprintf (fp, "MDA: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  POS=%04X[%u/%u]\n",
+    mda->reg->data[0], mda->reg->data[1], mda->reg->data[4], mda->reg->data[6],
+    mda->crtc_pos, x, y
   );
 
   fprintf (fp, "CRTC=[%02X", mda->crtc_reg[0]);
@@ -111,6 +113,17 @@ void mda_prt_state (mda_t *mda, FILE *fp)
   fflush (fp);
 }
 
+mem_blk_t *mda_get_mem (mda_t *mda)
+{
+  return (mda->mem);
+}
+
+mem_blk_t *mda_get_reg (mda_t *mda)
+{
+  return (mda->reg);
+}
+
+static
 void mda_set_pos (mda_t *mda, unsigned pos)
 {
   unsigned x, y;
@@ -127,6 +140,7 @@ void mda_set_pos (mda_t *mda, unsigned pos)
   trm_set_pos (mda->trm, pos % 80, pos / 80);
 }
 
+static
 void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
 {
   if (y1 < y2) {
@@ -218,6 +232,7 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
   trm_set_chr (mda->trm, x, y, c);
 }
 
+static
 void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
 {
   if (reg > 15) {
@@ -242,6 +257,7 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
   }
 }
 
+static
 unsigned char mda_crtc_get_reg (mda_t *mda, unsigned reg)
 {
   if (reg > 15) {
@@ -251,67 +267,59 @@ unsigned char mda_crtc_get_reg (mda_t *mda, unsigned reg)
   return (mda->crtc_reg[reg]);
 }
 
-void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
+void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
-  mda->crtc->data[addr] = val;
+  mda->reg->data[addr] = val;
 
   switch (addr) {
     case 0x01:
-      mda_crtc_set_reg (mda, mda->crtc->data[0], val);
-      break;
-
-    case 0x04:
-      mda->crtc_mode = val;
+      mda_crtc_set_reg (mda, mda->reg->data[0], val);
       break;
   }
 }
 
-void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
+void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 {
-  mda_mem_set_uint8 (mda, addr, val & 0xff);
+  mda_reg_set_uint8 (mda, addr, val & 0xff);
 
-  if (addr < mda->crtc->end) {
-    mda_crtc_set_uint8 (mda, addr + 1, val >> 8);
+  if (addr < mda->reg->end) {
+    mda_reg_set_uint8 (mda, addr + 1, val >> 8);
   }
 }
 
-unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr)
+unsigned char mda_reg_get_uint8 (mda_t *mda, unsigned long addr)
 {
   static unsigned cnt = 0;
 
   switch (addr) {
     case 0x00:
-      return (mda->crtc->data[0]);
+      return (mda->reg->data[0]);
 
     case 0x01:
-      return (mda_crtc_get_reg (mda, mda->crtc->data[0]));
-
-    case 0x04:
-      return (mda->crtc->data[addr]);
-      break;
+      return (mda_crtc_get_reg (mda, mda->reg->data[0]));
 
     case 0x06:
-      /* this is a quick hack for programs that wait for the horizontal sync */
       cnt += 1;
-      if (cnt > 16) {
+      if ((cnt & 7) == 0) {
         cnt = 0;
-        return 0x01;
+        mda->reg->data[6] ^= 0x01;
       }
-      return (0x00);
+      mda->reg->data[6] ^= (cnt & 1) ? 0x08 : 0x00;
+      return (mda->reg->data[6]);
 
     default:
       return (0xff);
   }
 }
 
-unsigned short mda_crtc_get_uint16 (mda_t *mda, unsigned long addr)
+unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr)
 {
   unsigned short ret;
 
-  ret = mda_crtc_get_uint8 (mda, addr);
+  ret = mda_reg_get_uint8 (mda, addr);
 
-  if (addr < mda->crtc->end) {
-    ret |= mda_crtc_get_uint8 (mda, addr + 1) << 8;
+  if (addr < mda->reg->end) {
+    ret |= mda_reg_get_uint8 (mda, addr + 1) << 8;
   }
 
   return (ret);

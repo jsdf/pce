@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.13 2003/08/20 15:47:28 hampa Exp $ */
+/* $Id: pce.c,v 1.14 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1386,6 +1386,9 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "video")) {
       if (pc->cga != NULL) {
         cga_prt_state (pc->cga, stdout);
+      }
+      else if (pc->hgc != NULL) {
+        hgc_prt_state (pc->hgc, stdout);
       }
       else if (pc->mda != NULL) {
         mda_prt_state (pc->mda, stdout);

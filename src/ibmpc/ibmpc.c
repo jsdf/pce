@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.15 2003/08/20 15:47:28 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.16 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -293,8 +293,8 @@ void pc_setup_mda (ibmpc_t *pc)
   pce_log (MSG_INF, "video: MDA\n");
 
   pc->mda = mda_new (pc->trm);
-  mem_add_blk (pc->mem, pc->mda->mem, 0);
-  mem_add_blk (pc->prt, pc->mda->crtc, 0);
+  mem_add_blk (pc->mem, mda_get_mem (pc->mda), 0);
+  mem_add_blk (pc->prt, mda_get_reg (pc->mda), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;
@@ -305,8 +305,8 @@ void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *ini)
   pce_log (MSG_INF, "video: HGC\n");
 
   pc->hgc = hgc_new (pc->trm, ini);
-  mem_add_blk (pc->mem, pc->hgc->mem, 0);
-  mem_add_blk (pc->prt, pc->hgc->reg, 0);
+  mem_add_blk (pc->mem, hgc_get_mem (pc->hgc), 0);
+  mem_add_blk (pc->prt, hgc_get_reg (pc->hgc), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;

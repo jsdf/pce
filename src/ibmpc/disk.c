@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.4 2003/05/01 07:11:33 hampa Exp $ */
+/* $Id: disk.c,v 1.5 2003/08/23 02:57:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -596,7 +596,7 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned func;
 
-  dsk_int13_log (dsks, cpu, stderr);
+//  dsk_int13_log (dsks, cpu, stderr);
 
   func = e86_get_ah (cpu);
 
