@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.19 2003/10/04 17:56:27 hampa Exp $
+; $Id: pce.asm,v 1.20 2003/11/18 00:31:10 hampa Exp $
 
 
 %include "pce.inc"
@@ -404,6 +404,9 @@ init_keyboard:
 
   mov     [0x001a], word 0x001e
   mov     [0x001c], word 0x001e
+
+  mov     [0x0017], byte 0x00           ; keyboard status 1
+  mov     [0x0018], byte 0x00           ; keyboard status 2
 
   ret
 
