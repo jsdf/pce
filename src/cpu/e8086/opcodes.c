@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-10-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -54,6 +54,8 @@ unsigned short e86_pop (e8086_t *c)
 static
 unsigned op_ud (e8086_t *c)
 {
+  e86_set_clk (c, 1);
+
   return (e86_undefined (c));
 }
 
