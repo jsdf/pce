@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.37 2003/09/24 08:08:15 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.38 2003/10/04 17:54:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -836,6 +836,7 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
   switch (model) {
     case PCE_CPU_8086:
     case PCE_CPU_8088:
+      e86_enable_86 (pc->cpu);
       break;
 
     case PCE_CPU_V20:
