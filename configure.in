@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -103,43 +103,46 @@ AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
 AC_MSG_RESULT([$PCE_CFG_DATE $PCE_CFG_TIME])
 
 
+#-----------------------------------------------------------------------------
+# host
+
+AC_CANONICAL_HOST
+
 AC_MSG_CHECKING([host OS])
 PCE_HOST_LINUX=0
 PCE_HOST_SUNOS=0
-os=`uname -s`
-case "$os" in
-[[Ll]]inux)
+case "$host_os" in
+[[Ll]]inux*)
 	PCE_HOST_LINUX=1
 	AC_DEFINE(PCE_HOST_LINUX)
 	AC_MSG_RESULT([Linux])
 	;;
-SunOS)
+SunOS*)
 	PCE_HOST_SUNOS=1
 	AC_DEFINE(DEFAULT_HOST_SUNOS)
 	AC_MSG_RESULT([SunOS])
 	;;
 *)
-	AC_MSG_RESULT([unknown ($os)])
+	AC_MSG_RESULT([unknown ($host_os)])
 	;;
 esac
 AC_SUBST(PCE_HOST_LINUX)
 AC_SUBST(PCE_HOST_SUNOS)
 
-AC_MSG_CHECKING([host architecture])
+AC_MSG_CHECKING([host cpu])
 PCE_HOST_IA32=0
 PCE_HOST_PPC=0
 PCE_HOST_SPARC=0
-arch=`uname -m`
-case "$arch" in
+case "$host_cpu" in
 i?86)
 	PCE_HOST_IA32=1
 	AC_DEFINE(PCE_HOST_IA32)
 	AC_MSG_RESULT([IA32])
 	;;
-ppc*)
+powerpc*)
 	PCE_HOST_PPC=1
 	AC_DEFINE(PCE_HOST_PPC)
-	AC_MSG_RESULT([ppc])
+	AC_MSG_RESULT([powerpc])
 	;;
 sparc* | sun4*)
 	PCE_HOST_SPARC=1
@@ -147,7 +150,7 @@ sparc* | sun4*)
 	AC_MSG_RESULT([sparc])
 	;;
 *)
-	AC_MSG_RESULT([unknown ($arch)])
+	AC_MSG_RESULT([unknown ($host_cpu)])
 	;;
 esac
 AC_SUBST(PCE_HOST_IA32)
@@ -156,7 +159,7 @@ AC_SUBST(PCE_HOST_SPARC)
 
 
 #-----------------------------------------------------------------------------
-# Checks for programs.
+# Checks for programs
 
 AC_PROG_CC
 AC_PROG_INSTALL
