@@ -504,6 +504,8 @@ int dsk_part_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long
       if (fwrite (buf, 512, m, p->part[pi].fp) != m) {
         return (1);
       }
+
+      fflush (p->part[pi].fp);
     }
     else {
       m = p->part[pi].block_i - i;
