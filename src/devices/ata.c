@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.c                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -28,7 +28,7 @@
 #include "ata.h"
 
 
-/* #define ATA_DEBUG 1 */
+/* #define DEBUG_ATA 1 */
 
 #define ATA_REG_COMMAND       0x07
 #define ATA_REG_STATUS        0x07
@@ -631,7 +631,7 @@ unsigned char ata_cmd_get_uint8 (ata_chn_t *ata, unsigned long addr)
     break;
   }
 
-#ifdef ATA_DEBUG
+#ifdef DEBUG_ATA
   fprintf (stderr, "ata: get8 %08lX -> %02X\n", addr, val);
   fflush (stderr);
 #endif
@@ -682,7 +682,7 @@ void ata_set_data16 (ata_chn_t *ata, unsigned short val)
 
 void ata_cmd_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
-#ifdef ATA_DEBUG
+#ifdef DEBUG_ATA
   fprintf (stderr, "ata: set8 %08lX <- %02X\n", addr, val);
   fflush (stderr);
 #endif
@@ -754,7 +754,7 @@ unsigned char ata_ctl_get_uint8 (ata_chn_t *ata, unsigned long addr)
     break;
   }
 
-#ifdef ATA_DEBUG
+#ifdef DEBUG_ATA
   fprintf (stderr, "ata: get ctl8 %08lX -> %02X\n", addr, val);
   fflush (stderr);
 #endif
@@ -774,7 +774,7 @@ unsigned long ata_ctl_get_uint32 (ata_chn_t *ata, unsigned long addr)
 
 void ata_ctl_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
-#ifdef ATA_DEBUG
+#ifdef DEBUG_ATA
   fprintf (stderr, "ata: set ctl8 %08lX <- %02X\n", addr, val);
   fflush (stderr);
 #endif
