@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkdosem.c                                     *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -30,33 +30,10 @@
 
 
 static
-unsigned long buf_get_uint32 (const void *buf, unsigned i)
-{
-  const unsigned char *tmp;
-
-  tmp = (const unsigned char *) buf + i;
-
-  return ((tmp[3] << 24) | (tmp[2] << 16) | (tmp[1] << 8) | tmp[0]);
-}
-
-static
-void buf_set_uint32 (void *buf, unsigned i, unsigned long v)
-{
-  unsigned char *tmp;
-
-  tmp = (unsigned char *) buf + i;
-
-  tmp[0] = v & 0xff;
-  tmp[1] = (v >> 8) & 0xff;
-  tmp[2] = (v >> 16) & 0xff;
-  tmp[3] = (v >> 24) & 0xff;
-}
-
-
-static
-int dsk_dosemu_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
+int dsk_dosemu_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 {
   disk_dosemu_t *img;
+  uint64_t      ofs, cnt;
 
   if ((i + n) > dsk->blocks) {
     return (1);
@@ -64,19 +41,21 @@ int dsk_dosemu_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 
   img = dsk->ext;
 
-  if (fseek (img->fp, img->start + 512UL * i, SEEK_SET)) {
+  ofs = img->start + 512 * (uint64_t) i;
+  cnt = 512 * (uint64_t) n;
+
+  if (dsk_read (img->fp, buf, ofs, cnt)) {
     return (1);
   }
-
-  dsk_fread_zero (buf, 512, n, img->fp);
 
   return (0);
 }
 
 static
-int dsk_dosemu_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
+int dsk_dosemu_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 {
   disk_dosemu_t *img;
+  uint64_t      ofs, cnt;
 
   if (dsk->readonly) {
     return (1);
@@ -88,11 +67,10 @@ int dsk_dosemu_write (disk_t *dsk, const void *buf, unsigned long i, unsigned lo
 
   img = dsk->ext;
 
-  if (fseek (img->fp, img->start + 512UL * i, SEEK_SET)) {
-    return (1);
-  }
+  ofs = img->start + 512 * (uint64_t) i;
+  cnt = 512 * (uint64_t) n;
 
-  if (fwrite (buf, 512, n, img->fp) != n) {
+  if (dsk_write (img->fp, buf, ofs, cnt)) {
     return (1);
   }
 
@@ -112,107 +90,120 @@ void dsk_dosemu_del (disk_t *dsk)
   free (img);
 }
 
-disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro)
+disk_t *dsk_dosemu_open_fp (FILE *fp, int ro)
 {
   disk_dosemu_t *img;
-  FILE          *fp;
-  unsigned char buf[128];
-  unsigned      c, h, s;
-  unsigned long start;
+  unsigned char buf[64];
+  uint32_t      c, h, s;
+  uint64_t      start;
 
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
+  if (dsk_read (fp, buf, 0, 23)) {
     return (NULL);
   }
-
-  if (fread (buf, 1, 128, fp) != 128) {
-    fclose (fp);
-    return (NULL);
-  }
-
-  fclose (fp);
 
   if (memcmp (buf, "DOSEMU\x00", 7) != 0) {
     return (NULL);
   }
 
-  c = buf_get_uint32 (buf, 15);
-  h = buf_get_uint32 (buf, 7);
-  s = buf_get_uint32 (buf, 11);
-  start = buf_get_uint32 (buf, 19);
+  c = dsk_get_uint32_le (buf, 15);
+  h = dsk_get_uint32_le (buf, 7);
+  s = dsk_get_uint32_le (buf, 11);
+  start = dsk_get_uint32_le (buf, 19);
 
-  if (start < 128) {
+  if (start < 23) {
     return (NULL);
   }
 
-  img = (disk_dosemu_t *) malloc (sizeof (disk_dosemu_t));
+  img = malloc (sizeof (disk_dosemu_t));
   if (img == NULL) {
     return (NULL);
   }
 
-  dsk_init (&img->dsk, img, d, c, h, s, ro);
+  dsk_init (&img->dsk, img, c, h, s);
 
-  img->dsk.del = &dsk_dosemu_del;
-  img->dsk.read = &dsk_dosemu_read;
-  img->dsk.write = &dsk_dosemu_write;
+  dsk_set_readonly (&img->dsk, ro);
+
+  img->dsk.del = dsk_dosemu_del;
+  img->dsk.read = dsk_dosemu_read;
+  img->dsk.write = dsk_dosemu_write;
 
   img->start = start;
 
-  if (ro) {
-    img->fp = fopen (fname, "rb");
-  }
-  else {
-    img->fp = fopen (fname, "r+b");
-  }
-
-  if (img->fp == NULL) {
-    free (img);
-    return (NULL);
-  }
+  img->fp = fp;
 
   return (&img->dsk);
 }
 
-disk_t *dsk_dosemu_create (unsigned d, unsigned c, unsigned h, unsigned s,
-  const char *fname, int ro)
+disk_t *dsk_dosemu_open (const char *fname, int ro)
 {
-  unsigned long n;
-  unsigned char buf[512];
-  FILE          *fp;
+  disk_t *dsk;
+  FILE   *fp;
 
-  /* make sure the file doesn't exist */
-  fp = fopen (fname, "rb");
-  if (fp != NULL) {
+  if (ro) {
+    fp = fopen (fname, "rb");
+  }
+  else {
+    fp = fopen (fname, "r+b");
+  }
+
+  if (fp == NULL) {
+    return (NULL);
+  }
+
+  dsk = dsk_dosemu_open_fp (fp, ro);
+
+  if (dsk == NULL) {
     fclose (fp);
     return (NULL);
   }
 
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    return (NULL);
+  return (dsk);
+}
+
+int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
+{
+  uint64_t      cnt;
+  unsigned char buf[128];
+
+  cnt = 512 * (uint64_t) (c * h * s);
+  if (cnt == 0) {
+    return (1);
   }
 
   memset (buf, 0, 128);
 
   memcpy (buf, "DOSEMU\x00", 7);
 
-  buf_set_uint32 (buf, 7, h);
-  buf_set_uint32 (buf, 11, s);
-  buf_set_uint32 (buf, 15, c);
-  buf_set_uint32 (buf, 19, 128);
+  dsk_set_uint32_le (buf, 7, h);
+  dsk_set_uint32_le (buf, 11, s);
+  dsk_set_uint32_le (buf, 15, c);
+  dsk_set_uint32_le (buf, 19, 128);
 
-  fwrite (buf, 1, 128, fp);
-
-  memset (buf, 0, 512);
-
-  n = (unsigned long) c * (unsigned long) h * (unsigned long) s;
-
-  while (n > 0) {
-    fwrite (buf, 1, 512, fp);
-    n -= 1;
+  if (dsk_write (fp, buf, 0, 128)) {
+    return (1);
   }
+
+  buf[0] = 0;
+  if (dsk_write (fp, buf, 128 + cnt - 1, 1)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
+{
+  int  r;
+  FILE *fp;
+
+  fp = fopen (fname, "w+b");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  r = dsk_dosemu_create_fp (fp, c, h, s);
 
   fclose (fp);
 
-  return (dsk_dosemu_new (d, fname, ro));
+  return (r);
 }

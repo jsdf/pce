@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.h                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,6 +30,7 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <stdint.h>
 
 
 struct disk_s;
@@ -37,13 +38,9 @@ struct disk_s;
 
 typedef void (*dsk_del_f) (struct disk_s *dsk);
 
-typedef int (*dsk_read_f) (struct disk_s *dsk, void *buf,
-  unsigned long i, unsigned long n
-);
+typedef int (*dsk_read_f) (struct disk_s *dsk, void *buf, uint32_t i, uint32_t n);
 
-typedef int (*dsk_write_f) (struct disk_s *dsk, const void *buf,
-  unsigned long i, unsigned long n
-);
+typedef int (*dsk_write_f) (struct disk_s *dsk, const void *buf, uint32_t i, uint32_t n);
 
 typedef int (*dsk_commit_f) (struct disk_s *dsk);
 
@@ -58,16 +55,16 @@ typedef struct disk_s {
   dsk_commit_f  commit;
 
   unsigned      drive;
-  unsigned      c;
-  unsigned      h;
-  unsigned      s;
-  unsigned long blocks;
+  uint32_t      c;
+  uint32_t      h;
+  uint32_t      s;
+  uint32_t      blocks;
 
-  unsigned      visible_c;
-  unsigned      visible_h;
-  unsigned      visible_s;
+  uint32_t      visible_c;
+  uint32_t      visible_h;
+  uint32_t      visible_s;
 
-  int           readonly;
+  char          readonly;
 
   void          *ext;
 } disk_t;
@@ -82,14 +79,27 @@ typedef struct {
 } disks_t;
 
 
-void dsk_fread_zero (void *buf, size_t size, size_t cnt, FILE *fp);
+uint16_t dsk_get_uint16_be (const void *buf, unsigned i);
+uint32_t dsk_get_uint32_be (const void *buf, unsigned i);
+uint64_t dsk_get_uint64_be (const void *buf, unsigned i);
+
+void dsk_set_uint16_be (void *buf, unsigned i, uint16_t v);
+void dsk_set_uint32_be (void *buf, unsigned i, uint32_t v);
+void dsk_set_uint64_be (void *buf, unsigned i, uint64_t v);
+
+uint32_t dsk_get_uint32_le (const void *buf, unsigned i);
+
+void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v);
+
+
+int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt);
+int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt);
+
 
 /*!***************************************************************************
  * @short Initialize a disk structure
  *****************************************************************************/
-void dsk_init (disk_t *dsk, void *ext, unsigned d,
-  unsigned c, unsigned h, unsigned s, int ro
-);
+void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s);
 
 /*!***************************************************************************
  * @short Delete a disk
@@ -98,57 +108,67 @@ void dsk_del (disk_t *dsk);
 
 
 /*!***************************************************************************
+ * @short Set the drive number
+ *****************************************************************************/
+void dsk_set_drive (disk_t *dsk, unsigned d);
+
+/*!***************************************************************************
+ * @short Set the read-only flag
+ *****************************************************************************/
+void dsk_set_readonly (disk_t *dsk, int v);
+
+/*!***************************************************************************
  * @short Set the visible geometry
  *****************************************************************************/
-void dsk_set_visible_chs (disk_t *dsk, unsigned c, unsigned h, unsigned s);
+void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s);
+
+uint32_t dsk_get_block_cnt (disk_t *dsk);
 
 
 /*!***************************************************************************
  * @short Create a new disk
  *****************************************************************************/
-disk_t *dsk_auto_new (unsigned d, const char *fname, int ro);
+disk_t *dsk_auto_open (const char *fname, int ro);
 
 
 /*!***************************************************************************
  * @short  Convert CHS to LBA
  * @return Nonzero if the CHS address is illegal
  *****************************************************************************/
-int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
-  unsigned long *lba
-);
+int dsk_get_lba (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s, uint32_t *v);
 
 /*!***************************************************************************
  * @short  Read blocks using LBA addressing
  * @return Zero if successful
  *****************************************************************************/
-int dsk_read_lba (disk_t *dsk, void *buf,
-  unsigned long blk_i, unsigned long blk_n
-);
+int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
 
 /*!***************************************************************************
  * @short  Read blocks using CHS addressing
  * @return Zero if successful
  *****************************************************************************/
 int dsk_read_chs (disk_t *dsk, void *buf,
-  unsigned c, unsigned h, unsigned s, unsigned long blk_n
+  uint32_t c, uint32_t h, uint32_t s, uint32_t blk_n
 );
 
 /*!***************************************************************************
  * @short  Write blocks using LBA addressing
  * @return Zero if successful
  *****************************************************************************/
-int dsk_write_lba (disk_t *dsk, const void *buf,
-  unsigned long blk_i, unsigned long blk_n
-);
+int dsk_write_lba (disk_t *dsk, const void *buf, uint32_t i, uint32_t n);
 
 /*!***************************************************************************
  * @short  Write blocks using LBA addressing
  * @return Zero if successful
  *****************************************************************************/
 int dsk_write_chs (disk_t *dsk, const void *buf,
-  unsigned c, unsigned h, unsigned s, unsigned long blk_n
+  uint32_t c, uint32_t h, uint32_t s, uint32_t n
 );
 
+/*!***************************************************************************
+ * @short  Commit changes
+ * @return Zero if successful
+ *****************************************************************************/
 int dsk_commit (disk_t *dsk);
 
 
@@ -182,6 +202,10 @@ int dsks_rmv_disk (disks_t *dsks, disk_t *dsk);
  *****************************************************************************/
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
 
+/*!***************************************************************************
+ * @short  Commit all disks in a disk set
+ * @return Zero if successful
+ *****************************************************************************/
 int dsks_commit (disks_t *dsks);
 
 

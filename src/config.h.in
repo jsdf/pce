@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,6 +25,11 @@
 
 #ifndef PCE_CONFIG_H
 #define PCE_CONFIG_H 1
+
+
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 600
+#endif
 
 
 #undef HAVE_LIMITS_H

@@ -2,8 +2,10 @@
 
 	* Added an ARM core emulator and a minimal system simulator
 	* Added a sparc32 core emulator and a minimal system simulator
+	* Cleaned up the block device code.
 	* Added a new partitioned block device type.
 	* Added copy on write support to all block devices.
+	* Added a new pce specific block device type (pimg).
 	* Added a new DOS utility pcemsg.com to send messages to the
 	  emulation core.
 	* Bugfixes

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkimg.c                                       *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -29,9 +29,10 @@
 
 
 static
-int dsk_img_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
+int dsk_img_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 {
   disk_img_t *img;
+  uint64_t   ofs, cnt;
 
   if ((i + n) > dsk->blocks) {
     return (1);
@@ -39,19 +40,21 @@ int dsk_img_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 
   img = dsk->ext;
 
-  if (fseek (img->fp, img->start + 512UL * i, SEEK_SET)) {
+  ofs = img->start + 512 * (uint64_t) i;
+  cnt = 512 * (uint64_t) n;
+
+  if (dsk_read (img->fp, buf, ofs, cnt)) {
     return (1);
   }
-
-  dsk_fread_zero (buf, 512, n, img->fp);
 
   return (0);
 }
 
 static
-int dsk_img_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
+int dsk_img_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 {
   disk_img_t *img;
+  uint64_t   ofs, cnt;
 
   if (dsk->readonly) {
     return (1);
@@ -63,11 +66,10 @@ int dsk_img_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
 
   img = dsk->ext;
 
-  if (fseek (img->fp, img->start + 512UL * i, SEEK_SET)) {
-    return (1);
-  }
+  ofs = img->start + 512 * (uint64_t) i;
+  cnt = 512 * (uint64_t) n;
 
-  if (fwrite (buf, 512, n, img->fp) != n) {
+  if (dsk_write (img->fp, buf, ofs, cnt)) {
     return (1);
   }
 
@@ -81,44 +83,103 @@ void dsk_img_del (disk_t *dsk)
 {
   disk_img_t *img;
 
-  img = (disk_img_t *) dsk->ext;
+  img = dsk->ext;
 
   fclose (img->fp);
   free (img);
 }
 
-disk_t *dsk_img_new (unsigned d, unsigned c, unsigned h, unsigned s,
-  unsigned long start, const char *fname, int ro)
+disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s, int ro)
 {
   disk_img_t *img;
 
-  img = (disk_img_t *) malloc (sizeof (disk_img_t));
+  img = malloc (sizeof (disk_img_t));
   if (img == NULL) {
     return (NULL);
   }
 
-  dsk_init (&img->dsk, img, d, c, h, s, ro);
+  dsk_init (&img->dsk, img, c, h, s);
 
-  img->dsk.del = &dsk_img_del;
-  img->dsk.read = &dsk_img_read;
-  img->dsk.write = &dsk_img_write;
+  dsk_set_readonly (&img->dsk, ro);
 
-  img->start = start;
+  img->dsk.del = dsk_img_del;
+  img->dsk.read = dsk_img_read;
+  img->dsk.write = dsk_img_write;
+
+  img->start = 0;
+
+  img->fp = fp;
+
+  return (&img->dsk);
+}
+
+disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro)
+{
+  disk_t *dsk;
+  FILE   *fp;
 
   if (ro) {
-    img->fp = fopen (fname, "rb");
+    fp = fopen (fname, "rb");
   }
   else {
-    img->fp = fopen (fname, "r+b");
-    if (img->fp == NULL) {
-      img->fp = fopen (fname, "w+b");
-    }
+    fp = fopen (fname, "r+b");
   }
 
-  if (img->fp == NULL) {
-    free (img);
+  if (fp == NULL) {
     return (NULL);
   }
 
-  return (&img->dsk);
+  dsk = dsk_img_open_fp (fp, c, h, s, ro);
+
+  if (dsk == NULL) {
+    fclose (fp);
+    return (NULL);
+  }
+
+  return (dsk);
+}
+
+void dsk_img_set_offset (disk_t *dsk, uint64_t ofs)
+{
+  disk_img_t *img;
+
+  img = dsk->ext;
+
+  img->start = ofs;
+}
+
+int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
+{
+  uint64_t      cnt;
+  unsigned char buf;
+
+  cnt = 512 * (uint64_t) (c * h * s);
+  if (cnt == 0) {
+    return (1);
+  }
+
+  buf = 0;
+
+  if (dsk_write (fp, &buf, cnt - 1, 1)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
+{
+  int  r;
+  FILE *fp;
+
+  fp = fopen (fname, "w+b");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  r = dsk_img_create_fp (fp, c, h, s);
+
+  fclose (fp);
+
+  return (r);
 }

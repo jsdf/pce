@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,8 +23,8 @@
 /* $Id$ */
 
 
-#ifndef PCE_H
-#define PCE_H 1
+#ifndef PCE_IBMPC_MAIN_H
+#define PCE_IBMPC_MAIN_H 1
 
 
 #include <config.h>
@@ -38,12 +38,6 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-
-#ifndef PCE_HOST_FOSC
-#define PCE_HOST_FOSC 100000000UL
-#endif
-
-#define PCE_EMU_FOSC 4772393
 
 #define PCE_BRK_STOP  1
 #define PCE_BRK_ABORT 2
@@ -113,6 +107,7 @@ extern unsigned long par_int28;
 #include <devices/blkdosem.h>
 #include <devices/blkimg.h>
 #include <devices/blkpart.h>
+#include <devices/blkpce.h>
 #include <devices/blkram.h>
 
 #include "util.h"

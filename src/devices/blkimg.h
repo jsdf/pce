@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkimg.h                                       *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -32,26 +32,28 @@
 #include <devices/disk.h>
 
 #include <stdio.h>
+#include <stdint.h>
 
 
 /*!***************************************************************************
  * @short The image file disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t        dsk;
+  disk_t   dsk;
 
-  unsigned long start;
-  FILE          *fp;
+  FILE     *fp;
+
+  uint64_t start;
 } disk_img_t;
 
 
-/*!***************************************************************************
- * @short Create a new image file disk
- *****************************************************************************/
-disk_t *dsk_img_new (unsigned d,
-  unsigned c, unsigned h, unsigned s,
-  unsigned long start, const char *fname, int ro
-);
+disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s, int ro);
+disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro);
+
+void dsk_img_set_offset (disk_t *dsk, uint64_t ofs);
+
+int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
+int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
 
 
 #endif

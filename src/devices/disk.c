@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.c                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,42 +25,181 @@
 
 #include "disk.h"
 
+#include "blkpce.h"
+#include "blkdosem.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 
-void dsk_fread_zero (void *buf, size_t size, size_t cnt, FILE *fp)
+uint16_t dsk_get_uint16_be (const void *buf, unsigned i)
+{
+  const unsigned char *tmp;
+  uint16_t            v;
+
+  tmp = (const unsigned char *) buf + i;
+
+  v = tmp[0];
+  v = (v << 8) | tmp[1];
+
+  return (v);
+}
+
+uint32_t dsk_get_uint32_be (const void *buf, unsigned i)
+{
+  const unsigned char *tmp;
+  uint32_t            v;
+
+  tmp = (const unsigned char *) buf + i;
+
+  v = tmp[0];
+  v = (v << 8) | tmp[1];
+  v = (v << 8) | tmp[2];
+  v = (v << 8) | tmp[3];
+
+  return (v);
+}
+
+uint64_t dsk_get_uint64_be (const void *buf, unsigned i)
+{
+  const unsigned char *tmp;
+  uint64_t            v;
+
+  tmp = (const unsigned char *) buf + i;
+
+  v = tmp[0];
+  v = (v << 8) | tmp[1];
+  v = (v << 8) | tmp[2];
+  v = (v << 8) | tmp[3];
+  v = (v << 8) | tmp[4];
+  v = (v << 8) | tmp[5];
+  v = (v << 8) | tmp[6];
+  v = (v << 8) | tmp[7];
+
+  return (v);
+}
+
+void dsk_set_uint16_be (void *buf, unsigned i, uint16_t v)
+{
+  unsigned char *tmp;
+
+  tmp = (unsigned char *) buf + i;
+
+  tmp[0] = (v >> 8) & 0xff;
+  tmp[1] = v & 0xff;
+}
+
+void dsk_set_uint32_be (void *buf, unsigned i, uint32_t v)
+{
+  unsigned char *tmp;
+
+  tmp = (unsigned char *) buf + i;
+
+  tmp[0] = (v >> 24) & 0xff;
+  tmp[1] = (v >> 16) & 0xff;
+  tmp[2] = (v >> 8) & 0xff;
+  tmp[3] = v & 0xff;
+}
+
+void dsk_set_uint64_be (void *buf, unsigned i, uint64_t v)
+{
+  unsigned char *tmp;
+
+  tmp = (unsigned char *) buf + i;
+
+  tmp[0] = (v >> 56) & 0xff;
+  tmp[1] = (v >> 48) & 0xff;
+  tmp[2] = (v >> 40) & 0xff;
+  tmp[3] = (v >> 32) & 0xff;
+  tmp[4] = (v >> 24) & 0xff;
+  tmp[5] = (v >> 16) & 0xff;
+  tmp[6] = (v >> 8) & 0xff;
+  tmp[7] = v & 0xff;
+}
+
+uint32_t dsk_get_uint32_le (const void *buf, unsigned i)
+{
+  const unsigned char *tmp;
+  uint32_t            v;
+
+  tmp = (const unsigned char *) buf + i;
+
+  v = tmp[3];
+  v = (v << 8) | tmp[2];
+  v = (v << 8) | tmp[1];
+  v = (v << 8) | tmp[0];
+
+  return (v);
+}
+
+void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v)
+{
+  unsigned char *tmp;
+
+  tmp = (unsigned char *) buf + i;
+
+  tmp[0] = v & 0xff;
+  tmp[1] = (v >> 8) & 0xff;
+  tmp[2] = (v >> 16) & 0xff;
+  tmp[3] = (v >> 24) & 0xff;
+}
+
+
+int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
 {
   size_t r;
 
-  r = fread (buf, size, cnt, fp);
+  if (fseeko (fp, ofs, SEEK_SET)) {
+    return (1);
+  }
+
+  r = fread (buf, 1, cnt, fp);
 
   if (r < cnt) {
-    memset ((unsigned char *) buf + size * r, 0x00, size * (cnt - r));
+    memset ((unsigned char *) buf + r, 0x00, cnt - r);
   }
+
+  return (0);
 }
 
-void dsk_init (disk_t *dsk, void *ext, unsigned d,
-  unsigned c, unsigned h, unsigned s, int ro)
+int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
+{
+  size_t r;
+
+  if (fseeko (fp, ofs, SEEK_SET)) {
+    return (1);
+  }
+
+  r = fwrite (buf, 1, cnt, fp);
+
+  if (r != cnt) {
+    return (1);
+  }
+
+  return (0);
+}
+
+
+void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s)
 {
   dsk->del = NULL;
   dsk->read = NULL;
   dsk->write = NULL;
   dsk->commit = NULL;
 
-  dsk->drive = d;
+  dsk->drive = 0;
 
   dsk->c = c;
   dsk->h = h;
   dsk->s = s;
 
-  dsk->blocks = (unsigned long) c * h * s;
+  dsk->blocks = c * h * s;
 
   dsk->visible_c = c;
   dsk->visible_h = h;
   dsk->visible_s = s;
 
-  dsk->readonly = (ro != 0);
+  dsk->readonly = 0;
 
   dsk->ext = ext;
 }
@@ -73,22 +212,48 @@ void dsk_del (disk_t *dsk)
 }
 
 
-void dsk_set_visible_chs (disk_t *dsk, unsigned c, unsigned h, unsigned s)
+void dsk_set_drive (disk_t *dsk, unsigned d)
+{
+  dsk->drive = d;
+}
+
+void dsk_set_readonly (disk_t *dsk, int v)
+{
+  dsk->readonly = (v != 0);
+}
+
+void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s)
 {
   dsk->visible_c = c;
   dsk->visible_h = h;
   dsk->visible_s = s;
 }
 
-
-disk_t *dsk_auto_new (unsigned d, const char *fname, int ro)
+uint32_t dsk_get_block_cnt (disk_t *dsk)
 {
+  return (dsk->blocks);
+}
+
+
+disk_t *dsk_auto_open (const char *fname, int ro)
+{
+  disk_t *dsk;
+
+  dsk = dsk_pce_open (fname, ro);
+  if (dsk != NULL) {
+    return (dsk);
+  }
+
+  dsk = dsk_dosemu_open (fname, ro);
+  if (dsk != NULL) {
+    return (dsk);
+  }
+
   return (NULL);
 }
 
 
-int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
-  unsigned long *lba)
+int dsk_get_lba (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s, uint32_t *v)
 {
   if ((s < 1) || (s > dsk->s)) {
     return (1);
@@ -98,12 +263,12 @@ int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
     return (1);
   }
 
-  *lba = ((c * dsk->h + h) * dsk->s + s - 1);
+  *v = ((c * dsk->h + h) * dsk->s + s - 1);
 
   return (0);
 }
 
-int dsk_read_lba (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
+int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 {
   if (dsk->read != NULL) {
     return (dsk->read (dsk, buf, i, n));
@@ -113,18 +278,18 @@ int dsk_read_lba (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 }
 
 int dsk_read_chs (disk_t *dsk, void *buf,
-  unsigned c, unsigned h, unsigned s, unsigned long blk_n)
+  uint32_t c, uint32_t h, uint32_t s, uint32_t n)
 {
-  unsigned long blk_i;
+  uint32_t i;
 
-  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
+  if (dsk_get_lba (dsk, c, h, s, &i)) {
     return (1);
   }
 
-  return (dsk_read_lba (dsk, buf, blk_i, blk_n));
+  return (dsk_read_lba (dsk, buf, i, n));
 }
 
-int dsk_write_lba (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
+int dsk_write_lba (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 {
   if (dsk->write != NULL) {
     return (dsk->write (dsk, buf, i, n));
@@ -134,15 +299,15 @@ int dsk_write_lba (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
 }
 
 int dsk_write_chs (disk_t *dsk, const void *buf,
-  unsigned c, unsigned h, unsigned s, unsigned long blk_n)
+  uint32_t c, uint32_t h, uint32_t s, uint32_t n)
 {
-  unsigned long blk_i;
+  uint32_t i;
 
-  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
+  if (dsk_get_lba (dsk, c, h, s, &i)) {
     return (1);
   }
 
-  return (dsk_write_lba (dsk, buf, blk_i, blk_n));
+  return (dsk_write_lba (dsk, buf, i, n));
 }
 
 int dsk_commit (disk_t *dsk)

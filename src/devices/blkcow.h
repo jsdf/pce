@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkcow.h                                       *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -32,6 +32,7 @@
 #include <devices/disk.h>
 
 #include <stdio.h>
+#include <stdint.h>
 
 
 /*!***************************************************************************
@@ -44,11 +45,11 @@ typedef struct {
 
   FILE          *fp;
 
-  unsigned long bitmap_offset;
-  unsigned long data_offset;
+  uint64_t      bitmap_offset;
+  uint64_t      data_offset;
 
   unsigned char *bitmap;
-  unsigned long bitmap_size;
+  uint32_t      bitmap_size;
 } disk_cow_t;
 
 

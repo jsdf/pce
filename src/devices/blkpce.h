@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/blkpart.h                                      *
- * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/devices/blkpce.h                                       *
+ * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,8 +23,8 @@
 /* $Id$ */
 
 
-#ifndef PCE_DEVICES_BLKPART_H
-#define PCE_DEVICES_BLKPART_H 1
+#ifndef PCE_DEVICES_BLKPCE_H
+#define PCE_DEVICES_BLKPCE_H 1
 
 
 #include <config.h>
@@ -32,43 +32,43 @@
 #include <devices/disk.h>
 
 #include <stdio.h>
-
-
-#define DSK_PART_MAX 16
+#include <stdint.h>
 
 
 /*!***************************************************************************
- * @short The partitioned image file disk structure
+ * @short The pce image file disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t        dsk;
+  disk_t   dsk;
 
-  unsigned      part_cnt;
+  FILE     *fp;
 
-  struct {
-    uint32_t block_i;
-    uint32_t block_n;
-    uint64_t start;
-    FILE     *fp;
-    int      close;
-    int      ro;
-  } part[DSK_PART_MAX];
-} disk_part_t;
+  uint32_t blk_size;
+  uint64_t blk_cnt;
+
+  uint32_t cylinders;
+  uint32_t heads;
+  uint32_t sectors;
+
+  uint64_t dir_base;
+  uint64_t blk_base;
+  uint64_t blk_last;
+
+  uint32_t dir_cnt;
+  uint32_t dir_size;
+  uint32_t dir_next;
+  uint32_t dir_alloc;
+
+  uint64_t **dir;
+  uint8_t  *dir_buf;
+} disk_pce_t;
 
 
-/*!***************************************************************************
- * @short Add a partition
- *****************************************************************************/
-int dsk_part_add_partition_fp (disk_t *dsk, FILE *fp, int close,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
+disk_t *dsk_pce_open_fp (FILE *fp, int ro);
+disk_t *dsk_pce_open (const char *fname, int ro);
 
-int dsk_part_add_partition (disk_t *dsk, const char *fname,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
-
-/*!***************************************************************************
- * @short Create a new partition image disk
- *****************************************************************************/
-disk_t *dsk_part_open (uint32_t c, uint32_t h, uint32_t s, int ro);
+int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
+int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
 
 
 #endif

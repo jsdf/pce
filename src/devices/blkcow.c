@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkcow.c                                       *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -32,8 +32,9 @@
 #define COW_MAGIC 0x434f5720
 
 /*
-0   4  magic
-4   4  version
+COW image file format
+0   4  magic (COW )
+4   4  version (0)
 8   4  block count
 12  4  bitmap start
 16  4  data start
@@ -41,36 +42,9 @@
 
 
 static
-unsigned long cow_get_uint32 (const void *buf, unsigned i)
-{
-  const unsigned char *tmp;
-
-  tmp = (const unsigned char *) buf + i;
-
-  return ((tmp[0] << 24) | (tmp[1] << 16) | (tmp[2] << 8) | tmp[3]);
-}
-
-static
-void cow_set_uint32 (void *buf, unsigned i, unsigned long v)
-{
-  unsigned char *tmp;
-
-  tmp = (unsigned char *) buf + i;
-
-  tmp[0] = (v >> 24) & 0xff;
-  tmp[1] = (v >> 16) & 0xff;
-  tmp[2] = (v >> 8) & 0xff;
-  tmp[3] = v & 0xff;
-}
-
-static
 int cow_read_bitmap (disk_cow_t *cow)
 {
-  if (fseek (cow->fp, cow->bitmap_offset, SEEK_SET)) {
-    return (1);
-  }
-
-  if (fread (cow->bitmap, 1, cow->bitmap_size, cow->fp) != cow->bitmap_size) {
+  if (dsk_read (cow->fp, cow->bitmap, cow->bitmap_offset, cow->bitmap_size)) {
     return (1);
   }
 
@@ -80,11 +54,7 @@ int cow_read_bitmap (disk_cow_t *cow)
 static
 int cow_write_bitmap (disk_cow_t *cow)
 {
-  if (fseek (cow->fp, cow->bitmap_offset, SEEK_SET)) {
-    return (1);
-  }
-
-  if (fwrite (cow->bitmap, 1, cow->bitmap_size, cow->fp) != cow->bitmap_size) {
+  if (dsk_write (cow->fp, cow->bitmap, cow->bitmap_offset, cow->bitmap_size)) {
     return (1);
   }
 
@@ -94,10 +64,10 @@ int cow_write_bitmap (disk_cow_t *cow)
 }
 
 static
-int cow_get_block (disk_cow_t *cow, unsigned long blk, unsigned long *cnt)
+int cow_get_block (disk_cow_t *cow, uint32_t blk, uint32_t *cnt)
 {
   int           r;
-  unsigned long i, n;
+  uint32_t      i, n;
   unsigned char m, v;
 
   i = blk / 8;
@@ -142,10 +112,9 @@ int cow_get_block (disk_cow_t *cow, unsigned long blk, unsigned long *cnt)
 }
 
 static
-int cow_set_block (disk_cow_t *cow, unsigned long blk, unsigned long cnt, int val)
+int cow_set_block (disk_cow_t *cow, uint32_t blk, uint32_t cnt, int val)
 {
-  unsigned long i;
-  unsigned long i0, i1;
+  uint32_t      i, i0, i1;
   unsigned char m0, m1;
 
   cnt = (blk + cnt - 1);
@@ -186,11 +155,7 @@ int cow_set_block (disk_cow_t *cow, unsigned long blk, unsigned long cnt, int va
 
   i1 = i1 - i0 + 1;
 
-  if (fseek (cow->fp, cow->bitmap_offset + i0, SEEK_SET)) {
-    return (1);
-  }
-
-  if (fwrite (cow->bitmap + i0, 1, i1, cow->fp) != i1) {
+  if (dsk_write (cow->fp, cow->bitmap + i0, cow->bitmap_offset + i0, i1)) {
     return (1);
   }
 
@@ -198,14 +163,16 @@ int cow_set_block (disk_cow_t *cow, unsigned long blk, unsigned long cnt, int va
 }
 
 static
-int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
+int dsk_cow_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 {
   unsigned char *tmp;
-  unsigned long cnt;
+  uint32_t      cnt;
+  uint64_t      ofs;
   disk_cow_t    *cow;
 
   cow = dsk->ext;
   tmp = buf;
+  ofs = cow->data_offset + 512 * (uint64_t) i;
 
   while (n > 0) {
     if (i >= dsk->blocks) {
@@ -214,11 +181,9 @@ int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
 
     cnt = n;
     if (cow_get_block (cow, i, &cnt)) {
-      if (fseek (cow->fp, cow->data_offset + 512UL * i, SEEK_SET)) {
+      if (dsk_read (cow->fp, tmp, ofs, 512 * cnt)) {
         return (1);
       }
-
-      dsk_fread_zero (tmp, 512, cnt, cow->fp);
     }
     else {
       if (dsk_read_lba (cow->orig, tmp, i, cnt)) {
@@ -229,16 +194,18 @@ int dsk_cow_read (disk_t *dsk, void *buf, unsigned long i, unsigned long n)
     i += cnt;
     n -= cnt;
     tmp += 512 * cnt;
+    ofs += 512 * cnt;
   }
 
   return (0);
 }
 
 static
-int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long n)
+int dsk_cow_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 {
   const unsigned char *tmp;
-  unsigned long       cnt;
+  uint32_t            cnt;
+  uint64_t            ofs;
   disk_cow_t          *cow;
 
   if (dsk->readonly) {
@@ -247,6 +214,8 @@ int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
 
   cow = dsk->ext;
   tmp = buf;
+
+  ofs = cow->data_offset + 512 * (uint64_t) i;
 
   while (n > 0) {
     if (i >= dsk->blocks) {
@@ -258,17 +227,14 @@ int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
       cow_set_block (cow, i, cnt, 1);
     }
 
-    if (fseek (cow->fp, cow->data_offset + 512UL * i, SEEK_SET)) {
-      return (1);
-    }
-
-    if (fwrite (tmp, 512, cnt, cow->fp) != cnt) {
+    if (dsk_write (cow->fp, tmp, ofs, 512 * cnt)) {
       return (1);
     }
 
     i += cnt;
     n -= cnt;
     tmp += 512 * cnt;
+    ofs += 512 * cnt;
   }
 
   fflush (cow->fp);
@@ -277,27 +243,24 @@ int dsk_cow_write (disk_t *dsk, const void *buf, unsigned long i, unsigned long 
 }
 
 static
-int cow_commit_block (disk_cow_t *cow, unsigned long blk)
+int cow_commit_block (disk_cow_t *cow, uint32_t blk)
 {
   unsigned char buf[512];
+  uint64_t      ofs;
 
-  if (fseek (cow->fp, cow->data_offset + 512UL * blk, SEEK_SET)) {
+  ofs = cow->data_offset + 512 * (uint64_t) blk;
+
+  if (dsk_read (cow->fp, buf, ofs, 512)) {
     return (1);
   }
-
-  dsk_fread_zero (buf, 512, 1, cow->fp);
 
   if (dsk_write_lba (cow->orig, buf, blk, 1)) {
     return (1);
   }
 
-  if (fseek (cow->fp, cow->data_offset + 512UL * blk, SEEK_SET)) {
-    return (1);
-  }
-
   memset (buf, 0, 512);
 
-  if (fwrite (buf, 512, 1, cow->fp) != 1) {
+  if (dsk_write (cow->fp, buf, ofs, 512)) {
     return (1);
   }
 
@@ -307,8 +270,8 @@ int cow_commit_block (disk_cow_t *cow, unsigned long blk)
 static
 int dsk_cow_commit (disk_t *dsk)
 {
-  unsigned long i, n;
-  unsigned long blk;
+  uint32_t      i, n;
+  uint32_t      blk;
   unsigned char msk;
   disk_cow_t    *cow;
 
@@ -319,7 +282,7 @@ int dsk_cow_commit (disk_t *dsk)
   for (i = 0; i < cow->bitmap_size; i++) {
     if (cow->bitmap[i] != 0) {
       msk = cow->bitmap[i];
-      blk = 8UL * i;
+      blk = 8 * i;
 
       while (msk != 0) {
         if (msk & 0x80) {
@@ -370,13 +333,13 @@ int dsk_cow_create (disk_cow_t *cow)
   cow->bitmap_offset = 20;
   cow->data_offset = (20 + cow->bitmap_size + 511) & (~511UL);
 
-  cow_set_uint32 (buf, 0, COW_MAGIC);
-  cow_set_uint32 (buf, 4, 0);
-  cow_set_uint32 (buf, 8, cow->dsk.blocks);
-  cow_set_uint32 (buf, 12, cow->bitmap_offset);
-  cow_set_uint32 (buf, 16, cow->data_offset);
+  dsk_set_uint32_be (buf, 0, COW_MAGIC);
+  dsk_set_uint32_be (buf, 4, 0);
+  dsk_set_uint32_be (buf, 8, cow->dsk.blocks);
+  dsk_set_uint32_be (buf, 12, cow->bitmap_offset);
+  dsk_set_uint32_be (buf, 16, cow->data_offset);
 
-  if (fwrite (buf, 1, 20, cow->fp) != 20) {
+  if (dsk_write (cow->fp, buf, 0, 20)) {
     return (1);
   }
 
@@ -394,24 +357,24 @@ int dsk_cow_open (disk_cow_t *cow)
 {
   unsigned char buf[32];
 
-  if (fread (buf, 1, 20, cow->fp) != 20) {
+  if (dsk_read (cow->fp, buf, 0, 20)) {
     return (1);
   }
 
-  if (cow_get_uint32 (buf, 0) != COW_MAGIC) {
+  if (dsk_get_uint32_be (buf, 0) != COW_MAGIC) {
     return (1);
   }
 
-  if (cow_get_uint32 (buf, 4) != 0) {
+  if (dsk_get_uint32_be (buf, 4) != 0) {
     return (1);
   }
 
-  if (cow_get_uint32 (buf, 8) != cow->dsk.blocks) {
+  if (dsk_get_uint32_be (buf, 8) != cow->dsk.blocks) {
     return (1);
   }
 
-  cow->bitmap_offset = cow_get_uint32 (buf, 12);
-  cow->data_offset = cow_get_uint32 (buf, 16);
+  cow->bitmap_offset = dsk_get_uint32_be (buf, 12);
+  cow->data_offset = dsk_get_uint32_be (buf, 16);
 
   if (cow_read_bitmap (cow)) {
     return (1);

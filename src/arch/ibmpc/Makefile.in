@@ -33,6 +33,7 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/blkdosem.o \
 	$(pcedst)/devices/blkimg.o \
 	$(pcedst)/devices/blkpart.o \
+	$(pcedst)/devices/blkpce.o \
 	$(pcedst)/devices/blkram.o \
 	$(pcedst)/devices/vga.o \
 	$(pcedst)/devices/ega.o \
@@ -66,6 +67,7 @@ HDR_EXT	:= \
 	devices/blkdosem.h \
 	devices/blkimg.h \
 	devices/blkpart.h \
+	devices/blkpce.h \
 	devices/blkram.h \
 	devices/vga.h \
 	devices/ega.h \

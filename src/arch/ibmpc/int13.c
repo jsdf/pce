@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -72,7 +72,7 @@ static
 void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned       i, n;
-  unsigned long  blk_i, blk_n;
+  uint32_t       blk_i, blk_n;
   unsigned       c, h, s;
   unsigned long  addr;
   unsigned char  buf[1024];
@@ -129,7 +129,7 @@ static
 void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned       i;
-  unsigned long  blk_i, blk_n;
+  uint32_t       blk_i, blk_n;
   unsigned       c, h, s;
   unsigned long  addr;
   unsigned short val;
