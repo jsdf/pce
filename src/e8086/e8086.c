@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.12 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: e8086.c,v 1.13 2003/04/23 23:39:16 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -185,7 +185,7 @@ void e86_execute (e8086_t *c)
 
   c->instructions += 1;
 
-  if (e86_get_if (c) && c->irq) {
+  if (c->irq && e86_get_if (c)) {
     c->irq = 0;
 
     if (c->inta != NULL) {
