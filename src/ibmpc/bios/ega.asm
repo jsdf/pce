@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.1 2003/09/14 21:27:39 hampa Exp $
+; $Id: ega.asm,v 1.2 2003/09/19 14:48:36 hampa Exp $
 
 
 %include "config.inc"
@@ -128,6 +128,25 @@ pal_default:
   db      (PAL_R1) + (PAL_R0)
   db      (PAL_R1 + PAL_B1) + (PAL_R0 + PAL_B0)
   db      (PAL_R1 + PAL_G1) + (PAL_R0 + PAL_G0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+
+pal_mono:
+  db      0x00
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+  db      PAL_R1 + PAL_G1 + PAL_B1
+
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
+  db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
   db      (PAL_R1 + PAL_G1 + PAL_B1) + (PAL_R0 + PAL_G0 + PAL_B0)
 
 
@@ -334,6 +353,38 @@ atc_set_palette_default:
   ret
 
 
+atc_set_palette_mono:
+  push    ax
+  push    cx
+  push    si
+  push    ds
+
+  mov     al, 0
+  mov     cx, 16
+  push    cs
+  pop     ds
+  mov     si, pal_mono
+  call    atc_set_palette
+
+  pop     ds
+  pop     si
+  pop     cx
+  pop     ax
+  ret
+
+
+; get video mem segment in AX
+get_segm:
+  mov     ax, 0xb800
+  cmp     word [BIOS_CRTC], 0x03b4
+  jne     .done
+
+  mov     ah, 0xb0
+
+.done:
+  ret
+
+
 ; Get page AL offset in AX
 get_pofs:
   push    dx
@@ -374,7 +425,7 @@ txt_set_char_xy:
   call    get_cofs
   add     di, ax
 
-  mov     ax, 0xb800
+  call    get_segm
   mov     es, ax
 
 .next:
@@ -411,7 +462,7 @@ txt_scroll_up_1:
   shr     cx, 1
   sub     cx, dx
 
-  mov     ax, 0xb800
+  call    get_segm
   mov     ds, ax
   mov     es, ax
 
@@ -454,9 +505,10 @@ txt_clear_rect:
   mov     ax, cx
   call    get_cofs
   add     di, ax
-  pop     ax
 
-  mov     es, [cs:segb800]
+  call    get_segm
+  mov     es, ax
+  pop     ax
 
 .next:
   mov     cl, dl
@@ -486,7 +538,11 @@ txt_clear:
   push    cx
   push    es
 
-  mov     es, [cs:segb800]
+  push    ax
+  call    get_segm
+  mov     es, ax
+  pop     ax
+
   rep     stosw
 
   pop     es
@@ -532,10 +588,12 @@ int_10_00_01:
   mov     [BIOS_MODE], al
   ret
 
+
 int_10_00_02:
   call    int_10_00_03
   mov     byte [BIOS_MODE], 0x02
   ret
+
 
 int_10_00_03:
   push    ax
@@ -597,10 +655,71 @@ int_10_00_03:
   pop     ax
   ret
 
+
+int_10_00_07:
+  push    ax
+  push    cx
+  push    dx
+  push    di
+
+  mov     dx, 0x03d0
+  mov     al, 7
+  out     dx, al
+
+  mov     byte [BIOS_MODE], 0x07
+  mov     word [BIOS_COLS], 80
+  mov     word [BIOS_SIZE], 4000
+  mov     word [BIOS_OFFS], 0
+
+  mov     di, BIOS_CPOS
+  mov     cx, 8
+.next:
+  mov     word [di], 0x0000
+  add     di, 2
+  loop    .next
+
+  mov     word [BIOS_CSIZ], 0x0607
+  mov     byte [BIOS_PAGE], 0x00
+  mov     word [BIOS_CRTC], 0x03b4
+
+  ; cursor size
+  mov     dx, 0x03b4
+  mov     ax, 0x0b0a
+  out     dx, ax
+  mov     ax, 0x0c0b
+  out     dx, ax
+
+  mov     dx, 0x3c2
+  mov     al, 0xc2
+  out     dx, al
+
+  mov     dx, 0x3b4
+  mov     ax, (0x28 << 8) | CRTC_ROFS
+  out     dx, ax
+
+  xor     ax, ax
+  call    crtc_set_curs_pos
+
+  xor     ax, ax
+  call    crtc_set_page_ofs
+
+  call    atc_set_palette_mono
+
+  mov     ax, 0x0720
+  xor     di, di
+  mov     cx, 8000
+  call    txt_clear
+
+  pop     di
+  pop     dx
+  pop     cx
+  pop     ax
+  ret
+
+
 int_10_00_04:
 int_10_00_05:
 int_10_00_06:
-int_10_00_07:
 int_10_00_08:
 int_10_00_09:
 int_10_00_0a:
@@ -608,6 +727,7 @@ int_10_00_0b:
 int_10_00_0c:
   mov     [BIOS_MODE], al
   ret
+
 
 int_10_00_0d:
   push    ax
@@ -979,8 +1099,11 @@ int_10_06:
   mov     bl, dh
   sub     bl, al                        ; rows to copy
 
-  mov     ds, [cs:segb800]
-  mov     es, [cs:segb800]
+  push    ax
+  call    get_segm
+  mov     ds, ax
+  mov     es, ax
+  pop     ax
 
 .copy:
   push    si
@@ -1087,8 +1210,11 @@ int_10_07:
   mov     bl, dh
   sub     bl, al                        ; rows to copy
 
-  mov     ds, [cs:segb800]
-  mov     es, [cs:segb800]
+  push    ax
+  call    get_segm
+  mov     ds, ax
+  mov     es, ax
+  pop     ax
 
 .copy:
   push    si
@@ -1141,10 +1267,10 @@ int_10_08:
   push    si
   push    es
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
-  mov     si, 0xb800
-  mov     es, si
+  call    get_segm
+  mov     es, ax
 
   mov     al, bh
   call    get_pofs
@@ -1177,10 +1303,10 @@ int_10_09:
 
   mov     ah, bl
 
-  mov     di, 0xb800
-  mov     es, di
-
   push    ax
+
+  call    get_segm
+  mov     es, ax
 
   mov     al, bh
   call    get_pofs
@@ -1217,10 +1343,10 @@ int_10_0a:
 
   mov     ds, [cs:bios_ds]
 
-  mov     di, 0xb800
-  mov     es, di
-
   push    ax
+
+  call    get_segm
+  mov     es, ax
 
   mov     al, bh
   call    get_pofs
@@ -1310,10 +1436,10 @@ int_10_0e:
   jmp     .ok
 
 .notbs:
-  mov     di, 0xb800
-  mov     es, di
-
   mov     cl, al
+
+  call    get_segm
+  mov     es, ax
 
   mov     al, [BIOS_PAGE]
   call    get_pofs

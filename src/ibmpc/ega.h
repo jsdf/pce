@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.h                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.1 2003/09/14 21:27:38 hampa Exp $ */
+/* $Id: ega.h,v 1.2 2003/09/19 14:48:36 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_EGA_H
@@ -36,6 +36,8 @@ typedef struct {
   mem_blk_t     *reg;
 
   unsigned char *data;
+
+  unsigned long segm;
 
   unsigned      mode_320x200_w;
   unsigned      mode_320x200_h;
