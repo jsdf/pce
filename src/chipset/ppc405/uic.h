@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/ppc405/uic.h                                   *
  * Created:       2004-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -30,16 +30,7 @@
 #define PPC_UIC_H 1
 
 
-#if defined (HAVE_STDINT_H)
 #include <stdint.h>
-#elif defined (HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
-#endif
 
 
 #define P405UIC_INT_U0   0              /* UART0 */
@@ -92,11 +83,13 @@ typedef struct p405_uic_s {
   uint32_t      levels;
   uint32_t      vr_msk;
 
-  void          *nint_ext;
   p405uic_int_f nint;
+  void          *nint_ext;
+  unsigned char nint_val;
 
-  void          *cint_ext;
   p405uic_int_f cint;
+  void          *cint_ext;
+  unsigned char cint_val;
 } p405_uic_t;
 
 
@@ -109,6 +102,8 @@ void p405uic_set_cint_f (p405_uic_t *uic, p405uic_int_f irq, void *ext);
 void p405uic_set_nint_f (p405_uic_t *uic, p405uic_int_f irq, void *ext);
 
 p405uic_irq_f p405uic_get_irq_f (p405_uic_t *uic, unsigned irq);
+
+uint32_t p405uic_get_levels (const p405_uic_t *uic);
 
 uint32_t p405uic_get_sr (p405_uic_t *uic);
 void p405uic_set_sr (p405_uic_t *uic, uint32_t val);

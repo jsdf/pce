@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/ppc405/uic.c                                   *
  * Created:       2004-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -58,11 +58,13 @@ void p405uic_init (p405_uic_t *uic)
   uic->levels = 0;
   uic->vr_msk = 0;
 
-  uic->nint_ext = NULL;
   uic->nint = NULL;
+  uic->nint_ext = NULL;
+  uic->nint_val = 0;
 
-  uic->cint_ext = NULL;
   uic->cint = NULL;
+  uic->cint_ext = NULL;
+  uic->cint_val = 0;
 }
 
 p405_uic_t *p405uic_new (void)
@@ -109,6 +111,32 @@ p405uic_irq_f p405uic_get_irq_f (p405_uic_t *uic, unsigned irq)
 }
 
 static
+void p405uic_set_cint (p405_uic_t *uic, unsigned char val)
+{
+  val = (val != 0);
+
+  if (val != uic->cint_val) {
+    uic->cint_val = val;
+    if (uic->cint != NULL) {
+      uic->cint (uic->cint_ext, val);
+    }
+  }
+}
+
+static
+void p405uic_set_nint (p405_uic_t *uic, unsigned char val)
+{
+  val = (val != 0);
+
+  if (val != uic->nint_val) {
+    uic->nint_val = val;
+    if (uic->nint != NULL) {
+      uic->nint (uic->nint_ext, val);
+    }
+  }
+}
+
+static
 void p405uic_update (p405_uic_t *uic)
 {
   unsigned i;
@@ -117,13 +145,6 @@ void p405uic_update (p405_uic_t *uic)
   uic->msr = uic->sr & uic->er;
 
   msk = uic->cr & uic->msr;
-
-  if (msk == uic->vr_msk) {
-    /* active critical interrupts have not changed */
-    return;
-  }
-
-  uic->vr_msk = msk;
 
   if (msk == 0) {
     /* no critical interrupts active */
@@ -147,38 +168,30 @@ void p405uic_update (p405_uic_t *uic)
 
     uic->vr = (uic->vcr & 0xfffffffcUL) + 512UL * i;
   }
+
+  p405uic_set_cint (uic, (uic->msr & uic->cr) != 0);
+  p405uic_set_nint (uic, (uic->msr & ~uic->cr) != 0);
 }
 
 uint32_t p405uic_get_sr (p405_uic_t *uic)
 {
+  fprintf (stderr, "p405 uic: get sr : %08lX\n", (unsigned long) uic->sr);
   return (uic->sr);
 }
 
 void p405uic_set_sr (p405_uic_t *uic, uint32_t val)
 {
-  uint32_t old;
-
-  old = uic->sr;
-
+  /* can't clear level sensitive interrupts that are still active */
   val &= (uic->tr | (uic->levels ^ uic->pr));
 
   uic->sr &= ~val;
 
   p405uic_update (uic);
+}
 
-  if ((uic->msr & uic->cr) == 0) {
-    /* no more critical interrupts pending */
-    if (uic->cint != NULL) {
-      uic->cint (uic->cint_ext, 0);
-    }
-  }
-
-  if ((uic->msr & ~uic->cr) == 0) {
-    /* no more non-critical interrupts pending */
-    if (uic->nint != NULL) {
-      uic->nint (uic->nint_ext, 0);
-    }
-  }
+uint32_t p405uic_get_levels (const p405_uic_t *uic)
+{
+  return (uic->levels);
 }
 
 uint32_t p405uic_get_er (p405_uic_t *uic)
@@ -216,6 +229,7 @@ uint32_t p405uic_get_pr (p405_uic_t *uic)
 void p405uic_set_pr (p405_uic_t *uic, uint32_t val)
 {
   uic->pr = val;
+  p405uic_update (uic);
 }
 
 uint32_t p405uic_get_tr (p405_uic_t *uic)
@@ -226,6 +240,7 @@ uint32_t p405uic_get_tr (p405_uic_t *uic)
 void p405uic_set_tr (p405_uic_t *uic, uint32_t val)
 {
   uic->tr = val;
+  p405uic_update (uic);
 }
 
 uint32_t p405uic_get_vcr (p405_uic_t *uic)
@@ -277,21 +292,8 @@ void p405uic_set_irq (p405_uic_t *uic, unsigned i, unsigned char val)
   }
 
   uic->sr |= msk;
-  p405uic_update (uic);
 
-  if (uic->msr & msk) {
-    /* trigger interrupt */
-    if (uic->cr & msk) {
-      if (uic->cint != NULL) {
-        uic->cint (uic->cint_ext, 1);
-      }
-    }
-    else  {
-      if (uic->nint != NULL) {
-        uic->nint (uic->nint_ext, 1);
-      }
-    }
-  }
+  p405uic_update (uic);
 }
 
 void p405uic_set_irq0 (p405_uic_t *uic, unsigned char val)
