@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.37 2003/11/08 14:20:20 hampa Exp $ */
+/* $Id: pce.c,v 1.38 2003/11/11 23:48:41 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -349,7 +349,7 @@ void disasm_str (char *dst, e86_disasm_t *op)
     dst[dst_i++] = ' ';
   }
 
-  if (op->flags != 0) {
+  if ((op->flags & ~E86_DFLAGS_CALL) != 0) {
     unsigned flg;
 
     flg = op->flags;
@@ -1243,7 +1243,7 @@ void do_h (cmd_t *cmd)
     "parport i fname           set parport output file\n"
     "q                         Quit\n"
     "r reg val                 set a register\n"
-    "s [what]                  Print status (pc|cpu|pit|ppi|pic|time|uart|video|xms\n"
+    "s [what]                  Print status (pc|cpu|pit|ppi|pic|time|uart|video|xms)\n"
     "time [c]                  print or clear time statistics\n"
     "t [cnt]                   Execute cnt instructions [1]\n"
     "u [addr [cnt]]            Disassemble\n",
@@ -1409,32 +1409,43 @@ void do_parport (cmd_t *cmd)
 void do_p (cmd_t *cmd)
 {
   unsigned short seg, ofs;
+  unsigned long  i, n;
   e86_disasm_t   op;
+
+  n = 1;
+
+  cmd_match_uint32 (cmd, &n);
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
-  e86_disasm_cur (pc->cpu, &op);
-
-  seg = e86_get_cs (pc->cpu);
-  ofs = e86_get_ip (pc->cpu) + op.dat_n;
-
   pce_start();
 
-  while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
-    pc_clock (pc);
+  for (i = 0; i < n; i++) {
+    e86_disasm_cur (pc->cpu, &op);
 
-    if (pc->brk) {
-      break;
+    seg = e86_get_cs (pc->cpu);
+    ofs = e86_get_ip (pc->cpu);
+
+    while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
+      pc_clock (pc);
+
+      if (pc->brk) {
+        break;
+      }
     }
-  }
 
-  while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs)) {
-    pc_clock (pc);
+    if (op.flags & E86_DFLAGS_CALL) {
+      unsigned short ofs2 = ofs + op.dat_n;
 
-    if (pc->brk) {
-      break;
+      while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
+        pc_clock (pc);
+
+        if (pc->brk) {
+          break;
+        }
+      }
     }
   }
 
