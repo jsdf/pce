@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.c                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.8 2003/04/20 00:22:51 hampa Exp $ */
+/* $Id: e8086.c,v 1.9 2003/04/20 19:07:51 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -213,8 +213,7 @@ unsigned long long e86_get_opcnt (e8086_t *c)
 
 void e86_execute (e8086_t *c)
 {
-  unsigned op;
-  unsigned cnt;
+  unsigned cnt, op;
 
   c->prefix = 0;
 
@@ -252,4 +251,3 @@ void e86_clock (e8086_t *c)
 
   c->clocks += 1;
 }
-
