@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.2 2003/04/15 04:14:03 hampa Exp $
+; $Id: pce.asm,v 1.3 2003/04/16 02:25:05 hampa Exp $
 
 
 %macro set_pos 1
@@ -40,6 +40,8 @@ start:
 
   call    set_bios_ds
 
+  call    pce_test
+
   call    init_int
   call    init_misc
   call    init_keyboard
@@ -53,6 +55,7 @@ start:
   mov     si, msg_init
   call    prt_string
 
+;  int     0x18
   int     0x19
 
 done:
@@ -106,12 +109,23 @@ init_int:
 
 
 init_misc:
-  mov     [0x0010], word 0x0031         ; equipment word
+  xor     ax, ax
+
+  mov     [0x0010], word 0x013d         ; equipment word
   mov     [0x0013], word 512            ; ram size
 
-  mov     [0x006c], word 0x0000
-  mov     [0x006e], word 0x0000
-  mov     [0x0070], byte 0x00
+  mov     [0x006c], ax
+  mov     [0x006e], ax
+  mov     [0x0070], al
+
+  mov     [0x0000], ax                  ; COM1
+  mov     [0x0000], ax
+  mov     [0x0000], ax
+  mov     [0x0000], ax
+  mov     [0x0000], ax                  ; LPT1
+  mov     [0x0000], ax
+  mov     [0x0000], ax
+  mov     [0x0000], ax
 
   ret
 
@@ -135,47 +149,156 @@ set_bios_ds:
 
 inttab:
   dw      int_00, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
+  dw      int_01, 0xf000
+  dw      int_02, 0xf000
+  dw      int_03, 0xf000
+  dw      int_04, 0xf000
+  dw      int_05, 0xf000
+  dw      int_06, 0xf000
+  dw      int_07, 0xf000
+  dw      int_08, 0xf000
+  dw      int_09, 0xf000
+  dw      int_0a, 0xf000
+  dw      int_0b, 0xf000
+  dw      int_0c, 0xf000
+  dw      int_0d, 0xf000
+  dw      int_0e, 0xf000
+  dw      int_0f, 0xf000
   dw      0xf065, 0xf000 ;int_10, 0xf000
   dw      0xf84d, 0xf000 ;int_11, 0xf000
   dw      0xf841, 0xf000 ;int_12, 0xf000
   dw      int_13, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
+  dw      0xe739, 0xf000 ;int_14, 0xf000
+  dw      int_15, 0xf000
   dw      0xe82e, 0xf000 ;int_16, 0xf000
-;  dw      int_16, 0xf000
-  dw      int_default, 0xf000
+  dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
   dw      0xe6f2, 0xf000 ;int_19, 0xf000
-  dw      0xfe6e, 0xf000 ;int_1a, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
+  dw      int_1a, 0xf000 ;0xfe6e, 0xf000 ;int_1a, 0xf000
+  dw      int_1b, 0xf000
+  dw      int_1c, 0xf000
   dw      0xf0a4, 0xf000 ;int_1d, 0xf000
-  dw      int_default, 0xf000
-  dw      int_default, 0xf000
+  dw      0xefc7, 0xf000 ;int_1e, 0xf000
+  dw      int_1f, 0xf000
 
 
 int_default:
+  db      0x66, 0x66, 0x00, 0x00
   iret
 
 
 ;-----------------------------------------------------------------------------
 
 int_00:
+  db      0x66, 0x66, 0xcd, 0x00
+  iret
+
+int_01:
+  db      0x66, 0x66, 0xcd, 0x01
+  iret
+
+int_02:
+  db      0x66, 0x66, 0xcd, 0x02
+  iret
+
+int_03:
+  db      0x66, 0x66, 0xcd, 0x03
+  iret
+
+int_04:
+  db      0x66, 0x66, 0xcd, 0x04
+  iret
+
+int_05:
+  db      0x66, 0x66, 0xcd, 0x05
+  iret
+
+int_06:
+  db      0x66, 0x66, 0xcd, 0x06
+  iret
+
+int_07:
+  db      0x66, 0x66, 0xcd, 0x07
+  iret
+
+int_08:
+  db      0x66, 0x66, 0xcd, 0x08
+  iret
+
+int_09:
+  db      0x66, 0x66, 0xcd, 0x09
+  iret
+
+int_0a:
+  db      0x66, 0x66, 0xcd, 0x0a
+  iret
+
+int_0b:
+  db      0x66, 0x66, 0xcd, 0x0b
+  iret
+
+int_0c:
+  db      0x66, 0x66, 0xcd, 0x0c
+  iret
+
+int_0d:
+  db      0x66, 0x66, 0xcd, 0x0d
+  iret
+
+int_0e:
+  db      0x66, 0x66, 0xcd, 0x0e
+  iret
+
+int_0f:
+  db      0x66, 0x66, 0xcd, 0x0f
+  iret
+
+int_10:
+  db      0x66, 0x66, 0xcd, 0x10
+  iret
+
+int_11:
+  db      0x66, 0x66, 0xcd, 0x11
+  iret
+
+int_12:
+  db      0x66, 0x66, 0xcd, 0x12
+  iret
+
+int_14:
+  db      0x66, 0x66, 0xcd, 0x14
+  iret
+
+int_15:
+  db      0x66, 0x66, 0xcd, 0x15
+  iret
+
+int_17:
+  db      0x66, 0x66, 0xcd, 0x17
+  iret
+
+int_19:
+  db      0x66, 0x66, 0xcd, 0x19
+  iret
+
+int_1b:
+  db      0x66, 0x66, 0xcd, 0x1b
+  iret
+
+int_1c:
+  db      0x66, 0x66, 0xcd, 0x1c
+  iret
+
+int_1d:
+  db      0x66, 0x66, 0xcd, 0x1d
+  iret
+
+int_1e:
+  db      0x66, 0x66, 0xcd, 0x1e
+  iret
+
+int_1f:
+  db      0x66, 0x66, 0xcd, 0x1f
   iret
 
 
@@ -193,6 +316,26 @@ int_16:
 
 int_18:
   jmp     0xf600:0x0000
+  iret
+
+int_1a:
+  or      ah, ah
+  jz      int_1a_00
+
+  jmp     0xf000:0xfe6e
+
+int_1a_00:
+  push    ds
+  call    set_bios_ds
+
+  add     [0x006c], word 5
+  adc     [0x006e], word 0
+
+  mov     al, 0
+  mov     dx, [0x006c]
+  mov     cx, [0x006e]
+
+  pop     ds
   iret
 
 
@@ -213,6 +356,51 @@ prt_string:
 .done
   pop     si
   pop     ax
+  ret
+
+;-----------------------------------------------------------------------------
+
+test_rol:
+  mov     ax, 0xf1cd
+  mov     cl, 0
+  stc
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  rol     ax, 1
+  rol     ax, cl
+  inc     cl
+
+  ret
+
+pce_test:
+  call    test_rol
   ret
 
 ;-----------------------------------------------------------------------------
