@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.25 2003/09/19 14:46:48 hampa Exp $ */
+/* $Id: pce.c,v 1.26 2003/09/21 21:11:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -593,31 +593,48 @@ void disasm_str (char *dst, e86_disasm_t *op)
     dst[dst_i++] = ' ';
   }
 
+  if (op->flags != 0) {
+    unsigned flg;
+
+    flg = op->flags;
+
+    dst[dst_i++] = '[';
+
+    if (flg & E86_DFLAGS_186) {
+      dst_i += sprintf (dst + dst_i, "186");
+      flg &= ~E86_DFLAGS_186;
+    }
+
+    if (flg != 0) {
+      if (flg != op->flags) {
+        dst[dst_i++] = ' ';
+      }
+      dst_i += sprintf (dst + dst_i, " %04X", flg);
+    }
+    dst[dst_i++] = ']';
+    dst[dst_i++] = ' ';
+  }
+
   strcpy (dst + dst_i, op->op);
   while (dst[dst_i] != 0) {
     dst_i += 1;
   }
 
-  if (op->arg_n == 0) {
-    dst[dst_i] = 0;
-  }
-  else if (op->arg_n == 1) {
+  if (op->arg_n > 0) {
     dst[dst_i++] = ' ';
     while (dst_i < 26) {
       dst[dst_i++] = ' ';
     }
-    sprintf (dst + dst_i, op->arg1);
+  }
+
+  if (op->arg_n == 1) {
+    dst_i += sprintf (dst + dst_i, op->arg1);
   }
   else if (op->arg_n == 2) {
-    dst[dst_i++] = ' ';
-    while (dst_i < 26) {
-      dst[dst_i++] = ' ';
-    }
-    sprintf (dst + dst_i, "%s, %s", op->arg1, op->arg2);
+    dst_i += sprintf (dst + dst_i, "%s, %s", op->arg1, op->arg2);
   }
-  else {
-    dst[dst_i] = 0;
-  }
+
+  dst[dst_i] = 0;
 }
 
 void prt_uint8_bin (FILE *fp, unsigned char val)
@@ -868,8 +885,8 @@ void prt_state (ibmpc_t *pc, FILE *fp)
   prt_state_cpu (pc->cpu, fp);
 
   fprintf (fp, "%04X:%04X  %s\n",
-    (unsigned) pc->cpu->sreg[E86_REG_CS],
-    (unsigned) pc->cpu->ip,
+    (unsigned) e86_get_cs (pc->cpu),
+    (unsigned) e86_get_ip (pc->cpu),
     str
   );
 }

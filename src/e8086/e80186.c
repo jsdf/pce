@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e80186.c                                         *
  * Created:       2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.6 2003/09/19 23:16:09 hampa Exp $ */
+/* $Id: e80186.c,v 1.7 2003/09/21 21:11:19 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -250,7 +250,7 @@ unsigned op_6d (e8086_t *c)
   return (1);
 }
 
-/* OP 6E: OUTB */
+/* OP 6E: OUTSB */
 static
 unsigned op_6e (e8086_t *c)
 {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.7 2003/08/29 21:13:50 hampa Exp $ */
+/* $Id: disasm.c,v 1.8 2003/09/21 21:11:19 hampa Exp $ */
 
 
 #include <string.h>
@@ -254,6 +254,15 @@ void dop_ud (e86_disasm_t *op, unsigned char *src)
 
   strcpy (op->op, "DB");
   disasm_imm8 (op->arg1, src);
+}
+
+static
+void dop_const (e86_disasm_t *op, const char *sop, unsigned cnt)
+{
+  op->dat_n = cnt;
+  op->arg_n = 0;
+
+  strcpy (op->op, sop);
 }
 
 static
@@ -733,6 +742,13 @@ void dop_2e (e86_disasm_t *op, unsigned char *src)
   op->dat_n += 1;
 }
 
+/* DOP 2F: DAS */
+static
+void dop_2f (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "DAS", 1);
+}
+
 /* DOP 30: XOR r/m8, reg8 */
 static void dop_30 (e86_disasm_t *op, unsigned char *src)
 {
@@ -794,6 +810,13 @@ void dop_36 (e86_disasm_t *op, unsigned char *src)
   op->dat_n += 1;
 }
 
+/* DOP 37: AAA */
+static
+void dop_37 (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "AAA", 1);
+}
+
 /* DOP 38: CMP r/m8, reg8 */
 static void dop_38 (e86_disasm_t *op, unsigned char *src)
 {
@@ -838,6 +861,28 @@ static void dop_3d (e86_disasm_t *op, unsigned char *src)
   strcpy (op->op, "CMP");
   strcpy (op->arg1, "AX");
   disasm_imm16 (op->arg2, src + 1);
+}
+
+/* DOP 3E: DS: */
+static
+void dop_3e (e86_disasm_t *op, unsigned char *src)
+{
+  char tmp[256];
+
+  e86_disasm (op, src + 1, op->ip);
+
+  strcpy (tmp, op->op);
+  strcpy (op->op, "DS: ");
+  strcat (op->op, tmp);
+
+  op->dat_n += 1;
+}
+
+/* DOP 3F: AAS */
+static
+void dop_3f (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "AAS", 1);
 }
 
 /* DOP 4x: INC reg16 */
@@ -889,27 +934,100 @@ static char *d_tab_70[16] = {
 static
 void dop_60 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "PUSHA");
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "PUSHA", 1);
 }
 
 /* DOP 61: POPA */
 static
 void dop_61 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "POPA");
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "POPA", 1);
 }
 
 /* DOP 62: BOUND */
 static
 void dop_62 (e86_disasm_t *op, unsigned char *src)
 {
+  op->flags |= E86_DFLAGS_186;
+
   dop_reg16_ea16 (op, src, "BOUND");
+}
+
+/* DOP 66: PCE HOOK */
+static
+void dop_66 (e86_disasm_t *op, unsigned char *src)
+{
+  if (src[1] != 0x66) {
+    dop_ud (op, src);
+    return;
+  }
+
+  op->dat_n = 4;
+  op->arg_n = 2;
+
+  strcpy (op->op, "PCEH");
+  disasm_imm8 (op->arg1, src + 2);
+  disasm_imm8 (op->arg2, src + 3);
+}
+
+/* DOP 68: PUSH imm16 */
+static
+void dop_68 (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+
+  op->dat_n = 3;
+  op->arg_n = 1;
+
+  strcpy (op->op, "PUSH");
+  disasm_imm16 (op->arg1, src + 1);
+}
+
+/* DOP 6A: PUSH imm8 */
+static
+void dop_6a (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+
+  op->dat_n = 2;
+  op->arg_n = 1;
+
+  strcpy (op->op, "PUSH");
+  disasm_simm8 (op->arg1, src + 1);
+}
+
+/* DOP 6C: INSB */
+static
+void dop_6c (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "INSB", 1);
+}
+
+/* DOP 6D: INSW */
+static
+void dop_6d (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "INSW", 1);
+}
+
+/* DOP 6E: OUTB */
+static
+void dop_6e (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "OUTSB", 1);
+}
+
+/* DOP 6F: OUTW */
+static
+void dop_6f (e86_disasm_t *op, unsigned char *src)
+{
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "OUTSW", 1);
 }
 
 /* DOP 7x: Jxx imm8 */
@@ -1059,12 +1177,10 @@ static void dop_8f (e86_disasm_t *op, unsigned char *src)
 }
 
 /* DOP 90: NOP */
-static void dop_90 (e86_disasm_t *op, unsigned char *src)
+static
+void dop_90 (e86_disasm_t *op, unsigned char *src)
 {
-  strcpy (op->op, "NOP");
-
-  op->dat_n = 1;
-  op->arg_n = 0;
+  dop_const (op, "NOP", 1);
 }
 
 /* DOP 9x: XCHG AX, reg16 */
@@ -1081,19 +1197,13 @@ static void dop_91 (e86_disasm_t *op, unsigned char *src)
 /* DOP 98: CBW */
 static void dop_98 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "CBW");
+  dop_const (op, "CBW", 1);
 }
 
 /* DOP 99: CWD */
 static void dop_99 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "CWD");
+  dop_const (op, "CWD", 1);
 }
 
 /* DOP 9A: CALL imm32 */
@@ -1107,40 +1217,34 @@ void dop_9a (e86_disasm_t *op, unsigned char *src)
   disasm_imm32 (op->arg1, src + 1);
 }
 
+/* DOP 9B: WAIT */
+static void dop_9b (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "WAIT", 1);
+}
+
 /* DOP 9C: PUSHF */
 static void dop_9c (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "PUSHF");
+  dop_const (op, "PUSHF", 1);
 }
 
 /* DOP 9D: POPF */
 static void dop_9d (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "POPF");
+  dop_const (op, "POPF", 1);
 }
 
 /* DOP 9E: SAHF */
 static void dop_9e (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "SAHF");
+  dop_const (op, "SAHF", 1);
 }
 
 /* DOP 9F: LAHF */
 static void dop_9f (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "LAHF");
+  dop_const (op, "LAHF", 1);
 }
 
 /* DOP A0: MOV AL, [data16] */
@@ -1191,40 +1295,28 @@ static void dop_a3 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_a4 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "MOVSB");
+  dop_const (op, "MOVSB", 1);
 }
 
 /* DOP A5: MOVSW */
 static
 void dop_a5 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "MOVSW");
+  dop_const (op, "MOVSW", 1);
 }
 
 /* DOP A6: CMPSB */
 static
 void dop_a6 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "CMPSB");
+  dop_const (op, "CMPSB", 1);
 }
 
 /* DOP A7: CMPSW */
 static
 void dop_a7 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "CMPSW");
+  dop_const (op, "CMPSW", 1);
 }
 
 /* DOP A8: TEST AL, data8 */
@@ -1253,60 +1345,42 @@ static void dop_a9 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_aa (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "STOSB");
+  dop_const (op, "STOSB", 1);
 }
 
 /* DOP AB: STOSW */
 static
 void dop_ab (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "STOSW");
+  dop_const (op, "STOSW", 1);
 }
 
 /* DOP AC: LODSB */
 static
 void dop_ac (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "LODSB");
+  dop_const (op, "LODSB", 1);
 }
 
 /* DOP AD: LODSW */
 static
 void dop_ad (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "LODSW");
+  dop_const (op, "LODSW", 1);
 }
 
 /* DOP AE: SCASB */
 static
 void dop_ae (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "SCASB");
+  dop_const (op, "SCASB", 1);
 }
 
 /* DOP AF: SCASW */
 static
 void dop_af (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "SCASW");
+  dop_const (op, "SCASW", 1);
 }
 
 /* DOP Bx: MOV reg8, imm8 */
@@ -1331,6 +1405,45 @@ static void dop_b8 (e86_disasm_t *op, unsigned char *src)
   disasm_imm16 (op->arg2, src + 1);
 }
 
+static char *d_tab_c0[8] = {
+  "ROL", "ROR", "RCL", "RCR",
+  "SHL", "SHR", "???",  "SAR"
+};
+
+/* DOP C0: ROL, ROR, RCL, RCR, SHL, SHR, SAR r/m8, imm8 */
+static void dop_c0 (e86_disasm_t *op, unsigned char *src)
+{
+  unsigned xop, cnt;
+
+  op->flags |= E86_DFLAGS_186;
+
+  xop = (src[1] >> 3) & 7;
+
+  strcpy (op->op, d_tab_c0[xop]);
+  cnt = disasm_ea8 (op->arg1, src + 1);
+  disasm_imm8 (op->arg2, src + cnt + 1);
+
+  op->dat_n = 2 + cnt;
+  op->arg_n = 2;
+}
+
+/* DOP C1: ROL, ROR, RCL, RCR, SHL, SHR, SAR r/m16, imm8 */
+static void dop_c1 (e86_disasm_t *op, unsigned char *src)
+{
+  unsigned xop, cnt;
+
+  op->flags |= E86_DFLAGS_186;
+
+  xop = (src[1] >> 3) & 7;
+
+  strcpy (op->op, d_tab_c0[xop]);
+  cnt = disasm_ea16 (op->arg1, src + 1);
+  disasm_imm8 (op->arg2, src + cnt + 1);
+
+  op->dat_n = 2 + cnt;
+  op->arg_n = 2;
+}
+
 /* DOP C2: RET imm16 */
 static void dop_c2 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1342,12 +1455,10 @@ static void dop_c2 (e86_disasm_t *op, unsigned char *src)
 }
 
 /* DOP C3: RET */
-static void dop_c3 (e86_disasm_t *op, unsigned char *src)
+static
+void dop_c3 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "RETN");
+  dop_const (op, "RETN", 1);
 }
 
 /* DOP C4: LES reg16, r/m16 */
@@ -1385,8 +1496,11 @@ static void dop_c7 (e86_disasm_t *op, unsigned char *src)
 }
 
 /* DOP C8: ENTER imm16, imm8 */
-static void dop_c8 (e86_disasm_t *op, unsigned char *src)
+static
+void dop_c8 (e86_disasm_t *op, unsigned char *src)
 {
+  op->flags |= E86_DFLAGS_186;
+
   strcpy (op->op, "ENTER");
   disasm_imm16 (op->arg1, src + 1);
   disasm_imm8 (op->arg2, src + 3);
@@ -1399,14 +1513,13 @@ static void dop_c8 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_c9 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "LEAVE");
+  op->flags |= E86_DFLAGS_186;
+  dop_const (op, "LEAVE", 1);
 }
 
 /* DOP CA: RETF imm16 */
-static void dop_ca (e86_disasm_t *op, unsigned char *src)
+static
+void dop_ca (e86_disasm_t *op, unsigned char *src)
 {
   op->dat_n = 3;
   op->arg_n = 1;
@@ -1419,24 +1532,19 @@ static void dop_ca (e86_disasm_t *op, unsigned char *src)
 static
 void dop_cb (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "RETF");
+  dop_const (op, "RETF", 1);
 }
 
 /* DOP CC: INT3 */
 static
 void dop_cc (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "INT3");
+  dop_const (op, "INT3", 1);
 }
 
 /* DOP CD: INT imm8 */
-static void dop_cd (e86_disasm_t *op, unsigned char *src)
+static
+void dop_cd (e86_disasm_t *op, unsigned char *src)
 {
   op->dat_n = 2;
   op->arg_n = 1;
@@ -1449,10 +1557,7 @@ static void dop_cd (e86_disasm_t *op, unsigned char *src)
 static
 void dop_cf (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "IRET");
+  dop_const (op, "IRET", 1);
 }
 
 static char *d_tab_d0[8] = {
@@ -1539,10 +1644,7 @@ static void dop_d4 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_d7 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-
-  strcpy (op->op, "XLAT");
+  dop_const (op, "XLAT", 1);
 }
 
 static char *d_tab_e0[4] = {
@@ -1594,6 +1696,17 @@ static void dop_e6 (e86_disasm_t *op, unsigned char *src)
   strcpy (op->op, "OUT");
   disasm_imm8 (op->arg1, src + 1);
   strcpy (op->arg2, "AL");
+}
+
+/* DOP E7: OUT imm8, AX */
+static void dop_e7 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 2;
+  op->arg_n = 2;
+
+  strcpy (op->op, "OUT");
+  disasm_imm8 (op->arg1, src + 1);
+  strcpy (op->arg2, "AX");
 }
 
 /* DOP E8: CALL imm16 */
@@ -1672,7 +1785,8 @@ static void dop_ed (e86_disasm_t *op, unsigned char *src)
 }
 
 /* DOP EE: OUT DX, AL */
-static void dop_ee (e86_disasm_t *op, unsigned char *src)
+static
+void dop_ee (e86_disasm_t *op, unsigned char *src)
 {
   op->dat_n = 1;
   op->arg_n = 2;
@@ -1680,6 +1794,33 @@ static void dop_ee (e86_disasm_t *op, unsigned char *src)
   strcpy (op->op, "OUT");
   strcpy (op->arg1, "DX");
   strcpy (op->arg2, "AL");
+}
+
+/* DOP EF: OUT DX, AX */
+static
+void dop_ef (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 2;
+
+  strcpy (op->op, "OUT");
+  strcpy (op->arg1, "DX");
+  strcpy (op->arg2, "AX");
+}
+
+/* DOP F0: LOCK */
+static
+void dop_f0 (e86_disasm_t *op, unsigned char *src)
+{
+  char tmp[256];
+
+  e86_disasm (op, src + 1, op->ip);
+
+  strcpy (tmp, op->op);
+  strcpy (op->op, "LOCK ");
+  strcat (op->op, tmp);
+
+  op->dat_n += 1;
 }
 
 /* DOP F2: REPNE */
@@ -1712,14 +1853,18 @@ void dop_f3 (e86_disasm_t *op, unsigned char *src)
   op->dat_n += 1;
 }
 
+/* DOP F4: HLT */
+static
+void dop_f4 (e86_disasm_t *op, unsigned char *src)
+{
+  dop_const (op, "HLT", 1);
+}
+
 /* DOP F5: CMC */
 static
 void dop_f5 (e86_disasm_t *op, unsigned char *src)
 {
-  strcpy (op->op, "CMC");
-
-  op->dat_n = 1;
-  op->arg_n = 0;
+  dop_const (op, "CMC", 1);
 }
 
 /* DOP F6: xxx r/m8 */
@@ -1922,32 +2067,32 @@ e86_disasm_f dop_list[256] = {
   &dop_10, &dop_11, &dop_12, &dop_13, &dop_14, &dop_15, &dop_16, &dop_17,
   &dop_18, &dop_19, &dop_1a, &dop_1b, &dop_1c, &dop_1d, &dop_1e, &dop_1f,
   &dop_20, &dop_21, &dop_22, &dop_23, &dop_24, &dop_25, &dop_26, &dop_27, /* 20 */
-  &dop_28, &dop_29, &dop_2a, &dop_2b, &dop_2c, &dop_2d, &dop_2e, &dop_ud,
-  &dop_30, &dop_31, &dop_32, &dop_33, &dop_34, &dop_35, &dop_36, &dop_ud, /* 30 */
-  &dop_38, &dop_39, &dop_3a, &dop_3b, &dop_3c, &dop_3d, &dop_ud, &dop_ud,
+  &dop_28, &dop_29, &dop_2a, &dop_2b, &dop_2c, &dop_2d, &dop_2e, &dop_2f,
+  &dop_30, &dop_31, &dop_32, &dop_33, &dop_34, &dop_35, &dop_36, &dop_37, /* 30 */
+  &dop_38, &dop_39, &dop_3a, &dop_3b, &dop_3c, &dop_3d, &dop_3e, &dop_3f,
   &dop_40, &dop_40, &dop_40, &dop_40, &dop_40, &dop_40, &dop_40, &dop_40, /* 40 */
   &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48, &dop_48,
   &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, &dop_50, /* 50 */
   &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58, &dop_58,
-  &dop_60, &dop_61, &dop_62, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, /* 60 */
-  &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
+  &dop_60, &dop_61, &dop_62, &dop_ud, &dop_ud, &dop_ud, &dop_66, &dop_ud, /* 60 */
+  &dop_68, &dop_ud, &dop_6a, &dop_ud, &dop_6c, &dop_6d, &dop_6e, &dop_6f,
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, /* 70 */
   &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70, &dop_70,
   &dop_80, &dop_81, &dop_80, &dop_83, &dop_84, &dop_85, &dop_86, &dop_87, /* 80 */
   &dop_88, &dop_89, &dop_8a, &dop_8b, &dop_8c, &dop_8d, &dop_8e, &dop_8f,
   &dop_90, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, /* 90 */
-  &dop_98, &dop_99, &dop_9a, &dop_ud, &dop_9c, &dop_9d, &dop_9e, &dop_9f,
+  &dop_98, &dop_99, &dop_9a, &dop_9b, &dop_9c, &dop_9d, &dop_9e, &dop_9f,
   &dop_a0, &dop_a1, &dop_a2, &dop_a3, &dop_a4, &dop_a5, &dop_a6, &dop_a7, /* A0 */
   &dop_a8, &dop_a9, &dop_aa, &dop_ab, &dop_ac, &dop_ad, &dop_ae, &dop_af,
   &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, /* B0 */
   &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,
-  &dop_ud, &dop_ud, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
+  &dop_c0, &dop_c1, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
   &dop_c8, &dop_c9, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
-  &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_ud, /* E0 */
-  &dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ed, &dop_ee, &dop_ud,
-  &dop_ud, &dop_ud, &dop_f2, &dop_f3, &dop_ud, &dop_f5, &dop_f6, &dop_f7, /* F0 */
+  &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_e7, /* E0 */
+  &dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ed, &dop_ee, &dop_ef,
+  &dop_f0, &dop_ud, &dop_f2, &dop_f3, &dop_f4, &dop_f5, &dop_f6, &dop_f7, /* F0 */
   &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_fe, &dop_ff
 };
 
@@ -1956,6 +2101,7 @@ void e86_disasm (e86_disasm_t *op, unsigned char *src, unsigned short ip)
   unsigned i;
   unsigned opc;
 
+  op->flags = 0;
   op->ip = ip;
 
   opc = src[0];
