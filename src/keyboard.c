@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     keyboard.c                                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.5 2003/04/19 02:41:22 hampa Exp $ */
+/* $Id: keyboard.c,v 1.6 2003/04/20 20:36:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -271,7 +271,7 @@ void key_clock (keyboard_t *key)
 
   cnt += 1;
 
-  if (cnt < 32) {
+  if (cnt < 256) {
     return;
   }
 

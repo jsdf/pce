@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.10 2003/04/20 19:09:20 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.11 2003/04/20 20:36:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -211,18 +211,23 @@ void pc_del (ibmpc_t *pc)
 
 void pc_clock (ibmpc_t *pc)
 {
-  e86_clock (pc->cpu);
+  unsigned long n;
+
+  n = e86_get_delay (pc->cpu);
+
+  e86_clock (pc->cpu, n);
+
   cga_clock (pc->cga);
   key_clock (pc->key);
 
-  pc->clk_cnt += 1;
-  pc->timer_clk_cnt += 1;
-
-  if (pc->timer_clk_cnt > (4 * 65536)) {
+  if (pc->timer_clk_cnt >= (4 * 65536)) {
     if (!e86_interrupt (pc->cpu, 8)) {
-      pc->timer_clk_cnt -= 4 * 65536;
+      pc->timer_clk_cnt -= (4 * 65536);
     }
   }
+
+  pc->clk_cnt += n;
+  pc->timer_clk_cnt += n;
 }
 
 void pc_break (ibmpc_t *pc, unsigned char val)
