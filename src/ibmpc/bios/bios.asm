@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.7 2003/08/19 17:06:36 hampa Exp $
+; $Id: bios.asm,v 1.8 2003/08/30 16:54:03 hampa Exp $
 
 
 CPU 8086
@@ -457,7 +457,7 @@ L_E1FC:
   loop    L_E1FC
 
 db 0xC7, 0x06, 0x08, 0x00, 0xC3, 0xE2   ; E205 mov word [0x8],0xe2c3
-db 0xC7, 0x06, 0x14, 0x00, 0x54, 0xFF   ; E20B mov word [0x14],0xff54
+  mov     word [0x0014], int_05
 db 0xC7, 0x06, 0x62, 0x00, 0x00, 0xF6   ; E211 mov word [0x62],0xf600
 
   mov     dx, 0x0021
@@ -4700,76 +4700,118 @@ L_FF47:
 int_default:
   iret
 
-db 0xFB                                 ; FF54 sti
-db 0x1E                                 ; FF55 push ds
-db 0x50                                 ; FF56 push ax
-db 0x53                                 ; FF57 push bx
-db 0x51                                 ; FF58 push cx
-db 0x52                                 ; FF59 push dx
-db 0xB8, 0x50, 0x00                     ; FF5A mov ax,0x50
-db 0x8E, 0xD8                           ; FF5D mov ds,ax
-db 0x80, 0x3E, 0x00, 0x00, 0x01         ; FF5F cmp byte [0x0],0x1
-db 0x74, 0x5F                           ; FF64 jz 0xffc5
-db 0xC6, 0x06, 0x00, 0x00, 0x01         ; FF66 mov byte [0x0],0x1
-db 0xB4, 0x0F                           ; FF6B mov ah,0xf
-db 0xCD, 0x10                           ; FF6D int 0x10
-db 0x8A, 0xCC                           ; FF6F mov cl,ah
-db 0xB5, 0x19                           ; FF71 mov ch,0x19
-db 0xE8, 0x55, 0x00                     ; FF73 call 0xffcb
-db 0x51                                 ; FF76 push cx
-db 0xB4, 0x03                           ; FF77 mov ah,0x3
-db 0xCD, 0x10                           ; FF79 int 0x10
-db 0x59                                 ; FF7B pop cx
-db 0x52                                 ; FF7C push dx
-db 0x33, 0xD2                           ; FF7D xor dx,dx
-db 0xB4, 0x02                           ; FF7F mov ah,0x2
-db 0xCD, 0x10                           ; FF81 int 0x10
-db 0xB4, 0x08                           ; FF83 mov ah,0x8
-db 0xCD, 0x10                           ; FF85 int 0x10
-db 0x0A, 0xC0                           ; FF87 or al,al
-db 0x75, 0x02                           ; FF89 jnz 0xff8d
-db 0xB0, 0x20                           ; FF8B mov al,0x20
-db 0x52                                 ; FF8D push dx
-db 0x33, 0xD2                           ; FF8E xor dx,dx
-db 0x32, 0xE4                           ; FF90 xor ah,ah
-db 0xCD, 0x17                           ; FF92 int 0x17
-db 0x5A                                 ; FF94 pop dx
-db 0xF6, 0xC4, 0x25                     ; FF95 test ah,0x25
-db 0x75, 0x21                           ; FF98 jnz 0xffbb
-db 0xFE, 0xC2                           ; FF9A inc dl
-db 0x3A, 0xCA                           ; FF9C cmp cl,dl
-db 0x75, 0xDF                           ; FF9E jnz 0xff7f
-db 0x32, 0xD2                           ; FFA0 xor dl,dl
-db 0x8A, 0xE2                           ; FFA2 mov ah,dl
-db 0x52                                 ; FFA4 push dx
-db 0xE8, 0x23, 0x00                     ; FFA5 call 0xffcb
-db 0x5A                                 ; FFA8 pop dx
-db 0xFE, 0xC6                           ; FFA9 inc dh
-db 0x3A, 0xEE                           ; FFAB cmp ch,dh
-db 0x75, 0xD0                           ; FFAD jnz 0xff7f
-db 0x5A                                 ; FFAF pop dx
-db 0xB4, 0x02                           ; FFB0 mov ah,0x2
-db 0xCD, 0x10                           ; FFB2 int 0x10
-db 0xC6, 0x06, 0x00, 0x00, 0x00         ; FFB4 mov byte [0x0],0x0
-db 0xEB, 0x0A                           ; FFB9 jmp short 0xffc5
-db 0x5A                                 ; FFBB pop dx
-db 0xB4, 0x02                           ; FFBC mov ah,0x2
-db 0xCD, 0x10                           ; FFBE int 0x10
-db 0xC6, 0x06, 0x00, 0x00, 0xFF         ; FFC0 mov byte [0x0],0xff
-db 0x5A                                 ; FFC5 pop dx
-db 0x59                                 ; FFC6 pop cx
-db 0x5B                                 ; FFC7 pop bx
-db 0x58                                 ; FFC8 pop ax
-db 0x1F                                 ; FFC9 pop ds
-db 0xCF                                 ; FFCA iret
-db 0x33, 0xD2                           ; FFCB xor dx,dx
-db 0x32, 0xE4                           ; FFCD xor ah,ah
-db 0xB0, 0x0A                           ; FFCF mov al,0xa
-db 0xCD, 0x17                           ; FFD1 int 0x17
-db 0x32, 0xE4                           ; FFD3 xor ah,ah
-db 0xB0, 0x0D                           ; FFD5 mov al,0xd
-db 0xCD, 0x17                           ; FFD7 int 0x17
-db 0xC3                                 ; FFD9 ret
+
+;*****************************************************************************
+;* int 05 handler
+;*****************************************************************************
+
+int_05:                                 ; FF54
+  sti
+  push    ds
+  push    ax
+  push    bx
+  push    cx
+  push    dx
+
+  mov     ax, 0x0050
+  mov     ds, ax
+
+  cmp     byte [0x0000], 0x01           ; check if already printing
+  je      .done
+
+  mov     byte [0x0000], 0x01           ; set flag
+
+  mov     ah, 0x0f
+  int     0x10                          ; get video mode
+
+  mov     cl, ah                        ; number of columns
+  mov     ch, 25                        ; number of rows
+
+  call    lpt0_prt_crlf
+
+  push    cx
+  mov     ah, 0x03
+  int     0x10                          ; get cursor position
+  pop     cx
+
+  push    dx                            ; save cursor position
+
+  xor     dx, dx                        ; row 0 / column 0
+
+.next:                                  ; FF7F
+  mov     ah, 0x02
+  int     0x10                          ; set cursor position
+
+  mov     ah, 0x08
+  int     0x10                          ; get character
+
+  or      al, al
+  jnz     .notnull
+
+  mov     al, 0x20                      ; convert NUL to space
+
+.notnull:                               ; FF8D
+  push    dx
+  xor     dx, dx
+  xor     ah, ah
+  int     0x17                          ; print character
+  pop     dx
+
+  test    ah, 0x25
+  jnz     .error
+
+  inc     dl                            ; next column
+  cmp     cl, dl
+  jne     .next
+
+  xor     dl, dl                        ; reset column
+  mov     ah, dl
+
+  push    dx
+  call    lpt0_prt_crlf
+  pop     dx
+
+  inc     dh                            ; next row
+  cmp     ch, dh
+  jne     .next
+
+  pop     dx                            ; original cursor position
+
+  mov     ah, 0x02
+  int     0x10                          ; restore cursor position
+
+  mov     byte [0x0000], 0x00           ; reset printing flag
+
+  jmp     short .done
+
+.error:                                 ; FFBB
+  pop     dx
+
+  mov     ah, 0x02
+  int     0x10                          ; restore cursor position
+
+  mov     byte [0x0000], 0xff           ; set error flag
+
+.done:                                  ; FFC5
+  pop     dx
+  pop     cx
+  pop     bx
+  pop     ax
+  pop     ds
+  iret
+
+
+lpt0_prt_crlf:                          ; FFCB
+  xor     dx, dx
+  xor     ah, ah
+  mov     al, 0x0a
+  int     0x17
+
+  xor     ah, ah
+  mov     al, 0x0d
+  int     0x17
+  ret
+
 
 L_FFDA:
   db      "PARITY CHECK 2", 13, 10
