@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.4 2003/08/29 22:45:59 hampa Exp $ */
+/* $Id: e80186.c,v 1.5 2003/08/30 12:39:13 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -70,7 +70,7 @@ unsigned op_61 (e8086_t *c)
   return (1);
 }
 
-/* OP 62: BOUND */
+/* OP 62: BOUND reg16, r/m16 */
 static
 unsigned op_62 (e8086_t *c)
 {
@@ -101,7 +101,7 @@ unsigned op_62 (e8086_t *c)
     return (0);
   }
 
-  e86_set_clk (c, 19);
+  e86_set_clk (c, (33 + 35) / 2);
 
   return (c->ea.cnt + 1);
 }
@@ -144,7 +144,7 @@ unsigned op_69 (e8086_t *c)
 
   e86_set_f (c, E86_FLG_Z, d == 0);
 
-  e86_set_clk_ea (c, 20, 20); /* ?? */
+  e86_set_clk_ea (c, (22 + 25) / 2, (29 + 32) / 2);
 
   return (c->ea.cnt + 3);
 }
@@ -187,9 +187,123 @@ unsigned op_6b (e8086_t *c)
 
   e86_set_f (c, E86_FLG_Z, d == 0);
 
-  e86_set_clk_ea (c, 20, 20); /* ?? */
+  e86_set_clk_ea (c, (22 + 25) / 2, (29 + 32) / 2);
 
   return (c->ea.cnt + 2);
+}
+
+/* OP 6C: INSB */
+static
+unsigned op_6c (e8086_t *c)
+{
+  unsigned short inc;
+
+  inc = e86_get_df (c) ? 0xffff : 0x0001;
+
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_cx (c) > 0) {
+      e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_prt8 (c, e86_get_dx (c)));
+
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 8);
+    }
+  }
+  else {
+    e86_set_mem8 (c, e86_get_es (c), e86_get_di (c), e86_get_prt8 (c, e86_get_dx (c)));
+    e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 8);
+  }
+
+  return (1);
+}
+
+/* OP 6D: INSW */
+static
+unsigned op_6d (e8086_t *c)
+{
+  unsigned short inc;
+
+  inc = e86_get_df (c) ? 0xfffe : 0x0002;
+
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_cx (c) > 0) {
+      e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_prt16 (c, e86_get_dx (c)));
+
+      e86_set_di (c, e86_get_di (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+
+      c->instructions += 1;
+      e86_set_clk (c, 8);
+    }
+  }
+  else {
+    e86_set_mem16 (c, e86_get_es (c), e86_get_di (c), e86_get_prt16 (c, e86_get_dx (c)));
+    e86_set_di (c, e86_get_di (c) + inc);
+
+    e86_set_clk (c, 8);
+  }
+
+  return (1);
+}
+
+/* OP 6E: OUTB */
+static
+unsigned op_6e (e8086_t *c)
+{
+  unsigned short seg;
+  unsigned short inc;
+
+  seg = e86_get_seg (c, E86_REG_DS);
+  inc = e86_get_df (c) ? 0xffff : 0x0001;
+
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_cx (c) > 0) {
+      e86_set_prt8 (c, e86_get_dx (c), e86_get_mem8 (c, seg, e86_get_si (c)));
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+      c->instructions += 1;
+      e86_set_clk (c, 8);
+    }
+  }
+  else {
+    e86_set_prt8 (c, e86_get_dx (c), e86_get_mem8 (c, seg, e86_get_si (c)));
+    e86_set_si (c, e86_get_si (c) + inc);
+    e86_set_clk (c, 8);
+  }
+
+  return (1);
+}
+
+/* Opcode 6F: OUTSW */
+static
+unsigned op_6f (e8086_t *c)
+{
+  unsigned short seg;
+  unsigned short inc;
+
+  seg = e86_get_seg (c, E86_REG_DS);
+  inc = e86_get_df (c) ? 0xfffe : 0x0002;
+
+  if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    while (e86_get_cx (c) > 0) {
+      e86_set_prt16 (c, e86_get_dx (c), e86_get_mem16 (c, seg, e86_get_si (c)));
+      e86_set_si (c, e86_get_si (c) + inc);
+      e86_set_cx (c, e86_get_cx (c) - 1);
+      c->instructions += 1;
+      e86_set_clk (c, 8);
+    }
+  }
+  else {
+    e86_set_prt16 (c, e86_get_dx (c), e86_get_mem16 (c, seg, e86_get_si (c)));
+    e86_set_si (c, e86_get_si (c) + inc);
+    e86_set_clk (c, 8);
+  }
+
+  return (1);
 }
 
 /* OP C0: ROL, ROR, RCL, RCR, SHL, SHR, SAR r/m8, imm8 */
@@ -273,7 +387,7 @@ unsigned op_c0 (e8086_t *c)
   }
 
   e86_set_ea8 (c, d & 0xff);
-  e86_set_clk_ea (c, 5 + cnt, 8 + cnt);
+  e86_set_clk_ea (c, 5 + cnt, 17 + cnt);
 
   return (c->ea.cnt + 2);
 }
@@ -359,7 +473,7 @@ unsigned op_c1 (e8086_t *c)
   }
 
   e86_set_ea16 (c, d);
-  e86_set_clk_ea (c, 5 + cnt, 8 + cnt);
+  e86_set_clk_ea (c, 5 + cnt, 17 + cnt);
 
   return (c->ea.cnt + 2);
 }
@@ -384,7 +498,7 @@ unsigned op_c8 (e8086_t *c)
     sp = e86_get_sp (c);
     bp = e86_get_bp (c);
 
-    for (i = 0; i < level; i++) {
+    for (i = 1; i < level; i++) {
       bp -= 2;
       e86_push (c, e86_get_mem16 (c, sp, bp));
     }
@@ -397,15 +511,15 @@ unsigned op_c8 (e8086_t *c)
 
   switch (level) {
     case 0:
-      e86_set_clk (c, 11);
-      break;
-
-    case 1:
       e86_set_clk (c, 15);
       break;
 
+    case 1:
+      e86_set_clk (c, 25);
+      break;
+
     default:
-      e86_set_clk (c, 12 + 4 * (level - 1));
+      e86_set_clk (c, 22 + 16 * (level - 1));
       break;
   }
 
@@ -418,7 +532,7 @@ unsigned op_c9 (e8086_t *c)
 {
   e86_set_sp (c, e86_get_bp (c));
   e86_set_bp (c, e86_pop (c));
-  e86_set_clk (c, 5);
+  e86_set_clk (c, 8);
 
   return (1);
 }
@@ -435,6 +549,10 @@ void e86_enable_186 (e8086_t *c)
   e86_opcodes[0x69] = &op_69;
   e86_opcodes[0x6a] = &op_6a;
   e86_opcodes[0x6b] = &op_6b;
+  e86_opcodes[0x6c] = &op_6c;
+  e86_opcodes[0x6d] = &op_6d;
+  e86_opcodes[0x6e] = &op_6e;
+  e86_opcodes[0x6f] = &op_6f;
   e86_opcodes[0xc0] = &op_c0;
   e86_opcodes[0xc1] = &op_c1;
   e86_opcodes[0xc8] = &op_c8;
