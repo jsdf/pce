@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     libini.h                                                   *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: libini.h,v 1.1 2003/04/22 17:56:20 hampa Exp $ */
+/* $Id: libini.h,v 1.2 2003/04/29 00:51:24 hampa Exp $ */
 
 
 #ifndef LIBINI_H
@@ -146,41 +146,43 @@ ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name);
  * @short  Get a long value
  * @param  sct The base section
  * @param  name The value name (as in "sect1.sect2.valname")
- * @retval lng The value
+ * @retval ret The return value
+ * @param  def The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
-int ini_get_long (const ini_sct_t *sct, const char *name, long *lng);
+int ini_get_slng (const ini_sct_t *sct, const char *name,
+  long *ret, long def);
+
+int ini_get_ulng (const ini_sct_t *sct, const char *name,
+  unsigned long *ret, unsigned long def);
+
+int ini_get_sint (const ini_sct_t *sct, const char *name,
+  int *ret, int def);
+
+int ini_get_uint (const ini_sct_t *sct, const char *name,
+  unsigned *ret, unsigned def);
 
 /*!***************************************************************************
- * @short  Get a long value
+ * @short  Get a double value
  * @param  sct The base section
  * @param  name The value name (as in "sect1.sect2.valname")
- * @param  val The default value
- * @return The value
- *****************************************************************************/
-long ini_get_def_long (const ini_sct_t *sct, const char *name, long val);
-
-/*!***************************************************************************
- * @short Get a double value
- * @param sct The base section
- * @param name The value name (as in "sect1.sect2.valname")
- * @retval dbl The value
+ * @retval ret The return value
+ * @param  def The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
-int ini_get_double (const ini_sct_t *sct, const char *name, double *dbl);
-
-double ini_get_def_double (const ini_sct_t *sct, const char *name, double val);
+int ini_get_sdbl (const ini_sct_t *sct, const char *name,
+  double *ret, double def);
 
 /*!***************************************************************************
- * @short Get a string value
- * @param sct The base section
- * @param name The value name (as in "sect1.sect2.valname")
- * @retval str The string. This must not be changed by the caller.
+ * @short  Get a string value
+ * @param  sct The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret The string. This must not be changed by the caller.
+ * @param  def The default value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
-int ini_get_string (const ini_sct_t *sct, const char *name, char **str);
-
-char *ini_get_def_string (const ini_sct_t *sct, const char *name, char *val);
+int ini_get_string (const ini_sct_t *sct, const char *name,
+  char **ret, char *def);
 
 
 /*!***************************************************************************
