@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,14 +34,13 @@ void trm_init (terminal_t *trm)
 
   trm->msg_ext = NULL;
   trm->set_msg = NULL;
+  trm->get_msgul = NULL;
 
   trm->key_ext = NULL;
   trm->set_key = NULL;
 
   trm->mse_ext = NULL;
   trm->set_mse = NULL;
-
-  trm->set_brk = NULL;
 
   trm->del = NULL;
   trm->set_mode = NULL;
@@ -68,11 +67,35 @@ void trm_del (terminal_t *trm)
   }
 }
 
-void trm_set_msg (terminal_t *trm, const char *msg, const char *val)
+void trm_set_msg_fct (terminal_t *trm, void *ext, void *set, void *getul)
+{
+  trm->msg_ext = ext;
+  trm->set_msg = set;
+  trm->get_msgul = getul;
+}
+
+void trm_set_key_fct (terminal_t *trm, void *ext, void *set)
+{
+  trm->key_ext = ext;
+  trm->set_key = set;
+}
+
+int trm_set_msg (terminal_t *trm, const char *msg, const char *val)
 {
   if (trm->set_msg != NULL) {
-    trm->set_msg (trm->msg_ext, msg, val);
+    return (trm->set_msg (trm->msg_ext, msg, val));
   }
+
+  return (1);
+}
+
+int trm_get_msgul (terminal_t *trm, const char *msg, unsigned long *val)
+{
+  if (trm->get_msgul != NULL) {
+    return (trm->get_msgul (trm->msg_ext, msg, val));
+  }
+
+  return (1);
 }
 
 void trm_set_mode (terminal_t *trm, unsigned m, unsigned w, unsigned h)

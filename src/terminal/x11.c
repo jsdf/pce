@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -736,6 +736,7 @@ static struct {
     { XK_Caps_Lock,     0xba3a }
 };
 
+static
 void xt_send_key_code (xterm_t *xt, unsigned long code)
 {
   if (xt->trm.set_key == NULL) {
@@ -748,6 +749,7 @@ void xt_send_key_code (xterm_t *xt, unsigned long code)
   }
 }
 
+static
 unsigned long xt_get_key_code (xterm_t *xt, KeySym key, int make)
 {
   unsigned      i;
@@ -818,24 +820,16 @@ void xt_check (xterm_t *xt)
       case KeyPress:
         key = XLookupKeysym (&event.xkey, 0);
         if ((key == XK_grave) && (event.xkey.state & Mod1Mask)) {
-          if (xt->trm.set_brk != NULL) {
-            xt->trm.set_brk (xt->trm.key_ext, 2);
-          }
+          trm_set_msg (&xt->trm, "emu.exit", "1");
         }
         else if ((key == XK_grave) && (event.xkey.state & ControlMask)) {
-          if (xt->trm.set_brk != NULL) {
-            xt->trm.set_brk (xt->trm.key_ext, 1);
-          }
+          trm_set_msg (&xt->trm, "emu.stop", "1");
         }
         else if (key == XK_Pause) {
-          if (xt->trm.set_brk != NULL) {
-            xt->trm.set_brk (xt->trm.key_ext, 2);
-          }
+          trm_set_msg (&xt->trm, "emu.exit", "1");
         }
         else if ((key == XK_Print) && (event.xkey.state == 0)) {
-          if (xt->trm.set_brk != NULL) {
-            xt->trm.set_brk (xt->trm.key_ext, 3);
-          }
+          trm_set_msg (&xt->trm, "video.screenshot", "");
         }
         else {
           code = xt_get_key_code (xt, key, 1);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -911,18 +911,18 @@ void sdl_check (sdl_t *sdl)
 
         if (key == SDLK_PAUSE) {
           trm_set_msg (&sdl->trm, "emu.exit", "1");
+          return;
         }
         else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
           trm_set_msg (&sdl->trm, "emu.stop", "1");
+          return;
         }
         else {
           unsigned long code;
 
-          if (evt.key.keysym.sym != SDLK_PAUSE) {
-            code = sdl_get_key_code (sdl, evt.key.keysym.sym, 1);
-            if (code != 0) {
-              sdl_send_key_code (sdl, code);
-            }
+          code = sdl_get_key_code (sdl, evt.key.keysym.sym, 1);
+          if (code != 0) {
+            sdl_send_key_code (sdl, code);
           }
         }
       }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -415,12 +415,8 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
     return;
   }
 
-  pc->trm->key_ext = pc;
-  pc->trm->set_key = (set_uint8_f) &pc_set_keycode;
-  pc->trm->set_brk = (set_uint8_f) &pc_break;
-
-  pc->trm->msg_ext = pc;
-  pc->trm->set_msg = (trm_set_msg_f) &pc_set_msg;
+  trm_set_key_fct (pc->trm, pc, pc_set_keycode);
+  trm_set_msg_fct (pc->trm, pc, pc_set_msg, pc_get_msgul);
 }
 
 static

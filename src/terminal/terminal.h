@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,7 +35,6 @@
 
 
 typedef void (*trm_del_f) (void *ext);
-typedef void (*trm_set_msg_f) (void *ext, const char *msg, const char *val);
 typedef void (*trm_set_mse_f) (void *ext, int dx, int dy, unsigned b);
 typedef void (*trm_set_mode_f) (void *ext, unsigned m, unsigned w, unsigned h);
 typedef void (*trm_set_size_f) (void *ext, unsigned w, unsigned h);
@@ -52,16 +51,15 @@ typedef void (*trm_check_f) (void *ext);
 typedef struct {
   void (*del) (void *ext);
 
-  void          *msg_ext;
-  trm_set_msg_f set_msg;
+  void *msg_ext;
+  int  (*set_msg) (void *ext, const char *msg, const char *val);
+  int  (*get_msgul) (void *ext, const char *msg, unsigned long *val);
 
   void *key_ext;
   void (*set_key) (void *ext, unsigned char val);
 
   void *mse_ext;
   void (*set_mse) (void *ext, int dx, int dy, unsigned b);
-
-  void (*set_brk) (void *ext, unsigned char val);
 
   trm_set_mode_f set_mode;
   trm_set_size_f set_size;
@@ -86,7 +84,11 @@ void trm_free (terminal_t *trm);
 
 void trm_del (terminal_t *trm);
 
-void trm_set_msg (terminal_t *trm, const char *msg, const char *val);
+void trm_set_msg_fct (terminal_t *trm, void *ext, void *set, void *getul);
+void trm_set_key_fct (terminal_t *trm, void *ext, void *set);
+
+int trm_set_msg (terminal_t *trm, const char *msg, const char *val);
+int trm_get_msgul (terminal_t *trm, const char *msg, unsigned long *val);
 
 void trm_set_mode (terminal_t *trm, unsigned m, unsigned w, unsigned h);
 void trm_set_size (terminal_t *trm, unsigned w, unsigned h);
