@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: disk.h,v 1.2 2003/04/23 16:29:32 hampa Exp $ */
 
 
 #ifndef PCE_FLOPPY_H
@@ -60,13 +60,34 @@ typedef struct {
 
 
 disk_t *dsk_new (unsigned drive);
+
 void dsk_free (disk_t *dsk);
+
 void dsk_del (disk_t *dsk);
 
-int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro);
-int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro);
+int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro);
+
+int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro);
+
 int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro);
 void dsk_set_drive (disk_t *dsk, unsigned drive);
+
+int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  unsigned long *lba);
+
+int dsk_read_lba (disk_t *dsk, void *buf,
+  unsigned long blk_i, unsigned long blk_n);
+
+int dsk_read_chs (disk_t *dsk, void *buf,
+  unsigned c, unsigned h, unsigned s, unsigned long blk_n);
+
+int dsk_write_lba (disk_t *dsk, const void *buf,
+  unsigned long blk_i, unsigned long blk_n);
+
+int dsk_write_chs (disk_t *dsk, const void *buf,
+  unsigned c, unsigned h, unsigned s, unsigned long blk_n);
 
 disks_t *dsks_new (void);
 void dsks_del (disks_t *dsks);

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: disk.c,v 1.2 2003/04/23 16:29:32 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -83,7 +83,8 @@ void dsk_del (disk_t *dsk)
   }
 }
 
-int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro)
+int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro)
 {
   dsk_free (dsk);
 
@@ -99,6 +100,8 @@ int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fn
   if (dsk->data == NULL) {
     return (1);
   }
+
+  memset (dsk->data, 0, 512UL * dsk->blocks);
 
   if (fname != NULL) {
     FILE *fp;
@@ -119,7 +122,8 @@ int dsk_set_mem (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fn
   return (0);
 }
 
-int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s, const char *fname, int ro)
+int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro)
 {
   char *mode;
 
@@ -199,6 +203,113 @@ int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
   dsk->fp_close = 1;
 
   return (0);
+}
+
+int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
+  unsigned long *lba)
+{
+  if ((s < 1) || (s > dsk->geom.s)) {
+    return (1);
+  }
+
+  if ((h >= dsk->geom.h) || (c >= dsk->geom.c)) {
+    return (1);
+  }
+
+  *lba = ((c * dsk->geom.h + h) * dsk->geom.s + s - 1);
+
+  return (0);
+}
+
+int dsk_read_lba (disk_t *dsk, void *buf,
+  unsigned long blk_i, unsigned long blk_n)
+{
+  unsigned long i, n;
+
+  if ((blk_i + blk_n) > dsk->blocks) {
+    return (1);
+  }
+
+  i = 512UL * blk_i;
+  n = 512UL * blk_n;
+
+  if (dsk->data != NULL) {
+    memcpy (buf, dsk->data + i, n);
+  }
+  else if (dsk->fp != NULL) {
+    if (fseek (dsk->fp, dsk->start + i, SEEK_SET)) {
+      return (1);
+    }
+
+    memset (buf, 0, n);
+
+    if (fread (buf, 512, blk_n, dsk->fp) != blk_n) {
+      return (1);
+    }
+  }
+  else {
+    return (1);
+  }
+
+  return (0);
+}
+
+int dsk_read_chs (disk_t *dsk, void *buf,
+  unsigned c, unsigned h, unsigned s, unsigned long blk_n)
+{
+  unsigned long blk_i;
+
+  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
+    return (1);
+  }
+
+  return (dsk_read_lba (dsk, buf, blk_i, blk_n));
+}
+
+int dsk_write_lba (disk_t *dsk, const void *buf,
+  unsigned long blk_i, unsigned long blk_n)
+{
+  unsigned long       i, n;
+  const unsigned char *tmp;
+
+  tmp = (const unsigned char *) buf;
+
+  if ((blk_i + blk_n) > dsk->blocks) {
+    return (1);
+  }
+
+  i = 512UL * blk_i;
+  n = 512UL * blk_n;
+
+  if (dsk->data != NULL) {
+    memcpy (dsk->data + i, buf, n);
+  }
+  else if (dsk->fp != NULL) {
+    if (fseek (dsk->fp, dsk->start + i, SEEK_SET)) {
+      return (1);
+    }
+
+    if (fwrite (buf, 512, blk_n, dsk->fp) != blk_n) {
+      return (1);
+    }
+  }
+  else {
+    return (1);
+  }
+
+  return (0);
+}
+
+int dsk_write_chs (disk_t *dsk, const void *buf,
+  unsigned c, unsigned h, unsigned s, unsigned long blk_n)
+{
+  unsigned long blk_i;
+
+  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
+    return (1);
+  }
+
+  return (dsk_write_lba (dsk, buf, blk_i, blk_n));
 }
 
 void dsk_set_drive (disk_t *dsk, unsigned drive)
@@ -310,10 +421,11 @@ void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
 
 void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 {
-  unsigned long  i, j;
-  unsigned long  blk_i;
-  unsigned       c, h, s, n;
+  unsigned       i;
+  unsigned long  blk_i, blk_n;
+  unsigned       c, h, s;
   unsigned short seg, ofs;
+  unsigned char  buf[512];
   disk_t         *dsk;
 
   dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -322,62 +434,33 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
     return;
   }
 
-  n = e86_get_al (cpu);
+  blk_n = e86_get_al (cpu);
+
   c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
+
   seg = e86_get_es (cpu);
   ofs = e86_get_bx (cpu);
 
-  if ((s < 1) || (s > dsk->geom.s)) {
+  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
     return;
   }
 
-  if ((h >= dsk->geom.h) || (c >= dsk->geom.c)) {
-    dsk_int13_set_status (dsks, cpu, 0x04);
-    return;
-  }
-
-  blk_i = ((c * dsk->geom.h + h) * dsk->geom.s + s - 1);
-
-  if ((blk_i + n) > dsk->blocks) {
-    dsk_int13_set_status (dsks, cpu, 0x04);
-    return;
-  }
-
-  if (dsk->data != NULL) {
-    unsigned char *src;
-
-    src = dsk->data + 512UL * blk_i;
-
-    for (i = 0; i < n; i++) {
-      for (j = 0; j < 512; j++) {
-        e86_set_mem8 (cpu, seg, ofs, *(src++));
-        ofs = (ofs + 1) & 0xffff;
-      }
-    }
-  }
-  else if (dsk->fp != NULL) {
-    unsigned char buf[512];
-
-    if (fseek (dsk->fp, dsk->start + 512UL * blk_i, SEEK_SET)) {
-      dsk_int13_set_status (dsks, cpu, 1);
+  while (blk_n > 0) {
+    if (dsk_read_lba (dsk, buf, blk_i, 1)) {
+      dsk_int13_set_status (dsks, cpu, 0x01);
       return;
     }
 
-    for (i = 0; i < n; i++) {
-      memset (buf, 0, 512);
-      fread (buf, 1, 512, dsk->fp);
-      for (j = 0; j < 512; j++) {
-        e86_set_mem8 (cpu, seg, ofs, buf[j]);
-        ofs = (ofs + 1) & 0xffff;
-      }
+    for (i = 0; i < 512; i++) {
+      e86_set_mem8 (cpu, seg, ofs, buf[i]);
+      ofs = (ofs + 1) & 0xffff;
     }
-  }
-  else {
-    dsk_int13_set_status (dsks, cpu, 1);
-    return;
+
+    blk_n -= 1;
+    blk_i += 1;
   }
 
   dsk_int13_set_status (dsks, cpu, 0);
@@ -385,10 +468,11 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 
 void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 {
-  unsigned long  i, j;
-  unsigned       c, h, s, n;
+  unsigned       i;
+  unsigned long  blk_i, blk_n;
+  unsigned       c, h, s;
   unsigned short seg, ofs;
-  unsigned long  blk_i;
+  unsigned char  buf[512];
   disk_t         *dsk;
 
   dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -402,61 +486,33 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
     return;
   }
 
-  n = e86_get_al (cpu);
+  blk_n = e86_get_al (cpu);
+
   c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
+
   seg = e86_get_es (cpu);
   ofs = e86_get_bx (cpu);
 
-  if ((s < 1) || (s > dsk->geom.s)) {
+  if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
     return;
   }
 
-  if ((h >= dsk->geom.h) || (c >= dsk->geom.c)) {
-    dsk_int13_set_status (dsks, cpu, 0x04);
-    return;
-  }
-
-  blk_i = (c * dsk->geom.h + h) * dsk->geom.s + s - 1;
-
-  if ((blk_i + n) > dsk->blocks) {
-    dsk_int13_set_status (dsks, cpu, 0x04);
-    return;
-  }
-
-  if (dsk->data != NULL) {
-    unsigned char *dst;
-
-    dst = dsk->data + 512UL * blk_i;
-
-    for (i = 0; i < n; i++) {
-      for (j = 0; j < 512; j++) {
-        *(dst++) = e86_get_mem8 (cpu, seg, ofs);
-        ofs = (ofs + 1) & 0xffff;
-      }
+  while (blk_n > 0) {
+    for (i = 0; i < 512; i++) {
+      buf[i] = e86_get_mem8 (cpu, seg, ofs);
+      ofs = (ofs + 1) & 0xffff;
     }
-  }
-  else if (dsk->fp != NULL) {
-    unsigned char buf[512];
 
-    if (fseek (dsk->fp, dsk->start + 512UL * blk_i, SEEK_SET)) {
-      dsk_int13_set_status (dsks, cpu, 1);
+    if (dsk_write_lba (dsk, buf, blk_i, 1)) {
+      dsk_int13_set_status (dsks, cpu, 0x01);
       return;
     }
 
-    for (i = 0; i < n; i++) {
-      for (j = 0; j < 512; j++) {
-        buf[j] = e86_get_mem8 (cpu, seg, ofs);
-        ofs = (ofs + 1) & 0xffff;
-      }
-      fwrite (buf, 1, 512, dsk->fp);
-    }
-  }
-  else {
-    dsk_int13_set_status (dsks, cpu, 1);
-    return;
+    blk_n -= 1;
+    blk_i += 1;
   }
 
   dsk_int13_set_status (dsks, cpu, 0);
