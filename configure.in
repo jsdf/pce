@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2004-06-02 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -257,16 +257,22 @@ else
 	have_ibmpc=0
 fi
 
+if test -d "$srcdir/src/arch/sim6502" ; then
+	have_sim6502=1
+else
+	have_sim6502=0
+fi
+
 if test -d "$srcdir/src/arch/sim405" ; then
 	have_sim405=1
 else
 	have_sim405=0
 fi
 
-if test -d "$srcdir/src/arch/sim6502" ; then
-	have_sim6502=1
+if test -d "$srcdir/src/cpu/e8086" ; then
+	have_e8086=1
 else
-	have_sim6502=0
+	have_e8086=0
 fi
 
 if test -d "$srcdir/src/cpu/e6502" ; then
@@ -275,10 +281,10 @@ else
 	have_e6502=0
 fi
 
-if test -d "$srcdir/src/cpu/e8086" ; then
-	have_e8086=1
+if test -d "$srcdir/src/cpu/ppc405" ; then
+	have_ppc405=1
 else
-	have_e8086=0
+	have_ppc405=0
 fi
 
 AC_MSG_CHECKING([whether to build the IBM PC emulator])
