@@ -1,5 +1,12 @@
 0.0.4
 
+	* Added ESC opcodes
+	* Added lots of instruction timings
+	* Fixed a serious bug in the LDS/LES instructions
+	* The overflow flag is now set correctly
+	* Added a PPI 8255 emulator
+	* Lots of small bugfixes
+
 0.0.3	2003-04-15
 
 	* Lots of changes. Basically a new project.

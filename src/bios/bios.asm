@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.4 2003/04/17 14:15:55 hampa Exp $
+; $Id: bios.asm,v 1.5 2003/04/18 20:09:30 hampa Exp $
 
 
 CPU 8086
@@ -2919,7 +2919,9 @@ db 0x8A, 0xDE                           ; F2DE mov bl,dh
 db 0xEB, 0xDC                           ; F2E0 jmp short 0xf2be
 L_F2E2:
 db 0x80, 0x3E, 0x49, 0x00, 0x02         ; F2E2 cmp byte [0x49],0x2
-db 0x72, 0x18                           ; F2E7 jc 0xf301
+;db 0x72, 0x18                           ; F2E7 jc 0xf301
+; #### patch ####
+  jmp     short L_F301
 db 0x80, 0x3E, 0x49, 0x00, 0x03         ; F2E9 cmp byte [0x49],0x3
 db 0x77, 0x11                           ; F2EE ja 0xf301
 db 0x52                                 ; F2F0 push dx

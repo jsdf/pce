@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.5 2003/04/17 14:15:56 hampa Exp $
+; $Id: pce.asm,v 1.6 2003/04/18 20:09:31 hampa Exp $
 
 
 %macro set_pos 1
@@ -34,9 +34,11 @@ section .text
 ;-----------------------------------------------------------------------------
 
 start:
+  cli
   mov     ax, 0x0050
   mov     ss, ax
   mov     sp, 1024
+  sti
 
   call    set_bios_ds
 
@@ -47,7 +49,7 @@ start:
   call    init_misc
   call    init_keyboard
 
-  mov     ax, 0x0007
+  mov     ax, 0x0003
   int     0x10
 
   push    cs
@@ -56,8 +58,8 @@ start:
   mov     si, msg_init
   call    prt_string
 
-;  int     0x18
   int     0x19
+;  int     0x18
 
 done:
   jmp     done
@@ -66,8 +68,7 @@ done:
 testdiv   dw 13
 
 msg_init:
-  db      "PC BIOS", 13, 10
-  db      "(hacked up version for PCE)", 13, 10, 0
+  db      "PC BIOS (hacked up version for PCE)", 13, 10, 13, 10, 0
 
 
 ;-----------------------------------------------------------------------------
@@ -112,7 +113,7 @@ init_int:
 init_misc:
   xor     ax, ax
 
-  mov     [0x0010], word 0x017d         ; equipment word
+;  mov     [0x0010], word 0x017d         ; equipment word
   mov     [0x0013], word 512            ; ram size
 
   mov     [0x006c], ax
@@ -148,6 +149,9 @@ init_ppi:
   out     0x61, al
 
   in      al, 0x60                      ; get config word
+  mov     ah, 0
+
+  mov     [0x0010], ax                  ; equipment word
 
   ret
 
@@ -184,7 +188,7 @@ inttab:
   dw      0xe82e, 0xf000 ;int_16, 0xf000
   dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
-  dw      0xe6f2, 0xf000 ;int_19, 0xf000
+  dw      int_19, 0xf000 ;0xe6f2, 0xf000
   dw      0xfe6e, 0xf000 ;int_1a, 0xf000
   dw      int_1b, 0xf000
   dw      int_default, 0xf000
@@ -283,10 +287,6 @@ int_17:
   db      0x66, 0x66, 0xcd, 0x17
   iret
 
-int_19:
-  db      0x66, 0x66, 0xcd, 0x19
-  iret
-
 int_1b:
   db      0x66, 0x66, 0xcd, 0x1b
   iret
@@ -316,6 +316,39 @@ int_18:
   iret
 
 
+int_19:
+  xor     bx, bx
+  mov     es, bx
+  mov     bx, 0x7c00
+
+;  jmp     .try_fd
+
+  mov     ax, 0x0201
+  mov     cx, 0x0001
+  mov     dx, 0x0080
+  int     0x13
+  jc      .try_fd
+
+  cmp     [es:0x7dfe], word 0xaa55
+  je      .boot
+
+.try_fd:
+  mov     ax, 0x0201
+  mov     cx, 0x0001
+  mov     dx, 0x0000
+  int     0x13
+  jc      .fail
+
+  cmp     [es:0x7dfe], word 0xaa55
+  je      .boot
+
+.fail:
+  iret
+
+.boot:
+  jmp     0x0000:0x7c00
+
+
 prt_string:
   push    ax
   push    si
@@ -337,36 +370,8 @@ prt_string:
 
 ;-----------------------------------------------------------------------------
 
-test_imul:
-  mov     ax, 1
-  mov     cx, 0
-  xor     si, si
-  mov     di, si
-
-.next1:
-  imul    cx
-  adc     si, ax
-  adc     di, dx
-  inc     ax
-  loop    .next1
-
-  mov     al, 1
-  mov     cx, 0
-  xor     si, si
-  mov     di, si
-
-.next2:
-  imul    cl
-  adc     si, ax
-  adc     di, 0
-  inc     al
-  loop    .next2
-
-  ret
-
 
 pce_test:
-  call    test_imul
   ret
 
 ;-----------------------------------------------------------------------------
