@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     cmd.c                                                      *
+ * File name:     src/lib/cmd.c                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cmd.c,v 1.2 2003/11/08 21:48:15 hampa Exp $ */
+/* $Id: cmd.c,v 1.3 2003/12/20 11:43:29 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -98,12 +98,39 @@ char *str_rtrim (char *str)
 
 void cmd_get (cmd_t *cmd)
 {
-  fgets (cmd->str, 256, cmd_fpi);
+  fgets (cmd->str, PCE_CMD_MAX, cmd_fpi);
 
   str_ltrim (cmd->str);
   str_rtrim (cmd->str);
 
   cmd->i = 0;
+}
+
+void cmd_set_str (cmd_t *cmd, const char *str)
+{
+  unsigned i;
+
+  cmd->i = 0;
+
+  for (i = 0; i < PCE_CMD_MAX; i++) {
+    cmd->str[i] = str[i];
+
+    if (str[i] == 0) {
+      return;
+    }
+  }
+
+  cmd->str[PCE_CMD_MAX - 1] = 0;
+}
+
+void cmd_rewind (cmd_t *cmd)
+{
+  cmd->i = 0;
+}
+
+const char *cmd_get_str (cmd_t *cmd)
+{
+  return (cmd->str + cmd->i);
 }
 
 int cmd_match_space (cmd_t *cmd)
