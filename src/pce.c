@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     pce.c                                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.9 2003/04/19 03:29:33 hampa Exp $ */
+/* $Id: pce.c,v 1.10 2003/04/20 00:21:49 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -50,6 +50,13 @@ static unsigned     bp_cnt = 0;
 static breakpoint_t *breakpoint = NULL;
 
 static unsigned long ops_cnt[256];
+
+static unsigned long long pce_opcnt = 0;
+static unsigned long long pce_eclk = 0;
+static unsigned long long pce_eclk_base = 4770000;
+static unsigned long long pce_hclk = 0;
+static unsigned long long pce_hclk_base = 266 * 1000 * 1000ULL;
+static unsigned long long pce_hclk_last = 0;
 
 static ibmpc_t      *pc;
 
@@ -81,6 +88,20 @@ void prt_version (void)
 
   fflush (stdout);
 }
+
+#ifdef PCE_HAVE_RDTSC
+static inline
+unsigned long long read_tsc (void)
+{
+  unsigned long long ret;
+
+  __asm __volatile (
+    "rdtsc" : "=A" (ret) :: "memory"
+  );
+
+  return (ret);
+}
+#endif
 
 int str_is_space (char c)
 {
@@ -145,15 +166,6 @@ char *str_rtrim (char *str)
   str[j] = 0;
 
   return (str);
-}
-
-void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
-{
-  ops_cnt[op1 & 0xff] += 1;
-
-  if ((op1 == 0xcd) && (op2 == 0x28)) {
-    usleep (10000);
-  }
 }
 
 void cmd_get (cmd_t *cmd)
@@ -599,13 +611,47 @@ void prt_error (const char *str, ...)
   va_end (va);
 }
 
+void cpu_start()
+{
+#ifdef PCE_HAVE_RDTSC
+  pce_hclk_last = read_tsc();
+#else
+  pce_hclk_last = 0;
+#endif
+}
+
+void cpu_end()
+{
+#ifdef PCE_HAVE_RDTSC
+  pce_hclk_last = read_tsc() - pce_hclk_last;
+#else
+  pce_hclk_last = 0;
+#endif
+
+  pce_eclk = e86_get_clock (pc->cpu);
+  pce_hclk += pce_hclk_last;
+  pce_opcnt = e86_get_opcnt (pc->cpu);
+}
+
 void cpu_exec (void)
 {
-  unsigned long old;
+  unsigned long long old;
 
-  old = pc->cpu->instructions;
-  while (pc->cpu->instructions == old) {
+  old = e86_get_opcnt (pc->cpu);
+
+  while (e86_get_opcnt (pc->cpu) == old) {
     pc_clock (pc);
+  }
+}
+
+void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
+{
+  ops_cnt[op1 & 0xff] += 1;
+
+  if ((op1 == 0xcd) && (op2 == 0x28)) {
+    cpu_end();
+    usleep (10000);
+    cpu_start();
   }
 }
 
@@ -825,14 +871,16 @@ void do_e (cmd_t *cmd)
 
 void do_g (cmd_t *cmd)
 {
-  breakpoint_t   *bp;
-  unsigned short seg, ofs;
+  breakpoint_t       *bp;
+  unsigned short     seg, ofs;
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
   key_set_fd (pc->key, 0);
+
+  cpu_start();
 
   while (1) {
     cpu_exec();
@@ -866,6 +914,8 @@ void do_g (cmd_t *cmd)
     }
   }
 
+  cpu_end();
+
   key_set_fd (pc->key, -1);
 
   fputs ("\n", stdout);
@@ -890,6 +940,8 @@ void do_p (cmd_t *cmd)
 
   pc->brk = 0;
 
+  cpu_start();
+
   while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
     pc_clock (pc);
 
@@ -905,6 +957,8 @@ void do_p (cmd_t *cmd)
       break;
     }
   }
+
+  cpu_end();
 
   key_set_fd (pc->key, -1);
 
@@ -939,6 +993,24 @@ void do_s (cmd_t *cmd)
         printf ("no video adapter installed\n");
       }
     }
+    else if (cmd_match (cmd, "time")) {
+#ifdef PCE_HAVE_RDTSC
+      printf (
+        "OPS=%llX  R=%.4fMHz\n"
+        "ECLK=%llX[%.4fs] @ %.4fMHz\n"
+        "HCLK=%llX[%.4fs] @ %.4fMHz\n",
+        pce_opcnt,
+        1.0E-6 * ((pce_hclk > 0) ?
+          ((double) pce_eclk / (double) pce_hclk * pce_hclk_base) : 0.0),
+        pce_eclk, (double) pce_eclk / (double) pce_eclk_base,
+        1.0E-6 * pce_eclk_base,
+        pce_hclk, (double) pce_hclk / (double) pce_hclk_base,
+        1.0E-6 * pce_hclk_base
+      );
+#else
+      ;
+#endif
+    }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
       return;
@@ -948,23 +1020,32 @@ void do_s (cmd_t *cmd)
 
 void do_t (cmd_t *cmd)
 {
-  unsigned long cnt;
-  unsigned long inst;
+  unsigned long i, n;
 
-  cnt = 1;
+  n = 1;
 
-  cmd_match_uint32 (cmd, &cnt);
+  cmd_match_uint32 (cmd, &n);
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
-  inst = pc->cpu->instructions + cnt;
-
   pc->brk = 0;
 
-  while ((pc->cpu->instructions < inst) && (pc->brk == 0)) {
-    pc_clock (pc);
+  if (n > 255) {
+    key_set_fd (pc->key, 0);
+  }
+
+  cpu_start();
+
+  for (i = 0; i < n; i++) {
+    cpu_exec();
+  }
+
+  cpu_end();
+
+  if (n > 255) {
+    key_set_fd (pc->key, -1);
   }
 
   prt_state (pc, stdout);
