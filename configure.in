@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.28 2003/10/06 12:25:05 hampa Exp $
+# $Id: configure.in,v 1.29 2003/10/13 01:52:57 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -43,6 +43,7 @@ IFS="$IFS."
 read p PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC dstr r < "$srcdir/version"
 IFS=$oldifs
 if test "x$dstr" != "x" ; then
+	PCE_VERSION_REL=0
 	if test "x$dstr" = "xcvs" ; then
 		dstr=`date +%Y%m%d`
 		PCE_VERSION_STR="cvs-$dstr"
@@ -50,16 +51,19 @@ if test "x$dstr" != "x" ; then
 		PCE_VERSION_STR="$dstr"
 	fi
 else
+	PCE_VERSION_REL=1
 	PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 fi
 AC_SUBST(PCE_VERSION_MAJ)
 AC_SUBST(PCE_VERSION_MIN)
 AC_SUBST(PCE_VERSION_MIC)
 AC_SUBST(PCE_VERSION_STR)
+AC_SUBST(PCE_VERSION_REL)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MAJ, $PCE_VERSION_MAJ)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIN, $PCE_VERSION_MIN)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIC, $PCE_VERSION_MIC)
 AC_DEFINE_UNQUOTED(PCE_VERSION_STR, "$PCE_VERSION_STR")
+AC_DEFINE_UNQUOTED(PCE_VERSION_REL, $PCE_VERSION_REL)
 AC_MSG_RESULT([$PCE_VERSION_STR])
 
 
@@ -113,6 +117,7 @@ dnl Checks for header files.
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
+AC_CHECK_HEADER(X11/X.h, HAVE_X11_X_H=1, HAVE_X11_X_H=0)
 
 
 dnl -----------------------------------------------------------------------
@@ -120,6 +125,8 @@ dnl Checks for libraries
 
 
 AC_MSG_CHECKING([for X11])
+PCE_X11_CCF="-I/usr/X11R6/include"
+PCE_X11_LDF="-L/usr/X11R6/lib -lX11"
 AC_ARG_WITH(x11,
   AC_HELP_STRING([--with-x11], [Use the X11 terminal]),
   [
@@ -128,17 +135,26 @@ AC_ARG_WITH(x11,
 		AC_MSG_RESULT([no (forced)])
 	else
 		PCE_X11_USE=1
+		if test -d "$withval" ; then
+			if test -f "$withval/include/X11/X.h" ; then
+				PCE_X11_CCF="$withval/include"
+				PCE_X11_LDF="$withval/lib -lX11"
+			fi
+		fi
 		AC_MSG_RESULT([yes (forced)])
 	fi
   ],
   [
-	PCE_X11_USE=0
-	AC_MSG_RESULT([no (not yet autodeteced)])
+	if test $HAVE_X11_X_H -eq 0 ; then
+		PCE_X11_USE=0
+		AC_MSG_RESULT([no (not detected)])
+	else
+		PCE_X11_USE=1
+		AC_MSG_RESULT([yes (detected)])
+	fi
   ]
 )
 if test $PCE_X11_USE -ne 0 ; then
-	PCE_X11_CCF="-I/usr/X11R6/include"
-	PCE_X11_LDF="-L/usr/X11R6/lib -lX11"
 	AC_DEFINE(PCE_X11_USE)
 fi
 AC_SUBST(PCE_X11_USE)
@@ -159,7 +175,7 @@ AC_ARG_WITH(sdl,
 	fi
   ],
   [
-	if sdl-config --cflags > /dev/null 2>&1 ; then
+	if sdl-config --version > /dev/null 2>&1 ; then
 		PCE_SDL_USE=1
 		AC_MSG_RESULT([yes (detected)])
 	else
