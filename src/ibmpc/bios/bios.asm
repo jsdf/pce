@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.12 2003/10/04 17:55:17 hampa Exp $
+; $Id: bios.asm,v 1.13 2003/10/13 01:55:42 hampa Exp $
 
 
 CPU 8086
@@ -42,7 +42,10 @@ L_E016:
   dw     L_E0D1                        ; Return address
 
 
-; Check first 16KB of memory if [40:72] != 0x1234
+;-----------------------------------------------------------------------------
+; check CX bytes of RAM at ES:0000 (DS = ES)
+;-----------------------------------------------------------------------------
+
 L_E018:
   mov    cx, 0x4000
 
@@ -50,33 +53,33 @@ L_E01B:
   cld
   mov    bx, cx
 
-  mov    ax, 0xaaaa
-  mov    dx, 0xff55
+  mov    ax, 0xaaaa                     ; first pattern
+  mov    dx, 0xff55                     ; second and third pattern
   sub    di, di
-  rep    stosb                         ; Clear 16KB at 0:0
+  rep    stosb                          ; Clear 16KB at 0:0
 
 L_E028:
   dec    di
-  std
+  std                                   ; reverse direction
 
 L_E02A:
   mov    si, di
-  mov    cx, bx
+  mov    cx, bx                         ; byte count
 
 L_E02E:
   lodsb
-  xor    al, ah
+  xor    al, ah                         ; check if readback ok
   jnz    L_E058
 
-  mov    al, dl
+  mov    al, dl                         ; store next pattern
   stosb
 
   loop   L_E02E
 
-  and    ah, ah
+  and    ah, ah                         ; check if done
   jz     L_E052
 
-  mov    ah, al
+  mov    ah, al                         ; get next pattern
   xchg   dh, dl
 
   and    ah, ah
@@ -107,9 +110,17 @@ L_E058:
 db 0xFF                                 ; E05A db 0xFF
 
 
-; Initial boot entry
+;-----------------------------------------------------------------------------
+; cold boot entry
+;-----------------------------------------------------------------------------
+
 start:                                  ; E05B
   cli
+
+
+;-----------------------------------------------------------------------------
+; check 8088 register, flags and conditional jumps
+;-----------------------------------------------------------------------------
 
   mov    ah, 0xd5
   sahf                                  ; Initialize the flags
@@ -174,6 +185,10 @@ L_E0AD:
   hlt                                   ; Failed tests
 
 
+;-----------------------------------------------------------------------------
+; verify bios checksum
+;-----------------------------------------------------------------------------
+
 L_E0AE:
   ; AX = 0x0000
   out    0xa0, al
@@ -212,6 +227,11 @@ L_E0D1:
   nop
   nop
 ; **** patch **** (bios is modifed -> incorrect checksum)
+
+
+;-----------------------------------------------------------------------------
+; test the DMAC and timer channel 1 and set them up for ram refresh
+;-----------------------------------------------------------------------------
 
   mov    al, 0x04
   out    0x08, al                       ; deactivate DMAC
@@ -397,8 +417,11 @@ L_E1A3:                                 ; clear memory, 32K at a time
   jnz     L_E1A3
 
 
+;-----------------------------------------------------------------------------
+; initialize the PIC 8259
+;-----------------------------------------------------------------------------
+
 L_E1B4:
-  ; PIC
   mov     al, 0x13                      ; ICW1
   out     0x20, al
 
@@ -433,18 +456,19 @@ L_E1B4:
 
   call    L_E643                        ; reset keyboard ?
 
-  cmp     bl, 0x65
+  cmp     bl, 0x65                      ; check if manufacturing test 2
   jne     L_E1F7
 
   mov     dl, 0xff
 
 L_E1EB:
-db 0xE8, 0x62, 0x04                     ; E1EB call 0xe650
-db 0x8A, 0xC3                           ; E1EE mov al,bl
-db 0xAA                                 ; E1F0 stosb
-db 0xFE, 0xCA                           ; E1F1 dec dl
-db 0x75, 0xF6                           ; E1F3 jnz 0xe1eb
-db 0xCD, 0x3E                           ; E1F5 int 0x3e
+  call    L_E650                        ; read in test program
+  mov     al, bl
+  stosb
+  dec     dl
+  jnz     L_E1EB
+
+  int     0x3e
 
 L_E1F7:
   mov     cx, 0x20
@@ -1128,6 +1152,7 @@ L_E64A:
   mov     al, 0xcc
   out     0x61, al
 
+L_E650:
   mov     al, 0x4c
   out     0x61, al
 
@@ -1239,12 +1264,11 @@ L_E6E4:
   db      0xff
 
 
-;*****************************************************************************
-;* int 19 handler
-;*****************************************************************************
-; E6F2
+;-----------------------------------------------------------------------------
+; int 19 handler
+;-----------------------------------------------------------------------------
 
-int_19:
+int_19:                                 ; E6F2
   sti
 
   sub     ax, ax
