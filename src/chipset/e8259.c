@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.c                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.c,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
+/* $Id: e8259.c,v 1.3 2003/08/29 19:15:21 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -70,6 +70,37 @@ e8259_t *e8259_new (void)
 void e8259_del (e8259_t *pic)
 {
   free (pic);
+}
+
+e8259_irq_f e8259_get_irq (e8259_t *pic, unsigned irq)
+{
+  switch (irq & 7) {
+    case 0:
+      return ((e8259_irq_f) &e8259_set_irq0);
+
+    case 1:
+      return ((e8259_irq_f) &e8259_set_irq1);
+
+    case 2:
+      return ((e8259_irq_f) &e8259_set_irq2);
+
+    case 3:
+      return ((e8259_irq_f) &e8259_set_irq3);
+
+    case 4:
+      return ((e8259_irq_f) &e8259_set_irq4);
+
+    case 5:
+      return ((e8259_irq_f) &e8259_set_irq5);
+
+    case 6:
+      return ((e8259_irq_f) &e8259_set_irq6);
+
+    case 7:
+      return ((e8259_irq_f) &e8259_set_irq7);
+  }
+
+  return (NULL);
 }
 
 void e8259_set_irq (e8259_t *pic, void *ext, e8259_irq_f set)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8259.h                                        *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8259.h,v 1.2 2003/04/26 16:58:14 hampa Exp $ */
+/* $Id: e8259.h,v 1.3 2003/08/29 19:15:21 hampa Exp $ */
 
 
 /* PIC 8259A */
@@ -56,6 +56,16 @@ typedef struct {
 
 e8259_t *e8259_new (void);
 void e8259_del (e8259_t *pic);
+
+/*!***************************************************************************
+ * @short  Get an IRQ function
+ * @param  pic The PIC
+ * @param  irq The IRQ number
+ * @return The function that is to be called to trigger IRQ irq.
+ *
+ * The return value is a pointer to one of the e8259_set_irq?() functions.
+ *****************************************************************************/
+e8259_irq_f e8259_get_irq (e8259_t *pic, unsigned irq);
 
 /*!***************************************************************************
  * @short Set the IRQ function
