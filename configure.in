@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.11 2003/04/26 16:35:27 hampa Exp $
+# $Id: configure.in,v 1.12 2003/04/27 00:25:44 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -157,6 +157,12 @@ AC_OUTPUT(
 
 dnl -----------------------------------------------------------------------
 
+term="vt100"
+
+if test "x$PCE_X11_USE" = "x1" ; then
+	term="$term x11"
+fi
+
 eval "pce_bindir=$bindir"
 eval "pce_bindir=$pce_bindir"
 
@@ -181,5 +187,6 @@ echo "  libdir:                $pce_libdir"
 echo "  mandir:                $pce_mandir"
 echo "  datadir:               $pce_datdir"
 echo ""
+echo "  Terminals:             $term"
 echo "  Host clock:            $PCE_HOST_FOSC"
 echo "  Use Pentium TSC:       $PCE_HAVE_TSC"
