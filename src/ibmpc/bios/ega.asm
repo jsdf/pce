@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.8 2003/09/21 21:12:30 hampa Exp $
+; $Id: ega.asm,v 1.9 2003/09/22 02:37:56 hampa Exp $
 
 
 %include "config.inc"
@@ -102,6 +102,11 @@ start:
 .done
   pop     ax
   retf
+
+
+msg_init  db "PCE EGA BIOS version ", PCE_VERSION_STR
+          db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
+          db 13, 10, 13, 10, 0
 
 
 seg0000   dw 0x0000
@@ -1953,7 +1958,34 @@ int_10:
   iret
 
 
+; print string at CS:SI
+prt_string:
+  push    ax
+  push    bx
+  push    si
+
+  xor     bx, bx
+
+.next
+  cs      lodsb
+  or      al, al
+  jz      .done
+
+  mov     ah, 0x0e
+  int     0x10
+
+  jmp     short .next
+
+.done
+  pop     si
+  pop     bx
+  pop     ax
+  ret
+
+
 ega_init:
+  push    ax
+  push    si
   push    ds
 
   xor     ax, ax
@@ -1980,7 +2012,15 @@ ega_init:
   mov     word [0x00a8], ptr00a8
   mov     word [0x00a8 + 2], cs
 
+  mov     ax, 0x0003
+  int     0x10
+
+  mov     si, msg_init
+  call    prt_string
+
   pop     ds
+  pop     si
+  pop     ax
   ret
 
 

@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.16 2003/09/21 00:41:04 hampa Exp $
+; $Id: pce.asm,v 1.17 2003/09/22 02:37:56 hampa Exp $
 
 
 %include "config.inc"
@@ -198,19 +198,29 @@ init_video:
   cmp     al, 0x30
   je      .mda
 
+  cmp     al, 0x20
+  je      .cga
+
+  xor     ax, ax
+  jmp     .prtmsg
+
+.cga:
   mov     ax, 0x0003
   int     0x10
   mov     ax, msg_cga
-  jmp     .done
+  jmp     .prtmsg
 
 .mda:
   mov     ax, 0x0007
   int     0x10
   mov     ax, msg_mda
 
-.done:
+.prtmsg:
   mov     si, msg_init
   call    prt_string
+
+  or      ax, ax
+  jz      .done
 
   mov     si, ax
   call    prt_string
@@ -218,6 +228,7 @@ init_video:
   mov     si, msg_video
   call    prt_string
 
+.done:
   pop     si
   pop     ax
   ret
