@@ -206,6 +206,15 @@ disk_t *dsk_fdimg_open_fp (FILE *fp, int ro)
   }
 
   switch (cnt) {
+    case 160UL * 1024UL:
+      return (dsk_img_open_fp (fp, 40, 1, 8, ro));
+
+    case 180UL * 1024UL:
+      return (dsk_img_open_fp (fp, 40, 1, 9, ro));
+
+    case 320UL * 1024UL:
+      return (dsk_img_open_fp (fp, 40, 2, 8, ro));
+
     case 360UL * 1024UL:
       return (dsk_img_open_fp (fp, 40, 2, 9, ro));
 
