@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     ibmpc.c                                                    *
+ * File name:     src/ibmpc.c                                                *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.11 2003/04/20 20:36:28 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.12 2003/04/21 13:35:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -66,6 +66,23 @@ void pc_setup_ppi (ibmpc_t *pc, unsigned ramsize)
   blk->get_uint8 = (geta_uint8_f) &e8255_get_port8;
   mem_add_blk (pc->prt, blk);
   pc->ppi_prt = blk;
+}
+
+void pc_setup_pic (ibmpc_t *pc)
+{
+  pc->pic = e8259_new();
+
+  pc->pic_prt = mem_blk_new (0x20, 2, 0);
+  pc->pic_prt->ext = pc->pic;
+  pc->pic_prt->set_uint8 = (seta_uint8_f) &e8259_set_uint8;
+  pc->pic_prt->get_uint8 = (geta_uint8_f) &e8259_get_uint8;
+  mem_add_blk (pc->prt, pc->pic_prt);
+
+  pc->pic->irq_ext = pc->cpu;
+  pc->pic->irq = (set_uint8_f) &e86_irq;
+
+  pc->cpu->inta_ext = pc->pic;
+  pc->cpu->inta = (get_uint8_f) &e8259_inta;
 }
 
 void pc_setup_keyboard (ibmpc_t *pc)
@@ -166,6 +183,8 @@ ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
 
   pc_setup_ppi (pc, ramsize);
 
+  pc_setup_pic (pc);
+
   pc_setup_keyboard (pc);
 
   pc->mda = NULL;
@@ -197,6 +216,9 @@ void pc_del (ibmpc_t *pc)
 
   e86_del (pc->cpu);
 
+  e8259_del (pc->pic);
+  mem_blk_del (pc->pic_prt);
+
   e8255_del (pc->ppi);
   mem_blk_del (pc->ppi_prt);
 
@@ -217,13 +239,14 @@ void pc_clock (ibmpc_t *pc)
 
   e86_clock (pc->cpu, n);
 
+  e8259_clock (pc->pic);
+
   cga_clock (pc->cga);
   key_clock (pc->key);
 
   if (pc->timer_clk_cnt >= (4 * 65536)) {
-    if (!e86_interrupt (pc->cpu, 8)) {
-      pc->timer_clk_cnt -= (4 * 65536);
-    }
+    e8259_set_irq0 (pc->pic, 1);
+    pc->timer_clk_cnt -= (4 * 65536);
   }
 
   pc->clk_cnt += n;
@@ -349,9 +372,4 @@ void pc_load_bios (ibmpc_t *pc, char *fname)
   if (fread (pc->bios->data, 1, 64 * 1024, fp) != (64 * 1024)) {
     fprintf (stderr, "loading bios failed\n");
   }
-}
-
-void pc_prt_state (ibmpc_t *pc, FILE *fp)
-{
-  e86_prt_state (pc->cpu, fp);
 }

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     ibmpc.h                                                    *
+ * File name:     src/ibmpc.h                                                *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.7 2003/04/20 00:21:12 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.8 2003/04/21 13:35:38 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -49,6 +49,9 @@ typedef struct {
   unsigned char ppi_port_b;
   unsigned char ppi_port_c[2];
 
+  e8259_t       *pic;
+  mem_blk_t     *pic_prt;
+
   unsigned long long clk_cnt;
   unsigned long      timer_clk_cnt;
 
@@ -61,8 +64,6 @@ ibmpc_t *pc_new (unsigned ramsize, unsigned dsp);
 void pc_del (ibmpc_t *pc);
 
 void pc_clock (ibmpc_t *pc);
-
-void pc_prt_state (ibmpc_t *pc, FILE *fp);
 
 
 #endif
