@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/video.h                                          *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.h,v 1.3 2003/09/13 18:10:15 hampa Exp $ */
+/* $Id: video.h,v 1.4 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #ifndef PCE_VIDEO_H
@@ -28,6 +28,13 @@
 
 
 #include <stdio.h>
+
+
+#define PCE_VIDEO_NONE 0
+#define PCE_VIDEO_MDA  1
+#define PCE_VIDEO_CGA  2
+#define PCE_VIDEO_HGC  3
+#define PCE_VIDEO_EGA  4
 
 
 typedef void (*pce_video_del_f) (void *ext);
@@ -60,7 +67,9 @@ typedef struct {
   pce_video_prt_state_f  prt_state;
   pce_video_screenshot_f screenshot;
 
-  void *ext;
+  void     *ext;
+
+  unsigned type;
 } video_t;
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.11 2003/09/13 18:11:17 hampa Exp $ */
+/* $Id: cga.c,v 1.12 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -75,10 +75,10 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
     cga->crtc_reg[i] = 0;
   }
 
-  ini_get_uint (sct, "mode1_width", &cga->mode1_w, 640);
-  ini_get_uint (sct, "mode1_height", &cga->mode1_h, 400);
-  ini_get_uint (sct, "mode2_width", &cga->mode2_w, 640);
-  ini_get_uint (sct, "mode2_height", &cga->mode2_h, 400);
+  ini_get_uint (sct, "mode_320x200_w", &cga->mode1_w, 640);
+  ini_get_uint (sct, "mode_320x200_h", &cga->mode1_h, 400);
+  ini_get_uint (sct, "mode_640x200_w", &cga->mode2_w, 640);
+  ini_get_uint (sct, "mode_640x200_h", &cga->mode2_h, 400);
 
   ini_get_uint (sct, "io", &iobase, 0x3d4);
   ini_get_uint (sct, "membase", &membase, 0xb8000);
@@ -232,6 +232,8 @@ void cga_mode0_update (cga_t *cga)
       i = (i + 2) & 0x3fff;
     }
   }
+
+  trm_flush (cga->trm);
 }
 
 void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
@@ -269,6 +271,7 @@ void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 
   trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
   trm_set_chr (cga->trm, x, y, c);
+  trm_flush (cga->trm);
 }
 
 void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
@@ -311,6 +314,7 @@ void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
   trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
   trm_set_chr (cga->trm, x, y, c);
+  trm_flush (cga->trm);
 }
 
 
@@ -371,11 +375,11 @@ void cga_mode1_update (cga_t *cga)
       for (i = 0; i < 4; i++) {
         trm_set_col (cga->trm, cga->palette[(val0 >> 6) & 0x03], 0);
         pce_smap_get_pixel (&cga->smap, 4 * x + i, 2 * y, &sx, &sy, &sw, &sh);
-        trm_set_rct (cga->trm, sx, sy, sw, sh);
+        trm_set_pxl (cga->trm, sx, sy, sw, sh);
 
         trm_set_col (cga->trm, cga->palette[(val1 >> 6) & 0x03], 0);
         pce_smap_get_pixel (&cga->smap, 4 * x + i, 2 * y + 1, &sx, &sy, &sw, &sh);
-        trm_set_rct (cga->trm, sx, sy, sw, sh);
+        trm_set_pxl (cga->trm, sx, sy, sw, sh);
 
         val0 <<= 2;
         val1 <<= 2;
@@ -385,6 +389,8 @@ void cga_mode1_update (cga_t *cga)
     mem0 += 80;
     mem1 += 80;
   }
+
+  trm_flush (cga->trm);
 }
 
 void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
@@ -423,12 +429,14 @@ void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
       trm_set_col (cga->trm, cga->palette[col], 0);
 
       pce_smap_get_pixel (&cga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_rct (cga->trm, sx, sy, sw, sh);
+      trm_set_pxl (cga->trm, sx, sy, sw, sh);
     }
 
     old <<= 2;
     val <<= 2;
   }
+
+  trm_flush (cga->trm);
 }
 
 
@@ -500,12 +508,14 @@ void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
       col = (val >> 7) & 0x01;
       trm_set_col (cga->trm, col ? 15 : 0, 0);
       pce_smap_get_pixel (&cga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_rct (cga->trm, sx, sy, sw, sh);
+      trm_set_pxl (cga->trm, sx, sy, sw, sh);
     }
 
     old <<= 1;
     val <<= 1;
   }
+
+  trm_flush (cga->trm);
 }
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.30 2003/09/05 14:43:36 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.31 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -121,9 +121,10 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
       mem_blk_set_ro (rom, 1);
       mem_add_blk (pc->mem, rom, 1);
 
-      if (fread (rom->data, 1, size, fp) != size) {
-        pce_log (MSG_ERR, "loading rom data failed (%s)\n", fname);
-      }
+      fread (rom->data, 1, size, fp);
+//      if (fread (rom->data, 1, size, fp) != size) {
+//        pce_log (MSG_ERR, "loading rom data failed (%s)\n", fname);
+//      }
 
       fclose (fp);
     }
@@ -354,6 +355,16 @@ void pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
   pc->ppi_port_a[0] |= 0x20;
 }
 
+void pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
+{
+  pc->video = ega_new (pc->trm, sct);
+  mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+  mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
+
+  pc->ppi_port_a[0] &= ~0x30;
+  pc->ppi_port_a[0] |= 0x20;
+}
+
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -361,7 +372,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
   pc->video = NULL;
 
   if (par_video != NULL) {
-    if (strcmp (par_video, "cga") == 0) {
+    if (strcmp (par_video, "ega") == 0) {
+      sct = ini_sct_find_sct (ini, "ega");
+      pc_setup_ega (pc, sct);
+      return;
+    }
+    else if (strcmp (par_video, "cga") == 0) {
       sct = ini_sct_find_sct (ini, "cga");
       pc_setup_cga (pc, sct);
       return;
@@ -380,6 +396,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
       pce_log (MSG_ERR, "unknown video device (%s)\n", par_video);
       return;
     }
+  }
+
+  sct = ini_sct_find_sct (ini, "ega");
+  if (sct != NULL) {
+    pc_setup_ega (pc, sct);
+    return;
   }
 
   sct = ini_sct_find_sct (ini, "cga");

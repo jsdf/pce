@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.14 2003/09/13 18:11:17 hampa Exp $
+# $Id: pce.cfg.in,v 1.15 2003/09/14 21:27:38 hampa Exp $
 
 section pc {
 	section cpu {
@@ -56,18 +56,29 @@ section pc {
 #		keymap = "\x1b\x5b\x33\x7e=\x53\xd3"	# Delete
 	}
 
+	section ega {
+		mode_320x200_w = 640
+		mode_320x200_h = 480
+
+		mode_640x200_w = 640
+		mode_640x200_h = 480
+
+		mode_640x350_w = 640
+		mode_640x350_h = 480
+	}
+
 	section cga {
 		io = 0x3d4
 		membase = 0xb8000
 		memsize = 16384
 
 		# 320 * 200 * 4
-		mode1_width = 640
-		mode1_height = 480
+		mode_320x200_w = 640
+		mode_320x200_h = 480
 
 		# 640 * 200 * 2
-		mode2_width = 640
-		mode2_height = 480
+		mode_640x200_w = 640
+		mode_640x200_h = 480
 	}
 
 	section hgc {
@@ -78,8 +89,8 @@ section pc {
 		memsize = 65536
 
 		# 720 * 348 * 2
-		mode1_width = 720
-		mode1_height = 540
+		mode_720x348_w = 720
+		mode_720x348_h = 540
 	}
 
 	section mda {

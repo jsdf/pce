@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.9 2003/09/13 18:11:17 hampa Exp $ */
+/* $Id: hgc.c,v 1.10 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -62,8 +62,8 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
     hgc->crtc_reg[i] = 0;
   }
 
-  ini_get_uint (sct, "mode1_width", &hgc->mode1_w, 720);
-  ini_get_uint (sct, "mode1_height", &hgc->mode1_h, 540);
+  ini_get_uint (sct, "mode_720x348_w", &hgc->mode1_w, 720);
+  ini_get_uint (sct, "mode_720x348_h", &hgc->mode1_h, 540);
 
   ini_get_ulng (sct, "color7", &hgc->rgb_fg, 0xe89050);
   ini_get_ulng (sct, "color15", &hgc->rgb_hi, 0xfff0c8);
@@ -230,6 +230,8 @@ void hgc_mode0_update (hgc_t *hgc)
       i = (i + 2) & 0x7fff;
     }
   }
+
+  trm_flush (hgc->trm);
 }
 
 static
@@ -272,6 +274,7 @@ void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
+  trm_flush (hgc->trm);
 }
 
 static
@@ -319,6 +322,7 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 
   trm_set_col (hgc->trm, fg, bg);
   trm_set_chr (hgc->trm, x, y, c);
+  trm_flush (hgc->trm);
 }
 
 
@@ -386,7 +390,7 @@ void hgc_mode1_update (hgc_t *hgc)
         for (j = 0; j < 4; j++) {
           trm_set_col (hgc->trm, (val[j] & 0x80) ? 7 : 0, 0);
           pce_smap_get_pixel (&hgc->smap, 8 * x + i, 4 * y + j, &sx, &sy, &sw, &sh);
-          trm_set_rct (hgc->trm, sx, sy, sw, sh);
+          trm_set_pxl (hgc->trm, sx, sy, sw, sh);
           val[j] <<= 1;
         }
       }
@@ -397,6 +401,8 @@ void hgc_mode1_update (hgc_t *hgc)
     mem[2] += 90;
     mem[3] += 90;
   }
+
+  trm_flush (hgc->trm);
 }
 
 static
@@ -429,12 +435,14 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
     if ((old ^ val) & 0x80) {
       trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
       pce_smap_get_pixel (&hgc->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_rct (hgc->trm, sx, sy, sw, sh);
+      trm_set_pxl (hgc->trm, sx, sy, sw, sh);
     }
 
     old <<= 1;
     val <<= 1;
   }
+
+  trm_flush (hgc->trm);
 }
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.3 2003/09/04 20:14:15 hampa Exp $ */
+/* $Id: hook.c,v 1.4 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #include "pce.h"
@@ -179,6 +179,10 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       e86_set_bx (pc->cpu, (pc->parport[1] != NULL) ? pc->parport[1]->io : 0);
       e86_set_cx (pc->cpu, (pc->parport[2] != NULL) ? pc->parport[2]->io : 0);
       e86_set_dx (pc->cpu, (pc->parport[3] != NULL) ? pc->parport[3]->io : 0);
+      break;
+
+    case PCEH_GET_VIDEO:
+      e86_set_ax (pc->cpu, pc->video->type);
       break;
 
     case PCEH_XMS:

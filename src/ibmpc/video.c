@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/video.c                                          *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.c,v 1.3 2003/09/13 18:10:15 hampa Exp $ */
+/* $Id: video.c,v 1.4 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -31,6 +31,8 @@
 void pce_video_init (video_t *vid)
 {
   vid->ext = NULL;
+
+  vid->type = PCE_VIDEO_NONE;
 
   vid->del = NULL;
   vid->get_mem = NULL;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.2 2003/09/13 18:09:50 hampa Exp $ */
+/* $Id: x11.c,v 1.3 2003/09/14 21:27:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -260,7 +260,7 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt->trm.set_pos = (trm_set_pos_f) &xt_set_pos;
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
   xt->trm.set_pxl = (trm_set_pxl_f) &xt_set_pxl;
-  xt->trm.set_rct = (trm_set_rct_f) &xt_set_rct;
+  xt->trm.flush = (trm_flush_f) &xt_flush;
   xt->trm.check = (trm_check_f) &xt_check;
 
   xt->init_display = 0;
@@ -299,14 +299,14 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt_init_cursor (xt);
   xt_init_pointer (xt);
 
+  xt->flush_x1 = xt->wdw_w;
+  xt->flush_y1 = xt->wdw_h;
+  xt->flush_x2 = 0;
+  xt->flush_y2 = 0;
+
   XMapWindow (xt->display, xt->wdw);
 
   return (0);
-}
-
-void xt_flush (xterm_t *xt)
-{
-  XFlush (xt->display);
 }
 
 terminal_t *xt_new (ini_sct_t *ini)
@@ -441,6 +441,11 @@ void xt_set_size (xterm_t *xt, unsigned m, unsigned w, unsigned h)
 
   XSetWMNormalHints (xt->display, xt->wdw, &size);
 
+  xt->flush_x1 = xt->wdw_w;
+  xt->flush_y1 = xt->wdw_h;
+  xt->flush_x2 = 0;
+  xt->flush_y2 = 0;
+
   xt_set_col (xt, 0, 0);
   xt_clear (xt);
 }
@@ -536,16 +541,34 @@ void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
   }
 }
 
-void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y)
+void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
 {
-  XDrawPoint (xt->display, xt->back, xt->back_gc, x, y);
-  XDrawPoint (xt->display, xt->wdw, xt->gc, x, y);
+  if ((w == 1) && (h == 1)) {
+    XDrawPoint (xt->display, xt->back, xt->back_gc, x, y);
+//    XDrawPoint (xt->display, xt->wdw, xt->gc, x, y);
+  }
+  else {
+    XFillRectangle (xt->display, xt->back, xt->back_gc, x, y, w, h);
+//    XFillRectangle (xt->display, xt->wdw, xt->gc, x, y, w, h);
+  }
+
+  if (x < xt->flush_x1) {
+    xt->flush_x1 = x;
+  }
+  if (y < xt->flush_y1) {
+    xt->flush_y1 = y;
+  }
+  if ((x + w) > xt->flush_x2) {
+    xt->flush_x2 = x + w - 1;
+  }
+  if ((y + h) > xt->flush_y2) {
+    xt->flush_y2 = y + h - 1;
+  }
 }
 
-void xt_set_rct (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
+void xt_flush (xterm_t *xt)
 {
-  XFillRectangle (xt->display, xt->back, xt->back_gc, x, y, w, h);
-  XFillRectangle (xt->display, xt->wdw, xt->gc, x, y, w, h);
+//  XFlush (xt->display);
 }
 
 void xt_clear (xterm_t *xt)
@@ -728,9 +751,29 @@ unsigned long xt_get_key_code (xterm_t *xt, KeySym key, int make)
 
 void xt_check (xterm_t *xt)
 {
-  XEvent event;
-  KeySym key;
-  unsigned long code;
+  XEvent          event;
+  KeySym          key;
+  unsigned long   code;
+  static unsigned cnt = 0;
+
+  cnt += 1;
+
+  if (cnt > 16) {
+    cnt -= 16;
+
+    if ((xt->flush_x1 <= xt->flush_x2) && (xt->flush_y1 <= xt->flush_y2)) {
+      unsigned        w, h;
+
+
+      w = xt->flush_x2 - xt->flush_x1 + 1;
+      h = xt->flush_y2 - xt->flush_y1 + 1;
+      xt_update (xt, xt->flush_x1, xt->flush_y1, w, h);
+      xt->flush_x1 = xt->wdw_w;
+      xt->flush_y1 = xt->wdw_h;
+      xt->flush_x2 = 0;
+      xt->flush_y2 = 0;
+    }
+  }
 
   while (XPending (xt->display) > 0) {
     XNextEvent (xt->display, &event);

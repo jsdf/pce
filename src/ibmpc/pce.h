@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.15 2003/09/04 20:14:15 hampa Exp $ */
+/* $Id: pce.h,v 1.16 2003/09/14 21:27:38 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -59,6 +59,9 @@ typedef unsigned char (*get_uint8_f) (void *ext);
 typedef unsigned short (*get_uint16_f) (void *ext);
 
 
+struct ibmpc_t;
+
+
 extern char     *par_terminal;
 extern char     *par_video;
 extern unsigned par_boot;
@@ -92,6 +95,7 @@ void pce_log (unsigned level, const char *str, ...);
 #include "mda.h"
 #include "hgc.h"
 #include "cga.h"
+#include "ega.h"
 #include "mouse.h"
 #include "serial.h"
 #include "parport.h"

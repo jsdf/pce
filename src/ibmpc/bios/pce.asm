@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.14 2003/09/13 18:28:26 hampa Exp $
+; $Id: pce.asm,v 1.15 2003/09/14 21:27:40 hampa Exp $
 
 
 %include "config.inc"
@@ -51,7 +51,7 @@ start:
 
   sti
 
-;  call    init_rom
+  call    init_rom1
   call    init_video
   call    init_mem
   call    init_misc
@@ -277,9 +277,7 @@ start_rom:
   ret
 
 
-init_rom:
-;  db 0x66, 0x66, 0x00, 0x00
-
+init_rom1:
   push    ax
   push    dx
   push    si
@@ -300,33 +298,34 @@ init_rom:
   add     dx, ax
   jz      .norom
 
-  mov     si, msg_rom1
-  call    prt_string
-  mov     ax, es
-  call    prt_uint16
-  mov     si, msg_rom2
-  call    prt_string
+;  mov     si, msg_rom1
+;  call    prt_string
+;  mov     ax, es
+;  call    prt_uint16
+;  mov     si, msg_rom2
+;  call    prt_string
 
-  call    check_rom
-  or      ah, ah
-  jz      .romok
+;  call    check_rom
+;  or      ah, ah
+;  jz      .romok
+  jmp     .romok
 
-  mov     si, msg_cksmbad
-  call    prt_string
+;  mov     si, msg_cksmbad
+;  call    prt_string
 
-  call    prt_nl
+;  call    prt_nl
 
   jmp     .skiprom
 
 .romok:
-  mov     si, msg_cksmok
-  call    prt_string
+;  mov     si, msg_cksmok
+;  call    prt_string
 
   push    dx
   call    start_rom
   pop     dx
 
-  call    prt_nl
+;  call    prt_nl
 
 .norom:
   add     dx, 0x0080
@@ -665,7 +664,7 @@ inttab:
   dw      int_0d, 0xf000
   dw      int_0e, 0xf000
   dw      int_0f, 0xf000
-  dw      0xf065, 0xf000 ;int_10, 0xf000
+  dw      0xf065, 0xf000 ;0xf065, 0xf000
   dw      0xf84d, 0xf000 ;int_11, 0xf000
   dw      0xf841, 0xf000 ;int_12, 0xf000
   dw      int_13, 0xf000

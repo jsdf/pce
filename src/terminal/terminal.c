@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.4 2003/09/13 18:09:50 hampa Exp $ */
+/* $Id: terminal.c,v 1.5 2003/09/14 21:27:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -48,6 +48,7 @@ void trm_init (terminal_t *trm)
   trm->set_pos = NULL;
   trm->set_chr = NULL;
   trm->set_pxl = NULL;
+  trm->flush = NULL;
   trm->check = NULL;
 }
 
@@ -104,17 +105,17 @@ void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c)
   }
 }
 
-void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y)
+void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h)
 {
   if (trm->set_pxl != NULL) {
-    trm->set_pxl (trm->ext, x, y);
+    trm->set_pxl (trm->ext, x, y, w, h);
   }
 }
 
-void trm_set_rct (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h)
+void trm_flush (terminal_t *trm)
 {
-  if (trm->set_rct != NULL) {
-    trm->set_rct (trm->ext, x, y, w, h);
+  if (trm->flush != NULL) {
+    trm->flush (trm->ext);
   }
 }
 
