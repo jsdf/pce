@@ -234,6 +234,29 @@ AC_SUBST(PCE_SDL_CCF)
 AC_SUBST(PCE_SDL_LDF)
 
 
+AC_MSG_CHECKING([whether to build the ppc405 core])
+AC_ARG_ENABLE(ppc405,
+  AC_HELP_STRING([--enable-ppc405], [Enable the PowerPC 405 core]),
+  [
+  	if test "x$enableval" = "xyes" ; then
+  		PCE_BUILD_PPC405=1
+  		AC_MSG_RESULT([yes])
+  	else
+  		PCE_BUILD_PPC405=0
+  		AC_MSG_RESULT([no])
+  	fi
+  ],
+  [
+  	PCE_BUILD_PPC405=0
+	AC_MSG_RESULT([no])
+  ]
+)
+AC_SUBST(PCE_BUILD_PPC405)
+if test $PCE_BUILD_PPC405 -eq 1 ; then
+	AC_DEFINE(PCE_BUILD_PPC405)
+fi
+
+
 AC_MSG_CHECKING([host clock])
 AC_ARG_WITH(host-clock,
   AC_HELP_STRING([--with-host-clock=clock], [Set the host clock speed in Hz]),
@@ -310,6 +333,7 @@ AC_OUTPUT(
   src/chipset/Makefile
   src/cpu/Makefile
   src/cpu/e8086/Makefile
+  src/cpu/ppc405/Makefile
   src/devices/Makefile
   src/lib/Makefile
   src/libini/Makefile

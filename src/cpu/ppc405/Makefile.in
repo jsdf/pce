@@ -1,0 +1,41 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+SRC := disasm.c mmu.c opcode13.c opcode1f.c opcodes.c ppc405.c
+OBJ := disasm.o mmu.o opcode13.o opcode1f.o opcodes.o ppc405.o
+HDR := ppc405.h internal.h
+BIN := ppc405.a
+
+SDP := Makefile $(HDR) $(HDR_EXT)
+BDP := Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(BIN) $(OBJ)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN)
+
+
+ppc405.a: $(OBJ)
+	rm -f $@
+	$(AR) $(AR_FLG) $@ $(OBJ)
+
+
+disasm.o:	disasm.c $(SDP)
+mmu.o:		mmu.c $(SDP)
+opcode13.o:	opcode13.c $(SDP)
+opcode1f.o:	opcode1f.c $(SDP)
+opcodes.o:	opcodes.c $(SDP)
+ppc405.o:	ppc405.c $(SDP)

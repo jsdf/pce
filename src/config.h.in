@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -52,6 +52,8 @@
 #undef PCE_ARCH_X86
 #undef PCE_ARCH_PPC
 #undef PCE_ARCH_SPARC
+
+#undef PCE_BUILD_PPC405
 
 #undef PCE_HOST_FOSC
 #undef PCE_HAVE_TSC

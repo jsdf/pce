@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: config.inc.in,v 1.1 2003/12/29 11:06:22 hampa Exp $
+# $Id$
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -50,6 +50,8 @@ PCE_X11_LDF	:= @PCE_X11_LDF@
 PCE_SDL_USE	:= @PCE_SDL_USE@
 PCE_SDL_CCF	:= @PCE_SDL_CCF@
 PCE_SDL_LDF	:= @PCE_SDL_LDF@
+
+PCE_BUILD_PPC405 := @PCE_BUILD_PPC405@
 
 
 # end of user editable section
