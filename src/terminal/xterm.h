@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.h,v 1.3 2003/08/19 00:53:41 hampa Exp $ */
+/* $Id: xterm.h,v 1.4 2003/08/19 17:06:20 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_XTERM_H
@@ -52,10 +52,16 @@ typedef struct {
   int           screen;
   int           display_w;
   int           display_h;
-  Window        wdw;
 
+  Window        wdw;
   GC            gc;
+
+  Pixmap        back;
+  GC            back_gc;
+
   GC            crs_gc;
+
+  unsigned      mode;
 
   XFontStruct   *font;
   int           font_w;
@@ -73,12 +79,12 @@ typedef struct {
   unsigned      crs_y2;
   unsigned      crs_x;
   unsigned      crs_y;
-  Pixmap        crs_bg;
+  unsigned      crs_fg;
 
   unsigned      fg;
   unsigned      bg;
 
-  XColor        col[16];
+  XColor        col[256];
 } xterm_t;
 
 
@@ -88,11 +94,14 @@ terminal_t *xt_new (ini_sct_t *ini);
 void xt_free (xterm_t *xt);
 void xt_del (xterm_t *xt);
 
-void xt_set_size (xterm_t *xt, unsigned w, unsigned h);
+void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h);
+void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b);
 void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg);
 void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2);
 void xt_set_pos (xterm_t *xt, unsigned x, unsigned y);
 void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c);
+void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y);
+void xt_clear (xterm_t *xt);
 void xt_check (xterm_t *xt);
 
 

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.6 2003/08/19 01:32:17 hampa Exp $ */
+/* $Id: vt100.c,v 1.7 2003/08/19 17:06:20 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -596,7 +596,7 @@ unsigned vt100_str_int (unsigned char *buf, unsigned n)
   return (ret);
 }
 
-void vt100_set_size (vt100_t *vt, unsigned w, unsigned h)
+void vt100_set_size (vt100_t *vt, unsigned mode, unsigned w, unsigned h)
 {
 }
 

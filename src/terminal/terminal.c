@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.c,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: terminal.c,v 1.2 2003/08/19 17:06:19 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -34,6 +34,16 @@ void trm_init (terminal_t *trm)
   trm->key_ext = NULL;
   trm->set_key = NULL;
   trm->set_brk = NULL;
+
+  trm->del = NULL;
+  trm->set_size = NULL;
+  trm->set_map = NULL;
+  trm->set_col = NULL;
+  trm->set_crs = NULL;
+  trm->set_pos = NULL;
+  trm->set_chr = NULL;
+  trm->set_pxl = NULL;
+  trm->check = NULL;
 }
 
 void trm_free (terminal_t *trm)
@@ -47,10 +57,17 @@ void trm_del (terminal_t *trm)
   }
 }
 
-void trm_set_size (terminal_t *trm, unsigned w, unsigned h)
+void trm_set_size (terminal_t *trm, unsigned mode, unsigned w, unsigned h)
 {
   if (trm->set_size != NULL) {
-    trm->set_size (trm->ext, w, h);
+    trm->set_size (trm->ext, mode, w, h);
+  }
+}
+
+void trm_set_map (terminal_t *trm, unsigned i, unsigned r, unsigned g, unsigned b)
+{
+  if (trm->set_map != NULL) {
+    trm->set_map (trm->ext, i, r, g, b);
   }
 }
 
@@ -79,6 +96,13 @@ void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c)
 {
   if (trm->set_chr != NULL) {
     trm->set_chr (trm->ext, x, y, c);
+  }
+}
+
+void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y)
+{
+  if (trm->set_pxl != NULL) {
+    trm->set_pxl (trm->ext, x, y);
   }
 }
 

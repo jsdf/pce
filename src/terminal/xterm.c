@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.5 2003/08/19 00:53:41 hampa Exp $ */
+/* $Id: xterm.c,v 1.6 2003/08/19 17:06:20 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -61,6 +61,9 @@ struct {  unsigned short r, g, b; } rgb[16] = {
   { 0xffff, 0xffff, 0xffff }
 };
 
+static
+unsigned char col_alloc[256];
+
 
 static
 int xt_init_colors (xterm_t *xt)
@@ -75,6 +78,11 @@ int xt_init_colors (xterm_t *xt)
     xt->col[i].blue = rgb[i].b;
 
     XAllocColor (xt->display, DefaultColormap (xt->display, xt->screen), &xt->col[i]);
+    col_alloc[i] = 1;
+  }
+
+  for (i = 16; i < 256; i++) {
+    col_alloc[i] = 0;
   }
 
   return (0);
@@ -82,10 +90,6 @@ int xt_init_colors (xterm_t *xt)
 
 int xt_init_cursor (xterm_t *xt)
 {
-  xt->crs_bg = XCreatePixmap (xt->display, xt->wdw, xt->font_w, xt->font_h,
-    DefaultDepth (xt->display, xt->screen)
-  );
-
   xt->init_cursor = 1;
 
   xt->crs_y1 = 32;
@@ -182,6 +186,10 @@ int xt_init_window (xterm_t *xt)
     &progname, 1, &size, &wm, &cls
   );
 
+  xt->back = XCreatePixmap (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h,
+    DefaultDepth (xt->display, xt->screen)
+  );
+
   XSelectInput (xt->display, xt->wdw,
     ExposureMask | KeyPressMask | KeyReleaseMask |
     StructureNotifyMask | ButtonPressMask | ButtonReleaseMask
@@ -192,26 +200,30 @@ int xt_init_window (xterm_t *xt)
 
 int xt_init_gc (xterm_t *xt)
 {
-  unsigned long valuemask = 0; /* ignore XGCvalues and use defaults */
   XGCValues     values;
   unsigned int  line_width = 6;
   int           line_style = LineOnOffDash;
   int           cap_style = CapRound;
   int           join_style = JoinRound;
 
-  xt->gc = XCreateGC (xt->display, xt->wdw, valuemask, &values);
-
-  xt->crs_gc = XCreateGC (xt->display, xt->wdw, valuemask, &values);
-
-  XSetFont (xt->display, xt->gc, xt->font->fid);
-
+  xt->gc = XCreateGC (xt->display, xt->wdw, 0, &values);
   XSetForeground (xt->display, xt->gc, WhitePixel (xt->display, xt->screen));
   XSetBackground (xt->display, xt->gc, BlackPixel (xt->display, xt->screen));
-
+  XSetFont (xt->display, xt->gc, xt->font->fid);
   XSetLineAttributes (xt->display, xt->gc, line_width, line_style, cap_style, join_style);
 
+  xt->back_gc = XCreateGC (xt->display, xt->back, 0, &values);
+  XSetForeground (xt->display, xt->back_gc, WhitePixel (xt->display, xt->screen));
+  XSetBackground (xt->display, xt->back_gc, BlackPixel (xt->display, xt->screen));
+  XSetFont (xt->display, xt->back_gc, xt->font->fid);
+  XSetLineAttributes (xt->display, xt->back_gc, line_width, line_style, cap_style, join_style);
+
+  xt->crs_gc = XCreateGC (xt->display, xt->wdw, 0, &values);
   XSetForeground (xt->display, xt->crs_gc, WhitePixel (xt->display, xt->screen));
-  XSetBackground (xt->display, xt->crs_gc, BlackPixel (xt->display, xt->screen));
+
+  xt->fg = 15;
+  xt->bg = 0;
+  xt->crs_fg = 15;
 
   xt->init_gc = 1;
 
@@ -226,10 +238,12 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
 
   xt->trm.del = (trm_del_f) &xt_del;
   xt->trm.set_size = (trm_set_size_f) &xt_set_size;
+  xt->trm.set_map = (trm_set_map_f) &xt_set_map;
   xt->trm.set_col = (trm_set_col_f) &xt_set_col;
   xt->trm.set_crs = (trm_set_crs_f) &xt_set_crs;
   xt->trm.set_pos = (trm_set_pos_f) &xt_set_pos;
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
+  xt->trm.set_pxl = (trm_set_pxl_f) &xt_set_pxl;
   xt->trm.check = (trm_check_f) &xt_check;
 
   xt->init_display = 0;
@@ -246,6 +260,8 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
     fprintf (stderr, "xt_init_font()\n");
     return (1);
   }
+
+  xt->mode = 0;
 
   xt->scn_w = 80;
   xt->scn_h = 25;
@@ -301,17 +317,18 @@ void xt_free (xterm_t *xt)
     return;
   }
 
+  if (xt->init_window) {
+    XFreePixmap (xt->display, xt->back);
+  }
+
   if (xt->init_font) {
     XUnloadFont (xt->display, xt->font->fid);
   }
 
   if (xt->init_gc) {
     XFreeGC (xt->display, xt->gc);
+    XFreeGC (xt->display, xt->back_gc);
     XFreeGC (xt->display, xt->crs_gc);
-  }
-
-  if (xt->init_cursor) {
-    XFreePixmap (xt->display, xt->crs_bg);
   }
 
   if (xt->init_display) {
@@ -330,25 +347,37 @@ void xt_del (xterm_t *xt)
 static
 void xt_crs_restore (xterm_t *xt)
 {
+  int x, y;
+
   if (xt->crs_y1 <= xt->crs_y2) {
-    XCopyArea (xt->display, xt->crs_bg, xt->wdw, xt->crs_gc,
-      0, 0, xt->font_w, xt->font_h, xt->crs_x * xt->font_w, xt->crs_y * xt->font_h
+    x = xt->crs_x * xt->font_w;
+    y = xt->crs_y * xt->font_h;
+    XCopyArea (xt->display, xt->back, xt->wdw, xt->gc,
+      x, y, xt->font_w, xt->font_h, x, y
     );
   }
 }
 
 void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
 {
+  unsigned col;
+
   xt->crs_x = x;
   xt->crs_y = y;
+
+  if (xt->mode != 0) {
+    return;
+  }
 
   if (xt->crs_y2 < xt->crs_y1) {
     return;
   }
 
-  XCopyArea (xt->display, xt->wdw, xt->crs_bg, xt->crs_gc,
-    x * xt->font_w, y * xt->font_h, xt->font_w, xt->font_h, 0, 0
-  );
+  col = xt->scn[2 * (xt->scn_w * y) + 1] & 0x0f;
+  if (col != xt->crs_fg) {
+    xt->crs_fg = col;
+    XSetForeground (xt->display, xt->crs_gc, xt->col[col].pixel);
+  }
 
   XFillRectangle (xt->display, xt->wdw, xt->crs_gc,
     x * xt->font_w, (y + 1) * xt->font_h - xt->crs_y2 - 1,
@@ -356,7 +385,7 @@ void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
   );
 }
 
-void xt_set_size (xterm_t *xt, unsigned w, unsigned h)
+void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
 {
   XSizeHints size;
 
@@ -364,14 +393,31 @@ void xt_set_size (xterm_t *xt, unsigned w, unsigned h)
     return;
   }
 
-  xt->scn_w = w;
-  xt->scn_h = h;
-  xt->scn = (unsigned char *) realloc (xt->scn, 2 * w * h);
+  if (mode == 0) {
+    xt->scn_w = w;
+    xt->scn_h = h;
 
-  xt->wdw_w = w * xt->font_w;
-  xt->wdw_h = h * xt->font_h;
+    xt->wdw_w = w * xt->font_w;
+    xt->wdw_h = h * xt->font_h;
+  }
+  else {
+    xt->scn_w = w / xt->font_w;
+    xt->scn_h = h / xt->font_h;
+
+    xt->wdw_w = w;
+    xt->wdw_h = h;
+  }
+
+  xt->mode = mode;
+
+  xt->scn = (unsigned char *) realloc (xt->scn, 2 * xt->scn_w * xt->scn_h);
 
   XResizeWindow (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h);
+
+  XFreePixmap (xt->display, xt->back);
+  xt->back = XCreatePixmap (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h,
+    DefaultDepth (xt->display, xt->screen)
+  );
 
   size.flags = PSize | PMinSize | PMaxSize;
   size.min_width = xt->wdw_w;
@@ -380,6 +426,29 @@ void xt_set_size (xterm_t *xt, unsigned w, unsigned h)
   size.max_height = xt->wdw_h;
 
   XSetWMNormalHints (xt->display, xt->wdw, &size);
+
+  xt_clear (xt);
+}
+
+void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b)
+{
+  if (idx >= 256) {
+    return;
+  }
+
+//  if (col_alloc[idx]) {
+//    XFreeColor (xt->display, &xt->col[idx]);
+//  }
+
+  xt->col[idx].flags = DoRed | DoGreen | DoBlue;
+
+  xt->col[idx].red = r;
+  xt->col[idx].green = g;
+  xt->col[idx].blue = b;
+
+  XAllocColor (xt->display, DefaultColormap (xt->display, xt->screen), &xt->col[idx]);
+
+  col_alloc[idx] = 1;
 }
 
 void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg)
@@ -393,6 +462,9 @@ void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg)
 
   XSetForeground (xt->display, xt->gc, xt->col[xt->fg].pixel);
   XSetBackground (xt->display, xt->gc, xt->col[xt->bg].pixel);
+
+  XSetForeground (xt->display, xt->back_gc, xt->col[xt->fg].pixel);
+  XSetBackground (xt->display, xt->back_gc, xt->col[xt->bg].pixel);
 }
 
 void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2)
@@ -414,6 +486,7 @@ void xt_set_pos (xterm_t *xt, unsigned x, unsigned y)
 void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
 {
   unsigned i;
+  int      scrx, scry;
 
   if ((x >= xt->scn_w) || (y >= xt->scn_h)) {
     return;
@@ -428,9 +501,15 @@ void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
     xt_crs_restore (xt);
   }
 
-  XDrawImageString (xt->display, xt->wdw, xt->gc,
-    x * xt->font_w, (y + 1) * xt->font_h - xt->font_d,
-    &c, 1
+  scrx = x * xt->font_w;
+  scry = y * xt->font_h;
+
+  XDrawImageString (xt->display, xt->back, xt->back_gc,
+    scrx, scry + xt->font_h - xt->font_d, &c, 1
+  );
+
+  XCopyArea (xt->display, xt->back, xt->wdw, xt->gc,
+    scrx, scry, xt->font_w, xt->font_h, scrx, scry
   );
 
   if ((xt->crs_x == x) && (xt->crs_y == y)) {
@@ -438,52 +517,26 @@ void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
   }
 }
 
-void xt_set_str (xterm_t *xt, unsigned x, unsigned y, const char *str)
+void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y)
 {
-  unsigned n;
-
-  n = strlen (str);
-
-  XDrawImageString (xt->display, xt->wdw, xt->gc, x * xt->font_w, (y + 1) * xt->font_h, str, n);
+  XDrawPoint (xt->display, xt->back, xt->back_gc, x, y);
+  XDrawPoint (xt->display, xt->wdw, xt->gc, x, y);
 }
 
 void xt_clear (xterm_t *xt)
 {
-  XClearWindow (xt->display, xt->wdw);
+  XDrawRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
+  XDrawRectangle (xt->display, xt->wdw, xt->gc, 0, 0, xt->wdw_w, xt->wdw_h);
+//  XClearWindow (xt->display, xt->wdw);
 }
 
-void xt_update (xterm_t *xt)
+void xt_update (xterm_t *xt, int x, int y, int w, int h)
 {
-  unsigned      x, y, i;
-  unsigned      fg, bg;
-  unsigned char c;
-
-  i = 0;
-
-  xt_crs_restore (xt);
-
-  for (y = 0; y < xt->scn_h; y++) {
-    for (x = 0; x < xt->scn_w; x++) {
-      c = xt->scn[i];
-      fg = xt->scn[i + 1] & 0x0f;
-      bg = (xt->scn[i + 1] & 0xf0) >> 4;
-
-      XSetForeground (xt->display, xt->gc, xt->col[fg].pixel);
-      XSetBackground (xt->display, xt->gc, xt->col[bg].pixel);
-
-      XDrawImageString (xt->display, xt->wdw, xt->gc,
-        x * xt->font_w, (y + 1) * xt->font_h - xt->font_d,
-        &c, 1
-      );
-
-      i += 2;
-    }
-  }
+  XCopyArea (xt->display, xt->back, xt->wdw, xt->gc,
+    x, y, w, h, x, y
+  );
 
   xt_crs_draw (xt, xt->crs_x, xt->crs_y);
-
-  XSetForeground (xt->display, xt->gc, xt->col[xt->fg].pixel);
-  XSetBackground (xt->display, xt->gc, xt->col[xt->bg].pixel);
 }
 
 
@@ -658,8 +711,11 @@ void xt_check (xterm_t *xt)
     XNextEvent (xt->display, &event);
 
     switch (event.type) {
-      case Expose:
-        xt_update (xt);
+      case Expose: {
+        XExposeEvent *evt;
+        evt = (XExposeEvent *) &event;
+        xt_update (xt, evt->x, evt->y, evt->width, evt->height);
+        }
         break;
 
       case KeyPress:
