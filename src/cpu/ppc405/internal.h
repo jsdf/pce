@@ -78,10 +78,13 @@ extern p405_opcode_f p405_opcodes[64];
 #define P405_EXCPT_MSR (P405_MSR_WE | P405_MSR_EE | P405_MSR_PR | P405_MSR_DWE \
   | P405_MSR_IR | P405_MSR_DR)
 
+#define P405_EA_IDX 0x01
+#define P405_EA_UPD 0x02
+
 #define p405_sext(x, n) ( \
   ((x) & (1UL << ((n) - 1))) ? \
-  (((x) | ~((1 << (n)) - 1)) & 0xffffffffUL) : \
-  ((x) & ((1 << (n)) - 1)) \
+  (((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
+  ((x) & ((1UL << (n)) - 1)) \
   )
 
 #define p405_uext(x, n) ((x) & ((1 << (n)) - 1))
@@ -91,7 +94,6 @@ extern p405_opcode_f p405_opcodes[64];
  | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
 
 #define p405_bits(val, i, n) (((val) >> (32 - (i) - (n))) & ((1UL << (n)) - 1))
-#define p405_get_bits(val, i, n) (((val) >> (32 - (i) - (n))) & ((1UL << (n)) - 1))
 
 #define p405_get_ir_op2(ir) (((ir) >> 1) & 0x3ff)
 
@@ -124,7 +126,7 @@ int p405_check_privilege (p405_t *c);
 void p405_set_xer_so_ov (p405_t *c, uint64_t r1, uint32_t r2);
 void p405_set_xer_oflow (p405_t *c, int of);
 void p405_set_cr0 (p405_t *c, uint32_t r);
-int p405_get_ea (p405_t *c, uint32_t *val, int idx, int update);
+int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags);
 uint64_t p405_mul (uint32_t s1, uint32_t s2);
 
 void p405_op_add (p405_t *c, uint32_t s1, uint32_t s2, int oe, int rc, int co, int ci);

@@ -310,119 +310,210 @@ int p405_translate_exec (p405_t *c, uint32_t *ea)
 
 int p405_ifetch (p405_t *c, uint32_t addr, uint32_t *val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_exec (c, &addr)) {
     return (1);
   }
 
-  *val = p405_get_mem32 (c, addr & ~0x03);
+  addr &= ~0x03UL;
 
+  if (addr < c->ram_cnt) {
+    unsigned char *mem = &c->ram[addr];
+
+    *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+  }
+  else if (c->get_uint32 != NULL) {
+    *val = c->get_uint32 (c->mem_ext, addr);
+  }
+  else {
+    *val = 0xffffffffUL;
+  }
+
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_X | 0x04, addr, vaddr, *val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dload8 (p405_t *c, uint32_t addr, uint8_t *val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_read (c, &addr)) {
     return (1);
   }
 
-  *val = p405_get_mem8 (c, addr);
+  if (addr < c->ram_cnt) {
+    *val = c->ram[addr];
+  }
+  else if (c->get_uint8 != NULL) {
+    *val = c->get_uint8 (c->mem_ext, addr);
+  }
+  else {
+    *val = 0xff;
+  }
 
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_R | 0x01, addr, vaddr, *val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dload16 (p405_t *c, uint32_t addr, uint16_t *val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_read (c, &addr)) {
     return (1);
   }
 
-  *val = p405_get_mem16 (c, addr);
+  if (addr < c->ram_cnt) {
+    unsigned char *mem = &c->ram[addr];
 
+    *val = (mem[0] << 8) | mem[1];
+  }
+  else if (c->get_uint16 != NULL) {
+    *val = c->get_uint16 (c->mem_ext, addr);
+  }
+  else {
+    *val = 0xffffU;
+  }
+
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_R | 0x02, addr, vaddr, *val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dload32 (p405_t *c, uint32_t addr, uint32_t *val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_read (c, &addr)) {
     return (1);
   }
 
-  *val = p405_get_mem32 (c, addr);
+  if (addr < c->ram_cnt) {
+    unsigned char *mem = &c->ram[addr];
 
+    *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+  }
+  else if (c->get_uint32 != NULL) {
+    *val = c->get_uint32 (c->mem_ext, addr);
+  }
+  else {
+    *val = 0xffffffffUL;
+  }
+
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_R | 0x04, addr, vaddr, *val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dstore8 (p405_t *c, uint32_t addr, uint8_t val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_write (c, &addr)) {
     return (1);
   }
 
-  p405_set_mem8 (c, addr, val);
+  if (addr < c->ram_cnt) {
+    c->ram[addr] = val;
+  }
+  else if (c->set_uint8 != NULL) {
+    c->set_uint8 (c->mem_ext, addr, val);
+  }
 
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_W | 0x01, addr, vaddr, val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dstore16 (p405_t *c, uint32_t addr, uint16_t val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_write (c, &addr)) {
     return (1);
   }
 
-  p405_set_mem16 (c, addr, val);
+  if (addr < c->ram_cnt) {
+    unsigned char *mem = &c->ram[addr];
 
+    mem[0] = (val >> 8) & 0xff;
+    mem[1] = val & 0xff;
+  }
+  else if (c->set_uint16 != NULL) {
+    c->set_uint16 (c->mem_ext, addr, val);
+  }
+
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_W | 0x02, addr, vaddr, val);
   }
+#endif
 
   return (0);
 }
 
 int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val)
 {
+#ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
+#endif
 
   if (p405_translate_write (c, &addr)) {
     return (1);
   }
 
-  p405_set_mem32 (c, addr, val);
+  if (addr < c->ram_cnt) {
+    unsigned char *mem = &c->ram[addr];
 
+    mem[0] = (val >> 24) & 0xff;
+    mem[1] = (val >> 16) & 0xff;
+    mem[2] = (val >> 8) & 0xff;
+    mem[3] = val & 0xff;
+  }
+  else if (c->set_uint32 != NULL) {
+    c->set_uint32 (c->mem_ext, addr, val);
+  }
+
+#ifdef P405_LOG_MEM
   if (c->log_mem != NULL) {
     c->log_mem (c->log_ext, P405_MMU_MODE_W | 0x04, addr, vaddr, val);
   }
+#endif
 
   return (0);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcodes.c                                   *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -91,15 +91,16 @@ void p405_set_cr0 (p405_t *c, uint32_t r)
   }
 }
 
-int p405_get_ea (p405_t *c, uint32_t *val, int idx, int update)
+int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags)
 {
-  if (update) {
+  if (flags & P405_EA_UPD) {
     if (p405_get_ir_ra (c->ir) == 0) {
+      p405_op_undefined (c);
       return (1);
     }
   }
 
-  if (idx) {
+  if (flags & P405_EA_IDX) {
     *val = (p405_get_ra0 (c, c->ir) + p405_get_rb (c, c->ir)) & 0xffffffffUL;
   }
   else {
@@ -426,7 +427,7 @@ void op_03 (p405_t *c)
   unsigned to;
   uint32_t ra1, im1, ra2, im2;
 
-  to = p405_get_bits (c->ir, 6, 5);
+  to = p405_bits (c->ir, 6, 5);
   ra1 = p405_get_ra (c, c->ir);
   im1 = p405_sext (c->ir, 16);
 
@@ -727,8 +728,7 @@ void op_20 (p405_t *c)
 {
   uint32_t rt, ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -747,8 +747,7 @@ void op_21 (p405_t *c)
 {
   uint32_t rt, ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -769,8 +768,7 @@ void op_22 (p405_t *c)
   uint8_t  rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -790,8 +788,7 @@ void op_23 (p405_t *c)
   uint8_t  rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -811,8 +808,7 @@ void op_24 (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -829,8 +825,7 @@ void op_25 (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -849,8 +844,7 @@ void op_26 (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -867,8 +861,7 @@ void op_27 (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -888,8 +881,7 @@ void op_28 (p405_t *c)
   uint16_t rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -909,8 +901,7 @@ void op_29 (p405_t *c)
   uint16_t rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -931,8 +922,7 @@ void op_2a (p405_t *c)
   uint16_t rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -952,8 +942,7 @@ void op_2b (p405_t *c)
   uint16_t rt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -973,8 +962,7 @@ void op_2c (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -991,8 +979,7 @@ void op_2d (p405_t *c)
 {
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 1)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, P405_EA_UPD)) {
     return;
   }
 
@@ -1013,8 +1000,7 @@ void op_2e (p405_t *c)
   uint32_t val;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 
@@ -1051,8 +1037,7 @@ void op_2f (p405_t *c)
   unsigned rs, cnt;
   uint32_t ea;
 
-  if (p405_get_ea (c, &ea, 0, 0)) {
-    p405_op_undefined (c);
+  if (p405_get_ea (c, &ea, 0)) {
     return;
   }
 

@@ -339,6 +339,9 @@ typedef struct p405_s {
   p405_set_uint16_f  set_uint16;
   p405_set_uint32_f  set_uint32;
 
+  unsigned char      *ram;
+  unsigned long      ram_cnt;
+
   void               *dcr_ext;
   p405_get_uint32_f  get_dcr;
   p405_set_uint32_f  set_dcr;
@@ -422,6 +425,8 @@ void p405_set_mem_fct (p405_t *c, void *ext,
   void *get8, void *get16, void *get32,
   void *set8, void *set16, void *set32
 );
+
+void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt);
 
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set);
 

@@ -42,6 +42,9 @@ void p405_init (p405_t *c)
   c->set_uint16 = NULL;
   c->set_uint32 = NULL;
 
+  c->ram = NULL;
+  c->ram_cnt = 0;
+
   c->dcr_ext = NULL;
   c->get_dcr = NULL;
   c->set_dcr = NULL;
@@ -97,6 +100,12 @@ void p405_set_mem_fct (p405_t *c, void *ext,
   c->set_uint8 = (p405_set_uint8_f) set8;
   c->set_uint16 = (p405_set_uint16_f) set16;
   c->set_uint32 = (p405_set_uint32_f) set32;
+}
+
+void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt)
+{
+  c->ram = ram;
+  c->ram_cnt = cnt;
 }
 
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/disasm.c                                    *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -507,7 +507,7 @@ static
 void opd_03 (p405_disasm_t *dis)
 {
   disasm_op3 (dis, "twi", 0, 0, ARG_UINT5, ARG_RA, ARG_SIMM16,
-    p405_get_bits (dis->ir, 6, 5), 0, 0
+    p405_bits (dis->ir, 6, 5), 0, 0
   );
 }
 
