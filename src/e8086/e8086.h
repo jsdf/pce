@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.12 2003/04/26 23:34:02 hampa Exp $ */
+/* $Id: e8086.h,v 1.13 2003/05/01 07:10:36 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -111,6 +111,8 @@ typedef struct {
   unsigned short sreg[4];
   unsigned short ip;
   unsigned short flg;
+
+  unsigned short cur_ip;
 
   unsigned       pq_cnt;
   unsigned char  pq[E86_PQ_FILL];
