@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.h                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -151,7 +151,7 @@ void sarm_break (simarm_t *sim, unsigned char val);
  *****************************************************************************/
 void sarm_set_keycode (simarm_t *sim, unsigned char val);
 
-void sarm_set_msg (simarm_t *sim, const char *msg, const char *val);
+int sarm_set_msg (simarm_t *sim, const char *msg, const char *val);
 
 
 #endif

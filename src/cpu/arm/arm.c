@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -101,7 +101,7 @@ static unsigned arm_reg_map[32][8] = {
   { 1,  2,  3,  4,  5,  6,  7,  8 }   /* 1f sys */
 };
 
-void arm_init (arm_t *c)
+void arm_init (arm_t *c, int be)
 {
   unsigned i;
 
@@ -133,10 +133,12 @@ void arm_init (arm_t *c)
     c->copr[i] = NULL;
   }
 
-  p15_init (&c->copr15);
+  p15_init (&c->copr15, be);
   c->copr[15] = &c->copr15.copr;
 
   c->exception_base = 0;
+
+  c->bigendian = (be != 0);
 
   c->irq = 0;
   c->fiq = 0;
@@ -146,7 +148,7 @@ void arm_init (arm_t *c)
   c->clkcnt = 0;
 }
 
-arm_t *arm_new (void)
+arm_t *arm_new (int be)
 {
   arm_t *c;
 
@@ -155,7 +157,7 @@ arm_t *arm_new (void)
     return (NULL);
   }
 
-  arm_init (c);
+  arm_init (c, be);
 
   return (c);
 }

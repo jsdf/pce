@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -106,26 +106,42 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
   const char *model;
+  int        be;
 
   sct = ini_sct_find_sct (ini, "cpu");
 
   model = ini_get_str_def (sct, "model", "armv5");
+  be = ini_get_lng_def (sct, "bigendian", 1) != 0;
 
-  pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
+  pce_log (MSG_INF, "CPU:\tmodel=%s endian=%s\n",
+    model, be ? "big" : "little"
+  );
 
-  sim->cpu = arm_new ();
+  sim->cpu = arm_new (be);
   if (sim->cpu == NULL) {
     return;
   }
 
-  arm_set_mem_fct (sim->cpu, sim->mem,
-    &mem_get_uint8,
-    &mem_get_uint16_le,
-    &mem_get_uint32_le,
-    &mem_set_uint8,
-    &mem_set_uint16_le,
-    &mem_set_uint32_le
-  );
+  if (be) {
+    arm_set_mem_fct (sim->cpu, sim->mem,
+      &mem_get_uint8,
+      &mem_get_uint16_be,
+      &mem_get_uint32_be,
+      &mem_set_uint8,
+      &mem_set_uint16_be,
+      &mem_set_uint32_be
+    );
+  }
+  else {
+    arm_set_mem_fct (sim->cpu, sim->mem,
+      &mem_get_uint8,
+      &mem_get_uint16_le,
+      &mem_get_uint32_le,
+      &mem_set_uint8,
+      &mem_set_uint16_le,
+      &mem_set_uint32_le
+    );
+  }
 
   if (sim->ram != NULL) {
     arm_set_ram (sim->cpu, mem_blk_get_data (sim->ram), mem_blk_get_size (sim->ram));
@@ -409,6 +425,14 @@ void sarm_clock (simarm_t *sim, unsigned n)
   if (sim->clk_div[0] >= 1024) {
     scon_check (sim);
 
+    if (sim->serport[0] != NULL) {
+      ser_clock (sim->serport[0], 1024);
+    }
+
+    if (sim->serport[1] != NULL) {
+      ser_clock (sim->serport[1], 1024);
+    }
+
     sim->clk_div[0] &= 1023;
   }
 
@@ -422,24 +446,48 @@ void sarm_clock (simarm_t *sim, unsigned n)
 /*  sim->clk_div[3] += n; */
 }
 
-void sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
+int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 {
+  /* a hack, for debugging only */
   if (sim == NULL) {
     sim = par_sim;
+  }
+
+  if (msg == NULL) {
+    msg = "";
+  }
+
+  if (val == NULL) {
+    val = "";
   }
 
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       sim->brk = PCE_BRK_STOP;
-      return;
+      return (0);
     }
     else if (strcmp (val, "abort") == 0) {
       sim->brk = PCE_BRK_ABORT;
-      return;
+      return (0);
     }
+    else if (strcmp (val, "") == 0) {
+      sim->brk = PCE_BRK_ABORT;
+      return (0);
+    }
+  }
+  else if (strcmp (msg, "emu.stop") == 0) {
+    sim->brk = PCE_BRK_STOP;
+    return (0);
+  }
+  else if (strcmp (msg, "emu.exit") == 0) {
+    sim->brk = PCE_BRK_ABORT;
+    return (0);
   }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
+
   pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
+
+  return (1);
 }

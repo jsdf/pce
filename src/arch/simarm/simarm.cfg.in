@@ -6,6 +6,7 @@
 section simarm {
 	section cpu {
 		model = "armv5"
+		bigendian = 0
 	}
 
 	# Multiple "ram" sections may be present

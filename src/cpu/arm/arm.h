@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -219,6 +219,8 @@ typedef struct arm_s {
 
   uint32_t           exception_base;
 
+  char               bigendian;
+
   unsigned char      irq;
   unsigned char      fiq;
 
@@ -254,13 +256,13 @@ int arm_set_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t val);
 /*!***************************************************************************
  * @short Initialize an arm context struct
  *****************************************************************************/
-void arm_init (arm_t *c);
+void arm_init (arm_t *c, int be);
 
 /*!***************************************************************************
  * @short  Create and initialize an arm context struct
  * @return The arm struct or NULL on error
  *****************************************************************************/
-arm_t *arm_new (void);
+arm_t *arm_new (int be);
 
 /*!***************************************************************************
  * @short Free the resources used by an arm struct
@@ -299,9 +301,9 @@ void arm_copr_init (arm_copr_t *p);
 void arm_copr_free (arm_copr_t *p);
 void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p);
 
-void p15_init (arm_copr15_t *c);
+void p15_init (arm_copr15_t *c, int be);
 void p15_free (arm_copr15_t *p);
-arm_copr_t *p15_new (void);
+arm_copr_t *p15_new (int be);
 void p15_del (arm_copr15_t *p);
 
 

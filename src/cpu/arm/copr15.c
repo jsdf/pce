@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -30,7 +30,7 @@
 int p15_exec (arm_t *c, arm_copr_t *p);
 
 
-void p15_init (arm_copr15_t *c)
+void p15_init (arm_copr15_t *c, int be)
 {
   arm_copr_init (&c->copr);
 
@@ -38,10 +38,14 @@ void p15_init (arm_copr15_t *c)
   c->copr.exec = p15_exec;
 
   c->reg[0] = ARM_C15_ID;
-  c->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L | ARM_C15_CR_B;
+  c->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
+
+  if (be) {
+    c->reg[1] |= ARM_C15_CR_B;
+  }
 }
 
-arm_copr_t *p15_new (void)
+arm_copr_t *p15_new (int be)
 {
   arm_copr15_t *c;
 
@@ -50,7 +54,7 @@ arm_copr_t *p15_new (void)
     return (NULL);
   }
 
-  p15_init (c);
+  p15_init (c, be);
 
   return (&c->copr);
 }
@@ -265,13 +269,13 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
   case 0x01: /* control register */
     val &= ~ARM_C15_CR_C;
     val &= ~ARM_C15_CR_W;
-    val &= ~ARM_C15_CR_B;
     val |= ARM_C15_CR_P;
     val |= ARM_C15_CR_D;
     val |= ARM_C15_CR_L;
     p15->reg[1] = val & 0xffffffffUL;
 
     c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000UL : 0x00000000UL;
+    c->bigendian = (val & ARM_C15_CR_B) != 0;
     break;
 
   case 0x02: /* translation table base */

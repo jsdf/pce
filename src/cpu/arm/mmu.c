@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -499,7 +499,19 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 
   if (addr < c->ram_cnt) {
     unsigned char *p = &c->ram[addr];
-    *val = p[0] | ((uint32_t) p[1] << 8) | ((uint32_t) p[2] << 16) | ((uint32_t) p[3] << 24);
+
+    if (c->bigendian) {
+      *val = (uint32_t) p[0] << 24;
+      *val |= (uint32_t) p[1] << 16;
+      *val |= (uint32_t) p[2] << 8;
+      *val |= p[3];
+    }
+    else {
+      *val = p[0];
+      *val |= (uint32_t) p[1] << 8;
+      *val |= (uint32_t) p[2] << 16;
+      *val |= (uint32_t) p[3] << 24;
+    }
   }
   else {
     *val = c->get_uint32 (c->mem_ext, addr);
@@ -531,7 +543,14 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
   }
 
   if ((addr + 2) <= c->ram_cnt) {
-    *val = c->ram[addr] | ((uint16_t) c->ram[addr + 1] << 8);
+    if (c->bigendian) {
+      *val = (uint16_t) c->ram[addr] << 8;
+      *val |= c->ram[addr + 1];
+    }
+    else {
+      *val = c->ram[addr];
+      *val |= (uint16_t) c->ram[addr + 1] << 8;
+    }
   }
   else {
     *val = c->get_uint16 (c->mem_ext, addr);
@@ -548,7 +567,19 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 
   if (addr < c->ram_cnt) {
     unsigned char *p = &c->ram[addr];
-    *val = p[0] | ((uint32_t) p[1] << 8) | ((uint32_t) p[2] << 16) | ((uint32_t) p[3] << 24);
+
+    if (c->bigendian) {
+      *val = (uint32_t) p[0] << 24;
+      *val |= (uint32_t) p[1] << 16;
+      *val |= (uint32_t) p[2] << 8;
+      *val |= p[3];
+    }
+    else {
+      *val = p[0];
+      *val |= (uint32_t) p[1] << 8;
+      *val |= (uint32_t) p[2] << 16;
+      *val |= (uint32_t) p[3] << 24;
+    }
   }
   else {
     *val = c->get_uint32 (c->mem_ext, addr);
@@ -580,8 +611,14 @@ int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
   }
 
   if ((addr + 2) <= c->ram_cnt) {
-    c->ram[addr] = val & 0xff;
-    c->ram[addr + 1] = (val >> 8) & 0xff;
+    if (c->bigendian) {
+      c->ram[addr + 0] = (val >> 8) & 0xff;
+      c->ram[addr + 1] = val & 0xff;
+    }
+    else {
+      c->ram[addr + 0] = val & 0xff;
+      c->ram[addr + 1] = (val >> 8) & 0xff;
+    }
   }
   else {
     c->set_uint16 (c->mem_ext, addr, val);
@@ -597,10 +634,18 @@ int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
   }
 
   if ((addr + 4) <= c->ram_cnt) {
-    c->ram[addr] = val & 0xff;
-    c->ram[addr + 1] = (val >> 8) & 0xff;
-    c->ram[addr + 2] = (val >> 16) & 0xff;
-    c->ram[addr + 3] = (val >> 24) & 0xff;
+    if (c->bigendian) {
+      c->ram[addr + 0] = (val >> 24) & 0xff;
+      c->ram[addr + 1] = (val >> 16) & 0xff;
+      c->ram[addr + 2] = (val >> 8) & 0xff;
+      c->ram[addr + 3] = val & 0xff;
+    }
+    else {
+      c->ram[addr + 0] = val & 0xff;
+      c->ram[addr + 1] = (val >> 8) & 0xff;
+      c->ram[addr + 2] = (val >> 16) & 0xff;
+      c->ram[addr + 3] = (val >> 24) & 0xff;
+    }
   }
   else {
     c->set_uint32 (c->mem_ext, addr, val);
