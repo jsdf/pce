@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,12 +30,9 @@ void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
 {
   e8250_init (&mse->uart);
 
-  mse->uart.setup_ext = mse;
-  mse->uart.setup = (e8250_setup_f) &mse_uart_setup;
-  mse->uart.send_ext = mse;
-  mse->uart.send = (e8250_send_f) &mse_uart_out;
-  mse->uart.recv_ext = mse;
-  mse->uart.recv = (e8250_recv_f) &mse_uart_inp;
+  e8250_set_setup_f (&mse->uart, mse_uart_setup, mse);
+  e8250_set_send_f (&mse->uart, mse_uart_out, mse);
+  e8250_set_recv_f (&mse->uart, mse_uart_inp, mse);
 
   mem_blk_init (&mse->port, base, 8, 0);
   mse->port.ext = &mse->uart;

@@ -720,7 +720,6 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
   ini_sct_t     *sct;
   unsigned long base;
   unsigned      irq;
-  e8250_irq_f   irqf;
 
   sct = ini_sct_find_sct (ini, "mouse");
   if (sct == NULL) {
@@ -734,8 +733,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
   pc->mse = mse_new (base, sct);
 
-  irqf = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
-  e8250_set_irq_f (&pc->mse->uart, irqf, &pc->pic);
+  e8250_set_irq_f (&pc->mse->uart, e8259_get_irq_f (&pc->pic, irq), &pc->pic);
 
   mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
@@ -799,7 +797,6 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   const char    *fname;
   const char    *chip;
   ini_sct_t     *sct;
-  e8250_irq_f   irqf;
 
   static unsigned long defbase[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
   static unsigned      defirq[4] = { 4, 3, 4, 3 };
@@ -838,8 +835,9 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
       }
 
-      irqf = (e8250_irq_f) e8259_get_irq_f (&pc->pic, irq);
-      e8250_set_irq_f (&pc->serport[i]->uart, irqf, &pc->pic);
+      e8250_set_irq_f (&pc->serport[i]->uart,
+        e8259_get_irq_f (&pc->pic, irq), &pc->pic
+      );
 
       mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -78,6 +78,8 @@ void prt_version (void)
 
 void sig_int (int s)
 {
+  signal (SIGINT, sig_int);
+
   par_sig_int = 1;
 }
 
@@ -364,8 +366,8 @@ int main (int argc, char *argv[])
 
   par_sim = s405_new (sct);
 
-  signal (SIGINT, &sig_int);
-  signal (SIGSEGV, &sig_segv);
+  signal (SIGINT, sig_int);
+  signal (SIGSEGV, sig_segv);
 
   cmd_init (stdin, stdout, &cmd_match_sym);
   ppc_cmd_init (par_sim);

@@ -36,11 +36,11 @@ void e8250_init (e8250_t *uart)
 
   uart->inp_i = 0;
   uart->inp_j = 0;
-  uart->inp_n = E8250_BUF_MAX;
+  uart->inp_n = 8;
 
   uart->out_i = 0;
   uart->out_j = 0;
-  uart->out_n = E8250_BUF_MAX;
+  uart->out_n = 8;
 
   uart->txd[0] = 0;
   uart->txd[1] = 0;
@@ -146,10 +146,28 @@ int e8250_set_chip_str (e8250_t *uart, const char *str)
   return (1);
 }
 
-void e8250_set_irq_f (e8250_t *uart, e8250_irq_f fct, void *ext)
+void e8250_set_irq_f (e8250_t *uart, void *fct, void *ext)
 {
   uart->irq = fct;
   uart->irq_ext = ext;
+}
+
+void e8250_set_send_f (e8250_t *uart, void *fct, void *ext)
+{
+  uart->send = fct;
+  uart->send_ext = ext;
+}
+
+void e8250_set_recv_f (e8250_t *uart, void *fct, void *ext)
+{
+  uart->recv = fct;
+  uart->recv_ext = ext;
+}
+
+void e8250_set_setup_f (e8250_t *uart, void *fct, void *ext)
+{
+  uart->setup = fct;
+  uart->setup_ext = ext;
 }
 
 void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)

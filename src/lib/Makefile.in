@@ -12,6 +12,10 @@ include $(reldir)/config.inc
 
 FILES := brkpt cmd hexdump ihex inidsk load log
 
+ifeq "$(PCE_ENABLE_TUN)" "1"
+FILES += tun
+endif
+
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
 HDR := $(foreach f,$(FILES),$(f).h)

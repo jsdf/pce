@@ -187,7 +187,6 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
   const char    *fname;
   const char    *chip;
   ini_sct_t     *sct;
-  e8250_irq_f   irqf;
 
   static unsigned long defbase[4] = { 0xef600300UL, 0xef600400UL };
   static unsigned      defirq[4] = { 0, 1 };
@@ -232,8 +231,9 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
       }
 
-      irqf = (e8250_irq_f) p405uic_get_irq_f (&sim->uic, irq);
-      e8250_set_irq_f (&sim->serport[i]->uart, irqf, &sim->uic);
+      e8250_set_irq_f (&sim->serport[i]->uart,
+        p405uic_get_irq_f (&sim->uic, irq), &sim->uic
+      );
 
       mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
 
@@ -241,6 +241,43 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
     }
 
     sct = ini_sct_find_next (sct, "serial");
+  }
+}
+
+static
+void s405_setup_slip (sim405_t *sim, ini_sct_t *ini)
+{
+  ini_sct_t  *sct;
+  unsigned   ser;
+  const char *name;
+
+  sct = ini_sct_find_sct (ini, "slip");
+  if (sct == NULL) {
+    return;
+  }
+
+  ser = ini_get_lng_def (sct, "serial", 0);
+  name = ini_get_str_def (sct, "interface", "tun0");
+
+  pce_log (MSG_INF, "SLIP:\tserport=%u interface=%s\n", ser, name);
+
+  if (ser >= 2) {
+    return;
+  }
+
+  if (sim->serport[ser] == NULL) {
+    return;
+  }
+
+  sim->slip = slip_new();
+  if (sim->slip == NULL) {
+    return;
+  }
+
+  slip_set_serport (sim->slip, sim->serport[ser]);
+
+  if (slip_set_tun (sim->slip, name)) {
+    pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n", name);
   }
 }
 
@@ -386,6 +423,7 @@ sim405_t *s405_new (ini_sct_t *ini)
   s405_setup_nvram (sim, ini);
   s405_setup_ppc (sim, ini);
   s405_setup_serport (sim, ini);
+  s405_setup_slip (sim, ini);
   s405_setup_disks (sim, ini);
   s405_setup_pci (sim, ini);
   s405_setup_ata (sim, ini);
@@ -408,6 +446,8 @@ void s405_del (sim405_t *sim)
   s405_pci_del (sim->pci);
 
   dsks_del (sim->dsks);
+
+  slip_del (sim->slip);
 
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
@@ -539,6 +579,18 @@ void s405_clock (sim405_t *sim, unsigned n)
 {
   if (sim->clk_div[0] >= 1024) {
     scon_check (sim);
+
+    if (sim->serport[0] != NULL) {
+      ser_clock (sim->serport[0], 1024);
+    }
+
+    if (sim->serport[1] != NULL) {
+      ser_clock (sim->serport[1], 1024);
+    }
+
+    if (sim->slip != NULL) {
+      slip_clock (sim->slip, 1024);
+    }
 
     sim->clk_div[0] &= 1023;
   }

@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := cmd_ppc main pci sim405 sercons
+FILES := cmd_ppc main pci sim405 sercons slip
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -68,6 +68,11 @@ MAN1	:=
 
 BIN	:= sim405
 
+ifeq "$(PCE_ENABLE_TUN)" "1"
+OBJ_EXT += $(pcedst)/lib/tun.o
+HDR_EXT += lib/tun.h
+endif
+
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
@@ -98,3 +103,4 @@ sim405.o:	sim405.c $(SDP)
 main.o:		main.c $(SDP)
 pci.o:		pci.c $(SDP)
 sercons.o:	sercons.c $(SDP)
+slip.o:		slip.c $(SDP)

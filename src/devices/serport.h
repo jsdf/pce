@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -62,6 +62,9 @@ typedef struct serport_s {
   int           dtr;
   int           rts;
 
+  int           check_out;
+  int           check_inp;
+
   FILE          *fp;
   int           fp_close;
 } serport_t;
@@ -80,13 +83,14 @@ void ser_free (serport_t *ser);
 void ser_del (serport_t *ser);
 
 mem_blk_t *ser_get_reg (serport_t *ser);
+e8250_t *ser_get_uart (serport_t *ser);
 
 int ser_set_fp (serport_t *ser, FILE *fp, int close);
 int ser_set_fname (serport_t *ser, const char *fname);
 
-void ser_uart_setup (serport_t *ser, unsigned char val);
-void ser_uart_out (serport_t *ser, unsigned char val);
-void ser_uart_inp (serport_t *ser, unsigned char val);
+void ser_uart_check_setup (serport_t *ser, unsigned char val);
+void ser_uart_check_out (serport_t *ser, unsigned char val);
+void ser_uart_check_inp (serport_t *ser, unsigned char val);
 
 void ser_receive (serport_t *ser, unsigned char val);
 

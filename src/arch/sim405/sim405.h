@@ -120,6 +120,8 @@ typedef struct sim405_s {
 
   serport_t          *serport[2];
 
+  slip_t             *slip;
+
   breakpoint_t       *brkpt;
 
   uint32_t           cpc0_cr1;

@@ -70,5 +70,7 @@
 #undef PCE_SDL_USE
 #define PCE_VT100_USE 1
 
+#undef PCE_ENABLE_TUN
+
 
 #endif

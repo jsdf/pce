@@ -100,12 +100,6 @@
 #define E8250_BUF_MAX 256
 
 
-typedef void (*e8250_irq_f) (void *ext, unsigned char val);
-typedef void (*e8250_recv_f) (void *ext, unsigned char val);
-typedef void (*e8250_send_f) (void *ext, unsigned char val);
-typedef void (*e8250_setup_f) (void *ext, unsigned char val);
-
-
 /*!***************************************************************************
  * @short The UART 8250 structure
  *****************************************************************************/
@@ -144,19 +138,19 @@ typedef struct {
 
   unsigned char  irq_val;
   void           *irq_ext;
-  e8250_irq_f    irq;
+  void           (*irq) (void *ext, unsigned char val);
 
   /* output buffer is not empty */
   void           *send_ext;
-  e8250_send_f   send;
+  void           (*send) (void *ext, unsigned char val);
 
   /* input buffer is not full */
   void           *recv_ext;
-  e8250_recv_f   recv;
+  void           (*recv) (void *ext, unsigned char val);
 
   /* setup (DIV, MCR or LCR) has changed */
   void           *setup_ext;
-  e8250_setup_f  setup;
+  void           (*setup) (void *ext, unsigned char val);
 } e8250_t;
 
 
@@ -217,7 +211,32 @@ int e8250_set_chip_str (e8250_t *uart, const char *str);
  * @param fct  The function to be called on IRQ
  * @param ext  The transparent parameter for fct
  *****************************************************************************/
-void e8250_set_irq_f (e8250_t *uart, e8250_irq_f fct, void *ext);
+void e8250_set_irq_f (e8250_t *uart, void *fct, void *ext);
+
+/*!***************************************************************************
+ * @short Set the send function
+ * @param uart The UART structure
+ * @param fct  The function to be called when the output queue is not empty
+ * @param ext  The transparent parameter for fct
+ *****************************************************************************/
+void e8250_set_send_f (e8250_t *uart, void *fct, void *ext);
+
+/*!***************************************************************************
+ * @short Set the receive function
+ * @param uart The UART structure
+ * @param fct  The function to be called when the input queue is not full
+ * @param ext  The transparent parameter for fct
+ *****************************************************************************/
+void e8250_set_recv_f (e8250_t *uart, void *fct, void *ext);
+
+/*!***************************************************************************
+ * @short Set the setup function
+ * @param uart The UART structure
+ * @param fct  The function to be called when the UART setup changes
+ * @param ext  The transparent parameter for fct
+ *****************************************************************************/
+void e8250_set_setup_f (e8250_t *uart, void *fct, void *ext);
+
 
 /*!***************************************************************************
  * @short Set the input and output queue sizes

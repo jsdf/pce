@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/main.h                                     *
- * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/arch/sim405/slip.h                                     *
+ * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,41 +23,44 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIM405_MAIN_H
-#define PCE_SIM405_MAIN_H 1
+#ifndef PCE_DEVICES_SLIP_H
+#define PCE_DEVICES_SLIP_H 1
 
 
-#include <lib/cmd.h>
-#include <devices/pci.h>
-
-#include "pci.h"
-#include "slip.h"
-#include "sim405.h"
-#include "sercons.h"
-#include "cmd_ppc.h"
+#include <devices/serport.h>
 
 
-#define s405_br16(x) ((((x) & 0xff) << 8) | (((x) >> 8) & 0xff))
-#define s405_br32(x) ((((x) & 0xff) << 24) | ((((x) >> 8) & 0xff) << 16) \
- | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
+#define PCE_SLIP_BUF_MAX 4096
 
 
-extern int      par_verbose;
+typedef struct {
+  serport_t     *ser;
 
-extern unsigned par_xlat;
+  unsigned      buf_out_n;
+  unsigned char buf_out[PCE_SLIP_BUF_MAX];
+  char          buf_out_esc;
 
-extern sim405_t *par_sim;
+  unsigned      buf_inp_i;
+  unsigned      buf_inp_n;
+  unsigned char buf_inp[PCE_SLIP_BUF_MAX];
 
-extern unsigned par_sig_int;
+  int           check_out;
+  int           check_inp;
+
+  int           tun_fd;
+} slip_t;
 
 
-void prt_sep (FILE *fp, const char *str, ...);
+void slip_init (slip_t *slip);
+void slip_free (slip_t *slip);
 
-void prt_state (sim405_t *sim, FILE *fp, const char *str);
+slip_t *slip_new (void);
+void slip_del (slip_t *slip);
 
-void pce_start (void);
-void pce_stop (void);
-void pce_run (void);
+void slip_set_serport (slip_t *slip, serport_t *ser);
+int slip_set_tun (slip_t *slip, const char *name);
+
+void slip_clock (slip_t *slip, unsigned n);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -66,13 +66,9 @@ void ser_init (serport_t *ser, unsigned long base, unsigned shift)
   ser->addr_shift = shift;
 
   e8250_init (&ser->uart);
-
-  ser->uart.setup_ext = ser;
-  ser->uart.setup = (e8250_setup_f) &ser_uart_setup;
-  ser->uart.send_ext = ser;
-  ser->uart.send = (e8250_send_f) &ser_uart_out;
-  ser->uart.recv_ext = ser;
-  ser->uart.recv = (e8250_recv_f) &ser_uart_inp;
+  e8250_set_setup_f (&ser->uart, ser_uart_check_setup, ser);
+  e8250_set_send_f (&ser->uart, ser_uart_check_out, ser);
+  e8250_set_recv_f (&ser->uart, ser_uart_check_inp, ser);
 
   mem_blk_init (&ser->port, base, 8 << shift, 0);
   ser->port.ext = ser;
@@ -90,6 +86,9 @@ void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 
   ser->dtr = 0;
   ser->rts = 0;
+
+  ser->check_out = 0;
+  ser->check_inp = 0;
 
   ser->fp = NULL;
   ser->fp_close = 0;
@@ -136,6 +135,11 @@ mem_blk_t *ser_get_reg (serport_t *ser)
   return (&ser->port);
 }
 
+e8250_t *ser_get_uart (serport_t *ser)
+{
+  return (&ser->uart);
+}
+
 int ser_set_fp (serport_t *ser, FILE *fp, int close)
 {
   if (ser->fp_close) {
@@ -165,7 +169,7 @@ int ser_set_fname (serport_t *ser, const char *fname)
   return (0);
 }
 
-void ser_uart_setup (serport_t *ser, unsigned char val)
+void ser_uart_check_setup (serport_t *ser, unsigned char val)
 {
   int           chg;
   unsigned long bps;
@@ -222,28 +226,15 @@ void ser_uart_setup (serport_t *ser, unsigned char val)
 }
 
 /* 8250 output buffer is not empty */
-void ser_uart_out (serport_t *ser, unsigned char val)
+void ser_uart_check_out (serport_t *ser, unsigned char val)
 {
-  unsigned char c;
-
-  if (ser->fp == NULL) {
-    return;
-  }
-
-  while (1) {
-    if (e8250_get_out (&ser->uart, &c)) {
-      break;
-    }
-
-    fputc (c, ser->fp);
-  }
-
-  fflush (ser->fp);
+  ser->check_out = 1;
 }
 
 /* 8250 input buffer is not full */
-void ser_uart_inp (serport_t *ser, unsigned char val)
+void ser_uart_check_inp (serport_t *ser, unsigned char val)
 {
+  ser->check_inp = 1;
 }
 
 void ser_receive (serport_t *ser, unsigned char val)
@@ -253,5 +244,25 @@ void ser_receive (serport_t *ser, unsigned char val)
 
 void ser_clock (serport_t *ser, unsigned n)
 {
+  unsigned char c;
+
+  if (ser->check_out) {
+    ser->check_out = 0;
+
+    while (1) {
+      if (e8250_get_out (&ser->uart, &c)) {
+        break;
+      }
+
+      if (ser->fp != NULL) {
+        fputc (c, ser->fp);
+      }
+    }
+
+    if (ser->fp != NULL) {
+      fflush (ser->fp);
+    }
+  }
+
   e8250_clock (&ser->uart, n);
 }
