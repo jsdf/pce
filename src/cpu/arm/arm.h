@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -133,6 +133,8 @@ typedef unsigned long long uint64_t;
   (c)->cpsr |= (v) & 0x1f; \
   } while (0)
 
+#define arm_get_mmu(c) (&(c)->copr15)
+
 
 struct arm_s;
 struct arm_copr_s;
@@ -164,9 +166,24 @@ typedef struct arm_copr_s {
 
 
 typedef struct {
+  int      valid;
+
+  uint32_t vaddr;
+  uint32_t vmask;
+
+  uint32_t raddr;
+  uint32_t rmask;
+} arm_tbuf_t;
+
+
+typedef struct {
   arm_copr_t copr;
 
-  uint32_t reg[16];
+  arm_tbuf_t tbuf_exec;
+  arm_tbuf_t tbuf_read;
+  arm_tbuf_t tbuf_write;
+
+  uint32_t   reg[16];
 } arm_copr15_t;
 
 
@@ -202,6 +219,7 @@ typedef struct arm_s {
 
   arm_copr_t         *copr[16];
 
+  /* system control coprocessor */
   arm_copr15_t       copr15;
 
   uint32_t           ir;
@@ -224,6 +242,8 @@ typedef struct arm_s {
 /*****************************************************************************
  * MMU
  *****************************************************************************/
+
+void arm_tbuf_flush (arm_t *c);
 
 int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
   unsigned *domn, unsigned *perm

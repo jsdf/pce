@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -30,11 +30,12 @@
 #include "internal.h"
 
 
+static
 void arm_mmu_fault (arm_t *c, uint32_t addr, unsigned status, unsigned domn)
 {
   arm_copr15_t *mmu;
 
-  mmu = c->copr[15]->ext;
+  mmu = arm_get_mmu (c);
 
   mmu->reg[6] = addr;
   mmu->reg[5] = ((domn & 0x0f) << 4) | (status & 0x0f);
@@ -42,31 +43,56 @@ void arm_mmu_fault (arm_t *c, uint32_t addr, unsigned status, unsigned domn)
   arm_exception_data_abort (c);
 }
 
+static
 void arm_mmu_translation_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
   arm_mmu_fault (c, addr, sect ? 0x05 : 0x07, domn);
 }
 
+static
 void arm_mmu_domain_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
   arm_mmu_fault (c, addr, sect ? 0x09 : 0x0b, domn);
 }
 
+static
 void arm_mmu_permission_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
   arm_mmu_fault (c, addr, sect ? 0x0d : 0x0f, domn);
 }
 
 
+void arm_tbuf_flush (arm_t *c)
+{
+  arm_copr15_t *mmu;
+
+  mmu = arm_get_mmu (c);
+
+  mmu->tbuf_exec.valid = 0;
+  mmu->tbuf_read.valid = 0;
+  mmu->tbuf_write.valid = 0;
+}
+
+static inline
+void arm_tbuf_set (arm_tbuf_t *tb, uint32_t vaddr, uint32_t raddr, uint32_t mask)
+{
+  tb->vaddr = vaddr & mask;
+  tb->vmask = mask;
+  tb->raddr = raddr & mask;
+  tb->rmask = ~mask;
+  tb->valid = 1;
+}
+
+
 /*!***************************************************************************
- * @short Check access permissions
+ * @short Check access permissions for reading
  * @param cr    The control register (coprocessor 15 register 1)
  * @param perm  The page or section permission bits
  * @param priv  Check for privileged access if true
- * @param w     Check for write access if true, read access if false
  * @return Zero if access violation, non-zero if ok
  *****************************************************************************/
-int arm_mmu_check_perm (uint32_t cr, unsigned perm, int priv, int w)
+static
+int arm_mmu_check_perm_read (uint32_t cr, unsigned perm, int priv)
 {
   if (perm == 0) {
     switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
@@ -74,10 +100,10 @@ int arm_mmu_check_perm (uint32_t cr, unsigned perm, int priv, int w)
       return (0);
 
     case ARM_C15_CR_S: /* priv: read only, user: no access */
-      return (priv && (w == 0));
+      return (priv);
 
     case ARM_C15_CR_R: /* read only */
-      return (w == 0);
+      return (1);
 
     case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
       return (0);
@@ -95,7 +121,53 @@ int arm_mmu_check_perm (uint32_t cr, unsigned perm, int priv, int w)
     return (0);
 
   case 0x02: /* read only */
-    return (w == 0);
+    return (1);
+
+  case 0x03: /* read/write */
+    return (1);
+  }
+
+  return (0);
+}
+
+/*!***************************************************************************
+ * @short Check access permissions for writing
+ * @param cr    The control register (coprocessor 15 register 1)
+ * @param perm  The page or section permission bits
+ * @param priv  Check for privileged access if true
+ * @return Zero if access violation, non-zero if ok
+ *****************************************************************************/
+static
+int arm_mmu_check_perm_write (uint32_t cr, unsigned perm, int priv)
+{
+  if (perm == 0) {
+    switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
+    case 0x00: /* no access */
+      return (0);
+
+    case ARM_C15_CR_S: /* priv: read only, user: no access */
+      return (0);
+
+    case ARM_C15_CR_R: /* read only */
+      return (0);
+
+    case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
+      return (0);
+    }
+
+    return (0);
+  }
+
+  if (priv) {
+    return (1);
+  }
+
+  switch (perm) {
+  case 0x01: /* no access */
+    return (0);
+
+  case 0x02: /* read only */
+    return (0);
 
   case 0x03: /* read/write */
     return (1);
@@ -113,15 +185,16 @@ int arm_mmu_check_perm (uint32_t cr, unsigned perm, int priv, int w)
  * @retval sect  The virtual address is in a section if true, in a page if false
  * @return Non-zero on translation fault
  *****************************************************************************/
-int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int *sect)
+static
+int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
+  unsigned *domn, unsigned *perm, int *sect)
 {
   arm_copr15_t *mmu;
   unsigned     ap;
   uint32_t     addr1, addr2;
   uint32_t     desc1, desc2;
-  uint32_t     vaddr;
 
-  mmu = c->copr[15]->ext;
+  mmu = arm_get_mmu (c);
 
   addr1 = (mmu->reg[2] & 0xffffc000UL) | ((*addr >> 18) & 0x00003ffcUL);
   desc1 = c->get_uint32 (c->mem_ext, addr1);
@@ -131,6 +204,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   switch (desc1 & 0x03) {
   case 0x00:
     /* section translation fault */
+    *mask = 0;
     *domn = 0;
     *sect = 1;
     return (1);
@@ -144,6 +218,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   case 0x02:
     /* section */
     *addr = (desc1 & 0xfff00000UL) | (*addr & 0x000fffffUL);
+    *mask = 0xfff00000UL;
     *domn = arm_get_bits (desc1, 5, 4);
     *perm = arm_get_bits (desc1, 10, 2);
     *sect = 1;
@@ -163,6 +238,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   switch (desc2 & 0x03) {
   case 0x00:
     /* page translation fault */
+    *mask = 0;
     *perm = 0;
     return (1);
 
@@ -170,6 +246,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
     /* large page */
     ap = 4 + 2 * arm_get_bits (*addr, 14, 2);
     *addr = (desc2 & 0xffff0000UL) | (*addr & 0x0000ffffUL);
+    *mask = 0xffff0000UL;
     *perm = arm_get_bits (desc2, ap, 2);
     return (0);
 
@@ -177,6 +254,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
     /* small page */
     ap = 4 + 2 * arm_get_bits (*addr, 10, 2);
     *addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
+    *mask = 0xfffff000UL;
     *perm = arm_get_bits (desc2, ap, 2);
     return (0);
 
@@ -184,14 +262,15 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
     if ((desc1 & 0x03) == 0x01) {
       /* xscale extended small page */
       *addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
+      *mask = 0xfffff000UL;
       *perm = arm_get_bits (desc2, 4, 2);
       return (0);
     }
 
     /* tiny page */
-    vaddr = *addr;
     *perm = arm_get_bits (desc2, 4, 2);
     *addr = (desc2 & 0xfffffc00UL) | (*addr & 0x000003ffUL);
+    *mask = 0xfffffc00UL;
     return (0);
   }
 
@@ -202,74 +281,184 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   return (1);
 }
 
-int arm_translate_check (arm_t *c, uint32_t *addr, int p, int w, int x)
+static
+int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
 {
   arm_copr15_t *mmu;
   unsigned     domn, perm;
   int          sect;
-  uint32_t     vaddr;
+  uint32_t     vaddr, mask;
+  arm_tbuf_t   *tb;
 
-  if (c->copr[15] == NULL) {
-    return (0);
-  }
-
-  mmu = c->copr[15]->ext;
+  mmu = arm_get_mmu (c);
 
   if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
     return (0);
   }
 
+  tb = &mmu->tbuf_exec;
+
   vaddr = *addr;
 
-  if (arm_translate (c, addr, &domn, &perm, &sect)) {
-    if (x) {
-      arm_exception_prefetch_abort (c);
+  if (tb->valid) {
+    if ((vaddr & tb->vmask) == tb->vaddr) {
+      *addr = tb->raddr | (vaddr & tb->rmask);
+      return (0);
     }
-    else {
-      arm_mmu_translation_fault (c, vaddr, domn, sect);
-    }
+  }
+
+  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+    arm_exception_prefetch_abort (c);
     return (1);
   }
 
   /* check domain */
   switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
   case 0x00: /* no access */
-    if (x) {
-      arm_exception_prefetch_abort (c);
-    }
-    else {
-      arm_mmu_domain_fault (c, vaddr, domn, sect);
-    }
+    arm_mmu_domain_fault (c, vaddr, domn, sect);
     return (1);
 
   case 0x01: /* client */
-    if (arm_mmu_check_perm (mmu->reg[1], perm, p, w) == 0) {
-      if (x) {
-        arm_exception_prefetch_abort (c);
-      }
-      else {
-        arm_mmu_permission_fault (c, vaddr, domn, sect);
-      }
+    if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
+      arm_exception_prefetch_abort (c);
       return (1);
     }
+    arm_tbuf_set (tb, vaddr, *addr, mask);
     return (0);
 
   case 0x02: /* undefined */
     return (0);
 
   case 0x03: /* manager */
+    arm_tbuf_set (tb, vaddr, *addr, mask);
     return (0);
   }
 
   return (0);
 }
 
+static
+int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
+{
+  arm_copr15_t *mmu;
+  unsigned     domn, perm;
+  int          sect;
+  uint32_t     vaddr, mask;
+  arm_tbuf_t   *tb;
+
+  mmu = arm_get_mmu (c);
+
+  if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
+    return (0);
+  }
+
+  tb = &mmu->tbuf_read;
+
+  vaddr = *addr;
+
+  if (tb->valid) {
+    if ((vaddr & tb->vmask) == tb->vaddr) {
+      *addr = tb->raddr | (vaddr & tb->rmask);
+      return (0);
+    }
+  }
+
+  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+    arm_mmu_translation_fault (c, vaddr, domn, sect);
+    return (1);
+  }
+
+  /* check domain */
+  switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
+  case 0x00: /* no access */
+    arm_mmu_domain_fault (c, vaddr, domn, sect);
+    return (1);
+
+  case 0x01: /* client */
+    if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
+      arm_mmu_permission_fault (c, vaddr, domn, sect);
+      return (1);
+    }
+    arm_tbuf_set (tb, vaddr, *addr, mask);
+    return (0);
+
+  case 0x02: /* undefined */
+    return (0);
+
+  case 0x03: /* manager */
+    arm_tbuf_set (tb, vaddr, *addr, mask);
+    return (0);
+  }
+
+  return (0);
+}
+
+static
+int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
+{
+  arm_copr15_t *mmu;
+  unsigned     domn, perm;
+  int          sect;
+  uint32_t     vaddr, mask;
+  arm_tbuf_t   *tb;
+
+  mmu = arm_get_mmu (c);
+
+  if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
+    return (0);
+  }
+
+  tb = &mmu->tbuf_write;
+
+  vaddr = *addr;
+
+  if (tb->valid) {
+    if ((vaddr & tb->vmask) == tb->vaddr) {
+      *addr = tb->raddr | (vaddr & tb->rmask);
+      return (0);
+    }
+  }
+
+  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+    arm_mmu_translation_fault (c, vaddr, domn, sect);
+    return (1);
+  }
+
+  /* check domain */
+  switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
+  case 0x00: /* no access */
+    arm_mmu_domain_fault (c, vaddr, domn, sect);
+    return (1);
+
+  case 0x01: /* client */
+    if (arm_mmu_check_perm_write (mmu->reg[1], perm, priv) == 0) {
+      arm_mmu_permission_fault (c, vaddr, domn, sect);
+      return (1);
+    }
+
+    arm_tbuf_set (tb, vaddr, *addr, mask);
+
+    return (0);
+
+  case 0x02: /* undefined */
+    return (0);
+
+  case 0x03: /* manager */
+    arm_tbuf_set (tb, vaddr, *addr, mask);
+    return (0);
+  }
+
+  return (0);
+}
+
+/* translate without causing exceptions */
 int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
   unsigned *domn, unsigned *perm)
 {
   arm_copr15_t *mmu;
   unsigned     domn1, perm1;
   int          sect;
+  uint32_t     mask;
 
   if (domn == NULL) {
     domn = &domn1;
@@ -286,28 +475,25 @@ int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
     return (0);
   }
 
-  if (c->copr[15] == NULL) {
-    return (0);
-  }
-
-  mmu = c->copr[15]->ext;
+  mmu = arm_get_mmu (c);
 
   if ((xlat == ARM_XLAT_CPU) && ((mmu->reg[1] & ARM_C15_CR_M) == 0)) {
     return (0);
   }
 
-  if (arm_translate (c, addr, domn, perm, &sect)) {
+  if (arm_translate (c, addr, &mask, domn, perm, &sect)) {
     return (1);
   }
 
   return (0);
 }
 
+
 int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 {
   addr &= ~0x03UL;
 
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 1)) {
+  if (arm_translate_exec (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -318,7 +504,7 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 
 int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
+  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -329,7 +515,7 @@ int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 
 int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
+  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -340,7 +526,7 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 
 int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
+  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -351,7 +537,7 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 
 int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
+  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -362,7 +548,7 @@ int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val)
 
 int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
+  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -373,7 +559,7 @@ int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 
 int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 {
-  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
+  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
     return (1);
   }
 
@@ -384,7 +570,7 @@ int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 
 int arm_dload8_t (arm_t *c, uint32_t addr, uint8_t *val)
 {
-  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+  if (arm_translate_read (c, &addr, 0)) {
     return (1);
   }
 
@@ -395,7 +581,7 @@ int arm_dload8_t (arm_t *c, uint32_t addr, uint8_t *val)
 
 int arm_dload16_t (arm_t *c, uint32_t addr, uint16_t *val)
 {
-  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+  if (arm_translate_read (c, &addr, 0)) {
     return (1);
   }
 
@@ -406,7 +592,7 @@ int arm_dload16_t (arm_t *c, uint32_t addr, uint16_t *val)
 
 int arm_dload32_t (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+  if (arm_translate_read (c, &addr, 0)) {
     return (1);
   }
 
@@ -417,7 +603,7 @@ int arm_dload32_t (arm_t *c, uint32_t addr, uint32_t *val)
 
 int arm_dstore8_t (arm_t *c, uint32_t addr, uint8_t val)
 {
-  if (arm_translate_check (c, &addr, 0, 1, 0)) {
+  if (arm_translate_write (c, &addr, 0)) {
     return (1);
   }
 
@@ -428,7 +614,7 @@ int arm_dstore8_t (arm_t *c, uint32_t addr, uint8_t val)
 
 int arm_dstore16_t (arm_t *c, uint32_t addr, uint16_t val)
 {
-  if (arm_translate_check (c, &addr, 0, 1, 0)) {
+  if (arm_translate_write (c, &addr, 0)) {
     return (1);
   }
 
@@ -439,7 +625,7 @@ int arm_dstore16_t (arm_t *c, uint32_t addr, uint16_t val)
 
 int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val)
 {
-  if (arm_translate_check (c, &addr, 0, 1, 0)) {
+  if (arm_translate_write (c, &addr, 0)) {
     return (1);
   }
 

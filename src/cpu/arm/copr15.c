@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -255,9 +255,12 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
 
   val = arm_get_rd (c, c->ir);
 
+  /* conservative flushing of translation buffer */
+  arm_tbuf_flush (c);
+
   switch (arm_ir_rn (c->ir)) {
-//  case 0x00:
-//    return (1);
+  case 0x00: /* id register */
+    return (1);
 
   case 0x01: /* control register */
     val &= ~ARM_C15_CR_C;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -278,6 +278,8 @@ void arm_reset (arm_t *c)
 
   c->oprcnt = 0;
   c->clkcnt = 0;
+
+  arm_tbuf_flush (c);
 }
 
 void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode)
