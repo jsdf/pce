@@ -1,9 +1,9 @@
 # Makefile
-# $Id: Makefile.in,v 1.7 2003/04/23 12:48:40 hampa Exp $
+# $Id: Makefile.in,v 1.8 2003/04/23 13:18:01 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := e8086 e8255 e8259 ibmpc libini
+subdir := libini e8086 e8255 e8259 ibmpc
 reldir := ..
 
 include $(reldir)/Makefile.inc
