@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pceint28.asm,v 1.1 2003/09/18 19:07:56 hampa Exp $
+; $Id: pceint28.asm,v 1.2 2003/09/19 14:46:48 hampa Exp $
 
 ; pceint28 [on|off]
 
@@ -142,7 +142,7 @@ do_help:
 
 
 do_on:
-  mov     ax, 1
+  mov     ax, 10
   pcehook PCEH_SET_INT28
   jmp     done
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.24 2003/09/18 19:07:14 hampa Exp $ */
+/* $Id: pce.c,v 1.25 2003/09/19 14:46:48 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ char                      *par_terminal = NULL;
 char                      *par_video = NULL;
 unsigned                  par_boot = 128;
 char                      *par_cpu = NULL;
-int                       pce_int28 = 1;
+unsigned long             par_int28 = 10000;
 
 
 static unsigned           bp_cnt = 0;
@@ -983,10 +983,10 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 
 //  pce_log (MSG_DEB, "%04X:%04X\n", e86_get_cs (pc->cpu), e86_get_ip (pc->cpu));
 
-  if (pce_int28) {
-    if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
+  if ((op1 == 0xcd) && (op2 == 0x28) && (pc->key_clk == 0)) {
+    if (par_int28 > 0) {
       cpu_end();
-      usleep (10000);
+      usleep (par_int28);
       cpu_start();
     }
   }
@@ -1278,32 +1278,36 @@ void do_h (cmd_t *cmd)
 
 void do_int28 (cmd_t *cmd)
 {
-  int c;
-
-  c = 0;
+  int            set;
+  unsigned short val;
 
   if (cmd_match (cmd, "on")) {
-    c = 1;
+    set = 1;
+    val = 10;
   }
   else if (cmd_match (cmd, "off")) {
-    c = 2;
+    set = 1;
+    val = 0;
+  }
+  else if (cmd_match_uint16 (cmd, &val)) {
+    set = 1;
+  }
+  else {
+    set = 0;
   }
 
   if (!cmd_match_end (cmd)) {
     return;
   }
 
-  switch (c) {
-    case 1:
-      pce_int28 = 1;
-      break;
-
-    case 2:
-      pce_int28 = 0;
-      break;
+  if (set) {
+    par_int28 = 1000UL * val;
   }
 
-  printf ("int 28h sleeping is %s\n", pce_int28 ? "on" : "off");
+  printf ("int 28h sleeping is %s (%lums)\n",
+    (par_int28 > 0) ? "on" : "off",
+    par_int28 / 1000UL
+  );
 }
 
 void do_last (cmd_t *cmd)

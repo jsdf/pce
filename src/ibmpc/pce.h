@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.18 2003/09/18 19:07:15 hampa Exp $ */
+/* $Id: pce.h,v 1.19 2003/09/19 14:46:48 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -62,11 +62,11 @@ typedef unsigned short (*get_uint16_f) (void *ext);
 struct ibmpc_t;
 
 
-extern char     *par_terminal;
-extern char     *par_video;
-extern unsigned par_boot;
-extern char     *par_cpu;
-int             pce_int28;
+extern char          *par_terminal;
+extern char          *par_video;
+extern unsigned      par_boot;
+extern char          *par_cpu;
+extern unsigned long par_int28;
 
 
 void pce_log_set_fp (FILE *fp, int close);

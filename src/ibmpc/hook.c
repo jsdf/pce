@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.5 2003/09/18 19:06:52 hampa Exp $ */
+/* $Id: hook.c,v 1.6 2003/09/19 14:46:48 hampa Exp $ */
 
 
 #include "pce.h"
@@ -164,7 +164,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     case PCEH_SET_INT28:
-      pce_int28 = (e86_get_ax (pc->cpu) != 0);
+      par_int28 = 1000UL * e86_get_ax (pc->cpu);
       break;
 
     case PCEH_GET_BOOT:
@@ -190,7 +190,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     case PCEH_GET_INT28:
-      e86_set_ax (pc->cpu, pce_int28);
+      e86_set_ax (pc->cpu, par_int28 / 1000UL);
       break;
 
     case PCEH_XMS:
