@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/xterm.h                                       *
+ * File name:     src/terminal/x11.h                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,11 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.h,v 1.6 2003/08/29 19:17:51 hampa Exp $ */
+/* $Id: x11.h,v 1.1 2003/09/02 11:43:41 hampa Exp $ */
 
 
-#ifndef PCE_TERMINAL_XTERM_H
-#define PCE_TERMINAL_XTERM_H 1
+#ifndef PCE_TERMINAL_X11_H
+#define PCE_TERMINAL_X11_H 1
 
 
 #include <stdio.h>
