@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,12 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.3 2003/04/23 16:29:57 hampa Exp $ */
+/* $Id: pce.c,v 1.4 2003/04/23 23:40:09 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <signal.h>
@@ -70,8 +71,8 @@ void prt_help (void)
     "usage: pce [options]\n"
     "  --help                 Print usage information\n"
     "  --version              Print version information\n"
-    "  -r, --ram int          Set RAM size in KB\n"
-    "  -d, --display  string  Set video adapter type [mda|cga]\n",
+    "  -c, --config string    Set the config file\n"
+    "  -l, --log string       Set the log file\n",
     stdout
   );
 
@@ -107,6 +108,15 @@ unsigned long long read_tsc (void)
   );
 
   return (ret);
+}
+#else
+unsigned long long read_tsc (void)
+{
+  double sec;
+
+  sec = (double) clock() / (double) CLOCKS_PER_SEC;
+
+  return ((unsigned long long) sec * pce_hclk_base);
 }
 #endif
 
@@ -773,20 +783,12 @@ void prt_error (const char *str, ...)
 
 void cpu_start()
 {
-#ifdef PCE_HAVE_TSC
   pce_hclk_last = read_tsc();
-#else
-  pce_hclk_last = 0;
-#endif
 }
 
 void cpu_end()
 {
-#ifdef PCE_HAVE_TSC
   pce_hclk_last = read_tsc() - pce_hclk_last;
-#else
-  pce_hclk_last = 0;
-#endif
 
   pce_eclk = e86_get_clock (pc->cpu);
   pce_hclk += pce_hclk_last;
@@ -806,6 +808,10 @@ void cpu_exec (void)
 
 void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
 {
+  ibmpc_t *pc;
+
+  pc = (ibmpc_t *) ext;
+
   ops_cnt[op1 & 0xff] += 1;
 
   if ((op1 == 0xcd) && (op2 == 0x28)) {
@@ -1280,6 +1286,18 @@ void do_s (cmd_t *cmd)
   }
 }
 
+void do_time (cmd_t *cmd)
+{
+  if (cmd_match (cmd, "c")) {
+    pce_opcnt = 0;
+    pce_eclk = 0;
+    pce_hclk = 0;
+  }
+  else if (cmd_match_eol (cmd)) {
+    prt_state_time (stdout);
+  }
+}
+
 void do_t (cmd_t *cmd)
 {
   unsigned long i, n;
@@ -1486,6 +1504,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "disk")) {
       do_disk (&cmd);
+    }
+    else if (cmd_match (&cmd, "time")) {
+      do_time (&cmd);
     }
     else if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
