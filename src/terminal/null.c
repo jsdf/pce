@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/null.c                                        *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -41,6 +41,7 @@ void null_init (null_t *vt, ini_sct_t *ini)
   vt->trm.set_pos = (trm_set_pos_f) &null_set_pos;
   vt->trm.set_chr = (trm_set_chr_f) &null_set_chr;
   vt->trm.set_pxl = (trm_set_pxl_f) &null_set_pxl;
+  vt->trm.set_rct = (trm_set_rct_f) &null_set_rct;
   vt->trm.check = (trm_check_f) &null_check;
 }
 
@@ -94,7 +95,11 @@ void null_set_chr (null_t *vt, unsigned x, unsigned y, unsigned char c)
 {
 }
 
-void null_set_pxl (null_t *vt, unsigned x, unsigned y, unsigned w, unsigned h)
+void null_set_pxl (null_t *vt, unsigned x, unsigned y)
+{
+}
+
+void null_set_rct (null_t *vt, unsigned x, unsigned y, unsigned w, unsigned h)
 {
 }
 

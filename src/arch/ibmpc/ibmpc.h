@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -92,6 +92,8 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model);
 void pc_break (ibmpc_t *pc, unsigned char val);
 
 void pc_set_keycode (ibmpc_t *pc, unsigned char val);
+
+void pc_set_msg (ibmpc_t *pc, const char *msg, const char *val);
 
 
 #endif

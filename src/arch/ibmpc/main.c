@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -661,6 +661,8 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
   pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
     e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
   );
+
+  trm_check (pc->trm);
 }
 
 
@@ -1013,6 +1015,7 @@ void do_h (cmd_t *cmd)
     "int28 [on|off|val]        turn int28 sleeping on/off\n"
     "i [b|w] port              input a byte or word from a port\n"
     "last [i [n]]              print last instruction addresses\n"
+    "m [msg [val]]             send a message\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "par i fname               set parport output file\n"
     "p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
@@ -1157,6 +1160,27 @@ void do_last (cmd_t *cmd)
     );
     idx = (idx + 1) % PCE_LAST_MAX;
   }
+}
+
+static
+void do_m (cmd_t *cmd)
+{
+  char msg[256];
+  char val[256];
+
+  if (!cmd_match_str (cmd, msg, 256)) {
+    strcpy (msg, "");
+  }
+
+  if (!cmd_match_str (cmd, val, 256)) {
+    strcpy (val, "");
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  pc_set_msg (pc, msg, val);
 }
 
 static
@@ -1541,6 +1565,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "last")) {
       do_last (&cmd);
+    }
+    else if (cmd_match (&cmd, "m")) {
+      do_m (&cmd);
     }
     else if (cmd_match (&cmd, "par")) {
       do_par (&cmd);

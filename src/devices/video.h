@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/video.h                                        *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -50,20 +50,6 @@ typedef void (*pce_video_clock_f) (void *ext, unsigned long cnt);
 
 
 typedef struct {
-  unsigned w;
-  unsigned h;
-
-  unsigned sw;
-  unsigned sh;
-
-  unsigned *mapx;
-  unsigned *mapw;
-  unsigned *mapy;
-  unsigned *maph;
-} scrmap_t;
-
-
-typedef struct {
   pce_video_del_f        del;
   pce_video_get_mem_f    get_mem;
   pce_video_get_reg_f    get_reg;
@@ -73,9 +59,9 @@ typedef struct {
   pce_video_screenshot_f screenshot;
   pce_video_clock_f      clock;
 
-  void     *ext;
+  void                   *ext;
 
-  unsigned type;
+  unsigned               type;
 } video_t;
 
 
@@ -94,17 +80,6 @@ int pce_video_dump (video_t *vid, FILE *fp);
 int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 
 void pce_video_clock (video_t *vid, unsigned long cnt);
-
-
-int pce_smap_init (scrmap_t *smap,
-  unsigned w, unsigned h, unsigned sw, unsigned sh
-);
-
-void pce_smap_free (scrmap_t *smap);
-
-void pce_smap_get_pixel (scrmap_t *smap, unsigned x, unsigned y,
-  unsigned *sx, unsigned *sy, unsigned *sw, unsigned *sh
-);
 
 
 #endif

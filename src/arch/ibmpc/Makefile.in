@@ -72,6 +72,7 @@ HDR_EXT	:= \
 	lib/log.h \
 	libini/libini.h \
 	terminal/terminal.h \
+	terminal/scrmap.h \
 	terminal/vt100.h \
 	terminal/null.h \
 	terminal/font.h

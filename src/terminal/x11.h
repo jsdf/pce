@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.h                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -113,7 +113,8 @@ void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg);
 void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2, int show);
 void xt_set_pos (xterm_t *xt, unsigned x, unsigned y);
 void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c);
-void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h);
+void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y);
+void xt_set_rct (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h);
 void xt_clear (xterm_t *xt);
 void xt_check (xterm_t *xt);
 

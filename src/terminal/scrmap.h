@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/sercons.c                                  *
- * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/terminal/scrmap.h                                      *
+ * Created:       2004-05-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,75 +23,44 @@
 /* $Id$ */
 
 
+#ifndef PCE_TERMINAL_SCRMAP_H
+#define PCE_TERMINAL_SCRMAP_H 1
+
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/poll.h>
-
-#include "main.h"
 
 
-static
-int scon_readable (int fd, int t)
-{
-  int           r;
-  struct pollfd pfd[1];
+typedef struct {
+  unsigned x;
+  unsigned w;
+} trm_scrmap_pixel_t;
 
-  pfd[0].fd = fd;
-  pfd[0].events = POLLIN;
+typedef struct {
+  unsigned w;
+  unsigned h;
 
-  r = poll (pfd, 1, t);
-  if (r < 0) {
-    return (0);
-  }
+  unsigned sw;
+  unsigned sh;
 
-  if ((pfd[0].revents & POLLIN) == 0) {
-    return (0);
-  }
+  unsigned *mapx;
+  unsigned *mapw;
+  unsigned *mapy;
+  unsigned *maph;
+} trm_scrmap_t;
 
-  return (1);
-}
 
-void scon_check (sim405_t *sim)
-{
-  unsigned      i, n;
-  unsigned char buf[8];
-  ssize_t       r;
+void trm_smap_init (trm_scrmap_t *smap);
 
-  if (par_sig_int) {
-    par_sig_int = 0;
-    s405_set_keycode (sim, 0x03);
-  }
+void trm_smap_free (trm_scrmap_t *smap);
 
-  if (!scon_readable (0, 0)) {
-    return;
-  }
 
-  r = read (0, buf, 8);
-  if (r <= 0) {
-    return;
-  }
+void trm_smap_set_map (trm_scrmap_t *smap,
+  unsigned w, unsigned h, unsigned sw, unsigned sh
+);
 
-  n = (unsigned) r;
+void trm_smap_get_pixel (trm_scrmap_t *smap, unsigned x, unsigned y,
+  unsigned *sx, unsigned *sy, unsigned *sw, unsigned *sh
+);
 
-  if ((n == 1) && (buf[0] == 0)) {
-    s405_set_msg (sim, "break", "stop");
-    return;
-  }
-  if ((n == 1) && (buf[0] == 0x1b)) {
-    s405_set_msg (sim, "break", "stop");
-    return;
-  }
-  else if ((n == 1) && (buf[0] == 0xe0)) {
-    s405_set_msg (sim, "break", "abort");
-    return;
-  }
 
-  for (i = 0; i < n; i++) {
-    s405_set_keycode (sim, buf[i]);
-  }
-}
+#endif

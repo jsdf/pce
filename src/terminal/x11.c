@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -195,7 +195,7 @@ int xt_init_window (xterm_t *xt)
 
   wm.initial_state = NormalState;
   wm.input = True;
-//  wm_hints.icon_pixmap = icon_pixmap;
+/*  wm_hints.icon_pixmap = icon_pixmap; */
   wm.icon_pixmap = None;
   wm.flags = StateHint | IconPixmapHint | InputHint;
 
@@ -268,6 +268,7 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt->trm.set_pos = (trm_set_pos_f) &xt_set_pos;
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
   xt->trm.set_pxl = (trm_set_pxl_f) &xt_set_pxl;
+  xt->trm.set_rct = (trm_set_rct_f) &xt_set_rct;
   xt->trm.check = (trm_check_f) &xt_check;
 
   xt->init_display = 0;
@@ -381,6 +382,7 @@ void xt_crs_restore (xterm_t *xt)
   }
 }
 
+static
 void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
 {
   unsigned col;
@@ -563,16 +565,27 @@ void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
   }
 }
 
-void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
+void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y)
 {
-  if ((w == 1) && (h == 1)) {
-    XDrawPoint (xt->display, xt->back, xt->back_gc, x, y);
-//    XDrawPoint (xt->display, xt->wdw, xt->gc, x, y);
+  XDrawPoint (xt->display, xt->back, xt->back_gc, x, y);
+
+  if (x < xt->flush_x1) {
+    xt->flush_x1 = x;
   }
-  else {
-    XFillRectangle (xt->display, xt->back, xt->back_gc, x, y, w, h);
-//    XFillRectangle (xt->display, xt->wdw, xt->gc, x, y, w, h);
+  if (y < xt->flush_y1) {
+    xt->flush_y1 = y;
   }
+  if (x >= xt->flush_x2) {
+    xt->flush_x2 = x;
+  }
+  if (y >= xt->flush_y2) {
+    xt->flush_y2 = y;
+  }
+}
+
+void xt_set_rct (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  XFillRectangle (xt->display, xt->back, xt->back_gc, x, y, w, h);
 
   if (x < xt->flush_x1) {
     xt->flush_x1 = x;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/vga.h                                          *
  * Created:       2004-03-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -35,8 +35,6 @@
 typedef struct vga_t {
   video_t       vid;
 
-  scrmap_t      smap;
-
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
@@ -45,6 +43,8 @@ typedef struct vga_t {
   unsigned long base;
   unsigned long size;
 
+  unsigned      mode_80x25_w;
+  unsigned      mode_80x25_h;
   unsigned      mode_320x200_w;
   unsigned      mode_320x200_h;
   unsigned      mode_640x200_w;

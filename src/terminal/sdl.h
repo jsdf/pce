@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.h                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include <terminal/terminal.h>
+#include <terminal/scrmap.h>
 #include <libini/libini.h>
 
 #include <SDL/SDL.h>
@@ -40,22 +41,25 @@ typedef struct {
 
   SDL_Surface   *scr;
 
+  trm_scrmap_t  smap;
+
+  unsigned      wdw_w;
+  unsigned      wdw_h;
+
   unsigned      dsp_bpp;
   unsigned      scr_bpp;
 
   unsigned      mode;
   unsigned      pxl_w;
   unsigned      pxl_h;
-  unsigned      scr_w;
-  unsigned      scr_h;
-
-  unsigned      font_w;
-  unsigned      font_h;
-  unsigned char *font;
 
   unsigned      txt_w;
   unsigned      txt_h;
   unsigned char *txt_buf;
+
+  unsigned      font_w;
+  unsigned      font_h;
+  unsigned char *font;
 
   unsigned      crs_x;
   unsigned      crs_y;
@@ -93,7 +97,8 @@ void sdl_set_col (sdl_t *sdl, unsigned fg, unsigned bg);
 void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show);
 void sdl_set_pos (sdl_t *sdl, unsigned x, unsigned y);
 void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c);
-void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h);
+void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y);
+void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h);
 void sdl_check (sdl_t *sdl);
 
 

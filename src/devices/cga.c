@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -56,6 +56,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 {
   unsigned      i;
   unsigned long iobase, membase, memsize;
+  unsigned      w, h;
   cga_t         *cga;
 
   cga = (cga_t *) malloc (sizeof (cga_t));
@@ -73,16 +74,19 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->vid.dump = (pce_video_dump_f) &cga_dump;
   cga->vid.screenshot = (pce_video_screenshot_f) &cga_screenshot;
 
-  pce_smap_init (&cga->smap, 320, 200, 320, 200);
-
   for (i = 0; i < 16; i++) {
     cga->crtc_reg[i] = 0;
   }
 
-  cga->mode1_w = ini_get_lng_def (sct, "mode_320x200_w", 640);
-  cga->mode1_h = ini_get_lng_def (sct, "mode_320x200_h", 400);
-  cga->mode2_w = ini_get_lng_def (sct, "mode_640x200_w", 640);
-  cga->mode2_h = ini_get_lng_def (sct, "mode_640x200_h", 400);
+  w = ini_get_lng_def (sct, "w", 640);
+  h = ini_get_lng_def (sct, "h", 400);
+
+  cga->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+  cga->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+  cga->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
+  cga->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
+  cga->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
+  cga->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
 
   iobase = ini_get_lng_def (sct, "io", 0x3d4L);
   membase = ini_get_lng_def (sct, "membase", 0xb8000L);
@@ -125,6 +129,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 
   cga->mode = 0;
   trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_size (trm, cga->mode_80x25_w, cga->mode_80x25_h);
 
   return (&cga->vid);
 }
@@ -134,7 +139,6 @@ void cga_del (cga_t *cga)
   if (cga != NULL) {
     mem_blk_del (cga->mem);
     mem_blk_del (cga->reg);
-    pce_smap_free (&cga->smap);
     free (cga);
   }
 }
@@ -384,7 +388,6 @@ static
 void cga_mode1_update (cga_t *cga)
 {
   unsigned      x, y, i;
-  unsigned      sx, sy, sw, sh;
   unsigned      val0, val1;
   unsigned char *mem0, *mem1;
 
@@ -398,12 +401,10 @@ void cga_mode1_update (cga_t *cga)
 
       for (i = 0; i < 4; i++) {
         trm_set_col (cga->trm, cga->palette[(val0 >> 6) & 0x03], 0);
-        pce_smap_get_pixel (&cga->smap, 4 * x + i, 2 * y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (cga->trm, sx, sy, sw, sh);
+        trm_set_pxl (cga->trm, 4 * x + i, 2 * y);
 
         trm_set_col (cga->trm, cga->palette[(val1 >> 6) & 0x03], 0);
-        pce_smap_get_pixel (&cga->smap, 4 * x + i, 2 * y + 1, &sx, &sy, &sw, &sh);
-        trm_set_pxl (cga->trm, sx, sy, sw, sh);
+        trm_set_pxl (cga->trm, 4 * x + i, 2 * y + 1);
 
         val0 <<= 2;
         val1 <<= 2;
@@ -419,7 +420,6 @@ void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
   unsigned      i;
   unsigned      x, y;
-  unsigned      sx, sy, sw, sh;
   unsigned char old;
 
   old = cga->mem->data[addr];
@@ -450,8 +450,7 @@ void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
       col = (val >> 6) & 0x03;
       trm_set_col (cga->trm, cga->palette[col], 0);
 
-      pce_smap_get_pixel (&cga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (cga->trm, sx, sy, sw, sh);
+      trm_set_pxl (cga->trm, x + i, y);
     }
 
     old <<= 2;
@@ -501,7 +500,6 @@ void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
   unsigned      i;
   unsigned      x, y;
-  unsigned      sx, sy, sw, sh;
   unsigned char old;
 
   old = cga->mem->data[addr];
@@ -527,8 +525,7 @@ void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
     if ((old ^ val) & 0x80) {
       col = (val >> 7) & 0x01;
       trm_set_col (cga->trm, col ? 15 : 0, 0);
-      pce_smap_get_pixel (&cga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (cga->trm, sx, sy, sw, sh);
+      trm_set_pxl (cga->trm, x + i, y);
     }
 
     old <<= 1;
@@ -668,18 +665,17 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
   switch (newmode) {
     case 0:
       trm_set_mode (cga->trm, TERM_MODE_TEXT, 80, 25);
+      trm_set_size (cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
       break;
 
     case 1:
-      trm_set_mode (cga->trm, TERM_MODE_GRAPH, cga->mode1_w, cga->mode1_h);
-      pce_smap_free (&cga->smap);
-      pce_smap_init (&cga->smap, 320, 200, cga->mode1_w, cga->mode1_h);
+      trm_set_mode (cga->trm, TERM_MODE_GRAPH, 320, 200);
+      trm_set_size (cga->trm, cga->mode_320x200_w, cga->mode_320x200_h);
       break;
 
     case 2:
-      trm_set_mode (cga->trm, TERM_MODE_GRAPH, cga->mode2_w, cga->mode2_h);
-      pce_smap_free (&cga->smap);
-      pce_smap_init (&cga->smap, 640, 200, cga->mode2_w, cga->mode2_h);
+      trm_set_mode (cga->trm, TERM_MODE_GRAPH, 640, 200);
+      trm_set_size (cga->trm, cga->mode_640x200_w, cga->mode_640x200_h);
       break;
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/null.h                                        *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -50,7 +50,8 @@ void null_set_col (null_t *vt, unsigned fg, unsigned bg);
 void null_set_crs (null_t *vt, unsigned y1, unsigned y2, int show);
 void null_set_pos (null_t *vt, unsigned x, unsigned y);
 void null_set_chr (null_t *vt, unsigned x, unsigned y, unsigned char c);
-void null_set_pxl (null_t *vt, unsigned x, unsigned y, unsigned w, unsigned h);
+void null_set_pxl (null_t *vt, unsigned x, unsigned y);
+void null_set_rct (null_t *vt, unsigned x, unsigned y, unsigned w, unsigned h);
 void null_check (null_t *vt);
 
 

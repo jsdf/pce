@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.h                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_HGC_H
@@ -35,13 +35,14 @@
 typedef struct {
   video_t       vid;
 
-  scrmap_t      smap;
-
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
-  unsigned      mode1_w;
-  unsigned      mode1_h;
+  unsigned      mode_80x25_w;
+  unsigned      mode_80x25_h;
+
+  unsigned      mode_720x348_w;
+  unsigned      mode_720x348_h;
 
   unsigned char crtc_reg[18];
 

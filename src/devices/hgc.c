@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -86,6 +86,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 {
   unsigned i;
   unsigned iobase, membase, memsize;
+  unsigned w, h;
   hgc_t    *hgc;
 
   hgc = (hgc_t *) malloc (sizeof (hgc_t));
@@ -103,14 +104,17 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
   hgc->vid.dump = (pce_video_dump_f) &hgc_dump;
   hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
 
-  pce_smap_init (&hgc->smap, 720, 348, 720, 348);
-
   for (i = 0; i < 18; i++) {
     hgc->crtc_reg[i] = 0;
   }
 
-  hgc->mode1_w = ini_get_lng_def (sct, "mode_720x348_w", 720);
-  hgc->mode1_h = ini_get_lng_def (sct, "mode_720x348_h", 540);
+  w = ini_get_lng_def (sct, "w", 640);
+  h = ini_get_lng_def (sct, "h", 400);
+
+  hgc->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+  hgc->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+  hgc->mode_720x348_w = ini_get_lng_def (sct, "mode_720x348_w", w);
+  hgc->mode_720x348_h = ini_get_lng_def (sct, "mode_720x348_h", h);
 
   iobase = ini_get_lng_def (sct, "io", 0x3b4L);
   membase = ini_get_lng_def (sct, "membase", 0xb0000L);
@@ -153,6 +157,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
   hgc_set_colors (hgc, 0);
 
   trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_size (trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
 
   return (&hgc->vid);
 }
@@ -162,7 +167,6 @@ void hgc_del (hgc_t *hgc)
   if (hgc != NULL) {
     mem_blk_del (hgc->mem);
     mem_blk_del (hgc->reg);
-    pce_smap_free (&hgc->smap);
     free (hgc);
   }
 }
@@ -420,7 +424,6 @@ void hgc_mode1_update (hgc_t *hgc)
   unsigned      x, y, i, j;
   unsigned      val[4];
   unsigned      col1, col2;
-  unsigned      sx, sy, sw, sh;
   unsigned char *mem[4];
 
   mem[0] = hgc->mem->data;
@@ -451,8 +454,7 @@ void hgc_mode1_update (hgc_t *hgc)
             col1 = col2;
           }
 
-          pce_smap_get_pixel (&hgc->smap, 8 * x + i, 4 * y + j, &sx, &sy, &sw, &sh);
-          trm_set_pxl (hgc->trm, sx, sy, sw, sh);
+          trm_set_pxl (hgc->trm, 8 * x + i, 4 * y +j);
           val[j] <<= 1;
         }
       }
@@ -470,7 +472,6 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
   unsigned      i;
   unsigned      x, y;
-  unsigned      sx, sy, sw, sh;
   unsigned      bank;
   unsigned char old;
 
@@ -494,8 +495,7 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
   for (i = 0; i < 8; i++) {
     if ((old ^ val) & 0x80) {
       trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
-      pce_smap_get_pixel (&hgc->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (hgc->trm, sx, sy, sw, sh);
+      trm_set_pxl (hgc->trm, x + i, y);
     }
 
     old <<= 1;
@@ -618,12 +618,12 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
     switch (newmode) {
       case 0:
         trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
+        trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
         break;
 
       case 1:
-        trm_set_mode (hgc->trm, TERM_MODE_GRAPH, hgc->mode1_w, hgc->mode1_h);
-        pce_smap_free (&hgc->smap);
-        pce_smap_init (&hgc->smap, 720, 348, hgc->mode1_w, hgc->mode1_h);
+        trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
+        trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
         break;
     }
   }

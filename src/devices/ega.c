@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -75,7 +75,8 @@ static unsigned char ega_get_uint8_odd_even (ega_t *ega, unsigned long addr);
 
 video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 {
-  ega_t *ega;
+  unsigned w, h;
+  ega_t    *ega;
 
   ega = (ega_t *) malloc (sizeof (ega_t));
   if (ega == NULL) {
@@ -110,21 +111,24 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->vid.screenshot = (pce_video_screenshot_f) &ega_screenshot;
   ega->vid.clock = (pce_video_clock_f) &ega_clock;
 
-  pce_smap_init (&ega->smap, 320, 200, 320, 200);
-
   memset (ega->crtc_reg, 0xff, 24 * sizeof (unsigned char));
   memset (ega->ts_reg, 0, 5 * sizeof (unsigned char));
   memset (ega->gdc_reg, 0, 9 * sizeof (unsigned char));
   memset (ega->atc_reg, 0, 21 * sizeof (unsigned char));
 
-  ega->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", 640);
-  ega->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", 400);
-  ega->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", 640);
-  ega->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", 400);
-  ega->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", 640);
-  ega->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", 480);
-  ega->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", 640);
-  ega->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", 480);
+  w = ini_get_lng_def (sct, "w", 640);
+  h = ini_get_lng_def (sct, "h", 400);
+
+  ega->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+  ega->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+  ega->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
+  ega->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
+  ega->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
+  ega->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
+  ega->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", w);
+  ega->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", h);
+  ega->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
+  ega->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
 
   pce_log (MSG_INF, "video:\tEGA io=0x03b0 membase=0xa000 memsize=262144\n");
 
@@ -155,6 +159,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->mode = 0;
 
   trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_size (trm, ega->mode_80x25_w, ega->mode_80x25_h);
 
   return (&ega->vid);
 }
@@ -164,7 +169,6 @@ void ega_del (ega_t *ega)
   if (ega != NULL) {
     mem_blk_del (ega->mem);
     mem_blk_del (ega->reg);
-    pce_smap_free (&ega->smap);
     free (ega->data);
     free (ega);
   }
@@ -458,7 +462,6 @@ static
 void ega_update_cga4 (ega_t *ega)
 {
   unsigned      i, x, y, w;
-  unsigned      sx, sy, sw, sh;
   unsigned      col1, col2;
   unsigned      rofs;
   unsigned long addr;
@@ -488,8 +491,7 @@ void ega_update_cga4 (ega_t *ega)
           col1 = col2;
         }
 
-        pce_smap_get_pixel (&ega->smap, 4 * x + i, y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (ega->trm, sx, sy, sw, sh);
+        trm_set_pxl (ega->trm, 4 * x + i, y);
 
         msk = msk >> 2;
       }
@@ -510,7 +512,6 @@ static
 void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
-  unsigned      sx, sy, sw, sh;
   unsigned      x, y, c;
   unsigned      rofs;
   unsigned char msk;
@@ -583,8 +584,7 @@ void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4
       c &= ega->atc_reg[0x12];
 
       trm_set_col (ega->trm, c, 0);
-      pce_smap_get_pixel (&ega->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (ega->trm, sx, sy, sw, sh);
+      trm_set_pxl (ega->trm, x + i, y);
     }
   }
 }
@@ -649,7 +649,6 @@ static
 void ega_update_ega16 (ega_t *ega)
 {
   unsigned      i, x, y, w;
-  unsigned      sx, sy, sw, sh;
   unsigned      col1, col2;
   unsigned      rofs;
   unsigned long addr;
@@ -679,8 +678,7 @@ void ega_update_ega16 (ega_t *ega)
           col1 = col2;
         }
 
-        pce_smap_get_pixel (&ega->smap, 8 * x + i, y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (ega->trm, sx, sy, sw, sh);
+        trm_set_pxl (ega->trm, 8 * x + i, y);
 
         msk = msk >> 1;
       }
@@ -706,7 +704,6 @@ static
 void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
-  unsigned      sx, sy, sw, sh;
   unsigned      x, y, c, m;
   unsigned      rofs;
   unsigned char msk;
@@ -781,8 +778,7 @@ void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[
       c &= ega->atc_reg[0x12];
 
       trm_set_col (ega->trm, c, 0);
-      pce_smap_get_pixel (&ega->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (ega->trm, sx, sy, sw, sh);
+      trm_set_pxl (ega->trm, x + i, y);
     }
 
     m = m >> 1;
@@ -1036,6 +1032,8 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
 
   switch (mode) {
     case 0:
+      sw = ega->mode_80x25_w;
+      sh = ega->mode_80x25_h;
       trm_set_mode (ega->trm, TERM_MODE_TEXT, w, h);
       break;
 
@@ -1061,11 +1059,14 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
         sh = h;
       }
 
-      trm_set_mode (ega->trm, TERM_MODE_GRAPH, sw, sh);
-      pce_smap_free (&ega->smap);
-      pce_smap_init (&ega->smap, w, h, sw, sh);
+      trm_set_mode (ega->trm, TERM_MODE_GRAPH, w, h);
       break;
+
+    default:
+      return;
   }
+
+  trm_set_size (ega->trm, sw, sh);
 
   ega->mode = mode;
   ega->mode_w = w;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -71,6 +71,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 {
   unsigned i;
   unsigned iobase, membase, memsize;
+  unsigned w, h;
   mda_t    *mda;
 
   mda = (mda_t *) malloc (sizeof (mda_t));
@@ -91,6 +92,12 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
   for (i = 0; i < 18; i++) {
     mda->crtc_reg[i] = 0;
   }
+
+  w = ini_get_lng_def (sct, "w", 640);
+  h = ini_get_lng_def (sct, "h", 400);
+
+  mda->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+  mda->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
 
   iobase = ini_get_lng_def (sct, "io", 0x3b4L);
   membase = ini_get_lng_def (sct, "membase", 0xb0000);
@@ -127,6 +134,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
   mda_set_colors (mda);
 
   trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+  trm_set_size (trm, mda->mode_80x25_w, mda->mode_80x25_h);
 
   return (&mda->vid);
 }

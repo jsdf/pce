@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/vga.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -165,8 +165,6 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
   vga->vid.screenshot = (pce_video_screenshot_f) &vga_screenshot;
   vga->vid.clock = (pce_video_clock_f) &vga_clock;
 
-  pce_smap_init (&vga->smap, 320, 200, 320, 200);
-
   memset (vga->crtc_reg, 0xff, 24 * sizeof (unsigned char));
   memset (vga->ts_reg, 0, 5 * sizeof (unsigned char));
   memset (vga->gdc_reg, 0, 9 * sizeof (unsigned char));
@@ -224,7 +222,6 @@ void vga_del (vga_t *vga)
   if (vga != NULL) {
     mem_blk_del (vga->mem);
     mem_blk_del (vga->reg);
-    pce_smap_free (&vga->smap);
     free (vga->data);
     free (vga);
   }
@@ -517,7 +514,6 @@ static
 void vga_update_cga4 (vga_t *vga)
 {
   unsigned      i, x, y, w;
-  unsigned      sx, sy, sw, sh;
   unsigned      col1, col2;
   unsigned      rofs;
   unsigned long addr;
@@ -547,8 +543,7 @@ void vga_update_cga4 (vga_t *vga)
           col1 = col2;
         }
 
-        pce_smap_get_pixel (&vga->smap, 4 * x + i, y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (vga->trm, sx, sy, sw, sh);
+        trm_set_pxl (vga->trm, 4 * x + i, y);
 
         msk = msk >> 2;
       }
@@ -569,7 +564,6 @@ static
 void vga_set_latches_cga4 (vga_t *vga, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
-  unsigned      sx, sy, sw, sh;
   unsigned      x, y, c;
   unsigned      rofs;
   unsigned char msk;
@@ -642,8 +636,7 @@ void vga_set_latches_cga4 (vga_t *vga, unsigned long addr, unsigned char latch[4
       c &= vga->atc_reg[0x12];
 
       trm_set_col (vga->trm, c, 0);
-      pce_smap_get_pixel (&vga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (vga->trm, sx, sy, sw, sh);
+      trm_set_pxl (vga->trm, x + i, y);
     }
   }
 }
@@ -708,7 +701,6 @@ static
 void vga_update_ega16 (vga_t *vga)
 {
   unsigned      i, x, y, w;
-  unsigned      sx, sy, sw, sh;
   unsigned      col1, col2;
   unsigned      rofs;
   unsigned long addr;
@@ -738,8 +730,7 @@ void vga_update_ega16 (vga_t *vga)
           col1 = col2;
         }
 
-        pce_smap_get_pixel (&vga->smap, 8 * x + i, y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (vga->trm, sx, sy, sw, sh);
+        trm_set_pxl (vga->trm, 8 * x + i, y);
 
         msk = msk >> 1;
       }
@@ -765,7 +756,6 @@ static
 void vga_set_latches_ega16 (vga_t *vga, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
-  unsigned      sx, sy, sw, sh;
   unsigned      x, y, c, m;
   unsigned      rofs;
   unsigned char msk;
@@ -840,8 +830,7 @@ void vga_set_latches_ega16 (vga_t *vga, unsigned long addr, unsigned char latch[
       c &= vga->atc_reg[0x12];
 
       trm_set_col (vga->trm, c, 0);
-      pce_smap_get_pixel (&vga->smap, x + i, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (vga->trm, sx, sy, sw, sh);
+      trm_set_pxl (vga->trm, x + i, y);
     }
 
     m = m >> 1;
@@ -863,7 +852,6 @@ static
 void vga_update_vga256 (vga_t *vga)
 {
   unsigned      x, y;
-  unsigned      sx, sy, sw, sh;
   unsigned      col;
   unsigned      rofs;
   unsigned long addr;
@@ -881,8 +869,7 @@ void vga_update_vga256 (vga_t *vga)
       }
 
       trm_set_col (vga->trm, col, 0);
-      pce_smap_get_pixel (&vga->smap, x, y, &sx, &sy, &sw, &sh);
-      trm_set_pxl (vga->trm, sx, sy, sw, sh);
+      trm_set_pxl (vga->trm, x, y);
     }
 
     addr = (addr + rofs) & 0xffff;
@@ -896,7 +883,6 @@ void vga_set_latches_vga256 (vga_t *vga, unsigned long addr, unsigned char latch
 {
   unsigned i;
   unsigned x, y;
-  unsigned sx, sy, sw, sh;
 
   if (vga->crtc_reg[0x14] & 0x20) {
     addr = addr & 0xfffc;
@@ -912,8 +898,7 @@ void vga_set_latches_vga256 (vga_t *vga, unsigned long addr, unsigned char latch
     vga->data[addr] = latch[i];
 
     trm_set_col (vga->trm, latch[i], 0);
-    pce_smap_get_pixel (&vga->smap, x + i, y, &sx, &sy, &sw, &sh);
-    trm_set_pxl (vga->trm, sx, sy, sw, sh);
+    trm_set_pxl (vga->trm, x + i, y);
 
     addr += 0x10000UL;
   }
@@ -1225,7 +1210,9 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
 
   switch (mode) {
     case 0:
-      trm_set_mode (vga->trm, TERM_MODE_TEXT, w, h);
+      trm_set_mode (vga->trm, TERM_MODE_TEXT, 80, 25);
+      sw = vga->mode_80x25_w;
+      sh = vga->mode_80x25_h;
       break;
 
     case 16:
@@ -1251,11 +1238,14 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
         sh = h;
       }
 
-      trm_set_mode (vga->trm, TERM_MODE_GRAPH, sw, sh);
-      pce_smap_free (&vga->smap);
-      pce_smap_init (&vga->smap, w, h, sw, sh);
+      trm_set_mode (vga->trm, TERM_MODE_GRAPH, w, h);
       break;
+
+    default:
+      return;
   }
+
+  trm_set_size (vga->trm, sw, sh);
 
   vga->mode = mode;
   vga->mode_w = w;

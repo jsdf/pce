@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -59,6 +59,7 @@ unsigned char sdl_colmap[16][3] = {
 };
 
 
+static
 int sdl_set_font_psf (sdl_t *sdl, const char *fname)
 {
   FILE          *fp;
@@ -90,27 +91,96 @@ int sdl_set_font_psf (sdl_t *sdl, const char *fname)
   return (0);
 }
 
+static
+Uint32 sdl_get_col (sdl_t *sdl, unsigned idx)
+{
+  Uint32 col;
+
+  idx &= 0xff;
+
+  col = SDL_MapRGB (sdl->scr->format,
+    sdl->colmap[idx][0], sdl->colmap[idx][1], sdl->colmap[idx][2]
+  );
+
+  return (col);
+}
+
+static
+void sdl_set_upd_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  if (x < sdl->upd_x1) {
+    sdl->upd_x1 = x;
+  }
+
+  if (y < sdl->upd_y1) {
+    sdl->upd_y1 = y;
+  }
+
+  if ((x + w) > sdl->upd_x2) {
+    sdl->upd_x2 = x + w - 1;
+  }
+
+  if ((y + h) > sdl->upd_y2) {
+    sdl->upd_y2 = y + h - 1;
+  }
+}
+
+static
+void sdl_clr_upd_rct (sdl_t *sdl)
+{
+  sdl->upd_x1 = sdl->pxl_w;
+  sdl->upd_y1 = sdl->pxl_h;
+  sdl->upd_x2 = 0;
+  sdl->upd_y2 = 0;
+}
+
+static
+void sdl_update (sdl_t *sdl)
+{
+  unsigned w, h;
+
+  if ((sdl->upd_x2 < sdl->upd_x1) || (sdl->upd_y2 < sdl->upd_y1)) {
+    return;
+  }
+
+  w = sdl->upd_x2 - sdl->upd_x1 + 1;
+  h = sdl->upd_y2 - sdl->upd_y1 + 1;
+  SDL_UpdateRect (sdl->scr, sdl->upd_x1, sdl->upd_y1, w, h);
+
+  sdl_clr_upd_rct (sdl);
+}
+
+static
 int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h)
 {
+  if (sdl->scr != NULL) {
+    SDL_FreeSurface (sdl->scr);
+  }
+
   sdl->scr = NULL;
 
   if (sdl->dsp_bpp == 2) {
-    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 16, SDL_HWSURFACE);
+    sdl->scr = SDL_SetVideoMode (w, h, 16, SDL_HWSURFACE | SDL_RESIZABLE);
     sdl->scr_bpp = 2;
   }
   else if (sdl->dsp_bpp == 4) {
-    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_HWSURFACE);
+    sdl->scr = SDL_SetVideoMode (w, h, 32, SDL_HWSURFACE | SDL_RESIZABLE);
     sdl->scr_bpp = 4;
   }
 
   if (sdl->scr == NULL) {
-    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 16, SDL_SWSURFACE);
+    sdl->scr = SDL_SetVideoMode (w, h, 16, SDL_SWSURFACE | SDL_RESIZABLE);
     sdl->scr_bpp = 2;
   }
 
   if (sdl->scr == NULL) {
     return (1);
   }
+
+  sdl->wdw_w = w;
+  sdl->wdw_h = h;
+
+  trm_smap_set_map (&sdl->smap, sdl->pxl_w, sdl->pxl_h, w, h);
 
   return (0);
 }
@@ -139,16 +209,16 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->trm.set_pos = (trm_set_pos_f) &sdl_set_pos;
   sdl->trm.set_chr = (trm_set_chr_f) &sdl_set_chr;
   sdl->trm.set_pxl = (trm_set_pxl_f) &sdl_set_pxl;
+  sdl->trm.set_rct = (trm_set_rct_f) &sdl_set_rct;
   sdl->trm.check = (trm_check_f) &sdl_check;
 
   if (SDL_Init (SDL_INIT_VIDEO) < 0) {
     return (NULL);
   }
 
-  sdl->mode = TERM_MODE_TEXT;
-  sdl->scr_w = 80;
-  sdl->scr_h = 25;
+  sdl->scr = NULL;
 
+  sdl->mode = TERM_MODE_TEXT;
   sdl->txt_w = 80;
   sdl->txt_h = 25;
   sdl->txt_buf = (unsigned char *) malloc (3 * 80 * 25);
@@ -181,13 +251,15 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->fgidx = 7;
   sdl->bgidx = 0;
 
-  sdl->pxl_w = sdl->scr_w * sdl->font_w;
-  sdl->pxl_h = sdl->scr_h * sdl->font_h;
+  sdl->pxl_w = sdl->txt_w * sdl->font_w;
+  sdl->pxl_h = sdl->txt_h * sdl->font_h;
 
-  sdl->upd_x1 = sdl->pxl_w;
-  sdl->upd_y1 = sdl->pxl_h;
-  sdl->upd_x2 = 0;
-  sdl->upd_y2 = 0;
+  sdl->wdw_w = sdl->pxl_w;
+  sdl->wdw_h = sdl->pxl_h;
+
+  trm_smap_init (&sdl->smap);
+
+  sdl_clr_upd_rct (sdl);
 
   sdl->grab = 0;
 
@@ -234,6 +306,8 @@ void sdl_del (sdl_t *sdl)
       SDL_FreeSurface (sdl->scr);
     }
 
+    trm_smap_free (&sdl->smap);
+
     free (sdl->txt_buf);
     free (sdl->font);
     free (sdl);
@@ -242,51 +316,88 @@ void sdl_del (sdl_t *sdl)
   SDL_Quit();
 }
 
-Uint32 sdl_get_col (sdl_t *sdl, unsigned idx)
+static
+void sdls_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h, Uint32 col)
 {
-  Uint32 col;
+  unsigned i, j;
+  Uint8    *p;
 
-  idx &= 0xff;
+  if (sdl->scr_bpp == 1) {
+    p = (Uint8 *) sdl->scr->pixels + y * sdl->scr->pitch
+      + x * sdl->scr->format->BytesPerPixel;
 
-  col = SDL_MapRGB (sdl->scr->format,
-    sdl->colmap[idx][0], sdl->colmap[idx][1], sdl->colmap[idx][2]
-  );
+    for (j = 0; j < h; j++) {
+      for (i = 0; i < w; i++) {
+        *p = col;
+        p += 1;
+      }
 
-  return (col);
+      p += sdl->scr->pitch - w;
+    }
+  }
+  else if (sdl->scr_bpp == 2) {
+    p = (Uint8 *) sdl->scr->pixels + y * sdl->scr->pitch
+      + x * sdl->scr->format->BytesPerPixel;
+
+    for (j = 0; j < h; j++) {
+      for (i = 0; i < w; i++) {
+        *(Uint16 *)p = col;
+        p += 2;
+      }
+
+      p += sdl->scr->pitch - (w << 1);
+    }
+  }
+  else if (sdl->scr_bpp == 4) {
+    p = (Uint8 *) sdl->scr->pixels + y * sdl->scr->pitch
+      + x * sdl->scr->format->BytesPerPixel;
+
+    for (j = 0; j < h; j++) {
+      for (i = 0; i < w; i++) {
+        *(Uint32 *)p = col;
+        p += 4;
+      }
+
+      p += sdl->scr->pitch - (w << 2);
+    }
+  }
 }
 
-void sdl_set_upd_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
+static
+void sdl_set_pixel (sdl_t *sdl, unsigned x, unsigned y, Uint32 col)
 {
-  if (x < sdl->upd_x1) {
-    sdl->upd_x1 = x;
-  }
+  unsigned sx, sy, sw, sh;
 
-  if (y < sdl->upd_y1) {
-    sdl->upd_y1 = y;
-  }
+  trm_smap_get_pixel (&sdl->smap, x, y, &sx, &sy, &sw, &sh);
 
-  if ((x + w) > sdl->upd_x2) {
-    sdl->upd_x2 = x + w - 1;
-  }
+  sdl_set_upd_rct (sdl, sx, sy, sw, sh);
 
-  if ((y + h) > sdl->upd_y2) {
-    sdl->upd_y2 = y + h - 1;
-  }
+  sdls_set_rct (sdl, sx, sy, sw, sh, col);
 }
 
-void sdl_clr_upd_rct (sdl_t *sdl)
+static
+void sdl_set_rect (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h, Uint32 col)
 {
-  sdl->upd_x1 = sdl->pxl_w;
-  sdl->upd_y1 = sdl->pxl_h;
-  sdl->upd_x2 = 0;
-  sdl->upd_y2 = 0;
+  unsigned x1, y1, w1, h1;
+  unsigned x2, y2, w2, h2;
+
+  trm_smap_get_pixel (&sdl->smap, x, y, &x1, &y1, &w1, &h1);
+  trm_smap_get_pixel (&sdl->smap, x + w - 1, y + h - 1, &x2, &y2, &w2, &h2);
+
+  w1 = x2 - x1 + w2;
+  h1 = y2 - y1 + h2;
+
+  sdl_set_upd_rct (sdl, x1, y1, w1, h1);
+
+  sdls_set_rct (sdl, x1, y1, w1, h1, col);
 }
 
+static
 void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
-  Uint32 fg, Uint32 bg, unsigned update)
+  Uint32 fg, Uint32 bg)
 {
   unsigned      i, j;
-  Uint8         *p;
+  unsigned char val;
   unsigned char *fnt;
 
   x *= sdl->font_w;
@@ -294,114 +405,69 @@ void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
 
   fnt = sdl->font + c * sdl->font_h;
 
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    if (SDL_LockSurface (sdl->scr) < 0) {
-      return;
-    }
-  }
+  val = 0;
 
-  if (sdl->scr_bpp == 2) {
-    for (j = 0; j < sdl->font_h; j++) {
-      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-        + x * sdl->scr->format->BytesPerPixel;
-
-      for (i = 0; i < sdl->font_w; i++) {
-        *(Uint16 *)p = (*fnt & (0x80 >> i)) ? fg : bg;
-        p += sdl->scr->format->BytesPerPixel;
+  for (j = 0; j < sdl->font_h; j++) {
+    for (i = 0; i < sdl->font_w; i++) {
+      if ((i & 7) == 0) {
+        val = *(fnt++);
       }
 
-      fnt += 1;
+      sdl_set_pixel (sdl, x + i, y + j, (val & 0x80) ? fg : bg);
+
+      val = (val & 0x7f) << 1;
     }
-  }
-  else if (sdl->scr_bpp == 4) {
-    for (j = 0; j < sdl->font_h; j++) {
-      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-        + x * sdl->scr->format->BytesPerPixel;
-
-      for (i = 0; i < sdl->font_w; i++) {
-        *(Uint32 *)p = (*fnt & (0x80 >> i)) ? fg : bg;
-        p += sdl->scr->format->BytesPerPixel;
-      }
-
-      fnt += 1;
-    }
-  }
-
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    SDL_UnlockSurface (sdl->scr);
-  }
-
-  switch (update) {
-    case PCESDL_UPDATE_NOW:
-      SDL_UpdateRect (sdl->scr, x, y, sdl->font_w, sdl->font_h);
-      break;
-
-    case PCESDL_UPDATE_DELAY:
-      sdl_set_upd_rct (sdl, x, y, sdl->font_w, sdl->font_h);
-      break;
   }
 }
 
-void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h,
-  Uint32 col, unsigned update)
+static
+void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
 {
-  unsigned i, j;
-  Uint8    *p;
+  unsigned i, h;
+  Uint32   col;
 
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    if (SDL_LockSurface (sdl->scr) < 0) {
-      return;
-    }
+  if (sdl->crs_y2 < sdl->crs_y1) {
+    return;
   }
 
-  if (sdl->scr_bpp == 2) {
-    for (j = 0; j < h; j++) {
-      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-        + x * sdl->scr->format->BytesPerPixel;
-
-      for (i = 0; i < w; i++) {
-        *(Uint16 *) p = col;
-        p += sdl->scr->format->BytesPerPixel;
-      }
-    }
-  }
-  else if (sdl->scr_bpp == 4) {
-    for (j = 0; j < h; j++) {
-      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-        + x * sdl->scr->format->BytesPerPixel;
-
-      for (i = 0; i < w; i++) {
-        *(Uint32 *) p = col;
-        p += sdl->scr->format->BytesPerPixel;
-      }
-    }
+  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
+    return;
   }
 
-  if (SDL_MUSTLOCK (sdl->scr)) {
-    SDL_UnlockSurface (sdl->scr);
+  i = 3 * (sdl->txt_w * y + x);
+  col = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
+
+  x *= sdl->font_w;
+  y = sdl->font_h * y + sdl->crs_y1;
+  h = sdl->crs_y2 - sdl->crs_y1 + 1;
+
+  sdl_set_rect (sdl, x, y, sdl->font_w, h, col);
+}
+
+static
+void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
+{
+  unsigned i;
+  unsigned chr;
+  Uint32   fg, bg;
+
+  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
+    return;
   }
 
-  switch (update) {
-    case PCESDL_UPDATE_NOW:
-      SDL_UpdateRect (sdl->scr, x, y, w, h);
-      break;
+  i = 3 * (sdl->txt_w * y + x);
 
-    case PCESDL_UPDATE_DELAY:
-      sdl_set_upd_rct (sdl, x, y, w, h);
-      break;
-  }
+  chr = sdl->txt_buf[i];
+  fg = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
+  bg = sdl_get_col (sdl, sdl->txt_buf[i + 2]);
+
+  sdl_set_chr_xyc (sdl, x, y, chr, fg, bg);
 }
 
 void sdl_set_mode (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
 {
-  if (sdl->scr != NULL) {
-    SDL_FreeSurface (sdl->scr);
-  }
-
   if (m == TERM_MODE_TEXT) {
     sdl->mode = TERM_MODE_TEXT;
-    sdl->scr_w = w;
-    sdl->scr_h = h;
     sdl->txt_w = w;
     sdl->txt_h = h;
     sdl->pxl_w = w * sdl->font_w;
@@ -412,23 +478,19 @@ void sdl_set_mode (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
   }
   else {
     sdl->mode = TERM_MODE_GRAPH;
-    sdl->scr_w = w;
-    sdl->scr_h = h;
     sdl->pxl_w = w;
     sdl->pxl_h = h;
     sdl->crs_on = 0;
   }
 
-  sdl_set_window_size (sdl, sdl->pxl_w, sdl->pxl_h);
-
-  sdl->upd_x1 = sdl->pxl_w;
-  sdl->upd_y1 = sdl->pxl_h;
-  sdl->upd_x2 = 0;
-  sdl->upd_y2 = 0;
+  sdl_clr_upd_rct (sdl);
 }
 
 void sdl_set_size (sdl_t *sdl, unsigned w, unsigned h)
 {
+  if ((w > 0) && (h > 0)) {
+    sdl_set_window_size (sdl, w, h);
+  }
 }
 
 void sdl_set_map (sdl_t *sdl, unsigned i, unsigned r, unsigned g, unsigned b)
@@ -459,50 +521,14 @@ void sdl_set_col (sdl_t *sdl, unsigned fg, unsigned bg)
   sdl->bg = sdl_get_col (sdl, bg);
 }
 
-void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
-{
-  unsigned i, h;
-  Uint32   col;
-
-  if (sdl->crs_y2 < sdl->crs_y1) {
-    return;
-  }
-
-  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
-    return;
-  }
-
-  i = 3 * (sdl->txt_w * y + x);
-  col = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
-
-  x *= sdl->font_w;
-  y = sdl->font_h * y + sdl->crs_y1;
-  h = sdl->crs_y2 - sdl->crs_y1 + 1;
-
-  sdl_set_rct (sdl, x, y, sdl->font_w, h, col, sdl->upd_text);
-}
-
-void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
-{
-  unsigned i;
-  unsigned chr;
-  Uint32   fg, bg;
-
-  if ((x >= sdl->txt_w) || (y >= sdl->txt_h)) {
-    return;
-  }
-
-  i = 3 * (sdl->txt_w * y + x);
-
-  chr = sdl->txt_buf[i];
-  fg = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
-  bg = sdl_get_col (sdl, sdl->txt_buf[i + 2]);
-
-  sdl_set_chr_xyc (sdl, x, y, chr, fg, bg, sdl->upd_text);
-}
-
 void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show)
 {
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
   if (sdl->crs_on) {
     sdl_crs_erase (sdl, sdl->crs_x, sdl->crs_y);
   }
@@ -518,10 +544,24 @@ void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2, int show)
   if (sdl->crs_on) {
     sdl_crs_draw (sdl, sdl->crs_x, sdl->crs_y);
   }
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  if (sdl->upd_text == PCESDL_UPDATE_NOW) {
+    sdl_update (sdl);
+  }
 }
 
 void sdl_set_pos (sdl_t *sdl, unsigned x, unsigned y)
 {
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
   if (sdl->crs_on) {
     sdl_crs_erase (sdl, sdl->crs_x, sdl->crs_y);
   }
@@ -531,6 +571,14 @@ void sdl_set_pos (sdl_t *sdl, unsigned x, unsigned y)
 
   if (sdl->crs_on) {
     sdl_crs_draw (sdl, sdl->crs_x, sdl->crs_y);
+  }
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  if (sdl->upd_text == PCESDL_UPDATE_NOW) {
+    sdl_update (sdl);
   }
 }
 
@@ -542,22 +590,69 @@ void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c)
     return;
   }
 
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
   i = 3 * (sdl->txt_w * y + x);
 
   sdl->txt_buf[i] = c;
   sdl->txt_buf[i + 1] = sdl->fgidx;
   sdl->txt_buf[i + 2] = sdl->bgidx;
 
-  sdl_set_chr_xyc (sdl, x, y, c, sdl->fg, sdl->bg, sdl->upd_text);
+  sdl_set_chr_xyc (sdl, x, y, c, sdl->fg, sdl->bg);
 
   if (sdl->crs_on && (sdl->crs_x == x) && (sdl->crs_y == y)) {
     sdl_crs_draw (sdl, x, y);
   }
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  if (sdl->upd_text == PCESDL_UPDATE_NOW) {
+    sdl_update (sdl);
+  }
 }
 
-void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
+void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y)
 {
-  sdl_set_rct (sdl, x, y, w, h, sdl->fg, sdl->upd_graph);
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
+  sdl_set_pixel (sdl, x, y, sdl->fg);
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  if (sdl->upd_graph == PCESDL_UPDATE_NOW) {
+    sdl_update (sdl);
+  }
+}
+
+void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    if (SDL_LockSurface (sdl->scr) < 0) {
+      return;
+    }
+  }
+
+  sdl_set_rect (sdl, x, y, w, h, sdl->fg);
+
+  if (SDL_MUSTLOCK (sdl->scr)) {
+    SDL_UnlockSurface (sdl->scr);
+  }
+
+  if (sdl->upd_graph == PCESDL_UPDATE_NOW) {
+    sdl_update (sdl);
+  }
 }
 
 void sdl_send_key_code (sdl_t *sdl, unsigned long code)
@@ -686,25 +781,17 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
 
 void sdl_check (sdl_t *sdl)
 {
-  SDL_Event evt;
+  SDL_Event     evt;
   static Uint32 ticks1 = 0;
   Uint32        ticks2;
 
   if ((sdl->upd_x1 <= sdl->upd_x2) && (sdl->upd_y1 <= sdl->upd_y2)) {
     ticks2 = SDL_GetTicks();
     if ((ticks2 < ticks1) || ((ticks2 - ticks1) > sdl->upd_freq)) {
-      unsigned w, h;
-
       ticks1 = ticks2;
 
-      w = sdl->upd_x2 - sdl->upd_x1 + 1;
-      h = sdl->upd_y2 - sdl->upd_y1 + 1;
-      SDL_UpdateRect (sdl->scr, sdl->upd_x1, sdl->upd_y1, w, h);
-
-      sdl->upd_x1 = sdl->pxl_w;
-      sdl->upd_y1 = sdl->pxl_h;
-      sdl->upd_x2 = 0;
-      sdl->upd_y2 = 0;
+      sdl_update (sdl);
+      sdl_clr_upd_rct (sdl);
     }
   }
 
@@ -718,52 +805,49 @@ void sdl_check (sdl_t *sdl)
         key = evt.key.keysym.sym;
 
         if (key == SDLK_PAUSE) {
-          if (sdl->trm.set_brk != NULL) {
-            sdl->trm.set_brk (sdl->trm.key_ext, 2);
-          }
+          trm_set_msg (&sdl->trm, "break", "abort");
         }
         else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LALT)) {
-          if (sdl->trm.set_brk != NULL) {
-            sdl->trm.set_brk (sdl->trm.key_ext, 2);
-          }
+          trm_set_msg (&sdl->trm, "break", "abort");
         }
         else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
-          if (sdl->trm.set_brk != NULL) {
-            sdl->trm.set_brk (sdl->trm.key_ext, 1);
-          }
+          trm_set_msg (&sdl->trm, "break", "stop");
         }
         else if ((key == SDLK_PRINT) && (mod == 0)) {
-          if (sdl->trm.set_brk != NULL) {
-            sdl->trm.set_brk (sdl->trm.key_ext, 3);
-          }
+          trm_set_msg (&sdl->trm, "video.screenshot", "");
         }
         else {
           unsigned long code;
 
-          code = sdl_get_key_code (sdl, evt.key.keysym.sym, 1);
-          if (code != 0) {
-            sdl_send_key_code (sdl, code);
+          if (evt.key.keysym.sym != SDLK_PAUSE) {
+            code = sdl_get_key_code (sdl, evt.key.keysym.sym, 1);
+            if (code != 0) {
+              sdl_send_key_code (sdl, code);
+            }
           }
         }
       }
-        break;
+      break;
 
       case SDL_KEYUP: {
-          unsigned long code;
+        unsigned long code;
 
-          code = sdl_get_key_code (sdl, evt.key.keysym.sym, 0);
-          if (code != 0) {
-            sdl_send_key_code (sdl, code);
-          }
+        code = sdl_get_key_code (sdl, evt.key.keysym.sym, 0);
+        if (code != 0) {
+          sdl_send_key_code (sdl, code);
         }
-        break;
+      }
+      break;
 
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
         if (sdl->trm.set_mse != NULL) {
           unsigned b;
+          SDLMod mod;
 
-          if ((evt.type == SDL_MOUSEBUTTONDOWN) && (evt.button.button == SDL_BUTTON_MIDDLE)) {
+          mod = SDL_GetModState();
+
+          if ((evt.type == SDL_MOUSEBUTTONDOWN) && (evt.button.button == SDL_BUTTON_MIDDLE) && (mod & KMOD_LCTRL)) {
             if (sdl->grab == 0) {
               sdl->grab = 1;
               SDL_ShowCursor (0);
@@ -784,7 +868,7 @@ void sdl_check (sdl_t *sdl)
         break;
 
       case SDL_MOUSEMOTION:
-        if ((sdl->trm.set_mse != NULL) && (sdl->grab)) {
+        if (sdl->grab && (sdl->trm.set_mse != NULL)) {
           unsigned b;
 
           b = SDL_GetMouseState (NULL, NULL);
@@ -792,6 +876,11 @@ void sdl_check (sdl_t *sdl)
 
           sdl->trm.set_mse (sdl->trm.mse_ext, evt.motion.xrel, evt.motion.yrel, b);
         }
+        break;
+
+      case SDL_VIDEORESIZE:
+        sdl_set_window_size (sdl, evt.resize.w, evt.resize.h);
+        trm_set_msg (&sdl->trm, "video.redraw", "1");
         break;
 
       default:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/disk.c                                         *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -540,6 +540,8 @@ int dsk_part_set_partition (disk_t *dsk,
 
   p->mbr[510] = 0x55;
   p->mbr[511] = 0xaa;
+
+  return (0);
 }
 
 disk_t *dsk_part_new (unsigned d,

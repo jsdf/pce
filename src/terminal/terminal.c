@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -32,6 +32,9 @@ void trm_init (terminal_t *trm)
 {
   trm->ext = NULL;
 
+  trm->msg_ext = NULL;
+  trm->set_msg = NULL;
+
   trm->key_ext = NULL;
   trm->set_key = NULL;
 
@@ -49,6 +52,8 @@ void trm_init (terminal_t *trm)
   trm->set_pos = NULL;
   trm->set_chr = NULL;
   trm->set_pxl = NULL;
+  trm->set_rct = NULL;
+
   trm->check = NULL;
 }
 
@@ -60,6 +65,13 @@ void trm_del (terminal_t *trm)
 {
   if (trm->del != NULL) {
     trm->del (trm->ext);
+  }
+}
+
+void trm_set_msg (terminal_t *trm, const char *msg, const char *val)
+{
+  if (trm->set_msg != NULL) {
+    trm->set_msg (trm->msg_ext, msg, val);
   }
 }
 
@@ -112,10 +124,26 @@ void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c)
   }
 }
 
-void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h)
+void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y)
 {
   if (trm->set_pxl != NULL) {
-    trm->set_pxl (trm->ext, x, y, w, h);
+    trm->set_pxl (trm->ext, x, y);
+  }
+}
+
+void trm_set_rct (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  unsigned i, j;
+
+  if (trm->set_rct != NULL) {
+    trm->set_rct (trm->ext, x, y, w, h);
+  }
+  else if (trm->set_pxl != NULL) {
+    for (j = 0; j < h; j++) {
+      for (i = 0; i < w; i++) {
+        trm->set_pxl (trm->ext, x + i, y + j);
+      }
+    }
   }
 }
 

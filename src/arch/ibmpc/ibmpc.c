@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -31,9 +31,6 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
-
-void pc_break (ibmpc_t *pc, unsigned char val);
-void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
 
 static
@@ -390,6 +387,9 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
   pc->trm->key_ext = pc;
   pc->trm->set_key = (set_uint8_f) &pc_set_keycode;
   pc->trm->set_brk = (set_uint8_f) &pc_break;
+
+  pc->trm->msg_ext = pc;
+  pc->trm->set_msg = (trm_set_msg_f) &pc_set_msg;
 }
 
 static
@@ -1008,13 +1008,17 @@ void pc_clock (ibmpc_t *pc)
 /*  pc->clk_div[3] += n; */
 }
 
-void pc_screenshot (ibmpc_t *pc)
+void pc_screenshot (ibmpc_t *pc, const char *fname)
 {
   static unsigned i = 0;
-  char            fname[256];
+  char            tmp[256];
   FILE            *fp;
 
-  sprintf (fname, "snap%04u.dat", i++);
+  if (fname == NULL) {
+    sprintf (tmp, "snap%04u.dat", i++);
+    fname = tmp;
+  }
+
   fp = fopen (fname, "wb");
   if (fp == NULL) {
     return;
@@ -1064,9 +1068,6 @@ void pc_break (ibmpc_t *pc, unsigned char val)
 
   if ((val == PCE_BRK_STOP) || (val == PCE_BRK_ABORT)) {
     pc->brk = val;
-  }
-  else if (val == PCE_BRK_SNAP) {
-    pc_screenshot (pc);
   }
 }
 
@@ -1119,4 +1120,36 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
     e8259_set_irq1 (&pc->pic, 1);
   }
 #endif
+}
+
+void pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
+{
+  if (strcmp (msg, "break") == 0) {
+    if (strcmp (val, "stop") == 0) {
+      pc->brk = PCE_BRK_STOP;
+      return;
+    }
+    else if (strcmp (val, "abort") == 0) {
+      pc->brk = PCE_BRK_ABORT;
+      return;
+    }
+  }
+
+  pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
+
+  if (strcmp (msg, "video.redraw") == 0) {
+    pce_video_update (pc->video);
+    return;
+  }
+  else if (strcmp (msg, "video.screenshot") == 0) {
+    if (strcmp (val, "") == 0) {
+      pc_screenshot (pc, NULL);
+    }
+    else {
+      pc_screenshot (pc, val);
+    }
+    return;
+  }
+
+  pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 }

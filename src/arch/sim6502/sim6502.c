@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.c                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -148,8 +148,7 @@ void s6502_setup_console (sim6502_t *sim, ini_sct_t *ini)
   sim->console.irq_ext = sim->cpu;
   sim->console.irq = (con_set_uint8_f) e6502_set_irq;
 
-  sim->console.brk_ext = sim;
-  sim->console.brk = (con_set_uint8_f) &s6502_break;
+  sim->console.msg_ext = sim;
 }
 
 sim6502_t *s6502_new (ini_sct_t *ini)
@@ -217,4 +216,22 @@ void s6502_clock (sim6502_t *sim, unsigned n)
   }
 
   e6502_clock (sim->cpu, n);
+}
+
+void s6502_set_msg (sim6502_t *sim, const char *msg, const char *val)
+{
+  if (strcmp (msg, "break") == 0) {
+    if (strcmp (val, "stop") == 0) {
+      sim->brk = PCE_BRK_STOP;
+      return;
+    }
+    else if (strcmp (val, "abort") == 0) {
+      sim->brk = PCE_BRK_ABORT;
+      return;
+    }
+  }
+
+  pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
+
+  pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 }

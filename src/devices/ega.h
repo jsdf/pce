@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/ega.h                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,8 +35,6 @@
 typedef struct ega_t {
   video_t       vid;
 
-  scrmap_t      smap;
-
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
@@ -45,6 +43,8 @@ typedef struct ega_t {
   unsigned long base;
   unsigned long size;
 
+  unsigned      mode_80x25_w;
+  unsigned      mode_80x25_h;
   unsigned      mode_320x200_w;
   unsigned      mode_320x200_h;
   unsigned      mode_640x200_w;

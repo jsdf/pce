@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.h                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -102,6 +102,8 @@ void s6502_break (sim6502_t *sim, unsigned char val);
 void s6502_reset (sim6502_t *sim);
 
 void s6502_clock (sim6502_t *sim, unsigned n);
+
+void s6502_set_msg (sim6502_t *sim, const char *msg, const char *val);
 
 
 #endif

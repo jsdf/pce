@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/console.c                                 *
  * Created:       2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -49,8 +49,7 @@ void con_init (console_t *con, ini_sct_t *sct)
   con->irq_ext = NULL;
   con->irq = NULL;
 
-  con->brk_ext = NULL;
-  con->brk = NULL;
+  con->msg_ext = NULL;
 
   con->status = 0x40;
   con->data_inp = 0;
@@ -178,14 +177,6 @@ void con_set_uint8 (console_t *con, unsigned long addr, unsigned char val)
   }
 }
 
-static
-void con_break (console_t *con, unsigned char val)
-{
-  if (con->brk != NULL) {
-    con->brk (con->brk_ext, val);
-  }
-}
-
 void con_check (console_t *con)
 {
   unsigned      i, n;
@@ -205,11 +196,11 @@ void con_check (console_t *con)
 
 
   if ((n == 1) && (buf[0] == 0)) {
-    con_break (con, PCE_BRK_STOP);
+    s6502_set_msg (con->msg_ext, "break", "stop");
     return;
   }
   else if ((n == 1) && (buf[0] == 0xe0)) {
-    con_break (con, PCE_BRK_ABORT);
+    s6502_set_msg (con->msg_ext, "break", "abort");
     return;
   }
 

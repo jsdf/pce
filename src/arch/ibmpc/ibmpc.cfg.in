@@ -115,6 +115,14 @@ section pc {
 	section video {
 		device = "vga"
 
+		# The default width and height that are used for modes
+		# that are not specified.
+		w = 640
+		h = 400
+
+		mode_80x25_w = 640
+		mode_80x25_h = 400
+
 		mode_320x200_w = 640
 		mode_320x200_h = 480
 
@@ -130,6 +138,14 @@ section pc {
 
 	section video {
 		device = "ega"
+
+		# The default width and height that are used for modes
+		# that are not specified.
+		w = 640
+		h = 400
+
+		mode_80x25_w = 640
+		mode_80x25_h = 400
 
 		mode_320x200_w = 640
 		mode_320x200_h = 480
@@ -149,6 +165,14 @@ section pc {
 		
 		# Don't change this
 		memsize = 16384
+
+		# The default width and height that are used for modes
+		# that are not specified.
+		w = 640
+		h = 400
+
+		mode_80x25_w = 640
+		mode_80x25_h = 400
 
 		# 320 * 200 * 4
 		mode_320x200_w = 640
@@ -174,6 +198,14 @@ section pc {
 		gcolor0 = 0x000000
 		gcolor1 = 0xf0f0f0
 
+		# The default width and height that are used for modes
+		# that are not specified.
+		w = 640
+		h = 400
+
+		mode_80x25_w = 640
+		mode_80x25_h = 400
+
 		# 720 * 348 * 2
 		mode_720x348_w = 720
 		mode_720x348_h = 540
@@ -193,6 +225,14 @@ section pc {
 		color7 = 0x00c000
 		color9 = 0xc0f000
 		color15 = 0x00f000
+
+		# The default width and height that are used for modes
+		# that are not specified.
+		w = 640
+		h = 400
+
+		mode_80x25_w = 640
+		mode_80x25_h = 400
 	}
 
 	section serial {
@@ -264,4 +304,23 @@ section pc {
 		h = 8
 		s = 17
 	}
+
+	section disk {
+		drive = 129
+                type = "partition"
+                file = "/dev/hda3"
+
+                c = 4096
+                h = 128
+                s = 63
+
+                partition_type = 0x06
+
+                start_c = 0
+                start_h = 1
+                start_s = 1
+                end_c = 64
+                end_h = 127
+                end_s = 62
+        }
 }

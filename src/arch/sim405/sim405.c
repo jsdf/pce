@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -437,4 +437,22 @@ void s405_clock (sim405_t *sim, unsigned n)
 //  sim->clk_div[1] += n;
 //  sim->clk_div[2] += n;
 //  sim->clk_div[3] += n;
+}
+
+void s405_set_msg (sim405_t *sim, const char *msg, const char *val)
+{
+  if (strcmp (msg, "break") == 0) {
+    if (strcmp (val, "stop") == 0) {
+      sim->brk = PCE_BRK_STOP;
+      return;
+    }
+    else if (strcmp (val, "abort") == 0) {
+      sim->brk = PCE_BRK_ABORT;
+      return;
+    }
+  }
+
+  pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
+
+  pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 }

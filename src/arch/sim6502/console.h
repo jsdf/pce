@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/console.h                                 *
  * Created:       2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -38,8 +38,7 @@ typedef struct {
   void            *irq_ext;
   con_set_uint8_f irq;
 
-  void            *brk_ext;
-  con_set_uint8_f brk;
+  void            *msg_ext;
 
   unsigned char   status;
   unsigned char   data_inp;
