@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.15 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: cga.c,v 1.16 2003/10/04 17:53:33 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -114,8 +114,8 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 
   cga->pal = 0;
   cga->palette[0] = 0;
-  cga->palette[1] = 3;
-  cga->palette[2] = 5;
+  cga->palette[1] = 11;
+  cga->palette[2] = 13;
   cga->palette[3] = 15;
 
   cga->mode = 0;
@@ -618,15 +618,15 @@ void cga_set_palette (cga_t *cga, unsigned pal, unsigned char bg)
   switch (pal & 1) {
     case 0:
       cga->palette[0] = bg;
-      cga->palette[1] = 3;
-      cga->palette[2] = 5;
+      cga->palette[1] = 8;
+      cga->palette[2] = 13;
       cga->palette[3] = 15;
       break;
 
     case 1:
       cga->palette[0] = bg;
-      cga->palette[1] = 2;
-      cga->palette[2] = 4;
+      cga->palette[1] = 10;
+      cga->palette[2] = 12;
       cga->palette[3] = 14;
       break;
   }
