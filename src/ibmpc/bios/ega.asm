@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.5 2003/09/21 04:04:22 hampa Exp $
+; $Id: ega.asm,v 1.6 2003/09/21 08:16:46 hampa Exp $
 
 
 %include "config.inc"
@@ -40,6 +40,8 @@
 %define BIOS_CSIZ 0x0060
 %define BIOS_PAGE 0x0062
 %define BIOS_CRTC 0x0063
+%define BIOS_ROWS 0x0084
+%define BIOS_CHRH 0x0085
 
 %define CRTC_INDEX   0x03d4
 %define CRTC_DATA    0x03d5
@@ -102,12 +104,11 @@ start:
   retf
 
 
+seg0000   dw 0x0000
 seg0040   dw 0x0040
 sega000   dw 0xa000
 segb000   dw 0xb000
 segb800   dw 0xb800
-
-bios_ds   dw 0x0040
 
 cursor14  db 0, 2, 4, 6, 8, 10, 11, 13, 14
 
@@ -171,13 +172,52 @@ mode01:
 mode02:
   db      80, 24, 14
   dw      4000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode03:
+  db      80, 24, 14
+  dw      4000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode04:
+  db      40, 24, 8
+  dw      16000
   db      0, 0, 0, 0 ; ts
   db      0x43 ; misc out
   db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
   db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
   db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
 
-mode03:
+mode05:
+  db      80, 24, 8
+  dw      16000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode06:
   db      80, 24, 14
   dw      4000
   db      0, 0, 0, 0 ; ts
@@ -185,6 +225,127 @@ mode03:
   db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
   db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
   db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode07:
+  db      80, 24, 14
+  dw      4000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x42                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07        ; atc
+  db      0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode08:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode09:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode0a:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode0b:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode0c:
+  db      80, 24, 14
+  dw      4000
+  db      0, 0, 0, 0 ; ts
+  db      0x43 ; misc out
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; crtc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ; atc
+  db      0, 0, 0, 0, 0, 0, 0, 0, 0 ; gdc
+
+mode0d:
+  db      40, 24, 8
+  dw      8000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode0e:
+  db      80, 24, 8
+  dw      16000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode0f:
+  db      80, 24, 8
+  dw      28000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
+mode10:
+  db      80, 24, 8
+  dw      28000
+  db      0x00, 0x00, 0x00, 0x00                                ; ts
+  db      0x43                                                  ; misc out
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
+  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+  db      0x00
+  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
+  db      0x38, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f
+  db      0x00, 0x00, 0x00, 0x00
+  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
+  db      0x00
+
 
 ptr00a8:
   dw      mode00, 0xc000                 ; video parameter table
@@ -252,6 +413,31 @@ int_10_func:
 int_10_funcend:
 
 
+; write AH into register AL at DX
+ega_set_reg:
+  out     dx, ax
+  ret
+
+
+; write CX bytes from DS:SI into index/data DX, starting at AL
+ega_set_regs:
+  push    ax
+  push    cx
+  push    si
+
+.next:
+  mov     ah, [si]
+  inc     si
+  out     dx, ax
+  inc     al
+  loop    .next
+
+  pop     si
+  pop     cx
+  pop     ax
+  ret
+
+
 ; set page offset AX
 crtc_set_page_ofs:
   push    ax
@@ -293,29 +479,8 @@ crtc_set_curs_pos:
   ret
 
 
-; write AH into register AL
+; set AH into ATC register AL
 atc_set_reg:
-  push    ax
-  push    dx
-
-  push    ax
-  mov     dx, 0x3da
-  in      al, dx
-  pop      ax
-
-  mov     dx, ATC_INDEX
-  or      al, 0x20
-  out     dx, al
-  mov     al, ah
-  out     dx, al
-
-  pop     dx
-  pop     ax
-  ret
-
-
-; set AH into palette register AL
-atc_set_pal_reg:
   push    ax
   push    cx
   push    dx
@@ -341,8 +506,8 @@ atc_set_pal_reg:
   ret
 
 
-; set CX palette entries from DS:SI starting at AL
-atc_set_palette:
+; write CX bytes from DS:SI starting at AL
+atc_set_regs:
   push    ax
   push    cx
   push    dx
@@ -356,7 +521,7 @@ atc_set_palette:
 
   mov     dx, ATC_INDEX
   mov     al, ah
-  and     al, 0x0f
+  and     al, 0x1f
   out     dx, al                        ; set index
 
   lodsb
@@ -390,7 +555,7 @@ atc_set_palette_default:
   push    cs
   pop     ds
   mov     si, pal_default
-  call    atc_set_palette
+  call    atc_set_regs
 
   pop     ds
   pop     si
@@ -410,7 +575,7 @@ atc_set_palette_mono:
   push    cs
   pop     ds
   mov     si, pal_mono
-  call    atc_set_palette
+  call    atc_set_regs
 
   pop     ds
   pop     si
@@ -480,6 +645,92 @@ txt_set_char_xy:
   loop    .next
 
 .done:
+  ret
+
+
+; set character AL CX times at DL, DH in page BH with color BL
+gra_set_char_xyc:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+  push    si
+  push    di
+  push    bp
+  push    es
+
+  jcxz    .done
+
+  mul     byte [BIOS_CHRH]
+  mov     si, ax                        ; font index
+
+  mov     al, bh
+  call    get_pofs
+  mov     di, ax
+
+  push    dx
+  mov     al, dh
+  mul     byte [BIOS_COLS]
+  mul     word [BIOS_CHRH]
+  pop     dx
+  add     di, ax
+
+  mov     dh, 0
+  add     di, dx
+
+  mov     bh, [BIOS_CHRH]
+  mov     bp, [BIOS_COLS]
+
+  mov     dx, TS_INDEX
+  mov     ax, 0x0f02
+  out     dx, ax
+
+  mov     dx, GDC_INDEX
+  mov     ax, 0x0205
+  out     dx, ax
+
+  mov     es, [cs:sega000]
+
+  mov     ds, [cs:seg0000]
+  lds     ax, [4 * 0x43]
+  add     si, ax
+
+.next:
+  mov     ax, 0xff08
+  out     dx, ax
+  mov     al, 0
+
+  push    cx
+  push    di
+  rep     stosb
+  pop     di
+  pop     cx
+
+  mov     ah, [si]
+  mov     al, 0x08
+  out     dx, ax
+  mov     al, bl
+
+  push    cx
+  push    di
+  rep     stosb
+  pop     di
+  pop     cx
+
+  inc     si
+  add     di, bp
+  dec     bh
+  jnz     .next
+
+.done:
+  pop     es
+  pop     bp
+  pop     di
+  pop     si
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
   ret
 
 
@@ -629,66 +880,93 @@ gra_clear:
   ret
 
 
-int_10_00_00:
-int_10_00_01:
-  mov     [BIOS_MODE], al
-  ret
-
-
-int_10_00_02:
-  call    int_10_00_03
-  mov     byte [BIOS_MODE], 0x02
-  ret
-
-
-int_10_00_03:
+; init mode AL with parameter table DS:SI
+int_10_init_mode:
   push    ax
   push    cx
   push    dx
+  push    bx
   push    di
+  push    es
 
   mov     dx, 0x03d0
-  mov     al, 3
   out     dx, al
 
-  mov     byte [BIOS_MODE], 0x03
-  mov     word [BIOS_COLS], 80
-  mov     word [BIOS_SIZE], 4000
-  mov     word [BIOS_OFFS], 0
+  mov     es, [cs:seg0040]
+
+  mov     [es:BIOS_MODE], al
+
+  mov     bx, si
+
+  lea     si, [bx + 10]
+  mov     al, 0x00
+  mov     cx, 25
+  mov     dx, CRTC_INDEX
+  call    ega_set_regs
+
+  lea     si, [bx + 5]
+  mov     al, 0x01
+  mov     cx, 5
+  mov     dx, TS_INDEX
+  call    ega_set_regs
+
+  lea     si, [bx + 35]
+  mov     al, 0x00
+  mov     cx, 20
+  mov     dx, ATC_INDEX
+  call    atc_set_regs
+
+  lea     si, [bx + 55]
+  mov     al, 0x00
+  mov     cx, 9
+  mov     dx, GDC_INDEX
+  call    ega_set_regs
+
+  mov     dx, 0x3cc
+  mov     al, [bx + 9]
+  out     dx, al                        ; misc output register
+
+  mov     al, [bx]
+  mov     ah, 0
+  mov     [es:BIOS_COLS], ax
+
+  mov     al, [bx + 1]
+  mov     [es:BIOS_ROWS], al
+
+  mov     al, [bx + 2]
+  mov     ah, 0
+  mov     [es:BIOS_CHRH], ax
+
+  mov     ax, [bx + 3]
+  mov     [es:BIOS_SIZE], ax
+
+  mov     word [es:BIOS_OFFS], 0
 
   mov     di, BIOS_CPOS
   mov     cx, 8
-.next:
-  mov     word [di], 0x0000
-  add     di, 2
-  loop    .next
-
-  mov     word [BIOS_CSIZ], 0x0607
-  mov     byte [BIOS_PAGE], 0x00
-  mov     word [BIOS_CRTC], 0x03d4
-
-  ; cursor size
-  mov     dx, 0x03d4
-  mov     ax, 0x0b0a
-  out     dx, ax
-  mov     ax, 0x0c0b
-  out     dx, ax
-
-  mov     dx, 0x3cc
-  mov     al, 0x43
-  out     dx, al
-
-  mov     dx, CRTC_INDEX
-  mov     ax, (0x28 << 8) | CRTC_ROFS
-  out     dx, ax
-
   xor     ax, ax
-  call    crtc_set_curs_pos
+  rep     stosw
 
-  xor     ax, ax
-  call    crtc_set_page_ofs
+  mov     word [es:BIOS_CSIZ], 0x0607
+  mov     byte [es:BIOS_PAGE], 0x00
+  mov     word [es:BIOS_CRTC], 0x03d4
 
-  call    atc_set_palette_default
+  pop     es
+  pop     di
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
+  ret
+
+
+int_10_00_00:
+int_10_00_01:
+int_10_00_02:
+int_10_00_03:
+  push    ax
+  push    cx
+  push    di
 
   mov     ax, 0x0720
   xor     di, di
@@ -696,7 +974,6 @@ int_10_00_03:
   call    txt_clear
 
   pop     di
-  pop     dx
   pop     cx
   pop     ax
   ret
@@ -705,51 +982,9 @@ int_10_00_03:
 int_10_00_07:
   push    ax
   push    cx
-  push    dx
   push    di
 
-  mov     dx, 0x03d0
-  mov     al, 7
-  out     dx, al
-
-  mov     byte [BIOS_MODE], 0x07
-  mov     word [BIOS_COLS], 80
-  mov     word [BIOS_SIZE], 4000
-  mov     word [BIOS_OFFS], 0
-
-  mov     di, BIOS_CPOS
-  mov     cx, 8
-.next:
-  mov     word [di], 0x0000
-  add     di, 2
-  loop    .next
-
-  mov     word [BIOS_CSIZ], 0x0607
-  mov     byte [BIOS_PAGE], 0x00
   mov     word [BIOS_CRTC], 0x03b4
-
-  ; cursor size
-  mov     dx, 0x03b4
-  mov     ax, 0x0b0a
-  out     dx, ax
-  mov     ax, 0x0c0b
-  out     dx, ax
-
-  mov     dx, 0x3c2
-  mov     al, 0xc2
-  out     dx, al
-
-  mov     dx, 0x3b4
-  mov     ax, (0x28 << 8) | CRTC_ROFS
-  out     dx, ax
-
-  xor     ax, ax
-  call    crtc_set_curs_pos
-
-  xor     ax, ax
-  call    crtc_set_page_ofs
-
-  call    atc_set_palette_mono
 
   mov     ax, 0x0720
   xor     di, di
@@ -757,7 +992,6 @@ int_10_00_07:
   call    txt_clear
 
   pop     di
-  pop     dx
   pop     cx
   pop     ax
   ret
@@ -771,140 +1005,26 @@ int_10_00_09:
 int_10_00_0a:
 int_10_00_0b:
 int_10_00_0c:
-  mov     [BIOS_MODE], al
   ret
 
 
 int_10_00_0d:
-  push    ax
-  push    cx
-  push    dx
-  push    di
-
-  mov     dx, 0x03d0
-  mov     al, 0x0d
-  out     dx, al
-
-  mov     byte [BIOS_MODE], 0x0d
-  mov     word [BIOS_COLS], 40
-  mov     word [BIOS_SIZE], 8000
-  mov     word [BIOS_OFFS], 0
-
-  mov     word [BIOS_CSIZ], 0x0607
-  mov     byte [BIOS_PAGE], 0x00
-  mov     word [BIOS_CRTC], 0x03d4
-
-  mov     dx, 0x3c2
-  mov     al, 0xc2
-  out     dx, al
-
-  mov     dx, CRTC_INDEX
-  mov     ax, (0x14 << 8) | CRTC_ROFS
-  out     dx, ax
-
-  xor     ax, ax
-  call    crtc_set_page_ofs
-
-  call    atc_set_palette_default
-
-  mov     al, 0
-  xor     di, di
-  mov     cx, 64000
-  call    gra_clear
-
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
-
-
 int_10_00_0e:
-  push    ax
-  push    cx
-  push    dx
-  push    di
-
-  mov     dx, 0x03d0
-  mov     al, 0x0e
-  out     dx, al
-
-  mov     byte [BIOS_MODE], 0x0e
-  mov     word [BIOS_COLS], 80
-  mov     word [BIOS_SIZE], 16000
-  mov     word [BIOS_OFFS], 0
-
-  mov     word [BIOS_CSIZ], 0x0607
-  mov     byte [BIOS_PAGE], 0x00
-  mov     word [BIOS_CRTC], 0x03d4
-
-  mov     dx, 0x3c2
-  mov     al, 0xc2
-  out     dx, al
-
-  mov     dx, CRTC_INDEX
-  mov     ax, (0x28 << 8) | CRTC_ROFS
-  out     dx, ax
-
-  xor     ax, ax
-  call    crtc_set_page_ofs
-
-  call    atc_set_palette_default
-
-  mov     al, 0
-  xor     di, di
-  mov     cx, 64000
-  call    gra_clear
-
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
-
-
 int_10_00_0f:
-  call    int_10_00_10
-  mov     byte [BIOS_MODE], 0x0f
-  ret
-
-
 int_10_00_10:
   push    ax
   push    cx
   push    dx
   push    di
 
-  mov     dx, 0x03d0
-  mov     al, 0x10
-  out     dx, al
-
-  mov     byte [BIOS_MODE], 0x10
-  mov     word [BIOS_COLS], 80
-  mov     word [BIOS_SIZE], 28000
-  mov     word [BIOS_OFFS], 0
-
-  mov     word [BIOS_CSIZ], 0x0607
-  mov     byte [BIOS_PAGE], 0x00
-  mov     word [BIOS_CRTC], 0x03d4
-
-  mov     dx, 0x3c2
-  mov     al, 0xc2
-  out     dx, al
-
-  mov     dx, CRTC_INDEX
-  mov     ax, (0x28 << 8) | CRTC_ROFS
-  out     dx, ax
-
-  xor     ax, ax
-  call    crtc_set_page_ofs
-
-  call    atc_set_palette_default
-
   mov     al, 0
   xor     di, di
-  mov     cx, 2 * 28000
+  mov     cx, 64000
   call    gra_clear
+
+  mov     dx, GDC_INDEX
+  mov     ax, (0x00 << 8) | GDC_MODE
+  out     dx, ax
 
   pop     di
   pop     dx
@@ -921,9 +1041,24 @@ int_10_00_10:
 int_10_00:
   push    si
 
-  mov     ds, [cs:seg0040]
+  cmp     al, 0x10
+  ja      .badfunc
 
-  push     ax
+  push    cs
+  pop     ds
+
+  push    ax
+  mov     ah, al
+  mov     al, 0
+  shr     ax, 1
+  shr     ax, 1
+  add     ax, mode00
+  mov     si, ax
+  pop     ax
+
+  call    int_10_init_mode
+
+  push    ax
   mov     ah, 0
   mov     si, ax
   pop     ax
@@ -931,6 +1066,8 @@ int_10_00:
   shl     si, 1
   cmp     si, (int_10_00_funcend - int_10_00_func)
   jae     .badfunc
+
+  mov     ds, [cs:seg0040]
 
   call    [cs:si + int_10_00_func]
 
@@ -1041,7 +1178,7 @@ int_10_02:
 int_10_03:
   push    bx
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   mov     bl, bh
   and     bx, 0x0007
@@ -1067,7 +1204,7 @@ int_10_05:
   push    dx
   push    bx
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   mov     [BIOS_PAGE], al
 
@@ -1368,7 +1505,7 @@ int_10_09:
   push    di
   push    es
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   mov     ah, bl
 
@@ -1410,7 +1547,7 @@ int_10_0a:
 
   jcxz    .done
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   push    ax
 
@@ -1468,7 +1605,7 @@ int_10_0e:
   push    di
   push    es
 
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
 
   mov     bl, [BIOS_PAGE]
   and     bx, 0x0007
@@ -1566,7 +1703,7 @@ int_10_0e:
 ;*****************************************************************************
 
 int_10_0f:
-  mov     ds, [cs:bios_ds]
+  mov     ds, [cs:seg0040]
   mov     al, [BIOS_MODE]
   mov     ah, [BIOS_COLS]
   mov     bh, [BIOS_PAGE]
@@ -1601,7 +1738,7 @@ int_10_1000:
   mov     al, bh
   mov     ah, bl
   mov     ax, bx
-  call    atc_set_pal_reg
+  call    atc_set_reg
 
   mov     ds, [cs:seg0040]
   lds     si, [0x00a8]
@@ -1641,7 +1778,7 @@ int_10_1002:
   push    es
   pop     ds
   mov     si, dx
-  call    atc_set_palette
+  call    atc_set_regs
 
   pop     si
   pop     cx
@@ -1804,6 +1941,9 @@ ega_init:
   mov     word [4 * 0x43 + 2], cs
 
   mov     ds, [cs:seg0040]
+
+  mov     byte [0x0087], 0x60
+
   mov     word [0x00a8], ptr00a8
   mov     word [0x00a8 + 2], cs
 

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: ega.c,v 1.6 2003/09/21 08:16:45 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1082,6 +1082,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 
     case 0x20: /* 0x3d0: pce extension */
       switch (val) {
+        case 0x02:
         case 0x03:
           ega_set_mode (ega, 0, 80, 25);
           ega->segm = 0x18000;
