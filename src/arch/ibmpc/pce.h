@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.h                                       *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -112,6 +112,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <devices/hgc.h>
 #include <devices/cga.h>
 #include <devices/ega.h>
+#include <devices/vga.h>
 #include <devices/disk.h>
 
 #include "int13.h"

@@ -113,6 +113,22 @@ section pc {
 	# The mode_*_{w,h} lines define the window size that is used
 	# for that mode.
 	section video {
+		device = "vga"
+
+		mode_320x200_w = 640
+		mode_320x200_h = 480
+
+		mode_640x200_w = 640
+		mode_640x200_h = 480
+
+		mode_640x350_w = 640
+		mode_640x350_h = 480
+
+		mode_640x480_w = 640
+		mode_640x480_h = 480
+	}
+
+	section video {
 		device = "ega"
 
 		mode_320x200_w = 640

@@ -34,6 +34,8 @@ HGC		Supported
 
 EGA		No user defined fonts. Requires a custem bios (included).
 
+VGA		Partially supported.
+
 Disks		Only supported through INT 13h ATM.
 
 Mouse		A Microsoft serial mouse is emulated.

@@ -10,12 +10,12 @@ reldir := ../../../..
 include $(reldir)/config.inc
 
 
-SRC := basic.asm bios.asm ega.asm pce.asm
-OBJ := basic.bin bios.bin ega.bin pce.bin
-LST := basic.lst bios.lst ega.lst pce.lst
+SRC := basic.asm bios.asm ega.asm pce.asm vga.asm
+OBJ := basic.bin bios.bin ega.bin pce.bin vga.bin
+LST := basic.lst bios.lst ega.lst pce.lst vga.lst
 HDR :=
 MAN :=
-BIN := ega.rom ibmpc.rom
+BIN := ega.rom ibmpc.rom vga.rom
 
 HDR_EXT	:= $(topdir)/src/arch/ibmpc/pce.inc
 
@@ -30,6 +30,10 @@ BIOS_BDP := Makefile $(BIOS_OBJ)
 EGA_OBJ := ega.bin
 EGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc $(HDR) $(HDR_EXT)
 EGA_BDP := Makefile $(EGA_OBJ)
+
+VGA_OBJ := vga.bin
+VGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc $(HDR) $(HDR_EXT)
+VGA_BDP := Makefile $(VGA_OBJ)
 
 CLN := $(OBJ) $(BIN) $(LST)
 DCL := Makefile
@@ -53,6 +57,8 @@ cmp:
 ega.rom: $(EGA_BDP)
 	cat ega.bin > $@
 
+vga.rom: $(VGA_BDP)
+	cat vga.bin > $@
 
 ibmpc.rom: $(BIOS_BDP)
 	cat pce.bin basic.bin bios.bin > $@
@@ -70,3 +76,6 @@ basic.bin: basic.asm $(BIOS_SDP)
 
 ega.bin: ega.asm $(EGA_SDP)
 	$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l ega.lst -o $@ $<
+
+vga.bin: vga.asm $(VGA_SDP)
+	$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l vga.lst -o $@ $<

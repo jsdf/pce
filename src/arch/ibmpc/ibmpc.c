@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -482,6 +482,23 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 }
 
 static
+int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
+{
+  pc->video = vga_new (pc->trm, sct);
+  if (pc->video == NULL) {
+    return (1);
+  }
+
+  mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+  mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
+
+  pc->ppi_port_a[0] &= ~0x30;
+  pc->ppi_port_a[0] |= 0x00;
+
+  return (0);
+}
+
+static
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
   const char *dev;
@@ -505,7 +522,10 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 
   pce_log (MSG_INF, "video:\tdevice=%s\n", dev);
 
-  if (strcmp (dev, "ega") == 0) {
+  if (strcmp (dev, "vga") == 0) {
+    pc_setup_vga (pc, sct);
+  }
+  else if (strcmp (dev, "ega") == 0) {
     pc_setup_ega (pc, sct);
   }
   else if (strcmp (dev, "cga") == 0) {
