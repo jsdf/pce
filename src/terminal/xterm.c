@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.7 2003/08/20 10:31:38 hampa Exp $ */
+/* $Id: xterm.c,v 1.8 2003/08/24 04:10:55 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -186,13 +186,13 @@ int xt_init_window (xterm_t *xt)
     &progname, 1, &size, &wm, &cls
   );
 
-  xt->back = XCreatePixmap (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h,
-    DefaultDepth (xt->display, xt->screen)
-  );
-
   XSelectInput (xt->display, xt->wdw,
     ExposureMask | KeyPressMask | KeyReleaseMask |
     StructureNotifyMask | ButtonPressMask | ButtonReleaseMask
+  );
+
+  xt->back = XCreatePixmap (xt->display, xt->wdw, xt->wdw_w, xt->wdw_h,
+    DefaultDepth (xt->display, xt->screen)
   );
 
   return (0);
@@ -207,21 +207,22 @@ int xt_init_gc (xterm_t *xt)
   int           join_style = JoinRound;
 
   xt->gc = XCreateGC (xt->display, xt->wdw, 0, &values);
-  XSetForeground (xt->display, xt->gc, WhitePixel (xt->display, xt->screen));
-  XSetBackground (xt->display, xt->gc, BlackPixel (xt->display, xt->screen));
+  XSetForeground (xt->display, xt->gc, xt->col[0].pixel);
+  XSetBackground (xt->display, xt->gc, xt->col[0].pixel);
   XSetFont (xt->display, xt->gc, xt->font->fid);
   XSetLineAttributes (xt->display, xt->gc, line_width, line_style, cap_style, join_style);
 
   xt->back_gc = XCreateGC (xt->display, xt->back, 0, &values);
-  XSetForeground (xt->display, xt->back_gc, WhitePixel (xt->display, xt->screen));
-  XSetBackground (xt->display, xt->back_gc, BlackPixel (xt->display, xt->screen));
+  XSetForeground (xt->display, xt->back_gc, xt->col[0].pixel);
+  XSetBackground (xt->display, xt->back_gc, xt->col[0].pixel);
   XSetFont (xt->display, xt->back_gc, xt->font->fid);
   XSetLineAttributes (xt->display, xt->back_gc, line_width, line_style, cap_style, join_style);
+  XDrawRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
 
   xt->crs_gc = XCreateGC (xt->display, xt->wdw, 0, &values);
   XSetForeground (xt->display, xt->crs_gc, WhitePixel (xt->display, xt->screen));
 
-  xt->fg = 15;
+  xt->fg = 0;
   xt->bg = 0;
   xt->crs_fg = 15;
 
@@ -261,6 +262,8 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
     return (1);
   }
 
+  xt_init_colors (xt);
+
   xt->mode = 0;
 
   xt->scn_w = 80;
@@ -278,8 +281,6 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   }
 
   xt_init_cursor (xt);
-
-  xt_init_colors (xt);
 
   XMapWindow (xt->display, xt->wdw);
 
@@ -423,6 +424,7 @@ void xt_set_size (xterm_t *xt, unsigned mode, unsigned w, unsigned h)
 
   XSetWMNormalHints (xt->display, xt->wdw, &size);
 
+  xt_set_col (xt, 0, 0);
   xt_clear (xt);
 }
 
