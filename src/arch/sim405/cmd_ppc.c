@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -793,11 +793,11 @@ void do_h (cmd_t *cmd, sim405_t *sim)
     "bl                        list breakpoints\n"
     "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
     "c [cnt]                   clock\n"
-    "cth n                     switch to thread n (0 <= n <= 1f)\n"
     "d [addr [cnt]]            dump memory\n"
     "e addr [val...]           enter bytes into memory\n"
-    "g [b]                     run with or without breakpoints (ESC to stop)\n"
+    "g [b]                     run with or without breakpoints (^` to stop)\n"
     "key [val...]              send keycodes to the serial console\n"
+    "m msg [val]               send a message to the core\n"
     "p [cnt]                   execute cnt instructions, skip calls [1]\n"
     "q                         quit\n"
     "rfi                       execute to next rfi or rfci\n"
@@ -823,6 +823,29 @@ void do_key (cmd_t *cmd, sim405_t *sim)
 
   if (!cmd_match_end (cmd)) {
     return;
+  }
+}
+
+static
+void do_m (cmd_t *cmd, sim405_t *sim)
+{
+  char msg[256];
+  char val[256];
+
+  if (!cmd_match_str (cmd, msg, 256)) {
+    strcpy (msg, "");
+  }
+
+  if (!cmd_match_str (cmd, val, 256)) {
+    strcpy (val, "");
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (s405_set_msg (sim, msg, val)) {
+    printf ("error\n");
   }
 }
 
@@ -1166,6 +1189,9 @@ int ppc_do_cmd (cmd_t *cmd, sim405_t *sim)
   }
   else if (cmd_match (cmd, "key")) {
     do_key (cmd, sim);
+  }
+  else if (cmd_match (cmd, "m")) {
+    do_m (cmd, sim);
   }
   else if (cmd_match (cmd, "p")) {
     do_p (cmd, sim);

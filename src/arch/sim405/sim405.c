@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -552,24 +552,74 @@ void s405_clock (sim405_t *sim, unsigned n)
 /*  sim->clk_div[3] += n; */
 }
 
-void s405_set_msg (sim405_t *sim, const char *msg, const char *val)
+int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
 {
+  /* a hack, for debugging only */
   if (sim == NULL) {
     sim = par_sim;
+  }
+
+  if (msg == NULL) {
+    msg = "";
+  }
+
+  if (val == NULL) {
+    val = "";
   }
 
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       sim->brk = PCE_BRK_STOP;
-      return;
+      return (0);
     }
     else if (strcmp (val, "abort") == 0) {
       sim->brk = PCE_BRK_ABORT;
-      return;
+      return (0);
     }
+    else if (strcmp (val, "") == 0) {
+      sim->brk = PCE_BRK_ABORT;
+      return (0);
+    }
+  }
+  else if (strcmp (msg, "emu.stop") == 0) {
+    sim->brk = PCE_BRK_STOP;
+    return (0);
+  }
+  else if (strcmp (msg, "emu.exit") == 0) {
+    sim->brk = PCE_BRK_ABORT;
+    return (0);
   }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
+  if (strcmp (msg, "disk.commit") == 0) {
+    if (strcmp (val, "") == 0) {
+      if (dsks_commit (sim->dsks)) {
+        pce_log (MSG_ERR, "commit failed for at least one disk\n");
+        return (1);
+      }
+    }
+    else {
+      unsigned d;
+      disk_t   *dsk;
+
+      d = strtoul (val, NULL, 0);
+      dsk = dsks_get_disk (sim->dsks, d);
+      if (dsk == NULL) {
+        pce_log (MSG_ERR, "no such disk (%s)\n", val);
+        return (1);
+      }
+
+      if (dsk_commit (dsk)) {
+        pce_log (MSG_ERR, "commit failed (%s)\n", val);
+        return (1);
+      }
+    }
+
+    return (0);
+  }
+
   pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
+
+  return (1);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.h                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -174,7 +174,12 @@ void s405_break (sim405_t *sim, unsigned char val);
  *****************************************************************************/
 void s405_set_keycode (sim405_t *sim, unsigned char val);
 
-void s405_set_msg (sim405_t *sim, const char *msg, const char *val);
+/*****************************************************************************
+ * @short Send a message to the emulator core
+ * @param msg The message
+ * @param val The message parameter
+ *****************************************************************************/
+int s405_set_msg (sim405_t *sim, const char *msg, const char *val);
 
 
 #endif

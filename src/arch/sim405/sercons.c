@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sercons.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -79,15 +79,17 @@ void scon_check (sim405_t *sim)
   n = (unsigned) r;
 
   if ((n == 1) && (buf[0] == 0)) {
-    s405_set_msg (sim, "break", "stop");
+    s405_set_msg (sim, "emu.stop", "");
     return;
   }
+#if 0
   if ((n == 1) && (buf[0] == 0x1b)) {
-    s405_set_msg (sim, "break", "stop");
+    s405_set_msg (sim, "emu.stop", "");
     return;
   }
+#endif
   else if ((n == 1) && (buf[0] == 0xe0)) {
-    s405_set_msg (sim, "break", "abort");
+    s405_set_msg (sim, "emu.abort", "");
     return;
   }
 
