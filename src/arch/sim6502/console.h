@@ -42,6 +42,8 @@ typedef struct {
   con_set_uint8_f brk;
 
   unsigned char   status;
+  unsigned char   data_inp;
+  unsigned char   data_out;
 
   unsigned        buf_i;
   unsigned        buf_j;

@@ -52,7 +52,9 @@ void con_init (console_t *con, ini_sct_t *sct)
   con->brk_ext = NULL;
   con->brk = NULL;
 
-  con->status = 0;
+  con->status = 0x40;
+  con->data_inp = 0;
+  con->data_out = 0;
 
   con->buf_i = 0;
   con->buf_j = 0;
@@ -113,13 +115,11 @@ int con_add_char (console_t *con, unsigned char c)
 }
 
 static
-int con_get_char (console_t *con, unsigned char *c)
+int con_rmv_char (console_t *con)
 {
   if (con->buf_i == con->buf_j) {
     return (1);
   }
-
-  *c = con->buf[con->buf_i];
 
   con->buf_i = (con->buf_i + 1) % CON_BUF_CNT;
 
@@ -134,20 +134,31 @@ int con_get_char (console_t *con, unsigned char *c)
   return (0);
 }
 
+static
+int con_get_char (console_t *con, unsigned char *c)
+{
+  if (con->buf_i == con->buf_j) {
+    return (1);
+  }
+
+  *c = con->buf[con->buf_i];
+
+  return (0);
+}
+
 unsigned char con_get_uint8 (console_t *con, unsigned long addr)
 {
-  unsigned char val;
-
   if (addr == 0) {
     return (con->status);
   }
 
   if (addr == 1) {
-    if (con_get_char (con, &val)) {
-      return (0);
-    }
+    con_get_char (con, &con->data_inp);
+    return (con->data_inp);
+  }
 
-    return (val);
+  if (addr == 2) {
+    return (con->data_out);
   }
 
   return (0);
@@ -155,7 +166,13 @@ unsigned char con_get_uint8 (console_t *con, unsigned long addr)
 
 void con_set_uint8 (console_t *con, unsigned long addr, unsigned char val)
 {
-  if (addr == 2) {
+  if (addr == 0) {
+    if (val & 0x80) {
+      con_rmv_char (con);
+    }
+  }
+  else if (addr == 2) {
+    con->data_out = val;
     fputc (val, stdout);
     fflush (stdout);
   }

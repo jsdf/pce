@@ -6,11 +6,11 @@
 section sim6502 {
 	# Multiple "ram" sections may be present
 	section ram {
-		# The linear base address
+		# The base address
 		base = 0x0000
 
 		# The size in bytes
-		size = 0xf000
+		size = 0xe000
 		
 		# The RAM image that is used to initialize the RAM
 		file = "sim6502.ram"
@@ -18,7 +18,7 @@ section sim6502 {
 
 	# Multiple "rom" sections may be present
 	section rom {
-		# The linear base address
+		# The base address
 		base = 0xf000
 
 		# The rom size in bytes
@@ -26,5 +26,9 @@ section sim6502 {
 
 		# The file from which the rom code is loaded
 		file = "sim6502.rom"
+	}
+
+	section console {
+		io = 0xe000
 	}
 }
