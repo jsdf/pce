@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.7 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: x11.c,v 1.8 2003/10/06 12:35:24 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -392,7 +392,7 @@ void xt_crs_draw (xterm_t *xt, unsigned x, unsigned y)
     return;
   }
 
-  if (xt->crs_y2 < xt->crs_y1) {
+  if (xt->crs_on == 0) {
     return;
   }
 
