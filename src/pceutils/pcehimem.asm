@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcehimem.asm,v 1.2 2003/09/02 14:56:25 hampa Exp $
+; $Id: pcehimem.asm,v 1.3 2003/09/21 21:11:40 hampa Exp $
 
 
 %include "config.inc"
@@ -271,7 +271,7 @@ prt_uint16:
   ret
 
 
-msg_noxms      db "HIMEM: Error: no XMS available", 0x0d, 0x0a, 0x00
+msg_noxms      db "HIMEM: No XMS available", 0x0d, 0x0a, 0x00
 
 msg_himem      db "HIMEM: ", 0x00
 
