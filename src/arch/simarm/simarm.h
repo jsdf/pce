@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.h                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -106,6 +106,8 @@ typedef struct simarm_s {
   slip_t             *slip;
 
   breakpoint_t       *brkpt;
+
+  int                bigendian;
 
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];

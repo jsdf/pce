@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.h                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -48,6 +48,8 @@ typedef struct {
   uint32_t  pci_control;
   uint32_t  pci_addr_ext;
   uint32_t  xscale_int_enable;
+
+  int       bigendian;
 } pci_ixp_t;
 
 
@@ -56,6 +58,8 @@ void pci_ixp_free (pci_ixp_t *ixp);
 
 pci_ixp_t *pci_ixp_new (void);
 void pci_ixp_del (pci_ixp_t *ixp);
+
+void pci_ixp_set_endian (pci_ixp_t *ixp, int big);
 
 void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev);
 

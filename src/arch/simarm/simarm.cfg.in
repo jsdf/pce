@@ -5,7 +5,10 @@
 
 section simarm {
 	section cpu {
+		# This has no effect yet
 		model = "armv5"
+
+		# Set to 1 for a big endian system
 		bigendian = 0
 	}
 
@@ -17,13 +20,13 @@ section simarm {
 		# The size in bytes
 		size = 0x04000000
 		
-		# The RAM image that is used to initialize the RAM
+		# The RAM image that is used to initialize the RAM (optional)
 		file = "linux.bin"
 	}
 
 	# Multiple "rom" sections may be present
 	section rom {
-		# The file from which the rom code is loaded
+		# The file from which the rom code is loaded (optional)
 		file = "simarm.rom"
 
 		# The linear base address
@@ -33,7 +36,7 @@ section simarm {
 		size = 65536
 	}
 
-	# load sections are processed after the emulator is set up.
+	# load sections are processed after all ram and rom sections.
 	section load {
 		format = "ihex"
 		file = "simarm.ihex"

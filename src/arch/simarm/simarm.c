@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -106,23 +106,22 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
   const char *model;
-  int        be;
 
   sct = ini_sct_find_sct (ini, "cpu");
 
   model = ini_get_str_def (sct, "model", "armv5");
-  be = ini_get_lng_def (sct, "bigendian", 1) != 0;
+  sim->bigendian = ini_get_lng_def (sct, "bigendian", 1) != 0;
 
   pce_log (MSG_INF, "CPU:\tmodel=%s endian=%s\n",
-    model, be ? "big" : "little"
+    model, sim->bigendian ? "big" : "little"
   );
 
-  sim->cpu = arm_new (be);
+  sim->cpu = arm_new (sim->bigendian);
   if (sim->cpu == NULL) {
     return;
   }
 
-  if (be) {
+  if (sim->bigendian) {
     arm_set_mem_fct (sim->cpu, sim->mem,
       &mem_get_uint8,
       &mem_get_uint16_be,
@@ -318,6 +317,8 @@ static
 void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 {
   sim->pci = pci_ixp_new();
+
+  pci_ixp_set_endian (sim->pci, sim->bigendian);
 
   mem_add_blk (sim->mem, pci_ixp_get_mem_io (sim->pci), 0);
   mem_add_blk (sim->mem, pci_ixp_get_mem_cfg (sim->pci), 0);

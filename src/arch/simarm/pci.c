@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.c                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-03-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -130,7 +130,10 @@ unsigned short pci_bus_get_io16 (pci_ixp_t *ixp, unsigned long addr)
   addr ^= 0x02;
 
   val = mem_get_uint16_le (&ixp->asio, addr);
-  val = sarm_br16 (val);
+
+  if (ixp->bigendian) {
+    val = sarm_br16 (val);
+  }
 
 #ifdef DEBUG_PCI
   pce_log (MSG_DEB, "pci-bus: get io16 %08lX -> %04X\n", addr, val);
@@ -145,7 +148,10 @@ unsigned long pci_bus_get_io32 (pci_ixp_t *ixp, unsigned long addr)
   unsigned long val;
 
   val = mem_get_uint32_le (&ixp->asio, addr);
-  val = sarm_br32 (val);
+
+  if (ixp->bigendian) {
+    val = sarm_br32 (val);
+  }
 
 #ifdef DEBUG_PCI
   pce_log (MSG_DEB, "pci-bus: get io32 %08lX -> %08lX\n", addr, val);
@@ -171,7 +177,9 @@ void pci_bus_set_io16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
 {
   addr ^= 0x02;
 
-  val = sarm_br16 (val);
+  if (ixp->bigendian) {
+    val = sarm_br16 (val);
+  }
 
 #ifdef DEBUG_PCI
   pce_log (MSG_DEB, "pci-bus: set io16 %08lX <- %04X\n", addr, val);
@@ -183,7 +191,9 @@ void pci_bus_set_io16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
 static
 void pci_bus_set_io32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 {
-  val = sarm_br32 (val);
+  if (ixp->bigendian) {
+    val = sarm_br32 (val);
+  }
 
 #ifdef DEBUG_PCI
   pce_log (MSG_DEB, "pci-bus: set io32 %08lX <- %08lX\n", addr, val);
@@ -330,6 +340,8 @@ void pci_bus_set_csr32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 
 void pci_ixp_init (pci_ixp_t *ixp)
 {
+  ixp->bigendian = 0;
+
   mem_init (&ixp->asio);
 
   mem_blk_init (&ixp->pci_io, 0xd8000000UL, 0x02000000UL, 0);
@@ -449,6 +461,11 @@ void pci_ixp_del (pci_ixp_t *ixp)
     pci_ixp_free (ixp);
     free (ixp);
   }
+}
+
+void pci_ixp_set_endian (pci_ixp_t *ixp, int big)
+{
+  ixp->bigendian = (big != 0);
 }
 
 void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev)
