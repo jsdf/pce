@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd hexdump log
+FILES := brkpt cmd ihex hexdump log
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -32,5 +32,6 @@ all: $(OBJ)
 
 brkpt.o:	brkpt.c brkpt.h $(SDP)
 cmd.o:		cmd.c cmd.h $(SDP)
+ihex.o:		ihex.c ihex.h $(SDP)
 hexdump.o:	hexdump.c hexdump.h $(SDP)
 log.o:		log.c log.h $(SDP)

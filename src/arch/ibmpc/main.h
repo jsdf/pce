@@ -71,18 +71,10 @@ extern char          *par_cpu;
 extern unsigned long par_int28;
 
 
-void pce_log_set_fp (FILE *fp, int close);
-void pce_log_set_fname (const char *fname);
-void pce_log (unsigned level, const char *str, ...);
-
-
-void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii
-);
-
-
+#include <lib/brkpt.h>
 #include <lib/log.h>
 #include <lib/hexdump.h>
+#include <lib/ihex.h>
 
 #include <cpu/e8086/e8086.h>
 #include <chipset/e8237.h>
@@ -117,6 +109,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <devices/vga.h>
 #include <devices/disk.h>
 
+#include "util.h"
 #include "int13.h"
 #include "mouse.h"
 #include "ems.h"

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -555,7 +555,7 @@ void do_bl (cmd_t *cmd, sim405_t *sim)
     return;
   }
 
-  bp_list (sim->brkpt);
+  bp_list (sim->brkpt, 0);
 }
 
 static

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -441,7 +441,7 @@ void do_bl (cmd_t *cmd, sim6502_t *sim)
     return;
   }
 
-  bp_list (breakpoint);
+  bp_list (breakpoint, 0);
 }
 
 static

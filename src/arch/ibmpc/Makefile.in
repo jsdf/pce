@@ -18,7 +18,7 @@ subdir += bios pceutils
 endif
 
 
-FILES := ems hook ibmpc int13 main mouse xms
+FILES := ems hook ibmpc int13 main mouse util xms
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -38,8 +38,10 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/parport.o \
 	$(pcedst)/devices/serport.o \
 	$(pcedst)/devices/video.o \
+	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
+	$(pcedst)/lib/ihex.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/libini/libini.a \
 	$(pcedst)/terminal/terminal.a
@@ -63,8 +65,10 @@ HDR_EXT	:= \
 	devices/parport.h \
 	devices/serport.h \
 	devices/video.h \
+	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
+	lib/ihex.h \
 	lib/log.h \
 	libini/libini.h \
 	terminal/terminal.h \
@@ -119,4 +123,5 @@ hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)
 main.o:		main.c $(SDP)
 mouse.o:	mouse.c $(SDP)
+util.o:		util.c $(SDP)
 xms.o:		xms.c $(SDP)

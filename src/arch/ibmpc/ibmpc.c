@@ -26,7 +26,6 @@
 #include "main.h"
 
 
-void pc_load_bios (ibmpc_t *pc, char *fname);
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
@@ -36,23 +35,6 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 void pc_break (ibmpc_t *pc, unsigned char val);
 void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
-
-static
-int pc_load_ram (mem_blk_t *blk, const char *fname)
-{
-  FILE *fp;
-
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
-
-  fread (blk->data, 1, blk->size, fp);
-
-  fclose (fp);
-
-  return (0);
-}
 
 static
 void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
@@ -85,7 +67,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     if (fname != NULL) {
-      if (pc_load_ram (ram, fname)) {
+      if (pce_load_mem_blk (ram, fname)) {
         pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
       }
     }
@@ -116,7 +98,7 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
     mem_blk_set_ro (rom, 1);
     mem_add_blk (pc->mem, rom, 1);
 
-    if (pc_load_ram (rom, fname)) {
+    if (pce_load_mem_blk (rom, fname)) {
       pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
     }
 
@@ -833,6 +815,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc->brk = 0;
   pc->clk_cnt = 0;
 
+  pc->brkpt = NULL;
+
   for (i = 0; i < 4; i++) {
     pc->clk_div[i] = 0;
   }
@@ -915,6 +899,8 @@ void pc_del (ibmpc_t *pc)
   if (pc == NULL) {
     return;
   }
+
+  bp_clear_all (&pc->brkpt);
 
   pc_del_xms (pc);
   pc_del_ems (pc);

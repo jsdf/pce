@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/brkpt.c                                            *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -110,23 +110,33 @@ void bp_clear_all (breakpoint_t **lst)
   }
 }
 
-void bp_print (breakpoint_t *bp, const char *str)
+void bp_print (breakpoint_t *bp, const char *str, int seg)
 {
-  printf ("%s%08lX  %04X  %04X\n",
-    str,
-    (unsigned long) bp->addr[0],
-    (unsigned) bp->pass, (unsigned) bp->reset
-  );
+  if (seg) {
+    printf ("%s%04lX:%04lX  %04X  %04X\n",
+      str,
+      (unsigned long) bp->addr[0],
+      (unsigned long) bp->addr[1],
+      (unsigned) bp->pass, (unsigned) bp->reset
+    );
+  }
+  else {
+    printf ("%s%08lX  %04X  %04X\n",
+      str,
+      (unsigned long) bp->addr[0],
+      (unsigned) bp->pass, (unsigned) bp->reset
+    );
+  }
 }
 
-void bp_list (breakpoint_t *lst)
+void bp_list (breakpoint_t *lst, int seg)
 {
   if (lst == NULL) {
     printf ("No breakpoints defined\n");
   }
 
   while (lst != NULL) {
-    bp_print (lst, "  ");
+    bp_print (lst, "  ", seg);
 
     lst = lst->next;
   }
@@ -149,7 +159,6 @@ int bp_check (breakpoint_t **lst, unsigned long addr1, unsigned long addr2)
       }
       else {
         bp->pass = bp->reset;
-        bp_print (bp, "brk: ");
       }
 
       return (1);

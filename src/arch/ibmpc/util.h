@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/brkpt.h                                            *
- * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/arch/ibmpc/util.h                                      *
+ * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
@@ -23,32 +23,19 @@
 /* $Id$ */
 
 
-#ifndef PCE_LIB_BRKPT_H
-#define PCE_LIB_BRKPT_H 1
+#ifndef PCE_IBMPC_UTIL_H
+#define PCE_IBMPC_UTIL_H 1
 
 
-typedef struct breakpoint_s {
-  struct breakpoint_s *next;
-  unsigned long       addr[2];
-  unsigned            pass;
-  unsigned            reset;
-} breakpoint_t;
+int str_istail (const char *str, const char *tail);
+int str_isarg (const char *str, const char *arg1, const char *arg2);
 
+void prt_error (const char *str, ...);
+void pce_set_fd (int fd, int interactive);
 
-breakpoint_t *bp_get (breakpoint_t *lst, unsigned long addr1, unsigned long addr2);
+int pce_load_mem_blk (mem_blk_t *blk, const char *fname);
 
-void bp_add (breakpoint_t **lst, unsigned long addr1, unsigned long addr2,
-  unsigned pass, unsigned reset);
-
-int bp_clear (breakpoint_t **lst, unsigned long addr1, unsigned long addr2);
-
-void bp_clear_all (breakpoint_t **lst);
-
-void bp_print (breakpoint_t *bp, const char *str, int seg);
-
-void bp_list (breakpoint_t *lst, int seg);
-
-int bp_check (breakpoint_t **lst, unsigned long addr1, unsigned long addr2);
+ini_sct_t *pce_load_config (const char *fname);
 
 
 #endif
