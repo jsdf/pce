@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcehimem.asm,v 1.4 2003/09/22 05:15:25 hampa Exp $
+; $Id: pcehimem.asm,v 1.5 2003/10/13 19:59:08 hampa Exp $
 
 
 %include "pce.inc"
@@ -144,7 +144,7 @@ drv_init:
   ; xms info
   pceh    PCEH_XMS_INFO
 
-  or      ax, ax
+  test    al, 0x01                      ; check if xms installed
   jnz     .xmsok
 
   mov     si, msg_noxms
@@ -156,15 +156,26 @@ drv_init:
   mov     si, msg_himem
   call    prt_string
 
-  mov     ax, dx
+  xchg    ax, dx                        ; XMS size in K
   call    prt_uint16
 
-  mov     si, msg_plus
+  mov     si, msg_xmsplus
   call    prt_string
 
-  mov     ax, cx
+  mov     ax, cx                        ; UMB size in paragraphs
   mov     cl, 6
   shr     ax, cl
+  call    prt_uint16
+
+  mov     si, msg_umbplus
+  call    prt_string
+
+  xor     ax, ax
+  test    dl, 0x02                      ; check if HMA available
+  jz      .nohma
+  mov     ax, 64
+
+.nohma:
   call    prt_uint16
 
   mov     si, msg_avail
@@ -275,8 +286,8 @@ msg_noxms      db "HIMEM: No XMS available", 0x0d, 0x0a, 0x00
 
 msg_himem      db "HIMEM: ", 0x00
 
-msg_plus       db "K XMS + ", 0x00
-
-msg_avail      db "K UMB available", 0x0d, 0x0a, 0x00
+msg_xmsplus    db "K XMS + ", 0x00
+msg_umbplus    db "K UMB + ", 0x00
+msg_avail      db "K HMA available", 0x0d, 0x0a, 0x00
 
 msg_nl         db 0x0d, 0x0a, 0x00

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.40 2003/10/06 21:31:28 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.41 2003/10/13 19:59:07 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -621,9 +621,8 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 
 void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 {
-  ini_sct_t     *sct;
-  unsigned long emb_size, umb_size, umb_base;
-  mem_blk_t     *umbmem;
+  ini_sct_t *sct;
+  mem_blk_t *mem;
 
   pc->xms = NULL;
 
@@ -632,21 +631,19 @@ void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
     return;
   }
 
-  ini_get_ulng (sct, "xms_size", &emb_size, 0);
-  emb_size *= 1024UL;
-
-  if (emb_size >= 64UL * 1024UL * 1024UL) {
-    emb_size = 64UL * 1024UL * 1024UL - 1;
+  pc->xms = xms_new (sct);
+  if (pc->xms == NULL) {
+    return;
   }
 
-  ini_get_ulng (sct, "umb_size", &umb_size, 0);
-  ini_get_ulng (sct, "umb_segm", &umb_base, 0xd000);
+  mem = xms_get_umb_mem (pc->xms);
+  if (mem != NULL) {
+    mem_add_blk (pc->mem, mem, 0);
+  }
 
-  pc->xms = xms_new (emb_size, umb_size, umb_base);
-
-  umbmem = xms_get_umb_mem (pc->xms);
-  if (umbmem != NULL) {
-    mem_add_blk (pc->mem, umbmem, 0);
+  mem = xms_get_hma_mem (pc->xms);
+  if (mem != NULL) {
+    mem_add_blk (pc->mem, mem, 0);
   }
 }
 

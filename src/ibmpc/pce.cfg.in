@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.19 2003/09/22 02:38:14 hampa Exp $
+# $Id: pce.cfg.in,v 1.20 2003/10/13 19:59:08 hampa Exp $
 
 section pc {
 	section cpu {
@@ -9,27 +9,40 @@ section pc {
 		model = "80186"
 	}
 
+	# Multiple "ram" sections may be present
 	section ram {
+		# The linear base address
 		base = 0x00000
+
+		# The size in bytes
 		size = 655360
-#		sizek = 640
+
+		# The size in KB
+		#sizek = 640
 	}
 
-	section ram {
-		base = 0xe0000
-		size = 65536
-	}
-
+	# Multiple "rom" sections may be present
 	section rom {
+		# The file from which the rom code is loaded
 		file = "PCE_DIR_DATA/pce/ibmpc.rom"
+
+		# The linear base address
 		base = 0xf0000
+
+		# The rom size in bytes
 		size = 65536
 	}
 
 	section xms {
+		# The maximum XMS memory used in KB
 		xms_size = 32768
+
+		# Define one UMB
 		umb_size = 65536
 		umb_segm = 0xd000
+
+		# Enable the HMA
+		hma = 1
 	}
 
 	section terminal {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/xms.h                                            *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.h,v 1.2 2003/09/02 14:56:25 hampa Exp $ */
+/* $Id: xms.h,v 1.3 2003/10/13 19:59:08 hampa Exp $ */
 
 
 #ifndef PCE_XMS_H
@@ -56,14 +56,20 @@ typedef struct {
   unsigned long umb_max;
 
   mem_blk_t     *umbmem;
+
+  mem_blk_t     *hma;
+  int           hma_alloc;
 } xms_t;
 
 
-xms_t *xms_new (unsigned long emb_size, unsigned long umb_size, unsigned long umb_seg);
+xms_t *xms_new (ini_sct_t *sct);
 
 void xms_del (xms_t *xms);
 
 mem_blk_t *xms_get_umb_mem (xms_t *xms);
+mem_blk_t *xms_get_hma_mem (xms_t *xms);
+
+void xms_prt_state (xms_t *xms, FILE *fp);
 
 void xms_info (xms_t *xms, e8086_t *cpu);
 

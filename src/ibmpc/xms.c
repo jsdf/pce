@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/xms.c                                            *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.c,v 1.3 2003/09/04 20:13:22 hampa Exp $ */
+/* $Id: xms.c,v 1.4 2003/10/13 19:59:08 hampa Exp $ */
 
 
 #include "pce.h"
@@ -60,9 +60,25 @@ void emb_del (xms_emb_t *emb)
   }
 }
 
-xms_t *xms_new (unsigned long emb_size, unsigned long umb_size, unsigned long umb_segm)
+xms_t *xms_new (ini_sct_t *sct)
 {
-  xms_t *xms;
+  unsigned long emb_size;
+  unsigned long umb_size;
+  unsigned long umb_segm;
+  int           hma;
+  xms_t         *xms;
+
+  ini_get_ulng (sct, "xms_size", &emb_size, 0);
+  emb_size *= 1024UL;
+
+  if (emb_size >= 64UL * 1024UL * 1024UL) {
+    emb_size = 64UL * 1024UL * 1024UL - 1;
+  }
+
+  ini_get_ulng (sct, "umb_size", &umb_size, 0);
+  ini_get_ulng (sct, "umb_segm", &umb_segm, 0xd000);
+
+  ini_get_sint (sct, "hma", &hma, 0);
 
   umb_size = umb_size / 16;
   umb_segm = (umb_segm + 15) & ~0x0f;
@@ -95,9 +111,19 @@ xms_t *xms_new (unsigned long emb_size, unsigned long umb_size, unsigned long um
   xms->umb[0].size = umb_size;
   xms->umb[0].alloc = 0;
 
-  pce_log (MSG_INF, "xms:\tEMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x\n",
+  if (hma) {
+    xms->hma = mem_blk_new (0x100000, 65536 - 16, 1);
+  }
+  else {
+    xms->hma = NULL;
+  }
+
+  xms->hma_alloc = 0;
+
+  pce_log (MSG_INF, "xms:\tEMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x HMA=%d\n",
     emb_size, emb_size / (1024 * 1024),
-    16UL * umb_size, umb_size / 64, (unsigned) umb_segm
+    16UL * umb_size, umb_size / 64, (unsigned) umb_segm,
+    (hma != 0)
   );
 
   return (xms);
@@ -112,11 +138,62 @@ void xms_del (xms_t *xms)
       emb_del (xms->emb[i]);
     }
 
+    mem_blk_del (xms->hma);
     mem_blk_del (xms->umbmem);
     free (xms->umb);
 
     free (xms);
   }
+}
+
+mem_blk_t *xms_get_umb_mem (xms_t *xms)
+{
+  return (xms->umbmem);
+}
+
+mem_blk_t *xms_get_hma_mem (xms_t *xms)
+{
+  return (xms->hma);
+}
+
+void xms_prt_state (xms_t *xms, FILE *fp)
+{
+  unsigned i;
+  unsigned long hma;
+
+  hma = (xms->hma != NULL) ? (65536 - 16) : 0;
+
+  fprintf (fp,
+    "XMS: EMB: %luK/%luK  UMB: %luK/%luK  HMA: %luK/%luK\n",
+    xms->emb_used / 1024, xms->emb_max / 1024,
+    xms->umb_used / 64, xms->umb_max / 64,
+    hma / 1024, hma / 1024
+  );
+
+  fprintf (fp, "EMB: blk=%u used=%lu max=%lu\n",
+    xms->emb_cnt, xms->emb_used, xms->emb_max
+  );
+
+  for (i = 0; i < xms->emb_cnt; i++) {
+    fprintf (fp, "  %u: %luK  lock=%d\n",
+      i, xms->emb[i]->size / 1024, (xms->emb[i]->lock != 0)
+    );
+  }
+
+  fprintf (fp, "UMB: blk=%u used=%lu max=%lu\n",
+    xms->umb_cnt, 16 * xms->umb_used, 16 * xms->umb_max
+  );
+
+  for (i = 0; i < xms->umb_cnt; i++) {
+    fprintf (fp, "  %u: 0x%04x:0x0000 + 0x%05x  alloc=%d\n",
+      i,
+      (unsigned) xms->umb[i].segm,
+      (unsigned) xms->umb[i].size * 16,
+      (xms->umb[i].alloc != 0)
+    );
+  }
+
+  fflush (fp);
 }
 
 xms_emb_t *xms_get_emb (xms_t *xms, unsigned handle)
@@ -312,53 +389,87 @@ void xms_00 (xms_t *xms, e8086_t *cpu)
 {
   e86_set_ax (cpu, 0x0300);
   e86_set_bx (cpu, 0x0000);
-  e86_set_dx (cpu, 0x0000);
+  e86_set_dx (cpu, (xms->hma != NULL));
 }
 
 /* 01: request high memory area */
 void xms_01 (xms_t *xms, e8086_t *cpu)
 {
-  e86_set_ax (cpu, 0x0000);
-  e86_set_bl (cpu, 0x90);
+  if (xms->hma == NULL) {
+    e86_set_ax (cpu, 0x0000);
+    e86_set_bl (cpu, 0x90);
+    return;
+  }
+
+  if (xms->hma_alloc) {
+    e86_set_ax (cpu, 0x0000);
+    e86_set_bl (cpu, 0x91);
+    return;
+  }
+
+  xms->hma_alloc = 1;
+
+  e86_set_ax (cpu, 0x0001);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 02: release high memory area */
 void xms_02 (xms_t *xms, e8086_t *cpu)
 {
-  e86_set_ax (cpu, 0x0000);
-  e86_set_bl (cpu, 0x90);
+  if (xms->hma == NULL) {
+    e86_set_ax (cpu, 0x0000);
+    e86_set_bl (cpu, 0x90);
+    return;
+  }
+
+  if (xms->hma_alloc == 0) {
+    e86_set_ax (cpu, 0x0000);
+    e86_set_bl (cpu, 0x93);
+    return;
+  }
+
+  xms->hma_alloc = 0;
+
+  e86_set_ax (cpu, 0x0001);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 03: global enable a20 */
 void xms_03 (xms_t *xms, e8086_t *cpu)
 {
+  e86_set_addr_mask (cpu, ~0);
   e86_set_ax (cpu, 0x0001);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 04: global disable a20 */
 void xms_04 (xms_t *xms, e8086_t *cpu)
 {
+  e86_set_addr_mask (cpu, 0xfffff);
   e86_set_ax (cpu, 0x0001);
-  e86_set_bl (cpu, 0x94);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 05: local enable a20 */
 void xms_05 (xms_t *xms, e8086_t *cpu)
 {
+  e86_set_addr_mask (cpu, ~0);
   e86_set_ax (cpu, 0x0001);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 06: local disable a20 */
 void xms_06 (xms_t *xms, e8086_t *cpu)
 {
+  e86_set_addr_mask (cpu, 0xfffff);
   e86_set_ax (cpu, 0x0001);
-  e86_set_bl (cpu, 0x94);
+  e86_set_bl (cpu, 0x00);
 }
 
 /* 07: query a20 */
 void xms_07 (xms_t *xms, e8086_t *cpu)
 {
-  e86_set_ax (cpu, 0x0001);
+  e86_set_ax (cpu, (e86_get_addr_mask (cpu) & 0x100000) != 0);
   e86_set_bl (cpu, 0x00);
 }
 
@@ -714,21 +825,24 @@ void xms_11 (xms_t *xms, e8086_t *cpu)
   e86_set_ax (cpu, 0x0001);
 }
 
-mem_blk_t *xms_get_umb_mem (xms_t *xms)
-{
-  return (xms->umbmem);
-}
-
 void xms_info (xms_t *xms, e8086_t *cpu)
 {
+  unsigned short flags;
+
+  flags = 0;
+
   if (xms != NULL) {
-    e86_set_ax (cpu, 0x0001);
+    flags = 0x0001;
+
+    if (xms->hma != NULL) {
+      flags |= 0x0002;
+    }
+
     e86_set_cx (cpu, xms->umb_max);
     e86_set_dx (cpu, xms->emb_max / 1024UL);
   }
-  else {
-    e86_set_ax (cpu, 0x0000);
-  }
+
+  e86_set_ax (cpu, flags);
 }
 
 void xms_handler (xms_t *xms, e8086_t *cpu)

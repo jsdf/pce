@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.32 2003/10/13 01:55:33 hampa Exp $ */
+/* $Id: pce.c,v 1.33 2003/10/13 19:59:08 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -751,6 +751,12 @@ void prt_state_video (video_t *vid, FILE *fp)
 {
   fputs ("-video-----------------------------------------------------------------------\n", fp);
   pce_video_prt_state (vid, fp);
+}
+
+void prt_state_xms (xms_t *xms, FILE *fp)
+{
+  fputs ("-XMS-------------------------------------------------------------------------\n", fp);
+  xms_prt_state (xms, fp);
 }
 
 void prt_state_pit (e8253_t *pit, FILE *fp)
@@ -1727,6 +1733,9 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "pic")) {
       prt_state_pic (pc->pic, stdout);
     }
+    else if (cmd_match (cmd, "time")) {
+      prt_state_time (stdout);
+    }
     else if (cmd_match (cmd, "uart")) {
       unsigned short i;
       if (!cmd_match_uint16 (cmd, &i)) {
@@ -1739,8 +1748,8 @@ void do_s (cmd_t *cmd)
     else if (cmd_match (cmd, "video")) {
       prt_state_video (pc->video, stdout);
     }
-    else if (cmd_match (cmd, "time")) {
-      prt_state_time (stdout);
+    else if (cmd_match (cmd, "xms")) {
+      prt_state_xms (pc->xms, stdout);
     }
     else {
       prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
