@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.12 2003/04/23 23:38:27 hampa Exp $ */
+/* $Id: microcode.c,v 1.13 2003/04/25 14:01:10 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -1387,6 +1387,8 @@ unsigned op_66 (e8086_t *c)
   if (c->op_hook != NULL) {
     c->op_hook (c->op_ext, c->pq[2], c->pq[3]);
   }
+
+  e86_set_clk (c, 16);
 
   return (4);
 }
