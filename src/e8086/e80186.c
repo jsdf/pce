@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e80186.c                                         *
  * Created:       2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.5 2003/08/30 12:39:13 hampa Exp $ */
+/* $Id: e80186.c,v 1.6 2003/09/19 23:16:09 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -540,7 +540,7 @@ unsigned op_c9 (e8086_t *c)
 void e86_enable_186 (e8086_t *c)
 {
   c->cpu &= ~E86_CPU_REP_BUG;
-  c->cpu |= E86_CPU_MASK_SHIFT | E86_CPU_PUSH_FIRST | E86_CPU_INT6;
+  c->cpu |= E86_CPU_MASK_SHIFT | E86_CPU_PUSH_FIRST;
 
   e86_opcodes[0x60] = &op_60;
   e86_opcodes[0x61] = &op_61;
