@@ -1,0 +1,56 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/15 04:03:56 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir := e8086 bios
+reldir := ..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= floppy.c ibmpc.c keyboard.c mda.c memory.c pce.c
+
+OBJ	:= floppy.o ibmpc.o keyboard.o mda.o memory.o pce.o
+OBJ_EXT	:= e8086/e8086.a
+
+HDR	:= floppy.h ibmpc.h keyboard.h mda.h memory.h pce.h
+HDR_EXT	:=
+
+MAN	:=
+
+BIN	:= pce
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(BIN) $(OBJ)
+
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+install:
+	$(INSTALL) -d -m 755 $(bindir)
+	$(INSTALL) -m 755 -s $(BIN) $(bindir)
+ifneq "$(MAN)" ""
+	$(INSTALL) -d -m 755 $(mandir)/man1
+	for f in $(MAN) ; do \
+		rm -f $(mandir)/man1/$$f.gz ; \
+		gzip -c --best $(srcdir)/$$f > $(mandir)/man1/$$f.gz ; \
+	done
+endif
+
+
+pce: $(OBJ) $(OBJ_EXT)
+	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT)
+
+
+floppy.o:	floppy.c $(SDP)
+ibmpc.o:	ibmpc.c $(SDP)
+keyboard.o:	keyboard.c $(SDP)
+mda.o:		mda.c $(SDP)
+memory.o:	memory.c $(SDP)
+pce.o:		pce.c $(SDP)

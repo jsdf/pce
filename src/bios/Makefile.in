@@ -1,0 +1,45 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/15 04:03:56 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= basic.asm bios.asm pce.asm
+
+OBJ	:= basic.bin bios.bin pce.bin
+OBJ_EXT	:=
+
+HDR	:=
+HDR_EXT	:=
+
+MAN	:=
+
+BIN	:= ibmpc.rom
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(BIN)
+
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+cmp:
+	fcmp $(topdir)/contrib/bios/ibmpc.cmp ibmpc.rom > ibmpc.diff
+
+
+ibmpc.rom: $(OBJ)
+	cat pce.bin basic.bin bios.bin > $@
+
+
+pce.bin:	pce.asm
+bios.bin:	bios.asm
+basic.bin:	basic.asm
