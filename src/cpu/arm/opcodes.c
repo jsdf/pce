@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -1575,6 +1575,109 @@ void opb0 (arm_t *c)
   arm_set_clk (c, 0, 1);
 }
 
+/* E0 00: cdp[cond] coproc, opcode1, crd, crn, crm, opcode2 */
+static
+void ope0_00 (arm_t *c)
+{
+  unsigned cop, op1, op2, rd, rn, rm;
+
+  cop = arm_get_bits (c->ir, 8, 4);
+  op1 = arm_get_bits (c->ir, 21, 3);
+  op2 = arm_get_bits (c->ir, 5, 3);
+  rd = arm_ir_rd (c->ir);
+  rn = arm_ir_rn (c->ir);
+  rm = arm_ir_rm (c->ir);
+
+  if (1) {
+    arm_set_clk (c, 0, 1);
+    arm_exception_undefined (c);
+    return;
+  }
+
+  /* exec copr */
+
+  arm_set_clk (c, 4, 1);
+}
+
+/* E0 01: mcr[cond] coproc, opcode1, rd, crn, crm, opcode2 */
+static
+void ope0_01 (arm_t *c)
+{
+  unsigned cop, op1, op2, rn, rm;
+  uint32_t s;
+
+  cop = arm_get_bits (c->ir, 8, 4);
+  op1 = arm_get_bits (c->ir, 21, 3);
+  op2 = arm_get_bits (c->ir, 5, 3);
+  rn = arm_ir_rn (c->ir);
+  rm = arm_ir_rm (c->ir);
+  s = arm_get_rd (c, c->ir);
+
+  if (1) {
+    arm_set_clk (c, 0, 1);
+    arm_exception_undefined (c);
+    return;
+  }
+
+  /* write copr */
+
+  arm_set_clk (c, 4, 1);
+}
+
+/* E0 11: mrc[cond] coproc, opcode1, rd, crn, crm, opcode2 */
+static
+void ope0_11 (arm_t *c)
+{
+  unsigned cop, op1, op2, rn, rm;
+  uint32_t d;
+
+  cop = arm_get_bits (c->ir, 8, 4);
+  op1 = arm_get_bits (c->ir, 21, 3);
+  op2 = arm_get_bits (c->ir, 5, 3);
+  rn = arm_ir_rn (c->ir);
+  rm = arm_ir_rm (c->ir);
+
+  /* read copr */
+
+  if (1) {
+    arm_set_clk (c, 0, 1);
+    arm_exception_undefined (c);
+    return;
+  }
+
+  if (arm_rd_is_pc (c->ir)) {
+    arm_set_cpsr (c, (arm_get_cpsr (c) & ~ARM_PSR_CC) | (d & ARM_PSR_CC));
+  }
+  else {
+    arm_set_rd (c, c->ir, d);
+  }
+
+  arm_set_clk (c, 4, 1);
+}
+
+/* E0 */
+static
+void ope0 (arm_t *c)
+{
+  switch (c->ir & 0x00100010UL) {
+  case 0x00000000UL:
+    ope0_00 (c);
+    break;
+
+  case 0x00000010UL:
+    ope0_01 (c);
+    break;
+
+  case 0x00100010UL:
+    ope0_11 (c);
+    break;
+
+  default:
+    arm_op_undefined (c);
+    break;
+  }
+}
+
 /* F0: swi[cond] immediate */
 static
 void opf0 (arm_t *c)
@@ -1615,8 +1718,8 @@ arm_opcode_f arm_opcodes[256] = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  /* d0 */
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  /* e0 */
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  ope0, ope0, ope0, ope0, ope0, ope0, ope0, ope0,  /* e0 */
+  ope0, ope0, ope0, ope0, ope0, ope0, ope0, ope0,
   opf0, opf0, opf0, opf0, opf0, opf0, opf0, opf0,  /* f0 */
   opf0, opf0, opf0, opf0, opf0, opf0, opf0, opf0
 };

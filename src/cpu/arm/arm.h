@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -284,7 +284,7 @@ typedef struct {
   unsigned argn;
 
   char     op[64];
-  char     arg[6][64];
+  char     arg[8][64];
 } arm_dasm_t;
 
 

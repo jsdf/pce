@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -47,7 +47,15 @@ enum {
   ARG_RS,
   ARG_RNI,
 
+  ARG_CD,
+  ARG_CN,
+  ARG_CM,
+
   ARG_SH,
+
+  ARG_COPR,
+  ARG_COPR_OP1,
+  ARG_COPR_OP2,
 
   ARG_CPSR,
   ARG_SPSR,
@@ -120,6 +128,18 @@ unsigned dasm_arg (char *dst1, char *dst2, uint32_t ir, unsigned arg)
     sprintf (dst1, "[r%u]", (unsigned) arm_ir_rn (ir));
     return (1);
 
+  case ARG_CD:
+    sprintf (dst1, "c%u", (unsigned) arm_ir_rd (ir));
+    return (1);
+
+  case ARG_CN:
+    sprintf (dst1, "c%u", (unsigned) arm_ir_rn (ir));
+    return (1);
+
+  case ARG_CM:
+    sprintf (dst1, "c%u", (unsigned) arm_ir_rm (ir));
+    return (1);
+
   case ARG_SH:
     if (arm_ir_i (ir)) {
       unsigned n;
@@ -161,6 +181,18 @@ unsigned dasm_arg (char *dst1, char *dst2, uint32_t ir, unsigned arg)
       return (1);
     }
     return (0);
+
+  case ARG_COPR:
+    sprintf (dst1, "p%u", (unsigned) arm_get_bits (ir, 8, 4));
+    return (1);
+
+  case ARG_COPR_OP1:
+    sprintf (dst1, "0x%02X", (unsigned) arm_get_bits (ir, 21, 3));
+    return (1);
+
+  case ARG_COPR_OP2:
+    sprintf (dst1, "0x%02X", (unsigned) arm_get_bits (ir, 5, 3));
+    return (1);
 
   case ARG_CPSR:
     strcpy (dst1, "cpsr");
@@ -760,6 +792,103 @@ static void opdb0 (arm_dasm_t *da)
   da->flags |= ARM_DFLAG_CALL;
 }
 
+/* E0 00: cdp[cond] coproc, opcode1, crd, crn, crm, opcode2 */
+static void opde0_00 (arm_dasm_t *da)
+{
+  unsigned n;
+
+  if (arm_get_bits (da->ir, 28, 4) == 0x0f) {
+    dasm_op0 (da, "cdp2", FLG_NONE);
+  }
+  else {
+    dasm_op0 (da, "cdp", FLG_COND);
+  }
+
+  n = dasm_arg (da->arg[0], da->arg[1], da->ir, ARG_COPR);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP1);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CD);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CN);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CM);
+
+  if (arm_get_bits (da->ir, 5, 3) != 0) {
+    n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP2);
+  }
+
+  da->argn = n;
+}
+
+/* E0 01: mcr[cond] coproc, opcode1, rd, crn, crm, opcode2 */
+static void opde0_01 (arm_dasm_t *da)
+{
+  unsigned n;
+
+  if (arm_get_bits (da->ir, 28, 4) == 0x0f) {
+    dasm_op0 (da, "mcr2", FLG_NONE);
+  }
+  else {
+    dasm_op0 (da, "mcr", FLG_COND);
+  }
+
+  n = dasm_arg (da->arg[0], da->arg[1], da->ir, ARG_COPR);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP1);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_RD);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CN);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CM);
+
+  if (arm_get_bits (da->ir, 5, 3) != 0) {
+    n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP2);
+  }
+
+  da->argn = n;
+}
+
+/* E0 11: mrc[cond] coproc, opcode1, rd, crn, crm, opcode2 */
+static void opde0_11 (arm_dasm_t *da)
+{
+  unsigned n;
+
+  if (arm_get_bits (da->ir, 28, 4) == 0x0f) {
+    dasm_op0 (da, "mrc2", FLG_NONE);
+  }
+  else {
+    dasm_op0 (da, "mrc", FLG_COND);
+  }
+
+  n = dasm_arg (da->arg[0], da->arg[1], da->ir, ARG_COPR);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP1);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_RD);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CN);
+  n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_CM);
+
+  if (arm_get_bits (da->ir, 5, 3) != 0) {
+    n += dasm_arg (da->arg[n], da->arg[n + 1], da->ir, ARG_COPR_OP2);
+  }
+
+  da->argn = n;
+}
+
+/* E0 */
+static void opde0 (arm_dasm_t *da)
+{
+  switch (da->ir & 0x00100010UL) {
+  case 0x00000000UL:
+    opde0_00 (da);
+    break;
+
+  case 0x00000010UL:
+    opde0_01 (da);
+    break;
+
+  case 0x00100010UL:
+    opde0_11 (da);
+    break;
+
+  default:
+    opdud (da);
+    break;
+  }
+}
+
 /* F0: swi[cond] immediate */
 static void opdf0 (arm_dasm_t *da)
 {
@@ -826,8 +955,8 @@ arm_dasm_f arm_dasm_op[256] = {
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,  /* d0 */
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,
-  opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,  /* e0 */
-  opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,
+  opde0, opde0, opde0, opde0, opde0, opde0, opde0, opde0,  /* e0 */
+  opde0, opde0, opde0, opde0, opde0, opde0, opde0, opde0,
   opdf0, opdf0, opdf0, opdf0, opdf0, opdf0, opdf0, opdf0,  /* f0 */
   opdf0, opdf0, opdf0, opdf0, opdf0, opdf0, opdf0, opdf0
 };
