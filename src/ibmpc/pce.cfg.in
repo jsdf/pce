@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.1 2003/04/23 12:48:43 hampa Exp $
+# $Id: pce.cfg.in,v 1.2 2003/05/01 07:11:43 hampa Exp $
 
 section pc {
 	# RAM size in KB
@@ -13,7 +13,21 @@ section pc {
 		size = 65536
 	}
 
+	section term_x11 {
+	}
+
+#	section term_vt100 {
+#	}
+
 	section cga {
+	}
+
+#	section mda {
+#	}
+
+	section parport {
+		base = 0x378
+		file = "parport.out"
 	}
 
 	section disk {

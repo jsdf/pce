@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.10 2003/04/26 23:36:47 hampa Exp $ */
+/* $Id: pce.c,v 1.11 2003/05/01 07:11:43 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1254,6 +1254,36 @@ void do_last (cmd_t *cmd)
   }
 }
 
+void do_parport (cmd_t *cmd)
+{
+  unsigned short port;
+  char           fname[256];
+
+  if (!cmd_match_uint16 (cmd, &port)) {
+    cmd_error (cmd, "need a port number");
+    return;
+  }
+
+  if (!cmd_match_str (cmd, fname)) {
+    cmd_error (cmd, "need a file name");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if ((port >= 4) || (pc->parport[port] == NULL)) {
+    prt_error ("no parallel port %u\n", (unsigned) port);
+    return;
+  }
+
+  if (parport_set_fname (pc->parport[port], fname)) {
+    prt_error ("setting new file failed\n");
+    return;
+  }
+}
+
 void do_p (cmd_t *cmd)
 {
   unsigned short seg, ofs;
@@ -1445,23 +1475,14 @@ int do_cmd (void)
 
     cmd_get (&cmd);
 
-    if (cmd_match (&cmd, "dump")) {
-      do_dump (&cmd);
-    }
-    else if (cmd_match (&cmd, "int28")) {
-      do_int28 (&cmd);
-    }
-    else if (cmd_match (&cmd, "last")) {
-      do_last (&cmd);
-    }
-    else if (cmd_match (&cmd, "time")) {
-      do_time (&cmd);
-    }
-    else if (cmd_match (&cmd, "b")) {
+    if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
     }
     else if (cmd_match (&cmd, "c")) {
       do_c (&cmd);
+    }
+    else if (cmd_match (&cmd, "dump")) {
+      do_dump (&cmd);
     }
     else if (cmd_match (&cmd, "d")) {
       do_d (&cmd);
@@ -1471,6 +1492,15 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
+    }
+    else if (cmd_match (&cmd, "int28")) {
+      do_int28 (&cmd);
+    }
+    else if (cmd_match (&cmd, "last")) {
+      do_last (&cmd);
+    }
+    else if (cmd_match (&cmd, "parport")) {
+      do_parport (&cmd);
     }
     else if (cmd_match (&cmd, "p")) {
       do_p (&cmd);
@@ -1483,6 +1513,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "s")) {
       do_s (&cmd);
+    }
+    else if (cmd_match (&cmd, "time")) {
+      do_time (&cmd);
     }
     else if (cmd_match (&cmd, "t")) {
       do_t (&cmd);

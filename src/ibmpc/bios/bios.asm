@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.5 2003/04/29 00:51:54 hampa Exp $
+; $Id: bios.asm,v 1.6 2003/05/01 07:11:43 hampa Exp $
 
 
 CPU 8086
@@ -3982,9 +3982,8 @@ db 0xFF                                 ; F840 db 0xFF
 ;*****************************************************************************
 ;* int 12 handler
 ;*****************************************************************************
-; F841
 
-int_12:
+int_12:                                 ; F841
   sti
   push    ds
   call    set_bios_ds
@@ -4001,8 +4000,7 @@ int_12:
 ;* int 11 handler
 ;*****************************************************************************
 
-; F84D
-int_11:
+int_11:                                 ; F84D
   sti
   push    ds
   call    set_bios_ds
@@ -4015,33 +4013,73 @@ int_11:
   dw      0xffff                        ; F857
 
 
-db 0xFB                                 ; F859 sti
-db 0x1E                                 ; F85A push ds
-db 0xE8, 0xE0, 0x06                     ; F85B call 0xff3e
-db 0x80, 0x26, 0x71, 0x00, 0x7F         ; F85E and byte [0x71],0x7f
-db 0xE8, 0x04, 0x00                     ; F863 call 0xf86a
-db 0x1F                                 ; F866 pop ds
-db 0xCA, 0x02, 0x00                     ; F867 retf 0x2
-db 0x0A, 0xE4                           ; F86A or ah,ah
-db 0x74, 0x13                           ; F86C jz 0xf881
-db 0xFE, 0xCC                           ; F86E dec ah
-db 0x74, 0x18                           ; F870 jz 0xf88a
-db 0xFE, 0xCC                           ; F872 dec ah
-db 0x74, 0x1A                           ; F874 jz 0xf890
-db 0xFE, 0xCC                           ; F876 dec ah
-db 0x75, 0x03                           ; F878 jnz 0xf87d
-db 0xE9, 0x24, 0x01                     ; F87A jmp 0xf9a1
-db 0xB4, 0x80                           ; F87D mov ah,0x80
-db 0xF9                                 ; F87F stc
-db 0xC3                                 ; F880 ret
-db 0xE4, 0x61                           ; F881 in al,0x61
-db 0x24, 0xF7                           ; F883 and al,0xf7
-db 0xE6, 0x61                           ; F885 out 0x61,al
-db 0x2A, 0xE4                           ; F887 sub ah,ah
-db 0xC3                                 ; F889 ret
-db 0xE4, 0x61                           ; F88A in al,0x61
-db 0x0C, 0x08                           ; F88C or al,0x8
-db 0xEB, 0xF5                           ; F88E jmp short 0xf885
+;*****************************************************************************
+;* int 15 handler
+;*****************************************************************************
+
+int_15:                                 ; F859
+  sti
+  push    ds
+
+  call    set_bios_ds
+
+  and     [0x0071], byte 0x7f           ; break flag
+
+  call    L_F86A
+
+  pop     ds
+  retf    2
+
+L_F86A:
+  or      ah, ah
+  jz      int_15_00
+
+  dec     ah
+  jz      int_15_01
+
+  dec     ah
+  jz      int_15_02
+
+  dec     ah
+  jnz     L_F87D
+  jmp     int_15_03
+
+L_F87D:
+  mov     ah, 0x80
+  stc
+  ret
+
+
+;*****************************************************************************
+;* int 15 func 00 - turn tape drive motor on
+;*****************************************************************************
+
+int_15_00:                              ; F881
+  in      al, 0x61
+  and     al, 0xf7
+
+L_F885:
+  out     0x61, al
+
+  sub     ah, ah
+  ret
+
+
+;*****************************************************************************
+;* int 15 func 01 - turn tape drive motor off
+;*****************************************************************************
+
+int_15_01:                              ; F88A
+  in      al, 0x61
+  or      al, 0x08
+  jmp     short L_F885
+
+
+;*****************************************************************************
+;* int 15 func 02 - read data from tape
+;*****************************************************************************
+
+int_15_02:                              ; F890
 db 0x53                                 ; F890 push bx
 db 0x51                                 ; F891 push cx
 db 0x56                                 ; F892 push si
@@ -4173,6 +4211,8 @@ db 0x86, 0xC4                           ; F999 xchg al,ah
 db 0x2B, 0xD8                           ; F99B sub bx,ax
 db 0xA3, 0x67, 0x00                     ; F99D mov [0x67],ax
 db 0xC3                                 ; F9A0 ret
+
+int_15_03:                              ; F9A1
 db 0x53                                 ; F9A1 push bx
 db 0x51                                 ; F9A2 push cx
 db 0xE4, 0x61                           ; F9A3 in al,0x61
@@ -4519,7 +4559,7 @@ bios_int_addr_10:                       ; FF03
   dw      int_12                        ; int 12 (F841)
   dw      0xec59                        ; int 13
   dw      0xe739                        ; int 14
-  dw      0xf859                        ; int 15
+  dw      int_15                        ; int 15 (F859)
   dw      int_16                        ; int 16 (E82E)
   dw      int_17                        ; int 17 (EFD2)
   dw      0x0000                        ; int 18
