@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -50,7 +50,9 @@ int mem_blk_init (mem_blk_t *blk, unsigned long base, unsigned long size, int al
 
   blk->ext = blk;
 
-  blk->flags = 0;
+  blk->active = 1;
+  blk->readonly = 0;
+  blk->data_del = (blk->data != NULL);
   blk->addr1 = base;
   blk->addr2 = base + size - 1;
   blk->size = size;
@@ -78,7 +80,9 @@ mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc)
 void mem_blk_free (mem_blk_t *blk)
 {
   if (blk != NULL) {
-    free (blk->data);
+    if (blk->data_del) {
+      free (blk->data);
+    }
   }
 }
 
@@ -102,14 +106,39 @@ void mem_blk_set_ext (mem_blk_t *blk, void *ext)
   blk->ext = ext;
 }
 
-void mem_blk_set_ro (mem_blk_t *blk, int ro)
+unsigned char *mem_blk_get_data (mem_blk_t *blk)
 {
-  if (ro) {
-    blk->flags |= MEM_FLAG_RO;
+  return (blk->data);
+}
+
+void mem_blk_set_data (mem_blk_t *blk, void *data, int del)
+{
+  if (blk->data_del) {
+    free (blk->data);
   }
-  else {
-    blk->flags &= ~MEM_FLAG_RO;
-  }
+
+  blk->data = data;
+  blk->data_del = (data != NULL) && del;
+}
+
+int mem_blk_get_active (mem_blk_t *blk)
+{
+  return (blk->active);
+}
+
+void mem_blk_set_active (mem_blk_t *blk, int val)
+{
+  blk->active = (val != 0);
+}
+
+int mem_blk_get_readonly (mem_blk_t *blk)
+{
+  return (blk->readonly);
+}
+
+void mem_blk_set_readonly (mem_blk_t *blk, int val)
+{
+  blk->readonly = (val != 0);
 }
 
 unsigned long mem_blk_get_addr (const mem_blk_t *blk)
@@ -126,11 +155,6 @@ void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr)
 unsigned long mem_blk_get_size (const mem_blk_t *blk)
 {
   return (blk->size);
-}
-
-unsigned char *mem_blk_get_data (mem_blk_t *blk)
-{
-  return (blk->data);
 }
 
 
@@ -320,21 +344,23 @@ static
 mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 {
   unsigned  i;
+  mem_blk_t *blk;
   mem_lst_t *lst;
 
   if (mem->last != NULL) {
-    lst = mem->last;
-    if ((addr >= lst->addr1) && (addr <= lst->addr2)) {
-      return (lst->blk);
+    blk = mem->last->blk;
+    if (blk->active && (addr >= blk->addr1) && (addr <= blk->addr2)) {
+      return (blk);
     }
   }
 
   lst = mem->lst;
 
   for (i = 0; i < mem->cnt; i++) {
-    if ((addr >= lst->addr1) && (addr <= lst->addr2)) {
+    blk = lst->blk;
+    if (blk->active && (addr >= blk->addr1) && (addr <= blk->addr2)) {
       mem->last = lst;
-      return (lst->blk);
+      return (blk);
     }
 
     lst += 1;
@@ -512,7 +538,7 @@ void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
   blk = mem_get_blk (mem, addr);
 
   if (blk != NULL) {
-    if (blk->flags & MEM_FLAG_RO) {
+    if (blk->readonly) {
       return;
     }
 
@@ -540,7 +566,7 @@ void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val)
       return;
     }
 
-    if (blk->flags & MEM_FLAG_RO) {
+    if (blk->readonly) {
       return;
     }
 
@@ -569,7 +595,7 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
       return;
     }
 
-    if (blk->flags & MEM_FLAG_RO) {
+    if (blk->readonly) {
       return;
     }
 
@@ -600,7 +626,7 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
       return;
     }
 
-    if (blk->flags & MEM_FLAG_RO) {
+    if (blk->readonly) {
       return;
     }
 
@@ -633,7 +659,7 @@ void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
       return;
     }
 
-    if (blk->flags & MEM_FLAG_RO) {
+    if (blk->readonly) {
       return;
     }
 
@@ -727,7 +753,26 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
   mem->cnt += 1;
 
   lst->blk = blk;
-  lst->addr1 = blk->addr1;
-  lst->addr2 = blk->addr1 + blk->size - 1;
   lst->del = (del != 0);
+}
+
+void mem_rmv_blk (memory_t *mem, mem_blk_t *blk)
+{
+  unsigned  i, j;
+  mem_lst_t *lst;
+
+  i = 0;
+  j = 0;
+  lst = mem->lst;
+
+  while (i < mem->cnt) {
+    if (lst[i].blk != blk) {
+      lst[j++] = lst[i];
+    }
+
+    i += 1;
+  }
+
+  mem->cnt = j;
+  mem->last = NULL;
 }

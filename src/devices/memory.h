@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,9 +25,6 @@
 
 #ifndef PCE_MEMORY_H
 #define PCE_MEMORY_H 1
-
-
-#define MEM_FLAG_RO  1
 
 
 typedef unsigned char (*mem_get_uint8_f) (void *blk, unsigned long addr);
@@ -55,7 +52,9 @@ typedef struct {
 
   void             *ext;
 
-  unsigned short   flags;
+  unsigned char    active;
+  unsigned char    readonly;
+  unsigned char    data_del;
   unsigned long    addr1;
   unsigned long    addr2;
   unsigned long    size;
@@ -65,8 +64,6 @@ typedef struct {
 
 typedef struct {
   mem_blk_t     *blk;
-  unsigned long addr1;
-  unsigned long addr2;
   int           del;
 } mem_lst_t;
 
@@ -125,12 +122,22 @@ void mem_blk_clear (mem_blk_t *blk, unsigned char val);
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 
+unsigned char *mem_blk_get_data (mem_blk_t *blk);
+
+void mem_blk_set_data (mem_blk_t *blk, void *data, int del);
+
+int mem_blk_get_active (mem_blk_t *blk);
+
+void mem_blk_set_active (mem_blk_t *blk, int val);
+
+int mem_blk_get_readonly (mem_blk_t *blk);
+
 /*!***************************************************************************
  * @short Set the read-only flag
  * @param blk The memory block
  * @param ro  Make block-read only if true, read-write otherwise
  *****************************************************************************/
-void mem_blk_set_ro (mem_blk_t *blk, int ro);
+void mem_blk_set_readonly (mem_blk_t *blk, int val);
 
 /*!***************************************************************************
  * @short  Get the base address
@@ -147,7 +154,6 @@ unsigned long mem_blk_get_addr (const mem_blk_t *blk);
 void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr);
 
 unsigned long mem_blk_get_size (const mem_blk_t *blk);
-unsigned char *mem_blk_get_data (mem_blk_t *blk);
 
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val);
@@ -227,6 +233,13 @@ void mem_set_default (memory_t *mem, unsigned char val);
  *            structure is deleted.
  *****************************************************************************/
 void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
+
+/*!***************************************************************************
+ * @short Remove a memory block without deleting it
+ * @param mem The memory structure
+ * @param blk The memory block
+ *****************************************************************************/
+void mem_rmv_blk (memory_t *mem, mem_blk_t *blk);
 
 
 #endif
