@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include <chipset/e8250.h>
+#include <chipset/82xx/e8250.h>
 #include <devices/memory.h>
 
 

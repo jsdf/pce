@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -76,11 +76,11 @@ extern unsigned long par_int28;
 #include <lib/load.h>
 
 #include <cpu/e8086/e8086.h>
-#include <chipset/e8237.h>
-#include <chipset/e8250.h>
-#include <chipset/e8253.h>
-#include <chipset/e8255.h>
-#include <chipset/e8259.h>
+#include <chipset/82xx/e8237.h>
+#include <chipset/82xx/e8250.h>
+#include <chipset/82xx/e8253.h>
+#include <chipset/82xx/e8255.h>
+#include <chipset/82xx/e8259.h>
 
 #include <libini/libini.h>
 

@@ -24,7 +24,7 @@ HDR := $(foreach f,$(FILES),$(f).h)
 
 OBJ_EXT	:= \
 	$(pcedst)/cpu/arm/arm.a \
-	$(pcedst)/chipset/e8250.o \
+	$(pcedst)/chipset/82xx/e8250.o \
 	$(pcedst)/devices/pci.o \
 	$(pcedst)/devices/pci-ata.o \
 	$(pcedst)/devices/ata.o \
@@ -46,7 +46,7 @@ OBJ_EXT	:= \
 HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/arm/arm.h \
-	chipset/e8250.h \
+	chipset/82xx/e8250.h \
 	devices/block/block.h \
 	devices/block/blkcow.h \
 	devices/block/blkdosem.h \

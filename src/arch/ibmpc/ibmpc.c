@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-03-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1141,7 +1141,7 @@ void pc_clock (ibmpc_t *pc)
     e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
 #endif
 
-    pc->clk_div[1] += pc->clk_div[0];
+    pc->clk_div[1] += pc->clk_div[0] & ~0x1fUL;
 
     pc->clk_div[0] &= 0x1f;
 
@@ -1149,7 +1149,7 @@ void pc_clock (ibmpc_t *pc)
       unsigned      i;
       unsigned long clk;
 
-      clk = pc->clk_div[1] & ~4095;
+      clk = pc->clk_div[1] & ~4095UL;
 
       pce_video_clock (pc->video, clk);
 

@@ -26,7 +26,7 @@ HDR := $(foreach f,$(FILES),$(f).h)
 
 OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
-	$(pcedst)/chipset/chipset.a \
+	$(pcedst)/chipset/82xx/chipset.a \
 	$(PCE_BLK_OBJ) \
 	$(pcedst)/devices/cga.o \
 	$(pcedst)/devices/vga.o \
@@ -50,11 +50,11 @@ OBJ_EXT	:= \
 HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/e8086/e8086.h \
-	chipset/e8237.h \
-	chipset/e8250.h \
-	chipset/e8253.h \
-	chipset/e8255.h \
-	chipset/e8259.h \
+	chipset/82xx/e8237.h \
+	chipset/82xx/e8250.h \
+	chipset/82xx/e8253.h \
+	chipset/82xx/e8255.h \
+	chipset/82xx/e8259.h \
 	$(PCE_BLK_HDR) \
 	devices/cga.h \
 	devices/vga.h \

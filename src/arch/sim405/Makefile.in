@@ -24,7 +24,7 @@ HDR := $(foreach f,$(FILES),$(f).h)
 
 OBJ_EXT	:= \
 	$(pcedst)/cpu/ppc405/ppc405.a \
-	$(pcedst)/chipset/e8250.o \
+	$(pcedst)/chipset/82xx/e8250.o \
 	$(pcedst)/chipset/ppc405/uic.o \
 	$(pcedst)/devices/ata.o \
 	$(pcedst)/devices/memory.o \
@@ -47,7 +47,7 @@ OBJ_EXT	:= \
 HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/ppc405/ppc405.h \
-	chipset/e8250.h \
+	chipset/82xx/e8250.h \
 	chipset/ppc405/uic.h \
 	devices/ata.h \
 	devices/pci.h \
