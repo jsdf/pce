@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.c                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-12-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cmd.c,v 1.3 2003/12/20 11:43:29 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdio.h>
@@ -160,13 +160,34 @@ void cmd_error (cmd_t *cmd, const char *str)
 int cmd_match_str (cmd_t *cmd, char *str, unsigned max)
 {
   unsigned i, n;
+  int      quote;
 
   cmd_match_space (cmd);
 
   i = cmd->i;
   n = 0;
 
-  while ((cmd->str[i] != 0) && !str_is_space (cmd->str[i])) {
+  if (cmd->str[i] == '"') {
+    quote = 1;
+    i += 1;
+  }
+  else {
+    quote = 0;
+  }
+
+  while (cmd->str[i] != 0) {
+    if (quote) {
+      if (cmd->str[i] == '"') {
+        i += 1;
+        break;
+      }
+    }
+    else {
+      if (str_is_space (cmd->str[i])) {
+        break;
+      }
+    }
+
     *(str++) = cmd->str[i];
     i += 1;
     n += 1;
