@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -645,6 +645,29 @@ void do_key (cmd_t *cmd, simarm_t *sim)
 }
 
 static
+void do_m (cmd_t *cmd, simarm_t *sim)
+{
+  char msg[256];
+  char val[256];
+
+  if (!cmd_match_str (cmd, msg, 256)) {
+    strcpy (msg, "");
+  }
+
+  if (!cmd_match_str (cmd, val, 256)) {
+    strcpy (val, "");
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  if (sarm_set_msg (sim, msg, val)) {
+    printf ("error\n");
+  }
+}
+
+static
 void do_p (cmd_t *cmd, simarm_t *sim)
 {
   unsigned long cnt;
@@ -902,6 +925,9 @@ int sarm_do_cmd (cmd_t *cmd, simarm_t *sim)
   }
   else if (cmd_match (cmd, "key")) {
     do_key (cmd, sim);
+  }
+  else if (cmd_match (cmd, "m")) {
+    do_m (cmd, sim);
   }
   else if (cmd_match (cmd, "p")) {
     do_p (cmd, sim);

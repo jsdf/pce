@@ -31,12 +31,15 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/block/block.a \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/serport.o \
+	$(pcedst)/devices/slip.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/ihex.o \
+	$(pcedst)/lib/inidsk.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(PCE_BLK_OBJ) \
 	$(pcedst)/libini/libini.a
 
 
@@ -56,17 +59,25 @@ HDR_EXT	:= \
 	devices/pci.h \
 	devices/pci-ata.h \
 	devices/serport.h \
+	devices/slip.h \
 	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
 	lib/ihex.h \
+	lib/inidsk.h \
 	lib/load.h \
 	lib/log.h \
+	$(PCE_BLK_HDR) \
 	libini/libini.h
 
 MAN1	:=
 
 BIN	:= simarm
+
+ifeq "$(PCE_ENABLE_TUN)" "1"
+OBJ_EXT += $(pcedst)/lib/tun.o
+HDR_EXT += lib/tun.h
+endif
 
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)

@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd hexdump ihex inidsk load log
+FILES := brkpt cmd hexdump ihex inidsk load log tun
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 FILES += tun
@@ -41,3 +41,4 @@ ihex.o:		ihex.c ihex.h $(SDP)
 inidsk.o:	inidsk.c inidsk.h log.h $(PCE_BLK_HDR) $(SDP)
 load.o:		load.c load.h ihex.h devices/memory.h $(SDP)
 log.o:		log.c log.h $(SDP)
+tun.o:		tun.c tun.h $(SDP)

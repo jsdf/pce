@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.h                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -56,6 +56,8 @@ void pci_ixp_free (pci_ixp_t *ixp);
 
 pci_ixp_t *pci_ixp_new (void);
 void pci_ixp_del (pci_ixp_t *ixp);
+
+void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev);
 
 mem_blk_t *pci_ixp_get_mem_io (pci_ixp_t *ixp);
 mem_blk_t *pci_ixp_get_mem_cfg (pci_ixp_t *ixp);

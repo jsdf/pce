@@ -10,7 +10,8 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := ata cga ega hgc mda memory nvram parport pci pci-ata serport vga video
+FILES := cga ega hgc mda vga video \
+	ata memory nvram parport pci pci-ata serport slip
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -71,5 +72,7 @@ pci.o:		pci.c pci.h memory.h $(SDP)
 pci-ata.o:	pci-ata.c pci-ata.h pci.h ata.h devices/block/block.h $(SDP)
 
 serport.o:	serport.c serport.h memory.h chipset/e8250.h $(SDP)
+
+slip.o:		slip.c slip.h serport.h chipset/e8250.h lib/tun.h $(SDP)
 
 video.o:	video.c video.h memory.h $(SDP)

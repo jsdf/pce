@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := cmd_ppc main pci sim405 sercons slip
+FILES := cmd_ppc main pci sim405 sercons
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -32,6 +32,7 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/pci.o \
 	$(pcedst)/devices/pci-ata.o \
 	$(pcedst)/devices/serport.o \
+	$(pcedst)/devices/slip.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
@@ -54,6 +55,7 @@ HDR_EXT	:= \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/serport.h \
+	devices/slip.h \
 	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
@@ -103,4 +105,3 @@ sim405.o:	sim405.c $(SDP)
 main.o:		main.c $(SDP)
 pci.o:		pci.c $(SDP)
 sercons.o:	sercons.c $(SDP)
-slip.o:		slip.c $(SDP)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/sercons.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -79,15 +79,11 @@ void scon_check (simarm_t *sim)
   n = (unsigned) r;
 
   if ((n == 1) && (buf[0] == 0)) {
-    sarm_set_msg (sim, "break", "stop");
-    return;
-  }
-  if ((n == 1) && (buf[0] == 0x1b)) {
-    sarm_set_msg (sim, "break", "stop");
+    sarm_set_msg (sim, "emu.stop", "");
     return;
   }
   else if ((n == 1) && (buf[0] == 0xe0)) {
-    sarm_set_msg (sim, "break", "abort");
+    sarm_set_msg (sim, "emu.abort", "");
     return;
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.h                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -29,9 +29,9 @@
 
 #include <lib/cmd.h>
 #include <devices/pci.h>
+#include <devices/slip.h>
 
 #include "pci.h"
-#include "slip.h"
 #include "sim405.h"
 #include "sercons.h"
 #include "cmd_ppc.h"

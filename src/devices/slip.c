@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/slip.c                                     *
+ * File name:     src/devices/slip.c                                         *
  * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -23,7 +23,10 @@
 /* $Id$ */
 
 
-#include "main.h"
+#include <config.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef PCE_ENABLE_TUN
 #include <lib/tun.h>

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.h                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -79,6 +79,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <lib/log.h>
 #include <lib/brkpt.h>
+#include <lib/inidsk.h>
 #include <lib/load.h>
 
 
@@ -95,10 +96,14 @@ typedef struct simarm_s {
   ixp_intc_t         *intc;
   ixp_timer_t        *timer;
 
+  disks_t            *dsks;
+
   pci_ixp_t          *pci;
   pci_ata_t          pciata;
 
   serport_t          *serport[2];
+
+  slip_t             *slip;
 
   breakpoint_t       *brkpt;
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -267,6 +267,50 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 }
 
 static
+void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
+{
+  ini_sct_t  *sct;
+  unsigned   ser;
+  const char *name;
+
+  sct = ini_sct_find_sct (ini, "slip");
+  if (sct == NULL) {
+    return;
+  }
+
+  ser = ini_get_lng_def (sct, "serial", 0);
+  name = ini_get_str_def (sct, "interface", "tun0");
+
+  pce_log (MSG_INF, "SLIP:\tserport=%u interface=%s\n", ser, name);
+
+  if (ser >= 2) {
+    return;
+  }
+
+  if (sim->serport[ser] == NULL) {
+    pce_log (MSG_ERR, "*** no serial port (%u)\n", ser);
+    return;
+  }
+
+  sim->slip = slip_new();
+  if (sim->slip == NULL) {
+    return;
+  }
+
+  slip_set_serport (sim->slip, sim->serport[ser]);
+
+  if (slip_set_tun (sim->slip, name)) {
+    pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n", name);
+  }
+}
+
+static
+void sarm_setup_disks (simarm_t *sim, ini_sct_t *ini)
+{
+  sim->dsks = ini_get_disks (ini);
+}
+
+static
 void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 {
   sim->pci = pci_ixp_new();
@@ -286,13 +330,54 @@ void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 static
 void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 {
+  unsigned  pcidev, pciirq;
+  unsigned  chn, dev, drv;
+  ini_sct_t *sct;
+  disk_t    *dsk;
+
   pci_ata_init (&sim->pciata);
 
-  pci_dev_set_irq_f (&sim->pciata.pci, 0, pci_set_intr_a, &sim->pci->bus);
+  sct = ini_sct_find_sct (ini, "pci_ata");
+  if (sct == NULL) {
+    return;
+  }
 
-  pci_set_device (&sim->pci->bus, &sim->pciata.pci, 4);
+  pcidev = ini_get_lng_def (sct, "pci_device", 1);
+  pciirq = ini_get_lng_def (sct, "pci_irq", 31);
 
-  pce_log (MSG_INF, "PCI0:\tATA\n");
+  pce_log (MSG_INF, "PCI-ATA:\tpcidev=%u irq=%u\n", pcidev, pciirq);
+
+  pci_ixp_add_device (sim->pci, &sim->pciata.pci);
+  pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
+//  pci_dev_set_irq_f (&sim->pciata.pci, 0, pci_set_intr_a, &sim->pci->bus);
+  pci_dev_set_irq_f (&sim->pciata.pci, 0,
+    ict_get_irq_f (sim->intc, pciirq), sim->intc
+  );
+
+  sct = ini_sct_find_sct (sct, "device");
+
+  while (sct != NULL) {
+    chn = ini_get_lng_def (sct, "channel", 0);
+    dev = ini_get_lng_def (sct, "device", 0);
+    drv = ini_get_lng_def (sct, "drive", 0);
+
+    dsk = dsks_get_disk (sim->dsks, drv);
+    if (dsk == NULL) {
+      pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
+    }
+    else {
+      pce_log (MSG_INF, "PCI-ATA:\tchn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
+        chn, dev, drv,
+        (unsigned long) dsk->visible_c,
+        (unsigned long) dsk->visible_h,
+        (unsigned long) dsk->visible_s
+      );
+
+      pci_ata_set_block (&sim->pciata, dsk, 2 * chn + dev);
+    }
+
+    sct = ini_sct_find_next (sct, "device");
+  }
 }
 
 static
@@ -366,6 +451,8 @@ simarm_t *sarm_new (ini_sct_t *ini)
   sarm_setup_intc (sim, ini);
   sarm_setup_timer (sim, ini);
   sarm_setup_serport (sim, ini);
+  sarm_setup_slip (sim, ini);
+  sarm_setup_disks (sim, ini);
   sarm_setup_pci (sim, ini);
   sarm_setup_ata (sim, ini);
 
@@ -382,6 +469,10 @@ void sarm_del (simarm_t *sim)
 
   pci_ata_free (&sim->pciata);
   pci_ixp_del (sim->pci);
+
+  dsks_del (sim->dsks);
+
+  slip_del (sim->slip);
 
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
@@ -431,6 +522,10 @@ void sarm_clock (simarm_t *sim, unsigned n)
 
     if (sim->serport[1] != NULL) {
       ser_clock (sim->serport[1], 1024);
+    }
+
+    if (sim->slip != NULL) {
+      slip_clock (sim->slip, 1024);
     }
 
     sim->clk_div[0] &= 1023;
@@ -486,6 +581,32 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
+  if (strcmp (msg, "disk.commit") == 0) {
+    if (strcmp (val, "") == 0) {
+      if (dsks_commit (sim->dsks)) {
+        pce_log (MSG_ERR, "commit failed for at least one disk\n");
+        return (1);
+      }
+    }
+    else {
+      unsigned d;
+      disk_t   *dsk;
+
+      d = strtoul (val, NULL, 0);
+      dsk = dsks_get_disk (sim->dsks, d);
+      if (dsk == NULL) {
+        pce_log (MSG_ERR, "no such disk (%s)\n", val);
+        return (1);
+      }
+
+      if (dsk_commit (dsk)) {
+        pce_log (MSG_ERR, "commit failed (%s)\n", val);
+        return (1);
+      }
+    }
+
+    return (0);
+  }
 
   pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 

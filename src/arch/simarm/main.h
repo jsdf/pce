@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.h                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -33,6 +33,7 @@
 
 #include <devices/memory.h>
 #include <devices/pci.h>
+#include <devices/slip.h>
 
 #include "timer.h"
 #include "intc.h"
@@ -40,6 +41,11 @@
 #include "simarm.h"
 #include "sercons.h"
 #include "cmd_arm.h"
+
+
+#define sarm_br16(x) ((((x) & 0xff) << 8) | (((x) >> 8) & 0xff))
+#define sarm_br32(x) ((((x) & 0xff) << 24) | ((((x) >> 8) & 0xff) << 16) \
+ | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
 
 
 extern int      par_verbose;

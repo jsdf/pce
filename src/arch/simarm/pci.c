@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.c                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -26,15 +26,25 @@
 #include "main.h"
 
 
+/* #define DEBUG_PCI 1 */
+/* #define DEBUG_PCI_IXP 1 */
+
+
 unsigned char pci_ixp_get_cfg8 (pci_ixp_t *ixp, unsigned long addr)
 {
-  fprintf (stderr, "pci-ixp: get cfg 8 (0x%08lx)\n", addr); fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: get cfg8 %08lX\n", addr);
+#endif
+
   return (0);
 }
 
 unsigned short pci_ixp_get_cfg16 (pci_ixp_t *ixp, unsigned long addr)
 {
-  fprintf (stderr, "pci-ixp: get cfg 16 (0x%08lx)\n", addr); fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: get cfg16 %08lX\n", addr);
+#endif
+
   return (0);
 }
 
@@ -44,28 +54,32 @@ unsigned long pci_ixp_get_cfg32 (pci_ixp_t *ixp, unsigned long addr)
 
   val = pci_dev_get_cfg32 (&ixp->dev, addr);
 
-  fprintf (stderr, "pci-ixp: get cfg 32 (0x%08lx) : 0x%08lx\n", addr, val);
-  fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: get cfg32 %08lX -> %08lX\n", addr, val);
+#endif
 
   return (val);
 }
 
 void pci_ixp_set_cfg8 (pci_ixp_t *ixp, unsigned long addr, unsigned char val)
 {
-  fprintf (stderr, "pci-ixp: set cfg 32 (0x%08lx, 0x%02x)\n", addr, val);
-  fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %02X\n", addr, val);
+#endif
 }
 
 void pci_ixp_set_cfg16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
 {
-  fprintf (stderr, "pci-ixp: set cfg 32 (0x%08lx, 0x%04x)\n", addr, val);
-  fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %04X\n", addr, val);
+#endif
 }
 
 void pci_ixp_set_cfg32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 {
-  fprintf (stderr, "pci-ixp: set cfg 32 (0x%08lx, 0x%08lx)\n", addr, val);
-  fflush (stderr);
+#ifdef DEBUG_PCI_IXP
+  pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %08lX)\n", addr, val);
+#endif
 
   pci_dev_set_cfg32 (&ixp->dev, addr, val);
 }
@@ -95,42 +109,86 @@ unsigned pci_ixp_get_device (unsigned long addr)
 static
 unsigned char pci_bus_get_io8 (pci_ixp_t *ixp, unsigned long addr)
 {
-  pce_log (MSG_DEB, "pci-bus: get io 8 %08lX\n", addr);
-  return (mem_get_uint8 (&ixp->asio, addr));
+  unsigned char val;
+
+  addr ^= 0x03;
+
+  val = mem_get_uint8 (&ixp->asio, addr);
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get io8 %08lX -> %02X\n", addr, val);
+#endif
+
+  return (val);
 }
 
 static
 unsigned short pci_bus_get_io16 (pci_ixp_t *ixp, unsigned long addr)
 {
-  pce_log (MSG_DEB, "pci-bus: get io 16 %08lX\n", addr);
-  return (mem_get_uint16_le (&ixp->asio, addr));
+  unsigned short val;
+
+  addr ^= 0x02;
+
+  val = mem_get_uint16_le (&ixp->asio, addr);
+  val = sarm_br16 (val);
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get io16 %08lX -> %04X\n", addr, val);
+#endif
+
+  return (val);
 }
 
 static
 unsigned long pci_bus_get_io32 (pci_ixp_t *ixp, unsigned long addr)
 {
-  pce_log (MSG_DEB, "pci-bus: get io 32 %08lX\n", addr);
-  return (mem_get_uint32_le (&ixp->asio, addr));
+  unsigned long val;
+
+  val = mem_get_uint32_le (&ixp->asio, addr);
+  val = sarm_br32 (val);
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get io32 %08lX -> %08lX\n", addr, val);
+#endif
+
+  return (val);
 }
 
 static
 void pci_bus_set_io8 (pci_ixp_t *ixp, unsigned long addr, unsigned char val)
 {
-  pce_log (MSG_DEB, "pci-bus: set io 8 %08lX <- %02X\n", addr, val);
+  addr ^= 0x03;
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set io8 %08lX <- %02X\n", addr, val);
+#endif
+
   mem_set_uint8 (&ixp->asio, addr, val);
 }
 
 static
 void pci_bus_set_io16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
 {
-  pce_log (MSG_DEB, "pci-bus: set io 16 %08lX <- %04X\n", addr, val);
+  addr ^= 0x02;
+
+  val = sarm_br16 (val);
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set io16 %08lX <- %04X\n", addr, val);
+#endif
+
   mem_set_uint16_le (&ixp->asio, addr, val);
 }
 
 static
 void pci_bus_set_io32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 {
-  pce_log (MSG_DEB, "pci-bus: set io 32 %08lX <- %08lX\n", addr, val);
+  val = sarm_br32 (val);
+
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set io32 %08lX <- %08lX\n", addr, val);
+#endif
+
   mem_set_uint32_le (&ixp->asio, addr, val);
 }
 
@@ -138,39 +196,53 @@ void pci_bus_set_io32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 static
 unsigned char pci_bus_get_cfg8 (pci_ixp_t *ixp, unsigned long addr)
 {
-  pce_log (MSG_DEB, "pci-bus: get cfg 8 %08lX\n", addr);
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get cfg8 %08lX\n", addr);
+#endif
+
   return (0x55);
 }
 
 static
 unsigned short pci_bus_get_cfg16 (pci_ixp_t *ixp, unsigned long addr)
 {
-  pce_log (MSG_DEB, "pci-bus: get cfg 16 %08lX\n", addr);
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get cfg16 %08lX\n", addr);
+#endif
+
   return (0x5555);
 }
 
 static
 unsigned long pci_bus_get_cfg32 (pci_ixp_t *ixp, unsigned long addr)
 {
-  unsigned dev;
-
-/*  pce_log (MSG_DEB, "PCI get cfg 32 %08lX\n", addr); */
+  unsigned      dev;
+  unsigned long val;
 
   dev = pci_ixp_get_device (addr);
+  val = pci_get_cfg32 (&ixp->bus, dev, addr & 0xffffU);
 
-  return (pci_get_cfg32 (&ixp->bus, dev, addr & 0xffffU));
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: get cfg32 %08lX -> %02X\n", addr, val);
+#endif
+
+  return (val);
 }
 
 static
 void pci_bus_set_cfg8 (pci_ixp_t *ixp, unsigned long addr, unsigned char val)
 {
-  pce_log (MSG_DEB, "pci-bus: set cfg 8 %08lX <- %02X\n", addr, val);
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set cfg8 %08lX <- %02X\n", addr, val);
+#endif
 }
 
 static
 void pci_bus_set_cfg16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
 {
-  pce_log (MSG_DEB, "pci-bus: set cfg 16 %08lX <- %04X\n", addr, val);
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set cfg16 %08lX <- %04X\n", addr, val);
+#endif
 }
 
 static
@@ -178,7 +250,9 @@ void pci_bus_set_cfg32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 {
   unsigned dev;
 
-/*  pce_log (MSG_DEB, "PCI set cfg 32 %08lX %08lX\n", addr, val); */
+#ifdef DEBUG_PCI
+  pce_log (MSG_DEB, "pci-bus: set cfg32 %08lX <- %08lX\n", addr, val);
+#endif
 
   dev = pci_ixp_get_device (addr);
 
@@ -374,6 +448,17 @@ void pci_ixp_del (pci_ixp_t *ixp)
   if (ixp != NULL) {
     pci_ixp_free (ixp);
     free (ixp);
+  }
+}
+
+void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev)
+{
+  unsigned i;
+
+  for (i = 0; i < PCI_REG_MAX; i++) {
+    if (dev->reg[i] != NULL) {
+      mem_add_blk (&ixp->asio, dev->reg[i], 0);
+    }
   }
 }
 

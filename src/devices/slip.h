@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/slip.h                                     *
+ * File name:     src/devices/slip.h                                         *
  * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
