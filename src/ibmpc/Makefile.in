@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.19 2003/10/18 03:28:11 hampa Exp $
+# $Id: Makefile.in,v 1.20 2003/10/18 19:08:27 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -38,7 +38,7 @@ HDR_EXT	:= \
 	$(pcesrc)/terminal/terminal.h $(pcesrc)/terminal/vt100.h \
 	$(pcesrc)/terminal/font.h
 
-MAN	:=
+MAN1	:= pce.1
 
 BIN	:= pce
 
@@ -68,14 +68,14 @@ clean:
 	rm -f $(OBJ) $(BIN)
 
 
-install:
+install: pce pce.cfg
 	$(INSTALL) -d -m 755 $(bindir)
 	$(INSTALL) -d -m 755 $(etcdir)
 	$(INSTALL) -m 755 -s $(BIN) $(bindir)
 	test -f $(etcdir)/pce.cfg || $(INSTALL) -m 644 pce.cfg $(etcdir)
-ifneq "$(MAN)" ""
+ifneq "$(MAN1)" ""
 	$(INSTALL) -d -m 755 $(mandir)/man1
-	for f in $(MAN) ; do \
+	for f in $(MAN1) ; do \
 		rm -f $(mandir)/man1/$$f.gz ; \
 		gzip -c --best $(srcdir)/$$f > $(mandir)/man1/$$f.gz ; \
 	done

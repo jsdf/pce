@@ -1,0 +1,71 @@
+.TH PCE 1 "2003-10-17" "pce" "HH"
+
+.SH NAME
+pce \- IBM PC emulator
+
+.SH SYNOPSIS
+
+.BI pce " [options]"
+
+.BI pce " --help"
+
+.BI pce " --version"
+
+.SH DESCRIPTION
+.BR pce (1)
+is an IBM PC hardware emulator. It emulates most of
+the hardware of an IBM PC 5150. The emulation is complete enough to
+boot DOS and run most DOS applications.
+
+.SH OPTIONS
+
+.TP
+.B --help
+Print usage information
+\
+.TP
+.B --version
+Print version information
+\
+.TP
+.BI "-b, --boot " drive
+Set the boot drive. Default is 128.
+\
+.TP
+.BI "-c, --config " file
+Set the config file name.
+\
+.TP
+.BI "-g, --video " string
+Set the video device. Possible devices are 'mda', 'cga', 'hgc' and 'ega'.
+There must be an entry for the selected device in the config file.
+\
+.TP
+.BI "-t, --terminal " string
+Set the terminal device. Possible devices are 'vt100', 'x11 and 'sdl'.
+There must be an entry for the selected device in the config file.
+\
+.TP
+.BI "-p, --cpu " model
+Select the CPU model to be emulated. Possible values are '8086',
+'8088', '80186', '80188', 'v20' and 'v30'. This overrides the
+cpu model specified in the config file.
+\
+.TP
+.B "-v, --verbose"
+Verbose operation. This is highly recommended.
+\
+.TP
+.BI "-l, --log " file
+Write log messages to the file specified instead of stdout.
+\
+.TP
+.B "-r, --run"
+Start running immediately
+
+
+.SH SEE ALSO
+.BR bochs (1), mtools (1)
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>
