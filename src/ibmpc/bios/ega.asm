@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.13 2003/09/24 01:09:30 hampa Exp $
+; $Id: ega.asm,v 1.14 2003/10/01 16:58:49 hampa Exp $
 
 
 %include "pce.inc"
@@ -116,6 +116,10 @@ segb000   dw 0xb000
 segb800   dw 0xb800
 
 cursor14  db 0, 2, 4, 6, 8, 10, 11, 13, 14
+
+modemap   db 0x00, 0x00, 0x00, 0x00, 0x04, 0x05, 0x06, 0x07
+          db 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0d, 0x0d
+          db 0x0d
 
 pal_default:
   db      0x00
@@ -334,7 +338,7 @@ mode0e:
   db      0x00
 
 mode0f:
-  db      80, 24, 8
+  db      80, 24, 14
   dw      28000
   db      0x00, 0x00, 0x00, 0x00                                ; ts
   db      0x43                                                  ; misc out
@@ -349,7 +353,7 @@ mode0f:
   db      0x00
 
 mode10:
-  db      80, 24, 8
+  db      80, 24, 14
   dw      28000
   db      0x00, 0x00, 0x00, 0x00                                ; ts
   db      0x43                                                  ; misc out
@@ -674,6 +678,7 @@ gra_set_char_xyc:
   push    si
   push    di
   push    bp
+  push    ds
   push    es
 
   jcxz    .done
@@ -699,7 +704,7 @@ gra_set_char_xyc:
   mov     bp, [BIOS_COLS]
 
   mov     dx, TS_INDEX
-  mov     ax, 0x0f02
+  mov     ax, (0x0f << 8) | TS_WRPL
   out     dx, ax
 
   mov     dx, GDC_INDEX
@@ -713,18 +718,14 @@ gra_set_char_xyc:
   add     si, ax
 
 .next:
-  mov     ax, 0xff08
-  out     dx, ax
-  mov     al, 0
+  mov     ax, (0xff << 8) | GDC_BMSK
+  out     dx, ax                        ; set bit mask
 
-  push    cx
-  push    di
-  rep     stosb
-  pop     di
-  pop     cx
+  mov     byte [es:di], 0x00            ; clear background
+  mov     al, [es:di]                   ; fill latches
 
   mov     ah, [si]
-  mov     al, 0x08
+  mov     al, GDC_BMSK
   out     dx, ax
   mov     al, bl
 
@@ -739,8 +740,16 @@ gra_set_char_xyc:
   dec     bh
   jnz     .next
 
+  mov     ax, (0xff << 8) | GDC_BMSK
+  out     dx, ax                        ; reset bit mask
+
+  mov     dx, GDC_INDEX
+  mov     ax, 0x0005
+  out     dx, ax                        ; reset read/write mode
+
 .done:
   pop     es
+  pop     ds
   pop     bp
   pop     di
   pop     si
@@ -790,6 +799,70 @@ txt_scroll_up_1:
   pop     ds
   pop     di
   pop     si
+  pop     dx
+  pop     cx
+  pop     ax
+  ret
+
+
+gra_scroll_up_1:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+  push    si
+  push    di
+  push    ds
+  push    es
+
+  mov     al, [BIOS_PAGE]
+  call    get_pofs
+  mov     di, ax
+  mov     si, ax
+
+  mov     ax, [BIOS_COLS]
+  mul     word [BIOS_CHRH]
+  mov     bx, ax                        ; row size in bytes
+  mov     dl, [BIOS_ROWS]
+  mov     dh, 0
+  mul     dx
+  mov     cx, ax                        ; page size in bytes
+
+  add     si, bx
+
+  mov     dx, GDC_INDEX
+  mov     ax, (0x01 << 8) | GDC_MODE
+  out     dx, ax                        ; write mode 1
+
+  mov     dx, TS_INDEX
+  mov     ax, (0x0f << 8) | TS_WRPL
+  out     dx, ax
+
+  mov     ds, [cs:sega000]
+  mov     es, [cs:sega000]
+
+  rep     movsb
+
+  mov     dx, GDC_INDEX
+  mov     ax, (0x02 << 8) | GDC_MODE
+  out     dx, ax
+
+  mov     ax, (0xff << 8) | GDC_BMSK
+  out     dx, ax
+
+  mov     al, 0
+  mov     cx, bx
+  rep     stosb
+
+  mov     dx, GDC_INDEX
+  mov     ax, (0x00 << 8) | GDC_MODE
+  out     dx, ax
+
+  pop     es
+  pop     ds
+  pop     di
+  pop     si
+  pop     bx
   pop     dx
   pop     cx
   pop     ax
@@ -967,6 +1040,32 @@ int_10_init_mode:
   mov     word [es:BIOS_CSIZ], 0x0607
   mov     byte [es:BIOS_PAGE], 0x00
   mov     word [es:BIOS_CRTC], 0x03d4
+
+  xor     ax, ax
+  mov     es, ax
+
+  mov     dx, cs
+
+  mov     al, [bx + 2]                  ; character height
+
+  cmp     al, 8
+  jne     .not8x8
+  mov     ax, fnt_8x8
+  jmp     .fntdone
+
+.not8x8:
+  cmp     al, 14
+  jne     .not8x14
+  mov     ax, fnt_8x14
+  jmp     .fntdone
+
+.not8x14:
+  xor     ax, ax
+  cwd
+
+.fntdone:
+  mov     word [es:4 * 0x43], ax
+  mov     word [es:4 * 0x43 + 2], dx
 
   pop     es
   pop     di
@@ -1529,7 +1628,13 @@ int_10_07:
   ret
 
 
-; int 10 func 08 - get character and attribute
+;*****************************************************************************
+;* int 10 func 08 - get character and attribute
+;* inp: BH = page
+;* out: AH = attribute
+;*      AL = character
+;*****************************************************************************
+
 int_10_08:
   push    bx
   push    si
@@ -1559,15 +1664,19 @@ int_10_08:
   ret
 
 
-; int 10 func 09 - set character and attribute
-int_10_09:
-  push    ax
+;*****************************************************************************
+;* int 10 func 09 - set character and attribute
+;* inp: AL = character
+;*      BH = page
+;*      BL = attribute
+;*      CX = count
+;*****************************************************************************
+
+int_10_09_mode03:
   push    cx
   push    bx
   push    di
   push    es
-
-  mov     ds, [cs:seg0040]
 
   mov     ah, bl
 
@@ -1595,11 +1704,60 @@ int_10_09:
   pop     di
   pop     bx
   pop     cx
+  ret
+
+int_10_09_mode0d:
+  push    dx
+
+  push    bx
+  mov     bl, [BIOS_PAGE]
+  and     bx, 0x0007
+  mov     dx, [bx + BIOS_CPOS]
+  pop     bx
+
+  call    gra_set_char_xyc
+
+  pop     dx
+  ret
+
+int_10_09:
+  push    ax
+
+  mov     ds, [cs:seg0040]
+
+  push    bx
+  mov     bl, [BIOS_MODE]
+  and     bx, 0x007f
+  mov     ah, [cs:bx + modemap]
+  pop     bx
+
+  cmp     ah, 0x00
+  jne     .not00
+
+  call    int_10_09_mode03
+  jmp     .done
+
+.not00:
+  cmp      ah, 0x0d
+  jne      .not0d
+
+  call     int_10_09_mode0d
+  jmp      .done
+
+.not0d:
+
+.done:
   pop     ax
   ret
 
 
-; int 10 func 0a - set character
+;*****************************************************************************
+;* int 10 func 0a - set character
+;* inp: AL = character
+;*      BH = page
+;*      CX = count
+;*****************************************************************************
+
 int_10_0a:
   push    ax
   push    cx
@@ -1648,26 +1806,172 @@ int_10_0b:
   ret
 
 
-; int 10 func 0c - set pixel
+;*****************************************************************************
+;* int 10 func 0c - set pixel
+;* inp: AL = color
+;*      BH = page
+;*      CX = x
+;*      DX = y
+;*****************************************************************************
+
 int_10_0c:
+  push    ax
+  push    cx
+  push    dx
+  push    bx
+  push    es
+
+  mov     ds, [cs:seg0040]
+
+  mov     bl, al                        ; color
+
+  mov     ax, dx
+  mul     word [BIOS_COLS]
+  mov     dl, cl                        ; bit index
+  mov     dh, bl                        ; color
+  shr     cx, 1
+  shr     cx, 1
+  shr     cx, 1
+  add     cx, ax
+
+  mov     al, bh
+  call    get_pofs
+  mov     bx, ax
+  add     bx, cx
+
+  mov     cx, dx
+
+  mov     dx, TS_INDEX
+  mov     ax, (0x0f << 8) | TS_WRPL
+  out     dx, ax                        ; enable all write planes
+
+  mov     dx, GDC_INDEX
+  mov     ax, (0x02 << 8) | GDC_MODE
+  out     dx, ax                        ; set write mode 2
+
+  and     cl, 0x07                      ; bit index
+  mov     ah, 0x80
+  shr     ah, cl
+  mov     al, GDC_BMSK
+  out     dx, ax                        ; set bit mask
+
+  mov     ax, 0xa000
+  mov     es, ax
+
+  mov     al, [es:bx]                   ; fill latches
+  mov     [es:bx], ch                   ; set pixel
+
+  mov     ax, (0x00 << 8) | GDC_MODE
+  out     dx, ax                        ; reset mode
+
+  mov     ax, (0xff << 8) | GDC_BMSK
+  out     dx, ax                        ; reset bit mask
+
+  pop     es
+  pop     bx
+  pop     dx
+  pop     cx
+  pop     ax
   ret
 
 
-; int 10 func 0d - get pixel
+;*****************************************************************************
+;* int 10 func 0d - get pixel
+;* inp: BH = page
+;*      CX = x
+;*      DX = y
+;* out: AL = color
+;*****************************************************************************
+
 int_10_0d:
   ret
 
 
-; int 10 func 0e - print character
-int_10_0e:
-  push    ax
+;*****************************************************************************
+;* int 10 func 0e - print character
+;* inp: AL = character
+;*      BL = color
+;*****************************************************************************
+
+int_10_0e_mode0d:
   push    cx
   push    dx
   push    bx
   push    di
   push    es
 
-  mov     ds, [cs:seg0040]
+  mov     ah, bl                        ; save color
+
+  mov     bl, [BIOS_PAGE]
+  and     bx, 0x0007
+  shl     bx, 1
+
+  mov     dx, [bx + BIOS_CPOS]
+
+  cmp     al, 0x0a
+  jne     .notlf
+
+  inc     dh
+  cmp     dh, 25
+  jb      .ok
+
+  call    gra_scroll_up_1
+  mov     dh, 24
+  jmp     .ok
+
+.notlf:
+  cmp     al, 0x0d
+  jne     .notcr
+
+  mov     dl, 0
+  jmp     .ok
+
+.notcr:
+  cmp     al, 0x08
+  jne     .notbs
+
+  or      dl, dl
+  jz      .ok
+
+  dec     dl
+  jmp     .ok
+
+.notbs:
+  push    bx
+  mov     bh, [BIOS_PAGE]
+  mov     bl, ah
+  mov     cx, 1
+  call    gra_set_char_xyc
+  pop     bx
+
+  inc     dl
+  cmp     dl, [BIOS_COLS]
+  jb      .ok
+
+  mov     dl, 0
+  inc     dh
+  cmp     dh, 25
+  jb      .ok
+
+  call    gra_scroll_up_1
+  mov     dh, 24
+
+.ok:
+  mov     [bx + BIOS_CPOS], dx
+
+  pop     es
+  pop     di
+  pop     bx
+  pop     dx
+  pop     cx
+  ret
+
+int_10_0e_mode03:
+  push    cx
+  push    dx
+  push    bx
+  push    di
+  push    es
 
   mov     bl, [BIOS_PAGE]
   and     bx, 0x0007
@@ -1753,6 +2057,35 @@ int_10_0e:
   pop     bx
   pop     dx
   pop     cx
+  ret
+
+int_10_0e:
+  push    ax
+
+  mov     ds, [cs:seg0040]
+
+  push    bx
+  mov     bl, [BIOS_MODE]
+  and     bx, 0x007f
+  mov     ah, [cs:bx + modemap]
+  pop     bx
+
+  cmp     ah, 0x00
+  jne     .not00
+
+  call    int_10_0e_mode03
+  jmp     .done
+
+.not00:
+  cmp      ah, 0x0d
+  jne      .not0d
+
+  call     int_10_0e_mode0d
+  jmp      .done
+
+.not0d:
+
+.done:
   pop     ax
   ret
 
@@ -1818,7 +2151,11 @@ int_10_1000:
   ret
 
 
-; int 10 func 1001 - set overscan color
+;*****************************************************************************
+;* int 10 func 1001 - set overscan color
+;* BH = new value
+;*****************************************************************************
+
 int_10_1001:
   push    ax
   mov     ah, bh
@@ -2020,7 +2357,7 @@ ega_init:
   mov     word [4 * 0x1f], fnt_8x8 + 8 * 128
   mov     word [4 * 0x1f + 2], cs
 
-  mov     word [4 * 0x43], fnt_8x8 + 8 * 128
+  mov     word [4 * 0x43], fnt_8x8
   mov     word [4 * 0x43 + 2], cs
 
   mov     ds, [cs:seg0040]
