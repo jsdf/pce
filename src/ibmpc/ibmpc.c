@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.41 2003/10/13 19:59:07 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.42 2003/10/18 03:28:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -619,6 +619,29 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   }
 }
 
+void pc_setup_ems (ibmpc_t *pc, ini_sct_t *ini)
+{
+  ini_sct_t *sct;
+  mem_blk_t *mem;
+
+  pc->ems = NULL;
+
+  sct = ini_sct_find_sct (ini, "ems");
+  if (sct == NULL) {
+    return;
+  }
+
+  pc->ems = ems_new (sct);
+  if (pc->ems == NULL) {
+    return;
+  }
+
+  mem = ems_get_mem (pc->ems);
+  if (mem != NULL) {
+    mem_add_blk (pc->mem, mem, 0);
+  }
+}
+
 void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
@@ -690,6 +713,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_mouse (pc, ini);
   pc_setup_serport (pc, ini);
   pc_setup_parport (pc, ini);
+  pc_setup_ems (pc, ini);
   pc_setup_xms (pc, ini);
 
   return (pc);
@@ -699,6 +723,12 @@ void pc_del_xms (ibmpc_t *pc)
 {
   xms_del (pc->xms);
   pc->xms = NULL;
+}
+
+void pc_del_ems (ibmpc_t *pc)
+{
+  ems_del (pc->ems);
+  pc->ems = NULL;
 }
 
 void pc_del_mouse (ibmpc_t *pc)
@@ -738,6 +768,7 @@ void pc_del (ibmpc_t *pc)
   }
 
   pc_del_xms (pc);
+  pc_del_ems (pc);
   pc_del_parport (pc);
   pc_del_serport (pc);
   pc_del_mouse (pc);

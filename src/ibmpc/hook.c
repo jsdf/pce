@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.8 2003/10/13 01:54:36 hampa Exp $ */
+/* $Id: hook.c,v 1.9 2003/10/18 03:28:11 hampa Exp $ */
 
 
 #include "pce.h"
@@ -233,6 +233,14 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
     case PCEH_XMS_INFO:
       xms_info (pc->xms, pc->cpu);
+      break;
+
+    case PCEH_EMS:
+      ems_handler (pc->ems, pc->cpu);
+      break;
+
+    case PCEH_EMS_INFO:
+      ems_info (pc->ems, pc->cpu);
       break;
 
     default:

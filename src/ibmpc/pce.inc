@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.inc,v 1.3 2003/10/13 01:54:37 hampa Exp $
+; $Id: pce.inc,v 1.4 2003/10/18 03:28:11 hampa Exp $
 
 
 %ifndef PCE_INC
@@ -70,6 +70,9 @@
 
 %define PCEH_XMS       0x0003
 %define PCEH_XMS_INFO  0x0103
+
+%define PCEH_EMS       0x0004
+%define PCEH_EMS_INFO  0x0104
 
 %define PCEH_INT       0x00cd
 

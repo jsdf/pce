@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.34 2003/10/17 05:42:55 hampa Exp $ */
+/* $Id: pce.c,v 1.35 2003/10/18 03:28:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -751,6 +751,12 @@ void prt_state_video (video_t *vid, FILE *fp)
 {
   fputs ("-video-----------------------------------------------------------------------\n", fp);
   pce_video_prt_state (vid, fp);
+}
+
+void prt_state_ems (ems_t *ems, FILE *fp)
+{
+  fputs ("-EMS-------------------------------------------------------------------------\n", fp);
+  ems_prt_state (ems, fp);
 }
 
 void prt_state_xms (xms_t *xms, FILE *fp)
@@ -1751,6 +1757,9 @@ void do_s (cmd_t *cmd)
     }
     else if (cmd_match (cmd, "video")) {
       prt_state_video (pc->video, stdout);
+    }
+    else if (cmd_match (cmd, "ems")) {
+      prt_state_ems (pc->ems, stdout);
     }
     else if (cmd_match (cmd, "xms")) {
       prt_state_xms (pc->xms, stdout);

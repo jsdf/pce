@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.20 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: pce.h,v 1.21 2003/10/18 03:28:11 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -109,6 +109,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include "mouse.h"
 #include "serial.h"
 #include "parport.h"
+#include "ems.h"
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
