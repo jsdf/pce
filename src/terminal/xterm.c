@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.10 2003/08/29 19:17:51 hampa Exp $ */
+/* $Id: xterm.c,v 1.11 2003/08/30 16:55:21 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -624,6 +624,7 @@ static struct {
     { XK_Next,          0x51e0 },
     { XK_End,           0x4fe0 },
     { XK_Insert,        0x52e0 },
+    { XK_Print,         0x37e0 },
     { XK_Num_Lock,      0x45 },
 
     { XK_KP_Enter,      0x1ce0 },
@@ -735,7 +736,7 @@ void xt_check (xterm_t *xt)
 
       case KeyPress:
         key = XLookupKeysym (&event.xkey, 0);
-        if (key == XK_Print) {
+        if ((key == XK_grave) && (event.xkey.state & Mod1Mask)) {
           if (xt->trm.set_brk != NULL) {
             xt->trm.set_brk (xt->trm.key_ext, 2);
           }
@@ -743,6 +744,11 @@ void xt_check (xterm_t *xt)
         else if ((key == XK_grave) && (event.xkey.state & ControlMask)) {
           if (xt->trm.set_brk != NULL) {
             xt->trm.set_brk (xt->trm.key_ext, 1);
+          }
+        }
+        else if (key == XK_Pause) {
+          if (xt->trm.set_brk != NULL) {
+            xt->trm.set_brk (xt->trm.key_ext, 2);
           }
         }
         else {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.8 2003/08/29 13:28:25 hampa Exp $ */
+/* $Id: vt100.c,v 1.9 2003/08/30 16:55:21 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -718,6 +718,12 @@ void vt100_check (vt100_t *vt)
   if ((n == 1) && (buf[0] == 0)) {
     if (vt->trm.set_brk != NULL) {
       vt->trm.set_brk (vt->trm.key_ext, 1);
+    }
+    return;
+  }
+  else if ((n == 1) && (buf[0] == 0xe0)) {
+    if (vt->trm.set_brk != NULL) {
+      vt->trm.set_brk (vt->trm.key_ext, 2);
     }
     return;
   }
