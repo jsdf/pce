@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -876,4 +876,6 @@ int_1a:
 
 ;-----------------------------------------------------------------------------
 
+%ifndef NOFILL
   set_pos (0x6000)
+%endif

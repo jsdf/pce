@@ -64,9 +64,20 @@ ibmpc.rom: $(BIOS_BDP)
 	cat pce.bin basic.bin bios.bin > $@
 
 
+# ihex is a custom utility, part of the misc-utils package
+ibmpc.ihex: ega.bin pce2.bin basic.bin bios.bin
+	ihex -e -o $@ \
+	-a 0xc0000 -i ega.bin \
+	-a 0xf0000 -i pce2.bin \
+	-a 0xf6000 -i basic.bin \
+	-a 0xfe000 -i bios.bin
+
 
 pce.bin: pce.asm $(BIOS_SDP)
 	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -o $@ $<
+
+pce2.bin: pce.asm $(BIOS_SDP)
+	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -DNOFILL -o $@ $<
 
 bios.bin: bios.asm $(BIOS_SDP)
 	$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l bios.lst -o $@ $<
