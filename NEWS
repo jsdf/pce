@@ -5,6 +5,7 @@
 	* The trap flag is now handled almost correctly
 	* Completely reworked terminal support
 	* Added X11 terminal support
+	* CPU identification should now work
 
 0.0.5	2003-04-23
 
