@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hook.c                                           *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,10 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hook.c,v 1.9 2003/10/18 03:28:11 hampa Exp $ */
+/* $Id: hook.c,v 1.10 2003/10/28 13:19:41 hampa Exp $ */
 
 
 #include "pce.h"
+
+#include <time.h>
 
 
 static
