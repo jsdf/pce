@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.10 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H

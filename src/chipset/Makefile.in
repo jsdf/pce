@@ -3,16 +3,11 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir :=
+subdir := ppc405
 reldir := ../..
 
 
 include $(reldir)/config.inc
-
-
-ifeq "$(PCE_BUILD_PPC405)" "1"
-subdir += ppc405
-endif
 
 
 SRC := e8237.c e8250.c e8253.c e8255.c e8259.c

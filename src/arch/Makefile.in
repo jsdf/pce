@@ -1,13 +1,22 @@
 # Makefile
-# $Id: Makefile.in,v 1.2 2003/12/29 11:06:23 hampa Exp $
+# $Id$
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := ibmpc
+subdir :=
 reldir := ../..
 
 
 include $(reldir)/config.inc
+
+
+ifeq "$(PCE_BUILD_SIM6502)" "1"
+subdir += sim6502
+endif
+
+ifeq "$(PCE_BUILD_IBMPC)" "1"
+subdir += ibmpc
+endif
 
 
 DCL := Makefile

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.h,v 1.6 2003/11/18 00:31:39 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_VT100_H

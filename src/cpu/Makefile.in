@@ -3,12 +3,20 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := e8086
+subdir :=
 reldir := ../..
 
 
 include $(reldir)/config.inc
 
+
+ifeq "$(PCE_BUILD_6502)" "1"
+subdir += e6502
+endif
+
+ifeq "$(PCE_BUILD_8086)" "1"
+subdir += e8086
+endif
 
 ifeq "$(PCE_BUILD_PPC405)" "1"
 subdir += ppc405

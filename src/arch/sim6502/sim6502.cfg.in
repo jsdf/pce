@@ -1,0 +1,30 @@
+# sim6502.cfg
+# Example config file
+
+# $Id$
+
+section sim6502 {
+	# Multiple "ram" sections may be present
+	section ram {
+		# The linear base address
+		base = 0x0000
+
+		# The size in bytes
+		size = 0xf000
+		
+		# The RAM image that is used to initialize the RAM
+		file = "sim6502.ram"
+	}
+
+	# Multiple "rom" sections may be present
+	section rom {
+		# The linear base address
+		base = 0xf000
+
+		# The rom size in bytes
+		size = 0x1000
+
+		# The file from which the rom code is loaded
+		file = "sim6502.rom"
+	}
+}
