@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-03-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -27,16 +27,7 @@
 #define PPC405_H 1
 
 
-#if defined (HAVE_STDINT_H)
 #include <stdint.h>
-#elif defined (HAVE_INTTYPES_H)
-#include <inttypes.h>
-#else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned long uint32_t;
-typedef unsigned long long uint64_t;
-#endif
 
 
 struct p405_s;
@@ -97,6 +88,8 @@ typedef struct p405_tlbe_s {
   uint8_t            tid;
   uint32_t           mask;
   uint32_t           vaddr;
+
+  unsigned char      endian;
 
   unsigned           idx;
   struct p405_tlbe_s *next;
@@ -410,7 +403,7 @@ unsigned p405_get_tlb_index (p405_t *c, uint32_t ea);
 unsigned p405_get_tlb_entry_cnt (p405_t *c);
 p405_tlbe_t *p405_get_tlb_entry_ea (p405_t *c, uint32_t ea);
 p405_tlbe_t *p405_get_tlb_entry_idx (p405_t *c, unsigned idx);
-int p405_translate (p405_t *c, uint32_t *ea, unsigned xlat);
+int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat);
 
 /*!***************************************************************************
  * @short Get byte from translated address

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/mmu.c                                       *
  * Created:       2003-11-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -45,6 +45,7 @@ void p405_tlb_init (p405_tlb_t *tlb)
     tlb->entry[i].tid = 0;
     tlb->entry[i].mask = 0xffffffffUL;
     tlb->entry[i].vaddr = 0;
+    tlb->entry[i].endian = 0;
 
     tlb->entry[i].idx = i;
 
@@ -122,6 +123,7 @@ void p405_set_tlb_entry_hi (p405_t *c, unsigned idx, uint32_t tlbhi, uint8_t pid
   ent->tid = pid;
   ent->mask = 0xfffffc00UL << (2 * p405_get_tlbe_size (ent));
   ent->vaddr = tlbhi & ent->mask;
+  ent->endian = (tlbhi & P405_TLBHI_E) != 0;
 }
 
 void p405_set_tlb_entry_lo (p405_t *c, unsigned idx, uint32_t tlblo)
@@ -154,7 +156,7 @@ void p405_tlb_invalidate_all (p405_t *c)
   }
 }
 
-int p405_translate_read (p405_t *c, uint32_t *ea)
+int p405_translate_read (p405_t *c, uint32_t *ea, int *e)
 {
   p405_tlbe_t *ent;
 
@@ -175,12 +177,16 @@ int p405_translate_read (p405_t *c, uint32_t *ea)
     }
 
     *ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+    *e = ent->endian;
+  }
+  else {
+    *e = 0;
   }
 
   return (0);
 }
 
-int p405_translate (p405_t *c, uint32_t *ea, unsigned xlat)
+int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat)
 {
   p405_tlbe_t *ent;
 
@@ -191,12 +197,16 @@ int p405_translate (p405_t *c, uint32_t *ea, unsigned xlat)
     }
 
     *ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+    *e = ent->endian;
+  }
+  else {
+    *e = 0;
   }
 
   return (0);
 }
 
-int p405_translate_write (p405_t *c, uint32_t *ea)
+int p405_translate_write (p405_t *c, uint32_t *ea, int *e)
 {
   p405_tlbe_t *ent;
 
@@ -247,12 +257,16 @@ int p405_translate_write (p405_t *c, uint32_t *ea)
     }
 
     *ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+    *e = ent->endian;
+  }
+  else {
+    *e = 0;
   }
 
   return (0);
 }
 
-int p405_translate_exec (p405_t *c, uint32_t *ea)
+int p405_translate_exec (p405_t *c, uint32_t *ea, int *e)
 {
   p405_tlbe_t *ent;
 
@@ -303,6 +317,10 @@ int p405_translate_exec (p405_t *c, uint32_t *ea)
     }
 
     *ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+    *e = ent->endian;
+  }
+  else {
+    *e = 0;
   }
 
   return (0);
@@ -310,11 +328,12 @@ int p405_translate_exec (p405_t *c, uint32_t *ea)
 
 int p405_ifetch (p405_t *c, uint32_t addr, uint32_t *val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_exec (c, &addr)) {
+  if (p405_translate_exec (c, &addr, &e)) {
     return (1);
   }
 
@@ -323,10 +342,18 @@ int p405_ifetch (p405_t *c, uint32_t addr, uint32_t *val)
   if (addr < c->ram_cnt) {
     unsigned char *mem = &c->ram[addr];
 
-    *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+    if (e) {
+      *val = (mem[3] << 24) | (mem[2] << 16) | (mem[1] << 8) | mem[0];
+    }
+    else {
+      *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+    }
   }
   else if (c->get_uint32 != NULL) {
     *val = c->get_uint32 (c->mem_ext, addr);
+    if (e) {
+      *val = p405_br32 (*val);
+    }
   }
   else {
     *val = 0xffffffffUL;
@@ -343,11 +370,12 @@ int p405_ifetch (p405_t *c, uint32_t addr, uint32_t *val)
 
 int p405_dload8 (p405_t *c, uint32_t addr, uint8_t *val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_read (c, &addr)) {
+  if (p405_translate_read (c, &addr, &e)) {
     return (1);
   }
 
@@ -372,21 +400,30 @@ int p405_dload8 (p405_t *c, uint32_t addr, uint8_t *val)
 
 int p405_dload16 (p405_t *c, uint32_t addr, uint16_t *val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_read (c, &addr)) {
+  if (p405_translate_read (c, &addr, &e)) {
     return (1);
   }
 
   if (addr < c->ram_cnt) {
     unsigned char *mem = &c->ram[addr];
 
-    *val = (mem[0] << 8) | mem[1];
+    if (e) {
+      *val = (mem[1] << 8) | mem[0];
+    }
+    else {
+      *val = (mem[0] << 8) | mem[1];
+    }
   }
   else if (c->get_uint16 != NULL) {
     *val = c->get_uint16 (c->mem_ext, addr);
+    if (e) {
+      *val = p405_br16 (*val);
+    }
   }
   else {
     *val = 0xffffU;
@@ -403,21 +440,30 @@ int p405_dload16 (p405_t *c, uint32_t addr, uint16_t *val)
 
 int p405_dload32 (p405_t *c, uint32_t addr, uint32_t *val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_read (c, &addr)) {
+  if (p405_translate_read (c, &addr, &e)) {
     return (1);
   }
 
   if (addr < c->ram_cnt) {
     unsigned char *mem = &c->ram[addr];
 
-    *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+    if (e) {
+      *val = (mem[3] << 24) | (mem[2] << 16) | (mem[1] << 8) | mem[0];
+    }
+    else {
+      *val = (mem[0] << 24) | (mem[1] << 16) | (mem[2] << 8) | mem[3];
+    }
   }
   else if (c->get_uint32 != NULL) {
     *val = c->get_uint32 (c->mem_ext, addr);
+    if (e) {
+      *val = p405_br32 (*val);
+    }
   }
   else {
     *val = 0xffffffffUL;
@@ -434,11 +480,12 @@ int p405_dload32 (p405_t *c, uint32_t addr, uint32_t *val)
 
 int p405_dstore8 (p405_t *c, uint32_t addr, uint8_t val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_write (c, &addr)) {
+  if (p405_translate_write (c, &addr, &e)) {
     return (1);
   }
 
@@ -460,22 +507,34 @@ int p405_dstore8 (p405_t *c, uint32_t addr, uint8_t val)
 
 int p405_dstore16 (p405_t *c, uint32_t addr, uint16_t val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_write (c, &addr)) {
+  if (p405_translate_write (c, &addr, &e)) {
     return (1);
   }
 
   if (addr < c->ram_cnt) {
     unsigned char *mem = &c->ram[addr];
 
-    mem[0] = (val >> 8) & 0xff;
-    mem[1] = val & 0xff;
+    if (e) {
+      mem[0] = val & 0xff;
+      mem[1] = (val >> 8) & 0xff;
+    }
+    else {
+      mem[0] = (val >> 8) & 0xff;
+      mem[1] = val & 0xff;
+    }
   }
   else if (c->set_uint16 != NULL) {
-    c->set_uint16 (c->mem_ext, addr, val);
+    if (e) {
+      c->set_uint16 (c->mem_ext, addr, p405_br16 (val));
+    }
+    else {
+      c->set_uint16 (c->mem_ext, addr, val);
+    }
   }
 
 #ifdef P405_LOG_MEM
@@ -489,24 +548,38 @@ int p405_dstore16 (p405_t *c, uint32_t addr, uint16_t val)
 
 int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val)
 {
+  int e;
 #ifdef P405_LOG_MEM
   uint32_t vaddr = addr;
 #endif
 
-  if (p405_translate_write (c, &addr)) {
+  if (p405_translate_write (c, &addr, &e)) {
     return (1);
   }
 
   if (addr < c->ram_cnt) {
     unsigned char *mem = &c->ram[addr];
 
-    mem[0] = (val >> 24) & 0xff;
-    mem[1] = (val >> 16) & 0xff;
-    mem[2] = (val >> 8) & 0xff;
-    mem[3] = val & 0xff;
+    if (e) {
+      mem[0] = val & 0xff;
+      mem[1] = (val >> 8) & 0xff;
+      mem[2] = (val >> 16) & 0xff;
+      mem[3] = (val >> 24) & 0xff;
+    }
+    else {
+      mem[0] = (val >> 24) & 0xff;
+      mem[1] = (val >> 16) & 0xff;
+      mem[2] = (val >> 8) & 0xff;
+      mem[3] = val & 0xff;
+    }
   }
   else if (c->set_uint32 != NULL) {
-    c->set_uint32 (c->mem_ext, addr, val);
+    if (e) {
+      c->set_uint32 (c->mem_ext, addr, p405_br32 (val));
+    }
+    else {
+      c->set_uint32 (c->mem_ext, addr, val);
+    }
   }
 
 #ifdef P405_LOG_MEM
@@ -520,7 +593,9 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val)
 
 int p405_get_xlat8 (p405_t *c, uint32_t addr, unsigned xlat, uint8_t *val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
   }
 
@@ -531,29 +606,43 @@ int p405_get_xlat8 (p405_t *c, uint32_t addr, unsigned xlat, uint8_t *val)
 
 int p405_get_xlat16 (p405_t *c, uint32_t addr, unsigned xlat, uint16_t *val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
   }
 
   *val = p405_get_mem16 (c, addr);
+
+  if (e) {
+    *val = p405_br16 (*val);
+  }
 
   return (0);
 }
 
 int p405_get_xlat32 (p405_t *c, uint32_t addr, unsigned xlat, uint32_t *val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
   }
 
   *val = p405_get_mem32 (c, addr);
+
+  if (e) {
+    *val = p405_br32 (*val);
+  }
 
   return (0);
 }
 
 int p405_set_xlat8 (p405_t *c, uint32_t addr, unsigned xlat, uint8_t val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
   }
 
@@ -564,8 +653,14 @@ int p405_set_xlat8 (p405_t *c, uint32_t addr, unsigned xlat, uint8_t val)
 
 int p405_set_xlat16 (p405_t *c, uint32_t addr, unsigned xlat, uint16_t val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
+  }
+
+  if (e) {
+    val = p405_br16 (val);
   }
 
   p405_set_mem16 (c, addr, val);
@@ -575,8 +670,14 @@ int p405_set_xlat16 (p405_t *c, uint32_t addr, unsigned xlat, uint16_t val)
 
 int p405_set_xlat32 (p405_t *c, uint32_t addr, unsigned xlat, uint32_t val)
 {
-  if (p405_translate (c, &addr, xlat)) {
+  int e;
+
+  if (p405_translate (c, &addr, &e, xlat)) {
     return (1);
+  }
+
+  if (e) {
+    val = p405_br32 (val);
   }
 
   p405_set_mem32 (c, addr, val);
