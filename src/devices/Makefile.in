@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := cga disk ega hgc mda memory nvram parport serport vga video
+FILES := blkcow blkpart cga disk ega hgc mda memory nvram parport serport vga video
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -28,6 +28,10 @@ all: $(BIN) $(OBJ)
 
 
 disk.o:		disk.c disk.h $(SDP)
+
+blkcow.o:	blkcow.c blkcow.h disk.h $(SDP)
+
+blkpart.o:	blkpart.c blkpart.h disk.h $(SDP)
 
 cga.o:		cga.c cga.h video.h memory.h \
 		libini/libini.h \

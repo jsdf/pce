@@ -10,7 +10,7 @@ reldir := ../../../..
 include $(reldir)/config.inc
 
 
-BASECOM := pceboot pcecpu pceexit pceint28 pcestop pcetime pcever
+BASECOM := pceboot pcecpu pceexit pceint28 pcemsg pcestop pcetime pcever
 BASESYS := pceemm pcehimem
 
 SRC := $(foreach f,$(BASECOM) $(BASESYS),$(f).asm)
@@ -40,10 +40,10 @@ install:
 
 
 %.com: %.asm
-	nasm -O2 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
+	nasm -O5 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
 
 %.sys: %.asm
-	nasm -O2 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
+	nasm -O5 -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin $< -o $@
 
 
 pceboot.com:	pceboot.asm $(SDP)
@@ -52,6 +52,7 @@ pceemm.sys:	pceemm.asm $(SDP)
 pceexit.com:	pceexit.asm $(SDP)
 pcehimem.sys:	pcehimem.asm $(SDP)
 pceint28.sys:	pceint28.asm $(SDP)
+pcemsg.com:	pcemsg.asm $(SDP)
 pcestop.com:	pcestop.asm $(SDP)
 pcetime.com:	pcetime.asm $(SDP)
 pcever.com:	pcever.asm $(SDP)

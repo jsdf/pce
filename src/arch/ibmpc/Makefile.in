@@ -29,6 +29,8 @@ OBJ_EXT	:= \
 	$(pcedst)/chipset/chipset.a \
 	$(pcedst)/devices/cga.o \
 	$(pcedst)/devices/disk.o \
+	$(pcedst)/devices/blkcow.o \
+	$(pcedst)/devices/blkpart.o \
 	$(pcedst)/devices/vga.o \
 	$(pcedst)/devices/ega.o \
 	$(pcedst)/devices/hgc.o \
@@ -57,6 +59,8 @@ HDR_EXT	:= \
 	chipset/e8259.h \
 	devices/cga.h \
 	devices/disk.h \
+	devices/blkcow.h \
+	devices/blkpart.h \
 	devices/vga.h \
 	devices/ega.h \
 	devices/hgc.h \

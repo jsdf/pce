@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -533,12 +533,12 @@ static
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
-  disk_t     *dsk;
+  disk_t     *dsk, *cow;
   unsigned   drive;
   unsigned   c, h, s;
   unsigned   vc, vh, vs;
   int        ro;
-  const char *type, *fname;
+  const char *type, *fname, *cowname;
 
   pc->dsk = dsks_new();
 
@@ -549,6 +549,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     type = ini_get_str_def (sct, "type", "auto");
 
     fname = ini_get_str (sct, "file");
+    cowname = ini_get_str (sct, "cow");
 
     c = ini_get_lng_def (sct, "c", 80);
     h = ini_get_lng_def (sct, "h", 2);
@@ -607,8 +608,21 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       dsk = NULL;
     }
 
+    if ((dsk != NULL) && (cowname != NULL)) {
+      cow = dsk_cow_new (dsk, cowname);
+
+      if (cow == NULL) {
+        pce_log (MSG_ERR, "*** loading drive 0x%02x failed (cow)\n", drive);
+        dsk_del (dsk);
+        dsk = NULL;
+      }
+      else {
+        dsk = cow;
+      }
+    }
+
     if (dsk == NULL) {
-      pce_log (MSG_ERR, "*** loading drive %02X failed\n", drive);
+      pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
     }
     else {
       vc = (vc == 0) ? dsk->c : vc;
@@ -1177,29 +1191,43 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
 #endif
 }
 
-void pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
+int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 {
   /* a hack, for debugging only */
   if (pc == NULL) {
     pc = par_pc;
   }
 
+  if (msg == NULL) {
+    msg = "";
+  }
+
+  if (val == NULL) {
+    val = "";
+  }
+
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       pc->brk = PCE_BRK_STOP;
-      return;
+      return (0);
     }
     else if (strcmp (val, "abort") == 0) {
       pc->brk = PCE_BRK_ABORT;
-      return;
+      return (0);
     }
+    else if (strcmp (val, "") == 0) {
+      pc->brk = PCE_BRK_ABORT;
+      return (0);
+    }
+
+    return (1);
   }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
   if (strcmp (msg, "video.redraw") == 0) {
     pce_video_update (pc->video);
-    return;
+    return (0);
   }
   else if (strcmp (msg, "video.screenshot") == 0) {
     if (strcmp (val, "") == 0) {
@@ -1208,8 +1236,28 @@ void pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     else {
       pc_screenshot (pc, val);
     }
-    return;
+    return (0);
+  }
+  else if (strcmp (msg, "disk.commit") == 0) {
+    unsigned d;
+    disk_t   *dsk;
+
+    d = strtoul (val, NULL, 0);
+    dsk = dsks_get_disk (pc->dsk, d);
+    if (dsk == NULL) {
+      pce_log (MSG_ERR, "no such disk (%s)\n", val);
+      return (1);
+    }
+
+    if (dsk_commit (dsk)) {
+      pce_log (MSG_ERR, "commit failed (%s)\n", val);
+      return (1);
+    }
+
+    return (0);
   }
 
   pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
+
+  return (1);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -126,6 +126,50 @@ void pc_int_1a (ibmpc_t *pc)
   }
 }
 
+static
+void pc_hook_msg (ibmpc_t *pc)
+{
+  unsigned       i, p;
+  unsigned short ds;
+  unsigned char  msg[256];
+  unsigned char  val[256];
+
+  ds = e86_get_ds (pc->cpu);
+
+  p = e86_get_si (pc->cpu);
+  for (i = 0; i < 256; i++) {
+    msg[i] = e86_get_mem16 (pc->cpu, ds, p++);
+    if (msg[i] == 0) {
+      break;
+    }
+  }
+
+  if (i >= 256) {
+    return;
+  }
+
+  p = e86_get_di (pc->cpu);
+  for (i = 0; i < 256; i++) {
+    val[i] = e86_get_mem16 (pc->cpu, ds, p++);
+    if (val[i] == 0) {
+      break;
+    }
+  }
+
+  if (i >= 256) {
+    return;
+  }
+
+  if (pc_set_msg (pc, msg, val)) {
+    e86_set_cf (pc->cpu, 1);
+    e86_set_ax (pc->cpu, 0x0001);
+  }
+  else {
+    e86_set_cf (pc->cpu, 0);
+    e86_set_ax (pc->cpu, 0x0000);
+  }
+}
+
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 {
   ibmpc_t *pc;
@@ -241,6 +285,10 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
     case PCEH_EMS_INFO:
       ems_info (pc->ems, pc->cpu);
+      break;
+
+    case PCEH_MSG:
+      pc_hook_msg (pc);
       break;
 
     default:

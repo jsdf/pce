@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1176,7 +1176,9 @@ void do_m (cmd_t *cmd)
     return;
   }
 
-  pc_set_msg (pc, msg, val);
+  if (pc_set_msg (pc, msg, val)) {
+    printf ("error\n");
+  }
 }
 
 static

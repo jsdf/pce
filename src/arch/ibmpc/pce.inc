@@ -3,10 +3,10 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/ibmpc/pce.inc                                          *
+;* File name:     src/arch/ibmpc/pce.inc                                     *
 ;* Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.inc,v 1.1 2003/12/20 01:01:34 hampa Exp $
+; $Id$
 
 
 %ifndef PCE_INC
@@ -73,6 +73,8 @@
 
 %define PCEH_EMS       0x0004
 %define PCEH_EMS_INFO  0x0104
+
+%define PCEH_MSG       0x0005
 
 %define PCEH_INT       0x00cd
 
