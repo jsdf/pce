@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.5 2003/08/19 00:53:40 hampa Exp $ */
+/* $Id: vt100.c,v 1.6 2003/08/19 01:32:17 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -193,9 +193,8 @@ int get_key_byte (const char **str, unsigned char *ret)
   return (0);
 }
 
-void vt100_set_key_str (vt100_t *vt, const char *str)
+int vt100_set_key_str (vt100_t *vt, const char *str)
 {
-  unsigned      i;
   const char    *tmp;
   unsigned      key_cnt, seq_cnt;
   unsigned char key[256], seq[256];
@@ -207,37 +206,45 @@ void vt100_set_key_str (vt100_t *vt, const char *str)
 
   while ((*tmp != 0) && (*tmp != '=')) {
     if (get_key_byte (&tmp, &key[key_cnt])) {
-      return;
+      return (1);
     }
 
     key_cnt += 1;
   }
 
   if (*tmp != '=') {
-    return;
+    return (1);
   }
 
   tmp += 1;
 
   while (*tmp != 0) {
     if (get_key_byte (&tmp, &seq[seq_cnt])) {
-      return;
+      return (1);
     }
 
     seq_cnt += 1;
   }
 
-  fputs ("vt100: keymap:", stderr);
-  for (i = 0; i < key_cnt; i++) {
-    fprintf (stderr, " %02x", key[i]);
+#if 0
+  {
+    unsigned i;
+
+    fputs ("vt100: keymap:", stderr);
+    for (i = 0; i < key_cnt; i++) {
+      fprintf (stderr, " %02x", key[i]);
+    }
+    fputs (" ->", stderr);
+    for (i = 0; i < seq_cnt; i++) {
+      fprintf (stderr, " %02x", seq[i]);
+    }
+    fputs ("\n", stderr);
   }
-  fputs (" ->", stderr);
-  for (i = 0; i < seq_cnt; i++) {
-    fprintf (stderr, " %02x", seq[i]);
-  }
-  fputs ("\n", stderr);
+#endif
 
   vt100_set_key (vt, key, key_cnt, seq, seq_cnt);
+
+  return (0);
 }
 
 void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
@@ -468,7 +475,9 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
 
     while (val != NULL) {
       if (ini_val_get_str (val, &str) == 0) {
-        vt100_set_key_str (vt, str);
+        if (vt100_set_key_str (vt, str)) {
+          fprintf (stderr, "vt100: bad keymap (%s)\n", str);
+        }
       }
 
       val = ini_val_find_next (val, "keymap");
