@@ -281,11 +281,15 @@ section pc {
 	# Disk types are:
 	# "image"  A raw image file. "c", "h" and "s" must be specified.
 	# "dosemu" A DOSEMU style hard disk image file
+	# "pce"    A PCE style disk image file
 	# "ram"    A RAM disk. If a file name is specified, the contents
 	#          of that file are loaded into the RAM disk (but the file
 	#          is never altered).
 	# "partition"  A partitioned disk that is patched together from
 	#              multiple raw images.
+	# "auto"   Try to autodetect the image file format. This works for
+	#          DOSEMU and PCE disk images as well as raw images starting
+	#          with a DOS boot sector.
 	# The c, h, s parameters determine the actual image file layout, the
 	# visible_c, visible_h, visible_s parameters determine the disk size
 	# as reported by the BIOS.
@@ -306,7 +310,7 @@ section pc {
 		c = 83
 		h = 2
 		s = 18
-		
+
 		visible_c = 80
 		visible_h = 2
 		visible_s = 18
@@ -317,13 +321,6 @@ section pc {
 		type = "dosemu"
 		file = "pce_80.img"
 		readonly = 1
-		
-		# The c/h/s values are used to create the dosemu image if
-		# it doesn't already exist. If it does then these values
-		# are not used.
-		c = 256
-		h = 8
-		s = 17
 	}
 
 	section disk {
