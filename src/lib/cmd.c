@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/cmd.c                                              *
+ * File name:     cmd.c                                                      *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cmd.c,v 1.1 2003/11/08 14:20:20 hampa Exp $ */
+/* $Id: cmd.c,v 1.2 2003/11/08 21:48:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -201,7 +201,7 @@ int cmd_match (cmd_t *cmd, const char *str)
   return (1);
 }
 
-int cmd_match_ulng (cmd_t *cmd, unsigned long *val)
+int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
 {
   unsigned       i;
   unsigned       cnt;
@@ -221,18 +221,26 @@ int cmd_match_ulng (cmd_t *cmd, unsigned long *val)
   cnt = 0;
 
   while (cmd->str[i] != 0) {
+    unsigned dig;
+
     if ((cmd->str[i] >= '0') && (cmd->str[i] <= '9')) {
-      ret = 16 * ret + (unsigned long) (cmd->str[i] - '0');
+      dig = cmd->str[i] - '0';
     }
     else if ((cmd->str[i] >= 'a') && (cmd->str[i] <= 'f')) {
-      ret = 16 * ret + (unsigned long) (cmd->str[i] - 'a' + 10);
+      dig = cmd->str[i] - 'a' + 10;
     }
     else if ((cmd->str[i] >= 'A') && (cmd->str[i] <= 'F')) {
-      ret = 16 * ret + (unsigned long) (cmd->str[i] - 'A' + 10);
+      dig = cmd->str[i] - 'A' + 10;
     }
     else {
       break;
     }
+
+    if (dig >= base) {
+      break;
+    }
+
+    ret = base * ret + dig;
 
     cnt += 1;
     i += 1;
@@ -248,11 +256,11 @@ int cmd_match_ulng (cmd_t *cmd, unsigned long *val)
   return (1);
 }
 
-int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
+int cmd_match_uint16b (cmd_t *cmd, unsigned short *val, unsigned base)
 {
   unsigned long tmp;
 
-  if (cmd_match_ulng (cmd, &tmp)) {
+  if (cmd_match_ulng (cmd, &tmp, base)) {
     *val = tmp;
     return (1);
   }
@@ -260,9 +268,19 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
   return (0);
 }
 
+int cmd_match_uint16 (cmd_t *cmd, unsigned short *val)
+{
+  return (cmd_match_uint16b (cmd, val, 16));
+}
+
+int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+  return (cmd_match_ulng (cmd, val, base));
+}
+
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val)
 {
-  return (cmd_match_ulng (cmd, val));
+  return (cmd_match_uint32b (cmd, val, 16));
 }
 
 int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
