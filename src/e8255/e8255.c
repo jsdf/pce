@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     e8255.c                                                    *
+ * File name:     src/e8255/e8255.c                                          *
  * Created:       2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8255.c,v 1.1 2003/04/17 11:47:27 hampa Exp $ */
+/* $Id: e8255.c,v 1.2 2003/04/21 13:35:08 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -59,53 +59,6 @@ e8255_t *e8255_new (void)
 void e8255_del (e8255_t *ppi)
 {
   free (ppi);
-}
-
-void e8255_prt_state (e8255_t *ppi, FILE *fp)
-{
-  fprintf (fp,
-    "8255: MOD=%02X  MODA=%u  MODB=%u",
-    ppi->mode, ppi->group_a_mode, ppi->group_b_mode
-  );
-
-  if (ppi->port[0].inp != 0) {
-    fprintf (fp, "  A=I[%02X]", e8255_get_inp (ppi, 0));
-  }
-  else {
-    fprintf (fp, "  A=O[%02X]", e8255_get_out (ppi, 0));
-  }
-
-  if (ppi->port[1].inp != 0) {
-    fprintf (fp, "  B=I[%02X]", e8255_get_inp (ppi, 1));
-  }
-  else {
-    fprintf (fp, "  B=O[%02X]", e8255_get_out (ppi, 1));
-  }
-
-  switch (ppi->port[2].inp) {
-    case 0xff:
-      fprintf (fp, "  C=I[%02X]", e8255_get_inp (ppi, 2));
-      break;
-
-    case 0x00:
-      fprintf (fp, "  C=O[%02X]", e8255_get_out (ppi, 2));
-      break;
-
-    case 0x0f:
-      fprintf (fp, "  CH=O[%X]  CL=I[%X]",
-        (e8255_get_out (ppi, 2) >> 4) & 0x0f, e8255_get_inp (ppi, 2) & 0x0f
-      );
-      break;
-
-    case 0xf0:
-      fprintf (fp, "  CH=I[%X]  CL=O[%X]",
-        (e8255_get_inp (ppi, 2) >> 4) & 0x0f, e8255_get_out (ppi, 2) & 0x0f
-      );
-      break;
-  }
-
-  fputs ("\n", fp);
-  fflush (fp);
 }
 
 void e8255_set_inp (e8255_t *ppi, unsigned p, unsigned char val)

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     e8255.h                                                    *
+ * File name:     src/e8255/e8255.h                                          *
  * Created:       2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8255.h,v 1.1 2003/04/17 11:47:27 hampa Exp $ */
+/* $Id: e8255.h,v 1.2 2003/04/21 13:35:08 hampa Exp $ */
 
 
 /* PPI 8255 */
@@ -57,8 +57,6 @@ typedef struct {
 
 e8255_t *e8255_new (void);
 void e8255_del (e8255_t *ppi);
-
-void e8255_prt_state (e8255_t *ppi, FILE *fp);
 
 void e8255_set_inp (e8255_t *ppi, unsigned p, unsigned char val);
 void e8255_set_out (e8255_t *ppi, unsigned p, unsigned char val);
