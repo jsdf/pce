@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -481,6 +481,11 @@ void ppc_log_exception (void *ext, unsigned long ofs)
 
     case 0x0700:
       name = "program";
+      return;
+      break;
+
+    case 0x0800:
+      name = "fpu unavailable";
       break;
 
     case 0x0c00:
@@ -511,6 +516,7 @@ void ppc_log_exception (void *ext, unsigned long ofs)
   );
 }
 
+#if 0
 static
 void ppc_log_mem (void *ext, unsigned mode,
   unsigned long raddr, unsigned long vaddr, unsigned long val)
@@ -523,6 +529,7 @@ void ppc_log_mem (void *ext, unsigned mode,
     pce_log (MSG_DEB, "mem: 0x%08lx 0x%08lx %02x\n", raddr, val, mode);
   }
 }
+#endif
 
 static
 void do_bc (cmd_t *cmd, sim405_t *sim)
@@ -1183,5 +1190,5 @@ void ppc_cmd_init (sim405_t *sim)
   sim->ppc->log_opcode = NULL;
   sim->ppc->log_undef = &ppc_log_undef;
   sim->ppc->log_exception = &ppc_log_exception;
-  sim->ppc->log_mem = &ppc_log_mem;
+  sim->ppc->log_mem = NULL;
 }

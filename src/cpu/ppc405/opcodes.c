@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcodes.c                                   *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1057,6 +1057,86 @@ void op_2f (p405_t *c)
   p405_set_clk (c, 4, cnt);
 }
 
+/* 30: lfs */
+static
+void op_30 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 31: lfsu */
+static
+void op_31 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 32: lfd */
+static
+void op_32 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 33: lfdu */
+static
+void op_33 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 34: stfs */
+static
+void op_34 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 35: stfsu */
+static
+void op_35 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 36: stfd */
+static
+void op_36 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 37: stfdu */
+static
+void op_37 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 3B: single precision floating point instructions */
+static
+void op_3b (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 3F: double precision floating point instructions */
+static
+void op_3f (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
 
 static
 p405_opcode_f p405_opcodes[64] = {
@@ -1066,8 +1146,8 @@ p405_opcode_f p405_opcodes[64] = {
   &op_18, &op_19, &op_1a, &op_1b, &op_1c, &op_1d,   NULL,   NULL,
   &op_20, &op_21, &op_22, &op_23, &op_24, &op_25, &op_26, &op_27,   /* 20 */
   &op_28, &op_29, &op_2a, &op_2b, &op_2c, &op_2d, &op_2e, &op_2f,
-    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   /* 30 */
-    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL
+  &op_30, &op_31, &op_32, &op_33, &op_34, &op_35, &op_36, &op_37,   /* 30 */
+    NULL,   NULL,   NULL, &op_3b,   NULL,   NULL,   NULL, &op_3f
 };
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/internal.h                                  *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -143,6 +143,7 @@ void p405_exception_data_store (p405_t *c, uint32_t ea, int store, int zone);
 void p405_exception_instr_store (p405_t *c, int zone);
 void p405_exception_external (p405_t *c);
 void p405_exception_program (p405_t *c, uint32_t esr);
+void p405_exception_program_fpu (p405_t *c);
 void p405_exception_syscall (p405_t *c);
 void p405_exception_pit (p405_t *c);
 void p405_exception_tlb_miss_data (p405_t *c, uint32_t ea, int store);

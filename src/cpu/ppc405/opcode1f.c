@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcode1f.c                                  *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1509,6 +1509,14 @@ void op_1f_216 (p405_t *c)
   p405_set_clk (c, 4, 1);
 }
 
+/* 1F 217: lfsx */
+static
+void op_1f_217 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
 /* 1F 218: srw[.] ra, rs, rb */
 static
 void op_1f_218 (p405_t *c)
@@ -1544,6 +1552,14 @@ void op_1f_236 (p405_t *c)
   p405_set_clk (c, 4, 1);
 }
 
+/* 1F 237: lfsux */
+static
+void op_1f_237 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
 /* 1F 255: lswi rt, ra0, nb */
 static
 void op_1f_255 (p405_t *c)
@@ -1563,6 +1579,22 @@ static
 void op_1f_256 (p405_t *c)
 {
   p405_set_clk (c, 4, 1);
+}
+
+/* 1F 257: lfdx */
+static
+void op_1f_257 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 1F 277: lfdux */
+static
+void op_1f_277 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
 }
 
 /* 1F 295: stswx rs, ra0, rb */
@@ -1595,6 +1627,22 @@ void op_1f_296 (p405_t *c)
   p405_set_clk (c, 4, 1);
 }
 
+/* 1F 297: stfsx */
+static
+void op_1f_297 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
+/* 1F 2b7: stfsux */
+static
+void op_1f_2b7 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
 /* 1F 2D5: stswi rs, ra0, nb */
 static
 void op_1f_2d5 (p405_t *c)
@@ -1608,6 +1656,14 @@ void op_1f_2d5 (p405_t *c)
   );
 }
 
+/* 1F 2D7: stfdx */
+static
+void op_1f_2d7 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
+}
+
 /* 1F 2F6: dcba ra0, rb */
 static
 void op_1f_2f6 (p405_t *c)
@@ -1617,6 +1673,14 @@ void op_1f_2f6 (p405_t *c)
   }
 
   p405_set_clk (c, 4, 1);
+}
+
+/* 1F 2F7: stfdux */
+static
+void op_1f_2f7 (p405_t *c)
+{
+  p405_set_clk (c, 0, 1);
+  p405_exception_program_fpu (c);
 }
 
 /* 1F 316: lhbrx rt, ra0, rb */
@@ -2074,7 +2138,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_008,       NULL, &op_1f_00a,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 210 */
-        NULL, &op_1f_215, &op_1f_216,       NULL,
+        NULL, &op_1f_215, &op_1f_216, &op_1f_217,
   &op_1f_218,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 220 */
@@ -2082,7 +2146,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_028,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 230 */
-        NULL,       NULL, &op_1f_236,       NULL,
+        NULL,       NULL, &op_1f_236, &op_1f_237,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 240 */
@@ -2090,7 +2154,7 @@ p405_opcode_f p405_opcode1f[1024] = {
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 250 */
-        NULL, &op_1f_255, &op_1f_256,       NULL,
+        NULL, &op_1f_255, &op_1f_256, &op_1f_257,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 260 */
@@ -2098,7 +2162,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_068,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 270 */
-        NULL,       NULL,       NULL,       NULL,
+        NULL,       NULL,       NULL, &op_1f_277,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 280 */
@@ -2106,7 +2170,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_088,       NULL, &op_1f_08a,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 290 */
-        NULL, &op_1f_295, &op_1f_296,       NULL,
+        NULL, &op_1f_295, &op_1f_296, &op_1f_297,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2a0 */
@@ -2114,7 +2178,7 @@ p405_opcode_f p405_opcode1f[1024] = {
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2b0 */
-        NULL,       NULL,       NULL,       NULL,
+        NULL,       NULL,       NULL, &op_1f_2b7,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2c0 */
@@ -2122,7 +2186,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_0c8,       NULL, &op_1f_0ca,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2d0 */
-        NULL, &op_1f_2d5,       NULL,       NULL,
+        NULL, &op_1f_2d5,       NULL, &op_1f_2d7,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2e0 */
@@ -2130,7 +2194,7 @@ p405_opcode_f p405_opcode1f[1024] = {
   &op_1f_0e8,       NULL, &op_1f_0ea, &op_1f_0eb,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 2f0 */
-        NULL,       NULL, &op_1f_2f6,       NULL,
+        NULL,       NULL, &op_1f_2f6, &op_1f_2f7,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL,
         NULL,       NULL,       NULL,       NULL, /* 300 */
