@@ -53,6 +53,9 @@ disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int
 disk_t *dsk_dosimg_open_fp (FILE *fp, int ro);
 disk_t *dsk_dosimg_open (const char *fname, int ro);
 
+disk_t *dsk_fdimg_open_fp (FILE *fp, int ro);
+disk_t *dsk_fdimg_open (const char *fname, int ro);
+
 void dsk_img_set_offset (disk_t *dsk, uint64_t ofs);
 
 int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);

@@ -197,6 +197,60 @@ disk_t *dsk_dosimg_open (const char *fname, int ro)
   return (dsk);
 }
 
+disk_t *dsk_fdimg_open_fp (FILE *fp, int ro)
+{
+  uint64_t cnt;
+
+  if (dsk_get_filesize (fp, &cnt)) {
+    return (NULL);
+  }
+
+  switch (cnt) {
+    case 360UL * 1024UL:
+      return (dsk_img_open_fp (fp, 40, 2, 9, ro));
+
+    case 720UL * 1024UL:
+      return (dsk_img_open_fp (fp, 80, 2, 9, ro));
+
+    case 1200UL * 1024UL:
+      return (dsk_img_open_fp (fp, 80, 2, 15, ro));
+
+    case 1440UL * 1024UL:
+      return (dsk_img_open_fp (fp, 80, 2, 18, ro));
+
+    case 2880UL * 1024UL:
+      return (dsk_img_open_fp (fp, 80, 2, 36, ro));
+  }
+
+  return (NULL);
+}
+
+disk_t *dsk_fdimg_open (const char *fname, int ro)
+{
+  disk_t *dsk;
+  FILE   *fp;
+
+  if (ro) {
+    fp = fopen (fname, "rb");
+  }
+  else {
+    fp = fopen (fname, "r+b");
+  }
+
+  if (fp == NULL) {
+    return (NULL);
+  }
+
+  dsk = dsk_fdimg_open_fp (fp, ro);
+
+  if (dsk == NULL) {
+    fclose (fp);
+    return (NULL);
+  }
+
+  return (dsk);
+}
+
 void dsk_img_set_offset (disk_t *dsk, uint64_t ofs)
 {
   disk_img_t *img;

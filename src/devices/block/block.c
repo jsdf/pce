@@ -193,6 +193,24 @@ int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
   return (0);
 }
 
+int dsk_get_filesize (FILE *fp, uint64_t *cnt)
+{
+  off_t val;
+
+  if (fseeko (fp, 0, SEEK_END)) {
+    return (1);
+  }
+
+  val = ftello (fp);
+  if (val == (off_t) -1) {
+    return (1);
+  }
+
+  *cnt = val;
+
+  return (0);
+}
+
 
 void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s)
 {
@@ -264,6 +282,11 @@ disk_t *dsk_auto_open (const char *fname, int ro)
   }
 
   dsk = dsk_dosemu_open (fname, ro);
+  if (dsk != NULL) {
+    return (dsk);
+  }
+
+  dsk = dsk_fdimg_open (fname, ro);
   if (dsk != NULL) {
     return (dsk);
   }
