@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -157,9 +157,45 @@ void sarm_prt_state_mmu (arm_t *c, FILE *fp)
 
   p = c->copr[15]->ext;
 
-  fprintf (fp, "CR=%08lX  TTB=%08lX\n",
+  fprintf (fp, "CR=[%c %c %c %c %c %c %c %c %c %c]\n",
+    (p->reg[1] & ARM_C15_CR_R) ? 'R' : 'r',
+    (p->reg[1] & ARM_C15_CR_S) ? 'S' : 's',
+    (p->reg[1] & ARM_C15_CR_B) ? 'B' : 'b',
+    (p->reg[1] & ARM_C15_CR_L) ? 'L' : 'l',
+    (p->reg[1] & ARM_C15_CR_D) ? 'D' : 'd',
+    (p->reg[1] & ARM_C15_CR_P) ? 'P' : 'p',
+    (p->reg[1] & ARM_C15_CR_W) ? 'W' : 'w',
+    (p->reg[1] & ARM_C15_CR_C) ? 'C' : 'c',
+    (p->reg[1] & ARM_C15_CR_A) ? 'A' : 'a',
+    (p->reg[1] & ARM_C15_CR_M) ? 'M' : 'm'
+  );
+
+  fprintf (fp, "c00=%08lX  c04=%08lX  c08=%08lX  c12=%08lX\n",
+    (unsigned long) p->reg[0],
+    (unsigned long) p->reg[4],
+    (unsigned long) p->reg[8],
+    (unsigned long) p->reg[12]
+  );
+
+  fprintf (fp, "c01=%08lX  c05=%08lX  c09=%08lX  c13=%08lX\n",
     (unsigned long) p->reg[1],
-    (unsigned long) p->reg[2]
+    (unsigned long) p->reg[5],
+    (unsigned long) p->reg[9],
+    (unsigned long) p->reg[13]
+  );
+
+  fprintf (fp, "c02=%08lX  c06=%08lX  c10=%08lX  c14=%08lX\n",
+    (unsigned long) p->reg[2],
+    (unsigned long) p->reg[6],
+    (unsigned long) p->reg[10],
+    (unsigned long) p->reg[14]
+  );
+
+  fprintf (fp, "c03=%08lX  c07=%08lX  c11=%08lX  c15=%08lX\n",
+    (unsigned long) p->reg[3],
+    (unsigned long) p->reg[7],
+    (unsigned long) p->reg[11],
+    (unsigned long) p->reg[15]
   );
 }
 
@@ -255,6 +291,10 @@ void sarm_log_trap (void *ext, unsigned long addr)
   switch (addr) {
     case 0x00000004UL:
       name = "undefined operation";
+      break;
+
+    case 0x00000010UL:
+      name = "data abort";
       break;
 
     default:
@@ -744,6 +784,23 @@ void do_x (cmd_t *cmd, simarm_t *sim)
   }
   else if (cmd_match (cmd, "v")) {
     xlat = ARM_XLAT_VIRTUAL;
+  }
+  else if (cmd_match (cmd, "x")) {
+    unsigned long addr1;
+    uint32_t      addr2;
+
+    if (!cmd_match_uint32 (cmd, &addr1)) {
+      cmd_error (cmd, "expect address");
+      return;
+    }
+
+    addr2 = addr1;
+    if (arm_translate_extern (sim->cpu, &addr2, par_xlat)) {
+      printf ("%08lX translation abort\n", addr1);
+    }
+    else {
+      printf ("%08lX -> %08lX\n", addr1, (unsigned long) addr2);
+    }
   }
   else {
     cmd_error (cmd, "unknown translation type");

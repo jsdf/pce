@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -76,6 +76,12 @@ typedef unsigned long long uint64_t;
 #define ARM_C15_CR_D 0x00000020UL
 #define ARM_C15_CR_L 0x00000040UL
 #define ARM_C15_CR_B 0x00000080UL
+#define ARM_C15_CR_S 0x00000100UL
+#define ARM_C15_CR_R 0x00000200UL
+#define ARM_C15_CR_F 0x00000400UL
+#define ARM_C15_CR_Z 0x00000800UL
+#define ARM_C15_CR_I 0x00001000UL
+#define ARM_C15_CR_V 0x00002000UL
 
 
 #define ARM_XLAT_CPU     0
@@ -215,6 +221,8 @@ typedef struct arm_s {
 /*****************************************************************************
  * MMU
  *****************************************************************************/
+
+int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat);
 
 int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val);
 int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val);

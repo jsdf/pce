@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -80,9 +80,22 @@ int p15_set_reg7 (arm_t *c, arm_copr15_t *p)
     /* invalidate all caches */
     return (0);
   }
-  else if ((rm == 10) && (op2 == 4)) {
-    /* drain write buffer */
-    return (0);
+  else if (rm == 10) {
+    switch (op2) {
+    case 0x01:
+      /* clean data cache line */
+      return (0);
+
+    case 0x02:
+      /* clean data cache line */
+      return (0);
+
+    case 0x04:
+      /* drain write buffer */
+      return (0);
+    }
+
+    return (1);
   }
 
   return (1);
@@ -167,10 +180,10 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
     }
     val &= ~ARM_C15_CR_C;
     val &= ~ARM_C15_CR_W;
+    val &= ~ARM_C15_CR_B;
     val |= ARM_C15_CR_P;
     val |= ARM_C15_CR_D;
     val |= ARM_C15_CR_L;
-    val |= ARM_C15_CR_B;
     p15->reg[1] = val & 0xffffffffUL;
     break;
 
