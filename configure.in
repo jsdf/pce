@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2004-09-29 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -270,15 +270,17 @@ AC_SUBST(PCE_SDL_LDF)
 
 
 
-dnl -----------------------------------------------------------------------
-dnl Checks for options
+#-----------------------------------------------------------------------------
+# Checks for options
 
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
-if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
+if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
+if test -d "$srcdir/src/arch/sims32"; then have_sims32=1; else have_sims32=0; fi
 if test -d "$srcdir/src/cpu/e8086"; then have_e8086=1; else have_e8086=0; fi
 if test -d "$srcdir/src/cpu/e6502"; then have_e6502=1; else have_e6502=0; fi
 if test -d "$srcdir/src/cpu/ppc405"; then have_ppc405=1; else have_ppc405=0; fi
+if test -d "$srcdir/src/cpu/sparc32"; then have_sparc32=1; else have_sparc32=0; fi
 
 
 AC_MSG_CHECKING([whether to build the IBM PC emulator])
@@ -362,6 +364,34 @@ fi
 AC_SUBST(PCE_BUILD_SIM6502)
 if test "x$PCE_BUILD_SIM6502" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_SIM6502)
+fi
+
+
+AC_MSG_CHECKING([whether to build the sparc32 simulator])
+if test "x$have_sims32$have_sparc32" != "x11" ; then
+	PCE_BUILD_SIMS32=0
+	AC_MSG_RESULT([no (no source)])
+else
+	AC_ARG_ENABLE(sims32,
+	  AC_HELP_STRING([--enable-sims32], [Enable the sparc32 simulator]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_SIMS32=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_SIMS32=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_SIMS32=1
+		AC_MSG_RESULT([yes (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_SIMS32)
+if test "x$PCE_BUILD_SIMS32" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_SIMS32)
 fi
 
 
@@ -458,6 +488,37 @@ if test "x$PCE_BUILD_PPC405" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to build the sparc32 core])
+if test "x$have_sparc32" = "x0" ; then
+	PCE_BUILD_SPARC32=0
+	AC_MSG_RESULT([no (no source)])
+elif test "x$PCE_BUILD_SIMS32" = "x1" ; then
+	PCE_BUILD_SPARC32=1
+	AC_MSG_RESULT([yes (required by sims32)])
+else
+	AC_ARG_ENABLE(sparc32,
+	  AC_HELP_STRING([--enable-sparc32], [Enable the sparc32 core]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_SPARC32=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_SPARC32=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_SPARC32=0
+		AC_MSG_RESULT([no (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_SPARC32)
+if test "x$PCE_BUILD_SPARC32" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_SPARC32)
+fi
+
+
 eval "pce_etcdir=$sysconfdir"
 eval "pce_etcdir=$pce_etcdir"
 
@@ -504,6 +565,13 @@ else
 	emu2="$emu2 sim6502"
 fi
 
+if test "x$PCE_BUILD_SIMS32" = "x1" ; then
+	extra="$extra src/arch/sims32/Makefile"
+	emu1="$emu1 sims32"
+else
+	emu2="$emu2 sims32"
+fi
+
 if test "x$PCE_BUILD_6502" = "x1" ; then
 	extra="$extra src/cpu/e6502/Makefile"
 	core1="$core1 6502"
@@ -520,9 +588,16 @@ fi
 
 if test "x$PCE_BUILD_PPC405" = "x1" ; then
 	extra="$extra src/cpu/ppc405/Makefile"
-	core1="$core1 PPC405"
+	core1="$core1 ppc405"
 else
-	core2="$core2 PPC405"
+	core2="$core2 ppc405"
+fi
+
+if test "x$PCE_BUILD_SPARC32" = "x1" ; then
+	extra="$extra src/cpu/sparc32/Makefile"
+	core1="$core1 sparc32"
+else
+	core2="$core2 sparc32"
 fi
 
 

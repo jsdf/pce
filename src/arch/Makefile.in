@@ -22,6 +22,10 @@ ifeq "$(PCE_BUILD_SIM6502)" "1"
 subdir += sim6502
 endif
 
+ifeq "$(PCE_BUILD_SIMS32)" "1"
+subdir += sims32
+endif
+
 
 DCL := Makefile
 

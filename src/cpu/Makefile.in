@@ -22,6 +22,10 @@ ifeq "$(PCE_BUILD_PPC405)" "1"
 subdir += ppc405
 endif
 
+ifeq "$(PCE_BUILD_SPARC32)" "1"
+subdir += sparc32
+endif
+
 
 DCL := Makefile
 

@@ -1,0 +1,85 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+pcesrc := $(topdir)/src
+pcedst := $(reldir)/src
+
+
+include $(reldir)/config.inc
+
+
+CC_FLG += -I$(srcdir)
+
+
+FILES := cmd_s32 main sercons sims32
+
+SRC := $(foreach f,$(FILES),$(f).c)
+OBJ := $(foreach f,$(FILES),$(f).o)
+HDR := $(foreach f,$(FILES),$(f).h)
+
+OBJ_EXT	:= \
+	$(pcedst)/cpu/sparc32/sparc32.a \
+	$(pcedst)/chipset/e8250.o \
+	$(pcedst)/devices/memory.o \
+	$(pcedst)/devices/serport.o \
+	$(pcedst)/lib/brkpt.o \
+	$(pcedst)/lib/cmd.o \
+	$(pcedst)/lib/hexdump.o \
+	$(pcedst)/lib/ihex.o \
+	$(pcedst)/lib/load.o \
+	$(pcedst)/lib/log.o \
+	$(pcedst)/libini/libini.a
+
+
+HDR_EXT	:= \
+	$(pcedst)/config.h \
+	cpu/sparc32/sparc32.h \
+	chipset/e8250.h \
+	devices/memory.h \
+	devices/serport.h \
+	lib/brkpt.h \
+	lib/cmd.h \
+	lib/hexdump.h \
+	lib/ihex.h \
+	lib/load.h \
+	lib/log.h \
+	libini/libini.h
+
+MAN1	:=
+
+BIN	:= sims32
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(BIN) $(OBJ) sims32.cfg
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN) $(OBJ) sims32.cfg
+
+
+install: install-bin sims32.cfg
+	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
+	test -f $(DESTDIR)$(etcdir)/sims32.cfg || $(INSTALL) -m 644 sims32.cfg $(DESTDIR)$(etcdir)
+
+
+sims32: $(OBJ) $(OBJ_EXT)
+	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+
+sims32.cfg: sims32.cfg.in
+	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+
+
+cmd_s32.o:	cmd_s32.c $(SDP)
+main.o:		main.c $(SDP)
+sercons.o:	sercons.c $(SDP)
+sims32.o:	sims32.c $(SDP)

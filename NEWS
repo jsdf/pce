@@ -1,5 +1,6 @@
 0.1.6
 
+	* Added a sparc32 core emulator and minimal simulator
 	* Added a new partitioned block device type.
 	* Added copy on write support to all block devices.
 	* Added a new DOS utility pcemsg.com to send messages to the
