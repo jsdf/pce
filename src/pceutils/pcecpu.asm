@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pcecpu.asm,v 1.1 2003/09/22 05:15:25 hampa Exp $
+; $Id: pcecpu.asm,v 1.2 2003/10/07 16:05:25 hampa Exp $
 
 ; pcecpu [cpu]
 
@@ -47,6 +47,7 @@ str_v20        db "v20", 0
 str_v30        db "v30", 0
 str_80186      db "80186", 0
 str_80188      db "80188", 0
+str_80286      db "80286", 0
 str_unknown    db "unknown", 0
 
 
@@ -159,40 +160,42 @@ start:
   or      ax, ax
   jnz     set_80188
 
+  mov     di, str_80286
+  call    is_param
+  or      ax, ax
+  jnz     set_80286
 
-do_help:
-  mov     si, msg_help
-  call    prt_string
-  jmp     done
-
+  jmp     do_help
 
 set_8086:
   mov     ax, PCE_CPU_8086
-  pceh    PCEH_SET_CPU
-  jmp     done
+  jmp     setok
 
 set_8088:
   mov     ax, PCE_CPU_8088
-  pceh    PCEH_SET_CPU
-  jmp     done
+  jmp     setok
 
 set_v20:
   mov     ax, PCE_CPU_V20
-  pceh    PCEH_SET_CPU
-  jmp     done
+  jmp     setok
 
 set_v30:
   mov     ax, PCE_CPU_V30
-  pceh    PCEH_SET_CPU
-  jmp     done
+  jmp     setok
 
 set_80186:
   mov     ax, PCE_CPU_80186
-  pceh    PCEH_SET_CPU
-  jmp     done
+  jmp     setok
 
 set_80188:
   mov     ax, PCE_CPU_80188
+  jmp     setok
+
+set_80286:
+  mov     ax, PCE_CPU_80286
+  jmp     setok
+
+setok:
   pceh    PCEH_SET_CPU
   jmp     done
 
@@ -227,12 +230,23 @@ do_info:
   cmp     ax, PCE_CPU_80188
   je      .ok
 
+  mov     si, str_80286
+  cmp     ax, PCE_CPU_80286
+  je      .ok
+
   mov     si, str_unknown
 
 .ok:
   call    prt_string
 
   mov     si, msg_info2
+  call    prt_string
+
+  jmp     done
+
+
+do_help:
+  mov     si, msg_help
   call    prt_string
 
 
