@@ -110,8 +110,32 @@ case "$os" in
 	AC_DEFINE(PCE_HOST_LINUX)
 	AC_MSG_RESULT([Linux])
 	;;
+SunOS)
+	AC_DEFINE(DEFAULT_HOST_SUNOS)
+	AC_MSG_RESULT([SunOS])
+	;;
 *)
 	AC_MSG_RESULT([unknown ($os)])
+	;;
+esac
+
+AC_MSG_CHECKING([host architecture])
+arch=`uname -m`
+case "$arch" in
+i?86)
+	AC_DEFINE(PCE_ARCH_X86)
+	AC_MSG_RESULT([x86])
+	;;
+ppc*)
+	AC_DEFINE(PCE_ARCH_PPC)
+	AC_MSG_RESULT([ppc])
+	;;
+sparc* | sun4*)
+	AC_DEFINE(PCE_ARCH_SPARC)
+	AC_MSG_RESULT([sparc])
+	;;
+*)
+	AC_MSG_RESULT([unknown ($arch)])
 	;;
 esac
 

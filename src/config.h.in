@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: config.h.in,v 1.9 2003/10/13 01:53:29 hampa Exp $ */
+/* $Id$ */
 
 
 #ifndef PCE_CONFIG_H
@@ -47,8 +47,13 @@
 #undef PCE_CFG_TIME
 
 #undef PCE_HOST_LINUX
-#undef PCE_HOST_FOSC
+#undef PCE_HOST_SUNOS
 
+#undef PCE_ARCH_X86
+#undef PCE_ARCH_PPC
+#undef PCE_ARCH_SPARC
+
+#undef PCE_HOST_FOSC
 #undef PCE_HAVE_TSC
 
 #undef PCE_DIR_ETC
