@@ -334,6 +334,10 @@ AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
 dnl --------------------------------------------------------------------------
 
+if test "x$PCE_BUILD_PPC405" = "x1" ; then
+	extra="src/chipset/ppc405/Makefile src/cpu/ppc405/Makefile"
+fi
+
 AC_OUTPUT(
   Makefile
   config.inc
@@ -344,15 +348,14 @@ AC_OUTPUT(
   src/arch/ibmpc/bios/Makefile
   src/arch/ibmpc/pceutils/Makefile
   src/chipset/Makefile
-  src/chipset/ppc405/Makefile
   src/cpu/Makefile
   src/cpu/e8086/Makefile
-  src/cpu/ppc405/Makefile
   src/devices/Makefile
   src/lib/Makefile
   src/libini/Makefile
   src/terminal/Makefile
   src/config.inc
+  $extra
 )
 
 
