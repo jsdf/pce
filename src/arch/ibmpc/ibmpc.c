@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -563,7 +563,11 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
       dsk = dsk_ram_new (drive, c, h, s, fname, ro);
     }
     else if (strcmp (type, "image") == 0) {
-      dsk = dsk_img_new (drive, c, h, s, 0, fname, ro);
+      unsigned long start;
+
+      start = ini_get_lng_def (sct, "offset", 0);
+
+      dsk = dsk_img_new (drive, c, h, s, start, fname, ro);
     }
     else if (strcmp (type, "dosemu") == 0) {
       dsk = dsk_dosemu_new (drive, fname, ro);

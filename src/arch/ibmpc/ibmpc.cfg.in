@@ -288,6 +288,7 @@ section pc {
 		drive = 0
 		type = "image"
 		file = "pce_00.img"
+		offset = 0
 		c = 80
 		h = 2
 		s = 18
