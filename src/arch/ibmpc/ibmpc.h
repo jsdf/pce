@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -74,6 +74,8 @@ typedef struct ibmpc_t {
 
   unsigned           cpu_model;
 
+  unsigned           bootdrive;
+
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];
 
@@ -87,13 +89,16 @@ void pc_del (ibmpc_t *pc);
 
 void pc_clock (ibmpc_t *pc);
 
+void pc_screenshot (ibmpc_t *pc, const char *fname);
+
 int pc_set_cpu_model (ibmpc_t *pc, unsigned model);
+
+void pc_set_bootdrive (ibmpc_t *pc, unsigned drv);
+unsigned pc_get_bootdrive (ibmpc_t *pc);
 
 void pc_break (ibmpc_t *pc, unsigned char val);
 
 void pc_set_keycode (ibmpc_t *pc, unsigned char val);
-
-int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -902,6 +902,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc->key_i = 0;
   pc->key_j = 0;
 
+  pc->bootdrive = 128;
+
   pc->brk = 0;
   pc->clk_cnt = 0;
 
@@ -1129,6 +1131,16 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
   return (0);
 }
 
+void pc_set_bootdrive (ibmpc_t *pc, unsigned drv)
+{
+  pc->bootdrive = drv;
+}
+
+unsigned pc_get_bootdrive (ibmpc_t *pc)
+{
+  return (pc->bootdrive);
+}
+
 void pc_break (ibmpc_t *pc, unsigned char val)
 {
   if (pc == NULL) {
@@ -1189,116 +1201,4 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
     e8259_set_irq1 (&pc->pic, 1);
   }
 #endif
-}
-
-int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
-{
-  /* a hack, for debugging only */
-  if (pc == NULL) {
-    pc = par_pc;
-  }
-
-  if (msg == NULL) {
-    msg = "";
-  }
-
-  if (val == NULL) {
-    val = "";
-  }
-
-  if (strcmp (msg, "break") == 0) {
-    if (strcmp (val, "stop") == 0) {
-      pc->brk = PCE_BRK_STOP;
-      return (0);
-    }
-    else if (strcmp (val, "abort") == 0) {
-      pc->brk = PCE_BRK_ABORT;
-      return (0);
-    }
-    else if (strcmp (val, "") == 0) {
-      pc->brk = PCE_BRK_ABORT;
-      return (0);
-    }
-
-    return (1);
-  }
-  else if (strcmp (msg, "emu.stop") == 0) {
-    pc->brk = PCE_BRK_STOP;
-  }
-  else if (strcmp (msg, "emu.exit") == 0) {
-    pc->brk = PCE_BRK_ABORT;
-  }
-
-  pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
-
-  if (strcmp (msg, "cpu.int28") == 0) {
-    par_int28 = 1000UL * strtoul (val, NULL, 0);
-    return (0);
-  }
-  else if (strcmp (msg, "video.redraw") == 0) {
-    pce_video_update (pc->video);
-    return (0);
-  }
-  else if (strcmp (msg, "video.screenshot") == 0) {
-    if (strcmp (val, "") == 0) {
-      pc_screenshot (pc, NULL);
-    }
-    else {
-      pc_screenshot (pc, val);
-    }
-    return (0);
-  }
-  else if (strcmp (msg, "video.setsize") == 0) {
-    unsigned w, h;
-    char     *tmp1, *tmp2;
-
-    w = strtoul (val, &tmp1, 0);
-    if ((w == 0) || (tmp1 == val) || (*tmp1 == 0)) {
-      return (1);
-    }
-
-    h = strtoul (tmp1, &tmp2, 0);
-    if ((h == 0) || (tmp2 == tmp1) || (*tmp2 != 0)) {
-      return (1);
-    }
-
-    trm_set_size (pc->trm, w, h);
-    pce_video_update (pc->video);
-
-    return (0);
-  }
-  else if (strcmp (msg, "disk.boot") == 0) {
-    par_boot = strtoul (val, NULL, 0);
-    return (0);
-  }
-  else if (strcmp (msg, "disk.commit") == 0) {
-    if (strcmp (val, "") == 0) {
-      if (dsks_commit (pc->dsk)) {
-        pce_log (MSG_ERR, "commit failed for at least one disk\n");
-        return (1);
-      }
-    }
-    else {
-      unsigned d;
-      disk_t   *dsk;
-
-      d = strtoul (val, NULL, 0);
-      dsk = dsks_get_disk (pc->dsk, d);
-      if (dsk == NULL) {
-        pce_log (MSG_ERR, "no such disk (%s)\n", val);
-        return (1);
-      }
-
-      if (dsk_commit (dsk)) {
-        pce_log (MSG_ERR, "commit failed (%s)\n", val);
-        return (1);
-      }
-    }
-
-    return (0);
-  }
-
-  pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
-
-  return (1);
 }

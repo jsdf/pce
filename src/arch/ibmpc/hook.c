@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -134,6 +134,8 @@ void pc_hook_msg (ibmpc_t *pc)
   unsigned char  msg[256];
   unsigned char  val[256];
 
+  e86_set_cf (pc->cpu, 1);
+
   ds = e86_get_ds (pc->cpu);
 
   p = e86_get_si (pc->cpu);
@@ -205,8 +207,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     case PCEH_SET_BOOT:
-      pce_log (MSG_INF, "set boot drive to %u\n", e86_get_al (pc->cpu));
-      par_boot = e86_get_al (pc->cpu);
+      pc_set_bootdrive (pc, e86_get_al (pc->cpu));
       break;
 
     case PCEH_SET_INT28:
@@ -228,7 +229,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
       break;
 
     case PCEH_GET_BOOT:
-      e86_set_al (pc->cpu, par_boot);
+      e86_set_al (pc->cpu, pc_get_bootdrive (pc));
       break;
 
     case PCEH_GET_COM:

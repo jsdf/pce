@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -32,13 +32,14 @@
 
 char                      *par_terminal = NULL;
 char                      *par_video = NULL;
-unsigned                  par_boot = 128;
 char                      *par_cpu = NULL;
 unsigned long             par_int28 = 10000;
 
 ibmpc_t                   *par_pc = NULL;
 
 ini_sct_t                 *par_cfg = NULL;
+
+static unsigned           par_boot = 128;
 
 #define PCE_LAST_MAX 1024
 static unsigned short     pce_last_i = 0;
@@ -668,7 +669,7 @@ void do_boot (cmd_t *cmd)
   unsigned short val;
 
   if (cmd_match_eol (cmd)) {
-    printf ("boot drive is 0x%02x\n", par_boot);
+    printf ("boot drive is 0x%02x\n", pc_get_bootdrive (pc));
     return;
   }
 
@@ -681,7 +682,7 @@ void do_boot (cmd_t *cmd)
     return;
   }
 
-  par_boot = val;
+  pc_set_bootdrive (pc, val);
 }
 
 static
@@ -1723,6 +1724,8 @@ int main (int argc, char *argv[])
 
   pc->cpu->op_int = &pce_op_int;
   pc->cpu->op_undef = &pce_op_undef;
+
+  pc_set_bootdrive (pc, par_boot);
 
   e86_reset (pc->cpu);
 

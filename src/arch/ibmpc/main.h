@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -66,7 +66,6 @@ struct ibmpc_t;
 
 extern char          *par_terminal;
 extern char          *par_video;
-extern unsigned      par_boot;
 extern char          *par_cpu;
 extern unsigned long par_int28;
 
@@ -123,6 +122,7 @@ extern unsigned long par_int28;
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
+#include "msg.h"
 
 
 extern ibmpc_t *par_pc;
