@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <time.h>
 
 #include <unistd.h>
