@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -43,6 +43,8 @@
 #undef HAVE_TERMIOS_H
 
 #undef HAVE_SYS_POLL_H
+
+#undef HAVE_SYS_TIME_H
 
 #undef HAVE_UNISTD_H
 

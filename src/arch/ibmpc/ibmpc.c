@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -24,6 +24,10 @@
 
 
 #include "main.h"
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
@@ -1074,6 +1078,8 @@ void pc_del (ibmpc_t *pc)
   free (pc);
 }
 
+#ifdef HAVE_SYS_TIME_H
+static
 void pc_clock_pit (ibmpc_t *pc, unsigned n)
 {
   unsigned long  clk0, clk1;
@@ -1109,6 +1115,7 @@ void pc_clock_pit (ibmpc_t *pc, unsigned n)
 
   e8253_clock (&pc->pit, clk1);
 }
+#endif
 
 void pc_clock (ibmpc_t *pc)
 {
@@ -1125,12 +1132,16 @@ void pc_clock (ibmpc_t *pc)
     e8237_clock (&pc->dma, 1);
     e8259_clock (&pc->pic);
 
+#if HAVE_SYS_TIME_H
     if (pc->pit_real) {
       pc_clock_pit (pc, 4 * (pc->clk_div[0] / 32));
     }
     else {
       e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
     }
+#else
+    e8253_clock (&pc->pit, 4 * (pc->clk_div[0] / 32));
+#endif
 
     pc->clk_div[1] += pc->clk_div[0];
 
