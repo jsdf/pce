@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.2 2003/04/24 23:18:17 hampa Exp $
+; $Id: pce.asm,v 1.3 2003/04/25 02:29:56 hampa Exp $
 
 
 %macro set_pos 1
@@ -135,6 +135,9 @@ init_ppi:
   mov     ah, 0
 
   mov     [0x0010], ax                  ; equipment word
+
+  mov     al, 0x7c
+  out     0x61, al
 
   pop     ax
   ret
