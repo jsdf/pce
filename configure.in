@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.34 2003/12/20 01:01:33 hampa Exp $
+# $Id: configure.in,v 1.35 2003/12/29 11:06:23 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -107,6 +107,7 @@ case "$INSTALL" in
 esac
 AC_PATH_PROG(AR, ar, ar)
 AC_PATH_PROG(NASM, nasm,)
+AC_PATH_PROG(GZIP, gzip, gzip)
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 
@@ -251,8 +252,9 @@ AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 dnl --------------------------------------------------------------------------
 
 AC_OUTPUT(
-  Makefile.inc
   Makefile
+  config.inc
+  rules.inc
   src/Makefile
   src/arch/Makefile
   src/arch/ibmpc/Makefile
@@ -271,14 +273,19 @@ AC_OUTPUT(
 
 dnl --------------------------------------------------------------------------
 
-term="vt100"
+term="null vt100"
+noterm=""
 
 if test "x$PCE_X11_USE" = "x1" ; then
 	term="$term x11"
+else
+	noterm="$noterm x11"
 fi
 
 if test "x$PCE_SDL_USE" = "x1" ; then
 	term="$term sdl"
+else
+	noterm="$noterm sdl"
 fi
 
 eval "pce_bindir=$bindir"
@@ -303,12 +310,13 @@ echo "  etcdir:                $pce_etcdir"
 echo "  mandir:                $pce_mandir"
 echo "  datadir:               $pce_datdir"
 echo ""
-echo "  Terminals:             $term"
+echo "  Terminals built:       $term"
+echo "  Terminals skipped:    $noterm"
 
 if test $PCE_HAVE_NASM -eq 0 ; then
-	echo "  Build BIOS:            no"
+	echo "  Build PC BIOS:         no"
 else
-	echo "  Build BIOS:            yes"
+	echo "  Build PC BIOS:         yes"
 fi
 
 echo "  Host clock:            $PCE_HOST_FOSC"

@@ -1,34 +1,32 @@
 # Makefile
-# $Id: Makefile.in,v 1.3 2003/09/04 20:11:15 hampa Exp $
+# $Id: Makefile.in,v 1.4 2003/12/29 11:06:23 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir :=
 reldir := ../..
 
-include $(reldir)/Makefile.inc
+
+include $(reldir)/config.inc
 
 
-SRC	:= e8250.c e8253.c e8255.c e8259.c
+SRC := e8250.c e8253.c e8255.c e8259.c
+OBJ := e8250.o e8253.o e8255.o e8259.o
+HDR := e8250.h e8253.h e8255.h e8259.h
+MAN :=
+BIN := chipset.a
 
-OBJ	:= e8250.o e8253.o e8255.o e8259.o
+SDP := Makefile
+BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-HDR	:= e8250.h e8253.h e8255.h e8259.h
-HDR_EXT	:=
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
 
-MAN	:=
 
-BIN	:= chipset.a
-
-SDP	:= Makefile
-BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+include $(reldir)/rules.inc
 
 
 all: $(BIN)
-
-
-clean:
-	rm -f $(BIN) $(OBJ)
 
 
 chipset.a: $(OBJ)

@@ -1,12 +1,18 @@
 # Makefile
-# $Id: Makefile.in,v 1.1 2003/04/15 04:03:56 hampa Exp $
+# $Id: Makefile.in,v 1.2 2003/12/29 11:06:21 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir := src
 reldir := .
 
-include $(reldir)/Makefile.inc
+include $(reldir)/config.inc
+
+
+DCL := Makefile config.inc config.log config.status rules.inc
+
+
+include $(reldir)/rules.inc
 
 
 all:

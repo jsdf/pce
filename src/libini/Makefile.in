@@ -1,12 +1,14 @@
 # Makefile
-# $Id: Makefile.in,v 1.1 2003/04/22 17:56:20 hampa Exp $
+# $Id: Makefile.in,v 1.2 2003/12/29 11:06:23 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir :=
 reldir := ../..
 
-include $(reldir)/Makefile.inc
+
+include $(reldir)/config.inc
+
 
 SRC := read.c scanner.c section.c value.c write.c
 OBJ := read.o scanner.o section.o value.o write.o
@@ -17,6 +19,12 @@ BIN := libini.a
 SDP := Makefile $(HDR) scanner.h
 BDP := Makefile $(OBJ)
 
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
 
 all: $(BIN)
 
@@ -24,10 +32,6 @@ all: $(BIN)
 libini.a: $(OBJ)
 	rm -f $@
 	$(AR) $(AR_FLG) $@ $(OBJ)
-
-clean:
-	rm -f $(OBJ) $(BIN)
-
 
 
 read.o:		read.c $(SDP)

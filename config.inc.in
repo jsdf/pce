@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.10 2003/11/16 03:44:25 hampa Exp $
+# $Id: config.inc.in,v 1.1 2003/12/29 11:06:22 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -12,9 +12,6 @@ libdir		= @libdir@
 mandir		= @mandir@
 incdir		= @includedir@
 datdir		= @datadir@
-
-pcesrc	:= $(topdir)/src
-pcedst	:= $(reldir)/src
 
 
 # Executables
@@ -32,6 +29,9 @@ LD_FLG          = $(LDFLAGS)
 
 AR		= @AR@
 AR_FLG		= -rs
+
+GZIP		= @GZIP@
+GZIP_FLG	= --best
 
 LN_S		= @LN_S@
 LN_S_FLG	= -f
@@ -62,43 +62,6 @@ PCE_VERSION_STR := @PCE_VERSION_STR@
 PCE_VERSION_REL := @PCE_VERSION_REL@
 
 
-VPATH = $(srcdir) $(pcesrc)
-
-
 ifneq "$(reldir)" "$(topdir)"
 CC_FLG	+= -I$(topdir)/src
 endif
-
-
-all: subdirs
-
-
-subdirs: subdirs-rec
-subdirs-rec:
-ifneq "$(subdir)" ""
-	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG)); \
-	done
-endif
-
-
-clean: clean-rec
-clean-rec:
-ifneq "$(subdir)" ""
-	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) clean); \
-	done
-endif
-
-
-install: install-rec
-install-rec:
-ifneq "$(subdir)" ""
-	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) install); \
-	done
-endif
-
-
-%.o: %.c
-	$(CC) -c $(CC_FLG) $(CC_FLG_EXTRA) -o $@ $<

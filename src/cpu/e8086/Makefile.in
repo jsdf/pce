@@ -1,34 +1,32 @@
 # Makefile
-# $Id: Makefile.in,v 1.1 2003/12/20 01:01:37 hampa Exp $
+# $Id: Makefile.in,v 1.2 2003/12/29 11:06:23 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir :=
 reldir := ../../..
 
-include $(reldir)/Makefile.inc
+
+include $(reldir)/config.inc
 
 
-SRC	:= disasm.c e8086.c e80186.c e80286r.c flags.c ea.c opcodes.c pqueue.c
+SRC := disasm.c e8086.c e80186.c e80286r.c flags.c ea.c opcodes.c pqueue.c
+OBJ := disasm.o e8086.o e80186.o e80286r.o flags.o ea.o opcodes.o pqueue.o
+HDR := e8086.h internal.h
+MAN :=
+BIN := e8086.a
 
-OBJ	:= disasm.o e8086.o e80186.o e80286r.o flags.o ea.o opcodes.o pqueue.o
+SDP := Makefile $(HDR) $(HDR_EXT)
+BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-HDR	:= e8086.h internal.h
-HDR_EXT	:=
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
 
-MAN	:=
 
-BIN	:= e8086.a
-
-SDP	:= Makefile $(HDR) $(HDR_EXT)
-BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+include $(reldir)/rules.inc
 
 
 all: $(BIN)
-
-
-clean:
-	rm -f $(BIN) $(OBJ)
 
 
 e8086.a: $(OBJ)

@@ -1,21 +1,20 @@
 # Makefile
-# $Id: Makefile.in,v 1.5 2003/10/18 19:30:32 hampa Exp $
+# $Id: Makefile.in,v 1.6 2003/12/29 11:06:23 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir :=
 reldir := ../..
-pcesrc	:= $(topdir)/src
-pcedst	:= ..
-
-include $(reldir)/Makefile.inc
 
 
-SRC	:= font.c null.c terminal.c vt100.c
-OBJ	:= font.o null.o terminal.o vt100.o
-HDR	:= font.h null.h terminal.h vt100.h
-MAN	:=
-BIN	:= terminal.a
+include $(reldir)/config.inc
+
+
+SRC := font.c null.c terminal.c vt100.c
+OBJ := font.o null.o terminal.o vt100.o
+HDR := font.h null.h terminal.h vt100.h
+MAN :=
+BIN := terminal.a
 
 ifeq "$(PCE_X11_USE)" "1"
 	SRC += x11.c
@@ -31,9 +30,14 @@ ifeq "$(PCE_SDL_USE)" "1"
 	CC_FLG_EXTRA += $(PCE_SDL_CCF)
 endif
 
+SDP := Makefile $(HDR) $(HDR_EXT)
+BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-SDP	:= Makefile $(HDR) $(HDR_EXT)
-BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
 
 
 all: $(BIN)
@@ -42,9 +46,6 @@ all: $(BIN)
 terminal.a: $(OBJ)
 	rm -f $@
 	$(AR) $(AR_FLG) $@ $(OBJ)
-
-clean:
-	rm -f $(OBJ) $(BIN)
 
 
 font.o:		font.c $(SDP)

@@ -1,0 +1,98 @@
+# Makefile include file
+# $Id: rules.inc.in,v 1.1 2003/12/29 11:06:23 hampa Exp $
+
+
+VPATH = $(srcdir) $(topdir)/src
+
+
+#-----------------------------------------------------------------------------
+
+all: subdirs
+
+
+subdirs: subdirs-rec
+subdirs-rec:
+ifneq "$(subdir)" ""
+	@for dir in $(subdir); do \
+		(cd $$dir && $(MAKE) $(MAKE_FLG)); \
+	done
+endif
+
+
+#-----------------------------------------------------------------------------
+
+clean: clean-rec clean-files
+
+clean-files:
+ifneq "$(CLN)" ""
+	rm -f $(CLN)
+endif
+
+clean-rec:
+ifneq "$(subdir)" ""
+	@for dir in $(subdir); do \
+		(cd $$dir && $(MAKE) $(MAKE_FLG) clean); \
+	done
+endif
+
+
+#-----------------------------------------------------------------------------
+
+distclean: distclean-rec distclean-files
+
+distclean-files:
+ifneq "$(CLN)" ""
+	rm -f $(CLN)
+endif
+ifneq "$(DCL)" ""
+	rm -f $(DCL)
+endif
+
+distclean-rec:
+ifneq "$(subdir)" ""
+	@for dir in $(subdir); do \
+		(cd $$dir && $(MAKE) $(MAKE_FLG) distclean); \
+	done
+endif
+
+
+#-----------------------------------------------------------------------------
+
+install: install-rec
+install-rec:
+ifneq "$(subdir)" ""
+	@for dir in $(subdir); do \
+		(cd $$dir && $(MAKE) $(MAKE_FLG) install); \
+	done
+endif
+
+install-bin:
+ifneq "$(BIN)" ""
+	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	for f in $(BIN) ; do \
+		$(INSTALL) -m 755 -s $$f $(DESTDIR)$(bindir) ; \
+	done
+endif
+
+install-bins:
+ifneq "$(BINS)" ""
+	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	for f in $(BINS) ; do \
+		$(INSTALL) -m 755 $$f $(DESTDIR)$(bindir) ; \
+	done
+endif
+
+install-man:
+ifneq "$(MAN1)" ""
+	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1
+	for f in $(MAN1) ; do \
+		rm -f $(DESTDIR)$(mandir)/man1/$$f.gz ; \
+		$(GZIP) -c $(GZIP_FLG) $(srcdir)/$$f > $(DESTDIR)$(mandir)/man1/$$f.gz ; \
+	done
+endif
+
+
+#-----------------------------------------------------------------------------
+
+%.o: %.c
+	$(CC) -c $(CC_FLG) $(CC_FLG_EXTRA) -o $@ $<
