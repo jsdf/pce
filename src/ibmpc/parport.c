@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/parport.c                                        *
  * Created:       2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,20 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: parport.c,v 1.1 2003/04/29 00:51:54 hampa Exp $ */
+/* $Id: parport.c,v 1.2 2003/09/04 20:14:03 hampa Exp $ */
 
 
 #include <stdio.h>
 
 #include "pce.h"
-
-
-#define PARPORT_STR 0x01
-
-#define PARPORT_BSY 0x80
-#define PARPORT_ACK 0x40
-#define PARPORT_OFF 0x10
-#define PARPORT_ERR 0x08
 
 
 parport_t *parport_new (unsigned base)
@@ -44,6 +36,8 @@ parport_t *parport_new (unsigned base)
   if (par == NULL) {
     return (NULL);
   }
+
+  par->io = base;
 
   par->prt = mem_blk_new (base, 4, 0);
   par->prt->ext = par;
