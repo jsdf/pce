@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.h                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.11 2003/04/24 12:22:06 hampa Exp $ */
+/* $Id: e8086.h,v 1.12 2003/04/26 23:34:02 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -67,8 +67,14 @@
 #define E86_REG_SS 2
 #define E86_REG_DS 3
 
+#define E86_PREFIX_NEW  0x0001
+#define E86_PREFIX_SEG  0x0002
+#define E86_PREFIX_REP  0x0004
+#define E86_PREFIX_REPN 0x0008
+#define E86_PREFIX_LOCK 0x0010
 
 #define E86_PQ_SIZE 6
+#define E86_PQ_FILL 6
 
 
 typedef unsigned char (*e86_get_uint8_f) (void *ext, unsigned long addr);
@@ -107,13 +113,15 @@ typedef struct {
   unsigned short flg;
 
   unsigned       pq_cnt;
-  unsigned char  pq[E86_PQ_SIZE];
+  unsigned char  pq[E86_PQ_FILL];
 
   unsigned       prefix;
 
   unsigned short seg_override;
 
   int            irq;
+
+  unsigned       last_interrupt;
 
   struct {
     int            is_mem;
@@ -323,6 +331,8 @@ unsigned long long e86_get_clock (e8086_t *c);
 unsigned long long e86_get_opcnt (e8086_t *c);
 
 unsigned long e86_get_delay (e8086_t *c);
+
+unsigned e86_get_last_int (e8086_t *c);
 
 void e86_execute (e8086_t *c);
 

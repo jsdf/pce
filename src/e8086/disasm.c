@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.5 2003/04/26 16:34:13 hampa Exp $ */
+/* $Id: disasm.c,v 1.6 2003/04/26 23:34:00 hampa Exp $ */
 
 
 #include <string.h>
@@ -1526,6 +1526,17 @@ static void dop_e4 (e86_disasm_t *op, unsigned char *src)
   disasm_imm8 (op->arg2, src + 1);
 }
 
+/* DOP E5: IN AX, imm8 */
+static void dop_e5 (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 2;
+  op->arg_n = 2;
+
+  strcpy (op->op, "IN");
+  strcpy (op->arg1, "AX");
+  disasm_imm8 (op->arg2, src + 1);
+}
+
 /* DOP E6: OUT imm8, AL */
 static void dop_e6 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1886,7 +1897,7 @@ e86_disasm_f dop_list[256] = {
   &dop_ud, &dop_ud, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
-  &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_ud, &dop_e6, &dop_ud, /* E0 */
+  &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_ud, /* E0 */
   &dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ed, &dop_ee, &dop_ud,
   &dop_ud, &dop_ud, &dop_f2, &dop_f3, &dop_ud, &dop_f5, &dop_f6, &dop_f7, /* F0 */
   &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_f8, &dop_fe, &dop_ff

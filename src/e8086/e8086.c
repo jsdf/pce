@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.15 2003/04/26 16:34:14 hampa Exp $ */
+/* $Id: e8086.c,v 1.16 2003/04/26 23:34:02 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -70,6 +70,8 @@ e8086_t *e86_new (void)
   c->op_undef = NULL;
 
   c->irq = 0;
+
+  c->last_interrupt = 0;
 
   c->clocks = 0;
   c->instructions = 0;
@@ -186,6 +188,11 @@ unsigned long long e86_get_opcnt (e8086_t *c)
 unsigned long e86_get_delay (e8086_t *c)
 {
   return (c->delay);
+}
+
+unsigned e86_get_last_int (e8086_t *c)
+{
+  return (c->last_interrupt);
 }
 
 void e86_execute (e8086_t *c)

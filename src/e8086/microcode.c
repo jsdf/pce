@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/microcode.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.14 2003/04/26 16:34:14 hampa Exp $ */
+/* $Id: microcode.c,v 1.15 2003/04/26 23:34:02 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -49,6 +49,8 @@ void e86_trap (e8086_t *c, unsigned n)
 {
   unsigned short ofs;
 
+  c->last_interrupt = n;
+
   e86_push (c, c->flg);
   e86_push (c, c->sreg[E86_REG_CS]);
   e86_push (c, c->ip);
@@ -74,13 +76,23 @@ void e86_pq_init (e8086_t *c)
 
 void e86_pq_fill (e8086_t *c)
 {
-  unsigned i, j;
+  unsigned       i;
+  unsigned short val;
 
-  j = 0;
+  i = c->pq_cnt;
+  while (i < (E86_PQ_FILL - 1)) {
+    val = e86_get_mem16 (c, e86_get_cs (c), e86_get_ip (c) + i);
+    c->pq[i] = val & 0xff;
+    c->pq[i + 1] = (val >> 8) & 0xff;
 
-  for (i = c->pq_cnt; i < E86_PQ_SIZE; i++) {
-    c->pq[i] = e86_get_mem8 (c, c->sreg[E86_REG_CS], c->ip + i);
+    i += 2;
   }
+
+  if (i < E86_PQ_FILL) {
+    c->pq[i] = e86_get_mem8 (c, e86_get_cs (c), e86_get_ip (c) + i);
+  }
+
+  c->pq_cnt = E86_PQ_SIZE;
 }
 
 void e86_pq_adjust (e8086_t *c, unsigned cnt)
@@ -2431,7 +2443,7 @@ unsigned op_9b (e8086_t *c)
 static
 unsigned op_9c (e8086_t *c)
 {
-  e86_push (c, c->flg | 0xf000);
+  e86_push (c, (c->flg & 0x0fd5) | 0xf002);
   e86_set_clk (c, 10);
 
   return (1);
@@ -2462,7 +2474,7 @@ unsigned op_9e (e8086_t *c)
 static
 unsigned op_9f (e8086_t *c)
 {
-  e86_set_ah (c, c->flg & 0xff);
+  e86_set_ah (c, (c->flg & 0xd5) | 0x02);
   e86_set_clk (c, 4);
 
   return (1);
@@ -2541,7 +2553,11 @@ unsigned op_a4 (e8086_t *c)
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_cx (c) > 0) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
+    while (e86_get_cx (c) > end) {
       val = e86_get_mem8 (c, seg1, e86_get_si (c));
       e86_set_mem8 (c, seg2, e86_get_di (c), val);
 
@@ -2579,7 +2595,11 @@ unsigned op_a5 (e8086_t *c)
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_cx (c) > 0) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
+    while (e86_get_cx (c) > end) {
       val = e86_get_mem16 (c, seg1, e86_get_si (c));
       e86_set_mem16 (c, seg2, e86_get_di (c), val);
 
@@ -2619,9 +2639,13 @@ unsigned op_a6 (e8086_t *c)
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (e86_get_cx (c) > 0) {
+    while (e86_get_cx (c) > end) {
       s1 = e86_get_mem8 (c, seg1, e86_get_si (c));
       s2 = e86_get_mem8 (c, seg2, e86_get_di (c));
 
@@ -2669,9 +2693,13 @@ unsigned op_a7 (e8086_t *c)
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
     z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
-    while (e86_get_cx (c) > 0) {
+    while (e86_get_cx (c) > end) {
       s1 = e86_get_mem16 (c, seg1, e86_get_si (c));
       s2 = e86_get_mem16 (c, seg2, e86_get_di (c));
 
@@ -2803,7 +2831,11 @@ unsigned op_ac (e8086_t *c)
   inc = e86_get_df (c) ? 0xffff : 0x0001;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_cx (c) > 0) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
+    while (e86_get_cx (c) > end) {
       e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
@@ -2831,7 +2863,11 @@ unsigned op_ad (e8086_t *c)
   inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
   if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-    while (e86_get_cx (c) > 0) {
+    unsigned end;
+
+    end = (e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) ? 1 : 0;
+
+    while (e86_get_cx (c) > end) {
       e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
       e86_set_si (c, e86_get_si (c) + inc);
       e86_set_cx (c, e86_get_cx (c) - 1);
@@ -3965,6 +4001,7 @@ unsigned op_f6_04 (e8086_t *c)
 
   e86_set_ax (c, d);
   e86_set_f (c, E86_FLG_O | E86_FLG_C, d & 0xff00);
+  e86_set_f (c, E86_FLG_Z, d == 0);
   e86_set_clk_ea (c, (70 + 77) / 2, (76 + 83) / 2);
 
   return (c->ea.cnt + 1);
@@ -3994,6 +4031,8 @@ unsigned op_f6_05 (e8086_t *c)
   else {
     e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
   }
+
+  e86_set_f (c, E86_FLG_Z, d == 0);
 
   e86_set_clk_ea (c, (80 + 98) / 2, (86 + 104) / 2);
 
@@ -4157,6 +4196,7 @@ unsigned op_f7_04 (e8086_t *c)
   e86_set_ax (c, d & 0xffff);
   e86_set_dx (c, d >> 16);
   e86_set_f (c, E86_FLG_C | E86_FLG_O, d & 0xffff0000);
+  e86_set_f (c, E86_FLG_Z, d == 0);
   e86_set_clk_ea (c, (118 + 113) / 2, (124 + 139) / 2);
 
   return (c->ea.cnt + 1);
@@ -4188,6 +4228,8 @@ unsigned op_f7_05 (e8086_t *c)
   else {
     e86_set_f1 (c, E86_FLG_C | E86_FLG_O);
   }
+
+  e86_set_f (c, E86_FLG_Z, d == 0);
 
   e86_set_clk_ea (c, (128 + 154) / 2, (134 + 160) / 2);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-27 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.6 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: internal.h,v 1.7 2003/04/26 23:34:02 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -28,13 +28,6 @@
 
 
 #include "e8086.h"
-
-
-#define E86_PREFIX_NEW  0x0001
-#define E86_PREFIX_SEG  0x0002
-#define E86_PREFIX_REP  0x0004
-#define E86_PREFIX_REPN 0x0008
-#define E86_PREFIX_LOCK 0x0010
 
 
 #define e86_mk_uint16(lo, hi) \
