@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.10 2003/08/30 03:08:53 hampa Exp $
+# $Id: Makefile.in,v 1.11 2003/09/02 11:44:47 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -11,15 +11,20 @@ pcedst	:= ..
 include $(reldir)/Makefile.inc
 
 
-SRC	:= cga.c disk.c hgc.c ibmpc.c log.c mda.c memory.c mouse.c parport.c pce.c video.c
+FILES	:= cga disk hgc hook ibmpc log mda memory mouse \
+	parport pce video xms
 
-OBJ	:= cga.o disk.o hgc.o ibmpc.o log.o mda.o memory.o mouse.o parport.o pce.o video.o
+SRC	:= $(foreach f,$(FILES),$(f).c)
+
+OBJ	:= $(foreach f,$(FILES),$(f).o)
+
 OBJ_EXT	:= \
 	$(pcedst)/e8086/e8086.a $(pcedst)/chipset/chipset.a \
 	$(pcedst)/libini/libini.a \
 	$(pcedst)/terminal/terminal.o $(pcedst)/terminal/vt100.o
 
-HDR	:= cga.h disk.h hgc.h ibmpc.h log.h mda.h memory.h mouse.h parport.h pce.h video.h
+HDR	:= $(foreach f,$(FILES),$(f).h)
+
 HDR_EXT	:= \
 	$(pcesrc)/e8086/e8086.h $(pcesrc)/chipset/e8253.h \
 	$(pcesrc)/chipset/e8255.h $(pcesrc)/chipset/e8259.h \
@@ -31,8 +36,8 @@ MAN	:=
 BIN	:= pce
 
 ifeq "$(PCE_X11_USE)" "1"
-	OBJ_EXT += $(pcedst)/terminal/xterm.o
-	HDR_EXT += $(pcesrc)/terminal/xterm.h
+	OBJ_EXT += $(pcedst)/terminal/x11.o
+	HDR_EXT += $(pcesrc)/terminal/x11.h
 	CC_FLG_EXTRA := $(PCE_X11_CCF)
 	LD_FLG_EXTRA := $(PCE_X11_LDF)
 endif
@@ -72,6 +77,7 @@ pce.cfg: pce.cfg.in
 cga.o:		cga.c $(SDP)
 disk.o:		disk.c $(SDP)
 hgc.o:		hgc.c $(SDP)
+hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)
 log.o:		log.c $(SDP)
 mda.o:		mda.c $(SDP)
@@ -80,3 +86,4 @@ mouse.o:	mouse.c $(SDP)
 parport.o:	parport.c $(SDP)
 pce.o:		pce.c $(SDP)
 video.o:	video.c $(SDP)
+xms.o:		xms.c $(SDP)
