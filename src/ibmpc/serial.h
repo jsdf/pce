@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.h,v 1.2 2003/09/05 14:43:36 hampa Exp $ */
+/* $Id: serial.h,v 1.3 2003/09/06 13:53:12 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_SERIAL_H
@@ -43,6 +43,9 @@ typedef struct {
   unsigned      databits;
   unsigned      stopbits;
   unsigned      parity;
+
+  int           dtr;
+  int           rts;
 
   int           fd;
   int           close;

@@ -20,10 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.c,v 1.4 2003/09/05 14:43:36 hampa Exp $ */
+/* $Id: serial.c,v 1.5 2003/09/06 13:53:12 hampa Exp $ */
 
 
 #include <stdio.h>
+
+#include "pce.h"
 
 #include <unistd.h>
 #include <termios.h>
@@ -32,7 +34,10 @@
 #include <sys/stat.h>
 #include <sys/poll.h>
 
-#include "pce.h"
+#ifdef PCE_HOST_LINUX
+#include <sys/ioctl.h>
+#include <linux/serial_reg.h>
+#endif
 
 
 serial_t *ser_new (unsigned base)
@@ -67,6 +72,9 @@ serial_t *ser_new (unsigned base)
   ser->stopbits = 1;
   ser->parity = E8250_PARITY_N;
 
+  ser->dtr = 0;
+  ser->rts = 0;
+
   ser->fd = -1;
   ser->close = 0;
 
@@ -88,37 +96,7 @@ void ser_del (serial_t *ser)
   }
 }
 
-void ser_set_fd (serial_t *ser, int fd, int cls)
-{
-  if (ser->close) {
-    close (ser->fd);
-  }
-
-  ser->fd = fd;
-  ser->close = (fd < 0) ? 0 : cls;
-
-  ser_setup (ser, 1);
-}
-
-int ser_set_fname (serial_t *ser, const char *fname)
-{
-  int fd;
-
-  fd = open (fname,
-    O_RDWR | O_CREAT | O_NOCTTY | O_TRUNC,
-    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
-  );
-
-  if (fd < 0) {
-    return (1);
-  }
-
-  ser_set_fd (ser, fd, 1);
-
-  return (0);
-}
-
-int ser_tios_set (serial_t *ser)
+int ser_line_setup (serial_t *ser)
 {
   struct termios tio;
   speed_t        spd;
@@ -268,14 +246,114 @@ int ser_tios_set (serial_t *ser)
   return (0);
 }
 
+
+#ifdef PCE_HOST_LINUX
+
+void ser_modem_setup (serial_t *ser)
+{
+  int val;
+
+  ioctl (ser->fd, TIOCMGET, &val);
+  val &= ~(UART_MCR_DTR | UART_MCR_RTS);
+  val |= e8250_get_dtr (&ser->uart) ? UART_MCR_DTR : 0;
+  val |= e8250_get_rts (&ser->uart) ? UART_MCR_RTS : 0;
+  ioctl (ser->fd, TIOCMSET, &val);
+}
+
+#else
+
+void ser_modem_setup (serial_t *ser)
+{
+}
+
+#endif
+
+
+void ser_set_fd (serial_t *ser, int fd, int cls)
+{
+  if (ser->close) {
+    close (ser->fd);
+  }
+
+  ser->fd = fd;
+  ser->close = (fd < 0) ? 0 : cls;
+
+  ser_line_setup (ser);
+  ser_modem_setup (ser);
+}
+
+int ser_set_fname (serial_t *ser, const char *fname)
+{
+  int fd;
+
+  fd = open (fname,
+    O_RDWR | O_CREAT | O_NOCTTY | O_TRUNC,
+    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+  );
+
+  if (fd < 0) {
+    return (1);
+  }
+
+  ser_set_fd (ser, fd, 1);
+
+  return (0);
+}
+
 void ser_setup (serial_t *ser, unsigned char val)
 {
-  ser->bps = e8250_get_bps (&ser->uart);
-  ser->databits = e8250_get_databits (&ser->uart);
-  ser->stopbits = e8250_get_stopbits (&ser->uart);
-  ser->parity = e8250_get_parity (&ser->uart);
+  int           chg;
+  unsigned long bps;
+  unsigned      data, stop, parity;
+  int           dtr, rts;
 
-  ser_tios_set (ser);
+  chg = 0;
+
+  bps = e8250_get_bps (&ser->uart);
+  if (bps != ser->bps) {
+    ser->bps = bps;
+    chg = 1;
+  }
+
+  data = e8250_get_databits (&ser->uart);
+  if (data != ser->databits) {
+    ser->databits = data;
+    chg = 1;
+  }
+
+  stop = e8250_get_stopbits (&ser->uart);
+  if (stop != ser->stopbits) {
+    ser->stopbits = stop;
+    chg = 1;
+  }
+
+  parity = e8250_get_parity (&ser->uart);
+  if (parity != ser->parity) {
+    ser->parity = parity;
+    chg = 1;
+  }
+
+  if (chg) {
+    ser_line_setup (ser);
+  }
+
+  chg = 0;
+
+  dtr = e8250_get_dtr (&ser->uart);
+  if (dtr != ser->dtr) {
+    ser->dtr = dtr;
+    chg = 1;
+  }
+
+  rts = e8250_get_rts (&ser->uart);
+  if (rts != ser->rts) {
+    ser->rts = rts;
+    chg = 1;
+  }
+
+  if (chg) {
+    ser_modem_setup (ser);
+  }
 }
 
 void ser_send (serial_t *ser, unsigned char val)
