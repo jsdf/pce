@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.3 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: mda.c,v 1.4 2003/08/19 17:07:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -65,6 +65,8 @@ mda_t *mda_new (terminal_t *trm)
   mda->crtc->get_uint16 = (geta_uint16_f) &mda_crtc_get_uint16;
 
   mda->trm = trm;
+
+  trm_set_map (trm, 7, 200 * 256, 104 * 256, 16 * 256);
 
   return (mda);
 }

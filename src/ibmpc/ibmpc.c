@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.13 2003/08/19 01:32:04 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.14 2003/08/19 17:07:14 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -285,13 +285,25 @@ void pc_setup_mda (ibmpc_t *pc)
   pc->ppi_port_a[0] |= 0x30;
 }
 
+void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *ini)
+{
+  pce_log (MSG_INF, "video: HGC\n");
+
+  pc->hgc = hgc_new (pc->trm, ini);
+  mem_add_blk (pc->mem, pc->hgc->mem, 0);
+  mem_add_blk (pc->prt, pc->hgc->reg, 0);
+
+  pc->ppi_port_a[0] &= ~0x30;
+  pc->ppi_port_a[0] |= 0x30;
+}
+
 void pc_setup_cga (ibmpc_t *pc)
 {
   pce_log (MSG_INF, "video: CGA\n");
 
   pc->cga = cga_new (pc->trm);
   mem_add_blk (pc->mem, pc->cga->mem, 0);
-  mem_add_blk (pc->prt, pc->cga->crtc, 0);
+  mem_add_blk (pc->prt, pc->cga->reg, 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x20;
@@ -299,14 +311,21 @@ void pc_setup_cga (ibmpc_t *pc)
 
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
-  ini_sct_t * sct;
+  ini_sct_t *sct;
 
   pc->mda = NULL;
+  pc->hgc = NULL;
   pc->cga = NULL;
 
   sct = ini_sct_find_sct (ini, "cga");
   if (sct != NULL) {
     pc_setup_cga (pc);
+    return;
+  }
+
+  sct = ini_sct_find_sct (ini, "hgc");
+  if (sct != NULL) {
+    pc_setup_hgc (pc, sct);
     return;
   }
 
@@ -480,6 +499,7 @@ void pc_del (ibmpc_t *pc)
   dsks_del (pc->dsk);
 
   mda_del (pc->mda);
+  hgc_del (pc->hgc);
   cga_del (pc->cga);
 
   trm_del (pc->trm);

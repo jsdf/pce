@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.h                                          *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.7 2003/04/29 00:51:54 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.8 2003/08/19 17:07:14 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -30,6 +30,7 @@
 typedef struct {
   e8086_t       *cpu;
   mda_t         *mda;
+  hgc_t         *hgc;
   cga_t         *cga;
   disks_t       *dsk;
 

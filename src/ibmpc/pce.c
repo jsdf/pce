@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.11 2003/05/01 07:11:43 hampa Exp $ */
+/* $Id: pce.c,v 1.12 2003/08/19 17:07:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1202,6 +1202,16 @@ void do_g (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_h (cmd_t *cmd)
+{
+  fputs (
+    "bc addr                 clear a breakpoint\n"
+    "bl                      list breakpoints\n"
+    "bs addr [pass [reset]]  set a breakpoint\n",
+    stdout
+  );
+}
+
 void do_int28 (cmd_t *cmd)
 {
   int c;
@@ -1492,6 +1502,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "g")) {
       do_g (&cmd);
+    }
+    else if (cmd_match (&cmd, "h")) {
+      do_h (&cmd);
     }
     else if (cmd_match (&cmd, "int28")) {
       do_int28 (&cmd);

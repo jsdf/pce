@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/cga.h                                            *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/ibmpc/hgc.h                                            *
+ * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -20,11 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.5 2003/08/19 17:07:14 hampa Exp $ */
+/* $Id: hgc.h,v 1.1 2003/08/19 17:07:14 hampa Exp $ */
 
 
-#ifndef PCE_CGA_H
-#define PCE_CGA_H 1
+#ifndef PCE_HGC_H
+#define PCE_HGC_H 1
 
 
 typedef struct {
@@ -33,37 +33,38 @@ typedef struct {
 
   unsigned char crtc_reg[16];
 
+  unsigned      page_ofs;
   unsigned      crtc_pos;
   unsigned      crtc_ofs;
 
-  unsigned char pal;
-  unsigned char palette[4];
+  unsigned char enable_page1;
+  unsigned char enable_graph;
 
   int           crs_on;
 
   unsigned      mode;
 
   terminal_t    *trm;
-} cga_t;
+} hgc_t;
 
 
-cga_t *cga_new (terminal_t *trm);
+hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini);
 
-void cga_del (cga_t *cga);
+void hgc_del (hgc_t *cga);
 
-void cga_clock (cga_t *cga);
+void hgc_clock (hgc_t *cga);
 
-void cga_prt_state (cga_t *cga, FILE *fp);
+void hgc_prt_state (hgc_t *cga, FILE *fp);
 
-void cga_set_pos (cga_t *cga, unsigned pos);
+void hgc_set_pos (hgc_t *cga, unsigned pos);
 
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
+void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
+void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);
 
-void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr);
-unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr);
+void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
+void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);
+unsigned char hgc_reg_get_uint8 (hgc_t *hgc, unsigned long addr);
+unsigned short hgc_reg_get_uint16 (hgc_t *hgc, unsigned long addr);
 
 
 #endif
