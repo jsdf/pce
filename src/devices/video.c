@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/video.c                                          *
+ * File name:     src/devices/video.c                                        *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.c,v 1.7 2003/10/03 23:15:58 hampa Exp $ */
+/* $Id: video.c,v 1.1 2003/11/16 03:44:26 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "pce.h"
+#include "video.h"
 
 
 void pce_video_init (video_t *vid)

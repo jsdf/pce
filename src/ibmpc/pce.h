@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.24 2003/11/08 14:54:55 hampa Exp $ */
+/* $Id: pce.h,v 1.25 2003/11/16 03:44:26 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -80,6 +80,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 
 #include <lib/log.h>
+#include <lib/hexdump.h>
 
 #include <e8086/e8086.h>
 #include <chipset/e8250.h>
@@ -102,13 +103,13 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #endif
 
 #include <devices/memory.h>
+#include <devices/video.h>
+#include <devices/mda.h>
+#include <devices/hgc.h>
+#include <devices/cga.h>
+#include <devices/ega.h>
 
 #include "disk.h"
-#include "video.h"
-#include "mda.h"
-#include "hgc.h"
-#include "cga.h"
-#include "ega.h"
 #include "mouse.h"
 #include "serial.h"
 #include "parport.h"

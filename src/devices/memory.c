@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     memory.c                                                   *
+ * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.4 2003/11/11 16:33:57 hampa Exp $ */
+/* $Id: memory.c,v 1.5 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #include <stdlib.h>

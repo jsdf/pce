@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/cga.h                                            *
+ * File name:     src/devices/cga.h                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,11 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.10 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: cga.h,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
 #define PCE_CGA_H 1
+
+
+#include <libini/libini.h>
+#include <terminal/terminal.h>
+#include <devices/video.h>
 
 
 typedef struct {

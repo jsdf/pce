@@ -1,5 +1,5 @@
 # Makefile include file
-# $Id: Makefile.inc.in,v 1.9 2003/10/28 13:42:45 hampa Exp $
+# $Id: Makefile.inc.in,v 1.10 2003/11/16 03:44:25 hampa Exp $
 
 #--------------------------------------------------------------------------
 # user editable section
@@ -12,6 +12,9 @@ libdir		= @libdir@
 mandir		= @mandir@
 incdir		= @includedir@
 datdir		= @datadir@
+
+pcesrc	:= $(topdir)/src
+pcedst	:= $(reldir)/src
 
 
 # Executables
@@ -59,7 +62,7 @@ PCE_VERSION_STR := @PCE_VERSION_STR@
 PCE_VERSION_REL := @PCE_VERSION_REL@
 
 
-VPATH = $(srcdir)
+VPATH = $(srcdir) $(pcesrc)
 
 
 ifneq "$(reldir)" "$(topdir)"

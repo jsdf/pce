@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.39 2003/11/12 00:07:40 hampa Exp $ */
+/* $Id: pce.c,v 1.40 2003/11/16 03:44:26 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -408,66 +408,6 @@ void prt_uint8_bin (FILE *fp, unsigned char val)
       fputc ('0', fp);
     }
     m = m >> 1;
-  }
-}
-
-void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii)
-{
-  unsigned long i;
-  unsigned      col;
-  unsigned char *data;
-  unsigned char line[256];
-
-  col = 0;
-  data = (unsigned char *) buf;
-
-  for (i = 0; i < n; i++) {
-    fputs ((col == 0) ? prefix : " ", fp);
-
-    fprintf (fp, "%02X", data[i]);
-
-    if ((data[i] >= 0x20) && (data[i] <= 0x7f)) {
-      line[col] = data[i];
-    }
-    else {
-      line[col] = '.';
-    }
-
-    col += 1;
-    if (col >= cols) {
-      fprintf (fp, "\t# %08lX", addr + i - (i % cols));
-
-      if (ascii) {
-        fputs ("  ", fp);
-        fwrite (line, 1, col, fp);
-      }
-
-      fputs ("\n", fp);
-
-      col = 0;
-    }
-  }
-
-  if (col > 0) {
-    unsigned col1, col2;
-
-    col1 = strlen (prefix) + 3 * col - 1;
-    col2 = (strlen (prefix) + 3 * cols - 1 + 8) & ~7;
-
-    do {
-      fputs ("\t", fp);
-      col1 = (col1 + 8) & ~7;
-    } while (col1 < col2);
-
-    fprintf (fp, "# %08lX", addr + i - (i % cols));
-
-    if (ascii) {
-      fputs ("  ", fp);
-      fwrite (line, 1, col, fp);
-    }
-
-    fputs ("\n", fp);
   }
 }
 

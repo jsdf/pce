@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ega.h                                            *
+ * File name:     src/devices/ega.h                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,11 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.6 2003/10/03 23:17:22 hampa Exp $ */
+/* $Id: ega.h,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_EGA_H
 #define PCE_IBMPC_EGA_H 1
+
+
+#include <libini/libini.h>
+#include <terminal/terminal.h>
+#include <devices/video.h>
 
 
 typedef struct ega_t {

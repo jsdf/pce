@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/hgc.c                                            *
+ * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.14 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: hgc.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "pce.h"
+#include <lib/log.h>
+#include <lib/hexdump.h>
+
+#include "hgc.h"
 
 
 static
@@ -122,16 +126,16 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 
   hgc->mem = mem_blk_new (membase, memsize, 1);
   hgc->mem->ext = hgc;
-  hgc->mem->set_uint8 = (seta_uint8_f) &hgc_mem_set_uint8;
-  hgc->mem->set_uint16 = (seta_uint16_f) &hgc_mem_set_uint16;
+  hgc->mem->set_uint8 = (mem_set_uint8_f) &hgc_mem_set_uint8;
+  hgc->mem->set_uint16 = (mem_set_uint16_f) &hgc_mem_set_uint16;
   mem_blk_init (hgc->mem, 0x00);
 
   hgc->reg = mem_blk_new (iobase, 16, 1);
   hgc->reg->ext = hgc;
-  hgc->reg->set_uint8 = (seta_uint8_f) &hgc_reg_set_uint8;
-  hgc->reg->set_uint16 = (seta_uint16_f) &hgc_reg_set_uint16;
-  hgc->reg->get_uint8 = (geta_uint8_f) &hgc_reg_get_uint8;
-  hgc->reg->get_uint16 = (geta_uint16_f) &hgc_reg_get_uint16;
+  hgc->reg->set_uint8 = (mem_set_uint8_f) &hgc_reg_set_uint8;
+  hgc->reg->set_uint16 = (mem_set_uint16_f) &hgc_reg_set_uint16;
+  hgc->reg->get_uint8 = (mem_get_uint8_f) &hgc_reg_get_uint8;
+  hgc->reg->get_uint16 = (mem_get_uint16_f) &hgc_reg_get_uint16;
   mem_blk_init (hgc->reg, 0x00);
 
   hgc->trm = trm;

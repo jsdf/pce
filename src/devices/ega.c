@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ega.c                                            *
+ * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.13 2003/10/04 17:54:24 hampa Exp $ */
+/* $Id: ega.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "pce.h"
+#include <lib/log.h>
+#include <lib/hexdump.h>
+
+#include "ega.h"
 
 
 #define CRTC_INDEX   0x0024
@@ -130,17 +134,17 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
   ega->mem = mem_blk_new (0xa0000, 128UL * 1024, 0);
   ega->mem->ext = ega;
-  ega->mem->set_uint8 = (seta_uint8_f) &ega_mem_set_uint8;
-  ega->mem->get_uint8 = (geta_uint8_f) &ega_mem_get_uint8;
-  ega->mem->set_uint16 = (seta_uint16_f) &ega_mem_set_uint16;
-  ega->mem->get_uint16 = (geta_uint16_f) &ega_mem_get_uint16;
+  ega->mem->set_uint8 = (mem_set_uint8_f) &ega_mem_set_uint8;
+  ega->mem->get_uint8 = (mem_get_uint8_f) &ega_mem_get_uint8;
+  ega->mem->set_uint16 = (mem_set_uint16_f) &ega_mem_set_uint16;
+  ega->mem->get_uint16 = (mem_get_uint16_f) &ega_mem_get_uint16;
 
   ega->reg = mem_blk_new (0x3b0, 64, 1);
   ega->reg->ext = ega;
-  ega->reg->set_uint8 = (seta_uint8_f) &ega_reg_set_uint8;
-  ega->reg->set_uint16 = (seta_uint16_f) &ega_reg_set_uint16;
-  ega->reg->get_uint8 = (geta_uint8_f) &ega_reg_get_uint8;
-  ega->reg->get_uint16 = (geta_uint16_f) &ega_reg_get_uint16;
+  ega->reg->set_uint8 = (mem_set_uint8_f) &ega_reg_set_uint8;
+  ega->reg->set_uint16 = (mem_set_uint16_f) &ega_reg_set_uint16;
+  ega->reg->get_uint8 = (mem_get_uint8_f) &ega_reg_get_uint8;
+  ega->reg->get_uint16 = (mem_get_uint16_f) &ega_reg_get_uint16;
   mem_blk_init (ega->reg, 0x00);
 
   ega->trm = trm;

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/mda.c                                            *
+ * File name:     src/devices/mda.c                                          *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,15 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.12 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: mda.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #include <stdio.h>
 
-#include "pce.h"
+#include <lib/log.h>
+#include <lib/hexdump.h>
+
+#include "mda.h"
 
 
 static
@@ -104,16 +107,16 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 
   mda->mem = mem_blk_new (membase, memsize, 1);
   mda->mem->ext = mda;
-  mda->mem->set_uint8 = (seta_uint8_f) &mda_mem_set_uint8;
-  mda->mem->set_uint16 = (seta_uint16_f) &mda_mem_set_uint16;
+  mda->mem->set_uint8 = (mem_set_uint8_f) &mda_mem_set_uint8;
+  mda->mem->set_uint16 = (mem_set_uint16_f) &mda_mem_set_uint16;
   mem_blk_init (mda->mem, 0x00);
 
   mda->reg = mem_blk_new (iobase, 16, 1);
   mda->reg->ext = mda;
-  mda->reg->set_uint8 = (seta_uint8_f) &mda_reg_set_uint8;
-  mda->reg->set_uint16 = (seta_uint16_f) &mda_reg_set_uint16;
-  mda->reg->get_uint8 = (geta_uint8_f) &mda_reg_get_uint8;
-  mda->reg->get_uint16 = (geta_uint16_f) &mda_reg_get_uint16;
+  mda->reg->set_uint8 = (mem_set_uint8_f) &mda_reg_set_uint8;
+  mda->reg->set_uint16 = (mem_set_uint16_f) &mda_reg_set_uint16;
+  mda->reg->get_uint8 = (mem_get_uint8_f) &mda_reg_get_uint8;
+  mda->reg->get_uint16 = (mem_get_uint16_f) &mda_reg_get_uint16;
   mem_blk_init (mda->reg, 0x00);
 
   mda->trm = trm;

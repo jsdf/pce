@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/cga.c                                            *
+ * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,15 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.16 2003/10/04 17:53:33 hampa Exp $ */
+/* $Id: cga.c,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #include <stdio.h>
 
-#include "pce.h"
+#include <lib/log.h>
+#include <lib/hexdump.h>
+
+#include "cga.h"
 
 
 static
@@ -93,16 +96,16 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 
   cga->mem = mem_blk_new (membase, memsize, 1);
   cga->mem->ext = cga;
-  cga->mem->set_uint8 = (seta_uint8_f) &cga_mem_set_uint8;
-  cga->mem->set_uint16 = (seta_uint16_f) &cga_mem_set_uint16;
+  cga->mem->set_uint8 = (mem_set_uint8_f) &cga_mem_set_uint8;
+  cga->mem->set_uint16 = (mem_set_uint16_f) &cga_mem_set_uint16;
   mem_blk_init (cga->mem, 0x00);
 
   cga->reg = mem_blk_new (iobase, 16, 1);
   cga->reg->ext = cga;
-  cga->reg->set_uint8 = (seta_uint8_f) &cga_reg_set_uint8;
-  cga->reg->set_uint16 = (seta_uint16_f) &cga_reg_set_uint16;
-  cga->reg->get_uint8 = (geta_uint8_f) &cga_reg_get_uint8;
-  cga->reg->get_uint16 = (geta_uint16_f) &cga_reg_get_uint16;
+  cga->reg->set_uint8 = (mem_set_uint8_f) &cga_reg_set_uint8;
+  cga->reg->set_uint16 = (mem_set_uint16_f) &cga_reg_set_uint16;
+  cga->reg->get_uint8 = (mem_get_uint8_f) &cga_reg_get_uint8;
+  cga->reg->get_uint16 = (mem_get_uint16_f) &cga_reg_get_uint16;
   mem_blk_init (cga->reg, 0x00);
 
   cga->trm = trm;

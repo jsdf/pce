@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/hgc.h                                            *
+ * File name:     src/devices/hgc.h                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,11 +20,16 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.9 2003/09/23 00:39:16 hampa Exp $ */
+/* $Id: hgc.h,v 1.1 2003/11/16 03:44:25 hampa Exp $ */
 
 
 #ifndef PCE_HGC_H
 #define PCE_HGC_H 1
+
+
+#include <libini/libini.h>
+#include <terminal/terminal.h>
+#include <devices/video.h>
 
 
 typedef struct {

@@ -1,12 +1,10 @@
 # Makefile
-# $Id: Makefile.in,v 1.25 2003/11/08 14:54:55 hampa Exp $
+# $Id: Makefile.in,v 1.26 2003/11/16 03:44:26 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
 subdir :=
 reldir := ../..
-pcesrc	:= $(topdir)/src
-pcedst	:= ..
 
 ifeq "@PCE_HAVE_NASM@" "1"
 subdir += bios
@@ -16,17 +14,24 @@ endif
 include $(reldir)/Makefile.inc
 
 
-FILES	:= cga disk ega ems hgc hook ibmpc mda mouse \
-	parport pce serial video xms
+FILES := \
+	disk ems hook ibmpc mouse parport pce serial xms
 
 SRC	:= $(foreach f,$(FILES),$(f).c)
 
 OBJ	:= $(foreach f,$(FILES),$(f).o)
 
 OBJ_EXT	:= \
-	$(pcedst)/e8086/e8086.a $(pcedst)/chipset/chipset.a \
+	$(pcedst)/e8086/e8086.a \
+	$(pcedst)/chipset/chipset.a \
+	$(pcedst)/devices/cga.o \
+	$(pcedst)/devices/ega.o \
+	$(pcedst)/devices/hgc.o \
+	$(pcedst)/devices/mda.o \
 	$(pcedst)/devices/memory.o \
+	$(pcedst)/devices/video.o \
 	$(pcedst)/lib/cmd.o \
+	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/libini/libini.a \
 	$(pcedst)/terminal/terminal.a
@@ -34,27 +39,38 @@ OBJ_EXT	:= \
 HDR	:= $(foreach f,$(FILES),$(f).h)
 
 HDR_EXT	:= \
-	$(pcesrc)/e8086/e8086.h $(pcesrc)/chipset/e8253.h \
-	$(pcesrc)/chipset/e8255.h $(pcesrc)/chipset/e8259.h \
-	$(pcesrc)/devices/memory.h \
-	$(pcesrc)/lib/cmd.h \
-	$(pcesrc)/lib/log.h \
-	$(pcesrc)/libini/libini.h \
-	$(pcesrc)/terminal/terminal.h $(pcesrc)/terminal/vt100.h \
-	$(pcesrc)/terminal/null.h $(pcesrc)/terminal/font.h
+	$(pcedst)/config.h \
+	e8086/e8086.h \
+	chipset/e8253.h \
+	chipset/e8255.h \
+	chipset/e8259.h \
+	devices/cga.h \
+	devices/ega.h \
+	devices/hgc.h \
+	devices/mda.h \
+	devices/memory.h \
+	devices/video.h \
+	lib/cmd.h \
+	lib/hexdump.h \
+	lib/log.h \
+	libini/libini.h \
+	terminal/terminal.h \
+	terminal/vt100.h \
+	terminal/null.h \
+	terminal/font.h
 
 MAN1	:= pce.1
 
 BIN	:= pce
 
 ifeq "$(PCE_X11_USE)" "1"
-	HDR_EXT += $(pcesrc)/terminal/x11.h
+	HDR_EXT += terminal/x11.h
 	CC_FLG_EXTRA += $(PCE_X11_CCF)
 	LD_FLG_EXTRA += $(PCE_X11_LDF)
 endif
 
 ifeq "$(PCE_SDL_USE)" "1"
-	HDR_EXT += $(pcesrc)/terminal/sdl.h
+	HDR_EXT += terminal/sdl.h
 	CC_FLG_EXTRA += $(PCE_SDL_CCF)
 	LD_FLG_EXTRA += $(PCE_SDL_LDF)
 endif
@@ -92,17 +108,12 @@ pce.cfg: pce.cfg.in
 	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 
 
-cga.o:		cga.c $(SDP)
 disk.o:		disk.c $(SDP)
-ega.o:		ega.c $(SDP)
 ems.o:		ems.c $(SDP)
-hgc.o:		hgc.c $(SDP)
 hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)
-mda.o:		mda.c $(SDP)
 mouse.o:	mouse.c $(SDP)
 parport.o:	parport.c $(SDP)
 pce.o:		pce.c $(SDP)
 serial.o:	serial.c $(SDP)
-video.o:	video.c $(SDP)
 xms.o:		xms.c $(SDP)
