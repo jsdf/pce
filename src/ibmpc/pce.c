@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.6 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: pce.c,v 1.7 2003/04/25 14:01:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -49,10 +49,10 @@ typedef struct breakpoint_t {
 } breakpoint_t;
 
 
-static unsigned     bp_cnt = 0;
-static breakpoint_t *breakpoint = NULL;
+static unsigned           bp_cnt = 0;
+static breakpoint_t       *breakpoint = NULL;
 
-static unsigned long ops_cnt[256];
+static unsigned long      ops_cnt[256];
 
 static unsigned long long pce_opcnt = 0;
 static unsigned long long pce_eclk = 0;
@@ -814,11 +814,12 @@ void pce_run (void)
 
   cpu_start();
 
+  pc->brk = 0;
+
   while (1) {
     cpu_exec();
 
     if (pc->brk) {
-      pc->brk = 0;
       break;
     }
   }
@@ -1184,6 +1185,8 @@ void do_g (cmd_t *cmd)
 
   cpu_start();
 
+  pc->brk = 0;
+
   while (1) {
     cpu_exec();
 
@@ -1211,7 +1214,6 @@ void do_g (cmd_t *cmd)
     }
 
     if (pc->brk) {
-      pc->brk = 0;
       break;
     }
   }
@@ -1572,6 +1574,10 @@ int do_cmd (void)
     else {
       printf ("unknown command (%s)\n", cmd.str);
     }
+
+    if (pc->brk & 2) {
+      break;
+    }
   };
 
   return (0);
@@ -1712,8 +1718,10 @@ int main (int argc, char *argv[])
 
   if (run) {
     pce_run();
-    fputs ("\n", stdout);
-    do_cmd();
+    if (pc->brk != 2) {
+      fputs ("\n", stdout);
+      do_cmd();
+    }
   }
   else {
     do_cmd();

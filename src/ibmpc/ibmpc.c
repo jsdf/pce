@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.5 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.6 2003/04/25 14:01:43 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -425,7 +425,7 @@ void pc_clock (ibmpc_t *pc)
 
 void pc_break (ibmpc_t *pc, unsigned char val)
 {
-  pc->brk = 1;
+  pc->brk = val;
 }
 
 unsigned get_bcd_8 (unsigned n)
@@ -499,6 +499,9 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
   else if ((op1 == 0x00) && (op2 == 0x00)) {
     pc->brk = 1;
   }
+  else if ((op1 == 0x01) && (op2 == 0x00)) {
+    pc->brk = 2;
+  }
   else {
     fprintf (stderr, "hook: %02X %02X\n", op1, op2);
   }
@@ -531,7 +534,7 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 
 void pc_set_keycode (ibmpc_t *pc, unsigned char val)
 {
-  pce_log (MSG_DEB, "keycode: %02X\n", val);
+//  pce_log (MSG_DEB, "keycode: %02X\n", val);
 
   if (pc->key_clk > 0) {
     if (pc->key_j < 256) {

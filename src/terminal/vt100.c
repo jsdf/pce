@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: vt100.c,v 1.3 2003/04/25 14:01:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -583,7 +583,7 @@ void vt100_check (vt100_t *vt)
 
   if ((n == 1) && (buf[0] == 0)) {
     if (vt->trm.set_brk != NULL) {
-      vt->trm.set_brk (vt->trm.key_ext, 0);
+      vt->trm.set_brk (vt->trm.key_ext, 1);
     }
     return;
   }

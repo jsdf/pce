@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
+/* $Id: xterm.c,v 1.3 2003/04/25 14:01:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -655,6 +655,10 @@ void xt_check (xterm_t *xt)
 
     switch (event.type) {
       case Expose:
+        fprintf (stderr, "expose: %d %d + %d %d (%d)\n",
+          event.xexpose.x, event.xexpose.y,
+          event.xexpose.width, event.xexpose.height, event.xexpose.count
+        );
         xt_update (xt);
         break;
 
@@ -662,7 +666,12 @@ void xt_check (xterm_t *xt)
         key = XLookupKeysym (&event.xkey, 0);
         if (key == XK_Print) {
           if (xt->trm.set_brk != NULL) {
-            xt->trm.set_brk (xt->trm.key_ext, 0);
+            xt->trm.set_brk (xt->trm.key_ext, 2);
+          }
+        }
+        else if ((key == XK_grave) && (event.xkey.state & ControlMask)) {
+          if (xt->trm.set_brk != NULL) {
+            xt->trm.set_brk (xt->trm.key_ext, 1);
           }
         }
         else {
@@ -675,6 +684,14 @@ void xt_check (xterm_t *xt)
         key = XLookupKeysym (&event.xkey, 0);
         code = xt_get_key_code (xt, key, 0);
         xt_send_key_code (xt, code);
+        break;
+
+      case NoExpose:
+      case ConfigureNotify:
+        break;
+
+      default:
+        fprintf (stderr, "X event: %04X\n", event.type);
         break;
     }
   }
