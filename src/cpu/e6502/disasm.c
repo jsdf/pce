@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/disasm.c                                     *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -42,6 +42,7 @@
 #define E6502_MODE_DB        11
 #define E6502_MODE_BRA       12
 #define E6502_MODE_JMP       13
+#define E6502_MODE_A         14
 
 
 typedef struct {
@@ -65,7 +66,7 @@ e6502_dop_t doptab[256] = {
   { 0x07, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x08, "PHP", E6502_MODE_IMP,       1, 3, 0 },
   { 0x09, "ORA", E6502_MODE_IMM,       2, 2, 0 },
-  { 0x0a, "ASL", E6502_MODE_IMP,       1, 2, 0 },
+  { 0x0a, "ASL", E6502_MODE_A,         1, 2, 0 },
   { 0x0b, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x0c, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x0d, "ORA", E6502_MODE_ABS,       3, 4, 0 },
@@ -97,7 +98,7 @@ e6502_dop_t doptab[256] = {
   { 0x27, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x28, "PLP", E6502_MODE_IMP,       1, 4, 0 },
   { 0x29, "AND", E6502_MODE_IMM,       2, 2, 0 },
-  { 0x2a, "ROL", E6502_MODE_IMP,       1, 2, 0 },
+  { 0x2a, "ROL", E6502_MODE_A,         1, 2, 0 },
   { 0x2b, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x2c, "BIT", E6502_MODE_ABS,       3, 4, 0 },
   { 0x2d, "AND", E6502_MODE_ABS,       3, 4, 0 },
@@ -129,7 +130,7 @@ e6502_dop_t doptab[256] = {
   { 0x47, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x48, "PHA", E6502_MODE_IMP,       1, 3, 0 },
   { 0x49, "EOR", E6502_MODE_IMM,       2, 2, 0 },
-  { 0x4a, "LSR", E6502_MODE_IMP,       1, 2, 0 },
+  { 0x4a, "LSR", E6502_MODE_A,         1, 2, 0 },
   { 0x4b, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x4c, "JMP", E6502_MODE_JMP,       3, 3, E6502_OPF_BRA },
   { 0x4d, "EOR", E6502_MODE_ABS,       3, 4, 0 },
@@ -161,7 +162,7 @@ e6502_dop_t doptab[256] = {
   { 0x67, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x68, "PLA", E6502_MODE_IMP,       1, 4, 0 },
   { 0x69, "ADC", E6502_MODE_IMM,       2, 2, 0 },
-  { 0x6a, "ROR", E6502_MODE_IMP,       1, 2, 0 },
+  { 0x6a, "ROR", E6502_MODE_A,         1, 2, 0 },
   { 0x6b, "DB",  E6502_MODE_DB,        1, 1, 0 },
   { 0x6c, "JMP", E6502_MODE_ABS,       3, 5, E6502_OPF_BRA },
   { 0x6d, "ADC", E6502_MODE_ABS,       3, 4, 0 },
@@ -387,6 +388,10 @@ void e6502_disasm (e6502_disasm_t *op, unsigned char *src, unsigned short pc)
 
   case E6502_MODE_JMP:
     sprintf (op->arg1, "%04X", (unsigned) e6502_mk_uint16 (src[1], src[2]));
+    break;
+
+  case E6502_MODE_A:
+    strcpy (op->arg1, "A");
     break;
 
   default:
