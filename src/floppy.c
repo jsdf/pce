@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     floppy.c                                                   *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.4 2003/04/16 17:19:51 hampa Exp $ */
+/* $Id: floppy.c,v 1.5 2003/04/17 14:15:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -216,7 +216,7 @@ void dsk_int13_set_status (disks_t *dsks, e8086_t *cpu, unsigned val)
 {
   e86_set_ah (cpu, val);
   e86_set_mem8 (cpu, 0x40, 0x41, val);
-  e86_set_flg (cpu, E86_FLG_C, val != 0);
+  e86_set_cf (cpu, val != 0);
 
   dsks->last_status = val;
 }

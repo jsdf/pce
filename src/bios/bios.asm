@@ -20,8 +20,10 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.3 2003/04/16 02:25:05 hampa Exp $
+; $Id: bios.asm,v 1.4 2003/04/17 14:15:55 hampa Exp $
 
+
+CPU 8086
 
 %macro set_pos 1
   times %1 - ($ - $$) db 0
@@ -35,9 +37,11 @@ section .text
 L_E0000:
   db      "1501476 COPR. IBM 1981"
 
+
 ; The initial stack
 L_E016:
   dw     L_E0D1                        ; Return address
+
 
 ; Check first 16KB of memory if [40:72] != 0x1234
 L_E018:
@@ -91,12 +95,13 @@ L_E048:
 
 L_E052:
   in     al, 0x62
-  and    al, 0xc0
+  and    al, 0xc0                       ; check if NMI occured
   mov    al, 0x00
 
 L_E058:
   cld
   ret
+
 
 db 0xFF                                 ; E05A db 0xFF
 
@@ -106,42 +111,42 @@ L_E05B:
   cli
 
   mov    ah, 0xd5
-  sahf                                 ; Initialize the flags
+  sahf                                  ; Initialize the flags
 
-  jnc    L_E0AD                        ; Test the flags
-  jnz    L_E0AD
-  jpo    L_E0AD
-  jns    L_E0AD
+  jnc    halt_cpu                       ; Test the flags
+  jnz    halt_cpu
+  jpo    halt_cpu
+  jns    halt_cpu
 
   lahf
   mov    cl, 5
   shr    ah, cl
-  jnc    L_E0AD
+  jnc    halt_cpu
 
   mov    al, 0x40
-  shl    al,1                          ; Set the overflow flag
-  jno    L_E0AD
+  shl    al,1                           ; Set the overflow flag
+  jno    halt_cpu
 
   xor    ah, ah
-  sahf                                 ; Clear all flags
+  sahf                                  ; Clear all flags
 
-  jna    L_E0AD                        ; Test the flags
-  js     L_E0AD
-  jpe    L_E0AD
+  jna    halt_cpu                       ; Test the flags
+  js     halt_cpu
+  jpe    halt_cpu
 
   lahf
   mov    cl, 5
   shr    ah, cl
-  jc     L_E0AD
+  jc     halt_cpu
 
   shl    ah, 1
-  jo     L_E0AD
+  jo     halt_cpu
 
-  mov    ax, 0xffff                    ; First test value
-  stc                                  ; First pass
+  mov    ax, 0xffff                     ; First test value
+  stc                                   ; First pass
 
 L_E08C:
-  mov    ds, ax
+  mov    ds, ax                         ; test registers
   mov    bx, ds
   mov    es, bx
   mov    cx, es
@@ -153,18 +158,20 @@ L_E08C:
   mov    di, si
   jnc    L_E0A9
 
-  xor    ax, di                        ; Check value 1
-  jnz    L_E0AD
+  xor    ax, di                         ; Check value 1
+  jnz    halt_cpu
 
-  clc                                  ; Second pass
+  clc                                   ; Second pass
   jmp    L_E08C
 
 L_E0A9:
-  or     ax, di                        ; Check value 2
+  or     ax, di                         ; Check value 2
   jz     L_E0AE
 
+halt_cpu:                               ; E0AD
 L_E0AD:
-  hlt                                  ; Failed tests
+  hlt                                   ; Failed tests
+
 
 L_E0AE:
   ; AX = 0x0000
@@ -178,11 +185,16 @@ L_E0AE:
   mov    dl, 0xb8
   out    dx, al
 
+  ; 99 = 10011001
+  ; group A: mode 0, group B: mode 0
+  ; port A[60]: input, port B[61]: output, port C[62]: input
   mov    al, 0x99
-  out    0x63, al
+  out    0x63, al                       ; Set up PPI 8255
 
+  ; FC = 11111100
   mov    al, 0xfc
-  out    0x61, al
+  out    0x61, al                       ; Set up port B
+
 
   mov    ax, cs
   mov    ss, ax
@@ -195,7 +207,7 @@ L_E0AE:
   jmp    L_EC4C                        ; Add up bytes from DS:E000 to DS:FFFF
 
 L_E0D1:
-  jnz    L_E0AD                        ; Verify checksum
+  jnz    halt_cpu                      ; Verify checksum
 
   mov    al, 0x04
   out    0x08, al
@@ -206,12 +218,13 @@ L_E0D1:
   mov    al, cl                        ; CX = 0000
   out    0x41, al                      ; Set counter low byte
 
+  ; this is a quick test of PIT counter 1
 L_E0DF:
   mov    al, 0x40
   out    0x43, al                      ; Counter latch for counter 1
 
   cmp    bl, 0xff
-  jz     L_E0EF
+  je     L_E0EF
 
   in     al, 0x41                      ; Get counter low byte
   or     bl, al
@@ -234,11 +247,12 @@ L_E0F5:
   in     al, 0x41                      ; Get counter low byte
 
   and    bl, al
-  je     L_E104
+  jz     L_E104
 
   loop   L_E0F5
 
   hlt
+
 
 L_E104:
   ; Set up counter 1 for RAM refresh
@@ -246,24 +260,25 @@ L_E104:
   out    0x41, al                      ; Set counter 1 low byte
 
   ; DMAC
-  out    0x0d, al
+  out    0x0d, al                       ; master clear temp register
+
   mov    al, 0xff
 
 L_E10C:
   mov    bl, al
   mov    bh, al
-  mov    cx, 8
+  mov    cx, 8                          ; 4 DMA channels
   sub    dx, dx
 
 L_E115:
-  out    dx, al
+  out    dx, al                         ; set address or word count to FFFF
   push   ax
   out    dx, al
   mov    ax, 0x0101
   in     al, dx
   mov    ah, al
   in     al, dx
-  cmp    bx, ax
+  cmp    bx, ax                         ; check if readback ok
   je     L_E124
 
   hlt
@@ -272,26 +287,26 @@ L_E124:
   inc    dx
   loop   L_E115
 
-  inc    al
+  inc    al                             ; do the same with a value of 0
   jz     L_E10C
 
 
-  mov    ds, bx                        ; DS = 0
+  mov    ds, bx                         ; DS = 0
   mov    es, bx
 
   mov    al, 0xff
-  out    0x01, al
+  out    0x01, al                       ; DMA channel 0 word count
   push   ax
   out    0x01, al
 
   mov    dl, 0x0b
   mov    al, 0x58
-  out    dx, al
+  out    dx, al                         ; DMA mode register
 
   mov    al, 0x00
-  out    0x08, al
+  out    0x08, al                       ; DMA status/command register
   push   ax
-  out    0x0a, al
+  out    0x0a, al                       ; DMA mask register
 
   mov    cl, 0x03
   mov    al, 0x41
@@ -301,14 +316,16 @@ L_E146:
   inc    al
   loop   L_E146
 
+
   mov    dx, 0x0213
   mov    al, 0x01
   out    dx, al
 
 
-  mov    bp, [0x0472]
+  mov    bp, [0x0472]                   ; check boot mode
   cmp    bp, 0x1234
-  je     L_E165
+  je     L_E165                         ; skip memory check
+
 
   ; Set up stack for a call
   mov    sp, D_F041
@@ -317,6 +334,7 @@ L_E146:
   jz     L_E165
 
   hlt
+
 
 L_E165:
   sub    di, di
@@ -336,30 +354,32 @@ L_E174:
   mov     [0x472], bp
 
   mov     al, 0xf8
-  out     0x61, al
+  out     0x61, al                      ; activate HS6 in port C
 
   in      al, 0x62
-  and     al, 0x01
-  mov     cl, 12
+  and     al, 0x01                      ; get HS6
+  mov     cl, 8 + 4
   rol     ax, cl
+
   mov     al, 0xfc
-  out     0x61, al
+  out     0x61, al                      ; activate HS2-HS5 in port C
+
   in      al, 0x62
-  and     al, 0x0f
+  and     al, 0x0f                      ; get HS2-HS5
   or      al, ah
 
   mov     bl, al
   mov     ah, 0x20
   mul     ah
-  mov     [0x415], ax
+  mov     [0x415], ax                   ; extra memory after 64K
 
-  jz      L_E1B4
+  jz      L_E1B4                        ; ZF is undefined after MUL!
 
   mov     dx, 0x1000
   mov     ah, al
   mov     al, 0x00
 
-L_E1A3:
+L_E1A3:                                 ; clear memory, 32K at a time
   mov     es, dx
   mov     cx, 0x8000
   sub     di, di
@@ -369,7 +389,9 @@ L_E1A3:
   dec     bl
   jnz     L_E1A3
 
+
 L_E1B4:
+  ; PIC
   mov     al, 0x13
   out     0x20, al
 
@@ -1810,16 +1832,16 @@ db 0xE6, 0x61                           ; EC47 out 0x61,al
 db 0xE9, 0x12, 0xFE                     ; EC49 jmp 0xea5e
 
 
-; Add up bytes from DS:BX to DS:BX+2000
+; Add up 8K bytes from DS:BX to DS:BX+2000
 L_EC4C:
   mov    cx, 0x2000
 
   xor    al, al
 
-L_EC51:
+.next                                   ; EC51
   add    al, [bx]
   inc    bx
-  loop   L_EC51
+  loop   .next
 
   or     al, al
   ret

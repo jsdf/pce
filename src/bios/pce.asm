@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.4 2003/04/16 17:20:01 hampa Exp $
+; $Id: pce.asm,v 1.5 2003/04/17 14:15:56 hampa Exp $
 
 
 %macro set_pos 1
@@ -42,6 +42,7 @@ start:
 
 ;  call    pce_test
 
+  call    init_ppi
   call    init_int
   call    init_misc
   call    init_keyboard
@@ -139,6 +140,16 @@ init_keyboard:
 
   ret
 
+init_ppi:
+  mov     al, 0x99
+  out     0x63, al                      ; set up ppi ports
+
+  mov     al, 0xfc
+  out     0x61, al
+
+  in      al, 0x60                      ; get config word
+
+  ret
 
 set_bios_ds:
   mov     ds, [cs:.bios_ds]
@@ -156,7 +167,7 @@ inttab:
   dw      int_05, 0xf000
   dw      int_06, 0xf000
   dw      int_07, 0xf000
-  dw      int_08, 0xf000
+  dw      0xfea5, 0xf000 ;int_08, 0xf000
   dw      int_09, 0xf000
   dw      int_0a, 0xf000
   dw      int_0b, 0xf000
@@ -174,9 +185,9 @@ inttab:
   dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
   dw      0xe6f2, 0xf000 ;int_19, 0xf000
-  dw      int_1a, 0xf000 ;0xfe6e, 0xf000 ;int_1a, 0xf000
+  dw      0xfe6e, 0xf000 ;int_1a, 0xf000
   dw      int_1b, 0xf000
-  dw      int_1c, 0xf000
+  dw      int_default, 0xf000
   dw      0xf0a4, 0xf000 ;int_1d, 0xf000
   dw      0xefc7, 0xf000 ;int_1e, 0xf000
   dw      int_1f, 0xf000
@@ -218,10 +229,6 @@ int_06:
 
 int_07:
   db      0x66, 0x66, 0xcd, 0x07
-  iret
-
-int_08:
-  db      0x66, 0x66, 0xcd, 0x08
   iret
 
 int_09:
@@ -284,10 +291,6 @@ int_1b:
   db      0x66, 0x66, 0xcd, 0x1b
   iret
 
-int_1c:
-  db      0x66, 0x66, 0xcd, 0x1c
-  iret
-
 int_1d:
   db      0x66, 0x66, 0xcd, 0x1d
   iret
@@ -308,33 +311,8 @@ int_13:
   retf    2
 
 
-int_16:
-  mov     ax, 0x3062
-  or      ax, ax
-  retf    2
-
 int_18:
   jmp     0xf600:0x0000
-  iret
-
-int_1a:
-  or      ah, ah
-  jz      int_1a_00
-
-  jmp     0xf000:0xfe6e
-
-int_1a_00:
-  push    ds
-  call    set_bios_ds
-
-  add     [0x006c], word 5
-  adc     [0x006e], word 0
-
-  mov     al, 0
-  mov     dx, [0x006c]
-  mov     cx, [0x006e]
-
-  pop     ds
   iret
 
 
