@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.3 2003/09/17 04:22:12 hampa Exp $ */
+/* $Id: sdl.c,v 1.4 2003/09/19 15:09:19 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ int sdl_set_font_psf (sdl_t *sdl, const char *fname)
 terminal_t *sdl_new (ini_sct_t *sct)
 {
   sdl_t *sdl;
-  char  *font;
+  char  *str;
 
   sdl = (sdl_t *) malloc (sizeof (sdl_t));
   if (sdl == NULL) {
@@ -129,11 +129,11 @@ terminal_t *sdl_new (ini_sct_t *sct)
 
   sdl->font = NULL;
 
-  ini_get_string (sct, "font", &font, NULL);
+  ini_get_string (sct, "font", &str, NULL);
 
-  if (font != NULL) {
-    if (sdl_set_font_psf (sdl, font)) {
-      fprintf (stderr, "sdl: loading PSF font %s failed\n", font);
+  if (str != NULL) {
+    if (sdl_set_font_psf (sdl, str)) {
+      fprintf (stderr, "sdl: loading PSF font %s failed\n", str);
     }
   }
 
@@ -164,9 +164,24 @@ terminal_t *sdl_new (ini_sct_t *sct)
   sdl->upd_y2 = 0;
 
   sdl->grab = 0;
-  sdl->upd = 0;
 
-  ini_get_uint (sct, "update", &sdl->upd_freq, 100);
+  ini_get_uint (sct, "update_delay", &sdl->upd_freq, 100);
+
+  ini_get_string (sct, "update_text", &str, "now");
+  if (strcmp (str, "now") == 0) {
+    sdl->upd_text = PCESDL_UPDATE_NOW;
+  }
+  else {
+    sdl->upd_text = PCESDL_UPDATE_DELAY;
+  }
+
+  ini_get_string (sct, "update_graph", &str, "delay");
+  if (strcmp (str, "now") == 0) {
+    sdl->upd_graph = PCESDL_UPDATE_NOW;
+  }
+  else {
+    sdl->upd_graph = PCESDL_UPDATE_DELAY;
+  }
 
   sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_SWSURFACE);
   if (sdl->scr == NULL) {
@@ -414,7 +429,7 @@ void sdl_crs_draw (sdl_t *sdl, unsigned x, unsigned y)
   y = sdl->font_h * (y + 1) - sdl->crs_y2 - 1;
   h = sdl->crs_y2 - sdl->crs_y1 + 1;
 
-  sdl_set_rct (sdl, x, y, sdl->font_w, h, col, PCESDL_UPDATE_NOW);
+  sdl_set_rct (sdl, x, y, sdl->font_w, h, col, sdl->upd_text);
 }
 
 void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
@@ -433,7 +448,7 @@ void sdl_crs_erase (sdl_t *sdl, unsigned x, unsigned y)
   fg = sdl_get_col (sdl, sdl->txt_buf[i + 1]);
   bg = sdl_get_col (sdl, sdl->txt_buf[i + 2]);
 
-  sdl_set_chr_xyc (sdl, x, y, chr, fg, bg, PCESDL_UPDATE_NOW);
+  sdl_set_chr_xyc (sdl, x, y, chr, fg, bg, sdl->upd_text);
 }
 
 void sdl_set_crs (sdl_t *sdl, unsigned y1, unsigned y2)
@@ -480,7 +495,7 @@ void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c)
   sdl->txt_buf[i + 1] = sdl->fgidx;
   sdl->txt_buf[i + 2] = sdl->bgidx;
 
-  sdl_set_chr_xyc (sdl, x, y, c, sdl->fg, sdl->bg, PCESDL_UPDATE_NOW);
+  sdl_set_chr_xyc (sdl, x, y, c, sdl->fg, sdl->bg, sdl->upd_text);
 
   if (sdl->crs_on && (sdl->crs_x == x) && (sdl->crs_y == y)) {
     sdl_crs_draw (sdl, x, y);
@@ -489,12 +504,7 @@ void sdl_set_chr (sdl_t *sdl, unsigned x, unsigned y, unsigned char c)
 
 void sdl_set_pxl (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
 {
-  sdl_set_rct (sdl, x, y, w, h, sdl->fg, PCESDL_UPDATE_DELAY);
-}
-
-void sdl_set_upd (sdl_t *sdl, int upd)
-{
-  sdl->upd = upd;
+  sdl_set_rct (sdl, x, y, w, h, sdl->fg, sdl->upd_graph);
 }
 
 void sdl_send_key_code (sdl_t *sdl, unsigned long code)
@@ -626,7 +636,7 @@ void sdl_check (sdl_t *sdl)
   static Uint32 ticks1 = 0;
   Uint32        ticks2;
 
-  if ((sdl->upd == 0) && (sdl->upd_x1 <= sdl->upd_x2) && (sdl->upd_y1 <= sdl->upd_y2)) {
+  if ((sdl->upd_x1 <= sdl->upd_x2) && (sdl->upd_y1 <= sdl->upd_y2)) {
     ticks2 = SDL_GetTicks();
     if ((ticks2 < ticks1) || ((ticks2 - ticks1) > sdl->upd_freq)) {
       unsigned w, h;

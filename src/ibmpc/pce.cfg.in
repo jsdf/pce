@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.17 2003/09/17 04:22:31 hampa Exp $
+# $Id: pce.cfg.in,v 1.18 2003/09/19 15:09:19 hampa Exp $
 
 section pc {
 	section cpu {
@@ -36,6 +36,9 @@ section pc {
 		driver = "sdl"
 		update = 100
 #		font = "font.psf"
+		update_delay = 50
+		update_text = "delay"
+		update_graph = "delay"
 	}
 
 	section terminal {
