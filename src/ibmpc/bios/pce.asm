@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.10 2003/09/04 20:14:16 hampa Exp $
+; $Id: pce.asm,v 1.11 2003/09/05 00:45:18 hampa Exp $
 
 
 %include "config.inc"
@@ -163,7 +163,7 @@ init_ppi:
   out     0x61, al
 
   in      al, 0x60                      ; get config word
-  mov     ah, 0x40
+  mov     ah, 0x00
 
   mov     [0x0010], ax                  ; equipment word
 
@@ -311,6 +311,31 @@ init_serport:
   mov     [0x0004], cx
   mov     [0x0006], dx
 
+  sub     ax, 1
+  cmc
+  mov     ax, 0
+  adc     ax, 0
+
+  sub     bx, 1
+  cmc
+  adc     ax, 0
+
+  sub     cx, 1
+  cmc
+  adc     ax, 0
+
+  sub     dx, 1
+  cmc
+  adc     ax, 0
+
+  mov     cl, 9
+  shl     ax, cl
+
+  mov     dx, [0x0010]
+  and     dx, 0x0e00
+  or      dx, ax
+  mov     [0x0010], dx
+
   pop     bx
   pop     dx
   pop     cx
@@ -331,6 +356,29 @@ init_parport:
   mov     [0x000a], bx
   mov     [0x000c], cx
   mov     [0x000e], dx
+
+  sub     ax, 1
+  cmc
+  mov     ax, 0
+  adc     ax, 0
+
+  sub     bx, 1
+  cmc
+  adc     ax, 0
+
+  sub     cx, 1
+  cmc
+  adc     ax, 0
+
+  sub     dx, 1
+  cmc
+  adc     ax, 0
+
+  mov     cl, 14
+  shl     ax, cl
+
+  and     byte [0x0011], 0x3f
+  or      word [0x0010], ax
 
   pop     bx
   pop     dx
