@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     memory.c                                                   *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.1 2003/04/15 04:03:56 hampa Exp $ */
+/* $Id: memory.c,v 1.2 2003/04/16 14:15:17 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -69,6 +69,11 @@ void mem_blk_del (mem_blk_t *blk)
     free (blk->data);
     free (blk);
   }
+}
+
+void mem_blk_init (mem_blk_t *blk, unsigned char val)
+{
+  memset (blk->data, val, blk->size);
 }
 
 void mem_blk_set_ro (mem_blk_t *blk, int ro)
