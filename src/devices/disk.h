@@ -107,6 +107,8 @@ void dsk_fread_zero (void *buf, size_t size, size_t cnt, FILE *fp);
 
 void dsk_init (disk_t *dsk, void *ext);
 
+void dsk_init_chs (disk_t *dsk, unsigned d, unsigned c, unsigned h, unsigned s, int ro);
+
 /*!***************************************************************************
  * @short Set the visible geometry
  *****************************************************************************/

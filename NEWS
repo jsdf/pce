@@ -1,3 +1,11 @@
+0.1.6
+
+	* Added a new partitioned block device type.
+	* Added copy on write support to all block devices.
+	* Added a new DOS utility pcemsg.com to send messages to the
+	  emulation core.
+	* Bugfixes
+
 0.1.5	2004-08-03	r439
 
 	* Added a 6502 emulator
