@@ -1,5 +1,11 @@
 0.0.6
 
+	* Added a PIT 8253 emulator
+	* Massive source tree restructuring
+	* The trap flag is now handled almost correctly
+	* Completely reworked terminal support
+	* Added X11 terminal support
+
 0.0.5	2003-04-23
 
 	* Completed instruction timings

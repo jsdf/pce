@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.3 2003/04/26 16:35:28 hampa Exp $
+; $Id: bios.asm,v 1.4 2003/04/26 18:17:18 hampa Exp $
 
 
 CPU 8086
@@ -38,7 +38,6 @@ L_E0000:
   db      "1501476 COPR. IBM 1981"
 
 
-; The initial stack
 L_E016:
   dw     L_E0D1                        ; Return address
 
@@ -107,7 +106,7 @@ db 0xFF                                 ; E05A db 0xFF
 
 
 ; Initial boot entry
-L_E05B:
+start:                                  ; E05B
   cli
 
   mov    ah, 0xd5
@@ -210,7 +209,7 @@ L_E0D1:
 ;  jnz    halt_cpu                      ; Verify checksum
   nop
   nop
-; **** patch ****
+; **** patch **** (bios is modifed -> incorrect checksum)
 
   mov    al, 0x04
   out    0x08, al
@@ -260,7 +259,7 @@ L_E0F5:
 L_E104:
   ; Set up counter 1 for RAM refresh
   mov    al, 0x12
-  out    0x41, al                      ; Set counter 1 low byte
+  out    0x41, al                       ; Set counter 1 low byte
 
   ; DMAC
   out    0x0d, al                       ; master clear temp register
@@ -334,6 +333,8 @@ L_E146:
   mov    sp, D_F041
   nop
   jmp    L_E018                        ; Check first 16KB of memory
+
+L_E162:
   jz     L_E165
 
   hlt
@@ -343,10 +344,10 @@ L_E165:
   sub    di, di
 
   in     al, 0x60
-  and    al, 0x0c
+  and    al, 0x0c                       ; RAM size (HS0 and HS1)
   add    al, 0x04
   mov    cl, 0x0c
-  shl    ax, cl
+  shl    ax, cl                         ; RAM size in bytes
   mov    cx, ax
   cld
 
@@ -525,12 +526,14 @@ db 0xE2, 0xF9                           ; E265 loop 0xe260
   nop
   mov     cx, 16
 
-db 0xB0, 0xFF                           ; E274 mov al,0xff
-db 0xEE                                 ; E276 out dx,al
-db 0xB0, 0x36                           ; E277 mov al,0x36
-db 0xE6, 0x43                           ; E279 out 0x43,al
-db 0xB0, 0x00                           ; E27B mov al,0x0
-db 0xE6, 0x40                           ; E27D out 0x40,al
+  mov     al, 0xff
+  out     dx, al
+
+  mov     al, 0x36                      ; PIT counter 0 mode 3
+  out     0x43, al
+
+  mov     al, 0
+  out     0x40,al                       ; counter value low byte
 
 L_E27F:                                 ; set up offsets int 10-1f
   movsw
@@ -538,7 +541,7 @@ L_E27F:                                 ; set up offsets int 10-1f
   inc     di
   loop    L_E27F
 
-  out     0x40, al
+  out     0x40, al                      ; counter value high byte
 
   pop     ds
 
@@ -556,31 +559,47 @@ db 0xFE, 0x06, 0x12, 0x04               ; E29B inc byte [0x412]
 db 0xC7, 0x06, 0x20, 0x00, 0x6D, 0xE6   ; E29F mov word [0x20],0xe66d
 db 0xB0, 0xFE                           ; E2A5 mov al,0xfe
 db 0xE6, 0x21                           ; E2A7 out 0x21,al
-db 0xB0, 0xCC                           ; E2A9 mov al,0xcc
-db 0xE6, 0x61                           ; E2AB out 0x61,al
-db 0xE4, 0x60                           ; E2AD in al,0x60
-db 0xB4, 0x00                           ; E2AF mov ah,0x0
-db 0xA3, 0x10, 0x04                     ; E2B1 mov [0x410],ax
-db 0x24, 0x30                           ; E2B4 and al,0x30
-db 0x75, 0x29                           ; E2B6 jnz 0xe2e1
-db 0xC7, 0x06, 0x40, 0x00, 0x53, 0xFF   ; E2B8 mov word [0x40],0xff53
-db 0xE9, 0xA2, 0x00                     ; E2BE jmp 0xe363
-db 0xFF                                 ; E2C1 db 0xFF
-db 0xFF, 0x50, 0xE4                     ; E2C2 call near [bx+si-0x1c]
 
-db 0x62, 0xA8, 0xC0, 0x74               ; E2C5 bound bp,[bx+si+0x74c0]
-db 0x15, 0xBE, 0xDA                     ; E2C9 adc ax,0xdabe
-db 0xFF, 0x90, 0xA8, 0x40               ; E2CC call near [bx+si+0x40a8]
-db 0x75, 0x04                           ; E2D0 jnz 0xe2d6
-db 0xBE, 0x23, 0xFF                     ; E2D2 mov si,0xff23
-db 0x90                                 ; E2D5 nop
-db 0x2B, 0xC0                           ; E2D6 sub ax,ax
-db 0xCD, 0x10                           ; E2D8 int 0x10
+  mov     al, 0xcc
+  out     0x61, al
+  in      al, 0x60
+  mov     ah, 0
+  mov     [0x0410], ax                  ; store equipment word
+
+  and     al, 0x30                      ; display adapter
+  jnz     L_E2E1
+
+  ; display adapter with own bios
+  mov     [0x0040], word int_default
+  jmp     L_E363
+
+  db      0xff
+  db      0xff
+
+L_E2C3:
+  push    ax
+  in      al, 0x62
+  test    al, 0xc0
+  jz      L_E2DF
+  mov     si, L_FFDA                    ; "PARITY CHECK 2"
+  nop
+  test    al, 0x40
+  jnz     L_E2D6
+  mov     si, L_FF23                    ; "PARITY CHECK 1"
+  nop
+
+L_E2D6:
+  sub     ax, ax
+  int     0x10
+
 db 0xE8, 0xDD, 0x03                     ; E2DA call 0xe6ba
 db 0xFA                                 ; E2DD cli
 db 0xF4                                 ; E2DE hlt
+L_E2DF:
 db 0x58                                 ; E2DF pop ax
 db 0xCF                                 ; E2E0 iret
+
+L_E2E1:
 db 0x3C, 0x30                           ; E2E1 cmp al,0x30
 db 0x74, 0x08                           ; E2E3 jz 0xe2ed
 db 0xFE, 0xC4                           ; E2E5 inc ah
@@ -645,6 +664,7 @@ db 0x75, 0xDE                           ; E35C jnz 0xe33c
 db 0x58                                 ; E35E pop ax
 db 0xB4, 0x00                           ; E35F mov ah,0x0
 db 0xCD, 0x10                           ; E361 int 0x10
+L_E363:
 db 0xBA, 0x00, 0xC0                     ; E363 mov dx,0xc000
 db 0x8E, 0xDA                           ; E366 mov ds,dx
 db 0x2B, 0xDB                           ; E368 sub bx,bx
@@ -835,7 +855,7 @@ db 0xA8, 0x01                           ; E4F4 test al,0x1
 db 0x75, 0x0A                           ; E4F6 jnz 0xe502
 db 0x80, 0x3E, 0x12, 0x00, 0x01         ; E4F8 cmp byte [0x12],0x1
 db 0x75, 0x3D                           ; E4FD jnz 0xe53c
-db 0xE9, 0x59, 0xFB                     ; E4FF jmp 0xe05b
+  jmp     start
 db 0xE4, 0x21                           ; E502 in al,0x21
 db 0x24, 0xBF                           ; E504 and al,0xbf
 db 0xE6, 0x21                           ; E506 out 0x21,al
@@ -1007,10 +1027,13 @@ db 0x04, 0x90                           ; E630 add al,0x90
 db 0x27                                 ; E632 daa
 db 0x14, 0x40                           ; E633 adc al,0x40
 db 0x27                                 ; E635 daa
-db 0xB4, 0x0E                           ; E636 mov ah,0xe
-db 0xB7, 0x00                           ; E638 mov bh,0x0
-db 0xCD, 0x10                           ; E63A int 0x10
-db 0xC3                                 ; E63C ret
+
+prt_char:                               ; E636
+  mov     ah, 0x0e
+  mov     bh, 0
+  int     0x10
+  ret
+
 db 0xBC, 0x03, 0x78                     ; E63D mov sp,0x7803
 db 0x03, 0x78, 0x02                     ; E640 add di,[bx+si+0x2]
 
@@ -1084,19 +1107,28 @@ db 0x26, 0x8C, 0x1E, 0x02, 0x01         ; E6AE mov [es:0x102],ds
 db 0x26, 0xFF, 0x1E, 0x00, 0x01         ; E6B3 call far [es:0x100]
 db 0x5A                                 ; E6B8 pop dx
 db 0xC3                                 ; E6B9 ret
-db 0xE8, 0x81, 0x18                     ; E6BA call 0xff3e
-db 0x80, 0x3E, 0x12, 0x00, 0x01         ; E6BD cmp byte [0x12],0x1
-db 0x75, 0x05                           ; E6C2 jnz 0xe6c9
-db 0xB6, 0x01                           ; E6C4 mov dh,0x1
-db 0xE9, 0x06, 0xFF                     ; E6C6 jmp 0xe5cf
-db 0x2E, 0x8A, 0x04                     ; E6C9 mov al,[cs:si]
-db 0x46                                 ; E6CC inc si
-db 0x50                                 ; E6CD push ax
-db 0xE8, 0x65, 0xFF                     ; E6CE call 0xe636
-db 0x58                                 ; E6D1 pop ax
-db 0x3C, 0x0A                           ; E6D2 cmp al,0xa
-db 0x75, 0xF3                           ; E6D4 jnz 0xe6c9
-db 0xC3                                 ; E6D6 ret
+
+L_E6BA:
+  call    set_bios_ds
+
+  cmp     [0x0012], byte 0x01
+  jne     L_E6C9
+
+  mov     dh, 0x01
+  jmp     L_E5CF
+
+L_E6C9:
+  mov     al, [cs:si]
+  inc     si
+
+  push    ax
+  call    prt_char
+  pop     ax
+
+  cmp     al, 0x0a
+  jne     L_E6C9
+  ret
+
 db 0x20, 0x52, 0x4F                     ; E6D7 and [bp+si+0x4f],dl
 db 0x4D                                 ; E6DA dec bp
 db 0x0D, 0x0A, 0x50                     ; E6DB or ax,0x500a
@@ -1663,7 +1695,7 @@ db 0x74, 0x33                           ; EA76 jz 0xeaab
 db 0x3C, 0x53                           ; EA78 cmp al,0x53
 db 0x75, 0x2F                           ; EA7A jnz 0xeaab
 db 0xC7, 0x06, 0x72, 0x00, 0x34, 0x12   ; EA7C mov word [0x72],0x1234
-db 0xEA, 0x5B, 0xE0, 0x00, 0xF0         ; EA82 jmp 0xf000:0xe05b
+  jmp     0xf000:start
 db 0x52                                 ; EA87 push dx
 db 0x4F                                 ; EA88 dec di
 db 0x50                                 ; EA89 push ax
@@ -2408,9 +2440,10 @@ db 0xEE                                 ; F03E out dx,al
 db 0xEB, 0xDD                           ; F03F jmp short 0xf01e
 
 D_F041:
-db 0x62                                 ; F041 db 0x62
-db 0xE1, 0xFF                           ; F042 loope 0xf043
-db 0xFF                                 ; F044 db 0xFF
+  dw      L_E162
+
+db 0xFF
+db 0xFF
 
 int_10_func:
   dw      int_10_00                     ; F0FC
@@ -4418,6 +4451,7 @@ bios_int_addr_10:                       ; FF03
   dw      0x0000                        ; int 1f
 
 
+L_FF23:
   db      "PARITY CHECK 1", 13, 10      ; FF23
   db      " 301", 13, 10                ; FF33
   db      "131", 13, 10                 ; FF39
@@ -4515,25 +4549,18 @@ db 0x32, 0xE4                           ; FFD3 xor ah,ah
 db 0xB0, 0x0D                           ; FFD5 mov al,0xd
 db 0xCD, 0x17                           ; FFD7 int 0x17
 db 0xC3                                 ; FFD9 ret
-db 0x50                                 ; FFDA push ax
-db 0x41                                 ; FFDB inc cx
-db 0x52                                 ; FFDC push dx
-db 0x49                                 ; FFDD dec cx
-db 0x54                                 ; FFDE push sp
-db 0x59                                 ; FFDF pop cx
-db 0x20, 0x43, 0x48                     ; FFE0 and [bp+di+0x48],al
-db 0x45                                 ; FFE3 inc bp
-db 0x43                                 ; FFE4 inc bx
-db 0x4B                                 ; FFE5 dec bx
-db 0x20, 0x32                           ; FFE6 and [bp+si],dh
-db 0x0D, 0x0A, 0x36                     ; FFE8 or ax,0x360a
-db 0x30, 0x31                           ; FFEB xor [bx+di],dh
-db 0x0D, 0x0A, 0xFF                     ; FFED or ax,0xff0a
+
+L_FFDA:
+  db      "PARITY CHECK 2", 13, 10
+  db      "601", 13, 10
+
+  db      0xff
+
 
 ;  times 0xfff0 - ($ - $$) db 0
 
 L_FFF0:
-;  jmp    0xf000:L_E05B
+;  jmp    0xf000:start
   jmp    0xf000:0x0000
 
   db     "10/27/82"
