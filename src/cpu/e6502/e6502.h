@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.h                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -152,28 +152,14 @@ void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
   }
 }
 
-static inline
-unsigned short e6502_get_mem16 (e6502_t *c, unsigned short addr)
-{
-  if ((addr >= c->ram_lo) && (addr < c->ram_hi)) {
-    return (c->ram[addr] + (c->ram[addr + 1] << 8));
-  }
-  else {
-    return (c->mem_get_uint16 (c->mem, addr));
-  }
-}
+#define e6502_get_mem16(c, addr) ( \
+  (e6502_get_mem8 ((c), (addr) & 0xffffU) & 0xff) | \
+  ((e6502_get_mem8 ((c), ((addr) + 1) & 0xffffU) & 0xff) << 8) )
 
-static inline
-void e6502_set_mem16 (e6502_t *c, unsigned short addr, unsigned short val)
-{
-  if ((addr >= c->ram_lo) && (addr < c->ram_hi)) {
-    c->ram[addr] = val & 0xff;
-    c->ram[addr + 1] = (val >> 8) & 0xff;
-  }
-  else {
-    c->mem_set_uint16 (c->mem, addr, val);
-  }
-}
+#define e6502_set_mem16(c, addr, v) do { \
+  e6502_set_mem8 ((c), (addr) & 0xffffU, (v) & 0xff); \
+  e6502_set_mem8 ((c), ((addr) + 1) & 0xffffU, ((v) >> 8) & 0xff); \
+  } while (0)
 
 
 /*****************************************************************************

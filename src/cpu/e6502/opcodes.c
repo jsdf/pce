@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/opcodes.c                                    *
  * Created:       2004-05-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -875,7 +875,14 @@ static void op_6a (e6502_t *c)
 /* OP 6C: JMP [xxxx] */
 static void op_6c (e6502_t *c)
 {
-  e6502_set_pc (c, e6502_get_abs (c));
+  unsigned short addr;
+
+  e6502_get_inst2 (c);
+
+  addr = e6502_mk_uint16 (c->inst[1], c->inst[2]);
+  addr = e6502_get_mem16 (c, addr);
+
+  e6502_set_pc (c, addr);
   e6502_set_clk (c, 0, 5);
 }
 
