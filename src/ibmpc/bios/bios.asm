@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     bios.asm                                                   *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.6 2003/05/01 07:11:43 hampa Exp $
+; $Id: bios.asm,v 1.7 2003/08/19 17:06:36 hampa Exp $
 
 
 CPU 8086
@@ -45,6 +45,8 @@ L_E016:
 ; Check first 16KB of memory if [40:72] != 0x1234
 L_E018:
   mov    cx, 0x4000
+
+L_E01B:
   cld
   mov    bx, cx
 
@@ -600,85 +602,139 @@ db 0x58                                 ; E2DF pop ax
 db 0xCF                                 ; E2E0 iret
 
 L_E2E1:
-db 0x3C, 0x30                           ; E2E1 cmp al,0x30
-db 0x74, 0x08                           ; E2E3 jz 0xe2ed
-db 0xFE, 0xC4                           ; E2E5 inc ah
-db 0x3C, 0x20                           ; E2E7 cmp al,0x20
-db 0x75, 0x02                           ; E2E9 jnz 0xe2ed
-db 0xB4, 0x03                           ; E2EB mov ah,0x3
-db 0x86, 0xE0                           ; E2ED xchg ah,al
-db 0x50                                 ; E2EF push ax
-db 0x2A, 0xE4                           ; E2F0 sub ah,ah
-db 0xCD, 0x10                           ; E2F2 int 0x10
-db 0x58                                 ; E2F4 pop ax
-db 0x50                                 ; E2F5 push ax
-db 0xBB, 0x00, 0xB0                     ; E2F6 mov bx,0xb000
-db 0xBA, 0xB8, 0x03                     ; E2F9 mov dx,0x3b8
-db 0xB9, 0x00, 0x10                     ; E2FC mov cx,0x1000
-db 0xB0, 0x01                           ; E2FF mov al,0x1
-db 0x80, 0xFC, 0x30                     ; E301 cmp ah,0x30
-db 0x74, 0x08                           ; E304 jz 0xe30e
-db 0xB7, 0xB8                           ; E306 mov bh,0xb8
-db 0xB2, 0xD8                           ; E308 mov dl,0xd8
-db 0xB5, 0x40                           ; E30A mov ch,0x40
-db 0xFE, 0xC8                           ; E30C dec al
-db 0xEE                                 ; E30E out dx,al
-db 0x81, 0xFD, 0x34, 0x12               ; E30F cmp bp,0x1234
-db 0x8E, 0xC3                           ; E313 mov es,bx
-db 0x74, 0x07                           ; E315 jz 0xe31e
-db 0x8E, 0xDB                           ; E317 mov ds,bx
-db 0xE8, 0xFF, 0xFC                     ; E319 call 0xe01b
-db 0x75, 0x32                           ; E31C jnz 0xe350
-db 0x58                                 ; E31E pop ax
-db 0x50                                 ; E31F push ax
-db 0xB4, 0x00                           ; E320 mov ah,0x0
-db 0xCD, 0x10                           ; E322 int 0x10
-db 0xB8, 0x20, 0x70                     ; E324 mov ax,0x7020
-db 0x2B, 0xFF                           ; E327 sub di,di
-db 0xB9, 0x28, 0x00                     ; E329 mov cx,0x28
-db 0xF3, 0xAB                           ; E32C rep stosw
-db 0x58                                 ; E32E pop ax
-db 0x50                                 ; E32F push ax
-db 0x80, 0xFC, 0x30                     ; E330 cmp ah,0x30
-db 0xBA, 0xBA, 0x03                     ; E333 mov dx,0x3ba
-db 0x74, 0x02                           ; E336 jz 0xe33a
-db 0xB2, 0xDA                           ; E338 mov dl,0xda
-db 0xB4, 0x08                           ; E33A mov ah,0x8
-db 0x2B, 0xC9                           ; E33C sub cx,cx
-db 0xEC                                 ; E33E in al,dx
-db 0x22, 0xC4                           ; E33F and al,ah
-db 0x75, 0x04                           ; E341 jnz 0xe347
-db 0xE2, 0xF9                           ; E343 loop 0xe33e
-db 0xEB, 0x09                           ; E345 jmp short 0xe350
-db 0x2B, 0xC9                           ; E347 sub cx,cx
-db 0xEC                                 ; E349 in al,dx
-db 0x22, 0xC4                           ; E34A and al,ah
-db 0x74, 0x0A                           ; E34C jz 0xe358
-db 0xE2, 0xF9                           ; E34E loop 0xe349
+  cmp     al, 0x30                      ; check if MDA
+  je      L_E2ED
+
+  inc     ah
+
+  cmp     al, 0x20
+  jne     L_E2ED
+
+  mov     ah, 3
+
+L_E2ED:
+  xchg    ah, al
+
+  push    ax
+  sub     ah, ah
+  int     0x10                          ; Set video mode
+  pop     ax
+
+  push    ax
+
+  ; values for CGA
+  mov     bx, 0xb000
+  mov     dx, 0x3b8
+  mov     cx, 0x1000
+  mov     al, 1
+
+  cmp     ah, 0x30
+  je      L_E30E
+
+  ; fix values for MDA
+  mov     bh, 0xb8
+  mov     dl, 0xd8
+  mov     ch, 0x40
+  dec     al
+
+L_E30E:
+  out     dx, al
+  cmp     bp, 0x1234
+  mov     es, bx
+  je      L_E31E
+
+  mov     ds, bx
+  call    L_E01B
+  jnz     L_E350
+
+L_E31E:
+  pop     ax
+
+  push    ax
+  mov     ah, 0
+  int     0x10
+
+  mov     ax, 0x7020
+  sub     di, di
+  mov     cx, 40
+  rep     stosw
+  pop     ax
+
+  push    ax
+
+  cmp     ah, 0x30
+  mov     dx, 0x3ba
+  je      L_E33A
+  mov     dl, 0xda
+
+L_E33A:
+  mov     ah, 8
+
+L_E33C:
+  sub     cx, cx
+
+L_E33E:
+  in      al, dx
+  and     al, ah
+  jnz     L_E347
+  loop    L_E33E
+
+  jmp     short L_E350
+
+L_E347:
+  sub     cx, cx
+
+L_E349:
+  in      al, dx
+  and     al, ah
+  jz      L_E358
+  loop    L_E349
+
+L_E350:
 db 0xBA, 0x02, 0x01                     ; E350 mov dx,0x102
 db 0xE8, 0x79, 0x02                     ; E353 call 0xe5cf
 db 0xEB, 0x06                           ; E356 jmp short 0xe35e
-db 0xB1, 0x03                           ; E358 mov cl,0x3
-db 0xD2, 0xEC                           ; E35A shr ah,cl
-db 0x75, 0xDE                           ; E35C jnz 0xe33c
-db 0x58                                 ; E35E pop ax
-db 0xB4, 0x00                           ; E35F mov ah,0x0
-db 0xCD, 0x10                           ; E361 int 0x10
+
+L_E358:
+  mov     cl, 3
+  shr     ah, cl
+  jnz     L_E33C
+
+L_E35E:
+  pop     ax
+
+  mov     ah, 0
+  int     0x10
+
+
+; -- initialize bios extensions
+
 L_E363:
-db 0xBA, 0x00, 0xC0                     ; E363 mov dx,0xc000
-db 0x8E, 0xDA                           ; E366 mov ds,dx
-db 0x2B, 0xDB                           ; E368 sub bx,bx
-db 0x8B, 0x07                           ; E36A mov ax,[bx]
-db 0x53                                 ; E36C push bx
-db 0x5B                                 ; E36D pop bx
-db 0x3D, 0x55, 0xAA                     ; E36E cmp ax,0xaa55
-db 0x75, 0x05                           ; E371 jnz 0xe378
-db 0xE8, 0x0E, 0x03                     ; E373 call 0xe684
-db 0xEB, 0x04                           ; E376 jmp short 0xe37c
-db 0x81, 0xC2, 0x80, 0x00               ; E378 add dx,0x80
-db 0x81, 0xFA, 0x00, 0xC8               ; E37C cmp dx,0xc800
-db 0x7C, 0xE4                           ; E380 jl 0xe366
-db 0xBA, 0x10, 0x02                     ; E382 mov dx,0x210
+  mov     dx, 0xc000
+
+L_E366:
+  mov     ds, dx
+
+  sub     bx, bx
+  mov     ax, [bx]                      ; read bios extension id
+
+  push    bx
+  pop     bx
+
+  cmp     ax, 0xaa55                    ; check if valid extension
+  jne     L_E378
+
+  call    L_E684                        ; init bios extension
+  jmp     short L_E37C
+
+L_E378:
+  add     dx, 0x80
+
+L_E37C:
+  cmp     dx, 0xc800
+  jl      L_E366
+
+  mov     dx, 0x210                     ; expansion card port
 db 0xB8, 0x55, 0x55                     ; E385 mov ax,0x5555
 db 0xEE                                 ; E388 out dx,al
 db 0xB0, 0x01                           ; E389 mov al,0x1
@@ -714,23 +770,35 @@ db 0xEB, 0xDD                           ; E3BB jmp short 0xe39a
 db 0xBE, 0xED, 0xFE                     ; E3BD mov si,0xfeed
 db 0x90                                 ; E3C0 nop
 db 0xE8, 0xF6, 0x02                     ; E3C1 call 0xe6ba
-db 0xE8, 0x77, 0x1B                     ; E3C4 call 0xff3e
-db 0xA0, 0x10, 0x00                     ; E3C7 mov al,[0x10]
-db 0x24, 0x0C                           ; E3CA and al,0xc
-db 0xB4, 0x04                           ; E3CC mov ah,0x4
-db 0xF6, 0xE4                           ; E3CE mul ah
-db 0x04, 0x10                           ; E3D0 add al,0x10
-db 0x8B, 0xD0                           ; E3D2 mov dx,ax
-db 0x8B, 0xD8                           ; E3D4 mov bx,ax
-db 0xA1, 0x15, 0x00                     ; E3D6 mov ax,[0x15]
-db 0x83, 0xFB, 0x40                     ; E3D9 cmp bx,byte +0x40
-db 0x74, 0x02                           ; E3DC jz 0xe3e0
-db 0x2B, 0xC0                           ; E3DE sub ax,ax
-db 0x03, 0xC3                           ; E3E0 add ax,bx
-db 0xA3, 0x13, 0x00                     ; E3E2 mov [0x13],ax
-db 0x81, 0xFD, 0x34, 0x12               ; E3E5 cmp bp,0x1234
-db 0x1E                                 ; E3E9 push ds
-db 0x74, 0x4F                           ; E3EA jz 0xe43b
+
+L_E3C4:
+  call    set_bios_ds
+
+  mov     al, [0x0010]                  ; configuration word
+  and     al, 0x0c
+
+  mov     ah, 0x04
+  mul     ah                            ; ram size in KB
+  add     al, 16
+
+  mov     dx, ax
+  mov     bx, ax
+
+  mov     ax, [0x0015]                  ; post state 2
+
+  cmp     bx, byte 64
+  je      L_E3E0
+
+  sub     ax, ax
+
+L_E3E0:
+  add     ax, bx
+  mov     [0x0013], ax                  ; ram size
+
+  cmp     bp, 0x1234
+  push    ds
+  je      L_E43B
+
 db 0xBB, 0x00, 0x04                     ; E3EC mov bx,0x400
 db 0xB9, 0x10, 0x00                     ; E3EF mov cx,0x10
 db 0x3B, 0xD1                           ; E3F2 cmp dx,cx
@@ -767,6 +835,7 @@ db 0x81, 0xFB, 0x00, 0x10               ; E430 cmp bx,0x1000
 db 0x77, 0x05                           ; E434 ja 0xe43b
 db 0xBB, 0x00, 0x10                     ; E436 mov bx,0x1000
 db 0xEB, 0xB7                           ; E439 jmp short 0xe3f2
+L_E43B:
 db 0x1F                                 ; E43B pop ds
 db 0x80, 0x3E, 0x12, 0x00, 0x01         ; E43C cmp byte [0x12],0x1
 db 0x74, 0x2A                           ; E441 jz 0xe46d
@@ -1017,16 +1086,22 @@ L_E61A:
   out     0x61, al
   ret
 
-db 0x50                                 ; E625 push ax
-db 0xB1, 0x04                           ; E626 mov cl,0x4
-db 0xD2, 0xE8                           ; E628 shr al,cl
-db 0xE8, 0x03, 0x00                     ; E62A call 0xe630
-db 0x58                                 ; E62D pop ax
-db 0x24, 0x0F                           ; E62E and al,0xf
-db 0x04, 0x90                           ; E630 add al,0x90
-db 0x27                                 ; E632 daa
-db 0x14, 0x40                           ; E633 adc al,0x40
-db 0x27                                 ; E635 daa
+
+prt_hex_al:                             ; E625
+  push    ax
+  mov     cl, 4
+  shr     al, cl
+  call    prt_nibble
+  pop     ax
+
+  and     al, 0x0f
+
+; print nibble in AL
+prt_nibble:                             ; E630
+  add     al, 0x90
+  daa
+  adc     al, 0x40
+  daa
 
 prt_char:                               ; E636
   mov     ah, 0x0e
@@ -1085,28 +1160,41 @@ db 0xB0, 0x20                           ; E67E mov al,0x20
 db 0xE6, 0x20                           ; E680 out 0x20,al
 db 0x58                                 ; E682 pop ax
 db 0xCF                                 ; E683 iret
-db 0xB8, 0x40, 0x00                     ; E684 mov ax,0x40
-db 0x8E, 0xC0                           ; E687 mov es,ax
-db 0x2A, 0xE4                           ; E689 sub ah,ah
-db 0x8A, 0x47, 0x02                     ; E68B mov al,[bx+0x2]
-db 0xB1, 0x09                           ; E68E mov cl,0x9
-db 0xD3, 0xE0                           ; E690 shl ax,cl
-db 0x8B, 0xC8                           ; E692 mov cx,ax
-db 0x51                                 ; E694 push cx
-db 0xB1, 0x04                           ; E695 mov cl,0x4
-db 0xD3, 0xE8                           ; E697 shr ax,cl
-db 0x03, 0xD0                           ; E699 add dx,ax
-db 0x59                                 ; E69B pop cx
-db 0xE8, 0xB0, 0x05                     ; E69C call 0xec4f
-db 0x74, 0x05                           ; E69F jz 0xe6a6
-db 0xE8, 0x65, 0x01                     ; E6A1 call 0xe809
-db 0xEB, 0x13                           ; E6A4 jmp short 0xe6b9
-db 0x52                                 ; E6A6 push dx
-db 0x26, 0xC7, 0x06, 0x00, 0x01, 0x03, 0x00     ; E6A7 mov word [es:0x100],0x3
-db 0x26, 0x8C, 0x1E, 0x02, 0x01         ; E6AE mov [es:0x102],ds
-db 0x26, 0xFF, 0x1E, 0x00, 0x01         ; E6B3 call far [es:0x100]
-db 0x5A                                 ; E6B8 pop dx
-db 0xC3                                 ; E6B9 ret
+
+; found bios extension in [c000-c800]
+L_E684:
+  mov     ax, 0x40
+  mov     es, ax
+
+  sub     ah, ah
+  mov     al, [bx + 2]                  ; get bios extension size
+  mov     cl, 9
+  shl     ax, cl
+  mov     cx, ax                        ; size in bytes
+
+  push    cx
+  mov     cl, 4
+  shr     ax, cl                        ; size in paragraphs
+  add     dx, ax                        ; skip extension
+  pop     cx
+
+  call    L_EC4F                        ; Add up all bytes
+  jz      .chksumok
+
+  call    L_E809
+  jmp     short L_E6B9
+
+.chksumok:                              ; E6A6
+  push    dx
+  mov     [es:0x100], word 3
+  mov     [es:0x102], ds
+
+  call    far [es:0x100]
+  pop     dx
+
+L_E6B9:
+  ret
+
 
 L_E6BA:
   call    set_bios_ds
@@ -1129,9 +1217,10 @@ L_E6C9:
   jne     L_E6C9
   ret
 
-db 0x20, 0x52, 0x4F                     ; E6D7 and [bp+si+0x4f],dl
-db 0x4D                                 ; E6DA dec bp
-db 0x0D, 0x0A, 0x50                     ; E6DB or ax,0x500a
+L_E6D7:
+  db " ROM", 0x0d, 0x0a
+
+db 0x50                     ; E6DD
 db 0xB0, 0x20                           ; E6DE mov al,0x20
 db 0xE6, 0x20                           ; E6E0 out 0x20,al
 db 0x58                                 ; E6E2 pop ax
@@ -1307,23 +1396,33 @@ db 0xFE, 0xCB                           ; E802 dec bl
 db 0x75, 0xEF                           ; E804 jnz 0xe7f5
 db 0x0A, 0xFF                           ; E806 or bh,bh
 db 0xC3                                 ; E808 ret
-db 0x52                                 ; E809 push dx
-db 0x50                                 ; E80A push ax
-db 0x8C, 0xDA                           ; E80B mov dx,ds
-db 0x81, 0xFA, 0x00, 0xC8               ; E80D cmp dx,0xc800
-db 0x7E, 0x13                           ; E811 jng 0xe826
-db 0x8A, 0xC6                           ; E813 mov al,dh
-db 0xE8, 0x0D, 0xFE                     ; E815 call 0xe625
-db 0x8A, 0xC2                           ; E818 mov al,dl
-db 0xE8, 0x08, 0xFE                     ; E81A call 0xe625
-db 0xBE, 0xD7, 0xE6                     ; E81D mov si,0xe6d7
-db 0xE8, 0x97, 0xFE                     ; E820 call 0xe6ba
-db 0x58                                 ; E823 pop ax
-db 0x5A                                 ; E824 pop dx
-db 0xC3                                 ; E825 ret
-db 0xBA, 0x02, 0x01                     ; E826 mov dx,0x102
-db 0xE8, 0xA3, 0xFD                     ; E829 call 0xe5cf
-db 0xEB, 0xF5                           ; E82C jmp short 0xe823
+
+L_E809:
+  push    dx
+  push    ax
+
+  mov     dx, ds
+  cmp     dx, 0xc800
+  jng     L_E826
+
+  mov     al, dh
+  call    prt_hex_al
+
+  mov     al, dl
+  call    prt_hex_al
+
+  mov     si, L_E6D7
+  call    L_E6BA                        ; print " ROM"
+
+L_E823:
+  pop     ax
+  pop     dx
+  ret
+
+L_E826:
+  mov     dx, 0x0102
+  call    L_E5CF
+  jmp     short L_E823
 
 
 ;*****************************************************************************
@@ -1894,6 +1993,7 @@ db 0xE9, 0x12, 0xFE                     ; EC49 jmp 0xea5e
 L_EC4C:
   mov    cx, 0x2000
 
+L_EC4F:
   xor    al, al
 
 .next                                   ; EC51
