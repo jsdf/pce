@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -373,6 +373,8 @@ void e86_push (e8086_t *c, unsigned short val);
 unsigned short e86_pop (e8086_t *c);
 void e86_trap (e8086_t *c, unsigned n);
 
+void e86_pq_init (e8086_t *c);
+void e86_pq_fill (e8086_t *c);
 
 
 #define E86_DFLAGS_186  0x0001

@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8086/internal.h                                       *
+ * File name:     src/cpu/e8086/internal.h                                   *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -84,8 +84,6 @@ void e86_set_ea8 (e8086_t *c, unsigned char val);
 void e86_set_ea16 (e8086_t *c, unsigned short val);
 
 
-void e86_pq_init (e8086_t *c);
-void e86_pq_fill (e8086_t *c);
 void e86_pq_adjust (e8086_t *c, unsigned cnt);
 
 
