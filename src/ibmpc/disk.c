@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.7 2003/09/01 18:07:12 hampa Exp $ */
+/* $Id: disk.c,v 1.8 2003/09/02 10:04:23 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -556,9 +556,14 @@ void dsk_int13_05 (disks_t *dsks, e8086_t *cpu)
   }
   h = e86_get_dh (cpu);
 
-  ofs = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e);
-  seg = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e + 2);
-  fill = e86_get_mem8 (cpu, seg, ofs + 8);
+  if (d < 4) {
+    ofs = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e);
+    seg = e86_get_mem16 (cpu, 0x0000, 4 * 0x001e + 2);
+    fill = e86_get_mem8 (cpu, seg, ofs + 8);
+  }
+  else {
+    fill = 0xf6;
+  }
 
   memset (buf, fill, 512);
 
