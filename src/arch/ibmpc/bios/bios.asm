@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.1 2003/12/20 01:01:34 hampa Exp $
+; $Id$
 
 
 CPU 8086
@@ -226,7 +226,7 @@ L_E0D1:
 ;  jnz    halt_cpu                      ; Verify checksum
   nop
   nop
-; **** patch **** (bios is modifed -> incorrect checksum)
+; #### patch #### (bios is modifed -> incorrect checksum)
 
 
 ;-----------------------------------------------------------------------------
@@ -481,9 +481,9 @@ L_E1FC:
   stosw
   loop    L_E1FC
 
-db 0xC7, 0x06, 0x08, 0x00, 0xC3, 0xE2   ; E205 mov word [0x8],0xe2c3
-  mov     word [0x0014], int_05
-db 0xC7, 0x06, 0x62, 0x00, 0x00, 0xF6   ; E211 mov word [0x62],0xf600
+  mov     word [4 * 0x02], int_02
+  mov     word [4 * 0x05], int_05
+  mov     word [4 * 0x18 + 2], 0xf600
 
   mov     dx, 0x0021
   mov     al, 0x00
@@ -603,15 +603,22 @@ db 0xE6, 0x21                           ; E2A7 out 0x21,al
   db      0xff
   db      0xff
 
-L_E2C3:
+;-----------------------------------------------------------------------------
+; int 02
+;-----------------------------------------------------------------------------
+
+int_02:                                 ; E2C3
   push    ax
   in      al, 0x62
   test    al, 0xc0
   jz      L_E2DF
+
   mov     si, L_FFDA                    ; "PARITY CHECK 2"
   nop
+
   test    al, 0x40
   jnz     L_E2D6
+
   mov     si, L_FF23                    ; "PARITY CHECK 1"
   nop
 
@@ -619,12 +626,15 @@ L_E2D6:
   sub     ax, ax
   int     0x10
 
-db 0xE8, 0xDD, 0x03                     ; E2DA call 0xe6ba
-db 0xFA                                 ; E2DD cli
-db 0xF4                                 ; E2DE hlt
+  call    L_E6BA
+
+  cli
+  hlt
+
 L_E2DF:
-db 0x58                                 ; E2DF pop ax
-db 0xCF                                 ; E2E0 iret
+  pop     ax
+  iret
+
 
 L_E2E1:
   cmp     al, 0x30                      ; check if MDA
@@ -716,9 +726,9 @@ L_E349:
   loop    L_E349
 
 L_E350:
-db 0xBA, 0x02, 0x01                     ; E350 mov dx,0x102
-db 0xE8, 0x79, 0x02                     ; E353 call 0xe5cf
-db 0xEB, 0x06                           ; E356 jmp short 0xe35e
+  mov     dx, 0x0102
+  call    L_E5CF
+  jmp     short L_E35E
 
 L_E358:
   mov     cl, 3
@@ -796,9 +806,9 @@ db 0x3C, 0xAA                           ; E3B7 cmp al,0xaa
 db 0x74, 0x09                           ; E3B9 jz 0xe3c4
 db 0xEB, 0xDD                           ; E3BB jmp short 0xe39a
 L_E3BD:
-db 0xBE, 0xED, 0xFE                     ; E3BD mov si,0xfeed
-db 0x90                                 ; E3C0 nop
-db 0xE8, 0xF6, 0x02                     ; E3C1 call 0xe6ba
+  mov     si, L_FEED
+  nop
+  call    L_E6BA
 
 L_E3C4:
   call    set_bios_ds
@@ -1250,11 +1260,18 @@ L_E6C9:
 L_E6D7:
   db " ROM", 0x0d, 0x0a
 
-db 0x50                     ; E6DD
-db 0xB0, 0x20                           ; E6DE mov al,0x20
-db 0xE6, 0x20                           ; E6E0 out 0x20,al
-db 0x58                                 ; E6E2 pop ax
-db 0xCF                                 ; E6E3 iret
+
+;-----------------------------------------------------------------------------
+; default hardware interrupt handler
+;-----------------------------------------------------------------------------
+
+L_E6DD:
+  push    ax
+  mov     al, 0x20
+  out     0x20, al                      ; end of interrupt
+  pop     ax
+  iret
+
 
 L_E6E4:
   jmp     0x0000:0x7c00
@@ -1265,7 +1282,7 @@ L_E6E4:
 
 
 ;-----------------------------------------------------------------------------
-; int 19 handler
+; int 19 - boot os
 ;-----------------------------------------------------------------------------
 
 int_19:                                 ; E6F2
@@ -1312,38 +1329,63 @@ db 0x00, 0x60, 0x00                     ; E730 add [bx+si+0x0],ah
 db 0x30, 0x00                           ; E733 xor [bx+si],al
 db 0x18, 0x00                           ; E735 sbb [bx+si],al
 db 0x0C, 0x00                           ; E737 or al,0x0
-db 0xFB                                 ; E739 sti
-db 0x1E                                 ; E73A push ds
-db 0x52                                 ; E73B push dx
-db 0x56                                 ; E73C push si
-db 0x57                                 ; E73D push di
-db 0x51                                 ; E73E push cx
-db 0x53                                 ; E73F push bx
-db 0x8B, 0xF2                           ; E740 mov si,dx
-db 0x8B, 0xFA                           ; E742 mov di,dx
-db 0xD1, 0xE6                           ; E744 shl si,1
-db 0xE8, 0xF5, 0x17                     ; E746 call 0xff3e
-db 0x8B, 0x14                           ; E749 mov dx,[si]
-db 0x0B, 0xD2                           ; E74B or dx,dx
-db 0x74, 0x13                           ; E74D jz 0xe762
-db 0x0A, 0xE4                           ; E74F or ah,ah
-db 0x74, 0x16                           ; E751 jz 0xe769
-db 0xFE, 0xCC                           ; E753 dec ah
-db 0x74, 0x45                           ; E755 jz 0xe79c
-db 0xFE, 0xCC                           ; E757 dec ah
-db 0x74, 0x6A                           ; E759 jz 0xe7c5
-db 0xFE, 0xCC                           ; E75B dec ah
-db 0x75, 0x03                           ; E75D jnz 0xe762
-db 0xE9, 0x83, 0x00                     ; E75F jmp 0xe7e5
-db 0x5B                                 ; E762 pop bx
-db 0x59                                 ; E763 pop cx
-db 0x5F                                 ; E764 pop di
-db 0x5E                                 ; E765 pop si
-db 0x5A                                 ; E766 pop dx
-db 0x1F                                 ; E767 pop ds
-db 0xCF                                 ; E768 iret
-db 0x8A, 0xE0                           ; E769 mov ah,al
-db 0x83, 0xC2, 0x03                     ; E76B add dx,byte +0x3
+
+
+;-----------------------------------------------------------------------------
+; int 14 - serial port
+;-----------------------------------------------------------------------------
+
+int_14:                                 ; E739
+  sti
+  push    ds
+  push    dx
+  push    si
+  push    di
+  push    cx
+  push    bx
+
+  mov     si, dx
+  mov     di, dx
+
+  shl     si, 1
+
+  call    set_bios_ds
+
+  mov     dx, [si]                      ; get port base address
+  or      dx, dx
+  jz      L_E762
+
+  or      ah, ah
+  jz      int_14_00
+
+  dec     ah
+  jz      int_14_01
+
+  dec     ah
+  jz      int_14_02
+
+  dec     ah
+  jnz     L_E762
+
+  jmp     int_14_03
+
+L_E762:
+  pop     bx
+  pop     cx
+  pop     di
+  pop     si
+  pop     dx
+  pop     ds
+  iret
+
+
+;-----------------------------------------------------------------------------
+; int 14 func 00
+;-----------------------------------------------------------------------------
+
+int_14_00:                              ; E769
+  mov     ah, al
+  add     dx, byte 0x03
 db 0xB0, 0x80                           ; E76E mov al,0x80
 db 0xEE                                 ; E770 out dx,al
 db 0x8A, 0xD4                           ; E771 mov dl,ah
@@ -1368,6 +1410,8 @@ db 0x4A                                 ; E796 dec dx
 db 0xB0, 0x00                           ; E797 mov al,0x0
 db 0xEE                                 ; E799 out dx,al
 db 0xEB, 0x49                           ; E79A jmp short 0xe7e5
+
+int_14_01:                              ; E79C
 db 0x50                                 ; E79C push ax
 db 0x83, 0xC2, 0x04                     ; E79D add dx,byte +0x4
 db 0xB0, 0x03                           ; E7A0 mov al,0x3
@@ -1390,6 +1434,8 @@ db 0x59                                 ; E7BF pop cx
 db 0x8A, 0xC1                           ; E7C0 mov al,cl
 db 0xEE                                 ; E7C2 out dx,al
 db 0xEB, 0x9D                           ; E7C3 jmp short 0xe762
+
+int_14_02:                              ; E7C5
 db 0x83, 0xC2, 0x04                     ; E7C5 add dx,byte +0x4
 db 0xB0, 0x01                           ; E7C8 mov al,0x1
 db 0xEE                                 ; E7CA out dx,al
@@ -1406,6 +1452,8 @@ db 0x80, 0xE4, 0x1E                     ; E7DC and ah,0x1e
 db 0x8B, 0x14                           ; E7DF mov dx,[si]
 db 0xEC                                 ; E7E1 in al,dx
 db 0xE9, 0x7D, 0xFF                     ; E7E2 jmp 0xe762
+
+int_14_03:                              ; E7E5
 db 0x8B, 0x14                           ; E7E5 mov dx,[si]
 db 0x83, 0xC2, 0x05                     ; E7E7 add dx,byte +0x5
 db 0xEC                                 ; E7EA in al,dx
@@ -1454,9 +1502,9 @@ L_E826:
   jmp     short L_E823
 
 
-;*****************************************************************************
-;* int 16 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 16 handler
+;-----------------------------------------------------------------------------
 
 int_16:                                 ; E82E
   sti
@@ -1475,6 +1523,9 @@ int_16:                                 ; E82E
 
   jmp     short int_16_done
 
+;-----------------------------------------------------------------------------
+; int 16 func 00
+;-----------------------------------------------------------------------------
 int_16_00:                              ; E842
   sti
   nop
@@ -1492,6 +1543,9 @@ int_16_00:                              ; E842
   jmp     short int_16_done
 
 
+;-----------------------------------------------------------------------------
+; int 16 func 01
+;-----------------------------------------------------------------------------
 int_16_01:                              ; E85A
   cli
 
@@ -1507,6 +1561,9 @@ int_16_01:                              ; E85A
   retf    2
 
 
+;-----------------------------------------------------------------------------
+; int 16 func 02
+;-----------------------------------------------------------------------------
 int_16_02:
   mov     al, [0x0017]                  ; keyboard status
 
@@ -1678,9 +1735,9 @@ db 0xFF                                 ; E985 db 0xFF
 db 0xFF                                 ; E986 db 0xFF
 
 
-;*****************************************************************************
-;* int 09 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 09 handler
+;-----------------------------------------------------------------------------
 
 int_09:                                 ; E987
   sti
@@ -2047,9 +2104,9 @@ L_EC4F:
   ret
 
 
-;*****************************************************************************
-;* int 13 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 13
+;-----------------------------------------------------------------------------
 
 int_13:                                 ; EC59
   sti
@@ -2084,90 +2141,146 @@ int_13:                                 ; EC59
   retf    2
 
 L_EC85:
-  mov     dh, al
-  and     [0x003f], byte 0x7f
+  mov     dh, al                        ; sector count
+  and     [0x003f], byte 0x7f           ; clear current op is write
 
   or      ah, ah
-  jz      L_ECB7                        ; func 00
+  jz      int_13_00
 
   dec     ah
-  jz      L_ED07                        ; func 01
+  jz      int_13_01
 
-  mov     [0x0041], byte 0
+  mov     byte [0x0041], 0x00           ; last operation status
 
-  cmp     dl, 4
+  cmp     dl, 4                         ; check drive number
   jae     L_ECB1
 
   dec     ah
-  jz      L_ED0B                        ; func 02
+  jz      int_13_02
 
   dec     ah
   jnz     L_ECA9
-  jmp     L_ED3E                        ; func 03
+  jmp     int_13_03
 
 L_ECA9:
   dec     ah
-  jz      L_ED14                        ; func 04
+  jz      int_13_04
 
   dec     ah
-  jz      L_ED18                        ; func 05
+  jz      int_13_05
 
 L_ECB1:
-  mov     [0x0041], byte 0x01
+  mov     byte [0x0041], 0x01           ; invalid request
   ret
 
-L_ECB7:                                 ;func00
-db 0xBA, 0xF2, 0x03                     ; ECB7 mov dx,0x3f2
-db 0xFA                                 ; ECBA cli
-db 0xA0, 0x3F, 0x00                     ; ECBB mov al,[0x3f]
-db 0xB1, 0x04                           ; ECBE mov cl,0x4
-db 0xD2, 0xE0                           ; ECC0 shl al,cl
-db 0xA8, 0x20                           ; ECC2 test al,0x20
-db 0x75, 0x0C                           ; ECC4 jnz 0xecd2
-db 0xA8, 0x40                           ; ECC6 test al,0x40
-db 0x75, 0x06                           ; ECC8 jnz 0xecd0
-db 0xA8, 0x80                           ; ECCA test al,0x80
-db 0x74, 0x06                           ; ECCC jz 0xecd4
-db 0xFE, 0xC0                           ; ECCE inc al
-db 0xFE, 0xC0                           ; ECD0 inc al
-db 0xFE, 0xC0                           ; ECD2 inc al
-db 0x0C, 0x08                           ; ECD4 or al,0x8
-db 0xEE                                 ; ECD6 out dx,al
-db 0xC6, 0x06, 0x3E, 0x00, 0x00         ; ECD7 mov byte [0x3e],0x0
-db 0xC6, 0x06, 0x41, 0x00, 0x00         ; ECDC mov byte [0x41],0x0
-db 0x0C, 0x04                           ; ECE1 or al,0x4
-db 0xEE                                 ; ECE3 out dx,al
-db 0xFB                                 ; ECE4 sti
-db 0xE8, 0x2A, 0x02                     ; ECE5 call 0xef12
-db 0xA0, 0x42, 0x00                     ; ECE8 mov al,[0x42]
-db 0x3C, 0xC0                           ; ECEB cmp al,0xc0
-db 0x74, 0x06                           ; ECED jz 0xecf5
-db 0x80, 0x0E, 0x41, 0x00, 0x20         ; ECEF or byte [0x41],0x20
-db 0xC3                                 ; ECF4 ret
-db 0xB4, 0x03                           ; ECF5 mov ah,0x3
-db 0xE8, 0x47, 0x01                     ; ECF7 call 0xee41
-db 0xBB, 0x01, 0x00                     ; ECFA mov bx,0x1
-db 0xE8, 0x6C, 0x01                     ; ECFD call 0xee6c
-db 0xBB, 0x03, 0x00                     ; ED00 mov bx,0x3
-db 0xE8, 0x66, 0x01                     ; ED03 call 0xee6c
-db 0xC3                                 ; ED06 ret
-L_ED07:                                 ; func01
-db 0xA0, 0x41, 0x00                     ; ED07 mov al,[0x41]
-db 0xC3                                 ; ED0A ret
-L_ED0B:                                 ; func 02
-db 0xB0, 0x46                           ; ED0B mov al,0x46
-db 0xE8, 0xB8, 0x01                     ; ED0D call 0xeec8
-db 0xB4, 0xE6                           ; ED10 mov ah,0xe6
-db 0xEB, 0x36                           ; ED12 jmp short 0xed4a
-L_ED14:                                 ; func 04
-db 0xB0, 0x42                           ; ED14 mov al,0x42
-db 0xEB, 0xF5                           ; ED16 jmp short 0xed0d
-L_ED18:                                 ; func 05
-db 0x80, 0x0E, 0x3F, 0x00, 0x80         ; ED18 or byte [0x3f],0x80
-db 0xB0, 0x4A                           ; ED1D mov al,0x4a
-db 0xE8, 0xA6, 0x01                     ; ED1F call 0xeec8
-db 0xB4, 0x4D                           ; ED22 mov ah,0x4d
-db 0xEB, 0x24                           ; ED24 jmp short 0xed4a
+
+;-----------------------------------------------------------------------------
+; int 13 func 00 - reset fdc
+;-----------------------------------------------------------------------------
+
+int_13_00:                              ; ECB7
+  mov     dx, 0x03f2
+  cli
+
+  mov     al, [0x003f]
+  mov     cl, 0x04
+  shl     al, cl
+  test    al, 0x20                      ; drive motor 1
+  jnz     L_ECD2
+
+  test    al, 0x40                      ; drive motor 2
+  jnz     L_ECD0
+
+  test    al, 0x80                      ; drive motor 3
+  jz      L_ECD4
+
+  inc     al
+
+L_ECD0:
+  inc     al
+
+L_ECD2:
+  inc     al
+
+L_ECD4:
+  or      al, 0x08                      ; dma enable
+  out     dx, al                        ; select drive
+
+  mov     byte [0x003e], 0x00           ; seek status
+  mov     byte [0x0041], 0x00           ; diskette status
+
+  or      al, 0x04                      ; reset fdc
+  out     dx, al
+
+  sti
+
+  call    L_EF12
+
+  mov     al, [0x0042]                  ; fdc status register 0
+  cmp     al, 0xc0
+  je      L_ECF5
+
+  or      byte [0x0041], 0x20           ; general controller failure
+  ret
+
+L_ECF5:
+  mov     ah, 0x03
+  call    L_EE41
+
+  mov     bx, 0x0001
+  call    L_EE6C
+
+  mov     bx, 0x0003
+  call    L_EE6C
+
+  ret
+
+
+;-----------------------------------------------------------------------------
+; int 13 func 01 - get last operation status
+;-----------------------------------------------------------------------------
+
+int_13_01:                              ; ED07
+  mov     al, [0x0041]
+  ret
+
+
+;-----------------------------------------------------------------------------
+; int 13 func 02 - read
+;-----------------------------------------------------------------------------
+
+int_13_02:                              ; ED0B
+  mov     al, 0x46                      ; dma mode
+
+L_ED0D:
+  call    fdc_setup_dma
+
+  mov     ah, 0xe6
+  jmp     short L_ED4A
+
+
+;-----------------------------------------------------------------------------
+; int 13 func 04 - verify
+;-----------------------------------------------------------------------------
+
+int_13_04:                              ; ED14
+  mov     al, 0x42
+  jmp     short L_ED0D
+
+
+;-----------------------------------------------------------------------------
+; int 13 func 05 - format
+;-----------------------------------------------------------------------------
+
+int_13_05:                              ; ED18
+  or      byte [0x003f], 0x80
+
+  mov     al, 0x4a
+  call    fdc_setup_dma                 ; EEC8
+
+  mov     ah, 0x4d
+  jmp     short L_ED4A
+
 db 0xBB, 0x07, 0x00                     ; ED26 mov bx,0x7
 db 0xE8, 0x40, 0x01                     ; ED29 call 0xee6c
 db 0xBB, 0x09, 0x00                     ; ED2C mov bx,0x9
@@ -2176,52 +2289,90 @@ db 0xBB, 0x0F, 0x00                     ; ED32 mov bx,0xf
 db 0xE8, 0x34, 0x01                     ; ED35 call 0xee6c
 db 0xBB, 0x11, 0x00                     ; ED38 mov bx,0x11
 db 0xE9, 0xAB, 0x00                     ; ED3B jmp 0xede9
-L_ED3E:                                 ; func 03
-db 0x80, 0x0E, 0x3F, 0x00, 0x80         ; ED3E or byte [0x3f],0x80
-db 0xB0, 0x4A                           ; ED43 mov al,0x4a
-db 0xE8, 0x80, 0x01                     ; ED45 call 0xeec8
-db 0xB4, 0xC5                           ; ED48 mov ah,0xc5
-db 0x73, 0x08                           ; ED4A jnc 0xed54
-db 0xC6, 0x06, 0x41, 0x00, 0x09         ; ED4C mov byte [0x41],0x9
-db 0xB0, 0x00                           ; ED51 mov al,0x0
-db 0xC3                                 ; ED53 ret
-db 0x50                                 ; ED54 push ax
-db 0x51                                 ; ED55 push cx
-db 0x8A, 0xCA                           ; ED56 mov cl,dl
-db 0xB0, 0x01                           ; ED58 mov al,0x1
-db 0xD2, 0xE0                           ; ED5A shl al,cl
-db 0xFA                                 ; ED5C cli
-db 0xC6, 0x06, 0x40, 0x00, 0xFF         ; ED5D mov byte [0x40],0xff
-db 0x84, 0x06, 0x3F, 0x00               ; ED62 test [0x3f],al
-db 0x75, 0x31                           ; ED66 jnz 0xed99
-db 0x80, 0x26, 0x3F, 0x00, 0xF0         ; ED68 and byte [0x3f],0xf0
-db 0x08, 0x06, 0x3F, 0x00               ; ED6D or [0x3f],al
-db 0xFB                                 ; ED71 sti
-db 0xB0, 0x10                           ; ED72 mov al,0x10
-db 0xD2, 0xE0                           ; ED74 shl al,cl
-db 0x0A, 0xC2                           ; ED76 or al,dl
-db 0x0C, 0x0C                           ; ED78 or al,0xc
-db 0x52                                 ; ED7A push dx
-db 0xBA, 0xF2, 0x03                     ; ED7B mov dx,0x3f2
-db 0xEE                                 ; ED7E out dx,al
-db 0x5A                                 ; ED7F pop dx
-db 0xF6, 0x06, 0x3F, 0x00, 0x80         ; ED80 test byte [0x3f],0x80
-db 0x74, 0x12                           ; ED85 jz 0xed99
-db 0xBB, 0x14, 0x00                     ; ED87 mov bx,0x14
-db 0xE8, 0xDF, 0x00                     ; ED8A call 0xee6c
-db 0x0A, 0xE4                           ; ED8D or ah,ah
-db 0x74, 0x08                           ; ED8F jz 0xed99
-db 0x2B, 0xC9                           ; ED91 sub cx,cx
-db 0xE2, 0xFE                           ; ED93 loop 0xed93
-db 0xFE, 0xCC                           ; ED95 dec ah
-db 0xEB, 0xF6                           ; ED97 jmp short 0xed8f
-db 0xFB                                 ; ED99 sti
-db 0x59                                 ; ED9A pop cx
-db 0xE8, 0xDF, 0x00                     ; ED9B call 0xee7d
-db 0x58                                 ; ED9E pop ax
-db 0x8A, 0xFC                           ; ED9F mov bh,ah
-db 0xB6, 0x00                           ; EDA1 mov dh,0x0
-db 0x72, 0x4B                           ; EDA3 jc 0xedf0
+
+
+;-----------------------------------------------------------------------------
+; int 13 func 03 - write
+;-----------------------------------------------------------------------------
+
+int_13_03:                              ; ED3E
+  or      byte [0x003f], 0x80
+  mov     al, 0x4a
+  call    fdc_setup_dma                 ; EEC8
+  mov     ah, 0xc5
+
+
+; do fdc read/write operation
+L_ED4A:
+  jnc     L_ED54                        ; dma setup was ok
+
+  mov     byte [0x0041], 0x09
+  mov     al, 0x00
+  ret
+
+L_ED54:
+  push    ax
+  push    cx
+
+  mov     cl, dl
+  mov     al, 0x01
+  shl     al, cl
+
+  cli
+
+  mov     byte [0x0040], 0xff           ; reset motor off timeout
+
+  test    byte [0x003f], al             ; check if motor is on
+  jnz     L_ED99
+
+  and     byte [0x003f], 0xf0           ; clear motor status
+  or      byte [0x003f], al             ; set motor status to on
+
+  sti
+
+  mov     al, 0x10
+  shl     al, cl
+  or      al, dl
+  or      al, 0x0c
+
+  push    dx
+  mov     dx, 0x03f2
+  out     dx, al                        ; turn on motor
+  pop     dx
+
+  test    byte [0x003f], 0x80
+  jz      L_ED99
+
+  mov     bx, 2 * 0x000a                ; motor start time
+  call    dpt_get_param                 ; EE6C
+  or      ah, ah
+
+L_ED8F:
+  jz      L_ED99
+
+  sub     cx, cx
+
+L_ED93:
+  loop    L_ED93
+
+  dec     ah
+  jmp     short L_ED8F
+
+L_ED99:
+  ; motor is on
+
+  sti
+
+  pop     cx
+
+  call    L_EE7D
+
+  pop     ax
+
+  mov     bh, ah
+  mov     dh, 0x00
+  jc      L_EDF0
+
 db 0xBE, 0xF0, 0xED                     ; EDA5 mov si,0xedf0
 db 0x90                                 ; EDA8 nop
 db 0x56                                 ; EDA9 push si
@@ -2251,6 +2402,7 @@ db 0xBB, 0x0D, 0x00                     ; EDE6 mov bx,0xd
 db 0xE8, 0x80, 0x00                     ; EDE9 call 0xee6c
 db 0x5E                                 ; EDEC pop si
 db 0xE8, 0x43, 0x01                     ; EDED call 0xef33
+L_EDF0:
 db 0x72, 0x45                           ; EDF0 jc 0xee37
 db 0xE8, 0x74, 0x01                     ; EDF2 call 0xef69
 db 0x72, 0x3F                           ; EDF5 jc 0xee36
@@ -2291,48 +2443,71 @@ db 0xC3                                 ; EE3A ret
 db 0xE8, 0x70, 0x01                     ; EE3B call 0xefae
 db 0x32, 0xE4                           ; EE3E xor ah,ah
 db 0xC3                                 ; EE40 ret
-L_EE41:
-db 0x52                                 ; EE41 push dx
-db 0x51                                 ; EE42 push cx
-db 0xBA, 0xF4, 0x03                     ; EE43 mov dx,0x3f4
-db 0x33, 0xC9                           ; EE46 xor cx,cx
-db 0xEC                                 ; EE48 in al,dx
-db 0xA8, 0x40                           ; EE49 test al,0x40
-db 0x74, 0x0C                           ; EE4B jz 0xee59
-db 0xE2, 0xF9                           ; EE4D loop 0xee48
-db 0x80, 0x0E, 0x41, 0x00, 0x80         ; EE4F or byte [0x41],0x80
-db 0x59                                 ; EE54 pop cx
-db 0x5A                                 ; EE55 pop dx
-db 0x58                                 ; EE56 pop ax
-db 0xF9                                 ; EE57 stc
-db 0xC3                                 ; EE58 ret
-db 0x33, 0xC9                           ; EE59 xor cx,cx
-db 0xEC                                 ; EE5B in al,dx
-db 0xA8, 0x80                           ; EE5C test al,0x80
-db 0x75, 0x04                           ; EE5E jnz 0xee64
-db 0xE2, 0xF9                           ; EE60 loop 0xee5b
-db 0xEB, 0xEB                           ; EE62 jmp short 0xee4f
-db 0x8A, 0xC4                           ; EE64 mov al,ah
-db 0xB2, 0xF5                           ; EE66 mov dl,0xf5
-db 0xEE                                 ; EE68 out dx,al
-db 0x59                                 ; EE69 pop cx
-db 0x5A                                 ; EE6A pop dx
-db 0xC3                                 ; EE6B ret
 
+; send ah to fdc
+L_EE41:
+  push    dx
+  push    cx
+
+  mov     dx, 0x03f4                    ; status register
+  xor     cx, cx
+
+L_EE48:
+  in      al, dx
+  test    al, 0x40                      ; direction
+  jz      L_EE59
+  loop    L_EE48
+
+L_EE4F:
+  or      byte [0x0041], 0x80           ; timeout
+
+  pop     cx
+  pop     dx
+  pop     ax
+  stc
+  ret
+
+L_EE59:
+  xor     cx, cx
+
+L_EE5B:
+  in      al, dx
+  test    al, 0x80                      ; ready
+  jnz     L_EE64
+  loop    L_EE5B
+
+  jmp     short L_EE4F                  ; timeout
+
+L_EE64:
+  mov     al, ah
+  mov     dl, 0xf5                      ; data register
+
+  out     dx, al
+
+  pop     cx
+  pop     dx
+  ret
+
+
+; get dpt parameter (bx / 2) in AH.
+dpt_get_param:                          ; EE6C
 L_EE6C:
   push    ds
+
   sub     ax, ax
   mov     ds, ax
 
-  lds     si, [4 * 0x1e]
+  lds     si, [4 * 0x1e]                ; get pointer to dpt
 
   shr     bx, 1
-  mov     ah, [bx + si]
+  mov     ah, [bx + si]                 ; get parameter
 
   pop     ds
   jc      L_EE41
   ret
 
+
+L_EE7D:
 db 0xB0, 0x01                           ; EE7D mov al,0x1
 db 0x51                                 ; EE7F push cx
 db 0x8A, 0xCA                           ; EE80 mov cl,dl
@@ -2367,51 +2542,75 @@ db 0xEB, 0xF3                           ; EEC3 jmp short 0xeeb8
 db 0x59                                 ; EEC5 pop cx
 db 0x9D                                 ; EEC6 popf
 db 0xC3                                 ; EEC7 ret
-db 0x51                                 ; EEC8 push cx
-db 0xFA                                 ; EEC9 cli
-db 0xE6, 0x0C                           ; EECA out 0xc,al
-db 0x50                                 ; EECC push ax
-db 0x58                                 ; EECD pop ax
-db 0xE6, 0x0B                           ; EECE out 0xb,al
-db 0x8C, 0xC0                           ; EED0 mov ax,es
-db 0xB1, 0x04                           ; EED2 mov cl,0x4
-db 0xD3, 0xC0                           ; EED4 rol ax,cl
-db 0x8A, 0xE8                           ; EED6 mov ch,al
-db 0x24, 0xF0                           ; EED8 and al,0xf0
-db 0x03, 0xC3                           ; EEDA add ax,bx
-db 0x73, 0x02                           ; EEDC jnc 0xeee0
-db 0xFE, 0xC5                           ; EEDE inc ch
-db 0x50                                 ; EEE0 push ax
-db 0xE6, 0x04                           ; EEE1 out 0x4,al
-db 0x8A, 0xC4                           ; EEE3 mov al,ah
-db 0xE6, 0x04                           ; EEE5 out 0x4,al
-db 0x8A, 0xC5                           ; EEE7 mov al,ch
-db 0x24, 0x0F                           ; EEE9 and al,0xf
-db 0xE6, 0x81                           ; EEEB out 0x81,al
-db 0x8A, 0xE6                           ; EEED mov ah,dh
-db 0x2A, 0xC0                           ; EEEF sub al,al
-db 0xD1, 0xE8                           ; EEF1 shr ax,1
-db 0x50                                 ; EEF3 push ax
-db 0xBB, 0x06, 0x00                     ; EEF4 mov bx,0x6
-db 0xE8, 0x72, 0xFF                     ; EEF7 call 0xee6c
-db 0x8A, 0xCC                           ; EEFA mov cl,ah
-db 0x58                                 ; EEFC pop ax
-db 0xD3, 0xE0                           ; EEFD shl ax,cl
-db 0x48                                 ; EEFF dec ax
-db 0x50                                 ; EF00 push ax
-db 0xE6, 0x05                           ; EF01 out 0x5,al
-db 0x8A, 0xC4                           ; EF03 mov al,ah
-db 0xE6, 0x05                           ; EF05 out 0x5,al
-db 0xFB                                 ; EF07 sti
-db 0x59                                 ; EF08 pop cx
-db 0x58                                 ; EF09 pop ax
-db 0x03, 0xC1                           ; EF0A add ax,cx
-db 0x59                                 ; EF0C pop cx
-db 0xB0, 0x02                           ; EF0D mov al,0x2
-db 0xE6, 0x0A                           ; EF0F out 0xa,al
-db 0xC3                                 ; EF11 ret
-db 0xE8, 0x1E, 0x00                     ; EF12 call 0xef33
-db 0x72, 0x14                           ; EF15 jc 0xef2b
+
+; setup dma channel 2 with mode al, address ES:BX, sector count dh
+fdc_setup_dma:                          ; EEC8
+L_EEC8:
+  push    cx
+  cli
+
+  out     0x000c, al                    ; dma mode
+  push    ax
+  pop     ax
+  out     0x000b, al                    ; clear flip-flop
+
+  mov     ax, es
+  mov     cl, 0x04
+  rol     ax, cl
+  mov     ch, al                        ; dma page
+  and     al, 0xf0
+  add     ax, bx
+  jnc     L_EEE0
+
+  inc     ch
+
+L_EEE0:
+  ; linear address in CH:AX
+
+  push    ax
+  out     0x0004, al                    ; dma address low byte
+  mov     al, ah
+  out     0x0004, al                    ; dma address high byte
+
+  mov     al, ch
+  and     al, 0x0f
+  out     0x81, al                      ; dma page
+
+  mov     ah, dh                        ; sector count
+  sub     al, al
+  shr     ax, 1                         ; n << 7
+
+  push    ax
+  mov     bx, 2 * 0x0003                ; bytes per sector
+  call    L_EE6C
+  mov     cl, ah
+  pop     ax
+
+  shl     ax, cl                        ; byte count in AX
+  dec     ax
+
+  push    ax
+  out     0x0005, al                    ; dma channel 2 word count
+  mov     al, ah
+  out     0x0005, al
+
+  sti
+
+  pop     cx
+  pop     ax
+
+  add     ax, cx
+  pop     cx
+
+  mov     al, 0x02
+  out     0x000a, al
+
+  ret
+
+
+L_EF12:
+  call    L_EF33
+  jc      L_EF2B
 db 0xB4, 0x08                           ; EF17 mov ah,0x8
 db 0xE8, 0x25, 0xFF                     ; EF19 call 0xee41
 db 0xE8, 0x4A, 0x00                     ; EF1C call 0xef69
@@ -2421,10 +2620,13 @@ db 0x24, 0x60                           ; EF24 and al,0x60
 db 0x3C, 0x60                           ; EF26 cmp al,0x60
 db 0x74, 0x02                           ; EF28 jz 0xef2c
 db 0xF8                                 ; EF2A clc
-db 0xC3                                 ; EF2B ret
+L_EF2B:
+  ret
 db 0x80, 0x0E, 0x41, 0x00, 0x40         ; EF2C or byte [0x41],0x40
 db 0xF9                                 ; EF31 stc
 db 0xC3                                 ; EF32 ret
+
+L_EF33:
 db 0xFB                                 ; EF33 sti
 db 0x53                                 ; EF34 push bx
 db 0x51                                 ; EF35 push cx
@@ -2443,16 +2645,29 @@ db 0x9D                                 ; EF53 popf
 db 0x59                                 ; EF54 pop cx
 db 0x5B                                 ; EF55 pop bx
 db 0xC3                                 ; EF56 ret
-db 0xFB                                 ; EF57 sti
-db 0x1E                                 ; EF58 push ds
-db 0x50                                 ; EF59 push ax
-db 0xE8, 0xE1, 0x0F                     ; EF5A call 0xff3e
-db 0x80, 0x0E, 0x3E, 0x00, 0x80         ; EF5D or byte [0x3e],0x80
-db 0xB0, 0x20                           ; EF62 mov al,0x20
-db 0xE6, 0x20                           ; EF64 out 0x20,al
-db 0x58                                 ; EF66 pop ax
-db 0x1F                                 ; EF67 pop ds
-db 0xCF                                 ; EF68 iret
+
+
+;-----------------------------------------------------------------------------
+; int 0e - floppy
+;-----------------------------------------------------------------------------
+
+int_0e:                                 ; EF57
+  sti
+  push    ds
+  push    ax
+
+  call    set_bios_ds
+
+  or      byte [0x003e], 0x80
+
+  mov     al, 0x20
+  out     0x20, al                      ; end of interrupt
+
+  pop     ax
+  pop     ds
+  iret
+
+
 db 0xFC                                 ; EF69 cld
 db 0xBF, 0x42, 0x00                     ; EF6A mov di,0x42
 db 0x51                                 ; EF6D push cx
@@ -2503,13 +2718,14 @@ db 0x8A, 0xC4                           ; EFBE mov al,ah
 db 0xFE, 0xC0                           ; EFC0 inc al
 db 0x2A, 0xC1                           ; EFC2 sub al,cl
 db 0xC3                                 ; EFC4 ret
-db 0xFF                                 ; EFC5 db 0xFF
-db 0xFF
 
 
-;*****************************************************************************
-;* int 1E
-;*****************************************************************************
+  db      0xff, 0xff
+
+
+;-----------------------------------------------------------------------------
+;* int 1E - diskette parameter table
+;-----------------------------------------------------------------------------
 
 int_1e:                                 ; EFC7
   db 0xCF                               ; step rate
@@ -2525,9 +2741,9 @@ int_1e:                                 ; EFC7
   db 0x04                               ; motor start time
 
 
-;*****************************************************************************
-;* int 17 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 17 handler
+;-----------------------------------------------------------------------------
 
 int_17:                                 ; EFD2
   sti
@@ -2566,11 +2782,11 @@ int_17_done:                            ; EFF5
   iret
 
 
-;*****************************************************************************
-;* int 17 func 00 - print character
-;* AL = character
-;* DX = port
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 17 func 00 - print character
+; inp: AL = character
+;      DX = port
+;-----------------------------------------------------------------------------
 
 int_17_00:                              ; EFFB
   push    ax
@@ -2608,10 +2824,10 @@ L_F015:
   pop     ax
 
 
-;*****************************************************************************
-;* int 17 func 02 - get port status
-;* DX = port
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 17 func 02 - get port status
+; inp: DX = port
+;-----------------------------------------------------------------------------
 
 int_17_02:                              ; F01D
   push    ax
@@ -2634,10 +2850,10 @@ L_F028:
   jmp     short int_17_done
 
 
-;*****************************************************************************
-;* int 17 func 01 - initialize port
-;* DX = port
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 17 func 01 - initialize port
+; inp: DX = port
+;-----------------------------------------------------------------------------
 
 int_17_01:                              ; F030
   push    ax
@@ -2685,9 +2901,9 @@ int_10_func:
   dw      int_10_0f                     ; F274
 
 
-;*****************************************************************************
-;* int 10 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 handler
+;-----------------------------------------------------------------------------
 
 int_10:                                 ; F065
   sti
@@ -2733,42 +2949,34 @@ L_F095:
 
   jmp     near [cs:si + int_10_func]
 
-db 0xFF                                 ; F0A1 db 0xFF
-db 0xFF                                 ; F0A2 db 0xFF
-db 0xFF                                 ; F0A3 db 0xFF
-db 0x38, 0x28                           ; F0A4 cmp [bx+si],ch
-db 0x2D, 0x0A, 0x1F                     ; F0A6 sub ax,0x1f0a
-db 0x06                                 ; F0A9 push es
-db 0x19, 0x1C                           ; F0AA sbb [si],bx
-db 0x02, 0x07                           ; F0AC add al,[bx]
-db 0x06                                 ; F0AE push es
-db 0x07                                 ; F0AF pop es
-db 0x00, 0x00                           ; F0B0 add [bx+si],al
-db 0x00, 0x00                           ; F0B2 add [bx+si],al
-db 0x71, 0x50                           ; F0B4 jno 0xf106
-db 0x5A                                 ; F0B6 pop dx
-db 0x0A, 0x1F                           ; F0B7 or bl,[bx]
-db 0x06                                 ; F0B9 push es
-db 0x19, 0x1C                           ; F0BA sbb [si],bx
-db 0x02, 0x07                           ; F0BC add al,[bx]
-db 0x06                                 ; F0BE push es
-db 0x07                                 ; F0BF pop es
-db 0x00, 0x00                           ; F0C0 add [bx+si],al
-db 0x00, 0x00                           ; F0C2 add [bx+si],al
-db 0x38, 0x28                           ; F0C4 cmp [bx+si],ch
-db 0x2D, 0x0A, 0x7F                     ; F0C6 sub ax,0x7f0a
-db 0x06                                 ; F0C9 push es
-db 0x64, 0x70, 0x02                     ; F0CA fs jo 0xf0cf
-db 0x01, 0x06, 0x07, 0x00               ; F0CD add [0x7],ax
-db 0x00, 0x00                           ; F0D1 add [bx+si],al
-db 0x00, 0x61, 0x50                     ; F0D3 add [bx+di+0x50],ah
-db 0x52                                 ; F0D6 push dx
-db 0x0F                                 ; F0D7 db 0x0F
-db 0x19, 0x06, 0x19, 0x19               ; F0D8 sbb [0x1919],ax
-db 0x02, 0x0D                           ; F0DC add cl,[di]
-db 0x0B, 0x0C                           ; F0DE or cx,[si]
-db 0x00, 0x00                           ; F0E0 add [bx+si],al
-db 0x00, 0x00                           ; F0E2 add [bx+si],al
+
+  db      0xff, 0xff, 0xff
+
+
+;-----------------------------------------------------------------------------
+; int 1d - video parameter table
+;-----------------------------------------------------------------------------
+
+int_1d:                                 ; F0A4
+  db 0x38, 0x28, 0x2D, 0x0A             ; crtc regs modes 00 and 01
+  db 0x1F, 0x06, 0x19, 0x1C
+  db 0x02, 0x07, 0x06, 0x07
+  db 0x00, 0x00, 0x00, 0x00
+
+  db 0x71, 0x50, 0x5A, 0x0A             ; crtc regs modes 02 and 03
+  db 0x1F, 0x06, 0x19, 0x1C
+  db 0x02, 0x07, 0x06, 0x07
+  db 0x00, 0x00, 0x00, 0x00
+
+  db 0x38, 0x28, 0x2D, 0x0A             ; crtc regs modes 04 and 05
+  db 0x7F, 0x06, 0x64, 0x70
+  db 0x02, 0x01, 0x06, 0x07
+  db 0x00, 0x00, 0x00, 0x00
+
+  db 0x61, 0x50, 0x52, 0x0F             ; crtc regs modes 06 and 07
+  db 0x19, 0x06, 0x19, 0x19
+  db 0x02, 0x0D, 0x0B, 0x0C
+  db 0x00, 0x00, 0x00, 0x00
 
 ; page sizes
 L_F0E4:
@@ -2800,10 +3008,10 @@ L_F0F4:
   db 0x29
 
 
-;*****************************************************************************
-;* int 10 func 00 - set video mode
-;* AL = video mode (0 - 7)
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 00 - set video mode
+; inp: AL = video mode (0 - 7)
+;-----------------------------------------------------------------------------
 
 int_10_00:                              ; F0FC
   mov     dx, 0x03d4
@@ -2949,11 +3157,11 @@ int_10_done1:                           ; F1C8
   iret
 
 
-;*****************************************************************************
-;* int 10 func 01 - set cursor size
-;* CH = top scan line
-;* CL = bottom scan line
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 01 - set cursor size
+; inp: CH = top scan line
+;      CL = bottom scan line
+;-----------------------------------------------------------------------------
 
 int_10_01:                              ; F1CD
   mov     ah, 0x0a                      ; crtc register
@@ -2983,12 +3191,12 @@ L_F1D8:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 02 - set cursor position
-;* BH = page
-;* DH = row
-;* DL = column
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 02 - set cursor position
+; inp: BH = page
+;      DH = row
+;      DL = column
+;-----------------------------------------------------------------------------
 
 int_10_02:                              ; F1EE
   mov     cl, bh
@@ -3021,10 +3229,10 @@ L_F206:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 05 - set current page
-;* AL = page
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 05 - set current page
+; inp: AL = page
+;-----------------------------------------------------------------------------
 
 int_10_05:                              ; F217
   mov     [0x0062], al                  ; current page
@@ -3052,10 +3260,14 @@ int_10_05:                              ; F217
   jmp     short int_10_done
 
 
-;*****************************************************************************
-;* int 10 func 03 - get cursor position and size
-;* BH = page number
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 03 - get cursor position and size
+; inp: BH = page number
+; out: DH = row
+;      DL = column
+;      CH = top scan line
+;      CL = bottom scan line
+;-----------------------------------------------------------------------------
 
 int_10_03:                              ; F239
   mov     bl, bh
@@ -3074,11 +3286,11 @@ int_10_03:                              ; F239
   iret
 
 
-;*****************************************************************************
-;* int 10 func 0b - set background color and color palette
-;* BH = select background color (0) or color palette (1)
-;* BL = background color or color palette
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0b - set background color and color palette
+; inp: BH = select background color (0) or color palette (1)
+;      BL = background color or color palette
+;-----------------------------------------------------------------------------
 
 int_10_0b:                              ; F24E
   mov     dx, [0x0063]                  ; crtc base
@@ -3110,12 +3322,12 @@ int_10_0b_01:                           ; F26A
   jmp     short L_F263
 
 
-;*****************************************************************************
-;* int 10 func 0f - get video mode
-;* AH = column count
-;* AL = video mode
-;* BH = current page
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0f - get video mode
+; out: AH = column count
+;      AL = video mode
+;      BH = current page
+;-----------------------------------------------------------------------------
 
 int_10_0f:                              ; F274
   mov     ah, [0x004a]                  ; number of columns
@@ -3144,15 +3356,15 @@ L_F285:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 06 - scroll up
-;* AL = line count (0 to clear)
-;* BH = attribute for new lines
-;* CH = row upper left corner
-;* CL = column upper left corner
-;* DH = row lower right corner
-;* DL = column lower right corner
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 06 - scroll up
+; inp: AL = line count (0 to clear)
+;      BH = attribute for new lines
+;      CH = row upper left corner
+;      CL = column upper left corner
+;      DH = row lower right corner
+;      DL = column lower right corner
+;-----------------------------------------------------------------------------
 
 int_10_06:                              ; F296
   mov     bl, al
@@ -3165,7 +3377,7 @@ int_10_06:                              ; F296
 
   jmp     L_F495
 
-; cga text modes
+; cga/mda text modes
 L_F2A5:
   push    bx
   mov     ax, cx
@@ -3264,15 +3476,15 @@ L_F331:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 07 - scroll down
-;* AL = line count
-;* BH = attribute for new lines
-;* CH = upper left corner row
-;* CL = upper left corner column
-;* DH = lower right corner row
-;* DL = lower right corner column
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 07 - scroll down
+; inp: AL = line count
+;      BH = attribute for new lines
+;      CH = upper left corner row
+;      CL = upper left corner column
+;      DH = lower right corner row
+;      DL = lower right corner column
+;-----------------------------------------------------------------------------
 
 int_10_07:                              ; F338
   std
@@ -3323,13 +3535,12 @@ L_F370:
   jmp     short L_F361
 
 
-;*****************************************************************************
-;* int 10 func 08 - get character and attribute
-;* BH = page
-;*
-;* AL = character
-;* AH = attribute
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 08 - get character and attribute
+; inp: BH = page
+; out: AL = character
+;      AH = attribute
+;-----------------------------------------------------------------------------
 
 int_10_08:                              ; F374
   cmp     ah, 4
@@ -3395,13 +3606,13 @@ L_F3B3:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 09 - write character and attribute
-;* AL = character
-;* BH = page
-;* BL = attribute
-;* CX = count
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 09 - write character and attribute
+; inp: AL = character
+;      BH = page
+;      BL = attribute
+;      CX = count
+;-----------------------------------------------------------------------------
 
 int_10_09:                              ; F3B9
   cmp     ah, 4
@@ -3460,12 +3671,12 @@ L_F3E3:
   jmp     int_10_done
 
 
-;*****************************************************************************
-;* int 10 func 0a - write character without attribute
-;* AL = character
-;* BH = page
-;* CX = count
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0a - write character without attribute
+; inp: AL = character
+;      BH = page
+;      CX = count
+;-----------------------------------------------------------------------------
 
 int_10_0a:                              ; F3EC
   cmp     ah, 4
@@ -3524,13 +3735,13 @@ L_F416:
   jmp     int_10_done
 
 
-;*****************************************************************************
-;* int 10 func 0d - get pixel
-;* inp: BH = page
-;*      CX = x
-;*      DX = y
-;* out: AL = color
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0d - get pixel
+; inp: BH = page
+;      CX = x
+;      DX = y
+; out: AL = color
+;-----------------------------------------------------------------------------
 
 int_10_0d:                              ; F41E
   call    L_F452
@@ -3543,13 +3754,13 @@ int_10_0d:                              ; F41E
   jmp     int_10_done
 
 
-;*****************************************************************************
-;* int 10 func 0c - set pixel
-;* inp: AL = color
-;*      BH = page
-;*      CX = x
-;*      DX = y
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0c - set pixel
+; inp: AL = color
+;      BH = page
+;      CX = x
+;      DX = y
+;-----------------------------------------------------------------------------
 
 int_10_0c:                              ; F42F
   push    ax
@@ -3991,12 +4202,12 @@ L_F702:
   ret
 
 
-;*****************************************************************************
-;* int 10 func 0e - print character
-;* AL = character
-;* BH = page
-;* BL = foreground color
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 0e - print character
+; inp: AL = character
+;      BH = page
+;      BL = foreground color
+;-----------------------------------------------------------------------------
 
 int_10_0e:                              ; F718
   push    ax
@@ -4098,27 +4309,25 @@ L_F78D:
   jmp     short L_F76F
 
 
-db 0x03, 0x03                           ; F794 add ax,[bp+di]
-db 0x05, 0x05, 0x03                     ; F796 add ax,0x305
-db 0x03, 0x03                           ; F799 add ax,[bp+di]
-db 0x04
+L_F794:
+  db 0x03, 0x03, 0x05, 0x05,
+  db 0x03, 0x03, 0x03, 0x04
 
 
-;*****************************************************************************
-;* int 10 func 04 - get light pen position
-;* AH = status (0/1)
-;* BX = x
-;* CX = y if more than 200 lines
-;* CH = y if less than 200 lines (mode 4 - 6)
-;* DH = text mode row
-;* DL = text mode column
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 10 func 04 - get light pen position
+; out: AH = status (0/1)
+;      BX = x
+;      CH = y
+;      DH = text mode row
+;      DL = text mode column
+;-----------------------------------------------------------------------------
 
 int_10_04:                              ; F79C
   mov     ah, 0
 
   mov     dx, [0x0063]                  ; crtc base
-  add     dx, byte 6
+  add     dx, byte 0x06
   in      al, dx
 
   test    al, 0x04
@@ -4130,65 +4339,91 @@ int_10_04:                              ; F79C
   jmp     L_F832
 
 L_F7B1:
-db 0xB4, 0x10                           ; F7B1 mov ah,0x10
-db 0x8B, 0x16, 0x63, 0x00               ; F7B3 mov dx,[0x63]
-db 0x8A, 0xC4                           ; F7B7 mov al,ah
-db 0xEE                                 ; F7B9 out dx,al
-db 0x42                                 ; F7BA inc dx
-db 0xEC                                 ; F7BB in al,dx
-db 0x8A, 0xE8                           ; F7BC mov ch,al
-db 0x4A                                 ; F7BE dec dx
-db 0xFE, 0xC4                           ; F7BF inc ah
-db 0x8A, 0xC4                           ; F7C1 mov al,ah
-db 0xEE                                 ; F7C3 out dx,al
-db 0x42                                 ; F7C4 inc dx
-db 0xEC                                 ; F7C5 in al,dx
-db 0x8A, 0xE5                           ; F7C6 mov ah,ch
-db 0x8A, 0x1E, 0x49, 0x00               ; F7C8 mov bl,[0x49]
-db 0x2A, 0xFF                           ; F7CC sub bh,bh
-db 0x2E, 0x8A, 0x9F, 0x94, 0xF7         ; F7CE mov bl,[cs:bx+0xf794]
-db 0x2B, 0xC3                           ; F7D3 sub ax,bx
-db 0x8B, 0x1E, 0x4E, 0x00               ; F7D5 mov bx,[0x4e]
-db 0xD1, 0xEB                           ; F7D9 shr bx,1
-db 0x2B, 0xC3                           ; F7DB sub ax,bx
-db 0x79, 0x02                           ; F7DD jns 0xf7e1
-db 0x2B, 0xC0                           ; F7DF sub ax,ax
-db 0xB1, 0x03                           ; F7E1 mov cl,0x3
-db 0x80, 0x3E, 0x49, 0x00, 0x04         ; F7E3 cmp byte [0x49],0x4
-db 0x72, 0x2A                           ; F7E8 jc 0xf814
-db 0x80, 0x3E, 0x49, 0x00, 0x07         ; F7EA cmp byte [0x49],0x7
-db 0x74, 0x23                           ; F7EF jz 0xf814
-db 0xB2, 0x28                           ; F7F1 mov dl,0x28
-db 0xF6, 0xF2                           ; F7F3 div dl
-db 0x8A, 0xE8                           ; F7F5 mov ch,al
-db 0x02, 0xED                           ; F7F7 add ch,ch
-db 0x8A, 0xDC                           ; F7F9 mov bl,ah
-db 0x2A, 0xFF                           ; F7FB sub bh,bh
-db 0x80, 0x3E, 0x49, 0x00, 0x06         ; F7FD cmp byte [0x49],0x6
-db 0x75, 0x04                           ; F802 jnz 0xf808
-db 0xB1, 0x04                           ; F804 mov cl,0x4
-db 0xD0, 0xE4                           ; F806 shl ah,1
-db 0xD3, 0xE3                           ; F808 shl bx,cl
-db 0x8A, 0xD4                           ; F80A mov dl,ah
-db 0x8A, 0xF0                           ; F80C mov dh,al
-db 0xD0, 0xEE                           ; F80E shr dh,1
-db 0xD0, 0xEE                           ; F810 shr dh,1
-db 0xEB, 0x12                           ; F812 jmp short 0xf826
-db 0xF6, 0x36, 0x4A, 0x00               ; F814 div byte [0x4a]
-db 0x8A, 0xF0                           ; F818 mov dh,al
-db 0x8A, 0xD4                           ; F81A mov dl,ah
-db 0xD2, 0xE0                           ; F81C shl al,cl
-db 0x8A, 0xE8                           ; F81E mov ch,al
-db 0x8A, 0xDC                           ; F820 mov bl,ah
-db 0x32, 0xFF                           ; F822 xor bh,bh
-db 0xD3, 0xE3                           ; F824 shl bx,cl
-db 0xB4, 0x01                           ; F826 mov ah,0x1
+  mov     ah, 0x10
+  mov     dx, [0x0063]
+  mov     al, ah
+  out     dx, al
+  inc     dx
+  in      al, dx
+  mov     ch, al
+
+  dec     dx
+  inc     ah
+
+  mov     al, ah
+  out     dx, al
+  inc     dx
+  in      al, dx
+  mov     ah, ch
+
+  mov     bl, [0x0049]                  ; video mode
+  sub     bh, bh
+  mov     bl, [cs:bx + L_F794]
+  sub     ax, bx
+
+  mov     bx, [0x004e]                  ; page offset
+  shr     bx, 1
+  sub     ax, bx
+  jns     L_F7E1
+
+  sub     ax, ax
+
+L_F7E1:
+  mov     cl, 0x03
+
+  cmp     byte [0x0049], 0x04
+  jb      L_F814
+
+  cmp     byte [0x49], 0x07
+  je      L_F814
+
+; graphic mode
+  mov     dl, 0x28                      ; bytes per row
+  div     dl
+  mov     ch, al                        ; row
+  add     ch, ch
+
+  mov     bl, ah
+  sub     bh, bh
+  cmp     byte [0x0049], 0x06
+  jne     L_F808
+
+  mov     cl, 0x04
+  shl     ah, 1
+
+L_F808:
+  shl     bx, cl                        ; x
+
+  mov     dl, ah                        ; column
+  mov     dh, al                        ; row
+  shr     dh, 1
+  shr     dh, 1
+
+  jmp     short L_F826
+
+; text mode
+L_F814:
+  div     byte [0x004a]                 ; divide by columns
+  mov     dh, al                        ; row
+  mov     dl, ah                        ; column
+
+  shl     al, cl
+  mov     ch, al                        ; pixel row
+
+  mov     bl, ah
+  xor     bh, bh
+  shl     bx, cl                        ; pixel column
+
+L_F826:
+  mov     ah, 0x01
+
 L_F828:
-db 0x52                                 ; F828 push dx
-db 0x8B, 0x16, 0x63, 0x00               ; F829 mov dx,[0x63]
-db 0x83, 0xC2, 0x07                     ; F82D add dx,byte +0x7
-db 0xEE                                 ; F830 out dx,al
-db 0x5A                                 ; F831 pop dx
+  push    dx
+  mov     dx, [0x0063]
+  add     dx, byte 0x07
+  out     dx, al
+  pop     dx
+
 L_F832:
   pop     di
   pop     si
@@ -4203,9 +4438,10 @@ L_F832:
   db      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 
-;*****************************************************************************
-;* int 12 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 12
+; out: AX = ram size in KB
+;-----------------------------------------------------------------------------
 
 int_12:                                 ; F841
   sti
@@ -4220,9 +4456,10 @@ int_12:                                 ; F841
   dw      0xffff                        ; F84B
 
 
-;*****************************************************************************
-;* int 11 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 11
+; out: AX = configuration word
+;-----------------------------------------------------------------------------
 
 int_11:                                 ; F84D
   sti
@@ -4237,9 +4474,9 @@ int_11:                                 ; F84D
   dw      0xffff                        ; F857
 
 
-;*****************************************************************************
-;* int 15 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 15
+;-----------------------------------------------------------------------------
 
 int_15:                                 ; F859
   sti
@@ -4247,7 +4484,7 @@ int_15:                                 ; F859
 
   call    set_bios_ds
 
-  and     [0x0071], byte 0x7f           ; break flag
+  and     byte [0x0071], 0x7f           ; break flag
 
   call    L_F86A
 
@@ -4274,9 +4511,9 @@ L_F87D:
   ret
 
 
-;*****************************************************************************
-;* int 15 func 00 - turn tape drive motor on
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 15 func 00 - turn tape drive motor on
+;-----------------------------------------------------------------------------
 
 int_15_00:                              ; F881
   in      al, 0x61
@@ -4289,9 +4526,9 @@ L_F885:
   ret
 
 
-;*****************************************************************************
-;* int 15 func 01 - turn tape drive motor off
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 15 func 01 - turn tape drive motor off
+;-----------------------------------------------------------------------------
 
 int_15_01:                              ; F88A
   in      al, 0x61
@@ -4299,16 +4536,18 @@ int_15_01:                              ; F88A
   jmp     short L_F885
 
 
-;*****************************************************************************
-;* int 15 func 02 - read data from tape
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 15 func 02 - read data from tape
+;-----------------------------------------------------------------------------
 
 int_15_02:                              ; F890
-db 0x53                                 ; F890 push bx
-db 0x51                                 ; F891 push cx
-db 0x56                                 ; F892 push si
-db 0xBE, 0x07, 0x00                     ; F893 mov si,0x7
-db 0xE8, 0xBF, 0x01                     ; F896 call 0xfa58
+  push    bx
+  push    cx
+  push    si
+
+  mov     si, 0x0007
+  call    L_FA58                        ; turn motor on
+
 db 0xE4, 0x62                           ; F899 in al,0x62
 db 0x24, 0x10                           ; F89B and al,0x10
 db 0xA2, 0x6B, 0x00                     ; F89D mov [0x6b],al
@@ -4528,13 +4767,23 @@ db 0xF9                                 ; FA51 stc
 db 0xD1, 0xD0                           ; FA52 rcl ax,1
 db 0xA3, 0x69, 0x00                     ; FA54 mov [0x69],ax
 db 0xC3                                 ; FA57 ret
-db 0xE8, 0x26, 0xFE                     ; FA58 call 0xf881
-db 0xB3, 0x42                           ; FA5B mov bl,0x42
-db 0xB9, 0x00, 0x07                     ; FA5D mov cx,0x700
-db 0xE2, 0xFE                           ; FA60 loop 0xfa60
-db 0xFE, 0xCB                           ; FA62 dec bl
-db 0x75, 0xF7                           ; FA64 jnz 0xfa5d
-db 0xC3                                 ; FA66 ret
+
+L_FA58:
+  call    int_15_00                     ; F881
+
+  mov     bl, 0x42
+
+L_FA5D:
+  mov     cx, 0x0700
+
+L_FA60:
+  loop    L_FA60
+
+  dec     bl
+  jnz     L_FA5D
+
+  ret
+
 db 0x20, 0x32                           ; FA67 and [bp+si],dh
 db 0x30, 0x31                           ; FA69 xor [bx+di],dh
 db 0x0D, 0x0A, 0xFF                     ; FA6B or ax,0xff0a
@@ -4671,9 +4920,9 @@ L_FA6E:
   db 0x00, 0x10, 0x38, 0x6C, 0xC6, 0xC6, 0xFE, 0x00 ; 7F
 
 
-;*****************************************************************************
-;* int 1a handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 1a
+;-----------------------------------------------------------------------------
 
 int_1a:                                 ; FE6E
   sti
@@ -4710,9 +4959,9 @@ int_1a_01:                              ; FE91
   db      0xff, 0xff, 0xff, 0xff
 
 
-;*****************************************************************************
-;* int 08 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 08
+;-----------------------------------------------------------------------------
 
 int_08:                                 ; FEA5
   sti
@@ -4764,25 +5013,27 @@ L_FEE3:
   iret
 
 
-  db      "1801", 13, 10                ; FEED
+L_FEED:
+  db      "1801", 13, 10
+
 
 ; initial interrupt addresses
 bios_int_addr_08:                       ; FEF3
   dw      int_08                        ; int 08 (FEA5)
   dw      int_09                        ; int 09 (E987)
-  dw      0xe6dd                        ; int 0a
-  dw      0xe6dd                        ; int 0b
-  dw      0xe6dd                        ; int 0c
-  dw      0xe6dd                        ; int 0d
-  dw      0xef57                        ; int 0e
-  dw      0xe6dd                        ; int 0f
+  dw      L_E6DD                        ; int 0a
+  dw      L_E6DD                        ; int 0b
+  dw      L_E6DD                        ; int 0c
+  dw      L_E6DD                        ; int 0d
+  dw      int_0e                        ; int 0e
+  dw      L_E6DD                        ; int 0f
 
 bios_int_addr_10:                       ; FF03
   dw      int_10                        ; int 10 (F065)
   dw      int_11                        ; int 11 (F84D)
   dw      int_12                        ; int 12 (F841)
   dw      int_13                        ; int 13
-  dw      0xe739                        ; int 14
+  dw      int_14                        ; int 14
   dw      int_15                        ; int 15 (F859)
   dw      int_16                        ; int 16 (E82E)
   dw      int_17                        ; int 17 (EFD2)
@@ -4791,7 +5042,7 @@ bios_int_addr_10:                       ; FF03
   dw      int_1a                        ; int 1a (FE6E)
   dw      int_default                   ; int 1b (FF53)
   dw      int_default                   ; int 1c (FF53)
-  dw      0xf0a4                        ; int 1d
+  dw      int_1d                        ; int 1d
   dw      int_1e                        ; int 1e (EFC7)
   dw      0x0000                        ; int 1f
 
@@ -4825,9 +5076,9 @@ int_default:
   iret
 
 
-;*****************************************************************************
-;* int 05 handler
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; int 05
+;-----------------------------------------------------------------------------
 
 int_05:                                 ; FF54
   sti
@@ -4947,8 +5198,12 @@ L_FFDA:
 ;  times 0xfff0 - ($ - $$) db 0
 
 L_FFF0:
+; #### patch #### jump to pce init code
 ;  jmp    0xf000:start
   jmp    0xf000:0x0000
 
   db     "10/27/82"
-  db     0xff, 0xff, 0x78
+
+  db     0xff, 0xff
+
+  db     0x78                           ; checksum

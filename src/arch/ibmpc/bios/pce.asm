@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.1 2003/12/20 01:01:36 hampa Exp $
+; $Id$
 
 
 %include "pce.inc"
@@ -649,7 +649,7 @@ prt_uint16:
 inttab:
   dw      int_00, 0xf000
   dw      int_01, 0xf000
-  dw      int_02, 0xf000
+  dw      0xe2c3, 0xf000 ;int_02, 0xf000
   dw      int_03, 0xf000
   dw      int_04, 0xf000
   dw      0xff54, 0xf000 ;int_05, 0xf000
