@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.7 2003/09/21 10:06:33 hampa Exp $
+; $Id: ega.asm,v 1.8 2003/09/21 21:12:30 hampa Exp $
 
 
 %include "config.inc"
@@ -1127,7 +1127,7 @@ int_10_01:
 
 
 ;*****************************************************************************
-;* int 10 func 01 - set cursor position
+;* int 10 func 02 - set cursor position
 ;* inp: DH = row
 ;*      DL = column
 ;*****************************************************************************
@@ -1174,7 +1174,14 @@ int_10_02:
   ret
 
 
-; int 10 func 03 - get cursor position and size
+;*****************************************************************************
+;* int 10 func 03 - get cursor position and size
+;* out: CH cursor start line
+;*      CL cursor end line
+;*      DH = cursor row
+;*      DL = cursor column
+;*****************************************************************************
+
 int_10_03:
   push    bx
 
@@ -1197,7 +1204,11 @@ int_10_04:
   ret
 
 
-; int 10 func 05 - set current page
+;*****************************************************************************
+;* int 10 func 05 - set current page
+;* inp: AL = page number
+;*****************************************************************************
+
 int_10_05:
   push    ax
   push    cx
@@ -1367,9 +1378,14 @@ int_10_06:
 
 ;*****************************************************************************
 ;* int 10 func 07 - scroll down
-;* inp:
+;* inp: AL = row count
+;*      BH = attribute for new lines
+;*      CH = top left row
+;*      CL = top left column
+;*      DH = bottom right row
+;*      DL = bottom right column
 ;*****************************************************************************
-; int 10 func 07 - scroll down
+
 int_10_07:
   push    ax
   push    cx
