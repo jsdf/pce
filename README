@@ -16,7 +16,10 @@ The most important options for configure are:
 Set the installation prefix. Default is /usr/local.
 
 --with-x11
-Build the X11 based output terminal.
+Build the X11 based terminal.
+
+--with-sdl
+Build the SDL based terminal.
 
 --with-host-clock=clock
 Set the host clock speed in Hz. This value is used for display
