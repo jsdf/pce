@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.5 2003/04/17 11:47:57 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.6 2003/04/17 14:16:19 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -76,6 +76,9 @@ ibmpc_t *pc_new (unsigned ramsize)
   if (pc == NULL) {
     return (NULL);
   }
+
+  pc->clk_cnt = 0;
+  pc->timer_clk_cnt = 0;
 
   pc->mem = mem_new();
   pc->ram = mem_blk_new (0, 1024 * ramsize, 1);
@@ -163,6 +166,13 @@ void pc_clock (ibmpc_t *pc)
   key_clock (pc->key);
 
   pc->clk_cnt += 1;
+  pc->timer_clk_cnt += 1;
+
+  if (pc->timer_clk_cnt > (4 * 65536)) {
+    if (!e86_interrupt (pc->cpu, 8)) {
+      pc->timer_clk_cnt -= 4 * 65536;
+    }
+  }
 }
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)

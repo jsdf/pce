@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.3 2003/04/17 11:47:57 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.4 2003/04/17 14:16:19 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -49,6 +49,7 @@ typedef struct {
   unsigned char ppi_port_c[2];
 
   unsigned long clk_cnt;
+  unsigned long timer_clk_cnt;
 } ibmpc_t;
 
 
