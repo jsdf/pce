@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/blkdosem.c                                     *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-17 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -133,7 +133,6 @@ disk_t *dsk_dosemu_new (unsigned d, const char *fname, int ro)
   fclose (fp);
 
   if (memcmp (buf, "DOSEMU\x00", 7) != 0) {
-    fclose (fp);
     return (NULL);
   }
 
