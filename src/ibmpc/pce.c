@@ -20,13 +20,15 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.2 2003/04/23 13:08:39 hampa Exp $ */
+/* $Id: pce.c,v 1.3 2003/04/23 16:29:57 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
 #include <unistd.h>
+#include <signal.h>
 
 #include "pce.h"
 
@@ -87,6 +89,11 @@ void prt_version (void)
   );
 
   fflush (stdout);
+}
+
+void sig_int (int s)
+{
+  key_interrupt (pc->key);
 }
 
 #ifdef PCE_HAVE_TSC
@@ -1651,6 +1658,9 @@ int main (int argc, char *argv[])
   e86_reset (pc->cpu);
 
   pce_log_set_stderr (0);
+
+  signal (SIGINT, &sig_int);
+//  signal (SIGTERM, &sig_int);
 
   do_cmd();
 

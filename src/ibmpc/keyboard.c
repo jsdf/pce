@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: keyboard.c,v 1.2 2003/04/23 16:29:57 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -128,7 +128,9 @@ keyboard_t *key_new (void)
 
   key->map = keymap_new();
 
-  for (i = 32; i < 128; i++) {
+  key->ctrlc = 0;
+
+  for (i = 0; i < 255; i++) {
     c = i;
     keymap_set_key (key->map, &c, 1, i);
   }
@@ -136,6 +138,11 @@ keyboard_t *key_new (void)
   keymap_set_key (key->map, "\x00", 1, 0x10000); // brk
 
   keymap_set_key (key->map, "\x1b", 1, 0x011b);
+
+  keymap_set_key (key->map, "\x01", 1, 0x1e01); // ctrl-a
+  keymap_set_key (key->map, "\x02", 1, 0x3002); // ctrl-b
+  keymap_set_key (key->map, "\x04", 1, 0x2004); // ctrl-d
+  keymap_set_key (key->map, "\x05", 1, 0x1205); // ctrl-e
 
   keymap_set_key (key->map, "\x0a", 1, 0x1c0d);
   keymap_set_key (key->map, "\x08", 1, 0x0e08);
@@ -256,13 +263,18 @@ void key_add_key (keyboard_t *key, unsigned short val)
   mem_set_uint16_le (key->mem, 0x41c, buf2);
 }
 
+void key_interrupt (keyboard_t *key)
+{
+  key->ctrlc = 1;
+}
+
 void key_clock (keyboard_t *key)
 {
   unsigned char buf[256];
   unsigned char *tmp;
   unsigned long val;
   ssize_t       r;
-  unsigned      n;
+  unsigned      n, m;
 
   static unsigned long cnt = 0;
 
@@ -273,6 +285,11 @@ void key_clock (keyboard_t *key)
   }
 
   cnt = 0;
+
+  if (key->ctrlc) {
+    key_add_key (key, 0x2e03);
+    key->ctrlc = 0;
+  }
 
   if (!fd_readable (key->fd, 0)) {
     return;
@@ -295,6 +312,7 @@ void key_clock (keyboard_t *key)
   }
 
   tmp = buf;
+  m = n;
 
   while (n > 0) {
     val = keymap_get_key (key->map, &tmp, &n);
@@ -302,13 +320,13 @@ void key_clock (keyboard_t *key)
     if (val == 0) {
       unsigned i;
 
-      fprintf (stderr, "unknown key:"); fflush (stderr);
+      pce_log (MSG_ERR, "unknown key:");
 
-      for (i = 0; i < n; i++) {
-        fprintf (stderr, " %02X", (unsigned) tmp[i]);
+      for (i = 0; i < m; i++) {
+        pce_log (MSG_ERR, " %02X", (unsigned) buf[i]);
       }
 
-      fputs ("\n", stderr);
+      pce_log (MSG_ERR, "\n");
 
       return;
     }

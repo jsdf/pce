@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
+/* $Id: keyboard.h,v 1.2 2003/04/23 16:29:57 hampa Exp $ */
 
 
 #ifndef PCE_KEYBOARD_H
@@ -40,6 +40,8 @@ typedef struct {
   void        *brk_ext;
   set_uint8_f brk;
 
+  int         ctrlc;
+
   int         fd;
 } keyboard_t;
 
@@ -54,6 +56,7 @@ keyboard_t *key_new (void);
 void key_del (keyboard_t *key);
 void key_set_fd (keyboard_t *key, int fd);
 void key_add_key (keyboard_t *key, unsigned short val);
+void key_interrupt (keyboard_t *key);
 void key_clock (keyboard_t *key);
 
 
