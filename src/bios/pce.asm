@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.9 2003/04/20 19:09:20 hampa Exp $
+; $Id: pce.asm,v 1.10 2003/04/21 13:36:32 hampa Exp $
 
 
 %macro set_pos 1
@@ -40,12 +40,13 @@ start:
   mov     sp, 1024
 
   call    init_int
+  call    init_ppi
+  call    init_pic
 
   sti
 
   call    set_bios_ds
 
-  call    init_ppi
   call    init_video
   call    init_mem
   call    init_misc
@@ -136,6 +137,20 @@ init_ppi:
   mov     [0x0010], ax                  ; equipment word
 
   pop     ax
+  ret
+
+init_pic:
+  mov     al, 0x13
+  out     0x20, al
+
+  mov     al, 0x08
+  out     0x21, al
+
+  mov     al, 0x01
+  out     0x21, al
+
+  mov     al, 0x00
+  out     0x21, al
   ret
 
 
