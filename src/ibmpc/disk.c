@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.c                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.c,v 1.8 2003/09/02 10:04:23 hampa Exp $ */
+/* $Id: disk.c,v 1.9 2003/10/06 21:31:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -186,7 +186,7 @@ int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
   dsk->geom.c = buf_get_uint32 (buf + 15);
   dsk->geom.h = buf_get_uint32 (buf + 7);
   dsk->geom.s = buf_get_uint32 (buf + 11);
-  dsk->start = 128;
+  dsk->start = buf_get_uint32 (buf + 19);
   dsk->blocks = dsk->geom.c * dsk->geom.h * dsk->geom.s;
 
   dsk->readonly = ro;
@@ -195,6 +195,42 @@ int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro)
   dsk->fp_close = 1;
 
   return (0);
+}
+
+int dsk_set_auto (disk_t *dsk, char **type,
+  unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro)
+{
+  FILE          *fp;
+  unsigned char buf[512];
+
+  *type = "unknown";
+
+  if (fname == NULL) {
+    *type = "ram";
+    return (dsk_set_mem (dsk, c, h, s, fname, ro));
+  }
+
+  fp = fopen (fname, "rb");
+  if (fp == NULL) {
+    return (1);
+  }
+
+  memset (buf, 0, 512);
+  fread (buf, 1, 512, fp);
+  fclose (fp);
+
+  if (memcmp (buf, "DOSEMU\x00", 7) == 0) {
+    *type = "dosemu";
+    return (dsk_set_hdimage (dsk, fname, ro));
+  }
+
+  if ((buf[510] == 0x55) && (buf[511] == 0xaa)) {
+    *type = "image";
+    return (dsk_set_image (dsk, c, h, s, fname, ro));
+  }
+
+  return (1);
 }
 
 int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.39 2003/10/05 21:48:11 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.40 2003/10/06 21:31:28 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -455,7 +455,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
   while (sct != NULL) {
     ini_get_uint (sct, "drive", &drive, 0);
-    ini_get_string (sct, "type", &type, "image");
+    ini_get_string (sct, "type", &type, "auto");
     ini_get_string (sct, "file", &fname, NULL);
 
     ini_get_uint (sct, "c", &c, 80);
@@ -474,6 +474,9 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
     else if (strcmp (type, "dosemu") == 0) {
       r = dsk_set_hdimage (dsk, fname, ro);
+    }
+    else if (strcmp (type, "auto") == 0) {
+      r = dsk_set_auto (dsk, &type, c, h, s, fname, ro);
     }
     else {
       r = 1;

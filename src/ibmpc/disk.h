@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/disk.h                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disk.h,v 1.2 2003/04/23 16:29:32 hampa Exp $ */
+/* $Id: disk.h,v 1.3 2003/10/06 21:31:28 hampa Exp $ */
 
 
 #ifndef PCE_FLOPPY_H
@@ -72,7 +72,10 @@ int dsk_set_image (disk_t *dsk, unsigned c, unsigned h, unsigned s,
   const char *fname, int ro);
 
 int dsk_set_hdimage (disk_t *dsk, const char *fname, int ro);
-void dsk_set_drive (disk_t *dsk, unsigned drive);
+
+int dsk_set_auto (disk_t *dsk, char **type,
+  unsigned c, unsigned h, unsigned s,
+  const char *fname, int ro);
 
 int dsk_get_lba (disk_t *dsk, unsigned c, unsigned h, unsigned s,
   unsigned long *lba);
@@ -88,6 +91,9 @@ int dsk_write_lba (disk_t *dsk, const void *buf,
 
 int dsk_write_chs (disk_t *dsk, const void *buf,
   unsigned c, unsigned h, unsigned s, unsigned long blk_n);
+
+void dsk_set_drive (disk_t *dsk, unsigned drive);
+
 
 disks_t *dsks_new (void);
 void dsks_del (disks_t *dsks);
