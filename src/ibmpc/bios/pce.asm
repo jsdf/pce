@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.6 2003/05/01 07:11:44 hampa Exp $
+; $Id: pce.asm,v 1.7 2003/08/23 04:03:09 hampa Exp $
 
 
 %macro set_pos 1
@@ -592,36 +592,27 @@ int_18:
 
 
 int_19:
+  ; get boot drive in AL
+  db      0x66, 0x66, 0x02, 0x00
+  mov     dl, al
+
   xor     bx, bx
   mov     es, bx
   mov     bx, 0x7c00
 
-;  jmp     .try_fd
-
   mov     ax, 0x0201
   mov     cx, 0x0001
-  mov     dx, 0x0080
-  int     0x13
-  jc      .try_fd
-
-  cmp     [es:0x7dfe], word 0xaa55
-  je      .boot
-
-.try_fd:
-  mov     ax, 0x0201
-  mov     cx, 0x0001
-  mov     dx, 0x0000
+  mov     dh, 0x00
   int     0x13
   jc      .fail
 
   cmp     [es:0x7dfe], word 0xaa55
-  je      .boot
+  jne     .fail
+
+  jmp     0x0000:0x7c00
 
 .fail:
   iret
-
-.boot:
-  jmp     0x0000:0x7c00
 
 
 int_1a:

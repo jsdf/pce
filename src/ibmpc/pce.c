@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.14 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: pce.c,v 1.15 2003/08/23 04:03:08 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ typedef struct breakpoint_t {
 
 char                      *par_terminal = NULL;
 char                      *par_video = NULL;
+unsigned                  par_boot = 128;
 
 static unsigned           bp_cnt = 0;
 static breakpoint_t       *breakpoint = NULL;
@@ -85,6 +86,7 @@ void prt_help (void)
     "  -l, --log string       Set the log file\n"
     "  -t, --terminal string  Set terminal\n"
     "  -g, --video string     Set video device\n"
+    "  -b, --boot int         Set boot drive [128]\n"
     "  -r, --run              Start running immediately\n",
     stdout
   );
@@ -1669,6 +1671,14 @@ int main (int argc, char *argv[])
       }
 
       par_video = argv[i];
+    }
+    else if (str_isarg2 (argv[i], "-b", "--boot")) {
+      i += 1;
+      if (i >= argc) {
+        return (1);
+      }
+
+      par_boot = (unsigned) strtoul (argv[i], NULL, 0);
     }
     else if (str_isarg2 (argv[i], "-r", "--run")) {
       run = 1;
