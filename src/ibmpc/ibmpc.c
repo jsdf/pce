@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.8 2003/04/26 16:58:14 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.9 2003/04/26 18:17:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -181,15 +181,6 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   blk->set_uint8 = (seta_uint8_f) &e8255_set_port8;
   blk->get_uint8 = (geta_uint8_f) &e8255_get_port8;
   mem_add_blk (pc->prt, blk, 1);
-}
-
-void pc_setup_keyboard (ibmpc_t *pc)
-{
-  pc->key = key_new();
-  pc->key->mem = pc->mem;
-
-  pc->key->brk_ext = pc;
-  pc->key->brk = (set_uint8_f) &pc_break;
 }
 
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
@@ -360,7 +351,6 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_pit (pc);
   pc_setup_ppi (pc, ini);
   pc_setup_terminal (pc, ini);
-  pc_setup_keyboard (pc);
   pc_setup_video (pc, ini);
   pc_setup_disks (pc, ini);
 
@@ -374,7 +364,6 @@ void pc_del (ibmpc_t *pc)
   }
 
   dsks_del (pc->dsk);
-  key_del (pc->key);
 
   mda_del (pc->mda);
   cga_del (pc->cga);

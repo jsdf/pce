@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.3 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id: pce.h,v 1.4 2003/04/26 18:17:44 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -76,7 +76,6 @@ void pce_log (unsigned level, const char *str, ...);
 
 #include "log.h"
 #include "memory.h"
-#include "keyboard.h"
 #include "disk.h"
 #include "mda.h"
 #include "cga.h"

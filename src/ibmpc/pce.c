@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.8 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id: pce.c,v 1.9 2003/04/26 18:17:44 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -30,6 +30,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <termios.h>
 
 #include "pce.h"
 
@@ -100,7 +101,7 @@ void prt_version (void)
 
 void sig_int (int s)
 {
-  key_interrupt (pc->key);
+  /* hmm... */
 }
 
 #ifdef PCE_HAVE_TSC
@@ -817,6 +818,31 @@ void prt_error (const char *str, ...)
   va_end (va);
 }
 
+void pce_set_fd (int fd, int interactive)
+{
+  static int            sios_ok = 0;
+  static struct termios sios;
+  struct termios        tios;
+
+  if (sios_ok == 0) {
+    tcgetattr (fd, &sios);
+    sios_ok = 1;
+  }
+
+  if (interactive) {
+    tcsetattr (fd, TCSANOW, &sios);
+  }
+  else {
+    tios = sios;
+
+    tios.c_lflag &= ~(ICANON | ECHO);
+    tios.c_cc[VMIN] = 1;
+    tios.c_cc[VTIME] = 0;
+
+    tcsetattr (fd, TCSANOW, &tios);
+  }
+}
+
 void cpu_start()
 {
   pce_eclk_last = e86_get_clock (pc->cpu);
@@ -848,7 +874,7 @@ void cpu_exec (void)
 
 void pce_run (void)
 {
-  key_set_fd (pc->key, 0);
+  pce_set_fd (0, 0);
 
   cpu_start();
 
@@ -864,7 +890,7 @@ void pce_run (void)
 
   cpu_end();
 
-  key_set_fd (pc->key, -1);
+  pce_set_fd (0, 1);
 }
 
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
@@ -1238,7 +1264,7 @@ void do_g (cmd_t *cmd)
     return;
   }
 
-  key_set_fd (pc->key, 0);
+  pce_set_fd (0, 0);
 
   cpu_start();
 
@@ -1277,7 +1303,7 @@ void do_g (cmd_t *cmd)
 
   cpu_end();
 
-  key_set_fd (pc->key, -1);
+  pce_set_fd (0, 1);
 
   fputs ("\n", stdout);
   prt_state (pc, stdout);
@@ -1319,7 +1345,7 @@ void do_p (cmd_t *cmd)
   seg = e86_get_cs (pc->cpu);
   ofs = e86_get_ip (pc->cpu) + op.dat_n;
 
-  key_set_fd (pc->key, 0);
+  pce_set_fd (0, 0);
 
   pc->brk = 0;
 
@@ -1343,7 +1369,7 @@ void do_p (cmd_t *cmd)
 
   cpu_end();
 
-  key_set_fd (pc->key, -1);
+  pce_set_fd (0, 1);
 
   prt_state (pc, stdout);
 }
@@ -1418,10 +1444,6 @@ void do_t (cmd_t *cmd)
 
   pc->brk = 0;
 
-  if (n > 255) {
-    key_set_fd (pc->key, 0);
-  }
-
   cpu_start();
 
   for (i = 0; i < n; i++) {
@@ -1429,10 +1451,6 @@ void do_t (cmd_t *cmd)
   }
 
   cpu_end();
-
-  if (n > 255) {
-    key_set_fd (pc->key, -1);
-  }
 
   prt_state (pc, stdout);
 }

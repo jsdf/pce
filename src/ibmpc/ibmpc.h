@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.5 2003/04/26 16:35:28 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.6 2003/04/26 18:17:44 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -29,7 +29,6 @@
 
 typedef struct {
   e8086_t       *cpu;
-  keyboard_t    *key;
   mda_t         *mda;
   cga_t         *cga;
   disks_t       *dsk;
