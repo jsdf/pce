@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-07-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -74,7 +74,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
   unsigned       i, n;
   unsigned long  blk_i, blk_n;
   unsigned       c, h, s;
-  unsigned short seg, ofs;
+  unsigned long  addr;
   unsigned char  buf[1024];
   disk_t         *dsk;
 
@@ -90,8 +90,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
 
-  seg = e86_get_es (cpu);
-  ofs = e86_get_bx (cpu);
+  addr = e86_get_linear (e86_get_es (cpu), e86_get_bx (cpu));
 
   if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
@@ -110,9 +109,16 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
     blk_i += n;
 
     n *= 512;
-    for (i = 0; i < n; i += 2) {
-      e86_set_mem16 (cpu, seg, ofs, buf[i] | (buf[i + 1] << 8));
-      ofs = (ofs + 2) & 0xffffU;
+
+    if ((addr + n) <= cpu->ram_cnt) {
+      memcpy (cpu->ram + addr, buf, n);
+      addr += n;
+    }
+    else {
+      for (i = 0; i < n; i += 2) {
+        e86_set_mem16 (cpu, addr >> 4, addr & 0x0f, buf[i] | (buf[i + 1] << 8));
+        addr += 2;
+      }
     }
   }
 
@@ -125,7 +131,8 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   unsigned       i;
   unsigned long  blk_i, blk_n;
   unsigned       c, h, s;
-  unsigned short seg, ofs, val;
+  unsigned long  addr;
+  unsigned short val;
   unsigned char  buf[512];
   disk_t         *dsk;
 
@@ -146,8 +153,7 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   h = e86_get_dh (cpu);
   s = e86_get_cl (cpu) & 0x3f;
 
-  seg = e86_get_es (cpu);
-  ofs = e86_get_bx (cpu);
+  addr = e86_get_linear (e86_get_es (cpu), e86_get_bx (cpu));
 
   if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
     dsk_int13_set_status (dsks, cpu, 0x04);
@@ -155,11 +161,17 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
   }
 
   while (blk_n > 0) {
-    for (i = 0; i < 256; i++) {
-      val = e86_get_mem16 (cpu, seg, ofs);
-      buf[2 * i] = val & 0xff;
-      buf[2 * i + 1] = (val >> 8) & 0xff;
-      ofs = (ofs + 2) & 0xffffU;
+    if ((addr + 512) < cpu->ram_cnt) {
+      memcpy (buf, cpu->ram + addr, 512);
+      addr += 512;
+    }
+    else {
+      for (i = 0; i < 256; i++) {
+        val = e86_get_mem16 (cpu, addr >> 4, addr & 0x0f);
+        buf[2 * i] = val & 0xff;
+        buf[2 * i + 1] = (val >> 8) & 0xff;
+        addr += 2;
+      }
     }
 
     if (dsk_write_lba (dsk, buf, blk_i, 1)) {
