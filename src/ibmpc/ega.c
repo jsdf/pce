@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.9 2003/09/24 01:09:55 hampa Exp $ */
+/* $Id: ega.c,v 1.10 2003/09/24 08:09:34 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -467,7 +467,7 @@ int ega_mode16_screenshot (ega_t *ega, FILE *fp)
       }
     }
 
-    addr += rofs;
+    addr = (addr + rofs) & 0xffff;
   }
 
   return (0);
