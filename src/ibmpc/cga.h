@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.h                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.5 2003/08/19 17:07:14 hampa Exp $ */
+/* $Id: cga.h,v 1.6 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -28,6 +28,8 @@
 
 
 typedef struct {
+  video_t       vid;
+
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
@@ -47,13 +49,16 @@ typedef struct {
 } cga_t;
 
 
-cga_t *cga_new (terminal_t *trm);
+video_t *cga_new (terminal_t *trm, ini_sct_t *sct);
 
 void cga_del (cga_t *cga);
 
 void cga_clock (cga_t *cga);
 
 void cga_prt_state (cga_t *cga, FILE *fp);
+
+mem_blk_t *cga_get_mem (cga_t *cga);
+mem_blk_t *cga_get_reg (cga_t *cga);
 
 void cga_set_pos (cga_t *cga, unsigned pos);
 

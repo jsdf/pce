@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.6 2003/08/29 13:29:52 hampa Exp $ */
+/* $Id: mda.c,v 1.7 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -35,29 +35,52 @@ unsigned char coltab[16] = {
 };
 
 
-mda_t *mda_new (terminal_t *trm)
+video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 {
-  unsigned i;
-  mda_t    *mda;
+  unsigned      i;
+  unsigned      iobase, membase, memsize;
+  unsigned char r, g, b;
+  mda_t         *mda;
 
   mda = (mda_t *) malloc (sizeof (mda_t));
   if (mda == NULL) {
     return (NULL);
   }
 
+  pce_video_init (&mda->vid);
+
+  mda->vid.ext = mda;
+  mda->vid.del = (pce_video_del_f) &mda_del;
+  mda->vid.get_mem = (pce_video_get_mem_f) &mda_get_mem;
+  mda->vid.get_reg = (pce_video_get_reg_f) &mda_get_reg;
+  mda->vid.prt_state = (pce_video_prt_state_f) &mda_prt_state;
+
   for (i = 0; i < 16; i++) {
     mda->crtc_reg[i] = 0;
   }
 
+  ini_get_ulng (sct, "color7", &mda->rgb_fg, 0xe89050);
+  ini_get_ulng (sct, "color15", &mda->rgb_hi, 0xfff0c8);
+
+  ini_get_uint (sct, "io", &iobase, 0x3b4);
+  ini_get_uint (sct, "membase", &membase, 0xb0000);
+  ini_get_uint (sct, "memsize", &memsize, 4096);
+
+  memsize = (memsize < 4096) ? 4096 : memsize;
+
+  pce_log (MSG_INF, "video:\tMDA io=0x%04x membase=0x%05x memsize=0x%05x\n",
+    iobase, membase, memsize
+  );
+
   mda->crtc_pos = 0;
 
-  mda->mem = mem_blk_new (0xb0000, 4096, 1);
+  mda->mem = mem_blk_new (membase, memsize, 1);
   mda->mem->ext = mda;
   mda->mem->set_uint8 = (seta_uint8_f) &mda_mem_set_uint8;
   mda->mem->set_uint16 = (seta_uint16_f) &mda_mem_set_uint16;
   mem_blk_init (mda->mem, 0x00);
 
-  mda->reg = mem_blk_new (0x3b4, 16, 1);
+  mda->reg = mem_blk_new (iobase, 16, 1);
   mda->reg->ext = mda;
   mda->reg->set_uint8 = (seta_uint8_f) &mda_reg_set_uint8;
   mda->reg->set_uint16 = (seta_uint16_f) &mda_reg_set_uint16;
@@ -67,10 +90,19 @@ mda_t *mda_new (terminal_t *trm)
 
   mda->trm = trm;
 
-//  trm_set_map (trm, 7, 200 * 256, 104 * 256, 16 * 256);
+  r = (mda->rgb_fg >> 16) & 0xff;
+  g = (mda->rgb_fg >> 8) & 0xff;
+  b = mda->rgb_fg & 0xff;
+  trm_set_map (trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+
+  r = (mda->rgb_hi >> 16) & 0xff;
+  g = (mda->rgb_hi >> 8) & 0xff;
+  b = mda->rgb_hi & 0xff;
+  trm_set_map (trm, 15, r | (r << 8), g | (g << 8), b | (b << 8));
+
   trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
-  return (mda);
+  return (&mda->vid);
 }
 
 void mda_del (mda_t *mda)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.h                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.3 2003/08/23 02:57:38 hampa Exp $ */
+/* $Id: mda.h,v 1.4 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #ifndef PCE_MDA_H
@@ -28,6 +28,8 @@
 
 
 typedef struct {
+  video_t       vid;
+
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
@@ -35,11 +37,13 @@ typedef struct {
 
   unsigned      crtc_pos;
 
+  unsigned long rgb_fg;
+  unsigned long rgb_hi;
   terminal_t    *trm;
 } mda_t;
 
 
-mda_t *mda_new (terminal_t *trm);
+video_t *mda_new (terminal_t *trm, ini_sct_t *sct);
 void mda_del (mda_t *mda);
 
 void mda_clock (mda_t *mda);

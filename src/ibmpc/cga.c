@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.7 2003/08/29 13:29:52 hampa Exp $ */
+/* $Id: cga.c,v 1.8 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -28,9 +28,10 @@
 #include "pce.h"
 
 
-cga_t *cga_new (terminal_t *trm)
+video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 {
   unsigned i;
+  unsigned iobase, membase, memsize;
   cga_t    *cga;
 
   cga = (cga_t *) malloc (sizeof (cga_t));
@@ -38,25 +39,43 @@ cga_t *cga_new (terminal_t *trm)
     return (NULL);
   }
 
+  pce_video_init (&cga->vid);
+
+  cga->vid.ext = cga;
+  cga->vid.del = (pce_video_del_f) &cga_del;
+  cga->vid.get_mem = (pce_video_get_mem_f) &cga_get_mem;
+  cga->vid.get_reg = (pce_video_get_reg_f) &cga_get_reg;
+  cga->vid.prt_state = (pce_video_prt_state_f) &cga_prt_state;
+
   for (i = 0; i < 16; i++) {
     cga->crtc_reg[i] = 0;
   }
 
-  cga->trm = trm;
+  ini_get_uint (sct, "io", &iobase, 0x3d4);
+  ini_get_uint (sct, "membase", &membase, 0xb8000);
+  ini_get_uint (sct, "memsize", &memsize, 16384);
 
-  cga->mem = mem_blk_new (0xb8000, 16384, 1);
+  memsize = (memsize < 16384) ? 16384 : memsize;
+
+  pce_log (MSG_INF, "video:\tCGA io=0x%04x membase=0x%05x memsize=0x%05x\n",
+    iobase, membase, memsize
+  );
+
+  cga->mem = mem_blk_new (membase, memsize, 1);
   cga->mem->ext = cga;
   cga->mem->set_uint8 = (seta_uint8_f) &cga_mem_set_uint8;
   cga->mem->set_uint16 = (seta_uint16_f) &cga_mem_set_uint16;
   mem_blk_init (cga->mem, 0x00);
 
-  cga->reg = mem_blk_new (0x3d4, 16, 1);
+  cga->reg = mem_blk_new (iobase, 16, 1);
   cga->reg->ext = cga;
   cga->reg->set_uint8 = (seta_uint8_f) &cga_reg_set_uint8;
   cga->reg->set_uint16 = (seta_uint16_f) &cga_reg_set_uint16;
   cga->reg->get_uint8 = (geta_uint8_f) &cga_reg_get_uint8;
   cga->reg->get_uint16 = (geta_uint16_f) &cga_reg_get_uint16;
   mem_blk_init (cga->reg, 0x00);
+
+  cga->trm = trm;
 
   cga->crtc_pos = 0;
   cga->crtc_ofs = 0;
@@ -72,7 +91,7 @@ cga_t *cga_new (terminal_t *trm)
   cga->mode = 0;
   trm_set_size (trm, TERM_MODE_TEXT, 80, 25);
 
-  return (cga);
+  return (&cga->vid);
 }
 
 void cga_del (cga_t *cga)
@@ -128,6 +147,17 @@ void cga_prt_state (cga_t *cga, FILE *fp)
   fflush (fp);
 }
 
+mem_blk_t *cga_get_mem (cga_t *cga)
+{
+  return (cga->mem);
+}
+
+mem_blk_t *cga_get_reg (cga_t *cga)
+{
+  return (cga->reg);
+}
+
+static
 void cga_mode0_update (cga_t *cga)
 {
   unsigned i;
@@ -149,6 +179,7 @@ void cga_mode0_update (cga_t *cga)
   }
 }
 
+static
 void cga_mode1_update (cga_t *cga)
 {
   unsigned      x, y, i;

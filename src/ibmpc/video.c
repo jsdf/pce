@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ibmpc.h                                          *
- * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/ibmpc/video.c                                          *
+ * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,57 +20,52 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.10 2003/08/30 03:08:53 hampa Exp $ */
+/* $Id: video.c,v 1.1 2003/08/30 03:08:53 hampa Exp $ */
 
 
-#ifndef PCE_IBMPC_H
-#define PCE_IBMPC_H 1
+#include <stdio.h>
+
+#include "pce.h"
 
 
-typedef struct {
-  e8086_t       *cpu;
-  video_t       *video;
-  disks_t       *dsk;
-  mouse_t       *mse;
+void pce_video_init (video_t *vid)
+{
+  vid->ext = NULL;
 
-  memory_t      *mem;
-  mem_blk_t     *ram;
+  vid->del = NULL;
+  vid->get_mem = NULL;
+  vid->get_reg = NULL;
+  vid->prt_state = NULL;
+}
 
-  memory_t      *prt;
+void pce_video_del (video_t *vid)
+{
+  if (vid->del != NULL) {
+    vid->del (vid->ext);
+  }
+}
 
-  e8253_t       *pit;
-  mem_blk_t     *pit_prt;
+mem_blk_t *pce_video_get_mem (video_t *vid)
+{
+  if (vid->get_mem != NULL) {
+    return (vid->get_mem (vid->ext));
+  }
 
-  e8255_t       *ppi;
-  mem_blk_t     *ppi_prt;
-  unsigned char ppi_port_a[2];
-  unsigned char ppi_port_b;
-  unsigned char ppi_port_c[2];
+  return (NULL);
+}
 
-  unsigned      key_i;
-  unsigned      key_j;
-  unsigned long key_clk;
-  unsigned char key_buf[256];
+mem_blk_t *pce_video_get_reg (video_t *vid)
+{
+  if (vid->get_reg != NULL) {
+    return (vid->get_reg (vid->ext));
+  }
 
-  e8259_t       *pic;
-  mem_blk_t     *pic_prt;
+  return (NULL);
+}
 
-  terminal_t    *trm;
-
-  parport_t     *parport[4];
-
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
-
-  unsigned           brk;
-} ibmpc_t;
-
-
-ibmpc_t *pc_new (ini_sct_t *ini);
-
-void pc_del (ibmpc_t *pc);
-
-void pc_clock (ibmpc_t *pc);
-
-
-#endif
+void pce_video_prt_state (video_t *vid, FILE *fp)
+{
+  if (vid->prt_state != NULL) {
+    vid->prt_state (vid->ext, fp);
+  }
+}

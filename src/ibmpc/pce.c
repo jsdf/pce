@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.19 2003/08/29 21:35:58 hampa Exp $ */
+/* $Id: pce.c,v 1.20 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -661,6 +661,12 @@ void prt_state_time (FILE *fp)
   );
 }
 
+void prt_state_video (video_t *vid, FILE *fp)
+{
+  fputs ("-video-----------------------------------------------------------------------\n", fp);
+  pce_video_prt_state (vid, fp);
+}
+
 void prt_state_pit (e8253_t *pit, FILE *fp)
 {
   unsigned        i;
@@ -798,9 +804,11 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
 
 void prt_state_pc (ibmpc_t *pc, FILE *fp)
 {
+  prt_state_video (pc->video, fp);
   prt_state_ppi (pc->ppi, fp);
   prt_state_pit (pc->pit, fp);
   prt_state_pic (pc->pic, fp);
+  prt_state_time (fp);
   prt_state_cpu (pc->cpu, fp);
 }
 
@@ -1390,18 +1398,7 @@ void do_s (cmd_t *cmd)
       prt_state_pic (pc->pic, stdout);
     }
     else if (cmd_match (cmd, "video")) {
-      if (pc->cga != NULL) {
-        cga_prt_state (pc->cga, stdout);
-      }
-      else if (pc->hgc != NULL) {
-        hgc_prt_state (pc->hgc, stdout);
-      }
-      else if (pc->mda != NULL) {
-        mda_prt_state (pc->mda, stdout);
-      }
-      else {
-        printf ("no video adapter installed\n");
-      }
+      prt_state_video (pc->video, stdout);
     }
     else if (cmd_match (cmd, "time")) {
       prt_state_time (stdout);

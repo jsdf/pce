@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.h                                            *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.11 2003/08/29 21:15:08 hampa Exp $ */
+/* $Id: pce.h,v 1.12 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #ifndef PCE_H
@@ -86,6 +86,7 @@ void pce_log (unsigned level, const char *str, ...);
 #include "log.h"
 #include "memory.h"
 #include "disk.h"
+#include "video.h"
 #include "mda.h"
 #include "hgc.h"
 #include "cga.h"

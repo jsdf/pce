@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.5 2003/08/30 01:09:27 hampa Exp $ */
+/* $Id: hgc.c,v 1.6 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -38,10 +38,11 @@ static unsigned hgclines1[348];
 static unsigned hgclines2[348];
 
 
-hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
+video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 {
   unsigned      i, n;
   unsigned char r, g, b;
+  unsigned      iobase, membase, memsize;
   hgc_t         *hgc;
 
   hgc = (hgc_t *) malloc (sizeof (hgc_t));
@@ -49,28 +50,46 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
     return (NULL);
   }
 
+  pce_video_init (&hgc->vid);
+
+  hgc->vid.ext = hgc;
+  hgc->vid.del = (pce_video_del_f) &hgc_del;
+  hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
+  hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
+  hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
+
   for (i = 0; i < 16; i++) {
     hgc->crtc_reg[i] = 0;
   }
 
-  ini_get_ulng (ini, "color7", &hgc->rgb_fg, 0xe89050);
-  ini_get_ulng (ini, "color15", &hgc->rgb_hi, 0xfff0c8);
+  ini_get_ulng (sct, "color7", &hgc->rgb_fg, 0xe89050);
+  ini_get_ulng (sct, "color15", &hgc->rgb_hi, 0xfff0c8);
 
-  hgc->trm = trm;
+  ini_get_uint (sct, "io", &iobase, 0x3b4);
+  ini_get_uint (sct, "membase", &membase, 0xb0000);
+  ini_get_uint (sct, "memsize", &memsize, 65536);
 
-  hgc->mem = mem_blk_new (0xb0000, 65536, 1);
+  memsize = (memsize < 32768) ? 32768 : 65536;
+
+  pce_log (MSG_INF, "video:\tHGC io=0x%04x membase=0x%05x memsize=0x%05x\n",
+    iobase, membase, memsize
+  );
+
+  hgc->mem = mem_blk_new (membase, memsize, 1);
   hgc->mem->ext = hgc;
   hgc->mem->set_uint8 = (seta_uint8_f) &hgc_mem_set_uint8;
   hgc->mem->set_uint16 = (seta_uint16_f) &hgc_mem_set_uint16;
   mem_blk_init (hgc->mem, 0x00);
 
-  hgc->reg = mem_blk_new (0x3b4, 16, 1);
+  hgc->reg = mem_blk_new (iobase, 16, 1);
   hgc->reg->ext = hgc;
   hgc->reg->set_uint8 = (seta_uint8_f) &hgc_reg_set_uint8;
   hgc->reg->set_uint16 = (seta_uint16_f) &hgc_reg_set_uint16;
   hgc->reg->get_uint8 = (geta_uint8_f) &hgc_reg_get_uint8;
   hgc->reg->get_uint16 = (geta_uint16_f) &hgc_reg_get_uint16;
   mem_blk_init (hgc->reg, 0x00);
+
+  hgc->trm = trm;
 
   hgc->crtc_pos = 0;
   hgc->crtc_ofs = 0;
@@ -102,7 +121,7 @@ hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini)
     n = n % 348;
   }
 
-  return (hgc);
+  return (&hgc->vid);
 }
 
 void hgc_del (hgc_t *hgc)
@@ -328,7 +347,7 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
     mode &= ~0x02;
   }
 
-  if (hgc->enable_page1 == 0) {
+  if ((hgc->enable_page1 == 0) || (mem_blk_get_size (hgc->mem) < 65536)) {
     mode &= ~0x80;
   }
 

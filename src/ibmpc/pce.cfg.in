@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.9 2003/08/30 01:09:27 hampa Exp $
+# $Id: pce.cfg.in,v 1.10 2003/08/30 03:08:53 hampa Exp $
 
 section pc {
 	section cpu {
@@ -51,23 +51,34 @@ section pc {
 	}
 
 	section cga {
+		io = 0x3d4
+		membase = 0xb8000
+		memsize = 16384
 	}
 
 	section hgc {
 		color7 = 0xe89050
 		color15 = 0xfff0c8
+		io = 0x3b4
+		membase = 0xb0000
+		memsize = 65536
 	}
 
 	section mda {
+		color7 = 0xe89050
+		color15 = 0xfff0c8
+		io = 0x3b4
+		membase = 0xb0000
+		memsize = 4096
 	}
 
 	section mouse {
-		base = 0x3f8
+		io = 0x3f8
 		irq = 4
 	}
 
 	section parport {
-		base = 0x378
+		io = 0x378
 		file = "parport.out"
 	}
 

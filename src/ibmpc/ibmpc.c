@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.23 2003/08/29 22:45:23 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.24 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -324,37 +324,31 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
   pc->trm->set_brk = (set_uint8_f) &pc_break;
 }
 
-void pc_setup_mda (ibmpc_t *pc)
+void pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 {
-  pce_log (MSG_INF, "video:\tMDA\n");
-
-  pc->mda = mda_new (pc->trm);
-  mem_add_blk (pc->mem, mda_get_mem (pc->mda), 0);
-  mem_add_blk (pc->prt, mda_get_reg (pc->mda), 0);
+  pc->video = mda_new (pc->trm, sct);
+  mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+  mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;
 }
 
-void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *ini)
+void pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 {
-  pce_log (MSG_INF, "video:\tHGC\n");
-
-  pc->hgc = hgc_new (pc->trm, ini);
-  mem_add_blk (pc->mem, hgc_get_mem (pc->hgc), 0);
-  mem_add_blk (pc->prt, hgc_get_reg (pc->hgc), 0);
+  pc->video = hgc_new (pc->trm, sct);
+  mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+  mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x30;
 }
 
-void pc_setup_cga (ibmpc_t *pc)
+void pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 {
-  pce_log (MSG_INF, "video:\tCGA\n");
-
-  pc->cga = cga_new (pc->trm);
-  mem_add_blk (pc->mem, pc->cga->mem, 0);
-  mem_add_blk (pc->prt, pc->cga->reg, 0);
+  pc->video = cga_new (pc->trm, sct);
+  mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+  mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
   pc->ppi_port_a[0] &= ~0x30;
   pc->ppi_port_a[0] |= 0x20;
@@ -364,14 +358,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t *sct;
 
-  pc->mda = NULL;
-  pc->hgc = NULL;
-  pc->cga = NULL;
+  pc->video = NULL;
 
   if (par_video != NULL) {
     if (strcmp (par_video, "cga") == 0) {
       sct = ini_sct_find_sct (ini, "cga");
-      pc_setup_cga (pc);
+      pc_setup_cga (pc, sct);
       return;
     }
     else if (strcmp (par_video, "hgc") == 0) {
@@ -381,7 +373,7 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
     }
     else if (strcmp (par_video, "mda") == 0) {
       sct = ini_sct_find_sct (ini, "mda");
-      pc_setup_mda (pc);
+      pc_setup_mda (pc, sct);
       return;
     }
     else {
@@ -392,7 +384,7 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 
   sct = ini_sct_find_sct (ini, "cga");
   if (sct != NULL) {
-    pc_setup_cga (pc);
+    pc_setup_cga (pc, sct);
     return;
   }
 
@@ -404,7 +396,7 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 
   sct = ini_sct_find_sct (ini, "mda");
   if (sct != NULL) {
-    pc_setup_mda (pc);
+    pc_setup_mda (pc, sct);
     return;
   }
 }
@@ -478,10 +470,10 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
     return;
   }
 
-  ini_get_uint (sct, "base", &base, 0x03f8);
+  ini_get_uint (sct, "io", &base, 0x03f8);
   ini_get_uint (sct, "irq", &irq, 4);
 
-  pce_log (MSG_INF, "mouse:\tbase=%04x irq=%u\n", base, irq);
+  pce_log (MSG_INF, "mouse:\tio=0x%04x irq=%u\n", base, irq);
 
   pc->mse = mse_new (base);
   pc->mse->intr_ext = pc->pic;
@@ -509,10 +501,10 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "parport");
 
   while ((i < 4) && (sct != NULL)) {
-    ini_get_uint (sct, "base", &base, defbase[i]);
+    ini_get_uint (sct, "io", &base, defbase[i]);
     ini_get_string (sct, "file", &fname, NULL);
 
-    pce_log (MSG_INF, "LPT:\tbase=%04X file=%s\n",
+    pce_log (MSG_INF, "LPT:\tio=0x%04x file=%s\n",
       base, (fname == NULL) ? "<none>" : fname
     );
 
@@ -612,9 +604,7 @@ void pc_del (ibmpc_t *pc)
 
   dsks_del (pc->dsk);
 
-  mda_del (pc->mda);
-  hgc_del (pc->hgc);
-  cga_del (pc->cga);
+  pce_video_del (pc->video);
 
   trm_del (pc->trm);
 
@@ -644,7 +634,6 @@ void pc_clock (ibmpc_t *pc)
   }
 
   if (pc->clk_div[2] >= 1024) {
-    cga_clock (pc->cga);
     trm_check (pc->trm);
     pc->clk_div[2] -= 1024;
   }

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.h,v 1.3 2003/08/30 01:09:27 hampa Exp $ */
+/* $Id: hgc.h,v 1.4 2003/08/30 03:08:53 hampa Exp $ */
 
 
 #ifndef PCE_HGC_H
@@ -28,6 +28,8 @@
 
 
 typedef struct {
+  video_t       vid;
+
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
@@ -51,7 +53,7 @@ typedef struct {
 } hgc_t;
 
 
-hgc_t *hgc_new (terminal_t *trm, ini_sct_t *ini);
+video_t *hgc_new (terminal_t *trm, ini_sct_t *ini);
 
 void hgc_del (hgc_t *cga);
 
