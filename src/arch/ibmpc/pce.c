@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/pce.c                                       *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1363,6 +1363,33 @@ void do_i (cmd_t *cmd)
 }
 
 static
+void do_key (cmd_t *cmd)
+{
+  unsigned short c;
+
+  while (1) {
+    if (cmd_match (cmd, "cad")) {
+      pc_set_keycode (pc, 0x38);
+      pc_set_keycode (pc, 0x1d);
+      pc_set_keycode (pc, 0x53);
+      pc_set_keycode (pc, 0xd3);
+      pc_set_keycode (pc, 0x9d);
+      pc_set_keycode (pc, 0xb8);
+    }
+    else if (cmd_match_uint16 (cmd, &c)) {
+      pc_set_keycode (pc, c);
+    }
+    else {
+      break;
+    }
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+}
+
+static
 void do_last (cmd_t *cmd)
 {
   unsigned short i, j, n;
@@ -1793,6 +1820,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "i")) {
       do_i (&cmd);
+    }
+    else if (cmd_match (&cmd, "key")) {
+      do_key (&cmd);
     }
     else if (cmd_match (&cmd, "last")) {
       do_last (&cmd);

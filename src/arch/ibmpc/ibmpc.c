@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-02-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -484,7 +484,6 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 static
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 {
-  int        r;
   const char *dev;
   ini_sct_t  *sct;
 
@@ -1075,7 +1074,8 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
   pc->key_buf[pc->key_j] = val;
   pc->key_j += 1;
 
-  if ((e8259_get_isr (&pc->pic) | e8259_get_irr (&pc->pic)) & 0x01) {
+#if 0
+  if (((e8259_get_isr (&pc->pic) | e8259_get_irr (&pc->pic)) & 0x01) == 0) {
     pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
     pc->key_i += 1;
 
@@ -1086,4 +1086,5 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
 
     e8259_set_irq1 (&pc->pic, 1);
   }
+#endif
 }
