@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: xterm.c,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -86,6 +86,8 @@ int xt_init_cursor (xterm_t *xt)
     DefaultDepth (xt->display, xt->screen)
   );
 
+  xt->init_cursor = 1;
+
   xt->crs_y1 = 32;
   xt->crs_y2 = 0;
 
@@ -101,6 +103,8 @@ int xt_init_display (xterm_t *xt)
   if (xt->display == NULL) {
     return (1);
   }
+
+  xt->init_display = 1;
 
   xt->screen = DefaultScreen (xt->display);
   xt->display_w = DisplayWidth (xt->display, xt->screen);
@@ -120,6 +124,8 @@ int xt_init_font (xterm_t *xt)
   if (xt->font == NULL) {
     return (1);
   }
+
+  xt->init_font = 1;
 
   xt->font_w = XTextWidth (xt->font, "W", 1);
   xt->font_h = xt->font->ascent + xt->font->descent;
@@ -146,6 +152,8 @@ int xt_init_window (xterm_t *xt)
     WhitePixel (xt->display, xt->screen),
     BlackPixel (xt->display, xt->screen)
   );
+
+  xt->init_window = 1;
 
   if (XStringListToTextProperty (&name, 1, &windowName) == 0) {
     return (1);
@@ -201,6 +209,8 @@ int xt_init_gc (xterm_t *xt)
   XSetForeground (xt->display, xt->crs_gc, WhitePixel (xt->display, xt->screen));
   XSetBackground (xt->display, xt->crs_gc, BlackPixel (xt->display, xt->screen));
 
+  xt->init_gc = 1;
+
   return (0);
 }
 
@@ -218,11 +228,10 @@ int xt_init (xterm_t *xt)
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
   xt->trm.check = (trm_check_f) &xt_check;
 
-  xt->display = NULL;
-  xt->screen = 0;
-  xt->font = NULL;
-  xt->wdw = None;
-  xt->scn = NULL;
+  xt->init_display = 0;
+  xt->init_font = 0;
+  xt->init_window = 0;
+  xt->init_gc = 0;
 
   if (xt_init_display (xt)) {
     fprintf (stderr, "xt_init_display()\n");
@@ -272,6 +281,7 @@ terminal_t *xt_new (void)
   }
 
   if (xt_init (xt)) {
+    xt_free (xt);
     free (xt);
     return (NULL);
   }
@@ -287,12 +297,21 @@ void xt_free (xterm_t *xt)
     return;
   }
 
-  if (xt->display == NULL) {
-    return;
+  if (xt->init_font) {
+    XUnloadFont (xt->display, xt->font->fid);
   }
 
-  if (xt->font != NULL) {
-    XUnloadFont (xt->display, xt->font->fid);
+  if (xt->init_gc) {
+    XFreeGC (xt->display, xt->gc);
+    XFreeGC (xt->display, xt->crs_gc);
+  }
+
+  if (xt->init_cursor) {
+    XFreePixmap (xt->display, xt->crs_bg);
+  }
+
+  if (xt->init_display) {
+    XCloseDisplay (xt->display);
   }
 }
 
@@ -376,8 +395,8 @@ void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2)
 {
   xt_crs_restore (xt);
 
-  xt->crs_y1 = y1;
-  xt->crs_y2 = y2;
+  xt->crs_y1 = (xt->font_h * y1) / 256;
+  xt->crs_y2 = (xt->font_h * y2) / 256;
 
   xt_crs_draw (xt, xt->crs_x, xt->crs_y);
 }

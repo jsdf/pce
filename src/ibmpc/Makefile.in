@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.3 2003/04/24 23:18:15 hampa Exp $
+# $Id: Makefile.in,v 1.4 2003/04/25 02:30:18 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -29,16 +29,15 @@ MAN	:=
 
 BIN	:= pce
 
-SDP	:= Makefile $(HDR) $(HDR_EXT)
-BDP	:= Makefile $(OBJ) $(OBJ_EXT)
-
-
 ifeq "$(PCE_X11_USE)" "1"
 	OBJ_EXT += $(pcedst)/terminal/xterm.o
 	HDR_EXT += $(pcesrc)/terminal/xterm.h
 	CC_FLG_EXTRA := $(PCE_X11_CCF)
 	LD_FLG_EXTRA := $(PCE_X11_LDF)
 endif
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
 
 all: $(BIN) $(OBJ) pce.cfg

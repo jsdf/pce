@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: terminal.h,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -67,9 +67,22 @@ void trm_del (terminal_t *trm);
 
 void trm_set_size (terminal_t *trm, unsigned w, unsigned h);
 void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg);
+
+/*****************************************************************************
+ * @short Set the cursor size
+ * @param trm The terminal
+ * @param y1  The first (lower) cursor line
+ * @param y2  The second (higher) cursor line
+ *
+ * The lines y1 and y2 are a percentage in the range [0, 255] of the whole
+ * character height.
+ *****************************************************************************/
 void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2);
+
 void trm_set_pos (terminal_t *trm, unsigned x, unsigned y);
+
 void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c);
+
 void trm_check (terminal_t *trm);
 
 

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.2 2003/04/24 23:18:15 hampa Exp $ */
+/* $Id: mda.c,v 1.3 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -127,12 +127,18 @@ void mda_set_pos (mda_t *mda, unsigned pos)
 
 void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
 {
-  if ((y1 > 13) || (y2 > 13)) {
+  if (y1 < y2) {
     y1 = 0;
-    y2 = 7;
+    y2 = 13;
   }
 
-  trm_set_crs (mda->trm, 13 - y1, 13 - y2);
+  y1 = (y1 <= 13) ? (13 - y1) : 0;
+  y2 = (y2 <= 13) ? (13 - y2) : 0;
+
+  y1 = (255 * y1 + 6) / 13;
+  y2 = (255 * y2 + 6) / 13;
+
+  trm_set_crs (mda->trm, y1, y2);
 }
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)

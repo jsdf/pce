@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.h,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: xterm.h,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_XTERM_H
@@ -44,6 +44,7 @@ typedef struct {
   char          init_display;
   char          init_font;
   char          init_window;
+  char          init_cursor;
   char          init_gc;
 
   Display       *display;

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.1 2003/04/24 23:18:17 hampa Exp $ */
+/* $Id: vt100.c,v 1.2 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -80,19 +80,29 @@ unsigned char chrmap[256] = {
 
 vt100_keymap_t *vt100_get_key (vt100_t *vt, unsigned char *key, unsigned cnt)
 {
-  unsigned i;
+  unsigned       i;
+  vt100_keymap_t *map, *ret;
 
   if (cnt == 1) {
     return (vt->keymap + (key[0] & 0xff));
   }
 
-  for (i = 256; i < (vt->key_cnt - 256); i++) {
-    if ((vt->keymap[i].key_cnt == cnt) && (memcmp (key, vt->keymap[i].key, cnt) == 0)) {
-      return (&vt->keymap[i]);
+  map = vt->keymap;
+  ret = NULL;
+
+  for (i = 0; i < vt->key_cnt; i++) {
+    if (map->key_cnt <= cnt) {
+      if (memcmp (key, map->key, map->key_cnt) == 0) {
+        if ((ret == NULL) || (ret->key_cnt < map->key_cnt)) {
+          ret = map;
+        }
+      }
     }
+
+    map += 1;
   }
 
-  return (NULL);
+  return (ret);
 }
 
 void vt100_set_key (vt100_t *vt,
@@ -158,6 +168,37 @@ void vt100_init (vt100_t *vt, int inp, int out)
     vt->keymap[i].seq_cnt = 0;
   }
 
+  vt100_set_key (vt, "\x01", 1, "\x1d\x1e\x9e\x9d", 4);
+  vt100_set_key (vt, "\x02", 1, "\x1d\x30\xb0\x9d", 4);
+  vt100_set_key (vt, "\x03", 1, "\x1d\x2e\xae\x9d", 4);
+  vt100_set_key (vt, "\x04", 1, "\x1d\x20\xa0\x9d", 4);
+  vt100_set_key (vt, "\x05", 1, "\x1d\x12\x92\x9d", 4);
+  vt100_set_key (vt, "\x06", 1, "\x1d\x21\xa1\x9d", 4);
+  vt100_set_key (vt, "\x07", 1, "\x1d\x22\xa2\x9d", 4);
+  vt100_set_key (vt, "\x08", 1, "\x1d\x23\xa3\x9d", 4);
+  vt100_set_key (vt, "\x09", 1, "\x1d\x17\x97\x9d", 4);
+  vt100_set_key (vt, "\x0a", 1, "\x1d\x24\xa4\x9d", 4);
+  vt100_set_key (vt, "\x0b", 1, "\x1d\x25\xa5\x9d", 4);
+  vt100_set_key (vt, "\x0c", 1, "\x1d\x26\xa6\x9d", 4);
+  vt100_set_key (vt, "\x0d", 1, "\x1d\x32\xb2\x9d", 4);
+  vt100_set_key (vt, "\x0e", 1, "\x1d\x31\xb1\x9d", 4);
+  vt100_set_key (vt, "\x0f", 1, "\x1d\x18\x98\x9d", 4);
+  vt100_set_key (vt, "\x10", 1, "\x1d\x19\x99\x9d", 4);
+  vt100_set_key (vt, "\x11", 1, "\x1d\x10\x90\x9d", 4);
+  vt100_set_key (vt, "\x12", 1, "\x1d\x13\x93\x9d", 4);
+  vt100_set_key (vt, "\x13", 1, "\x1d\x1f\x9f\x9d", 4);
+  vt100_set_key (vt, "\x14", 1, "\x1d\x14\x94\x9d", 4);
+  vt100_set_key (vt, "\x15", 1, "\x1d\x16\x96\x9d", 4);
+  vt100_set_key (vt, "\x16", 1, "\x1d\x2f\xaf\x9d", 4);
+  vt100_set_key (vt, "\x17", 1, "\x1d\x11\x91\x9d", 4);
+  vt100_set_key (vt, "\x18", 1, "\x1d\x2d\xad\x9d", 4);
+  vt100_set_key (vt, "\x19", 1, "\x1d\x15\x95\x9d", 4);
+  vt100_set_key (vt, "\x1a", 1, "\x1d\x2c\xac\x9d", 4);
+
+  vt100_set_key (vt, "\x08", 1, "\x0e\x8e", 2);
+  vt100_set_key (vt, "\x0a", 1, "\x1c\x9c", 2);
+  vt100_set_key (vt, "\x1b\x1b", 2, "\x01\x81", 2);
+
   vt100_set_key (vt, "\x20", 1, "\x39\xb9", 2);
   vt100_set_key (vt, "\x21", 1, "\x2a\x02\x82\xaa", 4);
   vt100_set_key (vt, "\x22", 1, "\x2a\x28\xa8\xaa", 4);
@@ -165,47 +206,149 @@ void vt100_init (vt100_t *vt, int inp, int out)
   vt100_set_key (vt, "\x24", 1, "\x2a\x05\x85\xaa", 4);
   vt100_set_key (vt, "\x25", 1, "\x2a\x06\x86\xaa", 4);
   vt100_set_key (vt, "\x26", 1, "\x2a\x08\x88\xaa", 4);
-  vt100_set_key (vt, "\x27", 1, "\x2a\x28\xa8\xaa", 4);
+  vt100_set_key (vt, "\x27", 1, "\x28\xa8", 2);
   vt100_set_key (vt, "\x28", 1, "\x2a\x0a\x8a\xaa", 4);
   vt100_set_key (vt, "\x29", 1, "\x2a\x0b\x8b\xaa", 4);
   vt100_set_key (vt, "\x2a", 1, "\x2a\x09\x89\xaa", 4);
   vt100_set_key (vt, "\x2b", 1, "\x2a\x0d\x8d\xaa", 4);
   vt100_set_key (vt, "\x2c", 1, "\x33\xb3", 2);
   vt100_set_key (vt, "\x2d", 1, "\x0c\x8c", 2);
+  vt100_set_key (vt, "\x2e", 1, "\x34\xb4", 2);
+  vt100_set_key (vt, "\x2f", 1, "\x35\xb5", 2);
 
-#if 0
-  0x34, 0x35,
-  0x0b, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-  0x09, 0x0a, 0x27, 0x27, 0x33, 0x0d, 0x34, 0x35,
-  0x03,
-  0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22,
-  0x23, 0x17, 0x24, 0x25, 0x26, 0x32, 0x31, 0x18,
-  0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11,
-  0x2d, 0x15, 0x2c, 0x1a,
-  0x2b,
-  0x1b, 0x07, 0x0c,
-  0x29, 0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22,
-  0x23, 0x17, 0x24, 0x25, 0x26, 0x32, 0x31, 0x18,
-  0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11,
-  0x2d, 0x15, 0x2c, 0x1a,
-  0x2b,
+  vt100_set_key (vt, "0", 1, "\x0b\x8b", 2);
+  vt100_set_key (vt, "1", 1, "\x02\x82", 2);
+  vt100_set_key (vt, "2", 1, "\x03\x83", 2);
+  vt100_set_key (vt, "3", 1, "\x04\x84", 2);
+  vt100_set_key (vt, "4", 1, "\x05\x85", 2);
+  vt100_set_key (vt, "5", 1, "\x06\x86", 2);
+  vt100_set_key (vt, "6", 1, "\x07\x87", 2);
+  vt100_set_key (vt, "7", 1, "\x08\x88", 2);
+  vt100_set_key (vt, "8", 1, "\x09\x89", 2);
+  vt100_set_key (vt, "9", 1, "\x0a\x8a", 2);
 
-  0x1b,
-
-  0x29,
-  0
-#endif
-  vt100_set_key (vt, "a", 1, "\x1e\x9e", 2);
-  vt100_set_key (vt, "b", 1, "\x30\xb0", 2);
+  vt100_set_key (vt, "\x3a", 1, "\x2a\x27\xa7\xaa", 4);
+  vt100_set_key (vt, "\x3b", 1, "\x27\xa7", 2);
+  vt100_set_key (vt, "\x3c", 1, "\x2a\x33\xb3\xaa", 4);
+  vt100_set_key (vt, "\x3d", 1, "\x0d\x8d", 2);
+  vt100_set_key (vt, "\x3e", 1, "\x2a\x34\xb4\xaa", 4);
+  vt100_set_key (vt, "\x3f", 1, "\x2a\x35\xb5\xaa", 4);
+  vt100_set_key (vt, "\x40", 1, "\x2a\x03\x83\xaa", 4);
 
   vt100_set_key (vt, "A", 1, "\x2a\x1e\x9e\xaa", 4);
   vt100_set_key (vt, "B", 1, "\x2a\x30\xb0\xaa", 4);
+  vt100_set_key (vt, "C", 1, "\x2a\x2e\xae\xaa", 4);
+  vt100_set_key (vt, "D", 1, "\x2a\x20\xa0\xaa", 4);
+  vt100_set_key (vt, "E", 1, "\x2a\x12\x92\xaa", 4);
+  vt100_set_key (vt, "F", 1, "\x2a\x21\xa1\xaa", 4);
+  vt100_set_key (vt, "G", 1, "\x2a\x22\xa2\xaa", 4);
+  vt100_set_key (vt, "H", 1, "\x2a\x23\xa3\xaa", 4);
+  vt100_set_key (vt, "I", 1, "\x2a\x17\x97\xaa", 4);
+  vt100_set_key (vt, "J", 1, "\x2a\x24\xa4\xaa", 4);
+  vt100_set_key (vt, "K", 1, "\x2a\x25\xa5\xaa", 4);
+  vt100_set_key (vt, "L", 1, "\x2a\x26\xa6\xaa", 4);
+  vt100_set_key (vt, "M", 1, "\x2a\x32\xb2\xaa", 4);
+  vt100_set_key (vt, "N", 1, "\x2a\x31\xb1\xaa", 4);
+  vt100_set_key (vt, "O", 1, "\x2a\x18\x98\xaa", 4);
+  vt100_set_key (vt, "P", 1, "\x2a\x19\x99\xaa", 4);
+  vt100_set_key (vt, "Q", 1, "\x2a\x10\x90\xaa", 4);
+  vt100_set_key (vt, "R", 1, "\x2a\x13\x93\xaa", 4);
+  vt100_set_key (vt, "S", 1, "\x2a\x1f\x9f\xaa", 4);
+  vt100_set_key (vt, "T", 1, "\x2a\x14\x94\xaa", 4);
+  vt100_set_key (vt, "U", 1, "\x2a\x16\x96\xaa", 4);
+  vt100_set_key (vt, "V", 1, "\x2a\x2f\xaf\xaa", 4);
+  vt100_set_key (vt, "W", 1, "\x2a\x11\x91\xaa", 4);
+  vt100_set_key (vt, "X", 1, "\x2a\x2d\xad\xaa", 4);
+  vt100_set_key (vt, "Y", 1, "\x2a\x15\x95\xaa", 4);
+  vt100_set_key (vt, "Z", 1, "\x2a\x2c\xac\xaa", 4);
 
-  vt100_set_key (vt, "\x08", 1, "\x0e\x8e", 2);
-  vt100_set_key (vt, "\x0a", 1, "\x1c\x9c", 2);
-  vt100_set_key (vt, "\x1b", 1, "\x01\x81", 2);
+  vt100_set_key (vt, "\x5b", 1, "\x1a\x9a", 2);
+  vt100_set_key (vt, "\x5c", 1, "\x2b\xab", 2);
+  vt100_set_key (vt, "\x5d", 1, "\x1b\x9b", 2);
+  vt100_set_key (vt, "\x5e", 1, "\x2a\x07\x87\xaa", 4);
+  vt100_set_key (vt, "\x5f", 1, "\x2a\x0c\x8c\xaa", 4);
+  vt100_set_key (vt, "\x60", 1, "\x29\xa9", 2);
 
-  vt100_set_key (vt, "\x1b\x4f\x50", 3, "\x3b\xbb", 2);
+  vt100_set_key (vt, "a", 1, "\x1e\x9e", 2);
+  vt100_set_key (vt, "b", 1, "\x30\xb0", 2);
+  vt100_set_key (vt, "c", 1, "\x2e\xae", 2);
+  vt100_set_key (vt, "d", 1, "\x20\xa0", 2);
+  vt100_set_key (vt, "e", 1, "\x12\x92", 2);
+  vt100_set_key (vt, "f", 1, "\x21\xa1", 2);
+  vt100_set_key (vt, "g", 1, "\x22\xa2", 2);
+  vt100_set_key (vt, "h", 1, "\x23\xa3", 2);
+  vt100_set_key (vt, "i", 1, "\x17\x97", 2);
+  vt100_set_key (vt, "j", 1, "\x24\xa4", 2);
+  vt100_set_key (vt, "k", 1, "\x25\xa5", 2);
+  vt100_set_key (vt, "l", 1, "\x26\xa6", 2);
+  vt100_set_key (vt, "m", 1, "\x32\xb2", 2);
+  vt100_set_key (vt, "n", 1, "\x31\xb1", 2);
+  vt100_set_key (vt, "o", 1, "\x18\x98", 2);
+  vt100_set_key (vt, "p", 1, "\x19\x99", 2);
+  vt100_set_key (vt, "q", 1, "\x10\x90", 2);
+  vt100_set_key (vt, "r", 1, "\x13\x93", 2);
+  vt100_set_key (vt, "s", 1, "\x1f\x9f", 2);
+  vt100_set_key (vt, "t", 1, "\x14\x94", 2);
+  vt100_set_key (vt, "u", 1, "\x16\x96", 2);
+  vt100_set_key (vt, "v", 1, "\x2f\xaf", 2);
+  vt100_set_key (vt, "w", 1, "\x11\x91", 2);
+  vt100_set_key (vt, "x", 1, "\x2d\xad", 2);
+  vt100_set_key (vt, "y", 1, "\x15\x95", 2);
+  vt100_set_key (vt, "z", 1, "\x2c\xac", 2);
+
+  vt100_set_key (vt, "\x7b", 1, "\x2a\x1a\x9a\xaa", 4);
+  vt100_set_key (vt, "\x7c", 1, "\x2a\x2b\xab\xaa", 4);
+  vt100_set_key (vt, "\x7d", 1, "\x2a\x1b\x9b\xaa", 4);
+  vt100_set_key (vt, "\x7e", 1, "\x2a\x29\xa9\xaa", 4);
+
+  vt100_set_key (vt, "\xe1", 1, "\x38\x1e\x9e\xb8", 4);
+  vt100_set_key (vt, "\xe2", 1, "\x38\x30\xb0\xb8", 4);
+  vt100_set_key (vt, "\xe3", 1, "\x38\x2e\xae\xb8", 4);
+  vt100_set_key (vt, "\xe4", 1, "\x38\x20\xa0\xb8", 4);
+  vt100_set_key (vt, "\xe5", 1, "\x38\x12\x92\xb8", 4);
+  vt100_set_key (vt, "\xe6", 1, "\x38\x21\xa1\xb8", 4);
+  vt100_set_key (vt, "\xe7", 1, "\x38\x22\xa2\xb8", 4);
+  vt100_set_key (vt, "\xe8", 1, "\x38\x23\xa3\xb8", 4);
+  vt100_set_key (vt, "\xe9", 1, "\x38\x17\x97\xb8", 4);
+  vt100_set_key (vt, "\xea", 1, "\x38\x24\xa4\xb8", 4);
+  vt100_set_key (vt, "\xeb", 1, "\x38\x25\xa5\xb8", 4);
+  vt100_set_key (vt, "\xec", 1, "\x38\x26\xa6\xb8", 4);
+  vt100_set_key (vt, "\xed", 1, "\x38\x32\xb2\xb8", 4);
+  vt100_set_key (vt, "\xee", 1, "\x38\x31\xb1\xb8", 4);
+  vt100_set_key (vt, "\xef", 1, "\x38\x18\x98\xb8", 4);
+  vt100_set_key (vt, "\xf0", 1, "\x38\x19\x99\xb8", 4);
+  vt100_set_key (vt, "\xf1", 1, "\x38\x10\x90\xb8", 4);
+  vt100_set_key (vt, "\xf2", 1, "\x38\x13\x93\xb8", 4);
+  vt100_set_key (vt, "\xf3", 1, "\x38\x1f\x9f\xb8", 4);
+  vt100_set_key (vt, "\xf4", 1, "\x38\x14\x94\xb8", 4);
+  vt100_set_key (vt, "\xf5", 1, "\x38\x16\x96\xb8", 4);
+  vt100_set_key (vt, "\xf6", 1, "\x38\x2f\xaf\xb8", 4);
+  vt100_set_key (vt, "\xf7", 1, "\x38\x11\x91\xb8", 4);
+  vt100_set_key (vt, "\xf8", 1, "\x38\x2d\xad\xb8", 4);
+  vt100_set_key (vt, "\xf9", 1, "\x38\x15\x95\xb8", 4);
+  vt100_set_key (vt, "\xfa", 1, "\x38\x2c\xac\xb8", 4);
+
+  vt100_set_key (vt, "\x1b\x4f\x50", 3, "\x3b\xbb", 2); // F1
+  vt100_set_key (vt, "\x1b\x4f\x51", 3, "\x3c\xbc", 2); // F2
+  vt100_set_key (vt, "\x1b\x4f\x52", 3, "\x3d\xbd", 2); // F3
+  vt100_set_key (vt, "\x1b\x4f\x53", 3, "\x3e\xbe", 2); // F4
+  vt100_set_key (vt, "\x1b\x5b\x31\x35\x7e", 5, "\x3f\xbf", 2); // F5
+  vt100_set_key (vt, "\x1b\x5b\x31\x37\x7e", 5, "\x40\xc0", 2); // F6
+  vt100_set_key (vt, "\x1b\x5b\x31\x38\x7e", 5, "\x41\xc1", 2); // F7
+  vt100_set_key (vt, "\x1b\x5b\x32\x30\x7e", 5, "\x43\xc3", 2); // F9
+  vt100_set_key (vt, "\x1b\x5b\x32\x31\x7e", 5, "\x44\xc4", 2); // F10
+
+  vt100_set_key (vt, "\x1b\x5b\x48", 3, "\x47\xc7", 2); // Home
+  vt100_set_key (vt, "\x1b\x5b\x41", 3, "\x48\xc8", 2); // Up
+  vt100_set_key (vt, "\x1b\x5b\x35\x7e", 4, "\x49\xc9", 2); // PgUp
+  vt100_set_key (vt, "\x1b\x5b\x44", 3, "\x4b\xcb", 2); // Left
+  vt100_set_key (vt, "\x1b\x5b\x45", 3, "\x4c\xcc", 2); // KP-5
+  vt100_set_key (vt, "\x1b\x5b\x43", 3, "\x4d\xcd", 2); // Right
+  vt100_set_key (vt, "\x1b\x5b\x46", 3, "\x4f\xcf", 2); // End
+  vt100_set_key (vt, "\x1b\x5b\x42", 3, "\x50\xd0", 2); // Down
+  vt100_set_key (vt, "\x1b\x5b\x36\x7e", 4, "\x51\xd1", 2); // PgDn
+  vt100_set_key (vt, "\x1b\x5b\x32\x7e", 4, "\x52\xd2", 2); // Ins
+  vt100_set_key (vt, "\x1b\x5b\x33\x7e", 4, "\x53\xd3", 2); // Del
 }
 
 terminal_t *vt100_new (int inp, int out)
@@ -329,6 +472,10 @@ void vt100_set_pos_scn (vt100_t *vt, unsigned x, unsigned y)
   unsigned      i;
   unsigned char buf[256];
 
+  if ((x == vt->scn_x) && (y == vt->scn_y)) {
+    return;
+  }
+
   vt->scn_x = x;
   vt->scn_y = y;
 
@@ -381,6 +528,10 @@ void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2)
 {
   vt->crs_y1 = y1;
   vt->crs_y2 = y2;
+
+  if (vt->crs_y1 <= vt->crs_y2) {
+    vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
+  }
 }
 
 void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y)
@@ -404,11 +555,15 @@ void vt100_set_chr (vt100_t *vt, unsigned x, unsigned y, unsigned char c)
   vt100_write (vt, &c, 1);
 
   vt->scn_x += 1;
+
+  if (vt->crs_y1 <= vt->crs_y2) {
+    vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
+  }
 }
 
 void vt100_check (vt100_t *vt)
 {
-  unsigned      i, n;
+  unsigned      i, j, n;
   unsigned char buf[8];
   ssize_t       r;
   vt100_keymap_t *key;
@@ -433,16 +588,22 @@ void vt100_check (vt100_t *vt)
     return;
   }
 
-  key = vt100_get_key (vt, buf, n);
+  i = 0;
+  while (i < n) {
+    key = vt100_get_key (vt, buf + i, n - i);
 
-  if (key == NULL) {
-    fprintf (stderr, "vt100: unknown key %u %02X %02X %02X\n", n, buf[0], buf[1], buf[2]);
-    return;
-  }
-
-  if (vt->trm.set_key != NULL) {
-    for (i = 0; i < key->seq_cnt; i++) {
-      vt->trm.set_key (vt->trm.key_ext, key->seq[i]);
+    if (key == NULL) {
+      fprintf (stderr, "vt100: unknown key %u %02X %02X %02X\n", n, buf[0], buf[1], buf[2]);
+      fprintf (stderr, "vt100: %u keys\n", vt->key_cnt);
+      return;
     }
+
+    if (vt->trm.set_key != NULL) {
+      for (j = 0; j < key->seq_cnt; j++) {
+        vt->trm.set_key (vt->trm.key_ext, key->seq[j]);
+      }
+    }
+
+    i += key->key_cnt;
   }
 }

@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.4 2003/04/24 23:18:15 hampa Exp $ */
+/* $Id: cga.c,v 1.5 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -152,12 +152,18 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 
 void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 {
-  if ((y1 > 7) || (y2 > 7)) {
+  if (y1 < y2) {
     y1 = 0;
     y2 = 7;
   }
 
-  trm_set_crs (cga->trm, 7 - y1, 7 - y2);
+  y1 = (y1 <= 7) ? (7 - y1) : 0;
+  y2 = (y2 <= 7) ? (7 - y2) : 0;
+
+  y1 = (y1 << 5) | (y1 << 2) | (y1 >> 1);
+  y2 = (y2 << 5) | (y2 << 2) | (y2 >> 1);
+
+  trm_set_crs (cga->trm, y1, y2);
 }
 
 void cga_set_page_ofs (cga_t *cga, unsigned ofs)

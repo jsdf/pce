@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.4 2003/04/24 23:18:15 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.5 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -133,7 +133,8 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   ppi->port[2].read = (get_uint8_f) &pc_ppi_get_port_c;
   pc->ppi = ppi;
 
-  pc->ppi_port_a = 0x40 | 0x30 | 0x0c | 0x01;
+  pc->ppi_port_a[0] = 0x40 | 0x30 | 0x0c | 0x01;
+  pc->ppi_port_a[1] = 0;
   pc->ppi_port_b = 0;
   pc->ppi_port_c[0] = (ram & 0x0f);
   pc->ppi_port_c[1] = (ram >> 4) & 0x01;
@@ -217,8 +218,8 @@ void pc_setup_mda (ibmpc_t *pc)
   mem_add_blk (pc->mem, pc->mda->mem, 0);
   mem_add_blk (pc->prt, pc->mda->crtc, 0);
 
-  pc->ppi_port_a &= ~0x30;
-  pc->ppi_port_a |= 0x30;
+  pc->ppi_port_a[0] &= ~0x30;
+  pc->ppi_port_a[0] |= 0x30;
 }
 
 void pc_setup_cga (ibmpc_t *pc)
@@ -227,8 +228,8 @@ void pc_setup_cga (ibmpc_t *pc)
   mem_add_blk (pc->mem, pc->cga->mem, 0);
   mem_add_blk (pc->prt, pc->cga->crtc, 0);
 
-  pc->ppi_port_a &= ~0x30;
-  pc->ppi_port_a |= 0x20;
+  pc->ppi_port_a[0] &= ~0x30;
+  pc->ppi_port_a[0] |= 0x20;
 }
 
 void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
@@ -390,7 +391,7 @@ void pc_clock (ibmpc_t *pc)
     pc->key_clk = (n < pc->key_clk) ? (pc->key_clk - n) : 0;
 
     if ((pc->key_clk == 0) && (pc->key_i < pc->key_j)) {
-      pc->ppi_port_a = pc->key_buf[pc->key_i];
+      pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
       e8259_set_irq1 (pc->pic, 1);
       pc->key_i += 1;
 
@@ -409,11 +410,11 @@ void pc_clock (ibmpc_t *pc)
     pc->clk_div[1] -= 16;
   }
 
-  if (pc->clk_div[2] >= 64) {
+  if (pc->clk_div[2] >= 256) {
     cga_clock (pc->cga);
 //    key_clock (pc->key);
     trm_check (pc->trm);
-    pc->clk_div[2] -= 64;
+    pc->clk_div[2] -= 256;
   }
 
   pc->clk_cnt += n;
@@ -506,11 +507,11 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
   if (pc->ppi_port_b & 0x80) {
-    return (pc->ppi_port_a);
+    return (pc->ppi_port_a[0]);
   }
-
-  /* key code */
-  return (0);
+  else {
+    return (pc->ppi_port_a[1]);
+  }
 }
 
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
@@ -530,6 +531,8 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 
 void pc_set_keycode (ibmpc_t *pc, unsigned char val)
 {
+  pce_log (MSG_DEB, "keycode: %02X\n", val);
+
   if (pc->key_clk > 0) {
     if (pc->key_j < 256) {
       pc->key_buf[pc->key_j] = val;
@@ -538,9 +541,7 @@ void pc_set_keycode (ibmpc_t *pc, unsigned char val)
     return;
   }
 
-  pc->ppi_port_a = val;
+  pc->ppi_port_a[1] = val;
   e8259_set_irq1 (pc->pic, 1);
   pc->key_clk = 10000;
-
-  pce_log (MSG_DEB, "keycode: %02X\n", val);
 }

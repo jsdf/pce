@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.5 2003/04/24 23:18:16 hampa Exp $ */
+/* $Id: pce.c,v 1.6 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1635,7 +1635,7 @@ int str_isarg2 (const char *str, const char *arg1, const char *arg2)
 int main (int argc, char *argv[])
 {
   int       i;
-  int       halt;
+  int       run;
   char      *cfg;
   ini_sct_t *ini, *sct;
 
@@ -1651,7 +1651,7 @@ int main (int argc, char *argv[])
   }
 
   cfg = NULL;
-  halt = 0;
+  run = 0;
 
   pce_log_set_fp (NULL, 0);
   pce_log_set_stderr (1);
@@ -1672,8 +1672,8 @@ int main (int argc, char *argv[])
       }
       pce_log_set_fname (argv[i]);
     }
-    else if (str_isarg2 (argv[i], "-m", "--monitor")) {
-      halt = 1;
+    else if (str_isarg2 (argv[i], "-r", "--run")) {
+      run = 1;
     }
     else {
       printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
@@ -1710,11 +1710,13 @@ int main (int argc, char *argv[])
   signal (SIGINT, &sig_int);
 //  signal (SIGTERM, &sig_int);
 
-  if (halt) {
+  if (run) {
+    pce_run();
+    fputs ("\n", stdout);
     do_cmd();
   }
   else {
-    pce_run();
+    do_cmd();
   }
 
   pc_del (pc);

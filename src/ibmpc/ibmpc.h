@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.2 2003/04/24 23:18:15 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.3 2003/04/25 02:30:18 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -41,7 +41,7 @@ typedef struct {
 
   e8255_t       *ppi;
   mem_blk_t     *ppi_prt;
-  unsigned char ppi_port_a;
+  unsigned char ppi_port_a[2];
   unsigned char ppi_port_b;
   unsigned char ppi_port_c[2];
 
