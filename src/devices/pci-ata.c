@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/pci-ata.c                                      *
  * Created:       2004-12-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,6 +27,9 @@
 #include <stdlib.h>
 
 #include "pci-ata.h"
+
+
+/* #define DEBUG_PCI_ATA 1 */
 
 
 void pci_ata_init (pci_ata_t *dev)
@@ -100,6 +103,10 @@ unsigned char pci_ata_get_cfg8 (pci_ata_t *dev, unsigned long addr)
 
   val = pci_dev_get_cfg8 (&dev->pci, addr);
 
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: get cfg8 %08lX -> %02X\n", addr, val);
+#endif
+
   return (val);
 }
 
@@ -108,6 +115,10 @@ unsigned short pci_ata_get_cfg16 (pci_ata_t *dev, unsigned long addr)
   unsigned short val;
 
   val = pci_dev_get_cfg16 (&dev->pci, addr);
+
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: get cfg16 %08lX -> %04X\n", addr, val);
+#endif
 
   return (val);
 }
@@ -118,21 +129,37 @@ unsigned long pci_ata_get_cfg32 (pci_ata_t *dev, unsigned long addr)
 
   val = pci_dev_get_cfg32 (&dev->pci, addr);
 
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: get cfg32 %08lX -> %08lX\n", addr, val);
+#endif
+
   return (val);
 }
 
 void pci_ata_set_cfg8 (pci_ata_t *dev, unsigned long addr, unsigned char val)
 {
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: set cfg8 %08lX <- %02X\n", addr, val);
+#endif
+
   pci_dev_set_cfg8 (&dev->pci, addr, val);
 }
 
 void pci_ata_set_cfg16 (pci_ata_t *dev, unsigned long addr, unsigned short val)
 {
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: set cfg16 %08lX <- %04X\n", addr, val);
+#endif
+
   pci_dev_set_cfg16 (&dev->pci, addr, val);
 }
 
 void pci_ata_set_cfg32 (pci_ata_t *dev, unsigned long addr, unsigned long val)
 {
+#ifdef DEBUG_PCI_ATA
+  fprintf (stderr, "pci-ata: set cfg32 %08lX <- %08lX\n", addr, val);
+#endif
+
   if (addr == 0x10) {
     val = (val & ~0x07UL) | 1;
     pci_dev_set_cfg32 (&dev->pci, addr, val);
