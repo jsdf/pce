@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.c                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -62,14 +62,16 @@
 #define ATA_BUF_MODE_READ  1
 #define ATA_BUF_MODE_WRITE 2
 
-#define ATA_CMD_RECALIBRATE  0x10
-#define ATA_CMD_READ         0x20
-#define ATA_CMD_READ_RETRY   0x21
-#define ATA_CMD_WRITE        0x30
-#define ATA_CMD_WRITE_RETRY  0x31
-#define ATA_CMD_DIAGNOSTIC   0x90
-#define ATA_CMD_SET_GEOMETRY 0x91
-#define ATA_CMD_IDENTIFY     0xEC
+#define ATA_CMD_RECALIBRATE        0x10
+#define ATA_CMD_READ               0x20
+#define ATA_CMD_READ_RETRY         0x21
+#define ATA_CMD_WRITE              0x30
+#define ATA_CMD_WRITE_RETRY        0x31
+#define ATA_CMD_DIAGNOSTIC         0x90
+#define ATA_CMD_SET_GEOMETRY       0x91
+#define ATA_CMD_STANDBY_IMMEDIATE1 0x94
+#define ATA_CMD_STANDBY_IMMEDIATE2 0xe0
+#define ATA_CMD_IDENTIFY           0xec
 
 
 unsigned char ata_ctl_get_uint8 (ata_chn_t *ata, unsigned long addr);
@@ -457,6 +459,12 @@ void ata_cmd_set_geometry (ata_dev_t *dev)
 }
 
 static
+void ata_cmd_standby_immediate (ata_dev_t *dev)
+{
+  ata_cmd_ok (dev);
+}
+
+static
 void ata_cmd_identify (ata_dev_t *dev)
 {
   uint32_t cnt1, cnt2;
@@ -524,6 +532,11 @@ void ata_command (ata_chn_t *ata, unsigned cmd)
 
   case ATA_CMD_SET_GEOMETRY:
     ata_cmd_set_geometry (ata->sel);
+    break;
+
+  case ATA_CMD_STANDBY_IMMEDIATE1:
+  case ATA_CMD_STANDBY_IMMEDIATE2:
+    ata_cmd_standby_immediate (ata->sel);
     break;
 
   case ATA_CMD_IDENTIFY:
