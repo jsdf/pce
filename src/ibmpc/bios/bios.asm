@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.13 2003/10/13 01:55:42 hampa Exp $
+; $Id: bios.asm,v 1.14 2003/11/18 00:30:50 hampa Exp $
 
 
 CPU 8086
@@ -1815,15 +1815,24 @@ db 0x58                                 ; EA65 pop ax
 db 0xCF                                 ; EA66 iret
 
 L_EA67:
-db 0xF6, 0x06, 0x17, 0x00, 0x08         ; EA67 test byte [0x17],0x8
-db 0x75, 0x03                           ; EA6C jnz 0xea71
-db 0xE9, 0x91, 0x00                     ; EA6E jmp 0xeb02
-db 0xF6, 0x06, 0x17, 0x00, 0x04         ; EA71 test byte [0x17],0x4
-db 0x74, 0x33                           ; EA76 jz 0xeaab
-db 0x3C, 0x53                           ; EA78 cmp al,0x53
-db 0x75, 0x2F                           ; EA7A jnz 0xeaab
-db 0xC7, 0x06, 0x72, 0x00, 0x34, 0x12   ; EA7C mov word [0x72],0x1234
-  jmp     0xf000:start
+  test    byte [0x0017], 0x08           ; alt
+  jnz     L_EA71
+  jmp     L_EB02
+
+L_EA71:
+  test    byte [0x0017], 0x04           ; ctrl
+  jz      L_EAAB
+
+  cmp     al, 0x53                      ; del
+  jnz     L_EAAB
+
+  ; Alt-Ctrl-Del was pressed
+  mov     word [0x0072], 0x1234
+
+; #### patch ####
+;  jmp     0xf000:start
+  jmp     0xf000:0xfff0
+
 db 0x52                                 ; EA87 push dx
 db 0x4F                                 ; EA88 dec di
 db 0x50                                 ; EA89 push ax
@@ -1848,10 +1857,13 @@ db 0x24, 0x25                           ; EAA1 and al,0x25
 db 0x26, 0x2C, 0x2D                     ; EAA3 es sub al,0x2d
 db 0x2E, 0x2F                           ; EAA6 cs das
 db 0x30, 0x31                           ; EAA8 xor [bx+di],dh
-db 0x32, 0x3C                           ; EAAA xor bh,[si]
-db 0x39, 0x75, 0x05                     ; EAAC cmp [di+0x5],si
+db 0x32
+L_EAAB:
+  cmp     al, 0x39
+  jnz     L_EAB4
 db 0xB0, 0x20                           ; EAAF mov al,0x20
 db 0xE9, 0x21, 0x01                     ; EAB1 jmp 0xebd5
+L_EAB4:
 db 0xBF, 0x87, 0xEA                     ; EAB4 mov di,0xea87
 db 0xB9, 0x0A, 0x00                     ; EAB7 mov cx,0xa
 db 0xF2, 0xAE                           ; EABA repne scasb
@@ -1883,6 +1895,7 @@ db 0x3C, 0x47                           ; EAF8 cmp al,0x47
 db 0x73, 0xF9                           ; EAFA jnc 0xeaf5
 db 0xBB, 0x5F, 0xE9                     ; EAFC mov bx,0xe95f
 db 0xE9, 0x1B, 0x01                     ; EAFF jmp 0xec1d
+L_EB02:
 db 0xF6, 0x06, 0x17, 0x00, 0x04         ; EB02 test byte [0x17],0x4
 db 0x74, 0x58                           ; EB07 jz 0xeb61
 db 0x3C, 0x46                           ; EB09 cmp al,0x46
