@@ -5,7 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -39,9 +40,6 @@ typedef unsigned long long uint64_t;
 #endif
 
 
-struct arm_s;
-
-
 /*****************************************************************************
  * ARM
  *****************************************************************************/
@@ -66,6 +64,18 @@ struct arm_s;
 #define ARM_MODE_ABT 0x17
 #define ARM_MODE_UND 0x1a
 #define ARM_MODE_SYS 0x1f
+
+
+/* #define ARM_C15_ID   0x4105f000UL */
+#define ARM_C15_ID   0x69052000UL
+#define ARM_C15_CR_M 0x00000001UL
+#define ARM_C15_CR_A 0x00000002UL
+#define ARM_C15_CR_C 0x00000004UL
+#define ARM_C15_CR_W 0x00000008UL
+#define ARM_C15_CR_P 0x00000010UL
+#define ARM_C15_CR_D 0x00000020UL
+#define ARM_C15_CR_L 0x00000040UL
+#define ARM_C15_CR_B 0x00000080UL
 
 
 #define ARM_XLAT_CPU     0
@@ -118,6 +128,10 @@ struct arm_s;
   } while (0)
 
 
+struct arm_s;
+struct arm_copr_s;
+
+
 typedef unsigned char (*arm_get_uint8_f) (void *ext, unsigned long addr);
 typedef unsigned short (*arm_get_uint16_f) (void *ext, unsigned long addr);
 typedef unsigned long (*arm_get_uint32_f) (void *ext, unsigned long addr);
@@ -126,9 +140,33 @@ typedef void (*arm_set_uint8_f) (void *ext, unsigned long addr, unsigned char va
 typedef void (*arm_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 typedef void (*arm_set_uint32_f) (void *ext, unsigned long addr, unsigned long val);
 
+typedef int (*arm_copr_exec_f) (struct arm_s *c, struct arm_copr_s *p);
+
 typedef void (*arm_opcode_f) (struct arm_s *c);
 
 
+/*****************************************************************************
+ * @short The ARM coprocessor context
+ *****************************************************************************/
+typedef struct arm_copr_s {
+  unsigned        copr_idx;
+
+  arm_copr_exec_f exec;
+
+  void            *ext;
+} arm_copr_t;
+
+
+typedef struct {
+  arm_copr_t copr;
+
+  uint32_t reg[16];
+} arm_copr15_t;
+
+
+/*****************************************************************************
+ * @short The ARM CPU context
+ *****************************************************************************/
 typedef struct arm_s {
   void               *mem_ext;
 
@@ -153,7 +191,12 @@ typedef struct arm_s {
   uint32_t           reg[16];
   uint32_t           reg_alt[ARM_REG_ALT_CNT];
 
+  /* the current register mapping */
   unsigned           reg_map;
+
+  arm_copr_t         *copr[16];
+
+  arm_copr15_t       copr15;
 
   uint32_t           ir;
 
@@ -222,6 +265,16 @@ unsigned long long arm_get_clkcnt (arm_t *c);
  * @short Get the previous instruction delay
  *****************************************************************************/
 unsigned long arm_get_delay (arm_t *c);
+
+
+void arm_copr_init (arm_copr_t *p);
+void arm_copr_free (arm_copr_t *p);
+void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p);
+
+void p15_init (arm_copr15_t *c);
+void p15_free (arm_copr15_t *p);
+arm_copr_t *p15_new (void);
+void p15_del (arm_copr15_t *p);
 
 
 void arm_set_reg_map (arm_t *arm, unsigned mode);

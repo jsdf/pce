@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -75,45 +75,17 @@ int sarm_match_reg (cmd_t *cmd, simarm_t *sim, uint32_t **reg)
 
 void sarm_dasm_str (char *dst, arm_dasm_t *op)
 {
-  switch (op->argn) {
-    case 0:
-      sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
-      break;
+  unsigned i, j;
 
-    case 1:
-      sprintf (dst, "%08lX  %-8s %s", (unsigned long) op->ir, op->op, op->arg[0]);
-      break;
+  if (op->argn == 0) {
+    sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
+  }
+  else {
+    j = sprintf (dst, "%08lX  %-8s %s", (unsigned long) op->ir, op->op, op->arg[0]);
 
-    case 2:
-      sprintf (dst, "%08lX  %-8s %s, %s",
-        (unsigned long) op->ir, op->op, op->arg[0], op->arg[1]
-      );
-      break;
-
-    case 3:
-      sprintf (dst, "%08lX  %-8s %s, %s, %s",
-        (unsigned long) op->ir, op->op,
-        op->arg[0], op->arg[1], op->arg[2]
-      );
-      break;
-
-    case 4:
-      sprintf (dst, "%08lX  %-8s %s, %s, %s, %s",
-        (unsigned long) op->ir, op->op,
-        op->arg[0], op->arg[1], op->arg[2], op->arg[3]
-      );
-      break;
-
-    case 5:
-      sprintf (dst, "%08lX  %-8s %s, %s, %s, %s, %s",
-        (unsigned long) op->ir, op->op,
-        op->arg[0], op->arg[1], op->arg[2], op->arg[3], op->arg[4]
-      );
-      break;
-
-    default:
-      strcpy (dst, "---");
-      break;
+    for (i = 1; i < op->argn; i++) {
+      j += sprintf (dst + j, ", %s", op->arg[i]);
+    }
   }
 }
 
@@ -175,6 +147,20 @@ void sarm_prt_state_cpu (arm_t *c, FILE *fp)
   sarm_dasm_str (str, &op);
 
   fprintf (fp, "%08lX  %s\n", (unsigned long) arm_get_pc (c), str);
+}
+
+void sarm_prt_state_mmu (arm_t *c, FILE *fp)
+{
+  arm_copr15_t *p;
+
+  prt_sep (fp, "ARM MMU");
+
+  p = c->copr[15]->ext;
+
+  fprintf (fp, "CR=%08lX  TTB=%08lX\n",
+    (unsigned long) p->reg[1],
+    (unsigned long) p->reg[2]
+  );
 }
 
 
@@ -267,6 +253,10 @@ void sarm_log_trap (void *ext, unsigned long addr)
   char     *name;
 
   switch (addr) {
+    case 0x00000004UL:
+      name = "undefined operation";
+      break;
+
     default:
       name = "unknown";
       break;
@@ -719,6 +709,54 @@ void do_u (cmd_t *cmd, simarm_t *sim)
   saddr = addr;
 }
 
+static
+void do_x (cmd_t *cmd, simarm_t *sim)
+{
+  unsigned xlat;
+
+  if (cmd_match_eol (cmd)) {
+    switch (par_xlat) {
+      case ARM_XLAT_CPU:
+        printf ("xlat cpu\n");
+        break;
+
+      case ARM_XLAT_REAL:
+        printf ("xlat real\n");
+        break;
+
+      case ARM_XLAT_VIRTUAL:
+        printf ("xlat virtual\n");
+        break;
+
+      default:
+        printf ("xlat unknown\n");
+        break;
+    }
+
+    return;
+  }
+
+  if (cmd_match (cmd, "c")) {
+    xlat = ARM_XLAT_CPU;
+  }
+  else if (cmd_match (cmd, "r")) {
+    xlat = ARM_XLAT_REAL;
+  }
+  else if (cmd_match (cmd, "v")) {
+    xlat = ARM_XLAT_VIRTUAL;
+  }
+  else {
+    cmd_error (cmd, "unknown translation type");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  par_xlat = xlat;
+}
+
 int sarm_do_cmd (cmd_t *cmd, simarm_t *sim)
 {
   if (cmd_match (cmd, "b")) {
@@ -756,6 +794,9 @@ int sarm_do_cmd (cmd_t *cmd, simarm_t *sim)
   }
   else if (cmd_match (cmd, "u")) {
     do_u (cmd, sim);
+  }
+  else if (cmd_match (cmd, "x")) {
+    do_x (cmd, sim);
   }
   else {
     cmd_error (cmd, "unknown command");

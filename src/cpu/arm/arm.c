@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -103,6 +103,8 @@ static unsigned arm_reg_map[32][8] = {
 
 void arm_init (arm_t *c)
 {
+  unsigned i;
+
   c->mem_ext = NULL;
 
   c->get_uint8 = NULL;
@@ -120,9 +122,16 @@ void arm_init (arm_t *c)
 
   arm_set_opcodes (c);
 
+  c->cpsr = 0;
+
   c->reg_map = 0;
 
-  c->cpsr = 0;
+  for (i = 0; i < 16; i++) {
+    c->copr[i] = NULL;
+  }
+
+  p15_init (&c->copr15);
+  c->copr[15] = &c->copr15.copr;
 
   c->oprcnt = 0;
   c->clkcnt = 0;
@@ -183,6 +192,25 @@ unsigned long long arm_get_clkcnt (arm_t *c)
 unsigned long arm_get_delay (arm_t *c)
 {
   return (c->delay);
+}
+
+
+void arm_copr_init (arm_copr_t *p)
+{
+  p->copr_idx = 0;
+  p->exec = NULL;
+  p->ext = NULL;
+}
+
+void arm_copr_free (arm_copr_t *p)
+{
+}
+
+void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p)
+{
+  if (i < 16) {
+    c->copr[i] = p;
+  }
 }
 
 
@@ -305,6 +333,8 @@ void arm_interrupt (arm_t *c, unsigned char val)
 
 void arm_execute (arm_t *c)
 {
+  c->oprcnt += 1;
+
   if (arm_ifetch (c, arm_get_pc (c), &c->ir)) {
     return;
   }
@@ -320,8 +350,6 @@ void arm_execute (arm_t *c)
     arm_set_clk (c, 4, 1);
   }
 
-  c->oprcnt += 1;
-
   if (c->interrupt) {
     if (arm_get_cpsr_i (c)) {
       /* ... */
@@ -332,18 +360,18 @@ void arm_execute (arm_t *c)
 void arm_clock (arm_t *c, unsigned long n)
 {
   while (n >= c->delay) {
-    if (c->delay == 0) {
-      fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) arm_get_pc (c));
-      fflush (stderr);
-      c->delay = 1;
-    }
-
     n -= c->delay;
 
     c->clkcnt += c->delay;
     c->delay = 0;
 
     arm_execute (c);
+
+    if (c->delay == 0) {
+/*      fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) arm_get_pc (c)); */
+/*      fflush (stderr); */
+      c->delay = 1;
+    }
   }
 
   c->clkcnt += n;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -1579,6 +1579,7 @@ void opb0 (arm_t *c)
 static
 void ope0_00 (arm_t *c)
 {
+  int      r;
   unsigned cop, op1, op2, rd, rn, rm;
 
   cop = arm_get_bits (c->ir, 8, 4);
@@ -1588,13 +1589,18 @@ void ope0_00 (arm_t *c)
   rn = arm_ir_rn (c->ir);
   rm = arm_ir_rm (c->ir);
 
-  if (1) {
+  if (c->copr[cop] != NULL) {
+    r = c->copr[cop]->exec (c, c->copr[cop]);
+  }
+  else {
+    r = 1;
+  }
+
+  if (r) {
     arm_set_clk (c, 0, 1);
     arm_exception_undefined (c);
     return;
   }
-
-  /* exec copr */
 
   arm_set_clk (c, 4, 1);
 }
@@ -1603,33 +1609,35 @@ void ope0_00 (arm_t *c)
 static
 void ope0_01 (arm_t *c)
 {
+  int      r;
   unsigned cop, op1, op2, rn, rm;
-  uint32_t s;
 
   cop = arm_get_bits (c->ir, 8, 4);
   op1 = arm_get_bits (c->ir, 21, 3);
   op2 = arm_get_bits (c->ir, 5, 3);
   rn = arm_ir_rn (c->ir);
   rm = arm_ir_rm (c->ir);
-  s = arm_get_rd (c, c->ir);
 
-  if (1) {
+  if (c->copr[cop] != NULL) {
+    r = c->copr[cop]->exec (c, c->copr[cop]);
+  }
+  else {
+    r = 1;
+  }
+
+  if (r) {
     arm_set_clk (c, 0, 1);
     arm_exception_undefined (c);
     return;
   }
-
-  /* write copr */
-
-  arm_set_clk (c, 4, 1);
 }
 
 /* E0 11: mrc[cond] coproc, opcode1, rd, crn, crm, opcode2 */
 static
 void ope0_11 (arm_t *c)
 {
+  int      r;
   unsigned cop, op1, op2, rn, rm;
-  uint32_t d;
 
   cop = arm_get_bits (c->ir, 8, 4);
   op1 = arm_get_bits (c->ir, 21, 3);
@@ -1637,22 +1645,18 @@ void ope0_11 (arm_t *c)
   rn = arm_ir_rn (c->ir);
   rm = arm_ir_rm (c->ir);
 
-  /* read copr */
+  if (c->copr[cop] != NULL) {
+    r = c->copr[cop]->exec (c, c->copr[cop]);
+  }
+  else {
+    r = 1;
+  }
 
-  if (1) {
+  if (r) {
     arm_set_clk (c, 0, 1);
     arm_exception_undefined (c);
     return;
   }
-
-  if (arm_rd_is_pc (c->ir)) {
-    arm_set_cpsr (c, (arm_get_cpsr (c) & ~ARM_PSR_CC) | (d & ARM_PSR_CC));
-  }
-  else {
-    arm_set_rd (c, c->ir, d);
-  }
-
-  arm_set_clk (c, 4, 1);
 }
 
 /* E0 */

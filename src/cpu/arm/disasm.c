@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -916,7 +916,7 @@ void arm_dasm_mem (arm_t *c, arm_dasm_t *da, uint32_t pc, unsigned xlat)
     da->pc = pc;
     da->ir = 0xffffffffUL;
 
-    dasm_op0 (da, "TLB_MISS", FLG_NONE);
+    dasm_op0 (da, "<xlat>", FLG_NONE);
 
     da->flags |= ARM_DFLAG_TLBM;
   }

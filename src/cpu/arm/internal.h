@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -106,6 +106,8 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
   (c)->delay += (clk); \
 } while (0)
 
+
+int arm_is_privileged (arm_t *c);
 
 int arm_write_cpsr (arm_t *c, uint32_t val);
 

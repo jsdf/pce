@@ -22,8 +22,8 @@ ifeq "$(PCE_HOST_IA32)" "1"
 CC_FLG_EXTRA += -DPCE_HOST_IA32
 endif
 
-SRC := arm.c disasm.c mmu.c opcodes.c
-OBJ := arm.o disasm.o mmu.o opcodes.o
+SRC := arm.c copr15.c disasm.c mmu.c opcodes.c
+OBJ := arm.o copr15.o disasm.o mmu.o opcodes.o
 HDR := arm.h internal.h
 BIN := arm.a
 
@@ -46,6 +46,7 @@ arm.a: $(OBJ)
 
 
 arm.o:		arm.c $(SDP)
+copr15.o:	copr15.c $(SDP)
 disasm.o:	disasm.c $(SDP)
 mmu.o:		mmu.c $(SDP)
 opcodes.o:	opcodes.c $(SDP)
