@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.h                                          *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.6 2003/04/26 18:17:44 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.7 2003/04/29 00:51:54 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -56,6 +56,8 @@ typedef struct {
   mem_blk_t     *pic_prt;
 
   terminal_t    *trm;
+
+  parport_t     *parport[4];
 
   unsigned long long clk_cnt;
   unsigned long      clk_div[4];

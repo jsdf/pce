@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.4 2003/04/26 16:35:28 hampa Exp $
+; $Id: pce.asm,v 1.5 2003/04/29 00:51:55 hampa Exp $
 
 
 %macro set_pos 1
@@ -52,6 +52,7 @@ start:
   call    init_mem
   call    init_misc
   call    init_keyboard
+  call    init_parport
   call    init_time
 
   call    prt_nl
@@ -156,7 +157,7 @@ init_ppi:
   out     0x61, al
 
   in      al, 0x60                      ; get config word
-  mov     ah, 0
+  mov     ah, 0x40
 
   mov     [0x0010], ax                  ; equipment word
 
@@ -289,6 +290,10 @@ init_keyboard:
 
   ret
 
+
+init_parport:
+  mov     [0x0008], word 0x0378
+  ret
 
 get_bcd:
   push    dx

@@ -1,5 +1,5 @@
 # Makefile
-# $Id: Makefile.in,v 1.6 2003/04/26 18:17:44 hampa Exp $
+# $Id: Makefile.in,v 1.7 2003/04/29 00:51:54 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
@@ -11,15 +11,15 @@ pcedst	:= ..
 include $(reldir)/Makefile.inc
 
 
-SRC	:= cga.c disk.c ibmpc.c log.c mda.c memory.c pce.c
+SRC	:= cga.c disk.c ibmpc.c log.c mda.c memory.c parport.c pce.c
 
-OBJ	:= cga.o disk.o ibmpc.o log.o mda.o memory.o pce.o
+OBJ	:= cga.o disk.o ibmpc.o log.o mda.o memory.o parport.o pce.o
 OBJ_EXT	:= \
 	$(pcedst)/e8086/e8086.a $(pcedst)/chipset/chipset.a \
 	$(pcedst)/libini/libini.a \
 	$(pcedst)/terminal/terminal.o $(pcedst)/terminal/vt100.o
 
-HDR	:= cga.h disk.h ibmpc.h log.h mda.h memory.h pce.h
+HDR	:= cga.h disk.h ibmpc.h log.h mda.h memory.h parport.h pce.h
 HDR_EXT	:= \
 	$(pcesrc)/e8086/e8086.h $(pcesrc)/chipset/e8253.h \
 	$(pcesrc)/chipset/e8255.h $(pcesrc)/chipset/e8259.h \
@@ -75,4 +75,5 @@ ibmpc.o:	ibmpc.c $(SDP)
 log.o:		log.c $(SDP)
 mda.o:		mda.c $(SDP)
 memory.o:	memory.c $(SDP)
+parport.o:	parport.c $(SDP)
 pce.o:		pce.c $(SDP)

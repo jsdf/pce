@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.10 2003/04/26 23:36:47 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.11 2003/04/29 00:51:54 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
 {
   unsigned ram;
 
-  ram = ini_get_def_long (ini, "ram", 640);
+  ini_get_uint (ini, "ram", &ram, 640);
 
   pce_log (0, "RAM: %uKB\n", ram);
 
@@ -64,9 +64,9 @@ void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "rom");
 
   while (sct != NULL) {
-    fname = ini_get_def_string (sct, "file", "default.rom");
-    base = ini_get_def_long (sct, "base", 0);
-    size = ini_get_def_long (sct, "size", 64 * 1024);
+    ini_get_string (sct, "file", &fname, "default.rom");
+    ini_get_ulng (sct, "base", &base, 0);
+    ini_get_ulng (sct, "size", &size, 64 * 1024);
 
     pce_log (0, "ROM: %05X %04X %s\n", base, size, fname);
 
@@ -160,7 +160,7 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
   mem_blk_t *blk;
   unsigned  ram;
 
-  ram = ini_get_def_long (ini, "ram", 640);
+  ini_get_uint (ini, "ram", &ram, 640);
   ram = ram / 32;
 
   ppi = e8255_new();
@@ -278,15 +278,15 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "disk");
 
   while (sct != NULL) {
-    drive = ini_get_def_long (sct, "drive", 0);
-    type = ini_get_def_string (sct, "type", "image");
-    fname = ini_get_def_string (sct, "file", NULL);
+    ini_get_uint (sct, "drive", &drive, 0);
+    ini_get_string (sct, "type", &type, "image");
+    ini_get_string (sct, "file", &fname, NULL);
 
-    c = ini_get_def_long (sct, "c", 80);
-    h = ini_get_def_long (sct, "h", 2);
-    s = ini_get_def_long (sct, "s", 18);
+    ini_get_uint (sct, "c", &c, 80);
+    ini_get_uint (sct, "h", &h, 2);
+    ini_get_uint (sct, "s", &s, 18);
 
-    ro = ini_get_def_long (sct, "readonly", 0);
+    ini_get_sint (sct, "readonly", &ro, 0);
 
     dsk = dsk_new (drive);
 
@@ -317,6 +317,49 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
     }
 
     sct = ini_sct_find_next (sct, "disk");
+  }
+}
+
+void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
+{
+  unsigned        i;
+  unsigned        base;
+  char            *fname;
+  ini_sct_t       *sct;
+  static unsigned defbase[4] = { 0x378, 0x278, 0x3bc, 0x2bc };
+
+  for (i = 0; i < 4; i++) {
+    pc->parport[i] = NULL;
+  }
+
+  i = 0;
+  sct = ini_sct_find_sct (ini, "parport");
+
+  while ((i < 4) && (sct != NULL)) {
+    ini_get_uint (sct, "base", &base, defbase[i]);
+    ini_get_string (sct, "file", &fname, NULL);
+
+    pce_log (MSG_INF, "parport at %04X -> %s\n",
+      base, (fname == NULL) ? "<none>" : fname
+    );
+
+    pc->parport[i] = parport_new (base);
+    if (pc->parport[i] == NULL) {
+      pce_log (MSG_ERR, "parport setup failed [%04X -> %s]\n",
+        base, (fname == NULL) ? "<none>" : fname
+      );
+    }
+    else {
+      if (fname != NULL) {
+        parport_set_fname (pc->parport[i], fname);
+      }
+
+      mem_add_blk (pc->prt, pc->parport[i]->prt, 0);
+
+      i += 1;
+    }
+
+    sct = ini_sct_find_next (sct, "parport");
   }
 }
 
@@ -355,8 +398,20 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc_setup_terminal (pc, ini);
   pc_setup_video (pc, ini);
   pc_setup_disks (pc, ini);
+  pc_setup_parport (pc, ini);
 
   return (pc);
+}
+
+void pc_del_parport (ibmpc_t *pc)
+{
+  unsigned i;
+
+  for (i = 0; i < 4; i++) {
+    if (pc->parport[i] != NULL) {
+      parport_del (pc->parport[i]);
+    }
+  }
 }
 
 void pc_del (ibmpc_t *pc)
@@ -364,6 +419,8 @@ void pc_del (ibmpc_t *pc)
   if (pc == NULL) {
     return;
   }
+
+  pc_del_parport (pc);
 
   dsks_del (pc->dsk);
 

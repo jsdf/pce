@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: bios.asm,v 1.4 2003/04/26 18:17:18 hampa Exp $
+; $Id: bios.asm,v 1.5 2003/04/29 00:51:54 hampa Exp $
 
 
 CPU 8086
@@ -2364,86 +2364,167 @@ db 0xC3                                 ; EFC4 ret
 db 0xFF                                 ; EFC5 db 0xFF
 db 0xFF
 
-; EFC7
-int_1e:
-  db 0xCF
-db 0x02, 0x25                           ; EFC8 add ah,[di]
-db 0x02, 0x08                           ; EFCA add cl,[bx+si]
-db 0x2A, 0xFF                           ; EFCC sub bh,bh
-db 0x50                                 ; EFCE push ax
-db 0xF6, 0x19                           ; EFCF neg byte [bx+di]
-db 0x04, 0xFB                           ; EFD1 add al,0xfb
-db 0x1E                                 ; EFD3 push ds
-db 0x52                                 ; EFD4 push dx
-db 0x56                                 ; EFD5 push si
-db 0x51                                 ; EFD6 push cx
-db 0x53                                 ; EFD7 push bx
-db 0xE8, 0x63, 0x0F                     ; EFD8 call 0xff3e
-db 0x8B, 0xF2                           ; EFDB mov si,dx
-db 0x8A, 0x5C, 0x78                     ; EFDD mov bl,[si+0x78]
-db 0xD1, 0xE6                           ; EFE0 shl si,1
-db 0x8B, 0x54, 0x08                     ; EFE2 mov dx,[si+0x8]
-db 0x0B, 0xD2                           ; EFE5 or dx,dx
-db 0x74, 0x0C                           ; EFE7 jz 0xeff5
-db 0x0A, 0xE4                           ; EFE9 or ah,ah
-db 0x74, 0x0E                           ; EFEB jz 0xeffb
-db 0xFE, 0xCC                           ; EFED dec ah
-db 0x74, 0x3F                           ; EFEF jz 0xf030
-db 0xFE, 0xCC                           ; EFF1 dec ah
-db 0x74, 0x28                           ; EFF3 jz 0xf01d
-db 0x5B                                 ; EFF5 pop bx
-db 0x59                                 ; EFF6 pop cx
-db 0x5E                                 ; EFF7 pop si
-db 0x5A                                 ; EFF8 pop dx
-db 0x1F                                 ; EFF9 pop ds
-db 0xCF                                 ; EFFA iret
-db 0x50                                 ; EFFB push ax
-db 0xEE                                 ; EFFC out dx,al
-db 0x42                                 ; EFFD inc dx
-db 0x2B, 0xC9                           ; EFFE sub cx,cx
-db 0xEC                                 ; F000 in al,dx
-db 0x8A, 0xE0                           ; F001 mov ah,al
-db 0xA8, 0x80                           ; F003 test al,0x80
-db 0x75, 0x0E                           ; F005 jnz 0xf015
-db 0xE2, 0xF7                           ; F007 loop 0xf000
-db 0xFE, 0xCB                           ; F009 dec bl
-db 0x75, 0xF1                           ; F00B jnz 0xeffe
-db 0x80, 0xCC, 0x01                     ; F00D or ah,0x1
-db 0x80, 0xE4, 0xF9                     ; F010 and ah,0xf9
-db 0xEB, 0x13                           ; F013 jmp short 0xf028
-db 0xB0, 0x0D                           ; F015 mov al,0xd
-db 0x42                                 ; F017 inc dx
-db 0xEE                                 ; F018 out dx,al
-db 0xB0, 0x0C                           ; F019 mov al,0xc
-db 0xEE                                 ; F01B out dx,al
-db 0x58                                 ; F01C pop ax
-db 0x50                                 ; F01D push ax
-db 0x8B, 0x54, 0x08                     ; F01E mov dx,[si+0x8]
-db 0x42                                 ; F021 inc dx
-db 0xEC                                 ; F022 in al,dx
-db 0x8A, 0xE0                           ; F023 mov ah,al
-db 0x80, 0xE4, 0xF8                     ; F025 and ah,0xf8
-db 0x5A                                 ; F028 pop dx
-db 0x8A, 0xC2                           ; F029 mov al,dl
-db 0x80, 0xF4, 0x48                     ; F02B xor ah,0x48
-db 0xEB, 0xC5                           ; F02E jmp short 0xeff5
-db 0x50                                 ; F030 push ax
-db 0x42                                 ; F031 inc dx
-db 0x42                                 ; F032 inc dx
-db 0xB0, 0x08                           ; F033 mov al,0x8
-db 0xEE                                 ; F035 out dx,al
-db 0xB8, 0xE8, 0x03                     ; F036 mov ax,0x3e8
-db 0x48                                 ; F039 dec ax
-db 0x75, 0xFD                           ; F03A jnz 0xf039
-db 0xB0, 0x0C                           ; F03C mov al,0xc
-db 0xEE                                 ; F03E out dx,al
-db 0xEB, 0xDD                           ; F03F jmp short 0xf01e
+
+;*****************************************************************************
+;* int 1E
+;*****************************************************************************
+
+int_1e:                                 ; EFC7
+  db 0xCF                               ; step rate
+  db 0x02                               ; dma mode
+  db 0x25                               ; motor off delay
+  db 0x02                               ; byte per sector
+  db 0x08                               ; sectors per track
+  db 0x2a                               ; gap 3 writing
+  db 0xff
+  db 0x50                               ; gap 3 formatting
+  db 0xf6                               ; fill byte
+  db 0x19                               ; head settle time
+  db 0x04                               ; motor start time
+
+
+;*****************************************************************************
+;* int 17 handler
+;*****************************************************************************
+
+int_17:                                 ; EFD2
+  sti
+  push    ds
+  push    dx
+  push    si
+  push    cx
+  push    bx
+
+  call    set_bios_ds
+
+  mov     si, dx
+  mov     bl, [si + 0x0078]             ; port timeout value
+
+  shl     si, 1
+  mov     dx, [si + 0x0008]             ; base address
+
+  or      dx, dx
+  jz      int_17_done
+
+  or      ah, ah
+  jz      int_17_00
+
+  dec     ah
+  jz      int_17_01
+
+  dec     ah
+  jz      int_17_02
+
+int_17_done:                            ; EFF5
+  pop     bx
+  pop     cx
+  pop     si
+  pop     dx
+  pop     ds
+  iret
+
+
+;*****************************************************************************
+;* int 17 func 00 - print character
+;* AL = character
+;* DX = port
+;*****************************************************************************
+; int17 func 00
+
+int_17_00:                              ; EFFB
+  push    ax
+
+  out     dx, al                        ; write data register
+
+  inc     dx
+
+L_EFFE:
+  sub     cx, cx
+
+L_F000:
+  in      al, dx                        ; read status register
+  mov     ah, al
+  test    al, 0x80                      ; busy
+  jnz     L_F015
+  loop    L_F000
+
+  dec     bl
+  jnz     L_EFFE
+
+  or      ah, 0x01                      ; timeout
+  and     ah, 0xf9
+  jmp     short L_F028
+
+L_F015:
+  mov     al, 0x0d
+
+  inc     dx
+  out     dx, al                        ; strobe
+
+  mov     al, 0x0c
+  out     dx, al                        ; no strobe
+
+  pop     ax
+
+
+;*****************************************************************************
+;* int 17 func 02 - get port status
+;* DX = port
+;*****************************************************************************
+
+int_17_02:                              ; F01D
+  push    ax
+
+L_F01E:
+  mov     dx, [si + 0x0008]             ; port base address
+
+  inc     dx
+  in      al, dx                        ; read status register
+
+  mov     ah, al
+  and     ah, 0xf8
+
+L_F028:
+  pop     dx
+
+  mov     al, dl
+  xor     ah, 0x48
+
+  jmp     short int_17_done
+
+
+;*****************************************************************************
+;* int 17 func 01 - initialize port
+;* DX = port
+;*****************************************************************************
+
+int_17_01:                              ; F030
+  push    ax
+
+  inc     dx
+  inc     dx
+
+  mov     al, 0x08
+  out     dx, al                        ; write control register
+
+  mov     ax, 1000
+
+L_F039:
+  dec     ax
+  jnz     L_F039
+
+  mov     al, 0x0c
+  out     dx, al
+
+  jmp     short L_F01E
+
 
 D_F041:
   dw      L_E162
 
 db 0xFF
 db 0xFF
+
 
 int_10_func:
   dw      int_10_00                     ; F0FC
@@ -4440,7 +4521,7 @@ bios_int_addr_10:                       ; FF03
   dw      0xe739                        ; int 14
   dw      0xf859                        ; int 15
   dw      int_16                        ; int 16 (E82E)
-  dw      0xefd2                        ; int 17
+  dw      int_17                        ; int 17 (EFD2)
   dw      0x0000                        ; int 18
   dw      int_19                        ; int 19 (E6F2)
   dw      int_1a                        ; int 1a (FE6E)
