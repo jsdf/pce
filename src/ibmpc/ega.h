@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.h                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.h,v 1.2 2003/09/19 14:48:36 hampa Exp $ */
+/* $Id: ega.h,v 1.3 2003/09/22 23:03:10 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_EGA_H
@@ -63,6 +63,8 @@ typedef struct {
   unsigned      mode;
   unsigned      mode_w;
   unsigned      mode_h;
+
+  char          update;
 
   terminal_t    *trm;
 } ega_t;

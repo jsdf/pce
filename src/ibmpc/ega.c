@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ega.c                                            *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,43 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ega.c,v 1.6 2003/09/21 08:16:45 hampa Exp $ */
+/* $Id: ega.c,v 1.7 2003/09/22 23:03:10 hampa Exp $ */
 
 
 #include <stdio.h>
 
 #include "pce.h"
+
+
+#define CRTC_INDEX   0x0024
+#define CRTC_DATA    0x0025
+#define CRTC_CSIZ_HI 0x0a
+#define CRTC_CSIZ_LO 0x0b
+#define CRTC_OFFS_HI 0x0c
+#define CRTC_OFFS_LO 0x0d
+#define CRTC_CPOS_HI 0x0e
+#define CRTC_CPOS_LO 0x0f
+#define CRTC_ROFS    0x13
+
+#define TS_INDEX     0x0014
+#define TS_DATA      0x0015
+#define TS_WRPL      0x02
+
+#define GDC_INDEX    0x002e
+#define GDC_DATA     0x002f
+#define GDC_SETR     0x00
+#define GDC_ENAB     0x01
+#define GDC_CCMP     0x02
+#define GDC_FSEL     0x03
+#define GDC_RDPL     0x04
+#define GDC_MODE     0x05
+#define GDC_MISC     0x06
+#define GDC_CARE     0x07
+#define GDC_BMSK     0x08
+
+#define ATC_INDEX    0x0010
+#define ATC_DATA     0x0011
+#define ATC_OSCN     0x11
 
 
 static
@@ -96,6 +127,8 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   ega->crtc_ofs = 0;
 
   ega->crs_on = 1;
+
+  ega->update = 0;
 
   ega->mode = 0;
 
@@ -417,6 +450,50 @@ int ega_mode16_screenshot (ega_t *ega, FILE *fp)
   return (0);
 }
 
+void ega_mode16_update (ega_t *ega)
+{
+  unsigned      i, x, y, w;
+  unsigned      sx, sy, sw, sh;
+  unsigned      col1, col2;
+  unsigned      rofs;
+  unsigned long addr;
+  unsigned char msk;
+
+  addr = ega->crtc_ofs & 0xffff;
+  rofs = 2 * ega->crtc_reg[0x13];
+
+  w = ega->mode_w / 8;
+
+  col1 = 0;
+  trm_set_col (ega->trm, 0, 0);
+
+  for (y = 0; y < ega->mode_h; y++) {
+    for (x = 0; x < w; x++) {
+      msk = 0x80;
+      for (i = 0; i < 8; i++) {
+        col2 = (ega->data[addr + x + 0 * 65536] & msk) ? 0x01 : 0x00;
+        col2 |= (ega->data[addr + x + 1 * 65536] & msk) ? 0x02 : 0x00;
+        col2 |= (ega->data[addr + x + 2 * 65536] & msk) ? 0x04 : 0x00;
+        col2 |= (ega->data[addr + x + 3 * 65536] & msk) ? 0x08 : 0x00;
+
+        if (col1 != col2) {
+          trm_set_col (ega->trm, col2, 0);
+          col1 = col2;
+        }
+
+        pce_smap_get_pixel (&ega->smap, 8 * x + i, y, &sx, &sy, &sw, &sh);
+        trm_set_pxl (ega->trm, sx, sy, sw, sh);
+
+        msk = msk >> 1;
+      }
+    }
+
+    addr = (addr + rofs) & 0xffff;
+  }
+
+  ega->update = 0;
+}
+
 void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch[4])
 {
   unsigned      i;
@@ -462,6 +539,11 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
     return;
   }
 
+  if (ega->update) {
+    ega_mode16_update (ega);
+    return;
+  }
+
   rofs = 2 * ega->crtc_reg[0x13];
 
   if ((8 * rofs) < ega->mode_w) {
@@ -486,41 +568,6 @@ void ega_mode16_set_latches (ega_t *ega, unsigned long addr, unsigned char latch
       pce_smap_get_pixel (&ega->smap, x + i, y, &sx, &sy, &sw, &sh);
       trm_set_pxl (ega->trm, sx, sy, sw, sh);
     }
-  }
-}
-
-void ega_mode16_update (ega_t *ega)
-{
-  unsigned      i, x, y, w;
-  unsigned      sx, sy, sw, sh;
-  unsigned      c;
-  unsigned      rofs;
-  unsigned long addr;
-  unsigned char msk;
-
-  addr = ega->crtc_ofs & 0xffff;
-  rofs = 2 * ega->crtc_reg[0x13];
-
-  w = ega->mode_w / 8;
-
-  for (y = 0; y < ega->mode_h; y++) {
-    for (x = 0; x < w; x++) {
-      msk = 0x80;
-      for (i = 0; i < 8; i++) {
-        c = (ega->data[addr + x + 0 * 65536] & msk) ? 0x01 : 0x00;
-        c |= (ega->data[addr + x + 1 * 65536] & msk) ? 0x02 : 0x00;
-        c |= (ega->data[addr + x + 2 * 65536] & msk) ? 0x04 : 0x00;
-        c |= (ega->data[addr + x + 3 * 65536] & msk) ? 0x08 : 0x00;
-
-        trm_set_col (ega->trm, c, 0);
-        pce_smap_get_pixel (&ega->smap, 8 * x + i, y, &sx, &sy, &sw, &sh);
-        trm_set_pxl (ega->trm, sx, sy, sw, sh);
-
-        msk = msk >> 1;
-      }
-    }
-
-    addr = (addr + rofs) & 0xffff;
   }
 }
 
@@ -701,7 +748,7 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
 {
   unsigned sw, sh;
 
-  fprintf (stderr, "ega: set mode %u (%u, %u)\n", mode, w, h);
+  pce_log (MSG_DEB, "ega:\tset mode %u (%u, %u)\n", mode, w, h);
 
   switch (mode) {
     case 0:
@@ -735,6 +782,8 @@ void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
   ega->mode = mode;
   ega->mode_w = w;
   ega->mode_h = h;
+
+  ega->update = 0;
 }
 
 void ega_set_pos (ega_t *ega, unsigned pos)
@@ -921,7 +970,7 @@ void ega_atc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
       trm_set_map (ega->trm, reg, r, g, b);
 
-//      ega_update (ega);
+      ega->update = 1;
     }
     return;
   }
@@ -1043,6 +1092,43 @@ unsigned char ega_crtc_get_reg (ega_t *ega, unsigned reg)
   return (ega->crtc_reg[reg]);
 }
 
+unsigned char ega_get_input_state_1 (ega_t *ega)
+{
+  static unsigned cnt = 0;
+  unsigned char   val;
+
+  ega->atc_index = 1;
+
+  cnt += 1;
+
+  val = ega->reg->data[0x2a];
+
+  if (val & 0x08) {
+    if (cnt >= 64) {
+      cnt = 0;
+      val &= ~(0x80 | 0x08 | 0x01);
+    }
+  }
+  else {
+    if ((cnt & 3) == 0) {
+      val ^= 0x01;
+    }
+    if (cnt >= (8 * ega->mode_h)) {
+      cnt = 0;
+      val |= (0x80 | 0x08);
+      val &= ~0x01;
+
+      if (ega->update) {
+        ega_update (ega);
+      }
+    }
+  }
+
+  ega->reg->data[0x2a] = val;
+
+  return (val);
+}
+
 void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 {
 //  pce_log (MSG_DEB, "ega: set reg %04lx = %02x\n", addr, val);
@@ -1051,7 +1137,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
     case 0x10: /* 0x3c0: ATC index/data */
       if (ega->atc_index) {
         ega->atc_index = 0;
-        ega->reg->data[addr] = val;
+        ega->reg->data[0x10] = val;
       }
       else {
         ega->atc_index = 1;
@@ -1065,7 +1151,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       break;
 
     case 0x14: /* 0x3c4: TS index */
-      ega->reg->data[addr] = val;
+      ega->reg->data[0x14] = val;
       break;
 
     case 0x15: /* 0x3c5: TS data */
@@ -1073,7 +1159,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       break;
 
     case 0x1e: /* 0x3ce: GDC index */
-      ega->reg->data[addr] = val;
+      ega->reg->data[0x1e] = val;
       break;
 
     case 0x1f: /* 0x3cf: GDC data */
@@ -1081,7 +1167,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
       break;
 
     case 0x20: /* 0x3d0: pce extension */
-      switch (val) {
+      switch (val & 0x7f) {
         case 0x02:
         case 0x03:
           ega_set_mode (ega, 0, 80, 25);
@@ -1103,6 +1189,10 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 
         case 0x10:
           ega_set_mode (ega, 16, 640, 350);
+          break;
+
+        default:
+          pce_log (MSG_INF, "ega: unknown mode (%u)\n", val);
           break;
       }
       break;
@@ -1127,12 +1217,10 @@ void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
 
 unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
 {
-  static unsigned cnt = 0;
-
 //  pce_log (MSG_DEB, "ega: get reg %04lx\n", addr);
 
   switch (addr) {
-    case 0x12: /* 0x3c2: input status register 0 */
+    case 0x12: /* 0x3c2: input state 0  */
       return (0x00);
 
     case 0x14: /* 0x3c4 */
@@ -1159,18 +1247,8 @@ unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
       return (ega_crtc_get_reg (ega, ega->reg->data[0x24]));
 
 //    case 0x0a:
-    case 0x2a: /* 0x3da */
-      ega->atc_index = 1;
-
-      cnt += 1;
-      if ((cnt & 7) == 0) {
-        ega->reg->data[0x2a] ^= 1;
-      }
-      if (cnt >= 64) {
-        cnt = 0;
-        ega->reg->data[0x2a] ^= (0x08 | 0x80);
-      }
-      return (ega->reg->data[0x2a]);
+    case 0x2a: /* 0x3da: input state 1 */
+      return (ega_get_input_state_1 (ega));
 
     default:
       return (0xff);
