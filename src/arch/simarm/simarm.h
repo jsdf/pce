@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.h                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -57,9 +57,9 @@ typedef unsigned short (*get_uint16_f) (void *ext);
 struct simarm_t;
 
 
-extern char          *par_terminal;
-extern char          *par_video;
-extern char          *par_cpu;
+extern char *par_terminal;
+extern char *par_video;
+extern char *par_cpu;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
@@ -90,6 +90,10 @@ typedef struct simarm_s {
 
   nvram_t            *nvr;
 
+  ixp_intc_t         *intc;
+
+  ixp_timer_t        *timer;
+
   serport_t          *serport[2];
 
   breakpoint_t       *brkpt;
@@ -102,19 +106,19 @@ typedef struct simarm_s {
 
 
 /*****************************************************************************
- * @short Create a new sim405 context
- * @param ini A libini sim405 section. Can be NULL.
+ * @short Create a new simarm context
+ * @param ini A libini simarm section. Can be NULL.
  *****************************************************************************/
 simarm_t *sarm_new (ini_sct_t *ini);
 
 /*****************************************************************************
- * @short Delete a sim405 context
+ * @short Delete a simarm context
  *****************************************************************************/
 void sarm_del (simarm_t *sim);
 
 /*****************************************************************************
  * @short  Get the number of clock cycles
- * @return The number of clock cycles the SIM405GS3 went through since the last
+ * @return The number of clock cycles the simarm went through since the last
  *         initialization
  *****************************************************************************/
 unsigned long long sarm_get_clkcnt (simarm_t *sim);

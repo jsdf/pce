@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -185,7 +185,7 @@ typedef struct arm_s {
   arm_set_uint32_f   set_uint32;
 
   void               *log_ext;
-  void               (*log_opcode) (void *ext, unsigned long ir);
+  int                (*log_opcode) (void *ext, unsigned long ir);
   void               (*log_undef) (void *ext, unsigned long ir);
   void               (*log_exception) (void *ext, unsigned long addr);
 
@@ -206,7 +206,10 @@ typedef struct arm_s {
 
   uint32_t           ir;
 
-  unsigned char      interrupt;
+  uint32_t           exception_base;
+
+  unsigned char      irq;
+  unsigned char      fiq;
 
   unsigned long      delay;
 
@@ -222,7 +225,9 @@ typedef struct arm_s {
  * MMU
  *****************************************************************************/
 
-int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat);
+int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
+  unsigned *domn, unsigned *perm
+);
 
 int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val);
 int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val);
@@ -293,11 +298,6 @@ void arm_set_reg_map (arm_t *arm, unsigned mode);
 void arm_reset (arm_t *c);
 
 /*!***************************************************************************
- * @short Log an undefined instruction
- *****************************************************************************/
-void arm_undefined (arm_t *c);
-
-/*!***************************************************************************
  * @short Execute an exception
  *****************************************************************************/
 void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode);
@@ -312,10 +312,19 @@ void arm_exception_prefetch_abort (arm_t *c);
 
 void arm_exception_data_abort (arm_t *c);
 
+void arm_exception_irq (arm_t *c);
+
+void arm_exception_fiq (arm_t *c);
+
 /*!***************************************************************************
  * @short The external interrupt input signal
  *****************************************************************************/
-void arm_interrupt (arm_t *c, unsigned char val);
+void arm_set_irq (arm_t *c, unsigned char val);
+
+/*!***************************************************************************
+ * @short The external fast interrupt input signal
+ *****************************************************************************/
+void arm_set_fiq (arm_t *c, unsigned char val);
 
 /*!***************************************************************************
  * @short Execute one instruction

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -133,6 +133,12 @@ void arm_init (arm_t *c)
   p15_init (&c->copr15);
   c->copr[15] = &c->copr15.copr;
 
+  c->exception_base = 0;
+
+  c->irq = 0;
+  c->fiq = 0;
+
+  c->delay = 0;
   c->oprcnt = 0;
   c->clkcnt = 0;
 }
@@ -263,7 +269,10 @@ void arm_reset (arm_t *c)
 
   c->ir = 0;
 
-  c->interrupt = 0;
+  c->exception_base = 0;
+
+  c->irq = 0;
+  c->fiq = 0;
 
   c->delay = 1;
 
@@ -271,16 +280,9 @@ void arm_reset (arm_t *c)
   c->clkcnt = 0;
 }
 
-void arm_undefined (arm_t *c)
-{
-  if (c->log_undef != NULL) {
-    c->log_undef (c->log_ext, c->ir);
-  }
-}
-
 void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode)
 {
-  uint32_t cpsr;
+  uint32_t cpsr, spsr;
 
   if (c->log_exception != NULL) {
     c->log_exception (c->log_ext, addr);
@@ -289,21 +291,21 @@ void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode)
   c->delay += 1;
 
   cpsr = arm_get_cpsr (c);
+  spsr = cpsr;
 
-  cpsr &= ~(ARM_PSR_T | ARM_PSR_I | ARM_PSR_M);
-  cpsr |= mode & 0x1f;
+  cpsr &= ~(ARM_PSR_T | ARM_PSR_M);
+  cpsr |= ARM_PSR_I | (mode & 0x1f);
 
-  arm_write_cpsr (c, cpsr);
-  arm_set_spsr (c, cpsr);
+  arm_write_cpsr (c, cpsr, 0);
+  arm_set_spsr (c, spsr);
   arm_set_lr (c, ret);
-  arm_set_pc (c, addr);
+  arm_set_pc (c, (c->exception_base + addr) & 0xffffffffUL);
 }
 
 void arm_exception_reset (arm_t *c)
 {
   arm_exception (c, 0x00000000UL, 0, ARM_MODE_SVC);
-
-  arm_set_cpsr_f (c, 0);
+  arm_set_cpsr_f (c, 1);
 }
 
 void arm_exception_undefined (arm_t *c)
@@ -326,9 +328,25 @@ void arm_exception_data_abort (arm_t *c)
   arm_exception (c, 0x00000010UL, arm_get_pc (c) + 8, ARM_MODE_ABT);
 }
 
-void arm_interrupt (arm_t *c, unsigned char val)
+void arm_exception_irq (arm_t *c)
 {
-  c->interrupt = (val != 0);
+  arm_exception (c, 0x00000018UL, arm_get_pc (c) + 4, ARM_MODE_IRQ);
+}
+
+void arm_exception_fiq (arm_t *c)
+{
+  arm_exception (c, 0x0000001cUL, arm_get_pc (c) + 4, ARM_MODE_FIQ);
+  arm_set_cpsr_f (c, 1);
+}
+
+void arm_set_irq (arm_t *c, unsigned char val)
+{
+  c->irq = (val != 0);
+}
+
+void arm_set_fiq (arm_t *c, unsigned char val)
+{
+  c->fiq = (val != 0);
 }
 
 void arm_execute (arm_t *c)
@@ -340,7 +358,10 @@ void arm_execute (arm_t *c)
   }
 
   if (c->log_opcode != NULL) {
-    c->log_opcode (c->log_ext, c->ir);
+    if (c->log_opcode (c->log_ext, c->ir)) {
+      /* nop */
+      c->ir = 0xe1a00000UL;
+    }
   }
 
   if (arm_check_cond (c, arm_ir_cond (c->ir))) {
@@ -350,10 +371,11 @@ void arm_execute (arm_t *c)
     arm_set_clk (c, 4, 1);
   }
 
-  if (c->interrupt) {
-    if (arm_get_cpsr_i (c)) {
-      /* ... */
-    }
+  if (c->fiq && (arm_get_cpsr_f (c) == 0)) {
+    arm_exception_fiq (c);
+  }
+  else if (c->irq && (arm_get_cpsr_i (c) == 0)) {
+    arm_exception_irq (c);
   }
 }
 
@@ -368,8 +390,8 @@ void arm_clock (arm_t *c, unsigned long n)
     arm_execute (c);
 
     if (c->delay == 0) {
-/*      fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) arm_get_pc (c)); */
-/*      fflush (stderr); */
+      fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) arm_get_pc (c));
+      fflush (stderr);
       c->delay = 1;
     }
   }

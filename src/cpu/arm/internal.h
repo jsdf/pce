@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -45,6 +45,14 @@ int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val);
 int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val);
 int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val);
 
+int arm_dload8_t (arm_t *c, uint32_t addr, uint8_t *val);
+int arm_dload16_t (arm_t *c, uint32_t addr, uint16_t *val);
+int arm_dload32_t (arm_t *c, uint32_t addr, uint32_t *val);
+
+int arm_dstore8_t (arm_t *c, uint32_t addr, uint8_t val);
+int arm_dstore16_t (arm_t *c, uint32_t addr, uint16_t val);
+int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val);
+
 
 /*****************************************************************************
  * arm
@@ -68,7 +76,7 @@ extern arm_opcode_f arm_opcodes[256];
   ((x) & ((1UL << (n)) - 1)) \
   )
 
-#define arm_extu(x, n) ((x) & ((1 << (n)) - 1))
+#define arm_extu(x, n) ((x) & ((1UL << (n)) - 1))
 
 #define arm_ir_cond(ir) (((ir) >> 28) & 0x0f)
 #define arm_ir_rn(ir) (((ir) >> 16) & 0x0f)
@@ -107,9 +115,10 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 } while (0)
 
 
-int arm_is_privileged (arm_t *c);
+#define arm_is_privileged(c) (arm_get_cpsr_m (c) != ARM_MODE_USR)
 
-int arm_write_cpsr (arm_t *c, uint32_t val);
+
+int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk);
 
 int arm_check_cond (arm_t *c, unsigned cond);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -59,6 +59,10 @@ int sarm_match_reg (cmd_t *cmd, simarm_t *sim, uint32_t **reg)
   }
   else if (cmd_match (cmd, "pc")) {
     *reg = &cpu->reg[15];
+    return (1);
+  }
+  else if (cmd_match (cmd, "lr")) {
+    *reg = &cpu->reg[14];
     return (1);
   }
   else if (cmd_match (cmd, "cpsr")) {
@@ -157,7 +161,10 @@ void sarm_prt_state_mmu (arm_t *c, FILE *fp)
 
   p = c->copr[15]->ext;
 
-  fprintf (fp, "CR=[%c %c %c %c %c %c %c %c %c %c]\n",
+  fprintf (fp, "CR=[%c%c%c%c%c%c%c%c%c%c%c%c%c]\n",
+    (p->reg[1] & ARM_C15_CR_V) ? 'V' : 'v',
+    (p->reg[1] & ARM_C15_CR_I) ? 'I' : 'i',
+    (p->reg[1] & ARM_C15_CR_Z) ? 'Z' : 'z',
     (p->reg[1] & ARM_C15_CR_R) ? 'R' : 'r',
     (p->reg[1] & ARM_C15_CR_S) ? 'S' : 's',
     (p->reg[1] & ARM_C15_CR_B) ? 'B' : 'b',
@@ -263,9 +270,11 @@ int sarm_exec_off (simarm_t *sim, unsigned long addr)
 
 #if 0
 static
-void sarm_log_opcode (void *ext, unsigned long ir)
+int sarm_log_opcode (void *ext, unsigned long ir)
 {
   simarm_t *sim = ext;
+
+  return (0);
 }
 #endif
 
@@ -274,12 +283,18 @@ void sarm_log_undef (void *ext, unsigned long ir)
 {
   simarm_t *sim = ext;
 
+  if ((ir & 0x0f000000UL) == 0x0c000000UL) {
+    return;
+  }
+
+  if ((ir & 0x0f000000UL) == 0x0d000000UL) {
+    return;
+  }
+
   pce_log (MSG_DEB,
     "%08lX: undefined operation [%08lX]\n",
     (unsigned long) arm_get_pc (sim->cpu), ir
   );
-
-  sarm_break (sim, PCE_BRK_STOP);
 }
 
 static
@@ -288,13 +303,34 @@ void sarm_log_trap (void *ext, unsigned long addr)
   simarm_t *sim = ext;
   char     *name;
 
-  switch (addr) {
-    case 0x00000004UL:
+  switch (addr & 0xff) {
+    case 0x04:
       name = "undefined operation";
+      name = NULL;
       break;
 
-    case 0x00000010UL:
+    case 0x08:
+      name = "swi";
+      name = NULL;
+      break;
+
+    case 0x0c:
+      name = "prefetch abort";
+      name = NULL;
+      break;
+
+    case 0x10:
       name = "data abort";
+      name = NULL;
+      break;
+
+    case 0x18:
+      name = "irq";
+      name = NULL;
+      break;
+
+    case 0x1c:
+      name = "fiq";
       break;
 
     default:
@@ -302,9 +338,11 @@ void sarm_log_trap (void *ext, unsigned long addr)
       break;
   }
 
-  pce_log (MSG_DEB, "%08lX: exception %lx (%s)\n",
-    (unsigned long) arm_get_pc (sim->cpu), addr, name
-  );
+  if (name != NULL) {
+    pce_log (MSG_DEB, "%08lX: exception %lx (%s)\n",
+      (unsigned long) arm_get_pc (sim->cpu), addr, name
+    );
+  }
 }
 
 static
@@ -506,7 +544,7 @@ void do_e (cmd_t *cmd, simarm_t *sim)
 
   while (cmd_match_uint16 (cmd, &val)) {
     if (arm_set_mem8 (sim->cpu, addr, par_xlat, val)) {
-      printf ("TLB miss: %08lx <- %02x\n", addr, (unsigned) val);
+      printf ("translation fault: %08lx <- %02x\n", addr, (unsigned) val);
     }
 
     addr += 1;
@@ -788,6 +826,7 @@ void do_x (cmd_t *cmd, simarm_t *sim)
   else if (cmd_match (cmd, "x")) {
     unsigned long addr1;
     uint32_t      addr2;
+    unsigned      domn, perm;
 
     if (!cmd_match_uint32 (cmd, &addr1)) {
       cmd_error (cmd, "expect address");
@@ -795,12 +834,16 @@ void do_x (cmd_t *cmd, simarm_t *sim)
     }
 
     addr2 = addr1;
-    if (arm_translate_extern (sim->cpu, &addr2, par_xlat)) {
+    if (arm_translate_extern (sim->cpu, &addr2, par_xlat, &domn, &perm)) {
       printf ("%08lX translation abort\n", addr1);
     }
     else {
-      printf ("%08lX -> %08lX\n", addr1, (unsigned long) addr2);
+      printf ("%08lX -> %08lX D=%02X P=%02X\n",
+        addr1, (unsigned long) addr2, domn, perm
+      );
     }
+
+    return;
   }
   else {
     cmd_error (cmd, "unknown translation type");
@@ -867,6 +910,6 @@ void sarm_cmd_init (simarm_t *sim)
 {
   sim->cpu->log_ext = sim;
   sim->cpu->log_opcode = NULL;
-  sim->cpu->log_undef = &sarm_log_undef;
-  sim->cpu->log_exception = &sarm_log_trap;
+  sim->cpu->log_undef = sarm_log_undef;
+  sim->cpu->log_exception = sarm_log_trap;
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -84,6 +84,7 @@ void sig_int (int s)
 void sig_segv (int s)
 {
   fprintf (stderr, "pce: segmentation fault\n");
+  fprintf (stderr, "  PC=%08lX\n", (unsigned long) arm_get_pc (par_sim->cpu));
   fflush (stderr);
 
   exit (1);
@@ -149,12 +150,7 @@ void prt_state (simarm_t *sim, FILE *fp, const char *str)
 static
 void prt_prompt (simarm_t *sim, FILE *fp)
 {
-  unsigned long long clk;
-
-  clk = sarm_get_clkcnt (sim);
-
-  fputs ("\x1b[0;37;40m", fp);
-  fprintf (fp, "[%08llX] ", clk);
+  fputs ("\x1b[0;37;40m-", fp);
   fflush (fp);
 }
 

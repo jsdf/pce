@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -56,12 +56,14 @@ enum {
   ARG_COPR,
   ARG_COPR_OP1,
   ARG_COPR_OP2,
+  ARG_COPR_OP3,
 
   ARG_CPSR,
   ARG_SPSR,
   ARG_PSR_FLD,
 
   ARG_AMODE2,
+  ARG_AMODE3,
   ARG_AMODE4
 };
 
@@ -194,6 +196,10 @@ unsigned dasm_arg (char *dst1, char *dst2, uint32_t ir, unsigned arg)
     sprintf (dst1, "0x%02X", (unsigned) arm_get_bits (ir, 5, 3));
     return (1);
 
+  case ARG_COPR_OP3:
+    sprintf (dst1, "0x%02X", (unsigned) arm_get_bits (ir, 4, 4));
+    return (1);
+
   case ARG_CPSR:
     strcpy (dst1, "cpsr");
     return (1);
@@ -250,6 +256,56 @@ unsigned dasm_arg (char *dst1, char *dst2, uint32_t ir, unsigned arg)
       }
       else {
         unsigned long ofs = arm_extu (ir, 12);
+
+        if (p) {
+          if (w) {
+            fmt = "[r%u %c 0x%08lx]!";
+          }
+          else {
+            if (ofs == 0) {
+              fmt = "[r%u]";
+            }
+            else {
+              fmt = "[r%u %c 0x%08lx]";
+            }
+          }
+        }
+        else {
+          fmt = "[r%u] %c 0x%08lx";
+        }
+        sprintf (dst1, fmt, (unsigned) arm_ir_rn (ir),
+          arm_get_bit (ir, 23) ? '+' : '-', ofs
+        );
+      }
+    }
+    return (1);
+
+  case ARG_AMODE3:
+    {
+      int  i, p, u, w;
+      char *fmt;
+
+      p = arm_get_bit (ir, 24);
+      u = arm_get_bit (ir, 23);
+      i = arm_get_bit (ir, 22);
+      w = arm_get_bit (ir, 21);
+
+      if (i == 0) {
+        if (p) {
+          fmt = w ? "[r%u %c r%u]!" : "[r%u %c r%u]";
+        }
+        else {
+          fmt = "[r%u] %c r%u";
+        }
+        sprintf (dst1, fmt, (unsigned) arm_ir_rn (ir),
+          u ? '+' : '-',
+          (unsigned) arm_ir_rm (ir)
+        );
+      }
+      else {
+        unsigned long ofs;
+
+        ofs = (arm_get_bits (ir, 8, 4) << 4) | arm_get_bits (ir, 0, 4);
 
         if (p) {
           if (w) {
@@ -387,6 +443,21 @@ int dasm_op4 (arm_dasm_t *da, const char *op, unsigned flg,
   return (0);
 }
 
+static
+int dasm_op5 (arm_dasm_t *da, const char *op, unsigned flg,
+  unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5)
+{
+  dasm_op0 (da, op, flg);
+
+  da->argn = dasm_arg (da->arg[0], da->arg[1], da->ir, arg1);
+  da->argn += dasm_arg (da->arg[da->argn], da->arg[da->argn + 1], da->ir, arg2);
+  da->argn += dasm_arg (da->arg[da->argn], da->arg[da->argn + 1], da->ir, arg3);
+  da->argn += dasm_arg (da->arg[da->argn], da->arg[da->argn + 1], da->ir, arg4);
+  da->argn += dasm_arg (da->arg[da->argn], da->arg[da->argn + 1], da->ir, arg5);
+
+  return (0);
+}
+
 
 static void opdud (arm_dasm_t *da)
 {
@@ -399,6 +470,52 @@ static void opd00_09 (arm_dasm_t *da)
   dasm_op3 (da, "mul", FLG_COND | FLG_S, ARG_RN, ARG_RM, ARG_RS);
 }
 
+/* 00 0B: ldr/str[cond][h|sh|sb|d] rd, addressing_mode */
+static void opd00_0b (arm_dasm_t *da)
+{
+  if (arm_get_bits (da->ir, 5, 2) == 0) {
+    opdud (da);
+    return;
+  }
+
+  if (arm_get_bit (da->ir, 20)) {
+    dasm_op2 (da, "ldr", FLG_COND, ARG_RD, ARG_AMODE3);
+
+    if (arm_get_bit (da->ir, 6)) {
+      strcat (da->op, "s");
+    }
+
+    if (arm_get_bit (da->ir, 5)) {
+      strcat (da->op, "h");
+    }
+    else {
+      strcat (da->op, "b");
+    }
+  }
+  else {
+    if (arm_get_bit (da->ir, 6)) {
+      if (arm_get_bit (da->ir, 5)) {
+        dasm_op2 (da, "str", FLG_COND, ARG_RD, ARG_AMODE3);
+      }
+      else {
+        dasm_op2 (da, "ldr", FLG_COND, ARG_RD, ARG_AMODE3);
+      }
+
+      strcat (da->op, "d");
+    }
+    else {
+      dasm_op2 (da, "str", FLG_COND, ARG_RD, ARG_AMODE3);
+
+      if (arm_get_bit (da->ir, 5)) {
+        strcat (da->op, "h");
+      }
+      else {
+        strcat (da->op, "b");
+      }
+    }
+  }
+}
+
 /* 00 ext */
 static void opd00_ext (arm_dasm_t *da)
 {
@@ -406,8 +523,9 @@ static void opd00_ext (arm_dasm_t *da)
   case 0x09:
     opd00_09 (da);
     break;
+
   default:
-    opdud (da);
+    opd00_0b (da);
     break;
   }
 }
@@ -436,8 +554,9 @@ static void opd02_ext (arm_dasm_t *da)
   case 0x09:
     opd02_09 (da);
     break;
+
   default:
-    opdud (da);
+    opd00_0b (da);
     break;
   }
 }
@@ -457,7 +576,7 @@ static void opd02 (arm_dasm_t *da)
 static void opd04 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op3 (da, "sub", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -468,7 +587,7 @@ static void opd04 (arm_dasm_t *da)
 static void opd06 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op3 (da, "rsb", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -479,7 +598,12 @@ static void opd06 (arm_dasm_t *da)
 static void opd08 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    if (arm_get_shext (da->ir) == 0x09) {
+      dasm_op4 (da, "umull", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_RM, ARG_RS);
+    }
+    else {
+      opd00_0b (da);
+    }
   }
   else {
     dasm_op3 (da, "add", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -490,7 +614,12 @@ static void opd08 (arm_dasm_t *da)
 static void opd0a (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    if (arm_get_shext (da->ir) == 0x09) {
+      dasm_op4 (da, "umlal", FLG_COND | FLG_S, ARG_RN, ARG_RD, ARG_RM, ARG_RS);
+    }
+    else {
+      opd00_0b (da);
+    }
   }
   else {
     dasm_op3 (da, "adc", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -501,7 +630,12 @@ static void opd0a (arm_dasm_t *da)
 static void opd0c (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    if (arm_get_shext (da->ir) == 0x09) {
+      dasm_op4 (da, "smull", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_RM, ARG_RS);
+    }
+    else {
+      opd00_0b (da);
+    }
   }
   else {
     dasm_op3 (da, "sbc", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -512,7 +646,12 @@ static void opd0c (arm_dasm_t *da)
 static void opd0e (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    if (arm_get_shext (da->ir) == 0x09) {
+      dasm_op4 (da, "smlal", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_RM, ARG_RS);
+    }
+    else {
+      opd00_0b (da);
+    }
   }
   else {
     dasm_op3 (da, "rsc", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -543,6 +682,12 @@ static void opd10 (arm_dasm_t *da)
     opd10_09 (da);
     break;
 
+  case 0x0b:
+  case 0x0d:
+  case 0x0f:
+    opd00_0b (da);
+    break;
+
   default:
     opdud (da);
     break;
@@ -553,7 +698,7 @@ static void opd10 (arm_dasm_t *da)
 static void opd11 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "tst", FLG_COND, ARG_RN, ARG_SH);
@@ -589,6 +734,12 @@ static void opd12 (arm_dasm_t *da)
     opd12_07 (da);
     break;
 
+  case 0x012000b0UL:
+  case 0x012000d0UL:
+  case 0x012000f0UL:
+    opd00_0b (da);
+    break;
+
   default:
     opdud (da);
     break;
@@ -599,7 +750,7 @@ static void opd12 (arm_dasm_t *da)
 static void opd13 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "teq", FLG_COND, ARG_RN, ARG_SH);
@@ -631,6 +782,12 @@ static void opd14 (arm_dasm_t *da)
     opd14_09 (da);
     break;
 
+  case 0x0b:
+  case 0x0d:
+  case 0x0f:
+    opd00_0b (da);
+    break;
+
   default:
     opdud (da);
     break;
@@ -641,7 +798,7 @@ static void opd14 (arm_dasm_t *da)
 static void opd15 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "cmp", FLG_COND, ARG_RN, ARG_SH);
@@ -652,6 +809,18 @@ static void opd15 (arm_dasm_t *da)
 static void opd16_01 (arm_dasm_t *da)
 {
   dasm_op2 (da, "clz", FLG_COND, ARG_RD, ARG_RM);
+}
+
+/* 16 08: smulxy[cond] rd, rm, rs */
+static void opd16_08 (arm_dasm_t *da)
+{
+  char op[16];
+
+  strcpy (op, "smul");
+  strcat (op, arm_get_bit (da->ir, 5) ? "t" : "b");
+  strcat (op, arm_get_bit (da->ir, 6) ? "t" : "b");
+
+  dasm_op3 (da, op, FLG_COND, ARG_RN, ARG_RM, ARG_RS);
 }
 
 /* 16 */
@@ -666,6 +835,19 @@ static void opd16 (arm_dasm_t *da)
     opd16_01 (da);
     break;
 
+  case 0x01600080UL:
+  case 0x016000a0UL:
+  case 0x016000c0UL:
+  case 0x016000e0UL:
+    opd16_08 (da);
+    break;
+
+  case 0x016000b0UL:
+  case 0x016000d0UL:
+  case 0x016000f0UL:
+    opd00_0b (da);
+    break;
+
   default:
     opdud (da);
     break;
@@ -676,7 +858,7 @@ static void opd16 (arm_dasm_t *da)
 static void opd17 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "cmn", FLG_COND, ARG_RN, ARG_SH);
@@ -687,7 +869,7 @@ static void opd17 (arm_dasm_t *da)
 static void opd18 (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op3 (da, "orr", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -698,7 +880,7 @@ static void opd18 (arm_dasm_t *da)
 static void opd1a (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "mov", FLG_COND | FLG_S, ARG_RD, ARG_SH);
@@ -709,7 +891,7 @@ static void opd1a (arm_dasm_t *da)
 static void opd1c (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op3 (da, "bic", FLG_COND | FLG_S, ARG_RD, ARG_RN, ARG_SH);
@@ -720,7 +902,7 @@ static void opd1c (arm_dasm_t *da)
 static void opd1e (arm_dasm_t *da)
 {
   if (arm_is_shext (da->ir)) {
-    opdud (da);
+    opd00_0b (da);
   }
   else {
     dasm_op2 (da, "mvn", FLG_COND | FLG_S, ARG_RD, ARG_SH);
@@ -790,6 +972,18 @@ static void opdb0 (arm_dasm_t *da)
   da->argn = dasm_arg (da->arg[0], da->arg[1], d, ARG_UIMM32);
 
   da->flags |= ARM_DFLAG_CALL;
+}
+
+/* C4: mcrr[cond] coproc, opcode, rd, rn, crm */
+static void opdc4 (arm_dasm_t *da)
+{
+  dasm_op5 (da, "mcrr", FLG_COND, ARG_COPR, ARG_COPR_OP3, ARG_RD, ARG_RN, ARG_RM);
+}
+
+/* C5: mrrc[cond] coproc, opcode, rd, rn, crm */
+static void opdc5 (arm_dasm_t *da)
+{
+  dasm_op5 (da, "mrrc", FLG_COND, ARG_COPR, ARG_COPR_OP3, ARG_RD, ARG_RN, ARG_RM);
 }
 
 /* E0 00: cdp[cond] coproc, opcode1, crd, crn, crm, opcode2 */
@@ -951,7 +1145,7 @@ arm_dasm_f arm_dasm_op[256] = {
   opda0, opda0, opda0, opda0, opda0, opda0, opda0, opda0,
   opdb0, opdb0, opdb0, opdb0, opdb0, opdb0, opdb0, opdb0,  /* b0 */
   opdb0, opdb0, opdb0, opdb0, opdb0, opdb0, opdb0, opdb0,
-  opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,  /* c0 */
+  opdud, opdud, opdud, opdud, opdc4, opdc5, opdud, opdud,  /* c0 */
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,  /* d0 */
   opdud, opdud, opdud, opdud, opdud, opdud, opdud, opdud,

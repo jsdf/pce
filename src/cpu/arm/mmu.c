@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -119,10 +119,11 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   unsigned     ap;
   uint32_t     addr1, addr2;
   uint32_t     desc1, desc2;
+  uint32_t     vaddr;
 
   mmu = c->copr[15]->ext;
 
-  addr1 = mmu->reg[2] | ((*addr >> 18) & 0x0000fffcUL);
+  addr1 = (mmu->reg[2] & 0xffffc000UL) | ((*addr >> 18) & 0x00003ffcUL);
   desc1 = c->get_uint32 (c->mem_ext, addr1);
 
   addr2 = 0;
@@ -136,7 +137,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
 
   case 0x01:
     /* coarse */
-    addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 10) & 0x03fc);
+    addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 10) & 0x000003fcUL);
     *domn = arm_get_bits (desc1, 5, 4);
     break;
 
@@ -150,7 +151,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
 
   case 0x03:
     /* fine */
-    addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 8) & 0x00000ffcUL);
+    addr2 = (desc1 & 0xfffff000UL) | ((*addr >> 8) & 0x00000ffcUL);
     *domn = arm_get_bits (desc1, 5, 4);
     break;
   }
@@ -180,7 +181,15 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
     return (0);
 
   case 0x03:
+    if ((desc1 & 0x03) == 0x01) {
+      /* xscale extended small page */
+      *addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
+      *perm = arm_get_bits (desc2, 4, 2);
+      return (0);
+    }
+
     /* tiny page */
+    vaddr = *addr;
     *perm = arm_get_bits (desc2, 4, 2);
     *addr = (desc2 & 0xfffffc00UL) | (*addr & 0x000003ffUL);
     return (0);
@@ -193,7 +202,7 @@ int arm_translate (arm_t *c, uint32_t *addr, unsigned *domn, unsigned *perm, int
   return (1);
 }
 
-int arm_translate_check (arm_t *c, uint32_t *addr, int w)
+int arm_translate_check (arm_t *c, uint32_t *addr, int p, int w, int x)
 {
   arm_copr15_t *mmu;
   unsigned     domn, perm;
@@ -213,19 +222,34 @@ int arm_translate_check (arm_t *c, uint32_t *addr, int w)
   vaddr = *addr;
 
   if (arm_translate (c, addr, &domn, &perm, &sect)) {
-    arm_mmu_translation_fault (c, vaddr, domn, sect);
+    if (x) {
+      arm_exception_prefetch_abort (c);
+    }
+    else {
+      arm_mmu_translation_fault (c, vaddr, domn, sect);
+    }
     return (1);
   }
 
   /* check domain */
   switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
   case 0x00: /* no access */
-    arm_mmu_domain_fault (c, vaddr, domn, sect);
+    if (x) {
+      arm_exception_prefetch_abort (c);
+    }
+    else {
+      arm_mmu_domain_fault (c, vaddr, domn, sect);
+    }
     return (1);
 
   case 0x01: /* client */
-    if (arm_mmu_check_perm (mmu->reg[1], perm, arm_is_privileged (c), w)) {
-      arm_mmu_permission_fault (c, vaddr, domn, sect);
+    if (arm_mmu_check_perm (mmu->reg[1], perm, p, w) == 0) {
+      if (x) {
+        arm_exception_prefetch_abort (c);
+      }
+      else {
+        arm_mmu_permission_fault (c, vaddr, domn, sect);
+      }
       return (1);
     }
     return (0);
@@ -240,11 +264,23 @@ int arm_translate_check (arm_t *c, uint32_t *addr, int w)
   return (0);
 }
 
-int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat)
+int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
+  unsigned *domn, unsigned *perm)
 {
   arm_copr15_t *mmu;
-  unsigned     domn, perm;
+  unsigned     domn1, perm1;
   int          sect;
+
+  if (domn == NULL) {
+    domn = &domn1;
+  }
+
+  if (perm == NULL) {
+    perm = &perm1;
+  }
+
+  *domn = 0;
+  *perm = 0;
 
   if (xlat == ARM_XLAT_REAL) {
     return (0);
@@ -260,7 +296,7 @@ int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat)
     return (0);
   }
 
-  if (arm_translate (c, addr, &domn, &perm, &sect)) {
+  if (arm_translate (c, addr, domn, perm, &sect)) {
     return (1);
   }
 
@@ -271,7 +307,7 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 {
   addr &= ~0x03UL;
 
-  if (arm_translate_check (c, &addr, 0)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 1)) {
     return (1);
   }
 
@@ -282,7 +318,7 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 
 int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 {
-  if (arm_translate_check (c, &addr, 0)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
     return (1);
   }
 
@@ -293,7 +329,7 @@ int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 
 int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 {
-  if (arm_translate_check (c, &addr, 0)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
     return (1);
   }
 
@@ -304,7 +340,7 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 
 int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  if (arm_translate_check (c, &addr, 0)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 0, 0)) {
     return (1);
   }
 
@@ -315,7 +351,7 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 
 int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val)
 {
-  if (arm_translate_check (c, &addr, 1)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
     return (1);
   }
 
@@ -326,7 +362,7 @@ int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val)
 
 int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 {
-  if (arm_translate_check (c, &addr, 1)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
     return (1);
   }
 
@@ -337,7 +373,73 @@ int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 
 int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 {
-  if (arm_translate_check (c, &addr, 1)) {
+  if (arm_translate_check (c, &addr, arm_is_privileged (c), 1, 0)) {
+    return (1);
+  }
+
+  c->set_uint32 (c->mem_ext, addr, val);
+
+  return (0);
+}
+
+int arm_dload8_t (arm_t *c, uint32_t addr, uint8_t *val)
+{
+  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+    return (1);
+  }
+
+  *val = c->get_uint8 (c->mem_ext, addr);
+
+  return (0);
+}
+
+int arm_dload16_t (arm_t *c, uint32_t addr, uint16_t *val)
+{
+  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+    return (1);
+  }
+
+  *val = c->get_uint16 (c->mem_ext, addr);
+
+  return (0);
+}
+
+int arm_dload32_t (arm_t *c, uint32_t addr, uint32_t *val)
+{
+  if (arm_translate_check (c, &addr, 0, 0, 0)) {
+    return (1);
+  }
+
+  *val = c->get_uint32 (c->mem_ext, addr);
+
+  return (0);
+}
+
+int arm_dstore8_t (arm_t *c, uint32_t addr, uint8_t val)
+{
+  if (arm_translate_check (c, &addr, 0, 1, 0)) {
+    return (1);
+  }
+
+  c->set_uint8 (c->mem_ext, addr, val);
+
+  return (0);
+}
+
+int arm_dstore16_t (arm_t *c, uint32_t addr, uint16_t val)
+{
+  if (arm_translate_check (c, &addr, 0, 1, 0)) {
+    return (1);
+  }
+
+  c->set_uint16 (c->mem_ext, addr, val);
+
+  return (0);
+}
+
+int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val)
+{
+  if (arm_translate_check (c, &addr, 0, 1, 0)) {
     return (1);
   }
 
@@ -349,7 +451,7 @@ int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 
 int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 
@@ -365,7 +467,7 @@ int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val)
 
 int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 
@@ -381,7 +483,7 @@ int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val)
 
 int arm_get_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 
@@ -397,7 +499,7 @@ int arm_get_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t *val)
 
 int arm_set_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 
@@ -410,7 +512,7 @@ int arm_set_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t val)
 
 int arm_set_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 
@@ -423,7 +525,7 @@ int arm_set_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t val)
 
 int arm_set_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat)) {
+  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
     return (1);
   }
 

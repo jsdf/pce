@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -125,6 +125,62 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 }
 
 static
+void sarm_setup_intc (simarm_t *sim, ini_sct_t *ini)
+{
+  unsigned long base;
+  ini_sct_t     *sct;
+
+  sct = ini_sct_find_sct (ini, "intc");
+  if (sct != NULL) {
+    base = ini_get_lng_def (sct, "base", 0xd6000000UL);
+  }
+  else {
+    base = 0xd6000000UL;
+  }
+
+  sim->intc = ict_new (base);
+  if (sim->intc == NULL) {
+    return;
+  }
+
+  ict_set_fiq_f (sim->intc, arm_set_fiq, sim->cpu);
+  ict_set_irq_f (sim->intc, arm_set_irq, sim->cpu);
+
+  mem_add_blk (sim->mem, ict_get_io (sim->intc, 0), 0);
+
+  pce_log (MSG_INF, "INTC:\tbase=0x%08lx\n", base);
+}
+
+static
+void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
+{
+  unsigned long base;
+  ini_sct_t     *sct;
+
+  sct = ini_sct_find_sct (ini, "timer");
+  if (sct != NULL) {
+    base = ini_get_lng_def (sct, "base", 0xc0020000UL);
+  }
+  else {
+    base = 0xc0020000UL;
+  }
+
+  sim->timer = tmr_new (base);
+  if (sim->timer == NULL) {
+    return;
+  }
+
+  tmr_set_irq_f (sim->timer, 0, ict_set_irq4, sim->intc);
+  tmr_set_irq_f (sim->timer, 1, ict_set_irq5, sim->intc);
+  tmr_set_irq_f (sim->timer, 2, ict_set_irq6, sim->intc);
+  tmr_set_irq_f (sim->timer, 3, ict_set_irq7, sim->intc);
+
+  mem_add_blk (sim->mem, tmr_get_io (sim->timer, 0), 0);
+
+  pce_log (MSG_INF, "TIMER:\tbase=0x%08lx\n", base);
+}
+
+static
 void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 {
   unsigned      i;
@@ -133,10 +189,6 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
   const char    *fname;
   const char    *chip;
   ini_sct_t     *sct;
-
-  static unsigned long defbase[4] = { 0xef600300UL, 0xef600400UL };
-  static unsigned      defirq[4] = { 0, 1 };
-
 
   sim->serport[0] = NULL;
   sim->serport[1] = NULL;
@@ -148,8 +200,8 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 
   i = 0;
   while ((i < 2) && (sct != NULL)) {
-    base = ini_get_lng_def (sct, "io", defbase[i]);
-    irq = ini_get_lng_def (sct, "irq", defirq[i]);
+    base = ini_get_lng_def (sct, "io", 0xc0030000UL);
+    irq = ini_get_lng_def (sct, "irq", 2);
     chip = ini_get_str_def (sct, "uart", "8250");
     fname = ini_get_str (sct, "file");
 
@@ -177,8 +229,9 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
       }
 
-//      irqf = (e8250_irq_f) p405uic_get_irq_f (&sim->uic, irq);
-//      e8250_set_irq_f (&sim->serport[i]->uart, irqf, &sim->uic);
+      e8250_set_irq_f (&sim->serport[i]->uart,
+        ict_get_irq_f (sim->intc, irq), sim->intc
+      );
 
       mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
 
@@ -256,6 +309,8 @@ simarm_t *sarm_new (ini_sct_t *ini)
   sarm_setup_ram (sim, ini);
   sarm_setup_rom (sim, ini);
   sarm_setup_cpu (sim, ini);
+  sarm_setup_intc (sim, ini);
+  sarm_setup_timer (sim, ini);
   sarm_setup_serport (sim, ini);
 
   sarm_load_mem (sim, ini);
@@ -271,6 +326,10 @@ void sarm_del (simarm_t *sim)
 
   ser_del (sim->serport[1]);
   ser_del (sim->serport[0]);
+
+  tmr_del (sim->timer);
+
+  ict_del (sim->intc);
 
   arm_del (sim->cpu);
 
@@ -311,6 +370,7 @@ void sarm_clock (simarm_t *sim, unsigned n)
     sim->clk_div[0] &= 1023;
   }
 
+  tmr_clock (sim->timer);
   arm_clock (sim->cpu, n);
 
   sim->clk_cnt += n;
@@ -322,6 +382,10 @@ void sarm_clock (simarm_t *sim, unsigned n)
 
 void sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 {
+  if (sim == NULL) {
+    sim = par_sim;
+  }
+
   if (strcmp (msg, "break") == 0) {
     if (strcmp (val, "stop") == 0) {
       sim->brk = PCE_BRK_STOP;

@@ -16,7 +16,7 @@ include $(reldir)/config.inc
 CC_FLG += -I$(srcdir)
 
 
-FILES := cmd_arm main sercons simarm
+FILES := cmd_arm intc main sercons simarm timer
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -80,6 +80,8 @@ simarm.cfg: simarm.cfg.in
 
 
 cmd_arm.o:	cmd_arm.c $(SDP)
+intc.o:		intc.c $(SDP)
 main.o:		main.c $(SDP)
 sercons.o:	sercons.c $(SDP)
 simarm.o:	simarm.c $(SDP)
+timer.o:	timer.c $(SDP)

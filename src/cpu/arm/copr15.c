@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -80,6 +80,54 @@ int p15_set_reg7 (arm_t *c, arm_copr15_t *p)
     /* invalidate all caches */
     return (0);
   }
+  else if ((rm == 2) && (op2 == 5)) {
+    /* ??? */
+    return (0);
+  }
+  else if (rm == 5) {
+    switch (op2) {
+    case 0x00:
+      /* invalidate entire instruction cache */
+      return (0);
+
+    case 0x01:
+      /* invalidate instruction cache line */
+      return (0);
+
+    case 0x02:
+      /* invalidate instruction cache line */
+      return (0);
+
+    case 0x04:
+      /* flush prefetch buffer */
+      return (0);
+
+    case 0x06:
+      /* flush entire branch target cache */
+      return (0);
+
+    case 0x07:
+      /* flush branch target cache entry */
+      return (0);
+    }
+
+    return (1);
+  }
+  else if (rm == 6) {
+    switch (op2) {
+    case 0x00:
+      /* invalidate entire data cache */
+      return (0);
+
+    case 0x01:
+      /* invalidate data cache line */
+      return (0);
+
+    case 0x02:
+      /* invalidate data cache line */
+      return (0);
+    }
+  }
   else if (rm == 10) {
     switch (op2) {
     case 0x01:
@@ -109,9 +157,38 @@ int p15_set_reg8 (arm_t *c, arm_copr15_t *p)
   rm = arm_ir_rm (c->ir);
   op2 = arm_get_bits (c->ir, 5, 3);
 
-  if ((rm == 7) && (op2 == 0)) {
-    /* invalidate entire tlb */
-    return (0);
+  if (rm == 5) {
+    switch (op2) {
+    case 0x00:
+      /* invalidate entire instruction tlb */
+      return (0);
+
+    case 0x01:
+      /* invalidate instruction tlb single entry */
+      return (0);
+    }
+  }
+  else if (rm == 6) {
+    switch (op2) {
+    case 0x00:
+      /* invalidate entire data tlb */
+      return (0);
+
+    case 0x01:
+      /* invalidate data tlb single entry */
+      return (0);
+    }
+  }
+  else if (rm == 7) {
+    switch (op2) {
+    case 0x00:
+      /* invalidate entire unified tlb */
+      return (0);
+
+    case 0x01:
+      /* invalidate unified tlb single entry */
+      return (0);
+    }
   }
 
   return (1);
@@ -142,6 +219,14 @@ int p15_op_mrc (arm_t *c, arm_copr_t *p)
 
   case 0x03: /* domain access control */
     val = p15->reg[2];
+    break;
+
+  case 0x05: /* fault status */
+    val = p15->reg[5];
+    break;
+
+  case 0x06: /* fault address */
+    val = p15->reg[6];
     break;
 
   default:
@@ -175,9 +260,6 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
 //    return (1);
 
   case 0x01: /* control register */
-    if (val & ARM_C15_CR_M) {
-      fprintf (stderr, "%08lX: enabled translation\n", (unsigned long) arm_get_pc (c));
-    }
     val &= ~ARM_C15_CR_C;
     val &= ~ARM_C15_CR_W;
     val &= ~ARM_C15_CR_B;
@@ -185,6 +267,8 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
     val |= ARM_C15_CR_D;
     val |= ARM_C15_CR_L;
     p15->reg[1] = val & 0xffffffffUL;
+
+    c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000UL : 0x00000000UL;
     break;
 
   case 0x02: /* translation table base */
