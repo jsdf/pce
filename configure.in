@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.19 2003/09/04 20:34:26 hampa Exp $
+# $Id: configure.in,v 1.20 2003/09/06 13:49:17 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -109,6 +109,19 @@ AC_SUBST(PCE_HAVE_TSC)
 if test $PCE_HAVE_TSC -eq 1 ; then
 	AC_DEFINE(PCE_HAVE_TSC)
 fi
+
+
+AC_MSG_CHECKING([host OS])
+os=`uname -o`
+case "$os" in
+*[[Ll]]inux*)
+	AC_DEFINE(PCE_HOST_LINUX)
+	AC_MSG_RESULT([Linux])
+	;;
+*)
+	AC_MSG_RESULT([unknown ($os)])
+	;;
+esac
 
 
 dnl -----------------------------------------------------------------------
