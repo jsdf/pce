@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/video.c                                          *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: video.c,v 1.2 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: video.c,v 1.3 2003/09/13 18:10:15 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -77,4 +77,83 @@ int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode)
   }
 
   return (1);
+}
+
+void pce_smap_init (scrmap_t *smap,
+  unsigned w, unsigned h, unsigned sw, unsigned sh)
+{
+  unsigned long i, n;
+  unsigned      x, y;
+  unsigned      px, pw, tx;
+  unsigned      py, ph, ty;
+
+  smap->w = w;
+  smap->h = h;
+  smap->sw = sw;
+  smap->sh = sh;
+
+  n = (unsigned long) w * (unsigned long) h;
+
+  smap->pxl = (scrmap_pixel_t *) malloc (n * sizeof (scrmap_pixel_t));
+  if (smap->pxl == NULL) {
+    return;
+  }
+
+  i = 0;
+  py = 0;
+  ty = 0;
+
+  for (y = 0; y < h; y++) {
+    ty += sh;
+    ph = ty / h;
+    ty = ty % h;
+
+    px = 0;
+    tx = 0;
+
+    for (x = 0; x < w; x++) {
+      tx += sw;
+      pw = tx / w;
+      tx = tx % w;
+
+      smap->pxl[i].x = px;
+      smap->pxl[i].y = py;
+      smap->pxl[i].w = pw;
+      smap->pxl[i].h = ph;
+
+      i += 1;
+      px += pw;
+    }
+
+    py += ph;
+  }
+}
+
+void pce_smap_free (scrmap_t *smap)
+{
+  if (smap != NULL) {
+    free (smap->pxl);
+    smap->pxl = NULL;
+  }
+}
+
+void pce_smap_get_pixel (scrmap_t *smap, unsigned x, unsigned y,
+  unsigned *sx, unsigned *sy, unsigned *sw, unsigned *sh)
+{
+  unsigned long i;
+
+  if ((x >= smap->w) || (y >= smap->h)) {
+    *sx = 0;
+    *sy = 0;
+    *sw = 0;
+    *sh = 0;
+    return;
+  }
+
+  i = (unsigned long) smap->w * y + x;
+
+  *sx = smap->pxl[i].x;
+  *sy = smap->pxl[i].y;
+  *sw = smap->pxl[i].w;
+  *sh = smap->pxl[i].h;
 }
