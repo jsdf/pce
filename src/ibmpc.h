@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     ibmpc.h                                                    *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.h,v 1.5 2003/04/18 20:07:49 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.6 2003/04/19 03:28:05 hampa Exp $ */
 
 
 #ifndef PCE_IBMPC_H
@@ -56,7 +56,7 @@ typedef struct {
 } ibmpc_t;
 
 
-ibmpc_t *pc_new (unsigned ramsize);
+ibmpc_t *pc_new (unsigned ramsize, unsigned dsp);
 
 void pc_del (ibmpc_t *pc);
 

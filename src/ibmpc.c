@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.8 2003/04/19 02:02:11 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.9 2003/04/19 03:28:05 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -78,8 +78,7 @@ void pc_setup_keyboard (ibmpc_t *pc)
 
 void pc_setup_mda (ibmpc_t *pc)
 {
-  pc->mda = mda_new();
-  pc->mda->fp = stdout;
+  pc->mda = mda_new (stdout);
   mem_add_blk (pc->mem, pc->mda->mem);
   mem_add_blk (pc->prt, pc->mda->crtc);
 
@@ -120,7 +119,7 @@ void pc_setup_disks (ibmpc_t *pc)
   dsks_add_disk (pc->dsk, dsk);
 }
 
-ibmpc_t *pc_new (unsigned ramsize)
+ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
 {
   ibmpc_t *pc;
 
@@ -169,7 +168,14 @@ ibmpc_t *pc_new (unsigned ramsize)
   pc_setup_keyboard (pc);
 
   pc->mda = NULL;
-  pc_setup_cga (pc);
+  pc->cga = NULL;
+
+  if (dsp == 0) {
+    pc_setup_mda (pc);
+  }
+  else {
+    pc_setup_cga (pc);
+  }
 
   pc_setup_disks (pc);
 
