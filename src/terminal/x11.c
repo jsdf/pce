@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: x11.c,v 1.1 2003/09/02 11:43:41 hampa Exp $ */
+/* $Id: x11.c,v 1.2 2003/09/13 18:09:50 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -223,6 +223,7 @@ int xt_init_gc (xterm_t *xt)
   XSetBackground (xt->display, xt->gc, xt->col[0].pixel);
   XSetFont (xt->display, xt->gc, xt->font->fid);
   XSetLineAttributes (xt->display, xt->gc, line_width, line_style, cap_style, join_style);
+  XSetFillStyle (xt->display, xt->gc, FillSolid);
 
   xt->back_gc = XCreateGC (xt->display, xt->back, 0, &values);
   XSetForeground (xt->display, xt->back_gc, xt->col[0].pixel);
@@ -230,9 +231,11 @@ int xt_init_gc (xterm_t *xt)
   XSetFont (xt->display, xt->back_gc, xt->font->fid);
   XSetLineAttributes (xt->display, xt->back_gc, line_width, line_style, cap_style, join_style);
   XDrawRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
+  XSetFillStyle (xt->display, xt->back_gc, FillSolid);
 
   xt->crs_gc = XCreateGC (xt->display, xt->wdw, 0, &values);
   XSetForeground (xt->display, xt->crs_gc, WhitePixel (xt->display, xt->screen));
+  XSetFillStyle (xt->display, xt->crs_gc, FillSolid);
 
   xt->fg = 0;
   xt->bg = 0;
@@ -257,6 +260,7 @@ int xt_init (xterm_t *xt, ini_sct_t *ini)
   xt->trm.set_pos = (trm_set_pos_f) &xt_set_pos;
   xt->trm.set_chr = (trm_set_chr_f) &xt_set_chr;
   xt->trm.set_pxl = (trm_set_pxl_f) &xt_set_pxl;
+  xt->trm.set_rct = (trm_set_rct_f) &xt_set_rct;
   xt->trm.check = (trm_check_f) &xt_check;
 
   xt->init_display = 0;
@@ -538,11 +542,16 @@ void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y)
   XDrawPoint (xt->display, xt->wdw, xt->gc, x, y);
 }
 
+void xt_set_rct (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+  XFillRectangle (xt->display, xt->back, xt->back_gc, x, y, w, h);
+  XFillRectangle (xt->display, xt->wdw, xt->gc, x, y, w, h);
+}
+
 void xt_clear (xterm_t *xt)
 {
   XFillRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
   XFillRectangle (xt->display, xt->wdw, xt->gc, 0, 0, xt->wdw_w, xt->wdw_h);
-//  XClearWindow (xt->display, xt->wdw);
 }
 
 void xt_update (xterm_t *xt, int x, int y, int w, int h)

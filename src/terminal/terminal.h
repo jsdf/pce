@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/terminal.h                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: terminal.h,v 1.5 2003/08/29 19:17:51 hampa Exp $ */
+/* $Id: terminal.h,v 1.6 2003/09/13 18:09:50 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_TERMINAL_H
@@ -43,6 +43,7 @@ typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2);
 typedef void (*trm_set_pos_f) (void *ext, unsigned x, unsigned y);
 typedef void (*trm_set_chr_f) (void *ext, unsigned x, unsigned y, unsigned char c);
 typedef void (*trm_set_pxl_f) (void *ext, unsigned x, unsigned y);
+typedef void (*trm_set_rct_f) (void *ext, unsigned x, unsigned y, unsigned w, unsigned h);
 typedef void (*trm_check_f) (void *ext);
 
 
@@ -57,17 +58,18 @@ typedef struct {
 
   void (*set_brk) (void *ext, unsigned char val);
 
-  void (*set_size) (void *ext, unsigned m, unsigned w, unsigned h);
+  trm_set_size_f set_size;
 
-  void (*set_map) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
-  void (*set_col) (void *ext, unsigned fg, unsigned bg);
-  void (*set_crs) (void *ext, unsigned y1, unsigned y2);
-  void (*set_pos) (void *ext, unsigned x, unsigned y);
+  trm_set_map_f  set_map;
+  trm_set_col_f  set_col;
+  trm_set_crs_f  set_crs;
+  trm_set_pos_f  set_pos;
 
-  void (*set_chr) (void *ext, unsigned x, unsigned y, unsigned char c);
-  void (*set_pxl) (void *ext, unsigned x, unsigned y);
+  trm_set_chr_f  set_chr;
+  trm_set_pxl_f  set_pxl;
+  trm_set_rct_f  set_rct;
 
-  void (*check) (void *ext);
+  trm_check_f    check;
 
   void *ext;
 } terminal_t;
@@ -98,6 +100,8 @@ void trm_set_pos (terminal_t *trm, unsigned x, unsigned y);
 void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c);
 
 void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y);
+
+void trm_set_rct (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h);
 
 void trm_check (terminal_t *trm);
 
