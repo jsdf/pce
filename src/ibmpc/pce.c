@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/pce.c                                            *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-10-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.29 2003/09/24 08:09:09 hampa Exp $ */
+/* $Id: pce.c,v 1.30 2003/10/03 23:16:23 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -1747,6 +1747,15 @@ void do_t (cmd_t *cmd)
   prt_state (pc, stdout);
 }
 
+void do_update (cmd_t *cmd)
+{
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  pce_video_update (pc->video);
+}
+
 void do_u (cmd_t *cmd)
 {
   unsigned              i;
@@ -1854,6 +1863,9 @@ int do_cmd (void)
     }
     else if (cmd_match (&cmd, "t")) {
       do_t (&cmd);
+    }
+    else if (cmd_match (&cmd, "update")) {
+      do_update (&cmd);
     }
     else if (cmd_match (&cmd, "u")) {
       do_u (&cmd);
