@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     mda.h                                                      *
- * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     term.h                                                     *
+ * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -20,46 +20,39 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.3 2003/04/18 20:05:50 hampa Exp $ */
+/* $Id: term.h,v 1.1 2003/04/18 20:05:50 hampa Exp $ */
 
 
-#ifndef PCE_MDA_H
-#define PCE_MDA_H 1
+#ifndef PCE_TERM_H
+#define PCE_TERM_H 1
 
 
 #include <pce.h>
-#include <e8086/e8086.h>
 
 
 typedef struct {
-  mem_blk_t     *mem;
-  mem_blk_t     *crtc;
+  unsigned x;
+  unsigned y;
 
-  unsigned char crtc_reg[16];
+  unsigned fg;
+  unsigned bg;
 
-  unsigned      cur_pos;
+  int      col_chg;
 
-  unsigned      scn_x;
-  unsigned      scn_y;
-  unsigned      scn_a;
-
-  FILE          *fp;
-} mda_t;
+  FILE     *fp;
+} term_t;
 
 
-mda_t *mda_new (void);
-void mda_del (mda_t *mda);
+void trm_init (term_t *trm, FILE *fp);
+void trm_free (term_t *trm);
 
-void mda_clock (mda_t *mda);
-
-void mda_set_pos (mda_t *mda, unsigned pos);
-
-void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-
-void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr);
+void trm_clr_scn (term_t *trm);
+void trm_set_pos (term_t *trm, unsigned x, unsigned y);
+void trm_set_col (term_t *trm, unsigned fg, unsigned bg);
+void trm_set_attr_mono (term_t *trm, unsigned char a);
+void trm_set_attr_col (term_t *trm, unsigned char a);
+void trm_set_chr (term_t *trm, unsigned char chr);
+void trm_set_chr_xy (term_t *trm, unsigned x, unsigned y, unsigned char c);
 
 
 #endif

@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     mda.h                                                      *
- * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     cga.h                                                      *
+ * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -20,15 +20,14 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.3 2003/04/18 20:05:50 hampa Exp $ */
+/* $Id: cga.h,v 1.1 2003/04/18 20:05:50 hampa Exp $ */
 
 
-#ifndef PCE_MDA_H
-#define PCE_MDA_H 1
+#ifndef PCE_CGA_H
+#define PCE_CGA_H 1
 
 
 #include <pce.h>
-#include <e8086/e8086.h>
 
 
 typedef struct {
@@ -37,29 +36,29 @@ typedef struct {
 
   unsigned char crtc_reg[16];
 
-  unsigned      cur_pos;
+  unsigned      crtc_mode;
+  unsigned      crtc_pos;
+  unsigned      crtc_ofs;
 
-  unsigned      scn_x;
-  unsigned      scn_y;
-  unsigned      scn_a;
-
-  FILE          *fp;
-} mda_t;
+  term_t        trm;
+} cga_t;
 
 
-mda_t *mda_new (void);
-void mda_del (mda_t *mda);
+cga_t *cga_new (FILE *fp);
+void cga_del (cga_t *cga);
 
-void mda_clock (mda_t *mda);
+void cga_clock (cga_t *cga);
 
-void mda_set_pos (mda_t *mda, unsigned pos);
+void cga_prt_state (cga_t *cga, FILE *fp);
 
-void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
+void cga_set_pos (cga_t *cga, unsigned pos);
 
-void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr);
+void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
+void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
+
+void cga_crtc_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
+void cga_crtc_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
+unsigned char cga_crtc_get_uint8 (cga_t *cga, unsigned long addr);
 
 
 #endif
