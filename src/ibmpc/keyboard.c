@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/keyboard.c                                       *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.2 2003/04/23 16:29:57 hampa Exp $ */
+/* $Id: keyboard.c,v 1.3 2003/04/24 12:23:12 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -302,6 +302,7 @@ void key_clock (keyboard_t *key)
 
   n = (unsigned) r;
 
+#if 0
   while ((n < 256) && fd_readable (key->fd, 10)) {
     r = read (0, buf + n, 256 - n);
     if (r <= 0) {
@@ -310,6 +311,7 @@ void key_clock (keyboard_t *key)
 
     n += (unsigned) r;
   }
+#endif
 
   tmp = buf;
   m = n;
