@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: ega.asm,v 1.12 2003/09/23 06:59:10 hampa Exp $
+; $Id: ega.asm,v 1.13 2003/09/24 01:09:30 hampa Exp $
 
 
 %include "pce.inc"
@@ -305,7 +305,7 @@ mode0c:
 
 mode0d:
   db      40, 24, 8
-  dw      8000
+  dw      8192
   db      0x00, 0x00, 0x00, 0x00                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
@@ -320,7 +320,7 @@ mode0d:
 
 mode0e:
   db      80, 24, 8
-  dw      16000
+  dw      16384
   db      0x00, 0x00, 0x00, 0x00                                ; ts
   db      0x43                                                  ; misc out
   db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
