@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.3 2003/04/16 02:25:05 hampa Exp $
+; $Id: pce.asm,v 1.4 2003/04/16 17:20:01 hampa Exp $
 
 
 %macro set_pos 1
@@ -40,7 +40,7 @@ start:
 
   call    set_bios_ds
 
-  call    pce_test
+;  call    pce_test
 
   call    init_int
   call    init_misc
@@ -111,7 +111,7 @@ init_int:
 init_misc:
   xor     ax, ax
 
-  mov     [0x0010], word 0x013d         ; equipment word
+  mov     [0x0010], word 0x017d         ; equipment word
   mov     [0x0013], word 512            ; ram size
 
   mov     [0x006c], ax
@@ -169,7 +169,7 @@ inttab:
   dw      0xf841, 0xf000 ;int_12, 0xf000
   dw      int_13, 0xf000
   dw      0xe739, 0xf000 ;int_14, 0xf000
-  dw      int_15, 0xf000
+  dw      int_default, 0xf000
   dw      0xe82e, 0xf000 ;int_16, 0xf000
   dw      0xefd2, 0xf000 ;int_17, 0xf000
   dw      int_18, 0xf000
@@ -183,7 +183,6 @@ inttab:
 
 
 int_default:
-  db      0x66, 0x66, 0x00, 0x00
   iret
 
 
@@ -360,47 +359,36 @@ prt_string:
 
 ;-----------------------------------------------------------------------------
 
-test_rol:
-  mov     ax, 0xf1cd
-  mov     cl, 0
-  stc
+test_imul:
+  mov     ax, 1
+  mov     cx, 0
+  xor     si, si
+  mov     di, si
 
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
+.next1:
+  imul    cx
+  adc     si, ax
+  adc     di, dx
+  inc     ax
+  loop    .next1
 
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
+  mov     al, 1
+  mov     cx, 0
+  xor     si, si
+  mov     di, si
 
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
-
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
-
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
-
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
-
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
-
-  rol     ax, 1
-  rol     ax, cl
-  inc     cl
+.next2:
+  imul    cl
+  adc     si, ax
+  adc     di, 0
+  inc     al
+  loop    .next2
 
   ret
 
+
 pce_test:
-  call    test_rol
+  call    test_imul
   ret
 
 ;-----------------------------------------------------------------------------
