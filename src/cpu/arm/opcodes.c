@@ -58,6 +58,7 @@ int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk)
   return (0);
 }
 
+static
 void arm_set_cc_log (arm_t *c, uint32_t val)
 {
   uint32_t cc;
@@ -76,20 +77,59 @@ void arm_set_cc_log (arm_t *c, uint32_t val)
   c->cpsr |= cc;
 }
 
+static
 void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
-  arm_set_cc_log (c, d);
-  arm_set_cc_c (c, (d < s1) || ((d == s1) && (s2 != 0)));
-  arm_set_cc_v (c, (d ^ s1) & (d ^ s2) & 0x80000000UL);
+  uint32_t cc;
+
+  cc = 0;
+
+  if (d == 0) {
+    cc |= ARM_PSR_Z;
+  }
+  else if (d & 0x80000000UL) {
+    cc |= ARM_PSR_N;
+  }
+
+  if ((d < s1) || ((d == s1) && (s2 != 0))) {
+    cc |= ARM_PSR_C;
+  }
+
+  if ((d ^ s1) & (d ^ s2) & 0x80000000UL) {
+    cc |= ARM_PSR_V;
+  }
+
+  c->cpsr &= ~(ARM_PSR_Z | ARM_PSR_N | ARM_PSR_C | ARM_PSR_V);
+  c->cpsr |= cc;
 }
 
+static
 void arm_set_cc_sub (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
-  arm_set_cc_log (c, d);
-  arm_set_cc_c (c, !((d > s1) || ((d == s1) && (s2 != 0))));
-  arm_set_cc_v (c, (d ^ s1) & (s1 ^ s2) & 0x80000000UL);
+  uint32_t cc;
+
+  cc = 0;
+
+  if (d == 0) {
+    cc |= ARM_PSR_Z;
+  }
+  else if (d & 0x80000000UL) {
+    cc |= ARM_PSR_N;
+  }
+
+  if (!((d > s1) || ((d == s1) && (s2 != 0)))) {
+    cc |= ARM_PSR_C;
+  }
+
+  if ((d ^ s1) & (s1 ^ s2) & 0x80000000UL) {
+    cc |= ARM_PSR_V;
+  }
+
+  c->cpsr &= ~(ARM_PSR_Z | ARM_PSR_N | ARM_PSR_C | ARM_PSR_V);
+  c->cpsr |= cc;
 }
 
+static
 uint32_t arm_set_psr_field (uint32_t psr, uint32_t val, unsigned fld)
 {
   if (fld & 0x01) {
@@ -170,6 +210,7 @@ int arm_check_cond (arm_t *c, unsigned cond)
   return (0);
 }
 
+static
 uint32_t arm_get_sh (arm_t *c, uint32_t ir, uint32_t *cry)
 {
   unsigned n;
