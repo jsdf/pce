@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: serial.c,v 1.2 2003/09/05 00:45:37 hampa Exp $ */
+/* $Id: serial.c,v 1.3 2003/09/05 14:08:00 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -322,6 +322,9 @@ void ser_check (serial_t *ser)
   if (ser->fd < 0) {
     return;
   }
+
+  ser_send (ser, 1);
+  e8250_check_txd (&ser->uart);
 
   while (1) {
     if (e8250_inp_full (&ser->uart)) {
