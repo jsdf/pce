@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/e8086.c                                          *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.14 2003/04/24 12:22:05 hampa Exp $ */
+/* $Id: e8086.c,v 1.15 2003/04/26 16:34:14 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -191,8 +191,11 @@ unsigned long e86_get_delay (e8086_t *c)
 void e86_execute (e8086_t *c)
 {
   unsigned cnt, op;
+  int      tf;
 
   c->prefix = 0;
+
+  tf = e86_get_tf (c);
 
   do {
     e86_pq_fill (c);
@@ -215,7 +218,12 @@ void e86_execute (e8086_t *c)
 
   c->instructions += 1;
 
-  if (c->irq && e86_get_if (c)) {
+  tf &= e86_get_tf (c);
+
+  if (tf) {
+    e86_trap (c, 1);
+  }
+  else if (c->irq && e86_get_if (c)) {
     c->irq = 0;
 
     if (c->inta != NULL) {

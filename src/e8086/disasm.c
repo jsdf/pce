@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/disasm.c                                         *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: disasm.c,v 1.4 2003/04/23 23:38:56 hampa Exp $ */
+/* $Id: disasm.c,v 1.5 2003/04/26 16:34:13 hampa Exp $ */
 
 
 #include <string.h>
@@ -1262,6 +1262,26 @@ void dop_ad (e86_disasm_t *op, unsigned char *src)
   strcpy (op->op, "LODSW");
 }
 
+/* DOP AE: SCASB */
+static
+void dop_ae (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "SCASB");
+}
+
+/* DOP AF: SCASW */
+static
+void dop_af (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "SCASW");
+}
+
 /* DOP Bx: MOV reg8, imm8 */
 static void dop_b0 (e86_disasm_t *op, unsigned char *src)
 {
@@ -1355,6 +1375,16 @@ void dop_cb (e86_disasm_t *op, unsigned char *src)
   op->arg_n = 0;
 
   strcpy (op->op, "RETF");
+}
+
+/* DOP CC: INT3 */
+static
+void dop_cc (e86_disasm_t *op, unsigned char *src)
+{
+  op->dat_n = 1;
+  op->arg_n = 0;
+
+  strcpy (op->op, "INT3");
 }
 
 /* DOP CD: INT imm8 */
@@ -1849,11 +1879,11 @@ e86_disasm_f dop_list[256] = {
   &dop_90, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, &dop_91, /* 90 */
   &dop_98, &dop_99, &dop_9a, &dop_ud, &dop_9c, &dop_9d, &dop_9e, &dop_9f,
   &dop_a0, &dop_a1, &dop_a2, &dop_a3, &dop_a4, &dop_a5, &dop_a6, &dop_a7, /* A0 */
-  &dop_a8, &dop_a9, &dop_aa, &dop_ab, &dop_ac, &dop_ad, &dop_ud, &dop_ud,
+  &dop_a8, &dop_a9, &dop_aa, &dop_ab, &dop_ac, &dop_ad, &dop_ae, &dop_af,
   &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, &dop_b0, /* B0 */
   &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,
   &dop_ud, &dop_ud, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
-  &dop_ud, &dop_ud, &dop_ca, &dop_cb, &dop_ud, &dop_cd, &dop_ud, &dop_cf,
+  &dop_ud, &dop_ud, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ud, &dop_cf,
   &dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
   &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
   &dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_ud, &dop_e6, &dop_ud, /* E0 */

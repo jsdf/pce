@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: microcode.c,v 1.13 2003/04/25 14:01:10 hampa Exp $ */
+/* $Id: microcode.c,v 1.14 2003/04/26 16:34:14 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -55,8 +55,8 @@ void e86_trap (e8086_t *c, unsigned n)
 
   ofs = (unsigned short) (n & 0xff) << 2;
 
-  c->ip = e86_get_mem16 (c, 0, ofs);
-  c->sreg[E86_REG_CS] = e86_get_mem16 (c, 0, ofs + 2);
+  e86_set_ip (c, e86_get_mem16 (c, 0, ofs));
+  e86_set_cs (c, e86_get_mem16 (c, 0, ofs + 2));
   c->flg &= ~(E86_FLG_I | E86_FLG_T);
 
   e86_pq_init (c);
@@ -1360,7 +1360,17 @@ unsigned op_48 (e8086_t *c)
 static
 unsigned op_50 (e8086_t *c)
 {
-  e86_push (c, e86_get_reg16 (c, c->pq[0] & 7));
+  unsigned reg;
+
+  reg = c->pq[0] & 7;
+
+  if (reg == E86_REG_SP) {
+    e86_push (c, e86_get_sp (c) - 2);
+  }
+  else {
+    e86_push (c, e86_get_reg16 (c, reg));
+  }
+
   e86_set_clk (c, 10);
 
   return (1);
@@ -4517,7 +4527,14 @@ static
 unsigned op_ff_06 (e8086_t *c)
 {
   e86_get_ea_ptr (c, c->pq + 1);
-  e86_push (c, e86_get_ea16 (c));
+
+  if ((c->ea.is_mem == 0) && (c->ea.ofs == E86_REG_SP)) {
+    e86_push (c, e86_get_sp (c) - 2);
+  }
+  else {
+    e86_push (c, e86_get_ea16 (c));
+  }
+
   e86_set_clk_ea (c, 10, 16);
 
   return (c->ea.cnt + 1);
