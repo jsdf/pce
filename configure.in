@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.21 2003/09/08 17:17:43 hampa Exp $
+# $Id: configure.in,v 1.22 2003/09/13 18:12:16 hampa Exp $
 
 
 AC_PREREQ(2.50)
@@ -112,9 +112,9 @@ fi
 
 
 AC_MSG_CHECKING([host OS])
-os=`uname -o`
+os=`uname -s`
 case "$os" in
-*[[Ll]]inux*)
+[[Ll]]inux)
 	AC_DEFINE(PCE_HOST_LINUX)
 	AC_MSG_RESULT([Linux])
 	;;
@@ -217,5 +217,12 @@ echo "  mandir:                $pce_mandir"
 echo "  datadir:               $pce_datdir"
 echo ""
 echo "  Terminals:             $term"
+
+if test $PCE_HAVE_NASM -eq 0 ; then
+	echo "  Build BIOS:            no"
+else
+	echo "  Build BIOS:            yes"
+fi
+
 echo "  Host clock:            $PCE_HOST_FOSC"
 echo "  Use Pentium TSC:       $PCE_HAVE_TSC"
