@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.c,v 1.5 2003/04/17 14:15:44 hampa Exp $ */
+/* $Id: floppy.c,v 1.6 2003/04/18 20:07:22 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -103,7 +103,10 @@ int dsk_set_file (disk_t *dsk, const char *fname)
 
   dsk->fp = fopen (fname, "r+");
   if (dsk->fp == NULL) {
-    return (1);
+    dsk->fp = fopen (fname, "w+");
+    if (dsk->fp == NULL) {
+      return (1);
+    }
   }
 
   dsk->fp_close = 1;
@@ -182,6 +185,21 @@ int dsks_add_disk (disks_t *dsks, disk_t *dsk)
   dsks->cnt += 1;
 
   return (0);
+}
+
+void dsks_rmv_disk (disks_t *dsks, disk_t *dsk)
+{
+  unsigned i, j;
+
+  j = 0;
+  for (i = 0; i < dsks->cnt; i++) {
+    if (dsks->dsk[i] != dsk) {
+      dsks->dsk[j] = dsks->dsk[i];
+      j += 1;
+    }
+  }
+
+  dsks->cnt = j;
 }
 
 disk_t *dsks_get_disk (disks_t *dsks, unsigned drive)
@@ -284,6 +302,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
     }
 
     while (n > 0) {
+      memset (buf, 0, 512);
       fread (buf, 1, 512, dsk->fp);
       for (j = 0; j < 512; j++) {
         e86_set_mem8 (cpu, seg, ofs, buf[j]);
@@ -402,6 +421,26 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
   dsk_int13_set_status (dsks, cpu, 0);
 }
 
+void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
+{
+  unsigned drive;
+  disk_t   *dsk;
+
+  drive = e86_get_dl (cpu);
+  dsk = dsks_get_disk (dsks, drive);
+
+  if (dsk == NULL) {
+    dsk_int13_set_status (dsks, cpu, 1);
+    return;
+  }
+
+  dsk_int13_set_status (dsks, cpu, 0);
+  e86_set_ah (cpu, 3);
+  e86_set_cx (cpu, (dsk->size >> 16) & 0xffff);
+  e86_set_dx (cpu, dsk->size & 0xffff);
+  e86_set_cf (cpu, 0);
+}
+
 void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
 {
   fprintf (fp,
@@ -443,6 +482,7 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       break;
 
     case 0x04:
+    case 0x18:
       dsk_int13_set_status (dsks, cpu, 0);
       break;
 
@@ -450,9 +490,9 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       dsk_int13_08 (dsks, cpu);
       break;
 
-    case 0x15:
-      dsk_int13_set_status (dsks, cpu, 1);
-      break;
+//    case 0x15:
+//      dsk_int13_15 (dsks, cpu);
+//      break;
 
     default:
       dsk_int13_set_status (dsks, cpu, 1);
