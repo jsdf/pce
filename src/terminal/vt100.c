@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.c,v 1.11 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: vt100.c,v 1.12 2003/11/18 00:31:38 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -111,7 +111,7 @@ void vt100_set_key (vt100_t *vt,
 {
   vt100_keymap_t *map;
 
-  if ((key_cnt > 8) || (seq_cnt > 8)) {
+  if ((key_cnt > VT100_KEY_MAX) || (seq_cnt > VT100_KEY_MAX)) {
     return;
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.h                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: vt100.h,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: vt100.h,v 1.6 2003/11/18 00:31:39 hampa Exp $ */
 
 
 #ifndef PCE_TERMINAL_VT100_H
@@ -33,12 +33,15 @@
 #include <terminal/terminal.h>
 
 
+#define VT100_KEY_MAX 16
+
+
 typedef struct vt100_keymap_t {
   unsigned      key_cnt;
-  unsigned char key[8];
+  unsigned char key[VT100_KEY_MAX];
 
   unsigned      seq_cnt;
-  unsigned char seq[8];
+  unsigned char seq[VT100_KEY_MAX];
 } vt100_keymap_t;
 
 
