@@ -193,15 +193,13 @@ void ser_uart_out (serial_t *ser, unsigned char val)
 
   while (1) {
     if (e8250_get_out (&ser->uart, &c)) {
-      return;
+      break;
     }
 
-    fprintf (stderr, "serial: '%c'\n", c);
-    fflush (stderr);
-
     fputc (c, ser->fp);
-    fflush (ser->fp);
   }
+
+  fflush (ser->fp);
 }
 
 /* 8250 input buffer is not full */
