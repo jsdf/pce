@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/memory.c                                         *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.c,v 1.4 2003/08/30 03:07:44 hampa Exp $ */
+/* $Id: memory.c,v 1.5 2003/09/04 20:13:07 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -107,11 +107,13 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
     blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
+      addr -= blk->base;
+
       if (blk->get_uint8 != NULL) {
-        return (blk->get_uint8 (blk->ext, addr - blk->base));
+        return (blk->get_uint8 (blk->ext, addr));
       }
       else {
-        return (blk->data[addr - blk->base]);
+        return (blk->data[addr]);
       }
     }
   }
@@ -121,24 +123,34 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
 
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
 {
-  unsigned  i;
-  mem_blk_t *blk;
+  unsigned       i;
+  unsigned short val;
+  mem_blk_t      *blk;
 
   for (i = 0; i < mem->cnt; i++) {
     blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
+      if ((addr + 1) > blk->end) {
+        val = mem_get_uint8 (mem, addr);
+        val += (unsigned short) mem_get_uint8 (mem, addr + 1) << 8;
+        return (val);
+      }
+
+      addr -= blk->base;
+
       if (blk->get_uint16 != NULL) {
-        return (blk->get_uint16 (blk->ext, addr - blk->base));
+        return (blk->get_uint16 (blk->ext, addr));
       }
       else {
-        addr -= blk->base;
-        return (blk->data[addr] + (blk->data[addr + 1] << 8));
+        val = blk->data[addr];
+        val += (unsigned short) blk->data[addr + 1] << 8;
+        return (val);
       }
     }
   }
 
-  return ((mem->def_val << 8) | mem->def_val);
+  return (((unsigned short) mem->def_val << 8) | mem->def_val);
 }
 
 void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
@@ -150,15 +162,20 @@ void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
     blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
+      addr -= blk->base;
+
       if (blk->flags & MEM_FLAG_RO) {
         return;
       }
-      else if (blk->set_uint8 != NULL) {
-        blk->set_uint8 (blk->ext, addr - blk->base, val);
+
+      if (blk->set_uint8 != NULL) {
+        blk->set_uint8 (blk->ext, addr, val);
       }
       else {
-        blk->data[addr - blk->base] = val;
+        blk->data[addr] = val;
       }
+
+      return;
     }
   }
 }
@@ -172,16 +189,27 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
     blk = mem->lst[i].blk;
 
     if ((addr >= blk->base) && (addr <= blk->end)) {
+      if ((addr + 1) > blk->end) {
+        mem_set_uint8 (mem, addr, val & 0xff);
+        mem_set_uint8 (mem, addr + 1, (val >> 8) & 0xff);
+        return;
+      }
+
+      addr -= blk->base;
+
       if (blk->flags & MEM_FLAG_RO) {
         return;
       }
-      else if (blk->set_uint16 != NULL) {
-        blk->set_uint16 (blk->ext, addr - blk->base, val);
+
+      if (blk->set_uint16 != NULL) {
+        blk->set_uint16 (blk->ext, addr, val);
       }
       else {
-        blk->data[addr - blk->base] = val & 0xff;
-        blk->data[addr - blk->base + 1] = (val >> 8) & 0xff;
+        blk->data[addr] = val & 0xff;
+        blk->data[addr + 1] = (val >> 8) & 0xff;
       }
+
+      return;
     }
   }
 }
