@@ -1,12 +1,17 @@
 # Makefile
-# $Id: Makefile.in,v 1.14 2003/09/13 18:12:16 hampa Exp $
+# $Id: Makefile.in,v 1.15 2003/09/13 18:28:45 hampa Exp $
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := bios
+subdir :=
 reldir := ../..
 pcesrc	:= $(topdir)/src
 pcedst	:= ..
+
+ifeq "@PCE_HAVE_NASM@" "1"
+subdir += bios
+endif
+
 
 include $(reldir)/Makefile.inc
 
