@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.3 2003/12/23 03:48:30 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.4 2003/12/23 05:04:10 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -159,6 +159,8 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
     pce_log (MSG_ERR, "creating nvram failed\n");
     return;
   }
+
+  nvr_set_endian (pc->nvr, 0);
 
   mem_add_blk (pc->mem, nvr_get_mem (pc->nvr), 0);
 
