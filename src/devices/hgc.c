@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/hgc.c                                          *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-08-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -450,9 +450,9 @@ void hgc_mode1_update (hgc_t *hgc)
       for (i = 0; i < 8; i++) {
         for (j = 0; j < 4; j++) {
           col1 = (val[j] & 0x80) ? 7 : 0;
-          if (col1 != col2) {
+          if (col2 != col1) {
             trm_set_col (hgc->trm, col1, 0);
-            col1 = col2;
+            col2 = col1;
           }
 
           trm_set_pxl (hgc->trm, 8 * x + i, 4 * y +j);
