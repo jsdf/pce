@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     e8086.c                                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,13 +20,15 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
+/* $Id: e8086.c,v 1.3 2003/04/16 07:04:41 hampa Exp $ */
 
 
 #include <pce.h>
 
 #include "e8086.h"
 #include "internal.h"
+
+#include <stdarg.h>
 
 
 /*************************************************************************
@@ -200,40 +202,72 @@ void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
 }
 
+void e86_log_op (e8086_t *c, const char *str, ...)
+{
+  va_list     va;
+  static char ft[2] = { '-', '+' };
+
+  fprintf (stderr, "E86: %04X:%04X  [%02X %02X %02X %02X %02X %02X] ",
+    e86_get_cs (c), e86_get_ip (c),
+    c->pq[0], c->pq[1], c->pq[2], c->pq[3], c->pq[4], c->pq[5]
+  );
+
+  if (str != NULL) {
+    va_start (va, str);
+    vfprintf (stderr, str, va);
+    va_end (va);
+  }
+
+  fputs ("\n", stderr);
+
+  fprintf (stderr,
+    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
+    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
+  );
+
+  fprintf (stderr, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
+    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
+    e86_get_ip (c), c->flg
+  );
+
+  fprintf (stderr, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
+    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
+    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
+    ft[(c->flg & E86_FLG_I) != 0],
+    ft[(c->flg & E86_FLG_D) != 0]
+  );
+
+  fflush (stderr);
+}
+
 void e86_prt_state (e8086_t *c, FILE *fp)
 {
-  static char  ft[2] = { '-', '+' };
+  double      cpi;
+  static char ft[2] = { '-', '+' };
 
-  fprintf (fp, "clk=%lu  op=%lu  delay=%lu\n", c->clocks, c->instructions, c->delay);
+  cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
+
+  fprintf (fp, "clk=%lu  op=%lu  delay=%lu  cpi=%.2f  mips=%.4f\n",
+    c->clocks, c->instructions,
+    c->delay,
+    cpi, 4.77 / cpi
+  );
 
   fprintf (fp,
     "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X\n",
-    c->dreg[E86_REG_AX],
-    c->dreg[E86_REG_BX],
-    c->dreg[E86_REG_CX],
-    c->dreg[E86_REG_DX],
-    c->dreg[E86_REG_SP],
-    c->dreg[E86_REG_BP],
-    c->dreg[E86_REG_SI],
-    c->dreg[E86_REG_DI]
+    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c)
   );
 
   fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
-    c->sreg[E86_REG_CS],
-    c->sreg[E86_REG_DS],
-    c->sreg[E86_REG_ES],
-    c->sreg[E86_REG_SS],
-    c->ip,
-    c->flg
+    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
+    e86_get_ip (c), c->flg
   );
 
   fprintf (fp, "  C%c O%c S%c Z%c A%c P%c I%c D%c\n",
-    ft[(c->flg & E86_FLG_C) != 0],
-    ft[(c->flg & E86_FLG_O) != 0],
-    ft[(c->flg & E86_FLG_S) != 0],
-    ft[(c->flg & E86_FLG_Z) != 0],
-    ft[(c->flg & E86_FLG_A) != 0],
-    ft[(c->flg & E86_FLG_P) != 0],
+    ft[e86_get_cf (c)], ft[e86_get_of (c)], ft[e86_get_sf (c)],
+    ft[e86_get_zf (c)], ft[e86_get_af (c)], ft[e86_get_pf (c)],
     ft[(c->flg & E86_FLG_I) != 0],
     ft[(c->flg & E86_FLG_D) != 0]
   );
@@ -255,10 +289,7 @@ void e86_execute (e8086_t *c)
 
     cnt = e86_opcodes[op] (c);
 
-    if (cnt == 0) {
-      e86_pq_init (c);
-    }
-    else {
+    if (cnt > 0) {
       c->ip = (c->ip + cnt) & 0xffff;
       e86_pq_adjust (c, cnt);
     }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     internal.h                                                 *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.2 2003/04/16 02:26:17 hampa Exp $ */
+/* $Id: internal.h,v 1.3 2003/04/16 07:04:42 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -42,6 +42,16 @@
 #define e86_add_sint8(w, b) \
   ((((b) & 0x80) ? ((w) + ((b) | 0xff00)) : ((w) + ((b) & 0xff))) & 0xffff)
 
+#define e86_add_uint16(s1, s2) \
+  (((s1) + (s2)) & 0xffff)
+
+#define e86_add_uint4(s1, s2) \
+  (((s1) & 0x0f) + ((s2) & 0x0f))
+
+#define e86_sub_uint4(s1, s2) \
+  (((s1) & 0x0f) - ((s2) & 0x0f))
+
+
 #define e86_get_prt8(cpu, ofs) \
   (cpu)->prt_get_uint8 ((cpu)->prt, ofs)
 
@@ -54,32 +64,19 @@
 #define e86_set_prt16(cpu, ofs, val) \
   (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val)
 
-#define e86_get_flg(cpu, f) \
-  (((cpu)->flg & (f)) != 0)
 
-#define e86_set_flg(cpu, f, v) \
-  if (v) (c)->flg |= (f); else (c)->flg &= ~(f);
-
-#define e86_get_cf(cpu) \
-  (((cpu)->flg & E86_FLG_C) != 0)
-
-#define e86_set_cf(cpu, v) \
-  if (v) (c)->flg |= E86_FLG_C; else (c)->flg &= ~E86_FLG_C;
-
-#define e86_get_of(cpu) \
-  (((cpu)->flg & E86_FLG_O) != 0)
-
-#define e86_set_of(cpu, v) \
-  if (v) (c)->flg |= E86_FLG_O; else (c)->flg &= ~E86_FLG_O;
+#define e86_get_sego(cpu, seg) \
+  (((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (seg));
 
 #define e86_get_seg(cpu, seg) \
-  ((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (cpu)->sreg[(seg)];
+  (((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (cpu)->sreg[(seg)])
 
-#define e86_add_uint4(s1, s2) \
-  (((s1) & 0x0f) + ((s2) & 0x0f))
 
-#define e86_sub_uint4(s1, s2) \
-  (((s1) & 0x0f) - ((s2) & 0x0f))
+#define e86_set_clk(cpu, clk) do { (cpu)->delay += (clk); } while (0)
+#define e86_set_clk_ea(cpu, clkreg, clkmem) \
+  do { \
+    (c)->delay += ((c)->ea.is_mem) ? (clkmem) : (clkreg); \
+  } while (0)
 
 
 typedef unsigned (*e86_opcode_f) (e8086_t *c);
@@ -106,6 +103,8 @@ void e86_pq_adjust (e8086_t *c, unsigned cnt);
 void e86_set_flags8 (e8086_t *c, unsigned short mask, unsigned short dst, unsigned short src);
 void e86_set_flags16 (e8086_t *c, unsigned short mask, unsigned long dst, unsigned long src);
 void e86_set_flags_af (e8086_t *c, unsigned d);
+
+void e86_log_op (e8086_t *c, const char *str, ...);
 
 
 #endif
