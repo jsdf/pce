@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/e8253.c                                        *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8253.c,v 1.3 2003/04/26 23:35:24 hampa Exp $ */
+/* $Id$ */
 
 
 #include <stdlib.h>
@@ -50,17 +50,21 @@ static struct cnt_mode_t tab_mode[6] = {
   { &cnt_new_val_0, &cnt_dec_val_0, &cnt_set_gate_0 },
   { NULL, NULL, NULL },
   { &cnt_new_val_2, &cnt_dec_val_2, &cnt_set_gate_2 },
-  { &cnt_new_val_3, &cnt_dec_val_3, &cnt_set_gate_3 }
+  { &cnt_new_val_3, &cnt_dec_val_3, &cnt_set_gate_3 },
+  { NULL, NULL, NULL },
+  { NULL, NULL, NULL }
 };
 
 
 static
 void cnt_set_out (e8253_counter_t *cnt, unsigned char val)
 {
-  cnt->out_val = val;
+  if (cnt->out_val != val) {
+    cnt->out_val = val;
 
-  if (cnt->out != NULL) {
-    cnt->out (cnt->out_ext, val);
+    if (cnt->out != NULL) {
+      cnt->out (cnt->out_ext, val);
+    }
   }
 }
 
@@ -95,6 +99,7 @@ void cnt_dec_val_0 (e8253_counter_t *cnt, unsigned n)
 static
 void cnt_set_gate_0 (e8253_counter_t *cnt, unsigned char val)
 {
+  cnt->counting = (cnt->counting && val);
 }
 
 static
@@ -200,6 +205,7 @@ void cnt_set_gate_3 (e8253_counter_t *cnt, unsigned char val)
     }
   }
   else {
+    cnt_set_out (cnt, 1);
     cnt->counting = 0;
   }
 }
@@ -278,11 +284,13 @@ unsigned char e8253_cnt_get_out (e8253_counter_t *cnt)
 
 void e8253_cnt_set_gate (e8253_counter_t *cnt, unsigned char val)
 {
-  if (tab_mode[cnt->mode].set_gate != NULL) {
-    tab_mode[cnt->mode].set_gate (cnt, val);
-  }
+  if (val != cnt->gate) {
+    if (tab_mode[cnt->mode].set_gate != NULL) {
+      tab_mode[cnt->mode].set_gate (cnt, val);
+    }
 
-  cnt->gate = val;
+    cnt->gate = val;
+  }
 }
 
 static
@@ -395,6 +403,14 @@ void e8253_del (e8253_t *pit)
   }
 }
 
+void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set)
+{
+  if (cntr <= 2) {
+    pit->counter[cntr].out_ext = ext;
+    pit->counter[cntr].out = set;
+  }
+}
+
 void e8253_set_gate (e8253_t *pit, unsigned cntr, unsigned char val)
 {
   if (cntr <= 2) {
@@ -402,12 +418,19 @@ void e8253_set_gate (e8253_t *pit, unsigned cntr, unsigned char val)
   }
 }
 
-void e8253_set_out (e8253_t *pit, unsigned cntr, void *ext, e8253_set_out_f set)
+void e8253_set_gate0 (e8253_t *pit, unsigned char val)
 {
-  if (cntr <= 2) {
-    pit->counter[cntr].out_ext = ext;
-    pit->counter[cntr].out = set;
-  }
+  e8253_cnt_set_gate (&pit->counter[0], val);
+}
+
+void e8253_set_gate1 (e8253_t *pit, unsigned char val)
+{
+  e8253_cnt_set_gate (&pit->counter[1], val);
+}
+
+void e8253_set_gate2 (e8253_t *pit, unsigned char val)
+{
+  e8253_cnt_set_gate (&pit->counter[2], val);
 }
 
 unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr)
@@ -420,6 +443,11 @@ unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr)
 }
 
 unsigned short e8253_get_uint16 (e8253_t *pit, unsigned long addr)
+{
+  return (e8253_get_uint8 (pit, addr));
+}
+
+unsigned long e8253_get_uint32 (e8253_t *pit, unsigned long addr)
 {
   return (e8253_get_uint8 (pit, addr));
 }
@@ -445,7 +473,12 @@ void e8253_set_uint8 (e8253_t *pit, unsigned long addr, unsigned char val)
 
 void e8253_set_uint16 (e8253_t *pit, unsigned long addr, unsigned short val)
 {
-  e8253_set_uint8 (pit, addr, val);
+  e8253_set_uint8 (pit, addr, val & 0xff);
+}
+
+void e8253_set_uint32 (e8253_t *pit, unsigned long addr, unsigned long val)
+{
+  e8253_set_uint8 (pit, addr, val & 0xff);
 }
 
 void e8253_clock (e8253_t *pit, unsigned n)
