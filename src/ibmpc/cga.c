@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.9 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: cga.c,v 1.10 2003/08/31 01:38:10 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -155,8 +155,8 @@ void cga_prt_state (cga_t *cga, FILE *fp)
   );
 
   fprintf (fp, "CRTC=[%02X", cga->crtc_reg[0]);
-  for (i = 1; i < 15; i++) {
-    if (i == 8) {
+  for (i = 1; i < 18; i++) {
+    if ((i & 7) == 0) {
       fputs ("-", fp);
     }
     else {
@@ -706,7 +706,7 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
 void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
 {
-  if (reg > 15) {
+  if (reg > 17) {
     return;
   }
 
@@ -768,7 +768,7 @@ void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 {
   cga_reg_set_uint8 (cga, addr, val & 0xff);
 
-  if (addr < cga->reg->end) {
+  if ((addr + 1) < cga->reg->size) {
     cga_reg_set_uint8 (cga, addr + 1, val >> 8);
   }
 }
@@ -807,7 +807,7 @@ unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr)
 
   ret = cga_reg_get_uint8 (cga, addr);
 
-  if (addr < cga->reg->end) {
+  if ((addr + 1) < cga->reg->size) {
     ret |= cga_reg_get_uint8 (cga, addr + 1) << 8;
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/xterm.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xterm.c,v 1.12 2003/08/30 17:16:18 hampa Exp $ */
+/* $Id: xterm.c,v 1.13 2003/08/31 01:38:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -540,8 +540,8 @@ void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y)
 
 void xt_clear (xterm_t *xt)
 {
-  XDrawRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
-  XDrawRectangle (xt->display, xt->wdw, xt->gc, 0, 0, xt->wdw_w, xt->wdw_h);
+  XFillRectangle (xt->display, xt->back, xt->back_gc, 0, 0, xt->wdw_w, xt->wdw_h);
+  XFillRectangle (xt->display, xt->wdw, xt->gc, 0, 0, xt->wdw_w, xt->wdw_h);
 //  XClearWindow (xt->display, xt->wdw);
 }
 

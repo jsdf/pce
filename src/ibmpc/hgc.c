@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/hgc.c                                            *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: hgc.c,v 1.7 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: hgc.c,v 1.8 2003/08/31 01:38:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -163,8 +163,8 @@ void hgc_prt_state (hgc_t *hgc, FILE *fp)
   );
 
   fprintf (fp, "CRTC=[%02X", hgc->crtc_reg[0]);
-  for (i = 1; i < 15; i++) {
-    if (i == 8) {
+  for (i = 1; i < 18; i++) {
+    if ((i & 7) == 0) {
       fputs ("-", fp);
     }
     else {
@@ -607,7 +607,7 @@ void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 
     case 1:
       hgc_mode1_set_uint8 (hgc, addr, val);
-      if (addr < hgc->mem->end) {
+      if ((addr + 1) < hgc->mem->size) {
         hgc_mode1_set_uint8 (hgc, addr + 1, val >> 8);
       }
       break;
@@ -680,7 +680,7 @@ void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
   hgc_reg_set_uint8 (hgc, addr, val & 0xff);
 
-  if (addr < hgc->reg->end) {
+  if ((addr + 1) < hgc->reg->size) {
     hgc_reg_set_uint8 (hgc, addr + 1, val >> 8);
   }
 }
@@ -719,7 +719,7 @@ unsigned short hgc_reg_get_uint16 (hgc_t *hgc, unsigned long addr)
 
   ret = hgc_reg_get_uint8 (hgc, addr);
 
-  if (addr < hgc->reg->end) {
+  if ((addr + 1) < hgc->reg->size) {
     ret |= hgc_reg_get_uint8 (hgc, addr + 1) << 8;
   }
 

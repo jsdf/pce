@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.8 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: mda.c,v 1.9 2003/08/31 01:38:11 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -133,8 +133,8 @@ void mda_prt_state (mda_t *mda, FILE *fp)
   );
 
   fprintf (fp, "CRTC=[%02X", mda->crtc_reg[0]);
-  for (i = 1; i < 15; i++) {
-    if (i == 8) {
+  for (i = 1; i < 18; i++) {
+    if ((i & 7) == 0) {
       fputs ("-", fp);
     }
     else {

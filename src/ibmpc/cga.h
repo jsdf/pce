@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/cga.h                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-31 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.7 2003/08/30 16:55:36 hampa Exp $ */
+/* $Id: cga.h,v 1.8 2003/08/31 01:38:11 hampa Exp $ */
 
 
 #ifndef PCE_CGA_H
@@ -33,7 +33,7 @@ typedef struct {
   mem_blk_t     *mem;
   mem_blk_t     *reg;
 
-  unsigned char crtc_reg[16];
+  unsigned char crtc_reg[18];
 
   unsigned      crtc_pos;
   unsigned      crtc_ofs;
