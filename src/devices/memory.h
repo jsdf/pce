@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/memory.h                                         *
+ * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: memory.h,v 1.1 2003/11/08 14:54:55 hampa Exp $ */
+/* $Id: memory.h,v 1.2 2003/11/08 15:42:04 hampa Exp $ */
 
 
 #ifndef PCE_MEMORY_H
@@ -30,20 +30,27 @@
 #define MEM_FLAG_RO  1
 
 
+typedef unsigned char (*mem_get_uint8_f) (void *blk, unsigned long addr);
+typedef unsigned short (*mem_get_uint16_f) (void *blk, unsigned long addr);
+
+typedef void (*mem_set_uint8_f) (void *blk, unsigned long addr, unsigned char val);
+typedef void (*mem_set_uint16_f) (void *blk, unsigned long addr, unsigned short val);
+
+
 typedef struct {
-  unsigned char (*get_uint8) (void *blk, unsigned long addr);
-  unsigned short (*get_uint16) (void *blk, unsigned long addr);
+  mem_get_uint8_f  get_uint8;
+  mem_get_uint16_f get_uint16;
 
-  void (*set_uint8) (void *blk, unsigned long addr, unsigned char val);
-  void (*set_uint16) (void *blk, unsigned long addr, unsigned short val);
+  mem_set_uint8_f  set_uint8;
+  mem_set_uint16_f set_uint16;
 
-  void           *ext;
+  void             *ext;
 
-  unsigned short flags;
-  unsigned long  base;
-  unsigned long  size;
-  unsigned long  end;
-  unsigned char  *data;
+  unsigned short   flags;
+  unsigned long    base;
+  unsigned long    size;
+  unsigned long    end;
+  unsigned char    *data;
 } mem_blk_t;
 
 
@@ -61,16 +68,39 @@ typedef struct {
 
 
 
+/*!***************************************************************************
+ * @short  Create a new memory block
+ * @param  base  The linear base address
+ * @param  size  The block size in bytes
+ * @param  alloc If true then backing store is allocated
+ * @return The memory block or NULL on error
+ *****************************************************************************/
 mem_blk_t *mem_blk_new (unsigned long base, unsigned long size, int alloc);
+
+/*!***************************************************************************
+ * @short Delete a memory block
+ * @param blk The memory block
+ *
+ * Backing store is freed if it was allocated in mem_blk_new().
+ *****************************************************************************/
 void mem_blk_del (mem_blk_t *blk);
+
+/*!***************************************************************************
+ * @short Initialize a memory block
+ * @param blk The memory block
+ * @param val The byte value with which the block is initialized
+ *****************************************************************************/
 void mem_blk_init (mem_blk_t *blk, unsigned char val);
+
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 void mem_blk_set_ro (mem_blk_t *blk, int ro);
 unsigned long mem_blk_get_size (mem_blk_t *blk);
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
+unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr);
 void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val);
+void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val);
 void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val);
 
 memory_t *mem_new (void);
