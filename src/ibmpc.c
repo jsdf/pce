@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.12 2003/04/21 13:35:38 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.13 2003/04/21 15:50:34 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -121,25 +121,42 @@ void pc_setup_disks (ibmpc_t *pc)
   pc->dsk = dsks_new();
 
   dsk = dsk_new (0);
-  dsk_set_mem (dsk, 80, 2, 18, "drive_a.img", 0);
-  dsks_add_disk (pc->dsk, dsk);
+  if (dsk_set_mem (dsk, 80, 2, 18, "drive_a.img", 0)) {
+    dsk_del (dsk);
+  }
+  else {
+    dsks_add_disk (pc->dsk, dsk);
+  }
 
   dsk = dsk_new (1);
-  dsk_set_image (dsk, 80, 2, 18, "drive_b.img", 0);
-  dsks_add_disk (pc->dsk, dsk);
+  if (dsk_set_image (dsk, 80, 2, 18, "drive_b.img", 0)) {
+    dsk_del (dsk);
+  }
+  else {
+    dsks_add_disk (pc->dsk, dsk);
+  }
 
   dsk = dsk_new (0x80);
-  dsk_set_hdimage (dsk, "drive_c.img", 0);
-  dsks_add_disk (pc->dsk, dsk);
+  if (dsk_set_hdimage (dsk, "drive_c.img", 0)) {
+    dsk_del (dsk);
+  }
+  else {
+    dsks_add_disk (pc->dsk, dsk);
+  }
 
   dsk = dsk_new (0x81);
-  dsk_set_hdimage (dsk, "/var/lib/dosemu/dos_c.img", 1);
-  dsks_add_disk (pc->dsk, dsk);
+  if (dsk_set_hdimage (dsk, "/var/lib/dosemu/dos_c.img", 1)) {
+    dsk_del (dsk);
+  }
+  else {
+    dsks_add_disk (pc->dsk, dsk);
+  }
 }
 
 ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
 {
-  ibmpc_t *pc;
+  unsigned i;
+  ibmpc_t  *pc;
 
   ramsize = (ramsize + 31) & ~31;
 
@@ -151,7 +168,10 @@ ibmpc_t *pc_new (unsigned ramsize, unsigned dsp)
   pc->brk = 0;
 
   pc->clk_cnt = 0;
-  pc->timer_clk_cnt = 0;
+
+  for (i = 0; i < 4; i++) {
+    pc->clk_div[i] = 0;
+  }
 
   pc->mem = mem_new();
   pc->ram = mem_blk_new (0, 1024 * ramsize, 1);
@@ -239,18 +259,26 @@ void pc_clock (ibmpc_t *pc)
 
   e86_clock (pc->cpu, n);
 
-  e8259_clock (pc->pic);
-
-  cga_clock (pc->cga);
-  key_clock (pc->key);
-
-  if (pc->timer_clk_cnt >= (4 * 65536)) {
+  if (pc->clk_div[0] >= (4 * 65536)) {
     e8259_set_irq0 (pc->pic, 1);
-    pc->timer_clk_cnt -= (4 * 65536);
+    pc->clk_div[0] -= (4 * 65536);
+  }
+
+  if (pc->clk_div[1] >= 16) {
+    e8259_clock (pc->pic);
+    pc->clk_div[1] -= 16;
+  }
+
+  if (pc->clk_div[2] >= 64) {
+    cga_clock (pc->cga);
+    key_clock (pc->key);
+    pc->clk_div[2] -= 64;
   }
 
   pc->clk_cnt += n;
-  pc->timer_clk_cnt += n;
+  pc->clk_div[0] += n;
+  pc->clk_div[1] += n;
+  pc->clk_div[2] += n;
 }
 
 void pc_break (ibmpc_t *pc, unsigned char val)
