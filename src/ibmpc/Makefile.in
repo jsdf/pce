@@ -1,0 +1,67 @@
+# Makefile
+# $Id: Makefile.in,v 1.1 2003/04/23 12:48:42 hampa Exp $
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir := bios
+reldir := ../..
+pcesrc	:= $(topdir)/src
+pcedst	:= ..
+
+include $(reldir)/Makefile.inc
+
+
+SRC	:= cga.c disk.c ibmpc.c keyboard.c log.c mda.c memory.c pce.c term.c
+
+OBJ	:= cga.o disk.o ibmpc.o keyboard.o log.o mda.o memory.o pce.o term.o
+OBJ_EXT	:= $(pcedst)/e8086/e8086.a $(pcedst)/e8255/e8255.a \
+	$(pcedst)/e8259/e8259.a $(pcedst)/libini/libini.a
+
+HDR	:= cga.h disk.h ibmpc.h keyboard.h log.h mda.h memory.h pce.h term.h
+HDR_EXT	:= $(pcesrc)/e8086/e8086.h $(pcesrc)/e8255/e8255.h \
+	$(pcesrc)/e8259/e8259.h $(pcesrc)/libini/libini.h
+
+MAN	:=
+
+BIN	:= pce pce.cfg
+
+SDP	:= Makefile $(HDR) $(HDR_EXT)
+BDP	:= Makefile $(OBJ) $(OBJ_EXT)
+
+
+all: $(BIN) $(OBJ)
+
+
+clean:
+	rm -f $(OBJ) $(BIN)
+
+
+install:
+	$(INSTALL) -d -m 755 $(bindir)
+	$(INSTALL) -d -m 755 $(etcdir)
+	$(INSTALL) -m 755 -s $(BIN) $(bindir)
+	$(INSTALL) -m 644 pce.cfg $(etcdir)
+ifneq "$(MAN)" ""
+	$(INSTALL) -d -m 755 $(mandir)/man1
+	for f in $(MAN) ; do \
+		rm -f $(mandir)/man1/$$f.gz ; \
+		gzip -c --best $(srcdir)/$$f > $(mandir)/man1/$$f.gz ; \
+	done
+endif
+
+
+pce: $(OBJ) $(OBJ_EXT)
+	$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT)
+
+pce.cfg: pce.cfg.in
+	sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
+
+cga.o:		cga.c $(SDP)
+disk.o:		disk.c $(SDP)
+ibmpc.o:	ibmpc.c $(SDP)
+keyboard.o:	keyboard.c $(SDP)
+log.o:		log.c $(SDP)
+mda.o:		mda.c $(SDP)
+memory.o:	memory.c $(SDP)
+pce.o:		pce.c $(SDP)
+term.o:		term.c $(SDP)

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/floppy.h                                               *
+ * File name:     src/ibmpc/disk.h                                           *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,15 +20,11 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: floppy.h,v 1.4 2003/04/21 19:10:59 hampa Exp $ */
+/* $Id: disk.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
 #ifndef PCE_FLOPPY_H
 #define PCE_FLOPPY_H 1
-
-
-#include <pce.h>
-#include <e8086/e8086.h>
 
 
 #define PCE_MAX_DISKS 16

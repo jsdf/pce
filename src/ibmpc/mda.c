@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     mda.c                                                      *
+ * File name:     src/ibmpc/mda.c                                            *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.c,v 1.4 2003/04/19 03:27:36 hampa Exp $ */
+/* $Id: mda.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
 #include <stdio.h>
 
-#include <pce.h>
+#include "pce.h"
 
 
 mda_t *mda_new (FILE *fp)

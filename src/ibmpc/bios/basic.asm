@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: basic.asm,v 1.2 2003/04/15 04:14:00 hampa Exp $
+; $Id: basic.asm,v 1.1 2003/04/23 12:48:43 hampa Exp $
 
 
 section .text

@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc.c                                                *
+ * File name:     src/ibmpc/ibmpc.c                                          *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2003 by Hampa Hug <hampa@hampa.ch>                *
@@ -20,13 +20,13 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: ibmpc.c,v 1.17 2003/04/23 11:07:35 hampa Exp $ */
+/* $Id: ibmpc.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
 #include <stdio.h>
 #include <time.h>
 
-#include <pce.h>
+#include "pce.h"
 
 
 void pc_load_bios (ibmpc_t *pc, char *fname);

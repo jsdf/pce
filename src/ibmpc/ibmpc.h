@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     cga.h                                                      *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * File name:     src/ibmpc/ibmpc.h                                          *
+ * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,45 +20,46 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.h,v 1.2 2003/04/19 02:00:43 hampa Exp $ */
+/* $Id: ibmpc.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
-#ifndef PCE_CGA_H
-#define PCE_CGA_H 1
-
-
-#include <pce.h>
+#ifndef PCE_IBMPC_H
+#define PCE_IBMPC_H 1
 
 
 typedef struct {
-  mem_blk_t     *mem;
-  mem_blk_t     *crtc;
+  e8086_t       *cpu;
+  keyboard_t    *key;
+  mda_t         *mda;
+  cga_t         *cga;
+  disks_t       *dsk;
 
-  unsigned char crtc_reg[16];
+  memory_t      *mem;
+  mem_blk_t     *ram;
 
-  unsigned      crtc_mode;
-  unsigned      crtc_pos;
-  unsigned      crtc_ofs;
+  memory_t      *prt;
 
-  term_t        trm;
-} cga_t;
+  e8255_t       *ppi;
+  mem_blk_t     *ppi_prt;
+  unsigned char ppi_port_a;
+  unsigned char ppi_port_b;
+  unsigned char ppi_port_c[2];
+
+  e8259_t       *pic;
+  mem_blk_t     *pic_prt;
+
+  unsigned long long clk_cnt;
+  unsigned long      clk_div[4];
+
+  int           brk;
+} ibmpc_t;
 
 
-cga_t *cga_new (FILE *fp);
-void cga_del (cga_t *cga);
+ibmpc_t *pc_new (ini_sct_t *ini);
 
-void cga_clock (cga_t *cga);
+void pc_del (ibmpc_t *pc);
 
-void cga_prt_state (cga_t *cga, FILE *fp);
-
-void cga_set_pos (cga_t *cga, unsigned pos);
-
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-
-void cga_crtc_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_crtc_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-unsigned char cga_crtc_get_uint8 (cga_t *cga, unsigned long addr);
+void pc_clock (ibmpc_t *pc);
 
 
 #endif

@@ -1,14 +1,14 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg,v 1.1 2003/04/22 17:59:54 hampa Exp $
+# $Id: pce.cfg.in,v 1.1 2003/04/23 12:48:43 hampa Exp $
 
 section pc {
 	# RAM size in KB
 	ram = 512
 
 	section rom {
-		file = "ibmpc.rom"
+		file = "PCE_DIR_DATA/pce/ibmpc.rom"
 		base = 0xf0000
 		size = 65536
 	}

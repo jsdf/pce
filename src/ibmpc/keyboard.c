@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/keyboard.c                                             *
+ * File name:     src/ibmpc/keyboard.c                                       *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
@@ -20,12 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: keyboard.c,v 1.7 2003/04/21 13:34:51 hampa Exp $ */
+/* $Id: keyboard.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
 #include <stdio.h>
 
-#include <pce.h>
+#include "pce.h"
 
 #include <unistd.h>
 #include <termios.h>

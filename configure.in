@@ -20,7 +20,7 @@
 #* Public License for more details.                                          *
 #*****************************************************************************
 
-# $Id: configure.in,v 1.8 2003/04/22 22:18:54 hampa Exp $
+# $Id: configure.in,v 1.9 2003/04/23 12:48:40 hampa Exp $
 
 
 AC_INIT(Makefile.in)
@@ -109,14 +109,26 @@ dnl -----------------------------------------------------------------------
 dnl Checks for libraries
 
 
+eval "pce_etcdir=$sysconfdir"
+eval "pce_etcdir=$pce_etcdir"
+
+eval "pce_datdir=$datadir"
+eval "pce_datdir=$pce_datdir"
+
+
+AC_DEFINE_UNQUOTED(PCE_DIR_ETC, "$pce_etcdir")
+AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
+
+
 AC_OUTPUT(
   Makefile.inc
   Makefile
   src/Makefile
-  src/bios/Makefile
   src/e8086/Makefile
   src/e8255/Makefile
   src/e8259/Makefile
+  src/ibmpc/bios/Makefile
+  src/ibmpc/Makefile
   src/libini/Makefile
 )
 
@@ -126,14 +138,12 @@ dnl -----------------------------------------------------------------------
 eval "pce_bindir=$bindir"
 eval "pce_bindir=$pce_bindir"
 
-eval "pce_etcdir=$sysconfdir"
-eval "pce_etcdir=$pce_etcdir"
-
 eval "pce_libdir=$libdir"
 eval "pce_libdir=$pce_libdir"
 
 eval "pce_mandir=$mandir"
 eval "pce_mandir=$pce_mandir"
+
 
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
@@ -147,6 +157,7 @@ echo "  bindir:                $pce_bindir"
 echo "  etcdir:                $pce_etcdir"
 echo "  libdir:                $pce_libdir"
 echo "  mandir:                $pce_mandir"
+echo "  datadir:               $pce_datdir"
 echo ""
 echo "  Host clock:            $PCE_HOST_FOSC"
 echo "  Use Pentium TSC:       $PCE_HAVE_TSC"

@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/config.h.in                                            *
- * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/term.h                                                 *
+ * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,31 +20,39 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: config.h.in,v 1.4 2003/04/23 12:48:40 hampa Exp $ */
+/* $Id: term.h,v 1.1 2003/04/23 12:48:43 hampa Exp $ */
 
 
-#ifndef PCE_CONFIG_H
-#define PCE_CONFIG_H 1
+#ifndef PCE_TERM_H
+#define PCE_TERM_H 1
 
 
-#undef HAVE_LIMITS_H
+#include <stdio.h>
 
-#undef HAVE_STDINT_H
 
-#undef PCE_VERSION_MAJ
-#undef PCE_VERSION_MIN
-#undef PCE_VERSION_MIC
-#undef PCE_VERSION_STR
+typedef struct {
+  unsigned x;
+  unsigned y;
 
-#undef PCE_CFG_DATE
-#undef PCE_CFG_TIME
+  unsigned fg;
+  unsigned bg;
 
-#undef PCE_HOST_FOSC
+  int      col_chg;
 
-#undef PCE_HAVE_TSC
+  FILE     *fp;
+} term_t;
 
-#undef PCE_DIR_ETC
-#undef PCE_DIR_DATA
+
+void trm_init (term_t *trm, FILE *fp);
+void trm_free (term_t *trm);
+
+void trm_clr_scn (term_t *trm);
+void trm_set_pos (term_t *trm, unsigned x, unsigned y);
+void trm_set_col (term_t *trm, unsigned fg, unsigned bg);
+void trm_set_attr_mono (term_t *trm, unsigned char a);
+void trm_set_attr_col (term_t *trm, unsigned char a);
+void trm_set_chr (term_t *trm, unsigned char chr);
+void trm_set_chr_xy (term_t *trm, unsigned x, unsigned y, unsigned char c);
 
 
 #endif

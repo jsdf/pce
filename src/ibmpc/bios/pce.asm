@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.11 2003/04/21 19:14:59 hampa Exp $
+; $Id: pce.asm,v 1.1 2003/04/23 12:48:45 hampa Exp $
 
 
 %macro set_pos 1

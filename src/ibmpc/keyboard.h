@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     mda.h                                                      *
- * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * File name:     src/ibmpc/keyboard.h                                       *
+ * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,45 +20,41 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: mda.h,v 1.4 2003/04/19 03:27:36 hampa Exp $ */
+/* $Id: keyboard.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
-#ifndef PCE_MDA_H
-#define PCE_MDA_H 1
+#ifndef PCE_KEYBOARD_H
+#define PCE_KEYBOARD_H 1
 
 
-#include <pce.h>
-#include <e8086/e8086.h>
+typedef struct keymap_t {
+  unsigned long   key[256];
+  struct keymap_t *map[256];
+} keymap_t;
 
 
 typedef struct {
-  mem_blk_t     *mem;
-  mem_blk_t     *crtc;
+  keymap_t    *map;
+  memory_t    *mem;
 
-  unsigned char crtc_reg[16];
+  void        *brk_ext;
+  set_uint8_f brk;
 
-  unsigned      crtc_mode;
-  unsigned      crtc_pos;
-
-  term_t        trm;
-} mda_t;
+  int         fd;
+} keyboard_t;
 
 
-mda_t *mda_new (FILE *fp);
-void mda_del (mda_t *mda);
+keymap_t *keymap_new (void);
+void keymap_del (keymap_t *map);
+void keymap_set_key (keymap_t *map, unsigned char *seq, unsigned cnt, unsigned long key);
+unsigned long keymap_get_key (keymap_t *map, unsigned char **seq, unsigned *cnt);
 
-void mda_clock (mda_t *mda);
 
-void mda_prt_state (mda_t *mda, FILE *fp);
-
-void mda_set_pos (mda_t *mda, unsigned pos);
-
-void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-
-void mda_crtc_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_crtc_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-unsigned char mda_crtc_get_uint8 (mda_t *mda, unsigned long addr);
+keyboard_t *key_new (void);
+void key_del (keyboard_t *key);
+void key_set_fd (keyboard_t *key, int fd);
+void key_add_key (keyboard_t *key, unsigned short val);
+void key_clock (keyboard_t *key);
 
 
 #endif

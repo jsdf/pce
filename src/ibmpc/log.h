@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/pce.h                                                  *
- * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/ibmpc/log.h                                            *
+ * Created:       2003-02-02 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,59 +20,27 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.h,v 1.7 2003/04/23 11:07:36 hampa Exp $ */
+/* $Id: log.h,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
-#ifndef PCE_H
-#define PCE_H 1
+#ifndef PCE_LOG_H
+#define PCE_LOG_H 1
 
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
-#ifndef PCE_HOST_FOSC
-#define PCE_HOST_FOSC 100000000UL
-#endif
-
-#define PCE_EMU_FOSC 4772393
+#define MSG_ERR 0
+#define MSG_MSG 1
+#define MSG_INF 2
+#define MSG_DEB 3
 
 
-typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*seta_uint16_f) (void *ext, unsigned long addr, unsigned short val);
-typedef unsigned char (*geta_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*geta_uint16_f) (void *ext, unsigned long addr);
-
-typedef void (*set_uint8_f) (void *ext, unsigned char val);
-typedef void (*set_uint16_f) (void *ext, unsigned short val);
-typedef unsigned char (*get_uint8_f) (void *ext);
-typedef unsigned short (*get_uint16_f) (void *ext);
-
+void pce_log_set_level (unsigned level);
+unsigned pce_log_get_level (void);
 
 void pce_log_set_fp (FILE *fp, int close);
 void pce_log_set_fname (const char *fname);
-void pce_log (unsigned level, const char *str, ...);
+void pce_log_set_stderr (int f);
 
-
-#include <e8086/e8086.h>
-#include <e8255/e8255.h>
-#include <e8259/e8259.h>
-
-#include <libini/libini.h>
-
-#include <term.h>
-#include <memory.h>
-#include <keyboard.h>
-#include <floppy.h>
-#include <mda.h>
-#include <cga.h>
-#include <ibmpc.h>
+void pce_log (unsigned level, const char *msg, ...);
 
 
 #endif

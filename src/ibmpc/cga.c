@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     cga.c                                                      *
+ * File name:     src/ibmpc/cga.c                                            *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-04-23 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,12 +20,12 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: cga.c,v 1.4 2003/04/20 00:20:14 hampa Exp $ */
+/* $Id: cga.c,v 1.1 2003/04/23 12:48:42 hampa Exp $ */
 
 
 #include <stdio.h>
 
-#include <pce.h>
+#include "pce.h"
 
 
 cga_t *cga_new (FILE *fp)
