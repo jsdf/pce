@@ -10,6 +10,15 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
+ifeq "$(PCE_HAVE_STDINT_H)" "1"
+CC_FLG_EXTRA := -DHAVE_STDINT_H
+else
+ifeq "$(PCE_HAVE_INTTYPES_H)" "1"
+CC_FLG_EXTRA := -DHAVE_INTTYPES_H
+endif
+endif
+
+
 SRC := uic.c
 OBJ := uic.o
 HDR := uic.h

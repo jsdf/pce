@@ -172,7 +172,20 @@ dnl Checks for header files.
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS(limits.h unistd.h fcntl.h termios.h sys/poll.h)
-AC_CHECK_HEADER(X11/X.h, HAVE_X11_X_H=1, HAVE_X11_X_H=0)
+
+AC_CHECK_HEADER(stdint.h,
+	[AC_DEFINE(HAVE_STDINT_H)
+	PCE_HAVE_STDINT_H=1],
+	PCE_HAVE_STDINT_H=0
+)
+AC_SUBST(PCE_HAVE_STDINT_H)
+
+AC_CHECK_HEADER(inttypes.h,
+	[AC_DEFINE(HAVE_INTTYPES_H)
+	PCE_HAVE_INTTYPES_H=1],
+	PCE_HAVE_INTTYPES_H=0
+)
+AC_SUBST(PCE_HAVE_INTTYPES_H)
 
 
 dnl -----------------------------------------------------------------------

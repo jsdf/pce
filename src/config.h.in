@@ -31,6 +31,8 @@
 
 #undef HAVE_STDINT_H
 
+#undef HAVE_INTTYPES_H
+
 #undef HAVE_FCNTL_H
 
 #undef HAVE_TERMIOS_H

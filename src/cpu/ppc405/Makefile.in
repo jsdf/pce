@@ -10,6 +10,15 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
+ifeq "$(PCE_HAVE_STDINT_H)" "1"
+CC_FLG_EXTRA := -DHAVE_STDINT_H
+else
+ifeq "$(PCE_HAVE_INTTYPES_H)" "1"
+CC_FLG_EXTRA := -DHAVE_INTTYPES_H
+endif
+endif
+
+
 SRC := disasm.c mmu.c opcode13.c opcode1f.c opcodes.c ppc405.c
 OBJ := disasm.o mmu.o opcode13.o opcode1f.o opcodes.o ppc405.o
 HDR := ppc405.h internal.h

@@ -27,7 +27,16 @@
 #define PPC405_H 1
 
 
+#if defined (HAVE_STDINT_H)
 #include <stdint.h>
+#elif defined (HAVE_INTTYPES_H)
+#include <inttypes.h>
+#else
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
+#endif
 
 
 struct p405_s;
