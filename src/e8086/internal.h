@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/e8086/internal.h                                       *
  * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-08-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: internal.h,v 1.8 2003/08/29 09:45:42 hampa Exp $ */
+/* $Id: internal.h,v 1.9 2003/08/29 21:14:49 hampa Exp $ */
 
 
 #ifndef PCE_E8086_INTERNAL_H
@@ -28,6 +28,10 @@
 
 
 #include "e8086.h"
+
+
+#define E86_CPU_REP_BUG    1
+#define E86_CPU_MASK_SHIFT 2
 
 
 #define e86_mk_uint16(lo, hi) \

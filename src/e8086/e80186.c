@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e80186.c,v 1.2 2003/08/29 12:42:18 hampa Exp $ */
+/* $Id: e80186.c,v 1.3 2003/08/29 21:14:48 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -106,7 +106,7 @@ unsigned op_62 (e8086_t *c)
   return (c->ea.cnt + 1);
 }
 
-/* OP C8: ENTER (80186) */
+/* OP C8: ENTER imm16, imm8 */
 static
 unsigned op_c8 (e8086_t *c)
 {
@@ -154,13 +154,10 @@ unsigned op_c8 (e8086_t *c)
   return (4);
 }
 
-/* OP C9: LEAVE (80186) */
+/* OP C9: LEAVE */
 static
 unsigned op_c9 (e8086_t *c)
 {
-  fprintf (stderr, "LEAVE\n"); fflush (stderr);
-  sleep (1);
-
   e86_set_sp (c, e86_get_bp (c));
   e86_set_bp (c, e86_pop (c));
   e86_set_clk (c, 5);
@@ -168,8 +165,11 @@ unsigned op_c9 (e8086_t *c)
   return (1);
 }
 
-void e186_enable (void)
+void e86_enable_186 (e8086_t *c)
 {
+  c->cpu &= ~E86_CPU_REP_BUG;
+  c->cpu |= E86_CPU_MASK_SHIFT;
+
   e86_opcodes[0x60] = &op_60;
   e86_opcodes[0x61] = &op_61;
   e86_opcodes[0x62] = &op_62;

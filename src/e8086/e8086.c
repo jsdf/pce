@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.c,v 1.18 2003/08/29 09:45:42 hampa Exp $ */
+/* $Id: e8086.c,v 1.19 2003/08/29 21:14:48 hampa Exp $ */
 
 
 #include "e8086.h"
@@ -45,6 +45,8 @@ e8086_t *e86_new (void)
   if (c == NULL) {
     return (NULL);
   }
+
+  c->cpu = E86_CPU_REP_BUG;
 
   c->mem = NULL;
   c->mem_get_uint8 = &e86_get_mem_uint8;
@@ -83,6 +85,11 @@ e8086_t *e86_new (void)
 void e86_del (e8086_t *c)
 {
   free (c);
+}
+
+void e86_enable_v30 (e8086_t *c)
+{
+  c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
 }
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)

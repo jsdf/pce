@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8086.h,v 1.14 2003/08/29 09:45:42 hampa Exp $ */
+/* $Id: e8086.h,v 1.15 2003/08/29 21:14:48 hampa Exp $ */
 
 
 #ifndef PCE_E8086_H
@@ -84,6 +84,8 @@ typedef void (*e86_set_uint16_f) (void *ext, unsigned long addr, unsigned short 
 
 
 typedef struct {
+  unsigned         cpu;
+
   void             *mem;
   e86_get_uint8_f  mem_get_uint8;
   e86_set_uint8_f  mem_set_uint8;
@@ -310,7 +312,8 @@ e8086_t *e86_new (void);
 
 void e86_del (e8086_t *c);
 
-void e186_enable (void);
+void e86_enable_v30 (e8086_t *c);
+void e86_enable_186 (e8086_t *c);
 
 void e86_reset (e8086_t *c);
 
