@@ -1,7 +1,7 @@
 # pce.cfg
 # Example config file
 
-# $Id: pce.cfg.in,v 1.10 2003/08/30 03:08:53 hampa Exp $
+# $Id: pce.cfg.in,v 1.11 2003/09/02 11:46:18 hampa Exp $
 
 section pc {
 	section cpu {
@@ -24,6 +24,10 @@ section pc {
 		file = "PCE_DIR_DATA/pce/ibmpc.rom"
 		base = 0xf0000
 		size = 65536
+	}
+
+	section xms {
+		sizek = 32768
 	}
 
 	section terminal {
