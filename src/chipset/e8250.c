@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/e8250.c                                        *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: e8250.c,v 1.1 2003/09/04 20:11:16 hampa Exp $ */
+/* $Id: e8250.c,v 1.2 2003/09/05 00:40:48 hampa Exp $ */
 
 
 #include <stdlib.h>
@@ -70,11 +70,11 @@ void e8250_init (e8250_t *uart)
 {
   uart->inp_i = 0;
   uart->inp_j = 0;
-  uart->inp_n = 16;
+  uart->inp_n = 2;
 
   uart->out_i = 0;
   uart->out_j = 0;
-  uart->out_n = 16;
+  uart->out_n = 2;
 
   uart->txd[0] = 0;
   uart->txd[1] = 0;
@@ -365,6 +365,9 @@ void e8250_set_uint8 (e8250_t *uart, unsigned long addr, unsigned char val)
 
     case 0x04:
       uart->mcr = val;
+      if (uart->mcr & E8250_MCR_LOOP) {
+        fprintf (stderr, "uart: loop mode\n");
+      }
       break;
 
     case 0x05:
