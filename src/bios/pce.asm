@@ -20,7 +20,7 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id: pce.asm,v 1.10 2003/04/21 13:36:32 hampa Exp $
+; $Id: pce.asm,v 1.11 2003/04/21 19:14:59 hampa Exp $
 
 
 %macro set_pos 1
@@ -39,13 +39,13 @@ start:
   mov     ss, ax
   mov     sp, 1024
 
+  call    set_bios_ds
+
   call    init_int
   call    init_ppi
   call    init_pic
 
   sti
-
-  call    set_bios_ds
 
   call    init_video
   call    init_mem
@@ -59,7 +59,7 @@ start:
   pop     ds
 
   int     0x19
-;  int     0x18
+  int     0x18
 
 done:
   jmp     done

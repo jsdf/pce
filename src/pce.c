@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: pce.c,v 1.12 2003/04/21 13:36:15 hampa Exp $ */
+/* $Id: pce.c,v 1.13 2003/04/21 19:14:59 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -808,24 +808,6 @@ void pc_opstat (void *ext, unsigned char op1, unsigned char op2)
   }
 }
 
-void do_dump (cmd_t *cmd)
-{
-  FILE *fp;
-
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
-
-  fp = fopen ("memory.dat", "wb");
-  if (fp == NULL) {
-    return;
-  }
-
-  fwrite (pc->ram->data, 1, pc->ram->size, fp);
-
-  fclose (fp);
-}
-
 void do_bl (cmd_t *cmd)
 {
   if (!cmd_match_end (cmd)) {
@@ -922,6 +904,138 @@ void do_c (cmd_t *cmd)
   }
 
   prt_state (pc, stdout);
+}
+
+void do_disk_a (cmd_t *cmd)
+{
+  int            r;
+  unsigned short drive, type;
+  unsigned short c, h, s;
+  char           fname[256];
+  int            ro;
+  disk_t         *dsk;
+
+  drive = 0;
+  type = 0;
+  c = 80;
+  h = 2;
+  s = 18;
+  ro = 0;
+
+  if (!cmd_match_uint16 (cmd, &drive)) {
+    cmd_error (cmd, "need a drive number");
+    return;
+  }
+
+  if (cmd_match (cmd, "ram")) {
+    type = 1;
+  }
+  else if (cmd_match (cmd, "image")) {
+    type = 2;
+  }
+  else if (cmd_match (cmd, "hdimage")) {
+    type = 3;
+  }
+  else {
+    cmd_error (cmd, "need image type");
+    return;
+  }
+
+  if (!cmd_match_str (cmd, fname)) {
+    sprintf (fname, "disk_%02x.img", drive);
+  }
+
+  cmd_match_uint16 (cmd, &c);
+  cmd_match_uint16 (cmd, &h);
+  cmd_match_uint16 (cmd, &s);
+
+  if (cmd_match (cmd, "ro")) {
+    ro = 1;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  dsk = dsk_new (drive);
+
+  if (type == 1) {
+    r = dsk_set_mem (dsk, c, h, s, fname, ro);
+  }
+  else if (type == 2) {
+    r = dsk_set_image (dsk, c, h, s, fname, ro);
+  }
+  else {
+    r = dsk_set_hdimage (dsk, fname, ro);
+  }
+
+  if (r) {
+    cmd_error (cmd, "reading image failed");
+    dsk_del (dsk);
+    return;
+  }
+
+  if (dsks_add_disk (pc->dsk, dsk)) {
+    cmd_error (cmd, "adding disk failed");
+    dsk_del (dsk);
+    return;
+  }
+}
+
+void do_disk_r (cmd_t *cmd)
+{
+  unsigned short drive;
+  disk_t         *dsk;
+
+  drive = 0;
+
+  if (!cmd_match_uint16 (cmd, &drive)) {
+    cmd_error (cmd, "drive number expected");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  dsk = dsks_get_disk (pc->dsk, drive);
+  if (dsk == 0) {
+    return;
+  }
+
+  dsks_rmv_disk (pc->dsk, dsk);
+  dsk_del (dsk);
+}
+
+void do_disk (cmd_t *cmd)
+{
+  if (cmd_match (cmd, "a")) {
+    do_disk_a (cmd);
+  }
+  else if (cmd_match (cmd, "r")) {
+    do_disk_r (cmd);
+  }
+  else {
+    cmd_error (cmd, "syntax");
+  }
+}
+
+void do_dump (cmd_t *cmd)
+{
+  FILE *fp;
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  fp = fopen ("memory.dat", "wb");
+  if (fp == NULL) {
+    return;
+  }
+
+  fwrite (pc->ram->data, 1, pc->ram->size, fp);
+
+  fclose (fp);
 }
 
 void do_d (cmd_t *cmd)
@@ -1362,6 +1476,9 @@ int do_cmd (void)
 
     if (cmd_match (&cmd, "dump")) {
       do_dump (&cmd);
+    }
+    else if (cmd_match (&cmd, "disk")) {
+      do_disk (&cmd);
     }
     else if (cmd_match (&cmd, "b")) {
       do_b (&cmd);
