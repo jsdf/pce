@@ -33,6 +33,7 @@
 /* CPU flags */
 #define E6502_FLG_N 0x80
 #define E6502_FLG_V 0x40
+#define E6502_FLG_R 0x20
 #define E6502_FLG_B 0x10
 #define E6502_FLG_D 0x08
 #define E6502_FLG_I 0x04
@@ -55,20 +56,25 @@ typedef struct e6502_t {
   unsigned           cpu;
 
   unsigned short     pc;
-  unsigned char      s;
-  unsigned char      p;
   unsigned char      a;
   unsigned char      x;
   unsigned char      y;
+  unsigned char      s;
+  unsigned char      p;
+
+  unsigned short     ea;
+  char               ea_page;
+
+  unsigned char      rst_val;
+  unsigned char      irq_val;
+  unsigned char      nmi_val;
+  unsigned char      nmi_pnd;
 
   void               *mem;
   e6502_get_uint8_f  mem_get_uint8;
   e6502_set_uint8_f  mem_set_uint8;
   e6502_get_uint16_f mem_get_uint16;
   e6502_set_uint16_f mem_set_uint16;
-
-  unsigned short     ea;
-  char               ea_page;
 
   unsigned char      *ram;
   unsigned short     ram_lo;
@@ -84,8 +90,8 @@ typedef struct e6502_t {
   e6502_opcode_f     op[256];
 
   unsigned long      delay;
-  unsigned long long clocks;
-  unsigned long long instructions;
+  unsigned long long clkcnt;
+  unsigned long long inscnt;
 } e6502_t;
 
 
@@ -105,6 +111,7 @@ typedef struct e6502_t {
 
 #define e6502_get_nf(c) (((c)->p & E6502_FLG_N) != 0)
 #define e6502_get_vf(c) (((c)->p & E6502_FLG_V) != 0)
+#define e6502_get_rf(c) (((c)->p & E6502_FLG_R) != 0)
 #define e6502_get_bf(c) (((c)->p & E6502_FLG_B) != 0)
 #define e6502_get_df(c) (((c)->p & E6502_FLG_D) != 0)
 #define e6502_get_if(c) (((c)->p & E6502_FLG_I) != 0)
@@ -116,6 +123,7 @@ typedef struct e6502_t {
 
 #define e6502_set_nf(c, v) e6502_set_flag (c, E6502_FLG_N, v)
 #define e6502_set_vf(c, v) e6502_set_flag (c, E6502_FLG_V, v)
+#define e6502_set_rf(c, v) e6502_set_flag (c, E6502_FLG_R, v)
 #define e6502_set_bf(c, v) e6502_set_flag (c, E6502_FLG_B, v)
 #define e6502_set_df(c, v) e6502_set_flag (c, E6502_FLG_D, v)
 #define e6502_set_if(c, v) e6502_set_flag (c, E6502_FLG_I, v)
@@ -168,12 +176,26 @@ void e6502_set_mem16 (e6502_t *c, unsigned short addr, unsigned short val)
 }
 
 
+/*****************************************************************************
+ * @short Initialize a 6502 context
+ *****************************************************************************/
 void e6502_init (e6502_t *c);
+
+/*****************************************************************************
+ * @short Create and initialize a new 6502 context
+ *****************************************************************************/
 e6502_t *e6502_new (void);
+
+/*****************************************************************************
+ * @short Free the resources used by a 6502 context
+ *****************************************************************************/
 void e6502_free (e6502_t *c);
+
+/*****************************************************************************
+ * @short Delete a 6502 context
+ *****************************************************************************/
 void e6502_del (e6502_t *c);
 
-void e6502_reset (e6502_t *c);
 
 void e6502_set_ram (e6502_t *c, unsigned char *ram,
   unsigned short lo, unsigned short hi
@@ -183,14 +205,56 @@ void e6502_set_mem_f (e6502_t *c, void *mem,
   void *get8, void *set8, void *get16, void *set16
 );
 
-void e6502_undefined (e6502_t *c);
 
+/*****************************************************************************
+ * @short Get the number of executed clock cycles
+ *****************************************************************************/
 unsigned long long e6502_get_clock (e6502_t *c);
+
+/*****************************************************************************
+ * @short Get the number of executed instructions
+ *****************************************************************************/
 unsigned long long e6502_get_opcnt (e6502_t *c);
+
+/*****************************************************************************
+ * @short Get the current delay
+ *****************************************************************************/
 unsigned long e6502_get_delay (e6502_t *c);
 
+
+void e6502_undefined (e6502_t *c);
+
+/*****************************************************************************
+ * @short Set the 6502 RST line
+ *****************************************************************************/
+void e6502_set_reset (e6502_t *c, unsigned char val);
+
+/*****************************************************************************
+ * @short Set the 6502 IRQ line
+ *****************************************************************************/
+void e6502_set_irq (e6502_t *c, unsigned char val);
+
+/*****************************************************************************
+ * @short Set the 6502 NMI line
+ *****************************************************************************/
+void e6502_set_nmi (e6502_t *c, unsigned char val);
+
+
+/*****************************************************************************
+ * @short Reset the 6502
+ *****************************************************************************/
+void e6502_reset (e6502_t *c);
+
+/*****************************************************************************
+ * @short Execute one instruction
+ *****************************************************************************/
 void e6502_execute (e6502_t *c);
 
+/*****************************************************************************
+ * @short Clock the 6502
+ * @param c The 6502 context
+ * @param n The number of clock cycles
+ *****************************************************************************/
 void e6502_clock (e6502_t *c, unsigned n);
 
 

@@ -67,7 +67,7 @@ static
 void prt_version (void)
 {
   fputs (
-    "pce-sim6502 version " PCE_VERSION_STR
+    "pce sim6502 version " PCE_VERSION_STR
     " (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
     "Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n",
     stdout
@@ -708,20 +708,7 @@ void do_r (cmd_t *cmd, sim6502_t *sim)
   unsigned short *reg16;
   unsigned short val;
 
-  if (s6502_match_reg8 (cmd, sim, &reg8)) {
-    if (cmd_match_eol (cmd)) {
-      printf ("%02x\n", *reg8);
-      return;
-    }
-
-    if (!cmd_match_uint16 (cmd, &val)) {
-      prt_error ("missing value\n");
-      return;
-    }
-
-    *reg8 = (val & 0xff);
-  }
-  else if (s6502_match_reg16 (cmd, sim, &reg16)) {
+  if (s6502_match_reg16 (cmd, sim, &reg16)) {
     if (cmd_match_eol (cmd)) {
       printf ("%04x\n", *reg16);
       return;
@@ -733,6 +720,19 @@ void do_r (cmd_t *cmd, sim6502_t *sim)
     }
 
     *reg16 = val;
+  }
+  else if (s6502_match_reg8 (cmd, sim, &reg8)) {
+    if (cmd_match_eol (cmd)) {
+      printf ("%02x\n", *reg8);
+      return;
+    }
+
+    if (!cmd_match_uint16 (cmd, &val)) {
+      prt_error ("missing value\n");
+      return;
+    }
+
+    *reg8 = (val & 0xff);
   }
 
   if (!cmd_match_end (cmd)) {

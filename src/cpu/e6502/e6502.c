@@ -43,14 +43,19 @@ void e6502_init (e6502_t *c)
 
   c->cpu = 0;
 
+  c->ea = 0;
+  c->ea_page = 0;
+
+  c->rst_val = 0;
+  c->irq_val = 1;
+  c->nmi_val = 1;
+  c->nmi_pnd = 0;
+
   c->mem = NULL;
   c->mem_get_uint8 = &e6502_get_mem_uint8;
   c->mem_get_uint16 = &e6502_get_mem_uint16;
   c->mem_set_uint8 = &e6502_set_mem_uint8;
   c->mem_set_uint16 = &e6502_set_mem_uint16;
-
-  c->ea = 0;
-  c->ea_page = 0;
 
   c->ram = NULL;
   c->ram_lo = 0xffffU;
@@ -66,8 +71,8 @@ void e6502_init (e6502_t *c)
   }
 
   c->delay = 0;
-  c->clocks = 0;
-  c->instructions = 0;
+  c->clkcnt = 0;
+  c->inscnt = 0;
 }
 
 e6502_t *e6502_new (void)
@@ -94,17 +99,6 @@ void e6502_del (e6502_t *c)
     e6502_free (c);
     free (c);
   }
-}
-
-void e6502_reset (e6502_t *c)
-{
-  c->delay = 0;
-  c->instructions = 0;
-
-  e6502_set_a (c, 0x00);
-  e6502_set_s (c, 0x00);
-  e6502_set_p (c, 0x00);
-  e6502_set_pc (c, e6502_get_mem16 (c, 0xfffcU));
 }
 
 void e6502_set_ram (e6502_t *c, unsigned char *ram, unsigned short lo, unsigned short hi)
@@ -146,21 +140,14 @@ void e6502_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
 }
 
-void e6502_undefined (e6502_t *c)
-{
-  if (c->op_undef != NULL) {
-    c->op_undef (c->op_ext, c->inst[0]);
-  }
-}
-
 unsigned long long e6502_get_clock (e6502_t *c)
 {
-  return (c->clocks);
+  return (c->clkcnt);
 }
 
 unsigned long long e6502_get_opcnt (e6502_t *c)
 {
-  return (c->instructions);
+  return (c->inscnt);
 }
 
 unsigned long e6502_get_delay (e6502_t *c)
@@ -168,9 +155,69 @@ unsigned long e6502_get_delay (e6502_t *c)
   return (c->delay);
 }
 
+void e6502_set_reset (e6502_t *c, unsigned char val)
+{
+  if ((c->rst_val == 0) && (val != 0)) {
+    e6502_reset (c);
+  }
+
+  c->rst_val = (val != 0);
+}
+
+void e6502_set_irq (e6502_t *c, unsigned char val)
+{
+  c->irq_val = (val != 0);
+}
+
+void e6502_set_nmi (e6502_t *c, unsigned char val)
+{
+  if ((c->nmi_val != 0) && (val == 0)) {
+    c->nmi_pnd = 1;
+  }
+
+  c->nmi_val = (val != 0);
+}
+
+
+void e6502_undefined (e6502_t *c)
+{
+  if (c->op_undef != NULL) {
+    c->op_undef (c->op_ext, c->inst[0]);
+  }
+}
+
+void e6502_reset (e6502_t *c)
+{
+  c->delay = 7;
+  c->rst_val = 1;
+  c->nmi_pnd = 0;
+
+  e6502_set_a (c, 0x00);
+  e6502_set_x (c, 0x00);
+  e6502_set_y (c, 0x00);
+  e6502_set_s (c, 0x00);
+  e6502_set_p (c, E6502_FLG_R | E6502_FLG_I);
+  e6502_set_pc (c, e6502_get_mem16 (c, 0xfffcU));
+}
+
 void e6502_execute (e6502_t *c)
 {
+  if (c->nmi_pnd) {
+    c->nmi_pnd = 0;
+    e6502_trap (c, 0xfffaU);
+    return;
+  }
+
+  if ((c->irq_val == 0) && (e6502_get_if (c) == 0)) {
+    e6502_trap (c, 0xfffeU);
+    return;
+  }
+
   c->inst[0] = e6502_get_mem8 (c, c->pc);
+
+  if (c->op_stat != NULL) {
+    c->op_stat (c->op_ext, c->inst[0]);
+  }
 
   if (c->op_stat != NULL) {
     c->op_stat (c->op_ext, c->inst[0]);
@@ -178,18 +225,22 @@ void e6502_execute (e6502_t *c)
 
   c->op[c->inst[0]] (c);
 
-  c->instructions += 1;
+  c->inscnt += 1;
 }
 
 void e6502_clock (e6502_t *c, unsigned n)
 {
+  if (c->rst_val == 0) {
+    return;
+  }
+
   while (n >= c->delay) {
     n -= c->delay;
-    c->clocks += c->delay;
+    c->clkcnt += c->delay;
     c->delay = 0;
     e6502_execute (c);
   }
 
   c->delay -= n;
-  c->clocks += n;
+  c->clkcnt += n;
 }

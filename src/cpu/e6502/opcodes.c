@@ -31,6 +31,52 @@
 #include <stdarg.h>
 
 
+unsigned char e6502_pull (e6502_t *c)
+{
+  unsigned char val;
+
+  e6502_set_s (c, e6502_get_s (c) + 1);
+  val = e6502_get_mem8 (c, 0x0100 + e6502_get_s (c));
+
+  return (val);
+}
+
+unsigned short e6502_pull16 (e6502_t *c)
+{
+  unsigned char val1, val2;
+
+  val1 = e6502_get_mem8 (c, 0x0100 + ((e6502_get_s (c) + 1) & 0xff));
+  val2 = e6502_get_mem8 (c, 0x0100 + ((e6502_get_s (c) + 2) & 0xff));
+  e6502_set_s (c, e6502_get_s (c) + 2);
+
+  return (e6502_mk_uint16 (val1, val2));
+}
+
+void e6502_push (e6502_t *c, unsigned char val)
+{
+  e6502_set_mem8 (c, 0x0100 + e6502_get_s (c), val);
+  e6502_set_s (c, e6502_get_s (c) - 1);
+}
+
+void e6502_push16 (e6502_t *c, unsigned short val)
+{
+  e6502_set_mem8 (c, 0x0100 + e6502_get_s (c), val >> 8);
+  e6502_set_mem8 (c, 0x0100 + ((e6502_get_s (c) - 1) & 0xff), val & 0xff);
+  e6502_set_s (c, e6502_get_s (c) - 2);
+}
+
+void e6502_trap (e6502_t *c, unsigned short addr)
+{
+  e6502_push16 (c, e6502_get_pc (c));
+  e6502_push (c, e6502_get_p (c));
+
+  e6502_set_if (c, 1);
+
+  e6502_set_pc (c, e6502_get_mem16 (c, addr));
+  e6502_set_clk (c, 0, 8);
+}
+
+
 static
 void e6502_op_adc (e6502_t *c, unsigned char s2)
 {
@@ -255,43 +301,6 @@ void e6502_op_ora (e6502_t *c, unsigned char s2)
 }
 
 static
-unsigned char e6502_op_pull (e6502_t *c)
-{
-  unsigned char val;
-
-  e6502_set_s (c, e6502_get_s (c) + 1);
-  val = e6502_get_mem8 (c, 0x0100 + e6502_get_s (c));
-
-  return (val);
-}
-
-unsigned short e6502_op_pull16 (e6502_t *c)
-{
-  unsigned char val1, val2;
-
-  val1 = e6502_get_mem8 (c, 0x0100 + ((e6502_get_s (c) + 1) & 0xff));
-  val2 = e6502_get_mem8 (c, 0x0100 + ((e6502_get_s (c) + 2) & 0xff));
-  e6502_set_s (c, e6502_get_s (c) + 2);
-
-  return (e6502_mk_uint16 (val1, val2));
-}
-
-static
-void e6502_op_push (e6502_t *c, unsigned char val)
-{
-  e6502_set_mem8 (c, 0x0100 + e6502_get_s (c), val);
-  e6502_set_s (c, e6502_get_s (c) - 1);
-}
-
-static
-void e6502_op_push16 (e6502_t *c, unsigned short val)
-{
-  e6502_set_mem8 (c, 0x0100 + e6502_get_s (c), val >> 8);
-  e6502_set_mem8 (c, 0x0100 + ((e6502_get_s (c) - 1) & 0xff), val & 0xff);
-  e6502_set_s (c, e6502_get_s (c) - 2);
-}
-
-static
 unsigned char e6502_op_rol (e6502_t *c, unsigned char s)
 {
   unsigned char d;
@@ -371,10 +380,16 @@ static void op_ud (e6502_t *c)
   e6502_set_clk (c, 1, 1);
 }
 
-/* OP 00: */
+/* OP 00: BRK */
 static void op_00 (e6502_t *c)
 {
-  e6502_set_clk (c, 1, 1);
+  e6502_push16 (c, e6502_get_pc (c) + 2);
+  e6502_push (c, e6502_get_p (c) | E6502_FLG_B);
+
+  e6502_set_if (c, 1);
+  e6502_set_pc (c, e6502_get_mem16 (c, 0xfffeU));
+
+  e6502_set_clk (c, 0, 7);
 }
 
 /* OP 01: ORA [[xx + X]] */
@@ -405,7 +420,7 @@ static void op_06 (e6502_t *c)
 /* OP 08: PHP */
 static void op_08 (e6502_t *c)
 {
-  e6502_op_push (c, e6502_get_p (c));
+  e6502_push (c, e6502_get_p (c));
   e6502_set_clk (c, 1, 3);
 }
 
@@ -509,7 +524,7 @@ static void op_20 (e6502_t *c)
 {
   e6502_get_inst2 (c);
 
-  e6502_op_push16 (c, e6502_get_pc (c) + 2);
+  e6502_push16 (c, e6502_get_pc (c) + 2);
   e6502_set_pc (c, e6502_mk_uint16 (c->inst[1], c->inst[2]));
 
   e6502_set_clk (c, 0, 6);
@@ -550,7 +565,9 @@ static void op_26 (e6502_t *c)
 /* OP 28: PLP */
 static void op_28 (e6502_t *c)
 {
-  e6502_set_p (c, e6502_op_pull (c));
+  e6502_set_p (c, e6502_pull (c));
+  e6502_set_bf (c, 0);
+  e6502_set_rf (c, 1);
   e6502_set_clk (c, 1, 4);
 }
 
@@ -659,8 +676,10 @@ static void op_3e (e6502_t *c)
 /* OP 40: RTI */
 static void op_40 (e6502_t *c)
 {
-  e6502_set_p (c, e6502_op_pull (c));
-  e6502_set_pc (c, e6502_op_pull16 (c));
+  e6502_set_p (c, e6502_pull (c));
+  e6502_set_pc (c, e6502_pull16 (c));
+  e6502_set_rf (c, 1);
+  e6502_set_bf (c, 0);
   e6502_set_clk (c, 0, 6);
 }
 
@@ -692,7 +711,7 @@ static void op_46 (e6502_t *c)
 /* OP 48: PHA */
 static void op_48 (e6502_t *c)
 {
-  e6502_op_push (c, e6502_get_a (c));
+  e6502_push (c, e6502_get_a (c));
   e6502_set_clk (c, 1, 3);
 }
 
@@ -802,7 +821,7 @@ static void op_58 (e6502_t *c)
 /* OP 60: RTS */
 static void op_60 (e6502_t *c)
 {
-  e6502_set_pc (c, e6502_op_pull16 (c) + 1);
+  e6502_set_pc (c, e6502_pull16 (c) + 1);
 
   e6502_set_clk (c, 0, 6);
 }
@@ -835,7 +854,7 @@ static void op_66 (e6502_t *c)
 /* OP 68: PLA */
 static void op_68 (e6502_t *c)
 {
-  e6502_set_a (c, e6502_op_pull (c));
+  e6502_set_a (c, e6502_pull (c));
   e6502_set_clk (c, 1, 4);
 }
 

@@ -50,6 +50,7 @@
 #define e6502_mk_sint16(lo) \
   (((lo) & 0x80) ? ((lo) | 0xff00U) : ((lo) & 0xff))
 
+
 #define e6502_get_idx_ind_x(c) e6502_get_mem8 (c, e6502_get_ea_idx_ind_x (c))
 #define e6502_get_zpg(c) e6502_get_mem8 (c, e6502_get_ea_zpg (c))
 #define e6502_get_abs(c) e6502_get_mem8 (c, e6502_get_ea_abs (c))
@@ -70,7 +71,14 @@ unsigned short e6502_get_ea_zpg_y (e6502_t *c);
 unsigned short e6502_get_ea_abs_y (e6502_t *c);
 unsigned short e6502_get_ea_abs_x (e6502_t *c);
 
+
 extern e6502_opcode_f e6502_opcodes[256];
+
+unsigned char e6502_pull (e6502_t *c);
+unsigned short e6502_pull16 (e6502_t *c);
+void e6502_push (e6502_t *c, unsigned char val);
+void e6502_push16 (e6502_t *c, unsigned short val);
+void e6502_trap (e6502_t *c, unsigned short addr);
 
 
 #endif
