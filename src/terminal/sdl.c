@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: sdl.c,v 1.5 2003/09/21 04:04:22 hampa Exp $ */
+/* $Id: sdl.c,v 1.6 2003/09/24 01:08:40 hampa Exp $ */
 
 
 #include <stdio.h>
@@ -90,10 +90,36 @@ int sdl_set_font_psf (sdl_t *sdl, const char *fname)
   return (0);
 }
 
+int sdl_set_mode (sdl_t *sdl, unsigned w, unsigned h)
+{
+  sdl->scr = NULL;
+
+  if (sdl->dsp_bpp == 2) {
+    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 16, SDL_HWSURFACE);
+    sdl->scr_bpp = 2;
+  }
+  else if (sdl->dsp_bpp == 4) {
+    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_HWSURFACE);
+    sdl->scr_bpp = 4;
+  }
+
+  if (sdl->scr == NULL) {
+    sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 16, SDL_SWSURFACE);
+    sdl->scr_bpp = 2;
+  }
+
+  if (sdl->scr == NULL) {
+    return (1);
+  }
+
+  return (0);
+}
+
 terminal_t *sdl_new (ini_sct_t *sct)
 {
-  sdl_t *sdl;
-  char  *str;
+  sdl_t               *sdl;
+  char                *str;
+  const SDL_VideoInfo *inf;
 
   sdl = (sdl_t *) malloc (sizeof (sdl_t));
   if (sdl == NULL) {
@@ -183,8 +209,10 @@ terminal_t *sdl_new (ini_sct_t *sct)
     sdl->upd_graph = PCESDL_UPDATE_DELAY;
   }
 
-  sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_SWSURFACE);
-  if (sdl->scr == NULL) {
+  inf = SDL_GetVideoInfo();
+  sdl->dsp_bpp = inf->vfmt->BytesPerPixel;
+
+  if (sdl_set_mode (sdl, sdl->pxl_w, sdl->pxl_h)) {
     free (sdl);
     return (NULL);
   }
@@ -196,7 +224,9 @@ terminal_t *sdl_new (ini_sct_t *sct)
   SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
   SDL_EventState (SDL_MOUSEMOTION, SDL_ENABLE);
 
-  fprintf (stderr, "sdl: bpp = %u\n", sdl->scr->format->BytesPerPixel);
+  fprintf (stderr, "sdl: display bpp = %u  screen bpp = %u\n",
+    sdl->dsp_bpp, sdl->scr_bpp
+  );
 
   return (&sdl->trm);
 }
@@ -274,22 +304,31 @@ void sdl_set_chr_xyc (sdl_t *sdl, unsigned x, unsigned y, unsigned c,
     }
   }
 
-  for (j = 0; j < sdl->font_h; j++) {
-    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-      + x * sdl->scr->format->BytesPerPixel;
+  if (sdl->scr_bpp == 2) {
+    for (j = 0; j < sdl->font_h; j++) {
+      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+        + x * sdl->scr->format->BytesPerPixel;
 
-    for (i = 0; i < sdl->font_w; i++) {
-      if (*fnt & (0x80 >> i)) {
-        *(Uint32 *)p = fg;
-      }
-      else {
-        *(Uint32 *)p = bg;
+      for (i = 0; i < sdl->font_w; i++) {
+        *(Uint16 *)p = (*fnt & (0x80 >> i)) ? fg : bg;
+        p += sdl->scr->format->BytesPerPixel;
       }
 
-      p += sdl->scr->format->BytesPerPixel;
+      fnt += 1;
     }
+  }
+  else if (sdl->scr_bpp == 4) {
+    for (j = 0; j < sdl->font_h; j++) {
+      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+        + x * sdl->scr->format->BytesPerPixel;
 
-    fnt += 1;
+      for (i = 0; i < sdl->font_w; i++) {
+        *(Uint32 *)p = (*fnt & (0x80 >> i)) ? fg : bg;
+        p += sdl->scr->format->BytesPerPixel;
+      }
+
+      fnt += 1;
+    }
   }
 
   if (SDL_MUSTLOCK (sdl->scr)) {
@@ -319,14 +358,26 @@ void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h,
     }
   }
 
-  for (j = 0; j < h; j++) {
-    p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
-      + x * sdl->scr->format->BytesPerPixel;
+  if (sdl->scr_bpp == 2) {
+    for (j = 0; j < h; j++) {
+      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+        + x * sdl->scr->format->BytesPerPixel;
 
-    for (i = 0; i < w; i++) {
-      *(Uint32 *) p = col;
+      for (i = 0; i < w; i++) {
+        *(Uint16 *) p = col;
+        p += sdl->scr->format->BytesPerPixel;
+      }
+    }
+  }
+  else if (sdl->scr_bpp == 4) {
+    for (j = 0; j < h; j++) {
+      p = (Uint8 *) sdl->scr->pixels + (y + j) * sdl->scr->pitch
+        + x * sdl->scr->format->BytesPerPixel;
 
-      p += sdl->scr->format->BytesPerPixel;
+      for (i = 0; i < w; i++) {
+        *(Uint32 *) p = col;
+        p += sdl->scr->format->BytesPerPixel;
+      }
     }
   }
 
@@ -372,7 +423,7 @@ void sdl_set_size (sdl_t *sdl, unsigned m, unsigned w, unsigned h)
     sdl->crs_on = 0;
   }
 
-  sdl->scr = SDL_SetVideoMode (sdl->pxl_w, sdl->pxl_h, 32, SDL_SWSURFACE);
+  sdl_set_mode (sdl, sdl->pxl_w, sdl->pxl_h);
 
   sdl->upd_x1 = sdl->pxl_w;
   sdl->upd_y1 = sdl->pxl_h;
@@ -557,6 +608,7 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
     case SDLK_LEFTBRACKET:  ret = 0x1a; break;
     case SDLK_RIGHTBRACKET: ret = 0x1b; break;
     case SDLK_RETURN:       ret = 0x1c; break;
+    case SDLK_RCTRL:
     case SDLK_LCTRL:        ret = 0x1d; break;
     case SDLK_a:            ret = 0x1e; break;
     case SDLK_s:            ret = 0x1f; break;
