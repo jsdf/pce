@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/xms.c                                            *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,7 +20,7 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
-/* $Id: xms.c,v 1.2 2003/09/02 14:56:25 hampa Exp $ */
+/* $Id: xms.c,v 1.3 2003/09/04 20:13:22 hampa Exp $ */
 
 
 #include "pce.h"
@@ -443,9 +443,9 @@ void xms_0b (xms_t *xms, e8086_t *cpu)
   dsta = e86_get_mem16 (cpu, seg1, ofs1 + 12);
   dsta += e86_get_mem16 (cpu, seg1, ofs1 + 14) << 16;
 
-  pce_log (MSG_DEB, "xms: move %04x:%08lx -> %04x:%08lx %04lx\n",
-    srch, srca, dsth, dsta, cnt
-  );
+//  pce_log (MSG_DEB, "xms: move %04x:%08lx -> %04x:%08lx %04lx\n",
+//    srch, srca, dsth, dsta, cnt
+//  );
 
   if ((srch == 0) && (dsth == 0)) {
     seg1 = (srca >> 16) & 0xffff;
