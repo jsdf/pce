@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-31 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2004-03-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -42,7 +42,7 @@ unsigned dsks_get_hd_cnt (disks_t *dsks)
   return (n);
 }
 
-#if 0
+#ifdef INT13LOG
 static
 void dsk_int13_log (disks_t *dsks, e8086_t *cpu, FILE *fp)
 {
@@ -236,6 +236,27 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
     return;
   }
 
+  if ((drive & 0x80) == 0) {
+    unsigned type;
+
+    if (dsk->visible_c < 50) {
+      type = 0x01;
+    }
+    else {
+      if (dsk->visible_s < 12) {
+        type = 0x03;
+      }
+      else if (dsk->visible_s < 17) {
+        type = 0x02;
+      }
+      else {
+        type = 0x04;
+      }
+
+      e86_set_bx (cpu, type);
+    }
+  }
+
   e86_set_dl (cpu, dsks_get_hd_cnt (dsks));
   e86_set_dh (cpu, dsk->visible_h - 1);
   e86_set_ch (cpu, dsk->visible_c - 1);
@@ -288,7 +309,9 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 {
   unsigned func;
 
-  /* dsk_int13_log (dsks, cpu, stderr); */
+#ifdef INT13LOG
+  dsk_int13_log (dsks, cpu, stderr);
+#endif
 
   func = e86_get_ah (cpu);
 
@@ -329,8 +352,9 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
       dsk_int13_10 (dsks, cpu);
       break;
 
+    case 0x17:
     case 0x18:
-      dsk_int13_set_status (dsks, cpu, 0x01);
+      dsk_int13_set_status (dsks, cpu, 0x00);
       break;
 
     default:
