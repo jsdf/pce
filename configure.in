@@ -104,13 +104,17 @@ AC_MSG_RESULT([$PCE_CFG_DATE $PCE_CFG_TIME])
 
 
 AC_MSG_CHECKING([host OS])
+PCE_HOST_LINUX=0
+PCE_HOST_SUNOS=0
 os=`uname -s`
 case "$os" in
 [[Ll]]inux)
+	PCE_HOST_LINUX=1
 	AC_DEFINE(PCE_HOST_LINUX)
 	AC_MSG_RESULT([Linux])
 	;;
 SunOS)
+	PCE_HOST_SUNOS=1
 	AC_DEFINE(DEFAULT_HOST_SUNOS)
 	AC_MSG_RESULT([SunOS])
 	;;
@@ -118,26 +122,37 @@ SunOS)
 	AC_MSG_RESULT([unknown ($os)])
 	;;
 esac
+AC_SUBST(PCE_HOST_LINUX)
+AC_SUBST(PCE_HOST_SUNOS)
 
 AC_MSG_CHECKING([host architecture])
+PCE_HOST_IA32=0
+PCE_HOST_PPC=0
+PCE_HOST_SPARC=0
 arch=`uname -m`
 case "$arch" in
 i?86)
-	AC_DEFINE(PCE_ARCH_X86)
-	AC_MSG_RESULT([x86])
+	PCE_HOST_IA32=1
+	AC_DEFINE(PCE_HOST_IA32)
+	AC_MSG_RESULT([IA32])
 	;;
 ppc*)
-	AC_DEFINE(PCE_ARCH_PPC)
+	PCE_HOST_PPC=1
+	AC_DEFINE(PCE_HOST_PPC)
 	AC_MSG_RESULT([ppc])
 	;;
 sparc* | sun4*)
-	AC_DEFINE(PCE_ARCH_SPARC)
+	PCE_HOST_SPARC=1
+	AC_DEFINE(PCE_HOST_SPARC)
 	AC_MSG_RESULT([sparc])
 	;;
 *)
 	AC_MSG_RESULT([unknown ($arch)])
 	;;
 esac
+AC_SUBST(PCE_HOST_IA32)
+AC_SUBST(PCE_HOST_PPC)
+AC_SUBST(PCE_HOST_SPARC)
 
 
 #-----------------------------------------------------------------------------
