@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.c                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -176,7 +176,7 @@ void s6502_load_mem (sim6502_t *sim, ini_sct_t *ini)
       }
     }
 
-    sct = ini_sct_find_next (ini, "load");
+    sct = ini_sct_find_next (sct, "load");
   }
 }
 

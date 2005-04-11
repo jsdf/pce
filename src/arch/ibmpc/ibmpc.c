@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -922,7 +922,7 @@ void pc_load_mem (ibmpc_t *pc, ini_sct_t *ini)
       }
     }
 
-    sct = ini_sct_find_next (ini, "load");
+    sct = ini_sct_find_next (sct, "load");
   }
 }
 

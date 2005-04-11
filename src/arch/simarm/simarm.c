@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -410,7 +410,7 @@ void sarm_load_mem (simarm_t *sim, ini_sct_t *ini)
       }
     }
 
-    sct = ini_sct_find_next (ini, "load");
+    sct = ini_sct_find_next (sct, "load");
   }
 }
 
