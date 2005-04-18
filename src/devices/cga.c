@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/cga.c                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -67,13 +67,14 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   pce_video_init (&cga->vid);
 
   cga->vid.ext = cga;
-  cga->vid.del = (pce_video_del_f) &cga_del;
-  cga->vid.get_mem = (pce_video_get_mem_f) &cga_get_mem;
-  cga->vid.get_reg = (pce_video_get_reg_f) &cga_get_reg;
-  cga->vid.prt_state = (pce_video_prt_state_f) &cga_prt_state;
-  cga->vid.update = (pce_video_update_f) &cga_update;
-  cga->vid.dump = (pce_video_dump_f) &cga_dump;
-  cga->vid.screenshot = (pce_video_screenshot_f) &cga_screenshot;
+  cga->vid.del = (pce_video_del_f) cga_del;
+  cga->vid.get_mem = (pce_video_get_mem_f) cga_get_mem;
+  cga->vid.get_reg = (pce_video_get_reg_f) cga_get_reg;
+  cga->vid.prt_state = (pce_video_prt_state_f) cga_prt_state;
+  cga->vid.update = (pce_video_update_f) cga_update;
+  cga->vid.dump = (pce_video_dump_f) cga_dump;
+  cga->vid.screenshot = (pce_video_screenshot_f) cga_screenshot;
+  cga->vid.clock = (pce_video_clock_f) cga_clock;
 
   for (i = 0; i < 16; i++) {
     cga->crtc_reg[i] = 0;
@@ -120,6 +121,8 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
   cga->crtc_pos = 0;
   cga->crtc_ofs = 0;
 
+  cga->clkcnt = 0;
+
   cga->crs_on = 1;
 
   cga->pal = 0;
@@ -144,8 +147,9 @@ void cga_del (cga_t *cga)
   }
 }
 
-void cga_clock (cga_t *cga)
+void cga_clock (cga_t *cga, unsigned long cnt)
 {
+  cga->clkcnt += cnt;
 }
 
 void cga_prt_state (cga_t *cga, FILE *fp)
@@ -826,8 +830,6 @@ void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 
 unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
 {
-  static unsigned cnt = 0;
-
   switch (addr) {
     case 0x00:
       return (cga->reg->data[0]);
@@ -836,13 +838,23 @@ unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
       return (cga_crtc_get_reg (cga, cga->reg->data[0]));
 
     case 0x06:
-      cnt += 1;
-      if ((cnt & 7) == 0) {
-        cga->reg->data[6] ^= 1;
+      /* dot clock: 14.31818 MHz
+         horizontal frequency: 15.750 KHz
+         vertical frequency: 60 Hz
+         h timing: 48ms of 64ms
+         v timging: 200 of 262.5 lines */
+      if ((cga->clkcnt & 63) < 48) {
+        cga->reg->data[6] &= ~0x01;
       }
-      if (cnt >= 64) {
-        cnt = 0;
-        cga->reg->data[6] ^= 8;
+      else {
+        cga->reg->data[6] |= 0x01;
+      }
+
+      if ((cga->clkcnt & 16383) < 12700) {
+        cga->reg->data[6] &= ~0x08;
+      }
+      else {
+        cga->reg->data[6] |= 0x08;
       }
 
       return (cga->reg->data[6]);

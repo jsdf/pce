@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/cga.h                                          *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -50,6 +50,8 @@ typedef struct {
   unsigned      crtc_pos;
   unsigned      crtc_ofs;
 
+  unsigned long clkcnt;
+
   unsigned char pal;
   unsigned char palette[4];
 
@@ -65,7 +67,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct);
 
 void cga_del (cga_t *cga);
 
-void cga_clock (cga_t *cga);
+void cga_clock (cga_t *cga, unsigned long cnt);
 
 void cga_prt_state (cga_t *cga, FILE *fp);
 

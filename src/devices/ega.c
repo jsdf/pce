@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/ega.c                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -102,14 +102,14 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
   ega->vid.type = PCE_VIDEO_EGA;
   ega->vid.ext = ega;
-  ega->vid.del = (pce_video_del_f) &ega_del;
-  ega->vid.get_mem = (pce_video_get_mem_f) &ega_get_mem;
-  ega->vid.get_reg = (pce_video_get_reg_f) &ega_get_reg;
-  ega->vid.prt_state = (pce_video_prt_state_f) &ega_prt_state;
-  ega->vid.update = (pce_video_update_f) &ega_update;
-  ega->vid.dump = (pce_video_dump_f) &ega_dump;
-  ega->vid.screenshot = (pce_video_screenshot_f) &ega_screenshot;
-  ega->vid.clock = (pce_video_clock_f) &ega_clock;
+  ega->vid.del = (pce_video_del_f) ega_del;
+  ega->vid.get_mem = (pce_video_get_mem_f) ega_get_mem;
+  ega->vid.get_reg = (pce_video_get_reg_f) ega_get_reg;
+  ega->vid.prt_state = (pce_video_prt_state_f) ega_prt_state;
+  ega->vid.update = (pce_video_update_f) ega_update;
+  ega->vid.dump = (pce_video_dump_f) ega_dump;
+  ega->vid.screenshot = (pce_video_screenshot_f) ega_screenshot;
+  ega->vid.clock = (pce_video_clock_f) ega_clock;
 
   memset (ega->crtc_reg, 0xff, 24 * sizeof (unsigned char));
   memset (ega->ts_reg, 0, 5 * sizeof (unsigned char));
@@ -148,6 +148,8 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
   mem_blk_clear (ega->reg, 0x00);
 
   ega->trm = trm;
+
+  ega->clkcnt = 0;
 
   ega->crtc_pos = 0;
   ega->crtc_ofs = 0;
@@ -1417,35 +1419,33 @@ unsigned char ega_crtc_get_reg (ega_t *ega, unsigned reg)
 
 unsigned char ega_get_input_state_1 (ega_t *ega)
 {
-  static unsigned cnt = 0;
-  unsigned char   val;
+  unsigned char val;
 
   ega->atc_index = 1;
 
-  cnt += 1;
-
   val = ega->reg->data[0x2a];
 
-  if (val & 0x08) {
-    if (cnt >= 64) {
-      cnt = 0;
-      val &= ~(0x80 | 0x08 | 0x01);
-    }
+  val &= ~0x80;
+
+  /* these are cga timings */
+  if ((ega->clkcnt & 63) < 48) {
+    val &= ~0x01;
   }
   else {
-    if ((cnt & 3) == 0) {
-      val ^= 0x01;
-    }
-    if (cnt >= (8 * ega->mode_h)) {
-      cnt = 0;
-      val |= (0x80 | 0x08);
-      val &= ~0x01;
+    val |= 0x81;
+  }
 
-      if (ega->dirty) {
-        ega->update (ega);
-        ega->dirty = 0;
-      }
-    }
+  if ((ega->clkcnt & 16383) < 12700) {
+    val &= ~0x08;
+  }
+  else {
+    val |= 0x88;
+  }
+
+  /* hack */
+  if (ega->dirty) {
+    ega->update (ega);
+    ega->dirty = 0;
   }
 
   ega->reg->data[0x2a] = val;
@@ -1601,6 +1601,8 @@ unsigned short ega_reg_get_uint16 (ega_t *ega, unsigned long addr)
 void ega_clock (ega_t *ega, unsigned long cnt)
 {
   static unsigned upd_cnt = 0;
+
+  ega->clkcnt += cnt;
 
   if (ega->dirty) {
     upd_cnt += 1;

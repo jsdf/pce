@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/ega.h                                          *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -62,6 +62,8 @@ typedef struct ega_t {
   int           atc_index;
 
   unsigned char latch[4];
+
+  unsigned long clkcnt;
 
   void          (*update) (struct ega_t *ega);
   int           (*screenshot) (struct ega_t *ega, FILE *fp);
