@@ -731,6 +731,7 @@ AC_OUTPUT(
   src/cpu/e8086/Makefile
   src/devices/Makefile
   src/devices/block/Makefile
+  src/devices/video/Makefile
   src/lib/Makefile
   src/libini/Makefile
   src/terminal/Makefile
