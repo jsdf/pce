@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-09-26 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-03-08 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -2285,7 +2285,7 @@ L_ECD4:
 
   sti
 
-  call    L_EF12
+  call    L_EF12                        ; sense interrupt status
 
   mov     al, [0x0042]                  ; fdc status register 0
   cmp     al, 0xc0
@@ -2295,7 +2295,7 @@ L_ECD4:
   ret
 
 L_ECF5:
-  mov     ah, 0x03
+  mov     ah, 0x03                      ; specify
   call    L_EE41
 
   mov     bx, 0x0001
@@ -2684,13 +2684,13 @@ L_EF12:
   call    L_EF33                        ; wait for floppy interrupt
   jc      L_EF2B
 
-  mov     ah, 0x08
+  mov     ah, 0x08                      ; sense interrupt status
   call    L_EE41                        ; send ah to fdc
 
   call    L_EF69                        ; read result bytes from fdc
   jc      L_EF2B
 
-  mov     al, [0x0042]
+  mov     al, [0x0042]                  ; fdc st0
   and     al, 0x60
   cmp     al, 0x60
   je      L_EF2C
@@ -2769,11 +2769,11 @@ L_EF69:
 
 L_EF72:
   xor     cx, cx
-  mov     dx, 0x03f4
+  mov     dx, 0x03f4                    ; fdc main status register
 
 L_EF77:
   in      al, dx
-  test    al, 0x80
+  test    al, 0x80                      ; data request
   jnz     L_EF88
   loop    L_EF77
 
@@ -2789,7 +2789,7 @@ L_EF83:
 
 L_EF88:
   in      al, dx
-  test    al, 0x40
+  test    al, 0x40                      ; data direction
   jnz     L_EF94
 
 L_EF8D:
@@ -2807,8 +2807,8 @@ L_EF9C:
   loop    L_EF9C
 
   dec     dx
-  in      al, dx
-  test    al, 0x10
+  in      al, dx                        ; main status register
+  test    al, 0x10                      ; busy
   jz      L_EFAA
 
   dec     bl

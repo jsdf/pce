@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/ega.asm                                *
 ;* Created:       2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-12-06 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-03-26 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -2340,7 +2340,7 @@ int_10_12_10:
   mov     bh, 0                 ; monitor type
   mov     bl, 3                 ; ram size
   mov     ch, 0                 ; featrue connector
-  mov     cl, 7                 ; switches
+  mov     cl, 9                 ; switches
   ret
 
 
@@ -2438,7 +2438,7 @@ ega_init:
   mov     ds, [cs:seg0040]
 
   mov     byte [0x0087], 0x60
-  mov     byte [0x0088], 0x07           ; switches
+  mov     byte [0x0088], 0x09           ; switches
 
   mov     word [0x00a8], ptr00a8
   mov     word [0x00a8 + 2], cs

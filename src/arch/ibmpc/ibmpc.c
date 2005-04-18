@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1138,7 +1138,7 @@ void pc_clock (ibmpc_t *pc)
 
       clk = pc->clk_div[1] & ~4095UL;
 
-      pce_video_clock (pc->video, clk);
+      pce_video_clock (pc->video, clk / 4);
 
       trm_check (pc->trm);
 
