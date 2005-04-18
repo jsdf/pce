@@ -3,15 +3,14 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := block
+subdir := block video
 reldir := ../..
 
 
 include $(reldir)/config.inc
 
 
-FILES := cga ega hgc mda vga video \
-	ata memory nvram parport pci pci-ata serport slip
+FILES := ata memory nvram parport pci pci-ata serport slip
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -27,36 +26,6 @@ include $(reldir)/rules.inc
 
 all: $(BIN) $(OBJ)
 
-
-cga.o:		cga.c cga.h video.h memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
-
-ega.o:		ega.c ega.h video.h memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
-
-hgc.o:		hgc.c hgc.h video.h memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
-
-mda.o:		mda.c mda.h video.h memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
-
-vga.o:		vga.c vga.h video.h memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
 
 memory.o:	memory.c memory.h $(SDP)
 
@@ -74,5 +43,3 @@ pci-ata.o:	pci-ata.c pci-ata.h pci.h ata.h devices/block/block.h $(SDP)
 serport.o:	serport.c serport.h memory.h chipset/82xx/e8250.h $(SDP)
 
 slip.o:		slip.c slip.h serport.h chipset/82xx/e8250.h lib/tun.h $(SDP)
-
-video.o:	video.c video.h memory.h $(SDP)

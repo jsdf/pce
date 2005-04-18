@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -100,12 +100,13 @@ extern unsigned long par_int28;
 #include <devices/nvram.h>
 #include <devices/parport.h>
 #include <devices/serport.h>
-#include <devices/video.h>
-#include <devices/mda.h>
-#include <devices/hgc.h>
-#include <devices/cga.h>
-#include <devices/ega.h>
-#include <devices/vga.h>
+
+#include <devices/video/video.h>
+#include <devices/video/mda.h>
+#include <devices/video/hgc.h>
+#include <devices/video/cga.h>
+#include <devices/video/ega.h>
+#include <devices/video/vga.h>
 
 #include <devices/block/block.h>
 #include <devices/block/blkcow.h>

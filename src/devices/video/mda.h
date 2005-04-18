@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/cga.h                                          *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/devices/video/mda.h                                    *
+ * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -23,13 +23,13 @@
 /* $Id$ */
 
 
-#ifndef PCE_CGA_H
-#define PCE_CGA_H 1
+#ifndef PCE_MDA_H
+#define PCE_MDA_H 1
 
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <devices/video.h>
+#include <devices/video/video.h>
 
 
 typedef struct {
@@ -40,55 +40,41 @@ typedef struct {
 
   unsigned      mode_80x25_w;
   unsigned      mode_80x25_h;
-  unsigned      mode_320x200_w;
-  unsigned      mode_320x200_h;
-  unsigned      mode_640x200_w;
-  unsigned      mode_640x200_h;
 
   unsigned char crtc_reg[18];
 
+  unsigned long rgb[16];
+
   unsigned      crtc_pos;
-  unsigned      crtc_ofs;
-
-  unsigned long clkcnt;
-
-  unsigned char pal;
-  unsigned char palette[4];
-
-  int           crs_on;
-
-  unsigned      mode;
 
   terminal_t    *trm;
-} cga_t;
+} mda_t;
 
 
-video_t *cga_new (terminal_t *trm, ini_sct_t *sct);
+video_t *mda_new (terminal_t *trm, ini_sct_t *sct);
+void mda_del (mda_t *mda);
 
-void cga_del (cga_t *cga);
+void mda_clock (mda_t *mda);
 
-void cga_clock (cga_t *cga, unsigned long cnt);
+void mda_prt_state (mda_t *mda, FILE *fp);
 
-void cga_prt_state (cga_t *cga, FILE *fp);
+int mda_dump (mda_t *mda, FILE *fp);
 
-int cga_dump (cga_t *cga, FILE *fp);
+mem_blk_t *mda_get_mem (mda_t *mda);
+mem_blk_t *mda_get_reg (mda_t *mda);
 
-mem_blk_t *cga_get_mem (cga_t *cga);
-mem_blk_t *cga_get_reg (cga_t *cga);
+int mda_screenshot (mda_t *hgc, FILE *fp, unsigned mode);
 
-int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode);
+void mda_update (mda_t *mda);
 
-void cga_update (cga_t *cga);
+void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
+void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
 
-void cga_set_pos (cga_t *cga, unsigned pos);
+void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
+void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
 
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-
-void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr);
-unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr);
+unsigned char mda_reg_get_uint8 (mda_t *mda, unsigned long addr);
+unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr);
 
 
 #endif

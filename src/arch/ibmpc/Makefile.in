@@ -28,16 +28,16 @@ OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
 	$(pcedst)/chipset/82xx/chipset.a \
 	$(PCE_BLK_OBJ) \
-	$(pcedst)/devices/cga.o \
-	$(pcedst)/devices/vga.o \
-	$(pcedst)/devices/ega.o \
-	$(pcedst)/devices/hgc.o \
-	$(pcedst)/devices/mda.o \
+	$(pcedst)/devices/video/cga.o \
+	$(pcedst)/devices/video/vga.o \
+	$(pcedst)/devices/video/ega.o \
+	$(pcedst)/devices/video/hgc.o \
+	$(pcedst)/devices/video/mda.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/nvram.o \
 	$(pcedst)/devices/parport.o \
 	$(pcedst)/devices/serport.o \
-	$(pcedst)/devices/video.o \
+	$(pcedst)/devices/video/video.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
@@ -57,16 +57,16 @@ HDR_EXT	:= \
 	chipset/82xx/e8255.h \
 	chipset/82xx/e8259.h \
 	$(PCE_BLK_HDR) \
-	devices/cga.h \
-	devices/vga.h \
-	devices/ega.h \
-	devices/hgc.h \
-	devices/mda.h \
+	devices/video/cga.h \
+	devices/video/vga.h \
+	devices/video/ega.h \
+	devices/video/hgc.h \
+	devices/video/mda.h \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/parport.h \
 	devices/serport.h \
-	devices/video.h \
+	devices/video/video.h \
 	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
