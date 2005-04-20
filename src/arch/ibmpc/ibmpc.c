@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -317,8 +317,12 @@ void pc_setup_ppi (ibmpc_t *pc)
 
   blk = mem_blk_new (0x60, 4, 0);
   blk->ext = &pc->ppi;
-  blk->set_uint8 = (mem_set_uint8_f) &e8255_set_port8;
-  blk->get_uint8 = (mem_get_uint8_f) &e8255_get_port8;
+  blk->set_uint8 = (mem_set_uint8_f) &e8255_set_uint8;
+  blk->set_uint16 = (mem_set_uint16_f) &e8255_set_uint16;
+  blk->set_uint32 = (mem_set_uint32_f) &e8255_set_uint32;
+  blk->get_uint8 = (mem_get_uint8_f) &e8255_get_uint8;
+  blk->get_uint16 = (mem_get_uint16_f) &e8255_get_uint16;
+  blk->get_uint32 = (mem_get_uint32_f) &e8255_get_uint32;
   mem_add_blk (pc->prt, blk, 1);
 }
 

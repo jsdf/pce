@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8255.h                                        *
+ * File name:     src/chipset/82xx/e8255.h                                   *
  * Created:       2003-04-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -81,8 +81,13 @@ unsigned char e8255_get_out_a (e8255_t *ppi);
 unsigned char e8255_get_out_b (e8255_t *ppi);
 unsigned char e8255_get_out_c (e8255_t *ppi);
 
-void e8255_set_port8 (e8255_t *ppi, unsigned long addr, unsigned char val);
-unsigned char e8255_get_port8 (e8255_t *ppi, unsigned long addr);
+void e8255_set_uint8 (e8255_t *ppi, unsigned long addr, unsigned char val);
+void e8255_set_uint16 (e8255_t *ppi, unsigned long addr, unsigned short val);
+void e8255_set_uint32 (e8255_t *ppi, unsigned long addr, unsigned long val);
+
+unsigned char e8255_get_uint8 (e8255_t *ppi, unsigned long addr);
+unsigned short e8255_get_uint16 (e8255_t *ppi, unsigned long addr);
+unsigned long e8255_get_uint32 (e8255_t *ppi, unsigned long addr);
 
 
 #endif
