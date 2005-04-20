@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/cga.c                                          *
+ * File name:     src/devices/video/cga.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -838,23 +838,27 @@ unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
       return (cga_crtc_get_reg (cga, cga->reg->data[0]));
 
     case 0x06:
-      /* dot clock: 14.31818 MHz
-         horizontal frequency: 15.750 KHz
-         vertical frequency: 60 Hz
-         h timing: 48ms of 64ms
-         v timging: 200 of 262.5 lines */
-      if ((cga->clkcnt & 63) < 48) {
-        cga->reg->data[6] &= ~0x01;
-      }
-      else {
-        cga->reg->data[6] |= 0x01;
-      }
-
-      if ((cga->clkcnt & 16383) < 12700) {
+      /* p freq: 14.31818 MHz
+         h freq: 15.750 KHz
+         v freq: 60 Hz
+         912 / 14.31818e6 * 1e6 = 63.6952
+         640 / 14.31818e6 * 1e6 = 44.6984
+         262 / 15.75e3 * 1e6 = 16634.9206
+         200 / 15.75e3 * 1e6 = 12698.4127
+       */
+      if ((cga->clkcnt % 16635) < 12699) {
         cga->reg->data[6] &= ~0x08;
+
+        if ((cga->clkcnt % 64) < 45) {
+          cga->reg->data[6] |= 0x01;
+        }
+        else {
+          cga->reg->data[6] &= ~0x01;
+        }
       }
       else {
         cga->reg->data[6] |= 0x08;
+        cga->reg->data[6] |= 0x01;
       }
 
       return (cga->reg->data[6]);

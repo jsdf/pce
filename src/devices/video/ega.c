@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/ega.c                                          *
+ * File name:     src/devices/video/ega.c                                    *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1419,27 +1419,22 @@ unsigned char ega_crtc_get_reg (ega_t *ega, unsigned reg)
 
 unsigned char ega_get_input_state_1 (ega_t *ega)
 {
-  unsigned char val;
-
   ega->atc_index = 1;
 
-  val = ega->reg->data[0x2a];
-
-  val &= ~0x80;
-
   /* these are cga timings */
-  if ((ega->clkcnt & 63) < 48) {
-    val &= ~0x01;
-  }
-  else {
-    val |= 0x81;
-  }
+  if ((ega->clkcnt % 16635) < 12699) {
+    ega->reg->data[0x2a] &= ~0x08;
 
-  if ((ega->clkcnt & 16383) < 12700) {
-    val &= ~0x08;
+    if ((ega->clkcnt % 64) < 45) {
+      ega->reg->data[0x2a] |= 0x01;
+    }
+    else {
+      ega->reg->data[0x2a] &= ~0x01;
+    }
   }
   else {
-    val |= 0x88;
+    ega->reg->data[0x2a] |= 0x08;
+    ega->reg->data[0x2a] |= 0x01;
   }
 
   /* hack */
@@ -1448,9 +1443,7 @@ unsigned char ega_get_input_state_1 (ega_t *ega)
     ega->dirty = 0;
   }
 
-  ega->reg->data[0x2a] = val;
-
-  return (val);
+  return (ega->reg->data[0x2a]);
 }
 
 void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)

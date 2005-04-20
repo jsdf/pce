@@ -1121,6 +1121,8 @@ void pc_clock (ibmpc_t *pc)
     e8237_clock (&pc->dma, 1);
     e8259_clock (&pc->pic);
 
+    pce_video_clock (pc->video, (pc->clk_div[0] & ~0x1fUL) / 4);
+
 #if HAVE_SYS_TIME_H
     if (pc->pit_real) {
       pc_clock_pit (pc, 8 * (pc->clk_div[0] / 32));
@@ -1141,8 +1143,6 @@ void pc_clock (ibmpc_t *pc)
       unsigned long clk;
 
       clk = pc->clk_div[1] & ~4095UL;
-
-      pce_video_clock (pc->video, clk / 4);
 
       trm_check (pc->trm);
 
