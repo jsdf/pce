@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -3429,6 +3429,7 @@ unsigned op_d2 (e8086_t *c)
   }
 
   if (cnt == 0) {
+    e86_set_clk_ea (c, 8, 20);
     return (c->ea.cnt + 1);
   }
 
@@ -3436,34 +3437,38 @@ unsigned op_d2 (e8086_t *c)
     case 0: /* ROL r/m8, CL */
       d = (s << (cnt & 7)) | (s >> (8 - (cnt & 7)));
       e86_set_cf (c, d & 1);
-      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d >> 7) ^ d) & 0x01);
       break;
 
     case 1: /* ROR r/m8, CL */
       d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
       e86_set_cf (c, d & 0x80);
-      e86_set_of (c, ((d << 1) ^ d) & 0x80);
+      if (cnt == 1) {
+        e86_set_of (c, (d ^ s) & 0x80);
+      }
       break;
 
     case 2: /* RCL r/m8, CL */
       s |= e86_get_cf (c) << 8;
       d = (s << (cnt % 9)) | (s >> (9 - (cnt % 9)));
       e86_set_cf (c, d & 0x100);
-      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d >> 1) ^ d) & 0x80);
       break;
 
     case 3: /* RCR r/m8, CL */
       s |= e86_get_cf (c) << 8;
       d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
       e86_set_cf (c, d & 0x100);
-      e86_set_of (c, ((d << 1) ^ d) & 0x80);
+      if (cnt == 1) {
+        e86_set_of (c, (d ^ s) & 0x80);
+      }
       break;
 
     case 4: /* SHL r/m8, CL */
       d = (cnt > 8) ? 0 : (s << cnt);
       e86_set_flg_szp_8 (c, d);
       e86_set_cf (c, d & 0x100);
-      e86_set_of (c, ((s << 1) ^ s) & 0x80);
+      e86_set_of (c, ((d >> 1) ^ d) & 0x80);
       break;
 
     case 5: /* SHR r/m8, CL */
@@ -3472,7 +3477,7 @@ unsigned op_d2 (e8086_t *c)
       e86_set_cf (c, d & 1);
       d = d >> 1;
       e86_set_flg_szp_8 (c, d);
-      e86_set_of (c, s & 0x80);
+      e86_set_of (c, ((d << 1) ^ d) & 0x80);
       break;
 
     case 7: /* SAR r/m8, CL */
@@ -3516,6 +3521,7 @@ unsigned op_d3 (e8086_t *c)
   }
 
   if (cnt == 0) {
+    e86_set_clk_ea (c, 8, 20);
     return (c->ea.cnt + 1);
   }
 
@@ -3523,34 +3529,38 @@ unsigned op_d3 (e8086_t *c)
     case 0: /* ROL r/m16, CL */
       d = (s << (cnt & 15)) | (s >> (16 - (cnt & 15)));
       e86_set_cf (c, d & 1);
-      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d >> 7) ^ d) & 0x01);
       break;
 
     case 1: /* ROR r/m16, CL */
       d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
       e86_set_cf (c, d & 0x8000);
-      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
+      if (cnt == 1) {
+        e86_set_of (c, (d ^ s) & 0x8000);
+      }
       break;
 
     case 2: /* RCL r/m16, CL */
       s |= e86_get_cf (c) << 16;
       d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
-      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d >> 1) ^ d) & 0x8000);
       break;
 
     case 3: /* RCR r/m16, CL */
       s |= e86_get_cf (c) << 16;
       d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
       e86_set_cf (c, d & 0x10000);
-      e86_set_of (c, ((d << 1) ^ d) & 0x8000);
+      if (cnt == 1) {
+        e86_set_of (c, (d ^ s) & 0x8000);
+      }
       break;
 
     case 4: /* SHL r/m16, CL */
       d = (cnt > 16) ? 0 : (s << cnt);
       e86_set_flg_szp_16 (c, d);
       e86_set_cf (c, d & 0x10000);
-      e86_set_of (c, ((s << 1) ^ s) & 0x8000);
+      e86_set_of (c, ((d >> 1) ^ d) & 0x8000);
       break;
 
     case 5: /* SHR r/m16, CL */
@@ -3559,7 +3569,7 @@ unsigned op_d3 (e8086_t *c)
       e86_set_cf (c, d & 1);
       d = d >> 1;
       e86_set_flg_szp_16 (c, d);
-      e86_set_of (c, s & 0x8000);
+      e86_set_of (c, ((d << 1) ^ d) & 0x80);
       break;
 
     case 7: /* SAR r/m16, CL */

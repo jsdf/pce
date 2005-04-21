@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/internal.h                                 *
  * Created:       2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -49,9 +49,6 @@ int s32_dstore32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t val);
 /*****************************************************************************
  * sparc32
  *****************************************************************************/
-
-extern s32_opcode_f s32_opcodes[4][64];
-
 
 #define S32_ASI_UTEXT 0x08
 #define S32_ASI_STEXT 0x09

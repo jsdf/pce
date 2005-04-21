@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/internal.h                                  *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -60,9 +60,6 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 /*****************************************************************************
  * PPC
  *****************************************************************************/
-
-extern p405_opcode_f p405_opcodes[64];
-
 
 #define P405_PVR_405GP   0x40110000UL
 #define P405_PVR_NPE405H 0x41410140UL

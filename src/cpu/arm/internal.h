@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,9 +57,6 @@ int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val);
 /*****************************************************************************
  * arm
  *****************************************************************************/
-
-extern arm_opcode_f arm_opcodes[256];
-
 
 #define arm_get_bit(v, i) (((v) >> (i)) & 1)
 #define arm_get_bits(v, i, n) (((v) >> (i)) & ((1UL << (n)) - 1))
