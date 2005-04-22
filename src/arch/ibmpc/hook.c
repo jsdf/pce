@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -131,8 +131,8 @@ void pc_hook_msg (ibmpc_t *pc)
 {
   unsigned       i, p;
   unsigned short ds;
-  unsigned char  msg[256];
-  unsigned char  val[256];
+  char           msg[256];
+  char           val[256];
 
   e86_set_cf (pc->cpu, 1);
 

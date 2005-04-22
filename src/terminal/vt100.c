@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -78,13 +78,17 @@ unsigned char chrmap[256] = {
 };
 
 
-vt100_keymap_t *vt100_get_key (vt100_t *vt, unsigned char *key, unsigned cnt)
+static
+vt100_keymap_t *vt100_get_key (vt100_t *vt, const void *key, unsigned cnt)
 {
-  unsigned       i;
-  vt100_keymap_t *map, *ret;
+  unsigned            i;
+  const unsigned char *tkey;
+  vt100_keymap_t      *map, *ret;
+
+  tkey = key;
 
   if (cnt == 1) {
-    return (vt->keymap + (key[0] & 0xff));
+    return (vt->keymap + (tkey[0] & 0xff));
   }
 
   map = vt->keymap;
@@ -92,7 +96,7 @@ vt100_keymap_t *vt100_get_key (vt100_t *vt, unsigned char *key, unsigned cnt)
 
   for (i = 0; i < vt->key_cnt; i++) {
     if (map->key_cnt <= cnt) {
-      if (memcmp (key, map->key, map->key_cnt) == 0) {
+      if (memcmp (tkey, map->key, map->key_cnt) == 0) {
         if ((ret == NULL) || (ret->key_cnt < map->key_cnt)) {
           ret = map;
         }
@@ -105,9 +109,10 @@ vt100_keymap_t *vt100_get_key (vt100_t *vt, unsigned char *key, unsigned cnt)
   return (ret);
 }
 
+static
 void vt100_set_key (vt100_t *vt,
-  unsigned char *key, unsigned key_cnt,
-  unsigned char *seq, unsigned seq_cnt)
+  const void *key, unsigned key_cnt,
+  const void *seq, unsigned seq_cnt)
 {
   vt100_keymap_t *map;
 
