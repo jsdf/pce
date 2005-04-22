@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,6 +30,9 @@
 #include <signal.h>
 
 
+static void prt_state_cpu (e8086_t *c, FILE *fp);
+
+
 char                      *par_terminal = NULL;
 char                      *par_video = NULL;
 char                      *par_cpu = NULL;
@@ -40,10 +43,6 @@ ibmpc_t                   *par_pc = NULL;
 ini_sct_t                 *par_cfg = NULL;
 
 static unsigned           par_boot = 128;
-
-#define PCE_LAST_MAX 1024
-static unsigned short     pce_last_i = 0;
-static unsigned short     pce_last[PCE_LAST_MAX][2];
 
 static unsigned           pce_last_int = 0;
 
@@ -93,6 +92,11 @@ void sig_int (int s)
 void sig_segv (int s)
 {
   fprintf (stderr, "pce: segmentation fault\n");
+
+  if ((pc != NULL) && (pc->cpu != NULL)) {
+    prt_state_cpu (pc->cpu, stderr);
+  }
+
   fflush (stderr);
 
   exit (1);
@@ -628,6 +632,7 @@ void pce_run_bp (void)
   pce_stop();
 }
 
+#if 0
 static
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 {
@@ -635,10 +640,8 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 
   pc = (ibmpc_t *) ext;
 
-  pce_last_i = (pce_last_i + 1) % PCE_LAST_MAX;
-  pce_last[pce_last_i][0] = e86_get_cs (pc->cpu);
-  pce_last[pce_last_i][1] = e86_get_ip (pc->cpu);
 }
+#endif
 
 static
 void pce_op_int (void *ext, unsigned char n)
@@ -1020,7 +1023,6 @@ void do_h (cmd_t *cmd)
     "g [b]                     run with or without breakpoints\n"
     "int28 [on|off|val]        turn int28 sleeping on/off\n"
     "i [b|w] port              input a byte or word from a port\n"
-    "last [i [n]]              print last instruction addresses\n"
     "m[g|s] [msg [val]]        send a message\n"
     "o [b|w] port val          output a byte or word to a port\n"
     "par i fname               set parport output file\n"
@@ -1128,45 +1130,6 @@ void do_key (cmd_t *cmd)
 
   if (!cmd_match_end (cmd)) {
     return;
-  }
-}
-
-static
-void do_last (cmd_t *cmd)
-{
-  unsigned short i, j, n;
-  unsigned       idx;
-
-  if (cmd_match (cmd, "start")) {
-    if (!cmd_match_end (cmd)) {
-      return;
-    }
-    pc->cpu->op_stat = &pce_op_stat;
-    return;
-  }
-
-  if (cmd_match (cmd, "stop")) {
-    if (!cmd_match_end (cmd)) {
-      return;
-    }
-    pc->cpu->op_stat = NULL;
-    return;
-  }
-
-  i = 0;
-  n = 16;
-
-  cmd_match_uint16 (cmd, &n);
-  cmd_match_uint16 (cmd, &i);
-
-  idx = (pce_last_i + PCE_LAST_MAX - i - n + 1) % PCE_LAST_MAX;
-
-  for (j = 0; j < n; j++) {
-    printf ("%d: %04X:%04X\n",
-      (int) j - (int) n - (int) i,
-      pce_last[idx][0], pce_last[idx][1]
-    );
-    idx = (idx + 1) % PCE_LAST_MAX;
   }
 }
 
@@ -1693,9 +1656,6 @@ int do_cmd (ibmpc_t *pc)
     else if (cmd_match (&cmd, "key")) {
       do_key (&cmd);
     }
-    else if (cmd_match (&cmd, "last")) {
-      do_last (&cmd);
-    }
     else if (cmd_match (&cmd, "m")) {
       do_m (&cmd);
     }
@@ -1861,6 +1821,9 @@ int main (int argc, char *argv[])
 
   pc->cpu->op_int = &pce_op_int;
   pc->cpu->op_undef = &pce_op_undef;
+#if 0
+  pc->cpu->op_stat = pce_op_stat;
+#endif
 
   pc_set_bootdrive (pc, par_boot);
 
