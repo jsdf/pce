@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -357,10 +357,10 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
   return (dsk_write_lba (dsk, buf, i, n));
 }
 
-int dsk_commit (disk_t *dsk)
+int dsk_commit (disk_t *dsk, int writeback)
 {
   if (dsk->commit != NULL) {
-    return (dsk->commit (dsk));
+    return (dsk->commit (dsk, writeback));
   }
 
   return (0);
@@ -458,7 +458,7 @@ disk_t *dsks_get_disk (disks_t *dsks, unsigned drive)
   return (NULL);
 }
 
-int dsks_commit (disks_t *dsks)
+int dsks_commit (disks_t *dsks, int writeback)
 {
   unsigned i;
   int      r;
@@ -466,10 +466,23 @@ int dsks_commit (disks_t *dsks)
   r = 0;
 
   for (i = 0; i < dsks->cnt; i++) {
-    if (dsk_commit (dsks->dsk[i])) {
+    if (dsk_commit (dsks->dsk[i], writeback)) {
       r = 1;
     }
   }
 
   return (r);
+}
+
+int dsks_commit_disk (disks_t *dsks, unsigned drive, int writeback)
+{
+  unsigned i;
+
+  for (i = 0; i < dsks->cnt; i++) {
+    if (dsks->dsk[i]->drive == drive) {
+      return (dsk_commit (dsks->dsk[i], writeback));
+    }
+  }
+
+  return (1);
 }

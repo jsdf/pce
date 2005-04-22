@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -162,24 +162,38 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
   }
   else if (strcmp (msg, "disk.commit") == 0) {
     if (strcmp (val, "") == 0) {
-      if (dsks_commit (pc->dsk)) {
+      if (dsks_commit (pc->dsk, 1)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
         return (1);
       }
     }
     else {
       unsigned d;
-      disk_t   *dsk;
 
       d = strtoul (val, NULL, 0);
-      dsk = dsks_get_disk (pc->dsk, d);
-      if (dsk == NULL) {
-        pce_log (MSG_ERR, "no such disk (%s)\n", val);
+
+      if (dsks_commit_disk (pc->dsk, d, 1)) {
+        pce_log (MSG_ERR, "commit failed (%s)\n", val);
         return (1);
       }
+    }
 
-      if (dsk_commit (dsk)) {
-        pce_log (MSG_ERR, "commit failed (%s)\n", val);
+    return (0);
+  }
+  else if (strcmp (msg, "disk.clean") == 0) {
+    if (strcmp (val, "") == 0) {
+      if (dsks_commit (pc->dsk, 0)) {
+        pce_log (MSG_ERR, "clean failed for at least one disk\n");
+        return (1);
+      }
+    }
+    else {
+      unsigned d;
+
+      d = strtoul (val, NULL, 0);
+
+      if (dsks_commit_disk (pc->dsk, d, 0)) {
+        pce_log (MSG_ERR, "clean failed (%s)\n", val);
         return (1);
       }
     }

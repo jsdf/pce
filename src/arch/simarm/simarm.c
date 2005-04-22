@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -574,24 +574,38 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 
   if (strcmp (msg, "disk.commit") == 0) {
     if (strcmp (val, "") == 0) {
-      if (dsks_commit (sim->dsks)) {
+      if (dsks_commit (sim->dsks, 1)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
         return (1);
       }
     }
     else {
       unsigned d;
-      disk_t   *dsk;
 
       d = strtoul (val, NULL, 0);
-      dsk = dsks_get_disk (sim->dsks, d);
-      if (dsk == NULL) {
-        pce_log (MSG_ERR, "no such disk (%s)\n", val);
+
+      if (dsks_commit_disk (sim->dsks, d, 1)) {
+        pce_log (MSG_ERR, "commit failed (%s)\n", val);
         return (1);
       }
+    }
 
-      if (dsk_commit (dsk)) {
-        pce_log (MSG_ERR, "commit failed (%s)\n", val);
+    return (0);
+  }
+  else if (strcmp (msg, "disk.clean") == 0) {
+    if (strcmp (val, "") == 0) {
+      if (dsks_commit (sim->dsks, 0)) {
+        pce_log (MSG_ERR, "clean failed for at least one disk\n");
+        return (1);
+      }
+    }
+    else {
+      unsigned d;
+
+      d = strtoul (val, NULL, 0);
+
+      if (dsks_commit_disk (sim->dsks, d, 0)) {
+        pce_log (MSG_ERR, "clean failed (%s)\n", val);
         return (1);
       }
     }

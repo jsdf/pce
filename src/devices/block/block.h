@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.h                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -42,7 +42,7 @@ typedef int (*dsk_read_f) (struct disk_s *dsk, void *buf, uint32_t i, uint32_t n
 
 typedef int (*dsk_write_f) (struct disk_s *dsk, const void *buf, uint32_t i, uint32_t n);
 
-typedef int (*dsk_commit_f) (struct disk_s *dsk);
+typedef int (*dsk_commit_f) (struct disk_s *dsk, int writeback);
 
 
 /*!***************************************************************************
@@ -182,7 +182,7 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
  * @short  Commit changes
  * @return Zero if successful
  *****************************************************************************/
-int dsk_commit (disk_t *dsk);
+int dsk_commit (disk_t *dsk, int writeback);
 
 
 /*!***************************************************************************
@@ -217,9 +217,18 @@ disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
 
 /*!***************************************************************************
  * @short  Commit all disks in a disk set
+ * @param  writeback Write data back to base disk if true
  * @return Zero if successful
  *****************************************************************************/
-int dsks_commit (disks_t *dsks);
+int dsks_commit (disks_t *dsks, int writeback);
+
+/*!***************************************************************************
+ * @short  Commit a disk in a disk set
+ * @param  drive     The drive number
+ * @param  writeback Write data back to base disk if true
+ * @return Zero if successful
+ *****************************************************************************/
+int dsks_commit_disk (disks_t *dsks, unsigned drive, int writeback);
 
 
 #endif

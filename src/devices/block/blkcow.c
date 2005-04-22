@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkcow.c                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -243,32 +243,46 @@ int dsk_cow_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 }
 
 static
-int cow_commit_block (disk_cow_t *cow, uint32_t blk)
+int cow_commit_block (disk_cow_t *cow, uint32_t blk, int writeback)
 {
-  unsigned char buf[512];
+  unsigned char buf1[512];
+  unsigned char buf2[512];
   uint64_t      ofs;
 
   ofs = cow->data_offset + 512 * (uint64_t) blk;
 
-  if (dsk_read (cow->fp, buf, ofs, 512)) {
+  if (dsk_read (cow->fp, buf1, ofs, 512)) {
     return (1);
   }
 
-  if (dsk_write_lba (cow->orig, buf, blk, 1)) {
+  if (writeback) {
+    if (dsk_write_lba (cow->orig, buf1, blk, 1)) {
+      return (1);
+    }
+  }
+  else {
+    if (dsk_read_lba (cow->orig, buf2, blk, 1)) {
+      return (1);
+    }
+
+    if (memcmp (buf1, buf2, 512) != 0) {
+      return (1);
+    }
+  }
+
+  memset (buf1, 0, 512);
+
+  if (dsk_write (cow->fp, buf1, ofs, 512)) {
     return (1);
   }
 
-  memset (buf, 0, 512);
-
-  if (dsk_write (cow->fp, buf, ofs, 512)) {
-    return (1);
-  }
+  cow->bitmap[blk >> 3] &= ~(0x80 >> (blk & 7));
 
   return (0);
 }
 
 static
-int dsk_cow_commit (disk_t *dsk)
+int dsk_cow_commit (disk_t *dsk, int writeback)
 {
   uint32_t      i, n;
   uint32_t      blk;
@@ -286,15 +300,14 @@ int dsk_cow_commit (disk_t *dsk)
 
       while (msk != 0) {
         if (msk & 0x80) {
-          cow_commit_block (cow, blk);
-          n += 1;
+          if (cow_commit_block (cow, blk, writeback) == 0) {
+            n += 1;
+          }
         }
 
         msk = (msk << 1) & 0xff;
         blk += 1;
       }
-
-      cow->bitmap[i] = 0;
     }
   }
 
