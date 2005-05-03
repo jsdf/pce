@@ -67,6 +67,8 @@
 %define PCEH_GET_CPU   0x0502
 %define PCEH_GET_AMSK  0x0602
 %define PCEH_GET_VERS  0x0702
+%define PCEH_GET_FDCNT 0x0802
+%define PCEH_GET_HDCNT 0x0902
 
 %define PCEH_XMS       0x0003
 %define PCEH_XMS_INFO  0x0103

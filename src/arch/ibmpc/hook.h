@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.h                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -43,6 +43,8 @@
 #define PCEH_GET_CPU   0x0502
 #define PCEH_GET_AMSK  0x0602
 #define PCEH_GET_VERS  0x0702
+#define PCEH_GET_HDCNT 0x0802
+#define PCEH_GET_FDCNT 0x0902
 
 #define PCEH_XMS       0x0003
 #define PCEH_XMS_INFO  0x0103

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -265,6 +265,14 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
         e86_set_ax (pc->cpu, msk & 0xffff);
         e86_set_dx (pc->cpu, (msk >> 16) & 0xffff);
       }
+      break;
+
+    case PCEH_GET_FDCNT:
+      e86_set_ax (pc->cpu, pc->fd_cnt);
+      break;
+
+    case PCEH_GET_HDCNT:
+      e86_set_ax (pc->cpu, pc->hd_cnt);
       break;
 
     case PCEH_GET_VERS:

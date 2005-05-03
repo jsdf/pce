@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -77,6 +77,7 @@ start:
   call    init_serport
   call    init_parport
   call    init_time
+  call    init_biosdata
 
   call    prt_nl
 
@@ -113,6 +114,22 @@ init_data:
   pop     cx
   pop     ax
   ret
+
+
+init_biosdata:
+  push    ax
+  push    ds
+
+  mov     ax, 0x0040
+  mov     ds, ax
+
+  pceh    PCEH_GET_HDCNT
+  mov     [0x0075], al
+
+  pop     ds
+  pop     ax
+  ret
+
 
 init_int:
   push    ax

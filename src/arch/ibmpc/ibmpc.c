@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -704,6 +704,11 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
         else {
           pc->ppi_port_a[0] |= 0x01;
         }
+
+        pc->fd_cnt += 1;
+      }
+      else {
+        pc->hd_cnt += 1;
       }
     }
     else {
@@ -946,6 +951,9 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc->key_j = 0;
 
   pc->bootdrive = 128;
+
+  pc->fd_cnt = 0;
+  pc->hd_cnt = 0;
 
   pc->brk = 0;
   pc->pause = 0;
