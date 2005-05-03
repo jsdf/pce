@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/x11.c                                         *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -108,7 +108,7 @@ int xt_init_pointer (xterm_t *xt)
   Pixmap               mask;
   static unsigned char map[16] = { 0 };
 
-  mask = XCreatePixmapFromBitmapData (xt->display, xt->wdw, map,
+  mask = XCreatePixmapFromBitmapData (xt->display, xt->wdw, (char *) map,
     1, 1, 0, 0, 1
   );
 
@@ -553,7 +553,7 @@ void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c)
   scry = y * xt->font_h;
 
   XDrawImageString (xt->display, xt->back, xt->back_gc,
-    scrx, scry + xt->font_h - xt->font_d, &c, 1
+    scrx, scry + xt->font_h - xt->font_d, (char *) &c, 1
   );
 
   XCopyArea (xt->display, xt->back, xt->wdw, xt->gc,
