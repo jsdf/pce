@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-05-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1325,7 +1325,10 @@ unsigned op_50 (e8086_t *c)
 static
 unsigned op_58 (e8086_t *c)
 {
-  e86_set_reg16 (c, c->pq[0] & 7, e86_pop (c));
+  unsigned short val;
+
+  val = e86_pop (c);
+  e86_set_reg16 (c, c->pq[0] & 7, val);
   e86_set_clk (c, 8);
 
   return (1);
@@ -2212,8 +2215,15 @@ unsigned op_87 (e8086_t *c)
 static
 unsigned op_88 (e8086_t *c)
 {
+  unsigned char val;
+  unsigned      reg;
+
   e86_get_ea_ptr (c, c->pq + 1);
-  e86_set_ea8 (c, e86_get_reg8 (c, (c->pq[1] >> 3) & 7));
+
+  reg = (c->pq[1] >> 3) & 7;
+  val = e86_get_reg8 (c, reg);
+
+  e86_set_ea8 (c, val);
   e86_set_clk_ea (c, 2, 9);
 
   return (c->ea.cnt + 1);
@@ -2223,8 +2233,15 @@ unsigned op_88 (e8086_t *c)
 static
 unsigned op_89 (e8086_t *c)
 {
+  unsigned short val;
+  unsigned       reg;
+
   e86_get_ea_ptr (c, c->pq + 1);
-  e86_set_ea16 (c, e86_get_reg16 (c, (c->pq[1] >> 3) & 7));
+
+  reg = (c->pq[1] >> 3) & 7;
+  val = e86_get_reg16 (c, reg);
+
+  e86_set_ea16 (c, val);
   e86_set_clk_ea (c, 2, 9);
 
   return (c->ea.cnt + 1);
@@ -2234,8 +2251,15 @@ unsigned op_89 (e8086_t *c)
 static
 unsigned op_8a (e8086_t *c)
 {
+  unsigned char val;
+  unsigned      reg;
+
   e86_get_ea_ptr (c, c->pq + 1);
-  e86_set_reg8 (c, (c->pq[1] >> 3) & 7, e86_get_ea8 (c));
+
+  reg = (c->pq[1] >> 3) & 7;
+  val = e86_get_ea8 (c);
+
+  e86_set_reg8 (c, reg, val);
   e86_set_clk_ea (c, 2, 8);
 
   return (c->ea.cnt + 1);
@@ -2245,8 +2269,15 @@ unsigned op_8a (e8086_t *c)
 static
 unsigned op_8b (e8086_t *c)
 {
+  unsigned short val;
+  unsigned       reg;
+
   e86_get_ea_ptr (c, c->pq + 1);
-  e86_set_reg16 (c, (c->pq[1] >> 3) & 7, e86_get_ea16 (c));
+
+  reg = (c->pq[1] >> 3) & 7;
+  val = e86_get_ea16 (c);
+
+  e86_set_reg16 (c, reg, val);
   e86_set_clk_ea (c, 2, 8);
 
   return (c->ea.cnt + 1);
@@ -2395,7 +2426,7 @@ unsigned op_9c (e8086_t *c)
 static
 unsigned op_9d (e8086_t *c)
 {
-  c->flg = e86_pop (c);
+  c->flg = (e86_pop (c) & 0x0fd5) | 0xf002;
   e86_set_clk (c, 8);
 
   return (1);
@@ -2429,11 +2460,13 @@ static
 unsigned op_a0 (e8086_t *c)
 {
   unsigned short seg, ofs;
+  unsigned char  val;
 
   seg = e86_get_seg (c, E86_REG_DS);
   ofs = e86_mk_uint16 (c->pq[1], c->pq[2]);
+  val = e86_get_mem8 (c, seg, ofs);
 
-  e86_set_al (c, e86_get_mem8 (c, seg, ofs));
+  e86_set_al (c, val);
   e86_set_clk (c, 10);
 
   return (3);

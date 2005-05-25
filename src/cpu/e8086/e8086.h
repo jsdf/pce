@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-05-25 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -186,13 +186,15 @@ typedef struct e8086_t {
 
 #define e86_set_reg8(cpu, reg, val) \
   do { \
-    if ((reg) & 4) { \
-      (cpu)->dreg[(reg) & 3] &= 0x00ff; \
-      (cpu)->dreg[(reg) & 3] |= ((val) & 0xff) << 8; \
+    unsigned char v = (val) & 0xff; \
+    unsigned      r = (reg); \
+    if (r & 4) { \
+      (cpu)->dreg[r & 3] &= 0x00ff; \
+      (cpu)->dreg[r & 3] |= v << 8; \
     } \
     else { \
-      (cpu)->dreg[(reg) & 3] &= 0xff00; \
-      (cpu)->dreg[(reg) & 3] |= (val) & 0xff; \
+      (cpu)->dreg[r & 3] &= 0xff00; \
+      (cpu)->dreg[r & 3] |= v; \
     } \
   } while (0)
 
