@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8253.c                                        *
+ * File name:     src/chipset/82xx/e8253.c                                   *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -288,6 +288,12 @@ unsigned char e8253_cnt_get_uint8 (e8253_counter_t *cnt)
 }
 
 static
+unsigned short e8253_cnt_get_uint16 (e8253_counter_t *cnt)
+{
+  return (cnt->val & 0xffff);
+}
+
+static
 void e8253_cnt_set_uint8 (e8253_counter_t *cnt, unsigned char val)
 {
   if (cnt->cr_wr == 0) {
@@ -438,7 +444,11 @@ unsigned char e8253_get_uint8 (e8253_t *pit, unsigned long addr)
 
 unsigned short e8253_get_uint16 (e8253_t *pit, unsigned long addr)
 {
-  return (e8253_get_uint8 (pit, addr));
+  if (addr < 3) {
+    return (e8253_cnt_get_uint16 (&pit->counter[addr]));
+  }
+
+  return (0xffff);
 }
 
 unsigned long e8253_get_uint32 (e8253_t *pit, unsigned long addr)
