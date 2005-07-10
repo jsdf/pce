@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-06-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -80,6 +80,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
   }
   else if (strcmp (msg, "emu.idle.toggle") == 0) {
     par_int28 = (par_int28 == 0) ? 10000UL : 0UL;
+    return (0);
   }
   else if (strcmp (msg, "emu.config.save") == 0) {
     if (ini_write (pc->cfg, val)) {
