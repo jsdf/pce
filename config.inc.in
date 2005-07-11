@@ -101,6 +101,10 @@ ifneq "$(reldir)" "$(topdir)"
 CC_FLG	+= -I$(topdir)/src
 endif
 
+ifneq "$(PCE_HAVE_STDINT_H)" "1"
+CC_FLG	+= -I$(topdir)/src/lib/stdint
+endif
+
 
 PCE_BLK_OBJ := $(pcedst)/devices/block/block.a
 PCE_BLK_HDR := devices/block/block.h \
