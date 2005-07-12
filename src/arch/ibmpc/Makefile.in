@@ -106,9 +106,11 @@ all: $(BIN) $(OBJ) ibmpc.cfg
 
 
 install: ibmpc ibmpc.cfg install-bin install-man
-	( rm -f $(DESTDIR)$(bindir)/pce ; cd $(DESTDIR)$(bindir) && ln -s ibmpc pce ; )
-	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	test -f $(DESTDIR)$(etcdir)/ibmpc.cfg || $(INSTALL) -m 644 ibmpc.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  LN     pce"
+	$(QR)( rm -f $(DESTDIR)$(bindir)/pce ; cd $(DESTDIR)$(bindir) && ln -s ibmpc pce ; )
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     ibmpc.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/ibmpc.cfg || $(INSTALL) -m 644 ibmpc.cfg $(DESTDIR)$(etcdir)
 
 
 ibmpc: $(OBJ) $(OBJ_EXT)

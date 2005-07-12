@@ -68,24 +68,27 @@ endif
 
 install-bin:
 ifneq "$(BIN)" ""
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	for f in $(BIN) ; do \
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	$(QR)for f in $(BIN) ; do \
+		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
 		$(INSTALL) -m 755 -s $$f $(DESTDIR)$(bindir) ; \
 	done
 endif
 
 install-bins:
 ifneq "$(BINS)" ""
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	for f in $(BINS) ; do \
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
+	$(QR)for f in $(BINS) ; do \
+		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
 		$(INSTALL) -m 755 $$f $(DESTDIR)$(bindir) ; \
 	done
 endif
 
 install-man:
 ifneq "$(MAN1)" ""
-	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1
-	for f in $(MAN1) ; do \
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1
+	$(QR)for f in $(MAN1) ; do \
+		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
 		$(INSTALL) -m 644 $(srcdir)/$$f $(DESTDIR)$(mandir)/man1 ; \
 	done
 endif

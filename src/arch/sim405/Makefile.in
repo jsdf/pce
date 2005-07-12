@@ -91,8 +91,9 @@ all: $(BIN) $(OBJ) sim405.cfg
 
 
 install: install-bin sim405.cfg
-	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	test -f $(DESTDIR)$(etcdir)/sim405.cfg || $(INSTALL) -m 644 sim405.cfg $(DESTDIR)$(etcdir)
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     sim405.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/sim405.cfg || $(INSTALL) -m 644 sim405.cfg $(DESTDIR)$(etcdir)
 
 
 sim405: $(OBJ) $(OBJ_EXT)

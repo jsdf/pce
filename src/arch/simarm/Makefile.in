@@ -95,8 +95,9 @@ all: $(BIN) $(OBJ) simarm.cfg
 
 
 install: install-bin simarm.cfg
-	$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	test -f $(DESTDIR)$(etcdir)/simarm.cfg || $(INSTALL) -m 644 simarm.cfg $(DESTDIR)$(etcdir)
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     simarm.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/simarm.cfg || $(INSTALL) -m 644 simarm.cfg $(DESTDIR)$(etcdir)
 
 
 simarm: $(OBJ) $(OBJ_EXT)
