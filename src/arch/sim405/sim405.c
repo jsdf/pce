@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -175,6 +175,7 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
   p405_set_dcr_fct (sim->ppc, sim, &s405_get_dcr, &s405_set_dcr);
 
   p405uic_init (&sim->uic);
+  p405uic_set_invert (&sim->uic, 0x0000007f);
   p405uic_set_nint_f (&sim->uic, (p405uic_int_f) &p405_interrupt, sim->ppc);
 }
 

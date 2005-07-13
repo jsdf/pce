@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/ppc405/uic.c                                   *
  * Created:       2004-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -55,7 +55,8 @@ void p405uic_init (p405_uic_t *uic)
   uic->vcr = 0;
   uic->vr = 0;
 
-  uic->levels = 0;
+  uic->levels = 0x00000000;
+  uic->invert = 0x00000000;
   uic->vr_msk = 0;
 
   uic->nint = NULL;
@@ -91,6 +92,12 @@ void p405uic_del (p405_uic_t *uic)
     p405uic_free (uic);
     free (uic);
   }
+}
+
+void p405uic_set_invert (p405_uic_t *uic, unsigned long inv)
+{
+  uic->invert = inv & 0xffffffff;
+  uic->levels = inv & 0xffffffff;
 }
 
 void p405uic_set_cint_f (p405_uic_t *uic, p405uic_int_f fct, void *ext)
@@ -265,6 +272,10 @@ void p405uic_set_irq (p405_uic_t *uic, unsigned i, unsigned char val)
   uint32_t msk;
 
   msk = 0x80000000UL >> (i & 0x1f);
+
+  if (uic->invert & msk) {
+    val = !val;
+  }
 
   if ((val != 0) == ((uic->levels & msk) != 0)) {
     /* level has not changed */
