@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -240,6 +240,7 @@ typedef struct {
 #define p405_get_ctr(c) ((c)->ctr)
 #define p405_get_dbcr0(c) ((c)->dbcr0)
 #define p405_get_dbcr1(c) ((c)->dbcr1)
+#define p405_get_dbsr(c) ((c)->dbsr)
 #define p405_get_dccr(c) ((c)->dccr)
 #define p405_get_dcwr(c) ((c)->dcwr)
 #define p405_get_dear(c) ((c)->dear)
@@ -281,6 +282,7 @@ typedef struct {
 #define p405_set_ctr(c, v) do { (c)->ctr = (v); } while (0)
 #define p405_set_dbcr0(c, v) do { (c)->dbcr0 = (v); } while (0)
 #define p405_set_dbcr1(c, v) do { (c)->dbcr1 = (v); } while (0)
+#define p405_set_dbsr(c, v) do { (c)->dbsr = (v); } while (0)
 #define p405_set_dccr(c, v) do { (c)->dccr = (v); } while (0)
 #define p405_set_dcwr(c, v) do { (c)->dcwr = (v); } while (0)
 #define p405_set_dear(c, v) do { (c)->dear = (v); } while (0)
@@ -362,6 +364,7 @@ typedef struct p405_s {
   uint32_t           ctr;
   uint32_t           dbcr0;
   uint32_t           dbcr1;
+  uint32_t           dbsr;
   uint32_t           dccr;
   uint32_t           dcwr;
   uint32_t           dear;

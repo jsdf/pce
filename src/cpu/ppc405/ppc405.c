@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.c                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -340,6 +340,7 @@ void p405_reset (p405_t *c)
   c->ctr = 0;
   c->dbcr0 = 0;
   c->dbcr1 = 0;
+  c->dbsr = 0;
   c->dcwr = 0;
   c->dear = 0;
   c->esr = 0;

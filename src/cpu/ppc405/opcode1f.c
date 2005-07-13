@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcode1f.c                                  *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -859,6 +859,10 @@ void op_1f_153 (p405_t *c)
       rt = p405_get_dbcr1 (c);
       break;
 
+    case P405_SPRN_DBSR:
+      rt = p405_get_dbsr (c);
+      break;
+
     case P405_SPRN_DCCR:
       rt = p405_get_dccr (c);
       break;
@@ -1241,6 +1245,10 @@ void op_1f_1d3 (p405_t *c)
 
     case P405_SPRN_DBCR1:
       p405_set_dbcr1 (c, rs);
+      break;
+
+    case P405_SPRN_DBSR:
+      p405_set_dbsr (c, p405_get_dbsr (c) & ~rs);
       break;
 
     case P405_SPRN_DCCR:
