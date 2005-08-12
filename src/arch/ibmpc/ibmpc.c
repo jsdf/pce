@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-08-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,6 +25,8 @@
 
 #include "main.h"
 
+#include <lib/iniram.h>
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -36,80 +38,6 @@ unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 
-
-static
-void pc_setup_ram (ibmpc_t *pc, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *ram;
-  const char    *fname;
-  unsigned long base, size;
-
-  pc->ram = NULL;
-
-  sct = ini_sct_find_sct (ini, "ram");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 655360L);
-
-    pce_log (MSG_INF, "RAM:\tbase=0x%05lx size=%lu file=%s\n",
-      base, size, (fname == NULL) ? "<none>" : fname
-    );
-
-    ram = mem_blk_new (base, size, 1);
-    mem_blk_clear (ram, 0x00);
-    mem_blk_set_readonly (ram, 0);
-    mem_add_blk (pc->mem, ram, 1);
-
-    if (base == 0) {
-      pc->ram = ram;
-    }
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (ram, fname)) {
-        pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "ram");
-  }
-}
-
-static
-void pc_setup_rom (ibmpc_t *pc, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *rom;
-  const char    *fname;
-  unsigned long base, size;
-
-  sct = ini_sct_find_sct (ini, "rom");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 65536L);
-
-    pce_log (MSG_INF, "ROM:\tbase=0x%05lx size=%lu file=%s\n",
-      base, size, (fname != NULL) ? fname : "<none>"
-    );
-
-    rom = mem_blk_new (base, size, 1);
-    mem_blk_clear (rom, 0x00);
-    mem_blk_set_readonly (rom, 1);
-    mem_add_blk (pc->mem, rom, 1);
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (rom, fname)) {
-        pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "rom");
-  }
-}
 
 static
 void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
@@ -971,8 +899,9 @@ ibmpc_t *pc_new (ini_sct_t *ini)
   pc->prt = mem_new();
   mem_set_default (pc->prt, 0xff);
 
-  pc_setup_ram (pc, ini);
-  pc_setup_rom (pc, ini);
+  ini_get_ram (pc->mem, ini, &pc->ram);
+  ini_get_rom (pc->mem, ini);
+
   pc_setup_nvram (pc, ini);
   pc_setup_cpu (pc, ini);
   pc_setup_dma (pc);
