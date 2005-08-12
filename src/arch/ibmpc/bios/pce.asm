@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2005-08-12 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -39,12 +39,14 @@ msg_init       db "PC BIOS version ", PCE_VERSION_STR
                db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
                db 13, 10, 13, 10, 0
 
-msg_memchk1    db "Memory check... ", 0
+msg_memchk1    db "Memory size:    ", 0
 msg_memchk2    db "KB", 13, 0
 
+msg_serial     db "Serial ports:   ", 0
+msg_parallel   db "Parallel ports: ", 0
+msg_video      db "Video adapter:  ", 0
 msg_mda        db "MDA", 0
 msg_cga        db "CGA", 0
-msg_video      db " video adapter initialized", 13, 10, 0
 
 msg_rom1       db "ROM[", 0
 msg_rom2       db "]:", 0
@@ -283,11 +285,13 @@ init_video:
   or      ax, ax
   jz      .done
 
+  mov     si, msg_video
+  call    prt_string
+
   mov     si, ax
   call    prt_string
 
-  mov     si, msg_video
-  call    prt_string
+  call    prt_nl
 
 .done:
   pop     si
@@ -438,17 +442,23 @@ init_mem:
   cmp     ax, 0xaa55
   jne     .done
 
-  xchg    [es:0x7fff], al
-  xchg    [es:0x7fff], al
-  xchg    [es:0x7fff], ah
-  xchg    [es:0x7fff], ah
+  xchg    [es:0 + 1023], al
+  xchg    [es:0 + 1023], al
+  xchg    [es:0 + 1023], ah
+  xchg    [es:0 + 1023], ah
 
   cmp     ax, 0xaa55
   jne     .done
 
-  add     cx, 32
-  add     bx, 0x800
+  inc     cx
+  add     bx, 1024 / 16
 
+  cmp     cx, 704
+  jae     .done
+
+  jmp     .next
+
+.done:
   mov     si, msg_memchk1
   call    prt_string
 
@@ -458,12 +468,6 @@ init_mem:
   mov     si, msg_memchk2
   call    prt_string
 
-  cmp     cx, 704
-  jae     .done
-
-  jmp     .next
-
-.done:
   call    prt_nl
 
   mov     [0x0013], cx
@@ -494,6 +498,7 @@ init_serport:
   push    cx
   push    dx
   push    bx
+  push    si
 
   ; get com info
   pceh    PCEH_GET_COM
@@ -520,6 +525,10 @@ init_serport:
   cmc
   adc     ax, 0
 
+  mov     si, msg_serial
+  call    prt_string
+  call    prt_uint16
+
   mov     cl, 9
   shl     ax, cl
 
@@ -528,6 +537,9 @@ init_serport:
   or      dx, ax
   mov     [0x0010], dx
 
+  call    prt_nl
+
+  pop     si
   pop     bx
   pop     dx
   pop     cx
@@ -540,6 +552,7 @@ init_parport:
   push    cx
   push    dx
   push    bx
+  push    si
 
   ; get lpt info
   pceh    PCEH_GET_LPT
@@ -566,12 +579,19 @@ init_parport:
   cmc
   adc     ax, 0
 
+  mov     si, msg_parallel
+  call    prt_string
+  call    prt_uint16
+
   mov     cl, 14
   shl     ax, cl
 
   and     byte [0x0011], 0x3f
   or      word [0x0010], ax
 
+  call    prt_nl
+
+  pop     si
   pop     bx
   pop     dx
   pop     cx
