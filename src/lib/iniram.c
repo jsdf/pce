@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/iniram.c                                           *
  * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-08-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-08-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -33,6 +33,7 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
   ini_sct_t     *sct;
   mem_blk_t     *ram;
   const char    *fname;
+  long          tmp;
   unsigned long base, size;
 
   if (addr0 != NULL) {
@@ -44,7 +45,16 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
   while (sct != NULL) {
     fname = ini_get_str (sct, "file");
     base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 65536L);
+
+    if (ini_get_lng (sct, "sizem", &tmp) == 0) {
+      size = 1024UL * 1024UL * tmp;
+    }
+    if (ini_get_lng (sct, "sizek", &tmp) == 0) {
+      size = 1024UL * tmp;
+    }
+    else {
+      size = ini_get_lng_def (sct, "size", 65536L);
+    }
 
     pce_log (MSG_INF, "RAM:\tbase=0x%08lx size=%lu file=%s\n",
       base, size, (fname == NULL) ? "<none>" : fname
