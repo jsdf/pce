@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-08-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -938,8 +938,11 @@ void do_d (cmd_t *cmd)
 static
 void do_e (cmd_t *cmd)
 {
+  unsigned       i;
   unsigned short seg, ofs;
+  unsigned long  addr;
   unsigned short val;
+  char           buf[256];
 
   seg = 0;
   ofs = 0;
@@ -948,9 +951,28 @@ void do_e (cmd_t *cmd)
     cmd_error (cmd, "need an address");
   }
 
-  while (cmd_match_uint16 (cmd, &val)) {
-    mem_set_uint8 (pc->mem, (seg << 4) + ofs, val);
-    ofs = (ofs + 1) & 0xffff;
+  addr = (seg << 4) + ofs;
+
+  while (1) {
+    if (cmd_match_uint16 (cmd, &val)) {
+      mem_set_uint8 (pc->mem, addr, val);
+      addr += 1;
+    }
+    else if (cmd_match_str (cmd, buf, 256)) {
+      i = 0;
+      while (buf[i] != 0) {
+        mem_set_uint8 (pc->mem, addr, buf[i]);
+        addr += 1;
+        i += 1;
+      }
+    }
+    else {
+      break;
+    }
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
   }
 }
 
@@ -1017,7 +1039,7 @@ void do_h (cmd_t *cmd)
     "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
     "c [cnt]                   clock [1]\n"
     "d [addr [cnt]]            dump memory\n"
-    "e addr [val...]           enter bytes into memory\n"
+    "e addr [val|string...]    enter bytes into memory\n"
     "far                       run until cs changes\n"
     "dump what fname           dump to file (ram|video)\n"
     "g [b]                     run with or without breakpoints\n"
@@ -1033,7 +1055,8 @@ void do_h (cmd_t *cmd)
     "s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
     "t [cnt]                   execute cnt instructions [1]\n"
     "u [addr [cnt]]            disassemble\n"
-    "v [expr...]               evaluate expressions\n",
+    "v [expr...]               evaluate expressions\n"
+    "w name addr cnt           save memory to file\n",
     stdout
   );
 }
@@ -1606,6 +1629,54 @@ void do_v (cmd_t *cmd)
 }
 
 static
+void do_w (cmd_t *cmd)
+{
+  unsigned short seg, ofs;
+  unsigned long  cnt;
+  char           fname[256];
+  unsigned char  v;
+  FILE           *fp;
+
+  if (!cmd_match_str (cmd, fname, 256)) {
+    cmd_error (cmd, "need a file name");
+    return;
+  }
+
+  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+    cmd_error (cmd, "address expected");
+    return;
+  }
+
+  if (!cmd_match_uint32 (cmd, &cnt)) {
+    cmd_error (cmd, "byte count expected");
+    return;
+  }
+
+  if (!cmd_match_end (cmd)) {
+    return;
+  }
+
+  fp = fopen (fname, "wb");
+  if (fp == NULL) {
+    printf ("can't open file (%s)\n", fname);
+    return;
+  }
+
+  while (cnt > 0) {
+    v = e86_get_mem8 (pc->cpu, seg, ofs);
+    fputc (v, fp);
+
+    ofs += 1;
+    seg += ofs >> 4;
+    ofs &= 0x000f;
+
+    cnt -= 1;
+  }
+
+  fclose (fp);
+}
+
+static
 int do_cmd (ibmpc_t *pc)
 {
   cmd_t  cmd;
@@ -1694,6 +1765,9 @@ int do_cmd (ibmpc_t *pc)
     }
     else if (cmd_match (&cmd, "v")) {
       do_v (&cmd);
+    }
+    else if (cmd_match (&cmd, "w")) {
+      do_w (&cmd);
     }
     else if (cmd_match_eol (&cmd)) {
       ;
