@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/e8086/disasm.c                                         *
+ * File name:     src/cpu/e8086/disasm.c                                     *
  * Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-11-12 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2003 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2005-10-14 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2002-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -676,9 +676,7 @@ void dop_26 (e86_disasm_t *op, unsigned char *src)
 static
 void dop_27 (e86_disasm_t *op, unsigned char *src)
 {
-  op->dat_n = 1;
-  op->arg_n = 0;
-  strcpy (op->op, "SUB");
+  dop_const (op, "DAA", 1);
 }
 
 /* DOP 28: SUB r/m8, reg8 */
