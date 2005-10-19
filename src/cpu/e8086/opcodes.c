@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-10-14 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -798,6 +798,7 @@ unsigned op_27 (e8086_t *c)
   }
 
   e86_set_al (c, al);
+  e86_set_flg_szp_8 (c, al);
   e86_set_clk (c, 4);
 
   return (1);
@@ -963,6 +964,7 @@ unsigned op_2f (e8086_t *c)
   }
 
   e86_set_al (c, al);
+  e86_set_flg_szp_8 (c, al);
   e86_set_clk (c, 4);
 
   return (1);
