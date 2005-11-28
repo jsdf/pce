@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/inidsk.c                                           *
  * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,6 +23,8 @@
 /* $Id$ */
 
 
+#include <stdlib.h>
+
 #include <lib/inidsk.h>
 #include <lib/log.h>
 
@@ -33,6 +35,47 @@
 #include <devices/block/blkram.h>
 #include <devices/block/blkraw.h>
 
+
+int dsk_insert (disks_t *dsks, const char *str)
+{
+  unsigned i;
+  unsigned drv;
+  char     buf[16];
+  disk_t   *dsk;
+
+  i = 0;
+  while ((i < 16) && (str[i] != 0)) {
+    if (str[i] == ':') {
+      buf[i] = 0;
+      break;
+    }
+
+    buf[i] = str[i];
+
+    i += 1;
+  }
+
+  if ((i == 0) || (str[i] == 0)) {
+    return (1);
+  }
+
+  drv = strtoul (buf, NULL, 0);
+  str = str + i + 1;
+
+  dsk = dsk_auto_open (str, 0);
+  if (dsk == NULL) {
+    return (1);
+  }
+
+  dsk_set_drive (dsk, drv);
+
+  if (dsks_add_disk (dsks, dsk)) {
+    dsk_del (dsk);
+    return (1);
+  }
+
+  return (0);
+}
 
 disk_t *ini_get_disk (ini_sct_t *sct)
 {

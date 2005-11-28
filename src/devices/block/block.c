@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -217,7 +217,8 @@ void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s)
   dsk->del = NULL;
   dsk->read = NULL;
   dsk->write = NULL;
-  dsk->commit = NULL;
+  dsk->get_msg = NULL;
+  dsk->set_msg = NULL;
 
   dsk->drive = 0;
 
@@ -357,13 +358,31 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
   return (dsk_write_lba (dsk, buf, i, n));
 }
 
-int dsk_commit (disk_t *dsk, int writeback)
+int dsk_commit (disk_t *dsk)
 {
-  if (dsk->commit != NULL) {
-    return (dsk->commit (dsk, writeback));
+  return (dsk_set_msg (dsk, "commit", NULL));
+}
+
+int dsk_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)
+{
+  if (dsk->get_msg != NULL) {
+    return (dsk->get_msg (dsk, msg, val, max));
   }
 
-  return (0);
+  return (1);
+}
+
+int dsk_set_msg (disk_t *dsk, const char *msg, const char *val)
+{
+  if (dsk->set_msg != NULL) {
+    if (val == NULL) {
+      val = "";
+    }
+
+    return (dsk->set_msg (dsk, msg, val));
+  }
+
+  return (1);
 }
 
 
@@ -458,7 +477,7 @@ disk_t *dsks_get_disk (disks_t *dsks, unsigned drive)
   return (NULL);
 }
 
-int dsks_commit (disks_t *dsks, int writeback)
+int dsks_commit (disks_t *dsks)
 {
   unsigned i;
   int      r;
@@ -466,7 +485,7 @@ int dsks_commit (disks_t *dsks, int writeback)
   r = 0;
 
   for (i = 0; i < dsks->cnt; i++) {
-    if (dsk_commit (dsks->dsk[i], writeback)) {
+    if (dsk_set_msg (dsks->dsk[i], "commit", NULL)) {
       r = 1;
     }
   }
@@ -474,15 +493,30 @@ int dsks_commit (disks_t *dsks, int writeback)
   return (r);
 }
 
-int dsks_commit_disk (disks_t *dsks, unsigned drive, int writeback)
+int dsks_get_msg (disks_t *dsks, unsigned drv, const char *msg, char *val, unsigned max)
 {
-  unsigned i;
+  disk_t *dsk;
 
-  for (i = 0; i < dsks->cnt; i++) {
-    if (dsks->dsk[i]->drive == drive) {
-      return (dsk_commit (dsks->dsk[i], writeback));
-    }
+  dsk = dsks_get_disk (dsks, drv);
+  if (dsk == NULL) {
+    return (1);
   }
 
-  return (1);
+  return (dsk_get_msg (dsk, msg, val, max));
+}
+
+int dsks_set_msg (disks_t *dsks, unsigned drv, const char *msg, const char *val)
+{
+  disk_t *dsk;
+
+  dsk = dsks_get_disk (dsks, drv);
+  if (dsk == NULL) {
+    return (1);
+  }
+
+  if (val == NULL) {
+    val = "";
+  }
+
+  return (dsk_set_msg (dsk, msg, val));
 }

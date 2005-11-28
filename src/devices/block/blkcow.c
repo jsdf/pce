@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkcow.c                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -243,36 +243,24 @@ int dsk_cow_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 }
 
 static
-int cow_commit_block (disk_cow_t *cow, uint32_t blk, int writeback)
+int cow_commit_block (disk_cow_t *cow, uint32_t blk)
 {
-  unsigned char buf1[512];
-  unsigned char buf2[512];
+  unsigned char buf[512];
   uint64_t      ofs;
 
   ofs = cow->data_offset + 512 * (uint64_t) blk;
 
-  if (dsk_read (cow->fp, buf1, ofs, 512)) {
+  if (dsk_read (cow->fp, buf, ofs, 512)) {
     return (1);
   }
 
-  if (writeback) {
-    if (dsk_write_lba (cow->orig, buf1, blk, 1)) {
-      return (1);
-    }
-  }
-  else {
-    if (dsk_read_lba (cow->orig, buf2, blk, 1)) {
-      return (1);
-    }
-
-    if (memcmp (buf1, buf2, 512) != 0) {
-      return (1);
-    }
+  if (dsk_write_lba (cow->orig, buf, blk, 1)) {
+    return (1);
   }
 
-  memset (buf1, 0, 512);
+  memset (buf, 0, 512);
 
-  if (dsk_write (cow->fp, buf1, ofs, 512)) {
+  if (dsk_write (cow->fp, buf, ofs, 512)) {
     return (1);
   }
 
@@ -282,7 +270,7 @@ int cow_commit_block (disk_cow_t *cow, uint32_t blk, int writeback)
 }
 
 static
-int dsk_cow_commit (disk_t *dsk, int writeback)
+int dsk_cow_commit (disk_t *dsk)
 {
   uint32_t      i, n;
   uint32_t      blk;
@@ -300,7 +288,7 @@ int dsk_cow_commit (disk_t *dsk, int writeback)
 
       while (msk != 0) {
         if (msk & 0x80) {
-          if (cow_commit_block (cow, blk, writeback) == 0) {
+          if (cow_commit_block (cow, blk) == 0) {
             n += 1;
           }
         }
@@ -320,6 +308,26 @@ int dsk_cow_commit (disk_t *dsk, int writeback)
   fflush (cow->fp);
 
   return (0);
+}
+
+static
+int dsk_cow_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)
+{
+  return (1);
+}
+
+static
+int dsk_cow_set_msg (disk_t *dsk, const char *msg, const char *val)
+{
+  disk_cow_t *cow;
+
+  cow = dsk->ext;
+
+  if (strcmp (msg, "commit") == 0) {
+    return (dsk_cow_commit (dsk));
+  }
+
+  return (1);
 }
 
 static
@@ -433,10 +441,11 @@ disk_t *dsk_cow_new (disk_t *dsk, const char *fname)
 
   cow->dsk = *dsk;
 
-  cow->dsk.del = &dsk_cow_del;
-  cow->dsk.read = &dsk_cow_read;
-  cow->dsk.write = &dsk_cow_write;
-  cow->dsk.commit = &dsk_cow_commit;
+  cow->dsk.del = dsk_cow_del;
+  cow->dsk.read = dsk_cow_read;
+  cow->dsk.write = dsk_cow_write;
+  cow->dsk.get_msg = dsk_cow_get_msg;
+  cow->dsk.set_msg = dsk_cow_set_msg;
   cow->dsk.ext = cow;
 
   cow->orig = dsk;

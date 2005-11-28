@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-06-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -26,18 +26,35 @@
 #include "main.h"
 
 static
-unsigned long msg_get_ulng (const char *str)
+int msg_get_ulng (const char *str, unsigned long *val)
 {
-  char          *end;
-  unsigned long val;
+  char *end;
 
-  val = strtoul (str, &end, 0);
+  *val = strtoul (str, &end, 0);
 
   if ((end == str) || (*end != 0)) {
-    return (0);
+    return (1);
   }
 
-  return (val);
+  return (0);
+}
+
+static
+int msg_get_uint (const char *str, unsigned *val)
+{
+  unsigned long tmp;
+
+  if (msg_get_ulng (str, &tmp)) {
+    return (1);
+  }
+
+  *val = tmp;
+
+  if (*val != tmp) {
+    return (1);
+  }
+
+  return (0);
 }
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
@@ -64,7 +81,14 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     return (0);
   }
   else if (strcmp (msg, "emu.pause") == 0) {
-    pc->pause = (msg_get_ulng (val) != 0);
+    unsigned v;
+
+    if (msg_get_uint (val, &v)) {
+      return (1);
+    }
+
+    pc->pause = (v != 0);
+
     return (0);
   }
   else if (strcmp (msg, "emu.pause.toggle") == 0) {
@@ -75,7 +99,14 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
   if (strcmp (msg, "emu.idle") == 0) {
-    par_int28 = 1000UL * msg_get_ulng (val);
+    unsigned long v;
+
+    if (msg_get_ulng (val, &v)) {
+      return (1);
+    }
+
+    par_int28 = 1000UL * v;
+
     return (0);
   }
   else if (strcmp (msg, "emu.idle.toggle") == 0) {
@@ -90,7 +121,14 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     return (0);
   }
   else if (strcmp (msg, "emu.realtime") == 0) {
-    pc->pit_real = (msg_get_ulng (val) != 0);
+    unsigned v;
+
+    if (msg_get_uint (val, &v)) {
+      return (1);
+    }
+
+    pc->pit_real = (v != 0);
+
     return (0);
   }
   else if (strcmp (msg, "emu.realtime.toggle") == 0) {
@@ -163,7 +201,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
   }
   else if (strcmp (msg, "disk.commit") == 0) {
     if (strcmp (val, "") == 0) {
-      if (dsks_commit (pc->dsk, 1)) {
+      if (dsks_commit (pc->dsk)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
         return (1);
       }
@@ -171,9 +209,11 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     else {
       unsigned d;
 
-      d = strtoul (val, NULL, 0);
+      if (msg_get_uint (val, &d)) {
+        return (1);
+      }
 
-      if (dsks_commit_disk (pc->dsk, d, 1)) {
+      if (dsks_set_msg (pc->dsk, d, "commit", NULL)) {
         pce_log (MSG_ERR, "commit failed (%s)\n", val);
         return (1);
       }
@@ -181,22 +221,28 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if (strcmp (msg, "disk.clean") == 0) {
-    if (strcmp (val, "") == 0) {
-      if (dsks_commit (pc->dsk, 0)) {
-        pce_log (MSG_ERR, "clean failed for at least one disk\n");
-        return (1);
-      }
+  else if ((strcmp (msg, "disk.eject") == 0) || (strcmp (msg, "eject") == 0)) {
+    unsigned d;
+    disk_t   *dsk;
+
+    if (msg_get_uint (val, &d)) {
+      return (1);
     }
-    else {
-      unsigned d;
 
-      d = strtoul (val, NULL, 0);
+    dsk = dsks_get_disk (pc->dsk, d);
+    if (dsk == NULL) {
+      return (1);
+    }
 
-      if (dsks_commit_disk (pc->dsk, d, 0)) {
-        pce_log (MSG_ERR, "clean failed (%s)\n", val);
-        return (1);
-      }
+    dsks_rmv_disk (pc->dsk, dsk);
+
+    dsk_del (dsk);
+
+    return (0);
+  }
+  else if ((strcmp (msg, "disk.insert") == 0) || (strcmp (msg, "insert") == 0)) {
+    if (dsk_insert (pc->dsk, val)) {
+      return (1);
     }
 
     return (0);

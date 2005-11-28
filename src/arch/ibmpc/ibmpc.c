@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-08-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -485,130 +485,6 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
-disk_t *pc_setup_disk (ini_sct_t *sct)
-{
-  disk_t     *dsk, *cow;
-  ini_val_t  *val;
-  unsigned   drive;
-  unsigned   c, h, s;
-  unsigned   vc, vh, vs;
-  int        ro;
-  const char *type, *fname, *cowname;
-
-  drive = ini_get_lng_def (sct, "drive", 0);
-  type = ini_get_str_def (sct, "type", "auto");
-
-  fname = ini_get_str (sct, "file");
-  cowname = ini_get_str (sct, "cow");
-
-  c = ini_get_lng_def (sct, "c", 80);
-  h = ini_get_lng_def (sct, "h", 2);
-  s = ini_get_lng_def (sct, "s", 18);
-  vc = ini_get_lng_def (sct, "visible_c", 0);
-  vh = ini_get_lng_def (sct, "visible_h", 0);
-  vs = ini_get_lng_def (sct, "visible_s", 0);
-
-  ro = ini_get_lng_def (sct, "readonly", 0);
-
-  if (strcmp (type, "ram") == 0) {
-    dsk = dsk_ram_open (fname, c, h, s, ro);
-  }
-  else if (strcmp (type, "image") == 0) {
-    dsk = dsk_img_open (fname, c, h, s, ro);
-    if (dsk != NULL) {
-      dsk_img_set_offset (dsk, ini_get_lng_def (sct, "offset", 0));
-    }
-  }
-  else if (strcmp (type, "dosemu") == 0) {
-    dsk = dsk_dosemu_open (fname, ro);
-  }
-  else if (strcmp (type, "pce") == 0) {
-    dsk = dsk_pce_open (fname, ro);
-  }
-  else if (strcmp (type, "partition") == 0) {
-    ini_sct_t     *p;
-    unsigned long start;
-    unsigned long blk_i, blk_n;
-    const char    *fname;
-
-    dsk = dsk_part_open (c, h, s, ro);
-
-    if (dsk != NULL) {
-      p = ini_sct_find_sct (sct, "partition");
-      while (p != NULL) {
-        start = ini_get_lng_def (p, "offset", 0);
-        blk_i = ini_get_lng_def (p, "block_start", 0);
-        blk_n = ini_get_lng_def (p, "block_count", 0);
-        fname = ini_get_str (p, "file");
-        ro = ini_get_lng_def (p, "readonly", 0);
-
-        if (fname != NULL) {
-          if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
-            pce_log (MSG_ERR, "*** adding partition failed\n");
-          }
-        }
-
-        p = ini_sct_find_next (p, "partition");
-      }
-    }
-  }
-  else if (strcmp (type, "auto") == 0) {
-    dsk = dsk_auto_open (fname, ro);
-  }
-  else {
-    dsk = NULL;
-  }
-
-  if (dsk == NULL) {
-    pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
-    return (NULL);
-  }
-
-  dsk_set_drive (dsk, drive);
-
-  val = ini_sct_find_val (sct, "cow");
-  while (val != NULL) {
-    const char *cname;
-
-    cname = ini_val_get_str (val);
-    if (cname == NULL) {
-      dsk_del (dsk);
-      return (NULL);
-    }
-
-    cow = dsk_cow_new (dsk, cowname);
-
-    if (cow == NULL) {
-      pce_log (MSG_ERR, "*** loading drive 0x%02x failed (cow)\n", drive);
-      dsk_del (dsk);
-      return (NULL);
-    }
-    else {
-      dsk = cow;
-    }
-
-    val = ini_val_find_next (val, "cow");
-  }
-
-  vc = (vc == 0) ? dsk->c : vc;
-  vh = (vh == 0) ? dsk->h : vh;
-  vs = (vs == 0) ? dsk->s : vs;
-
-  dsk_set_visible_chs (dsk, vc, vh, vs);
-
-  pce_log (MSG_INF,
-    "disk:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u ro=%d file=%s\n",
-    drive, type,
-    dsk->c, dsk->h, dsk->s,
-    dsk->visible_c, dsk->visible_h, dsk->visible_s,
-    ro,
-    (fname != NULL) ? fname : "<>"
-  );
-
-  return (dsk);
-}
-
-static
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
@@ -619,7 +495,7 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "disk");
 
   while (sct != NULL) {
-    dsk = pc_setup_disk (sct);
+    dsk = ini_get_disk (sct);
 
     if (dsk != NULL) {
       dsks_add_disk (pc->dsk, dsk);

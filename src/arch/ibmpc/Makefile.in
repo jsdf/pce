@@ -27,26 +27,27 @@ HDR := $(foreach f,$(FILES),$(f).h)
 OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
 	$(pcedst)/chipset/82xx/chipset.a \
-	$(PCE_BLK_OBJ) \
 	$(pcedst)/devices/video/cga.o \
 	$(pcedst)/devices/video/vga.o \
 	$(pcedst)/devices/video/ega.o \
 	$(pcedst)/devices/video/hgc.o \
 	$(pcedst)/devices/video/mda.o \
+	$(pcedst)/devices/video/video.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/nvram.o \
 	$(pcedst)/devices/parport.o \
 	$(pcedst)/devices/serport.o \
-	$(pcedst)/devices/video/video.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
 	$(pcedst)/lib/hexdump.o \
+	$(pcedst)/lib/inidsk.o \
 	$(pcedst)/lib/iniram.o \
 	$(pcedst)/lib/ihex.o \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/libini/libini.a \
+	$(PCE_BLK_OBJ) \
 	$(PCE_TERM_OBJ)
 
 HDR_EXT	:= \
@@ -63,14 +64,15 @@ HDR_EXT	:= \
 	devices/video/ega.h \
 	devices/video/hgc.h \
 	devices/video/mda.h \
+	devices/video/video.h \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/parport.h \
 	devices/serport.h \
-	devices/video/video.h \
 	lib/brkpt.h \
 	lib/cmd.h \
 	lib/hexdump.h \
+	lib/inidsk.h \
 	lib/iniram.h \
 	lib/ihex.h \
 	lib/srec.h \

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.h                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -36,23 +36,23 @@
 struct disk_s;
 
 
-typedef void (*dsk_del_f) (struct disk_s *dsk);
-
 typedef int (*dsk_read_f) (struct disk_s *dsk, void *buf, uint32_t i, uint32_t n);
 
 typedef int (*dsk_write_f) (struct disk_s *dsk, const void *buf, uint32_t i, uint32_t n);
 
-typedef int (*dsk_commit_f) (struct disk_s *dsk, int writeback);
+typedef int (*dsk_get_msg_f) (struct disk_s *dsk, const char *msg, char *val, unsigned max);
+typedef int (*dsk_set_msg_f) (struct disk_s *dsk, const char *msg, const char *val);
 
 
 /*!***************************************************************************
  * @short The disk structure
  *****************************************************************************/
 typedef struct disk_s {
-  dsk_del_f     del;
+  void          (*del) (struct disk_s *dsk);
   dsk_read_f    read;
   dsk_write_f   write;
-  dsk_commit_f  commit;
+  dsk_get_msg_f get_msg;
+  dsk_set_msg_f set_msg;
 
   unsigned      drive;
   uint32_t      c;
@@ -178,11 +178,19 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
   uint32_t c, uint32_t h, uint32_t s, uint32_t n
 );
 
+int dsk_commit (disk_t *dsk);
+
 /*!***************************************************************************
- * @short  Commit changes
+ * @short  Get a message from a disk
  * @return Zero if successful
  *****************************************************************************/
-int dsk_commit (disk_t *dsk, int writeback);
+int dsk_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max);
+
+/*!***************************************************************************
+ * @short  Send a message to a disk
+ * @return Zero if successful
+ *****************************************************************************/
+int dsk_set_msg (disk_t *dsk, const char *msg, const char *val);
 
 
 /*!***************************************************************************
@@ -217,18 +225,28 @@ disk_t *dsks_get_disk (disks_t *dsks, unsigned drive);
 
 /*!***************************************************************************
  * @short  Commit all disks in a disk set
- * @param  writeback Write data back to base disk if true
  * @return Zero if successful
  *****************************************************************************/
-int dsks_commit (disks_t *dsks, int writeback);
+int dsks_commit (disks_t *dsks);
 
 /*!***************************************************************************
- * @short  Commit a disk in a disk set
- * @param  drive     The drive number
- * @param  writeback Write data back to base disk if true
+ * @short  Get a message from a disk
+ * @param  drv The drive number
+ * @param  msg The message
+ * @param  val The return value
+ * @param  max The size of val
  * @return Zero if successful
  *****************************************************************************/
-int dsks_commit_disk (disks_t *dsks, unsigned drive, int writeback);
+int dsks_get_msg (disks_t *dsks, unsigned drv, const char *msg, char *val, unsigned max);
+
+/*!***************************************************************************
+ * @short  Send a message to a disk
+ * @param  drv The drive number
+ * @param  msg The message
+ * @param  val The message parameters or NULL
+ * @return Zero if successful
+ *****************************************************************************/
+int dsks_set_msg (disks_t *dsks, unsigned drv, const char *msg, const char *val);
 
 
 #endif

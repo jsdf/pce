@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-08-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -1032,6 +1032,31 @@ void do_g (cmd_t *cmd)
 static
 void do_h (cmd_t *cmd)
 {
+  if (cmd_match (cmd, "m")) {
+    fputs (
+      "emu.stop\n"
+      "emu.exit\n"
+      "emu.pause           <0|1>\n"
+      "emu.pause.toggle\n"
+      "emu.idle            <ms>\n"
+      "emu.idle.toggle\n"
+      "emu.config.save     <fname>\n"
+      "emu.realtime        <0|1>\n"
+      "emu.realtime.toggle\n"
+      "cpu.model           <8086|8088|v20|v30|80186|80188>\n"
+      "video.redraw\n"
+      "video.screenshot    [fname]\n"
+      "video.size          <w> <h>\n"
+      "disk.boot           <bootdrive>\n"
+      "disk.commit         [drive]\n"
+      "disk.eject          <drive>\n"
+      "disk.insert         <drive>:<fname>\n",
+      stdout
+    );
+
+    return;
+  }
+
   fputs (
     "boot [drive]              Set the boot drive\n"
     "bc [addr]                 clear a breakpoint or all\n"
