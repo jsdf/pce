@@ -723,6 +723,8 @@ AC_OUTPUT(
   config.inc
   rules.inc
   src/Makefile
+  src/apps/Makefile
+  src/apps/pceimg/Makefile
   src/arch/Makefile
   src/chipset/Makefile
   src/chipset/82xx/Makefile

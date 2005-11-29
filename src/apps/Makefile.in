@@ -1,0 +1,16 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir := pceimg
+reldir := ../..
+
+
+include $(reldir)/config.inc
+
+
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
