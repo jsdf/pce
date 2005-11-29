@@ -276,6 +276,20 @@ AC_SUBST(PCE_SDL_LDF)
 #-----------------------------------------------------------------------------
 # Checks for options
 
+AC_ARG_ENABLE(largefile,
+  AC_HELP_STRING([--disable-largefile], [Disable large file support]),
+  opt_large=$enableval
+)
+
+if test "$opt_large" = "no" ; then
+	PCE_LARGE_FILE="0"
+else
+	AC_DEFINE(PCE_LARGE_FILE)
+	PCE_LARGE_FILE="1"
+fi
+AC_SUBST(PCE_LARGE_FILE)
+
+
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi

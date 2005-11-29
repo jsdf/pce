@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2002-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,13 @@
 
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 600
+#endif
+
+
+#undef PCE_LARGE_FILE
+
+#ifdef PCE_LARGE_FILE
+#define _FILE_OFFSET_BITS 64
 #endif
 
 
