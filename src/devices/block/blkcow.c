@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkcow.c                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -63,6 +63,12 @@ int cow_write_bitmap (disk_cow_t *cow)
   return (0);
 }
 
+/*
+ * - check if block blk is copied, return true if so.
+ * - check how many blocks, starting at blk have the same status
+ *   and return that number in cnt.
+ * - cnt on output <= cnt on input.
+ */
 static
 int cow_get_block (disk_cow_t *cow, uint32_t blk, uint32_t *cnt)
 {
@@ -85,15 +91,22 @@ int cow_get_block (disk_cow_t *cow, uint32_t blk, uint32_t *cnt)
   n = n - 1;
   v = r ? 0xff : 0x00;
 
+  /* i, m refer to first data block */
+
   while (n > 0) {
     if (m == 0x01) {
       i += 1;
       m = 0x80;
 
+      /* skip runs of 8 blocks */
       while ((n >= 8) && (cow->bitmap[i] == v)) {
         i += 1;
         n -= 8;
         *cnt += 8;
+      }
+
+      if (n == 0) {
+        return (r);
       }
     }
     else {
