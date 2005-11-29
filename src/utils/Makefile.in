@@ -3,14 +3,14 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := lib libini cpu chipset devices terminal arch utils
-reldir := ..
+subdir := pceimg
+reldir := ../..
 
 
 include $(reldir)/config.inc
 
 
-DCL := Makefile config.h config.inc
+DCL := Makefile
 
 
 include $(reldir)/rules.inc
