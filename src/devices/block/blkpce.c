@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.c                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -212,7 +212,7 @@ int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
   }
 
   buf[0] = 0;
-  if (dsk_write (fp, buf, 128 + 512 * n - 1, 1)) {
+  if (dsk_write (fp, buf, 128 + 512 * (uint64_t) n - 1, 1)) {
     return (1);
   }
 
