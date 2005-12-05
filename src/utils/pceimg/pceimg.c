@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/apps/pceimg/pceimg.c                                   *
+ * File name:     src/utils/pceimg/pceimg.c                                  *
  * Created:       2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
@@ -45,7 +45,9 @@
 #define DSK_DOSEMU 3
 
 
-const char *argv0 = NULL;
+static const char *argv0 = NULL;
+
+static int        par_quiet = 0;
 
 
 static
@@ -55,6 +57,7 @@ void prt_help (void)
     "usage: pceimg command [options]\n"
     "\n"
     "create [options] [output]\n"
+    "  -q, --quiet             Be quiet\n"
     "  -c, --cylinders int     Set number of cylinders [1024]\n"
     "  -h, --heads int         Set number of heads [16]\n"
     "  -s, --sectors int       Set number of sectors per track [63]\n"
@@ -63,6 +66,7 @@ void prt_help (void)
     "  -o, --output string     Set the output file name [stdout]\n"
     "\n"
     "convert [options] [input [output]]\n"
+    "  -q, --quiet             Be quiet\n"
     "  -c, --cylinders int     Set number of cylinders [1024]\n"
     "  -h, --heads int         Set number of heads [16]\n"
     "  -s, --sectors int       Set number of sectors per track [63]\n"
@@ -233,7 +237,7 @@ disk_t *dsk_open (const char *str, uint32_t c, uint32_t h, uint32_t s, int ro)
 }
 
 static
-int dsk_copy (disk_t *dst, disk_t *src, int verbose)
+int dsk_copy (disk_t *dst, disk_t *src)
 {
   uint32_t      i, n, m;
   uint32_t      prg_i, prg_n;
@@ -284,7 +288,7 @@ int dsk_copy (disk_t *dst, disk_t *src, int verbose)
     i += m;
     n -= m;
 
-    if (verbose) {
+    if (par_quiet == 0) {
       prg_i += m;
       if (prg_i > 16384) {
         fprintf (stdout, "block %lu of %lu (%.2f%%)\r",
@@ -298,7 +302,7 @@ int dsk_copy (disk_t *dst, disk_t *src, int verbose)
     }
   }
 
-  if (verbose) {
+  if (par_quiet == 0) {
     fprintf (stdout, "block %lu of %lu (%.2f%%)\n",
       (unsigned long) prg_n, (unsigned long) prg_n, 100.0
     );
@@ -318,7 +322,10 @@ int main_create (int argc, char **argv)
 
   i = 1;
   while (i < argc) {
-    if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
+    if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
+      par_quiet = 1;
+    }
+    else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
       i += 1;
       par_c = strtoul (argv[i], NULL, 0);
     }
@@ -390,10 +397,12 @@ int main_create (int argc, char **argv)
     par_s = 63;
   }
 
-  fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
-    (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
-    (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
-  );
+  if (par_quiet == 0) {
+    fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
+      (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
+      (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
+    );
+  }
 
   if (par_out == NULL) {
     fprintf (stderr, "%s: need a file name\n", argv0);
@@ -415,7 +424,6 @@ int main_convert (int argc, char **argv)
   const char *par_inp = NULL;
   const char *par_out = NULL;
   const char *par_cow = NULL;
-  int        par_verbose = 0;
   uint32_t   par_c = 1024;
   uint32_t   par_h = 16;
   uint32_t   par_s = 63;
@@ -423,8 +431,8 @@ int main_convert (int argc, char **argv)
 
   i = 1;
   while (i < argc) {
-    if (opt_check (argc, argv, "-v", "--verbose", i, 0)) {
-      par_verbose = 1;
+    if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
+      par_quiet = 1;
     }
     else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
       i += 1;
@@ -509,10 +517,12 @@ int main_convert (int argc, char **argv)
   par_h = inp->h;
   par_s = inp->s;
 
-  fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
-    (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
-    (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
-  );
+  if (par_quiet == 0) {
+    fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
+      (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
+      (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
+    );
+  }
 
   if (dsk_create (par_out, par_c, par_h, par_s)) {
     fprintf (stderr, "%s: can't create output file (%s)\n", argv0, par_out);
@@ -525,7 +535,7 @@ int main_convert (int argc, char **argv)
     return (1);
   }
 
-  if (dsk_copy (out, inp, par_verbose)) {
+  if (dsk_copy (out, inp)) {
     fprintf (stderr, "%s: copy failed\n", argv0);
     return (1);
   }
