@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,7 +52,7 @@
 #define ARM_MODE_IRQ 0x12
 #define ARM_MODE_SVC 0x13
 #define ARM_MODE_ABT 0x17
-#define ARM_MODE_UND 0x1a
+#define ARM_MODE_UND 0x1b
 #define ARM_MODE_SYS 0x1f
 
 
@@ -91,6 +91,7 @@
 #define arm_get_lr(c) ((c)->reg[14])
 #define arm_get_cpsr(c) ((c)->cpsr)
 #define arm_get_spsr(c) ((c)->spsr)
+#define arm_get_last_pc(c) ((c)->lastpc[1])
 
 #define arm_set_reg(c, n, v) do { (c)->reg[(n)] = (v); } while (0)
 #define arm_set_pc(c, v) do { (c)->reg[15] = (v); } while (0)
@@ -206,6 +207,8 @@ typedef struct arm_s {
 
   uint32_t           reg[16];
   uint32_t           reg_alt[ARM_REG_ALT_CNT];
+
+  uint32_t           lastpc[2];
 
   /* the current register mapping */
   unsigned           reg_map;

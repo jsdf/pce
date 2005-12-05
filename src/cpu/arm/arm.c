@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -93,8 +93,8 @@ static unsigned arm_reg_map[32][8] = {
   { 1,  2,  3,  4,  5, 20, 21,  8 },  /* 17 abt */
   { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 18 */
   { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 19 */
-  { 1,  2,  3,  4,  5, 22, 23,  8 },  /* 1a und */
-  { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 1b */
+  { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 1a */
+  { 1,  2,  3,  4,  5, 22, 23,  8 },  /* 1b und */
   { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 1c */
   { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 1d */
   { 0,  0,  0,  0,  0,  0,  0,  0 },  /* 1e */
@@ -281,6 +281,9 @@ void arm_reset (arm_t *c)
     c->spsr_alt[i] = 0;
   }
 
+  c->lastpc[0] = 0;
+  c->lastpc[1] = 0;
+
   c->ir = 0;
 
   c->exception_base = 0;
@@ -374,7 +377,10 @@ void arm_execute (arm_t *c)
 {
   c->oprcnt += 1;
 
-  if (arm_ifetch (c, arm_get_pc (c), &c->ir)) {
+  c->lastpc[1] = c->lastpc[0];
+  c->lastpc[0] = arm_get_pc (c);
+
+  if (arm_ifetch (c, c->lastpc[0], &c->ir)) {
     return;
   }
 

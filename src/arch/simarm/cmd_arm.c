@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -362,8 +362,10 @@ void sarm_log_trap (void *ext, unsigned long addr)
   }
 
   if (name != NULL) {
-    pce_log (MSG_DEB, "%08lX: exception %lx (%s)\n",
-      (unsigned long) arm_get_pc (sim->cpu), addr, name
+    pce_log (MSG_DEB, "%08lX (%08lX): exception %lx (%s)\n",
+      (unsigned long) arm_get_pc (sim->cpu),
+      (unsigned long) arm_get_last_pc (sim->cpu),
+      addr, name
     );
   }
 }
