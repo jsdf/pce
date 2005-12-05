@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -149,14 +149,17 @@ disk_t *dsk_dosimg_open_fp (FILE *fp, int ro)
     return (NULL);
   }
 
+  /* boot sector id */
   if ((buf[510] != 0x55) || (buf[511] != 0xaa)) {
     return (NULL);
   }
 
+  /* sector size */
   if (dsk_get_uint16_le (buf, 11) != 512) {
     return (NULL);
   }
 
+  /* total sectors */
   n = dsk_get_uint16_le (buf, 19);
   if (n == 0) {
     n = dsk_get_uint32_le (buf, 32);
@@ -188,6 +191,114 @@ disk_t *dsk_dosimg_open (const char *fname, int ro)
   }
 
   dsk = dsk_dosimg_open_fp (fp, ro);
+
+  if (dsk == NULL) {
+    fclose (fp);
+    return (NULL);
+  }
+
+  return (dsk);
+}
+
+disk_t *dsk_mbrimg_open_fp (FILE *fp, int ro)
+{
+  unsigned      i;
+  unsigned char *p;
+  unsigned char buf[512];
+  uint32_t      c, h, s, n;
+  uint32_t      tc1, th1, ts1, tn;
+  uint32_t      tc2, th2, ts2;
+  disk_t        *dsk;
+
+  if (dsk_read (fp, buf, 0, 512)) {
+    return (NULL);
+  }
+
+  /* mbr id */
+  if ((buf[510] != 0x55) || (buf[511] != 0xaa)) {
+    return (NULL);
+  }
+
+  c = 0;
+  h = 0;
+  s = 0;
+  n = 0;
+
+  p = buf + 0x1be;
+
+  for (i = 0; i < 4; i++) {
+    if (p[0] & 0x7f) {
+      return (NULL);
+    }
+
+    /* partition end, in blocks */
+    tn = dsk_get_uint32_le (p, 8);
+    tn += dsk_get_uint32_le (p, 12);
+    n = (tn > n) ? tn : n;
+
+    /* partition start */
+    tc1 = p[3] | ((p[2] & 0xc0) << 2);
+    th1 = p[1];
+    ts1 = p[2] & 0x3f;
+    h = (th1 > h) ? th1 : h;
+    s = (ts1 > s) ? ts1 : s;
+
+    /* partition end */
+    tc2 = p[7] | ((p[6] & 0xc0) << 2);
+    th2 = p[5];
+    ts2 = p[6] & 0x3f;
+    h = (th2 > h) ? th2 : h;
+    s = (ts2 > s) ? ts2 : s;
+
+    /* check if start is before end */
+    if (tc2 < tc1) {
+      return (NULL);
+    }
+    else if (tc2 == tc1) {
+      if (th2 < th1) {
+        return (NULL);
+      }
+      else if (th2 == th1) {
+        if (ts2 < ts1) {
+          return (NULL);
+        }
+      }
+    }
+  }
+
+  if (s == 0) {
+    return (NULL);
+  }
+
+  h = h + 1;
+  c = n / (h * s);
+
+  if (c == 0) {
+    return (NULL);
+  }
+
+  dsk = dsk_img_open_fp (fp, c, h, s, ro);
+
+  return (dsk);
+}
+
+disk_t *dsk_mbrimg_open (const char *fname, int ro)
+{
+  disk_t *dsk;
+  FILE   *fp;
+
+  if (ro) {
+    fp = fopen (fname, "rb");
+  }
+  else {
+    fp = fopen (fname, "r+b");
+  }
+
+  if (fp == NULL) {
+    return (NULL);
+  }
+
+  dsk = dsk_mbrimg_open_fp (fp, ro);
 
   if (dsk == NULL) {
     fclose (fp);

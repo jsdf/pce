@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -287,12 +287,17 @@ disk_t *dsk_auto_open (const char *fname, int ro)
     return (dsk);
   }
 
-  dsk = dsk_fdimg_open (fname, ro);
+  dsk = dsk_dosimg_open (fname, ro);
   if (dsk != NULL) {
     return (dsk);
   }
 
-  dsk = dsk_dosimg_open (fname, ro);
+  dsk = dsk_mbrimg_open (fname, ro);
+  if (dsk != NULL) {
+    return (dsk);
+  }
+
+  dsk = dsk_fdimg_open (fname, ro);
   if (dsk != NULL) {
     return (dsk);
   }
