@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-06 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -77,6 +77,9 @@
 #define ARM_XLAT_CPU     0
 #define ARM_XLAT_REAL    1
 #define ARM_XLAT_VIRTUAL 2
+
+
+#define ARM_TLB_SIZE (1 << 6)
 
 
 #define ARM_REG_ALT_CNT 24
@@ -170,9 +173,9 @@ typedef struct {
 typedef struct {
   arm_copr_t copr;
 
-  arm_tbuf_t tbuf_exec;
-  arm_tbuf_t tbuf_read;
-  arm_tbuf_t tbuf_write;
+  arm_tbuf_t tbuf_exec[ARM_TLB_SIZE];
+  arm_tbuf_t tbuf_read[ARM_TLB_SIZE];
+  arm_tbuf_t tbuf_write[ARM_TLB_SIZE];
 
   uint32_t   reg[16];
 } arm_copr15_t;

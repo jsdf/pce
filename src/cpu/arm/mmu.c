@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,13 +64,16 @@ void arm_mmu_permission_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 
 void arm_tbuf_flush (arm_t *c)
 {
+  unsigned     i;
   arm_copr15_t *mmu;
 
   mmu = arm_get_mmu (c);
 
-  mmu->tbuf_exec.valid = 0;
-  mmu->tbuf_read.valid = 0;
-  mmu->tbuf_write.valid = 0;
+  for (i = 0; i < ARM_TLB_SIZE; i++) {
+    mmu->tbuf_exec[i].valid = 0;
+    mmu->tbuf_read[i].valid = 0;
+    mmu->tbuf_write[i].valid = 0;
+  }
 }
 
 static inline
@@ -296,7 +299,7 @@ int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
     return (0);
   }
 
-  tb = &mmu->tbuf_exec;
+  tb = &mmu->tbuf_exec[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
   vaddr = *addr;
 
@@ -352,7 +355,7 @@ int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
     return (0);
   }
 
-  tb = &mmu->tbuf_read;
+  tb = &mmu->tbuf_read[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
   vaddr = *addr;
 
@@ -408,7 +411,7 @@ int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
     return (0);
   }
 
-  tb = &mmu->tbuf_write;
+  tb = &mmu->tbuf_write[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
   vaddr = *addr;
 
