@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -78,6 +78,8 @@ void prt_version (void)
 
 void sig_int (int s)
 {
+  signal (s, sig_int);
+
   par_sig_int = 1;
 }
 
@@ -360,8 +362,9 @@ int main (int argc, char *argv[])
 
   par_sim = sarm_new (sct);
 
-  signal (SIGINT, &sig_int);
-  signal (SIGSEGV, &sig_segv);
+  signal (SIGINT, sig_int);
+  signal (SIGSEGV, sig_segv);
+  signal (SIGPIPE, SIG_IGN);
 
   cmd_init (stdin, stdout, &cmd_match_sym);
   sarm_cmd_init (par_sim);
