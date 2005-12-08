@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,37 +25,6 @@
 
 #include "main.h"
 
-static
-int msg_get_ulng (const char *str, unsigned long *val)
-{
-  char *end;
-
-  *val = strtoul (str, &end, 0);
-
-  if ((end == str) || (*end != 0)) {
-    return (1);
-  }
-
-  return (0);
-}
-
-static
-int msg_get_uint (const char *str, unsigned *val)
-{
-  unsigned long tmp;
-
-  if (msg_get_ulng (str, &tmp)) {
-    return (1);
-  }
-
-  *val = tmp;
-
-  if (*val != tmp) {
-    return (1);
-  }
-
-  return (0);
-}
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 {
@@ -72,33 +41,33 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     val = "";
   }
 
-  if (strcmp (msg, "emu.stop") == 0) {
+  if (msg_is_message ("emu.stop", msg)) {
     pc->brk = PCE_BRK_STOP;
     return (0);
   }
-  else if (strcmp (msg, "emu.exit") == 0) {
+  else if (msg_is_message ("emu.exit", msg)) {
     pc->brk = PCE_BRK_ABORT;
     return (0);
   }
-  else if (strcmp (msg, "emu.pause") == 0) {
-    unsigned v;
+  else if (msg_is_message ("emu.pause", msg)) {
+    int v;
 
-    if (msg_get_uint (val, &v)) {
+    if (msg_get_bool (val, &v)) {
       return (1);
     }
 
-    pc->pause = (v != 0);
+    pc->pause = v;
 
     return (0);
   }
-  else if (strcmp (msg, "emu.pause.toggle") == 0) {
-    pc->pause = (pc->pause == 0);
+  else if (msg_is_message ("emu.pause.toggle", msg)) {
+    pc->pause = !pc->pause;
     return (0);
   }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-  if (strcmp (msg, "emu.idle") == 0) {
+  if (msg_is_message ("emu.idle", msg)) {
     unsigned long v;
 
     if (msg_get_ulng (val, &v)) {
@@ -109,18 +78,18 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if (strcmp (msg, "emu.idle.toggle") == 0) {
+  else if (msg_is_message ("emu.idle.toggle", msg)) {
     par_int28 = (par_int28 == 0) ? 10000UL : 0UL;
     return (0);
   }
-  else if (strcmp (msg, "emu.config.save") == 0) {
+  else if (msg_is_message ("emu.config.save", msg)) {
     if (ini_write (pc->cfg, val)) {
       return (1);
     }
 
     return (0);
   }
-  else if (strcmp (msg, "emu.realtime") == 0) {
+  else if (msg_is_message ("emu.realtime", msg)) {
     unsigned v;
 
     if (msg_get_uint (val, &v)) {
@@ -131,11 +100,11 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if (strcmp (msg, "emu.realtime.toggle") == 0) {
+  else if (msg_is_message ("emu.realtime.toggle", msg)) {
     pc->pit_real = !pc->pit_real;
     return (0);
   }
-  else if (strcmp (msg, "cpu.model") == 0) {
+  else if (msg_is_message ("cpu.model", msg)) {
     if (strcmp (val, "8086") == 0) {
       pc_set_cpu_model (pc, PCE_CPU_8086);
     }
@@ -163,11 +132,11 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if (strcmp (msg, "video.redraw") == 0) {
+  else if (msg_is_message ("video.redraw", msg)) {
     pce_video_update (pc->video);
     return (0);
   }
-  else if (strcmp (msg, "video.screenshot") == 0) {
+  else if (msg_is_message ("video.screenshot", msg)) {
     if (strcmp (val, "") == 0) {
       pc_screenshot (pc, NULL);
     }
@@ -176,7 +145,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
     }
     return (0);
   }
-  else if (strcmp (msg, "video.size") == 0) {
+  else if (msg_is_message ("video.size", msg)) {
     unsigned w, h;
     char     *tmp1, *tmp2;
 
@@ -195,11 +164,18 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if (strcmp (msg, "disk.boot") == 0) {
-    pc->bootdrive = strtoul (val, NULL, 0);
+  else if (msg_is_message ("disk.boot", msg)) {
+    unsigned v;
+
+    if (msg_get_uint (val, &v)) {
+      return (1);
+    }
+
+    pc->bootdrive = v;
+
     return (0);
   }
-  else if (strcmp (msg, "disk.commit") == 0) {
+  else if (msg_is_message ("disk.commit", msg)) {
     if (strcmp (val, "") == 0) {
       if (dsks_commit (pc->dsk)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
@@ -221,7 +197,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if ((strcmp (msg, "disk.eject") == 0) || (strcmp (msg, "eject") == 0)) {
+  else if (msg_is_message ("disk.eject", msg)) {
     unsigned d;
     disk_t   *dsk;
 
@@ -240,7 +216,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
     return (0);
   }
-  else if ((strcmp (msg, "disk.insert") == 0) || (strcmp (msg, "insert") == 0)) {
+  else if (msg_is_message ("disk.insert", msg)) {
     if (dsk_insert (pc->dsk, val)) {
       return (1);
     }

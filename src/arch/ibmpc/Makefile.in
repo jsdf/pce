@@ -33,6 +33,7 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/video/hgc.o \
 	$(pcedst)/devices/video/mda.o \
 	$(pcedst)/devices/video/video.o \
+	$(pcedst)/devices/device.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/nvram.o \
 	$(pcedst)/devices/parport.o \
@@ -46,6 +47,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(pcedst)/lib/msg.o \
 	$(pcedst)/libini/libini.a \
 	$(PCE_BLK_OBJ) \
 	$(PCE_TERM_OBJ)
@@ -65,6 +67,7 @@ HDR_EXT	:= \
 	devices/video/hgc.h \
 	devices/video/mda.h \
 	devices/video/video.h \
+	devices/device.h \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/parport.h \
@@ -78,6 +81,7 @@ HDR_EXT	:= \
 	lib/srec.h \
 	lib/load.h \
 	lib/log.h \
+	lib/msg.h \
 	libini/libini.h \
 	$(PCE_TERM_HDR)
 
