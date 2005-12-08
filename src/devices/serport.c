@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -61,6 +61,11 @@ void ser_set_uint32 (serport_t *ser, unsigned long addr, unsigned long val)
 
 void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 {
+  dev_init (&ser->device, ser, "uart");
+
+  ser->device.free = (void *) ser_free;
+  ser->device.del = (void *) ser_del;
+
   ser->io = base;
 
   ser->addr_shift = shift;

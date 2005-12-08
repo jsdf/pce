@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-06 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -36,6 +36,8 @@
 #include <stdio.h>
 
 #include <chipset/82xx/e8250.h>
+
+#include <devices/device.h>
 #include <devices/memory.h>
 
 
@@ -43,6 +45,8 @@
  * @short The serial port context
  *****************************************************************************/
 typedef struct serport_s {
+  device_t      device;
+
   /* the 8250 I/O ports. size is (8 << addr_shift). */
   mem_blk_t     port;
 

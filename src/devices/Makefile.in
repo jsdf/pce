@@ -10,7 +10,7 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := ata memory nvram parport pci pci-ata serport slip
+FILES := ata device memory nvram parport pci pci-ata serport slip
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -27,6 +27,8 @@ include $(reldir)/rules.inc
 all: $(BIN) $(OBJ)
 
 
+device.o:	device.c device.h $(SDP)
+
 memory.o:	memory.c memory.h $(SDP)
 
 ata.o:		ata.c ata.h memory.h devices/block/block.h $(SDP)
@@ -40,6 +42,6 @@ pci.o:		pci.c pci.h memory.h $(SDP)
 
 pci-ata.o:	pci-ata.c pci-ata.h pci.h ata.h devices/block/block.h $(SDP)
 
-serport.o:	serport.c serport.h memory.h chipset/82xx/e8250.h $(SDP)
+serport.o:	serport.c serport.h device.h memory.h chipset/82xx/e8250.h $(SDP)
 
 slip.o:		slip.c slip.h serport.h chipset/82xx/e8250.h lib/tun.h $(SDP)
