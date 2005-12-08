@@ -40,6 +40,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/inidsk.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(pcedst)/lib/msg.o \
 	$(PCE_BLK_OBJ) \
 	$(pcedst)/libini/libini.a
 
@@ -63,6 +64,7 @@ HDR_EXT	:= \
 	lib/inidsk.h \
 	lib/load.h \
 	lib/log.h \
+	lib/msg.h \
 	$(PCE_BLK_HDR) \
 	libini/libini.h
 

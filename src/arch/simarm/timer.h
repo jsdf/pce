@@ -53,6 +53,8 @@ typedef struct ixp_timer_s {
   ixp_timer_counter_t cntr[4];
 
   unsigned long       twde;
+
+  unsigned            scale;
 } ixp_timer_t;
 
 
@@ -66,6 +68,8 @@ mem_blk_t *tmr_get_io (ixp_timer_t *tmr, unsigned i);
 int tmr_get_active (ixp_timer_t *tmr, unsigned i);
 
 void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext);
+
+void tmr_set_scale (ixp_timer_t *tmr, unsigned scale);
 
 void tmr_clock (ixp_timer_t *tmr, unsigned n);
 

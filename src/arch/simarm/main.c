@@ -200,7 +200,7 @@ void pce_run (void)
   pce_start();
 
   while (1) {
-    sarm_clock (par_sim, 64);
+    sarm_clock (par_sim, 16);
 
     if (par_sim->brk) {
       break;

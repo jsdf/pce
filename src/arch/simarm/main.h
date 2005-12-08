@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.h                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,7 +27,15 @@
 #define PCE_SIMARM_MAIN_H 1
 
 
+#include <config.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <lib/log.h>
 #include <lib/cmd.h>
+#include <lib/msg.h>
 
 #include <cpu/arm/arm.h>
 

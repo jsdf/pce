@@ -190,6 +190,8 @@ void tmr_init (ixp_timer_t *tmr, unsigned long base)
   }
 
   tmr->twde = 0;
+
+  tmr->scale = 1;
 }
 
 ixp_timer_t *tmr_new (unsigned long base)
@@ -243,6 +245,11 @@ void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext)
     tmr->cntr[i].irq = f;
     tmr->cntr[i].irq_ext = ext;
   }
+}
+
+void tmr_set_scale (ixp_timer_t *tmr, unsigned scale)
+{
+  tmr->scale = scale;
 }
 
 static
@@ -328,6 +335,8 @@ void tmr_set_uint32 (ixp_timer_t *tmr, unsigned long addr, unsigned long val)
 
 void tmr_clock (ixp_timer_t *tmr, unsigned n)
 {
+  n *= tmr->scale;
+
   if (tmr->cntr[0].ctrl & IXP_TIMER_ACT) {
     ctr_clock (&tmr->cntr[0], n);
   }

@@ -178,14 +178,17 @@ static
 void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 {
   unsigned long base;
+  unsigned      scale;
   ini_sct_t     *sct;
 
   sct = ini_sct_find_sct (ini, "timer");
   if (sct != NULL) {
-    base = ini_get_lng_def (sct, "base", 0xc0020000UL);
+    base = ini_get_lng_def (sct, "base", 0xc0020000);
+    scale = ini_get_lng_def (sct, "scale", 4);
   }
   else {
-    base = 0xc0020000UL;
+    base = 0xc0020000;
+    scale = 4;
   }
 
   sim->timer = tmr_new (base);
@@ -198,9 +201,11 @@ void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
   tmr_set_irq_f (sim->timer, 2, ict_set_irq6, sim->intc);
   tmr_set_irq_f (sim->timer, 3, ict_set_irq7, sim->intc);
 
+  tmr_set_scale (sim->timer, scale);
+
   mem_add_blk (sim->mem, tmr_get_io (sim->timer, 0), 0);
 
-  pce_log (MSG_INF, "TIMER:\tbase=0x%08lx\n", base);
+  pce_log (MSG_INF, "TIMER:\tbase=0x%08lx ts=%u\n", base, scale);
 }
 
 static
@@ -504,34 +509,35 @@ void sarm_reset (simarm_t *sim)
 
 void sarm_clock (simarm_t *sim, unsigned n)
 {
-  if (sim->clk_div[0] >= 16384) {
-    scon_check (sim);
-
+  if (sim->clk_div[0] >= 4096) {
     if (sim->serport[0] != NULL) {
-      ser_clock (sim->serport[0], 16384);
+      ser_clock (sim->serport[0], 4096);
     }
 
     if (sim->serport[1] != NULL) {
-      ser_clock (sim->serport[1], 16384);
+      ser_clock (sim->serport[1], 4096);
     }
 
     if (sim->slip != NULL) {
-      slip_clock (sim->slip, 16384);
+      slip_clock (sim->slip, 4096);
     }
 
-    sim->clk_div[0] &= 16383;
+    sim->clk_div[1] += sim->clk_div[0];
+    sim->clk_div[0] &= 4095;
+
+    if (sim->clk_div[1] >= 16384) {
+      scon_check (sim);
+
+      sim->clk_div[0] &= 16383;
+    }
   }
 
-  /* artificially speed up timer */
-  tmr_clock (sim->timer, 5 * n);
+  tmr_clock (sim->timer, n);
 
   arm_clock (sim->cpu, n);
 
   sim->clk_cnt += n;
   sim->clk_div[0] += n;
-/*  sim->clk_div[1] += n; */
-/*  sim->clk_div[2] += n; */
-/*  sim->clk_div[3] += n; */
 }
 
 int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
@@ -549,21 +555,7 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
     val = "";
   }
 
-  if (strcmp (msg, "break") == 0) {
-    if (strcmp (val, "stop") == 0) {
-      sim->brk = PCE_BRK_STOP;
-      return (0);
-    }
-    else if (strcmp (val, "abort") == 0) {
-      sim->brk = PCE_BRK_ABORT;
-      return (0);
-    }
-    else if (strcmp (val, "") == 0) {
-      sim->brk = PCE_BRK_ABORT;
-      return (0);
-    }
-  }
-  else if (strcmp (msg, "emu.stop") == 0) {
+  if (msg_is_message ("emu.stop", msg)) {
     sim->brk = PCE_BRK_STOP;
     return (0);
   }
@@ -574,7 +566,7 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-  if (strcmp (msg, "disk.commit") == 0) {
+  if (msg_is_message ("disk.commit", msg)) {
     if (strcmp (val, "") == 0) {
       if (dsks_commit (sim->dsks)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
@@ -591,6 +583,15 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
         return (1);
       }
     }
+
+    return (0);
+  }
+  else if (msg_is_message ("emu.timer_scale", msg)) {
+    unsigned long v;
+
+    v = strtoul (val, NULL, 0);
+
+    tmr_set_scale (sim->timer, v);
 
     return (0);
   }
