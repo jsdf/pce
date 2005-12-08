@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8250.c                                        *
+ * File name:     src/chipset/82xx/e8250.c                                   *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -55,6 +55,9 @@ void e8250_init (e8250_t *uart)
 
   uart->mcr = 0;
   uart->msr = 0; /* E8250_MSR_DCD | E8250_MSR_DSR | E8250_MSR_CTS; */
+
+  uart->rxd_read_cnt = 0;
+  uart->txd_write_cnt = 0;
 
   uart->have_scratch = 1;
 
@@ -242,6 +245,7 @@ void e8250_check_rxd (e8250_t *uart)
   uart->rxd[1] = 1;
   uart->lsr |= E8250_LSR_RRD;
 
+  /* receive queue is not full */
   if (uart->recv != NULL) {
     uart->recv (uart->recv_ext, 1);
   }
@@ -553,7 +557,17 @@ unsigned char e8250_read_rxd (e8250_t *uart)
   uart->lsr &= ~E8250_LSR_RRD;
   e8250_clr_int_cond (uart, E8250_IER_RRD);
 
-  e8250_check_rxd (uart);
+  uart->rxd_read_cnt += 1;
+
+  /* every uart->inp_n bytes, give the reader a break */
+  if (uart->rxd_read_cnt < uart->inp_n) {
+    e8250_check_rxd (uart);
+  }
+
+  /* rxd still empty -> reset read count */
+  if (uart->rxd[1] == 0) {
+    uart->rxd_read_cnt = 0;
+  }
 
   return (val);
 }
@@ -619,7 +633,18 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
   uart->lsr &= ~E8250_LSR_TBE;
 
   e8250_clr_int_cond (uart, E8250_IER_TBE);
-  e8250_check_txd (uart);
+
+  uart->txd_write_cnt += 1;
+
+  /* every uart->out_n bytes, give the reader a break */
+  if (uart->txd_write_cnt < uart->out_n) {
+    e8250_check_txd (uart);
+  }
+
+  /* txd still full -> reset write count */
+  if (uart->txd[1]) {
+    uart->txd_write_cnt = 0;
+  }
 }
 
 static

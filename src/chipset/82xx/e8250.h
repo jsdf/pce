@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8250.h                                        *
+ * File name:     src/chipset/82xx/e8250.h                                   *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-02 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -127,6 +127,9 @@ typedef struct {
   unsigned char  mcr;
   unsigned char  msr;
   unsigned char  scratch;
+
+  unsigned       rxd_read_cnt;
+  unsigned       txd_write_cnt;
 
   /* enables or disables the scratch register */
   unsigned char  have_scratch;
