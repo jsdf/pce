@@ -508,18 +508,18 @@ void sarm_clock (simarm_t *sim, unsigned n)
     scon_check (sim);
 
     if (sim->serport[0] != NULL) {
-      ser_clock (sim->serport[0], 1024);
+      ser_clock (sim->serport[0], 16384);
     }
 
     if (sim->serport[1] != NULL) {
-      ser_clock (sim->serport[1], 1024);
+      ser_clock (sim->serport[1], 16384);
     }
 
     if (sim->slip != NULL) {
-      slip_clock (sim->slip, 1024);
+      slip_clock (sim->slip, 16384);
     }
 
-    sim->clk_div[0] &= 1023;
+    sim->clk_div[0] &= 16383;
   }
 
   /* artificially speed up timer */
