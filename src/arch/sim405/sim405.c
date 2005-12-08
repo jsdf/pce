@@ -148,17 +148,20 @@ void s405_setup_nvram (sim405_t *sim, ini_sct_t *ini)
 static
 void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 {
-  ini_sct_t  *sct;
-  const char *model;
-  uint32_t   inv;
+  ini_sct_t     *sct;
+  const char    *model;
+  unsigned long uicinv;
+  unsigned      timer_scale;
 
   sct = ini_sct_find_sct (ini, "powerpc");
 
   model = ini_get_str_def (sct, "model", "ppc405");
+  uicinv = ini_get_lng_def (sct, "uic_invert", 0x0000007f);
+  timer_scale = ini_get_lng_def (sct, "timer_scale", 8);
 
-  inv = ini_get_lng_def (sct, "uic_invert", 0x0000007f);
-
-  pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
+  pce_log (MSG_INF, "CPU:\tmodel=%s uicinv=%08lX ts=%u\n",
+    model, uicinv, timer_scale
+  );
 
   sim->ppc = p405_new ();
 
@@ -177,8 +180,10 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 
   p405_set_dcr_fct (sim->ppc, sim, &s405_get_dcr, &s405_set_dcr);
 
+  p405_set_timer_scale (sim->ppc, timer_scale);
+
   p405uic_init (&sim->uic);
-  p405uic_set_invert (&sim->uic, inv);
+  p405uic_set_invert (&sim->uic, uicinv);
   p405uic_set_nint_f (&sim->uic, (p405uic_int_f) &p405_interrupt, sim->ppc);
 }
 
@@ -611,7 +616,7 @@ int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
     val = "";
   }
 
-  if (strcmp (msg, "break") == 0) {
+  if (msg_is_message ("emu.break", msg)) {
     if (strcmp (val, "stop") == 0) {
       sim->brk = PCE_BRK_STOP;
       return (0);
@@ -625,18 +630,18 @@ int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
       return (0);
     }
   }
-  else if (strcmp (msg, "emu.stop") == 0) {
+  else if (msg_is_message ("emu.stop", msg)) {
     sim->brk = PCE_BRK_STOP;
     return (0);
   }
-  else if (strcmp (msg, "emu.exit") == 0) {
+  else if (msg_is_message ("emu.exit", msg)) {
     sim->brk = PCE_BRK_ABORT;
     return (0);
   }
 
   pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-  if (strcmp (msg, "disk.commit") == 0) {
+  if (msg_is_message ("disk.commit", msg)) {
     if (strcmp (val, "") == 0) {
       if (dsks_commit (sim->dsks)) {
         pce_log (MSG_ERR, "commit failed for at least one disk\n");
@@ -653,6 +658,15 @@ int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
         return (1);
       }
     }
+
+    return (0);
+  }
+  else if (msg_is_message ("cpu.set_timer_scale", msg)) {
+    unsigned long v;
+
+    v = strtoul (val, NULL, 0);
+
+    p405_set_timer_scale (sim->ppc, v);
 
     return (0);
   }

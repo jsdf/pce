@@ -27,6 +27,7 @@ OBJ_EXT	:= \
 	$(pcedst)/chipset/82xx/e8250.o \
 	$(pcedst)/chipset/ppc405/uic.o \
 	$(pcedst)/devices/ata.o \
+	$(pcedst)/devices/device.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/nvram.o \
 	$(pcedst)/devices/pci.o \
@@ -41,6 +42,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/inidsk.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(pcedst)/lib/msg.o \
 	$(PCE_BLK_OBJ) \
 	$(pcedst)/libini/libini.a
 
@@ -53,6 +55,7 @@ HDR_EXT	:= \
 	devices/ata.h \
 	devices/pci.h \
 	devices/pci-ata.h \
+	devices/device.h \
 	devices/memory.h \
 	devices/nvram.h \
 	devices/serport.h \
@@ -65,6 +68,7 @@ HDR_EXT	:= \
 	lib/inidsk.h \
 	lib/load.h \
 	lib/log.h \
+	lib/msg.h \
 	$(PCE_BLK_HDR) \
 	libini/libini.h
 

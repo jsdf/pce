@@ -58,6 +58,8 @@ void p405_init (p405_t *c)
   p405_set_opcodes (c);
 
   c->pvr = P405_PVR_405GP;
+
+  c->timer_scale = 1;
 }
 
 p405_t *p405_new (void)
@@ -115,6 +117,11 @@ void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set)
   c->set_dcr = (p405_set_uint32_f) set;
 }
 
+
+void p405_set_timer_scale (p405_t *c, unsigned scale)
+{
+  c->timer_scale = scale;
+}
 
 unsigned long long p405_get_opcnt (p405_t *c)
 {
@@ -441,8 +448,7 @@ void p405_clock (p405_t *c, unsigned long n)
 
     c->clkcnt += c->delay;
 
-    /* artificially speed up timer */
-    p405_clock_tb (c, 16 * c->delay);
+    p405_clock_tb (c, c->timer_scale * c->delay);
 
     c->delay = 0;
 

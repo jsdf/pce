@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -393,6 +393,8 @@ typedef struct p405_s {
 
   p405_tlb_t         tlb;
 
+  unsigned           timer_scale;
+
   unsigned long      delay;
 
   unsigned long long oprcnt;
@@ -451,9 +453,29 @@ void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt);
 
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set);
 
+
+/*!***************************************************************************
+ * @short Set the internal timer scale
+ * @param c     The cpu context
+ * @param scale The timer scale. The timer runs this much faster than the cpu.
+ *****************************************************************************/
+void p405_set_timer_scale (p405_t *c, unsigned scale);
+
+/*!***************************************************************************
+ * @short Get the number of executed instructions
+ *****************************************************************************/
 unsigned long long p405_get_opcnt (p405_t *c);
+
+/*!***************************************************************************
+ * @short Get the number of executed clock cycles
+ *****************************************************************************/
 unsigned long long p405_get_clkcnt (p405_t *c);
+
+/*!***************************************************************************
+ * @short Get the current delay before the next instruction
+ *****************************************************************************/
 unsigned long p405_get_delay (p405_t *c);
+
 
 /*!***************************************************************************
  * @short Get a byte from a physical address
@@ -470,8 +492,19 @@ uint16_t p405_get_mem16 (p405_t *c, uint32_t addr);
  *****************************************************************************/
 uint32_t p405_get_mem32 (p405_t *c, uint32_t addr);
 
+/*!***************************************************************************
+ * @short Set an 8 bit word at a physical address
+ *****************************************************************************/
 void p405_set_mem8 (p405_t *c, uint32_t addr, uint8_t val);
+
+/*!***************************************************************************
+ * @short Set a 16 bit word at a physical address
+ *****************************************************************************/
 void p405_set_mem16 (p405_t *c, uint32_t addr, uint16_t val);
+
+/*!***************************************************************************
+ * @short Set a 32 bit word at a physical address
+ *****************************************************************************/
 void p405_set_mem32 (p405_t *c, uint32_t addr, uint32_t val);
 
 unsigned long p405_get_dcr (p405_t *c, unsigned long dcrn);
