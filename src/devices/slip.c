@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/slip.c                                         *
  * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -46,12 +46,11 @@ void slip_init (slip_t *slip)
 {
   slip->ser = NULL;
 
-  slip->buf_inp_i = 0;
-  slip->buf_inp_n = 0;
-  slip->buf_out_n = 0;
+  slip->out_cnt = 0;
 
-  slip->check_out = 0;
-  slip->check_inp = 0;
+  slip->inp_hd = NULL;
+  slip->inp_tl = NULL;
+  slip->inp_cnt = 0;
 
   slip->tun_fd = -1;
 }
@@ -115,81 +114,116 @@ int slip_set_tun (slip_t *slip, const char *name)
 }
 
 static
+slip_buf_t *slip_buf_alloc (slip_t *slip)
+{
+  slip_buf_t *buf;
+
+  buf = malloc (sizeof (slip_buf_t));
+  if (buf == NULL) {
+    return (0);
+  }
+
+  buf->next = NULL;
+  buf->i = 0;
+  buf->n = 0;
+
+  return (buf);
+}
+
+static
+void slip_buf_free (slip_t *slip, slip_buf_t *buf)
+{
+  free (buf);
+}
+
+static
 void slip_send_packet (slip_t *slip)
 {
 #ifdef PCE_ENABLE_TUN
   if (slip->tun_fd >= 0) {
 #ifdef SLIP_DEBUG
-    fprintf (stderr, "slip: send %u\n", slip->buf_out_n);
+    fprintf (stderr, "slip: send %u\n", slip->out_cnt);
     fflush (stderr);
 #endif
 
-    tun_set_packet (slip->tun_fd, slip->buf_out, slip->buf_out_n);
+    tun_set_packet (slip->tun_fd, slip->out, slip->out_cnt);
   }
 #endif
 }
 
 static
-void slip_receive_packet (slip_t *slip)
+int slip_receive_packet (slip_t *slip)
 {
 #ifdef PCE_ENABLE_TUN
   unsigned      i, j, n;
-  unsigned char buf[PCE_SLIP_BUF_MAX];
-
-  slip->buf_inp_i = 0;
-  slip->buf_inp_n = 0;
+  unsigned char tmp[PCE_SLIP_BUF_MAX];
+  slip_buf_t    *buf;
 
   if (tun_check_packet (slip->tun_fd) == 0) {
-    return;
+    return (1);
   }
 
   n = PCE_SLIP_BUF_MAX;
 
-  if (tun_get_packet (slip->tun_fd, buf, &n)) {
-    return;
+  if (tun_get_packet (slip->tun_fd, tmp, &n)) {
+    return (1);
+  }
+
+  buf = slip_buf_alloc (slip);
+  if (buf == NULL) {
+    return (1);
   }
 
   j = 0;
-  slip->buf_inp[j++] = 192;
+  buf->buf[j++] = 192;
 
   for (i = 0; i < n; i++) {
-    if (buf[i] == 192) {
+    if (tmp[i] == 192) {
       if (j < PCE_SLIP_BUF_MAX) {
-        slip->buf_inp[j++] = 219;
+        buf->buf[j++] = 219;
       }
       if (j < PCE_SLIP_BUF_MAX) {
-        slip->buf_inp[j++] = 220;
+        buf->buf[j++] = 220;
       }
     }
-    else if (buf[i] == 219) {
+    else if (tmp[i] == 219) {
       if (j < PCE_SLIP_BUF_MAX) {
-        slip->buf_inp[j++] = 219;
+        buf->buf[j++] = 219;
       }
       if (j < PCE_SLIP_BUF_MAX) {
-        slip->buf_inp[j++] = 221;
+        buf->buf[j++] = 221;
       }
     }
     else {
       if (j < PCE_SLIP_BUF_MAX) {
-        slip->buf_inp[j++] = buf[i];
+        buf->buf[j++] = tmp[i];
       }
     }
   }
 
   if (j < PCE_SLIP_BUF_MAX) {
-    slip->buf_inp[j++] = 192;
+    buf->buf[j++] = 192;
   }
 
 #ifdef SLIP_DEBUG
   fprintf (stderr, "slip: recv %u / %u\n", n, j);
 #endif
 
-  slip->buf_inp_n = j;
+  buf->n = j;
 
-  slip->check_inp = 1;
+  if (slip->inp_hd == NULL) {
+    slip->inp_hd = buf;
+  }
+  else {
+    slip->inp_tl->next = buf;
+  }
+
+  slip->inp_tl = buf;
+  slip->inp_cnt += 1;
+
+  return (0);
 #else
-  slip->buf_inp_i = 0;
-  slip->buf_inp_n = 0;
+  return (1);
 #endif
 }
 
@@ -197,23 +231,23 @@ static
 void slip_set_out (slip_t *slip, unsigned char c)
 {
   if (c == 192) {
-    if (slip->buf_out_n > 0) {
+    if (slip->out_cnt > 0) {
       slip_send_packet (slip);
     }
 
-    slip->buf_out_n = 0;
-    slip->buf_out_esc = 0;
+    slip->out_cnt = 0;
+    slip->out_esc = 0;
 
     return;
   }
 
   if (c == 219) {
-    slip->buf_out_esc = 1;
+    slip->out_esc = 1;
     return;
   }
 
-  if (slip->buf_out_esc) {
-    slip->buf_out_esc = 0;
+  if (slip->out_esc) {
+    slip->out_esc = 0;
 
     if (c == 220) {
       c = 192;
@@ -226,54 +260,66 @@ void slip_set_out (slip_t *slip, unsigned char c)
     }
   }
 
-  if (slip->buf_out_n >= PCE_SLIP_BUF_MAX) {
+  if (slip->out_cnt >= PCE_SLIP_BUF_MAX) {
     return;
   }
 
-  slip->buf_out[slip->buf_out_n++] = c;
+  slip->out[slip->out_cnt++] = c;
 }
 
 static
 void slip_uart_check_out (slip_t *slip, unsigned char val)
 {
-  slip->check_out = 1;
+  unsigned char c;
+  while (1) {
+    if (e8250_get_out (&slip->ser->uart, &c)) {
+      break;
+    }
+
+    slip_set_out (slip, c);
+  }
 }
 
 static
 void slip_uart_check_inp (slip_t *slip, unsigned char val)
 {
-  slip->check_inp = 1;
 }
 
 void slip_clock (slip_t *slip, unsigned n)
 {
-  unsigned char c;
+  while (slip->inp_hd != NULL) {
+    slip_buf_t *buf;
 
-  if (slip->check_out) {
-    slip->check_out = 0;
+    buf = slip->inp_hd;
 
-    while (1) {
-      if (e8250_get_out (&slip->ser->uart, &c)) {
+    while (buf->i < buf->n) {
+      if (e8250_receive (&slip->ser->uart, buf->buf[buf->i])) {
         break;
       }
 
-      slip_set_out (slip, c);
+      buf->i += 1;
     }
+
+    if (buf->i < buf->n) {
+      break;
+    }
+
+    if (buf->next == NULL) {
+      slip->inp_hd = NULL;
+      slip->inp_tl = NULL;
+    }
+    else {
+      slip->inp_hd = buf->next;
+    }
+
+    slip_buf_free (slip, buf);
+
+    slip->inp_cnt -= 1;
   }
 
-  if (slip->check_inp) {
-    slip->check_inp = 0;
-
-    while (slip->buf_inp_i < slip->buf_inp_n) {
-      if (e8250_receive (&slip->ser->uart, slip->buf_inp[slip->buf_inp_i])) {
-        break;
-      }
-
-      slip->buf_inp_i += 1;
+  while (slip->inp_cnt < 8) {
+    if (slip_receive_packet (slip)) {
+      break;
     }
-  }
-
-  if (slip->buf_inp_i >= slip->buf_inp_n) {
-    slip_receive_packet (slip);
   }
 }
