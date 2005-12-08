@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.c                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -127,24 +127,46 @@ unsigned long ctr_get_status (ixp_timer_counter_t *ctr)
 }
 
 static
-void ctr_clock (ixp_timer_counter_t *ctr)
+void ctr_clock (ixp_timer_counter_t *ctr, unsigned n)
 {
-  ctr->clk[1] += 1;
-
-  if (ctr->clk[1] < ctr->clk[0]) {
+  if (ctr->clk[0] == 0) {
     return;
   }
 
-  ctr->clk[1] = 0;
+  while (n >= ctr->clk[0]) {
+    if (ctr->status == 0) {
+      ctr->status = ctr->load;
+    }
 
-  if (ctr->status == 0) {
-    ctr->status = ctr->load;
+    ctr->status = (ctr->status - 1) & 0xffffffffUL;
+
+    if (ctr->status == 0) {
+      ctr_set_irq (ctr, 1);
+    }
+
+    n -= ctr->clk[0];
   }
 
-  ctr->status = (ctr->status - 1) & 0xffffffffUL;
+  while (n > 0) {
+    ctr->clk[1] += 1;
 
-  if (ctr->status == 0) {
-    ctr_set_irq (ctr, 1);
+    if (ctr->clk[1] < ctr->clk[0]) {
+      return;
+    }
+
+    ctr->clk[1] = 0;
+
+    if (ctr->status == 0) {
+      ctr->status = ctr->load;
+    }
+
+    ctr->status = (ctr->status - 1) & 0xffffffffUL;
+
+    if (ctr->status == 0) {
+      ctr_set_irq (ctr, 1);
+    }
+
+    n -= 1;
   }
 }
 
@@ -304,21 +326,21 @@ void tmr_set_uint32 (ixp_timer_t *tmr, unsigned long addr, unsigned long val)
   }
 }
 
-void tmr_clock (ixp_timer_t *tmr)
+void tmr_clock (ixp_timer_t *tmr, unsigned n)
 {
   if (tmr->cntr[0].ctrl & IXP_TIMER_ACT) {
-    ctr_clock (&tmr->cntr[0]);
+    ctr_clock (&tmr->cntr[0], n);
   }
 
   if (tmr->cntr[1].ctrl & IXP_TIMER_ACT) {
-    ctr_clock (&tmr->cntr[1]);
+    ctr_clock (&tmr->cntr[1], n);
   }
 
   if (tmr->cntr[2].ctrl & IXP_TIMER_ACT) {
-    ctr_clock (&tmr->cntr[2]);
+    ctr_clock (&tmr->cntr[2], n);
   }
 
   if (tmr->cntr[3].ctrl & IXP_TIMER_ACT) {
-    ctr_clock (&tmr->cntr[3]);
+    ctr_clock (&tmr->cntr[3], n);
   }
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-07 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -200,7 +200,7 @@ void pce_run (void)
   pce_start();
 
   while (1) {
-    sarm_clock (par_sim, 1);
+    sarm_clock (par_sim, 64);
 
     if (par_sim->brk) {
       break;

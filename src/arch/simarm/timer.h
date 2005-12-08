@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.h                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +33,7 @@ typedef struct {
   unsigned long status;
   unsigned long clear;
 
+  /* clock divisor */
   unsigned long clk[2];
 
   void          (*irq) (void *ext, unsigned char val);
@@ -66,7 +67,7 @@ int tmr_get_active (ixp_timer_t *tmr, unsigned i);
 
 void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext);
 
-void tmr_clock (ixp_timer_t *tmr);
+void tmr_clock (ixp_timer_t *tmr, unsigned n);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -504,7 +504,7 @@ void sarm_reset (simarm_t *sim)
 
 void sarm_clock (simarm_t *sim, unsigned n)
 {
-  if (sim->clk_div[0] >= 1024) {
+  if (sim->clk_div[0] >= 16384) {
     scon_check (sim);
 
     if (sim->serport[0] != NULL) {
@@ -522,7 +522,9 @@ void sarm_clock (simarm_t *sim, unsigned n)
     sim->clk_div[0] &= 1023;
   }
 
-  tmr_clock (sim->timer);
+  /* artificially speed up timer */
+  tmr_clock (sim->timer, 5 * n);
+
   arm_clock (sim->cpu, n);
 
   sim->clk_cnt += n;
