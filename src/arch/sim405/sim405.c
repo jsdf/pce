@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -150,10 +150,13 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
   const char *model;
+  uint32_t   inv;
 
   sct = ini_sct_find_sct (ini, "powerpc");
 
   model = ini_get_str_def (sct, "model", "ppc405");
+
+  inv = ini_get_lng_def (sct, "uic_invert", 0x0000007f);
 
   pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
 
@@ -175,7 +178,7 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
   p405_set_dcr_fct (sim->ppc, sim, &s405_get_dcr, &s405_set_dcr);
 
   p405uic_init (&sim->uic);
-  p405uic_set_invert (&sim->uic, 0x0000007f);
+  p405uic_set_invert (&sim->uic, inv);
   p405uic_set_nint_f (&sim->uic, (p405uic_int_f) &p405_interrupt, sim->ppc);
 }
 
@@ -564,31 +567,33 @@ void s405_reset (sim405_t *sim)
 
 void s405_clock (sim405_t *sim, unsigned n)
 {
-  if (sim->clk_div[0] >= 1024) {
-    scon_check (sim);
-
+  if (sim->clk_div[0] >= 4096) {
     if (sim->serport[0] != NULL) {
-      ser_clock (sim->serport[0], 1024);
+      ser_clock (sim->serport[0], 4096);
     }
 
     if (sim->serport[1] != NULL) {
-      ser_clock (sim->serport[1], 1024);
+      ser_clock (sim->serport[1], 4096);
     }
 
     if (sim->slip != NULL) {
-      slip_clock (sim->slip, 1024);
+      slip_clock (sim->slip, 4096);
     }
 
-    sim->clk_div[0] &= 1023;
+    sim->clk_div[1] += sim->clk_div[0];
+    sim->clk_div[0] &= 4095;
+
+    if (sim->clk_div[1] >= 16384) {
+      scon_check (sim);
+
+      sim->clk_div[0] &= 16383;
+    }
   }
 
   p405_clock (sim->ppc, n);
 
   sim->clk_cnt += n;
   sim->clk_div[0] += n;
-/*  sim->clk_div[1] += n; */
-/*  sim->clk_div[2] += n; */
-/*  sim->clk_div[3] += n; */
 }
 
 int s405_set_msg (sim405_t *sim, const char *msg, const char *val)

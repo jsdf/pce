@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.c                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -440,7 +440,9 @@ void p405_clock (p405_t *c, unsigned long n)
     n -= c->delay;
 
     c->clkcnt += c->delay;
-    p405_clock_tb (c, c->delay);
+
+    /* artificially speed up timer */
+    p405_clock_tb (c, 16 * c->delay);
 
     c->delay = 0;
 

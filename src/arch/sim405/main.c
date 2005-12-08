@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -204,7 +204,7 @@ void pce_run (void)
   pce_start();
 
   while (1) {
-    s405_clock (par_sim, 1);
+    s405_clock (par_sim, 64);
 
     if (par_sim->brk) {
       break;

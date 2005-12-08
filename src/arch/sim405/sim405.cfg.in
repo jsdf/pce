@@ -6,6 +6,12 @@
 section sim405 {
 	section powerpc {
 		model = "ppc405"
+
+		# for linux 2.6
+		uic_invert = 0x7f
+
+		# for linux 2.4 (bug in linux)
+		#uic_invert = 0x7e
 	}
 
 	# Multiple "ram" sections may be present
