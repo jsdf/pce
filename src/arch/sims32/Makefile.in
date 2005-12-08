@@ -25,6 +25,7 @@ HDR := $(foreach f,$(FILES),$(f).h)
 OBJ_EXT	:= \
 	$(pcedst)/cpu/sparc32/sparc32.a \
 	$(pcedst)/chipset/82xx/e8250.o \
+	$(pcedst)/devices/device.o \
 	$(pcedst)/devices/memory.o \
 	$(pcedst)/devices/serport.o \
 	$(pcedst)/lib/brkpt.o \
@@ -41,6 +42,7 @@ HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/sparc32/sparc32.h \
 	chipset/82xx/e8250.h \
+	devices/device.h \
 	devices/memory.h \
 	devices/serport.h \
 	lib/brkpt.h \

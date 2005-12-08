@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -180,9 +180,6 @@ void ss32_setup_serport (sims32_t *sim, ini_sct_t *ini)
       if (e8250_set_chip_str (&sim->serport[i]->uart, chip)) {
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
       }
-
-//      irqf = (e8250_irq_f) p405uic_get_irq_f (&sim->uic, irq);
-//      e8250_set_irq_f (&sim->serport[i]->uart, irqf, &sim->uic);
 
       mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
 

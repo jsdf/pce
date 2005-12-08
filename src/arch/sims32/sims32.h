@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.h                                   *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -102,20 +102,20 @@ typedef struct sims32_s {
 
 
 /*****************************************************************************
- * @short Create a new sim405 context
- * @param ini A libini sim405 section. Can be NULL.
+ * @short Create a new sims32 context
+ * @param ini A libini sims32 section. Can be NULL.
  *****************************************************************************/
 sims32_t *ss32_new (ini_sct_t *ini);
 
 /*****************************************************************************
- * @short Delete a sim405 context
+ * @short Delete a sims32 context
  *****************************************************************************/
 void ss32_del (sims32_t *sim);
 
 /*****************************************************************************
  * @short  Get the number of clock cycles
- * @return The number of clock cycles the SIM405GS3 went through since the last
- *         initialization
+ * @return The number of clock cycles the simulation went through since the
+ *         last initialization
  *****************************************************************************/
 unsigned long long ss32_get_clkcnt (sims32_t *sim);
 
