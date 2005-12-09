@@ -27,7 +27,7 @@
 
 
 static
-int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent);
+int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent);
 
 
 static
@@ -48,7 +48,7 @@ int ini_write_val (ini_val_t *val, FILE *fp)
 
   switch (val->type) {
     case INI_VAL_U32:
-      fprintf (fp, "%ld", val->val.u32);
+      fprintf (fp, "0x%lx", val->val.u32);
       break;
 
     case INI_VAL_S32:
@@ -71,7 +71,7 @@ int ini_write_val (ini_val_t *val, FILE *fp)
 }
 
 static
-int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
+int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
   if (ini_write_indent (fp, indent)) {
     return (1);
@@ -79,7 +79,7 @@ int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned inden
 
   fprintf (fp, "section %s {\n", ini_sct_get_name (sct));
 
-  if (ini_write_body (sct, fp, level, indent + 1)) {
+  if (ini_write_body (sct, fp, indent + 1)) {
     return (1);
   }
 
@@ -93,23 +93,31 @@ int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned inden
 }
 
 static
-int ini_write_section2 (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
+int ini_write_section2 (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
+  int subsct;
+
+  subsct = (sct->head != NULL);
+
   if (ini_write_indent (fp, indent)) {
     return (1);
   }
 
-  fprintf (fp, "[%s]\n", ini_sct_get_name (sct));
+  fprintf (fp, "[%s]%s", ini_sct_get_name (sct), subsct ? " {\n" : "\n");
 
-  if (ini_write_body (sct, fp, level, indent)) {
+  if (ini_write_body (sct, fp, indent + subsct)) {
     return (1);
+  }
+
+  if (subsct) {
+    fputs ("}\n", fp);
   }
 
   return (0);
 }
 
 static
-int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
+int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
   ini_val_t *val;
   ini_sct_t *down;
@@ -137,13 +145,13 @@ int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned level, unsigned indent)
 
   down = sct->head;
   while (down != NULL) {
-    if ((level == 0) && (ini_sct_get_format (down) == 2)) {
-      if (ini_write_section2 (down, fp, level + 1, indent)) {
+    if (ini_sct_get_format (down) == 2) {
+      if (ini_write_section2 (down, fp, indent)) {
         return (1);
       }
     }
     else {
-      if (ini_write_section1 (down, fp, level + 1, indent)) {
+      if (ini_write_section1 (down, fp, indent)) {
         return (1);
       }
     }
@@ -168,7 +176,7 @@ int ini_write_fp (ini_sct_t *sct, FILE *fp)
     fp
   );
 
-  r = ini_write_body (sct, fp, 0, 0);
+  r = ini_write_body (sct, fp, 0);
 
   return (r);
 }
