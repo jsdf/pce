@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/iniram.c                                           *
  * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-08-20 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -26,6 +26,7 @@
 #include <lib/iniram.h>
 #include <lib/load.h>
 #include <lib/log.h>
+#include <libini/libini.h>
 
 
 void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
@@ -33,7 +34,6 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
   ini_sct_t     *sct;
   mem_blk_t     *ram;
   const char    *fname;
-  long          tmp;
   unsigned long base, size;
 
   if (addr0 != NULL) {
@@ -43,17 +43,17 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
   sct = ini_sct_find_sct (ini, "ram");
 
   while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
+    ini_get_string (sct, "file", &fname, NULL);
+    ini_get_uint32 (sct, "base", &base, 0);
 
-    if (ini_get_lng (sct, "sizem", &tmp) == 0) {
-      size = 1024UL * 1024UL * tmp;
+    if (ini_get_uint32 (sct, "sizem", &size, 0) == 0) {
+      size *= 1024UL * 1024UL;
     }
-    if (ini_get_lng (sct, "sizek", &tmp) == 0) {
-      size = 1024UL * tmp;
+    else if (ini_get_uint32 (sct, "sizek", &size, 0) == 0) {
+      size *= 1024UL;
     }
     else {
-      size = ini_get_lng_def (sct, "size", 65536L);
+      ini_get_uint32 (sct, "size", &size, 65536);
     }
 
     pce_log (MSG_INF, "RAM:\tbase=0x%08lx size=%lu file=%s\n",
@@ -89,9 +89,9 @@ void ini_get_rom (memory_t *mem, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "rom");
 
   while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 65536L);
+    ini_get_string (sct, "file", &fname, NULL);
+    ini_get_uint32 (sct, "base", &base, 0);
+    ini_get_uint32 (sct, "size", &size, 65536);
 
     pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
       base, size, (fname != NULL) ? fname : "<none>"
