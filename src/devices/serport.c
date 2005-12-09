@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -65,6 +65,7 @@ void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 
   ser->device.free = (void *) ser_free;
   ser->device.del = (void *) ser_del;
+  ser->device.clock = (void *) ser_clock;
 
   ser->io = base;
 
@@ -133,6 +134,11 @@ void ser_del (serport_t *ser)
     ser_free (ser);
     free (ser);
   }
+}
+
+device_t *ser_get_device (serport_t *ser)
+{
+  return (&ser->device);
 }
 
 mem_blk_t *ser_get_reg (serport_t *ser)

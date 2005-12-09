@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -30,78 +30,6 @@ void sarm_break (simarm_t *sim, unsigned char val);
 
 
 static
-void sarm_setup_ram (simarm_t *sim, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *ram;
-  const char    *fname;
-  unsigned long base, size;
-
-  sct = ini_sct_find_sct (ini, "ram");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 16L * 1024L * 1024L);
-
-    pce_log (MSG_INF, "RAM:\tbase=0x%08lx size=%lu file=%s\n",
-      base, size, (fname == NULL) ? "<none>" : fname
-    );
-
-    ram = mem_blk_new (base, size, 1);
-    mem_blk_clear (ram, 0x00);
-    mem_blk_set_readonly (ram, 0);
-    mem_add_blk (sim->mem, ram, 1);
-
-    if (base == 0) {
-      sim->ram = ram;
-    }
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (ram, fname)) {
-        pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "ram");
-  }
-}
-
-static
-void sarm_setup_rom (simarm_t *sim, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *rom;
-  const char    *fname;
-  unsigned long base, size;
-
-  sct = ini_sct_find_sct (ini, "rom");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 65536L);
-
-    pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
-      base, size, (fname != NULL) ? fname : "<none>"
-    );
-
-    rom = mem_blk_new (base, size, 1);
-    mem_blk_clear (rom, 0x00);
-    mem_blk_set_readonly (rom, 1);
-    mem_add_blk (sim->mem, rom, 1);
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (rom, fname)) {
-        pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "rom");
-  }
-}
-
-static
 void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
@@ -112,7 +40,7 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
   model = ini_get_str_def (sct, "model", "armv5");
   sim->bigendian = ini_get_lng_def (sct, "bigendian", 1) != 0;
 
-  pce_log (MSG_INF, "CPU:\tmodel=%s endian=%s\n",
+  pce_log (MSG_INF, "CPU:        model=%s endian=%s\n",
     model, sim->bigendian ? "big" : "little"
   );
 
@@ -171,7 +99,7 @@ void sarm_setup_intc (simarm_t *sim, ini_sct_t *ini)
 
   mem_add_blk (sim->mem, ict_get_io (sim->intc, 0), 0);
 
-  pce_log (MSG_INF, "INTC:\tbase=0x%08lx\n", base);
+  pce_log (MSG_INF, "INTC:       base=0x%08lx\n", base);
 }
 
 static
@@ -205,7 +133,7 @@ void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 
   mem_add_blk (sim->mem, tmr_get_io (sim->timer, 0), 0);
 
-  pce_log (MSG_INF, "TIMER:\tbase=0x%08lx ts=%u\n", base, scale);
+  pce_log (MSG_INF, "TIMER:      base=0x%08lx ts=%u\n", base, scale);
 }
 
 static
@@ -218,9 +146,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
   const char    *fname;
   const char    *chip;
   ini_sct_t     *sct;
-
-  sim->serport[0] = NULL;
-  sim->serport[1] = NULL;
+  serport_t     *ser;
 
   sct = ini_sct_find_sct (ini, "serial");
   if (sct == NULL) {
@@ -228,44 +154,47 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
   }
 
   i = 0;
-  while ((i < 2) && (sct != NULL)) {
-    base = ini_get_lng_def (sct, "io", 0xc0030000UL);
-    irq = ini_get_lng_def (sct, "irq", 2);
-    fifo = ini_get_lng_def (sct, "fifo", 16);
-    chip = ini_get_str_def (sct, "uart", "8250");
-    fname = ini_get_str (sct, "file");
+  while (sct != NULL) {
+    ini_get_uint32 (sct, "io", &base, 0xc0030000UL);
+    ini_get_uint16 (sct, "irq", &irq, 2);
+    ini_get_uint16 (sct, "fifo", &fifo, 16);
+    ini_get_string (sct, "uart", &chip, "8250");
+    ini_get_string (sct, "file", &fname, NULL);
 
-    pce_log (MSG_INF, "UART%u:\tio=0x%08lx irq=%u uart=%s file=%s\n",
+    pce_log (MSG_INF, "UART%02u:     io=0x%08lx irq=%u uart=%s file=%s\n",
       i, base, irq, chip, (fname == NULL) ? "<none>" : fname
     );
 
-    sim->serport[i] = ser_new (base, 2);
-    if (sim->serport[i] == NULL) {
+    ser = ser_new (base, 2);
+
+    if (ser == NULL) {
       pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
         base, irq, (fname == NULL) ? "<none>" : fname
       );
     }
     else {
       if (fname != NULL) {
-        if (ser_set_fname (sim->serport[i], fname)) {
+        if (ser_set_fname (ser, fname)) {
           pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
         }
       }
       else {
-        ser_set_fp (sim->serport[i], stdout, 0);
+        ser_set_fp (ser, stdout, 0);
       }
 
-      e8250_set_buf_size (ser_get_uart (sim->serport[i]), fifo, fifo);
+      e8250_set_buf_size (ser_get_uart (ser), fifo, fifo);
 
-      if (e8250_set_chip_str (&sim->serport[i]->uart, chip)) {
+      if (e8250_set_chip_str (ser_get_uart (ser), chip)) {
         pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
       }
 
-      e8250_set_irq_f (&sim->serport[i]->uart,
+      e8250_set_irq_f (ser_get_uart (ser),
         ict_get_irq_f (sim->intc, irq), sim->intc
       );
 
-      mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
+      mem_add_blk (sim->mem, ser_get_reg (ser), 0);
+
+      dev_lst_add (&sim->dev, ser_get_device (ser));
 
       i += 1;
     }
@@ -275,28 +204,51 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 }
 
 static
+void sarm_setup_console (simarm_t *sim, ini_sct_t *ini)
+{
+  unsigned  seridx;
+  ini_sct_t *sct;
+
+  /* default */
+  sim->console = dev_lst_get_ext (&sim->dev, "uart", 0);
+
+  sct = ini_sct_find_sct (ini, "console");
+  if (sct == NULL) {
+    return;
+  }
+
+  ini_get_uint16 (sct, "serial", &seridx, 0);
+
+  pce_log (MSG_INF, "CONSOLE:    serport=%u\n", seridx);
+
+  sim->console = dev_lst_get_ext (&sim->dev, "uart", seridx);
+
+  if (sim->console == NULL) {
+    pce_log (MSG_ERR, "*** no serial port (%u)\n", seridx);
+  }
+}
+
+static
 void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 {
   ini_sct_t  *sct;
-  unsigned   ser;
+  unsigned   seridx;
   const char *name;
+  device_t   *ser;
 
   sct = ini_sct_find_sct (ini, "slip");
   if (sct == NULL) {
     return;
   }
 
-  ser = ini_get_lng_def (sct, "serial", 0);
-  name = ini_get_str_def (sct, "interface", "tun0");
+  ini_get_uint16 (sct, "serial", &seridx, 0);
+  ini_get_string (sct, "interface", &name, "tun0");
 
-  pce_log (MSG_INF, "SLIP:\tserport=%u interface=%s\n", ser, name);
+  pce_log (MSG_INF, "SLIP:       serport=%u interface=%s\n", seridx, name);
 
-  if (ser >= 2) {
-    return;
-  }
-
-  if (sim->serport[ser] == NULL) {
-    pce_log (MSG_ERR, "*** no serial port (%u)\n", ser);
+  ser = dev_lst_get (&sim->dev, "uart", seridx);
+  if (ser == NULL) {
+    pce_log (MSG_ERR, "*** no serial port (%u)\n", seridx);
     return;
   }
 
@@ -305,7 +257,7 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
     return;
   }
 
-  slip_set_serport (sim->slip, sim->serport[ser]);
+  slip_set_serport (sim->slip, ser->ext);
 
   if (slip_set_tun (sim->slip, name)) {
     pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n", name);
@@ -334,7 +286,7 @@ void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 
   pci_set_irq_f (&sim->pci->bus, NULL, NULL);
 
-  pce_log (MSG_INF, "PCI:\tinitialized\n");
+  pce_log (MSG_INF, "PCI:        initialized\n");
 }
 
 static
@@ -355,7 +307,7 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
   pcidev = ini_get_lng_def (sct, "pci_device", 1);
   pciirq = ini_get_lng_def (sct, "pci_irq", 31);
 
-  pce_log (MSG_INF, "PCI-ATA:\tpcidev=%u irq=%u\n", pcidev, pciirq);
+  pce_log (MSG_INF, "PCI-ATA:    pcidev=%u irq=%u\n", pcidev, pciirq);
 
   pci_ixp_add_device (sim->pci, &sim->pciata.pci);
   pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
@@ -376,7 +328,7 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
       pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
     }
     else {
-      pce_log (MSG_INF, "PCI-ATA:\tchn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
+      pce_log (MSG_INF, "PCI-ATA:    chn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
         chn, dev, drv,
         (unsigned long) dsk->visible_c,
         (unsigned long) dsk->visible_h,
@@ -437,16 +389,22 @@ simarm_t *sarm_new (ini_sct_t *ini)
     sim->clk_div[i] = 0;
   }
 
+  sim->cfg = ini;
+
   sim->brkpt = NULL;
+
+  dev_lst_init (&sim->dev);
 
   sim->mem = mem_new();
 
-  sarm_setup_ram (sim, ini);
-  sarm_setup_rom (sim, ini);
+  ini_get_ram (sim->mem, ini, &sim->ram);
+  ini_get_rom (sim->mem, ini);
+
   sarm_setup_cpu (sim, ini);
   sarm_setup_intc (sim, ini);
   sarm_setup_timer (sim, ini);
   sarm_setup_serport (sim, ini);
+  sarm_setup_console (sim, ini);
   sarm_setup_slip (sim, ini);
   sarm_setup_disks (sim, ini);
   sarm_setup_pci (sim, ini);
@@ -470,15 +428,14 @@ void sarm_del (simarm_t *sim)
 
   slip_del (sim->slip);
 
-  ser_del (sim->serport[1]);
-  ser_del (sim->serport[0]);
-
   tmr_del (sim->timer);
   ict_del (sim->intc);
 
   arm_del (sim->cpu);
 
   mem_del (sim->mem);
+
+  dev_lst_free (&sim->dev);
 
   free (sim);
 }
@@ -497,8 +454,8 @@ void sarm_break (simarm_t *sim, unsigned char val)
 
 void sarm_set_keycode (simarm_t *sim, unsigned char val)
 {
-  if (sim->serport[0] != NULL) {
-    ser_receive (sim->serport[0], val);
+  if (sim->console != NULL) {
+    ser_receive (sim->console, val);
   }
 }
 
@@ -510,14 +467,6 @@ void sarm_reset (simarm_t *sim)
 void sarm_clock (simarm_t *sim, unsigned n)
 {
   if (sim->clk_div[0] >= 4096) {
-    if (sim->serport[0] != NULL) {
-      ser_clock (sim->serport[0], 4096);
-    }
-
-    if (sim->serport[1] != NULL) {
-      ser_clock (sim->serport[1], 4096);
-    }
-
     if (sim->slip != NULL) {
       slip_clock (sim->slip, 4096);
     }
@@ -531,6 +480,8 @@ void sarm_clock (simarm_t *sim, unsigned n)
       sim->clk_div[0] &= 16383;
     }
   }
+
+  dev_lst_clock (&sim->dev, n);
 
   tmr_clock (sim->timer, n);
 
@@ -592,6 +543,13 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
     v = strtoul (val, NULL, 0);
 
     tmr_set_scale (sim->timer, v);
+
+    return (0);
+  }
+  else if (msg_is_message ("emu.config.save", msg)) {
+    if (ini_write (sim->cfg, val)) {
+      return (1);
+    }
 
     return (0);
   }

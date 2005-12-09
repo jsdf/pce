@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/device.c                                       *
  * Created:       2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -37,6 +37,8 @@ void dev_init (device_t *dev, void *ext, const char *type)
 
   dev->free = NULL;
   dev->del = NULL;
+
+  dev->clock = NULL;
 
   dev->ext = ext;
 }
@@ -70,9 +72,8 @@ void dev_del (device_t *dev)
   else {
     dev_free (dev);
     free (dev->ext);
+    free (dev);
   }
-
-  free (dev);
 }
 
 void dev_ref (device_t *dev)
@@ -153,4 +154,32 @@ device_t *dev_lst_get (dev_list_t *lst, const char *type, unsigned idx)
   }
 
   return (NULL);
+}
+
+void *dev_lst_get_ext (dev_list_t *lst, const char *type, unsigned idx)
+{
+  device_t *dev;
+
+  dev = dev_lst_get (lst, type, idx);
+
+  if (dev == NULL) {
+    return (NULL);
+  }
+
+  return (dev->ext);
+}
+
+void dev_lst_clock (dev_list_t *lst, unsigned n)
+{
+  device_t *dev;
+
+  dev = lst->head;
+
+  while (dev != NULL) {
+    if (dev->clock != NULL) {
+      dev->clock (dev->ext, n);
+    }
+
+    dev = dev->next;
+  }
 }

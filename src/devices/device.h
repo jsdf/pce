@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/device.h                                       *
  * Created:       2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -35,6 +35,8 @@ typedef struct device_s {
   void            (*free) (struct device_s *dev);
   void            (*del) (struct device_s *dev);
 
+  void            (*clock) (void *ext, unsigned n);
+
   void            *ext;
 } device_t;
 
@@ -58,9 +60,13 @@ void dev_unref (device_t *dev);
 
 void dev_lst_init (dev_list_t *lst);
 void dev_lst_free (dev_list_t *lst);
+
 void dev_lst_add (dev_list_t *lst, device_t *dev);
 void dev_lst_insert (dev_list_t *lst, device_t *dev);
 device_t *dev_lst_get (dev_list_t *lst, const char *type, unsigned idx);
+void *dev_lst_get_ext (dev_list_t *lst, const char *type, unsigned idx);
+
+void dev_lst_clock (dev_list_t *lst, unsigned n);
 
 
 #endif

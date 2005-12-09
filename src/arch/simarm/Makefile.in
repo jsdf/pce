@@ -38,6 +38,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/ihex.o \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/inidsk.o \
+	$(pcedst)/lib/iniram.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/lib/msg.o \
@@ -62,6 +63,7 @@ HDR_EXT	:= \
 	lib/ihex.h \
 	lib/srec.h \
 	lib/inidsk.h \
+	lib/iniram.h \
 	lib/load.h \
 	lib/log.h \
 	lib/msg.h \

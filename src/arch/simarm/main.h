@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.h                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -36,6 +36,8 @@
 #include <lib/log.h>
 #include <lib/cmd.h>
 #include <lib/msg.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
 
 #include <cpu/arm/arm.h>
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -247,7 +247,7 @@ ini_sct_t *pce_load_config (const char *fname)
   if (fname != NULL) {
     ini = ini_read (fname);
     if (ini != NULL) {
-      pce_log (MSG_INF, "pce:\tusing config file '%s'\n", fname);
+      pce_log (MSG_INF, "pce: using config file '%s'\n", fname);
       return (ini);
     }
   }
@@ -356,8 +356,7 @@ int main (int argc, char *argv[])
 
   sct = ini_sct_find_sct (ini, "simarm");
   if (sct == NULL) {
-    pce_log (MSG_ERR, "section 'simarm' not found in config file\n");
-    return (1);
+    sct = ini;
   }
 
   par_sim = sarm_new (sct);

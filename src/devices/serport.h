@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -82,9 +82,26 @@ typedef struct serport_s {
  *****************************************************************************/
 void ser_init (serport_t *ser, unsigned long base, unsigned shift);
 
+/*!***************************************************************************
+ * @short Create a new serial port context
+ * @param base  The I/O base address
+ * @param shift The 8250 register address shift
+ *****************************************************************************/
 serport_t *ser_new (unsigned long base, unsigned shift);
+
+/*!***************************************************************************
+ * @short Free the resources used by a serial port context
+ * @param ser The serial port context
+ *****************************************************************************/
 void ser_free (serport_t *ser);
+
+/*!***************************************************************************
+ * @short Delete a serial port context
+ * @param ser The serial port context
+ *****************************************************************************/
 void ser_del (serport_t *ser);
+
+device_t *ser_get_device (serport_t *ser);
 
 mem_blk_t *ser_get_reg (serport_t *ser);
 e8250_t *ser_get_uart (serport_t *ser);
