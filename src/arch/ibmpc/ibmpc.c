@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -53,9 +53,9 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
     return;
   }
 
-  fname = ini_get_str (sct, "file");
-  base = ini_get_lng_def (sct, "base", 0);
-  size = ini_get_lng_def (sct, "size", 65536L);
+  ini_get_string (sct, "file", &fname, NULL);
+  ini_get_uint32 (sct, "base", &base, 0);
+  ini_get_uint32 (sct, "size", &size, 65536);
 
   pce_log (MSG_INF, "NVRAM:\tbase=0x%08lx size=%lu file=%s\n",
     base, size, (fname == NULL) ? "<>" : fname
@@ -567,9 +567,8 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "parport");
 
   while ((i < 4) && (sct != NULL)) {
-    base = ini_get_lng_def (sct, "io", defbase[i]);
-
-    fname = ini_get_str (sct, "file");
+    ini_get_uint32 (sct, "io", &base, defbase[i]);
+    ini_get_string (sct, "file", &fname, NULL);
 
     pce_log (MSG_INF, "LPT%u:\tio=0x%04lx file=%s\n",
       i + 1, base, (fname == NULL) ? "<none>" : fname
@@ -618,10 +617,10 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "serial");
 
   while ((i < 4) && (sct != NULL)) {
-    base = ini_get_lng_def (sct, "io", defbase[i]);
-    irq = ini_get_lng_def (sct, "irq", defirq[i]);
-    chip = ini_get_str_def (sct, "uart", "8250");
-    fname = ini_get_str (sct, "file");
+    ini_get_uint32 (sct, "io", &base, defbase[i]);
+    ini_get_uint16 (sct, "irq", &irq, defirq[i]);
+    ini_get_string (sct, "uart", &chip, "8250");
+    ini_get_string (sct, "file", &fname, NULL);
 
     pce_log (MSG_INF, "COM%u:\tio=0x%04lx irq=%u uart=%s file=%s\n",
       i + 1, base, irq, chip, (fname == NULL) ? "<none>" : fname
@@ -721,9 +720,9 @@ void pc_load_mem (ibmpc_t *pc, ini_sct_t *ini)
   sct = ini_sct_find_sct (ini, "load");
 
   while (sct != NULL) {
-    fmt = ini_get_str_def (sct, "format", "binary");
-    fname = ini_get_str (sct, "file");
-    addr = ini_get_lng_def (sct, "base", 0);
+    ini_get_string (sct, "format", &fmt, "binary");
+    ini_get_string (sct, "file", &fname, NULL);
+    ini_get_uint32 (sct, "base", &addr, 0);
 
     if (fname != NULL) {
       pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",

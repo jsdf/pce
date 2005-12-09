@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -31,80 +31,6 @@ static void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val);
 
 void s405_break (sim405_t *sim, unsigned char val);
 
-
-static
-void s405_setup_ram (sim405_t *sim, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *ram;
-  const char    *fname;
-  unsigned long base, size;
-
-  sim->ram = NULL;
-
-  sct = ini_sct_find_sct (ini, "ram");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 16L * 1024L * 1024L);
-
-    pce_log (MSG_INF, "RAM:\tbase=0x%08lx size=%lu file=%s\n",
-      base, size, (fname == NULL) ? "<none>" : fname
-    );
-
-    ram = mem_blk_new (base, size, 1);
-    mem_blk_clear (ram, 0x00);
-    mem_blk_set_readonly (ram, 0);
-    mem_add_blk (sim->mem, ram, 1);
-
-    if (base == 0) {
-      sim->ram = ram;
-    }
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (ram, fname)) {
-        pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "ram");
-  }
-}
-
-static
-void s405_setup_rom (sim405_t *sim, ini_sct_t *ini)
-{
-  ini_sct_t     *sct;
-  mem_blk_t     *rom;
-  const char    *fname;
-  unsigned long base, size;
-
-  sct = ini_sct_find_sct (ini, "rom");
-
-  while (sct != NULL) {
-    fname = ini_get_str (sct, "file");
-    base = ini_get_lng_def (sct, "base", 0);
-    size = ini_get_lng_def (sct, "size", 65536L);
-
-    pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
-      base, size, (fname != NULL) ? fname : "<none>"
-    );
-
-    rom = mem_blk_new (base, size, 1);
-    mem_blk_clear (rom, 0x00);
-    mem_blk_set_readonly (rom, 1);
-    mem_add_blk (sim->mem, rom, 1);
-
-    if (fname != NULL) {
-      if (pce_load_blk_bin (rom, fname)) {
-        pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
-      }
-    }
-
-    sct = ini_sct_find_next (sct, "rom");
-  }
-}
 
 static
 void s405_setup_nvram (sim405_t *sim, ini_sct_t *ini)
@@ -413,8 +339,9 @@ sim405_t *s405_new (ini_sct_t *ini)
 
   sim->mem = mem_new();
 
-  s405_setup_ram (sim, ini);
-  s405_setup_rom (sim, ini);
+  ini_get_ram (sim->mem, ini, &sim->ram);
+  ini_get_rom (sim->mem, ini);
+
   s405_setup_nvram (sim, ini);
   s405_setup_ppc (sim, ini);
   s405_setup_serport (sim, ini);
@@ -661,7 +588,7 @@ int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
 
     return (0);
   }
-  else if (msg_is_message ("cpu.set_timer_scale", msg)) {
+  else if (msg_is_message ("emu.timer_scale", msg)) {
     unsigned long v;
 
     v = strtoul (val, NULL, 0);

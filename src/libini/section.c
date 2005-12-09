@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/libini/section.c                                       *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,7 +23,7 @@
 /* $Id$ */
 
 
-#include "libini.h"
+#include <libini/libini.h>
 
 
 ini_sct_t *ini_sct_new (const char *name)
@@ -316,7 +316,7 @@ ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name)
   return (NULL);
 }
 
-int ini_set_lng (ini_sct_t *sct, const char *name, long v)
+int ini_set_uint32 (ini_sct_t *sct, const char *name, unsigned long v)
 {
   ini_val_t *val;
 
@@ -325,7 +325,21 @@ int ini_set_lng (ini_sct_t *sct, const char *name, long v)
     return (1);
   }
 
-  ini_val_set_lng (val, v);
+  ini_val_set_uint32 (val, v);
+
+  return (0);
+}
+
+int ini_set_sint32 (ini_sct_t *sct, const char *name, long v)
+{
+  ini_val_t *val;
+
+  val = ini_sct_new_val (sct, name);
+  if (val == NULL) {
+    return (1);
+  }
+
+  ini_val_set_sint32 (val, v);
 
   return (0);
 }
@@ -358,41 +372,112 @@ int ini_set_str (ini_sct_t *sct, const char *name, const char *v)
   return (0);
 }
 
-int ini_get_lng (const ini_sct_t *sct, const char *name, long *ret)
+int ini_get_uint32 (const ini_sct_t *sct, const char *name, unsigned long *ret, unsigned long def)
 {
   ini_val_t *val;
+
+  *ret = def;
 
   val = ini_sct_find_val (sct, name);
   if (val == NULL) {
     return (1);
   }
 
-  if (val->type != INI_VAL_LNG) {
+  if (ini_val_get_uint32 (val, ret)) {
     return (1);
   }
-
-  *ret = val->val.lng;
 
   return (0);
 }
 
-int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret)
+int ini_get_sint32 (const ini_sct_t *sct, const char *name, long *ret, long def)
 {
   ini_val_t *val;
+
+  *ret = def;
 
   val = ini_sct_find_val (sct, name);
   if (val == NULL) {
     return (1);
   }
 
-  if (val->type == INI_VAL_DBL) {
-    *ret = val->val.dbl;
-  }
-  else if (val->type == INI_VAL_LNG) {
-    *ret = (double) val->val.lng;
-  }
-  else {
+  if (ini_val_get_sint32 (val, ret)) {
     return (1);
+  }
+
+  return (0);
+}
+
+int ini_get_uint16 (const ini_sct_t *sct, const char *name, unsigned *ret, unsigned def)
+{
+  ini_val_t *val;
+
+  *ret = def;
+
+  val = ini_sct_find_val (sct, name);
+  if (val == NULL) {
+    return (1);
+  }
+
+  if (ini_val_get_uint16 (val, ret)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int ini_get_sint16 (const ini_sct_t *sct, const char *name, int *ret, int def)
+{
+  ini_val_t *val;
+
+  *ret = def;
+
+  val = ini_sct_find_val (sct, name);
+  if (val == NULL) {
+    return (1);
+  }
+
+  if (ini_val_get_sint16 (val, ret)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret, double def)
+{
+  ini_val_t *val;
+
+  *ret = def;
+
+  val = ini_sct_find_val (sct, name);
+  if (val == NULL) {
+    return (1);
+  }
+
+  if (ini_val_get_dbl (val, ret)) {
+    return (1);
+  }
+
+  return (0);
+}
+
+int ini_get_string (const ini_sct_t *sct, const char *name, const char **ret, const char *def)
+{
+  const char *tmp;
+  ini_val_t  *val;
+
+  *ret = def;
+
+  val = ini_sct_find_val (sct, name);
+  if (val == NULL) {
+    return (1);
+  }
+
+  tmp = ini_val_get_str (val);
+
+  if (tmp != NULL) {
+    *ret = tmp;
   }
 
   return (0);
@@ -400,22 +485,19 @@ int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret)
 
 const char *ini_get_str (const ini_sct_t *sct, const char *name)
 {
-  ini_val_t *val;
+  ini_val_t  *val;
 
   val = ini_sct_find_val (sct, name);
   if (val == NULL) {
     return (NULL);
   }
 
-  if (val->type != INI_VAL_STR) {
-    return (NULL);
-  }
-
-  return (val->val.str);
+  return (ini_val_get_str (val));
 }
 
 long ini_get_lng_def (ini_sct_t *sct, const char *name, long def)
 {
+  long      ret;
   ini_val_t *val;
 
   val = ini_sct_find_val (sct, name);
@@ -424,11 +506,11 @@ long ini_get_lng_def (ini_sct_t *sct, const char *name, long def)
     return (def);
   }
 
-  if (val->type != INI_VAL_LNG) {
+  if (ini_val_get_sint32 (val, &ret)) {
     return (def);
   }
 
-  return (val->val.lng);
+  return (ret);
 }
 
 double ini_get_dbl_def (ini_sct_t *sct, const char *name, double def)

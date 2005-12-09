@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -86,6 +86,11 @@ void sig_int (int s)
 void sig_segv (int s)
 {
   fprintf (stderr, "pce: segmentation fault\n");
+
+  if ((par_sim != NULL) && (par_sim->ppc != NULL)) {
+    fprintf (stderr, "  PC=%08lX\n", (unsigned long) p405_get_pc (par_sim->ppc));
+  }
+
   fflush (stderr);
 
   exit (1);

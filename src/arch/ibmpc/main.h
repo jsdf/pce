@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -73,6 +73,7 @@ extern unsigned long par_int28;
 #include <lib/log.h>
 #include <lib/hexdump.h>
 #include <lib/inidsk.h>
+#include <lib/iniram.h>
 #include <lib/ihex.h>
 #include <lib/load.h>
 #include <lib/msg.h>

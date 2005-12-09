@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/libini/write.c                                         *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,7 +23,7 @@
 /* $Id$ */
 
 
-#include "libini.h"
+#include <libini/libini.h>
 
 
 static
@@ -44,26 +44,23 @@ int ini_write_indent (FILE *fp, unsigned level)
 static
 int ini_write_val (ini_val_t *val, FILE *fp)
 {
-  long       lng;
-  double     dbl;
-  const char *str;
-
   fprintf (fp, "%s = ", val->name);
 
   switch (val->type) {
-    case INI_VAL_LNG:
-      ini_val_get_lng (val, &lng);
-      fprintf (fp, "%ld", lng);
+    case INI_VAL_U32:
+      fprintf (fp, "%ld", val->val.u32);
+      break;
+
+    case INI_VAL_S32:
+      fprintf (fp, "%ld", val->val.s32);
       break;
 
     case INI_VAL_DBL:
-      ini_val_get_dbl (val, &dbl);
-      fprintf (fp, "%f", dbl);
+      fprintf (fp, "%f", val->val.dbl);
       break;
 
     case INI_VAL_STR:
-      str = ini_val_get_str (val);
-      fprintf (fp, "\"%s\"", str);
+      fprintf (fp, "\"%s\"", val->val.str);
       break;
 
     default:

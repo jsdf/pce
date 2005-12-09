@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/libini/read.c                                          *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,8 +23,8 @@
 /* $Id$ */
 
 
-#include "libini.h"
-#include "scanner.h"
+#include <libini/libini.h>
+#include <libini/scanner.h>
 
 #include <math.h>
 
@@ -187,7 +187,7 @@ int parse_unsigned (scanner_t *scn, ini_val_t *val, int neg)
     lng = -lng;
   }
 
-  ini_val_set_lng (val, lng);
+  ini_val_set_sint32 (val, lng);
 
   return (0);
 }
@@ -231,7 +231,7 @@ int parse_number (scanner_t *scn, ini_val_t *val, int neg)
       lng = -lng;
     }
 
-    ini_val_set_lng (val, lng);
+    ini_val_set_sint32 (val, lng);
 
     return (0);
   }

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/libini/value.c                                         *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,7 +23,7 @@
 /* $Id$ */
 
 
-#include "libini.h"
+#include <libini/libini.h>
 
 
 ini_val_t *ini_val_new (const char *name)
@@ -44,14 +44,14 @@ ini_val_t *ini_val_new (const char *name)
   strcpy (val->name, name);
 
   val->next = NULL;
-  val->type = INI_VAL_LNG;
-  val->val.lng = 0;
+  val->type = INI_VAL_U32;
+  val->val.s32 = 0;
 
   return (val);
 }
 
 static
-void ini_val_del_val (ini_val_t *val)
+void ini_val_free (ini_val_t *val)
 {
   if (val->type == INI_VAL_STR) {
     free (val->val.str);
@@ -66,7 +66,7 @@ void ini_val_del (ini_val_t *val)
       ini_val_del (val->next);
     }
 
-    ini_val_del_val (val);
+    ini_val_free (val);
 
     free (val->name);
     free (val);
@@ -105,17 +105,25 @@ ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name)
   return (NULL);
 }
 
-void ini_val_set_lng (ini_val_t *val, long v)
+void ini_val_set_uint32 (ini_val_t *val, unsigned long v)
 {
-  ini_val_del_val (val);
+  ini_val_free (val);
 
-  val->type = INI_VAL_LNG;
-  val->val.lng = v;
+  val->type = INI_VAL_U32;
+  val->val.u32 = v;
+}
+
+void ini_val_set_sint32 (ini_val_t *val, long v)
+{
+  ini_val_free (val);
+
+  val->type = INI_VAL_S32;
+  val->val.s32 = v;
 }
 
 void ini_val_set_dbl (ini_val_t *val, double v)
 {
-  ini_val_del_val (val);
+  ini_val_free (val);
 
   val->type = INI_VAL_DBL;
   val->val.dbl = v;
@@ -123,7 +131,7 @@ void ini_val_set_dbl (ini_val_t *val, double v)
 
 void ini_val_set_str (ini_val_t *val, const char *v)
 {
-  ini_val_del_val (val);
+  ini_val_free (val);
 
   val->type = INI_VAL_STR;
 
@@ -135,26 +143,100 @@ void ini_val_set_str (ini_val_t *val, const char *v)
   strcpy (val->val.str, v);
 }
 
-int ini_val_get_lng (const ini_val_t *val, long *v)
+int ini_val_get_uint32 (const ini_val_t *val, unsigned long *v)
 {
-  if (val->type != INI_VAL_LNG) {
+  if (val->type == INI_VAL_U32) {
+    *v = val->val.u32;
+    return (0);
+  }
+
+  if (val->type == INI_VAL_S32) {
+    *v = val->val.s32;
+    return (0);
+  }
+
+  if (val->type == INI_VAL_DBL) {
+    *v = val->val.dbl;
+    return (0);
+  }
+
+  return (1);
+}
+
+int ini_val_get_sint32 (const ini_val_t *val, long *v)
+{
+  if (val->type == INI_VAL_S32) {
+    *v = val->val.s32;
+    return (0);
+  }
+
+  if (val->type == INI_VAL_U32) {
+    if (val->val.u32 > 0x7fffffffUL) {
+      return (1);
+    }
+    *v = val->val.u32;
+    return (0);
+  }
+
+  if (val->type == INI_VAL_DBL) {
+    if ((val->val.dbl < -0x7fffffff) || (val->val.dbl > 0x7fffffff)) {
+      return (1);
+    }
+    *v = val->val.dbl;
+    return (0);
+  }
+
+  return (1);
+}
+
+int ini_val_get_uint16 (const ini_val_t *val, unsigned *v)
+{
+  unsigned long tmp;
+
+  if (ini_val_get_uint32 (val, &tmp)) {
     return (1);
   }
 
-  *v = val->val.lng;
+  *v = tmp;
+
+  return (0);
+}
+
+int ini_val_get_sint16 (const ini_val_t *val, int *v)
+{
+  long tmp;
+
+  if (ini_val_get_sint32 (val, &tmp)) {
+    return (1);
+  }
+
+  if ((tmp < -0x7fff) || (tmp > 0x7fff)) {
+    return (1);
+  }
+
+  *v = tmp;
 
   return (0);
 }
 
 int ini_val_get_dbl (const ini_val_t *val, double *v)
 {
-  if (val->type != INI_VAL_DBL) {
-    return (1);
+  if (val->type == INI_VAL_DBL) {
+    *v = val->val.dbl;
+    return (0);
   }
 
-  *v = val->val.dbl;
+  if (val->type == INI_VAL_U32) {
+    *v = val->val.u32;
+    return (0);
+  }
 
-  return (0);
+  if (val->type == INI_VAL_S32) {
+    *v = val->val.s32;
+    return (0);
+  }
+
+  return (1);
 }
 
 const char *ini_val_get_str (const ini_val_t *val)

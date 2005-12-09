@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     scanner.c                                                  *
+ * File name:     src/libini/scanner.c                                       *
  * Created:       2000-12-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2000-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2000-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "scanner.h"
+#include <libini/scanner.h>
 
 
 static unsigned scn_get_char (scanner_t *scn);

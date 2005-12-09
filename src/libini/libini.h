@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/libini/libini.h                                        *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,13 +38,20 @@
 #define LIBINI_VERSION_STR "0.1.0"
 
 
+/* don't use */
+#define ini_val_get_lng ini_val_get_sint32
+#define ini_val_set_lng ini_val_set_sint32
+#define ini_get_lng ini_get_sint32
+
+
 /*!***************************************************************************
  * @short The value type identifiers
  *****************************************************************************/
 typedef enum {
-  INI_VAL_LNG = 1,
-  INI_VAL_DBL = 2,
-  INI_VAL_STR = 3
+  INI_VAL_U32 = 1,
+  INI_VAL_S32 = 2,
+  INI_VAL_DBL = 3,
+  INI_VAL_STR = 4
 } ini_type_t;
 
 
@@ -52,9 +59,10 @@ typedef enum {
  * @short The value union
  *****************************************************************************/
 typedef union {
-  char   *str;
-  long   lng;
-  double dbl;
+  char          *str;
+  unsigned long u32;
+  long          s32;
+  double        dbl;
 } ini_val_u;
 
 
@@ -115,11 +123,18 @@ ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name);
 
 
 /*!***************************************************************************
+ * @short Set a value to an unsigned long value
+ * @param val The value
+ * @param v   The long value
+ *****************************************************************************/
+void ini_val_set_uint32 (ini_val_t *val, unsigned long v);
+
+/*!***************************************************************************
  * @short Set a value to a long value
  * @param val The value
  * @param v   The long value
  *****************************************************************************/
-void ini_val_set_lng (ini_val_t *val, long v);
+void ini_val_set_sint32 (ini_val_t *val, long v);
 
 /*!***************************************************************************
  * @short Set a value to a double value
@@ -137,12 +152,36 @@ void ini_val_set_str (ini_val_t *val, const char *v);
 
 
 /*!***************************************************************************
+ * @short  Get an unsigned long value
+ * @param  val The value
+ * @retval v   The long value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_val_get_uint32 (const ini_val_t *val, unsigned long *v);
+
+/*!***************************************************************************
  * @short  Get a long value
  * @param  val The value
  * @retval v   The long value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
-int ini_val_get_lng (const ini_val_t *val, long *v);
+int ini_val_get_sint32 (const ini_val_t *val, long *v);
+
+/*!***************************************************************************
+ * @short  Get an unsigned int value
+ * @param  val The value
+ * @retval v   The long value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_val_get_uint16 (const ini_val_t *val, unsigned *v);
+
+/*!***************************************************************************
+ * @short  Get an int value
+ * @param  val The value
+ * @retval v   The long value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_val_get_sint16 (const ini_val_t *val, int *v);
 
 /*!***************************************************************************
  * @short  Get a double value
@@ -299,13 +338,22 @@ ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name);
 
 
 /*!***************************************************************************
+ * @short  Set an unsigned long value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @param  v    The value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_set_uint32 (ini_sct_t *sct, const char *name, unsigned long v);
+
+/*!***************************************************************************
  * @short  Set a long value
  * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
  * @param  v    The long value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
-int ini_set_lng (ini_sct_t *sct, const char *name, long v);
+int ini_set_sint32 (ini_sct_t *sct, const char *name, long v);
 
 /*!***************************************************************************
  * @short  Set a double value
@@ -327,13 +375,40 @@ int ini_set_str (ini_sct_t *sct, const char *name, const char *ret);
 
 
 /*!***************************************************************************
- * @short  Get a long value
+ * @short  Get a value
  * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
  * @retval ret  The return value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
-int ini_get_lng (const ini_sct_t *sct, const char *name, long *ret);
+int ini_get_uint32 (const ini_sct_t *sct, const char *name, unsigned long *ret, unsigned long def);
+
+/*!***************************************************************************
+ * @short  Get a value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_sint32 (const ini_sct_t *sct, const char *name, long *ret, long def);
+
+/*!***************************************************************************
+ * @short  Get a value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_uint16 (const ini_sct_t *sct, const char *name, unsigned *ret, unsigned def);
+
+/*!***************************************************************************
+ * @short  Get a value
+ * @param  sct  The base section
+ * @param  name The value name (as in "sect1.sect2.valname")
+ * @retval ret  The return value
+ * @return 0 if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_sint16 (const ini_sct_t *sct, const char *name, int *ret, int def);
 
 /*!***************************************************************************
  * @short  Get a double value
@@ -342,7 +417,7 @@ int ini_get_lng (const ini_sct_t *sct, const char *name, long *ret);
  * @retval ret  The return value
  * @return 0 if successful, nonzero otherwise
  *****************************************************************************/
-int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret);
+int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret, double def);
 
 /*!***************************************************************************
  * @short  Get a string value
@@ -350,6 +425,8 @@ int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret);
  * @param  name The value name (as in "sect1.sect2.valname")
  * @return The string or NULL on error
  *****************************************************************************/
+int ini_get_string (const ini_sct_t *sct, const char *name, const char **ret, const char *def);
+
 const char *ini_get_str (const ini_sct_t *sct, const char *name);
 
 long ini_get_lng_def (ini_sct_t *sct, const char *name, long def);
