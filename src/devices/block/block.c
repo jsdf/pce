@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -490,8 +490,10 @@ int dsks_commit (disks_t *dsks)
   r = 0;
 
   for (i = 0; i < dsks->cnt; i++) {
-    if (dsk_set_msg (dsks->dsk[i], "commit", NULL)) {
-      r = 1;
+    if (dsks->dsk[i]->set_msg != NULL) {
+      if (dsk_set_msg (dsks->dsk[i], "commit", NULL)) {
+        r = 1;
+      }
     }
   }
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.c                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -96,6 +96,28 @@ int dsk_pce_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
   return (0);
 }
 
+
+static
+int dsk_pce_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)
+{
+  return (1);
+}
+
+static
+int dsk_pce_set_msg (disk_t *dsk, const char *msg, const char *val)
+{
+  disk_pce_t *img;
+
+  img = dsk->ext;
+
+  if (strcmp (msg, "commit") == 0) {
+    return (0);
+  }
+
+  return (1);
+}
+
+
 static
 void dsk_pce_del (disk_t *dsk)
 {
@@ -150,6 +172,8 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
   img->dsk.del = dsk_pce_del;
   img->dsk.read = dsk_pce_read;
   img->dsk.write = dsk_pce_write;
+  img->dsk.get_msg = dsk_pce_get_msg;
+  img->dsk.set_msg = dsk_pce_set_msg;
 
   img->blk_ofs = dsk_get_uint32_be (buf, 8);
   img->blk_cnt = dsk_get_uint32_be (buf, 12);
