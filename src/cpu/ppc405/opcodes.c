@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcodes.c                                   *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-07-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-10 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -559,13 +559,24 @@ void op_10 (p405_t *c)
 static
 void op_11 (p405_t *c)
 {
+  /* hook */
+  if ((c->ir & 0x00ff0000) == 0x00ce0000) {
+    if (c->hook != NULL) {
+      c->hook (c->hook_ext, c->ir);
+    }
+
+    p405_set_clk (c, 4, 1);
+
+    return;
+  }
+
   if (p405_check_reserved (c, 0x03fffffdUL)) {
     return;
   }
 
   p405_exception_syscall (c);
 
-//  p405_set_clk (c, 0, 1);
+/*  p405_set_clk (c, 0, 1); */
 }
 
 /* 12: b/ba/bl/bla target */

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.c                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -54,6 +54,9 @@ void p405_init (p405_t *c)
   c->log_undef = NULL;
   c->log_exception = NULL;
   c->log_mem = NULL;
+
+  c->hook_ext = NULL;
+  c->hook = NULL;
 
   p405_set_opcodes (c);
 
@@ -115,6 +118,12 @@ void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set)
   c->dcr_ext = ext;
   c->get_dcr = (p405_get_uint32_f) get;
   c->set_dcr = (p405_set_uint32_f) set;
+}
+
+void p405_set_hook_fct (p405_t *c, void *ext, void *fct)
+{
+  c->hook_ext = ext;
+  c->hook = fct;
 }
 
 

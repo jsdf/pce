@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-10 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -357,6 +357,9 @@ typedef struct p405_s {
   void (*log_mem) (void *ext, unsigned mode,
     unsigned long raddr, unsigned long vaddr, unsigned long val);
 
+  void *hook_ext;
+  void (*hook) (void *ext, unsigned long ir);
+
   uint32_t           pc;
   uint32_t           gpr[32];
 
@@ -451,7 +454,17 @@ void p405_set_mem_fct (p405_t *c, void *ext,
 
 void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt);
 
+/*!***************************************************************************
+ * @short Set the DCR access functions
+ * @param c The cpu context
+ *****************************************************************************/
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set);
+
+/*!***************************************************************************
+ * @short Set the hook function
+ * @param c The cpu context
+ *****************************************************************************/
+void p405_set_hook_fct (p405_t *c, void *ext, void *fct);
 
 
 /*!***************************************************************************
