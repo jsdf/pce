@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-22 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2005-12-20 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -260,7 +260,7 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
 
   vt->trm.ext = vt;
 
-  vt->trm.del = (trm_del_f) &vt100_del;
+  vt->trm.del = (void *) vt100_del;
   vt->trm.set_mode = (trm_set_mode_f) &vt100_set_mode;
   vt->trm.set_col = (trm_set_col_f) &vt100_set_col;
   vt->trm.set_crs = (trm_set_crs_f) &vt100_set_crs;
@@ -670,37 +670,23 @@ void vt100_set_crs (vt100_t *vt, unsigned y1, unsigned y2, int show)
   vt->crs_on = (show != 0);
   vt->crs_y1 = y1;
   vt->crs_y2 = y2;
-
-  if (vt->crs_on) {
-    vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
-  }
 }
 
 void vt100_set_pos (vt100_t *vt, unsigned x, unsigned y)
 {
   vt->crs_x = x;
   vt->crs_y = y;
-
-  if (vt->crs_on) {
-    vt100_set_pos_scn (vt, x, y);
-  }
 }
 
 void vt100_set_chr (vt100_t *vt, unsigned x, unsigned y, unsigned char c)
 {
-  if ((vt->scn_x != x) || (vt->scn_y != y)) {
-    vt100_set_pos_scn (vt, x, y);
-  }
+  vt100_set_pos_scn (vt, x, y);
 
   c = chrmap[c & 0xff];
 
   vt100_write (vt, &c, 1);
 
   vt->scn_x += 1;
-
-  if (vt->crs_on) {
-    vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
-  }
 }
 
 void vt100_check (vt100_t *vt)
@@ -709,6 +695,13 @@ void vt100_check (vt100_t *vt)
   unsigned char buf[8];
   ssize_t       r;
   vt100_keymap_t *key;
+
+  if (vt->crs_on) {
+    vt100_set_pos_scn (vt, vt->crs_x, vt->crs_y);
+  }
+  else {
+    vt100_set_pos_scn (vt, 0, 0);
+  }
 
   if (!vt100_readable (vt, 0)) {
     return;
