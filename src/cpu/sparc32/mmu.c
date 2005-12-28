@@ -32,167 +32,167 @@
 
 int s32_ifetch (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t *val)
 {
-  addr &= ~0x03UL;
+	addr &= ~0x03UL;
 
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint32 != NULL) {
-    *val = c->get_uint32 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffffffUL;
-  }
+	if (c->get_uint32 != NULL) {
+		*val = c->get_uint32 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffffffUL;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dload8 (sparc32_t *c, uint32_t addr, uint8_t asi, uint8_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint8 != NULL) {
-    *val = c->get_uint8 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xff;
-  }
+	if (c->get_uint8 != NULL) {
+		*val = c->get_uint8 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xff;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dload16 (sparc32_t *c, uint32_t addr, uint8_t asi, uint16_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint16 != NULL) {
-    *val = c->get_uint16 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffU;
-  }
+	if (c->get_uint16 != NULL) {
+		*val = c->get_uint16 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffU;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dload32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint32 != NULL) {
-    *val = c->get_uint32 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffffffUL;
-  }
+	if (c->get_uint32 != NULL) {
+		*val = c->get_uint32 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffffffUL;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dstore8 (sparc32_t *c, uint32_t addr, uint8_t asi, uint8_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint8 != NULL) {
-    c->set_uint8 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint8 != NULL) {
+		c->set_uint8 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dstore16 (sparc32_t *c, uint32_t addr, uint8_t asi, uint16_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint16 != NULL) {
-    c->set_uint16 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint16 != NULL) {
+		c->set_uint16 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_dstore32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint32 != NULL) {
-    c->set_uint32 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint32 != NULL) {
+		c->set_uint32 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 
 int s32_get_mem8 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint8_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint8 != NULL) {
-    *val = c->get_uint8 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xff;
-  }
+	if (c->get_uint8 != NULL) {
+		*val = c->get_uint8 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xff;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_get_mem16 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint16_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint16 != NULL) {
-    *val = c->get_uint16 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffU;
-  }
+	if (c->get_uint16 != NULL) {
+		*val = c->get_uint16 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffU;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_get_mem32 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint32_t *val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->get_uint32 != NULL) {
-    *val = c->get_uint32 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffffffUL;
-  }
+	if (c->get_uint32 != NULL) {
+		*val = c->get_uint32 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffffffUL;
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_set_mem8 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint8_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint8 != NULL) {
-    c->set_uint8 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint8 != NULL) {
+		c->set_uint8 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_set_mem16 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint16_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint16 != NULL) {
-    c->set_uint16 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint16 != NULL) {
+		c->set_uint16 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int s32_set_mem32 (sparc32_t *c, uint32_t addr, uint8_t asi, unsigned xlat, uint32_t val)
 {
-  s32_set_asi (c, asi);
+	s32_set_asi (c, asi);
 
-  if (c->set_uint32 != NULL) {
-    c->set_uint32 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint32 != NULL) {
+		c->set_uint32 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }

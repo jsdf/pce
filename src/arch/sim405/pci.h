@@ -32,16 +32,16 @@
 
 
 typedef struct {
-  memory_t  asio;
+	memory_t  asio;
 
-  mem_blk_t pci_ioa;
-  mem_blk_t pci_iob;
-  mem_blk_t pci_cfg;
-  mem_blk_t pci_mem;
-  mem_blk_t pci_special;
-  mem_blk_t pci_csr;
+	mem_blk_t pci_ioa;
+	mem_blk_t pci_iob;
+	mem_blk_t pci_cfg;
+	mem_blk_t pci_mem;
+	mem_blk_t pci_special;
+	mem_blk_t pci_csr;
 
-  pci_bus_t bus;
+	pci_bus_t bus;
 } pci_405_t;
 
 

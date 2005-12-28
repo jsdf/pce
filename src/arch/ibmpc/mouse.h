@@ -28,19 +28,19 @@
 
 
 typedef struct {
-  mem_blk_t port;
-  e8250_t   uart;
+	mem_blk_t port;
+	e8250_t   uart;
 
-  int       dtr;
-  int       rts;
+	int       dtr;
+	int       rts;
 
-  char      accu_ok;
-  int       accu_dx;
-  int       accu_dy;
-  unsigned  accu_b;
+	char      accu_ok;
+	int       accu_dx;
+	int       accu_dy;
+	unsigned  accu_b;
 
-  int       fct_x[2];
-  int       fct_y[2];
+	int       fct_x[2];
+	int       fct_y[2];
 } mouse_t;
 
 

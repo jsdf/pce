@@ -31,80 +31,80 @@
 
 void pce_video_init (video_t *vid)
 {
-  vid->ext = NULL;
+	vid->ext = NULL;
 
-  vid->type = PCE_VIDEO_NONE;
+	vid->type = PCE_VIDEO_NONE;
 
-  vid->del = NULL;
-  vid->get_mem = NULL;
-  vid->get_reg = NULL;
-  vid->prt_state = NULL;
-  vid->update = NULL;
-  vid->dump = NULL;
-  vid->screenshot = NULL;
-  vid->clock = NULL;
+	vid->del = NULL;
+	vid->get_mem = NULL;
+	vid->get_reg = NULL;
+	vid->prt_state = NULL;
+	vid->update = NULL;
+	vid->dump = NULL;
+	vid->screenshot = NULL;
+	vid->clock = NULL;
 }
 
 void pce_video_del (video_t *vid)
 {
-  if (vid->del != NULL) {
-    vid->del (vid->ext);
-  }
+	if (vid->del != NULL) {
+		vid->del (vid->ext);
+	}
 }
 
 mem_blk_t *pce_video_get_mem (video_t *vid)
 {
-  if (vid->get_mem != NULL) {
-    return (vid->get_mem (vid->ext));
-  }
+	if (vid->get_mem != NULL) {
+		return (vid->get_mem (vid->ext));
+	}
 
-  return (NULL);
+	return (NULL);
 }
 
 mem_blk_t *pce_video_get_reg (video_t *vid)
 {
-  if (vid->get_reg != NULL) {
-    return (vid->get_reg (vid->ext));
-  }
+	if (vid->get_reg != NULL) {
+		return (vid->get_reg (vid->ext));
+	}
 
-  return (NULL);
+	return (NULL);
 }
 
 void pce_video_prt_state (video_t *vid, FILE *fp)
 {
-  if (vid->prt_state != NULL) {
-    vid->prt_state (vid->ext, fp);
-  }
+	if (vid->prt_state != NULL) {
+		vid->prt_state (vid->ext, fp);
+	}
 }
 
 void pce_video_update (video_t *vid)
 {
-  if (vid->update != NULL) {
-    vid->update (vid->ext);
-  }
+	if (vid->update != NULL) {
+		vid->update (vid->ext);
+	}
 }
 
 int pce_video_dump (video_t *vid, FILE *fp)
 {
-  if (vid->dump != NULL) {
-    return (vid->dump (vid->ext, fp));
-  }
+	if (vid->dump != NULL) {
+		return (vid->dump (vid->ext, fp));
+	}
 
-  return (1);
+	return (1);
 }
 
 int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode)
 {
-  if (vid->screenshot != NULL) {
-    return (vid->screenshot (vid->ext, fp, mode));
-  }
+	if (vid->screenshot != NULL) {
+		return (vid->screenshot (vid->ext, fp, mode));
+	}
 
-  return (1);
+	return (1);
 }
 
 void pce_video_clock (video_t *vid, unsigned long cnt)
 {
-  if (vid->clock != NULL) {
-    vid->clock (vid->ext, cnt);
-  }
+	if (vid->clock != NULL) {
+		vid->clock (vid->ext, cnt);
+	}
 }

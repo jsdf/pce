@@ -43,7 +43,7 @@
  * @short The character set type
  *****************************************************************************/
 typedef struct {
-  unsigned char el[32];
+	unsigned char el[32];
 } scn_set_t;
 
 
@@ -51,12 +51,12 @@ typedef struct {
  * @short The token class type
  *****************************************************************************/
 typedef struct scn_class_t {
-  struct scn_class_t *next;
+	struct scn_class_t *next;
 
-  unsigned  cls_id;
+	unsigned  cls_id;
 
-  scn_set_t start;
-  scn_set_t run;
+	scn_set_t start;
+	scn_set_t run;
 } scn_class_t;
 
 
@@ -64,25 +64,25 @@ typedef struct scn_class_t {
  * @short The scanner type
  *****************************************************************************/
 typedef struct scanner_t {
-  void     (*del) (struct scanner_t *scn);
-  unsigned (*get_char) (struct scanner_t *scn);
-  void     (*scan) (struct scanner_t *scn);
+	void     (*del) (struct scanner_t *scn);
+	unsigned (*get_char) (struct scanner_t *scn);
+	void     (*scan) (struct scanner_t *scn);
 
-  unsigned      tok_id;
-  char          tok_str[SCN_TOK_MAX];
+	unsigned      tok_id;
+	char          tok_str[SCN_TOK_MAX];
 
-  unsigned      curcnt;
-  unsigned      curchr[SCN_BUF_N];
+	unsigned      curcnt;
+	unsigned      curchr[SCN_BUF_N];
 
-  scn_set_t     white;
-  scn_set_t     newline;
+	scn_set_t     white;
+	scn_set_t     newline;
 
-  scn_class_t   *cls;
+	scn_class_t   *cls;
 
-  unsigned long line;
-  unsigned long offset;
+	unsigned long line;
+	unsigned long offset;
 
-  void          *ext;
+	void          *ext;
 } scanner_t;
 
 
@@ -90,8 +90,8 @@ typedef struct scanner_t {
  * @short The file scanner type
  *****************************************************************************/
 typedef struct {
-  scanner_t scn;
-  FILE      *file;
+	scanner_t scn;
+	FILE      *file;
 } scn_file_t;
 
 
@@ -99,10 +99,10 @@ typedef struct {
  * @short The string scanner type
  *****************************************************************************/
 typedef struct {
-  scanner_t     scn;
-  unsigned long i;
-  unsigned long n;
-  unsigned char *str;
+	scanner_t     scn;
+	unsigned long i;
+	unsigned long n;
+	unsigned char *str;
 } scn_str_t;
 
 

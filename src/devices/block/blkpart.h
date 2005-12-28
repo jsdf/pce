@@ -42,18 +42,18 @@
  * @short The partitioned image file disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t        dsk;
+	disk_t        dsk;
 
-  unsigned      part_cnt;
+	unsigned      part_cnt;
 
-  struct {
-    uint32_t block_i;
-    uint32_t block_n;
-    uint64_t start;
-    FILE     *fp;
-    int      close;
-    int      ro;
-  } part[DSK_PART_MAX];
+	struct {
+		uint32_t block_i;
+		uint32_t block_n;
+		uint64_t start;
+		FILE     *fp;
+		int      close;
+		int      ro;
+	} part[DSK_PART_MAX];
 } disk_part_t;
 
 
@@ -61,10 +61,10 @@ typedef struct {
  * @short Add a partition
  *****************************************************************************/
 int dsk_part_add_partition_fp (disk_t *dsk, FILE *fp, int close,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
+	uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
 
 int dsk_part_add_partition (disk_t *dsk, const char *fname,
-  uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
+	uint64_t start, uint32_t blk_i, uint32_t blk_n, int ro);
 
 /*!***************************************************************************
  * @short Create a new partition image disk

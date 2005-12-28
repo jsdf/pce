@@ -83,22 +83,22 @@ struct p405_s;
 
 
 typedef struct p405_tlbe_s {
-  uint32_t           tlbhi;
-  uint32_t           tlblo;
-  uint8_t            tid;
-  uint32_t           mask;
-  uint32_t           vaddr;
+	uint32_t           tlbhi;
+	uint32_t           tlblo;
+	uint8_t            tid;
+	uint32_t           mask;
+	uint32_t           vaddr;
 
-  unsigned char      endian;
+	unsigned char      endian;
 
-  unsigned           idx;
-  struct p405_tlbe_s *next;
+	unsigned           idx;
+	struct p405_tlbe_s *next;
 } p405_tlbe_t;
 
 
 typedef struct {
-  p405_tlbe_t entry[P405_TLB_ENTRIES];
-  p405_tlbe_t *first;
+	p405_tlbe_t entry[P405_TLB_ENTRIES];
+	p405_tlbe_t *first;
 } p405_tlb_t;
 
 
@@ -227,8 +227,8 @@ typedef struct {
 #define p405_set_gpr(c, n, v) do { (c)->gpr[(n)] = (v); } while (0)
 
 #define p405_set_bits(var, bits, val) do { \
-    if (val) (var) |= (bits); else (var) &= ~(bits); \
-  } while (0)
+		if (val) (var) |= (bits); else (var) &= ~(bits); \
+	} while (0)
 
 /* register read macros */
 #define p405_get_cr(c) ((c)->cr)
@@ -273,8 +273,8 @@ typedef struct {
 /* register write macros */
 #define p405_set_cr(c, v) do { (c)->cr = (v); } while (0)
 #define p405_set_crf(c, n, v) do { \
-  (c)->cr &= ~(0x0fUL << (28 - 4 * (n))); \
-  (c)->cr |= (v) << (28 - 4 * (n)); } while (0)
+	(c)->cr &= ~(0x0fUL << (28 - 4 * (n))); \
+	(c)->cr |= (v) << (28 - 4 * (n)); } while (0)
 #define p405_set_cr_lt(c, n, v) p405_set_bits ((c)->cr, P405_CR0_LT >> (4 * (n)), (v))
 #define p405_set_cr_gt(c, n, v) p405_set_bits ((c)->cr, P405_CR0_GT >> (4 * (n)), (v))
 #define p405_set_cr_eq(c, n, v) p405_set_bits ((c)->cr, P405_CR0_EQ >> (4 * (n)), (v))
@@ -326,84 +326,84 @@ typedef void (*p405_opcode_f) (struct p405_s *c);
 
 
 typedef struct {
-  p405_opcode_f op[64];
-  p405_opcode_f op13[1024];
-  p405_opcode_f op1f[1024];
+	p405_opcode_f op[64];
+	p405_opcode_f op13[1024];
+	p405_opcode_f op1f[1024];
 } p405_opcode_map_t;
 
 
 typedef struct p405_s {
-  void               *mem_ext;
+	void               *mem_ext;
 
-  p405_get_uint8_f   get_uint8;
-  p405_get_uint16_f  get_uint16;
-  p405_get_uint32_f  get_uint32;
+	p405_get_uint8_f   get_uint8;
+	p405_get_uint16_f  get_uint16;
+	p405_get_uint32_f  get_uint32;
 
-  p405_set_uint8_f   set_uint8;
-  p405_set_uint16_f  set_uint16;
-  p405_set_uint32_f  set_uint32;
+	p405_set_uint8_f   set_uint8;
+	p405_set_uint16_f  set_uint16;
+	p405_set_uint32_f  set_uint32;
 
-  unsigned char      *ram;
-  unsigned long      ram_cnt;
+	unsigned char      *ram;
+	unsigned long      ram_cnt;
 
-  void               *dcr_ext;
-  p405_get_uint32_f  get_dcr;
-  p405_set_uint32_f  set_dcr;
+	void               *dcr_ext;
+	p405_get_uint32_f  get_dcr;
+	p405_set_uint32_f  set_dcr;
 
-  void *log_ext;
-  void (*log_opcode) (void *ext, unsigned long ir);
-  void (*log_undef) (void *ext, unsigned long ir);
-  void (*log_exception) (void *ext, unsigned long offs);
-  void (*log_mem) (void *ext, unsigned mode,
-    unsigned long raddr, unsigned long vaddr, unsigned long val);
+	void *log_ext;
+	void (*log_opcode) (void *ext, unsigned long ir);
+	void (*log_undef) (void *ext, unsigned long ir);
+	void (*log_exception) (void *ext, unsigned long offs);
+	void (*log_mem) (void *ext, unsigned mode,
+		unsigned long raddr, unsigned long vaddr, unsigned long val);
 
-  void *hook_ext;
-  void (*hook) (void *ext, unsigned long ir);
+	void *hook_ext;
+	void (*hook) (void *ext, unsigned long ir);
 
-  uint32_t           pc;
-  uint32_t           gpr[32];
+	uint32_t           pc;
+	uint32_t           gpr[32];
 
-  uint32_t           cr;
-  uint32_t           ctr;
-  uint32_t           dbcr0;
-  uint32_t           dbcr1;
-  uint32_t           dbsr;
-  uint32_t           dccr;
-  uint32_t           dcwr;
-  uint32_t           dear;
-  uint32_t           esr;
-  uint32_t           evpr;
-  uint32_t           iccr;
-  uint32_t           lr;
-  uint32_t           msr;
-  uint32_t           pid;
-  uint32_t           pit[2];
-  uint32_t           pvr;
-  uint32_t           sprg[8];
-  uint32_t           srr[4];
-  uint32_t           tbl;
-  uint32_t           tbu;
-  uint32_t           tcr;
-  uint32_t           tsr;
-  uint32_t           xer;
-  uint32_t           zpr;
+	uint32_t           cr;
+	uint32_t           ctr;
+	uint32_t           dbcr0;
+	uint32_t           dbcr1;
+	uint32_t           dbsr;
+	uint32_t           dccr;
+	uint32_t           dcwr;
+	uint32_t           dear;
+	uint32_t           esr;
+	uint32_t           evpr;
+	uint32_t           iccr;
+	uint32_t           lr;
+	uint32_t           msr;
+	uint32_t           pid;
+	uint32_t           pit[2];
+	uint32_t           pvr;
+	uint32_t           sprg[8];
+	uint32_t           srr[4];
+	uint32_t           tbl;
+	uint32_t           tbu;
+	uint32_t           tcr;
+	uint32_t           tsr;
+	uint32_t           xer;
+	uint32_t           zpr;
 
-  uint32_t           ir;
+	uint32_t           ir;
 
-  char               reserve;
+	char               reserve;
 
-  unsigned char      interrupt;
+	unsigned char      interrupt;
 
-  p405_tlb_t         tlb;
+	p405_tlb_t         tlb;
 
-  unsigned           timer_scale;
+	unsigned           timer_scale;
 
-  unsigned long      delay;
+	unsigned long      delay;
 
-  unsigned long long oprcnt;
-  unsigned long long clkcnt;
+	unsigned long long oprcnt;
+	unsigned long long clkcnt;
 
-  p405_opcode_map_t  opcodes;
+	p405_opcode_map_t  opcodes;
 } p405_t;
 
 
@@ -448,8 +448,8 @@ void p405_free (p405_t *c);
 void p405_del (p405_t *c);
 
 void p405_set_mem_fct (p405_t *c, void *ext,
-  void *get8, void *get16, void *get32,
-  void *set8, void *set16, void *set32
+	void *get8, void *get16, void *get32,
+	void *set8, void *set16, void *set32
 );
 
 void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt);
@@ -546,19 +546,19 @@ void p405_clock (p405_t *c, unsigned long n);
 #define P405_DFLAG_RFI  0x0200
 
 typedef struct {
-  unsigned flags;
+	unsigned flags;
 
-  uint32_t pc;
-  uint32_t ir;
+	uint32_t pc;
+	uint32_t ir;
 
-  unsigned argn;
+	unsigned argn;
 
-  char     op[64];
-  char     arg1[64];
-  char     arg2[64];
-  char     arg3[64];
-  char     arg4[64];
-  char     arg5[64];
+	char     op[64];
+	char     arg1[64];
+	char     arg2[64];
+	char     arg3[64];
+	char     arg4[64];
+	char     arg5[64];
 } p405_disasm_t;
 
 

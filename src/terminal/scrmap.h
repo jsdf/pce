@@ -31,21 +31,21 @@
 
 
 typedef struct {
-  unsigned x;
-  unsigned w;
+	unsigned x;
+	unsigned w;
 } trm_scrmap_pixel_t;
 
 typedef struct {
-  unsigned w;
-  unsigned h;
+	unsigned w;
+	unsigned h;
 
-  unsigned sw;
-  unsigned sh;
+	unsigned sw;
+	unsigned sh;
 
-  unsigned *mapx;
-  unsigned *mapw;
-  unsigned *mapy;
-  unsigned *maph;
+	unsigned *mapx;
+	unsigned *mapw;
+	unsigned *mapy;
+	unsigned *maph;
 } trm_scrmap_t;
 
 
@@ -55,11 +55,11 @@ void trm_smap_free (trm_scrmap_t *smap);
 
 
 void trm_smap_set_map (trm_scrmap_t *smap,
-  unsigned w, unsigned h, unsigned sw, unsigned sh
+	unsigned w, unsigned h, unsigned sw, unsigned sh
 );
 
 void trm_smap_get_pixel (trm_scrmap_t *smap, unsigned x, unsigned y,
-  unsigned *sx, unsigned *sy, unsigned *sw, unsigned *sh
+	unsigned *sx, unsigned *sy, unsigned *sw, unsigned *sh
 );
 
 

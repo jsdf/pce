@@ -32,74 +32,74 @@
 
 int msg_is_message (const char *msg, const char *val)
 {
-  while (*msg != 0) {
-    if (strcmp (msg, val) == 0) {
-      return (1);
-    }
+	while (*msg != 0) {
+		if (strcmp (msg, val) == 0) {
+			return (1);
+		}
 
-    while ((*msg != 0) && (*msg != '.')) {
-      msg += 1;
-    }
+		while ((*msg != 0) && (*msg != '.')) {
+			msg += 1;
+		}
 
-    if (*msg == '.') {
-      msg += 1;
-    }
-  }
+		if (*msg == '.') {
+			msg += 1;
+		}
+	}
 
-  return (0);
+	return (0);
 }
 
 int msg_get_ulng (const char *str, unsigned long *val)
 {
-  unsigned long tmp;
-  char          *end;
+	unsigned long tmp;
+	char          *end;
 
-  tmp = strtoul (str, &end, 0);
+	tmp = strtoul (str, &end, 0);
 
-  if ((end == str) || (*end != 0)) {
-    return (1);
-  }
+	if ((end == str) || (*end != 0)) {
+		return (1);
+	}
 
-  *val = tmp;
+	*val = tmp;
 
-  return (0);
+	return (0);
 }
 
 int msg_get_uint (const char *str, unsigned *val)
 {
-  unsigned long tmp;
+	unsigned long tmp;
 
-  if (msg_get_ulng (str, &tmp)) {
-    return (1);
-  }
+	if (msg_get_ulng (str, &tmp)) {
+		return (1);
+	}
 
-  *val = tmp;
+	*val = tmp;
 
-  if (*val != tmp) {
-    return (1);
-  }
+	if (*val != tmp) {
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 int msg_get_bool (const char *str, int *val)
 {
-  unsigned long tmp;
+	unsigned long tmp;
 
-  if (strcmp (str, "true")) {
-    *val = 1;
-    return (0);
-  }
-  else if (strcmp (str, "false")) {
-    *val = 0;
-    return (0);
-  }
+	if (strcmp (str, "true")) {
+		*val = 1;
+		return (0);
+	}
+	else if (strcmp (str, "false")) {
+		*val = 0;
+		return (0);
+	}
 
-  if (msg_get_ulng (str, &tmp)) {
-    return (1);
-  }
+	if (msg_get_ulng (str, &tmp)) {
+		return (1);
+	}
 
-  *val = (tmp != 0);
+	*val = (tmp != 0);
 
-  return (0);
+	return (0);
 }

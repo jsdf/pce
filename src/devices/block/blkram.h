@@ -39,9 +39,9 @@
  * @short The ram disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t        dsk;
+	disk_t        dsk;
 
-  unsigned char *data;
+	unsigned char *data;
 } disk_ram_t;
 
 

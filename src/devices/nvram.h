@@ -31,10 +31,10 @@
 
 
 typedef struct {
-  mem_blk_t *mem;
+	mem_blk_t *mem;
 
-  FILE      *fp;
-  int       close;
+	FILE      *fp;
+	int       close;
 } nvram_t;
 
 

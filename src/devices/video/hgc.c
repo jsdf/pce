@@ -35,141 +35,141 @@
 static
 void hgc_get_colors (hgc_t *hgc, ini_sct_t *sct)
 {
-  hgc->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
-  hgc->rgb[1] = ini_get_lng_def (sct, "color1", 0xe89050);
-  hgc->rgb[2] = ini_get_lng_def (sct, "color2", 0xe89050);
-  hgc->rgb[3] = ini_get_lng_def (sct, "color3", 0xe89050);
-  hgc->rgb[4] = ini_get_lng_def (sct, "color4", 0xe89050);
-  hgc->rgb[5] = ini_get_lng_def (sct, "color5", 0xe89050);
-  hgc->rgb[6] = ini_get_lng_def (sct, "color6", 0xe89050);
-  hgc->rgb[7] = ini_get_lng_def (sct, "color7", 0xe89050);
-  hgc->rgb[8] = ini_get_lng_def (sct, "color8", 0xfff0c8);
-  hgc->rgb[9] = ini_get_lng_def (sct, "color9", 0xfff0c8);
-  hgc->rgb[10] = ini_get_lng_def (sct, "color10", 0xfff0c8);
-  hgc->rgb[11] = ini_get_lng_def (sct, "color11", 0xfff0c8);
-  hgc->rgb[12] = ini_get_lng_def (sct, "color12", 0xfff0c8);
-  hgc->rgb[13] = ini_get_lng_def (sct, "color13", 0xfff0c8);
-  hgc->rgb[14] = ini_get_lng_def (sct, "color14", 0xfff0c8);
-  hgc->rgb[15] = ini_get_lng_def (sct, "color15", 0xfff0c8);
+	hgc->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
+	hgc->rgb[1] = ini_get_lng_def (sct, "color1", 0xe89050);
+	hgc->rgb[2] = ini_get_lng_def (sct, "color2", 0xe89050);
+	hgc->rgb[3] = ini_get_lng_def (sct, "color3", 0xe89050);
+	hgc->rgb[4] = ini_get_lng_def (sct, "color4", 0xe89050);
+	hgc->rgb[5] = ini_get_lng_def (sct, "color5", 0xe89050);
+	hgc->rgb[6] = ini_get_lng_def (sct, "color6", 0xe89050);
+	hgc->rgb[7] = ini_get_lng_def (sct, "color7", 0xe89050);
+	hgc->rgb[8] = ini_get_lng_def (sct, "color8", 0xfff0c8);
+	hgc->rgb[9] = ini_get_lng_def (sct, "color9", 0xfff0c8);
+	hgc->rgb[10] = ini_get_lng_def (sct, "color10", 0xfff0c8);
+	hgc->rgb[11] = ini_get_lng_def (sct, "color11", 0xfff0c8);
+	hgc->rgb[12] = ini_get_lng_def (sct, "color12", 0xfff0c8);
+	hgc->rgb[13] = ini_get_lng_def (sct, "color13", 0xfff0c8);
+	hgc->rgb[14] = ini_get_lng_def (sct, "color14", 0xfff0c8);
+	hgc->rgb[15] = ini_get_lng_def (sct, "color15", 0xfff0c8);
 
-  hgc->rgb[16] = ini_get_lng_def (sct, "gcolor0", 0x000000);
-  hgc->rgb[17] = ini_get_lng_def (sct, "gcolor1", 0xfff0c8);
+	hgc->rgb[16] = ini_get_lng_def (sct, "gcolor0", 0x000000);
+	hgc->rgb[17] = ini_get_lng_def (sct, "gcolor1", 0xfff0c8);
 }
 
 static
 void hgc_set_colors (hgc_t *hgc, unsigned mode)
 {
-  unsigned i;
-  unsigned r, g, b;
+	unsigned i;
+	unsigned r, g, b;
 
-  for (i = 0; i < 16; i++) {
-    r = (hgc->rgb[i] >> 16) & 0xff;
-    g = (hgc->rgb[i] >> 8) & 0xff;
-    b = hgc->rgb[i] & 0xff;
-    trm_set_map (hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
-  }
+	for (i = 0; i < 16; i++) {
+		r = (hgc->rgb[i] >> 16) & 0xff;
+		g = (hgc->rgb[i] >> 8) & 0xff;
+		b = hgc->rgb[i] & 0xff;
+		trm_set_map (hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+	}
 
-  if (mode == 1) {
-    r = (hgc->rgb[16] >> 16) & 0xff;
-    g = (hgc->rgb[16] >> 8) & 0xff;
-    b = hgc->rgb[16] & 0xff;
-    trm_set_map (hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
+	if (mode == 1) {
+		r = (hgc->rgb[16] >> 16) & 0xff;
+		g = (hgc->rgb[16] >> 8) & 0xff;
+		b = hgc->rgb[16] & 0xff;
+		trm_set_map (hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
 
-    r = (hgc->rgb[17] >> 16) & 0xff;
-    g = (hgc->rgb[17] >> 8) & 0xff;
-    b = hgc->rgb[17] & 0xff;
-    trm_set_map (hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
-  }
+		r = (hgc->rgb[17] >> 16) & 0xff;
+		g = (hgc->rgb[17] >> 8) & 0xff;
+		b = hgc->rgb[17] & 0xff;
+		trm_set_map (hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+	}
 }
 
 video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 {
-  unsigned i;
-  unsigned iobase, membase, memsize;
-  unsigned w, h;
-  hgc_t    *hgc;
+	unsigned i;
+	unsigned iobase, membase, memsize;
+	unsigned w, h;
+	hgc_t    *hgc;
 
-  hgc = (hgc_t *) malloc (sizeof (hgc_t));
-  if (hgc == NULL) {
-    return (NULL);
-  }
+	hgc = (hgc_t *) malloc (sizeof (hgc_t));
+	if (hgc == NULL) {
+		return (NULL);
+	}
 
-  pce_video_init (&hgc->vid);
+	pce_video_init (&hgc->vid);
 
-  hgc->vid.ext = hgc;
-  hgc->vid.del = (pce_video_del_f) &hgc_del;
-  hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
-  hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
-  hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
-  hgc->vid.update = (pce_video_update_f) &hgc_update;
-  hgc->vid.dump = (pce_video_dump_f) &hgc_dump;
-  hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
+	hgc->vid.ext = hgc;
+	hgc->vid.del = (pce_video_del_f) &hgc_del;
+	hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
+	hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
+	hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
+	hgc->vid.update = (pce_video_update_f) &hgc_update;
+	hgc->vid.dump = (pce_video_dump_f) &hgc_dump;
+	hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
 
-  for (i = 0; i < 18; i++) {
-    hgc->crtc_reg[i] = 0;
-  }
+	for (i = 0; i < 18; i++) {
+		hgc->crtc_reg[i] = 0;
+	}
 
-  w = ini_get_lng_def (sct, "w", 640);
-  h = ini_get_lng_def (sct, "h", 400);
+	w = ini_get_lng_def (sct, "w", 640);
+	h = ini_get_lng_def (sct, "h", 400);
 
-  hgc->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-  hgc->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
-  hgc->mode_720x348_w = ini_get_lng_def (sct, "mode_720x348_w", w);
-  hgc->mode_720x348_h = ini_get_lng_def (sct, "mode_720x348_h", h);
+	hgc->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
+	hgc->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+	hgc->mode_720x348_w = ini_get_lng_def (sct, "mode_720x348_w", w);
+	hgc->mode_720x348_h = ini_get_lng_def (sct, "mode_720x348_h", h);
 
-  iobase = ini_get_lng_def (sct, "io", 0x3b4L);
-  membase = ini_get_lng_def (sct, "membase", 0xb0000L);
-  memsize = ini_get_lng_def (sct, "memsize", 65536L);
+	iobase = ini_get_lng_def (sct, "io", 0x3b4L);
+	membase = ini_get_lng_def (sct, "membase", 0xb0000L);
+	memsize = ini_get_lng_def (sct, "memsize", 65536L);
 
-  memsize = (memsize < 32768) ? 32768 : 65536;
+	memsize = (memsize < 32768) ? 32768 : 65536;
 
-  hgc_get_colors (hgc, sct);
+	hgc_get_colors (hgc, sct);
 
-  pce_log (MSG_INF, "video:\tHGC io=0x%04x membase=0x%05x memsize=0x%05x\n",
-    iobase, membase, memsize
-  );
+	pce_log (MSG_INF, "video:\tHGC io=0x%04x membase=0x%05x memsize=0x%05x\n",
+		iobase, membase, memsize
+	);
 
-  hgc->mem = mem_blk_new (membase, memsize, 1);
-  hgc->mem->ext = hgc;
-  hgc->mem->set_uint8 = (mem_set_uint8_f) &hgc_mem_set_uint8;
-  hgc->mem->set_uint16 = (mem_set_uint16_f) &hgc_mem_set_uint16;
-  mem_blk_clear (hgc->mem, 0x00);
+	hgc->mem = mem_blk_new (membase, memsize, 1);
+	hgc->mem->ext = hgc;
+	hgc->mem->set_uint8 = (mem_set_uint8_f) &hgc_mem_set_uint8;
+	hgc->mem->set_uint16 = (mem_set_uint16_f) &hgc_mem_set_uint16;
+	mem_blk_clear (hgc->mem, 0x00);
 
-  hgc->reg = mem_blk_new (iobase, 16, 1);
-  hgc->reg->ext = hgc;
-  hgc->reg->set_uint8 = (mem_set_uint8_f) &hgc_reg_set_uint8;
-  hgc->reg->set_uint16 = (mem_set_uint16_f) &hgc_reg_set_uint16;
-  hgc->reg->get_uint8 = (mem_get_uint8_f) &hgc_reg_get_uint8;
-  hgc->reg->get_uint16 = (mem_get_uint16_f) &hgc_reg_get_uint16;
-  mem_blk_clear (hgc->reg, 0x00);
+	hgc->reg = mem_blk_new (iobase, 16, 1);
+	hgc->reg->ext = hgc;
+	hgc->reg->set_uint8 = (mem_set_uint8_f) &hgc_reg_set_uint8;
+	hgc->reg->set_uint16 = (mem_set_uint16_f) &hgc_reg_set_uint16;
+	hgc->reg->get_uint8 = (mem_get_uint8_f) &hgc_reg_get_uint8;
+	hgc->reg->get_uint16 = (mem_get_uint16_f) &hgc_reg_get_uint16;
+	mem_blk_clear (hgc->reg, 0x00);
 
-  hgc->trm = trm;
+	hgc->trm = trm;
 
-  hgc->crtc_pos = 0;
-  hgc->crtc_ofs = 0;
+	hgc->crtc_pos = 0;
+	hgc->crtc_ofs = 0;
 
-  hgc->enable_page1 = 0;
-  hgc->enable_graph = 0;
+	hgc->enable_page1 = 0;
+	hgc->enable_graph = 0;
 
-  hgc->crs_on = 1;
+	hgc->crs_on = 1;
 
-  hgc->mode = 0;
+	hgc->mode = 0;
 
-  hgc_set_colors (hgc, 0);
+	hgc_set_colors (hgc, 0);
 
-  trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-  trm_set_size (trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
+	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
+	trm_set_size (trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
 
-  return (&hgc->vid);
+	return (&hgc->vid);
 }
 
 void hgc_del (hgc_t *hgc)
 {
-  if (hgc != NULL) {
-    mem_blk_del (hgc->mem);
-    mem_blk_del (hgc->reg);
-    free (hgc);
-  }
+	if (hgc != NULL) {
+		mem_blk_del (hgc->mem);
+		mem_blk_del (hgc->reg);
+		free (hgc);
+	}
 }
 
 void hgc_clock (hgc_t *hgc)
@@ -178,77 +178,77 @@ void hgc_clock (hgc_t *hgc)
 
 void hgc_prt_state (hgc_t *hgc, FILE *fp)
 {
-  unsigned i;
-  unsigned x, y;
+	unsigned i;
+	unsigned x, y;
 
-  if (hgc->crtc_pos < hgc->crtc_ofs) {
-    x = 0;
-    y = 0;
-  }
-  else {
-    x = (hgc->crtc_pos - hgc->crtc_ofs) % 80;
-    y = (hgc->crtc_pos - hgc->crtc_ofs) / 80;
-  }
+	if (hgc->crtc_pos < hgc->crtc_ofs) {
+		x = 0;
+		y = 0;
+	}
+	else {
+		x = (hgc->crtc_pos - hgc->crtc_ofs) % 80;
+		y = (hgc->crtc_pos - hgc->crtc_ofs) / 80;
+	}
 
-  fprintf (fp, "HGC: MODE=%u  PAGE=%04X  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
-    hgc->mode, hgc->page_ofs, hgc->crtc_ofs, hgc->crtc_pos, x, y,
-    (hgc->crs_on) ? "ON" : "OFF"
-  );
+	fprintf (fp, "HGC: MODE=%u  PAGE=%04X  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
+		hgc->mode, hgc->page_ofs, hgc->crtc_ofs, hgc->crtc_pos, x, y,
+		(hgc->crs_on) ? "ON" : "OFF"
+	);
 
-  fprintf (fp, "REG: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  3BF=%02X\n",
-    hgc->reg->data[0], hgc->reg->data[1], hgc->reg->data[4],
-    hgc->reg->data[6], hgc->reg->data[11]
-  );
+	fprintf (fp, "REG: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  3BF=%02X\n",
+		hgc->reg->data[0], hgc->reg->data[1], hgc->reg->data[4],
+		hgc->reg->data[6], hgc->reg->data[11]
+	);
 
-  fprintf (fp, "CRTC=[%02X", hgc->crtc_reg[0]);
-  for (i = 1; i < 18; i++) {
-    if ((i & 7) == 0) {
-      fputs ("-", fp);
-    }
-    else {
-      fputs (" ", fp);
-    }
-    fprintf (fp, "%02X", hgc->crtc_reg[i]);
-  }
-  fputs ("]\n", fp);
+	fprintf (fp, "CRTC=[%02X", hgc->crtc_reg[0]);
+	for (i = 1; i < 18; i++) {
+		if ((i & 7) == 0) {
+			fputs ("-", fp);
+		}
+		else {
+			fputs (" ", fp);
+		}
+		fprintf (fp, "%02X", hgc->crtc_reg[i]);
+	}
+	fputs ("]\n", fp);
 
-  fflush (fp);
+	fflush (fp);
 }
 
 int hgc_dump (hgc_t *hgc, FILE *fp)
 {
-  fprintf (fp, "# HGC dump\n");
+	fprintf (fp, "# HGC dump\n");
 
-  fprintf (fp, "\n# REGS:\n");
-  pce_dump_hex (fp,
-    mem_blk_get_data (hgc->reg),
-    mem_blk_get_size (hgc->reg),
-    mem_blk_get_addr (hgc->reg),
-    16, "# ", 0
-  );
+	fprintf (fp, "\n# REGS:\n");
+	pce_dump_hex (fp,
+		mem_blk_get_data (hgc->reg),
+		mem_blk_get_size (hgc->reg),
+		mem_blk_get_addr (hgc->reg),
+		16, "# ", 0
+	);
 
-  fprintf (fp, "\n# CRTC:\n");
-  pce_dump_hex (fp, hgc->crtc_reg, 18, 0, 16, "# ", 0);
+	fprintf (fp, "\n# CRTC:\n");
+	pce_dump_hex (fp, hgc->crtc_reg, 18, 0, 16, "# ", 0);
 
-  fputs ("\n\n# RAM:\n", fp);
-  pce_dump_hex (fp,
-    mem_blk_get_data (hgc->mem),
-    mem_blk_get_size (hgc->mem),
-    mem_blk_get_addr (hgc->mem),
-    16, "", 1
-  );
+	fputs ("\n\n# RAM:\n", fp);
+	pce_dump_hex (fp,
+		mem_blk_get_data (hgc->mem),
+		mem_blk_get_size (hgc->mem),
+		mem_blk_get_addr (hgc->mem),
+		16, "", 1
+	);
 
-  return (0);
+	return (0);
 }
 
 mem_blk_t *hgc_get_mem (hgc_t *hgc)
 {
-  return (hgc->mem);
+	return (hgc->mem);
 }
 
 mem_blk_t *hgc_get_reg (hgc_t *hgc)
 {
-  return (hgc->reg);
+	return (hgc->reg);
 }
 
 
@@ -259,128 +259,128 @@ mem_blk_t *hgc_get_reg (hgc_t *hgc)
 static
 int hgc_mode0_screenshot (hgc_t *hgc, FILE *fp)
 {
-  unsigned i;
-  unsigned x, y;
+	unsigned i;
+	unsigned x, y;
 
-  i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
+	i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
 
-  for (y = 0; y < 25; y++) {
-    for (x = 0; x < 80; x++) {
-      fputc (hgc->mem->data[i], fp);
-      i = (i + 2) & 0x7fff;
-    }
+	for (y = 0; y < 25; y++) {
+		for (x = 0; x < 80; x++) {
+			fputc (hgc->mem->data[i], fp);
+			i = (i + 2) & 0x7fff;
+		}
 
-    fputs ("\n", fp);
-  }
+		fputs ("\n", fp);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 void hgc_mode0_update (hgc_t *hgc)
 {
-  unsigned i;
-  unsigned x, y;
-  unsigned fg, bg;
+	unsigned i;
+	unsigned x, y;
+	unsigned fg, bg;
 
-  i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
+	i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
 
-  for (y = 0; y < 25; y++) {
-    for (x = 0; x < 80; x++) {
-      fg = hgc->mem->data[i + 1] & 0x0f;
-      bg = (hgc->mem->data[i + 1] & 0xf0) >> 4;
+	for (y = 0; y < 25; y++) {
+		for (x = 0; x < 80; x++) {
+			fg = hgc->mem->data[i + 1] & 0x0f;
+			bg = (hgc->mem->data[i + 1] & 0xf0) >> 4;
 
-      trm_set_col (hgc->trm, fg, bg);
-      trm_set_chr (hgc->trm, x, y, hgc->mem->data[i]);
+			trm_set_col (hgc->trm, fg, bg);
+			trm_set_chr (hgc->trm, x, y, hgc->mem->data[i]);
 
-      i = (i + 2) & 0x7fff;
-    }
-  }
+			i = (i + 2) & 0x7fff;
+		}
+	}
 }
 
 static
 void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
-  unsigned      x, y;
-  unsigned char c, a;
-  unsigned      fg, bg;
+	unsigned      x, y;
+	unsigned char c, a;
+	unsigned      fg, bg;
 
-  if (hgc->mem->data[addr] == val) {
-    return;
-  }
+	if (hgc->mem->data[addr] == val) {
+		return;
+	}
 
-  hgc->mem->data[addr] = val;
+	hgc->mem->data[addr] = val;
 
-  if (addr & 1) {
-    c = hgc->mem->data[addr - 1];
-    a = val;
-  }
-  else {
-    c = val;
-    a = hgc->mem->data[addr + 1];
-  }
+	if (addr & 1) {
+		c = hgc->mem->data[addr - 1];
+		a = val;
+	}
+	else {
+		c = val;
+		a = hgc->mem->data[addr + 1];
+	}
 
-  if (addr < (hgc->crtc_ofs << 1)) {
-    return;
-  }
+	if (addr < (hgc->crtc_ofs << 1)) {
+		return;
+	}
 
-  addr -= (hgc->crtc_ofs << 1);
+	addr -= (hgc->crtc_ofs << 1);
 
-  if (addr >= 4000) {
-    return;
-  }
+	if (addr >= 4000) {
+		return;
+	}
 
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
+	x = (addr >> 1) % 80;
+	y = (addr >> 1) / 80;
 
-  fg = a & 0x0f;
-  bg = (a & 0xf0) >> 4;
+	fg = a & 0x0f;
+	bg = (a & 0xf0) >> 4;
 
-  trm_set_col (hgc->trm, fg, bg);
-  trm_set_chr (hgc->trm, x, y, c);
+	trm_set_col (hgc->trm, fg, bg);
+	trm_set_chr (hgc->trm, x, y, c);
 }
 
 static
 void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
-  unsigned      x, y;
-  unsigned char c, a;
-  unsigned      fg, bg;
+	unsigned      x, y;
+	unsigned char c, a;
+	unsigned      fg, bg;
 
-  if (addr & 1) {
-    hgc_mem_set_uint8 (hgc, addr, val & 0xff);
-    hgc_mem_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
-    return;
-  }
+	if (addr & 1) {
+		hgc_mem_set_uint8 (hgc, addr, val & 0xff);
+		hgc_mem_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
+		return;
+	}
 
-  c = val & 0xff;
-  a = (val >> 8) & 0xff;
+	c = val & 0xff;
+	a = (val >> 8) & 0xff;
 
-  if ((hgc->mem->data[addr] == c) && (hgc->mem->data[addr + 1] == a)) {
-    return;
-  }
+	if ((hgc->mem->data[addr] == c) && (hgc->mem->data[addr + 1] == a)) {
+		return;
+	}
 
-  hgc->mem->data[addr] = c;
-  hgc->mem->data[addr + 1] = a;
+	hgc->mem->data[addr] = c;
+	hgc->mem->data[addr + 1] = a;
 
-  if (addr < (hgc->crtc_ofs << 1)) {
-    return;
-  }
+	if (addr < (hgc->crtc_ofs << 1)) {
+		return;
+	}
 
-  addr -= (hgc->crtc_ofs << 1);
+	addr -= (hgc->crtc_ofs << 1);
 
-  if (addr >= 4000) {
-    return;
-  }
+	if (addr >= 4000) {
+		return;
+	}
 
-  x = (addr >> 1) % 80;
-  y = (addr >> 1) / 80;
+	x = (addr >> 1) % 80;
+	y = (addr >> 1) / 80;
 
-  fg = a & 0x0f;
-  bg = (a & 0xf0) >> 4;
+	fg = a & 0x0f;
+	bg = (a & 0xf0) >> 4;
 
-  trm_set_col (hgc->trm, fg, bg);
-  trm_set_chr (hgc->trm, x, y, c);
+	trm_set_col (hgc->trm, fg, bg);
+	trm_set_chr (hgc->trm, x, y, c);
 }
 
 
@@ -391,388 +391,388 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 static
 int hgc_mode1_screenshot (hgc_t *hgc, FILE *fp)
 {
-  unsigned      x, y, i;
-  unsigned      val;
-  unsigned char *mem;
+	unsigned      x, y, i;
+	unsigned      val;
+	unsigned char *mem;
 
-  fprintf (fp, "P5\n720 348\n255 ");
+	fprintf (fp, "P5\n720 348\n255 ");
 
-  for (y = 0; y < 348; y++) {
-    mem = (hgc->page_ofs) ? (hgc->mem->data + 32768) : hgc->mem->data;
-    mem += (y & 3) * 8192;
-    mem += 90 * (y / 4);
+	for (y = 0; y < 348; y++) {
+		mem = (hgc->page_ofs) ? (hgc->mem->data + 32768) : hgc->mem->data;
+		mem += (y & 3) * 8192;
+		mem += 90 * (y / 4);
 
-    for (x = 0; x < 90; x++) {
-      val = mem[x];
+		for (x = 0; x < 90; x++) {
+			val = mem[x];
 
-      for (i = 0; i < 8; i++) {
-        if (val & (0x80 >> i)) {
-          fputc (255, fp);
-        }
-        else {
-          fputc (0, fp);
-        }
-      }
-    }
-  }
+			for (i = 0; i < 8; i++) {
+				if (val & (0x80 >> i)) {
+					fputc (255, fp);
+				}
+				else {
+					fputc (0, fp);
+				}
+			}
+		}
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 void hgc_mode1_update (hgc_t *hgc)
 {
-  unsigned      x, y, i, j;
-  unsigned      val[4];
-  unsigned      col1, col2;
-  unsigned char *mem[4];
+	unsigned      x, y, i, j;
+	unsigned      val[4];
+	unsigned      col1, col2;
+	unsigned char *mem[4];
 
-  mem[0] = hgc->mem->data;
+	mem[0] = hgc->mem->data;
 
-  if (hgc->page_ofs) {
-    mem[0] += 32768;
-  }
+	if (hgc->page_ofs) {
+		mem[0] += 32768;
+	}
 
-  mem[1] = mem[0] + 1 * 8192;
-  mem[2] = mem[0] + 2 * 8192;
-  mem[3] = mem[0] + 3 * 8192;
+	mem[1] = mem[0] + 1 * 8192;
+	mem[2] = mem[0] + 2 * 8192;
+	mem[3] = mem[0] + 3 * 8192;
 
-  trm_set_col (hgc->trm, 7, 0);
-  col2 = 7;
+	trm_set_col (hgc->trm, 7, 0);
+	col2 = 7;
 
-  for (y = 0; y < 87; y++) {
-    for (x = 0; x < 90; x++) {
-      val[0] = mem[0][x];
-      val[1] = mem[1][x];
-      val[2] = mem[2][x];
-      val[3] = mem[3][x];
+	for (y = 0; y < 87; y++) {
+		for (x = 0; x < 90; x++) {
+			val[0] = mem[0][x];
+			val[1] = mem[1][x];
+			val[2] = mem[2][x];
+			val[3] = mem[3][x];
 
-      for (i = 0; i < 8; i++) {
-        for (j = 0; j < 4; j++) {
-          col1 = (val[j] & 0x80) ? 7 : 0;
-          if (col2 != col1) {
-            trm_set_col (hgc->trm, col1, 0);
-            col2 = col1;
-          }
+			for (i = 0; i < 8; i++) {
+				for (j = 0; j < 4; j++) {
+					col1 = (val[j] & 0x80) ? 7 : 0;
+					if (col2 != col1) {
+						trm_set_col (hgc->trm, col1, 0);
+						col2 = col1;
+					}
 
-          trm_set_pxl (hgc->trm, 8 * x + i, 4 * y +j);
-          val[j] <<= 1;
-        }
-      }
-    }
+					trm_set_pxl (hgc->trm, 8 * x + i, 4 * y +j);
+					val[j] <<= 1;
+				}
+			}
+		}
 
-    mem[0] += 90;
-    mem[1] += 90;
-    mem[2] += 90;
-    mem[3] += 90;
-  }
+		mem[0] += 90;
+		mem[1] += 90;
+		mem[2] += 90;
+		mem[3] += 90;
+	}
 }
 
 static
 void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
-  unsigned      i;
-  unsigned      x, y;
-  unsigned      bank;
-  unsigned char old;
+	unsigned      i;
+	unsigned      x, y;
+	unsigned      bank;
+	unsigned char old;
 
-  old = hgc->mem->data[addr];
+	old = hgc->mem->data[addr];
 
-  if (old == val) {
-    return;
-  }
+	if (old == val) {
+		return;
+	}
 
-  hgc->mem->data[addr] = val;
+	hgc->mem->data[addr] = val;
 
-  if (addr > 32767) {
-    addr -= 32768;
-  }
+	if (addr > 32767) {
+		addr -= 32768;
+	}
 
-  bank = addr / 8192;
+	bank = addr / 8192;
 
-  x = 8 * ((addr & 8191) % 90);
-  y = 4 * ((addr & 8191) / 90) + bank;
+	x = 8 * ((addr & 8191) % 90);
+	y = 4 * ((addr & 8191) / 90) + bank;
 
-  for (i = 0; i < 8; i++) {
-    if ((old ^ val) & 0x80) {
-      trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
-      trm_set_pxl (hgc->trm, x + i, y);
-    }
+	for (i = 0; i < 8; i++) {
+		if ((old ^ val) & 0x80) {
+			trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
+			trm_set_pxl (hgc->trm, x + i, y);
+		}
 
-    old <<= 1;
-    val <<= 1;
-  }
+		old <<= 1;
+		val <<= 1;
+	}
 }
 
 
 int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode)
 {
-  if ((hgc->mode == 1) && ((mode == 2) || (mode == 0))) {
-    return (hgc_mode1_screenshot (hgc, fp));
-  }
-  else if ((hgc->mode == 0) && ((mode == 1) || (mode == 0))) {
-    return (hgc_mode0_screenshot (hgc, fp));
-  }
+	if ((hgc->mode == 1) && ((mode == 2) || (mode == 0))) {
+		return (hgc_mode1_screenshot (hgc, fp));
+	}
+	else if ((hgc->mode == 0) && ((mode == 1) || (mode == 0))) {
+		return (hgc_mode0_screenshot (hgc, fp));
+	}
 
-  return (1);
+	return (1);
 }
 
 void hgc_update (hgc_t *hgc)
 {
-  switch (hgc->mode) {
-    case 0:
-      hgc_mode0_update (hgc);
-      break;
+	switch (hgc->mode) {
+		case 0:
+			hgc_mode0_update (hgc);
+			break;
 
-    case 1:
-      hgc_mode1_update (hgc);
-      break;
-  }
+		case 1:
+			hgc_mode1_update (hgc);
+			break;
+	}
 }
 
 static
 void hgc_set_pos (hgc_t *hgc, unsigned pos)
 {
-  hgc->crtc_pos = pos;
+	hgc->crtc_pos = pos;
 
-  if (hgc->mode == 0) {
-    if (pos < hgc->crtc_ofs) {
-      return;
-    }
+	if (hgc->mode == 0) {
+		if (pos < hgc->crtc_ofs) {
+			return;
+		}
 
-    pos -= hgc->crtc_ofs;
+		pos -= hgc->crtc_ofs;
 
-    if (pos >= 2000) {
-      return;
-    }
+		if (pos >= 2000) {
+			return;
+		}
 
-    trm_set_pos (hgc->trm, pos % 80, pos / 80);
-  }
+		trm_set_pos (hgc->trm, pos % 80, pos / 80);
+	}
 }
 
 static
 void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
 {
-  if (hgc->mode == 0) {
-    if (y1 > 13) {
-      trm_set_crs (hgc->trm, 0, 0, 0);
-      return;
-    }
+	if (hgc->mode == 0) {
+		if (y1 > 13) {
+			trm_set_crs (hgc->trm, 0, 0, 0);
+			return;
+		}
 
-    if ((y2 < y1) || (y2 > 13)) {
-      y2 = 13;
-    }
+		if ((y2 < y1) || (y2 > 13)) {
+			y2 = 13;
+		}
 
-    y1 = (255 * y1 + 6) / 13;
-    y2 = (255 * y2 + 6) / 13;
+		y1 = (255 * y1 + 6) / 13;
+		y2 = (255 * y2 + 6) / 13;
 
-    trm_set_crs (hgc->trm, y1, y2, 1);
-  }
+		trm_set_crs (hgc->trm, y1, y2, 1);
+	}
 }
 
 static
 void hgc_set_page_ofs (hgc_t *hgc, unsigned ofs)
 {
-  if (hgc->crtc_ofs == ofs) {
-    return;
-  }
+	if (hgc->crtc_ofs == ofs) {
+		return;
+	}
 
-  hgc->crtc_ofs = ofs;
+	hgc->crtc_ofs = ofs;
 
-  if (hgc->mode == 0) {
-    hgc_update (hgc);
-  }
+	if (hgc->mode == 0) {
+		hgc_update (hgc);
+	}
 }
 
 static
 void hgc_set_config (hgc_t *hgc, unsigned char val)
 {
-  hgc->enable_graph = ((val & 0x01) != 0);
-  hgc->enable_page1 = ((val & 0x02) != 0);
+	hgc->enable_graph = ((val & 0x01) != 0);
+	hgc->enable_page1 = ((val & 0x02) != 0);
 }
 
 static
 void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 {
-  unsigned newmode, newofs;
+	unsigned newmode, newofs;
 
-  if (hgc->enable_graph == 0) {
-    mode &= ~0x02;
-  }
+	if (hgc->enable_graph == 0) {
+		mode &= ~0x02;
+	}
 
-  if ((hgc->enable_page1 == 0) || (mem_blk_get_size (hgc->mem) < 65536)) {
-    mode &= ~0x80;
-  }
+	if ((hgc->enable_page1 == 0) || (mem_blk_get_size (hgc->mem) < 65536)) {
+		mode &= ~0x80;
+	}
 
-  newmode = (mode & 0x02) ? 1 : 0;
-  newofs = (mode & 0x80) ? 32768 : 0;
+	newmode = (mode & 0x02) ? 1 : 0;
+	newofs = (mode & 0x80) ? 32768 : 0;
 
-  if ((newmode == hgc->mode) && (newofs == hgc->page_ofs)) {
-    return;
-  }
+	if ((newmode == hgc->mode) && (newofs == hgc->page_ofs)) {
+		return;
+	}
 
-  if (newmode != hgc->mode) {
-    hgc->mode = newmode;
+	if (newmode != hgc->mode) {
+		hgc->mode = newmode;
 
-    hgc_set_colors (hgc, newmode);
+		hgc_set_colors (hgc, newmode);
 
-    switch (newmode) {
-      case 0:
-        trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
-        trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
-        break;
+		switch (newmode) {
+			case 0:
+				trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
+				trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
+				break;
 
-      case 1:
-        trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
-        trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
-        break;
-    }
-  }
+			case 1:
+				trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
+				trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
+				break;
+		}
+	}
 
-  if (newofs != hgc->page_ofs) {
-    hgc->page_ofs = newofs;
-  }
+	if (newofs != hgc->page_ofs) {
+		hgc->page_ofs = newofs;
+	}
 
-  hgc_update (hgc);
+	hgc_update (hgc);
 }
 
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
-  switch (hgc->mode) {
-    case 0:
-      hgc_mode0_set_uint8 (hgc, addr, val);
-      break;
+	switch (hgc->mode) {
+		case 0:
+			hgc_mode0_set_uint8 (hgc, addr, val);
+			break;
 
-    case 1:
-      hgc_mode1_set_uint8 (hgc, addr, val);
-      break;
-  }
+		case 1:
+			hgc_mode1_set_uint8 (hgc, addr, val);
+			break;
+	}
 }
 
 void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
-  switch (hgc->mode) {
-    case 0:
-      hgc_mode0_set_uint16 (hgc, addr, val);
-      break;
+	switch (hgc->mode) {
+		case 0:
+			hgc_mode0_set_uint16 (hgc, addr, val);
+			break;
 
-    case 1:
-      hgc_mode1_set_uint8 (hgc, addr, val);
-      if ((addr + 1) < hgc->mem->size) {
-        hgc_mode1_set_uint8 (hgc, addr + 1, val >> 8);
-      }
-      break;
-  }
+		case 1:
+			hgc_mode1_set_uint8 (hgc, addr, val);
+			if ((addr + 1) < hgc->mem->size) {
+				hgc_mode1_set_uint8 (hgc, addr + 1, val >> 8);
+			}
+			break;
+	}
 }
 
 static
 void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
 {
-  if (reg > 15) {
-    return;
-  }
+	if (reg > 15) {
+		return;
+	}
 
-  hgc->crtc_reg[reg] = val;
+	hgc->crtc_reg[reg] = val;
 
-  switch (reg) {
-    case 0x0a:
-    case 0x0b:
-      hgc_set_crs (hgc, hgc->crtc_reg[0x0a], hgc->crtc_reg[0x0b]);
-      break;
+	switch (reg) {
+		case 0x0a:
+		case 0x0b:
+			hgc_set_crs (hgc, hgc->crtc_reg[0x0a], hgc->crtc_reg[0x0b]);
+			break;
 
-    case 0x0c:
-      hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
-      break;
+		case 0x0c:
+			hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
+			break;
 
-    case 0x0d:
-      hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
-      break;
+		case 0x0d:
+			hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
+			break;
 
-    case 0x0e:
+		case 0x0e:
 /*      hgc_set_pos (hgc, (val << 8) | (hgc->crtc_reg[0x0f] & 0xff)); */
-      break;
+			break;
 
-    case 0x0f:
-      hgc_set_pos (hgc, (hgc->crtc_reg[0x0e] << 8) | val);
-      break;
-  }
+		case 0x0f:
+			hgc_set_pos (hgc, (hgc->crtc_reg[0x0e] << 8) | val);
+			break;
+	}
 }
 
 static
 unsigned char hgc_crtc_get_reg (hgc_t *hgc, unsigned reg)
 {
-  if (reg > 15) {
-    return (0xff);
-  }
+	if (reg > 15) {
+		return (0xff);
+	}
 
-  return (hgc->crtc_reg[reg]);
+	return (hgc->crtc_reg[reg]);
 }
 
 void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
-  hgc->reg->data[addr] = val;
+	hgc->reg->data[addr] = val;
 
-  switch (addr) {
-    case 0x01:
-      hgc_crtc_set_reg (hgc, hgc->reg->data[0], val);
-      break;
+	switch (addr) {
+		case 0x01:
+			hgc_crtc_set_reg (hgc, hgc->reg->data[0], val);
+			break;
 
-    case 0x04:
-      hgc_set_mode (hgc, val);
-      break;
+		case 0x04:
+			hgc_set_mode (hgc, val);
+			break;
 
-    case 0x0b:
-      hgc_set_config (hgc, val);
-      break;
-  }
+		case 0x0b:
+			hgc_set_config (hgc, val);
+			break;
+	}
 }
 
 void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
-  hgc_reg_set_uint8 (hgc, addr, val & 0xff);
+	hgc_reg_set_uint8 (hgc, addr, val & 0xff);
 
-  if ((addr + 1) < hgc->reg->size) {
-    hgc_reg_set_uint8 (hgc, addr + 1, val >> 8);
-  }
+	if ((addr + 1) < hgc->reg->size) {
+		hgc_reg_set_uint8 (hgc, addr + 1, val >> 8);
+	}
 }
 
 unsigned char hgc_reg_get_uint8 (hgc_t *hgc, unsigned long addr)
 {
-  static unsigned cnt = 0;
+	static unsigned cnt = 0;
 
-  switch (addr) {
-    case 0x00:
-      return (hgc->reg->data[0]);
+	switch (addr) {
+		case 0x00:
+			return (hgc->reg->data[0]);
 
-    case 0x01:
-      return (hgc_crtc_get_reg (hgc, hgc->reg->data[0]));
+		case 0x01:
+			return (hgc_crtc_get_reg (hgc, hgc->reg->data[0]));
 
-    case 0x06:
-      cnt += 1;
-      if ((cnt & 7) == 0) {
-        hgc->reg->data[6] ^= 0x01;
-      }
-      if (cnt >= 64) {
-        cnt = 0;
-        hgc->reg->data[6] ^= 0x80;
-      }
+		case 0x06:
+			cnt += 1;
+			if ((cnt & 7) == 0) {
+				hgc->reg->data[6] ^= 0x01;
+			}
+			if (cnt >= 64) {
+				cnt = 0;
+				hgc->reg->data[6] ^= 0x80;
+			}
 
-      return (hgc->reg->data[6]);
+			return (hgc->reg->data[6]);
 
-    default:
-      return (0xff);
-  }
+		default:
+			return (0xff);
+	}
 }
 
 unsigned short hgc_reg_get_uint16 (hgc_t *hgc, unsigned long addr)
 {
-  unsigned short ret;
+	unsigned short ret;
 
-  ret = hgc_reg_get_uint8 (hgc, addr);
+	ret = hgc_reg_get_uint8 (hgc, addr);
 
-  if ((addr + 1) < hgc->reg->size) {
-    ret |= hgc_reg_get_uint8 (hgc, addr + 1) << 8;
-  }
+	if ((addr + 1) < hgc->reg->size) {
+		ret |= hgc_reg_get_uint8 (hgc, addr + 1) << 8;
+	}
 
-  return (ret);
+	return (ret);
 }

@@ -33,167 +33,167 @@ int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent);
 static
 int ini_write_indent (FILE *fp, unsigned level)
 {
-  while (level > 0) {
-    fputc ('\t', fp);
-    level -= 1;
-  }
+	while (level > 0) {
+		fputc ('\t', fp);
+		level -= 1;
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int ini_write_val (ini_val_t *val, FILE *fp)
 {
-  fprintf (fp, "%s = ", val->name);
+	fprintf (fp, "%s = ", val->name);
 
-  switch (val->type) {
-    case INI_VAL_U32:
-      fprintf (fp, "0x%lx", val->val.u32);
-      break;
+	switch (val->type) {
+		case INI_VAL_U32:
+			fprintf (fp, "0x%lx", val->val.u32);
+			break;
 
-    case INI_VAL_S32:
-      fprintf (fp, "%ld", val->val.s32);
-      break;
+		case INI_VAL_S32:
+			fprintf (fp, "%ld", val->val.s32);
+			break;
 
-    case INI_VAL_DBL:
-      fprintf (fp, "%f", val->val.dbl);
-      break;
+		case INI_VAL_DBL:
+			fprintf (fp, "%f", val->val.dbl);
+			break;
 
-    case INI_VAL_STR:
-      fprintf (fp, "\"%s\"", val->val.str);
-      break;
+		case INI_VAL_STR:
+			fprintf (fp, "\"%s\"", val->val.str);
+			break;
 
-    default:
-      return (1);
-  }
+		default:
+			return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
-  if (ini_write_indent (fp, indent)) {
-    return (1);
-  }
+	if (ini_write_indent (fp, indent)) {
+		return (1);
+	}
 
-  fprintf (fp, "section %s {\n", ini_sct_get_name (sct));
+	fprintf (fp, "section %s {\n", ini_sct_get_name (sct));
 
-  if (ini_write_body (sct, fp, indent + 1)) {
-    return (1);
-  }
+	if (ini_write_body (sct, fp, indent + 1)) {
+		return (1);
+	}
 
-  if (ini_write_indent (fp, indent)) {
-    return (1);
-  }
+	if (ini_write_indent (fp, indent)) {
+		return (1);
+	}
 
-  fputs ("}\n", fp);
+	fputs ("}\n", fp);
 
-  return (0);
+	return (0);
 }
 
 static
 int ini_write_section2 (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
-  int subsct;
+	int subsct;
 
-  subsct = (sct->head != NULL);
+	subsct = (sct->head != NULL);
 
-  if (ini_write_indent (fp, indent)) {
-    return (1);
-  }
+	if (ini_write_indent (fp, indent)) {
+		return (1);
+	}
 
-  fprintf (fp, "[%s]%s", ini_sct_get_name (sct), subsct ? " {\n" : "\n");
+	fprintf (fp, "[%s]%s", ini_sct_get_name (sct), subsct ? " {\n" : "\n");
 
-  if (ini_write_body (sct, fp, indent + subsct)) {
-    return (1);
-  }
+	if (ini_write_body (sct, fp, indent + subsct)) {
+		return (1);
+	}
 
-  if (subsct) {
-    fputs ("}\n", fp);
-  }
+	if (subsct) {
+		fputs ("}\n", fp);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent)
 {
-  ini_val_t *val;
-  ini_sct_t *down;
+	ini_val_t *val;
+	ini_sct_t *down;
 
-  if (sct->val_head != NULL) {
-    val = sct->val_head;
-    while (val != NULL) {
-      if (ini_write_indent (fp, indent)) {
-        return (1);
-      }
+	if (sct->val_head != NULL) {
+		val = sct->val_head;
+		while (val != NULL) {
+			if (ini_write_indent (fp, indent)) {
+				return (1);
+			}
 
-      if (ini_write_val (val, fp)) {
-        return (1);
-      }
+			if (ini_write_val (val, fp)) {
+				return (1);
+			}
 
-      fputs ("\n", fp);
+			fputs ("\n", fp);
 
-      val = val->next;
-    }
+			val = val->next;
+		}
 
-    if (sct->head != NULL) {
-      fputs ("\n", fp);
-    }
-  }
+		if (sct->head != NULL) {
+			fputs ("\n", fp);
+		}
+	}
 
-  down = sct->head;
-  while (down != NULL) {
-    if (ini_sct_get_format (down) == 2) {
-      if (ini_write_section2 (down, fp, indent)) {
-        return (1);
-      }
-    }
-    else {
-      if (ini_write_section1 (down, fp, indent)) {
-        return (1);
-      }
-    }
+	down = sct->head;
+	while (down != NULL) {
+		if (ini_sct_get_format (down) == 2) {
+			if (ini_write_section2 (down, fp, indent)) {
+				return (1);
+			}
+		}
+		else {
+			if (ini_write_section1 (down, fp, indent)) {
+				return (1);
+			}
+		}
 
-    down = down->next;
+		down = down->next;
 
-    if (down != NULL) {
-      fputs ("\n", fp);
-    }
-  }
+		if (down != NULL) {
+			fputs ("\n", fp);
+		}
+	}
 
-  return (0);
+	return (0);
 }
 
 int ini_write_fp (ini_sct_t *sct, FILE *fp)
 {
-  int r;
+	int r;
 
-  fputs (
-    "# Generated automatically by libini "
-    LIBINI_VERSION_STR " by Hampa Hug <hampa@hampa.ch>\n\n",
-    fp
-  );
+	fputs (
+		"# Generated automatically by libini "
+		LIBINI_VERSION_STR " by Hampa Hug <hampa@hampa.ch>\n\n",
+		fp
+	);
 
-  r = ini_write_body (sct, fp, 0);
+	r = ini_write_body (sct, fp, 0);
 
-  return (r);
+	return (r);
 }
 
 int ini_write (ini_sct_t *sct, const char *fname)
 {
-  int  r;
-  FILE *fp;
+	int  r;
+	FILE *fp;
 
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    return (1);
-  }
+	fp = fopen (fname, "wb");
+	if (fp == NULL) {
+		return (1);
+	}
 
-  r = ini_write_fp (sct, fp);
+	r = ini_write_fp (sct, fp);
 
-  fclose (fp);
+	fclose (fp);
 
-  return (r);
+	return (r);
 }

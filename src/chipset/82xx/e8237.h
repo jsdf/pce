@@ -68,56 +68,56 @@ struct e8237_s;
 
 
 typedef struct {
-  struct e8237_s  *dma;
+	struct e8237_s  *dma;
 
-  unsigned short  base_addr;
-  unsigned short  base_cnt;
+	unsigned short  base_addr;
+	unsigned short  base_cnt;
 
-  unsigned short  cur_addr;
-  unsigned short  cur_cnt;
+	unsigned short  cur_addr;
+	unsigned short  cur_cnt;
 
-  unsigned short  mode;
-  unsigned short  state;
+	unsigned short  mode;
+	unsigned short  state;
 
-  unsigned char   dack_val;
-  unsigned char   tc_val;
+	unsigned char   dack_val;
+	unsigned char   tc_val;
 
-  struct e8237_s  *cascade;
+	struct e8237_s  *cascade;
 
-  void            *dack_ext;
-  e8237_signal_f  dack;
+	void            *dack_ext;
+	e8237_signal_f  dack;
 
-  void            *tc_ext;
-  e8237_signal_f  tc;
+	void            *tc_ext;
+	e8237_signal_f  tc;
 
-  void            *memwr_ext;
-  e8237_mem_write memwr;
+	void            *memwr_ext;
+	e8237_mem_write memwr;
 
-  void            *memrd_ext;
-  e8237_mem_read  memrd;
+	void            *memrd_ext;
+	e8237_mem_read  memrd;
 
-  void            *iowr_ext;
-  e8237_io_write  iowr;
+	void            *iowr_ext;
+	e8237_io_write  iowr;
 
-  void            *iord_ext;
-  e8237_io_read   iord;
+	void            *iord_ext;
+	e8237_io_read   iord;
 } e8237_chn_t;
 
 
 typedef struct e8237_s {
-  e8237_chn_t    chn[4];
+	e8237_chn_t    chn[4];
 
-  unsigned char  check;
+	unsigned char  check;
 
-  unsigned char  cmd;
-  unsigned char  flipflop;
-  unsigned       priority;
+	unsigned char  cmd;
+	unsigned char  flipflop;
+	unsigned       priority;
 
-  unsigned char  hreq_val;
-  unsigned char  hlda_val;
+	unsigned char  hreq_val;
+	unsigned char  hlda_val;
 
-  void           *hreq_ext;
-  e8237_signal_f hreq;
+	void           *hreq_ext;
+	e8237_signal_f hreq;
 } e8237_t;
 
 

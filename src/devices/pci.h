@@ -39,45 +39,45 @@
 
 
 typedef struct {
-  mem_blk_t        *reg[PCI_REG_MAX];
-  mem_blk_t        *mem[PCI_MEM_MAX];
+	mem_blk_t        *reg[PCI_REG_MAX];
+	mem_blk_t        *mem[PCI_MEM_MAX];
 
-  unsigned char    config[256];
-  unsigned char    wrmask[256];
+	unsigned char    config[256];
+	unsigned char    wrmask[256];
 
-  void             *cfg_ext;
+	void             *cfg_ext;
 
-  mem_get_uint8_f  get_cfg8;
-  mem_get_uint16_f get_cfg16;
-  mem_get_uint32_f get_cfg32;
+	mem_get_uint8_f  get_cfg8;
+	mem_get_uint16_f get_cfg16;
+	mem_get_uint32_f get_cfg32;
 
-  mem_set_uint8_f  set_cfg8;
-  mem_set_uint16_f set_cfg16;
-  mem_set_uint32_f set_cfg32;
+	mem_set_uint8_f  set_cfg8;
+	mem_set_uint16_f set_cfg16;
+	mem_set_uint32_f set_cfg32;
 
-  void             (*irqa) (void *ext, unsigned char val);
-  void             *irqa_ext;
-  unsigned char    irqa_val;
+	void             (*irqa) (void *ext, unsigned char val);
+	void             *irqa_ext;
+	unsigned char    irqa_val;
 
-  void             *ext;
+	void             *ext;
 } pci_dev_t;
 
 
 typedef struct {
-  pci_dev_t     *dev[32];
+	pci_dev_t     *dev[32];
 
-  memory_t      *asio;
-  memory_t      *asmem;
+	memory_t      *asio;
+	memory_t      *asmem;
 
-  unsigned long cfgaddr;
-  unsigned long cfgdata;
+	unsigned long cfgaddr;
+	unsigned long cfgdata;
 
-  /* interrupt requests A-D */
-  unsigned      intr;
+	/* interrupt requests A-D */
+	unsigned      intr;
 
-  void          (*irq) (void *ext, unsigned char val);
-  void          *irq_ext;
-  unsigned char irq_val;
+	void          (*irq) (void *ext, unsigned char val);
+	void          *irq_ext;
+	unsigned char irq_val;
 } pci_bus_t;
 
 

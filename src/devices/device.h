@@ -28,23 +28,23 @@
 
 
 typedef struct device_s {
-  struct device_s *next;
-  unsigned        refcnt;
-  const char      *type;
+	struct device_s *next;
+	unsigned        refcnt;
+	const char      *type;
 
-  void            (*free) (struct device_s *dev);
-  void            (*del) (struct device_s *dev);
+	void            (*free) (struct device_s *dev);
+	void            (*del) (struct device_s *dev);
 
-  void            (*clock) (void *ext, unsigned n);
+	void            (*clock) (void *ext, unsigned n);
 
-  void            *ext;
+	void            *ext;
 } device_t;
 
 
 typedef struct {
-  unsigned cnt;
-  device_t *head;
-  device_t *tail;
+	unsigned cnt;
+	device_t *head;
+	device_t *tail;
 } dev_list_t;
 
 

@@ -34,87 +34,87 @@
 
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
 {
-  FILE *fp;
+	FILE *fp;
 
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
+	fp = fopen (fname, "rb");
+	if (fp == NULL) {
+		return (1);
+	}
 
-  fread (blk->data, 1, blk->size, fp);
+	fread (blk->data, 1, blk->size, fp);
 
-  fclose (fp);
+	fclose (fp);
 
-  return (0);
+	return (0);
 }
 
 int pce_load_mem_ihex (memory_t *mem, const char *fname)
 {
-  int  r;
-  FILE *fp;
+	int  r;
+	FILE *fp;
 
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
+	fp = fopen (fname, "rb");
+	if (fp == NULL) {
+		return (1);
+	}
 
-  r = ihex_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
+	r = ihex_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
 
-  fclose (fp);
+	fclose (fp);
 
-  return (r);
+	return (r);
 }
 
 int pce_load_mem_srec (memory_t *mem, const char *fname)
 {
-  int  r;
-  FILE *fp;
+	int  r;
+	FILE *fp;
 
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
+	fp = fopen (fname, "rb");
+	if (fp == NULL) {
+		return (1);
+	}
 
-  r = srec_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
+	r = srec_load_fp (fp, mem, (ihex_set_f) &mem_set_uint8_rw);
 
-  fclose (fp);
+	fclose (fp);
 
-  return (r);
+	return (r);
 }
 
 int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
 {
-  int  c;
-  FILE *fp;
+	int  c;
+	FILE *fp;
 
-  fp = fopen (fname, "rb");
-  if (fp == NULL) {
-    return (1);
-  }
+	fp = fopen (fname, "rb");
+	if (fp == NULL) {
+		return (1);
+	}
 
-  c = fgetc (fp);
-  while (c != EOF) {
-    mem_set_uint8 (mem, base, c & 0xff);
-    base += 1;
-    c = fgetc (fp);
-  }
+	c = fgetc (fp);
+	while (c != EOF) {
+		mem_set_uint8 (mem, base, c & 0xff);
+		base += 1;
+		c = fgetc (fp);
+	}
 
-  fclose (fp);
+	fclose (fp);
 
-  return (0);
+	return (0);
 }
 
 int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr)
 {
-  if (strcmp (fmt, "binary") == 0) {
-    return (pce_load_mem_bin (mem, fname, addr));
-  }
-  else if (strcmp (fmt, "ihex") == 0) {
-    return (pce_load_mem_ihex (mem, fname));
-  }
-  else if (strcmp (fmt, "srec") == 0) {
-    return (pce_load_mem_srec (mem, fname));
-  }
+	if (strcmp (fmt, "binary") == 0) {
+		return (pce_load_mem_bin (mem, fname, addr));
+	}
+	else if (strcmp (fmt, "ihex") == 0) {
+		return (pce_load_mem_ihex (mem, fname));
+	}
+	else if (strcmp (fmt, "srec") == 0) {
+		return (pce_load_mem_srec (mem, fname));
+	}
 
-  return (1);
+	return (1);
 }

@@ -28,7 +28,7 @@
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii);
+	unsigned long addr, unsigned cols, char *prefix, int ascii);
 
 
 #endif

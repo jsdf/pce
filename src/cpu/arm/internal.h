@@ -64,14 +64,14 @@ int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val);
 #define arm_ror32(v, n) (((v) >> (n)) | ((v) << (32 - (n))))
 
 #define arm_asr32(v, n) ((v & 0x80000000UL) ? \
-  (((v) >> (n)) | (((1UL << (n)) - 1) << (32 - (n)))) : \
-  ((v) >> (n)))
+	(((v) >> (n)) | (((1UL << (n)) - 1) << (32 - (n)))) : \
+	((v) >> (n)))
 
 #define arm_exts(x, n) ( \
-  ((x) & (1UL << ((n) - 1))) ? \
-  (((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
-  ((x) & ((1UL << (n)) - 1)) \
-  )
+	((x) & (1UL << ((n) - 1))) ? \
+	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
+	((x) & ((1UL << (n)) - 1)) \
+	)
 
 #define arm_extu(x, n) ((x) & ((1UL << (n)) - 1))
 
@@ -91,11 +91,11 @@ int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val);
 static inline
 uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 {
-  if (reg == 15) {
-    return ((arm_get_reg (c, 15) + pc) & 0xffffffffUL);
-  }
+	if (reg == 15) {
+		return ((arm_get_reg (c, 15) + pc) & 0xffffffffUL);
+	}
 
-  return (arm_get_reg (c, reg));
+	return (arm_get_reg (c, reg));
 }
 
 #define arm_get_rn(c, ir) (arm_get_reg_pc ((c), arm_ir_rn(ir), 8))
@@ -107,8 +107,8 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 #define arm_set_rd(c, ir, v) do { arm_set_reg ((c), arm_ir_rd(ir), (v)); } while (0)
 
 #define arm_set_clk(c, dpc, clk) do { \
-  (c)->reg[15] += (dpc); \
-  (c)->delay += (clk); \
+	(c)->reg[15] += (dpc); \
+	(c)->delay += (clk); \
 } while (0)
 
 

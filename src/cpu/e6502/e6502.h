@@ -51,43 +51,43 @@ typedef void (*e6502_opcode_f) (struct e6502_t *c);
 
 
 typedef struct e6502_t {
-  unsigned           cpu;
+	unsigned           cpu;
 
-  unsigned short     pc;
-  unsigned char      a;
-  unsigned char      x;
-  unsigned char      y;
-  unsigned char      s;
-  unsigned char      p;
+	unsigned short     pc;
+	unsigned char      a;
+	unsigned char      x;
+	unsigned char      y;
+	unsigned char      s;
+	unsigned char      p;
 
-  unsigned short     ea;
-  char               ea_page;
+	unsigned short     ea;
+	char               ea_page;
 
-  unsigned char      rst_val;
-  unsigned char      irq_val;
-  unsigned char      nmi_val;
-  unsigned char      nmi_pnd;
+	unsigned char      rst_val;
+	unsigned char      irq_val;
+	unsigned char      nmi_val;
+	unsigned char      nmi_pnd;
 
-  void               *mem;
-  e6502_get_uint8_f  mem_get_uint8;
-  e6502_set_uint8_f  mem_set_uint8;
+	void               *mem;
+	e6502_get_uint8_f  mem_get_uint8;
+	e6502_set_uint8_f  mem_set_uint8;
 
-  unsigned char      *ram;
-  unsigned short     ram_lo;
-  unsigned short     ram_hi;
+	unsigned char      *ram;
+	unsigned short     ram_lo;
+	unsigned short     ram_hi;
 
-  void               *op_ext;
-  void               (*op_hook) (void *ext, unsigned char op);
-  void               (*op_stat) (void *ext, unsigned char op);
-  void               (*op_undef) (void *ext, unsigned char op);
+	void               *op_ext;
+	void               (*op_hook) (void *ext, unsigned char op);
+	void               (*op_stat) (void *ext, unsigned char op);
+	void               (*op_undef) (void *ext, unsigned char op);
 
-  unsigned char      inst[4];
+	unsigned char      inst[4];
 
-  e6502_opcode_f     op[256];
+	e6502_opcode_f     op[256];
 
-  unsigned long      delay;
-  unsigned long long clkcnt;
-  unsigned long long inscnt;
+	unsigned long      delay;
+	unsigned long long clkcnt;
+	unsigned long long inscnt;
 } e6502_t;
 
 
@@ -115,7 +115,7 @@ typedef struct e6502_t {
 #define e6502_get_cf(c) (((c)->p & E6502_FLG_C) != 0)
 
 #define e6502_set_flag(c, f, v) \
-  do { if (v) (c)->p |= (f); else (c)->p &= ~(f); } while (0)
+	do { if (v) (c)->p |= (f); else (c)->p &= ~(f); } while (0)
 
 #define e6502_set_nf(c, v) e6502_set_flag (c, E6502_FLG_N, v)
 #define e6502_set_vf(c, v) e6502_set_flag (c, E6502_FLG_V, v)
@@ -130,32 +130,32 @@ typedef struct e6502_t {
 static inline
 unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 {
-  if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
-    return (c->ram[addr]);
-  }
+	if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
+		return (c->ram[addr]);
+	}
 
-  return (c->mem_get_uint8 (c->mem, addr));
+	return (c->mem_get_uint8 (c->mem, addr));
 }
 
 static inline
 void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 {
-  if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
-    c->ram[addr] = val;
-  }
-  else {
-    c->mem_set_uint8 (c->mem, addr, val);
-  }
+	if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
+		c->ram[addr] = val;
+	}
+	else {
+		c->mem_set_uint8 (c->mem, addr, val);
+	}
 }
 
 #define e6502_get_mem16(c, addr) ( \
-  (e6502_get_mem8 ((c), (addr) & 0xffffU) & 0xff) | \
-  ((e6502_get_mem8 ((c), ((addr) + 1) & 0xffffU) & 0xff) << 8) )
+	(e6502_get_mem8 ((c), (addr) & 0xffffU) & 0xff) | \
+	((e6502_get_mem8 ((c), ((addr) + 1) & 0xffffU) & 0xff) << 8) )
 
 #define e6502_set_mem16(c, addr, v) do { \
-  e6502_set_mem8 ((c), (addr) & 0xffffU, (v) & 0xff); \
-  e6502_set_mem8 ((c), ((addr) + 1) & 0xffffU, ((v) >> 8) & 0xff); \
-  } while (0)
+	e6502_set_mem8 ((c), (addr) & 0xffffU, (v) & 0xff); \
+	e6502_set_mem8 ((c), ((addr) + 1) & 0xffffU, ((v) >> 8) & 0xff); \
+	} while (0)
 
 
 /*****************************************************************************
@@ -180,7 +180,7 @@ void e6502_del (e6502_t *c);
 
 
 void e6502_set_ram (e6502_t *c, unsigned char *ram,
-  unsigned short lo, unsigned short hi
+	unsigned short lo, unsigned short hi
 );
 
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
@@ -245,16 +245,16 @@ void e6502_clock (e6502_t *c, unsigned n);
 #define E6502_OPF_RTS 0x0008
 
 typedef struct {
-  unsigned       flags;
+	unsigned       flags;
 
-  unsigned short pc;
-  unsigned       dat_n;
-  unsigned char  dat[16];
+	unsigned short pc;
+	unsigned       dat_n;
+	unsigned char  dat[16];
 
-  char           op[64];
+	char           op[64];
 
-  unsigned       arg_n;
-  char           arg1[64];
+	unsigned       arg_n;
+	char           arg1[64];
 } e6502_disasm_t;
 
 

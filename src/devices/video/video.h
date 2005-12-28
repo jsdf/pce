@@ -50,18 +50,18 @@ typedef void (*pce_video_clock_f) (void *ext, unsigned long cnt);
 
 
 typedef struct {
-  pce_video_del_f        del;
-  pce_video_get_mem_f    get_mem;
-  pce_video_get_reg_f    get_reg;
-  pce_video_prt_state_f  prt_state;
-  pce_video_update_f     update;
-  pce_video_dump_f       dump;
-  pce_video_screenshot_f screenshot;
-  pce_video_clock_f      clock;
+	pce_video_del_f        del;
+	pce_video_get_mem_f    get_mem;
+	pce_video_get_reg_f    get_reg;
+	pce_video_prt_state_f  prt_state;
+	pce_video_update_f     update;
+	pce_video_dump_f       dump;
+	pce_video_screenshot_f screenshot;
+	pce_video_clock_f      clock;
 
-  void                   *ext;
+	void                   *ext;
 
-  unsigned               type;
+	unsigned               type;
 } video_t;
 
 

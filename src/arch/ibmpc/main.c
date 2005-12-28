@@ -52,593 +52,593 @@ static ibmpc_t            *pc;
 static
 void prt_help (void)
 {
-  fputs (
-    "usage: ibmpc [options]\n"
-    "  --help                 Print usage information\n"
-    "  --version              Print version information\n"
-    "  -b, --boot int         Set boot drive [128]\n"
-    "  -c, --config string    Set the config file\n"
-    "  -g, --video string     Set video device\n"
-    "  -l, --log string       Set the log file\n"
-    "  -p, --cpu string       Set the cpu model\n"
-    "  -q, --quiet            Quiet operation [no]\n"
-    "  -r, --run              Start running immediately\n"
-    "  -t, --terminal string  Set terminal\n"
-    "  -v, --verbose          Verbose operation [no]\n",
-    stdout
-  );
+	fputs (
+		"usage: ibmpc [options]\n"
+		"  --help                 Print usage information\n"
+		"  --version              Print version information\n"
+		"  -b, --boot int         Set boot drive [128]\n"
+		"  -c, --config string    Set the config file\n"
+		"  -g, --video string     Set video device\n"
+		"  -l, --log string       Set the log file\n"
+		"  -p, --cpu string       Set the cpu model\n"
+		"  -q, --quiet            Quiet operation [no]\n"
+		"  -r, --run              Start running immediately\n"
+		"  -t, --terminal string  Set terminal\n"
+		"  -v, --verbose          Verbose operation [no]\n",
+		stdout
+	);
 
-  fflush (stdout);
+	fflush (stdout);
 }
 
 static
 void prt_version (void)
 {
-  fputs (
-    "pce ibmpc version " PCE_VERSION_STR
-    " (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-    "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
-    stdout
-  );
+	fputs (
+		"pce ibmpc version " PCE_VERSION_STR
+		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
+		stdout
+	);
 
-  fflush (stdout);
+	fflush (stdout);
 }
 
 void sig_int (int s)
 {
-  /* hmm... */
+	/* hmm... */
 }
 
 void sig_segv (int s)
 {
-  fprintf (stderr, "pce: segmentation fault\n");
+	fprintf (stderr, "pce: segmentation fault\n");
 
-  if ((pc != NULL) && (pc->cpu != NULL)) {
-    prt_state_cpu (pc->cpu, stderr);
-  }
+	if ((pc != NULL) && (pc->cpu != NULL)) {
+		prt_state_cpu (pc->cpu, stderr);
+	}
 
-  fflush (stderr);
+	fflush (stderr);
 
-  exit (1);
+	exit (1);
 }
 
 static
 int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
 {
-  unsigned i;
+	unsigned i;
 
-  static char *dreg[8] = {
-    "ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
-  };
+	static char *dreg[8] = {
+		"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
+	};
 
-  static char *sreg[4] = {
-    "es", "cs", "ss", "ds"
-  };
+	static char *sreg[4] = {
+		"es", "cs", "ss", "ds"
+	};
 
-  for (i = 0; i < 8; i++) {
-    if (cmd_match (cmd, dreg[i])) {
-      *reg = &pc->cpu->dreg[i];
-      return (1);
-    }
-  }
+	for (i = 0; i < 8; i++) {
+		if (cmd_match (cmd, dreg[i])) {
+			*reg = &pc->cpu->dreg[i];
+			return (1);
+		}
+	}
 
-  for (i = 0; i < 4; i++) {
-    if (cmd_match (cmd, sreg[i])) {
-      *reg = &pc->cpu->sreg[i];
-      return (1);
-    }
-  }
+	for (i = 0; i < 4; i++) {
+		if (cmd_match (cmd, sreg[i])) {
+			*reg = &pc->cpu->sreg[i];
+			return (1);
+		}
+	}
 
-  if (cmd_match (cmd, "ip")) {
-    *reg = &pc->cpu->ip;
-    return (1);
-  }
+	if (cmd_match (cmd, "ip")) {
+		*reg = &pc->cpu->ip;
+		return (1);
+	}
 
-  if (cmd_match (cmd, "flags")) {
-    *reg = &pc->cpu->flg;
-    return (1);
-  }
+	if (cmd_match (cmd, "flags")) {
+		*reg = &pc->cpu->flg;
+		return (1);
+	}
 
-  *reg = NULL;
+	*reg = NULL;
 
-  return (0);
+	return (0);
 }
 
 static
 int cmd_match_sym (cmd_t *cmd, unsigned long *val)
 {
-  unsigned short *reg;
+	unsigned short *reg;
 
-  if (cmd_match_reg (cmd, &reg)) {
-    *val = *reg;
-    return (1);
-  }
+	if (cmd_match_reg (cmd, &reg)) {
+		*val = *reg;
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 void disasm_str (char *dst, e86_disasm_t *op)
 {
-  unsigned     i;
-  unsigned     dst_i;
+	unsigned     i;
+	unsigned     dst_i;
 
-  dst_i = 2;
-  sprintf (dst, "%02X", op->dat[0]);
+	dst_i = 2;
+	sprintf (dst, "%02X", op->dat[0]);
 
-  for (i = 1; i < op->dat_n; i++) {
-    sprintf (dst + dst_i, " %02X", op->dat[i]);
-    dst_i += 3;
-  }
+	for (i = 1; i < op->dat_n; i++) {
+		sprintf (dst + dst_i, " %02X", op->dat[i]);
+		dst_i += 3;
+	}
 
-  dst[dst_i++] = ' ';
-  while (dst_i < 20) {
-    dst[dst_i++] = ' ';
-  }
+	dst[dst_i++] = ' ';
+	while (dst_i < 20) {
+		dst[dst_i++] = ' ';
+	}
 
-  if ((op->flags & ~(E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) != 0) {
-    unsigned flg;
+	if ((op->flags & ~(E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) != 0) {
+		unsigned flg;
 
-    flg = op->flags;
+		flg = op->flags;
 
-    dst[dst_i++] = '[';
+		dst[dst_i++] = '[';
 
-    if (flg & E86_DFLAGS_186) {
-      dst_i += sprintf (dst + dst_i, "186");
-      flg &= ~E86_DFLAGS_186;
-    }
+		if (flg & E86_DFLAGS_186) {
+			dst_i += sprintf (dst + dst_i, "186");
+			flg &= ~E86_DFLAGS_186;
+		}
 
-    if (flg != 0) {
-      if (flg != op->flags) {
-        dst[dst_i++] = ' ';
-      }
-      dst_i += sprintf (dst + dst_i, " %04X", flg);
-    }
-    dst[dst_i++] = ']';
-    dst[dst_i++] = ' ';
-  }
+		if (flg != 0) {
+			if (flg != op->flags) {
+				dst[dst_i++] = ' ';
+			}
+			dst_i += sprintf (dst + dst_i, " %04X", flg);
+		}
+		dst[dst_i++] = ']';
+		dst[dst_i++] = ' ';
+	}
 
-  strcpy (dst + dst_i, op->op);
-  while (dst[dst_i] != 0) {
-    dst_i += 1;
-  }
+	strcpy (dst + dst_i, op->op);
+	while (dst[dst_i] != 0) {
+		dst_i += 1;
+	}
 
-  if (op->arg_n > 0) {
-    dst[dst_i++] = ' ';
-    while (dst_i < 26) {
-      dst[dst_i++] = ' ';
-    }
-  }
+	if (op->arg_n > 0) {
+		dst[dst_i++] = ' ';
+		while (dst_i < 26) {
+			dst[dst_i++] = ' ';
+		}
+	}
 
-  if (op->arg_n == 1) {
-    dst_i += sprintf (dst + dst_i, op->arg1);
-  }
-  else if (op->arg_n == 2) {
-    dst_i += sprintf (dst + dst_i, "%s, %s", op->arg1, op->arg2);
-  }
+	if (op->arg_n == 1) {
+		dst_i += sprintf (dst + dst_i, op->arg1);
+	}
+	else if (op->arg_n == 2) {
+		dst_i += sprintf (dst + dst_i, "%s, %s", op->arg1, op->arg2);
+	}
 
-  dst[dst_i] = 0;
+	dst[dst_i] = 0;
 }
 
 static
 void prt_uint8_bin (FILE *fp, unsigned char val)
 {
-  unsigned      i;
-  unsigned char m;
+	unsigned      i;
+	unsigned char m;
 
-  m = 0x80;
+	m = 0x80;
 
-  for (i = 0; i < 8; i++) {
-    if (val & m) {
-      fputc ('1', fp);
-    }
-    else {
-      fputc ('0', fp);
-    }
-    m = m >> 1;
-  }
+	for (i = 0; i < 8; i++) {
+		if (val & m) {
+			fputc ('1', fp);
+		}
+		else {
+			fputc ('0', fp);
+		}
+		m = m >> 1;
+	}
 }
 
 void prt_sep (FILE *fp, const char *str, ...)
 {
-  unsigned i;
-  va_list  va;
+	unsigned i;
+	va_list  va;
 
-  fputs ("-", fp);
-  i = 1;
+	fputs ("-", fp);
+	i = 1;
 
-  va_start (va, str);
-  i += vfprintf (fp, str, va);
-  va_end (va);
+	va_start (va, str);
+	i += vfprintf (fp, str, va);
+	va_end (va);
 
-  while (i < 78) {
-    fputc ('-', fp);
-    i += 1;
-  }
+	while (i < 78) {
+		fputc ('-', fp);
+		i += 1;
+	}
 
-  fputs ("\n", fp);
+	fputs ("\n", fp);
 }
 
 static
 void prt_state_video (video_t *vid, FILE *fp)
 {
-  fputs ("-video-----------------------------------------------------------------------\n", fp);
-  pce_video_prt_state (vid, fp);
+	fputs ("-video-----------------------------------------------------------------------\n", fp);
+	pce_video_prt_state (vid, fp);
 }
 
 static
 void prt_state_ems (ems_t *ems, FILE *fp)
 {
-  fputs ("-EMS-------------------------------------------------------------------------\n", fp);
-  ems_prt_state (ems, fp);
+	fputs ("-EMS-------------------------------------------------------------------------\n", fp);
+	ems_prt_state (ems, fp);
 }
 
 static
 void prt_state_xms (xms_t *xms, FILE *fp)
 {
-  fputs ("-XMS-------------------------------------------------------------------------\n", fp);
-  xms_prt_state (xms, fp);
+	fputs ("-XMS-------------------------------------------------------------------------\n", fp);
+	xms_prt_state (xms, fp);
 }
 
 static
 void prt_state_pit (e8253_t *pit, FILE *fp)
 {
-  unsigned        i;
-  e8253_counter_t *cnt;
+	unsigned        i;
+	e8253_counter_t *cnt;
 
-  fprintf (fp, "-8253-PIT--------------------------------------------------------------------\n");
+	fprintf (fp, "-8253-PIT--------------------------------------------------------------------\n");
 
-  for (i = 0; i < 3; i++) {
-    cnt = &pit->counter[i];
+	for (i = 0; i < 3; i++) {
+		cnt = &pit->counter[i];
 
-    fprintf (fp,
-      "C%d: SR=%02X M=%u RW=%d  CE=%04X  %s=%02X %s=%02X  %s=%02X %s=%02X  "
-      "G=%u O=%u R=%d\n",
-      i,
-      cnt->sr, cnt->mode, cnt->rw,
-      cnt->val,
-      (cnt->cr_wr & 2) ? "cr1" : "CR1", cnt->cr[1],
-      (cnt->cr_wr & 1) ? "cr0" : "CR0", cnt->cr[0],
-      (cnt->ol_rd & 2) ? "ol1" : "OL1", cnt->ol[1],
-      (cnt->ol_rd & 1) ? "ol0" : "OL0", cnt->ol[0],
-      (unsigned) cnt->gate,
-      (unsigned) cnt->out_val,
-      cnt->counting
-    );
-  }
+		fprintf (fp,
+			"C%d: SR=%02X M=%u RW=%d  CE=%04X  %s=%02X %s=%02X  %s=%02X %s=%02X  "
+			"G=%u O=%u R=%d\n",
+			i,
+			cnt->sr, cnt->mode, cnt->rw,
+			cnt->val,
+			(cnt->cr_wr & 2) ? "cr1" : "CR1", cnt->cr[1],
+			(cnt->cr_wr & 1) ? "cr0" : "CR0", cnt->cr[0],
+			(cnt->ol_rd & 2) ? "ol1" : "OL1", cnt->ol[1],
+			(cnt->ol_rd & 1) ? "ol0" : "OL0", cnt->ol[0],
+			(unsigned) cnt->gate,
+			(unsigned) cnt->out_val,
+			cnt->counting
+		);
+	}
 }
 
 static
 void prt_state_ppi (e8255_t *ppi, FILE *fp)
 {
-  fputs ("-8255-PPI--------------------------------------------------------------------\n", fp);
+	fputs ("-8255-PPI--------------------------------------------------------------------\n", fp);
 
-  fprintf (fp,
-    "MOD=%02X  MODA=%u  MODB=%u",
-    ppi->mode, ppi->group_a_mode, ppi->group_b_mode
-  );
+	fprintf (fp,
+		"MOD=%02X  MODA=%u  MODB=%u",
+		ppi->mode, ppi->group_a_mode, ppi->group_b_mode
+	);
 
-  if (ppi->port[0].inp != 0) {
-    fprintf (fp, "  A=I[%02X]", e8255_get_inp (ppi, 0));
-  }
-  else {
-    fprintf (fp, "  A=O[%02X]", e8255_get_out (ppi, 0));
-  }
+	if (ppi->port[0].inp != 0) {
+		fprintf (fp, "  A=I[%02X]", e8255_get_inp (ppi, 0));
+	}
+	else {
+		fprintf (fp, "  A=O[%02X]", e8255_get_out (ppi, 0));
+	}
 
-  if (ppi->port[1].inp != 0) {
-    fprintf (fp, "  B=I[%02X]", e8255_get_inp (ppi, 1));
-  }
-  else {
-    fprintf (fp, "  B=O[%02X]", e8255_get_out (ppi, 1));
-  }
+	if (ppi->port[1].inp != 0) {
+		fprintf (fp, "  B=I[%02X]", e8255_get_inp (ppi, 1));
+	}
+	else {
+		fprintf (fp, "  B=O[%02X]", e8255_get_out (ppi, 1));
+	}
 
-  switch (ppi->port[2].inp) {
-    case 0xff:
-      fprintf (fp, "  C=I[%02X]", e8255_get_inp (ppi, 2));
-      break;
+	switch (ppi->port[2].inp) {
+		case 0xff:
+			fprintf (fp, "  C=I[%02X]", e8255_get_inp (ppi, 2));
+			break;
 
-    case 0x00:
-      fprintf (fp, "  C=O[%02X]", e8255_get_out (ppi, 2));
-      break;
+		case 0x00:
+			fprintf (fp, "  C=O[%02X]", e8255_get_out (ppi, 2));
+			break;
 
-    case 0x0f:
-      fprintf (fp, "  CH=O[%X]  CL=I[%X]",
-        (e8255_get_out (ppi, 2) >> 4) & 0x0f, e8255_get_inp (ppi, 2) & 0x0f
-      );
-      break;
+		case 0x0f:
+			fprintf (fp, "  CH=O[%X]  CL=I[%X]",
+				(e8255_get_out (ppi, 2) >> 4) & 0x0f, e8255_get_inp (ppi, 2) & 0x0f
+			);
+			break;
 
-    case 0xf0:
-      fprintf (fp, "  CH=I[%X]  CL=O[%X]",
-        (e8255_get_inp (ppi, 2) >> 4) & 0x0f, e8255_get_out (ppi, 2) & 0x0f
-      );
-      break;
-  }
+		case 0xf0:
+			fprintf (fp, "  CH=I[%X]  CL=O[%X]",
+				(e8255_get_inp (ppi, 2) >> 4) & 0x0f, e8255_get_out (ppi, 2) & 0x0f
+			);
+			break;
+	}
 
-  fputs ("\n", fp);
-  fflush (fp);
+	fputs ("\n", fp);
+	fflush (fp);
 }
 
 static
 void prt_state_dma (e8237_t *dma, FILE *fp)
 {
-  unsigned i;
+	unsigned i;
 
-  prt_sep (fp, "8237-DMAC");
+	prt_sep (fp, "8237-DMAC");
 
-  fprintf (fp, "CMD=%02X  PRI=%02X  CHK=%d\n",
-    e8237_get_command (dma),
-    e8237_get_priority (dma),
-    dma->check != 0
-  );
+	fprintf (fp, "CMD=%02X  PRI=%02X  CHK=%d\n",
+		e8237_get_command (dma),
+		e8237_get_priority (dma),
+		dma->check != 0
+	);
 
-  for (i = 0; i < 4; i++) {
-    unsigned short state;
+	for (i = 0; i < 4; i++) {
+		unsigned short state;
 
-    state = e8237_get_state (dma, i);
+		state = e8237_get_state (dma, i);
 
-    fprintf (fp,
-      "CHN %u: MODE=%02X ADDR=%04X[%04X] CNT=%04X[%04X] DREQ=%d SREQ=%d MASK=%d\n",
-      i,
-      e8237_get_mode (dma, i) & 0xfcU,
-      e8237_get_addr (dma, i),
-      e8237_get_addr_base (dma, i),
-      e8237_get_cnt (dma, i),
-      e8237_get_cnt_base (dma, i),
-      (state & E8237_STATE_DREQ) != 0,
-      (state & E8237_STATE_SREQ) != 0,
-      (state & E8237_STATE_MASK) != 0
-    );
-  }
+		fprintf (fp,
+			"CHN %u: MODE=%02X ADDR=%04X[%04X] CNT=%04X[%04X] DREQ=%d SREQ=%d MASK=%d\n",
+			i,
+			e8237_get_mode (dma, i) & 0xfcU,
+			e8237_get_addr (dma, i),
+			e8237_get_addr_base (dma, i),
+			e8237_get_cnt (dma, i),
+			e8237_get_cnt_base (dma, i),
+			(state & E8237_STATE_DREQ) != 0,
+			(state & E8237_STATE_SREQ) != 0,
+			(state & E8237_STATE_MASK) != 0
+		);
+	}
 
-  fflush (fp);
+	fflush (fp);
 }
 
 static
 void prt_state_pic (e8259_t *pic, FILE *fp)
 {
-  unsigned i;
+	unsigned i;
 
-  prt_sep (fp, "8259A-PIC");
-  fputs ("IRR=", fp);   prt_uint8_bin (fp, e8259_get_irr (pic));
-  fputs ("  IMR=", fp); prt_uint8_bin (fp, e8259_get_imr (pic));
-  fputs ("  ISR=", fp); prt_uint8_bin (fp, e8259_get_isr (pic));
-  fputs ("\n", fp);
+	prt_sep (fp, "8259A-PIC");
+	fputs ("IRR=", fp);   prt_uint8_bin (fp, e8259_get_irr (pic));
+	fputs ("  IMR=", fp); prt_uint8_bin (fp, e8259_get_imr (pic));
+	fputs ("  ISR=", fp); prt_uint8_bin (fp, e8259_get_isr (pic));
+	fputs ("\n", fp);
 
-  fprintf (fp, "ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
-    e8259_get_icw (pic, 0), e8259_get_icw (pic, 1), e8259_get_icw (pic, 2),
-    e8259_get_icw (pic, 3),
-    e8259_get_ocw (pic, 0), e8259_get_ocw (pic, 1), e8259_get_ocw (pic, 2)
-  );
+	fprintf (fp, "ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
+		e8259_get_icw (pic, 0), e8259_get_icw (pic, 1), e8259_get_icw (pic, 2),
+		e8259_get_icw (pic, 3),
+		e8259_get_ocw (pic, 0), e8259_get_ocw (pic, 1), e8259_get_ocw (pic, 2)
+	);
 
-  fprintf (fp, "N0=%04lX", pic->irq_cnt[0]);
-  for (i = 1; i < 8; i++) {
-    fprintf (fp, "  N%u=%04lX", i, pic->irq_cnt[i]);
-  }
-  fputs ("\n", fp);
+	fprintf (fp, "N0=%04lX", pic->irq_cnt[0]);
+	for (i = 1; i < 8; i++) {
+		fprintf (fp, "  N%u=%04lX", i, pic->irq_cnt[i]);
+	}
+	fputs ("\n", fp);
 
-  fflush (fp);
+	fflush (fp);
 }
 
 static
 void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 {
-  char p;
+	char p;
 
-  switch (e8250_get_parity (uart)) {
-    case E8250_PARITY_N:
-      p = 'N';
-      break;
+	switch (e8250_get_parity (uart)) {
+		case E8250_PARITY_N:
+			p = 'N';
+			break;
 
-    case E8250_PARITY_E:
-      p = 'E';
-      break;
+		case E8250_PARITY_E:
+			p = 'E';
+			break;
 
-    case E8250_PARITY_O:
-      p = 'O';
-      break;
+		case E8250_PARITY_O:
+			p = 'O';
+			break;
 
-    case E8250_PARITY_M:
-      p = 'M';
-      break;
+		case E8250_PARITY_M:
+			p = 'M';
+			break;
 
-    case E8250_PARITY_S:
-      p = 'S';
-      break;
+		case E8250_PARITY_S:
+			p = 'S';
+			break;
 
-    default:
-      p = '?';
-      break;
-  }
+		default:
+			p = '?';
+			break;
+	}
 
-  fputs ("-8250-UART-------------------------------------------------------------------\n", fp);
-  fprintf (stderr,
-    "IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
-    "TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
-    "IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
-    base,
-    e8250_get_bps (uart), e8250_get_databits (uart), p, e8250_get_stopbits (uart),
-    e8250_get_dtr (uart), e8250_get_rts (uart),
-    uart->txd[0], uart->txd[1] ? '*' : ' ',
-    uart->rxd[0], uart->rxd[1] ? '*' : ' ',
-    uart->scratch, uart->divisor,
-    uart->ier, uart->iir, uart->lcr, uart->lsr, uart->mcr, uart->msr
-  );
+	fputs ("-8250-UART-------------------------------------------------------------------\n", fp);
+	fprintf (stderr,
+		"IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
+		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
+		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
+		base,
+		e8250_get_bps (uart), e8250_get_databits (uart), p, e8250_get_stopbits (uart),
+		e8250_get_dtr (uart), e8250_get_rts (uart),
+		uart->txd[0], uart->txd[1] ? '*' : ' ',
+		uart->rxd[0], uart->rxd[1] ? '*' : ' ',
+		uart->scratch, uart->divisor,
+		uart->ier, uart->iir, uart->lcr, uart->lsr, uart->mcr, uart->msr
+	);
 }
 
 static
 void prt_state_cpu (e8086_t *c, FILE *fp)
 {
-  double      cpi, mips;
-  static char ft[2] = { '-', '+' };
+	double      cpi, mips;
+	static char ft[2] = { '-', '+' };
 
-  fputs ("-8086------------------------------------------------------------------------\n", fp);
+	fputs ("-8086------------------------------------------------------------------------\n", fp);
 
-  cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
-  mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
-  fprintf (fp, "CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
-    c->clocks, c->instructions,
-    c->delay,
-    cpi, mips
-  );
+	cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
+	mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
+	fprintf (fp, "CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
+		c->clocks, c->instructions,
+		c->delay,
+		cpi, mips
+	);
 
-  fprintf (fp,
-    "AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
-    e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
-    e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
-    pce_last_int
-  );
+	fprintf (fp,
+		"AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
+		e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+		e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
+		pce_last_int
+	);
 
-  fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
-    e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
-    e86_get_ip (c), c->flg
-  );
+	fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
+		e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
+		e86_get_ip (c), c->flg
+	);
 
-  fprintf (fp, "  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
-    ft[e86_get_if (c)], ft[e86_get_df (c)],
-    ft[e86_get_of (c)], ft[e86_get_sf (c)],
-    ft[e86_get_zf (c)], ft[e86_get_af (c)],
-    ft[e86_get_pf (c)], ft[e86_get_cf (c)]
-  );
+	fprintf (fp, "  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
+		ft[e86_get_if (c)], ft[e86_get_df (c)],
+		ft[e86_get_of (c)], ft[e86_get_sf (c)],
+		ft[e86_get_zf (c)], ft[e86_get_af (c)],
+		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
+	);
 }
 
 static
 void prt_state_pc (ibmpc_t *pc, FILE *fp)
 {
-  prt_state_video (pc->video, fp);
-  prt_state_ppi (&pc->ppi, fp);
-  prt_state_pit (&pc->pit, fp);
-  prt_state_pic (&pc->pic, fp);
-  prt_state_dma (&pc->dma, fp);
-  prt_state_cpu (pc->cpu, fp);
+	prt_state_video (pc->video, fp);
+	prt_state_ppi (&pc->ppi, fp);
+	prt_state_pit (&pc->pit, fp);
+	prt_state_pic (&pc->pic, fp);
+	prt_state_dma (&pc->dma, fp);
+	prt_state_cpu (pc->cpu, fp);
 }
 
 static
 void prt_state (ibmpc_t *pc, FILE *fp)
 {
-  e86_disasm_t op;
-  char         str[256];
+	e86_disasm_t op;
+	char         str[256];
 
-  e86_disasm_cur (pc->cpu, &op);
-  disasm_str (str, &op);
+	e86_disasm_cur (pc->cpu, &op);
+	disasm_str (str, &op);
 
-  prt_state_cpu (pc->cpu, fp);
+	prt_state_cpu (pc->cpu, fp);
 
-  fprintf (fp, "%04X:%04X  %s\n",
-    (unsigned) e86_get_cs (pc->cpu),
-    (unsigned) e86_get_ip (pc->cpu),
-    str
-  );
+	fprintf (fp, "%04X:%04X  %s\n",
+		(unsigned) e86_get_cs (pc->cpu),
+		(unsigned) e86_get_ip (pc->cpu),
+		str
+	);
 }
 
 static
 void prt_prompt (FILE *fp)
 {
-  fputs ("\x1b[0;37;40m-", fp);
-  fflush (fp);
+	fputs ("\x1b[0;37;40m-", fp);
+	fflush (fp);
 }
 
 static
 void cpu_exec (void)
 {
-  unsigned long long old;
+	unsigned long long old;
 
-  old = e86_get_opcnt (pc->cpu);
+	old = e86_get_opcnt (pc->cpu);
 
-  while (e86_get_opcnt (pc->cpu) == old) {
-    pc_clock (pc);
-  }
+	while (e86_get_opcnt (pc->cpu) == old) {
+		pc_clock (pc);
+	}
 }
 
 static
 int pce_check_break (ibmpc_t *pc)
 {
-  breakpoint_t   *bp;
-  unsigned short seg, ofs;
+	breakpoint_t   *bp;
+	unsigned short seg, ofs;
 
-  seg = e86_get_cs (pc->cpu);
-  ofs = e86_get_ip (pc->cpu);
+	seg = e86_get_cs (pc->cpu);
+	ofs = e86_get_ip (pc->cpu);
 
-  bp = bp_get (pc->brkpt, seg, ofs);
+	bp = bp_get (pc->brkpt, seg, ofs);
 
-  if (bp != NULL) {
-    if (bp->pass > 0) {
-      bp->pass -= 1;
-    }
+	if (bp != NULL) {
+		if (bp->pass > 0) {
+			bp->pass -= 1;
+		}
 
-    if (bp->pass == 0) {
-      if (bp->reset == 0) {
-        bp_clear (&pc->brkpt, seg, ofs);
-      }
-      else {
-        bp->pass = bp->reset;
-        bp_print (pc->brkpt, "brk: ", 1);
-      }
+		if (bp->pass == 0) {
+			if (bp->reset == 0) {
+				bp_clear (&pc->brkpt, seg, ofs);
+			}
+			else {
+				bp->pass = bp->reset;
+				bp_print (pc->brkpt, "brk: ", 1);
+			}
 
-      return (1);
-    }
-  }
+			return (1);
+		}
+	}
 
-  if (pc->brk) {
-    return (1);
-  }
+	if (pc->brk) {
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 void pce_start (void)
 {
-  pce_set_fd (0, 0);
-  pc->brk = 0;
+	pce_set_fd (0, 0);
+	pc->brk = 0;
 }
 
 static
 void pce_stop (void)
 {
-  pce_set_fd (0, 1);
+	pce_set_fd (0, 1);
 }
 
 static
 void pce_run (void)
 {
-  pce_start();
+	pce_start();
 
-  while (pc->brk == 0) {
-    pc_clock (pc);
-    pc_clock (pc);
+	while (pc->brk == 0) {
+		pc_clock (pc);
+		pc_clock (pc);
 
-    while (pc->pause) {
-      usleep (250000UL);
-      trm_check (pc->trm);
-    }
-  }
+		while (pc->pause) {
+			usleep (250000UL);
+			trm_check (pc->trm);
+		}
+	}
 
-  pce_stop();
+	pce_stop();
 }
 
 static
 void pce_run_bp (void)
 {
-  pce_start();
+	pce_start();
 
-  while (1) {
-    cpu_exec();
+	while (1) {
+		cpu_exec();
 
-    if (pce_check_break (pc)) {
-      break;
-    }
-  }
+		if (pce_check_break (pc)) {
+			break;
+		}
+	}
 
-  pce_stop();
+	pce_stop();
 }
 
 #if 0
 static
 void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 {
-  ibmpc_t *pc;
+	ibmpc_t *pc;
 
-  pc = (ibmpc_t *) ext;
+	pc = (ibmpc_t *) ext;
 
 }
 #endif
@@ -646,1307 +646,1307 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 static
 void pce_op_int (void *ext, unsigned char n)
 {
-  pce_last_int = n;
+	pce_last_int = n;
 
 #ifndef PCE_HOST_DOS
-  if (n == 0x28) {
-    if (par_int28 > 0) {
-      usleep (par_int28);
-    }
-  }
+	if (n == 0x28) {
+		if (par_int28 > 0) {
+			usleep (par_int28);
+		}
+	}
 #endif
 }
 
 static
 void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 {
-  ibmpc_t *pc;
+	ibmpc_t *pc;
 
-  pc = (ibmpc_t *) ext;
+	pc = (ibmpc_t *) ext;
 
-  pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
-    e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
-  );
+	pce_log (MSG_DEB, "%04X:%04X: undefined operation [%02X %02x]\n",
+		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
+	);
 
 #ifndef PCE_HOST_DOS
-  usleep (100000UL);
+	usleep (100000UL);
 #endif
 
-  trm_check (pc->trm);
+	trm_check (pc->trm);
 }
 
 
 static
 void do_boot (cmd_t *cmd)
 {
-  unsigned short val;
+	unsigned short val;
 
-  if (cmd_match_eol (cmd)) {
-    printf ("boot drive is 0x%02x\n", pc_get_bootdrive (pc));
-    return;
-  }
+	if (cmd_match_eol (cmd)) {
+		printf ("boot drive is 0x%02x\n", pc_get_bootdrive (pc));
+		return;
+	}
 
-  if (!cmd_match_uint16 (cmd, &val)) {
-    cmd_error (cmd, "expecting boot drive");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &val)) {
+		cmd_error (cmd, "expecting boot drive");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  pc_set_bootdrive (pc, val);
+	pc_set_bootdrive (pc, val);
 }
 
 static
 void do_bc (cmd_t *cmd)
 {
-  unsigned short seg, ofs;
+	unsigned short seg, ofs;
 
-  if (cmd_match_eol (cmd)) {
-    bp_clear_all (&pc->brkpt);
-    return;
-  }
+	if (cmd_match_eol (cmd)) {
+		bp_clear_all (&pc->brkpt);
+		return;
+	}
 
-  seg = e86_get_cs (pc->cpu);
-  ofs = e86_get_ip (pc->cpu);
+	seg = e86_get_cs (pc->cpu);
+	ofs = e86_get_ip (pc->cpu);
 
-  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-    cmd_error (cmd, "expecting address");
-    return;
-  }
+	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		cmd_error (cmd, "expecting address");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (bp_clear (&pc->brkpt, seg, ofs)) {
-    printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
-  }
+	if (bp_clear (&pc->brkpt, seg, ofs)) {
+		printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
+	}
 }
 
 static
 void do_bl (cmd_t *cmd)
 {
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  bp_list (pc->brkpt, 1);
+	bp_list (pc->brkpt, 1);
 }
 
 static
 void do_bs (cmd_t *cmd)
 {
-  unsigned short seg, ofs, pass, reset;
+	unsigned short seg, ofs, pass, reset;
 
-  seg = pc->cpu->sreg[E86_REG_CS];
-  ofs = 0;
-  pass = 1;
-  reset = 0;
+	seg = pc->cpu->sreg[E86_REG_CS];
+	ofs = 0;
+	pass = 1;
+	reset = 0;
 
-  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-    cmd_error (cmd, "expecting address");
-    return;
-  }
+	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		cmd_error (cmd, "expecting address");
+		return;
+	}
 
-  cmd_match_uint16 (cmd, &pass);
-  cmd_match_uint16 (cmd, &reset);
+	cmd_match_uint16 (cmd, &pass);
+	cmd_match_uint16 (cmd, &reset);
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (pass > 0) {
-    printf ("Breakpoint at %04X:%04X  %04X  %04X\n",
-      (unsigned)seg,
-      (unsigned)ofs,
-      pass, reset
-    );
+	if (pass > 0) {
+		printf ("Breakpoint at %04X:%04X  %04X  %04X\n",
+			(unsigned)seg,
+			(unsigned)ofs,
+			pass, reset
+		);
 
-    bp_add (&pc->brkpt, seg, ofs, pass, reset);
-  }
+		bp_add (&pc->brkpt, seg, ofs, pass, reset);
+	}
 }
 
 static
 void do_b (cmd_t *cmd)
 {
-  if (cmd_match (cmd, "l")) {
-    do_bl (cmd);
-  }
-  else if (cmd_match (cmd, "s")) {
-    do_bs (cmd);
-  }
-  else if (cmd_match (cmd, "c")) {
-    do_bc (cmd);
-  }
-  else {
-    prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
-  }
+	if (cmd_match (cmd, "l")) {
+		do_bl (cmd);
+	}
+	else if (cmd_match (cmd, "s")) {
+		do_bs (cmd);
+	}
+	else if (cmd_match (cmd, "c")) {
+		do_bc (cmd);
+	}
+	else {
+		prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
+	}
 }
 
 static
 void do_c (cmd_t *cmd)
 {
-  unsigned long cnt;
+	unsigned long cnt;
 
-  cnt = 1;
+	cnt = 1;
 
-  cmd_match_uint32 (cmd, &cnt);
+	cmd_match_uint32 (cmd, &cnt);
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  while (cnt > 0) {
-    pc_clock (pc);
-    cnt -= 1;
-  }
+	while (cnt > 0) {
+		pc_clock (pc);
+		cnt -= 1;
+	}
 
-  prt_state (pc, stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_dump (cmd_t *cmd)
 {
-  FILE *fp;
-  char what[256];
-  char fname[256];
+	FILE *fp;
+	char what[256];
+	char fname[256];
 
-  if (!cmd_match_str (cmd, what, 256)) {
-    cmd_error (cmd, "don't know what to dump");
-    return;
-  }
+	if (!cmd_match_str (cmd, what, 256)) {
+		cmd_error (cmd, "don't know what to dump");
+		return;
+	}
 
-  if (!cmd_match_str (cmd, fname, 256)) {
-    cmd_error (cmd, "need a file name");
-    return;
-  }
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    prt_error ("dump: can't open file (%s)\n", fname);
-    return;
-  }
+	fp = fopen (fname, "wb");
+	if (fp == NULL) {
+		prt_error ("dump: can't open file (%s)\n", fname);
+		return;
+	}
 
-  if (strcmp (what, "ram") == 0) {
-    fprintf (fp, "# RAM dump\n\n");
-    pce_dump_hex (fp, pc->ram->data, pc->ram->size, 0, 16, "", 1);
-  }
-  else if (strcmp (what, "video") == 0) {
-    if (pce_video_dump (pc->video, fp)) {
-      prt_error ("dumping video failed\n");
-    }
-  }
-  else if (strcmp (what, "config") == 0) {
-    if (ini_write_fp (par_cfg, fp)) {
-      prt_error ("dumping configuration failed\n");
-    }
-  }
-  else {
-    prt_error ("dump: don't know what to dump (%s)\n", what);
-  }
+	if (strcmp (what, "ram") == 0) {
+		fprintf (fp, "# RAM dump\n\n");
+		pce_dump_hex (fp, pc->ram->data, pc->ram->size, 0, 16, "", 1);
+	}
+	else if (strcmp (what, "video") == 0) {
+		if (pce_video_dump (pc->video, fp)) {
+			prt_error ("dumping video failed\n");
+		}
+	}
+	else if (strcmp (what, "config") == 0) {
+		if (ini_write_fp (par_cfg, fp)) {
+			prt_error ("dumping configuration failed\n");
+		}
+	}
+	else {
+		prt_error ("dump: don't know what to dump (%s)\n", what);
+	}
 
-  fclose (fp);
+	fclose (fp);
 }
 
 static
 void do_d (cmd_t *cmd)
 {
-  unsigned              i, j;
-  unsigned short        cnt;
-  unsigned short        seg, ofs1, ofs2;
-  static int            first = 1;
-  static unsigned short sseg = 0;
-  static unsigned short sofs = 0;
-  unsigned short        p, p1, p2;
-  char                  buf[256];
+	unsigned              i, j;
+	unsigned short        cnt;
+	unsigned short        seg, ofs1, ofs2;
+	static int            first = 1;
+	static unsigned short sseg = 0;
+	static unsigned short sofs = 0;
+	unsigned short        p, p1, p2;
+	char                  buf[256];
 
-  if (first) {
-    first = 0;
-    sseg = e86_get_ds (pc->cpu);
-    sofs = 0;
-  }
+	if (first) {
+		first = 0;
+		sseg = e86_get_ds (pc->cpu);
+		sofs = 0;
+	}
 
-  seg = sseg;
-  ofs1 = sofs;
-  cnt = 256;
+	seg = sseg;
+	ofs1 = sofs;
+	cnt = 256;
 
-  if (cmd_match_uint16_16 (cmd, &seg, &ofs1)) {
-    cmd_match_uint16 (cmd, &cnt);
-  }
+	if (cmd_match_uint16_16 (cmd, &seg, &ofs1)) {
+		cmd_match_uint16 (cmd, &cnt);
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  ofs2 = (ofs1 + cnt - 1) & 0xffff;
-  if (ofs2 < ofs1) {
-    ofs2 = 0xffff;
-    cnt = ofs2 - ofs1 + 1;
-  }
+	ofs2 = (ofs1 + cnt - 1) & 0xffff;
+	if (ofs2 < ofs1) {
+		ofs2 = 0xffff;
+		cnt = ofs2 - ofs1 + 1;
+	}
 
-  sseg = seg;
-  sofs = ofs1 + cnt;
+	sseg = seg;
+	sofs = ofs1 + cnt;
 
-  p1 = ofs1 / 16;
-  p2 = ofs2 / 16 + 1;
+	p1 = ofs1 / 16;
+	p2 = ofs2 / 16 + 1;
 
-  for (p = p1; p < p2; p++) {
-    j = 16 * p;
+	for (p = p1; p < p2; p++) {
+		j = 16 * p;
 
-    sprintf (buf,
-      "%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-      seg, j
-    );
+		sprintf (buf,
+			"%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
+			seg, j
+		);
 
-    for (i = 0; i < 16; i++) {
-      if ((j >= ofs1) && (j <= ofs2)) {
-        unsigned val, val1, val2;
+		for (i = 0; i < 16; i++) {
+			if ((j >= ofs1) && (j <= ofs2)) {
+				unsigned val, val1, val2;
 
-        val = e86_get_mem8 (pc->cpu, seg, j);
-        val1 = (val >> 4) & 0x0f;
-        val2 = val & 0x0f;
+				val = e86_get_mem8 (pc->cpu, seg, j);
+				val1 = (val >> 4) & 0x0f;
+				val2 = val & 0x0f;
 
-        buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-        buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
+				buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
+				buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
 
-        if ((val >= 32) && (val <= 127)) {
-          buf[60 + i] = val;
-        }
-        else {
-          buf[60 + i] = '.';
-        }
-      }
-      else {
-        buf[11 + 3 * i] = ' ';
-        buf[11 + 3 * i + 1] = ' ';
-        buf[60 + i] = ' ';
-      }
+				if ((val >= 32) && (val <= 127)) {
+					buf[60 + i] = val;
+				}
+				else {
+					buf[60 + i] = '.';
+				}
+			}
+			else {
+				buf[11 + 3 * i] = ' ';
+				buf[11 + 3 * i + 1] = ' ';
+				buf[60 + i] = ' ';
+			}
 
-      j += 1;
-    }
+			j += 1;
+		}
 
-    fputs (buf, stdout);
-  }
+		fputs (buf, stdout);
+	}
 }
 
 static
 void do_e (cmd_t *cmd)
 {
-  unsigned       i;
-  unsigned short seg, ofs;
-  unsigned long  addr;
-  unsigned short val;
-  char           buf[256];
+	unsigned       i;
+	unsigned short seg, ofs;
+	unsigned long  addr;
+	unsigned short val;
+	char           buf[256];
 
-  seg = 0;
-  ofs = 0;
+	seg = 0;
+	ofs = 0;
 
-  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-    cmd_error (cmd, "need an address");
-  }
+	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		cmd_error (cmd, "need an address");
+	}
 
-  addr = (seg << 4) + ofs;
+	addr = (seg << 4) + ofs;
 
-  while (1) {
-    if (cmd_match_uint16 (cmd, &val)) {
-      mem_set_uint8 (pc->mem, addr, val);
-      addr += 1;
-    }
-    else if (cmd_match_str (cmd, buf, 256)) {
-      i = 0;
-      while (buf[i] != 0) {
-        mem_set_uint8 (pc->mem, addr, buf[i]);
-        addr += 1;
-        i += 1;
-      }
-    }
-    else {
-      break;
-    }
-  }
+	while (1) {
+		if (cmd_match_uint16 (cmd, &val)) {
+			mem_set_uint8 (pc->mem, addr, val);
+			addr += 1;
+		}
+		else if (cmd_match_str (cmd, buf, 256)) {
+			i = 0;
+			while (buf[i] != 0) {
+				mem_set_uint8 (pc->mem, addr, buf[i]);
+				addr += 1;
+				i += 1;
+			}
+		}
+		else {
+			break;
+		}
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 }
 
 static
 void do_far (cmd_t *cmd)
 {
-  unsigned short seg;
+	unsigned short seg;
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  seg = e86_get_cs (pc->cpu);
+	seg = e86_get_cs (pc->cpu);
 
-  pce_start();
+	pce_start();
 
-  while (e86_get_cs (pc->cpu) == seg) {
-    cpu_exec();
+	while (e86_get_cs (pc->cpu) == seg) {
+		cpu_exec();
 
-    if (pce_check_break (pc)) {
-      break;
-    }
-  }
+		if (pce_check_break (pc)) {
+			break;
+		}
+	}
 
-  pce_stop();
+	pce_stop();
 
-  prt_state (pc, stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_g (cmd_t *cmd)
 {
-  int run;
+	int run;
 
-  if (cmd_match (cmd, "b")) {
-    run = 0;
-  }
-  else {
-    run = 1;
-  }
+	if (cmd_match (cmd, "b")) {
+		run = 0;
+	}
+	else {
+		run = 1;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (run) {
-    pce_run();
-    return;
-  }
+	if (run) {
+		pce_run();
+		return;
+	}
 
-  pce_run_bp();
+	pce_run_bp();
 
-  fputs ("\n", stdout);
-  prt_state (pc, stdout);
+	fputs ("\n", stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_h (cmd_t *cmd)
 {
-  if (cmd_match (cmd, "m")) {
-    fputs (
-      "emu.stop\n"
-      "emu.exit\n"
-      "emu.pause           <0|1>\n"
-      "emu.pause.toggle\n"
-      "emu.idle            <ms>\n"
-      "emu.idle.toggle\n"
-      "emu.config.save     <fname>\n"
-      "emu.realtime        <0|1>\n"
-      "emu.realtime.toggle\n"
-      "cpu.model           <8086|8088|v20|v30|80186|80188>\n"
-      "video.redraw\n"
-      "video.screenshot    [fname]\n"
-      "video.size          <w> <h>\n"
-      "disk.boot           <bootdrive>\n"
-      "disk.commit         [drive]\n"
-      "disk.eject          <drive>\n"
-      "disk.insert         <drive>:<fname>\n",
-      stdout
-    );
+	if (cmd_match (cmd, "m")) {
+		fputs (
+			"emu.stop\n"
+			"emu.exit\n"
+			"emu.pause           <0|1>\n"
+			"emu.pause.toggle\n"
+			"emu.idle            <ms>\n"
+			"emu.idle.toggle\n"
+			"emu.config.save     <fname>\n"
+			"emu.realtime        <0|1>\n"
+			"emu.realtime.toggle\n"
+			"cpu.model           <8086|8088|v20|v30|80186|80188>\n"
+			"video.redraw\n"
+			"video.screenshot    [fname]\n"
+			"video.size          <w> <h>\n"
+			"disk.boot           <bootdrive>\n"
+			"disk.commit         [drive]\n"
+			"disk.eject          <drive>\n"
+			"disk.insert         <drive>:<fname>\n",
+			stdout
+		);
 
-    return;
-  }
+		return;
+	}
 
-  fputs (
-    "boot [drive]              Set the boot drive\n"
-    "bc [addr]                 clear a breakpoint or all\n"
-    "bl                        list breakpoints\n"
-    "bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
-    "c [cnt]                   clock [1]\n"
-    "d [addr [cnt]]            dump memory\n"
-    "e addr [val|string...]    enter bytes into memory\n"
-    "far                       run until cs changes\n"
-    "dump what fname           dump to file (ram|video)\n"
-    "g [b]                     run with or without breakpoints\n"
-    "int28 [on|off|val]        turn int28 sleeping on/off\n"
-    "i [b|w] port              input a byte or word from a port\n"
-    "m[g|s] [msg [val]]        send a message\n"
-    "o [b|w] port val          output a byte or word to a port\n"
-    "par i fname               set parport output file\n"
-    "pq [c|f|s]                prefetch queue clear/fill/status\n"
-    "p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
-    "q                         quit\n"
-    "r [reg val]               set a register\n"
-    "s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
-    "t [cnt]                   execute cnt instructions [1]\n"
-    "u [addr [cnt]]            disassemble\n"
-    "v [expr...]               evaluate expressions\n"
-    "w name addr cnt           save memory to file\n",
-    stdout
-  );
+	fputs (
+		"boot [drive]              Set the boot drive\n"
+		"bc [addr]                 clear a breakpoint or all\n"
+		"bl                        list breakpoints\n"
+		"bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
+		"c [cnt]                   clock [1]\n"
+		"d [addr [cnt]]            dump memory\n"
+		"e addr [val|string...]    enter bytes into memory\n"
+		"far                       run until cs changes\n"
+		"dump what fname           dump to file (ram|video)\n"
+		"g [b]                     run with or without breakpoints\n"
+		"int28 [on|off|val]        turn int28 sleeping on/off\n"
+		"i [b|w] port              input a byte or word from a port\n"
+		"m[g|s] [msg [val]]        send a message\n"
+		"o [b|w] port val          output a byte or word to a port\n"
+		"par i fname               set parport output file\n"
+		"pq [c|f|s]                prefetch queue clear/fill/status\n"
+		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
+		"q                         quit\n"
+		"r [reg val]               set a register\n"
+		"s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
+		"t [cnt]                   execute cnt instructions [1]\n"
+		"u [addr [cnt]]            disassemble\n"
+		"v [expr...]               evaluate expressions\n"
+		"w name addr cnt           save memory to file\n",
+		stdout
+	);
 }
 
 static
 void do_int28 (cmd_t *cmd)
 {
-  int            set;
-  unsigned short val;
+	int            set;
+	unsigned short val;
 
-  if (cmd_match (cmd, "on")) {
-    set = 1;
-    val = 10;
-  }
-  else if (cmd_match (cmd, "off")) {
-    set = 1;
-    val = 0;
-  }
-  else if (cmd_match_uint16 (cmd, &val)) {
-    set = 1;
-  }
-  else {
-    set = 0;
-  }
+	if (cmd_match (cmd, "on")) {
+		set = 1;
+		val = 10;
+	}
+	else if (cmd_match (cmd, "off")) {
+		set = 1;
+		val = 0;
+	}
+	else if (cmd_match_uint16 (cmd, &val)) {
+		set = 1;
+	}
+	else {
+		set = 0;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (set) {
-    par_int28 = 1000UL * val;
-  }
+	if (set) {
+		par_int28 = 1000UL * val;
+	}
 
-  printf ("int 28h sleeping is %s (%lums)\n",
-    (par_int28 > 0) ? "on" : "off",
-    par_int28 / 1000UL
-  );
+	printf ("int 28h sleeping is %s (%lums)\n",
+		(par_int28 > 0) ? "on" : "off",
+		par_int28 / 1000UL
+	);
 }
 
 static
 void do_i (cmd_t *cmd)
 {
-  int            word;
-  unsigned short port;
+	int            word;
+	unsigned short port;
 
-  if (cmd_match (cmd, "w")) {
-    word = 1;
-  }
-  else if (cmd_match (cmd, "b")) {
-    word = 0;
-  }
-  else {
-    word = 0;
-  }
+	if (cmd_match (cmd, "w")) {
+		word = 1;
+	}
+	else if (cmd_match (cmd, "b")) {
+		word = 0;
+	}
+	else {
+		word = 0;
+	}
 
-  if (!cmd_match_uint16 (cmd, &port)) {
-    cmd_error (cmd, "need a port address");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &port)) {
+		cmd_error (cmd, "need a port address");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (word) {
-    printf ("%04X: %04X\n", port, e86_get_prt16 (pc->cpu, port));
-  }
-  else {
-    printf ("%04X: %02X\n", port, e86_get_prt8 (pc->cpu, port));
-  }
+	if (word) {
+		printf ("%04X: %04X\n", port, e86_get_prt16 (pc->cpu, port));
+	}
+	else {
+		printf ("%04X: %02X\n", port, e86_get_prt8 (pc->cpu, port));
+	}
 }
 
 static
 void do_key (cmd_t *cmd)
 {
-  unsigned short c;
+	unsigned short c;
 
-  while (1) {
-    if (cmd_match (cmd, "cad")) {
-      pc_set_keycode (pc, 0x38);
-      pc_set_keycode (pc, 0x1d);
-      pc_set_keycode (pc, 0x53);
-      pc_set_keycode (pc, 0xd3);
-      pc_set_keycode (pc, 0x9d);
-      pc_set_keycode (pc, 0xb8);
-    }
-    else if (cmd_match_uint16 (cmd, &c)) {
-      pc_set_keycode (pc, c);
-    }
-    else {
-      break;
-    }
-  }
+	while (1) {
+		if (cmd_match (cmd, "cad")) {
+			pc_set_keycode (pc, 0x38);
+			pc_set_keycode (pc, 0x1d);
+			pc_set_keycode (pc, 0x53);
+			pc_set_keycode (pc, 0xd3);
+			pc_set_keycode (pc, 0x9d);
+			pc_set_keycode (pc, 0xb8);
+		}
+		else if (cmd_match_uint16 (cmd, &c)) {
+			pc_set_keycode (pc, c);
+		}
+		else {
+			break;
+		}
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 }
 
 static
 void do_ms (cmd_t *cmd)
 {
-  char msg[256];
-  char val[256];
+	char msg[256];
+	char val[256];
 
-  if (!cmd_match_str (cmd, msg, 256)) {
-    strcpy (msg, "");
-  }
+	if (!cmd_match_str (cmd, msg, 256)) {
+		strcpy (msg, "");
+	}
 
-  if (!cmd_match_str (cmd, val, 256)) {
-    strcpy (val, "");
-  }
+	if (!cmd_match_str (cmd, val, 256)) {
+		strcpy (val, "");
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (pc_set_msg (pc, msg, val)) {
-    printf ("error\n");
-  }
+	if (pc_set_msg (pc, msg, val)) {
+		printf ("error\n");
+	}
 }
 
 static
 void do_mg (cmd_t *cmd)
 {
-  char msg[256];
-  char val[256];
+	char msg[256];
+	char val[256];
 
-  if (!cmd_match_str (cmd, msg, 256)) {
-    strcpy (msg, "");
-  }
+	if (!cmd_match_str (cmd, msg, 256)) {
+		strcpy (msg, "");
+	}
 
-  if (!cmd_match_str (cmd, val, 256)) {
-    strcpy (val, "");
-  }
+	if (!cmd_match_str (cmd, val, 256)) {
+		strcpy (val, "");
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (pc_get_msg (pc, msg, val, 256)) {
-    printf ("error\n");
-  }
+	if (pc_get_msg (pc, msg, val, 256)) {
+		printf ("error\n");
+	}
 
-  printf ("%s\n", val);
+	printf ("%s\n", val);
 }
 
 static
 void do_m (cmd_t *cmd)
 {
-  if (cmd_match (cmd, "s")) {
-    do_ms (cmd);
-  }
-  else if (cmd_match (cmd, "g")) {
-    do_mg (cmd);
-  }
-  else {
-    do_ms (cmd);
-  }
+	if (cmd_match (cmd, "s")) {
+		do_ms (cmd);
+	}
+	else if (cmd_match (cmd, "g")) {
+		do_mg (cmd);
+	}
+	else {
+		do_ms (cmd);
+	}
 }
 
 static
 void do_o (cmd_t *cmd)
 {
-  int            word;
-  unsigned short port, val;
+	int            word;
+	unsigned short port, val;
 
-  if (cmd_match (cmd, "w")) {
-    word = 1;
-  }
-  else if (cmd_match (cmd, "b")) {
-    word = 0;
-  }
-  else {
-    word = 0;
-  }
+	if (cmd_match (cmd, "w")) {
+		word = 1;
+	}
+	else if (cmd_match (cmd, "b")) {
+		word = 0;
+	}
+	else {
+		word = 0;
+	}
 
-  if (!cmd_match_uint16 (cmd, &port)) {
-    cmd_error (cmd, "need a port address");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &port)) {
+		cmd_error (cmd, "need a port address");
+		return;
+	}
 
-  if (!cmd_match_uint16 (cmd, &val)) {
-    cmd_error (cmd, "need a value");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &val)) {
+		cmd_error (cmd, "need a value");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if (word) {
-    e86_set_prt16 (pc->cpu, port, val);
-  }
-  else {
-    e86_set_prt8 (pc->cpu, port, val);
-  }
+	if (word) {
+		e86_set_prt16 (pc->cpu, port, val);
+	}
+	else {
+		e86_set_prt8 (pc->cpu, port, val);
+	}
 }
 
 static
 void do_par (cmd_t *cmd)
 {
-  unsigned short port;
-  char           fname[256];
+	unsigned short port;
+	char           fname[256];
 
-  if (!cmd_match_uint16 (cmd, &port)) {
-    cmd_error (cmd, "need a port number");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &port)) {
+		cmd_error (cmd, "need a port number");
+		return;
+	}
 
-  if (!cmd_match_str (cmd, fname, 256)) {
-    cmd_error (cmd, "need a file name");
-    return;
-  }
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  if ((port >= 4) || (pc->parport[port] == NULL)) {
-    prt_error ("no parallel port %u\n", (unsigned) port);
-    return;
-  }
+	if ((port >= 4) || (pc->parport[port] == NULL)) {
+		prt_error ("no parallel port %u\n", (unsigned) port);
+		return;
+	}
 
-  if (parport_set_fname (pc->parport[port], fname)) {
-    prt_error ("setting new file failed\n");
-    return;
-  }
+	if (parport_set_fname (pc->parport[port], fname)) {
+		prt_error ("setting new file failed\n");
+		return;
+	}
 }
 
 static
 void do_pqc (cmd_t *cmd)
 {
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  e86_pq_init (pc->cpu);
+	e86_pq_init (pc->cpu);
 }
 
 static
 void do_pqs (cmd_t *cmd)
 {
-  unsigned i;
+	unsigned i;
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  fputs ("PQ:", stdout);
+	fputs ("PQ:", stdout);
 
-  for (i = 0; i < pc->cpu->pq_cnt; i++) {
-    printf (" %02X", pc->cpu->pq[i]);
-  }
+	for (i = 0; i < pc->cpu->pq_cnt; i++) {
+		printf (" %02X", pc->cpu->pq[i]);
+	}
 
-  fputs ("\n", stdout);
+	fputs ("\n", stdout);
 }
 
 static
 void do_pqf (cmd_t *cmd)
 {
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  e86_pq_fill (pc->cpu);
+	e86_pq_fill (pc->cpu);
 }
 
 static
 void do_pq (cmd_t *cmd)
 {
-  if (cmd_match (cmd, "c")) {
-    do_pqc (cmd);
-  }
-  else if (cmd_match (cmd, "f")) {
-    do_pqf (cmd);
-  }
-  else if (cmd_match (cmd, "s")) {
-    do_pqs (cmd);
-  }
-  else if (cmd_match_eol (cmd)) {
-    do_pqs (cmd);
-  }
-  else {
-    prt_error ("pq: unknown command (%s)\n", cmd->str + cmd->i);
-  }
+	if (cmd_match (cmd, "c")) {
+		do_pqc (cmd);
+	}
+	else if (cmd_match (cmd, "f")) {
+		do_pqf (cmd);
+	}
+	else if (cmd_match (cmd, "s")) {
+		do_pqs (cmd);
+	}
+	else if (cmd_match_eol (cmd)) {
+		do_pqs (cmd);
+	}
+	else {
+		prt_error ("pq: unknown command (%s)\n", cmd->str + cmd->i);
+	}
 }
 
 static
 void do_p (cmd_t *cmd)
 {
-  unsigned short seg, ofs;
-  unsigned long  i, n;
-  int            brk;
-  e86_disasm_t   op;
+	unsigned short seg, ofs;
+	unsigned long  i, n;
+	int            brk;
+	e86_disasm_t   op;
 
-  n = 1;
+	n = 1;
 
-  cmd_match_uint32 (cmd, &n);
+	cmd_match_uint32 (cmd, &n);
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  brk = 0;
+	brk = 0;
 
-  pce_start();
+	pce_start();
 
-  for (i = 0; i < n; i++) {
-    e86_disasm_cur (pc->cpu, &op);
+	for (i = 0; i < n; i++) {
+		e86_disasm_cur (pc->cpu, &op);
 
-    seg = e86_get_cs (pc->cpu);
-    ofs = e86_get_ip (pc->cpu);
+		seg = e86_get_cs (pc->cpu);
+		ofs = e86_get_ip (pc->cpu);
 
-    while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
-      pc_clock (pc);
+		while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
+			pc_clock (pc);
 
-      if (pce_check_break (pc)) {
-        brk = 1;
-        break;
-      }
-    }
+			if (pce_check_break (pc)) {
+				brk = 1;
+				break;
+			}
+		}
 
-    if (brk) {
-      break;
-    }
+		if (brk) {
+			break;
+		}
 
-    if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
-      unsigned short ofs2 = ofs + op.dat_n;
+		if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
+			unsigned short ofs2 = ofs + op.dat_n;
 
-      while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
-        pc_clock (pc);
+			while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
+				pc_clock (pc);
 
-        if (pce_check_break (pc)) {
-          brk = 1;
-          break;
-        }
-      }
-    }
+				if (pce_check_break (pc)) {
+					brk = 1;
+					break;
+				}
+			}
+		}
 
-    if (brk) {
-      break;
-    }
+		if (brk) {
+			break;
+		}
 
-    if (pce_check_break (pc)) {
-      break;
-    }
-  }
+		if (pce_check_break (pc)) {
+			break;
+		}
+	}
 
-  pce_stop();
+	pce_stop();
 
-  prt_state (pc, stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_r (cmd_t *cmd)
 {
-  unsigned short val;
-  unsigned short *reg;
+	unsigned short val;
+	unsigned short *reg;
 
-  if (cmd_match_eol (cmd)) {
-    prt_state_cpu (pc->cpu, stdout);
-    return;
-  }
+	if (cmd_match_eol (cmd)) {
+		prt_state_cpu (pc->cpu, stdout);
+		return;
+	}
 
-  if (!cmd_match_reg (cmd, &reg)) {
-    prt_error ("missing register\n");
-    return;
-  }
+	if (!cmd_match_reg (cmd, &reg)) {
+		prt_error ("missing register\n");
+		return;
+	}
 
-  if (!cmd_match_uint16 (cmd, &val)) {
-    prt_error ("missing value\n");
-    return;
-  }
+	if (!cmd_match_uint16 (cmd, &val)) {
+		prt_error ("missing value\n");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  *reg = val;
+	*reg = val;
 
-  prt_state (pc, stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_s (cmd_t *cmd)
 {
-  if (cmd_match_eol (cmd)) {
-    prt_state (pc, stdout);
-    return;
-  }
+	if (cmd_match_eol (cmd)) {
+		prt_state (pc, stdout);
+		return;
+	}
 
-  while (!cmd_match_eol (cmd)) {
-    if (cmd_match (cmd, "pc")) {
-      prt_state_pc (pc, stdout);
-    }
-    else if (cmd_match (cmd, "cpu")) {
-      prt_state_cpu (pc->cpu, stdout);
-    }
-    else if (cmd_match (cmd, "pit")) {
-      prt_state_pit (&pc->pit, stdout);
-    }
-    else if (cmd_match (cmd, "ppi")) {
-      prt_state_ppi (&pc->ppi, stdout);
-    }
-    else if (cmd_match (cmd, "pic")) {
-      prt_state_pic (&pc->pic, stdout);
-    }
-    else if (cmd_match (cmd, "dma")) {
-      prt_state_dma (&pc->dma, stdout);
-    }
-    else if (cmd_match (cmd, "uart")) {
-      unsigned short i;
-      if (!cmd_match_uint16 (cmd, &i)) {
-        i = 0;
-      }
-      if ((i < 4) && (pc->serport[i] != NULL)) {
-        prt_state_uart (&pc->serport[i]->uart, pc->serport[i]->io, stdout);
-      }
-    }
-    else if (cmd_match (cmd, "video")) {
-      prt_state_video (pc->video, stdout);
-    }
-    else if (cmd_match (cmd, "ems")) {
-      prt_state_ems (pc->ems, stdout);
-    }
-    else if (cmd_match (cmd, "xms")) {
-      prt_state_xms (pc->xms, stdout);
-    }
-    else {
-      prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
-      return;
-    }
-  }
+	while (!cmd_match_eol (cmd)) {
+		if (cmd_match (cmd, "pc")) {
+			prt_state_pc (pc, stdout);
+		}
+		else if (cmd_match (cmd, "cpu")) {
+			prt_state_cpu (pc->cpu, stdout);
+		}
+		else if (cmd_match (cmd, "pit")) {
+			prt_state_pit (&pc->pit, stdout);
+		}
+		else if (cmd_match (cmd, "ppi")) {
+			prt_state_ppi (&pc->ppi, stdout);
+		}
+		else if (cmd_match (cmd, "pic")) {
+			prt_state_pic (&pc->pic, stdout);
+		}
+		else if (cmd_match (cmd, "dma")) {
+			prt_state_dma (&pc->dma, stdout);
+		}
+		else if (cmd_match (cmd, "uart")) {
+			unsigned short i;
+			if (!cmd_match_uint16 (cmd, &i)) {
+				i = 0;
+			}
+			if ((i < 4) && (pc->serport[i] != NULL)) {
+				prt_state_uart (&pc->serport[i]->uart, pc->serport[i]->io, stdout);
+			}
+		}
+		else if (cmd_match (cmd, "video")) {
+			prt_state_video (pc->video, stdout);
+		}
+		else if (cmd_match (cmd, "ems")) {
+			prt_state_ems (pc->ems, stdout);
+		}
+		else if (cmd_match (cmd, "xms")) {
+			prt_state_xms (pc->xms, stdout);
+		}
+		else {
+			prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
+			return;
+		}
+	}
 }
 
 static
 void do_screenshot (cmd_t *cmd)
 {
-  char     fname[256];
-  unsigned mode;
-  FILE     *fp;
+	char     fname[256];
+	unsigned mode;
+	FILE     *fp;
 
-  if (!cmd_match_str (cmd, fname, 256)) {
-    cmd_error (cmd, "need a file name");
-    return;
-  }
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
 
-  if (cmd_match (cmd, "t")) {
-    mode = 1;
-  }
-  else if (cmd_match (cmd, "g")) {
-    mode = 2;
-  }
-  else {
-    if (!cmd_match_eol (cmd)) {
-      return;
-    }
+	if (cmd_match (cmd, "t")) {
+		mode = 1;
+	}
+	else if (cmd_match (cmd, "g")) {
+		mode = 2;
+	}
+	else {
+		if (!cmd_match_eol (cmd)) {
+			return;
+		}
 
-    mode = 0;
-  }
+		mode = 0;
+	}
 
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    prt_error ("can't open file (%s)\n", fname);
-    return;
-  }
+	fp = fopen (fname, "wb");
+	if (fp == NULL) {
+		prt_error ("can't open file (%s)\n", fname);
+		return;
+	}
 
-  if (pce_video_screenshot (pc->video, fp, mode)) {
-    fclose (fp);
-    prt_error ("screenshot failed\n");
-    return;
-  }
+	if (pce_video_screenshot (pc->video, fp, mode)) {
+		fclose (fp);
+		prt_error ("screenshot failed\n");
+		return;
+	}
 
-  fclose (fp);
+	fclose (fp);
 }
 
 static
 void do_t (cmd_t *cmd)
 {
-  unsigned long i, n;
+	unsigned long i, n;
 
-  n = 1;
+	n = 1;
 
-  cmd_match_uint32 (cmd, &n);
+	cmd_match_uint32 (cmd, &n);
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  pce_start();
+	pce_start();
 
-  for (i = 0; i < n; i++) {
-    cpu_exec();
+	for (i = 0; i < n; i++) {
+		cpu_exec();
 
-    if (pce_check_break (pc)) {
-      break;
-    }
-  }
+		if (pce_check_break (pc)) {
+			break;
+		}
+	}
 
-  pce_stop();
+	pce_stop();
 
-  prt_state (pc, stdout);
+	prt_state (pc, stdout);
 }
 
 static
 void do_update (cmd_t *cmd)
 {
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  pce_video_update (pc->video);
+	pce_video_update (pc->video);
 }
 
 static
 void do_u (cmd_t *cmd)
 {
-  unsigned              i;
-  unsigned short        seg, ofs, cnt;
-  static unsigned int   first = 1;
-  static unsigned short sseg = 0;
-  static unsigned short sofs = 0;
-  e86_disasm_t          op;
-  char                  str[256];
+	unsigned              i;
+	unsigned short        seg, ofs, cnt;
+	static unsigned int   first = 1;
+	static unsigned short sseg = 0;
+	static unsigned short sofs = 0;
+	e86_disasm_t          op;
+	char                  str[256];
 
-  if (first) {
-    first = 0;
-    sseg = e86_get_cs (pc->cpu);
-    sofs = e86_get_ip (pc->cpu);
-  }
+	if (first) {
+		first = 0;
+		sseg = e86_get_cs (pc->cpu);
+		sofs = e86_get_ip (pc->cpu);
+	}
 
-  seg = sseg;
-  ofs = sofs;
-  cnt = 16;
+	seg = sseg;
+	ofs = sofs;
+	cnt = 16;
 
-  if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-    cmd_match_uint16 (cmd, &cnt);
-  }
+	if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		cmd_match_uint16 (cmd, &cnt);
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  for (i = 0; i < cnt; i++) {
-    e86_disasm_mem (pc->cpu, &op, seg, ofs);
-    disasm_str (str, &op);
+	for (i = 0; i < cnt; i++) {
+		e86_disasm_mem (pc->cpu, &op, seg, ofs);
+		disasm_str (str, &op);
 
-    fprintf (stdout, "%04X:%04X  %s\n", seg, ofs, str);
+		fprintf (stdout, "%04X:%04X  %s\n", seg, ofs, str);
 
-    ofs = (ofs + op.dat_n) & 0xffff;
-  }
+		ofs = (ofs + op.dat_n) & 0xffff;
+	}
 
-  sseg = seg;
-  sofs = ofs;
+	sseg = seg;
+	sofs = ofs;
 }
 
 static
 void do_v (cmd_t *cmd)
 {
-  unsigned long val;
+	unsigned long val;
 
-  while (cmd_match_uint32 (cmd, &val)) {
-    printf ("%lX\n", val);
-  }
+	while (cmd_match_uint32 (cmd, &val)) {
+		printf ("%lX\n", val);
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 }
 
 static
 void do_w (cmd_t *cmd)
 {
-  unsigned short seg, ofs;
-  unsigned long  cnt;
-  char           fname[256];
-  unsigned char  v;
-  FILE           *fp;
+	unsigned short seg, ofs;
+	unsigned long  cnt;
+	char           fname[256];
+	unsigned char  v;
+	FILE           *fp;
 
-  if (!cmd_match_str (cmd, fname, 256)) {
-    cmd_error (cmd, "need a file name");
-    return;
-  }
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
 
-  if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-    cmd_error (cmd, "address expected");
-    return;
-  }
+	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		cmd_error (cmd, "address expected");
+		return;
+	}
 
-  if (!cmd_match_uint32 (cmd, &cnt)) {
-    cmd_error (cmd, "byte count expected");
-    return;
-  }
+	if (!cmd_match_uint32 (cmd, &cnt)) {
+		cmd_error (cmd, "byte count expected");
+		return;
+	}
 
-  if (!cmd_match_end (cmd)) {
-    return;
-  }
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
 
-  fp = fopen (fname, "wb");
-  if (fp == NULL) {
-    printf ("can't open file (%s)\n", fname);
-    return;
-  }
+	fp = fopen (fname, "wb");
+	if (fp == NULL) {
+		printf ("can't open file (%s)\n", fname);
+		return;
+	}
 
-  while (cnt > 0) {
-    v = e86_get_mem8 (pc->cpu, seg, ofs);
-    fputc (v, fp);
+	while (cnt > 0) {
+		v = e86_get_mem8 (pc->cpu, seg, ofs);
+		fputc (v, fp);
 
-    ofs += 1;
-    seg += ofs >> 4;
-    ofs &= 0x000f;
+		ofs += 1;
+		seg += ofs >> 4;
+		ofs &= 0x000f;
 
-    cnt -= 1;
-  }
+		cnt -= 1;
+	}
 
-  fclose (fp);
+	fclose (fp);
 }
 
 static
 int do_cmd (ibmpc_t *pc)
 {
-  cmd_t  cmd;
+	cmd_t  cmd;
 
-  while (1) {
-    prt_prompt (stdout);
-    fflush (stdout);
+	while (1) {
+		prt_prompt (stdout);
+		fflush (stdout);
 
-    cmd_get (&cmd);
+		cmd_get (&cmd);
 
-    if (pc->trm != NULL) {
-      trm_check (pc->trm);
-    }
+		if (pc->trm != NULL) {
+			trm_check (pc->trm);
+		}
 
-    if (cmd_match (&cmd, "boot")) {
-      do_boot (&cmd);
-    }
-    else if (cmd_match (&cmd, "b")) {
-      do_b (&cmd);
-    }
-    else if (cmd_match (&cmd, "c")) {
-      do_c (&cmd);
-    }
-    else if (cmd_match (&cmd, "dump")) {
-      do_dump (&cmd);
-    }
-    else if (cmd_match (&cmd, "d")) {
-      do_d (&cmd);
-    }
-    else if (cmd_match (&cmd, "e")) {
-      do_e (&cmd);
-    }
-    else if (cmd_match (&cmd, "far")) {
-      do_far (&cmd);
-    }
-    else if (cmd_match (&cmd, "g")) {
-      do_g (&cmd);
-    }
-    else if (cmd_match (&cmd, "h")) {
-      do_h (&cmd);
-    }
-    else if (cmd_match (&cmd, "int28")) {
-      do_int28 (&cmd);
-    }
-    else if (cmd_match (&cmd, "i")) {
-      do_i (&cmd);
-    }
-    else if (cmd_match (&cmd, "key")) {
-      do_key (&cmd);
-    }
-    else if (cmd_match (&cmd, "m")) {
-      do_m (&cmd);
-    }
-    else if (cmd_match (&cmd, "par")) {
-      do_par (&cmd);
-    }
-    else if (cmd_match (&cmd, "o")) {
-      do_o (&cmd);
-    }
-    else if (cmd_match (&cmd, "pq")) {
-      do_pq (&cmd);
-    }
-    else if (cmd_match (&cmd, "p")) {
-      do_p (&cmd);
-    }
-    else if (cmd_match (&cmd, "q")) {
-      break;
-    }
-    else if (cmd_match (&cmd, "r")) {
-      do_r (&cmd);
-    }
-    else if (cmd_match (&cmd, "screenshot")) {
-      do_screenshot (&cmd);
-    }
-    else if (cmd_match (&cmd, "s")) {
-      do_s (&cmd);
-    }
-    else if (cmd_match (&cmd, "t")) {
-      do_t (&cmd);
-    }
-    else if (cmd_match (&cmd, "update")) {
-      do_update (&cmd);
-    }
-    else if (cmd_match (&cmd, "u")) {
-      do_u (&cmd);
-    }
-    else if (cmd_match (&cmd, "v")) {
-      do_v (&cmd);
-    }
-    else if (cmd_match (&cmd, "w")) {
-      do_w (&cmd);
-    }
-    else if (cmd_match_eol (&cmd)) {
-      ;
-    }
-    else {
-      printf ("unknown command (%s)\n", cmd.str);
-    }
+		if (cmd_match (&cmd, "boot")) {
+			do_boot (&cmd);
+		}
+		else if (cmd_match (&cmd, "b")) {
+			do_b (&cmd);
+		}
+		else if (cmd_match (&cmd, "c")) {
+			do_c (&cmd);
+		}
+		else if (cmd_match (&cmd, "dump")) {
+			do_dump (&cmd);
+		}
+		else if (cmd_match (&cmd, "d")) {
+			do_d (&cmd);
+		}
+		else if (cmd_match (&cmd, "e")) {
+			do_e (&cmd);
+		}
+		else if (cmd_match (&cmd, "far")) {
+			do_far (&cmd);
+		}
+		else if (cmd_match (&cmd, "g")) {
+			do_g (&cmd);
+		}
+		else if (cmd_match (&cmd, "h")) {
+			do_h (&cmd);
+		}
+		else if (cmd_match (&cmd, "int28")) {
+			do_int28 (&cmd);
+		}
+		else if (cmd_match (&cmd, "i")) {
+			do_i (&cmd);
+		}
+		else if (cmd_match (&cmd, "key")) {
+			do_key (&cmd);
+		}
+		else if (cmd_match (&cmd, "m")) {
+			do_m (&cmd);
+		}
+		else if (cmd_match (&cmd, "par")) {
+			do_par (&cmd);
+		}
+		else if (cmd_match (&cmd, "o")) {
+			do_o (&cmd);
+		}
+		else if (cmd_match (&cmd, "pq")) {
+			do_pq (&cmd);
+		}
+		else if (cmd_match (&cmd, "p")) {
+			do_p (&cmd);
+		}
+		else if (cmd_match (&cmd, "q")) {
+			break;
+		}
+		else if (cmd_match (&cmd, "r")) {
+			do_r (&cmd);
+		}
+		else if (cmd_match (&cmd, "screenshot")) {
+			do_screenshot (&cmd);
+		}
+		else if (cmd_match (&cmd, "s")) {
+			do_s (&cmd);
+		}
+		else if (cmd_match (&cmd, "t")) {
+			do_t (&cmd);
+		}
+		else if (cmd_match (&cmd, "update")) {
+			do_update (&cmd);
+		}
+		else if (cmd_match (&cmd, "u")) {
+			do_u (&cmd);
+		}
+		else if (cmd_match (&cmd, "v")) {
+			do_v (&cmd);
+		}
+		else if (cmd_match (&cmd, "w")) {
+			do_w (&cmd);
+		}
+		else if (cmd_match_eol (&cmd)) {
+			;
+		}
+		else {
+			printf ("unknown command (%s)\n", cmd.str);
+		}
 
-    if (pc->brk == PCE_BRK_ABORT) {
-      break;
-    }
-  };
+		if (pc->brk == PCE_BRK_ABORT) {
+			break;
+		}
+	};
 
-  return (0);
+	return (0);
 }
 
 int main (int argc, char *argv[])
 {
-  int       i;
-  int       run;
-  char      *cfg;
-  ini_sct_t *sct;
+	int       i;
+	int       run;
+	char      *cfg;
+	ini_sct_t *sct;
 
-  if (argc == 2) {
-    if (str_isarg (argv[1], "?", "help")) {
-      prt_help();
-      return (0);
-    }
-    else if (str_isarg (argv[1], NULL, "version")) {
-      prt_version();
-      return (0);
-    }
-  }
+	if (argc == 2) {
+		if (str_isarg (argv[1], "?", "help")) {
+			prt_help();
+			return (0);
+		}
+		else if (str_isarg (argv[1], NULL, "version")) {
+			prt_version();
+			return (0);
+		}
+	}
 
-  cfg = NULL;
-  run = 0;
+	cfg = NULL;
+	run = 0;
 
-  pce_log_init();
-  pce_log_add_fp (stderr, 0, MSG_INF);
+	pce_log_init();
+	pce_log_add_fp (stderr, 0, MSG_INF);
 
-  i = 1;
-  while (i < argc) {
-    if (str_isarg (argv[i], "v", "verbose")) {
-      pce_log_set_level (stderr, MSG_DEB);
-    }
-    else if (str_isarg (argv[i], "q", "quiet")) {
-      pce_log_set_level (stderr, MSG_ERR);
-    }
-    else if (str_isarg (argv[i], "c", "config")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
-      cfg = argv[i];
-    }
-    else if (str_isarg (argv[i], "l", "log")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
-      pce_log_add_fname (argv[i], MSG_DEB);
-    }
-    else if (str_isarg (argv[i], "t", "terminal")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
+	i = 1;
+	while (i < argc) {
+		if (str_isarg (argv[i], "v", "verbose")) {
+			pce_log_set_level (stderr, MSG_DEB);
+		}
+		else if (str_isarg (argv[i], "q", "quiet")) {
+			pce_log_set_level (stderr, MSG_ERR);
+		}
+		else if (str_isarg (argv[i], "c", "config")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
+			cfg = argv[i];
+		}
+		else if (str_isarg (argv[i], "l", "log")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
+			pce_log_add_fname (argv[i], MSG_DEB);
+		}
+		else if (str_isarg (argv[i], "t", "terminal")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
 
-      par_terminal = argv[i];
-    }
-    else if (str_isarg (argv[i], "g", "video")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
+			par_terminal = argv[i];
+		}
+		else if (str_isarg (argv[i], "g", "video")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
 
-      par_video = argv[i];
-    }
-    else if (str_isarg (argv[i], "p", "cpu")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
+			par_video = argv[i];
+		}
+		else if (str_isarg (argv[i], "p", "cpu")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
 
-      par_cpu = argv[i];
-    }
-    else if (str_isarg (argv[i], "b", "boot")) {
-      i += 1;
-      if (i >= argc) {
-        return (1);
-      }
+			par_cpu = argv[i];
+		}
+		else if (str_isarg (argv[i], "b", "boot")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
 
-      par_boot = (unsigned) strtoul (argv[i], NULL, 0);
-    }
-    else if (str_isarg (argv[i], "r", "run")) {
-      run = 1;
-    }
-    else {
-      printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
-      return (1);
-    }
+			par_boot = (unsigned) strtoul (argv[i], NULL, 0);
+		}
+		else if (str_isarg (argv[i], "r", "run")) {
+			run = 1;
+		}
+		else {
+			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
+			return (1);
+		}
 
-    i += 1;
-  }
+		i += 1;
+	}
 
-  pce_log (MSG_MSG,
-    "pce ibmpc version " PCE_VERSION_STR
-    " (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-    "Copyright (C) 1995-2005 Hampa Hug <hampa@hampa.ch>\n"
-  );
+	pce_log (MSG_MSG,
+		"pce ibmpc version " PCE_VERSION_STR
+		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"Copyright (C) 1995-2005 Hampa Hug <hampa@hampa.ch>\n"
+	);
 
-  par_cfg = pce_load_config (cfg);
-  if (par_cfg == NULL) {
-    pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
-    return (1);
-  }
+	par_cfg = pce_load_config (cfg);
+	if (par_cfg == NULL) {
+		pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
+		return (1);
+	}
 
-  sct = ini_sct_find_sct (par_cfg, "pc");
-  if (sct == NULL) {
-    sct = par_cfg;
-  }
+	sct = ini_sct_find_sct (par_cfg, "pc");
+	if (sct == NULL) {
+		sct = par_cfg;
+	}
 
-  pc = pc_new (sct);
-  par_pc = pc;
+	pc = pc_new (sct);
+	par_pc = pc;
 
-  pc->cpu->op_int = &pce_op_int;
-  pc->cpu->op_undef = &pce_op_undef;
+	pc->cpu->op_int = &pce_op_int;
+	pc->cpu->op_undef = &pce_op_undef;
 #if 0
-  pc->cpu->op_stat = pce_op_stat;
+	pc->cpu->op_stat = pce_op_stat;
 #endif
 
-  pc_set_bootdrive (pc, par_boot);
+	pc_set_bootdrive (pc, par_boot);
 
-  e86_reset (pc->cpu);
+	e86_reset (pc->cpu);
 
-  signal (SIGINT, &sig_int);
-  signal (SIGSEGV, &sig_segv);
+	signal (SIGINT, &sig_int);
+	signal (SIGSEGV, &sig_segv);
 
-  cmd_init (stdin, stdout, &cmd_match_sym);
+	cmd_init (stdin, stdout, &cmd_match_sym);
 
-  if (run) {
-    pce_run();
-    if (pc->brk != 2) {
-      fputs ("\n", stdout);
-      do_cmd (pc);
-    }
-  }
-  else {
-    do_cmd (pc);
-  }
+	if (run) {
+		pce_run();
+		if (pc->brk != 2) {
+			fputs ("\n", stdout);
+			do_cmd (pc);
+		}
+	}
+	else {
+		do_cmd (pc);
+	}
 
-  pc_del (pc);
+	pc_del (pc);
 
-  pce_log_done();
+	pce_log_done();
 
-  return (0);
+	return (0);
 }

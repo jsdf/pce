@@ -30,56 +30,56 @@
 
 
 static p405uic_irq_f p405uic_irqf[32] = {
-  &p405uic_set_irq0,  &p405uic_set_irq1,  &p405uic_set_irq2,
-  &p405uic_set_irq3,  &p405uic_set_irq4,  &p405uic_set_irq5,
-  &p405uic_set_irq6,  &p405uic_set_irq7,  &p405uic_set_irq8,
-  &p405uic_set_irq9,  &p405uic_set_irq10, &p405uic_set_irq11,
-  &p405uic_set_irq12, &p405uic_set_irq13, &p405uic_set_irq14,
-  &p405uic_set_irq15, &p405uic_set_irq16, &p405uic_set_irq17,
-  &p405uic_set_irq18, &p405uic_set_irq19, &p405uic_set_irq20,
-  &p405uic_set_irq21, &p405uic_set_irq22, &p405uic_set_irq23,
-  &p405uic_set_irq24, &p405uic_set_irq25, &p405uic_set_irq26,
-  &p405uic_set_irq27, &p405uic_set_irq28, &p405uic_set_irq29,
-  &p405uic_set_irq30, &p405uic_set_irq31,
+	&p405uic_set_irq0,  &p405uic_set_irq1,  &p405uic_set_irq2,
+	&p405uic_set_irq3,  &p405uic_set_irq4,  &p405uic_set_irq5,
+	&p405uic_set_irq6,  &p405uic_set_irq7,  &p405uic_set_irq8,
+	&p405uic_set_irq9,  &p405uic_set_irq10, &p405uic_set_irq11,
+	&p405uic_set_irq12, &p405uic_set_irq13, &p405uic_set_irq14,
+	&p405uic_set_irq15, &p405uic_set_irq16, &p405uic_set_irq17,
+	&p405uic_set_irq18, &p405uic_set_irq19, &p405uic_set_irq20,
+	&p405uic_set_irq21, &p405uic_set_irq22, &p405uic_set_irq23,
+	&p405uic_set_irq24, &p405uic_set_irq25, &p405uic_set_irq26,
+	&p405uic_set_irq27, &p405uic_set_irq28, &p405uic_set_irq29,
+	&p405uic_set_irq30, &p405uic_set_irq31,
 };
 
 
 void p405uic_init (p405_uic_t *uic)
 {
-  uic->sr = 0;
-  uic->er = 0;
-  uic->msr = 0;
-  uic->cr = 0;
-  uic->pr = 0xffffffffUL;
-  uic->tr = (0x80000000UL >> P405UIC_INT_EM);
-  uic->vcr = 0;
-  uic->vr = 0;
+	uic->sr = 0;
+	uic->er = 0;
+	uic->msr = 0;
+	uic->cr = 0;
+	uic->pr = 0xffffffffUL;
+	uic->tr = (0x80000000UL >> P405UIC_INT_EM);
+	uic->vcr = 0;
+	uic->vr = 0;
 
-  uic->levels = 0x00000000;
-  uic->invert = 0x00000000;
-  uic->vr_msk = 0;
+	uic->levels = 0x00000000;
+	uic->invert = 0x00000000;
+	uic->vr_msk = 0;
 
-  uic->nint = NULL;
-  uic->nint_ext = NULL;
-  uic->nint_val = 0;
+	uic->nint = NULL;
+	uic->nint_ext = NULL;
+	uic->nint_val = 0;
 
-  uic->cint = NULL;
-  uic->cint_ext = NULL;
-  uic->cint_val = 0;
+	uic->cint = NULL;
+	uic->cint_ext = NULL;
+	uic->cint_val = 0;
 }
 
 p405_uic_t *p405uic_new (void)
 {
-  p405_uic_t *uic;
+	p405_uic_t *uic;
 
-  uic = malloc (sizeof (p405_uic_t));
-  if (uic == NULL) {
-    return (NULL);
-  }
+	uic = malloc (sizeof (p405_uic_t));
+	if (uic == NULL) {
+		return (NULL);
+	}
 
-  p405uic_init (uic);
+	p405uic_init (uic);
 
-  return (uic);
+	return (uic);
 }
 
 void p405uic_free (p405_uic_t *uic)
@@ -88,381 +88,381 @@ void p405uic_free (p405_uic_t *uic)
 
 void p405uic_del (p405_uic_t *uic)
 {
-  if (uic != NULL) {
-    p405uic_free (uic);
-    free (uic);
-  }
+	if (uic != NULL) {
+		p405uic_free (uic);
+		free (uic);
+	}
 }
 
 void p405uic_set_invert (p405_uic_t *uic, unsigned long inv)
 {
-  uic->invert = inv & 0xffffffff;
-  uic->levels = inv & 0xffffffff;
+	uic->invert = inv & 0xffffffff;
+	uic->levels = inv & 0xffffffff;
 }
 
 void p405uic_set_cint_f (p405_uic_t *uic, p405uic_int_f fct, void *ext)
 {
-  uic->cint_ext = ext;
-  uic->cint = fct;
+	uic->cint_ext = ext;
+	uic->cint = fct;
 }
 
 void p405uic_set_nint_f (p405_uic_t *uic, p405uic_int_f fct, void *ext)
 {
-  uic->nint_ext = ext;
-  uic->nint = fct;
+	uic->nint_ext = ext;
+	uic->nint = fct;
 }
 
 p405uic_irq_f p405uic_get_irq_f (p405_uic_t *uic, unsigned irq)
 {
-  return (p405uic_irqf[irq & 0x1f]);
+	return (p405uic_irqf[irq & 0x1f]);
 }
 
 static
 void p405uic_set_cint (p405_uic_t *uic, unsigned char val)
 {
-  val = (val != 0);
+	val = (val != 0);
 
-  if (val != uic->cint_val) {
-    uic->cint_val = val;
-    if (uic->cint != NULL) {
-      uic->cint (uic->cint_ext, val);
-    }
-  }
+	if (val != uic->cint_val) {
+		uic->cint_val = val;
+		if (uic->cint != NULL) {
+			uic->cint (uic->cint_ext, val);
+		}
+	}
 }
 
 static
 void p405uic_set_nint (p405_uic_t *uic, unsigned char val)
 {
-  val = (val != 0);
+	val = (val != 0);
 
-  if (val != uic->nint_val) {
-    uic->nint_val = val;
-    if (uic->nint != NULL) {
-      uic->nint (uic->nint_ext, val);
-    }
-  }
+	if (val != uic->nint_val) {
+		uic->nint_val = val;
+		if (uic->nint != NULL) {
+			uic->nint (uic->nint_ext, val);
+		}
+	}
 }
 
 static
 void p405uic_update (p405_uic_t *uic)
 {
-  unsigned i;
-  uint32_t msk;
+	unsigned i;
+	uint32_t msk;
 
-  uic->msr = uic->sr & uic->er;
+	uic->msr = uic->sr & uic->er;
 
-  msk = uic->cr & uic->msr;
+	msk = uic->cr & uic->msr;
 
-  if (msk == 0) {
-    /* no critical interrupts active */
-    uic->vr = 0;
-  }
-  else {
-    i = 0;
+	if (msk == 0) {
+		/* no critical interrupts active */
+		uic->vr = 0;
+	}
+	else {
+		i = 0;
 
-    if (uic->vcr & P405UIC_VCR_PRO) {
-      while ((msk & 0x80000000UL) == 0) {
-        msk <<= 1;
-        i += 1;
-      }
-    }
-    else {
-      while ((msk & 0x00000001UL) == 0) {
-        msk >>= 1;
-        i += 1;
-      }
-    }
+		if (uic->vcr & P405UIC_VCR_PRO) {
+			while ((msk & 0x80000000UL) == 0) {
+				msk <<= 1;
+				i += 1;
+			}
+		}
+		else {
+			while ((msk & 0x00000001UL) == 0) {
+				msk >>= 1;
+				i += 1;
+			}
+		}
 
-    uic->vr = (uic->vcr & 0xfffffffcUL) + 512UL * i;
-  }
+		uic->vr = (uic->vcr & 0xfffffffcUL) + 512UL * i;
+	}
 
-  p405uic_set_cint (uic, (uic->msr & uic->cr) != 0);
-  p405uic_set_nint (uic, (uic->msr & ~uic->cr) != 0);
+	p405uic_set_cint (uic, (uic->msr & uic->cr) != 0);
+	p405uic_set_nint (uic, (uic->msr & ~uic->cr) != 0);
 }
 
 uint32_t p405uic_get_sr (p405_uic_t *uic)
 {
-  fprintf (stderr, "p405 uic: get sr : %08lX\n", (unsigned long) uic->sr);
-  return (uic->sr);
+	fprintf (stderr, "p405 uic: get sr : %08lX\n", (unsigned long) uic->sr);
+	return (uic->sr);
 }
 
 void p405uic_set_sr (p405_uic_t *uic, uint32_t val)
 {
-  /* can't clear level sensitive interrupts that are still active */
-  val &= (uic->tr | (uic->levels ^ uic->pr));
+	/* can't clear level sensitive interrupts that are still active */
+	val &= (uic->tr | (uic->levels ^ uic->pr));
 
-  uic->sr &= ~val;
+	uic->sr &= ~val;
 
-  p405uic_update (uic);
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_levels (const p405_uic_t *uic)
 {
-  return (uic->levels);
+	return (uic->levels);
 }
 
 uint32_t p405uic_get_er (p405_uic_t *uic)
 {
-  return (uic->er);
+	return (uic->er);
 }
 
 void p405uic_set_er (p405_uic_t *uic, uint32_t val)
 {
-  uic->er = val;
-  p405uic_update (uic);
+	uic->er = val;
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_msr (p405_uic_t *uic)
 {
-  return (uic->msr);
+	return (uic->msr);
 }
 
 uint32_t p405uic_get_cr (p405_uic_t *uic)
 {
-  return (uic->cr);
+	return (uic->cr);
 }
 
 void p405uic_set_cr (p405_uic_t *uic, uint32_t val)
 {
-  uic->cr = val;
-  p405uic_update (uic);
+	uic->cr = val;
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_pr (p405_uic_t *uic)
 {
-  return (uic->pr);
+	return (uic->pr);
 }
 
 void p405uic_set_pr (p405_uic_t *uic, uint32_t val)
 {
-  uic->pr = val;
-  p405uic_update (uic);
+	uic->pr = val;
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_tr (p405_uic_t *uic)
 {
-  return (uic->tr);
+	return (uic->tr);
 }
 
 void p405uic_set_tr (p405_uic_t *uic, uint32_t val)
 {
-  uic->tr = val;
-  p405uic_update (uic);
+	uic->tr = val;
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_vcr (p405_uic_t *uic)
 {
-  return (uic->vcr);
+	return (uic->vcr);
 }
 
 void p405uic_set_vcr (p405_uic_t *uic, uint32_t val)
 {
-  uic->vcr = val;
-  p405uic_update (uic);
+	uic->vcr = val;
+	p405uic_update (uic);
 }
 
 uint32_t p405uic_get_vr (p405_uic_t *uic)
 {
-  return (uic->vr);
+	return (uic->vr);
 }
 
 
 void p405uic_set_irq (p405_uic_t *uic, unsigned i, unsigned char val)
 {
-  uint32_t msk;
+	uint32_t msk;
 
-  msk = 0x80000000UL >> (i & 0x1f);
+	msk = 0x80000000UL >> (i & 0x1f);
 
-  if (uic->invert & msk) {
-    val = !val;
-  }
+	if (uic->invert & msk) {
+		val = !val;
+	}
 
-  if ((val != 0) == ((uic->levels & msk) != 0)) {
-    /* level has not changed */
-    return;
-  }
+	if ((val != 0) == ((uic->levels & msk) != 0)) {
+		/* level has not changed */
+		return;
+	}
 
-  if (val) {
-    uic->levels |= msk;
+	if (val) {
+		uic->levels |= msk;
 
-    if ((uic->pr & msk) == 0) {
-      return;
-    }
-  }
-  else {
-    uic->levels &= ~msk;
+		if ((uic->pr & msk) == 0) {
+			return;
+		}
+	}
+	else {
+		uic->levels &= ~msk;
 
-    if (uic->pr & msk) {
-      return;
-    }
-  }
+		if (uic->pr & msk) {
+			return;
+		}
+	}
 
-  if (uic->sr & msk) {
-    /* already active */
-    return;
-  }
+	if (uic->sr & msk) {
+		/* already active */
+		return;
+	}
 
-  uic->sr |= msk;
+	uic->sr |= msk;
 
-  p405uic_update (uic);
+	p405uic_update (uic);
 }
 
 void p405uic_set_irq0 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 0, val);
+	p405uic_set_irq (uic, 0, val);
 }
 
 void p405uic_set_irq1 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 1, val);
+	p405uic_set_irq (uic, 1, val);
 }
 
 void p405uic_set_irq2 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 2, val);
+	p405uic_set_irq (uic, 2, val);
 }
 
 void p405uic_set_irq3 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 3, val);
+	p405uic_set_irq (uic, 3, val);
 }
 
 void p405uic_set_irq4 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 4, val);
+	p405uic_set_irq (uic, 4, val);
 }
 
 void p405uic_set_irq5 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 5, val);
+	p405uic_set_irq (uic, 5, val);
 }
 
 void p405uic_set_irq6 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 6, val);
+	p405uic_set_irq (uic, 6, val);
 }
 
 void p405uic_set_irq7 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 7, val);
+	p405uic_set_irq (uic, 7, val);
 }
 
 void p405uic_set_irq8 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 8, val);
+	p405uic_set_irq (uic, 8, val);
 }
 
 void p405uic_set_irq9 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 9, val);
+	p405uic_set_irq (uic, 9, val);
 }
 
 void p405uic_set_irq10 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 10, val);
+	p405uic_set_irq (uic, 10, val);
 }
 
 void p405uic_set_irq11 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 11, val);
+	p405uic_set_irq (uic, 11, val);
 }
 
 void p405uic_set_irq12 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 12, val);
+	p405uic_set_irq (uic, 12, val);
 }
 
 void p405uic_set_irq13 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 13, val);
+	p405uic_set_irq (uic, 13, val);
 }
 
 void p405uic_set_irq14 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 14, val);
+	p405uic_set_irq (uic, 14, val);
 }
 
 void p405uic_set_irq15 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 15, val);
+	p405uic_set_irq (uic, 15, val);
 }
 
 void p405uic_set_irq16 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 16, val);
+	p405uic_set_irq (uic, 16, val);
 }
 
 void p405uic_set_irq17 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 17, val);
+	p405uic_set_irq (uic, 17, val);
 }
 
 void p405uic_set_irq18 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 18, val);
+	p405uic_set_irq (uic, 18, val);
 }
 
 void p405uic_set_irq19 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 19, val);
+	p405uic_set_irq (uic, 19, val);
 }
 
 void p405uic_set_irq20 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 20, val);
+	p405uic_set_irq (uic, 20, val);
 }
 
 void p405uic_set_irq21 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 21, val);
+	p405uic_set_irq (uic, 21, val);
 }
 
 void p405uic_set_irq22 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 22, val);
+	p405uic_set_irq (uic, 22, val);
 }
 
 void p405uic_set_irq23 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 23, val);
+	p405uic_set_irq (uic, 23, val);
 }
 
 void p405uic_set_irq24 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 24, val);
+	p405uic_set_irq (uic, 24, val);
 }
 
 void p405uic_set_irq25 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 25, val);
+	p405uic_set_irq (uic, 25, val);
 }
 
 void p405uic_set_irq26 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 26, val);
+	p405uic_set_irq (uic, 26, val);
 }
 
 void p405uic_set_irq27 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 27, val);
+	p405uic_set_irq (uic, 27, val);
 }
 
 void p405uic_set_irq28 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 28, val);
+	p405uic_set_irq (uic, 28, val);
 }
 
 void p405uic_set_irq29 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 29, val);
+	p405uic_set_irq (uic, 29, val);
 }
 
 void p405uic_set_irq30 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 30, val);
+	p405uic_set_irq (uic, 30, val);
 }
 
 void p405uic_set_irq31 (p405_uic_t *uic, unsigned char val)
 {
-  p405uic_set_irq (uic, 31, val);
+	p405uic_set_irq (uic, 31, val);
 }

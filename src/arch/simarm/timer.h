@@ -28,17 +28,17 @@
 
 
 typedef struct {
-  unsigned long ctrl;
-  unsigned long load;
-  unsigned long status;
-  unsigned long clear;
+	unsigned long ctrl;
+	unsigned long load;
+	unsigned long status;
+	unsigned long clear;
 
-  /* clock divisor */
-  unsigned long clk[2];
+	/* clock divisor */
+	unsigned long clk[2];
 
-  void          (*irq) (void *ext, unsigned char val);
-  void          *irq_ext;
-  unsigned char irq_val;
+	void          (*irq) (void *ext, unsigned char val);
+	void          *irq_ext;
+	unsigned char irq_val;
 } ixp_timer_counter_t;
 
 
@@ -46,15 +46,15 @@ typedef struct {
  * @short The IXP timer context
  *****************************************************************************/
 typedef struct ixp_timer_s {
-  mem_blk_t           io;
+	mem_blk_t           io;
 
-  unsigned long       base;
+	unsigned long       base;
 
-  ixp_timer_counter_t cntr[4];
+	ixp_timer_counter_t cntr[4];
 
-  unsigned long       twde;
+	unsigned long       twde;
 
-  unsigned            scale;
+	unsigned            scale;
 } ixp_timer_t;
 
 

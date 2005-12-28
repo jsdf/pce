@@ -33,20 +33,20 @@ typedef void (*con_set_uint8_f) (void *ext, unsigned char val);
 
 
 typedef struct {
-  mem_blk_t       *io;
+	mem_blk_t       *io;
 
-  void            *irq_ext;
-  con_set_uint8_f irq;
+	void            *irq_ext;
+	con_set_uint8_f irq;
 
-  void            *msg_ext;
+	void            *msg_ext;
 
-  unsigned char   status;
-  unsigned char   data_inp;
-  unsigned char   data_out;
+	unsigned char   status;
+	unsigned char   data_inp;
+	unsigned char   data_out;
 
-  unsigned        buf_i;
-  unsigned        buf_j;
-  unsigned char   buf[CON_BUF_CNT];
+	unsigned        buf_i;
+	unsigned        buf_j;
+	unsigned char   buf[CON_BUF_CNT];
 } console_t;
 
 

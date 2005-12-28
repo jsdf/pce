@@ -53,524 +53,524 @@ static int        par_quiet = 0;
 static
 void prt_help (void)
 {
-  fputs (
-    "usage: pceimg command [options]\n"
-    "\n"
-    "create [options] [output]\n"
-    "  -q, --quiet             Be quiet\n"
-    "  -c, --cylinders int     Set number of cylinders [1024]\n"
-    "  -h, --heads int         Set number of heads [16]\n"
-    "  -s, --sectors int       Set number of sectors per track [63]\n"
-    "  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
-    "  -m, --size int          Set disk size in megabytes [0]\n"
-    "  -o, --output string     Set the output file name [stdout]\n"
-    "\n"
-    "convert [options] [input [output]]\n"
-    "  -q, --quiet             Be quiet\n"
-    "  -c, --cylinders int     Set number of cylinders [1024]\n"
-    "  -h, --heads int         Set number of heads [16]\n"
-    "  -s, --sectors int       Set number of sectors per track [63]\n"
-    "  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
-    "  -i, --input string      Set the input file name [stdin]\n"
-    "  -o, --output string     Set the output file name [stdout]\n"
-    "  -w, --cow string        Set the COW file name [none]\n"
-    "\n"
-    "file names: <format>:<name>\n"
-    "formats:    raw, pce, dosemu\n",
-    stdout
-  );
+	fputs (
+		"usage: pceimg command [options]\n"
+		"\n"
+		"create [options] [output]\n"
+		"  -q, --quiet             Be quiet\n"
+		"  -c, --cylinders int     Set number of cylinders [1024]\n"
+		"  -h, --heads int         Set number of heads [16]\n"
+		"  -s, --sectors int       Set number of sectors per track [63]\n"
+		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
+		"  -m, --size int          Set disk size in megabytes [0]\n"
+		"  -o, --output string     Set the output file name [stdout]\n"
+		"\n"
+		"convert [options] [input [output]]\n"
+		"  -q, --quiet             Be quiet\n"
+		"  -c, --cylinders int     Set number of cylinders [1024]\n"
+		"  -h, --heads int         Set number of heads [16]\n"
+		"  -s, --sectors int       Set number of sectors per track [63]\n"
+		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
+		"  -i, --input string      Set the input file name [stdin]\n"
+		"  -o, --output string     Set the output file name [stdout]\n"
+		"  -w, --cow string        Set the COW file name [none]\n"
+		"\n"
+		"file names: <format>:<name>\n"
+		"formats:    raw, pce, dosemu\n",
+		stdout
+	);
 
-  fflush (stdout);
+	fflush (stdout);
 }
 
 static
 void prt_version (void)
 {
-  fputs (
-    "pceimg version " PCE_VERSION_STR
-    " (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-    "Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
-    stdout
-  );
+	fputs (
+		"pceimg version " PCE_VERSION_STR
+		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"Copyright (C) 1995-2003 Hampa Hug <hampa@hampa.ch>\n",
+		stdout
+	);
 
-  fflush (stdout);
+	fflush (stdout);
 }
 
 
 static
 int opt_check (int argc, char **argv, const char *opt1, const char *opt2,
-  int i, int n)
+	int i, int n)
 {
-  if ((opt1 != NULL) && (strcmp (argv[i], opt1) == 0)) {
-    ;
-  }
-  else if ((opt2 != NULL) && (strcmp (argv[i], opt2) == 0)) {
-    ;
-  }
-  else {
-    return (0);
-  }
+	if ((opt1 != NULL) && (strcmp (argv[i], opt1) == 0)) {
+		;
+	}
+	else if ((opt2 != NULL) && (strcmp (argv[i], opt2) == 0)) {
+		;
+	}
+	else {
+		return (0);
+	}
 
-  if ((i + n) >= argc) {
-    return (0);
-  }
+	if ((i + n) >= argc) {
+		return (0);
+	}
 
-  return (1);
+	return (1);
 }
 
 static
 unsigned pce_get_disk_type (const char *str)
 {
-  unsigned i;
-  char     buf[256];
+	unsigned i;
+	char     buf[256];
 
-  i = 0;
-  while (str[i] != ':') {
-    if (str[i] == 0) {
-      return (DSK_NONE);
-    }
+	i = 0;
+	while (str[i] != ':') {
+		if (str[i] == 0) {
+			return (DSK_NONE);
+		}
 
-    if (i >= 256) {
-      return (DSK_NONE);
-    }
+		if (i >= 256) {
+			return (DSK_NONE);
+		}
 
-    buf[i] = str[i];
+		buf[i] = str[i];
 
-    i += 1;
-  }
+		i += 1;
+	}
 
-  buf[i] = 0;
+	buf[i] = 0;
 
-  if (strcmp (buf, "raw") == 0) {
-    return (DSK_RAW);
-  }
+	if (strcmp (buf, "raw") == 0) {
+		return (DSK_RAW);
+	}
 
-  if (strcmp (buf, "pce") == 0) {
-    return (DSK_PCE);
-  }
+	if (strcmp (buf, "pce") == 0) {
+		return (DSK_PCE);
+	}
 
-  if (strcmp (buf, "dosemu") == 0) {
-    return (DSK_DOSEMU);
-  }
+	if (strcmp (buf, "dosemu") == 0) {
+		return (DSK_DOSEMU);
+	}
 
-  return (DSK_NONE);
+	return (DSK_NONE);
 }
 
 static
 const char *pce_get_disk_name (const char *str)
 {
-  unsigned i;
+	unsigned i;
 
-  i = 0;
-  while (str[i] != ':') {
-    if (str[i] == 0) {
-      return (str);
-    }
+	i = 0;
+	while (str[i] != ':') {
+		if (str[i] == 0) {
+			return (str);
+		}
 
-    i += 1;
-  }
+		i += 1;
+	}
 
-  return (str + i + 1);
+	return (str + i + 1);
 }
 
 static
 int pce_block_is_null (const void *buf, unsigned cnt)
 {
-  unsigned            i;
-  const unsigned char *tmp;
+	unsigned            i;
+	const unsigned char *tmp;
 
-  tmp = buf;
+	tmp = buf;
 
-  for (i = 0; i < cnt; i++) {
-    if (tmp[i] != 0) {
-      return (0);
-    }
-  }
+	for (i = 0; i < cnt; i++) {
+		if (tmp[i] != 0) {
+			return (0);
+		}
+	}
 
-  return (1);
+	return (1);
 }
 
 static
 int dsk_create (const char *str, uint32_t c, uint32_t h, uint32_t s)
 {
-  unsigned   type;
-  const char *name;
+	unsigned   type;
+	const char *name;
 
-  type = pce_get_disk_type (str);
-  name = pce_get_disk_name (str);
+	type = pce_get_disk_type (str);
+	name = pce_get_disk_name (str);
 
-  switch (type) {
-  case DSK_RAW:
-    return (dsk_img_create (name, c, h, s));
+	switch (type) {
+	case DSK_RAW:
+		return (dsk_img_create (name, c, h, s));
 
-  case DSK_PCE:
-    return (dsk_pce_create (name, c, h, s));
+	case DSK_PCE:
+		return (dsk_pce_create (name, c, h, s));
 
-  case DSK_DOSEMU:
-    return (dsk_dosemu_create (name, c, h, s));
-  }
+	case DSK_DOSEMU:
+		return (dsk_dosemu_create (name, c, h, s));
+	}
 
-  return (dsk_pce_create (name, c, h, s));
+	return (dsk_pce_create (name, c, h, s));
 }
 
 static
 disk_t *dsk_open (const char *str, uint32_t c, uint32_t h, uint32_t s, int ro)
 {
-  unsigned   type;
-  const char *name;
+	unsigned   type;
+	const char *name;
 
-  type = pce_get_disk_type (str);
-  name = pce_get_disk_name (str);
+	type = pce_get_disk_type (str);
+	name = pce_get_disk_name (str);
 
-  switch (type) {
-  case DSK_RAW:
-    return (dsk_img_open (name, c, h, s, ro));
+	switch (type) {
+	case DSK_RAW:
+		return (dsk_img_open (name, c, h, s, ro));
 
-  case DSK_PCE:
-    return (dsk_pce_open (name, ro));
+	case DSK_PCE:
+		return (dsk_pce_open (name, ro));
 
-  case DSK_DOSEMU:
-    return (dsk_dosemu_open (name, ro));
-  }
+	case DSK_DOSEMU:
+		return (dsk_dosemu_open (name, ro));
+	}
 
-  return (dsk_auto_open (name, ro));
+	return (dsk_auto_open (name, ro));
 }
 
 static
 int dsk_copy (disk_t *dst, disk_t *src)
 {
-  uint32_t      i, n, m;
-  uint32_t      prg_i, prg_n;
-  unsigned      k;
-  uint16_t      msk;
-  unsigned char buf[8192];
+	uint32_t      i, n, m;
+	uint32_t      prg_i, prg_n;
+	unsigned      k;
+	uint16_t      msk;
+	unsigned char buf[8192];
 
-  n = dsk_get_block_cnt (dst);
-  m = dsk_get_block_cnt (src);
+	n = dsk_get_block_cnt (dst);
+	m = dsk_get_block_cnt (src);
 
-  if (m < n) {
-    n = m;
-  }
+	if (m < n) {
+		n = m;
+	}
 
-  prg_i = 0;
-  prg_n = n;
+	prg_i = 0;
+	prg_n = n;
 
-  i = 0;
-  while (n > 0) {
-    m = (n < 16) ? n : 1;
+	i = 0;
+	while (n > 0) {
+		m = (n < 16) ? n : 1;
 
-    if (dsk_read_lba (src, buf, i, m)) {
-      return (1);
-    }
+		if (dsk_read_lba (src, buf, i, m)) {
+			return (1);
+		}
 
-    msk = 0;
-    for (k = 0; k < m; k++) {
-      if (pce_block_is_null (buf + 512 * k, 512) == 0) {
-        msk |= 1U << k;
-      }
-    }
+		msk = 0;
+		for (k = 0; k < m; k++) {
+			if (pce_block_is_null (buf + 512 * k, 512) == 0) {
+				msk |= 1U << k;
+			}
+		}
 
-    if (msk == 0xffff) {
-      if (dsk_write_lba (dst, buf, i, m)) {
-        return (1);
-      }
-    }
-    else if (msk != 0) {
-      for (k = 0; k < m; k++) {
-        if (msk & (1U << k)) {
-          if (dsk_write_lba (dst, buf + 512 * k, i + k, 1)) {
-            return (1);
-          }
-        }
-      }
-    }
+		if (msk == 0xffff) {
+			if (dsk_write_lba (dst, buf, i, m)) {
+				return (1);
+			}
+		}
+		else if (msk != 0) {
+			for (k = 0; k < m; k++) {
+				if (msk & (1U << k)) {
+					if (dsk_write_lba (dst, buf + 512 * k, i + k, 1)) {
+						return (1);
+					}
+				}
+			}
+		}
 
-    i += m;
-    n -= m;
+		i += m;
+		n -= m;
 
-    if (par_quiet == 0) {
-      prg_i += m;
-      if (prg_i > 16384) {
-        fprintf (stdout, "block %lu of %lu (%.2f%%)\r",
-          (unsigned long) i, (unsigned long) prg_n,
-          (100.0 * (i + 1)) / prg_n
-        );
-        prg_i = 0;
+		if (par_quiet == 0) {
+			prg_i += m;
+			if (prg_i > 16384) {
+				fprintf (stdout, "block %lu of %lu (%.2f%%)\r",
+					(unsigned long) i, (unsigned long) prg_n,
+					(100.0 * (i + 1)) / prg_n
+				);
+				prg_i = 0;
 
-        fflush (stdout);
-      }
-    }
-  }
+				fflush (stdout);
+			}
+		}
+	}
 
-  if (par_quiet == 0) {
-    fprintf (stdout, "block %lu of %lu (%.2f%%)\n",
-      (unsigned long) prg_n, (unsigned long) prg_n, 100.0
-    );
-  }
+	if (par_quiet == 0) {
+		fprintf (stdout, "block %lu of %lu (%.2f%%)\n",
+			(unsigned long) prg_n, (unsigned long) prg_n, 100.0
+		);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int main_create (int argc, char **argv)
 {
-  int      i;
-  char     *par_out = NULL;
-  uint32_t par_c = 0;
-  uint32_t par_h = 0;
-  uint32_t par_s = 0;
+	int      i;
+	char     *par_out = NULL;
+	uint32_t par_c = 0;
+	uint32_t par_h = 0;
+	uint32_t par_s = 0;
 
-  i = 1;
-  while (i < argc) {
-    if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
-      par_quiet = 1;
-    }
-    else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
-      i += 1;
-      par_c = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
-      i += 1;
-      par_h = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
-      i += 1;
-      par_s = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
-      par_c = strtoul (argv[i + 1], NULL, 0);
-      par_h = strtoul (argv[i + 2], NULL, 0);
-      par_s = strtoul (argv[i + 3], NULL, 0);
+	i = 1;
+	while (i < argc) {
+		if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
+			par_quiet = 1;
+		}
+		else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
+			i += 1;
+			par_c = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
+			i += 1;
+			par_h = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
+			i += 1;
+			par_s = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
+			par_c = strtoul (argv[i + 1], NULL, 0);
+			par_h = strtoul (argv[i + 2], NULL, 0);
+			par_s = strtoul (argv[i + 3], NULL, 0);
 
-      i += 3;
-    }
-    else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
-      uint32_t size;
+			i += 3;
+		}
+		else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
+			uint32_t size;
 
-      i += 1;
+			i += 1;
 
-      size = strtoul (argv[i], NULL, 0);
-      size *= (1024 * 1024) / 512;
+			size = strtoul (argv[i], NULL, 0);
+			size *= (1024 * 1024) / 512;
 
-      if (par_c == 0) {
-        par_s = (par_s == 0) ? 63 : par_s;
-        par_h = (par_h == 0) ? 16 : par_h;
-        par_c = size / (par_h * par_s);
-      }
-      else if (par_h == 0) {
-        par_s = (par_s == 0) ? 63 : par_s;
-        par_h = size / (par_c * par_s);
-      }
-      else if (par_s == 0) {
-        par_s = size / (par_c * par_h);
-      }
-    }
-    else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
-      i += 1;
-      par_out = argv[i];
-    }
-    else if (argv[i][0] != '-') {
-      if (par_out != NULL) {
-        fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
-        return (1);
-      }
+			if (par_c == 0) {
+				par_s = (par_s == 0) ? 63 : par_s;
+				par_h = (par_h == 0) ? 16 : par_h;
+				par_c = size / (par_h * par_s);
+			}
+			else if (par_h == 0) {
+				par_s = (par_s == 0) ? 63 : par_s;
+				par_h = size / (par_c * par_s);
+			}
+			else if (par_s == 0) {
+				par_s = size / (par_c * par_h);
+			}
+		}
+		else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
+			i += 1;
+			par_out = argv[i];
+		}
+		else if (argv[i][0] != '-') {
+			if (par_out != NULL) {
+				fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
+				return (1);
+			}
 
-      par_out = argv[i];
-    }
-    else {
-      fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
-      return (1);
-    }
+			par_out = argv[i];
+		}
+		else {
+			fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
+			return (1);
+		}
 
-    i += 1;
-  }
+		i += 1;
+	}
 
-  if (par_c == 0) {
-    par_c = 1024;
-  }
+	if (par_c == 0) {
+		par_c = 1024;
+	}
 
-  if (par_h == 0) {
-    par_h = 16;
-  }
+	if (par_h == 0) {
+		par_h = 16;
+	}
 
-  if (par_s == 0) {
-    par_s = 63;
-  }
+	if (par_s == 0) {
+		par_s = 63;
+	}
 
-  if (par_quiet == 0) {
-    fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
-      (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
-      (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
-    );
-  }
+	if (par_quiet == 0) {
+		fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
+			(unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
+			(unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
+		);
+	}
 
-  if (par_out == NULL) {
-    fprintf (stderr, "%s: need a file name\n", argv0);
-    return (1);
-  }
+	if (par_out == NULL) {
+		fprintf (stderr, "%s: need a file name\n", argv0);
+		return (1);
+	}
 
-  if (dsk_create (par_out, par_c, par_h, par_s)) {
-    fprintf (stderr, "%s: create failed (%s)\n", argv0, par_out);
-    return (1);
-  }
+	if (dsk_create (par_out, par_c, par_h, par_s)) {
+		fprintf (stderr, "%s: create failed (%s)\n", argv0, par_out);
+		return (1);
+	}
 
-  return (1);
+	return (1);
 }
 
 static
 int main_convert (int argc, char **argv)
 {
-  int        i;
-  const char *par_inp = NULL;
-  const char *par_out = NULL;
-  const char *par_cow = NULL;
-  uint32_t   par_c = 1024;
-  uint32_t   par_h = 16;
-  uint32_t   par_s = 63;
-  disk_t     *inp, *out, *cow;
+	int        i;
+	const char *par_inp = NULL;
+	const char *par_out = NULL;
+	const char *par_cow = NULL;
+	uint32_t   par_c = 1024;
+	uint32_t   par_h = 16;
+	uint32_t   par_s = 63;
+	disk_t     *inp, *out, *cow;
 
-  i = 1;
-  while (i < argc) {
-    if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
-      par_quiet = 1;
-    }
-    else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
-      i += 1;
-      par_c = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
-      i += 1;
-      par_h = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
-      i += 1;
-      par_s = strtoul (argv[i], NULL, 0);
-    }
-    else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
-      par_c = strtoul (argv[i + 1], NULL, 0);
-      par_h = strtoul (argv[i + 2], NULL, 0);
-      par_s = strtoul (argv[i + 3], NULL, 0);
+	i = 1;
+	while (i < argc) {
+		if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
+			par_quiet = 1;
+		}
+		else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
+			i += 1;
+			par_c = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
+			i += 1;
+			par_h = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
+			i += 1;
+			par_s = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
+			par_c = strtoul (argv[i + 1], NULL, 0);
+			par_h = strtoul (argv[i + 2], NULL, 0);
+			par_s = strtoul (argv[i + 3], NULL, 0);
 
-      i += 3;
-    }
-    else if (opt_check (argc, argv, "-w", "--cow", i, 1)) {
-      i += 1;
-      par_cow = argv[i];
-    }
-    else if (opt_check (argc, argv, "-i", "--input", i, 1)) {
-      i += 1;
-      par_inp = argv[i];
-    }
-    else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
-      i += 1;
-      par_out = argv[i];
-    }
-    else if (argv[i][0] != '-') {
-      if (par_inp == NULL) {
-        par_inp = argv[i];
-      }
-      else if (par_out == NULL) {
-        par_out = argv[i];
-      }
-      else {
-        fprintf (stderr, "%s: too many files (%s)\n", argv0, argv[i]);
-        return (1);
-      }
-    }
-    else {
-      fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
-      return (1);
-    }
+			i += 3;
+		}
+		else if (opt_check (argc, argv, "-w", "--cow", i, 1)) {
+			i += 1;
+			par_cow = argv[i];
+		}
+		else if (opt_check (argc, argv, "-i", "--input", i, 1)) {
+			i += 1;
+			par_inp = argv[i];
+		}
+		else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
+			i += 1;
+			par_out = argv[i];
+		}
+		else if (argv[i][0] != '-') {
+			if (par_inp == NULL) {
+				par_inp = argv[i];
+			}
+			else if (par_out == NULL) {
+				par_out = argv[i];
+			}
+			else {
+				fprintf (stderr, "%s: too many files (%s)\n", argv0, argv[i]);
+				return (1);
+			}
+		}
+		else {
+			fprintf (stderr, "%s: unknown option (%s)\n", argv0, argv[i]);
+			return (1);
+		}
 
-    i += 1;
-  }
+		i += 1;
+	}
 
-  if (par_inp == NULL) {
-    fprintf (stderr, "%s: need an input file name\n", argv0);
-    return (1);
-  }
+	if (par_inp == NULL) {
+		fprintf (stderr, "%s: need an input file name\n", argv0);
+		return (1);
+	}
 
-  if (par_out == NULL) {
-    fprintf (stderr, "%s: need an output file name\n", argv0);
-    return (1);
-  }
+	if (par_out == NULL) {
+		fprintf (stderr, "%s: need an output file name\n", argv0);
+		return (1);
+	}
 
-  inp = dsk_open (par_inp, par_c, par_h, par_s, 1);
-  if (inp == NULL) {
-    fprintf (stderr, "%s: can't open input file (%s)\n", argv0, par_inp);
-    return (1);
-  }
+	inp = dsk_open (par_inp, par_c, par_h, par_s, 1);
+	if (inp == NULL) {
+		fprintf (stderr, "%s: can't open input file (%s)\n", argv0, par_inp);
+		return (1);
+	}
 
-  if (par_cow != NULL) {
-    cow = inp;
+	if (par_cow != NULL) {
+		cow = inp;
 
-    inp = dsk_cow_new (cow, par_cow);
-    if (inp == NULL) {
-      dsk_del (cow);
-      fprintf (stderr, "%s: can't open COW file (%s)\n", argv0, par_cow);
-      return (1);
-    }
-  }
+		inp = dsk_cow_new (cow, par_cow);
+		if (inp == NULL) {
+			dsk_del (cow);
+			fprintf (stderr, "%s: can't open COW file (%s)\n", argv0, par_cow);
+			return (1);
+		}
+	}
 
-  /* geometry might be different in file header */
-  par_c = inp->c;
-  par_h = inp->h;
-  par_s = inp->s;
+	/* geometry might be different in file header */
+	par_c = inp->c;
+	par_h = inp->h;
+	par_s = inp->s;
 
-  if (par_quiet == 0) {
-    fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
-      (unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
-      (unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
-    );
-  }
+	if (par_quiet == 0) {
+		fprintf (stdout, "geometry: %lu/%lu/%lu (%luM)\n",
+			(unsigned long) par_c, (unsigned long) par_h, (unsigned long) par_s,
+			(unsigned long) ((par_c * par_h * par_s) / (2 * 1024))
+		);
+	}
 
-  if (dsk_create (par_out, par_c, par_h, par_s)) {
-    fprintf (stderr, "%s: can't create output file (%s)\n", argv0, par_out);
-    return (1);
-  }
+	if (dsk_create (par_out, par_c, par_h, par_s)) {
+		fprintf (stderr, "%s: can't create output file (%s)\n", argv0, par_out);
+		return (1);
+	}
 
-  out = dsk_open (par_out, par_c, par_h, par_s, 0);
-  if (out == NULL) {
-    fprintf (stderr, "%s: can't open output file (%s)\n", argv0, par_out);
-    return (1);
-  }
+	out = dsk_open (par_out, par_c, par_h, par_s, 0);
+	if (out == NULL) {
+		fprintf (stderr, "%s: can't open output file (%s)\n", argv0, par_out);
+		return (1);
+	}
 
-  if (dsk_copy (out, inp)) {
-    fprintf (stderr, "%s: copy failed\n", argv0);
-    return (1);
-  }
+	if (dsk_copy (out, inp)) {
+		fprintf (stderr, "%s: copy failed\n", argv0);
+		return (1);
+	}
 
-  dsk_del (out);
-  dsk_del (inp);
+	dsk_del (out);
+	dsk_del (inp);
 
-  return (0);
+	return (0);
 }
 
 int main (int argc, char **argv)
 {
-  if (argc < 2) {
-    return (1);
-  }
+	if (argc < 2) {
+		return (1);
+	}
 
-  argv0 = argv[0];
+	argv0 = argv[0];
 
-  if (argc == 2) {
-    if (opt_check (argc, argv, "-h", "--help", 1, 0)) {
-      prt_help();
-      return (0);
-    }
-    else if (opt_check (argc, argv, "-v", "--version", 1, 0)) {
-      prt_version();
-      return (0);
-    }
-  }
+	if (argc == 2) {
+		if (opt_check (argc, argv, "-h", "--help", 1, 0)) {
+			prt_help();
+			return (0);
+		}
+		else if (opt_check (argc, argv, "-v", "--version", 1, 0)) {
+			prt_version();
+			return (0);
+		}
+	}
 
-  if ((strcmp (argv[1], "new") == 0) || (strcmp (argv[1], "create") == 0)) {
-    return (main_create (argc - 1, argv + 1));
-  }
-  else if ((strcmp (argv[1], "conv") == 0) || (strcmp (argv[1], "convert") == 0)) {
-    return (main_convert (argc - 1, argv + 1));
-  }
+	if ((strcmp (argv[1], "new") == 0) || (strcmp (argv[1], "create") == 0)) {
+		return (main_create (argc - 1, argv + 1));
+	}
+	else if ((strcmp (argv[1], "conv") == 0) || (strcmp (argv[1], "convert") == 0)) {
+		return (main_convert (argc - 1, argv + 1));
+	}
 
-  return (1);
+	return (1);
 }

@@ -33,21 +33,21 @@
 
 
 typedef struct {
-  video_t       vid;
+	video_t       vid;
 
-  mem_blk_t     *mem;
-  mem_blk_t     *reg;
+	mem_blk_t     *mem;
+	mem_blk_t     *reg;
 
-  unsigned      mode_80x25_w;
-  unsigned      mode_80x25_h;
+	unsigned      mode_80x25_w;
+	unsigned      mode_80x25_h;
 
-  unsigned char crtc_reg[18];
+	unsigned char crtc_reg[18];
 
-  unsigned long rgb[16];
+	unsigned long rgb[16];
 
-  unsigned      crtc_pos;
+	unsigned      crtc_pos;
 
-  terminal_t    *trm;
+	terminal_t    *trm;
 } mda_t;
 
 

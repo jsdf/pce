@@ -31,139 +31,139 @@
 
 breakpoint_t *bp_get (breakpoint_t *lst, unsigned long addr1, unsigned long addr2)
 {
-  while (lst != NULL) {
-    if ((lst->addr[0] == addr1) && (lst->addr[1] == addr2)) {
-      return (lst);
-    }
+	while (lst != NULL) {
+		if ((lst->addr[0] == addr1) && (lst->addr[1] == addr2)) {
+			return (lst);
+		}
 
-    lst = lst->next;
-  }
+		lst = lst->next;
+	}
 
-  return (NULL);
+	return (NULL);
 }
 
 void bp_add (breakpoint_t **lst, unsigned long addr1, unsigned long addr2,
-  unsigned pass, unsigned reset)
+	unsigned pass, unsigned reset)
 {
-  breakpoint_t *bp;
+	breakpoint_t *bp;
 
-  bp = bp_get (*lst, addr1, addr2);
+	bp = bp_get (*lst, addr1, addr2);
 
-  if (bp != NULL) {
-    bp->pass = pass;
-    bp->reset = reset;
-    return;
-  }
+	if (bp != NULL) {
+		bp->pass = pass;
+		bp->reset = reset;
+		return;
+	}
 
-  bp = (breakpoint_t *) malloc (sizeof (breakpoint_t));
-  if (bp == NULL) {
-    return;
-  }
+	bp = (breakpoint_t *) malloc (sizeof (breakpoint_t));
+	if (bp == NULL) {
+		return;
+	}
 
-  bp->addr[0] = addr1;
-  bp->addr[1] = addr2;
-  bp->pass = pass;
-  bp->reset = reset;
+	bp->addr[0] = addr1;
+	bp->addr[1] = addr2;
+	bp->pass = pass;
+	bp->reset = reset;
 
-  bp->next = *lst;
-  *lst = bp;
+	bp->next = *lst;
+	*lst = bp;
 }
 
 int bp_clear (breakpoint_t **lst, unsigned long addr1, unsigned long addr2)
 {
-  breakpoint_t *bp1, *bp2;
+	breakpoint_t *bp1, *bp2;
 
-  bp1 = *lst;
-  if (bp1 == NULL) {
-    return (1);
-  }
+	bp1 = *lst;
+	if (bp1 == NULL) {
+		return (1);
+	}
 
-  if ((bp1->addr[0] == addr1) && (bp1->addr[1] == addr2)) {
-    *lst = bp1->next;
-    free (bp1);
-    return (0);
-  }
+	if ((bp1->addr[0] == addr1) && (bp1->addr[1] == addr2)) {
+		*lst = bp1->next;
+		free (bp1);
+		return (0);
+	}
 
-  bp2 = bp1->next;
-  while (bp2 != NULL) {
-    if ((bp2->addr[0] == addr1) && (bp2->addr[1] == addr2)) {
-      bp1->next = bp2->next;
-      free (bp2);
-      return (0);
-    }
+	bp2 = bp1->next;
+	while (bp2 != NULL) {
+		if ((bp2->addr[0] == addr1) && (bp2->addr[1] == addr2)) {
+			bp1->next = bp2->next;
+			free (bp2);
+			return (0);
+		}
 
-    bp1 = bp2;
-    bp2 = bp2->next;
-  }
+		bp1 = bp2;
+		bp2 = bp2->next;
+	}
 
-  return (1);
+	return (1);
 }
 
 void bp_clear_all (breakpoint_t **lst)
 {
-  breakpoint_t *bp;
+	breakpoint_t *bp;
 
-  while (*lst != NULL) {
-    bp = (*lst)->next;
-    free (*lst);
-    *lst = bp;
-  }
+	while (*lst != NULL) {
+		bp = (*lst)->next;
+		free (*lst);
+		*lst = bp;
+	}
 }
 
 void bp_print (breakpoint_t *bp, const char *str, int seg)
 {
-  if (seg) {
-    printf ("%s%04lX:%04lX  %04X  %04X\n",
-      str,
-      (unsigned long) bp->addr[0],
-      (unsigned long) bp->addr[1],
-      (unsigned) bp->pass, (unsigned) bp->reset
-    );
-  }
-  else {
-    printf ("%s%08lX  %04X  %04X\n",
-      str,
-      (unsigned long) bp->addr[0],
-      (unsigned) bp->pass, (unsigned) bp->reset
-    );
-  }
+	if (seg) {
+		printf ("%s%04lX:%04lX  %04X  %04X\n",
+			str,
+			(unsigned long) bp->addr[0],
+			(unsigned long) bp->addr[1],
+			(unsigned) bp->pass, (unsigned) bp->reset
+		);
+	}
+	else {
+		printf ("%s%08lX  %04X  %04X\n",
+			str,
+			(unsigned long) bp->addr[0],
+			(unsigned) bp->pass, (unsigned) bp->reset
+		);
+	}
 }
 
 void bp_list (breakpoint_t *lst, int seg)
 {
-  if (lst == NULL) {
-    printf ("No breakpoints defined\n");
-  }
+	if (lst == NULL) {
+		printf ("No breakpoints defined\n");
+	}
 
-  while (lst != NULL) {
-    bp_print (lst, "  ", seg);
+	while (lst != NULL) {
+		bp_print (lst, "  ", seg);
 
-    lst = lst->next;
-  }
+		lst = lst->next;
+	}
 }
 
 int bp_check (breakpoint_t **lst, unsigned long addr1, unsigned long addr2)
 {
-  breakpoint_t  *bp;
+	breakpoint_t  *bp;
 
-  bp = bp_get (*lst, addr1, addr2);
+	bp = bp_get (*lst, addr1, addr2);
 
-  if (bp != NULL) {
-    if (bp->pass > 0) {
-      bp->pass -= 1;
-    }
+	if (bp != NULL) {
+		if (bp->pass > 0) {
+			bp->pass -= 1;
+		}
 
-    if (bp->pass == 0) {
-      if (bp->reset == 0) {
-        bp_clear (lst, addr1, addr2);
-      }
-      else {
-        bp->pass = bp->reset;
-      }
+		if (bp->pass == 0) {
+			if (bp->reset == 0) {
+				bp_clear (lst, addr1, addr2);
+			}
+			else {
+				bp->pass = bp->reset;
+			}
 
-      return (1);
-    }
-  }
+			return (1);
+		}
+	}
 
-  return (0);
+	return (0);
 }

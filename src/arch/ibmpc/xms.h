@@ -31,34 +31,34 @@
 
 
 typedef struct {
-  unsigned long size;
-  unsigned      lock;
-  unsigned char *data;
+	unsigned long size;
+	unsigned      lock;
+	unsigned char *data;
 } xms_emb_t;
 
 
 typedef struct xms_umb_t {
-  unsigned short segm;
-  unsigned short size;
-  unsigned char  alloc;
+	unsigned short segm;
+	unsigned short size;
+	unsigned char  alloc;
 } xms_umb_t;
 
 
 typedef struct {
-  unsigned      emb_cnt;
-  xms_emb_t     **emb;
-  unsigned long emb_used;
-  unsigned long emb_max;
+	unsigned      emb_cnt;
+	xms_emb_t     **emb;
+	unsigned long emb_used;
+	unsigned long emb_max;
 
-  unsigned      umb_cnt;
-  xms_umb_t     *umb;
-  unsigned long umb_used;
-  unsigned long umb_max;
+	unsigned      umb_cnt;
+	xms_umb_t     *umb;
+	unsigned long umb_used;
+	unsigned long umb_max;
 
-  mem_blk_t     *umbmem;
+	mem_blk_t     *umbmem;
 
-  mem_blk_t     *hma;
-  int           hma_alloc;
+	mem_blk_t     *hma;
+	int           hma_alloc;
 } xms_t;
 
 

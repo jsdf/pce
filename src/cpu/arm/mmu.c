@@ -33,57 +33,57 @@
 static
 void arm_mmu_fault (arm_t *c, uint32_t addr, unsigned status, unsigned domn)
 {
-  arm_copr15_t *mmu;
+	arm_copr15_t *mmu;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  mmu->reg[6] = addr;
-  mmu->reg[5] = ((domn & 0x0f) << 4) | (status & 0x0f);
+	mmu->reg[6] = addr;
+	mmu->reg[5] = ((domn & 0x0f) << 4) | (status & 0x0f);
 
-  arm_exception_data_abort (c);
+	arm_exception_data_abort (c);
 }
 
 static
 void arm_mmu_translation_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
-  arm_mmu_fault (c, addr, sect ? 0x05 : 0x07, domn);
+	arm_mmu_fault (c, addr, sect ? 0x05 : 0x07, domn);
 }
 
 static
 void arm_mmu_domain_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
-  arm_mmu_fault (c, addr, sect ? 0x09 : 0x0b, domn);
+	arm_mmu_fault (c, addr, sect ? 0x09 : 0x0b, domn);
 }
 
 static
 void arm_mmu_permission_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 {
-  arm_mmu_fault (c, addr, sect ? 0x0d : 0x0f, domn);
+	arm_mmu_fault (c, addr, sect ? 0x0d : 0x0f, domn);
 }
 
 
 void arm_tbuf_flush (arm_t *c)
 {
-  unsigned     i;
-  arm_copr15_t *mmu;
+	unsigned     i;
+	arm_copr15_t *mmu;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  for (i = 0; i < ARM_TLB_SIZE; i++) {
-    mmu->tbuf_exec[i].valid = 0;
-    mmu->tbuf_read[i].valid = 0;
-    mmu->tbuf_write[i].valid = 0;
-  }
+	for (i = 0; i < ARM_TLB_SIZE; i++) {
+		mmu->tbuf_exec[i].valid = 0;
+		mmu->tbuf_read[i].valid = 0;
+		mmu->tbuf_write[i].valid = 0;
+	}
 }
 
 static inline
 void arm_tbuf_set (arm_tbuf_t *tb, uint32_t vaddr, uint32_t raddr, uint32_t mask)
 {
-  tb->vaddr = vaddr & mask;
-  tb->vmask = mask;
-  tb->raddr = raddr & mask;
-  tb->rmask = ~mask;
-  tb->valid = 1;
+	tb->vaddr = vaddr & mask;
+	tb->vmask = mask;
+	tb->raddr = raddr & mask;
+	tb->rmask = ~mask;
+	tb->valid = 1;
 }
 
 
@@ -97,40 +97,40 @@ void arm_tbuf_set (arm_tbuf_t *tb, uint32_t vaddr, uint32_t raddr, uint32_t mask
 static
 int arm_mmu_check_perm_read (uint32_t cr, unsigned perm, int priv)
 {
-  if (perm == 0) {
-    switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
-    case 0x00: /* no access */
-      return (0);
+	if (perm == 0) {
+		switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
+		case 0x00: /* no access */
+			return (0);
 
-    case ARM_C15_CR_S: /* priv: read only, user: no access */
-      return (priv);
+		case ARM_C15_CR_S: /* priv: read only, user: no access */
+			return (priv);
 
-    case ARM_C15_CR_R: /* read only */
-      return (1);
+		case ARM_C15_CR_R: /* read only */
+			return (1);
 
-    case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
-      return (0);
-    }
+		case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
+			return (0);
+		}
 
-    return (0);
-  }
+		return (0);
+	}
 
-  if (priv) {
-    return (1);
-  }
+	if (priv) {
+		return (1);
+	}
 
-  switch (perm) {
-  case 0x01: /* no access */
-    return (0);
+	switch (perm) {
+	case 0x01: /* no access */
+		return (0);
 
-  case 0x02: /* read only */
-    return (1);
+	case 0x02: /* read only */
+		return (1);
 
-  case 0x03: /* read/write */
-    return (1);
-  }
+	case 0x03: /* read/write */
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 /*!***************************************************************************
@@ -143,40 +143,40 @@ int arm_mmu_check_perm_read (uint32_t cr, unsigned perm, int priv)
 static
 int arm_mmu_check_perm_write (uint32_t cr, unsigned perm, int priv)
 {
-  if (perm == 0) {
-    switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
-    case 0x00: /* no access */
-      return (0);
+	if (perm == 0) {
+		switch (cr & (ARM_C15_CR_S | ARM_C15_CR_R)) {
+		case 0x00: /* no access */
+			return (0);
 
-    case ARM_C15_CR_S: /* priv: read only, user: no access */
-      return (0);
+		case ARM_C15_CR_S: /* priv: read only, user: no access */
+			return (0);
 
-    case ARM_C15_CR_R: /* read only */
-      return (0);
+		case ARM_C15_CR_R: /* read only */
+			return (0);
 
-    case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
-      return (0);
-    }
+		case ARM_C15_CR_S | ARM_C15_CR_R: /* undefined */
+			return (0);
+		}
 
-    return (0);
-  }
+		return (0);
+	}
 
-  if (priv) {
-    return (1);
-  }
+	if (priv) {
+		return (1);
+	}
 
-  switch (perm) {
-  case 0x01: /* no access */
-    return (0);
+	switch (perm) {
+	case 0x01: /* no access */
+		return (0);
 
-  case 0x02: /* read only */
-    return (0);
+	case 0x02: /* read only */
+		return (0);
 
-  case 0x03: /* read/write */
-    return (1);
-  }
+	case 0x03: /* read/write */
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 /*!***************************************************************************
@@ -190,627 +190,627 @@ int arm_mmu_check_perm_write (uint32_t cr, unsigned perm, int priv)
  *****************************************************************************/
 static
 int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
-  unsigned *domn, unsigned *perm, int *sect)
+	unsigned *domn, unsigned *perm, int *sect)
 {
-  arm_copr15_t *mmu;
-  unsigned     ap;
-  uint32_t     addr1, addr2;
-  uint32_t     desc1, desc2;
+	arm_copr15_t *mmu;
+	unsigned     ap;
+	uint32_t     addr1, addr2;
+	uint32_t     desc1, desc2;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  addr1 = (mmu->reg[2] & 0xffffc000UL) | ((*addr >> 18) & 0x00003ffcUL);
-  desc1 = c->get_uint32 (c->mem_ext, addr1);
+	addr1 = (mmu->reg[2] & 0xffffc000UL) | ((*addr >> 18) & 0x00003ffcUL);
+	desc1 = c->get_uint32 (c->mem_ext, addr1);
 
-  addr2 = 0;
+	addr2 = 0;
 
-  switch (desc1 & 0x03) {
-  case 0x00:
-    /* section translation fault */
-    *mask = 0;
-    *domn = 0;
-    *sect = 1;
-    return (1);
+	switch (desc1 & 0x03) {
+	case 0x00:
+		/* section translation fault */
+		*mask = 0;
+		*domn = 0;
+		*sect = 1;
+		return (1);
 
-  case 0x01:
-    /* coarse */
-    addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 10) & 0x000003fcUL);
-    *domn = arm_get_bits (desc1, 5, 4);
-    break;
+	case 0x01:
+		/* coarse */
+		addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 10) & 0x000003fcUL);
+		*domn = arm_get_bits (desc1, 5, 4);
+		break;
 
-  case 0x02:
-    /* section */
-    *addr = (desc1 & 0xfff00000UL) | (*addr & 0x000fffffUL);
-    *mask = 0xfff00000UL;
-    *domn = arm_get_bits (desc1, 5, 4);
-    *perm = arm_get_bits (desc1, 10, 2);
-    *sect = 1;
-    return (0);
+	case 0x02:
+		/* section */
+		*addr = (desc1 & 0xfff00000UL) | (*addr & 0x000fffffUL);
+		*mask = 0xfff00000UL;
+		*domn = arm_get_bits (desc1, 5, 4);
+		*perm = arm_get_bits (desc1, 10, 2);
+		*sect = 1;
+		return (0);
 
-  case 0x03:
-    /* fine */
-    addr2 = (desc1 & 0xfffff000UL) | ((*addr >> 8) & 0x00000ffcUL);
-    *domn = arm_get_bits (desc1, 5, 4);
-    break;
-  }
+	case 0x03:
+		/* fine */
+		addr2 = (desc1 & 0xfffff000UL) | ((*addr >> 8) & 0x00000ffcUL);
+		*domn = arm_get_bits (desc1, 5, 4);
+		break;
+	}
 
-  desc2 = c->get_uint32 (c->mem_ext, addr2);
+	desc2 = c->get_uint32 (c->mem_ext, addr2);
 
-  *sect = 0;
+	*sect = 0;
 
-  switch (desc2 & 0x03) {
-  case 0x00:
-    /* page translation fault */
-    *mask = 0;
-    *perm = 0;
-    return (1);
+	switch (desc2 & 0x03) {
+	case 0x00:
+		/* page translation fault */
+		*mask = 0;
+		*perm = 0;
+		return (1);
 
-  case 0x01:
-    /* large page */
-    ap = 4 + 2 * arm_get_bits (*addr, 14, 2);
-    *addr = (desc2 & 0xffff0000UL) | (*addr & 0x0000ffffUL);
-    *mask = 0xffff0000UL;
-    *perm = arm_get_bits (desc2, ap, 2);
-    return (0);
+	case 0x01:
+		/* large page */
+		ap = 4 + 2 * arm_get_bits (*addr, 14, 2);
+		*addr = (desc2 & 0xffff0000UL) | (*addr & 0x0000ffffUL);
+		*mask = 0xffff0000UL;
+		*perm = arm_get_bits (desc2, ap, 2);
+		return (0);
 
-  case 0x02:
-    /* small page */
-    ap = 4 + 2 * arm_get_bits (*addr, 10, 2);
-    *addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
-    *mask = 0xfffff000UL;
-    *perm = arm_get_bits (desc2, ap, 2);
-    return (0);
+	case 0x02:
+		/* small page */
+		ap = 4 + 2 * arm_get_bits (*addr, 10, 2);
+		*addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
+		*mask = 0xfffff000UL;
+		*perm = arm_get_bits (desc2, ap, 2);
+		return (0);
 
-  case 0x03:
-    if ((desc1 & 0x03) == 0x01) {
-      /* xscale extended small page */
-      *addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
-      *mask = 0xfffff000UL;
-      *perm = arm_get_bits (desc2, 4, 2);
-      return (0);
-    }
+	case 0x03:
+		if ((desc1 & 0x03) == 0x01) {
+			/* xscale extended small page */
+			*addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
+			*mask = 0xfffff000UL;
+			*perm = arm_get_bits (desc2, 4, 2);
+			return (0);
+		}
 
-    /* tiny page */
-    *perm = arm_get_bits (desc2, 4, 2);
-    *addr = (desc2 & 0xfffffc00UL) | (*addr & 0x000003ffUL);
-    *mask = 0xfffffc00UL;
-    return (0);
-  }
+		/* tiny page */
+		*perm = arm_get_bits (desc2, 4, 2);
+		*addr = (desc2 & 0xfffffc00UL) | (*addr & 0x000003ffUL);
+		*mask = 0xfffffc00UL;
+		return (0);
+	}
 
-  /* non-reachable */
+	/* non-reachable */
 
-  *perm = 0;
+	*perm = 0;
 
-  return (1);
+	return (1);
 }
 
 static
 int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
 {
-  arm_copr15_t *mmu;
-  unsigned     domn, perm;
-  int          sect;
-  uint32_t     vaddr, mask;
-  arm_tbuf_t   *tb;
+	arm_copr15_t *mmu;
+	unsigned     domn, perm;
+	int          sect;
+	uint32_t     vaddr, mask;
+	arm_tbuf_t   *tb;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
-    return (0);
-  }
+	if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
+		return (0);
+	}
 
-  tb = &mmu->tbuf_exec[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
+	tb = &mmu->tbuf_exec[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
-  vaddr = *addr;
+	vaddr = *addr;
 
-  if (tb->valid) {
-    if ((vaddr & tb->vmask) == tb->vaddr) {
-      *addr = tb->raddr | (vaddr & tb->rmask);
-      return (0);
-    }
-  }
+	if (tb->valid) {
+		if ((vaddr & tb->vmask) == tb->vaddr) {
+			*addr = tb->raddr | (vaddr & tb->rmask);
+			return (0);
+		}
+	}
 
-  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
-    arm_exception_prefetch_abort (c);
-    return (1);
-  }
+	if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+		arm_exception_prefetch_abort (c);
+		return (1);
+	}
 
-  /* check domain */
-  switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
-  case 0x00: /* no access */
-    arm_mmu_domain_fault (c, vaddr, domn, sect);
-    return (1);
+	/* check domain */
+	switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
+	case 0x00: /* no access */
+		arm_mmu_domain_fault (c, vaddr, domn, sect);
+		return (1);
 
-  case 0x01: /* client */
-    if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
-      arm_exception_prefetch_abort (c);
-      return (1);
-    }
-    arm_tbuf_set (tb, vaddr, *addr, mask);
-    return (0);
+	case 0x01: /* client */
+		if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
+			arm_exception_prefetch_abort (c);
+			return (1);
+		}
+		arm_tbuf_set (tb, vaddr, *addr, mask);
+		return (0);
 
-  case 0x02: /* undefined */
-    return (0);
+	case 0x02: /* undefined */
+		return (0);
 
-  case 0x03: /* manager */
-    arm_tbuf_set (tb, vaddr, *addr, mask);
-    return (0);
-  }
+	case 0x03: /* manager */
+		arm_tbuf_set (tb, vaddr, *addr, mask);
+		return (0);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
 {
-  arm_copr15_t *mmu;
-  unsigned     domn, perm;
-  int          sect;
-  uint32_t     vaddr, mask;
-  arm_tbuf_t   *tb;
+	arm_copr15_t *mmu;
+	unsigned     domn, perm;
+	int          sect;
+	uint32_t     vaddr, mask;
+	arm_tbuf_t   *tb;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
-    return (0);
-  }
+	if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
+		return (0);
+	}
 
-  tb = &mmu->tbuf_read[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
+	tb = &mmu->tbuf_read[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
-  vaddr = *addr;
+	vaddr = *addr;
 
-  if (tb->valid) {
-    if ((vaddr & tb->vmask) == tb->vaddr) {
-      *addr = tb->raddr | (vaddr & tb->rmask);
-      return (0);
-    }
-  }
+	if (tb->valid) {
+		if ((vaddr & tb->vmask) == tb->vaddr) {
+			*addr = tb->raddr | (vaddr & tb->rmask);
+			return (0);
+		}
+	}
 
-  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
-    arm_mmu_translation_fault (c, vaddr, domn, sect);
-    return (1);
-  }
+	if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+		arm_mmu_translation_fault (c, vaddr, domn, sect);
+		return (1);
+	}
 
-  /* check domain */
-  switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
-  case 0x00: /* no access */
-    arm_mmu_domain_fault (c, vaddr, domn, sect);
-    return (1);
+	/* check domain */
+	switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
+	case 0x00: /* no access */
+		arm_mmu_domain_fault (c, vaddr, domn, sect);
+		return (1);
 
-  case 0x01: /* client */
-    if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
-      arm_mmu_permission_fault (c, vaddr, domn, sect);
-      return (1);
-    }
-    arm_tbuf_set (tb, vaddr, *addr, mask);
-    return (0);
+	case 0x01: /* client */
+		if (arm_mmu_check_perm_read (mmu->reg[1], perm, priv) == 0) {
+			arm_mmu_permission_fault (c, vaddr, domn, sect);
+			return (1);
+		}
+		arm_tbuf_set (tb, vaddr, *addr, mask);
+		return (0);
 
-  case 0x02: /* undefined */
-    return (0);
+	case 0x02: /* undefined */
+		return (0);
 
-  case 0x03: /* manager */
-    arm_tbuf_set (tb, vaddr, *addr, mask);
-    return (0);
-  }
+	case 0x03: /* manager */
+		arm_tbuf_set (tb, vaddr, *addr, mask);
+		return (0);
+	}
 
-  return (0);
+	return (0);
 }
 
 static
 int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
 {
-  arm_copr15_t *mmu;
-  unsigned     domn, perm;
-  int          sect;
-  uint32_t     vaddr, mask;
-  arm_tbuf_t   *tb;
+	arm_copr15_t *mmu;
+	unsigned     domn, perm;
+	int          sect;
+	uint32_t     vaddr, mask;
+	arm_tbuf_t   *tb;
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
-    return (0);
-  }
+	if ((mmu->reg[1] & ARM_C15_CR_M) == 0) {
+		return (0);
+	}
 
-  tb = &mmu->tbuf_write[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
+	tb = &mmu->tbuf_write[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
 
-  vaddr = *addr;
+	vaddr = *addr;
 
-  if (tb->valid) {
-    if ((vaddr & tb->vmask) == tb->vaddr) {
-      *addr = tb->raddr | (vaddr & tb->rmask);
-      return (0);
-    }
-  }
+	if (tb->valid) {
+		if ((vaddr & tb->vmask) == tb->vaddr) {
+			*addr = tb->raddr | (vaddr & tb->rmask);
+			return (0);
+		}
+	}
 
-  if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
-    arm_mmu_translation_fault (c, vaddr, domn, sect);
-    return (1);
-  }
+	if (arm_translate (c, addr, &mask, &domn, &perm, &sect)) {
+		arm_mmu_translation_fault (c, vaddr, domn, sect);
+		return (1);
+	}
 
-  /* check domain */
-  switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
-  case 0x00: /* no access */
-    arm_mmu_domain_fault (c, vaddr, domn, sect);
-    return (1);
+	/* check domain */
+	switch ((mmu->reg[3] >> (2 * domn)) & 0x03) {
+	case 0x00: /* no access */
+		arm_mmu_domain_fault (c, vaddr, domn, sect);
+		return (1);
 
-  case 0x01: /* client */
-    if (arm_mmu_check_perm_write (mmu->reg[1], perm, priv) == 0) {
-      arm_mmu_permission_fault (c, vaddr, domn, sect);
-      return (1);
-    }
+	case 0x01: /* client */
+		if (arm_mmu_check_perm_write (mmu->reg[1], perm, priv) == 0) {
+			arm_mmu_permission_fault (c, vaddr, domn, sect);
+			return (1);
+		}
 
-    arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (tb, vaddr, *addr, mask);
 
-    return (0);
+		return (0);
 
-  case 0x02: /* undefined */
-    return (0);
+	case 0x02: /* undefined */
+		return (0);
 
-  case 0x03: /* manager */
-    arm_tbuf_set (tb, vaddr, *addr, mask);
-    return (0);
-  }
+	case 0x03: /* manager */
+		arm_tbuf_set (tb, vaddr, *addr, mask);
+		return (0);
+	}
 
-  return (0);
+	return (0);
 }
 
 /* translate without causing exceptions */
 int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
-  unsigned *domn, unsigned *perm)
+	unsigned *domn, unsigned *perm)
 {
-  arm_copr15_t *mmu;
-  unsigned     domn1, perm1;
-  int          sect;
-  uint32_t     mask;
+	arm_copr15_t *mmu;
+	unsigned     domn1, perm1;
+	int          sect;
+	uint32_t     mask;
 
-  if (domn == NULL) {
-    domn = &domn1;
-  }
+	if (domn == NULL) {
+		domn = &domn1;
+	}
 
-  if (perm == NULL) {
-    perm = &perm1;
-  }
+	if (perm == NULL) {
+		perm = &perm1;
+	}
 
-  *domn = 0;
-  *perm = 0;
+	*domn = 0;
+	*perm = 0;
 
-  if (xlat == ARM_XLAT_REAL) {
-    return (0);
-  }
+	if (xlat == ARM_XLAT_REAL) {
+		return (0);
+	}
 
-  mmu = arm_get_mmu (c);
+	mmu = arm_get_mmu (c);
 
-  if ((xlat == ARM_XLAT_CPU) && ((mmu->reg[1] & ARM_C15_CR_M) == 0)) {
-    return (0);
-  }
+	if ((xlat == ARM_XLAT_CPU) && ((mmu->reg[1] & ARM_C15_CR_M) == 0)) {
+		return (0);
+	}
 
-  if (arm_translate (c, addr, &mask, domn, perm, &sect)) {
-    return (1);
-  }
+	if (arm_translate (c, addr, &mask, domn, perm, &sect)) {
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 
 int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  uint32_t tmp;
+	uint32_t tmp;
 
-  addr &= ~0x03UL;
+	addr &= ~0x03UL;
 
-  if (arm_translate_exec (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_exec (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if (addr < c->ram_cnt) {
-    unsigned char *p = &c->ram[addr];
+	if (addr < c->ram_cnt) {
+		unsigned char *p = &c->ram[addr];
 
-    if (c->bigendian) {
-      tmp = (uint32_t) p[0] << 24;
-      tmp |= (uint32_t) p[1] << 16;
-      tmp |= (uint32_t) p[2] << 8;
-      tmp |= p[3];
-    }
-    else {
-      tmp = p[0];
-      tmp |= (uint32_t) p[1] << 8;
-      tmp |= (uint32_t) p[2] << 16;
-      tmp |= (uint32_t) p[3] << 24;
-    }
-  }
-  else {
-    tmp = c->get_uint32 (c->mem_ext, addr);
-  }
+		if (c->bigendian) {
+			tmp = (uint32_t) p[0] << 24;
+			tmp |= (uint32_t) p[1] << 16;
+			tmp |= (uint32_t) p[2] << 8;
+			tmp |= p[3];
+		}
+		else {
+			tmp = p[0];
+			tmp |= (uint32_t) p[1] << 8;
+			tmp |= (uint32_t) p[2] << 16;
+			tmp |= (uint32_t) p[3] << 24;
+		}
+	}
+	else {
+		tmp = c->get_uint32 (c->mem_ext, addr);
+	}
 
-  *val = tmp;
+	*val = tmp;
 
-  return (0);
+	return (0);
 }
 
 int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 {
-  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if ((addr + 4) <= c->ram_cnt) {
-    *val = c->ram[addr];
-  }
-  else {
-    *val = c->get_uint8 (c->mem_ext, addr);
-  }
+	if ((addr + 4) <= c->ram_cnt) {
+		*val = c->ram[addr];
+	}
+	else {
+		*val = c->get_uint8 (c->mem_ext, addr);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 {
-  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if ((addr + 2) <= c->ram_cnt) {
-    if (c->bigendian) {
-      *val = (uint16_t) c->ram[addr] << 8;
-      *val |= c->ram[addr + 1];
-    }
-    else {
-      *val = c->ram[addr];
-      *val |= (uint16_t) c->ram[addr + 1] << 8;
-    }
-  }
-  else {
-    *val = c->get_uint16 (c->mem_ext, addr);
-  }
+	if ((addr + 2) <= c->ram_cnt) {
+		if (c->bigendian) {
+			*val = (uint16_t) c->ram[addr] << 8;
+			*val |= c->ram[addr + 1];
+		}
+		else {
+			*val = c->ram[addr];
+			*val |= (uint16_t) c->ram[addr + 1] << 8;
+		}
+	}
+	else {
+		*val = c->get_uint16 (c->mem_ext, addr);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if (addr < c->ram_cnt) {
-    unsigned char *p = &c->ram[addr];
+	if (addr < c->ram_cnt) {
+		unsigned char *p = &c->ram[addr];
 
-    if (c->bigendian) {
-      *val = (uint32_t) p[0] << 24;
-      *val |= (uint32_t) p[1] << 16;
-      *val |= (uint32_t) p[2] << 8;
-      *val |= p[3];
-    }
-    else {
-      *val = p[0];
-      *val |= (uint32_t) p[1] << 8;
-      *val |= (uint32_t) p[2] << 16;
-      *val |= (uint32_t) p[3] << 24;
-    }
-  }
-  else {
-    *val = c->get_uint32 (c->mem_ext, addr);
-  }
+		if (c->bigendian) {
+			*val = (uint32_t) p[0] << 24;
+			*val |= (uint32_t) p[1] << 16;
+			*val |= (uint32_t) p[2] << 8;
+			*val |= p[3];
+		}
+		else {
+			*val = p[0];
+			*val |= (uint32_t) p[1] << 8;
+			*val |= (uint32_t) p[2] << 16;
+			*val |= (uint32_t) p[3] << 24;
+		}
+	}
+	else {
+		*val = c->get_uint32 (c->mem_ext, addr);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore8 (arm_t *c, uint32_t addr, uint8_t val)
 {
-  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if (addr < c->ram_cnt) {
-    c->ram[addr] = val;
-  }
-  else {
-    c->set_uint8 (c->mem_ext, addr, val);
-  }
+	if (addr < c->ram_cnt) {
+		c->ram[addr] = val;
+	}
+	else {
+		c->set_uint8 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 {
-  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if ((addr + 2) <= c->ram_cnt) {
-    if (c->bigendian) {
-      c->ram[addr + 0] = (val >> 8) & 0xff;
-      c->ram[addr + 1] = val & 0xff;
-    }
-    else {
-      c->ram[addr + 0] = val & 0xff;
-      c->ram[addr + 1] = (val >> 8) & 0xff;
-    }
-  }
-  else {
-    c->set_uint16 (c->mem_ext, addr, val);
-  }
+	if ((addr + 2) <= c->ram_cnt) {
+		if (c->bigendian) {
+			c->ram[addr + 0] = (val >> 8) & 0xff;
+			c->ram[addr + 1] = val & 0xff;
+		}
+		else {
+			c->ram[addr + 0] = val & 0xff;
+			c->ram[addr + 1] = (val >> 8) & 0xff;
+		}
+	}
+	else {
+		c->set_uint16 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 {
-  if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, arm_is_privileged (c))) {
+		return (1);
+	}
 
-  if ((addr + 4) <= c->ram_cnt) {
-    if (c->bigendian) {
-      c->ram[addr + 0] = (val >> 24) & 0xff;
-      c->ram[addr + 1] = (val >> 16) & 0xff;
-      c->ram[addr + 2] = (val >> 8) & 0xff;
-      c->ram[addr + 3] = val & 0xff;
-    }
-    else {
-      c->ram[addr + 0] = val & 0xff;
-      c->ram[addr + 1] = (val >> 8) & 0xff;
-      c->ram[addr + 2] = (val >> 16) & 0xff;
-      c->ram[addr + 3] = (val >> 24) & 0xff;
-    }
-  }
-  else {
-    c->set_uint32 (c->mem_ext, addr, val);
-  }
+	if ((addr + 4) <= c->ram_cnt) {
+		if (c->bigendian) {
+			c->ram[addr + 0] = (val >> 24) & 0xff;
+			c->ram[addr + 1] = (val >> 16) & 0xff;
+			c->ram[addr + 2] = (val >> 8) & 0xff;
+			c->ram[addr + 3] = val & 0xff;
+		}
+		else {
+			c->ram[addr + 0] = val & 0xff;
+			c->ram[addr + 1] = (val >> 8) & 0xff;
+			c->ram[addr + 2] = (val >> 16) & 0xff;
+			c->ram[addr + 3] = (val >> 24) & 0xff;
+		}
+	}
+	else {
+		c->set_uint32 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_dload8_t (arm_t *c, uint32_t addr, uint8_t *val)
 {
-  if (arm_translate_read (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, 0)) {
+		return (1);
+	}
 
-  *val = c->get_uint8 (c->mem_ext, addr);
+	*val = c->get_uint8 (c->mem_ext, addr);
 
-  return (0);
+	return (0);
 }
 
 int arm_dload16_t (arm_t *c, uint32_t addr, uint16_t *val)
 {
-  if (arm_translate_read (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, 0)) {
+		return (1);
+	}
 
-  *val = c->get_uint16 (c->mem_ext, addr);
+	*val = c->get_uint16 (c->mem_ext, addr);
 
-  return (0);
+	return (0);
 }
 
 int arm_dload32_t (arm_t *c, uint32_t addr, uint32_t *val)
 {
-  if (arm_translate_read (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_read (c, &addr, 0)) {
+		return (1);
+	}
 
-  *val = c->get_uint32 (c->mem_ext, addr);
+	*val = c->get_uint32 (c->mem_ext, addr);
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore8_t (arm_t *c, uint32_t addr, uint8_t val)
 {
-  if (arm_translate_write (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, 0)) {
+		return (1);
+	}
 
-  c->set_uint8 (c->mem_ext, addr, val);
+	c->set_uint8 (c->mem_ext, addr, val);
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore16_t (arm_t *c, uint32_t addr, uint16_t val)
 {
-  if (arm_translate_write (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, 0)) {
+		return (1);
+	}
 
-  c->set_uint16 (c->mem_ext, addr, val);
+	c->set_uint16 (c->mem_ext, addr, val);
 
-  return (0);
+	return (0);
 }
 
 int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val)
 {
-  if (arm_translate_write (c, &addr, 0)) {
-    return (1);
-  }
+	if (arm_translate_write (c, &addr, 0)) {
+		return (1);
+	}
 
-  c->set_uint32 (c->mem_ext, addr, val);
+	c->set_uint32 (c->mem_ext, addr, val);
 
-  return (0);
+	return (0);
 }
 
 
 int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->get_uint8 != NULL) {
-    *val = c->get_uint8 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xff;
-  }
+	if (c->get_uint8 != NULL) {
+		*val = c->get_uint8 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xff;
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->get_uint16 != NULL) {
-    *val = c->get_uint16 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffU;
-  }
+	if (c->get_uint16 != NULL) {
+		*val = c->get_uint16 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffU;
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_get_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t *val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->get_uint32 != NULL) {
-    *val = c->get_uint32 (c->mem_ext, addr);
-  }
-  else {
-    *val = 0xffffffffUL;
-  }
+	if (c->get_uint32 != NULL) {
+		*val = c->get_uint32 (c->mem_ext, addr);
+	}
+	else {
+		*val = 0xffffffffUL;
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_set_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->set_uint8 != NULL) {
-    c->set_uint8 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint8 != NULL) {
+		c->set_uint8 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_set_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->set_uint16 != NULL) {
-    c->set_uint16 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint16 != NULL) {
+		c->set_uint16 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }
 
 int arm_set_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t val)
 {
-  if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
-    return (1);
-  }
+	if (arm_translate_extern (c, &addr, xlat, NULL, NULL)) {
+		return (1);
+	}
 
-  if (c->set_uint32 != NULL) {
-    c->set_uint32 (c->mem_ext, addr, val);
-  }
+	if (c->set_uint32 != NULL) {
+		c->set_uint32 (c->mem_ext, addr, val);
+	}
 
-  return (0);
+	return (0);
 }

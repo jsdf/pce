@@ -63,7 +63,7 @@ extern char *par_cpu;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii
+	unsigned long addr, unsigned cols, char *prefix, int ascii
 );
 
 
@@ -87,36 +87,36 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
  * @short The simarm context struct
  *****************************************************************************/
 typedef struct simarm_s {
-  arm_t              *cpu;
+	arm_t              *cpu;
 
-  dev_list_t         dev;
+	dev_list_t         dev;
 
-  memory_t           *mem;
-  mem_blk_t          *ram;
-  nvram_t            *nvr;
+	memory_t           *mem;
+	mem_blk_t          *ram;
+	nvram_t            *nvr;
 
-  ixp_intc_t         *intc;
-  ixp_timer_t        *timer;
+	ixp_intc_t         *intc;
+	ixp_timer_t        *timer;
 
-  serport_t          *console;
+	serport_t          *console;
 
-  disks_t            *dsks;
+	disks_t            *dsks;
 
-  pci_ixp_t          *pci;
-  pci_ata_t          pciata;
+	pci_ixp_t          *pci;
+	pci_ata_t          pciata;
 
-  slip_t             *slip;
+	slip_t             *slip;
 
-  ini_sct_t          *cfg;
+	ini_sct_t          *cfg;
 
-  breakpoint_t       *brkpt;
+	breakpoint_t       *brkpt;
 
-  int                bigendian;
+	int                bigendian;
 
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
+	unsigned long long clk_cnt;
+	unsigned long      clk_div[4];
 
-  unsigned           brk;
+	unsigned           brk;
 } simarm_t;
 
 

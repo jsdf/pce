@@ -37,55 +37,55 @@
 
 
 typedef struct {
-  terminal_t    trm;
+	terminal_t    trm;
 
-  SDL_Surface   *scr;
+	SDL_Surface   *scr;
 
-  trm_scrmap_t  smap;
+	trm_scrmap_t  smap;
 
-  unsigned      wdw_w;
-  unsigned      wdw_h;
+	unsigned      wdw_w;
+	unsigned      wdw_h;
 
-  unsigned      dsp_bpp;
-  unsigned      scr_bpp;
+	unsigned      dsp_bpp;
+	unsigned      scr_bpp;
 
-  unsigned      mode;
-  unsigned      pxl_w;
-  unsigned      pxl_h;
+	unsigned      mode;
+	unsigned      pxl_w;
+	unsigned      pxl_h;
 
-  unsigned      txt_w;
-  unsigned      txt_h;
-  unsigned char *txt_buf;
+	unsigned      txt_w;
+	unsigned      txt_h;
+	unsigned char *txt_buf;
 
-  unsigned      font_w;
-  unsigned      font_h;
-  unsigned char *font;
+	unsigned      font_w;
+	unsigned      font_h;
+	unsigned char *font;
 
-  unsigned      crs_x;
-  unsigned      crs_y;
-  unsigned      crs_y1;
-  unsigned      crs_y2;
-  char          crs_on;
+	unsigned      crs_x;
+	unsigned      crs_y;
+	unsigned      crs_y1;
+	unsigned      crs_y2;
+	char          crs_on;
 
-  unsigned      upd_x1;
-  unsigned      upd_y1;
-  unsigned      upd_x2;
-  unsigned      upd_y2;
+	unsigned      upd_x1;
+	unsigned      upd_y1;
+	unsigned      upd_x2;
+	unsigned      upd_y2;
 
-  unsigned char fgidx;
-  unsigned char bgidx;
+	unsigned char fgidx;
+	unsigned char bgidx;
 
-  Uint32        fg;
-  Uint32        bg;
+	Uint32        fg;
+	Uint32        bg;
 
-  unsigned char magic;
+	unsigned char magic;
 
-  char          grab;
-  unsigned      upd_freq;
-  unsigned      upd_text;
-  unsigned      upd_graph;
+	char          grab;
+	unsigned      upd_freq;
+	unsigned      upd_text;
+	unsigned      upd_graph;
 
-  unsigned char colmap[256][3];
+	unsigned char colmap[256][3];
 } sdl_t;
 
 

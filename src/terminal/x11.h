@@ -40,64 +40,64 @@
 
 
 typedef struct {
-  terminal_t    trm;
+	terminal_t    trm;
 
-  char          init_display;
-  char          init_font;
-  char          init_window;
-  char          init_cursor;
-  char          init_gc;
+	char          init_display;
+	char          init_font;
+	char          init_window;
+	char          init_cursor;
+	char          init_gc;
 
-  Display       *display;
-  int           screen;
-  int           display_w;
-  int           display_h;
+	Display       *display;
+	int           screen;
+	int           display_w;
+	int           display_h;
 
-  Window        wdw;
-  GC            gc;
+	Window        wdw;
+	GC            gc;
 
-  Pixmap        back;
-  GC            back_gc;
+	Pixmap        back;
+	GC            back_gc;
 
-  GC            crs_gc;
+	GC            crs_gc;
 
-  Cursor        crs_none;
+	Cursor        crs_none;
 
-  unsigned      mode;
+	unsigned      mode;
 
-  XFontStruct   *font;
-  int           font_w;
-  int           font_h;
-  int           font_d;
+	XFontStruct   *font;
+	int           font_w;
+	int           font_h;
+	int           font_d;
 
-  unsigned      wdw_w;
-  unsigned      wdw_h;
+	unsigned      wdw_w;
+	unsigned      wdw_h;
 
-  unsigned      scn_w;
-  unsigned      scn_h;
-  unsigned char *scn;
+	unsigned      scn_w;
+	unsigned      scn_h;
+	unsigned char *scn;
 
-  unsigned      flush_x1;
-  unsigned      flush_y1;
-  unsigned      flush_x2;
-  unsigned      flush_y2;
+	unsigned      flush_x1;
+	unsigned      flush_y1;
+	unsigned      flush_x2;
+	unsigned      flush_y2;
 
-  char          crs_on;
-  unsigned      crs_y1;
-  unsigned      crs_y2;
-  unsigned      crs_x;
-  unsigned      crs_y;
-  unsigned      crs_fg;
+	char          crs_on;
+	unsigned      crs_y1;
+	unsigned      crs_y2;
+	unsigned      crs_x;
+	unsigned      crs_y;
+	unsigned      crs_fg;
 
-  int           grab;
+	int           grab;
 
-  int           mse_x;
-  int           mse_y;
+	int           mse_x;
+	int           mse_y;
 
-  unsigned      fg;
-  unsigned      bg;
+	unsigned      fg;
+	unsigned      bg;
 
-  XColor        col[256];
+	XColor        col[256];
 } xterm_t;
 
 

@@ -86,8 +86,8 @@
 #define ARM_SPSR_CNT    6
 
 #define arm_set_bits(var, bits, val) do { \
-    if (val) (var) |= (bits); else (var) &= ~(bits); \
-  } while (0)
+		if (val) (var) |= (bits); else (var) &= ~(bits); \
+	} while (0)
 
 #define arm_get_reg(c, n) ((c)->reg[(n)])
 #define arm_get_pc(c) ((c)->reg[15])
@@ -123,9 +123,9 @@
 #define arm_set_cpsr_f(c, v) arm_set_bits ((c)->cpsr, ARM_PSR_F, (v))
 #define arm_set_cpsr_t(c, v) arm_set_bits ((c)->cpsr, ARM_PSR_T, (v))
 #define arm_set_cpsr_m(c, v) do { \
-  (c)->cpsr &= ~0x1fUL; \
-  (c)->cpsr |= (v) & 0x1f; \
-  } while (0)
+	(c)->cpsr &= ~0x1fUL; \
+	(c)->cpsr |= (v) & 0x1f; \
+	} while (0)
 
 #define arm_get_mmu(c) (&(c)->copr15)
 
@@ -151,33 +151,33 @@ typedef void (*arm_opcode_f) (struct arm_s *c);
  * @short The ARM coprocessor context
  *****************************************************************************/
 typedef struct arm_copr_s {
-  unsigned        copr_idx;
+	unsigned        copr_idx;
 
-  arm_copr_exec_f exec;
+	arm_copr_exec_f exec;
 
-  void            *ext;
+	void            *ext;
 } arm_copr_t;
 
 
 typedef struct {
-  int      valid;
+	int      valid;
 
-  uint32_t vaddr;
-  uint32_t vmask;
+	uint32_t vaddr;
+	uint32_t vmask;
 
-  uint32_t raddr;
-  uint32_t rmask;
+	uint32_t raddr;
+	uint32_t rmask;
 } arm_tbuf_t;
 
 
 typedef struct {
-  arm_copr_t copr;
+	arm_copr_t copr;
 
-  arm_tbuf_t tbuf_exec[ARM_TLB_SIZE];
-  arm_tbuf_t tbuf_read[ARM_TLB_SIZE];
-  arm_tbuf_t tbuf_write[ARM_TLB_SIZE];
+	arm_tbuf_t tbuf_exec[ARM_TLB_SIZE];
+	arm_tbuf_t tbuf_read[ARM_TLB_SIZE];
+	arm_tbuf_t tbuf_write[ARM_TLB_SIZE];
 
-  uint32_t   reg[16];
+	uint32_t   reg[16];
 } arm_copr15_t;
 
 
@@ -185,61 +185,61 @@ typedef struct {
  * @short The ARM CPU context
  *****************************************************************************/
 typedef struct arm_s {
-  void               *mem_ext;
+	void               *mem_ext;
 
-  arm_get_uint8_f    get_uint8;
-  arm_get_uint16_f   get_uint16;
-  arm_get_uint32_f   get_uint32;
+	arm_get_uint8_f    get_uint8;
+	arm_get_uint16_f   get_uint16;
+	arm_get_uint32_f   get_uint32;
 
-  arm_set_uint8_f    set_uint8;
-  arm_set_uint16_f   set_uint16;
-  arm_set_uint32_f   set_uint32;
+	arm_set_uint8_f    set_uint8;
+	arm_set_uint16_f   set_uint16;
+	arm_set_uint32_f   set_uint32;
 
-  unsigned char      *ram;
-  unsigned long      ram_cnt;
+	unsigned char      *ram;
+	unsigned long      ram_cnt;
 
-  void               *log_ext;
-  int                (*log_opcode) (void *ext, unsigned long ir);
-  void               (*log_undef) (void *ext, unsigned long ir);
-  void               (*log_exception) (void *ext, unsigned long addr);
+	void               *log_ext;
+	int                (*log_opcode) (void *ext, unsigned long ir);
+	void               (*log_undef) (void *ext, unsigned long ir);
+	void               (*log_exception) (void *ext, unsigned long addr);
 
-  uint32_t           cpsr;
+	uint32_t           cpsr;
 
-  uint32_t           spsr;
-  uint32_t           spsr_alt[ARM_SPSR_CNT];
+	uint32_t           spsr;
+	uint32_t           spsr_alt[ARM_SPSR_CNT];
 
-  uint32_t           reg[16];
-  uint32_t           reg_alt[ARM_REG_ALT_CNT];
+	uint32_t           reg[16];
+	uint32_t           reg_alt[ARM_REG_ALT_CNT];
 
-  uint32_t           lastpc[2];
+	uint32_t           lastpc[2];
 
-  /* the current register mapping */
-  unsigned           reg_map;
+	/* the current register mapping */
+	unsigned           reg_map;
 
-  arm_copr_t         *copr[16];
+	arm_copr_t         *copr[16];
 
-  /* system control coprocessor */
-  arm_copr15_t       copr15;
+	/* system control coprocessor */
+	arm_copr15_t       copr15;
 
-  uint32_t           ir;
+	uint32_t           ir;
 
-  uint32_t           exception_base;
+	uint32_t           exception_base;
 
-  char               bigendian;
+	char               bigendian;
 
-  /* cpu is in a privileged mode */
-  char               privileged;
+	/* cpu is in a privileged mode */
+	char               privileged;
 
-  unsigned char      irq;
-  unsigned char      fiq;
-  unsigned char      irq_or_fiq;
+	unsigned char      irq;
+	unsigned char      fiq;
+	unsigned char      irq_or_fiq;
 
-  unsigned long      delay;
+	unsigned long      delay;
 
-  unsigned long long oprcnt;
-  unsigned long long clkcnt;
+	unsigned long long oprcnt;
+	unsigned long long clkcnt;
 
-  arm_opcode_f       opcodes[256];
+	arm_opcode_f       opcodes[256];
 } arm_t;
 
 
@@ -251,7 +251,7 @@ typedef struct arm_s {
 void arm_tbuf_flush (arm_t *c);
 
 int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
-  unsigned *domn, unsigned *perm
+	unsigned *domn, unsigned *perm
 );
 
 int arm_get_mem8 (arm_t *c, uint32_t addr, unsigned xlat, uint8_t *val);
@@ -285,8 +285,8 @@ void arm_free (arm_t *c);
 void arm_del (arm_t *c);
 
 void arm_set_mem_fct (arm_t *c, void *ext,
-  void *get8, void *get16, void *get32,
-  void *set8, void *set16, void *set32
+	void *get8, void *get16, void *get32,
+	void *set8, void *set16, void *set32
 );
 
 void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt);
@@ -373,15 +373,15 @@ void arm_clock (arm_t *c, unsigned long n);
 #define ARM_DFLAG_CALL 0x0100
 
 typedef struct {
-  unsigned flags;
+	unsigned flags;
 
-  uint32_t pc;
-  uint32_t ir;
+	uint32_t pc;
+	uint32_t ir;
 
-  unsigned argn;
+	unsigned argn;
 
-  char     op[64];
-  char     arg[8][64];
+	char     op[64];
+	char     arg[8][64];
 } arm_dasm_t;
 
 

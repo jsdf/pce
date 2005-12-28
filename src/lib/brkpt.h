@@ -28,17 +28,17 @@
 
 
 typedef struct breakpoint_s {
-  struct breakpoint_s *next;
-  unsigned long       addr[2];
-  unsigned            pass;
-  unsigned            reset;
+	struct breakpoint_s *next;
+	unsigned long       addr[2];
+	unsigned            pass;
+	unsigned            reset;
 } breakpoint_t;
 
 
 breakpoint_t *bp_get (breakpoint_t *lst, unsigned long addr1, unsigned long addr2);
 
 void bp_add (breakpoint_t **lst, unsigned long addr1, unsigned long addr2,
-  unsigned pass, unsigned reset);
+	unsigned pass, unsigned reset);
 
 int bp_clear (breakpoint_t **lst, unsigned long addr1, unsigned long addr2);
 

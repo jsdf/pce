@@ -38,23 +38,23 @@
  * @short The IXP interrupt controller context
  *****************************************************************************/
 typedef struct ixp_intc_s {
-  mem_blk_t     io;
+	mem_blk_t     io;
 
-  unsigned long base;
+	unsigned long base;
 
-  void          (*fiq) (void *ext, unsigned char val);
-  void          *fiq_ext;
-  unsigned char fiq_val;
+	void          (*fiq) (void *ext, unsigned char val);
+	void          *fiq_ext;
+	unsigned char fiq_val;
 
-  void          (*irq) (void *ext, unsigned char val);
-  void          *irq_ext;
-  unsigned char irq_val;
+	void          (*irq) (void *ext, unsigned char val);
+	void          *irq_ext;
+	unsigned char irq_val;
 
-  unsigned long status_raw;
-  unsigned long status_fiq;
-  unsigned long status_irq;
-  unsigned long enable_fiq;
-  unsigned long enable_irq;
+	unsigned long status_raw;
+	unsigned long status_fiq;
+	unsigned long status_irq;
+	unsigned long enable_fiq;
+	unsigned long enable_irq;
 } ixp_intc_t;
 
 

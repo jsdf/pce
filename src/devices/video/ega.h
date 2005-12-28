@@ -33,56 +33,56 @@
 
 
 typedef struct ega_t {
-  video_t       vid;
+	video_t       vid;
 
-  mem_blk_t     *mem;
-  mem_blk_t     *reg;
+	mem_blk_t     *mem;
+	mem_blk_t     *reg;
 
-  unsigned char *data;
+	unsigned char *data;
 
-  unsigned long base;
-  unsigned long size;
+	unsigned long base;
+	unsigned long size;
 
-  unsigned      mode_80x25_w;
-  unsigned      mode_80x25_h;
-  unsigned      mode_320x200_w;
-  unsigned      mode_320x200_h;
-  unsigned      mode_640x200_w;
-  unsigned      mode_640x200_h;
-  unsigned      mode_640x350_w;
-  unsigned      mode_640x350_h;
-  unsigned      mode_640x480_w;
-  unsigned      mode_640x480_h;
+	unsigned      mode_80x25_w;
+	unsigned      mode_80x25_h;
+	unsigned      mode_320x200_w;
+	unsigned      mode_320x200_h;
+	unsigned      mode_640x200_w;
+	unsigned      mode_640x200_h;
+	unsigned      mode_640x350_w;
+	unsigned      mode_640x350_h;
+	unsigned      mode_640x480_w;
+	unsigned      mode_640x480_h;
 
-  unsigned char crtc_reg[24];
-  unsigned char ts_reg[5];
-  unsigned char gdc_reg[9];
-  unsigned char atc_reg[21];
+	unsigned char crtc_reg[24];
+	unsigned char ts_reg[5];
+	unsigned char gdc_reg[9];
+	unsigned char atc_reg[21];
 
-  int           atc_index;
+	int           atc_index;
 
-  unsigned char latch[4];
+	unsigned char latch[4];
 
-  unsigned long clkcnt;
+	unsigned long clkcnt;
 
-  void          (*update) (struct ega_t *ega);
-  int           (*screenshot) (struct ega_t *ega, FILE *fp);
-  void          (*set_latches) (struct ega_t *ega, unsigned long addr, unsigned char val[4]);
-  void          (*set_uint8) (struct ega_t *ega, unsigned long addr, unsigned char val);
-  unsigned char (*get_uint8) (struct ega_t *ega, unsigned long addr);
+	void          (*update) (struct ega_t *ega);
+	int           (*screenshot) (struct ega_t *ega, FILE *fp);
+	void          (*set_latches) (struct ega_t *ega, unsigned long addr, unsigned char val[4]);
+	void          (*set_uint8) (struct ega_t *ega, unsigned long addr, unsigned char val);
+	unsigned char (*get_uint8) (struct ega_t *ega, unsigned long addr);
 
-  unsigned      crtc_pos;
-  unsigned      crtc_ofs;
+	unsigned      crtc_pos;
+	unsigned      crtc_ofs;
 
-  int           crs_on;
+	int           crs_on;
 
-  unsigned      mode;
-  unsigned      mode_w;
-  unsigned      mode_h;
+	unsigned      mode;
+	unsigned      mode_w;
+	unsigned      mode_h;
 
-  char          dirty;
+	char          dirty;
 
-  terminal_t    *trm;
+	terminal_t    *trm;
 } ega_t;
 
 

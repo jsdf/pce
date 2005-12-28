@@ -104,56 +104,56 @@
  * @short The UART 8250 structure
  *****************************************************************************/
 typedef struct {
-  unsigned       chip;
+	unsigned       chip;
 
-  /* input buffer. holds bytes that have not yet been received. */
-  unsigned       inp_i;
-  unsigned       inp_j;
-  unsigned       inp_n;
-  unsigned char  inp[E8250_BUF_MAX];
+	/* input buffer. holds bytes that have not yet been received. */
+	unsigned       inp_i;
+	unsigned       inp_j;
+	unsigned       inp_n;
+	unsigned char  inp[E8250_BUF_MAX];
 
-  /* output buffer. holds bytes that have been sent. */
-  unsigned       out_i;
-  unsigned       out_j;
-  unsigned       out_n;
-  unsigned char  out[E8250_BUF_MAX];
+	/* output buffer. holds bytes that have been sent. */
+	unsigned       out_i;
+	unsigned       out_j;
+	unsigned       out_n;
+	unsigned char  out[E8250_BUF_MAX];
 
-  unsigned char  txd[2];
-  unsigned char  rxd[2];
-  unsigned char  ier;
-  unsigned char  iir;
-  unsigned char  lcr;
-  unsigned char  lsr;
-  unsigned char  mcr;
-  unsigned char  msr;
-  unsigned char  scratch;
+	unsigned char  txd[2];
+	unsigned char  rxd[2];
+	unsigned char  ier;
+	unsigned char  iir;
+	unsigned char  lcr;
+	unsigned char  lsr;
+	unsigned char  mcr;
+	unsigned char  msr;
+	unsigned char  scratch;
 
-  unsigned       rxd_read_cnt;
-  unsigned       txd_write_cnt;
+	unsigned       rxd_read_cnt;
+	unsigned       txd_write_cnt;
 
-  /* enables or disables the scratch register */
-  unsigned char  have_scratch;
+	/* enables or disables the scratch register */
+	unsigned char  have_scratch;
 
-  /* records pending interrupts */
-  unsigned char  ipr;
+	/* records pending interrupts */
+	unsigned char  ipr;
 
-  unsigned short divisor;
+	unsigned short divisor;
 
-  unsigned char  irq_val;
-  void           *irq_ext;
-  void           (*irq) (void *ext, unsigned char val);
+	unsigned char  irq_val;
+	void           *irq_ext;
+	void           (*irq) (void *ext, unsigned char val);
 
-  /* output buffer is not empty */
-  void           *send_ext;
-  void           (*send) (void *ext, unsigned char val);
+	/* output buffer is not empty */
+	void           *send_ext;
+	void           (*send) (void *ext, unsigned char val);
 
-  /* input buffer is not full */
-  void           *recv_ext;
-  void           (*recv) (void *ext, unsigned char val);
+	/* input buffer is not full */
+	void           *recv_ext;
+	void           (*recv) (void *ext, unsigned char val);
 
-  /* setup (DIV, MCR or LCR) has changed */
-  void           *setup_ext;
-  void           (*setup) (void *ext, unsigned char val);
+	/* setup (DIV, MCR or LCR) has changed */
+	void           *setup_ext;
+	void           (*setup) (void *ext, unsigned char val);
 } e8250_t;
 
 

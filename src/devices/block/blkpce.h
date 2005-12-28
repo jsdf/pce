@@ -39,17 +39,17 @@
  * @short The pce image file disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t   dsk;
+	disk_t   dsk;
 
-  FILE     *fp;
+	FILE     *fp;
 
-  uint32_t blk_ofs;
-  uint32_t blk_cnt;
-  uint32_t blk_size;
+	uint32_t blk_ofs;
+	uint32_t blk_cnt;
+	uint32_t blk_size;
 
-  uint32_t c;
-  uint32_t h;
-  uint32_t s;
+	uint32_t c;
+	uint32_t h;
+	uint32_t s;
 } disk_pce_t;
 
 

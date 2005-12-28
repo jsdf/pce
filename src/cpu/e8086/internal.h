@@ -38,36 +38,36 @@
 
 
 #define e86_mk_uint16(lo, hi) \
-  (((hi) << 8) | (lo))
+	(((hi) << 8) | (lo))
 
 #define e86_mk_sint16(lo) \
-  (((lo) & 0x80) ? ((lo) | 0xff00) : ((lo) & 0xff))
+	(((lo) & 0x80) ? ((lo) | 0xff00) : ((lo) & 0xff))
 
 #define e86_add_sint8(w, b) \
-  ((((b) & 0x80) ? ((w) + ((b) | 0xff00)) : ((w) + ((b) & 0xff))) & 0xffff)
+	((((b) & 0x80) ? ((w) + ((b) | 0xff00)) : ((w) + ((b) & 0xff))) & 0xffff)
 
 #define e86_add_uint16(s1, s2) \
-  (((s1) + (s2)) & 0xffff)
+	(((s1) + (s2)) & 0xffff)
 
 #define e86_add_uint4(s1, s2) \
-  (((s1) & 0x0f) + ((s2) & 0x0f))
+	(((s1) & 0x0f) + ((s2) & 0x0f))
 
 #define e86_sub_uint4(s1, s2) \
-  (((s1) & 0x0f) - ((s2) & 0x0f))
+	(((s1) & 0x0f) - ((s2) & 0x0f))
 
 
 #define e86_get_sego(cpu, seg) \
-  (((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (seg));
+	(((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (seg));
 
 #define e86_get_seg(cpu, seg) \
-  (((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (cpu)->sreg[(seg)])
+	(((cpu)->prefix & E86_PREFIX_SEG) ? (cpu)->seg_override : (cpu)->sreg[(seg)])
 
 
 #define e86_set_clk(cpu, clk) do { (cpu)->delay += (clk); } while (0)
 #define e86_set_clk_ea(cpu, clkreg, clkmem) \
-  do { \
-    (c)->delay += ((c)->ea.is_mem) ? (clkmem) : (clkreg); \
-  } while (0)
+	do { \
+		(c)->delay += ((c)->ea.is_mem) ? (clkmem) : (clkreg); \
+	} while (0)
 
 
 typedef void (*e86_ea_f) (e8086_t *c);

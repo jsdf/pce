@@ -48,80 +48,80 @@
 
 int tun_open (const char *name)
 {
-  int    fd;
-  struct ifreq req;
+	int    fd;
+	struct ifreq req;
 
-  fd = open ("/dev/net/tun", O_RDWR);
-  if (fd < 0) {
-    return (-1);
-  }
+	fd = open ("/dev/net/tun", O_RDWR);
+	if (fd < 0) {
+		return (-1);
+	}
 
-  memset (&req, 0, sizeof (req));
+	memset (&req, 0, sizeof (req));
 
-  req.ifr_flags = IFF_TUN | IFF_NO_PI;
-  strncpy (req.ifr_name, name, IFNAMSIZ);
+	req.ifr_flags = IFF_TUN | IFF_NO_PI;
+	strncpy (req.ifr_name, name, IFNAMSIZ);
 
-  if (ioctl (fd, TUNSETIFF, (void *) &req) < 0) {
-    close (fd);
-    return (-1);
-  }
+	if (ioctl (fd, TUNSETIFF, (void *) &req) < 0) {
+		close (fd);
+		return (-1);
+	}
 
-  return (fd);
+	return (fd);
 }
 
 void tun_close (int fd)
 {
-  close (fd);
+	close (fd);
 }
 
 int tun_set_packet (int fd, const void *buf, unsigned cnt)
 {
-  ssize_t r;
+	ssize_t r;
 
-  r = write (fd, buf, cnt);
+	r = write (fd, buf, cnt);
 
-  if (r < 0) {
-    return (1);
-  }
+	if (r < 0) {
+		return (1);
+	}
 
-  if ((unsigned) r != cnt) {
-    return (1);
-  }
+	if ((unsigned) r != cnt) {
+		return (1);
+	}
 
-  return (0);
+	return (0);
 }
 
 int tun_get_packet (int fd, void *buf, unsigned *cnt)
 {
-  ssize_t r;
+	ssize_t r;
 
-  r = read (fd, buf, *cnt);
-  if (r < 0) {
-    return (1);
-  }
+	r = read (fd, buf, *cnt);
+	if (r < 0) {
+		return (1);
+	}
 
-  *cnt = (unsigned) r;
+	*cnt = (unsigned) r;
 
-  return (0);
+	return (0);
 }
 
 int tun_check_packet (int fd)
 {
-  int           r;
-  struct pollfd pfd[1];
+	int           r;
+	struct pollfd pfd[1];
 
-  pfd[0].fd = fd;
-  pfd[0].events = POLLIN;
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
 
-  r = poll (pfd, 1, 0);
-  if (r < 0) {
-    return (0);
-  }
+	r = poll (pfd, 1, 0);
+	if (r < 0) {
+		return (0);
+	}
 
-  if ((pfd[0].revents & POLLIN) == 0) {
-    return (0);
-  }
+	if ((pfd[0].revents & POLLIN) == 0) {
+		return (0);
+	}
 
-  return (1);
+	return (1);
 }
 

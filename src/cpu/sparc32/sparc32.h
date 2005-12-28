@@ -82,8 +82,8 @@ struct sparc32_s;
 
 
 #define s32_set_bits(var, bits, val) do { \
-    if (val) (var) |= (bits); else (var) &= ~(bits); \
-  } while (0)
+		if (val) (var) |= (bits); else (var) &= ~(bits); \
+	} while (0)
 
 #define s32_get_reg(c, n) (((n) == 0) ? 0 : (c)->reg[(n)])
 #define s32_get_pc(c) ((c)->pc)
@@ -122,15 +122,15 @@ struct sparc32_s;
 
 #define s32_get_tbr_tt(c) (((c)->tbr & S32_TBR_TT) >> 4)
 #define s32_set_tbr_tt(c, v) do { \
-  (c)->tbr &= 0xfffffc00UL; \
-  (c)->tbr |= ((v) & 0xff) << 4; \
-  } while (0)
+	(c)->tbr &= 0xfffffc00UL; \
+	(c)->tbr |= ((v) & 0xff) << 4; \
+	} while (0)
 
 #define s32_get_cwp(c) ((c)->psr & S32_PSR_CWP)
 #define s32_set_cwp(c, v) do { \
-  (c)->psr &= ~S32_PSR_CWP; \
-  (c)->psr |= (v) & S32_PSR_CWP; \
-  } while (0)
+	(c)->psr &= ~S32_PSR_CWP; \
+	(c)->psr |= (v) & S32_PSR_CWP; \
+	} while (0)
 
 
 typedef unsigned char (*s32_get_uint8_f) (void *ext, unsigned long addr);
@@ -145,46 +145,46 @@ typedef void (*s32_opcode_f) (struct sparc32_s *c);
 
 
 typedef struct sparc32_s {
-  void               *mem_ext;
+	void               *mem_ext;
 
-  s32_get_uint8_f    get_uint8;
-  s32_get_uint16_f   get_uint16;
-  s32_get_uint32_f   get_uint32;
+	s32_get_uint8_f    get_uint8;
+	s32_get_uint16_f   get_uint16;
+	s32_get_uint32_f   get_uint32;
 
-  s32_set_uint8_f    set_uint8;
-  s32_set_uint16_f   set_uint16;
-  s32_set_uint32_f   set_uint32;
+	s32_set_uint8_f    set_uint8;
+	s32_set_uint16_f   set_uint16;
+	s32_set_uint32_f   set_uint32;
 
-  void               *log_ext;
-  void               (*log_opcode) (void *ext, unsigned long ir);
-  void               (*log_undef) (void *ext, unsigned long ir);
-  void               (*log_exception) (void *ext, unsigned tn);
+	void               *log_ext;
+	void               (*log_opcode) (void *ext, unsigned long ir);
+	void               (*log_undef) (void *ext, unsigned long ir);
+	void               (*log_exception) (void *ext, unsigned tn);
 
-  uint32_t           reg[32];
-  uint32_t           pc;
-  uint32_t           npc;
-  uint32_t           psr;
-  uint32_t           wim;
-  uint32_t           tbr;
-  uint32_t           y;
+	uint32_t           reg[32];
+	uint32_t           pc;
+	uint32_t           npc;
+	uint32_t           psr;
+	uint32_t           wim;
+	uint32_t           tbr;
+	uint32_t           y;
 
-  unsigned           nwindows;
-  uint32_t           regstk[16 * S32_MWINDOWS];
+	unsigned           nwindows;
+	uint32_t           regstk[16 * S32_MWINDOWS];
 
-  uint8_t            asi;
-  uint8_t            asi_text;
-  uint8_t            asi_data;
+	uint8_t            asi;
+	uint8_t            asi_text;
+	uint8_t            asi_data;
 
-  uint32_t           ir;
+	uint32_t           ir;
 
-  unsigned char      interrupt;
+	unsigned char      interrupt;
 
-  unsigned long      delay;
+	unsigned long      delay;
 
-  unsigned long long oprcnt;
-  unsigned long long clkcnt;
+	unsigned long long oprcnt;
+	unsigned long long clkcnt;
 
-  s32_opcode_f       opcodes[4][64];
+	s32_opcode_f       opcodes[4][64];
 } sparc32_t;
 
 
@@ -224,8 +224,8 @@ void s32_free (sparc32_t *c);
 void s32_del (sparc32_t *c);
 
 void s32_set_mem_fct (sparc32_t *c, void *ext,
-  void *get8, void *get16, void *get32,
-  void *set8, void *set16, void *set32
+	void *get8, void *get16, void *get32,
+	void *set8, void *set16, void *set32
 );
 
 /*!***************************************************************************
@@ -311,17 +311,17 @@ void s32_clock (sparc32_t *c, unsigned long n);
 #define S32_DFLAG_RETT 0x0101
 
 typedef struct {
-  unsigned flags;
+	unsigned flags;
 
-  uint32_t pc;
-  uint32_t ir;
+	uint32_t pc;
+	uint32_t ir;
 
-  unsigned argn;
+	unsigned argn;
 
-  char     op[64];
-  char     arg1[64];
-  char     arg2[64];
-  char     arg3[64];
+	char     op[64];
+	char     arg1[64];
+	char     arg2[64];
+	char     arg3[64];
 } s32_dasm_t;
 
 

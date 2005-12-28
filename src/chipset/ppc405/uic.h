@@ -71,26 +71,26 @@ typedef void (*p405uic_irq_f) (struct p405_uic_s *uic, unsigned char val);
 
 
 typedef struct p405_uic_s {
-  uint32_t      sr;
-  uint32_t      er;
-  uint32_t      msr;
-  uint32_t      cr;
-  uint32_t      pr;
-  uint32_t      tr;
-  uint32_t      vcr;
-  uint32_t      vr;
+	uint32_t      sr;
+	uint32_t      er;
+	uint32_t      msr;
+	uint32_t      cr;
+	uint32_t      pr;
+	uint32_t      tr;
+	uint32_t      vcr;
+	uint32_t      vr;
 
-  uint32_t      levels;
-  uint32_t      invert;
-  uint32_t      vr_msk;
+	uint32_t      levels;
+	uint32_t      invert;
+	uint32_t      vr_msk;
 
-  p405uic_int_f nint;
-  void          *nint_ext;
-  unsigned char nint_val;
+	p405uic_int_f nint;
+	void          *nint_ext;
+	unsigned char nint_val;
 
-  p405uic_int_f cint;
-  void          *cint_ext;
-  unsigned char cint_val;
+	p405uic_int_f cint;
+	void          *cint_ext;
+	unsigned char cint_val;
 } p405_uic_t;
 
 

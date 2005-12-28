@@ -41,16 +41,16 @@
 
 
 typedef struct {
-  mem_blk_t     port;
+	mem_blk_t     port;
 
-  unsigned long io;
+	unsigned long io;
 
-  unsigned char status;
-  unsigned char control;
-  unsigned char data;
+	unsigned char status;
+	unsigned char control;
+	unsigned char data;
 
-  FILE          *fp;
-  int           close;
+	FILE          *fp;
+	int           close;
 } parport_t;
 
 

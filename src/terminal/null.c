@@ -31,32 +31,32 @@
 
 void null_init (null_t *vt, ini_sct_t *ini)
 {
-  trm_init (&vt->trm);
+	trm_init (&vt->trm);
 
-  vt->trm.del = (trm_del_f) &null_del;
-  vt->trm.set_mode = (trm_set_mode_f) &null_set_mode;
-  vt->trm.set_size = (trm_set_size_f) &null_set_size;
-  vt->trm.set_col = (trm_set_col_f) &null_set_col;
-  vt->trm.set_crs = (trm_set_crs_f) &null_set_crs;
-  vt->trm.set_pos = (trm_set_pos_f) &null_set_pos;
-  vt->trm.set_chr = (trm_set_chr_f) &null_set_chr;
-  vt->trm.set_pxl = (trm_set_pxl_f) &null_set_pxl;
-  vt->trm.set_rct = (trm_set_rct_f) &null_set_rct;
-  vt->trm.check = (trm_check_f) &null_check;
+	vt->trm.del = (trm_del_f) &null_del;
+	vt->trm.set_mode = (trm_set_mode_f) &null_set_mode;
+	vt->trm.set_size = (trm_set_size_f) &null_set_size;
+	vt->trm.set_col = (trm_set_col_f) &null_set_col;
+	vt->trm.set_crs = (trm_set_crs_f) &null_set_crs;
+	vt->trm.set_pos = (trm_set_pos_f) &null_set_pos;
+	vt->trm.set_chr = (trm_set_chr_f) &null_set_chr;
+	vt->trm.set_pxl = (trm_set_pxl_f) &null_set_pxl;
+	vt->trm.set_rct = (trm_set_rct_f) &null_set_rct;
+	vt->trm.check = (trm_check_f) &null_check;
 }
 
 terminal_t *null_new (ini_sct_t *ini)
 {
-  null_t *vt;
+	null_t *vt;
 
-  vt = (null_t *) malloc (sizeof (null_t));
-  if (vt == NULL) {
-    return (NULL);
-  }
+	vt = (null_t *) malloc (sizeof (null_t));
+	if (vt == NULL) {
+		return (NULL);
+	}
 
-  null_init (vt, ini);
+	null_init (vt, ini);
 
-  return (&vt->trm);
+	return (&vt->trm);
 }
 
 void null_free (null_t *vt)
@@ -65,10 +65,10 @@ void null_free (null_t *vt)
 
 void null_del (null_t *vt)
 {
-  if (vt != NULL) {
-    null_free (vt);
-    free (vt);
-  }
+	if (vt != NULL) {
+		null_free (vt);
+		free (vt);
+	}
 }
 
 void null_set_mode (null_t *vt, unsigned m, unsigned w, unsigned h)

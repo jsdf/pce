@@ -73,16 +73,16 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define P405_IR_AA 0x0002
 
 #define P405_EXCPT_MSR (P405_MSR_WE | P405_MSR_EE | P405_MSR_PR | P405_MSR_DWE \
-  | P405_MSR_IR | P405_MSR_DR)
+	| P405_MSR_IR | P405_MSR_DR)
 
 #define P405_EA_IDX 0x01
 #define P405_EA_UPD 0x02
 
 #define p405_sext(x, n) ( \
-  ((x) & (1UL << ((n) - 1))) ? \
-  (((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
-  ((x) & ((1UL << (n)) - 1)) \
-  )
+	((x) & (1UL << ((n) - 1))) ? \
+	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
+	((x) & ((1UL << (n)) - 1)) \
+	)
 
 #define p405_uext(x, n) ((x) & ((1 << (n)) - 1))
 

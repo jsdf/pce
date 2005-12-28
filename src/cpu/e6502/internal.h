@@ -31,24 +31,24 @@
 
 
 #define e6502_set_clk(cpu, cnt, clk) do { \
-  (cpu)->pc = ((cpu)->pc + (cnt)) & 0xffffU; \
-  (cpu)->delay += (clk); \
-  } while (0)
+	(cpu)->pc = ((cpu)->pc + (cnt)) & 0xffffU; \
+	(cpu)->delay += (clk); \
+	} while (0)
 
 #define e6502_get_inst1(c) do { \
-  (c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
-  } while (0)
+	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
+	} while (0)
 
 #define e6502_get_inst2(c) do { \
-  (c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
-  (c)->inst[2] = e6502_get_mem8 (c, (c->pc + 2) & 0xffffU); \
-  } while (0)
+	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
+	(c)->inst[2] = e6502_get_mem8 (c, (c->pc + 2) & 0xffffU); \
+	} while (0)
 
 #define e6502_mk_uint16(lo, hi) \
-  ((((hi) & 0xff) << 8) + ((lo) & 0xff))
+	((((hi) & 0xff) << 8) + ((lo) & 0xff))
 
 #define e6502_mk_sint16(lo) \
-  (((lo) & 0x80) ? ((lo) | 0xff00U) : ((lo) & 0xff))
+	(((lo) & 0x80) ? ((lo) | 0xff00U) : ((lo) & 0xff))
 
 
 #define e6502_get_idx_ind_x(c) e6502_get_mem8 (c, e6502_get_ea_idx_ind_x (c))

@@ -32,24 +32,24 @@
 
 
 typedef struct {
-  memory_t  asio;
+	memory_t  asio;
 
-  mem_blk_t pci_cfg;
-  mem_blk_t pci_io;
-  mem_blk_t pci_mem;
-  mem_blk_t pci_special;
-  mem_blk_t pci_pcicfg;
-  mem_blk_t pci_csr;
+	mem_blk_t pci_cfg;
+	mem_blk_t pci_io;
+	mem_blk_t pci_mem;
+	mem_blk_t pci_special;
+	mem_blk_t pci_pcicfg;
+	mem_blk_t pci_csr;
 
-  pci_bus_t bus;
+	pci_bus_t bus;
 
-  pci_dev_t dev;
+	pci_dev_t dev;
 
-  uint32_t  pci_control;
-  uint32_t  pci_addr_ext;
-  uint32_t  xscale_int_enable;
+	uint32_t  pci_control;
+	uint32_t  pci_addr_ext;
+	uint32_t  xscale_int_enable;
 
-  int       bigendian;
+	int       bigendian;
 } pci_ixp_t;
 
 

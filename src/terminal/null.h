@@ -34,7 +34,7 @@
 
 
 typedef struct {
-  terminal_t     trm;
+	terminal_t     trm;
 } null_t;
 
 

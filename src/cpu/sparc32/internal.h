@@ -57,10 +57,10 @@ int s32_dstore32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t val);
 
 
 #define s32_exts(x, n) ( \
-  ((x) & (1UL << ((n) - 1))) ? \
-  (((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
-  ((x) & ((1UL << (n)) - 1)) \
-  )
+	((x) & (1UL << ((n) - 1))) ? \
+	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
+	((x) & ((1UL << (n)) - 1)) \
+	)
 
 #define s32_extu(x, n) ((x) & ((1 << (n)) - 1))
 
@@ -80,14 +80,14 @@ int s32_dstore32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t val);
 #define s32_get_rs2(c, ir) (s32_get_reg ((c), s32_ir_rs2(ir)))
 #define s32_set_rd(c, ir, v) s32_set_reg ((c), s32_ir_rd(ir), (v))
 #define s32_get_rs2_or_simm13(c, ir) ( \
-  s32_ir_i(ir) ? s32_ir_simm13(ir) : s32_get_reg((c), s32_ir_rs2(ir)))
+	s32_ir_i(ir) ? s32_ir_simm13(ir) : s32_get_reg((c), s32_ir_rs2(ir)))
 #define s32_get_addr(c, ir) \
-  ((s32_get_rs1((c), (ir)) + s32_get_rs2_or_simm13((c), (ir))) & 0xffffffffUL)
+	((s32_get_rs1((c), (ir)) + s32_get_rs2_or_simm13((c), (ir))) & 0xffffffffUL)
 
 #define s32_set_clk(c, dpc, clk) do { \
-  (c)->pc = (c)->npc; \
-  (c)->npc += (dpc); \
-  (c)->delay += (clk); \
+	(c)->pc = (c)->npc; \
+	(c)->npc += (dpc); \
+	(c)->delay += (clk); \
 } while (0)
 
 

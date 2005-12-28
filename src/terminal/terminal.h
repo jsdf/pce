@@ -49,33 +49,33 @@ typedef void (*trm_check_f) (void *ext);
 
 
 typedef struct {
-  void (*del) (void *ext);
+	void (*del) (void *ext);
 
-  void *msg_ext;
-  int  (*set_msg) (void *ext, const char *msg, const char *val);
-  int  (*get_msgul) (void *ext, const char *msg, unsigned long *val);
+	void *msg_ext;
+	int  (*set_msg) (void *ext, const char *msg, const char *val);
+	int  (*get_msgul) (void *ext, const char *msg, unsigned long *val);
 
-  void *key_ext;
-  void (*set_key) (void *ext, unsigned char val);
+	void *key_ext;
+	void (*set_key) (void *ext, unsigned char val);
 
-  void *mse_ext;
-  void (*set_mse) (void *ext, int dx, int dy, unsigned b);
+	void *mse_ext;
+	void (*set_mse) (void *ext, int dx, int dy, unsigned b);
 
-  trm_set_mode_f set_mode;
-  trm_set_size_f set_size;
+	trm_set_mode_f set_mode;
+	trm_set_size_f set_size;
 
-  trm_set_map_f  set_map;
-  trm_set_col_f  set_col;
-  trm_set_crs_f  set_crs;
-  trm_set_pos_f  set_pos;
+	trm_set_map_f  set_map;
+	trm_set_col_f  set_col;
+	trm_set_crs_f  set_crs;
+	trm_set_pos_f  set_pos;
 
-  trm_set_chr_f  set_chr;
-  trm_set_pxl_f  set_pxl;
-  trm_set_rct_f  set_rct;
+	trm_set_chr_f  set_chr;
+	trm_set_pxl_f  set_pxl;
+	trm_set_rct_f  set_rct;
 
-  trm_check_f    check;
+	trm_check_f    check;
 
-  void           *ext;
+	void           *ext;
 } terminal_t;
 
 

@@ -35,26 +35,26 @@
 
 /* a packet buffer */
 typedef struct slip_buf_s {
-  struct slip_buf_s *next;
-  unsigned          i;
-  unsigned          n;
-  unsigned char     buf[PCE_SLIP_BUF_MAX];
+	struct slip_buf_s *next;
+	unsigned          i;
+	unsigned          n;
+	unsigned char     buf[PCE_SLIP_BUF_MAX];
 } slip_buf_t;
 
 
 typedef struct {
-  serport_t     *ser;
+	serport_t     *ser;
 
-  unsigned      out_cnt;
-  unsigned char out[PCE_SLIP_BUF_MAX];
-  char          out_esc;
+	unsigned      out_cnt;
+	unsigned char out[PCE_SLIP_BUF_MAX];
+	char          out_esc;
 
-  /* input packet queue */
-  slip_buf_t    *inp_hd;
-  slip_buf_t    *inp_tl;
-  unsigned      inp_cnt;
+	/* input packet queue */
+	slip_buf_t    *inp_hd;
+	slip_buf_t    *inp_tl;
+	unsigned      inp_cnt;
 
-  int           tun_fd;
+	int           tun_fd;
 } slip_t;
 
 

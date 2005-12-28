@@ -91,70 +91,70 @@ typedef unsigned (*e86_opcode_f) (struct e8086_t *c);
 
 
 typedef struct e8086_t {
-  unsigned         cpu;
+	unsigned         cpu;
 
-  unsigned short   dreg[8];
-  unsigned short   sreg[4];
-  unsigned short   ip;
-  unsigned short   flg;
+	unsigned short   dreg[8];
+	unsigned short   sreg[4];
+	unsigned short   ip;
+	unsigned short   flg;
 
-  void             *mem;
-  e86_get_uint8_f  mem_get_uint8;
-  e86_set_uint8_f  mem_set_uint8;
-  e86_get_uint16_f mem_get_uint16;
-  e86_set_uint16_f mem_set_uint16;
+	void             *mem;
+	e86_get_uint8_f  mem_get_uint8;
+	e86_set_uint8_f  mem_set_uint8;
+	e86_get_uint16_f mem_get_uint16;
+	e86_set_uint16_f mem_set_uint16;
 
-  void             *prt;
-  e86_get_uint8_f  prt_get_uint8;
-  e86_set_uint8_f  prt_set_uint8;
-  e86_get_uint16_f prt_get_uint16;
-  e86_set_uint16_f prt_set_uint16;
+	void             *prt;
+	e86_get_uint8_f  prt_get_uint8;
+	e86_set_uint8_f  prt_set_uint8;
+	e86_get_uint16_f prt_get_uint16;
+	e86_set_uint16_f prt_set_uint16;
 
-  unsigned char    *ram;
-  unsigned long    ram_cnt;
+	unsigned char    *ram;
+	unsigned long    ram_cnt;
 
-  unsigned long    addr_mask;
+	unsigned long    addr_mask;
 
-  void             *inta_ext;
-  e86_inta_f       inta;
+	void             *inta_ext;
+	e86_inta_f       inta;
 
-  void             *op_ext;
-  void             (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
-  void             (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
-  void             (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
-  void             (*op_int) (void *ext, unsigned char n);
+	void             *op_ext;
+	void             (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
+	void             (*op_stat) (void *ext, unsigned char op1, unsigned char op2);
+	void             (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
+	void             (*op_int) (void *ext, unsigned char n);
 
-  unsigned short   cur_ip;
+	unsigned short   cur_ip;
 
-  unsigned         pq_cnt;
-  unsigned char    pq[E86_PQ_FILL + 2];
+	unsigned         pq_cnt;
+	unsigned char    pq[E86_PQ_FILL + 2];
 
-  unsigned         prefix;
+	unsigned         prefix;
 
-  unsigned short   seg_override;
+	unsigned short   seg_override;
 
-  int              irq;
+	int              irq;
 
-  e86_opcode_f     op[256];
+	e86_opcode_f     op[256];
 
-  struct {
-    int            is_mem;
-    unsigned char  *data;
-    unsigned short seg;
-    unsigned short ofs;
-    unsigned short cnt;
-    unsigned long  delay;
-  } ea;
+	struct {
+		int            is_mem;
+		unsigned char  *data;
+		unsigned short seg;
+		unsigned short ofs;
+		unsigned short cnt;
+		unsigned long  delay;
+	} ea;
 
-  unsigned long    delay;
+	unsigned long    delay;
 
-  unsigned long long clocks;
-  unsigned long long instructions;
+	unsigned long long clocks;
+	unsigned long long instructions;
 } e8086_t;
 
 
 #define e86_get_reg8(cpu, reg) \
-  ((((reg) & 4) ? ((cpu)->dreg[(reg) & 3] >> 8) : (cpu)->dreg[(reg) & 3]) & 0xff)
+	((((reg) & 4) ? ((cpu)->dreg[(reg) & 3] >> 8) : (cpu)->dreg[(reg) & 3]) & 0xff)
 
 #define e86_get_al(cpu) ((cpu)->dreg[E86_REG_AX] & 0xff)
 #define e86_get_bl(cpu) ((cpu)->dreg[E86_REG_BX] & 0xff)
@@ -185,18 +185,18 @@ typedef struct e8086_t {
 
 
 #define e86_set_reg8(cpu, reg, val) \
-  do { \
-    unsigned char v = (val) & 0xff; \
-    unsigned      r = (reg); \
-    if (r & 4) { \
-      (cpu)->dreg[r & 3] &= 0x00ff; \
-      (cpu)->dreg[r & 3] |= v << 8; \
-    } \
-    else { \
-      (cpu)->dreg[r & 3] &= 0xff00; \
-      (cpu)->dreg[r & 3] |= v; \
-    } \
-  } while (0)
+	do { \
+		unsigned char v = (val) & 0xff; \
+		unsigned      r = (reg); \
+		if (r & 4) { \
+			(cpu)->dreg[r & 3] &= 0x00ff; \
+			(cpu)->dreg[r & 3] |= v << 8; \
+		} \
+		else { \
+			(cpu)->dreg[r & 3] &= 0xff00; \
+			(cpu)->dreg[r & 3] |= v; \
+		} \
+	} while (0)
 
 #define e86_set_al(cpu, val) e86_set_reg8 (cpu, E86_REG_AL, val)
 #define e86_set_bl(cpu, val) e86_set_reg8 (cpu, E86_REG_BL, val)
@@ -209,7 +209,7 @@ typedef struct e8086_t {
 
 
 #define e86_set_reg16(cpu, reg, val) \
-  do { (cpu)->dreg[(reg) & 7] = (val) & 0xffff; } while (0)
+	do { (cpu)->dreg[(reg) & 7] = (val) & 0xffff; } while (0)
 
 #define e86_set_ax(cpu, val) do { (cpu)->dreg[E86_REG_AX] = (val) & 0xffff; } while (0)
 #define e86_set_bx(cpu, val) do { (cpu)->dreg[E86_REG_BX] = (val) & 0xffff; } while (0)
@@ -222,7 +222,7 @@ typedef struct e8086_t {
 
 
 #define e86_set_sreg(cpu, reg, val) \
-  do { (cpu)->sreg[(reg) & 3] = (val) & 0xffff; } while (0)
+	do { (cpu)->sreg[(reg) & 3] = (val) & 0xffff; } while (0)
 
 #define e86_set_cs(cpu, val) do { (cpu)->sreg[E86_REG_CS] = (val) & 0xffff; } while (0)
 #define e86_set_ds(cpu, val) do { (cpu)->sreg[E86_REG_DS] = (val) & 0xffff; } while (0)
@@ -250,7 +250,7 @@ typedef struct e8086_t {
 #define e86_set_flags(c, v) do { (c)->flg = (v) & 0xffffU; } while (0)
 
 #define e86_set_f(c, f, v) \
-  do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
+	do { if (v) (c)->flg |= (f); else (c)->flg &= ~(f); } while (0)
 
 #define e86_set_cf(c, v) e86_set_f (c, E86_FLG_C, v)
 #define e86_set_pf(c, v) e86_set_f (c, E86_FLG_P, v)
@@ -264,66 +264,66 @@ typedef struct e8086_t {
 
 
 #define e86_get_linear(seg, ofs) \
-  ((((seg) & 0xffff) << 4) + ((ofs) & 0xffff))
+	((((seg) & 0xffff) << 4) + ((ofs) & 0xffff))
 
 static inline
 unsigned char e86_get_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
-  return ((addr < c->ram_cnt) ? c->ram[addr] : c->mem_get_uint8 (c->mem, addr));
+	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+	return ((addr < c->ram_cnt) ? c->ram[addr] : c->mem_get_uint8 (c->mem, addr));
 }
 
 static inline
 void e86_set_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned char val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
-  if (addr < c->ram_cnt) {
-    c->ram[addr] = val;
-  }
-  else {
-    c->mem_set_uint8 (c->mem, addr, val);
-  }
+	if (addr < c->ram_cnt) {
+		c->ram[addr] = val;
+	}
+	else {
+		c->mem_set_uint8 (c->mem, addr, val);
+	}
 }
 
 static inline
 unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
-  if ((addr + 1) < c->ram_cnt) {
-    return (c->ram[addr] + (c->ram[addr + 1] << 8));
-  }
-  else {
-    return (c->mem_get_uint16 (c->mem, addr));
-  }
+	if ((addr + 1) < c->ram_cnt) {
+		return (c->ram[addr] + (c->ram[addr + 1] << 8));
+	}
+	else {
+		return (c->mem_get_uint16 (c->mem, addr));
+	}
 }
 
 static inline
 void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
 {
-  unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
-  if ((addr + 1) < c->ram_cnt) {
-    c->ram[addr] = val & 0xff;
-    c->ram[addr + 1] = (val >> 8) & 0xff;
-  }
-  else {
-    c->mem_set_uint16 (c->mem, addr, val);
-  }
+	if ((addr + 1) < c->ram_cnt) {
+		c->ram[addr] = val & 0xff;
+		c->ram[addr + 1] = (val >> 8) & 0xff;
+	}
+	else {
+		c->mem_set_uint16 (c->mem, addr, val);
+	}
 }
 
 #define e86_get_prt8(cpu, ofs) \
-  (cpu)->prt_get_uint8 ((cpu)->prt, ofs)
+	(cpu)->prt_get_uint8 ((cpu)->prt, ofs)
 
 #define e86_get_prt16(cpu, ofs) \
-  (cpu)->prt_get_uint16 ((cpu)->prt, ofs)
+	(cpu)->prt_get_uint16 ((cpu)->prt, ofs)
 
 #define e86_set_prt8(cpu, ofs, val) \
-  do { (cpu)->prt_set_uint8 ((cpu)->prt, ofs, val); } while (0)
+	do { (cpu)->prt_set_uint8 ((cpu)->prt, ofs, val); } while (0)
 
 #define e86_set_prt16(cpu, ofs, val) \
-  do { (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val); } while (0)
+	do { (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val); } while (0)
 
 #define e86_get_delay(c) ((c)->delay)
 
@@ -345,13 +345,13 @@ void e86_reset (e8086_t *c);
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt);
 
 void e86_set_mem (e8086_t *c, void *mem,
-  e86_get_uint8_f get8, e86_set_uint8_f set8,
-  e86_get_uint16_f get16, e86_set_uint16_f set16
+	e86_get_uint8_f get8, e86_set_uint8_f set8,
+	e86_get_uint16_f get16, e86_set_uint16_f set16
 );
 
 void e86_set_prt (e8086_t *c, void *prt,
-  e86_get_uint8_f get8, e86_set_uint8_f set8,
-  e86_get_uint16_f get16, e86_set_uint16_f set16
+	e86_get_uint8_f get8, e86_set_uint8_f set8,
+	e86_get_uint16_f get16, e86_set_uint16_f set16
 );
 
 void e86_set_inta_f (e8086_t *c, void *ext, e86_inta_f inta);
@@ -384,17 +384,17 @@ void e86_pq_fill (e8086_t *c);
 #define E86_DFLAGS_LOOP 0x0200
 
 typedef struct {
-  unsigned       flags;
+	unsigned       flags;
 
-  unsigned short ip;
-  unsigned       dat_n;
-  unsigned char  dat[16];
+	unsigned short ip;
+	unsigned       dat_n;
+	unsigned char  dat[16];
 
-  char           op[64];
+	char           op[64];
 
-  unsigned       arg_n;
-  char           arg1[64];
-  char           arg2[64];
+	unsigned       arg_n;
+	char           arg1[64];
+	char           arg2[64];
 } e86_disasm_t;
 
 

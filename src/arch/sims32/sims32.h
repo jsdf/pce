@@ -63,7 +63,7 @@ extern char          *par_cpu;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii
+	unsigned long addr, unsigned cols, char *prefix, int ascii
 );
 
 
@@ -84,20 +84,20 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
  * @short The sims32 context struct
  *****************************************************************************/
 typedef struct sims32_s {
-  sparc32_t          *cpu;
+	sparc32_t          *cpu;
 
-  memory_t           *mem;
+	memory_t           *mem;
 
-  nvram_t            *nvr;
+	nvram_t            *nvr;
 
-  serport_t          *serport[2];
+	serport_t          *serport[2];
 
-  breakpoint_t       *brkpt;
+	breakpoint_t       *brkpt;
 
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
+	unsigned long long clk_cnt;
+	unsigned long      clk_div[4];
 
-  unsigned           brk;
+	unsigned           brk;
 } sims32_t;
 
 

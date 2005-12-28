@@ -48,25 +48,25 @@ typedef int (*dsk_set_msg_f) (struct disk_s *dsk, const char *msg, const char *v
  * @short The disk structure
  *****************************************************************************/
 typedef struct disk_s {
-  void          (*del) (struct disk_s *dsk);
-  dsk_read_f    read;
-  dsk_write_f   write;
-  dsk_get_msg_f get_msg;
-  dsk_set_msg_f set_msg;
+	void          (*del) (struct disk_s *dsk);
+	dsk_read_f    read;
+	dsk_write_f   write;
+	dsk_get_msg_f get_msg;
+	dsk_set_msg_f set_msg;
 
-  unsigned      drive;
-  uint32_t      c;
-  uint32_t      h;
-  uint32_t      s;
-  uint32_t      blocks;
+	unsigned      drive;
+	uint32_t      c;
+	uint32_t      h;
+	uint32_t      s;
+	uint32_t      blocks;
 
-  uint32_t      visible_c;
-  uint32_t      visible_h;
-  uint32_t      visible_s;
+	uint32_t      visible_c;
+	uint32_t      visible_h;
+	uint32_t      visible_s;
 
-  char          readonly;
+	char          readonly;
 
-  void          *ext;
+	void          *ext;
 } disk_t;
 
 
@@ -74,8 +74,8 @@ typedef struct disk_s {
  * @short The disk set structure
  *****************************************************************************/
 typedef struct {
-  unsigned cnt;
-  disk_t   **dsk;
+	unsigned cnt;
+	disk_t   **dsk;
 } disks_t;
 
 
@@ -161,7 +161,7 @@ int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
  * @return Zero if successful
  *****************************************************************************/
 int dsk_read_chs (disk_t *dsk, void *buf,
-  uint32_t c, uint32_t h, uint32_t s, uint32_t blk_n
+	uint32_t c, uint32_t h, uint32_t s, uint32_t blk_n
 );
 
 /*!***************************************************************************
@@ -175,7 +175,7 @@ int dsk_write_lba (disk_t *dsk, const void *buf, uint32_t i, uint32_t n);
  * @return Zero if successful
  *****************************************************************************/
 int dsk_write_chs (disk_t *dsk, const void *buf,
-  uint32_t c, uint32_t h, uint32_t s, uint32_t n
+	uint32_t c, uint32_t h, uint32_t s, uint32_t n
 );
 
 int dsk_commit (disk_t *dsk);

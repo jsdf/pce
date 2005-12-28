@@ -65,46 +65,46 @@ typedef void (*e8259_irq_f) (struct e8259_s *pic, unsigned char val);
 
 
 typedef struct e8259_s {
-  /* initialization control words */
-  unsigned char icw[4];
+	/* initialization control words */
+	unsigned char icw[4];
 
-  /* operation command words */
-  unsigned char ocw[3];
+	/* operation command words */
+	unsigned char ocw[3];
 
-  /* interrupt request register */
-  unsigned char irr;
+	/* interrupt request register */
+	unsigned char irr;
 
-  /* interrupt mask register */
-  unsigned char imr;
+	/* interrupt mask register */
+	unsigned char imr;
 
-  /* interrupt service register */
-  unsigned char isr;
+	/* interrupt service register */
+	unsigned char isr;
 
-  /* eight irq input states */
-  unsigned char irq_inp;
+	/* eight irq input states */
+	unsigned char irq_inp;
 
-  /* irq0, irq1, ... trigger interrupts base, base + 1, ... */
-  unsigned      base;
+	/* irq0, irq1, ... trigger interrupts base, base + 1, ... */
+	unsigned      base;
 
-  /* the next expected icw */
-  unsigned      next_icw;
+	/* the next expected icw */
+	unsigned      next_icw;
 
-  /* select irr or isr for reading */
-  int           read_irr;
+	/* select irr or isr for reading */
+	int           read_irr;
 
-  /* highest priority irq */
-  unsigned      priority;
+	/* highest priority irq */
+	unsigned      priority;
 
-  /* rotate on automatic EOI mode */
-  int           rot_on_aeoi;
+	/* rotate on automatic EOI mode */
+	int           rot_on_aeoi;
 
-  /* interrupt counts */
-  unsigned long irq_cnt[8];
+	/* interrupt counts */
+	unsigned long irq_cnt[8];
 
-  /* the interrupt function */
-  void          *intr_ext;
-  unsigned char intr_val;
-  e8259_int_f   intr;
+	/* the interrupt function */
+	void          *intr_ext;
+	unsigned char intr_val;
+	e8259_int_f   intr;
 } e8259_t;
 
 

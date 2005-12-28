@@ -37,35 +37,35 @@
 
 
 typedef struct vt100_keymap_t {
-  unsigned      key_cnt;
-  unsigned char key[VT100_KEY_MAX];
+	unsigned      key_cnt;
+	unsigned char key[VT100_KEY_MAX];
 
-  unsigned      seq_cnt;
-  unsigned char seq[VT100_KEY_MAX];
+	unsigned      seq_cnt;
+	unsigned char seq[VT100_KEY_MAX];
 } vt100_keymap_t;
 
 
 typedef struct {
-  terminal_t     trm;
+	terminal_t     trm;
 
-  unsigned       fg;
-  unsigned       bg;
+	unsigned       fg;
+	unsigned       bg;
 
-  unsigned       scn_x;
-  unsigned       scn_y;
+	unsigned       scn_x;
+	unsigned       scn_y;
 
-  unsigned       crs_x;
-  unsigned       crs_y;
+	unsigned       crs_x;
+	unsigned       crs_y;
 
-  char           crs_on;
-  unsigned       crs_y1;
-  unsigned       crs_y2;
+	char           crs_on;
+	unsigned       crs_y1;
+	unsigned       crs_y2;
 
-  unsigned       key_cnt;
-  vt100_keymap_t *keymap;
+	unsigned       key_cnt;
+	vt100_keymap_t *keymap;
 
-  int            fd_inp;
-  int            fd_out;
+	int            fd_inp;
+	int            fd_out;
 } vt100_t;
 
 

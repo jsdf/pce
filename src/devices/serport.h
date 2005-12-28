@@ -24,9 +24,9 @@
 
 
 /*
-  UART 8250 based serial port. This is very limited. Data sent out over
-  the wires by the UART are written to a file. No data is ever
-  received unless ser_receive() is called.
+	UART 8250 based serial port. This is very limited. Data sent out over
+	the wires by the UART are written to a file. No data is ever
+	received unless ser_receive() is called.
 */
 
 #ifndef PCE_DEVICES_SERPORT_H
@@ -45,32 +45,32 @@
  * @short The serial port context
  *****************************************************************************/
 typedef struct serport_s {
-  device_t      device;
+	device_t      device;
 
-  /* the 8250 I/O ports. size is (8 << addr_shift). */
-  mem_blk_t     port;
+	/* the 8250 I/O ports. size is (8 << addr_shift). */
+	mem_blk_t     port;
 
-  e8250_t       uart;
+	e8250_t       uart;
 
-  /* the I/O base address */
-  unsigned long io;
+	/* the I/O base address */
+	unsigned long io;
 
-  /* the 8250 register address shift */
-  unsigned      addr_shift;
+	/* the 8250 register address shift */
+	unsigned      addr_shift;
 
-  unsigned      bps;
-  unsigned      databits;
-  unsigned      stopbits;
-  unsigned      parity;
+	unsigned      bps;
+	unsigned      databits;
+	unsigned      stopbits;
+	unsigned      parity;
 
-  int           dtr;
-  int           rts;
+	int           dtr;
+	int           rts;
 
-  int           check_out;
-  int           check_inp;
+	int           check_out;
+	int           check_inp;
 
-  FILE          *fp;
-  int           fp_close;
+	FILE          *fp;
+	int           fp_close;
 } serport_t;
 
 

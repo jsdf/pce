@@ -39,17 +39,17 @@
  * @short The copy on write disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t        dsk;
+	disk_t        dsk;
 
-  disk_t        *orig;
+	disk_t        *orig;
 
-  FILE          *fp;
+	FILE          *fp;
 
-  uint64_t      bitmap_offset;
-  uint64_t      data_offset;
+	uint64_t      bitmap_offset;
+	uint64_t      data_offset;
 
-  unsigned char *bitmap;
-  uint32_t      bitmap_size;
+	unsigned char *bitmap;
+	uint32_t      bitmap_size;
 } disk_cow_t;
 
 

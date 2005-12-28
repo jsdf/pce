@@ -37,59 +37,59 @@
 
 
 typedef struct ibmpc_t {
-  e8086_t            *cpu;
-  video_t            *video;
-  disks_t            *dsk;
-  mouse_t            *mse;
+	e8086_t            *cpu;
+	video_t            *video;
+	disks_t            *dsk;
+	mouse_t            *mse;
 
-  memory_t           *mem;
-  mem_blk_t          *ram;
+	memory_t           *mem;
+	mem_blk_t          *ram;
 
-  memory_t           *prt;
+	memory_t           *prt;
 
-  nvram_t            *nvr;
+	nvram_t            *nvr;
 
-  e8237_t            dma;
-  e8253_t            pit;
-  e8255_t            ppi;
-  e8259_t            pic;
+	e8237_t            dma;
+	e8253_t            pit;
+	e8255_t            ppi;
+	e8259_t            pic;
 
-  unsigned char      ppi_port_a[2];
-  unsigned char      ppi_port_b;
-  unsigned char      ppi_port_c[2];
+	unsigned char      ppi_port_a[2];
+	unsigned char      ppi_port_b;
+	unsigned char      ppi_port_c[2];
 
-  unsigned           key_i;
-  unsigned           key_j;
-  unsigned char      key_buf[256];
+	unsigned           key_i;
+	unsigned           key_j;
+	unsigned char      key_buf[256];
 
-  ems_t              *ems;
-  xms_t              *xms;
+	ems_t              *ems;
+	xms_t              *xms;
 
-  terminal_t         *trm;
+	terminal_t         *trm;
 
-  serport_t          *serport[4];
-  parport_t          *parport[4];
+	serport_t          *serport[4];
+	parport_t          *parport[4];
 
-  ini_sct_t          *cfg;
+	ini_sct_t          *cfg;
 
-  breakpoint_t       *brkpt;
+	breakpoint_t       *brkpt;
 
-  unsigned           cpu_model;
+	unsigned           cpu_model;
 
-  unsigned           bootdrive;
+	unsigned           bootdrive;
 
-  unsigned           fd_cnt;
-  unsigned           hd_cnt;
+	unsigned           fd_cnt;
+	unsigned           hd_cnt;
 
-  char               pit_real;
-  unsigned long      pit_clk;
-  unsigned long      pit_clkdiv;
+	char               pit_real;
+	unsigned long      pit_clk;
+	unsigned long      pit_clkdiv;
 
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
+	unsigned long long clk_cnt;
+	unsigned long      clk_div[4];
 
-  unsigned           brk;
-  char               pause;
+	unsigned           brk;
+	char               pause;
 } ibmpc_t;
 
 

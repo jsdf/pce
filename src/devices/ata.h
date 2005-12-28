@@ -37,53 +37,53 @@ struct ata_chn_s;
 
 
 typedef struct ata_dev_s {
-  struct ata_chn_s *chn;
+	struct ata_chn_s *chn;
 
-  unsigned char    reg_cmd;
-  unsigned char    reg_status;
-  unsigned char    reg_error;
-  unsigned char    reg_features;
-  unsigned char    reg_cyl_lo;
-  unsigned char    reg_cyl_hi;
-  unsigned char    reg_head;
-  unsigned char    reg_sec;
-  unsigned char    reg_sec_cnt;
-  unsigned char    reg_dev_ctl;
+	unsigned char    reg_cmd;
+	unsigned char    reg_status;
+	unsigned char    reg_error;
+	unsigned char    reg_features;
+	unsigned char    reg_cyl_lo;
+	unsigned char    reg_cyl_hi;
+	unsigned char    reg_head;
+	unsigned char    reg_sec;
+	unsigned char    reg_sec_cnt;
+	unsigned char    reg_dev_ctl;
 
-  uint16_t         c;
-  uint16_t         h;
-  uint16_t         s;
+	uint16_t         c;
+	uint16_t         h;
+	uint16_t         s;
 
-  uint16_t         default_c;
-  uint16_t         default_h;
-  uint16_t         default_s;
+	uint16_t         default_c;
+	uint16_t         default_h;
+	uint16_t         default_s;
 
-  unsigned         buf_i;
-  unsigned         buf_n;
-  unsigned         buf_mode;
-  uint32_t         buf_blk_i;
-  uint32_t         buf_blk_n;
-  unsigned char    buf[512];
-  void             (*callback) (struct ata_dev_s *dev);
+	unsigned         buf_i;
+	unsigned         buf_n;
+	unsigned         buf_mode;
+	uint32_t         buf_blk_i;
+	uint32_t         buf_blk_n;
+	unsigned char    buf[512];
+	void             (*callback) (struct ata_dev_s *dev);
 
-  char             model[64];
-  char             firmware[16];
-  char             serial[32];
+	char             model[64];
+	char             firmware[16];
+	char             serial[32];
 
-  disk_t           *blk;
+	disk_t           *blk;
 } ata_dev_t;
 
 
 typedef struct ata_chn_s {
-  mem_blk_t     reg_cmd;
-  mem_blk_t     reg_ctl;
+	mem_blk_t     reg_cmd;
+	mem_blk_t     reg_ctl;
 
-  void          *irq_ext;
-  unsigned char irq_val;
-  void          (*irq) (void *ext, unsigned char val);
+	void          *irq_ext;
+	unsigned char irq_val;
+	void          (*irq) (void *ext, unsigned char val);
 
-  ata_dev_t     dev[2];
-  ata_dev_t     *sel;
+	ata_dev_t     dev[2];
+	ata_dev_t     *sel;
 } ata_chn_t;
 
 

@@ -34,8 +34,8 @@
 
 
 typedef struct {
-  unsigned i;
-  char     str[PCE_CMD_MAX];
+	unsigned i;
+	char     str[PCE_CMD_MAX];
 } cmd_t;
 
 

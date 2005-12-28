@@ -63,7 +63,7 @@ extern char          *par_cpu;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii
+	unsigned long addr, unsigned cols, char *prefix, int ascii
 );
 
 
@@ -103,34 +103,34 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
  * @short The sim405 context struct
  *****************************************************************************/
 typedef struct sim405_s {
-  p405_t             *ppc;
-  p405_uic_t         uic;
+	p405_t             *ppc;
+	p405_uic_t         uic;
 
-  memory_t           *mem;
-  mem_blk_t          *ram;
+	memory_t           *mem;
+	mem_blk_t          *ram;
 
-  memory_t           *cab;
+	memory_t           *cab;
 
-  nvram_t            *nvr;
+	nvram_t            *nvr;
 
-  disks_t            *dsks;
+	disks_t            *dsks;
 
-  pci_405_t          *pci;
-  pci_ata_t          pciata;
+	pci_405_t          *pci;
+	pci_ata_t          pciata;
 
-  serport_t          *serport[2];
+	serport_t          *serport[2];
 
-  slip_t             *slip;
+	slip_t             *slip;
 
-  breakpoint_t       *brkpt;
+	breakpoint_t       *brkpt;
 
-  uint32_t           cpc0_cr1;
-  uint32_t           cpc0_psr;
+	uint32_t           cpc0_cr1;
+	uint32_t           cpc0_psr;
 
-  unsigned long long clk_cnt;
-  unsigned long      clk_div[4];
+	unsigned long long clk_cnt;
+	unsigned long      clk_div[4];
 
-  unsigned           brk;
+	unsigned           brk;
 } sim405_t;
 
 

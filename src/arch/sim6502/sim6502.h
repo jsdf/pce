@@ -58,7 +58,7 @@ struct sim6502_s;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-  unsigned long addr, unsigned cols, char *prefix, int ascii
+	unsigned long addr, unsigned cols, char *prefix, int ascii
 );
 
 
@@ -78,18 +78,18 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
  * @short The sim6502 context struct
  *****************************************************************************/
 typedef struct sim6502_s {
-  e6502_t            *cpu;
+	e6502_t            *cpu;
 
-  memory_t           *mem;
-  mem_blk_t          *ram;
+	memory_t           *mem;
+	mem_blk_t          *ram;
 
-  console_t          console;
+	console_t          console;
 
-  unsigned long long clk_cnt;
+	unsigned long long clk_cnt;
 
-  unsigned long      clk_div;
+	unsigned long      clk_div;
 
-  unsigned           brk;
+	unsigned           brk;
 } sim6502_t;
 
 

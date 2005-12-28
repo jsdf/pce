@@ -39,11 +39,11 @@
  * @short The image file disk structure
  *****************************************************************************/
 typedef struct {
-  disk_t   dsk;
+	disk_t   dsk;
 
-  FILE     *fp;
+	FILE     *fp;
 
-  uint64_t start;
+	uint64_t start;
 } disk_img_t;
 
 

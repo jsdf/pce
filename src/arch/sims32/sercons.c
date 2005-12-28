@@ -38,60 +38,60 @@
 static
 int scon_readable (int fd, int t)
 {
-  int           r;
-  struct pollfd pfd[1];
+	int           r;
+	struct pollfd pfd[1];
 
-  pfd[0].fd = fd;
-  pfd[0].events = POLLIN;
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
 
-  r = poll (pfd, 1, t);
-  if (r < 0) {
-    return (0);
-  }
+	r = poll (pfd, 1, t);
+	if (r < 0) {
+		return (0);
+	}
 
-  if ((pfd[0].revents & POLLIN) == 0) {
-    return (0);
-  }
+	if ((pfd[0].revents & POLLIN) == 0) {
+		return (0);
+	}
 
-  return (1);
+	return (1);
 }
 
 void scon_check (sims32_t *sim)
 {
-  unsigned      i, n;
-  unsigned char buf[8];
-  ssize_t       r;
+	unsigned      i, n;
+	unsigned char buf[8];
+	ssize_t       r;
 
-  if (par_sig_int) {
-    par_sig_int = 0;
-    ss32_set_keycode (sim, 0x03);
-  }
+	if (par_sig_int) {
+		par_sig_int = 0;
+		ss32_set_keycode (sim, 0x03);
+	}
 
-  if (!scon_readable (0, 0)) {
-    return;
-  }
+	if (!scon_readable (0, 0)) {
+		return;
+	}
 
-  r = read (0, buf, 8);
-  if (r <= 0) {
-    return;
-  }
+	r = read (0, buf, 8);
+	if (r <= 0) {
+		return;
+	}
 
-  n = (unsigned) r;
+	n = (unsigned) r;
 
-  if ((n == 1) && (buf[0] == 0)) {
-    ss32_set_msg (sim, "break", "stop");
-    return;
-  }
-  if ((n == 1) && (buf[0] == 0x1b)) {
-    ss32_set_msg (sim, "break", "stop");
-    return;
-  }
-  else if ((n == 1) && (buf[0] == 0xe0)) {
-    ss32_set_msg (sim, "break", "abort");
-    return;
-  }
+	if ((n == 1) && (buf[0] == 0)) {
+		ss32_set_msg (sim, "break", "stop");
+		return;
+	}
+	if ((n == 1) && (buf[0] == 0x1b)) {
+		ss32_set_msg (sim, "break", "stop");
+		return;
+	}
+	else if ((n == 1) && (buf[0] == 0xe0)) {
+		ss32_set_msg (sim, "break", "abort");
+		return;
+	}
 
-  for (i = 0; i < n; i++) {
-    ss32_set_keycode (sim, buf[i]);
-  }
+	for (i = 0; i < n; i++) {
+		ss32_set_keycode (sim, buf[i]);
+	}
 }

@@ -28,26 +28,26 @@
 
 
 typedef struct ems_block_t {
-  unsigned short     handle;
-  unsigned           pages;
-  unsigned char      *data;
+	unsigned short     handle;
+	unsigned           pages;
+	unsigned char      *data;
 
-  int                map_saved;
-  struct ems_block_t *map_blk[4];
-  unsigned           map_page[4];
+	int                map_saved;
+	struct ems_block_t *map_blk[4];
+	unsigned           map_page[4];
 } ems_block_t;
 
 
 typedef struct {
-  ems_block_t   *blk[256];
+	ems_block_t   *blk[256];
 
-  unsigned      pages_max;
-  unsigned      pages_used;
+	unsigned      pages_max;
+	unsigned      pages_used;
 
-  ems_block_t   *map_blk[4];
-  unsigned      map_page[4];
+	ems_block_t   *map_blk[4];
+	unsigned      map_page[4];
 
-  mem_blk_t     *mem;
+	mem_blk_t     *mem;
 } ems_t;
 
 

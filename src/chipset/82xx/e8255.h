@@ -32,26 +32,26 @@
 
 
 typedef struct {
-  unsigned char val_inp;
-  unsigned char val_out;
+	unsigned char val_inp;
+	unsigned char val_out;
 
-  unsigned char inp;
+	unsigned char inp;
 
-  void          *read_ext;
-  unsigned char (*read) (void *ext);
+	void          *read_ext;
+	unsigned char (*read) (void *ext);
 
-  void          *write_ext;
-  void          (*write) (void *ext, unsigned char val);
+	void          *write_ext;
+	void          (*write) (void *ext, unsigned char val);
 } e8255_port_t;
 
 
 typedef struct {
-  unsigned char group_a_mode;
-  unsigned char group_b_mode;
+	unsigned char group_a_mode;
+	unsigned char group_b_mode;
 
-  unsigned char mode;
+	unsigned char mode;
 
-  e8255_port_t  port[3];
+	e8255_port_t  port[3];
 } e8255_t;
 
 

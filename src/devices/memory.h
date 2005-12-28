@@ -41,63 +41,63 @@ typedef void (*mem_set_uint32_f) (void *blk, unsigned long addr, unsigned long v
  *****************************************************************************/
 typedef struct {
  /*!**************************************************************************
-  * These access functions are used if data is NULL.
-  ****************************************************************************/
-  mem_get_uint8_f  get_uint8;
-  mem_get_uint16_f get_uint16;
-  mem_get_uint32_f get_uint32;
+	* These access functions are used if data is NULL.
+	****************************************************************************/
+	mem_get_uint8_f  get_uint8;
+	mem_get_uint16_f get_uint16;
+	mem_get_uint32_f get_uint32;
 
-  mem_set_uint8_f  set_uint8;
-  mem_set_uint16_f set_uint16;
-  mem_set_uint32_f set_uint32;
+	mem_set_uint8_f  set_uint8;
+	mem_set_uint16_f set_uint16;
+	mem_set_uint32_f set_uint32;
 
-  void             *ext;
+	void             *ext;
 
-  unsigned char    active;
-  unsigned char    readonly;
-
- /*!**************************************************************************
-  * Delete data when the memory block is deleted
-  ****************************************************************************/
-  unsigned char    data_del;
+	unsigned char    active;
+	unsigned char    readonly;
 
  /*!**************************************************************************
-  * Memory block base address
-  ****************************************************************************/
-  unsigned long    addr1;
+	* Delete data when the memory block is deleted
+	****************************************************************************/
+	unsigned char    data_del;
 
  /*!**************************************************************************
-  * The last address inside the memory block. addr2 == addr1 + size - 1
-  ****************************************************************************/
-  unsigned long    addr2;
+	* Memory block base address
+	****************************************************************************/
+	unsigned long    addr1;
 
  /*!**************************************************************************
-  * The memory block size
-  ****************************************************************************/
-  unsigned long    size;
+	* The last address inside the memory block. addr2 == addr1 + size - 1
+	****************************************************************************/
+	unsigned long    addr2;
 
  /*!**************************************************************************
-  * The actual memory or NULL if get_* and set_* are used
-  ****************************************************************************/
-  unsigned char    *data;
+	* The memory block size
+	****************************************************************************/
+	unsigned long    size;
+
+ /*!**************************************************************************
+	* The actual memory or NULL if get_* and set_* are used
+	****************************************************************************/
+	unsigned char    *data;
 } mem_blk_t;
 
 
 typedef struct {
-  mem_blk_t     *blk;
-  int           del;
+	mem_blk_t     *blk;
+	int           del;
 } mem_lst_t;
 
 
 typedef struct {
-  unsigned       cnt;
-  mem_lst_t      *lst;
+	unsigned       cnt;
+	mem_lst_t      *lst;
 
-  mem_lst_t      *last;
+	mem_lst_t      *last;
 
-  unsigned char  def_val8;
-  unsigned short def_val16;
-  unsigned long  def_val32;
+	unsigned char  def_val8;
+	unsigned short def_val16;
+	unsigned long  def_val32;
 } memory_t;
 
 

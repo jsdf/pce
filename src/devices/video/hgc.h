@@ -33,33 +33,33 @@
 
 
 typedef struct {
-  video_t       vid;
+	video_t       vid;
 
-  mem_blk_t     *mem;
-  mem_blk_t     *reg;
+	mem_blk_t     *mem;
+	mem_blk_t     *reg;
 
-  unsigned      mode_80x25_w;
-  unsigned      mode_80x25_h;
+	unsigned      mode_80x25_w;
+	unsigned      mode_80x25_h;
 
-  unsigned      mode_720x348_w;
-  unsigned      mode_720x348_h;
+	unsigned      mode_720x348_w;
+	unsigned      mode_720x348_h;
 
-  unsigned char crtc_reg[18];
+	unsigned char crtc_reg[18];
 
-  unsigned      page_ofs;
-  unsigned      crtc_pos;
-  unsigned      crtc_ofs;
+	unsigned      page_ofs;
+	unsigned      crtc_pos;
+	unsigned      crtc_ofs;
 
-  unsigned char enable_page1;
-  unsigned char enable_graph;
+	unsigned char enable_page1;
+	unsigned char enable_graph;
 
-  int           crs_on;
+	int           crs_on;
 
-  unsigned long rgb[18];
+	unsigned long rgb[18];
 
-  unsigned      mode;
+	unsigned      mode;
 
-  terminal_t    *trm;
+	terminal_t    *trm;
 } hgc_t;
 
 

@@ -37,29 +37,29 @@ typedef void (*e8253_out_f) (void *ext, unsigned char val);
  * @short The PIT 8253 counter structure
  *****************************************************************************/
 typedef struct {
-  /* counter register */
-  unsigned char   cr[2];
-  unsigned char   cr_wr;
+	/* counter register */
+	unsigned char   cr[2];
+	unsigned char   cr_wr;
 
-  /* output latch */
-  unsigned char   ol[2];
-  unsigned char   ol_rd;
-  unsigned char   cnt_rd;
+	/* output latch */
+	unsigned char   ol[2];
+	unsigned char   ol_rd;
+	unsigned char   cnt_rd;
 
-  unsigned char   sr;
-  unsigned char   rw;
-  unsigned char   mode;
-  unsigned char   bcd;
+	unsigned char   sr;
+	unsigned char   rw;
+	unsigned char   mode;
+	unsigned char   bcd;
 
-  unsigned char   counting;
+	unsigned char   counting;
 
-  unsigned char   gate;
+	unsigned char   gate;
 
-  void            *out_ext;
-  e8253_out_f     out;
-  unsigned char   out_val;
+	void            *out_ext;
+	e8253_out_f     out;
+	unsigned char   out_val;
 
-  unsigned short val;
+	unsigned short val;
 } e8253_counter_t;
 
 
@@ -67,7 +67,7 @@ typedef struct {
  * @short The PIT 8253 structure
  *****************************************************************************/
 typedef struct {
-  e8253_counter_t counter[3];
+	e8253_counter_t counter[3];
 } e8253_t;
 
 

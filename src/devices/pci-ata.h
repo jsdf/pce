@@ -40,9 +40,9 @@
 
 
 typedef struct {
-  pci_dev_t pci;
+	pci_dev_t pci;
 
-  ata_chn_t ata[2];
+	ata_chn_t ata[2];
 } pci_ata_t;
 
 

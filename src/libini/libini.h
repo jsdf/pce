@@ -48,10 +48,10 @@
  * @short The value type identifiers
  *****************************************************************************/
 typedef enum {
-  INI_VAL_U32 = 1,
-  INI_VAL_S32 = 2,
-  INI_VAL_DBL = 3,
-  INI_VAL_STR = 4
+	INI_VAL_U32 = 1,
+	INI_VAL_S32 = 2,
+	INI_VAL_DBL = 3,
+	INI_VAL_STR = 4
 } ini_type_t;
 
 
@@ -59,10 +59,10 @@ typedef enum {
  * @short The value union
  *****************************************************************************/
 typedef union {
-  char          *str;
-  unsigned long u32;
-  long          s32;
-  double        dbl;
+	char          *str;
+	unsigned long u32;
+	long          s32;
+	double        dbl;
 } ini_val_u;
 
 
@@ -70,10 +70,10 @@ typedef union {
  * @short The value struct
  *****************************************************************************/
 typedef struct ini_val_s {
-  struct ini_val_s *next;
-  char             *name;
-  ini_type_t       type;
-  ini_val_u        val;
+	struct ini_val_s *next;
+	char             *name;
+	ini_type_t       type;
+	ini_val_u        val;
 } ini_val_t;
 
 
@@ -203,13 +203,13 @@ const char *ini_val_get_str (const ini_val_t *val);
  * @short The ini section struct
  *****************************************************************************/
 typedef struct ini_sect_s {
-  char              *name;
-  unsigned          format;
-  struct ini_sect_s *next;
-  struct ini_sect_s *head;
-  struct ini_sect_s *tail;
-  ini_val_t         *val_head;
-  ini_val_t         *val_tail;
+	char              *name;
+	unsigned          format;
+	struct ini_sect_s *next;
+	struct ini_sect_s *head;
+	struct ini_sect_s *tail;
+	ini_val_t         *val_head;
+	ini_val_t         *val_tail;
 } ini_sct_t;
 
 
