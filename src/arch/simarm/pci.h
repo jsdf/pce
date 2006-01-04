@@ -5,8 +5,9 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.h                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,6 +19,11 @@
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
+ *****************************************************************************/
+
+/*****************************************************************************
+ * This software was developed at the Computer Engineering and Networks      *
+ * Laboratory (TIK), Swiss Federal Institute of Technology (ETH) Zurich.     *
  *****************************************************************************/
 
 /* $Id$ */
