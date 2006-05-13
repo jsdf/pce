@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/pqueue.c                                     *
  * Created:       2003-09-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -44,7 +44,7 @@ void e86_pq_fill (e8086_t *c)
 	if (ofs <= (0xffff - E86_PQ_FILL)) {
 		unsigned long addr;
 
-		addr = e86_get_linear (seg, ofs);
+		addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
 		if (addr <= (c->ram_cnt - E86_PQ_FILL)) {
 			for (i = c->pq_cnt; i < E86_PQ_FILL; i++) {
@@ -54,7 +54,7 @@ void e86_pq_fill (e8086_t *c)
 		else {
 			i = c->pq_cnt;
 			while (i < E86_PQ_FILL) {
-				val = c->mem_get_uint16 (c->mem, addr + i);
+				val = c->mem_get_uint16 (c->mem, (addr + i) & c->addr_mask);
 				c->pq[i] = val & 0xff;
 				c->pq[i + 1] = (val >> 8) & 0xff;
 				i += 2;
