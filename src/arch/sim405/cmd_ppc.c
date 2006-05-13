@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -354,9 +354,11 @@ void prt_state_spr (p405_t *c, FILE *fp)
 		(unsigned long) p405_get_iccr (c)
 	);
 
-	fprintf (fp, "SPG4=%08lX  DBC0=%08lX\n",
+	fprintf (fp, "SPG4=%08lX  DBC0=%08lX  PIT0=%08lX  PIT1=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 4),
-		(unsigned long) p405_get_dbcr0 (c)
+		(unsigned long) p405_get_dbcr0 (c),
+		(unsigned long) p405_get_pit (c, 0),
+		(unsigned long) p405_get_pit (c, 1)
 	);
 
 	fprintf (fp, "SPG5=%08lX  DBC1=%08lX\n",
