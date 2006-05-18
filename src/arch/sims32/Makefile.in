@@ -79,7 +79,7 @@ install: install-bin sims32.cfg
 
 sims32: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QP)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
 sims32.cfg: sims32.cfg.in
