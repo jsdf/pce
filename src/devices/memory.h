@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-10-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -40,9 +40,7 @@ typedef void (*mem_set_uint32_f) (void *blk, unsigned long addr, unsigned long v
  * @short The memory block structure
  *****************************************************************************/
 typedef struct {
- /*!**************************************************************************
-	* These access functions are used if data is NULL.
-	****************************************************************************/
+	/* These access functions are used if data is NULL. */
 	mem_get_uint8_f  get_uint8;
 	mem_get_uint16_f get_uint16;
 	mem_get_uint32_f get_uint32;
@@ -56,29 +54,19 @@ typedef struct {
 	unsigned char    active;
 	unsigned char    readonly;
 
- /*!**************************************************************************
-	* Delete data when the memory block is deleted
-	****************************************************************************/
+	/* Delete data when the memory block is deleted */
 	unsigned char    data_del;
 
- /*!**************************************************************************
-	* Memory block base address
-	****************************************************************************/
+	/* Memory block base address */
 	unsigned long    addr1;
 
- /*!**************************************************************************
-	* The last address inside the memory block. addr2 == addr1 + size - 1
-	****************************************************************************/
+	/* The last address inside the memory block. addr2 == addr1 + size - 1 */
 	unsigned long    addr2;
 
- /*!**************************************************************************
-	* The memory block size
-	****************************************************************************/
+	/* The memory block size */
 	unsigned long    size;
 
- /*!**************************************************************************
-	* The actual memory or NULL if get_* and set_* are used
-	****************************************************************************/
+	/* The actual memory or NULL if get_* and set_* are used */
 	unsigned char    *data;
 } mem_blk_t;
 
