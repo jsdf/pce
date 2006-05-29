@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -418,15 +418,6 @@ void arm_execute (arm_t *c)
 
 void arm_clock (arm_t *c, unsigned long n)
 {
-	if (n == c->delay) {
-		c->clkcnt += n;
-		c->delay = 0;
-
-		arm_execute (c);
-
-		return;
-	}
-
 	while (n >= c->delay) {
 		n -= c->delay;
 
