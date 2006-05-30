@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -83,9 +83,6 @@
 #define ARM_XLAT_CPU     0
 #define ARM_XLAT_REAL    1
 #define ARM_XLAT_VIRTUAL 2
-
-
-#define ARM_TLB_SIZE (1 << 6)
 
 
 #define ARM_REG_ALT_CNT 24
@@ -179,9 +176,9 @@ typedef struct {
 typedef struct {
 	arm_copr_t copr;
 
-	arm_tbuf_t tbuf_exec[ARM_TLB_SIZE];
-	arm_tbuf_t tbuf_read[ARM_TLB_SIZE];
-	arm_tbuf_t tbuf_write[ARM_TLB_SIZE];
+	arm_tbuf_t tbuf_exec;
+	arm_tbuf_t tbuf_read;
+	arm_tbuf_t tbuf_write;
 
 	uint32_t   reg[16];
 } arm_copr15_t;
@@ -253,8 +250,6 @@ typedef struct arm_s {
 /*****************************************************************************
  * MMU
  *****************************************************************************/
-
-void arm_tbuf_flush (arm_t *c);
 
 int arm_translate_extern (arm_t *c, uint32_t *addr, unsigned xlat,
 	unsigned *domn, unsigned *perm

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -67,20 +67,6 @@ void arm_mmu_permission_fault (arm_t *c, uint32_t addr, unsigned domn, int sect)
 	arm_mmu_fault (c, addr, sect ? 0x0d : 0x0f, domn);
 }
 
-
-void arm_tbuf_flush (arm_t *c)
-{
-	unsigned     i;
-	arm_copr15_t *mmu;
-
-	mmu = arm_get_mmu (c);
-
-	for (i = 0; i < ARM_TLB_SIZE; i++) {
-		mmu->tbuf_exec[i].valid = 0;
-		mmu->tbuf_read[i].valid = 0;
-		mmu->tbuf_write[i].valid = 0;
-	}
-}
 
 static inline
 void arm_tbuf_set (arm_tbuf_t *tb, uint32_t vaddr, uint32_t raddr, uint32_t mask)
@@ -297,7 +283,6 @@ int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
 	unsigned     domn, perm;
 	int          sect;
 	uint32_t     vaddr, mask;
-	arm_tbuf_t   *tb;
 
 	mmu = arm_get_mmu (c);
 
@@ -305,11 +290,11 @@ int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
 		return (0);
 	}
 
-	tb = &mmu->tbuf_exec[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
-
 	vaddr = *addr;
 
-	if (tb->valid) {
+	if (mmu->tbuf_exec.valid) {
+		arm_tbuf_t *tb = &mmu->tbuf_exec;
+
 		if ((vaddr & tb->vmask) == tb->vaddr) {
 			*addr = tb->raddr | (vaddr & tb->rmask);
 			return (0);
@@ -332,14 +317,14 @@ int arm_translate_exec (arm_t *c, uint32_t *addr, int priv)
 			arm_exception_prefetch_abort (c);
 			return (1);
 		}
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_exec, vaddr, *addr, mask);
 		return (0);
 
 	case 0x02: /* undefined */
 		return (0);
 
 	case 0x03: /* manager */
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_exec, vaddr, *addr, mask);
 		return (0);
 	}
 
@@ -353,7 +338,6 @@ int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
 	unsigned     domn, perm;
 	int          sect;
 	uint32_t     vaddr, mask;
-	arm_tbuf_t   *tb;
 
 	mmu = arm_get_mmu (c);
 
@@ -361,11 +345,11 @@ int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
 		return (0);
 	}
 
-	tb = &mmu->tbuf_read[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
-
 	vaddr = *addr;
 
-	if (tb->valid) {
+	if (mmu->tbuf_read.valid) {
+		arm_tbuf_t *tb = &mmu->tbuf_read;
+
 		if ((vaddr & tb->vmask) == tb->vaddr) {
 			*addr = tb->raddr | (vaddr & tb->rmask);
 			return (0);
@@ -388,14 +372,14 @@ int arm_translate_read (arm_t *c, uint32_t *addr, int priv)
 			arm_mmu_permission_fault (c, vaddr, domn, sect);
 			return (1);
 		}
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_read, vaddr, *addr, mask);
 		return (0);
 
 	case 0x02: /* undefined */
 		return (0);
 
 	case 0x03: /* manager */
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_read, vaddr, *addr, mask);
 		return (0);
 	}
 
@@ -409,7 +393,6 @@ int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
 	unsigned     domn, perm;
 	int          sect;
 	uint32_t     vaddr, mask;
-	arm_tbuf_t   *tb;
 
 	mmu = arm_get_mmu (c);
 
@@ -417,11 +400,11 @@ int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
 		return (0);
 	}
 
-	tb = &mmu->tbuf_write[(*addr >> 12) & (ARM_TLB_SIZE - 1)];
-
 	vaddr = *addr;
 
-	if (tb->valid) {
+	if (mmu->tbuf_write.valid) {
+		arm_tbuf_t *tb = &mmu->tbuf_write;
+
 		if ((vaddr & tb->vmask) == tb->vaddr) {
 			*addr = tb->raddr | (vaddr & tb->rmask);
 			return (0);
@@ -445,7 +428,7 @@ int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
 			return (1);
 		}
 
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_write, vaddr, *addr, mask);
 
 		return (0);
 
@@ -453,7 +436,7 @@ int arm_translate_write (arm_t *c, uint32_t *addr, int priv)
 		return (0);
 
 	case 0x03: /* manager */
-		arm_tbuf_set (tb, vaddr, *addr, mask);
+		arm_tbuf_set (&mmu->tbuf_write, vaddr, *addr, mask);
 		return (0);
 	}
 

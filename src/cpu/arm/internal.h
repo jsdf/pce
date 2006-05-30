@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -121,6 +121,17 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 #define arm_check_cond_al(ir) (((ir) & 0xf0000000UL) == 0xe0000000UL)
 
 #define arm_is_privileged(c) ((c)->privileged)
+
+
+static inline
+void arm_tbuf_flush (arm_t *c)
+{
+	arm_copr15_t *mmu = arm_get_mmu (c);
+
+	mmu->tbuf_exec.valid = 0;
+	mmu->tbuf_read.valid = 0;
+	mmu->tbuf_write.valid = 0;
+}
 
 
 int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk);
