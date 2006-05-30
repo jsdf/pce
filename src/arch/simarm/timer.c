@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.c                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -46,6 +46,8 @@ static void tmr_set_uint32 (ixp_timer_t *ic, unsigned long addr, unsigned long v
 static
 void ctr_init (ixp_timer_counter_t *ctr)
 {
+	ctr->clock = NULL;
+
 	ctr->irq = NULL;
 	ctr->irq_ext = NULL;
 	ctr->irq_val = 0;
@@ -55,8 +57,7 @@ void ctr_init (ixp_timer_counter_t *ctr)
 	ctr->status = 0;
 	ctr->clear = 0;
 
-	ctr->clk[0] = 1;
-	ctr->clk[1] = 0;
+	ctr->clkdiv = 0;
 }
 
 static
@@ -77,26 +78,74 @@ void ctr_set_irq (ixp_timer_counter_t *ctr, unsigned char val)
 }
 
 static
+void ctr_clock_1 (ixp_timer_counter_t *ctr, unsigned n)
+{
+	if (ctr->status == 0) {
+		ctr->status = ctr->load;
+	}
+
+	if (n < ctr->status) {
+		ctr->status -= n;
+		return;
+	}
+
+	n -= ctr->status;
+
+	while (n > ctr->load) {
+		n -= ctr->load;
+		n -= 1;
+	}
+
+	ctr->status = ctr->load - n;
+
+	ctr_set_irq (ctr, 1);
+}
+
+static
+void ctr_clock_16 (ixp_timer_counter_t *ctr, unsigned n)
+{
+	n += ctr->clkdiv;
+
+	ctr->clkdiv = n % 16;
+
+	ctr_clock_1 (ctr, n / 16);
+}
+
+static
+void ctr_clock_256 (ixp_timer_counter_t *ctr, unsigned n)
+{
+	n += ctr->clkdiv;
+
+	ctr->clkdiv = n % 256;
+
+	ctr_clock_1 (ctr, n / 256);
+}
+
+static
 void ctr_set_ctrl (ixp_timer_counter_t *ctr, unsigned long val)
 {
 	ctr->ctrl = val & 0x0000008cUL;
 
 	switch ((val >> 2) & 0x03) {
 	case 0x00:
-		ctr->clk[0] = 1;
+		ctr->clock = ctr_clock_1;
 		break;
 
 	case 0x01:
-		ctr->clk[0] = 16;
+		ctr->clock = ctr_clock_16;
 		break;
 
 	case 0x02:
-		ctr->clk[0] = 256;
+		ctr->clock = ctr_clock_256;
 		break;
 
 	case 0x03:
-		ctr->clk[0] = 1;
+		ctr->clock = ctr_clock_1;
 		break;
+	}
+
+	if ((ctr->ctrl & IXP_TIMER_ACT) == 0) {
+		ctr->clock = NULL;
 	}
 }
 
@@ -130,50 +179,6 @@ static
 unsigned long ctr_get_status (ixp_timer_counter_t *ctr)
 {
 	return (ctr->status);
-}
-
-static
-void ctr_clock (ixp_timer_counter_t *ctr, unsigned n)
-{
-	if (ctr->clk[0] == 0) {
-		return;
-	}
-
-	while (n >= ctr->clk[0]) {
-		if (ctr->status == 0) {
-			ctr->status = ctr->load;
-		}
-
-		ctr->status = (ctr->status - 1) & 0xffffffffUL;
-
-		if (ctr->status == 0) {
-			ctr_set_irq (ctr, 1);
-		}
-
-		n -= ctr->clk[0];
-	}
-
-	while (n > 0) {
-		ctr->clk[1] += 1;
-
-		if (ctr->clk[1] < ctr->clk[0]) {
-			return;
-		}
-
-		ctr->clk[1] = 0;
-
-		if (ctr->status == 0) {
-			ctr->status = ctr->load;
-		}
-
-		ctr->status = (ctr->status - 1) & 0xffffffffUL;
-
-		if (ctr->status == 0) {
-			ctr_set_irq (ctr, 1);
-		}
-
-		n -= 1;
-	}
 }
 
 void tmr_init (ixp_timer_t *tmr, unsigned long base)
@@ -341,21 +346,16 @@ void tmr_set_uint32 (ixp_timer_t *tmr, unsigned long addr, unsigned long val)
 
 void tmr_clock (ixp_timer_t *tmr, unsigned n)
 {
+	unsigned            i;
+	ixp_timer_counter_t *c;
+
 	n *= tmr->scale;
 
-	if (tmr->cntr[0].ctrl & IXP_TIMER_ACT) {
-		ctr_clock (&tmr->cntr[0], n);
-	}
+	for (i = 0; i < 4; i++) {
+		c = &tmr->cntr[i];
 
-	if (tmr->cntr[1].ctrl & IXP_TIMER_ACT) {
-		ctr_clock (&tmr->cntr[1], n);
-	}
-
-	if (tmr->cntr[2].ctrl & IXP_TIMER_ACT) {
-		ctr_clock (&tmr->cntr[2], n);
-	}
-
-	if (tmr->cntr[3].ctrl & IXP_TIMER_ACT) {
-		ctr_clock (&tmr->cntr[3], n);
+		if (c->clock != NULL) {
+			c->clock (c, n);
+		}
 	}
 }

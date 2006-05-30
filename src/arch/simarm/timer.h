@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/timer.h                                    *
  * Created:       2004-11-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -33,14 +33,17 @@
 #define PCE_SIMARM_TIMER_H 1
 
 
-typedef struct {
+typedef struct ixp_timer_counter_s {
 	unsigned long ctrl;
 	unsigned long load;
 	unsigned long status;
 	unsigned long clear;
 
-	/* clock divisor */
-	unsigned long clk[2];
+	/* clock divisor, remaining clocks */
+	unsigned long clkdiv;
+
+	/* set to the clocking function if the counter is active */
+	void          (*clock) (struct ixp_timer_counter_s *cntr, unsigned n);
 
 	void          (*irq) (void *ext, unsigned char val);
 	void          *irq_ext;
@@ -60,6 +63,7 @@ typedef struct ixp_timer_s {
 
 	unsigned long       twde;
 
+	/* artificial timer scale */
 	unsigned            scale;
 } ixp_timer_t;
 
