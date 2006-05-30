@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -472,24 +472,30 @@ void sarm_reset (simarm_t *sim)
 
 void sarm_clock (simarm_t *sim, unsigned n)
 {
-	if (sim->clk_div[0] >= 4096) {
-		if (sim->slip != NULL) {
-			slip_clock (sim->slip, 4096);
-		}
+	if (sim->clk_div[0] >= 256) {
+		dev_lst_clock (&sim->dev, 256);
+
+		tmr_clock (sim->timer, 256);
 
 		sim->clk_div[1] += sim->clk_div[0];
-		sim->clk_div[0] &= 4095;
+		sim->clk_div[0] &= 255;
 
-		if (sim->clk_div[1] >= 16384) {
-			scon_check (sim);
+		if (sim->clk_div[1] >= 4096) {
 
-			sim->clk_div[0] &= 16383;
+			if (sim->slip != NULL) {
+				slip_clock (sim->slip, 4096);
+			}
+
+			sim->clk_div[2] += sim->clk_div[1];
+			sim->clk_div[1] &= 4095;
+
+			if (sim->clk_div[2] >= 16384) {
+				scon_check (sim);
+
+				sim->clk_div[2] &= 16383;
+			}
 		}
 	}
-
-	dev_lst_clock (&sim->dev, n);
-
-	tmr_clock (sim->timer, n);
 
 	arm_clock (sim->cpu, n);
 
