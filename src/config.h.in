@@ -40,25 +40,19 @@
 
 
 #undef HAVE_LIMITS_H
-
 #undef HAVE_STDINT_H
-
 #undef HAVE_INTTYPES_H
-
 #undef HAVE_FCNTL_H
-
 #undef HAVE_TERMIOS_H
-
 #undef HAVE_SYS_POLL_H
-
 #undef HAVE_SYS_TIME_H
-
 #undef HAVE_UNISTD_H
 
 #undef HAVE_FSEEKO
 #undef HAVE_USLEEP
 #undef HAVE_NANOSLEEP
 #undef HAVE_SLEEP
+#undef HAVE_GETTIMEOFDAY
 
 #undef PCE_VERSION_MAJ
 #undef PCE_VERSION_MIN

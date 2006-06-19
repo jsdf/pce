@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -879,7 +879,7 @@ void pc_del (ibmpc_t *pc)
 	free (pc);
 }
 
-#ifdef HAVE_SYS_TIME_H
+#ifdef HAVE_GETTIMEOFDAY
 static
 void pc_clock_pit (ibmpc_t *pc, unsigned n)
 {
@@ -935,7 +935,7 @@ void pc_clock (ibmpc_t *pc)
 
 		pce_video_clock (pc->video, (pc->clk_div[0] & ~0x1fUL) / 4);
 
-#if HAVE_SYS_TIME_H
+#ifdef HAVE_GETTIMEOFDAY
 		if (pc->pit_real) {
 			pc_clock_pit (pc, 8 * (pc->clk_div[0] / 32));
 		}
