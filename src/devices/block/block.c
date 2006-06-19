@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 
 uint16_t dsk_get_uint16_be (const void *buf, unsigned i)
@@ -163,9 +164,19 @@ int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
 {
 	size_t r;
 
+#ifdef HAVE_FSEEKO
 	if (fseeko (fp, ofs, SEEK_SET)) {
 		return (1);
 	}
+#else
+	if (ofs > LONG_MAX) {
+		return (1);
+	}
+
+	if (fseek (fp, (long) ofs, cnt)) {
+		return (1);
+	}
+#endif
 
 	r = fread (buf, 1, cnt, fp);
 
@@ -180,9 +191,19 @@ int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
 {
 	size_t r;
 
+#ifdef HAVE_FSEEKO
 	if (fseeko (fp, ofs, SEEK_SET)) {
 		return (1);
 	}
+#else
+	if (ofs > LONG_MAX) {
+		return (1);
+	}
+
+	if (fseek (fp, (long) ofs, cnt)) {
+		return (1);
+	}
+#endif
 
 	r = fwrite (buf, 1, cnt, fp);
 
@@ -195,6 +216,7 @@ int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
 
 int dsk_get_filesize (FILE *fp, uint64_t *cnt)
 {
+#ifdef HAVE_FSEEKO
 	off_t val;
 
 	if (fseeko (fp, 0, SEEK_END)) {
@@ -205,6 +227,18 @@ int dsk_get_filesize (FILE *fp, uint64_t *cnt)
 	if (val == (off_t) -1) {
 		return (1);
 	}
+#else
+	long val;
+
+	if (fseek (fp, 0, SEEK_END)) {
+		return (1);
+	}
+
+	val = ftell (fp);
+	if (val == -1) {
+		return (1);
+	}
+#endif
 
 	*cnt = val;
 
