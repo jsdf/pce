@@ -335,6 +335,10 @@ int main (int argc, char *argv[])
 	signal (SIGINT, &sig_int);
 	signal (SIGSEGV, &sig_segv);
 
+#ifdef SIGPIPE
+	signal (SIGPIPE, SIG_IGN);
+#endif
+
 	cmd_init (stdin, stdout, &cmd_match_sym);
 	ss32_cmd_init (par_sim);
 
