@@ -30,6 +30,7 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/serport.o \
 	$(pcedst)/lib/brkpt.o \
 	$(pcedst)/lib/cmd.o \
+	$(pcedst)/lib/console.o \
 	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/ihex.o \
 	$(pcedst)/lib/srec.o \
@@ -47,6 +48,7 @@ HDR_EXT	:= \
 	devices/serport.h \
 	lib/brkpt.h \
 	lib/cmd.h \
+	lib/console.h \
 	lib/hexdump.h \
 	lib/ihex.h \
 	lib/srec.h \

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,6 +70,8 @@ extern unsigned long par_int28;
 
 
 #include <lib/brkpt.h>
+#include <lib/cmd.h>
+#include <lib/console.h>
 #include <lib/log.h>
 #include <lib/hexdump.h>
 #include <lib/inidsk.h>

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-29 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -168,40 +168,15 @@ void prt_prompt (simarm_t *sim, FILE *fp)
 	fflush (fp);
 }
 
-void pce_set_fd (int fd, int interactive)
-{
-	static int            sios_ok = 0;
-	static struct termios sios;
-	struct termios        tios;
-
-	if (sios_ok == 0) {
-		tcgetattr (fd, &sios);
-		sios_ok = 1;
-	}
-
-	if (interactive) {
-		tcsetattr (fd, TCSANOW, &sios);
-	}
-	else {
-		tios = sios;
-
-		tios.c_lflag &= ~(ICANON | ECHO);
-		tios.c_cc[VMIN] = 1;
-		tios.c_cc[VTIME] = 0;
-
-		tcsetattr (fd, TCSANOW, &tios);
-	}
-}
-
 void pce_start (void)
 {
-	pce_set_fd (0, 0);
+	pce_set_fd_interactive (0, 0);
 	par_sim->brk = 0;
 }
 
 void pce_stop (void)
 {
-	pce_set_fd (0, 1);
+	pce_set_fd_interactive (0, 1);
 }
 
 void pce_run (void)

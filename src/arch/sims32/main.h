@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/main.h                                     *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,7 @@
 
 
 #include <lib/cmd.h>
+#include <lib/console.h>
 
 #include "sims32.h"
 #include "sercons.h"

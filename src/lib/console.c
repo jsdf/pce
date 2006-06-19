@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim6502/main.h                                    *
- * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/console.c                                          *
+ * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,21 +23,39 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIM6502_MAIN_H
-#define PCE_SIM6502_MAIN_H 1
+#include <config.h>
+
+#include "console.h"
 
 
-#include "sim6502.h"
-
-#include <lib/cmd.h>
-#include <lib/console.h>
-#include <lib/brkpt.h>
-
-extern int       par_verbose;
-
-extern sim6502_t *par_sim;
-
-extern unsigned  par_sig_int;
-
-
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
+
+
+void pce_set_fd_interactive (int fd, int interactive)
+{
+#ifdef HAVE_TERMIOS_H
+	static int            sios_ok = 0;
+	static struct termios sios;
+	struct termios        tios;
+
+	if (sios_ok == 0) {
+		tcgetattr (fd, &sios);
+		sios_ok = 1;
+	}
+
+	if (interactive) {
+		tcsetattr (fd, TCSANOW, &sios);
+	}
+	else {
+		tios = sios;
+
+		tios.c_lflag &= ~(ICANON | ECHO);
+		tios.c_cc[VMIN] = 1;
+		tios.c_cc[VTIME] = 0;
+
+		tcsetattr (fd, TCSANOW, &tios);
+	}
+#endif
+}

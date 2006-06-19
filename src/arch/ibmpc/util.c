@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/util.c                                      *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -82,33 +82,6 @@ void prt_error (const char *str, ...)
 	va_start (va, str);
 	vfprintf (stderr, str, va);
 	va_end (va);
-}
-
-void pce_set_fd (int fd, int interactive)
-{
-#ifdef HAVE_TERMIOS_H
-	static int            sios_ok = 0;
-	static struct termios sios;
-	struct termios        tios;
-
-	if (sios_ok == 0) {
-		tcgetattr (fd, &sios);
-		sios_ok = 1;
-	}
-
-	if (interactive) {
-		tcsetattr (fd, TCSANOW, &sios);
-	}
-	else {
-		tios = sios;
-
-		tios.c_lflag &= ~(ICANON | ECHO);
-		tios.c_cc[VMIN] = 1;
-		tios.c_cc[VTIME] = 0;
-
-		tcsetattr (fd, TCSANOW, &tios);
-	}
-#endif
 }
 
 ini_sct_t *pce_load_config (const char *fname)

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/util.h                                      *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,7 +31,6 @@ int str_istail (const char *str, const char *tail);
 int str_isarg (const char *str, const char *arg1, const char *arg2);
 
 void prt_error (const char *str, ...);
-void pce_set_fd (int fd, int interactive);
 
 ini_sct_t *pce_load_config (const char *fname);
 

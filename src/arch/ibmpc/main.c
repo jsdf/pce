@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,8 +24,6 @@
 
 
 #include "main.h"
-
-#include <lib/cmd.h>
 
 #include <signal.h>
 
@@ -588,14 +586,14 @@ int pce_check_break (ibmpc_t *pc)
 static
 void pce_start (void)
 {
-	pce_set_fd (0, 0);
+	pce_set_fd_interactive (0, 0);
 	pc->brk = 0;
 }
 
 static
 void pce_stop (void)
 {
-	pce_set_fd (0, 1);
+	pce_set_fd_interactive (0, 1);
 }
 
 static

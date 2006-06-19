@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim6502/main.h                                    *
- * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/console.h                                          *
+ * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,21 +23,11 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIM6502_MAIN_H
-#define PCE_SIM6502_MAIN_H 1
+#ifndef PCE_LIB_CONSOLE_H
+#define PCE_LIB_CONSOLE_H 1
 
 
-#include "sim6502.h"
-
-#include <lib/cmd.h>
-#include <lib/console.h>
-#include <lib/brkpt.h>
-
-extern int       par_verbose;
-
-extern sim6502_t *par_sim;
-
-extern unsigned  par_sig_int;
+void pce_set_fd_interactive (int fd, int interactive);
 
 
 #endif
