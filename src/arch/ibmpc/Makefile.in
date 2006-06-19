@@ -49,6 +49,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/lib/msg.o \
+	$(pcedst)/lib/sysdep.o \
 	$(pcedst)/libini/libini.a \
 	$(PCE_BLK_OBJ) \
 	$(PCE_TERM_OBJ)
@@ -84,6 +85,7 @@ HDR_EXT	:= \
 	lib/load.h \
 	lib/log.h \
 	lib/msg.h \
+	lib/sysdep.h \
 	libini/libini.h \
 	$(PCE_TERM_HDR)
 

@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/config.h.in                                            *
- * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/sysdep.h                                           *
+ * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,66 +23,11 @@
 /* $Id$ */
 
 
-#ifndef PCE_CONFIG_H
-#define PCE_CONFIG_H 1
+#ifndef PCE_LIB_SYSDEP_H
+#define PCE_LIB_SYSDEP_H 1
 
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 600
-#endif
-
-
-#undef PCE_LARGE_FILE
-
-#ifdef PCE_LARGE_FILE
-#define _FILE_OFFSET_BITS 64
-#endif
-
-
-#undef HAVE_LIMITS_H
-
-#undef HAVE_STDINT_H
-
-#undef HAVE_INTTYPES_H
-
-#undef HAVE_FCNTL_H
-
-#undef HAVE_TERMIOS_H
-
-#undef HAVE_SYS_POLL_H
-
-#undef HAVE_SYS_TIME_H
-
-#undef HAVE_UNISTD_H
-
-#undef HAVE_FSEEKO
-#undef HAVE_USLEEP
-#undef HAVE_NANOSLEEP
-#undef HAVE_SLEEP
-
-#undef PCE_VERSION_MAJ
-#undef PCE_VERSION_MIN
-#undef PCE_VERSION_MIC
-#undef PCE_VERSION_STR
-#undef PCE_VERSION_REL
-
-#undef PCE_CFG_DATE
-#undef PCE_CFG_TIME
-
-#undef PCE_HOST_LINUX
-#undef PCE_HOST_SUNOS
-
-#undef PCE_HOST_IA32
-#undef PCE_HOST_PPC
-#undef PCE_HOST_SPARC
-
-#undef PCE_DIR_ETC
-
-#undef PCE_X11_USE
-#undef PCE_SDL_USE
-#define PCE_VT100_USE 1
-
-#undef PCE_ENABLE_TUN
+int pce_usleep (unsigned long usec);
 
 
 #endif

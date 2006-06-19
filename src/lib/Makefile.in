@@ -10,7 +10,8 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd console hexdump ihex inidsk iniram load log msg srec
+FILES := brkpt cmd console hexdump ihex inidsk iniram load log msg srec \
+	sysdep
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 FILES += tun
@@ -46,3 +47,4 @@ log.o:		log.c log.h $(SDP)
 msg.o:		msg.c msg.h $(SDP)
 tun.o:		tun.c tun.h $(SDP)
 srec.o:		srec.c srec.h $(SDP)
+sysdep.o:	sysdep.c sysdep.h $(SDP)

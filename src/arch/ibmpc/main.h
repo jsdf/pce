@@ -79,6 +79,7 @@ extern unsigned long par_int28;
 #include <lib/ihex.h>
 #include <lib/load.h>
 #include <lib/msg.h>
+#include <lib/sysdep.h>
 
 #include <cpu/e8086/e8086.h>
 #include <chipset/82xx/e8237.h>

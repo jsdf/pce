@@ -606,7 +606,7 @@ void pce_run (void)
 		pc_clock (pc);
 
 		while (pc->pause) {
-			usleep (250000UL);
+			pce_usleep (250000UL);
 			trm_check (pc->trm);
 		}
 	}
@@ -646,13 +646,11 @@ void pce_op_int (void *ext, unsigned char n)
 {
 	pce_last_int = n;
 
-#ifndef PCE_HOST_DOS
 	if (n == 0x28) {
 		if (par_int28 > 0) {
-			usleep (par_int28);
+			pce_usleep (par_int28);
 		}
 	}
-#endif
 }
 
 static
@@ -666,9 +664,7 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
 	);
 
-#ifndef PCE_HOST_DOS
-	usleep (100000UL);
-#endif
+	pce_usleep (100000UL);
 
 	trm_check (pc->trm);
 }

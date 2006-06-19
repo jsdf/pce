@@ -216,6 +216,8 @@ AC_SUBST(PCE_HAVE_INTTYPES_H)
 #-----------------------------------------------------------------------------
 # Checks for libraries
 
+AC_FUNC_FSEEKO
+AC_CHECK_FUNCS(sleep nanosleep usleep)
 
 AC_PATH_X
 if test "x$no_x" = "xyes" ; then
