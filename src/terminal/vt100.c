@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,6 +23,8 @@
 /* $Id$ */
 
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +32,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+
+#ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
 
 #include <terminal/terminal.h>
 #include <terminal/vt100.h>
@@ -518,6 +523,8 @@ void vt100_del (vt100_t *vt)
 	}
 }
 
+#ifdef HAVE_SYS_POLL_H
+
 static
 int vt100_readable (vt100_t *vt, int t)
 {
@@ -542,6 +549,16 @@ int vt100_readable (vt100_t *vt, int t)
 
 	return (1);
 }
+
+#else
+
+static
+int vt100_readable (vt100_t *vt, int t)
+{
+	return (0);
+}
+
+#endif
 
 #if 0
 static
