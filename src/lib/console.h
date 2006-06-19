@@ -30,4 +30,12 @@
 void pce_set_fd_interactive (int fd, int interactive);
 
 
+/*!***************************************************************************
+ * @short Check if a file descriptor is readable
+ * @param fd The file descriptor
+ * @param t  Wait at most t milliseconds for fd to become readable
+ *****************************************************************************/
+int pce_fd_readable (int fd, int t);
+
+
 #endif

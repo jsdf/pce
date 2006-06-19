@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sercons.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -36,31 +36,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include <sys/poll.h>
 
 #include "main.h"
 
-
-static
-int scon_readable (int fd, int t)
-{
-	int           r;
-	struct pollfd pfd[1];
-
-	pfd[0].fd = fd;
-	pfd[0].events = POLLIN;
-
-	r = poll (pfd, 1, t);
-	if (r < 0) {
-		return (0);
-	}
-
-	if ((pfd[0].revents & POLLIN) == 0) {
-		return (0);
-	}
-
-	return (1);
-}
 
 void scon_check (sim405_t *sim)
 {
@@ -73,7 +51,7 @@ void scon_check (sim405_t *sim)
 		s405_set_keycode (sim, 0x03);
 	}
 
-	if (!scon_readable (0, 0)) {
+	if (!pce_fd_readable (0, 0)) {
 		return;
 	}
 

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/console.c                                 *
  * Created:       2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,7 +30,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include <sys/poll.h>
 
 #include "main.h"
 
@@ -67,27 +66,6 @@ void con_free (console_t *con)
 mem_blk_t *con_get_io (console_t *con)
 {
 	return (con->io);
-}
-
-static
-int con_readable (int fd, int t)
-{
-	int           r;
-	struct pollfd pfd[1];
-
-	pfd[0].fd = fd;
-	pfd[0].events = POLLIN;
-
-	r = poll (pfd, 1, t);
-	if (r < 0) {
-		return (0);
-	}
-
-	if ((pfd[0].revents & POLLIN) == 0) {
-		return (0);
-	}
-
-	return (1);
 }
 
 static
@@ -183,7 +161,7 @@ void con_check (console_t *con)
 	unsigned char buf[8];
 	ssize_t       r;
 
-	if (!con_readable (0, 0)) {
+	if (!pce_fd_readable (0, 0)) {
 		return;
 	}
 
