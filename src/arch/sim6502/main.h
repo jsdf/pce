@@ -27,6 +27,12 @@
 #define PCE_SIM6502_MAIN_H 1
 
 
+#include <config.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "sim6502.h"
 
 #include <lib/cmd.h>

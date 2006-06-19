@@ -33,6 +33,12 @@
 #define PCE_SIM405_MAIN_H 1
 
 
+#include <config.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/inidsk.h>
