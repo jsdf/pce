@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -988,6 +988,10 @@ void sdl_check (sdl_t *sdl)
 			case SDL_VIDEORESIZE:
 				sdl_set_window_size (sdl, evt.resize.w, evt.resize.h);
 				trm_set_msg (&sdl->trm, "video.redraw", "1");
+				break;
+
+			case SDL_QUIT:
+				trm_set_msg (&sdl->trm, "emu.exit", "1");
 				break;
 
 			default:
