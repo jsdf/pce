@@ -169,11 +169,11 @@ int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
 		return (1);
 	}
 #else
-	if (ofs > LONG_MAX) {
+	if (ofs > (uint64_t) LONG_MAX) {
 		return (1);
 	}
 
-	if (fseek (fp, (long) ofs, cnt)) {
+	if (fseek (fp, (long) ofs, SEEK_SET)) {
 		return (1);
 	}
 #endif
@@ -196,11 +196,11 @@ int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
 		return (1);
 	}
 #else
-	if (ofs > LONG_MAX) {
+	if (ofs > (uint64_t) LONG_MAX) {
 		return (1);
 	}
 
-	if (fseek (fp, (long) ofs, cnt)) {
+	if (fseek (fp, (long) ofs, SEEK_SET)) {
 		return (1);
 	}
 #endif
