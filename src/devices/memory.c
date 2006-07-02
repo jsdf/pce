@@ -176,98 +176,98 @@ unsigned long mem_blk_get_size (const mem_blk_t *blk)
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val)
 {
-	unsigned char *tmp = (unsigned char *) buf;
+	unsigned char *tmp = (unsigned char *) buf + addr;
 
-	tmp[addr] = val;
+	tmp[0] = val;
 }
 
 void buf_set_uint16_be (void *buf, unsigned long addr, unsigned short val)
 {
-	unsigned char *tmp = (unsigned char *) buf;
+	unsigned char *tmp = (unsigned char *) buf + addr;
 
-	tmp[addr] = (val >> 8) & 0xff;
-	tmp[addr + 1] = val & 0xff;
+	tmp[0] = (val >> 8) & 0xff;
+	tmp[1] = val & 0xff;
 }
 
 void buf_set_uint16_le (void *buf, unsigned long addr, unsigned short val)
 {
-	unsigned char *tmp = (unsigned char *) buf;
+	unsigned char *tmp = (unsigned char *) buf + addr;
 
-	tmp[addr] = val & 0xff;
-	tmp[addr + 1] = (val >> 8) & 0xff;
+	tmp[0] = val & 0xff;
+	tmp[1] = (val >> 8) & 0xff;
 }
 
 void buf_set_uint32_be (void *buf, unsigned long addr, unsigned long val)
 {
-	unsigned char *tmp = (unsigned char *) buf;
+	unsigned char *tmp = (unsigned char *) buf + addr;
 
-	tmp[addr] = (val >> 24) & 0xff;
-	tmp[addr + 1] = (val >> 16) & 0xff;
-	tmp[addr + 2] = (val >> 8) & 0xff;
-	tmp[addr + 3] = val & 0xff;
+	tmp[0] = (val >> 24) & 0xff;
+	tmp[1] = (val >> 16) & 0xff;
+	tmp[2] = (val >> 8) & 0xff;
+	tmp[3] = val & 0xff;
 }
 
 void buf_set_uint32_le (void *buf, unsigned long addr, unsigned long val)
 {
-	unsigned char *tmp = (unsigned char *) buf;
+	unsigned char *tmp = (unsigned char *) buf + addr;
 
-	tmp[addr] = val & 0xff;
-	tmp[addr + 1] = (val >> 8) & 0xff;
-	tmp[addr + 2] = (val >> 16) & 0xff;
-	tmp[addr + 3] = (val >> 24) & 0xff;
+	tmp[0] = val & 0xff;
+	tmp[1] = (val >> 8) & 0xff;
+	tmp[2] = (val >> 16) & 0xff;
+	tmp[3] = (val >> 24) & 0xff;
 }
 
 unsigned char buf_get_uint8 (const void *buf, unsigned long addr)
 {
-	const unsigned char *tmp = (const unsigned char *) buf;
+	const unsigned char *tmp = (const unsigned char *) buf + addr;
 
-	return (tmp[addr]);
+	return (tmp[0]);
 }
 
 unsigned short buf_get_uint16_be (const void *buf, unsigned long addr)
 {
-	const unsigned char *tmp = (const unsigned char *) buf;
+	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned short      ret;
 
-	ret = tmp[addr + 1];
-	ret = (ret << 8) | tmp[addr];
+	ret = tmp[1];
+	ret = (ret << 8) | tmp[0];
 
 	return (ret);
 }
 
 unsigned short buf_get_uint16_le (const void *buf, unsigned long addr)
 {
-	const unsigned char *tmp = (const unsigned char *) buf;
+	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned short      ret;
 
-	ret = tmp[addr];
-	ret = (ret << 8) | tmp[addr + 1];
+	ret = tmp[0];
+	ret = (ret << 8) | tmp[1];
 
 	return (ret);
 }
 
 unsigned long buf_get_uint32_be (const void *buf, unsigned long addr)
 {
-	const unsigned char *tmp = (const unsigned char *) buf;
+	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned long       ret;
 
-	ret = tmp[addr + 3];
-	ret = (ret << 8) | tmp[addr + 2];
-	ret = (ret << 8) | tmp[addr + 1];
-	ret = (ret << 8) | tmp[addr];
+	ret = tmp[3];
+	ret = (ret << 8) | tmp[2];
+	ret = (ret << 8) | tmp[1];
+	ret = (ret << 8) | tmp[0];
 
 	return (ret);
 }
 
 unsigned long buf_get_uint32_le (const void *buf, unsigned long addr)
 {
-	const unsigned char *tmp = (const unsigned char *) buf;
+	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned long       ret;
 
-	ret = tmp[addr];
-	ret = (ret << 8) | tmp[addr + 1];
-	ret = (ret << 8) | tmp[addr + 2];
-	ret = (ret << 8) | tmp[addr + 3];
+	ret = tmp[0];
+	ret = (ret << 8) | tmp[1];
+	ret = (ret << 8) | tmp[2];
+	ret = (ret << 8) | tmp[3];
 
 	return (ret);
 }
