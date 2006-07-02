@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,7 +32,7 @@
 int mem_blk_init (mem_blk_t *blk, unsigned long base, unsigned long size, int alloc)
 {
 	if (alloc) {
-		blk->data = (unsigned char *) malloc (size + 16);
+		blk->data = malloc (size + 16);
 		if (blk->data == NULL) {
 			return (1);
 		}
@@ -94,16 +94,32 @@ void mem_blk_del (mem_blk_t *blk)
 	}
 }
 
-void mem_blk_clear (mem_blk_t *blk, unsigned char val)
+void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32)
 {
-	if (blk->data != NULL) {
-		memset (blk->data, val, blk->size);
-	}
+	blk->ext = ext;
+	blk->get_uint8 = g8;
+	blk->get_uint16 = g16;
+	blk->get_uint32 = g32;
+}
+
+void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32)
+{
+	blk->ext = ext;
+	blk->set_uint8 = s8;
+	blk->set_uint16 = s16;
+	blk->set_uint32 = s32;
 }
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext)
 {
 	blk->ext = ext;
+}
+
+void mem_blk_clear (mem_blk_t *blk, unsigned char val)
+{
+	if (blk->data != NULL) {
+		memset (blk->data, val, blk->size);
+	}
 }
 
 unsigned char *mem_blk_get_data (mem_blk_t *blk)

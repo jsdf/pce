@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-26 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -49,6 +49,7 @@ typedef struct {
 	mem_set_uint16_f set_uint16;
 	mem_set_uint32_f set_uint32;
 
+	/* The transparant parameter for get_*() and set_*(). */
 	void             *ext;
 
 	unsigned char    active;
@@ -122,14 +123,16 @@ void mem_blk_free (mem_blk_t *blk);
  *****************************************************************************/
 void mem_blk_del (mem_blk_t *blk);
 
+void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32);
+void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32);
+void mem_blk_set_ext (mem_blk_t *blk, void *ext);
+
 /*!***************************************************************************
  * @short Clear a memory block
  * @param blk The memory block
  * @param val The byte value with which the block is initialized
  *****************************************************************************/
 void mem_blk_clear (mem_blk_t *blk, unsigned char val);
-
-void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 
 unsigned char *mem_blk_get_data (mem_blk_t *blk);
 
@@ -139,6 +142,11 @@ int mem_blk_get_active (mem_blk_t *blk);
 
 void mem_blk_set_active (mem_blk_t *blk, int val);
 
+/*!***************************************************************************
+ * @short  Get the read-only flag
+ * @param  blk The memory block
+ * @return True if the block is read-only
+ *****************************************************************************/
 int mem_blk_get_readonly (mem_blk_t *blk);
 
 /*!***************************************************************************
@@ -162,6 +170,11 @@ unsigned long mem_blk_get_addr (const mem_blk_t *blk);
  *****************************************************************************/
 void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr);
 
+/*!***************************************************************************
+ * @short  Get the memory block size in bytes
+ * @param  blk The memory block
+ * @return The memory block size in bytes
+ *****************************************************************************/
 unsigned long mem_blk_get_size (const mem_blk_t *blk);
 
 
