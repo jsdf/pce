@@ -260,7 +260,12 @@ section pc {
 		# Valid values for uart are: "8250", "16450"
 		uart = "8250"
 
+		# An output file
 		file = "serport.out"
+
+		# If support for host serial port emulation is compiled in
+		# this tty device will be connected to the serial port.
+		device = "/dev/ttyS0"
 	}
 
 	section mouse {

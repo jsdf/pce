@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/serport.h                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,10 +24,10 @@
 
 
 /*
-	UART 8250 based serial port. This is very limited. Data sent out over
-	the wires by the UART are written to a file. No data is ever
-	received unless ser_receive() is called.
-*/
+ * UART 8250 based serial port. This is very limited. Data sent out over
+ * the wires by the UART are written to a file. No data is ever
+ * received unless ser_receive() is called.
+ */
 
 #ifndef PCE_DEVICES_SERPORT_H
 #define PCE_DEVICES_SERPORT_H 1
@@ -71,6 +71,9 @@ typedef struct serport_s {
 
 	FILE          *fp;
 	int           fp_close;
+
+	int           fd;
+	int           fd_close;
 } serport_t;
 
 
@@ -109,10 +112,17 @@ e8250_t *ser_get_uart (serport_t *ser);
 int ser_set_fp (serport_t *ser, FILE *fp, int close);
 int ser_set_fname (serport_t *ser, const char *fname);
 
-void ser_uart_check_setup (serport_t *ser, unsigned char val);
-void ser_uart_check_out (serport_t *ser, unsigned char val);
-void ser_uart_check_inp (serport_t *ser, unsigned char val);
+int ser_set_fd (serport_t *ser, int fd, int close);
+int ser_set_dname (serport_t *ser, const char *dname);
 
+/*!***************************************************************************
+ * @short Receive a byte from the outside
+ * @param ser The serial port context
+ * @param val The byte
+ *
+ * The value will be received by the UART as though it had arrived over the
+ * wire.
+ *****************************************************************************/
 void ser_receive (serport_t *ser, unsigned char val);
 
 void ser_clock (serport_t *ser, unsigned n);

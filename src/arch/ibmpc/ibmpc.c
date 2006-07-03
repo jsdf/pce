@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -602,7 +602,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long base;
 	unsigned      irq;
-	const char    *fname;
+	const char    *fname, *dname;
 	const char    *chip;
 	ini_sct_t     *sct;
 
@@ -621,9 +621,12 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_string (sct, "file", &fname, NULL);
+		ini_get_string (sct, "device", &dname, NULL);
 
-		pce_log (MSG_INF, "COM%u:\tio=0x%04lx irq=%u uart=%s file=%s\n",
-			i + 1, base, irq, chip, (fname == NULL) ? "<none>" : fname
+		pce_log (MSG_INF, "COM%u:\tio=0x%04lx irq=%u uart=%s file=%s dev=%s\n",
+			i + 1, base, irq, chip,
+			(fname == NULL) ? "<none>" : fname,
+			(dname == NULL) ? "<none>" : dname
 		);
 
 		pc->serport[i] = ser_new (base, 0);
@@ -636,6 +639,12 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 			if (fname != NULL) {
 				if (ser_set_fname (pc->serport[i], fname)) {
 					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+				}
+			}
+
+			if (dname != NULL) {
+				if (ser_set_dname (pc->serport[i], dname)) {
+					pce_log (MSG_ERR, "*** can't open device (%s)\n", dname);
 				}
 			}
 

@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/chipset/82xx/e8250.c                                   *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -79,6 +79,9 @@ void e8250_init (e8250_t *uart)
 
 	uart->setup_ext = NULL;
 	uart->setup = NULL;
+
+	uart->check_ext = NULL;
+	uart->check = NULL;
 }
 
 e8250_t *e8250_new (void)
@@ -173,6 +176,12 @@ void e8250_set_setup_f (e8250_t *uart, void *fct, void *ext)
 	uart->setup_ext = ext;
 }
 
+void e8250_set_check_f (e8250_t *uart, void *fct, void *ext)
+{
+	uart->check = fct;
+	uart->check_ext = ext;
+}
+
 void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
 {
 	uart->inp_i = 0;
@@ -247,7 +256,7 @@ void e8250_check_rxd (e8250_t *uart)
 
 	/* receive queue is not full */
 	if (uart->recv != NULL) {
-		uart->recv (uart->recv_ext, 1);
+		uart->recv (uart->recv_ext);
 	}
 
 	e8250_set_int_cond (uart, E8250_IER_RRD);
@@ -277,7 +286,7 @@ void e8250_check_txd (e8250_t *uart)
 	}
 	else {
 		if (uart->send != NULL) {
-			uart->send (uart->send_ext, 1);
+			uart->send (uart->send_ext);
 		}
 	}
 
@@ -384,6 +393,27 @@ void e8250_set_dcd (e8250_t *uart, unsigned char val)
 	}
 }
 
+void e8250_set_ri (e8250_t *uart, unsigned char val)
+{
+	unsigned char msr;
+
+	msr = uart->msr;
+
+	if (val) {
+		uart->msr |= E8250_MSR_RI;
+	}
+	else {
+		uart->msr &= ~E8250_MSR_RI;
+	}
+
+	if ((msr ^ uart->msr) & E8250_MSR_RI) {
+		uart->msr |= E8250_MSR_DRI;
+	}
+	else {
+		uart->msr &= ~E8250_MSR_DRI;
+	}
+}
+
 
 int e8250_set_inp (e8250_t *uart, unsigned char val)
 {
@@ -482,6 +512,12 @@ void e8250_get_out_all (e8250_t *uart)
 	uart->out_i = 0;
 	uart->out_j = 0;
 }
+
+int e8250_out_empty (e8250_t *uart)
+{
+	return (uart->out_i == uart->out_j);
+}
+
 
 int e8250_receive (e8250_t *uart, unsigned char val)
 {
@@ -589,6 +625,10 @@ unsigned char e8250_read_msr (e8250_t *uart)
 {
 	unsigned char val;
 
+	if (uart->check != NULL) {
+		uart->check (uart->check_ext);
+	}
+
 	val = uart->msr;
 
 	uart->msr &= 0xf0;
@@ -609,7 +649,7 @@ void e8250_write_div_lo (e8250_t *uart, unsigned char val)
 	uart->divisor |= (val & 0xff);
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext, 1);
+		uart->setup (uart->setup_ext);
 	}
 }
 
@@ -620,7 +660,7 @@ void e8250_write_div_hi (e8250_t *uart, unsigned char val)
 	uart->divisor |= (val & 0xff) << 8;
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext, 1);
+		uart->setup (uart->setup_ext);
 	}
 }
 
@@ -666,7 +706,7 @@ void e8250_write_lcr (e8250_t *uart, unsigned char val)
 	uart->lcr = val;
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext, 1);
+		uart->setup (uart->setup_ext);
 	}
 }
 
@@ -709,7 +749,7 @@ void e8250_write_mcr (e8250_t *uart, unsigned char val)
 	}
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext, 1);
+		uart->setup (uart->setup_ext);
 	}
 }
 
