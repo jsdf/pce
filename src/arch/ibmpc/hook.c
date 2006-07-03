@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/hook.c                                      *
  * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-05-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -77,37 +77,41 @@ unsigned get_bcd_8 (unsigned n)
 
 void pc_int_1a (ibmpc_t *pc)
 {
-	time_t    tm;
-	struct tm *tval;
+	unsigned ah;
 
-	switch (e86_get_ah (pc->cpu)) {
-		case 0x00:
-			e86_set_dx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6c));
-			e86_set_cx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6e));
-			e86_set_al (pc->cpu, e86_get_mem8 (pc->cpu, 0x40, 0x70));
-			e86_set_mem8 (pc->cpu, 0x40, 0x70, 0);
-			e86_set_cf (pc->cpu, 0);
-			break;
+	ah = e86_get_ah (pc->cpu);
 
-		case 0x01:
-			e86_set_mem16 (pc->cpu, 0x40, 0x6c, e86_get_dx (pc->cpu));
-			e86_set_mem16 (pc->cpu, 0x40, 0x6e, e86_get_cx (pc->cpu));
-			e86_set_cf (pc->cpu, 0);
-			break;
+	e86_set_cf (pc->cpu, 1);
 
-		case 0x02:
+	if (ah == 0x00) {
+		e86_set_dx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6c));
+		e86_set_cx (pc->cpu, e86_get_mem16 (pc->cpu, 0x40, 0x6e));
+		e86_set_al (pc->cpu, e86_get_mem8 (pc->cpu, 0x40, 0x70));
+		e86_set_mem8 (pc->cpu, 0x40, 0x70, 0);
+		e86_set_cf (pc->cpu, 0);
+	}
+	else if (ah == 0x01) {
+		e86_set_mem16 (pc->cpu, 0x40, 0x6c, e86_get_dx (pc->cpu));
+		e86_set_mem16 (pc->cpu, 0x40, 0x6e, e86_get_cx (pc->cpu));
+		e86_set_cf (pc->cpu, 0);
+	}
+	else if (pc->support_rtc) {
+		time_t    tm;
+		struct tm *tval;
+
+		if (ah == 0x02) {
 			tm = time (NULL);
 			tval = localtime (&tm);
 			e86_set_ch (pc->cpu, get_bcd_8 (tval->tm_hour));
 			e86_set_cl (pc->cpu, get_bcd_8 (tval->tm_min));
 			e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_sec));
 			e86_set_cf (pc->cpu, 0);
-			break;
-
-		case 0x03:
-			break;
-
-		case 0x04:
+		}
+		else if (ah == 0x03) {
+			e86_set_cf (pc->cpu, 0);
+			return;
+		}
+		else if (ah == 0x04) {
 			tm = time (NULL);
 			tval = localtime (&tm);
 			e86_set_ch (pc->cpu, get_bcd_8 ((1900 + tval->tm_year) / 100));
@@ -115,14 +119,10 @@ void pc_int_1a (ibmpc_t *pc)
 			e86_set_dh (pc->cpu, get_bcd_8 (tval->tm_mon + 1));
 			e86_set_dl (pc->cpu, get_bcd_8 (tval->tm_mday));
 			e86_set_cf (pc->cpu, 0);
-			break;
-
-		case 0x05:
-			break;
-
-		default:
-			e86_set_cf (pc->cpu, 1);
-			break;
+		}
+		else if (ah == 0x05) {
+			e86_set_cf (pc->cpu, 0);
+		}
 	}
 }
 

@@ -764,6 +764,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->bootdrive = 128;
 
+	pc->support_rtc = (ini_get_lng_def (ini, "rtc", 1) != 0);
+
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
 

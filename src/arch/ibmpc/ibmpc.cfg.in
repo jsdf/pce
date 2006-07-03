@@ -4,6 +4,9 @@
 # $Id$
 
 section pc {
+	# Enable access to the RTC
+	rtc = 1
+
 	section cpu {
 		# 8086, 8088, V20, V30, 80186, 80188
 		model = "80186"
