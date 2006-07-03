@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -31,6 +31,14 @@
 #define _XOPEN_SOURCE 600
 #endif
 
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE 1
+#endif
+
+#ifndef _NETBSD_SOURCE
+#define _NETBSD_SOURCE 1
+#endif
+
 
 #undef PCE_LARGE_FILE
 
@@ -39,14 +47,17 @@
 #endif
 
 
+#undef HAVE_FCNTL_H
+#undef HAVE_INTTYPES_H
 #undef HAVE_LIMITS_H
 #undef HAVE_STDINT_H
-#undef HAVE_INTTYPES_H
-#undef HAVE_FCNTL_H
 #undef HAVE_TERMIOS_H
-#undef HAVE_SYS_POLL_H
-#undef HAVE_SYS_TIME_H
 #undef HAVE_UNISTD_H
+#undef HAVE_LINUX_IF_TUN_H
+#undef HAVE_SYS_IOCTL_H
+#undef HAVE_SYS_POLL_H
+#undef HAVE_SYS_SOCKET_H
+#undef HAVE_SYS_TIME_H
 
 #undef HAVE_FSEEKO
 #undef HAVE_USLEEP
@@ -65,6 +76,7 @@
 
 #undef PCE_HOST_LINUX
 #undef PCE_HOST_SUNOS
+#undef PCE_HOST_NETBSD
 
 #undef PCE_HOST_IA32
 #undef PCE_HOST_PPC
@@ -77,6 +89,7 @@
 #define PCE_VT100_USE 1
 
 #undef PCE_ENABLE_TUN
+#undef PCE_ENABLE_SERPORT
 
 
 #endif
