@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/config.h.in                                            *
  * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-08 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -27,13 +27,10 @@
 #define PCE_CONFIG_H 1
 
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 600
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
 
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE 1
-#endif
 
 #ifndef _NETBSD_SOURCE
 #define _NETBSD_SOURCE 1
@@ -43,7 +40,9 @@
 #undef PCE_LARGE_FILE
 
 #ifdef PCE_LARGE_FILE
+#ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
+#endif
 #endif
 
 
