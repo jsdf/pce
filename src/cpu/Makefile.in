@@ -14,6 +14,10 @@ ifeq "$(PCE_BUILD_6502)" "1"
 subdir += e6502
 endif
 
+ifeq "$(PCE_BUILD_68000)" "1"
+subdir += e68000
+endif
+
 ifeq "$(PCE_BUILD_8086)" "1"
 subdir += e8086
 endif

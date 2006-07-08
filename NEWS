@@ -1,3 +1,7 @@
+0.1.7
+
+	* Added an 68000 core emulator.
+
 0.1.6	2005-02-28	r540
 
 	* Added an ARM core emulator and a minimal system simulator

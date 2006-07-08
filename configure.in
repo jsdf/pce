@@ -5,8 +5,8 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2005-03-06 by Hampa Hug <hampa@hampa.ch>                   *
-#* Copyright:     (C) 2002-2005 Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2006-07-08 by Hampa Hug <hampa@hampa.ch>                   *
+#* Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
 #*****************************************************************************
@@ -304,10 +304,12 @@ AC_SUBST(PCE_LARGE_FILE)
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
+if test -d "$srcdir/src/arch/sim68k"; then have_sim68k=1; else have_sim68k=0; fi
 if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
 if test -d "$srcdir/src/arch/sims32"; then have_sims32=1; else have_sims32=0; fi
 if test -d "$srcdir/src/cpu/e8086"; then have_e8086=1; else have_e8086=0; fi
 if test -d "$srcdir/src/cpu/e6502"; then have_e6502=1; else have_e6502=0; fi
+if test -d "$srcdir/src/cpu/e68000"; then have_e68000=1; else have_e68000=0; fi
 if test -d "$srcdir/src/cpu/arm"; then have_arm=1; else have_arm=0; fi
 if test -d "$srcdir/src/cpu/ppc405"; then have_ppc405=1; else have_ppc405=0; fi
 if test -d "$srcdir/src/cpu/sparc32"; then have_sparc32=1; else have_sparc32=0; fi
@@ -397,6 +399,34 @@ if test "x$PCE_BUILD_SIM6502" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to build the 68000 simulator])
+if test "x$have_sim68k$have_e68000" != "x11" ; then
+	PCE_BUILD_SIM68K=0
+	AC_MSG_RESULT([no (no source)])
+else
+	AC_ARG_ENABLE(sim68k,
+	  AC_HELP_STRING([--enable-sim68k], [Enable the 68000 simulator]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_SIM68K=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_SIM68K=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_SIM68K=1
+		AC_MSG_RESULT([yes (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_SIM68K)
+if test "x$PCE_BUILD_SIM68K" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_SIM68K)
+fi
+
+
 AC_MSG_CHECKING([whether to build the sparc32 simulator])
 if test "x$have_sims32$have_sparc32" != "x11" ; then
 	PCE_BUILD_SIMS32=0
@@ -481,6 +511,37 @@ fi
 AC_SUBST(PCE_BUILD_6502)
 if test "x$PCE_BUILD_6502" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_6502)
+fi
+
+
+AC_MSG_CHECKING([whether to build the 68000 core])
+if test "x$have_e68000" != "x1" ; then
+	PCE_BUILD_68000=0
+	AC_MSG_RESULT([no (no source)])
+elif test "x$PCE_BUILD_SIM68K" = "x1" ; then
+	PCE_BUILD_68000=1
+	AC_MSG_RESULT([yes (required by sim68k)])
+else
+	AC_ARG_ENABLE(68000,
+	  AC_HELP_STRING([--enable-68000], [Enable the 68000 core]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_68000=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_68000=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_68000=0
+		AC_MSG_RESULT([no (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_68000)
+if test "x$PCE_BUILD_68000" = "x1" ; then
+	AC_DEFINE(PCE_BUILD_68000)
 fi
 
 
@@ -720,6 +781,13 @@ else
 	emu2="$emu2 sim6502"
 fi
 
+if test "x$PCE_BUILD_SIM68K" = "x1" ; then
+	extra="$extra src/arch/sim68k/Makefile"
+	emu1="$emu1 sim68k"
+else
+	emu2="$emu2 sim68k"
+fi
+
 if test "x$PCE_BUILD_SIMARM" = "x1" ; then
 	extra="$extra src/arch/simarm/Makefile"
 	emu1="$emu1 simarm"
@@ -739,6 +807,13 @@ if test "x$PCE_BUILD_6502" = "x1" ; then
 	core1="$core1 6502"
 else
 	core2="$core2 6502"
+fi
+
+if test "x$PCE_BUILD_68000" = "x1" ; then
+	extra="$extra src/cpu/e68000/Makefile"
+	core1="$core1 68000"
+else
+	core2="$core2 68000"
 fi
 
 if test "x$PCE_BUILD_8086" = "x1" ; then
