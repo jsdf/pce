@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-12 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -224,9 +224,9 @@ disk_t *dsk_mbrimg_open_fp (FILE *fp, int ro)
 	s = 0;
 	n = 0;
 
-	p = buf + 0x1be;
-
 	for (i = 0; i < 4; i++) {
+		p = buf + 0x1be + 16 * i;
+
 		if (p[0] & 0x7f) {
 			return (NULL);
 		}
