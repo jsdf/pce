@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -223,6 +223,10 @@ int ser_line_setup (serport_t *ser)
 	struct termios tio;
 	speed_t        spd;
 
+	if (ser->fd == -1) {
+		return (0);
+	}
+
 	if (tcgetattr (ser->fd, &tio)) {
 		return (1);
 	}
@@ -376,11 +380,13 @@ void ser_modem_setup (serport_t *ser)
 {
 	int val;
 
-	ioctl (ser->fd, TIOCMGET, &val);
-	val &= ~(TIOCM_DTR | TIOCM_RTS);
-	val |= ser->dtr ? TIOCM_DTR : 0;
-	val |= ser->rts ? TIOCM_RTS : 0;
-	ioctl (ser->fd, TIOCMSET, &val);
+	if (ser->fd != -1) {
+		ioctl (ser->fd, TIOCMGET, &val);
+		val &= ~(TIOCM_DTR | TIOCM_RTS);
+		val |= ser->dtr ? TIOCM_DTR : 0;
+		val |= ser->rts ? TIOCM_RTS : 0;
+		ioctl (ser->fd, TIOCMSET, &val);
+	}
 }
 
 static
@@ -388,7 +394,12 @@ void ser_status_check (serport_t *ser)
 {
 	int val;
 
-	ioctl (ser->fd, TIOCMGET, &val);
+	if (ser->fd != -1) {
+		ioctl (ser->fd, TIOCMGET, &val);
+	}
+	else {
+		val = TIOCM_DSR | TIOCM_CTS | TIOCM_CD;
+	}
 
 	e8250_set_dsr (&ser->uart, (val & TIOCM_DSR) != 0);
 	e8250_set_cts (&ser->uart, (val & TIOCM_CTS) != 0);
