@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -67,12 +67,6 @@ int arm_dstore32_t (arm_t *c, uint32_t addr, uint32_t val);
 #define arm_get_bit(v, i) (((v) >> (i)) & 1)
 #define arm_get_bits(v, i, n) (((v) >> (i)) & ((1UL << (n)) - 1))
 
-#define arm_ror32(v, n) (((v) >> (n)) | ((v) << (32 - (n))))
-
-#define arm_asr32(v, n) ((v & 0x80000000UL) ? \
-	(((v) >> (n)) | (((1UL << (n)) - 1) << (32 - (n)))) : \
-	((v) >> (n)))
-
 #define arm_exts(x, n) ( \
 	((x) & (1UL << ((n) - 1))) ? \
 	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
@@ -122,6 +116,35 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 
 #define arm_is_privileged(c) ((c)->privileged)
 
+
+static inline
+uint32_t arm_ror32 (uint32_t v, unsigned n)
+{
+	n &= 31;
+
+	if (n > 0) {
+		v = ((v >> n) | (v << (32 - n))) & 0xffffffff;
+	}
+
+	return (v);
+}
+
+static inline
+uint32_t arm_asr32 (uint32_t v, unsigned n)
+{
+	n &= 31;
+
+	if (n > 0) {
+		if (v & 0x80000000) {
+			v = ((v >> n) | (0xffffffff << (32 - n))) & 0xffffffff;
+		}
+		else {
+			v = v >> n;
+		}
+	}
+
+	return (v);
+}
 
 static inline
 void arm_tbuf_flush (arm_t *c)
