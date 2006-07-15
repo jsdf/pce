@@ -12,6 +12,7 @@ libdir		= @libdir@
 mandir		= @mandir@
 incdir		= @includedir@
 datdir		= @datadir@
+datarootdir	= @datarootdir@
 
 
 ifeq "$(V)" "1"
