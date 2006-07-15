@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -264,7 +264,8 @@ typedef struct e8086_t {
 
 
 #define e86_get_linear(seg, ofs) \
-	((((seg) & 0xffff) << 4) + ((ofs) & 0xffff))
+	((((seg) & 0xffffUL) << 4) + ((ofs) & 0xffff))
+
 
 static inline
 unsigned char e86_get_mem8 (e8086_t *c, unsigned short seg, unsigned short ofs)

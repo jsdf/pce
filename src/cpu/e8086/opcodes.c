@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/opcodes.c                                    *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-10-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -3576,14 +3576,14 @@ unsigned op_d3 (e8086_t *c)
 			break;
 
 		case 2: /* RCL r/m16, CL */
-			s |= e86_get_cf (c) << 16;
+			s |= (unsigned long) e86_get_cf (c) << 16;
 			d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
 			e86_set_cf (c, d & 0x10000);
 			e86_set_of (c, ((d >> 1) ^ d) & 0x8000);
 			break;
 
 		case 3: /* RCR r/m16, CL */
-			s |= e86_get_cf (c) << 16;
+			s |= (unsigned long) e86_get_cf (c) << 16;
 			d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
 			e86_set_cf (c, d & 0x10000);
 			if (cnt == 1) {
@@ -4254,7 +4254,7 @@ unsigned op_f7_06 (e8086_t *c)
 		return (0);
 	}
 
-	s1 = (e86_get_dx (c) << 16) | e86_get_ax (c);
+	s1 = ((unsigned long) e86_get_dx (c) << 16) | e86_get_ax (c);
 
 	d = s1 / s2;
 
