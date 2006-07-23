@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2006-07-23 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -873,8 +873,13 @@ int_14:
   iret
 
 int_15:
+  push    bp
+  mov     bp, sp
+  push    word [bp + 6]                 ; flags
+  popf
+  pop     bp
   pceh    PCEH_INT, 0x15
-  iret
+  retf    2
 
 int_17:
   pceh    PCEH_INT, 0x17
@@ -940,6 +945,12 @@ int_1a:
   jmp     0xf000:0xfe6e
 
 .hook:
+  push    bp
+  mov     bp, sp
+  push    word [bp + 6]                 ; flags
+  popf
+  pop     bp
+
   pceh    PCEH_INT, 0x1a
 
   retf    2
