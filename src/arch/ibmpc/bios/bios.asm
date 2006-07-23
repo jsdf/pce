@@ -5,8 +5,8 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/bios.asm                               *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2005-03-08 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -21,6 +21,9 @@
 ;*****************************************************************************
 
 ; $Id$
+
+
+; Patches are marked with '#### patch ####'.
 
 
 CPU 8086
@@ -223,10 +226,10 @@ L_E0AE:
   jmp    L_EC4C                         ; Add up bytes from DS:E000 to DS:FFFF
 
 L_E0D1:
+; #### patch #### (bios is modifed -> incorrect checksum)
 ;  jnz    halt_cpu                      ; Verify checksum
   nop
   nop
-; #### patch #### (bios is modifed -> incorrect checksum)
 
 
 ;-----------------------------------------------------------------------------
@@ -374,7 +377,7 @@ L_E165:
   mov    cx, ax
   cld
 
-L_E174:
+L_E174:                                 ; clear memory
   stosb
   loop    L_E174
 
@@ -470,12 +473,12 @@ L_E1EB:
 
   int     0x3e
 
-L_E1F7:
+L_E1F7:                                 ; initialize interrupt vectors
   mov     cx, 0x20
   sub     di, di
 
 L_E1FC:
-  mov     ax, L_FF47
+  mov     ax, L_FF47                    ; default interrupt handler
   stosw
   mov     ax, cs
   stosw
@@ -520,29 +523,38 @@ L_E237:
 
 
 L_E23F:
-db 0xB0, 0xFE                           ; E23F mov al,0xfe
-db 0xEE                                 ; E241 out dx,al
-db 0xB0, 0x10                           ; E242 mov al,0x10
-db 0xE6, 0x43                           ; E244 out 0x43,al
-db 0xB9, 0x16, 0x00                     ; E246 mov cx,0x16
-db 0x8A, 0xC1                           ; E249 mov al,cl
-db 0xE6, 0x40                           ; E24B out 0x40,al
+  mov     al, 0xfe
+  out     dx, al                        ; interrupt mask register
+
+  mov     al, 0x10
+  out     0x43, al                      ; PIT mode control
+
+  ; set pit counter 0 to a small value and wait for the interrupt.
+  mov     cx, 0x0016
+  mov     al, cl
+  out     0x40, al
+
 L_E24D:
-db 0xF6, 0xC4, 0xFF                     ; E24D test ah,0xff
-db 0x75, 0x04                           ; E250 jnz 0xe256
-db 0xE2, 0xF9                           ; E252 loop 0xe24d
-db 0xEB, 0xE1                           ; E254 jmp short 0xe237
+  test    ah, 0xff                      ; check if interrupt occurred
+  jnz     L_E256                        ; interrupt occurred, good
+  loop    L_E24D
+
+  jmp     short L_E237
+
 L_E256:
-db 0xB1, 0x12                           ; E256 mov cl,0x12
-db 0xB0, 0xFF                           ; E258 mov al,0xff
-db 0xE6, 0x40                           ; E25A out 0x40,al
-db 0xB8, 0xFE, 0x00                     ; E25C mov ax,0xfe
-db 0xEE                                 ; E25F out dx,al
+  ; set pit counter 0 to a large value and wait for the interrupt.
+  mov     cl, 0x12
+
+  mov     al, 0xff
+  out     0x40, al
+
+  mov     ax, 0xfe
+  out     dx, al
 
 L_E260:
-db 0xF6, 0xC4, 0xFF                     ; E260 test ah,0xff
-db 0x75, 0xD2                           ; E263 jnz 0xe237
-db 0xE2, 0xF9                           ; E265 loop 0xe260
+  test    ah, 0xff
+  jnz     L_E237                        ; interrupt occurred, not good
+  loop    L_E260
 
 ; E267
   push    ds
@@ -560,7 +572,7 @@ db 0xE2, 0xF9                           ; E265 loop 0xe260
   out     0x43, al
 
   mov     al, 0
-  out     0x40,al                       ; counter value low byte
+  out     0x40, al                      ; counter value low byte
 
 L_E27F:                                 ; set up offsets int 10-1f
   movsw
@@ -898,22 +910,28 @@ db 0xE8, 0xBF, 0x01                     ; E463 call 0xe625
 db 0xBE, 0x33, 0xFF                     ; E466 mov si,0xff33
 db 0x90                                 ; E469 nop
 db 0xE8, 0x4D, 0x02                     ; E46A call 0xe6ba
-db 0x2B, 0xC0                           ; E46D sub ax,ax
-db 0x8E, 0xC0                           ; E46F mov es,ax
-db 0xB9, 0x08, 0x00                     ; E471 mov cx,0x8
-db 0x1E                                 ; E474 push ds
-db 0x0E                                 ; E475 push cs
-db 0x1F                                 ; E476 pop ds
+L_E46D:
+  sub     ax, ax
+  mov     es, ax
+
+  mov     cx, 8
+  push    ds
+
+  push    cs
+  pop     ds
   mov     si, bios_int_addr_08          ; FEF3
-db 0x90                                 ; E47A nop
-db 0xBF, 0x20, 0x00                     ; E47B mov di,0x20
+  nop
+  mov     di, 0x0020
+
 L_E47E:
-db 0xA5                                 ; E47E movsw
-db 0x47                                 ; E47F inc di
-db 0x47                                 ; E480 inc di
-db 0xE2, 0xFB                           ; E481 loop 0xe47e
-db 0x1F                                 ; E483 pop ds
-db 0x1E                                 ; E484 push ds
+  movsw
+  inc     di
+  inc     di
+  loop    L_E47E
+
+  pop     ds
+
+  push    ds
 db 0xB0, 0x4D                           ; E485 mov al,0x4d
 db 0xE6, 0x61                           ; E487 out 0x61,al
 db 0xB0, 0xFF                           ; E489 mov al,0xff
@@ -1957,7 +1975,7 @@ L_EA71:
   ; Alt-Ctrl-Del was pressed
   mov     word [0x0072], 0x1234
 
-; #### patch ####
+; #### patch #### (new entry address)
 ;  jmp     0xf000:start
   jmp     0xf000:0xfff0
 
@@ -3530,9 +3548,8 @@ db 0xEB, 0xDC                           ; F2E0 jmp short 0xf2be
 
 L_F2E2:
   cmp     byte [0x0049], 0x02
+; #### patch #### (don't wait for retrace)
 ;  jb      L_F301
-; #### patch ####
-; don't wait for retrace
   jmp     short L_F301
 
   cmp     byte [0x0049], 0x03
@@ -3677,7 +3694,7 @@ L_F381:
   pop     ds
 
 L_F38F:
-; #### patch ####
+; #### patch #### (don't wait for horizontal retrace)
 ;  in      al, dx
 ;  test    al, 0x01                     ; check if horizontal sync
   jmp     short L_F39A
@@ -3751,16 +3768,13 @@ L_F3C6:
   pop     bx
 
 L_F3D1:
-; #### patch ####
+; #### patch #### (don't wait for horizontal retrace)
 ;  mov     dx, [0x0063]                 ; crtc base
   jmp     short L_F3E3
   nop
   nop
 
-;  add     dx, byte 6                   ; crtc status register
-  nop
-  nop
-  nop
+  add     dx, byte 6                   ; crtc status register
 
 L_F3D8:
   in      al, dx
@@ -3813,16 +3827,13 @@ L_F3F9:
   pop     bx
 
 L_F402:
-; #### patch ####
+; #### patch #### (don't wait for horizontal retrace)
 ;  mov     dx, [0x0063]                 ; crtc base
   jmp     short L_F416
   nop
   nop
 
-;  add     dx, byte 6                   ; crtc status register
-  nop
-  nop
-  nop
+  add     dx, byte 6                    ; crtc status register
 
 L_F409:
   in      al, dx                        ; read status register
@@ -5314,7 +5325,7 @@ L_FFDA:
 ;  times 0xfff0 - ($ - $$) db 0
 
 L_FFF0:
-; #### patch #### jump to pce init code
+; #### patch #### (jump to pce init code)
 ;  jmp    0xf000:start
   jmp    0xf000:0x0000
 

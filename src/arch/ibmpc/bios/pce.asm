@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2006-07-23 by Hampa Hug <hampa@hampa.ch>                   *
+;* Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -152,6 +152,8 @@ init_int:
   cld
   rep     movsw
 
+
+%ifdef INIT_ALL_INTERRUPTS
   mov     cx, 256 - 32
 
 .next:
@@ -160,6 +162,11 @@ init_int:
   mov     ax, 0xf000
   stosw
   loop    .next
+%else
+  xor     ax, ax
+  mov     cx, 2 * (256 - 32)
+  rep     stosw                         ; set interrupts 21 to ff to 0000:0000
+%endif
 
   ; set int 0x40 == int 0x13
   mov     ax, [es:4 * 0x13 + 0]
