@@ -19,6 +19,12 @@ section pc {
 
 		# The size in bytes
 		size = 655360
+
+		# The size in KB
+		#sizek = 640
+
+		# The size in MB
+		#sizem = 1
 	}
 
 	# Multiple "rom" sections may be present
@@ -33,11 +39,19 @@ section pc {
 		size = 65536
 	}
 
-	# load sections are processed after the emulator is set up.
+	# "load" sections are processed after all the "ram" and "rom"
+	# sections. It is possible to overwrite read-only blocks, too.
 	section load {
+		# Intel hex file
 		format = "ihex"
 		file = "ibmpc.ihex"
 	}
+
+	#section load {
+	#	# Motorola S-Record file
+	#	format = "srec"
+	#	file = "ibmpc.srec"
+	#}
 
 	section load {
 		format = "binary"
@@ -53,7 +67,10 @@ section pc {
 
 	# 8253 PIT
 	section pit {
+		# Don't change this
 		address = 0x40
+
+		# If set to 1 then clocking of the PIT is tied to real time.
 		realtime = 1
 	}
 

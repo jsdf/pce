@@ -91,7 +91,16 @@ void ini_get_rom (memory_t *mem, ini_sct_t *ini)
 	while (sct != NULL) {
 		ini_get_string (sct, "file", &fname, NULL);
 		ini_get_uint32 (sct, "base", &base, 0);
-		ini_get_uint32 (sct, "size", &size, 65536);
+
+		if (ini_get_uint32 (sct, "sizem", &size, 0) == 0) {
+			size *= 1024UL * 1024UL;
+		}
+		else if (ini_get_uint32 (sct, "sizek", &size, 0) == 0) {
+			size *= 1024UL;
+		}
+		else {
+			ini_get_uint32 (sct, "size", &size, 65536);
+		}
 
 		pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
 			base, size, (fname != NULL) ? fname : "<none>"
