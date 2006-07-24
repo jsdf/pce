@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/vt100.c                                       *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-01 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -273,8 +273,8 @@ void vt100_init (vt100_t *vt, ini_sct_t *ini, int inp, int out)
 	vt->trm.set_chr = (trm_set_chr_f) &vt100_set_chr;
 	vt->trm.check = (trm_check_f) &vt100_check;
 
-	vt->scn_x = 0;
-	vt->scn_y = 0;
+	vt->scn_x = ~0;
+	vt->scn_y = ~0;
 
 	vt->crs_x = 0;
 	vt->crs_y = 0;
