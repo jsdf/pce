@@ -1,4 +1,4 @@
-0.1.7
+0.1.7	2006-07-24
 
 	* Implemented Motorola S-Record loading support.
 	* Added 'pceimg', an application to create and convert disk images.
