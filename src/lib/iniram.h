@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/iniram.h                                           *
  * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-08-12 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,8 +32,22 @@
 #include <devices/memory.h>
 
 
-void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0);
-void ini_get_rom (memory_t *mem, ini_sct_t *ini);
+/*!***************************************************************************
+ * @short  Initialize memory blocks from ini file
+ * @param  mem   The address space
+ * @param  ini   The ini section containing the "ram" sections
+ * @retval addr0 Returns the memory block that starts at address 0, or NULL.
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0);
+
+/*!***************************************************************************
+ * @short  Initialize read-only memory blocks from ini file
+ * @param  mem The address space
+ * @param  ini The ini section containing the "rom" sections
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_rom (memory_t *mem, ini_sct_t *ini);
 
 
 #endif

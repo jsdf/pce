@@ -29,7 +29,7 @@
 #include <libini/libini.h>
 
 
-void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
+int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 {
 	ini_sct_t     *sct;
 	mem_blk_t     *ram;
@@ -61,6 +61,11 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 		);
 
 		ram = mem_blk_new (base, size, 1);
+		if (ram == NULL) {
+			pce_log (MSG_ERR, "*** memory block creation failed\n");
+			return (1);
+		}
+
 		mem_blk_clear (ram, 0x00);
 		mem_blk_set_readonly (ram, 0);
 		mem_add_blk (mem, ram, 1);
@@ -72,14 +77,17 @@ void ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 		if (fname != NULL) {
 			if (pce_load_blk_bin (ram, fname)) {
 				pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
+				return (1);
 			}
 		}
 
 		sct = ini_sct_find_next (sct, "ram");
 	}
+
+	return (0);
 }
 
-void ini_get_rom (memory_t *mem, ini_sct_t *ini)
+int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
 	mem_blk_t     *rom;
@@ -107,6 +115,11 @@ void ini_get_rom (memory_t *mem, ini_sct_t *ini)
 		);
 
 		rom = mem_blk_new (base, size, 1);
+		if (rom == NULL) {
+			pce_log (MSG_ERR, "*** memory block creation failed\n");
+			return (1);
+		}
+
 		mem_blk_clear (rom, 0x00);
 		mem_blk_set_readonly (rom, 1);
 		mem_add_blk (mem, rom, 1);
@@ -114,9 +127,12 @@ void ini_get_rom (memory_t *mem, ini_sct_t *ini)
 		if (fname != NULL) {
 			if (pce_load_blk_bin (rom, fname)) {
 				pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+				return (1);
 			}
 		}
 
 		sct = ini_sct_find_next (sct, "rom");
 	}
+
+	return (0);
 }
