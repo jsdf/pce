@@ -1,6 +1,9 @@
 0.1.7
 
+	* Implemented Motorola S-Record loading support.
+	* Added 'pceimg', an application to create and convert disk images.
 	* Added an 68000 core emulator.
+	* Bugfixes
 
 0.1.6	2005-02-28	r540
 
