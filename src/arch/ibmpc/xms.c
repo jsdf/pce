@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-11 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -119,7 +119,7 @@ xms_t *xms_new (ini_sct_t *sct)
 
 	xms->hma_alloc = 0;
 
-	pce_log (MSG_INF, "xms:\tEMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x HMA=%d\n",
+	pce_log (MSG_INF, "XMS:\tEMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x HMA=%d\n",
 		emb_size, emb_size / (1024 * 1024),
 		16UL * umb_size, umb_size / 64, (unsigned) umb_segm,
 		(hma != 0)

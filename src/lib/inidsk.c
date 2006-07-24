@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/lib/inidsk.c                                           *
  * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -191,7 +191,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	dsk_set_visible_chs (dsk, vc, vh, vs);
 
 	pce_log (MSG_INF,
-		"DISK:       drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
+		"DISK:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
 		drive, type,
 		dsk->c, dsk->h, dsk->s,
 		dsk->visible_c, dsk->visible_h, dsk->visible_s,
