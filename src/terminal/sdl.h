@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.h                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,7 +33,7 @@
 #include <terminal/scrmap.h>
 #include <libini/libini.h>
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 
 typedef struct {

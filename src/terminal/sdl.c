@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <terminal/terminal.h>
 #include <terminal/font.h>
