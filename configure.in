@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2006-07-08 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -236,8 +236,16 @@ if test "x$no_x" = "xyes" ; then
 	PCE_X11_LDF=""
 else
 	PCE_X11_USE=1
-	PCE_X11_CCF="-I$x_includes"
-	PCE_X11_LDF="-L$x_libraries -lX11"
+	if test -n "$x_includes" ; then
+		PCE_X11_CCF="-I$x_includes"
+	else
+		PCE_X11_CCF=""
+	fi
+	if test -n "$x_libraries" ; then
+		PCE_X11_LDF="-L$x_libraries -lX11"
+	else
+		PCE_X11_LDF="-lX11"
+	fi
 	AC_DEFINE(PCE_X11_USE)
 fi
 AC_SUBST(PCE_X11_USE)
