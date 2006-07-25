@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-07-25 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -181,6 +181,46 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 
 		blk_n -= 1;
 		blk_i += 1;
+	}
+
+	dsk_int13_set_status (dsks, cpu, 0x00);
+}
+
+static
+void dsk_int13_04 (disks_t *dsks, e8086_t *cpu)
+{
+	uint32_t       blk_i, blk_n;
+	unsigned       c, h, s, n;
+	unsigned char  buf[1024];
+	disk_t         *dsk;
+
+	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
+	if (dsk == NULL) {
+		dsk_int13_set_status (dsks, cpu, 0x01);
+		return;
+	}
+
+	blk_n = e86_get_al (cpu);
+
+	c = e86_get_ch (cpu) | ((e86_get_cl (cpu) & 0xc0) << 2);
+	h = e86_get_dh (cpu);
+	s = e86_get_cl (cpu) & 0x3f;
+
+	if (dsk_get_lba (dsk, c, h, s, &blk_i)) {
+		dsk_int13_set_status (dsks, cpu, 0x04);
+		return;
+	}
+
+	while (blk_n > 0) {
+		n = (blk_n < 2) ? 1 : 2;
+
+		if (dsk_read_lba (dsk, buf, blk_i, n)) {
+			dsk_int13_set_status (dsks, cpu, 0x01);
+			return;
+		}
+
+		blk_n -= n;
+		blk_i += n;
 	}
 
 	dsk_int13_set_status (dsks, cpu, 0x00);
@@ -379,7 +419,7 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 			break;
 
 		case 0x04:
-			dsk_int13_set_status (dsks, cpu, 0x00);
+			dsk_int13_04 (dsks, cpu);
 			break;
 
 		case 0x05:
