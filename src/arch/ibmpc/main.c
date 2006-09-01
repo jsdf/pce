@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-09-01 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -61,6 +61,7 @@ void prt_help (void)
 		"  -p, --cpu string       Set the cpu model\n"
 		"  -q, --quiet            Quiet operation [no]\n"
 		"  -r, --run              Start running immediately\n"
+		"  -R, --no-monitor       Never stop running\n"
 		"  -t, --terminal string  Set terminal\n"
 		"  -v, --verbose          Verbose operation [no]\n",
 		stdout
@@ -1806,7 +1807,7 @@ int do_cmd (ibmpc_t *pc)
 int main (int argc, char *argv[])
 {
 	int       i;
-	int       run;
+	int       run, nomon;
 	char      *cfg;
 	ini_sct_t *sct;
 
@@ -1823,6 +1824,7 @@ int main (int argc, char *argv[])
 
 	cfg = NULL;
 	run = 0;
+	nomon = 0;
 
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
@@ -1884,6 +1886,9 @@ int main (int argc, char *argv[])
 		else if (str_isarg (argv[i], "r", "run")) {
 			run = 1;
 		}
+		else if (str_isarg (argv[i], "R", "no-monitor")) {
+			nomon = 1;
+		}
 		else {
 			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
 			return (1);
@@ -1895,13 +1900,33 @@ int main (int argc, char *argv[])
 	pce_log (MSG_MSG,
 		"pce ibmpc version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2005 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
-	par_cfg = pce_load_config (cfg);
-	if (par_cfg == NULL) {
-		pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
-		return (1);
+	if (argc < 2) {
+		/* no arguments, use defaults */
+		pce_log_set_level (stderr, MSG_ERR);
+		par_terminal = "sdl";
+		par_video = "ega";
+		cfg = "ibmpc.cfg";
+		nomon = 1;
+
+		par_cfg = pce_load_config ("ibmpc.cfg");
+		if (par_cfg == NULL) {
+			par_cfg = pce_load_config ("pce.cfg");
+		}
+
+		if (par_cfg == NULL) {
+			pce_log (MSG_ERR, "loading config file failed\n");
+			return (1);
+		}
+	}
+	else {
+		par_cfg = pce_load_config (cfg);
+		if (par_cfg == NULL) {
+			pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
+			return (1);
+		}
 	}
 
 	sct = ini_sct_find_sct (par_cfg, "pc");
@@ -1927,9 +1952,14 @@ int main (int argc, char *argv[])
 
 	cmd_init (stdin, stdout, &cmd_match_sym);
 
-	if (run) {
+	if (nomon) {
+		while (pc->brk != PCE_BRK_ABORT) {
+			pce_run();
+		}
+	}
+	else if (run) {
 		pce_run();
-		if (pc->brk != 2) {
+		if (pc->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 			do_cmd (pc);
 		}

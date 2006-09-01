@@ -1,17 +1,17 @@
-.TH PCE 1 "2004-01-09" "HH" "pce"
+.TH PCE 1 "2006-09-01" "HH" "pce"
 \
 .SH NAME
-pce \- IBM PC emulator
+ibmpc \- IBM PC 5150 emulator
 \
 .SH SYNOPSIS
-.BI pce " [options]"
+.BI ibmpc " [options]"
 .PP
-.BI pce " --help"
+.BI ibmpc " --help"
 .PP
-.BI pce " --version"
+.BI ibmpc " --version"
 \
 .SH DESCRIPTION
-.BR pce (1)
+.BR ibmpc (1)
 is an IBM PC hardware emulator. It emulates most of
 the hardware of an IBM PC 5150. The emulation is complete enough to
 boot DOS and run most DOS applications.
@@ -42,12 +42,8 @@ Set the video device. Possible devices are
 .BR ega "."
 \
 .TP
-.BI "-t, --terminal " string
-Set the terminal device. Possible devices are
-.BR null ", "
-.BR vt100 ", "
-.BR x11 " and "
-.BR sdl "."
+.BI "-l, --log " file
+Write log messages to the file specified instead of stdout.
 \
 .TP
 .BI "-p, --cpu " model
@@ -61,16 +57,24 @@ Select the CPU model to be emulated. Possible values are
 This overrides the cpu model specified in the config file.
 \
 .TP
+.B "-r, --run"
+Start running immediately.
+\
+.TP
+.B "-R, --no-monitor"
+Start running immediately and never fall back to the monitor.
+\
+.TP
+.BI "-t, --terminal " string
+Set the terminal device. Possible devices are
+.BR null ", "
+.BR vt100 ", "
+.BR x11 " and "
+.BR sdl "."
+\
+.TP
 .B "-v, --verbose"
 Verbose operation. This is highly recommended.
-\
-.TP
-.BI "-l, --log " file
-Write log messages to the file specified instead of stdout.
-\
-.TP
-.B "-r, --run"
-Start running immediately
 \
 .SH SEE ALSO
 .BR bochs "(1), " mtools (1)
