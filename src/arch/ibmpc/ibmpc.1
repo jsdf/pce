@@ -1,4 +1,4 @@
-.TH PCE 1 "2006-09-01" "HH" "pce"
+.TH IBMPC 1 "2006-09-13" "HH" "pce"
 \
 .SH NAME
 ibmpc \- IBM PC 5150 emulator
@@ -27,7 +27,8 @@ Print version information
 \
 .TP
 .BI "-b, --boot " drive
-Set the boot drive. Default is 128.
+Set the boot drive. The default is 128 (the first hard disk).
+Reasonable values are 128 and 0 (the first floppy disk).
 \
 .TP
 .BI "-c, --config " file
@@ -35,11 +36,21 @@ Set the config file name.
 \
 .TP
 .BI "-g, --video " string
-Set the video device. Possible devices are
-.BR mda ", "
-.BR cga ", "
-.BR hgc " and "
-.BR ega "."
+Set the video device. Possible devices are:
+.RS
+.TP
+.B mda
+Monochrome Display Adapter
+.TP
+.B cga
+Color Graphic Adapter
+.TP
+.B hgc
+Hercules Graphic Card
+.TP
+.B ega
+Enhanced Graphic Adapter
+.RE
 \
 .TP
 .BI "-l, --log " file
@@ -57,12 +68,19 @@ Select the CPU model to be emulated. Possible values are
 This overrides the cpu model specified in the config file.
 \
 .TP
+.B "-q, --quiet"
+Don't print anything to stdout or stderr.
+\
+.TP
 .B "-r, --run"
 Start running immediately.
 \
 .TP
 .B "-R, --no-monitor"
 Start running immediately and never fall back to the monitor.
+This is useful if stdout is not visible, for example because
+the emulator was started directly from a graphical user
+interface such as X or Windows.
 \
 .TP
 .BI "-t, --terminal " string
