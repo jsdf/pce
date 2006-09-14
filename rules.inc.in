@@ -104,3 +104,11 @@ endif
 	$(QP)echo "  AR     $@"
 	$(QR)rm -f $@
 	$(QR)$(AR) $(AR_FLG) $@ $^
+
+%.1.ps: %.1
+	$(QP)echo "  MAN    $@"
+	$(QR)groff -Tps -mandoc < $< > $@
+
+%.1.txt: %.1
+	$(QP)echo "  MAN    $@"
+	$(QR)groff -Tlatin1 -P -c -P -b -P -u -mandoc < $< > $@
