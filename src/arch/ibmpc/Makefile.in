@@ -102,12 +102,13 @@ ifeq "$(PCE_SDL_USE)" "1"
 endif
 
 MAN1 := ibmpc.1
+MANT := $(foreach f,$(MAN1),$(f).txt $(f).ps)
 BIN  := ibmpc
 
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(OBJ) $(BIN) ibmpc.cfg
+CLN := $(OBJ) $(BIN) $(MANT) ibmpc.cfg
 DCL := Makefile
 
 

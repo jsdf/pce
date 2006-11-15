@@ -24,12 +24,13 @@ OBJ_EXT	:= $(PCE_BLK_OBJ)
 HDR_EXT	:= $(pcedst)/config.h $(PCE_BLK_HDR) \
 
 MAN1 := pceimg.1
+MANT := $(foreach f,$(MAN1),$(f).txt $(f).ps)
 BIN  := pceimg
 
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(OBJ) $(BIN)
+CLN := $(OBJ) $(BIN) $(MANT)
 DCL := Makefile
 
 

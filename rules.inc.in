@@ -21,6 +21,17 @@ endif
 
 #-----------------------------------------------------------------------------
 
+man: $(MANT) man-rec
+man-rec:
+ifneq "$(subdir)" ""
+	@for dir in $(subdir); do \
+		(cd $$dir && $(MAKE) $(MAKE_FLG) man); \
+	done
+endif
+
+
+#-----------------------------------------------------------------------------
+
 clean: clean-rec clean-files
 
 clean-files:
