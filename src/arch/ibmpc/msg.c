@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-11-15 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -104,7 +104,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		pc->pit_real = !pc->pit_real;
 		return (0);
 	}
-	else if (msg_is_message ("cpu.model", msg)) {
+	else if (msg_is_message ("emu.cpu.model", msg)) {
 		if (strcmp (val, "8086") == 0) {
 			pc_set_cpu_model (pc, PCE_CPU_8086);
 		}
@@ -132,11 +132,11 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("video.redraw", msg)) {
+	else if (msg_is_message ("emu.video.redraw", msg)) {
 		pce_video_update (pc->video);
 		return (0);
 	}
-	else if (msg_is_message ("video.screenshot", msg)) {
+	else if (msg_is_message ("emu.video.screenshot", msg)) {
 		if (strcmp (val, "") == 0) {
 			pc_screenshot (pc, NULL);
 		}
@@ -145,7 +145,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		}
 		return (0);
 	}
-	else if (msg_is_message ("video.size", msg)) {
+	else if (msg_is_message ("emu.video.size", msg)) {
 		unsigned w, h;
 		char     *tmp1, *tmp2;
 
@@ -164,7 +164,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("disk.boot", msg)) {
+	else if (msg_is_message ("emu.disk.boot", msg)) {
 		unsigned v;
 
 		if (msg_get_uint (val, &v)) {
@@ -175,7 +175,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("disk.commit", msg)) {
+	else if (msg_is_message ("emu.disk.commit", msg)) {
 		if (strcmp (val, "") == 0) {
 			if (dsks_commit (pc->dsk)) {
 				pce_log (MSG_ERR, "commit failed for at least one disk\n");
@@ -197,7 +197,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("disk.eject", msg)) {
+	else if (msg_is_message ("emu.disk.eject", msg)) {
 		unsigned d;
 		disk_t   *dsk;
 
@@ -216,7 +216,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("disk.insert", msg)) {
+	else if (msg_is_message ("emu.disk.insert", msg)) {
 		if (dsk_insert (pc->dsk, val)) {
 			return (1);
 		}
