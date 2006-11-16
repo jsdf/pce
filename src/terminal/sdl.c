@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/terminal/sdl.c                                         *
  * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+ * Last modified: 2006-11-07 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -798,7 +798,7 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
 		case SDLK_KP_MULTIPLY:  ret = 0x37; break;
 		case SDLK_LALT:         ret = 0x38; break;
 		case SDLK_SPACE:        ret = 0x39; break;
-		case SDLK_CAPSLOCK:     ret = 0xba3a; break;
+		case SDLK_CAPSLOCK:     ret = 0xba3aU; break;
 		case SDLK_F1:           ret = 0x3b; break;
 		case SDLK_F2:           ret = 0x3c; break;
 		case SDLK_F3:           ret = 0x3d; break;
@@ -809,6 +809,8 @@ unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
 		case SDLK_F8:           ret = 0x42; break;
 		case SDLK_F9:           ret = 0x43; break;
 		case SDLK_F10:          ret = 0x44; break;
+		case SDLK_F11:          ret = 0x57; break;
+		case SDLK_F12:          ret = 0x58; break;
 
 		case SDLK_NUMLOCK:      ret = 0x45; break;
 		case SDLK_SCROLLOCK:    ret = 0x46; break;
