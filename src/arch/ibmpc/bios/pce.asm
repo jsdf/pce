@@ -5,7 +5,6 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2006-09-02 by Hampa Hug <hampa@hampa.ch>                   *
 ;* Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
@@ -130,7 +129,7 @@ init_biosdata:
 
   ; keyboard status 1
   ; (non-functional on PC, but some programs need it)
-  mov     [0x0096], byte 0x10
+  ;mov     [0x0096], byte 0x10
 
   pop     ds
   pop     ax
