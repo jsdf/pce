@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -250,6 +249,23 @@ void sarm_prt_state_intc (simarm_t *sim, FILE *fp)
 	fprintf (fp, "inp raw: %08lx\n", ic->status_raw);
 	fprintf (fp, "ena fiq: %08lx\n", ic->enable_fiq);
 	fprintf (fp, "out fiq: %08lx (%d)\n", ic->status_fiq, (int) ic->fiq_val);
+}
+
+void sarm_prt_state_mem (simarm_t *sim, FILE *fp)
+{
+	unsigned  i;
+	mem_blk_t *blk;
+
+	prt_sep (fp, "IXP MEM");
+
+	for (i = 0; i < sim->mem->cnt; i++) {
+		blk = sim->mem->lst[i].blk;
+
+		fprintf (fp, "BLK %04X: A1=%08lX A2=%08lX S=%08lX RO=%d\n",
+			i, blk->addr1, blk->addr2, blk->size,
+			(blk->readonly != 0)
+		);
+	}
 }
 
 
@@ -647,7 +663,7 @@ void do_h (cmd_t *cmd, simarm_t *sim)
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
 		"q                         quit\n"
 		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu|intc|mmu|timer)\n"
+		"s [what]                  print status (cpu|intc|mem|mmu|timer)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"

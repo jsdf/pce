@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -74,7 +73,7 @@ void prt_version (void)
 	fputs (
 		"pce simarm version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -91,8 +90,14 @@ void sig_int (int s)
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce: segmentation fault\n");
-	fprintf (stderr, "  PC=%08lX\n", (unsigned long) arm_get_pc (par_sim->cpu));
+
+	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
+		sarm_prt_state_cpu (par_sim->cpu, stderr);
+	}
+
 	fflush (stderr);
+
+	pce_set_fd_interactive (0, 1);
 
 	exit (1);
 }
@@ -152,6 +157,9 @@ void prt_state (simarm_t *sim, FILE *fp, const char *str)
 		}
 		else if (cmd_match (&cmd, "intc")) {
 			sarm_prt_state_intc (sim, fp);
+		}
+		else if (cmd_match (&cmd, "mem")) {
+			sarm_prt_state_mem (sim, fp);
 		}
 		else {
 			printf ("unknown component (%s)\n", cmd_get_str (&cmd));
@@ -328,7 +336,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce simarm version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);

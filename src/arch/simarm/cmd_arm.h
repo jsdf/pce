@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.h                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -36,6 +35,7 @@ void sarm_prt_state_cpu (arm_t *c, FILE *fp);
 void sarm_prt_state_mmu (arm_t *c, FILE *fp);
 void sarm_prt_state_timer (ixp_timer_t *tmr, FILE *fp);
 void sarm_prt_state_intc (simarm_t *sim, FILE *fp);
+void sarm_prt_state_mem (simarm_t *sim, FILE *fp);
 
 int sarm_do_cmd (cmd_t *cmd, simarm_t *sim);
 
