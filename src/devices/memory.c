@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/devices/memory.c                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -758,7 +757,7 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 		return;
 	}
 
-	lst = (mem_lst_t *) realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
+	lst = realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
 	if (lst == NULL) {
 		return;
 	}
@@ -770,6 +769,8 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 
 	lst->blk = blk;
 	lst->del = (del != 0);
+
+	mem->last = NULL;
 }
 
 void mem_rmv_blk (memory_t *mem, mem_blk_t *blk)
