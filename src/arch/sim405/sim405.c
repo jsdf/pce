@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -247,10 +246,11 @@ void s405_setup_pci (sim405_t *sim, ini_sct_t *ini)
 static
 void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 {
-	unsigned  pcidev, pciirq;
-	unsigned  chn, dev, drv;
-	ini_sct_t *sct;
-	disk_t    *dsk;
+	unsigned       pcidev, pciirq;
+	unsigned       chn, dev, drv;
+	unsigned  long vendor_id, device_id;
+	ini_sct_t      *sct;
+	disk_t         *dsk;
 
 	pci_ata_init (&sim->pciata);
 
@@ -262,7 +262,14 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 	pcidev = ini_get_lng_def (sct, "pci_device", 1);
 	pciirq = ini_get_lng_def (sct, "pci_irq", 31);
 
-	pce_log (MSG_INF, "PCI-ATA:\tpcidev=%u irq=%u\n", pcidev, pciirq);
+	ini_get_uint32 (sct, "vendor_id", &vendor_id, PCIID_VENDOR_VIA);
+	ini_get_uint32 (sct, "device_id", &device_id, PCIID_VIA_82C561);
+
+	pce_log (MSG_INF, "ATA:    pcidev=%u irq=%u vendor=0x%04lx id=0x%04lx\n",
+		pcidev, pciirq, vendor_id, device_id
+	);
+
+	pci_dev_set_device_id (&sim->pciata.pci, vendor_id, device_id);
 
 	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
 	pci_dev_set_irq_f (&sim->pciata.pci, 0,
@@ -281,7 +288,7 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 			pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
 		}
 		else {
-			pce_log (MSG_INF, "PCI-ATA:\tchn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
+			pce_log (MSG_INF, "ATA:    chn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
 				chn, dev, drv,
 				(unsigned long) dsk->visible_c,
 				(unsigned long) dsk->visible_h,

@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/pci.c                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -417,7 +416,7 @@ void pci_ixp_init (pci_ixp_t *ixp)
 	ixp->dev.get_cfg32 = (mem_get_uint32_f) pci_ixp_get_cfg32;
 	ixp->dev.set_cfg32 = (mem_set_uint32_f) pci_ixp_set_cfg32;
 
-	buf_set_uint16_le (ixp->dev.config, 0x00, PCIID_INTEL);
+	buf_set_uint16_le (ixp->dev.config, 0x00, PCIID_VENDOR_INTEL);
 	buf_set_uint16_le (ixp->dev.config, 0x02, PCIID_INTEL_IXP2400);
 	buf_set_uint32_le (ixp->dev.config, 0x04, 0x00000001);
 	buf_set_uint32_le (ixp->dev.config, 0x08, 0x0b400101);

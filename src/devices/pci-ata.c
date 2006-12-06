@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/pci-ata.c                                      *
  * Created:       2004-12-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -56,8 +55,9 @@ void pci_ata_init (pci_ata_t *dev)
 	dev->pci.reg[2] = &dev->ata[1].reg_cmd;
 	dev->pci.reg[3] = &dev->ata[1].reg_ctl;
 
-	buf_set_uint16_le (dev->pci.config, 0x00, PCIID_INTEL);
-	buf_set_uint16_le (dev->pci.config, 0x02, PCIID_INTEL_PIIX_IDE);
+	buf_set_uint16_le (dev->pci.config, 0x00, PCIID_VENDOR_VIA);
+	buf_set_uint16_le (dev->pci.config, 0x02, PCIID_VIA_82C561);
+
 	buf_set_uint32_le (dev->pci.config, 0x04, 0x00000001);
 	buf_set_uint32_le (dev->pci.config, 0x08, 0x01010f01);
 	buf_set_uint32_le (dev->pci.config, 0x0c, 0x00000000);

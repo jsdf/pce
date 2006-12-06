@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/pci-ata.h                                      *
  * Created:       2004-12-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,9 +33,13 @@
 #include <devices/ata.h>
 
 
+/* these are IDE chipsets */
 #define PCIID_INTEL_PIIX_IDE  0x1239
 #define PCIID_INTEL_PIIX3_IDE 0x7010
 #define PCIID_INTEL_PIIX4_IDE 0x7111
+#define PCIID_OPTI_82C558     0xc558
+#define PCIID_NS_87410        0xd001
+#define PCIID_VIA_82C561      0x0561
 
 
 typedef struct {

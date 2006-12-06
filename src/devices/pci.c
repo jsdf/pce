@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/pci.c                                          *
  * Created:       2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-11 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -84,6 +83,12 @@ void pci_dev_set_irq_a (pci_dev_t *dev, unsigned char val)
 			dev->irqa (dev->irqa_ext, val);
 		}
 	}
+}
+
+void pci_dev_set_device_id (pci_dev_t *dev, unsigned vendor, unsigned id)
+{
+	buf_set_uint16_le (dev->config, 0x00, vendor);
+	buf_set_uint16_le (dev->config, 0x02, id);
 }
 
 void pci_dev_set_cfg_mask (pci_dev_t *dev, unsigned i, unsigned n, int val)

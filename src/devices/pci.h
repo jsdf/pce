@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/pci.h                                          *
  * Created:       2004-06-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,7 +34,10 @@
 #define PCI_REG_MAX 8
 #define PCI_MEM_MAX 8
 
-#define PCIID_INTEL 0x8086
+#define PCIID_VENDOR_INTEL 0x8086
+#define PCIID_VENDOR_OPTI  0x1045
+#define PCIID_VENDOR_NS    0x100b
+#define PCIID_VENDOR_VIA   0x1106
 
 
 typedef struct {
@@ -86,6 +88,8 @@ void pci_dev_free (pci_dev_t *dev);
 
 void pci_dev_set_irq_f (pci_dev_t *dev, unsigned idx, void *irq, void *ext);
 void pci_dev_set_irq_a (pci_dev_t *dev, unsigned char val);
+
+void pci_dev_set_device_id (pci_dev_t *dev, unsigned vendor, unsigned id);
 
 void pci_dev_set_cfg_mask (pci_dev_t *dev, unsigned i, unsigned n, int val);
 
