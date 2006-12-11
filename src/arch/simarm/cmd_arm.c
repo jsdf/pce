@@ -105,7 +105,7 @@ void sarm_prt_state_cpu (arm_t *c, FILE *fp)
 	arm_dasm_t         op;
 	char               str[256];
 
-	prt_sep (fp, "ARM");
+	pce_prt_sep (fp, "ARM");
 
 	opcnt = arm_get_opcnt (c);
 	clkcnt = arm_get_clkcnt (c);
@@ -162,7 +162,7 @@ void sarm_prt_state_mmu (arm_t *c, FILE *fp)
 {
 	arm_copr15_t *p;
 
-	prt_sep (fp, "ARM MMU");
+	pce_prt_sep (fp, "ARM MMU");
 
 	p = c->copr[15]->ext;
 
@@ -216,7 +216,7 @@ void sarm_prt_state_timer (ixp_timer_t *tmr, FILE *fp)
 	unsigned            i;
 	ixp_timer_counter_t *cnt;
 
-	prt_sep (fp, "IXP TIMER");
+	pce_prt_sep (fp, "IXP TIMER");
 
 	fprintf (fp, "ADDR=%08lX\n", tmr->base);
 
@@ -238,7 +238,7 @@ void sarm_prt_state_intc (simarm_t *sim, FILE *fp)
 {
 	ixp_intc_t *ic;
 
-	prt_sep (fp, "IXP INTC");
+	pce_prt_sep (fp, "IXP INTC");
 
 	ic = sim->intc;
 
@@ -253,7 +253,7 @@ void sarm_prt_state_intc (simarm_t *sim, FILE *fp)
 
 void sarm_prt_state_mem (simarm_t *sim, FILE *fp)
 {
-	prt_sep (fp, "ARM MEM");
+	pce_prt_sep (fp, "ARM MEM");
 	mem_prt_state (sim->mem, fp);
 }
 

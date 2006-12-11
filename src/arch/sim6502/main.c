@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -66,7 +65,7 @@ void prt_version (void)
 	fputs (
 		"pce sim6502 version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -199,26 +198,6 @@ void prt_error (const char *str, ...)
 	va_end (va);
 }
 
-void prt_sep (FILE *fp, const char *str, ...)
-{
-	unsigned i;
-	va_list  va;
-
-	fputs ("-", fp);
-	i = 1;
-
-	va_start (va, str);
-	i += vfprintf (fp, str, va);
-	va_end (va);
-
-	while (i < 78) {
-		fputc ('-', fp);
-		i += 1;
-	}
-
-	fputs ("\n", fp);
-}
-
 void prt_state_cpu (e6502_t *c, FILE *fp)
 {
 	unsigned long long opcnt, clkcnt;
@@ -226,7 +205,7 @@ void prt_state_cpu (e6502_t *c, FILE *fp)
 	e6502_disasm_t     op;
 	char               str[256];
 
-	prt_sep (fp, "6502");
+	pce_prt_sep (fp, "6502");
 
 	opcnt = e6502_get_opcnt (c);
 	clkcnt = e6502_get_clock (c);
@@ -260,22 +239,35 @@ void prt_state_cpu (e6502_t *c, FILE *fp)
 }
 
 static
-void prt_state_default (sim6502_t *sim, FILE *fp)
+void prt_state_mem (sim6502_t *sim, FILE *fp)
 {
-	prt_state_cpu (sim->cpu, fp);
+	pce_prt_sep (fp, "6502 MEM");
+	mem_prt_state (sim->mem, fp);
 }
 
 static
 void prt_state (sim6502_t *sim, FILE *fp, const char *str)
 {
-}
+	cmd_t cmd;
 
-static
-void prt_prompt (sim6502_t *sim, FILE *fp)
-{
-	fputs ("\x1b[0;37;40m-", fp);
+	cmd_set_str (&cmd, str);
 
-	fflush (fp);
+	if (cmd_match_eol (&cmd)) {
+		return;
+	}
+
+	while (!cmd_match_eol (&cmd)) {
+		if (cmd_match (&cmd, "cpu")) {
+			prt_state_cpu (sim->cpu, fp);
+		}
+		else if (cmd_match (&cmd, "mem")) {
+			prt_state_mem (sim, fp);
+		}
+		else {
+			printf ("unknown component (%s)\n", cmd_get_str (&cmd));
+			return;
+		}
+	}
 }
 
 void pce_start (void)
@@ -481,7 +473,7 @@ void do_c (cmd_t *cmd, sim6502_t *sim)
 		cnt -= 1;
 	}
 
-	prt_state_default (sim, stdout);
+	prt_state_cpu (sim->cpu, stdout);
 }
 
 static
@@ -654,7 +646,7 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 	s6502_run_bp (sim);
 
 	fputs ("\n", stdout);
-	prt_state_default (sim, stdout);
+	prt_state_cpu (sim->cpu, stdout);
 }
 
 static
@@ -667,11 +659,11 @@ void do_h (cmd_t *cmd, sim6502_t *sim)
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b]                     run with or without breakpoints (ESC to stop)\n"
+		"g [b]                     run with or without breakpoints\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
 		"q                         quit\n"
 		"r reg [val]               set a register\n"
-		"s [what]                  print status (ppc|cth|clp|dpp|epc)\n"
+		"s [what]                  print status (cpu|mem)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n",
@@ -714,7 +706,7 @@ void do_p (cmd_t *cmd, sim6502_t *sim)
 
 	pce_stop();
 
-	prt_state_default (sim, stdout);
+	prt_state_cpu (sim->cpu, stdout);
 }
 
 static
@@ -755,14 +747,14 @@ void do_r (cmd_t *cmd, sim6502_t *sim)
 		return;
 	}
 
-	prt_state_default (sim, stdout);
+	prt_state_cpu (sim->cpu, stdout);
 }
 
 static
 void do_s (cmd_t *cmd, sim6502_t *sim)
 {
 	if (cmd_match_eol (cmd)) {
-		prt_state_default (sim, stdout);
+		prt_state_cpu (sim->cpu, stdout);
 		return;
 	}
 
@@ -790,7 +782,7 @@ void do_t (cmd_t *cmd, sim6502_t *sim)
 
 	pce_stop();
 
-	prt_state_default (sim, stdout);
+	prt_state_cpu (sim->cpu, stdout);
 }
 
 static
@@ -850,8 +842,7 @@ int do_cmd (sim6502_t *sim)
 	cmd_t cmd;
 
 	while (1) {
-		prt_prompt (sim, stdout);
-		fflush (stdout);
+		pce_prt_prompt (stdout, NULL);
 
 		cmd_get (&cmd);
 

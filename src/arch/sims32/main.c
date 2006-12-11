@@ -74,11 +74,13 @@ void prt_version (void)
 	fflush (stdout);
 }
 
+static
 void sig_int (int s)
 {
 	par_sig_int = 1;
 }
 
+static
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce: segmentation fault\n");
@@ -107,26 +109,6 @@ int cmd_match_sym (cmd_t *cmd, unsigned long *val)
 	return (0);
 }
 
-void prt_sep (FILE *fp, const char *str, ...)
-{
-	unsigned i;
-	va_list  va;
-
-	fputs ("-", fp);
-	i = 1;
-
-	va_start (va, str);
-	i += vfprintf (fp, str, va);
-	va_end (va);
-
-	while (i < 78) {
-		fputc ('-', fp);
-		i += 1;
-	}
-
-	fputs ("\n", fp);
-}
-
 void prt_state (sims32_t *sim, FILE *fp, const char *str)
 {
 	cmd_t cmd;
@@ -149,18 +131,6 @@ void prt_state (sims32_t *sim, FILE *fp, const char *str)
 			return;
 		}
 	}
-}
-
-static
-void prt_prompt (sims32_t *sim, FILE *fp)
-{
-	unsigned long long clk;
-
-	clk = ss32_get_clkcnt (sim);
-
-	fputs ("\x1b[0;37;40m", fp);
-	fprintf (fp, "[%08llX] ", clk);
-	fflush (fp);
 }
 
 void pce_start (void)
@@ -195,8 +165,7 @@ int do_cmd (sims32_t *sim)
 	cmd_t cmd;
 
 	while (1) {
-		prt_prompt (sim, stdout);
-		fflush (stdout);
+		pce_prt_prompt (stdout, NULL);
 
 		cmd_get (&cmd);
 

@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/lib/console.c                                          *
  * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -26,6 +25,8 @@
 #include <config.h>
 
 #include "console.h"
+
+#include <stdarg.h>
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -85,4 +86,37 @@ int pce_fd_readable (int fd, int t)
 #else
 	return (0);
 #endif
+}
+
+void pce_prt_sep (FILE *fp, const char *str, ...)
+{
+	unsigned i;
+	va_list  va;
+
+	fputs ("-", fp);
+	i = 1;
+
+	va_start (va, str);
+	i += vfprintf (fp, str, va);
+	va_end (va);
+
+	while (i < 78) {
+		fputc ('-', fp);
+		i += 1;
+	}
+
+	fputs ("\n", fp);
+}
+
+void pce_prt_prompt (FILE *fp, const char *str)
+{
+	/* reset terminal colors */
+	fputs ("\x1b[0;37;40m", fp);
+
+	if (str == NULL) {
+		str = "-";
+	}
+
+	fputs (str, fp);
+	fflush (fp);
 }

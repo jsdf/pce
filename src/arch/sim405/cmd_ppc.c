@@ -242,7 +242,7 @@ void prt_state_ppc (p405_t *c, FILE *fp)
 	p405_disasm_t      op;
 	char               str[256];
 
-	prt_sep (fp, "PPC405");
+	pce_prt_sep (fp, "PPC405");
 
 	opcnt = p405_get_opcnt (c);
 	clkcnt = p405_get_clkcnt (c);
@@ -302,7 +302,7 @@ void prt_state_spr (p405_t *c, FILE *fp)
 {
 	uint32_t msr;
 
-	prt_sep (fp, "PPC405 SPR");
+	pce_prt_sep (fp, "PPC405 SPR");
 
 	msr = p405_get_msr (c);
 
@@ -386,7 +386,7 @@ void prt_state_spr (p405_t *c, FILE *fp)
 
 void prt_state_uic (p405_uic_t *uic, FILE *fp)
 {
-	prt_sep (fp, "UIC");
+	pce_prt_sep (fp, "UIC");
 
 	fprintf (fp, "  L=%08lX\n", (unsigned long) p405uic_get_levels (uic));
 	fprintf (fp, " SR=%08lX\n", (unsigned long) p405uic_get_sr (uic));
@@ -401,7 +401,7 @@ void prt_state_uic (p405_uic_t *uic, FILE *fp)
 
 void s405_prt_state_mem (sim405_t *sim, FILE *fp)
 {
-	prt_sep (fp, "PPC MEM");
+	pce_prt_sep (fp, "PPC MEM");
 	mem_prt_state (sim->mem, fp);
 }
 

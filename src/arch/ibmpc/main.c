@@ -239,44 +239,24 @@ void prt_uint8_bin (FILE *fp, unsigned char val)
 	}
 }
 
-void prt_sep (FILE *fp, const char *str, ...)
-{
-	unsigned i;
-	va_list  va;
-
-	fputs ("-", fp);
-	i = 1;
-
-	va_start (va, str);
-	i += vfprintf (fp, str, va);
-	va_end (va);
-
-	while (i < 78) {
-		fputc ('-', fp);
-		i += 1;
-	}
-
-	fputs ("\n", fp);
-}
-
 static
 void prt_state_video (video_t *vid, FILE *fp)
 {
-	fputs ("-video-----------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "video");
 	pce_video_prt_state (vid, fp);
 }
 
 static
 void prt_state_ems (ems_t *ems, FILE *fp)
 {
-	fputs ("-EMS-------------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "EMS");
 	ems_prt_state (ems, fp);
 }
 
 static
 void prt_state_xms (xms_t *xms, FILE *fp)
 {
-	fputs ("-XMS-------------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "XMS");
 	xms_prt_state (xms, fp);
 }
 
@@ -286,7 +266,7 @@ void prt_state_pit (e8253_t *pit, FILE *fp)
 	unsigned        i;
 	e8253_counter_t *cnt;
 
-	fprintf (fp, "-8253-PIT--------------------------------------------------------------------\n");
+	pce_prt_sep (fp, "8253-PIT");
 
 	for (i = 0; i < 3; i++) {
 		cnt = &pit->counter[i];
@@ -311,7 +291,7 @@ void prt_state_pit (e8253_t *pit, FILE *fp)
 static
 void prt_state_ppi (e8255_t *ppi, FILE *fp)
 {
-	fputs ("-8255-PPI--------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "8255-PPI");
 
 	fprintf (fp,
 		"MOD=%02X  MODA=%u  MODB=%u",
@@ -343,13 +323,15 @@ void prt_state_ppi (e8255_t *ppi, FILE *fp)
 
 		case 0x0f:
 			fprintf (fp, "  CH=O[%X]  CL=I[%X]",
-				(e8255_get_out (ppi, 2) >> 4) & 0x0f, e8255_get_inp (ppi, 2) & 0x0f
+				(e8255_get_out (ppi, 2) >> 4) & 0x0f,
+				e8255_get_inp (ppi, 2) & 0x0f
 			);
 			break;
 
 		case 0xf0:
 			fprintf (fp, "  CH=I[%X]  CL=O[%X]",
-				(e8255_get_inp (ppi, 2) >> 4) & 0x0f, e8255_get_out (ppi, 2) & 0x0f
+				(e8255_get_inp (ppi, 2) >> 4) & 0x0f,
+				e8255_get_out (ppi, 2) & 0x0f
 			);
 			break;
 	}
@@ -363,7 +345,7 @@ void prt_state_dma (e8237_t *dma, FILE *fp)
 {
 	unsigned i;
 
-	prt_sep (fp, "8237-DMAC");
+	pce_prt_sep (fp, "8237-DMAC");
 
 	fprintf (fp, "CMD=%02X  PRI=%02X  CHK=%d\n",
 		e8237_get_command (dma),
@@ -398,7 +380,7 @@ void prt_state_pic (e8259_t *pic, FILE *fp)
 {
 	unsigned i;
 
-	prt_sep (fp, "8259A-PIC");
+	pce_prt_sep (fp, "8259A-PIC");
 	fputs ("IRR=", fp);   prt_uint8_bin (fp, e8259_get_irr (pic));
 	fputs ("  IMR=", fp); prt_uint8_bin (fp, e8259_get_imr (pic));
 	fputs ("  ISR=", fp); prt_uint8_bin (fp, e8259_get_isr (pic));
@@ -425,38 +407,40 @@ void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 	char p;
 
 	switch (e8250_get_parity (uart)) {
-		case E8250_PARITY_N:
-			p = 'N';
-			break;
+	case E8250_PARITY_N:
+		p = 'N';
+		break;
 
-		case E8250_PARITY_E:
-			p = 'E';
-			break;
+	case E8250_PARITY_E:
+		p = 'E';
+		break;
 
-		case E8250_PARITY_O:
-			p = 'O';
-			break;
+	case E8250_PARITY_O:
+		p = 'O';
+		break;
 
-		case E8250_PARITY_M:
-			p = 'M';
-			break;
+	case E8250_PARITY_M:
+		p = 'M';
+		break;
 
-		case E8250_PARITY_S:
-			p = 'S';
-			break;
+	case E8250_PARITY_S:
+		p = 'S';
+		break;
 
-		default:
-			p = '?';
-			break;
+	default:
+		p = '?';
+		break;
 	}
 
-	fputs ("-8250-UART-------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "8250-UART");
+
 	fprintf (stderr,
 		"IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
 		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
 		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
 		base,
-		e8250_get_bps (uart), e8250_get_databits (uart), p, e8250_get_stopbits (uart),
+		e8250_get_bps (uart), e8250_get_databits (uart), p,
+		e8250_get_stopbits (uart),
 		e8250_get_dtr (uart), e8250_get_rts (uart),
 		uart->txd[0], uart->txd[1] ? '*' : ' ',
 		uart->rxd[0], uart->rxd[1] ? '*' : ' ',
@@ -471,7 +455,7 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
 	double      cpi, mips;
 	static char ft[2] = { '-', '+' };
 
-	fputs ("-8086------------------------------------------------------------------------\n", fp);
+	pce_prt_sep (fp, "8086");
 
 	cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
 	mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
@@ -504,7 +488,7 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
 static
 void prt_state_mem (ibmpc_t *pc, FILE *fp)
 {
-	prt_sep (fp, "PC MEM");
+	pce_prt_sep (fp, "PC MEM");
 	mem_prt_state (pc->mem, fp);
 }
 
@@ -535,13 +519,6 @@ void prt_state (ibmpc_t *pc, FILE *fp)
 		(unsigned) e86_get_ip (pc->cpu),
 		str
 	);
-}
-
-static
-void prt_prompt (FILE *fp)
-{
-	fputs ("\x1b[0;37;40m-", fp);
-	fflush (fp);
 }
 
 static
@@ -1713,8 +1690,7 @@ int do_cmd (ibmpc_t *pc)
 	cmd_t  cmd;
 
 	while (1) {
-		prt_prompt (stdout);
-		fflush (stdout);
+		pce_prt_prompt (stdout, NULL);
 
 		cmd_get (&cmd);
 

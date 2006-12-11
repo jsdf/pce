@@ -108,7 +108,7 @@ void ss32_prt_state_cpu (sparc32_t *c, FILE *fp)
 	s32_dasm_t         op;
 	char               str[256];
 
-	prt_sep (fp, "SPARC32");
+	pce_prt_sep (fp, "SPARC32");
 
 	opcnt = s32_get_opcnt (c);
 	clkcnt = s32_get_clkcnt (c);
@@ -184,7 +184,7 @@ void ss32_prt_state_cpu (sparc32_t *c, FILE *fp)
 
 void ss32_prt_state_mem (sims32_t *sim, FILE *fp)
 {
-	prt_sep (fp, "SPARC MEM");
+	pce_prt_sep (fp, "SPARC MEM");
 	mem_prt_state (sim->mem, fp);
 }
 

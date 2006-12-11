@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/lib/console.h                                          *
  * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
@@ -27,6 +26,9 @@
 #define PCE_LIB_CONSOLE_H 1
 
 
+#include <stdio.h>
+
+
 void pce_set_fd_interactive (int fd, int interactive);
 
 
@@ -36,6 +38,10 @@ void pce_set_fd_interactive (int fd, int interactive);
  * @param t  Wait at most t milliseconds for fd to become readable
  *****************************************************************************/
 int pce_fd_readable (int fd, int t);
+
+void pce_prt_sep (FILE *fp, const char *str, ...);
+
+void pce_prt_prompt (FILE *fp, const char *str);
 
 
 #endif
