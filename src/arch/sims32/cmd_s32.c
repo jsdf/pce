@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/cmd_s32.c                                  *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-02-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -181,6 +180,12 @@ void ss32_prt_state_cpu (sparc32_t *c, FILE *fp)
 	ss32_dasm_str (str, &op);
 
 	fprintf (fp, "%08lX  %s\n", (unsigned long) s32_get_pc (c), str);
+}
+
+void ss32_prt_state_mem (sims32_t *sim, FILE *fp)
+{
+	prt_sep (fp, "SPARC MEM");
+	mem_prt_state (sim->mem, fp);
 }
 
 
@@ -542,7 +547,7 @@ void do_h (cmd_t *cmd, sims32_t *sim)
 		"q                         quit\n"
 		"rett                      execute to next rett\n"
 		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu)\n"
+		"s [what]                  print status (cpu|mem)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n",

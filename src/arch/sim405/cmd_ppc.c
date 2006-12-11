@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-04-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -389,6 +388,12 @@ void prt_state_uic (p405_uic_t *uic, FILE *fp)
 	fprintf (fp, " TR=%08lX\n", (unsigned long) p405uic_get_tr (uic));
 	fprintf (fp, "VCR=%08lX\n", (unsigned long) p405uic_get_vcr (uic));
 	fprintf (fp, " VR=%08lX\n", (unsigned long) p405uic_get_vr (uic));
+}
+
+void s405_prt_state_mem (sim405_t *sim, FILE *fp)
+{
+	prt_sep (fp, "PPC MEM");
+	mem_prt_state (sim->mem, fp);
 }
 
 
@@ -822,7 +827,7 @@ void do_h (cmd_t *cmd, sim405_t *sim)
 		"q                         quit\n"
 		"rfi                       execute to next rfi or rfci\n"
 		"r reg [val]               set a register\n"
-		"s [what]                  print status (ppc|spr)\n"
+		"s [what]                  print status (mem|ppc|spr)\n"
 		"tlb l [first [count]]     list TLB entries\n"
 		"tlb s addr                search the TLB\n"
 		"t [cnt]                   execute cnt instructions [1]\n"

@@ -793,3 +793,18 @@ void mem_rmv_blk (memory_t *mem, mem_blk_t *blk)
 	mem->cnt = j;
 	mem->last = NULL;
 }
+
+void mem_prt_state (memory_t *mem, FILE *fp)
+{
+	unsigned  i;
+	mem_lst_t *lst;
+
+	for (i = 0; i < mem->cnt; i++) {
+		lst = &mem->lst[i];
+
+		fprintf (fp, "BLK %04X: A1=%08lX A2=%08lX S=%08lX RO=%d\n",
+			i, lst->blk->addr1, lst->blk->addr2, lst->blk->size,
+			(lst->blk->readonly != 0)
+		);
+	}
+}

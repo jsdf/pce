@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/main.c                                     *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -134,6 +133,9 @@ void prt_state (sims32_t *sim, FILE *fp, const char *str)
 	while (!cmd_match_eol (&cmd)) {
 		if (cmd_match (&cmd, "cpu")) {
 			ss32_prt_state_cpu (sim->cpu, fp);
+		}
+		else if (cmd_match (&cmd, "mem")) {
+			ss32_prt_state_mem (sim, fp);
 		}
 		else {
 			printf ("unknown component (%s)\n", cmd_get_str (&cmd));

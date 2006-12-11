@@ -253,19 +253,8 @@ void sarm_prt_state_intc (simarm_t *sim, FILE *fp)
 
 void sarm_prt_state_mem (simarm_t *sim, FILE *fp)
 {
-	unsigned  i;
-	mem_blk_t *blk;
-
-	prt_sep (fp, "IXP MEM");
-
-	for (i = 0; i < sim->mem->cnt; i++) {
-		blk = sim->mem->lst[i].blk;
-
-		fprintf (fp, "BLK %04X: A1=%08lX A2=%08lX S=%08lX RO=%d\n",
-			i, blk->addr1, blk->addr2, blk->size,
-			(blk->readonly != 0)
-		);
-	}
+	prt_sep (fp, "ARM MEM");
+	mem_prt_state (sim->mem, fp);
 }
 
 

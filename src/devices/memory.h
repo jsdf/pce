@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -25,6 +24,9 @@
 
 #ifndef PCE_MEMORY_H
 #define PCE_MEMORY_H 1
+
+
+#include <stdio.h>
 
 
 typedef unsigned char (*mem_get_uint8_f) (void *blk, unsigned long addr);
@@ -262,6 +264,8 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
  * @param blk The memory block
  *****************************************************************************/
 void mem_rmv_blk (memory_t *mem, mem_blk_t *blk);
+
+void mem_prt_state (memory_t *mem, FILE *fp);
 
 
 #endif

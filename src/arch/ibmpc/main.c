@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -498,6 +497,13 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
 		ft[e86_get_zf (c)], ft[e86_get_af (c)],
 		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
 	);
+}
+
+static
+void prt_state_mem (ibmpc_t *pc, FILE *fp)
+{
+	prt_sep (fp, "PC MEM");
+	mem_prt_state (pc->mem, fp);
 }
 
 static
@@ -1072,7 +1078,7 @@ void do_h (cmd_t *cmd)
 		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
 		"q                         quit\n"
 		"r [reg val]               set a register\n"
-		"s [what]                  print status (pc|cpu|pit|ppi|pic|uart|video|xms)\n"
+		"s [what]                  print status (pc|cpu|mem|pit|ppi|pic|uart|video|xms)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
@@ -1487,6 +1493,9 @@ void do_s (cmd_t *cmd)
 		}
 		else if (cmd_match (cmd, "dma")) {
 			prt_state_dma (&pc->dma, stdout);
+		}
+		else if (cmd_match (cmd, "mem")) {
+			prt_state_mem (pc, stdout);
 		}
 		else if (cmd_match (cmd, "uart")) {
 			unsigned short i;
