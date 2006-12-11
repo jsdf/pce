@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.h                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -34,6 +33,11 @@
 
 
 #include <stdint.h>
+
+
+/* #define P405_DEBUG      1 */
+/* #define P405_LOG_MEM    1 */
+/* #define P405_LOG_OPCODE 1 */
 
 
 struct p405_s;
@@ -105,6 +109,10 @@ typedef struct p405_tlbe_s {
 typedef struct {
 	p405_tlbe_t entry[P405_TLB_ENTRIES];
 	p405_tlbe_t *first;
+
+	p405_tlbe_t *tbuf_exec;
+	p405_tlbe_t *tbuf_read;
+	p405_tlbe_t *tbuf_write;
 } p405_tlb_t;
 
 
@@ -363,8 +371,8 @@ typedef struct p405_s {
 	void (*log_mem) (void *ext, unsigned mode,
 		unsigned long raddr, unsigned long vaddr, unsigned long val);
 
-	void *hook_ext;
-	void (*hook) (void *ext, unsigned long ir);
+	void               *hook_ext;
+	void               (*hook) (void *ext, unsigned long ir);
 
 	uint32_t           pc;
 	uint32_t           gpr[32];
@@ -413,10 +421,47 @@ typedef struct p405_s {
 } p405_t;
 
 
+/*!***************************************************************************
+ * @short  Get the index of the TLB entry corresponding to an EA
+ * @param  c  The cpu context
+ * @param  ea The virtual address
+ * @return The entry index or P405_TLB_ENTRIES if there is no entry
+ *****************************************************************************/
 unsigned p405_get_tlb_index (p405_t *c, uint32_t ea);
-unsigned p405_get_tlb_entry_cnt (p405_t *c);
+
+/*!***************************************************************************
+ * @short  Get the TLB entry corresponding to an EA
+ * @param  c  The cpu context
+ * @param  ea The virtual address
+ * @return The entry or NULL if there is no entry
+ *****************************************************************************/
 p405_tlbe_t *p405_get_tlb_entry_ea (p405_t *c, uint32_t ea);
+
+/*!***************************************************************************
+ * @short  Get a TLB entry by index
+ * @param  c   The cpu context
+ * @param  idx The TLB entry index
+ * @return The entry or NULL if the index is out of range
+ *****************************************************************************/
 p405_tlbe_t *p405_get_tlb_entry_idx (p405_t *c, unsigned idx);
+
+/*!***************************************************************************
+ * @short  Get the number of TLB entries
+ * @param  c The cpu context
+ * @return The number of TLB entries
+ *****************************************************************************/
+unsigned p405_get_tlb_entry_cnt (p405_t *c);
+
+/*!***************************************************************************
+ * @short  Translate a virtual address
+ * @param  c    The cpu context
+ * @retval ea   On input the virtual address, on output the real address
+ * @retval e    Zero if the address is big-endian, non-zero if it is
+ *              little-endian
+ * @param  xlat The translation mode (P405_XLAT_VIRTUAL, P405_XLAT_REAL or
+ *              P405_XLAT_CPU)
+ * @return Zero if successful, non-zero otherwise
+ *****************************************************************************/
 int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat);
 
 /*!***************************************************************************

@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcode1f.c                                  *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -1287,6 +1286,7 @@ void op_1f_1d3 (p405_t *c)
 
 		case P405_SPRN_PID:
 			p405_set_pid (c, rs);
+			p405_tbuf_clear (c);
 			break;
 
 		case P405_SPRN_PIT:

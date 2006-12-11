@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/ppc405.c                                    *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -65,6 +64,7 @@ void p405_init (p405_t *c)
 	c->hook = NULL;
 
 	p405_set_opcodes (c);
+	p405_tlb_init (&c->tlb);
 
 	c->pvr = P405_PVR_405GP;
 
@@ -75,7 +75,7 @@ p405_t *p405_new (void)
 {
 	p405_t *c;
 
-	c = (p405_t *) malloc (sizeof (p405_t));
+	c = malloc (sizeof (p405_t));
 	if (c == NULL) {
 		return (NULL);
 	}
@@ -104,13 +104,13 @@ void p405_set_mem_fct (p405_t *c, void *ext,
 {
 	c->mem_ext = ext;
 
-	c->get_uint8 = (p405_get_uint8_f) get8;
-	c->get_uint16 = (p405_get_uint16_f) get16;
-	c->get_uint32 = (p405_get_uint32_f) get32;
+	c->get_uint8 = get8;
+	c->get_uint16 = get16;
+	c->get_uint32 = get32;
 
-	c->set_uint8 = (p405_set_uint8_f) set8;
-	c->set_uint16 = (p405_set_uint16_f) set16;
-	c->set_uint32 = (p405_set_uint32_f) set32;
+	c->set_uint8 = set8;
+	c->set_uint16 = set16;
+	c->set_uint32 = set32;
 }
 
 void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt)
@@ -122,8 +122,8 @@ void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt)
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set)
 {
 	c->dcr_ext = ext;
-	c->get_dcr = (p405_get_uint32_f) get;
-	c->set_dcr = (p405_set_uint32_f) set;
+	c->get_dcr = get;
+	c->set_dcr = set;
 }
 
 void p405_set_hook_fct (p405_t *c, void *ext, void *fct)
@@ -178,7 +178,7 @@ uint32_t p405_get_mem32 (p405_t *c, uint32_t addr)
 		return (c->get_uint32 (c->mem_ext, addr));
 	}
 
-	return (0xffffffffUL);
+	return (0xffffffff);
 }
 
 void p405_set_mem8 (p405_t *c, uint32_t addr, uint8_t val)
@@ -228,13 +228,15 @@ void p405_undefined (p405_t *c)
 static
 void p405_exception (p405_t *c, uint32_t ofs)
 {
+	p405_tbuf_clear (c);
+
 	if (c->log_exception != NULL) {
 		c->log_exception (c->log_ext, ofs);
 	}
 
 	c->delay += 1;
 
-	p405_set_pc (c, (p405_get_evpr (c) & 0xffff0000UL) | ofs);
+	p405_set_pc (c, (p405_get_evpr (c) & 0xffff0000) | ofs);
 }
 
 void p405_exception_data_store (p405_t *c, uint32_t ea, int store, int zone)
@@ -242,8 +244,9 @@ void p405_exception_data_store (p405_t *c, uint32_t ea, int store, int zone)
 	p405_set_srr (c, 0, p405_get_pc (c));
 	p405_set_srr (c, 1, p405_get_msr (c));
 
-	c->msr &= ~P405_EXCPT_MSR;
 	p405_set_dear (c, ea);
+
+	c->msr &= ~P405_EXCPT_MSR;
 	c->esr &= P405_ESR_MCI;
 
 	if (store) {
@@ -259,8 +262,9 @@ void p405_exception_data_store (p405_t *c, uint32_t ea, int store, int zone)
 
 void p405_exception_instr_store (p405_t *c, int zone)
 {
-	c->srr[0] = c->pc;
-	c->srr[1] = c->msr;
+	p405_set_srr (c, 0, p405_get_pc (c));
+	p405_set_srr (c, 1, p405_get_msr (c));
+
 	c->msr &= ~P405_EXCPT_MSR;
 	c->esr &= P405_ESR_MCI;
 
@@ -322,8 +326,9 @@ void p405_exception_tlb_miss_data (p405_t *c, uint32_t ea, int store)
 	p405_set_srr (c, 0, p405_get_pc (c));
 	p405_set_srr (c, 1, p405_get_msr (c));
 
+	p405_set_dear (c, ea);
+
 	c->msr &= ~P405_EXCPT_MSR;
-	c->dear = ea;
 	c->esr = (c->esr & P405_ESR_MCI) | ((store) ? P405_ESR_DST : 0);
 
 	p405_exception (c, 0x1100);
@@ -331,8 +336,8 @@ void p405_exception_tlb_miss_data (p405_t *c, uint32_t ea, int store)
 
 void p405_exception_tlb_miss_instr (p405_t *c)
 {
-	c->srr[0] = c->pc;
-	c->srr[1] = c->msr;
+	p405_set_srr (c, 0, p405_get_pc (c));
+	p405_set_srr (c, 1, p405_get_msr (c));
 
 	c->msr &= ~P405_EXCPT_MSR;
 
@@ -389,12 +394,12 @@ void p405_reset (p405_t *c)
 
 	c->interrupt = 0;
 
-	p405_tlb_init (&c->tlb);
-
 	c->delay = 1;
 
 	c->oprcnt = 0;
 	c->clkcnt = 0;
+
+	p405_tlb_init (&c->tlb);
 }
 
 void p405_execute (p405_t *c)
@@ -405,9 +410,11 @@ void p405_execute (p405_t *c)
 		return;
 	}
 
+#ifdef P405_LOG_OPCODE
 	if (c->log_opcode != NULL) {
 		c->log_opcode (c->log_ext, c->ir);
 	}
+#endif
 
 	op = (c->ir >> 26) & 0x3f;
 
@@ -424,7 +431,7 @@ void p405_execute (p405_t *c)
 
 void p405_clock_tb (p405_t *c, unsigned long n)
 {
-	c->tbl = (c->tbl + n) & 0xffffffffUL;
+	c->tbl = (c->tbl + n) & 0xffffffff;
 
 	if (c->tbl < n) {
 		c->tbu += 1;
@@ -453,12 +460,15 @@ void p405_clock_tb (p405_t *c, unsigned long n)
 void p405_clock (p405_t *c, unsigned long n)
 {
 	while (n >= c->delay) {
+#if P405_DEBUG
 		if (c->delay == 0) {
-			fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) p405_get_pc (c));
+			fprintf (stderr, "warning: delay == 0 at %08lx\n",
+				(unsigned long) p405_get_pc (c)
+			);
 			fflush (stderr);
 			c->delay = 1;
 		}
-
+#endif
 		n -= c->delay;
 
 		c->clkcnt += c->delay;
@@ -470,8 +480,10 @@ void p405_clock (p405_t *c, unsigned long n)
 		p405_execute (c);
 	}
 
-	c->clkcnt += n;
-	p405_clock_tb (c, n);
+	if (n > 0) {
+		c->clkcnt += n;
+		p405_clock_tb (c, n);
 
-	c->delay -= n;
+		c->delay -= n;
+	}
 }

@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/mmu.c                                       *
  * Created:       2003-11-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -35,11 +34,6 @@
 #include "ppc405.h"
 #include "internal.h"
 
-#define p405_tlb_match(ent, ea, pid) ( \
-		(((ent)->tlbhi & P405_TLBHI_V) != 0) && \
-		(((ea) & (ent)->mask) == (ent)->vaddr) && \
-		(((ent)->tid == 0) || ((ent)->tid == (pid))) )
-
 
 void p405_tlb_init (p405_tlb_t *tlb)
 {
@@ -64,6 +58,49 @@ void p405_tlb_init (p405_tlb_t *tlb)
 	}
 
 	tlb->first = &tlb->entry[0];
+
+	tlb->tbuf_exec = NULL;
+	tlb->tbuf_read = NULL;
+	tlb->tbuf_write = NULL;
+}
+
+void p405_tbuf_clear (p405_t *c)
+{
+	c->tlb.tbuf_exec = NULL;
+	c->tlb.tbuf_read = NULL;
+	c->tlb.tbuf_write = NULL;
+}
+
+static inline
+int p405_tlb_match (p405_tlbe_t *ent, uint32_t ea, uint32_t pid)
+{
+	if ((ent->tlbhi & P405_TLBHI_V) == 0) {
+		return (0);
+	}
+
+	if ((ea & ent->mask) != ent->vaddr) {
+		return (0);
+	}
+
+	if ((ent->tid != 0) && (ent->tid != pid)) {
+		return (0);
+	}
+
+	return (1);
+}
+
+static inline
+int p405_tlb_match_valid (p405_tlbe_t *ent, uint32_t ea, uint32_t pid)
+{
+	if ((ea & ent->mask) != ent->vaddr) {
+		return (0);
+	}
+
+	if ((ent->tid != 0) && (ent->tid != pid)) {
+		return (0);
+	}
+
+	return (1);
 }
 
 inline
@@ -130,11 +167,15 @@ void p405_set_tlb_entry_hi (p405_t *c, unsigned idx, uint32_t tlbhi, uint8_t pid
 	ent->mask = 0xfffffc00UL << (2 * p405_get_tlbe_size (ent));
 	ent->vaddr = tlbhi & ent->mask;
 	ent->endian = (tlbhi & P405_TLBHI_E) != 0;
+
+	p405_tbuf_clear (c);
 }
 
 void p405_set_tlb_entry_lo (p405_t *c, unsigned idx, uint32_t tlblo)
 {
 	c->tlb.entry[idx % P405_TLB_ENTRIES].tlblo = tlblo;
+
+	p405_tbuf_clear (c);
 }
 
 uint32_t p405_get_tlb_entry_hi (p405_t *c, unsigned idx)
@@ -160,36 +201,8 @@ void p405_tlb_invalidate_all (p405_t *c)
 	for (i = 0; i < P405_TLB_ENTRIES; i++) {
 		c->tlb.entry[i].tlbhi &= ~P405_TLBHI_V;
 	}
-}
 
-int p405_translate_read (p405_t *c, uint32_t *ea, int *e)
-{
-	p405_tlbe_t *ent;
-
-	if (p405_get_msr_dr (c)) {
-		ent = p405_get_tlb_entry_ea (c, *ea);
-		if (ent == NULL) {
-			p405_exception_tlb_miss_data (c, *ea, 0);
-			return (1);
-		}
-
-		if (p405_get_msr_pr (c)) {
-			switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
-				case 0x00:
-					/* no access */
-					p405_exception_data_store (c, *ea, 0, 1);
-					return (1);
-			}
-		}
-
-		*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
-		*e = ent->endian;
-	}
-	else {
-		*e = 0;
-	}
-
-	return (0);
+	p405_tbuf_clear (c);
 }
 
 int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat)
@@ -212,62 +225,114 @@ int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat)
 	return (0);
 }
 
+int p405_translate_read (p405_t *c, uint32_t *ea, int *e)
+{
+	p405_tlbe_t *ent;
+
+	if (p405_get_msr_dr (c) == 0) {
+		*e = 0;
+		return (0);
+	}
+
+	if (c->tlb.tbuf_read != NULL) {
+		ent = c->tlb.tbuf_read;
+		if (p405_tlb_match_valid (ent, *ea, c->pid)) {
+			*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+			*e = ent->endian;
+			return (0);
+		}
+	}
+
+	ent = p405_get_tlb_entry_ea (c, *ea);
+	if (ent == NULL) {
+		p405_exception_tlb_miss_data (c, *ea, 0);
+		return (1);
+	}
+
+	if (p405_get_msr_pr (c)) {
+		switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
+		case 0x00:
+			/* no access */
+			p405_exception_data_store (c, *ea, 0, 1);
+			return (1);
+		}
+	}
+
+	*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+	*e = ent->endian;
+
+	c->tlb.tbuf_read = ent;
+
+	return (0);
+}
+
 int p405_translate_write (p405_t *c, uint32_t *ea, int *e)
 {
 	p405_tlbe_t *ent;
 
-	if (p405_get_msr_dr (c)) {
-		ent = p405_get_tlb_entry_ea (c, *ea);
-		if (ent == NULL) {
-			p405_exception_tlb_miss_data (c, *ea, 1);
+	if (p405_get_msr_dr (c) == 0) {
+		*e = 0;
+		return (0);
+	}
+
+	if (c->tlb.tbuf_write != NULL) {
+		ent = c->tlb.tbuf_write;
+		if (p405_tlb_match_valid (ent, *ea, c->pid)) {
+			*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+			*e = ent->endian;
+			return (0);
+		}
+	}
+
+	ent = p405_get_tlb_entry_ea (c, *ea);
+	if (ent == NULL) {
+		p405_exception_tlb_miss_data (c, *ea, 1);
+		return (1);
+	}
+
+	if (p405_get_msr_pr (c)) {
+		switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
+		case 0x00:
+			/* no access */
+			p405_exception_data_store (c, *ea, 1, 1);
 			return (1);
-		}
 
-		if (p405_get_msr_pr (c)) {
-			switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
-				case 0x00:
-					/* no access */
-					p405_exception_data_store (c, *ea, 1, 1);
-					return (1);
-
-				case 0x01:
-				case 0x02:
-					/* use tlb bits */
-					if (p405_get_tlbe_wr (ent) == 0) {
-						p405_exception_data_store (c, *ea, 1, 0);
-						return (1);
-					}
-					break;
-
-				case 0x03:
-					/* full access */
-					break;
+		case 0x01:
+		case 0x02:
+			/* use tlb bits */
+			if (p405_get_tlbe_wr (ent) == 0) {
+				p405_exception_data_store (c, *ea, 1, 0);
+				return (1);
 			}
-		}
-		else {
-			switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
-				case 0x00:
-				case 0x01:
-					/* use tlb bits */
-					if (p405_get_tlbe_wr (ent) == 0) {
-						p405_exception_data_store (c, *ea, 1, 0);
-						return (1);
-					}
-					break;
+			break;
 
-				case 0x02:
-				case 0x03:
-					/* full access */
-					break;
-			}
+		case 0x03:
+			/* full access */
+			break;
 		}
-
-		*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
-		*e = ent->endian;
 	}
 	else {
-		*e = 0;
+		switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
+		case 0x00:
+		case 0x01:
+			/* use tlb bits */
+			if (p405_get_tlbe_wr (ent) == 0) {
+				p405_exception_data_store (c, *ea, 1, 0);
+				return (1);
+			}
+			break;
+
+		case 0x02:
+		case 0x03:
+			/* full access */
+			break;
+		}
 	}
+
+	*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+	*e = ent->endian;
+
+	c->tlb.tbuf_write = ent;
 
 	return (0);
 }
@@ -276,58 +341,69 @@ int p405_translate_exec (p405_t *c, uint32_t *ea, int *e)
 {
 	p405_tlbe_t *ent;
 
-	if (p405_get_msr_ir (c)) {
-		ent = p405_get_tlb_entry_ea (c, *ea);
-		if (ent == NULL) {
-			p405_exception_tlb_miss_instr (c);
+	if (p405_get_msr_ir (c) == 0) {
+		*e = 0;
+		return (0);
+	}
+
+	if (c->tlb.tbuf_exec != NULL) {
+		ent = c->tlb.tbuf_exec;
+		if (p405_tlb_match_valid (ent, *ea, c->pid)) {
+			*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+			*e = ent->endian;
+			return (0);
+		}
+	}
+
+	ent = p405_get_tlb_entry_ea (c, *ea);
+	if (ent == NULL) {
+		p405_exception_tlb_miss_instr (c);
+		return (1);
+	}
+
+	if (p405_get_msr_pr (c)) {
+		switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
+		case 0x00:
+			/* no access */
+			p405_exception_instr_store (c, 1);
 			return (1);
-		}
 
-		if (p405_get_msr_pr (c)) {
-			switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
-				case 0x00:
-					/* no access */
-					p405_exception_instr_store (c, 1);
-					return (1);
-
-				case 0x01:
-				case 0x02:
-					/* use tlb bits */
-					if (p405_get_tlbe_ex (ent) == 0) {
-						p405_exception_instr_store (c, 0);
-						return (1);
-					}
-					break;
-
-				case 0x03:
-					/* full access */
-					break;
+		case 0x01:
+		case 0x02:
+			/* use tlb bits */
+			if (p405_get_tlbe_ex (ent) == 0) {
+				p405_exception_instr_store (c, 0);
+				return (1);
 			}
-		}
-		else {
-			switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
-				case 0x00:
-				case 0x01:
-					/* use tlb bits */
-					if (p405_get_tlbe_ex (ent) == 0) {
-						p405_exception_instr_store (c, 0);
-						return (1);
-					}
-					break;
+			break;
 
-				case 0x02:
-				case 0x03:
-					/* full access */
-					break;
-			}
+		case 0x03:
+			/* full access */
+			break;
 		}
-
-		*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
-		*e = ent->endian;
 	}
 	else {
-		*e = 0;
+		switch (p405_get_zprf (c, p405_get_tlbe_zsel (ent))) {
+		case 0x00:
+		case 0x01:
+			/* use tlb bits */
+			if (p405_get_tlbe_ex (ent) == 0) {
+				p405_exception_instr_store (c, 0);
+				return (1);
+			}
+			break;
+
+		case 0x02:
+		case 0x03:
+			/* full access */
+			break;
+		}
 	}
+
+	*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+	*e = ent->endian;
+
+	c->tlb.tbuf_exec = ent;
 
 	return (0);
 }

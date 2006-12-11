@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/internal.h                                  *
  * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -42,6 +41,8 @@
  *****************************************************************************/
 
 void p405_tlb_init (p405_tlb_t *tlb);
+
+void p405_tbuf_clear (p405_t *c);
 
 void p405_set_tlb_entry_hi (p405_t *c, unsigned idx, uint32_t tlbhi, uint8_t pid);
 void p405_set_tlb_entry_lo (p405_t *c, unsigned idx, uint32_t tlblo);
