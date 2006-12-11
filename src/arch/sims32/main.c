@@ -67,7 +67,7 @@ void prt_version (void)
 	fputs (
 		"pce sims32 version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -82,7 +82,14 @@ void sig_int (int s)
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce: segmentation fault\n");
+
+	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
+		ss32_prt_state_cpu (par_sim->cpu, stderr);
+	}
+
 	fflush (stderr);
+
+	pce_set_fd_interactive (0, 1);
 
 	exit (1);
 }
@@ -317,7 +324,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce sims32 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);

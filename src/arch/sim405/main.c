@@ -73,7 +73,7 @@ void prt_version (void)
 	fputs (
 		"pce sim405 version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -92,10 +92,14 @@ void sig_segv (int s)
 	fprintf (stderr, "pce: segmentation fault\n");
 
 	if ((par_sim != NULL) && (par_sim->ppc != NULL)) {
-		fprintf (stderr, "  PC=%08lX\n", (unsigned long) p405_get_pc (par_sim->ppc));
+		fprintf (stderr, "  PC=%08lX\n",
+			(unsigned long) p405_get_pc (par_sim->ppc)
+		);
 	}
 
 	fflush (stderr);
+
+	pce_set_fd_interactive (0, 1);
 
 	exit (1);
 }
@@ -336,7 +340,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce sim405 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);

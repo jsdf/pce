@@ -174,37 +174,46 @@ int ppc_match_reg (cmd_t *cmd, sim405_t *sim, uint32_t **reg)
 void ppc_disasm_str (char *dst, p405_disasm_t *op)
 {
 	switch (op->argn) {
-		case 0:
-			sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
-			break;
+	case 0:
+		sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
+		break;
 
-		case 1:
-			sprintf (dst, "%08lX  %-8s %s", (unsigned long) op->ir, op->op, op->arg1);
-			break;
+	case 1:
+		sprintf (dst, "%08lX  %-8s %s",
+			(unsigned long) op->ir, op->op, op->arg1
+		);
+		break;
 
-		case 2:
-			sprintf (dst, "%08lX  %-8s %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2);
-			break;
+	case 2:
+		sprintf (dst, "%08lX  %-8s %s, %s",
+			(unsigned long) op->ir, op->op, op->arg1, op->arg2
+		);
+		break;
 
-		case 3:
-			sprintf (dst, "%08lX  %-8s %s, %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2, op->arg3);
-			break;
+	case 3:
+		sprintf (dst, "%08lX  %-8s %s, %s, %s",
+			(unsigned long) op->ir, op->op,
+			op->arg1, op->arg2, op->arg3
+		);
+		break;
 
-		case 4:
-			sprintf (dst, "%08lX  %-8s %s, %s, %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2, op->arg3, op->arg4);
-			break;
+	case 4:
+		sprintf (dst, "%08lX  %-8s %s, %s, %s, %s",
+			(unsigned long) op->ir, op->op,
+			op->arg1, op->arg2, op->arg3, op->arg4
+		);
+		break;
 
-		case 5:
-			sprintf (dst, "%08lX  %-8s %s, %s, %s, %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2, op->arg3, op->arg4, op->arg5);
-			break;
+	case 5:
+		sprintf (dst, "%08lX  %-8s %s, %s, %s, %s, %s",
+			(unsigned long) op->ir, op->op,
+			op->arg1, op->arg2, op->arg3, op->arg4, op->arg5
+		);
+		break;
 
-		default:
-			strcpy (dst, "---");
-			break;
+	default:
+		strcpy (dst, "---");
+		break;
 	}
 }
 
