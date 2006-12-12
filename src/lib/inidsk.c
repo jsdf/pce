@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/lib/inidsk.c                                           *
  * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -62,7 +61,7 @@ int dsk_insert (disks_t *dsks, const char *str)
 	drv = strtoul (buf, NULL, 0);
 	str = str + i + 1;
 
-	dsk = dsk_auto_open (str, 0);
+	dsk = dsk_auto_open (str, 0, 0);
 	if (dsk == NULL) {
 		return (1);
 	}
@@ -79,37 +78,38 @@ int dsk_insert (disks_t *dsks, const char *str)
 
 disk_t *ini_get_disk (ini_sct_t *sct)
 {
-	disk_t     *dsk, *cow;
-	ini_val_t  *val;
-	unsigned   drive;
-	unsigned   c, h, s;
-	unsigned   vc, vh, vs;
-	int        ro;
+	disk_t        *dsk, *cow;
+	ini_val_t     *val;
+	unsigned      drive;
+	unsigned long c, h, s;
+	unsigned long ofs;
+	unsigned long vc, vh, vs;
+	int           ro;
 	const char *type, *fname, *cowname;
 
-	drive = ini_get_lng_def (sct, "drive", 0);
-	type = ini_get_str_def (sct, "type", "auto");
+	ini_get_uint16 (sct, "drive", &drive, 0);
+	ini_get_string (sct, "type", &type, "auto");
 
-	fname = ini_get_str (sct, "file");
-	cowname = ini_get_str (sct, "cow");
+	ini_get_string (sct, "file", &fname, NULL);
+	ini_get_string (sct, "cow", &cowname, NULL);
 
-	c = ini_get_lng_def (sct, "c", 80);
-	h = ini_get_lng_def (sct, "h", 2);
-	s = ini_get_lng_def (sct, "s", 18);
-	vc = ini_get_lng_def (sct, "visible_c", 0);
-	vh = ini_get_lng_def (sct, "visible_h", 0);
-	vs = ini_get_lng_def (sct, "visible_s", 0);
+	ini_get_uint32 (sct, "offset", &ofs, 0);
 
-	ro = ini_get_lng_def (sct, "readonly", 0);
+	ini_get_uint32 (sct, "c", &c, 80);
+	ini_get_uint32 (sct, "h", &h, 2);
+	ini_get_uint32 (sct, "s", &s, 18);
+
+	ini_get_uint32 (sct, "visible_c", &vc, 0);
+	ini_get_uint32 (sct, "visible_h", &vh, 0);
+	ini_get_uint32 (sct, "visible_s", &vs, 0);
+
+	ini_get_sint16 (sct, "readonly", &ro, 0);
 
 	if (strcmp (type, "ram") == 0) {
 		dsk = dsk_ram_open (fname, c, h, s, ro);
 	}
 	else if (strcmp (type, "image") == 0) {
-		dsk = dsk_img_open (fname, c, h, s, ro);
-		if (dsk != NULL) {
-			dsk_img_set_offset (dsk, ini_get_lng_def (sct, "offset", 0));
-		}
+		dsk = dsk_img_open (fname, c, h, s, ofs, ro);
 	}
 	else if (strcmp (type, "dosemu") == 0) {
 		dsk = dsk_dosemu_open (fname, ro);
@@ -145,7 +145,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		}
 	}
 	else if (strcmp (type, "auto") == 0) {
-		dsk = dsk_auto_open (fname, ro);
+		dsk = dsk_auto_open (fname, ofs, ro);
 	}
 	else {
 		dsk = NULL;
@@ -171,7 +171,10 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		cow = dsk_cow_new (dsk, cowname);
 
 		if (cow == NULL) {
-			pce_log (MSG_ERR, "*** loading drive 0x%02x failed (cow)\n", drive);
+			pce_log (MSG_ERR,
+				"*** loading drive 0x%02x failed (cow)\n",
+				drive
+			);
 			dsk_del (dsk);
 			return (NULL);
 		}

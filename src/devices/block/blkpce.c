@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.c                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -146,6 +145,7 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
+	/* format version */
 	if (dsk_get_uint32_be (buf, 4) != 0) {
 		return (NULL);
 	}
@@ -212,7 +212,8 @@ disk_t *dsk_pce_open (const char *fname, int ro)
 	return (dsk);
 }
 
-int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
+int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs)
 {
 	uint32_t      n;
 	unsigned char buf[32];
@@ -222,9 +223,13 @@ int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
 		return (1);
 	}
 
+	if (ofs < 32) {
+		ofs = 512;
+	}
+
 	dsk_set_uint32_be (buf, 0, DSK_PCE_MAGIC);
 	dsk_set_uint32_be (buf, 4, 0);
-	dsk_set_uint32_be (buf, 8, 128);
+	dsk_set_uint32_be (buf, 8, ofs);
 	dsk_set_uint32_be (buf, 12, n);
 	dsk_set_uint32_be (buf, 16, c);
 	dsk_set_uint32_be (buf, 20, h);
@@ -236,24 +241,25 @@ int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
 	}
 
 	buf[0] = 0;
-	if (dsk_write (fp, buf, 128 + 512 * (uint64_t) n - 1, 1)) {
+	if (dsk_write (fp, buf, ofs + 512 * (uint64_t) n - 1, 1)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
+int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs)
 {
 	int  r;
 	FILE *fp;
 
-	fp = fopen (fname, "w+b");
+	fp = fopen (fname, "wb");
 	if (fp == NULL) {
 		return (1);
 	}
 
-	r = dsk_pce_create_fp (fp, c, h, s);
+	r = dsk_pce_create_fp (fp, c, h, s, ofs);
 
 	fclose (fp);
 

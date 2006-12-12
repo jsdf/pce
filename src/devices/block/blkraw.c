@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-12 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -89,7 +88,8 @@ void dsk_img_del (disk_t *dsk)
 	free (img);
 }
 
-disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s, int ro)
+disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs, int ro)
 {
 	disk_img_t *img;
 
@@ -106,14 +106,15 @@ disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s, int ro)
 	img->dsk.read = dsk_img_read;
 	img->dsk.write = dsk_img_write;
 
-	img->start = 0;
+	img->start = ofs;
 
 	img->fp = fp;
 
 	return (&img->dsk);
 }
 
-disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro)
+disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs, int ro)
 {
 	disk_t *dsk;
 	FILE   *fp;
@@ -129,7 +130,7 @@ disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int
 		return (NULL);
 	}
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ro);
+	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -139,13 +140,13 @@ disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int
 	return (dsk);
 }
 
-disk_t *dsk_dosimg_open_fp (FILE *fp, int ro)
+disk_t *dsk_dosimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
 	unsigned char buf[512];
 	uint32_t      c, h, s, n;
 	disk_t        *dsk;
 
-	if (dsk_read (fp, buf, 0, 512)) {
+	if (dsk_read (fp, buf, ofs, 512)) {
 		return (NULL);
 	}
 
@@ -169,12 +170,12 @@ disk_t *dsk_dosimg_open_fp (FILE *fp, int ro)
 	s = dsk_get_uint16_le (buf, 24);
 	c = n / (h * s);
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ro);
+	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
 
 	return (dsk);
 }
 
-disk_t *dsk_dosimg_open (const char *fname, int ro)
+disk_t *dsk_dosimg_open (const char *fname, uint64_t ofs, int ro)
 {
 	disk_t *dsk;
 	FILE   *fp;
@@ -190,7 +191,7 @@ disk_t *dsk_dosimg_open (const char *fname, int ro)
 		return (NULL);
 	}
 
-	dsk = dsk_dosimg_open_fp (fp, ro);
+	dsk = dsk_dosimg_open_fp (fp, ofs, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -200,7 +201,7 @@ disk_t *dsk_dosimg_open (const char *fname, int ro)
 	return (dsk);
 }
 
-disk_t *dsk_mbrimg_open_fp (FILE *fp, int ro)
+disk_t *dsk_mbrimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
 	unsigned      i;
 	unsigned char *p;
@@ -210,7 +211,7 @@ disk_t *dsk_mbrimg_open_fp (FILE *fp, int ro)
 	uint32_t      tc2, th2, ts2;
 	disk_t        *dsk;
 
-	if (dsk_read (fp, buf, 0, 512)) {
+	if (dsk_read (fp, buf, ofs, 512)) {
 		return (NULL);
 	}
 
@@ -277,12 +278,12 @@ disk_t *dsk_mbrimg_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ro);
+	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
 
 	return (dsk);
 }
 
-disk_t *dsk_mbrimg_open (const char *fname, int ro)
+disk_t *dsk_mbrimg_open (const char *fname, uint64_t ofs, int ro)
 {
 	disk_t *dsk;
 	FILE   *fp;
@@ -298,7 +299,7 @@ disk_t *dsk_mbrimg_open (const char *fname, int ro)
 		return (NULL);
 	}
 
-	dsk = dsk_mbrimg_open_fp (fp, ro);
+	dsk = dsk_mbrimg_open_fp (fp, ofs, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -308,7 +309,7 @@ disk_t *dsk_mbrimg_open (const char *fname, int ro)
 	return (dsk);
 }
 
-disk_t *dsk_fdimg_open_fp (FILE *fp, int ro)
+disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
 	uint64_t cnt;
 
@@ -316,36 +317,40 @@ disk_t *dsk_fdimg_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
-	switch (cnt) {
-		case 160UL * 1024UL:
-			return (dsk_img_open_fp (fp, 40, 1, 8, ro));
+	if (cnt <= ofs) {
+		return (NULL);
+	}
 
-		case 180UL * 1024UL:
-			return (dsk_img_open_fp (fp, 40, 1, 9, ro));
+	switch (cnt - ofs) {
+	case 160UL * 1024UL:
+		return (dsk_img_open_fp (fp, 40, 1, 8, ofs, ro));
 
-		case 320UL * 1024UL:
-			return (dsk_img_open_fp (fp, 40, 2, 8, ro));
+	case 180UL * 1024UL:
+		return (dsk_img_open_fp (fp, 40, 1, 9, ofs, ro));
 
-		case 360UL * 1024UL:
-			return (dsk_img_open_fp (fp, 40, 2, 9, ro));
+	case 320UL * 1024UL:
+		return (dsk_img_open_fp (fp, 40, 2, 8, ofs, ro));
 
-		case 720UL * 1024UL:
-			return (dsk_img_open_fp (fp, 80, 2, 9, ro));
+	case 360UL * 1024UL:
+		return (dsk_img_open_fp (fp, 40, 2, 9, ofs, ro));
 
-		case 1200UL * 1024UL:
-			return (dsk_img_open_fp (fp, 80, 2, 15, ro));
+	case 720UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 2, 9, ofs, ro));
 
-		case 1440UL * 1024UL:
-			return (dsk_img_open_fp (fp, 80, 2, 18, ro));
+	case 1200UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 2, 15, ofs, ro));
 
-		case 2880UL * 1024UL:
-			return (dsk_img_open_fp (fp, 80, 2, 36, ro));
+	case 1440UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 2, 18, ofs, ro));
+
+	case 2880UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 2, 36, ofs, ro));
 	}
 
 	return (NULL);
 }
 
-disk_t *dsk_fdimg_open (const char *fname, int ro)
+disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro)
 {
 	disk_t *dsk;
 	FILE   *fp;
@@ -361,7 +366,7 @@ disk_t *dsk_fdimg_open (const char *fname, int ro)
 		return (NULL);
 	}
 
-	dsk = dsk_fdimg_open_fp (fp, ro);
+	dsk = dsk_fdimg_open_fp (fp, ofs, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -380,36 +385,37 @@ void dsk_img_set_offset (disk_t *dsk, uint64_t ofs)
 	img->start = ofs;
 }
 
-int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
+int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs)
 {
 	uint64_t      cnt;
 	unsigned char buf;
 
-	cnt = 512 * (uint64_t) (c * h * s);
+	cnt = 512 * (uint64_t) c * (uint64_t) h * (uint64_t) s;
 	if (cnt == 0) {
 		return (1);
 	}
 
 	buf = 0;
 
-	if (dsk_write (fp, &buf, cnt - 1, 1)) {
+	if (dsk_write (fp, &buf, ofs + cnt - 1, 1)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
+int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s, uint64_t ofs)
 {
 	int  r;
 	FILE *fp;
 
-	fp = fopen (fname, "w+b");
+	fp = fopen (fname, "wb");
 	if (fp == NULL) {
 		return (1);
 	}
 
-	r = dsk_img_create_fp (fp, c, h, s);
+	r = dsk_img_create_fp (fp, c, h, s, ofs);
 
 	fclose (fp);
 

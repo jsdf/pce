@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.h                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -138,10 +137,12 @@ uint32_t dsk_get_block_cnt (const disk_t *dsk);
 /*!***************************************************************************
  * @short  Open a disk image
  * @param  fname The disk image file name
- * @param  ro Open read-only if true
+ * @param  ofs   For raw images, the image data start offset. Not used for
+ *               other image formats.
+ * @param  ro    Open read-only if true
  * @return A new disk image structure
  *****************************************************************************/
-disk_t *dsk_auto_open (const char *fname, int ro);
+disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro);
 
 
 /*!***************************************************************************

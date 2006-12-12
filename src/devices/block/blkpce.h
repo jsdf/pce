@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.h                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-01-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -56,8 +55,11 @@ typedef struct {
 disk_t *dsk_pce_open_fp (FILE *fp, int ro);
 disk_t *dsk_pce_open (const char *fname, int ro);
 
-int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s);
-int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s);
+int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs);
+
+int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs);
 
 
 #endif

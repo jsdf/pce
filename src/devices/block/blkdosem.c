@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkdosem.c                               *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -93,7 +92,7 @@ void dsk_dosemu_del (disk_t *dsk)
 disk_t *dsk_dosemu_open_fp (FILE *fp, int ro)
 {
 	disk_dosemu_t *img;
-	unsigned char buf[64];
+	unsigned char buf[32];
 	uint32_t      c, h, s;
 	uint64_t      start;
 
@@ -160,38 +159,42 @@ disk_t *dsk_dosemu_open (const char *fname, int ro)
 	return (dsk);
 }
 
-int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s)
+int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs)
 {
 	uint64_t      cnt;
-	unsigned char buf[128];
+	unsigned char buf[32];
 
-	cnt = 512 * (uint64_t) (c * h * s);
+	cnt = 512 * (uint64_t) c * (uint64_t) h * (uint64_t) s;
 	if (cnt == 0) {
 		return (1);
 	}
 
-	memset (buf, 0, 128);
+	if (ofs < 23) {
+		ofs = 128;
+	}
 
 	memcpy (buf, "DOSEMU\x00", 7);
 
 	dsk_set_uint32_le (buf, 7, h);
 	dsk_set_uint32_le (buf, 11, s);
 	dsk_set_uint32_le (buf, 15, c);
-	dsk_set_uint32_le (buf, 19, 128);
+	dsk_set_uint32_le (buf, 19, ofs);
 
-	if (dsk_write (fp, buf, 0, 128)) {
+	if (dsk_write (fp, buf, 0, 23)) {
 		return (1);
 	}
 
 	buf[0] = 0;
-	if (dsk_write (fp, buf, 128 + cnt - 1, 1)) {
+	if (dsk_write (fp, buf, ofs + cnt - 1, 1)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
+int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs)
 {
 	int  r;
 	FILE *fp;
@@ -201,7 +204,7 @@ int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s)
 		return (1);
 	}
 
-	r = dsk_dosemu_create_fp (fp, c, h, s);
+	r = dsk_dosemu_create_fp (fp, c, h, s, ofs);
 
 	fclose (fp);
 
