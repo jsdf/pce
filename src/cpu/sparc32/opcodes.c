@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/opcodes.c                                  *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-10-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -338,7 +337,7 @@ void op20a (sparc32_t *c)
 	s32_set_rd (c, c->ir, d & 0xffffffffUL);
 	s32_set_y (c, (d >> 32) & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 19);
 }
 
 /* 2 0B: smul rs1, reg_or_imm, rd */
@@ -371,7 +370,7 @@ void op20b (sparc32_t *c)
 	s32_set_rd (c, c->ir, d & 0xffffffffUL);
 	s32_set_y (c, (d >> 32) & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 19);
 }
 
 /* 2 0C: subx rs1, reg_or_imm, rd */
@@ -415,7 +414,7 @@ void op20e (sparc32_t *c)
 
 	s32_set_rd (c, c->ir, d & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 39);
 }
 
 /* 2 0F: sdiv rs1, reg_or_imm, rd */
@@ -463,7 +462,7 @@ void op20f (sparc32_t *c)
 
 	s32_set_rd (c, c->ir, d & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 39);
 }
 
 /* 2 10: addcc rs1, reg_or_imm, rd */
@@ -657,7 +656,7 @@ void op21a (sparc32_t *c)
 
 	s32_set_icc_log (c, d & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 19);
 }
 
 /* 2 1B: smulcc rs1, reg_or_imm, rd */
@@ -692,7 +691,7 @@ void op21b (sparc32_t *c)
 
 	s32_set_icc_log (c, d & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 19);
 }
 
 /* 2 1C: subxcc rs1, reg_or_imm, rd */
@@ -752,7 +751,7 @@ void op21e (sparc32_t *c)
 
 	s32_set_rd (c, c->ir, d & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 39);
 }
 
 /* 2 1F: sdivcc rs1, reg_or_imm, rd */
@@ -807,7 +806,7 @@ void op21f (sparc32_t *c)
 	s32_set_icc_log (c, d & 0xffffffffUL);
 	s32_set_psr_v (c, of);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 39);
 }
 
 /* 2 20: taddcc rs1, reg_or_imm, rd */
@@ -1229,7 +1228,7 @@ void op238 (sparc32_t *c)
 
 	s32_set_rd (c, c->ir, s32_get_pc (c));
 
-	s32_set_clk (c, 0, 1);
+	s32_set_clk (c, 0, 2);
 	s32_set_npc (c, d);
 }
 
@@ -1448,7 +1447,7 @@ void op303 (sparc32_t *c)
 	s32_set_reg (c, rd + 0, val1 & 0xffffffffUL);
 	s32_set_reg (c, rd + 1, val2 & 0xffffffffUL);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 2);
 }
 
 /* 3 04: st rd, [rs1 + reg_or_imm] */
@@ -1523,15 +1522,15 @@ void op307 (sparc32_t *c)
 		return;
 	}
 
-	if (s32_dstore16 (c, addr, c->asi_data, s32_get_reg (c, rd))) {
+	if (s32_dstore32 (c, addr, c->asi_data, s32_get_reg (c, rd))) {
 		return;
 	}
 
-	if (s32_dstore16 (c, addr + 4, c->asi_data, s32_get_reg (c, rd + 1))) {
+	if (s32_dstore32 (c, addr + 4, c->asi_data, s32_get_reg (c, rd + 1))) {
 		return;
 	}
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 2);
 }
 
 /* 3 09: ldsb [rs1 + reg_or_imm], rd */
@@ -1620,7 +1619,7 @@ void op30f (sparc32_t *c)
 
 	s32_set_rd (c, c->ir, val);
 
-	s32_set_clk (c, 4, 1);
+	s32_set_clk (c, 4, 2);
 }
 
 /* 3 10: lda [rs1 + rs2]asi, rd */
