@@ -862,29 +862,6 @@ void do_key (cmd_t *cmd, sim405_t *sim)
 }
 
 static
-void do_m (cmd_t *cmd, sim405_t *sim)
-{
-	char msg[256];
-	char val[256];
-
-	if (!cmd_match_str (cmd, msg, 256)) {
-		strcpy (msg, "");
-	}
-
-	if (!cmd_match_str (cmd, val, 256)) {
-		strcpy (val, "");
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (s405_set_msg (sim, msg, val)) {
-		printf ("error\n");
-	}
-}
-
-static
 void do_p (cmd_t *cmd, sim405_t *sim)
 {
 	unsigned long cnt;
@@ -1155,41 +1132,27 @@ void do_u (cmd_t *cmd, sim405_t *sim)
 }
 
 static
-void do_v (cmd_t *cmd)
-{
-	unsigned long val;
-
-	while (cmd_match_uint32 (cmd, &val)) {
-		printf ("%lX\n", val);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-}
-
-static
 void do_x (cmd_t *cmd, sim405_t *sim)
 {
 	unsigned xlat;
 
 	if (cmd_match_eol (cmd)) {
 		switch (par_xlat) {
-			case P405_XLAT_CPU:
-				printf ("xlat cpu\n");
-				break;
+		case P405_XLAT_CPU:
+			printf ("xlat cpu\n");
+			break;
 
-			case P405_XLAT_REAL:
-				printf ("xlat real\n");
-				break;
+		case P405_XLAT_REAL:
+			printf ("xlat real\n");
+			break;
 
-			case P405_XLAT_VIRTUAL:
-				printf ("xlat virtual\n");
-				break;
+		case P405_XLAT_VIRTUAL:
+			printf ("xlat virtual\n");
+			break;
 
-			default:
-				printf ("xlat unknown\n");
-				break;
+		default:
+			printf ("xlat unknown\n");
+			break;
 		}
 
 		return;
@@ -1216,7 +1179,7 @@ void do_x (cmd_t *cmd, sim405_t *sim)
 	par_xlat = xlat;
 }
 
-int ppc_do_cmd (cmd_t *cmd, sim405_t *sim)
+int ppc_do_cmd (sim405_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
 		do_b (cmd, sim);
@@ -1239,9 +1202,6 @@ int ppc_do_cmd (cmd_t *cmd, sim405_t *sim)
 	else if (cmd_match (cmd, "key")) {
 		do_key (cmd, sim);
 	}
-	else if (cmd_match (cmd, "m")) {
-		do_m (cmd, sim);
-	}
 	else if (cmd_match (cmd, "p")) {
 		do_p (cmd, sim);
 	}
@@ -1263,14 +1223,10 @@ int ppc_do_cmd (cmd_t *cmd, sim405_t *sim)
 	else if (cmd_match (cmd, "u")) {
 		do_u (cmd, sim);
 	}
-	else if (cmd_match (cmd, "v")) {
-		do_v (cmd);
-	}
 	else if (cmd_match (cmd, "x")) {
 		do_x (cmd, sim);
 	}
 	else {
-		cmd_error (cmd, "unknown command");
 		return (1);
 	}
 

@@ -48,6 +48,9 @@ simarm_t *par_sim = NULL;
 unsigned par_sig_int = 0;
 
 
+static monitor_t par_mon;
+
+
 static
 void prt_help (void)
 {
@@ -172,34 +175,6 @@ void pce_run (void)
 	}
 
 	pce_stop();
-}
-
-static
-int do_cmd (simarm_t *sim)
-{
-	cmd_t cmd;
-
-	while (1) {
-		pce_prt_prompt (stdout, NULL);
-
-		cmd_get (&cmd);
-
-		if (cmd_match_eol (&cmd)) {
-			;
-		}
-		else if (cmd_match (&cmd, "q")) {
-			break;
-		}
-		else {
-			sarm_do_cmd (&cmd, sim);
-		}
-
-		if (sim->brk == PCE_BRK_ABORT) {
-			break;
-		}
-	};
-
-	return (0);
 }
 
 static
@@ -336,17 +311,25 @@ int main (int argc, char *argv[])
 
 	sarm_reset (par_sim);
 
+	mon_init (&par_mon);
+	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
+	mon_set_msg_fct (&par_mon, sarm_set_msg, NULL, par_sim);
+
 	if (run) {
 		pce_run();
 		if (par_sim->brk != 2) {
 			fputs ("\n", stdout);
-			do_cmd (par_sim);
 		}
 	}
 	else {
 		pce_log (MSG_INF, "type 'h' for help\n");
-		do_cmd (par_sim);
 	}
+
+	if (par_sim->brk != 2) {
+		mon_run (&par_mon);
+	}
+
+	mon_free (&par_mon);
 
 	sarm_del (par_sim);
 

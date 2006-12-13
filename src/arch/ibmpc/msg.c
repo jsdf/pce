@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-11-15 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -47,6 +46,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 	}
 	else if (msg_is_message ("emu.exit", msg)) {
 		pc->brk = PCE_BRK_ABORT;
+		mon_set_terminate (&par_mon, 1);
 		return (0);
 	}
 	else if (msg_is_message ("emu.pause", msg)) {

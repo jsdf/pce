@@ -41,7 +41,5 @@ int pce_fd_readable (int fd, int t);
 
 void pce_prt_sep (FILE *fp, const char *str, ...);
 
-void pce_prt_prompt (FILE *fp, const char *str);
-
 
 #endif

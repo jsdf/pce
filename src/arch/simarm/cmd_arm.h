@@ -37,6 +37,6 @@ void sarm_prt_state_timer (ixp_timer_t *tmr, FILE *fp);
 void sarm_prt_state_intc (simarm_t *sim, FILE *fp);
 void sarm_prt_state_mem (simarm_t *sim, FILE *fp);
 
-int sarm_do_cmd (cmd_t *cmd, simarm_t *sim);
+int sarm_do_cmd (simarm_t *sim, cmd_t *cmd);
 
 void sarm_cmd_init (simarm_t *sim);

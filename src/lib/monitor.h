@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sims32/main.h                                     *
- * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:     src/lib/monitor.h                                          *
+ * Created:       2006-12-13 by Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,41 +22,37 @@
 /* $Id$ */
 
 
-#ifndef PCE_SIMS32_MAIN_H
-#define PCE_SIMS32_MAIN_H 1
+#ifndef PCE_LIB_MONITOR_H
+#define PCE_LIB_MONITOR_H 1
 
-
-#include <config.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include <lib/cmd.h>
-#include <lib/console.h>
-#include <lib/monitor.h>
-
-#include "sims32.h"
-#include "sercons.h"
-#include "cmd_s32.h"
 
 
-extern int      par_verbose;
+typedef struct {
+	void *cmdext;
+	int  (*docmd) (void *ext, cmd_t *cmd);
 
-extern unsigned par_xlat;
+	void *msgext;
+	int  (*setmsg) (void *ext, const char *msg, const char *val);
+	int  (*getmsg) (void *ext, const char *msg, char *val, unsigned max);
 
-extern sims32_t *par_sim;
+	char terminate;
+} monitor_t;
 
-extern unsigned par_sig_int;
 
+void mon_init (monitor_t *mon);
+void mon_free (monitor_t *mon);
 
-void prt_sep (FILE *fp, const char *str, ...);
+monitor_t *mon_new (void);
+void mon_del (monitor_t *mon);
 
-void prt_state (sims32_t *sim, FILE *fp, const char *str);
+void mon_set_cmd_fct (monitor_t *mon, void *fct, void *ext);
+void mon_set_msg_fct (monitor_t *mon, void *set, void *get, void *ext);
 
-void pce_start (void);
-void pce_stop (void);
-void pce_run (void);
+void mon_set_terminate (monitor_t *mon, int val);
+
+int mon_run (monitor_t *mon);
 
 
 #endif

@@ -40,6 +40,11 @@ unsigned  par_sig_int = 0;
 
 static breakpoint_t *breakpoint = NULL;
 
+static monitor_t    par_mon;
+
+
+void prt_state_cpu (e6502_t *c, FILE *fp);
+
 
 static
 void prt_help (void)
@@ -80,7 +85,14 @@ void sig_int (int s)
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce-sim6502: segmentation fault\n");
+
+	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
+		prt_state_cpu (par_sim->cpu, stderr);
+	}
+
 	fflush (stderr);
+
+	pce_set_fd_interactive (0, 1);
 
 	exit (1);
 }
@@ -824,81 +836,47 @@ void do_u (cmd_t *cmd, sim6502_t *sim)
 }
 
 static
-void do_v (cmd_t *cmd)
+int s6502_do_cmd (sim6502_t *sim, cmd_t *cmd)
 {
-	unsigned long val;
-
-	while (cmd_match_uint32 (cmd, &val)) {
-		printf ("%lX\n", val);
+	if (cmd_match (cmd, "b")) {
+		do_b (cmd, sim);
 	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
+	else if (cmd_match (cmd, "c")) {
+		do_c (cmd, sim);
 	}
-}
-
-int do_cmd (sim6502_t *sim)
-{
-	cmd_t cmd;
-
-	while (1) {
-		pce_prt_prompt (stdout, NULL);
-
-		cmd_get (&cmd);
-
-		if (cmd_match_eol (&cmd)) {
-			;
-		}
-		else if (cmd_match (&cmd, "q")) {
-			break;
-		}
-		else if (cmd_match (&cmd, "b")) {
-			do_b (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "c")) {
-			do_c (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "dump")) {
-			do_dump (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "d")) {
-			do_d (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "e")) {
-			do_e (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "g")) {
-			do_g (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "h")) {
-			do_h (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "p")) {
-			do_p (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "r")) {
-			do_r (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "s")) {
-			do_s (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "t")) {
-			do_t (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "u")) {
-			do_u (&cmd, sim);
-		}
-		else if (cmd_match (&cmd, "v")) {
-			do_v (&cmd);
-		}
-		else {
-			printf ("unknown command (%s)\n", cmd_get_str (&cmd));
-		}
-
-		if (sim->brk == PCE_BRK_ABORT) {
-			break;
-		}
-	};
+	else if (cmd_match (cmd, "dump")) {
+		do_dump (cmd, sim);
+	}
+	else if (cmd_match (cmd, "d")) {
+		do_d (cmd, sim);
+	}
+	else if (cmd_match (cmd, "e")) {
+		do_e (cmd, sim);
+	}
+	else if (cmd_match (cmd, "g")) {
+		do_g (cmd, sim);
+	}
+	else if (cmd_match (cmd, "h")) {
+		do_h (cmd, sim);
+	}
+	else if (cmd_match (cmd, "p")) {
+		do_p (cmd, sim);
+	}
+	else if (cmd_match (cmd, "r")) {
+		do_r (cmd, sim);
+	}
+	else if (cmd_match (cmd, "s")) {
+		do_s (cmd, sim);
+	}
+	else if (cmd_match (cmd, "t")) {
+		do_t (cmd, sim);
+	}
+	else if (cmd_match (cmd, "u")) {
+		do_u (cmd, sim);
+	}
+	else {
+		return (1);
+	}
 
 	return (0);
 }
@@ -1001,7 +979,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce sim6502 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2004 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -1034,17 +1012,25 @@ int main (int argc, char *argv[])
 
 	s6502_reset (par_sim);
 
+	mon_init (&par_mon);
+	mon_set_cmd_fct (&par_mon, s6502_do_cmd, par_sim);
+	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
+
 	if (run) {
 		pce_run (par_sim);
 		if (par_sim->brk != 2) {
 			fputs ("\n", stdout);
-			do_cmd (par_sim);
 		}
 	}
 	else {
 		pce_log (MSG_INF, "type 'h' for help\n");
-		do_cmd (par_sim);
 	}
+
+	if (par_sim->brk != 2) {
+		mon_run (&par_mon);
+	}
+
+	mon_free (&par_mon);
 
 	s6502_del (par_sim);
 

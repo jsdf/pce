@@ -173,34 +173,6 @@ void pce_run (void)
 	pce_stop();
 }
 
-
-int do_cmd (sim405_t *sim)
-{
-	cmd_t cmd;
-
-	while (1) {
-		pce_prt_prompt (stdout, NULL);
-
-		cmd_get (&cmd);
-
-		if (cmd_match_eol (&cmd)) {
-			;
-		}
-		else if (cmd_match (&cmd, "q")) {
-			break;
-		}
-		else {
-			ppc_do_cmd (&cmd, sim);
-		}
-
-		if (sim->brk == PCE_BRK_ABORT) {
-			break;
-		}
-	};
-
-	return (0);
-}
-
 static
 ini_sct_t *pce_load_config (const char *fname)
 {
@@ -245,6 +217,7 @@ int main (int argc, char *argv[])
 	int       run;
 	char      *cfg;
 	ini_sct_t *ini, *sct;
+	monitor_t mon;
 
 	if (argc == 2) {
 		if (str_isarg1 (argv[1], "--help")) {
@@ -336,17 +309,21 @@ int main (int argc, char *argv[])
 
 	s405_reset (par_sim);
 
+	mon_init (&mon);
+	mon_set_cmd_fct (&mon, ppc_do_cmd, par_sim);
+	mon_set_msg_fct (&mon, s405_set_msg, NULL, par_sim);
+
 	if (run) {
 		pce_run();
 		if (par_sim->brk != 2) {
 			fputs ("\n", stdout);
-			do_cmd (par_sim);
 		}
 	}
 	else {
 		pce_log (MSG_INF, "type 'h' for help\n");
-		do_cmd (par_sim);
 	}
+
+	mon_run (&mon);
 
 	s405_del (par_sim);
 

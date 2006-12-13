@@ -29,6 +29,6 @@ void ss32_dasm_str (char *dst, s32_dasm_t *op);
 void ss32_prt_state_cpu (sparc32_t *c, FILE *fp);
 void ss32_prt_state_mem (sims32_t *sim, FILE *fp);
 
-int ss32_do_cmd (cmd_t *cmd, sims32_t *sim);
+int ss32_do_cmd (sims32_t *sim, cmd_t *cmd);
 
 void ss32_cmd_init (sims32_t *sim);

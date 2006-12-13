@@ -107,16 +107,3 @@ void pce_prt_sep (FILE *fp, const char *str, ...)
 
 	fputs ("\n", fp);
 }
-
-void pce_prt_prompt (FILE *fp, const char *str)
-{
-	/* reset terminal colors */
-	fputs ("\x1b[0;37;40m", fp);
-
-	if (str == NULL) {
-		str = "-";
-	}
-
-	fputs (str, fp);
-	fflush (fp);
-}

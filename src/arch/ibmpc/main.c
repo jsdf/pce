@@ -35,6 +35,8 @@ char                      *par_video = NULL;
 char                      *par_cpu = NULL;
 unsigned long             par_int28 = 10000;
 
+monitor_t                 par_mon;
+
 ibmpc_t                   *par_pc = NULL;
 
 ini_sct_t                 *par_cfg = NULL;
@@ -44,6 +46,7 @@ static unsigned           par_boot = 128;
 static unsigned           pce_last_int = 0;
 
 static ibmpc_t            *pc;
+
 
 
 static
@@ -1162,68 +1165,6 @@ void do_key (cmd_t *cmd)
 }
 
 static
-void do_ms (cmd_t *cmd)
-{
-	char msg[256];
-	char val[256];
-
-	if (!cmd_match_str (cmd, msg, 256)) {
-		strcpy (msg, "");
-	}
-
-	if (!cmd_match_str (cmd, val, 256)) {
-		strcpy (val, "");
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pc_set_msg (pc, msg, val)) {
-		printf ("error\n");
-	}
-}
-
-static
-void do_mg (cmd_t *cmd)
-{
-	char msg[256];
-	char val[256];
-
-	if (!cmd_match_str (cmd, msg, 256)) {
-		strcpy (msg, "");
-	}
-
-	if (!cmd_match_str (cmd, val, 256)) {
-		strcpy (val, "");
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pc_get_msg (pc, msg, val, 256)) {
-		printf ("error\n");
-	}
-
-	printf ("%s\n", val);
-}
-
-static
-void do_m (cmd_t *cmd)
-{
-	if (cmd_match (cmd, "s")) {
-		do_ms (cmd);
-	}
-	else if (cmd_match (cmd, "g")) {
-		do_mg (cmd);
-	}
-	else {
-		do_ms (cmd);
-	}
-}
-
-static
 void do_o (cmd_t *cmd)
 {
 	int            word;
@@ -1623,20 +1564,6 @@ void do_u (cmd_t *cmd)
 }
 
 static
-void do_v (cmd_t *cmd)
-{
-	unsigned long val;
-
-	while (cmd_match_uint32 (cmd, &val)) {
-		printf ("%lX\n", val);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-}
-
-static
 void do_w (cmd_t *cmd)
 {
 	unsigned short seg, ofs;
@@ -1685,108 +1612,84 @@ void do_w (cmd_t *cmd)
 }
 
 static
-int do_cmd (ibmpc_t *pc)
+int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 {
-	cmd_t  cmd;
+	if (pc->trm != NULL) {
+		trm_check (pc->trm);
+	}
 
-	while (1) {
-		pce_prt_prompt (stdout, NULL);
-
-		cmd_get (&cmd);
-
-		if (pc->trm != NULL) {
-			trm_check (pc->trm);
-		}
-
-		if (cmd_match (&cmd, "boot")) {
-			do_boot (&cmd);
-		}
-		else if (cmd_match (&cmd, "b")) {
-			do_b (&cmd);
-		}
-		else if (cmd_match (&cmd, "c")) {
-			do_c (&cmd);
-		}
-		else if (cmd_match (&cmd, "dump")) {
-			do_dump (&cmd);
-		}
-		else if (cmd_match (&cmd, "d")) {
-			do_d (&cmd);
-		}
-		else if (cmd_match (&cmd, "e")) {
-			do_e (&cmd);
-		}
-		else if (cmd_match (&cmd, "far")) {
-			do_far (&cmd);
-		}
-		else if (cmd_match (&cmd, "g")) {
-			do_g (&cmd);
-		}
-		else if (cmd_match (&cmd, "h")) {
-			do_h (&cmd);
-		}
-		else if (cmd_match (&cmd, "int28")) {
-			do_int28 (&cmd);
-		}
-		else if (cmd_match (&cmd, "i")) {
-			do_i (&cmd);
-		}
-		else if (cmd_match (&cmd, "key")) {
-			do_key (&cmd);
-		}
-		else if (cmd_match (&cmd, "m")) {
-			do_m (&cmd);
-		}
-		else if (cmd_match (&cmd, "par")) {
-			do_par (&cmd);
-		}
-		else if (cmd_match (&cmd, "o")) {
-			do_o (&cmd);
-		}
-		else if (cmd_match (&cmd, "pq")) {
-			do_pq (&cmd);
-		}
-		else if (cmd_match (&cmd, "p")) {
-			do_p (&cmd);
-		}
-		else if (cmd_match (&cmd, "q")) {
-			break;
-		}
-		else if (cmd_match (&cmd, "r")) {
-			do_r (&cmd);
-		}
-		else if (cmd_match (&cmd, "screenshot")) {
-			do_screenshot (&cmd);
-		}
-		else if (cmd_match (&cmd, "s")) {
-			do_s (&cmd);
-		}
-		else if (cmd_match (&cmd, "t")) {
-			do_t (&cmd);
-		}
-		else if (cmd_match (&cmd, "update")) {
-			do_update (&cmd);
-		}
-		else if (cmd_match (&cmd, "u")) {
-			do_u (&cmd);
-		}
-		else if (cmd_match (&cmd, "v")) {
-			do_v (&cmd);
-		}
-		else if (cmd_match (&cmd, "w")) {
-			do_w (&cmd);
-		}
-		else if (cmd_match_eol (&cmd)) {
-			;
-		}
-		else {
-			printf ("unknown command (%s)\n", cmd.str);
-		}
-
-		if (pc->brk == PCE_BRK_ABORT) {
-			break;
-		}
-	};
+	if (cmd_match (cmd, "boot")) {
+		do_boot (cmd);
+	}
+	else if (cmd_match (cmd, "b")) {
+		do_b (cmd);
+	}
+	else if (cmd_match (cmd, "c")) {
+		do_c (cmd);
+	}
+	else if (cmd_match (cmd, "dump")) {
+		do_dump (cmd);
+	}
+	else if (cmd_match (cmd, "d")) {
+		do_d (cmd);
+	}
+	else if (cmd_match (cmd, "e")) {
+		do_e (cmd);
+	}
+	else if (cmd_match (cmd, "far")) {
+		do_far (cmd);
+	}
+	else if (cmd_match (cmd, "g")) {
+		do_g (cmd);
+	}
+	else if (cmd_match (cmd, "h")) {
+		do_h (cmd);
+	}
+	else if (cmd_match (cmd, "int28")) {
+		do_int28 (cmd);
+	}
+	else if (cmd_match (cmd, "i")) {
+		do_i (cmd);
+	}
+	else if (cmd_match (cmd, "key")) {
+		do_key (cmd);
+	}
+	else if (cmd_match (cmd, "par")) {
+		do_par (cmd);
+	}
+	else if (cmd_match (cmd, "o")) {
+		do_o (cmd);
+	}
+	else if (cmd_match (cmd, "pq")) {
+		do_pq (cmd);
+	}
+	else if (cmd_match (cmd, "p")) {
+		do_p (cmd);
+	}
+	else if (cmd_match (cmd, "r")) {
+		do_r (cmd);
+	}
+	else if (cmd_match (cmd, "screenshot")) {
+		do_screenshot (cmd);
+	}
+	else if (cmd_match (cmd, "s")) {
+		do_s (cmd);
+	}
+	else if (cmd_match (cmd, "t")) {
+		do_t (cmd);
+	}
+	else if (cmd_match (cmd, "update")) {
+		do_update (cmd);
+	}
+	else if (cmd_match (cmd, "u")) {
+		do_u (cmd);
+	}
+	else if (cmd_match (cmd, "w")) {
+		do_w (cmd);
+	}
+	else {
+		return (1);
+	}
 
 	return (0);
 }
@@ -1939,6 +1842,10 @@ int main (int argc, char *argv[])
 
 	cmd_init (stdin, stdout, &cmd_match_sym);
 
+	mon_init (&par_mon);
+	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
+	mon_set_msg_fct (&par_mon, pc_set_msg, pc_get_msg, par_pc);
+
 	if (nomon) {
 		while (pc->brk != PCE_BRK_ABORT) {
 			pce_run();
@@ -1948,12 +1855,17 @@ int main (int argc, char *argv[])
 		pce_run();
 		if (pc->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
-			do_cmd (pc);
 		}
 	}
 	else {
-		do_cmd (pc);
+		pce_log (MSG_INF, "type 'h' for help\n");
 	}
+
+	if (pc->brk != PCE_BRK_ABORT) {
+		mon_run (&par_mon);
+	}
+
+	mon_free (&par_mon);
 
 	pc_del (pc);
 

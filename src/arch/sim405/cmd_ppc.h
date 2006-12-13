@@ -36,6 +36,6 @@ void prt_state_spr (p405_t *c, FILE *fp);
 void prt_state_uic (p405_uic_t *uic, FILE *fp);
 void s405_prt_state_mem (sim405_t *sim, FILE *fp);
 
-int ppc_do_cmd (cmd_t *cmd, sim405_t *sim);
+int ppc_do_cmd (sim405_t *sim, cmd_t *cmd);
 
 void ppc_cmd_init (sim405_t *sim);

@@ -763,21 +763,7 @@ void do_u (cmd_t *cmd, sims32_t *sim)
 	saddr = addr;
 }
 
-static
-void do_v (cmd_t *cmd)
-{
-	unsigned long val;
-
-	while (cmd_match_uint32 (cmd, &val)) {
-		printf ("%lX\n", val);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-}
-
-int ss32_do_cmd (cmd_t *cmd, sims32_t *sim)
+int ss32_do_cmd (sims32_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
 		do_b (cmd, sim);
@@ -818,11 +804,7 @@ int ss32_do_cmd (cmd_t *cmd, sims32_t *sim)
 	else if (cmd_match (cmd, "u")) {
 		do_u (cmd, sim);
 	}
-	else if (cmd_match (cmd, "v")) {
-		do_v (cmd);
-	}
 	else {
-		cmd_error (cmd, "unknown command");
 		return (1);
 	}
 

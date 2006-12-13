@@ -33,6 +33,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
+	$(pcedst)/lib/monitor.o \
 	$(pcedst)/libini/libini.a
 
 
@@ -48,6 +49,7 @@ HDR_EXT	:= \
 	lib/srec.h \
 	lib/load.h \
 	lib/log.h \
+	lib/monitor.h \
 	libini/libini.h
 
 MAN1	:=
