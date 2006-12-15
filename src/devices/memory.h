@@ -125,6 +125,8 @@ void mem_blk_free (mem_blk_t *blk);
  *****************************************************************************/
 void mem_blk_del (mem_blk_t *blk);
 
+void mem_blk_fix_fct (mem_blk_t *blk);
+
 void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32);
 void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32);
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
@@ -194,16 +196,22 @@ unsigned long buf_get_uint32_le (const void *buf, unsigned long addr);
 
 
 void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val);
+void mem_blk_set_uint8_null (void *ext, unsigned long addr, unsigned char val);
 void mem_blk_set_uint16_be (mem_blk_t *blk, unsigned long addr, unsigned short val);
 void mem_blk_set_uint16_le (mem_blk_t *blk, unsigned long addr, unsigned short val);
+void mem_blk_set_uint16_null (void *ext, unsigned long addr, unsigned short val);
 void mem_blk_set_uint32_be (mem_blk_t *blk, unsigned long addr, unsigned long val);
 void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long val);
+void mem_blk_set_uint32_null (void *ext, unsigned long addr, unsigned long val);
 
 unsigned char mem_blk_get_uint8 (const mem_blk_t *blk, unsigned long addr);
+unsigned char mem_blk_get_uint8_null (const void *ext, unsigned long addr);
 unsigned short mem_blk_get_uint16_be (const mem_blk_t *blk, unsigned long addr);
 unsigned short mem_blk_get_uint16_le (const mem_blk_t *blk, unsigned long addr);
+unsigned short mem_blk_get_uint16_null (const void *ext, unsigned long addr);
 unsigned long mem_blk_get_uint32_be (const mem_blk_t *blk, unsigned long addr);
 unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr);
+unsigned long mem_blk_get_uint32_null (const void *ext, unsigned long addr);
 
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);

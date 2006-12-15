@@ -93,12 +93,45 @@ void mem_blk_del (mem_blk_t *blk)
 	}
 }
 
+void mem_blk_fix_fct (mem_blk_t *blk)
+{
+	if (blk->data != NULL) {
+		return;
+	}
+
+	if (blk->get_uint8 == NULL) {
+		blk->get_uint8 = (void *) mem_blk_get_uint8_null;
+	}
+
+	if (blk->get_uint16 == NULL) {
+		blk->get_uint16 = (void *) mem_blk_get_uint16_null;
+	}
+
+	if (blk->get_uint32 == NULL) {
+		blk->get_uint32 = (void *) mem_blk_get_uint32_null;
+	}
+
+	if (blk->set_uint8 == NULL) {
+		blk->set_uint8 = (void *) mem_blk_set_uint8_null;
+	}
+
+	if (blk->set_uint16 == NULL) {
+		blk->set_uint16 = (void *) mem_blk_set_uint16_null;
+	}
+
+	if (blk->set_uint32 == NULL) {
+		blk->set_uint32 = (void *) mem_blk_set_uint32_null;
+	}
+}
+
 void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32)
 {
 	blk->ext = ext;
 	blk->get_uint8 = g8;
 	blk->get_uint16 = g16;
 	blk->get_uint32 = g32;
+
+	mem_blk_fix_fct (blk);
 }
 
 void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32)
@@ -107,6 +140,8 @@ void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32
 	blk->set_uint8 = s8;
 	blk->set_uint16 = s16;
 	blk->set_uint32 = s32;
+
+	mem_blk_fix_fct (blk);
 }
 
 void mem_blk_set_ext (mem_blk_t *blk, void *ext)
@@ -277,6 +312,10 @@ void mem_blk_set_uint8 (mem_blk_t *blk, unsigned long addr, unsigned char val)
 	blk->data[addr] = val;
 }
 
+void mem_blk_set_uint8_null (void *ext, unsigned long addr, unsigned char val)
+{
+}
+
 void mem_blk_set_uint16_be (mem_blk_t *blk, unsigned long addr, unsigned short val)
 {
 	blk->data[addr] = (val >> 8) & 0xff;
@@ -287,6 +326,10 @@ void mem_blk_set_uint16_le (mem_blk_t *blk, unsigned long addr, unsigned short v
 {
 	blk->data[addr] = val & 0xff;
 	blk->data[addr + 1] = (val >> 8) & 0xff;
+}
+
+void mem_blk_set_uint16_null (void *ext, unsigned long addr, unsigned short val)
+{
 }
 
 void mem_blk_set_uint32_be (mem_blk_t *blk, unsigned long addr, unsigned long val)
@@ -305,9 +348,18 @@ void mem_blk_set_uint32_le (mem_blk_t *blk, unsigned long addr, unsigned long va
 	blk->data[addr + 3] = (val >> 24) & 0xff;
 }
 
+void mem_blk_set_uint32_null (void *ext, unsigned long addr, unsigned long val)
+{
+}
+
 unsigned char mem_blk_get_uint8 (const mem_blk_t *blk, unsigned long addr)
 {
 	return (blk->data[addr]);
+}
+
+unsigned char mem_blk_get_uint8_null (const void *ext, unsigned long addr)
+{
+	return (0);
 }
 
 unsigned short mem_blk_get_uint16_be (const mem_blk_t *blk, unsigned long addr)
@@ -328,6 +380,11 @@ unsigned short mem_blk_get_uint16_le (const mem_blk_t *blk, unsigned long addr)
 	ret = (ret << 8) | blk->data[addr];
 
 	return (ret);
+}
+
+unsigned short mem_blk_get_uint16_null (const void *ext, unsigned long addr)
+{
+	return (0);
 }
 
 unsigned long mem_blk_get_uint32_be (const mem_blk_t *blk, unsigned long addr)
@@ -352,6 +409,11 @@ unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr)
 	ret = (ret << 8) | blk->data[addr];
 
 	return (ret);
+}
+
+unsigned long mem_blk_get_uint32_null (const void *ext, unsigned long addr)
+{
+	return (0);
 }
 
 
