@@ -121,7 +121,7 @@ int dev_ds1743_set_fname (dev_ds1743_t *rtc, const char *fname)
 		return (0);
 	}
 
-	fp = fopen (fname, "w+b");
+	fp = fopen (fname, "r+b");
 	if (fp == NULL) {
 		return (1);
 	}
