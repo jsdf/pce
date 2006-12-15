@@ -3,7 +3,7 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := block video
+subdir := block clock video
 reldir := ../..
 
 

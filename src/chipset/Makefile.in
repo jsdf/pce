@@ -3,7 +3,7 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := 82xx ppc405
+subdir := 82xx clock ppc405
 reldir := ../..
 
 

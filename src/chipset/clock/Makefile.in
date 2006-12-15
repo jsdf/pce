@@ -1,0 +1,32 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+SRC := ds1743.c
+OBJ := ds1743.o
+HDR := ds1743.h
+MAN :=
+BIN :=
+
+SDP := Makefile
+BDP := Makefile
+
+CLN := $(OBJ) $(BIN)
+DCL := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(OBJ)
+
+
+ds1743:	ds1743.c ds1743.h $(SDP)

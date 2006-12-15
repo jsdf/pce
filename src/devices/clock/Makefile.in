@@ -1,0 +1,34 @@
+# Makefile
+# $Id$
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+FILES := ds1743
+
+SRC  := $(foreach f,$(FILES),$(f).c)
+OBJ  := $(foreach f,$(FILES),$(f).o)
+HDR  := $(foreach f,$(FILES),$(f).h)
+MAN1 :=
+BIN  :=
+
+SDP  := Makefile
+BDP  := Makefile
+
+CLN  := $(BIN) $(OBJ)
+DCL  := Makefile
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN) $(OBJ)
+
+
+ds1743.o:	ds1743.c ds1743.h chipset/clock/ds1743.h devices/device.h devices/memory.h $(SDP)

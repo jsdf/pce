@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
+#* Last modified: 2006-12-15 by Hampa Hug <hampa@hampa.ch>                   *
 #* Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
@@ -893,11 +893,13 @@ AC_OUTPUT(
   src/arch/Makefile
   src/chipset/Makefile
   src/chipset/82xx/Makefile
+  src/chipset/clock/Makefile
   src/chipset/ppc405/Makefile
   src/cpu/Makefile
   src/cpu/e8086/Makefile
   src/devices/Makefile
   src/devices/block/Makefile
+  src/devices/clock/Makefile
   src/devices/video/Makefile
   src/lib/Makefile
   src/libini/Makefile
