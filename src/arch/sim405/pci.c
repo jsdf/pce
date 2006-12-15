@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/pci.c                                      *
  * Created:       2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -30,6 +29,73 @@
 
 
 #include "main.h"
+
+
+/* #define DEBUG_PCI 1 */
+
+#define PCIID_VENDOR_IBM           0x1014
+#define PCIID_IBM_PPC_405GP_BRIDGE 0x0156
+
+
+static
+unsigned char pchb_get_cfg8 (pci_405_t *pci405, unsigned long addr)
+{
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_get_cfg8 (0x%08lx) == 0x00\n", addr);
+#endif
+
+	return (0);
+}
+
+static
+unsigned short pchb_get_cfg16 (pci_405_t *pci405, unsigned long addr)
+{
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_get_cfg16 (0x%08lx) == 0x0000\n", addr);
+#endif
+
+	return (0);
+}
+
+static
+unsigned long pchb_get_cfg32 (pci_405_t *pci405, unsigned long addr)
+{
+	unsigned long val;
+
+	val = pci_dev_get_cfg32 (&pci405->pchb, addr);
+
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_get_cfg16 (0x%08lx) == 0x%08lx\n", addr, val);
+#endif
+
+	return (val);
+}
+
+static
+void pchb_set_cfg8 (pci_405_t *pci405, unsigned long addr, unsigned char val)
+{
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_set_cfg8 (0x%08lx, 0x%02x)\n", addr, val);
+#endif
+}
+
+static
+void pchb_set_cfg16 (pci_405_t *pci405, unsigned long addr, unsigned short val)
+{
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_set_cfg16 (0x%08lx, 0x%04x)\n", addr, val);
+#endif
+}
+
+static
+void pchb_set_cfg32 (pci_405_t *pci405, unsigned long addr, unsigned long val)
+{
+#ifdef DEBUG_PCI
+	pce_log (MSG_DEB, "pchb_set_cfg32 (0x%08lx, 0x%08lx)\n", addr, val);
+#endif
+
+	pci_dev_set_cfg32 (&pci405->pchb, addr, val);
+}
 
 
 static
@@ -129,11 +195,20 @@ void pci_bus_set_iob32 (pci_405_t *pci, unsigned long addr, unsigned long val)
 static
 unsigned char pci_bus_get_cfg8 (pci_405_t *pci, unsigned long addr)
 {
+	unsigned char val;
+
 	if ((addr >= 4) && (addr <= 7)) {
-		return (pci_get_config_data8 (&pci->bus, (addr - 4) & 0x03) & 0xff);
+		val = pci_get_config_data8 (&pci->bus, (addr - 4) & 0x03) & 0xff;
+	}
+	else {
+		val = 0x55;
 	}
 
-	return (0x55);
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_get_cfg16 (0x%08lx) == 0x%02x)\n", addr, val);
+#endif
+
+	return (val);
 }
 
 static
@@ -141,13 +216,18 @@ unsigned short pci_bus_get_cfg16 (pci_405_t *pci, unsigned long addr)
 {
 	unsigned short val;
 
+	val = 0x5555;
+
 	if ((addr >= 4) && (addr <= 7)) {
 		val = pci_get_config_data16 (&pci->bus, (addr - 4) & 0x03);
 		val = s405_br16 (val);
-		return (val);
 	}
 
-	return (0x5555);
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_get_cfg16 (0x%08lx) == 0x%04x)\n", addr, val);
+#endif
+
+	return (val);
 }
 
 static
@@ -169,12 +249,20 @@ unsigned long pci_bus_get_cfg32 (pci_405_t *pci, unsigned long addr)
 		break;
 	}
 
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_get_cfg32 (0x%08lx) == 0x%08lx)\n", addr, val);
+#endif
+
 	return (s405_br32 (val));
 }
 
 static
 void pci_bus_set_cfg8 (pci_405_t *pci, unsigned long addr, unsigned char val)
 {
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_set_cfg8 (0x%08lx, 0x%02x)\n", addr, val);
+#endif
+
 	if ((addr >= 4) && (addr <= 7)) {
 		pci_set_config_data8 (&pci->bus, (addr - 4) & 0x03, val);
 	}
@@ -185,6 +273,10 @@ void pci_bus_set_cfg16 (pci_405_t *pci, unsigned long addr, unsigned short val)
 {
 	val = s405_br16 (val);
 
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_set_cfg16 (0x%08lx, 0x%04x)\n", addr, val);
+#endif
+
 	if ((addr >= 4) && (addr <= 7)) {
 		pci_set_config_data16 (&pci->bus, (addr - 4) & 0x03, val);
 	}
@@ -194,6 +286,10 @@ static
 void pci_bus_set_cfg32 (pci_405_t *pci, unsigned long addr, unsigned long val)
 {
 	val = s405_br32 (val);
+
+#ifdef DEBUG_PCI
+	fprintf (stderr, "pci_bus_set_cfg32 (0x%08lx, 0x%08lx)\n", addr, val);
+#endif
 
 	switch (addr) {
 	case 0x00:
@@ -296,6 +392,32 @@ void s405_pci_init (pci_405_t *pci)
 
 	pci_init (&pci->bus);
 	pci_set_asio (&pci->bus, &pci->asio);
+
+
+	pci_dev_init (&pci->pchb);
+
+	pci->pchb.ext = pci;
+	pci->pchb.cfg_ext = pci;
+	pci->pchb.get_cfg8 = (mem_get_uint8_f) pchb_get_cfg8;
+	pci->pchb.set_cfg8 = (mem_set_uint8_f) pchb_set_cfg8;
+	pci->pchb.get_cfg16 = (mem_get_uint16_f) pchb_get_cfg16;
+	pci->pchb.set_cfg16 = (mem_set_uint16_f) pchb_set_cfg16;
+	pci->pchb.get_cfg32 = (mem_get_uint32_f) pchb_get_cfg32;
+	pci->pchb.set_cfg32 = (mem_set_uint32_f) pchb_set_cfg32;
+
+	buf_set_uint16_le (pci->pchb.config, 0x00, PCIID_VENDOR_IBM);
+	buf_set_uint16_le (pci->pchb.config, 0x02, PCIID_IBM_PPC_405GP_BRIDGE);
+	buf_set_uint32_le (pci->pchb.config, 0x04, 0x00000000);
+	buf_set_uint32_le (pci->pchb.config, 0x08, 0x06000100);
+	buf_set_uint32_le (pci->pchb.config, 0x0c, 0x00000007);
+	buf_set_uint32_le (pci->pchb.config, 0x3c, 0x04010100);
+
+	pci_dev_set_cfg_mask (&pci->pchb, 8 * 0x01, 32, 1);
+	pci_dev_set_cfg_mask (&pci->pchb, 8 * 0x04, 16, 1);
+	pci_dev_set_cfg_mask (&pci->pchb, 8 * 0x0c, 16, 1);
+	pci_dev_set_cfg_mask (&pci->pchb, 8 * 0x3c, 32, 1);
+
+	pci_set_device (&pci->bus, &pci->pchb, 0);
 }
 
 void s405_pci_free (pci_405_t *pci)
@@ -306,6 +428,8 @@ void s405_pci_free (pci_405_t *pci)
 	mem_blk_free (&pci->pci_iob);
 	mem_blk_free (&pci->pci_ioa);
 	mem_free (&pci->asio);
+
+	pci_dev_free (&pci->pchb);
 
 	pci_free (&pci->bus);
 }

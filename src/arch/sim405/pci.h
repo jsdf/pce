@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/pci.h                                      *
  * Created:       2004-11-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -33,13 +32,11 @@
 #define PCE_SIM405_PCI_H 1
 
 
-#define PCIID_INTEL_IXP2400 0x9001
-#define PCIID_INTEL_IXP2800 0x9004
-
-
 typedef struct {
+	/* PCI I/O address space */
 	memory_t  asio;
 
+	/* These get mapped into the CPU's address space. */
 	mem_blk_t pci_ioa;
 	mem_blk_t pci_iob;
 	mem_blk_t pci_cfg;
@@ -48,6 +45,9 @@ typedef struct {
 	mem_blk_t pci_csr;
 
 	pci_bus_t bus;
+
+	/* host bridge */
+	pci_dev_t pchb;
 } pci_405_t;
 
 
