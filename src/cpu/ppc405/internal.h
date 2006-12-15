@@ -68,7 +68,11 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
  * PPC
  *****************************************************************************/
 
-#define P405_PVR_405GP   0x40110000UL
+#define P405_PVR_405GP   0x40110000
+#define P405_PVR_405GP_A 0x40110000
+#define P405_PVR_405GP_B 0x40110040
+#define P405_PVR_405GP_C 0x40110082
+#define P405_PVR_405GP_D 0x401100c4
 #define P405_PVR_NPE405H 0x41410140UL
 #define P405_PVR_NPE405L 0x416100c0UL
 

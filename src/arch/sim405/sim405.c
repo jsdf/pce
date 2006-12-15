@@ -51,7 +51,7 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 	uicinv = ini_get_lng_def (sct, "uic_invert", 0x0000007f);
 	timer_scale = ini_get_lng_def (sct, "timer_scale", 8);
 
-	pce_log (MSG_INF, "CPU:\tmodel=%s uicinv=%08lX ts=%u\n",
+	pce_log (MSG_INF, "CPU:      model=%s uicinv=%08lX ts=%u\n",
 		model, uicinv, timer_scale
 	);
 
@@ -108,7 +108,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 		chip = ini_get_str_def (sct, "uart", "8250");
 		fname = ini_get_str (sct, "file");
 
-		pce_log (MSG_INF, "UART%u:\tio=0x%08lx irq=%u uart=%s file=%s\n",
+		pce_log (MSG_INF, "UART%u:    addr=0x%08lx irq=%u uart=%s file=%s\n",
 			i, base, irq, chip, (fname == NULL) ? "<none>" : fname
 		);
 
@@ -160,7 +160,7 @@ void s405_setup_sercons (sim405_t *sim, ini_sct_t *ini)
 		ini_get_uint16 (sct, "serial", &ser, 0);
 	}
 
-	pce_log (MSG_INF, "SERCON: serport=%u\n", ser);
+	pce_log (MSG_INF, "SERCONS:  serport=%u\n", ser);
 
 	if (ser >= 2) {
 		return;
@@ -184,7 +184,7 @@ void s405_setup_slip (sim405_t *sim, ini_sct_t *ini)
 	ser = ini_get_lng_def (sct, "serial", 0);
 	name = ini_get_str_def (sct, "interface", "tun0");
 
-	pce_log (MSG_INF, "SLIP:\tserport=%u interface=%s\n", ser, name);
+	pce_log (MSG_INF, "SLIP:     serport=%u interface=%s\n", ser, name);
 
 	if (ser >= 2) {
 		return;
@@ -223,9 +223,9 @@ void s405_setup_pci (sim405_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, s405_pci_get_mem_special (sim->pci), 0);
 	mem_add_blk (sim->mem, s405_pci_get_mem_csr (sim->pci), 0);
 
-	pci_set_irq_f (&sim->pci->bus, p405uic_get_irq_f (&sim->uic, 31), &sim->uic);
+	/* pci_set_irq_f (&sim->pci->bus, p405uic_get_irq_f (&sim->uic, 31), &sim->uic); */
 
-	pce_log (MSG_INF, "PCI:\tirq=%u\n", 31);
+	pce_log (MSG_INF, "PCI:      initialized\n");
 }
 
 static
@@ -250,7 +250,7 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 	ini_get_uint32 (sct, "vendor_id", &vendor_id, PCIID_VENDOR_VIA);
 	ini_get_uint32 (sct, "device_id", &device_id, PCIID_VIA_82C561);
 
-	pce_log (MSG_INF, "ATA:    pcidev=%u irq=%u vendor=0x%04lx id=0x%04lx\n",
+	pce_log (MSG_INF, "PCI-ATA:  pcidev=%u irq=%u vendor=0x%04lx id=0x%04lx\n",
 		pcidev, pciirq, vendor_id, device_id
 	);
 
@@ -303,7 +303,7 @@ void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
 		addr = ini_get_lng_def (sct, "base", 0);
 
 		if (fname != NULL) {
-			pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
+			pce_log (MSG_INF, "Load:     format=%s file=%s\n",
 				fmt, (fname != NULL) ? fname : "<none>"
 			);
 
@@ -380,7 +380,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	unsigned i;
 	sim405_t *sim;
 
-	sim = (sim405_t *) malloc (sizeof (sim405_t));
+	sim = malloc (sizeof (sim405_t));
 	if (sim == NULL) {
 		return (NULL);
 	}
