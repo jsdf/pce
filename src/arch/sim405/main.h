@@ -45,6 +45,9 @@
 #include <lib/monitor.h>
 #include <lib/msg.h>
 
+#include <chipset/clock/ds1743.h>
+
+#include <devices/clock/ds1743.h>
 #include <devices/pci.h>
 #include <devices/slip.h>
 

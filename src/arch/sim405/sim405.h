@@ -42,6 +42,8 @@
 #include <limits.h>
 #endif
 
+#include <devices/device.h>
+
 
 #define PCE_BRK_STOP  1
 #define PCE_BRK_ABORT 2
@@ -114,9 +116,7 @@ typedef struct sim405_s {
 	memory_t           *mem;
 	mem_blk_t          *ram;
 
-	memory_t           *cab;
-
-	nvram_t            *nvr;
+	dev_list_t         devlst;
 
 	disks_t            *dsks;
 

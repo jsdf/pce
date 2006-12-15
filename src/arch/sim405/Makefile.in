@@ -25,7 +25,9 @@ HDR := $(foreach f,$(FILES),$(f).h)
 OBJ_EXT	:= \
 	$(pcedst)/cpu/ppc405/ppc405.a \
 	$(pcedst)/chipset/82xx/e8250.o \
+	$(pcedst)/chipset/clock/ds1743.o \
 	$(pcedst)/chipset/ppc405/uic.o \
+	$(pcedst)/devices/clock/ds1743.o \
 	$(pcedst)/devices/ata.o \
 	$(pcedst)/devices/device.o \
 	$(pcedst)/devices/memory.o \
@@ -54,7 +56,9 @@ HDR_EXT	:= \
 	$(pcedst)/config.h \
 	cpu/ppc405/ppc405.h \
 	chipset/82xx/e8250.h \
+	chipset/clock/ds1743.h \
 	chipset/ppc405/uic.h \
+	devices/clock/ds1743.h \
 	devices/ata.h \
 	devices/pci.h \
 	devices/pci-ata.h \

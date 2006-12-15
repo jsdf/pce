@@ -50,12 +50,12 @@ section sim405 {
 		base = 0xffff0000
 	}
 
-	# The nvram is not used yet but can be configured all the same
-        section nvram {
-		base = 0xf0000000
-		size = 0x2000
-		file = "nvram.dat"
-        }
+	section device {
+		type = "ds1743"
+		address = 0xf0000000
+		size = 8192
+		file = "ds1743.bin"
+	}
 
 	# Up to two "serial" sections may be present. The first is
 	# UART0, the second UART1. If the base addresses are changed,

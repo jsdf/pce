@@ -38,45 +38,6 @@ void s405_break (sim405_t *sim, unsigned char val);
 
 
 static
-void s405_setup_nvram (sim405_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	const char    *fname;
-	unsigned long base, size;
-
-	sim->nvr = NULL;
-
-	sct = ini_sct_find_sct (ini, "nvram");
-	if (sct == NULL) {
-		return;
-	}
-
-	fname = ini_get_str (sct, "file");
-	base = ini_get_lng_def (sct, "base", 0);
-	size = ini_get_lng_def (sct, "size", 65536L);
-
-	pce_log (MSG_INF, "NVRAM:\tbase=0x%08lx size=%lu file=%s\n",
-		base, size, (fname == NULL) ? "<>" : fname
-	);
-
-	sim->nvr = nvr_new (base, size);
-	if (sim->nvr == NULL) {
-		pce_log (MSG_ERR, "*** creating nvram failed\n");
-		return;
-	}
-
-	nvr_set_endian (sim->nvr, 1);
-
-	mem_add_blk (sim->mem, nvr_get_mem (sim->nvr), 0);
-
-	if (fname != NULL) {
-		if (nvr_set_fname (sim->nvr, fname)) {
-			pce_log (MSG_ERR, "*** loading nvram failed (%s)\n", fname);
-		}
-	}
-}
-
-static
 void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
@@ -355,6 +316,65 @@ void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
 	}
 }
 
+static
+void s405_setup_ds1743 (sim405_t *sim, ini_sct_t *sct)
+{
+	unsigned long addr, size;
+	const char    *fname;
+	dev_ds1743_t  *rtc;
+
+	ini_get_uint32 (sct, "address", &addr, 0xf0000000);
+	ini_get_uint32 (sct, "size", &size, 8192);
+	ini_get_string (sct, "file", &fname, NULL);
+
+	pce_log (MSG_INF, "DS1743:   address=0x%08lx size=%lu file=%s\n",
+		addr, size, (fname != NULL) ? fname : "<none>"
+	);
+
+	rtc = dev_ds1743_new (addr, size);
+	if (rtc == NULL) {
+		return;
+	}
+
+	dev_ds1743_set_date (rtc);
+
+	if (fname != NULL) {
+		if (dev_ds1743_set_fname (rtc, fname)) {
+			pce_log (MSG_ERR, "*** opening file failed\n");
+		}
+	}
+
+	mem_add_blk (sim->mem, &rtc->blk, 0);
+
+	dev_lst_add (&sim->devlst, &rtc->dev);
+}
+
+static
+void s405_setup_devices (sim405_t *sim, ini_sct_t *ini)
+{
+	ini_sct_t  *sct;
+	const char *type;
+
+	sct = ini_sct_find_sct (ini, "device");
+
+	while (sct != NULL) {
+		ini_get_string (sct, "type", &type, NULL);
+
+		if (type != NULL) {
+			if (strcmp (type, "ds1743") == 0) {
+				s405_setup_ds1743 (sim, sct);
+			}
+			else {
+				pce_log (MSG_INF, "*** unknown device '%s'\n",
+					type
+				);
+			}
+		}
+
+		sct = ini_sct_find_next (sct, "device");
+	}
+}
+
 sim405_t *s405_new (ini_sct_t *ini)
 {
 	unsigned i;
@@ -374,12 +394,13 @@ sim405_t *s405_new (ini_sct_t *ini)
 
 	sim->brkpt = NULL;
 
+	dev_lst_init (&sim->devlst);
+
 	sim->mem = mem_new();
 
 	ini_get_ram (sim->mem, ini, &sim->ram);
 	ini_get_rom (sim->mem, ini);
 
-	s405_setup_nvram (sim, ini);
 	s405_setup_ppc (sim, ini);
 	s405_setup_serport (sim, ini);
 	s405_setup_sercons (sim, ini);
@@ -387,6 +408,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	s405_setup_disks (sim, ini);
 	s405_setup_pci (sim, ini);
 	s405_setup_ata (sim, ini);
+	s405_setup_devices (sim, ini);
 
 	sim->cpc0_cr1 = 0x00000000UL;
 	sim->cpc0_psr = 0x00000400UL;
@@ -401,6 +423,8 @@ void s405_del (sim405_t *sim)
 	if (sim == NULL) {
 		return;
 	}
+
+	dev_lst_free (&sim->devlst);
 
 	pci_ata_free (&sim->pciata);
 	s405_pci_del (sim->pci);
