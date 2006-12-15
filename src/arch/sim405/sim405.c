@@ -410,8 +410,12 @@ sim405_t *s405_new (ini_sct_t *ini)
 	s405_setup_ata (sim, ini);
 	s405_setup_devices (sim, ini);
 
-	sim->cpc0_cr1 = 0x00000000UL;
-	sim->cpc0_psr = 0x00000400UL;
+	sim->ocm0_iscntl = 0;
+	sim->ocm0_isarc = 0;
+	sim->ocm0_dscntl = 0;
+	sim->ocm0_dsarc = 0;
+	sim->cpc0_cr1 = 0x00000000;
+	sim->cpc0_psr = 0x00000400;
 
 	s405_load_mem (sim, ini);
 
@@ -457,40 +461,57 @@ unsigned long s405_get_dcr (void *ext, unsigned long dcrn)
 	sim = (sim405_t *) ext;
 
 	switch (dcrn) {
-		case 0:
-			s405_break (sim, PCE_BRK_STOP);
-			break;
+	case 0:
+		s405_break (sim, PCE_BRK_STOP);
+		break;
 
-		case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
-			return (sim->cpc0_cr1);
+	case SIM405_DCRN_OCM0_ISARC: /* 0x18 */
+		return (sim->ocm0_isarc);
 
-		case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
-			return (sim->cpc0_psr);
+	case SIM405_DCRN_OCM0_ISCNTL: /* 0x19 */
+		return (sim->ocm0_iscntl);
 
-		case SIM405_DCRN_UIC0_SR:
-			return (p405uic_get_sr (&sim->uic));
+	case SIM405_DCRN_OCM0_DSARC: /* 0x1a */
+		return (sim->ocm0_dsarc);
 
-		case SIM405_DCRN_UIC0_ER:
-			return (p405uic_get_er (&sim->uic));
+	case SIM405_DCRN_OCM0_DSCNTL: /* 0x1b */
+		return (sim->ocm0_dscntl);
 
-		case SIM405_DCRN_UIC0_CR:
-			return (p405uic_get_cr (&sim->uic));
+	case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
+		return (sim->cpc0_cr1);
 
-		case SIM405_DCRN_UIC0_PR:
-			return (p405uic_get_er (&sim->uic));
+	case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
+		return (sim->cpc0_psr);
 
-		case SIM405_DCRN_UIC0_TR:
-			return (p405uic_get_er (&sim->uic));
+	case SIM405_DCRN_UIC0_SR:
+		return (p405uic_get_sr (&sim->uic));
 
-		case SIM405_DCRN_UIC0_MSR:
-			return (p405uic_get_msr (&sim->uic));
+	case SIM405_DCRN_UIC0_ER:
+		return (p405uic_get_er (&sim->uic));
 
-		case SIM405_DCRN_UIC0_VR:
-			return (p405uic_get_vr (&sim->uic));
+	case SIM405_DCRN_UIC0_CR:
+		return (p405uic_get_cr (&sim->uic));
 
-		default:
-			pce_log (MSG_DEB, "get dcr %03lx\n", dcrn);
-			break;
+	case SIM405_DCRN_UIC0_PR:
+		return (p405uic_get_er (&sim->uic));
+
+	case SIM405_DCRN_UIC0_TR:
+		return (p405uic_get_er (&sim->uic));
+
+	case SIM405_DCRN_UIC0_MSR:
+		return (p405uic_get_msr (&sim->uic));
+
+	case SIM405_DCRN_UIC0_VR:
+		return (p405uic_get_vr (&sim->uic));
+
+	case SIM405_DCRN_MAL0_CFG: /* 0x180 */
+		return (0);
+
+	default:
+		pce_log (MSG_DEB, "%08lX: get dcr %03lx\n",
+			(unsigned long) p405_get_pc (sim->ppc), dcrn
+		);
+		break;
 	}
 
 	return (0);
@@ -504,41 +525,74 @@ void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val)
 	sim = (sim405_t *) ext;
 
 	switch (dcrn) {
-		case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
-			sim->cpc0_cr1 = val;
-			break;
+	case SIM405_DCRN_OCM0_ISARC: /* 0x18 */
+		sim->ocm0_isarc = val;
+		break;
 
-		case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
-			sim->cpc0_psr = val;
-			break;
+	case SIM405_DCRN_OCM0_ISCNTL: /* 0x19 */
+		sim->ocm0_iscntl = val;
+		if (val & 0x80000000) {
+			pce_log (MSG_DEB,
+				"%08lX: instruction side ocm0 enabled\n",
+				(unsigned long) p405_get_pc (sim->ppc)
+			);
+		}
+		break;
 
-		case SIM405_DCRN_UIC0_SR:
-			p405uic_set_sr (&sim->uic, val);
-			break;
+	case SIM405_DCRN_OCM0_DSARC: /* 0x1a */
+		sim->ocm0_dsarc = val;
+		break;
 
-		case SIM405_DCRN_UIC0_ER:
-			p405uic_set_er (&sim->uic, val);
-			break;
+	case SIM405_DCRN_OCM0_DSCNTL: /* 0x1b */
+		sim->ocm0_dscntl = val;
+		if (val & 0x80000000) {
+			pce_log (MSG_DEB,
+				"%08lX: data side ocm0 enabled\n",
+				(unsigned long) p405_get_pc (sim->ppc)
+			);
+		}
+		break;
 
-		case SIM405_DCRN_UIC0_CR:
-			p405uic_set_cr (&sim->uic, val);
-			break;
+	case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
+		sim->cpc0_cr1 = val;
+		break;
 
-		case SIM405_DCRN_UIC0_PR:
-			p405uic_set_pr (&sim->uic, val);
-			break;
+	case SIM405_DCRN_CPC0_PSR: /* 0xb4 */
+		sim->cpc0_psr = val;
+		break;
 
-		case SIM405_DCRN_UIC0_TR:
-			p405uic_set_tr (&sim->uic, val);
-			break;
+	case SIM405_DCRN_UIC0_SR:
+		p405uic_set_sr (&sim->uic, val);
+		break;
 
-		case SIM405_DCRN_UIC0_VCR:
-			p405uic_set_vcr (&sim->uic, val);
-			break;
+	case SIM405_DCRN_UIC0_ER:
+		p405uic_set_er (&sim->uic, val);
+		break;
 
-		default:
-			pce_log (MSG_DEB, "set dcr %03lx <- %08lx\n", dcrn, val);
-			break;
+	case SIM405_DCRN_UIC0_CR:
+		p405uic_set_cr (&sim->uic, val);
+		break;
+
+	case SIM405_DCRN_UIC0_PR:
+		p405uic_set_pr (&sim->uic, val);
+		break;
+
+	case SIM405_DCRN_UIC0_TR:
+		p405uic_set_tr (&sim->uic, val);
+		break;
+
+	case SIM405_DCRN_UIC0_VCR:
+		p405uic_set_vcr (&sim->uic, val);
+		break;
+
+	case SIM405_DCRN_MAL0_CFG: /* 0x180 */
+		break;
+
+	default:
+		pce_log (MSG_DEB, "%08lX: set dcr %03lx <- %08lx\n",
+			(unsigned long) p405_get_pc (sim->ppc), dcrn, val
+		);
+		break;
 	}
 }
 

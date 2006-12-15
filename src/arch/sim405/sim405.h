@@ -92,6 +92,11 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #include <lib/load.h>
 
 
+#define SIM405_DCRN_OCM0_ISARC  0x18
+#define SIM405_DCRN_OCM0_ISCNTL 0x19
+#define SIM405_DCRN_OCM0_DSARC  0x1a
+#define SIM405_DCRN_OCM0_DSCNTL 0x1b
+
 #define SIM405_DCRN_CPC0_CR1 0xb2
 #define SIM405_DCRN_CPC0_PSR 0xb4
 #define SIM405_DCRN_CPC0_PSR_PAE 0x00000400UL
@@ -104,6 +109,9 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 #define SIM405_DCRN_UIC0_MSR 0xc6
 #define SIM405_DCRN_UIC0_VR  0xc7
 #define SIM405_DCRN_UIC0_VCR 0xc8
+
+#define SIM405_DCRN_MAL0_CFG 0x180
+#define SIM405_DCRN_MAL0_ESR 0x181
 
 
 /*****************************************************************************
@@ -129,6 +137,12 @@ typedef struct sim405_s {
 	slip_t             *slip;
 
 	breakpoint_t       *brkpt;
+
+	/* OCM DCRs */
+	uint32_t           ocm0_iscntl;
+	uint32_t           ocm0_isarc;
+	uint32_t           ocm0_dscntl;
+	uint32_t           ocm0_dsarc;
 
 	uint32_t           cpc0_cr1;
 	uint32_t           cpc0_psr;
