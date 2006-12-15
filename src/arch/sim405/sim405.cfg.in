@@ -74,6 +74,10 @@ section sim405 {
 		file = "current/uart1.out"
 	}
 
+	section sercons {
+		serial = 0
+	}
+
 	section slip {
 		serial = 1
 		interface = "tun0"

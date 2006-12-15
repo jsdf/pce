@@ -185,6 +185,30 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 }
 
 static
+void s405_setup_sercons (sim405_t *sim, ini_sct_t *ini)
+{
+	ini_sct_t  *sct;
+	unsigned   ser;
+
+	sct = ini_sct_find_sct (ini, "sercons");
+
+	if (sct == NULL) {
+		ser = 0;
+	}
+	else {
+		ini_get_uint16 (sct, "serial", &ser, 0);
+	}
+
+	pce_log (MSG_INF, "SERCON: serport=%u\n", ser);
+
+	if (ser >= 2) {
+		return;
+	}
+
+	sim->sercons = ser;
+}
+
+static
 void s405_setup_slip (sim405_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
@@ -358,6 +382,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	s405_setup_nvram (sim, ini);
 	s405_setup_ppc (sim, ini);
 	s405_setup_serport (sim, ini);
+	s405_setup_sercons (sim, ini);
 	s405_setup_slip (sim, ini);
 	s405_setup_disks (sim, ini);
 	s405_setup_pci (sim, ini);
@@ -502,7 +527,9 @@ void s405_break (sim405_t *sim, unsigned char val)
 
 void s405_set_keycode (sim405_t *sim, unsigned char val)
 {
-	ser_receive (sim->serport[1], val);
+	if (sim->serport[sim->sercons] != NULL) {
+		ser_receive (sim->serport[sim->sercons], val);
+	}
 }
 
 void s405_reset (sim405_t *sim)
