@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.c                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,6 +69,9 @@
 #define ATA_CMD_DIAGNOSTIC         0x90
 #define ATA_CMD_SET_GEOMETRY       0x91
 #define ATA_CMD_STANDBY_IMMEDIATE1 0x94
+#define ATA_CMD_READ_MULTIPLE      0xc4
+#define ATA_CMD_WRITE_MULTIPLE     0xc5
+#define ATA_CMD_SET_MULTIPLE_MODE  0xc6
 #define ATA_CMD_STANDBY_IMMEDIATE2 0xe0
 #define ATA_CMD_IDENTIFY           0xec
 
@@ -110,8 +112,14 @@ void ata_dev_init (ata_dev_t *dev)
 	dev->default_h = 0;
 	dev->default_s = 0;
 
+	dev->multi_block_max = 0;
+	dev->multi_block_size = 0;
+
 	dev->buf_i = 0;
 	dev->buf_n = 0;
+	dev->buf_m = 0;
+	dev->buf_mult_i = 0;
+	dev->buf_mult_n = 0;
 	dev->buf_mode = ATA_BUF_MODE_NONE;
 	dev->callback = NULL;
 
@@ -223,6 +231,28 @@ void ata_set_block (ata_chn_t *ata, disk_t *blk, unsigned devi)
 	dev->s = dev->default_s;
 }
 
+void ata_set_model (ata_chn_t *ata, unsigned devi, const char *name)
+{
+	char *dst;
+
+	if (devi < 2) {
+		dst = ata->dev[devi].model;
+		strncpy (dst, name, 64);
+		dst[63] = 0;
+	}
+}
+
+void ata_set_multi_mode (ata_chn_t *ata, unsigned devi, unsigned max)
+{
+	if (max > 255) {
+		max = 255;
+	}
+
+	if (devi < 2) {
+		ata->dev[devi].multi_block_max = max;
+	}
+}
+
 static
 void ata_set_irq (ata_chn_t *ata, unsigned char val)
 {
@@ -241,7 +271,7 @@ void ata_set_irq (ata_chn_t *ata, unsigned char val)
 	}
 }
 
-static
+static inline
 unsigned short ata_get_uint16_le (void *buf, unsigned i)
 {
 	unsigned short val;
@@ -253,7 +283,7 @@ unsigned short ata_get_uint16_le (void *buf, unsigned i)
 	return (val);
 }
 
-static
+static inline
 void ata_set_uint16_le (void *buf, unsigned i, unsigned short val)
 {
 	unsigned char *tmp = (unsigned char *) buf + i;
@@ -286,6 +316,7 @@ void ata_set_string (void *buf, unsigned i, const char *str, unsigned cnt)
 }
 
 
+/* Get the current sector address as LBA */
 static
 int ata_get_lba (ata_dev_t *dev, uint32_t *lba)
 {
@@ -339,30 +370,71 @@ void ata_cmd_recalibrate (ata_dev_t *dev)
 }
 
 static
+void ata_buf_reset (ata_dev_t *dev)
+{
+	dev->buf_i = 0;
+	dev->buf_n = 0;
+	dev->buf_m = 0;
+
+	dev->buf_blk_i = 0;
+	dev->buf_blk_n = 0;
+
+	dev->buf_mult_i = 0;
+	dev->buf_mult_n = 0;
+
+	dev->buf_mode = ATA_BUF_MODE_NONE;
+}
+
+static
 void ata_cmd_read_cb (ata_dev_t *dev)
 {
-	if (dev->buf_blk_n == 0) {
-		dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
+	unsigned cnt;
+
+	/* move to next sector in buffer */
+	dev->buf_i = dev->buf_n;
+	dev->buf_n += 512;
+
+	if (dev->buf_n > dev->buf_m) {
+		if (dev->buf_blk_n == 0) {
+			/* all done */
+			ata_buf_reset (dev);
+
+			dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
+			dev->callback = NULL;
+			return;
+		}
+
+		cnt = ATA_BUF_MAX / 512;
+		if (cnt > dev->buf_blk_n) {
+			cnt = dev->buf_blk_n;
+		}
+
+		while (dsk_read_lba (dev->blk, dev->buf, dev->buf_blk_i, cnt)) {
+			if (cnt == 1) {
+				ata_cmd_abort (dev);
+				return;
+			}
+			cnt = 1;
+		}
+
+		dev->buf_m = 512 * cnt;
+
+		dev->buf_blk_i += cnt;
+		dev->buf_blk_n -= cnt;
+
 		dev->buf_i = 0;
-		dev->buf_n = 0;
-		dev->buf_mode = ATA_BUF_MODE_NONE;
-		dev->callback = NULL;
-		return;
+		dev->buf_n = 512;
 	}
 
-	if (dsk_read_lba (dev->blk, dev->buf, dev->buf_blk_i, 1)) {
-		ata_cmd_abort (dev);
-		return;
-	}
-
-	dev->buf_blk_i += 1;
-	dev->buf_blk_n -= 1;
-	dev->buf_i = 0;
-	dev->buf_n = 512;
 	dev->buf_mode = ATA_BUF_MODE_READ;
 	dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DRQ | ATA_STATUS_DSC;
 
-	ata_set_irq (dev->chn, 1);
+	dev->buf_mult_i += 1;
+
+	if (dev->buf_mult_i >= dev->buf_mult_n) {
+		dev->buf_mult_i = 0;
+		ata_set_irq (dev->chn, 1);
+	}
 }
 
 static
@@ -375,6 +447,8 @@ void ata_cmd_read (ata_dev_t *dev)
 		return;
 	}
 
+	ata_buf_reset (dev);
+
 	dev->buf_blk_i = idx;
 	dev->buf_blk_n = (dev->reg_sec_cnt == 0) ? 256 : dev->reg_sec_cnt;
 	dev->callback = ata_cmd_read_cb;
@@ -383,36 +457,82 @@ void ata_cmd_read (ata_dev_t *dev)
 }
 
 static
-void ata_cmd_write_cb (ata_dev_t *dev)
+void ata_cmd_read_multiple (ata_dev_t *dev)
 {
-	if (dsk_write_lba (dev->blk, dev->buf, dev->buf_blk_i, 1)) {
+	uint32_t idx;
+
+	if (dev->multi_block_size == 0) {
 		ata_cmd_abort (dev);
 		return;
 	}
 
-	dev->buf_blk_i += 1;
-	dev->buf_blk_n -= 1;
-
-	if (dev->buf_blk_n == 0) {
-		dev->buf_i = 0;
-		dev->buf_n = 0;
-		dev->buf_mode = ATA_BUF_MODE_NONE;
-		dev->callback = NULL;
-		dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
-	}
-	else {
-		dev->buf_i = 0;
-		dev->buf_n = 512;
-		dev->buf_mode = ATA_BUF_MODE_WRITE;
-		dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DRQ | ATA_STATUS_DSC;
+	if (ata_get_lba (dev, &idx)) {
+		ata_cmd_abort (dev);
+		return;
 	}
 
-	ata_set_irq (dev->chn, 1);
+	ata_buf_reset (dev);
+
+	dev->buf_blk_i = idx;
+	dev->buf_blk_n = (dev->reg_sec_cnt == 0) ? 256 : dev->reg_sec_cnt;
+	dev->buf_mult_n = dev->multi_block_size;
+	dev->buf_mult_i = dev->buf_mult_n;
+	dev->callback = ata_cmd_read_cb;
+
+	ata_cmd_read_cb (dev);
+}
+
+static
+void ata_cmd_write_cb (ata_dev_t *dev)
+{
+	unsigned cnt;
+
+	dev->buf_i = dev->buf_n;
+	dev->buf_n += 512;
+
+	if (dev->buf_n > dev->buf_m) {
+		cnt = dev->buf_i / 512;
+
+		if (dsk_write_lba (dev->blk, dev->buf, dev->buf_blk_i, cnt)) {
+			ata_cmd_abort (dev);
+			return;
+		}
+
+		dev->buf_blk_i += cnt;
+		dev->buf_blk_n -= cnt;
+
+		if (dev->buf_blk_n == 0) {
+			ata_buf_reset (dev);
+			dev->callback = NULL;
+			dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
+			ata_set_irq (dev->chn, 1);
+			return;
+		}
+		else {
+			cnt = ATA_BUF_MAX / 512;
+			if (cnt > dev->buf_blk_n) {
+				cnt = dev->buf_blk_n;
+			}
+			dev->buf_i = 0;
+			dev->buf_n = 512;
+			dev->buf_m = 512 * cnt;
+			dev->buf_mode = ATA_BUF_MODE_WRITE;
+			dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DRQ | ATA_STATUS_DSC;
+		}
+	}
+
+	dev->buf_mult_i += 1;
+
+	if (dev->buf_mult_i >= dev->buf_mult_n) {
+		dev->buf_mult_i = 0;
+		ata_set_irq (dev->chn, 1);
+	}
 }
 
 static
 void ata_cmd_write (ata_dev_t *dev)
 {
+	unsigned cnt;
 	uint32_t idx;
 
 	if (ata_get_lba (dev, &idx)) {
@@ -420,14 +540,78 @@ void ata_cmd_write (ata_dev_t *dev)
 		return;
 	}
 
+	ata_buf_reset (dev);
+
 	dev->buf_i = 0;
 	dev->buf_n = 512;
+
 	dev->buf_mode = ATA_BUF_MODE_WRITE;
+
 	dev->buf_blk_i = idx;
 	dev->buf_blk_n = (dev->reg_sec_cnt == 0) ? 256 : dev->reg_sec_cnt;
+
 	dev->callback = ata_cmd_write_cb;
 
+	cnt = ATA_BUF_MAX / 512;
+	if (cnt > dev->buf_blk_n) {
+		cnt = dev->buf_blk_n;
+	}
+
+	dev->buf_m = 512 * cnt;
+
 	dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DRQ | ATA_STATUS_DSC;
+}
+
+static
+void ata_cmd_write_multiple (ata_dev_t *dev)
+{
+	unsigned cnt;
+	uint32_t idx;
+
+	if (ata_get_lba (dev, &idx)) {
+		ata_cmd_abort (dev);
+		return;
+	}
+
+	ata_buf_reset (dev);
+
+	dev->buf_i = 0;
+	dev->buf_n = 512;
+
+	dev->buf_mode = ATA_BUF_MODE_WRITE;
+
+	dev->buf_blk_i = idx;
+	dev->buf_blk_n = (dev->reg_sec_cnt == 0) ? 256 : dev->reg_sec_cnt;
+	dev->buf_mult_i = 0;
+	dev->buf_mult_n = dev->multi_block_size;
+
+	dev->callback = ata_cmd_write_cb;
+
+	cnt = ATA_BUF_MAX / 512;
+	if (cnt > dev->buf_blk_n) {
+		cnt = dev->buf_blk_n;
+	}
+
+	dev->buf_m = 512 * cnt;
+
+	dev->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DRQ | ATA_STATUS_DSC;
+}
+
+static
+void ata_cmd_set_multiple_mode (ata_dev_t *dev)
+{
+	unsigned cnt;
+
+	cnt = dev->reg_sec_cnt;
+
+	if (cnt > dev->multi_block_max) {
+		ata_cmd_abort (dev);
+		return;
+	}
+
+	dev->multi_block_size = cnt;
+
+	ata_cmd_ok (dev);
 }
 
 static
@@ -482,7 +666,7 @@ void ata_cmd_identify (ata_dev_t *dev)
 	ata_set_uint16_le (dev->buf, 2 * 22, 0x0000); /* vendor specific bytes */
 	ata_set_string (dev->buf, 2 * 23, dev->firmware, 8);
 	ata_set_string (dev->buf, 2 * 27, dev->model, 40);
-	ata_set_uint16_le (dev->buf, 2 * 47, 0x0000); /* multiple */
+	ata_set_uint16_le (dev->buf, 2 * 47, dev->multi_block_max & 0xff);
 	ata_set_uint16_le (dev->buf, 2 * 49, 0x0200); /* lba */
 	ata_set_uint16_le (dev->buf, 2 * 53, 0x0001);
 	ata_set_uint16_le (dev->buf, 2 * 54, dev->c);
@@ -521,9 +705,21 @@ void ata_command (ata_chn_t *ata, unsigned cmd)
 		ata_cmd_read (ata->sel);
 		break;
 
+	case ATA_CMD_READ_MULTIPLE:
+		ata_cmd_read_multiple (ata->sel);
+		break;
+
 	case ATA_CMD_WRITE:
 	case ATA_CMD_WRITE_RETRY:
 		ata_cmd_write (ata->sel);
+		break;
+
+	case ATA_CMD_WRITE_MULTIPLE:
+		ata_cmd_write_multiple (ata->sel);
+		break;
+
+	case ATA_CMD_SET_MULTIPLE_MODE:
+		ata_cmd_set_multiple_mode (ata->sel);
 		break;
 
 	case ATA_CMD_DIAGNOSTIC:
@@ -544,7 +740,7 @@ void ata_command (ata_chn_t *ata, unsigned cmd)
 		break;
 
 	default:
-		fprintf (stderr, "ata: cmd=%02X\n", cmd);
+		fprintf (stderr, "ata: unknown command (%02X)\n", cmd);
 		fflush (stderr);
 		ata_cmd_abort (ata->sel);
 		break;
@@ -573,6 +769,7 @@ unsigned short ata_get_data16 (ata_chn_t *ata)
 		else {
 			sel->buf_i = 0;
 			sel->buf_n = 0;
+			sel->buf_m = 0;
 			sel->buf_mode = ATA_BUF_MODE_NONE;
 			sel->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
 		}
@@ -672,9 +869,7 @@ void ata_set_data16 (ata_chn_t *ata, unsigned short val)
 			sel->callback (sel);
 		}
 		else {
-			sel->buf_i = 0;
-			sel->buf_n = 0;
-			sel->buf_mode = ATA_BUF_MODE_NONE;
+			ata_buf_reset (sel);
 			sel->reg_status = ATA_STATUS_DRDY | ATA_STATUS_DSC;
 		}
 	}

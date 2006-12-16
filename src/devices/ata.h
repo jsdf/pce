@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.h                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,6 +35,9 @@ struct ata_dev_s;
 struct ata_chn_s;
 
 
+#define ATA_BUF_MAX 4096
+
+
 typedef struct ata_dev_s {
 	struct ata_chn_s *chn;
 
@@ -58,12 +60,18 @@ typedef struct ata_dev_s {
 	uint16_t         default_h;
 	uint16_t         default_s;
 
+	unsigned         multi_block_max;
+	unsigned         multi_block_size;
+
 	unsigned         buf_i;
 	unsigned         buf_n;
+	unsigned         buf_m;
 	unsigned         buf_mode;
 	uint32_t         buf_blk_i;
 	uint32_t         buf_blk_n;
-	unsigned char    buf[512];
+	unsigned         buf_mult_i;
+	unsigned         buf_mult_n;
+	unsigned char    buf[ATA_BUF_MAX];
 	void             (*callback) (struct ata_dev_s *dev);
 
 	char             model[64];
@@ -94,6 +102,10 @@ ata_chn_t *ata_new (unsigned long addr1, unsigned long addr2);
 void ata_del (ata_chn_t *ata);
 
 void ata_set_irq_f (ata_chn_t *ata, void *irq, void *ext);
+
+void ata_set_model (ata_chn_t *ata, unsigned devi, const char *name);
+
+void ata_set_multi_mode (ata_chn_t *ata, unsigned devi, unsigned max);
 
 void ata_set_block (ata_chn_t *ata, disk_t *blk, unsigned devi);
 

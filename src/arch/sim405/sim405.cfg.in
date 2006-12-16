@@ -95,9 +95,11 @@ section sim405 {
 		pci_irq = 31
 
 		section device {
+			model = "PCEDISK"
 			channel = 0
 			device = 0
 			drive = 0
+			multi_count_max = 16
 		}
 	}
 }

@@ -96,6 +96,15 @@ void pci_ata_set_block (pci_ata_t *dev, disk_t *blk, unsigned i)
 	}
 }
 
+ata_chn_t *pci_ata_get_ata (pci_ata_t *dev, unsigned i)
+{
+	if (i < 2) {
+		return (&dev->ata[i]);
+	}
+
+	return (NULL);
+}
+
 
 unsigned char pci_ata_get_cfg8 (pci_ata_t *dev, unsigned long addr)
 {

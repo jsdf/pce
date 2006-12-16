@@ -54,6 +54,8 @@ void pci_ata_free (pci_ata_t *dev);
 
 void pci_ata_set_block (pci_ata_t *dev, disk_t *blk, unsigned i);
 
+ata_chn_t *pci_ata_get_ata (pci_ata_t *dev, unsigned i);
+
 unsigned char pci_ata_get_cfg8 (pci_ata_t *dev, unsigned long addr);
 unsigned short pci_ata_get_cfg16 (pci_ata_t *dev, unsigned long addr);
 unsigned long pci_ata_get_cfg32 (pci_ata_t *dev, unsigned long addr);
