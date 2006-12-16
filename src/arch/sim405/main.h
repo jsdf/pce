@@ -40,6 +40,7 @@
 
 #include <lib/cmd.h>
 #include <lib/console.h>
+#include <lib/iniata.h>
 #include <lib/inidsk.h>
 #include <lib/iniram.h>
 #include <lib/monitor.h>

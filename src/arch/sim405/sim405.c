@@ -223,8 +223,6 @@ void s405_setup_pci (sim405_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, s405_pci_get_mem_special (sim->pci), 0);
 	mem_add_blk (sim->mem, s405_pci_get_mem_csr (sim->pci), 0);
 
-	/* pci_set_irq_f (&sim->pci->bus, p405uic_get_irq_f (&sim->uic, 31), &sim->uic); */
-
 	pce_log (MSG_INF, "PCI:      initialized\n");
 }
 
@@ -242,8 +240,8 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 		return;
 	}
 
-	ini_get_uint32 (sct, "pci_device", &pcidev, 1);
-	ini_get_uint32 (sct, "pci_irq", &pciirq, 31);
+	ini_get_uint16 (sct, "pci_device", &pcidev, 1);
+	ini_get_uint16 (sct, "pci_irq", &pciirq, 31);
 
 	ini_get_uint32 (sct, "vendor_id", &vendor_id, PCIID_VENDOR_VIA);
 	ini_get_uint32 (sct, "device_id", &device_id, PCIID_VIA_82C561);
@@ -259,46 +257,7 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 		p405uic_get_irq_f (&sim->uic, pciirq), &sim->uic
 	);
 
-	sct = ini_sct_find_sct (sct, "device");
-
-	while (sct != NULL) {
-		unsigned   chn, dev, drv;
-		unsigned   multi;
-		const char *model;
-		ata_chn_t  *ata;
-		disk_t     *dsk;
-
-		ini_get_uint16 (sct, "channel", &chn, 0);
-		ini_get_uint16 (sct, "device", &dev, 0);
-		ini_get_uint16 (sct, "drive", &drv, 0);
-		ini_get_uint16 (sct, "multi_count_max", &multi, 0);
-		ini_get_string (sct, "model", &model, "PCEDISK");
-
-		dsk = dsks_get_disk (sim->dsks, drv);
-		if (dsk == NULL) {
-			pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
-		}
-		else {
-			pce_log (MSG_INF,
-				"ATA:      chn=%u dev=%u dsk=%u chs=%lu/%lu/%lu"
-				" mult=%u model=%s\n",
-				chn, dev, drv,
-				(unsigned long) dsk->visible_c,
-				(unsigned long) dsk->visible_h,
-				(unsigned long) dsk->visible_s,
-				multi, model
-			);
-
-			ata = pci_ata_get_ata (&sim->pciata, chn);
-
-			ata_set_multi_mode (ata, dev, multi);
-			ata_set_model (ata, dev, model);
-
-			pci_ata_set_block (&sim->pciata, dsk, 2 * chn + dev);
-		}
-
-		sct = ini_sct_find_next (sct, "device");
-	}
+	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);
 }
 
 static

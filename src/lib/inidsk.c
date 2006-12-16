@@ -194,7 +194,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	dsk_set_visible_chs (dsk, vc, vh, vs);
 
 	pce_log (MSG_INF,
-		"DISK:\tdrive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
+		"DISK:     drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
 		drive, type,
 		dsk->c, dsk->h, dsk->s,
 		dsk->visible_c, dsk->visible_h, dsk->visible_s,

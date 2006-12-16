@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -292,16 +291,14 @@ void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 
 	pci_set_irq_f (&sim->pci->bus, NULL, NULL);
 
-	pce_log (MSG_INF, "PCI:        initialized\n");
+	pce_log (MSG_INF, "PCI:      initialized\n");
 }
 
 static
 void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 {
 	unsigned  pcidev, pciirq;
-	unsigned  chn, dev, drv;
 	ini_sct_t *sct;
-	disk_t    *dsk;
 
 	pci_ata_init (&sim->pciata);
 
@@ -313,39 +310,15 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 	pcidev = ini_get_lng_def (sct, "pci_device", 1);
 	pciirq = ini_get_lng_def (sct, "pci_irq", 31);
 
-	pce_log (MSG_INF, "PCI-ATA:    pcidev=%u irq=%u\n", pcidev, pciirq);
+	pce_log (MSG_INF, "PCI-ATA:  pcidev=%u irq=%u\n", pcidev, pciirq);
 
 	pci_ixp_add_device (sim->pci, &sim->pciata.pci);
 	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
-//  pci_dev_set_irq_f (&sim->pciata.pci, 0, pci_set_intr_a, &sim->pci->bus);
 	pci_dev_set_irq_f (&sim->pciata.pci, 0,
 		ict_get_irq_f (sim->intc, pciirq), sim->intc
 	);
 
-	sct = ini_sct_find_sct (sct, "device");
-
-	while (sct != NULL) {
-		chn = ini_get_lng_def (sct, "channel", 0);
-		dev = ini_get_lng_def (sct, "device", 0);
-		drv = ini_get_lng_def (sct, "drive", 0);
-
-		dsk = dsks_get_disk (sim->dsks, drv);
-		if (dsk == NULL) {
-			pce_log (MSG_ERR, "*** no such drive (%u)\n", drv);
-		}
-		else {
-			pce_log (MSG_INF, "PCI-ATA:    chn=%u dev=%u dsk=%u chs=%lu/%lu/%lu\n",
-				chn, dev, drv,
-				(unsigned long) dsk->visible_c,
-				(unsigned long) dsk->visible_h,
-				(unsigned long) dsk->visible_s
-			);
-
-			pci_ata_set_block (&sim->pciata, dsk, 2 * chn + dev);
-		}
-
-		sct = ini_sct_find_next (sct, "device");
-	}
+	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);
 }
 
 static

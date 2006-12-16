@@ -10,8 +10,8 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-FILES := brkpt cmd console hexdump ihex inidsk iniram load log monitor \
-	msg srec sysdep
+FILES := brkpt cmd console hexdump iniata ihex inidsk iniram load log \
+	monitor msg srec sysdep
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 FILES += tun
@@ -40,6 +40,8 @@ cmd.o:		cmd.c cmd.h $(SDP)
 console.o:	console.c console.h $(SDP)
 hexdump.o:	hexdump.c hexdump.h $(SDP)
 ihex.o:		ihex.c ihex.h $(SDP)
+iniata.o:	iniata.c iniata.h log.h devices/ata.h devices/block/block.h \
+		devices/memory.h devices/pci-ata.h $(SDP)
 inidsk.o:	inidsk.c inidsk.h log.h $(PCE_BLK_HDR) $(SDP)
 iniram.o:	iniram.c iniram.h load.h log.h devices/memory.h $(SDP)
 load.o:		load.c load.h ihex.h devices/memory.h $(SDP)

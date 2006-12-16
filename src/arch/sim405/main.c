@@ -181,7 +181,7 @@ ini_sct_t *pce_load_config (const char *fname)
 	if (fname != NULL) {
 		ini = ini_read (fname);
 		if (ini != NULL) {
-			pce_log (MSG_INF, "pce:\tusing config file '%s'\n", fname);
+			pce_log (MSG_INF, "config:   file=%s\n", fname);
 			return (ini);
 		}
 	}

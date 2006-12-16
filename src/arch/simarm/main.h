@@ -47,6 +47,7 @@
 #include <lib/console.h>
 #include <lib/msg.h>
 #include <lib/monitor.h>
+#include <lib/iniata.h>
 #include <lib/inidsk.h>
 #include <lib/iniram.h>
 
