@@ -103,8 +103,6 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 
 #define p405_bits(val, i, n) (((val) >> (32 - (i) - (n))) & ((1UL << (n)) - 1))
 
-#define p405_get_ir_op2(ir) (((ir) >> 1) & 0x3ff)
-
 #define p405_get_ir_rc(ir) (((ir) & P405_IR_RC) != 0)
 #define p405_get_ir_oe(ir) (((ir) & P405_IR_OE) != 0)
 #define p405_get_ir_lk(ir) (((ir) & P405_IR_LK) != 0)
@@ -119,32 +117,30 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define p405_get_rb(c, ir) ((c)->gpr[p405_get_ir_rb (ir)])
 #define p405_get_rs(c, ir) ((c)->gpr[p405_get_ir_rs (ir)])
 #define p405_get_rt(c, ir) ((c)->gpr[p405_get_ir_rt (ir)])
-#define p405_get_ra0(c, ir) ((p405_get_ir_ra (ir) != 0) ? p405_get_ra (c, ir) : 0)
+#define p405_get_ra0(c, ir) (((ir) & 0x1f0000) ? p405_get_ra (c, ir) : 0)
 
 #define p405_set_ra(c, ir, val) do { (c)->gpr[p405_get_ir_ra (ir)] = (val); } while (0)
 #define p405_set_rb(c, ir, val) do { (c)->gpr[p405_get_ir_rb (ir)] = (val); } while (0)
 #define p405_set_rs(c, ir, val) do { (c)->gpr[p405_get_ir_rs (ir)] = (val); } while (0)
 #define p405_set_rt(c, ir, val) do { (c)->gpr[p405_get_ir_rt (ir)] = (val); } while (0)
 
+#define p405_get_simm16(ir) (((ir) & 0x8000) ? ((ir) | 0xffff0000) : ((ir) & 0xffff))
+#define p405_get_uimm16(ir) ((ir) & 0xffff)
+
 #define p405_set_clk(c, dpc, clk) do { (c)->pc += (dpc); (c)->delay += (clk); } while (0)
 
 
-int p405_check_reserved (p405_t *c, uint32_t res);
-int p405_check_privilege (p405_t *c);
 void p405_set_xer_so_ov (p405_t *c, uint64_t r1, uint32_t r2);
 void p405_set_xer_oflow (p405_t *c, int of);
 void p405_set_cr0 (p405_t *c, uint32_t r);
 int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags);
 uint64_t p405_mul (uint32_t s1, uint32_t s2);
 
-void p405_op_add (p405_t *c, uint32_t s1, uint32_t s2, int oe, int rc, int co, int ci);
-void p405_op_and (p405_t *c, uint32_t s1, uint32_t s2, int rc);
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk);
 void p405_op_cmpl (p405_t *c, uint32_t s1, uint32_t s2, unsigned fld);
 void p405_op_crop (p405_t *c, unsigned bt, unsigned ba, unsigned bb, unsigned booltab);
 void p405_op_lsw (p405_t *c, unsigned rt, unsigned ra, unsigned rb, uint32_t ea, unsigned cnt);
 void p405_op_stsw (p405_t *c, unsigned rs, uint32_t ea, unsigned cnt);
-void p405_op_sub (p405_t *c, uint32_t s1, uint32_t s2, int oe, int rc, int co, int ci);
 void p405_op_undefined (p405_t *c);
 
 void p405_exception_data_store (p405_t *c, uint32_t ea, int store, int zone);
@@ -160,6 +156,29 @@ void p405_exception_tlb_miss_instr (p405_t *c);
 void p405_set_opcode13 (p405_t *c);
 void p405_set_opcode1f (p405_t *c);
 void p405_set_opcodes (p405_t *c);
+
+
+inline static
+int p405_check_reserved (p405_t *c, uint32_t res)
+{
+	if (c->ir & res) {
+		p405_op_undefined (c);
+		return (1);
+	}
+
+	return (0);
+}
+
+inline static
+int p405_check_privilege (p405_t *c)
+{
+	if (p405_get_msr_pr (c)) {
+		p405_exception_program (c, P405_ESR_PPR);
+		return (1);
+	}
+
+	return (0);
+}
 
 
 #endif

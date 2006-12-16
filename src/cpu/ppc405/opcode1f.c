@@ -46,24 +46,48 @@ void op_1f_000 (p405_t *c)
 	);
 }
 
-/* 1F 008: subfc[o][.] rt, ra, rb */
+/* 1F 008: subfc[.] rt, ra, rb */
 static
 void op_1f_008 (p405_t *c)
 {
-	p405_op_sub (c,
-		p405_get_rb (c, c->ir), p405_get_ra (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = p405_get_ra (c, c->ir);
+
+	rt = (s1 - s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt <= s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 00A: addc[o][.] rt, ra, rb */
+/* 1F 00A: addc[.] rt, ra, rb */
 static
 void op_1f_00a (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), p405_get_rb (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt < s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 00B: mulhwu[.] rt, ra, rb */
@@ -202,9 +226,20 @@ void op_1f_01a (p405_t *c)
 static
 void op_1f_01c (p405_t *c)
 {
-	p405_op_and (c,
-		p405_get_rs (c, c->ir), p405_get_rb (c, c->ir), p405_get_ir_rc (c->ir)
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rs (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = s1 & s2;
+
+	p405_set_ra (c, c->ir, rt);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 020: cmpl bf, ra, rb */
@@ -218,14 +253,24 @@ void op_1f_020 (p405_t *c)
 	);
 }
 
-/* 1F 028: subf[o][.] rt, ra, rb */
+/* 1F 028: subf[.] rt, ra, rb */
 static
 void op_1f_028 (p405_t *c)
 {
-	p405_op_sub (c,
-		p405_get_rb (c, c->ir), p405_get_ra (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 0, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = p405_get_ra (c, c->ir);
+
+	rt = (s1 - s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 036: dcbst ra0, rb */
@@ -263,9 +308,20 @@ void op_1f_037 (p405_t *c)
 static
 void op_1f_03c (p405_t *c)
 {
-	p405_op_and (c,
-		p405_get_rs (c, c->ir), ~p405_get_rb (c, c->ir), p405_get_ir_rc (c->ir)
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rs (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = s1 & ~s2;
+
+	p405_set_ra (c, c->ir, rt);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 04B: mulhw[.] rt, ra, rb */
@@ -425,24 +481,50 @@ void op_1f_086 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 088: subfe[o][.] rt, ra, rb */
+/* 1F 088: subfe[.] rt, ra, rb */
 static
 void op_1f_088 (p405_t *c)
 {
-	p405_op_sub (c,
-		p405_get_rb (c, c->ir), p405_get_ra (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	uint32_t rt, s1, s2, s3;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, (rt < s1) || ((rt == s1) && s3));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 08A: adde[o][.] rt, ra, rb */
+/* 1F 08A: adde[.] rt, ra, rb */
 static
 void op_1f_08a (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), p405_get_rb (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	uint32_t rt, s1, s2, s3;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, (rt < s1) || ((rt == s1) && s3));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 090: mtcrf fxm, rs */
@@ -572,30 +654,56 @@ void op_1f_0b7 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 0C8: subfze[o][.] rt, ra */
+/* 1F 0C8: subfze[.] rt, ra */
 static
 void op_1f_0c8 (p405_t *c)
 {
-	if (p405_check_reserved (c, 0xf800UL)) {
+	uint32_t rt, s2, s3;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
 		return;
 	}
 
-	p405_op_sub (c, 0x00000000UL, p405_get_ra (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (0 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, (rt == 0) && s3);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 0CA: addze[o][.] rt, ra */
+/* 1F 0CA: addze[.] rt, ra */
 static
 void op_1f_0ca (p405_t *c)
 {
-	if (p405_check_reserved (c, 0xf800UL)) {
+	uint32_t rt, s1, s2;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
 		return;
 	}
 
-	p405_op_add (c, p405_get_ra (c, c->ir), 0x00000000UL,
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt < s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 0D7: stbx rs, ra0, rb */
@@ -619,31 +727,56 @@ void op_1f_0d7 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 0E8: subfme[o][.] rt, ra */
+/* 1F 0E8: subfme[.] rt, ra */
 static
 void op_1f_0e8 (p405_t *c)
 {
-	if (p405_check_reserved (c, 0xf800UL)) {
+	uint32_t rt, s2, s3;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
 		return;
 	}
 
-	p405_op_sub (c, 0xffffffffUL, p405_get_ra (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (0xffffffff + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, s2 || s3);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 0EA: addme[o][.] rt, ra */
+/* 1F 0EA: addme[.] rt, ra */
 static
 void op_1f_0ea (p405_t *c)
 {
-	if (p405_check_reserved (c, 0xf800UL)) {
+	uint32_t rt, s1, s2;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
 		return;
 	}
 
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), 0xffffffffUL,
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 1, 1
-	);
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 - 1) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, (s1 > 0) || (s2 > 0));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 0EB: mullw[o][.] rt, ra, rb */
@@ -716,14 +849,24 @@ void op_1f_106 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
-/* 1F 10A: add[o][.] rt, ra, rb */
+/* 1F 10A: add[.] rt, ra, rb */
 static
 void op_1f_10a (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), p405_get_rb (c, c->ir),
-		p405_get_ir_oe (c->ir), p405_get_ir_rc (c->ir), 0, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 116: dcbt ra0, rb */
@@ -852,145 +995,145 @@ void op_1f_153 (p405_t *c)
 	rt = 0;
 
 	switch (sprn) {
-		case P405_SPRN_CTR:
-			rt = p405_get_ctr (c);
-			break;
+	case P405_SPRN_CTR:
+		rt = p405_get_ctr (c);
+		break;
 
-		case P405_SPRN_DBCR0:
-			rt = p405_get_dbcr0 (c);
-			break;
+	case P405_SPRN_DBCR0:
+		rt = p405_get_dbcr0 (c);
+		break;
 
-		case P405_SPRN_DBCR1:
-			rt = p405_get_dbcr1 (c);
-			break;
+	case P405_SPRN_DBCR1:
+		rt = p405_get_dbcr1 (c);
+		break;
 
-		case P405_SPRN_DBSR:
-			rt = p405_get_dbsr (c);
-			break;
+	case P405_SPRN_DBSR:
+		rt = p405_get_dbsr (c);
+		break;
 
-		case P405_SPRN_DCCR:
-			rt = p405_get_dccr (c);
-			break;
+	case P405_SPRN_DCCR:
+		rt = p405_get_dccr (c);
+		break;
 
-		case P405_SPRN_DCWR:
-			rt = p405_get_dcwr (c);
-			break;
+	case P405_SPRN_DCWR:
+		rt = p405_get_dcwr (c);
+		break;
 
-		case P405_SPRN_DEAR:
-			rt = p405_get_dear (c);
-			break;
+	case P405_SPRN_DEAR:
+		rt = p405_get_dear (c);
+		break;
 
-		case P405_SPRN_ESR:
-			rt = p405_get_esr (c);
-			break;
+	case P405_SPRN_ESR:
+		rt = p405_get_esr (c);
+		break;
 
-		case P405_SPRN_EVPR:
-			rt = p405_get_evpr (c);
-			break;
+	case P405_SPRN_EVPR:
+		rt = p405_get_evpr (c);
+		break;
 
-		case P405_SPRN_ICCR:
-			rt = p405_get_iccr (c);
-			break;
+	case P405_SPRN_ICCR:
+		rt = p405_get_iccr (c);
+		break;
 
-		case P405_SPRN_LR:
-			rt = p405_get_lr (c);
-			break;
+	case P405_SPRN_LR:
+		rt = p405_get_lr (c);
+		break;
 
-		case P405_SPRN_PID:
-			rt = p405_get_pid (c);
-			break;
+	case P405_SPRN_PID:
+		rt = p405_get_pid (c);
+		break;
 
-		case P405_SPRN_PIT:
-			rt = p405_get_pit (c, 0);
-			break;
+	case P405_SPRN_PIT:
+		rt = p405_get_pit (c, 0);
+		break;
 
-		case P405_SPRN_PVR:
-			rt = p405_get_pvr (c);
-			break;
+	case P405_SPRN_PVR:
+		rt = p405_get_pvr (c);
+		break;
 
-		case P405_SPRN_SPRG0:
-			rt = p405_get_sprg (c, 0);
-			break;
+	case P405_SPRN_SPRG0:
+		rt = p405_get_sprg (c, 0);
+		break;
 
-		case P405_SPRN_SPRG1:
-			rt = p405_get_sprg (c, 1);
-			break;
+	case P405_SPRN_SPRG1:
+		rt = p405_get_sprg (c, 1);
+		break;
 
-		case P405_SPRN_SPRG2:
-			rt = p405_get_sprg (c, 2);
-			break;
+	case P405_SPRN_SPRG2:
+		rt = p405_get_sprg (c, 2);
+		break;
 
-		case P405_SPRN_SPRG3:
-			rt = p405_get_sprg (c, 3);
-			break;
+	case P405_SPRN_SPRG3:
+		rt = p405_get_sprg (c, 3);
+		break;
 
-		case P405_SPRN_SPRG4:
-			rt = p405_get_sprg (c, 4);
-			break;
+	case P405_SPRN_SPRG4:
+		rt = p405_get_sprg (c, 4);
+		break;
 
-		case P405_SPRN_SPRG5:
-			rt = p405_get_sprg (c, 5);
-			break;
+	case P405_SPRN_SPRG5:
+		rt = p405_get_sprg (c, 5);
+		break;
 
-		case P405_SPRN_SPRG6:
-			rt = p405_get_sprg (c, 6);
-			break;
+	case P405_SPRN_SPRG6:
+		rt = p405_get_sprg (c, 6);
+		break;
 
-		case P405_SPRN_SPRG7:
-			rt = p405_get_sprg (c, 7);
-			break;
+	case P405_SPRN_SPRG7:
+		rt = p405_get_sprg (c, 7);
+		break;
 
-		case P405_SPRN_SPRG4R:
-			rt = p405_get_sprg (c, 4);
-			break;
+	case P405_SPRN_SPRG4R:
+		rt = p405_get_sprg (c, 4);
+		break;
 
-		case P405_SPRN_SPRG5R:
-			rt = p405_get_sprg (c, 5);
-			break;
+	case P405_SPRN_SPRG5R:
+		rt = p405_get_sprg (c, 5);
+		break;
 
-		case P405_SPRN_SPRG6R:
-			rt = p405_get_sprg (c, 6);
-			break;
+	case P405_SPRN_SPRG6R:
+		rt = p405_get_sprg (c, 6);
+		break;
 
-		case P405_SPRN_SPRG7R:
-			rt = p405_get_sprg (c, 7);
-			break;
+	case P405_SPRN_SPRG7R:
+		rt = p405_get_sprg (c, 7);
+		break;
 
-		case P405_SPRN_SRR0:
-			rt = p405_get_srr (c, 0);
-			break;
+	case P405_SPRN_SRR0:
+		rt = p405_get_srr (c, 0);
+		break;
 
-		case P405_SPRN_SRR1:
-			rt = p405_get_srr (c, 1);
-			break;
+	case P405_SPRN_SRR1:
+		rt = p405_get_srr (c, 1);
+		break;
 
-		case P405_SPRN_SRR2:
-			rt = p405_get_srr (c, 2);
-			break;
+	case P405_SPRN_SRR2:
+		rt = p405_get_srr (c, 2);
+		break;
 
-		case P405_SPRN_SRR3:
-			rt = p405_get_srr (c, 3);
-			break;
+	case P405_SPRN_SRR3:
+		rt = p405_get_srr (c, 3);
+		break;
 
-		case P405_SPRN_TBL:
-			rt = p405_get_tbl (c);
-			break;
+	case P405_SPRN_TBL:
+		rt = p405_get_tbl (c);
+		break;
 
-		case P405_SPRN_TBU:
-			rt = p405_get_tbu (c);
-			break;
+	case P405_SPRN_TBU:
+		rt = p405_get_tbu (c);
+		break;
 
-		case P405_SPRN_XER:
-			rt = p405_get_xer (c);
-			break;
+	case P405_SPRN_XER:
+		rt = p405_get_xer (c);
+		break;
 
-		case P405_SPRN_ZPR:
-			rt = p405_get_zpr (c);
-			break;
+	case P405_SPRN_ZPR:
+		rt = p405_get_zpr (c);
+		break;
 
-		default:
-			p405_op_undefined (c);
-			return;
+	default:
+		p405_op_undefined (c);
+		return;
 	}
 
 	p405_set_rt (c, c->ir, rt);
@@ -1240,155 +1383,155 @@ void op_1f_1d3 (p405_t *c)
 	rs = p405_get_rs (c, c->ir);
 
 	switch (sprn) {
-		case P405_SPRN_CTR:
-			p405_set_ctr (c, rs);
-			break;
+	case P405_SPRN_CTR:
+		p405_set_ctr (c, rs);
+		break;
 
-		case P405_SPRN_DBCR0:
-			p405_set_dbcr0 (c, rs);
-			break;
+	case P405_SPRN_DBCR0:
+		p405_set_dbcr0 (c, rs);
+		break;
 
-		case P405_SPRN_DBCR1:
-			p405_set_dbcr1 (c, rs);
-			break;
+	case P405_SPRN_DBCR1:
+		p405_set_dbcr1 (c, rs);
+		break;
 
-		case P405_SPRN_DBSR:
-			p405_set_dbsr (c, p405_get_dbsr (c) & ~rs);
-			break;
+	case P405_SPRN_DBSR:
+		p405_set_dbsr (c, p405_get_dbsr (c) & ~rs);
+		break;
 
-		case P405_SPRN_DCCR:
-			p405_set_dccr (c, rs);
-			break;
+	case P405_SPRN_DCCR:
+		p405_set_dccr (c, rs);
+		break;
 
-		case P405_SPRN_DCWR:
-			p405_set_dcwr (c, rs);
-			break;
+	case P405_SPRN_DCWR:
+		p405_set_dcwr (c, rs);
+		break;
 
-		case P405_SPRN_DEAR:
-			p405_set_dear (c, rs);
-			break;
+	case P405_SPRN_DEAR:
+		p405_set_dear (c, rs);
+		break;
 
-		case P405_SPRN_ESR:
-			p405_set_esr (c, rs);
-			break;
+	case P405_SPRN_ESR:
+		p405_set_esr (c, rs);
+		break;
 
-		case P405_SPRN_EVPR:
-			p405_set_evpr (c, rs);
-			break;
+	case P405_SPRN_EVPR:
+		p405_set_evpr (c, rs);
+		break;
 
-		case P405_SPRN_ICCR:
-			p405_set_iccr (c, rs);
-			break;
+	case P405_SPRN_ICCR:
+		p405_set_iccr (c, rs);
+		break;
 
-		case P405_SPRN_LR:
-			p405_set_lr (c, rs);
-			break;
+	case P405_SPRN_LR:
+		p405_set_lr (c, rs);
+		break;
 
-		case P405_SPRN_PID:
-			p405_set_pid (c, rs);
-			p405_tbuf_clear (c);
-			break;
+	case P405_SPRN_PID:
+		p405_set_pid (c, rs);
+		p405_tbuf_clear (c);
+		break;
 
-		case P405_SPRN_PIT:
-			p405_set_pit (c, 0, rs);
-			p405_set_pit (c, 1, rs);
-			break;
+	case P405_SPRN_PIT:
+		p405_set_pit (c, 0, rs);
+		p405_set_pit (c, 1, rs);
+		break;
 
-		case P405_SPRN_PVR:
-//      p405_set_pvr (c, rs);
-			break;
+	case P405_SPRN_PVR:
+		/* p405_set_pvr (c, rs); */
+		break;
 
-		case P405_SPRN_SPRG0:
-			p405_set_sprg (c, 0, rs);
-			break;
+	case P405_SPRN_SPRG0:
+		p405_set_sprg (c, 0, rs);
+		break;
 
-		case P405_SPRN_SPRG1:
-			p405_set_sprg (c, 1, rs);
-			break;
+	case P405_SPRN_SPRG1:
+		p405_set_sprg (c, 1, rs);
+		break;
 
-		case P405_SPRN_SPRG2:
-			p405_set_sprg (c, 2, rs);
-			break;
+	case P405_SPRN_SPRG2:
+		p405_set_sprg (c, 2, rs);
+		break;
 
-		case P405_SPRN_SPRG3:
-			p405_set_sprg (c, 3, rs);
-			break;
+	case P405_SPRN_SPRG3:
+		p405_set_sprg (c, 3, rs);
+		break;
 
-		case P405_SPRN_SPRG4:
-			p405_set_sprg (c, 4, rs);
-			break;
+	case P405_SPRN_SPRG4:
+		p405_set_sprg (c, 4, rs);
+		break;
 
-		case P405_SPRN_SPRG5:
-			p405_set_sprg (c, 5, rs);
-			break;
+	case P405_SPRN_SPRG5:
+		p405_set_sprg (c, 5, rs);
+		break;
 
-		case P405_SPRN_SPRG6:
-			p405_set_sprg (c, 6, rs);
-			break;
+	case P405_SPRN_SPRG6:
+		p405_set_sprg (c, 6, rs);
+		break;
 
-		case P405_SPRN_SPRG7:
-			p405_set_sprg (c, 7, rs);
-			break;
+	case P405_SPRN_SPRG7:
+		p405_set_sprg (c, 7, rs);
+		break;
 
-		case P405_SPRN_SPRG4R:
-			p405_set_sprg (c, 4, rs);
-			break;
+	case P405_SPRN_SPRG4R:
+		p405_set_sprg (c, 4, rs);
+		break;
 
-		case P405_SPRN_SPRG5R:
-			p405_set_sprg (c, 5, rs);
-			break;
+	case P405_SPRN_SPRG5R:
+		p405_set_sprg (c, 5, rs);
+		break;
 
-		case P405_SPRN_SPRG6R:
-			p405_set_sprg (c, 6, rs);
-			break;
+	case P405_SPRN_SPRG6R:
+		p405_set_sprg (c, 6, rs);
+		break;
 
-		case P405_SPRN_SPRG7R:
-			p405_set_sprg (c, 7, rs);
-			break;
+	case P405_SPRN_SPRG7R:
+		p405_set_sprg (c, 7, rs);
+		break;
 
-		case P405_SPRN_SRR0:
-			p405_set_srr (c, 0, rs);
-			break;
+	case P405_SPRN_SRR0:
+		p405_set_srr (c, 0, rs);
+		break;
 
-		case P405_SPRN_SRR1:
-			p405_set_srr (c, 1, rs);
-			break;
+	case P405_SPRN_SRR1:
+		p405_set_srr (c, 1, rs);
+		break;
 
-		case P405_SPRN_SRR2:
-			p405_set_srr (c, 2, rs);
-			break;
+	case P405_SPRN_SRR2:
+		p405_set_srr (c, 2, rs);
+		break;
 
-		case P405_SPRN_SRR3:
-			p405_set_srr (c, 3, rs);
-			break;
+	case P405_SPRN_SRR3:
+		p405_set_srr (c, 3, rs);
+		break;
 
-		case P405_SPRN_TBL:
-			p405_set_tbl (c, rs);
-			break;
+	case P405_SPRN_TBL:
+		p405_set_tbl (c, rs);
+		break;
 
-		case P405_SPRN_TCR:
-			p405_set_tcr (c, rs);
-			break;
+	case P405_SPRN_TCR:
+		p405_set_tcr (c, rs);
+		break;
 
-		case P405_SPRN_TBU:
-			p405_set_tbu (c, rs);
-			break;
+	case P405_SPRN_TBU:
+		p405_set_tbu (c, rs);
+		break;
 
-		case P405_SPRN_TSR:
-			p405_set_tsr (c, p405_get_tsr (c) & ~rs);
-			break;
+	case P405_SPRN_TSR:
+		p405_set_tsr (c, p405_get_tsr (c) & ~rs);
+		break;
 
-		case P405_SPRN_XER:
-			p405_set_xer (c, rs);
-			break;
+	case P405_SPRN_XER:
+		p405_set_xer (c, rs);
+		break;
 
-		case P405_SPRN_ZPR:
-			p405_set_zpr (c, rs);
-			break;
+	case P405_SPRN_ZPR:
+		p405_set_zpr (c, rs);
+		break;
 
-		default:
-			p405_op_undefined (c);
-			return;
+	default:
+		p405_op_undefined (c);
+		return;
 	}
 
 	p405_set_clk (c, 4, 1);
@@ -1494,6 +1637,52 @@ void op_1f_200 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
+/* 1F 208: subfco[.] rt, ra, rb */
+static
+void op_1f_208 (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = p405_get_ra (c, c->ir);
+
+	rt = (s1 - s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, rt <= s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
+/* 1F 20A: addco[.] rt, ra, rb */
+static
+void op_1f_20a (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, rt < s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
 /* 1F 215: lswx rt, ra0, rb */
 static
 void op_1f_215 (p405_t *c)
@@ -1555,6 +1744,28 @@ void op_1f_218 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
+/* 1F 228: subfo[.] rt, ra, rb */
+static
+void op_1f_228 (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = p405_get_ra (c, c->ir);
+
+	rt = (s1 - s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
 /* 1F 236: tlbsync */
 static
 void op_1f_236 (p405_t *c)
@@ -1611,6 +1822,54 @@ void op_1f_277 (p405_t *c)
 	p405_exception_program_fpu (c);
 }
 
+/* 1F 288: subfeo[.] rt, ra, rb */
+static
+void op_1f_288 (p405_t *c)
+{
+	uint32_t rt, s1, s2, s3;
+
+	s1 = p405_get_rb (c, c->ir);
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, (rt < s1) || ((rt == s1) && s3));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
+/* 1F 28A: addeo[.] rt, ra, rb */
+static
+void op_1f_28a (p405_t *c)
+{
+	uint32_t rt, s1, s2, s3;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, (rt < s1) || ((rt == s1) && (s3 > 0)));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
 /* 1F 295: stswx rs, ra0, rb */
 static
 void op_1f_295 (p405_t *c)
@@ -1649,12 +1908,66 @@ void op_1f_297 (p405_t *c)
 	p405_exception_program_fpu (c);
 }
 
-/* 1F 2b7: stfsux */
+/* 1F 2B7: stfsux */
 static
 void op_1f_2b7 (p405_t *c)
 {
 	p405_set_clk (c, 0, 1);
 	p405_exception_program_fpu (c);
+}
+
+/* 1F 2C8: subfzeo[.] rt, ra */
+static
+void op_1f_2c8 (p405_t *c)
+{
+	uint32_t rt, s2, s3;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
+		return;
+	}
+
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (0 + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, rt & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, (rt == 0) && s3);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
+/* 1F 2CA: addzeo[.] rt, ra */
+static
+void op_1f_2ca (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
+		return;
+	}
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & rt & 0x80000000);
+	p405_set_xer_ca (c, rt < s1);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 2D5: stswi rs, ra0, nb */
@@ -1678,6 +1991,60 @@ void op_1f_2d7 (p405_t *c)
 	p405_exception_program_fpu (c);
 }
 
+/* 1F 2E8: subfmeo[.] rt, ra */
+static
+void op_1f_2e8 (p405_t *c)
+{
+	uint32_t rt, s2, s3;
+
+	if (p405_check_reserved (c, 0x0000f800)) {
+		return;
+	}
+
+	s2 = ~p405_get_ra (c, c->ir);
+	s3 = p405_get_xer_ca (c);
+
+	rt = (0xffffffff + s2 + s3) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, ~rt & (rt ^ s2) & 0x80000000);
+	p405_set_xer_ca (c, s2 || s3);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
+/* 1F 2EA: addmeo[.] rt, ra */
+static
+void op_1f_2ea (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	if (p405_check_reserved (c, 0xf800UL)) {
+		return;
+	}
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_xer_ca (c);
+
+	rt = (s1 + s2 - 1) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & ~rt & 0x80000000);
+	p405_set_xer_ca (c, (s1 > 0) || (s2 > 0));
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
+}
+
 /* 1F 2F6: dcba ra0, rb */
 static
 void op_1f_2f6 (p405_t *c)
@@ -1695,6 +2062,28 @@ void op_1f_2f7 (p405_t *c)
 {
 	p405_set_clk (c, 0, 1);
 	p405_exception_program_fpu (c);
+}
+
+/* 1F 30A: addo[.] rt, ra, rb */
+static
+void op_1f_30a (p405_t *c)
+{
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_rb (c, c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000);
+
+	if (p405_get_ir_rc (c->ir)) {
+		p405_set_cr0 (c, rt);
+	}
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1F 316: lhbrx rt, ra0, rb */
@@ -2011,7 +2400,7 @@ void op_1f (p405_t *c)
 {
 	unsigned op2;
 
-	op2 = p405_get_ir_op2 (c->ir);
+	op2 = (c->ir >> 1) & 0x3ff;
 
 	c->opcodes.op1f[op2] (c);
 }
@@ -2149,7 +2538,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 	&op_1f_200,       NULL,       NULL,       NULL, /* 200 */
 				NULL,       NULL,       NULL,       NULL,
-	&op_1f_008,       NULL, &op_1f_00a,       NULL,
+	&op_1f_208,       NULL, &op_1f_20a,       NULL,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 210 */
 				NULL, &op_1f_215, &op_1f_216, &op_1f_217,
@@ -2157,7 +2546,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 220 */
 				NULL,       NULL,       NULL,       NULL,
-	&op_1f_028,       NULL,       NULL,       NULL,
+	&op_1f_228,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 230 */
 				NULL,       NULL, &op_1f_236, &op_1f_237,
@@ -2181,7 +2570,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 280 */
 				NULL,       NULL,       NULL,       NULL,
-	&op_1f_088,       NULL, &op_1f_08a,       NULL,
+	&op_1f_288,       NULL, &op_1f_28a,       NULL,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 290 */
 				NULL, &op_1f_295, &op_1f_296, &op_1f_297,
@@ -2197,7 +2586,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 2c0 */
 				NULL,       NULL,       NULL,       NULL,
-	&op_1f_0c8,       NULL, &op_1f_0ca,       NULL,
+	&op_1f_2c8,       NULL, &op_1f_2ca,       NULL,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 2d0 */
 				NULL, &op_1f_2d5,       NULL, &op_1f_2d7,
@@ -2205,7 +2594,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 2e0 */
 				NULL,       NULL,       NULL,       NULL,
-	&op_1f_0e8,       NULL, &op_1f_0ea, &op_1f_0eb,
+	&op_1f_2e8,       NULL, &op_1f_2ea, &op_1f_0eb,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 2f0 */
 				NULL,       NULL, &op_1f_2f6, &op_1f_2f7,
@@ -2213,7 +2602,7 @@ p405_opcode_f p405_opcode1f[1024] = {
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 300 */
 				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_10a,       NULL,
+				NULL,       NULL, &op_1f_30a,       NULL,
 				NULL,       NULL,       NULL,       NULL,
 				NULL,       NULL,       NULL,       NULL, /* 310 */
 				NULL,       NULL, &op_1f_316,       NULL,

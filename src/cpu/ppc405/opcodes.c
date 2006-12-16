@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcodes.c                                   *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -32,26 +31,6 @@
 #include "ppc405.h"
 #include "internal.h"
 
-
-int p405_check_reserved (p405_t *c, uint32_t res)
-{
-	if (c->ir & res) {
-		p405_op_undefined (c);
-		return (1);
-	}
-
-	return (0);
-}
-
-int p405_check_privilege (p405_t *c)
-{
-	if (p405_get_msr_pr (c)) {
-		p405_exception_program (c, P405_ESR_PPR);
-		return (1);
-	}
-
-	return (0);
-}
 
 void p405_set_xer_so_ov (p405_t *c, uint64_t r1, uint32_t r2)
 {
@@ -158,53 +137,6 @@ uint64_t p405_mul (uint32_t s1, uint32_t s2)
 
 
 /*****************************************************************************/
-
-/* generic add rt, src1, src2 */
-void p405_op_add (p405_t *c, uint32_t s1, uint32_t s2, int oe, int rc, int co, int ci)
-{
-	uint64_t rt64;
-	uint32_t rt;
-
-	rt64 = (uint64_t) s1 + (uint64_t) s2;
-
-	if (ci) {
-		rt64 += p405_get_xer_ca (c);
-	}
-
-	rt = rt64 & 0xffffffffUL;
-
-	p405_set_rt (c, c->ir, rt);
-
-	if (oe) {
-		p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000UL);
-	}
-
-	if (co) {
-		p405_set_xer_ca (c, rt64 > 0xffffffffUL);
-	}
-
-	if (rc) {
-		p405_set_cr0 (c, rt);
-	}
-
-	p405_set_clk (c, 4, 1);
-}
-
-/* generic and ra, src1, src2 */
-void p405_op_and (p405_t *c, uint32_t s1, uint32_t s2, int rc)
-{
-	uint32_t rt;
-
-	rt = s1 & s2;
-
-	p405_set_ra (c, c->ir, rt);
-
-	if (rc) {
-		p405_set_cr0 (c, rt);
-	}
-
-	p405_set_clk (c, 4, 1);
-}
 
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk)
 {
@@ -380,42 +312,6 @@ void p405_op_stsw (p405_t *c, unsigned rs, uint32_t ea, unsigned cnt)
 	p405_set_clk (c, 4, (clk > 0) ? clk : 1);
 }
 
-/* generic sub rt, src1, src2 */
-void p405_op_sub (p405_t *c, uint32_t s1, uint32_t s2, int oe, int rc, int co, int ci)
-{
-	uint64_t rt64;
-	uint32_t rt;
-
-	s2 = ~s2 & 0xffffffffUL;
-
-	rt64 = (uint64_t) s1 + (uint64_t) s2;
-
-	if (ci) {
-		rt64 += p405_get_xer_ca (c);
-	}
-	else {
-		rt64 += 1;
-	}
-
-	rt = rt64 & 0xffffffffUL;
-
-	p405_set_rt (c, c->ir, rt);
-
-	if (oe) {
-		p405_set_xer_oflow (c, (rt ^ s1) & (rt ^ s2) & 0x80000000UL);
-	}
-
-	if (co) {
-		p405_set_xer_ca (c, rt64 > 0xffffffffUL);
-	}
-
-	if (rc) {
-		p405_set_cr0 (c, rt);
-	}
-
-	p405_set_clk (c, 4, 1);
-}
-
 void p405_op_undefined (p405_t *c)
 {
 	p405_undefined (c);
@@ -483,9 +379,18 @@ void op_07 (p405_t *c)
 static
 void op_08 (p405_t *c)
 {
-	p405_op_sub (c, p405_sext (c->ir, 16), p405_get_ra (c, c->ir),
-		0, 0, 1, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_simm16 (c->ir);
+	s2 = p405_get_ra (c, c->ir);
+
+	rt = (s1 - s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt <= s1);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0A: cmpli bf, ra, imm16 */
@@ -514,40 +419,69 @@ void op_0b (p405_t *c)
 static
 void op_0c (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), p405_sext (c->ir, 16),
-		0, 0, 1, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_simm16 (c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt < s1);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0D: addic. rt, ra, simm16 */
 static
 void op_0d (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra (c, c->ir), p405_sext (c->ir, 16),
-		0, 1, 1, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_simm16 (c->ir);
+
+	rt = (s1 + s2) & 0xffffffff;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_xer_ca (c, rt < s1);
+	p405_set_cr0 (c, rt);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0E: addi rt, ra0, simm16 */
 static
 void op_0e (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra0 (c, c->ir), p405_sext (c->ir, 16),
-		0, 0, 0, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra0 (c, c->ir);
+	s2 = p405_get_simm16 (c->ir);
+
+	rt = s1 + s2;
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0F: addis rt, ra0, imm16 */
 static
 void op_0f (p405_t *c)
 {
-	p405_op_add (c,
-		p405_get_ra0 (c, c->ir), p405_uext (c->ir, 16) << 16,
-		0, 0, 0, 0
-	);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_ra0 (c, c->ir);
+	s2 = p405_get_uimm16 (c->ir);
+
+	rt = s1 + (s2 << 16);
+
+	p405_set_rt (c, c->ir, rt);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 10: bc/bca/bcl/bcla target */
@@ -729,14 +663,36 @@ void op_1b (p405_t *c)
 static
 void op_1c (p405_t *c)
 {
-	p405_op_and (c, p405_get_rs (c, c->ir), p405_uext (c->ir, 16), 1);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rs (c, c->ir);
+	s2 = p405_get_uimm16 (c->ir);
+
+	rt = s1 & s2;
+
+	p405_set_ra (c, c->ir, rt);
+
+	p405_set_cr0 (c, rt);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 1D: andis. ra, rs, uimm16 */
 static
 void op_1d (p405_t *c)
 {
-	p405_op_and (c, p405_get_rs (c, c->ir), p405_uext (c->ir, 16) << 16, 1);
+	uint32_t rt, s1, s2;
+
+	s1 = p405_get_rs (c, c->ir);
+	s2 = p405_get_uimm16 (c->ir);
+
+	rt = s1 & (s2 << 16);
+
+	p405_set_ra (c, c->ir, rt);
+
+	p405_set_cr0 (c, rt);
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 20: lwz rt, ra0, simm16 */

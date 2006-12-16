@@ -291,8 +291,7 @@ int main (int argc, char *argv[])
 
 	sct = ini_sct_find_sct (ini, "sim405");
 	if (sct == NULL) {
-		pce_log (MSG_ERR, "section 'sim405' not found in config file\n");
-		return (1);
+		sct = ini;
 	}
 
 	par_sim = s405_new (sct);

@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/opcode13.c                                  *
  * Created:       2003-11-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -218,7 +217,7 @@ void op_13 (p405_t *c)
 {
 	unsigned op2;
 
-	op2 = p405_get_ir_op2 (c->ir);
+	op2 = (c->ir >> 1) & 0x3ff;
 
 	c->opcodes.op13[op2] (c);
 }

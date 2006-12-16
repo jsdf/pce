@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/ppc405/disasm.c                                    *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -768,7 +767,7 @@ void opd_13 (p405_disasm_t *dis)
 {
 	unsigned op2;
 
-	op2 = p405_get_ir_op2 (dis->ir);
+	op2 = (dis->ir >> 1) & 0x3ff;
 
 	p405_opd13[op2] (dis);
 }
@@ -1600,7 +1599,7 @@ void opd_1f (p405_disasm_t *dis)
 {
 	unsigned op2;
 
-	op2 = p405_get_ir_op2 (dis->ir);
+	op2 = (dis->ir >> 1) & 0x3ff;
 
 	p405_opd1f[op2] (dis);
 }
