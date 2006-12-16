@@ -172,38 +172,6 @@ void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, 
 	p405_set_clk (c, 0, 1);
 }
 
-/* generic logical compare */
-void p405_op_cmpl (p405_t *c, uint32_t s1, uint32_t s2, unsigned fld)
-{
-	unsigned val;
-
-	val = 0;
-
-	s1 &= 0xffffffffUL;
-	s2 &= 0xffffffffUL;
-
-	if (s1 < s2) {
-		val |= P405_CR_LT;
-	}
-	else if (s1 > s2) {
-		val |= P405_CR_GT;
-	}
-	else {
-		val |= P405_CR_EQ;
-	}
-
-	if (c->xer & P405_XER_SO) {
-		val |= P405_CR_SO;
-	}
-
-	fld = 4 * (7 - (fld & 0x07));
-
-	c->cr &= ~(0x0fUL << fld);
-	c->cr |= (uint32_t) val << fld;
-
-	p405_set_clk (c, 4, 1);
-}
-
 /* generic cr bit op */
 void p405_op_crop (p405_t *c, unsigned bt, unsigned ba, unsigned bb, unsigned booltab)
 {
@@ -393,26 +361,75 @@ void op_08 (p405_t *c)
 	p405_set_clk (c, 4, 1);
 }
 
-/* 0A: cmpli bf, ra, imm16 */
+/* 0A: cmpli bf, ra, uimm16 */
 static
 void op_0a (p405_t *c)
 {
-	p405_op_cmpl (c,
-		p405_get_ra (c, c->ir),
-		p405_uext (c->ir, 16),
-		(c->ir >> 23) & 0x07
-	);
+	unsigned f;
+	uint32_t d, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_uimm16 (c->ir);
+
+	f = (c->ir >> 23) & 0x07;
+
+	if (s1 < s2) {
+		d = P405_CR_LT;
+	}
+	else if (s1 > s2) {
+		d = P405_CR_GT;
+	}
+	else {
+		d = P405_CR_EQ;
+	}
+
+	if (p405_get_xer_so (c)) {
+		d |= P405_CR_SO;
+	}
+
+	f = 4 * (7 - f);
+
+	c->cr &= ~(0x0fUL << f);
+	c->cr |= d << f;
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0B: cmpi bf, ra, simm16 */
 static
 void op_0b (p405_t *c)
 {
-	p405_op_cmpl (c,
-		p405_get_ra (c, c->ir) + 0x80000000UL,
-		p405_sext (c->ir, 16) + 0x80000000UL,
-		(c->ir >> 23) & 0x07
-	);
+	unsigned f;
+	uint32_t d, s1, s2;
+
+	s1 = p405_get_ra (c, c->ir);
+	s2 = p405_get_simm16 (c->ir);
+
+	s1 ^= 0x80000000;
+	s2 ^= 0x80000000;
+
+	f = (c->ir >> 23) & 0x07;
+
+	if (s1 < s2) {
+		d = P405_CR_LT;
+	}
+	else if (s1 > s2) {
+		d = P405_CR_GT;
+	}
+	else {
+		d = P405_CR_EQ;
+	}
+
+	if (p405_get_xer_so (c)) {
+		d |= P405_CR_SO;
+	}
+
+	f = 4 * (7 - f);
+
+	c->cr &= ~(0x0fUL << f);
+	c->cr |= d << f;
+
+	p405_set_clk (c, 4, 1);
 }
 
 /* 0C: addic rt, ra, simm16 */

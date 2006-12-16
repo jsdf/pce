@@ -137,7 +137,6 @@ int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags);
 uint64_t p405_mul (uint32_t s1, uint32_t s2);
 
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk);
-void p405_op_cmpl (p405_t *c, uint32_t s1, uint32_t s2, unsigned fld);
 void p405_op_crop (p405_t *c, unsigned bt, unsigned ba, unsigned bb, unsigned booltab);
 void p405_op_lsw (p405_t *c, unsigned rt, unsigned ra, unsigned rb, uint32_t ea, unsigned cnt);
 void p405_op_stsw (p405_t *c, unsigned rs, uint32_t ea, unsigned cnt);
