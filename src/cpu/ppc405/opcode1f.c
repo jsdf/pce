@@ -154,7 +154,7 @@ void op_1f_014 (p405_t *c)
 {
 	uint32_t rt, ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -175,7 +175,7 @@ void op_1f_017 (p405_t *c)
 {
 	uint32_t rt, ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -336,7 +336,7 @@ void op_1f_037 (p405_t *c)
 {
 	uint32_t  rt, ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -423,7 +423,7 @@ void op_1f_057 (p405_t *c)
 	uint8_t  rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -468,7 +468,7 @@ void op_1f_077 (p405_t *c)
 	uint8_t  rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -619,7 +619,7 @@ void op_1f_096 (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -649,7 +649,7 @@ void op_1f_097 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -687,7 +687,7 @@ void op_1f_0b7 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -762,7 +762,7 @@ void op_1f_0d7 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -871,7 +871,7 @@ void op_1f_0f7 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -933,7 +933,7 @@ void op_1f_117 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -971,7 +971,7 @@ void op_1f_137 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -1194,7 +1194,7 @@ void op_1f_157 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -1249,7 +1249,7 @@ void op_1f_177 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -1273,7 +1273,7 @@ void op_1f_197 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -1311,7 +1311,7 @@ void op_1f_1b7 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX | P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 1, 1)) {
 		return;
 	}
 
@@ -1745,7 +1745,7 @@ void op_1f_216 (p405_t *c)
 {
 	uint32_t rt, ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -1935,7 +1935,7 @@ void op_1f_296 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -2139,7 +2139,7 @@ void op_1f_316 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -2272,7 +2272,7 @@ void op_1f_396 (p405_t *c)
 		return;
 	}
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 
@@ -2422,7 +2422,7 @@ void op_1f_3f6 (p405_t *c)
 
 	/* alignment exception if cache block non-cacheable or write-through */
 
-	if (p405_get_ea (c, &ea, P405_EA_IDX)) {
+	if (p405_get_ea (c, &ea, 1, 0)) {
 		return;
 	}
 

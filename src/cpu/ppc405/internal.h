@@ -86,9 +86,6 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define P405_EXCPT_MSR (P405_MSR_WE | P405_MSR_EE | P405_MSR_PR | P405_MSR_DWE \
 	| P405_MSR_IR | P405_MSR_DR)
 
-#define P405_EA_IDX 0x01
-#define P405_EA_UPD 0x02
-
 #define p405_sext(x, n) ( \
 	((x) & (1UL << ((n) - 1))) ? \
 	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
@@ -130,10 +127,6 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define p405_set_clk(c, dpc, clk) do { (c)->pc += (dpc); (c)->delay += (clk); } while (0)
 
 
-void p405_set_xer_so_ov (p405_t *c, uint64_t r1, uint32_t r2);
-void p405_set_xer_oflow (p405_t *c, int of);
-void p405_set_cr0 (p405_t *c, uint32_t r);
-int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags);
 uint64_t p405_mul (uint32_t s1, uint32_t s2);
 
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk);
@@ -157,7 +150,7 @@ void p405_set_opcode1f (p405_t *c);
 void p405_set_opcodes (p405_t *c);
 
 
-inline static
+static inline
 int p405_check_reserved (p405_t *c, uint32_t res)
 {
 	if (c->ir & res) {
@@ -168,13 +161,66 @@ int p405_check_reserved (p405_t *c, uint32_t res)
 	return (0);
 }
 
-inline static
+static inline
 int p405_check_privilege (p405_t *c)
 {
 	if (p405_get_msr_pr (c)) {
 		p405_exception_program (c, P405_ESR_PPR);
 		return (1);
 	}
+
+	return (0);
+}
+
+static inline
+void p405_set_xer_oflow (p405_t *c, int of)
+{
+	if (of) {
+		c->xer |= (P405_XER_SO | P405_XER_OV);
+	}
+	else {
+		c->xer &= ~P405_XER_OV;
+	}
+}
+
+static inline
+void p405_set_cr0 (p405_t *c, uint32_t r)
+{
+	c->cr &= 0x0fffffff;
+
+	if (r & 0x80000000) {
+		c->cr |= P405_CR0_LT;
+	}
+	else if (r & 0x7fffffff) {
+		c->cr |= P405_CR0_GT;
+	}
+	else {
+		c->cr |= P405_CR0_EQ;
+	}
+
+	if (c->xer & P405_XER_SO) {
+		c->cr |= P405_CR0_SO;
+	}
+}
+
+static inline
+int p405_get_ea (p405_t *c, uint32_t *val, int idx, int upd)
+{
+	if (upd) {
+		if (p405_get_ir_ra (c->ir) == 0) {
+			p405_op_undefined (c);
+			return (1);
+		}
+	}
+
+	if (idx) {
+		*val = p405_get_ra0 (c, c->ir) + p405_get_rb (c, c->ir);
+	}
+	else {
+		*val = p405_get_ra0 (c, c->ir) + p405_get_simm16 (c->ir);
+	}
+
+	*val &= 0xffffffff;
 
 	return (0);
 }

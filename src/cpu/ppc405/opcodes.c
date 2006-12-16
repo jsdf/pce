@@ -32,69 +32,7 @@
 #include "internal.h"
 
 
-void p405_set_xer_so_ov (p405_t *c, uint64_t r1, uint32_t r2)
-{
-	int c1, c2;
-
-	c1 = (r1 & ~0xffffffffULL) != 0;
-	c2 = (r2 & 0x80000000UL) != 0;
-
-	if (c1 != c2) {
-		c->xer |= (P405_XER_SO | P405_XER_OV);
-	}
-	else {
-		c->xer &= ~P405_XER_OV;
-	}
-}
-
-void p405_set_xer_oflow (p405_t *c, int of)
-{
-	if (of) {
-		c->xer |= (P405_XER_SO | P405_XER_OV);
-	}
-	else {
-		c->xer &= ~P405_XER_OV;
-	}
-}
-
-void p405_set_cr0 (p405_t *c, uint32_t r)
-{
-	c->cr &= 0x0fffffffUL;
-
-	if (r & 0x80000000UL) {
-		c->cr |= P405_CR0_LT;
-	}
-	else if (r & 0x7fffffffUL) {
-		c->cr |= P405_CR0_GT;
-	}
-	else {
-		c->cr |= P405_CR0_EQ;
-	}
-
-	if (c->xer & P405_XER_SO) {
-		c->cr |= P405_CR0_SO;
-	}
-}
-
-int p405_get_ea (p405_t *c, uint32_t *val, unsigned flags)
-{
-	if (flags & P405_EA_UPD) {
-		if (p405_get_ir_ra (c->ir) == 0) {
-			p405_op_undefined (c);
-			return (1);
-		}
-	}
-
-	if (flags & P405_EA_IDX) {
-		*val = (p405_get_ra0 (c, c->ir) + p405_get_rb (c, c->ir)) & 0xffffffffUL;
-	}
-	else {
-		*val = (p405_get_ra0 (c, c->ir) + p405_sext (c->ir, 16)) & 0xffffffffUL;
-	}
-
-	return (0);
-}
-
+static inline
 uint32_t p405_get_mask (unsigned mb, unsigned me)
 {
 	uint32_t msk;
@@ -718,7 +656,7 @@ void op_20 (p405_t *c)
 {
 	uint32_t rt, ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -737,7 +675,7 @@ void op_21 (p405_t *c)
 {
 	uint32_t rt, ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -758,7 +696,7 @@ void op_22 (p405_t *c)
 	uint8_t  rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -778,7 +716,7 @@ void op_23 (p405_t *c)
 	uint8_t  rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -798,7 +736,7 @@ void op_24 (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -815,7 +753,7 @@ void op_25 (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -834,7 +772,7 @@ void op_26 (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -851,7 +789,7 @@ void op_27 (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -871,7 +809,7 @@ void op_28 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -891,7 +829,7 @@ void op_29 (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -912,7 +850,7 @@ void op_2a (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -932,7 +870,7 @@ void op_2b (p405_t *c)
 	uint16_t rt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -952,7 +890,7 @@ void op_2c (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -969,7 +907,7 @@ void op_2d (p405_t *c)
 {
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, P405_EA_UPD)) {
+	if (p405_get_ea (c, &ea, 0, 1)) {
 		return;
 	}
 
@@ -990,7 +928,7 @@ void op_2e (p405_t *c)
 	uint32_t val;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
@@ -1027,7 +965,7 @@ void op_2f (p405_t *c)
 	unsigned rs, cnt;
 	uint32_t ea;
 
-	if (p405_get_ea (c, &ea, 0)) {
+	if (p405_get_ea (c, &ea, 0, 0)) {
 		return;
 	}
 
