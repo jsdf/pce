@@ -309,11 +309,11 @@ void s405_setup_ds1743 (sim405_t *sim, ini_sct_t *sct)
 		return;
 	}
 
-	dev_ds1743_set_date (rtc);
-
 	if (fname != NULL) {
 		if (dev_ds1743_set_fname (rtc, fname)) {
-			pce_log (MSG_ERR, "*** opening file failed\n");
+			pce_log (MSG_ERR, "*** opening file failed (%s)\n",
+				fname
+			);
 		}
 	}
 

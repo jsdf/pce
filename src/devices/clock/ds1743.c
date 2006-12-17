@@ -29,6 +29,8 @@
 
 
 static void dev_ds1743_del_dev (device_t *dev);
+static void dev_ds1743_cbread (dev_ds1743_t *rtc, unsigned char val);
+static void dev_ds1743_cbwrite (dev_ds1743_t *rtc, unsigned char val);
 
 
 dev_ds1743_t *dev_ds1743_new (unsigned long addr, unsigned long size)
@@ -44,6 +46,8 @@ dev_ds1743_t *dev_ds1743_new (unsigned long addr, unsigned long size)
 	rtc->dev.del = dev_ds1743_del_dev;
 
 	ds1743_init (&rtc->ds1743, size);
+	ds1743_set_cbread (&rtc->ds1743, rtc, dev_ds1743_cbread);
+	ds1743_set_cbwrite (&rtc->ds1743, rtc, dev_ds1743_cbwrite);
 
 	mem_blk_init (&rtc->blk, addr, size, 0);
 
@@ -75,6 +79,19 @@ static
 void dev_ds1743_del_dev (device_t *dev)
 {
 	dev_ds1743_del (dev->ext);
+}
+
+static
+void dev_ds1743_cbread (dev_ds1743_t *rtc, unsigned char val)
+{
+	/* RTC is about to be read */
+	dev_ds1743_set_date (rtc);
+}
+
+static
+void dev_ds1743_cbwrite (dev_ds1743_t *rtc, unsigned char val)
+{
+	/* RTC was just written */
 }
 
 void dev_ds1743_set_date (dev_ds1743_t *rtc)
@@ -122,6 +139,10 @@ int dev_ds1743_set_fname (dev_ds1743_t *rtc, const char *fname)
 	}
 
 	fp = fopen (fname, "r+b");
+	if (fp == NULL) {
+		fp = fopen (fname, "w+b");
+	}
+
 	if (fp == NULL) {
 		return (1);
 	}

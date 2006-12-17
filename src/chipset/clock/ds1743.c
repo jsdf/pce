@@ -61,6 +61,12 @@ void ds1743_init (ds1743_t *rtc, unsigned size)
 {
 	unsigned i;
 
+	rtc->cbrext = NULL;
+	rtc->cbread = NULL;
+
+	rtc->cbwext = NULL;
+	rtc->cbwrite = NULL;
+
 	if (size < 8) {
 		size = 8;
 	}
@@ -108,6 +114,18 @@ void ds1743_del (ds1743_t *rtc)
 	}
 }
 
+void ds1743_set_cbread (ds1743_t *rtc, void *ext, void *fct)
+{
+	rtc->cbrext = ext;
+	rtc->cbread = fct;
+}
+
+void ds1743_set_cbwrite (ds1743_t *rtc, void *ext, void *fct)
+{
+	rtc->cbwext = ext;
+	rtc->cbwrite = fct;
+}
+
 static
 unsigned ds1743_int_to_bcd (unsigned val)
 {
@@ -139,6 +157,10 @@ void ds1743_clk_to_ram (ds1743_t *rtc)
 	unsigned char *p;
 
 	p = rtc->data + rtc->cnt - 8;
+
+	if (p[DS1743_CENTURY] & DS1743_R) {
+		return;
+	}
 
 	v = ds1743_int_to_bcd (rtc->year / 100);
 	p[DS1743_CENTURY] &= 0xc0;
@@ -179,6 +201,10 @@ void ds1743_ram_to_clk (ds1743_t *rtc)
 	unsigned char *p;
 
 	p = rtc->data + rtc->cnt - 8;
+
+	if (p[DS1743_CENTURY] & DS1743_W) {
+		return;
+	}
 
 	v = ds1743_bcd_to_int (p[DS1743_CENTURY] & 0x3f);
 	rtc->year = 10 * v;
@@ -235,12 +261,18 @@ unsigned char ds1743_get_uint8 (ds1743_t *rtc, unsigned long addr)
 {
 	unsigned char val;
 
+	if (addr >= rtc->cnt) {
+		return (0);
+	}
+
 	if (addr < (rtc->cnt - 8)) {
 		return (rtc->data[addr]);
 	}
 
-	if (addr >= rtc->cnt) {
-		return (0);
+	ds1743_clk_to_ram (rtc);
+
+	if (rtc->cbread != NULL) {
+		rtc->cbread (rtc->cbrext, 1);
 	}
 
 	val = rtc->data[addr];
@@ -264,28 +296,20 @@ unsigned long ds1743_get_uint32 (ds1743_t *rtc, unsigned long addr)
 
 void ds1743_set_uint8 (ds1743_t *rtc, unsigned long addr, unsigned char val)
 {
-	unsigned char old;
-
 	if (addr >= rtc->cnt) {
 		return;
 	}
 
-	old = rtc->data[addr];
 	rtc->data[addr] = val;
 
 	if (addr < (rtc->cnt - 8)) {
 		return;
 	}
 
-	if (addr == (rtc->cnt - 8 + DS1743_CENTURY)) {
-		if (((old & DS1743_W) != 0) && ((val & DS1743_W) == 0)) {
-			ds1743_ram_to_clk (rtc);
-		}
+	ds1743_ram_to_clk (rtc);
 
-		if (((old & DS1743_R) == 0) && ((val & DS1743_R) != 0)) {
-			ds1743_clk_to_ram (rtc);
-		}
-
+	if (rtc->cbwrite != NULL) {
+		rtc->cbwrite (rtc->cbwext, 1);
 	}
 }
 

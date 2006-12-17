@@ -30,6 +30,14 @@
 
 
 typedef struct {
+	/* This is called just before the RTC bytes are read. */
+	void          *cbrext;
+	void          (*cbread) (void *ext, unsigned char val);
+
+	/* This is called just after the RTC bytes were written. */
+	void          *cbwext;
+	void          (*cbwrite) (void *ext, unsigned char val);
+
 	unsigned      cnt;
 	unsigned char data[DS1743_NVMAX];
 
@@ -48,6 +56,9 @@ void ds1743_free (ds1743_t *rtc);
 
 ds1743_t *ds1743_new (unsigned size);
 void ds1743_del (ds1743_t *rtc);
+
+void ds1743_set_cbread (ds1743_t *rtc, void *ext, void *fct);
+void ds1743_set_cbwrite (ds1743_t *rtc, void *ext, void *fct);
 
 void ds1743_set_date (ds1743_t *rtc, unsigned y, unsigned m, unsigned d);
 void ds1743_set_time (ds1743_t *rtc, unsigned h, unsigned m, unsigned s);
