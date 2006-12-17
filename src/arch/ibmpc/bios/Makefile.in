@@ -53,10 +53,10 @@ all: $(TARGET)
 
 
 install:
-	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)/pce
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)
 	$(QR)for f in $(BIN) ; do \
 		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
-		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir)/pce ; \
+		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir) ; \
 	done
 
 

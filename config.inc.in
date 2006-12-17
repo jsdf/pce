@@ -5,13 +5,13 @@
 # user editable section
 
 prefix  	= @prefix@
-etcdir		= @sysconfdir@
+etcdir		= @sysconfdir@/pce
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 libdir		= @libdir@
 mandir		= @mandir@
 incdir		= @includedir@
-datdir		= @datadir@
+datdir		= @datadir@/pce
 datarootdir	= @datarootdir@
 
 

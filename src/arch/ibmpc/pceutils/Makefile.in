@@ -35,10 +35,10 @@ all: $(BIN)
 
 
 install:
-	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)/pce/pceutils
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)/pceutils
 	$(QR)for f in $(BIN) ; do \
 		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
-		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir)/pce/pceutils ; \
+		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir)/pceutils ; \
 	done
 
 
