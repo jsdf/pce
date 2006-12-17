@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -149,6 +150,8 @@ typedef struct sim405_s {
 
 	unsigned long long clk_cnt;
 	unsigned long      clk_div[4];
+
+	clock_t            real_clk;
 
 	unsigned           brk;
 } sim405_t;

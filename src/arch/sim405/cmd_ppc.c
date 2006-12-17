@@ -234,26 +234,37 @@ void prt_tlb_entry (FILE *fp, p405_tlbe_t *ent, unsigned idx)
 	);
 }
 
-void prt_state_ppc (p405_t *c, FILE *fp)
+void s405_prt_state_ppc (sim405_t *sim, FILE *fp)
 {
 	unsigned           i;
 	unsigned long long opcnt, clkcnt;
 	unsigned long      delay;
+	double             t, efrq;
+	p405_t             *c;
 	p405_disasm_t      op;
 	char               str[256];
 
 	pce_prt_sep (fp, "PPC405");
 
+	c = sim->ppc;
+
 	opcnt = p405_get_opcnt (c);
 	clkcnt = p405_get_clkcnt (c);
 	delay = p405_get_delay (c);
 
-	fprintf (fp, "CLK=%llx  OP=%llx  DLY=%lx  CPI=%.4f\n",
+	t = (double) (clock() - sim->real_clk) / CLOCKS_PER_SEC;
+	efrq = (t < 0.001) ? 0.0 : (clkcnt / (1000.0 * 1000.0 * t));
+
+	fprintf (fp,
+		"CLK=%llx  OP=%llx  DLY=%lx  CPI=%.4f  TIME=%.4f  EFRQ=%.6f\n",
 		clkcnt, opcnt, delay,
-		(opcnt > 0) ? ((double) (clkcnt + delay) / (double) opcnt) : 1.0
+		(opcnt > 0) ? ((double) (clkcnt + delay) / (double) opcnt) : 1.0,
+		t, efrq
 	);
 
-	fprintf (fp, " MSR=%08lX  XER=%08lX   CR=%08lX  XER=[%c%c%c]     CR0=[%c%c%c%c]\n",
+	fprintf (fp,
+		" MSR=%08lX  XER=%08lX   CR=%08lX  XER=[%c%c%c]"
+		"     CR0=[%c%c%c%c]\n",
 		(unsigned long) p405_get_msr (c),
 		(unsigned long) p405_get_xer (c),
 		(unsigned long) p405_get_cr (c),
@@ -266,7 +277,8 @@ void prt_state_ppc (p405_t *c, FILE *fp)
 		(p405_get_cr_so (c, 0)) ? 'O' : '-'
 	);
 
-	fprintf (fp, "  PC=%08lX  CTR=%08lX   LR=%08lX  PID=%08lX  ZPR=%08lX\n",
+	fprintf (fp,
+		"  PC=%08lX  CTR=%08lX   LR=%08lX  PID=%08lX  ZPR=%08lX\n",
 		(unsigned long) p405_get_pc (c),
 		(unsigned long) p405_get_ctr (c),
 		(unsigned long) p405_get_lr (c),
@@ -274,7 +286,8 @@ void prt_state_ppc (p405_t *c, FILE *fp)
 		(unsigned long) p405_get_zpr (c)
 	);
 
-	fprintf (fp, "SRR0=%08lX SRR1=%08lX SRR2=%08lX SRR3=%08lX  ESR=%08lX\n",
+	fprintf (fp,
+		"SRR0=%08lX SRR1=%08lX SRR2=%08lX SRR3=%08lX  ESR=%08lX\n",
 		(unsigned long) p405_get_srr (c, 0),
 		(unsigned long) p405_get_srr (c, 1),
 		(unsigned long) p405_get_srr (c, 2),
@@ -283,7 +296,9 @@ void prt_state_ppc (p405_t *c, FILE *fp)
 	);
 
 	for (i = 0; i < 8; i++) {
-		fprintf (fp, " R%02u=%08lX  R%02u=%08lX  R%02u=%08lX  R%02u=%08lX  SP%u=%08lX\n",
+		fprintf (fp,
+			" R%02u=%08lX  R%02u=%08lX  R%02u=%08lX  R%02u=%08lX"
+			"  SP%u=%08lX\n",
 			i + 0, (unsigned long) p405_get_gpr (c, i + 0),
 			i + 8, (unsigned long) p405_get_gpr (c, i + 8),
 			i + 16, (unsigned long) p405_get_gpr (c, i + 16),
@@ -298,7 +313,7 @@ void prt_state_ppc (p405_t *c, FILE *fp)
 	fprintf (fp, "%08lX  %s\n", (unsigned long) p405_get_pc (c), str);
 }
 
-void prt_state_spr (p405_t *c, FILE *fp)
+void s405_prt_state_spr (p405_t *c, FILE *fp)
 {
 	uint32_t msr;
 
@@ -306,7 +321,8 @@ void prt_state_spr (p405_t *c, FILE *fp)
 
 	msr = p405_get_msr (c);
 
-	fprintf (fp, " MSR=%08lX  [%s %s %s %s %s %s %s %s %s %s %s %s %s %s]\n",
+	fprintf (fp,
+		" MSR=%08lX  [%s %s %s %s %s %s %s %s %s %s %s %s %s %s]\n",
 		(unsigned long) msr,
 		(msr & P405_MSR_AP) ? "AP" : "ap",
 		(msr & P405_MSR_APE) ? "APE" : "ape",
@@ -324,7 +340,8 @@ void prt_state_spr (p405_t *c, FILE *fp)
 		(msr & P405_MSR_DR) ? "DR" : "dr"
 	);
 
-	fprintf (fp, "  PC=%08lX   XER=%08lX    CR=%08lX   PID=%08lX   ZPR=%08lX\n",
+	fprintf (fp,
+		"  PC=%08lX   XER=%08lX    CR=%08lX   PID=%08lX   ZPR=%08lX\n",
 		(unsigned long) p405_get_pc (c),
 		(unsigned long) p405_get_xer (c),
 		(unsigned long) p405_get_cr (c),
@@ -332,7 +349,8 @@ void prt_state_spr (p405_t *c, FILE *fp)
 		(unsigned long) p405_get_zpr (c)
 	);
 
-	fprintf (fp, "SPG0=%08lX  SRR0=%08lX    LR=%08lX   CTR=%08lX   ESR=%08lX\n",
+	fprintf (fp,
+		"SPG0=%08lX  SRR0=%08lX    LR=%08lX   CTR=%08lX   ESR=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 0),
 		(unsigned long) p405_get_srr (c, 0),
 		(unsigned long) p405_get_lr (c),
@@ -340,7 +358,8 @@ void prt_state_spr (p405_t *c, FILE *fp)
 		(unsigned long) p405_get_esr (c)
 	);
 
-	fprintf (fp, "SPG1=%08lX  SRR1=%08lX   TBU=%08lX   TBL=%08lX  DEAR=%08lX\n",
+	fprintf (fp,
+		"SPG1=%08lX  SRR1=%08lX   TBU=%08lX   TBL=%08lX  DEAR=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 1),
 		(unsigned long) p405_get_srr (c, 1),
 		(unsigned long) p405_get_tbu (c),
@@ -354,7 +373,8 @@ void prt_state_spr (p405_t *c, FILE *fp)
 		(unsigned long) p405_get_evpr (c)
 	);
 
-	fprintf (fp, "SPG3=%08lX  SRR3=%08lX  DCCR=%08lX  DCWR=%08lX  ICCR=%08lX\n",
+	fprintf (fp,
+		"SPG3=%08lX  SRR3=%08lX  DCCR=%08lX  DCWR=%08lX  ICCR=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 3),
 		(unsigned long) p405_get_srr (c, 3),
 		(unsigned long) p405_get_dccr (c),
@@ -384,7 +404,7 @@ void prt_state_spr (p405_t *c, FILE *fp)
 	);
 }
 
-void prt_state_uic (p405_uic_t *uic, FILE *fp)
+void s405_prt_state_uic (p405_uic_t *uic, FILE *fp)
 {
 	pce_prt_sep (fp, "UIC");
 
@@ -680,7 +700,7 @@ void do_c (cmd_t *cmd, sim405_t *sim)
 		cnt -= 1;
 	}
 
-	prt_state_ppc (sim->ppc, stdout);
+	s405_prt_state_ppc (sim, stdout);
 }
 
 static
@@ -815,7 +835,7 @@ void do_g (cmd_t *cmd, sim405_t *sim)
 		ppc_run_bp (sim);
 
 		fputs ("\n", stdout);
-		prt_state_ppc (sim->ppc, stdout);
+		s405_prt_state_ppc (sim, stdout);
 	}
 }
 
@@ -911,7 +931,7 @@ void do_p (cmd_t *cmd, sim405_t *sim)
 
 	pce_stop();
 
-	prt_state_ppc (sim->ppc, stdout);
+	s405_prt_state_ppc (sim, stdout);
 }
 
 static
@@ -926,7 +946,9 @@ void do_rfi (cmd_t *cmd, sim405_t *sim)
 	pce_start();
 
 	while (1) {
-		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc), P405_XLAT_CPU);
+		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc),
+			P405_XLAT_CPU
+		);
 
 		if (ppc_exec_off (sim, p405_get_pc (sim->ppc))) {
 			break;
@@ -939,7 +961,7 @@ void do_rfi (cmd_t *cmd, sim405_t *sim)
 
 	pce_stop();
 
-	prt_state_ppc (sim->ppc, stdout);
+	s405_prt_state_ppc (sim, stdout);
 }
 
 static
@@ -969,14 +991,14 @@ void do_r (cmd_t *cmd, sim405_t *sim)
 
 	*reg = val;
 
-	prt_state_ppc (sim->ppc, stdout);
+	s405_prt_state_ppc (sim, stdout);
 }
 
 static
 void do_s (cmd_t *cmd, sim405_t *sim)
 {
 	if (cmd_match_eol (cmd)) {
-		prt_state_ppc (sim->ppc, stdout);
+		s405_prt_state_ppc (sim, stdout);
 		return;
 	}
 
@@ -1080,7 +1102,7 @@ void do_t (cmd_t *cmd, sim405_t *sim)
 
 	pce_stop();
 
-	prt_state_ppc (sim->ppc, stdout);
+	s405_prt_state_ppc (sim, stdout);
 }
 
 static

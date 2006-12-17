@@ -31,9 +31,10 @@
 int ppc_match_reg (cmd_t *cmd, sim405_t *sim, uint32_t **reg);
 
 void ppc_disasm_str (char *dst, p405_disasm_t *op);
-void prt_state_ppc (p405_t *c, FILE *fp);
-void prt_state_spr (p405_t *c, FILE *fp);
-void prt_state_uic (p405_uic_t *uic, FILE *fp);
+
+void s405_prt_state_ppc (sim405_t *sim, FILE *fp);
+void s405_prt_state_spr (p405_t *c, FILE *fp);
+void s405_prt_state_uic (p405_uic_t *uic, FILE *fp);
 void s405_prt_state_mem (sim405_t *sim, FILE *fp);
 
 int ppc_do_cmd (sim405_t *sim, cmd_t *cmd);

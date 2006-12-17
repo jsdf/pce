@@ -360,6 +360,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 
 	sim->brk = 0;
 	sim->clk_cnt = 0;
+	sim->real_clk = clock();
 
 	for (i = 0; i < 4; i++) {
 		sim->clk_div[i] = 0;

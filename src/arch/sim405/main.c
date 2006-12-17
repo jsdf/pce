@@ -128,14 +128,14 @@ void prt_state (sim405_t *sim, FILE *fp, const char *str)
 	}
 
 	while (!cmd_match_eol (&cmd)) {
-		if (cmd_match (&cmd, "ppc")) {
-			prt_state_ppc (sim->ppc, fp);
+		if (cmd_match (&cmd, "ppc") || cmd_match (&cmd, "cpu")) {
+			s405_prt_state_ppc (sim, fp);
 		}
 		else if (cmd_match (&cmd, "spr")) {
-			prt_state_spr (sim->ppc, fp);
+			s405_prt_state_spr (sim->ppc, fp);
 		}
 		else if (cmd_match (&cmd, "uic")) {
-			prt_state_uic (&sim->uic, fp);
+			s405_prt_state_uic (&sim->uic, fp);
 		}
 		else if (cmd_match (&cmd, "mem")) {
 			s405_prt_state_mem (sim, fp);
