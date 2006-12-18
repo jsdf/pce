@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -1444,6 +1443,26 @@ void op12_00 (arm_t *c)
 	arm_set_clk (c, 4, 1);
 }
 
+/* 12 03: blx rm */
+static
+void op12_03 (arm_t *c)
+{
+	uint32_t d;
+
+	d = arm_get_rm (c, c->ir);
+
+	if (d & 1) {
+		/* branch to thumb instruction set */
+		op_undefined (c);
+		return;
+	}
+
+	arm_set_lr (c, (arm_get_pc (c) + 4) & 0xffffffff);
+	arm_set_pc (c, d & 0xfffffffe);
+
+	arm_set_clk (c, 0, 1);
+}
+
 /* 12 07: bkpt uimm16 */
 static
 void op12_07 (arm_t *c)
@@ -1456,18 +1475,22 @@ void op12_07 (arm_t *c)
 static
 void op12 (arm_t *c)
 {
-	switch (c->ir & 0x0ff000f0UL) {
-	case 0x01200000UL:
+	switch (c->ir & 0x0ff000f0) {
+	case 0x01200000:
 		op12_00 (c);
 		break;
 
-	case 0x01200070UL:
+	case 0x01200030:
+		op12_03 (c);
+		break;
+
+	case 0x01200070:
 		op12_07 (c);
 		break;
 
-	case 0x012000b0UL:
-	case 0x012000d0UL:
-	case 0x012000f0UL:
+	case 0x012000b0:
+	case 0x012000d0:
+	case 0x012000f0:
 		op00_0b (c);
 		break;
 

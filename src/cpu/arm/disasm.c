@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -717,6 +716,14 @@ static void opd12_00 (arm_dasm_t *da)
 	dasm_op2 (da, "msr", FLG_COND, ARG_PSR_FLD, ARG_RM);
 }
 
+/* 12 03: blx[cond] rm */
+static void opd12_03 (arm_dasm_t *da)
+{
+	dasm_op1 (da, "blx", FLG_COND, ARG_RM);
+
+	da->flags |= ARM_DFLAG_CALL;
+}
+
 /* 12 07: bkpt uimm16 */
 static void opd12_07 (arm_dasm_t *da)
 {
@@ -731,18 +738,22 @@ static void opd12_07 (arm_dasm_t *da)
 /* 12 */
 static void opd12 (arm_dasm_t *da)
 {
-	switch (da->ir & 0x0ff000f0UL) {
-	case 0x01200000UL:
+	switch (da->ir & 0x0ff000f0) {
+	case 0x01200000:
 		opd12_00 (da);
 		break;
 
-	case 0x01200070UL:
+	case 0x01200030:
+		opd12_03 (da);
+		break;
+
+	case 0x01200070:
 		opd12_07 (da);
 		break;
 
-	case 0x012000b0UL:
-	case 0x012000d0UL:
-	case 0x012000f0UL:
+	case 0x012000b0:
+	case 0x012000d0:
+	case 0x012000f0:
 		opd00_0b (da);
 		break;
 
