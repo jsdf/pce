@@ -138,17 +138,17 @@ int s6502_match_reg16 (cmd_t *cmd, sim6502_t *sim, unsigned short **reg)
 }
 
 static
-int cmd_match_sym (cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (sim6502_t *sim, cmd_t *cmd, unsigned long *val)
 {
 	unsigned char  *reg8;
 	unsigned short *reg16;
 
-	if (s6502_match_reg16 (cmd, par_sim, &reg16)) {
+	if (s6502_match_reg16 (cmd, sim, &reg16)) {
 		*val = *reg16;
 		return (1);
 	}
 
-	if (s6502_match_reg8 (cmd, par_sim, &reg8)) {
+	if (s6502_match_reg8 (cmd, sim, &reg8)) {
 		*val = *reg8;
 		return (1);
 	}
@@ -1008,7 +1008,7 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, &cmd_match_sym);
+	cmd_init (stdin, stdout, par_sim, cmd_match_sym);
 
 	s6502_reset (par_sim);
 

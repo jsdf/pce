@@ -106,11 +106,11 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_sym (cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (simarm_t *sim, cmd_t *cmd, unsigned long *val)
 {
 	uint32_t *reg;
 
-	if (sarm_match_reg (cmd, par_sim, &reg)) {
+	if (sarm_match_reg (cmd, sim, &reg)) {
 		*val = *reg;
 		return (1);
 	}
@@ -306,7 +306,7 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, &cmd_match_sym);
+	cmd_init (stdin, stdout, par_sim, cmd_match_sym);
 	sarm_cmd_init (par_sim);
 
 	sarm_reset (par_sim);

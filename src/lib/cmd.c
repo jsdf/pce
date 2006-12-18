@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.c                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,7 +32,8 @@ static FILE *cmd_fpi = NULL;
 static FILE *cmd_fpo = NULL;
 
 
-static cmd_match_sym_f cmd_match_sym = NULL;
+static void  *cmd_match_sym_ext = NULL;
+static int   (*cmd_match_sym) (void *ext, cmd_t *cmd, unsigned long *ret);
 
 
 int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
@@ -310,8 +310,8 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 	i = cmd->i;
 
 	if (cmd_match_sym != NULL) {
-		if (cmd_match_sym (cmd, val)) {
-			*val &= 0xffffffffUL;
+		if (cmd_match_sym (cmd_match_sym_ext, cmd, val)) {
+			*val &= 0xffffffff;
 			return (1);
 		}
 	}
@@ -874,9 +874,10 @@ int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
 	return (1);
 }
 
-void cmd_init (FILE *inp, FILE *out, cmd_match_sym_f sym)
+void cmd_init (FILE *inp, FILE *out, void *ext, void *sym)
 {
 	cmd_fpi = inp;
 	cmd_fpo = out;
+	cmd_match_sym_ext = ext;
 	cmd_match_sym = sym;
 }

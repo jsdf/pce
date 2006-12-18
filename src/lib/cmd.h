@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.h                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,9 +38,6 @@ typedef struct {
 } cmd_t;
 
 
-typedef int (*cmd_match_sym_f) (cmd_t *cmd, unsigned long *ret);
-
-
 void cmd_get (cmd_t *cmd);
 void cmd_set_str (cmd_t *cmd, const char *str);
 void cmd_rewind (cmd_t *cmd);
@@ -59,7 +55,7 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val);
 int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base);
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val);
 int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs);
-void cmd_init (FILE *inp, FILE *out, cmd_match_sym_f sym);
+void cmd_init (FILE *inp, FILE *out, void *ext, void *sym);
 
 
 #endif

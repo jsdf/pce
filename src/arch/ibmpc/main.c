@@ -106,7 +106,7 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
+int cmd_match_reg (ibmpc_t *pc, cmd_t *cmd, unsigned short **reg)
 {
 	unsigned i;
 
@@ -148,11 +148,11 @@ int cmd_match_reg (cmd_t *cmd, unsigned short **reg)
 }
 
 static
-int cmd_match_sym (cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (ibmpc_t *pc, cmd_t *cmd, unsigned long *val)
 {
 	unsigned short *reg;
 
-	if (cmd_match_reg (cmd, &reg)) {
+	if (cmd_match_reg (pc, cmd, &reg)) {
 		*val = *reg;
 		return (1);
 	}
@@ -1368,7 +1368,7 @@ void do_r (cmd_t *cmd)
 		return;
 	}
 
-	if (!cmd_match_reg (cmd, &reg)) {
+	if (!cmd_match_reg (pc, cmd, &reg)) {
 		prt_error ("missing register\n");
 		return;
 	}
@@ -1840,7 +1840,7 @@ int main (int argc, char *argv[])
 	signal (SIGINT, &sig_int);
 	signal (SIGSEGV, &sig_segv);
 
-	cmd_init (stdin, stdout, &cmd_match_sym);
+	cmd_init (stdin, stdout, pc, cmd_match_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
