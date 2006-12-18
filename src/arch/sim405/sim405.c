@@ -76,7 +76,7 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 
 	p405uic_init (&sim->uic);
 	p405uic_set_invert (&sim->uic, uicinv);
-	p405uic_set_nint_f (&sim->uic, (p405uic_int_f) &p405_interrupt, sim->ppc);
+	p405uic_set_nint_fct (&sim->uic, sim->ppc, p405_interrupt);
 }
 
 static
@@ -133,7 +133,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			}
 
 			e8250_set_irq_f (&sim->serport[i]->uart,
-				p405uic_get_irq_f (&sim->uic, irq), &sim->uic
+				p405uic_get_irq_fct (&sim->uic, irq), &sim->uic
 			);
 
 			mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
@@ -254,7 +254,7 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 
 	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
 	pci_dev_set_irq_f (&sim->pciata.pci, 0,
-		p405uic_get_irq_f (&sim->uic, pciirq), &sim->uic
+		p405uic_get_irq_fct (&sim->uic, pciirq), &sim->uic
 	);
 
 	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);

@@ -408,14 +408,70 @@ void s405_prt_state_uic (p405_uic_t *uic, FILE *fp)
 {
 	pce_prt_sep (fp, "UIC");
 
-	fprintf (fp, "  L=%08lX\n", (unsigned long) p405uic_get_levels (uic));
-	fprintf (fp, " SR=%08lX\n", (unsigned long) p405uic_get_sr (uic));
-	fprintf (fp, " ER=%08lX\n", (unsigned long) p405uic_get_er (uic));
-	fprintf (fp, "MSR=%08lX\n", (unsigned long) p405uic_get_msr (uic));
-	fprintf (fp, " CR=%08lX\n", (unsigned long) p405uic_get_cr (uic));
-	fprintf (fp, " PR=%08lX\n", (unsigned long) p405uic_get_pr (uic));
-	fprintf (fp, " TR=%08lX\n", (unsigned long) p405uic_get_tr (uic));
-	fprintf (fp, "VCR=%08lX\n", (unsigned long) p405uic_get_vcr (uic));
+	fprintf (fp,
+		"  L=%08lX  N00=%08lX  N08=%08lX  N16=%08lX  N24=%08lX\n",
+		(unsigned long) p405uic_get_levels (uic),
+		p405uic_get_int_cnt (uic, 0),
+		p405uic_get_int_cnt (uic, 8),
+		p405uic_get_int_cnt (uic, 16),
+		p405uic_get_int_cnt (uic, 24)
+	);
+	fprintf (fp,
+		" SR=%08lX  N01=%08lX  N09=%08lX  N17=%08lX  N25=%08lX\n",
+		(unsigned long) p405uic_get_sr (uic),
+		p405uic_get_int_cnt (uic, 1),
+		p405uic_get_int_cnt (uic, 9),
+		p405uic_get_int_cnt (uic, 17),
+		p405uic_get_int_cnt (uic, 25)
+	);
+	fprintf (fp,
+		" ER=%08lX  N02=%08lX  N10=%08lX  N18=%08lX  N26=%08lX\n",
+		(unsigned long) p405uic_get_er (uic),
+		p405uic_get_int_cnt (uic, 2),
+		p405uic_get_int_cnt (uic, 10),
+		p405uic_get_int_cnt (uic, 18),
+		p405uic_get_int_cnt (uic, 26)
+	);
+	fprintf (fp,
+		"MSR=%08lX  N03=%08lX  N11=%08lX  N19=%08lX  N27=%08lX\n",
+		(unsigned long) p405uic_get_msr (uic),
+		p405uic_get_int_cnt (uic, 3),
+		p405uic_get_int_cnt (uic, 11),
+		p405uic_get_int_cnt (uic, 19),
+		p405uic_get_int_cnt (uic, 27)
+	);
+	fprintf (fp,
+		" CR=%08lX  N04=%08lX  N12=%08lX  N20=%08lX  N28=%08lX\n",
+		(unsigned long) p405uic_get_cr (uic),
+		p405uic_get_int_cnt (uic, 4),
+		p405uic_get_int_cnt (uic, 12),
+		p405uic_get_int_cnt (uic, 20),
+		p405uic_get_int_cnt (uic, 28)
+	);
+	fprintf (fp,
+		" PR=%08lX  N05=%08lX  N13=%08lX  N21=%08lX  N29=%08lX\n",
+		(unsigned long) p405uic_get_pr (uic),
+		p405uic_get_int_cnt (uic, 5),
+		p405uic_get_int_cnt (uic, 13),
+		p405uic_get_int_cnt (uic, 21),
+		p405uic_get_int_cnt (uic, 29)
+	);
+	fprintf (fp,
+		" TR=%08lX  N06=%08lX  N14=%08lX  N22=%08lX  N30=%08lX\n",
+		(unsigned long) p405uic_get_tr (uic),
+		p405uic_get_int_cnt (uic, 6),
+		p405uic_get_int_cnt (uic, 14),
+		p405uic_get_int_cnt (uic, 22),
+		p405uic_get_int_cnt (uic, 30)
+	);
+	fprintf (fp,
+		"VCR=%08lX  N07=%08lX  N15=%08lX  N23=%08lX  N31=%08lX\n",
+		(unsigned long) p405uic_get_vcr (uic),
+		p405uic_get_int_cnt (uic, 7),
+		p405uic_get_int_cnt (uic, 15),
+		p405uic_get_int_cnt (uic, 23),
+		p405uic_get_int_cnt (uic, 31)
+	);
 	fprintf (fp, " VR=%08lX\n", (unsigned long) p405uic_get_vr (uic));
 }
 
@@ -536,48 +592,46 @@ void ppc_log_exception (void *ext, unsigned long ofs)
 	sim = (sim405_t *) ext;
 
 	switch (ofs) {
-		case 0x0300:
-			name = "data store";
-			return;
+	case 0x0300:
+		name = "data store";
+		return;
 
-		case 0x0400:
-			name = "instruction store";
-			return;
+	case 0x0400:
+		name = "instruction store";
+		return;
 
-		case 0x0500:
-			name = "external interrupt";
-			return;
+	case 0x0500:
+		name = "external interrupt";
+		return;
 
-		case 0x0700:
-			name = "program";
-			return;
-			break;
+	case 0x0700:
+		name = "program";
+		return;
 
-		case 0x0800:
-			name = "fpu unavailable";
-			break;
+	case 0x0800:
+		name = "fpu unavailable";
+		break;
 
-		case 0x0c00:
-			name = "system call";
-			return;
+	case 0x0c00:
+		name = "system call";
+		return;
 
-		case 0x1000:
-			name = "PIT";
-			return;
+	case 0x1000:
+		name = "PIT";
+		return;
 
-		case 0x1100:
-			name = "TLB miss data";
-			return;
-			break;
+	case 0x1100:
+		name = "TLB miss data";
+		return;
+		break;
 
-		case 0x1200:
-			name = "TLB miss instruction";
-			return;
-			break;
+	case 0x1200:
+		name = "TLB miss instruction";
+		return;
 
-		default:
-			name = "unknown";
-			break;
+	default:
+		name = "unknown";
+		break;
 	}
 
 	pce_log (MSG_DEB, "%08lX: exception %x (%s)\n",

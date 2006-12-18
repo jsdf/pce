@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/ppc405/uic.c                                   *
  * Created:       2004-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,7 +28,7 @@
 #include "uic.h"
 
 
-static p405uic_irq_f p405uic_irqf[32] = {
+static void *p405uic_irqf[32] = {
 	&p405uic_set_irq0,  &p405uic_set_irq1,  &p405uic_set_irq2,
 	&p405uic_set_irq3,  &p405uic_set_irq4,  &p405uic_set_irq5,
 	&p405uic_set_irq6,  &p405uic_set_irq7,  &p405uic_set_irq8,
@@ -46,6 +45,8 @@ static p405uic_irq_f p405uic_irqf[32] = {
 
 void p405uic_init (p405_uic_t *uic)
 {
+	unsigned i;
+
 	uic->sr = 0;
 	uic->er = 0;
 	uic->msr = 0;
@@ -66,6 +67,10 @@ void p405uic_init (p405_uic_t *uic)
 	uic->cint = NULL;
 	uic->cint_ext = NULL;
 	uic->cint_val = 0;
+
+	for (i = 0; i < 32; i++) {
+		uic->intcnt[i] = 0;
+	}
 }
 
 p405_uic_t *p405uic_new (void)
@@ -100,19 +105,19 @@ void p405uic_set_invert (p405_uic_t *uic, unsigned long inv)
 	uic->levels = inv & 0xffffffff;
 }
 
-void p405uic_set_cint_f (p405_uic_t *uic, p405uic_int_f fct, void *ext)
+void p405uic_set_cint_fct (p405_uic_t *uic, void *ext, void *fct)
 {
 	uic->cint_ext = ext;
 	uic->cint = fct;
 }
 
-void p405uic_set_nint_f (p405_uic_t *uic, p405uic_int_f fct, void *ext)
+void p405uic_set_nint_fct (p405_uic_t *uic, void *ext, void *fct)
 {
 	uic->nint_ext = ext;
 	uic->nint = fct;
 }
 
-p405uic_irq_f p405uic_get_irq_f (p405_uic_t *uic, unsigned irq)
+void *p405uic_get_irq_fct (p405_uic_t *uic, unsigned irq)
 {
 	return (p405uic_irqf[irq & 0x1f]);
 }
@@ -182,7 +187,6 @@ void p405uic_update (p405_uic_t *uic)
 
 uint32_t p405uic_get_sr (p405_uic_t *uic)
 {
-	fprintf (stderr, "p405 uic: get sr : %08lX\n", (unsigned long) uic->sr);
 	return (uic->sr);
 }
 
@@ -266,6 +270,14 @@ uint32_t p405uic_get_vr (p405_uic_t *uic)
 	return (uic->vr);
 }
 
+unsigned long p405uic_get_int_cnt (p405_uic_t *uic, unsigned i)
+{
+	if (i < 32) {
+		return (uic->intcnt[i]);
+	}
+
+	return (0);
+}
 
 void p405uic_set_irq (p405_uic_t *uic, unsigned i, unsigned char val)
 {
@@ -301,6 +313,8 @@ void p405uic_set_irq (p405_uic_t *uic, unsigned i, unsigned char val)
 		/* already active */
 		return;
 	}
+
+	uic->intcnt[i] += 1;
 
 	uic->sr |= msk;
 
