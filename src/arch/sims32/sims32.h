@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.h                                   *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -92,7 +91,7 @@ typedef struct sims32_s {
 
 	serport_t          *serport[2];
 
-	breakpoint_t       *brkpt;
+	bp_set_t           bps;
 
 	unsigned long long clk_cnt;
 	unsigned long      clk_div[4];

@@ -204,12 +204,19 @@ void ss32_exec (sims32_t *sim)
 static
 void ss32_run_bp (sims32_t *sim)
 {
+	breakpoint_t *bp;
+
 	pce_start();
 
 	while (1) {
 		ss32_exec (sim);
 
-		if (bp_check (&sim->brkpt, s32_get_pc (sim->cpu), 0)) {
+		bp = bps_match (&sim->bps, s32_get_pc (sim->cpu));
+		if (bp != NULL) {
+			bp_print (bp, stdout);
+			if (bp_get_pass (bp) == 0) {
+				bps_bp_del (&sim->bps, bp);
+			}
 			break;
 		}
 
@@ -290,88 +297,6 @@ void ss32_log_trap (void *ext, unsigned tn)
 	pce_log (MSG_DEB, "%08lX: trap %x (%s)\n",
 		(unsigned long) s32_get_pc (sim->cpu), tn, name
 	);
-}
-
-static
-void do_bc (cmd_t *cmd, sims32_t *sim)
-{
-	unsigned long addr;
-
-	if (cmd_match_eol (cmd)) {
-		bp_clear_all (&sim->brkpt);
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (bp_clear (&sim->brkpt, addr, 0)) {
-		printf ("no breakpoint cleared at %08lX\n", addr);
-	}
-}
-
-static
-void do_bl (cmd_t *cmd, sims32_t *sim)
-{
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	bp_list (sim->brkpt, 0);
-}
-
-static
-void do_bs (cmd_t *cmd, sims32_t *sim)
-{
-	unsigned long  addr;
-	unsigned short pass, reset;
-
-	addr = s32_get_pc (sim->cpu);
-	pass = 1;
-	reset = 0;
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	cmd_match_uint16 (cmd, &pass);
-	cmd_match_uint16 (cmd, &reset);
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pass > 0) {
-		printf ("Breakpoint at %08lX  %04X  %04X\n",
-			addr, pass, reset
-		);
-
-		bp_add (&sim->brkpt, addr, 0, pass, reset);
-	}
-}
-
-static
-void do_b (cmd_t *cmd, sims32_t *sim)
-{
-	if (cmd_match (cmd, "l")) {
-		do_bl (cmd, sim);
-	}
-	else if (cmd_match (cmd, "s")) {
-		do_bs (cmd, sim);
-	}
-	else if (cmd_match (cmd, "c")) {
-		do_bc (cmd, sim);
-	}
-	else {
-		cmd_error (cmd, "b: unknown command");
-	}
 }
 
 static
@@ -503,6 +428,7 @@ void do_g (cmd_t *cmd, sims32_t *sim)
 {
 	int           run;
 	unsigned long addr;
+	breakpoint_t  *bp;
 
 	if (cmd_match (cmd, "b")) {
 		run = 0;
@@ -512,7 +438,8 @@ void do_g (cmd_t *cmd, sims32_t *sim)
 	}
 
 	if (cmd_match_uint32 (cmd, &addr)) {
-		bp_add (&sim->brkpt, addr, 0, 1, 0);
+		bp = bp_addr_new (addr);
+		bps_bp_add (&sim->bps, bp);
 		run = 0;
 	}
 
@@ -525,9 +452,6 @@ void do_g (cmd_t *cmd, sims32_t *sim)
 	}
 	else {
 		ss32_run_bp (sim);
-
-		fputs ("\n", stdout);
-		ss32_prt_state_cpu (sim->cpu, stdout);
 	}
 }
 
@@ -535,13 +459,14 @@ static
 void do_h (cmd_t *cmd, sims32_t *sim)
 {
 	fputs (
-		"bc [addr]                 clear a breakpoint or all\n"
+		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
+		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b]                     run with or without breakpoints (ESC to stop)\n"
+		"g [b] [addr]              run with or without breakpoints (ESC to stop)\n"
 		"key [val...]              send keycodes to the serial console\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
 		"q                         quit\n"
@@ -766,7 +691,7 @@ void do_u (cmd_t *cmd, sims32_t *sim)
 int ss32_do_cmd (sims32_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		do_b (cmd, sim);
+		cmd_do_b (cmd, &sim->bps, 0);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

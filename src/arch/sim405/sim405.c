@@ -366,7 +366,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 		sim->clk_div[i] = 0;
 	}
 
-	sim->brkpt = NULL;
+	bps_init (&sim->bps);
 
 	dev_lst_init (&sim->devlst);
 
@@ -418,6 +418,8 @@ void s405_del (sim405_t *sim)
 	p405_del (sim->ppc);
 
 	mem_del (sim->mem);
+
+	bps_free (&sim->bps);
 
 	free (sim);
 }

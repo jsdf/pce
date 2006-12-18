@@ -38,9 +38,7 @@ ini_sct_t *par_cfg = NULL;
 unsigned  par_sig_int = 0;
 
 
-static breakpoint_t *breakpoint = NULL;
-
-static monitor_t    par_mon;
+static monitor_t par_mon;
 
 
 void prt_state_cpu (e6502_t *c, FILE *fp);
@@ -352,12 +350,19 @@ int s6502_exec_off (sim6502_t *sim, unsigned short addr)
 static
 void s6502_run_bp (sim6502_t *sim)
 {
+	breakpoint_t *bp;
+
 	pce_start();
 
 	while (1) {
 		s6502_exec_off (sim, e6502_get_pc (sim->cpu));
 
-		if (bp_check (&breakpoint, e6502_get_pc (sim->cpu), 0)) {
+		bp = bps_match (&sim->bps, e6502_get_pc (sim->cpu));
+		if (bp != NULL) {
+			bp_print (bp, stdout);
+			if (bp_get_pass (bp) == 0) {
+				bps_bp_del (&sim->bps, bp);
+			}
 			break;
 		}
 
@@ -385,87 +390,6 @@ void s6502_log_undef (void *ext, unsigned char op)
 	s6502_break (sim, PCE_BRK_STOP);
 }
 
-
-static
-void do_bc (cmd_t *cmd, sim6502_t *sim)
-{
-	unsigned short addr;
-
-	if (cmd_match_eol (cmd)) {
-		bp_clear_all (&breakpoint);
-		return;
-	}
-
-	if (!cmd_match_uint16 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (bp_clear (&breakpoint, addr, 0)) {
-		printf ("no breakpoint cleared at %04X\n", (unsigned) addr);
-	}
-}
-
-static
-void do_bl (cmd_t *cmd, sim6502_t *sim)
-{
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	bp_list (breakpoint, 0);
-}
-
-static
-void do_bs (cmd_t *cmd, sim6502_t *sim)
-{
-	unsigned short addr, pass, reset;
-
-	addr = e6502_get_pc (sim->cpu);
-	pass = 1;
-	reset = 0;
-
-	if (!cmd_match_uint16 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	cmd_match_uint16 (cmd, &pass);
-	cmd_match_uint16 (cmd, &reset);
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pass > 0) {
-		printf ("Breakpoint at %04X  p=%04X  r=%04X\n",
-			addr, pass, reset
-		);
-
-		bp_add (&breakpoint, addr, 0, pass, reset);
-	}
-}
-
-static
-void do_b (cmd_t *cmd, sim6502_t *sim)
-{
-	if (cmd_match (cmd, "l")) {
-		do_bl (cmd, sim);
-	}
-	else if (cmd_match (cmd, "s")) {
-		do_bs (cmd, sim);
-	}
-	else if (cmd_match (cmd, "c")) {
-		do_bc (cmd, sim);
-	}
-	else {
-		cmd_error (cmd, "b: unknown command (%s)");
-	}
-}
 
 static
 void do_c (cmd_t *cmd, sim6502_t *sim)
@@ -633,6 +557,7 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 {
 	int            run;
 	unsigned short addr;
+	breakpoint_t   *bp;
 
 	if (cmd_match (cmd, "b")) {
 		run = 0;
@@ -642,7 +567,8 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 	}
 
 	if (cmd_match_uint16 (cmd, &addr)) {
-		bp_add (&breakpoint, addr, 0, 1, 0);
+		bp = bp_addr_new (addr);
+		bps_bp_add (&sim->bps, bp);
 		run = 0;
 	}
 
@@ -652,22 +578,20 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 
 	if (run) {
 		pce_run (sim);
-		return;
 	}
-
-	s6502_run_bp (sim);
-
-	fputs ("\n", stdout);
-	prt_state_cpu (sim->cpu, stdout);
+	else {
+		s6502_run_bp (sim);
+	}
 }
 
 static
 void do_h (cmd_t *cmd, sim6502_t *sim)
 {
 	fputs (
-		"bc [addr]                 clear a breakpoint or all\n"
+		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
+		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
@@ -839,7 +763,7 @@ static
 int s6502_do_cmd (sim6502_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		do_b (cmd, sim);
+		cmd_do_b (cmd, &sim->bps, 0);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

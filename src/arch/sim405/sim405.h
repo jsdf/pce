@@ -137,7 +137,7 @@ typedef struct sim405_s {
 
 	slip_t             *slip;
 
-	breakpoint_t       *brkpt;
+	bp_set_t           bps;
 
 	/* OCM DCRs */
 	uint32_t           ocm0_iscntl;

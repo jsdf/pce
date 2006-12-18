@@ -497,12 +497,19 @@ void ppc_exec (sim405_t *sim)
 static
 void ppc_run_bp (sim405_t *sim)
 {
+	breakpoint_t *bp;
+
 	pce_start();
 
 	while (1) {
 		ppc_exec (sim);
 
-		if (bp_check (&sim->brkpt, p405_get_pc (sim->ppc), 0)) {
+		bp = bps_match (&sim->bps, p405_get_pc (sim->ppc));
+		if (bp != NULL) {
+			bp_print (bp, stdout);
+			if (bp_get_pass (bp) == 0) {
+				bps_bp_del (&sim->bps, bp);
+			}
 			break;
 		}
 
@@ -655,88 +662,6 @@ void ppc_log_mem (void *ext, unsigned mode,
 #endif
 
 static
-void do_bc (cmd_t *cmd, sim405_t *sim)
-{
-	unsigned long addr;
-
-	if (cmd_match_eol (cmd)) {
-		bp_clear_all (&sim->brkpt);
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (bp_clear (&sim->brkpt, addr, 0)) {
-		printf ("no breakpoint cleared at %08lX\n", addr);
-	}
-}
-
-static
-void do_bl (cmd_t *cmd, sim405_t *sim)
-{
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	bp_list (sim->brkpt, 0);
-}
-
-static
-void do_bs (cmd_t *cmd, sim405_t *sim)
-{
-	unsigned long  addr;
-	unsigned short pass, reset;
-
-	addr = p405_get_pc (sim->ppc);
-	pass = 1;
-	reset = 0;
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	cmd_match_uint16 (cmd, &pass);
-	cmd_match_uint16 (cmd, &reset);
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pass > 0) {
-		printf ("Breakpoint at %08lX  %04X  %04X\n",
-			addr, pass, reset
-		);
-
-		bp_add (&sim->brkpt, addr, 0, pass, reset);
-	}
-}
-
-static
-void do_b (cmd_t *cmd, sim405_t *sim)
-{
-	if (cmd_match (cmd, "l")) {
-		do_bl (cmd, sim);
-	}
-	else if (cmd_match (cmd, "s")) {
-		do_bs (cmd, sim);
-	}
-	else if (cmd_match (cmd, "c")) {
-		do_bc (cmd, sim);
-	}
-	else {
-		cmd_error (cmd, "b: unknown command");
-	}
-}
-
-static
 void do_c (cmd_t *cmd, sim405_t *sim)
 {
 	unsigned long cnt;
@@ -865,6 +790,7 @@ void do_g (cmd_t *cmd, sim405_t *sim)
 {
 	int           run;
 	unsigned long addr;
+	breakpoint_t  *bp;
 
 	if (cmd_match (cmd, "b")) {
 		run = 0;
@@ -874,7 +800,8 @@ void do_g (cmd_t *cmd, sim405_t *sim)
 	}
 
 	if (cmd_match_uint32 (cmd, &addr)) {
-		bp_add (&sim->brkpt, addr, 0, 1, 0);
+		bp = bp_addr_new (addr);
+		bps_bp_add (&sim->bps, bp);
 		run = 0;
 	}
 
@@ -887,9 +814,6 @@ void do_g (cmd_t *cmd, sim405_t *sim)
 	}
 	else {
 		ppc_run_bp (sim);
-
-		fputs ("\n", stdout);
-		s405_prt_state_ppc (sim, stdout);
 	}
 }
 
@@ -897,13 +821,14 @@ static
 void do_h (cmd_t *cmd, sim405_t *sim)
 {
 	fputs (
-		"bc [addr]                 clear a breakpoint or all\n"
+		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
+		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b]                     run with or without breakpoints (^` to stop)\n"
+		"g [b] [addr]              run with or without breakpoints (^` to stop)\n"
 		"key [val...]              send keycodes to the serial console\n"
 		"m msg [val]               send a message to the core\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
@@ -1258,7 +1183,7 @@ void do_x (cmd_t *cmd, sim405_t *sim)
 int ppc_do_cmd (sim405_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		do_b (cmd, sim);
+		cmd_do_b (cmd, &sim->bps, 0);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

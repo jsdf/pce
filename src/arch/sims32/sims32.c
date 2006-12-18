@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -224,7 +223,7 @@ sims32_t *ss32_new (ini_sct_t *ini)
 	unsigned i;
 	sims32_t *sim;
 
-	sim = (sims32_t *) malloc (sizeof (sims32_t));
+	sim = malloc (sizeof (sims32_t));
 	if (sim == NULL) {
 		return (NULL);
 	}
@@ -236,7 +235,7 @@ sims32_t *ss32_new (ini_sct_t *ini)
 		sim->clk_div[i] = 0;
 	}
 
-	sim->brkpt = NULL;
+	bps_init (&sim->bps);
 
 	sim->mem = mem_new();
 
@@ -262,6 +261,8 @@ void ss32_del (sims32_t *sim)
 	s32_del (sim->cpu);
 
 	mem_del (sim->mem);
+
+	bps_free (&sim->bps);
 
 	free (sim);
 }
@@ -300,9 +301,9 @@ void ss32_clock (sims32_t *sim, unsigned n)
 
 	sim->clk_cnt += n;
 	sim->clk_div[0] += n;
-/*  sim->clk_div[1] += n; */
-/*  sim->clk_div[2] += n; */
-/*  sim->clk_div[3] += n; */
+	/* sim->clk_div[1] += n; */
+	/* sim->clk_div[2] += n; */
+	/* sim->clk_div[3] += n; */
 }
 
 void ss32_set_msg (sims32_t *sim, const char *msg, const char *val)

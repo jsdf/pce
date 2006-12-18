@@ -252,6 +252,30 @@ int cmd_match (cmd_t *cmd, const char *str)
 	return (1);
 }
 
+int cmd_peek (cmd_t *cmd, const char *str)
+{
+	unsigned i, s;
+
+	s = cmd->i;
+
+	cmd_match_space (cmd);
+
+	i = cmd->i;
+
+	while ((*str != 0) && (cmd->str[i] == *str)) {
+		i += 1;
+		str += 1;
+	}
+
+	if (*str != 0) {
+		return (0);
+	}
+
+	cmd->i = s;
+
+	return (1);
+}
+
 int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned       i;
@@ -619,6 +643,10 @@ int cmd_match_expr_band (cmd_t *cmd, unsigned long *val, unsigned base)
 	}
 
 	while (1) {
+		if (cmd_peek (cmd, "&&")) {
+			return (1);
+		}
+
 		if (cmd_match (cmd, "&")) {
 			op = 1;
 		}
@@ -685,6 +713,10 @@ int cmd_match_expr_bor (cmd_t *cmd, unsigned long *val, unsigned base)
 	}
 
 	while (1) {
+		if (cmd_peek (cmd, "||")) {
+			return (1);
+		}
+
 		if (cmd_match (cmd, "|")) {
 			op = 1;
 		}

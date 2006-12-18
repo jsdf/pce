@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/brkpt.h                                            *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,28 +26,68 @@
 #define PCE_LIB_BRKPT_H 1
 
 
-typedef struct breakpoint_s {
-	struct breakpoint_s *next;
-	unsigned long       addr[2];
-	unsigned            pass;
-	unsigned            reset;
+#include <lib/cmd.h>
+
+
+#define BP_TYPE_ADDR   1
+#define BP_TYPE_SEGOFS 2
+#define BP_TYPE_EXPR   3
+
+
+/* a breakpoint */
+typedef struct breakpoint_t {
+	unsigned      type;
+
+	void          (*del) (struct breakpoint_t *bp);
+	int           (*match) (struct breakpoint_t *bp, unsigned long addr);
+	void          (*print) (struct breakpoint_t *bp, FILE *fp);
+
+	unsigned      pass;
+	unsigned      reset;
+
+	unsigned long addr;
+	char          *expr;
 } breakpoint_t;
 
 
-breakpoint_t *bp_get (breakpoint_t *lst, unsigned long addr1, unsigned long addr2);
+/* a set of breakpoints */
+typedef struct {
+	unsigned     cnt;
+	breakpoint_t **bp;
+} bp_set_t;
 
-void bp_add (breakpoint_t **lst, unsigned long addr1, unsigned long addr2,
-	unsigned pass, unsigned reset);
 
-int bp_clear (breakpoint_t **lst, unsigned long addr1, unsigned long addr2);
+breakpoint_t *bp_new (unsigned type);
 
-void bp_clear_all (breakpoint_t **lst);
+void bp_set_pass (breakpoint_t *bp, unsigned pass, unsigned reset);
 
-void bp_print (breakpoint_t *bp, const char *str, int seg);
+unsigned bp_get_pass (breakpoint_t *bp);
 
-void bp_list (breakpoint_t *lst, int seg);
+void bp_del (breakpoint_t *bp);
+int bp_match (breakpoint_t *bp, unsigned long addr);
+void bp_print (breakpoint_t *bp, FILE *fp);
 
-int bp_check (breakpoint_t **lst, unsigned long addr1, unsigned long addr2);
+breakpoint_t *bp_addr_new (unsigned long addr);
+breakpoint_t *bp_segofs_new (unsigned short seg, unsigned short ofs);
+breakpoint_t *bp_expr_new (const char *expr);
+
+
+void bps_init (bp_set_t *bps);
+void bps_free (bp_set_t *bps);
+
+int bps_bp_add (bp_set_t *bps, breakpoint_t *bp);
+
+breakpoint_t *bps_bp_get_index (bp_set_t *bps, unsigned idx);
+
+void bps_bp_del_index (bp_set_t *bps, unsigned idx);
+void bps_bp_del (bp_set_t *bps, breakpoint_t *bp);
+void bps_bp_del_all (bp_set_t *bps);
+
+void bps_list (bp_set_t *bps, FILE *fp);
+breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr);
+
+
+void cmd_do_b (cmd_t *cmd, bp_set_t *bps, int defseg);
 
 
 #endif

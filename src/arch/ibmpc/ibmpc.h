@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2001-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -72,7 +71,7 @@ typedef struct ibmpc_t {
 
 	ini_sct_t          *cfg;
 
-	breakpoint_t       *brkpt;
+	bp_set_t           bps;
 
 	unsigned           cpu_model;
 

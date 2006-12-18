@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.c                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-11 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -193,6 +192,8 @@ sim6502_t *s6502_new (ini_sct_t *ini)
 	sim->clk_cnt = 0;
 	sim->clk_div = 0;
 
+	bps_init (&sim->bps);
+
 	sim->mem = mem_new();
 
 	s6502_setup_ram (sim, ini);
@@ -216,6 +217,8 @@ void s6502_del (sim6502_t *sim)
 	e6502_del (sim->cpu);
 
 	mem_del (sim->mem);
+
+	bps_free (&sim->bps);
 
 	free (sim);
 }

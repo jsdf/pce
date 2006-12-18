@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/sim6502.h                                 *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -67,6 +66,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <libini/libini.h>
 
+#include <lib/brkpt.h>
 #include <lib/log.h>
 #include <lib/ihex.h>
 #include <lib/load.h>
@@ -84,6 +84,8 @@ typedef struct sim6502_s {
 	mem_blk_t          *ram;
 
 	console_t          console;
+
+	bp_set_t           bps;
 
 	unsigned long long clk_cnt;
 

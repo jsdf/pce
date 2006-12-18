@@ -541,28 +541,22 @@ int pce_check_break (ibmpc_t *pc)
 {
 	breakpoint_t   *bp;
 	unsigned short seg, ofs;
+	unsigned long  addr;
 
 	seg = e86_get_cs (pc->cpu);
 	ofs = e86_get_ip (pc->cpu);
+	addr = (seg << 16) | ofs;
 
-	bp = bp_get (pc->brkpt, seg, ofs);
+	bp = bps_match (&pc->bps, addr);
 
 	if (bp != NULL) {
-		if (bp->pass > 0) {
-			bp->pass -= 1;
+		bp_print (bp, stdout);
+
+		if (bp_get_pass (bp) == 0) {
+			bps_bp_del (&pc->bps, bp);
 		}
 
-		if (bp->pass == 0) {
-			if (bp->reset == 0) {
-				bp_clear (&pc->brkpt, seg, ofs);
-			}
-			else {
-				bp->pass = bp->reset;
-				bp_print (pc->brkpt, "brk: ", 1);
-			}
-
-			return (1);
-		}
+		return (1);
 	}
 
 	if (pc->brk) {
@@ -679,93 +673,6 @@ void do_boot (cmd_t *cmd)
 	}
 
 	pc_set_bootdrive (pc, val);
-}
-
-static
-void do_bc (cmd_t *cmd)
-{
-	unsigned short seg, ofs;
-
-	if (cmd_match_eol (cmd)) {
-		bp_clear_all (&pc->brkpt);
-		return;
-	}
-
-	seg = e86_get_cs (pc->cpu);
-	ofs = e86_get_ip (pc->cpu);
-
-	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (bp_clear (&pc->brkpt, seg, ofs)) {
-		printf ("no breakpoint cleared at %04X:%04X\n", seg, ofs);
-	}
-}
-
-static
-void do_bl (cmd_t *cmd)
-{
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	bp_list (pc->brkpt, 1);
-}
-
-static
-void do_bs (cmd_t *cmd)
-{
-	unsigned short seg, ofs, pass, reset;
-
-	seg = pc->cpu->sreg[E86_REG_CS];
-	ofs = 0;
-	pass = 1;
-	reset = 0;
-
-	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		cmd_error (cmd, "expecting address");
-		return;
-	}
-
-	cmd_match_uint16 (cmd, &pass);
-	cmd_match_uint16 (cmd, &reset);
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (pass > 0) {
-		printf ("Breakpoint at %04X:%04X  %04X  %04X\n",
-			(unsigned)seg,
-			(unsigned)ofs,
-			pass, reset
-		);
-
-		bp_add (&pc->brkpt, seg, ofs, pass, reset);
-	}
-}
-
-static
-void do_b (cmd_t *cmd)
-{
-	if (cmd_match (cmd, "l")) {
-		do_bl (cmd);
-	}
-	else if (cmd_match (cmd, "s")) {
-		do_bs (cmd);
-	}
-	else if (cmd_match (cmd, "c")) {
-		do_bc (cmd);
-	}
-	else {
-		prt_error ("b: unknown command (%s)\n", cmd->str + cmd->i);
-	}
 }
 
 static
@@ -988,7 +895,9 @@ void do_far (cmd_t *cmd)
 static
 void do_g (cmd_t *cmd)
 {
-	int run;
+	int            run;
+	unsigned short seg, ofs;
+	breakpoint_t   *bp;
 
 	if (cmd_match (cmd, "b")) {
 		run = 0;
@@ -997,19 +906,22 @@ void do_g (cmd_t *cmd)
 		run = 1;
 	}
 
+	if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		bp = bp_segofs_new (seg, ofs);
+		bps_bp_add (&pc->bps, bp);
+		run = 0;
+	}
+
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
 
 	if (run) {
 		pce_run();
-		return;
 	}
-
-	pce_run_bp();
-
-	fputs ("\n", stdout);
-	prt_state (pc, stdout);
+	else {
+		pce_run_bp();
+	}
 }
 
 static
@@ -1042,15 +954,16 @@ void do_h (cmd_t *cmd)
 
 	fputs (
 		"boot [drive]              Set the boot drive\n"
-		"bc [addr]                 clear a breakpoint or all\n"
+		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set a breakpoint [pass=1 reset=0]\n"
+		"bss addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock [1]\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val|string...]    enter bytes into memory\n"
 		"far                       run until cs changes\n"
 		"dump what fname           dump to file (ram|video)\n"
-		"g [b]                     run with or without breakpoints\n"
+		"g [b] [addr]              run with or without breakpoints\n"
 		"int28 [on|off|val]        turn int28 sleeping on/off\n"
 		"i [b|w] port              input a byte or word from a port\n"
 		"m[g|s] [msg [val]]        send a message\n"
@@ -1622,7 +1535,7 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 		do_boot (cmd);
 	}
 	else if (cmd_match (cmd, "b")) {
-		do_b (cmd);
+		cmd_do_b (cmd, &pc->bps, 1);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd);

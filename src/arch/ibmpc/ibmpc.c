@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -773,7 +772,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc->pause = 0;
 	pc->clk_cnt = 0;
 
-	pc->brkpt = NULL;
+	bps_init (&pc->bps);
 
 	for (i = 0; i < 4; i++) {
 		pc->clk_div[i] = 0;
@@ -861,7 +860,7 @@ void pc_del (ibmpc_t *pc)
 		return;
 	}
 
-	bp_clear_all (&pc->brkpt);
+	bps_free (&pc->bps);
 
 	pc_del_xms (pc);
 	pc_del_ems (pc);

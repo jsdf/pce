@@ -370,7 +370,7 @@ simarm_t *sarm_new (ini_sct_t *ini)
 
 	sim->cfg = ini;
 
-	sim->brkpt = NULL;
+	bps_init (&sim->bps);
 
 	dev_lst_init (&sim->dev);
 
@@ -415,6 +415,8 @@ void sarm_del (simarm_t *sim)
 	mem_del (sim->mem);
 
 	dev_lst_free (&sim->dev);
+
+	bps_free (&sim->bps);
 
 	free (sim);
 }

@@ -35,7 +35,7 @@ include $(reldir)/rules.inc
 all: $(OBJ)
 
 
-brkpt.o:	brkpt.c brkpt.h $(SDP)
+brkpt.o:	brkpt.c brkpt.h cmd.h $(SDP)
 cmd.o:		cmd.c cmd.h $(SDP)
 console.o:	console.c console.h $(SDP)
 hexdump.o:	hexdump.c hexdump.h $(SDP)
