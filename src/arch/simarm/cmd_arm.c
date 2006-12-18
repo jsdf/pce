@@ -581,7 +581,8 @@ void do_h (cmd_t *cmd, simarm_t *sim)
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
-		"x [c|r|v]                 set the translation mode (cpu, real, virtual)\n",
+		"x [c|r|v]                 set the translation mode (cpu, real, virtual)\n"
+		"xx [addr...]              translate a virtual address\n",
 		stdout
 	);
 }
@@ -767,51 +768,13 @@ void do_u (cmd_t *cmd, simarm_t *sim)
 }
 
 static
-void do_x (cmd_t *cmd, simarm_t *sim)
+void do_xx (cmd_t *cmd, simarm_t *sim)
 {
-	unsigned xlat;
+	unsigned long addr1;
+	uint32_t      addr2;
+	unsigned      domn, perm;
 
-	if (cmd_match_eol (cmd)) {
-		switch (par_xlat) {
-			case ARM_XLAT_CPU:
-				printf ("xlat cpu\n");
-				break;
-
-			case ARM_XLAT_REAL:
-				printf ("xlat real\n");
-				break;
-
-			case ARM_XLAT_VIRTUAL:
-				printf ("xlat virtual\n");
-				break;
-
-			default:
-				printf ("xlat unknown\n");
-				break;
-		}
-
-		return;
-	}
-
-	if (cmd_match (cmd, "c")) {
-		xlat = ARM_XLAT_CPU;
-	}
-	else if (cmd_match (cmd, "r")) {
-		xlat = ARM_XLAT_REAL;
-	}
-	else if (cmd_match (cmd, "v")) {
-		xlat = ARM_XLAT_VIRTUAL;
-	}
-	else if (cmd_match (cmd, "x")) {
-		unsigned long addr1;
-		uint32_t      addr2;
-		unsigned      domn, perm;
-
-		if (!cmd_match_uint32 (cmd, &addr1)) {
-			cmd_error (cmd, "expect address");
-			return;
-		}
-
+	while (cmd_match_uint32 (cmd, &addr1)) {
 		addr2 = addr1;
 		if (arm_translate_extern (sim->cpu, &addr2, par_xlat, &domn, &perm)) {
 			printf ("%08lX translation abort\n", addr1);
@@ -821,8 +784,45 @@ void do_x (cmd_t *cmd, simarm_t *sim)
 				addr1, (unsigned long) addr2, domn, perm
 			);
 		}
+	}
+}
+
+static
+void do_x (cmd_t *cmd, simarm_t *sim)
+{
+	if (cmd_match_eol (cmd)) {
+		switch (par_xlat) {
+		case ARM_XLAT_CPU:
+			printf ("xlat cpu\n");
+			break;
+
+		case ARM_XLAT_REAL:
+			printf ("xlat real\n");
+			break;
+
+		case ARM_XLAT_VIRTUAL:
+			printf ("xlat virtual\n");
+			break;
+
+		default:
+			printf ("xlat unknown\n");
+			break;
+		}
 
 		return;
+	}
+
+	if (cmd_match (cmd, "c")) {
+		par_xlat = ARM_XLAT_CPU;
+	}
+	else if (cmd_match (cmd, "r")) {
+		par_xlat = ARM_XLAT_REAL;
+	}
+	else if (cmd_match (cmd, "v")) {
+		par_xlat = ARM_XLAT_VIRTUAL;
+	}
+	else if (cmd_match (cmd, "x")) {
+		do_xx (cmd, sim);
 	}
 	else {
 		cmd_error (cmd, "unknown translation type");
@@ -832,8 +832,6 @@ void do_x (cmd_t *cmd, simarm_t *sim)
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
-
-	par_xlat = xlat;
 }
 
 int sarm_do_cmd (simarm_t *sim, cmd_t *cmd)
