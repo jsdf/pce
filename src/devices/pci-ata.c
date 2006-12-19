@@ -47,8 +47,8 @@ void pci_ata_init (pci_ata_t *dev)
 	ata_init (&dev->ata[0], 0x1f0, 0x3f4);
 	ata_init (&dev->ata[1], 0x170, 0x374);
 
-	ata_set_irq_f (&dev->ata[0], pci_dev_set_irq_a, dev);
-	ata_set_irq_f (&dev->ata[1], pci_dev_set_irq_a, dev);
+	ata_set_irq_f (&dev->ata[0], pci_dev_set_inta, dev);
+	ata_set_irq_f (&dev->ata[1], pci_dev_set_inta, dev);
 
 	dev->pci.reg[0] = &dev->ata[0].reg_cmd;
 	dev->pci.reg[1] = &dev->ata[0].reg_ctl;
@@ -204,5 +204,5 @@ void pci_ata_set_cfg32 (pci_ata_t *dev, unsigned long addr, unsigned long val)
 
 void pci_ata_set_irq (pci_ata_t *dev, unsigned char val)
 {
-	pci_dev_set_irq_a (&dev->pci, val);
+	pci_dev_set_inta (&dev->pci, val);
 }

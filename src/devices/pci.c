@@ -33,6 +33,8 @@ void pci_dev_init (pci_dev_t *dev)
 {
 	unsigned i;
 
+	dev->index = 0;
+
 	for (i = 0; i < PCI_REG_MAX; i++) {
 		dev->reg[i] = NULL;
 	}
@@ -57,6 +59,12 @@ void pci_dev_init (pci_dev_t *dev)
 	dev->get_cfg16 = NULL;
 	dev->set_cfg32 = NULL;
 
+	for (i = 0; i < 4; i++) {
+		dev->intr[i] = NULL;
+		dev->intr_ext[i] = NULL;
+		dev->intr_val[i] = 0;
+	}
+
 	dev->ext = NULL;
 }
 
@@ -64,25 +72,54 @@ void pci_dev_free (pci_dev_t *dev)
 {
 }
 
-void pci_dev_set_irq_f (pci_dev_t *dev, unsigned idx, void *irq, void *ext)
+void pci_dev_set_intr_fct (pci_dev_t *dev, unsigned intr, void *ext, void *fct)
 {
-	if (idx == 0) {
-		dev->irqa = irq;
-		dev->irqa_ext = ext;
+	if (intr < 4) {
+		dev->intr[intr] = fct;
+		dev->intr_ext[intr] = ext;
+		dev->intr_val[intr] = 0;
 	}
 }
 
-void pci_dev_set_irq_a (pci_dev_t *dev, unsigned char val)
+void pci_dev_set_intr (pci_dev_t *dev, unsigned intr, unsigned char val)
 {
+	if (intr >= 4) {
+		return;
+	}
+
 	val = (val != 0);
 
-	if (val != dev->irqa_val) {
-		dev->irqa_val = val;
+	if (val != dev->intr_val[intr]) {
+		dev->intr_val[intr] = val;
 
-		if (dev->irqa != NULL) {
-			dev->irqa (dev->irqa_ext, val);
+		if (dev->intr[intr] != NULL) {
+			dev->intr[intr] (dev->intr_ext[intr], val);
+		}
+
+		if (dev->pci != NULL) {
+			pci_set_intr (dev->pci, dev->index, intr, val);
 		}
 	}
+}
+
+void pci_dev_set_inta (pci_dev_t *dev, unsigned char val)
+{
+	pci_dev_set_intr (dev, 0, val);
+}
+
+void pci_dev_set_intb (pci_dev_t *dev, unsigned char val)
+{
+	pci_dev_set_intr (dev, 1, val);
+}
+
+void pci_dev_set_intc (pci_dev_t *dev, unsigned char val)
+{
+	pci_dev_set_intr (dev, 2, val);
+}
+
+void pci_dev_set_intd (pci_dev_t *dev, unsigned char val)
+{
+	pci_dev_set_intr (dev, 3, val);
 }
 
 void pci_dev_set_device_id (pci_dev_t *dev, unsigned vendor, unsigned id)
@@ -171,7 +208,7 @@ void pci_dev_set_cfg32 (pci_dev_t *dev, unsigned long addr, unsigned long val)
 
 void pci_init (pci_bus_t *pci)
 {
-	unsigned i;
+	unsigned i, j;
 
 	for (i = 0; i < 32; i++) {
 		pci->dev[i] = NULL;
@@ -180,11 +217,13 @@ void pci_init (pci_bus_t *pci)
 	pci->asio = NULL;
 	pci->asmem = NULL;
 
-	pci->intr = 0;
-
-	pci->irq = NULL;
-	pci->irq_ext = NULL;
-	pci->irq_val = 0;
+	for (i = 0; i < 32; i++) {
+		for (j = 0; j < 4; j++) {
+			pci->irq[i][j] = NULL;
+			pci->irq_ext[i][j] = NULL;
+			pci->irq_val[i][j] = 0;
+		}
+	}
 
 	pci->cfgaddr = 0;
 	pci->cfgdata = 0;
@@ -199,7 +238,9 @@ void pci_set_device (pci_bus_t *pci, pci_dev_t *dev, unsigned i)
 	unsigned  j;
 	pci_dev_t *old;
 
-	old = pci->dev[i & 0x1f];
+	i &= 0x1f;
+
+	old = pci->dev[i];
 
 	if (old != NULL) {
 		if (pci->asio != NULL) {
@@ -219,7 +260,10 @@ void pci_set_device (pci_bus_t *pci, pci_dev_t *dev, unsigned i)
 		}
 	}
 
-	pci->dev[i & 0x1f] = dev;
+	dev->index = i;
+	dev->pci = pci;
+
+	pci->dev[i] = dev;
 
 	if (dev != NULL) {
 		if (pci->asio != NULL) {
@@ -250,10 +294,13 @@ void pci_set_asmem (pci_bus_t *pci, memory_t *as)
 	pci->asmem = as;
 }
 
-void pci_set_irq_f (pci_bus_t *pci, void *irq, void *ext)
+void pci_set_irq_fct (pci_bus_t *pci, unsigned dev, unsigned intr, void *ext, void *fct)
 {
-	pci->irq = irq;
-	pci->irq_ext = ext;
+	if ((dev < 32) && (intr < 4)) {
+		pci->irq[dev][intr] = fct;
+		pci->irq_ext[dev][intr] = ext;
+		pci->irq_val[dev][intr] = 0;
+	}
 }
 
 void pci_set_cfg8 (pci_bus_t *pci, unsigned dev, unsigned long addr, unsigned char val)
@@ -317,43 +364,45 @@ unsigned long pci_get_cfg32 (pci_bus_t *pci, unsigned dev, unsigned long addr)
 }
 
 static
-void pci_set_irq (pci_bus_t *pci, unsigned char val)
+void pci_set_irq (pci_bus_t *pci, unsigned dev, unsigned intr, unsigned char val)
 {
 	val = (val != 0);
 
-	if (val != pci->irq_val) {
-		pci->irq_val = val;
+	dev &= 0x1f;
+	intr &= 0x03;
 
-		if (pci->irq != NULL) {
-			pci->irq (pci->irq_ext, val);
+	if (val != pci->irq_val[dev][intr]) {
+		pci->irq_val[dev][intr] = val;
+
+		if (pci->irq[dev][intr] != NULL) {
+			pci->irq[dev][intr] (pci->irq_ext[dev][intr], val);
 		}
 	}
 }
 
-void pci_set_intr (pci_bus_t *pci, unsigned intr, unsigned char val)
+void pci_set_intr (pci_bus_t *pci, unsigned dev, unsigned intr, unsigned char val)
 {
-	unsigned msk;
-
-	msk = 1 << (intr & 0x03);
-
-	if (val) {
-		pci->intr |= msk;
-	}
-	else {
-		pci->intr &= ~msk;
-	}
-
-	pci_set_irq (pci, pci->intr != 0);
+	pci_set_irq (pci, dev, intr, val);
 }
 
-void pci_set_intr_a (pci_bus_t *pci, unsigned char val)
+void pci_set_inta (pci_bus_t *pci, unsigned dev, unsigned char val)
 {
-	pci_set_intr (pci, 0, val);
+	pci_set_intr (pci, 0, dev, val);
 }
 
-void pci_set_intr_b (pci_bus_t *pci, unsigned char val)
+void pci_set_intb (pci_bus_t *pci, unsigned dev, unsigned char val)
 {
-	pci_set_intr (pci, 1, val);
+	pci_set_intr (pci, 1, dev, val);
+}
+
+void pci_set_intc (pci_bus_t *pci, unsigned dev, unsigned char val)
+{
+	pci_set_intr (pci, 2, dev, val);
+}
+
+void pci_set_intd (pci_bus_t *pci, unsigned dev, unsigned char val)
+{
+	pci_set_intr (pci, 3, dev, val);
 }
 
 

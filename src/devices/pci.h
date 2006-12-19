@@ -40,7 +40,14 @@
 #define PCIID_VENDOR_VIA   0x1106
 
 
+struct pci_bus_t;
+
+
 typedef struct {
+	unsigned         index;
+
+	struct pci_bus_t *pci;
+
 	mem_blk_t        *reg[PCI_REG_MAX];
 	mem_blk_t        *mem[PCI_MEM_MAX];
 
@@ -57,15 +64,15 @@ typedef struct {
 	mem_set_uint16_f set_cfg16;
 	mem_set_uint32_f set_cfg32;
 
-	void             (*irqa) (void *ext, unsigned char val);
-	void             *irqa_ext;
-	unsigned char    irqa_val;
+	void             (*intr[4]) (void *ext, unsigned char val);
+	void             *intr_ext[4];
+	unsigned char    intr_val[4];
 
 	void             *ext;
 } pci_dev_t;
 
 
-typedef struct {
+typedef struct pci_bus_t {
 	pci_dev_t     *dev[32];
 
 	memory_t      *asio;
@@ -74,20 +81,21 @@ typedef struct {
 	unsigned long cfgaddr;
 	unsigned long cfgdata;
 
-	/* interrupt requests A-D */
-	unsigned      intr;
-
-	void          (*irq) (void *ext, unsigned char val);
-	void          *irq_ext;
-	unsigned char irq_val;
+	void          (*irq[32][4]) (void *ext, unsigned char val);
+	void          *irq_ext[32][4];
+	unsigned char irq_val[32][4];
 } pci_bus_t;
 
 
 void pci_dev_init (pci_dev_t *dev);
 void pci_dev_free (pci_dev_t *dev);
 
-void pci_dev_set_irq_f (pci_dev_t *dev, unsigned idx, void *irq, void *ext);
-void pci_dev_set_irq_a (pci_dev_t *dev, unsigned char val);
+void pci_dev_set_intr_fct (pci_dev_t *dev, unsigned intr, void *ext, void *fct);
+void pci_dev_set_intr (pci_dev_t *dev, unsigned intr, unsigned char val);
+void pci_dev_set_inta (pci_dev_t *dev, unsigned char val);
+void pci_dev_set_intb (pci_dev_t *dev, unsigned char val);
+void pci_dev_set_intc (pci_dev_t *dev, unsigned char val);
+void pci_dev_set_intd (pci_dev_t *dev, unsigned char val);
 
 void pci_dev_set_device_id (pci_dev_t *dev, unsigned vendor, unsigned id);
 
@@ -110,7 +118,7 @@ void pci_set_device (pci_bus_t *pci, pci_dev_t *dev, unsigned i);
 void pci_set_asio (pci_bus_t *pci, memory_t *as);
 void pci_set_asmem (pci_bus_t *pci, memory_t *as);
 
-void pci_set_irq_f (pci_bus_t *pci, void *irq, void *ext);
+void pci_set_irq_fct (pci_bus_t *pci, unsigned dev, unsigned intr, void *ext, void *fct);
 
 void pci_set_cfg8 (pci_bus_t *pci, unsigned dev, unsigned long addr, unsigned char val);
 void pci_set_cfg16 (pci_bus_t *pci, unsigned dev, unsigned long addr, unsigned short val);
@@ -120,9 +128,11 @@ unsigned char pci_get_cfg8 (pci_bus_t *pci, unsigned dev, unsigned long addr);
 unsigned short pci_get_cfg16 (pci_bus_t *pci, unsigned dev, unsigned long addr);
 unsigned long pci_get_cfg32 (pci_bus_t *pci, unsigned dev, unsigned long addr);
 
-void pci_set_intr (pci_bus_t *pci, unsigned intr, unsigned char val);
-void pci_set_intr_a (pci_bus_t *pci, unsigned char val);
-void pci_set_intr_b (pci_bus_t *pci, unsigned char val);
+void pci_set_intr (pci_bus_t *pci, unsigned dev, unsigned intr, unsigned char val);
+void pci_set_inta (pci_bus_t *pci, unsigned dev, unsigned char val);
+void pci_set_intb (pci_bus_t *pci, unsigned dev, unsigned char val);
+void pci_set_intc (pci_bus_t *pci, unsigned dev, unsigned char val);
+void pci_set_intd (pci_bus_t *pci, unsigned dev, unsigned char val);
 
 unsigned long pci_get_config_addr (pci_bus_t *pci);
 unsigned char pci_get_config_data8 (pci_bus_t *pci, unsigned addr);

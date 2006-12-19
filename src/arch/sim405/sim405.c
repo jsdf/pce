@@ -253,8 +253,8 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 	pci_dev_set_device_id (&sim->pciata.pci, vendor_id, device_id);
 
 	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
-	pci_dev_set_irq_f (&sim->pciata.pci, 0,
-		p405uic_get_irq_fct (&sim->uic, pciirq), &sim->uic
+	pci_dev_set_intr_fct (&sim->pciata.pci, 0,
+		&sim->uic, p405uic_get_irq_fct (&sim->uic, pciirq)
 	);
 
 	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);

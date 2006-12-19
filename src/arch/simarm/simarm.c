@@ -289,8 +289,6 @@ void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, pci_ixp_get_mem_csr (sim->pci), 0);
 	mem_add_blk (sim->mem, pci_ixp_get_mem_mem (sim->pci), 0);
 
-	pci_set_irq_f (&sim->pci->bus, NULL, NULL);
-
 	pce_log (MSG_INF, "PCI:      initialized\n");
 }
 
@@ -314,8 +312,8 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 
 	pci_ixp_add_device (sim->pci, &sim->pciata.pci);
 	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
-	pci_dev_set_irq_f (&sim->pciata.pci, 0,
-		ict_get_irq_f (sim->intc, pciirq), sim->intc
+	pci_dev_set_intr_fct (&sim->pciata.pci, 0,
+		sim->intc, ict_get_irq_f (sim->intc, pciirq)
 	);
 
 	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);
