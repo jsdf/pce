@@ -44,6 +44,7 @@ void cmd_rewind (cmd_t *cmd);
 const char *cmd_get_str (cmd_t *cmd);
 int cmd_match_space (cmd_t *cmd);
 void cmd_error (cmd_t *cmd, const char *str);
+int cmd_match_ident (cmd_t *cmd, char *str, unsigned max);
 int cmd_match_str (cmd_t *cmd, char *str, unsigned max);
 int cmd_match_eol (cmd_t *cmd);
 int cmd_match_end (cmd_t *cmd);

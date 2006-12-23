@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/internal.h                                 *
  * Created:       2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -75,12 +74,12 @@ int s32_dstore32 (sparc32_t *c, uint32_t addr, uint8_t asi, uint32_t val);
 #define s32_ir_simm30(ir) (((ir) & 0x20000000UL) ? ((ir) | 0xe0000000UL) : ((ir) & 0x1fffffffUL))
 #define s32_ir_uimm22(ir) ((ir) & 0x003fffffUL)
 
-#define s32_get_rd(c, ir) (s32_get_reg ((c), s32_ir_rd(ir)))
-#define s32_get_rs1(c, ir) (s32_get_reg ((c), s32_ir_rs1(ir)))
-#define s32_get_rs2(c, ir) (s32_get_reg ((c), s32_ir_rs2(ir)))
-#define s32_set_rd(c, ir, v) s32_set_reg ((c), s32_ir_rd(ir), (v))
+#define s32_get_rd(c, ir) (s32_get_gpr ((c), s32_ir_rd(ir)))
+#define s32_get_rs1(c, ir) (s32_get_gpr ((c), s32_ir_rs1(ir)))
+#define s32_get_rs2(c, ir) (s32_get_gpr ((c), s32_ir_rs2(ir)))
+#define s32_set_rd(c, ir, v) s32_set_gpr ((c), s32_ir_rd(ir), (v))
 #define s32_get_rs2_or_simm13(c, ir) ( \
-	s32_ir_i(ir) ? s32_ir_simm13(ir) : s32_get_reg((c), s32_ir_rs2(ir)))
+	s32_ir_i(ir) ? s32_ir_simm13(ir) : s32_get_gpr((c), s32_ir_rs2(ir)))
 #define s32_get_addr(c, ir) \
 	((s32_get_rs1((c), (ir)) + s32_get_rs2_or_simm13((c), (ir))) & 0xffffffffUL)
 

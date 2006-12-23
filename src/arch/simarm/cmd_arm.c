@@ -42,46 +42,6 @@ static const char *arm_modes[32] = {
 	"0x1c", "0x1d", "0x1e", "sys"
 };
 
-int sarm_match_reg (cmd_t *cmd, simarm_t *sim, uint32_t **reg)
-{
-	arm_t *cpu;
-
-	cpu = sim->cpu;
-
-	cmd_match_space (cmd);
-
-	if (cmd_match (cmd, "r")) {
-		unsigned n;
-
-		if (!cmd_match_uint (cmd, &n, 10)) {
-			cmd_error (cmd, "missing register number");
-			return (0);
-		}
-
-		*reg = &cpu->reg[n & 0x0f];
-
-		return (1);
-	}
-	else if (cmd_match (cmd, "pc")) {
-		*reg = &cpu->reg[15];
-		return (1);
-	}
-	else if (cmd_match (cmd, "lr")) {
-		*reg = &cpu->reg[14];
-		return (1);
-	}
-	else if (cmd_match (cmd, "cpsr")) {
-		*reg = &cpu->cpsr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "spsr")) {
-		*reg = &cpu->spsr;
-		return (1);
-	}
-
-	return (0);
-}
-
 void sarm_dasm_str (char *dst, arm_dasm_t *op)
 {
 	unsigned i, j;
@@ -117,26 +77,26 @@ void sarm_prt_state_cpu (arm_t *c, FILE *fp)
 	);
 
 	fprintf (fp, "r00=%08lX  r04=%08lX  r08=%08lX  r12=%08lX  CPSR=%08lX\n",
-		(unsigned long) arm_get_reg (c, 0),
-		(unsigned long) arm_get_reg (c, 4),
-		(unsigned long) arm_get_reg (c, 8),
-		(unsigned long) arm_get_reg (c, 12),
+		(unsigned long) arm_get_gpr (c, 0),
+		(unsigned long) arm_get_gpr (c, 4),
+		(unsigned long) arm_get_gpr (c, 8),
+		(unsigned long) arm_get_gpr (c, 12),
 		(unsigned long) arm_get_cpsr (c)
 	);
 
 	fprintf (fp, "r01=%08lX  r05=%08lX  r09=%08lX  r13=%08lX  SPSR=%08lX\n",
-		(unsigned long) arm_get_reg (c, 1),
-		(unsigned long) arm_get_reg (c, 5),
-		(unsigned long) arm_get_reg (c, 9),
-		(unsigned long) arm_get_reg (c, 13),
+		(unsigned long) arm_get_gpr (c, 1),
+		(unsigned long) arm_get_gpr (c, 5),
+		(unsigned long) arm_get_gpr (c, 9),
+		(unsigned long) arm_get_gpr (c, 13),
 		(unsigned long) arm_get_spsr (c)
 	);
 
 	fprintf (fp, "r02=%08lX  r06=%08lX  r10=%08lX  r14=%08lX    CC=[%c%c%c%c]\n",
-		(unsigned long) arm_get_reg (c, 2),
-		(unsigned long) arm_get_reg (c, 6),
-		(unsigned long) arm_get_reg (c, 10),
-		(unsigned long) arm_get_reg (c, 14),
+		(unsigned long) arm_get_gpr (c, 2),
+		(unsigned long) arm_get_gpr (c, 6),
+		(unsigned long) arm_get_gpr (c, 10),
+		(unsigned long) arm_get_gpr (c, 14),
 		(arm_get_cc_n (c)) ? 'N' : '-',
 		(arm_get_cc_z (c)) ? 'Z' : '-',
 		(arm_get_cc_c (c)) ? 'C' : '-',
@@ -144,10 +104,10 @@ void sarm_prt_state_cpu (arm_t *c, FILE *fp)
 	);
 
 	fprintf (fp, "r03=%08lX  r07=%08lX  r11=%08lX  r15=%08lX     M=%02X (%s)\n",
-		(unsigned long) arm_get_reg (c, 3),
-		(unsigned long) arm_get_reg (c, 7),
-		(unsigned long) arm_get_reg (c, 11),
-		(unsigned long) arm_get_reg (c, 15),
+		(unsigned long) arm_get_gpr (c, 3),
+		(unsigned long) arm_get_gpr (c, 7),
+		(unsigned long) arm_get_gpr (c, 11),
+		(unsigned long) arm_get_gpr (c, 15),
 		(unsigned) arm_get_cpsr_m (c),
 		arm_modes[arm_get_cpsr_m (c) & 0x1f]
 	);
@@ -658,15 +618,25 @@ static
 void do_r (cmd_t *cmd, simarm_t *sim)
 {
 	unsigned long val;
-	uint32_t      *reg;
+	char          sym[256];
 
-	if (!sarm_match_reg (cmd, sim, &reg)) {
+	if (cmd_match_eol (cmd)) {
+		sarm_prt_state_cpu (sim->cpu, stdout);
+		return;
+	}
+
+	if (!cmd_match_ident (cmd, sym, 256)) {
 		printf ("missing register\n");
 		return;
 	}
 
+	if (arm_get_reg (sim->cpu, sym, &val)) {
+		printf ("bad register (%s)\n", sym);
+		return;
+	}
+
 	if (cmd_match_eol (cmd)) {
-		printf ("%08lx\n", (unsigned long) *reg);
+		printf ("%08lX\n", val);
 		return;
 	}
 
@@ -679,7 +649,7 @@ void do_r (cmd_t *cmd, simarm_t *sim)
 		return;
 	}
 
-	*reg = val;
+	arm_set_reg (sim->cpu, sym, val);
 
 	sarm_prt_state_cpu (sim->cpu, stdout);
 }

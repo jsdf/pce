@@ -106,12 +106,9 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_sym (simarm_t *sim, cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (simarm_t *sim, const char *sym, unsigned long *val)
 {
-	uint32_t *reg;
-
-	if (sarm_match_reg (cmd, sim, &reg)) {
-		*val = *reg;
+	if (arm_get_reg (sim->cpu, sym, val) == 0) {
 		return (1);
 	}
 

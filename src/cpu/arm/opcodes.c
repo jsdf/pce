@@ -477,7 +477,7 @@ void op00_0b (arm_t *c)
 					return;
 				}
 
-				val = arm_get_reg (c, (arm_ir_rd (c->ir) + 1) & 0x0f);
+				val = arm_get_gpr (c, (arm_ir_rd (c->ir) + 1) & 0x0f);
 
 				if (arm_dstore32 (c, (base + 4) & 0xfffffffcUL, val)) {
 					return;
@@ -495,7 +495,7 @@ void op00_0b (arm_t *c)
 				}
 
 				arm_set_rd (c, c->ir, val);
-				arm_set_reg (c, (arm_ir_rd (c->ir) + 1) & 0xff, val2);
+				arm_set_gpr (c, (arm_ir_rd (c->ir) + 1) & 0xff, val2);
 			}
 		}
 		else if (h) {
@@ -2269,7 +2269,7 @@ void op80 (arm_t *c)
 					return;
 				}
 
-				arm_set_reg (c, i, val);
+				arm_set_gpr (c, i, val);
 			}
 			else {
 				val = arm_get_reg_pc (c, i, 8);

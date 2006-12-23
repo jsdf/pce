@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.c                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
 
@@ -37,29 +37,28 @@ static void e86_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
 static void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val);
 
 
-e8086_t *e86_new (void)
+static char *dreg16[8] = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
+static char *dreg8[8] = { "ah", "al", "bh", "bl", "ch", "cl", "dh", "dl" };
+static char *sreg[4] = { "es", "cs", "ss", "ds" };
+
+
+void e86_init (e8086_t *c)
 {
 	unsigned i;
-	e8086_t  *c;
-
-	c = (e8086_t *) malloc (sizeof (e8086_t));
-	if (c == NULL) {
-		return (NULL);
-	}
 
 	c->cpu = E86_CPU_REP_BUG;
 
 	c->mem = NULL;
-	c->mem_get_uint8 = &e86_get_mem_uint8;
-	c->mem_get_uint16 = &e86_get_mem_uint16;
-	c->mem_set_uint8 = &e86_set_mem_uint8;
-	c->mem_set_uint16 = &e86_set_mem_uint16;
+	c->mem_get_uint8 = e86_get_mem_uint8;
+	c->mem_get_uint16 = e86_get_mem_uint16;
+	c->mem_set_uint8 = e86_set_mem_uint8;
+	c->mem_set_uint16 = e86_set_mem_uint16;
 
 	c->prt = NULL;
-	c->prt_get_uint8 = &e86_get_mem_uint8;
-	c->prt_get_uint16 = &e86_get_mem_uint16;
-	c->prt_set_uint8 = &e86_set_mem_uint8;
-	c->prt_set_uint16 = &e86_set_mem_uint16;
+	c->prt_get_uint8 = e86_get_mem_uint8;
+	c->prt_get_uint16 = e86_get_mem_uint16;
+	c->prt_set_uint8 = e86_set_mem_uint8;
+	c->prt_set_uint16 = e86_set_mem_uint16;
 
 	c->ram = NULL;
 	c->ram_cnt = 0;
@@ -84,13 +83,32 @@ e8086_t *e86_new (void)
 	c->clocks = 0;
 	c->instructions = 0;
 	c->delay = 0;
+}
+
+void e86_free (e8086_t *c)
+{
+}
+
+e8086_t *e86_new (void)
+{
+	e8086_t *c;
+
+	c = malloc (sizeof (e8086_t));
+	if (c == NULL) {
+		return (NULL);
+	}
+
+	e86_init (c);
 
 	return (c);
 }
 
 void e86_del (e8086_t *c)
 {
-	free (c);
+	if (c != NULL) {
+		e86_free (c);
+		free (c);
+	}
 }
 
 void e86_enable_86 (e8086_t *c)
@@ -121,6 +139,12 @@ unsigned long e86_get_addr_mask (e8086_t *c)
 	return (c->addr_mask);
 }
 
+void e86_set_inta_fct (e8086_t *c, void *ext, void *fct)
+{
+	c->inta_ext = ext;
+	c->inta = fct;
+}
+
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)
 {
 	c->ram = ram;
@@ -149,37 +173,6 @@ void e86_set_prt (e8086_t *c, void *prt,
 	c->prt_set_uint16 = set16;
 }
 
-void e86_set_inta_f (e8086_t *c, void *ext, e86_inta_f inta)
-{
-	c->inta_ext = ext;
-	c->inta = inta;
-}
-
-void e86_reset (e8086_t *c)
-{
-	unsigned i;
-
-	c->instructions = 0;
-
-	for (i = 0; i < 8; i++) {
-		c->dreg[i] = 0;
-	}
-
-	for (i = 0; i < 4; i++) {
-		c->sreg[i] = 0;
-	}
-
-	e86_set_cs (c, 0xf000);
-	e86_set_ip (c, 0xfff0);
-	e86_set_flags (c, 0x0000);
-
-	c->pq_cnt = 0;
-
-	c->irq = 0;
-
-	c->prefix = 0;
-}
-
 static
 unsigned char e86_get_mem_uint8 (void *mem, unsigned long addr)
 {
@@ -200,6 +193,86 @@ void e86_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
 static
 void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short val)
 {
+}
+
+int e86_get_reg (e8086_t *c, const char *reg, unsigned long *val)
+{
+	unsigned i;
+
+	if (*reg == '%') {
+		reg += 1;
+	}
+
+	for (i = 0; i < 8; i++) {
+		if (strcmp (reg, dreg16[i]) == 0) {
+			*val = e86_get_reg16 (c, i);
+			return (0);
+		}
+
+		if (strcmp (reg, dreg8[i]) == 0) {
+			*val = e86_get_reg8 (c, i);
+			return (0);
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (strcmp (reg, sreg[i]) == 0) {
+			*val = e86_get_sreg (c, i);
+			return (0);
+		}
+	}
+
+	if (strcmp (reg, "ip") == 0) {
+		*val = e86_get_ip (c);
+		return (0);
+	}
+
+	if (strcmp (reg, "flags") == 0) {
+		*val = e86_get_flags (c);
+		return (0);
+	}
+
+	return (1);
+}
+
+int e86_set_reg (e8086_t *c, const char *reg, unsigned long val)
+{
+	unsigned i;
+
+	if (*reg == '%') {
+		reg += 1;
+	}
+
+	for (i = 0; i < 8; i++) {
+		if (strcmp (reg, dreg16[i]) == 0) {
+			e86_set_reg16 (c, i, val);
+			return (0);
+		}
+
+		if (strcmp (reg, dreg8[i]) == 0) {
+			e86_set_reg8 (c, i, val);
+			return (0);
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (strcmp (reg, sreg[i]) == 0) {
+			e86_set_sreg (c, i, val);
+			return (0);
+		}
+	}
+
+	if (strcmp (reg, "ip") == 0) {
+		e86_set_ip (c, val);
+		return (0);
+	}
+
+	if (strcmp (reg, "flags") == 0) {
+		e86_set_flags (c, val);
+		return (0);
+	}
+
+	return (1);
 }
 
 void e86_trap (e8086_t *c, unsigned n)
@@ -261,6 +334,31 @@ unsigned long long e86_get_clock (e8086_t *c)
 unsigned long long e86_get_opcnt (e8086_t *c)
 {
 	return (c->instructions);
+}
+
+void e86_reset (e8086_t *c)
+{
+	unsigned i;
+
+	c->instructions = 0;
+
+	for (i = 0; i < 8; i++) {
+		c->dreg[i] = 0;
+	}
+
+	for (i = 0; i < 4; i++) {
+		c->sreg[i] = 0;
+	}
+
+	e86_set_cs (c, 0xf000);
+	e86_set_ip (c, 0xfff0);
+	e86_set_flags (c, 0x0000);
+
+	c->pq_cnt = 0;
+
+	c->irq = 0;
+
+	c->prefix = 0;
 }
 
 void e86_execute (e8086_t *c)

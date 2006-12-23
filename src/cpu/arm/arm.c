@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-29 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -203,6 +202,111 @@ void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt)
 {
 	c->ram = ram;
 	c->ram_cnt = cnt;
+}
+
+static
+int arm_get_reg_idx (const char *reg, unsigned *idx, unsigned max)
+{
+	unsigned n;
+
+	n = 0;
+
+	if ((reg[0] < '0') || (reg[0] > '9')) {
+		return (1);
+	}
+
+	while ((reg[0] >= '0') && (reg[0] <= '9')) {
+		n = 10 * n + (unsigned) (reg[0] - '0');
+		reg += 1;
+	}
+
+	if (reg[0] != 0) {
+		return (1);
+	}
+
+	if (n > max) {
+		return (1);
+	}
+
+	*idx = n;
+
+	return (0);
+}
+
+int arm_get_reg (arm_t *c, const char *reg, unsigned long *val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "pc") == 0) {
+		*val = arm_get_pc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "lr") == 0) {
+		*val = arm_get_lr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "cpsr") == 0) {
+		*val = arm_get_cpsr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "spsr") == 0) {
+		*val = arm_get_spsr (c);
+		return (0);
+	}
+
+	if (reg[0] == 'r') {
+		if (arm_get_reg_idx (reg + 1, &idx, 15)) {
+			return (1);
+		}
+
+		*val = arm_get_gpr (c, idx);
+
+		return (0);
+	}
+
+	return (1);
+}
+
+int arm_set_reg (arm_t *c, const char *reg, unsigned long val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "pc") == 0) {
+		arm_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "lr") == 0) {
+		arm_set_lr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "cpsr") == 0) {
+		arm_set_cpsr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "spsr") == 0) {
+		arm_set_spsr (c, val);
+		return (0);
+	}
+
+	if (reg[0] == 'r') {
+		if (arm_get_reg_idx (reg + 1, &idx, 15)) {
+			return (1);
+		}
+
+		arm_set_gpr (c, idx, val);
+
+		return (0);
+	}
+
+	return (1);
 }
 
 unsigned long long arm_get_opcnt (arm_t *c)

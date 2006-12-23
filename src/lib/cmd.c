@@ -33,7 +33,7 @@ static FILE *cmd_fpo = NULL;
 
 
 static void  *cmd_match_sym_ext = NULL;
-static int   (*cmd_match_sym) (void *ext, cmd_t *cmd, unsigned long *ret);
+static int   (*cmd_match_sym) (void *ext, const char *sym, unsigned long *ret);
 
 
 int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
@@ -158,6 +158,64 @@ void cmd_error (cmd_t *cmd, const char *str)
 {
 	fprintf (cmd_fpo, "*** %s [%s]\n", str, cmd->str + cmd->i);
 	fflush (cmd_fpo);
+}
+
+static
+int str_is_ident (char c)
+{
+	if ((c >= '0') && (c <= '9')) {
+		return (1);
+	}
+
+	if ((c >= 'a') && (c <= 'z')) {
+		return (1);
+	}
+
+	if ((c >= 'A') && (c <= 'Z')) {
+		return (1);
+	}
+
+	if (c == '_') {
+		return (1);
+	}
+
+	return (0);
+}
+
+int cmd_match_ident (cmd_t *cmd, char *str, unsigned max)
+{
+	unsigned i, n;
+
+	cmd_match_space (cmd);
+
+	if (cmd->str[cmd->i] != '%') {
+		return (0);
+	}
+
+	i = cmd->i;
+	n = 1;
+	*(str++) = cmd->str[i++];
+
+	while (cmd->str[i] != 0) {
+		if (str_is_ident (cmd->str[i]) == 0) {
+			break;
+		}
+
+		*(str++) = cmd->str[i];
+		i += 1;
+		n += 1;
+
+		if (n >= max) {
+			cmd_error (cmd, "identifier too long");
+			return (0);
+		}
+	}
+
+	*str = 0;
+
+	cmd->i = i;
+
+	return (n > 0);
 }
 
 int cmd_match_str (cmd_t *cmd, char *str, unsigned max)
@@ -328,15 +386,18 @@ int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned i;
+	char     ident[256];
 
 	cmd_match_space (cmd);
 
 	i = cmd->i;
 
-	if (cmd_match_sym != NULL) {
-		if (cmd_match_sym (cmd_match_sym_ext, cmd, val)) {
-			*val &= 0xffffffff;
-			return (1);
+	if (cmd_match_ident (cmd, ident, 256)) {
+		if (cmd_match_sym != NULL) {
+			if (cmd_match_sym (cmd_match_sym_ext, ident, val)) {
+				*val &= 0xffffffff;
+				return (1);
+			}
 		}
 	}
 

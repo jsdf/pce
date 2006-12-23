@@ -31,146 +31,6 @@
 #include "main.h"
 
 
-int ppc_match_reg (cmd_t *cmd, sim405_t *sim, uint32_t **reg)
-{
-	p405_t *ppc;
-
-	ppc = sim->ppc;
-
-	cmd_match_space (cmd);
-
-	if (cmd_match (cmd, "r")) {
-		unsigned n;
-
-		if (!cmd_match_uint (cmd, &n, 10)) {
-			cmd_error (cmd, "missing register number");
-			return (0);
-		}
-
-		*reg = &ppc->gpr[n & 0x3f];
-
-		return (1);
-	}
-	else if (cmd_match (cmd, "cr")) {
-		*reg = &ppc->cr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "ctr")) {
-		*reg = &ppc->ctr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "dear")) {
-		*reg = &ppc->dear;
-		return (1);
-	}
-	else if (cmd_match (cmd, "esr")) {
-		*reg = &ppc->esr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "evpr")) {
-		*reg = &ppc->evpr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "lr")) {
-		*reg = &ppc->lr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "msr")) {
-		*reg = &ppc->msr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "pc")) {
-		*reg = &ppc->pc;
-		return (1);
-	}
-	else if (cmd_match (cmd, "pid")) {
-		*reg = &ppc->pid;
-		return (1);
-	}
-	else if (cmd_match (cmd, "pit1")) {
-		*reg = &ppc->pit[1];
-		return (1);
-	}
-	else if (cmd_match (cmd, "pit")) {
-		*reg = &ppc->pit[0];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg0")) {
-		*reg = &ppc->sprg[0];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg1")) {
-		*reg = &ppc->sprg[1];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg2")) {
-		*reg = &ppc->sprg[2];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg3")) {
-		*reg = &ppc->sprg[3];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg4")) {
-		*reg = &ppc->sprg[4];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg5")) {
-		*reg = &ppc->sprg[5];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg6")) {
-		*reg = &ppc->sprg[6];
-		return (1);
-	}
-	else if (cmd_match (cmd, "sprg7")) {
-		*reg = &ppc->sprg[7];
-		return (1);
-	}
-	else if (cmd_match (cmd, "srr0")) {
-		*reg = &ppc->srr[0];
-		return (1);
-	}
-	else if (cmd_match (cmd, "srr1")) {
-		*reg = &ppc->srr[1];
-		return (1);
-	}
-	else if (cmd_match (cmd, "srr2")) {
-		*reg = &ppc->srr[2];
-		return (1);
-	}
-	else if (cmd_match (cmd, "srr3")) {
-		*reg = &ppc->srr[3];
-		return (1);
-	}
-	else if (cmd_match (cmd, "tbl")) {
-		*reg = &ppc->tbl;
-		return (1);
-	}
-	else if (cmd_match (cmd, "tbu")) {
-		*reg = &ppc->tbu;
-		return (1);
-	}
-	else if (cmd_match (cmd, "tcr")) {
-		*reg = &ppc->tcr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "tsr")) {
-		*reg = &ppc->tsr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "xer")) {
-		*reg = &ppc->xer;
-		return (1);
-	}
-	else if (cmd_match (cmd, "zpr")) {
-		*reg = &ppc->zpr;
-		return (1);
-	}
-
-	return (0);
-}
-
 void ppc_disasm_str (char *dst, p405_disasm_t *op)
 {
 	switch (op->argn) {
@@ -947,15 +807,25 @@ static
 void do_r (cmd_t *cmd, sim405_t *sim)
 {
 	unsigned long val;
-	uint32_t      *reg;
+	char          sym[256];
 
-	if (!ppc_match_reg (cmd, sim, &reg)) {
+	if (cmd_match_eol (cmd)) {
+		s405_prt_state_ppc (sim, stdout);
+		return;
+	}
+
+	if (!cmd_match_ident (cmd, sym, 256)) {
 		printf ("missing register\n");
 		return;
 	}
 
+	if (p405_get_reg (sim->ppc, sym, &val)) {
+		printf ("bad register (%s)\n", sym);
+		return;
+	}
+
 	if (cmd_match_eol (cmd)) {
-		printf ("%08lx\n", (unsigned long) *reg);
+		printf ("%08lX\n", val);
 		return;
 	}
 
@@ -968,7 +838,7 @@ void do_r (cmd_t *cmd, sim405_t *sim)
 		return;
 	}
 
-	*reg = val;
+	p405_set_reg (sim->ppc, sym, val);
 
 	s405_prt_state_ppc (sim, stdout);
 }

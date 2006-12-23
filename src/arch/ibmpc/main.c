@@ -106,54 +106,19 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_reg (ibmpc_t *pc, cmd_t *cmd, unsigned short **reg)
+int cmd_match_reg (ibmpc_t *pc, const char *sym, unsigned long *reg)
 {
-	unsigned i;
-
-	static char *dreg[8] = {
-		"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"
-	};
-
-	static char *sreg[4] = {
-		"es", "cs", "ss", "ds"
-	};
-
-	for (i = 0; i < 8; i++) {
-		if (cmd_match (cmd, dreg[i])) {
-			*reg = &pc->cpu->dreg[i];
-			return (1);
-		}
+	if (e86_get_reg (pc->cpu, sym, reg)) {
+		return (0);
 	}
 
-	for (i = 0; i < 4; i++) {
-		if (cmd_match (cmd, sreg[i])) {
-			*reg = &pc->cpu->sreg[i];
-			return (1);
-		}
-	}
-
-	if (cmd_match (cmd, "ip")) {
-		*reg = &pc->cpu->ip;
-		return (1);
-	}
-
-	if (cmd_match (cmd, "flags")) {
-		*reg = &pc->cpu->flg;
-		return (1);
-	}
-
-	*reg = NULL;
-
-	return (0);
+	return (1);
 }
 
 static
-int cmd_match_sym (ibmpc_t *pc, cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (ibmpc_t *pc, const char *sym, unsigned long *val)
 {
-	unsigned short *reg;
-
-	if (cmd_match_reg (pc, cmd, &reg)) {
-		*val = *reg;
+	if (cmd_match_reg (pc, sym, val)) {
 		return (1);
 	}
 
@@ -1271,23 +1236,33 @@ void do_p (cmd_t *cmd)
 }
 
 static
-void do_r (cmd_t *cmd)
+void do_r (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned short val;
-	unsigned short *reg;
+	unsigned long val;
+	char          sym[256];
 
 	if (cmd_match_eol (cmd)) {
 		prt_state_cpu (pc->cpu, stdout);
 		return;
 	}
 
-	if (!cmd_match_reg (pc, cmd, &reg)) {
-		prt_error ("missing register\n");
+	if (!cmd_match_ident (cmd, sym, 256)) {
+		printf ("missing register\n");
 		return;
 	}
 
-	if (!cmd_match_uint16 (cmd, &val)) {
-		prt_error ("missing value\n");
+	if (e86_get_reg (pc->cpu, sym, &val)) {
+		printf ("bad register (%s)\n", sym);
+		return;
+	}
+
+	if (cmd_match_eol (cmd)) {
+		printf ("%04lX\n", val);
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &val)) {
+		printf ("missing value\n");
 		return;
 	}
 
@@ -1295,7 +1270,7 @@ void do_r (cmd_t *cmd)
 		return;
 	}
 
-	*reg = val;
+	e86_set_reg (pc->cpu, sym, val);
 
 	prt_state (pc, stdout);
 }
@@ -1580,7 +1555,7 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 		do_p (cmd);
 	}
 	else if (cmd_match (cmd, "r")) {
-		do_r (cmd);
+		do_r (cmd, pc);
 	}
 	else if (cmd_match (cmd, "screenshot")) {
 		do_screenshot (cmd);

@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/sparc32.h                                  *
  * Created:       2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -85,7 +84,7 @@ struct sparc32_s;
 		if (val) (var) |= (bits); else (var) &= ~(bits); \
 	} while (0)
 
-#define s32_get_reg(c, n) (((n) == 0) ? 0 : (c)->reg[(n)])
+#define s32_get_gpr(c, n) (((n) == 0) ? 0 : (c)->reg[(n)])
 #define s32_get_pc(c) ((c)->pc)
 #define s32_get_npc(c) ((c)->npc)
 #define s32_get_psr(c) ((c)->psr)
@@ -93,7 +92,7 @@ struct sparc32_s;
 #define s32_get_tbr(c) ((c)->tbr)
 #define s32_get_y(c) ((c)->y)
 
-#define s32_set_reg(c, n, v) do { if ((n) != 0) (c)->reg[(n)] = (v); } while (0)
+#define s32_set_gpr(c, n, v) do { if ((n) != 0) (c)->reg[(n)] = (v); } while (0)
 #define s32_set_pc(c, v) do { (c)->pc = (v); } while (0)
 #define s32_set_npc(c, v) do { (c)->npc = (v); } while (0)
 #define s32_set_psr(c, v) do { (c)->psr = (v); } while (0)
@@ -236,6 +235,9 @@ void s32_set_mem_fct (sparc32_t *c, void *ext,
  * s32_reset() must be called after this.
  *****************************************************************************/
 void s32_set_nwindows (sparc32_t *c, unsigned n);
+
+int s32_get_reg (sparc32_t *c, const char *reg, unsigned long *val);
+int s32_set_reg (sparc32_t *c, const char *reg, unsigned long val);
 
 /*!***************************************************************************
  * @short Get the number of executed instructions

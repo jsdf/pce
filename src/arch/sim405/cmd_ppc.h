@@ -28,8 +28,6 @@
 /* $Id$ */
 
 
-int ppc_match_reg (cmd_t *cmd, sim405_t *sim, uint32_t **reg);
-
 void ppc_disasm_str (char *dst, p405_disasm_t *op);
 
 void s405_prt_state_ppc (sim405_t *sim, FILE *fp);

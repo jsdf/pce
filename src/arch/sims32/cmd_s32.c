@@ -25,78 +25,35 @@
 #include "main.h"
 
 
-int ss32_match_reg (cmd_t *cmd, sims32_t *sim, uint32_t **reg)
-{
-	sparc32_t *cpu;
-
-	cpu = sim->cpu;
-
-	cmd_match_space (cmd);
-
-	if (cmd_match (cmd, "%r")) {
-		unsigned n;
-
-		if (!cmd_match_uint (cmd, &n, 10)) {
-			cmd_error (cmd, "missing register number");
-			return (0);
-		}
-
-		*reg = &cpu->reg[n & 0x3f];
-
-		return (1);
-	}
-	else if (cmd_match (cmd, "%npc")) {
-		*reg = &cpu->npc;
-		return (1);
-	}
-	else if (cmd_match (cmd, "%psr")) {
-		*reg = &cpu->psr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "%pc")) {
-		*reg = &cpu->pc;
-		return (1);
-	}
-	else if (cmd_match (cmd, "%tbr")) {
-		*reg = &cpu->tbr;
-		return (1);
-	}
-	else if (cmd_match (cmd, "%wim")) {
-		*reg = &cpu->wim;
-		return (1);
-	}
-	else if (cmd_match (cmd, "%y")) {
-		*reg = &cpu->y;
-		return (1);
-	}
-
-	return (0);
-}
-
 void ss32_dasm_str (char *dst, s32_dasm_t *op)
 {
 	switch (op->argn) {
-		case 0:
-			sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
-			break;
+	case 0:
+		sprintf (dst, "%08lX  %s", (unsigned long) op->ir, op->op);
+		break;
 
-		case 1:
-			sprintf (dst, "%08lX  %-8s %s", (unsigned long) op->ir, op->op, op->arg1);
-			break;
+	case 1:
+		sprintf (dst, "%08lX  %-8s %s",
+			(unsigned long) op->ir, op->op, op->arg1
+		);
+		break;
 
-		case 2:
-			sprintf (dst, "%08lX  %-8s %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2);
-			break;
+	case 2:
+		sprintf (dst, "%08lX  %-8s %s, %s",
+			(unsigned long) op->ir, op->op, op->arg1, op->arg2
+		);
+		break;
 
-		case 3:
-			sprintf (dst, "%08lX  %-8s %s, %s, %s",
-				(unsigned long) op->ir, op->op, op->arg1, op->arg2, op->arg3);
-			break;
+	case 3:
+		sprintf (dst, "%08lX  %-8s %s, %s, %s",
+			(unsigned long) op->ir, op->op,
+			op->arg1, op->arg2, op->arg3
+		);
+		break;
 
-		default:
-			strcpy (dst, "---");
-			break;
+	default:
+		strcpy (dst, "---");
+		break;
 	}
 }
 
@@ -128,51 +85,51 @@ void ss32_prt_state_cpu (sparc32_t *c, FILE *fp)
 	);
 
 	fprintf (fp, " r00=%08lX  r08=%08lX  r16=%08lX  r24=%08lX    PC=%08lX\n",
-		(unsigned long) s32_get_reg (c, 0),
-		(unsigned long) s32_get_reg (c, 8),
-		(unsigned long) s32_get_reg (c, 16),
-		(unsigned long) s32_get_reg (c, 24),
+		(unsigned long) s32_get_gpr (c, 0),
+		(unsigned long) s32_get_gpr (c, 8),
+		(unsigned long) s32_get_gpr (c, 16),
+		(unsigned long) s32_get_gpr (c, 24),
 		(unsigned long) s32_get_pc (c)
 	);
 
 	fprintf (fp, " r01=%08lX  r09=%08lX  r17=%08lX  r25=%08lX   nPC=%08lX\n",
-		(unsigned long) s32_get_reg (c, 1),
-		(unsigned long) s32_get_reg (c, 9),
-		(unsigned long) s32_get_reg (c, 17),
-		(unsigned long) s32_get_reg (c, 25),
+		(unsigned long) s32_get_gpr (c, 1),
+		(unsigned long) s32_get_gpr (c, 9),
+		(unsigned long) s32_get_gpr (c, 17),
+		(unsigned long) s32_get_gpr (c, 25),
 		(unsigned long) s32_get_npc (c)
 	);
 
 	fprintf (fp, " r02=%08lX  r10=%08lX  r18=%08lX  r26=%08lX   WIM=%08lX\n",
-		(unsigned long) s32_get_reg (c, 2),
-		(unsigned long) s32_get_reg (c, 10),
-		(unsigned long) s32_get_reg (c, 18),
-		(unsigned long) s32_get_reg (c, 26),
+		(unsigned long) s32_get_gpr (c, 2),
+		(unsigned long) s32_get_gpr (c, 10),
+		(unsigned long) s32_get_gpr (c, 18),
+		(unsigned long) s32_get_gpr (c, 26),
 		(unsigned long) s32_get_wim (c)
 	);
 
 	fprintf (fp, " r03=%08lX  r11=%08lX  r19=%08lX  r27=%08lX   TBR=%08lX\n",
-		(unsigned long) s32_get_reg (c, 3),
-		(unsigned long) s32_get_reg (c, 11),
-		(unsigned long) s32_get_reg (c, 19),
-		(unsigned long) s32_get_reg (c, 27),
+		(unsigned long) s32_get_gpr (c, 3),
+		(unsigned long) s32_get_gpr (c, 11),
+		(unsigned long) s32_get_gpr (c, 19),
+		(unsigned long) s32_get_gpr (c, 27),
 		(unsigned long) s32_get_tbr (c)
 	);
 
 	fprintf (fp, " r04=%08lX  r12=%08lX  r20=%08lX  r28=%08lX     Y=%08lX\n",
-		(unsigned long) s32_get_reg (c, 4),
-		(unsigned long) s32_get_reg (c, 12),
-		(unsigned long) s32_get_reg (c, 20),
-		(unsigned long) s32_get_reg (c, 28),
+		(unsigned long) s32_get_gpr (c, 4),
+		(unsigned long) s32_get_gpr (c, 12),
+		(unsigned long) s32_get_gpr (c, 20),
+		(unsigned long) s32_get_gpr (c, 28),
 		(unsigned long) s32_get_y (c)
 	);
 
 	for (i = 5; i < 8; i++) {
 		fprintf (fp, " r%02u=%08lX  r%02u=%08lX  r%02u=%08lX  r%02u=%08lX\n",
-			i + 0, (unsigned long) s32_get_reg (c, i + 0),
-			i + 8, (unsigned long) s32_get_reg (c, i + 8),
-			i + 16, (unsigned long) s32_get_reg (c, i + 16),
-			i + 24, (unsigned long) s32_get_reg (c, i + 24)
+			i + 0, (unsigned long) s32_get_gpr (c, i + 0),
+			i + 8, (unsigned long) s32_get_gpr (c, i + 8),
+			i + 16, (unsigned long) s32_get_gpr (c, i + 16),
+			i + 24, (unsigned long) s32_get_gpr (c, i + 24)
 		);
 	}
 
@@ -579,15 +536,25 @@ static
 void do_r (cmd_t *cmd, sims32_t *sim)
 {
 	unsigned long val;
-	uint32_t      *reg;
+	char          sym[256];
 
-	if (!ss32_match_reg (cmd, sim, &reg)) {
+	if (cmd_match_eol (cmd)) {
+		ss32_prt_state_cpu (sim->cpu, stdout);
+		return;
+	}
+
+	if (!cmd_match_ident (cmd, sym, 256)) {
 		printf ("missing register\n");
 		return;
 	}
 
+	if (s32_get_reg (sim->cpu, sym, &val)) {
+		printf ("bad register (%s)\n", sym);
+		return;
+	}
+
 	if (cmd_match_eol (cmd)) {
-		printf ("%08lx\n", (unsigned long) *reg);
+		printf ("%08lX\n", val);
 		return;
 	}
 
@@ -600,7 +567,7 @@ void do_r (cmd_t *cmd, sims32_t *sim)
 		return;
 	}
 
-	*reg = val;
+	s32_set_reg (sim->cpu, sym, val);
 
 	ss32_prt_state_cpu (sim->cpu, stdout);
 }

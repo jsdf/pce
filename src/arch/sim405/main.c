@@ -105,12 +105,9 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_sym (sim405_t *sim, cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (sim405_t *sim, const char *sym, unsigned long *val)
 {
-	uint32_t *reg;
-
-	if (ppc_match_reg (cmd, sim, &reg)) {
-		*val = *reg;
+	if (p405_get_reg (sim->ppc, sym, val) == 0) {
 		return (1);
 	}
 

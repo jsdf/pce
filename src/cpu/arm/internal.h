@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/internal.h                                     *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -92,10 +91,10 @@ static inline
 uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 {
 	if (reg == 15) {
-		return ((arm_get_reg (c, 15) + pc) & 0xffffffffUL);
+		return ((arm_get_gpr (c, 15) + pc) & 0xffffffff);
 	}
 
-	return (arm_get_reg (c, reg));
+	return (arm_get_gpr (c, reg));
 }
 
 #define arm_get_rn(c, ir) (arm_get_reg_pc ((c), arm_ir_rn(ir), 8))
@@ -103,8 +102,8 @@ uint32_t arm_get_reg_pc (arm_t *c, unsigned reg, uint32_t pc)
 #define arm_get_rs(c, ir) (arm_get_reg_pc ((c), arm_ir_rs(ir), 8))
 #define arm_get_rm(c, ir) (arm_get_reg_pc ((c), arm_ir_rm(ir), 8))
 
-#define arm_set_rn(c, ir, v) do { arm_set_reg ((c), arm_ir_rn(ir), (v)); } while (0)
-#define arm_set_rd(c, ir, v) do { arm_set_reg ((c), arm_ir_rd(ir), (v)); } while (0)
+#define arm_set_rn(c, ir, v) do { arm_set_gpr ((c), arm_ir_rn(ir), (v)); } while (0)
+#define arm_set_rd(c, ir, v) do { arm_set_gpr ((c), arm_ir_rd(ir), (v)); } while (0)
 
 #define arm_set_clk(c, dpc, clk) do { \
 	(c)->reg[15] += (dpc); \

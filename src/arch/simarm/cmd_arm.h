@@ -28,8 +28,6 @@
 /* $Id$ */
 
 
-int sarm_match_reg (cmd_t *cmd, simarm_t *sim, uint32_t **reg);
-
 void sarm_dasm_str (char *dst, arm_dasm_t *op);
 void sarm_prt_state_cpu (arm_t *c, FILE *fp);
 void sarm_prt_state_mmu (arm_t *c, FILE *fp);

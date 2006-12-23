@@ -123,35 +123,14 @@ int s6502_match_reg8 (cmd_t *cmd, sim6502_t *sim, unsigned char **reg)
 	return (0);
 }
 
-int s6502_match_reg16 (cmd_t *cmd, sim6502_t *sim, unsigned short **reg)
-{
-	cmd_match_space (cmd);
-
-	if (cmd_match (cmd, "pc") || cmd_match (cmd, "PC")) {
-		*reg = &sim->cpu->pc;
-		return (1);
-	}
-
-	return (0);
-}
-
 static
-int cmd_match_sym (sim6502_t *sim, cmd_t *cmd, unsigned long *val)
+int cmd_match_sym (sim6502_t *sim, const char *sym, unsigned long *val)
 {
-	unsigned char  *reg8;
-	unsigned short *reg16;
-
-	if (s6502_match_reg16 (cmd, sim, &reg16)) {
-		*val = *reg16;
-		return (1);
+	if (e6502_get_reg (sim->cpu, sym, val)) {
+		return (0);
 	}
 
-	if (s6502_match_reg8 (cmd, sim, &reg8)) {
-		*val = *reg8;
-		return (1);
-	}
-
-	return (0);
+	return (1);
 }
 
 void s6502_disasm_str (char *dst, e6502_disasm_t *op)
@@ -648,40 +627,39 @@ void do_p (cmd_t *cmd, sim6502_t *sim)
 static
 void do_r (cmd_t *cmd, sim6502_t *sim)
 {
-	unsigned char  *reg8;
-	unsigned short *reg16;
-	unsigned short val;
+	unsigned long val;
+	char          sym[256];
 
-	if (s6502_match_reg16 (cmd, sim, &reg16)) {
-		if (cmd_match_eol (cmd)) {
-			printf ("%04x\n", *reg16);
-			return;
-		}
-
-		if (!cmd_match_uint16 (cmd, &val)) {
-			prt_error ("missing value\n");
-			return;
-		}
-
-		*reg16 = val;
+	if (cmd_match_eol (cmd)) {
+		prt_state_cpu (sim->cpu, stdout);
+		return;
 	}
-	else if (s6502_match_reg8 (cmd, sim, &reg8)) {
-		if (cmd_match_eol (cmd)) {
-			printf ("%02x\n", *reg8);
-			return;
-		}
 
-		if (!cmd_match_uint16 (cmd, &val)) {
-			prt_error ("missing value\n");
-			return;
-		}
+	if (!cmd_match_ident (cmd, sym, 256)) {
+		prt_error ("missing register\n");
+		return;
+	}
 
-		*reg8 = (val & 0xff);
+	if (e6502_get_reg (sim->cpu, sym, &val)) {
+		prt_error ("bad register\n");
+		return;
+	}
+
+	if (cmd_match_eol (cmd)) {
+		printf ("%02lX\n", val);
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &val)) {
+		prt_error ("missing value\n");
+		return;
 	}
 
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
+
+	e6502_set_reg (sim->cpu, sym, val);
 
 	prt_state_cpu (sim->cpu, stdout);
 }

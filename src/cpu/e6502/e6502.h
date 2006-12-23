@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.h                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -184,6 +183,10 @@ void e6502_set_ram (e6502_t *c, unsigned char *ram,
 );
 
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
+
+
+int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val);
+int e6502_set_reg (e6502_t *c, const char *reg, unsigned long val);
 
 
 /*****************************************************************************

@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ppc405.h"
 #include "internal.h"
@@ -151,6 +152,255 @@ unsigned long long p405_get_clkcnt (p405_t *c)
 unsigned long p405_get_delay (p405_t *c)
 {
 	return (c->delay);
+}
+
+static
+int p405_get_reg_idx (const char *reg, unsigned *idx, unsigned max)
+{
+	unsigned n;
+
+	n = 0;
+
+	if ((reg[0] < '0') || (reg[0] > '9')) {
+		return (1);
+	}
+
+	while ((reg[0] >= '0') && (reg[0] <= '9')) {
+		n = 10 * n + (unsigned) (reg[0] - '0');
+		reg += 1;
+	}
+
+	if (reg[0] != 0) {
+		return (1);
+	}
+
+	if (n > max) {
+		return (1);
+	}
+
+	*idx = n;
+
+	return (0);
+}
+
+int p405_get_reg (p405_t *c, const char *reg, unsigned long *val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "cr") == 0) {
+		*val = p405_get_cr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "ctr") == 0) {
+		*val = p405_get_ctr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "dear") == 0) {
+		*val = p405_get_dear (c);
+		return (0);
+	}
+	else if (strcmp (reg, "esr") == 0) {
+		*val = p405_get_esr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "evpr") == 0) {
+		*val = p405_get_evpr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "lr") == 0) {
+		*val = p405_get_lr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "msr") == 0) {
+		*val = p405_get_msr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		*val = p405_get_pc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "pid") == 0) {
+		*val = p405_get_pid (c);
+		return (0);
+	}
+	else if (strcmp (reg, "pit1") == 0) {
+		*val = p405_get_pit (c, 1);
+		return (0);
+	}
+	else if (strcmp (reg, "pit") == 0) {
+		*val = p405_get_pit (c, 0);
+		return (0);
+	}
+	else if (strcmp (reg, "tbl") == 0) {
+		*val = p405_get_tbl (c);
+		return (0);
+	}
+	else if (strcmp (reg, "tbu") == 0) {
+		*val = p405_get_tbu (c);
+		return (0);
+	}
+	else if (strcmp (reg, "tcr") == 0) {
+		*val = p405_get_tcr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "tsr") == 0) {
+		*val = p405_get_tsr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "xer") == 0) {
+		*val = p405_get_xer (c);
+		return (0);
+	}
+	else if (strcmp (reg, "zpr") == 0) {
+		*val = p405_get_zpr (c);
+		return (0);
+	}
+
+	if (strncmp (reg, "sprg", 4) == 0) {
+		if (p405_get_reg_idx (reg + 4, &idx, 7)) {
+			return (1);
+		}
+
+		*val = p405_get_sprg (c, idx);
+
+		return (0);
+	}
+
+	if (strncmp (reg, "srr", 3) == 0) {
+		if (p405_get_reg_idx (reg + 3, &idx, 3)) {
+			return (1);
+		}
+
+		*val = p405_get_srr (c, idx);
+
+		return (0);
+	}
+
+	if (reg[0] == 'r') {
+		if (p405_get_reg_idx (reg + 1, &idx, 31)) {
+			return (1);
+		}
+
+		*val = p405_get_gpr (c, idx);
+
+		return (0);
+	}
+
+	return (1);
+}
+
+int p405_set_reg (p405_t *c, const char *reg, unsigned long val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "cr") == 0) {
+		p405_set_cr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "ctr") == 0) {
+		p405_set_ctr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "dear") == 0) {
+		p405_set_dear (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "esr") == 0) {
+		p405_set_esr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "evpr") == 0) {
+		p405_set_evpr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "lr") == 0) {
+		p405_set_lr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "msr") == 0) {
+		p405_set_msr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		p405_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pid") == 0) {
+		p405_set_pid (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pit1") == 0) {
+		p405_set_pit (c, 1, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pit") == 0) {
+		p405_set_pit (c, 0, val);
+		return (0);
+	}
+	else if (strcmp (reg, "tbl") == 0) {
+		p405_set_tbl (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "tbu") == 0) {
+		p405_set_tbu (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "tcr") == 0) {
+		p405_set_tcr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "tsr") == 0) {
+		p405_set_tsr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "xer") == 0) {
+		p405_set_xer (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "zpr") == 0) {
+		p405_set_zpr (c, val);
+		return (0);
+	}
+
+	if (strncmp (reg, "sprg", 4) == 0) {
+		if (p405_get_reg_idx (reg + 4, &idx, 7)) {
+			return (1);
+		}
+
+		p405_set_sprg (c, idx, val);
+
+		return (0);
+	}
+
+	if (strncmp (reg, "srr", 3) == 0) {
+		if (p405_get_reg_idx (reg + 3, &idx, 3)) {
+			return (1);
+		}
+
+		p405_set_srr (c, idx, val);
+
+		return (0);
+	}
+
+	if ((reg[0] == 'r') || (reg[0] == 'R')) {
+		if (p405_get_reg_idx (reg + 1, &idx, 31)) {
+			return (1);
+		}
+
+		p405_set_gpr (c, idx, val);
+
+		return (0);
+	}
+
+	return (1);
 }
 
 

@@ -179,7 +179,7 @@ void op100 (sparc32_t *c)
 
 	d = (s32_get_pc (c) + (s32_ir_simm30 (c->ir) << 2)) & 0xfffffffcUL;
 
-	s32_set_reg (c, 15, s32_get_pc (c));
+	s32_set_gpr (c, 15, s32_get_pc (c));
 
 	s32_set_clk (c, 0, 1);
 	s32_set_npc (c, d);
@@ -1444,8 +1444,8 @@ void op303 (sparc32_t *c)
 		return;
 	}
 
-	s32_set_reg (c, rd + 0, val1 & 0xffffffffUL);
-	s32_set_reg (c, rd + 1, val2 & 0xffffffffUL);
+	s32_set_gpr (c, rd + 0, val1 & 0xffffffff);
+	s32_set_gpr (c, rd + 1, val2 & 0xffffffff);
 
 	s32_set_clk (c, 4, 2);
 }
@@ -1522,11 +1522,11 @@ void op307 (sparc32_t *c)
 		return;
 	}
 
-	if (s32_dstore32 (c, addr, c->asi_data, s32_get_reg (c, rd))) {
+	if (s32_dstore32 (c, addr, c->asi_data, s32_get_gpr (c, rd))) {
 		return;
 	}
 
-	if (s32_dstore32 (c, addr + 4, c->asi_data, s32_get_reg (c, rd + 1))) {
+	if (s32_dstore32 (c, addr + 4, c->asi_data, s32_get_gpr (c, rd + 1))) {
 		return;
 	}
 
@@ -1750,8 +1750,8 @@ void op313 (sparc32_t *c)
 		return;
 	}
 
-	s32_set_reg (c, rd + 0, val1 & 0xffffffffUL);
-	s32_set_reg (c, rd + 1, val2 & 0xffffffffUL);
+	s32_set_gpr (c, rd + 0, val1 & 0xffffffff);
+	s32_set_gpr (c, rd + 1, val2 & 0xffffffff);
 
 	s32_set_clk (c, 4, 1);
 }
@@ -1864,11 +1864,11 @@ void op317 (sparc32_t *c)
 		return;
 	}
 
-	if (s32_dstore32 (c, addr, s32_ir_asi (c->ir), s32_get_reg (c, rd))) {
+	if (s32_dstore32 (c, addr, s32_ir_asi (c->ir), s32_get_gpr (c, rd))) {
 		return;
 	}
 
-	if (s32_dstore32 (c, addr + 4, s32_ir_asi (c->ir), s32_get_reg (c, rd + 1))) {
+	if (s32_dstore32 (c, addr + 4, s32_ir_asi (c->ir), s32_get_gpr (c, rd + 1))) {
 		return;
 	}
 

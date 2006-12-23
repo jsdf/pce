@@ -274,7 +274,7 @@ void pc_setup_pic (ibmpc_t *pc)
 
 	e8259_set_int_f (&pc->pic, pc->cpu, (e8259_int_f) &e86_irq);
 
-	e86_set_inta_f (pc->cpu, &pc->pic, (e86_inta_f) &e8259_inta);
+	e86_set_inta_fct (pc->cpu, &pc->pic, e8259_inta);
 }
 
 static

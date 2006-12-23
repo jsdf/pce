@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
@@ -92,14 +91,14 @@
 		if (val) (var) |= (bits); else (var) &= ~(bits); \
 	} while (0)
 
-#define arm_get_reg(c, n) ((c)->reg[(n)])
+#define arm_get_gpr(c, n) ((c)->reg[(n)])
 #define arm_get_pc(c) ((c)->reg[15])
 #define arm_get_lr(c) ((c)->reg[14])
 #define arm_get_cpsr(c) ((c)->cpsr)
 #define arm_get_spsr(c) ((c)->spsr)
 #define arm_get_last_pc(c) ((c)->lastpc[1])
 
-#define arm_set_reg(c, n, v) do { (c)->reg[(n)] = (v); } while (0)
+#define arm_set_gpr(c, n, v) do { (c)->reg[(n)] = (v); } while (0)
 #define arm_set_pc(c, v) do { (c)->reg[15] = (v); } while (0)
 #define arm_set_lr(c, v) do { (c)->reg[14] = (v); } while (0)
 #define arm_set_cpsr(c, v) do { (c)->cpsr = (v); } while (0)
@@ -291,6 +290,9 @@ void arm_set_mem_fct (arm_t *c, void *ext,
 );
 
 void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt);
+
+int arm_get_reg (arm_t *c, const char *reg, unsigned long *val);
+int arm_set_reg (arm_t *c, const char *reg, unsigned long val);
 
 /*!***************************************************************************
  * @short Get the number of executed instructions

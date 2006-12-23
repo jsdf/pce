@@ -5,7 +5,6 @@
 /*****************************************************************************
  * File name:     src/cpu/e8086/e8086.h                                      *
  * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
@@ -85,8 +84,6 @@ typedef unsigned short (*e86_get_uint16_f) (void *ext, unsigned long addr);
 typedef void (*e86_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
 typedef void (*e86_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 
-typedef unsigned char (*e86_inta_f) (void *ext);
-
 typedef unsigned (*e86_opcode_f) (struct e8086_t *c);
 
 
@@ -116,7 +113,7 @@ typedef struct e8086_t {
 	unsigned long    addr_mask;
 
 	void             *inta_ext;
-	e86_inta_f       inta;
+	unsigned char    (*inta) (void *ext);
 
 	void             *op_ext;
 	void             (*op_hook) (void *ext, unsigned char op1, unsigned char op2);
@@ -329,8 +326,10 @@ void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned
 #define e86_get_delay(c) ((c)->delay)
 
 
-e8086_t *e86_new (void);
+void e86_init (e8086_t *c);
+void e86_free (e8086_t *c);
 
+e8086_t *e86_new (void);
 void e86_del (e8086_t *c);
 
 void e86_enable_86 (e8086_t *c);
@@ -341,7 +340,7 @@ void e86_enable_v30 (e8086_t *c);
 void e86_set_addr_mask (e8086_t *c, unsigned long msk);
 unsigned long e86_get_addr_mask (e8086_t *c);
 
-void e86_reset (e8086_t *c);
+void e86_set_inta_fct (e8086_t *c, void *ext, void *fct);
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt);
 
@@ -355,7 +354,8 @@ void e86_set_prt (e8086_t *c, void *prt,
 	e86_get_uint16_f get16, e86_set_uint16_f set16
 );
 
-void e86_set_inta_f (e8086_t *c, void *ext, e86_inta_f inta);
+int e86_get_reg (e8086_t *c, const char *reg, unsigned long *val);
+int e86_set_reg (e8086_t *c, const char *reg, unsigned long val);
 
 void e86_irq (e8086_t *cpu, unsigned char val);
 
@@ -366,6 +366,8 @@ unsigned e86_undefined (e8086_t *c);
 unsigned long long e86_get_clock (e8086_t *c);
 
 unsigned long long e86_get_opcnt (e8086_t *c);
+
+void e86_reset (e8086_t *c);
 
 void e86_execute (e8086_t *c);
 

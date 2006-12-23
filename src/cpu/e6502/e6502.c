@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e6502/e6502.c                                      *
  * Created:       2004-05-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
 
@@ -120,6 +120,74 @@ unsigned char e6502_get_mem_uint8 (void *mem, unsigned long addr)
 static
 void e6502_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
 {
+}
+
+int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val)
+{
+	if (*reg == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "a") == 0) {
+		*val = e6502_get_a (c);
+		return (0);
+	}
+	else if (strcmp (reg, "x") == 0) {
+		*val = e6502_get_x (c);
+		return (0);
+	}
+	else if (strcmp (reg, "y") == 0) {
+		*val = e6502_get_y (c);
+		return (0);
+	}
+	else if (strcmp (reg, "p") == 0) {
+		*val = e6502_get_p (c);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		*val = e6502_get_pc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "s") == 0) {
+		*val = e6502_get_s (c);
+		return (0);
+	}
+
+	return (1);
+}
+
+int e6502_set_reg (e6502_t *c, const char *reg, unsigned long val)
+{
+	if (*reg == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "a") == 0) {
+		e6502_set_a (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "x") == 0) {
+		e6502_set_x (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "y") == 0) {
+		e6502_set_y (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "p") == 0) {
+		e6502_set_p (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		e6502_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "s") == 0) {
+		e6502_set_s (c, val);
+		return (0);
+	}
+
+	return (1);
 }
 
 unsigned long long e6502_get_clock (e6502_t *c)

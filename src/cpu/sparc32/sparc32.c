@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/sparc32/sparc32.c                                  *
  * Created:       2004-09-27 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-10-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -111,6 +110,127 @@ void s32_set_nwindows (sparc32_t *c, unsigned n)
 	else {
 		c->nwindows = n;
 	}
+}
+
+static
+int s32_get_reg_idx (const char *reg, unsigned *idx, unsigned max)
+{
+	unsigned n;
+
+	n = 0;
+
+	if ((reg[0] < '0') || (reg[0] > '9')) {
+		return (1);
+	}
+
+	while ((reg[0] >= '0') && (reg[0] <= '9')) {
+		n = 10 * n + (unsigned) (reg[0] - '0');
+		reg += 1;
+	}
+
+	if (reg[0] != 0) {
+		return (1);
+	}
+
+	if (n > max) {
+		return (1);
+	}
+
+	*idx = n;
+
+	return (0);
+}
+
+int s32_get_reg (sparc32_t *c, const char *reg, unsigned long *val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "npc") == 0) {
+		*val = s32_get_npc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "psr") == 0) {
+		*val = s32_get_psr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		*val = s32_get_pc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "tbr") == 0) {
+		*val = s32_get_tbr (c);
+		return (0);
+	}
+	else if (strcmp (reg, "wim") == 0) {
+		*val = s32_get_wim (c);
+		return (0);
+	}
+	else if (strcmp (reg, "y") == 0) {
+		*val = s32_get_y (c);
+		return (0);
+	}
+
+	if (reg[0] == 'r') {
+		if (s32_get_reg_idx (reg + 1, &idx, 31)) {
+			return (1);
+		}
+
+		*val = s32_get_gpr (c, idx);
+
+		return (0);
+	}
+
+	return (1);
+}
+
+int s32_set_reg (sparc32_t *c, const char *reg, unsigned long val)
+{
+	unsigned idx;
+
+	if (reg[0] == '%') {
+		reg += 1;
+	}
+
+	if (strcmp (reg, "npc") == 0) {
+		s32_set_npc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "psr") == 0) {
+		s32_set_psr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "pc") == 0) {
+		s32_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "tbr") == 0) {
+		s32_set_tbr (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "wim") == 0) {
+		s32_set_wim (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "y") == 0) {
+		s32_set_y (c, val);
+		return (0);
+	}
+
+	if (reg[0] == 'r') {
+		if (s32_get_reg_idx (reg + 1, &idx, 31)) {
+			return (1);
+		}
+
+		s32_set_gpr (c, idx, val);
+
+		return (0);
+	}
+
+	return (1);
 }
 
 unsigned long long s32_get_opcnt (sparc32_t *c)
@@ -280,8 +400,8 @@ void s32_trap (sparc32_t *c, unsigned tn)
 
 	s32_save (c, 0);
 
-	s32_set_reg (c, 17, s32_get_pc (c));
-	s32_set_reg (c, 18, s32_get_npc (c));
+	s32_set_gpr (c, 17, s32_get_pc (c));
+	s32_set_gpr (c, 18, s32_get_npc (c));
 
 	s32_set_tbr_tt (c, tn);
 

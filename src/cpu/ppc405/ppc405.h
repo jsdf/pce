@@ -541,6 +541,10 @@ unsigned long long p405_get_clkcnt (p405_t *c);
 unsigned long p405_get_delay (p405_t *c);
 
 
+int p405_get_reg (p405_t *c, const char *reg, unsigned long *val);
+int p405_set_reg (p405_t *c, const char *reg, unsigned long val);
+
+
 /*!***************************************************************************
  * @short Get a byte from a physical address
  *****************************************************************************/

@@ -22,8 +22,6 @@
 /* $Id$ */
 
 
-int ss32_match_reg (cmd_t *cmd, sims32_t *sim, uint32_t **reg);
-
 void ss32_dasm_str (char *dst, s32_dasm_t *op);
 
 void ss32_prt_state_cpu (sparc32_t *c, FILE *fp);
