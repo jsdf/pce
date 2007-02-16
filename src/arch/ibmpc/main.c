@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1582,6 +1582,66 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	return (0);
 }
 
+static
+int pce_load_default_config (const char *dir)
+{
+	unsigned i, j;
+	char     str[1024];
+
+	if (dir == NULL) {
+		dir = "";
+	}
+
+	if (strlen (dir) > (1024 - 16)) {
+		return (1);
+	}
+
+	i = 0;
+	j = 0;
+	while (dir[i] != 0) {
+		str[i] = dir[i];
+		if (str[i] == '/') {
+			j = i + 1;
+		}
+		i += 1;
+	}
+
+	if (j > 0) {
+		str[j] = 0;
+		if (chdir (str) != 0) {
+			return (1);
+		}
+	}
+
+	strcpy (str + j, "ibmpc.cfg");
+	par_cfg = pce_load_config (str);
+	if (par_cfg != NULL) {
+		return (0);
+	}
+
+	strcpy (str + j, "pce.cfg");
+	par_cfg = pce_load_config (str);
+	if (par_cfg != NULL) {
+		return (0);
+	}
+
+	return (1);
+}
+
+static
+int pce_default_config (const char *argv0)
+{
+	if (pce_load_default_config (NULL) == 0) {
+		return (0);
+	}
+
+	if (pce_load_default_config (argv0) == 0) {
+		return (0);
+	}
+
+	return (1);
+}
+
 int main (int argc, char *argv[])
 {
 	int       i;
@@ -1678,7 +1738,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_MSG,
 		"pce ibmpc version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	if (argc < 2) {
@@ -1686,15 +1746,9 @@ int main (int argc, char *argv[])
 		pce_log_set_level (stderr, MSG_ERR);
 		par_terminal = "sdl";
 		par_video = "ega";
-		cfg = "ibmpc.cfg";
 		nomon = 1;
 
-		par_cfg = pce_load_config ("ibmpc.cfg");
-		if (par_cfg == NULL) {
-			par_cfg = pce_load_config ("pce.cfg");
-		}
-
-		if (par_cfg == NULL) {
+		if (pce_default_config (argv[0])) {
 			pce_log (MSG_ERR, "loading config file failed\n");
 			return (1);
 		}
