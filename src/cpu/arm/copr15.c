@@ -32,20 +32,22 @@
 #include "internal.h"
 
 
+static int cp15_reset (arm_t *c, arm_copr_t *p);
 static int cp15_exec (arm_t *c, arm_copr_t *p);
 
 
-void cp15_init (arm_copr15_t *c)
+void cp15_init (arm_copr15_t *p)
 {
 	unsigned i;
 
-	arm_copr_init (&c->copr);
+	arm_copr_init (&p->copr);
 
-	c->copr.ext = c;
-	c->copr.exec = cp15_exec;
+	p->copr.ext = p;
+	p->copr.reset = cp15_reset;
+	p->copr.exec = cp15_exec;
 
 	for (i = 0; i < 16; i++) {
-		c->reg[i] = 0;
+		p->reg[i] = 0;
 	}
 }
 
@@ -74,22 +76,6 @@ void cp15_del (arm_copr15_t *p)
 	}
 
 	free (p);
-}
-
-void cp15_reset (arm_copr15_t *p, int be)
-{
-	unsigned i;
-
-	p->reg[0] = ARM_C15_ID;
-	p->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
-
-	if (be) {
-		p->reg[1] |= ARM_C15_CR_B;
-	}
-
-	for (i = 2; i < 16; i++) {
-		p->reg[i] = 0;
-	}
 }
 
 /* cache functions */
@@ -342,6 +328,28 @@ int cp15_op_mcr (arm_t *c, arm_copr_t *p)
 
 	default:
 		return (1);
+	}
+
+	return (0);
+}
+
+static
+int cp15_reset (arm_t *c, arm_copr_t *p)
+{
+	unsigned     i;
+	arm_copr15_t *p15;
+
+	p15 = p->ext;
+
+	p15->reg[0] = ARM_C15_ID;
+	p15->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
+
+	if (c->bigendian) {
+		p15->reg[1] |= ARM_C15_CR_B;
+	}
+
+	for (i = 2; i < 16; i++) {
+		p15->reg[i] = 0;
 	}
 
 	return (0);

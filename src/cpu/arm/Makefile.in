@@ -10,8 +10,8 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
-SRC := arm.c copr15.c disasm.c mmu.c opcodes.c
-OBJ := arm.o copr15.o disasm.o mmu.o opcodes.o
+SRC := arm.c copr14.c copr15.c disasm.c mmu.c opcodes.c
+OBJ := arm.o copr14.o copr15.o disasm.o mmu.o opcodes.o
 HDR := arm.h internal.h
 BIN := arm.a
 
@@ -32,6 +32,7 @@ arm.a: $(OBJ)
 
 
 arm.o:		arm.c $(SDP)
+copr14.o:	copr14.c $(SDP)
 copr15.o:	copr15.c $(SDP)
 disasm.o:	disasm.c $(SDP)
 mmu.o:		mmu.c $(SDP)

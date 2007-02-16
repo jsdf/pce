@@ -153,6 +153,9 @@ void arm_init (arm_t *c)
 		c->copr[i] = NULL;
 	}
 
+	cp14_init (&c->copr14);
+	c->copr[14] = &c->copr14.copr;
+
 	cp15_init (&c->copr15);
 	c->copr[15] = &c->copr15.copr;
 }
@@ -173,6 +176,7 @@ arm_t *arm_new (void)
 
 void arm_free (arm_t *c)
 {
+	cp14_free (&c->copr14);
 	cp15_free (&c->copr15);
 }
 
@@ -346,6 +350,7 @@ void arm_copr_init (arm_copr_t *p)
 {
 	p->copr_idx = 0;
 	p->exec = NULL;
+	p->reset = NULL;
 	p->ext = NULL;
 }
 
@@ -458,7 +463,13 @@ void arm_reset (arm_t *c)
 
 	arm_tbuf_flush (c);
 
-	cp15_reset (&c->copr15, c->bigendian);
+	for (i = 0; i < 16; i++) {
+		if (c->copr[i] != NULL) {
+			if (c->copr[i]->reset != NULL) {
+				c->copr[i]->reset (c, c->copr[i]);
+			}
+		}
+	}
 }
 
 void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode)

@@ -2442,12 +2442,6 @@ void ope0_01 (arm_t *c)
 		r = 1;
 	}
 
-	if (cop == 14) {
-		/* hack */
-		arm_set_clk (c, 4, 1);
-		return;
-	}
-
 	if (r) {
 		arm_set_clk (c, 0, 1);
 		arm_exception_undefined (c);

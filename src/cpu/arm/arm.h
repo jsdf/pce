@@ -152,8 +152,6 @@ typedef void (*arm_set_uint8_f) (void *ext, unsigned long addr, unsigned char va
 typedef void (*arm_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
 typedef void (*arm_set_uint32_f) (void *ext, unsigned long addr, unsigned long val);
 
-typedef int (*arm_copr_exec_f) (struct arm_s *c, struct arm_copr_s *p);
-
 typedef void (*arm_opcode_f) (struct arm_s *c);
 
 
@@ -161,11 +159,12 @@ typedef void (*arm_opcode_f) (struct arm_s *c);
  * @short The ARM coprocessor context
  *****************************************************************************/
 typedef struct arm_copr_s {
-	unsigned        copr_idx;
+	unsigned copr_idx;
 
-	arm_copr_exec_f exec;
+	int      (*reset) (struct arm_s *c, struct arm_copr_s *p);
+	int      (*exec) (struct arm_s *c, struct arm_copr_s *p);
 
-	void            *ext;
+	void     *ext;
 } arm_copr_t;
 
 
@@ -189,6 +188,14 @@ typedef struct {
 
 	uint32_t   reg[16];
 } arm_copr15_t;
+
+
+typedef struct {
+	arm_copr_t copr;
+
+	uint32_t   cclkcfg;
+	uint32_t   pwrmode;
+} arm_copr14_t;
 
 
 /*****************************************************************************
@@ -229,6 +236,8 @@ typedef struct arm_s {
 	unsigned           reg_map;
 
 	arm_copr_t         *copr[16];
+
+	arm_copr14_t       copr14;
 
 	/* system control coprocessor */
 	arm_copr15_t       copr15;
@@ -373,21 +382,19 @@ int arm_copr_check (arm_t *c, unsigned i);
 void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p);
 
 
+void cp14_init (arm_copr14_t *c);
+void cp14_free (arm_copr14_t *p);
+arm_copr_t *cp14_new (void);
+void cp14_del (arm_copr14_t *p);
+
+
 /*!***************************************************************************
  * @short Initialize a system control coprocessor context
  *****************************************************************************/
 void cp15_init (arm_copr15_t *c);
-
 void cp15_free (arm_copr15_t *p);
 arm_copr_t *cp15_new (void);
 void cp15_del (arm_copr15_t *p);
-
-/*!***************************************************************************
- * @short Reset a system control coprocessor context
- * @param p  The system control coprocessor context
- * @param be Set big endian mode if non-zero
- *****************************************************************************/
-void cp15_reset (arm_copr15_t *p, int be);
 
 
 void arm_set_reg_map (arm_t *arm, unsigned mode);
