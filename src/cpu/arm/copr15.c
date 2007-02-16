@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -33,25 +32,24 @@
 #include "internal.h"
 
 
-int p15_exec (arm_t *c, arm_copr_t *p);
+static int cp15_exec (arm_t *c, arm_copr_t *p);
 
 
-void p15_init (arm_copr15_t *c, int be)
+void cp15_init (arm_copr15_t *c)
 {
+	unsigned i;
+
 	arm_copr_init (&c->copr);
 
 	c->copr.ext = c;
-	c->copr.exec = p15_exec;
+	c->copr.exec = cp15_exec;
 
-	c->reg[0] = ARM_C15_ID;
-	c->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
-
-	if (be) {
-		c->reg[1] |= ARM_C15_CR_B;
+	for (i = 0; i < 16; i++) {
+		c->reg[i] = 0;
 	}
 }
 
-arm_copr_t *p15_new (int be)
+arm_copr_t *cp15_new (void)
 {
 	arm_copr15_t *c;
 
@@ -60,26 +58,43 @@ arm_copr_t *p15_new (int be)
 		return (NULL);
 	}
 
-	p15_init (c, be);
+	cp15_init (c);
 
 	return (&c->copr);
 }
 
-void p15_free (arm_copr15_t *p)
+void cp15_free (arm_copr15_t *p)
 {
 }
 
-void p15_del (arm_copr15_t *p)
+void cp15_del (arm_copr15_t *p)
 {
 	if (p != NULL) {
-		p15_free (p);
+		cp15_free (p);
 	}
 
 	free (p);
 }
 
+void cp15_reset (arm_copr15_t *p, int be)
+{
+	unsigned i;
+
+	p->reg[0] = ARM_C15_ID;
+	p->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
+
+	if (be) {
+		p->reg[1] |= ARM_C15_CR_B;
+	}
+
+	for (i = 2; i < 16; i++) {
+		p->reg[i] = 0;
+	}
+}
+
 /* cache functions */
-int p15_set_reg7 (arm_t *c, arm_copr15_t *p)
+static
+int cp15_set_reg7 (arm_t *c, arm_copr15_t *p)
 {
 	unsigned rm, op2;
 
@@ -160,7 +175,8 @@ int p15_set_reg7 (arm_t *c, arm_copr15_t *p)
 }
 
 /* TLB functions */
-int p15_set_reg8 (arm_t *c, arm_copr15_t *p)
+static
+int cp15_set_reg8 (arm_t *c, arm_copr15_t *p)
 {
 	unsigned rm, op2;
 
@@ -204,7 +220,25 @@ int p15_set_reg8 (arm_t *c, arm_copr15_t *p)
 	return (1);
 }
 
-int p15_op_mrc (arm_t *c, arm_copr_t *p)
+static
+int cp15_set_reg15 (arm_t *c, arm_copr15_t *p, uint32_t val)
+{
+	unsigned rm, op2;
+
+	rm = arm_ir_rm (c->ir);
+	op2 = arm_get_bits (c->ir, 5, 3);
+
+	if (rm == 1) {
+		/* xscale: coprocessor access register */
+		p->reg[15] = val & 0x00003fff;
+		return (0);
+	}
+
+	return (1);
+}
+
+static
+int cp15_op_mrc (arm_t *c, arm_copr_t *p)
 {
 	arm_copr15_t *p15;
 	unsigned     op2;
@@ -239,6 +273,10 @@ int p15_op_mrc (arm_t *c, arm_copr_t *p)
 		val = p15->reg[6];
 		break;
 
+	case 0x0f: /* implementation defined */
+		val = p15->reg[15];
+		break;
+
 	default:
 		return (1);
 	}
@@ -247,13 +285,14 @@ int p15_op_mrc (arm_t *c, arm_copr_t *p)
 		arm_set_cpsr (c, (arm_get_cpsr (c) & ~ARM_PSR_CC) | (val & ARM_PSR_CC));
 	}
 	else {
-		arm_set_rd (c, c->ir, val & 0xffffffffUL);
+		arm_set_rd (c, c->ir, val & 0xffffffff);
 	}
 
 	return (0);
 }
 
-int p15_op_mcr (arm_t *c, arm_copr_t *p)
+static
+int cp15_op_mcr (arm_t *c, arm_copr_t *p)
 {
 	arm_copr15_t *p15;
 	unsigned     op2;
@@ -278,28 +317,28 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
 		val |= ARM_C15_CR_P;
 		val |= ARM_C15_CR_D;
 		val |= ARM_C15_CR_L;
-		p15->reg[1] = val & 0xffffffffUL;
+		arm_set_bits (val, ARM_C15_CR_B, c->bigendian);
+		p15->reg[1] = val & 0xffffffff;
 
-		c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000UL : 0x00000000UL;
-		c->bigendian = (val & ARM_C15_CR_B) != 0;
+		c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000 : 0x00000000;
 		break;
 
 	case 0x02: /* translation table base */
-		p15->reg[2] = val & 0xffffc000UL;
+		p15->reg[2] = val & 0xffffc000;
 		break;
 
 	case 0x03: /* domain access control */
-		p15->reg[3] = val & 0xffffffffUL;
+		p15->reg[3] = val & 0xffffffff;
 		break;
 
 	case 0x07:
-		return (p15_set_reg7 (c, p15));
+		return (cp15_set_reg7 (c, p15));
 
 	case 0x08:
-		return (p15_set_reg8 (c, p15));
+		return (cp15_set_reg8 (c, p15));
 
 	case 0x0f: /* implementation defined */
-		return (0);
+		return (cp15_set_reg15 (c, p15, val));
 
 	default:
 		return (1);
@@ -308,7 +347,8 @@ int p15_op_mcr (arm_t *c, arm_copr_t *p)
 	return (0);
 }
 
-int p15_exec (arm_t *c, arm_copr_t *p)
+static
+int cp15_exec (arm_t *c, arm_copr_t *p)
 {
 	int           r;
 	unsigned long pc;
@@ -322,15 +362,15 @@ int p15_exec (arm_t *c, arm_copr_t *p)
 
 	op = "?";
 
-	switch (c->ir & 0x00f00010UL) {
-	case 0x00000010UL: /* mcr */
+	switch (c->ir & 0x00f00010) {
+	case 0x00000010: /* mcr */
 		op = "W";
-		r = p15_op_mcr (c, p);
+		r = cp15_op_mcr (c, p);
 		break;
 
-	case 0x00100010UL: /* mrc */
+	case 0x00100010: /* mrc */
 		op = "R";
-		r = p15_op_mrc (c, p);
+		r = cp15_op_mrc (c, p);
 		break;
 
 	default:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -59,6 +59,14 @@
 #define ARM_MODE_ABT 0x17
 #define ARM_MODE_UND 0x1b
 #define ARM_MODE_SYS 0x1f
+
+
+/* enable big endian mode */
+#define ARM_FLAG_BIGENDIAN 1
+/* enable coprocessor access register */
+#define ARM_FLAG_CPAR      2
+#define ARM_FLAG_XSCALE    (ARM_FLAG_CPAR)
+#define ARM_FLAG_ALL       0xffff
 
 
 /* #define ARM_C15_ID   0x4105f000UL */
@@ -187,6 +195,8 @@ typedef struct {
  * @short The ARM CPU context
  *****************************************************************************/
 typedef struct arm_s {
+	unsigned           flags;
+
 	void               *mem_ext;
 
 	arm_get_uint8_f    get_uint8;
@@ -227,10 +237,11 @@ typedef struct arm_s {
 
 	uint32_t           exception_base;
 
-	char               bigendian;
+	/* this reflects the B bit in copr15 reg 1 */
+	int                bigendian;
 
 	/* cpu is in a privileged mode */
-	char               privileged;
+	int                privileged;
 
 	unsigned char      irq;
 	unsigned char      fiq;
@@ -264,26 +275,29 @@ int arm_set_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t val);
 
 
 /*!***************************************************************************
- * @short Initialize an arm context struct
+ * @short Initialize an ARM context
  *****************************************************************************/
-void arm_init (arm_t *c, int be);
+void arm_init (arm_t *c);
 
 /*!***************************************************************************
- * @short  Create and initialize an arm context struct
- * @return The arm struct or NULL on error
+ * @short  Create and initialize an ARM context
+ * @return The ARM context or NULL on error
  *****************************************************************************/
-arm_t *arm_new (int be);
+arm_t *arm_new (void);
 
 /*!***************************************************************************
- * @short Free the resources used by an arm struct
+ * @short Free the resources used by an ARM context
  *****************************************************************************/
 void arm_free (arm_t *c);
 
 /*!***************************************************************************
- * @short Delete an arm struct
+ * @short Delete an ARM context
  *****************************************************************************/
 void arm_del (arm_t *c);
 
+/*!***************************************************************************
+ * @short Set the memory access functions
+ *****************************************************************************/
 void arm_set_mem_fct (arm_t *c, void *ext,
 	void *get8, void *get16, void *get32,
 	void *set8, void *set16, void *set32
@@ -291,8 +305,29 @@ void arm_set_mem_fct (arm_t *c, void *ext,
 
 void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt);
 
+
+/*!***************************************************************************
+ * @short  Get CPU flags
+ * @short  c     The cpu context
+ * @short  flags The flags to get
+ * @return The current cpu flags masked by flags.
+ *****************************************************************************/
+unsigned arm_get_flags (const arm_t *c, unsigned flags);
+
+/*!***************************************************************************
+ * @short Set CPU flags
+ * @short c     The cpu context
+ * @short flags The flags to set (ARM_FLAG_*)
+ * @short val   Set the flags if non-zero, clear them otherwise
+ *
+ * Flags must be set before arm_reset() is called.
+ *****************************************************************************/
+void arm_set_flags (arm_t *c, unsigned flags, int val);
+
+
 int arm_get_reg (arm_t *c, const char *reg, unsigned long *val);
 int arm_set_reg (arm_t *c, const char *reg, unsigned long val);
+
 
 /*!***************************************************************************
  * @short Get the number of executed instructions
@@ -310,17 +345,53 @@ unsigned long long arm_get_clkcnt (arm_t *c);
 unsigned long arm_get_delay (arm_t *c);
 
 
+/*!***************************************************************************
+ * @short Initialize a coprocessor context
+ *****************************************************************************/
 void arm_copr_init (arm_copr_t *p);
+
+/*!***************************************************************************
+ * @short Free a coprocessor context
+ *****************************************************************************/
 void arm_copr_free (arm_copr_t *p);
+
+/*!***************************************************************************
+ * @short Check if coprocessor is present and enabled
+ * @param i The coprocessor index
+ * @return Zero if coprocessor i is present and enabled, non-zero otherwise.
+ *****************************************************************************/
+int arm_copr_check (arm_t *c, unsigned i);
+
+/*!***************************************************************************
+ * @short Set a coprocessor
+ * @param c The ARM CPU context
+ * @param i The coprocessor index
+ * @param p The coprocessor context
+ *
+ * The coprocessor context p is owned by the caller.
+ *****************************************************************************/
 void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p);
 
-void p15_init (arm_copr15_t *c, int be);
-void p15_free (arm_copr15_t *p);
-arm_copr_t *p15_new (int be);
-void p15_del (arm_copr15_t *p);
+
+/*!***************************************************************************
+ * @short Initialize a system control coprocessor context
+ *****************************************************************************/
+void cp15_init (arm_copr15_t *c);
+
+void cp15_free (arm_copr15_t *p);
+arm_copr_t *cp15_new (void);
+void cp15_del (arm_copr15_t *p);
+
+/*!***************************************************************************
+ * @short Reset a system control coprocessor context
+ * @param p  The system control coprocessor context
+ * @param be Set big endian mode if non-zero
+ *****************************************************************************/
+void cp15_reset (arm_copr15_t *p, int be);
 
 
 void arm_set_reg_map (arm_t *arm, unsigned mode);
+
 
 /*!***************************************************************************
  * @short Reset an arm cpu core
@@ -362,7 +433,7 @@ void arm_set_fiq (arm_t *c, unsigned char val);
 void arm_execute (arm_t *c);
 
 /*!***************************************************************************
- * @short Clock a sparc32 cpu core
+ * @short Clock an ARM cpu core
  *****************************************************************************/
 void arm_clock (arm_t *c, unsigned long n);
 

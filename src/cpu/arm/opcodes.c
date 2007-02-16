@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/opcodes.c                                      *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -2340,7 +2340,7 @@ void opc4 (arm_t *c)
 	rn = arm_ir_rn (c->ir);
 	rd = arm_ir_rd (c->ir);
 
-	if (c->copr[cop] != NULL) {
+	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
 	}
 	else {
@@ -2348,6 +2348,7 @@ void opc4 (arm_t *c)
 	}
 
 	if (cop == 0) {
+		/* hack */
 		arm_set_clk (c, 4, 1);
 		return;
 	}
@@ -2371,7 +2372,7 @@ void opc5 (arm_t *c)
 	rn = arm_ir_rn (c->ir);
 	rd = arm_ir_rd (c->ir);
 
-	if (c->copr[cop] != NULL) {
+	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
 	}
 	else {
@@ -2379,6 +2380,7 @@ void opc5 (arm_t *c)
 	}
 
 	if (cop == 0) {
+		/* hack */
 		arm_set_clk (c, 4, 1);
 		return;
 	}
@@ -2404,7 +2406,7 @@ void ope0_00 (arm_t *c)
 	rn = arm_ir_rn (c->ir);
 	rm = arm_ir_rm (c->ir);
 
-	if (c->copr[cop] != NULL) {
+	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
 	}
 	else {
@@ -2433,7 +2435,7 @@ void ope0_01 (arm_t *c)
 	rn = arm_ir_rn (c->ir);
 	rm = arm_ir_rm (c->ir);
 
-	if (c->copr[cop] != NULL) {
+	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
 	}
 	else {
@@ -2441,6 +2443,7 @@ void ope0_01 (arm_t *c)
 	}
 
 	if (cop == 14) {
+		/* hack */
 		arm_set_clk (c, 4, 1);
 		return;
 	}
@@ -2465,7 +2468,7 @@ void ope0_11 (arm_t *c)
 	rn = arm_ir_rn (c->ir);
 	rm = arm_ir_rm (c->ir);
 
-	if (c->copr[cop] != NULL) {
+	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
 	}
 	else {
@@ -2473,6 +2476,7 @@ void ope0_11 (arm_t *c)
 	}
 
 	if (cop == 0) {
+		/* hack */
 		arm_set_clk (c, 4, 1);
 		return;
 	}

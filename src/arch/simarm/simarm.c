@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -49,10 +49,13 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 		model, sim->bigendian ? "big" : "little"
 	);
 
-	sim->cpu = arm_new (sim->bigendian);
+	sim->cpu = arm_new();
 	if (sim->cpu == NULL) {
 		return;
 	}
+
+	arm_set_flags (sim->cpu, ARM_FLAG_XSCALE, 1);
+	arm_set_flags (sim->cpu, ARM_FLAG_BIGENDIAN, sim->bigendian);
 
 	if (sim->bigendian) {
 		arm_set_mem_fct (sim->cpu, sim->mem,

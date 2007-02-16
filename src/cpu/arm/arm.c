@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -106,9 +106,11 @@ static unsigned arm_reg_map[32][8] = {
 	{ 1,  2,  3,  4,  5,  6,  7,  8 }   /* 1f sys */
 };
 
-void arm_init (arm_t *c, int be)
+void arm_init (arm_t *c)
 {
 	unsigned i;
+
+	c->flags = 0;
 
 	c->mem_ext = NULL;
 
@@ -134,18 +136,10 @@ void arm_init (arm_t *c, int be)
 
 	c->reg_map = 0;
 
-	for (i = 0; i < 16; i++) {
-		c->copr[i] = NULL;
-	}
-
-	p15_init (&c->copr15, be);
-	c->copr[15] = &c->copr15.copr;
-
 	c->exception_base = 0;
 
+	c->bigendian = 0;
 	c->privileged = 1;
-
-	c->bigendian = (be != 0);
 
 	c->irq = 0;
 	c->fiq = 0;
@@ -154,24 +148,32 @@ void arm_init (arm_t *c, int be)
 	c->delay = 0;
 	c->oprcnt = 0;
 	c->clkcnt = 0;
+
+	for (i = 0; i < 16; i++) {
+		c->copr[i] = NULL;
+	}
+
+	cp15_init (&c->copr15);
+	c->copr[15] = &c->copr15.copr;
 }
 
-arm_t *arm_new (int be)
+arm_t *arm_new (void)
 {
 	arm_t *c;
 
-	c = (arm_t *) malloc (sizeof (arm_t));
+	c = malloc (sizeof (arm_t));
 	if (c == NULL) {
 		return (NULL);
 	}
 
-	arm_init (c, be);
+	arm_init (c);
 
 	return (c);
 }
 
 void arm_free (arm_t *c)
 {
+	cp15_free (&c->copr15);
 }
 
 void arm_del (arm_t *c)
@@ -202,6 +204,21 @@ void arm_set_ram (arm_t *c, unsigned char *ram, unsigned long cnt)
 {
 	c->ram = ram;
 	c->ram_cnt = cnt;
+}
+
+unsigned arm_get_flags (const arm_t *c, unsigned flags)
+{
+	return (c->flags & flags);
+}
+
+void arm_set_flags (arm_t *c, unsigned flags, int val)
+{
+	if (val) {
+		c->flags |= flags;
+	}
+	else {
+		c->flags &= ~flags;
+	}
 }
 
 static
@@ -336,6 +353,29 @@ void arm_copr_free (arm_copr_t *p)
 {
 }
 
+int arm_copr_check (arm_t *c, unsigned i)
+{
+	if (i >= 16) {
+		return (1);
+	}
+
+	if (c->copr[i] == NULL) {
+		return (1);
+	}
+
+	if (c->flags & ARM_FLAG_CPAR) {
+		uint32_t cpar;
+
+		cpar = c->copr15.reg[15];
+
+		if ((i <= 13) && (cpar & (1UL << i))) {
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
 void arm_set_copr (arm_t *c, unsigned i, arm_copr_t *p)
 {
 	if (i < 16) {
@@ -398,6 +438,13 @@ void arm_reset (arm_t *c)
 
 	c->exception_base = 0;
 
+	/* Actually, endianness should be reset to little endian and then
+	 * initialized by the CPU itself. We don't do that because we
+	 * have a byte based memory system and therefore (contrary to
+	 * the specification) this setting *does* affect word loads and
+	 * stores. */
+	c->bigendian = ((c->flags & ARM_FLAG_BIGENDIAN) != 0);
+
 	c->privileged = 1;
 
 	c->irq = 0;
@@ -410,6 +457,8 @@ void arm_reset (arm_t *c)
 	c->clkcnt = 0;
 
 	arm_tbuf_flush (c);
+
+	cp15_reset (&c->copr15, c->bigendian);
 }
 
 void arm_exception (arm_t *c, uint32_t addr, uint32_t ret, unsigned mode)
