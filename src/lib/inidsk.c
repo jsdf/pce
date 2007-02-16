@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/inidsk.c                                           *
  * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -105,6 +105,14 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 
 	ini_get_sint16 (sct, "readonly", &ro, 0);
 
+	pce_log_tag (MSG_INF,
+		"DISK:", "drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
+		drive, type,
+		c, h, s, vc, vh, vs,
+		(ro ? "ro" : "rw"),
+		(fname != NULL) ? fname : "<>"
+	);
+
 	if (strcmp (type, "ram") == 0) {
 		dsk = dsk_ram_open (fname, c, h, s, ro);
 	}
@@ -156,6 +164,15 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		return (NULL);
 	}
 
+	if ((dsk->c != c) || (dsk->h != h) || (dsk->s != s)) {
+		pce_log_tag (MSG_INF,
+			"DISK:", "drive=%u chs=%u/%u/%u vchs=%u/%u/%u\n",
+			drive,
+			dsk->c, dsk->h, dsk->s,
+			dsk->visible_c, dsk->visible_h, dsk->visible_s
+		);
+	}
+
 	dsk_set_drive (dsk, drive);
 
 	val = ini_sct_find_val (sct, "cow");
@@ -167,6 +184,11 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 			dsk_del (dsk);
 			return (NULL);
 		}
+
+		pce_log_tag (MSG_INF,
+			"DISK:", "drive=%u cow=%s rw\n",
+			drive, cname
+		);
 
 		cow = dsk_cow_new (dsk, cowname);
 
@@ -192,15 +214,6 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	vs = (vs == 0) ? dsk->s : vs;
 
 	dsk_set_visible_chs (dsk, vc, vh, vs);
-
-	pce_log (MSG_INF,
-		"DISK:     drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
-		drive, type,
-		dsk->c, dsk->h, dsk->s,
-		dsk->visible_c, dsk->visible_h, dsk->visible_s,
-		(ro ? "ro" : "rw"),
-		(fname != NULL) ? fname : "<>"
-	);
 
 	return (dsk);
 }

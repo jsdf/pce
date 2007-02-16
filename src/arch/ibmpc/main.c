@@ -78,7 +78,7 @@ void prt_version (void)
 	fputs (
 		"pce ibmpc version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 

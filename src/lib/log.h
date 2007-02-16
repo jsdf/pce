@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/log.h                                              *
  * Created:       2003-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -46,6 +45,7 @@ void pce_log_set_level (FILE *fp, unsigned level);
 unsigned pce_log_get_level (FILE *fp);
 
 void pce_log (unsigned level, const char *msg, ...);
+void pce_log_tag (unsigned level, const char *tag, const char *msg, ...);
 
 
 #endif

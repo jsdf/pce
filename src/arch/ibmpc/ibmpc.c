@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -56,7 +56,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint32 (sct, "base", &base, 0);
 	ini_get_uint32 (sct, "size", &size, 65536);
 
-	pce_log (MSG_INF, "NVRAM:\tbase=0x%08lx size=%lu file=%s\n",
+	pce_log_tag (MSG_INF, "NVRAM:", "addr=0x%08lx size=%lu file=%s\n",
 		base, size, (fname == NULL) ? "<>" : fname
 	);
 
@@ -85,13 +85,13 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 
 	sct = ini_sct_find_sct (ini, "cpu");
 
-	model = ini_get_str_def (sct, "model", (par_cpu != NULL) ? par_cpu : "8086");
+	ini_get_string (sct, "model", &model, (par_cpu != NULL) ? par_cpu : "8086");
 
 	if (par_cpu != NULL) {
 		model = par_cpu;
 	}
 
-	pce_log (MSG_INF, "CPU:\tmodel=%s\n", model);
+	pce_log_tag (MSG_INF, "CPU:", "model=%s\n", model);
 
 	pc->cpu = e86_new ();
 	pc->cpu_model = PCE_CPU_8086;
@@ -147,29 +147,69 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
-void pc_setup_dma (ibmpc_t *pc)
+void pc_setup_dma (ibmpc_t *pc, ini_sct_t *ini)
 {
-	mem_blk_t *blk;
+	unsigned long addr;
+	ini_sct_t     *sct;
+	mem_blk_t     *blk;
 
-	pce_log (MSG_INF, "DMAC:\taddr=0x%08x size=0x%04x\n", 0x00, 16);
+	sct = ini_sct_find_sct (ini, "dmac");
+
+	ini_get_uint32 (sct, "address", &addr, 0);
+
+	pce_log_tag (MSG_INF, "DMAC:", "addr=0x%08x size=0x%04x\n", addr, 16);
 
 	e8237_init (&pc->dma);
 
-	blk = mem_blk_new (0x00, 16, 0);
-	blk->ext = &pc->dma;
-	blk->set_uint8 = (mem_set_uint8_f) &e8237_set_uint8;
-	blk->get_uint8 = (mem_get_uint8_f) &e8237_get_uint8;
-	blk->set_uint16 = (mem_set_uint16_f) &e8237_set_uint16;
-	blk->get_uint16 = (mem_get_uint16_f) &e8237_get_uint16;
-	blk->set_uint32 = (mem_set_uint32_f) &e8237_set_uint32;
-	blk->get_uint32 = (mem_get_uint32_f) &e8237_get_uint32;
+	blk = mem_blk_new (addr, 16, 0);
+	if (blk == NULL) {
+		pce_log (MSG_ERR, "*** allocating DMAC failed\n");
+		return;
+	}
+
+	mem_blk_set_fct (blk, &pc->dma,
+		e8237_get_uint8, e8237_get_uint16, e8237_get_uint32,
+		e8237_set_uint8, e8237_set_uint16, e8237_set_uint32
+	);
+
 	mem_add_blk (pc->prt, blk, 1);
 
 	/* This is a hack. HLDA should be connected to the CPU core. Instead,
-		 this will keep it permanently at high. */
+	 * this will keep it permanently at high. */
 	e8237_set_hlda (&pc->dma, 1);
 }
 
+static
+void pc_setup_pic (ibmpc_t *pc, ini_sct_t *ini)
+{
+	ini_sct_t     *sct;
+	mem_blk_t     *blk;
+	unsigned long addr;
+
+	sct = ini_sct_find_sct (ini, "pic");
+
+	ini_get_uint32 (sct, "address", &addr, 0x0020);
+
+	pce_log_tag (MSG_INF, "PIC:", "addr=0x%08x size=0x%04x\n", addr, 2);
+
+	e8259_init (&pc->pic);
+
+	blk = mem_blk_new (addr, 2, 0);
+	if (blk == NULL) {
+		return;
+	}
+
+	mem_blk_set_fct (blk, &pc->pic,
+		e8259_get_uint8, e8259_get_uint16, e8259_get_uint32,
+		e8259_set_uint8, e8259_set_uint16, e8259_set_uint32
+	);
+
+	mem_add_blk (pc->prt, blk, 1);
+
+	e8259_set_int_fct (&pc->pic, pc->cpu, e86_irq);
+
+	e86_set_inta_fct (pc->cpu, &pc->pic, e8259_inta);
+}
 
 static
 void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
@@ -181,42 +221,48 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 
 	sct = ini_sct_find_sct (ini, "pit");
 
-	addr = ini_get_lng_def (sct, "address", 0x40);
-	rt = (ini_get_lng_def (sct, "realtime", 0) != 0);
+	ini_get_uint32 (sct, "address", &addr, 0x0040);
+	ini_get_sint16 (sct, "realtime", &rt, 0);
 
-	pce_log (MSG_INF, "PIT:\taddr=0x%08lx size=0x%04x realtime=%d\n",
-		addr, 4, rt
+	pce_log_tag (MSG_INF, "PIT:", "addr=0x%08lx size=0x%04x realtime=%d\n",
+		addr, 4, (rt != 0)
 	);
 
 	e8253_init (&pc->pit);
 
 	blk = mem_blk_new (addr, 4, 0);
-	blk->ext = &pc->pit;
-	blk->set_uint8 = (mem_set_uint8_f) &e8253_set_uint8;
-	blk->get_uint8 = (mem_get_uint8_f) &e8253_get_uint8;
-	blk->set_uint16 = (mem_set_uint16_f) &e8253_set_uint16;
-	blk->get_uint16 = (mem_get_uint16_f) &e8253_get_uint16;
-	blk->set_uint32 = (mem_set_uint32_f) &e8253_set_uint32;
-	blk->get_uint32 = (mem_get_uint32_f) &e8253_get_uint32;
+	if (blk == NULL) {
+		return;
+	}
+
+	mem_blk_set_fct (blk, &pc->pit,
+		e8253_get_uint8, e8253_get_uint16, e8253_get_uint32,
+		e8253_set_uint8, e8253_set_uint16, e8253_set_uint32
+	);
+
 	mem_add_blk (pc->prt, blk, 1);
 
 	e8253_set_gate (&pc->pit, 0, 1);
 	e8253_set_gate (&pc->pit, 1, 1);
 	e8253_set_gate (&pc->pit, 2, 1);
 
-	e8253_set_out_f (&pc->pit, 0, (e8253_out_f) &e8259_set_irq0, &pc->pic);
-	e8253_set_out_f (&pc->pit, 1, (e8253_out_f) &e8237_set_dreq0, &pc->dma);
+	e8253_set_out_fct (&pc->pit, 0, &pc->pic, e8259_set_irq0);
+	e8253_set_out_fct (&pc->pit, 1, &pc->dma, e8237_set_dreq0);
 
-	pc->pit_real = rt;
+	pc->pit_real = (rt != 0);
 	pc->pit_clk = 0;
 	pc->pit_clkdiv = 0;
 }
 
 static
-void pc_setup_ppi (ibmpc_t *pc)
+void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 {
-	mem_blk_t *blk;
-	unsigned  ram;
+	ini_sct_t     *sct;
+	mem_blk_t     *blk;
+	unsigned long addr;
+	unsigned      ram;
+
+	sct = ini_sct_find_sct (ini, "ppi");
 
 	if (pc->ram != NULL) {
 		ram = mem_blk_get_size (pc->ram) / 32;
@@ -225,16 +271,18 @@ void pc_setup_ppi (ibmpc_t *pc)
 		ram = 1;
 	}
 
-	pce_log (MSG_INF, "PPI:\taddr=0x%08x size=0x%04x\n", 0x60, 4);
+	ini_get_uint32 (sct, "address", &addr, 0x0060);
+
+	pce_log_tag (MSG_INF, "PPI:", "addr=0x%08x size=0x%04x\n", addr, 4);
 
 	e8255_init (&pc->ppi);
 
 	pc->ppi.port[0].read_ext = pc;
-	pc->ppi.port[0].read = (get_uint8_f) &pc_ppi_get_port_a;
+	pc->ppi.port[0].read = (void *) pc_ppi_get_port_a;
 	pc->ppi.port[1].write_ext = pc;
-	pc->ppi.port[1].write = (set_uint8_f) &pc_ppi_set_port_b;
+	pc->ppi.port[1].write = (void *) pc_ppi_set_port_b;
 	pc->ppi.port[2].read_ext = pc;
-	pc->ppi.port[2].read = (get_uint8_f) &pc_ppi_get_port_c;
+	pc->ppi.port[2].read = (void *) pc_ppi_get_port_c;
 
 	pc->ppi_port_a[0] = 0x30 | 0x0c;
 	pc->ppi_port_a[1] = 0;
@@ -242,39 +290,17 @@ void pc_setup_ppi (ibmpc_t *pc)
 	pc->ppi_port_c[0] = (ram & 0x0f);
 	pc->ppi_port_c[1] = (ram >> 4) & 0x01;
 
-	blk = mem_blk_new (0x60, 4, 0);
-	blk->ext = &pc->ppi;
-	blk->set_uint8 = (mem_set_uint8_f) &e8255_set_uint8;
-	blk->set_uint16 = (mem_set_uint16_f) &e8255_set_uint16;
-	blk->set_uint32 = (mem_set_uint32_f) &e8255_set_uint32;
-	blk->get_uint8 = (mem_get_uint8_f) &e8255_get_uint8;
-	blk->get_uint16 = (mem_get_uint16_f) &e8255_get_uint16;
-	blk->get_uint32 = (mem_get_uint32_f) &e8255_get_uint32;
+	blk = mem_blk_new (addr, 4, 0);
+	if (blk == NULL) {
+		return;
+	}
+
+	mem_blk_set_fct (blk, &pc->ppi,
+		e8255_get_uint8, e8255_get_uint16, e8255_get_uint32,
+		e8255_set_uint8, e8255_set_uint16, e8255_set_uint32
+	);
+
 	mem_add_blk (pc->prt, blk, 1);
-}
-
-static
-void pc_setup_pic (ibmpc_t *pc)
-{
-	mem_blk_t *blk;
-
-	pce_log (MSG_INF, "PIC:\taddr=0x%08x size=0x%04x\n", 0x20, 2);
-
-	e8259_init (&pc->pic);
-
-	blk = mem_blk_new (0x20, 2, 0);
-	blk->ext = &pc->pic;
-	blk->set_uint8 = (mem_set_uint8_f) &e8259_set_uint8;
-	blk->get_uint8 = (mem_get_uint8_f) &e8259_get_uint8;
-	blk->set_uint16 = (mem_set_uint16_f) &e8259_set_uint16;
-	blk->get_uint16 = (mem_get_uint16_f) &e8259_get_uint16;
-	blk->set_uint32 = (mem_set_uint32_f) &e8259_set_uint32;
-	blk->get_uint32 = (mem_get_uint32_f) &e8259_get_uint32;
-	mem_add_blk (pc->prt, blk, 1);
-
-	e8259_set_int_f (&pc->pic, pc->cpu, (e8259_int_f) &e86_irq);
-
-	e86_set_inta_fct (pc->cpu, &pc->pic, e8259_inta);
 }
 
 static
@@ -286,12 +312,12 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 	pc->trm = NULL;
 
 	sct = ini_sct_find_sct (ini, "terminal");
-	driver = ini_get_str_def (sct, "driver", "null");
+	ini_get_string (sct, "driver", &driver, "null");
 
 	if (par_terminal != NULL) {
 		while ((sct != NULL) && (strcmp (par_terminal, driver) != 0)) {
 			sct = ini_sct_find_next (sct, "terminal");
-			driver = ini_get_str_def (sct, "driver", "null");
+			ini_get_string (sct, "driver", &driver, "null");
 		}
 
 		if (sct == NULL) {
@@ -299,7 +325,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		}
 	}
 
-	pce_log (MSG_INF, "term:\tdriver=%s\n", driver);
+	pce_log_tag (MSG_INF, "TERM:", "driver=%s\n", driver);
 
 	if (strcmp (driver, "x11") == 0) {
 #ifdef PCE_X11_USE
@@ -444,12 +470,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 	pc->video = NULL;
 
 	sct = ini_sct_find_sct (ini, "video");
-	dev = ini_get_str_def (sct, "device", "cga");
+	ini_get_string (sct, "device", &dev, "cga");
 
 	if (par_video != NULL) {
 		while ((sct != NULL) && (strcmp (par_video, dev) != 0)) {
 			sct = ini_sct_find_next (sct, "video");
-			dev = ini_get_str_def (sct, "device", "cga");
+			ini_get_string (sct, "device", &dev, "cga");
 		}
 
 		if (sct == NULL) {
@@ -457,7 +483,7 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 		}
 	}
 
-	pce_log (MSG_INF, "video:\tdevice=%s\n", dev);
+	pce_log_tag (MSG_INF, "VIDEO:", "device=%s\n", dev);
 
 	if (strcmp (dev, "vga") == 0) {
 		pc_setup_vga (pc, sct);
@@ -526,7 +552,7 @@ static
 void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
-	unsigned long base;
+	unsigned long addr;
 	unsigned      irq;
 
 	sct = ini_sct_find_sct (ini, "mouse");
@@ -534,12 +560,14 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	base = ini_get_lng_def (sct, "io", 0x03f8);
-	irq = ini_get_lng_def (sct, "irq", 4);
+	if (ini_get_uint32 (sct, "address", &addr, 0x03f8)) {
+		ini_get_uint32 (sct, "io", &addr, 0x03f8);
+	}
+	ini_get_uint16 (sct, "irq", &irq, 4);
 
-	pce_log (MSG_INF, "mouse:\tio=0x%04lx irq=%u\n", base, irq);
+	pce_log_tag (MSG_INF, "MOUSE:", "addr=0x%04lx irq=%u\n", addr, irq);
 
-	pc->mse = mse_new (base, sct);
+	pc->mse = mse_new (addr, sct);
 
 	e8250_set_irq_f (&pc->mse->uart, e8259_get_irq_f (&pc->pic, irq), &pc->pic);
 
@@ -553,7 +581,7 @@ static
 void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 {
 	unsigned        i;
-	unsigned long   base;
+	unsigned long   addr;
 	const char      *fname;
 	ini_sct_t       *sct;
 	static unsigned defbase[4] = { 0x378, 0x278, 0x3bc, 0x2bc };
@@ -566,23 +594,30 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 	sct = ini_sct_find_sct (ini, "parport");
 
 	while ((i < 4) && (sct != NULL)) {
-		ini_get_uint32 (sct, "io", &base, defbase[i]);
+		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
+			ini_get_uint32 (sct, "io", &addr, defbase[i]);
+		}
 		ini_get_string (sct, "file", &fname, NULL);
 
-		pce_log (MSG_INF, "LPT%u:\tio=0x%04lx file=%s\n",
-			i + 1, base, (fname == NULL) ? "<none>" : fname
+		pce_log_tag (MSG_INF,
+			"PARPORT:", "LPT%u addr=0x%04lx file=%s\n",
+			i + 1, addr, (fname == NULL) ? "<none>" : fname
 		);
 
-		pc->parport[i] = parport_new (base);
+		pc->parport[i] = parport_new (addr);
 		if (pc->parport[i] == NULL) {
-			pce_log (MSG_ERR, "*** parport setup failed [%04X -> %s]\n",
-				base, (fname == NULL) ? "<none>" : fname
+			pce_log (MSG_ERR,
+				"*** parport setup failed [%04X -> %s]\n",
+				addr, (fname == NULL) ? "<none>" : fname
 			);
 		}
 		else {
 			if (fname != NULL) {
 				if (parport_set_fname (pc->parport[i], fname)) {
-					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+					pce_log (MSG_ERR,
+						"*** can't open file (%s)\n",
+						fname
+					);
 				}
 			}
 
@@ -599,7 +634,7 @@ static
 void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 {
 	unsigned      i;
-	unsigned long base;
+	unsigned long addr;
 	unsigned      irq;
 	const char    *fname, *dname;
 	const char    *chip;
@@ -616,22 +651,25 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 	sct = ini_sct_find_sct (ini, "serial");
 
 	while ((i < 4) && (sct != NULL)) {
-		ini_get_uint32 (sct, "io", &base, defbase[i]);
+		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
+			ini_get_uint32 (sct, "io", &addr, defbase[i]);
+		}
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_string (sct, "file", &fname, NULL);
 		ini_get_string (sct, "device", &dname, NULL);
 
-		pce_log (MSG_INF, "COM%u:\tio=0x%04lx irq=%u uart=%s file=%s dev=%s\n",
-			i + 1, base, irq, chip,
+		pce_log_tag (MSG_INF,
+			"SERPORT:", "COM%u addr=0x%04lx irq=%u uart=%s file=%s dev=%s\n",
+			i + 1, addr, irq, chip,
 			(fname == NULL) ? "<none>" : fname,
 			(dname == NULL) ? "<none>" : dname
 		);
 
-		pc->serport[i] = ser_new (base, 0);
+		pc->serport[i] = ser_new (addr, 0);
 		if (pc->serport[i] == NULL) {
 			pce_log (MSG_ERR, "*** serial port setup failed [%04X/%u -> %s]\n",
-				base, irq, (fname == NULL) ? "<none>" : fname
+				addr, irq, (fname == NULL) ? "<none>" : fname
 			);
 		}
 		else {
@@ -730,13 +768,9 @@ void pc_load_mem (ibmpc_t *pc, ini_sct_t *ini)
 	while (sct != NULL) {
 		ini_get_string (sct, "format", &fmt, "binary");
 		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_uint32 (sct, "base", &addr, 0);
+		ini_get_uint32 (sct, "address", &addr, 0);
 
 		if (fname != NULL) {
-			pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
-				fmt, (fname != NULL) ? fname : "<none>"
-			);
-
 			if (pce_load_mem (pc->mem, fname, fmt, addr)) {
 				pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
 			}
@@ -751,7 +785,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	unsigned  i;
 	ibmpc_t   *pc;
 
-	pc = (ibmpc_t *) malloc (sizeof (ibmpc_t));
+	pc = malloc (sizeof (ibmpc_t));
 	if (pc == NULL) {
 		return (NULL);
 	}
@@ -789,10 +823,10 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc_setup_nvram (pc, ini);
 	pc_setup_cpu (pc, ini);
-	pc_setup_dma (pc);
-	pc_setup_pic (pc);
+	pc_setup_dma (pc, ini);
+	pc_setup_pic (pc, ini);
 	pc_setup_pit (pc, ini);
-	pc_setup_ppi (pc);
+	pc_setup_ppi (pc, ini);
 
 	pc_setup_terminal (pc, ini);
 

@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/video/ega.c                                    *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -130,7 +129,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 	ega->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
 	ega->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
 
-	pce_log (MSG_INF, "video:\tEGA io=0x03b0 membase=0xa000 memsize=262144\n");
+	pce_log_tag (MSG_INF, "VIDEO:", "EGA addr=0x03b0 membase=0xa000 memsize=262144\n");
 
 	ega->mem = mem_blk_new (0xa0000, 128UL * 1024, 0);
 	ega->mem->ext = ega;

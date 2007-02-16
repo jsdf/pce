@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/load.c                                             *
  * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,9 +26,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ihex.h"
-#include "srec.h"
-#include "load.h"
+#include <lib/log.h>
+#include <lib/ihex.h>
+#include <lib/srec.h>
+#include <lib/load.h>
 
 
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
@@ -53,6 +53,10 @@ int pce_load_mem_ihex (memory_t *mem, const char *fname)
 	int  r;
 	FILE *fp;
 
+	pce_log_tag (MSG_INF, "Load:", "file=%s format=ihex\n",
+		fname
+	);
+
 	fp = fopen (fname, "rb");
 	if (fp == NULL) {
 		return (1);
@@ -70,6 +74,10 @@ int pce_load_mem_srec (memory_t *mem, const char *fname)
 	int  r;
 	FILE *fp;
 
+	pce_log_tag (MSG_INF, "Load:", "file=%s format=srec\n",
+		fname
+	);
+
 	fp = fopen (fname, "rb");
 	if (fp == NULL) {
 		return (1);
@@ -86,6 +94,10 @@ int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
 {
 	int  c;
 	FILE *fp;
+
+	pce_log_tag (MSG_INF, "Load:", "file=%s format=binary addr=0x%08lx\n",
+		fname, base
+	);
 
 	fp = fopen (fname, "rb");
 	if (fp == NULL) {
@@ -106,6 +118,10 @@ int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
 
 int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr)
 {
+	if (fname == NULL) {
+		return (1);
+	}
+
 	if (strcmp (fmt, "binary") == 0) {
 		return (pce_load_mem_bin (mem, fname, addr));
 	}

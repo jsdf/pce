@@ -274,7 +274,7 @@ section pc {
 	}
 
 	section serial {
-		io = 0x3f8
+		address = 0x3f8
 		irq = 4
 
 		# Valid values for uart are: "8250", "16450"
@@ -289,7 +289,7 @@ section pc {
 	}
 
 	section mouse {
-		io = 0x2f8
+		address = 0x2f8
 		irq = 3
 		speed_x_mul = 3
 		speed_x_div = 2
@@ -298,7 +298,7 @@ section pc {
 	}
 
 	section parport {
-		io = 0x378
+		address = 0x378
 		file = "parport.out"
 	}
 

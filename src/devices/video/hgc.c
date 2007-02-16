@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/hgc.c                                          *
+ * File name:     src/devices/video/hgc.c                                    *
  * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -125,7 +124,8 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 
 	hgc_get_colors (hgc, sct);
 
-	pce_log (MSG_INF, "video:\tHGC io=0x%04x membase=0x%05x memsize=0x%05x\n",
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "HGC addr=0x%04x membase=0x%05x memsize=0x%05x\n",
 		iobase, membase, memsize
 	);
 
@@ -617,15 +617,15 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 		hgc_set_colors (hgc, newmode);
 
 		switch (newmode) {
-			case 0:
-				trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
-				trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
-				break;
+		case 0:
+			trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
+			trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
+			break;
 
-			case 1:
-				trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
-				trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
-				break;
+		case 1:
+			trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
+			trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
+			break;
 		}
 	}
 

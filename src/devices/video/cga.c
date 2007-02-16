@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/video/cga.c                                    *
  * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -98,7 +97,8 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 		memsize = 16384;
 	}
 
-	pce_log (MSG_INF, "video:\tCGA io=0x%04lx membase=0x%05lx memsize=0x%05lx\n",
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "CGA addr=0x%04lx membase=0x%05lx memsize=0x%05lx\n",
 		iobase, membase, memsize
 	);
 

@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/82xx/e8253.c                                   *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-07-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -403,7 +402,7 @@ void e8253_del (e8253_t *pit)
 	}
 }
 
-void e8253_set_out_f (e8253_t *pit, unsigned cntr, e8253_out_f fct, void *ext)
+void e8253_set_out_fct (e8253_t *pit, unsigned cntr, void *ext, void *fct)
 {
 	if (cntr <= 2) {
 		pit->counter[cntr].out_ext = ext;

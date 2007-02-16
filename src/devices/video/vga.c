@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/vga.c                                          *
+ * File name:     src/devices/video/vga.c                                    *
  * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-11-26 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -192,7 +191,8 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 	vga->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
 	vga->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
 
-	pce_log (MSG_INF, "video:\tVGA io=0x03b0 membase=0xa000 memsize=262144\n");
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "VGA addr=0x03b0 membase=0xa000 memsize=262144\n");
 
 	vga->mem = mem_blk_new (0xa0000, 128UL * 1024, 0);
 	vga->mem->ext = vga;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/iniram.c                                           *
  * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -55,7 +55,7 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
-		pce_log (MSG_INF, "RAM:      base=0x%08lx size=%lu file=%s\n",
+		pce_log_tag (MSG_INF, "RAM:", "addr=0x%08lx size=%lu file=%s\n",
 			base, size, (fname == NULL) ? "<none>" : fname
 		);
 
@@ -109,7 +109,7 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
-		pce_log (MSG_INF, "ROM:      base=0x%08lx size=%lu file=%s\n",
+		pce_log_tag (MSG_INF, "ROM:", "addr=0x%08lx size=%lu file=%s\n",
 			base, size, (fname != NULL) ? fname : "<none>"
 		);
 

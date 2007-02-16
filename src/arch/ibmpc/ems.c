@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ems.c                                       *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -96,7 +95,7 @@ ems_t *ems_new (ini_sct_t *sct)
 	ems->mem->get_uint16 = (geta_uint16_f) &ems_get_uint16;
 	ems->mem->set_uint16 = (seta_uint16_f) &ems_set_uint16;
 
-	pce_log (MSG_INF, "EMS:\tsize=%luK (%lu pages) segment=0x%04x\n",
+	pce_log_tag (MSG_INF, "EMS:", "size=%luK (%lu pages) segment=0x%04x\n",
 		16UL * pages, ems->pages_max, segm
 	);
 

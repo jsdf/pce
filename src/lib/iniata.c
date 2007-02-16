@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/iniata.c                                           *
  * Created:       2006-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -47,8 +47,8 @@ int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct)
 		ini_get_uint16 (sct, "multi_count_max", &multi, 0);
 		ini_get_string (sct, "model", &model, "PCEDISK");
 
-		pce_log (MSG_INF,
-			"ATA-DEV:  device=%u multi=%u model=%s drive=%u\n",
+		pce_log_tag (MSG_INF,
+			"ATA-DEV:", "device=%u multi=%u model=%s drive=%u\n",
 			dev, multi, model, drv
 		);
 
@@ -83,7 +83,7 @@ int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct)
 
 		chn = pci_ata_get_chn (pciata, idx);
 
-		pce_log (MSG_INF, "PCI-ATA:  channel=%u\n", idx);
+		pce_log_tag (MSG_INF, "PCI-ATA:", "channel=%u\n", idx);
 
 		if (chn == NULL) {
 			pce_log (MSG_ERR, "*** no such channel (%u)\n", idx);

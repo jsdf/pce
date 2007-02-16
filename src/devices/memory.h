@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/memory.h                                       *
  * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -129,6 +129,9 @@ void mem_blk_fix_fct (mem_blk_t *blk);
 
 void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32);
 void mem_blk_set_fset (mem_blk_t *blk, void *ext, void *s8, void *s16, void *s32);
+void mem_blk_set_fct (mem_blk_t *blk, void *ext,
+	void *g8, void *g16, void *g32, void *s8, void *s16, void *s32
+);
 void mem_blk_set_ext (mem_blk_t *blk, void *ext);
 
 /*!***************************************************************************

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8259.h                                        *
+ * File name:     src/chipset/82xx/e8259.h                                   *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -60,7 +59,6 @@
 struct e8259_s;
 
 
-typedef void (*e8259_int_f) (void *ext, unsigned char val);
 typedef void (*e8259_irq_f) (struct e8259_s *pic, unsigned char val);
 
 
@@ -103,8 +101,8 @@ typedef struct e8259_s {
 
 	/* the interrupt function */
 	void          *intr_ext;
+	void          (*intr) (void *ext, unsigned char val);
 	unsigned char intr_val;
-	e8259_int_f   intr;
 } e8259_t;
 
 
@@ -148,7 +146,7 @@ e8259_irq_f e8259_get_irq_f (e8259_t *pic, unsigned irq);
  * @param ext The transparent parameter for the interrupt function
  * @param fct The interrupt function
  *****************************************************************************/
-void e8259_set_int_f (e8259_t *pic, void *ext, e8259_int_f fct);
+void e8259_set_int_fct (e8259_t *pic, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Set an IRQ signal

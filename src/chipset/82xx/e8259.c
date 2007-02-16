@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8259.c                                        *
+ * File name:     src/chipset/82xx/e8259.c                                   *
  * Created:       2003-04-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -129,7 +128,7 @@ e8259_irq_f e8259_get_irq_f (e8259_t *pic, unsigned irq)
 	return (NULL);
 }
 
-void e8259_set_int_f (e8259_t *pic, void *ext, e8259_int_f fct)
+void e8259_set_int_fct (e8259_t *pic, void *ext, void *fct)
 {
 	pic->intr_ext = ext;
 	pic->intr = fct;

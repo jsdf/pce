@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/xms.c                                       *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,13 +29,13 @@ xms_emb_t *emb_new (unsigned long size)
 {
 	xms_emb_t *emb;
 
-	emb = (xms_emb_t *) malloc (sizeof (xms_emb_t));
+	emb = malloc (sizeof (xms_emb_t));
 	if (emb == NULL) {
 		return (NULL);
 	}
 
 	if (size > 0) {
-		emb->data = (unsigned char *) malloc (size);
+		emb->data = malloc (size);
 		if (emb->data == NULL) {
 			free (emb);
 			return (NULL);
@@ -68,14 +67,14 @@ xms_t *xms_new (ini_sct_t *sct)
 	int           hma;
 	xms_t         *xms;
 
-	emb_size = 1024UL * ini_get_lng_def (sct, "xms_size", 0);
-
+	ini_get_uint32 (sct, "xms_size", &emb_size, 0);
+	emb_size *= 1024UL;
 	if (emb_size >= 64UL * 1024UL * 1024UL) {
 		emb_size = 64UL * 1024UL * 1024UL - 1;
 	}
 
-	umb_size = ini_get_lng_def (sct, "umb_size", 0);
-	umb_segm = ini_get_lng_def (sct, "umb_segm", 0xd000L);
+	ini_get_uint32 (sct, "umb_size", &umb_size, 0);
+	ini_get_uint32 (sct, "umb_segm", &umb_segm, 0xd000);
 
 	hma = ini_get_lng_def (sct, "hma", 0);
 
@@ -105,7 +104,7 @@ xms_t *xms_new (ini_sct_t *sct)
 	xms->umb_max = umb_size;
 
 	xms->umb_cnt = 1;
-	xms->umb = (xms_umb_t *) malloc (sizeof (xms_umb_t));
+	xms->umb = malloc (sizeof (xms_umb_t));
 	xms->umb[0].segm = umb_segm;
 	xms->umb[0].size = umb_size;
 	xms->umb[0].alloc = 0;
@@ -119,7 +118,7 @@ xms_t *xms_new (ini_sct_t *sct)
 
 	xms->hma_alloc = 0;
 
-	pce_log (MSG_INF, "XMS:\tEMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x HMA=%d\n",
+	pce_log_tag (MSG_INF, "XMS:", "EMB=%lu[%luM] UMB=%lu[%luK] at 0x%04x HMA=%d\n",
 		emb_size, emb_size / (1024 * 1024),
 		16UL * umb_size, umb_size / 64, (unsigned) umb_segm,
 		(hma != 0)
@@ -242,7 +241,7 @@ int umb_split (xms_t *xms, unsigned idx, unsigned short size)
 	}
 
 	xms->umb_cnt += 1;
-	xms->umb = (xms_umb_t *) realloc (xms->umb, xms->umb_cnt * sizeof (xms_umb_t));
+	xms->umb = realloc (xms->umb, xms->umb_cnt * sizeof (xms_umb_t));
 
 	for (j = xms->umb_cnt - 1; j > idx; j--) {
 		xms->umb[j] = xms->umb[j - 1];
@@ -848,82 +847,84 @@ void xms_handler (xms_t *xms, e8086_t *cpu)
 	}
 
 	switch (e86_get_ah (cpu)) {
-		case 0x00:
-			xms_00 (xms, cpu);
-			break;
+	case 0x00:
+		xms_00 (xms, cpu);
+		break;
 
-		case 0x01:
-			xms_01 (xms, cpu);
-			break;
+	case 0x01:
+		xms_01 (xms, cpu);
+		break;
 
-		case 0x02:
-			xms_02 (xms, cpu);
-			break;
+	case 0x02:
+		xms_02 (xms, cpu);
+		break;
 
-		case 0x03:
-			xms_03 (xms, cpu);
-			break;
+	case 0x03:
+		xms_03 (xms, cpu);
+		break;
 
-		case 0x04:
-			xms_04 (xms, cpu);
-			break;
+	case 0x04:
+		xms_04 (xms, cpu);
+		break;
 
-		case 0x05:
-			xms_05 (xms, cpu);
-			break;
+	case 0x05:
+		xms_05 (xms, cpu);
+		break;
 
-		case 0x06:
-			xms_06 (xms, cpu);
-			break;
+	case 0x06:
+		xms_06 (xms, cpu);
+		break;
 
-		case 0x07:
-			xms_07 (xms, cpu);
-			break;
+	case 0x07:
+		xms_07 (xms, cpu);
+		break;
 
-		case 0x08:
-			xms_08 (xms, cpu);
-			break;
+	case 0x08:
+		xms_08 (xms, cpu);
+		break;
 
-		case 0x09:
-			xms_09 (xms, cpu);
-			break;
+	case 0x09:
+		xms_09 (xms, cpu);
+		break;
 
-		case 0x0a:
-			xms_0a (xms, cpu);
-			break;
+	case 0x0a:
+		xms_0a (xms, cpu);
+		break;
 
-		case 0x0b:
-			xms_0b (xms, cpu);
-			break;
+	case 0x0b:
+		xms_0b (xms, cpu);
+		break;
 
-		case 0x0c:
-			xms_0c (xms, cpu);
-			break;
+	case 0x0c:
+		xms_0c (xms, cpu);
+		break;
 
-		case 0x0d:
-			xms_0d (xms, cpu);
-			break;
+	case 0x0d:
+		xms_0d (xms, cpu);
+		break;
 
-		case 0x0e:
-			xms_0e (xms, cpu);
-			break;
+	case 0x0e:
+		xms_0e (xms, cpu);
+		break;
 
-		case 0x0f:
-			xms_0f (xms, cpu);
-			break;
+	case 0x0f:
+		xms_0f (xms, cpu);
+		break;
 
-		case 0x10:
-			xms_10 (xms, cpu);
-			break;
+	case 0x10:
+		xms_10 (xms, cpu);
+		break;
 
-		case 0x11:
-			xms_11 (xms, cpu);
-			break;
+	case 0x11:
+		xms_11 (xms, cpu);
+		break;
 
-		default:
-			pce_log (MSG_DEB, "xms: unknown function (%x)\n", e86_get_ah (cpu));
-			e86_set_ax (cpu, 0x0000);
-			e86_set_bl (cpu, 0x80);
-			break;
+	default:
+		pce_log (MSG_DEB, "xms: unknown function (%x)\n",
+			e86_get_ah (cpu)
+		);
+		e86_set_ax (cpu, 0x0000);
+		e86_set_bl (cpu, 0x80);
+		break;
 	}
 }

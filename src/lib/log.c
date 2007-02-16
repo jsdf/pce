@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/log.c                                              *
  * Created:       2003-02-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -147,6 +146,26 @@ void pce_log (unsigned level, const char *msg, ...)
 	for (i = 0; i < log_cnt; i++) {
 		if (level <= log[i].level) {
 			va_start (va, msg);
+			vfprintf (log[i].fp, msg, va);
+			va_end (va);
+			fflush (log[i].fp);
+		}
+	}
+}
+
+void pce_log_tag (unsigned level, const char *tag, const char *msg, ...)
+{
+	unsigned i;
+	va_list va;
+
+	if (tag == NULL) {
+		tag = "";
+	}
+
+	for (i = 0; i < log_cnt; i++) {
+		if (level <= log[i].level) {
+			va_start (va, msg);
+			fprintf (log[i].fp, "%-9s ", tag);
 			vfprintf (log[i].fp, msg, va);
 			va_end (va);
 			fflush (log[i].fp);

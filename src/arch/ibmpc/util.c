@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/util.c                                      *
  * Created:       2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -93,7 +92,9 @@ ini_sct_t *pce_load_config (const char *fname)
 	if (fname != NULL) {
 		ini = ini_read (fname);
 		if (ini != NULL) {
-			pce_log (MSG_INF, "pce:\tusing config file '%s'\n", fname);
+			pce_log_tag (MSG_INF,
+				"PCE:", "using config file \"%s\"\n", fname
+			);
 			return (ini);
 		}
 	}
@@ -103,7 +104,9 @@ ini_sct_t *pce_load_config (const char *fname)
 		sprintf (buf, "%s/.pce.cfg", home);
 		ini = ini_read (buf);
 		if (ini != NULL) {
-			pce_log (MSG_INF, "pce:\tusing config file '%s'\n", buf);
+			pce_log_tag (MSG_INF,
+				"PCE:", "using config file \"%s\"\n", buf
+			);
 			return (ini);
 		}
 	}

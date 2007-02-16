@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8253.h                                        *
+ * File name:     src/chipset/82xx/e8253.h                                   *
  * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,9 +27,6 @@
 
 #ifndef PCE_E8253_H
 #define PCE_E8253_H 1
-
-
-typedef void (*e8253_out_f) (void *ext, unsigned char val);
 
 
 /*!***************************************************************************
@@ -56,7 +52,7 @@ typedef struct {
 	unsigned char   gate;
 
 	void            *out_ext;
-	e8253_out_f     out;
+	void            (*out) (void *ext, unsigned char val);
 	unsigned char   out_val;
 
 	unsigned short val;
@@ -100,10 +96,10 @@ void e8253_del (e8253_t *pit);
  * @short Set the output function for a PIT counter
  * @param pit  The PIT structure
  * @param cntr The counter index (0 <= cntr <= 2)
- * @param fct  The function that is called to set the counter output signal
  * @param ext  The transparent parameter for the output function
+ * @param fct  The function that is called to set the counter output signal
  *****************************************************************************/
-void e8253_set_out_f (e8253_t *pit, unsigned cntr, e8253_out_f fct, void *ext);
+void e8253_set_out_fct (e8253_t *pit, unsigned cntr, void *ext, void *fct);
 
 
 /*!***************************************************************************

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/mda.c                                          *
+ * File name:     src/devices/video/mda.c                                    *
  * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -110,7 +109,8 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 
 	mda_get_colors (mda, sct);
 
-	pce_log (MSG_INF, "video:\tMDA io=0x%04x membase=0x%05x memsize=0x%05x\n",
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "MDA addr=0x%04x membase=0x%05x memsize=0x%05x\n",
 		iobase, membase, memsize
 	);
 
