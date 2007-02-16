@@ -10,6 +10,9 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
+CC_FLG_EXTRA += $(PCE_HOST_CFLAGS)
+
+
 SRC := arm.c copr14.c copr15.c disasm.c mmu.c opcodes.c
 OBJ := arm.o copr14.o copr15.o disasm.o mmu.o opcodes.o
 HDR := arm.h internal.h

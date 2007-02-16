@@ -10,9 +10,8 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
-ifeq "$(PCE_HOST_IA32)" "1"
-CC_FLG_EXTRA += -DPCE_HOST_IA32
-endif
+CC_FLG_EXTRA += $(PCE_HOST_CFLAGS)
+
 
 SRC := disasm.c mmu.c opcode13.c opcode1f.c opcodes.c ppc405.c
 OBJ := disasm.o mmu.o opcode13.o opcode1f.o opcodes.o ppc405.o

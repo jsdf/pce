@@ -590,11 +590,15 @@ void arm_clock (arm_t *c, unsigned long n)
 
 		arm_execute (c);
 
+#if 0
 		if (c->delay == 0) {
-			fprintf (stderr, "warning: delay == 0 at %08lx\n", (unsigned long) arm_get_pc (c));
+			fprintf (stderr, "%08lX ARM: delay == 0\n",
+				(unsigned long) arm_get_pc (c)
+			);
 			fflush (stderr);
 			c->delay = 1;
 		}
+#endif
 	}
 
 	c->clkcnt += n;

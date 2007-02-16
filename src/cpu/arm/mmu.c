@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/mmu.c                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -34,6 +33,15 @@
 
 #include "arm.h"
 #include "internal.h"
+
+
+#if defined(PCE_HOST_PPC) || defined (PCE_HOST_SPARC)
+#define ARM_HOST_BE
+#endif
+
+#if defined(PCE_HOST_IA32)
+#define ARM_HOST_LE
+#endif
 
 
 static
@@ -191,7 +199,7 @@ int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
 
 	mmu = arm_get_mmu (c);
 
-	addr1 = (mmu->reg[2] & 0xffffc000UL) | ((*addr >> 18) & 0x00003ffcUL);
+	addr1 = (mmu->reg[2] & 0xffffc000) | ((*addr >> 18) & 0x00003ffc);
 	desc1 = c->get_uint32 (c->mem_ext, addr1);
 
 	addr2 = 0;
@@ -206,14 +214,14 @@ int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
 
 	case 0x01:
 		/* coarse */
-		addr2 = (desc1 & 0xfffffc00UL) | ((*addr >> 10) & 0x000003fcUL);
+		addr2 = (desc1 & 0xfffffc00) | ((*addr >> 10) & 0x000003fc);
 		*domn = arm_get_bits (desc1, 5, 4);
 		break;
 
 	case 0x02:
 		/* section */
-		*addr = (desc1 & 0xfff00000UL) | (*addr & 0x000fffffUL);
-		*mask = 0xfff00000UL;
+		*addr = (desc1 & 0xfff00000) | (*addr & 0x000fffff);
+		*mask = 0xfff00000;
 		*domn = arm_get_bits (desc1, 5, 4);
 		*perm = arm_get_bits (desc1, 10, 2);
 		*sect = 1;
@@ -221,7 +229,7 @@ int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
 
 	case 0x03:
 		/* fine */
-		addr2 = (desc1 & 0xfffff000UL) | ((*addr >> 8) & 0x00000ffcUL);
+		addr2 = (desc1 & 0xfffff000) | ((*addr >> 8) & 0x00000ffc);
 		*domn = arm_get_bits (desc1, 5, 4);
 		break;
 	}
@@ -240,32 +248,32 @@ int arm_translate (arm_t *c, uint32_t *addr, uint32_t *mask,
 	case 0x01:
 		/* large page */
 		ap = 4 + 2 * arm_get_bits (*addr, 14, 2);
-		*addr = (desc2 & 0xffff0000UL) | (*addr & 0x0000ffffUL);
-		*mask = 0xffff0000UL;
+		*addr = (desc2 & 0xffff0000) | (*addr & 0x0000ffff);
+		*mask = 0xffff0000;
 		*perm = arm_get_bits (desc2, ap, 2);
 		return (0);
 
 	case 0x02:
 		/* small page */
 		ap = 4 + 2 * arm_get_bits (*addr, 10, 2);
-		*addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
-		*mask = 0xfffff000UL;
+		*addr = (desc2 & 0xfffff000) | (*addr & 0x00000fff);
+		*mask = 0xfffff000;
 		*perm = arm_get_bits (desc2, ap, 2);
 		return (0);
 
 	case 0x03:
 		if ((desc1 & 0x03) == 0x01) {
 			/* xscale extended small page */
-			*addr = (desc2 & 0xfffff000UL) | (*addr & 0x00000fffUL);
-			*mask = 0xfffff000UL;
+			*addr = (desc2 & 0xfffff000) | (*addr & 0x00000fff);
+			*mask = 0xfffff000;
 			*perm = arm_get_bits (desc2, 4, 2);
 			return (0);
 		}
 
 		/* tiny page */
 		*perm = arm_get_bits (desc2, 4, 2);
-		*addr = (desc2 & 0xfffffc00UL) | (*addr & 0x000003ffUL);
-		*mask = 0xfffffc00UL;
+		*addr = (desc2 & 0xfffffc00) | (*addr & 0x000003ff);
+		*mask = 0xfffffc00;
 		return (0);
 	}
 
@@ -495,16 +503,24 @@ int arm_ifetch (arm_t *c, uint32_t addr, uint32_t *val)
 		unsigned char *p = &c->ram[addr];
 
 		if (c->bigendian) {
+#ifdef ARM_HOST_BE
+			tmp = *(uint32_t *)p;
+#else
 			tmp = (uint32_t) p[0] << 24;
 			tmp |= (uint32_t) p[1] << 16;
 			tmp |= (uint32_t) p[2] << 8;
 			tmp |= p[3];
+#endif
 		}
 		else {
+#ifdef ARM_HOST_LE
+			tmp = *(uint32_t *)p;
+#else
 			tmp = p[0];
 			tmp |= (uint32_t) p[1] << 8;
 			tmp |= (uint32_t) p[2] << 16;
 			tmp |= (uint32_t) p[3] << 24;
+#endif
 		}
 	}
 	else {
@@ -540,12 +556,20 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 
 	if ((addr + 2) <= c->ram_cnt) {
 		if (c->bigendian) {
+#ifdef ARM_HOST_BE
+			*val = *(uint16_t *)(&c->ram[addr]);
+#else
 			*val = (uint16_t) c->ram[addr] << 8;
 			*val |= c->ram[addr + 1];
+#endif
 		}
 		else {
+#ifdef ARM_HOST_LE
+			*val = *(uint32_t *)(&c->ram[addr]);
+#else
 			*val = c->ram[addr];
 			*val |= (uint16_t) c->ram[addr + 1] << 8;
+#endif
 		}
 	}
 	else {
@@ -565,16 +589,24 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 		unsigned char *p = &c->ram[addr];
 
 		if (c->bigendian) {
+#ifdef ARM_HOST_BE
+			*val = *(uint32_t *)(&c->ram[addr]);
+#else
 			*val = (uint32_t) p[0] << 24;
 			*val |= (uint32_t) p[1] << 16;
 			*val |= (uint32_t) p[2] << 8;
 			*val |= p[3];
+#endif
 		}
 		else {
+#ifdef ARM_HOST_LE
+			*val = *(uint32_t *)(&c->ram[addr]);
+#else
 			*val = p[0];
 			*val |= (uint32_t) p[1] << 8;
 			*val |= (uint32_t) p[2] << 16;
 			*val |= (uint32_t) p[3] << 24;
+#endif
 		}
 	}
 	else {
@@ -608,12 +640,20 @@ int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 
 	if ((addr + 2) <= c->ram_cnt) {
 		if (c->bigendian) {
+#ifdef ARM_HOST_BE
+			*(uint16_t *)(&c->ram[addr]) = val;
+#else
 			c->ram[addr + 0] = (val >> 8) & 0xff;
 			c->ram[addr + 1] = val & 0xff;
+#endif
 		}
 		else {
+#ifdef ARM_HOST_LE
+			*(uint16_t *)(&c->ram[addr]) = val;
+#else
 			c->ram[addr + 0] = val & 0xff;
 			c->ram[addr + 1] = (val >> 8) & 0xff;
+#endif
 		}
 	}
 	else {
@@ -631,16 +671,24 @@ int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 
 	if ((addr + 4) <= c->ram_cnt) {
 		if (c->bigendian) {
+#ifdef ARM_HOST_BE
+			*(uint32_t *)(&c->ram[addr]) = val;
+#else
 			c->ram[addr + 0] = (val >> 24) & 0xff;
 			c->ram[addr + 1] = (val >> 16) & 0xff;
 			c->ram[addr + 2] = (val >> 8) & 0xff;
 			c->ram[addr + 3] = val & 0xff;
+#endif
 		}
 		else {
+#ifdef ARM_HOST_LE
+			*(uint32_t *)(&c->ram[addr]) = val;
+#else
 			c->ram[addr + 0] = val & 0xff;
 			c->ram[addr + 1] = (val >> 8) & 0xff;
 			c->ram[addr + 2] = (val >> 16) & 0xff;
 			c->ram[addr + 3] = (val >> 24) & 0xff;
+#endif
 		}
 	}
 	else {
@@ -743,7 +791,7 @@ int arm_get_mem16 (arm_t *c, uint32_t addr, unsigned xlat, uint16_t *val)
 		*val = c->get_uint16 (c->mem_ext, addr);
 	}
 	else {
-		*val = 0xffffU;
+		*val = 0xffff;
 	}
 
 	return (0);
@@ -759,7 +807,7 @@ int arm_get_mem32 (arm_t *c, uint32_t addr, unsigned xlat, uint32_t *val)
 		*val = c->get_uint32 (c->mem_ext, addr);
 	}
 	else {
-		*val = 0xffffffffUL;
+		*val = 0xffffffff;
 	}
 
 	return (0);
