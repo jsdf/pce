@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -76,7 +76,7 @@ void prt_version (void)
 	fputs (
 		"pce simarm version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -182,7 +182,9 @@ ini_sct_t *pce_load_config (const char *fname)
 	if (fname != NULL) {
 		ini = ini_read (fname);
 		if (ini != NULL) {
-			pce_log (MSG_INF, "pce: using config file '%s'\n", fname);
+			pce_log_tag (MSG_INF, "PCE:",
+				"using config file '%s'\n", fname
+			);
 			return (ini);
 		}
 	}
@@ -280,7 +282,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce simarm version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -289,7 +291,7 @@ int main (int argc, char *argv[])
 		return (1);
 	}
 
-	sct = ini_sct_find_sct (ini, "simarm");
+	sct = ini_next_sct (ini, NULL, "simarm");
 	if (sct == NULL) {
 		sct = ini;
 	}

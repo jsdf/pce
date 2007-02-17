@@ -1761,7 +1761,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	sct = ini_sct_find_sct (par_cfg, "pc");
+	sct = ini_next_sct (par_cfg, NULL, "pc");
 	if (sct == NULL) {
 		sct = par_cfg;
 	}

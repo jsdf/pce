@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/mouse.c                                     *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -44,10 +43,10 @@ void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
 	e8250_set_dsr (&mse->uart, 1);
 	e8250_set_cts (&mse->uart, 1);
 
-	mse->fct_x[0] = ini_get_lng_def (sct, "speed_x_mul", 1);
-	mse->fct_x[1] = ini_get_lng_def (sct, "speed_x_div", 1);
-	mse->fct_y[0] = ini_get_lng_def (sct, "speed_y_mul", 1);
-	mse->fct_y[1] = ini_get_lng_def (sct, "speed_y_div", 1);
+	ini_get_sint16 (sct, "speed_x_mul", &mse->fct_x[0], 1);
+	ini_get_sint16 (sct, "speed_x_div", &mse->fct_x[1], 1);
+	ini_get_sint16 (sct, "speed_y_mul", &mse->fct_y[0], 1);
+	ini_get_sint16 (sct, "speed_y_div", &mse->fct_y[1], 1);
 
 	mse->dtr = 0;
 	mse->rts = 0;
@@ -59,7 +58,7 @@ mouse_t *mse_new (unsigned long base, ini_sct_t *sct)
 {
 	mouse_t *mse;
 
-	mse = (mouse_t *) malloc (sizeof (mouse_t));
+	mse = malloc (sizeof (mouse_t));
 	if (mse == NULL) {
 		return (NULL);
 	}

@@ -12,7 +12,7 @@ section sims32 {
 	# Multiple "ram" sections may be present
 	section ram {
 		# The linear base address
-		base = 0x00000000
+		address = 0x00000000
 
 		# The size in bytes
 		size = 0x04000000
@@ -27,7 +27,7 @@ section sims32 {
 		file = "sims32.rom"
 
 		# The linear base address
-		base = 0xffff0000
+		address = 0xffff0000
 
 		# The rom size in bytes
 		size = 65536
@@ -42,14 +42,14 @@ section sims32 {
 	section load {
 		format = "binary"
 		file = "rom.bin"
-		base = 0xffff0000
+		address = 0xffff0000
 	}
 
 	# Up to two "serial" sections may be present. The first is
 	# UART0, the second UART1. If the base addresses are changed,
 	# linux won't find the UARTs
 	section serial {
-		io = 0xef600300
+		address = 0xef600300
 		irq = 0
 		
 		# The file that output is written to
@@ -57,7 +57,7 @@ section sims32 {
 	}
 
 	section serial {
-		io = 0xef600400
+		address = 0xef600400
 		irq = 1
 		file = "current/uart1.out"
 	}

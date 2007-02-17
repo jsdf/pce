@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/main.h                                     *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,7 @@
 
 #include <lib/cmd.h>
 #include <lib/console.h>
+#include <lib/iniram.h>
 #include <lib/monitor.h>
 
 #include "sims32.h"

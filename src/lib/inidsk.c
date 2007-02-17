@@ -134,21 +134,19 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		dsk = dsk_part_open (c, h, s, ro);
 
 		if (dsk != NULL) {
-			p = ini_sct_find_sct (sct, "partition");
-			while (p != NULL) {
-				start = ini_get_lng_def (p, "offset", 0);
-				blk_i = ini_get_lng_def (p, "block_start", 0);
-				blk_n = ini_get_lng_def (p, "block_count", 0);
-				fname = ini_get_str (p, "file");
-				ro = ini_get_lng_def (p, "readonly", 0);
+			p = NULL;
+			while ((p = ini_next_sct (sct, p, "partition")) != NULL) {
+				ini_get_uint32 (p, "offset", &start, 0);
+				ini_get_uint32 (p, "block_start", &blk_i, 0);
+				ini_get_uint32 (p, "block_count", &blk_n, 0);
+				ini_get_string (p, "file", &fname, NULL);
+				ini_get_bool (p, "readonly", &ro, 0);
 
 				if (fname != NULL) {
 					if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
 						pce_log (MSG_ERR, "*** adding partition failed\n");
 					}
 				}
-
-				p = ini_sct_find_next (p, "partition");
 			}
 		}
 	}
@@ -175,8 +173,8 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 
 	dsk_set_drive (dsk, drive);
 
-	val = ini_sct_find_val (sct, "cow");
-	while (val != NULL) {
+	val = NULL;
+	while ((val = ini_next_val (sct, val, "cow")) != NULL) {
 		const char *cname;
 
 		cname = ini_val_get_str (val);
@@ -205,8 +203,6 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 
 			dsk = cow;
 		}
-
-		val = ini_val_find_next (val, "cow");
 	}
 
 	vc = (vc == 0) ? dsk->c : vc;
@@ -226,9 +222,8 @@ disks_t *ini_get_disks (ini_sct_t *ini)
 
 	dsks = dsks_new();
 
-	sct = ini_sct_find_sct (ini, "disk");
-
-	while (sct != NULL) {
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "disk")) != NULL) {
 		dsk = ini_get_disk (sct);
 
 		if (dsk != NULL) {
@@ -237,8 +232,6 @@ disks_t *ini_get_disks (ini_sct_t *ini)
 		else {
 			pce_log (MSG_ERR, "*** loading drive failed\n");
 		}
-
-		sct = ini_sct_find_next (sct, "disk");
 	}
 
 	return (dsks);

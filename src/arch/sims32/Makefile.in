@@ -33,6 +33,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/console.o \
 	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/ihex.o \
+	$(pcedst)/lib/iniram.o \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
@@ -52,6 +53,7 @@ HDR_EXT	:= \
 	lib/console.h \
 	lib/hexdump.h \
 	lib/ihex.h \
+	lib/iniram.h \
 	lib/srec.h \
 	lib/load.h \
 	lib/log.h \

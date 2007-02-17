@@ -76,7 +76,7 @@ xms_t *xms_new (ini_sct_t *sct)
 	ini_get_uint32 (sct, "umb_size", &umb_size, 0);
 	ini_get_uint32 (sct, "umb_segm", &umb_segm, 0xd000);
 
-	hma = ini_get_lng_def (sct, "hma", 0);
+	ini_get_bool (sct, "hma", &hma, 0);
 
 	umb_size = umb_size / 16;
 	umb_segm = (umb_segm + 15) & ~0x0f;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.h                                   *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -86,6 +86,7 @@ typedef struct sims32_s {
 	sparc32_t          *cpu;
 
 	memory_t           *mem;
+	mem_blk_t          *ram;
 
 	nvram_t            *nvr;
 

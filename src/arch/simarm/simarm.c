@@ -40,10 +40,10 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 	ini_sct_t  *sct;
 	const char *model;
 
-	sct = ini_sct_find_sct (ini, "cpu");
+	sct = ini_next_sct (ini, NULL, "cpu");
 
-	model = ini_get_str_def (sct, "model", "armv5");
-	sim->bigendian = ini_get_lng_def (sct, "bigendian", 1) != 0;
+	ini_get_string (sct, "model", &model, "armv5");
+	ini_get_bool (sct, "bigendian", &sim->bigendian, 1);
 
 	pce_log_tag (MSG_INF, "CPU:", "model=%s endian=%s\n",
 		model, sim->bigendian ? "big" : "little"
@@ -86,18 +86,14 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 static
 void sarm_setup_intc (simarm_t *sim, ini_sct_t *ini)
 {
-	unsigned long base;
+	unsigned long addr;
 	ini_sct_t     *sct;
 
-	sct = ini_sct_find_sct (ini, "intc");
-	if (sct != NULL) {
-		base = ini_get_lng_def (sct, "base", 0xd6000000UL);
-	}
-	else {
-		base = 0xd6000000UL;
-	}
+	sct = ini_next_sct (ini, NULL, "intc");
 
-	sim->intc = ict_new (base);
+	ini_get_uint32 (sct, "address", &addr, 0xd6000000);
+
+	sim->intc = ict_new (addr);
 	if (sim->intc == NULL) {
 		return;
 	}
@@ -107,27 +103,22 @@ void sarm_setup_intc (simarm_t *sim, ini_sct_t *ini)
 
 	mem_add_blk (sim->mem, ict_get_io (sim->intc, 0), 0);
 
-	pce_log_tag (MSG_INF, "INTC:", "addr=0x%08lx\n", base);
+	pce_log_tag (MSG_INF, "INTC:", "addr=0x%08lx\n", addr);
 }
 
 static
 void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 {
-	unsigned long base;
+	unsigned long addr;
 	unsigned      scale;
 	ini_sct_t     *sct;
 
-	sct = ini_sct_find_sct (ini, "timer");
-	if (sct != NULL) {
-		base = ini_get_lng_def (sct, "base", 0xc0020000);
-		scale = ini_get_lng_def (sct, "scale", 4);
-	}
-	else {
-		base = 0xc0020000;
-		scale = 4;
-	}
+	sct = ini_next_sct (ini, NULL, "timer");
 
-	sim->timer = tmr_new (base);
+	ini_get_uint32 (sct, "address", &addr, 0xc0020000);
+	ini_get_uint16 (sct, "scale", &scale, 4);
+
+	sim->timer = tmr_new (addr);
 	if (sim->timer == NULL) {
 		return;
 	}
@@ -141,14 +132,14 @@ void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 
 	mem_add_blk (sim->mem, tmr_get_io (sim->timer, 0), 0);
 
-	pce_log_tag (MSG_INF, "TIMER:", "addr=0x%08lx ts=%u\n", base, scale);
+	pce_log_tag (MSG_INF, "TIMER:", "addr=0x%08lx ts=%u\n", addr, scale);
 }
 
 static
 void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 {
 	unsigned      i;
-	unsigned long base;
+	unsigned long addr;
 	unsigned      irq;
 	unsigned      fifo;
 	const char    *fname;
@@ -156,34 +147,37 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	serport_t     *ser;
 
-	sct = ini_sct_find_sct (ini, "serial");
-	if (sct == NULL) {
-		return;
-	}
-
 	i = 0;
-	while (sct != NULL) {
-		ini_get_uint32 (sct, "io", &base, 0xc0030000UL);
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "serial")) != NULL) {
+		if (ini_get_uint32 (sct, "address", &addr, 0xc0030000)) {
+			ini_get_uint32 (sct, "io", &addr, 0xc0030000);
+		}
 		ini_get_uint16 (sct, "irq", &irq, 2);
 		ini_get_uint16 (sct, "fifo", &fifo, 16);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_string (sct, "file", &fname, NULL);
 
-		pce_log_tag (MSG_INF, "UART:", "n=%u addr=0x%08lx irq=%u uart=%s file=%s\n",
-			i, base, irq, chip, (fname == NULL) ? "<none>" : fname
+		pce_log_tag (MSG_INF, "UART:",
+			"n=%u addr=0x%08lx irq=%u uart=%s file=%s\n",
+			i, addr, irq, chip, (fname == NULL) ? "<none>" : fname
 		);
 
-		ser = ser_new (base, 2);
+		ser = ser_new (addr, 2);
 
 		if (ser == NULL) {
-			pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
-				base, irq, (fname == NULL) ? "<none>" : fname
+			pce_log (MSG_ERR,
+				"*** serial port setup failed [%08lX/%u -> %s]\n",
+				addr, irq, (fname == NULL) ? "<none>" : fname
 			);
 		}
 		else {
 			if (fname != NULL) {
 				if (ser_set_fname (ser, fname)) {
-					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+					pce_log (MSG_ERR,
+						"*** can't open file (%s)\n",
+						fname
+					);
 				}
 			}
 			else {
@@ -193,7 +187,9 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 			e8250_set_buf_size (ser_get_uart (ser), fifo, fifo);
 
 			if (e8250_set_chip_str (ser_get_uart (ser), chip)) {
-				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
+				pce_log (MSG_ERR,
+					"*** unknown UART chip (%s)\n", chip
+				);
 			}
 
 			e8250_set_irq_f (ser_get_uart (ser),
@@ -206,8 +202,6 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 
 			i += 1;
 		}
-
-		sct = ini_sct_find_next (sct, "serial");
 	}
 }
 
@@ -220,7 +214,7 @@ void sarm_setup_console (simarm_t *sim, ini_sct_t *ini)
 	/* default */
 	sim->console = dev_lst_get_ext (&sim->dev, "uart", 0);
 
-	sct = ini_sct_find_sct (ini, "console");
+	sct = ini_next_sct (ini, NULL, "console");
 	if (sct == NULL) {
 		return;
 	}
@@ -244,7 +238,7 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 	const char *name;
 	device_t   *ser;
 
-	sct = ini_sct_find_sct (ini, "slip");
+	sct = ini_next_sct (ini, NULL, "slip");
 	if (sct == NULL) {
 		return;
 	}
@@ -252,7 +246,9 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 	ini_get_uint16 (sct, "serial", &seridx, 0);
 	ini_get_string (sct, "interface", &name, "tun0");
 
-	pce_log_tag (MSG_INF, "SLIP:", "serport=%u interface=%s\n", seridx, name);
+	pce_log_tag (MSG_INF, "SLIP:", "serport=%u interface=%s\n",
+		seridx, name
+	);
 
 	ser = dev_lst_get (&sim->dev, "uart", seridx);
 	if (ser == NULL) {
@@ -268,7 +264,9 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 	slip_set_serport (sim->slip, ser->ext);
 
 	if (slip_set_tun (sim->slip, name)) {
-		pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n", name);
+		pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n",
+			name
+		);
 	}
 }
 
@@ -303,13 +301,13 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 
 	pci_ata_init (&sim->pciata);
 
-	sct = ini_sct_find_sct (ini, "pci_ata");
+	sct = ini_next_sct (ini, NULL, "pci_ata");
 	if (sct == NULL) {
 		return;
 	}
 
-	pcidev = ini_get_lng_def (sct, "pci_device", 1);
-	pciirq = ini_get_lng_def (sct, "pci_irq", 31);
+	ini_get_uint16 (sct, "pci_device", &pcidev, 1);
+	ini_get_uint16 (sct, "pci_irq", &pciirq, 31);
 
 	pce_log_tag (MSG_INF, "PCI-ATA:", "pcidev=%u irq=%u\n",
 		pcidev, pciirq
@@ -324,37 +322,12 @@ void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);
 }
 
-static
-void sarm_load_mem (simarm_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	const char    *fmt;
-	const char    *fname;
-	unsigned long addr;
-
-	sct = ini_sct_find_sct (ini, "load");
-
-	while (sct != NULL) {
-		fmt = ini_get_str_def (sct, "format", "binary");
-		fname = ini_get_str (sct, "file");
-		addr = ini_get_lng_def (sct, "base", 0);
-
-		if (fname != NULL) {
-			if (pce_load_mem (sim->mem, fname, fmt, addr)) {
-				pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "load");
-	}
-}
-
 simarm_t *sarm_new (ini_sct_t *ini)
 {
 	unsigned i;
 	simarm_t *sim;
 
-	sim = (simarm_t *) malloc (sizeof (simarm_t));
+	sim = malloc (sizeof (simarm_t));
 	if (sim == NULL) {
 		return (NULL);
 	}
@@ -388,7 +361,7 @@ simarm_t *sarm_new (ini_sct_t *ini)
 	sarm_setup_pci (sim, ini);
 	sarm_setup_ata (sim, ini);
 
-	sarm_load_mem (sim, ini);
+	pce_load_mem_ini (sim->mem, ini);
 
 	return (sim);
 }

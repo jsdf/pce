@@ -30,10 +30,11 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/console.o \
 	$(pcedst)/lib/hexdump.o \
 	$(pcedst)/lib/ihex.o \
-	$(pcedst)/lib/srec.o \
+	$(pcedst)/lib/iniram.o \
 	$(pcedst)/lib/load.o \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/lib/monitor.o \
+	$(pcedst)/lib/srec.o \
 	$(pcedst)/libini/libini.a
 
 
@@ -46,10 +47,11 @@ HDR_EXT	:= \
 	lib/console.h \
 	lib/hexdump.h \
 	lib/ihex.h \
-	lib/srec.h \
+	lib/iniram.h \
 	lib/load.h \
 	lib/log.h \
 	lib/monitor.h \
+	lib/srec.h \
 	libini/libini.h
 
 MAN1	:=

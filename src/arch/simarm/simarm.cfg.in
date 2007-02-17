@@ -15,7 +15,7 @@ section simarm {
 	# Multiple "ram" sections may be present
 	section ram {
 		# The linear base address
-		base = 0x00000000
+		address = 0x00000000
 
 		# The size in bytes
 		size = 0x04000000
@@ -30,7 +30,7 @@ section simarm {
 		file = "simarm.rom"
 
 		# The linear base address
-		base = 0xffff0000
+		address = 0xffff0000
 
 		# The rom size in bytes
 		size = 65536
@@ -45,23 +45,23 @@ section simarm {
 	section load {
 		format = "binary"
 		file = "rom.bin"
-		base = 0xffff0000
+		address = 0xffff0000
 	}
 
 	# interrupt controller
 	section intc {
-		base = 0xd6000000
+		address = 0xd6000000
 	}
 
 	# timer
 	section timer {
-		base = 0xc0020000
+		address = 0xc0020000
 		scale = 5
 	}
 
 	# serial port
 	section serial {
-		io = 0xc0030000
+		address = 0xc0030000
 		irq = 2
 		fifo = 64
 

@@ -64,12 +64,12 @@ ems_t *ems_new (ini_sct_t *sct)
 	unsigned      segm;
 	ems_t         *ems;
 
-	pages = ini_get_lng_def (sct, "size", 0);
+	ini_get_uint32 (sct, "size", &pages, 0);
 	pages = (pages + 15) / 16;
 
-	segm = ini_get_lng_def (sct, "segment", 0xe000);
+	ini_get_uint16 (sct, "segment", &segm, 0xe000);
 
-	ems = (ems_t *) malloc (sizeof (ems_t));
+	ems = malloc (sizeof (ems_t));
 	if (ems == NULL) {
 		return (NULL);
 	}

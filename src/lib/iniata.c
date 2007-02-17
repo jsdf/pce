@@ -32,16 +32,17 @@
 #include <devices/block/block.h>
 
 
-int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct)
+int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *ini)
 {
 	unsigned   dev, drv;
 	unsigned   multi;
 	const char *model;
 	disk_t     *dsk;
+	ini_sct_t  *sct;
 
-	sct = ini_sct_find_sct (sct, "device");
+	sct = NULL;
 
-	while (sct != NULL) {
+	while ((sct = ini_next_sct (ini, sct, "device")) != NULL) {
 		ini_get_uint16 (sct, "device", &dev, 0);
 		ini_get_uint16 (sct, "disk", &drv, 0);
 		ini_get_uint16 (sct, "multi_count_max", &multi, 0);
@@ -62,23 +63,21 @@ int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct)
 
 			ata_set_block (ata, dsk, dev);
 		}
-
-		sct = ini_sct_find_next (sct, "device");
 	}
 
 	return (0);
 }
 
-int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct)
+int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *ini)
 {
 	unsigned  idx;
+	ini_sct_t *sct;
 	ata_chn_t *chn;
 
-	sct = ini_sct_find_sct (sct, "channel");
-
 	idx = 0;
+	sct = NULL;
 
-	while (sct != NULL) {
+	while ((sct = ini_next_sct (ini, sct, "channel")) != NULL) {
 		ini_get_uint16 (sct, "channel", &idx, idx);
 
 		chn = pci_ata_get_chn (pciata, idx);
@@ -91,8 +90,6 @@ int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct)
 		else {
 			ini_get_ata_chn (chn, dsks, sct);
 		}
-
-		sct = ini_sct_find_next (sct, "device");
 	}
 
 	return (0);

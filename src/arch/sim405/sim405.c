@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -45,13 +45,13 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 	unsigned long uicinv;
 	unsigned      timer_scale;
 
-	sct = ini_sct_find_sct (ini, "powerpc");
+	sct = ini_next_sct (ini, NULL, "powerpc");
 
-	model = ini_get_str_def (sct, "model", "ppc405");
-	uicinv = ini_get_lng_def (sct, "uic_invert", 0x0000007f);
-	timer_scale = ini_get_lng_def (sct, "timer_scale", 8);
+	ini_get_string (sct, "model", &model, "ppc405");
+	ini_get_uint32 (sct, "uic_invert", &uicinv, 0x0000007f);
+	ini_get_uint16 (sct, "timer_scale", &timer_scale, 8);
 
-	pce_log (MSG_INF, "CPU:      model=%s uicinv=%08lX ts=%u\n",
+	pce_log_tag (MSG_INF, "CPU:", "model=%s uicinv=%08lX ts=%u\n",
 		model, uicinv, timer_scale
 	);
 
@@ -83,39 +83,43 @@ static
 void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 {
 	unsigned      i;
-	unsigned long base;
+	unsigned long addr;
 	unsigned      irq;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
 
-	static unsigned long defbase[4] = { 0xef600300UL, 0xef600400UL };
-	static unsigned      defirq[4] = { 0, 1 };
+	static unsigned long defbase[2] = { 0xef600300, 0xef600400 };
+	static unsigned      defirq[2] = { 0, 1 };
 
 
 	sim->serport[0] = NULL;
 	sim->serport[1] = NULL;
 
-	sct = ini_sct_find_sct (ini, "serial");
-	if (sct == NULL) {
-		return;
-	}
-
 	i = 0;
-	while ((i < 2) && (sct != NULL)) {
-		base = ini_get_lng_def (sct, "io", defbase[i]);
-		irq = ini_get_lng_def (sct, "irq", defirq[i]);
-		chip = ini_get_str_def (sct, "uart", "8250");
-		fname = ini_get_str (sct, "file");
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "serial")) != NULL) {
+		if (i >= 2) {
+			break;
+		}
 
-		pce_log (MSG_INF, "UART%u:    addr=0x%08lx irq=%u uart=%s file=%s\n",
-			i, base, irq, chip, (fname == NULL) ? "<none>" : fname
+		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
+			ini_get_uint32 (sct, "io", &addr, defbase[i]);
+		}
+		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
+		ini_get_string (sct, "uart", &chip, "8250");
+		ini_get_string (sct, "file", &fname, NULL);
+
+		pce_log_tag (MSG_INF, "UART:",
+			"n=%u addr=0x%08lx irq=%u uart=%s file=%s\n",
+			i, addr, irq, chip, (fname == NULL) ? "<none>" : fname
 		);
 
-		sim->serport[i] = ser_new (base, 0);
+		sim->serport[i] = ser_new (addr, 0);
 		if (sim->serport[i] == NULL) {
-			pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
-				base, irq, (fname == NULL) ? "<none>" : fname
+			pce_log (MSG_ERR,
+				"*** serial port setup failed [%08lX/%u -> %s]\n",
+				addr, irq, (fname == NULL) ? "<none>" : fname
 			);
 		}
 		else {
@@ -140,8 +144,6 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 
 			i += 1;
 		}
-
-		sct = ini_sct_find_next (sct, "serial");
 	}
 }
 
@@ -151,7 +153,7 @@ void s405_setup_sercons (sim405_t *sim, ini_sct_t *ini)
 	ini_sct_t  *sct;
 	unsigned   ser;
 
-	sct = ini_sct_find_sct (ini, "sercons");
+	sct = ini_next_sct (ini, NULL, "sercons");
 
 	if (sct == NULL) {
 		ser = 0;
@@ -160,7 +162,7 @@ void s405_setup_sercons (sim405_t *sim, ini_sct_t *ini)
 		ini_get_uint16 (sct, "serial", &ser, 0);
 	}
 
-	pce_log (MSG_INF, "SERCONS:  serport=%u\n", ser);
+	pce_log_tag (MSG_INF, "CONSOLE:", "serport=%u\n", ser);
 
 	if (ser >= 2) {
 		return;
@@ -176,15 +178,15 @@ void s405_setup_slip (sim405_t *sim, ini_sct_t *ini)
 	unsigned   ser;
 	const char *name;
 
-	sct = ini_sct_find_sct (ini, "slip");
+	sct = ini_next_sct (ini, NULL, "slip");
 	if (sct == NULL) {
 		return;
 	}
 
-	ser = ini_get_lng_def (sct, "serial", 0);
-	name = ini_get_str_def (sct, "interface", "tun0");
+	ini_get_uint16 (sct, "serial", &ser, 0);
+	ini_get_string (sct, "interface", &name, "tun0");
 
-	pce_log (MSG_INF, "SLIP:     serport=%u interface=%s\n", ser, name);
+	pce_log_tag (MSG_INF, "SLIP:", "serport=%u interface=%s\n", ser, name);
 
 	if (ser >= 2) {
 		return;
@@ -223,7 +225,7 @@ void s405_setup_pci (sim405_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, s405_pci_get_mem_special (sim->pci), 0);
 	mem_add_blk (sim->mem, s405_pci_get_mem_csr (sim->pci), 0);
 
-	pce_log (MSG_INF, "PCI:      initialized\n");
+	pce_log_tag (MSG_INF, "PCI:", "initialized\n");
 }
 
 static
@@ -235,7 +237,7 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 
 	pci_ata_init (&sim->pciata);
 
-	sct = ini_sct_find_sct (ini, "pci_ata");
+	sct = ini_next_sct (ini, NULL, "pci_ata");
 	if (sct == NULL) {
 		return;
 	}
@@ -246,7 +248,8 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 	ini_get_uint32 (sct, "vendor_id", &vendor_id, PCIID_VENDOR_VIA);
 	ini_get_uint32 (sct, "device_id", &device_id, PCIID_VIA_82C561);
 
-	pce_log (MSG_INF, "PCI-ATA:  pcidev=%u irq=%u vendor=0x%04lx id=0x%04lx\n",
+	pce_log_tag (MSG_INF, "PCI-ATA:",
+		"pcidev=%u irq=%u vendor=0x%04lx id=0x%04lx\n",
 		pcidev, pciirq, vendor_id, device_id
 	);
 
@@ -261,35 +264,6 @@ void s405_setup_ata (sim405_t *sim, ini_sct_t *ini)
 }
 
 static
-void s405_load_mem (sim405_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	const char    *fmt;
-	const char    *fname;
-	unsigned long addr;
-
-	sct = ini_sct_find_sct (ini, "load");
-
-	while (sct != NULL) {
-		fmt = ini_get_str_def (sct, "format", "binary");
-		fname = ini_get_str (sct, "file");
-		addr = ini_get_lng_def (sct, "base", 0);
-
-		if (fname != NULL) {
-			pce_log (MSG_INF, "Load:     format=%s file=%s\n",
-				fmt, (fname != NULL) ? fname : "<none>"
-			);
-
-			if (pce_load_mem (sim->mem, fname, fmt, addr)) {
-				pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "load");
-	}
-}
-
-static
 void s405_setup_ds1743 (sim405_t *sim, ini_sct_t *sct)
 {
 	unsigned long addr, size;
@@ -300,7 +274,7 @@ void s405_setup_ds1743 (sim405_t *sim, ini_sct_t *sct)
 	ini_get_uint32 (sct, "size", &size, 8192);
 	ini_get_string (sct, "file", &fname, NULL);
 
-	pce_log (MSG_INF, "DS1743:   address=0x%08lx size=%lu file=%s\n",
+	pce_log_tag (MSG_INF, "DS1743:", "addr=0x%08lx size=%lu file=%s\n",
 		addr, size, (fname != NULL) ? fname : "<none>"
 	);
 
@@ -328,9 +302,8 @@ void s405_setup_devices (sim405_t *sim, ini_sct_t *ini)
 	ini_sct_t  *sct;
 	const char *type;
 
-	sct = ini_sct_find_sct (ini, "device");
-
-	while (sct != NULL) {
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "device")) != NULL) {
 		ini_get_string (sct, "type", &type, NULL);
 
 		if (type != NULL) {
@@ -343,8 +316,6 @@ void s405_setup_devices (sim405_t *sim, ini_sct_t *ini)
 				);
 			}
 		}
-
-		sct = ini_sct_find_next (sct, "device");
 	}
 }
 
@@ -391,7 +362,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	sim->cpc0_cr1 = 0x00000000;
 	sim->cpc0_psr = 0x00000400;
 
-	s405_load_mem (sim, ini);
+	pce_load_mem_ini (sim->mem, ini);
 
 	return (sim);
 }

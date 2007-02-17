@@ -77,12 +77,12 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 	unsigned w, h;
 	ega_t    *ega;
 
-	ega = (ega_t *) malloc (sizeof (ega_t));
+	ega = malloc (sizeof (ega_t));
 	if (ega == NULL) {
 		return (NULL);
 	}
 
-	ega->data = (unsigned char *) malloc (256UL * 1024);
+	ega->data = malloc (256UL * 1024);
 	if (ega->data == NULL) {
 		free (ega);
 		return (NULL);
@@ -115,19 +115,19 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 	memset (ega->gdc_reg, 0, 9 * sizeof (unsigned char));
 	memset (ega->atc_reg, 0, 21 * sizeof (unsigned char));
 
-	w = ini_get_lng_def (sct, "w", 640);
-	h = ini_get_lng_def (sct, "h", 400);
+	ini_get_uint16 (sct, "w", &w, 640);
+	ini_get_uint16 (sct, "h", &h, 400);
 
-	ega->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-	ega->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
-	ega->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
-	ega->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
-	ega->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
-	ega->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
-	ega->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", w);
-	ega->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", h);
-	ega->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
-	ega->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
+	ini_get_uint16 (sct, "mode_80x25_w", &ega->mode_80x25_w, w);
+	ini_get_uint16 (sct, "mode_80x25_h", &ega->mode_80x25_h, h);
+	ini_get_uint16 (sct, "mode_320x200_w", &ega->mode_320x200_w, w);
+	ini_get_uint16 (sct, "mode_320x200_h", &ega->mode_320x200_h, h);
+	ini_get_uint16 (sct, "mode_640x200_w", &ega->mode_640x200_w, w);
+	ini_get_uint16 (sct, "mode_640x200_h", &ega->mode_640x200_h, h);
+	ini_get_uint16 (sct, "mode_640x350_w", &ega->mode_640x350_w, w);
+	ini_get_uint16 (sct, "mode_640x350_h", &ega->mode_640x350_h, h);
+	ini_get_uint16 (sct, "mode_640x480_w", &ega->mode_640x480_w, w);
+	ini_get_uint16 (sct, "mode_640x480_h", &ega->mode_640x480_h, h);
 
 	pce_log_tag (MSG_INF, "VIDEO:", "EGA addr=0x03b0 membase=0xa000 memsize=262144\n");
 

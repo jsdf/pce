@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/sims32.c                                   *
  * Created:       2004-09-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,88 +29,22 @@ void ss32_break (sims32_t *sim, unsigned char val);
 
 
 static
-void ss32_setup_ram (sims32_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	mem_blk_t     *ram;
-	const char    *fname;
-	unsigned long base, size;
-
-	sct = ini_sct_find_sct (ini, "ram");
-
-	while (sct != NULL) {
-		fname = ini_get_str (sct, "file");
-		base = ini_get_lng_def (sct, "base", 0);
-		size = ini_get_lng_def (sct, "size", 16L * 1024L * 1024L);
-
-		pce_log (MSG_INF, "RAM:\tbase=0x%08lx size=%lu file=%s\n",
-			base, size, (fname == NULL) ? "<none>" : fname
-		);
-
-		ram = mem_blk_new (base, size, 1);
-		mem_blk_clear (ram, 0x00);
-		mem_blk_set_readonly (ram, 0);
-		mem_add_blk (sim->mem, ram, 1);
-
-		if (fname != NULL) {
-			if (pce_load_blk_bin (ram, fname)) {
-				pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "ram");
-	}
-}
-
-static
-void ss32_setup_rom (sims32_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	mem_blk_t     *rom;
-	const char    *fname;
-	unsigned long base, size;
-
-	sct = ini_sct_find_sct (ini, "rom");
-
-	while (sct != NULL) {
-		fname = ini_get_str (sct, "file");
-		base = ini_get_lng_def (sct, "base", 0);
-		size = ini_get_lng_def (sct, "size", 65536L);
-
-		pce_log (MSG_INF, "ROM:\tbase=0x%08lx size=%lu file=%s\n",
-			base, size, (fname != NULL) ? fname : "<none>"
-		);
-
-		rom = mem_blk_new (base, size, 1);
-		mem_blk_clear (rom, 0x00);
-		mem_blk_set_readonly (rom, 1);
-		mem_add_blk (sim->mem, rom, 1);
-
-		if (fname != NULL) {
-			if (pce_load_blk_bin (rom, fname)) {
-				pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "rom");
-	}
-}
-
-static
 void ss32_setup_cpu (sims32_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
 	const char *model;
 	unsigned   nwindows;
 
-	sct = ini_sct_find_sct (ini, "sparc32");
+	sct = ini_next_sct (ini, NULL, "sparc32");
 
-	model = ini_get_str_def (sct, "model", "sparc32");
-	nwindows = ini_get_lng_def (sct, "nwindows", 4);
+	ini_get_string (sct, "model", &model, "sparc32");
+	ini_get_uint16 (sct, "nwindows", &nwindows, 4);
 
-	pce_log (MSG_INF, "CPU:\tmodel=%s nwindows=%u\n", model, nwindows);
+	pce_log_tag (MSG_INF, "CPU:", "model=%s nwindows=%u\n",
+		model, nwindows
+	);
 
-	sim->cpu = s32_new ();
+	sim->cpu = s32_new();
 	if (sim->cpu == NULL) {
 		return;
 	}
@@ -131,45 +65,52 @@ static
 void ss32_setup_serport (sims32_t *sim, ini_sct_t *ini)
 {
 	unsigned      i;
-	unsigned long base;
+	unsigned long addr;
 	unsigned      irq;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
 
-	static unsigned long defbase[4] = { 0xef600300UL, 0xef600400UL };
+	static unsigned long defbase[4] = { 0xef600300, 0xef600400 };
 	static unsigned      defirq[4] = { 0, 1 };
 
 
 	sim->serport[0] = NULL;
 	sim->serport[1] = NULL;
 
-	sct = ini_sct_find_sct (ini, "serial");
-	if (sct == NULL) {
-		return;
-	}
-
 	i = 0;
-	while ((i < 2) && (sct != NULL)) {
-		base = ini_get_lng_def (sct, "io", defbase[i]);
-		irq = ini_get_lng_def (sct, "irq", defirq[i]);
-		chip = ini_get_str_def (sct, "uart", "8250");
-		fname = ini_get_str (sct, "file");
+	sct = 0;
+	while ((sct = ini_next_sct (ini, sct, "serial")) != NULL) {
+		if (i >= 2) {
+			break;
+		}
 
-		pce_log (MSG_INF, "UART%u:\tio=0x%08lx irq=%u uart=%s file=%s\n",
-			i, base, irq, chip, (fname == NULL) ? "<none>" : fname
+		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
+			ini_get_uint32 (sct, "io", &addr, defbase[i]);
+		}
+		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
+		ini_get_string (sct, "uart", &chip, "8250");
+		ini_get_string (sct, "file", &fname, NULL);
+
+		pce_log_tag (MSG_INF, "UART:",
+			"n=%u addr=0x%08lx irq=%u uart=%s file=%s\n",
+			i, addr, irq, chip, (fname == NULL) ? "<none>" : fname
 		);
 
-		sim->serport[i] = ser_new (base, 0);
+		sim->serport[i] = ser_new (addr, 0);
 		if (sim->serport[i] == NULL) {
-			pce_log (MSG_ERR, "*** serial port setup failed [%08lX/%u -> %s]\n",
-				base, irq, (fname == NULL) ? "<none>" : fname
+			pce_log (MSG_ERR,
+				"*** serial port setup failed [%08lX/%u -> %s]\n",
+				addr, irq, (fname == NULL) ? "<none>" : fname
 			);
 		}
 		else {
 			if (fname != NULL) {
 				if (ser_set_fname (sim->serport[i], fname)) {
-					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+					pce_log (MSG_ERR,
+						"*** can't open file (%s)\n",
+						fname
+					);
 				}
 			}
 			else {
@@ -184,37 +125,6 @@ void ss32_setup_serport (sims32_t *sim, ini_sct_t *ini)
 
 			i += 1;
 		}
-
-		sct = ini_sct_find_next (sct, "serial");
-	}
-}
-
-static
-void ss32_load_mem (sims32_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	const char    *fmt;
-	const char    *fname;
-	unsigned long addr;
-
-	sct = ini_sct_find_sct (ini, "load");
-
-	while (sct != NULL) {
-		fmt = ini_get_str_def (sct, "format", "binary");
-		fname = ini_get_str (sct, "file");
-		addr = ini_get_lng_def (sct, "base", 0);
-
-		if (fname != NULL) {
-			pce_log (MSG_INF, "Load:\tformat=%s file=%s\n",
-				fmt, (fname != NULL) ? fname : "<none>"
-			);
-
-			if (pce_load_mem (sim->mem, fname, fmt, addr)) {
-				pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "load");
 	}
 }
 
@@ -239,12 +149,13 @@ sims32_t *ss32_new (ini_sct_t *ini)
 
 	sim->mem = mem_new();
 
-	ss32_setup_ram (sim, ini);
-	ss32_setup_rom (sim, ini);
+	ini_get_ram (sim->mem, ini, &sim->ram);
+	ini_get_rom (sim->mem, ini);
+
 	ss32_setup_cpu (sim, ini);
 	ss32_setup_serport (sim, ini);
 
-	ss32_load_mem (sim, ini);
+	pce_load_mem_ini (sim->mem, ini);
 
 	return (sim);
 }

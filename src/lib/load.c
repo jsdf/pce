@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <libini/libini.h>
+
 #include <lib/log.h>
 #include <lib/ihex.h>
 #include <lib/srec.h>
@@ -133,4 +135,35 @@ int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned lo
 	}
 
 	return (1);
+}
+
+int pce_load_mem_ini (memory_t *mem, ini_sct_t *ini)
+{
+	int           r;
+	const char    *fmt;
+	const char    *fname;
+	unsigned long addr;
+	ini_sct_t     *sct;
+
+	r = 0;
+
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "load")) != NULL) {
+		ini_get_string (sct, "format", &fmt, "binary");
+		ini_get_string (sct, "file", &fname, NULL);
+		if (ini_get_uint32 (sct, "address", &addr, 0)) {
+			ini_get_uint32 (sct, "base", &addr, 0);
+		}
+
+		if (fname != NULL) {
+			if (pce_load_mem (mem, fname, fmt, addr)) {
+				r = 1;
+				pce_log (MSG_ERR, "*** loading failed (%s)\n",
+					fname
+				);
+			}
+		}
+	}
+
+	return (r);
 }

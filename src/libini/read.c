@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/libini/read.c                                          *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -270,20 +269,19 @@ int parse_number (scanner_t *scn, ini_val_t *val, int neg)
 }
 
 static
-ini_val_t *parse_value (scanner_t *scn)
+int parse_value (scanner_t *scn, ini_sct_t *sct)
 {
 	ini_val_t *val;
 
-	val = ini_val_new (scn_str (scn));
+	val = ini_new_val (sct, scn_str (scn));
 	if (val == NULL) {
-		return (NULL);
+		return (1);
 	}
 
 	ini_scn_scan (scn);
 
 	if ((scn_chr (scn, '=') == 0) && (scn_chr (scn, ':') == 0)) {
-		ini_val_del (val);
-		return (NULL);
+		return (1);
 	}
 
 	ini_scn_scan (scn);
@@ -292,84 +290,79 @@ ini_val_t *parse_value (scanner_t *scn)
 		ini_scn_scan (scn);
 
 		if (parse_number (scn, val, 1)) {
-			ini_val_del (val);
-			return (NULL);
+			return (1);
 		}
 
-		return (val);
+		return (0);
 	}
 	else if (scn_chr (scn, '+')) {
 		ini_scn_scan (scn);
 
 		if (parse_number (scn, val, 0)) {
-			ini_val_del (val);
-			return (NULL);
+			return (1);
 		}
 
-		return (val);
+		return (0);
 	}
 
 	if ((scn_tid (scn) == INI_TOK_IDENT) || (scn_tid (scn) == INI_TOK_STRING)) {
 		ini_val_set_str (val, scn_str (scn));
 		ini_scn_scan (scn);
-		return (val);
+		return (0);
 	}
 
 	if (scn_tid (scn) == INI_TOK_DIGIT) {
 		if (parse_number (scn, val, 0)) {
-			ini_val_del (val);
-			return (NULL);
+			return (1);
 		}
 
-		return (val);
+		return (0);
 	}
 
-	ini_val_del (val);
-
-	return (NULL);
+	return (1);
 }
 
 static
-ini_sct_t *parse_sect1 (scanner_t *scn)
+int parse_sect1 (scanner_t *scn, ini_sct_t *ini)
 {
 	ini_sct_t *sct;
 
 	ini_scn_scan (scn);
 
 	if (scn_tid (scn) != INI_TOK_IDENT) {
-		return (NULL);
+		return (1);
 	}
 
-	sct = ini_sct_new (scn_str (scn));
+	sct = ini_new_sct (ini, scn_str (scn));
+	if (sct == NULL) {
+		return (1);
+	}
 
 	ini_sct_set_format (sct, 1, 0);
 
 	ini_scn_scan (scn);
 
 	if (scn_chr (scn, '{') == 0) {
-		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	ini_scn_scan (scn);
 
 	if (parse_sect_body (scn, sct, 1)) {
-		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	if (scn_chr (scn, '}') == 0) {
-		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	ini_scn_scan (scn);
 
-	return (sct);
+	return (0);
 }
 
 static
-ini_sct_t *parse_sect2 (scanner_t *scn)
+int parse_sect2 (scanner_t *scn, ini_sct_t *ini)
 {
 	int       subsct;
 	ini_sct_t *sct;
@@ -379,18 +372,20 @@ ini_sct_t *parse_sect2 (scanner_t *scn)
 	subsct = 0;
 
 	if (scn_tid (scn) != INI_TOK_IDENT) {
-		return (NULL);
+		return (1);
 	}
 
-	sct = ini_sct_new (scn_str (scn));
+	sct = ini_new_sct (ini, scn_str (scn));
+	if (sct == NULL) {
+		return (1);
+	}
 
 	ini_sct_set_format (sct, 2, 0);
 
 	ini_scn_scan (scn);
 
 	if (scn_chr (scn, ']') == 0) {
-		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	ini_scn_scan (scn);
@@ -401,36 +396,29 @@ ini_sct_t *parse_sect2 (scanner_t *scn)
 	}
 
 	if (parse_sect_body (scn, sct, subsct)) {
-		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	if (subsct) {
 		if (scn_chr (scn, '}') == 0) {
-			ini_sct_del (sct);
-			return (NULL);
+			return (1);
 		}
 
 		ini_scn_scan (scn);
 	}
-	return (sct);
+
+	return (0);
 }
 
 static
 int parse_sect_body (scanner_t *scn, ini_sct_t *sct, int subsct)
 {
-	ini_sct_t *newsct;
-	ini_val_t  *val;
-
 	while (scn_tid (scn) != SCN_TOK_NONE) {
 		if (scn_tok (scn, INI_TOK_IDENT, "section")) {
 			if (subsct) {
-				newsct = parse_sect1 (scn);
-				if (newsct == NULL) {
+				if (parse_sect1 (scn, sct)) {
 					return (1);
 				}
-
-				ini_sct_add_sct (sct, newsct);
 			}
 			else {
 				break;
@@ -438,24 +426,18 @@ int parse_sect_body (scanner_t *scn, ini_sct_t *sct, int subsct)
 		}
 		else if (scn_tok (scn, SCN_TOK_CHAR, "[")) {
 			if (subsct) {
-				newsct = parse_sect2 (scn);
-				if (newsct == NULL) {
+				if (parse_sect2 (scn, sct)) {
 					return (1);
 				}
-
-				ini_sct_add_sct (sct, newsct);
 			}
 			else {
 				break;
 			}
 		}
 		else if (scn_tid (scn) == INI_TOK_IDENT) {
-			val = parse_value (scn);
-			if (val == NULL) {
+			if (parse_value (scn, sct)) {
 				return (1);
 			}
-
-			ini_sct_add_val (sct, val);
 		}
 		else {
 			break;

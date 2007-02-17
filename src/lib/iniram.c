@@ -39,11 +39,12 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 		*addr0 = NULL;
 	}
 
-	sct = ini_sct_find_sct (ini, "ram");
-
-	while (sct != NULL) {
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "ram")) != NULL) {
 		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_uint32 (sct, "base", &base, 0);
+		if (ini_get_uint32 (sct, "address", &base, 0)) {
+			ini_get_uint32 (sct, "base", &base, 0);
+		}
 
 		if (ini_get_uint32 (sct, "sizem", &size, 0) == 0) {
 			size *= 1024UL * 1024UL;
@@ -79,8 +80,6 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 				return (1);
 			}
 		}
-
-		sct = ini_sct_find_next (sct, "ram");
 	}
 
 	return (0);
@@ -93,11 +92,12 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 	const char    *fname;
 	unsigned long base, size;
 
-	sct = ini_sct_find_sct (ini, "rom");
-
-	while (sct != NULL) {
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "rom")) != NULL) {
 		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_uint32 (sct, "base", &base, 0);
+		if (ini_get_uint32 (sct, "address", &base, 0)) {
+			ini_get_uint32 (sct, "base", &base, 0);
+		}
 
 		if (ini_get_uint32 (sct, "sizem", &size, 0) == 0) {
 			size *= 1024UL * 1024UL;
@@ -129,8 +129,6 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 				return (1);
 			}
 		}
-
-		sct = ini_sct_find_next (sct, "rom");
 	}
 
 	return (0);

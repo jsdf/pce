@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/msg.c                                       *
  * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -254,7 +254,7 @@ int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max)
 	}
 
 	if (strcmp (msg, "emu.config.get_string") == 0) {
-		str = ini_get_str_def (pc->cfg, val, "");
+		ini_get_string (pc->cfg, val, &str, "");
 		return (pc_copy_msg (val, str, max));
 	}
 	else if (strcmp (msg, "pit.realtime") == 0) {

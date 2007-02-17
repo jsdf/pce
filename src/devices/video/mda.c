@@ -30,26 +30,25 @@
 #include "mda.h"
 
 
+static unsigned long mda_col[17] = {
+	0x000000, 0x000000, 0xe89050, 0xe89050,
+	0xe89050, 0xe89050, 0xe89050, 0xe89050,
+	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
+	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
+	0xfff0c8
+};
+
+
 static
 void mda_get_colors (mda_t *mda, ini_sct_t *sct)
 {
-	mda->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
-	mda->rgb[1] = ini_get_lng_def (sct, "color1", 0x000000);
-	mda->rgb[2] = ini_get_lng_def (sct, "color2", 0xe89050);
-	mda->rgb[3] = ini_get_lng_def (sct, "color3", 0xe89050);
-	mda->rgb[4] = ini_get_lng_def (sct, "color4", 0xe89050);
-	mda->rgb[5] = ini_get_lng_def (sct, "color5", 0xe89050);
-	mda->rgb[6] = ini_get_lng_def (sct, "color6", 0xe89050);
-	mda->rgb[7] = ini_get_lng_def (sct, "color7", 0xe89050);
-	mda->rgb[8] = ini_get_lng_def (sct, "color8", 0xfff0c8);
-	mda->rgb[9] = ini_get_lng_def (sct, "color9", 0xfff0c8);
-	mda->rgb[10] = ini_get_lng_def (sct, "color10", 0xfff0c8);
-	mda->rgb[11] = ini_get_lng_def (sct, "color11", 0xfff0c8);
-	mda->rgb[12] = ini_get_lng_def (sct, "color12", 0xfff0c8);
-	mda->rgb[13] = ini_get_lng_def (sct, "color13", 0xfff0c8);
-	mda->rgb[14] = ini_get_lng_def (sct, "color14", 0xfff0c8);
-	mda->rgb[15] = ini_get_lng_def (sct, "color15", 0xfff0c8);
-	mda->rgb[16] = ini_get_lng_def (sct, "color16", 0xfff0c8);
+	unsigned i;
+	char     str[16];
+
+	for (i = 0; i < 17; i++) {
+		sprintf (str, "color%u", i);
+		ini_get_uint32 (sct, str, &mda->rgb[i], mda_col[i]);
+	}
 }
 
 static
@@ -68,10 +67,10 @@ void mda_set_colors (mda_t *mda)
 
 video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 {
-	unsigned i;
-	unsigned iobase, membase, memsize;
-	unsigned w, h;
-	mda_t    *mda;
+	unsigned      i;
+	unsigned long iobase, membase, memsize;
+	unsigned      w, h;
+	mda_t         *mda;
 
 	mda = (mda_t *) malloc (sizeof (mda_t));
 	if (mda == NULL) {
@@ -93,15 +92,15 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 		mda->crtc_reg[i] = 0;
 	}
 
-	w = ini_get_lng_def (sct, "w", 640);
-	h = ini_get_lng_def (sct, "h", 400);
+	ini_get_uint16 (sct, "w", &w, 640);
+	ini_get_uint16 (sct, "h", &h, 400);
 
-	mda->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-	mda->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
+	ini_get_uint16 (sct, "mode_80x25_w", &mda->mode_80x25_w, w);
+	ini_get_uint16 (sct, "mode_80x25_h", &mda->mode_80x25_h, h);
 
-	iobase = ini_get_lng_def (sct, "io", 0x3b4L);
-	membase = ini_get_lng_def (sct, "membase", 0xb0000);
-	memsize = ini_get_lng_def (sct, "memsize", 4096);
+	ini_get_uint32 (sct, "io", &iobase, 0x03b4);
+	ini_get_uint32 (sct, "membase", &membase, 0x000b0000);
+	ini_get_uint32 (sct, "memsize", &memsize, 4096);
 
 	if (memsize < 4096) {
 		memsize = 4096;

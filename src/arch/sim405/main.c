@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/main.c                                     *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -286,7 +286,7 @@ int main (int argc, char *argv[])
 		return (1);
 	}
 
-	sct = ini_sct_find_sct (ini, "sim405");
+	sct = ini_next_sct (ini, NULL, "sim405");
 	if (sct == NULL) {
 		sct = ini;
 	}

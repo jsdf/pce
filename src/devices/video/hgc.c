@@ -31,28 +31,27 @@
 #include "hgc.h"
 
 
+static unsigned long hgc_col[16] = {
+	0x000000, 0xe89050, 0xe89050, 0xe89050,
+	0xe89050, 0xe89050, 0xe89050, 0xe89050,
+	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
+	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8
+};
+
+
 static
 void hgc_get_colors (hgc_t *hgc, ini_sct_t *sct)
 {
-	hgc->rgb[0] = ini_get_lng_def (sct, "color0", 0x000000);
-	hgc->rgb[1] = ini_get_lng_def (sct, "color1", 0xe89050);
-	hgc->rgb[2] = ini_get_lng_def (sct, "color2", 0xe89050);
-	hgc->rgb[3] = ini_get_lng_def (sct, "color3", 0xe89050);
-	hgc->rgb[4] = ini_get_lng_def (sct, "color4", 0xe89050);
-	hgc->rgb[5] = ini_get_lng_def (sct, "color5", 0xe89050);
-	hgc->rgb[6] = ini_get_lng_def (sct, "color6", 0xe89050);
-	hgc->rgb[7] = ini_get_lng_def (sct, "color7", 0xe89050);
-	hgc->rgb[8] = ini_get_lng_def (sct, "color8", 0xfff0c8);
-	hgc->rgb[9] = ini_get_lng_def (sct, "color9", 0xfff0c8);
-	hgc->rgb[10] = ini_get_lng_def (sct, "color10", 0xfff0c8);
-	hgc->rgb[11] = ini_get_lng_def (sct, "color11", 0xfff0c8);
-	hgc->rgb[12] = ini_get_lng_def (sct, "color12", 0xfff0c8);
-	hgc->rgb[13] = ini_get_lng_def (sct, "color13", 0xfff0c8);
-	hgc->rgb[14] = ini_get_lng_def (sct, "color14", 0xfff0c8);
-	hgc->rgb[15] = ini_get_lng_def (sct, "color15", 0xfff0c8);
+	unsigned i;
+	char     str[16];
 
-	hgc->rgb[16] = ini_get_lng_def (sct, "gcolor0", 0x000000);
-	hgc->rgb[17] = ini_get_lng_def (sct, "gcolor1", 0xfff0c8);
+	for (i = 0; i < 16; i++) {
+		sprintf (str, "color%u", i);
+		ini_get_uint32 (sct, str, &hgc->rgb[i], hgc_col[i]);
+	}
+
+	ini_get_uint32 (sct, "gcolor0", &hgc->rgb[16], 0x000000);
+	ini_get_uint32 (sct, "gcolor1", &hgc->rgb[17], 0xfff0c8);
 }
 
 static
@@ -83,12 +82,12 @@ void hgc_set_colors (hgc_t *hgc, unsigned mode)
 
 video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 {
-	unsigned i;
-	unsigned iobase, membase, memsize;
-	unsigned w, h;
-	hgc_t    *hgc;
+	unsigned      i;
+	unsigned long iobase, membase, memsize;
+	unsigned      w, h;
+	hgc_t         *hgc;
 
-	hgc = (hgc_t *) malloc (sizeof (hgc_t));
+	hgc = malloc (sizeof (hgc_t));
 	if (hgc == NULL) {
 		return (NULL);
 	}
@@ -108,17 +107,17 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 		hgc->crtc_reg[i] = 0;
 	}
 
-	w = ini_get_lng_def (sct, "w", 640);
-	h = ini_get_lng_def (sct, "h", 400);
+	ini_get_uint16 (sct, "w", &w, 640);
+	ini_get_uint16 (sct, "h", &h, 400);
 
-	hgc->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-	hgc->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
-	hgc->mode_720x348_w = ini_get_lng_def (sct, "mode_720x348_w", w);
-	hgc->mode_720x348_h = ini_get_lng_def (sct, "mode_720x348_h", h);
+	ini_get_uint16 (sct, "mode_80x25_w", &hgc->mode_80x25_w, w);
+	ini_get_uint16 (sct, "mode_80x25_h", &hgc->mode_80x25_h, h);
+	ini_get_uint16 (sct, "mode_720x348_w", &hgc->mode_720x348_w, w);
+	ini_get_uint16 (sct, "mode_720x348_h", &hgc->mode_720x348_h, h);
 
-	iobase = ini_get_lng_def (sct, "io", 0x3b4L);
-	membase = ini_get_lng_def (sct, "membase", 0xb0000L);
-	memsize = ini_get_lng_def (sct, "memsize", 65536L);
+	ini_get_uint32 (sct, "io", &iobase, 0x03b4);
+	ini_get_uint32 (sct, "membase", &membase, 0x000b0000);
+	ini_get_uint32 (sct, "memsize", &memsize, 65536);
 
 	memsize = (memsize < 32768) ? 32768 : 65536;
 

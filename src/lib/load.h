@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/load.h                                             *
  * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +28,8 @@
 
 #include <devices/memory.h>
 
+#include <libini/libini.h>
+
 
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname);
 
@@ -37,6 +38,8 @@ int pce_load_mem_srec (memory_t *mem, const char *fname);
 int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base);
 
 int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr);
+
+int pce_load_mem_ini (memory_t *mem, ini_sct_t *ini);
 
 
 #endif

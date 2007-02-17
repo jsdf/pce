@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/main.c                                     *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,7 +70,7 @@ void prt_version (void)
 	fputs (
 		"pce sims32 version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -167,7 +167,9 @@ ini_sct_t *pce_load_config (const char *fname)
 	if (fname != NULL) {
 		ini = ini_read (fname);
 		if (ini != NULL) {
-			pce_log (MSG_INF, "pce:\tusing config file '%s'\n", fname);
+			pce_log_tag (MSG_INF, "PCE:",
+				"using config file '%s'\n", fname
+			);
 			return (ini);
 		}
 	}
@@ -265,7 +267,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce sims32 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -274,10 +276,9 @@ int main (int argc, char *argv[])
 		return (1);
 	}
 
-	sct = ini_sct_find_sct (ini, "sims32");
+	sct = ini_next_sct (ini, NULL, "sims32");
 	if (sct == NULL) {
-		pce_log (MSG_ERR, "section 'sims32' not found in config file\n");
-		return (1);
+		sct = ini;
 	}
 
 	par_sim = ss32_new (sct);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.h                                     *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -78,7 +78,7 @@ typedef struct ibmpc_t {
 	unsigned           bootdrive;
 
 	/* allow int 1a to get real time */
-	char               support_rtc;
+	int                support_rtc;
 
 	unsigned           fd_cnt;
 	unsigned           hd_cnt;

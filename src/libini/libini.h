@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/libini/libini.h                                        *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,95 +31,60 @@
 #include <string.h>
 
 
-#define LIBINI_VERSION_MAJ 0
-#define LIBINI_VERSION_MIN 1
-#define LIBINI_VERSION_MIC 0
-#define LIBINI_VERSION_STR "0.1.0"
-
-
-/* don't use */
-#define ini_val_get_lng ini_val_get_sint32
-#define ini_val_set_lng ini_val_set_sint32
-#define ini_get_lng ini_get_sint32
-
-
 /*!***************************************************************************
  * @short The value type identifiers
  *****************************************************************************/
-typedef enum {
-	INI_VAL_U32 = 1,
-	INI_VAL_S32 = 2,
-	INI_VAL_DBL = 3,
-	INI_VAL_STR = 4
-} ini_type_t;
-
-
-/*!***************************************************************************
- * @short The value union
- *****************************************************************************/
-typedef union {
-	char          *str;
-	unsigned long u32;
-	long          s32;
-	double        dbl;
-} ini_val_u;
+#define INI_VAL_NONE 0
+#define INI_VAL_U32  1
+#define INI_VAL_S32  2
+#define INI_VAL_DBL  3
+#define INI_VAL_STR  4
 
 
 /*!***************************************************************************
  * @short The value struct
  *****************************************************************************/
 typedef struct ini_val_s {
-	struct ini_val_s *next;
 	char             *name;
-	ini_type_t       type;
-	ini_val_u        val;
+	unsigned         type;
+
+	union {
+		char          *str;
+		unsigned long u32;
+		long          s32;
+		double        dbl;
+	} val;
 } ini_val_t;
 
 
 /*!***************************************************************************
- * @short  Create a new value
- * @param  name The value name
- * @return A pointer to the value or NULL on error
- *
- * The type and value of the new value are undefined
+ * @short The ini section struct
  *****************************************************************************/
-ini_val_t *ini_val_new (const char *name);
+typedef struct ini_sect_s {
+	char              *name;
+	unsigned          format;
+
+	struct ini_sect_s *sct;
+	unsigned          sctcnt;
+
+	ini_val_t         *val;
+	unsigned          valcnt;
+} ini_sct_t;
+
 
 /*!***************************************************************************
- * @short  Delete a list of values
- * @param  val The value
+ * @short Initialize a value
+ * @param name The value name
  *****************************************************************************/
-void ini_val_del (ini_val_t *val);
+void ini_val_init (ini_val_t *val, const char *name);
 
 /*!***************************************************************************
- * @short  Get a value's name
- * @param  val The value
- * @return The value's name
+ * @short Free a value
+ * @param val The value
  *****************************************************************************/
-const char *ini_val_get_name (const ini_val_t *val);
+void ini_val_free (ini_val_t *val);
 
-/*!***************************************************************************
- * @short  Get a value's type
- * @param  val The value
- * @return The value's type
- *****************************************************************************/
-ini_type_t ini_val_get_type (const ini_val_t *val);
-
-/*!***************************************************************************
- * @short  Get the next value in a list of values
- * @param  val The value
- * @return The next value
- *****************************************************************************/
-ini_val_t *ini_val_get_next (const ini_val_t *val);
-
-/*!***************************************************************************
- * @short  Find the next value by name
- * @param  val  The current value
- * @param  name The value name
- * @return A pointer to the value or NULL if the value can't be found
- *****************************************************************************/
-ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name);
-
+void ini_val_set_none (ini_val_t *val);
 
 /*!***************************************************************************
  * @short Set a value to an unsigned long value
@@ -135,6 +99,13 @@ void ini_val_set_uint32 (ini_val_t *val, unsigned long v);
  * @param v   The long value
  *****************************************************************************/
 void ini_val_set_sint32 (ini_val_t *val, long v);
+
+/*!***************************************************************************
+ * @short Set a value to a boolean value
+ * @param val The value
+ * @param v   The boolean value
+ *****************************************************************************/
+void ini_val_set_bool (ini_val_t *val, int v);
 
 /*!***************************************************************************
  * @short Set a value to a double value
@@ -154,7 +125,7 @@ void ini_val_set_str (ini_val_t *val, const char *v);
 /*!***************************************************************************
  * @short  Get an unsigned long value
  * @param  val The value
- * @retval v   The long value
+ * @retval v   The uint32 value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
 int ini_val_get_uint32 (const ini_val_t *val, unsigned long *v);
@@ -162,7 +133,7 @@ int ini_val_get_uint32 (const ini_val_t *val, unsigned long *v);
 /*!***************************************************************************
  * @short  Get a long value
  * @param  val The value
- * @retval v   The long value
+ * @retval v   The sint32 value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
 int ini_val_get_sint32 (const ini_val_t *val, long *v);
@@ -170,7 +141,7 @@ int ini_val_get_sint32 (const ini_val_t *val, long *v);
 /*!***************************************************************************
  * @short  Get an unsigned int value
  * @param  val The value
- * @retval v   The long value
+ * @retval v   The uint16 value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
 int ini_val_get_uint16 (const ini_val_t *val, unsigned *v);
@@ -178,10 +149,18 @@ int ini_val_get_uint16 (const ini_val_t *val, unsigned *v);
 /*!***************************************************************************
  * @short  Get an int value
  * @param  val The value
- * @retval v   The long value
+ * @retval v   The sint16 value
  * @return Zero if successful, nonzero otherwise
  *****************************************************************************/
 int ini_val_get_sint16 (const ini_val_t *val, int *v);
+
+/*!***************************************************************************
+ * @short  Get a boolean value
+ * @param  val The value
+ * @retval v   The boolean value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_val_get_bool (const ini_val_t *val, int *v);
 
 /*!***************************************************************************
  * @short  Get a double value
@@ -200,18 +179,15 @@ const char *ini_val_get_str (const ini_val_t *val);
 
 
 /*!***************************************************************************
- * @short The ini section struct
+ * @short Initialize a section
+ * @param name The section name
  *****************************************************************************/
-typedef struct ini_sect_s {
-	char              *name;
-	unsigned          format;
-	struct ini_sect_s *next;
-	struct ini_sect_s *head;
-	struct ini_sect_s *tail;
-	ini_val_t         *val_head;
-	ini_val_t         *val_tail;
-} ini_sct_t;
+void ini_sct_init (ini_sct_t *sct, const char *name);
 
+/*!***************************************************************************
+ * @short Free a section
+ *****************************************************************************/
+void ini_sct_free (ini_sct_t *sct);
 
 /*!***************************************************************************
  * @short  Create a new section
@@ -226,85 +202,32 @@ ini_sct_t *ini_sct_new (const char *name);
  *****************************************************************************/
 void ini_sct_del (ini_sct_t *sct);
 
-
-/*!***************************************************************************
- * @short Set the section name
- * @param sct  The section
- * @param name The new section name
- *****************************************************************************/
-void ini_sct_set_name (ini_sct_t *sct, const char *name);
-
-/*!***************************************************************************
- * @short  Get the section name
- * @param  sct The section
- * @return The section name
- *****************************************************************************/
-const char *ini_sct_get_name (const ini_sct_t *sct);
-
-
-/*!***************************************************************************
- * @short Set the section format
- * @param sct    The section
- * @param format The new section format
- * @param rec    If true set the format on all subsections
- *****************************************************************************/
 void ini_sct_set_format (ini_sct_t *sct, unsigned format, int rec);
 
+ini_sct_t *ini_get_sct_idx (const ini_sct_t *sct, unsigned i);
+ini_val_t *ini_get_val_idx (const ini_sct_t *sct, unsigned i);
+
+ini_sct_t *ini_next_sct (ini_sct_t *sct, ini_sct_t *val, const char *name);
+ini_val_t *ini_next_val (ini_sct_t *sct, ini_val_t *val, const char *name);
+
+ini_sct_t *ini_get_sct (ini_sct_t *sct, const char *name, int add);
+ini_val_t *ini_get_val (ini_sct_t *sct, const char *name, int add);
+
 /*!***************************************************************************
- * @short  Get the section format
- * @param  sct The section
- * @return The section format
+ * @short  Add a subsection
+ * @param  sct  The parent section
+ * @param  name The subsection name
+ * @return The new section
  *****************************************************************************/
-unsigned ini_sct_get_format (const ini_sct_t *sct);
-
-
-/*!***************************************************************************
- * @short  Get the next section in a section list
- * @param  sct The section
- * @return The next section or NULL if this is the last section
- *****************************************************************************/
-ini_sct_t *ini_sct_get_next (const ini_sct_t *sct);
+ini_sct_t *ini_new_sct (ini_sct_t *sct, const char *name);
 
 /*!***************************************************************************
- * @short  Get the first subsection
- * @param  sct The section
- * @return The first subsection or NULL if there aren't any
- *****************************************************************************/
-ini_sct_t *ini_sct_get_head (const ini_sct_t *sct);
-
-/*!***************************************************************************
- * @short  Get the first value
- * @param  sct The section
- * @return The first value or NULL if there aren't any
- *****************************************************************************/
-ini_val_t *ini_sct_get_val_head (const ini_sct_t *sct);
-
-
-/*!***************************************************************************
- * @short Add a subsection
- * @param sct The section
- * @param add The subsection
- *****************************************************************************/
-void ini_sct_add_sct (ini_sct_t *sct, ini_sct_t *add);
-
-/*!***************************************************************************
- * @short Add a value to a section
- * @param sct The section
- * @param val The value
- *****************************************************************************/
-void ini_sct_add_val (ini_sct_t *sct, ini_val_t *val);
-
-/*!***************************************************************************
- * @short  Add a new value to a section
- * @param  sct  The section
- * @param  name The new value name
+ * @short  Add a value
+ * @param  sct  The parent section
+ * @param  name The value name
  * @return The new value
- *
- * If a value of the given name already exists no new value is created and
- * a pointer to the existing value is returned.
  *****************************************************************************/
-ini_val_t *ini_sct_new_val (ini_sct_t *sct, const char *name);
-
+ini_val_t *ini_new_val (ini_sct_t *sct, const char *name);
 
 /*!***************************************************************************
  * @short  Find a value in an ini tree
@@ -315,7 +238,7 @@ ini_val_t *ini_sct_new_val (ini_sct_t *sct, const char *name);
  * The first value of the given name is returned. Use ini_val_find_next()
  * to find more values of the same name.
  *****************************************************************************/
-ini_val_t *ini_sct_find_val (const ini_sct_t *sct, const char *name);
+ini_val_t *ini_find_val (const ini_sct_t *sct, const char *name);
 
 /*!***************************************************************************
  * @short  Find a section in an ini tree
@@ -323,18 +246,7 @@ ini_val_t *ini_sct_find_val (const ini_sct_t *sct, const char *name);
  * @param  name The section name (as in "sect1.sect2")
  * @return A pointer to the section or NULL if the section can't be found
  *****************************************************************************/
-ini_sct_t *ini_sct_find_sct (ini_sct_t *sct, const char *name);
-
-/*!***************************************************************************
- * @short  Find the next section
- * @param  sct The base section
- * @param  name The section name (as in "sect1")
- * @return A pointer to the section or NULL if the value can't be found
- *
- * This looks for the next section on the same level as the base section.
- * The section name can only be a simple name for now.
- *****************************************************************************/
-ini_sct_t *ini_sct_find_next (ini_sct_t *sct, const char *name);
+ini_sct_t *ini_find_sct (ini_sct_t *sct, const char *name);
 
 
 /*!***************************************************************************
@@ -411,6 +323,14 @@ int ini_get_uint16 (const ini_sct_t *sct, const char *name, unsigned *ret, unsig
 int ini_get_sint16 (const ini_sct_t *sct, const char *name, int *ret, int def);
 
 /*!***************************************************************************
+ * @short  Get a boolean value
+ * @param  val The value
+ * @retval v   The boolean value
+ * @return Zero if successful, nonzero otherwise
+ *****************************************************************************/
+int ini_get_bool (const ini_sct_t *sct, const char *name, int *ret, int def);
+
+/*!***************************************************************************
  * @short  Get a double value
  * @param  sct  The base section
  * @param  name The value name (as in "sect1.sect2.valname")
@@ -426,12 +346,6 @@ int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret, double def
  * @return The string or NULL on error
  *****************************************************************************/
 int ini_get_string (const ini_sct_t *sct, const char *name, const char **ret, const char *def);
-
-const char *ini_get_str (const ini_sct_t *sct, const char *name);
-
-long ini_get_lng_def (ini_sct_t *sct, const char *name, long def);
-double ini_get_dbl_def (ini_sct_t *sct, const char *name, double def);
-const char *ini_get_str_def (ini_sct_t *sct, const char *name, const char *def);
 
 
 /*!***************************************************************************

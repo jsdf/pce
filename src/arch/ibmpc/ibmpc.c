@@ -47,7 +47,7 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->nvr = NULL;
 
-	sct = ini_sct_find_sct (ini, "nvram");
+	sct = ini_next_sct (ini, NULL, "nvram");
 	if (sct == NULL) {
 		return;
 	}
@@ -83,9 +83,11 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t  *sct;
 	const char *model;
 
-	sct = ini_sct_find_sct (ini, "cpu");
+	sct = ini_next_sct (ini, NULL, "cpu");
 
-	ini_get_string (sct, "model", &model, (par_cpu != NULL) ? par_cpu : "8086");
+	ini_get_string (sct, "model", &model,
+		(par_cpu != NULL) ? par_cpu : "8086"
+	);
 
 	if (par_cpu != NULL) {
 		model = par_cpu;
@@ -153,7 +155,7 @@ void pc_setup_dma (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	mem_blk_t     *blk;
 
-	sct = ini_sct_find_sct (ini, "dmac");
+	sct = ini_next_sct (ini, NULL, "dmac");
 
 	ini_get_uint32 (sct, "address", &addr, 0);
 
@@ -186,7 +188,7 @@ void pc_setup_pic (ibmpc_t *pc, ini_sct_t *ini)
 	mem_blk_t     *blk;
 	unsigned long addr;
 
-	sct = ini_sct_find_sct (ini, "pic");
+	sct = ini_next_sct (ini, NULL, "pic");
 
 	ini_get_uint32 (sct, "address", &addr, 0x0020);
 
@@ -219,7 +221,7 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned long addr;
 	int           rt;
 
-	sct = ini_sct_find_sct (ini, "pit");
+	sct = ini_next_sct (ini, NULL, "pit");
 
 	ini_get_uint32 (sct, "address", &addr, 0x0040);
 	ini_get_sint16 (sct, "realtime", &rt, 0);
@@ -262,7 +264,7 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      ram;
 
-	sct = ini_sct_find_sct (ini, "ppi");
+	sct = ini_next_sct (ini, NULL, "ppi");
 
 	if (pc->ram != NULL) {
 		ram = mem_blk_get_size (pc->ram) / 32;
@@ -311,12 +313,12 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->trm = NULL;
 
-	sct = ini_sct_find_sct (ini, "terminal");
+	sct = ini_next_sct (ini, NULL, "terminal");
 	ini_get_string (sct, "driver", &driver, "null");
 
 	if (par_terminal != NULL) {
 		while ((sct != NULL) && (strcmp (par_terminal, driver) != 0)) {
-			sct = ini_sct_find_next (sct, "terminal");
+			sct = ini_next_sct (ini, sct, "terminal");
 			ini_get_string (sct, "driver", &driver, "null");
 		}
 
@@ -469,12 +471,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->video = NULL;
 
-	sct = ini_sct_find_sct (ini, "video");
+	sct = ini_next_sct (ini, NULL, "video");
 	ini_get_string (sct, "device", &dev, "cga");
 
 	if (par_video != NULL) {
 		while ((sct != NULL) && (strcmp (par_video, dev) != 0)) {
-			sct = ini_sct_find_next (sct, "video");
+			sct = ini_next_sct (ini, sct, "video");
 			ini_get_string (sct, "device", &dev, "cga");
 		}
 
@@ -512,14 +514,13 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 {
-	ini_sct_t  *sct;
-	disk_t     *dsk;
+	ini_sct_t *sct;
+	disk_t    *dsk;
 
 	pc->dsk = dsks_new();
 
-	sct = ini_sct_find_sct (ini, "disk");
-
-	while (sct != NULL) {
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "disk")) != NULL) {
 		dsk = ini_get_disk (sct);
 
 		if (dsk != NULL) {
@@ -543,8 +544,6 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 		else {
 			pce_log (MSG_ERR, "*** loading drive failed\n");
 		}
-
-		sct = ini_sct_find_next (sct, "disk");
 	}
 }
 
@@ -555,7 +554,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      irq;
 
-	sct = ini_sct_find_sct (ini, "mouse");
+	sct = ini_next_sct (ini, NULL, "mouse");
 	if (sct == NULL) {
 		return;
 	}
@@ -591,9 +590,12 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	i = 0;
-	sct = ini_sct_find_sct (ini, "parport");
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "parport")) != NULL) {
+		if (i >= 4) {
+			break;
+		}
 
-	while ((i < 4) && (sct != NULL)) {
 		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
 			ini_get_uint32 (sct, "io", &addr, defbase[i]);
 		}
@@ -625,8 +627,6 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 
 			i += 1;
 		}
-
-		sct = ini_sct_find_next (sct, "parport");
 	}
 }
 
@@ -648,9 +648,12 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	i = 0;
-	sct = ini_sct_find_sct (ini, "serial");
+	sct = NULL;
+	while ((sct = ini_next_sct (ini, sct, "serial")) != NULL) {
+		if (i >= 4) {
+			break;
+		}
 
-	while ((i < 4) && (sct != NULL)) {
 		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
 			ini_get_uint32 (sct, "io", &addr, defbase[i]);
 		}
@@ -697,8 +700,6 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 
 			i += 1;
 		}
-
-		sct = ini_sct_find_next (sct, "serial");
 	}
 }
 
@@ -710,7 +711,7 @@ void pc_setup_ems (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->ems = NULL;
 
-	sct = ini_sct_find_sct (ini, "ems");
+	sct = ini_next_sct (ini, NULL, "ems");
 	if (sct == NULL) {
 		return;
 	}
@@ -734,7 +735,7 @@ void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->xms = NULL;
 
-	sct = ini_sct_find_sct (ini, "xms");
+	sct = ini_next_sct (ini, NULL, "xms");
 	if (sct == NULL) {
 		return;
 	}
@@ -755,31 +756,6 @@ void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 	}
 }
 
-static
-void pc_load_mem (ibmpc_t *pc, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	const char    *fmt;
-	const char    *fname;
-	unsigned long addr;
-
-	sct = ini_sct_find_sct (ini, "load");
-
-	while (sct != NULL) {
-		ini_get_string (sct, "format", &fmt, "binary");
-		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_uint32 (sct, "address", &addr, 0);
-
-		if (fname != NULL) {
-			if (pce_load_mem (pc->mem, fname, fmt, addr)) {
-				pce_log (MSG_ERR, "*** loading failed (%s)\n", fname);
-			}
-		}
-
-		sct = ini_sct_find_next (sct, "load");
-	}
-}
-
 ibmpc_t *pc_new (ini_sct_t *ini)
 {
 	unsigned  i;
@@ -797,7 +773,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->bootdrive = 128;
 
-	pc->support_rtc = (ini_get_lng_def (ini, "rtc", 1) != 0);
+	ini_get_bool (ini, "rtc", &pc->support_rtc, 1);
 
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
@@ -841,7 +817,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_ems (pc, ini);
 	pc_setup_xms (pc, ini);
 
-	pc_load_mem (pc, ini);
+	pce_load_mem_ini (pc->mem, ini);
 
 	return (pc);
 }

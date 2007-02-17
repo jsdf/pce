@@ -15,7 +15,7 @@ section pc {
 	# Multiple "ram" sections may be present
 	section ram {
 		# The linear base address
-		base = 0x00000
+		address = 0x00000
 
 		# The size in bytes
 		size = 655360
@@ -33,7 +33,7 @@ section pc {
 		file = "PCE_DIR_DATA/pce/ibmpc.rom"
 
 		# The linear base address
-		base = 0xf0000
+		address = 0xf0000
 
 		# The rom size in bytes
 		size = 65536
@@ -56,13 +56,7 @@ section pc {
 	section load {
 		format = "binary"
 		file = "rom.bin"
-		base = 0xf0000
-	}
-
-	section nvram {
-		file = "nvram.dat"
-		base = 0xa0000
-		size = 65536
+		address = 0xf0000
 	}
 
 	# 8253 PIT

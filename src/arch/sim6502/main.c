@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/main.c                                    *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -892,7 +892,7 @@ int main (int argc, char *argv[])
 
 	par_cfg = ini;
 
-	sct = ini_sct_find_sct (ini, "sim6502");
+	sct = ini_next_sct (ini, NULL, "sim6502");
 	if (sct == NULL) {
 		pce_log (MSG_ERR, "*** section 'sim6502' not found in config file\n");
 		return (1);

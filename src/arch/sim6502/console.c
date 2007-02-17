@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim6502/console.c                                 *
  * Created:       2004-05-31 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,7 +37,7 @@ void con_init (console_t *con, ini_sct_t *sct)
 {
 	unsigned long iobase;
 
-	iobase = ini_get_lng_def (sct, "io", 0xf000U);
+	ini_get_uint32 (sct, "io", &iobase, 0xf000);
 
 	con->io = mem_blk_new (iobase, 4, 0);
 	con->io->ext = con;

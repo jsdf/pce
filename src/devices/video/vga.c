@@ -177,19 +177,19 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
 	vga_set_ega_dac (vga);
 
-	w = ini_get_lng_def (sct, "w", 640);
-	h = ini_get_lng_def (sct, "h", 400);
+	ini_get_uint16 (sct, "w", &w, 640);
+	ini_get_uint16 (sct, "h", &h, 400);
 
-	vga->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-	vga->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
-	vga->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
-	vga->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
-	vga->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
-	vga->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
-	vga->mode_640x350_w = ini_get_lng_def (sct, "mode_640x350_w", w);
-	vga->mode_640x350_h = ini_get_lng_def (sct, "mode_640x350_h", h);
-	vga->mode_640x480_w = ini_get_lng_def (sct, "mode_640x480_w", w);
-	vga->mode_640x480_h = ini_get_lng_def (sct, "mode_640x480_h", h);
+	ini_get_uint16 (sct, "mode_80x25_w", &vga->mode_80x25_w, w);
+	ini_get_uint16 (sct, "mode_80x25_h", &vga->mode_80x25_h, h);
+	ini_get_uint16 (sct, "mode_320x200_w", &vga->mode_320x200_w, w);
+	ini_get_uint16 (sct, "mode_320x200_h", &vga->mode_320x200_h, h);
+	ini_get_uint16 (sct, "mode_640x200_w", &vga->mode_640x200_w, w);
+	ini_get_uint16 (sct, "mode_640x200_h", &vga->mode_640x200_h, h);
+	ini_get_uint16 (sct, "mode_640x350_w", &vga->mode_640x350_w, w);
+	ini_get_uint16 (sct, "mode_640x350_h", &vga->mode_640x350_h, h);
+	ini_get_uint16 (sct, "mode_640x480_w", &vga->mode_640x480_w, w);
+	ini_get_uint16 (sct, "mode_640x480_h", &vga->mode_640x480_h, h);
 
 	pce_log_tag (MSG_INF,
 		"VIDEO:", "VGA addr=0x03b0 membase=0xa000 memsize=262144\n");

@@ -58,7 +58,7 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 	unsigned      w, h;
 	cga_t         *cga;
 
-	cga = (cga_t *) malloc (sizeof (cga_t));
+	cga = malloc (sizeof (cga_t));
 	if (cga == NULL) {
 		return (NULL);
 	}
@@ -79,19 +79,19 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 		cga->crtc_reg[i] = 0;
 	}
 
-	w = ini_get_lng_def (sct, "w", 640);
-	h = ini_get_lng_def (sct, "h", 400);
+	ini_get_uint16 (sct, "w", &w, 640);
+	ini_get_uint16 (sct, "h", &h, 400);
 
-	cga->mode_80x25_w = ini_get_lng_def (sct, "mode_80x25_w", w);
-	cga->mode_80x25_h = ini_get_lng_def (sct, "mode_80x25_h", h);
-	cga->mode_320x200_w = ini_get_lng_def (sct, "mode_320x200_w", w);
-	cga->mode_320x200_h = ini_get_lng_def (sct, "mode_320x200_h", h);
-	cga->mode_640x200_w = ini_get_lng_def (sct, "mode_640x200_w", w);
-	cga->mode_640x200_h = ini_get_lng_def (sct, "mode_640x200_h", h);
+	ini_get_uint16 (sct, "mode_80x25_w", &cga->mode_80x25_w, w);
+	ini_get_uint16 (sct, "mode_80x25_h", &cga->mode_80x25_h, h);
+	ini_get_uint16 (sct, "mode_320x200_w", &cga->mode_320x200_w, w);
+	ini_get_uint16 (sct, "mode_320x200_h", &cga->mode_320x200_h, h);
+	ini_get_uint16 (sct, "mode_640x200_w", &cga->mode_640x200_w, w);
+	ini_get_uint16 (sct, "mode_640x200_h", &cga->mode_640x200_h, h);
 
-	iobase = ini_get_lng_def (sct, "io", 0x3d4L);
-	membase = ini_get_lng_def (sct, "membase", 0xb8000L);
-	memsize = ini_get_lng_def (sct, "memsize", 16384L);
+	ini_get_uint32 (sct, "io", &iobase, 0x03d4);
+	ini_get_uint32 (sct, "membase", &membase, 0x000b8000);
+	ini_get_uint32 (sct, "memsize", &memsize, 16384);
 
 	if (memsize < 16384) {
 		memsize = 16384;

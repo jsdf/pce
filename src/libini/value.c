@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/libini/value.c                                         *
  * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,88 +25,30 @@
 #include <libini/libini.h>
 
 
-ini_val_t *ini_val_new (const char *name)
+void ini_val_init (ini_val_t *val, const char *name)
 {
-	ini_val_t *val;
-
-	val = (ini_val_t *) malloc (sizeof (ini_val_t));
-	if (val == NULL) {
-		return (NULL);
-	}
-
-	val->name = (char *) malloc (strlen (name) + 1);
-	if (val->name == NULL) {
-		free (val);
-		return (NULL);
-	}
-
-	strcpy (val->name, name);
-
-	val->next = NULL;
-	val->type = INI_VAL_U32;
-	val->val.s32 = 0;
-
-	return (val);
+	val->name = strdup (name);
+	val->type = INI_VAL_NONE;
 }
 
-static
 void ini_val_free (ini_val_t *val)
+{
+	ini_val_set_none (val);
+	free (val->name);
+}
+
+void ini_val_set_none (ini_val_t *val)
 {
 	if (val->type == INI_VAL_STR) {
 		free (val->val.str);
-		val->val.str = NULL;
-	}
-}
-
-void ini_val_del (ini_val_t *val)
-{
-	if (val != NULL) {
-		if (val->next != NULL) {
-			ini_val_del (val->next);
-		}
-
-		ini_val_free (val);
-
-		free (val->name);
-		free (val);
-	}
-}
-
-const char *ini_val_get_name (const ini_val_t *val)
-{
-	return (val->name);
-}
-
-ini_type_t ini_val_get_type (const ini_val_t *val)
-{
-	return (val->type);
-}
-
-ini_val_t *ini_val_get_next (const ini_val_t *val)
-{
-	return (val->next);
-}
-
-ini_val_t *ini_val_find_next (const ini_val_t *val, const char *name)
-{
-	if (val != NULL) {
-		val = val->next;
 	}
 
-	while (val != NULL) {
-		if (strcmp (val->name, name) == 0) {
-			return ((ini_val_t *) val);
-		}
-
-		val = val->next;
-	}
-
-	return (NULL);
+	val->type = INI_VAL_NONE;
 }
 
 void ini_val_set_uint32 (ini_val_t *val, unsigned long v)
 {
-	ini_val_free (val);
+	ini_val_set_none (val);
 
 	val->type = INI_VAL_U32;
 	val->val.u32 = v;
@@ -115,15 +56,23 @@ void ini_val_set_uint32 (ini_val_t *val, unsigned long v)
 
 void ini_val_set_sint32 (ini_val_t *val, long v)
 {
-	ini_val_free (val);
+	ini_val_set_none (val);
 
 	val->type = INI_VAL_S32;
 	val->val.s32 = v;
 }
 
+void ini_val_set_bool (ini_val_t *val, int v)
+{
+	ini_val_set_none (val);
+
+	val->type = INI_VAL_S32;
+	val->val.s32 = (v != 0);
+}
+
 void ini_val_set_dbl (ini_val_t *val, double v)
 {
-	ini_val_free (val);
+	ini_val_set_none (val);
 
 	val->type = INI_VAL_DBL;
 	val->val.dbl = v;
@@ -131,16 +80,10 @@ void ini_val_set_dbl (ini_val_t *val, double v)
 
 void ini_val_set_str (ini_val_t *val, const char *v)
 {
-	ini_val_free (val);
+	ini_val_set_none (val);
 
 	val->type = INI_VAL_STR;
-
-	val->val.str = malloc (strlen (v) + 1);
-	if (val->val.str == NULL) {
-		return;
-	}
-
-	strcpy (val->val.str, v);
+	val->val.str = strdup (v);
 }
 
 int ini_val_get_uint32 (const ini_val_t *val, unsigned long *v)
@@ -171,7 +114,7 @@ int ini_val_get_sint32 (const ini_val_t *val, long *v)
 	}
 
 	if (val->type == INI_VAL_U32) {
-		if (val->val.u32 > 0x7fffffffUL) {
+		if (val->val.u32 > 0x7fffffff) {
 			return (1);
 		}
 		*v = val->val.u32;
@@ -197,7 +140,7 @@ int ini_val_get_uint16 (const ini_val_t *val, unsigned *v)
 		return (1);
 	}
 
-	*v = tmp;
+	*v = tmp & 0xffff;
 
 	return (0);
 }
@@ -217,6 +160,26 @@ int ini_val_get_sint16 (const ini_val_t *val, int *v)
 	*v = tmp;
 
 	return (0);
+}
+
+int ini_val_get_bool (const ini_val_t *val, int *v)
+{
+	if (val->type == INI_VAL_S32) {
+		*v = (val->val.s32 != 0);
+		return (0);
+	}
+
+	if (val->type == INI_VAL_U32) {
+		*v = (val->val.u32 != 0);
+		return (0);
+	}
+
+	if (val->type == INI_VAL_DBL) {
+		*v = (val->val.dbl != 0.0);
+		return (0);
+	}
+
+	return (1);
 }
 
 int ini_val_get_dbl (const ini_val_t *val, double *v)
