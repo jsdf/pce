@@ -2234,7 +2234,7 @@ void op80 (arm_t *c)
 	unsigned i;
 	unsigned regs, regn;
 	unsigned mode;
-	uint32_t addr1, addr2;
+	uint32_t addr, base, writeback;
 	uint32_t val;
 
 	p = arm_get_bit (c->ir, 24);
@@ -2246,18 +2246,34 @@ void op80 (arm_t *c)
 	regs = arm_get_bits (c->ir, 0, 16);
 	regn = arm_bitcnt32 (regs);
 	mode = arm_get_cpsr_m (c);
-
-	addr1 = arm_get_rn (c, c->ir);
-	addr2 = u ? (addr1 + 4 * regn) : (addr1 - 4 * regn);
+	base = arm_get_rn (c, c->ir);
 
 	if (u) {
-		addr1 = addr1 + (p ? 4 : 0);
+		writeback = base + 4 * regn;
+
+		if (p) {
+			/* ib */
+			addr = base + 4;
+		}
+		else {
+			/* ia */
+			addr = base;
+		}
 	}
 	else {
-		addr1 = addr2 + (p ? 0 : 4);
+		writeback = base - 4 * regn;
+
+		if (p) {
+			/* db */
+			addr = base - 4 * regn;
+		}
+		else {
+			/* da */
+			addr = base - 4 * regn + 4;
+		}
 	}
 
-	if (s && !(regs & 0x8000U)) {
+	if (s && !(regs & 0x8000)) {
 		/* access user mode registers */
 		arm_set_reg_map (c, ARM_MODE_USR);
 	}
@@ -2265,7 +2281,7 @@ void op80 (arm_t *c)
 	for (i = 0; i < 16; i++) {
 		if (regs & (1U << i)) {
 			if (l) {
-				if (arm_dload32 (c, addr1 & 0xfffffffcUL, &val)) {
+				if (arm_dload32 (c, addr & 0xfffffffc, &val)) {
 					return;
 				}
 
@@ -2274,21 +2290,17 @@ void op80 (arm_t *c)
 			else {
 				val = arm_get_reg_pc (c, i, 8);
 
-				if (arm_dstore32 (c, addr1 & 0xfffffffcUL, val)) {
+				if (arm_dstore32 (c, addr & 0xfffffffc, val)) {
 					return;
 				}
 			}
 
-			addr1 += 4;
+			addr += 4;
 		}
 	}
 
-	if (w) {
-		arm_set_rn (c, c->ir, addr2);
-	}
-
 	if (s) {
-		if (regs & 0x8000U) {
+		if (regs & 0x8000) {
 			arm_write_cpsr (c, arm_get_spsr (c), 1);
 		}
 		else {
@@ -2296,7 +2308,11 @@ void op80 (arm_t *c)
 		}
 	}
 
-	arm_set_clk (c, (l && (regs & 0x8000U)) ? 0 : 4, 1);
+	if (w) {
+		arm_set_rn (c, c->ir, writeback);
+	}
+
+	arm_set_clk (c, (l && (regs & 0x8000)) ? 0 : 4, 1);
 }
 
 /* A0: b[cond] target */
