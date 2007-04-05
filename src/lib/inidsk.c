@@ -35,7 +35,7 @@
 #include <devices/block/blkraw.h>
 
 
-int dsk_insert (disks_t *dsks, const char *str)
+int dsk_insert (disks_t *dsks, const char *str, int eject)
 {
 	unsigned i;
 	unsigned drv;
@@ -67,6 +67,16 @@ int dsk_insert (disks_t *dsks, const char *str)
 	}
 
 	dsk_set_drive (dsk, drv);
+
+	if (eject) {
+		disk_t *old;
+
+		old = dsks_get_disk (dsks, drv);
+		if (old != NULL) {
+			dsks_rmv_disk (dsks, old);
+			dsk_del (old);
+		}
+	}
 
 	if (dsks_add_disk (dsks, dsk)) {
 		dsk_del (dsk);

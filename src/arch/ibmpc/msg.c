@@ -217,7 +217,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		return (0);
 	}
 	else if (msg_is_message ("emu.disk.insert", msg)) {
-		if (dsk_insert (pc->dsk, val)) {
+		if (dsk_insert (pc->dsk, val, 1)) {
 			return (1);
 		}
 
