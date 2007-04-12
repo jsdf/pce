@@ -573,7 +573,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
 	pc->trm->mse_ext = pc->mse;
-	pc->trm->set_mse = (trm_set_mse_f) &mse_set;
+	pc->trm->set_mse = (void *) mse_set;
 }
 
 static
