@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.c                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -188,13 +188,14 @@ int cmd_match_ident (cmd_t *cmd, char *str, unsigned max)
 
 	cmd_match_space (cmd);
 
-	if (cmd->str[cmd->i] != '%') {
-		return (0);
-	}
-
 	i = cmd->i;
-	n = 1;
-	*(str++) = cmd->str[i++];
+	n = 0;
+
+	if (cmd->str[cmd->i] == '%') {
+		*(str++) = '%';
+		i += 1;
+		n += 1;
+	}
 
 	while (cmd->str[i] != 0) {
 		if (str_is_ident (cmd->str[i]) == 0) {
@@ -386,19 +387,49 @@ int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned i;
-	char     ident[256];
+	char     str[256];
 
 	cmd_match_space (cmd);
 
 	i = cmd->i;
 
-	if (cmd_match_ident (cmd, ident, 256)) {
+	if (cmd_match_ident (cmd, str, 256)) {
+		/*
+		 * If the identifier does not start with '%', check
+		 * if it could be a constant.
+		 */
+		if (str[0] != '%') {
+			unsigned t;
+
+			t = cmd->i;
+			cmd->i = i;
+
+			if (cmd_match_expr_const (cmd, val, base)) {
+				/* check if the constant is at least as long
+				   as the identifier. */
+				if (cmd->i >= t) {
+					return (1);
+				}
+			}
+
+			cmd->i = t;
+		}
+
 		if (cmd_match_sym != NULL) {
-			if (cmd_match_sym (cmd_match_sym_ext, ident, val)) {
+			unsigned j;
+
+			j = 0;
+			while (str[j] == '%') {
+				j += 1;
+			}
+
+			if (cmd_match_sym (cmd_match_sym_ext, str + j, val)) {
 				*val &= 0xffffffff;
 				return (1);
 			}
 		}
+
+		cmd->i = i;
 	}
 
 	if (cmd_match (cmd, "(")) {
