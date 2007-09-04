@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/int13.c                                     *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -265,6 +264,12 @@ void dsk_int13_05 (disks_t *dsks, e8086_t *cpu)
 	}
 	else {
 		fill = 0xf6;
+	}
+
+	if (h >= dsk->h) {
+		/* don't fail if formatting a non-existing head */
+		dsk_int13_set_status (dsks, cpu, 0x00);
+		return;
 	}
 
 	memset (buf, fill, 512);
