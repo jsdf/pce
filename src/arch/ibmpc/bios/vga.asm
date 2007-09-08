@@ -5,8 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/vga.asm                                *
 ;* Created:       2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-03-28 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+;* Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -82,327 +81,326 @@ section .text
 ;-----------------------------------------------------------------------------
 
 rom_start:
-  dw      0xaa55
-  db      (rom_end - rom_start + 511) / 512
+	dw	0xaa55
+	db	(rom_end - rom_start + 511) / 512
 
 init:
-  jmp     start
+	jmp	start
 
-  set_pos 0x1d
-  db      " IBM "
+	set_pos	0x1d
+	db	" IBM "
 
 start:
-  push    ax
+	push	ax
 
-  pceh    PCEH_GET_VIDEO
-  cmp     ax, 4
-  jne     .done
+	pceh	PCEH_GET_VIDEO
+	cmp	ax, 4
+	jne	.done
 
-  call    ega_init
+	call	ega_init
 
 .done
-  pop     ax
-  retf
+	pop	ax
+	retf
 
 
-msg_init  db "PCE VGA BIOS version ", PCE_VERSION_STR
-          db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
-          db 13, 10, 13, 10, 0
+msg_init	db "PCE VGA BIOS version ", PCE_VERSION_STR
+		db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
+		db 13, 10, 13, 10, 0
 
 
-seg0000   dw 0x0000
-seg0040   dw 0x0040
-sega000   dw 0xa000
-segb000   dw 0xb000
-segb800   dw 0xb800
+seg0000		dw 0x0000
+seg0040		dw 0x0040
+sega000		dw 0xa000
+segb000		dw 0xb000
+segb800		dw 0xb800
 
-cursor14  db 0, 2, 4, 6, 8, 10, 11, 13, 14
+cursor14	db 0, 2, 4, 6, 8, 10, 11, 13, 14
 
-modemap   db 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x06, 0x07
-          db 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0d, 0x0d
-          db 0x0d, 0x0d, 0x0d, 0x13
+modemap		db 0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x06, 0x07
+		db 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0d, 0x0d
+		db 0x0d, 0x0d, 0x0d, 0x13
 
-pal_ega:
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x00
+pal_ega		db 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07
+		db 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+		db 0x00
 
 pal_vga:
 %include "pal13.inc"
 
 
 mode00:
-  db      40, 24, 14
-  dw      2000
-  db      0x00, 0x03, 0x00, 0x02                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x00, 0x00, 0x0f, 0x00
-  db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
-  db      0x00
+	db	40, 24, 14
+	dw	2000
+	db	0x00, 0x03, 0x00, 0x02		; ts
+	db	0x43				; misc out
+	db	0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x00, 0x00, 0x0f, 0x00
+	db	0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00	; gdc
+	db	0x00
 
 mode01:
-  db      40, 24, 14
-  dw      2000
-  db      0x00, 0x03, 0x00, 0x02                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x00, 0x00, 0x0f, 0x00
-  db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
-  db      0x00
+	db	40, 24, 14
+	dw	2000
+	db	0x00, 0x03, 0x00, 0x02		; ts
+	db	0x43				; misc out
+	db	0x00, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0xa3
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x00, 0x00, 0x0f, 0x00
+	db	0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00	; gdc
+	db	0x00
 
 mode02:
-  db      80, 24, 14
-  dw      4000
-  db      0x00, 0x03, 0x00, 0x02                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x00, 0x00, 0x0f, 0x00
-  db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 14
+	dw	4000
+	db	0x00, 0x03, 0x00, 0x02		; ts
+	db	0x43				; misc out
+	db	0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x00, 0x00, 0x0f, 0x00
+	db	0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00	; gdc
+	db	0x00
 
 mode03:
-  db      80, 24, 14
-  dw      4000
-  db      0x00, 0x03, 0x00, 0x02                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x00, 0x00, 0x0f, 0x00
-  db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 14
+	dw	4000
+	db	0x00, 0x03, 0x00, 0x02		; ts
+	db	0x43				; misc out
+	db	0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x00, 0x00, 0x0f, 0x00
+	db	0x0f, 0x0f, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00	; gdc
+	db	0x00
 
 mode04:
-  db      40, 24, 8
-  dw      8192
-  db      0x00, 0x03, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
-  db      0x00
-  db      0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06        ; atc
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x01, 0x00, 0x03, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00        ; gdc
-  db      0xff
+	db	40, 24, 8
+	dw	8192
+	db	0x00, 0x03, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+	db	0x00
+	db	0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06	; atc
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x01, 0x00, 0x03, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00	; gdc
+	db	0xff
 
 mode05:
-  db      40, 24, 8
-  dw      8192
-  db      0x00, 0x03, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
-  db      0x00
-  db      0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06        ; atc
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x01, 0x00, 0x03, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00        ; gdc
-  db      0xff
+	db	40, 24, 8
+	dw	8192
+	db	0x00, 0x03, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+	db	0x00
+	db	0x00, 0x1b, 0x2d, 0x3f, 0x00, 0x03, 0x04, 0x06	; atc
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x01, 0x00, 0x03, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x0e, 0x00	; gdc
+	db	0xff
 
 mode06:
-  db      80, 24, 8
-  dw      8192
-  db      0x00, 0x01, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
-  db      0x00
-  db      0x00, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; atc
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x01, 0x00, 0x01, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00        ; gdc
-  db      0xff
+	db	80, 24, 8
+	dw	8192
+	db	0x00, 0x01, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x01
+	db	0x00
+	db	0x00, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; atc
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x01, 0x00, 0x01, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00	; gdc
+	db	0xff
 
 mode07:
-  db      80, 24, 14
-  dw      4000
-  db      0x00, 0x03, 0x00, 0x02                                ; ts
-  db      0x42                                                  ; misc out
-  db      0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
-  db      0x00
-  db      0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07        ; atc
-  db      0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f
-  db      0x00, 0x00, 0x0f, 0x00
-  db      0x0f, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xa3        ; gdc
-  db      0x00
+	db	80, 24, 14
+	dw	4000
+	db	0x00, 0x03, 0x00, 0x02		; ts
+	db	0x42				; misc out
+	db	0x00, 0x4f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x0d, 0x0b, 0x0d, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0xa3
+	db	0x00
+	db	0x00, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07	; atc
+	db	0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3f
+	db	0x00, 0x00, 0x0f, 0x00
+	db	0x0f, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xa3	; gdc
+	db	0x00
 
 mode08:
-  times   64 db 0x00
+	times	64 db 0x00
 
 mode09:
-  times   64 db 0x00
+	times	64 db 0x00
 
 mode0a:
-  times   64 db 0x00
+	times	64 db 0x00
 
 mode0b:
-  times   64 db 0x00
+	times	64 db 0x00
 
 mode0c:
-  times   64 db 0x00
+	times	64 db 0x00
 
 mode0d:
-  db      40, 24, 8
-  dw      8192
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	40, 24, 8
+	dw	8192
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 mode0e:
-  db      80, 24, 8
-  dw      16384
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 8
+	dw	16384
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 mode0f:
-  db      80, 24, 14
-  dw      28000
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x05, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 14
+	dw	28000
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x05, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 mode10:
-  db      80, 24, 14
-  dw      28000
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 14
+	dw	28000
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 
 mode11:
-  db      80, 24, 16
-  dw      38400
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 16
+	dw	38400
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 
 mode12:
-  db      80, 24, 16
-  dw      38400
-  db      0x00, 0x00, 0x00, 0x06                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07        ; atc
-  db      0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; gdc
-  db      0x00
+	db	80, 24, 16
+	dw	38400
+	db	0x00, 0x00, 0x00, 0x06		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07	; atc
+	db	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; gdc
+	db	0x00
 
 mode13:
-  db      40, 24, 8
-  dw      64000
-  db      0x00, 0x0f, 0x00, 0x0e                                ; ts
-  db      0x43                                                  ; misc out
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00        ; crtc
-  db      0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
-  db      0x00, 0x00, 0x00, 0x28, 0x60, 0x00, 0x00, 0x00
-  db      0x00
-  db      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07        ; atc
-  db      0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
-  db      0x01, 0x00, 0x0f, 0x00
-  db      0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x01, 0x00        ; gdc
-  db      0xff
+	db	40, 24, 8
+	dw	64000
+	db	0x00, 0x0f, 0x00, 0x0e		; ts
+	db	0x43				; misc out
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	; crtc
+	db	0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00
+	db	0x00, 0x00, 0x00, 0x28, 0x60, 0x00, 0x00, 0x00
+	db	0x00
+	db	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07	; atc
+	db	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+	db	0x01, 0x00, 0x0f, 0x00
+	db	0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x01, 0x00	; gdc
+	db	0xff
 
 
 ; display combination code table
 dcct:
-  db      0x01                          ; entry count
-  db      0x00                          ; version
-  db      0x08                          ; max val
-  db      0x00                          ; reserved
+	db	0x01				; entry count
+	db	0x00				; version
+	db	0x08				; max val
+	db	0x00				; reserved
 
-  db      0x08, 0x00
+	db	0x08, 0x00
 
 
 ; secondary video save pointer table
 vspt2:
-  dw      0x1a
-  dw      dcct, VGA_BIOS_CS
-  dw      0, 0                          ; second alphanumeric character set override
-  dw      0, 0                          ; user palette profile table
-  dw      0, 0
-  dw      0, 0
-  dw      0, 0
+	dw	0x1a
+	dw	dcct, VGA_BIOS_CS
+	dw	0, 0				; second alphanumeric character set override
+	dw	0, 0				; user palette profile table
+	dw	0, 0
+	dw	0, 0
+	dw	0, 0
 
 
 ptr00a8:
-  dw      mode00, VGA_BIOS_CS           ; video parameter table
-  dw      pal_ega, VGA_BIOS_CS          ; parameter dynamic save area
-  dw      0, 0                          ; alphanumeric character set override
-  dw      0, 0                          ; graphics character set override
-  dw      vspt2, VGA_BIOS_CS            ; secondary video save pointer table
-  dw      0, 0
-  dw      0, 0
+	dw	mode00, VGA_BIOS_CS		; video parameter table
+	dw	pal_ega, VGA_BIOS_CS		; parameter dynamic save area
+	dw	0, 0				; alphanumeric character set override
+	dw	0, 0				; graphics character set override
+	dw	vspt2, VGA_BIOS_CS		; secondary video save pointer table
+	dw	0, 0
+	dw	0, 0
 
 
 %include "fnt8x8.inc"
@@ -411,1041 +409,1041 @@ ptr00a8:
 
 
 int10_00_func:
-  dw      int10_00_00
-  dw      int10_00_01
-  dw      int10_00_02
-  dw      int10_00_03
-  dw      int10_00_04
-  dw      int10_00_05
-  dw      int10_00_06
-  dw      int10_00_07
-  dw      int10_00_08
-  dw      int10_00_09
-  dw      int10_00_0a
-  dw      int10_00_0b
-  dw      int10_00_0c
-  dw      int10_00_0d
-  dw      int10_00_0e
-  dw      int10_00_0f
-  dw      int10_00_10
-  dw      int10_00_11
-  dw      int10_00_12
-  dw      int10_00_13
+	dw	int10_00_00
+	dw	int10_00_01
+	dw	int10_00_02
+	dw	int10_00_03
+	dw	int10_00_04
+	dw	int10_00_05
+	dw	int10_00_06
+	dw	int10_00_07
+	dw	int10_00_08
+	dw	int10_00_09
+	dw	int10_00_0a
+	dw	int10_00_0b
+	dw	int10_00_0c
+	dw	int10_00_0d
+	dw	int10_00_0e
+	dw	int10_00_0f
+	dw	int10_00_10
+	dw	int10_00_11
+	dw	int10_00_12
+	dw	int10_00_13
 int10_00_funcend:
 
 int10_10_func:
-  dw      int10_1000
-  dw      int10_1001
-  dw      int10_1002
-  dw      int10_1003
-  dw      int10_1004
-  dw      int10_1005
-  dw      int10_1006
-  dw      int10_1007
-  dw      int10_1008
-  dw      int10_1009
-  dw      int10_100a
-  dw      int10_100b
-  dw      int10_100c
-  dw      int10_100d
-  dw      int10_100e
-  dw      int10_100f
-  dw      int10_1010
-  dw      int10_1011
-  dw      int10_1012
-  dw      int10_1013
-  dw      int10_1014
-  dw      int10_1015
-  dw      int10_1016
-  dw      int10_1017
-  dw      int10_1018
-  dw      int10_1019
-  dw      int10_101a
-  dw      int10_101b
+	dw	int10_1000
+	dw	int10_1001
+	dw	int10_1002
+	dw	int10_1003
+	dw	int10_1004
+	dw	int10_1005
+	dw	int10_1006
+	dw	int10_1007
+	dw	int10_1008
+	dw	int10_1009
+	dw	int10_100a
+	dw	int10_100b
+	dw	int10_100c
+	dw	int10_100d
+	dw	int10_100e
+	dw	int10_100f
+	dw	int10_1010
+	dw	int10_1011
+	dw	int10_1012
+	dw	int10_1013
+	dw	int10_1014
+	dw	int10_1015
+	dw	int10_1016
+	dw	int10_1017
+	dw	int10_1018
+	dw	int10_1019
+	dw	int10_101a
+	dw	int10_101b
 int10_10_funcend:
 
 int10_func:
-  dw      int10_00
-  dw      int10_01
-  dw      int10_02
-  dw      int10_03
-  dw      int10_04
-  dw      int10_05
-  dw      int10_06
-  dw      int10_07
-  dw      int10_08
-  dw      int10_09
-  dw      int10_0a
-  dw      int10_0b
-  dw      int10_0c
-  dw      int10_0d
-  dw      int10_0e
-  dw      int10_0f
-  dw      int10_10
-  dw      int10_11
-  dw      int10_12
-  dw      int10_13
-  dw      int10_14
-  dw      int10_15
-  dw      int10_16
-  dw      int10_17
-  dw      int10_18
-  dw      int10_19
-  dw      int10_1a
-  dw      int10_1b
-  dw      int10_1c
+	dw	int10_00
+	dw	int10_01
+	dw	int10_02
+	dw	int10_03
+	dw	int10_04
+	dw	int10_05
+	dw	int10_06
+	dw	int10_07
+	dw	int10_08
+	dw	int10_09
+	dw	int10_0a
+	dw	int10_0b
+	dw	int10_0c
+	dw	int10_0d
+	dw	int10_0e
+	dw	int10_0f
+	dw	int10_10
+	dw	int10_11
+	dw	int10_12
+	dw	int10_13
+	dw	int10_14
+	dw	int10_15
+	dw	int10_16
+	dw	int10_17
+	dw	int10_18
+	dw	int10_19
+	dw	int10_1a
+	dw	int10_1b
+	dw	int10_1c
 int10_funcend:
 
 
 ; write AH into register AL at DX
 ega_set_reg:
-  out     dx, ax
-  ret
+	out	dx, ax
+	ret
 
 
 ; write CX bytes from DS:SI into index/data DX, starting at AL
 ega_set_regs:
-  push    ax
-  push    cx
-  push    si
+	push	ax
+	push	cx
+	push	si
 
 .next:
-  mov     ah, [si]
-  inc     si
-  out     dx, ax
-  inc     al
-  loop    .next
+	mov	ah, [si]
+	inc	si
+	out	dx, ax
+	inc	al
+	loop	.next
 
-  pop     si
-  pop     cx
-  pop     ax
-  ret
+	pop	si
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
 
 ; set page offset AX
 crtc_set_page_ofs:
-  push    ax
-  push    cx
-  push    dx
+	push	ax
+	push	cx
+	push	dx
 
-  mov     cx, ax
-  mov     dx, CRTC_INDEX
-  mov     al, CRTC_OFFS_HI
-  mov     ah, ch
-  out     dx, ax
-  mov     al, CRTC_OFFS_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	cx, ax
+	mov	dx, CRTC_INDEX
+	mov	al, CRTC_OFFS_HI
+	mov	ah, ch
+	out	dx, ax
+	mov	al, CRTC_OFFS_LO
+	mov	ah, cl
+	out	dx, ax
 
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 ; set cursor position AX
 crtc_set_curs_pos:
-  push    ax
-  push    cx
-  push    dx
+	push	ax
+	push	cx
+	push	dx
 
-  mov     cx, ax
-  mov     dx, CRTC_INDEX
-  mov     al, CRTC_CPOS_HI
-  mov     ah, ch
-  out     dx, ax
-  mov     al, CRTC_CPOS_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	cx, ax
+	mov	dx, CRTC_INDEX
+	mov	al, CRTC_CPOS_HI
+	mov	ah, ch
+	out	dx, ax
+	mov	al, CRTC_CPOS_LO
+	mov	ah, cl
+	out	dx, ax
 
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
 
 ; set AH into ATC register AL
 atc_set_reg:
-  push    ax
-  push    cx
-  push    dx
+	push	ax
+	push	cx
+	push	dx
 
-  mov     cx, ax
+	mov	cx, ax
 
-  cli
+	cli
 
-  mov     dx, 0x3da
-  in      al, dx
+	mov	dx, 0x3da
+	in	al, dx
 
-  mov     dx, ATC_INDEX
-  mov     al, cl
-  and     al, 0x1f
-  out     dx, al
-  mov     al, ch
-  out     dx, al
+	mov	dx, ATC_INDEX
+	mov	al, cl
+	and	al, 0x1f
+	out	dx, al
+	mov	al, ch
+	out	dx, al
 
-  mov     al, 0x20
-  out     dx, al
+	mov	al, 0x20
+	out	dx, al
 
-  sti
+	sti
 
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 ; read ATC register AL into AH
 atc_get_reg:
-  push    cx
-  push    dx
+	push	cx
+	push	dx
 
-  mov     cl, al
+	mov	cl, al
 
-  cli
+	cli
 
-  mov     dx, 0x3da                     ; clear flip/flop
-  in      al, dx
+	mov	dx, 0x3da			; clear flip/flop
+	in	al, dx
 
-  mov     dx, ATC_INDEX
-  mov     al, cl
-  and     al, 0x1f
-  out     dx, al                        ; index
+	mov	dx, ATC_INDEX
+	mov	al, cl
+	and	al, 0x1f
+	out	dx, al				; index
 
-  inc     dx
-  in      al, dx                        ; read register
-  mov     ch, al
+	inc	dx
+	in	al, dx				; read register
+	mov	ch, al
 
-  mov     dx, 0x3da                     ; clear flip/flop
-  in      al, dx
+	mov	dx, 0x3da			; clear flip/flop
+	in	al, dx
 
-  mov     dx, ATC_INDEX
-  mov     al, 0x20
-  out     dx, al
+	mov	dx, ATC_INDEX
+	mov	al, 0x20
+	out	dx, al
 
-  sti
+	sti
 
-  mov     ax, cx
+	mov	ax, cx
 
-  pop     dx
-  pop     cx
-  ret
+	pop	dx
+	pop	cx
+	ret
 
 ; write CX bytes from DS:SI starting at AL
 atc_set_regs:
-  push    ax
-  push    cx
-  push    si
+	push	ax
+	push	cx
+	push	si
 
 .next:
-  mov     ah, [si]
-  inc     si
-  call    atc_set_reg
+	mov	ah, [si]
+	inc	si
+	call	atc_set_reg
 
-  inc     al
-  loop    .next
+	inc	al
+	loop	.next
 
-  pop     si
-  pop     cx
-  pop     ax
-  ret
+	pop	si
+	pop	cx
+	pop	ax
+	ret
 
 ; read CX bytes to ES:DI starting at AL
 atc_get_regs:
-  push    ax
-  push    cx
-  push    di
+	push	ax
+	push	cx
+	push	di
 
-  cli
+	cli
 
 .next:
-  call    atc_get_reg
-  mov     [es:di], ah
-  inc     di
-  loop    .next
+	call	atc_get_reg
+	mov	[es:di], ah
+	inc	di
+	loop	.next
 
-  pop     di
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
 
 ; write [AH DH DL] into DAC index AL
 dac_set_color:
-  push    ax
-  push    cx
-  push    dx
+	push	ax
+	push	cx
+	push	dx
 
-  mov     cx, dx
+	mov	cx, dx
 
-  cli
-  mov     dx, DAC_WRAD
-  out     dx, al
+	cli
+	mov	dx, DAC_WRAD
+	out	dx, al
 
-  mov     dx, DAC_RGBV
-  mov     al, ah
-  out     dx, al
-  mov     al, ch
-  out     dx, al
-  mov     al, cl
-  out     dx, al
-  sti
+	mov	dx, DAC_RGBV
+	mov	al, ah
+	out	dx, al
+	mov	al, ch
+	out	dx, al
+	mov	al, cl
+	out	dx, al
+	sti
 
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 ; read DAC entry AL into [AH DH DL]
 dac_get_color:
-  push    cx
+	push	cx
 
-  cli
+	cli
 
-  mov     dx, DAC_RDAD
-  out     dx, al
+	mov	dx, DAC_RDAD
+	out	dx, al
 
-  mov     dx, DAC_RGBV
-  in      al, dx
-  mov     ah, al
-  in      al, dx
-  mov     ch, al
-  in      al, dx
-  mov     cl, al
+	mov	dx, DAC_RGBV
+	in	al, dx
+	mov	ah, al
+	in	al, dx
+	mov	ch, al
+	in	al, dx
+	mov	cl, al
 
-  sti
+	sti
 
-  mov     dx, cx
+	mov	dx, cx
 
-  pop     cx
-  ret
+	pop	cx
+	ret
 
 ; write CX DAC entries from DS:SI starting at AL
 dac_set_colors:
-  push    ax
-  push    cx
-  push    dx
-  push    si
+	push	ax
+	push	cx
+	push	dx
+	push	si
 
 .next:
-  mov     ah, [si]
-  mov     dh, [si + 1]
-  mov     dl, [si + 2]
-  call    dac_set_color
-  add     si, 3
-  inc     al
-  loop    .next
+	mov	ah, [si]
+	mov	dh, [si + 1]
+	mov	dl, [si + 2]
+	call	dac_set_color
+	add	si, 3
+	inc	al
+	loop	.next
 
-  pop     si
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	si
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 ; read CX DAC entries starting at AL to ES:DI
 dac_get_colors:
-  push    ax
-  push    cx
-  push    dx
-  push    di
+	push	ax
+	push	cx
+	push	dx
+	push	di
 
 .next:
-  call    dac_get_color
-  mov     [es:di], ah
-  mov     [es:di + 1], dh
-  mov     [es:di + 2], dl
-  add     di, 3
-  inc     al
-  loop    .next
+	call	dac_get_color
+	mov	[es:di], ah
+	mov	[es:di + 1], dh
+	mov	[es:di + 2], dl
+	add	di, 3
+	inc	al
+	loop	.next
 
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
 
 ; get mode in AH
 get_modemap:
-  push    bx
-  mov     bl, [BIOS_MODE]
-  and     bx, 0x007f
-  mov     ah, [cs:bx + modemap]
-  pop     bx
-  ret
+	push	bx
+	mov	bl, [BIOS_MODE]
+	and	bx, 0x007f
+	mov	ah, [cs:bx + modemap]
+	pop	bx
+	ret
 
 
 ; get video mem segment in AX
 get_segm:
-  mov     ax, 0xb800
-  cmp     word [BIOS_CRTC], 0x03b4
-  jne     .done
+	mov	ax, 0xb800
+	cmp	word [BIOS_CRTC], 0x03b4
+	jne	.done
 
-  mov     ah, 0xb0
+	mov	ah, 0xb0
 
 .done:
-  ret
+	ret
 
 
 ; Get page AL offset in AX
 get_pofs:
-  push    dx
-  and     ax, 0x0007
-  mul     word [BIOS_SIZE]
-  pop     dx
-  shl     ax, 1
-  ret
+	push	dx
+	and	ax, 0x0007
+	mul	word [BIOS_SIZE]
+	pop	dx
+	shl	ax, 1
+	ret
 
 ; convert position (AL, AH) into addr in AX
 get_cofs:
-  push    cx
-  push    dx
+	push	cx
+	push	dx
 
-  mov     cx, ax
+	mov	cx, ax
 
-  mov     al, ah                        ; row
-  mov     ah, 0
-  mul     word [BIOS_COLS]
+	mov	al, ah				; row
+	mov	ah, 0
+	mul	word [BIOS_COLS]
 
-  mov     ch, 0
-  add     ax, cx
-  shl     ax, 1
+	mov	ch, 0
+	add	ax, cx
+	shl	ax, 1
 
-  pop     dx
-  pop     cx
-  ret
+	pop	dx
+	pop	cx
+	ret
 
 ; set character AL CX times at (DL, DH) in page BH
 txt_set_char_xy:
-  jcxz    .done
+	jcxz	.done
 
-  xchg    al, bh
-  call    get_pofs
-  mov     di, ax
+	xchg	al, bh
+	call	get_pofs
+	mov	di, ax
 
-  mov     ax, dx
-  call    get_cofs
-  add     di, ax
+	mov	ax, dx
+	call	get_cofs
+	add	di, ax
 
-  call    get_segm
-  mov     es, ax
+	call	get_segm
+	mov	es, ax
 
 .next:
-  mov     [es:di], bh
-  add     di, 2
-  loop    .next
+	mov	[es:di], bh
+	add	di, 2
+	loop	.next
 
 .done:
-  ret
+	ret
 
 
 ; set character AL CX times at DL, DH in page BH with color BL
 ega_set_char_xyc:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    si
-  push    di
-  push    bp
-  push    ds
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	si
+	push	di
+	push	bp
+	push	ds
+	push	es
 
-  jcxz    .done
+	jcxz	.done
 
-  mul     byte [BIOS_CHRH]
-  mov     si, ax                        ; font index
+	mul	byte [BIOS_CHRH]
+	mov	si, ax				; font index
 
-  mov     al, bh
-  call    get_pofs
-  mov     di, ax
+	mov	al, bh
+	call	get_pofs
+	mov	di, ax
 
-  push    dx
-  mov     al, dh
-  mul     byte [BIOS_COLS]
-  mul     word [BIOS_CHRH]
-  pop     dx
-  add     di, ax
+	push	dx
+	mov	al, dh
+	mul	byte [BIOS_COLS]
+	mul	word [BIOS_CHRH]
+	pop	dx
+	add	di, ax
 
-  mov     dh, 0
-  add     di, dx
+	mov	dh, 0
+	add	di, dx
 
-  mov     bh, [BIOS_CHRH]
-  mov     bp, [BIOS_COLS]
+	mov	bh, [BIOS_CHRH]
+	mov	bp, [BIOS_COLS]
 
-  mov     dx, TS_INDEX
-  mov     ax, (0x0f << 8) | TS_WRPL
-  out     dx, ax
+	mov	dx, TS_INDEX
+	mov	ax, (0x0f << 8) | TS_WRPL
+	out	dx, ax
 
-  mov     dx, GDC_INDEX
-  mov     ax, 0x0205
-  out     dx, ax
+	mov	dx, GDC_INDEX
+	mov	ax, 0x0205
+	out	dx, ax
 
-  mov     es, [cs:sega000]
+	mov	es, [cs:sega000]
 
-  mov     ds, [cs:seg0000]
-  lds     ax, [4 * 0x43]                ; pointer to font
-  add     si, ax
+	mov	ds, [cs:seg0000]
+	lds	ax, [4 * 0x43]			; pointer to font
+	add	si, ax
 
 .next:
-  mov     ax, (0xff << 8) | GDC_BMSK
-  out     dx, ax                        ; set bit mask
+	mov	ax, (0xff << 8) | GDC_BMSK
+	out	dx, ax				; set bit mask
 
-  mov     byte [es:di], 0x00            ; clear background
-  mov     al, [es:di]                   ; fill latches
+	mov	byte [es:di], 0x00		; clear background
+	mov	al, [es:di]			; fill latches
 
-  mov     ah, [si]
-  mov     al, GDC_BMSK
-  out     dx, ax
-  mov     al, bl
+	mov	ah, [si]
+	mov	al, GDC_BMSK
+	out	dx, ax
+	mov	al, bl
 
-  push    cx
-  push    di
-  rep     stosb
-  pop     di
-  pop     cx
+	push	cx
+	push	di
+	rep	stosb
+	pop	di
+	pop	cx
 
-  inc     si
-  add     di, bp
-  dec     bh
-  jnz     .next
+	inc	si
+	add	di, bp
+	dec	bh
+	jnz	.next
 
-  mov     ax, (0xff << 8) | GDC_BMSK
-  out     dx, ax                        ; reset bit mask
+	mov	ax, (0xff << 8) | GDC_BMSK
+	out	dx, ax				; reset bit mask
 
-  mov     dx, GDC_INDEX
-  mov     ax, 0x0005
-  out     dx, ax                        ; reset read/write mode
+	mov	dx, GDC_INDEX
+	mov	ax, 0x0005
+	out	dx, ax				; reset read/write mode
 
 .done:
-  pop     es
-  pop     ds
-  pop     bp
-  pop     di
-  pop     si
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	ds
+	pop	bp
+	pop	di
+	pop	si
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ; set character AL CX times at DL, DH in page BH with color BL
 vga_set_char_xyc:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    si
-  push    di
-  push    bp
-  push    ds
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	si
+	push	di
+	push	bp
+	push	ds
+	push	es
 
-  jcxz    .done
+	jcxz	.done
 
-  mul     byte [BIOS_CHRH]
-  mov     si, ax                        ; font index
+	mul	byte [BIOS_CHRH]
+	mov	si, ax				; font index
 
-  mov     al, bh
-  call    get_pofs
-  mov     di, ax                        ; paget offset
+	mov	al, bh
+	call	get_pofs
+	mov	di, ax				; paget offset
 
-  push    dx
-  mov     al, dh                        ; y
-  mul     byte [BIOS_COLS]
-  mul     word [BIOS_CHRH]
-  pop     dx
-  mov     dh, 0
-  add     ax, dx
-  shl     ax, 1
-  shl     ax, 1
-  shl     ax, 1
-  add     di, ax
+	push	dx
+	mov	al, dh				; y
+	mul	byte [BIOS_COLS]
+	mul	word [BIOS_CHRH]
+	pop	dx
+	mov	dh, 0
+	add	ax, dx
+	shl	ax, 1
+	shl	ax, 1
+	shl	ax, 1
+	add	di, ax
 
-  mov     bh, [BIOS_CHRH]
-  mov     bp, [BIOS_COLS]
-  shl     bp, 1
-  shl     bp, 1
-  shl     bp, 1
-  mov     es, [cs:sega000]
+	mov	bh, [BIOS_CHRH]
+	mov	bp, [BIOS_COLS]
+	shl	bp, 1
+	shl	bp, 1
+	shl	bp, 1
+	mov	es, [cs:sega000]
 
-  mov     ds, [cs:seg0000]
-  lds     ax, [4 * 0x43]                ; pointer to font
-  add     si, ax
+	mov	ds, [cs:seg0000]
+	lds	ax, [4 * 0x43]			; pointer to font
+	add	si, ax
 
 .next_row:
-  mov     ah, [si]                      ; font byte
+	mov	ah, [si]			; font byte
 
-  push    cx
-  push    di
+	push	cx
+	push	di
 
-  shl     cx, 1
-  shl     cx, 1
-  shl     cx, 1                         ; pixel count
+	shl	cx, 1
+	shl	cx, 1
+	shl	cx, 1				; pixel count
 
 .next_pixel:
-  mov     al, 0x00
-  test    ah, 0x80
-  jz      .black
+	mov	al, 0x00
+	test	ah, 0x80
+	jz	.black
 
-  mov     al, bl
+	mov	al, bl
 
 .black:
-  stosb
+	stosb
 
-  rol     ah, 1
-  loop    .next_pixel
+	rol	ah, 1
+	loop	.next_pixel
 
-  pop     di
-  pop     cx
+	pop	di
+	pop	cx
 
-  inc     si
-  add     di, bp
-  dec     bh
-  jnz     .next_row
+	inc	si
+	add	di, bp
+	dec	bh
+	jnz	.next_row
 
 .done:
-  pop     es
-  pop     ds
-  pop     bp
-  pop     di
-  pop     si
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	ds
+	pop	bp
+	pop	di
+	pop	si
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ; scroll entire text screen up one line
 txt_scroll_up_1:
-  push    ax
-  push    cx
-  push    dx
-  push    si
-  push    di
-  push    ds
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	si
+	push	di
+	push	ds
+	push	es
 
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
 
-  mov     dx, [BIOS_COLS]
+	mov	dx, [BIOS_COLS]
 
-  mov     si, ax
-  add     si, dx
-  add     si, dx
+	mov	si, ax
+	add	si, dx
+	add	si, dx
 
-  mov     di, ax
+	mov	di, ax
 
-  mov     cx, [BIOS_SIZE]
-  shr     cx, 1
-  sub     cx, dx
+	mov	cx, [BIOS_SIZE]
+	shr	cx, 1
+	sub	cx, dx
 
-  call    get_segm
-  mov     ds, ax
-  mov     es, ax
+	call	get_segm
+	mov	ds, ax
+	mov	es, ax
 
-  rep     movsw
+	rep	movsw
 
-  mov     ax, 0x0720
-  mov     cx, dx
-  rep     stosw
+	mov	ax, 0x0720
+	mov	cx, dx
+	rep	stosw
 
-  pop     es
-  pop     ds
-  pop     di
-  pop     si
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	ds
+	pop	di
+	pop	si
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ega_scroll_up_1:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    si
-  push    di
-  push    ds
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	si
+	push	di
+	push	ds
+	push	es
 
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
-  mov     di, ax
-  mov     si, ax
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
+	mov	di, ax
+	mov	si, ax
 
-  mov     ax, [BIOS_COLS]
-  mul     word [BIOS_CHRH]
-  mov     bx, ax                        ; row size in bytes
-  mov     dl, [BIOS_ROWS]
-  mov     dh, 0
-  mul     dx
-  mov     cx, ax                        ; page size in bytes
+	mov	ax, [BIOS_COLS]
+	mul	word [BIOS_CHRH]
+	mov	bx, ax				; row size in bytes
+	mov	dl, [BIOS_ROWS]
+	mov	dh, 0
+	mul	dx
+	mov	cx, ax				; page size in bytes
 
-  add     si, bx
+	add	si, bx
 
-  mov     dx, GDC_INDEX
-  mov     ax, (0x01 << 8) | GDC_MODE
-  out     dx, ax                        ; write mode 1
+	mov	dx, GDC_INDEX
+	mov	ax, (0x01 << 8) | GDC_MODE
+	out	dx, ax				; write mode 1
 
-  mov     dx, TS_INDEX
-  mov     ax, (0x0f << 8) | TS_WRPL
-  out     dx, ax
+	mov	dx, TS_INDEX
+	mov	ax, (0x0f << 8) | TS_WRPL
+	out	dx, ax
 
-  mov     ds, [cs:sega000]
-  mov     es, [cs:sega000]
+	mov	ds, [cs:sega000]
+	mov	es, [cs:sega000]
 
-  rep     movsb
+	rep	movsb
 
-  mov     dx, GDC_INDEX
-  mov     ax, (0x02 << 8) | GDC_MODE
-  out     dx, ax
+	mov	dx, GDC_INDEX
+	mov	ax, (0x02 << 8) | GDC_MODE
+	out	dx, ax
 
-  mov     ax, (0xff << 8) | GDC_BMSK
-  out     dx, ax
+	mov	ax, (0xff << 8) | GDC_BMSK
+	out	dx, ax
 
-  mov     al, 0
-  mov     cx, bx
-  rep     stosb
+	mov	al, 0
+	mov	cx, bx
+	rep	stosb
 
-  mov     dx, GDC_INDEX
-  mov     ax, (0x00 << 8) | GDC_MODE
-  out     dx, ax
+	mov	dx, GDC_INDEX
+	mov	ax, (0x00 << 8) | GDC_MODE
+	out	dx, ax
 
-  pop     es
-  pop     ds
-  pop     di
-  pop     si
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	ds
+	pop	di
+	pop	si
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 vga_scroll_up_1:
-  push    ax
-  push    cx
-  push    dx
-  push    si
-  push    di
+	push	ax
+	push	cx
+	push	dx
+	push	si
+	push	di
 
-  mov     ax, [BIOS_COLS]
-  mul     word [BIOS_CHRH]
-  shl     ax, 1
-  shl     ax, 1
-  shl     ax, 1
+	mov	ax, [BIOS_COLS]
+	mul	word [BIOS_CHRH]
+	shl	ax, 1
+	shl	ax, 1
+	shl	ax, 1
 
-  mov     cx, [BIOS_SIZE]
-  sub     cx, ax
+	mov	cx, [BIOS_SIZE]
+	sub	cx, ax
 
-  mov     ds, [cs:sega000]
-  mov     si, ax
+	mov	ds, [cs:sega000]
+	mov	si, ax
 
-  mov     es, [cs:sega000]
-  xor     di, di
+	mov	es, [cs:sega000]
+	xor	di, di
 
-  rep     movsb
+	rep	movsb
 
-  mov     cx, ax
-  mov     al, 0x00
-  rep     stosb
+	mov	cx, ax
+	mov	al, 0x00
+	rep	stosb
 
-  pop     di
-  pop     si
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	si
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ; Clear the rectangle (CL, CH) - (DL, DH) with AX
 txt_clear_rect:
-  push    ax
-  push    cx
-  push    dx
-  push    di
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	di
+	push	es
 
-  sub     dh, ch
-  jb      .done
-  inc     dh
-  sub     dl, cl
-  jb      .done
-  inc     dl
+	sub	dh, ch
+	jb	.done
+	inc	dh
+	sub	dl, cl
+	jb	.done
+	inc	dl
 
-  push    ax
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
-  mov     di, ax
+	push	ax
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
+	mov	di, ax
 
-  mov     ax, cx
-  call    get_cofs
-  add     di, ax
+	mov	ax, cx
+	call	get_cofs
+	add	di, ax
 
-  call    get_segm
-  mov     es, ax
-  pop     ax
+	call	get_segm
+	mov	es, ax
+	pop	ax
 
 .next:
-  mov     cl, dl
-  mov     ch, 0
-  push    di
-  rep     stosw
-  pop     di
+	mov	cl, dl
+	mov	ch, 0
+	push	di
+	rep	stosw
+	pop	di
 
-  mov     cx, [BIOS_COLS]
-  shl     cx, 1
-  add     di, cx
+	mov	cx, [BIOS_COLS]
+	shl	cx, 1
+	add	di, cx
 
-  dec     dh
-  jnz     .next
+	dec	dh
+	jnz	.next
 
 .done:
-  pop     es
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	di
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ; clear CX words at B800:DI with AX
 vga_clear_cga:
-  push    cx
-  push    di
-  push    es
+	push	cx
+	push	di
+	push	es
 
-  mov     es, [cs:segb800]
-  rep     stosw
+	mov	es, [cs:segb800]
+	rep	stosw
 
-  pop     es
-  pop     di
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	cx
+	ret
 
 
 ; clear CX bytes at A000:DI with color AL
 vga_clear_ega:
-  push    cx
-  push    dx
-  push    di
-  push    es
+	push	cx
+	push	dx
+	push	di
+	push	es
 
-  push    ax
-  mov     dx, GDC_INDEX
-  mov     ax, (0x02 << 8) | GDC_MODE
-  out     dx, ax
+	push	ax
+	mov	dx, GDC_INDEX
+	mov	ax, (0x02 << 8) | GDC_MODE
+	out	dx, ax
 
-  mov     ax, (0x00 << 8) | GDC_FSEL
-  out     dx, ax
+	mov	ax, (0x00 << 8) | GDC_FSEL
+	out	dx, ax
 
-  mov     ax, (0xff << 8) | GDC_BMSK
-  out     dx, ax
+	mov	ax, (0xff << 8) | GDC_BMSK
+	out	dx, ax
 
-  mov     dx, TS_INDEX
-  mov     ax, (0x0f << 8) | TS_WRPL
-  out     dx, ax
-  pop     ax
+	mov	dx, TS_INDEX
+	mov	ax, (0x0f << 8) | TS_WRPL
+	out	dx, ax
+	pop	ax
 
-  mov     es, [cs:sega000]
-  rep     stosb
+	mov	es, [cs:sega000]
+	rep	stosb
 
-  pop     es
-  pop     di
-  pop     dx
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	dx
+	pop	cx
+	ret
 
 
 ; clear CX bytes at A000:DI with color AL
 vga_clear:
-  push    cx
-  push    di
-  push    es
+	push	cx
+	push	di
+	push	es
 
-  mov     es, [cs:sega000]
-  rep     stosb
+	mov	es, [cs:sega000]
+	rep	stosb
 
-  pop     es
-  pop     di
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	cx
+	ret
 
 
 ; init mode AL with parameter table DS:SI
 int10_init_mode:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    di
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	di
+	push	es
 
-  mov     dx, 0x03d0
-  out     dx, al
+	mov	dx, 0x03d0
+	out	dx, al
 
-  mov     es, [cs:seg0040]
+	mov	es, [cs:seg0040]
 
-  mov     [es:BIOS_MODE], al
+	mov	[es:BIOS_MODE], al
 
-  mov     bx, si
+	mov	bx, si
 
-  lea     si, [bx + 10]
-  mov     al, 0x00
-  mov     cx, 25
-  mov     dx, CRTC_INDEX
-  call    ega_set_regs
+	lea	si, [bx + 10]
+	mov	al, 0x00
+	mov	cx, 25
+	mov	dx, CRTC_INDEX
+	call	ega_set_regs
 
-  lea     si, [bx + 5]
-  mov     al, 0x01
-  mov     cx, 5
-  mov     dx, TS_INDEX
-  call    ega_set_regs
+	lea	si, [bx + 5]
+	mov	al, 0x01
+	mov	cx, 5
+	mov	dx, TS_INDEX
+	call	ega_set_regs
 
-  lea     si, [bx + 35]
-  mov     al, 0x00
-  mov     cx, 20
-  mov     dx, ATC_INDEX
-  call    atc_set_regs
+	lea	si, [bx + 35]
+	mov	al, 0x00
+	mov	cx, 20
+	mov	dx, ATC_INDEX
+	call	atc_set_regs
 
-  lea     si, [bx + 55]
-  mov     al, 0x00
-  mov     cx, 9
-  mov     dx, GDC_INDEX
-  call    ega_set_regs
+	lea	si, [bx + 55]
+	mov	al, 0x00
+	mov	cx, 9
+	mov	dx, GDC_INDEX
+	call	ega_set_regs
 
-  mov     dx, 0x3cc
-  mov     al, [bx + 9]
-  out     dx, al                        ; misc output register
+	mov	dx, 0x3cc
+	mov	al, [bx + 9]
+	out	dx, al				; misc output register
 
-  mov     al, [bx]
-  mov     ah, 0
-  mov     [es:BIOS_COLS], ax
+	mov	al, [bx]
+	mov	ah, 0
+	mov	[es:BIOS_COLS], ax
 
-  mov     al, [bx + 1]
-  mov     [es:BIOS_ROWS], al
+	mov	al, [bx + 1]
+	mov	[es:BIOS_ROWS], al
 
-  mov     al, [bx + 2]
-  mov     ah, 0
-  mov     [es:BIOS_CHRH], ax
+	mov	al, [bx + 2]
+	mov	ah, 0
+	mov	[es:BIOS_CHRH], ax
 
-  mov     ax, [bx + 3]
-  mov     [es:BIOS_SIZE], ax
+	mov	ax, [bx + 3]
+	mov	[es:BIOS_SIZE], ax
 
-  mov     word [es:BIOS_OFFS], 0
+	mov	word [es:BIOS_OFFS], 0
 
-  mov     di, BIOS_CPOS
-  mov     cx, 8
-  xor     ax, ax
-  rep     stosw
+	mov	di, BIOS_CPOS
+	mov	cx, 8
+	xor	ax, ax
+	rep	stosw
 
-  mov     word [es:BIOS_CSIZ], 0x0607
-  mov     byte [es:BIOS_PAGE], 0x00
-  mov     word [es:BIOS_CRTC], 0x03d4
+	mov	word [es:BIOS_CSIZ], 0x0607
+	mov	byte [es:BIOS_PAGE], 0x00
+	mov	word [es:BIOS_CRTC], 0x03d4
 
-  xor     ax, ax
-  mov     es, ax
+	xor	ax, ax
+	mov	es, ax
 
-  mov     dx, cs
+	mov	dx, cs
 
-  mov     al, [bx + 2]                  ; character height
+	mov	al, [bx + 2]			; character height
 
-  cmp     al, 8
-  jbe     .fnt8x8
+	cmp	al, 8
+	jbe	.fnt8x8
 
-  cmp     al, 14
-  jbe     .fnt8x14
+	cmp	al, 14
+	jbe	.fnt8x14
 
-  jmp     .fnt8x16
+	jmp	.fnt8x16
 
 .fnt8x8:
-  mov     ax, fnt_8x8
-  jmp     .fntdone
+	mov	ax, fnt_8x8
+	jmp	.fntdone
 
 .fnt8x14:
-  mov     ax, fnt_8x14
-  jmp     .fntdone
+	mov	ax, fnt_8x14
+	jmp	.fntdone
 
 .fnt8x16:
-  mov     ax, fnt_8x16
+	mov	ax, fnt_8x16
 
 .fntdone:
-  mov     word [es:4 * 0x43], ax
-  mov     word [es:4 * 0x43 + 2], dx
+	mov	word [es:4 * 0x43], ax
+	mov	word [es:4 * 0x43 + 2], dx
 
-  pop     es
-  pop     di
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 int10_00_00:
 int10_00_01:
 int10_00_02:
 int10_00_03:
-  push    ax
-  push    cx
-  push    di
+	push	ax
+	push	cx
+	push	di
 
-  mov     ax, 0x0720
-  xor     di, di
-  mov     cx, 8192
-  call    vga_clear_cga
+	mov	ax, 0x0720
+	xor	di, di
+	mov	cx, 8192
+	call	vga_clear_cga
 
-  pop     di
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	cx
+	pop	ax
+	ret
 
 
 int10_00_04:
 int10_00_05:
 int10_00_06:
-  push    ax
-  push    cx
-  push    di
+	push	ax
+	push	cx
+	push	di
 
-  xor     ax, ax
-  xor     di, di
-  mov     cx, 8192
-  call    vga_clear_cga
+	xor	ax, ax
+	xor	di, di
+	mov	cx, 8192
+	call	vga_clear_cga
 
-  pop     di
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	cx
+	pop	ax
+	ret
 
 
 int10_00_07:
-  push    ax
-  push    cx
-  push    di
+	push	ax
+	push	cx
+	push	di
 
-  mov     word [BIOS_CRTC], 0x03b4
+	mov	word [BIOS_CRTC], 0x03b4
 
-  mov     ax, 0x0720
-  xor     di, di
-  mov     cx, 8000
+	mov	ax, 0x0720
+	xor	di, di
+	mov	cx, 8000
 ;  call    txt_clear
 
-  pop     di
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	cx
+	pop	ax
+	ret
 
 
 int10_00_08:
@@ -1453,8 +1451,8 @@ int10_00_09:
 int10_00_0a:
 int10_00_0b:
 int10_00_0c:
-  pceh    PCEH_STOP
-  ret
+	pceh	PCEH_STOP
+	ret
 
 
 int10_00_0d:
@@ -1463,58 +1461,58 @@ int10_00_0f:
 int10_00_10:
 int10_00_11:
 int10_00_12:
-  push    ax
-  push    cx
-  push    dx
-  push    di
+	push	ax
+	push	cx
+	push	dx
+	push	di
 
-  test    al, 0x80
-  jnz     .noclear
+	test	al, 0x80
+	jnz	.noclear
 
-  mov     al, 0
-  xor     di, di
-  mov     cx, 64000
-  call    vga_clear_ega
+	mov	al, 0
+	xor	di, di
+	mov	cx, 64000
+	call	vga_clear_ega
 
-  mov     dx, GDC_INDEX
-  mov     ax, (0x00 << 8) | GDC_MODE
-  out     dx, ax
+	mov	dx, GDC_INDEX
+	mov	ax, (0x00 << 8) | GDC_MODE
+	out	dx, ax
 
 .noclear:
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 int10_00_13:
-  push    ax
-  push    cx
-  push    dx
-  push    di
+	push	ax
+	push	cx
+	push	dx
+	push	di
 
-  push    cs
-  pop     ds
+	push	cs
+	pop	ds
 
-  mov     al, 0
-  mov     cx, 256
-  mov     si, pal_vga
-  call    dac_set_colors
+	mov	al, 0
+	mov	cx, 256
+	mov	si, pal_vga
+	call	dac_set_colors
 
-  test    al, 0x80
-  jnz     .noclear
+	test	al, 0x80
+	jnz	.noclear
 
-  mov     al, 0
-  xor     di, di
-  mov     cx, 64000
-  call    vga_clear
+	mov	al, 0
+	xor	di, di
+	mov	cx, 64000
+	call	vga_clear
 
 .noclear:
-  pop     di
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1522,53 +1520,53 @@ int10_00_13:
 ; inp: AL = video mode
 ;-----------------------------------------------------------------------------
 int10_00:
-  push    si
+	push	si
 
-  push    ax
-  and     al, 0x7f
-  cmp     al, 0x13
-  pop     ax
-  ja      .badfunc
+	push	ax
+	and	al, 0x7f
+	cmp	al, 0x13
+	pop	ax
+	ja	.badfunc
 
-  push    cs
-  pop     ds
+	push	cs
+	pop	ds
 
-  push    ax
-  and     al, 0x7f
-  mov     ah, al
-  mov     al, 0
-  shr     ax, 1
-  shr     ax, 1
-  add     ax, mode00
-  mov     si, ax
-  pop     ax
+	push	ax
+	and	al, 0x7f
+	mov	ah, al
+	mov	al, 0
+	shr	ax, 1
+	shr	ax, 1
+	add	ax, mode00
+	mov	si, ax
+	pop	ax
 
-  cmp     byte [si], 0x00
-  je      .badfunc
+	cmp	byte [si], 0x00
+	je	.badfunc
 
-  call    int10_init_mode
+	call	int10_init_mode
 
-  push    ax
-  and     al, 0x7f
-  mov     ah, 0
-  mov     si, ax
-  pop     ax
+	push	ax
+	and	al, 0x7f
+	mov	ah, 0
+	mov	si, ax
+	pop	ax
 
-  shl     si, 1
-  cmp     si, (int10_00_funcend - int10_00_func)
-  jae     .badfunc
+	shl	si, 1
+	cmp	si, (int10_00_funcend - int10_00_func)
+	jae	.badfunc
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  call    [cs:si + int10_00_func]
-  jmp     .done
+	call	[cs:si + int10_00_func]
+	jmp	.done
 
 .badfunc:
-  pceh    PCEH_STOP
+	pceh	PCEH_STOP
 
 .done:
-  pop     si
-  ret
+	pop	si
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1577,45 +1575,45 @@ int10_00:
 ;      CL = end line
 ;-----------------------------------------------------------------------------
 int10_01:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
+	push	ax
+	push	cx
+	push	dx
+	push	bx
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  cmp     cl, 0x07
-  jbe     .clok
-  mov     cl, 0x08
+	cmp	cl, 0x07
+	jbe	.clok
+	mov	cl, 0x08
 
 .clok:
-  cmp     ch, 0x07
-  jbe     .chok
-  mov     ch, 0x08
+	cmp	ch, 0x07
+	jbe	.chok
+	mov	ch, 0x08
 
 .chok:
-  mov     [BIOS_CSIZ], cx
+	mov	[BIOS_CSIZ], cx
 
-  mov     bh, 0
-  mov     bl, ch
-  mov     ch, [cs:bx + cursor14]
-  mov     bl, cl
-  mov     cl, [cs:bx + cursor14]
+	mov	bh, 0
+	mov	bl, ch
+	mov	ch, [cs:bx + cursor14]
+	mov	bl, cl
+	mov	cl, [cs:bx + cursor14]
 
-  mov     dx, [BIOS_CRTC]
-  mov     al, CRTC_CSIZ_HI
-  mov     ah, ch
-  out     dx, ax
+	mov	dx, [BIOS_CRTC]
+	mov	al, CRTC_CSIZ_HI
+	mov	ah, ch
+	out	dx, ax
 
-  mov     al, CRTC_CSIZ_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	al, CRTC_CSIZ_LO
+	mov	ah, cl
+	out	dx, ax
 
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1624,45 +1622,45 @@ int10_01:
 ;      DL = column
 ;-----------------------------------------------------------------------------
 int10_02:
-  push    ax
-  push    dx
-  push    bx
+	push	ax
+	push	dx
+	push	bx
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  mov     al, bh                        ; page
+	mov	al, bh				; page
 
-  mov     bl, bh
-  and     bx, 0x0007
-  shl     bx, 1
+	mov	bl, bh
+	and	bx, 0x0007
+	shl	bx, 1
 
-  mov     [bx + BIOS_CPOS], dx
+	mov	[bx + BIOS_CPOS], dx
 
-  cmp     al, [BIOS_PAGE]
-  jne     .done
+	cmp	al, [BIOS_PAGE]
+	jne	.done
 
-  call    get_pofs
-  mov     bx, ax
+	call	get_pofs
+	mov	bx, ax
 
-  mov     ax, dx
-  call    get_cofs
-  add     bx, ax
-  shr     bx, 1
+	mov	ax, dx
+	call	get_cofs
+	add	bx, ax
+	shr	bx, 1
 
-  mov     dx, [BIOS_CRTC]
-  mov     al, CRTC_CPOS_HI
-  mov     ah, bh
-  out     dx, ax
+	mov	dx, [BIOS_CRTC]
+	mov	al, CRTC_CPOS_HI
+	mov	ah, bh
+	out	dx, ax
 
-  mov     al, CRTC_CPOS_LO
-  mov     ah, bl
-  out     dx, ax
+	mov	al, CRTC_CPOS_LO
+	mov	ah, bl
+	out	dx, ax
 
 .done:
-  pop     bx
-  pop     dx
-  pop     ax
-  ret
+	pop	bx
+	pop	dx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1673,25 +1671,25 @@ int10_02:
 ;      DL = cursor column
 ;-----------------------------------------------------------------------------
 int10_03:
-  push    bx
+	push	bx
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  mov     bl, bh
-  and     bx, 0x0007
-  shl     bx, 1
+	mov	bl, bh
+	and	bx, 0x0007
+	shl	bx, 1
 
-  mov     cx, [BIOS_CSIZ]
-  mov     dx, [bx + BIOS_CPOS]
+	mov	cx, [BIOS_CSIZ]
+	mov	dx, [bx + BIOS_CPOS]
 
-  pop     bx
-  ret
+	pop	bx
+	ret
 
 
 ; int 10 func 04 - get lightpen position
 int10_04:
-  mov     ah, 0
-  ret
+	mov	ah, 0
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1699,48 +1697,48 @@ int10_04:
 ; inp: AL = page number
 ;-----------------------------------------------------------------------------
 int10_05:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
+	push	ax
+	push	cx
+	push	dx
+	push	bx
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  mov     [BIOS_PAGE], al
+	mov	[BIOS_PAGE], al
 
-  call    get_pofs
-  mov     cx, ax
-  shr     cx, 1
+	call	get_pofs
+	mov	cx, ax
+	shr	cx, 1
 
-  mov     dx, [BIOS_CRTC]
-  mov     al, CRTC_OFFS_HI
-  mov     ah, ch
-  out     dx, ax
-  mov     al, CRTC_OFFS_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	dx, [BIOS_CRTC]
+	mov	al, CRTC_OFFS_HI
+	mov	ah, ch
+	out	dx, ax
+	mov	al, CRTC_OFFS_LO
+	mov	ah, cl
+	out	dx, ax
 
-  mov     bl, [BIOS_PAGE]
-  mov     bh, 0
-  shl     bx, 1
-  mov     ax, [bx + BIOS_CPOS]
-  call    get_cofs
-  shr     ax, 1
-  add     cx, ax
+	mov	bl, [BIOS_PAGE]
+	mov	bh, 0
+	shl	bx, 1
+	mov	ax, [bx + BIOS_CPOS]
+	call	get_cofs
+	shr	ax, 1
+	add	cx, ax
 
-  mov     dx, [BIOS_CRTC]
-  mov     al, CRTC_CPOS_HI
-  mov     ah, ch
-  out     dx, ax
-  mov     al, CRTC_CPOS_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	dx, [BIOS_CRTC]
+	mov	al, CRTC_CPOS_HI
+	mov	ah, ch
+	out	dx, ax
+	mov	al, CRTC_CPOS_LO
+	mov	ah, cl
+	out	dx, ax
 
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1753,143 +1751,143 @@ int10_05:
 ;      DL = bottom right column
 ;-----------------------------------------------------------------------------
 int10_06_cga_txt:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    si
-  push    di
-  push    bp
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	si
+	push	di
+	push	bp
+	push	es
 
-  or      al, al
-  jz      .clear
+	or	al, al
+	jz	.clear
 
-  push    dx
-  sub     dh, ch
-  inc     dh
-  cmp     al, dh
-  pop     dx
+	push	dx
+	sub	dh, ch
+	inc	dh
+	cmp	al, dh
+	pop	dx
 
-  jae     .clear
-  jmp     .scroll
+	jae	.clear
+	jmp	.scroll
 
 .clear:
-  mov     ah, bh
-  mov     al, 0x20
-  call    txt_clear_rect
-  jmp     .done
+	mov	ah, bh
+	mov	al, 0x20
+	call	txt_clear_rect
+	jmp	.done
 
 .scroll:
-  sub     dl, cl
-  inc     dl                            ; window width
-  sub     dh, ch
-  inc     dh                            ; window height
+	sub	dl, cl
+	inc	dl				; window width
+	sub	dh, ch
+	inc	dh				; window height
 
-  push    ax
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
-  mov     di, ax
+	push	ax
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
+	mov	di, ax
 
-  mov     ax, cx
-  call    get_cofs
-  add     di, ax                        ; dest in DI
-  pop     ax
+	mov	ax, cx
+	call	get_cofs
+	add	di, ax				; dest in DI
+	pop	ax
 
-  mov     bp, [BIOS_COLS]
-  shl     bp, 1
+	mov	bp, [BIOS_COLS]
+	shl	bp, 1
 
-  push    ax
-  push    dx
-  mov     ah, 0
-  mul     bp
-  mov     si, di
-  add     si, ax                        ; source in SI
-  pop     dx
-  pop     ax
+	push	ax
+	push	dx
+	mov	ah, 0
+	mul	bp
+	mov	si, di
+	add	si, ax				; source in SI
+	pop	dx
+	pop	ax
 
-  mov     bl, dh
-  sub     bl, al                        ; rows to copy
+	mov	bl, dh
+	sub	bl, al				; rows to copy
 
-  push    ax
-  call    get_segm
-  mov     ds, ax
-  mov     es, ax
-  pop     ax
+	push	ax
+	call	get_segm
+	mov	ds, ax
+	mov	es, ax
+	pop	ax
 
 .copy:
-  push    si
-  push    di
+	push	si
+	push	di
 
-  mov     cl, dl
-  mov     ch, 0
-  rep     movsw
+	mov	cl, dl
+	mov	ch, 0
+	rep	movsw
 
-  pop     di
-  pop     si
+	pop	di
+	pop	si
 
-  add     si, bp
-  add     di, bp
+	add	si, bp
+	add	di, bp
 
-  dec     bl
-  jnz     .copy
+	dec	bl
+	jnz	.copy
 
-  mov     bl, al                        ; rows to clear
-  mov     ah, bh
-  mov     al, 0x20
+	mov	bl, al				; rows to clear
+	mov	ah, bh
+	mov	al, 0x20
 
 .clearrow:
-  push    di
-  mov     cl, dl
-  mov     ch, 0
-  rep     stosw
-  pop     di
+	push	di
+	mov	cl, dl
+	mov	ch, 0
+	rep	stosw
+	pop	di
 
-  add     di, bp
+	add	di, bp
 
-  dec     bl
-  jnz     .clearrow
+	dec	bl
+	jnz	.clearrow
 
 .done:
-  pop     es
-  pop     bp
-  pop     di
-  pop     si
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	bp
+	pop	di
+	pop	si
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 int10_06:
-  push    ax
+	push	ax
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  call    get_modemap
+	call	get_modemap
 
-  cmp     ah, 0x00
-  je      .mode00
+	cmp	ah, 0x00
+	je	.mode00
 
-  cmp     ah, 0x04
-  jb      .done
-  cmp     ah, 0x06
-  jbe     .mode04
+	cmp	ah, 0x04
+	jb	.done
+	cmp	ah, 0x06
+	jbe	.mode04
 
-  jmp     .done
+	jmp	.done
 
 .mode00:
-  call    int10_06_cga_txt
-  jmp     .done
+	call	int10_06_cga_txt
+	jmp	.done
 
 .mode04:
-  pop     ax
-  int     0x42
-  ret
+	pop	ax
+	int	0x42
+	ret
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -1902,145 +1900,145 @@ int10_06:
 ;      DL = bottom right column
 ;-----------------------------------------------------------------------------
 int10_07_cga_txt:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    si
-  push    di
-  push    bp
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	si
+	push	di
+	push	bp
+	push	es
 
-  or      al, al
-  jz      .clear
+	or	al, al
+	jz	.clear
 
-  push    dx
-  sub     dh, ch
-  inc     dh
-  cmp     al, dh
-  pop     dx
+	push	dx
+	sub	dh, ch
+	inc	dh
+	cmp	al, dh
+	pop	dx
 
-  jae     .clear
-  jmp     .scroll
+	jae	.clear
+	jmp	.scroll
 
 .clear:
-  mov     ah, bh
-  mov     al, 0x20
-  call    txt_clear_rect
-  jmp     .done
+	mov	ah, bh
+	mov	al, 0x20
+	call	txt_clear_rect
+	jmp	.done
 
 .scroll:
-  sub     dl, cl
-  inc     dl                            ; window width
-  sub     dh, ch
-  inc     dh                            ; window height
+	sub	dl, cl
+	inc	dl				; window width
+	sub	dh, ch
+	inc	dh				; window height
 
-  push    ax
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
-  mov     di, ax
+	push	ax
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
+	mov	di, ax
 
-  mov     ax, cx
-  add     ah, dh
-  dec     ah
-  call    get_cofs
-  add     di, ax                        ; dest in DI
-  pop     ax
+	mov	ax, cx
+	add	ah, dh
+	dec	ah
+	call	get_cofs
+	add	di, ax				; dest in DI
+	pop	ax
 
-  mov     bp, [BIOS_COLS]
-  shl     bp, 1
+	mov	bp, [BIOS_COLS]
+	shl	bp, 1
 
-  push    ax
-  push    dx
-  mov     ah, 0
-  mul     bp
-  mov     si, di
-  sub     si, ax                        ; source in SI
-  pop     dx
-  pop     ax
+	push	ax
+	push	dx
+	mov	ah, 0
+	mul	bp
+	mov	si, di
+	sub	si, ax				; source in SI
+	pop	dx
+	pop	ax
 
-  mov     bl, dh
-  sub     bl, al                        ; rows to copy
+	mov	bl, dh
+	sub	bl, al				; rows to copy
 
-  push    ax
-  call    get_segm
-  mov     ds, ax
-  mov     es, ax
-  pop     ax
+	push	ax
+	call	get_segm
+	mov	ds, ax
+	mov	es, ax
+	pop	ax
 
 .copy:
-  push    si
-  push    di
+	push	si
+	push	di
 
-  mov     cl, dl
-  mov     ch, 0
-  rep     movsw
+	mov	cl, dl
+	mov	ch, 0
+	rep	movsw
 
-  pop     di
-  pop     si
+	pop	di
+	pop	si
 
-  sub     si, bp
-  sub     di, bp
+	sub	si, bp
+	sub	di, bp
 
-  dec     bl
-  jnz     .copy
+	dec	bl
+	jnz	.copy
 
-  mov     bl, al                        ; rows to clear
-  mov     ah, bh
-  mov     al, 0x20
+	mov	bl, al				; rows to clear
+	mov	ah, bh
+	mov	al, 0x20
 
 .clearrow:
-  push    di
-  mov     cl, dl
-  mov     ch, 0
-  rep     stosw
-  pop     di
+	push	di
+	mov	cl, dl
+	mov	ch, 0
+	rep	stosw
+	pop	di
 
-  sub     di, bp
+	sub	di, bp
 
-  dec     bl
-  jnz     .clearrow
+	dec	bl
+	jnz	.clearrow
 
 .done:
-  pop     es
-  pop     bp
-  pop     di
-  pop     si
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	bp
+	pop	di
+	pop	si
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 int10_07:
-  push    ax
+	push	ax
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  call    get_modemap
+	call	get_modemap
 
-  cmp     ah, 0x00
-  je      .mode00
+	cmp	ah, 0x00
+	je	.mode00
 
-  cmp     ah, 0x04
-  jb      .done
-  cmp     ah, 0x06
-  jbe     .mode04
+	cmp	ah, 0x04
+	jb	.done
+	cmp	ah, 0x06
+	jbe	.mode04
 
-  jmp     .done
+	jmp	.done
 
 .mode00:
-  call    int10_07_cga_txt
-  jmp     .done
+	call	int10_07_cga_txt
+	jmp	.done
 
 .mode04:
-  pop     ax
-  int     0x42
-  ret
+	pop	ax
+	int	0x42
+	ret
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2050,32 +2048,32 @@ int10_07:
 ;      AL = character
 ;-----------------------------------------------------------------------------
 int10_08:
-  push    bx
-  push    si
-  push    es
+	push	bx
+	push	si
+	push	es
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  call    get_segm
-  mov     es, ax
+	call	get_segm
+	mov	es, ax
 
-  mov     al, bh
-  call    get_pofs
-  mov     si, ax
+	mov	al, bh
+	call	get_pofs
+	mov	si, ax
 
-  mov     bl, bh
-  and     bx, 0x0007
-  shl     bx, 1
-  mov     ax, [bx + BIOS_CPOS]
-  call    get_cofs
-  add     si, ax
+	mov	bl, bh
+	and	bx, 0x0007
+	shl	bx, 1
+	mov	ax, [bx + BIOS_CPOS]
+	call	get_cofs
+	add	si, ax
 
-  mov     ax, [es:si]
+	mov	ax, [es:si]
 
-  pop     es
-  pop     si
-  pop     bx
-  ret
+	pop	es
+	pop	si
+	pop	bx
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2086,89 +2084,89 @@ int10_08:
 ;      CX = count
 ;-----------------------------------------------------------------------------
 int10_09_mode03:
-  push    cx
-  push    bx
-  push    di
-  push    es
+	push	cx
+	push	bx
+	push	di
+	push	es
 
-  mov     ah, bl
+	mov	ah, bl
 
-  push    ax
+	push	ax
 
-  call    get_segm
-  mov     es, ax
+	call	get_segm
+	mov	es, ax
 
-  mov     al, bh
-  call    get_pofs
-  mov     di, ax
+	mov	al, bh
+	call	get_pofs
+	mov	di, ax
 
-  mov     bl, bh
-  and     bx, 0x0007
-  shl     bx, 1
-  mov     ax, [bx + BIOS_CPOS]
-  call    get_cofs
-  add     di, ax
+	mov	bl, bh
+	and	bx, 0x0007
+	shl	bx, 1
+	mov	ax, [bx + BIOS_CPOS]
+	call	get_cofs
+	add	di, ax
 
-  pop     ax
+	pop	ax
 
-  rep     stosw
+	rep	stosw
 
-  pop     es
-  pop     di
-  pop     bx
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	cx
+	ret
 
 int10_09_mode0d:
-  push    dx
+	push	dx
 
-  push    bx
-  mov     bl, [BIOS_PAGE]
-  and     bx, 0x0007
-  mov     dx, [bx + BIOS_CPOS]
-  pop     bx
+	push	bx
+	mov	bl, [BIOS_PAGE]
+	and	bx, 0x0007
+	mov	dx, [bx + BIOS_CPOS]
+	pop	bx
 
-  call    ega_set_char_xyc
+	call	ega_set_char_xyc
 
-  pop     dx
-  ret
+	pop	dx
+	ret
 
 int10_09:
-  push    ax
+	push	ax
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  call    get_modemap
+	call	get_modemap
 
-  cmp     ah, 0x00
-  je      .mode00
+	cmp	ah, 0x00
+	je	.mode00
 
-  cmp     ah, 0x0d
-  je      .mode0d
+	cmp	ah, 0x0d
+	je	.mode0d
 
-  cmp     ah, 0x04
-  jb      .done
-  cmp     ah, 0x06
-  jbe     .mode04
+	cmp	ah, 0x04
+	jb	.done
+	cmp	ah, 0x06
+	jbe	.mode04
 
-  jmp     .done
+	jmp	.done
 
 .mode00:
-  call    int10_09_mode03
-  jmp     .done
+	call	int10_09_mode03
+	jmp	.done
 
 .mode0d:
-  call    int10_09_mode0d
-  jmp     .done
+	call	int10_09_mode0d
+	jmp	.done
 
 .mode04:
-  pop     ax
-  int     0x42
-  ret
+	pop	ax
+	int	0x42
+	ret
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2178,85 +2176,85 @@ int10_09:
 ;      CX = count
 ;-----------------------------------------------------------------------------
 int10_0a_mode03:
-  push    ax
-  push    cx
-  push    bx
-  push    di
-  push    es
+	push	ax
+	push	cx
+	push	bx
+	push	di
+	push	es
 
-  jcxz    .done
+	jcxz	.done
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  push    ax
+	push	ax
 
-  call    get_segm
-  mov     es, ax
+	call	get_segm
+	mov	es, ax
 
-  mov     al, bh
-  call    get_pofs
-  mov     di, ax
+	mov	al, bh
+	call	get_pofs
+	mov	di, ax
 
-  mov     bl, bh
-  and     bx, 0x0007
-  shl     bx, 1
-  mov     ax, [bx + BIOS_CPOS]
-  call    get_cofs
-  add     di, ax
+	mov	bl, bh
+	and	bx, 0x0007
+	shl	bx, 1
+	mov	ax, [bx + BIOS_CPOS]
+	call	get_cofs
+	add	di, ax
 
-  pop     ax
+	pop	ax
 
 .next:
-  stosb
-  inc     di
-  loop    .next
+	stosb
+	inc	di
+	loop	.next
 
 .done:
-  pop     es
-  pop     di
-  pop     bx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	cx
+	pop	ax
+	ret
 
 int10_0a:
-  push    ax
+	push	ax
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  push    bx
-  mov     bl, [BIOS_MODE]
-  and     bx, 0x007f
-  mov     ah, [cs:bx + modemap]
-  pop     bx
+	push	bx
+	mov	bl, [BIOS_MODE]
+	and	bx, 0x007f
+	mov	ah, [cs:bx + modemap]
+	pop	bx
 
-  cmp     ah, 0x00
-  jne     .not00
+	cmp	ah, 0x00
+	jne	.not00
 
-  call    int10_0a_mode03
-  jmp     .done
+	call	int10_0a_mode03
+	jmp	.done
 
 .not00:
-  cmp     ah, 0x0d
-  jne     .not0d
+	cmp	ah, 0x0d
+	jne	.not0d
 
 ;  call    int10_0e_mode0d
-  jmp     .done
+	jmp	.done
 
 .not0d:
-  pop     ax
-  push    ax
+	pop	ax
+	push	ax
 
-  int     0x42
+	int	0x42
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 ; int 10 func 0b - set background color
 int10_0b:
-  ret
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2267,64 +2265,64 @@ int10_0b:
 ;      DX = y
 ;-----------------------------------------------------------------------------
 int10_0c:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    es
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	es
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  mov     bl, al                        ; color
+	mov	bl, al				; color
 
-  mov     ax, dx
-  mul     word [BIOS_COLS]
-  mov     dl, cl                        ; bit index
-  mov     dh, bl                        ; color
-  shr     cx, 1
-  shr     cx, 1
-  shr     cx, 1
-  add     cx, ax
+	mov	ax, dx
+	mul	word [BIOS_COLS]
+	mov	dl, cl				; bit index
+	mov	dh, bl				; color
+	shr	cx, 1
+	shr	cx, 1
+	shr	cx, 1
+	add	cx, ax
 
-  mov     al, bh
-  call    get_pofs
-  mov     bx, ax
-  add     bx, cx
+	mov	al, bh
+	call	get_pofs
+	mov	bx, ax
+	add	bx, cx
 
-  mov     cx, dx
+	mov	cx, dx
 
-  mov     dx, TS_INDEX
-  mov     ax, (0x0f << 8) | TS_WRPL
-  out     dx, ax                        ; enable all write planes
+	mov	dx, TS_INDEX
+	mov	ax, (0x0f << 8) | TS_WRPL
+	out	dx, ax				; enable all write planes
 
-  mov     dx, GDC_INDEX
-  mov     ax, (0x02 << 8) | GDC_MODE
-  out     dx, ax                        ; set write mode 2
+	mov	dx, GDC_INDEX
+	mov	ax, (0x02 << 8) | GDC_MODE
+	out	dx, ax				; set write mode 2
 
-  and     cl, 0x07                      ; bit index
-  mov     ah, 0x80
-  shr     ah, cl
-  mov     al, GDC_BMSK
-  out     dx, ax                        ; set bit mask
+	and	cl, 0x07			; bit index
+	mov	ah, 0x80
+	shr	ah, cl
+	mov	al, GDC_BMSK
+	out	dx, ax				; set bit mask
 
-  mov     ax, 0xa000
-  mov     es, ax
+	mov	ax, 0xa000
+	mov	es, ax
 
-  mov     al, [es:bx]                   ; fill latches
-  mov     [es:bx], ch                   ; set pixel
+	mov	al, [es:bx]			; fill latches
+	mov	[es:bx], ch			; set pixel
 
-  mov     ax, (0x00 << 8) | GDC_MODE
-  out     dx, ax                        ; reset mode
+	mov	ax, (0x00 << 8) | GDC_MODE
+	out	dx, ax				; reset mode
 
-  mov     ax, (0xff << 8) | GDC_BMSK
-  out     dx, ax                        ; reset bit mask
+	mov	ax, (0xff << 8) | GDC_BMSK
+	out	dx, ax				; reset bit mask
 
-  pop     es
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	es
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2335,7 +2333,7 @@ int10_0c:
 ; out: AL = color
 ;-----------------------------------------------------------------------------
 int10_0d:
-  ret
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2344,285 +2342,285 @@ int10_0d:
 ;      BL = color
 ;-----------------------------------------------------------------------------
 int10_0e:
-  push    ax
+	push	ax
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  push    bx
-  mov     bl, [BIOS_MODE]
-  and     bx, 0x007f
-  mov     ah, [cs:bx + modemap]
-  pop     bx
+	push	bx
+	mov	bl, [BIOS_MODE]
+	and	bx, 0x007f
+	mov	ah, [cs:bx + modemap]
+	pop	bx
 
-  cmp     ah, 0x00
-  jne     .not00
+	cmp	ah, 0x00
+	jne	.not00
 
-  call    int10_0e_mode03
-  jmp     .done
+	call	int10_0e_mode03
+	jmp	.done
 
 .not00:
-  cmp     ah, 0x0d
-  jne     .not0d
+	cmp	ah, 0x0d
+	jne	.not0d
 
-  call    int10_0e_mode0d
-  jmp     .done
+	call	int10_0e_mode0d
+	jmp	.done
 
 .not0d:
-  cmp     ah, 0x13
-  jne     .not13
+	cmp	ah, 0x13
+	jne	.not13
 
-  call    int10_0e_mode13
-  jmp     .done
+	call	int10_0e_mode13
+	jmp	.done
 
 .not13:
-  pop     ax
-  push    ax
+	pop	ax
+	push	ax
 
-  int     0x42
+	int	0x42
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 int10_0e_mode13:
-  push    cx
-  push    dx
-  push    bx
-  push    di
-  push    es
+	push	cx
+	push	dx
+	push	bx
+	push	di
+	push	es
 
-  mov     ah, bl                        ; save color
+	mov	ah, bl				; save color
 
-  mov     bl, [BIOS_PAGE]
-  and     bx, 0x0007
-  shl     bx, 1
+	mov	bl, [BIOS_PAGE]
+	and	bx, 0x0007
+	shl	bx, 1
 
-  mov     dx, [bx + BIOS_CPOS]
+	mov	dx, [bx + BIOS_CPOS]
 
-  cmp     al, 0x0a
-  jne     .notlf
+	cmp	al, 0x0a
+	jne	.notlf
 
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    vga_scroll_up_1
-  mov     dh, 24
-  jmp     .ok
+	call	vga_scroll_up_1
+	mov	dh, 24
+	jmp	.ok
 
 .notlf:
-  cmp     al, 0x0d
-  jne     .notcr
+	cmp	al, 0x0d
+	jne	.notcr
 
-  mov     dl, 0
-  jmp     .ok
+	mov	dl, 0
+	jmp	.ok
 
 .notcr:
-  cmp     al, 0x08
-  jne     .notbs
+	cmp	al, 0x08
+	jne	.notbs
 
-  or      dl, dl
-  jz      .ok
+	or	dl, dl
+	jz	.ok
 
-  dec     dl
-  jmp     .ok
+	dec	dl
+	jmp	.ok
 
 .notbs:
-  push    bx
-  mov     bh, [BIOS_PAGE]
-  mov     bl, ah
-  mov     cx, 1
-  call    vga_set_char_xyc
-  pop     bx
+	push	bx
+	mov	bh, [BIOS_PAGE]
+	mov	bl, ah
+	mov	cx, 1
+	call	vga_set_char_xyc
+	pop	bx
 
-  inc     dl
-  cmp     dl, [BIOS_COLS]
-  jb      .ok
+	inc	dl
+	cmp	dl, [BIOS_COLS]
+	jb	.ok
 
-  mov     dl, 0
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	mov	dl, 0
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    vga_scroll_up_1
-  mov     dh, 24
+	call	vga_scroll_up_1
+	mov	dh, 24
 
 .ok:
-  mov     [bx + BIOS_CPOS], dx
+	mov	[bx + BIOS_CPOS], dx
 
-  pop     es
-  pop     di
-  pop     bx
-  pop     dx
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	dx
+	pop	cx
+	ret
 
 int10_0e_mode0d:
-  push    cx
-  push    dx
-  push    bx
-  push    di
-  push    es
+	push	cx
+	push	dx
+	push	bx
+	push	di
+	push	es
 
-  mov     ah, bl                        ; save color
+	mov	ah, bl				; save color
 
-  mov     bl, [BIOS_PAGE]
-  and     bx, 0x0007
-  shl     bx, 1
+	mov	bl, [BIOS_PAGE]
+	and	bx, 0x0007
+	shl	bx, 1
 
-  mov     dx, [bx + BIOS_CPOS]
+	mov	dx, [bx + BIOS_CPOS]
 
-  cmp     al, 0x0a
-  jne     .notlf
+	cmp	al, 0x0a
+	jne	.notlf
 
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    ega_scroll_up_1
-  mov     dh, 24
-  jmp     .ok
+	call	ega_scroll_up_1
+	mov	dh, 24
+	jmp	.ok
 
 .notlf:
-  cmp     al, 0x0d
-  jne     .notcr
+	cmp	al, 0x0d
+	jne	.notcr
 
-  mov     dl, 0
-  jmp     .ok
+	mov	dl, 0
+	jmp	.ok
 
 .notcr:
-  cmp     al, 0x08
-  jne     .notbs
+	cmp	al, 0x08
+	jne	.notbs
 
-  or      dl, dl
-  jz      .ok
+	or	dl, dl
+	jz	.ok
 
-  dec     dl
-  jmp     .ok
+	dec	dl
+	jmp	.ok
 
 .notbs:
-  push    bx
-  mov     bh, [BIOS_PAGE]
-  mov     bl, ah
-  mov     cx, 1
-  call    ega_set_char_xyc
-  pop     bx
+	push	bx
+	mov	bh, [BIOS_PAGE]
+	mov	bl, ah
+	mov	cx, 1
+	call	ega_set_char_xyc
+	pop	bx
 
-  inc     dl
-  cmp     dl, [BIOS_COLS]
-  jb      .ok
+	inc	dl
+	cmp	dl, [BIOS_COLS]
+	jb	.ok
 
-  mov     dl, 0
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	mov	dl, 0
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    ega_scroll_up_1
-  mov     dh, 24
+	call	ega_scroll_up_1
+	mov	dh, 24
 
 .ok:
-  mov     [bx + BIOS_CPOS], dx
+	mov	[bx + BIOS_CPOS], dx
 
-  pop     es
-  pop     di
-  pop     bx
-  pop     dx
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	dx
+	pop	cx
+	ret
 
 int10_0e_mode03:
-  push    cx
-  push    dx
-  push    bx
-  push    di
-  push    es
+	push	cx
+	push	dx
+	push	bx
+	push	di
+	push	es
 
-  mov     bl, [BIOS_PAGE]
-  and     bx, 0x0007
-  shl     bx, 1
+	mov	bl, [BIOS_PAGE]
+	and	bx, 0x0007
+	shl	bx, 1
 
-  mov     dx, [bx + BIOS_CPOS]
+	mov	dx, [bx + BIOS_CPOS]
 
-  cmp     al, 0x0a
-  jne     .notlf
+	cmp	al, 0x0a
+	jne	.notlf
 
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    txt_scroll_up_1
-  mov     dh, 24
-  jmp     .ok
+	call	txt_scroll_up_1
+	mov	dh, 24
+	jmp	.ok
 
 .notlf:
-  cmp     al, 0x0d
-  jne     .notcr
+	cmp	al, 0x0d
+	jne	.notcr
 
-  mov     dl, 0
-  jmp     .ok
+	mov	dl, 0
+	jmp	.ok
 
 .notcr:
-  cmp     al, 0x08
-  jne     .notbs
+	cmp	al, 0x08
+	jne	.notbs
 
-  or      dl, dl
-  jz      .ok
+	or	dl, dl
+	jz	.ok
 
-  dec     dl
-  jmp     .ok
+	dec	dl
+	jmp	.ok
 
 .notbs:
-  mov     cl, al
+	mov	cl, al
 
-  call    get_segm
-  mov     es, ax
+	call	get_segm
+	mov	es, ax
 
-  mov     al, [BIOS_PAGE]
-  call    get_pofs
-  mov     di, ax
+	mov	al, [BIOS_PAGE]
+	call	get_pofs
+	mov	di, ax
 
-  mov     ax, [bx + BIOS_CPOS]
-  call    get_cofs
-  add     di, ax
+	mov	ax, [bx + BIOS_CPOS]
+	call	get_cofs
+	add	di, ax
 
-  mov     [es:di], cl
+	mov	[es:di], cl
 
-  mov     dx, [bx + BIOS_CPOS]
-  inc     dl
-  cmp     dl, [BIOS_COLS]
-  jb      .ok
+	mov	dx, [bx + BIOS_CPOS]
+	inc	dl
+	cmp	dl, [BIOS_COLS]
+	jb	.ok
 
-  mov     dl, 0
-  inc     dh
-  cmp     dh, 25
-  jb      .ok
+	mov	dl, 0
+	inc	dh
+	cmp	dh, 25
+	jb	.ok
 
-  call    txt_scroll_up_1
-  mov     dh, 24
+	call	txt_scroll_up_1
+	mov	dh, 24
 
 .ok:
-  mov     [bx + BIOS_CPOS], dx
+	mov	[bx + BIOS_CPOS], dx
 
-  mov     ax, dx
-  call    get_cofs
-  shr     ax, 1
+	mov	ax, dx
+	call	get_cofs
+	shr	ax, 1
 
-  mov     cx, ax
-  mov     dx, [BIOS_CRTC]
-  mov     al, CRTC_CPOS_HI
-  mov     ah, ch
-  out     dx, ax
-  mov     al, CRTC_CPOS_LO
-  mov     ah, cl
-  out     dx, ax
+	mov	cx, ax
+	mov	dx, [BIOS_CRTC]
+	mov	al, CRTC_CPOS_HI
+	mov	ah, ch
+	out	dx, ax
+	mov	al, CRTC_CPOS_LO
+	mov	ah, cl
+	out	dx, ax
 
-  pop     es
-  pop     di
-  pop     bx
-  pop     dx
-  pop     cx
-  ret
+	pop	es
+	pop	di
+	pop	bx
+	pop	dx
+	pop	cx
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2632,31 +2630,31 @@ int10_0e_mode03:
 ;      BH = current page
 ;-----------------------------------------------------------------------------
 int10_0f:
-  mov     ds, [cs:seg0040]
-  mov     al, [BIOS_MODE]
-  mov     ah, [BIOS_COLS]
-  mov     bh, [BIOS_PAGE]
-  ret
+	mov	ds, [cs:seg0040]
+	mov	al, [BIOS_MODE]
+	mov	ah, [BIOS_COLS]
+	mov	bh, [BIOS_PAGE]
+	ret
 
 
 ;-----------------------------------------------------------------------------
 ; int 10 func 10 - palette
 ;-----------------------------------------------------------------------------
 int10_10:
-  push    si
+	push	si
 
-  mov     si, ax
-  and     si, 0x00ff
-  shl     si, 1
+	mov	si, ax
+	and	si, 0x00ff
+	shl	si, 1
 
-  cmp     si, int10_10_funcend - int10_10_func
-  ja      .done
+	cmp	si, int10_10_funcend - int10_10_func
+	ja	.done
 
-  call    [cs:si + int10_10_func]
+	call	[cs:si + int10_10_func]
 
 .done:
-  pop     si
-  ret
+	pop	si
+	ret
 
 
 int10_1004:
@@ -2674,7 +2672,7 @@ int10_1014:
 int10_1016:
 int10_101a:
 int10_101b:
-  ret
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2683,27 +2681,27 @@ int10_101b:
 ;      BH = new value
 ;-----------------------------------------------------------------------------
 int10_1000:
-  push    ax
-  mov     al, bh
-  mov     ah, bl
-  mov     ax, bx
-  call    atc_set_reg
+	push	ax
+	mov	al, bh
+	mov	ah, bl
+	mov	ax, bx
+	call	atc_set_reg
 
-  mov     ds, [cs:seg0040]
-  lds     si, [0x00a8]
-  lds     si, [si + 4]
-  mov     ax, ds
-  or      ax, si
-  jz      .done
+	mov	ds, [cs:seg0040]
+	lds	si, [0x00a8]
+	lds	si, [si + 4]
+	mov	ax, ds
+	or	ax, si
+	jz	.done
 
-  mov     al, bl
-  mov     ah, 0
-  add     si, ax
-  mov     [si], bh
+	mov	al, bl
+	mov	ah, 0
+	add	si, ax
+	mov	[si], bh
 
 .done:
-  pop     ax
-  ret
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2711,12 +2709,12 @@ int10_1000:
 ; inp: BH = new value
 ;-----------------------------------------------------------------------------
 int10_1001:
-  push    ax
-  mov     ah, bh
-  mov     al, ATC_OSCN
-  call    atc_set_reg
-  pop     ax
-  ret
+	push	ax
+	mov	ah, bh
+	mov	al, ATC_OSCN
+	call	atc_set_reg
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2724,21 +2722,21 @@ int10_1001:
 ; inp: ES:DX pointer to palette
 ;-----------------------------------------------------------------------------
 int10_1002:
-  push    ax
-  push    cx
-  push    si
+	push	ax
+	push	cx
+	push	si
 
-  mov     al, 0
-  mov     cx, 17
-  push    es
-  pop     ds
-  mov     si, dx
-  call    atc_set_regs
+	mov	al, 0
+	mov	cx, 17
+	push	es
+	pop	ds
+	mov	si, dx
+	call	atc_set_regs
 
-  pop     si
-  pop     cx
-  pop     ax
-  ret
+	pop	si
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2746,7 +2744,7 @@ int10_1002:
 ; inp: BL = blink enable
 ;-----------------------------------------------------------------------------
 int10_1003:
-  ret
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2756,12 +2754,12 @@ int10_1003:
 ; out: BH = value
 ;-----------------------------------------------------------------------------
 int10_1007:
-  push    ax
-  mov     al, bl
-  call    atc_get_reg
-  mov     bh, ah
-  pop     ax
-  ret
+	push	ax
+	mov	al, bl
+	call	atc_get_reg
+	mov	bh, ah
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2769,12 +2767,12 @@ int10_1007:
 ; out: BH = overscan color
 ;-----------------------------------------------------------------------------
 int10_1008:
-  push    ax
-  mov     al, ATC_OSCN
-  call    atc_get_reg
-  mov     bh, ah
-  pop     ax
-  ret
+	push	ax
+	mov	al, ATC_OSCN
+	call	atc_get_reg
+	mov	bh, ah
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2782,19 +2780,19 @@ int10_1008:
 ; inp: ES:DX pointer to 17 byte buffer
 ;-----------------------------------------------------------------------------
 int10_1009:
-  push    ax
-  push    cx
-  push    di
+	push	ax
+	push	cx
+	push	di
 
-  mov     di, dx
-  mov     al, 0
-  mov     cx, 17
-  call    atc_get_regs
+	mov	di, dx
+	mov	al, 0
+	mov	cx, 17
+	call	atc_get_regs
 
-  pop     di
-  pop     cx
-  pop     ax
-  ret
+	pop	di
+	pop	cx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2805,17 +2803,17 @@ int10_1009:
 ;      DH = red
 ;-----------------------------------------------------------------------------
 int10_1010:
-  push    ax
-  push    dx
+	push	ax
+	push	dx
 
-  mov     al, bl
-  mov     ah, dh
-  mov     dx, cx
-  call    dac_set_color
+	mov	al, bl
+	mov	ah, dh
+	mov	dx, cx
+	call	dac_set_color
 
-  pop     dx
-  pop     ax
-  ret
+	pop	dx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2825,18 +2823,18 @@ int10_1010:
 ;      ES:DX = buffer
 ;-----------------------------------------------------------------------------
 int10_1012:
-  push    ax
-  push    si
+	push	ax
+	push	si
 
-  mov     al, bl
-  push    es
-  pop     ds
-  mov     si, dx
-  call    dac_set_colors
+	mov	al, bl
+	push	es
+	pop	ds
+	mov	si, dx
+	call	dac_set_colors
 
-  pop     si
-  pop     ax
-  ret
+	pop	si
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2847,18 +2845,18 @@ int10_1012:
 ;      DH = red
 ;-----------------------------------------------------------------------------
 int10_1015:
-  push    ax
-  push    dx
+	push	ax
+	push	dx
 
-  mov     al, bl
-  call    dac_get_color
+	mov	al, bl
+	call	dac_get_color
 
-  mov     cx, dx
+	mov	cx, dx
 
-  pop     dx
-  mov     dh, ah
-  pop     ax
-  ret
+	pop	dx
+	mov	dh, ah
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2868,16 +2866,16 @@ int10_1015:
 ;      ES:DX = buffer
 ;-----------------------------------------------------------------------------
 int10_1017:
-  push    ax
-  push    di
+	push	ax
+	push	di
 
-  mov     al, bl
-  mov     di, dx
-  call    dac_get_colors
+	mov	al, bl
+	mov	di, dx
+	call	dac_get_colors
 
-  pop     di
-  pop     ax
-  ret
+	pop	di
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2885,16 +2883,16 @@ int10_1017:
 ; inp: BL = color mask
 ;-----------------------------------------------------------------------------
 int10_1018:
-  push    ax
-  push    dx
+	push	ax
+	push	dx
 
-  mov     dx, DAC_CMSK
-  mov     al, bl
-  out     dx, al
+	mov	dx, DAC_CMSK
+	mov	al, bl
+	out	dx, al
 
-  pop     dx
-  pop     ax
-  ret
+	pop	dx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -2902,99 +2900,99 @@ int10_1018:
 ; out: BL = color mask
 ;-----------------------------------------------------------------------------
 int10_1019:
-  push    ax
-  push    dx
+	push	ax
+	push	dx
 
-  mov     dx, DAC_CMSK
-  in      al, dx
-  mov     bl, al
+	mov	dx, DAC_CMSK
+	in	al, dx
+	mov	bl, al
 
-  pop     dx
-  pop     ax
-  ret
+	pop	dx
+	pop	ax
+	ret
 
 
 ;-----------------------------------------------------------------------------
 ; int 10 func 11
 ;-----------------------------------------------------------------------------
 int10_11:
-  cmp     al, 0x30
-  je      int10_1130
-  ret
+	cmp	al, 0x30
+	je	int10_1130
+	ret
 
 
 ; int 10 func 1130 - get font information
 int10_1130:
-  mov     cx, 14
-  mov     dl, 24
+	mov	cx, 14
+	mov	dl, 24
 
-  push    cs
-  pop     es
+	push	cs
+	pop	es
 
-  cmp     bh, 0x01
-  jb      .int1f
-  je      .int43
+	cmp	bh, 0x01
+	jb	.int1f
+	je	.int43
 
-  cmp     bh, 0x03
-  jb      .fnt8x14
-  je      .fnt8x8
+	cmp	bh, 0x03
+	jb	.fnt8x14
+	je	.fnt8x8
 
-  cmp     bh, 0x05
-  jb      .fnt8x8_2
-  je      .fnt9x14
+	cmp	bh, 0x05
+	jb	.fnt8x8_2
+	je	.fnt9x14
 
-  cmp     bh, 0x07
-  jb      .fnt8x16
-  je      .fnt9x16
+	cmp	bh, 0x07
+	jb	.fnt8x16
+	je	.fnt9x16
 
-  jmp     .done
+	jmp	.done
 
 .int1f:
-  xor     bp, bp
-  mov     es, bp
-  les     bp, [es:4 * 0x1f]
-  jmp     .done
+	xor	bp, bp
+	mov	es, bp
+	les	bp, [es:4 * 0x1f]
+	jmp	.done
 
 .int43:
-  xor     bp, bp
-  mov     es, bp
-  les     bp, [es:4 * 0x43]
-  jmp     .done
+	xor	bp, bp
+	mov	es, bp
+	les	bp, [es:4 * 0x43]
+	jmp	.done
 
 .fnt8x14:
-  mov     bp, fnt_8x14
-  jmp     .done
+	mov	bp, fnt_8x14
+	jmp	.done
 
 .fnt8x8:
-  mov     bp, fnt_8x8
-  jmp     .done
+	mov	bp, fnt_8x8
+	jmp	.done
 
 .fnt8x8_2:
-  mov     bp, fnt_8x8 + 8 * 128
-  jmp     .done
+	mov	bp, fnt_8x8 + 8 * 128
+	jmp	.done
 
 .fnt8x16:
 .fnt9x14:
 .fnt9x16:
-  jmp     .done
+	jmp	.done
 
 .done:
-  ret
+	ret
 
 
 int10_12:
-  cmp     bl, 0x10
-  je      int10_12_10
-  ret
+	cmp	bl, 0x10
+	je	int10_12_10
+	ret
 
 
 ; int 10 func 1210 - get ega config
 int10_12_10:
-  mov     bh, 0                 ; monitor type
-  mov     bl, 3                 ; ram size
-  mov     ch, 0                 ; featrue connector
-  mov     cl, 7                 ; switches
-  ret
+	mov	bh, 0				; monitor type
+	mov	bl, 3				; ram size
+	mov	ch, 0				; featrue connector
+	mov	cl, 7				; switches
+	ret
 
 
 int10_13:
@@ -3006,19 +3004,19 @@ int10_18:
 int10_19:
 int10_1b:
 int10_1c:
-  pceh    PCEH_STOP
-  ret
+	pceh	PCEH_STOP
+	ret
 
 
 ;-----------------------------------------------------------------------------
 ; int 10 func 11
 ;-----------------------------------------------------------------------------
 int10_1a:
-  cmp     al, 0x01
-  jb      int10_1a00
-  je      int10_1a01
+	cmp	al, 0x01
+	jb	int10_1a00
+	je	int10_1a01
 
-  ret
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -3028,9 +3026,9 @@ int10_1a:
 ;      BH = secondary video adapter
 ;-----------------------------------------------------------------------------
 int10_1a00:
-  mov     al, 0x1a
-  mov     bx, 0x0008
-  ret
+	mov	al, 0x1a
+	mov	bx, 0x0008
+	ret
 
 
 ;-----------------------------------------------------------------------------
@@ -3040,107 +3038,107 @@ int10_1a00:
 ; out: AL = 0x1a
 ;-----------------------------------------------------------------------------
 int10_1a01:
-  mov     al, 0x1a
-  ret
+	mov	al, 0x1a
+	ret
 
 
 int10:
-  push    si
-  push    ds
+	push	si
+	push	ds
 
-  cld
+	cld
 
-  push    ax
-  mov     al, ah
-  mov     ah, 0
-  shl     ax, 1
-  mov     si, ax
-  pop     ax
+	push	ax
+	mov	al, ah
+	mov	ah, 0
+	shl	ax, 1
+	mov	si, ax
+	pop	ax
 
-  cmp     si, (int10_funcend - int10_func)
-  jae     .badfunc
+	cmp	si, (int10_funcend - int10_func)
+	jae	.badfunc
 
-  call    word [cs:si + int10_func]
-  jmp     .done
+	call	word [cs:si + int10_func]
+	jmp	.done
 
 .badfunc:
-;  pceh    PCEH_STOP
+	;pceh	PCEH_STOP
 
 .done:
-  pop     ds
-  pop     si
-  iret
+	pop	ds
+	pop	si
+	iret
 
 
 ; print string at CS:SI
 prt_string:
-  push    ax
-  push    bx
-  push    si
+	push	ax
+	push	bx
+	push	si
 
-  xor     bx, bx
+	xor	bx, bx
 
 .next
-  cs      lodsb
-  or      al, al
-  jz      .done
+	cs	lodsb
+	or	al, al
+	jz	.done
 
-  mov     ah, 0x0e
-  int     0x10
+	mov	ah, 0x0e
+	int	0x10
 
-  jmp     short .next
+	jmp	short .next
 
 .done
-  pop     si
-  pop     bx
-  pop     ax
-  ret
+	pop	si
+	pop	bx
+	pop	ax
+	ret
 
 
 ega_init:
-  push    ax
-  push    si
-  push    ds
+	push	ax
+	push	si
+	push	ds
 
-  xor     ax, ax
-  mov     ds, ax
+	xor	ax, ax
+	mov	ds, ax
 
-  mov     ax, [4 * 0x10]
-  mov     [4 * 0x42], ax
-  mov     ax, [4 * 0x10 + 2]
-  mov     [4 * 0x42 + 2], ax
+	mov	ax, [4 * 0x10]
+	mov	[4 * 0x42], ax
+	mov	ax, [4 * 0x10 + 2]
+	mov	[4 * 0x42 + 2], ax
 
-  mov     word [4 * 0x10], int10
-  mov     word [4 * 0x10 + 2], cs
+	mov	word [4 * 0x10], int10
+	mov	word [4 * 0x10 + 2], cs
 
-  mov     word [4 * 0x1f], fnt_8x8 + 8 * 128
-  mov     word [4 * 0x1f + 2], cs
+	mov	word [4 * 0x1f], fnt_8x8 + 8 * 128
+	mov	word [4 * 0x1f + 2], cs
 
-  mov     word [4 * 0x43], fnt_8x8
-  mov     word [4 * 0x43 + 2], cs
+	mov	word [4 * 0x43], fnt_8x8
+	mov	word [4 * 0x43 + 2], cs
 
-  mov     ds, [cs:seg0040]
+	mov	ds, [cs:seg0040]
 
-  mov     byte [0x0087], 0x60
-  mov     byte [0x0088], 0x09           ; switches
+	mov	byte [0x0087], 0x60
+	mov	byte [0x0088], 0x09		; switches
 
-  mov     word [0x00a8], ptr00a8
-  mov     word [0x00a8 + 2], cs
+	mov	word [0x00a8], ptr00a8
+	mov	word [0x00a8 + 2], cs
 
-  mov     ax, 0x0003
-  int     0x10
+	mov	ax, 0x0003
+	int	0x10
 
-  mov     si, msg_init
-  call    prt_string
+	mov	si, msg_init
+	call	prt_string
 
-  pop     ds
-  pop     si
-  pop     ax
-  ret
+	pop	ds
+	pop	si
+	pop	ax
+	ret
 
 
-  times 16383 - ($ - $$) db 0xff
+	times	16383 - ($ - $$) db 0xff
 
-  db      0x00
+	db	0x00
 
 rom_end:

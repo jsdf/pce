@@ -61,7 +61,7 @@ install:
 
 
 cmp:
-	fcmp $(srcdir)/ibmpc.cmp ibmpc.rom > ibmpc.diff
+	bdiff -E -b 65536 -i $(srcdir)/ibmpc.cmp -i ibmpc.rom > ibmpc.diff
 
 
 ega.rom: $(EGA_BDP)

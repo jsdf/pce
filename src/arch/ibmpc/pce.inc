@@ -5,8 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/pce.inc                                     *
 ;* Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -82,16 +81,16 @@
 
 
 %macro pceh 1
-  db      0x66, 0x66, (%1 & 0xff), (%1 >> 8) & 0xff
+	db	0x66, 0x66, (%1 & 0xff), (%1 >> 8) & 0xff
 %endmacro
 
 %macro pceh 2
-  db      0x66, 0x66, %1, %2
+	db	0x66, 0x66, %1, %2
 %endmacro
 
 
 %macro set_pos 1
-  times %1 - ($ - $$) db 0
+	times %1 - ($ - $$) db 0
 %endmacro
 
 
