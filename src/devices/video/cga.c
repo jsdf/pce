@@ -625,10 +625,14 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 {
 	if (cga->mode == 0) {
-		if (y1 > 7) {
+		if ((y1 & 0x60) == 0x20) {
+			/* cursor off */
 			trm_set_crs (cga->trm, 0, 0, 0);
 			return;
 		}
+
+		y1 &= 0x1f;
+		y2 &= 0x1f;
 
 		if ((y2 < y1) || (y2 > 7)) {
 			y2 = 7;
