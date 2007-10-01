@@ -286,15 +286,25 @@ AC_ARG_WITH(sdl,
   ]
 )
 if test "x$PCE_SDL_USE" != "x0" ; then
+	AC_MSG_CHECKING([for static SDL])
+	AC_ARG_ENABLE(static-sdl,
+	  AC_HELP_STRING([--enable-static-sdl], [Link to static SDL [[no]]]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_SDL_LDF=`sdl-config --static-libs`
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_SDL_LDF=`sdl-config --libs`
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+  		PCE_SDL_LDF=`sdl-config --libs`
+		AC_MSG_RESULT([no (default)])
+	  ]
+	)
+
 	PCE_SDL_CCF=`sdl-config --cflags`
-	case "$LDFLAGS" in
-	*-static*)
-		PCE_SDL_LDF=`sdl-config --static-libs`
-		;;
-	*)
-		PCE_SDL_LDF=`sdl-config --libs`
-		;;
-	esac
 	AC_DEFINE(PCE_SDL_USE)
 fi
 AC_SUBST(PCE_SDL_USE)
