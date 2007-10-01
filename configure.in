@@ -5,8 +5,7 @@
 #*****************************************************************************
 #* File name:     configure.in                                               *
 #* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Last modified: 2006-12-15 by Hampa Hug <hampa@hampa.ch>                   *
-#* Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
+#* Copyright:     (C) 2002-2007 Hampa Hug <hampa@hampa.ch>                   *
 #*****************************************************************************
 
 #*****************************************************************************
@@ -38,10 +37,21 @@ if test ! -r "$srcdir/version" ; then
 	AC_MSG_RESULT([file 'version' not found in source directory])
 	exit 1
 fi
+
 oldifs=$IFS
 IFS="$IFS."
 read p PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC dstr r < "$srcdir/version"
 IFS=$oldifs
+
+AC_ARG_ENABLE(release,
+  AC_HELP_STRING([--enable-release], [Build a release [[no]]]),
+  [
+	if test "$enableval" = "yes" ; then
+		dstr=""
+	fi
+  ]
+)
+
 if test "x$dstr" != "x" ; then
 	PCE_VERSION_REL=0
 	if test "x$dstr" = "xcvs" ; then
