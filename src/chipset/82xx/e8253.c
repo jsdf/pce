@@ -48,10 +48,10 @@ struct cnt_mode_t {
 };
 
 static struct cnt_mode_t tab_mode[6] = {
-	{ &cnt_new_val_0, &cnt_dec_val_0, &cnt_set_gate_0 },
+	{ cnt_new_val_0, cnt_dec_val_0, cnt_set_gate_0 },
 	{ NULL, NULL, NULL },
-	{ &cnt_new_val_2, &cnt_dec_val_2, &cnt_set_gate_2 },
-	{ &cnt_new_val_3, &cnt_dec_val_3, &cnt_set_gate_3 },
+	{ cnt_new_val_2, cnt_dec_val_2, cnt_set_gate_2 },
+	{ cnt_new_val_3, cnt_dec_val_3, cnt_set_gate_3 },
 	{ NULL, NULL, NULL },
 	{ NULL, NULL, NULL }
 };
@@ -366,6 +366,13 @@ void cnt_set_control (e8253_counter_t *cnt, unsigned char val)
 	cnt->rw = rw;
 	cnt->mode = (val >> 1) & 7;
 	cnt->bcd = (val & 1);
+
+	if (cnt->mode == 6) {
+		cnt->mode = 2;
+	}
+	else if (cnt->mode == 7) {
+		cnt->mode = 3;
+	}
 }
 
 
