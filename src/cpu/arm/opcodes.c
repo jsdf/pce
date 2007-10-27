@@ -2344,11 +2344,11 @@ void op41 (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
-/* 80: ldm/stm[cond][mode] rn[!], registers[^] */
+/* 80: stm[cond][mode] rn[!], registers[^] */
 static
 void op80 (arm_t *c)
 {
-	int      p, u, s, w, l;
+	int      p, u, s, w;
 	unsigned i;
 	unsigned regs, regn;
 	unsigned mode;
@@ -2359,7 +2359,80 @@ void op80 (arm_t *c)
 	u = arm_get_bit (c->ir, 23);
 	s = arm_get_bit (c->ir, 22);
 	w = arm_get_bit (c->ir, 21);
-	l = arm_get_bit (c->ir, 20);
+
+	regs = arm_get_bits (c->ir, 0, 16);
+	regn = arm_bitcnt32 (regs);
+	mode = arm_get_cpsr_m (c);
+	base = arm_get_rn (c, c->ir);
+
+	if (u) {
+		writeback = base + 4 * regn;
+
+		if (p) {
+			/* ib */
+			addr = base + 4;
+		}
+		else {
+			/* ia */
+			addr = base;
+		}
+	}
+	else {
+		writeback = base - 4 * regn;
+
+		if (p) {
+			/* db */
+			addr = base - 4 * regn;
+		}
+		else {
+			/* da */
+			addr = base - 4 * regn + 4;
+		}
+	}
+
+	if (s) {
+		/* access user mode registers */
+		arm_set_reg_map (c, ARM_MODE_USR);
+	}
+
+	for (i = 0; i < 16; i++) {
+		if (regs & (1U << i)) {
+			val = arm_get_reg_pc (c, i, 8);
+
+			if (arm_dstore32 (c, addr & 0xfffffffc, val)) {
+				return;
+			}
+
+			addr += 4;
+		}
+	}
+
+	if (s) {
+		arm_set_reg_map (c, mode);
+	}
+
+	if (w) {
+		arm_set_rn (c, c->ir, writeback);
+	}
+
+	arm_set_clk (c, 4, 1);
+}
+
+/* 81: ldm[cond][mode] rn[!], registers[^] */
+static
+void op81 (arm_t *c)
+{
+	int      p, u, s, w;
+	unsigned i;
+	unsigned regs, regn;
+	unsigned mode;
+	uint32_t addr, base, writeback;
+	uint32_t val;
+
+	p = arm_get_bit (c->ir, 24);
+	u = arm_get_bit (c->ir, 23);
+	s = arm_get_bit (c->ir, 22);
+	w = arm_get_bit (c->ir, 21);
 
 	regs = arm_get_bits (c->ir, 0, 16);
 	regn = arm_bitcnt32 (regs);
@@ -2398,24 +2471,23 @@ void op80 (arm_t *c)
 
 	for (i = 0; i < 16; i++) {
 		if (regs & (1U << i)) {
-			if (l) {
-				if (arm_dload32 (c, addr & 0xfffffffc, &val)) {
-					return;
-				}
+			if (arm_dload32 (c, addr & 0xfffffffc, &val)) {
+				return;
+			}
 
-				arm_set_gpr (c, i, val);
+			if (i == arm_ir_rn (c->ir)) {
+				/* defer modification of base register */
+				base = val;
 			}
 			else {
-				val = arm_get_reg_pc (c, i, 8);
-
-				if (arm_dstore32 (c, addr & 0xfffffffc, val)) {
-					return;
-				}
+				arm_set_gpr (c, i, val);
 			}
 
 			addr += 4;
 		}
 	}
+
+	arm_set_rn (c, c->ir, base);
 
 	if (s) {
 		if (regs & 0x8000) {
@@ -2430,7 +2502,7 @@ void op80 (arm_t *c)
 		arm_set_rn (c, c->ir, writeback);
 	}
 
-	arm_set_clk (c, (l && (regs & 0x8000)) ? 0 : 4, 1);
+	arm_set_clk (c, (regs & 0x8000) ? 0 : 4, 1);
 }
 
 /* A0: b[cond] target */
@@ -2668,10 +2740,10 @@ arm_opcode_f arm_opcodes[256] = {
 	op40, op41, op40, op41, op40, op41, op40, op41,
 	op40, op41, op40, op41, op40, op41, op40, op41,  /* 70 */
 	op40, op41, op40, op41, op40, op41, op40, op41,
-	op80, op80, op80, op80, op80, op80, op80, op80,  /* 80 */
-	op80, op80, op80, op80, op80, op80, op80, op80,
-	op80, op80, op80, op80, op80, op80, op80, op80,  /* 90 */
-	op80, op80, op80, op80, op80, op80, op80, op80,
+	op80, op81, op80, op81, op80, op81, op80, op81,  /* 80 */
+	op80, op81, op80, op81, op80, op81, op80, op81,
+	op80, op81, op80, op81, op80, op81, op80, op81,  /* 90 */
+	op80, op81, op80, op81, op80, op81, op80, op81,
 	opa0, opa0, opa0, opa0, opa0, opa0, opa0, opa0,  /* a0 */
 	opa0, opa0, opa0, opa0, opa0, opa0, opa0, opa0,
 	opb0, opb0, opb0, opb0, opb0, opb0, opb0, opb0,  /* b0 */
