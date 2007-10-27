@@ -402,17 +402,16 @@ void op00_09 (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
-/* 00 0b: ldr/str[cond][h|sh|sb|d] rd, addressing_mode */
+/* 00 0b: str[cond][h|sh|sb|d] rd, addressing_mode */
 static
 void op00_0b (arm_t *c)
 {
-	int      p, u, w, l, s, h;
+	int      p, u, w, s, h;
 	uint32_t val, base, index;
 
 	p = arm_get_bit (c->ir, 24);
 	u = arm_get_bit (c->ir, 23);
 	w = arm_get_bit (c->ir, 21);
-	l = arm_get_bit (c->ir, 20);
 	s = arm_get_bit (c->ir, 6);
 	h = arm_get_bit (c->ir, 5);
 
@@ -420,7 +419,8 @@ void op00_0b (arm_t *c)
 
 	/* get index */
 	if (arm_get_bit (c->ir, 22)) {
-		index = (arm_get_bits (c->ir, 8, 4) << 4) | arm_get_bits (c->ir, 0, 4);
+		index = arm_get_bits (c->ir, 8, 4) << 4;
+		index |= arm_get_bits (c->ir, 0, 4);
 	}
 	else {
 		index = arm_get_rm (c, c->ir);
@@ -428,91 +428,63 @@ void op00_0b (arm_t *c)
 
 	/* pre-index */
 	if (p) {
-		base = (base + ((u) ? (index) : (~index + 1))) & 0xffffffffUL;
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
 	}
 
-	if (l) {
-		if (h) {
-			uint16_t tmp;
+	val = arm_get_rd (c, c->ir);
 
-			if (arm_dload16 (c, base & 0xfffffffeUL, &tmp)) {
+	if (s) {
+		/* ldrd/strd */
+
+		if (arm_ir_rd (c->ir) & 1) {
+			op_undefined (c);
+			return;
+		}
+
+		base &= 0xfffffff8;
+
+		if (h) {
+			if (arm_dstore32 (c, base, val)) {
 				return;
 			}
 
-			if (s) {
-				val = arm_exts (tmp, 16);
-			}
-			else {
-				val = arm_extu (tmp, 16);
+			val = arm_get_gpr (c, (arm_ir_rd (c->ir) + 1) & 0x0f);
+
+			if (arm_dstore32 (c, base + 4, val)) {
+				return;
 			}
 		}
 		else {
-			uint8_t tmp;
+			uint32_t val2;
 
-			if (arm_dload8 (c, base, &tmp)) {
+			if (arm_dload32 (c, base, &val)) {
 				return;
 			}
 
-			if (s) {
-				val = arm_exts (tmp, 8);
+			if (arm_dload32 (c, base + 4, &val2)) {
+				return;
 			}
-			else {
-				val = arm_extu (tmp, 8);
-			}
-		}
 
-		arm_set_rd (c, c->ir, val);
+			arm_set_rd (c, c->ir, val);
+			arm_set_gpr (c, (arm_ir_rd (c->ir) + 1) & 0xff, val2);
+		}
+	}
+	else if (h) {
+		if (arm_dstore16 (c, base & 0xfffffffe, val)) {
+			return;
+		}
 	}
 	else {
-		val = arm_get_rd (c, c->ir);
-
-		if (s) {
-			if (arm_ir_rd (c->ir) & 1) {
-				op_undefined (c);
-				return;
-			}
-
-			if (h) {
-				if (arm_dstore32 (c, base & 0xfffffffcUL, val)) {
-					return;
-				}
-
-				val = arm_get_gpr (c, (arm_ir_rd (c->ir) + 1) & 0x0f);
-
-				if (arm_dstore32 (c, (base + 4) & 0xfffffffcUL, val)) {
-					return;
-				}
-			}
-			else {
-				uint32_t val2;
-
-				if (arm_dload32 (c, base & 0xfffffffeUL, &val)) {
-					return;
-				}
-
-				if (arm_dload32 (c, (base + 4) & 0xfffffffeUL, &val2)) {
-					return;
-				}
-
-				arm_set_rd (c, c->ir, val);
-				arm_set_gpr (c, (arm_ir_rd (c->ir) + 1) & 0xff, val2);
-			}
-		}
-		else if (h) {
-			if (arm_dstore16 (c, base & 0xfffffffeUL, val)) {
-				return;
-			}
-		}
-		else {
-			if (arm_dstore8 (c, base, val)) {
-				return;
-			}
+		if (arm_dstore8 (c, base, val)) {
+			return;
 		}
 	}
 
 	/* post-index */
 	if (p == 0) {
-		base = (base + ((u) ? (index) : (~index + 1))) & 0xffffffffUL;
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
 	}
 
 	/* base register writeback */
@@ -520,7 +492,7 @@ void op00_0b (arm_t *c)
 		arm_set_rn (c, c->ir, base);
 	}
 
-	arm_set_clk (c, (l && arm_rd_is_pc (c->ir)) ? 0 : 4, 1);
+	arm_set_clk (c, 4, 1);
 }
 
 /* 00 ext */
@@ -574,6 +546,81 @@ void op01_09 (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
+/* 01 0b: ldr[cond][h|sh|sb] rd, addressing_mode */
+static
+void op01_0b (arm_t *c)
+{
+	int      p, u, w, s, h;
+	uint32_t val, base, index;
+
+	p = arm_get_bit (c->ir, 24);
+	u = arm_get_bit (c->ir, 23);
+	w = arm_get_bit (c->ir, 21);
+	s = arm_get_bit (c->ir, 6);
+	h = arm_get_bit (c->ir, 5);
+
+	base = arm_get_rn (c, c->ir);
+
+	/* get index */
+	if (arm_get_bit (c->ir, 22)) {
+		index = arm_get_bits (c->ir, 8, 4) << 4;
+		index |= arm_get_bits (c->ir, 0, 4);
+	}
+	else {
+		index = arm_get_rm (c, c->ir);
+	}
+
+	/* pre-index */
+	if (p) {
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
+	}
+
+	if (h) {
+		uint16_t tmp;
+
+		if (arm_dload16 (c, base & 0xfffffffe, &tmp)) {
+			return;
+		}
+
+		if (s) {
+			val = arm_exts (tmp, 16);
+		}
+		else {
+			val = arm_extu (tmp, 16);
+		}
+	}
+	else {
+		uint8_t tmp;
+
+		if (arm_dload8 (c, base, &tmp)) {
+			return;
+		}
+
+		if (s) {
+			val = arm_exts (tmp, 8);
+		}
+		else {
+			val = arm_extu (tmp, 8);
+		}
+	}
+
+	arm_set_rd (c, c->ir, val);
+
+	/* post-index */
+	if (p == 0) {
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
+	}
+
+	/* base register writeback */
+	if ((p == 0) || (w == 1)) {
+		arm_set_rn (c, c->ir, base);
+	}
+
+	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
+}
+
 /* 01 ext */
 static
 void op01_ext (arm_t *c)
@@ -584,7 +631,7 @@ void op01_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -696,7 +743,7 @@ void op03_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -775,7 +822,7 @@ void op05_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -853,7 +900,7 @@ void op07_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -955,7 +1002,7 @@ void op09_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1061,7 +1108,7 @@ void op0b_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1173,7 +1220,7 @@ void op0d_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1290,7 +1337,7 @@ void op0f_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1392,7 +1439,7 @@ void op11_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1510,7 +1557,7 @@ void op13_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1601,7 +1648,7 @@ void op15_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1729,7 +1776,7 @@ void op17_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1799,7 +1846,7 @@ void op19_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1875,7 +1922,7 @@ void op1b_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -1951,7 +1998,7 @@ void op1d_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
@@ -2029,7 +2076,7 @@ void op1f_ext (arm_t *c)
 		break;
 
 	default:
-		op00_0b (c);
+		op01_0b (c);
 		break;
 	}
 }
