@@ -2136,18 +2136,17 @@ void op32 (arm_t *c)
 	arm_set_clk (c, 4, 1);
 }
 
-/* 40: ldr/str[cond][b][t] rd, [rn], address */
+/* 40: str[cond][b][t] rd, [rn], address */
 static
 void op40 (arm_t *c)
 {
-	int      p, u, b, w, l, t;
+	int      p, u, b, w, t;
 	uint32_t val, base, index;
 
 	p = arm_get_bit (c->ir, 24);
 	u = arm_get_bit (c->ir, 23);
 	b = arm_get_bit (c->ir, 22);
 	w = arm_get_bit (c->ir, 21);
-	l = arm_get_bit (c->ir, 20);
 	t = (p == 0) && (w == 1);
 
 	base = arm_get_rn (c, c->ir);
@@ -2170,7 +2169,7 @@ void op40 (arm_t *c)
 
 		case 0x02: /* asr */
 			if (n == 0) {
-				index = (index & 0x80000000UL) ? 0xffffffffUL : 0x00000000UL;
+				index = (index & 0x80000000) ? 0xffffffff : 0x00000000;
 			}
 			else {
 				index = arm_asr32 (index, n);
@@ -2192,77 +2191,41 @@ void op40 (arm_t *c)
 
 	/* pre-index */
 	if (p) {
-		base = (base + ((u) ? (index) : (~index + 1))) & 0xffffffffUL;
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
 	}
 
-	if (l) {
-		if (b) {
-			uint8_t tmp;
+	val = arm_get_rd (c, c->ir);
 
-			if (t) {
-				if (arm_dload8_t (c, base, &tmp)) {
-					return;
-				}
+	if (b) {
+		if (t) {
+			if (arm_dstore8_t (c, base, val)) {
+				return;
 			}
-			else {
-				if (arm_dload8 (c, base, &tmp)) {
-					return;
-				}
-			}
-
-			val = tmp & 0xff;
 		}
 		else {
-			if (t) {
-				if (arm_dload32_t (c, base & 0xfffffffcUL, &val)) {
-					return;
-				}
-			}
-			else {
-				if (arm_dload32 (c, base & 0xfffffffcUL, &val)) {
-					return;
-				}
-			}
-
-			if (base & 0x03) {
-				val = arm_ror32 (val, (base & 0x03) << 3);
+			if (arm_dstore8 (c, base, val)) {
+				return;
 			}
 		}
-
-		arm_set_rd (c, c->ir, val);
 	}
 	else {
-		val = arm_get_rd (c, c->ir);
-
-		if (b) {
-			if (t) {
-				if (arm_dstore8_t (c, base, val)) {
-					return;
-				}
-			}
-			else {
-				if (arm_dstore8 (c, base, val)) {
-					return;
-				}
+		if (t) {
+			if (arm_dstore32_t (c, base, val)) {
+				return;
 			}
 		}
 		else {
-			if (t) {
-				if (arm_dstore32_t (c, base, val)) {
-					return;
-				}
-			}
-			else {
-				if (arm_dstore32 (c, base, val)) {
-					return;
-				}
+			if (arm_dstore32 (c, base, val)) {
+				return;
 			}
 		}
 	}
 
 	/* post-index */
 	if (p == 0) {
-		base = (base + ((u) ? (index) : (~index + 1))) & 0xffffffffUL;
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
 	}
 
 	/* base register writeback */
@@ -2270,7 +2233,115 @@ void op40 (arm_t *c)
 		arm_set_rn (c, c->ir, base);
 	}
 
-	arm_set_clk (c, (l && arm_rd_is_pc (c->ir)) ? 0 : 4, 1);
+	arm_set_clk (c, 4, 1);
+}
+
+/* 41: ldr[cond][b][t] rd, [rn], address */
+static
+void op41 (arm_t *c)
+{
+	int      p, u, b, w, t;
+	uint32_t val, base, index;
+
+	p = arm_get_bit (c->ir, 24);
+	u = arm_get_bit (c->ir, 23);
+	b = arm_get_bit (c->ir, 22);
+	w = arm_get_bit (c->ir, 21);
+	t = (p == 0) && (w == 1);
+
+	base = arm_get_rn (c, c->ir);
+
+	/* get index */
+	if (arm_get_bit (c->ir, 25)) {
+		unsigned n;
+
+		index = arm_get_rm (c, c->ir);
+		n = arm_get_bits (c->ir, 7, 5);
+
+		switch (arm_get_bits (c->ir, 5, 2)) {
+		case 0x00: /* lsl */
+			index = index << n;
+			break;
+
+		case 0x01: /* lsr */
+			index = (n == 0) ? 0 : (index >> n);
+			break;
+
+		case 0x02: /* asr */
+			if (n == 0) {
+				index = (index & 0x80000000) ? 0xffffffff : 0x00000000;
+			}
+			else {
+				index = arm_asr32 (index, n);
+			}
+			break;
+
+		case 0x03: /* ror / rrx */
+			if (n == 0) {
+				index = (index >> 1) | (arm_get_cc_c (c) << 31);
+			}
+			else {
+				index = (index >> n) | (index << (32 - n));
+			}
+		}
+	}
+	else {
+		index = arm_extu (c->ir, 12);
+	}
+
+	/* pre-index */
+	if (p) {
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
+	}
+
+	if (b) {
+		uint8_t tmp;
+
+		if (t) {
+			if (arm_dload8_t (c, base, &tmp)) {
+				return;
+			}
+		}
+		else {
+			if (arm_dload8 (c, base, &tmp)) {
+				return;
+			}
+		}
+
+		val = tmp & 0xff;
+	}
+	else {
+		if (t) {
+			if (arm_dload32_t (c, base & 0xfffffffc, &val)) {
+				return;
+			}
+		}
+		else {
+			if (arm_dload32 (c, base & 0xfffffffc, &val)) {
+				return;
+			}
+		}
+
+		if (base & 0x03) {
+			val = arm_ror32 (val, (base & 0x03) << 3);
+		}
+	}
+
+	arm_set_rd (c, c->ir, val);
+
+	/* post-index */
+	if (p == 0) {
+		base += u ? index : (~index + 1);
+		base &= 0xffffffff;
+	}
+
+	/* base register writeback */
+	if ((p == 0) || (w == 1)) {
+		arm_set_rn (c, c->ir, base);
+	}
+
+	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
 /* 80: ldm/stm[cond][mode] rn[!], registers[^] */
@@ -2589,14 +2660,14 @@ arm_opcode_f arm_opcodes[256] = {
 	op08, op09, op0a, op0b, op0c, op0d, op0e, op0f,
 	NULL, op11, op32, op13, NULL, op15, NULL, op17,  /* 30 */
 	op18, op19, op1a, op1b, op1c, op1d, op1e, op1f,
-	op40, op40, op40, op40, op40, op40, op40, op40,  /* 40 */
-	op40, op40, op40, op40, op40, op40, op40, op40,
-	op40, op40, op40, op40, op40, op40, op40, op40,  /* 50 */
-	op40, op40, op40, op40, op40, op40, op40, op40,
-	op40, op40, op40, op40, op40, op40, op40, op40,  /* 60 */
-	op40, op40, op40, op40, op40, op40, op40, op40,
-	op40, op40, op40, op40, op40, op40, op40, op40,  /* 70 */
-	op40, op40, op40, op40, op40, op40, op40, op40,
+	op40, op41, op40, op41, op40, op41, op40, op41,  /* 40 */
+	op40, op41, op40, op41, op40, op41, op40, op41,
+	op40, op41, op40, op41, op40, op41, op40, op41,  /* 50 */
+	op40, op41, op40, op41, op40, op41, op40, op41,
+	op40, op41, op40, op41, op40, op41, op40, op41,  /* 60 */
+	op40, op41, op40, op41, op40, op41, op40, op41,
+	op40, op41, op40, op41, op40, op41, op40, op41,  /* 70 */
+	op40, op41, op40, op41, op40, op41, op40, op41,
 	op80, op80, op80, op80, op80, op80, op80, op80,  /* 80 */
 	op80, op80, op80, op80, op80, op80, op80, op80,
 	op80, op80, op80, op80, op80, op80, op80, op80,  /* 90 */
