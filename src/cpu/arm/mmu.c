@@ -538,7 +538,7 @@ int arm_dload8 (arm_t *c, uint32_t addr, uint8_t *val)
 		return (1);
 	}
 
-	if ((addr + 4) <= c->ram_cnt) {
+	if (addr < c->ram_cnt) {
 		*val = c->ram[addr];
 	}
 	else {
@@ -554,21 +554,21 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 		return (1);
 	}
 
-	if ((addr + 2) <= c->ram_cnt) {
+	if ((addr + 1) < c->ram_cnt) {
+		unsigned char *p = &c->ram[addr];
+
 		if (c->bigendian) {
 #ifdef ARM_HOST_BE
-			*val = *(uint16_t *)(&c->ram[addr]);
+			*val = *(uint16_t *) p;
 #else
-			*val = (uint16_t) c->ram[addr] << 8;
-			*val |= c->ram[addr + 1];
+			*val = ((uint16_t) p[0] << 8) | p[1];
 #endif
 		}
 		else {
 #ifdef ARM_HOST_LE
-			*val = *(uint32_t *)(&c->ram[addr]);
+			*val = *(uint32_t *) p;
 #else
-			*val = c->ram[addr];
-			*val |= (uint16_t) c->ram[addr + 1] << 8;
+			*val = ((uint16_t) p[1] << 8) | p[0];
 #endif
 		}
 	}
@@ -585,12 +585,12 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 		return (1);
 	}
 
-	if (addr < c->ram_cnt) {
+	if ((addr + 3) < c->ram_cnt) {
 		unsigned char *p = &c->ram[addr];
 
 		if (c->bigendian) {
 #ifdef ARM_HOST_BE
-			*val = *(uint32_t *)(&c->ram[addr]);
+			*val = *(uint32_t *) p;
 #else
 			*val = (uint32_t) p[0] << 24;
 			*val |= (uint32_t) p[1] << 16;
@@ -600,7 +600,7 @@ int arm_dload32 (arm_t *c, uint32_t addr, uint32_t *val)
 		}
 		else {
 #ifdef ARM_HOST_LE
-			*val = *(uint32_t *)(&c->ram[addr]);
+			*val = *(uint32_t *) p;
 #else
 			*val = p[0];
 			*val |= (uint32_t) p[1] << 8;
@@ -638,21 +638,23 @@ int arm_dstore16 (arm_t *c, uint32_t addr, uint16_t val)
 		return (1);
 	}
 
-	if ((addr + 2) <= c->ram_cnt) {
+	if ((addr + 1) < c->ram_cnt) {
+		unsigned char *p = &c->ram[addr];
+
 		if (c->bigendian) {
 #ifdef ARM_HOST_BE
-			*(uint16_t *)(&c->ram[addr]) = val;
+			*(uint16_t *) p = val;
 #else
-			c->ram[addr + 0] = (val >> 8) & 0xff;
-			c->ram[addr + 1] = val & 0xff;
+			p[0] = (val >> 8) & 0xff;
+			p[1] = val & 0xff;
 #endif
 		}
 		else {
 #ifdef ARM_HOST_LE
-			*(uint16_t *)(&c->ram[addr]) = val;
+			*(uint16_t *) p = val;
 #else
-			c->ram[addr + 0] = val & 0xff;
-			c->ram[addr + 1] = (val >> 8) & 0xff;
+			p[0] = val & 0xff;
+			p[1] = (val >> 8) & 0xff;
 #endif
 		}
 	}
@@ -669,25 +671,27 @@ int arm_dstore32 (arm_t *c, uint32_t addr, uint32_t val)
 		return (1);
 	}
 
-	if ((addr + 4) <= c->ram_cnt) {
+	if ((addr + 3) < c->ram_cnt) {
+		unsigned char *p = &c->ram[addr];
+
 		if (c->bigendian) {
 #ifdef ARM_HOST_BE
-			*(uint32_t *)(&c->ram[addr]) = val;
+			*(uint32_t *) p = val;
 #else
-			c->ram[addr + 0] = (val >> 24) & 0xff;
-			c->ram[addr + 1] = (val >> 16) & 0xff;
-			c->ram[addr + 2] = (val >> 8) & 0xff;
-			c->ram[addr + 3] = val & 0xff;
+			p[0] = (val >> 24) & 0xff;
+			p[1] = (val >> 16) & 0xff;
+			p[2] = (val >> 8) & 0xff;
+			p[3] = val & 0xff;
 #endif
 		}
 		else {
 #ifdef ARM_HOST_LE
-			*(uint32_t *)(&c->ram[addr]) = val;
+			*(uint32_t *) p = val;
 #else
-			c->ram[addr + 0] = val & 0xff;
-			c->ram[addr + 1] = (val >> 8) & 0xff;
-			c->ram[addr + 2] = (val >> 16) & 0xff;
-			c->ram[addr + 3] = (val >> 24) & 0xff;
+			p[0] = val & 0xff;
+			p[1] = (val >> 8) & 0xff;
+			p[2] = (val >> 16) & 0xff;
+			p[3] = (val >> 24) & 0xff;
 #endif
 		}
 	}
