@@ -46,7 +46,10 @@ void cp15_init (arm_copr15_t *p)
 	p->copr.reset = cp15_reset;
 	p->copr.exec = cp15_exec;
 
-	for (i = 0; i < 16; i++) {
+	p->reg[0] = ARM_C15_ID;
+	p->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
+
+	for (i = 2; i < 16; i++) {
 		p->reg[i] = 0;
 	}
 }
@@ -341,11 +344,11 @@ int cp15_reset (arm_t *c, arm_copr_t *p)
 
 	p15 = p->ext;
 
-	p15->reg[0] = ARM_C15_ID;
-	p15->reg[1] = ARM_C15_CR_P | ARM_C15_CR_D | ARM_C15_CR_L;
-
 	if (c->bigendian) {
 		p15->reg[1] |= ARM_C15_CR_B;
+	}
+	else {
+		p15->reg[1] &= ~ARM_C15_CR_B;
 	}
 
 	for (i = 2; i < 16; i++) {

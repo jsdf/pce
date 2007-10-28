@@ -225,6 +225,16 @@ void arm_set_flags (arm_t *c, unsigned flags, int val)
 	}
 }
 
+unsigned long arm_get_id (arm_t *c)
+{
+	return (c->copr15.reg[0]);
+}
+
+void arm_set_id (arm_t *c, unsigned long id)
+{
+	c->copr15.reg[0] = id;
+}
+
 static
 int arm_get_reg_idx (const char *reg, unsigned *idx, unsigned max)
 {

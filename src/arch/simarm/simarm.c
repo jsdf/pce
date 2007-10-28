@@ -37,16 +37,29 @@ void sarm_break (simarm_t *sim, unsigned char val);
 static
 void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 {
-	ini_sct_t  *sct;
-	const char *model;
+	ini_sct_t     *sct;
+	const char    *model;
+	unsigned long id;
 
 	sct = ini_next_sct (ini, NULL, "cpu");
 
 	ini_get_string (sct, "model", &model, "armv5");
 	ini_get_bool (sct, "bigendian", &sim->bigendian, 1);
 
-	pce_log_tag (MSG_INF, "CPU:", "model=%s endian=%s\n",
-		model, sim->bigendian ? "big" : "little"
+	if (strcmp (model, "xscale") == 0) {
+		id = 0x69052000;
+	}
+	else if (strcmp (model, "ixp2400") == 0) {
+		id = 0x69054190;
+	}
+	else {
+		id = 0x69054190;
+	}
+
+	ini_get_uint32 (sct, "id", &id, id);
+
+	pce_log_tag (MSG_INF, "CPU:", "model=%s id=0x%08lx endian=%s\n",
+		model, id, sim->bigendian ? "big" : "little"
 	);
 
 	sim->cpu = arm_new();
@@ -56,6 +69,8 @@ void sarm_setup_cpu (simarm_t *sim, ini_sct_t *ini)
 
 	arm_set_flags (sim->cpu, ARM_FLAG_XSCALE, 1);
 	arm_set_flags (sim->cpu, ARM_FLAG_BIGENDIAN, sim->bigendian);
+
+	arm_set_id (sim->cpu, id);
 
 	if (sim->bigendian) {
 		arm_set_mem_fct (sim->cpu, sim->mem,

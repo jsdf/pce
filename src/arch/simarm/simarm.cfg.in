@@ -6,10 +6,13 @@
 section simarm {
 	section cpu {
 		# This has no effect yet
-		model = "armv5"
+		model = "xscale"
 
 		# Set to 1 for a big endian system
 		bigendian = 0
+
+		# The processor ID
+		id = 0x69052000
 	}
 
 	# Multiple "ram" sections may be present

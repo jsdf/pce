@@ -63,13 +63,17 @@
 
 /* enable big endian mode */
 #define ARM_FLAG_BIGENDIAN 1
-/* enable coprocessor access register */
-#define ARM_FLAG_CPAR      2
-#define ARM_FLAG_XSCALE    (ARM_FLAG_CPAR)
+#define ARM_FLAG_T         2		/* thumb mode */
+#define ARM_FLAG_M         4		/* multiply instructions */
+#define ARM_FLAG_E         8		/* enhanced dsp instructions */
+#define ARM_FLAG_CPAR      16		/* coprocessor access register */
+#define ARM_FLAG_XSCALE    (ARM_FLAG_T | ARM_FLAG_M | ARM_FLAG_E | ARM_FLAG_CPAR)
 #define ARM_FLAG_ALL       0xffff
 
 
-/* #define ARM_C15_ID   0x4105f000UL */
+#define ARM_C15_ID_XSCALE_V5TE 0x69052000UL
+#define ARM_C15_ID_IXP2400     0x69054190UL
+
 #define ARM_C15_ID   0x69052000UL
 #define ARM_C15_CR_M 0x00000001UL
 #define ARM_C15_CR_A 0x00000002UL
@@ -332,6 +336,9 @@ unsigned arm_get_flags (const arm_t *c, unsigned flags);
  * Flags must be set before arm_reset() is called.
  *****************************************************************************/
 void arm_set_flags (arm_t *c, unsigned flags, int val);
+
+unsigned long arm_get_id (arm_t *c);
+void arm_set_id (arm_t *c, unsigned long id);
 
 
 int arm_get_reg (arm_t *c, const char *reg, unsigned long *val);
