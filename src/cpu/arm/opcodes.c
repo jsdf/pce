@@ -32,6 +32,10 @@
 #include "internal.h"
 
 
+/*
+ * Count the number of 1 bits in v.
+ */
+static
 unsigned arm_bitcnt32 (unsigned long v)
 {
 	unsigned n;
@@ -45,6 +49,10 @@ unsigned arm_bitcnt32 (unsigned long v)
 	return (n);
 }
 
+/*
+ * Write a new value to CPSR and adjust the register mapping and execution
+ * mode.
+ */
 int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk)
 {
 	if (prvchk) {
@@ -63,18 +71,21 @@ int arm_write_cpsr (arm_t *c, uint32_t val, int prvchk)
 	return (0);
 }
 
+/*
+ * Set the N and Z condition codes according to a 32 bit result
+ */
 static
-void arm_set_cc_log (arm_t *c, uint32_t val)
+void arm_set_cc_nz (arm_t *c, uint32_t val)
 {
 	uint32_t cc;
 
-	val &= 0xffffffffUL;
+	val &= 0xffffffff;
 	cc = 0;
 
 	if (val == 0) {
 		cc |= ARM_PSR_Z;
 	}
-	else if (val & 0x80000000UL) {
+	else if (val & 0x80000000) {
 		cc |= ARM_PSR_N;
 	}
 
@@ -82,6 +93,9 @@ void arm_set_cc_log (arm_t *c, uint32_t val)
 	c->cpsr |= cc;
 }
 
+/*
+ * Set the condition codes after an addition
+ */
 static
 void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
@@ -92,7 +106,7 @@ void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 	if (d == 0) {
 		cc |= ARM_PSR_Z;
 	}
-	else if (d & 0x80000000UL) {
+	else if (d & 0x80000000) {
 		cc |= ARM_PSR_N;
 	}
 
@@ -100,7 +114,7 @@ void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 		cc |= ARM_PSR_C;
 	}
 
-	if ((d ^ s1) & (d ^ s2) & 0x80000000UL) {
+	if ((d ^ s1) & (d ^ s2) & 0x80000000) {
 		cc |= ARM_PSR_V;
 	}
 
@@ -108,6 +122,9 @@ void arm_set_cc_add (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 	c->cpsr |= cc;
 }
 
+/*
+ * Set the condition codes after a subtraction
+ */
 static
 void arm_set_cc_sub (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 {
@@ -118,7 +135,7 @@ void arm_set_cc_sub (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 	if (d == 0) {
 		cc |= ARM_PSR_Z;
 	}
-	else if (d & 0x80000000UL) {
+	else if (d & 0x80000000) {
 		cc |= ARM_PSR_N;
 	}
 
@@ -126,7 +143,7 @@ void arm_set_cc_sub (arm_t *c, uint32_t d, uint32_t s1, uint32_t s2)
 		cc |= ARM_PSR_C;
 	}
 
-	if ((d ^ s1) & (s1 ^ s2) & 0x80000000UL) {
+	if ((d ^ s1) & (s1 ^ s2) & 0x80000000) {
 		cc |= ARM_PSR_V;
 	}
 
@@ -138,28 +155,31 @@ static
 uint32_t arm_set_psr_field (uint32_t psr, uint32_t val, unsigned fld)
 {
 	if (fld & 0x01) {
-		psr &= 0xffffff00UL;
-		psr |= val & 0x000000ffUL;
+		psr &= 0xffffff00;
+		psr |= val & 0x000000ff;
 	}
 
 	if (fld & 0x02) {
-		psr &= 0xffff00ffUL;
-		psr |= val & 0x0000ff00UL;
+		psr &= 0xffff00ff;
+		psr |= val & 0x0000ff00;
 	}
 
 	if (fld & 0x04) {
-		psr &= 0xff00ffffUL;
-		psr |= val & 0x00ff0000UL;
+		psr &= 0xff00ffff;
+		psr |= val & 0x00ff0000;
 	}
 
 	if (fld & 0x08) {
-		psr &= 0x00ffffffUL;
-		psr |= val & 0xff000000UL;
+		psr &= 0x00ffffff;
+		psr |= val & 0xff000000;
 	}
 
 	return (psr);
 }
 
+/*
+ * Check if condition cond is met
+ */
 int arm_check_cond (arm_t *c, unsigned cond)
 {
 	switch (cond & 0x0f) {
@@ -235,8 +255,8 @@ uint32_t arm_get_sh (arm_t *c, uint32_t ir, uint32_t *cry)
 			*cry = arm_get_cc_c (c);
 		}
 		else {
-			v = ((v >> n) | (v << (32 - n))) & 0xffffffffUL;
-			*cry = ((v & 0x80000000UL) != 0);
+			v = ((v >> n) | (v << (32 - n))) & 0xffffffff;
+			*cry = ((v & 0x80000000) != 0);
 		}
 
 		return (v);
@@ -290,9 +310,9 @@ uint32_t arm_get_sh (arm_t *c, uint32_t ir, uint32_t *cry)
 			}
 			else if (n < 32) {
 				*cry = (v >> (n - 1)) & 0x01;
-				if (v & 0x80000000UL) {
+				if (v & 0x80000000) {
 					v = v >> n;
-					v |= (0xffffffffUL << (32 - n)) & 0xffffffffUL;
+					v |= (0xffffffff << (32 - n)) & 0xffffffff;
 				}
 				else {
 					v = v >> n;
@@ -331,7 +351,7 @@ uint32_t arm_get_sh (arm_t *c, uint32_t ir, uint32_t *cry)
 			}
 			else {
 				*cry = (v >> (32 - n)) & 0x01;
-				v = (v << n) & 0xffffffffUL;
+				v = (v << n) & 0xffffffff;
 			}
 			return (v);
 
@@ -396,7 +416,7 @@ void op00_09 (arm_t *c)
 	s1 = arm_get_rm (c, c->ir);
 	s2 = arm_get_rs (c, c->ir);
 
-	d = (s1 * s2) & 0xffffffffUL;
+	d = (s1 * s2) & 0xffffffff;
 
 	arm_set_rn (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
@@ -539,10 +559,10 @@ void op01_09 (arm_t *c)
 	s1 = arm_get_rm (c, c->ir);
 	s2 = arm_get_rs (c, c->ir);
 
-	d = (s1 * s2) & 0xffffffffUL;
+	d = (s1 * s2) & 0xffffffff;
 
 	arm_set_rn (c, c->ir, d);
-	arm_set_cc_log (c, d);
+	arm_set_cc_nz (c, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
@@ -659,7 +679,7 @@ void op01 (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -675,7 +695,7 @@ void op02_09 (arm_t *c)
 	s2 = arm_get_rs (c, c->ir);
 	s3 = arm_get_rd (c, c->ir);
 
-	d = (s1 * s2 + s3) & 0xffffffffUL;
+	d = (s1 * s2 + s3) & 0xffffffff;
 
 	arm_set_rn (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
@@ -726,10 +746,10 @@ void op03_09 (arm_t *c)
 	s2 = arm_get_rs (c, c->ir);
 	s3 = arm_get_rd (c, c->ir);
 
-	d = (s1 * s2 + s3) & 0xffffffffUL;
+	d = (s1 * s2 + s3) & 0xffffffff;
 
 	arm_set_rn (c, c->ir, d);
-	arm_set_cc_log (c, d);
+	arm_set_cc_nz (c, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
@@ -771,7 +791,7 @@ void op03 (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -806,7 +826,7 @@ void op04 (arm_t *c)
 	s1 = arm_get_rn (c, c->ir);
 	s2 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 - s2) & 0xffffffffUL;
+	d = (s1 - s2) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
@@ -841,7 +861,7 @@ void op05 (arm_t *c)
 	s1 = arm_get_rn (c, c->ir);
 	s2 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 - s2) & 0xffffffffUL;
+	d = (s1 - s2) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -884,7 +904,7 @@ void op06 (arm_t *c)
 	s2 = arm_get_rn (c, c->ir);
 	s1 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 - s2) & 0xffffffffUL;
+	d = (s1 - s2) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
@@ -919,7 +939,7 @@ void op07 (arm_t *c)
 	s2 = arm_get_rn (c, c->ir);
 	s1 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 - s2) & 0xffffffffUL;
+	d = (s1 - s2) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -933,7 +953,7 @@ void op07 (arm_t *c)
 	}
 }
 
-/* 08 09: umull[cond][s] rdlo, rdhi, rm, rs */
+/* 08 09: umull[cond] rdlo, rdhi, rm, rs */
 static
 void op08_09 (arm_t *c)
 {
@@ -944,15 +964,11 @@ void op08_09 (arm_t *c)
 	s2 = arm_get_rs (c, c->ir);
 
 	d = (uint64_t) s1 * (uint64_t) s2;
-	d1 = d & 0xffffffffUL;
-	d2 = (d >> 32) & 0xffffffffUL;
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
 
 	arm_set_rn (c, c->ir, d2);
 	arm_set_rd (c, c->ir, d1);
-
-	if (arm_get_bit (c->ir, 20)) {
-		arm_set_cc_log (c, d2);
-	}
 
 	arm_set_clk (c, 4, 1);
 }
@@ -992,13 +1008,34 @@ void op08 (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
+/* 09 09: umull[cond]s rdlo, rdhi, rm, rs */
+static
+void op09_09 (arm_t *c)
+{
+	uint32_t d1, d2, s1, s2;
+	uint64_t d;
+
+	s1 = arm_get_rm (c, c->ir);
+	s2 = arm_get_rs (c, c->ir);
+
+	d = (uint64_t) s1 * (uint64_t) s2;
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
+
+	arm_set_rn (c, c->ir, d2);
+	arm_set_rd (c, c->ir, d1);
+	arm_set_cc_nz (c, d2);
+
+	arm_set_clk (c, 4, 1);
+}
+
 /* 09 ext */
 static
 void op09_ext (arm_t *c)
 {
 	switch (arm_get_shext (c->ir)) {
 	case 0x09:
-		op08_09 (c);
+		op09_09 (c);
 		break;
 
 	default:
@@ -1021,7 +1058,7 @@ void op09 (arm_t *c)
 	s1 = arm_get_rn (c, c->ir);
 	s2 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 + s2) & 0xffffffffUL;
+	d = (s1 + s2) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -1052,12 +1089,11 @@ void op0a_09 (arm_t *c)
 	d += d1;
 	d += (uint64_t) d2 << 32;
 
-	arm_set_rd (c, c->ir, d & 0xffffffffUL);
-	arm_set_rn (c, c->ir, (d >> 32) & 0xffffffffUL);
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
 
-	if (arm_get_bit (c->ir, 20)) {
-		arm_set_cc_log (c, (d >> 32) & 0xffffffffUL);
-	}
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
 
 	arm_set_clk (c, 4, 1);
 }
@@ -1098,13 +1134,40 @@ void op0a (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
+/* 0B 09: umlal[cond]s rdlo, rdhi, rm, rs */
+static
+void op0b_09 (arm_t *c)
+{
+	uint32_t s1, s2, d1, d2;
+	uint64_t d;
+
+	s1 = arm_get_rm (c, c->ir);
+	s2 = arm_get_rs (c, c->ir);
+	d1 = arm_get_rd (c, c->ir);
+	d2 = arm_get_rn (c, c->ir);
+
+	d = (uint64_t) s1 * (uint64_t) s2;
+
+	d += d1;
+	d += (uint64_t) d2 << 32;
+
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
+
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
+	arm_set_cc_nz (c, d2);
+
+	arm_set_clk (c, 4, 1);
+}
+
 /* 0B ext */
 static
 void op0b_ext (arm_t *c)
 {
 	switch (arm_get_shext (c->ir)) {
 	case 0x09:
-		op0a_09 (c);
+		op0b_09 (c);
 		break;
 
 	default:
@@ -1128,7 +1191,7 @@ void op0b (arm_t *c)
 	s2 = arm_get_sh (c, c->ir, NULL);
 	s3 = arm_get_cc_c (c);
 
-	d = (s1 + s2 + s3) & 0xffffffffUL;
+	d = (s1 + s2 + s3) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -1147,16 +1210,16 @@ static
 void op0c_09 (arm_t *c)
 {
 	int      sign;
-	uint32_t s1, s2;
+	uint32_t d1, d2, s1, s2;
 	uint64_t d;
 
 	s1 = arm_get_rm (c, c->ir);
 	s2 = arm_get_rs (c, c->ir);
 
-	sign = ((s1 ^ s2) & 0x80000000UL) != 0;
+	sign = ((s1 ^ s2) & 0x80000000) != 0;
 
-	s1 = ((s1 & 0x80000000UL) ? (~s1 + 1) : s1) & 0xffffffffUL;
-	s2 = ((s2 & 0x80000000UL) ? (~s2 + 1) : s2) & 0xffffffffUL;
+	s1 = ((s1 & 0x80000000) ? (~s1 + 1) : s1) & 0xffffffff;
+	s2 = ((s2 & 0x80000000) ? (~s2 + 1) : s2) & 0xffffffff;
 
 	d = (uint64_t) s1 * (uint64_t) s2;
 
@@ -1164,12 +1227,11 @@ void op0c_09 (arm_t *c)
 		d = ~d + 1;
 	}
 
-	arm_set_rd (c, c->ir, d & 0xffffffffUL);
-	arm_set_rn (c, c->ir, (d >> 32) & 0xffffffffUL);
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
 
-	if (arm_get_bit (c->ir, 20)) {
-		arm_set_cc_log (c, (d >> 32) & 0xffffffffUL);
-	}
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
 
 	arm_set_clk (c, 4, 1);
 }
@@ -1204,10 +1266,42 @@ void op0c (arm_t *c)
 	s2 = arm_get_sh (c, c->ir, NULL);
 	s3 = !arm_get_cc_c (c);
 
-	d = (s1 - s2 - s3) & 0xffffffffUL;
+	d = (s1 - s2 - s3) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
+}
+
+/* 0D 09: smull[cond]s rdlo, rdhi, rm, rs */
+static
+void op0d_09 (arm_t *c)
+{
+	int      sign;
+	uint32_t d1, d2, s1, s2;
+	uint64_t d;
+
+	s1 = arm_get_rm (c, c->ir);
+	s2 = arm_get_rs (c, c->ir);
+
+	sign = ((s1 ^ s2) & 0x80000000) != 0;
+
+	s1 = ((s1 & 0x80000000) ? (~s1 + 1) : s1) & 0xffffffff;
+	s2 = ((s2 & 0x80000000) ? (~s2 + 1) : s2) & 0xffffffff;
+
+	d = (uint64_t) s1 * (uint64_t) s2;
+
+	if (sign) {
+		d = ~d + 1;
+	}
+
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
+
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
+	arm_set_cc_nz (c, d2);
+
+	arm_set_clk (c, 4, 1);
 }
 
 /* 0D ext */
@@ -1216,7 +1310,7 @@ void op0d_ext (arm_t *c)
 {
 	switch (arm_get_shext (c->ir)) {
 	case 0x09:
-		op0c_09 (c);
+		op0d_09 (c);
 		break;
 
 	default:
@@ -1240,7 +1334,7 @@ void op0d (arm_t *c)
 	s2 = arm_get_sh (c, c->ir, NULL);
 	s3 = !arm_get_cc_c (c);
 
-	d = (s1 - s2 - s3) & 0xffffffffUL;
+	d = (s1 - s2 - s3) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -1267,10 +1361,10 @@ void op0e_09 (arm_t *c)
 	d1 = arm_get_rd (c, c->ir);
 	d2 = arm_get_rn (c, c->ir);
 
-	sign = ((s1 ^ s2) & 0x80000000UL) != 0;
+	sign = ((s1 ^ s2) & 0x80000000) != 0;
 
-	s1 = ((s1 & 0x80000000UL) ? (~s1 + 1) : s1) & 0xffffffffUL;
-	s2 = ((s2 & 0x80000000UL) ? (~s2 + 1) : s2) & 0xffffffffUL;
+	s1 = ((s1 & 0x80000000) ? (~s1 + 1) : s1) & 0xffffffff;
+	s2 = ((s2 & 0x80000000) ? (~s2 + 1) : s2) & 0xffffffff;
 
 	d = (uint64_t) s1 * (uint64_t) s2;
 
@@ -1281,12 +1375,11 @@ void op0e_09 (arm_t *c)
 	d += d1;
 	d += (uint64_t) d2 << 32;
 
-	arm_set_rd (c, c->ir, d & 0xffffffffUL);
-	arm_set_rn (c, c->ir, (d >> 32) & 0xffffffffUL);
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
 
-	if (arm_get_bit (c->ir, 20)) {
-		arm_set_cc_log (c, (d >> 32) & 0xffffffffUL);
-	}
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
 
 	arm_set_clk (c, 4, 1);
 }
@@ -1327,13 +1420,50 @@ void op0e (arm_t *c)
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
 }
 
+/* 0F 09: smlal[cond]s rdlo, rdhi, rm, rs */
+static
+void op0f_09 (arm_t *c)
+{
+	int      sign;
+	uint32_t s1, s2, d1, d2;
+	uint64_t d;
+
+	s1 = arm_get_rm (c, c->ir);
+	s2 = arm_get_rs (c, c->ir);
+	d1 = arm_get_rd (c, c->ir);
+	d2 = arm_get_rn (c, c->ir);
+
+	sign = ((s1 ^ s2) & 0x80000000) != 0;
+
+	s1 = ((s1 & 0x80000000) ? (~s1 + 1) : s1) & 0xffffffff;
+	s2 = ((s2 & 0x80000000) ? (~s2 + 1) : s2) & 0xffffffff;
+
+	d = (uint64_t) s1 * (uint64_t) s2;
+
+	if (sign) {
+		d = ~d + 1;
+	}
+
+	d += d1;
+	d += (uint64_t) d2 << 32;
+
+	d1 = d & 0xffffffff;
+	d2 = (d >> 32) & 0xffffffff;
+
+	arm_set_rd (c, c->ir, d1);
+	arm_set_rn (c, c->ir, d2);
+	arm_set_cc_nz (c, d2);
+
+	arm_set_clk (c, 4, 1);
+}
+
 /* 0F ext */
 static
 void op0f_ext (arm_t *c)
 {
 	switch (arm_get_shext (c->ir)) {
 	case 0x09:
-		op0e_09 (c);
+		op0f_09 (c);
 		break;
 
 	default:
@@ -1357,7 +1487,7 @@ void op0f (arm_t *c)
 	s1 = arm_get_sh (c, c->ir, NULL);
 	s3 = !arm_get_cc_c (c);
 
-	d = (s1 - s2 - s3) & 0xffffffffUL;
+	d = (s1 - s2 - s3) & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -1388,7 +1518,7 @@ void op10_09 (arm_t *c)
 	addr = arm_get_rn (c, c->ir);
 	s = arm_get_rm (c, c->ir);
 
-	if (arm_dload32 (c, addr & 0xfffffffcUL, &d)) {
+	if (arm_dload32 (c, addr & 0xfffffffc, &d)) {
 		return;
 	}
 
@@ -1396,7 +1526,7 @@ void op10_09 (arm_t *c)
 		d = arm_ror32 (d, (addr & 0x03) << 3);
 	}
 
-	if (arm_dstore32 (c, addr & 0xfffffffcUL, s)) {
+	if (arm_dstore32 (c, addr & 0xfffffffc, s)) {
 		return;
 	}
 
@@ -1460,7 +1590,7 @@ void op11 (arm_t *c)
 
 	d = s1 & s2;
 
-	arm_set_cc_log (c, d);
+	arm_set_cc_nz (c, d);
 	arm_set_cc_c (c, shc);
 	arm_set_clk (c, 4, 1);
 }
@@ -1481,10 +1611,12 @@ void op12_00 (arm_t *c)
 	val = arm_get_rm (c, c->ir);
 
 	if (arm_get_bit (c->ir, 22)) {
-		arm_set_spsr (c, arm_set_psr_field (arm_get_spsr (c), val, fld));
+		val = arm_set_psr_field (arm_get_spsr (c), val, fld);
+		arm_set_spsr (c, val);
 	}
 	else {
-		arm_write_cpsr (c, arm_set_psr_field (arm_get_cpsr (c), val, fld), 0);
+		val = arm_set_psr_field (arm_get_cpsr (c), val, fld);
+		arm_write_cpsr (c, val, 0);
 	}
 
 	arm_set_clk (c, 4, 1);
@@ -1578,7 +1710,7 @@ void op13 (arm_t *c)
 
 	d = s1 ^ s2;
 
-	arm_set_cc_log (c, d);
+	arm_set_cc_nz (c, d);
 	arm_set_cc_c (c, shc);
 	arm_set_clk (c, 4, 1);
 }
@@ -1667,7 +1799,7 @@ void op15 (arm_t *c)
 	s1 = arm_get_rn (c, c->ir);
 	s2 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 - s2) & 0xffffffffUL;
+	d = (s1 - s2) & 0xffffffff;
 
 	arm_set_cc_sub (c, d, s1, s2);
 	arm_set_clk (c, 4, 1);
@@ -1687,7 +1819,7 @@ void op16_01 (arm_t *c)
 		}
 		else {
 			d = 0;
-			while ((s & 0x80000000UL) == 0) {
+			while ((s & 0x80000000) == 0) {
 				d += 1;
 				s <<= 1;
 			}
@@ -1719,18 +1851,18 @@ void op16_08 (arm_t *c)
 		s2 = s2 >> 16;
 	}
 
-	sign = ((s1 ^ s2) & 0x8000UL) != 0;
+	sign = ((s1 ^ s2) & 0x8000) != 0;
 
-	s1 = ((s1 & 0x8000UL) ? (~s1 + 1) : s1) & 0xffffUL;
-	s2 = ((s2 & 0x8000UL) ? (~s2 + 1) : s2) & 0xffffUL;
+	s1 = ((s1 & 0x8000) ? (~s1 + 1) : s1) & 0xffff;
+	s2 = ((s2 & 0x8000) ? (~s2 + 1) : s2) & 0xffff;
 
 	d = s1 * s2;
 
 	if (sign) {
-		d = ~d + 1;
+		d = (~d + 1) & 0xffffffff;
 	}
 
-	arm_set_rn (c, c->ir, d & 0xffffffffUL);
+	arm_set_rn (c, c->ir, d);
 	arm_set_clk (c, 4, 1);
 }
 
@@ -1738,25 +1870,25 @@ void op16_08 (arm_t *c)
 static
 void op16 (arm_t *c)
 {
-	switch (c->ir & 0x0ff000f0UL) {
-	case 0x01600000UL:
+	switch (c->ir & 0x0ff000f0) {
+	case 0x01600000:
 		op12_00 (c);
 		break;
 
-	case 0x01600010UL:
+	case 0x01600010:
 		op16_01 (c);
 		break;
 
-	case 0x01600080UL:
-	case 0x016000a0UL:
-	case 0x016000c0UL:
-	case 0x016000e0UL:
+	case 0x01600080:
+	case 0x016000a0:
+	case 0x016000c0:
+	case 0x016000e0:
 		op16_08 (c);
 		break;
 
-	case 0x016000b0UL:
-	case 0x016000d0UL:
-	case 0x016000f0UL:
+	case 0x016000b0:
+	case 0x016000d0:
+	case 0x016000f0:
 		op00_0b (c);
 		break;
 
@@ -1795,7 +1927,7 @@ void op17 (arm_t *c)
 	s1 = arm_get_rn (c, c->ir);
 	s2 = arm_get_sh (c, c->ir, NULL);
 
-	d = (s1 + s2) & 0xffffffffUL;
+	d = (s1 + s2) & 0xffffffff;
 
 	arm_set_cc_add (c, d, s1, s2);
 	arm_set_clk (c, 4, 1);
@@ -1874,7 +2006,7 @@ void op19 (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -1947,7 +2079,7 @@ void op1b (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -2026,7 +2158,7 @@ void op1d (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -2060,7 +2192,7 @@ void op1e (arm_t *c)
 
 	d = arm_get_sh (c, c->ir, NULL);
 
-	d = ~d & 0xffffffffUL;
+	d = ~d & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 	arm_set_clk (c, arm_rd_is_pc (c->ir) ? 0 : 4, 1);
@@ -2094,7 +2226,7 @@ void op1f (arm_t *c)
 
 	d = arm_get_sh (c, c->ir, &shc);
 
-	d = ~d & 0xffffffffUL;
+	d = ~d & 0xffffffff;
 
 	arm_set_rd (c, c->ir, d);
 
@@ -2103,7 +2235,7 @@ void op1f (arm_t *c)
 		arm_set_clk (c, 0, 1);
 	}
 	else {
-		arm_set_cc_log (c, d);
+		arm_set_cc_nz (c, d);
 		arm_set_cc_c (c, shc);
 		arm_set_clk (c, 4, 1);
 	}
@@ -2127,10 +2259,12 @@ void op32 (arm_t *c)
 	val = arm_ror32 (val, rot);
 
 	if (arm_get_bit (c->ir, 22)) {
-		arm_set_spsr (c, arm_set_psr_field (arm_get_spsr (c), val, fld));
+		val = arm_set_psr_field (arm_get_spsr (c), val, fld);
+		arm_set_spsr (c, val);
 	}
 	else {
-		arm_write_cpsr (c, arm_set_psr_field (arm_get_cpsr (c), val, fld), 0);
+		val = arm_set_psr_field (arm_get_cpsr (c), val, fld);
+		arm_write_cpsr (c, val, 0);
 	}
 
 	arm_set_clk (c, 4, 1);
@@ -2169,7 +2303,12 @@ void op40 (arm_t *c)
 
 		case 0x02: /* asr */
 			if (n == 0) {
-				index = (index & 0x80000000) ? 0xffffffff : 0x00000000;
+				if (index & 0x80000000) {
+					index = 0xffffffff;
+				}
+				else {
+					index = 0x00000000;
+				}
 			}
 			else {
 				index = arm_asr32 (index, n);
@@ -2269,7 +2408,12 @@ void op41 (arm_t *c)
 
 		case 0x02: /* asr */
 			if (n == 0) {
-				index = (index & 0x80000000) ? 0xffffffff : 0x00000000;
+				if (index & 0x80000000) {
+					index = 0xffffffff;
+				}
+				else {
+					index = 0x00000000;
+				}
 			}
 			else {
 				index = arm_asr32 (index, n);
@@ -2512,7 +2656,7 @@ void opa0 (arm_t *c)
 	uint32_t d;
 
 	d = arm_exts (c->ir, 24);
-	d = (arm_get_pc (c) + (d << 2) + 8) & 0xffffffffUL;
+	d = (arm_get_pc (c) + (d << 2) + 8) & 0xffffffff;
 
 	arm_set_pc (c, d);
 
@@ -2526,9 +2670,9 @@ void opb0 (arm_t *c)
 	uint32_t d;
 
 	d = arm_exts (c->ir, 24);
-	d = (arm_get_pc (c) + (d << 2) + 8) & 0xffffffffUL;
+	d = (arm_get_pc (c) + (d << 2) + 8) & 0xffffffff;
 
-	arm_set_lr (c, (arm_get_pc (c) + 4) & 0xffffffffUL);
+	arm_set_lr (c, (arm_get_pc (c) + 4) & 0xffffffff);
 	arm_set_pc (c, d);
 
 	arm_set_clk (c, 0, 1);
@@ -2692,17 +2836,17 @@ void ope0_11 (arm_t *c)
 static
 void ope0 (arm_t *c)
 {
-	switch (c->ir & 0x00100010UL) {
-	case 0x00000000UL:
-	case 0x00100000UL:
+	switch (c->ir & 0x00100010) {
+	case 0x00000000:
+	case 0x00100000:
 		ope0_00 (c);
 		break;
 
-	case 0x00000010UL:
+	case 0x00000010:
 		ope0_01 (c);
 		break;
 
-	case 0x00100010UL:
+	case 0x00100010:
 		ope0_11 (c);
 		break;
 
