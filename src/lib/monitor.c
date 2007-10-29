@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/monitor.c                                          *
  * Created:       2006-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -195,6 +195,11 @@ static
 void mon_do_v (cmd_t *cmd)
 {
 	unsigned long val;
+
+	if (cmd_match_eol (cmd)) {
+		cmd_list_syms (cmd, stdout);
+		return;
+	}
 
 	while (cmd_match_uint32 (cmd, &val)) {
 		printf ("%lX\n", val);

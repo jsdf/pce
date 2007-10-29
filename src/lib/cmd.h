@@ -42,6 +42,7 @@ void cmd_get (cmd_t *cmd);
 void cmd_set_str (cmd_t *cmd, const char *str);
 void cmd_rewind (cmd_t *cmd);
 const char *cmd_get_str (cmd_t *cmd);
+void cmd_list_syms (cmd_t *cmd, FILE *fp);
 int cmd_match_space (cmd_t *cmd);
 void cmd_error (cmd_t *cmd, const char *str);
 int cmd_match_ident (cmd_t *cmd, char *str, unsigned max);

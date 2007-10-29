@@ -29,6 +29,12 @@
 #include "cmd.h"
 
 
+typedef struct {
+	char          *name;
+	unsigned long val;
+} cmd_sym_t;
+
+
 static FILE *cmd_fpi = NULL;
 static FILE *cmd_fpo = NULL;
 
@@ -38,6 +44,9 @@ static int   (*cmd_get_sym_fct) (void *ext, const char *sym, unsigned long *val)
 
 static void  *cmd_set_sym_ext = NULL;
 static int   (*cmd_set_sym_fct) (void *ext, const char *sym, unsigned long val);
+
+static unsigned  cmd_sym_cnt = 0;
+static cmd_sym_t *cmd_sym = NULL;
 
 
 int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
@@ -140,6 +149,153 @@ const char *cmd_get_str (cmd_t *cmd)
 	return (cmd->str + cmd->i);
 }
 
+int cmd_get_sym (cmd_t *cmd, const char *sym, unsigned long *val)
+{
+	unsigned   i;
+	const char *str;
+
+	str = sym;
+
+	if ((str[0] == '%') || (str[0] == '$')) {
+		str += 1;
+	}
+
+	if (sym[0] != '$') {
+		if (cmd_get_sym_fct != NULL) {
+			if (cmd_get_sym_fct (cmd_get_sym_ext, str, val) == 0) {
+				return (0);
+			}
+		}
+
+		if (sym[0] == '%') {
+			return (1);
+		}
+	}
+
+	for (i = 0; i < cmd_sym_cnt; i++) {
+		if (strcmp (cmd_sym[i].name, str) == 0) {
+			*val = cmd_sym[i].val;
+			return (0);
+		}
+	}
+
+	return (1);
+}
+
+int cmd_set_sym (cmd_t *cmd, const char *sym, unsigned long val)
+{
+	unsigned   i;
+	const char *str;
+	cmd_sym_t  *tmp;
+
+	str = sym;
+
+	if ((str[0] == '%') || (str[0] == '$')) {
+		str += 1;
+	}
+
+	if (sym[0] != '$') {
+		if (cmd_set_sym_fct != NULL) {
+			if (cmd_set_sym_fct (cmd_set_sym_ext, str, val) == 0) {
+				return (0);
+			}
+		}
+
+		if (sym[0] == '%') {
+			return (1);
+		}
+	}
+
+	for (i = 0; i < cmd_sym_cnt; i++) {
+		if (strcmp (cmd_sym[i].name, str) == 0) {
+			cmd_sym[i].val = val;
+			return (0);
+		}
+	}
+
+	tmp = realloc (cmd_sym, (cmd_sym_cnt + 1) * sizeof (cmd_sym_t));
+	if (tmp == NULL) {
+		return (1);
+	}
+
+	i = cmd_sym_cnt;
+	while (i > 0) {
+		if (strcmp (tmp[i - 1].name, str) < 0) {
+			break;
+		}
+
+		tmp[i] = tmp[i - 1];
+
+		i -= 1;
+	}
+
+	tmp[i].name = strdup (str);
+	tmp[i].val = val;
+
+	cmd_sym = tmp;
+	cmd_sym_cnt += 1;
+
+	return (0);
+}
+
+void cmd_del_sym (cmd_t *cmd, const char *sym, unsigned long *val)
+{
+	unsigned i, j;
+
+	if (sym[0] == '%') {
+		return;
+	}
+
+	if (sym[0] == '$') {
+		sym += 1;
+	}
+
+	*val = 0;
+
+	j = 0;
+
+	for (i = 0; i < cmd_sym_cnt; i++) {
+		if (strcmp (cmd_sym[i].name, sym) == 0) {
+			*val = cmd_sym[i].val;
+			free (cmd_sym[i].name);
+		}
+		else {
+			cmd_sym[j] = cmd_sym[i];
+			j += 1;
+		}
+	}
+
+	cmd_sym_cnt = j;
+}
+
+void cmd_list_syms (cmd_t *cmd, FILE *fp)
+{
+	unsigned i, k, n;
+
+	n = 0;
+	for (i = 0; i < cmd_sym_cnt; i++) {
+		k = strlen (cmd_sym[i].name);
+		if (k > n) {
+			 n = k;
+		}
+	}
+
+	n += 1;
+
+	for (i = 0; i < cmd_sym_cnt; i++) {
+		k = strlen (cmd_sym[i].name);
+
+		fprintf (fp, "$%s", cmd_sym[i].name);
+
+		while (k < n) {
+			fputc (' ', fp);
+			k += 1;
+		}
+
+		fprintf (fp, "= %08lX\n", cmd_sym[i].val);
+	}
+}
+
 int cmd_match_space (cmd_t *cmd)
 {
 	int      r;
@@ -195,10 +351,13 @@ int cmd_match_ident (cmd_t *cmd, char *str, unsigned max)
 	i = cmd->i;
 	n = 0;
 
-	if (cmd->str[cmd->i] == '%') {
-		*(str++) = '%';
+	switch (cmd->str[cmd->i]) {
+	case '%':
+	case '$':
+		*(str++) = cmd->str[cmd->i];
 		i += 1;
 		n += 1;
+		break;
 	}
 
 	while (cmd->str[i] != 0) {
@@ -399,10 +558,10 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 
 	if (cmd_match_ident (cmd, str, 256)) {
 		/*
-		 * If the identifier does not start with '%', check
+		 * If the identifier does not start with '%' or '$', check
 		 * if it could be a constant.
 		 */
-		if (str[0] != '%') {
+		if ((str[0] != '%') && (str[0] != '$')) {
 			unsigned t;
 
 			t = cmd->i;
@@ -419,18 +578,8 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 			cmd->i = t;
 		}
 
-		if (cmd_get_sym_fct != NULL) {
-			unsigned j;
-
-			j = 0;
-			while (str[j] == '%') {
-				j += 1;
-			}
-
-			if (cmd_get_sym_fct (cmd_get_sym_ext, str + j, val) == 0) {
-				*val &= 0xffffffff;
-				return (1);
-			}
+		if (cmd_get_sym (cmd, str, val) == 0) {
+			return (1);
 		}
 
 		cmd->i = i;
@@ -899,7 +1048,7 @@ int cmd_match_expr_lor (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
-int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base)
+int cmd_match_expr_cond (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
 	unsigned long val2, val3;
@@ -932,6 +1081,139 @@ int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base)
 	*val = *val ? val2 : val3;
 
 	return (1);
+}
+
+int cmd_match_expr_assign (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+	unsigned i, j;
+	unsigned op;
+	char     str[256];
+
+	cmd_match_space (cmd);
+
+	i = cmd->i;
+
+	if (cmd_match_ident (cmd, str, 256)) {
+		j = 0;
+		while (str[j] == '%') {
+			j += 1;
+		}
+
+		if (cmd_match (cmd, "=")) {
+			op = 1;
+		}
+		else if (cmd_match (cmd, "+=")) {
+			op = 2;
+		}
+		else if (cmd_match (cmd, "-=")) {
+			op = 3;
+		}
+		else if (cmd_match (cmd, "*=")) {
+			op = 4;
+		}
+		else if (cmd_match (cmd, "/=")) {
+			op = 5;
+		}
+		else if (cmd_match (cmd, "<<=")) {
+			op = 6;
+		}
+		else if (cmd_match (cmd, ">>=")) {
+			op = 7;
+		}
+		else if (cmd_match (cmd, "|=")) {
+			op = 8;
+		}
+		else if (cmd_match (cmd, "&=")) {
+			op = 9;
+		}
+		else if (cmd_match (cmd, "^=")) {
+			op = 10;
+		}
+		else {
+			op = 0;
+		}
+
+		if (op != 0) {
+			unsigned long tmp;
+
+			if (cmd_match (cmd, ";")) {
+				cmd_del_sym (cmd, str + j, val);
+				return (1);
+			}
+
+			if (cmd_get_sym (cmd, str + j, val)) {
+				*val = 0;
+			}
+
+			if (cmd_match_expr_cond (cmd, &tmp, base)) {
+				switch (op) {
+				case 1:
+					*val = tmp;
+					break;
+				case 2:
+					*val += tmp;
+					break;
+				case 3:
+					*val -= tmp;
+					break;
+				case 4:
+					*val *= tmp;
+					break;
+				case 5:
+					if (tmp != 0) {
+						*val /= tmp;
+					}
+					else {
+						*val = 0xffffffff;
+					}
+					break;
+				case 6:
+					*val <<= tmp;
+					break;
+				case 7:
+					*val >>= tmp;
+					break;
+				case 8:
+					*val |= tmp;
+					break;
+				case 9:
+					*val &= tmp;
+					break;
+				case 10:
+					*val ^= tmp;
+					break;
+				default:
+					*val = tmp;
+					break;
+				}
+
+				*val &= 0xffffffff;
+
+				cmd_set_sym (cmd, str + j, *val);
+
+				return (1);
+			}
+		}
+	}
+
+	cmd->i = i;
+
+	return (cmd_match_expr_cond (cmd, val, base));
+}
+
+int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base)
+{
+	while (1) {
+		if (cmd_match_expr_assign (cmd, val, base) == 0) {
+			return (0);
+		}
+
+		if (cmd_match (cmd, ",") == 0) {
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
 int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base)
