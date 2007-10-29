@@ -42,21 +42,29 @@ void cmd_get (cmd_t *cmd);
 void cmd_set_str (cmd_t *cmd, const char *str);
 void cmd_rewind (cmd_t *cmd);
 const char *cmd_get_str (cmd_t *cmd);
+
 void cmd_list_syms (cmd_t *cmd, FILE *fp);
-int cmd_match_space (cmd_t *cmd);
+
 void cmd_error (cmd_t *cmd, const char *str);
+
+int cmd_match_space (cmd_t *cmd);
 int cmd_match_ident (cmd_t *cmd, char *str, unsigned max);
 int cmd_match_str (cmd_t *cmd, char *str, unsigned max);
 int cmd_match_eol (cmd_t *cmd);
 int cmd_match_end (cmd_t *cmd);
 int cmd_match (cmd_t *cmd, const char *str);
+
+int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
+
 int cmd_match_ulng (cmd_t *cmd, unsigned long *val, unsigned base);
 int cmd_match_uint (cmd_t *cmd, unsigned *val, unsigned base);
+
 int cmd_match_uint16b (cmd_t *cmd, unsigned short *val, unsigned base);
 int cmd_match_uint16 (cmd_t *cmd, unsigned short *val);
 int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base);
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val);
 int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs);
+
 void cmd_init (FILE *inp, FILE *out, void *ext, void *getsym, void *setsym);
 
 

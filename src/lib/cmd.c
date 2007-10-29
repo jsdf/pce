@@ -49,9 +49,6 @@ static unsigned  cmd_sym_cnt = 0;
 static cmd_sym_t *cmd_sym = NULL;
 
 
-int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
-
-
 static
 int str_is_space (char c)
 {
@@ -296,6 +293,12 @@ void cmd_list_syms (cmd_t *cmd, FILE *fp)
 	}
 }
 
+void cmd_error (cmd_t *cmd, const char *str)
+{
+	fprintf (cmd_fpo, "*** %s [%s]\n", str, cmd->str + cmd->i);
+	fflush (cmd_fpo);
+}
+
 int cmd_match_space (cmd_t *cmd)
 {
 	int      r;
@@ -312,12 +315,6 @@ int cmd_match_space (cmd_t *cmd)
 	cmd->i = i;
 
 	return (r);
-}
-
-void cmd_error (cmd_t *cmd, const char *str)
-{
-	fprintf (cmd_fpo, "*** %s [%s]\n", str, cmd->str + cmd->i);
-	fflush (cmd_fpo);
 }
 
 static
@@ -474,6 +471,7 @@ int cmd_match (cmd_t *cmd, const char *str)
 	return (1);
 }
 
+static
 int cmd_peek (cmd_t *cmd, const char *str)
 {
 	unsigned i, s;
@@ -498,6 +496,7 @@ int cmd_peek (cmd_t *cmd, const char *str)
 	return (1);
 }
 
+static
 int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned       i;
@@ -531,7 +530,7 @@ int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 			break;
 		}
 
-		ret = (base * ret + dig) & 0xffffffffUL;
+		ret = (base * ret + dig) & 0xffffffff;
 
 		cnt += 1;
 		i += 1;
@@ -547,6 +546,7 @@ int cmd_match_expr_const (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (1);
 }
 
+static
 int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned i;
@@ -604,6 +604,7 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_neg (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned i;
@@ -636,18 +637,19 @@ int cmd_match_expr_neg (cmd_t *cmd, unsigned long *val, unsigned base)
 		*val = !*val;
 	}
 	else if (op == 2) {
-		*val = ~*val & 0xffffffffUL;
+		*val = ~*val & 0xffffffff;
 	}
 	else if (op == 3) {
 		;
 	}
 	else if (op == 4) {
-		*val = -*val & 0xffffffffUL;
+		*val = -*val & 0xffffffff;
 	}
 
 	return (1);
 }
 
+static
 int cmd_match_expr_product (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -680,19 +682,30 @@ int cmd_match_expr_product (cmd_t *cmd, unsigned long *val, unsigned base)
 		}
 
 		if (op == 1) {
-			*val = (*val * val2) & 0xffffffffUL;
+			*val = (*val * val2) & 0xffffffff;
 		}
 		else if (op == 2) {
-			*val = (val2 == 0) ? 0xffffffffUL : (*val / val2);
+			if (val2 != 0) {
+				*val = *val / val2;
+			}
+			else {
+				*val = 0xffffffff;
+			}
 		}
 		else {
-			*val = (val2 == 0) ? 0 : (*val % val2);
+			if (val2 != 0) {
+				*val = *val % val2;
+			}
+			else {
+				*val = 0;
+			}
 		}
 	}
 
 	return (0);
 }
 
+static
 int cmd_match_expr_sum (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -722,16 +735,17 @@ int cmd_match_expr_sum (cmd_t *cmd, unsigned long *val, unsigned base)
 		}
 
 		if (op == 1) {
-			*val = (*val + val2) & 0xffffffffUL;
+			*val = (*val + val2) & 0xffffffff;
 		}
 		else {
-			*val = (*val - val2) & 0xffffffffUL;
+			*val = (*val - val2) & 0xffffffff;
 		}
 	}
 
 	return (0);
 }
 
+static
 int cmd_match_expr_shift (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -769,22 +783,25 @@ int cmd_match_expr_shift (cmd_t *cmd, unsigned long *val, unsigned base)
 		val2 &= 0x1f;
 
 		if (op == 1) {
-			*val = ((*val << val2) | (*val >> (32 - val2))) & 0xffffffffUL;
+			*val = (*val << val2) | (*val >> (32 - val2));
 		}
 		else if (op == 2) {
-			*val = ((*val >> val2) | (*val << (32 - val2))) & 0xffffffffUL;
+			*val = (*val >> val2) | (*val << (32 - val2));
 		}
 		else if (op == 3) {
-			*val = (*val << val2) & 0xffffffffUL;
+			*val = *val << val2;
 		}
 		else if (op == 4) {
-			*val = (*val >> val2) & 0xffffffffUL;
+			*val = *val >> val2;
 		}
+
+		*val &= 0xffffffff;
 	}
 
 	return (0);
 }
 
+static
 int cmd_match_expr_cmp (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -836,6 +853,7 @@ int cmd_match_expr_cmp (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_equ (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -875,6 +893,7 @@ int cmd_match_expr_equ (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_band (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -912,6 +931,7 @@ int cmd_match_expr_band (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_bxor (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -945,6 +965,7 @@ int cmd_match_expr_bxor (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_bor (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -982,6 +1003,7 @@ int cmd_match_expr_bor (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_land (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -1015,6 +1037,7 @@ int cmd_match_expr_land (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_lor (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -1048,6 +1071,7 @@ int cmd_match_expr_lor (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (0);
 }
 
+static
 int cmd_match_expr_cond (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned      i;
@@ -1083,6 +1107,7 @@ int cmd_match_expr_cond (cmd_t *cmd, unsigned long *val, unsigned base)
 	return (1);
 }
 
+static
 int cmd_match_expr_assign (cmd_t *cmd, unsigned long *val, unsigned base)
 {
 	unsigned i, j;
@@ -1242,7 +1267,7 @@ int cmd_match_uint16b (cmd_t *cmd, unsigned short *val, unsigned base)
 	unsigned long tmp;
 
 	if (cmd_match_expr (cmd, &tmp, base)) {
-		*val = tmp & 0xffffU;
+		*val = tmp & 0xffff;
 		return (1);
 	}
 
