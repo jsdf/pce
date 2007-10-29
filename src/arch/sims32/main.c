@@ -100,13 +100,23 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_sym (sims32_t *sim, const char *sym, unsigned long *val)
+int cmd_get_sym (sims32_t *sim, const char *sym, unsigned long *val)
 {
 	if (s32_get_reg (sim->cpu, sym, val) == 0) {
-		return (1);
+		return (0);
 	}
 
-	return (0);
+	return (1);
+}
+
+static
+int cmd_set_sym (sims32_t *sim, const char *sym, unsigned long val)
+{
+	if (s32_set_reg (sim->cpu, sym, val) == 0) {
+		return (0);
+	}
+
+	return (1);
 }
 
 void prt_state (sims32_t *sim, FILE *fp, const char *str)
@@ -290,7 +300,7 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_match_sym);
+	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
 	ss32_cmd_init (par_sim);
 
 	ss32_reset (par_sim);

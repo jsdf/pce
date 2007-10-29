@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/cmd.h                                              *
  * Created:       2003-11-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -56,7 +56,7 @@ int cmd_match_uint16 (cmd_t *cmd, unsigned short *val);
 int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base);
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val);
 int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs);
-void cmd_init (FILE *inp, FILE *out, void *ext, void *sym);
+void cmd_init (FILE *inp, FILE *out, void *ext, void *getsym, void *setsym);
 
 
 #endif

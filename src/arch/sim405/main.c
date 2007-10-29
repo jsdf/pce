@@ -105,13 +105,23 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_sym (sim405_t *sim, const char *sym, unsigned long *val)
+int cmd_get_sym (sim405_t *sim, const char *sym, unsigned long *val)
 {
 	if (p405_get_reg (sim->ppc, sym, val) == 0) {
-		return (1);
+		return (0);
 	}
 
-	return (0);
+	return (1);
+}
+
+static
+int cmd_set_sym (sim405_t *sim, const char *sym, unsigned long val)
+{
+	if (p405_set_reg (sim->ppc, sym, val) == 0) {
+		return (0);
+	}
+
+	return (1);
 }
 
 void prt_state (sim405_t *sim, FILE *fp, const char *str)
@@ -300,7 +310,7 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_match_sym);
+	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
 	ppc_cmd_init (par_sim);
 
 	s405_reset (par_sim);

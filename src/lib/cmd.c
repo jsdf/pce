@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "cmd.h"
 
@@ -32,8 +33,11 @@ static FILE *cmd_fpi = NULL;
 static FILE *cmd_fpo = NULL;
 
 
-static void  *cmd_match_sym_ext = NULL;
-static int   (*cmd_match_sym) (void *ext, const char *sym, unsigned long *ret);
+static void  *cmd_get_sym_ext = NULL;
+static int   (*cmd_get_sym_fct) (void *ext, const char *sym, unsigned long *val);
+
+static void  *cmd_set_sym_ext = NULL;
+static int   (*cmd_set_sym_fct) (void *ext, const char *sym, unsigned long val);
 
 
 int cmd_match_expr (cmd_t *cmd, unsigned long *val, unsigned base);
@@ -415,7 +419,7 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 			cmd->i = t;
 		}
 
-		if (cmd_match_sym != NULL) {
+		if (cmd_get_sym_fct != NULL) {
 			unsigned j;
 
 			j = 0;
@@ -423,7 +427,7 @@ int cmd_match_expr_literal (cmd_t *cmd, unsigned long *val, unsigned base)
 				j += 1;
 			}
 
-			if (cmd_match_sym (cmd_match_sym_ext, str + j, val)) {
+			if (cmd_get_sym_fct (cmd_get_sym_ext, str + j, val) == 0) {
 				*val &= 0xffffffff;
 				return (1);
 			}
@@ -998,10 +1002,14 @@ int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
 	return (1);
 }
 
-void cmd_init (FILE *inp, FILE *out, void *ext, void *sym)
+void cmd_init (FILE *inp, FILE *out, void *ext, void *getsym, void *setsym)
 {
 	cmd_fpi = inp;
 	cmd_fpo = out;
-	cmd_match_sym_ext = ext;
-	cmd_match_sym = sym;
+
+	cmd_get_sym_ext = ext;
+	cmd_get_sym_fct = getsym;
+
+	cmd_set_sym_ext = ext;
+	cmd_set_sym_fct = setsym;
 }

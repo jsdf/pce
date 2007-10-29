@@ -106,9 +106,9 @@ void sig_segv (int s)
 }
 
 static
-int cmd_match_reg (ibmpc_t *pc, const char *sym, unsigned long *reg)
+int cmd_get_sym (ibmpc_t *pc, const char *sym, unsigned long *val)
 {
-	if (e86_get_reg (pc->cpu, sym, reg)) {
+	if (e86_get_reg (pc->cpu, sym, val) == 0) {
 		return (0);
 	}
 
@@ -116,13 +116,13 @@ int cmd_match_reg (ibmpc_t *pc, const char *sym, unsigned long *reg)
 }
 
 static
-int cmd_match_sym (ibmpc_t *pc, const char *sym, unsigned long *val)
+int cmd_set_sym (ibmpc_t *pc, const char *sym, unsigned long val)
 {
-	if (cmd_match_reg (pc, sym, val)) {
-		return (1);
+	if (e86_set_reg (pc->cpu, sym, val) == 0) {
+		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 static
@@ -1782,7 +1782,7 @@ int main (int argc, char *argv[])
 	signal (SIGINT, &sig_int);
 	signal (SIGSEGV, &sig_segv);
 
-	cmd_init (stdin, stdout, pc, cmd_match_sym);
+	cmd_init (stdin, stdout, pc, cmd_get_sym, cmd_set_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
