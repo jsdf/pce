@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/disasm.c                                       *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -716,6 +716,12 @@ static void opd12_00 (arm_dasm_t *da)
 	dasm_op2 (da, "msr", FLG_COND, ARG_PSR_FLD, ARG_RM);
 }
 
+/* 12 01: bx[cond] rm */
+static void opd12_01 (arm_dasm_t *da)
+{
+	dasm_op1 (da, "bx", FLG_COND, ARG_RM);
+}
+
 /* 12 03: blx[cond] rm */
 static void opd12_03 (arm_dasm_t *da)
 {
@@ -741,6 +747,10 @@ static void opd12 (arm_dasm_t *da)
 	switch (da->ir & 0x0ff000f0) {
 	case 0x01200000:
 		opd12_00 (da);
+		break;
+
+	case 0x01200010:
+		opd12_01 (da);
 		break;
 
 	case 0x01200030:

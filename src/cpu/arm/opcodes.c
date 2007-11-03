@@ -1622,6 +1622,25 @@ void op12_00 (arm_t *c)
 	arm_set_clk (c, 4, 1);
 }
 
+/* 12 01: bx rm */
+static
+void op12_01 (arm_t *c)
+{
+	uint32_t d;
+
+	d = arm_get_rm (c, c->ir);
+
+	if (d & 1) {
+		/* branch to thumb instruction set */
+		op_undefined (c);
+		return;
+	}
+
+	arm_set_pc (c, d & 0xfffffffc);
+
+	arm_set_clk (c, 0, 1);
+}
+
 /* 12 03: blx rm */
 static
 void op12_03 (arm_t *c)
@@ -1637,7 +1656,7 @@ void op12_03 (arm_t *c)
 	}
 
 	arm_set_lr (c, (arm_get_pc (c) + 4) & 0xffffffff);
-	arm_set_pc (c, d & 0xfffffffe);
+	arm_set_pc (c, d & 0xfffffffc);
 
 	arm_set_clk (c, 0, 1);
 }
@@ -1657,6 +1676,10 @@ void op12 (arm_t *c)
 	switch (c->ir & 0x0ff000f0) {
 	case 0x01200000:
 		op12_00 (c);
+		break;
+
+	case 0x01200010:
+		op12_01 (c);
 		break;
 
 	case 0x01200030:
