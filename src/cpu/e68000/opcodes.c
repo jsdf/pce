@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e68000/opcodes.c                                   *
  * Created:       2005-07-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -2483,7 +2482,7 @@ static unsigned op_scc (e68000_t *c, int cond)
 		e68_set_clk (c, 8);
 	}
 
-	e68_set_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, val);
+	e68_set_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, val);
 
 	return (c->ircnt);
 }
