@@ -3373,8 +3373,8 @@ static unsigned op9100_00 (e68000_t *c)
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea8 (c, 1, ea2, 0x0011, &s2);
+	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
 	s3 = e68_get_sr_x (c);
 
 	d = s1 - s2 - s3;
@@ -3430,8 +3430,8 @@ static unsigned op9140_00 (e68000_t *c)
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea16 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea16 (c, 1, ea2, 0x0011, &s2);
+	e68_get_ea16 (c, 1, ea1, 0x0011, &s1);
 	s3 = e68_get_sr_x (c);
 
 	d = s1 - s2 - s3;
@@ -3487,8 +3487,8 @@ static unsigned op9180_00 (e68000_t *c)
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea32 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea32 (c, 1, ea2, 0x0011, &s2);
+	e68_get_ea32 (c, 1, ea1, 0x0011, &s1);
 	s3 = e68_get_sr_x (c);
 
 	d = s1 - s2 - s3;
