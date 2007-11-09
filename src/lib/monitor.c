@@ -221,10 +221,7 @@ int mon_run (monitor_t *mon)
 
 		cmd_get (&cmd);
 
-		if (cmd_match_eol (&cmd)) {
-			r = 1;
-		}
-		else if (mon->docmd != NULL) {
+		if (mon->docmd != NULL) {
 			r = mon->docmd (mon->cmdext, &cmd);
 		}
 		else {
