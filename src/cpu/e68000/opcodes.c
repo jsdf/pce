@@ -191,6 +191,26 @@ static unsigned op0100_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
+/* 0100_01: MOVEP.W d16(An), Dn */
+static unsigned op0100_01 (e68000_t *c)
+{
+	uint32_t addr, disp;
+	uint16_t v;
+
+	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
+	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
+	addr += e68_exts (disp, 16);
+
+	v = e68_get_mem8 (c, addr);
+	v = (v << 8) | e68_get_mem8 (c, addr + 2);
+
+	e68_set_dreg16 (c, e68_ir_reg9 (c), v);
+
+	e68_set_clk (c, 8 + 0);
+
+	return (2);
+}
+
 /* 0100_XX: BTST Dn, <EA> */
 static unsigned op0100_xx (e68000_t *c)
 {
@@ -215,6 +235,9 @@ static unsigned op0100 (e68000_t *c)
 	case 0x00:
 		return (op0100_00 (c));
 
+	case 0x01:
+		return (op0100_01 (c));
+
 	default:
 		return (op0100_xx (c));
 	}
@@ -238,6 +261,28 @@ static unsigned op0140_00 (e68000_t *c)
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
+}
+
+/* 0140_01: MOVEP.L d16(An), Dn */
+static unsigned op0140_01 (e68000_t *c)
+{
+	uint32_t addr, disp;
+	uint32_t v;
+
+	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
+	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
+	addr += e68_exts (disp, 16);
+
+	v = e68_get_mem8 (c, addr);
+	v = (v << 8) | e68_get_mem8 (c, addr + 2);
+	v = (v << 8) | e68_get_mem8 (c, addr + 4);
+	v = (v << 8) | e68_get_mem8 (c, addr + 6);
+
+	e68_set_dreg32 (c, e68_ir_reg9 (c), v);
+
+	e68_set_clk (c, 12 + 0);
+
+	return (2);
 }
 
 /* 0140_XX: BCHG Dn, <EA> */
@@ -266,6 +311,9 @@ static unsigned op0140 (e68000_t *c)
 	case 0x00:
 		return (op0140_00 (c));
 
+	case 0x01:
+		return (op0140_01 (c));
+
 	default:
 		return (op0140_xx (c));
 	}
@@ -289,6 +337,26 @@ static unsigned op0180_00 (e68000_t *c)
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
+}
+
+/* 0180_01: MOVEP.W Dn, d16(An) */
+static unsigned op0180_01 (e68000_t *c)
+{
+	uint32_t addr, disp;
+	uint16_t v;
+
+	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
+	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
+	addr += e68_exts (disp, 16);
+
+	v = e68_get_dreg16 (c, e68_ir_reg9 (c));
+
+	e68_set_mem8 (c, addr + 0, v >> 8);
+	e68_set_mem8 (c, addr + 2, v & 0xff);
+
+	e68_set_clk (c, 8 + 0);
+
+	return (2);
 }
 
 /* 0180_XX: BCLR Dn, <EA> */
@@ -317,6 +385,9 @@ static unsigned op0180 (e68000_t *c)
 	case 0x00:
 		return (op0180_00 (c));
 
+	case 0x01:
+		return (op0180_01 (c));
+
 	default:
 		return (op0180_xx (c));
 	}
@@ -340,6 +411,28 @@ static unsigned op01c0_00 (e68000_t *c)
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
+}
+
+/* 01C0_01: MOVEP.L Dn, d16(An) */
+static unsigned op01c0_01 (e68000_t *c)
+{
+	uint32_t addr, disp;
+	uint32_t v;
+
+	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
+	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
+	addr += e68_exts (disp, 16);
+
+	v = e68_get_dreg32 (c, e68_ir_reg9 (c));
+
+	e68_set_mem8 (c, addr + 0, (v >> 24) & 0xff);
+	e68_set_mem8 (c, addr + 2, (v >> 16) & 0xff);
+	e68_set_mem8 (c, addr + 4, (v >> 8) & 0xff);
+	e68_set_mem8 (c, addr + 6, v & 0xff);
+
+	e68_set_clk (c, 12 + 0);
+
+	return (2);
 }
 
 /* 01C0_XX: BSET Dn, <EA> */
@@ -367,6 +460,9 @@ static unsigned op01c0 (e68000_t *c)
 	switch ((c->ir[0] >> 3) & 7) {
 	case 0x00:
 		return (op01c0_00 (c));
+
+	case 0x01:
+		return (op01c0_01 (c));
 
 	default:
 		return (op01c0_xx (c));

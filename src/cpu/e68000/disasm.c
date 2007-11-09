@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e68000/disasm.c                                    *
  * Created:       2005-07-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -50,6 +49,7 @@ enum {
 	ARG_AREG9PI,
 	ARG_AREG0PD,
 	ARG_AREG9PD,
+	ARG_AREG0DISP,
 	ARG_IMM8,
 	ARG_IMM16,
 	ARG_IMM32,
@@ -339,6 +339,14 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		sprintf (dst, "-(A%u)", (unsigned) ((da->ir[0] >> 9) & 7));
 		break;
 
+	case ARG_AREG0DISP:
+		val16 = (src[2] << 8) | src[3];
+		sprintf (dst, "$%04X(A%u)",
+			(unsigned) val16, (unsigned) (da->ir[0] & 7)
+		);
+		da->irn += 1;
+		break;
+
 	case ARG_IMM8:
 		sprintf (dst, "#$%02X", (unsigned) src[3]);
 		da->irn += 1;
@@ -494,28 +502,60 @@ static void d_0080 (e68_dasm_t *da, const uint8_t *src)
 	dasm_op2 (da, "ORI.L", src, ARG_IMM32, ARG_EA, 32);
 }
 
-/* 0100: BTST Dn, <EA> */
+/* 0100: misc */
 static void d_0100 (e68_dasm_t *da, const uint8_t *src)
 {
-	dasm_op2 (da, "BTST", src, ARG_DREG9, ARG_EA, 8);
+	switch ((da->ir[0] >> 3) & 7) {
+	case 0x01:
+		dasm_op2 (da, "MOVEP.W", src, ARG_AREG0DISP, ARG_DREG9, 16);
+		break;
+
+	default:
+		dasm_op2 (da, "BTST", src, ARG_DREG9, ARG_EA, 8);
+		break;
+	}
 }
 
-/* 0140: BCHG Dn, <EA> */
+/* 0140: misc */
 static void d_0140 (e68_dasm_t *da, const uint8_t *src)
 {
-	dasm_op2 (da, "BCHG", src, ARG_DREG9, ARG_EA, 8);
+	switch ((da->ir[0] >> 3) & 7) {
+	case 0x01:
+		dasm_op2 (da, "MOVEP.L", src, ARG_AREG0DISP, ARG_DREG9, 32);
+		break;
+
+	default:
+		dasm_op2 (da, "BCHG", src, ARG_DREG9, ARG_EA, 8);
+		break;
+	}
 }
 
-/* 0180: BCLR Dn, <EA> */
+/* 0180: misc */
 static void d_0180 (e68_dasm_t *da, const uint8_t *src)
 {
-	dasm_op2 (da, "BCLR", src, ARG_DREG9, ARG_EA, 8);
+	switch ((da->ir[0] >> 3) & 7) {
+	case 0x01:
+		dasm_op2 (da, "MOVEP.W", src, ARG_DREG9, ARG_AREG0DISP, 16);
+		break;
+
+	default:
+		dasm_op2 (da, "BCLR", src, ARG_DREG9, ARG_EA, 8);
+		break;
+	}
 }
 
-/* 01C0: BSET Dn, <EA> */
+/* 01C0: misc */
 static void d_01c0 (e68_dasm_t *da, const uint8_t *src)
 {
-	dasm_op2 (da, "BSET", src, ARG_DREG9, ARG_EA, 8);
+	switch ((da->ir[0] >> 3) & 7) {
+	case 0x01:
+		dasm_op2 (da, "MOVEP.L", src, ARG_DREG9, ARG_AREG0DISP, 32);
+		break;
+
+	default:
+		dasm_op2 (da, "BSET", src, ARG_DREG9, ARG_EA, 8);
+		break;
+	}
 }
 
 /* 0200: ANDI.B #XX, EA */
