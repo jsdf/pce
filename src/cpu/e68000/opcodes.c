@@ -65,7 +65,7 @@
 
 static unsigned e68_op_undefined (e68000_t *c)
 {
-	e68_undefined (c);
+	e68_exception_illegal (c);
 	e68_set_clk (c, 2);
 	return (0);
 }

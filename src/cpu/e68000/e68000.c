@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e68000/e68000.c                                    *
  * Created:       2005-07-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -439,6 +438,10 @@ void e68_exception_address (e68000_t *c, uint32_t addr)
 
 void e68_exception_illegal (e68000_t *c)
 {
+	if (c->log_undef != NULL) {
+		c->log_undef (c->log_ext, c->ir[0]);
+	}
+
 	e68_exception (c, 4, "ILLG");
 	e68_set_clk (c, 62);
 }
@@ -492,15 +495,6 @@ void e68_interrupt (e68000_t *c, unsigned char val)
 	if (val) {
 		c->halt &= ~1U;
 	}
-}
-
-void e68_undefined (e68000_t *c)
-{
-	if (c->log_undef != NULL) {
-		c->log_undef (c->log_ext, c->ir[0]);
-	}
-
-	e68_exception_illegal (c);
 }
 
 void e68_reset (e68000_t *c)
