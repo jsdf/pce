@@ -206,7 +206,7 @@ static unsigned op0100_01 (e68000_t *c)
 
 	e68_set_dreg16 (c, e68_ir_reg9 (c), v);
 
-	e68_set_clk (c, 8 + 0);
+	e68_set_clk (c, 16);
 
 	return (2);
 }
@@ -280,7 +280,7 @@ static unsigned op0140_01 (e68000_t *c)
 
 	e68_set_dreg32 (c, e68_ir_reg9 (c), v);
 
-	e68_set_clk (c, 12 + 0);
+	e68_set_clk (c, 24);
 
 	return (2);
 }
@@ -354,7 +354,7 @@ static unsigned op0180_01 (e68000_t *c)
 	e68_set_mem8 (c, addr + 0, v >> 8);
 	e68_set_mem8 (c, addr + 2, v & 0xff);
 
-	e68_set_clk (c, 8 + 0);
+	e68_set_clk (c, 16);
 
 	return (2);
 }
@@ -430,7 +430,7 @@ static unsigned op01c0_01 (e68000_t *c)
 	e68_set_mem8 (c, addr + 4, (v >> 8) & 0xff);
 	e68_set_mem8 (c, addr + 6, v & 0xff);
 
-	e68_set_clk (c, 12 + 0);
+	e68_set_clk (c, 24);
 
 	return (2);
 }
