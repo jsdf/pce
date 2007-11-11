@@ -859,12 +859,14 @@ void sdl_magic (sdl_t *sdl, SDLKey key)
 		trm_set_msg (&sdl->trm, "emu.pause.toggle", "");
 	}
 	else if (key == SDLK_q) {
+		sdl_grab_mouse (sdl, 0);
 		trm_set_msg (&sdl->trm, "emu.exit", "1");
 	}
 	else if (key == SDLK_r) {
 		trm_set_msg (&sdl->trm, "video.redraw", "1");
 	}
 	else if (key == SDLK_s) {
+		sdl_grab_mouse (sdl, 0);
 		trm_set_msg (&sdl->trm, "emu.stop", "1");
 	}
 	else if (key == SDLK_t) {
@@ -914,10 +916,12 @@ void sdl_check (sdl_t *sdl)
 				}
 
 				if (key == SDLK_PAUSE) {
+					sdl_grab_mouse (sdl, 0);
 					trm_set_msg (&sdl->trm, "emu.exit", "1");
 					return;
 				}
 				else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
+					sdl_grab_mouse (sdl, 0);
 					trm_set_msg (&sdl->trm, "emu.stop", "1");
 					return;
 				}
@@ -992,6 +996,7 @@ void sdl_check (sdl_t *sdl)
 				break;
 
 			case SDL_QUIT:
+				sdl_grab_mouse (sdl, 0);
 				trm_set_msg (&sdl->trm, "emu.exit", "1");
 				break;
 
