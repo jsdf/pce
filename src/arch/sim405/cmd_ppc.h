@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.h                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -34,6 +34,8 @@ void s405_prt_state_ppc (sim405_t *sim, FILE *fp);
 void s405_prt_state_spr (p405_t *c, FILE *fp);
 void s405_prt_state_uic (p405_uic_t *uic, FILE *fp);
 void s405_prt_state_mem (sim405_t *sim, FILE *fp);
+
+void ppc_run (sim405_t *sim);
 
 int ppc_do_cmd (sim405_t *sim, cmd_t *cmd);
 

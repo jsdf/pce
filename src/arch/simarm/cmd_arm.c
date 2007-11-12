@@ -231,30 +231,17 @@ void sarm_exec (simarm_t *sim)
 }
 
 static
-void sarm_run_bp (simarm_t *sim)
+int sarm_check_break (simarm_t *sim)
 {
-	breakpoint_t *bp;
-
-	pce_start (&sim->brk);
-
-	while (1) {
-		sarm_exec (sim);
-
-		bp = bps_match (&sim->bps, arm_get_pc (sim->cpu));
-		if (bp != NULL) {
-			bp_print (bp, stdout);
-			if (bp_get_pass (bp) == 0) {
-				bps_bp_del (&sim->bps, bp);
-			}
-			break;
-		}
-
-		if (sim->brk) {
-			break;
-		}
+	if (bps_check (&sim->bps, arm_get_pc (sim->cpu), stdout)) {
+		return (1);
 	}
 
-	pce_stop();
+	if (sim->brk) {
+		return (1);
+	}
+
+	return (0);
 }
 
 static
@@ -283,6 +270,21 @@ int sarm_exec_off (simarm_t *sim, unsigned long addr)
 	}
 
 	return (0);
+}
+
+void sarm_run (simarm_t *sim)
+{
+	pce_start (&sim->brk);
+
+	while (1) {
+		sarm_clock (sim, 16);
+
+		if (sim->brk) {
+			break;
+		}
+	}
+
+	pce_stop();
 }
 
 
@@ -490,35 +492,46 @@ void do_e (cmd_t *cmd, simarm_t *sim)
 }
 
 static
-void do_g (cmd_t *cmd, simarm_t *sim)
+void do_g_b (cmd_t *cmd, simarm_t *sim)
 {
-	int           run;
 	unsigned long addr;
 	breakpoint_t  *bp;
 
-	if (cmd_match (cmd, "b")) {
-		run = 0;
-	}
-	else {
-		run = 1;
-	}
-
-	if (cmd_match_uint32 (cmd, &addr)) {
+	while (cmd_match_uint32 (cmd, &addr)) {
 		bp = bp_addr_new (addr);
 		bps_bp_add (&sim->bps, bp);
-		run = 0;
 	}
 
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
 
-	if (run) {
-		pce_run();
+	pce_start (&sim->brk);
+
+	while (1) {
+		sarm_exec (sim);
+
+		if (sarm_check_break (sim)) {
+			break;
+		}
 	}
-	else {
-		sarm_run_bp (sim);
+
+	pce_stop();
+}
+
+static
+void do_g (cmd_t *cmd, simarm_t *sim)
+{
+	if (cmd_match (cmd, "b")) {
+		do_g_b (cmd, sim);
+		return;
 	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	sarm_run (sim);
 }
 
 static
@@ -532,7 +545,8 @@ void do_h (cmd_t *cmd, simarm_t *sim)
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b] [addr]              run with or without breakpoints (ESC to stop)\n"
+		"gb [addr...]              run with breakpoints\n"
+		"g                         run\n"
 		"key [val...]              send keycodes to the serial console\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
 		"q                         quit\n"

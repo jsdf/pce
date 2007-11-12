@@ -343,6 +343,20 @@ void s405_prt_state_mem (sim405_t *sim, FILE *fp)
 
 
 static
+int ppc_check_break (sim405_t *sim)
+{
+	if (bps_check (&sim->bps, p405_get_pc (sim->ppc), stdout)) {
+		return (1);
+	}
+
+	if (sim->brk) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 void ppc_exec (sim405_t *sim)
 {
 	unsigned long long old;
@@ -352,33 +366,6 @@ void ppc_exec (sim405_t *sim)
 	while (p405_get_opcnt (sim->ppc) == old) {
 		s405_clock (sim, 1);
 	}
-}
-
-static
-void ppc_run_bp (sim405_t *sim)
-{
-	breakpoint_t *bp;
-
-	pce_start (&sim->brk);
-
-	while (1) {
-		ppc_exec (sim);
-
-		bp = bps_match (&sim->bps, p405_get_pc (sim->ppc));
-		if (bp != NULL) {
-			bp_print (bp, stdout);
-			if (bp_get_pass (bp) == 0) {
-				bps_bp_del (&sim->bps, bp);
-			}
-			break;
-		}
-
-		if (sim->brk) {
-			break;
-		}
-	}
-
-	pce_stop();
 }
 
 static
@@ -407,6 +394,21 @@ int ppc_exec_off (sim405_t *sim, unsigned long addr)
 	}
 
 	return (0);
+}
+
+void ppc_run (sim405_t *sim)
+{
+	pce_start (&sim->brk);
+
+	while (1) {
+		s405_clock (sim, 64);
+
+		if (sim->brk) {
+			break;
+		}
+	}
+
+	pce_stop();
 }
 
 
@@ -646,35 +648,46 @@ void do_e (cmd_t *cmd, sim405_t *sim)
 }
 
 static
-void do_g (cmd_t *cmd, sim405_t *sim)
+void do_g_b (cmd_t *cmd, sim405_t *sim)
 {
-	int           run;
 	unsigned long addr;
 	breakpoint_t  *bp;
 
-	if (cmd_match (cmd, "b")) {
-		run = 0;
-	}
-	else {
-		run = 1;
-	}
-
-	if (cmd_match_uint32 (cmd, &addr)) {
+	while (cmd_match_uint32 (cmd, &addr)) {
 		bp = bp_addr_new (addr);
 		bps_bp_add (&sim->bps, bp);
-		run = 0;
 	}
 
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
 
-	if (run) {
-		pce_run();
+	pce_start (&sim->brk);
+
+	while (1) {
+		ppc_exec (sim);
+
+		if (ppc_check_break (sim)) {
+			break;
+		}
 	}
-	else {
-		ppc_run_bp (sim);
+
+	pce_stop();
+}
+
+static
+void do_g (cmd_t *cmd, sim405_t *sim)
+{
+	if (cmd_match (cmd, "b")) {
+		do_g_b (cmd, sim);
+		return;
 	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	ppc_run (sim);
 }
 
 static
@@ -688,7 +701,8 @@ void do_h (cmd_t *cmd, sim405_t *sim)
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b] [addr]              run with or without breakpoints (^` to stop)\n"
+		"gb [addr...]              run with breakpoints\n"
+		"g                         run\n"
 		"key [val...]              send keycodes to the serial console\n"
 		"m msg [val]               send a message to the core\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"

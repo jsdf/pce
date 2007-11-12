@@ -269,21 +269,19 @@ void prt_state (sim6502_t *sim, FILE *fp, const char *str)
 	}
 }
 
-void pce_run (sim6502_t *sim)
+static
+int s6502_check_break (sim6502_t *sim)
 {
-	pce_start (&sim->brk);
-
-	while (1) {
-		s6502_clock (sim, 1);
-
-		if (sim->brk) {
-			break;
-		}
+	if (bps_check (&sim->bps, e6502_get_pc (sim->cpu), stdout)) {
+		return (1);
 	}
 
-	pce_stop();
-}
+	if (sim->brk) {
+		return (1);
+	}
 
+	return (0);
+}
 
 static
 void s6502_exec (sim6502_t *sim)
@@ -325,24 +323,12 @@ int s6502_exec_off (sim6502_t *sim, unsigned short addr)
 	return (0);
 }
 
-static
-void s6502_run_bp (sim6502_t *sim)
+void s6502_run (sim6502_t *sim)
 {
-	breakpoint_t *bp;
-
 	pce_start (&sim->brk);
 
 	while (1) {
-		s6502_exec_off (sim, e6502_get_pc (sim->cpu));
-
-		bp = bps_match (&sim->bps, e6502_get_pc (sim->cpu));
-		if (bp != NULL) {
-			bp_print (bp, stdout);
-			if (bp_get_pass (bp) == 0) {
-				bps_bp_del (&sim->bps, bp);
-			}
-			break;
-		}
+		s6502_clock (sim, 1);
 
 		if (sim->brk) {
 			break;
@@ -531,35 +517,46 @@ void do_e (cmd_t *cmd, sim6502_t *sim)
 }
 
 static
-void do_g (cmd_t *cmd, sim6502_t *sim)
+void do_g_b (cmd_t *cmd, sim6502_t *sim)
 {
-	int            run;
 	unsigned short addr;
 	breakpoint_t   *bp;
 
-	if (cmd_match (cmd, "b")) {
-		run = 0;
-	}
-	else {
-		run = 1;
-	}
-
-	if (cmd_match_uint16 (cmd, &addr)) {
+	while (cmd_match_uint16 (cmd, &addr)) {
 		bp = bp_addr_new (addr);
 		bps_bp_add (&sim->bps, bp);
-		run = 0;
 	}
 
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
 
-	if (run) {
-		pce_run (sim);
+	pce_start (&sim->brk);
+
+	while (1) {
+		s6502_exec (sim);
+
+		if (s6502_check_break (sim)) {
+			break;
+		}
 	}
-	else {
-		s6502_run_bp (sim);
+
+	pce_stop();
+}
+
+static
+void do_g (cmd_t *cmd, sim6502_t *sim)
+{
+	if (cmd_match (cmd, "b")) {
+		do_g_b (cmd, sim);
+		return;
 	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	s6502_run (sim);
 }
 
 static
@@ -573,7 +570,8 @@ void do_h (cmd_t *cmd, sim6502_t *sim)
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val...]           enter bytes into memory\n"
-		"g [b]                     run with or without breakpoints\n"
+		"gb [addr...]              run with breakpoints\n"
+		"g                         run\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
 		"q                         quit\n"
 		"r reg [val]               set a register\n"
@@ -918,7 +916,7 @@ int main (int argc, char *argv[])
 	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
 
 	if (run) {
-		pce_run (par_sim);
+		s6502_run (par_sim);
 		if (par_sim->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}

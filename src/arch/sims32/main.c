@@ -143,21 +143,6 @@ void prt_state (sims32_t *sim, FILE *fp, const char *str)
 	}
 }
 
-void pce_run (void)
-{
-	pce_start (&par_sim->brk);
-
-	while (1) {
-		ss32_clock (par_sim, 1);
-
-		if (par_sim->brk) {
-			break;
-		}
-	}
-
-	pce_stop();
-}
-
 static
 ini_sct_t *pce_load_config (const char *fname)
 {
@@ -299,7 +284,7 @@ int main (int argc, char *argv[])
 	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
 
 	if (run) {
-		pce_run();
+		ss32_run (par_sim);
 		if (par_sim->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}

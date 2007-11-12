@@ -154,21 +154,6 @@ void prt_state (sim405_t *sim, FILE *fp, const char *str)
 	}
 }
 
-void pce_run (void)
-{
-	pce_start (&par_sim->brk);
-
-	while (1) {
-		s405_clock (par_sim, 64);
-
-		if (par_sim->brk) {
-			break;
-		}
-	}
-
-	pce_stop();
-}
-
 static
 ini_sct_t *pce_load_config (const char *fname)
 {
@@ -309,7 +294,7 @@ int main (int argc, char *argv[])
 	mon_set_msg_fct (&mon, s405_set_msg, NULL, par_sim);
 
 	if (run) {
-		pce_run();
+		ppc_run (par_sim);
 		if (par_sim->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}
@@ -318,9 +303,7 @@ int main (int argc, char *argv[])
 		pce_log (MSG_INF, "type 'h' for help\n");
 	}
 
-	if (par_sim->brk != PCE_BRK_ABORT) {
-		mon_run (&mon);
-	}
+	mon_run (&mon);
 
 	s405_del (par_sim);
 

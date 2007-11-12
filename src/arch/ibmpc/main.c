@@ -490,21 +490,8 @@ void prt_state (ibmpc_t *pc, FILE *fp)
 }
 
 static
-void cpu_exec (void)
+int pc_check_break (ibmpc_t *pc)
 {
-	unsigned long long old;
-
-	old = e86_get_opcnt (pc->cpu);
-
-	while (e86_get_opcnt (pc->cpu) == old) {
-		pc_clock (pc);
-	}
-}
-
-static
-int pce_check_break (ibmpc_t *pc)
-{
-	breakpoint_t   *bp;
 	unsigned short seg, ofs;
 	unsigned long  addr;
 
@@ -512,15 +499,7 @@ int pce_check_break (ibmpc_t *pc)
 	ofs = e86_get_ip (pc->cpu);
 	addr = (seg << 16) | ofs;
 
-	bp = bps_match (&pc->bps, addr);
-
-	if (bp != NULL) {
-		bp_print (bp, stdout);
-
-		if (bp_get_pass (bp) == 0) {
-			bps_bp_del (&pc->bps, bp);
-		}
-
+	if (bps_check (&pc->bps, addr, stdout)) {
 		return (1);
 	}
 
@@ -532,7 +511,19 @@ int pce_check_break (ibmpc_t *pc)
 }
 
 static
-void pce_run (void)
+void pc_exec (ibmpc_t *pc)
+{
+	unsigned long long old;
+
+	old = e86_get_opcnt (pc->cpu);
+
+	while (e86_get_opcnt (pc->cpu) == old) {
+		pc_clock (pc);
+	}
+}
+
+static
+void pc_run (ibmpc_t *pc)
 {
 	pce_start (&pc->brk);
 
@@ -543,22 +534,6 @@ void pce_run (void)
 		while (pc->pause) {
 			pce_usleep (250000UL);
 			trm_check (pc->trm);
-		}
-	}
-
-	pce_stop();
-}
-
-static
-void pce_run_bp (void)
-{
-	pce_start (&pc->brk);
-
-	while (1) {
-		cpu_exec();
-
-		if (pce_check_break (pc)) {
-			break;
 		}
 	}
 
@@ -819,7 +794,35 @@ void do_e (cmd_t *cmd)
 }
 
 static
-void do_far (cmd_t *cmd)
+void do_g_b (cmd_t *cmd, ibmpc_t *pc)
+{
+	unsigned short seg, ofs;
+	breakpoint_t  *bp;
+
+	while (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
+		bp = bp_segofs_new (seg, ofs);
+		bps_bp_add (&pc->bps, bp);
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	pce_start (&pc->brk);
+
+	while (1) {
+		pc_exec (pc);
+
+		if (pc_check_break (pc)) {
+			break;
+		}
+	}
+
+	pce_stop();
+}
+
+static
+void do_g_far (cmd_t *cmd, ibmpc_t *pc)
 {
 	unsigned short seg;
 
@@ -831,48 +834,37 @@ void do_far (cmd_t *cmd)
 
 	pce_start (&pc->brk);
 
-	while (e86_get_cs (pc->cpu) == seg) {
-		cpu_exec();
+	while (1) {
+		pc_exec (pc);
 
-		if (pce_check_break (pc)) {
+		if (e86_get_cs (pc->cpu) != seg) {
+			prt_state (pc, stdout);
+			break;
+		}
+
+		if (pc_check_break (pc)) {
 			break;
 		}
 	}
 
 	pce_stop();
-
-	prt_state (pc, stdout);
 }
 
 static
-void do_g (cmd_t *cmd)
+void do_g (cmd_t *cmd, ibmpc_t *pc)
 {
-	int            run;
-	unsigned short seg, ofs;
-	breakpoint_t   *bp;
-
 	if (cmd_match (cmd, "b")) {
-		run = 0;
+		do_g_b (cmd, pc);
+	}
+	else if (cmd_match (cmd, "far")) {
+		do_g_far (cmd, pc);
 	}
 	else {
-		run = 1;
-	}
+		if (!cmd_match_end (cmd)) {
+			return;
+		}
 
-	if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		bp = bp_segofs_new (seg, ofs);
-		bps_bp_add (&pc->bps, bp);
-		run = 0;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (run) {
-		pce_run();
-	}
-	else {
-		pce_run_bp();
+		pc_run (pc);
 	}
 }
 
@@ -913,9 +905,10 @@ void do_h (cmd_t *cmd)
 		"c [cnt]                   clock [1]\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val|string...]    enter bytes into memory\n"
-		"far                       run until cs changes\n"
 		"dump what fname           dump to file (ram|video)\n"
-		"g [b] [addr]              run with or without breakpoints\n"
+		"gb [addr...]              run with breakpoints\n"
+		"g far                     run until CS changes\n"
+		"g                         run\n"
 		"int28 [on|off|val]        turn int28 sleeping on/off\n"
 		"i [b|w] port              input a byte or word from a port\n"
 		"m[g|s] [msg [val]]        send a message\n"
@@ -1185,7 +1178,7 @@ void do_p (cmd_t *cmd)
 		while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
 			pc_clock (pc);
 
-			if (pce_check_break (pc)) {
+			if (pc_check_break (pc)) {
 				brk = 1;
 				break;
 			}
@@ -1201,7 +1194,7 @@ void do_p (cmd_t *cmd)
 			while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
 				pc_clock (pc);
 
-				if (pce_check_break (pc)) {
+				if (pc_check_break (pc)) {
 					brk = 1;
 					break;
 				}
@@ -1212,7 +1205,7 @@ void do_p (cmd_t *cmd)
 			break;
 		}
 
-		if (pce_check_break (pc)) {
+		if (pc_check_break (pc)) {
 			break;
 		}
 	}
@@ -1374,9 +1367,9 @@ void do_t (cmd_t *cmd)
 	pce_start (&pc->brk);
 
 	for (i = 0; i < n; i++) {
-		cpu_exec();
+		pc_exec (pc);
 
-		if (pce_check_break (pc)) {
+		if (pc_check_break (pc)) {
 			break;
 		}
 	}
@@ -1511,11 +1504,8 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	else if (cmd_match (cmd, "e")) {
 		do_e (cmd);
 	}
-	else if (cmd_match (cmd, "far")) {
-		do_far (cmd);
-	}
 	else if (cmd_match (cmd, "g")) {
-		do_g (cmd);
+		do_g (cmd, pc);
 	}
 	else if (cmd_match (cmd, "h")) {
 		do_h (cmd);
@@ -1777,11 +1767,11 @@ int main (int argc, char *argv[])
 
 	if (nomon) {
 		while (pc->brk != PCE_BRK_ABORT) {
-			pce_run();
+			pc_run (pc);
 		}
 	}
 	else if (run) {
-		pce_run();
+		pc_run (pc);
 		if (pc->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}
