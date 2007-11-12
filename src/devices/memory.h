@@ -217,20 +217,6 @@ unsigned long mem_blk_get_uint32_le (const mem_blk_t *blk, unsigned long addr);
 unsigned long mem_blk_get_uint32_null (const void *ext, unsigned long addr);
 
 
-unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
-unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);
-unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr);
-unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr);
-unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr);
-
-void mem_set_uint8_rw (memory_t *mem, unsigned long addr, unsigned char val);
-void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val);
-void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val);
-void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val);
-void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val);
-void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val);
-
-
 /*!***************************************************************************
  * @short Initialize a static memory structure
  * @param mem The memory structure
@@ -260,6 +246,8 @@ void mem_del (memory_t *mem);
  *****************************************************************************/
 void mem_set_default (memory_t *mem, unsigned char val);
 
+void mem_prt_state (memory_t *mem, FILE *fp);
+
 /*!***************************************************************************
  * @short Add a memory block to a memory structure
  * @param mem The memory structure
@@ -274,9 +262,27 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
  * @param mem The memory structure
  * @param blk The memory block
  *****************************************************************************/
-void mem_rmv_blk (memory_t *mem, mem_blk_t *blk);
+void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk);
 
-void mem_prt_state (memory_t *mem, FILE *fp);
+/*!***************************************************************************
+ * @short Get a memory block containing an address
+ * @param  mem The memory structure
+ * @return blk The memory block or NULL
+ *****************************************************************************/
+mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr);
+
+unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
+unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);
+unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr);
+unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr);
+unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr);
+
+void mem_set_uint8_rw (memory_t *mem, unsigned long addr, unsigned char val);
+void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val);
+void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val);
+void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val);
+void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val);
+void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val);
 
 
 #endif

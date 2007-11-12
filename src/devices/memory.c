@@ -433,7 +433,123 @@ unsigned long mem_blk_get_uint32_null (const void *ext, unsigned long addr)
 }
 
 
-static
+void mem_init (memory_t *mem)
+{
+	mem->cnt = 0;
+	mem->lst = NULL;
+
+	mem->last = NULL;
+
+	mem->def_val8 = 0xaa;
+	mem->def_val16 = 0xaaaaU;
+	mem->def_val32 = 0xaaaaaaaaUL;
+}
+
+memory_t *mem_new (void)
+{
+	memory_t *mem;
+
+	mem = (memory_t *) malloc (sizeof (memory_t));
+	if (mem == NULL) {
+		return (NULL);
+	}
+
+	mem_init (mem);
+
+	return (mem);
+}
+
+void mem_free (memory_t *mem)
+{
+	unsigned i;
+
+	if (mem != NULL) {
+		for (i = 0; i < mem->cnt; i++) {
+			if (mem->lst[i].del) {
+				mem_blk_del (mem->lst[i].blk);
+			}
+		}
+
+		free (mem->lst);
+	}
+}
+
+void mem_del (memory_t *mem)
+{
+	if (mem != NULL) {
+		mem_free (mem);
+		free (mem);
+	}
+}
+
+void mem_set_default (memory_t *mem, unsigned char val)
+{
+	mem->def_val8 = val;
+	mem->def_val16 = ((unsigned) val << 8) | val;
+	mem->def_val32 = ((unsigned long) val << 8) | val;
+	mem->def_val32 = (mem->def_val32 << 16) | mem->def_val32;
+}
+
+void mem_prt_state (memory_t *mem, FILE *fp)
+{
+	unsigned  i;
+	mem_lst_t *lst;
+
+	for (i = 0; i < mem->cnt; i++) {
+		lst = &mem->lst[i];
+
+		fprintf (fp, "BLK %04X: A1=%08lX A2=%08lX S=%08lX RO=%d\n",
+			i, lst->blk->addr1, lst->blk->addr2, lst->blk->size,
+			(lst->blk->readonly != 0)
+		);
+	}
+}
+
+void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
+{
+	mem_lst_t *lst;
+
+	if (blk == NULL) {
+		return;
+	}
+
+	lst = realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
+	if (lst == NULL) {
+		return;
+	}
+
+	mem->lst = lst;
+
+	lst += mem->cnt;
+	mem->cnt += 1;
+
+	lst->blk = blk;
+	lst->del = (del != 0);
+
+	mem->last = NULL;
+}
+
+void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk)
+{
+	unsigned  i, j;
+	mem_lst_t *lst;
+
+	i = 0;
+	j = 0;
+	lst = mem->lst;
+
+	while (i < mem->cnt) {
+		if (lst[i].blk != blk) {
+			lst[j++] = lst[i];
+		}
+
+		i += 1;
+	}
+
+	mem->cnt = j;
+	mem->last = NULL;
+}
+
 mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 {
 	unsigned  i;
@@ -767,122 +883,5 @@ void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
 			blk->data[addr + 2] = (val >> 16) & 0xff;
 			blk->data[addr + 3] = (val >> 24) & 0xff;
 		}
-	}
-}
-
-void mem_init (memory_t *mem)
-{
-	mem->cnt = 0;
-	mem->lst = NULL;
-
-	mem->last = NULL;
-
-	mem->def_val8 = 0xaa;
-	mem->def_val16 = 0xaaaaU;
-	mem->def_val32 = 0xaaaaaaaaUL;
-}
-
-memory_t *mem_new (void)
-{
-	memory_t *mem;
-
-	mem = (memory_t *) malloc (sizeof (memory_t));
-	if (mem == NULL) {
-		return (NULL);
-	}
-
-	mem_init (mem);
-
-	return (mem);
-}
-
-void mem_free (memory_t *mem)
-{
-	unsigned i;
-
-	if (mem != NULL) {
-		for (i = 0; i < mem->cnt; i++) {
-			if (mem->lst[i].del) {
-				mem_blk_del (mem->lst[i].blk);
-			}
-		}
-
-		free (mem->lst);
-	}
-}
-
-void mem_del (memory_t *mem)
-{
-	if (mem != NULL) {
-		mem_free (mem);
-		free (mem);
-	}
-}
-
-void mem_set_default (memory_t *mem, unsigned char val)
-{
-	mem->def_val8 = val;
-	mem->def_val16 = ((unsigned) val << 8) | val;
-	mem->def_val32 = ((unsigned long) val << 8) | val;
-	mem->def_val32 = (mem->def_val32 << 16) | mem->def_val32;
-}
-
-void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
-{
-	mem_lst_t *lst;
-
-	if (blk == NULL) {
-		return;
-	}
-
-	lst = realloc (mem->lst, (mem->cnt + 1) * sizeof (mem_lst_t));
-	if (lst == NULL) {
-		return;
-	}
-
-	mem->lst = lst;
-
-	lst += mem->cnt;
-	mem->cnt += 1;
-
-	lst->blk = blk;
-	lst->del = (del != 0);
-
-	mem->last = NULL;
-}
-
-void mem_rmv_blk (memory_t *mem, mem_blk_t *blk)
-{
-	unsigned  i, j;
-	mem_lst_t *lst;
-
-	i = 0;
-	j = 0;
-	lst = mem->lst;
-
-	while (i < mem->cnt) {
-		if (lst[i].blk != blk) {
-			lst[j++] = lst[i];
-		}
-
-		i += 1;
-	}
-
-	mem->cnt = j;
-	mem->last = NULL;
-}
-
-void mem_prt_state (memory_t *mem, FILE *fp)
-{
-	unsigned  i;
-	mem_lst_t *lst;
-
-	for (i = 0; i < mem->cnt; i++) {
-		lst = &mem->lst[i];
-
-		fprintf (fp, "BLK %04X: A1=%08lX A2=%08lX S=%08lX RO=%d\n",
-			i, lst->blk->addr1, lst->blk->addr2, lst->blk->size,
-			(lst->blk->readonly != 0)
-		);
 	}
 }
