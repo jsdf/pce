@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.h                                      *
  * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -46,17 +46,6 @@
 #define PCE_BRK_STOP  1
 #define PCE_BRK_ABORT 2
 #define PCE_BRK_SNAP  3
-
-
-typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*seta_uint16_f) (void *ext, unsigned long addr, unsigned short val);
-typedef unsigned char (*geta_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*geta_uint16_f) (void *ext, unsigned long addr);
-
-typedef void (*set_uint8_f) (void *ext, unsigned char val);
-typedef void (*set_uint16_f) (void *ext, unsigned short val);
-typedef unsigned char (*get_uint8_f) (void *ext);
-typedef unsigned short (*get_uint16_f) (void *ext);
 
 
 struct ibmpc_t;

@@ -89,11 +89,11 @@ ems_t *ems_new (ini_sct_t *sct)
 	}
 
 	ems->mem = mem_blk_new (16 * segm, 65536, 0);
-	ems->mem->ext = ems;
-	ems->mem->get_uint8 = (geta_uint8_f) &ems_get_uint8;
-	ems->mem->set_uint8 = (seta_uint8_f) &ems_set_uint8;
-	ems->mem->get_uint16 = (geta_uint16_f) &ems_get_uint16;
-	ems->mem->set_uint16 = (seta_uint16_f) &ems_set_uint16;
+
+	mem_blk_set_fct (ems->mem, ems,
+		ems_get_uint8, ems_get_uint16, NULL,
+		ems_set_uint8, ems_set_uint16, NULL
+	);
 
 	pce_log_tag (MSG_INF, "EMS:", "size=%luK (%lu pages) segment=0x%04x\n",
 		16UL * pages, ems->pages_max, segm
