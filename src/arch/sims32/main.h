@@ -51,12 +51,9 @@ extern sims32_t *par_sim;
 extern unsigned par_sig_int;
 
 
-void prt_sep (FILE *fp, const char *str, ...);
-
 void prt_state (sims32_t *sim, FILE *fp, const char *str);
 
-void pce_start (void);
-void pce_stop (void);
+
 void pce_run (void);
 
 

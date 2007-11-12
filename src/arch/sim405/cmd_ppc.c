@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/cmd_ppc.c                                  *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -359,7 +359,7 @@ void ppc_run_bp (sim405_t *sim)
 {
 	breakpoint_t *bp;
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		ppc_exec (sim);
@@ -734,7 +734,7 @@ void do_p (cmd_t *cmd, sim405_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (cnt > 0) {
 		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc), P405_XLAT_CPU);
@@ -782,7 +782,7 @@ void do_rfi (cmd_t *cmd, sim405_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc),
@@ -943,7 +943,7 @@ void do_t (cmd_t *cmd, sim405_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	for (i = 0; i < n; i++) {
 		ppc_exec (sim);

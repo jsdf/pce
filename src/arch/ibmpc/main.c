@@ -532,22 +532,9 @@ int pce_check_break (ibmpc_t *pc)
 }
 
 static
-void pce_start (void)
-{
-	pce_set_fd_interactive (0, 0);
-	pc->brk = 0;
-}
-
-static
-void pce_stop (void)
-{
-	pce_set_fd_interactive (0, 1);
-}
-
-static
 void pce_run (void)
 {
-	pce_start();
+	pce_start (&pc->brk);
 
 	while (pc->brk == 0) {
 		pc_clock (pc);
@@ -565,7 +552,7 @@ void pce_run (void)
 static
 void pce_run_bp (void)
 {
-	pce_start();
+	pce_start (&pc->brk);
 
 	while (1) {
 		cpu_exec();
@@ -842,7 +829,7 @@ void do_far (cmd_t *cmd)
 
 	seg = e86_get_cs (pc->cpu);
 
-	pce_start();
+	pce_start (&pc->brk);
 
 	while (e86_get_cs (pc->cpu) == seg) {
 		cpu_exec();
@@ -1187,7 +1174,7 @@ void do_p (cmd_t *cmd)
 
 	brk = 0;
 
-	pce_start();
+	pce_start (&pc->brk);
 
 	for (i = 0; i < n; i++) {
 		e86_disasm_cur (pc->cpu, &op);
@@ -1384,7 +1371,7 @@ void do_t (cmd_t *cmd)
 		return;
 	}
 
-	pce_start();
+	pce_start (&pc->brk);
 
 	for (i = 0; i < n; i++) {
 		cpu_exec();

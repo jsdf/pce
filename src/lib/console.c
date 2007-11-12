@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/console.c                                          *
  * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -106,4 +106,18 @@ void pce_prt_sep (FILE *fp, const char *str, ...)
 	}
 
 	fputs ("\n", fp);
+}
+
+void pce_start (unsigned *brk)
+{
+	if (brk != NULL) {
+		*brk = 0;
+	}
+
+	pce_set_fd_interactive (0, 0);
+}
+
+void pce_stop (void)
+{
+	pce_set_fd_interactive (0, 1);
 }

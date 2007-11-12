@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/console.h                                          *
  * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,10 @@
 #include <stdio.h>
 
 
+#define PCE_BRK_STOP  1
+#define PCE_BRK_ABORT 2
+
+
 void pce_set_fd_interactive (int fd, int interactive);
 
 
@@ -40,6 +44,10 @@ void pce_set_fd_interactive (int fd, int interactive);
 int pce_fd_readable (int fd, int t);
 
 void pce_prt_sep (FILE *fp, const char *str, ...);
+
+void pce_start (unsigned *brk);
+
+void pce_stop (void);
 
 
 #endif

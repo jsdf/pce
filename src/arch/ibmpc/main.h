@@ -43,11 +43,6 @@
 #endif
 
 
-#define PCE_BRK_STOP  1
-#define PCE_BRK_ABORT 2
-#define PCE_BRK_SNAP  3
-
-
 struct ibmpc_t;
 
 

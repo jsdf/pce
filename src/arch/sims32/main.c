@@ -143,20 +143,9 @@ void prt_state (sims32_t *sim, FILE *fp, const char *str)
 	}
 }
 
-void pce_start (void)
-{
-	pce_set_fd_interactive (0, 0);
-	par_sim->brk = 0;
-}
-
-void pce_stop (void)
-{
-	pce_set_fd_interactive (0, 1);
-}
-
 void pce_run (void)
 {
-	pce_start();
+	pce_start (&par_sim->brk);
 
 	while (1) {
 		ss32_clock (par_sim, 1);
@@ -311,7 +300,7 @@ int main (int argc, char *argv[])
 
 	if (run) {
 		pce_run();
-		if (par_sim->brk != 2) {
+		if (par_sim->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}
 	}
@@ -319,7 +308,7 @@ int main (int argc, char *argv[])
 		pce_log (MSG_INF, "type 'h' for help\n");
 	}
 
-	if (par_sim->brk != 2) {
+	if (par_sim->brk != PCE_BRK_ABORT) {
 		mon_run (&par_mon);
 	}
 

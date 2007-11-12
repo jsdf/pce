@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sims32/cmd_s32.c                                  *
  * Created:       2004-09-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -163,7 +163,7 @@ void ss32_run_bp (sims32_t *sim)
 {
 	breakpoint_t *bp;
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		ss32_exec (sim);
@@ -465,7 +465,7 @@ void do_p (cmd_t *cmd, sims32_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (cnt > 0) {
 		s32_dasm_mem (sim->cpu, &da, s32_get_pc (sim->cpu), sim->cpu->asi_text, S32_XLAT_CPU);
@@ -513,7 +513,7 @@ void do_rett (cmd_t *cmd, sims32_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		s32_dasm_mem (sim->cpu, &da, s32_get_pc (sim->cpu), sim->cpu->asi_text, S32_XLAT_CPU);
@@ -596,7 +596,7 @@ void do_t (cmd_t *cmd, sims32_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	for (i = 0; i < n; i++) {
 		ss32_exec (sim);

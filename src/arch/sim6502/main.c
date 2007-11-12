@@ -269,20 +269,9 @@ void prt_state (sim6502_t *sim, FILE *fp, const char *str)
 	}
 }
 
-void pce_start (void)
-{
-	pce_set_fd_interactive (0, 0);
-	par_sim->brk = 0;
-}
-
-void pce_stop (void)
-{
-	pce_set_fd_interactive (0, 1);
-}
-
 void pce_run (sim6502_t *sim)
 {
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		s6502_clock (sim, 1);
@@ -341,7 +330,7 @@ void s6502_run_bp (sim6502_t *sim)
 {
 	breakpoint_t *bp;
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		s6502_exec_off (sim, e6502_get_pc (sim->cpu));
@@ -610,7 +599,7 @@ void do_p (cmd_t *cmd, sim6502_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (cnt > 0) {
 		e6502_disasm_cur (sim->cpu, &dis);
@@ -698,7 +687,7 @@ void do_t (cmd_t *cmd, sim6502_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	for (i = 0; i < n; i++) {
 		s6502_exec (sim);
@@ -891,7 +880,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce sim6502 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -930,7 +919,7 @@ int main (int argc, char *argv[])
 
 	if (run) {
 		pce_run (par_sim);
-		if (par_sim->brk != 2) {
+		if (par_sim->brk != PCE_BRK_ABORT) {
 			fputs ("\n", stdout);
 		}
 	}
@@ -938,7 +927,7 @@ int main (int argc, char *argv[])
 		pce_log (MSG_INF, "type 'h' for help\n");
 	}
 
-	if (par_sim->brk != 2) {
+	if (par_sim->brk != PCE_BRK_ABORT) {
 		mon_run (&par_mon);
 	}
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/cmd_arm.c                                  *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -235,7 +235,7 @@ void sarm_run_bp (simarm_t *sim)
 {
 	breakpoint_t *bp;
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (1) {
 		sarm_exec (sim);
@@ -575,7 +575,7 @@ void do_p (cmd_t *cmd, simarm_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	while (cnt > 0) {
 		arm_dasm_mem (sim->cpu, &da, arm_get_pc (sim->cpu), ARM_XLAT_CPU);
@@ -678,7 +678,7 @@ void do_t (cmd_t *cmd, simarm_t *sim)
 		return;
 	}
 
-	pce_start();
+	pce_start (&sim->brk);
 
 	for (i = 0; i < n; i++) {
 		sarm_exec (sim);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.h                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -79,12 +79,9 @@ extern simarm_t *par_sim;
 extern unsigned par_sig_int;
 
 
-void prt_sep (FILE *fp, const char *str, ...);
-
 void prt_state (simarm_t *sim, FILE *fp, const char *str);
 
-void pce_start (void);
-void pce_stop (void);
+
 void pce_run (void);
 
 
