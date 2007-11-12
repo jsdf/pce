@@ -125,6 +125,8 @@ void mem_blk_free (mem_blk_t *blk);
  *****************************************************************************/
 void mem_blk_del (mem_blk_t *blk);
 
+mem_blk_t *mem_blk_clone (const mem_blk_t *blk);
+
 void mem_blk_fix_fct (mem_blk_t *blk);
 
 void mem_blk_set_fget (mem_blk_t *blk, void *ext, void *g8, void *g16, void *g32);

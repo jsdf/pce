@@ -93,6 +93,23 @@ void mem_blk_del (mem_blk_t *blk)
 	}
 }
 
+mem_blk_t *mem_blk_clone (const mem_blk_t *blk)
+{
+	mem_blk_t *ret;
+
+	ret = malloc (sizeof (mem_blk_t));
+	if (ret == NULL) {
+		return (NULL);
+	}
+
+	*ret = *blk;
+
+	ret->data_del = 0;
+	ret->active = 1;
+
+	return (ret);
+}
+
 void mem_blk_fix_fct (mem_blk_t *blk)
 {
 	if (blk->data != NULL) {
