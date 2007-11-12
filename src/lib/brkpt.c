@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/brkpt.c                                            *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -356,6 +356,29 @@ breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr)
 
 	return (NULL);
 }
+
+/*
+ * Check if a breakpoint is triggered
+ */
+int bps_check (bp_set_t *bps, unsigned long addr, FILE *fp)
+{
+	breakpoint_t *bp;
+
+	bp = bps_match (bps, addr);
+
+	if (bp != NULL) {
+		bp_print (bp, fp);
+
+		if (bp_get_pass (bp) == 0) {
+			bps_bp_del (bps, bp);
+		}
+
+		return (1);
+	}
+
+	return (0);
+}
+
 
 static
 void cmd_do_bsa (cmd_t *cmd, bp_set_t *bps)

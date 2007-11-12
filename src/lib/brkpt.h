@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/brkpt.h                                            *
  * Created:       2004-05-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -85,6 +85,8 @@ void bps_bp_del_all (bp_set_t *bps);
 
 void bps_list (bp_set_t *bps, FILE *fp);
 breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr);
+
+int bps_check (bp_set_t *bps, unsigned long addr, FILE *fp);
 
 
 void cmd_do_b (cmd_t *cmd, bp_set_t *bps, int defseg);
