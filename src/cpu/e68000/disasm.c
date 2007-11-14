@@ -906,6 +906,7 @@ static void d_4ac0 (e68_dasm_t *da, const uint8_t *src)
 {
 	if (da->ir[0] == 0x4afc) {
 		dasm_op0 (da, "ILLEGAL");
+		da->flags |= E68_DFLAG_CALL;
 	}
 	else {
 		dasm_op1 (da, "TAS", src, ARG_EA, 8);
@@ -957,6 +958,7 @@ static void d_4e40 (e68_dasm_t *da, const uint8_t *src)
 	else if (da->ir[0] == 0x4e73) {
 		dasm_op0 (da, "RTE");
 		da->flags |= E68_DFLAG_PRIV;
+		da->flags |= E68_DFLAG_RTE;
 	}
 	else if (da->ir[0] == 0x4e75) {
 		dasm_op0 (da, "RTS");
@@ -1253,6 +1255,8 @@ static void d_a000 (e68_dasm_t *da, const uint8_t *src)
 	sprintf (buf, "%04X", da->ir[0]);
 
 	dasm_op0 (da, buf);
+
+	da->flags |= E68_DFLAG_CALL;
 }
 
 /* B000: CMP.B <EA>, Dx */
@@ -1793,6 +1797,8 @@ static void d_f000 (e68_dasm_t *da, const uint8_t *src)
 	sprintf (buf, "%04X", da->ir[0]);
 
 	dasm_op0 (da, buf);
+
+	da->flags |= E68_DFLAG_CALL;
 }
 
 static void di_und (e68_dasm_t *da, const uint8_t *src)

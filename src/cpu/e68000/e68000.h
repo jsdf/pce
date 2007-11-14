@@ -350,6 +350,7 @@ void e68_set_mem32 (e68000_t *c, uint32_t addr, uint32_t val)
 
 #define E68_DFLAG_PRIV 0x0001
 #define E68_DFLAG_CALL 0x0100
+#define E68_DFLAG_RTE  0x0200
 
 typedef struct {
 	unsigned flags;
