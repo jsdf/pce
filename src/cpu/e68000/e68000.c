@@ -76,6 +76,8 @@ void e68_init (e68000_t *c)
 	e68_set_usp (c, 0);
 	e68_set_ssp (c, 0);
 	e68_set_pc (c, 0);
+
+	c->last_pc = 0;
 }
 
 e68000_t *e68_new (void)
@@ -155,6 +157,11 @@ const char *e68_get_exception_name (e68000_t *c)
 	return (c->excpts);
 }
 
+unsigned long e68_get_last_pc (e68000_t *c)
+{
+	return (c->last_pc);
+}
+
 int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val)
 {
 	char     type;
@@ -166,6 +173,10 @@ int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val)
 
 	if (strcmp (reg, "pc") == 0) {
 		*val = e68_get_pc (c);
+		return (0);
+	}
+	else if (strcmp (reg, "lpc") == 0) {
+		*val = c->last_pc;
 		return (0);
 	}
 	else if (strcmp (reg, "sr") == 0) {
@@ -258,6 +269,10 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 
 	if (strcmp (reg, "pc") == 0) {
 		e68_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "lpc") == 0) {
+		c->last_pc = val;
 		return (0);
 	}
 	else if (strcmp (reg, "sr") == 0) {
@@ -520,6 +535,8 @@ void e68_execute (e68000_t *c)
 {
 	unsigned opc;
 	unsigned n;
+
+	c->last_pc = e68_get_pc (c);
 
 	if (c->pc & 1) {
 		e68_exception_address (c, c->pc);
