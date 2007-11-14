@@ -26,6 +26,9 @@
 #define PCE_LIB_LOG_H 1
 
 
+#include <stdarg.h>
+
+
 #define PCE_LOG_MAX 16
 
 #define MSG_ERR 0
@@ -45,6 +48,8 @@ void pce_log_set_level (FILE *fp, unsigned level);
 unsigned pce_log_get_level (FILE *fp);
 
 void pce_log (unsigned level, const char *msg, ...);
+void pce_log_va (unsigned level, const char *msg, va_list va);
+void pce_log_deb (const char *msg, ...);
 void pce_log_tag (unsigned level, const char *tag, const char *msg, ...);
 
 

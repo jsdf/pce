@@ -153,6 +153,27 @@ void pce_log (unsigned level, const char *msg, ...)
 	}
 }
 
+void pce_log_va (unsigned level, const char *msg, va_list va)
+{
+	unsigned i;
+
+	for (i = 0; i < log_cnt; i++) {
+		if (level <= log[i].level) {
+			vfprintf (log[i].fp, msg, va);
+			fflush (log[i].fp);
+		}
+	}
+}
+
+void pce_log_deb (const char *msg, ...)
+{
+	va_list va;
+
+	va_start (va, msg);
+	pce_log_va (MSG_DEB, msg, va);
+	va_end (va);
+}
+
 void pce_log_tag (unsigned level, const char *tag, const char *msg, ...)
 {
 	unsigned i;
