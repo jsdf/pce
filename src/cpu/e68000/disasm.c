@@ -174,7 +174,6 @@ static
 void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsigned size)
 {
 	unsigned      v;
-	unsigned      val16;
 	unsigned long val32;
 
 	switch ((ea >> 3) & 7) {
@@ -198,16 +197,21 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 		sprintf (dst, "-(A%u)", ea & 7);
 		break;
 
-	case 0x05: /* (%Ax + XXXX) */
+	case 0x05: /* XXXX(%Ax) */
 		v = e68_get_uint16 (src, 2 * da->irn);
-		sprintf (dst, "$%04X(A%u)", v, ea & 7);
+		sprintf (dst, "$%s%04X(A%u)",
+			(v & 0x8000) ? "-" : "",
+			((v & 0x8000) ? (~v + 1) : v) & 0xffff,
+			ea & 7
+		);
 		da->irn += 1;
 		break;
 
-	case 0x06: /* (%Ax + Rx.S + XX) */
+	case 0x06: /* XX(%Ax, Rx.S) */
 		v = e68_get_uint16 (src, 2 * da->irn);
-		sprintf (dst, "$%02X(A%u, %s%u%s)",
-			v & 0xff,
+		sprintf (dst, "$%s%02X(A%u, %s%u%s)",
+			(v & 0x80) ? "-" : "",
+			((v & 0x80) ? (~v + 1) : v) & 0xff,
 			ea & 7,
 			(v & 0x8000) ? "A" : "D",
 			(v >> 12) & 7,
@@ -220,7 +224,12 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 		switch (ea & 7) {
 		case 0x00: /* XXXX */
 			v = e68_get_uint16 (src, 2 * da->irn);
-			sprintf (dst, "$%04X", v);
+			if (v & 0x8000) {
+				sprintf (dst, "$%08lX", v | 0xffff0000UL);
+			}
+			else {
+				sprintf (dst, "$%04X", v);
+			}
 			da->irn += 1;
 			break;
 
@@ -230,16 +239,19 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 			da->irn += 2;
 			break;
 
-		case 0x02: /* (PC + XXXX) */
+		case 0x02: /* XXXX(PC) */
 			v = e68_get_uint16 (src, 2 * da->irn);
-			sprintf (dst, "$%08lX(PC)", (da->pc + e68_exts (v, 16) + 2) & 0xffffffff);
+			sprintf (dst, "$%08lX(PC)",
+				(da->pc + e68_exts (v, 16) + 2) & 0xffffffff
+			);
 			da->irn += 1;
 			break;
 
-		case 0x03: /* (PC + Rx.S + XX) */
+		case 0x03: /* XX(PC, Rx.S) */
 			v = e68_get_uint16 (src, 2 * da->irn);
-			sprintf (dst, "$%02X(PC, %s%u%s)",
-				v,
+			sprintf (dst, "$%s%02X(PC, %s%u%s)",
+				(v & 0x80) ? "-" : "",
+				((v & 0x80) ? (~v + 1) : v) & 0xff,
 				(v & 0x8000) ? "A" : "D",
 				(v >> 12) & 7,
 				(v & 0x0800) ? ".L" : ".W"
@@ -249,13 +261,13 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 
 		case 0x04: /* #XXXX */
 			if (size == 8) {
-				val16 = e68_get_uint16 (src, 2 * da->irn);
-				sprintf (dst, "#$%02X", val16 & 0xff);
+				v = e68_get_uint16 (src, 2 * da->irn);
+				sprintf (dst, "#$%02X", v & 0xff);
 				da->irn += 1;
 			}
 			else if (size == 16) {
-				val16 = e68_get_uint16 (src, 2 * da->irn);
-				sprintf (dst, "#$%04X", val16);
+				v = e68_get_uint16 (src, 2 * da->irn);
+				sprintf (dst, "#$%04X", v);
 				da->irn += 1;
 			}
 			else if (size == 32) {
@@ -293,7 +305,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		break;
 
 	case ARG_IR:
-		sprintf (dst, "#$%04x", (unsigned) e68_get_uint16 (src, 0));
+		sprintf (dst, "#$%04X", (unsigned) e68_get_uint16 (src, 0));
 		break;
 
 	case ARG_EA:
@@ -340,9 +352,11 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		break;
 
 	case ARG_AREG0DISP:
-		val16 = (src[2] << 8) | src[3];
-		sprintf (dst, "$%04X(A%u)",
-			(unsigned) val16, (unsigned) (da->ir[0] & 7)
+		val16 = e68_get_uint16 (src, 2);
+		sprintf (dst, "$%s%04X(A%u)",
+			(val16 & 0x8000) ? "-" : "",
+			((val16 & 0x8000) ? (~val16 + 1) : val16) & 0xffff,
+			(unsigned) (da->ir[0] & 7)
 		);
 		da->irn += 1;
 		break;
@@ -353,7 +367,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		break;
 
 	case ARG_IMM16:
-		val16 = (src[2] << 8) | src[3];
+		val16 = e68_get_uint16 (src, 2);
 		sprintf (dst, "#$%04X", (unsigned) val16);
 		da->irn += 1;
 		break;
