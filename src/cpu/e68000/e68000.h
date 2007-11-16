@@ -29,6 +29,9 @@
 #include <stdint.h>
 
 
+/* #define E68000_LOG_MEM 1 */
+
+
 struct e68000_s;
 
 
@@ -99,6 +102,7 @@ typedef struct e68000_s {
 	void               (*log_opcode) (void *ext, unsigned long ir);
 	void               (*log_undef) (void *ext, unsigned long ir);
 	void               (*log_exception) (void *ext, unsigned tn);
+	void               (*log_mem) (void *ext, unsigned long addr, unsigned type);
 
 	void               *hook_ext;
 	int                (*hook) (void *ext);
@@ -183,36 +187,72 @@ void e68_set_areg32 (e68000_t *c, unsigned reg, uint32_t val)
 static inline
 uint8_t e68_get_mem8 (e68000_t *c, uint32_t addr)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 2);
+	}
+#endif
+
 	return (c->get_uint8 (c->mem_ext, addr & 0x00ffffff));
 }
 
 static inline
 uint16_t e68_get_mem16 (e68000_t *c, uint32_t addr)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 4);
+	}
+#endif
+
 	return (c->get_uint16 (c->mem_ext, addr & 0x00ffffff));
 }
 
 static inline
 uint32_t e68_get_mem32 (e68000_t *c, uint32_t addr)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 8);
+	}
+#endif
+
 	return (c->get_uint32 (c->mem_ext, addr & 0x00ffffff));
 }
 
 static inline
 void e68_set_mem8 (e68000_t *c, uint32_t addr, uint8_t val)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 3);
+	}
+#endif
+
 	c->set_uint8 (c->mem_ext, addr & 0x00ffffff, val);
 }
 
 static inline
 void e68_set_mem16 (e68000_t *c, uint32_t addr, uint16_t val)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 5);
+	}
+#endif
+
 	c->set_uint16 (c->mem_ext, addr & 0x00ffffff, val);
 }
 
 static inline
 void e68_set_mem32 (e68000_t *c, uint32_t addr, uint32_t val)
 {
+#ifdef E68000_LOG_MEM
+	if (c->log_mem != NULL) {
+		c->log_mem (c->log_ext, addr, 9);
+	}
+#endif
+
 	c->set_uint32 (c->mem_ext, addr & 0x00ffffff, val);
 }
 

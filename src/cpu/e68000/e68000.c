@@ -48,6 +48,7 @@ void e68_init (e68000_t *c)
 	c->log_opcode = NULL;
 	c->log_undef = NULL;
 	c->log_exception = NULL;
+	c->log_mem = NULL;
 
 	c->hook_ext = NULL;
 	c->hook = NULL;
