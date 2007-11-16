@@ -26,6 +26,7 @@
 #define PCE_E68000_H 1
 
 
+#include <stdlib.h>
 #include <stdint.h>
 
 
