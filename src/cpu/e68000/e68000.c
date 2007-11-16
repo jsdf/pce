@@ -370,7 +370,8 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 	return (0);
 }
 
-void e68_set_mode (e68000_t *c, int supervisor)
+static
+void e68_set_supervisor (e68000_t *c, int supervisor)
 {
 	if (c->supervisor) {
 		c->ssp = e68_get_areg32 (c, 7);
@@ -392,7 +393,7 @@ void e68_set_mode (e68000_t *c, int supervisor)
 void e68_set_sr (e68000_t *c, unsigned short val)
 {
 	if ((c->sr ^ val) & E68_SR_S) {
-		e68_set_mode (c, val & E68_SR_S);
+		e68_set_supervisor (c, val & E68_SR_S);
 	}
 
 	c->sr = val & E68_SR_MASK;

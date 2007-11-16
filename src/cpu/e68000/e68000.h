@@ -60,14 +60,6 @@ struct e68000_s;
 
 #define e68_set_pc(c, v) do { (c)->pc = (v) & 0xffffffff; } while (0)
 
-#define e68_set_usp(c, v) do { \
-	if ((c)->supervisor) (c)->usp = (v); else (c)->areg[7] = (v); \
-	} while (0)
-
-#define e68_set_ssp(c, v) do { \
-	if ((c)->supervisor) (c)->areg[7] = (v); else (c)->ssp = (v); \
-	} while (0)
-
 #define e68_get_sr_c(c) (((c)->sr & E68_SR_C) != 0)
 #define e68_get_sr_v(c) (((c)->sr & E68_SR_V) != 0)
 #define e68_get_sr_z(c) (((c)->sr & E68_SR_Z) != 0)
@@ -89,27 +81,19 @@ struct e68000_s;
 #define e68_set_sr_t(c, v) e68_set_cc ((c), E68_SR_T, (v))
 
 
-typedef unsigned char (*e68_get_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*e68_get_uint16_f) (void *ext, unsigned long addr);
-typedef unsigned long (*e68_get_uint32_f) (void *ext, unsigned long addr);
-
-typedef void (*e68_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*e68_set_uint16_f) (void *ext, unsigned long addr, unsigned short val);
-typedef void (*e68_set_uint32_f) (void *ext, unsigned long addr, unsigned long val);
-
 typedef unsigned (*e68_opcode_f) (struct e68000_s *c);
 
 
 typedef struct e68000_s {
 	void               *mem_ext;
 
-	e68_get_uint8_f    get_uint8;
-	e68_get_uint16_f   get_uint16;
-	e68_get_uint32_f   get_uint32;
+	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
+	unsigned short     (*get_uint16) (void *ext, unsigned long addr);
+	unsigned long      (*get_uint32) (void *ext, unsigned long addr);
 
-	e68_set_uint8_f    set_uint8;
-	e68_set_uint16_f   set_uint16;
-	e68_set_uint32_f   set_uint32;
+	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
+	void               (*set_uint16) (void *ext, unsigned long addr, unsigned short val);
+	void               (*set_uint32) (void *ext, unsigned long addr, unsigned long val);
 
 	void               *log_ext;
 	void               (*log_opcode) (void *ext, unsigned long ir);
@@ -155,120 +139,6 @@ typedef struct e68000_s {
 
 
 
-/*!***************************************************************************
- * @short Initialize a 68000 context struct
- *****************************************************************************/
-void e68_init (e68000_t *c);
-
-/*!***************************************************************************
- * @short  Create and initialize a 68000 context struct
- * @return The 68000 struct or NULL on error
- *****************************************************************************/
-e68000_t *e68_new (void);
-
-/*!***************************************************************************
- * @short Free the resources used by a 68000 struct
- *****************************************************************************/
-void e68_free (e68000_t *c);
-
-/*!***************************************************************************
- * @short Delete a 68000 struct
- *****************************************************************************/
-void e68_del (e68000_t *c);
-
-void e68_set_mem_fct (e68000_t *c, void *ext,
-  void *get8, void *get16, void *get32,
-  void *set8, void *set16, void *set32
-);
-
-void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
-
-/*!***************************************************************************
- * @short Get the number of executed instructions
- *****************************************************************************/
-unsigned long long e68_get_opcnt (e68000_t *c);
-
-/*!***************************************************************************
- * @short Get the number of clock cycles
- *****************************************************************************/
-unsigned long long e68_get_clkcnt (e68000_t *c);
-
-/*!***************************************************************************
- * @short Get the previous instruction delay
- *****************************************************************************/
-unsigned long e68_get_delay (e68000_t *c);
-
-unsigned e68_get_halt (e68000_t *c);
-void e68_set_halt (e68000_t *c, unsigned val);
-
-unsigned e68_get_exception (e68000_t *c);
-const char *e68_get_exception_name (e68000_t *c);
-
-unsigned long e68_get_last_pc (e68000_t *pc);
-
-
-int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val);
-int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
-
-
-/*!***************************************************************************
- * @short Set the execution mode
- *****************************************************************************/
-void e68_set_mode (e68000_t *c, int supervisor);
-
-/*!***************************************************************************
- * @short Set the status register
- *****************************************************************************/
-void e68_set_sr (e68000_t *c, unsigned short val);
-
-void e68_push16 (e68000_t *c, uint16_t val);
-void e68_push32 (e68000_t *c, uint32_t val);
-
-void e68_exception_reset (e68000_t *c);
-
-void e68_exception_address (e68000_t *c, uint32_t addr);
-
-void e68_exception_illegal (e68000_t *c);
-
-void e68_exception_divzero (e68000_t *c);
-
-void e68_exception_check (e68000_t *c);
-
-void e68_exception_overflow (e68000_t *c);
-
-void e68_exception_privilege (e68000_t *c);
-
-void e68_exception_axxx (e68000_t *c);
-
-void e68_exception_fxxx (e68000_t *c);
-
-void e68_exception_avec (e68000_t *c, unsigned level);
-
-void e68_exception_trap (e68000_t *c, unsigned n);
-
-void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect);
-
-/*!***************************************************************************
- * @short The external interrupt input signal
- *****************************************************************************/
-void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec);
-
-/*!***************************************************************************
- * @short Reset a 68000 cpu core
- *****************************************************************************/
-void e68_reset (e68000_t *c);
-
-/*!***************************************************************************
- * @short Execute one instruction
- *****************************************************************************/
-void e68_execute (e68000_t *c);
-
-/*!***************************************************************************
- * @short Clock a 68000 cpu core
- *****************************************************************************/
-void e68_clock (e68000_t *c, unsigned long n);
-
-
 static inline
 void e68_set_dreg8 (e68000_t *c, unsigned reg, uint8_t val)
 {
@@ -304,15 +174,9 @@ void e68_set_areg16 (e68000_t *c, unsigned reg, uint16_t val)
 static inline
 void e68_set_areg32 (e68000_t *c, unsigned reg, uint32_t val)
 {
-	c->areg[reg & 7] = val & ((reg == 7) ? 0xfffffffe : 0xffffffff);
+	reg &= 7;
+	c->areg[reg] = val & ((reg == 7) ? 0xfffffffe : 0xffffffff);
 }
-
-static inline
-void e68_set_ccr (e68000_t *c, uint8_t val)
-{
-	c->sr = (c->sr & 0xff00) | (val & 0x00ff);
-}
-
 
 static inline
 uint8_t e68_get_mem8 (e68000_t *c, uint32_t addr)
@@ -349,6 +213,120 @@ void e68_set_mem32 (e68000_t *c, uint32_t addr, uint32_t val)
 {
 	c->set_uint32 (c->mem_ext, addr & 0x00ffffff, val);
 }
+
+
+/*!***************************************************************************
+ * @short Initialize a 68000 context struct
+ *****************************************************************************/
+void e68_init (e68000_t *c);
+
+/*!***************************************************************************
+ * @short  Create and initialize a 68000 context struct
+ * @return The 68000 struct or NULL on error
+ *****************************************************************************/
+e68000_t *e68_new (void);
+
+/*!***************************************************************************
+ * @short Free the resources used by a 68000 struct
+ *****************************************************************************/
+void e68_free (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Delete a 68000 struct
+ *****************************************************************************/
+void e68_del (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Set the memory access functions
+ *****************************************************************************/
+void e68_set_mem_fct (e68000_t *c, void *ext,
+	void *get8, void *get16, void *get32,
+	void *set8, void *set16, void *set32
+);
+
+void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
+
+/*!***************************************************************************
+ * @short Get the number of executed instructions
+ *****************************************************************************/
+unsigned long long e68_get_opcnt (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Get the number of clock cycles
+ *****************************************************************************/
+unsigned long long e68_get_clkcnt (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Get the previous instruction delay
+ *****************************************************************************/
+unsigned long e68_get_delay (e68000_t *c);
+
+unsigned e68_get_halt (e68000_t *c);
+void e68_set_halt (e68000_t *c, unsigned val);
+
+/*!***************************************************************************
+ * @short Get the last exception number
+ *****************************************************************************/
+unsigned e68_get_exception (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Get the last exception name
+ *****************************************************************************/
+const char *e68_get_exception_name (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Get the last PC
+ *****************************************************************************/
+unsigned long e68_get_last_pc (e68000_t *pc);
+
+
+int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val);
+int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
+
+
+void e68_exception_reset (e68000_t *c);
+
+void e68_exception_address (e68000_t *c, uint32_t addr);
+
+void e68_exception_illegal (e68000_t *c);
+
+void e68_exception_divzero (e68000_t *c);
+
+void e68_exception_check (e68000_t *c);
+
+void e68_exception_overflow (e68000_t *c);
+
+void e68_exception_privilege (e68000_t *c);
+
+void e68_exception_axxx (e68000_t *c);
+
+void e68_exception_fxxx (e68000_t *c);
+
+void e68_exception_avec (e68000_t *c, unsigned level);
+
+void e68_exception_trap (e68000_t *c, unsigned n);
+
+void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect);
+
+/*!***************************************************************************
+ * @short Set the interrupt priority level input
+ *****************************************************************************/
+void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec);
+
+/*!***************************************************************************
+ * @short Reset a 68000 cpu core
+ *****************************************************************************/
+void e68_reset (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Execute one instruction
+ *****************************************************************************/
+void e68_execute (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Clock a 68000 cpu core
+ *****************************************************************************/
+void e68_clock (e68000_t *c, unsigned long n);
 
 
 /*****************************************************************************

@@ -78,11 +78,44 @@
 #define E68_SR_MASK (E68_CCR_MASK | E68_SR_S | E68_SR_T | E68_SR_I)
 
 
+void e68_set_sr (e68000_t *c, unsigned short val);
+
+void e68_push16 (e68000_t *c, uint16_t val);
+void e68_push32 (e68000_t *c, uint32_t val);
+
+static inline
+void e68_set_ccr (e68000_t *c, uint8_t val)
+{
+	c->sr = (c->sr & 0xff00) | (val & 0x00ff);
+}
+
 static inline
 void e68_set_iml (e68000_t *c, unsigned val)
 {
 	c->sr &= 0xf8ff;
 	c->sr |= (val & 7) << 8;
+}
+
+static inline
+void e68_set_usp (e68000_t *c, uint32_t val)
+{
+	if (c->supervisor) {
+		c->usp = val;
+	}
+	else {
+		c->areg[7] = val;
+	}
+}
+
+static inline
+void e68_set_ssp (e68000_t *c, uint32_t val)
+{
+	if (c->supervisor) {
+		c->areg[7] = val;
+	}
+	else {
+		c->ssp = val;
+	}
 }
 
 static inline
@@ -110,6 +143,7 @@ uint32_t e68_get_uint32 (const void *buf, unsigned i)
 
 	return (r);
 }
+
 
 void e68_set_opcodes (e68000_t *c);
 
