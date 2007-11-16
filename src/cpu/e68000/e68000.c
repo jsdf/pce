@@ -49,6 +49,9 @@ void e68_init (e68000_t *c)
 	c->log_undef = NULL;
 	c->log_exception = NULL;
 
+	c->hook_ext = NULL;
+	c->hook = NULL;
+
 	c->supervisor = 1;
 	c->halt = 2;
 
@@ -122,6 +125,12 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
 	c->set_uint8 = set8;
 	c->set_uint16 = set16;
 	c->set_uint32 = set32;
+}
+
+void e68_set_hook_fct (e68000_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook = fct;
 }
 
 unsigned long long e68_get_opcnt (e68000_t *c)

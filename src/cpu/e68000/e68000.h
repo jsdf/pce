@@ -116,6 +116,9 @@ typedef struct e68000_s {
 	void               (*log_undef) (void *ext, unsigned long ir);
 	void               (*log_exception) (void *ext, unsigned tn);
 
+	void               *hook_ext;
+	int                (*hook) (void *ext);
+
 	uint32_t           dreg[8];
 	uint32_t           areg[8];
 	uint32_t           pc;
@@ -177,6 +180,8 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
   void *get8, void *get16, void *get32,
   void *set8, void *set16, void *set32
 );
+
+void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Get the number of executed instructions

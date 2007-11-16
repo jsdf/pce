@@ -1775,7 +1775,15 @@ static unsigned op4ac0 (e68000_t *c)
 {
 	if (c->ir[0] == 0x4afc) {
 		/* ILLEGAL */
+		if (c->hook != NULL) {
+			if (c->hook (c->hook_ext) == 0) {
+				e68_set_clk (c, 8);
+				return (0);
+			}
+		}
+
 		e68_exception_illegal (c);
+
 		return (0);
 	}
 
