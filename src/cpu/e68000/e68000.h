@@ -55,7 +55,8 @@ struct e68000_s;
 #define e68_get_ssp(c) (((c)->supervisor ? (c)->areg[7] : (c)->ssp) & 0xffffffff)
 #define e68_get_sr(c) ((c)->sr & 0xffff)
 #define e68_get_ccr(c) ((c)->sr & 0xff)
-#define e68_get_int(c) (((c)->sr >> 8) & 7)
+#define e68_get_ipl(c) ((c)->int_ipl)
+#define e68_get_iml(c) (((c)->sr >> 8) & 7)
 
 #define e68_set_pc(c, v) do { (c)->pc = (v) & 0xffffffff; } while (0)
 
@@ -87,10 +88,6 @@ struct e68000_s;
 #define e68_set_sr_s(c, v) e68_set_cc ((c), E68_SR_S, (v))
 #define e68_set_sr_t(c, v) e68_set_cc ((c), E68_SR_T, (v))
 
-#define e68_set_int(c, v) do { \
-	(c)->sr &= ~(7U << 8); \
-	(c)->sr |= ((v) & 7) << 8; \
-	} while (0)
 
 typedef unsigned char (*e68_get_uint8_f) (void *ext, unsigned long addr);
 typedef unsigned short (*e68_get_uint16_f) (void *ext, unsigned long addr);
@@ -138,7 +135,9 @@ typedef struct e68000_s {
 	unsigned           ea_typ;
 	uint32_t           ea_val;
 
-	unsigned char      interrupt;
+	unsigned           int_ipl;
+	unsigned           int_vect;
+	int                int_avec;
 
 	unsigned long      delay;
 
@@ -220,12 +219,6 @@ void e68_set_sr (e68000_t *c, unsigned short val);
 void e68_push16 (e68000_t *c, uint16_t val);
 void e68_push32 (e68000_t *c, uint32_t val);
 
-/*!***************************************************************************
- * @short Execute an exception
- * @param n The exception number (0 <= n <= 255)
- *****************************************************************************/
-void e68_exception (e68000_t *c, unsigned n, const char *name);
-
 void e68_exception_reset (e68000_t *c);
 
 void e68_exception_address (e68000_t *c, uint32_t addr);
@@ -244,12 +237,16 @@ void e68_exception_axxx (e68000_t *c);
 
 void e68_exception_fxxx (e68000_t *c);
 
+void e68_exception_avec (e68000_t *c, unsigned level);
+
 void e68_exception_trap (e68000_t *c, unsigned n);
+
+void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect);
 
 /*!***************************************************************************
  * @short The external interrupt input signal
  *****************************************************************************/
-void e68_interrupt (e68000_t *c, unsigned char val);
+void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec);
 
 /*!***************************************************************************
  * @short Reset a 68000 cpu core

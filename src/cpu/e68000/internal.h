@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e68000/internal.h                                  *
  * Created:       2005-07-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -78,6 +77,13 @@
 #define E68_CCR_MASK (E68_SR_X | E68_SR_N | E68_SR_Z | E68_SR_V | E68_SR_C)
 #define E68_SR_MASK (E68_CCR_MASK | E68_SR_S | E68_SR_T | E68_SR_I)
 
+
+static inline
+void e68_set_iml (e68000_t *c, unsigned val)
+{
+	c->sr &= 0xf8ff;
+	c->sr |= (val & 7) << 8;
+}
 
 static inline
 uint16_t e68_get_uint16 (const void *buf, unsigned i)

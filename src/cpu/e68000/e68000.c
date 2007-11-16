@@ -54,7 +54,9 @@ void e68_init (e68000_t *c)
 
 	c->ircnt = 0;
 
-	c->interrupt = 0;
+	c->int_ipl = 0;
+	c->int_vect = 0;
+	c->int_avec = 0;
 
 	c->delay = 1;
 
@@ -400,6 +402,7 @@ void e68_push32 (e68000_t *c, uint32_t val)
 	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) - 4);
 }
 
+static
 void e68_exception (e68000_t *c, unsigned n, const char *name)
 {
 	uint16_t sr;
@@ -497,19 +500,35 @@ void e68_exception_fxxx (e68000_t *c)
 	e68_set_clk (c, 62);
 }
 
+void e68_exception_avec (e68000_t *c, unsigned level)
+{
+	e68_exception (c, 24 + level, "AVEC");
+	e68_set_iml (c, level & 7);
+	e68_set_clk (c, 62);
+}
+
 void e68_exception_trap (e68000_t *c, unsigned n)
 {
 	e68_exception (c, 32 + n, "TRAP");
 	e68_set_clk (c, 62);
 }
 
-void e68_interrupt (e68000_t *c, unsigned char val)
+void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect)
 {
-	c->interrupt = (val != 0);
+	e68_exception (c, vect, "INTR");
+	e68_set_iml (c, level & 7);
+	e68_set_clk (c, 62);
+}
 
-	if (val) {
+void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec)
+{
+	if (level > 0) {
 		c->halt &= ~1U;
 	}
+
+	c->int_ipl = level;
+	c->int_vect = vect;
+	c->int_avec = avec;
 }
 
 void e68_reset (e68000_t *c)
@@ -557,8 +576,19 @@ void e68_execute (e68000_t *c)
 
 	c->oprcnt += 1;
 
-	if (c->interrupt) {
-		/* ... */
+	if (c->int_ipl > 0) {
+		unsigned iml;
+
+		iml = e68_get_iml (c);
+
+		if ((iml < c->int_ipl) || (c->int_ipl == 7)) {
+			if (c->int_avec) {
+				e68_exception_avec (c, c->int_ipl);
+			}
+			else {
+				e68_exception_intr (c, c->int_ipl, c->int_vect);
+			}
+		}
 	}
 }
 
