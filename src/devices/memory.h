@@ -81,14 +81,19 @@ typedef struct {
 
 
 typedef struct {
-	unsigned       cnt;
-	mem_lst_t      *lst;
+	unsigned         cnt;
+	mem_lst_t        *lst;
 
-	mem_lst_t      *last;
+	mem_lst_t        *last;
 
-	unsigned char  def_val8;
-	unsigned short def_val16;
-	unsigned long  def_val32;
+	/* these functions are used if no block is found */
+	void             *ext;
+	mem_get_uint8_f  get_uint8;
+	mem_get_uint16_f get_uint16;
+	mem_get_uint32_f get_uint32;
+	mem_set_uint8_f  set_uint8;
+	mem_set_uint16_f set_uint16;
+	mem_set_uint32_f set_uint32;
 } memory_t;
 
 
@@ -242,12 +247,15 @@ void mem_free (memory_t *mem);
 void mem_del (memory_t *mem);
 
 /*!***************************************************************************
- * @short Set the default value
- * @param mem The memory structure
- * @param val The default byte value
+ * @short Set the default access functions
  *****************************************************************************/
-void mem_set_default (memory_t *mem, unsigned char val);
+void mem_set_fct (memory_t *mem, void *ext,
+	void *g8, void *g16, void *g32, void *s8, void *s16, void *s32
+);
 
+/*!***************************************************************************
+ * @short Print memory state information
+ *****************************************************************************/
 void mem_prt_state (memory_t *mem, FILE *fp);
 
 /*!***************************************************************************

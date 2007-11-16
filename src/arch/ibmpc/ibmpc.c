@@ -789,10 +789,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	}
 
 	pc->mem = mem_new();
-	mem_set_default (pc->mem, 0xff);
-
 	pc->prt = mem_new();
-	mem_set_default (pc->prt, 0xff);
 
 	ini_get_ram (pc->mem, ini, &pc->ram);
 	ini_get_rom (pc->mem, ini);
