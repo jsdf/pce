@@ -112,6 +112,8 @@ typedef struct e68000_s {
 	uint32_t           ssp;
 
 	uint32_t           last_pc;
+	uint16_t           last_trap_a;
+	uint16_t           last_trap_f;
 
 	char               supervisor;
 	unsigned char      halt;
@@ -278,6 +280,9 @@ const char *e68_get_exception_name (e68000_t *c);
  * @short Get the last PC
  *****************************************************************************/
 unsigned long e68_get_last_pc (e68000_t *pc);
+
+unsigned short e68_get_last_trap_a (e68000_t *c);
+unsigned short e68_get_last_trap_f (e68000_t *c);
 
 
 int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val);

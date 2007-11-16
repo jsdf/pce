@@ -83,6 +83,8 @@ void e68_init (e68000_t *c)
 	e68_set_pc (c, 0);
 
 	c->last_pc = 0;
+	c->last_trap_a = 0;
+	c->last_trap_f = 0;
 }
 
 e68000_t *e68_new (void)
@@ -171,6 +173,16 @@ const char *e68_get_exception_name (e68000_t *c)
 unsigned long e68_get_last_pc (e68000_t *c)
 {
 	return (c->last_pc);
+}
+
+unsigned short e68_get_last_trap_a (e68000_t *c)
+{
+	return (c->last_trap_a);
+}
+
+unsigned short e68_get_last_trap_f (e68000_t *c)
+{
+	return (c->last_trap_f);
 }
 
 int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val)

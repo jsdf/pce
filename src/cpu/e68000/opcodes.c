@@ -3656,7 +3656,10 @@ static unsigned op91c0 (e68000_t *c)
 /* A000: AXXX */
 static unsigned opa000 (e68000_t *c)
 {
+	c->last_trap_a = c->ir[0];
+
 	e68_exception_axxx (c);
+
 	return (0);
 }
 
@@ -5669,7 +5672,10 @@ static unsigned ope7c0 (e68000_t *c)
 /* F000: FXXX */
 static unsigned opf000 (e68000_t *c)
 {
+	c->last_trap_f = c->ir[0];
+
 	e68_exception_fxxx (c);
+
 	return (0);
 }
 
