@@ -1803,7 +1803,7 @@ static unsigned op4c80_03 (e68000_t *c)
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
 
 	if (a & 1) {
-		e68_exception_address (c, a);
+		e68_exception_address (c, a, 1, 0);
 		return (0);
 	}
 
@@ -1853,7 +1853,7 @@ static unsigned op4c80_xx (e68000_t *c)
 	a = c->ea_val;
 
 	if (a & 1) {
-		e68_exception_address (c, a);
+		e68_exception_address (c, a, 1, 0);
 		return (0);
 	}
 
@@ -1906,7 +1906,7 @@ static unsigned op4cc0_03 (e68000_t *c)
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
 
 	if (a & 1) {
-		e68_exception_address (c, a);
+		e68_exception_address (c, a, 1, 0);
 		return (0);
 	}
 
@@ -1955,7 +1955,7 @@ static unsigned op4cc0_xx (e68000_t *c)
 	a = c->ea_val;
 
 	if (a & 1) {
-		e68_exception_address (c, a);
+		e68_exception_address (c, a, 1, 0);
 		return (0);
 	}
 
@@ -2034,7 +2034,7 @@ static unsigned op4e40_03 (e68000_t *c)
 	a = e68_get_areg32 (c, reg);
 
 	if (a & 1) {
-		e68_exception_address (c, a);
+		e68_exception_address (c, a, 1, 0);
 		return (0);
 	}
 

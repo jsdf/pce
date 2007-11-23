@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/e68000/ea.c                                        *
  * Created:       2006-05-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-05-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -301,7 +300,7 @@ int e68_ea_get_val16 (e68000_t *c, uint16_t *val)
 
 	case 2:
 		if (c->ea_val & 1) {
-			e68_exception_address (c, c->ea_val);
+			e68_exception_address (c, c->ea_val, 1, 0);
 			return (1);
 		}
 		*val = e68_get_mem16 (c, c->ea_val);
@@ -335,7 +334,7 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val)
 
 	case 2:
 		if (c->ea_val & 1) {
-			e68_exception_address (c, c->ea_val);
+			e68_exception_address (c, c->ea_val, 1, 0);
 			return (1);
 		}
 		*val = e68_get_mem32 (c, c->ea_val);
@@ -400,7 +399,7 @@ int e68_ea_set_val16 (e68000_t *c, uint16_t val)
 
 	case 2:
 		if (c->ea_val & 1) {
-			e68_exception_address (c, c->ea_val);
+			e68_exception_address (c, c->ea_val, 1, 1);
 			return (1);
 		}
 		e68_set_mem16 (c, c->ea_val, val);
@@ -434,7 +433,7 @@ int e68_ea_set_val32 (e68000_t *c, uint32_t val)
 
 	case 2:
 		if (c->ea_val & 1) {
-			e68_exception_address (c, c->ea_val);
+			e68_exception_address (c, c->ea_val, 1, 1);
 			return (1);
 		}
 		e68_set_mem32 (c, c->ea_val, val);

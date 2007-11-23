@@ -466,13 +466,26 @@ void e68_exception_reset (e68000_t *c)
 	e68_set_clk (c, 64);
 }
 
-void e68_exception_address (e68000_t *c, uint32_t addr)
+void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 {
+	uint16_t val;
+
 	e68_exception (c, 3, "ADDR");
 
 	e68_push16 (c, c->ir[0]);
 	e68_push32 (c, addr);
-	e68_push16 (c, 0);
+
+	val = 0;
+
+	if (wr == 0) {
+		val |= 0x10;
+	}
+
+	if (data) {
+		val |= 0x08;
+	}
+
+	e68_push16 (c, val);
 
 	e68_set_clk (c, 64);
 }
@@ -581,7 +594,7 @@ void e68_execute (e68000_t *c)
 	c->last_pc = e68_get_pc (c);
 
 	if (c->pc & 1) {
-		e68_exception_address (c, c->pc);
+		e68_exception_address (c, c->pc, 0, 0);
 	}
 
 	c->ir[0] = e68_get_mem16 (c, c->pc);

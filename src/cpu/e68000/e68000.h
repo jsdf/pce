@@ -332,7 +332,7 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
 
 void e68_exception_reset (e68000_t *c);
 
-void e68_exception_address (e68000_t *c, uint32_t addr);
+void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr);
 
 void e68_exception_illegal (e68000_t *c);
 
