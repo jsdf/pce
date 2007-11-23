@@ -191,6 +191,8 @@ void mem_blk_set_addr (mem_blk_t *blk, unsigned long addr);
  *****************************************************************************/
 unsigned long mem_blk_get_size (const mem_blk_t *blk);
 
+void mem_blk_set_size (mem_blk_t *blk, unsigned long size);
+
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val);
 void buf_set_uint16_be (void *buf, unsigned long addr, unsigned short val);

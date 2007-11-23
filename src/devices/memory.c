@@ -240,6 +240,12 @@ unsigned long mem_blk_get_size (const mem_blk_t *blk)
 	return (blk->size);
 }
 
+void mem_blk_set_size (mem_blk_t *blk, unsigned long size)
+{
+	blk->size = size;
+	blk->addr2 = blk->addr1 + size - 1;
+}
+
 
 void buf_set_uint8 (void *buf, unsigned long addr, unsigned char val)
 {
