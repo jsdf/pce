@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/block.c                                  *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -281,6 +281,11 @@ void dsk_del (disk_t *dsk)
 void dsk_set_drive (disk_t *dsk, unsigned d)
 {
 	dsk->drive = d;
+}
+
+int dsk_get_readonly (disk_t *dsk)
+{
+	return (dsk->readonly != 0);
 }
 
 void dsk_set_readonly (disk_t *dsk, int v)
