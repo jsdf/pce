@@ -296,8 +296,8 @@ unsigned short buf_get_uint16_be (const void *buf, unsigned long addr)
 	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned short      ret;
 
-	ret = tmp[1];
-	ret = (ret << 8) | tmp[0];
+	ret = tmp[0];
+	ret = (ret << 8) | tmp[1];
 
 	return (ret);
 }
@@ -307,8 +307,8 @@ unsigned short buf_get_uint16_le (const void *buf, unsigned long addr)
 	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned short      ret;
 
-	ret = tmp[0];
-	ret = (ret << 8) | tmp[1];
+	ret = tmp[1];
+	ret = (ret << 8) | tmp[0];
 
 	return (ret);
 }
@@ -318,10 +318,10 @@ unsigned long buf_get_uint32_be (const void *buf, unsigned long addr)
 	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned long       ret;
 
-	ret = tmp[3];
-	ret = (ret << 8) | tmp[2];
+	ret = tmp[0];
 	ret = (ret << 8) | tmp[1];
-	ret = (ret << 8) | tmp[0];
+	ret = (ret << 8) | tmp[2];
+	ret = (ret << 8) | tmp[3];
 
 	return (ret);
 }
@@ -331,10 +331,10 @@ unsigned long buf_get_uint32_le (const void *buf, unsigned long addr)
 	const unsigned char *tmp = (const unsigned char *) buf + addr;
 	unsigned long       ret;
 
-	ret = tmp[0];
-	ret = (ret << 8) | tmp[1];
+	ret = tmp[3];
 	ret = (ret << 8) | tmp[2];
-	ret = (ret << 8) | tmp[3];
+	ret = (ret << 8) | tmp[1];
+	ret = (ret << 8) | tmp[0];
 
 	return (ret);
 }
