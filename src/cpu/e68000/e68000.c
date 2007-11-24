@@ -428,7 +428,7 @@ void e68_push32 (e68000_t *c, uint32_t val)
 static
 void e68_exception (e68000_t *c, unsigned n, const char *name)
 {
-	uint16_t sr;
+	uint16_t sr1, sr2;
 
 	c->excptn = n;
 	c->excpts = name;
@@ -437,13 +437,14 @@ void e68_exception (e68000_t *c, unsigned n, const char *name)
 		c->log_exception (c->log_ext, n);
 	}
 
-	sr = e68_get_sr (c);
-	sr &= ~E68_SR_T;
-	sr |= E68_SR_S;
-	e68_set_sr (c, sr);
+	sr1 = e68_get_sr (c);
+	sr2 = sr1;
+	sr2 &= ~E68_SR_T;
+	sr2 |= E68_SR_S;
+	e68_set_sr (c, sr2);
 
 	e68_push32 (c, e68_get_pc (c));
-	e68_push16 (c, sr);
+	e68_push16 (c, sr1);
 
 	e68_set_pc (c, e68_get_mem32 (c, 4 * (n & 0xff)));
 }
