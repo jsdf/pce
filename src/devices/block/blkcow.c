@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkcow.c                                 *
  * Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-22 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -296,6 +295,7 @@ int cow_commit_block (disk_cow_t *cow, uint32_t blk, unsigned cnt)
 static
 int dsk_cow_commit (disk_t *dsk)
 {
+	int           r;
 	unsigned      k;
 	uint32_t      i, n;
 	uint32_t      blk;
@@ -304,6 +304,7 @@ int dsk_cow_commit (disk_t *dsk)
 
 	cow = dsk->ext;
 
+	r = 0;
 	n = 0;
 
 	for (i = 0; i < cow->bitmap_size; i++) {
@@ -325,6 +326,9 @@ int dsk_cow_commit (disk_t *dsk)
 			if (cow_commit_block (cow, blk, k) == 0) {
 				n += k;
 			}
+			else {
+				r = 1;
+			}
 
 			blk += k;
 		}
@@ -338,7 +342,7 @@ int dsk_cow_commit (disk_t *dsk)
 
 	fflush (cow->fp);
 
-	return (0);
+	return (r);
 }
 
 static
