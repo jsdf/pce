@@ -44,6 +44,10 @@ void e68_init (e68000_t *c)
 	c->set_uint16 = NULL;
 	c->set_uint32 = NULL;
 
+	c->reset_ext = NULL;
+	c->reset = NULL;
+	c->reset_val = 0;
+
 	c->log_ext = NULL;
 	c->log_opcode = NULL;
 	c->log_undef = NULL;
@@ -128,6 +132,12 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
 	c->set_uint8 = set8;
 	c->set_uint16 = set16;
 	c->set_uint32 = set32;
+}
+
+void e68_set_reset_fct (e68000_t *c, void *ext, void *fct)
+{
+	c->reset_ext = ext;
+	c->reset = fct;
 }
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct)
@@ -568,9 +578,29 @@ void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec)
 	c->int_avec = avec;
 }
 
+static
+void e68_set_reset (e68000_t *c, unsigned char val)
+{
+	if ((c->reset_val != 0) == (val != 0)) {
+		return;
+	}
+
+	c->reset_val = (val != 0);
+
+	if (c->reset != NULL) {
+		c->reset (c->reset_ext, val);
+	}
+}
+
 void e68_reset (e68000_t *c)
 {
 	unsigned i;
+
+	if (c->reset_val) {
+		return;
+	}
+
+	e68_set_reset (c, 1);
 
 	e68_set_sr (c, E68_SR_S);
 
@@ -585,6 +615,8 @@ void e68_reset (e68000_t *c)
 	c->halt = 0;
 
 	e68_exception_reset (c);
+
+	e68_set_reset (c, 0);
 }
 
 void e68_execute (e68000_t *c)

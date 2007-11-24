@@ -99,14 +99,18 @@ typedef struct e68000_s {
 	void               (*set_uint16) (void *ext, unsigned long addr, unsigned short val);
 	void               (*set_uint32) (void *ext, unsigned long addr, unsigned long val);
 
+	void               *reset_ext;
+	void               (*reset) (void *ext, unsigned char val);
+	unsigned char      reset_val;
+
+	void               *hook_ext;
+	int                (*hook) (void *ext);
+
 	void               *log_ext;
 	void               (*log_opcode) (void *ext, unsigned long ir);
 	void               (*log_undef) (void *ext, unsigned long ir);
 	void               (*log_exception) (void *ext, unsigned tn);
 	void               (*log_mem) (void *ext, unsigned long addr, unsigned type);
-
-	void               *hook_ext;
-	int                (*hook) (void *ext);
 
 	uint32_t           dreg[8];
 	uint32_t           areg[8];
@@ -286,6 +290,8 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
 	void *get8, void *get16, void *get32,
 	void *set8, void *set16, void *set32
 );
+
+void e68_set_reset_fct (e68000_t *c, void *ext, void *fct);
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 

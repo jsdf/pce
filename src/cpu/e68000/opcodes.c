@@ -2090,9 +2090,11 @@ static unsigned op4e70 (e68000_t *c)
 		return (0);
 	}
 
+	e68_reset (c);
+
 	e68_set_clk (c, 136);
 
-	return (1);
+	return (0);
 }
 
 /* 4E71: NOP */
