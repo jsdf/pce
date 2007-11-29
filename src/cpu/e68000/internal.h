@@ -72,6 +72,7 @@
 
 #define E68_SR_XC (E68_SR_X | E68_SR_C)
 #define E68_SR_NZVC (E68_SR_N | E68_SR_Z | E68_SR_V | E68_SR_C)
+#define E68_SR_XNVC (E68_SR_X | E68_SR_N | E68_SR_V | E68_SR_C)
 #define E68_SR_XNZVC (E68_SR_X | E68_SR_N | E68_SR_Z | E68_SR_V | E68_SR_C)
 
 #define E68_CCR_MASK (E68_SR_X | E68_SR_N | E68_SR_Z | E68_SR_V | E68_SR_C)
@@ -145,6 +146,31 @@ uint32_t e68_get_uint32 (const void *buf, unsigned i)
 }
 
 
+void e68_cc_set_nz_8 (e68000_t *c, uint8_t msk, uint8_t val);
+void e68_cc_set_nz_16 (e68000_t *c, uint8_t msk, uint16_t val);
+void e68_cc_set_nz_32 (e68000_t *c, uint8_t msk, uint32_t val);
+
+void e68_cc_set_add_8 (e68000_t *c, uint8_t d, uint8_t s1, uint8_t s2);
+void e68_cc_set_add_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
+void e68_cc_set_add_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
+
+void e68_cc_set_addx_8 (e68000_t *c, uint8_t d, uint8_t s1, uint8_t s2);
+void e68_cc_set_addx_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
+void e68_cc_set_addx_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
+
+void e68_cc_set_cmp_8 (e68000_t *c, uint8_t d, uint8_t s1, uint8_t s2);
+void e68_cc_set_cmp_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
+void e68_cc_set_cmp_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
+
+void e68_cc_set_sub_8 (e68000_t *c, uint8_t d, uint8_t s1, uint8_t s2);
+void e68_cc_set_sub_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
+void e68_cc_set_sub_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
+
+void e68_cc_set_subx_8 (e68000_t *c, uint8_t d, uint8_t s1, uint8_t s2);
+void e68_cc_set_subx_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
+void e68_cc_set_subx_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
+
+
 void e68_set_opcodes (e68000_t *c);
 
 
@@ -155,25 +181,6 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val);
 int e68_ea_set_val8 (e68000_t *c, uint8_t val);
 int e68_ea_set_val16 (e68000_t *c, uint16_t val);
 int e68_ea_set_val32 (e68000_t *c, uint32_t val);
-
-void e68_cc_set_nz_8 (e68000_t *c, uint8_t msk, uint8_t val);
-void e68_cc_set_nz_16 (e68000_t *c, uint8_t msk, uint16_t val);
-void e68_cc_set_nz_32 (e68000_t *c, uint8_t msk, uint32_t val);
-void e68_cc_set_add_8 (e68000_t *c, uint8_t s1, uint8_t s2);
-void e68_cc_set_add_16 (e68000_t *c, uint16_t s1, uint16_t s2);
-void e68_cc_set_add_32 (e68000_t *c, uint32_t s1, uint32_t s2);
-void e68_cc_set_addx_8 (e68000_t *c, uint8_t s1, uint8_t s2, uint8_t s3);
-void e68_cc_set_addx_16 (e68000_t *c, uint16_t s1, uint16_t s2, uint16_t s3);
-void e68_cc_set_addx_32 (e68000_t *c, uint32_t s1, uint32_t s2, uint32_t s3);
-void e68_cc_set_cmp_8 (e68000_t *c, uint8_t s1, uint8_t s2);
-void e68_cc_set_cmp_16 (e68000_t *c, uint16_t s1, uint16_t s2);
-void e68_cc_set_cmp_32 (e68000_t *c, uint32_t s1, uint32_t s2);
-void e68_cc_set_sub_8 (e68000_t *c, uint8_t s1, uint8_t s2);
-void e68_cc_set_sub_16 (e68000_t *c, uint16_t s1, uint16_t s2);
-void e68_cc_set_sub_32 (e68000_t *c, uint32_t s1, uint32_t s2);
-void e68_cc_set_subx_8 (e68000_t *c, uint8_t s1, uint8_t s2, uint8_t s3);
-void e68_cc_set_subx_16 (e68000_t *c, uint16_t s1, uint16_t s2, uint16_t s3);
-void e68_cc_set_subx_32 (e68000_t *c, uint32_t s1, uint32_t s2, uint32_t s3);
 
 
 #endif

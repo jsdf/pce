@@ -591,7 +591,7 @@ static unsigned op0400 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, s1, s2);
+	e68_cc_set_sub_8 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -610,7 +610,7 @@ static unsigned op0440 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, s1, s2);
+	e68_cc_set_sub_16 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -630,7 +630,7 @@ static unsigned op0480 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, s1, s2);
+	e68_cc_set_sub_32 (c, d, s2, s1);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -649,7 +649,7 @@ static unsigned op0600 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_add_8 (c, s1, s2);
+	e68_cc_set_add_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -668,7 +668,7 @@ static unsigned op0640 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_add_16 (c, s1, s2);
+	e68_cc_set_add_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -688,7 +688,7 @@ static unsigned op0680 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_add_32 (c, s1, s2);
+	e68_cc_set_add_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -1010,7 +1010,7 @@ static unsigned op0c00 (e68000_t *c)
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
 	s2 = c->ir[1] & 0xff;
 
-	e68_cc_set_cmp_8 (c, s1, s2);
+	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1026,7 +1026,7 @@ static unsigned op0c40 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
 	s2 = c->ir[1];
 
-	e68_cc_set_cmp_16 (c, s1, s2);
+	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1043,7 +1043,7 @@ static unsigned op0c80 (e68000_t *c)
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
 	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
 
-	e68_cc_set_cmp_32 (c, s1, s2);
+	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -2288,7 +2288,7 @@ static unsigned op5000 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_add_8 (c, s1, s2);
+	e68_cc_set_add_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -2332,7 +2332,7 @@ static unsigned op5040_xx (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_add_16 (c, s1, s2);
+	e68_cc_set_add_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -2366,7 +2366,7 @@ static unsigned op5080_xx (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_add_32 (c, s1, s2);
+	e68_cc_set_add_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -2422,7 +2422,7 @@ static unsigned op5100 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, s1, s2);
+	e68_cc_set_sub_8 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -2466,7 +2466,7 @@ static unsigned op5140_xx (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, s1, s2);
+	e68_cc_set_sub_16 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -2523,7 +2523,7 @@ static unsigned op5180_xx (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, s1, s2);
+	e68_cc_set_sub_32 (c, d, s2, s1);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -3398,7 +3398,7 @@ static unsigned op9000 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_dreg8 (c, reg, d);
-	e68_cc_set_sub_8 (c, s1, s2);
+	e68_cc_set_sub_8 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3418,7 +3418,7 @@ static unsigned op9040 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_dreg16 (c, reg, d);
-	e68_cc_set_sub_16 (c, s1, s2);
+	e68_cc_set_sub_16 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3438,7 +3438,7 @@ static unsigned op9080 (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_dreg32 (c, reg, d);
-	e68_cc_set_sub_32 (c, s1, s2);
+	e68_cc_set_sub_32 (c, d, s2, s1);
 	e68_set_clk (c, 10);
 
 	return (c->ircnt);
@@ -3486,7 +3486,7 @@ static unsigned op9100_00 (e68000_t *c)
 	d = s1 - s2 - s3;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_subx_8 (c, s1, s2, s3);
+	e68_cc_set_subx_8 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3503,7 +3503,7 @@ static unsigned op9100_xx (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, s1, s2);
+	e68_cc_set_sub_8 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3543,7 +3543,7 @@ static unsigned op9140_00 (e68000_t *c)
 	d = s1 - s2 - s3;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_subx_16 (c, s1, s2, s3);
+	e68_cc_set_subx_16 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3560,7 +3560,7 @@ static unsigned op9140_xx (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, s1, s2);
+	e68_cc_set_sub_16 (c, d, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3600,7 +3600,7 @@ static unsigned op9180_00 (e68000_t *c)
 	d = s1 - s2 - s3;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_subx_32 (c, s1, s2, s3);
+	e68_cc_set_subx_32 (c, d, s2, s1);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -3617,7 +3617,7 @@ static unsigned op9180_xx (e68000_t *c)
 	d = s1 - s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, s1, s2);
+	e68_cc_set_sub_32 (c, d, s2, s1);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -3673,7 +3673,7 @@ static unsigned opb000 (e68000_t *c)
 	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
 
-	e68_cc_set_cmp_8 (c, s1, s2);
+	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -3687,7 +3687,7 @@ static unsigned opb040 (e68000_t *c)
 	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
 
-	e68_cc_set_cmp_16 (c, s1, s2);
+	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -3701,7 +3701,7 @@ static unsigned opb080 (e68000_t *c)
 	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
 
-	e68_cc_set_cmp_32 (c, s1, s2);
+	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 6);
 
 	return (c->ircnt);
@@ -3717,7 +3717,7 @@ static unsigned opb0c0 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
 	s2 = e68_exts (t, 16);
 
-	e68_cc_set_cmp_32 (c, s1, s2);
+	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3731,7 +3731,7 @@ static unsigned opb100_01 (e68000_t *c)
 	e68_get_ea8 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea8 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_8 (c, s1, s2);
+	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 16);
 
 	return (c->ircnt);
@@ -3774,7 +3774,7 @@ static unsigned opb140_01 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea16 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_16 (c, s1, s2);
+	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 24);
 
 	return (c->ircnt);
@@ -3817,7 +3817,7 @@ static unsigned opb180_01 (e68000_t *c)
 	e68_get_ea32 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea32 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_32 (c, s1, s2);
+	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 40);
 
 	return (c->ircnt);
@@ -3860,7 +3860,7 @@ static unsigned opb1c0 (e68000_t *c)
 	s1 = e68_get_areg32 (c, e68_ir_reg9 (c));
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
 
-	e68_cc_set_cmp_32 (c, s1, s2);
+	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4200,7 +4200,7 @@ static unsigned opd000 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_dreg8 (c, reg, d);
-	e68_cc_set_add_8 (c, s1, s2);
+	e68_cc_set_add_8 (c, d, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -4220,7 +4220,7 @@ static unsigned opd040 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_dreg16 (c, reg, d);
-	e68_cc_set_add_16 (c, s1, s2);
+	e68_cc_set_add_16 (c, d, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -4240,7 +4240,7 @@ static unsigned opd080 (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_dreg32 (c, reg, d);
-	e68_cc_set_add_32 (c, s1, s2);
+	e68_cc_set_add_32 (c, d, s1, s2);
 	e68_set_clk (c, 6);
 
 	return (c->ircnt);
@@ -4288,7 +4288,7 @@ static unsigned opd100_00 (e68000_t *c)
 	d = s1 + s2 + s3;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_addx_8 (c, s1, s2, s3);
+	e68_cc_set_addx_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4305,7 +4305,7 @@ static unsigned opd100_xx (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_add_8 (c, s1, s2);
+	e68_cc_set_add_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4345,7 +4345,7 @@ static unsigned opd140_00 (e68000_t *c)
 	d = s1 + s2 + s3;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_addx_16 (c, s1, s2, s3);
+	e68_cc_set_addx_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4362,7 +4362,7 @@ static unsigned opd140_xx (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_add_16 (c, s1, s2);
+	e68_cc_set_add_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4402,7 +4402,7 @@ static unsigned opd180_00 (e68000_t *c)
 	d = s1 + s2 + s3;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_addx_32 (c, s1, s2, s3);
+	e68_cc_set_addx_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -4419,7 +4419,7 @@ static unsigned opd180_xx (e68000_t *c)
 	d = s1 + s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_add_32 (c, s1, s2);
+	e68_cc_set_add_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
