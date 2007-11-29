@@ -83,6 +83,7 @@ struct e68000_s;
 #define e68_set_sr_x(c, v) e68_set_cc ((c), E68_SR_X, (v))
 #define e68_set_sr_s(c, v) e68_set_cc ((c), E68_SR_S, (v))
 #define e68_set_sr_t(c, v) e68_set_cc ((c), E68_SR_T, (v))
+#define e68_set_sr_xc(c, v) e68_set_cc ((c), E68_SR_X | E68_SR_C, (v))
 
 
 typedef unsigned (*e68_opcode_f) (struct e68000_s *c);
@@ -385,9 +386,12 @@ void e68_clock (e68000_t *c, unsigned long n);
  * disasm
  *****************************************************************************/
 
-#define E68_DFLAG_PRIV 0x0001
-#define E68_DFLAG_CALL 0x0100
-#define E68_DFLAG_RTE  0x0200
+#define E68_DFLAG_PRIV   0x0001
+#define E68_DFLAG_JUMP   0x0002
+#define E68_DFLAG_CALL   0x0004
+#define E68_DFLAG_RTE    0x0008
+#define E68_DFLAG_RTS    0x0010
+#define E68_DFLAG_DEP_CC 0x0020
 
 typedef struct {
 	unsigned flags;

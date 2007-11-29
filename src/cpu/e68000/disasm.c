@@ -81,11 +81,13 @@ static const char *op_dbcc[16] = {
 };
 
 static const char *op_scc[16] = {
-	"SRA", "SF",  "SHI", "SLS",
+	 "ST",  "SF", "SHI", "SLS",
 	"SCC", "SCS", "SNE", "SEQ",
 	"SVC", "SVS", "SPL", "SMI",
 	"SGE", "SLT", "SGT", "SLE"
 };
+
+static const char *hex_prefix = "$";
 
 
 static
@@ -170,11 +172,23 @@ void dasm_reglst (char *dst, uint16_t list, int rev)
 	}
 }
 
+static inline
+unsigned dasm_next_word (e68_dasm_t *da, const uint8_t *src)
+{
+	unsigned val;
+
+	val = e68_get_uint16 (src, 2 * da->irn);
+
+	da->irn += 1;
+
+	return (val);
+}
+
 static
 void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsigned size)
 {
 	unsigned      v;
-	unsigned long val32;
+	unsigned long v1, v2;
 
 	switch ((ea >> 3) & 7) {
 	case 0x00: /* %Dx */
@@ -198,94 +212,94 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 		break;
 
 	case 0x05: /* XXXX(%Ax) */
-		v = e68_get_uint16 (src, 2 * da->irn);
-		sprintf (dst, "$%s%04X(A%u)",
+		v = dasm_next_word (da, src);
+		sprintf (dst, "%s%s%04X(A%u)",
 			(v & 0x8000) ? "-" : "",
+			hex_prefix,
 			((v & 0x8000) ? (~v + 1) : v) & 0xffff,
 			ea & 7
 		);
-		da->irn += 1;
 		break;
 
 	case 0x06: /* XX(%Ax, Rx.S) */
-		v = e68_get_uint16 (src, 2 * da->irn);
-		sprintf (dst, "$%s%02X(A%u, %s%u%s)",
+		v = dasm_next_word (da, src);
+		sprintf (dst, "%s%s%02X(A%u, %s%u%s)",
 			(v & 0x80) ? "-" : "",
+			hex_prefix,
 			((v & 0x80) ? (~v + 1) : v) & 0xff,
 			ea & 7,
 			(v & 0x8000) ? "A" : "D",
 			(v >> 12) & 7,
 			(v & 0x0800) ? ".L" : ".W"
 		);
-		da->irn += 1;
 		break;
 
 	case 0x07:
 		switch (ea & 7) {
 		case 0x00: /* XXXX */
-			v = e68_get_uint16 (src, 2 * da->irn);
-			if (v & 0x8000) {
-				sprintf (dst, "$%08lX", v | 0xffff0000UL);
-			}
-			else {
-				sprintf (dst, "$%04X", v);
-			}
-			da->irn += 1;
+			v = dasm_next_word (da, src);
+			sprintf (dst, "%s%s%04X",
+				(v & 0x8000) ? "-" : "",
+				hex_prefix,
+				((v & 0x8000) ? (~v + 1) : v) & 0xffff
+			);
 			break;
 
 		case 0x01: /* XXXXXXXX */
-			val32 = e68_get_uint32 (src, 2 * da->irn);
-			sprintf (dst, "$%08lX", val32);
-			da->irn += 2;
+			v1 = dasm_next_word (da, src);
+			v2 = dasm_next_word (da, src);
+			sprintf (dst, "%s%08lX",
+				hex_prefix,
+				(v1 << 16) | v2
+			);
 			break;
 
 		case 0x02: /* XXXX(PC) */
-			v = e68_get_uint16 (src, 2 * da->irn);
-			sprintf (dst, "$%08lX(PC)",
-				(da->pc + e68_exts (v, 16) + 2) & 0xffffffff
-			);
-			da->irn += 1;
+			v = dasm_next_word (da, src);
+			v1 = (da->pc + e68_exts (v, 16) + 2) & 0xffffffff;
+			sprintf (dst, "%s%08lX(PC)", hex_prefix, v1);
 			break;
 
 		case 0x03: /* XX(PC, Rx.S) */
-			v = e68_get_uint16 (src, 2 * da->irn);
-			sprintf (dst, "$%s%02X(PC, %s%u%s)",
+			v = dasm_next_word (da, src);
+			sprintf (dst, "%s%s%02X(PC, %s%u%s)",
 				(v & 0x80) ? "-" : "",
+				hex_prefix,
 				((v & 0x80) ? (~v + 1) : v) & 0xff,
 				(v & 0x8000) ? "A" : "D",
 				(v >> 12) & 7,
 				(v & 0x0800) ? ".L" : ".W"
 			);
-			da->irn += 1;
 			break;
 
 		case 0x04: /* #XXXX */
 			if (size == 8) {
-				v = e68_get_uint16 (src, 2 * da->irn);
-				sprintf (dst, "#$%02X", v & 0xff);
-				da->irn += 1;
+				v = dasm_next_word (da, src) & 0xff;
+				sprintf (dst, "#%s%02X", hex_prefix, v);
 			}
 			else if (size == 16) {
-				v = e68_get_uint16 (src, 2 * da->irn);
-				sprintf (dst, "#$%04X", v);
-				da->irn += 1;
+				v = dasm_next_word (da, src);
+				sprintf (dst, "#%s%04X", hex_prefix, v);
 			}
 			else if (size == 32) {
-				val32 = e68_get_uint32 (src, 2 * da->irn);
-				sprintf (dst, "#$%08lX", val32);
-				da->irn += 2;
+				v1 = dasm_next_word (da, src);
+				v2 = dasm_next_word (da, src);
+				sprintf (dst, "#%s%08lX",
+					hex_prefix,
+					(v1 << 16) | v2
+				);
 			}
 
 			break;
 
 		default:
-			sprintf (dst, "EA(%02X)", ea & 0x3f);
+			sprintf (dst, "<EA>(%02X)", ea & 0x3f);
 			break;
 		}
 		break;
 
 	default:
-		sprintf (dst, "EA(%02X)", ea & 0x3f);
+		sprintf (dst, "<EA>(%02X)", ea & 0x3f);
 		break;
 	}
 }
@@ -305,7 +319,10 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		break;
 
 	case ARG_IR:
-		sprintf (dst, "#$%04X", (unsigned) e68_get_uint16 (src, 0));
+		sprintf (dst, "#%s%04X",
+			hex_prefix,
+			(unsigned) e68_get_uint16 (src, 0)
+		);
 		break;
 
 	case ARG_EA:
@@ -353,8 +370,9 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 
 	case ARG_AREG0DISP:
 		val16 = e68_get_uint16 (src, 2);
-		sprintf (dst, "$%s%04X(A%u)",
+		sprintf (dst, "%s%s%04X(A%u)",
 			(val16 & 0x8000) ? "-" : "",
+			hex_prefix,
 			((val16 & 0x8000) ? (~val16 + 1) : val16) & 0xffff,
 			(unsigned) (da->ir[0] & 7)
 		);
@@ -362,44 +380,56 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		break;
 
 	case ARG_IMM8:
-		sprintf (dst, "#$%02X", (unsigned) src[3]);
+		sprintf (dst, "#%s%02X", hex_prefix, (unsigned) src[3]);
 		da->irn += 1;
 		break;
 
 	case ARG_IMM16:
 		val16 = e68_get_uint16 (src, 2);
-		sprintf (dst, "#$%04X", (unsigned) val16);
+		sprintf (dst, "#%s%04X", hex_prefix, (unsigned) val16);
 		da->irn += 1;
 		break;
 
 	case ARG_IMM32:
 		val32 = e68_get_uint32 (src, 2);
-		sprintf (dst, "#$%08lX", (unsigned long) val32);
+		sprintf (dst, "#%s%08lX", hex_prefix, (unsigned long) val32);
 		da->irn += 2;
 		break;
 
 	case ARG_IMMQ:
 		val16 = (src[0] >> 1) & 7;
 		val16 = (val16 == 0) ? 8 : val16;
-		sprintf (dst, "#$%X", (unsigned) val16);
+		sprintf (dst, "#%s%X", hex_prefix, (unsigned) val16);
 		break;
 
 	case ARG_IRUIMM4:
-		sprintf (dst, "#$%02X", (unsigned) (da->ir[0] & 0x0f));
+		sprintf (dst, "#%s%02X",
+			hex_prefix,
+			(unsigned) (da->ir[0] & 0x0f)
+		);
 		break;
 
 	case ARG_IRSIMM8:
-		sprintf (dst, "#$%08lX", (unsigned long) e68_exts (da->ir[0], 8));
+		sprintf (dst, "#%s%08lX",
+			hex_prefix,
+			(unsigned long) e68_exts (da->ir[0], 8)
+		);
 		break;
 
 	case ARG_DIST8:
-		sprintf (dst, "$%08lX", da->pc + 2 + e68_exts (src[1], 8));
+		sprintf (dst, "%s%08lX",
+			hex_prefix,
+			da->pc + 2UL + e68_exts (src[1], 8)
+		);
 		break;
 
 	case ARG_DIST16:
 		val16 = e68_get_uint16 (src, 2 * da->irn);
 		da->irn += 1;
-		sprintf (dst, "$%08lX", da->pc + 2 + e68_exts (val16, 16));
+		sprintf (dst, "%s%08lX",
+			hex_prefix,
+			da->pc + 2UL + e68_exts (val16, 16)
+		);
 		break;
 
 	case ARG_REGLST:
@@ -742,18 +772,21 @@ static void d_3040 (e68_dasm_t *da, const uint8_t *src)
 static void d_4000 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "NEGX.B", src, ARG_EA, 8);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* 4040: NEGX.W <EA> */
 static void d_4040 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "NEGX.W", src, ARG_EA, 16);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* 4080: NEGX.L <EA> */
 static void d_4080 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "NEGX.L", src, ARG_EA, 32);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* 40C0: MOVE.W SR, <EA> */
@@ -845,6 +878,7 @@ static void d_46c0 (e68_dasm_t *da, const uint8_t *src)
 static void d_4800 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "NBCD.B", src, ARG_EA, 8);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* 4840: misc */
@@ -976,9 +1010,11 @@ static void d_4e40 (e68_dasm_t *da, const uint8_t *src)
 	}
 	else if (da->ir[0] == 0x4e75) {
 		dasm_op0 (da, "RTS");
+		da->flags |= E68_DFLAG_RTS;
 	}
 	else if (da->ir[0] == 0x4e76) {
 		dasm_op0 (da, "TRAPV");
+		da->flags |= E68_DFLAG_DEP_CC;
 	}
 	else if (da->ir[0] == 0x4e77) {
 		dasm_op0 (da, "RTR");
@@ -1016,6 +1052,7 @@ static void d_4e80 (e68_dasm_t *da, const uint8_t *src)
 static void d_4ec0 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "JMP", src, ARG_EA, 0);
+	da->flags |= E68_DFLAG_JUMP;
 }
 
 /* 5000: ADDQ.B #X, <EA> */
@@ -1061,9 +1098,14 @@ static void d_50c0 (e68_dasm_t *da, const uint8_t *src)
 
 	c = (da->ir[0] >> 8) & 0x0f;
 
+	if (c > 1) {
+		da->flags |= E68_DFLAG_DEP_CC;
+	}
+
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x01:
 		dasm_op2 (da, op_dbcc[c], src, ARG_DREG0, ARG_DIST16, 0);
+		da->flags |= E68_DFLAG_JUMP;
 		break;
 
 	default:
@@ -1090,6 +1132,13 @@ static void d_6000 (e68_dasm_t *da, const uint8_t *src)
 
 	if (c == 1) {
 		da->flags |= E68_DFLAG_CALL;
+	}
+	else {
+		da->flags |= E68_DFLAG_JUMP;
+	}
+
+	if (c > 1) {
+		da->flags |= E68_DFLAG_DEP_CC;
 	}
 }
 
@@ -1129,10 +1178,12 @@ static void d_8100 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "SBCD.B", src, ARG_DREG0, ARG_DREG9, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "SBCD.B", src, ARG_AREG0PD, ARG_AREG9PD, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1207,10 +1258,12 @@ static void d_9100 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "SUBX.B", src, ARG_DREG0, ARG_DREG9, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "SUBX.B", src, ARG_AREG0PD, ARG_AREG9PD, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1225,10 +1278,12 @@ static void d_9140 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "SUBX.W", src, ARG_DREG0, ARG_DREG9, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "SUBX.W", src, ARG_AREG0PD, ARG_AREG9PD, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1243,10 +1298,12 @@ static void d_9180 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "SUBX.L", src, ARG_DREG0, ARG_DREG9, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "SUBX.L", src, ARG_AREG0PD, ARG_AREG9PD, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1366,10 +1423,12 @@ static void d_c100 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "ABCD.B", src, ARG_DREG0, ARG_DREG9, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "ABCD.B", src, ARG_AREG0PD, ARG_AREG9PD, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1450,10 +1509,12 @@ static void d_d100 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "ADDX.B", src, ARG_DREG0, ARG_DREG9, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "ADDX.B", src, ARG_AREG0PD, ARG_AREG9PD, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1468,10 +1529,12 @@ static void d_d140 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "ADDX.W", src, ARG_DREG0, ARG_DREG9, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "ADDX.W", src, ARG_AREG0PD, ARG_AREG9PD, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1486,10 +1549,12 @@ static void d_d180 (e68_dasm_t *da, const uint8_t *src)
 	switch ((da->ir[0] >> 3) & 7) {
 	case 0x00:
 		dasm_op2 (da, "ADDX.L", src, ARG_DREG0, ARG_DREG9, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x01:
 		dasm_op2 (da, "ADDX.L", src, ARG_AREG0PD, ARG_AREG9PD, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	default:
@@ -1518,6 +1583,7 @@ static void d_e000 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXR.B", src, ARG_IMMQ, ARG_DREG0, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1534,6 +1600,7 @@ static void d_e000 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXR.B", src, ARG_DREG9, ARG_DREG0, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1560,6 +1627,7 @@ static void d_e040 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXR.W", src, ARG_IMMQ, ARG_DREG0, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1576,6 +1644,7 @@ static void d_e040 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXR.W", src, ARG_DREG9, ARG_DREG0, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1602,6 +1671,7 @@ static void d_e080 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXR.L", src, ARG_IMMQ, ARG_DREG0, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1618,6 +1688,7 @@ static void d_e080 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXR.L", src, ARG_DREG9, ARG_DREG0, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1649,6 +1720,7 @@ static void d_e100 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXL.B", src, ARG_IMMQ, ARG_DREG0, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1665,6 +1737,7 @@ static void d_e100 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXL.B", src, ARG_DREG9, ARG_DREG0, 8);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1691,6 +1764,7 @@ static void d_e140 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXL.W", src, ARG_IMMQ, ARG_DREG0, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1707,6 +1781,7 @@ static void d_e140 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXL.W", src, ARG_DREG9, ARG_DREG0, 16);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1733,6 +1808,7 @@ static void d_e180 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x02:
 		dasm_op2 (da, "ROXL.L", src, ARG_IMMQ, ARG_DREG0, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x03:
@@ -1749,6 +1825,7 @@ static void d_e180 (e68_dasm_t *da, const uint8_t *src)
 
 	case 0x06:
 		dasm_op2 (da, "ROXL.L", src, ARG_DREG9, ARG_DREG0, 32);
+		da->flags |= E68_DFLAG_DEP_CC;
 		break;
 
 	case 0x07:
@@ -1783,12 +1860,14 @@ static void d_e3c0 (e68_dasm_t *da, const uint8_t *src)
 static void d_e4c0 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "ROXR.W", src, ARG_EA, 16);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* E5C0: ROXL.W <EA> */
 static void d_e5c0 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op1 (da, "ROXL.W", src, ARG_EA, 16);
+	da->flags |= E68_DFLAG_DEP_CC;
 }
 
 /* E6C0: ROR.W <EA> */
