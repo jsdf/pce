@@ -3451,13 +3451,13 @@ static unsigned op90c0 (e68000_t *c)
 	uint32_t s1, s2, d;
 	uint16_t t;
 
-	reg = (c->ir[0] >> 9) & 7;
+	reg = e68_ir_reg9 (c);
 
-	s1 = e68_get_areg32 (c, reg);
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s2 = e68_exts (t, 16);
+	s1 = e68_exts (t, 16);
+	s2 = e68_get_areg32 (c, reg);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_areg32 (c, reg, d);
 	e68_set_clk (c, 8);
@@ -3468,25 +3468,25 @@ static unsigned op90c0 (e68000_t *c)
 /* 9100_00: SUBX.B <EA>, <EA> */
 static unsigned op9100_00 (e68000_t *c)
 {
-	uint8_t  s1, s2, s3, d;
+	uint8_t  s1, s2, d;
 	unsigned ea1, ea2;
 
-	ea1 = e68_ir_reg9 (c);
-	ea2 = e68_ir_reg0 (c);
+	ea1 = e68_ir_reg0 (c);
+	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea8 (c, 1, ea2, 0x0011, &s2);
 	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
-	s3 = e68_get_sr_x (c);
+	e68_get_ea8 (c, 1, ea2, 0x0011, &s2);
 
-	d = s1 - s2 - s3;
+	d = s2 - s1 - e68_get_sr_x (c);
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_subx_8 (c, d, s2, s1);
+	e68_cc_set_subx_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3525,25 +3525,25 @@ static unsigned op9100 (e68000_t *c)
 /* 9140_00: SUBX.W <EA>, <EA> */
 static unsigned op9140_00 (e68000_t *c)
 {
-	uint16_t s1, s2, s3, d;
+	uint16_t s1, s2, d;
 	unsigned ea1, ea2;
 
-	ea1 = e68_ir_reg9 (c);
-	ea2 = e68_ir_reg0 (c);
+	ea1 = e68_ir_reg0 (c);
+	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea16 (c, 1, ea2, 0x0011, &s2);
 	e68_get_ea16 (c, 1, ea1, 0x0011, &s1);
-	s3 = e68_get_sr_x (c);
+	e68_get_ea16 (c, 1, ea2, 0x0011, &s2);
 
-	d = s1 - s2 - s3;
+	d = s2 - s1 - e68_get_sr_x (c);
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_subx_16 (c, d, s2, s1);
+	e68_cc_set_subx_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3582,25 +3582,25 @@ static unsigned op9140 (e68000_t *c)
 /* 9180_00: SUBX.L <EA>, <EA> */
 static unsigned op9180_00 (e68000_t *c)
 {
-	uint32_t s1, s2, s3, d;
+	uint32_t s1, s2, d;
 	unsigned ea1, ea2;
 
-	ea1 = e68_ir_reg9 (c);
-	ea2 = e68_ir_reg0 (c);
+	ea1 = e68_ir_reg0 (c);
+	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
-	e68_get_ea32 (c, 1, ea2, 0x0011, &s2);
 	e68_get_ea32 (c, 1, ea1, 0x0011, &s1);
-	s3 = e68_get_sr_x (c);
+	e68_get_ea32 (c, 1, ea2, 0x0011, &s2);
 
-	d = s1 - s2 - s3;
+	d = s2 - s1 - e68_get_sr_x (c);
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_subx_32 (c, d, s2, s1);
+	e68_cc_set_subx_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -3644,10 +3644,10 @@ static unsigned op91c0 (e68000_t *c)
 
 	reg = (c->ir[0] >> 9) & 7;
 
-	s1 = e68_get_areg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_areg32 (c, reg);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_areg32 (c, reg, d);
 	e68_set_clk (c, 10);
@@ -3713,11 +3713,11 @@ static unsigned opb0c0 (e68000_t *c)
 	uint32_t s1, s2;
 	uint16_t t;
 
-	s1 = e68_get_areg32 (c, e68_ir_reg9 (c));
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s2 = e68_exts (t, 16);
+	s1 = e68_exts (t, 16);
+	s2 = e68_get_areg32 (c, e68_ir_reg9 (c));
 
-	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3728,13 +3728,14 @@ static unsigned opb100_01 (e68000_t *c)
 {
 	uint8_t s1, s2;
 
-	e68_get_ea8 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
-	e68_get_ea8 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
+	/* order ? */
+	e68_get_ea8 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
+	e68_get_ea8 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_8 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 16);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* B100_XX: EOR.B Dx, <EA> */
@@ -3771,13 +3772,14 @@ static unsigned opb140_01 (e68000_t *c)
 {
 	uint16_t s1, s2;
 
-	e68_get_ea16 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
-	e68_get_ea16 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
+	/* order */
+	e68_get_ea16 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
+	e68_get_ea16 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_16 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 24);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* B140_XX: EOR.W Dx, <EA> */
@@ -3814,13 +3816,14 @@ static unsigned opb180_01 (e68000_t *c)
 {
 	uint32_t s1, s2;
 
-	e68_get_ea32 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s1);
-	e68_get_ea32 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s2);
+	/* order */
+	e68_get_ea32 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
+	e68_get_ea32 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
-	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 40);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* B180_XX: EOR.L Dx, <EA> */
@@ -3857,16 +3860,16 @@ static unsigned opb1c0 (e68000_t *c)
 {
 	uint32_t s1, s2;
 
-	s1 = e68_get_areg32 (c, e68_ir_reg9 (c));
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_areg32 (c, e68_ir_reg9 (c));
 
-	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
 
-/* C000: AND.B EA, Dx */
+/* C000: AND.B <EA>, Dx */
 static unsigned opc000 (e68000_t *c)
 {
 	unsigned reg;
@@ -4246,18 +4249,18 @@ static unsigned opd080 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D0C0: ADDA.W EA, Ax */
+/* D0C0: ADDA.W <EA>, Ax */
 static unsigned opd0c0 (e68000_t *c)
 {
 	unsigned reg;
 	uint32_t s1, s2, d;
 	uint16_t t;
 
-	reg = (c->ir[0] >> 9) & 7;
+	reg = e68_ir_reg9 (c);
 
-	s1 = e68_get_areg32 (c, reg);
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s2 = e68_exts (t, 16);
+	s1 = e68_exts (t, 16);
+	s2 = e68_get_areg32 (c, reg);
 
 	d = s1 + s2;
 
@@ -4438,16 +4441,16 @@ static unsigned opd180 (e68000_t *c)
 	}
 }
 
-/* D1C0: ADDA.L EA, Ax */
+/* D1C0: ADDA.L <EA>, Ax */
 static unsigned opd1c0 (e68000_t *c)
 {
 	unsigned reg;
 	uint32_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	reg = e68_ir_reg9 (c);
 
-	s1 = e68_get_areg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_areg32 (c, reg);
 
 	d = s1 + s2;
 
