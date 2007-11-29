@@ -27,27 +27,24 @@
 
 
 #include <stdio.h>
+#include <stdarg.h>
 
 
-#define PCE_BRK_STOP  1
-#define PCE_BRK_ABORT 2
+FILE *pce_get_redirection (void);
+FILE *pce_get_fp_out (void);
+FILE *pce_get_fp_inp (void);
 
+int pce_set_redirection (const char *fname, const char *mode);
 
-void pce_set_fd_interactive (int fd, int interactive);
+void pce_gets (char *str, unsigned max);
+void pce_puts (const char *str);
+void pce_printf (const char *msg, ...);
+void pce_vprintf (const char *msg, va_list va);
 
+void pce_prt_sep (const char *str);
 
-/*!***************************************************************************
- * @short Check if a file descriptor is readable
- * @param fd The file descriptor
- * @param t  Wait at most t milliseconds for fd to become readable
- *****************************************************************************/
-int pce_fd_readable (int fd, int t);
-
-void pce_prt_sep (FILE *fp, const char *str, ...);
-
-void pce_start (unsigned *brk);
-
-void pce_stop (void);
+void pce_console_init (FILE *inp, FILE *out);
+void pce_console_done (void);
 
 
 #endif

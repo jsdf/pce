@@ -29,6 +29,7 @@
 
 #include "monitor.h"
 #include "cmd.h"
+#include "console.h"
 
 
 void mon_init (monitor_t *mon)
@@ -112,15 +113,11 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 static
 void mon_prt_prompt (monitor_t *mon)
 {
-	/* reset terminal colors */
-	fputs ("\x1b[0;37;40m", stdout);
-
-	fputs ("-", stdout);
-	fflush (stdout);
+	pce_puts ("-");
 }
 
 static
-void mon_do_ms (monitor_t *mon, cmd_t *cmd)
+void mon_cmd_ms (monitor_t *mon, cmd_t *cmd)
 {
 	char msg[256];
 	char val[256];
@@ -139,16 +136,16 @@ void mon_do_ms (monitor_t *mon, cmd_t *cmd)
 
 	if (mon->setmsg != NULL) {
 		if (mon->setmsg (mon->msgext, msg, val)) {
-			printf ("error\n");
+			pce_puts ("error\n");
 		}
 	}
 	else {
-		printf ("monitor: no set message function\n");
+		pce_puts ("monitor: no set message function\n");
 	}
 }
 
 static
-void mon_do_mg (monitor_t *mon, cmd_t *cmd)
+void mon_cmd_mg (monitor_t *mon, cmd_t *cmd)
 {
 	char msg[256];
 	char val[256];
@@ -170,39 +167,74 @@ void mon_do_mg (monitor_t *mon, cmd_t *cmd)
 			printf ("error\n");
 		}
 
-		printf ("%s\n", val);
+		pce_printf ("%s\n", val);
 	}
 	else {
-		printf ("monitor: no get message function\n");
+		pce_puts ("monitor: no get message function\n");
 	}
 }
 
 static
-void mon_do_m (monitor_t *mon, cmd_t *cmd)
+void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "s")) {
-		mon_do_ms (mon, cmd);
+		mon_cmd_ms (mon, cmd);
 	}
 	else if (cmd_match (cmd, "g")) {
-		mon_do_mg (mon, cmd);
+		mon_cmd_mg (mon, cmd);
 	}
 	else {
-		mon_do_ms (mon, cmd);
+		mon_cmd_ms (mon, cmd);
 	}
 }
 
 static
-void mon_do_v (cmd_t *cmd)
+void mon_cmd_redir (monitor_t *mon, cmd_t *cmd)
+{
+	int        close;
+	const char *mode;
+	char       fname[256];
+
+	close = 0;
+	mode = "w";
+
+	if (cmd_match (cmd, ">")) {
+		mode = "a";
+	}
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		close = 1;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	if (close) {
+		pce_set_redirection (NULL, NULL);
+	}
+	else {
+		if (pce_set_redirection (fname, mode)) {
+			pce_puts ("error setting redirection\n");
+		}
+		else {
+			pce_printf ("redirecting to \"%s\"\n", fname);
+		}
+	}
+}
+
+static
+void mon_cmd_v (cmd_t *cmd)
 {
 	unsigned long val;
 
 	if (cmd_match_eol (cmd)) {
-		cmd_list_syms (cmd, stdout);
+		cmd_list_syms (cmd);
 		return;
 	}
 
 	while (cmd_match_uint32 (cmd, &val)) {
-		printf ("%lX\n", val);
+		pce_printf ("%lX\n", val);
 	}
 
 	if (!cmd_match_end (cmd)) {
@@ -230,13 +262,16 @@ int mon_run (monitor_t *mon)
 
 		if (r != 0) {
 			if (cmd_match (&cmd, "m")) {
-				mon_do_m (mon, &cmd);
+				mon_cmd_m (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "q")) {
 				break;
 			}
 			else if (cmd_match (&cmd, "v")) {
-				mon_do_v (&cmd);
+				mon_cmd_v (&cmd);
+			}
+			else if (cmd_match (&cmd, ">")) {
+				mon_cmd_redir (mon, &cmd);
 			}
 		}
 	};

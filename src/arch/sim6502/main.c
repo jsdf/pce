@@ -204,7 +204,7 @@ void prt_state_cpu (e6502_t *c, FILE *fp)
 	e6502_disasm_t     op;
 	char               str[256];
 
-	pce_prt_sep (fp, "6502");
+	pce_prt_sep ("6502");
 
 	opcnt = e6502_get_opcnt (c);
 	clkcnt = e6502_get_clock (c);
@@ -240,7 +240,7 @@ void prt_state_cpu (e6502_t *c, FILE *fp)
 static
 void prt_state_mem (sim6502_t *sim, FILE *fp)
 {
-	pce_prt_sep (fp, "6502 MEM");
+	pce_prt_sep ("6502 MEM");
 	mem_prt_state (sim->mem, fp);
 }
 
@@ -907,13 +907,14 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
-
-	s6502_reset (par_sim);
+	pce_console_init (stdin, stdout);
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, s6502_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
+
+	s6502_reset (par_sim);
 
 	if (run) {
 		s6502_run (par_sim);
@@ -929,10 +930,10 @@ int main (int argc, char *argv[])
 		mon_run (&par_mon);
 	}
 
-	mon_free (&par_mon);
-
 	s6502_del (par_sim);
 
+	mon_free (&par_mon);
+	pce_console_done();
 	pce_log_done();
 
 	return (0);

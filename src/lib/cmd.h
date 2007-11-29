@@ -26,9 +26,6 @@
 #define PCE_LIB_CMD_H 1
 
 
-#include <stdio.h>
-
-
 #define PCE_CMD_MAX 256
 
 
@@ -43,7 +40,7 @@ void cmd_set_str (cmd_t *cmd, const char *str);
 void cmd_rewind (cmd_t *cmd);
 const char *cmd_get_str (cmd_t *cmd);
 
-void cmd_list_syms (cmd_t *cmd, FILE *fp);
+void cmd_list_syms (cmd_t *cmd);
 
 void cmd_error (cmd_t *cmd, const char *str);
 
@@ -65,7 +62,7 @@ int cmd_match_uint32b (cmd_t *cmd, unsigned long *val, unsigned base);
 int cmd_match_uint32 (cmd_t *cmd, unsigned long *val);
 int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs);
 
-void cmd_init (FILE *inp, FILE *out, void *ext, void *getsym, void *setsym);
+void cmd_init (void *ext, void *getsym, void *setsym);
 
 
 #endif

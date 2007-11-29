@@ -46,6 +46,7 @@
 #include <lib/load.h>
 #include <lib/monitor.h>
 #include <lib/msg.h>
+#include <lib/sysdep.h>
 
 #include <chipset/clock/ds1743.h>
 
@@ -71,9 +72,6 @@ extern unsigned par_xlat;
 extern sim405_t *par_sim;
 
 extern unsigned par_sig_int;
-
-
-void prt_state (sim405_t *sim, FILE *fp, const char *str);
 
 
 #endif

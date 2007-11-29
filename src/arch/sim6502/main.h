@@ -39,6 +39,7 @@
 #include <lib/iniram.h>
 #include <lib/load.h>
 #include <lib/monitor.h>
+#include <lib/sysdep.h>
 
 
 extern int       par_verbose;

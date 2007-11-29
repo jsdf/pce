@@ -124,36 +124,6 @@ int cmd_set_sym (sim405_t *sim, const char *sym, unsigned long val)
 	return (1);
 }
 
-void prt_state (sim405_t *sim, FILE *fp, const char *str)
-{
-	cmd_t cmd;
-
-	cmd_set_str (&cmd, str);
-
-	if (cmd_match_eol (&cmd)) {
-		return;
-	}
-
-	while (!cmd_match_eol (&cmd)) {
-		if (cmd_match (&cmd, "ppc") || cmd_match (&cmd, "cpu")) {
-			s405_prt_state_ppc (sim, fp);
-		}
-		else if (cmd_match (&cmd, "spr")) {
-			s405_prt_state_spr (sim->ppc, fp);
-		}
-		else if (cmd_match (&cmd, "uic")) {
-			s405_prt_state_uic (&sim->uic, fp);
-		}
-		else if (cmd_match (&cmd, "mem")) {
-			s405_prt_state_mem (sim, fp);
-		}
-		else {
-			printf ("unknown component (%s)\n", cmd_get_str (&cmd));
-			return;
-		}
-	}
-}
-
 static
 ini_sct_t *pce_load_config (const char *fname)
 {
@@ -284,14 +254,15 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
+	pce_console_init (stdin, stdout);
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
 	ppc_cmd_init (par_sim);
-
-	s405_reset (par_sim);
 
 	mon_init (&mon);
 	mon_set_cmd_fct (&mon, ppc_do_cmd, par_sim);
 	mon_set_msg_fct (&mon, s405_set_msg, NULL, par_sim);
+
+	s405_reset (par_sim);
 
 	if (run) {
 		ppc_run (par_sim);
@@ -300,13 +271,15 @@ int main (int argc, char *argv[])
 		}
 	}
 	else {
-		pce_log (MSG_INF, "type 'h' for help\n");
+		pce_puts ("type 'h' for help\n");
 	}
 
 	mon_run (&mon);
 
 	s405_del (par_sim);
 
+	mon_free (&mon);
+	pce_console_done();
 	pce_log_done();
 
 	return (0);

@@ -28,12 +28,12 @@
 /* $Id$ */
 
 
-void ppc_disasm_str (char *dst, p405_disasm_t *op);
+void s405_prt_state_ppc (sim405_t *sim);
+void s405_prt_state_spr (p405_t *c);
+void s405_prt_state_uic (p405_uic_t *uic);
+void s405_prt_state_mem (sim405_t *sim);
 
-void s405_prt_state_ppc (sim405_t *sim, FILE *fp);
-void s405_prt_state_spr (p405_t *c, FILE *fp);
-void s405_prt_state_uic (p405_uic_t *uic, FILE *fp);
-void s405_prt_state_mem (sim405_t *sim, FILE *fp);
+void prt_state (sim405_t *sim, const char *str);
 
 void ppc_run (sim405_t *sim);
 

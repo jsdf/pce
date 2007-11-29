@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "console.h"
 #include "cmd.h"
 
 
@@ -33,10 +34,6 @@ typedef struct {
 	char          *name;
 	unsigned long val;
 } cmd_sym_t;
-
-
-static FILE *cmd_fpi = NULL;
-static FILE *cmd_fpo = NULL;
 
 
 static void  *cmd_get_sym_ext = NULL;
@@ -111,7 +108,7 @@ char *str_rtrim (char *str)
 
 void cmd_get (cmd_t *cmd)
 {
-	fgets (cmd->str, PCE_CMD_MAX, cmd_fpi);
+	pce_gets (cmd->str, PCE_CMD_MAX);
 
 	str_ltrim (cmd->str);
 	str_rtrim (cmd->str);
@@ -265,7 +262,7 @@ void cmd_del_sym (cmd_t *cmd, const char *sym, unsigned long *val)
 	cmd_sym_cnt = j;
 }
 
-void cmd_list_syms (cmd_t *cmd, FILE *fp)
+void cmd_list_syms (cmd_t *cmd)
 {
 	unsigned i, k, n;
 
@@ -282,21 +279,20 @@ void cmd_list_syms (cmd_t *cmd, FILE *fp)
 	for (i = 0; i < cmd_sym_cnt; i++) {
 		k = strlen (cmd_sym[i].name);
 
-		fprintf (fp, "$%s", cmd_sym[i].name);
+		pce_printf ("$%s", cmd_sym[i].name);
 
 		while (k < n) {
-			fputc (' ', fp);
+			pce_puts (" ");
 			k += 1;
 		}
 
-		fprintf (fp, "= %08lX\n", cmd_sym[i].val);
+		pce_printf ("= %08lX\n", cmd_sym[i].val);
 	}
 }
 
 void cmd_error (cmd_t *cmd, const char *str)
 {
-	fprintf (cmd_fpo, "*** %s [%s]\n", str, cmd->str + cmd->i);
-	fflush (cmd_fpo);
+	pce_printf ("*** %s [%s]\n", str, cmd->str + cmd->i);
 }
 
 int cmd_match_space (cmd_t *cmd)
@@ -1309,11 +1305,8 @@ int cmd_match_uint16_16 (cmd_t *cmd, unsigned short *seg, unsigned short *ofs)
 	return (1);
 }
 
-void cmd_init (FILE *inp, FILE *out, void *ext, void *getsym, void *setsym)
+void cmd_init (void *ext, void *getsym, void *setsym)
 {
-	cmd_fpi = inp;
-	cmd_fpo = out;
-
 	cmd_get_sym_ext = ext;
 	cmd_get_sym_fct = getsym;
 

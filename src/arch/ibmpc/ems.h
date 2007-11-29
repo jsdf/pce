@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/ems.h                                            *
  * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,7 +56,7 @@ void ems_del (ems_t *ems);
 
 mem_blk_t *ems_get_mem (ems_t *ems);
 
-void ems_prt_state (ems_t *xms, FILE *fp);
+void ems_prt_state (ems_t *xms);
 
 void ems_info (ems_t *ems, e8086_t *cpu);
 

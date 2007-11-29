@@ -25,11 +25,6 @@
 #include "main.h"
 
 
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-
-
 int str_istail (const char *str, const char *tail)
 {
 	unsigned i, j;
@@ -72,15 +67,6 @@ int str_isarg (const char *str, const char *arg1, const char *arg2)
 	}
 
 	return (0);
-}
-
-void prt_error (const char *str, ...)
-{
-	va_list va;
-
-	va_start (va, str);
-	vfprintf (stderr, str, va);
-	va_end (va);
 }
 
 ini_sct_t *pce_load_config (const char *fname)

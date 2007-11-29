@@ -289,14 +289,15 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
+	pce_console_init (stdin, stdout);
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
 	sarm_cmd_init (par_sim);
-
-	sarm_reset (par_sim);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, sarm_set_msg, NULL, par_sim);
+
+	sarm_reset (par_sim);
 
 	if (run) {
 		sarm_run (par_sim);
@@ -312,10 +313,10 @@ int main (int argc, char *argv[])
 		mon_run (&par_mon);
 	}
 
-	mon_free (&par_mon);
-
 	sarm_del (par_sim);
 
+	mon_free (&par_mon);
+	pce_console_done();
 	pce_log_done();
 
 	return (0);

@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/sysdep.h                                           *
  * Created:       2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-06-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,7 +26,25 @@
 #define PCE_LIB_SYSDEP_H 1
 
 
+#define PCE_BRK_STOP  1
+#define PCE_BRK_ABORT 2
+
+
 int pce_usleep (unsigned long usec);
+
+void pce_set_fd_interactive (int fd, int interactive);
+
+/*!***************************************************************************
+ * @short Check if a file descriptor is readable
+ * @param fd The file descriptor
+ * @param t  Wait at most t milliseconds for fd to become readable
+ *****************************************************************************/
+int pce_fd_readable (int fd, int t);
+
+
+void pce_start (unsigned *brk);
+
+void pce_stop (void);
 
 
 #endif

@@ -27,97 +27,139 @@
 #include "console.h"
 
 #include <stdarg.h>
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
+#include <stdio.h>
+#include <string.h>
 
 
-void pce_set_fd_interactive (int fd, int interactive)
+static FILE *pce_fp_inp = NULL;
+static FILE *pce_fp_out = NULL;
+static FILE *pce_fp_redir = NULL;
+
+
+FILE *pce_get_redirection (void)
 {
-#ifdef HAVE_TERMIOS_H
-	static int            sios_ok = 0;
-	static struct termios sios;
-	struct termios        tios;
-
-	if (sios_ok == 0) {
-		tcgetattr (fd, &sios);
-		sios_ok = 1;
-	}
-
-	if (interactive) {
-		tcsetattr (fd, TCSANOW, &sios);
-	}
-	else {
-		tios = sios;
-
-		tios.c_lflag &= ~(ICANON | ECHO);
-		tios.c_cc[VMIN] = 1;
-		tios.c_cc[VTIME] = 0;
-
-		tcsetattr (fd, TCSANOW, &tios);
-	}
-#endif
+	return (pce_fp_redir);
 }
 
-int pce_fd_readable (int fd, int t)
+FILE *pce_get_fp_out (void)
 {
-#ifdef HAVE_SYS_POLL_H
-	int           r;
-	struct pollfd pfd[1];
+	return (pce_fp_out);
+}
 
-	pfd[0].fd = fd;
-	pfd[0].events = POLLIN;
+FILE *pce_get_fp_inp (void)
+{
+	return (pce_fp_inp);
+}
 
-	r = poll (pfd, 1, t);
-	if (r < 0) {
+int pce_set_redirection (const char *fname, const char *mode)
+{
+	if (pce_fp_redir != NULL) {
+		fclose (pce_fp_redir);
+		pce_fp_redir = NULL;
+	}
+
+	if (fname == NULL) {
 		return (0);
 	}
 
-	if ((pfd[0].revents & POLLIN) == 0) {
-		return (0);
+	pce_fp_redir = fopen (fname, mode);
+
+	if (pce_fp_redir == NULL) {
+		return (1);
 	}
 
-	return (1);
-#else
 	return (0);
-#endif
 }
 
-void pce_prt_sep (FILE *fp, const char *str, ...)
+void pce_gets (char *str, unsigned max)
 {
-	unsigned i;
-	va_list  va;
+	str[0] = 0;
 
-	fputs ("-", fp);
-	i = 1;
+	if (pce_fp_inp == NULL) {
+		pce_fp_inp = stdin;
+	}
 
-	va_start (va, str);
-	i += vfprintf (fp, str, va);
+	fgets (str, max, pce_fp_inp);
+
+	if (pce_fp_redir != NULL) {
+		fputs (str, pce_fp_redir);
+	}
+}
+
+void pce_puts (const char *str)
+{
+	if (pce_fp_out == NULL) {
+		pce_fp_out = stdout;
+	}
+
+	fputs (str, pce_fp_out);
+	fflush (pce_fp_out);
+
+	if (pce_fp_redir != NULL) {
+		fputs (str, pce_fp_redir);
+		fflush (pce_fp_redir);
+	}
+}
+
+void pce_printf (const char *msg, ...)
+{
+	va_list va;
+
+	if (pce_fp_out == NULL) {
+		pce_fp_out = stdout;
+	}
+
+	va_start (va, msg);
+
+	vfprintf (pce_fp_out, msg, va);
+	fflush (pce_fp_out);
+
+	if (pce_fp_redir != NULL) {
+		vfprintf (pce_fp_redir, msg, va);
+		fflush (pce_fp_redir);
+	}
+
 	va_end (va);
-
-	while (i < 78) {
-		fputc ('-', fp);
-		i += 1;
-	}
-
-	fputs ("\n", fp);
 }
 
-void pce_start (unsigned *brk)
+void pce_vprintf (const char *msg, va_list va)
 {
-	if (brk != NULL) {
-		*brk = 0;
+	if (pce_fp_out == NULL) {
+		pce_fp_out = stdout;
 	}
 
-	pce_set_fd_interactive (0, 0);
+	vfprintf (pce_fp_out, msg, va);
+	fflush (pce_fp_out);
+
+	if (pce_fp_redir != NULL) {
+		vfprintf (pce_fp_redir, msg, va);
+		fflush (pce_fp_redir);
+	}
 }
 
-void pce_stop (void)
+void pce_prt_sep (const char *str)
 {
-	pce_set_fd_interactive (0, 1);
+	unsigned i, n;
+
+	n = strlen (str);
+
+	pce_puts ("-");
+	pce_puts (str);
+
+	for (i = n + 1; i < 78; i++) {
+		pce_puts ("-");
+	}
+
+	pce_puts ("\n");
+}
+
+void pce_console_init (FILE *inp, FILE *out)
+{
+	pce_fp_inp = inp;
+	pce_fp_out = out;
+}
+
+void pce_console_done (void)
+{
+	pce_set_redirection (NULL, NULL);
 }

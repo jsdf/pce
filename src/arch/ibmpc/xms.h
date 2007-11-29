@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/ibmpc/xms.h                                            *
  * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -69,7 +68,7 @@ void xms_del (xms_t *xms);
 mem_blk_t *xms_get_umb_mem (xms_t *xms);
 mem_blk_t *xms_get_hma_mem (xms_t *xms);
 
-void xms_prt_state (xms_t *xms, FILE *fp);
+void xms_prt_state (xms_t *xms);
 
 void xms_info (xms_t *xms, e8086_t *cpu);
 

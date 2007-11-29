@@ -154,44 +154,41 @@ mem_blk_t *xms_get_hma_mem (xms_t *xms)
 	return (xms->hma);
 }
 
-void xms_prt_state (xms_t *xms, FILE *fp)
+void xms_prt_state (xms_t *xms)
 {
 	unsigned i;
 	unsigned long hma;
 
 	hma = (xms->hma != NULL) ? (65536 - 16) : 0;
 
-	fprintf (fp,
-		"XMS: EMB: %luK/%luK  UMB: %luK/%luK  HMA: %luK/%luK\n",
+	pce_printf ("XMS: EMB: %luK/%luK  UMB: %luK/%luK  HMA: %luK/%luK\n",
 		xms->emb_used / 1024, xms->emb_max / 1024,
 		xms->umb_used / 64, xms->umb_max / 64,
 		hma / 1024, hma / 1024
 	);
 
-	fprintf (fp, "EMB: blk=%u used=%lu max=%lu\n",
+	pce_printf ("EMB: blk=%u used=%lu max=%lu\n",
 		xms->emb_cnt, xms->emb_used, xms->emb_max
 	);
 
 	for (i = 0; i < xms->emb_cnt; i++) {
-		fprintf (fp, "  %u: %luK  lock=%d\n",
+		pce_printf ("  %u: %luK  lock=%d\n",
 			i, xms->emb[i]->size / 1024, (xms->emb[i]->lock != 0)
 		);
 	}
 
-	fprintf (fp, "UMB: blk=%u used=%lu max=%lu\n",
+	pce_printf ("UMB: blk=%u used=%lu max=%lu\n",
 		xms->umb_cnt, 16 * xms->umb_used, 16 * xms->umb_max
 	);
 
 	for (i = 0; i < xms->umb_cnt; i++) {
-		fprintf (fp, "  %u: 0x%04x:0x0000 + 0x%05x  alloc=%d\n",
+		pce_printf ("  %u: 0x%04x:0x0000 + 0x%05x  alloc=%d\n",
 			i,
 			(unsigned) xms->umb[i].segm,
 			(unsigned) xms->umb[i].size * 16,
 			(xms->umb[i].alloc != 0)
 		);
 	}
-
-	fflush (fp);
 }
 
 xms_emb_t *xms_get_emb (xms_t *xms, unsigned handle)

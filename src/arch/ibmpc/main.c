@@ -27,7 +27,7 @@
 #include <signal.h>
 
 
-static void prt_state_cpu (e8086_t *c, FILE *fp);
+static void prt_state_cpu (e8086_t *c);
 
 
 char                      *par_terminal = NULL;
@@ -93,12 +93,11 @@ void sig_int (int s)
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce: segmentation fault\n");
+	fflush (stderr);
 
 	if ((pc != NULL) && (pc->cpu != NULL)) {
-		prt_state_cpu (pc->cpu, stderr);
+		prt_state_cpu (pc->cpu);
 	}
-
-	fflush (stderr);
 
 	pce_set_fd_interactive (0, 1);
 
@@ -189,57 +188,65 @@ void disasm_str (char *dst, e86_disasm_t *op)
 }
 
 static
-void prt_uint8_bin (FILE *fp, unsigned char val)
+void prt_uint8_bin (unsigned char val)
 {
 	unsigned      i;
 	unsigned char m;
+	char          str[16];
 
 	m = 0x80;
 
 	for (i = 0; i < 8; i++) {
-		if (val & m) {
-			fputc ('1', fp);
-		}
-		else {
-			fputc ('0', fp);
-		}
+		str[i] = (val & m) ? '1' : '0';
 		m = m >> 1;
+	}
+
+	str[8] = 0;
+
+	pce_puts (str);
+}
+
+static
+void prt_state_video (video_t *vid)
+{
+	FILE *fp;
+
+	pce_prt_sep ("video");
+
+	pce_video_prt_state (vid, pce_get_fp_out());
+
+	fp = pce_get_redirection();
+	if (fp != NULL) {
+		pce_video_prt_state (vid, fp);
 	}
 }
 
 static
-void prt_state_video (video_t *vid, FILE *fp)
+void prt_state_ems (ems_t *ems)
 {
-	pce_prt_sep (fp, "video");
-	pce_video_prt_state (vid, fp);
+	pce_prt_sep ("EMS");
+	ems_prt_state (ems);
 }
 
 static
-void prt_state_ems (ems_t *ems, FILE *fp)
+void prt_state_xms (xms_t *xms)
 {
-	pce_prt_sep (fp, "EMS");
-	ems_prt_state (ems, fp);
+	pce_prt_sep ("XMS");
+	xms_prt_state (xms);
 }
 
 static
-void prt_state_xms (xms_t *xms, FILE *fp)
-{
-	pce_prt_sep (fp, "XMS");
-	xms_prt_state (xms, fp);
-}
-
-static
-void prt_state_pit (e8253_t *pit, FILE *fp)
+void prt_state_pit (e8253_t *pit)
 {
 	unsigned        i;
 	e8253_counter_t *cnt;
 
-	pce_prt_sep (fp, "8253-PIT");
+	pce_prt_sep ("8253-PIT");
 
 	for (i = 0; i < 3; i++) {
 		cnt = &pit->counter[i];
 
-		fprintf (fp,
+		pce_printf (
 			"C%d: SR=%02X M=%u RW=%d  CE=%04X  %s=%02X %s=%02X  %s=%02X %s=%02X  "
 			"G=%u O=%u R=%d\n",
 			i,
@@ -257,65 +264,64 @@ void prt_state_pit (e8253_t *pit, FILE *fp)
 }
 
 static
-void prt_state_ppi (e8255_t *ppi, FILE *fp)
+void prt_state_ppi (e8255_t *ppi)
 {
-	pce_prt_sep (fp, "8255-PPI");
+	pce_prt_sep ("8255-PPI");
 
-	fprintf (fp,
+	pce_printf (
 		"MOD=%02X  MODA=%u  MODB=%u",
 		ppi->mode, ppi->group_a_mode, ppi->group_b_mode
 	);
 
 	if (ppi->port[0].inp != 0) {
-		fprintf (fp, "  A=I[%02X]", e8255_get_inp (ppi, 0));
+		pce_printf ("  A=I[%02X]", e8255_get_inp (ppi, 0));
 	}
 	else {
-		fprintf (fp, "  A=O[%02X]", e8255_get_out (ppi, 0));
+		pce_printf ("  A=O[%02X]", e8255_get_out (ppi, 0));
 	}
 
 	if (ppi->port[1].inp != 0) {
-		fprintf (fp, "  B=I[%02X]", e8255_get_inp (ppi, 1));
+		pce_printf ("  B=I[%02X]", e8255_get_inp (ppi, 1));
 	}
 	else {
-		fprintf (fp, "  B=O[%02X]", e8255_get_out (ppi, 1));
+		pce_printf ("  B=O[%02X]", e8255_get_out (ppi, 1));
 	}
 
 	switch (ppi->port[2].inp) {
 		case 0xff:
-			fprintf (fp, "  C=I[%02X]", e8255_get_inp (ppi, 2));
+			pce_printf ("  C=I[%02X]", e8255_get_inp (ppi, 2));
 			break;
 
 		case 0x00:
-			fprintf (fp, "  C=O[%02X]", e8255_get_out (ppi, 2));
+			pce_printf ("  C=O[%02X]", e8255_get_out (ppi, 2));
 			break;
 
 		case 0x0f:
-			fprintf (fp, "  CH=O[%X]  CL=I[%X]",
+			pce_printf ("  CH=O[%X]  CL=I[%X]",
 				(e8255_get_out (ppi, 2) >> 4) & 0x0f,
 				e8255_get_inp (ppi, 2) & 0x0f
 			);
 			break;
 
 		case 0xf0:
-			fprintf (fp, "  CH=I[%X]  CL=O[%X]",
+			pce_printf ("  CH=I[%X]  CL=O[%X]",
 				(e8255_get_inp (ppi, 2) >> 4) & 0x0f,
 				e8255_get_out (ppi, 2) & 0x0f
 			);
 			break;
 	}
 
-	fputs ("\n", fp);
-	fflush (fp);
+	pce_puts ("\n");
 }
 
 static
-void prt_state_dma (e8237_t *dma, FILE *fp)
+void prt_state_dma (e8237_t *dma)
 {
 	unsigned i;
 
-	pce_prt_sep (fp, "8237-DMAC");
+	pce_prt_sep ("8237-DMAC");
 
-	fprintf (fp, "CMD=%02X  PRI=%02X  CHK=%d\n",
+	pce_printf ("CMD=%02X  PRI=%02X  CHK=%d\n",
 		e8237_get_command (dma),
 		e8237_get_priority (dma),
 		dma->check != 0
@@ -326,7 +332,7 @@ void prt_state_dma (e8237_t *dma, FILE *fp)
 
 		state = e8237_get_state (dma, i);
 
-		fprintf (fp,
+		pce_printf (
 			"CHN %u: MODE=%02X ADDR=%04X[%04X] CNT=%04X[%04X] DREQ=%d SREQ=%d MASK=%d\n",
 			i,
 			e8237_get_mode (dma, i) & 0xfcU,
@@ -339,38 +345,42 @@ void prt_state_dma (e8237_t *dma, FILE *fp)
 			(state & E8237_STATE_MASK) != 0
 		);
 	}
-
-	fflush (fp);
 }
 
 static
-void prt_state_pic (e8259_t *pic, FILE *fp)
+void prt_state_pic (e8259_t *pic)
 {
 	unsigned i;
 
-	pce_prt_sep (fp, "8259A-PIC");
-	fputs ("IRR=", fp);   prt_uint8_bin (fp, e8259_get_irr (pic));
-	fputs ("  IMR=", fp); prt_uint8_bin (fp, e8259_get_imr (pic));
-	fputs ("  ISR=", fp); prt_uint8_bin (fp, e8259_get_isr (pic));
-	fputs ("\n", fp);
+	pce_prt_sep ("8259A-PIC");
 
-	fprintf (fp, "ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
+	pce_puts ("IRR=");
+	prt_uint8_bin (e8259_get_irr (pic));
+
+	pce_puts ("  IMR=");
+	prt_uint8_bin (e8259_get_imr (pic));
+
+	pce_puts ("  ISR=");
+	prt_uint8_bin (e8259_get_isr (pic));
+
+	pce_puts ("\n");
+
+	pce_printf ("ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
 		e8259_get_icw (pic, 0), e8259_get_icw (pic, 1), e8259_get_icw (pic, 2),
 		e8259_get_icw (pic, 3),
 		e8259_get_ocw (pic, 0), e8259_get_ocw (pic, 1), e8259_get_ocw (pic, 2)
 	);
 
-	fprintf (fp, "N0=%04lX", pic->irq_cnt[0]);
+	pce_printf ("N0=%04lX", pic->irq_cnt[0]);
 	for (i = 1; i < 8; i++) {
-		fprintf (fp, "  N%u=%04lX", i, pic->irq_cnt[i]);
+		pce_printf ("  N%u=%04lX", i, pic->irq_cnt[i]);
 	}
-	fputs ("\n", fp);
 
-	fflush (fp);
+	pce_puts ("\n");
 }
 
 static
-void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
+void prt_state_uart (e8250_t *uart, unsigned base)
 {
 	char p;
 
@@ -400,9 +410,9 @@ void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 		break;
 	}
 
-	pce_prt_sep (fp, "8250-UART");
+	pce_prt_sep ("8250-UART");
 
-	fprintf (stderr,
+	pce_printf (
 		"IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
 		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
 		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
@@ -418,34 +428,35 @@ void prt_state_uart (e8250_t *uart, unsigned base, FILE *fp)
 }
 
 static
-void prt_state_cpu (e8086_t *c, FILE *fp)
+void prt_state_cpu (e8086_t *c)
 {
 	double      cpi, mips;
 	static char ft[2] = { '-', '+' };
 
-	pce_prt_sep (fp, "8086");
+	pce_prt_sep ("8086");
 
 	cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
 	mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
-	fprintf (fp, "CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
+
+	pce_printf ("CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
 		c->clocks, c->instructions,
 		c->delay,
 		cpi, mips
 	);
 
-	fprintf (fp,
+	pce_printf (
 		"AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
 		e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
 		e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
 		pce_last_int
 	);
 
-	fprintf (fp, "CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
+	pce_printf ("CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
 		e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
 		e86_get_ip (c), c->flg
 	);
 
-	fprintf (fp, "  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
+	pce_printf ("  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
 		ft[e86_get_if (c)], ft[e86_get_df (c)],
 		ft[e86_get_of (c)], ft[e86_get_sf (c)],
 		ft[e86_get_zf (c)], ft[e86_get_af (c)],
@@ -454,25 +465,25 @@ void prt_state_cpu (e8086_t *c, FILE *fp)
 }
 
 static
-void prt_state_mem (ibmpc_t *pc, FILE *fp)
+void prt_state_mem (ibmpc_t *pc)
 {
-	pce_prt_sep (fp, "PC MEM");
-	mem_prt_state (pc->mem, fp);
+	pce_prt_sep ("PC MEM");
+	mem_prt_state (pc->mem, stdout);
 }
 
 static
-void prt_state_pc (ibmpc_t *pc, FILE *fp)
+void prt_state_pc (ibmpc_t *pc)
 {
-	prt_state_video (pc->video, fp);
-	prt_state_ppi (&pc->ppi, fp);
-	prt_state_pit (&pc->pit, fp);
-	prt_state_pic (&pc->pic, fp);
-	prt_state_dma (&pc->dma, fp);
-	prt_state_cpu (pc->cpu, fp);
+	prt_state_video (pc->video);
+	prt_state_ppi (&pc->ppi);
+	prt_state_pit (&pc->pit);
+	prt_state_pic (&pc->pic);
+	prt_state_dma (&pc->dma);
+	prt_state_cpu (pc->cpu);
 }
 
 static
-void prt_state (ibmpc_t *pc, FILE *fp)
+void prt_state (ibmpc_t *pc)
 {
 	e86_disasm_t op;
 	char         str[256];
@@ -480,9 +491,9 @@ void prt_state (ibmpc_t *pc, FILE *fp)
 	e86_disasm_cur (pc->cpu, &op);
 	disasm_str (str, &op);
 
-	prt_state_cpu (pc->cpu, fp);
+	prt_state_cpu (pc->cpu);
 
-	fprintf (fp, "%04X:%04X  %s\n",
+	pce_printf ("%04X:%04X  %s\n",
 		(unsigned) e86_get_cs (pc->cpu),
 		(unsigned) e86_get_ip (pc->cpu),
 		str
@@ -586,7 +597,7 @@ void do_boot (cmd_t *cmd)
 	unsigned short val;
 
 	if (cmd_match_eol (cmd)) {
-		printf ("boot drive is 0x%02x\n", pc_get_bootdrive (pc));
+		pce_printf ("boot drive is 0x%02x\n", pc_get_bootdrive (pc));
 		return;
 	}
 
@@ -620,7 +631,7 @@ void do_c (cmd_t *cmd)
 		cnt -= 1;
 	}
 
-	prt_state (pc, stdout);
+	prt_state (pc);
 }
 
 static
@@ -646,7 +657,7 @@ void do_dump (cmd_t *cmd)
 
 	fp = fopen (fname, "wb");
 	if (fp == NULL) {
-		prt_error ("dump: can't open file (%s)\n", fname);
+		pce_printf ("dump: can't open file (%s)\n", fname);
 		return;
 	}
 
@@ -656,16 +667,16 @@ void do_dump (cmd_t *cmd)
 	}
 	else if (strcmp (what, "video") == 0) {
 		if (pce_video_dump (pc->video, fp)) {
-			prt_error ("dumping video failed\n");
+			pce_printf ("dumping video failed\n");
 		}
 	}
 	else if (strcmp (what, "config") == 0) {
 		if (ini_write_fp (par_cfg, fp)) {
-			prt_error ("dumping configuration failed\n");
+			pce_printf ("dumping configuration failed\n");
 		}
 	}
 	else {
-		prt_error ("dump: don't know what to dump (%s)\n", what);
+		pce_printf ("dump: don't know what to dump (%s)\n", what);
 	}
 
 	fclose (fp);
@@ -748,7 +759,7 @@ void do_d (cmd_t *cmd)
 			j += 1;
 		}
 
-		fputs (buf, stdout);
+		pce_puts (buf);
 	}
 }
 
@@ -838,7 +849,7 @@ void do_g_far (cmd_t *cmd, ibmpc_t *pc)
 		pc_exec (pc);
 
 		if (e86_get_cs (pc->cpu) != seg) {
-			prt_state (pc, stdout);
+			prt_state (pc);
 			break;
 		}
 
@@ -872,7 +883,7 @@ static
 void do_h (cmd_t *cmd)
 {
 	if (cmd_match (cmd, "m")) {
-		fputs (
+		pce_puts (
 			"emu.stop\n"
 			"emu.exit\n"
 			"emu.pause            <0|1>\n"
@@ -889,14 +900,13 @@ void do_h (cmd_t *cmd)
 			"emu.disk.boot        <bootdrive>\n"
 			"emu.disk.commit      [drive]\n"
 			"emu.disk.eject       <drive>\n"
-			"emu.disk.insert      <drive>:<fname>\n",
-			stdout
+			"emu.disk.insert      <drive>:<fname>\n"
 		);
 
 		return;
 	}
 
-	fputs (
+	pce_puts (
 		"boot [drive]              Set the boot drive\n"
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
@@ -922,8 +932,7 @@ void do_h (cmd_t *cmd)
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n",
-		stdout
+		"w name addr cnt           save memory to file\n"
 	);
 }
 
@@ -956,7 +965,7 @@ void do_int28 (cmd_t *cmd)
 		par_int28 = 1000UL * val;
 	}
 
-	printf ("int 28h sleeping is %s (%lums)\n",
+	pce_printf ("int 28h sleeping is %s (%lums)\n",
 		(par_int28 > 0) ? "on" : "off",
 		par_int28 / 1000UL
 	);
@@ -988,10 +997,10 @@ void do_i (cmd_t *cmd)
 	}
 
 	if (word) {
-		printf ("%04X: %04X\n", port, e86_get_prt16 (pc->cpu, port));
+		pce_printf ("%04X: %04X\n", port, e86_get_prt16 (pc->cpu, port));
 	}
 	else {
-		printf ("%04X: %02X\n", port, e86_get_prt8 (pc->cpu, port));
+		pce_printf ("%04X: %02X\n", port, e86_get_prt8 (pc->cpu, port));
 	}
 }
 
@@ -1081,12 +1090,12 @@ void do_par (cmd_t *cmd)
 	}
 
 	if ((port >= 4) || (pc->parport[port] == NULL)) {
-		prt_error ("no parallel port %u\n", (unsigned) port);
+		pce_printf ("no parallel port %u\n", (unsigned) port);
 		return;
 	}
 
 	if (parport_set_fname (pc->parport[port], fname)) {
-		prt_error ("setting new file failed\n");
+		pce_printf ("setting new file failed\n");
 		return;
 	}
 }
@@ -1110,13 +1119,13 @@ void do_pqs (cmd_t *cmd)
 		return;
 	}
 
-	fputs ("PQ:", stdout);
+	pce_puts ("PQ:");
 
 	for (i = 0; i < pc->cpu->pq_cnt; i++) {
-		printf (" %02X", pc->cpu->pq[i]);
+		pce_printf (" %02X", pc->cpu->pq[i]);
 	}
 
-	fputs ("\n", stdout);
+	pce_puts ("\n");
 }
 
 static
@@ -1145,7 +1154,7 @@ void do_pq (cmd_t *cmd)
 		do_pqs (cmd);
 	}
 	else {
-		prt_error ("pq: unknown command (%s)\n", cmd->str + cmd->i);
+		cmd_error (cmd, "pq: unknown command (%s)\n");
 	}
 }
 
@@ -1212,7 +1221,7 @@ void do_p (cmd_t *cmd)
 
 	pce_stop();
 
-	prt_state (pc, stdout);
+	prt_state (pc);
 }
 
 static
@@ -1222,27 +1231,27 @@ void do_r (cmd_t *cmd, ibmpc_t *pc)
 	char          sym[256];
 
 	if (cmd_match_eol (cmd)) {
-		prt_state_cpu (pc->cpu, stdout);
+		prt_state_cpu (pc->cpu);
 		return;
 	}
 
 	if (!cmd_match_ident (cmd, sym, 256)) {
-		printf ("missing register\n");
+		pce_printf ("missing register\n");
 		return;
 	}
 
 	if (e86_get_reg (pc->cpu, sym, &val)) {
-		printf ("bad register (%s)\n", sym);
+		pce_printf ("bad register (%s)\n", sym);
 		return;
 	}
 
 	if (cmd_match_eol (cmd)) {
-		printf ("%04lX\n", val);
+		pce_printf ("%04lX\n", val);
 		return;
 	}
 
 	if (!cmd_match_uint32 (cmd, &val)) {
-		printf ("missing value\n");
+		pce_printf ("missing value\n");
 		return;
 	}
 
@@ -1252,38 +1261,38 @@ void do_r (cmd_t *cmd, ibmpc_t *pc)
 
 	e86_set_reg (pc->cpu, sym, val);
 
-	prt_state (pc, stdout);
+	prt_state (pc);
 }
 
 static
 void do_s (cmd_t *cmd)
 {
 	if (cmd_match_eol (cmd)) {
-		prt_state (pc, stdout);
+		prt_state (pc);
 		return;
 	}
 
 	while (!cmd_match_eol (cmd)) {
 		if (cmd_match (cmd, "pc")) {
-			prt_state_pc (pc, stdout);
+			prt_state_pc (pc);
 		}
 		else if (cmd_match (cmd, "cpu")) {
-			prt_state_cpu (pc->cpu, stdout);
+			prt_state_cpu (pc->cpu);
 		}
 		else if (cmd_match (cmd, "pit")) {
-			prt_state_pit (&pc->pit, stdout);
+			prt_state_pit (&pc->pit);
 		}
 		else if (cmd_match (cmd, "ppi")) {
-			prt_state_ppi (&pc->ppi, stdout);
+			prt_state_ppi (&pc->ppi);
 		}
 		else if (cmd_match (cmd, "pic")) {
-			prt_state_pic (&pc->pic, stdout);
+			prt_state_pic (&pc->pic);
 		}
 		else if (cmd_match (cmd, "dma")) {
-			prt_state_dma (&pc->dma, stdout);
+			prt_state_dma (&pc->dma);
 		}
 		else if (cmd_match (cmd, "mem")) {
-			prt_state_mem (pc, stdout);
+			prt_state_mem (pc);
 		}
 		else if (cmd_match (cmd, "uart")) {
 			unsigned short i;
@@ -1291,20 +1300,23 @@ void do_s (cmd_t *cmd)
 				i = 0;
 			}
 			if ((i < 4) && (pc->serport[i] != NULL)) {
-				prt_state_uart (&pc->serport[i]->uart, pc->serport[i]->io, stdout);
+				prt_state_uart (
+					&pc->serport[i]->uart,
+					pc->serport[i]->io
+				);
 			}
 		}
 		else if (cmd_match (cmd, "video")) {
-			prt_state_video (pc->video, stdout);
+			prt_state_video (pc->video);
 		}
 		else if (cmd_match (cmd, "ems")) {
-			prt_state_ems (pc->ems, stdout);
+			prt_state_ems (pc->ems);
 		}
 		else if (cmd_match (cmd, "xms")) {
-			prt_state_xms (pc->xms, stdout);
+			prt_state_xms (pc->xms);
 		}
 		else {
-			prt_error ("unknown component (%s)\n", cmd->str + cmd->i);
+			cmd_error (cmd, "unknown component (%s)\n");
 			return;
 		}
 	}
@@ -1338,13 +1350,13 @@ void do_screenshot (cmd_t *cmd)
 
 	fp = fopen (fname, "wb");
 	if (fp == NULL) {
-		prt_error ("can't open file (%s)\n", fname);
+		pce_printf ("can't open file (%s)\n", fname);
 		return;
 	}
 
 	if (pce_video_screenshot (pc->video, fp, mode)) {
 		fclose (fp);
-		prt_error ("screenshot failed\n");
+		pce_printf ("screenshot failed\n");
 		return;
 	}
 
@@ -1376,7 +1388,7 @@ void do_t (cmd_t *cmd)
 
 	pce_stop();
 
-	prt_state (pc, stdout);
+	prt_state (pc);
 }
 
 static
@@ -1422,7 +1434,7 @@ void do_u (cmd_t *cmd)
 		e86_disasm_mem (pc->cpu, &op, seg, ofs);
 		disasm_str (str, &op);
 
-		fprintf (stdout, "%04X:%04X  %s\n", seg, ofs, str);
+		pce_printf ("%04X:%04X  %s\n", seg, ofs, str);
 
 		ofs = (ofs + op.dat_n) & 0xffff;
 	}
@@ -1461,7 +1473,7 @@ void do_w (cmd_t *cmd)
 
 	fp = fopen (fname, "wb");
 	if (fp == NULL) {
-		printf ("can't open file (%s)\n", fname);
+		pce_printf ("can't open file (%s)\n", fname);
 		return;
 	}
 
@@ -1759,7 +1771,8 @@ int main (int argc, char *argv[])
 	signal (SIGINT, &sig_int);
 	signal (SIGSEGV, &sig_segv);
 
-	cmd_init (stdin, stdout, pc, cmd_get_sym, cmd_set_sym);
+	pce_console_init (stdin, stdout);
+	cmd_init (pc, cmd_get_sym, cmd_set_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
@@ -1773,21 +1786,21 @@ int main (int argc, char *argv[])
 	else if (run) {
 		pc_run (pc);
 		if (pc->brk != PCE_BRK_ABORT) {
-			fputs ("\n", stdout);
+			pce_puts ("\n");
 		}
 	}
 	else {
-		pce_log (MSG_INF, "type 'h' for help\n");
+		pce_puts ("type 'h' for help\n");
 	}
 
 	if (pc->brk != PCE_BRK_ABORT) {
 		mon_run (&par_mon);
 	}
 
-	mon_free (&par_mon);
-
 	pc_del (pc);
 
+	mon_free (&par_mon);
+	pce_console_done();
 	pce_log_done();
 
 	return (0);

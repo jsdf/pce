@@ -122,7 +122,7 @@ mem_blk_t *ems_get_mem (ems_t *ems)
 	return (ems->mem);
 }
 
-void ems_prt_state (ems_t *ems, FILE *fp)
+void ems_prt_state (ems_t *ems)
 {
 	unsigned i, n;
 
@@ -133,15 +133,13 @@ void ems_prt_state (ems_t *ems, FILE *fp)
 		}
 	}
 
-	fprintf (fp,
-		"EMS: %u/%u pages  %luK/%luK  %u handles\n",
+	pce_printf ("EMS: %u/%u pages  %luK/%luK  %u handles\n",
 		ems->pages_used, ems->pages_max,
 		16UL * ems->pages_used, 16UL * ems->pages_max,
 		n
 	);
 
-	fprintf (fp,
-		"  mapping: [%u/%u %u/%u %u/%u %u/%u]\n",
+	pce_printf ("  mapping: [%u/%u %u/%u %u/%u %u/%u]\n",
 		(ems->map_blk[0] != NULL) ? ems->map_blk[0]->handle : 0xfff,
 		ems->map_page[0],
 		(ems->map_blk[1] != NULL) ? ems->map_blk[1]->handle : 0xfff,
@@ -154,11 +152,9 @@ void ems_prt_state (ems_t *ems, FILE *fp)
 
 	for (i = 0; i < 256; i++) {
 		if (ems->blk[i] != NULL) {
-			fprintf (fp, "  %u: %u pages\n", i, ems->blk[i]->pages);
+			pce_printf ("  %u: %u pages\n", i, ems->blk[i]->pages);
 		}
 	}
-
-	fflush (fp);
 }
 
 void ems_info (ems_t *ems, e8086_t *cpu)

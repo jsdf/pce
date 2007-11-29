@@ -274,14 +274,15 @@ int main (int argc, char *argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	cmd_init (stdin, stdout, par_sim, cmd_get_sym, cmd_set_sym);
+	pce_console_init (stdin, stdout);
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
 	ss32_cmd_init (par_sim);
-
-	ss32_reset (par_sim);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, ss32_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
+
+	ss32_reset (par_sim);
 
 	if (run) {
 		ss32_run (par_sim);
@@ -297,10 +298,10 @@ int main (int argc, char *argv[])
 		mon_run (&par_mon);
 	}
 
-	mon_free (&par_mon);
-
 	ss32_del (par_sim);
 
+	mon_free (&par_mon);
+	pce_console_done();
 	pce_log_done();
 
 	return (0);

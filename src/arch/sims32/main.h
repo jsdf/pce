@@ -36,6 +36,7 @@
 #include <lib/console.h>
 #include <lib/iniram.h>
 #include <lib/monitor.h>
+#include <lib/sysdep.h>
 
 #include "sims32.h"
 #include "sercons.h"
