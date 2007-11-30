@@ -32,6 +32,14 @@
 
 int pce_usleep (unsigned long usec);
 
+/*!***************************************************************************
+ * @short Get an interval in microseconds
+ *
+ * Returns the number of microseconds that passed since this function
+ * was called the last time with the same parameter.
+ *****************************************************************************/
+unsigned long pce_get_interval_us (unsigned long *val);
+
 void pce_set_fd_interactive (int fd, int interactive);
 
 /*!***************************************************************************

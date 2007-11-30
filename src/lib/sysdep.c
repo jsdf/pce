@@ -33,6 +33,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -66,6 +70,27 @@ int pce_usleep (unsigned long usec)
 	return (usleep (usec));
 #else
 	return (-1);
+#endif
+}
+
+unsigned long pce_get_interval_us (unsigned long *val)
+{
+#ifdef HAVE_GETTIMEOFDAY
+	unsigned long  clk0, clk1;
+	struct timeval tv;
+
+	if (gettimeofday (&tv, NULL)) {
+		return (0);
+	}
+
+	clk1 = (1000000UL * (unsigned long) tv.tv_sec + tv.tv_usec) & 0xffffffff;
+	clk0 = (clk1 - *val) & 0xffffffff;
+
+	*val = clk1;
+
+	return (clk0);
+#else
+	return (0);
 #endif
 }
 
