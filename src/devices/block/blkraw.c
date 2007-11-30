@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -309,6 +309,120 @@ disk_t *dsk_mbrimg_open (const char *fname, uint64_t ofs, int ro)
 	return (dsk);
 }
 
+/* HFS image */
+disk_t *dsk_hfsimg_open_fp (FILE *fp, uint64_t ofs, int ro)
+{
+	uint64_t      cnt;
+	uint32_t      c, h, s, n;
+	disk_t        *dsk;
+	unsigned char buf[512];
+
+	if (dsk_read (fp, buf, ofs + 1024, 512)) {
+		return (NULL);
+	}
+
+	if ((buf[0] != 'B') || (buf[1] != 'D')) {
+		return (NULL);
+	}
+
+	if (dsk_get_filesize (fp, &cnt)) {
+		return (NULL);
+	}
+
+	n = cnt / 512;
+	s = 16;
+	h = 16;
+	c = (n + h * s - 1) / (h * s);
+
+	if (c == 0) {
+		return (NULL);
+	}
+
+	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+
+	dsk->blocks = n;
+
+	return (dsk);
+}
+
+disk_t *dsk_hfsimg_open (const char *fname, uint64_t ofs, int ro)
+{
+	disk_t *dsk;
+	FILE   *fp;
+
+	if (ro) {
+		fp = fopen (fname, "rb");
+	}
+	else {
+		fp = fopen (fname, "r+b");
+	}
+
+	if (fp == NULL) {
+		return (NULL);
+	}
+
+	dsk = dsk_hfsimg_open_fp (fp, ofs, ro);
+
+	if (dsk == NULL) {
+		fclose (fp);
+		return (NULL);
+	}
+
+	return (dsk);
+}
+
+/* Macintosh harddisk image */
+disk_t *dsk_macimg_open_fp (FILE *fp, uint64_t ofs, int ro)
+{
+	uint32_t      c, h, s, n;
+	disk_t        *dsk;
+	unsigned char buf[512];
+
+	if (dsk_read (fp, buf, ofs, 512)) {
+		return (NULL);
+	}
+
+	if ((buf[0] != 'E') || (buf[1] != 'R')) {
+		return (NULL);
+	}
+
+	n = dsk_get_uint32_be (buf, 4);
+
+	s = 16;
+	h = 16;
+	c = (n + h * s - 1) / (h * s);
+
+	if (c == 0) {
+		return (NULL);
+	}
+
+	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+
+	dsk->blocks = n;
+
+	return (dsk);
+}
+
+disk_t *dsk_macimg_open (const char *fname, uint64_t ofs, int ro)
+{
+	disk_t *dsk;
+	FILE   *fp;
+
+	fp = fopen (fname, ro ? "rb" : "r+b");
+	if (fp == NULL) {
+		return (NULL);
+	}
+
+	dsk = dsk_macimg_open_fp (fp, ofs, ro);
+
+	if (dsk == NULL) {
+		fclose (fp);
+		return (NULL);
+	}
+
+	return (dsk);
+}
+
 disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
 	uint64_t cnt;
@@ -331,11 +445,17 @@ disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 	case 320UL * 1024UL:
 		return (dsk_img_open_fp (fp, 40, 2, 8, ofs, ro));
 
+	case 400UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 1, 10, ofs, ro));
+
 	case 360UL * 1024UL:
 		return (dsk_img_open_fp (fp, 40, 2, 9, ofs, ro));
 
 	case 720UL * 1024UL:
 		return (dsk_img_open_fp (fp, 80, 2, 9, ofs, ro));
+
+	case 800UL * 1024UL:
+		return (dsk_img_open_fp (fp, 80, 2, 10, ofs, ro));
 
 	case 1200UL * 1024UL:
 		return (dsk_img_open_fp (fp, 80, 2, 15, ofs, ro));

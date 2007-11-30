@@ -335,6 +335,16 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk);
 	}
 
+	dsk = dsk_hfsimg_open (fname, ofs, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
+	dsk = dsk_macimg_open (fname, ofs, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
 	dsk = dsk_fdimg_open (fname, ofs, ro);
 	if (dsk != NULL) {
 		return (dsk);

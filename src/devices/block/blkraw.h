@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkraw.h                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,6 +57,12 @@ disk_t *dsk_dosimg_open (const char *fname, uint64_t ofs, int ro);
 
 disk_t *dsk_mbrimg_open_fp (FILE *fp, uint64_t ofs, int ro);
 disk_t *dsk_mbrimg_open (const char *fname, uint64_t ofs, int ro);
+
+disk_t *dsk_hfsimg_open_fp (FILE *fp, uint64_t ofs, int ro);
+disk_t *dsk_hfsimg_open (const char *fname, uint64_t ofs, int ro);
+
+disk_t *dsk_macimg_open_fp (FILE *fp, uint64_t ofs, int ro);
+disk_t *dsk_macimg_open (const char *fname, uint64_t ofs, int ro);
 
 disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro);
 disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro);
