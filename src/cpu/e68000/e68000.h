@@ -176,7 +176,7 @@ void e68_set_areg16 (e68000_t *c, unsigned reg, uint16_t val)
 {
 	reg &= 7;
 
-	c->areg[reg] = val & ((reg == 7) ? 0xfffe : 0xffff);
+	c->areg[reg] = val & 0xffff;
 
 	if (val & 0x8000) {
 		c->areg[reg] |= 0xffff0000;
@@ -186,8 +186,7 @@ void e68_set_areg16 (e68000_t *c, unsigned reg, uint16_t val)
 static inline
 void e68_set_areg32 (e68000_t *c, unsigned reg, uint32_t val)
 {
-	reg &= 7;
-	c->areg[reg] = val & ((reg == 7) ? 0xfffffffe : 0xffffffff);
+	c->areg[reg & 7] = val & 0xffffffff;
 }
 
 static inline
