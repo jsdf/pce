@@ -95,7 +95,8 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	unsigned long ofs;
 	unsigned long vc, vh, vs;
 	int           ro;
-	const char *type, *fname, *cowname;
+	int           optional;
+	const char    *type, *fname, *cowname;
 
 	ini_get_uint16 (sct, "drive", &drive, 0);
 	ini_get_string (sct, "type", &type, "auto");
@@ -113,7 +114,8 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	ini_get_uint32 (sct, "visible_h", &vh, 0);
 	ini_get_uint32 (sct, "visible_s", &vs, 0);
 
-	ini_get_sint16 (sct, "readonly", &ro, 0);
+	ini_get_bool (sct, "readonly", &ro, 0);
+	ini_get_bool (sct, "optional", &optional, 0);
 
 	pce_log_tag (MSG_INF,
 		"DISK:", "drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
@@ -168,7 +170,10 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	}
 
 	if (dsk == NULL) {
-		pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
+		if (optional == 0) {
+			pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
+		}
+
 		return (NULL);
 	}
 
@@ -238,9 +243,6 @@ disks_t *ini_get_disks (ini_sct_t *ini)
 
 		if (dsk != NULL) {
 			dsks_add_disk (dsks, dsk);
-		}
-		else {
-			pce_log (MSG_ERR, "*** loading drive failed\n");
 		}
 	}
 
