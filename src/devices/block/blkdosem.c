@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkdosem.c                               *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -118,7 +118,7 @@ disk_t *dsk_dosemu_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
-	dsk_init (&img->dsk, img, c, h, s);
+	dsk_init (&img->dsk, img, 0, c, h, s);
 
 	dsk_set_readonly (&img->dsk, ro);
 
@@ -166,6 +166,7 @@ int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
 	unsigned char buf[32];
 
 	cnt = 512 * (uint64_t) c * (uint64_t) h * (uint64_t) s;
+
 	if (cnt == 0) {
 		return (1);
 	}

@@ -91,7 +91,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	disk_t        *dsk, *cow;
 	ini_val_t     *val;
 	unsigned      drive;
-	unsigned long c, h, s;
+	unsigned long c, h, s, n;
 	unsigned long ofs;
 	unsigned long vc, vh, vs;
 	int           ro;
@@ -106,9 +106,28 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 
 	ini_get_uint32 (sct, "offset", &ofs, 0);
 
-	ini_get_uint32 (sct, "c", &c, 80);
-	ini_get_uint32 (sct, "h", &h, 2);
-	ini_get_uint32 (sct, "s", &s, 18);
+	ini_get_uint32 (sct, "c", &c, 0);
+	ini_get_uint32 (sct, "h", &h, 0);
+	ini_get_uint32 (sct, "s", &s, 0);
+
+	if (ini_get_uint32 (sct, "blocks", &n, 0) == 0) {
+		;
+	}
+	else if (ini_get_uint32 (sct, "size", &n, 0) == 0) {
+		n = (n + 511) & ~511UL;
+	}
+	else if (ini_get_uint32 (sct, "sizek", &n, 0) == 0) {
+		n = 2 * n;
+	}
+	else if (ini_get_uint32 (sct, "sizem", &n, 0) == 0) {
+		n = 2048 * n;
+	}
+	else if (ini_get_uint32 (sct, "sizeg", &n, 0) == 0) {
+		n = 2048UL * 1024UL * n;
+	}
+	else {
+		n = 0;
+	}
 
 	ini_get_uint32 (sct, "visible_c", &vc, 0);
 	ini_get_uint32 (sct, "visible_h", &vh, 0);
@@ -117,19 +136,11 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	ini_get_bool (sct, "readonly", &ro, 0);
 	ini_get_bool (sct, "optional", &optional, 0);
 
-	pce_log_tag (MSG_INF,
-		"DISK:", "drive=%u type=%s chs=%u/%u/%u vchs=%u/%u/%u %s file=%s\n",
-		drive, type,
-		c, h, s, vc, vh, vs,
-		(ro ? "ro" : "rw"),
-		(fname != NULL) ? fname : "<>"
-	);
-
 	if (strcmp (type, "ram") == 0) {
-		dsk = dsk_ram_open (fname, c, h, s, ro);
+		dsk = dsk_ram_open (fname, n, c, h, s, ro);
 	}
 	else if (strcmp (type, "image") == 0) {
-		dsk = dsk_img_open (fname, c, h, s, ofs, ro);
+		dsk = dsk_img_open (fname, n, c, h, s, ofs, ro);
 	}
 	else if (strcmp (type, "dosemu") == 0) {
 		dsk = dsk_dosemu_open (fname, ro);
@@ -177,12 +188,24 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		return (NULL);
 	}
 
-	if ((dsk->c != c) || (dsk->h != h) || (dsk->s != s)) {
+	pce_log_tag (MSG_INF,
+		"DISK:", "drive=%u type=%s blocks=%lu chs=%lu/%lu/%lu%sfile=%s\n",
+		drive, type,
+		(unsigned long) dsk->blocks,
+		(unsigned long) dsk->c,
+		(unsigned long) dsk->h,
+		(unsigned long) dsk->s,
+		(ro ? " ro " : " "),
+		(fname != NULL) ? fname : "<>"
+	);
+
+	if ((dsk->c != dsk->visible_c) || (dsk->h != dsk->visible_h) || (dsk->s != dsk->visible_s)) {
 		pce_log_tag (MSG_INF,
-			"DISK:", "drive=%u chs=%u/%u/%u vchs=%u/%u/%u\n",
+			"DISK:", "drive=%u vchs=%lu/%lu/%lu\n",
 			drive,
-			dsk->c, dsk->h, dsk->s,
-			dsk->visible_c, dsk->visible_h, dsk->visible_s
+			(unsigned long) dsk->visible_c,
+			(unsigned long) dsk->visible_h,
+			(unsigned long) dsk->visible_s
 		);
 	}
 
@@ -199,7 +222,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		}
 
 		pce_log_tag (MSG_INF,
-			"DISK:", "drive=%u cow=%s rw\n",
+			"DISK:", "drive=%u type=cow file=%s\n",
 			drive, cname
 		);
 

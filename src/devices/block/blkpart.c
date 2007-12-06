@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpart.c                                *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -246,7 +245,7 @@ disk_t *dsk_part_open (uint32_t c, uint32_t h, uint32_t s, int ro)
 		return (NULL);
 	}
 
-	dsk_init (&p->dsk, p, c, h, s);
+	dsk_init (&p->dsk, p, 0, c, h, s);
 
 	dsk_set_readonly (&p->dsk, ro);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkpce.c                                 *
  * Created:       2004-11-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,17 +32,17 @@
 
 
 /*
-PCE image file format
-
-0    4    Magic (PIMG)
-4    4    version (0)
-8    4    image offset
-12   4    block count
-16   4    cylinders
-20   4    heads
-24   4    sectors
-28   4    block size
-*/
+ * PCE image file format
+ *
+ * 0    4    Magic (PIMG)
+ * 4    4    version (0)
+ * 8    4    image offset
+ * 12   4    block count
+ * 16   4    cylinders
+ * 20   4    heads
+ * 24   4    sectors
+ * 28   4    block size
+ */
 
 
 static
@@ -53,7 +53,7 @@ int dsk_pce_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 
 	img = dsk->ext;
 
-	if ((i + n) > img->blk_cnt) {
+	if ((i + n) > img->dsk.blocks) {
 		return (1);
 	}
 
@@ -79,7 +79,7 @@ int dsk_pce_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 		return (1);
 	}
 
-	if ((i + n) > img->blk_cnt) {
+	if ((i + n) > dsk->blocks) {
 		return (1);
 	}
 
@@ -134,7 +134,7 @@ void dsk_pce_del (disk_t *dsk)
 disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 {
 	disk_pce_t    *img;
-	uint32_t      c, h, s;
+	uint32_t      c, h, s, n;
 	unsigned char buf[32];
 
 	if (fread (buf, 1, 32, fp) != 32) {
@@ -154,6 +154,7 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
+	n = dsk_get_uint32_be (buf, 12);
 	c = dsk_get_uint32_be (buf, 16);
 	h = dsk_get_uint32_be (buf, 20);
 	s = dsk_get_uint32_be (buf, 24);
@@ -163,7 +164,7 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 		return (NULL);
 	}
 
-	dsk_init (&img->dsk, img, c, h, s);
+	dsk_init (&img->dsk, img, n, c, h, s);
 
 	dsk_set_readonly (&img->dsk, ro);
 
@@ -176,12 +177,7 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 	img->dsk.set_msg = dsk_pce_set_msg;
 
 	img->blk_ofs = dsk_get_uint32_be (buf, 8);
-	img->blk_cnt = dsk_get_uint32_be (buf, 12);
 	img->blk_size = dsk_get_uint32_be (buf, 28);
-
-	img->c = c;
-	img->h = h;
-	img->s = s;
 
 	return (&img->dsk);
 }
@@ -212,14 +208,12 @@ disk_t *dsk_pce_open (const char *fname, int ro)
 	return (dsk);
 }
 
-int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+int dsk_pce_create_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint32_t ofs)
 {
-	uint32_t      n;
 	unsigned char buf[32];
 
-	n = c * h * s;
-	if (n == 0) {
+	if (dsk_adjust_chs (&n, &c, &h, &s)) {
 		return (1);
 	}
 
@@ -248,7 +242,7 @@ int dsk_pce_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
 	return (0);
 }
 
-int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+int dsk_pce_create (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint32_t ofs)
 {
 	int  r;
@@ -259,7 +253,7 @@ int dsk_pce_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
 		return (1);
 	}
 
-	r = dsk_pce_create_fp (fp, c, h, s, ofs);
+	r = dsk_pce_create_fp (fp, n, c, h, s, ofs);
 
 	fclose (fp);
 

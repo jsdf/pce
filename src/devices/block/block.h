@@ -58,10 +58,12 @@ typedef struct disk_s {
 	dsk_set_msg_f set_msg;
 
 	unsigned      drive;
+
+	uint32_t      blocks;
+
 	uint32_t      c;
 	uint32_t      h;
 	uint32_t      s;
-	uint32_t      blocks;
 
 	uint32_t      visible_c;
 	uint32_t      visible_h;
@@ -100,11 +102,12 @@ int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_get_filesize (FILE *fp, uint64_t *cnt);
 
+int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s);
 
 /*!***************************************************************************
  * @short Initialize a disk structure
  *****************************************************************************/
-void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s);
+void dsk_init (disk_t *dsk, void *ext, uint32_t n, uint32_t c, uint32_t h, uint32_t s);
 
 /*!***************************************************************************
  * @short Delete a disk

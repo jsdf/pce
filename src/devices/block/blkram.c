@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkram.c                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -94,7 +93,7 @@ void dsk_ram_del (disk_t *dsk)
 	free (ram);
 }
 
-disk_t *dsk_ram_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro)
+disk_t *dsk_ram_open (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s, int ro)
 {
 	disk_ram_t *ram;
 
@@ -103,7 +102,7 @@ disk_t *dsk_ram_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int
 		return (NULL);
 	}
 
-	dsk_init (&ram->dsk, ram, c, h, s);
+	dsk_init (&ram->dsk, ram, n, c, h, s);
 
 	dsk_set_readonly (&ram->dsk, ro);
 

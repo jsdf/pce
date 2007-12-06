@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/utils/pceimg/pceimg.c                                  *
  * Created:       2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,21 +57,22 @@ void prt_help (void)
 		"\n"
 		"create [options] [output]\n"
 		"  -q, --quiet             Be quiet\n"
-		"  -c, --cylinders int     Set number of cylinders [1024]\n"
-		"  -h, --heads int         Set number of heads [16]\n"
-		"  -s, --sectors int       Set number of sectors per track [63]\n"
+		"  -c, --cylinders int     Set number of cylinders [0]\n"
+		"  -h, --heads int         Set number of heads [0]\n"
+		"  -s, --sectors int       Set number of sectors per track [0]\n"
 		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
 		"  -m, --size int          Set disk size in megabytes [0]\n"
-		"  -f, --offset int        Set data offset [4096]\n"
+		"  -f, --offset int        Set data offset [0]\n"
 		"  -o, --output string     Set the output file name [stdout]\n"
 		"\n"
 		"convert [options] [input [output]]\n"
 		"  -q, --quiet             Be quiet\n"
-		"  -c, --cylinders int     Set number of cylinders [1024]\n"
-		"  -h, --heads int         Set number of heads [16]\n"
-		"  -s, --sectors int       Set number of sectors per track [63]\n"
+		"  -c, --cylinders int     Set number of cylinders [0]\n"
+		"  -h, --heads int         Set number of heads [0]\n"
+		"  -s, --sectors int       Set number of sectors per track [0]\n"
 		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
-		"  -f, --offset int        Set data offset [4096]\n"
+		"  -m, --size int          Set disk size in megabytes [0]\n"
+		"  -f, --offset int        Set data offset [0]\n"
 		"  -i, --input string      Set the input file name [stdin]\n"
 		"  -o, --output string     Set the output file name [stdout]\n"
 		"  -w, --cow string        Set the COW file name [none]\n"
@@ -90,7 +91,7 @@ void prt_version (void)
 	fputs (
 		"pceimg version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2006 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -192,7 +193,7 @@ int pce_block_is_null (const void *buf, unsigned cnt)
 }
 
 static
-int dsk_create (const char *str, uint32_t c, uint32_t h, uint32_t s,
+int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint64_t ofs)
 {
 	unsigned   type;
@@ -203,20 +204,20 @@ int dsk_create (const char *str, uint32_t c, uint32_t h, uint32_t s,
 
 	switch (type) {
 	case DSK_RAW:
-		return (dsk_img_create (name, c, h, s, ofs));
+		return (dsk_img_create (name, n, c, h, s, ofs));
 
 	case DSK_PCE:
-		return (dsk_pce_create (name, c, h, s, ofs & 0xffffffff));
+		return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));
 	}
 
-	return (dsk_pce_create (name, c, h, s, ofs & 0xffffffff));
+	return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
 }
 
 static
-disk_t *dsk_open (const char *str, uint32_t c, uint32_t h, uint32_t s,
+disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint64_t ofs, int ro)
 {
 	unsigned   type;
@@ -227,7 +228,7 @@ disk_t *dsk_open (const char *str, uint32_t c, uint32_t h, uint32_t s,
 
 	switch (type) {
 	case DSK_RAW:
-		return (dsk_img_open (name, c, h, s, ofs, ro));
+		return (dsk_img_open (name, n, c, h, s, ofs, ro));
 
 	case DSK_PCE:
 		return (dsk_pce_open (name, ro));
@@ -323,6 +324,7 @@ int main_create (int argc, char **argv)
 	uint32_t par_c = 0;
 	uint32_t par_h = 0;
 	uint32_t par_s = 0;
+	uint32_t par_n = 0;
 	uint64_t par_ofs = 0;
 
 	i = 1;
@@ -354,25 +356,10 @@ int main_create (int argc, char **argv)
 			par_ofs = strtoull (argv[i], NULL, 0);
 		}
 		else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
-			uint32_t size;
-
 			i += 1;
 
-			size = strtoul (argv[i], NULL, 0);
-			size *= (1024 * 1024) / 512;
-
-			if (par_c == 0) {
-				par_s = (par_s == 0) ? 63 : par_s;
-				par_h = (par_h == 0) ? 16 : par_h;
-				par_c = size / (par_h * par_s);
-			}
-			else if (par_h == 0) {
-				par_s = (par_s == 0) ? 63 : par_s;
-				par_h = size / (par_c * par_s);
-			}
-			else if (par_s == 0) {
-				par_s = size / (par_c * par_h);
-			}
+			par_n = strtoul (argv[i], NULL, 0);
+			par_n *= 2048;
 		}
 		else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
 			i += 1;
@@ -398,24 +385,14 @@ int main_create (int argc, char **argv)
 		i += 1;
 	}
 
-	if (par_c == 0) {
-		par_c = 1024;
-	}
-
-	if (par_h == 0) {
-		par_h = 16;
-	}
-
-	if (par_s == 0) {
-		par_s = 63;
-	}
+	dsk_adjust_chs (&par_n, &par_c, &par_h, &par_s);
 
 	if (par_quiet == 0) {
 		fprintf (stdout, "geometry: %lu/%lu/%lu (%luM at %llu)\n",
 			(unsigned long) par_c,
 			(unsigned long) par_h,
 			(unsigned long) par_s,
-			(unsigned long) ((par_c * par_h * par_s) / (2 * 1024)),
+			(unsigned long) (par_n / (2 * 1024)),
 			(unsigned long long) par_ofs
 		);
 	}
@@ -425,7 +402,7 @@ int main_create (int argc, char **argv)
 		return (1);
 	}
 
-	if (dsk_create (par_out, par_c, par_h, par_s, par_ofs)) {
+	if (dsk_create (par_out, par_n, par_c, par_h, par_s, par_ofs)) {
 		fprintf (stderr, "%s: create failed (%s)\n", argv0, par_out);
 		return (1);
 	}
@@ -440,9 +417,10 @@ int main_convert (int argc, char **argv)
 	const char *par_inp = NULL;
 	const char *par_out = NULL;
 	const char *par_cow = NULL;
-	uint32_t   par_c = 1024;
-	uint32_t   par_h = 16;
-	uint32_t   par_s = 63;
+	uint32_t   par_c = 0;
+	uint32_t   par_h = 0;
+	uint32_t   par_s = 0;
+	uint32_t   par_n = 0;
 	uint64_t   par_ofs = 0;
 	disk_t     *inp, *out, *cow;
 
@@ -462,6 +440,12 @@ int main_convert (int argc, char **argv)
 		else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
 			i += 1;
 			par_s = strtoul (argv[i], NULL, 0);
+		}
+		else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
+			i += 1;
+
+			par_n = strtoul (argv[i], NULL, 0);
+			par_n *= 2048;
 		}
 		else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
 			par_c = strtoul (argv[i + 1], NULL, 0);
@@ -520,7 +504,7 @@ int main_convert (int argc, char **argv)
 		return (1);
 	}
 
-	inp = dsk_open (par_inp, par_c, par_h, par_s, par_ofs, 1);
+	inp = dsk_open (par_inp, par_n, par_c, par_h, par_s, par_ofs, 1);
 	if (inp == NULL) {
 		fprintf (stderr, "%s: can't open input file (%s)\n",
 			argv0, par_inp
@@ -545,25 +529,26 @@ int main_convert (int argc, char **argv)
 	par_c = inp->c;
 	par_h = inp->h;
 	par_s = inp->s;
+	par_n = inp->blocks;
 
 	if (par_quiet == 0) {
 		fprintf (stdout, "geometry: %lu/%lu/%lu (%luM at %llu)\n",
 			(unsigned long) par_c,
 			(unsigned long) par_h,
 			(unsigned long) par_s,
-			(unsigned long) ((par_c * par_h * par_s) / (2 * 1024)),
+			(unsigned long) (par_n / (2 * 1024)),
 			(unsigned long long) par_ofs
 		);
 	}
 
-	if (dsk_create (par_out, par_c, par_h, par_s, par_ofs)) {
+	if (dsk_create (par_out, par_n, par_c, par_h, par_s, par_ofs)) {
 		fprintf (stderr, "%s: can't create output file (%s)\n",
 			argv0, par_out
 		);
 		return (1);
 	}
 
-	out = dsk_open (par_out, par_c, par_h, par_s, par_ofs, 0);
+	out = dsk_open (par_out, par_n, par_c, par_h, par_s, par_ofs, 0);
 	if (out == NULL) {
 		fprintf (stderr, "%s: can't open output file (%s)\n",
 			argv0, par_out

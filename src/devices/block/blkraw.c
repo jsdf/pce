@@ -88,7 +88,7 @@ void dsk_img_del (disk_t *dsk)
 	free (img);
 }
 
-disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+disk_t *dsk_img_open_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint64_t ofs, int ro)
 {
 	disk_img_t *img;
@@ -98,7 +98,7 @@ disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
 		return (NULL);
 	}
 
-	dsk_init (&img->dsk, img, c, h, s);
+	dsk_init (&img->dsk, img, n, c, h, s);
 
 	dsk_set_readonly (&img->dsk, ro);
 
@@ -113,7 +113,7 @@ disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
 	return (&img->dsk);
 }
 
-disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s,
+disk_t *dsk_img_open (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint64_t ofs, int ro)
 {
 	disk_t *dsk;
@@ -130,7 +130,7 @@ disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s,
 		return (NULL);
 	}
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+	dsk = dsk_img_open_fp (fp, n, c, h, s, ofs, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -170,7 +170,7 @@ disk_t *dsk_dosimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 	s = dsk_get_uint16_le (buf, 24);
 	c = n / (h * s);
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+	dsk = dsk_img_open_fp (fp, n, c, h, s, ofs, ro);
 
 	return (dsk);
 }
@@ -278,7 +278,7 @@ disk_t *dsk_mbrimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 		return (NULL);
 	}
 
-	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+	dsk = dsk_img_open_fp (fp, n, c, h, s, ofs, ro);
 
 	return (dsk);
 }
@@ -313,7 +313,7 @@ disk_t *dsk_mbrimg_open (const char *fname, uint64_t ofs, int ro)
 disk_t *dsk_hfsimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
 	uint64_t      cnt;
-	uint32_t      c, h, s, n;
+	uint32_t      n;
 	disk_t        *dsk;
 	unsigned char buf[512];
 
@@ -329,16 +329,9 @@ disk_t *dsk_hfsimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 		return (NULL);
 	}
 
-	n = cnt / 512;
-	s = 16;
-	h = 16;
-	c = (n + h * s - 1) / (h * s);
+	n = (cnt - ofs) / 512;
 
-	if (c == 0) {
-		return (NULL);
-	}
-
-	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
+	dsk = dsk_img_open_fp (fp, n, 0, 0, 0, ofs, ro);
 
 	dsk->blocks = n;
 
@@ -374,7 +367,7 @@ disk_t *dsk_hfsimg_open (const char *fname, uint64_t ofs, int ro)
 /* Macintosh harddisk image */
 disk_t *dsk_macimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 {
-	uint32_t      c, h, s, n;
+	uint32_t      n;
 	disk_t        *dsk;
 	unsigned char buf[512];
 
@@ -388,17 +381,7 @@ disk_t *dsk_macimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 
 	n = dsk_get_uint32_be (buf, 4);
 
-	s = 16;
-	h = 16;
-	c = (n + h * s - 1) / (h * s);
-
-	if (c == 0) {
-		return (NULL);
-	}
-
-	dsk = dsk_img_open_fp (fp, c, h, s, ofs, ro);
-
-	dsk->blocks = n;
+	dsk = dsk_img_open_fp (fp, n, 0, 0, 0, ofs, ro);
 
 	return (dsk);
 }
@@ -437,34 +420,34 @@ disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 
 	switch (cnt - ofs) {
 	case 160UL * 1024UL:
-		return (dsk_img_open_fp (fp, 40, 1, 8, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 40, 1, 8, ofs, ro));
 
 	case 180UL * 1024UL:
-		return (dsk_img_open_fp (fp, 40, 1, 9, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 40, 1, 9, ofs, ro));
 
 	case 320UL * 1024UL:
-		return (dsk_img_open_fp (fp, 40, 2, 8, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 40, 2, 8, ofs, ro));
 
 	case 400UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 1, 10, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 1, 10, ofs, ro));
 
 	case 360UL * 1024UL:
-		return (dsk_img_open_fp (fp, 40, 2, 9, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 40, 2, 9, ofs, ro));
 
 	case 720UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 2, 9, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 2, 9, ofs, ro));
 
 	case 800UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 2, 10, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 2, 10, ofs, ro));
 
 	case 1200UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 2, 15, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 2, 15, ofs, ro));
 
 	case 1440UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 2, 18, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 2, 18, ofs, ro));
 
 	case 2880UL * 1024UL:
-		return (dsk_img_open_fp (fp, 80, 2, 36, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 80, 2, 36, ofs, ro));
 	}
 
 	return (NULL);
@@ -505,13 +488,18 @@ void dsk_img_set_offset (disk_t *dsk, uint64_t ofs)
 	img->start = ofs;
 }
 
-int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
+int dsk_img_create_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	uint64_t ofs)
 {
 	uint64_t      cnt;
 	unsigned char buf;
 
-	cnt = 512 * (uint64_t) c * (uint64_t) h * (uint64_t) s;
+	if (dsk_adjust_chs (&n, &c, &h, &s)) {
+		return (1);
+	}
+
+	cnt = 512 * (uint64_t) n;
+
 	if (cnt == 0) {
 		return (1);
 	}
@@ -525,7 +513,7 @@ int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
 	return (0);
 }
 
-int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s, uint64_t ofs)
+int dsk_img_create (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s, uint64_t ofs)
 {
 	int  r;
 	FILE *fp;
@@ -535,7 +523,7 @@ int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s, uint6
 		return (1);
 	}
 
-	r = dsk_img_create_fp (fp, c, h, s, ofs);
+	r = dsk_img_create_fp (fp, n, c, h, s, ofs);
 
 	fclose (fp);
 

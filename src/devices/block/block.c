@@ -245,7 +245,44 @@ int dsk_get_filesize (FILE *fp, uint64_t *cnt)
 }
 
 
-void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s)
+int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s)
+{
+	if (*n == 0) {
+		*n = *c * *h * *s;
+	}
+
+	if (*n == 0) {
+		return (1);
+	}
+
+	if (*c == 0) {
+		if (*s == 0) {
+			*s = 32;
+		}
+
+		if (*h == 0) {
+			*h = 32;
+		}
+
+		*c = *n / (*h * *s);
+	}
+
+	if (*h == 0) {
+		if (*s == 0) {
+			*s = 32;
+		}
+
+		*h = *n / (*c * *s);
+	}
+
+	if (*s == 0) {
+		*s = *n / (*c * *h);
+	}
+
+	return (0);
+}
+
+void dsk_init (disk_t *dsk, void *ext, uint32_t n, uint32_t c, uint32_t h, uint32_t s)
 {
 	dsk->del = NULL;
 	dsk->read = NULL;
@@ -255,11 +292,13 @@ void dsk_init (disk_t *dsk, void *ext, uint32_t c, uint32_t h, uint32_t s)
 
 	dsk->drive = 0;
 
+	dsk_adjust_chs (&n, &c, &h, &s);
+
+	dsk->blocks = n;
+
 	dsk->c = c;
 	dsk->h = h;
 	dsk->s = s;
-
-	dsk->blocks = c * h * s;
 
 	dsk->visible_c = c;
 	dsk->visible_h = h;

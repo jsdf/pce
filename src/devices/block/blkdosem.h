@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkdosem.h                               *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -49,11 +49,15 @@ typedef struct {
 disk_t *dsk_dosemu_open_fp (FILE *fp, int ro);
 disk_t *dsk_dosemu_open (const char *fname, int ro);
 
-int dsk_dosemu_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
-	uint32_t ofs);
+int dsk_dosemu_create_fp (FILE *fp,
+	uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs
+);
 
-int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
-	uint32_t ofs);
+int dsk_dosemu_create (const char *fname,
+	uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs
+);
 
 
 #endif

@@ -46,11 +46,15 @@ typedef struct {
 } disk_img_t;
 
 
-disk_t *dsk_img_open_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
-	uint64_t ofs, int ro);
+disk_t *dsk_img_open_fp (FILE *fp,
+	uint32_t n, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs, int ro
+);
 
-disk_t *dsk_img_open (const char *fname, uint32_t c, uint32_t h, uint32_t s,
-	uint64_t ofs, int ro);
+disk_t *dsk_img_open (const char *fname,
+	uint32_t n, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs, int ro
+);
 
 disk_t *dsk_dosimg_open_fp (FILE *fp, uint64_t ofs, int ro);
 disk_t *dsk_dosimg_open (const char *fname, uint64_t ofs, int ro);
@@ -69,11 +73,15 @@ disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro);
 
 void dsk_img_set_offset (disk_t *dsk, uint64_t ofs);
 
-int dsk_img_create_fp (FILE *fp, uint32_t c, uint32_t h, uint32_t s,
-	uint64_t ofs);
+int dsk_img_create_fp (FILE *fp,
+	uint32_t n, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs
+);
 
-int dsk_img_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
-	uint64_t ofs);
+int dsk_img_create (const char *fname,
+	uint32_t n, uint32_t c, uint32_t h, uint32_t s,
+	uint64_t ofs
+);
 
 
 #endif

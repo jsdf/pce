@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/block/blkram.h                                 *
  * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -45,7 +44,7 @@ typedef struct {
 } disk_ram_t;
 
 
-disk_t *dsk_ram_open (const char *fname, uint32_t c, uint32_t h, uint32_t s, int ro);
+disk_t *dsk_ram_open (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s, int ro);
 
 
 #endif
