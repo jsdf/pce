@@ -479,6 +479,71 @@ disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro)
 	return (dsk);
 }
 
+disk_t *dsk_autoimg_open_fp (FILE *fp, uint64_t ofs, int ro)
+{
+	unsigned      i;
+	uint64_t      cnt;
+	uint32_t      n;
+	unsigned char buf[512];
+	disk_t        *dsk;
+
+	if (dsk_get_filesize (fp, &cnt)) {
+		return (NULL);
+	}
+
+	if (cnt <= ofs) {
+		return (NULL);
+	}
+
+	cnt -= ofs;
+
+	if ((cnt < 512) || (cnt & 511)) {
+		return (NULL);
+	}
+
+	if (dsk_read (fp, buf, ofs, 512)) {
+		return (NULL);
+	}
+
+	for (i = 0; i < 512; i++) {
+		if (buf[i] != 0) {
+			return (NULL);
+		}
+	}
+
+	n = cnt / 512;
+
+	dsk = dsk_img_open_fp (fp, n, 0, 0, 0, ofs, ro);
+
+	return (dsk);
+}
+
+disk_t *dsk_autoimg_open (const char *fname, uint64_t ofs, int ro)
+{
+	disk_t *dsk;
+	FILE   *fp;
+
+	if (ro) {
+		fp = fopen (fname, "rb");
+	}
+	else {
+		fp = fopen (fname, "r+b");
+	}
+
+	if (fp == NULL) {
+		return (NULL);
+	}
+
+	dsk = dsk_autoimg_open_fp (fp, ofs, ro);
+
+	if (dsk == NULL) {
+		fclose (fp);
+		return (NULL);
+	}
+
+	return (dsk);
+}
+
 void dsk_img_set_offset (disk_t *dsk, uint64_t ofs)
 {
 	disk_img_t *img;

@@ -71,6 +71,9 @@ disk_t *dsk_macimg_open (const char *fname, uint64_t ofs, int ro);
 disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro);
 disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro);
 
+disk_t *dsk_autoimg_open_fp (FILE *fp, uint64_t ofs, int ro);
+disk_t *dsk_autoimg_open (const char *fname, uint64_t ofs, int ro);
+
 void dsk_img_set_offset (disk_t *dsk, uint64_t ofs);
 
 int dsk_img_create_fp (FILE *fp,

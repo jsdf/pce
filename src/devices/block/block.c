@@ -389,6 +389,11 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk);
 	}
 
+	dsk = dsk_autoimg_open (fname, ofs, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
 	return (NULL);
 }
 
