@@ -215,7 +215,7 @@ void prt_state_video (video_t *vid)
 
 	pce_video_prt_state (vid, pce_get_fp_out());
 
-	fp = pce_get_redirection();
+	fp = pce_get_redir_out();
 	if (fp != NULL) {
 		pce_video_prt_state (vid, fp);
 	}

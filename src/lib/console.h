@@ -30,11 +30,14 @@
 #include <stdarg.h>
 
 
-FILE *pce_get_redirection (void);
-FILE *pce_get_fp_out (void);
-FILE *pce_get_fp_inp (void);
+FILE *pce_get_redir_inp (void);
+FILE *pce_get_redir_out (void);
 
-int pce_set_redirection (const char *fname, const char *mode);
+FILE *pce_get_fp_inp (void);
+FILE *pce_get_fp_out (void);
+
+int pce_set_redir_inp (const char *fname);
+int pce_set_redir_out (const char *fname, const char *mode);
 
 void pce_gets (char *str, unsigned max);
 void pce_puts (const char *str);

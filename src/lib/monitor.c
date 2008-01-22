@@ -189,7 +189,36 @@ void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 }
 
 static
-void mon_cmd_redir (monitor_t *mon, cmd_t *cmd)
+void mon_cmd_redir_inp (monitor_t *mon, cmd_t *cmd)
+{
+	int  close;
+	char fname[256];
+
+	close = 0;
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		close = 1;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	if (close) {
+		pce_set_redir_inp (NULL);
+	}
+	else {
+		if (pce_set_redir_inp (fname)) {
+			pce_puts ("error setting redirection\n");
+		}
+		else {
+			pce_printf ("redirecting from \"%s\"\n", fname);
+		}
+	}
+}
+
+static
+void mon_cmd_redir_out (monitor_t *mon, cmd_t *cmd)
 {
 	int        close;
 	const char *mode;
@@ -211,10 +240,10 @@ void mon_cmd_redir (monitor_t *mon, cmd_t *cmd)
 	}
 
 	if (close) {
-		pce_set_redirection (NULL, NULL);
+		pce_set_redir_out (NULL, NULL);
 	}
 	else {
-		if (pce_set_redirection (fname, mode)) {
+		if (pce_set_redir_out (fname, mode)) {
 			pce_puts ("error setting redirection\n");
 		}
 		else {
@@ -270,8 +299,11 @@ int mon_run (monitor_t *mon)
 			else if (cmd_match (&cmd, "v")) {
 				mon_cmd_v (&cmd);
 			}
+			else if (cmd_match (&cmd, "<")) {
+				mon_cmd_redir_inp (mon, &cmd);
+			}
 			else if (cmd_match (&cmd, ">")) {
-				mon_cmd_redir (mon, &cmd);
+				mon_cmd_redir_out (mon, &cmd);
 			}
 		}
 	};

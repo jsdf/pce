@@ -344,7 +344,7 @@ void s405_prt_state_mem (sim405_t *sim)
 
 	mem_prt_state (sim->mem, pce_get_fp_out());
 
-	fp = pce_get_redirection();
+	fp = pce_get_redir_out();
 	if (fp != NULL) {
 		mem_prt_state (sim->mem, fp);
 	}

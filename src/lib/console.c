@@ -33,17 +33,19 @@
 
 static FILE *pce_fp_inp = NULL;
 static FILE *pce_fp_out = NULL;
-static FILE *pce_fp_redir = NULL;
+
+static FILE *pce_redir_inp = NULL;
+static FILE *pce_redir_out = NULL;
 
 
-FILE *pce_get_redirection (void)
+FILE *pce_get_redir_inp (void)
 {
-	return (pce_fp_redir);
+	return (pce_redir_inp);
 }
 
-FILE *pce_get_fp_out (void)
+FILE *pce_get_redir_out (void)
 {
-	return (pce_fp_out);
+	return (pce_redir_out);
 }
 
 FILE *pce_get_fp_inp (void)
@@ -51,20 +53,45 @@ FILE *pce_get_fp_inp (void)
 	return (pce_fp_inp);
 }
 
-int pce_set_redirection (const char *fname, const char *mode)
+FILE *pce_get_fp_out (void)
 {
-	if (pce_fp_redir != NULL) {
-		fclose (pce_fp_redir);
-		pce_fp_redir = NULL;
+	return (pce_fp_out);
+}
+
+int pce_set_redir_inp (const char *fname)
+{
+	if (pce_redir_inp != NULL) {
+		fclose (pce_redir_inp);
+		pce_redir_inp = NULL;
 	}
 
 	if (fname == NULL) {
 		return (0);
 	}
 
-	pce_fp_redir = fopen (fname, mode);
+	pce_redir_inp = fopen (fname, "r");
 
-	if (pce_fp_redir == NULL) {
+	if (pce_redir_inp == NULL) {
+		return (1);
+	}
+
+	return (0);
+}
+
+int pce_set_redir_out (const char *fname, const char *mode)
+{
+	if (pce_redir_out != NULL) {
+		fclose (pce_redir_out);
+		pce_redir_out = NULL;
+	}
+
+	if (fname == NULL) {
+		return (0);
+	}
+
+	pce_redir_out = fopen (fname, mode);
+
+	if (pce_redir_out == NULL) {
 		return (1);
 	}
 
@@ -79,10 +106,22 @@ void pce_gets (char *str, unsigned max)
 		pce_fp_inp = stdin;
 	}
 
+	if (pce_redir_inp != NULL) {
+		fgets (str, max, pce_redir_inp);
+
+		if (str[0] != 0) {
+			pce_puts (str);
+			return;
+		}
+
+		fclose (pce_redir_inp);
+		pce_redir_inp = NULL;
+	}
+
 	fgets (str, max, pce_fp_inp);
 
-	if (pce_fp_redir != NULL) {
-		fputs (str, pce_fp_redir);
+	if (pce_redir_out != NULL) {
+		fputs (str, pce_redir_out);
 	}
 }
 
@@ -95,9 +134,9 @@ void pce_puts (const char *str)
 	fputs (str, pce_fp_out);
 	fflush (pce_fp_out);
 
-	if (pce_fp_redir != NULL) {
-		fputs (str, pce_fp_redir);
-		fflush (pce_fp_redir);
+	if (pce_redir_out != NULL) {
+		fputs (str, pce_redir_out);
+		fflush (pce_redir_out);
 	}
 }
 
@@ -114,9 +153,9 @@ void pce_printf (const char *msg, ...)
 	vfprintf (pce_fp_out, msg, va);
 	fflush (pce_fp_out);
 
-	if (pce_fp_redir != NULL) {
-		vfprintf (pce_fp_redir, msg, va);
-		fflush (pce_fp_redir);
+	if (pce_redir_out != NULL) {
+		vfprintf (pce_redir_out, msg, va);
+		fflush (pce_redir_out);
 	}
 
 	va_end (va);
@@ -131,9 +170,9 @@ void pce_vprintf (const char *msg, va_list va)
 	vfprintf (pce_fp_out, msg, va);
 	fflush (pce_fp_out);
 
-	if (pce_fp_redir != NULL) {
-		vfprintf (pce_fp_redir, msg, va);
-		fflush (pce_fp_redir);
+	if (pce_redir_out != NULL) {
+		vfprintf (pce_redir_out, msg, va);
+		fflush (pce_redir_out);
 	}
 }
 
@@ -161,5 +200,6 @@ void pce_console_init (FILE *inp, FILE *out)
 
 void pce_console_done (void)
 {
-	pce_set_redirection (NULL, NULL);
+	pce_set_redir_out (NULL, NULL);
+	pce_set_redir_inp (NULL);
 }
