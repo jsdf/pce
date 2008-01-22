@@ -103,6 +103,9 @@ typedef struct e68000_s {
 	void               (*set_uint16) (void *ext, unsigned long addr, unsigned short val);
 	void               (*set_uint32) (void *ext, unsigned long addr, unsigned long val);
 
+	unsigned char      *ram;
+	unsigned long      ram_cnt;
+
 	void               *reset_ext;
 	void               (*reset) (void *ext, unsigned char val);
 	unsigned char      reset_val;
@@ -202,6 +205,12 @@ uint8_t e68_get_mem8 (e68000_t *c, uint32_t addr)
 	}
 #endif
 
+	addr &= 0x00ffffff;
+
+	if (addr < c->ram_cnt) {
+		return (c->ram[addr]);
+	}
+
 	return (c->get_uint8 (c->mem_ext, addr & 0x00ffffff));
 }
 
@@ -214,19 +223,38 @@ uint16_t e68_get_mem16 (e68000_t *c, uint32_t addr)
 	}
 #endif
 
-	return (c->get_uint16 (c->mem_ext, addr & 0x00ffffff));
+	addr &= 0x00ffffff;
+
+	if ((addr + 1) < c->ram_cnt) {
+		return ((c->ram[addr] << 8) | c->ram[addr + 1]);
+	}
+
+	return (c->get_uint16 (c->mem_ext, addr));
 }
 
 static inline
 uint32_t e68_get_mem32 (e68000_t *c, uint32_t addr)
 {
+	uint32_t val;
+
 #ifdef E68000_LOG_MEM
 	if (c->log_mem != NULL) {
 		c->log_mem (c->log_ext, addr, 8);
 	}
 #endif
 
-	return (c->get_uint32 (c->mem_ext, addr & 0x00ffffff));
+	addr &= 0x00ffffff;
+
+	if ((addr + 3) < c->ram_cnt) {
+		val = c->ram[addr];
+		val = (val << 8) | c->ram[addr + 1];
+		val = (val << 8) | c->ram[addr + 2];
+		val = (val << 8) | c->ram[addr + 3];
+
+		return (val);
+	}
+
+	return (c->get_uint32 (c->mem_ext, addr));
 }
 
 static inline
@@ -238,7 +266,14 @@ void e68_set_mem8 (e68000_t *c, uint32_t addr, uint8_t val)
 	}
 #endif
 
-	c->set_uint8 (c->mem_ext, addr & 0x00ffffff, val);
+	addr &= 0x00ffffff;
+
+	if (addr < c->ram_cnt) {
+		c->ram[addr] = val;
+	}
+	else {
+		c->set_uint8 (c->mem_ext, addr, val);
+	}
 }
 
 static inline
@@ -250,7 +285,15 @@ void e68_set_mem16 (e68000_t *c, uint32_t addr, uint16_t val)
 	}
 #endif
 
-	c->set_uint16 (c->mem_ext, addr & 0x00ffffff, val);
+	addr &= 0x00ffffff;
+
+	if ((addr + 1) < c->ram_cnt) {
+		c->ram[addr] = (val >> 8) & 0xff;
+		c->ram[addr + 1] = val & 0xff;
+	}
+	else {
+		c->set_uint16 (c->mem_ext, addr, val);
+	}
 }
 
 static inline
@@ -262,7 +305,17 @@ void e68_set_mem32 (e68000_t *c, uint32_t addr, uint32_t val)
 	}
 #endif
 
-	c->set_uint32 (c->mem_ext, addr & 0x00ffffff, val);
+	addr &= 0x00ffffff;
+
+	if ((addr + 3) < c->ram_cnt) {
+		c->ram[addr] = (val >> 24) & 0xff;
+		c->ram[addr + 1] = (val >> 16) & 0xff;
+		c->ram[addr + 2] = (val >> 8) & 0xff;
+		c->ram[addr + 3] = val & 0xff;
+	}
+	else {
+		c->set_uint32 (c->mem_ext, addr, val);
+	}
 }
 
 
@@ -294,6 +347,8 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
 	void *get8, void *get16, void *get32,
 	void *set8, void *set16, void *set32
 );
+
+void e68_set_ram (e68000_t *c, unsigned char *ram, unsigned long cnt);
 
 void e68_set_reset_fct (e68000_t *c, void *ext, void *fct);
 

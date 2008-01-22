@@ -46,6 +46,9 @@ void e68_init (e68000_t *c)
 	c->set_uint16 = NULL;
 	c->set_uint32 = NULL;
 
+	c->ram = NULL;
+	c->ram_cnt = 0;
+
 	c->reset_ext = NULL;
 	c->reset = NULL;
 	c->reset_val = 0;
@@ -135,6 +138,16 @@ void e68_set_mem_fct (e68000_t *c, void *ext,
 	c->set_uint8 = set8;
 	c->set_uint16 = set16;
 	c->set_uint32 = set32;
+}
+
+void e68_set_ram (e68000_t *c, unsigned char *ram, unsigned long cnt)
+{
+	if (ram == NULL) {
+		cnt = 0;
+	}
+
+	c->ram = ram;
+	c->ram_cnt = cnt;
 }
 
 void e68_set_reset_fct (e68000_t *c, void *ext, void *fct)
