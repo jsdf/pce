@@ -30,44 +30,7 @@
 #include <stdio.h>
 
 
-#define e68_exts(x, n) ( \
-	((x) & (1UL << ((n) - 1))) ? \
-	(((x) | ~((1UL << (n)) - 1)) & 0xffffffffUL) : \
-	((x) & ((1UL << (n)) - 1)) \
-	)
-
-#define e68_extu(x, n) ((x) & ((1 << (n)) - 1))
-
-#define e68_mk_uint16(hi, lo) (((hi) & 0xff) << 8) | ((lo) & 0xff))
-
-#define s32_ir_rd(ir) (((ir) >> 25) & 0x1f)
-#define s32_ir_rs1(ir) (((ir) >> 14) & 0x1f)
-#define s32_ir_rs2(ir) ((ir) & 0x1f)
-#define s32_ir_i(ir) ((ir) & 0x00002000UL)
-#define s32_ir_a(ir) ((ir) & 0x20000000UL)
-#define s32_ir_asi(ir) (((ir) >> 5) & 0xff)
-#define s32_ir_simm13(ir) (((ir) & 0x00001000UL) ? ((ir) | 0xfffff000UL) : ((ir) & 0x00000fffUL))
-#define s32_ir_simm22(ir) (((ir) & 0x00200000UL) ? ((ir) | 0xffe00000UL) : ((ir) & 0x001fffffUL))
-#define s32_ir_simm30(ir) (((ir) & 0x20000000UL) ? ((ir) | 0xe0000000UL) : ((ir) & 0x1fffffffUL))
-#define s32_ir_uimm22(ir) ((ir) & 0x003fffffUL)
-
-#define s32_get_rd(c, ir) (s32_get_reg ((c), s32_ir_rd(ir)))
-#define s32_get_rs1(c, ir) (s32_get_reg ((c), s32_ir_rs1(ir)))
-#define s32_get_rs2(c, ir) (s32_get_reg ((c), s32_ir_rs2(ir)))
-#define s32_set_rd(c, ir, v) s32_set_reg ((c), s32_ir_rd(ir), (v))
-#define s32_get_rs2_or_simm13(c, ir) ( \
-  s32_ir_i(ir) ? s32_ir_simm13(ir) : s32_get_reg((c), s32_ir_rs2(ir)))
-#define s32_get_addr(c, ir) \
-  ((s32_get_rs1((c), (ir)) + s32_get_rs2_or_simm13((c), (ir))) & 0xffffffffUL)
-
-#define e68_set_clk(c, clk) do { \
-	(c)->delay += (clk); \
-} while (0)
-
-#define e68_ifetch_next(c) do { \
-	(c)->ir[(c)->ircnt] = e68_get_mem16 ((c), (c)->pc + 2 * (c)->ircnt); \
-	(c)->ircnt += 1; \
-} while (0)
+#define e68_set_clk(c, clk) do { (c)->delay += (clk); } while (0)
 
 
 #define E68_SR_XC (E68_SR_X | E68_SR_C)
@@ -79,10 +42,23 @@
 #define E68_SR_MASK (E68_CCR_MASK | E68_SR_S | E68_SR_T | E68_SR_I)
 
 
+#define E68_FLAG_NOADDR 1
+
+
 void e68_set_sr (e68000_t *c, unsigned short val);
 
-void e68_push16 (e68000_t *c, uint16_t val);
-void e68_push32 (e68000_t *c, uint32_t val);
+
+static inline
+uint32_t e68_exts8 (uint32_t val)
+{
+	return ((val & 0x80) ? (val | 0xffffff00) : (val & 0x000000ff));
+}
+
+static inline
+uint32_t e68_exts16 (uint32_t val)
+{
+	return ((val & 0x8000) ? (val | 0xffff0000) : (val & 0x0000ffff));
+}
 
 static inline
 void e68_set_ccr (e68000_t *c, uint8_t val)
@@ -120,6 +96,28 @@ void e68_set_ssp (e68000_t *c, uint32_t val)
 }
 
 static inline
+void e68_push16 (e68000_t *c, uint16_t val)
+{
+	uint32_t sp;
+
+	sp = (e68_get_areg32 (c, 7) - 2) & 0xffffffff;
+
+	e68_set_mem16 (c, sp, val);
+	e68_set_areg32 (c, 7, sp);
+}
+
+static inline
+void e68_push32 (e68000_t *c, uint32_t val)
+{
+	uint32_t sp;
+
+	sp = (e68_get_areg32 (c, 7) - 4) & 0xffffffff;
+
+	e68_set_mem32 (c, sp, val);
+	e68_set_areg32 (c, 7, sp);
+}
+
+static inline
 uint16_t e68_get_uint16 (const void *buf, unsigned i)
 {
 	uint16_t            r;
@@ -143,6 +141,20 @@ uint32_t e68_get_uint32 (const void *buf, unsigned i)
 	r = (r << 8) | (tmp[3] & 0xff);
 
 	return (r);
+}
+
+static inline
+void e68_ifetch (e68000_t *c, unsigned i)
+{
+	c->ir[i] = e68_get_mem16 (c, c->pc + 2 * i);
+	c->ircnt = i + 1;
+}
+
+static inline
+void e68_ifetch_next (e68000_t *c)
+{
+	c->ir[c->ircnt] = e68_get_mem16 (c, c->pc + 2 * c->ircnt);
+	c->ircnt += 1;
 }
 
 
@@ -171,8 +183,9 @@ void e68_cc_set_subx_16 (e68000_t *c, uint16_t d, uint16_t s1, uint16_t s2);
 void e68_cc_set_subx_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
 
 
-void e68_set_opcodes (e68000_t *c);
-
+#define E68_EA_TYPE_IMM 0
+#define E68_EA_TYPE_REG 1
+#define E68_EA_TYPE_MEM 2
 
 int e68_ea_get_ptr (e68000_t *c, unsigned ea, unsigned mask, unsigned size);
 int e68_ea_get_val8 (e68000_t *c, uint8_t *val);
@@ -181,6 +194,9 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val);
 int e68_ea_set_val8 (e68000_t *c, uint8_t val);
 int e68_ea_set_val16 (e68000_t *c, uint16_t val);
 int e68_ea_set_val32 (e68000_t *c, uint32_t val);
+
+
+void e68_set_opcodes (e68000_t *c);
 
 
 #endif

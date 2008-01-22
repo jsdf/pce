@@ -256,7 +256,7 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 
 		case 0x02: /* XXXX(PC) */
 			v = dasm_next_word (da, src);
-			v1 = (da->pc + e68_exts (v, 16) + 2) & 0xffffffff;
+			v1 = (da->pc + e68_exts16 (v) + 2) & 0xffffffff;
 			sprintf (dst, "%s%08lX(PC)", hex_prefix, v1);
 			break;
 
@@ -412,14 +412,14 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 	case ARG_IRSIMM8:
 		sprintf (dst, "#%s%08lX",
 			hex_prefix,
-			(unsigned long) e68_exts (da->ir[0], 8)
+			(unsigned long) e68_exts8 (da->ir[0])
 		);
 		break;
 
 	case ARG_DIST8:
 		sprintf (dst, "%s%08lX",
 			hex_prefix,
-			da->pc + 2UL + e68_exts (src[1], 8)
+			da->pc + 2UL + e68_exts8 (src[1])
 		);
 		break;
 
@@ -428,7 +428,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		da->irn += 1;
 		sprintf (dst, "%s%08lX",
 			hex_prefix,
-			da->pc + 2UL + e68_exts (val16, 16)
+			da->pc + 2UL + e68_exts16 (val16)
 		);
 		break;
 

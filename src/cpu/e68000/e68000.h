@@ -26,6 +26,7 @@
 #define PCE_E68000_H 1
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -49,11 +50,11 @@ struct e68000_s;
 #define E68_SR_S 0x2000
 #define E68_SR_T 0x8000
 
-#define e68_get_dreg8(c, n) ((c)->dreg[(n)] & 0xff)
-#define e68_get_dreg16(c, n) ((c)->dreg[(n)] & 0xffff)
-#define e68_get_dreg32(c, n) ((c)->dreg[(n)] & 0xffffffff)
-#define e68_get_areg16(c, n) (((c)->areg[(n)]) & 0xffff)
-#define e68_get_areg32(c, n) ((c)->areg[(n)] & 0xffffffff)
+#define e68_get_dreg8(c, n) ((c)->dreg[(n) & 7] & 0xff)
+#define e68_get_dreg16(c, n) ((c)->dreg[(n) & 7] & 0xffff)
+#define e68_get_dreg32(c, n) ((c)->dreg[(n) & 7] & 0xffffffff)
+#define e68_get_areg16(c, n) (((c)->areg[(n) & 7]) & 0xffff)
+#define e68_get_areg32(c, n) ((c)->areg[(n) & 7] & 0xffffffff)
 #define e68_get_pc(c) ((c)->pc & 0xffffffff)
 #define e68_get_usp(c) (((c)->supervisor ? (c)->usp : (c)->areg[7]) & 0xffffffff)
 #define e68_get_ssp(c) (((c)->supervisor ? (c)->areg[7] : (c)->ssp) & 0xffffffff)
@@ -73,8 +74,8 @@ struct e68000_s;
 #define e68_get_sr_t(c) (((c)->sr & E68_SR_T) != 0)
 
 #define e68_set_cc(c, m, v) do { \
-    if (v) (c)->sr |= (m); else (c)->sr &= ~(m); \
-  } while (0)
+		if (v) (c)->sr |= (m); else (c)->sr &= ~(m); \
+	} while (0)
 
 #define e68_set_sr_c(c, v) e68_set_cc ((c), E68_SR_C, (v))
 #define e68_set_sr_v(c, v) e68_set_cc ((c), E68_SR_V, (v))
@@ -90,6 +91,8 @@ typedef unsigned (*e68_opcode_f) (struct e68000_s *c);
 
 
 typedef struct e68000_s {
+	unsigned           flags;
+
 	void               *mem_ext;
 
 	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
@@ -105,7 +108,7 @@ typedef struct e68000_s {
 	unsigned char      reset_val;
 
 	void               *hook_ext;
-	int                (*hook) (void *ext);
+	int                (*hook) (void *ext, unsigned val);
 
 	void               *log_ext;
 	void               (*log_opcode) (void *ext, unsigned long ir);
@@ -129,12 +132,13 @@ typedef struct e68000_s {
 	unsigned char      halt;
 
 	unsigned           ircnt;
-	uint16_t           ir[4];
+	uint16_t           ir[16];
 
 	unsigned           ea_typ;
 	uint32_t           ea_val;
 
 	unsigned           int_ipl;
+	char               int_nmi;
 	unsigned           int_vect;
 	int                int_avec;
 
@@ -295,6 +299,8 @@ void e68_set_reset_fct (e68000_t *c, void *ext, void *fct);
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 
+void e68_set_address_check (e68000_t *c, int check);
+
 /*!***************************************************************************
  * @short Get the number of executed instructions
  *****************************************************************************/
@@ -328,11 +334,25 @@ const char *e68_get_exception_name (e68000_t *c);
  *****************************************************************************/
 unsigned long e68_get_last_pc (e68000_t *pc);
 
+/*!***************************************************************************
+ * @short Get the last a-line trap number
+ *****************************************************************************/
 unsigned short e68_get_last_trap_a (e68000_t *c);
+
+/*!***************************************************************************
+ * @short Get the last f-line trap number
+ *****************************************************************************/
 unsigned short e68_get_last_trap_f (e68000_t *c);
 
 
+/*!***************************************************************************
+ * @short Get a named register
+ *****************************************************************************/
 int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val);
+
+/*!***************************************************************************
+ * @short Set a named register
+ *****************************************************************************/
 int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
 
 

@@ -33,8 +33,7 @@ void e68_cc_set_nz_8 (e68000_t *c, uint8_t msk, uint8_t val)
 	if ((val & 0xff) == 0) {
 		set |= E68_SR_Z;
 	}
-
-	if (val & 0x80) {
+	else if (val & 0x80) {
 		set |= E68_SR_N;
 	}
 
@@ -49,8 +48,7 @@ void e68_cc_set_nz_16 (e68000_t *c, uint8_t msk, uint16_t val)
 	if ((val & 0xffff) == 0) {
 		set |= E68_SR_Z;
 	}
-
-	if (val & 0x8000) {
+	else if (val & 0x8000) {
 		set |= E68_SR_N;
 	}
 
@@ -65,8 +63,7 @@ void e68_cc_set_nz_32 (e68000_t *c, uint8_t msk, uint32_t val)
 	if ((val & 0xffffffff) == 0) {
 		set |= E68_SR_Z;
 	}
-
-	if (val & 0x80000000) {
+	else if (val & 0x80000000) {
 		set |= E68_SR_N;
 	}
 

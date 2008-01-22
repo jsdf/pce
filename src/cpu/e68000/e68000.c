@@ -34,6 +34,8 @@ void e68_init (e68000_t *c)
 {
 	unsigned i;
 
+	c->flags = 0;
+
 	c->mem_ext = NULL;
 
 	c->get_uint8 = NULL;
@@ -63,6 +65,7 @@ void e68_init (e68000_t *c)
 	c->ircnt = 0;
 
 	c->int_ipl = 0;
+	c->int_nmi = 0;
 	c->int_vect = 0;
 	c->int_avec = 0;
 
@@ -146,6 +149,16 @@ void e68_set_hook_fct (e68000_t *c, void *ext, void *fct)
 	c->hook = fct;
 }
 
+void e68_set_address_check (e68000_t *c, int check)
+{
+	if (check) {
+		c->flags &= ~E68_FLAG_NOADDR;
+	}
+	else {
+		c->flags |= E68_FLAG_NOADDR;
+	}
+}
+
 unsigned long long e68_get_opcnt (e68000_t *c)
 {
 	return (c->oprcnt);
@@ -211,6 +224,21 @@ int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val)
 	}
 	else if (strcmp (reg, "lpc") == 0) {
 		*val = c->last_pc;
+		return (0);
+	}
+	else if ((reg[0] == 'o') && (reg[1] == 'p')) {
+		idx = 0;
+		while ((reg[2] >= '0') && (reg[2] <= '9')) {
+			idx = 10 * idx + (unsigned) (reg[2] - '0');
+			reg += 1;
+		}
+
+		if (reg[2] != 0) {
+			return (1);
+		}
+
+		*val = e68_get_mem16 (c, e68_get_pc (c) + 2 * idx);
+
 		return (0);
 	}
 	else if (strcmp (reg, "sr") == 0) {
@@ -416,23 +444,10 @@ void e68_set_supervisor (e68000_t *c, int supervisor)
 void e68_set_sr (e68000_t *c, unsigned short val)
 {
 	if ((c->sr ^ val) & E68_SR_S) {
-		e68_set_supervisor (c, val & E68_SR_S);
+		e68_set_supervisor (c, (val & E68_SR_S) != 0);
 	}
 
 	c->sr = val & E68_SR_MASK;
-}
-
-void e68_push16 (e68000_t *c, uint16_t val)
-{
-	e68_set_mem16 (c, e68_get_areg32 (c, 7) - 2, val);
-	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) - 2);
-}
-
-void e68_push32 (e68000_t *c, uint32_t val)
-{
-	e68_set_mem16 (c, e68_get_areg32 (c, 7) - 2, val & 0xffff);
-	e68_set_mem16 (c, e68_get_areg32 (c, 7) - 4, (val >> 16) & 0xffff);
-	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) - 4);
 }
 
 static
@@ -573,6 +588,10 @@ void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec)
 		c->halt &= ~1U;
 	}
 
+	if ((level == 7) && (c->int_ipl != 7)) {
+		c->int_nmi = 1;
+	}
+
 	c->int_ipl = level;
 	c->int_vect = vect;
 	c->int_avec = avec;
@@ -645,12 +664,16 @@ void e68_execute (e68000_t *c)
 
 	c->oprcnt += 1;
 
-	if (c->int_ipl > 0) {
+	if (c->int_nmi) {
+		e68_exception_avec (c, 7);
+		c->int_nmi = 0;
+	}
+	else if (c->int_ipl > 0) {
 		unsigned iml;
 
 		iml = e68_get_iml (c);
 
-		if ((iml < c->int_ipl) || (c->int_ipl == 7)) {
+		if (iml < c->int_ipl) {
 			if (c->int_avec) {
 				e68_exception_avec (c, c->int_ipl);
 			}

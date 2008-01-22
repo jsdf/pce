@@ -61,6 +61,14 @@
 	if (e68_ea_set_val32 (c, val)) return (0); \
 	} while (0)
 
+#define e68_chk_addr(c, addr, wr) do { \
+	if (((c)->flags & E68_FLAG_NOADDR) == 0) { \
+		if ((addr) & 1) { \
+			e68_exception_address (c, (addr), 1, (wr)); \
+			return (0); \
+		} \
+	} \
+	} while (0)
 
 
 static unsigned e68_op_undefined (e68000_t *c)
@@ -73,23 +81,27 @@ static unsigned e68_op_undefined (e68000_t *c)
 /* 0000_3C: ORI.B #XX, CCR */
 static unsigned op0000_3c (e68000_t *c)
 {
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	e68_set_ccr (c, (e68_get_ccr (c) | c->ir[1]) & E68_SR_XNZVC);
-	e68_set_clk (c, 32);
+	e68_set_clk (c, 20);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0000_XX: ORI.B #XX, <EA> */
-static unsigned op0000_xx (e68000_t *c)
+/* 0000: ORI.B #XX, <EA> */
+static unsigned op0000 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0000_3c (c));
+	}
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 | s2;
 
@@ -100,38 +112,30 @@ static unsigned op0000_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0000: misc */
-static unsigned op0000 (e68000_t *c)
-{
-	switch (c->ir[0] & 0x3f) {
-	case 0x3c:
-		return (op0000_3c (c));
-
-	default:
-		return (op0000_xx (c));
-	}
-}
-
 /* 0040_3C: ORI.W #XXXX, SR */
 static unsigned op0040_3c (e68000_t *c)
 {
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	e68_set_sr (c, (e68_get_sr (c) | c->ir[1]) & E68_SR_MASK);
-	e68_set_clk (c, 32);
+	e68_set_clk (c, 20);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0040_XX: ORI.W #XXXX, <EA> */
-static unsigned op0040_xx (e68000_t *c)
+/* 0040: ORI.W #XXXX, <EA> */
+static unsigned op0040 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0040_3c (c));
+	}
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1];
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1];
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 | s2;
 
@@ -142,34 +146,22 @@ static unsigned op0040_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0040: misc */
-static unsigned op0040 (e68000_t *c)
-{
-	switch (c->ir[0] & 0x3f) {
-	case 0x3c:
-		return (op0040_3c (c));
-
-	default:
-		return (op0040_xx (c));
-	}
-}
-
 /* 0080: ORI.L #XXXXXXXX, <EA> */
 static unsigned op0080 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 | s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 16);
 
 	return (c->ircnt);
 }
@@ -186,20 +178,21 @@ static unsigned op0100_00 (e68000_t *c)
 	m = 1UL << i;
 
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 6);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* 0100_01: MOVEP.W d16(An), Dn */
-static unsigned op0100_01 (e68000_t *c)
+/* 0100_08: MOVEP.W d16(An), Dn */
+static unsigned op0100_08 (e68000_t *c)
 {
-	uint32_t addr, disp;
+	uint32_t addr;
 	uint16_t v;
 
+	e68_ifetch (c, 1);
+
 	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
-	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
-	addr += e68_exts (disp, 16);
+	addr += e68_exts16 (c->ir[1]);
 
 	v = e68_get_mem8 (c, addr);
 	v = (v << 8) | e68_get_mem8 (c, addr + 2);
@@ -211,36 +204,29 @@ static unsigned op0100_01 (e68000_t *c)
 	return (2);
 }
 
-/* 0100_XX: BTST Dn, <EA> */
-static unsigned op0100_xx (e68000_t *c)
+/* 0100: BTST Dn, <EA> */
+static unsigned op0100 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, m;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
+	switch (c->ir[0] & 0x38) {
+	case 0x00:
+		return (op0100_00 (c));
+
+	case 0x08:
+		return (op0100_08 (c));
+	}
+
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0xffc, &s);
 	i = e68_get_dreg32 (c, e68_ir_reg9 (c)) & 0x07;
 
 	m = 1 << i;
 
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
-}
-
-/* 0100: misc */
-static unsigned op0100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op0100_00 (c));
-
-	case 0x01:
-		return (op0100_01 (c));
-
-	default:
-		return (op0100_xx (c));
-	}
 }
 
 /* 0140_00: BCHG Dn, Dn */
@@ -258,20 +244,21 @@ static unsigned op0140_00 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 0140_01: MOVEP.L d16(An), Dn */
 static unsigned op0140_01 (e68000_t *c)
 {
-	uint32_t addr, disp;
+	uint32_t addr;
 	uint32_t v;
 
+	e68_ifetch (c, 1);
+
 	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
-	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
-	addr += e68_exts (disp, 16);
+	addr += e68_exts16 (c->ir[1]);
 
 	v = e68_get_mem8 (c, addr);
 	v = (v << 8) | e68_get_mem8 (c, addr + 2);
@@ -285,11 +272,19 @@ static unsigned op0140_01 (e68000_t *c)
 	return (2);
 }
 
-/* 0140_XX: BCHG Dn, <EA> */
-static unsigned op0140_xx (e68000_t *c)
+/* 0140: BCHG Dn, <EA> */
+static unsigned op0140 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, d, m;
+
+	switch ((c->ir[0] >> 3) & 7) {
+	case 0x00:
+		return (op0140_00 (c));
+
+	case 0x01:
+		return (op0140_01 (c));
+	}
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
 	i = e68_get_dreg32 (c, e68_ir_reg9 (c)) & 0x07;
@@ -299,24 +294,9 @@ static unsigned op0140_xx (e68000_t *c)
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
-}
-
-/* 0140: misc */
-static unsigned op0140 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op0140_00 (c));
-
-	case 0x01:
-		return (op0140_01 (c));
-
-	default:
-		return (op0140_xx (c));
-	}
 }
 
 /* 0180_00: BCLR Dn, Dn */
@@ -334,20 +314,21 @@ static unsigned op0180_00 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 10);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 0180_01: MOVEP.W Dn, d16(An) */
 static unsigned op0180_01 (e68000_t *c)
 {
-	uint32_t addr, disp;
+	uint32_t addr;
 	uint16_t v;
 
+	e68_ifetch (c, 1);
+
 	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
-	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
-	addr += e68_exts (disp, 16);
+	addr += e68_exts16 (c->ir[1]);
 
 	v = e68_get_dreg16 (c, e68_ir_reg9 (c));
 
@@ -359,11 +340,19 @@ static unsigned op0180_01 (e68000_t *c)
 	return (2);
 }
 
-/* 0180_XX: BCLR Dn, <EA> */
-static unsigned op0180_xx (e68000_t *c)
+/* 0180: BCLR Dn, <EA> */
+static unsigned op0180 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, d, m;
+
+	switch ((c->ir[0] >> 3) & 7) {
+	case 0x00:
+		return (op0180_00 (c));
+
+	case 0x01:
+		return (op0180_01 (c));
+	}
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
 	i = e68_get_dreg32 (c, e68_ir_reg9 (c)) & 0x07;
@@ -373,24 +362,9 @@ static unsigned op0180_xx (e68000_t *c)
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
-}
-
-/* 0180: misc */
-static unsigned op0180 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op0180_00 (c));
-
-	case 0x01:
-		return (op0180_01 (c));
-
-	default:
-		return (op0180_xx (c));
-	}
 }
 
 /* 01C0_00: BSET Dn, Dn */
@@ -408,20 +382,21 @@ static unsigned op01c0_00 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 01C0_01: MOVEP.L Dn, d16(An) */
 static unsigned op01c0_01 (e68000_t *c)
 {
-	uint32_t addr, disp;
+	uint32_t addr;
 	uint32_t v;
 
+	e68_ifetch (c, 1);
+
 	addr = e68_get_areg32 (c, e68_ir_reg0 (c));
-	disp = e68_get_mem16 (c, e68_get_pc (c) + 2);
-	addr += e68_exts (disp, 16);
+	addr += e68_exts16 (c->ir[1]);
 
 	v = e68_get_dreg32 (c, e68_ir_reg9 (c));
 
@@ -435,11 +410,19 @@ static unsigned op01c0_01 (e68000_t *c)
 	return (2);
 }
 
-/* 01C0_XX: BSET Dn, <EA> */
-static unsigned op01c0_xx (e68000_t *c)
+/* 01C0: BSET Dn, <EA> */
+static unsigned op01c0 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, d, m;
+
+	switch ((c->ir[0] >> 3) & 7) {
+	case 0x00:
+		return (op01c0_00 (c));
+
+	case 0x01:
+		return (op01c0_01 (c));
+	}
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
 	i = e68_get_dreg32 (c, e68_ir_reg9 (c)) & 0x07;
@@ -449,46 +432,35 @@ static unsigned op01c0_xx (e68000_t *c)
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
-}
-
-/* 01C0: misc */
-static unsigned op01c0 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op01c0_00 (c));
-
-	case 0x01:
-		return (op01c0_01 (c));
-
-	default:
-		return (op01c0_xx (c));
-	}
 }
 
 /* 0200_3C: ANDI.B #XX, CCR */
 static unsigned op0200_3c (e68000_t *c)
 {
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	e68_set_ccr (c, e68_get_ccr (c) & c->ir[1] & E68_SR_XNZVC);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 20);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0200_XX: ANDI.B #XX, <EA> */
-static unsigned op0200_xx (e68000_t *c)
+/* 0200: ANDI.B #XX, <EA> */
+static unsigned op0200 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0200_3c (c));
+	}
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 & s2;
 
@@ -499,18 +471,6 @@ static unsigned op0200_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0200: misc */
-static unsigned op0200 (e68000_t *c)
-{
-	switch (c->ir[0] & 0x3f) {
-	case 0x3c:
-		return (op0200_3c (c));
-
-	default:
-		return (op0200_xx (c));
-	}
-}
-
 /* 0240_3C: ANDI.W #XXXX, SR */
 static unsigned op0240_3c (e68000_t *c)
 {
@@ -519,23 +479,27 @@ static unsigned op0240_3c (e68000_t *c)
 		return (0);
 	}
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	e68_set_sr (c, e68_get_sr (c) & c->ir[1]);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 20);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0240_XX: ANDI.W #XXXX, EA */
-static unsigned op0240_xx (e68000_t *c)
+/* 0240: ANDI.W #XXXX, <EA> */
+static unsigned op0240 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0240_3c (c));
+	}
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1];
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1];
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 & s2;
 
@@ -546,34 +510,22 @@ static unsigned op0240_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0240: misc */
-static unsigned op0240 (e68000_t *c)
-{
-	switch (c->ir[0] & 0x3f) {
-	case 0x3c:
-		return (op0240_3c (c));
-
-	default:
-		return (op0240_xx (c));
-	}
-}
-
-/* 0280: ANDI.L #XXXXXXXX, EA */
+/* 0280: ANDI.L #XXXXXXXX, <EA> */
 static unsigned op0280 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 & s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 16);
 
 	return (c->ircnt);
 }
@@ -583,15 +535,15 @@ static unsigned op0400 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, d, s2, s1);
+	e68_cc_set_sub_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -602,15 +554,15 @@ static unsigned op0440 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1];
+	s1 = c->ir[1];
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, d, s2, s1);
+	e68_cc_set_sub_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -621,17 +573,17 @@ static unsigned op0480 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, d, s2, s1);
-	e68_set_clk (c, 12);
+	e68_cc_set_sub_32 (c, d, s1, s2);
+	e68_set_clk (c, 16);
 
 	return (c->ircnt);
 }
@@ -641,10 +593,10 @@ static unsigned op0600 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 + s2;
 
@@ -660,10 +612,10 @@ static unsigned op0640 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1];
+	s1 = c->ir[1];
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 + s2;
 
@@ -679,17 +631,17 @@ static unsigned op0680 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 + s2;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
 	e68_cc_set_add_32 (c, d, s1, s2);
-	e68_set_clk (c, 12);
+	e68_set_clk (c, 16);
 
 	return (c->ircnt);
 }
@@ -700,55 +652,50 @@ static unsigned op0800_00 (e68000_t *c)
 	unsigned i;
 	uint32_t s, m;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+
 	s = e68_get_dreg32 (c, e68_ir_reg0 (c));
 	i = c->ir[1] & 0x1f;
 
 	m = 1UL << i;
 
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 10);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0800_XX: BTST #XX, <EA> */
-static unsigned op0800_xx (e68000_t *c)
+/* 0800: BTST #XX, <EA> */
+static unsigned op0800 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, m;
 
-	e68_ifetch_next (c);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
+	if ((c->ir[0] & 0x38) == 0x00) {
+		return (op0800_00 (c));
+	}
+
+	e68_ifetch (c, 1);
+
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x7fc, &s);
 	i = c->ir[1] & 0x07;
 
 	m = 1 << i;
 
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
 
-/* 0800: misc */
-static unsigned op0800 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op0800_00 (c));
-
-	default:
-		return (op0800_xx (c));
-	}
-}
-
-/* 0840_0: BCHG #XX, Dn */
-static unsigned op0840_0 (e68000_t *c)
+/* 0840_00: BCHG #XX, Dn */
+static unsigned op0840_00 (e68000_t *c)
 {
 	unsigned i, r;
 	uint32_t s, d, m;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+
 	r = e68_ir_reg0 (c);
 	s = e68_get_dreg32 (c, r);
 	i = c->ir[1] & 0x1f;
@@ -758,48 +705,44 @@ static unsigned op0840_0 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0840_1: BCHG #XX, <EA> */
-static unsigned op0840_1 (e68000_t *c)
-{
-	unsigned i;
-	uint8_t  s, d, m;
-
-	e68_ifetch_next (c);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
-	i = c->ir[1] & 0x07;
-
-	m = 1 << i;
-	d = s ^ m;
-
-	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
-
-	return (c->ircnt);
-}
-
-/* 0840: misc */
+/* 0840: BCHG #XX, <EA> */
 static unsigned op0840 (e68000_t *c)
 {
-	if ((c->ir[0] & 0x0038) == 0x0000) {
-		return (op0840_0 (c));
+	unsigned i;
+	uint8_t  s, d, m;
+
+	if ((c->ir[0] & 0x38) == 0x00) {
+		return (op0840_00 (c));
 	}
 
-	return (op0840_1 (c));
+	e68_ifetch (c, 1);
+
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
+	i = c->ir[1] & 0x07;
+
+	m = 1 << i;
+	d = s ^ m;
+
+	e68_set_ea8 (c, 0, 0, 0, d);
+	e68_set_sr_z (c, (s & m) == 0);
+	e68_set_clk (c, 12);
+
+	return (c->ircnt);
 }
 
-/* 0880_0: BCLR #XX, Dn */
-static unsigned op0880_0 (e68000_t *c)
+/* 0880_00: BCLR #XX, Dn */
+static unsigned op0880_00 (e68000_t *c)
 {
 	unsigned i, r;
 	uint32_t s, d, m;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+
 	r = e68_ir_reg0 (c);
 	s = e68_get_dreg32 (c, r);
 	i = c->ir[1] & 0x1f;
@@ -809,48 +752,44 @@ static unsigned op0880_0 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 14);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0880_1: BCLR #XX, <EA> */
-static unsigned op0880_1 (e68000_t *c)
-{
-	unsigned i;
-	uint8_t  s, d, m;
-
-	e68_ifetch_next (c);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
-	i = c->ir[1] & 0x07;
-
-	m = 1 << i;
-	d = s & ~m;
-
-	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
-
-	return (c->ircnt);
-}
-
-/* 0880: misc */
+/* 0880: BCLR #XX, <EA> */
 static unsigned op0880 (e68000_t *c)
 {
-	if ((c->ir[0] & 0x0038) == 0x0000) {
-		return (op0880_0 (c));
+	unsigned i;
+	uint8_t  s, d, m;
+
+	if ((c->ir[0] & 0x38) == 0x00) {
+		return (op0880_00 (c));
 	}
 
-	return (op0880_1 (c));
+	e68_ifetch (c, 1);
+
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
+	i = c->ir[1] & 0x07;
+
+	m = 1 << i;
+	d = s & ~m;
+
+	e68_set_ea8 (c, 0, 0, 0, d);
+	e68_set_sr_z (c, (s & m) == 0);
+	e68_set_clk (c, 12);
+
+	return (c->ircnt);
 }
 
-/* 08C0_0: BSET #XX, Dn */
-static unsigned op08c0_0 (e68000_t *c)
+/* 08C0_00: BSET #XX, Dn */
+static unsigned op08c0_00 (e68000_t *c)
 {
 	unsigned i, r;
 	uint32_t s, d, m;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+
 	r = e68_ir_reg0 (c);
 	s = e68_get_dreg32 (c, r);
 	i = c->ir[1] & 0x1f;
@@ -860,18 +799,23 @@ static unsigned op08c0_0 (e68000_t *c)
 
 	e68_set_dreg32 (c, r, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 08C0_1: BSET #XX, <EA> */
-static unsigned op08c0_1 (e68000_t *c)
+/* 08C0: BSET #XX, <EA> */
+static unsigned op08c0 (e68000_t *c)
 {
 	unsigned i;
 	uint8_t  s, d, m;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x38) == 0x00) {
+		return (op08c0_00 (c));
+	}
+
+	e68_ifetch (c, 1);
+
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &s);
 	i = c->ir[1] & 0x07;
 
@@ -880,30 +824,35 @@ static unsigned op08c0_1 (e68000_t *c)
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_set_sr_z (c, (s & m) == 0);
-	e68_set_clk (c, 20);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
 
-/* 08C0: misc */
-static unsigned op08c0 (e68000_t *c)
+/* 0A00_3C: EORI.B #XX, CCR */
+static unsigned op0a00_3c (e68000_t *c)
 {
-	if ((c->ir[0] & 0x0038) == 0x0000) {
-		return (op08c0_0 (c));
-	}
+	e68_ifetch (c, 1);
 
-	return (op08c0_1 (c));
+	e68_set_ccr (c, (e68_get_ccr (c) ^ c->ir[1]) & E68_SR_XNZVC);
+	e68_set_clk (c, 20);
+
+	return (2);
 }
 
-/* 0A00_XX: EORI.B #XX, <EA> */
-static unsigned op0a00_xx (e68000_t *c)
+/* 0A00: EORI.B #XX, <EA> */
+static unsigned op0a00 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0a00_3c (c));
+	}
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 ^ s2;
 
@@ -914,27 +863,6 @@ static unsigned op0a00_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0A00_3C: EORI.B #XX, CCR */
-static unsigned op0a00_3c (e68000_t *c)
-{
-	e68_ifetch_next (c);
-
-	e68_set_ccr (c, (e68_get_ccr (c) ^ c->ir[1]) & E68_SR_XNZVC);
-	e68_set_clk (c, 32);
-
-	return (c->ircnt);
-}
-
-/* 0A00: misc */
-static unsigned op0a00 (e68000_t *c)
-{
-	if ((c->ir[0] & 0x3f) == 0x3c) {
-		return (op0a00_3c (c));
-	}
-
-	return (op0a00_xx (c));
-}
-
 /* 0A40_3C: EORI.W #XXXX, SR */
 static unsigned op0a40_3c (e68000_t *c)
 {
@@ -943,23 +871,27 @@ static unsigned op0a40_3c (e68000_t *c)
 		return (0);
 	}
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	e68_set_sr (c, (e68_get_sr (c) ^ c->ir[1]) & E68_SR_MASK);
-	e68_set_clk (c, 32);
+	e68_set_clk (c, 20);
 
-	return (c->ircnt);
+	return (2);
 }
 
-/* 0A40_XX: EORI.W #XXXX, <EA> */
-static unsigned op0a40_xx (e68000_t *c)
+/* 0A40: EORI.W #XXXX, <EA> */
+static unsigned op0a40 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_ifetch_next (c);
+	if ((c->ir[0] & 0x3f) == 0x3c) {
+		return (op0a40_3c (c));
+	}
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = c->ir[1] & 0xffff;
+	e68_ifetch (c, 1);
+
+	s1 = c->ir[1] & 0xffff;
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 ^ s2;
 
@@ -970,26 +902,16 @@ static unsigned op0a40_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 0A40: misc */
-static unsigned op0a40 (e68000_t *c)
-{
-	if ((c->ir[0] & 0x3f) == 0x3c) {
-		return (op0a40_3c (c));
-	}
-
-	return (op0a40_xx (c));
-}
-
 /* 0A80: EORI.L #XXXXXXXX, <EA> */
 static unsigned op0a80 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
 	d = s1 ^ s2;
 
@@ -1005,12 +927,12 @@ static unsigned op0c00 (e68000_t *c)
 {
 	uint8_t s1, s2;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
-	s2 = c->ir[1] & 0xff;
+	s1 = c->ir[1] & 0xff;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x07fd, &s2);
 
-	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_8 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1021,12 +943,12 @@ static unsigned op0c40 (e68000_t *c)
 {
 	uint16_t s1, s2;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
-	s2 = c->ir[1];
+	s1 = c->ir[1];
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x07fd, &s2);
 
-	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_16 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1037,13 +959,13 @@ static unsigned op0c80 (e68000_t *c)
 {
 	uint32_t s1, s2;
 
-	e68_ifetch_next (c);
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+	e68_ifetch (c, 2);
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x07fd, &s1);
-	s2 = ((unsigned long) c->ir[1] << 16) | c->ir[2];
+	s1 = ((uint32_t) c->ir[1] << 16) | c->ir[2];
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x07fd, &s2);
 
-	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
@@ -1083,7 +1005,7 @@ static unsigned op2040 (e68000_t *c)
 	uint32_t val;
 
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &val);
-	e68_set_areg32 (c, (c->ir[0] >> 9) & 7, val);
+	e68_set_areg32 (c, e68_ir_reg9 (c), val);
 
 	e68_set_clk (c, 4);
 
@@ -1110,7 +1032,7 @@ static unsigned op3040 (e68000_t *c)
 	uint16_t val;
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &val);
-	e68_set_areg32 (c, e68_ir_reg9 (c), e68_exts (val, 16));
+	e68_set_areg32 (c, e68_ir_reg9 (c), e68_exts16 (val));
 
 	e68_set_clk (c, 4);
 
@@ -1120,20 +1042,20 @@ static unsigned op3040 (e68000_t *c)
 /* 4000: NEGX.B <EA> */
 static unsigned op4000 (e68000_t *c)
 {
-	uint8_t s, d, x;
+	uint8_t s, d;
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
-	x = e68_get_sr_x (c);
 
-	d = (0U - s - x) & 0xff;
+	d = (~s + 1 - e68_get_sr_x (c)) & 0xff;
 
 	if (d != 0) {
 		e68_set_sr_z (c, 0);
 	}
 
 	e68_set_ea8 (c, 0, 0, 0, d);
+	e68_set_sr_n (c, d & 0x80);
 	e68_set_sr_v (c, d & s & 0x80);
-	e68_set_cc (c, E68_SR_XC, s || x);
+	e68_set_sr_xc (c, (d | s) & 0x80);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1142,20 +1064,20 @@ static unsigned op4000 (e68000_t *c)
 /* 4040: NEGX.W <EA> */
 static unsigned op4040 (e68000_t *c)
 {
-	uint16_t s, d, x;
+	uint16_t s, d;
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
-	x = e68_get_sr_x (c);
 
-	d = (0U - s - x) & 0xffff;
+	d = (~s + 1 - e68_get_sr_x (c)) & 0xffff;
 
 	if (d != 0) {
 		e68_set_sr_z (c, 0);
 	}
 
 	e68_set_ea16 (c, 0, 0, 0, d);
+	e68_set_sr_n (c, d & 0x8000);
 	e68_set_sr_v (c, d & s & 0x8000);
-	e68_set_cc (c, E68_SR_XC, s || x);
+	e68_set_sr_xc (c, (d | s) & 0x8000);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -1164,20 +1086,20 @@ static unsigned op4040 (e68000_t *c)
 /* 4080: NEGX.L <EA> */
 static unsigned op4080 (e68000_t *c)
 {
-	uint32_t s, d, x;
+	uint32_t s, d;
 
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
-	x = e68_get_sr_x (c);
 
-	d = (0U - s - x) & 0xffffffff;
+	d = (~s + 1 - e68_get_sr_x (c)) & 0xffffffff;
 
 	if (d != 0) {
 		e68_set_sr_z (c, 0);
 	}
 
 	e68_set_ea32 (c, 0, 0, 0, d);
+	e68_set_sr_n (c, d & 0x80000000);
 	e68_set_sr_v (c, d & s & 0x80000000);
-	e68_set_cc (c, E68_SR_XC, s || x);
+	e68_set_sr_xc (c, (d | s) & 0x80000000);
 	e68_set_clk (c, 10);
 
 	return (c->ircnt);
@@ -1193,7 +1115,7 @@ static unsigned op40c0 (e68000_t *c)
 	s = e68_get_sr (c) & E68_SR_MASK;
 
 	e68_set_ea16 (c, 0, 0, 0, s);
-	e68_set_clk (c, 10);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1236,7 +1158,7 @@ static unsigned op41c0 (e68000_t *c)
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
@@ -1255,7 +1177,7 @@ static unsigned op4200 (e68000_t *c)
 
 	e68_set_cc (c, E68_SR_N | E68_SR_V | E68_SR_C, 0);
 	e68_set_cc (c, E68_SR_Z, 1);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1267,7 +1189,7 @@ static unsigned op4240 (e68000_t *c)
 
 	e68_set_cc (c, E68_SR_N | E68_SR_V | E68_SR_C, 0);
 	e68_set_cc (c, E68_SR_Z, 1);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1279,7 +1201,7 @@ static unsigned op4280 (e68000_t *c)
 
 	e68_set_cc (c, E68_SR_N | E68_SR_V | E68_SR_C, 0);
 	e68_set_cc (c, E68_SR_Z, 1);
-	e68_set_clk (c, 10);
+	e68_set_clk (c, 6);
 
 	return (c->ircnt);
 }
@@ -1294,10 +1216,11 @@ static unsigned op4400 (e68000_t *c)
 	d = (~s + 1) & 0xff;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
+	e68_set_sr_n (c, d & 0x80);
 	e68_set_sr_v (c, d & s & 0x80);
 	e68_set_sr_z (c, d == 0);
-	e68_set_cc (c, E68_SR_XC, d != 0);
-	e68_set_clk (c, 8);
+	e68_set_sr_xc (c, (d | s) & 0x80);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1312,10 +1235,11 @@ static unsigned op4440 (e68000_t *c)
 	d = (~s + 1) & 0xffff;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_set_sr_v (c, s == 0x8000);
+	e68_set_sr_n (c, d & 0x8000);
+	e68_set_sr_v (c, d & s & 0x8000);
 	e68_set_sr_z (c, d == 0);
-	e68_set_cc (c, E68_SR_XC, d != 0);
-	e68_set_clk (c, 8);
+	e68_set_sr_xc (c, (d | s) & 0x8000);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1330,10 +1254,11 @@ static unsigned op4480 (e68000_t *c)
 	d = (~s + 1) & 0xffffffff;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_set_sr_v (c, s == 0x80000000);
+	e68_set_sr_n (c, d & 0x80000000);
+	e68_set_sr_v (c, d & s & 0x80000000);
 	e68_set_sr_z (c, d == 0);
-	e68_set_cc (c, E68_SR_XC, d != 0);
-	e68_set_clk (c, 10);
+	e68_set_sr_xc (c, (d | s) & 0x80000000);
+	e68_set_clk (c, 6);
 
 	return (c->ircnt);
 }
@@ -1346,7 +1271,7 @@ static unsigned op44c0 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s);
 
 	e68_set_ccr (c, s & E68_SR_XNZVC);
-	e68_set_clk (c, 18);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
@@ -1362,7 +1287,7 @@ static unsigned op4600 (e68000_t *c)
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_cc_set_nz_8 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1378,7 +1303,7 @@ static unsigned op4640 (e68000_t *c)
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -1394,7 +1319,7 @@ static unsigned op4680 (e68000_t *c)
 
 	e68_set_ea32 (c, 0, 0, 0, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 10);
+	e68_set_clk (c, 6);
 
 	return (c->ircnt);
 }
@@ -1412,7 +1337,7 @@ static unsigned op46c0 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s);
 
 	e68_set_sr (c, s & E68_SR_MASK);
-	e68_set_clk (c, 18);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
@@ -1425,7 +1350,7 @@ static unsigned op4800 (e68000_t *c)
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
-	d = 0 - s - e68_get_sr_x (c);
+	d = 0U - s - e68_get_sr_x (c);
 
 	if (d & 0x0f) {
 		d -= 0x06;
@@ -1442,7 +1367,7 @@ static unsigned op4800 (e68000_t *c)
 	}
 
 	e68_set_ea8 (c, 0, 0, 0, d & 0xff);
-	e68_set_clk (c, 10);
+	e68_set_clk (c, 6);
 
 	return (c->ircnt);
 }
@@ -1460,58 +1385,50 @@ static unsigned op4840_00 (e68000_t *c)
 
 	e68_set_dreg32 (c, reg, val);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, val);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* 4840_XX: PEA <EA> */
-static unsigned op4840_xx (e68000_t *c)
+/* 4840: PEA <EA> */
+static unsigned op4840 (e68000_t *c)
 {
+	if ((c->ir[0] & 0x38) == 0x00) {
+		return (op4840_00 (c));
+	}
+
 	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x7e4, 32)) {
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	e68_push32 (c, c->ea_val);
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
-}
-
-/* 4840: misc */
-static unsigned op4840 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (op4840_00 (c));
-
-	default:
-		return (op4840_xx (c));
-	}
 }
 
 /* 4880_00: EXT.W Dn */
 static unsigned op4880_00 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint16_t s, d;
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg);
+	r = e68_ir_reg0 (c);
+	s = e68_get_dreg8 (c, r);
 
 	d = (s & 0x80) ? (s | 0xff00) : s;
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 4880_04: MOVEM.W list, -(Ax) */
@@ -1521,11 +1438,14 @@ static unsigned op4880_04 (e68000_t *c)
 	uint16_t r, v;
 	uint32_t a;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
-
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
+
+	if (r != 0) {
+		e68_chk_addr (c, a, 1);
+	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
@@ -1536,17 +1456,19 @@ static unsigned op4880_04 (e68000_t *c)
 			else {
 				v = e68_get_dreg16 (c, 15 - i);
 			}
+
 			e68_set_mem16 (c, a, v);
+
+			e68_set_clk (c, 4);
 		}
 		r >>= 1;
-		e68_set_clk (c, 8);
 	}
 
 	e68_set_areg32 (c, e68_ir_reg0 (c), a);
 
-	e68_set_clk (c, 16);
+	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (2);
 }
 
 /* 4880_XX: MOVEM.W list, <EA> */
@@ -1556,20 +1478,24 @@ static unsigned op4880_xx (e68000_t *c)
 	uint16_t r, v;
 	uint32_t a;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 
-	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1f4, 16)) {
+	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1e4, 16)) {
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	a = c->ea_val;
+
+	if (r != 0) {
+		e68_chk_addr (c, a, 1);
+	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
@@ -1581,12 +1507,13 @@ static unsigned op4880_xx (e68000_t *c)
 			}
 			e68_set_mem16 (c, a, v);
 			a = (a + 2) & 0xffffffff;
+
+			e68_set_clk (c, 4);
 		}
 		r >>= 1;
-		e68_set_clk (c, 8);
 	}
 
-	e68_set_clk (c, 16);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -1609,19 +1536,19 @@ static unsigned op4880 (e68000_t *c)
 /* 48C0_00: EXT.L Dn */
 static unsigned op48c0_00 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s, d;
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, reg);
+	r = e68_ir_reg0 (c);
+	s = e68_get_dreg16 (c, r);
 
 	d = (s & 0x8000) ? (s | 0xffff0000) : s;
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 48C0_04: MOVEM.L list, -(Ax) */
@@ -1631,10 +1558,14 @@ static unsigned op48c0_04 (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
+
+	if (r != 0) {
+		e68_chk_addr (c, a, 1);
+	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
@@ -1646,16 +1577,17 @@ static unsigned op48c0_04 (e68000_t *c)
 				v = e68_get_dreg32 (c, 15 - i);
 			}
 			e68_set_mem32 (c, a, v);
+
+			e68_set_clk (c, 8);
 		}
 		r >>= 1;
-		e68_set_clk (c, 16);
 	}
 
 	e68_set_areg32 (c, e68_ir_reg0 (c), a);
 
-	e68_set_clk (c, 16);
+	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (2);
 }
 
 /* 48C0_XX: MOVEM.L list, <EA> */
@@ -1665,20 +1597,24 @@ static unsigned op48c0_xx (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 
-	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1f4, 32)) {
+	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1e4, 32)) {
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	a = c->ea_val;
+
+	if (r != 0) {
+		e68_chk_addr (c, a, 1);
+	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
@@ -1690,12 +1626,13 @@ static unsigned op48c0_xx (e68000_t *c)
 			}
 			e68_set_mem32 (c, a, v);
 			a = (a + 4) & 0xffffffff;
+
+			e68_set_clk (c, 8);
 		}
 		r >>= 1;
-		e68_set_clk (c, 16);
 	}
 
-	e68_set_clk (c, 16);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -1720,7 +1657,7 @@ static unsigned op4a00 (e68000_t *c)
 {
 	uint8_t s;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0fff, &s);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
 	e68_cc_set_nz_8 (c, E68_SR_NZVC, s);
 	e68_set_clk (c, 8);
@@ -1733,7 +1670,7 @@ static unsigned op4a40 (e68000_t *c)
 {
 	uint16_t s;
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
 	e68_cc_set_nz_16 (c, E68_SR_NZVC, s);
 	e68_set_clk (c, 8);
@@ -1746,7 +1683,7 @@ static unsigned op4a80 (e68000_t *c)
 {
 	uint32_t s;
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, s);
 	e68_set_clk (c, 8);
@@ -1754,10 +1691,31 @@ static unsigned op4a80 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 4AC0_XX: TAS <EA> */
-static unsigned op4ac0_xx (e68000_t *c)
+/* 4AFC: ILLEGAL */
+static unsigned op4afc (e68000_t *c)
+{
+	e68_ifetch (c, 1);
+
+	if (c->hook != NULL) {
+		if (c->hook (c->hook_ext, c->ir[1]) == 0) {
+			e68_set_clk (c, 8);
+			return (0);
+		}
+	}
+
+	e68_exception_illegal (c);
+
+	return (0);
+}
+
+/* 4AC0: TAS <EA> */
+static unsigned op4ac0 (e68000_t *c)
 {
 	uint8_t s, d;
+
+	if (c->ir[0] == 0x4afc) {
+		return (op4afc (c));
+	}
 
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
@@ -1770,26 +1728,6 @@ static unsigned op4ac0_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 4AC0: misc */
-static unsigned op4ac0 (e68000_t *c)
-{
-	if (c->ir[0] == 0x4afc) {
-		/* ILLEGAL */
-		if (c->hook != NULL) {
-			if (c->hook (c->hook_ext) == 0) {
-				e68_set_clk (c, 8);
-				return (0);
-			}
-		}
-
-		e68_exception_illegal (c);
-
-		return (0);
-	}
-
-	return (op4ac0_xx (c));
-}
-
 /* 4C80_03: MOVEM.W (Ax)+, list */
 static unsigned op4c80_03 (e68000_t *c)
 {
@@ -1797,20 +1735,19 @@ static unsigned op4c80_03 (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
 
-	if (a & 1) {
-		e68_exception_address (c, a, 1, 0);
-		return (0);
+	if (r != 0) {
+		e68_chk_addr (c, a, 0);
 	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
 			v = e68_get_mem16 (c, a);
-			v = e68_exts (v, 16);
+			v = e68_exts16 (v);
 			if (i < 8) {
 				e68_set_dreg32 (c, i, v);
 			}
@@ -1818,16 +1755,17 @@ static unsigned op4c80_03 (e68000_t *c)
 				e68_set_areg32 (c, i - 8, v);
 			}
 			a = (a + 2) & 0xffffffff;
+
+			e68_set_clk (c, 4);
 		}
 		r >>= 1;
-		e68_set_clk (c, 8);
 	}
 
 	e68_set_areg32 (c, e68_ir_reg0 (c), a);
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (2);
 }
 
 /* 4C80_XX: MOVEM.W <EA>, list */
@@ -1837,30 +1775,29 @@ static unsigned op4c80_xx (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 
-	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1ec, 16)) {
+	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x7ec, 16)) {
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	a = c->ea_val;
 
-	if (a & 1) {
-		e68_exception_address (c, a, 1, 0);
-		return (0);
+	if (r != 0) {
+		e68_chk_addr (c, a, 0);
 	}
 
 	for (i = 0; i < 16; i++) {
 		if (r & 1) {
 			v = e68_get_mem16 (c, a);
-			v = e68_exts (v, 16);
+			v = e68_exts16 (v);
 			if (i < 8) {
 				e68_set_dreg32 (c, i, v);
 			}
@@ -1868,12 +1805,13 @@ static unsigned op4c80_xx (e68000_t *c)
 				e68_set_areg32 (c, i - 8, v);
 			}
 			a = (a + 2) & 0xffffffff;
+
+			e68_set_clk (c, 4);
 		}
 		r >>= 1;
-		e68_set_clk (c, 8);
 	}
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
@@ -1900,14 +1838,13 @@ static unsigned op4cc0_03 (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 	a = e68_get_areg32 (c, e68_ir_reg0 (c));
 
-	if (a & 1) {
-		e68_exception_address (c, a, 1, 0);
-		return (0);
+	if (r != 0) {
+		e68_chk_addr (c, a, 0);
 	}
 
 	for (i = 0; i < 16; i++) {
@@ -1920,16 +1857,17 @@ static unsigned op4cc0_03 (e68000_t *c)
 				e68_set_areg32 (c, i - 8, v);
 			}
 			a = (a + 4) & 0xffffffff;
+
+			e68_set_clk (c, 8);
 		}
 		r >>= 1;
-		e68_set_clk (c, 16);
 	}
 
 	e68_set_areg32 (c, e68_ir_reg0 (c), a);
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (2);
 }
 
 /* 4CC0_XX: MOVEM.L <EA>, list */
@@ -1939,24 +1877,23 @@ static unsigned op4cc0_xx (e68000_t *c)
 	uint16_t r;
 	uint32_t a, v;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
 	r = c->ir[1];
 
-	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x1ec, 32)) {
+	if (e68_ea_get_ptr (c, e68_ir_ea1 (c), 0x7ec, 32)) {
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	a = c->ea_val;
 
-	if (a & 1) {
-		e68_exception_address (c, a, 1, 0);
-		return (0);
+	if (r != 0) {
+		e68_chk_addr (c, a, 0);
 	}
 
 	for (i = 0; i < 16; i++) {
@@ -1969,12 +1906,13 @@ static unsigned op4cc0_xx (e68000_t *c)
 				e68_set_areg32 (c, i - 8, v);
 			}
 			a = (a + 4) & 0xffffffff;
+
+			e68_set_clk (c, 8);
 		}
 		r >>= 1;
-		e68_set_clk (c, 16);
 	}
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
@@ -2006,44 +1944,44 @@ static unsigned op4e40_00 (e68000_t *c)
 /* 4E40_02: LINK An, #XXXX */
 static unsigned op4e40_02 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s, d;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	reg = e68_ir_reg0 (c);
-	d = e68_get_areg32 (c, reg);
-	s = e68_exts (c->ir[1], 16);
+	r = e68_ir_reg0 (c);
+	d = e68_get_areg32 (c, r);
+	s = e68_exts16 (c->ir[1]);
 
-	e68_push32 (c, d);
-	e68_set_areg32 (c, reg, e68_get_areg32 (c, 7));
+
+	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) - 4);
+	e68_set_mem32 (c, e68_get_areg32 (c, 7), e68_get_areg32 (c, r));
+	e68_set_areg32 (c, r, e68_get_areg32 (c, 7));
 	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) + s);
 
-	e68_set_clk (c, 32);
+	e68_set_clk (c, 16);
 
-	return (c->ircnt);
+	return (2);
 }
 
 /* 4E40_03: UNLK An */
 static unsigned op4e40_03 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t a;
 
-	reg = e68_ir_reg0 (c);
-	a = e68_get_areg32 (c, reg);
+	r = e68_ir_reg0 (c);
+	a = e68_get_areg32 (c, r);
 
-	if (a & 1) {
-		e68_exception_address (c, a, 1, 0);
-		return (0);
-	}
+	e68_chk_addr (c, a, 0);
 
-	e68_set_areg32 (c, reg, e68_get_mem32 (c, a));
-	e68_set_areg32 (c, 7, a + 4);
+	e68_set_areg32 (c, 7, a);
+	e68_set_areg32 (c, r, e68_get_mem32 (c, a));
+	e68_set_areg32 (c, 7, e68_get_areg32 (c, 7) + 4);
 
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 4E40_04: MOVE.L Ax, USP */
@@ -2059,9 +1997,9 @@ static unsigned op4e40_04 (e68000_t *c)
 	s = e68_get_areg32 (c, e68_ir_reg0 (c));
 
 	e68_set_usp (c, s);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 4E40_05: MOVE.L USP, Ax */
@@ -2077,9 +2015,9 @@ static unsigned op4e40_05 (e68000_t *c)
 	s = e68_get_usp (c);
 
 	e68_set_areg32 (c, e68_ir_reg0 (c), s);
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* 4E70: RESET */
@@ -2092,7 +2030,7 @@ static unsigned op4e70 (e68000_t *c)
 
 	e68_reset (c);
 
-	e68_set_clk (c, 136);
+	e68_set_clk (c, 132);
 
 	return (0);
 }
@@ -2100,7 +2038,7 @@ static unsigned op4e70 (e68000_t *c)
 /* 4E71: NOP */
 static unsigned op4e71 (e68000_t *c)
 {
-	e68_set_clk (c, 8);
+	e68_set_clk (c, 4);
 
 	return (1);
 }
@@ -2113,7 +2051,8 @@ static unsigned op4e72 (e68000_t *c)
 		return (0);
 	}
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
+
 	e68_set_sr (c, c->ir[1]);
 
 	e68_set_clk (c, 4);
@@ -2141,7 +2080,7 @@ static unsigned op4e73 (e68000_t *c)
 	e68_set_pc (c, pc);
 	e68_set_ssp (c, sp + 6);
 
-	e68_set_clk (c, 40);
+	e68_set_clk (c, 20);
 
 	return (0);
 }
@@ -2156,7 +2095,7 @@ static unsigned op4e75 (e68000_t *c)
 	e68_set_pc (c, e68_get_mem32 (c, sp));
 	e68_set_areg32 (c, 7, sp + 4);
 
-	e68_set_clk (c, 32);
+	e68_set_clk (c, 16);
 
 	return (0);
 }
@@ -2165,7 +2104,12 @@ static unsigned op4e75 (e68000_t *c)
 static unsigned op4e76 (e68000_t *c)
 {
 	e68_set_pc (c, e68_get_pc (c) + 2);
-	e68_exception_overflow (c);
+
+	if (e68_get_sr_v (c)) {
+		e68_exception_overflow (c);
+	}
+
+	e68_set_clk (c, 4);
 
 	return (0);
 }
@@ -2181,7 +2125,7 @@ static unsigned op4e77 (e68000_t *c)
 	e68_set_pc (c, e68_get_mem32 (c, sp + 2));
 	e68_set_areg32 (c, 7, sp + 6);
 
-	e68_set_clk (c, 40);
+	e68_set_clk (c, 20);
 
 	return (0);
 }
@@ -2241,7 +2185,7 @@ static unsigned op4e80 (e68000_t *c)
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
@@ -2249,7 +2193,7 @@ static unsigned op4e80 (e68000_t *c)
 	e68_push32 (c, e68_get_pc (c) + 2 * c->ircnt);
 	e68_set_pc (c, c->ea_val);
 
-	e68_set_clk (c, 18);
+	e68_set_clk (c, 16);
 
 	return (0);
 }
@@ -2261,14 +2205,14 @@ static unsigned op4ec0 (e68000_t *c)
 		return (0);
 	}
 
-	if (c->ea_typ != 2) {
+	if (c->ea_typ != E68_EA_TYPE_MEM) {
 		e68_exception_illegal (c);
 		return (0);
 	}
 
 	e68_set_pc (c, c->ea_val);
 
-	e68_set_clk (c, 2);
+	e68_set_clk (c, 8);
 
 	return (0);
 }
@@ -2278,11 +2222,11 @@ static unsigned op5000 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
-	if (s2 == 0) {
-		s2 = 8;
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
 	d = s1 + s2;
@@ -2294,39 +2238,43 @@ static unsigned op5000 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 5040_01: ADDQ.W #X, Ax */
-static unsigned op5040_01 (e68000_t *c)
+/* 5040_08: ADDQ.W #X, Ax */
+static unsigned op5040_08 (e68000_t *c)
 {
-	unsigned reg;
-	uint32_t  s1, s2, d;
+	unsigned r;
+	uint32_t s1, s2, d;
 
-	reg = c->ir[0] & 7;
+	r = e68_ir_reg0 (c);
 
-	s1 = e68_get_areg32 (c, reg);
-	s2 = (c->ir[0] >> 9) & 7;
+	s1 = (c->ir[0] >> 9) & 7;
+	s2 = e68_get_areg32 (c, r);
 
-	if (s2 == 0) {
-		s2 = 8;
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
 	d = s1 + s2;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* 5040_XX: ADDQ.W #X, <EA> */
-static unsigned op5040_xx (e68000_t *c)
+/* 5040: ADDQ.W #X, <EA> */
+static unsigned op5040 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op5040_08 (c));
+	}
 
-	if (s2 == 0) {
-		s2 = 8;
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
+
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
 	d = s1 + s2;
@@ -2338,29 +2286,43 @@ static unsigned op5040_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 5040: misc */
-static unsigned op5040 (e68000_t *c)
+/* 5080_08: ADDQ.L #X, Ax */
+static unsigned op5080_08 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5040_01 (c));
+	unsigned r;
+	uint32_t s1, s2, d;
 
-	default:
-		return (op5040_xx (c));
+	r = e68_ir_reg0 (c);
+
+	s1 = (c->ir[0] >> 9) & 7;
+	s2 = e68_get_areg32 (c, r);
+
+	if (s1 == 0) {
+		s1 = 8;
 	}
+
+	d = s1 + s2;
+
+	e68_set_areg32 (c, r, d);
+	e68_set_clk (c, 12);
+
+	return (1);
 }
 
-/* 5080_XX: ADDQ.L #X, <EA> */
-static unsigned op5080_xx (e68000_t *c)
+/* 5080: ADDQ.L #X, <EA> */
+static unsigned op5080 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	/* maybe 16 bit ? */
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op5080_08 (c));
+	}
 
-	if (s2 == 0) {
-		s2 = 8;
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
+
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
 	d = s1 + s2;
@@ -2372,173 +2334,121 @@ static unsigned op5080_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 5080_01: ADDQ.L #X, Ax */
-static unsigned op5080_01 (e68000_t *c)
-{
-	unsigned reg;
-	uint32_t  s1, s2, d;
-
-	reg = c->ir[0] & 7;
-
-	s1 = e68_get_areg32 (c, reg);
-	s2 = (c->ir[0] >> 9) & 7;
-
-	if (s2 == 0) {
-		s2 = 8;
-	}
-
-	d = s1 + s2;
-
-	e68_set_areg32 (c, reg, d);
-	e68_set_clk (c, 12);
-
-	return (c->ircnt);
-}
-
-/* 5080: misc */
-static unsigned op5080 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5080_01 (c));
-
-	default:
-		return (op5080_xx (c));
-	}
-}
-
 /* 5100: SUBQ.B #X, <EA> */
 static unsigned op5100 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
 
-	if (s2 == 0) {
-		s2 = 8;
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
-	d = s1 - s2;
+	d = s2 - s1;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, d, s2, s1);
+	e68_cc_set_sub_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
 
-/* 5140_01: SUBQ.W #X, Ax */
-static unsigned op5140_01 (e68000_t *c)
+/* 5140_08: SUBQ.W #X, Ax */
+static unsigned op5140_08 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = c->ir[0] & 7;
+	r = e68_ir_reg0 (c);
 
-	s1 = e68_get_areg32 (c, reg);
-	s2 = (c->ir[0] >> 9) & 7;
+	s1 = (c->ir[0] >> 9) & 7;
+	s2 = e68_get_areg32 (c, r);
 
-	if (s2 == 0) {
-		s2 = 8;
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
-	d = s1 - s2;
+	d = s2 - s1;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 8);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* 5140_XX: SUBQ.W #X, <EA> */
-static unsigned op5140_xx (e68000_t *c)
+/* 5140: SUBQ.W #X, <EA> */
+static unsigned op5140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
-
-	if (s2 == 0) {
-		s2 = 8;
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op5140_08 (c));
 	}
 
-	d = s1 - s2;
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
+
+	if (s1 == 0) {
+		s1 = 8;
+	}
+
+	d = s2 - s1;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, d, s2, s1);
+	e68_cc_set_sub_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
 
-/* 5140: misc */
-static unsigned op5140 (e68000_t *c)
+/* 5180_08: SUBQ.L #X, Ax */
+static unsigned op5180_08 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5140_01 (c));
-
-	default:
-		return (op5140_xx (c));
-	}
-}
-
-/* 5180_01: SUBQ.L #X, Ax */
-static unsigned op5180_01 (e68000_t *c)
-{
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = c->ir[0] & 7;
+	r = e68_ir_reg0 (c);
 
-	s1 = e68_get_areg32 (c, reg);
-	s2 = (c->ir[0] >> 9) & 7;
+	s1 = (c->ir[0] >> 9) & 7;
+	s2 = e68_get_areg32 (c, r);
 
-	if (s2 == 0) {
-		s2 = 8;
+	if (s1 == 0) {
+		s1 = 8;
 	}
 
-	d = s1 - s2;
+	d = s2 - s1;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 12);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* 5180_XX: SUBQ.L #X, <EA> */
-static unsigned op5180_xx (e68000_t *c)
-{
-	uint32_t s1, s2, d;
-
-	/* maybe 16 bit ? */
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s1);
-	s2 = (c->ir[0] >> 9) & 7;
-
-	if (s2 == 0) {
-		s2 = 8;
-	}
-
-	d = s1 - s2;
-
-	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, d, s2, s1);
-	e68_set_clk (c, 12);
-
-	return (c->ircnt);
-}
-
-/* 5180: misc */
+/* 5180: SUBQ.L #X, <EA> */
 static unsigned op5180 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5180_01 (c));
+	uint32_t s1, s2, d;
 
-	default:
-		return (op5180_xx (c));
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op5180_08 (c));
 	}
+
+	s1 = (c->ir[0] >> 9) & 7;
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
+
+	if (s1 == 0) {
+		s1 = 8;
+	}
+
+	d = s2 - s1;
+
+	e68_set_ea32 (c, 0, 0, 0, d);
+	e68_cc_set_sub_32 (c, d, s1, s2);
+	e68_set_clk (c, 12);
+
+	return (c->ircnt);
 }
 
 /* DBcc Dx, dist */
@@ -2548,13 +2458,13 @@ static unsigned op_dbcc (e68000_t *c, int cond)
 	uint16_t val;
 	uint32_t dist;
 
-	e68_ifetch_next (c);
+	e68_ifetch (c, 1);
 
-	dist = e68_exts (c->ir[1], 16);
+	dist = e68_exts16 (c->ir[1]);
 
 	if (cond) {
-		e68_set_clk (c, 20);
-		return (c->ircnt);
+		e68_set_clk (c, 12);
+		return (2);
 	}
 
 	reg = e68_ir_reg0 (c);
@@ -2563,13 +2473,13 @@ static unsigned op_dbcc (e68000_t *c, int cond)
 	e68_set_dreg16 (c, reg, val);
 
 	if (val == 0xffff) {
-		e68_set_clk (c, 20);
-		return (c->ircnt);
+		e68_set_clk (c, 14);
+		return (2);
 	}
 
 	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
-	e68_set_clk (c, 18);
+	e68_set_clk (c, 10);
 
 	return (0);
 }
@@ -2579,424 +2489,251 @@ static unsigned op_scc (e68000_t *c, int cond)
 {
 	uint8_t val;
 
-	if (cond) {
-		val = 0xff;
-		e68_set_clk (c, 10);
-	}
-	else {
-		val = 0x00;
-		e68_set_clk (c, 8);
-	}
+	val = cond ? 0xff : 0x00;
 
 	e68_set_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, val);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
 
-/* 50C0_01: DBT Dx, dist */
-static unsigned op50c0_01 (e68000_t *c)
+/* 50C0: ST <EA> / DBT Dx, dist */
+static unsigned op50c0 (e68000_t *c)
 {
-	return (op_dbcc (c, 1));
-}
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, 1));
+	}
 
-/* 50C0_XX: ST <EA> */
-static unsigned op50c0_xx (e68000_t *c)
-{
 	return (op_scc (c, 1));
 }
 
-/* 50C0: misc */
-static unsigned op50c0 (e68000_t *c)
+/* 51C0: SF <EA> / DBF Dx, dist */
+static unsigned op51c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op50c0_01 (c));
-
-	default:
-		return (op50c0_xx (c));
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, 0));
 	}
-}
 
-/* 51C0_01: DBF Dx, dist */
-static unsigned op51c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, 0));
-}
-
-/* 51C0_XX: SF <EA> */
-static unsigned op51c0_xx (e68000_t *c)
-{
 	return (op_scc (c, 0));
 }
 
-/* 51C0: misc */
-static unsigned op51c0 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op51c0_01 (c));
-
-	default:
-		return (op51c0_xx (c));
-	}
-}
-
-/* 52C0_01: DBHI Dx, dist */
-static unsigned op52c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, !e68_get_sr_c (c) && !e68_get_sr_z (c)));
-}
-
-/* 52C0_XX: SHI <EA> */
-static unsigned op52c0_xx (e68000_t *c)
-{
-	return (op_scc (c, !e68_get_sr_c (c) && !e68_get_sr_z (c)));
-}
-
-/* 52C0: misc */
+/* 52C0: SHI <EA> / DBHI Dx, dist */
 static unsigned op52c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op52c0_01 (c));
+	int cond;
 
-	default:
-		return (op52c0_xx (c));
+	cond = (!e68_get_sr_c (c) && !e68_get_sr_z (c));
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 53C0_01: DBLS Dx, dist */
-static unsigned op53c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_c (c) || e68_get_sr_z (c)));
-}
-
-/* 53C0_XX: SLS <EA> */
-static unsigned op53c0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_c (c) || e68_get_sr_z (c)));
-}
-
-/* 53C0: misc */
+/* 53C0: SLS <EA> / DBLS Dx, dist */
 static unsigned op53c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op53c0_01 (c));
+	int cond;
 
-	default:
-		return (op53c0_xx (c));
+	cond = (e68_get_sr_c (c) || e68_get_sr_z (c));
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 54C0_01: DBCC Dx, dist */
-static unsigned op54c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, !e68_get_sr_c (c)));
-}
-
-/* 54C0_XX: SCC <EA> */
-static unsigned op54c0_xx (e68000_t *c)
-{
-	return (op_scc (c, !e68_get_sr_c (c)));
-}
-
-/* 54C0: misc */
+/* 54C0: SCC <EA> / DBCC Dx, dist */
 static unsigned op54c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op54c0_01 (c));
+	int cond;
 
-	default:
-		return (op54c0_xx (c));
+	cond = !e68_get_sr_c (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 55C0_01: DBCS Dx, dist */
-static unsigned op55c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_c (c)));
-}
-
-/* 55C0_XX: SCS <EA> */
-static unsigned op55c0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_c (c)));
-}
-
-/* 55C0: misc */
+/* 55C0: SCS <EA> / DBCS Dx, dist */
 static unsigned op55c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op55c0_01 (c));
+	int cond;
 
-	default:
-		return (op55c0_xx (c));
+	cond = e68_get_sr_c (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 56C0_01: DBNE Dx, dist */
-static unsigned op56c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, !e68_get_sr_z (c)));
-}
-
-/* 56C0_XX: SNE <EA> */
-static unsigned op56c0_xx (e68000_t *c)
-{
-	return (op_scc (c, !e68_get_sr_z (c)));
-}
-
-/* 56C0: misc */
+/* 56C0: SNE <EA> / DBNE Dx, dist */
 static unsigned op56c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op56c0_01 (c));
+	int cond;
 
-	default:
-		return (op56c0_xx (c));
+	cond = !e68_get_sr_z (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 57C0_01: DBEQ Dx, dist */
-static unsigned op57c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_z (c)));
-}
-
-/* 57C0_XX: SEQ <EA> */
-static unsigned op57c0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_z (c)));
-}
-
-/* 57C0: misc */
+/* 57C0: SEQ <EA> / DBEQ Dx, dist */
 static unsigned op57c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op57c0_01 (c));
+	int cond;
 
-	default:
-		return (op57c0_xx (c));
+	cond = e68_get_sr_z (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 58C0_01: DBVC Dx, dist */
-static unsigned op58c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, !e68_get_sr_v (c)));
-}
-
-/* 58C0_XX: SVC <EA> */
-static unsigned op58c0_xx (e68000_t *c)
-{
-	return (op_scc (c, !e68_get_sr_v (c)));
-}
-
-/* 58C0: misc */
+/* 58C0: SVC <EA> / DBVC Dx, dist */
 static unsigned op58c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op58c0_01 (c));
+	int cond;
 
-	default:
-		return (op58c0_xx (c));
+	cond = !e68_get_sr_v (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 59C0_01: DBVS Dx, dist */
-static unsigned op59c0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_v (c)));
-}
-
-/* 59C0_XX: SVS <EA> */
-static unsigned op59c0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_v (c)));
-}
-
-/* 59C0: misc */
+/* 59C0: SVS <EA> / DBVS Dx, dist */
 static unsigned op59c0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op59c0_01 (c));
+	int cond;
 
-	default:
-		return (op59c0_xx (c));
+	cond = e68_get_sr_v (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5AC0_01: DBPL Dx, dist */
-static unsigned op5ac0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, !e68_get_sr_n (c)));
-}
-
-/* 5AC0_XX: SPL <EA> */
-static unsigned op5ac0_xx (e68000_t *c)
-{
-	return (op_scc (c, !e68_get_sr_n (c)));
-}
-
-/* 5AC0: misc */
+/* 5AC0: SPL <EA> / DBPL Dx, dist */
 static unsigned op5ac0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5ac0_01 (c));
+	int cond;
 
-	default:
-		return (op5ac0_xx (c));
+	cond = !e68_get_sr_n (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5BC0_01: DBMI Dx, dist */
-static unsigned op5bc0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_n (c)));
-}
-
-/* 5BC0_XX: SMI <EA> */
-static unsigned op5bc0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_n (c)));
-}
-
-/* 5BC0: misc */
+/* 5BC0: SMI <EA> / DBMI Dx, dist */
 static unsigned op5bc0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5bc0_01 (c));
+	int cond;
 
-	default:
-		return (op5bc0_xx (c));
+	cond = e68_get_sr_n (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5CC0_01: DBGE Dx, dist */
-static unsigned op5cc0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_n (c) == e68_get_sr_v (c)));
-}
-
-/* 5CC0_XX: SGE <EA> */
-static unsigned op5cc0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_n (c) == e68_get_sr_v (c)));
-}
-
-/* 5CC0: misc */
+/* 5CC0: SGE <EA> / DBGE Dx, dist */
 static unsigned op5cc0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5cc0_01 (c));
+	int cond;
 
-	default:
-		return (op5cc0_xx (c));
+	cond = (e68_get_sr_n (c) == e68_get_sr_v (c));
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5DC0_01: DBLT Dx, dist */
-static unsigned op5dc0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, e68_get_sr_n (c) != e68_get_sr_v (c)));
-}
-
-/* 5DC0_XX: SLT <EA> */
-static unsigned op5dc0_xx (e68000_t *c)
-{
-	return (op_scc (c, e68_get_sr_n (c) != e68_get_sr_v (c)));
-}
-
-/* 5DC0: misc */
+/* 5DC0: SLT <EA> / DBLT Dx, dist */
 static unsigned op5dc0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5dc0_01 (c));
+	int cond;
 
-	default:
-		return (op5dc0_xx (c));
+	cond = (e68_get_sr_n (c) != e68_get_sr_v (c));
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5EC0_01: DBGT Dx, dist */
-static unsigned op5ec0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, (e68_get_sr_n (c) == e68_get_sr_v (c)) && !e68_get_sr_z (c)));
-}
-
-/* 5EC0_XX: SGT <EA> */
-static unsigned op5ec0_xx (e68000_t *c)
-{
-	return (op_scc (c, (e68_get_sr_n (c) == e68_get_sr_v (c)) && !e68_get_sr_z (c)));
-}
-
-/* 5EC0: misc */
+/* 5EC0: SGT <EA> / DBGT Dx, dist */
 static unsigned op5ec0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5ec0_01 (c));
+	int cond;
 
-	default:
-		return (op5ec0_xx (c));
+	cond = (e68_get_sr_n (c) == e68_get_sr_v (c)) && !e68_get_sr_z (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
-/* 5FC0_01: DBLE Dx, dist */
-static unsigned op5fc0_01 (e68000_t *c)
-{
-	return (op_dbcc (c, (e68_get_sr_n (c) != e68_get_sr_v (c)) || e68_get_sr_z (c)));
-}
-
-/* 5FC0_XX: SLE <EA> */
-static unsigned op5fc0_xx (e68000_t *c)
-{
-	return (op_scc (c, (e68_get_sr_n (c) != e68_get_sr_v (c)) || e68_get_sr_z (c)));
-}
-
-/* 5FC0: misc */
+/* 5FC0: SLE <EA> / DBLE Dx, dist */
 static unsigned op5fc0 (e68000_t *c)
 {
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (op5fc0_01 (c));
+	int cond;
 
-	default:
-		return (op5fc0_xx (c));
+	cond = (e68_get_sr_n (c) != e68_get_sr_v (c)) || e68_get_sr_z (c);
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (op_dbcc (c, cond));
 	}
+
+	return (op_scc (c, cond));
 }
 
 /* conditional jump */
-static unsigned op_bcc (e68000_t *c, int cond)
+static inline
+unsigned op_bcc (e68000_t *c, int cond)
 {
 	uint32_t dist;
 
-	dist = e68_exts (c->ir[0], 8);
+	dist = e68_exts8 (c->ir[0]);
 
 	if (dist == 0) {
-		e68_ifetch_next (c);
-		dist = e68_exts (c->ir[1], 16);
+		e68_ifetch (c, 1);
+		dist = e68_exts16 (c->ir[1]);
 	}
 
 	if (cond == 0) {
-		e68_set_clk (c, 12);
+		e68_set_clk (c, ((c->ir[0] & 0xff) == 0) ? 12 : 8);
 		return (c->ircnt);
 	}
 
 	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
-	e68_set_clk (c, 18);
+	e68_set_clk (c, 10);
 
 	return (0);
 }
@@ -3004,21 +2741,38 @@ static unsigned op_bcc (e68000_t *c, int cond)
 /* 6000: BRA dist */
 static unsigned op6000 (e68000_t *c)
 {
-	return (op_bcc (c, 1));
+	uint32_t dist;
+
+	dist = e68_exts8 (c->ir[0]);
+
+	if (dist == 0) {
+		e68_ifetch (c, 1);
+		dist = e68_exts16 (c->ir[1]);
+	}
+
+	e68_set_pc (c, e68_get_pc (c) + dist + 2);
+
+	e68_set_clk (c, 10);
+
+	return (0);
 }
 
 /* 6100: BSR dist */
 static unsigned op6100 (e68000_t *c)
 {
-	uint32_t pc;
+	uint32_t dist;
 
-	pc = e68_get_pc (c);
+	dist = e68_exts8 (c->ir[0]);
 
-	op_bcc (c, 1);
+	if (dist == 0) {
+		e68_ifetch (c, 1);
+		dist = e68_exts16 (c->ir[1]);
+	}
 
-	e68_push32 (c, pc + 2 * c->ircnt);
+	e68_push32 (c, e68_get_pc (c) + 2 * c->ircnt);
+	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
-	e68_set_clk (c, 16);
+	e68_set_clk (c, 18);
 
 	return (0);
 }
@@ -3112,7 +2866,7 @@ static unsigned op7000 (e68000_t *c)
 {
 	uint32_t val;
 
-	val = e68_exts (c->ir[0], 8);
+	val = e68_exts8 (c->ir[0]);
 
 	e68_set_dreg32 (c, e68_ir_reg9 (c), val);
 
@@ -3125,17 +2879,17 @@ static unsigned op7000 (e68000_t *c)
 /* 8000: OR.B <EA>, Dx */
 static unsigned op8000 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint8_t  s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg8 (c, reg);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg8 (c, r);
 
 	d = s1 | s2;
 
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 8);
 
@@ -3145,17 +2899,17 @@ static unsigned op8000 (e68000_t *c)
 /* 8040: OR.W <EA>, Dx */
 static unsigned op8040 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint16_t s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
 	d = s1 | s2;
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 8);
 
@@ -3165,17 +2919,17 @@ static unsigned op8040 (e68000_t *c)
 /* 8080: OR.L <EA>, Dx */
 static unsigned op8080 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
 	d = s1 | s2;
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 10);
 
@@ -3185,30 +2939,30 @@ static unsigned op8080 (e68000_t *c)
 /* 80C0: DIVU.W <EA>, Dx */
 static unsigned op80c0 (e68000_t *c)
 {
-	unsigned reg;
-	uint32_t s1, d, r;
-	uint16_t s2;
+	unsigned r;
+	uint32_t s2, d1, d2;
+	uint16_t s1;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
-	if (s2 == 0) {
+	if (s1 == 0) {
 		e68_exception_divzero (c);
 		return (0);
 	}
 
-	d = s1 / s2;
-	r = s1 % s2;
+	d1 = s2 / s1;
+	d2 = s2 % s1;
 
-	if (d & 0xffff0000) {
+	if (d1 & 0xffff0000) {
 		e68_set_sr_v (c, 1);
 		e68_set_sr_c (c, 0);
 	}
 	else {
-		e68_set_dreg32 (c, reg, ((r & 0xffff) << 16) | (d & 0xffff));
-		e68_cc_set_nz_16 (c, E68_SR_NZVC, d & 0xffff);
+		e68_set_dreg32 (c, r, ((d2 & 0xffff) << 16) | (d1 & 0xffff));
+		e68_cc_set_nz_16 (c, E68_SR_NZVC, d1 & 0xffff);
 	}
 
 	e68_set_clk (c, 144);
@@ -3235,8 +2989,6 @@ static unsigned op8100_00 (e68000_t *c)
 	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea8 (c, 1, ea2, 0x0011, &s2);
 
-	s1 += e68_get_sr_x (c);
-
 	d = (uint16_t) s2 - (uint16_t) s1 - e68_get_sr_x (c);
 
 	if ((s2 & 0x0f) < (s1 & 0x0f)) {
@@ -3259,10 +3011,14 @@ static unsigned op8100_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 8100_XX: AND.B Dx, <EA> */
-static unsigned op8100_xx (e68000_t *c)
+/* 8100: OR.B Dx, <EA> */
+static unsigned op8100 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
+
+	if ((c->ir[0] & 0x30) == 0) {
+		return (op8100_00 (c));
+	}
 
 	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
@@ -3276,20 +3032,7 @@ static unsigned op8100_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 8100: misc */
-static unsigned op8100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (op8100_00 (c));
-
-	default:
-		return (op8100_xx (c));
-	}
-}
-
-/* 8140: AND.W Dx, <EA> */
+/* 8140: OR.W Dx, <EA> */
 static unsigned op8140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
@@ -3306,7 +3049,7 @@ static unsigned op8140 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 8180: AND.L Dx, <EA> */
+/* 8180: OR.L Dx, <EA> */
 static unsigned op8180 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
@@ -3326,17 +3069,17 @@ static unsigned op8180 (e68000_t *c)
 /* 81C0: DIVS.W <EA>, Dx */
 static unsigned op81c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	int      n1, n2;
-	uint32_t s1, d, r;
-	uint16_t s2;
+	uint32_t s2, d1, d2;
+	uint16_t s1;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
-	if (s2 == 0) {
+	if (s1 == 0) {
 		e68_exception_divzero (c);
 		return (0);
 	}
@@ -3344,34 +3087,34 @@ static unsigned op81c0 (e68000_t *c)
 	n1 = 0;
 	n2 = 0;
 
-	if (s1 & 0x80000000) {
-		n1 = 1;
-		s1 = (~s1 + 1) & 0xffffffff;
-	}
-
-	if (s2 & 0x8000) {
+	if (s2 & 0x80000000) {
 		n2 = 1;
-		s2 = (~s2 + 1) & 0xffff;
+		s2 = (~s2 + 1) & 0xffffffff;
 	}
 
-	d = s1 / s2;
-	r = s1 % s2;
+	if (s1 & 0x8000) {
+		n1 = 1;
+		s1 = (~s1 + 1) & 0xffff;
+	}
 
-	if (n1) {
-		r = (~r + 1) & 0xffff;
+	d1 = s2 / s1;
+	d2 = s2 % s1;
+
+	if (n2) {
+		d2 = (~d2 + 1) & 0xffff;
 	}
 
 	if (n1 != n2) {
-		d = (~d + 1) & 0xffffffff;
+		d1 = (~d1 + 1) & 0xffffffff;
 	}
 
 	e68_set_clk (c, 162);
 
-	switch (d & 0xffff8000) {
+	switch (d1 & 0xffff8000) {
 	case 0x00000000:
 	case 0xffff8000:
-		e68_set_dreg32 (c, reg, ((r & 0xffff) << 16) | (d & 0xffff));
-		e68_cc_set_nz_16 (c, E68_SR_NZVC, d & 0xffff);
+		e68_set_dreg32 (c, r, ((d2 & 0xffff) << 16) | (d1 & 0xffff));
+		e68_cc_set_nz_16 (c, E68_SR_NZVC, d1 & 0xffff);
 		break;
 
 	default:
@@ -3387,18 +3130,18 @@ static unsigned op81c0 (e68000_t *c)
 /* 9000: SUB.B <EA>, Dx */
 static unsigned op9000 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint8_t  s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg8 (c, reg);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg8 (c, r);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
-	e68_set_dreg8 (c, reg, d);
-	e68_cc_set_sub_8 (c, d, s2, s1);
+	e68_set_dreg8 (c, r, d);
+	e68_cc_set_sub_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3407,18 +3150,18 @@ static unsigned op9000 (e68000_t *c)
 /* 9040: SUB.W <EA>, Dx */
 static unsigned op9040 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint16_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
-	e68_set_dreg16 (c, reg, d);
-	e68_cc_set_sub_16 (c, d, s2, s1);
+	e68_set_dreg16 (c, r, d);
+	e68_cc_set_sub_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3427,18 +3170,18 @@ static unsigned op9040 (e68000_t *c)
 /* 9080: SUB.L <EA>, Dx */
 static unsigned op9080 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
-	d = s1 - s2;
+	d = s2 - s1;
 
-	e68_set_dreg32 (c, reg, d);
-	e68_cc_set_sub_32 (c, d, s2, s1);
+	e68_set_dreg32 (c, r, d);
+	e68_cc_set_sub_32 (c, d, s1, s2);
 	e68_set_clk (c, 10);
 
 	return (c->ircnt);
@@ -3447,19 +3190,19 @@ static unsigned op9080 (e68000_t *c)
 /* 90C0: SUBA.W <EA>, Ax */
 static unsigned op90c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 	uint16_t t;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s1 = e68_exts (t, 16);
-	s2 = e68_get_areg32 (c, reg);
+	s1 = e68_exts16 (t);
+	s2 = e68_get_areg32 (c, r);
 
 	d = s2 - s1;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -3476,8 +3219,8 @@ static unsigned op9100_00 (e68000_t *c)
 
 	if (c->ir[0] & 0x0008) {
 		/* pre-decrement */
-		ea1 |= 0x20;
-		ea2 |= 0x20;
+		ea1 |= (4 << 3);
+		ea2 |= (4 << 3);
 	}
 
 	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
@@ -3492,34 +3235,25 @@ static unsigned op9100_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 9100_XX: SUB.B Dx, <EA> */
-static unsigned op9100_xx (e68000_t *c)
+/* 9100: SUB.B Dx, <EA> */
+static unsigned op9100 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg8 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0x00) {
+		return (op9100_00 (c));
+	}
 
-	d = s1 - s2;
+	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
+
+	d = s2 - s1;
 
 	e68_set_ea8 (c, 0, 0, 0, d);
-	e68_cc_set_sub_8 (c, d, s2, s1);
+	e68_cc_set_sub_8 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
-}
-
-/* 9100: misc */
-static unsigned op9100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (op9100_00 (c));
-
-	default:
-		return (op9100_xx (c));
-	}
 }
 
 /* 9140_00: SUBX.W <EA>, <EA> */
@@ -3533,8 +3267,8 @@ static unsigned op9140_00 (e68000_t *c)
 
 	if (c->ir[0] & 0x0008) {
 		/* pre-decrement */
-		ea1 |= 0x20;
-		ea2 |= 0x20;
+		ea1 |= (4 << 3);
+		ea2 |= (4 << 3);
 	}
 
 	e68_get_ea16 (c, 1, ea1, 0x0011, &s1);
@@ -3549,34 +3283,25 @@ static unsigned op9140_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 9140_XX: SUB.W Dx, <EA> */
-static unsigned op9140_xx (e68000_t *c)
+/* 9140: SUB.W Dx, <EA> */
+static unsigned op9140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg16 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0x00) {
+		return (op9140_00 (c));
+	}
 
-	d = s1 - s2;
+	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
+
+	d = s2 - s1;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
-	e68_cc_set_sub_16 (c, d, s2, s1);
+	e68_cc_set_sub_16 (c, d, s1, s2);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
-}
-
-/* 9140: misc */
-static unsigned op9140 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (op9140_00 (c));
-
-	default:
-		return (op9140_xx (c));
-	}
 }
 
 /* 9180_00: SUBX.L <EA>, <EA> */
@@ -3590,8 +3315,8 @@ static unsigned op9180_00 (e68000_t *c)
 
 	if (c->ir[0] & 0x0008) {
 		/* pre-decrement */
-		ea1 |= 0x20;
-		ea2 |= 0x20;
+		ea1 |= (4 << 3);
+		ea2 |= (4 << 3);
 	}
 
 	e68_get_ea32 (c, 1, ea1, 0x0011, &s1);
@@ -3606,50 +3331,41 @@ static unsigned op9180_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* 9180_XX: SUB.L Dx, <EA> */
-static unsigned op9180_xx (e68000_t *c)
+/* 9180: SUB.L Dx, <EA> */
+static unsigned op9180 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg32 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0x00) {
+		return (op9180_00 (c));
+	}
 
-	d = s1 - s2;
+	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
+
+	d = s2 - s1;
 
 	e68_set_ea32 (c, 0, 0, 0, d);
-	e68_cc_set_sub_32 (c, d, s2, s1);
+	e68_cc_set_sub_32 (c, d, s1, s2);
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
 }
 
-/* 9180: misc */
-static unsigned op9180 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (op9180_00 (c));
-
-	default:
-		return (op9180_xx (c));
-	}
-}
-
 /* 91C0: SUBA.L <EA>, Ax */
 static unsigned op91c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
-	s2 = e68_get_areg32 (c, reg);
+	s2 = e68_get_areg32 (c, r);
 
 	d = s2 - s1;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 10);
 
 	return (c->ircnt);
@@ -3668,12 +3384,12 @@ static unsigned opa000 (e68000_t *c)
 /* B000: CMP.B <EA>, Dx */
 static unsigned opb000 (e68000_t *c)
 {
-	uint8_t  s1, s2;
+	uint8_t s1, s2;
 
-	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg8 (c, e68_ir_reg9 (c));
 
-	e68_cc_set_cmp_8 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_8 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -3684,10 +3400,10 @@ static unsigned opb040 (e68000_t *c)
 {
 	uint16_t s1, s2;
 
-	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg16 (c, e68_ir_reg9 (c));
 
-	e68_cc_set_cmp_16 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_16 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
@@ -3698,10 +3414,10 @@ static unsigned opb080 (e68000_t *c)
 {
 	uint32_t s1, s2;
 
-	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg32 (c, e68_ir_reg9 (c));
 
-	e68_cc_set_cmp_32 (c, s1 - s2, s2, s1);
+	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
 	e68_set_clk (c, 6);
 
 	return (c->ircnt);
@@ -3714,7 +3430,7 @@ static unsigned opb0c0 (e68000_t *c)
 	uint16_t t;
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s1 = e68_exts (t, 16);
+	s1 = e68_exts16 (t);
 	s2 = e68_get_areg32 (c, e68_ir_reg9 (c));
 
 	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
@@ -3723,12 +3439,11 @@ static unsigned opb0c0 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* B100_01: CMPM.B (Ay)+, (Ax)+ */
-static unsigned opb100_01 (e68000_t *c)
+/* B100_08: CMPM.B (Ay)+, (Ax)+ */
+static unsigned opb100_08 (e68000_t *c)
 {
 	uint8_t s1, s2;
 
-	/* order ? */
 	e68_get_ea8 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea8 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
@@ -3738,10 +3453,14 @@ static unsigned opb100_01 (e68000_t *c)
 	return (1);
 }
 
-/* B100_XX: EOR.B Dx, <EA> */
-static unsigned opb100_xx (e68000_t *c)
+/* B100: EOR.B Dx, <EA> */
+static unsigned opb100 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (opb100_08 (c));
+	}
 
 	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
@@ -3755,37 +3474,28 @@ static unsigned opb100_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* B100: misc */
-static unsigned opb100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (opb100_01 (c));
-
-	default:
-		return (opb100_xx (c));
-	}
-}
-
-/* B140_01: CMPM.W (Ay)+, (Ax)+ */
-static unsigned opb140_01 (e68000_t *c)
+/* B140_08: CMPM.W (Ay)+, (Ax)+ */
+static unsigned opb140_08 (e68000_t *c)
 {
 	uint16_t s1, s2;
 
-	/* order */
 	e68_get_ea16 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea16 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
 	e68_cc_set_cmp_16 (c, s2 - s1, s1, s2);
-	e68_set_clk (c, 24);
+	e68_set_clk (c, 12);
 
 	return (1);
 }
 
-/* B140_XX: EOR.W Dx, <EA> */
-static unsigned opb140_xx (e68000_t *c)
+/* B140: EOR.W Dx, <EA> */
+static unsigned opb140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (opb140_08 (c));
+	}
 
 	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
@@ -3799,37 +3509,28 @@ static unsigned opb140_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* B140: misc */
-static unsigned opb140 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (opb140_01 (c));
-
-	default:
-		return (opb140_xx (c));
-	}
-}
-
-/* B180_01: CMPM.L (Ay)+, (Ax)+ */
-static unsigned opb180_01 (e68000_t *c)
+/* B180_08: CMPM.L (Ay)+, (Ax)+ */
+static unsigned opb180_08 (e68000_t *c)
 {
 	uint32_t s1, s2;
 
-	/* order */
 	e68_get_ea32 (c, 1, e68_ir_reg0 (c) | (3 << 3), 0x0008, &s1);
 	e68_get_ea32 (c, 1, e68_ir_reg9 (c) | (3 << 3), 0x0008, &s2);
 
 	e68_cc_set_cmp_32 (c, s2 - s1, s1, s2);
-	e68_set_clk (c, 40);
+	e68_set_clk (c, 20);
 
 	return (1);
 }
 
-/* B180_XX: EOR.L Dx, <EA> */
-static unsigned opb180_xx (e68000_t *c)
+/* B180: EOR.L Dx, <EA> */
+static unsigned opb180 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (opb180_08 (c));
+	}
 
 	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fd, &s2);
@@ -3841,18 +3542,6 @@ static unsigned opb180_xx (e68000_t *c)
 	e68_set_clk (c, 12);
 
 	return (c->ircnt);
-}
-
-/* B180: misc */
-static unsigned opb180 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x01:
-		return (opb180_01 (c));
-
-	default:
-		return (opb180_xx (c));
-	}
 }
 
 /* B1C0: CMPA.L <EA>, Ax */
@@ -3872,57 +3561,57 @@ static unsigned opb1c0 (e68000_t *c)
 /* C000: AND.B <EA>, Dx */
 static unsigned opc000 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint8_t  s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg8 (c, reg);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg8 (c, r);
 
 	d = s1 & s2;
 
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
 
-/* C040: AND.W EA, Dx */
+/* C040: AND.W <EA>, Dx */
 static unsigned opc040 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint16_t s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
 	d = s1 & s2;
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
 
-/* C080: AND.L EA, Dx */
+/* C080: AND.L <EA>, Dx */
 static unsigned opc080 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
 	d = s1 & s2;
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
 	e68_set_clk (c, 6);
 
@@ -3932,34 +3621,34 @@ static unsigned opc080 (e68000_t *c)
 /* C0C0: MULU.W <EA>, Dx */
 static unsigned opc0c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t d;
 	uint16_t s1, s2;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
 	d = (uint32_t) s1 * (uint32_t) s2;
 
 	e68_set_clk (c, 74);
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
 
 	return (c->ircnt);
 }
 
-/* C100_00: ABCD EA, EA */
+/* C100_00: ABCD <EA>, <EA> */
 static unsigned opc100_00 (e68000_t *c)
 {
 	uint8_t  s1, s2;
 	uint16_t d;
 	unsigned ea1, ea2;
 
-	ea1 = c->ir[0] & 0x07;
-	ea2 = (c->ir[0] >> 9) & 0x07;
+	ea1 = e68_ir_reg0 (c);
+	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x08) {
 		/* -(Ax) */
@@ -3972,6 +3661,7 @@ static unsigned opc100_00 (e68000_t *c)
 
 	d = (uint16_t) s1 + (uint16_t) s2 + e68_get_sr_x (c);
 
+	/* incorrect */
 	if (((s1 & 0x0f) + (s2 & 0x0f)) > 9) {
 		d += 0x06;
 	}
@@ -3995,10 +3685,14 @@ static unsigned opc100_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* C100_XX: AND.B Dx, <EA> */
-static unsigned opc100_xx (e68000_t *c)
+/* C100: AND.B Dx, <EA> */
+static unsigned opc100 (e68000_t *c)
 {
-	uint8_t  s1, s2, d;
+	uint8_t s1, s2, d;
+
+	if ((c->ir[0] & 0x30) == 0x00) {
+		return (opc100_00 (c));
+	}
 
 	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
 	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
@@ -4012,27 +3706,14 @@ static unsigned opc100_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* C100: misc */
-static unsigned opc100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (opc100_00 (c));
-
-	default:
-		return (opc100_xx (c));
-	}
-}
-
-/* C140_0: EXG Dx, Dx */
-static unsigned opc140_0 (e68000_t *c)
+/* C140_00: EXG Dx, Dx */
+static unsigned opc140_00 (e68000_t *c)
 {
 	unsigned r1, r2;
 	uint32_t s1, s2;
 
-	r1 = e68_ir_reg0 (c);
-	r2 = e68_ir_reg9 (c);
+	r1 = e68_ir_reg9 (c);
+	r2 = e68_ir_reg0 (c);
 
 	s1 = e68_get_dreg32 (c, r1);
 	s2 = e68_get_dreg32 (c, r2);
@@ -4042,17 +3723,17 @@ static unsigned opc140_0 (e68000_t *c)
 
 	e68_set_clk (c, 10);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* C140_1: EXG Ax, Ax */
-static unsigned opc140_1 (e68000_t *c)
+/* C140_08: EXG Ax, Ax */
+static unsigned opc140_08 (e68000_t *c)
 {
 	unsigned r1, r2;
 	uint32_t s1, s2;
 
-	r1 = e68_ir_reg0 (c);
-	r2 = e68_ir_reg9 (c);
+	r1 = e68_ir_reg9 (c);
+	r2 = e68_ir_reg0 (c);
 
 	s1 = e68_get_areg32 (c, r1);
 	s2 = e68_get_areg32 (c, r2);
@@ -4062,13 +3743,21 @@ static unsigned opc140_1 (e68000_t *c)
 
 	e68_set_clk (c, 10);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* C140_2: AND.W Dx, EA */
-static unsigned opc140_2 (e68000_t *c)
+/* C140: AND.W Dx, <EA> */
+static unsigned opc140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
+
+	switch ((c->ir[0] >> 3) & 7) {
+	case 0x00:
+		return (opc140_00 (c));
+
+	case 0x01:
+		return (opc140_08 (c));
+	}
 
 	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
@@ -4082,45 +3771,34 @@ static unsigned opc140_2 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* C140: misc */
-static unsigned opc140 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (opc140_0 (c));
-
-	case 0x01:
-		return (opc140_1 (c));
-
-	default:
-		return (opc140_2 (c));
-	}
-}
-
-/* C180_1: EXG Dx, Ay */
-static unsigned opc180_1 (e68000_t *c)
+/* C180_08: EXG Dx, Ay */
+static unsigned opc180_08 (e68000_t *c)
 {
 	unsigned r1, r2;
 	uint32_t s1, s2;
 
-	r1 = e68_ir_reg0 (c);
-	r2 = e68_ir_reg9 (c);
+	r1 = e68_ir_reg9 (c);
+	r2 = e68_ir_reg0 (c);
 
-	s1 = e68_get_areg32 (c, r1);
-	s2 = e68_get_dreg32 (c, r2);
+	s1 = e68_get_dreg32 (c, r1);
+	s2 = e68_get_areg32 (c, r2);
 
-	e68_set_areg32 (c, r1, s2);
-	e68_set_dreg32 (c, r2, s1);
+	e68_set_dreg32 (c, r1, s2);
+	e68_set_areg32 (c, r2, s1);
 
 	e68_set_clk (c, 10);
 
 	return (c->ircnt);
 }
 
-/* C180_2: AND.L Dx, <EA> */
-static unsigned opc180_2 (e68000_t *c)
+/* C180: AND.L Dx, <EA> */
+static unsigned opc180 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
+
+	if ((c->ir[0] & 0x38) == 0x08) {
+		return (opc180_08 (c));
+	}
 
 	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
@@ -4134,33 +3812,18 @@ static unsigned opc180_2 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* C180: misc */
-static unsigned opc180 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-		return (e68_op_undefined (c));
-
-	case 0x01:
-		return (opc180_1 (c));
-
-	default:
-		return (opc180_2 (c));
-	}
-}
-
 /* C1C0: MULS.W <EA>, Dx */
 static unsigned opc1c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	int      n1, n2;
 	uint32_t d;
 	uint16_t s1, s2;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
 	n1 = 0;
 	n2 = 0;
@@ -4183,66 +3846,66 @@ static unsigned opc1c0 (e68000_t *c)
 
 	e68_set_clk (c, 74);
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_NZVC, d);
 
 	return (c->ircnt);
 }
 
-/* D000: ADD.B EA, Dx */
+/* D000: ADD.B <EA>, Dx */
 static unsigned opd000 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint8_t  s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg8 (c, reg);
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s2);
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x0ffd, &s1);
+	s2 = e68_get_dreg8 (c, r);
 
 	d = s1 + s2;
 
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_add_8 (c, d, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
 
-/* D040: ADD.W EA, Dx */
+/* D040: ADD.W <EA>, Dx */
 static unsigned opd040 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint16_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg16 (c, reg);
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg16 (c, r);
 
 	d = s1 + s2;
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_add_16 (c, d, s1, s2);
 	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
 
-/* D080: ADD.L EA, Dx */
+/* D080: ADD.L <EA>, Dx */
 static unsigned opd080 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = (c->ir[0] >> 9) & 7;
+	r = e68_ir_reg9 (c);
 
-	s1 = e68_get_dreg32 (c, reg);
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s2);
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
+	s2 = e68_get_dreg32 (c, r);
 
 	d = s1 + s2;
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_add_32 (c, d, s1, s2);
 	e68_set_clk (c, 6);
 
@@ -4252,19 +3915,19 @@ static unsigned opd080 (e68000_t *c)
 /* D0C0: ADDA.W <EA>, Ax */
 static unsigned opd0c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 	uint16_t t;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x0fff, &t);
-	s1 = e68_exts (t, 16);
-	s2 = e68_get_areg32 (c, reg);
+	s1 = e68_exts16 (t);
+	s2 = e68_get_areg32 (c, r);
 
 	d = s1 + s2;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 8);
 
 	return (c->ircnt);
@@ -4273,22 +3936,22 @@ static unsigned opd0c0 (e68000_t *c)
 /* D100_00: ADDX.B <EA>, <EA> */
 static unsigned opd100_00 (e68000_t *c)
 {
-	uint8_t  s1, s2, s3, d;
+	uint8_t  s1, s2, d;
 	unsigned ea1, ea2;
 
 	ea1 = e68_ir_reg0 (c);
 	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
 	e68_get_ea8 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea8 (c, 1, ea2, 0x0011, &s2);
-	s3 = e68_get_sr_x (c);
 
-	d = s1 + s2 + s3;
+	d = s1 + s2 + e68_get_sr_x (c);
 
 	e68_set_ea8 (c, 0, 0, 0, d);
 	e68_cc_set_addx_8 (c, d, s1, s2);
@@ -4297,13 +3960,17 @@ static unsigned opd100_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D100_XX: ADD.B Dx, <EA> */
-static unsigned opd100_xx (e68000_t *c)
+/* D100: ADD.B Dx, <EA> */
+static unsigned opd100 (e68000_t *c)
 {
 	uint8_t s1, s2, d;
 
-	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg8 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0) {
+		return (opd100_00 (c));
+	}
+
+	s1 = e68_get_dreg8 (c, e68_ir_reg9 (c));
+	e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
 
 	d = s1 + s2;
 
@@ -4314,38 +3981,25 @@ static unsigned opd100_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D100: misc */
-static unsigned opd100 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (opd100_00 (c));
-
-	default:
-		return (opd100_xx (c));
-	}
-}
-
 /* D140_00: ADDX.W <EA>, <EA> */
 static unsigned opd140_00 (e68000_t *c)
 {
-	uint16_t s1, s2, s3, d;
+	uint16_t s1, s2, d;
 	unsigned ea1, ea2;
 
 	ea1 = e68_ir_reg0 (c);
 	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
 	e68_get_ea16 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea16 (c, 1, ea2, 0x0011, &s2);
-	s3 = e68_get_sr_x (c);
 
-	d = s1 + s2 + s3;
+	d = s1 + s2 + e68_get_sr_x (c);
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_addx_16 (c, d, s1, s2);
@@ -4354,13 +4008,17 @@ static unsigned opd140_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D140_XX: ADD.W Dx, <EA> */
-static unsigned opd140_xx (e68000_t *c)
+/* D140: ADD.W Dx, <EA> */
+static unsigned opd140 (e68000_t *c)
 {
 	uint16_t s1, s2, d;
 
-	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg16 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0) {
+		return (opd140_00 (c));
+	}
+
+	s1 = e68_get_dreg16 (c, e68_ir_reg9 (c));
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
 
 	d = s1 + s2;
 
@@ -4371,38 +4029,25 @@ static unsigned opd140_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D140: misc */
-static unsigned opd140 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (opd140_00 (c));
-
-	default:
-		return (opd140_xx (c));
-	}
-}
-
 /* D180_00: ADDX.L <EA>, <EA> */
 static unsigned opd180_00 (e68000_t *c)
 {
-	uint32_t s1, s2, s3, d;
+	uint32_t s1, s2, d;
 	unsigned ea1, ea2;
 
-	ea1 = c->ir[0] & 7;
-	ea2 = (c->ir[0] >> 9) & 7;
+	ea1 = e68_ir_reg0 (c);
+	ea2 = e68_ir_reg9 (c);
 
 	if (c->ir[0] & 0x0008) {
+		/* pre-decrement */
 		ea1 |= 0x20;
 		ea2 |= 0x20;
 	}
 
 	e68_get_ea32 (c, 1, ea1, 0x0011, &s1);
 	e68_get_ea32 (c, 1, ea2, 0x0011, &s2);
-	s3 = e68_get_sr_x (c);
 
-	d = s1 + s2 + s3;
+	d = s1 + s2 + e68_get_sr_x (c);
 
 	e68_set_ea32 (c, 0, 0, 0, d);
 	e68_cc_set_addx_32 (c, d, s1, s2);
@@ -4411,13 +4056,17 @@ static unsigned opd180_00 (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D180_XX: ADD.L Dx, <EA> */
-static unsigned opd180_xx (e68000_t *c)
+/* D180: ADD.L Dx, <EA> */
+static unsigned opd180 (e68000_t *c)
 {
 	uint32_t s1, s2, d;
 
-	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fc, &s1);
-	s2 = e68_get_dreg32 (c, (c->ir[0] >> 9) & 7);
+	if ((c->ir[0] & 0x30) == 0) {
+		return (opd180_00 (c));
+	}
+
+	s1 = e68_get_dreg32 (c, e68_ir_reg9 (c));
+	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x01fc, &s2);
 
 	d = s1 + s2;
 
@@ -4428,191 +4077,169 @@ static unsigned opd180_xx (e68000_t *c)
 	return (c->ircnt);
 }
 
-/* D180: misc */
-static unsigned opd180 (e68000_t *c)
-{
-	switch ((c->ir[0] >> 3) & 7) {
-	case 0x00:
-	case 0x01:
-		return (opd180_00 (c));
-
-	default:
-		return (opd180_xx (c));
-	}
-}
-
 /* D1C0: ADDA.L <EA>, Ax */
 static unsigned opd1c0 (e68000_t *c)
 {
-	unsigned reg;
+	unsigned r;
 	uint32_t s1, s2, d;
 
-	reg = e68_ir_reg9 (c);
+	r = e68_ir_reg9 (c);
 
 	e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x0fff, &s1);
-	s2 = e68_get_areg32 (c, reg);
+	s2 = e68_get_areg32 (c, r);
 
 	d = s1 + s2;
 
-	e68_set_areg32 (c, reg, d);
+	e68_set_areg32 (c, r, d);
 	e68_set_clk (c, 6);
 
 	return (c->ircnt);
+}
+
+static inline
+unsigned e68_get_shift_count (e68000_t *c)
+{
+	unsigned n;
+
+	n = e68_ir_reg9 (c);
+
+	if (c->ir[0] & 0x20) {
+		return (e68_get_dreg8 (c, n) & 0x3f);
+	}
+
+	if (n == 0) {
+		n = 8;
+	}
+
+	return (n);
 }
 
 /* E000_00: ASR.B <cnt>, Dx */
 static unsigned ope000_00 (e68000_t *c)
 {
 	uint8_t  s, d;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg);
+	n = e68_get_shift_count (c);
+	s = e68_get_dreg8 (c, r);
 
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 8) {
+	else if (n < 8) {
 		if (s & 0x80) {
-			d = (s | 0xff00) >> cnt;
+			d = (s | 0xff00) >> n;
 		}
 		else {
-			d = s >> cnt;
+			d = s >> n;
 		}
-		e68_set_cc (c, E68_SR_XC, s & (1 << (cnt - 1)));
+		e68_set_sr_xc (c, s & (1 << (n - 1)));
 	}
 	else {
 		if (s & 0x80) {
 			d = 0xff;
-			e68_set_cc (c, E68_SR_XC, 1);
+			e68_set_sr_xc (c, 1);
 		}
 		else {
 			d = 0x00;
-			e68_set_cc (c, E68_SR_XC, 0);
+			e68_set_sr_xc (c, 0);
 		}
 	}
 
-
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E000_01: LSR.B <cnt>, Dx */
 static unsigned ope000_01 (e68000_t *c)
 {
 	uint8_t  s, d;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg);
+	s = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
 
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 8) {
-		d = s >> cnt;
-		e68_set_cc (c, E68_SR_XC, s & (1 << (cnt - 1)));
+	else if (n < 8) {
+		d = s >> n;
+		e68_set_sr_xc (c, s & (1 << (n - 1)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (cnt == 8) && (s & 0x80));
+		e68_set_sr_xc (c, (n == 8) && (s & 0x80));
 	}
 
-
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E000_02: ROXR.B <cnt>, Dx */
 static unsigned ope000_02 (e68000_t *c)
 {
-	uint16_t s, d;
-	unsigned reg, n;
+	uint16_t v, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg) | (e68_get_sr_x (c) << 8);
+	v = e68_get_dreg8 (c, r);
+	x = e68_get_sr_x (c);
+	n = e68_get_shift_count (c);
 
-	if (n % 9) {
-		n = n % 9;
-		d = ((s >> n) | (s << (9 - n))) & 0x1ff;
-		e68_set_cc (c, E68_SR_XC, d & 0x100);
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = v & 1;
+		v = (v >> 1) | (x << 7);
+		x = t;
 	}
 
-	e68_set_dreg8 (c, reg, d & 0xff);
-	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d & 0xff);
-	e68_set_clk (c, 1);
+	e68_set_dreg8 (c, r, v & 0xff);
+	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, v & 0xff);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E000_03: ROR.B <cnt>, Dx */
 static unsigned ope000_03 (e68000_t *c)
 {
 	uint8_t  s, d;
-	unsigned reg, n;
+	unsigned r, n, k;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg);
+	s = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
 
-	if (n & 7) {
-		n &= 7;
-		d = ((s >> n) | (s << (8 - n))) & 0xff;
-		e68_set_sr_c (c, s & (1 << (n - 1)));
+	k = n & 7;
+
+	if (k > 0) {
+		d = ((s >> k) | (s << (8 - k))) & 0xff;
+		e68_set_sr_c (c, d & 0x80);
 	}
 	else {
 		d = s;
-		e68_set_sr_c (c, (n != 0) && (s & 0x80));
+		e68_set_sr_c (c, (n != 0) && (d & 0x80));
 	}
 
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E000: misc */
@@ -4640,167 +4267,129 @@ static unsigned ope000 (e68000_t *c)
 static unsigned ope040_00 (e68000_t *c)
 {
 	uint16_t s, d;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = c->ir[0] & 7;
+	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 
-	s = e68_get_dreg16 (c, reg);
-
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 16) {
+	else if (n < 16) {
 		if (s & 0x8000) {
-			d = (s | 0xffff0000) >> cnt;
+			d = (s | 0xffff0000) >> n;
 		}
 		else {
-			d = s >> cnt;
+			d = s >> n;
 		}
-		e68_set_cc (c, E68_SR_XC, s & (1U << (cnt - 1)));
+		e68_set_sr_xc (c, s & (1U << (n - 1)));
 	}
 	else {
 		if (s & 0x8000) {
 			d = 0xffff;
-			e68_set_cc (c, E68_SR_XC, 1);
+			e68_set_sr_xc (c, 1);
 		}
 		else {
 			d = 0x0000;
-			e68_set_cc (c, E68_SR_XC, 0);
+			e68_set_sr_xc (c, 0);
 		}
 	}
 
-
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E040_01: LSR.W <cnt>, Dx */
 static unsigned ope040_01 (e68000_t *c)
 {
 	uint16_t s, d;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, reg);
+	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 16) {
-		d = s >> cnt;
-		e68_set_cc (c, E68_SR_XC, s & (1U << (cnt - 1)));
+	else if (n < 16) {
+		d = s >> n;
+		e68_set_sr_xc (c, s & (1U << (n - 1)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (cnt == 16) && (s & 0x8000));
+		e68_set_sr_xc (c, (n == 16) && (s & 0x8000));
 	}
 
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E040_02: ROXR.W <cnt>, Dx */
 static unsigned ope040_02 (e68000_t *c)
 {
-	uint16_t s, d, x;
-	unsigned reg, n;
+	uint16_t d, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, reg);
+	d = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 	x = e68_get_sr_x (c);
 
-	if (n % 17) {
-		n = n % 17;
-		d = ((s >> n) | (x << (16 - n)));
-		if (n > 1) {
-			d |= s << (17 - n);
-		}
-		d &= 0xffff;
-		e68_set_cc (c, E68_SR_XC, s & (1U << (n - 1)));
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = d & 1;
+		d = (d >> 1) | (x << 15);
+		x = t;
 	}
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E040_03: ROR.W <cnt>, Dx */
 static unsigned ope040_03 (e68000_t *c)
 {
 	uint16_t s, d;
-	unsigned reg, n;
+	unsigned r, n, k;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
+	r = e68_ir_reg0 (c);
+
+	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
+
+	k = n & 15;
+
+	if (k > 0) {
+		d = ((s >> n) | (s << (16 - n))) & 0xffff;
+		e68_set_sr_c (c, d & 0x8000);
 	}
 	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
-
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, reg);
-
-	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
-	}
-	else {
-		n &= 15;
-		if (n > 0) {
-			d = ((s >> n) | (s << (16 - n))) & 0xffff;
-			e68_set_cc (c, E68_SR_C, s & (1 << (n - 1)));
-		}
-		else {
-			d = s;
-			e68_set_cc (c, E68_SR_C, s & 0x8000);
-		}
+		e68_set_sr_c (c, (n != 0) && (d & 0x8000));
 	}
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E040: misc */
@@ -4829,166 +4418,130 @@ static unsigned ope040 (e68000_t *c)
 static unsigned ope080_00 (e68000_t *c)
 {
 	uint32_t s, d;
-	unsigned r, cnt;
-
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	unsigned r, n;
 
 	r = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, r);
 
-	if (cnt == 0) {
+	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
+
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 32) {
+	else if (n < 32) {
 		if (s & 0x80000000) {
-			d = (s >> cnt) | (0xffffffff << (32 - cnt));
+			d = (s >> n) | (0xffffffff << (32 - n));
 		}
 		else {
-			d = s >> cnt;
+			d = s >> n;
 		}
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (cnt - 1)));
+		e68_set_sr_xc (c, s & (1UL << (n - 1)));
 	}
 	else {
 		if (s & 0x80000000) {
 			d = 0xffffffff;
-			e68_set_cc (c, E68_SR_XC, 1);
+			e68_set_sr_xc (c, 1);
 		}
 		else {
 			d = 0x00000000;
-			e68_set_cc (c, E68_SR_XC, 0);
+			e68_set_sr_xc (c, 0);
 		}
 	}
 
 
 	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E080_01: LSR.L <cnt>, Dx */
 static unsigned ope080_01 (e68000_t *c)
 {
 	uint32_t s, d;
-	unsigned r, cnt;
-
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	unsigned r, n;
 
 	r = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, r);
 
-	if (cnt == 0) {
+	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
+
+	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
+		e68_set_sr_c (c, 0);
 	}
-	else if (cnt < 32) {
-		d = s >> cnt;
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (cnt - 1)));
+	else if (n < 32) {
+		d = s >> n;
+		e68_set_sr_xc (c, s & (1UL << (n - 1)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (cnt == 32) && (s & 0x80000000));
+		e68_set_sr_xc (c, (n == 32) && (s & 0x80000000));
 	}
 
 
 	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E080_02: ROXR.L <cnt>, Dx */
 static unsigned ope080_02 (e68000_t *c)
 {
-	uint32_t s, d, x;
-	unsigned reg, n;
+	uint32_t d, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, reg);
+	d = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
 	x = e68_get_sr_x (c);
 
-	if (n % 33) {
-		n = n % 33;
-		d = ((s >> n) | (x << (32 - n)));
-		if (n > 1) {
-			d |= s << (33 - n);
-		}
-		d &= 0xffffffff;
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (n - 1)));
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = d & 1;
+		d = (d >> 1) | (x << 31);
+		x = t;
 	}
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E080_03: ROR.L <cnt>, Dx */
 static unsigned ope080_03 (e68000_t *c)
 {
 	uint32_t s, d;
-	unsigned reg, n;
+	unsigned r, n, k;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
+	r = e68_ir_reg0 (c);
+
+	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
+
+	k = n & 31;
+
+	if (k > 0) {
+		d = ((s >> k) | (s << (32 - k))) & 0xffffffff;
+		e68_set_sr_c (c, d & 0x80000000);
 	}
 	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
-
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, reg);
-
-	if (n == 0) {
 		d = s;
-		e68_set_cc (c, E68_SR_C, 0);
-	}
-	else {
-		n &= 31;
-		if (n > 0) {
-			d = ((s >> n) | (s << (32 - n))) & 0xffffffff;
-			e68_set_cc (c, E68_SR_C, s & (1 << (n - 1)));
-		}
-		else {
-			d = s;
-			e68_set_cc (c, E68_SR_C, s & 0x80000000);
-		}
+		e68_set_sr_c (c, (n != 0) && (d & 0x80000000));
 	}
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E080: misc */
@@ -5019,17 +4572,12 @@ static unsigned ope0c0 (e68000_t *c)
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s);
 
-	if (s & 0x8000) {
-		d = (s >> 1) | 0x8000;
-	}
-	else {
-		d = s >> 1;
-	}
+	d = (s >> 1) | (s & 0x8000);
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
 	e68_set_cc (c, E68_SR_XC, s & 1);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5038,42 +4586,34 @@ static unsigned ope0c0 (e68000_t *c)
 static unsigned ope100_00 (e68000_t *c)
 {
 	uint8_t  s, d, b;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = c->ir[0] & 7;
+	s = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
 
-	s = e68_get_dreg8 (c, reg);
-
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
 		e68_set_cc (c, E68_SR_C | E68_SR_V, 0);
 	}
-	else if (cnt < 8) {
-		d = s << cnt;
-		b = (0xff << (7 - cnt)) & 0xff;
-		e68_set_cc (c, E68_SR_XC, s & (1 << (8 - cnt)));
+	else if (n < 8) {
+		d = s << n;
+		b = (0xff << (7 - n)) & 0xff;
+		e68_set_sr_xc (c, s & (1 << (8 - n)));
 		e68_set_sr_v (c, ((s & b) != 0) && ((s & b) != b));
 	}
 	else {
 		d = 0x00;
-		e68_set_cc (c, E68_SR_XC, (cnt == 8) && (s & 0x01));
+		e68_set_sr_xc (c, (n == 8) && (s & 1));
 		e68_set_sr_v (c, s != 0);
 	}
 
-
-	e68_set_dreg8 (c, reg, d);
+	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E100_01: LSL.B <cnt>, Dx */
@@ -5082,16 +4622,10 @@ static unsigned ope100_01 (e68000_t *c)
 	uint8_t  s, d;
 	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
-
 	r = e68_ir_reg0 (c);
+
 	s = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
 
 	if (n == 0) {
 		d = s;
@@ -5099,87 +4633,74 @@ static unsigned ope100_01 (e68000_t *c)
 	}
 	else if (n < 8) {
 		d = s << n;
-		e68_set_cc (c, E68_SR_XC, s & (1 << (8 - n)));
+		e68_set_sr_xc (c, s & (1 << (8 - n)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (n == 8) && (s & 1));
+		e68_set_sr_xc (c, (n == 8) && (s & 1));
 	}
 
 
 	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E100_02: ROXL.B <cnt>, Dx */
 static unsigned ope100_02 (e68000_t *c)
 {
-	uint16_t s, d;
-	unsigned reg, n;
+	uint16_t d, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, reg) | (e68_get_sr_x (c) << 8);
+	d = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
+	x = e68_get_sr_x (c);
 
-	if (n % 9) {
-		n = n % 9;
-		d = ((s << n) | (s >> (9 - n))) & 0x1ff;
-		e68_set_cc (c, E68_SR_XC, d & 0x100);
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = (d >> 7) & 1;
+		d = (d << 1) | x;
+		x = t;
 	}
 
-	e68_set_dreg8 (c, reg, d & 0xff);
-	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d & 0xff);
-	e68_set_clk (c, 1);
+	e68_set_dreg8 (c, r, d);
+	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E100_03: ROL.B <cnt>, Dx */
 static unsigned ope100_03 (e68000_t *c)
 {
 	uint8_t  s, d;
-	unsigned r, n;
-
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	unsigned r, n, k;
 
 	r = e68_ir_reg0 (c);
-	s = e68_get_dreg8 (c, r);
 
-	if (n & 7) {
-		n &= 7;
-		d = ((s << n) | (s >> (8 - n))) & 0xff;
-		e68_set_sr_c (c, s & (1 << (8 - n)));
+	s = e68_get_dreg8 (c, r);
+	n = e68_get_shift_count (c);
+
+	k = n & 7;
+
+	if (k != 0) {
+		d = ((s << k) | (s >> (8 - k))) & 0xff;
+		e68_set_sr_c (c, d & 1);
 	}
 	else {
 		d = s;
-		e68_set_sr_c (c, (n != 0) && (s & 1));
+		e68_set_sr_c (c, (n != 0) && (d & 1));
 	}
 
 	e68_set_dreg8 (c, r, d);
 	e68_cc_set_nz_8 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E100: misc */
@@ -5207,42 +4728,35 @@ static unsigned ope100 (e68000_t *c)
 static unsigned ope140_00 (e68000_t *c)
 {
 	uint16_t s, d, b;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = c->ir[0] & 7;
+	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 
-	s = e68_get_dreg16 (c, reg);
-
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
 		e68_set_cc (c, E68_SR_C | E68_SR_V, 0);
 	}
-	else if (cnt < 16) {
-		d = s << cnt;
-		b = (0xffff << (15 - cnt)) & 0xffff;
-		e68_set_cc (c, E68_SR_XC, s & (1U << (16 - cnt)));
+	else if (n < 16) {
+		d = s << n;
+		b = (0xffff << (15 - n)) & 0xffff;
+		e68_set_sr_xc (c, s & (1U << (16 - n)));
 		e68_set_sr_v (c, ((s & b) != 0) && ((s & b) != b));
 	}
 	else {
 		d = 0x0000;
-		e68_set_cc (c, E68_SR_XC, (cnt == 16) && (s & 0x0001));
+		e68_set_sr_xc (c, (n == 16) && (s & 1));
 		e68_set_sr_v (c, s != 0);
 	}
 
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E140_01: LSL.W <cnt>, Dx */
@@ -5251,16 +4765,10 @@ static unsigned ope140_01 (e68000_t *c)
 	uint16_t s, d;
 	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
-
 	r = e68_ir_reg0 (c);
+
 	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 
 	if (n == 0) {
 		d = s;
@@ -5268,92 +4776,74 @@ static unsigned ope140_01 (e68000_t *c)
 	}
 	else if (n < 16) {
 		d = s << n;
-		e68_set_cc (c, E68_SR_XC, s & (1U << (16 - n)));
+		e68_set_sr_xc (c, s & (1U << (16 - n)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (n == 16) && (s & 1));
+		e68_set_sr_xc (c, (n == 16) && (s & 1));
 	}
 
 
 	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E140_02: ROXL.W <cnt>, Dx */
 static unsigned ope140_02 (e68000_t *c)
 {
-	uint16_t s, d, x;
-	unsigned reg, n;
+	uint16_t d, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, reg);
+	d = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
 	x = e68_get_sr_x (c);
 
-	if (n % 17) {
-		n = n % 17;
-		d = ((s << n) | (x << (n - 1)));
-		if (n > 1) {
-			d |= s >> (17 - n);
-		}
-		d &= 0xffff;
-		e68_set_cc (c, E68_SR_XC, s & (1U << (16 - n)));
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = (d >> 15) & 1;
+		d = (d << 1) | x;
+		x = t;
 	}
 
-	e68_set_dreg16 (c, reg, d);
+	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E140_03: ROL.W <cnt>, Dx */
 static unsigned ope140_03 (e68000_t *c)
 {
 	uint16_t s, d;
-	unsigned r, n;
-
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	unsigned r, n, k;
 
 	r = e68_ir_reg0 (c);
-	s = e68_get_dreg16 (c, r);
 
-	if (n & 15) {
-		n &= 15;
-		d = ((s << n) | (s >> (16 - n))) & 0xffff;
-		e68_set_sr_c (c, s & (1U << (16 - n)));
+	s = e68_get_dreg16 (c, r);
+	n = e68_get_shift_count (c);
+
+	k = n & 15;
+
+	if (k != 0) {
+		d = ((s << k) | (s >> (16 - k))) & 0xffff;
+		e68_set_sr_c (c, d & 1);
 	}
 	else {
 		d = s;
-		e68_set_sr_c (c, (n != 0) && (s & 1));
+		e68_set_sr_c (c, (n != 0) && (d & 1));
 	}
 
 	e68_set_dreg16 (c, r, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 6 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E140: misc */
@@ -5381,42 +4871,34 @@ static unsigned ope140 (e68000_t *c)
 static unsigned ope180_00 (e68000_t *c)
 {
 	uint32_t s, d, b;
-	unsigned reg, cnt;
+	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		cnt = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		cnt = e68_ir_reg9 (c);
-		cnt = (cnt == 0) ? 8 : cnt;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = c->ir[0] & 7;
+	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
 
-	s = e68_get_dreg32 (c, reg);
-
-	if (cnt == 0) {
+	if (n == 0) {
 		d = s;
 		e68_set_cc (c, E68_SR_C | E68_SR_V, 0);
 	}
-	else if (cnt < 32) {
-		d = s << cnt;
-		b = (0xffffffff << (31 - cnt)) & 0xffffffff;
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (32 - cnt)));
+	else if (n < 32) {
+		d = s << n;
+		b = (0xffffffff << (31 - n)) & 0xffffffff;
+		e68_set_sr_xc (c, s & (1UL << (32 - n)));
 		e68_set_sr_v (c, ((s & b) != 0) && ((s & b) != b));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (cnt == 32) && (s & 1));
+		e68_set_sr_xc (c, (n == 32) && (s & 1));
 		e68_set_sr_v (c, s != 0);
 	}
 
-
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E180_01: LSL.L <cnt>, Dx */
@@ -5425,16 +4907,10 @@ static unsigned ope180_01 (e68000_t *c)
 	uint32_t s, d;
 	unsigned r, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
-
 	r = e68_ir_reg0 (c);
+
 	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
 
 	if (n == 0) {
 		d = s;
@@ -5442,92 +4918,74 @@ static unsigned ope180_01 (e68000_t *c)
 	}
 	else if (n < 32) {
 		d = s << n;
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (32 - n)));
+		e68_set_sr_xc (c, s & (1UL << (32 - n)));
 	}
 	else {
 		d = 0;
-		e68_set_cc (c, E68_SR_XC, (n == 32) && (s & 1));
+		e68_set_sr_xc (c, (n == 32) && (s & 1));
 	}
 
 
 	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
-/* E180_02: ROXL.W <cnt>, Dx */
+/* E180_02: ROXL.L <cnt>, Dx */
 static unsigned ope180_02 (e68000_t *c)
 {
-	uint32_t s, d, x;
-	unsigned reg, n;
+	uint32_t d, x, t;
+	unsigned r, i, n;
 
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	r = e68_ir_reg0 (c);
 
-	reg = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, reg);
+	n = e68_get_shift_count (c);
+	d = e68_get_dreg32 (c, r);
 	x = e68_get_sr_x (c);
 
-	if (n % 33) {
-		n = n % 33;
-		d = ((s << n) | (x << (n - 1)));
-		if (n > 1) {
-			d |= s >> (33 - n);
-		}
-		d &= 0xffffffff;
-		e68_set_cc (c, E68_SR_XC, s & (1UL << (32 - n)));
-	}
-	else {
-		d = s;
-		e68_set_sr_c (c, e68_get_sr_x (c));
+	for (i = 0; i < n; i++) {
+		t = (d >> 31) & 1;
+		d = (d << 1) | x;
+		x = t;
 	}
 
-	e68_set_dreg32 (c, reg, d);
+	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, x);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E180_03: ROL.L <cnt>, Dx */
 static unsigned ope180_03 (e68000_t *c)
 {
 	uint32_t s, d;
-	unsigned r, n;
-
-	if (c->ir[0] & 0x20) {
-		n = e68_get_dreg8 (c, e68_ir_reg9 (c)) & 0x3f;
-	}
-	else {
-		n = e68_ir_reg9 (c);
-		n = (n == 0) ? 8 : n;
-	}
+	unsigned r, n, k;
 
 	r = e68_ir_reg0 (c);
-	s = e68_get_dreg32 (c, r);
 
-	if (n & 31) {
-		n &= 31;
-		d = ((s << n) | (s >> (32 - n))) & 0xffffffff;
-		e68_set_sr_c (c, s & (1UL << (32 - n)));
+	s = e68_get_dreg32 (c, r);
+	n = e68_get_shift_count (c);
+
+	k = n & 31;
+
+	if (k > 0) {
+		d = ((s << k) | (s >> (32 - k))) & 0xffffffff;
+		e68_set_sr_c (c, d & 1);
 	}
 	else {
 		d = s;
-		e68_set_sr_c (c, (n != 0) && (s & 1));
+		e68_set_sr_c (c, (n != 0) && (d & 1));
 	}
 
 	e68_set_dreg32 (c, r, d);
 	e68_cc_set_nz_32 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_clk (c, 1);
+	e68_set_clk (c, 8 + 2 * n);
 
-	return (c->ircnt);
+	return (1);
 }
 
 /* E180: misc */
@@ -5558,14 +5016,13 @@ static unsigned ope1c0 (e68000_t *c)
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s);
 
-	d = s << 1;
-
-	e68_set_cc (c, E68_SR_XC, s & 0x8000);
-	e68_set_sr_v (c, (s ^ d) & 0x8000);
+	d = (s << 1) & 0xffff;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z, d);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, s & 0x8000);
+	e68_set_sr_v (c, (s ^ d) & 0x8000);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5581,8 +5038,8 @@ static unsigned ope2c0 (e68000_t *c)
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_XC, s & 1);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, s & 1);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5594,12 +5051,12 @@ static unsigned ope3c0 (e68000_t *c)
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s);
 
-	d = s << 1;
+	d = (s << 1) & 0xffff;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_XC, s & 0x8000);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, s & 0x8000);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5612,12 +5069,12 @@ static unsigned ope4c0 (e68000_t *c)
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s);
 	x = e68_get_sr_x (c);
 
-	d = ((s >> 1) | (x << 15)) & 0xffff;
+	d = (s >> 1) | (x << 15);
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_XC, s & 1);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, s & 1);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5634,8 +5091,8 @@ static unsigned ope5c0 (e68000_t *c)
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_XC, s & 0x8000);
-	e68_set_clk (c, 1);
+	e68_set_sr_xc (c, s & 0x8000);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5651,8 +5108,8 @@ static unsigned ope6c0 (e68000_t *c)
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_C, s & 1);
-	e68_set_clk (c, 1);
+	e68_set_sr_c (c, s & 1);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5668,8 +5125,8 @@ static unsigned ope7c0 (e68000_t *c)
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
-	e68_set_cc (c, E68_SR_C, s & 0x8000);
-	e68_set_clk (c, 1);
+	e68_set_sr_c (c, d & 1);
+	e68_set_clk (c, 8);
 
 	return (c->ircnt);
 }
@@ -5694,14 +5151,14 @@ e68_opcode_f e68_opcodes[1024] = {
 	op0a00, op0a40, op0a80,   NULL, op0100, op0140, op0180, op01c0, /* 0A00 */
 	op0c00, op0c40, op0c80,   NULL, op0100, op0140, op0180, op01c0, /* 0C00 */
 	  NULL,   NULL,   NULL,   NULL, op0100, op0140, op0180, op01c0, /* 0E00 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1000 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1200 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1400 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1600 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1800 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1A00 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1C00 */
-	op1000, op1000, op1000, op1000, op1000, op1000, op1000, op1000, /* 1E00 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1000 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1200 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1400 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1600 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1800 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1A00 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1C00 */
+	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1E00 */
 	op2000, op2040, op2000, op2000, op2000, op2000, op2000, op2000, /* 2000 */
 	op2000, op2040, op2000, op2000, op2000, op2000, op2000, op2000, /* 2200 */
 	op2000, op2040, op2000, op2000, op2000, op2000, op2000, op2000, /* 2400 */
