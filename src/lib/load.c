@@ -108,7 +108,7 @@ int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
 
 	c = fgetc (fp);
 	while (c != EOF) {
-		mem_set_uint8 (mem, base, c & 0xff);
+		mem_set_uint8_rw (mem, base, c & 0xff);
 		base += 1;
 		c = fgetc (fp);
 	}
