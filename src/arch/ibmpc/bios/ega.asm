@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/ega.asm                                *
 ;* Created:       2003-09-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -93,7 +93,7 @@ start:
 
 	call	ega_init
 
-.done
+.done:
 	pop	ax
 	retf
 
@@ -2372,7 +2372,7 @@ prt_string:
 
 	xor	bx, bx
 
-.next
+.next:
 	cs	lodsb
 	or	al, al
 	jz	.done
@@ -2382,7 +2382,7 @@ prt_string:
 
 	jmp	short .next
 
-.done
+.done:
 	pop	si
 	pop	bx
 	pop	ax

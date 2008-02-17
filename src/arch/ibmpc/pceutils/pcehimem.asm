@@ -5,8 +5,7 @@
 ;*****************************************************************************
 ;* File name:     pcehimem.asm                                               *
 ;* Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -65,7 +64,7 @@ int_2f:
   mov     bx, xms_handler
   iret
 
-.done
+.done:
   jmp     far [cs:saveint2f]
 
 

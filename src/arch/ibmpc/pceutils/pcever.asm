@@ -5,8 +5,7 @@
 ;*****************************************************************************
 ;* File name:     pcever.asm                                                 *
 ;* Created:       2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -133,7 +132,7 @@ start:
   jnz     .release
   mov     si, msg_dev
 
-.release
+.release:
   call    prt_string
 
   mov     al, 0x0d

@@ -15424,7 +15424,7 @@ L_7E92:
   mov     bx, 0
   mov     dx, L_069A
 
-L_7EA9
+L_7EA9:
   mov     si, dx
   cs      lodsb
   mov     [bx], al

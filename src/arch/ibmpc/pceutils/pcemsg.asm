@@ -5,8 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/pceutils/pcemsg.asm                         *
 ;* Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+;* Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -74,7 +73,7 @@ get_msg_str:
   cmp     byte [si], '"'
   je      .quote
 
-.next
+.next:
   cmp     byte [si], 32
   jbe     .done
   movsb

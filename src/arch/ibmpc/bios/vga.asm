@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/vga.asm                                *
 ;* Created:       2004-03-26 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -99,7 +99,7 @@ start:
 
 	call	ega_init
 
-.done
+.done:
 	pop	ax
 	retf
 
@@ -3078,7 +3078,7 @@ prt_string:
 
 	xor	bx, bx
 
-.next
+.next:
 	cs	lodsb
 	or	al, al
 	jz	.done
@@ -3088,7 +3088,7 @@ prt_string:
 
 	jmp	short .next
 
-.done
+.done:
 	pop	si
 	pop	bx
 	pop	ax
