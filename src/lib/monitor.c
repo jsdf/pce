@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/monitor.c                                          *
  * Created:       2006-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -42,6 +42,7 @@ void mon_init (monitor_t *mon)
 	mon->getmsg = NULL;
 
 	mon->terminate = 0;
+	mon->prompt = NULL;
 }
 
 void mon_free (monitor_t *mon)
@@ -88,6 +89,11 @@ void mon_set_terminate (monitor_t *mon, int val)
 	mon->terminate = (val != 0);
 }
 
+void mon_set_prompt (monitor_t *mon, const char *str)
+{
+	mon->prompt = str;
+}
+
 #if 0
 static
 int mon_set_msg (monitor_t *mon, const char *msg, const char *val)
@@ -113,7 +119,12 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 static
 void mon_prt_prompt (monitor_t *mon)
 {
-	pce_puts ("-");
+	if (mon->prompt != NULL) {
+		pce_puts (mon->prompt);
+	}
+	else {
+		pce_puts ("-");
+	}
 }
 
 static

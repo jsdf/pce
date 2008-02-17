@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/monitor.h                                          *
  * Created:       2006-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2006-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,7 +37,9 @@ typedef struct {
 	int  (*setmsg) (void *ext, const char *msg, const char *val);
 	int  (*getmsg) (void *ext, const char *msg, char *val, unsigned max);
 
-	char terminate;
+	char       terminate;
+
+	const char *prompt;
 } monitor_t;
 
 
@@ -51,6 +53,8 @@ void mon_set_cmd_fct (monitor_t *mon, void *fct, void *ext);
 void mon_set_msg_fct (monitor_t *mon, void *set, void *get, void *ext);
 
 void mon_set_terminate (monitor_t *mon, int val);
+
+void mon_set_prompt (monitor_t *mon, const char *str);
 
 int mon_run (monitor_t *mon);
 
