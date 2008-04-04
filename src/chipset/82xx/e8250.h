@@ -127,8 +127,10 @@ typedef struct {
 	unsigned char  msr;
 	unsigned char  scratch;
 
-	unsigned       rxd_read_cnt;
-	unsigned       txd_write_cnt;
+	unsigned       rxd_throttle_max;
+	unsigned       rxd_throttle_cnt;
+	unsigned       txd_throttle_max;
+	unsigned       txd_throttle_cnt;
 
 	/* enables or disables the scratch register */
 	unsigned char  have_scratch;
@@ -260,6 +262,17 @@ void e8250_set_check_fct (e8250_t *uart, void *ext, void *fct);
  * @param out  The output queue size
  *****************************************************************************/
 void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out);
+
+/*!***************************************************************************
+ * @short Set the transmission throttle values
+ * @param uart The UART structure
+ * @param rxd  The input throttle value
+ * @param txd  The output throttle size
+ *
+ * If the throttle value is greater than zero, transmission will pause
+ * briefly after every throttle value bytes.
+ *****************************************************************************/
+void e8250_set_throttle (e8250_t *uart, unsigned rxd, unsigned txd);
 
 
 /*!***************************************************************************

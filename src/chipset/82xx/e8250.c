@@ -59,8 +59,10 @@ void e8250_init (e8250_t *uart)
 	uart->mcr = 0;
 	uart->msr = 0; /* E8250_MSR_DCD | E8250_MSR_DSR | E8250_MSR_CTS; */
 
-	uart->rxd_read_cnt = 0;
-	uart->txd_write_cnt = 0;
+	uart->rxd_throttle_max = 0;
+	uart->rxd_throttle_cnt = 0;
+	uart->txd_throttle_max = 0;
+	uart->txd_throttle_cnt = 0;
 
 	uart->have_scratch = 1;
 
@@ -194,6 +196,14 @@ void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
 	uart->out_i = 0;
 	uart->out_j = 0;
 	uart->out_n = (out <= E8250_BUF_MAX) ? out : E8250_BUF_MAX;
+}
+
+void e8250_set_throttle (e8250_t *uart, unsigned rxd, unsigned txd)
+{
+	uart->rxd_throttle_max = rxd;
+	uart->rxd_throttle_cnt = 0;
+	uart->txd_throttle_max = txd;
+	uart->txd_throttle_cnt = 0;
 }
 
 static
@@ -650,16 +660,24 @@ unsigned char e8250_read_rxd (e8250_t *uart)
 	uart->lsr &= ~E8250_LSR_RRD;
 	e8250_clr_int_cond (uart, E8250_IER_RRD);
 
-	uart->rxd_read_cnt += 1;
-
-	/* every uart->inp_n bytes, give the reader a break */
-	if (uart->rxd_read_cnt < uart->inp_n) {
+	if (uart->rxd_throttle_max > 0) {
+		/*
+		 * Every uart->rxd_throttle_max bytes, give the reader a
+		 * break. Transmission will continue on the next call to
+		 * either e8250_clock() or e8250_read_iir().
+		 */
+		if (uart->rxd_throttle_cnt < uart->rxd_throttle_max) {
+			uart->rxd_throttle_cnt += 1;
+			e8250_check_rxd (uart);
+		}
+	}
+	else {
 		e8250_check_rxd (uart);
 	}
 
 	/* rxd still empty -> reset read count */
 	if (uart->rxd[1] == 0) {
-		uart->rxd_read_cnt = 0;
+		uart->rxd_throttle_cnt = 0;
 	}
 
 	return (val);
@@ -673,6 +691,16 @@ unsigned char e8250_read_iir (e8250_t *uart)
 	val = uart->iir;
 
 	e8250_clr_int_cond (uart, E8250_IER_TBE);
+
+	if (uart->rxd_throttle_max > 0) {
+		/* restart receiving */
+		e8250_check_rxd (uart);
+	}
+
+	if (uart->txd_throttle_max > 0) {
+		/* restart sending */
+		e8250_check_txd (uart);
+	}
 
 	return (val);
 }
@@ -728,19 +756,26 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
 	uart->txd[1] = 1;
 
 	uart->lsr &= ~E8250_LSR_TBE;
-
 	e8250_clr_int_cond (uart, E8250_IER_TBE);
 
-	uart->txd_write_cnt += 1;
-
-	/* every uart->out_n bytes, give the reader a break */
-	if (uart->txd_write_cnt < uart->out_n) {
+	if (uart->txd_throttle_max > 0) {
+		/*
+		 * Every uart->txd_throttle_max bytes, give the sender a
+		 * break. Transmission will continue on the next call to
+		 * either e8250_clock() or e8250_read_iir().
+		 */
+		if (uart->txd_throttle_cnt < uart->txd_throttle_max) {
+			uart->txd_throttle_cnt += 1;
+			e8250_check_txd (uart);
+		}
+	}
+	else {
 		e8250_check_txd (uart);
 	}
 
 	/* txd still full -> reset write count */
 	if (uart->txd[1]) {
-		uart->txd_write_cnt = 0;
+		uart->txd_throttle_cnt = 0;
 	}
 }
 
