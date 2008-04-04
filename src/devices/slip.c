@@ -171,11 +171,13 @@ void slip_send_packet (slip_t *slip)
 #ifdef PCE_ENABLE_TUN
 	if (slip->tun_fd >= 0) {
 #ifdef SLIP_DEBUG
-		fprintf (stderr, "slip: send %u\n", slip->out_cnt);
+		fprintf (stderr, "slip: send tun S=%u\n", slip->out_cnt);
 		fflush (stderr);
 #endif
 
-		tun_set_packet (slip->tun_fd, slip->out, slip->out_cnt);
+		if (tun_set_packet (slip->tun_fd, slip->out, slip->out_cnt)) {
+			fprintf (stderr, "slip: packet drop\n");
+		}
 	}
 #endif
 }
@@ -235,7 +237,9 @@ int slip_receive_packet (slip_t *slip)
 	}
 
 #ifdef SLIP_DEBUG
-	fprintf (stderr, "slip: recv %u / %u\n", n, j);
+	fprintf (stderr, "slip: recv tun S=%u+%u Q=%u\n",
+		n, j - n, slip->inp_cnt + 1
+	);
 #endif
 
 	buf->n = j;
@@ -341,6 +345,12 @@ void slip_uart_check_inp (slip_t *slip, unsigned char val)
 		if (buf->i < buf->n) {
 			break;
 		}
+
+#ifdef SLIP_DEBUG
+		fprintf (stderr, "slip: recv uart S=%u Q=%u\n",
+			buf->n, slip->inp_cnt - 1
+		);
+#endif
 
 		if (buf->next == NULL) {
 			slip->inp_hd = NULL;
