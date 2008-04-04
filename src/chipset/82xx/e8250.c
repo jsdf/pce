@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/82xx/e8250.c                                   *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +27,10 @@
 #include <string.h>
 
 #include "e8250.h"
+
+
+static int e8250_get_inp (e8250_t *uart, unsigned char *val);
+static int e8250_set_out (e8250_t *uart, unsigned char val);
 
 
 void e8250_init (e8250_t *uart)
@@ -125,13 +128,13 @@ void e8250_set_chip_16450 (e8250_t *uart)
 int e8250_set_chip (e8250_t *uart, unsigned chip)
 {
 	switch (chip) {
-		case E8250_CHIP_8250:
-			e8250_set_chip_8250 (uart);
-			return (0);
+	case E8250_CHIP_8250:
+		e8250_set_chip_8250 (uart);
+		return (0);
 
-		case E8250_CHIP_16450:
-			e8250_set_chip_16450 (uart);
-			return (0);
+	case E8250_CHIP_16450:
+		e8250_set_chip_16450 (uart);
+		return (0);
 	}
 
 	return (1);
@@ -152,31 +155,31 @@ int e8250_set_chip_str (e8250_t *uart, const char *str)
 	return (1);
 }
 
-void e8250_set_irq_f (e8250_t *uart, void *fct, void *ext)
+void e8250_set_irq_fct (e8250_t *uart, void *ext, void *fct)
 {
 	uart->irq = fct;
 	uart->irq_ext = ext;
 }
 
-void e8250_set_send_f (e8250_t *uart, void *fct, void *ext)
+void e8250_set_send_fct (e8250_t *uart, void *ext, void *fct)
 {
 	uart->send = fct;
 	uart->send_ext = ext;
 }
 
-void e8250_set_recv_f (e8250_t *uart, void *fct, void *ext)
+void e8250_set_recv_fct (e8250_t *uart, void *ext, void *fct)
 {
 	uart->recv = fct;
 	uart->recv_ext = ext;
 }
 
-void e8250_set_setup_f (e8250_t *uart, void *fct, void *ext)
+void e8250_set_setup_fct (e8250_t *uart, void *ext, void *fct)
 {
 	uart->setup = fct;
 	uart->setup_ext = ext;
 }
 
-void e8250_set_check_f (e8250_t *uart, void *fct, void *ext)
+void e8250_set_check_fct (e8250_t *uart, void *ext, void *fct)
 {
 	uart->check = fct;
 	uart->check_ext = ext;
@@ -240,6 +243,10 @@ void e8250_clr_int_cond (e8250_t *uart, unsigned char c)
 	e8250_set_int_cond (uart, 0);
 }
 
+/*
+ * Move a character from the input queue to RxD and adjust interrupt
+ * conditions.
+ */
 static
 void e8250_check_rxd (e8250_t *uart)
 {
@@ -256,12 +263,16 @@ void e8250_check_rxd (e8250_t *uart)
 
 	/* receive queue is not full */
 	if (uart->recv != NULL) {
-		uart->recv (uart->recv_ext);
+		uart->recv (uart->recv_ext, 1);
 	}
 
 	e8250_set_int_cond (uart, E8250_IER_RRD);
 }
 
+/*
+ * Move a character from TxD to the output queue and adjust interrupt
+ * conditions.
+ */
 static
 void e8250_check_txd (e8250_t *uart)
 {
@@ -286,7 +297,7 @@ void e8250_check_txd (e8250_t *uart)
 	}
 	else {
 		if (uart->send != NULL) {
-			uart->send (uart->send_ext);
+			uart->send (uart->send_ext, 1);
 		}
 	}
 
@@ -330,6 +341,9 @@ int e8250_get_rts (e8250_t *uart)
 }
 
 
+/*
+ * Set the DSR input signal
+ */
 void e8250_set_dsr (e8250_t *uart, unsigned char val)
 {
 	unsigned char msr;
@@ -351,6 +365,9 @@ void e8250_set_dsr (e8250_t *uart, unsigned char val)
 	}
 }
 
+/*
+ * Set the CTS input signal
+ */
 void e8250_set_cts (e8250_t *uart, unsigned char val)
 {
 	unsigned char msr;
@@ -372,6 +389,9 @@ void e8250_set_cts (e8250_t *uart, unsigned char val)
 	}
 }
 
+/*
+ * Set the DCD input signal
+ */
 void e8250_set_dcd (e8250_t *uart, unsigned char val)
 {
 	unsigned char msr;
@@ -393,6 +413,9 @@ void e8250_set_dcd (e8250_t *uart, unsigned char val)
 	}
 }
 
+/*
+ * Set the RI input signal
+ */
 void e8250_set_ri (e8250_t *uart, unsigned char val)
 {
 	unsigned char msr;
@@ -415,6 +438,9 @@ void e8250_set_ri (e8250_t *uart, unsigned char val)
 }
 
 
+/*
+ * Add a byte to the input queue
+ */
 int e8250_set_inp (e8250_t *uart, unsigned char val)
 {
 	unsigned t;
@@ -432,6 +458,10 @@ int e8250_set_inp (e8250_t *uart, unsigned char val)
 	return (0);
 }
 
+/*
+ * Remove a byte from the input queue
+ */
+static
 int e8250_get_inp (e8250_t *uart, unsigned char *val)
 {
 	if (uart->inp_i == uart->inp_j) {
@@ -448,12 +478,18 @@ int e8250_get_inp (e8250_t *uart, unsigned char *val)
 	return (0);
 }
 
+/*
+ * Clear the input queue
+ */
 void e8250_get_inp_all (e8250_t *uart)
 {
 	uart->inp_i = 0;
 	uart->inp_j = 0;
 }
 
+/*
+ * Check if the input queue is full
+ */
 int e8250_inp_full (e8250_t *uart)
 {
 	unsigned t;
@@ -468,12 +504,19 @@ int e8250_inp_full (e8250_t *uart)
 	return (0);
 }
 
+/*
+ * Check if the input queue is empty
+ */
 int e8250_inp_empty (e8250_t *uart)
 {
 	return (uart->inp_i == uart->inp_j);
 }
 
 
+/*
+ * Add a byte to the output queue
+ */
+static
 int e8250_set_out (e8250_t *uart, unsigned char val)
 {
 	unsigned t;
@@ -491,6 +534,9 @@ int e8250_set_out (e8250_t *uart, unsigned char val)
 	return (0);
 }
 
+/*
+ * Remove a byte from the output queue
+ */
 int e8250_get_out (e8250_t *uart, unsigned char *val)
 {
 	if (uart->out_i == uart->out_j) {
@@ -507,17 +553,28 @@ int e8250_get_out (e8250_t *uart, unsigned char *val)
 	return (0);
 }
 
+/*
+ * Clear the output queue
+ */
 void e8250_get_out_all (e8250_t *uart)
 {
 	uart->out_i = 0;
 	uart->out_j = 0;
 }
 
+/*
+ * Check if the output queue is empty
+ */
 int e8250_out_empty (e8250_t *uart)
 {
 	return (uart->out_i == uart->out_j);
 }
 
+
+int e8250_send (e8250_t *uart, unsigned char *val)
+{
+	return (e8250_get_out (uart, val));
+}
 
 int e8250_receive (e8250_t *uart, unsigned char val)
 {
@@ -626,7 +683,7 @@ unsigned char e8250_read_msr (e8250_t *uart)
 	unsigned char val;
 
 	if (uart->check != NULL) {
-		uart->check (uart->check_ext);
+		uart->check (uart->check_ext, 1);
 	}
 
 	val = uart->msr;
@@ -649,7 +706,7 @@ void e8250_write_div_lo (e8250_t *uart, unsigned char val)
 	uart->divisor |= (val & 0xff);
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext);
+		uart->setup (uart->setup_ext, 1);
 	}
 }
 
@@ -660,7 +717,7 @@ void e8250_write_div_hi (e8250_t *uart, unsigned char val)
 	uart->divisor |= (val & 0xff) << 8;
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext);
+		uart->setup (uart->setup_ext, 1);
 	}
 }
 
@@ -706,7 +763,7 @@ void e8250_write_lcr (e8250_t *uart, unsigned char val)
 	uart->lcr = val;
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext);
+		uart->setup (uart->setup_ext, 1);
 	}
 }
 
@@ -749,51 +806,51 @@ void e8250_write_mcr (e8250_t *uart, unsigned char val)
 	}
 
 	if (uart->setup != NULL) {
-		uart->setup (uart->setup_ext);
+		uart->setup (uart->setup_ext, 1);
 	}
 }
 
 unsigned char e8250_get_uint8 (e8250_t *uart, unsigned long addr)
 {
 	switch (addr) {
-		case 0x00:
-			if (uart->lcr & E8250_LCR_DLAB) {
-				return (e8250_get_div_lo (uart));
-			}
-			else {
-				return (e8250_read_rxd (uart));
-			}
-			break;
+	case 0x00:
+		if (uart->lcr & E8250_LCR_DLAB) {
+			return (e8250_get_div_lo (uart));
+		}
+		else {
+			return (e8250_read_rxd (uart));
+		}
+		break;
 
-		case 0x01:
-			if (uart->lcr & 0x80) {
-				return (e8250_get_div_hi (uart));
-			}
-			else {
-				return (e8250_get_ier (uart));
-			}
-			break;
+	case 0x01:
+		if (uart->lcr & 0x80) {
+			return (e8250_get_div_hi (uart));
+		}
+		else {
+			return (e8250_get_ier (uart));
+		}
+		break;
 
-		case 0x02:
-			return (e8250_read_iir (uart));
+	case 0x02:
+		return (e8250_read_iir (uart));
 
-		case 0x03:
-			return (e8250_get_lcr (uart));
+	case 0x03:
+		return (e8250_get_lcr (uart));
 
-		case 0x04:
-			return (e8250_get_mcr (uart));
+	case 0x04:
+		return (e8250_get_mcr (uart));
 
-		case 0x05:
-			return (e8250_get_lsr (uart));
+	case 0x05:
+		return (e8250_get_lsr (uart));
 
-		case 0x06:
-			return (e8250_read_msr (uart));
+	case 0x06:
+		return (e8250_read_msr (uart));
 
-		case 0x07:
-			if (uart->have_scratch) {
-				return (e8250_get_scratch (uart));
-			}
-			return (0xff);
+	case 0x07:
+		if (uart->have_scratch) {
+			return (e8250_get_scratch (uart));
+		}
+		return (0xff);
 	}
 
 	return (0xff);
@@ -812,49 +869,49 @@ unsigned long e8250_get_uint32 (e8250_t *uart, unsigned long addr)
 void e8250_set_uint8 (e8250_t *uart, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
-		case 0x00:
-			if (uart->lcr & E8250_LCR_DLAB) {
-				e8250_write_div_lo (uart, val);
-			}
-			else {
-				e8250_write_txd (uart, val);
-			}
-			break;
+	case 0x00:
+		if (uart->lcr & E8250_LCR_DLAB) {
+			e8250_write_div_lo (uart, val);
+		}
+		else {
+			e8250_write_txd (uart, val);
+		}
+		break;
 
-		case 0x01:
-			if (uart->lcr & E8250_LCR_DLAB) {
-				e8250_write_div_hi (uart, val);
-			}
-			else {
-				e8250_write_ier (uart, val);
-			}
-			break;
+	case 0x01:
+		if (uart->lcr & E8250_LCR_DLAB) {
+			e8250_write_div_hi (uart, val);
+		}
+		else {
+			e8250_write_ier (uart, val);
+		}
+		break;
 
-		case 0x02:
-			/* IIR */
-			break;
+	case 0x02:
+		/* IIR */
+		break;
 
-		case 0x03:
-			e8250_write_lcr (uart, val);
-			break;
+	case 0x03:
+		e8250_write_lcr (uart, val);
+		break;
 
-		case 0x04:
-			e8250_write_mcr (uart, val);
-			break;
+	case 0x04:
+		e8250_write_mcr (uart, val);
+		break;
 
-		case 0x05:
-			/* LSR */
-			break;
+	case 0x05:
+		/* LSR */
+		break;
 
-		case 0x06:
-			/* MSR */
-			break;
+	case 0x06:
+		/* MSR */
+		break;
 
-		case 0x07:
-			if (uart->have_scratch) {
-				e8250_set_scratch (uart, val);
-			}
-			break;
+	case 0x07:
+		if (uart->have_scratch) {
+			e8250_set_scratch (uart, val);
+		}
+		break;
 	}
 }
 

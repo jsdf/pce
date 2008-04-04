@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/slip.c                                         *
  * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -90,9 +89,9 @@ void slip_set_serport (slip_t *slip, serport_t *ser)
 {
 	slip->ser = ser;
 
-	e8250_set_send_f (&ser->uart, slip_uart_check_out, slip);
-	e8250_set_recv_f (&ser->uart, slip_uart_check_inp, slip);
-	e8250_set_setup_f (&ser->uart, NULL, NULL);
+	e8250_set_send_fct (&ser->uart, slip, slip_uart_check_out);
+	e8250_set_recv_fct (&ser->uart, slip, slip_uart_check_inp);
+	e8250_set_setup_fct (&ser->uart, NULL, NULL);
 }
 
 int slip_set_tun (slip_t *slip, const char *name)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/sim405/sim405.c                                   *
  * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2008 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -136,8 +136,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
 			}
 
-			e8250_set_irq_f (&sim->serport[i]->uart,
-				p405uic_get_irq_fct (&sim->uic, irq), &sim->uic
+			e8250_set_irq_fct (&sim->serport[i]->uart,
+				&sim->uic, p405uic_get_irq_fct (&sim->uic, irq)
 			);
 
 			mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);

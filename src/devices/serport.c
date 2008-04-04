@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/serport.c                                      *
  * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -97,10 +96,10 @@ void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 	ser->addr_shift = shift;
 
 	e8250_init (&ser->uart);
-	e8250_set_send_f (&ser->uart, ser_uart_check_out, ser);
-	e8250_set_recv_f (&ser->uart, ser_uart_check_inp, ser);
-	e8250_set_setup_f (&ser->uart, ser_uart_check_setup, ser);
-	e8250_set_check_f (&ser->uart, ser_uart_check_status, ser);
+	e8250_set_send_fct (&ser->uart, ser, ser_uart_check_out);
+	e8250_set_recv_fct (&ser->uart, ser, ser_uart_check_inp);
+	e8250_set_setup_fct (&ser->uart, ser, ser_uart_check_setup);
+	e8250_set_check_fct (&ser->uart, ser, ser_uart_check_status);
 
 	mem_blk_init (&ser->port, base, 8 << shift, 0);
 	ser->port.ext = ser;

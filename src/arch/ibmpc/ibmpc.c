@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/ibmpc.c                                     *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1999-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -568,7 +568,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->mse = mse_new (addr, sct);
 
-	e8250_set_irq_f (&pc->mse->uart, e8259_get_irq_f (&pc->pic, irq), &pc->pic);
+	e8250_set_irq_fct (&pc->mse->uart, &pc->pic, e8259_get_irq_f (&pc->pic, irq));
 
 	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
@@ -692,8 +692,8 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
 			}
 
-			e8250_set_irq_f (&pc->serport[i]->uart,
-				e8259_get_irq_f (&pc->pic, irq), &pc->pic
+			e8250_set_irq_fct (&pc->serport[i]->uart,
+				&pc->pic, e8259_get_irq_f (&pc->pic, irq)
 			);
 
 			mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);

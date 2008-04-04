@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/chipset/82xx/e8250.h                                   *
  * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -145,19 +144,19 @@ typedef struct {
 
 	/* output buffer is not empty */
 	void           *send_ext;
-	void           (*send) (void *ext);
+	void           (*send) (void *ext, unsigned char val);
 
 	/* input buffer is not full */
 	void           *recv_ext;
-	void           (*recv) (void *ext);
+	void           (*recv) (void *ext, unsigned char val);
 
 	/* setup (DIV, MCR or LCR) has changed */
 	void           *setup_ext;
-	void           (*setup) (void *ext);
+	void           (*setup) (void *ext, unsigned char val);
 
 	/* MSR is about to be read */
 	void           *check_ext;
-	void           (*check) (void *ext);
+	void           (*check) (void *ext, unsigned char val);
 } e8250_t;
 
 
@@ -216,42 +215,42 @@ int e8250_set_chip_str (e8250_t *uart, const char *str);
 /*!***************************************************************************
  * @short Set the IRQ function
  * @param uart The UART structure
- * @param fct  The function to be called on IRQ
  * @param ext  The transparent parameter for fct
+ * @param fct  The function to be called on IRQ
  *****************************************************************************/
-void e8250_set_irq_f (e8250_t *uart, void *fct, void *ext);
+void e8250_set_irq_fct (e8250_t *uart, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Set the send function
  * @param uart The UART structure
- * @param fct  The function to be called when the output queue is not empty
  * @param ext  The transparent parameter for fct
+ * @param fct  The function to be called when the output queue is not empty
  *****************************************************************************/
-void e8250_set_send_f (e8250_t *uart, void *fct, void *ext);
+void e8250_set_send_fct (e8250_t *uart, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Set the receive function
  * @param uart The UART structure
- * @param fct  The function to be called when the input queue is not full
  * @param ext  The transparent parameter for fct
+ * @param fct  The function to be called when the input queue is not full
  *****************************************************************************/
-void e8250_set_recv_f (e8250_t *uart, void *fct, void *ext);
+void e8250_set_recv_fct (e8250_t *uart, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Set the setup function
  * @param uart The UART structure
- * @param fct  The function to be called when the UART setup changes
  * @param ext  The transparent parameter for fct
+ * @param fct  The function to be called when the UART setup changes
  *****************************************************************************/
-void e8250_set_setup_f (e8250_t *uart, void *fct, void *ext);
+void e8250_set_setup_fct (e8250_t *uart, void *ext, void *fct);
 
 /*!***************************************************************************
  * @short Set the check function
  * @param uart The UART structure
- * @param fct  The function to be called when the MSR is about to be read
  * @param ext  The transparent parameter for fct
+ * @param fct  The function to be called when the MSR is about to be read
  *****************************************************************************/
-void e8250_set_check_f (e8250_t *uart, void *fct, void *ext);
+void e8250_set_check_fct (e8250_t *uart, void *ext, void *fct);
 
 
 /*!***************************************************************************
@@ -335,6 +334,11 @@ void e8250_set_cts (e8250_t *uart, unsigned char val);
  *****************************************************************************/
 void e8250_set_dcd (e8250_t *uart, unsigned char val);
 
+/*!***************************************************************************
+ * @short  Set the RI input signal
+ * @param  uart The UART structure
+ * @return The state of the RI signal
+ *****************************************************************************/
 void e8250_set_ri (e8250_t *uart, unsigned char val);
 
 
@@ -345,14 +349,6 @@ void e8250_set_ri (e8250_t *uart, unsigned char val);
  * @return Nonzero on error (queue full)
  *****************************************************************************/
 int e8250_set_inp (e8250_t *uart, unsigned char val);
-
-/*!***************************************************************************
- * @short  Remove a byte from the input queue
- * @param  uart The UART structure
- * @retval val  The byte
- * @return Nonzero on error (queue empty)
- *****************************************************************************/
-int e8250_get_inp (e8250_t *uart, unsigned char *val);
 
 /*!***************************************************************************
  * @short  Clear the input queue
@@ -376,14 +372,6 @@ int e8250_inp_empty (e8250_t *uart);
 
 
 /*!***************************************************************************
- * @short  Add a byte to the output queue
- * @param  uart The UART structure
- * @param  val  The byte
- * @return Nonzero on error (queue full)
- *****************************************************************************/
-int e8250_set_out (e8250_t *uart, unsigned char val);
-
-/*!***************************************************************************
  * @short  Remove a byte to the output queue
  * @param  uart The UART structure
  * @retval val  The byte
@@ -397,13 +385,27 @@ int e8250_get_out (e8250_t *uart, unsigned char *val);
  *****************************************************************************/
 void e8250_get_out_all (e8250_t *uart);
 
+/*!***************************************************************************
+ * @short  Check if the output queue is empty
+ * @param  uart The UART structure
+ * @return Nonzero if the queue is empty
+ *****************************************************************************/
 int e8250_out_empty (e8250_t *uart);
+
+
+/*!***************************************************************************
+ * @short  Send a byte
+ * @param  uart The UART structure
+ * @param  val  The byte
+ * @return Nonzero on error (output queue empty)
+ *****************************************************************************/
+int e8250_send (e8250_t *uart, unsigned char *val);
 
 /*!***************************************************************************
  * @short  Receive a byte
  * @param  uart The UART structure
  * @param  val  The byte
- * @return Nonzero on error (queue full)
+ * @return Nonzero on error (input queue full)
  *****************************************************************************/
 int e8250_receive (e8250_t *uart, unsigned char val);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/simarm.c                                   *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -207,8 +207,8 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 				);
 			}
 
-			e8250_set_irq_f (ser_get_uart (ser),
-				ict_get_irq_f (sim->intc, irq), sim->intc
+			e8250_set_irq_fct (ser_get_uart (ser),
+				sim->intc, ict_get_irq_f (sim->intc, irq)
 			);
 
 			mem_add_blk (sim->mem, ser_get_reg (ser), 0);
