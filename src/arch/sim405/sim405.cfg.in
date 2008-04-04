@@ -64,6 +64,9 @@ section sim405 {
 		address = 0xef600300
 		irq = 0
 		
+		# Pause transmission briefly every 128 bytes
+		throttle = 128
+
 		# The file that output is written to
 		file = "current/uart0.out"
 	}

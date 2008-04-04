@@ -85,6 +85,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
+	unsigned      throttle;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
@@ -108,11 +109,13 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 		}
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
+		ini_get_uint16 (sct, "throttle", &throttle, 0);
 		ini_get_string (sct, "file", &fname, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s file=%s\n",
-			i, addr, irq, chip, (fname == NULL) ? "<none>" : fname
+			"n=%u addr=0x%08lx irq=%u uart=%s th=%u file=%s\n",
+			i, addr, irq, chip, throttle,
+			(fname == NULL) ? "<none>" : fname
 		);
 
 		sim->serport[i] = ser_new (addr, 0);
@@ -123,6 +126,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			);
 		}
 		else {
+			e8250_t *uart;
+
 			if (fname != NULL) {
 				if (ser_set_fname (sim->serport[i], fname)) {
 					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
@@ -132,11 +137,16 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 				ser_set_fp (sim->serport[i], stdout, 0);
 			}
 
-			if (e8250_set_chip_str (&sim->serport[i]->uart, chip)) {
+			uart = &sim->serport[i]->uart;
+
+			e8250_set_buf_size (uart, 256, 256);
+			e8250_set_throttle (uart, throttle, throttle);
+
+			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
 			}
 
-			e8250_set_irq_fct (&sim->serport[i]->uart,
+			e8250_set_irq_fct (uart,
 				&sim->uic, p405uic_get_irq_fct (&sim->uic, irq)
 			);
 
