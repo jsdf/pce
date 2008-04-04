@@ -252,6 +252,7 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 	unsigned   seridx;
 	const char *name;
 	device_t   *ser;
+	e8250_t    *uart;
 
 	sct = ini_next_sct (ini, NULL, "slip");
 	if (sct == NULL) {
@@ -276,7 +277,14 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 		return;
 	}
 
-	slip_set_serport (sim->slip, ser->ext);
+	uart = ser_get_uart (ser->ext);
+
+	e8250_set_send_fct (uart, sim->slip, slip_uart_check_out);
+	e8250_set_recv_fct (uart, sim->slip, slip_uart_check_inp);
+	e8250_set_setup_fct (uart, NULL, NULL);
+
+	slip_set_get_uint8_fct (sim->slip, uart, e8250_send);
+	slip_set_set_uint8_fct (sim->slip, uart, e8250_receive);
 
 	if (slip_set_tun (sim->slip, name)) {
 		pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n",

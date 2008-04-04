@@ -36,15 +36,12 @@
 
 /* #define SLIP_DEBUG 1 */
 
-
-static void slip_uart_check_out (slip_t *slip, unsigned char val);
-static void slip_uart_check_inp (slip_t *slip, unsigned char val);
+/* receive packet buffer */
+#define SLIP_PACKET_BUFFER 8
 
 
 void slip_init (slip_t *slip)
 {
-	slip->ser = NULL;
-
 	slip->out_cnt = 0;
 
 	slip->inp_hd = NULL;
@@ -52,6 +49,14 @@ void slip_init (slip_t *slip)
 	slip->inp_cnt = 0;
 
 	slip->tun_fd = -1;
+
+	slip->checking = 0;
+
+	slip->get_uint8 = NULL;
+	slip->get_uint8_ext = NULL;
+
+	slip->set_uint8 = NULL;
+	slip->set_uint8_ext = NULL;
 }
 
 void slip_free (slip_t *slip)
@@ -85,13 +90,16 @@ void slip_del (slip_t *slip)
 	}
 }
 
-void slip_set_serport (slip_t *slip, serport_t *ser)
+void slip_set_set_uint8_fct (slip_t *slip, void *ext, void *fct)
 {
-	slip->ser = ser;
+	slip->set_uint8 = fct;
+	slip->set_uint8_ext = ext;
+}
 
-	e8250_set_send_fct (&ser->uart, slip, slip_uart_check_out);
-	e8250_set_recv_fct (&ser->uart, slip, slip_uart_check_inp);
-	e8250_set_setup_fct (&ser->uart, NULL, NULL);
+void slip_set_get_uint8_fct (slip_t *slip, void *ext, void *fct)
+{
+	slip->get_uint8 = fct;
+	slip->get_uint8_ext = ext;
 }
 
 int slip_set_tun (slip_t *slip, const char *name)
@@ -111,6 +119,28 @@ int slip_set_tun (slip_t *slip, const char *name)
 	return (1);
 #endif
 }
+
+
+static
+int slip_get_uint8 (slip_t *slip, unsigned char *val)
+{
+	if (slip->get_uint8 != NULL) {
+		return (slip->get_uint8 (slip->get_uint8_ext, val));
+	}
+
+	return (1);
+}
+
+static
+int slip_set_uint8 (slip_t *slip, unsigned char val)
+{
+	if (slip->set_uint8 != NULL) {
+		return (slip->set_uint8 (slip->set_uint8_ext, val));
+	}
+
+	return (1);
+}
+
 
 static
 slip_buf_t *slip_buf_alloc (slip_t *slip)
@@ -266,33 +296,42 @@ void slip_set_out (slip_t *slip, unsigned char c)
 	slip->out[slip->out_cnt++] = c;
 }
 
-static
 void slip_uart_check_out (slip_t *slip, unsigned char val)
 {
 	unsigned char c;
+
+	if (slip->checking) {
+		return;
+	}
+
+	slip->checking = 1;
+
 	while (1) {
-		if (e8250_get_out (&slip->ser->uart, &c)) {
+		if (slip_get_uint8 (slip, &c)) {
 			break;
 		}
 
 		slip_set_out (slip, c);
 	}
+
+	slip->checking = 0;
 }
 
-static
 void slip_uart_check_inp (slip_t *slip, unsigned char val)
 {
-}
+	if (slip->checking) {
+		return;
+	}
 
-void slip_clock (slip_t *slip, unsigned n)
-{
+	slip->checking = 1;
+
 	while (slip->inp_hd != NULL) {
 		slip_buf_t *buf;
 
 		buf = slip->inp_hd;
 
 		while (buf->i < buf->n) {
-			if (e8250_receive (&slip->ser->uart, buf->buf[buf->i])) {
+			if (slip_set_uint8 (slip, buf->buf[buf->i])) {
 				break;
 			}
 
@@ -316,9 +355,17 @@ void slip_clock (slip_t *slip, unsigned n)
 		slip->inp_cnt -= 1;
 	}
 
-	while (slip->inp_cnt < 8) {
+	while (slip->inp_cnt < SLIP_PACKET_BUFFER) {
 		if (slip_receive_packet (slip)) {
 			break;
 		}
 	}
+
+	slip->checking = 0;
+}
+
+void slip_clock (slip_t *slip, unsigned n)
+{
+	slip_uart_check_inp (slip, 1);
+	slip_uart_check_out (slip, 1);
 }

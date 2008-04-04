@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/slip.h                                         *
  * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,9 +26,6 @@
 #define PCE_DEVICES_SLIP_H 1
 
 
-#include <devices/serport.h>
-
-
 #define PCE_SLIP_BUF_MAX 4096
 
 
@@ -43,8 +39,6 @@ typedef struct slip_buf_s {
 
 
 typedef struct {
-	serport_t     *ser;
-
 	unsigned      out_cnt;
 	unsigned char out[PCE_SLIP_BUF_MAX];
 	char          out_esc;
@@ -55,6 +49,14 @@ typedef struct {
 	unsigned      inp_cnt;
 
 	int           tun_fd;
+
+	char          checking;
+
+	void *get_uint8_ext;
+	int  (*get_uint8) (void *ext, unsigned char *val);
+
+	void *set_uint8_ext;
+	int  (*set_uint8) (void *ext, unsigned char val);
 } slip_t;
 
 
@@ -64,8 +66,13 @@ void slip_free (slip_t *slip);
 slip_t *slip_new (void);
 void slip_del (slip_t *slip);
 
-void slip_set_serport (slip_t *slip, serport_t *ser);
+void slip_set_set_uint8_fct (slip_t *slip, void *ext, void *fct);
+void slip_set_get_uint8_fct (slip_t *slip, void *ext, void *fct);
+
 int slip_set_tun (slip_t *slip, const char *name);
+
+void slip_uart_check_out (slip_t *slip, unsigned char val);
+void slip_uart_check_inp (slip_t *slip, unsigned char val);
 
 void slip_clock (slip_t *slip, unsigned n);
 
