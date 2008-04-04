@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/ata.c                                          *
  * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -73,6 +73,7 @@
 #define ATA_CMD_WRITE_MULTIPLE     0xc5
 #define ATA_CMD_SET_MULTIPLE_MODE  0xc6
 #define ATA_CMD_STANDBY_IMMEDIATE2 0xe0
+#define ATA_CMD_FLUSH_CACHE        0xe7
 #define ATA_CMD_IDENTIFY           0xec
 
 
@@ -649,6 +650,12 @@ void ata_cmd_standby_immediate (ata_dev_t *dev)
 }
 
 static
+void ata_cmd_flush_cache (ata_dev_t *dev)
+{
+	ata_cmd_ok (dev);
+}
+
+static
 void ata_cmd_identify (ata_dev_t *dev)
 {
 	uint32_t cnt1, cnt2;
@@ -733,6 +740,10 @@ void ata_command (ata_chn_t *ata, unsigned cmd)
 	case ATA_CMD_STANDBY_IMMEDIATE1:
 	case ATA_CMD_STANDBY_IMMEDIATE2:
 		ata_cmd_standby_immediate (ata->sel);
+		break;
+
+	case ATA_CMD_FLUSH_CACHE:
+		ata_cmd_flush_cache (ata->sel);
 		break;
 
 	case ATA_CMD_IDENTIFY:
