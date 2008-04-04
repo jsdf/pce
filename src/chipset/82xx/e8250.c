@@ -675,8 +675,8 @@ unsigned char e8250_read_rxd (e8250_t *uart)
 		e8250_check_rxd (uart);
 	}
 
-	/* rxd still empty -> reset read count */
-	if (uart->rxd[1] == 0) {
+	/* no interrupts pending -> reset read count */
+	if (uart->iir == E8250_IIR_PND) {
 		uart->rxd_throttle_cnt = 0;
 	}
 
@@ -773,8 +773,8 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
 		e8250_check_txd (uart);
 	}
 
-	/* txd still full -> reset write count */
-	if (uart->txd[1]) {
+	/* no interrupts pending -> reset write count */
+	if (uart->iir == E8250_IIR_PND) {
 		uart->txd_throttle_cnt = 0;
 	}
 }
