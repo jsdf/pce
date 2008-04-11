@@ -58,33 +58,34 @@ HDR_EXT	:= \
 
 MAN1	:=
 
-BIN	:= sim6502
+BIN	:= pce-sim6502
 
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(BIN) $(OBJ) sim6502.cfg
+CLN := $(BIN) $(OBJ) pce-sim6502.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) sim6502.cfg
+all: $(BIN) $(OBJ) pce-sim6502.cfg
 
 
-install: install-bin sim6502.cfg
+install: install-bin pce-sim6502.cfg
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	$(QP)echo "  CP     sim6502.cfg"
-	$(QR)test -f $(DESTDIR)$(etcdir)/sim6502.cfg || $(INSTALL) -m 644 sim6502.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     pce-sim6502.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/pce-sim6502.cfg || \
+		$(INSTALL) -m 644 pce-sim6502.cfg $(DESTDIR)$(etcdir)
 
 
-sim6502: $(OBJ) $(OBJ_EXT)
+pce-sim6502: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-sim6502.cfg: sim6502.cfg.in
+pce-sim6502.cfg: sim6502.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 

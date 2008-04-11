@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/apps/pceimg/pceimg.h                                   *
+ * File name:     src/utils/pceimg/pce-img.h                                 *
  * Created:       2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************

@@ -13,7 +13,7 @@ pcedst := $(reldir)/src
 include $(reldir)/config.inc
 
 
-FILES := pceimg
+FILES := pce-img
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -23,9 +23,9 @@ OBJ_EXT	:= $(PCE_BLK_OBJ)
 
 HDR_EXT	:= $(pcedst)/config.h $(PCE_BLK_HDR) \
 
-MAN1 := pceimg.1
+MAN1 := pce-img.1
 MANT := $(foreach f,$(MAN1),$(f).txt $(f).ps)
-BIN  := pceimg
+BIN  := pce-img
 
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
@@ -43,9 +43,9 @@ all: $(BIN)
 install: $(BIN) install-bin install-man
 
 
-pceimg: $(OBJ) $(OBJ_EXT)
+pce-img: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-pceimg.o:	pceimg.c $(SDP)
+pce-img.o:	pce-img.c $(SDP)

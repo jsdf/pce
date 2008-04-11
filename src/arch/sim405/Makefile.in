@@ -88,7 +88,7 @@ HDR_EXT	:= \
 
 MAN1	:=
 
-BIN	:= sim405
+BIN	:= pce-sim405
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 OBJ_EXT += $(pcedst)/lib/tun.o
@@ -98,28 +98,29 @@ endif
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(BIN) $(OBJ) sim405.cfg
+CLN := $(BIN) $(OBJ) pce-sim405.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) sim405.cfg
+all: $(BIN) $(OBJ) pce-sim405.cfg
 
 
-install: install-bin sim405.cfg
+install: install-bin pce-sim405.cfg
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	$(QP)echo "  CP     sim405.cfg"
-	$(QR)test -f $(DESTDIR)$(etcdir)/sim405.cfg || $(INSTALL) -m 644 sim405.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     pce-sim405.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/pce-sim405.cfg || \
+		$(INSTALL) -m 644 pce-sim405.cfg $(DESTDIR)$(etcdir)
 
 
-sim405: $(OBJ) $(OBJ_EXT)
+pce-sim405: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-sim405.cfg: sim405.cfg.in
+pce-sim405.cfg: sim405.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 

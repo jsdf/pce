@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/simarm/main.c                                     *
  * Created:       2004-11-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -55,9 +55,7 @@ static
 void prt_help (void)
 {
 	fputs (
-		"usage: simarm [options]\n"
-		"  --help                 Print usage information\n"
-		"  --version              Print version information\n"
+		"usage: pce-simarm [options]\n"
 		"  -c, --config string    Set the config file\n"
 		"  -l, --log string       Set the log file\n"
 		"  -p, --cpu string       Set the cpu model\n"
@@ -74,9 +72,9 @@ static
 void prt_version (void)
 {
 	fputs (
-		"pce simarm version " PCE_VERSION_STR
-		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
+		"pce-simarm version " PCE_VERSION_STR
+		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n\n"
+		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -92,7 +90,7 @@ void sig_int (int s)
 
 void sig_segv (int s)
 {
-	fprintf (stderr, "pce: segmentation fault\n");
+	fprintf (stderr, "pce-simarm: segmentation fault\n");
 
 	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
 		sarm_prt_state_cpu (par_sim->cpu, stderr);
@@ -264,9 +262,9 @@ int main (int argc, char *argv[])
 	}
 
 	pce_log (MSG_INF,
-		"pce simarm version " PCE_VERSION_STR
+		"pce-simarm version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);

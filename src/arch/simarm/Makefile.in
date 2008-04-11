@@ -80,7 +80,7 @@ HDR_EXT	:= \
 
 MAN1	:=
 
-BIN	:= simarm
+BIN	:= pce-simarm
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 OBJ_EXT += $(pcedst)/lib/tun.o
@@ -90,28 +90,28 @@ endif
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(BIN) $(OBJ) simarm.cfg
+CLN := $(BIN) $(OBJ) pce-simarm.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) simarm.cfg
+all: $(BIN) $(OBJ) pce-simarm.cfg
 
 
-install: install-bin simarm.cfg
+install: install-bin pce-simarm.cfg
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	$(QP)echo "  CP     simarm.cfg"
-	$(QR)test -f $(DESTDIR)$(etcdir)/simarm.cfg || $(INSTALL) -m 644 simarm.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     pce-simarm.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/pce-simarm.cfg || $(INSTALL) -m 644 pce-simarm.cfg $(DESTDIR)$(etcdir)
 
 
-simarm: $(OBJ) $(OBJ_EXT)
+pce-simarm: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-simarm.cfg: simarm.cfg.in
+pce-simarm.cfg: simarm.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 

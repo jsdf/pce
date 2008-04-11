@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/utils/pceimg/pceimg.c                                  *
+ * File name:     src/utils/pceimg/pce-img.c                                 *
  * Created:       2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 
 #define _XOPEN_SOURCE 600
 
-#include "pceimg.h"
+#include "pce-img.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +53,7 @@ static
 void prt_help (void)
 {
 	fputs (
-		"usage: pceimg command [options]\n"
+		"usage: pce-img command [options]\n"
 		"\n"
 		"create [options] [output]\n"
 		"  -q, --quiet             Be quiet\n"
@@ -89,9 +89,9 @@ static
 void prt_version (void)
 {
 	fputs (
-		"pceimg version " PCE_VERSION_STR
+		"pce-img version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 

@@ -103,37 +103,39 @@ ifeq "$(PCE_SDL_USE)" "1"
 	LD_FLG_EXTRA += $(PCE_SDL_LDF)
 endif
 
-MAN1 := ibmpc.1
+MAN1 := pce-ibmpc.1
 MANT := $(foreach f,$(MAN1),$(f).txt $(f).ps)
-BIN  := ibmpc
+BIN  := pce-ibmpc
 
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(OBJ) $(BIN) $(MANT) ibmpc.cfg
+CLN := $(OBJ) $(BIN) $(MANT) pce-ibmpc.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) ibmpc.cfg
+all: $(BIN) $(OBJ) pce-ibmpc.cfg
 
 
-install: ibmpc ibmpc.cfg install-bin install-man
+install: pce-ibmpc pce-ibmpc.cfg install-bin install-man
 	$(QP)echo "  LN     pce"
-	$(QR)( rm -f $(DESTDIR)$(bindir)/pce ; cd $(DESTDIR)$(bindir) && ln -s ibmpc pce ; )
+	$(QR)( rm -f $(DESTDIR)$(bindir)/pce ; \
+		cd $(DESTDIR)$(bindir) && ln -s pce-ibmpc pce ; )
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	$(QP)echo "  CP     ibmpc.cfg"
-	$(QR)test -f $(DESTDIR)$(etcdir)/ibmpc.cfg || $(INSTALL) -m 644 ibmpc.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     pce-ibmpc.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/pce-ibmpc.cfg || \
+		$(INSTALL) -m 644 pce-ibmpc.cfg $(DESTDIR)$(etcdir)
 
 
-ibmpc: $(OBJ) $(OBJ_EXT)
+pce-ibmpc: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-ibmpc.cfg: ibmpc.cfg.in
+pce-ibmpc.cfg: ibmpc.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 

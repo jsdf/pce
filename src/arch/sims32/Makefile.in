@@ -64,33 +64,34 @@ HDR_EXT	:= \
 
 MAN1	:=
 
-BIN	:= sims32
+BIN	:= pce-sims32
 
 SDP	:= Makefile $(HDR) $(HDR_EXT)
 BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 
-CLN := $(BIN) $(OBJ) sims32.cfg
+CLN := $(BIN) $(OBJ) pce-sims32.cfg
 DCL := Makefile
 
 
 include $(reldir)/rules.inc
 
 
-all: $(BIN) $(OBJ) sims32.cfg
+all: $(BIN) $(OBJ) pce-sims32.cfg
 
 
-install: install-bin sims32.cfg
+install: install-bin pce-sims32.cfg
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(etcdir)
-	$(QP)echo "  CP     sims32.cfg"
-	$(QR)test -f $(DESTDIR)$(etcdir)/sims32.cfg || $(INSTALL) -m 644 sims32.cfg $(DESTDIR)$(etcdir)
+	$(QP)echo "  CP     pce-sims32.cfg"
+	$(QR)test -f $(DESTDIR)$(etcdir)/pce-sims32.cfg || \
+		$(INSTALL) -m 644 pce-sims32.cfg $(DESTDIR)$(etcdir)
 
 
-sims32: $(OBJ) $(OBJ_EXT)
+pce-sims32: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
 
 
-sims32.cfg: sims32.cfg.in
+pce-sims32.cfg: sims32.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datdir)]g" < $< > $@
 

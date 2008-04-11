@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/arch/ibmpc/main.c                                      *
  * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -53,9 +53,7 @@ static
 void prt_help (void)
 {
 	fputs (
-		"usage: ibmpc [options]\n"
-		"  --help                 Print usage information\n"
-		"  --version              Print version information\n"
+		"usage: pce-ibmpc [options]\n"
 		"  -b, --boot int         Set boot drive [128]\n"
 		"  -c, --config string    Set the config file\n"
 		"  -g, --video string     Set video device\n"
@@ -76,9 +74,9 @@ static
 void prt_version (void)
 {
 	fputs (
-		"pce ibmpc version " PCE_VERSION_STR
-		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n",
+		"pce-ibmpc version " PCE_VERSION_STR
+		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n\n"
+		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -92,7 +90,7 @@ void sig_int (int s)
 
 void sig_segv (int s)
 {
-	fprintf (stderr, "pce: segmentation fault\n");
+	fprintf (stderr, "pce-ibmpc: segmentation fault\n");
 	fflush (stderr);
 
 	if ((pc != NULL) && (pc->cpu != NULL)) {
@@ -1725,9 +1723,9 @@ int main (int argc, char *argv[])
 	}
 
 	pce_log (MSG_MSG,
-		"pce ibmpc version " PCE_VERSION_STR
+		"pce-ibmpc version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2007 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	if (argc < 2) {

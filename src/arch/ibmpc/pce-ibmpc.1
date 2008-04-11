@@ -1,30 +1,18 @@
-.TH IBMPC 1 "2006-09-13" "HH" "pce"
+.TH PCE-IBMPC 1 "2008-04-11" "HH" "pce"
 \
 .SH NAME
-ibmpc \- IBM PC 5150 emulator
+pce-ibmpc \- IBM PC 5150 emulator
 \
 .SH SYNOPSIS
-.BI ibmpc " [options]"
-.PP
-.BI ibmpc " --help"
-.PP
-.BI ibmpc " --version"
+.BI pce-ibmpc " [options]"
 \
 .SH DESCRIPTION
-.BR ibmpc (1)
+.BR pce-ibmpc (1)
 is an IBM PC hardware emulator. It emulates most of
 the hardware of an IBM PC 5150. The emulation is complete enough to
 boot DOS and run most DOS applications.
 \
 .SH OPTIONS
-.TP
-.B --help
-Print usage information
-\
-.TP
-.B --version
-Print version information
-\
 .TP
 .BI "-b, --boot " drive
 Set the boot drive. The default is 128 (the first hard disk).
@@ -94,8 +82,17 @@ Set the terminal device. Possible devices are
 .B "-v, --verbose"
 Verbose operation. This is highly recommended.
 \
+.TP
+.B --help
+Print usage information
+\
+.TP
+.B --version
+Print version information
+\
 .SH SEE ALSO
-.BR bochs "(1), " mtools (1)
+.BR bochs "(1), "
+.BR mtools (1)
 \
 .SH AUTHOR
 Hampa Hug <hampa@hampa.ch>
