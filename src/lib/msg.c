@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/lib/msg.c                                              *
  * Created:       2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
+ * Copyright:     (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -86,11 +85,11 @@ int msg_get_bool (const char *str, int *val)
 {
 	unsigned long tmp;
 
-	if (strcmp (str, "true")) {
+	if (strcmp (str, "true") == 0) {
 		*val = 1;
 		return (0);
 	}
-	else if (strcmp (str, "false")) {
+	else if (strcmp (str, "false") == 0) {
 		*val = 0;
 		return (0);
 	}
