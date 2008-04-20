@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/copr15.c                                       *
  * Created:       2004-11-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -52,6 +52,9 @@ void cp15_init (arm_copr15_t *p)
 	for (i = 2; i < 16; i++) {
 		p->reg[i] = 0;
 	}
+
+	p->cache_type = 0;
+	p->auxiliary_control = 0;
 }
 
 arm_copr_t *cp15_new (void)
@@ -79,6 +82,80 @@ void cp15_del (arm_copr15_t *p)
 	}
 
 	free (p);
+}
+
+
+/*
+ * Get CP15/0 (ID)
+ */
+static
+int cp15_get_reg0 (arm_t *c, arm_copr15_t *p, unsigned op2, uint32_t *val)
+{
+	switch (op2) {
+	case 0:
+		/* ID */
+		*val = p->reg[0];
+		return (0);
+
+	case 1:
+		/* XScale Cache Type */
+		*val = p->cache_type;
+		return (0);
+	}
+
+	return (1);
+}
+
+/*
+ * Get CP15/1 (Control)
+ */
+static
+int cp15_get_reg1 (arm_t *c, arm_copr15_t *p, unsigned op2, uint32_t *val)
+{
+	switch (op2) {
+	case 0:
+		/* Control */
+		*val = p->reg[1];
+		return (0);
+
+	case 1:
+		/* XScale Auxiliary Control */
+		*val = p->auxiliary_control;
+		return (0);
+	}
+
+	return (1);
+}
+
+/*
+ * Set CP15/1 (Control)
+ */
+static
+int cp15_set_reg1 (arm_t *c, arm_copr15_t *p, unsigned op2, uint32_t val)
+{
+	switch (op2) {
+	case 0:
+		/* Control */
+		val &= ~ARM_C15_CR_C;
+		val &= ~ARM_C15_CR_W;
+		val |= ARM_C15_CR_P;
+		val |= ARM_C15_CR_D;
+		val |= ARM_C15_CR_L;
+		arm_set_bits (val, ARM_C15_CR_B, c->bigendian);
+		p->reg[1] = val & 0xffffffff;
+
+		c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000 : 0x00000000;
+
+		return (0);
+
+	case 1:
+		/* XScale Auxiliary Control */
+		p->auxiliary_control = val;
+
+		return (0);
+	}
+
+	return (1);
 }
 
 /* cache functions */
@@ -239,11 +316,15 @@ int cp15_op_mrc (arm_t *c, arm_copr_t *p)
 
 	switch (arm_ir_rn (c->ir)) {
 	case 0x00: /* ID register */
-		val = p15->reg[0];
+		if (cp15_get_reg0 (c, p15, op2, &val)) {
+			return (1);
+		}
 		break;
 
 	case 0x01: /* control register */
-		val = p15->reg[1];
+		if (cp15_get_reg1 (c, p15, op2, &val)) {
+			return (1);
+		}
 		break;
 
 	case 0x02: /* translation table base */
@@ -301,16 +382,7 @@ int cp15_op_mcr (arm_t *c, arm_copr_t *p)
 		return (1);
 
 	case 0x01: /* control register */
-		val &= ~ARM_C15_CR_C;
-		val &= ~ARM_C15_CR_W;
-		val |= ARM_C15_CR_P;
-		val |= ARM_C15_CR_D;
-		val |= ARM_C15_CR_L;
-		arm_set_bits (val, ARM_C15_CR_B, c->bigendian);
-		p15->reg[1] = val & 0xffffffff;
-
-		c->exception_base = (val & ARM_C15_CR_V) ? 0xffff0000 : 0x00000000;
-		break;
+		return (cp15_set_reg1 (c, p15, op2, val));
 
 	case 0x02: /* translation table base */
 		p15->reg[2] = val & 0xffffc000;

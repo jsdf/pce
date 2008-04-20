@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:     src/cpu/arm/arm.h                                          *
  * Created:       2004-11-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
  * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
  *****************************************************************************/
 
@@ -191,6 +191,9 @@ typedef struct {
 	arm_tbuf_t tbuf_write;
 
 	uint32_t   reg[16];
+
+	uint32_t   cache_type;
+	uint32_t   auxiliary_control;
 } arm_copr15_t;
 
 
