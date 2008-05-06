@@ -601,7 +601,7 @@ void s405_clock (sim405_t *sim, unsigned n)
 		if (sim->clk_div[1] >= 16384) {
 			scon_check (sim);
 
-			sim->clk_div[0] &= 16383;
+			sim->clk_div[1] &= 16383;
 		}
 	}
 
