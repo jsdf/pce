@@ -43,6 +43,8 @@
 void slip_init (slip_t *slip)
 {
 	slip->out_cnt = 0;
+	slip->out_esc = 0;
+	slip->out_packet_start = 0;
 
 	slip->inp_hd = NULL;
 	slip->inp_tl = NULL;
@@ -264,8 +266,17 @@ static
 void slip_set_out (slip_t *slip, unsigned char c)
 {
 	if (c == 192) {
-		if (slip->out_cnt > 0) {
-			slip_send_packet (slip);
+		if (slip->out_packet_start) {
+			if (slip->out_cnt == 0) {
+				fprintf (stderr, "slip: sending empty packet\n");
+			}
+			else {
+				slip_send_packet (slip);
+				slip->out_packet_start = 0;
+			}
+		}
+		else {
+			slip->out_packet_start = 1;
 		}
 
 		slip->out_cnt = 0;
@@ -274,8 +285,8 @@ void slip_set_out (slip_t *slip, unsigned char c)
 		return;
 	}
 
-	if (c == 219) {
-		slip->out_esc = 1;
+	if (slip->out_packet_start == 0) {
+		fprintf (stderr, "slip: garbage [%02X]\n", (unsigned) c);
 		return;
 	}
 
@@ -289,11 +300,21 @@ void slip_set_out (slip_t *slip, unsigned char c)
 			c = 219;
 		}
 		else {
+			fprintf (stderr, "slip: unknown escape (%02X)\n",
+				(unsigned) c
+			);
+			return;
+		}
+	}
+	else {
+		if (c == 219) {
+			slip->out_esc = 1;
 			return;
 		}
 	}
 
 	if (slip->out_cnt >= PCE_SLIP_BUF_MAX) {
+		fprintf (stderr, "slip: send buffer overrun\n");
 		return;
 	}
 
