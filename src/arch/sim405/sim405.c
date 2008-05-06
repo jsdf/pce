@@ -85,7 +85,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
-	unsigned      throttle;
+	unsigned      rate_cnt;
+	unsigned long rate_clk;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
@@ -109,12 +110,13 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 		}
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
-		ini_get_uint16 (sct, "throttle", &throttle, 0);
+		ini_get_uint16 (sct, "rate_chars", &rate_cnt, 16);
+		ini_get_uint32 (sct, "rate_clocks", &rate_clk, 16384);
 		ini_get_string (sct, "file", &fname, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s th=%u file=%s\n",
-			i, addr, irq, chip, throttle,
+			"n=%u addr=0x%08lx irq=%u uart=%s rate=%u/%lu file=%s\n",
+			i, addr, irq, chip, rate_cnt, rate_clk,
 			(fname == NULL) ? "<none>" : fname
 		);
 
@@ -140,7 +142,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			uart = &sim->serport[i]->uart;
 
 			e8250_set_buf_size (uart, 256, 256);
-			e8250_set_throttle (uart, throttle, throttle);
+			e8250_set_rate (uart, rate_cnt, rate_clk);
 
 			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);

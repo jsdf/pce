@@ -157,7 +157,8 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      irq;
 	unsigned      fifo;
-	unsigned      throttle;
+	unsigned      rate_cnt;
+	unsigned long rate_clk;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
@@ -171,13 +172,14 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 		}
 		ini_get_uint16 (sct, "irq", &irq, 2);
 		ini_get_uint16 (sct, "fifo", &fifo, 16);
-		ini_get_uint16 (sct, "throttle", &throttle, 0);
+		ini_get_uint16 (sct, "rate_chars", &rate_cnt, 16);
+		ini_get_uint32 (sct, "rate_clocks", &rate_clk, 16384);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_string (sct, "file", &fname, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s th=%u file=%s\n",
-			i, addr, irq, chip, throttle,
+			"n=%u addr=0x%08lx irq=%u uart=%s rate=%u/%lu file=%s\n",
+			i, addr, irq, chip, rate_cnt, rate_clk,
 			(fname == NULL) ? "<none>" : fname
 		);
 
@@ -203,7 +205,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 			}
 
 			e8250_set_buf_size (ser_get_uart (ser), fifo, fifo);
-			e8250_set_throttle (ser_get_uart (ser), throttle, throttle);
+			e8250_set_rate (ser_get_uart (ser), rate_cnt, rate_clk);
 
 			if (e8250_set_chip_str (ser_get_uart (ser), chip)) {
 				pce_log (MSG_ERR,
@@ -453,7 +455,7 @@ void sarm_clock (simarm_t *sim, unsigned n)
 		sim->clk_div[0] &= 255;
 
 		if (sim->clk_div[1] >= 4096) {
-			dev_lst_clock (&sim->dev, 256);
+			dev_lst_clock (&sim->dev, 4096);
 
 			if (sim->slip != NULL) {
 				slip_clock (sim->slip, 4096);

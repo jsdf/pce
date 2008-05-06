@@ -69,8 +69,9 @@ section simarm {
 
 		fifo = 64
 
-		# Pause transmission briefly every 128 bytes
-		throttle = 128
+		# Rate control
+		# Transmission is delayed by rate_clocks clocks every
+		# rate_chars characters
 
 		# The file that output is written to
 		file = "current/uart0.out"
