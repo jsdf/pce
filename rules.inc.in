@@ -14,7 +14,7 @@ subdirs: subdirs-rec
 subdirs-rec:
 ifneq "$(subdir)" ""
 	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG)); \
+		$(MAKE) -C $$dir $(MAKE_FLG) || exit 1 ; \
 	done
 endif
 
@@ -25,7 +25,7 @@ man: $(MANT) man-rec
 man-rec:
 ifneq "$(subdir)" ""
 	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) man); \
+		$(MAKE) -C $$dir $(MAKE_FLG) man || exit 1 ; \
 	done
 endif
 
@@ -42,7 +42,7 @@ endif
 clean-rec:
 ifneq "$(subdir)" ""
 	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) clean); \
+		$(MAKE) -C $$dir $(MAKE_FLG) clean || exit 1 ; \
 	done
 endif
 
@@ -62,7 +62,7 @@ endif
 distclean-rec:
 ifneq "$(subdir)" ""
 	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) distclean); \
+		$(MAKE) -C $$dir $(MAKE_FLG) distclean || exit 1 ; \
 	done
 endif
 
@@ -73,7 +73,7 @@ install: install-rec
 install-rec:
 ifneq "$(subdir)" ""
 	@for dir in $(subdir); do \
-		(cd $$dir && $(MAKE) $(MAKE_FLG) install); \
+		$(MAKE) -C $$dir $(MAKE_FLG) install || exit 1 ; \
 	done
 endif
 
