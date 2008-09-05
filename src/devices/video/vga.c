@@ -62,8 +62,6 @@
 #define ATC_OSCN     0x11
 
 
-static void vga_update (vga_t *vga);
-
 static void vga_update_cga_txt (vga_t *vga);
 static int vga_screenshot_cga_txt (vga_t *vga, FILE *fp);
 static void vga_set_latches_cga_txt (vga_t *cga, unsigned long addr, unsigned char val[4]);
@@ -156,14 +154,12 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
 	vga->vid.type = PCE_VIDEO_EGA;
 	vga->vid.ext = vga;
-	vga->vid.del = (pce_video_del_f) &vga_del;
-	vga->vid.get_mem = (pce_video_get_mem_f) &vga_get_mem;
-	vga->vid.get_reg = (pce_video_get_reg_f) &vga_get_reg;
-	vga->vid.prt_state = (pce_video_prt_state_f) &vga_prt_state;
-	vga->vid.update = (pce_video_update_f) &vga_update;
-	vga->vid.dump = (pce_video_dump_f) &vga_dump;
-	vga->vid.screenshot = (pce_video_screenshot_f) &vga_screenshot;
-	vga->vid.clock = (pce_video_clock_f) &vga_clock;
+	vga->vid.del = (void *) vga_del;
+	vga->vid.get_mem = (void *) vga_get_mem;
+	vga->vid.get_reg = (void *) vga_get_reg;
+	vga->vid.print_info = (void *) vga_prt_state;
+	vga->vid.screenshot = (void *) vga_screenshot;
+	vga->vid.clock = (void *) vga_clock;
 
 	memset (vga->crtc_reg, 0xff, 24 * sizeof (unsigned char));
 	memset (vga->ts_reg, 0, 5 * sizeof (unsigned char));
@@ -1156,12 +1152,6 @@ unsigned char vga_get_uint8_gdc (vga_t *vga, unsigned long addr)
 int vga_screenshot (vga_t *vga, FILE *fp, unsigned mode)
 {
 	return (vga->screenshot (vga, fp));
-}
-
-static
-void vga_update (vga_t *vga)
-{
-	vga->update (vga);
 }
 
 int vga_eval_mode (vga_t *vga)

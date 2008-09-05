@@ -80,13 +80,11 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 	pce_video_init (&mda->vid);
 
 	mda->vid.ext = mda;
-	mda->vid.del = (pce_video_del_f) &mda_del;
-	mda->vid.get_mem = (pce_video_get_mem_f) &mda_get_mem;
-	mda->vid.get_reg = (pce_video_get_reg_f) &mda_get_reg;
-	mda->vid.prt_state = (pce_video_prt_state_f) &mda_prt_state;
-	mda->vid.update = (pce_video_update_f) &mda_update;
-	mda->vid.dump = (pce_video_dump_f) &mda_dump;
-	mda->vid.screenshot = (pce_video_screenshot_f) &mda_screenshot;
+	mda->vid.del = (void *) mda_del;
+	mda->vid.get_mem = (void *) mda_get_mem;
+	mda->vid.get_reg = (void *) mda_get_reg;
+	mda->vid.print_info = (void *) mda_prt_state;
+	mda->vid.screenshot = (void *) mda_screenshot;
 
 	for (i = 0; i < 18; i++) {
 		mda->crtc_reg[i] = 0;

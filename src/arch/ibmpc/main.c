@@ -211,11 +211,11 @@ void prt_state_video (video_t *vid)
 
 	pce_prt_sep ("video");
 
-	pce_video_prt_state (vid, pce_get_fp_out());
+	pce_video_print_info (vid, pce_get_fp_out());
 
 	fp = pce_get_redir_out();
 	if (fp != NULL) {
-		pce_video_prt_state (vid, fp);
+		pce_video_print_info (vid, fp);
 	}
 }
 
@@ -662,11 +662,6 @@ void do_dump (cmd_t *cmd)
 	if (strcmp (what, "ram") == 0) {
 		fprintf (fp, "# RAM dump\n\n");
 		pce_dump_hex (fp, pc->ram->data, pc->ram->size, 0, 16, "", 1);
-	}
-	else if (strcmp (what, "video") == 0) {
-		if (pce_video_dump (pc->video, fp)) {
-			pce_printf ("dumping video failed\n");
-		}
 	}
 	else if (strcmp (what, "config") == 0) {
 		if (ini_write_fp (par_cfg, fp)) {
@@ -1390,16 +1385,6 @@ void do_t (cmd_t *cmd)
 }
 
 static
-void do_update (cmd_t *cmd)
-{
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	pce_video_update (pc->video);
-}
-
-static
 void do_u (cmd_t *cmd)
 {
 	unsigned              i;
@@ -1552,9 +1537,6 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "t")) {
 		do_t (cmd);
-	}
-	else if (cmd_match (cmd, "update")) {
-		do_update (cmd);
 	}
 	else if (cmd_match (cmd, "u")) {
 		do_u (cmd);

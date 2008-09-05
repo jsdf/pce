@@ -95,13 +95,12 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 	pce_video_init (&hgc->vid);
 
 	hgc->vid.ext = hgc;
-	hgc->vid.del = (pce_video_del_f) &hgc_del;
-	hgc->vid.get_mem = (pce_video_get_mem_f) &hgc_get_mem;
-	hgc->vid.get_reg = (pce_video_get_reg_f) &hgc_get_reg;
-	hgc->vid.prt_state = (pce_video_prt_state_f) &hgc_prt_state;
-	hgc->vid.update = (pce_video_update_f) &hgc_update;
-	hgc->vid.dump = (pce_video_dump_f) &hgc_dump;
-	hgc->vid.screenshot = (pce_video_screenshot_f) &hgc_screenshot;
+	hgc->vid.del = (void *) hgc_del;
+	hgc->vid.get_mem = (void *) hgc_get_mem;
+	hgc->vid.get_reg = (void *) hgc_get_reg;
+	hgc->vid.print_info = (void *) hgc_prt_state;
+	hgc->vid.redraw = (void *) hgc_update;
+	hgc->vid.screenshot = (void *) &hgc_screenshot;
 
 	for (i = 0; i < 18; i++) {
 		hgc->crtc_reg[i] = 0;

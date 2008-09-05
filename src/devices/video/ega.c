@@ -62,8 +62,6 @@
 #define ATC_OSCN     0x11
 
 
-static void ega_update (ega_t *ega);
-
 static void ega_update_cga_txt (ega_t *ega);
 static int ega_screenshot_cga_txt (ega_t *ega, FILE *fp);
 static void ega_set_latches_cga_txt (ega_t *cga, unsigned long addr, unsigned char val[4]);
@@ -101,14 +99,12 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
 	ega->vid.type = PCE_VIDEO_EGA;
 	ega->vid.ext = ega;
-	ega->vid.del = (pce_video_del_f) ega_del;
-	ega->vid.get_mem = (pce_video_get_mem_f) ega_get_mem;
-	ega->vid.get_reg = (pce_video_get_reg_f) ega_get_reg;
-	ega->vid.prt_state = (pce_video_prt_state_f) ega_prt_state;
-	ega->vid.update = (pce_video_update_f) ega_update;
-	ega->vid.dump = (pce_video_dump_f) ega_dump;
-	ega->vid.screenshot = (pce_video_screenshot_f) ega_screenshot;
-	ega->vid.clock = (pce_video_clock_f) ega_clock;
+	ega->vid.del = (void *) ega_del;
+	ega->vid.get_mem = (void *) ega_get_mem;
+	ega->vid.get_reg = (void *) ega_get_reg;
+	ega->vid.print_info = (void *) ega_prt_state;
+	ega->vid.screenshot = (void *) ega_screenshot;
+	ega->vid.clock = (void *) ega_clock;
 
 	memset (ega->crtc_reg, 0xff, 24 * sizeof (unsigned char));
 	memset (ega->ts_reg, 0, 5 * sizeof (unsigned char));
@@ -1038,12 +1034,6 @@ int ega_eval_mode (ega_t *ega)
 	}
 
 	return (0);
-}
-
-static
-void ega_update (ega_t *ega)
-{
-	ega->update (ega);
 }
 
 void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)

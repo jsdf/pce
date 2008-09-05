@@ -66,14 +66,13 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 	pce_video_init (&cga->vid);
 
 	cga->vid.ext = cga;
-	cga->vid.del = (pce_video_del_f) cga_del;
-	cga->vid.get_mem = (pce_video_get_mem_f) cga_get_mem;
-	cga->vid.get_reg = (pce_video_get_reg_f) cga_get_reg;
-	cga->vid.prt_state = (pce_video_prt_state_f) cga_prt_state;
-	cga->vid.update = (pce_video_update_f) cga_update;
-	cga->vid.dump = (pce_video_dump_f) cga_dump;
-	cga->vid.screenshot = (pce_video_screenshot_f) cga_screenshot;
-	cga->vid.clock = (pce_video_clock_f) cga_clock;
+	cga->vid.del = (void *) cga_del;
+	cga->vid.get_mem = (void *) cga_get_mem;
+	cga->vid.get_reg = (void *) cga_get_reg;
+	cga->vid.print_info = (void *) cga_prt_state;
+	cga->vid.redraw = (void *) cga_update;
+	cga->vid.screenshot = (void *) cga_screenshot;
+	cga->vid.clock = (void *) cga_clock;
 
 	for (i = 0; i < 16; i++) {
 		cga->crtc_reg[i] = 0;

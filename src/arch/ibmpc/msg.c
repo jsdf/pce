@@ -133,7 +133,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		return (0);
 	}
 	else if (msg_is_message ("emu.video.redraw", msg)) {
-		pce_video_update (pc->video);
+		pce_video_redraw (pc->video);
 		return (0);
 	}
 	else if (msg_is_message ("emu.video.screenshot", msg)) {
@@ -160,7 +160,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		}
 
 		trm_set_size (pc->trm, w, h);
-		pce_video_update (pc->video);
+		pce_video_redraw (pc->video);
 
 		return (0);
 	}

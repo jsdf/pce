@@ -5,8 +5,7 @@
 /*****************************************************************************
  * File name:     src/devices/video.h                                        *
  * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,45 +38,44 @@
 #define PCE_VIDEO_EGA  4
 
 
-typedef void (*pce_video_del_f) (void *ext);
-typedef mem_blk_t *(*pce_video_get_mem_f) (void *ext);
-typedef mem_blk_t *(*pce_video_get_reg_f) (void *ext);
-typedef void (*pce_video_prt_state_f) (void *ext, FILE *fp);
-typedef void (*pce_video_update_f) (void *ext);
-typedef int (*pce_video_dump_f) (void *ext, FILE *fp);
-typedef int (*pce_video_screenshot_f) (void *ext, FILE *fp, unsigned mode);
-typedef void (*pce_video_clock_f) (void *ext, unsigned long cnt);
-
-
 typedef struct {
-	pce_video_del_f        del;
-	pce_video_get_mem_f    get_mem;
-	pce_video_get_reg_f    get_reg;
-	pce_video_prt_state_f  prt_state;
-	pce_video_update_f     update;
-	pce_video_dump_f       dump;
-	pce_video_screenshot_f screenshot;
-	pce_video_clock_f      clock;
+	void      (*del) (void *ext);
 
-	void                   *ext;
+	int       (*set_msg) (void *ext, const char *msg, const char *val);
 
-	unsigned               type;
+	void      (*set_terminal) (void *ext, void *trm);
+
+	mem_blk_t *(*get_mem) (void *ext);
+	mem_blk_t *(*get_reg) (void *ext);
+
+	void      (*print_info) (void *ext, FILE *fp);
+
+	int       (*screenshot) (void *ext, FILE *fp, unsigned mode);
+
+	void      (*redraw) (void *ext);
+	void      (*clock) (void *ext, unsigned long cnt);
+
+	void      *ext;
+
+	unsigned  type;
 } video_t;
 
 
 void pce_video_init (video_t *vid);
 void pce_video_del (video_t *vid);
 
+void pce_video_set_msg (video_t *vid, const char *msg, const char *val);
+
+void pce_video_set_terminal (video_t *vid, void *trm);
+
 mem_blk_t *pce_video_get_mem (video_t *vid);
 mem_blk_t *pce_video_get_reg (video_t *vid);
 
-void pce_video_prt_state (video_t *vid, FILE *fp);
-
-void pce_video_update (video_t *vid);
-
-int pce_video_dump (video_t *vid, FILE *fp);
+void pce_video_print_info (video_t *vid, FILE *fp);
 
 int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
+
+void pce_video_redraw (video_t *vid);
 
 void pce_video_clock (video_t *vid, unsigned long cnt);
 

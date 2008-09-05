@@ -509,6 +509,12 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 	if (pc->video == NULL) {
 		pce_log (MSG_ERR, "*** setting up video device failed\n");
 	}
+
+	if (pc->video != NULL) {
+		if (pc->trm != NULL) {
+			pce_video_set_terminal (pc->video, pc->trm);
+		}
+	}
 }
 
 static
