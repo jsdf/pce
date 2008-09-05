@@ -42,7 +42,6 @@ typedef struct {
 	unsigned      out_cnt;
 	unsigned char out[PCE_SLIP_BUF_MAX];
 	char          out_esc;
-	char          out_packet_start;
 
 	/* input packet queue */
 	slip_buf_t    *inp_hd;

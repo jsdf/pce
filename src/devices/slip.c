@@ -44,7 +44,6 @@ void slip_init (slip_t *slip)
 {
 	slip->out_cnt = 0;
 	slip->out_esc = 0;
-	slip->out_packet_start = 0;
 
 	slip->inp_hd = NULL;
 	slip->inp_tl = NULL;
@@ -266,27 +265,13 @@ static
 void slip_set_out (slip_t *slip, unsigned char c)
 {
 	if (c == 192) {
-		if (slip->out_packet_start) {
-			if (slip->out_cnt == 0) {
-				fprintf (stderr, "slip: sending empty packet\n");
-			}
-			else {
-				slip_send_packet (slip);
-				slip->out_packet_start = 0;
-			}
-		}
-		else {
-			slip->out_packet_start = 1;
+		if (slip->out_cnt > 0) {
+			slip_send_packet (slip);
 		}
 
 		slip->out_cnt = 0;
 		slip->out_esc = 0;
 
-		return;
-	}
-
-	if (slip->out_packet_start == 0) {
-		fprintf (stderr, "slip: garbage [%02X]\n", (unsigned) c);
 		return;
 	}
 
