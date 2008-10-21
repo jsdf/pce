@@ -508,40 +508,27 @@ void ega_update_cga4 (ega_t *ega)
 static
 void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4])
 {
-	unsigned      i;
-	unsigned      x, y, c;
-	unsigned      rofs;
-	unsigned char msk;
+	unsigned i;
+	unsigned x, y, c;
+	unsigned rofs;
 
 	addr &= 0xffff;
 
-	msk = 0;
-
 	if (ega->ts_reg[2] & 0x01) {
-		msk |= ega->data[addr + 0x00000] ^ latch[0];
 		ega->data[addr + 0x00000] = latch[0];
 	}
 
 	if (ega->ts_reg[2] & 0x02) {
-		msk |= ega->data[addr + 0x10000] ^ latch[1];
 		ega->data[addr + 0x10000] = latch[1];
 	}
 
 	if (ega->ts_reg[2] & 0x04) {
-		msk |= ega->data[addr + 0x20000] ^ latch[2];
 		ega->data[addr + 0x20000] = latch[2];
 	}
 
 	if (ega->ts_reg[2] & 0x08) {
-		msk |= ega->data[addr + 0x30000] ^ latch[3];
 		ega->data[addr + 0x30000] = latch[3];
 	}
-
-	if (msk == 0) {
-		return;
-	}
-
-	msk = (msk & 0xaa) | ((msk << 1) & 0xaa);
 
 	if (addr < ega->crtc_ofs) {
 		return;
@@ -572,17 +559,15 @@ void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4
 
 		m = 0x80 >> (2 * i);
 
-		if (msk & m) {
-			c = (ega->data[addr + 0x00000] & (m >> 1)) ? 0x01 : 0x00;
-			c |= (ega->data[addr + 0x10000] & m) ? 0x02 : 0x00;
-			c |= (ega->data[addr + 0x20000] & m) ? 0x04 : 0x00;
-			c |= (ega->data[addr + 0x30000] & m) ? 0x08 : 0x00;
+		c = (ega->data[addr + 0x00000] & (m >> 1)) ? 0x01 : 0x00;
+		c |= (ega->data[addr + 0x10000] & m) ? 0x02 : 0x00;
+		c |= (ega->data[addr + 0x20000] & m) ? 0x04 : 0x00;
+		c |= (ega->data[addr + 0x30000] & m) ? 0x08 : 0x00;
 
-			c &= ega->atc_reg[0x12];
+		c &= ega->atc_reg[0x12];
 
-			trm_set_col (ega->trm, c, 0);
-			trm_set_pxl (ega->trm, x + i, y);
-		}
+		trm_set_col (ega->trm, c, 0);
+		trm_set_pxl (ega->trm, x + i, y);
 	}
 }
 
@@ -703,34 +688,23 @@ void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[
 	unsigned      i;
 	unsigned      x, y, c, m;
 	unsigned      rofs;
-	unsigned char msk;
 
 	addr &= 0xffff;
 
-	msk = 0;
-
 	if (ega->ts_reg[2] & 0x01) {
-		msk |= ega->data[addr] ^ latch[0];
 		ega->data[addr] = latch[0];
 	}
 
 	if (ega->ts_reg[2] & 0x02) {
-		msk |= ega->data[addr + 0x10000] ^ latch[1];
 		ega->data[addr + 0x10000] = latch[1];
 	}
 
 	if (ega->ts_reg[2] & 0x04) {
-		msk |= ega->data[addr + 0x20000] ^ latch[2];
 		ega->data[addr + 0x20000] = latch[2];
 	}
 
 	if (ega->ts_reg[2] & 0x08) {
-		msk |= ega->data[addr + 0x30000] ^ latch[3];
 		ega->data[addr + 0x30000] = latch[3];
-	}
-
-	if (msk == 0) {
-		return;
 	}
 
 	if (addr < ega->crtc_ofs) {
@@ -766,17 +740,15 @@ void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[
 	m = 0x80;
 
 	for (i = 0; i < 8; i++) {
-		if (msk & m) {
-			c = (ega->data[addr + 0x00000] & m) ? 0x01 : 0x00;
-			c |= (ega->data[addr + 0x10000] & m) ? 0x02 : 0x00;
-			c |= (ega->data[addr + 0x20000] & m) ? 0x04 : 0x00;
-			c |= (ega->data[addr + 0x30000] & m) ? 0x08 : 0x00;
+		c = (ega->data[addr + 0x00000] & m) ? 0x01 : 0x00;
+		c |= (ega->data[addr + 0x10000] & m) ? 0x02 : 0x00;
+		c |= (ega->data[addr + 0x20000] & m) ? 0x04 : 0x00;
+		c |= (ega->data[addr + 0x30000] & m) ? 0x08 : 0x00;
 
-			c &= ega->atc_reg[0x12];
+		c &= ega->atc_reg[0x12];
 
-			trm_set_col (ega->trm, c, 0);
-			trm_set_pxl (ega->trm, x + i, y);
-		}
+		trm_set_col (ega->trm, c, 0);
+		trm_set_pxl (ega->trm, x + i, y);
 
 		m = m >> 1;
 	}
