@@ -1006,6 +1006,8 @@ unsigned char ega_get_uint8_gdc (ega_t *ega, unsigned long addr)
 
 int ega_eval_mode (ega_t *ega)
 {
+	void *tmp;
+
 	if (ega->ts_reg[0x04] & 0x04) {
 		ega->set_uint8 = &ega_set_uint8_gdc;
 		ega->get_uint8 = &ega_get_uint8_gdc;
@@ -1014,6 +1016,8 @@ int ega_eval_mode (ega_t *ega)
 		ega->set_uint8 = &ega_set_uint8_odd_even;
 		ega->get_uint8 = &ega_get_uint8_odd_even;
 	}
+
+	tmp = ega->set_latches;
 
 	if (ega->atc_reg[0x10] & 0x01) {
 		if (ega->gdc_reg[0x05] & 0x20) {
@@ -1031,6 +1035,10 @@ int ega_eval_mode (ega_t *ega)
 		ega->update = &ega_update_cga_txt;
 		ega->screenshot = &ega_screenshot_cga_txt;
 		ega->set_latches = &ega_set_latches_cga_txt;
+	}
+
+	if (ega->set_latches != tmp) {
+		ega->dirty = 1;
 	}
 
 	return (0);
