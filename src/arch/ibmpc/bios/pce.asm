@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:     src/arch/ibmpc/bios/pce.asm                                *
 ;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -463,7 +463,7 @@ init_mem:
 	inc	cx
 	add	bx, 1024 / 16
 
-	cmp	cx, 704
+	cmp	cx, 640
 	jae	.done
 
 	jmp	.next
