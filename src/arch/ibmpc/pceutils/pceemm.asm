@@ -72,13 +72,27 @@ drv_interrupt:
 
 	mov	ah, [bx + 2]
 
-	or	ah, ah
+	or	ah, ah			; driver init
 	jne	.not00
 
 	call	drv_init
 	jmp	.done
 
 .not00:
+	cmp	ah, 0x0a		; get output status
+	jne	.not0a
+
+	mov	word [bx + 3], 0x0100
+	jmp	.done
+
+.not0a:
+	cmp	ah, 0x0b		; flush output buffers
+	jne	.not0b
+
+	mov	word [bx + 3], 0x0100
+	jmp	.done
+
+.not0b:
 	; unknown command
 	mov	word [bx + 3], 0x8103
 
