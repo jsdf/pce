@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/inidsk.c                                           *
- * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/inidsk.c                                             *
+ * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -54,7 +54,7 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 		i += 1;
 	}
 
-	if ((i == 0) || (str[i] == 0)) {
+	if ((i >= 16) || (i == 0) || (str[i] == 0)) {
 		return (1);
 	}
 
@@ -86,24 +86,118 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 	return (0);
 }
 
-disk_t *ini_get_disk (ini_sct_t *sct)
+disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 {
-	disk_t        *dsk, *cow;
-	ini_val_t     *val;
+	disk_t     *cow;
+	ini_val_t  *val;
+	const char *cname;
+
+	val = NULL;
+	while ((val = ini_next_val (sct, val, "cow")) != NULL) {
+		cname = ini_val_get_str (val);
+		if (cname == NULL) {
+			dsk_del (dsk);
+			return (NULL);
+		}
+
+		cow = dsk_cow_new (dsk, cname);
+
+		if (cow == NULL) {
+			dsk_del (dsk);
+			return (NULL);
+		}
+		else {
+			dsk_set_readonly (cow, 0);
+
+			dsk = cow;
+		}
+
+		pce_log_tag (MSG_INF,
+			"DISK:", "drive=%u type=cow file=%s\n",
+			dsk_get_drive (dsk), cname
+		);
+	}
+
+	return (dsk);
+}
+
+static
+void ini_get_vchs (ini_sct_t *sct, disk_t *dsk)
+{
+	unsigned long vc, vh, vs;
+
+	ini_get_uint32 (sct, "visible_c", &vc, 0);
+	ini_get_uint32 (sct, "visible_h", &vh, 0);
+	ini_get_uint32 (sct, "visible_s", &vs, 0);
+
+	vc = (vc == 0) ? dsk->c : vc;
+	vh = (vh == 0) ? dsk->h : vh;
+	vs = (vs == 0) ? dsk->s : vs;
+
+	if ((dsk->c != vc) || (dsk->h != vh) || (dsk->s != vs)) {
+		dsk_set_visible_chs (dsk, vc, vh, vs);
+
+		pce_log_tag (MSG_INF,
+			"DISK:", "drive=%u vchs=%lu/%lu/%lu\n",
+			dsk_get_drive (dsk),
+			(unsigned long) dsk->visible_c,
+			(unsigned long) dsk->visible_h,
+			(unsigned long) dsk->visible_s
+		);
+	}
+}
+
+static
+disk_t *ini_get_disk_part (ini_sct_t *sct,
+	unsigned long c, unsigned long h, unsigned long s, int ro)
+{
+	disk_t        *dsk;
+	ini_sct_t     *p;
+	unsigned long start;
+	unsigned long blk_i, blk_n;
+	const char    *fname;
+
+	dsk = dsk_part_open (c, h, s, ro);
+
+	if (dsk == NULL) {
+		return (NULL);
+	}
+
+	p = NULL;
+	while ((p = ini_next_sct (sct, p, "partition")) != NULL) {
+		ini_get_uint32 (p, "offset", &start, 0);
+		ini_get_uint32 (p, "block_start", &blk_i, 0);
+		ini_get_uint32 (p, "block_count", &blk_n, 0);
+		ini_get_string (p, "file", &fname, NULL);
+		ini_get_bool (p, "readonly", &ro, 0);
+
+		if (fname == NULL) {
+			dsk_del (dsk);
+			return (NULL);
+		}
+
+		if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
+			dsk_del (dsk);
+			return (NULL);
+		}
+	}
+
+	return (dsk);
+}
+
+int ini_get_disk (ini_sct_t *sct, disk_t **ret)
+{
+	disk_t        *dsk;
 	unsigned      drive;
 	unsigned long c, h, s, n;
 	unsigned long ofs;
-	unsigned long vc, vh, vs;
 	int           ro;
 	int           optional;
-	const char    *type, *fname, *cowname;
+	const char    *type, *fname;
 
 	ini_get_uint16 (sct, "drive", &drive, 0);
 	ini_get_string (sct, "type", &type, "auto");
-
 	ini_get_string (sct, "file", &fname, NULL);
-	ini_get_string (sct, "cow", &cowname, NULL);
-
 	ini_get_uint32 (sct, "offset", &ofs, 0);
 
 	ini_get_uint32 (sct, "c", &c, 0);
@@ -114,7 +208,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		;
 	}
 	else if (ini_get_uint32 (sct, "size", &n, 0) == 0) {
-		n = (n + 511) & ~511UL;
+		n = n & ~511UL;
 	}
 	else if (ini_get_uint32 (sct, "sizek", &n, 0) == 0) {
 		n = 2 * n;
@@ -128,10 +222,6 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	else {
 		n = 0;
 	}
-
-	ini_get_uint32 (sct, "visible_c", &vc, 0);
-	ini_get_uint32 (sct, "visible_h", &vh, 0);
-	ini_get_uint32 (sct, "visible_s", &vs, 0);
 
 	ini_get_bool (sct, "readonly", &ro, 0);
 	ini_get_bool (sct, "optional", &optional, 0);
@@ -149,29 +239,7 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		dsk = dsk_pce_open (fname, ro);
 	}
 	else if (strcmp (type, "partition") == 0) {
-		ini_sct_t     *p;
-		unsigned long start;
-		unsigned long blk_i, blk_n;
-		const char    *fname;
-
-		dsk = dsk_part_open (c, h, s, ro);
-
-		if (dsk != NULL) {
-			p = NULL;
-			while ((p = ini_next_sct (sct, p, "partition")) != NULL) {
-				ini_get_uint32 (p, "offset", &start, 0);
-				ini_get_uint32 (p, "block_start", &blk_i, 0);
-				ini_get_uint32 (p, "block_count", &blk_n, 0);
-				ini_get_string (p, "file", &fname, NULL);
-				ini_get_bool (p, "readonly", &ro, 0);
-
-				if (fname != NULL) {
-					if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
-						pce_log (MSG_ERR, "*** adding partition failed\n");
-					}
-				}
-			}
-		}
+		dsk = ini_get_disk_part (sct, c, h, s, ro);
 	}
 	else if (strcmp (type, "auto") == 0) {
 		dsk = dsk_auto_open (fname, ofs, ro);
@@ -181,12 +249,17 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 	}
 
 	if (dsk == NULL) {
+		*ret = NULL;
+
 		if (optional == 0) {
 			pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
+			return (1);
 		}
 
-		return (NULL);
+		return (0);
 	}
+
+	dsk_set_drive (dsk, drive);
 
 	pce_log_tag (MSG_INF,
 		"DISK:", "drive=%u type=%s blocks=%lu chs=%lu/%lu/%lu%sfile=%s\n",
@@ -199,73 +272,44 @@ disk_t *ini_get_disk (ini_sct_t *sct)
 		(fname != NULL) ? fname : "<>"
 	);
 
-	if ((dsk->c != dsk->visible_c) || (dsk->h != dsk->visible_h) || (dsk->s != dsk->visible_s)) {
-		pce_log_tag (MSG_INF,
-			"DISK:", "drive=%u vchs=%lu/%lu/%lu\n",
-			drive,
-			(unsigned long) dsk->visible_c,
-			(unsigned long) dsk->visible_h,
-			(unsigned long) dsk->visible_s
-		);
-	}
+	ini_get_vchs (sct, dsk);
 
-	dsk_set_drive (dsk, drive);
+	dsk = ini_get_cow (sct, dsk);
 
-	val = NULL;
-	while ((val = ini_next_val (sct, val, "cow")) != NULL) {
-		const char *cname;
+	if (dsk == NULL) {
+		*ret = NULL;
 
-		cname = ini_val_get_str (val);
-		if (cname == NULL) {
-			dsk_del (dsk);
-			return (NULL);
-		}
-
-		pce_log_tag (MSG_INF,
-			"DISK:", "drive=%u type=cow file=%s\n",
-			drive, cname
-		);
-
-		cow = dsk_cow_new (dsk, cowname);
-
-		if (cow == NULL) {
+		if (optional == 0) {
 			pce_log (MSG_ERR,
 				"*** loading drive 0x%02x failed (cow)\n",
 				drive
 			);
-			dsk_del (dsk);
-			return (NULL);
-		}
-		else {
-			dsk_set_readonly (cow, 0);
 
-			dsk = cow;
+			return (1);
 		}
+
+		return (0);
 	}
 
-	vc = (vc == 0) ? dsk->c : vc;
-	vh = (vh == 0) ? dsk->h : vh;
-	vs = (vs == 0) ? dsk->s : vs;
+	*ret = dsk;
 
-	dsk_set_visible_chs (dsk, vc, vh, vs);
-
-	return (dsk);
+	return (0);
 }
 
 disks_t *ini_get_disks (ini_sct_t *ini)
 {
-	ini_sct_t  *sct;
-	disk_t     *dsk;
-	disks_t    *dsks;
+	ini_sct_t *sct;
+	disk_t    *dsk;
+	disks_t   *dsks;
 
 	dsks = dsks_new();
 
 	sct = NULL;
 	while ((sct = ini_next_sct (ini, sct, "disk")) != NULL) {
-		dsk = ini_get_disk (sct);
-
-		if (dsk != NULL) {
-			dsks_add_disk (dsks, dsk);
+		if (ini_get_disk (sct, &dsk) == 0) {
+			if (dsk != NULL) {
+				dsks_add_disk (dsks, dsk);
+			}
 		}
 	}
 

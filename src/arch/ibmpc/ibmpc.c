@@ -527,28 +527,30 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
 	sct = NULL;
 	while ((sct = ini_next_sct (ini, sct, "disk")) != NULL) {
-		dsk = ini_get_disk (sct);
+		if (ini_get_disk (sct, &dsk)) {
+			pce_log (MSG_ERR, "*** loading drive failed\n");
+			continue;
+		}
 
-		if (dsk != NULL) {
-			dsks_add_disk (pc->dsk, dsk);
+		if (dsk == NULL) {
+			continue;
+		}
 
-			if (dsk_get_drive (dsk) < 0x80) {
-				/* if floppy disk increase number of floppy disks in config word */
-				if (pc->ppi_port_a[0] & 0x01) {
-					pc->ppi_port_a[0] = (pc->ppi_port_a[0] + 0x40) & 0xff;
-				}
-				else {
-					pc->ppi_port_a[0] |= 0x01;
-				}
+		dsks_add_disk (pc->dsk, dsk);
 
-				pc->fd_cnt += 1;
+		if (dsk_get_drive (dsk) < 0x80) {
+			/* if floppy disk increase number of floppy disks in config word */
+			if (pc->ppi_port_a[0] & 0x01) {
+				pc->ppi_port_a[0] = (pc->ppi_port_a[0] + 0x40) & 0xff;
 			}
 			else {
-				pc->hd_cnt += 1;
+				pc->ppi_port_a[0] |= 0x01;
 			}
+
+			pc->fd_cnt += 1;
 		}
 		else {
-			pce_log (MSG_ERR, "*** loading drive failed\n");
+			pc->hd_cnt += 1;
 		}
 	}
 }

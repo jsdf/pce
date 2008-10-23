@@ -309,12 +309,17 @@ section pc {
 	# "auto"   Try to autodetect the image file format. This works for
 	#          DOSEMU and PCE disk images as well as raw images starting
 	#          with a DOS boot sector.
+	#
 	# The c, h, s parameters determine the actual image file layout, the
 	# visible_c, visible_h, visible_s parameters determine the disk size
 	# as reported by the BIOS.
+	#
+	# If optional is set to 1 no error will be reported if the disk
+	# can't be opened.
 
 	section disk {
 		drive = 0
+		optional = 1
 		type = "image"
 		file = "pce_00.img"
 		offset = 0

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/inidsk.h                                           *
- * Created:       2004-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/inidsk.h                                             *
+ * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,7 +33,10 @@
 
 int dsk_insert (disks_t *dsks, const char *str, int eject);
 
-disk_t *ini_get_disk (ini_sct_t *sct);
+disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk);
+
+int ini_get_disk (ini_sct_t *sct, disk_t **ret);
+
 disks_t *ini_get_disks (ini_sct_t *ini);
 
 
