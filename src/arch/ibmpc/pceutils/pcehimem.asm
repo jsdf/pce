@@ -27,266 +27,270 @@
 
 section text
 
-  dd      -1                            ; link to next driver
-  dw      0x8000                        ; flags
-  dw      strategy                      ; strategy offset
-  dw      interrupt                     ; interrupt offset
-  db      "XMSXXXX0"                    ; driver name
+	dd	0xffffffff		; link to next driver
+	dw	0x8000			; flags, plain character device
+	dw	drv_strategy		; strategy offset
+	dw	drv_interrupt		; interrupt offset
+	db	"XMSXXXX0"		; driver name
 
-msg_init       db "HIMEM: PCE XMS Driver version ", PCE_VERSION_STR
-               db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
-               db 0x0d, 0x0a, 0x00
+reqadr:
+	dd	0
 
-reqadr         dd 0
-
-saveint2f      dd 0
+saveint2f:
+	dd	0
 
 
-;*****************************************************************************
-;* int 2f handler
-;*****************************************************************************
-
+;-----------------------------------------------------------------------------
+; int 2f handler
+;-----------------------------------------------------------------------------
 int_2f:
-  cmp     ax, 0x4300
-  jne     .not4300
+	cmp	ax, 0x4300		; xms installation check
+	jne	.not4300
 
-  ; check if XMS driver is installed
-  mov     al, 0x80
-  iret
+	mov	al, 0x80
+	iret
 
 .not4300:
-  cmp     ax, 0x4310
-  jne     .done
+	cmp	ax, 0x4310		; get xms driver entry point
+	jne	.done
 
-  ; get XMS driver entry point
-  mov     bx, cs
-  mov     es, bx
-  mov     bx, xms_handler
-  iret
+	mov	bx, cs
+	mov	es, bx
+	mov	bx, xms_handler
+	iret
 
 .done:
-  jmp     far [cs:saveint2f]
+	jmp	far [cs:saveint2f]
 
 
-;*****************************************************************************
-;* XMS handler
-;*****************************************************************************
-
+;-----------------------------------------------------------------------------
+; The XMS handler
+;-----------------------------------------------------------------------------
 xms_handler:
-  jmp     short .handler
-  nop
-  nop
-  nop
+	jmp	short .handler
+	nop
+	nop
+	nop
 
 .handler:
-  ; xms hook
-  pceh    PCEH_XMS
-  retf
+	pceh	PCEH_XMS		; PCE hook
+	retf
 
 
-;*****************************************************************************
-;* driver functions
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; driver strategy function
+;-----------------------------------------------------------------------------
+drv_strategy:
+	mov	[cs:reqadr], bx
+	mov	[cs:reqadr + 2], es
+	retf
 
-strategy:
-  mov     [cs:reqadr], bx
-  mov     [cs:reqadr + 2], es
-  retf
 
+;-----------------------------------------------------------------------------
+; driver interrupt function
+;-----------------------------------------------------------------------------
+drv_interrupt:
+	pushf
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	ds
 
-interrupt:
-  pushf
-  push    ax
-  push    cx
-  push    dx
-  push    bx
-  push    ds
+	lds	bx, [cs:reqadr]		; request address
 
-  lds     bx, [cs:reqadr]
+	mov	ah, [bx + 2]		; command
 
-  mov     ah, [bx + 2]
+	or	ah, ah			; driver init
+	jne	.not00
 
-  or      ah, ah
-  jne     .not00
-
-  call    drv_init
-  jmp     .done
+	call	drv_init
+	jmp	.done
 
 .not00:
-
-  ; unknown command
-  mov     word [bx + 3], 0x8103
+	; unknown command
+	mov	word [bx + 3], 0x8103
 
 .done:
-  pop     ds
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  popf
-  retf
+	pop	ds
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	popf
+	retf
 
 
 drv_end:
 
 
-;*****************************************************************************
-;* func 00: init driver
-;*****************************************************************************
-
+;-----------------------------------------------------------------------------
+; func 00: init driver
+;-----------------------------------------------------------------------------
 drv_init:
-  push    si
+	push	si
 
-  mov     si, msg_init
-  call    prt_string
+	mov	si, msg_init
+	call	prt_string
 
-  ; xms info
-  pceh    PCEH_XMS_INFO
+	pceh	PCEH_XMS_INFO		; get xms info
 
-  test    al, 0x01                      ; check if xms installed
-  jnz     .xmsok
+	test	al, 0x01		; check if xms installed
+	jnz	.xmsok
 
-  mov     si, msg_noxms
-  call    prt_string
+	mov	si, msg_noxms
+	call	prt_string
 
-  jmp     .doneerr
+	jmp	.doneerr
 
 .xmsok:
-  mov     si, msg_himem
-  call    prt_string
+	mov	si, msg_himem
+	call	prt_string
 
-  xchg    ax, dx                        ; XMS size in K
-  call    prt_uint16
+	xchg	ax, dx			; XMS size in K
+	call	prt_uint16
 
-  mov     si, msg_xmsplus
-  call    prt_string
+	mov	si, msg_xmsplus
+	call	prt_string
 
-  mov     ax, cx                        ; UMB size in paragraphs
-  mov     cl, 6
-  shr     ax, cl
-  call    prt_uint16
+	mov	ax, cx			; UMB size in paragraphs
+	mov	cl, 6
+	shr	ax, cl
+	call	prt_uint16
 
-  mov     si, msg_umbplus
-  call    prt_string
+	mov	si, msg_umbplus
+	call	prt_string
 
-  xor     ax, ax
-  test    dl, 0x02                      ; check if HMA available
-  jz      .nohma
-  mov     ax, 64
+	xor	ax, ax
+	test	dl, 0x02		; check if HMA available
+	jz	.nohma
+	mov	ax, 64			; HMA is always 64K
 
 .nohma:
-  call    prt_uint16
+	call	prt_uint16
 
-  mov     si, msg_avail
-  call    prt_string
+	mov	si, msg_avail
+	call	prt_string
 
-  push    ds
-  xor     ax, ax
-  mov     ds, ax
+	push	ds
+	xor	ax, ax
+	mov	ds, ax
 
-  mov     ax, [4 * 0x002f]
-  mov     [cs:saveint2f], ax
-  mov     ax, [4 * 0x002f + 2]
-  mov     [cs:saveint2f + 2], ax
+	mov	ax, [4 * 0x002f]	; int 2f address
+	mov	[cs:saveint2f], ax
+	mov	ax, [4 * 0x002f + 2]
+	mov	[cs:saveint2f + 2], ax
 
-  mov     word [4 * 0x002f], int_2f
-  mov     word [4 * 0x002f + 2], cs
-  pop     ds
+	mov	word [4 * 0x002f + 0], int_2f
+	mov	word [4 * 0x002f + 2], cs
+	pop	ds
 
-  jmp     .doneok
+	jmp	.doneok
 
 .doneerr:
-  ; end address
-  mov     word [bx + 14], 0x0000
-  mov     word [bx + 16], cs
+	mov	word [bx + 14], 0x0000	; end address
+	mov	word [bx + 16], cs
 
-  ; status
-  mov     word [bx + 3], 0x8100
-  jmp     .done
+	mov	word [bx + 3], 0x8100	; status
+	jmp	.done
 
 .doneok:
-  ; end address
-  mov     word [bx + 14], drv_end
-  mov     word [bx + 16], cs
+	mov	word [bx + 14], drv_end	; end address
+	mov	word [bx + 16], cs
 
-  ; status
-  mov     word [bx + 3], 0x0100
+	mov	word [bx + 3], 0x0100	; status
 
 .done:
-  ; param address
-  mov     word [bx + 18], 0
-  mov     word [bx + 20], 0
+	mov	word [bx + 18], 0	; param address
+	mov	word [bx + 20], 0
 
-  ; message flag
-  mov     word [bx + 23], 0x0000
+	mov	word [bx + 23], 0x0000	; message flag
 
-  mov     si, msg_nl
-  call    prt_string
+	mov	si, msg_nl
+	call	prt_string
 
-  pop     si
-  ret
+	pop	si
+	ret
 
 
+;-----------------------------------------------------------------------------
+; print the string at CS:SI
+;-----------------------------------------------------------------------------
 prt_string:
-  push    ax
-  push    bx
-  push    si
+	push	ax
+	push	bx
+	push	si
 
 .next:
-  mov     ah, 0x0e
-  mov     bx, 0x0007
-  mov     al, [cs:si]
-  or      al, al
-  jz      .done
-  int     0x10
-  inc     si
-  jmp     .next
+	mov	ah, 0x0e
+	mov	bx, 0x0007
+	mov	al, [cs:si]
+	or	al, al
+	jz	.done
+	int	0x10
+	inc	si
+	jmp	.next
 
 .done:
-  pop     si
-  pop     bx
-  pop     ax
-  ret
+	pop	si
+	pop	bx
+	pop	ax
+	ret
 
 
+;-----------------------------------------------------------------------------
+; print the 16 bit unsigned integer in AX
+;-----------------------------------------------------------------------------
 prt_uint16:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
+	push	ax
+	push	cx
+	push	dx
+	push	bx
 
-  xor     cx, cx
-  mov     bx, 10
+	xor	cx, cx
+	mov	bx, 10
 
 .next1:
-  xor     dx, dx
-  div     bx
-  push    dx
-  inc     cx
-  or      ax, ax
-  jnz     .next1
+	xor	dx, dx
+	div	bx
+	push	dx
+	inc	cx
+	or	ax, ax
+	jnz	.next1
 
 .next2:
-  pop     ax
-  mov     ah, 0x0e
-  add     al, '0'
-  mov     bx, 0x0007
-  int     0x10
-  loop    .next2
+	pop	ax
+	mov	ah, 0x0e
+	add	al, '0'
+	mov	bx, 0x0007
+	int	0x10
+	loop	.next2
 
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
 
-msg_noxms      db "HIMEM: No XMS available", 0x0d, 0x0a, 0x00
+msg_nl:
+	db	0x0d, 0x0a, 0x00
 
-msg_himem      db "HIMEM: ", 0x00
+msg_init:
+	db	"XMS: PCE XMS driver version ", PCE_VERSION_STR
+	db	0x0d, 0x0a, 0x00
 
-msg_xmsplus    db "K XMS + ", 0x00
-msg_umbplus    db "K UMB + ", 0x00
-msg_avail      db "K HMA available", 0x0d, 0x0a, 0x00
+msg_noxms:
+	db	"XMS: No XMS available", 0x0d, 0x0a, 0x00
 
-msg_nl         db 0x0d, 0x0a, 0x00
+msg_himem:
+	db	"XMS: ", 0x00
+
+msg_xmsplus:
+	db	"K XMS + ", 0x00
+
+msg_umbplus:
+	db	"K UMB + ", 0x00
+
+msg_avail:
+	db	"K HMA available", 0x0d, 0x0a, 0x00
