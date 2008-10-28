@@ -46,10 +46,10 @@
 struct ibmpc_t;
 
 
-extern char          *par_terminal;
-extern char          *par_video;
-extern char          *par_cpu;
-extern unsigned long par_int28;
+extern const char *par_terminal;
+extern const char *par_video;
+extern const char *par_cpu;
+extern unsigned   par_speed;
 
 
 #include <lib/brkpt.h>

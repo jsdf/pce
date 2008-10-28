@@ -213,7 +213,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_SET_INT28:
-		par_int28 = 1000UL * e86_get_ax (pc->cpu);
+		/* not supported anymore */
 		break;
 
 	case PCEH_SET_CPU:
@@ -251,7 +251,8 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_GET_INT28:
-		e86_set_ax (pc->cpu, par_int28 / 1000UL);
+		/* not supported anymore */
+		e86_set_ax (pc->cpu, 0);
 		break;
 
 	case PCEH_GET_CPU:

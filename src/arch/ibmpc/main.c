@@ -30,10 +30,10 @@
 static void prt_state_cpu (e8086_t *c);
 
 
-char                      *par_terminal = NULL;
-char                      *par_video = NULL;
-char                      *par_cpu = NULL;
-unsigned long             par_int28 = 10000;
+const char                *par_terminal = NULL;
+const char                *par_video = NULL;
+const char                *par_cpu = NULL;
+unsigned                  par_speed = 0;
 
 monitor_t                 par_mon;
 
@@ -536,6 +536,8 @@ void pc_run (ibmpc_t *pc)
 {
 	pce_start (&pc->brk);
 
+	pc_clock_discontinuity (pc);
+
 	while (pc->brk == 0) {
 		pc_clock (pc);
 		pc_clock (pc);
@@ -564,12 +566,6 @@ static
 void pce_op_int (void *ext, unsigned char n)
 {
 	pce_last_int = n;
-
-	if (n == 0x28) {
-		if (par_int28 > 0) {
-			pce_usleep (par_int28);
-		}
-	}
 }
 
 static
@@ -623,6 +619,8 @@ void do_c (cmd_t *cmd)
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
+
+	pc_clock_discontinuity (pc);
 
 	while (cnt > 0) {
 		pc_clock (pc);
@@ -814,6 +812,8 @@ void do_g_b (cmd_t *cmd, ibmpc_t *pc)
 
 	pce_start (&pc->brk);
 
+	pc_clock_discontinuity (pc);
+
 	while (1) {
 		pc_exec (pc);
 
@@ -837,6 +837,8 @@ void do_g_far (cmd_t *cmd, ibmpc_t *pc)
 	seg = e86_get_cs (pc->cpu);
 
 	pce_start (&pc->brk);
+
+	pc_clock_discontinuity (pc);
 
 	while (1) {
 		pc_exec (pc);
@@ -912,7 +914,6 @@ void do_h (cmd_t *cmd)
 		"gb [addr...]              run with breakpoints\n"
 		"g far                     run until CS changes\n"
 		"g                         run\n"
-		"int28 [on|off|val]        turn int28 sleeping on/off\n"
 		"i [b|w] port              input a byte or word from a port\n"
 		"m[g|s] [msg [val]]        send a message\n"
 		"o [b|w] port val          output a byte or word to a port\n"
@@ -926,41 +927,6 @@ void do_h (cmd_t *cmd)
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
 		"w name addr cnt           save memory to file\n"
-	);
-}
-
-static
-void do_int28 (cmd_t *cmd)
-{
-	int            set;
-	unsigned short val;
-
-	if (cmd_match (cmd, "on")) {
-		set = 1;
-		val = 10;
-	}
-	else if (cmd_match (cmd, "off")) {
-		set = 1;
-		val = 0;
-	}
-	else if (cmd_match_uint16 (cmd, &val)) {
-		set = 1;
-	}
-	else {
-		set = 0;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (set) {
-		par_int28 = 1000UL * val;
-	}
-
-	pce_printf ("int 28h sleeping is %s (%lums)\n",
-		(par_int28 > 0) ? "on" : "off",
-		par_int28 / 1000UL
 	);
 }
 
@@ -1171,6 +1137,8 @@ void do_p (cmd_t *cmd)
 
 	pce_start (&pc->brk);
 
+	pc_clock_discontinuity (pc);
+
 	for (i = 0; i < n; i++) {
 		e86_disasm_cur (pc->cpu, &op);
 
@@ -1371,6 +1339,8 @@ void do_t (cmd_t *cmd)
 
 	pce_start (&pc->brk);
 
+	pc_clock_discontinuity (pc);
+
 	for (i = 0; i < n; i++) {
 		pc_exec (pc);
 
@@ -1504,9 +1474,6 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "h")) {
 		do_h (cmd);
-	}
-	else if (cmd_match (cmd, "int28")) {
-		do_int28 (cmd);
 	}
 	else if (cmd_match (cmd, "i")) {
 		do_i (cmd);
@@ -1695,6 +1662,14 @@ int main (int argc, char *argv[])
 		}
 		else if (str_isarg (argv[i], "R", "no-monitor")) {
 			nomon = 1;
+		}
+		else if (str_isarg (argv[i], "s", "speed")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
+
+			par_speed = (unsigned) strtoul (argv[i], NULL, 0);
 		}
 		else {
 			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);

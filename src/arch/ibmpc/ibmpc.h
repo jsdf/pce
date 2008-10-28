@@ -34,6 +34,10 @@
 #define PCE_CPU_80188 5
 #define PCE_CPU_80286 6
 
+#define PCE_IBMPC_CLK0 14318184
+#define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
+#define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
+
 
 typedef struct ibmpc_t {
 	e8086_t            *cpu;
@@ -83,11 +87,18 @@ typedef struct ibmpc_t {
 	unsigned           fd_cnt;
 	unsigned           hd_cnt;
 
-	char               pit_real;
-	unsigned long      pit_clk;
-	unsigned long      pit_clkdiv;
+	/* the 1.19 MHz system clock */
+	unsigned long      clk2[2];
 
-	unsigned long long clk_cnt;
+	/* the 1.19 MHz real time clock */
+	unsigned long      rclk[2];
+
+	/* cpu speed factor (current, default) */
+	unsigned           speed[2];
+
+	/* cpu clock frequency (current, default) */
+	unsigned long      cpu_clk[2];
+
 	unsigned long      clk_div[4];
 
 	unsigned           brk;
@@ -99,11 +110,34 @@ ibmpc_t *pc_new (ini_sct_t *ini);
 
 void pc_del (ibmpc_t *pc);
 
+/*!***************************************************************************
+ * @short Reset the clock counters
+ *****************************************************************************/
+void pc_clock_reset (ibmpc_t *pc);
+
+/*!***************************************************************************
+ * @short Synchronize the clocks after a discontinuity
+ *****************************************************************************/
+void pc_clock_discontinuity (ibmpc_t *pc);
+
+/*!***************************************************************************
+ * @short Clock the pc
+ *****************************************************************************/
 void pc_clock (ibmpc_t *pc);
 
 void pc_screenshot (ibmpc_t *pc, const char *fname);
 
 int pc_set_cpu_model (ibmpc_t *pc, unsigned model);
+
+/*!***************************************************************************
+ * @short Set the emulated cpu clock frequency as a multiple of 4.77 MHz
+ *****************************************************************************/
+void pc_set_speed (ibmpc_t *pc, unsigned factor);
+
+/*!***************************************************************************
+ * @short Set the emulated cpu clock frequency
+ *****************************************************************************/
+void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk);
 
 void pc_set_bootdrive (ibmpc_t *pc, unsigned drv);
 unsigned pc_get_bootdrive (ibmpc_t *pc);

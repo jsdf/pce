@@ -10,6 +10,16 @@ section pc {
 	section cpu {
 		# 8086, 8088, V20, V30, 80186, 80188
 		model = "80186"
+
+		# This sets the CPU speed with respect to the emulated
+		# system clock. A value of 1 emulates a 4.77MHz CPU.
+		# A higher value emulates a faster CPU but also takes up
+		# more host CPU time.
+		speed = 8
+
+		# The emulated CPU clock can also be specified directly
+		# in Herz. Setting clock overrides the speed parameter.
+		#clock = 4772728
 	}
 
 	# Multiple "ram" sections may be present
@@ -63,9 +73,6 @@ section pc {
 	section pit {
 		# Don't change this
 		address = 0x40
-
-		# If set to 1 then clocking of the PIT is tied to real time.
-		realtime = 1
 	}
 
 	section ems {

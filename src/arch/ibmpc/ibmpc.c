@@ -80,8 +80,10 @@ void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 {
-	ini_sct_t  *sct;
-	const char *model;
+	ini_sct_t     *sct;
+	const char    *model;
+	unsigned      speed;
+	unsigned long clk;
 
 	sct = ini_next_sct (ini, NULL, "cpu");
 
@@ -89,11 +91,24 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 		(par_cpu != NULL) ? par_cpu : "8086"
 	);
 
+	ini_get_uint16 (sct, "speed", &speed, 1);
+
+	if (par_speed > 0) {
+		speed = par_speed;
+	}
+	else if (speed == 0) {
+		speed = 1;
+	}
+
+	ini_get_uint32 (sct, "clock", &clk, speed * PCE_IBMPC_CLK1);
+
 	if (par_cpu != NULL) {
 		model = par_cpu;
 	}
 
-	pce_log_tag (MSG_INF, "CPU:", "model=%s\n", model);
+	pce_log_tag (MSG_INF, "CPU:", "model=%s clock=%.6f MHz (%uX)\n",
+		model, clk / 1000000.0, speed
+	);
 
 	pc->cpu = e86_new ();
 	pc->cpu_model = PCE_CPU_8086;
@@ -146,6 +161,13 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->cpu->op_ext = pc;
 	pc->cpu->op_hook = &pc_e86_hook;
+
+	pc->speed[0] = speed;
+	pc->cpu_clk[0] = clk;
+
+	pc->speed[1] = speed;
+	pc->cpu_clk[1] = clk;
+
 }
 
 static
@@ -219,15 +241,13 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	mem_blk_t     *blk;
 	unsigned long addr;
-	int           rt;
 
 	sct = ini_next_sct (ini, NULL, "pit");
 
 	ini_get_uint32 (sct, "address", &addr, 0x0040);
-	ini_get_sint16 (sct, "realtime", &rt, 0);
 
-	pce_log_tag (MSG_INF, "PIT:", "addr=0x%08lx size=0x%04x realtime=%d\n",
-		addr, 4, (rt != 0)
+	pce_log_tag (MSG_INF, "PIT:", "addr=0x%08lx size=0x%04x\n",
+		addr, 4
 	);
 
 	e8253_init (&pc->pit);
@@ -250,10 +270,6 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 
 	e8253_set_out_fct (&pc->pit, 0, &pc->pic, e8259_set_irq0);
 	e8253_set_out_fct (&pc->pit, 1, &pc->dma, e8237_set_dreq0);
-
-	pc->pit_real = (rt != 0);
-	pc->pit_clk = 0;
-	pc->pit_clkdiv = 0;
 }
 
 static
@@ -766,8 +782,7 @@ void pc_setup_xms (ibmpc_t *pc, ini_sct_t *ini)
 
 ibmpc_t *pc_new (ini_sct_t *ini)
 {
-	unsigned  i;
-	ibmpc_t   *pc;
+	ibmpc_t *pc;
 
 	pc = malloc (sizeof (ibmpc_t));
 	if (pc == NULL) {
@@ -788,13 +803,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->brk = 0;
 	pc->pause = 0;
-	pc->clk_cnt = 0;
 
 	bps_init (&pc->bps);
-
-	for (i = 0; i < 4; i++) {
-		pc->clk_div[i] = 0;
-	}
 
 	pc->mem = mem_new();
 	pc->prt = mem_new();
@@ -823,6 +833,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_xms (pc, ini);
 
 	pce_load_mem_ini (pc->mem, ini);
+
+	pc_clock_reset (pc);
 
 	return (pc);
 }
@@ -904,90 +916,118 @@ void pc_del (ibmpc_t *pc)
 	free (pc);
 }
 
-#ifdef HAVE_GETTIMEOFDAY
-static
-void pc_clock_pit (ibmpc_t *pc, unsigned n)
+void pc_clock_reset (ibmpc_t *pc)
 {
-	unsigned long  clk0, clk1;
-	struct timeval tv;
+	unsigned i;
 
-	if (pc->pit_real == 0) {
-		e8253_clock (&pc->pit, n);
-		return;
+	for (i = 0; i < 4; i++) {
+		pc->clk_div[i] = 0;
 	}
 
-	pc->pit_clkdiv += n;
+	pc->clk2[0] = 0;
+	pc->clk2[1] = 0;
 
-	if (pc->pit_clkdiv < 256) {
-		return;
-	}
+	pc->rclk[0] = 0;
 
-	pc->pit_clkdiv &= 255;
-
-	if (gettimeofday (&tv, NULL)) {
-		e8253_clock (&pc->pit, n);
-		return;
-	}
-
-	clk0 = (1000000UL * tv.tv_sec + tv.tv_usec) & 0xffffffffUL;
-	clk0 += clk0 / 8;
-	clk1 = (clk0 - pc->pit_clk) & 0xffffffffUL;
-
-	pc->pit_clk = clk0;
-
-	if (clk1 > 1190000UL) {
-		clk1 = 1190000UL;
-	}
-
-	e8253_clock (&pc->pit, clk1);
+	pce_get_interval_us (&pc->rclk[1]);
 }
-#endif
+
+void pc_clock_discontinuity (ibmpc_t *pc)
+{
+	pc->rclk[0] = pc->clk2[0];
+	pce_get_interval_us (&pc->rclk[1]);
+}
+
+/*
+ * Synchronize the system clock with real time
+ */
+static
+void pc_clock_delay (ibmpc_t *pc)
+{
+	unsigned long vclk;
+	unsigned long rclk;
+	unsigned long us;
+
+	vclk = pc->clk2[0];
+
+	rclk = pce_get_interval_us (&pc->rclk[1]);
+	rclk = (PCE_IBMPC_CLK2 * (unsigned long long) rclk) / 1000000;
+	rclk += pc->rclk[0];
+
+	if (vclk < rclk) {
+		pc->clk2[0] = 0;
+		pc->clk2[1] = 0;
+		pc->rclk[0] = rclk - vclk;
+		return;
+	}
+
+	vclk -= rclk;
+
+	pc->clk2[0] = vclk;
+	pc->rclk[0] = 0;
+
+	us = (1000000 * (unsigned long long) vclk) / PCE_IBMPC_CLK2;
+
+	if (us > 10000) {
+		pce_usleep (us);
+	}
+}
 
 void pc_clock (ibmpc_t *pc)
 {
 	unsigned long n;
+	unsigned long clk2[2];
 
 	n = e86_get_delay (pc->cpu);
 
+	if (n > 1024) {
+		n = 1024;
+	}
+
 	e86_clock (pc->cpu, n);
 
-	pce_video_clock0 (pc->video, n, 4);
+	/* convert n from cpu clock to 1.19 MHz system clock */
+	clk2[0] = PCE_IBMPC_CLK2 * n + pc->clk2[1];
+	clk2[1] = clk2[0] % pc->cpu_clk[0];
+	clk2[0] = clk2[0] / pc->cpu_clk[0];
 
-	pc->clk_cnt += n;
-	pc->clk_div[0] += n;
+	pc->clk2[0] += clk2[0];
+	pc->clk2[1] = clk2[1];
 
-	if (pc->clk_div[0] >= 32) {
+	if (clk2[0] == 0) {
+		return;
+	}
+
+	pce_video_clock0 (pc->video, clk2[0], 1);
+
+	e8253_clock (&pc->pit, clk2[0]);
+
+	pc->clk_div[0] += clk2[0];
+
+	if (pc->clk_div[0] >= 8) {
+		pc->clk_div[1] += pc->clk_div[0];
+
+		clk2[0] = pc->clk_div[0] & ~7UL;
+
+		pc->clk_div[0] &= 7;
+
 		e8237_clock (&pc->dma, 1);
 		e8259_clock (&pc->pic);
 
 		pce_video_clock1 (pc->video, 0);
 
-#ifdef HAVE_GETTIMEOFDAY
-		if (pc->pit_real) {
-			pc_clock_pit (pc, 8 * (pc->clk_div[0] / 32));
-		}
-		else {
-			e8253_clock (&pc->pit, 8 * (pc->clk_div[0] / 32));
-		}
-#else
-		e8253_clock (&pc->pit, 8 * (pc->clk_div[0] / 32));
-#endif
+		if (pc->clk_div[1] >= 1024) {
+			unsigned i;
 
-		pc->clk_div[1] += pc->clk_div[0] & ~0x1fUL;
+			clk2[0] = pc->clk_div[1] & ~1023UL;
 
-		pc->clk_div[0] &= 0x1f;
-
-		if (pc->clk_div[1] >= 4096) {
-			unsigned      i;
-			unsigned long clk;
-
-			clk = pc->clk_div[1] & ~4095UL;
+			pc->clk_div[1] &= 1023;
 
 			trm_check (pc->trm);
 
 			for (i = 0; i < 4; i++) {
 				if (pc->serport[i] != NULL) {
-					ser_clock (pc->serport[i], clk);
+					ser_clock (pc->serport[i], clk2[0]);
 				}
 			}
 
@@ -1002,7 +1042,7 @@ void pc_clock (ibmpc_t *pc)
 				}
 			}
 
-			pc->clk_div[1] &= 4095;
+			pc_clock_delay (pc);
 		}
 	}
 }
@@ -1057,6 +1097,35 @@ int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
 	pc->cpu_model = model;
 
 	return (0);
+}
+
+void pc_set_speed (ibmpc_t *pc, unsigned factor)
+{
+	if (factor == 0) {
+		pc->speed[0] = pc->speed[1];
+		pc->cpu_clk[0] = pc->cpu_clk[1];
+	}
+	else {
+		pc->speed[0] = factor;
+		pc->cpu_clk[0] = factor * PCE_IBMPC_CLK1;
+	}
+
+	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz (%uX)\n",
+		pc->cpu_clk[0] / 1000000.0, pc->speed[0]
+	);
+}
+
+void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk)
+{
+	if (clk == 0) {
+		clk = pc->cpu_clk[1];
+	}
+
+	pc->cpu_clk[0] = clk;
+
+	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz\n",
+		pc->cpu_clk[0] / 1000000.0
+	);
 }
 
 void pc_set_bootdrive (ibmpc_t *pc, unsigned drv)

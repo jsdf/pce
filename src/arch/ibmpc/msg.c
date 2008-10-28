@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/msg.c                                       *
- * Created:       2004-09-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/msg.c                                         *
+ * Created:     2004-09-25 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,50 +58,25 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		pc->pause = v;
 
+		pc_clock_discontinuity (pc);
+
 		return (0);
 	}
 	else if (msg_is_message ("emu.pause.toggle", msg)) {
 		pc->pause = !pc->pause;
+
+		pc_clock_discontinuity (pc);
+
 		return (0);
 	}
 
 	pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
 
-	if (msg_is_message ("emu.idle", msg)) {
-		unsigned long v;
-
-		if (msg_get_ulng (val, &v)) {
-			return (1);
-		}
-
-		par_int28 = 1000UL * v;
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.idle.toggle", msg)) {
-		par_int28 = (par_int28 == 0) ? 10000UL : 0UL;
-		return (0);
-	}
-	else if (msg_is_message ("emu.config.save", msg)) {
+	if (msg_is_message ("emu.config.save", msg)) {
 		if (ini_write (pc->cfg, val)) {
 			return (1);
 		}
 
-		return (0);
-	}
-	else if (msg_is_message ("emu.realtime", msg)) {
-		unsigned v;
-
-		if (msg_get_uint (val, &v)) {
-			return (1);
-		}
-
-		pc->pit_real = (v != 0);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.realtime.toggle", msg)) {
-		pc->pit_real = !pc->pit_real;
 		return (0);
 	}
 	else if (msg_is_message ("emu.cpu.model", msg)) {
@@ -129,6 +104,45 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		else {
 			return (1);
 		}
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.cpu.clock", msg)) {
+		unsigned long v;
+
+		if (msg_get_ulng (val, &v)) {
+			return (1);
+		}
+
+		pc_set_cpu_clock (pc, v);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.cpu.speed", msg)) {
+		unsigned f;
+
+		if (msg_get_uint (val, &f)) {
+			return (1);
+		}
+
+		pc_set_speed (pc, f);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.cpu.speed.step", msg)) {
+		int v;
+
+		if (msg_get_sint (val, &v)) {
+			return (1);
+		}
+
+		v += (int) pc->speed[0];
+
+		if (v <= 0) {
+			v = 1;
+		}
+
+		pc_set_speed (pc, v);
 
 		return (0);
 	}
@@ -257,10 +271,6 @@ int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max)
 		ini_get_string (pc->cfg, val, &str, "");
 		return (pc_copy_msg (val, str, max));
 	}
-	else if (strcmp (msg, "pit.realtime") == 0) {
-		sprintf (buf, "%d", (pc->pit_real != 0));
-		return (pc_copy_msg (val, buf, max));
-	}
 
 	if (pc_get_msgul (pc, msg, &tmp) == 0) {
 		sprintf (buf, "%lu", tmp);
@@ -285,16 +295,16 @@ int pc_get_msgul (ibmpc_t *pc, const char *msg, unsigned long *val)
 		return (1);
 	}
 
-	if (strcmp (msg, "emu.idle") == 0) {
-		*val = par_int28;
+	if (msg_is_message ("emu.cpu.speed", msg)) {
+		*val = pc->speed[0];
 		return (0);
 	}
-	else if (strcmp (msg, "emu.pause") == 0) {
+	if (msg_is_message ("emu.cpu.clock", msg)) {
+		*val = pc->cpu_clk[0];
+		return (0);
+	}
+	else if (msg_is_message ("emu.pause", msg) == 0) {
 		*val = (pc->pause != 0);
-		return (0);
-	}
-	else if (strcmp (msg, "pit.realtime") == 0) {
-		*val = (pc->pit_real != 0);
 		return (0);
 	}
 
