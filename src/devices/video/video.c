@@ -32,8 +32,6 @@ void pce_video_init (video_t *vid)
 {
 	vid->ext = NULL;
 
-	vid->type = PCE_VIDEO_NONE;
-
 	vid->dotclk[0] = 0;
 	vid->dotclk[1] = 0;
 	vid->dotclk[2] = 0;

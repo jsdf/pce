@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/hook.c                                      *
- * Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/hook.c                                        *
+ * Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -247,7 +246,8 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_GET_VIDEO:
-		e86_set_ax (pc->cpu, pc->video->type);
+		/* not supported anymore */
+		e86_set_ax (pc->cpu, 0);
 		break;
 
 	case PCEH_GET_INT28:

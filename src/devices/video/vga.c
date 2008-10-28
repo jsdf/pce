@@ -152,7 +152,6 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
 	pce_video_init (&vga->vid);
 
-	vga->vid.type = PCE_VIDEO_EGA;
 	vga->vid.ext = vga;
 	vga->vid.del = (void *) vga_del;
 	vga->vid.get_mem = (void *) vga_get_mem;

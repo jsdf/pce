@@ -3,9 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/arch/ibmpc/pce.inc                                     *
-;* Created:       2003-09-02 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   src/arch/ibmpc/pce.inc                                       *
+;* Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -61,7 +61,6 @@
 %define PCEH_GET_BOOT  0x0002
 %define PCEH_GET_COM   0x0102
 %define PCEH_GET_LPT   0x0202
-%define PCEH_GET_VIDEO 0x0302
 %define PCEH_GET_INT28 0x0402
 %define PCEH_GET_CPU   0x0502
 %define PCEH_GET_AMSK  0x0602

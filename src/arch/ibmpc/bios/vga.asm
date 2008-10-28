@@ -92,14 +92,7 @@ init:
 
 start:
 	push	ax
-
-	pceh	PCEH_GET_VIDEO
-	cmp	ax, 4
-	jne	.done
-
 	call	ega_init
-
-.done:
 	pop	ax
 	retf
 

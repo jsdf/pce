@@ -31,13 +31,6 @@
 #include <devices/memory.h>
 
 
-#define PCE_VIDEO_NONE 0
-#define PCE_VIDEO_MDA  1
-#define PCE_VIDEO_CGA  2
-#define PCE_VIDEO_HGC  3
-#define PCE_VIDEO_EGA  4
-
-
 typedef struct {
 	void      (*del) (void *ext);
 
@@ -56,8 +49,6 @@ typedef struct {
 	void      (*clock) (void *ext, unsigned long cnt);
 
 	void      *ext;
-
-	unsigned  type;
 
 	/* the dot clock (clock, remainder, last) */
 	unsigned long dotclk[3];

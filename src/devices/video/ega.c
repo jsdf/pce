@@ -97,7 +97,6 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
 	pce_video_init (&ega->vid);
 
-	ega->vid.type = PCE_VIDEO_EGA;
 	ega->vid.ext = ega;
 	ega->vid.del = (void *) ega_del;
 	ega->vid.get_mem = (void *) ega_get_mem;
