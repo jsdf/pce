@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/msg.c                                              *
- * Created:       2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/msg.c                                                *
+ * Created:     2005-12-08 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,11 +64,44 @@ int msg_get_ulng (const char *str, unsigned long *val)
 	return (0);
 }
 
+int msg_get_slng (const char *str, long *val)
+{
+	unsigned long tmp;
+	char          *end;
+
+	tmp = strtol (str, &end, 0);
+
+	if ((end == str) || (*end != 0)) {
+		return (1);
+	}
+
+	*val = tmp;
+
+	return (0);
+}
+
 int msg_get_uint (const char *str, unsigned *val)
 {
 	unsigned long tmp;
 
 	if (msg_get_ulng (str, &tmp)) {
+		return (1);
+	}
+
+	*val = tmp;
+
+	if (*val != tmp) {
+		return (1);
+	}
+
+	return (0);
+}
+
+int msg_get_sint (const char *str, int *val)
+{
+	long tmp;
+
+	if (msg_get_slng (str, &tmp)) {
 		return (1);
 	}
 
