@@ -951,6 +951,8 @@ void pc_clock (ibmpc_t *pc)
 
 	e86_clock (pc->cpu, n);
 
+	pce_video_clock0 (pc->video, n, 4);
+
 	pc->clk_cnt += n;
 	pc->clk_div[0] += n;
 
@@ -958,7 +960,7 @@ void pc_clock (ibmpc_t *pc)
 		e8237_clock (&pc->dma, 1);
 		e8259_clock (&pc->pic);
 
-		pce_video_clock (pc->video, (pc->clk_div[0] & ~0x1fUL) / 4);
+		pce_video_clock1 (pc->video, 0);
 
 #ifdef HAVE_GETTIMEOFDAY
 		if (pc->pit_real) {

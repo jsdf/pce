@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video.c                                        *
- * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video.c                                          *
+ * Created:     2003-08-30 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +33,10 @@ void pce_video_init (video_t *vid)
 	vid->ext = NULL;
 
 	vid->type = PCE_VIDEO_NONE;
+
+	vid->dotclk[0] = 0;
+	vid->dotclk[1] = 0;
+	vid->dotclk[2] = 0;
 
 	vid->del = NULL;
 	vid->set_msg = NULL;
@@ -107,8 +111,14 @@ void pce_video_redraw (video_t *vid)
 	}
 }
 
-void pce_video_clock (video_t *vid, unsigned long cnt)
+void pce_video_clock1 (video_t *vid, unsigned long cnt)
 {
+	vid->dotclk[0] += cnt;
+
+	/* clocks since last call of this function */
+	cnt = vid->dotclk[0] - vid->dotclk[2];
+	vid->dotclk[2] = vid->dotclk[0];
+
 	if (vid->clock != NULL) {
 		vid->clock (vid->ext, cnt);
 	}

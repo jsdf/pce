@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video.h                                        *
- * Created:       2003-08-30 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video.h                                          *
+ * Created:     2003-08-30 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,7 +58,19 @@ typedef struct {
 	void      *ext;
 
 	unsigned  type;
+
+	/* the dot clock (clock, remainder, last) */
+	unsigned long dotclk[3];
 } video_t;
+
+
+/*!***************************************************************************
+ * @short Increase the clock count without calling the clock() function
+ *****************************************************************************/
+#define pce_video_clock0(vid, cnt, div) do { \
+	(vid)->dotclk[0] += ((cnt) + (vid)->dotclk[1]) / (div); \
+	(vid)->dotclk[1] = ((cnt) + (vid)->dotclk[1]) % (div); \
+	} while (0)
 
 
 void pce_video_init (video_t *vid);
@@ -77,7 +89,7 @@ int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 
 void pce_video_redraw (video_t *vid);
 
-void pce_video_clock (video_t *vid, unsigned long cnt);
+void pce_video_clock1 (video_t *vid, unsigned long cnt);
 
 
 #endif
