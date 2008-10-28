@@ -3,9 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/arch/ibmpc/bios/pce.asm                                *
-;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   src/arch/ibmpc/bios/pce.asm                                  *
+;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -365,66 +365,60 @@ start_rom:
 	ret
 
 
+; initialize rom extensions in the range [C000..C7FF]
 init_rom1:
 	push	ax
+	push	cx
 	push	dx
+	push	bx
 	push	si
+	push	di
 	push	es
+	push	ds
 
 	mov	dx, 0xc000
 
 .next:
 	mov	es, dx
-	cmp	word [es:0x0000], 0xaa55
+	cmp	word [es:0x0000], 0xaa55	; rom id
 	jne	.norom
-
-	mov	ah, [es:0x0002]
-	mov	al, 0
-	shr	ax, 1
-	shr	ax, 1
-	shr	ax, 1
-	add	dx, ax
-	jz	.norom
-
-	;mov	si, msg_rom1
-	;call	prt_string
-	;mov	ax, es
-	;call	prt_uint16
-	;mov	si, msg_rom2
-	;call	prt_string
 
 	;call	check_rom
 	;or	ah, ah
-	;jz	.romok
-	jmp	.romok
+	;jnz	.norom
 
-	;mov	si, msg_cksmbad
-	;call	prt_string
+	mov	ah, [es:0x0002]			; rom size / 512
+	mov	al, 0
+	shr	ax, 1
+	shr	ax, 1
+	shr	ax, 1				; rom size in paragraphs
+	add	ax, 0x007f
+	and	ax, 0xff80			; round up to 2K
+	jz	.norom
 
-	;call	prt_nl
-
-	jmp	.skiprom
+	add	dx, ax
 
 .romok:
-	;mov	si, msg_cksmok
-	;call	prt_string
-
 	push	dx
 	call	start_rom
 	pop	dx
 
-	;call	prt_nl
+	jmp	.skiprom
 
 .norom:
-	add	dx, 0x0080
+	add	dx, 0x0080			; 2KB
 
 .skiprom:
 	cmp	dx, 0xc800
 	jb	.next
 
+	pop	ds
 	pop	es
+	pop	di
 	pop	si
+	pop	bx
 	pop	dx
+	pop	cx
 	pop	ax
 	ret
 
