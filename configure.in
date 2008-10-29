@@ -873,7 +873,7 @@ else
 fi
 
 
-term1=" null vt100"
+term1=" null"
 term2=""
 
 if test "x$PCE_X11_USE" = "x1" ; then

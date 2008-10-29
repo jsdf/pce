@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/config.h.in                                            *
- * Created:       2002-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2002-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/config.h.in                                              *
+ * Created:     2002-12-16 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -85,7 +84,6 @@
 
 #undef PCE_X11_USE
 #undef PCE_SDL_USE
-#define PCE_VT100_USE 1
 
 #undef PCE_ENABLE_TUN
 #undef PCE_ENABLE_SERPORT

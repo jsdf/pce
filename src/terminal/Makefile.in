@@ -10,9 +10,9 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-SRC := font.c null.c scrmap.c terminal.c vt100.c
-OBJ := font.o null.o scrmap.o terminal.o vt100.o
-HDR := font.h null.h scrmap.h terminal.h vt100.h
+SRC := font.c null.c scrmap.c terminal.c
+OBJ := font.o null.o scrmap.o terminal.o
+HDR := font.h null.h scrmap.h terminal.h
 BIN := terminal.a
 
 HDR_EXT := libini/libini.h
@@ -52,5 +52,4 @@ null.o:		null.c $(SDP)
 scrmap.o:	scrmap.c $(SDP)
 sdl.o:		sdl.c $(SDP)
 terminal.o:	terminal.c $(SDP)
-vt100.o:	vt100.c $(SDP)
 x11.o:		x11.c $(SDP)

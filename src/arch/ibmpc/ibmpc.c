@@ -371,16 +371,6 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 			pce_log (MSG_ERR, "*** setting up null terminal failed\n");
 		}
 	}
-	else if (strcmp (driver, "vt100") == 0) {
-#ifdef PCE_VT100_USE
-		pc->trm = vt100_new (sct, 0, 1);
-		if (pc->trm == NULL) {
-			pce_log (MSG_ERR, "*** setting up vt100 terminal failed\n");
-		}
-#else
-		pce_log (MSG_ERR, "*** terminal driver 'vt100' not supported\n");
-#endif
-	}
 	else {
 		pce_log (MSG_ERR, "*** unknown terminal driver: %s\n", driver);
 	}

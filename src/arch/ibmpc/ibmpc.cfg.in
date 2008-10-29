@@ -127,27 +127,6 @@ section pc {
 		driver = "null"
 	}
 
-	section terminal {
-		driver = "vt100"
-
-		# Redefine keys. Syntax is
-		# <terminal escape sequence>=<scancode sequence>
-		#keymap = "=\x2a\xaa"			# Shift left
-		#keymap = "=\x38\xb8"			# Alt
-		#keymap = "=\x1d\x9d"			# Control
-		#keymap = "\x1b\x5b\x44=\x4b\xcb"	# Left
-		#keymap = "\x1b\x5b\x43=\x4d\xcd"	# Right
-		#keymap = "\x1b\x5b\x41=\x48\xc8"	# Up
-		#keymap = "\x1b\x5b\x42=\x50\xd0"	# Down
-		#keymap = "\x1b\x5b\x48=\x47\xc7"	# Home
-		#keymap = "\x1b\x5b\x46=\x4f\xcf"	# End
-		#keymap = "\x1b\x5b\x35\x7e=\x49\xc9"	# PgUp
-		#keymap = "\x1b\x5b\x36\x7e=\x51\xd1"	# PgDn
-		#keymap = "\x1b\x5b\x45=\x4c\xcc"	# KP-5
-		#keymap = "\x1b\x5b\x32\x7e=\x52\xd2"	# Insert
-		#keymap = "\x1b\x5b\x33\x7e=\x53\xd3"	# Delete
-	}
-
 	# Multiple "video" sections may be present
 	# The mode_*_{w,h} lines define the window size that is used
 	# for that mode.

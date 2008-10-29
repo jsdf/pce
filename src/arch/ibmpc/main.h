@@ -76,7 +76,6 @@ extern unsigned   par_speed;
 
 #include <terminal/terminal.h>
 #include <terminal/null.h>
-#include <terminal/vt100.h>
 
 #ifdef PCE_X11_USE
 #include <terminal/x11.h>
