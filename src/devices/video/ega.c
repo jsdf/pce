@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/ega.c                                    *
- * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/ega.c                                      *
+ * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -72,8 +72,7 @@ static unsigned char ega_get_uint8_odd_even (ega_t *ega, unsigned long addr);
 
 video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 {
-	unsigned w, h;
-	ega_t    *ega;
+	ega_t *ega;
 
 	ega = malloc (sizeof (ega_t));
 	if (ega == NULL) {
@@ -110,20 +109,6 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 	memset (ega->gdc_reg, 0, 9 * sizeof (unsigned char));
 	memset (ega->atc_reg, 0, 21 * sizeof (unsigned char));
 
-	ini_get_uint16 (sct, "w", &w, 640);
-	ini_get_uint16 (sct, "h", &h, 400);
-
-	ini_get_uint16 (sct, "mode_80x25_w", &ega->mode_80x25_w, w);
-	ini_get_uint16 (sct, "mode_80x25_h", &ega->mode_80x25_h, h);
-	ini_get_uint16 (sct, "mode_320x200_w", &ega->mode_320x200_w, w);
-	ini_get_uint16 (sct, "mode_320x200_h", &ega->mode_320x200_h, h);
-	ini_get_uint16 (sct, "mode_640x200_w", &ega->mode_640x200_w, w);
-	ini_get_uint16 (sct, "mode_640x200_h", &ega->mode_640x200_h, h);
-	ini_get_uint16 (sct, "mode_640x350_w", &ega->mode_640x350_w, w);
-	ini_get_uint16 (sct, "mode_640x350_h", &ega->mode_640x350_h, h);
-	ini_get_uint16 (sct, "mode_640x480_w", &ega->mode_640x480_w, w);
-	ini_get_uint16 (sct, "mode_640x480_h", &ega->mode_640x480_h, h);
-
 	pce_log_tag (MSG_INF, "VIDEO:", "EGA addr=0x03b0 membase=0xa000 memsize=262144\n");
 
 	ega->mem = mem_blk_new (0xa0000, 128UL * 1024, 0);
@@ -141,7 +126,10 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 	ega->reg->get_uint16 = (mem_get_uint16_f) &ega_reg_get_uint16;
 	mem_blk_clear (ega->reg, 0x00);
 
-	ega->trm = trm;
+	ega->trmnew = trm;
+	ega->trmclk = 0;
+
+	trm_old_init (&ega->trm, ega->trmnew);
 
 	ega->clkcnt = 0;
 
@@ -154,8 +142,7 @@ video_t *ega_new (terminal_t *trm, ini_sct_t *sct)
 
 	ega->mode = 0;
 
-	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-	trm_set_size (trm, ega->mode_80x25_w, ega->mode_80x25_h);
+	trm_old_set_mode (&ega->trm, TERM_MODE_TEXT, 80, 25);
 
 	return (&ega->vid);
 }
@@ -344,8 +331,8 @@ void ega_update_cga_txt (ega_t *ega)
 			bg = (fg >> 4) & 0x0f;
 			fg = fg & 0x0f;
 
-			trm_set_col (ega->trm, fg, bg);
-			trm_set_chr (ega->trm, x, y, ega->data[j]);
+			trm_old_set_col (&ega->trm, fg, bg);
+			trm_old_set_chr (&ega->trm, x, y, ega->data[j]);
 
 			j = (j + 2) & 0xffff;
 		}
@@ -398,8 +385,8 @@ void ega_set_latches_cga_txt (ega_t *ega, unsigned long addr, unsigned char val[
 		x = (addr >> 1) % rofs;
 		y = (addr >> 1) / rofs;
 
-		trm_set_col (ega->trm, a & 0x0f, (a & 0xf0) >> 4);
-		trm_set_chr (ega->trm, x, y, c);
+		trm_old_set_col (&ega->trm, a & 0x0f, (a & 0xf0) >> 4);
+		trm_old_set_chr (&ega->trm, x, y, c);
 	}
 }
 
@@ -469,7 +456,7 @@ void ega_update_cga4 (ega_t *ega)
 	w = ega->mode_w / 4;
 
 	col1 = 0;
-	trm_set_col (ega->trm, 0, 0);
+	trm_old_set_col (&ega->trm, 0, 0);
 
 	for (y = 0; y < ega->mode_h; y++) {
 		for (x = 0; x < w; x++) {
@@ -483,11 +470,11 @@ void ega_update_cga4 (ega_t *ega)
 				col2 &= ega->atc_reg[0x12];
 
 				if (col1 != col2) {
-					trm_set_col (ega->trm, col2, 0);
+					trm_old_set_col (&ega->trm, col2, 0);
 					col1 = col2;
 				}
 
-				trm_set_pxl (ega->trm, 4 * x + i, y);
+				trm_old_set_pxl (&ega->trm, 4 * x + i, y);
 
 				msk = msk >> 2;
 			}
@@ -565,8 +552,8 @@ void ega_set_latches_cga4 (ega_t *ega, unsigned long addr, unsigned char latch[4
 
 		c &= ega->atc_reg[0x12];
 
-		trm_set_col (ega->trm, c, 0);
-		trm_set_pxl (ega->trm, x + i, y);
+		trm_old_set_col (&ega->trm, c, 0);
+		trm_old_set_pxl (&ega->trm, x + i, y);
 	}
 }
 
@@ -641,7 +628,7 @@ void ega_update_ega16 (ega_t *ega)
 	w = ega->mode_w / 8;
 
 	col1 = 0;
-	trm_set_col (ega->trm, 0, 0);
+	trm_old_set_col (&ega->trm, 0, 0);
 
 	for (y = 0; y < ega->mode_h; y++) {
 		for (x = 0; x < w; x++) {
@@ -655,11 +642,11 @@ void ega_update_ega16 (ega_t *ega)
 				col2 &= ega->atc_reg[0x12];
 
 				if (col1 != col2) {
-					trm_set_col (ega->trm, col2, 0);
+					trm_old_set_col (&ega->trm, col2, 0);
 					col1 = col2;
 				}
 
-				trm_set_pxl (ega->trm, 8 * x + i, y);
+				trm_old_set_pxl (&ega->trm, 8 * x + i, y);
 
 				msk = msk >> 1;
 			}
@@ -746,8 +733,8 @@ void ega_set_latches_ega16 (ega_t *ega, unsigned long addr, unsigned char latch[
 
 		c &= ega->atc_reg[0x12];
 
-		trm_set_col (ega->trm, c, 0);
-		trm_set_pxl (ega->trm, x + i, y);
+		trm_old_set_col (&ega->trm, c, 0);
+		trm_old_set_pxl (&ega->trm, x + i, y);
 
 		m = m >> 1;
 	}
@@ -1017,47 +1004,20 @@ int ega_eval_mode (ega_t *ega)
 
 void ega_set_mode (ega_t *ega, unsigned mode, unsigned w, unsigned h)
 {
-	unsigned sw, sh;
-
 	pce_log (MSG_DEB, "ega:\tset mode %u (%u, %u)\n", mode, w, h);
 
 	switch (mode) {
-		case 0:
-			sw = ega->mode_80x25_w;
-			sh = ega->mode_80x25_h;
-			trm_set_mode (ega->trm, TERM_MODE_TEXT, w, h);
-			break;
+	case 0:
+		trm_old_set_mode (&ega->trm, TERM_MODE_TEXT, w, h);
+		break;
 
-		case 16:
-			if ((w == 320) && (h == 200)) {
-				sw = ega->mode_320x200_w;
-				sh = ega->mode_320x200_h;
-			}
-			else if ((w == 640) && (h == 200)) {
-				sw = ega->mode_640x200_w;
-				sh = ega->mode_640x200_h;
-			}
-			else if ((w == 640) && (h == 350)) {
-				sw = ega->mode_640x350_w;
-				sh = ega->mode_640x350_h;
-			}
-			else if ((w == 640) && (h == 480)) {
-				sw = ega->mode_640x480_w;
-				sh = ega->mode_640x480_h;
-			}
-			else {
-				sw = w;
-				sh = h;
-			}
+	case 16:
+		trm_old_set_mode (&ega->trm, TERM_MODE_GRAPH, w, h);
+		break;
 
-			trm_set_mode (ega->trm, TERM_MODE_GRAPH, w, h);
-			break;
-
-		default:
-			return;
+	default:
+		return;
 	}
-
-	trm_set_size (ega->trm, sw, sh);
 
 	ega->mode = mode;
 	ega->mode_w = w;
@@ -1091,14 +1051,14 @@ void ega_set_pos (ega_t *ega, unsigned pos)
 		return;
 	}
 
-	trm_set_pos (ega->trm, x, y);
+	trm_old_set_pos (&ega->trm, x, y);
 }
 
 void ega_set_crs (ega_t *ega, unsigned y1, unsigned y2)
 {
 	if (ega->mode == 0) {
 		if (y1 > 13) {
-			trm_set_crs (ega->trm, 0, 0, 0);
+			trm_old_set_crs (&ega->trm, 0, 0, 0);
 			return;
 		}
 
@@ -1109,7 +1069,7 @@ void ega_set_crs (ega_t *ega, unsigned y1, unsigned y2)
 		y1 = (255 * y1 + 6) / 13;
 		y2 = (255 * y2 + 6) / 13;
 
-		trm_set_crs (ega->trm, y1, y2, 1);
+		trm_old_set_crs (&ega->trm, y1, y2, 1);
 	}
 }
 
@@ -1259,7 +1219,7 @@ void ega_atc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 			g = (rgb[1] << 8) | rgb[1];
 			b = (rgb[2] << 8) | rgb[2];
 
-			trm_set_map (ega->trm, reg, r, g, b);
+			trm_old_set_map (&ega->trm, reg, r, g, b);
 
 			ega->dirty = 1;
 		}
@@ -1573,5 +1533,12 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 			ega->update (ega);
 			ega->dirty = 0;
 		}
+	}
+
+	ega->trmclk += cnt;
+
+	if (ega->trmclk > 16384) {
+		ega->trmclk = 0;
+		trm_old_update (&ega->trm);
 	}
 }

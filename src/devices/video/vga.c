@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/vga.c                                    *
- * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/vga.c                                      *
+ * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -92,7 +92,7 @@ void vga_dac_map_entry (vga_t *vga, unsigned idx)
 	g = (g << 8) | g;
 	b = (b << 8) | b;
 
-	trm_set_map (vga->trm, idx, r, g, b);
+	trm_old_set_map (&vga->trm, idx, r, g, b);
 }
 
 static
@@ -138,8 +138,6 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 		free (vga);
 		return (NULL);
 	}
-
-	vga->trm = trm;
 
 	vga->base = 0x18000;
 	vga->size = 0x08000;
@@ -213,8 +211,12 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 
 	vga->mode = 0;
 
-	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-	trm_set_size (trm, vga->mode_80x25_w, vga->mode_80x25_h);
+	vga->trmnew = trm;
+	vga->trmclk = 0;
+	trm_old_init (&vga->trm, vga->trmnew);
+
+	trm_old_set_mode (&vga->trm, TERM_MODE_TEXT, 80, 25);
+	trm_old_set_size (&vga->trm, vga->mode_80x25_w, vga->mode_80x25_h);
 
 	return (&vga->vid);
 }
@@ -402,8 +404,8 @@ void vga_update_cga_txt (vga_t *vga)
 			bg = (fg >> 4) & 0x0f;
 			fg = fg & 0x0f;
 
-			trm_set_col (vga->trm, fg, bg);
-			trm_set_chr (vga->trm, x, y, vga->data[j]);
+			trm_old_set_col (&vga->trm, fg, bg);
+			trm_old_set_chr (&vga->trm, x, y, vga->data[j]);
 
 			j = (j + 2) & 0xffff;
 		}
@@ -456,8 +458,8 @@ void vga_set_latches_cga_txt (vga_t *vga, unsigned long addr, unsigned char val[
 		x = (addr >> 1) % rofs;
 		y = (addr >> 1) / rofs;
 
-		trm_set_col (vga->trm, a & 0x0f, (a & 0xf0) >> 4);
-		trm_set_chr (vga->trm, x, y, c);
+		trm_old_set_col (&vga->trm, a & 0x0f, (a & 0xf0) >> 4);
+		trm_old_set_chr (&vga->trm, x, y, c);
 	}
 }
 
@@ -527,7 +529,7 @@ void vga_update_cga4 (vga_t *vga)
 	w = vga->mode_w / 4;
 
 	col1 = 0;
-	trm_set_col (vga->trm, 0, 0);
+	trm_old_set_col (&vga->trm, 0, 0);
 
 	for (y = 0; y < vga->mode_h; y++) {
 		for (x = 0; x < w; x++) {
@@ -541,11 +543,11 @@ void vga_update_cga4 (vga_t *vga)
 				col2 &= vga->atc_reg[0x12];
 
 				if (col1 != col2) {
-					trm_set_col (vga->trm, col2, 0);
+					trm_old_set_col (&vga->trm, col2, 0);
 					col1 = col2;
 				}
 
-				trm_set_pxl (vga->trm, 4 * x + i, y);
+				trm_old_set_pxl (&vga->trm, 4 * x + i, y);
 
 				msk = msk >> 2;
 			}
@@ -637,8 +639,8 @@ void vga_set_latches_cga4 (vga_t *vga, unsigned long addr, unsigned char latch[4
 
 			c &= vga->atc_reg[0x12];
 
-			trm_set_col (vga->trm, c, 0);
-			trm_set_pxl (vga->trm, x + i, y);
+			trm_old_set_col (&vga->trm, c, 0);
+			trm_old_set_pxl (&vga->trm, x + i, y);
 		}
 	}
 }
@@ -714,7 +716,7 @@ void vga_update_ega16 (vga_t *vga)
 	w = vga->mode_w / 8;
 
 	col1 = 0;
-	trm_set_col (vga->trm, 0, 0);
+	trm_old_set_col (&vga->trm, 0, 0);
 
 	for (y = 0; y < vga->mode_h; y++) {
 		for (x = 0; x < w; x++) {
@@ -728,11 +730,11 @@ void vga_update_ega16 (vga_t *vga)
 				col2 &= vga->atc_reg[0x12];
 
 				if (col1 != col2) {
-					trm_set_col (vga->trm, col2, 0);
+					trm_old_set_col (&vga->trm, col2, 0);
 					col1 = col2;
 				}
 
-				trm_set_pxl (vga->trm, 8 * x + i, y);
+				trm_old_set_pxl (&vga->trm, 8 * x + i, y);
 
 				msk = msk >> 1;
 			}
@@ -831,8 +833,8 @@ void vga_set_latches_ega16 (vga_t *vga, unsigned long addr, unsigned char latch[
 
 			c &= vga->atc_reg[0x12];
 
-			trm_set_col (vga->trm, c, 0);
-			trm_set_pxl (vga->trm, x + i, y);
+			trm_old_set_col (&vga->trm, c, 0);
+			trm_old_set_pxl (&vga->trm, x + i, y);
 		}
 
 		m = m >> 1;
@@ -870,8 +872,8 @@ void vga_update_vga256 (vga_t *vga)
 				col = vga->data[((addr + x) >> 2) + ((addr + x) & 0x03) * 0x10000UL];
 			}
 
-			trm_set_col (vga->trm, col, 0);
-			trm_set_pxl (vga->trm, x, y);
+			trm_old_set_col (&vga->trm, col, 0);
+			trm_old_set_pxl (&vga->trm, x, y);
 		}
 
 		addr = (addr + rofs) & 0xffff;
@@ -899,8 +901,8 @@ void vga_set_latches_vga256 (vga_t *vga, unsigned long addr, unsigned char latch
 	for (i = 0; i < 4; i++) {
 		vga->data[addr] = latch[i];
 
-		trm_set_col (vga->trm, latch[i], 0);
-		trm_set_pxl (vga->trm, x + i, y);
+		trm_old_set_col (&vga->trm, latch[i], 0);
+		trm_old_set_pxl (&vga->trm, x + i, y);
 
 		addr += 0x10000UL;
 	}
@@ -1209,7 +1211,7 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
 
 	switch (mode) {
 		case 0:
-			trm_set_mode (vga->trm, TERM_MODE_TEXT, 80, 25);
+			trm_old_set_mode (&vga->trm, TERM_MODE_TEXT, 80, 25);
 			sw = vga->mode_80x25_w;
 			sh = vga->mode_80x25_h;
 			break;
@@ -1237,14 +1239,14 @@ void vga_set_mode (vga_t *vga, unsigned mode, unsigned w, unsigned h)
 				sh = h;
 			}
 
-			trm_set_mode (vga->trm, TERM_MODE_GRAPH, w, h);
+			trm_old_set_mode (&vga->trm, TERM_MODE_GRAPH, w, h);
 			break;
 
 		default:
 			return;
 	}
 
-	trm_set_size (vga->trm, sw, sh);
+	trm_old_set_size (&vga->trm, sw, sh);
 
 	vga->mode = mode;
 	vga->mode_w = w;
@@ -1278,14 +1280,14 @@ void vga_set_pos (vga_t *vga, unsigned pos)
 		return;
 	}
 
-	trm_set_pos (vga->trm, x, y);
+	trm_old_set_pos (&vga->trm, x, y);
 }
 
 void vga_set_crs (vga_t *vga, unsigned y1, unsigned y2)
 {
 	if (vga->mode == 0) {
 		if (y1 > 13) {
-			trm_set_crs (vga->trm, 0, 0, 0);
+			trm_old_set_crs (&vga->trm, 0, 0, 0);
 			return;
 		}
 
@@ -1296,7 +1298,7 @@ void vga_set_crs (vga_t *vga, unsigned y1, unsigned y2)
 		y1 = (255 * y1 + 6) / 13;
 		y2 = (255 * y2 + 6) / 13;
 
-		trm_set_crs (vga->trm, y1, y2, 1);
+		trm_old_set_crs (&vga->trm, y1, y2, 1);
 	}
 }
 
@@ -1436,7 +1438,7 @@ void vga_atc_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 			vga->atc_reg[reg] = val & 0x3f;
 
 			vga_get_rgb_atc (vga, reg, rgb);
-			trm_set_map (vga->trm, reg, rgb[0] << 8, rgb[1] << 8, rgb[2] << 8);
+			trm_old_set_map (&vga->trm, reg, rgb[0] << 8, rgb[1] << 8, rgb[2] << 8);
 
 			vga->dirty = 1;
 		}
@@ -1826,5 +1828,12 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 			vga->update (vga);
 			vga->dirty = 0;
 		}
+	}
+
+	vga->trmclk += cnt;
+
+	if (vga->trmclk > 16384) {
+		vga->trmclk = 0;
+		trm_old_update (&vga->trm);
 	}
 }

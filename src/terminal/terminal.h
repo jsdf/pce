@@ -31,96 +31,210 @@
 #include <terminal/keys.h>
 
 
-#define TERM_MODE_TEXT  0
-#define TERM_MODE_GRAPH 1
-
-
-typedef void (*trm_del_f) (void *ext);
-typedef void (*trm_set_mse_f) (void *ext, int dx, int dy, unsigned b);
-typedef void (*trm_set_mode_f) (void *ext, unsigned m, unsigned w, unsigned h);
-typedef void (*trm_set_size_f) (void *ext, unsigned w, unsigned h);
-typedef void (*trm_set_map_f) (void *ext, unsigned i, unsigned r, unsigned g, unsigned b);
-typedef void (*trm_set_col_f) (void *ext, unsigned fg, unsigned bg);
-typedef void (*trm_set_crs_f) (void *ext, unsigned y1, unsigned y2, int show);
-typedef void (*trm_set_pos_f) (void *ext, unsigned x, unsigned y);
-typedef void (*trm_set_chr_f) (void *ext, unsigned x, unsigned y, unsigned char c);
-typedef void (*trm_set_pxl_f) (void *ext, unsigned x, unsigned y);
-typedef void (*trm_set_rct_f) (void *ext, unsigned x, unsigned y, unsigned w, unsigned h);
-typedef void (*trm_check_f) (void *ext);
-
-
+/*!***************************************************************************
+ * @short The terminal structure
+ *****************************************************************************/
 typedef struct {
-	void (*del) (void *ext);
+	void *ext;
 
-	void *msg_ext;
-	int  (*set_msg) (void *ext, const char *msg, const char *val);
-	int  (*get_msgul) (void *ext, const char *msg, unsigned long *val);
+	void *set_msg_emu_ext;
+	int  (*set_msg_emu) (void *ext, const char *msg, const char *val);
 
 	void *set_key_ext;
 	void (*set_key) (void *ext, unsigned event, pce_key_t key);
 
-	void *mse_ext;
-	void (*set_mse) (void *ext, int dx, int dy, unsigned b);
+	void *set_mouse_ext;
+	void (*set_mouse) (void *ext, int dx, int dy, unsigned but);
 
-	trm_set_mode_f set_mode;
-	trm_set_size_f set_size;
+	void (*del) (void *ext);
 
-	trm_set_map_f  set_map;
-	trm_set_col_f  set_col;
-	trm_set_crs_f  set_crs;
-	trm_set_pos_f  set_pos;
+	int  (*open) (void *ext, unsigned w, unsigned h);
 
-	trm_set_chr_f  set_chr;
-	trm_set_pxl_f  set_pxl;
-	trm_set_rct_f  set_rct;
+	int  (*close) (void *ext);
 
-	trm_check_f    check;
+	int  (*set_msg_trm) (void *ext, const char *msg, const char *val);
 
-	void           *ext;
+	void (*update) (void *ext);
+
+	void (*check) (void *ext);
+
+	int           is_open;
+
+	/* terminal buffer size */
+	unsigned      w;
+	unsigned      h;
+
+	unsigned long buf_cnt;
+	unsigned char *buf;
+
+	unsigned      scale_x;
+	unsigned      scale_y;
+
+	/* mul, div, overflow */
+	int           mouse_scale_x[3];
+	int           mouse_scale_y[3];
+
+	unsigned long scale_buf_cnt;
+	unsigned char *scale_buf;
+
+	/* update rectangle */
+	unsigned      update_x;
+	unsigned      update_y;
+	unsigned      update_w;
+	unsigned      update_h;
+
+	/* picture index for screenshots */
+	unsigned      pict_index;
 } terminal_t;
 
 
-void trm_init (terminal_t *trmp);
+/*!***************************************************************************
+ * @short Initialize a terminal structure
+ *****************************************************************************/
+void trm_init (terminal_t *trm, void *ext);
+
+/*!***************************************************************************
+ * @short Free the resources used by a terminal structure
+ *****************************************************************************/
 void trm_free (terminal_t *trm);
 
+/*!***************************************************************************
+ * @short Delete a terminal
+ *****************************************************************************/
 void trm_del (terminal_t *trm);
 
-void trm_set_msg_fct (terminal_t *trm, void *ext, void *set, void *getul);
+/*!***************************************************************************
+ * @short Open a terminal
+ *
+ * This function must be called after trm_init() and before the first
+ * output is sent to the terminal. The terminal size w and h is considered
+ * a hint only.
+ *****************************************************************************/
+int trm_open (terminal_t *trm, unsigned w, unsigned h);
+
+/*!***************************************************************************
+ * @short Close a terminal
+ *
+ * This function is called automatically by trm_del().
+ *****************************************************************************/
+int trm_close (terminal_t *trm);
+
+/*!***************************************************************************
+ * @short Set the terminal message function
+ *
+ * The terminal calls the message function when it wants to send a message
+ * to the core.
+ *****************************************************************************/
+void trm_set_msg_fct (terminal_t *trm, void *ext, void *fct);
+
+/*!***************************************************************************
+ * @short Set the terminal key function
+ *
+ * The terminal calls the key function to send key events to the core.
+ *****************************************************************************/
 void trm_set_key_fct (terminal_t *trm, void *ext, void *fct);
 
-int trm_set_msg (terminal_t *trm, const char *msg, const char *val);
-int trm_get_msgul (terminal_t *trm, const char *msg, unsigned long *val);
+/*!***************************************************************************
+ * @short Set the terminal mouse function
+ *
+ * The terminal calls the mouse function to send key events to the core.
+ *****************************************************************************/
+void trm_set_mouse_fct (terminal_t *trm, void *ext, void *fct);
 
-void trm_set_mode (terminal_t *trm, unsigned m, unsigned w, unsigned h);
+/*!***************************************************************************
+ * @short Save the terminal buffer to an image file
+ *
+ * If the file name is NULL, a default name is generated automatically.
+ *****************************************************************************/
+int trm_screenshot (terminal_t *trm, const char *fname);
+
+/*!***************************************************************************
+ * @short Send a message to the terminal
+ *****************************************************************************/
+int trm_set_msg_trm (terminal_t *trm, const char *msg, const char *val);
+
+/*!***************************************************************************
+ * @short Set the mouse scale factors
+ *
+ * Terminal mouse coordinates are multiplied by (mul_x / div_x) and
+ * (mul_y / div_y) before they are sent to the emulator core.
+ *****************************************************************************/
+void trm_set_mouse_scale (terminal_t *trm, int mul_x, int div_x, int mul_y, int div_y);
+
+/*!***************************************************************************
+ * @short Set the terminal window size
+ *****************************************************************************/
 void trm_set_size (terminal_t *trm, unsigned w, unsigned h);
 
-void trm_set_map (terminal_t *trm, unsigned i, unsigned r, unsigned g, unsigned b);
-void trm_set_col (terminal_t *trm, unsigned fg, unsigned bg);
-
-/*****************************************************************************
- * @short Set  the cursor size
- * @param trm  The terminal
- * @param y1   The cursor start line
- * @param y2   The cursor end line
- * @param show Turn cursor off if zero
- *
- * The lines y1 and y2 are a percentage in the range [0, 255] of the whole
- * character height.
+/*!***************************************************************************
+ * @short Set the terminal scale factors
  *****************************************************************************/
-void trm_set_crs (terminal_t *trm, unsigned y1, unsigned y2, int show);
+void trm_set_scale (terminal_t *trm, unsigned fx, unsigned fy);
 
-void trm_set_pos (terminal_t *trm, unsigned x, unsigned y);
+/*!***************************************************************************
+ * @short Set a pixel in the terminal buffer
+ * @param col The pixel color. This is an array of three RGB values.
+ *****************************************************************************/
+void trm_set_pixel (terminal_t *trm, unsigned x, unsigned y, const unsigned char *col);
 
-void trm_set_chr (terminal_t *trm, unsigned x, unsigned y, unsigned char c);
+/*!***************************************************************************
+ * @short Set lines in the terminal buffer
+ * @param buf The RGB source buffer, 3 bytes per pixel
+ * @param y   The first line in the terminal buffer
+ * @param cnt The number of lines
+ *
+ * The buffer width is implicit, as set by trm_set_size().
+ *****************************************************************************/
+void trm_set_lines (terminal_t *trm, const void *buf, unsigned y, unsigned cnt);
 
-void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y);
+/*!***************************************************************************
+ * @short Update the screen from the terminal buffer
+ *****************************************************************************/
+void trm_update (terminal_t *trm);
 
-void trm_set_rct (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h);
-
+/*!***************************************************************************
+ * @short Check for terminal events
+ *
+ * This function must be called periodically.
+ *****************************************************************************/
 void trm_check (terminal_t *trm);
 
 
+/*!***************************************************************************
+ * @short Send a message to the emulator core
+ *****************************************************************************/
+int trm_set_msg_emu (terminal_t *trm, const char *msg, const char *val);
+
+/*!***************************************************************************
+ * @short Send a key event to the emulator core
+ *****************************************************************************/
 void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key);
+
+/*!***************************************************************************
+ * @short Send a mouse event to the emulator core
+ *****************************************************************************/
+void trm_set_mouse (terminal_t *trm, int dx, int dy, unsigned but);
+
+/*!***************************************************************************
+ * @short Get the scale factors, given a specific terminal size
+ *****************************************************************************/
+void trm_get_scale (terminal_t *trm, unsigned w, unsigned h, unsigned *fx, unsigned *fy);
+
+/*!***************************************************************************
+ * @short Scale the terminal buffer
+ * @param src The source buffer
+ * @param w   The source buffer width
+ * @param h   The source buffer height
+ * @param fx  The scale factor in x direction
+ * @param fy  The scale factor in y direction
+ *
+ * The returned buffer is owned by the terminal and will be overwritten by
+ * subsequent calls to this function.
+ *****************************************************************************/
+const unsigned char *trm_scale (terminal_t *trm,
+	const unsigned char *src, unsigned w, unsigned h,
+	unsigned fx, unsigned fy
+);
 
 
 #endif

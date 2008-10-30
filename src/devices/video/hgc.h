@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/hgc.h                                    *
- * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/hgc.h                                      *
+ * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +28,7 @@
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
+#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
@@ -59,7 +59,9 @@ typedef struct {
 
 	unsigned      mode;
 
-	terminal_t    *trm;
+	terminal_t    *trmnew;
+	term_old_t    trm;
+	unsigned long trmclk;
 } hgc_t;
 
 
@@ -67,7 +69,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *ini);
 
 void hgc_del (hgc_t *cga);
 
-void hgc_clock (hgc_t *cga);
+void hgc_clock (hgc_t *cga, unsigned long cnt);
 
 void hgc_prt_state (hgc_t *cga, FILE *fp);
 

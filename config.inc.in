@@ -133,10 +133,15 @@ PCE_BLK_HDR := devices/block/block.h \
 	devices/block/blkraw.h
 
 PCE_TERM_HDR := \
-	terminal/keys.h \
-	terminal/scrmap.h \
-	terminal/null.h \
 	terminal/font.h \
+	terminal/keys.h \
+	terminal/null.h \
+	terminal/term-old.h \
 	terminal/terminal.h
 
-PCE_TERM_OBJ := $(pcedst)/terminal/terminal.a
+PCE_TERM_OBJ := \
+	$(pcedst)/terminal/font.o \
+	$(pcedst)/terminal/keys.o \
+	$(pcedst)/terminal/null.o \
+	$(pcedst)/terminal/term-old.o \
+	$(pcedst)/terminal/terminal.o

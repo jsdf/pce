@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/vga.h                                    *
- * Created:       2004-03-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/vga.h                                      *
+ * Created:     2004-03-25 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +28,7 @@
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
+#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
@@ -85,7 +85,9 @@ typedef struct vga_t {
 
 	char          dirty;
 
-	terminal_t    *trm;
+	terminal_t    *trmnew;
+	term_old_t    trm;
+	unsigned long trmclk;
 } vga_t;
 
 

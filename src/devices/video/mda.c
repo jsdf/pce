@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/mda.c                                    *
- * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/mda.c                                      *
+ * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -61,7 +61,7 @@ void mda_set_colors (mda_t *mda)
 		r = (mda->rgb[i] >> 16) & 0xff;
 		g = (mda->rgb[i] >> 8) & 0xff;
 		b = mda->rgb[i] & 0xff;
-		trm_set_map (mda->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+		trm_old_set_map (&mda->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
 	}
 }
 
@@ -85,6 +85,7 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 	mda->vid.get_reg = (void *) mda_get_reg;
 	mda->vid.print_info = (void *) mda_prt_state;
 	mda->vid.screenshot = (void *) mda_screenshot;
+	mda->vid.clock = (void *) mda_clock;
 
 	for (i = 0; i < 18; i++) {
 		mda->crtc_reg[i] = 0;
@@ -127,12 +128,14 @@ video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
 	mda->reg->get_uint16 = (mem_get_uint16_f) &mda_reg_get_uint16;
 	mem_blk_clear (mda->reg, 0x00);
 
-	mda->trm = trm;
+	mda->trmnew = trm;
+	mda->trmclk = 0;
+	trm_old_init (&mda->trm, mda->trmnew);
 
 	mda_set_colors (mda);
 
-	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-	trm_set_size (trm, mda->mode_80x25_w, mda->mode_80x25_h);
+	trm_old_set_mode (&mda->trm, TERM_MODE_TEXT, 80, 25);
+	trm_old_set_size (&mda->trm, mda->mode_80x25_w, mda->mode_80x25_h);
 
 	return (&mda->vid);
 }
@@ -146,8 +149,14 @@ void mda_del (mda_t *mda)
 	}
 }
 
-void mda_clock (mda_t *mda)
+void mda_clock (mda_t *mda, unsigned long cnt)
 {
+	mda->trmclk += cnt;
+
+	if (mda->trmclk > 16384) {
+		mda->trmclk = 0;
+		trm_old_update (&mda->trm);
+	}
 }
 
 void mda_prt_state (mda_t *mda, FILE *fp)
@@ -250,8 +259,8 @@ void mda_update (mda_t *mda)
 			fg = mda->mem->data[i + 1] & 0x0f;
 			bg = (mda->mem->data[i + 1] & 0xf0) >> 4;
 
-			trm_set_col (mda->trm, fg, bg);
-			trm_set_chr (mda->trm, x, y, mda->mem->data[i]);
+			trm_old_set_col (&mda->trm, fg, bg);
+			trm_old_set_chr (&mda->trm, x, y, mda->mem->data[i]);
 
 			i = (i + 2) & 0x3fff;
 		}
@@ -272,14 +281,14 @@ void mda_set_pos (mda_t *mda, unsigned pos)
 	x = pos % 80;
 	y = pos / 80;
 
-	trm_set_pos (mda->trm, pos % 80, pos / 80);
+	trm_old_set_pos (&mda->trm, pos % 80, pos / 80);
 }
 
 static
 void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
 {
 	if (y1 > 13) {
-		trm_set_crs (mda->trm, 0, 0, 0);
+		trm_old_set_crs (&mda->trm, 0, 0, 0);
 		return;
 	}
 
@@ -290,7 +299,7 @@ void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
 	y1 = (255 * y1 + 6) / 13;
 	y2 = (255 * y2 + 6) / 13;
 
-	trm_set_crs (mda->trm, y1, y2, 1);
+	trm_old_set_crs (&mda->trm, y1, y2, 1);
 }
 
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
@@ -320,8 +329,8 @@ void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 	x = (addr >> 1) % 80;
 	y = (addr >> 1) / 80;
 
-	trm_set_col (mda->trm, a & 0x0f, (a >> 4) & 0x0f);
-	trm_set_chr (mda->trm, x, y, c);
+	trm_old_set_col (&mda->trm, a & 0x0f, (a >> 4) & 0x0f);
+	trm_old_set_chr (&mda->trm, x, y, c);
 }
 
 void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
@@ -352,8 +361,8 @@ void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 	x = (addr >> 1) % 80;
 	y = (addr >> 1) / 80;
 
-	trm_set_col (mda->trm, a & 0x0f, (a >> 4) & 0x0f);
-	trm_set_chr (mda->trm, x, y, c);
+	trm_old_set_col (&mda->trm, a & 0x0f, (a >> 4) & 0x0f);
+	trm_old_set_chr (&mda->trm, x, y, c);
 }
 
 static

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/hgc.c                                    *
- * Created:       2003-08-19 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/hgc.c                                      *
+ * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,19 +64,19 @@ void hgc_set_colors (hgc_t *hgc, unsigned mode)
 		r = (hgc->rgb[i] >> 16) & 0xff;
 		g = (hgc->rgb[i] >> 8) & 0xff;
 		b = hgc->rgb[i] & 0xff;
-		trm_set_map (hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+		trm_old_set_map (&hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
 	}
 
 	if (mode == 1) {
 		r = (hgc->rgb[16] >> 16) & 0xff;
 		g = (hgc->rgb[16] >> 8) & 0xff;
 		b = hgc->rgb[16] & 0xff;
-		trm_set_map (hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
+		trm_old_set_map (&hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
 
 		r = (hgc->rgb[17] >> 16) & 0xff;
 		g = (hgc->rgb[17] >> 8) & 0xff;
 		b = hgc->rgb[17] & 0xff;
-		trm_set_map (hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+		trm_old_set_map (&hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
 	}
 }
 
@@ -101,6 +101,7 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 	hgc->vid.print_info = (void *) hgc_prt_state;
 	hgc->vid.redraw = (void *) hgc_update;
 	hgc->vid.screenshot = (void *) &hgc_screenshot;
+	hgc->vid.clock = (void *) hgc_clock;
 
 	for (i = 0; i < 18; i++) {
 		hgc->crtc_reg[i] = 0;
@@ -141,7 +142,9 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 	hgc->reg->get_uint16 = (mem_get_uint16_f) &hgc_reg_get_uint16;
 	mem_blk_clear (hgc->reg, 0x00);
 
-	hgc->trm = trm;
+	hgc->trmnew = trm;
+	hgc->trmclk = 0;
+	trm_old_init (&hgc->trm, hgc->trmnew);
 
 	hgc->crtc_pos = 0;
 	hgc->crtc_ofs = 0;
@@ -155,8 +158,8 @@ video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
 
 	hgc_set_colors (hgc, 0);
 
-	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-	trm_set_size (trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
+	trm_old_set_mode (&hgc->trm, TERM_MODE_TEXT, 80, 25);
+	trm_old_set_size (&hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
 
 	return (&hgc->vid);
 }
@@ -170,8 +173,14 @@ void hgc_del (hgc_t *hgc)
 	}
 }
 
-void hgc_clock (hgc_t *hgc)
+void hgc_clock (hgc_t *hgc, unsigned long cnt)
 {
+	hgc->trmclk += cnt;
+
+	if (hgc->trmclk > 16384) {
+		hgc->trmclk = 0;
+		trm_old_update (&hgc->trm);
+	}
 }
 
 void hgc_prt_state (hgc_t *hgc, FILE *fp)
@@ -288,8 +297,8 @@ void hgc_mode0_update (hgc_t *hgc)
 			fg = hgc->mem->data[i + 1] & 0x0f;
 			bg = (hgc->mem->data[i + 1] & 0xf0) >> 4;
 
-			trm_set_col (hgc->trm, fg, bg);
-			trm_set_chr (hgc->trm, x, y, hgc->mem->data[i]);
+			trm_old_set_col (&hgc->trm, fg, bg);
+			trm_old_set_chr (&hgc->trm, x, y, hgc->mem->data[i]);
 
 			i = (i + 2) & 0x7fff;
 		}
@@ -334,8 +343,8 @@ void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 	fg = a & 0x0f;
 	bg = (a & 0xf0) >> 4;
 
-	trm_set_col (hgc->trm, fg, bg);
-	trm_set_chr (hgc->trm, x, y, c);
+	trm_old_set_col (&hgc->trm, fg, bg);
+	trm_old_set_chr (&hgc->trm, x, y, c);
 }
 
 static
@@ -377,8 +386,8 @@ void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 	fg = a & 0x0f;
 	bg = (a & 0xf0) >> 4;
 
-	trm_set_col (hgc->trm, fg, bg);
-	trm_set_chr (hgc->trm, x, y, c);
+	trm_old_set_col (&hgc->trm, fg, bg);
+	trm_old_set_chr (&hgc->trm, x, y, c);
 }
 
 
@@ -435,7 +444,7 @@ void hgc_mode1_update (hgc_t *hgc)
 	mem[2] = mem[0] + 2 * 8192;
 	mem[3] = mem[0] + 3 * 8192;
 
-	trm_set_col (hgc->trm, 7, 0);
+	trm_old_set_col (&hgc->trm, 7, 0);
 	col2 = 7;
 
 	for (y = 0; y < 87; y++) {
@@ -449,11 +458,11 @@ void hgc_mode1_update (hgc_t *hgc)
 				for (j = 0; j < 4; j++) {
 					col1 = (val[j] & 0x80) ? 7 : 0;
 					if (col2 != col1) {
-						trm_set_col (hgc->trm, col1, 0);
+						trm_old_set_col (&hgc->trm, col1, 0);
 						col2 = col1;
 					}
 
-					trm_set_pxl (hgc->trm, 8 * x + i, 4 * y +j);
+					trm_old_set_pxl (&hgc->trm, 8 * x + i, 4 * y +j);
 					val[j] <<= 1;
 				}
 			}
@@ -493,8 +502,8 @@ void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 
 	for (i = 0; i < 8; i++) {
 		if ((old ^ val) & 0x80) {
-			trm_set_col (hgc->trm, (val & 0x80) ? 7 : 0, 0);
-			trm_set_pxl (hgc->trm, x + i, y);
+			trm_old_set_col (&hgc->trm, (val & 0x80) ? 7 : 0, 0);
+			trm_old_set_pxl (&hgc->trm, x + i, y);
 		}
 
 		old <<= 1;
@@ -544,7 +553,7 @@ void hgc_set_pos (hgc_t *hgc, unsigned pos)
 			return;
 		}
 
-		trm_set_pos (hgc->trm, pos % 80, pos / 80);
+		trm_old_set_pos (&hgc->trm, pos % 80, pos / 80);
 	}
 }
 
@@ -553,7 +562,7 @@ void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
 {
 	if (hgc->mode == 0) {
 		if (y1 > 13) {
-			trm_set_crs (hgc->trm, 0, 0, 0);
+			trm_old_set_crs (&hgc->trm, 0, 0, 0);
 			return;
 		}
 
@@ -564,7 +573,7 @@ void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
 		y1 = (255 * y1 + 6) / 13;
 		y2 = (255 * y2 + 6) / 13;
 
-		trm_set_crs (hgc->trm, y1, y2, 1);
+		trm_old_set_crs (&hgc->trm, y1, y2, 1);
 	}
 }
 
@@ -616,13 +625,13 @@ void hgc_set_mode (hgc_t *hgc, unsigned char mode)
 
 		switch (newmode) {
 		case 0:
-			trm_set_mode (hgc->trm, TERM_MODE_TEXT, 80, 25);
-			trm_set_size (hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
+			trm_old_set_mode (&hgc->trm, TERM_MODE_TEXT, 80, 25);
+			trm_old_set_size (&hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
 			break;
 
 		case 1:
-			trm_set_mode (hgc->trm, TERM_MODE_GRAPH, 720, 348);
-			trm_set_size (hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
+			trm_old_set_mode (&hgc->trm, TERM_MODE_GRAPH, 720, 348);
+			trm_old_set_size (&hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
 			break;
 		}
 	}

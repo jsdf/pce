@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/cga.c                                    *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/cga.c                                      *
+ * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,7 +115,9 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 	cga->reg->get_uint16 = (mem_get_uint16_f) &cga_reg_get_uint16;
 	mem_blk_clear (cga->reg, 0x00);
 
-	cga->trm = trm;
+	cga->trmnew = trm;
+	cga->trmclk = 0;
+	trm_old_init (&cga->trm, cga->trmnew);
 
 	cga->crtc_pos = 0;
 	cga->crtc_ofs = 0;
@@ -131,8 +133,12 @@ video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
 	cga->palette[3] = 15;
 
 	cga->mode = 0;
-	trm_set_mode (trm, TERM_MODE_TEXT, 80, 25);
-	trm_set_size (trm, cga->mode_80x25_w, cga->mode_80x25_h);
+	trm_old_set_mode (&cga->trm, TERM_MODE_TEXT, 80, 25);
+	trm_old_set_size (&cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
+
+	for (i = 0; i < 16; i++) {
+		trm_old_set_map (&cga->trm, i, cga_col[i].r, cga_col[i].g, cga_col[i].b);
+	}
 
 	return (&cga->vid);
 }
@@ -149,6 +155,13 @@ void cga_del (cga_t *cga)
 void cga_clock (cga_t *cga, unsigned long cnt)
 {
 	cga->clkcnt += cnt;
+
+	cga->trmclk += cnt;
+
+	if (cga->trmclk > 16384) {
+		cga->trmclk = 0;
+		trm_old_update (&cga->trm);
+	}
 }
 
 void cga_prt_state (cga_t *cga, FILE *fp)
@@ -266,8 +279,8 @@ void cga_mode0_update (cga_t *cga)
 			fg = cga->mem->data[i + 1] & 0x0f;
 			bg = (cga->mem->data[i + 1] & 0xf0) >> 4;
 
-			trm_set_col (cga->trm, fg, bg);
-			trm_set_chr (cga->trm, x, y, cga->mem->data[i]);
+			trm_old_set_col (&cga->trm, fg, bg);
+			trm_old_set_chr (&cga->trm, x, y, cga->mem->data[i]);
 
 			i = (i + 2) & 0x3fff;
 		}
@@ -307,8 +320,8 @@ void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 	x = (addr >> 1) % 80;
 	y = (addr >> 1) / 80;
 
-	trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-	trm_set_chr (cga->trm, x, y, c);
+	trm_old_set_col (&cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+	trm_old_set_chr (&cga->trm, x, y, c);
 }
 
 void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
@@ -345,8 +358,8 @@ void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 	x = (addr >> 1) % 80;
 	y = (addr >> 1) / 80;
 
-	trm_set_col (cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-	trm_set_chr (cga->trm, x, y, c);
+	trm_old_set_col (&cga->trm, a & 0x0f, (a & 0xf0) >> 4);
+	trm_old_set_chr (&cga->trm, x, y, c);
 }
 
 
@@ -404,11 +417,11 @@ void cga_mode1_update (cga_t *cga)
 			val1 = mem1[x];
 
 			for (i = 0; i < 4; i++) {
-				trm_set_col (cga->trm, cga->palette[(val0 >> 6) & 0x03], 0);
-				trm_set_pxl (cga->trm, 4 * x + i, 2 * y);
+				trm_old_set_col (&cga->trm, cga->palette[(val0 >> 6) & 0x03], 0);
+				trm_old_set_pxl (&cga->trm, 4 * x + i, 2 * y);
 
-				trm_set_col (cga->trm, cga->palette[(val1 >> 6) & 0x03], 0);
-				trm_set_pxl (cga->trm, 4 * x + i, 2 * y + 1);
+				trm_old_set_col (&cga->trm, cga->palette[(val1 >> 6) & 0x03], 0);
+				trm_old_set_pxl (&cga->trm, 4 * x + i, 2 * y + 1);
 
 				val0 <<= 2;
 				val1 <<= 2;
@@ -452,9 +465,9 @@ void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 
 		if ((old ^ val) & 0xc0) {
 			col = (val >> 6) & 0x03;
-			trm_set_col (cga->trm, cga->palette[col], 0);
+			trm_old_set_col (&cga->trm, cga->palette[col], 0);
 
-			trm_set_pxl (cga->trm, x + i, y);
+			trm_old_set_pxl (&cga->trm, x + i, y);
 		}
 
 		old <<= 2;
@@ -516,11 +529,11 @@ void cga_mode2_update (cga_t *cga)
 			val1 = mem1[x];
 
 			for (i = 0; i < 8; i++) {
-				trm_set_col (cga->trm, (val0 & 0x80) ? 15 : 0, 0);
-				trm_set_pxl (cga->trm, 8 * x + i, 2 * y);
+				trm_old_set_col (&cga->trm, (val0 & 0x80) ? 15 : 0, 0);
+				trm_old_set_pxl (&cga->trm, 8 * x + i, 2 * y);
 
-				trm_set_col (cga->trm, (val1 & 0x80) ? 15 : 0, 0);
-				trm_set_pxl (cga->trm, 8 * x + i, 2 * y + 1);
+				trm_old_set_col (&cga->trm, (val1 & 0x80) ? 15 : 0, 0);
+				trm_old_set_pxl (&cga->trm, 8 * x + i, 2 * y + 1);
 
 				val0 <<= 1;
 				val1 <<= 1;
@@ -560,8 +573,8 @@ void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 
 		if ((old ^ val) & 0x80) {
 			col = (val >> 7) & 0x01;
-			trm_set_col (cga->trm, col ? 15 : 0, 0);
-			trm_set_pxl (cga->trm, x + i, y);
+			trm_old_set_col (&cga->trm, col ? 15 : 0, 0);
+			trm_old_set_pxl (&cga->trm, x + i, y);
 		}
 
 		old <<= 1;
@@ -617,7 +630,7 @@ void cga_set_pos (cga_t *cga, unsigned pos)
 			return;
 		}
 
-		trm_set_pos (cga->trm, pos % 80, pos / 80);
+		trm_old_set_pos (&cga->trm, pos % 80, pos / 80);
 	}
 }
 
@@ -626,7 +639,7 @@ void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 	if (cga->mode == 0) {
 		if ((y1 & 0x60) == 0x20) {
 			/* cursor off */
-			trm_set_crs (cga->trm, 0, 0, 0);
+			trm_old_set_crs (&cga->trm, 0, 0, 0);
 			return;
 		}
 
@@ -640,7 +653,7 @@ void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
 		y1 = (y1 << 5) | (y1 << 2) | (y1 >> 1);
 		y2 = (y2 << 5) | (y2 << 2) | (y2 >> 1);
 
-		trm_set_crs (cga->trm, y1, y2, 1);
+		trm_old_set_crs (&cga->trm, y1, y2, 1);
 	}
 }
 
@@ -708,18 +721,18 @@ void cga_set_mode (cga_t *cga, unsigned char mode)
 
 	switch (newmode) {
 		case 0:
-			trm_set_mode (cga->trm, TERM_MODE_TEXT, 80, 25);
-			trm_set_size (cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
+			trm_old_set_mode (&cga->trm, TERM_MODE_TEXT, 80, 25);
+			trm_old_set_size (&cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
 			break;
 
 		case 1:
-			trm_set_mode (cga->trm, TERM_MODE_GRAPH, 320, 200);
-			trm_set_size (cga->trm, cga->mode_320x200_w, cga->mode_320x200_h);
+			trm_old_set_mode (&cga->trm, TERM_MODE_GRAPH, 320, 200);
+			trm_old_set_size (&cga->trm, cga->mode_320x200_w, cga->mode_320x200_h);
 			break;
 
 		case 2:
-			trm_set_mode (cga->trm, TERM_MODE_GRAPH, 640, 200);
-			trm_set_size (cga->trm, cga->mode_640x200_w, cga->mode_640x200_h);
+			trm_old_set_mode (&cga->trm, TERM_MODE_GRAPH, 640, 200);
+			trm_old_set_size (&cga->trm, cga->mode_640x200_w, cga->mode_640x200_h);
 			break;
 	}
 

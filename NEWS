@@ -1,6 +1,8 @@
 0.1.8
 
-	* Removed the VT100 terminal
+	* Removed the VT100 terminal.
+	* A complete rewrite of the terminal code.
+	* Improved video device emulation.
 
 0.1.7	2006-07-24	r663
 

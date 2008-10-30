@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/null.c                                        *
- * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/null.c                                          *
+ * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,80 +28,71 @@
 #include <terminal/null.h>
 
 
-void null_init (null_t *vt, ini_sct_t *ini)
+static
+void null_free (null_t *nt)
 {
-	trm_init (&vt->trm);
+}
 
-	vt->trm.del = (trm_del_f) &null_del;
-	vt->trm.set_mode = (trm_set_mode_f) &null_set_mode;
-	vt->trm.set_size = (trm_set_size_f) &null_set_size;
-	vt->trm.set_col = (trm_set_col_f) &null_set_col;
-	vt->trm.set_crs = (trm_set_crs_f) &null_set_crs;
-	vt->trm.set_pos = (trm_set_pos_f) &null_set_pos;
-	vt->trm.set_chr = (trm_set_chr_f) &null_set_chr;
-	vt->trm.set_pxl = (trm_set_pxl_f) &null_set_pxl;
-	vt->trm.set_rct = (trm_set_rct_f) &null_set_rct;
-	vt->trm.check = (trm_check_f) &null_check;
+static
+void null_del (null_t *nt)
+{
+	if (nt != NULL) {
+		null_free (nt);
+		free (nt);
+	}
+}
+
+static
+int null_open (null_t *nt, unsigned w, unsigned h)
+{
+	return (0);
+}
+
+static
+int null_close (null_t *nt)
+{
+	return (0);
+}
+
+static
+int null_set_msg_trm (null_t *nt, const char *msg, const char *val)
+{
+	return (1);
+}
+
+static
+void null_update (null_t *vt)
+{
+}
+
+static
+void null_check (null_t *vt)
+{
+}
+
+static
+void null_init (null_t *nt, ini_sct_t *ini)
+{
+	trm_init (&nt->trm, nt);
+
+	nt->trm.del = (void *) null_del;
+	nt->trm.open = (void *) null_open;
+	nt->trm.close = (void *) null_close;
+	nt->trm.set_msg_trm = (void *) null_set_msg_trm;
+	nt->trm.update = (void *) null_update;
+	nt->trm.check = (void *) null_check;
 }
 
 terminal_t *null_new (ini_sct_t *ini)
 {
-	null_t *vt;
+	null_t *nt;
 
-	vt = (null_t *) malloc (sizeof (null_t));
-	if (vt == NULL) {
+	nt = malloc (sizeof (null_t));
+	if (nt == NULL) {
 		return (NULL);
 	}
 
-	null_init (vt, ini);
+	null_init (nt, ini);
 
-	return (&vt->trm);
-}
-
-void null_free (null_t *vt)
-{
-}
-
-void null_del (null_t *vt)
-{
-	if (vt != NULL) {
-		null_free (vt);
-		free (vt);
-	}
-}
-
-void null_set_mode (null_t *vt, unsigned m, unsigned w, unsigned h)
-{
-}
-
-void null_set_size (null_t *vt, unsigned w, unsigned h)
-{
-}
-
-void null_set_col (null_t *vt, unsigned fg, unsigned bg)
-{
-}
-
-void null_set_crs (null_t *vt, unsigned y1, unsigned y2, int show)
-{
-}
-
-void null_set_pos (null_t *vt, unsigned x, unsigned y)
-{
-}
-
-void null_set_chr (null_t *vt, unsigned x, unsigned y, unsigned char c)
-{
-}
-
-void null_set_pxl (null_t *vt, unsigned x, unsigned y)
-{
-}
-
-void null_set_rct (null_t *vt, unsigned x, unsigned y, unsigned w, unsigned h)
-{
-}
-
-void null_check (null_t *vt)
-{
+	return (&nt->trm);
 }

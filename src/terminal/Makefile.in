@@ -10,10 +10,10 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-SRC := font.c keys.c null.c scrmap.c terminal.c
-OBJ := font.o keys.o null.o scrmap.o terminal.o
-HDR := font.h keys.h null.h scrmap.h terminal.h
-BIN := terminal.a
+SRC := font.c keys.c null.c term-old.c terminal.c
+OBJ := font.o keys.o null.o term-old.o terminal.o
+HDR := font.h keys.h null.h term-old.h terminal.h
+BIN :=
 
 HDR_EXT := libini/libini.h
 
@@ -27,14 +27,11 @@ DCL := Makefile
 include $(reldir)/rules.inc
 
 
-all: $(BIN)
-
-
-terminal.a: $(OBJ)
+all: $(OBJ)
 
 
 font.o:		font.c $(SDP)
 keys.o:		keys.c $(SDP)
 null.o:		null.c $(SDP)
-scrmap.o:	scrmap.c $(SDP)
+term-old.o:	term-old.c $(SDP)
 terminal.o:	terminal.c $(SDP)

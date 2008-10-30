@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/ega.h                                    *
- * Created:       2003-09-06 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/ega.h                                      *
+ * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +28,7 @@
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
+#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
@@ -42,17 +42,6 @@ typedef struct ega_t {
 
 	unsigned long base;
 	unsigned long size;
-
-	unsigned      mode_80x25_w;
-	unsigned      mode_80x25_h;
-	unsigned      mode_320x200_w;
-	unsigned      mode_320x200_h;
-	unsigned      mode_640x200_w;
-	unsigned      mode_640x200_h;
-	unsigned      mode_640x350_w;
-	unsigned      mode_640x350_h;
-	unsigned      mode_640x480_w;
-	unsigned      mode_640x480_h;
 
 	unsigned char crtc_reg[24];
 	unsigned char ts_reg[5];
@@ -82,7 +71,9 @@ typedef struct ega_t {
 
 	char          dirty;
 
-	terminal_t    *trm;
+	terminal_t    *trmnew;
+	term_old_t    trm;
+	unsigned long trmclk;
 } ega_t;
 
 

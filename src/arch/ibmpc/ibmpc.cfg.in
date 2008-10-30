@@ -100,33 +100,9 @@ section pc {
 		driver = "null"
 	}
 
-	# Multiple "video" sections may be present
-	# The mode_*_{w,h} lines define the window size that is used
-	# for that mode.
-	section video {
-		device = "vga"
-
-		# The default width and height that are used for modes
-		# that are not specified.
-		w = 640
-		h = 400
-
-		mode_80x25_w = 640
-		mode_80x25_h = 400
-
-		mode_320x200_w = 640
-		mode_320x200_h = 480
-
-		mode_640x200_w = 640
-		mode_640x200_h = 480
-
-		mode_640x350_w = 640
-		mode_640x350_h = 480
-
-		mode_640x480_w = 640
-		mode_640x480_h = 480
-	}
-
+	# Multiple "video" sections may be present. The first one will be
+	# used unless a video adapter type is specified on the command
+	# line.
 	section video {
 		device = "ega"
 

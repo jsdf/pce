@@ -159,25 +159,6 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		}
 		return (0);
 	}
-	else if (msg_is_message ("emu.video.size", msg)) {
-		unsigned w, h;
-		char     *tmp1, *tmp2;
-
-		w = strtoul (val, &tmp1, 0);
-		if ((w == 0) || (tmp1 == val) || (*tmp1 == 0)) {
-			return (1);
-		}
-
-		h = strtoul (tmp1, &tmp2, 0);
-		if ((h == 0) || (tmp2 == tmp1) || (*tmp2 != 0)) {
-			return (1);
-		}
-
-		trm_set_size (pc->trm, w, h);
-		pce_video_redraw (pc->video);
-
-		return (0);
-	}
 	else if (msg_is_message ("emu.disk.boot", msg)) {
 		unsigned v;
 

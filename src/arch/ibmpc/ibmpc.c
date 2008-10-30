@@ -361,7 +361,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	trm_set_key_fct (pc->trm, pc, pc_set_key);
-	trm_set_msg_fct (pc->trm, pc, pc_set_msg, pc_get_msgul);
+	trm_set_msg_fct (pc->trm, pc, pc_set_msg);
 }
 
 static
@@ -566,8 +566,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
 	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
-	pc->trm->mse_ext = pc->mse;
-	pc->trm->set_mse = (void *) mse_set;
+	trm_set_mouse_fct (pc->trm, pc->mse, mse_set);
 }
 
 static
@@ -791,8 +790,10 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc_setup_terminal (pc, ini);
 
+	pc_setup_video (pc, ini);
+
 	if (pc->trm != NULL) {
-		pc_setup_video (pc, ini);
+		trm_open (pc->trm, 640, 480);
 	}
 
 	pc_setup_disks (pc, ini);

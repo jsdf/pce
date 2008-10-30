@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/video/mda.h                                    *
- * Created:       2003-04-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/video/mda.h                                      *
+ * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +28,7 @@
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
+#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
@@ -47,14 +47,16 @@ typedef struct {
 
 	unsigned      crtc_pos;
 
-	terminal_t    *trm;
+	terminal_t    *trmnew;
+	term_old_t    trm;
+	unsigned long trmclk;
 } mda_t;
 
 
 video_t *mda_new (terminal_t *trm, ini_sct_t *sct);
 void mda_del (mda_t *mda);
 
-void mda_clock (mda_t *mda);
+void mda_clock (mda_t *mda, unsigned long cnt);
 
 void mda_prt_state (mda_t *mda, FILE *fp);
 
