@@ -2390,6 +2390,11 @@ ega_init:
 	xor	ax, ax
 	mov	ds, ax
 
+	; PCE specific check for presence of EGA
+	mov	al, [0x0410]
+	and	al, 0x30
+	jnz	.done
+
 	mov	ax, [4 * 0x10]
 	mov	[4 * 0x42], ax
 	mov	ax, [4 * 0x10 + 2]
@@ -2418,6 +2423,7 @@ ega_init:
 	mov	si, msg_init
 	call	prt_string
 
+.done:
 	pop	ds
 	pop	si
 	pop	ax
