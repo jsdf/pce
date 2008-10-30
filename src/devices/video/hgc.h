@@ -28,67 +28,43 @@
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
 typedef struct {
-	video_t       vid;
+	video_t       video;
 
-	mem_blk_t     *mem;
-	mem_blk_t     *reg;
+	mem_blk_t     *memblk;
+	unsigned char *mem;
 
-	unsigned      mode_80x25_w;
-	unsigned      mode_80x25_h;
+	mem_blk_t     *regblk;
+	unsigned char *reg;
 
-	unsigned      mode_720x348_w;
-	unsigned      mode_720x348_h;
+	terminal_t    *term;
 
-	unsigned char crtc_reg[18];
+	unsigned char reg_crt[18];
 
-	unsigned      page_ofs;
-	unsigned      crtc_pos;
-	unsigned      crtc_ofs;
+	unsigned char *font;
 
-	unsigned char enable_page1;
-	unsigned char enable_graph;
+	/* these are derived from the crtc registers */
+	unsigned      w;
+	unsigned      h;
+	unsigned      ch;
+	unsigned long hsync;
+	unsigned long vsync;
 
-	int           crs_on;
+	unsigned      buf_w;
+	unsigned      buf_h;
+	unsigned long bufmax;
+	unsigned char *buf;
 
-	unsigned long rgb[18];
-
-	unsigned      mode;
-
-	terminal_t    *trmnew;
-	term_old_t    trm;
-	unsigned long trmclk;
+	unsigned char update_state;
 } hgc_t;
 
 
-video_t *hgc_new (terminal_t *trm, ini_sct_t *ini);
+hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size);
 
-void hgc_del (hgc_t *cga);
-
-void hgc_clock (hgc_t *cga, unsigned long cnt);
-
-void hgc_prt_state (hgc_t *cga, FILE *fp);
-
-int hgc_dump (hgc_t *hgc, FILE *fp);
-
-mem_blk_t *hgc_get_mem (hgc_t *hgc);
-mem_blk_t *hgc_get_reg (hgc_t *hgc);
-
-int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode);
-
-void hgc_update (hgc_t *hgc);
-
-void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
-void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);
-
-void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val);
-void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val);
-unsigned char hgc_reg_get_uint8 (hgc_t *hgc, unsigned long addr);
-unsigned short hgc_reg_get_uint16 (hgc_t *hgc, unsigned long addr);
+video_t *hgc_new_ini (ini_sct_t *sct);
 
 
 #endif

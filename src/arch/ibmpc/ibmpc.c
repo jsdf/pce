@@ -355,7 +355,7 @@ int pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 {
-	pc->video = hgc_new (pc->trm, sct);
+	pc->video = hgc_new_ini (sct);
 	if (pc->video == NULL) {
 		return (1);
 	}

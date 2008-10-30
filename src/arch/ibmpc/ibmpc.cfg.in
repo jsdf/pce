@@ -191,24 +191,6 @@ section pc {
 		
 		# Only 32768 or 65536 makes sense.
 		memsize = 65536
-
-		color7 = 0xe89050
-		color15 = 0xfff0c8
-
-		gcolor0 = 0x000000
-		gcolor1 = 0xf0f0f0
-
-		# The default width and height that are used for modes
-		# that are not specified.
-		w = 640
-		h = 400
-
-		mode_80x25_w = 640
-		mode_80x25_h = 400
-
-		# 720 * 348 * 2
-		mode_720x348_w = 720
-		mode_720x348_h = 540
 	}
 
 	section video {

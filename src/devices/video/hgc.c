@@ -26,685 +26,422 @@
 #include <stdlib.h>
 
 #include <lib/log.h>
-#include <lib/hexdump.h>
 
-#include "hgc.h"
+#include <devices/video/hgc.h>
 
 
-static unsigned long hgc_col[16] = {
-	0x000000, 0xe89050, 0xe89050, 0xe89050,
-	0xe89050, 0xe89050, 0xe89050, 0xe89050,
-	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
-	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8
+#define HGC_IFREQ 1193182
+#define HGC_PFREQ 16257000
+#define HGC_HFREQ 18430
+#define HGC_VFREQ 50
+
+/* character width */
+#define HGC_CW    9
+
+/* hgc registers */
+#define HGC_CRTC_INDEX   0
+#define HGC_CRTC_DATA    1
+#define HGC_MODE         4
+#define HGC_STATUS       6
+#define HGC_CONFIG       11
+
+#define HGC_CRTC_HT      0
+#define HGC_CRTC_HD      1
+#define HGC_CRTC_HS      2
+#define HGC_CRTC_SYN     3
+#define HGC_CRTC_VT      4
+#define HGC_CRTC_VTA     5
+#define HGC_CRTC_VD      6
+#define HGC_CRTC_VS      7
+#define HGC_CRTC_IL      8
+#define HGC_CRTC_MS      9
+#define HGC_CRTC_CS      10
+#define HGC_CRTC_CE      11
+#define HGC_CRTC_SH      12
+#define HGC_CRTC_SL      13
+#define HGC_CRTC_PH      14
+#define HGC_CRTC_PL      15
+#define HGC_CRTC_LH      16
+#define HGC_CRTC_LL      17
+
+/* mode control register */
+#define HGC_MODE_GRAPH   0x02
+#define HGC_MODE_ENABLE  0x08
+#define HGC_MODE_BLINK   0x20
+#define HGC_MODE_PAGE1   0x80
+
+/* CRTC status register */
+#define HGC_STATUS_HSYNC 0x01
+#define HGC_STATUS_LIGHT 0x02
+#define HGC_STATUS_VIDEO 0x08
+#define HGC_STATUS_VSYNC 0x80
+
+/* configuration switch register */
+#define HGC_CONFIG_GRAPH 0x01
+#define HGC_CONFIG_PAGE1 0x02
+
+
+#include "hgc_font.h"
+
+
+static
+unsigned char hgc_rgb[16][3] = {
+	{ 0x00, 0x00, 0x00 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xe8, 0x90, 0x50 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 },
+	{ 0xff, 0xf0, 0xc8 }
 };
 
 
+/*
+ * Get CRTC start offset
+ */
 static
-void hgc_get_colors (hgc_t *hgc, ini_sct_t *sct)
+unsigned hgc_get_start (hgc_t *hgc)
 {
-	unsigned i;
-	char     str[16];
+	unsigned val;
 
-	for (i = 0; i < 16; i++) {
-		sprintf (str, "color%u", i);
-		ini_get_uint32 (sct, str, &hgc->rgb[i], hgc_col[i]);
-	}
+	val = hgc->reg_crt[0x0c];
+	val = (val << 8) | hgc->reg_crt[0x0d];
 
-	ini_get_uint32 (sct, "gcolor0", &hgc->rgb[16], 0x000000);
-	ini_get_uint32 (sct, "gcolor1", &hgc->rgb[17], 0xfff0c8);
+	return (val);
 }
 
+/*
+ * Get the absolute cursor position
+ */
 static
-void hgc_set_colors (hgc_t *hgc, unsigned mode)
+unsigned hgc_get_cursor (hgc_t *hgc)
 {
-	unsigned i;
-	unsigned r, g, b;
+	unsigned val;
 
-	for (i = 0; i < 16; i++) {
-		r = (hgc->rgb[i] >> 16) & 0xff;
-		g = (hgc->rgb[i] >> 8) & 0xff;
-		b = hgc->rgb[i] & 0xff;
-		trm_old_set_map (&hgc->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
+	val = hgc->reg_crt[0x0e];
+	val = (val << 8) | hgc->reg_crt[0x0f];
+
+	return (val);
+}
+
+/*
+ * Get the on screen cursor position
+ */
+static
+int hgc_get_position (hgc_t *hgc, unsigned *x, unsigned *y)
+{
+	unsigned pos, ofs;
+
+	if ((hgc->w == 0) || (hgc->h == 0)) {
+		return (1);
 	}
 
-	if (mode == 1) {
-		r = (hgc->rgb[16] >> 16) & 0xff;
-		g = (hgc->rgb[16] >> 8) & 0xff;
-		b = hgc->rgb[16] & 0xff;
-		trm_old_set_map (&hgc->trm, 0, r | (r << 8), g | (g << 8), b | (b << 8));
+	pos = hgc_get_cursor (hgc) & 0x3fff;
+	ofs = hgc_get_start (hgc) & 0x3fff;
 
-		r = (hgc->rgb[17] >> 16) & 0xff;
-		g = (hgc->rgb[17] >> 8) & 0xff;
-		b = hgc->rgb[17] & 0xff;
-		trm_old_set_map (&hgc->trm, 7, r | (r << 8), g | (g << 8), b | (b << 8));
+	if ((pos < ofs) || (pos >= (ofs + hgc->w * hgc->h))) {
+		return (1);
+	}
+
+	*x = (pos - ofs) % hgc->w;
+	*y = (pos - ofs) / hgc->w;
+
+	return (0);
+}
+
+/*
+ * Get a pointer to the active page
+ */
+static
+unsigned char *hgc_get_page (hgc_t *hgc)
+{
+	unsigned char *val;
+
+	val = hgc->mem;
+
+	if (hgc->reg[HGC_MODE] & HGC_MODE_PAGE1) {
+		val += 32768;
+	}
+
+	return (val);
+}
+
+/*
+ * Set the internal screen buffer size
+ */
+static
+int hgc_set_buf_size (hgc_t *hgc, unsigned w, unsigned h)
+{
+	unsigned long cnt;
+	unsigned char *tmp;
+
+	cnt = 3UL * (unsigned long) w * (unsigned long) h;
+
+	if (cnt > hgc->bufmax) {
+		tmp = realloc (hgc->buf, cnt);
+		if (tmp == NULL) {
+			return (1);
+		}
+
+		hgc->buf = tmp;
+		hgc->bufmax = cnt;
+	}
+
+	hgc->buf_w = w;
+	hgc->buf_h = h;
+
+	return (0);
+}
+
+/*
+ * Draw the cursor in the internal buffer
+ */
+static
+void hgc_text_draw_cursor (hgc_t *hgc)
+{
+	unsigned            i, j;
+	unsigned            x, y;
+	unsigned            c1, c2;
+	const unsigned char *src;
+	const unsigned char *col;
+	unsigned char       *dst;
+
+	if ((hgc->reg_crt[HGC_CRTC_CS] & 0x60) == 0x20) {
+		/* cursor off */
+		return;
+	}
+
+	src = hgc_get_page (hgc);
+
+	if (hgc_get_position (hgc, &x, &y)) {
+		return;
+	}
+
+	c1 = hgc->reg_crt[HGC_CRTC_CS] & 0x1f;
+	c2 = hgc->reg_crt[HGC_CRTC_CE] & 0x1f;
+
+	if (c1 >= hgc->ch) {
+		return;
+	}
+
+	if (c2 >= hgc->ch) {
+		c2 = hgc->ch - 1;
+	}
+
+	col = hgc_rgb[src[2 * (hgc->w * y + x) + 1] & 0x0f];
+	dst = hgc->buf + 3 * HGC_CW * (hgc->w * (hgc->ch * y + c1) + x);
+
+	for (j = c1; j <= c2; j++) {
+		for (i = 0; i < HGC_CW; i++) {
+			dst[3 * i + 0] = col[0];
+			dst[3 * i + 1] = col[1];
+			dst[3 * i + 2] = col[2];
+		}
+		dst += 3 * HGC_CW * hgc->w;
 	}
 }
 
-video_t *hgc_new (terminal_t *trm, ini_sct_t *sct)
+/*
+ * Draw a character in the internal buffer
+ */
+static
+void hgc_text_draw_char (hgc_t *hgc,
+	unsigned char *buf, unsigned char c, unsigned char a)
 {
-	unsigned      i;
-	unsigned long iobase, membase, memsize;
-	unsigned      w, h;
-	hgc_t         *hgc;
+	unsigned            i, j;
+	unsigned            map;
+	unsigned char       *dst;
+	const unsigned char *fg, *bg;
 
-	hgc = malloc (sizeof (hgc_t));
-	if (hgc == NULL) {
-		return (NULL);
+	if (hgc->reg[HGC_MODE] & HGC_MODE_BLINK) {
+		/* blinking is not supported */
+		a &= 0x7f;
 	}
 
-	pce_video_init (&hgc->vid);
+	fg = hgc_rgb[a & 0x0f];
+	bg = hgc_rgb[(a >> 4) & 0x0f];
 
-	hgc->vid.ext = hgc;
-	hgc->vid.del = (void *) hgc_del;
-	hgc->vid.get_mem = (void *) hgc_get_mem;
-	hgc->vid.get_reg = (void *) hgc_get_reg;
-	hgc->vid.print_info = (void *) hgc_prt_state;
-	hgc->vid.redraw = (void *) hgc_update;
-	hgc->vid.screenshot = (void *) &hgc_screenshot;
-	hgc->vid.clock = (void *) hgc_clock;
+	dst = buf;
 
-	for (i = 0; i < 18; i++) {
-		hgc->crtc_reg[i] = 0;
-	}
+	for (j = 0; j < hgc->ch; j++) {
+		map = hgc->font[14 * c + (j % 14)];
 
-	ini_get_uint16 (sct, "w", &w, 640);
-	ini_get_uint16 (sct, "h", &h, 400);
-
-	ini_get_uint16 (sct, "mode_80x25_w", &hgc->mode_80x25_w, w);
-	ini_get_uint16 (sct, "mode_80x25_h", &hgc->mode_80x25_h, h);
-	ini_get_uint16 (sct, "mode_720x348_w", &hgc->mode_720x348_w, w);
-	ini_get_uint16 (sct, "mode_720x348_h", &hgc->mode_720x348_h, h);
-
-	ini_get_uint32 (sct, "io", &iobase, 0x03b4);
-	ini_get_uint32 (sct, "membase", &membase, 0x000b0000);
-	ini_get_uint32 (sct, "memsize", &memsize, 65536);
-
-	memsize = (memsize < 32768) ? 32768 : 65536;
-
-	hgc_get_colors (hgc, sct);
-
-	pce_log_tag (MSG_INF,
-		"VIDEO:", "HGC addr=0x%04x membase=0x%05x memsize=0x%05x\n",
-		iobase, membase, memsize
-	);
-
-	hgc->mem = mem_blk_new (membase, memsize, 1);
-	hgc->mem->ext = hgc;
-	hgc->mem->set_uint8 = (mem_set_uint8_f) &hgc_mem_set_uint8;
-	hgc->mem->set_uint16 = (mem_set_uint16_f) &hgc_mem_set_uint16;
-	mem_blk_clear (hgc->mem, 0x00);
-
-	hgc->reg = mem_blk_new (iobase, 16, 1);
-	hgc->reg->ext = hgc;
-	hgc->reg->set_uint8 = (mem_set_uint8_f) &hgc_reg_set_uint8;
-	hgc->reg->set_uint16 = (mem_set_uint16_f) &hgc_reg_set_uint16;
-	hgc->reg->get_uint8 = (mem_get_uint8_f) &hgc_reg_get_uint8;
-	hgc->reg->get_uint16 = (mem_get_uint16_f) &hgc_reg_get_uint16;
-	mem_blk_clear (hgc->reg, 0x00);
-
-	hgc->trmnew = trm;
-	hgc->trmclk = 0;
-	trm_old_init (&hgc->trm, hgc->trmnew);
-
-	hgc->crtc_pos = 0;
-	hgc->crtc_ofs = 0;
-
-	hgc->enable_page1 = 0;
-	hgc->enable_graph = 0;
-
-	hgc->crs_on = 1;
-
-	hgc->mode = 0;
-
-	hgc_set_colors (hgc, 0);
-
-	trm_old_set_mode (&hgc->trm, TERM_MODE_TEXT, 80, 25);
-	trm_old_set_size (&hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
-
-	return (&hgc->vid);
-}
-
-void hgc_del (hgc_t *hgc)
-{
-	if (hgc != NULL) {
-		mem_blk_del (hgc->mem);
-		mem_blk_del (hgc->reg);
-		free (hgc);
-	}
-}
-
-void hgc_clock (hgc_t *hgc, unsigned long cnt)
-{
-	hgc->trmclk += cnt;
-
-	if (hgc->trmclk > 16384) {
-		hgc->trmclk = 0;
-		trm_old_update (&hgc->trm);
-	}
-}
-
-void hgc_prt_state (hgc_t *hgc, FILE *fp)
-{
-	unsigned i;
-	unsigned x, y;
-
-	if (hgc->crtc_pos < hgc->crtc_ofs) {
-		x = 0;
-		y = 0;
-	}
-	else {
-		x = (hgc->crtc_pos - hgc->crtc_ofs) % 80;
-		y = (hgc->crtc_pos - hgc->crtc_ofs) / 80;
-	}
-
-	fprintf (fp, "HGC: MODE=%u  PAGE=%04X  OFS=%04X  POS=%04X[%u/%u]  CRS=%s\n",
-		hgc->mode, hgc->page_ofs, hgc->crtc_ofs, hgc->crtc_pos, x, y,
-		(hgc->crs_on) ? "ON" : "OFF"
-	);
-
-	fprintf (fp, "REG: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  3BF=%02X\n",
-		hgc->reg->data[0], hgc->reg->data[1], hgc->reg->data[4],
-		hgc->reg->data[6], hgc->reg->data[11]
-	);
-
-	fprintf (fp, "CRTC=[%02X", hgc->crtc_reg[0]);
-	for (i = 1; i < 18; i++) {
-		if ((i & 7) == 0) {
-			fputs ("-", fp);
+		if ((c >= 0xc0) && (c <= 0xdf)) {
+			map = (map << 1) | (map & 1);
 		}
 		else {
-			fputs (" ", fp);
-		}
-		fprintf (fp, "%02X", hgc->crtc_reg[i]);
-	}
-	fputs ("]\n", fp);
-
-	fflush (fp);
-}
-
-int hgc_dump (hgc_t *hgc, FILE *fp)
-{
-	fprintf (fp, "# HGC dump\n");
-
-	fprintf (fp, "\n# REGS:\n");
-	pce_dump_hex (fp,
-		mem_blk_get_data (hgc->reg),
-		mem_blk_get_size (hgc->reg),
-		mem_blk_get_addr (hgc->reg),
-		16, "# ", 0
-	);
-
-	fprintf (fp, "\n# CRTC:\n");
-	pce_dump_hex (fp, hgc->crtc_reg, 18, 0, 16, "# ", 0);
-
-	fputs ("\n\n# RAM:\n", fp);
-	pce_dump_hex (fp,
-		mem_blk_get_data (hgc->mem),
-		mem_blk_get_size (hgc->mem),
-		mem_blk_get_addr (hgc->mem),
-		16, "", 1
-	);
-
-	return (0);
-}
-
-mem_blk_t *hgc_get_mem (hgc_t *hgc)
-{
-	return (hgc->mem);
-}
-
-mem_blk_t *hgc_get_reg (hgc_t *hgc)
-{
-	return (hgc->reg);
-}
-
-
-/*****************************************************************************
- * mode 0 (text 80 * 25 * 2)
- *****************************************************************************/
-
-static
-int hgc_mode0_screenshot (hgc_t *hgc, FILE *fp)
-{
-	unsigned i;
-	unsigned x, y;
-
-	i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
-
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fputc (hgc->mem->data[i], fp);
-			i = (i + 2) & 0x7fff;
+			map = map << 1;
 		}
 
-		fputs ("\n", fp);
-	}
-
-	return (0);
-}
-
-static
-void hgc_mode0_update (hgc_t *hgc)
-{
-	unsigned i;
-	unsigned x, y;
-	unsigned fg, bg;
-
-	i = (hgc->page_ofs + (hgc->crtc_ofs << 1)) & 0x7fff;
-
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fg = hgc->mem->data[i + 1] & 0x0f;
-			bg = (hgc->mem->data[i + 1] & 0xf0) >> 4;
-
-			trm_old_set_col (&hgc->trm, fg, bg);
-			trm_old_set_chr (&hgc->trm, x, y, hgc->mem->data[i]);
-
-			i = (i + 2) & 0x7fff;
-		}
-	}
-}
-
-static
-void hgc_mode0_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
-	unsigned      fg, bg;
-
-	if (hgc->mem->data[addr] == val) {
-		return;
-	}
-
-	hgc->mem->data[addr] = val;
-
-	if (addr & 1) {
-		c = hgc->mem->data[addr - 1];
-		a = val;
-	}
-	else {
-		c = val;
-		a = hgc->mem->data[addr + 1];
-	}
-
-	if (addr < (hgc->crtc_ofs << 1)) {
-		return;
-	}
-
-	addr -= (hgc->crtc_ofs << 1);
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	fg = a & 0x0f;
-	bg = (a & 0xf0) >> 4;
-
-	trm_old_set_col (&hgc->trm, fg, bg);
-	trm_old_set_chr (&hgc->trm, x, y, c);
-}
-
-static
-void hgc_mode0_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
-	unsigned      fg, bg;
-
-	if (addr & 1) {
-		hgc_mem_set_uint8 (hgc, addr, val & 0xff);
-		hgc_mem_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
-		return;
-	}
-
-	c = val & 0xff;
-	a = (val >> 8) & 0xff;
-
-	if ((hgc->mem->data[addr] == c) && (hgc->mem->data[addr + 1] == a)) {
-		return;
-	}
-
-	hgc->mem->data[addr] = c;
-	hgc->mem->data[addr + 1] = a;
-
-	if (addr < (hgc->crtc_ofs << 1)) {
-		return;
-	}
-
-	addr -= (hgc->crtc_ofs << 1);
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	fg = a & 0x0f;
-	bg = (a & 0xf0) >> 4;
-
-	trm_old_set_col (&hgc->trm, fg, bg);
-	trm_old_set_chr (&hgc->trm, x, y, c);
-}
-
-
-/*****************************************************************************
- * mode 1 (graphics 720 * 348 * 2)
- *****************************************************************************/
-
-static
-int hgc_mode1_screenshot (hgc_t *hgc, FILE *fp)
-{
-	unsigned      x, y, i;
-	unsigned      val;
-	unsigned char *mem;
-
-	fprintf (fp, "P5\n720 348\n255 ");
-
-	for (y = 0; y < 348; y++) {
-		mem = (hgc->page_ofs) ? (hgc->mem->data + 32768) : hgc->mem->data;
-		mem += (y & 3) * 8192;
-		mem += 90 * (y / 4);
-
-		for (x = 0; x < 90; x++) {
-			val = mem[x];
-
-			for (i = 0; i < 8; i++) {
-				if (val & (0x80 >> i)) {
-					fputc (255, fp);
-				}
-				else {
-					fputc (0, fp);
-				}
+		for (i = 0; i < HGC_CW; i++) {
+			if (map & (0x100 >> i)) {
+				dst[3 * i + 0] = fg[0];
+				dst[3 * i + 1] = fg[1];
+				dst[3 * i + 2] = fg[2];
 			}
-		}
-	}
-
-	return (0);
-}
-
-static
-void hgc_mode1_update (hgc_t *hgc)
-{
-	unsigned      x, y, i, j;
-	unsigned      val[4];
-	unsigned      col1, col2;
-	unsigned char *mem[4];
-
-	mem[0] = hgc->mem->data;
-
-	if (hgc->page_ofs) {
-		mem[0] += 32768;
-	}
-
-	mem[1] = mem[0] + 1 * 8192;
-	mem[2] = mem[0] + 2 * 8192;
-	mem[3] = mem[0] + 3 * 8192;
-
-	trm_old_set_col (&hgc->trm, 7, 0);
-	col2 = 7;
-
-	for (y = 0; y < 87; y++) {
-		for (x = 0; x < 90; x++) {
-			val[0] = mem[0][x];
-			val[1] = mem[1][x];
-			val[2] = mem[2][x];
-			val[3] = mem[3][x];
-
-			for (i = 0; i < 8; i++) {
-				for (j = 0; j < 4; j++) {
-					col1 = (val[j] & 0x80) ? 7 : 0;
-					if (col2 != col1) {
-						trm_old_set_col (&hgc->trm, col1, 0);
-						col2 = col1;
-					}
-
-					trm_old_set_pxl (&hgc->trm, 8 * x + i, 4 * y +j);
-					val[j] <<= 1;
-				}
+			else {
+				dst[3 * i + 0] = bg[0];
+				dst[3 * i + 1] = bg[1];
+				dst[3 * i + 2] = bg[2];
 			}
 		}
 
-		mem[0] += 90;
-		mem[1] += 90;
-		mem[2] += 90;
-		mem[3] += 90;
+		dst += (3 * HGC_CW * hgc->w);
+	}
+
+	/* underline */
+	if (((a & 0x07) == 1) && (hgc->ch >= 13)) {
+		dst = buf + 3 * 13 * (HGC_CW * hgc->w);
+		for (i = 0; i < HGC_CW; i++) {
+			dst[3 * i + 0] = fg[0];
+			dst[3 * i + 1] = fg[1];
+			dst[3 * i + 2] = fg[2];
+		}
 	}
 }
 
+/*
+ * Update text mode
+ */
 static
-void hgc_mode1_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+void hgc_update_text (hgc_t *hgc)
 {
-	unsigned      i;
-	unsigned      x, y;
-	unsigned      bank;
-	unsigned char old;
+	unsigned            x, y;
+	unsigned            ofs;
+	const unsigned char *src;
+	unsigned char       *dst;
 
-	old = hgc->mem->data[addr];
-
-	if (old == val) {
+	if (hgc_set_buf_size (hgc, HGC_CW * hgc->w, hgc->ch * hgc->h)) {
 		return;
 	}
 
-	hgc->mem->data[addr] = val;
+	src = hgc_get_page (hgc);
+	ofs = (hgc_get_start (hgc) << 1) & 0x7ffe;
 
-	if (addr > 32767) {
-		addr -= 32768;
-	}
+	dst = hgc->buf;
 
-	bank = addr / 8192;
+	for (y = 0; y < hgc->h; y++) {
+		for (x = 0; x < hgc->w; x++) {
+			hgc_text_draw_char (hgc, dst + 3 * HGC_CW * x,
+				src[ofs], src[ofs + 1]
+			);
 
-	x = 8 * ((addr & 8191) % 90);
-	y = 4 * ((addr & 8191) / 90) + bank;
-
-	for (i = 0; i < 8; i++) {
-		if ((old ^ val) & 0x80) {
-			trm_old_set_col (&hgc->trm, (val & 0x80) ? 7 : 0, 0);
-			trm_old_set_pxl (&hgc->trm, x + i, y);
+			ofs = (ofs + 2) & 0x7ffe;
 		}
 
-		old <<= 1;
-		val <<= 1;
+		dst += 3 * (HGC_CW * hgc->w) * hgc->ch;
 	}
+
+	hgc_text_draw_cursor (hgc);
 }
 
-
-int hgc_screenshot (hgc_t *hgc, FILE *fp, unsigned mode)
+/*
+ * Update graphic mode
+ */
+static
+void hgc_update_graph (hgc_t *hgc)
 {
-	if ((hgc->mode == 1) && ((mode == 2) || (mode == 0))) {
-		return (hgc_mode1_screenshot (hgc, fp));
-	}
-	else if ((hgc->mode == 0) && ((mode == 1) || (mode == 0))) {
-		return (hgc_mode0_screenshot (hgc, fp));
+	unsigned      x, y;
+	unsigned      w, h;
+	unsigned char *mem, *src;
+	unsigned char *dst;
+
+	w = 16 * hgc->w;
+	h = 4 * hgc->h;
+
+	if (hgc_set_buf_size (hgc, w, h)) {
+		return;
 	}
 
-	return (1);
+	mem = hgc_get_page (hgc);
+	dst = hgc->buf;
+
+	for (y = 0; y < h; y++) {
+		src = mem + (y % 4) * 8192 + (y / 4) * (2 * hgc->w);
+
+		for (x = 0; x < w; x++) {
+			if (src[x >> 3] & (0x80 >> (x & 7))) {
+				dst[0] = hgc_rgb[15][0];
+				dst[1] = hgc_rgb[15][1];
+				dst[2] = hgc_rgb[15][2];
+			}
+			else {
+				dst[0] = hgc_rgb[0][0];
+				dst[1] = hgc_rgb[0][1];
+				dst[2] = hgc_rgb[0][2];
+			}
+
+			dst += 3;
+		}
+	}
 }
 
+/*
+ * Update the internal screen buffer when the screen is blank
+ */
+static
+void hgc_update_blank (hgc_t *hgc)
+{
+	unsigned long x, y;
+	int           fx, fy;
+	unsigned char *dst;
+
+	hgc_set_buf_size (hgc, 720, 350);
+
+	dst = hgc->buf;
+
+	for (y = 0; y < hgc->buf_h; y++) {
+		fy = (y % 16) < 8;
+
+		for (x = 0; x < hgc->buf_w; x++) {
+			fx = (x % 16) < 8;
+
+			dst[0] = (fx != fy) ? 0x20 : 0x00;
+			dst[1] = dst[0];
+			dst[2] = dst[0];
+
+			dst += 3;
+		}
+	}
+}
+
+/*
+ * Update the internal screen buffer
+ */
+static
 void hgc_update (hgc_t *hgc)
 {
-	switch (hgc->mode) {
-		case 0:
-			hgc_mode0_update (hgc);
-			break;
-
-		case 1:
-			hgc_mode1_update (hgc);
-			break;
-	}
-}
-
-static
-void hgc_set_pos (hgc_t *hgc, unsigned pos)
-{
-	hgc->crtc_pos = pos;
-
-	if (hgc->mode == 0) {
-		if (pos < hgc->crtc_ofs) {
-			return;
-		}
-
-		pos -= hgc->crtc_ofs;
-
-		if (pos >= 2000) {
-			return;
-		}
-
-		trm_old_set_pos (&hgc->trm, pos % 80, pos / 80);
-	}
-}
-
-static
-void hgc_set_crs (hgc_t *hgc, unsigned y1, unsigned y2)
-{
-	if (hgc->mode == 0) {
-		if (y1 > 13) {
-			trm_old_set_crs (&hgc->trm, 0, 0, 0);
-			return;
-		}
-
-		if ((y2 < y1) || (y2 > 13)) {
-			y2 = 13;
-		}
-
-		y1 = (255 * y1 + 6) / 13;
-		y2 = (255 * y2 + 6) / 13;
-
-		trm_old_set_crs (&hgc->trm, y1, y2, 1);
-	}
-}
-
-static
-void hgc_set_page_ofs (hgc_t *hgc, unsigned ofs)
-{
-	if (hgc->crtc_ofs == ofs) {
+	if ((hgc->reg[HGC_MODE] & HGC_MODE_ENABLE) == 0) {
+		hgc_update_blank (hgc);
 		return;
 	}
 
-	hgc->crtc_ofs = ofs;
-
-	if (hgc->mode == 0) {
-		hgc_update (hgc);
-	}
-}
-
-static
-void hgc_set_config (hgc_t *hgc, unsigned char val)
-{
-	hgc->enable_graph = ((val & 0x01) != 0);
-	hgc->enable_page1 = ((val & 0x02) != 0);
-}
-
-static
-void hgc_set_mode (hgc_t *hgc, unsigned char mode)
-{
-	unsigned newmode, newofs;
-
-	if (hgc->enable_graph == 0) {
-		mode &= ~0x02;
-	}
-
-	if ((hgc->enable_page1 == 0) || (mem_blk_get_size (hgc->mem) < 65536)) {
-		mode &= ~0x80;
-	}
-
-	newmode = (mode & 0x02) ? 1 : 0;
-	newofs = (mode & 0x80) ? 32768 : 0;
-
-	if ((newmode == hgc->mode) && (newofs == hgc->page_ofs)) {
+	if ((hgc->w == 0) || (hgc->h == 0)) {
+		hgc_update_blank (hgc);
 		return;
 	}
 
-	if (newmode != hgc->mode) {
-		hgc->mode = newmode;
-
-		hgc_set_colors (hgc, newmode);
-
-		switch (newmode) {
-		case 0:
-			trm_old_set_mode (&hgc->trm, TERM_MODE_TEXT, 80, 25);
-			trm_old_set_size (&hgc->trm, hgc->mode_80x25_w, hgc->mode_80x25_h);
-			break;
-
-		case 1:
-			trm_old_set_mode (&hgc->trm, TERM_MODE_GRAPH, 720, 348);
-			trm_old_set_size (&hgc->trm, hgc->mode_720x348_w, hgc->mode_720x348_h);
-			break;
-		}
+	if (hgc->reg[HGC_MODE] & HGC_MODE_GRAPH) {
+		hgc_update_graph (hgc);
 	}
-
-	if (newofs != hgc->page_ofs) {
-		hgc->page_ofs = newofs;
-	}
-
-	hgc_update (hgc);
-}
-
-void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
-{
-	switch (hgc->mode) {
-		case 0:
-			hgc_mode0_set_uint8 (hgc, addr, val);
-			break;
-
-		case 1:
-			hgc_mode1_set_uint8 (hgc, addr, val);
-			break;
+	else {
+		hgc_update_text (hgc);
 	}
 }
 
-void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
-{
-	switch (hgc->mode) {
-		case 0:
-			hgc_mode0_set_uint16 (hgc, addr, val);
-			break;
 
-		case 1:
-			hgc_mode1_set_uint8 (hgc, addr, val);
-			if ((addr + 1) < hgc->mem->size) {
-				hgc_mode1_set_uint8 (hgc, addr + 1, val >> 8);
-			}
-			break;
-	}
-}
-
-static
-void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
-{
-	if (reg > 15) {
-		return;
-	}
-
-	hgc->crtc_reg[reg] = val;
-
-	switch (reg) {
-		case 0x0a:
-		case 0x0b:
-			hgc_set_crs (hgc, hgc->crtc_reg[0x0a], hgc->crtc_reg[0x0b]);
-			break;
-
-		case 0x0c:
-			hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
-			break;
-
-		case 0x0d:
-			hgc_set_page_ofs (hgc, (hgc->crtc_reg[0x0c] << 8) | val);
-			break;
-
-		case 0x0e:
-/*      hgc_set_pos (hgc, (val << 8) | (hgc->crtc_reg[0x0f] & 0xff)); */
-			break;
-
-		case 0x0f:
-			hgc_set_pos (hgc, (hgc->crtc_reg[0x0e] << 8) | val);
-			break;
-	}
-}
-
+/*
+ * Get a CRTC register
+ */
 static
 unsigned char hgc_crtc_get_reg (hgc_t *hgc, unsigned reg)
 {
@@ -712,74 +449,456 @@ unsigned char hgc_crtc_get_reg (hgc_t *hgc, unsigned reg)
 		return (0xff);
 	}
 
-	return (hgc->crtc_reg[reg]);
+	return (hgc->reg_crt[reg]);
 }
 
-void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+/*
+ * Set a CRTC register
+ */
+static
+void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
 {
-	hgc->reg->data[addr] = val;
-
-	switch (addr) {
-		case 0x01:
-			hgc_crtc_set_reg (hgc, hgc->reg->data[0], val);
-			break;
-
-		case 0x04:
-			hgc_set_mode (hgc, val);
-			break;
-
-		case 0x0b:
-			hgc_set_config (hgc, val);
-			break;
+	if (reg > 15) {
+		return;
 	}
+
+	if (hgc->reg_crt[reg] == val) {
+		return;
+	}
+
+	hgc->reg_crt[reg] = val;
+
+	hgc->ch = (hgc->reg_crt[HGC_CRTC_MS] & 0x1f) + 1;
+	hgc->w = hgc->reg_crt[HGC_CRTC_HD];
+	hgc->h = hgc->reg_crt[HGC_CRTC_VD];
+
+	hgc->hsync = (HGC_IFREQ * HGC_CW * hgc->reg_crt[HGC_CRTC_HS]) / HGC_PFREQ;
+	hgc->vsync = (HGC_IFREQ * hgc->ch * hgc->reg_crt[HGC_CRTC_VS]) / HGC_HFREQ;
+
+	hgc->update_state |= 1;
 }
 
-void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
+
+/*
+ * Get the CRTC index register
+ */
+static
+unsigned char hgc_get_crtc_index (hgc_t *hgc)
 {
-	hgc_reg_set_uint8 (hgc, addr, val & 0xff);
-
-	if ((addr + 1) < hgc->reg->size) {
-		hgc_reg_set_uint8 (hgc, addr + 1, val >> 8);
-	}
+	return (hgc->reg[HGC_CRTC_INDEX]);
 }
 
+/*
+ * Get the CRTC data register
+ */
+static
+unsigned char hgc_get_crtc_data (hgc_t *hgc)
+{
+	return (hgc_crtc_get_reg (hgc, hgc->reg[HGC_CRTC_INDEX]));
+}
+
+/*
+ * Get the configuration register
+ */
+static
+unsigned char hgc_get_config (hgc_t *hgc)
+{
+	return (hgc->reg[HGC_CONFIG]);
+}
+
+/*
+ * Get the mode control register
+ */
+static
+unsigned char hgc_get_mode (hgc_t *hgc)
+{
+	return (hgc->reg[HGC_MODE]);
+}
+
+/*
+ * Get the status register
+ */
+static
+unsigned char hgc_get_status (hgc_t *hgc)
+{
+	unsigned char val;
+
+	val = hgc->reg[HGC_STATUS];
+
+	if ((hgc->video.dotclk[0] % (HGC_IFREQ / HGC_VFREQ)) < hgc->vsync) {
+		val &= ~HGC_STATUS_VSYNC;
+	}
+	else {
+		val |= HGC_STATUS_VSYNC;
+	}
+
+	if ((hgc->video.dotclk[0] % (HGC_IFREQ / HGC_HFREQ)) < hgc->hsync) {
+		val |= HGC_STATUS_HSYNC;
+	}
+	else {
+		val &= ~HGC_STATUS_HSYNC;
+	}
+
+	return (val);
+}
+
+/*
+ * Set the CRTC index register
+ */
+static
+void hgc_set_crtc_index (hgc_t *hgc, unsigned char val)
+{
+	hgc->reg[HGC_CRTC_INDEX] = val;
+}
+
+/*
+ * Set the CRTC data register
+ */
+static
+void hgc_set_crtc_data (hgc_t *hgc, unsigned char val)
+{
+	hgc->reg[HGC_CRTC_DATA] = val;
+
+	hgc_crtc_set_reg (hgc, hgc->reg[HGC_CRTC_INDEX], val);
+}
+
+/*
+ * Set the configuration register
+ */
+static
+void hgc_set_config (hgc_t *hgc, unsigned char val)
+{
+	hgc->reg[HGC_CONFIG] = val;
+}
+
+/*
+ * Set the mode control register
+ */
+static
+void hgc_set_mode (hgc_t *hgc, unsigned char val)
+{
+	unsigned char cfg;
+
+	cfg = hgc_get_config (hgc);
+
+	if ((cfg & HGC_CONFIG_GRAPH) == 0) {
+		val &= ~HGC_MODE_GRAPH;
+	}
+
+	if ((cfg & HGC_CONFIG_PAGE1) == 0) {
+		val &= ~HGC_MODE_PAGE1;
+	}
+
+	if (mem_blk_get_size (hgc->memblk) < 65536) {
+		val &= ~HGC_MODE_PAGE1;
+	}
+
+	if (hgc->reg[HGC_MODE] == val) {
+		return;
+	}
+
+	hgc->reg[HGC_MODE] = val;
+
+	hgc->update_state |= 1;
+}
+
+/*
+ * Get an HGC register
+ */
+static
 unsigned char hgc_reg_get_uint8 (hgc_t *hgc, unsigned long addr)
 {
-	static unsigned cnt = 0;
-
 	switch (addr) {
-		case 0x00:
-			return (hgc->reg->data[0]);
+	case HGC_CRTC_INDEX:
+		return (hgc_get_crtc_index (hgc));
 
-		case 0x01:
-			return (hgc_crtc_get_reg (hgc, hgc->reg->data[0]));
+	case HGC_CRTC_DATA:
+		return (hgc_get_crtc_data (hgc));
 
-		case 0x06:
-			cnt += 1;
-			if ((cnt & 7) == 0) {
-				hgc->reg->data[6] ^= 0x01;
-			}
-			if (cnt >= 64) {
-				cnt = 0;
-				hgc->reg->data[6] ^= 0x80;
-			}
+	case HGC_MODE:
+		return (hgc_get_mode (hgc));
 
-			return (hgc->reg->data[6]);
+	case HGC_STATUS:
+		return (hgc_get_status (hgc));
 
-		default:
-			return (0xff);
+	case HGC_CONFIG:
+		return (hgc_get_config (hgc));
+
+	default:
+		return (0xff);
 	}
 }
 
+static
 unsigned short hgc_reg_get_uint16 (hgc_t *hgc, unsigned long addr)
 {
 	unsigned short ret;
 
 	ret = hgc_reg_get_uint8 (hgc, addr);
-
-	if ((addr + 1) < hgc->reg->size) {
-		ret |= hgc_reg_get_uint8 (hgc, addr + 1) << 8;
-	}
+	ret |= hgc_reg_get_uint8 (hgc, addr + 1) << 8;
 
 	return (ret);
+}
+
+/*
+ * Set an HGC register
+ */
+static
+void hgc_reg_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+{
+	switch (addr) {
+	case HGC_CRTC_INDEX:
+		hgc_set_crtc_index (hgc, val);
+		break;
+
+	case HGC_CRTC_DATA:
+		hgc_set_crtc_data (hgc, val);
+		break;
+
+	case HGC_MODE:
+		hgc_set_mode (hgc, val);
+		break;
+
+	case HGC_CONFIG:
+		hgc_set_config (hgc, val);
+		break;
+	}
+}
+
+static
+void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
+{
+	hgc_reg_set_uint8 (hgc, addr + 0, val & 0xff);
+	hgc_reg_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
+}
+
+
+static
+void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
+{
+	if (hgc->mem[addr] == val) {
+		return;
+	}
+
+	hgc->mem[addr] = val;
+
+	hgc->update_state |= 1;
+}
+
+static
+void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
+{
+	hgc_mem_set_uint8 (hgc, addr + 0, val & 0xff);
+
+	if ((addr + 1) < hgc->memblk->size) {
+		hgc_mem_set_uint8 (hgc, addr + 1, (val >> 8) & 0xff);
+	}
+}
+
+
+static
+void hgc_del (hgc_t *hgc)
+{
+	if (hgc != NULL) {
+		mem_blk_del (hgc->memblk);
+		mem_blk_del (hgc->regblk);
+		free (hgc);
+	}
+}
+
+static
+int hgc_set_msg (hgc_t *hgc, const char *msg, const char *val)
+{
+	return (1);
+}
+
+static
+void hgc_set_terminal (hgc_t *hgc, terminal_t *trm)
+{
+	hgc->term = trm;
+
+	if (hgc->term != NULL) {
+		trm_open (hgc->term, 720, 350);
+	}
+}
+
+static
+mem_blk_t *hgc_get_mem (hgc_t *hgc)
+{
+	return (hgc->memblk);
+}
+
+static
+mem_blk_t *hgc_get_reg (hgc_t *hgc)
+{
+	return (hgc->regblk);
+}
+
+static
+void hgc_print_info (hgc_t *hgc, FILE *fp)
+{
+	unsigned i;
+	unsigned pos, ofs;
+
+	fprintf (fp, "DEV: Hercules Graphics Card\n");
+
+	pos = hgc_get_cursor (hgc);
+	ofs = hgc_get_start (hgc);
+
+	fprintf (fp, "HGC: PAGE=%d  OFS=%04X  POS=%04X\n",
+		(hgc->reg[HGC_MODE] & HGC_MODE_PAGE1) != 0,
+		ofs, pos
+	);
+
+	fprintf (fp, "REG: CRTC=%02X  MODE=%02X  STATUS=%02X  CONF=%02X\n",
+		hgc->reg[HGC_CRTC_INDEX], hgc_get_mode (hgc),
+		hgc_get_status (hgc), hgc_get_config (hgc)
+	);
+
+	fprintf (fp, "CRTC=[%02X", hgc->reg_crt[0]);
+
+	for (i = 1; i < 18; i++) {
+		if ((i & 7) == 0) {
+			fputs ("-", fp);
+		}
+		else {
+			fputs (" ", fp);
+		}
+		fprintf (fp, "%02X", hgc->reg_crt[i]);
+	}
+	fputs ("]\n", fp);
+
+	fflush (fp);
+}
+
+static
+int hgc_screenshot (hgc_t *hgc, FILE *fp)
+{
+	hgc_update (hgc);
+
+	fprintf (fp, "P6\n%u %u\n255 ", hgc->buf_w, hgc->buf_h);
+	fwrite (hgc->buf, 1, 3 * hgc->buf_w * hgc->buf_h, fp);
+
+	return (0);
+}
+
+/*
+ * Force a screen update
+ */
+static
+void hgc_redraw (hgc_t *hgc)
+{
+	hgc->update_state |= 1;
+}
+
+static
+void hgc_clock (hgc_t *hgc, unsigned cnt)
+{
+	hgc->video.dotclk[0] %= (HGC_IFREQ / HGC_VFREQ);
+
+	if (hgc->video.dotclk[0] < hgc->vsync) {
+		hgc->update_state &= ~2;
+		return;
+	}
+
+	if ((hgc->update_state & 3) != 1) {
+		if (hgc->term != NULL) {
+			trm_update (hgc->term);
+		}
+		return;
+	}
+
+	/* vertical retrace started */
+
+	if (hgc->term != NULL) {
+		hgc_update (hgc);
+
+		trm_set_size (hgc->term, hgc->buf_w, hgc->buf_h);
+		trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
+		trm_update (hgc->term);
+	}
+
+	hgc->update_state = 2;
+}
+
+hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
+{
+	unsigned i;
+	hgc_t    *hgc;
+
+	hgc = malloc (sizeof (hgc_t));
+	if (hgc == NULL) {
+		return (NULL);
+	}
+
+	pce_video_init (&hgc->video);
+
+	hgc->video.ext = hgc;
+	hgc->video.del = (void *) hgc_del;
+	hgc->video.set_msg = (void *) hgc_set_msg;
+	hgc->video.set_terminal = (void *) hgc_set_terminal;
+	hgc->video.get_mem = (void *) hgc_get_mem;
+	hgc->video.get_reg = (void *) hgc_get_reg;
+	hgc->video.print_info = (void *) hgc_print_info;
+	hgc->video.screenshot = (void *) hgc_screenshot;
+	hgc->video.redraw = (void *) hgc_redraw;
+	hgc->video.clock = (void *) hgc_clock;
+
+	size = (size <= 32768) ? 32768UL : 65536UL;
+
+	hgc->memblk = mem_blk_new (mem, size, 1);
+	hgc->memblk->ext = hgc;
+	hgc->memblk->set_uint8 = (void *) hgc_mem_set_uint8;
+	hgc->memblk->set_uint16 = (void *) hgc_mem_set_uint16;
+	hgc->mem = hgc->memblk->data;
+	mem_blk_clear (hgc->memblk, 0x00);
+
+	hgc->regblk = mem_blk_new (io, 16, 1);
+	hgc->regblk->ext = hgc;
+	hgc->regblk->set_uint8 = (void *) hgc_reg_set_uint8;
+	hgc->regblk->set_uint16 = (void *) hgc_reg_set_uint16;
+	hgc->regblk->get_uint8 = (void *) hgc_reg_get_uint8;
+	hgc->regblk->get_uint16 = (void *) hgc_reg_get_uint16;
+	hgc->reg = hgc->regblk->data;
+	mem_blk_clear (hgc->regblk, 0x00);
+
+	hgc->reg[HGC_CONFIG] = HGC_CONFIG_GRAPH;
+
+	hgc->term = NULL;
+
+	for (i = 0; i < 18; i++) {
+		hgc->reg_crt[i] = 0;
+	}
+
+	hgc->font = hgc_font_8x14;
+
+	hgc->w = 0;
+	hgc->h = 0;
+	hgc->ch = 0;
+	hgc->hsync = 0;
+	hgc->vsync = 0;
+
+	hgc->bufmax = 0;
+	hgc->buf = NULL;
+
+	hgc->update_state = 0;
+
+	return (hgc);
+}
+
+video_t *hgc_new_ini (ini_sct_t *sct)
+{
+	unsigned long io, mem, size;
+	hgc_t         *hgc;
+
+	ini_get_uint32 (sct, "io", &io, 0x3b4);
+	ini_get_uint32 (sct, "address", &mem, 0xb0000);
+	ini_get_uint32 (sct, "size", &size, 65536);
+
+	hgc = hgc_new (io, mem, size);
+	if (hgc == NULL) {
+		return (NULL);
+	}
+
+	return (&hgc->video);
 }

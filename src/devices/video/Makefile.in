@@ -39,11 +39,9 @@ ega.o:		ega.c ega.h video.h devices/memory.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
-hgc.o:		hgc.c hgc.h video.h devices/memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
+hgc.o:		hgc.c hgc.h hgc_font.h video.h devices/memory.h \
+		libini/libini.h terminal/terminal.h lib/log.h \
+		$(SDP)
 
 mda.o:		mda.c mda.h mda_font.h video.h devices/memory.h \
 		libini/libini.h terminal/terminal.h lib/log.h \
