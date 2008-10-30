@@ -24,6 +24,13 @@ ifeq "$(PCE_X11_USE)" "1"
 	CC_FLG_EXTRA += $(PCE_X11_CCF)
 endif
 
+ifeq "$(PCE_SDL_USE)" "1"
+	SRC += sdl.c
+	OBJ += sdl.o
+	HDR += sdl.h
+	CC_FLG_EXTRA += $(PCE_SDL_CCF)
+endif
+
 SDP := Makefile $(HDR) $(HDR_EXT)
 BDP := Makefile $(OBJ) $(OBJ_EXT)
 
@@ -40,6 +47,7 @@ all: $(OBJ)
 font.o:		font.c $(SDP)
 keys.o:		keys.c $(SDP)
 null.o:		null.c $(SDP)
+sdl.o:		sdl.c $(SDP)
 term-old.o:	term-old.c $(SDP)
 terminal.o:	terminal.c $(SDP)
 x11.o:		x11.c $(SDP)

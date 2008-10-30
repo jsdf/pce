@@ -97,6 +97,13 @@ section pc {
 
 	# Multiple "terminal" sections may be present
 	section terminal {
+		driver = "sdl"
+
+		# Define a border around the image
+		border = 0
+	}
+
+	section terminal {
 		driver = "x11"
 	}
 

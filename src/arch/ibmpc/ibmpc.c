@@ -355,6 +355,16 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		pce_log (MSG_ERR, "*** terminal driver 'x11' not supported\n");
 #endif
 	}
+	else if (strcmp (driver, "sdl") == 0) {
+#ifdef PCE_SDL_USE
+		pc->trm = sdl_new (sct);
+		if (pc->trm == NULL) {
+			pce_log (MSG_ERR, "*** setting up sdl terminal failed\n");
+		}
+#else
+		pce_log (MSG_ERR, "*** terminal driver 'sdl' not supported\n");
+#endif
+	}
 	else if (strcmp (driver, "null") == 0) {
 		pc->trm = null_new (sct);
 		if (pc->trm == NULL) {
