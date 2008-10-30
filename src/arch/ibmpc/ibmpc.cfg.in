@@ -97,6 +97,10 @@ section pc {
 
 	# Multiple "terminal" sections may be present
 	section terminal {
+		driver = "x11"
+	}
+
+	section terminal {
 		driver = "null"
 	}
 

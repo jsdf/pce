@@ -345,7 +345,17 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 
 	pce_log_tag (MSG_INF, "TERM:", "driver=%s\n", driver);
 
-	if (strcmp (driver, "null") == 0) {
+	if (strcmp (driver, "x11") == 0) {
+#ifdef PCE_X11_USE
+		pc->trm = xt_new (sct);
+		if (pc->trm == NULL) {
+			pce_log (MSG_ERR, "*** setting up x11 terminal failed\n");
+		}
+#else
+		pce_log (MSG_ERR, "*** terminal driver 'x11' not supported\n");
+#endif
+	}
+	else if (strcmp (driver, "null") == 0) {
 		pc->trm = null_new (sct);
 		if (pc->trm == NULL) {
 			pce_log (MSG_ERR, "*** setting up null terminal failed\n");

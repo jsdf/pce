@@ -145,3 +145,8 @@ PCE_TERM_OBJ := \
 	$(pcedst)/terminal/null.o \
 	$(pcedst)/terminal/term-old.o \
 	$(pcedst)/terminal/terminal.o
+
+ifeq "$(PCE_X11_USE)" "1"
+	PCE_TERM_HDR += terminal/x11.h
+	PCE_TERM_OBJ +=	$(pcedst)/terminal/x11.o
+endif

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/x11.h                                         *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-08-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/x11.h                                           *
+ * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +38,9 @@
 #include <libini/libini.h>
 
 
+/*!***************************************************************************
+ * @short The X11 terminal structure
+ *****************************************************************************/
 typedef struct {
 	terminal_t    trm;
 
@@ -52,71 +54,32 @@ typedef struct {
 	int           screen;
 	int           display_w;
 	int           display_h;
+	Window        root;
 
 	Window        wdw;
 	GC            gc;
 
-	Pixmap        back;
-	GC            back_gc;
+	XImage        *img;
+	unsigned char *img_buf;
 
-	GC            crs_gc;
-
-	Cursor        crs_none;
-
-	unsigned      mode;
-
-	XFontStruct   *font;
-	int           font_w;
-	int           font_h;
-	int           font_d;
+	Cursor        empty_cursor;
 
 	unsigned      wdw_w;
 	unsigned      wdw_h;
 
-	unsigned      scn_w;
-	unsigned      scn_h;
-	unsigned char *scn;
-
-	unsigned      flush_x1;
-	unsigned      flush_y1;
-	unsigned      flush_x2;
-	unsigned      flush_y2;
-
-	char          crs_on;
-	unsigned      crs_y1;
-	unsigned      crs_y2;
-	unsigned      crs_x;
-	unsigned      crs_y;
-	unsigned      crs_fg;
-
-	int           grab;
-
 	int           mse_x;
 	int           mse_y;
 
-	unsigned      fg;
-	unsigned      bg;
+	unsigned      magic;
 
-	XColor        col[256];
+	int           grab;
 } xterm_t;
 
 
-int xt_init (xterm_t *xt, ini_sct_t *ini);
+/*!***************************************************************************
+ * @short Create a new X11 terminal
+ *****************************************************************************/
 terminal_t *xt_new (ini_sct_t *ini);
-
-void xt_free (xterm_t *xt);
-void xt_del (xterm_t *xt);
-
-void xt_set_mode (xterm_t *xt, unsigned m, unsigned w, unsigned h);
-void xt_set_map (xterm_t *xt, unsigned idx, unsigned r, unsigned g, unsigned b);
-void xt_set_col (xterm_t *xt, unsigned fg, unsigned bg);
-void xt_set_crs (xterm_t *xt, unsigned y1, unsigned y2, int show);
-void xt_set_pos (xterm_t *xt, unsigned x, unsigned y);
-void xt_set_chr (xterm_t *xt, unsigned x, unsigned y, unsigned char c);
-void xt_set_pxl (xterm_t *xt, unsigned x, unsigned y);
-void xt_set_rct (xterm_t *xt, unsigned x, unsigned y, unsigned w, unsigned h);
-void xt_clear (xterm_t *xt);
-void xt_check (xterm_t *xt);
 
 
 #endif
