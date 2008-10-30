@@ -22,75 +22,80 @@
 /* $Id$ */
 
 
-#ifndef PCE_CGA_H
-#define PCE_CGA_H 1
+#ifndef PCE_VIDEO_CGA_H
+#define PCE_VIDEO_CGA_H 1
 
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
-typedef struct {
-	video_t       vid;
+typedef struct cga_s {
+	video_t       video;
 
-	mem_blk_t     *mem;
-	mem_blk_t     *reg;
+	void          *ext;
 
-	unsigned      mode_80x25_w;
-	unsigned      mode_80x25_h;
-	unsigned      mode_320x200_w;
-	unsigned      mode_320x200_h;
-	unsigned      mode_640x200_w;
-	unsigned      mode_640x200_h;
+	/* update the internal screen buffer */
+	void          (*update) (struct cga_s *ext);
 
-	unsigned char crtc_reg[18];
+	mem_blk_t     *memblk;
+	unsigned char *mem;
 
-	unsigned      crtc_pos;
-	unsigned      crtc_ofs;
+	mem_blk_t     *regblk;
+	unsigned char *reg;
 
-	unsigned long clkcnt;
+	terminal_t    *term;
 
-	unsigned char pal;
-	unsigned char palette[4];
+	unsigned char reg_crt[18];
 
-	int           crs_on;
+	unsigned char pal[4];
 
-	unsigned      mode;
+	unsigned char *font;
 
-	terminal_t    *trmnew;
-	term_old_t    trm;
-	unsigned long trmclk;
+	/* composite mode color lookup table */
+	char          comp_tab_ok;
+	unsigned char *comp_tab;
+
+	/* these are derived from the crtc registers */
+	unsigned      w;
+	unsigned      h;
+	unsigned      ch;
+	unsigned long hsync;
+	unsigned long vsync;
+
+	unsigned      buf_w;
+	unsigned      buf_h;
+	unsigned long bufmax;
+	unsigned char *buf;
+
+	unsigned char update_state;
 } cga_t;
 
 
-video_t *cga_new (terminal_t *trm, ini_sct_t *sct);
+extern unsigned char cga_rgb[16][3];
+
+
+unsigned cga_get_start (cga_t *cga);
+unsigned cga_get_cursor (cga_t *cga);
+int cga_get_position (cga_t *cga, unsigned *x, unsigned *y);
+int cga_set_buf_size (cga_t *cga, unsigned w, unsigned h);
+void cga_update (cga_t *cga);
+unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr);
+unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr);
+void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
+void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
+
+
+void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long size);
+
+void cga_free (cga_t *cga);
+
+cga_t *cga_new (unsigned long io, unsigned long addr, unsigned long size);
 
 void cga_del (cga_t *cga);
 
-void cga_clock (cga_t *cga, unsigned long cnt);
-
-void cga_prt_state (cga_t *cga, FILE *fp);
-
-int cga_dump (cga_t *cga, FILE *fp);
-
-mem_blk_t *cga_get_mem (cga_t *cga);
-mem_blk_t *cga_get_reg (cga_t *cga);
-
-int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode);
-
-void cga_update (cga_t *cga);
-
-void cga_set_pos (cga_t *cga, unsigned pos);
-
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-
-void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val);
-void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val);
-unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr);
-unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr);
+video_t *cga_new_ini (ini_sct_t *sct);
 
 
 #endif

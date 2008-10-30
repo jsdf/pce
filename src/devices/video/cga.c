@@ -23,865 +23,760 @@
 
 
 #include <stdio.h>
+#include <math.h>
 
 #include <lib/log.h>
-#include <lib/hexdump.h>
 
-#include "cga.h"
+#include <devices/video/cga.h>
 
 
-static
-struct {  unsigned short r, g, b; } cga_col[16] = {
-	{ 0x0000, 0x0000, 0x0000 },
-	{ 0x0a0a, 0x0a0a, 0xb9b9 },
-	{ 0x0a0a, 0xc3c3, 0x0a0a },
-	{ 0x1414, 0xa0a0, 0xa0a0 },
-	{ 0xa7a7, 0x0a0a, 0x0a0a },
-	{ 0xa7a7, 0x0000, 0xa7a7 },
-	{ 0xa5a5, 0xa5a5, 0x2828 },
-	{ 0xc5c5, 0xc5c5, 0xc5c5 },
-	{ 0x6464, 0x6464, 0x6464 },
-	{ 0x0a0a, 0x0a0a, 0xffff },
-	{ 0x0a0a, 0xffff, 0x0a0a },
-	{ 0x0a0a, 0xffff, 0xffff },
-	{ 0xffff, 0x0a0a, 0x0a0a },
-	{ 0xffff, 0x0a0a, 0xffff },
-	{ 0xffff, 0xffff, 0x0000 },
-	{ 0xffff, 0xffff, 0xffff }
+#define CGA_IFREQ 1193182
+#define CGA_PFREQ 14318180
+#define CGA_HFREQ 15750
+#define CGA_VFREQ 60
+
+
+#define CGA_CRTC_INDEX   0
+#define CGA_CRTC_DATA    1
+#define CGA_MODE         4
+#define CGA_CSEL         5
+#define CGA_STATUS       6
+#define CGA_PEN_RESET    7
+#define CGA_PEN_SET      8
+
+#define CGA_CRTC_HT      0
+#define CGA_CRTC_HD      1
+#define CGA_CRTC_HS      2
+#define CGA_CRTC_SYN     3
+#define CGA_CRTC_VT      4
+#define CGA_CRTC_VTA     5
+#define CGA_CRTC_VD      6
+#define CGA_CRTC_VS      7
+#define CGA_CRTC_IL      8
+#define CGA_CRTC_MS      9
+#define CGA_CRTC_CS      10
+#define CGA_CRTC_CE      11
+#define CGA_CRTC_SH      12
+#define CGA_CRTC_SL      13
+#define CGA_CRTC_PH      14
+#define CGA_CRTC_PL      15
+#define CGA_CRTC_LH      16
+#define CGA_CRTC_LL      17
+
+#define CGA_MODE_T80     0x01
+#define CGA_MODE_G320    0x02
+#define CGA_MODE_CBURST  0x04
+#define CGA_MODE_ENABLE  0x08
+#define CGA_MODE_G640    0x10
+#define CGA_MODE_BLINK   0x20
+
+#define CGA_CSEL_COL     0x0f
+#define CGA_CSEL_INT     0x10
+#define CGA_CSEL_PAL     0x20
+
+#define CGA_STATUS_SYNC  0x01
+#define CGA_STATUS_PEN   0x02
+#define CGA_STATUS_VSYNC 0x08
+
+
+#include "cga_font.h"
+
+
+unsigned char cga_rgb[16][3] = {
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0xaa },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0xaa },
+	{ 0xaa, 0x00, 0x00 },
+	{ 0xaa, 0x00, 0xaa },
+	{ 0xaa, 0x55, 0x00 },
+	{ 0xaa, 0xaa, 0xaa },
+	{ 0x55, 0x55, 0x55 },
+	{ 0x55, 0x55, 0xff },
+	{ 0x55, 0xff, 0x55 },
+	{ 0x55, 0xff, 0xff },
+	{ 0xff, 0x55, 0x55 },
+	{ 0xff, 0x55, 0xff },
+	{ 0xff, 0xff, 0x55 },
+	{ 0xff, 0xff, 0xff }
 };
 
 
-video_t *cga_new (terminal_t *trm, ini_sct_t *sct)
+/*
+ * Get CRTC start offset
+ */
+unsigned cga_get_start (cga_t *cga)
 {
-	unsigned      i;
-	unsigned long iobase, membase, memsize;
-	unsigned      w, h;
-	cga_t         *cga;
+	unsigned val;
 
-	cga = malloc (sizeof (cga_t));
-	if (cga == NULL) {
-		return (NULL);
-	}
+	val = cga->reg_crt[CGA_CRTC_SH];
+	val = (val << 8) | cga->reg_crt[CGA_CRTC_SL];
 
-	pce_video_init (&cga->vid);
-
-	cga->vid.ext = cga;
-	cga->vid.del = (void *) cga_del;
-	cga->vid.get_mem = (void *) cga_get_mem;
-	cga->vid.get_reg = (void *) cga_get_reg;
-	cga->vid.print_info = (void *) cga_prt_state;
-	cga->vid.redraw = (void *) cga_update;
-	cga->vid.screenshot = (void *) cga_screenshot;
-	cga->vid.clock = (void *) cga_clock;
-
-	for (i = 0; i < 16; i++) {
-		cga->crtc_reg[i] = 0;
-	}
-
-	ini_get_uint16 (sct, "w", &w, 640);
-	ini_get_uint16 (sct, "h", &h, 400);
-
-	ini_get_uint16 (sct, "mode_80x25_w", &cga->mode_80x25_w, w);
-	ini_get_uint16 (sct, "mode_80x25_h", &cga->mode_80x25_h, h);
-	ini_get_uint16 (sct, "mode_320x200_w", &cga->mode_320x200_w, w);
-	ini_get_uint16 (sct, "mode_320x200_h", &cga->mode_320x200_h, h);
-	ini_get_uint16 (sct, "mode_640x200_w", &cga->mode_640x200_w, w);
-	ini_get_uint16 (sct, "mode_640x200_h", &cga->mode_640x200_h, h);
-
-	ini_get_uint32 (sct, "io", &iobase, 0x03d4);
-	ini_get_uint32 (sct, "membase", &membase, 0x000b8000);
-	ini_get_uint32 (sct, "memsize", &memsize, 16384);
-
-	if (memsize < 16384) {
-		memsize = 16384;
-	}
-
-	pce_log_tag (MSG_INF,
-		"VIDEO:", "CGA addr=0x%04lx membase=0x%05lx memsize=0x%05lx\n",
-		iobase, membase, memsize
-	);
-
-	cga->mem = mem_blk_new (membase, memsize, 1);
-	cga->mem->ext = cga;
-	cga->mem->set_uint8 = (mem_set_uint8_f) &cga_mem_set_uint8;
-	cga->mem->set_uint16 = (mem_set_uint16_f) &cga_mem_set_uint16;
-	mem_blk_clear (cga->mem, 0x00);
-
-	cga->reg = mem_blk_new (iobase, 16, 1);
-	cga->reg->ext = cga;
-	cga->reg->set_uint8 = (mem_set_uint8_f) &cga_reg_set_uint8;
-	cga->reg->set_uint16 = (mem_set_uint16_f) &cga_reg_set_uint16;
-	cga->reg->get_uint8 = (mem_get_uint8_f) &cga_reg_get_uint8;
-	cga->reg->get_uint16 = (mem_get_uint16_f) &cga_reg_get_uint16;
-	mem_blk_clear (cga->reg, 0x00);
-
-	cga->trmnew = trm;
-	cga->trmclk = 0;
-	trm_old_init (&cga->trm, cga->trmnew);
-
-	cga->crtc_pos = 0;
-	cga->crtc_ofs = 0;
-
-	cga->clkcnt = 0;
-
-	cga->crs_on = 1;
-
-	cga->pal = 0;
-	cga->palette[0] = 0;
-	cga->palette[1] = 11;
-	cga->palette[2] = 13;
-	cga->palette[3] = 15;
-
-	cga->mode = 0;
-	trm_old_set_mode (&cga->trm, TERM_MODE_TEXT, 80, 25);
-	trm_old_set_size (&cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
-
-	for (i = 0; i < 16; i++) {
-		trm_old_set_map (&cga->trm, i, cga_col[i].r, cga_col[i].g, cga_col[i].b);
-	}
-
-	return (&cga->vid);
+	return (val);
 }
 
-void cga_del (cga_t *cga)
+/*
+ * Get the absolute cursor position
+ */
+unsigned cga_get_cursor (cga_t *cga)
 {
-	if (cga != NULL) {
-		mem_blk_del (cga->mem);
-		mem_blk_del (cga->reg);
-		free (cga);
-	}
+	unsigned val;
+
+	val = cga->reg_crt[CGA_CRTC_PH];
+	val = (val << 8) | cga->reg_crt[CGA_CRTC_PL];
+
+	return (val);
 }
 
-void cga_clock (cga_t *cga, unsigned long cnt)
+/*
+ * Get the on screen cursor position
+ */
+int cga_get_position (cga_t *cga, unsigned *x, unsigned *y)
 {
-	cga->clkcnt += cnt;
+	unsigned pos, ofs;
 
-	cga->trmclk += cnt;
-
-	if (cga->trmclk > 16384) {
-		cga->trmclk = 0;
-		trm_old_update (&cga->trm);
+	if (cga->w == 0) {
+		return (1);
 	}
+
+	pos = cga_get_cursor (cga) & 0x1fff;
+	ofs = cga_get_start (cga) & 0x1fff;
+
+	if ((pos < ofs) || (pos >= (ofs + cga->w * cga->h))) {
+		return (1);
+	}
+
+	*x = (pos - ofs) % cga->w;
+	*y = (pos - ofs) / cga->w;
+
+	return (0);
 }
 
-void cga_prt_state (cga_t *cga, FILE *fp)
+/*
+ * Set the internal palette from the mode and color select registers
+ */
+static
+void cga_set_palette (cga_t *cga)
 {
-	unsigned i;
-	unsigned x, y;
+	unsigned char mode, csel;
 
-	if (cga->crtc_pos < cga->crtc_ofs) {
-		x = 0;
-		y = 0;
+	mode = cga->reg[CGA_MODE];
+	csel = cga->reg[CGA_CSEL];
+
+	cga->pal[0] = csel & 0x0f;
+
+	if (mode & CGA_MODE_CBURST) {
+		cga->pal[1] = 3;
+		cga->pal[2] = 4;
+		cga->pal[3] = 7;
+	}
+	else if (csel & CGA_CSEL_PAL) {
+		cga->pal[1] = 3;
+		cga->pal[2] = 5;
+		cga->pal[3] = 7;
 	}
 	else {
-		x = (cga->crtc_pos - cga->crtc_ofs) % 80;
-		y = (cga->crtc_pos - cga->crtc_ofs) / 80;
+		cga->pal[1] = 2;
+		cga->pal[2] = 4;
+		cga->pal[3] = 6;
 	}
 
-	fprintf (fp, "CGA: MODE=%u  OFS=%04X  POS=%04X[%u/%u]  CRS=%s  BG=%02X  PAL=%u\n",
-		cga->mode, cga->crtc_ofs, cga->crtc_pos, x, y,
-		(cga->crs_on) ? "ON" : "OFF",
-		cga->reg->data[5] & 0x0f, (cga->reg->data[5] >> 5) & 1
-	);
+	if (csel & CGA_CSEL_INT) {
+		cga->pal[1] += 8;
+		cga->pal[2] += 8;
+		cga->pal[3] += 8;
+	}
+}
 
-	fprintf (fp, "REG: 3D8=%02X  3D9=%02X  3DA=%02X  PAL=%u:[%02X %02X %02X %02X]\n",
-		cga->reg->data[4], cga->reg->data[5], cga->reg->data[6],
-		cga->pal, cga->palette[0], cga->palette[1], cga->palette[2], cga->palette[3]
-	);
+/*
+ * Set the internal screen buffer size
+ */
+int cga_set_buf_size (cga_t *cga, unsigned w, unsigned h)
+{
+	unsigned long cnt;
+	unsigned char *tmp;
 
-	fprintf (fp, "CRTC=[%02X", cga->crtc_reg[0]);
-	for (i = 1; i < 18; i++) {
-		if ((i & 7) == 0) {
-			fputs ("-", fp);
+	cnt = 3UL * (unsigned long) w * (unsigned long) h;
+
+	if (cnt > cga->bufmax) {
+		tmp = realloc (cga->buf, cnt);
+		if (tmp == NULL) {
+			return (1);
+		}
+
+		cga->buf = tmp;
+		cga->bufmax = cnt;
+	}
+
+	cga->buf_w = w;
+	cga->buf_h = h;
+
+	return (0);
+}
+
+/*
+ * Draw the cursor in the internal buffer
+ */
+static
+void cga_mode0_update_cursor (cga_t *cga)
+{
+	unsigned            i, j;
+	unsigned            x, y;
+	unsigned            c1, c2;
+	const unsigned char *col;
+	unsigned char       *dst;
+
+	if ((cga->reg_crt[CGA_CRTC_CS] & 0x60) == 0x20) {
+		/* cursor off */
+		return;
+	}
+
+	if (cga_get_position (cga, &x, &y)) {
+		return;
+	}
+
+	c1 = cga->reg_crt[CGA_CRTC_CS] & 0x1f;
+	c2 = cga->reg_crt[CGA_CRTC_CE] & 0x1f;
+
+	if (c1 >= cga->ch) {
+		return;
+	}
+
+	if (c2 >= cga->ch) {
+		c2 = cga->ch - 1;
+	}
+
+	col = cga_rgb[cga->mem[2 * (cga->w * y + x) + 1] & 0x0f];
+	dst = cga->buf + 3 * 8 * (cga->w * (cga->ch * y + c1) + x);
+
+	for (j = c1; j <= c2; j++) {
+		for (i = 0; i < 8; i++) {
+			dst[3 * i + 0] = col[0];
+			dst[3 * i + 1] = col[1];
+			dst[3 * i + 2] = col[2];
+		}
+		dst += 3 * 8 * cga->w;
+	}
+}
+
+/*
+ * Draw a character in the internal buffer
+ */
+static
+void cga_mode0_update_char (cga_t *cga,
+	unsigned char *dst, unsigned char c, unsigned char a)
+{
+	unsigned            i, j;
+	const unsigned char *fnt;
+	const unsigned char *fg, *bg;
+
+	if (cga->reg[CGA_MODE] & CGA_MODE_BLINK) {
+		/* blinking is not supported */
+
+		if ((cga->reg[CGA_CSEL] & CGA_CSEL_INT) == 0) {
+			a |= 0x80;
 		}
 		else {
-			fputs (" ", fp);
+			a &= 0x7f;
 		}
-		fprintf (fp, "%02X", cga->crtc_reg[i]);
-	}
-	fputs ("]\n", fp);
-
-	fflush (fp);
-}
-
-int cga_dump (cga_t *cga, FILE *fp)
-{
-	fprintf (fp, "# CGA dump\n");
-
-	fprintf (fp, "\n# REGS:\n");
-	pce_dump_hex (fp,
-		mem_blk_get_data (cga->reg),
-		mem_blk_get_size (cga->reg),
-		mem_blk_get_addr (cga->reg),
-		16, "# ", 0
-	);
-
-	fprintf (fp, "\n# CRTC:\n");
-	pce_dump_hex (fp, cga->crtc_reg, 18, 0, 16, "# ", 0);
-
-	fputs ("\n\n# RAM:\n", fp);
-	pce_dump_hex (fp,
-		mem_blk_get_data (cga->mem),
-		mem_blk_get_size (cga->mem),
-		mem_blk_get_addr (cga->mem),
-		16, "", 1
-	);
-
-	return (0);
-}
-
-mem_blk_t *cga_get_mem (cga_t *cga)
-{
-	return (cga->mem);
-}
-
-mem_blk_t *cga_get_reg (cga_t *cga)
-{
-	return (cga->reg);
-}
-
-
-/*****************************************************************************
- * mode 0 (text 80 * 25)
- *****************************************************************************/
-
-static
-int cga_mode0_screenshot (cga_t *cga, FILE *fp)
-{
-	unsigned i;
-	unsigned x, y;
-
-	i = (cga->crtc_ofs << 1) & 0x3fff;
-
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fputc (cga->mem->data[i], fp);
-			i = (i + 2) & 0x7fff;
-		}
-
-		fputs ("\n", fp);
 	}
 
-	return (0);
+	fg = cga_rgb[a & 0x0f];
+	bg = cga_rgb[(a >> 4) & 0x0f];
+
+	for (j = 0; j < cga->ch; j++) {
+		fnt = cga->font + 8 * c + (j & 7);
+
+		for (i = 0; i < 8; i++) {
+			if (*fnt & (0x80 >> i)) {
+				dst[3 * i + 0] = fg[0];
+				dst[3 * i + 1] = fg[1];
+				dst[3 * i + 2] = fg[2];
+			}
+			else {
+				dst[3 * i + 0] = bg[0];
+				dst[3 * i + 1] = bg[1];
+				dst[3 * i + 2] = bg[2];
+			}
+		}
+
+		dst += (3 * 8 * cga->w);
+	}
 }
 
+/*
+ * Update mode 0 (text 80 * 25 * 16)
+ */
 static
 void cga_mode0_update (cga_t *cga)
 {
-	unsigned i;
-	unsigned x, y;
-	unsigned fg, bg;
+	unsigned            x, y;
+	unsigned            ofs;
+	const unsigned char *src;
+	unsigned char       *dst;
 
-	i = (cga->crtc_ofs << 1) & 0x3fff;
-
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fg = cga->mem->data[i + 1] & 0x0f;
-			bg = (cga->mem->data[i + 1] & 0xf0) >> 4;
-
-			trm_old_set_col (&cga->trm, fg, bg);
-			trm_old_set_chr (&cga->trm, x, y, cga->mem->data[i]);
-
-			i = (i + 2) & 0x3fff;
-		}
-	}
-}
-
-void cga_mode0_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
-
-	if (cga->mem->data[addr] == val) {
+	if (cga_set_buf_size (cga, 8 * cga->w, cga->ch * cga->h)) {
 		return;
 	}
 
-	cga->mem->data[addr] = val;
+	src = cga->mem;
+	ofs = (2 * cga_get_start (cga)) & 0x3ffe;
 
-	if (addr & 1) {
-		c = cga->mem->data[addr - 1];
-		a = val;
-	}
-	else {
-		c = val;
-		a = cga->mem->data[addr + 1];
-	}
+	for (y = 0; y < cga->h; y++) {
+		dst = cga->buf + 3 * (8 * cga->w) * (cga->ch * y);
 
-	if (addr < (cga->crtc_ofs << 1)) {
-		return;
-	}
+		for (x = 0; x < cga->w; x++) {
+			cga_mode0_update_char (cga,
+				dst + 3 * 8 * x, src[ofs], src[ofs + 1]
+			);
 
-	addr -= (cga->crtc_ofs << 1);
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	trm_old_set_col (&cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-	trm_old_set_chr (&cga->trm, x, y, c);
-}
-
-void cga_mode0_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
-
-	if (addr & 1) {
-		cga_mem_set_uint8 (cga, addr, val & 0xff);
-		cga_mem_set_uint8 (cga, addr + 1, (val >> 8) & 0xff);
-		return;
-	}
-
-	c = val & 0xff;
-	a = (val >> 8) & 0xff;
-
-	if ((cga->mem->data[addr] == c) && (cga->mem->data[addr + 1] == a)) {
-		return;
-	}
-
-	cga->mem->data[addr] = c;
-	cga->mem->data[addr + 1] = a;
-
-	if (addr < (cga->crtc_ofs << 1)) {
-		return;
-	}
-
-	addr -= (cga->crtc_ofs << 1);
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	trm_old_set_col (&cga->trm, a & 0x0f, (a & 0xf0) >> 4);
-	trm_old_set_chr (&cga->trm, x, y, c);
-}
-
-
-/*****************************************************************************
- * mode 1 (graphics 320 * 200 * 4)
- *****************************************************************************/
-
-static
-int cga_mode1_screenshot (cga_t *cga, FILE *fp)
-{
-	unsigned      x, y, i;
-	unsigned      val, idx;
-	unsigned char *mem;
-
-	fputs ("P6\n320 200\n255 ", fp);
-
-	for (y = 0; y < 200; y++) {
-		mem = cga->mem->data + 80 * (y / 2);
-
-		if (y & 1) {
-			mem += 8192;
-		}
-
-		for (x = 0; x < 80; x++) {
-			val = mem[x];
-
-			for (i = 0; i < 4; i++) {
-				idx = (val >> 6) & 0x03;
-				idx = cga->palette[idx];
-				fputc (cga_col[idx].r >> 8, fp);
-				fputc (cga_col[idx].g >> 8, fp);
-				fputc (cga_col[idx].b >> 8, fp);
-
-				val <<= 2;
-			}
+			ofs = (ofs + 2) & 0x3ffe;
 		}
 	}
 
-	return (0);
+	cga_mode0_update_cursor (cga);
 }
 
+
+/*
+ * Update mode 1 (graphics 320 * 200 * 4)
+ */
 static
 void cga_mode1_update (cga_t *cga)
 {
-	unsigned      x, y, i;
-	unsigned      val0, val1;
-	unsigned char *mem0, *mem1;
+	unsigned            i, x, y, w, h;
+	unsigned            val, idx;
+	unsigned char       *dst;
+	const unsigned char *col;
+	const unsigned char *mem[2];
 
-	mem0 = cga->mem->data;
-	mem1 = cga->mem->data + 8192;
+	if (cga_set_buf_size (cga, 8 * cga->w, 2 * cga->h)) {
+		return;
+	}
 
-	for (y = 0; y < 100; y++) {
-		for (x = 0; x < 80; x++) {
-			val0 = mem0[x];
-			val1 = mem1[x];
+	mem[0] = cga->mem;
+	mem[1] = cga->mem + 8192;
+
+	dst = cga->buf;
+
+	w = 2 * cga->w;
+	h = 2 * cga->h;
+
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			val = mem[y & 1][x];
 
 			for (i = 0; i < 4; i++) {
-				trm_old_set_col (&cga->trm, cga->palette[(val0 >> 6) & 0x03], 0);
-				trm_old_set_pxl (&cga->trm, 4 * x + i, 2 * y);
+				idx = (val >> 6) & 3;
+				idx = cga->pal[idx];
+				col = cga_rgb[idx];
+				val = (val << 2) & 0xff;
 
-				trm_old_set_col (&cga->trm, cga->palette[(val1 >> 6) & 0x03], 0);
-				trm_old_set_pxl (&cga->trm, 4 * x + i, 2 * y + 1);
+				dst[0] = col[0];
+				dst[1] = col[1];
+				dst[2] = col[2];
 
-				val0 <<= 2;
-				val1 <<= 2;
+				dst += 3;
 			}
 		}
 
-		mem0 += 80;
-		mem1 += 80;
+		mem[y & 1] += w;
 	}
 }
 
-void cga_mode1_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-	unsigned      i;
-	unsigned      x, y;
-	unsigned char old;
-
-	old = cga->mem->data[addr];
-
-	if (old == val) {
-		return;
-	}
-
-	cga->mem->data[addr] = val;
-
-	if (addr < 8192) {
-		x = 4 * (addr % 80);
-		y = 2 * (addr / 80);
-	}
-	else {
-		x = 4 * ((addr - 8192) % 80);
-		y = 2 * ((addr - 8192) / 80) + 1;
-	}
-
-	if (y >= 200) {
-		return;
-	}
-
-	for (i = 0; i < 4; i++) {
-		unsigned col;
-
-		if ((old ^ val) & 0xc0) {
-			col = (val >> 6) & 0x03;
-			trm_old_set_col (&cga->trm, cga->palette[col], 0);
-
-			trm_old_set_pxl (&cga->trm, x + i, y);
-		}
-
-		old <<= 2;
-		val <<= 2;
-	}
-}
-
-
-/*****************************************************************************
- * mode 2 (graphics 620 * 200 * 2)
- *****************************************************************************/
-
-static
-int cga_mode2_screenshot (cga_t *cga, FILE *fp)
-{
-	unsigned      x, y, i;
-	unsigned      val;
-	unsigned char *mem;
-
-	fputs ("P5\n640 200\n255 ", fp);
-
-	for (y = 0; y < 200; y++) {
-		mem = cga->mem->data + 80 * (y / 2);
-
-		if (y & 1) {
-			mem += 8192;
-		}
-
-		for (x = 0; x < 80; x++) {
-			val = mem[x];
-
-			for (i = 0; i < 8; i++) {
-				if (val & (0x80 >> i)) {
-					fputc (0xff, fp);
-				}
-				else {
-					fputc (0x00, fp);
-				}
-			}
-		}
-	}
-
-	return (0);
-}
-
+/*
+ * Update mode 2 (graphics 640 * 200 * 2)
+ */
 static
 void cga_mode2_update (cga_t *cga)
 {
-	unsigned      x, y, i;
-	unsigned      val0, val1;
-	unsigned char *mem0, *mem1;
+	unsigned            i, x, y, w, h;
+	unsigned            val, idx;
+	unsigned char       *dst;
+	const unsigned char *col;
+	const unsigned char *mem[2];
 
-	mem0 = cga->mem->data;
-	mem1 = cga->mem->data + 8192;
+	if (cga_set_buf_size (cga, 16 * cga->w, 2 * cga->h)) {
+		return;
+	}
 
-	for (y = 0; y < 100; y++) {
-		for (x = 0; x < 80; x++) {
-			val0 = mem0[x];
-			val1 = mem1[x];
+	mem[0] = cga->mem;
+	mem[1] = cga->mem + 8192;
+
+	dst = cga->buf;
+
+	h = 2 * cga->h;
+	w = 2 * cga->w;
+
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			val = mem[y & 1][x];
 
 			for (i = 0; i < 8; i++) {
-				trm_old_set_col (&cga->trm, (val0 & 0x80) ? 15 : 0, 0);
-				trm_old_set_pxl (&cga->trm, 8 * x + i, 2 * y);
+				idx = (val & 0x80) ? cga->pal[0] : 0;
+				col = cga_rgb[idx];
+				val = (val << 1) & 0xff;
 
-				trm_old_set_col (&cga->trm, (val1 & 0x80) ? 15 : 0, 0);
-				trm_old_set_pxl (&cga->trm, 8 * x + i, 2 * y + 1);
+				dst[0] = col[0];
+				dst[1] = col[1];
+				dst[2] = col[2];
 
-				val0 <<= 1;
-				val1 <<= 1;
+				dst += 3;
 			}
 		}
 
-		mem0 += 80;
-		mem1 += 80;
+		mem[y & 1] += w;
 	}
 }
 
-void cga_mode2_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+/*
+ * Create the composite mode color lookup table
+ *
+ * This is adapted from DOSBox
+ */
+static
+void cga_make_comp_tab (cga_t *cga)
 {
-	unsigned      i;
-	unsigned      x, y;
-	unsigned char old;
+	unsigned            i, j;
+	double              Y, I, Q, t;
+	double              r, g, b;
+	double              hue, sat, lum;
+	double              hv, sh, ch;
+	const unsigned char *src;
+	unsigned char       *dst;
 
-	old = cga->mem->data[addr];
+	if (cga->comp_tab == NULL) {
+		cga->comp_tab = malloc (5 * 16 * 3);
+	}
 
-	if (old == val) {
+	hue = 0.0;
+	sat = 2.0 / 3.0;
+	lum = 1.0;
+
+	if (cga->reg[CGA_CSEL] & CGA_CSEL_PAL) {
+		hv = 35.0;
+	}
+	else {
+		hv = 50.0;
+	}
+
+	hv = (hv + hue) * 0.017453292519943295474;
+	sh = sin (hv);
+	ch = cos (hv);
+
+	src = cga_rgb[cga->reg[CGA_CSEL] & 0x0f];
+
+	for (i = 0; i < 16; i++) {
+		I = ((i & 0x08) ? 1.0 : 0.0) - ((i & 0x02) ? 1.0 : 0.0);
+		Q = ((i & 0x04) ? 1.0 : 0.0) - ((i & 0x01) ? 1.0 : 0.0);
+
+		I = sat * (0.5 * I);
+		Q = sat * (0.5 * Q);
+
+		t = ch * I + sh * Q;
+		Q = ch * Q - sh * I;
+		I = t;
+
+		for (j = 0; j < 5; j++) {
+			Y = lum * (double) j / 4.0;
+
+			r = Y + 0.956 * I + 0.621 * Q;
+			g = Y - 0.272 * I - 0.647 * Q;
+			b = Y - 1.105 * I + 1.702 * Q;
+
+			r = (r < 0.0) ? 0.0 : ((r > 1.0) ? 1.0 : r);
+			g = (g < 0.0) ? 0.0 : ((g > 1.0) ? 1.0 : g);
+			b = (b < 0.0) ? 0.0 : ((b > 1.0) ? 1.0 : b);
+
+			dst = cga->comp_tab + 3 * (16 * j + i);
+
+			dst[0] = (unsigned char) (src[0] * r);
+			dst[1] = (unsigned char) (src[1] * g);
+			dst[2] = (unsigned char) (src[2] * b);
+		}
+	}
+
+	cga->comp_tab_ok = 1;
+}
+
+/*
+ * Update mode 2 (graphics 640 * 200 * 2) for composite
+ */
+static
+void cga_mode2c_update (cga_t *cga)
+{
+	unsigned            x, y, w, h, n;
+	unsigned            avgmsk, avgval, pat;
+	const unsigned char *mem[2];
+	const unsigned char *src, *col;
+	unsigned char       *dst;
+
+	if (cga->comp_tab_ok == 0) {
+		cga_make_comp_tab (cga);
+	}
+
+	if (cga_set_buf_size (cga, 16 * cga->w, 2 * cga->h)) {
 		return;
 	}
 
-	cga->mem->data[addr] = val;
+	mem[0] = cga->mem;
+	mem[1] = cga->mem + 8192;
 
-	if (addr < 8192) {
-		x = 8 * (addr % 80);
-		y = 2 * (addr / 80);
-	}
-	else {
-		x = 8 * ((addr - 8192) % 80);
-		y = 2 * ((addr - 8192) / 80) + 1;
-	}
+	dst = cga->buf;
 
-	for (i = 0; i < 8; i++) {
-		unsigned col;
+	h = 2 * cga->h;
+	w = 2 * cga->w;
 
-		if ((old ^ val) & 0x80) {
-			col = (val >> 7) & 0x01;
-			trm_old_set_col (&cga->trm, col ? 15 : 0, 0);
-			trm_old_set_pxl (&cga->trm, x + i, y);
+	for (y = 0; y < h; y++) {
+		src = mem[y & 1];
+
+		avgmsk = (src[0] >> 7) & 1;
+		avgval = avgmsk;
+
+		for (x = 0; x < (8 * w); x++) {
+			if ((x & 3) == 0) {
+				if ((x & 7) == 0) {
+					pat = src[x >> 3];
+					pat = (pat << 4) | ((pat >> 4) & 0x0f);
+				}
+				else {
+					pat = pat >> 4;
+				}
+			}
+
+			avgval = avgval - ((avgmsk >> 3) & 1);
+			avgmsk = avgmsk << 1;
+
+			n = x + 1;
+
+			if (n < (8 * w)) {
+				if (src[n >> 3] & (0x80 >> (n & 7))) {
+					avgmsk |= 1;
+					avgval += 1;
+				}
+			}
+
+			col = cga->comp_tab + 3 * (16 * avgval + (pat & 0x0f));
+
+			dst[0] = col[0];
+			dst[1] = col[1];
+			dst[2] = col[2];
+
+			dst += 3;
 		}
 
-		old <<= 1;
-		val <<= 1;
+		mem[y & 1] += w;
 	}
 }
 
-
-int cga_screenshot (cga_t *cga, FILE *fp, unsigned mode)
+/*
+ * Update the internal screen buffer when the screen is blank
+ */
+static
+void cga_update_blank (cga_t *cga)
 {
-	if ((cga->mode == 0) && ((mode == 1) || (mode == 0))) {
-		return (cga_mode0_screenshot (cga, fp));
-	}
-	else if ((cga->mode == 1) && ((mode == 2) || (mode == 0))) {
-		return (cga_mode1_screenshot (cga, fp));
-	}
-	else if ((cga->mode == 2) && ((mode == 2) || (mode == 0))) {
-		return (cga_mode2_screenshot (cga, fp));
-	}
+	unsigned long x, y;
+	int           fx, fy;
+	unsigned char *dst;
 
-	return (1);
+	cga_set_buf_size (cga, 640, 200);
+
+	dst = cga->buf;
+
+	for (y = 0; y < cga->buf_h; y++) {
+		fy = (y % 16) < 8;
+
+		for (x = 0; x < cga->buf_w; x++) {
+			fx = (x % 16) < 8;
+
+			dst[0] = (fx != fy) ? 0x20 : 0x00;
+			dst[1] = dst[0];
+			dst[2] = dst[0];
+
+			dst += 3;
+		}
+	}
 }
 
+/*
+ * Update the internal screen buffer
+ */
 void cga_update (cga_t *cga)
 {
-	switch (cga->mode) {
-		case 0:
-			cga_mode0_update (cga);
-			break;
+	unsigned char mode;
 
-		case 1:
+	cga->buf_w = 0;
+	cga->buf_h = 0;
+
+	mode = cga->reg[CGA_MODE];
+
+	if ((mode & CGA_MODE_ENABLE) == 0) {
+		cga_update_blank (cga);
+	}
+	else if (mode & CGA_MODE_G320) {
+		if (mode & CGA_MODE_G640) {
+			if ((mode & CGA_MODE_CBURST) == 0) {
+				cga_mode2c_update (cga);
+			}
+			else {
+				cga_mode2_update (cga);
+			}
+		}
+		else {
 			cga_mode1_update (cga);
-			break;
-
-		case 2:
-			cga_mode2_update (cga);
-			break;
-	}
-}
-
-void cga_set_pos (cga_t *cga, unsigned pos)
-{
-	cga->crtc_pos = pos;
-
-	if (cga->mode == 0) {
-		if (pos < cga->crtc_ofs) {
-			return;
 		}
-
-		pos -= cga->crtc_ofs;
-
-		if (pos >= 2000) {
-			return;
-		}
-
-		trm_old_set_pos (&cga->trm, pos % 80, pos / 80);
-	}
-}
-
-void cga_set_crs (cga_t *cga, unsigned y1, unsigned y2)
-{
-	if (cga->mode == 0) {
-		if ((y1 & 0x60) == 0x20) {
-			/* cursor off */
-			trm_old_set_crs (&cga->trm, 0, 0, 0);
-			return;
-		}
-
-		y1 &= 0x1f;
-		y2 &= 0x1f;
-
-		if ((y2 < y1) || (y2 > 7)) {
-			y2 = 7;
-		}
-
-		y1 = (y1 << 5) | (y1 << 2) | (y1 >> 1);
-		y2 = (y2 << 5) | (y2 << 2) | (y2 >> 1);
-
-		trm_old_set_crs (&cga->trm, y1, y2, 1);
-	}
-}
-
-void cga_set_page_ofs (cga_t *cga, unsigned ofs)
-{
-	if (cga->crtc_ofs == ofs) {
-		return;
-	}
-
-	cga->crtc_ofs = ofs;
-
-	if (cga->mode == 0) {
-		cga_update (cga);
-	}
-}
-
-void cga_set_palette (cga_t *cga, unsigned pal, unsigned char bg)
-{
-	pal &= 1;
-
-	if (pal == cga->pal) {
-		return;
-	}
-
-	cga->pal = pal;
-
-	switch (pal & 1) {
-		case 0:
-			cga->palette[0] = bg;
-			cga->palette[1] = 8;
-			cga->palette[2] = 13;
-			cga->palette[3] = 15;
-			break;
-
-		case 1:
-			cga->palette[0] = bg;
-			cga->palette[1] = 10;
-			cga->palette[2] = 12;
-			cga->palette[3] = 14;
-			break;
-	}
-
-	cga_update (cga);
-}
-
-void cga_set_mode (cga_t *cga, unsigned char mode)
-{
-	unsigned newmode;
-
-	if ((mode & 0x02) == 0) {
-		newmode = 0;
-	}
-	else if ((mode & 0x10) == 0) {
-		newmode = 1;
 	}
 	else {
-		newmode = 2;
-	}
-
-	if (newmode == cga->mode) {
-		return;
-	}
-
-	cga->mode = newmode;
-
-	switch (newmode) {
-		case 0:
-			trm_old_set_mode (&cga->trm, TERM_MODE_TEXT, 80, 25);
-			trm_old_set_size (&cga->trm, cga->mode_80x25_w, cga->mode_80x25_h);
-			break;
-
-		case 1:
-			trm_old_set_mode (&cga->trm, TERM_MODE_GRAPH, 320, 200);
-			trm_old_set_size (&cga->trm, cga->mode_320x200_w, cga->mode_320x200_h);
-			break;
-
-		case 2:
-			trm_old_set_mode (&cga->trm, TERM_MODE_GRAPH, 640, 200);
-			trm_old_set_size (&cga->trm, cga->mode_640x200_w, cga->mode_640x200_h);
-			break;
-	}
-
-	cga_update (cga);
-}
-
-void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
-{
-	switch (cga->mode) {
-		case 0:
-			cga_mode0_set_uint8 (cga, addr, val);
-			break;
-
-		case 1:
-			cga_mode1_set_uint8 (cga, addr, val);
-			break;
-
-		case 2:
-			cga_mode2_set_uint8 (cga, addr, val);
-			break;
+		cga_mode0_update (cga);
 	}
 }
 
-void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
-{
-	switch (cga->mode) {
-		case 0:
-			cga_mode0_set_uint16 (cga, addr, val);
-			break;
 
-		case 1:
-			cga_mode1_set_uint8 (cga, addr, val);
-			cga_mode1_set_uint8 (cga, addr + 1, val >> 8);
-			break;
-
-		case 2:
-			cga_mode2_set_uint8 (cga, addr, val);
-			cga_mode2_set_uint8 (cga, addr + 1, val >> 8);
-			break;
-	}
-}
-
-void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
-{
-	if (reg > 17) {
-		return;
-	}
-
-	cga->crtc_reg[reg] = val;
-
-	switch (reg) {
-		case 0x0a:
-		case 0x0b:
-			cga_set_crs (cga, cga->crtc_reg[0x0a], cga->crtc_reg[0x0b]);
-			break;
-
-		case 0x0c:
-			cga_set_page_ofs (cga, (cga->crtc_reg[0x0c] << 8) | val);
-			break;
-
-		case 0x0d:
-			cga_set_page_ofs (cga, (cga->crtc_reg[0x0c] << 8) | val);
-			break;
-
-		case 0x0e:
-/*      cga_set_pos (cga, (val << 8) | (cga->crtc_reg[0x0f] & 0xff)); */
-			break;
-
-		case 0x0f:
-			cga_set_pos (cga, (cga->crtc_reg[0x0e] << 8) | val);
-			break;
-	}
-}
-
+/*
+ * Get a CRTC register
+ */
+static
 unsigned char cga_crtc_get_reg (cga_t *cga, unsigned reg)
 {
-	if (reg > 15) {
+	if ((reg < 12) || (reg > 17)) {
 		return (0xff);
 	}
 
-	return (cga->crtc_reg[reg]);
+	return (cga->reg_crt[reg]);
 }
 
-void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+/*
+ * Set a CRTC register
+ */
+static
+void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
 {
-	cga->reg->data[addr] = val;
-
-	switch (addr) {
-		case 0x01:
-			cga_crtc_set_reg (cga, cga->reg->data[0], val);
-			break;
-
-		case 0x04:
-			cga_set_mode (cga, val);
-			break;
-
-		case 0x05:
-			cga_set_palette (cga, (val >> 5) ^ 1, val & 0x0f);
-			break;
+	if (reg > 15) {
+		return;
 	}
+
+	if (cga->reg_crt[reg] == val) {
+		return;
+	}
+
+	cga->reg_crt[reg] = val;
+
+	cga->ch = (cga->reg_crt[CGA_CRTC_MS] & 0x1f) + 1;
+	cga->w = cga->reg_crt[CGA_CRTC_HD];
+	cga->h = cga->reg_crt[CGA_CRTC_VD];
+
+	cga->hsync = (CGA_IFREQ * 8 * cga->reg_crt[CGA_CRTC_HS]) / CGA_PFREQ;
+	cga->vsync = (CGA_IFREQ * cga->ch * cga->reg_crt[CGA_CRTC_VS]) / CGA_HFREQ;
+
+	cga->update_state |= 1;
 }
 
-void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
+
+/*
+ * Get the CRTC index register
+ */
+static
+unsigned char cga_get_crtc_index (cga_t *cga)
 {
-	cga_reg_set_uint8 (cga, addr, val & 0xff);
-
-	if ((addr + 1) < cga->reg->size) {
-		cga_reg_set_uint8 (cga, addr + 1, val >> 8);
-	}
+	return (cga->reg[CGA_CRTC_INDEX]);
 }
 
+/*
+ * Get the CRTC data register
+ */
+static
+unsigned char cga_get_crtc_data (cga_t *cga)
+{
+	return (cga_crtc_get_reg (cga, cga->reg[CGA_CRTC_INDEX]));
+}
+
+/*
+ * Get the status register
+ */
+static
+unsigned char cga_get_status (cga_t *cga)
+{
+	unsigned char val;
+
+	val = cga->reg[CGA_STATUS];
+
+	if ((cga->video.dotclk[0] % (CGA_IFREQ / CGA_VFREQ)) < cga->vsync) {
+		val &= ~(CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
+	}
+	else {
+		val |= (CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
+	}
+
+	if ((cga->video.dotclk[0] % (CGA_IFREQ / CGA_HFREQ)) >= cga->hsync) {
+		val |= CGA_STATUS_SYNC;
+	}
+
+	return (val);
+}
+
+/*
+ * Set the CRTC index register
+ */
+static
+void cga_set_crtc_index (cga_t *cga, unsigned char val)
+{
+	cga->reg[CGA_CRTC_INDEX] = val & 0x1f;
+}
+
+/*
+ * Set the CRTC data register
+ */
+static
+void cga_set_crtc_data (cga_t *cga, unsigned char val)
+{
+	cga->reg[CGA_CRTC_DATA] = val;
+
+	cga_crtc_set_reg (cga, cga->reg[CGA_CRTC_INDEX], val);
+}
+
+/*
+ * Set the mode register
+ */
+static
+void cga_set_mode (cga_t *cga, unsigned char val)
+{
+	cga->reg[CGA_MODE] = val;
+
+	cga_set_palette (cga);
+
+	cga->update_state |= 1;
+}
+
+/*
+ * Set the color select register
+ */
+static
+void cga_set_color_select (cga_t *cga, unsigned char val)
+{
+	cga->reg[CGA_CSEL] = val;
+
+	cga_set_palette (cga);
+
+	cga->update_state |= 1;
+}
+
+/*
+ * Get a CGA register
+ */
 unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
 {
 	switch (addr) {
-		case 0x00:
-			return (cga->reg->data[0]);
+	case CGA_CRTC_INDEX:
+		return (cga_get_crtc_index (cga));
 
-		case 0x01:
-			return (cga_crtc_get_reg (cga, cga->reg->data[0]));
+	case CGA_CRTC_DATA:
+		return (cga_get_crtc_data (cga));
 
-		case 0x06:
-			/* p freq: 14.31818 MHz
-				 h freq: 15.750 KHz
-				 v freq: 60 Hz
-				 912 / 14.31818e6 * 1e6 = 63.6952
-				 640 / 14.31818e6 * 1e6 = 44.6984
-				 262 / 15.75e3 * 1e6 = 16634.9206
-				 200 / 15.75e3 * 1e6 = 12698.4127
-			 */
-			if ((cga->clkcnt % 16635) < 12699) {
-				cga->reg->data[6] &= ~0x08;
-
-				if ((cga->clkcnt % 64) < 45) {
-					cga->reg->data[6] |= 0x01;
-				}
-				else {
-					cga->reg->data[6] &= ~0x01;
-				}
-			}
-			else {
-				cga->reg->data[6] |= 0x08;
-				cga->reg->data[6] |= 0x01;
-			}
-
-			return (cga->reg->data[6]);
-
-		default:
-			return (0xff);
+	case CGA_STATUS:
+		return (cga_get_status (cga));
 	}
+
+	return (0xff);
 }
 
 unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr)
@@ -890,9 +785,307 @@ unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr)
 
 	ret = cga_reg_get_uint8 (cga, addr);
 
-	if ((addr + 1) < cga->reg->size) {
+	if ((addr + 1) < cga->regblk->size) {
 		ret |= cga_reg_get_uint8 (cga, addr + 1) << 8;
 	}
 
 	return (ret);
+}
+
+/*
+ * Set a CGA register
+ */
+void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+{
+	switch (addr) {
+	case CGA_CRTC_INDEX:
+		cga_set_crtc_index (cga, val);
+		break;
+
+	case CGA_CRTC_DATA:
+		cga_set_crtc_data (cga, val);
+		break;
+
+	case CGA_MODE:
+		cga_set_mode (cga, val);
+		break;
+
+	case CGA_CSEL:
+		cga_set_color_select (cga, val);
+		break;
+
+	case CGA_PEN_RESET:
+		cga->reg[CGA_STATUS] &= ~CGA_STATUS_PEN;
+		break;
+
+	case CGA_PEN_SET:
+		cga->reg[CGA_STATUS] |= CGA_STATUS_PEN;
+		break;
+
+	default:
+		cga->reg[addr] = val;
+		break;
+	}
+}
+
+void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
+{
+	cga_reg_set_uint8 (cga, addr, val & 0xff);
+
+	if ((addr + 1) < cga->regblk->size) {
+		cga_reg_set_uint8 (cga, addr + 1, val >> 8);
+	}
+}
+
+
+static
+void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
+{
+	if (cga->mem[addr] == val) {
+		return;
+	}
+
+	cga->mem[addr] = val;
+
+	cga->update_state |= 1;
+}
+
+static
+void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
+{
+	cga_mem_set_uint8 (cga, addr, val & 0xff);
+
+	if ((addr + 1) < cga->memblk->size) {
+		cga_mem_set_uint8 (cga, addr + 1, (val >> 8) & 0xff);
+	}
+}
+
+
+static
+int cga_set_msg (cga_t *cga, const char *msg, const char *val)
+{
+	return (1);
+}
+
+static
+void cga_set_terminal (cga_t *cga, terminal_t *trm)
+{
+	cga->term = trm;
+
+	if (cga->term != NULL) {
+		trm_open (cga->term, 640, 200);
+	}
+}
+
+static
+mem_blk_t *cga_get_mem (cga_t *cga)
+{
+	return (cga->memblk);
+}
+
+static
+mem_blk_t *cga_get_reg (cga_t *cga)
+{
+	return (cga->regblk);
+}
+
+static
+void cga_print_info (cga_t *cga, FILE *fp)
+{
+	unsigned i;
+
+	fprintf (fp, "DEV: CGA\n");
+
+	fprintf (fp, "CGA: OFS=%04X  POS=%04X  BG=%02X  PAL=%u\n",
+		cga_get_start (cga),
+		cga_get_cursor (cga),
+		cga->reg[CGA_CSEL] & 0x0f,
+		(cga->reg[CGA_CSEL] >> 5) & 1
+	);
+
+	fprintf (fp,
+		"REG: MODE=%02X  CSEL=%02X  STATUS=%02X"
+		"  PAL=[%02X %02X %02X %02X]\n",
+		cga->reg[CGA_MODE],
+		cga->reg[CGA_CSEL],
+		cga->reg[CGA_STATUS],
+		cga->pal[0], cga->pal[1], cga->pal[2], cga->pal[3]
+	);
+
+	fprintf (fp, "CRTC=[%02X", cga->reg_crt[0]);
+	for (i = 1; i < 18; i++) {
+		fputs ((i & 7) ? " " : "-", fp);
+		fprintf (fp, "%02X", cga->reg_crt[i]);
+	}
+	fputs ("]\n", fp);
+
+	fflush (fp);
+}
+
+/*
+ * Force a screen update
+ */
+static
+void cga_redraw (cga_t *cga)
+{
+	cga->update_state |= 1;
+}
+
+static
+void cga_clock (cga_t *cga, unsigned long cnt)
+{
+	cga->video.dotclk[0] %= (CGA_IFREQ / CGA_VFREQ);
+
+	if ((cga->w == 0) || (cga->h == 0)) {
+		return;
+	}
+
+	if (cga->video.dotclk[0] < cga->vsync) {
+		cga->update_state &= ~2;
+		return;
+	}
+
+	if ((cga->update_state & 3) != 1) {
+		if (cga->term != NULL) {
+			trm_update (cga->term);
+		}
+		return;
+	}
+
+	/* vertical retrace started */
+
+	if (cga->term != NULL) {
+		cga->update (cga);
+
+		trm_set_size (cga->term, cga->buf_w, cga->buf_h);
+		trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
+		trm_update (cga->term);
+	}
+
+	cga->update_state = 2;
+}
+
+void cga_free (cga_t *cga)
+{
+	mem_blk_del (cga->memblk);
+	mem_blk_del (cga->regblk);
+	free (cga->comp_tab);
+}
+
+void cga_del (cga_t *cga)
+{
+	if (cga != NULL) {
+		cga_free (cga);
+		free (cga);
+	}
+}
+
+void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long size)
+{
+	unsigned i;
+
+	pce_video_init (&cga->video);
+
+	cga->video.ext = cga;
+	cga->video.del = (void *) cga_del;
+	cga->video.set_msg = (void *) cga_set_msg;
+	cga->video.set_terminal = (void *) cga_set_terminal;
+	cga->video.get_mem = (void *) cga_get_mem;
+	cga->video.get_reg = (void *) cga_get_reg;
+	cga->video.print_info = (void *) cga_print_info;
+	cga->video.redraw = (void *) cga_redraw;
+	cga->video.clock = (void *) cga_clock;
+
+	cga->ext = NULL;
+	cga->update = cga_update;
+
+	size = (size < 16384) ? 16384UL : size;
+
+	cga->memblk = mem_blk_new (addr, size, 1);
+	cga->memblk->ext = cga;
+	cga->memblk->set_uint8 = (void *) cga_mem_set_uint8;
+	cga->memblk->set_uint16 = (void *) &cga_mem_set_uint16;
+	cga->mem = cga->memblk->data;
+	mem_blk_clear (cga->memblk, 0x00);
+
+	cga->regblk = mem_blk_new (io, 16, 1);
+	cga->regblk->ext = cga;
+	cga->regblk->set_uint8 = (void *) cga_reg_set_uint8;
+	cga->regblk->set_uint16 = (void *) cga_reg_set_uint16;
+	cga->regblk->get_uint8 = (void *) cga_reg_get_uint8;
+	cga->regblk->get_uint16 = (void *) cga_reg_get_uint16;
+	cga->reg = cga->regblk->data;
+	mem_blk_clear (cga->regblk, 0x00);
+
+	cga->term = NULL;
+
+	for (i = 0; i < 18; i++) {
+		cga->reg_crt[i] = 0;
+	}
+
+	cga->pal[0] = 0;
+	cga->pal[1] = 11;
+	cga->pal[2] = 13;
+	cga->pal[3] = 15;
+
+	cga->font = cga_font_thick;
+
+	cga->comp_tab_ok = 0;
+	cga->comp_tab = NULL;
+
+	cga->w = 0;
+	cga->h = 0;
+	cga->ch = 0;
+	cga->hsync = 0;
+	cga->vsync = 0;
+
+	cga->bufmax = 0;
+	cga->buf = NULL;
+
+	cga->update_state = 0;
+}
+
+cga_t *cga_new (unsigned long io, unsigned long addr, unsigned long size)
+{
+	cga_t *cga;
+
+	cga = malloc (sizeof (cga_t));
+	if (cga == NULL) {
+		return (NULL);
+	}
+
+	cga_init (cga, io, addr, size);
+
+	return (cga);
+}
+
+video_t *cga_new_ini (ini_sct_t *sct)
+{
+	unsigned long io, addr, size;
+	unsigned      font;
+	cga_t         *cga;
+
+	ini_get_uint32 (sct, "io", &io, 0x3d4);
+	ini_get_uint32 (sct, "address", &addr, 0xb8000);
+	ini_get_uint32 (sct, "size", &size, 16384);
+	ini_get_uint16 (sct, "font", &font, 0);
+
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "CGA io=0x%04lx addr=0x%05lx size=0x%05lx font=%u\n",
+		io, addr, size, font
+	);
+
+	cga = cga_new (io, addr, size);
+	if (cga == NULL) {
+		return (NULL);
+	}
+
+	if (font == 0) {
+		cga->font = cga_font_thick;
+	}
+	else {
+		cga->font = cga_font_thin;
+	}
+
+	return (&cga->video);
 }

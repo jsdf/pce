@@ -27,11 +27,9 @@ include $(reldir)/rules.inc
 all: $(BIN) $(OBJ)
 
 
-cga.o:		cga.c cga.h video.h devices/memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
+cga.o:		cga.c cga.h cga_font.h video.h devices/memory.h \
+		libini/libini.h terminal/terminal.h lib/log.h \
+		$(SDP)
 
 ega.o:		ega.c ega.h video.h devices/memory.h \
 		libini/libini.h \

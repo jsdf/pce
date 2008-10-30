@@ -166,21 +166,10 @@ section pc {
 		# Don't change this
 		memsize = 16384
 
-		# The default width and height that are used for modes
-		# that are not specified.
-		w = 640
-		h = 400
-
-		mode_80x25_w = 640
-		mode_80x25_h = 400
-
-		# 320 * 200 * 4
-		mode_320x200_w = 640
-		mode_320x200_h = 480
-
-		# 640 * 200 * 2
-		mode_640x200_w = 640
-		mode_640x200_h = 480
+		# Select the built in CGA font
+		#   0 = thick font (default)
+		#   1 = thin font
+		font = 0
 	}
 
 	section video {

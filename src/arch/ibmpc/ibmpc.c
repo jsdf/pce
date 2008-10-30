@@ -372,7 +372,7 @@ int pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 {
-	pc->video = cga_new (pc->trm, sct);
+	pc->video = cga_new_ini (sct);
 	if (pc->video == NULL) {
 		return (1);
 	}
