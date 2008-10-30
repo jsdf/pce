@@ -219,20 +219,6 @@ section pc {
 		
 		# Don't change this
 		memsize = 4096
-
-		color0 = 0x000000
-		color1 = 0xc0c000
-		color7 = 0x00c000
-		color9 = 0xc0f000
-		color15 = 0x00f000
-
-		# The default width and height that are used for modes
-		# that are not specified.
-		w = 640
-		h = 400
-
-		mode_80x25_w = 640
-		mode_80x25_h = 400
 	}
 
 	section serial {

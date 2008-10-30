@@ -338,7 +338,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 static
 int pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 {
-	pc->video = mda_new (pc->trm, sct);
+	pc->video = mda_new_ini (sct);
 	if (pc->video == NULL) {
 		return (1);
 	}

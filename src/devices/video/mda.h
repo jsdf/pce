@@ -22,61 +22,49 @@
 /* $Id$ */
 
 
-#ifndef PCE_MDA_H
-#define PCE_MDA_H 1
+#ifndef PCE_VIDEO_MDA_H
+#define PCE_VIDEO_MDA_H 1
 
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
 typedef struct {
-	video_t       vid;
+	video_t       video;
 
-	mem_blk_t     *mem;
-	mem_blk_t     *reg;
+	mem_blk_t     *memblk;
+	unsigned char *mem;
 
-	unsigned      mode_80x25_w;
-	unsigned      mode_80x25_h;
+	mem_blk_t     *regblk;
+	unsigned char *reg;
 
-	unsigned char crtc_reg[18];
+	terminal_t    *term;
 
-	unsigned long rgb[16];
+	unsigned char reg_crt[18];
 
-	unsigned      crtc_pos;
+	unsigned char *font;
 
-	terminal_t    *trmnew;
-	term_old_t    trm;
-	unsigned long trmclk;
+	/* these are derived from the crtc registers */
+	unsigned      w;
+	unsigned      h;
+	unsigned      ch;
+	unsigned long hsync;
+	unsigned long vsync;
+
+	unsigned      buf_w;
+	unsigned      buf_h;
+	unsigned long bufmax;
+	unsigned char *buf;
+
+	unsigned char update_state;
 } mda_t;
 
 
-video_t *mda_new (terminal_t *trm, ini_sct_t *sct);
-void mda_del (mda_t *mda);
+mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size);
 
-void mda_clock (mda_t *mda, unsigned long cnt);
-
-void mda_prt_state (mda_t *mda, FILE *fp);
-
-int mda_dump (mda_t *mda, FILE *fp);
-
-mem_blk_t *mda_get_mem (mda_t *mda);
-mem_blk_t *mda_get_reg (mda_t *mda);
-
-int mda_screenshot (mda_t *hgc, FILE *fp, unsigned mode);
-
-void mda_update (mda_t *mda);
-
-void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-
-void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val);
-void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val);
-
-unsigned char mda_reg_get_uint8 (mda_t *mda, unsigned long addr);
-unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr);
+video_t *mda_new_ini (ini_sct_t *sct);
 
 
 #endif

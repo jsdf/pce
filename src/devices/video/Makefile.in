@@ -45,11 +45,9 @@ hgc.o:		hgc.c hgc.h video.h devices/memory.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
-mda.o:		mda.c mda.h video.h devices/memory.h \
-		libini/libini.h \
-		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
+mda.o:		mda.c mda.h mda_font.h video.h devices/memory.h \
+		libini/libini.h terminal/terminal.h lib/log.h \
+		$(SDP)
 
 vga.o:		vga.c vga.h video.h devices/memory.h \
 		libini/libini.h \

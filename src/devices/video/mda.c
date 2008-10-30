@@ -30,366 +30,336 @@
 #include "mda.h"
 
 
-static unsigned long mda_col[17] = {
-	0x000000, 0x000000, 0xe89050, 0xe89050,
-	0xe89050, 0xe89050, 0xe89050, 0xe89050,
-	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
-	0xfff0c8, 0xfff0c8, 0xfff0c8, 0xfff0c8,
-	0xfff0c8
+#define MDA_IFREQ 1193182
+#define MDA_PFREQ 16257000
+#define MDA_HFREQ 18430
+#define MDA_VFREQ 50
+
+/* character width */
+#define MDA_CW    9
+
+/* mda registers */
+#define MDA_CRTC_INDEX   0
+#define MDA_CRTC_DATA    1
+#define MDA_MODE         4
+#define MDA_STATUS       6
+
+#define MDA_CRTC_HT      0
+#define MDA_CRTC_HD      1
+#define MDA_CRTC_HS      2
+#define MDA_CRTC_SYN     3
+#define MDA_CRTC_VT      4
+#define MDA_CRTC_VTA     5
+#define MDA_CRTC_VD      6
+#define MDA_CRTC_VS      7
+#define MDA_CRTC_IL      8
+#define MDA_CRTC_MS      9
+#define MDA_CRTC_CS      10
+#define MDA_CRTC_CE      11
+#define MDA_CRTC_SH      12
+#define MDA_CRTC_SL      13
+#define MDA_CRTC_PH      14
+#define MDA_CRTC_PL      15
+#define MDA_CRTC_LH      16
+#define MDA_CRTC_LL      17
+
+/* mode control register */
+#define MDA_MODE_ENABLE  0x08
+#define MDA_MODE_BLINK   0x20
+
+/* CRTC status register */
+#define MDA_STATUS_HSYNC 0x01
+#define MDA_STATUS_LIGHT 0x02
+#define MDA_STATUS_VIDEO 0x08
+#define MDA_STATUS_VSYNC 0x80
+
+
+#include "mda_font.h"
+
+
+static
+unsigned char mda_rgb[16][3] = {
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xaa }
 };
 
 
+/*
+ * Get CRTC start offset
+ */
 static
-void mda_get_colors (mda_t *mda, ini_sct_t *sct)
+unsigned mda_get_start (mda_t *mda)
 {
-	unsigned i;
-	char     str[16];
+	unsigned val;
 
-	for (i = 0; i < 17; i++) {
-		sprintf (str, "color%u", i);
-		ini_get_uint32 (sct, str, &mda->rgb[i], mda_col[i]);
-	}
+	val = mda->reg_crt[0x0c];
+	val = (val << 8) | mda->reg_crt[0x0d];
+
+	return (val);
 }
 
+/*
+ * Get the absolute cursor position
+ */
 static
-void mda_set_colors (mda_t *mda)
+unsigned mda_get_cursor (mda_t *mda)
 {
-	unsigned i;
-	unsigned r, g, b;
+	unsigned val;
 
-	for (i = 0; i < 16; i++) {
-		r = (mda->rgb[i] >> 16) & 0xff;
-		g = (mda->rgb[i] >> 8) & 0xff;
-		b = mda->rgb[i] & 0xff;
-		trm_old_set_map (&mda->trm, i, r | (r << 8), g | (g << 8), b | (b << 8));
-	}
+	val = mda->reg_crt[0x0e];
+	val = (val << 8) | mda->reg_crt[0x0f];
+
+	return (val);
 }
 
-video_t *mda_new (terminal_t *trm, ini_sct_t *sct)
+/*
+ * Get the on screen cursor position
+ */
+static
+int mda_get_position (mda_t *mda, unsigned *x, unsigned *y)
 {
-	unsigned      i;
-	unsigned long iobase, membase, memsize;
-	unsigned      w, h;
-	mda_t         *mda;
+	unsigned pos, ofs;
 
-	mda = (mda_t *) malloc (sizeof (mda_t));
-	if (mda == NULL) {
-		return (NULL);
-	}
-
-	pce_video_init (&mda->vid);
-
-	mda->vid.ext = mda;
-	mda->vid.del = (void *) mda_del;
-	mda->vid.get_mem = (void *) mda_get_mem;
-	mda->vid.get_reg = (void *) mda_get_reg;
-	mda->vid.print_info = (void *) mda_prt_state;
-	mda->vid.screenshot = (void *) mda_screenshot;
-	mda->vid.clock = (void *) mda_clock;
-
-	for (i = 0; i < 18; i++) {
-		mda->crtc_reg[i] = 0;
-	}
-
-	ini_get_uint16 (sct, "w", &w, 640);
-	ini_get_uint16 (sct, "h", &h, 400);
-
-	ini_get_uint16 (sct, "mode_80x25_w", &mda->mode_80x25_w, w);
-	ini_get_uint16 (sct, "mode_80x25_h", &mda->mode_80x25_h, h);
-
-	ini_get_uint32 (sct, "io", &iobase, 0x03b4);
-	ini_get_uint32 (sct, "membase", &membase, 0x000b0000);
-	ini_get_uint32 (sct, "memsize", &memsize, 4096);
-
-	if (memsize < 4096) {
-		memsize = 4096;
-	}
-
-	mda_get_colors (mda, sct);
-
-	pce_log_tag (MSG_INF,
-		"VIDEO:", "MDA addr=0x%04x membase=0x%05x memsize=0x%05x\n",
-		iobase, membase, memsize
-	);
-
-	mda->crtc_pos = 0;
-
-	mda->mem = mem_blk_new (membase, memsize, 1);
-	mda->mem->ext = mda;
-	mda->mem->set_uint8 = (mem_set_uint8_f) &mda_mem_set_uint8;
-	mda->mem->set_uint16 = (mem_set_uint16_f) &mda_mem_set_uint16;
-	mem_blk_clear (mda->mem, 0x00);
-
-	mda->reg = mem_blk_new (iobase, 16, 1);
-	mda->reg->ext = mda;
-	mda->reg->set_uint8 = (mem_set_uint8_f) &mda_reg_set_uint8;
-	mda->reg->set_uint16 = (mem_set_uint16_f) &mda_reg_set_uint16;
-	mda->reg->get_uint8 = (mem_get_uint8_f) &mda_reg_get_uint8;
-	mda->reg->get_uint16 = (mem_get_uint16_f) &mda_reg_get_uint16;
-	mem_blk_clear (mda->reg, 0x00);
-
-	mda->trmnew = trm;
-	mda->trmclk = 0;
-	trm_old_init (&mda->trm, mda->trmnew);
-
-	mda_set_colors (mda);
-
-	trm_old_set_mode (&mda->trm, TERM_MODE_TEXT, 80, 25);
-	trm_old_set_size (&mda->trm, mda->mode_80x25_w, mda->mode_80x25_h);
-
-	return (&mda->vid);
-}
-
-void mda_del (mda_t *mda)
-{
-	if (mda != NULL) {
-		mem_blk_del (mda->mem);
-		mem_blk_del (mda->reg);
-		free (mda);
-	}
-}
-
-void mda_clock (mda_t *mda, unsigned long cnt)
-{
-	mda->trmclk += cnt;
-
-	if (mda->trmclk > 16384) {
-		mda->trmclk = 0;
-		trm_old_update (&mda->trm);
-	}
-}
-
-void mda_prt_state (mda_t *mda, FILE *fp)
-{
-	unsigned i;
-	unsigned x, y;
-
-	x = mda->crtc_pos % 80;
-	y = mda->crtc_pos / 80;
-
-	fprintf (fp, "MDA: 3B4=%02X  3B5=%02X  3B8=%02X  3BA=%02X  POS=%04X[%u/%u]\n",
-		mda->reg->data[0], mda->reg->data[1], mda->reg->data[4], mda->reg->data[6],
-		mda->crtc_pos, x, y
-	);
-
-	fprintf (fp, "CRTC=[%02X", mda->crtc_reg[0]);
-	for (i = 1; i < 18; i++) {
-		if ((i & 7) == 0) {
-			fputs ("-", fp);
-		}
-		else {
-			fputs (" ", fp);
-		}
-		fprintf (fp, "%02X", mda->crtc_reg[i]);
-	}
-	fputs ("]\n", fp);
-
-	fflush (fp);
-}
-
-int mda_dump (mda_t *mda, FILE *fp)
-{
-	fprintf (fp, "# MDA dump\n");
-
-	fprintf (fp, "\n# REGS:\n");
-	pce_dump_hex (fp,
-		mem_blk_get_data (mda->reg),
-		mem_blk_get_size (mda->reg),
-		mem_blk_get_addr (mda->reg),
-		16, "# ", 0
-	);
-
-	fprintf (fp, "\n# CRTC:\n");
-	pce_dump_hex (fp, mda->crtc_reg, 18, 0, 16, "# ", 0);
-
-	fputs ("\n\n# RAM:\n", fp);
-	pce_dump_hex (fp,
-		mem_blk_get_data (mda->mem),
-		mem_blk_get_size (mda->mem),
-		mem_blk_get_addr (mda->mem),
-		16, "", 1
-	);
-
-	return (0);
-}
-
-mem_blk_t *mda_get_mem (mda_t *mda)
-{
-	return (mda->mem);
-}
-
-mem_blk_t *mda_get_reg (mda_t *mda)
-{
-	return (mda->reg);
-}
-
-int mda_screenshot (mda_t *mda, FILE *fp, unsigned mode)
-{
-	unsigned i;
-	unsigned x, y;
-
-	if ((mode != 0) && (mode != 1)) {
+	if ((mda->w == 0) || (mda->h == 0)) {
 		return (1);
 	}
 
-	i = 0;
+	pos = mda_get_cursor (mda) & 0x0fff;
+	ofs = mda_get_start (mda) & 0x0fff;
 
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fputc (mda->mem->data[i], fp);
-			i += 2;
-		}
-
-		fputs ("\n", fp);
+	if ((pos < ofs) || (pos >= (ofs + mda->w * mda->h))) {
+		return (1);
 	}
+
+	*x = (pos - ofs) % mda->w;
+	*y = (pos - ofs) / mda->w;
 
 	return (0);
 }
 
-void mda_update (mda_t *mda)
+/*
+ * Set the internal screen buffer size
+ */
+static
+int mda_set_buf_size (mda_t *mda, unsigned w, unsigned h)
 {
-	unsigned i;
-	unsigned x, y;
-	unsigned fg, bg;
+	unsigned long cnt;
+	unsigned char *tmp;
 
-	i = 0;
+	cnt = 3UL * (unsigned long) w * (unsigned long) h;
 
-	for (y = 0; y < 25; y++) {
-		for (x = 0; x < 80; x++) {
-			fg = mda->mem->data[i + 1] & 0x0f;
-			bg = (mda->mem->data[i + 1] & 0xf0) >> 4;
+	if (cnt > mda->bufmax) {
+		tmp = realloc (mda->buf, cnt);
+		if (tmp == NULL) {
+			return (1);
+		}
 
-			trm_old_set_col (&mda->trm, fg, bg);
-			trm_old_set_chr (&mda->trm, x, y, mda->mem->data[i]);
+		mda->buf = tmp;
+		mda->bufmax = cnt;
+	}
 
-			i = (i + 2) & 0x3fff;
+	mda->buf_w = w;
+	mda->buf_h = h;
+
+	return (0);
+}
+
+/*
+ * Draw the cursor in the internal buffer
+ */
+static
+void mda_draw_cursor (mda_t *mda)
+{
+	unsigned            i, j;
+	unsigned            x, y;
+	unsigned            c1, c2;
+	const unsigned char *src;
+	const unsigned char *col;
+	unsigned char       *dst;
+
+	if ((mda->reg_crt[MDA_CRTC_CS] & 0x60) == 0x20) {
+		/* cursor off */
+		return;
+	}
+
+	src = mda->mem;
+
+	if (mda_get_position (mda, &x, &y)) {
+		return;
+	}
+
+	c1 = mda->reg_crt[MDA_CRTC_CS] & 0x1f;
+	c2 = mda->reg_crt[MDA_CRTC_CE] & 0x1f;
+
+	if (c1 >= mda->ch) {
+		return;
+	}
+
+	if (c2 >= mda->ch) {
+		c2 = mda->ch - 1;
+	}
+
+	col = mda_rgb[src[2 * (mda->w * y + x) + 1] & 0x0f];
+	dst = mda->buf + 3 * MDA_CW * (mda->w * (mda->ch * y + c1) + x);
+
+	for (j = c1; j <= c2; j++) {
+		for (i = 0; i < MDA_CW; i++) {
+			dst[3 * i + 0] = col[0];
+			dst[3 * i + 1] = col[1];
+			dst[3 * i + 2] = col[2];
+		}
+		dst += 3 * MDA_CW * mda->w;
+	}
+}
+
+/*
+ * Draw a character in the internal buffer
+ */
+static
+void mda_draw_char (mda_t *mda, unsigned char *buf, unsigned char c, unsigned char a)
+{
+	unsigned            i, j;
+	unsigned            map;
+	unsigned char       *dst;
+	const unsigned char *fg, *bg;
+
+	if (mda->reg[MDA_MODE] & MDA_MODE_BLINK) {
+		/* blinking is not supported */
+		a &= 0x7f;
+	}
+
+	fg = mda_rgb[a & 0x0f];
+	bg = mda_rgb[(a >> 4) & 0x0f];
+
+	dst = buf;
+
+	for (j = 0; j < mda->ch; j++) {
+		map = mda->font[14 * c + (j % 14)];
+
+		if ((c >= 0xc0) && (c <= 0xdf)) {
+			map = (map << 1) | (map & 1);
+		}
+		else {
+			map = map << 1;
+		}
+
+		for (i = 0; i < MDA_CW; i++) {
+			if (map & (0x100 >> i)) {
+				dst[3 * i + 0] = fg[0];
+				dst[3 * i + 1] = fg[1];
+				dst[3 * i + 2] = fg[2];
+			}
+			else {
+				dst[3 * i + 0] = bg[0];
+				dst[3 * i + 1] = bg[1];
+				dst[3 * i + 2] = bg[2];
+			}
+		}
+
+		dst += (3 * MDA_CW * mda->w);
+	}
+
+	/* underline */
+	if (((a & 0x07) == 1) && (mda->ch >= 13)) {
+		dst = buf + 3 * 13 * (MDA_CW * mda->w);
+		for (i = 0; i < MDA_CW; i++) {
+			dst[3 * i + 0] = fg[0];
+			dst[3 * i + 1] = fg[1];
+			dst[3 * i + 2] = fg[2];
 		}
 	}
 }
 
+/*
+ * Update the internal screen buffer when the screen is blank
+ */
 static
-void mda_set_pos (mda_t *mda, unsigned pos)
+void mda_update_blank (mda_t *mda)
 {
-	unsigned x, y;
+	unsigned long x, y;
+	int           fx, fy;
+	unsigned char *dst;
 
-	if (mda->crtc_pos == pos) {
-		return;
+	mda_set_buf_size (mda, 720, 350);
+
+	dst = mda->buf;
+
+	for (y = 0; y < mda->buf_h; y++) {
+		fy = (y % 16) < 8;
+
+		for (x = 0; x < mda->buf_w; x++) {
+			fx = (x % 16) < 8;
+
+			dst[0] = (fx != fy) ? 0x20 : 0x00;
+			dst[1] = dst[0];
+			dst[2] = dst[0];
+
+			dst += 3;
+		}
 	}
-
-	mda->crtc_pos = pos;
-
-	x = pos % 80;
-	y = pos / 80;
-
-	trm_old_set_pos (&mda->trm, pos % 80, pos / 80);
 }
 
+/*
+ * Update the internal screen buffer
+ */
 static
-void mda_set_crs (mda_t *mda, unsigned y1, unsigned y2)
+void mda_update (mda_t *mda)
 {
-	if (y1 > 13) {
-		trm_old_set_crs (&mda->trm, 0, 0, 0);
+	unsigned            x, y;
+	unsigned            ofs;
+	const unsigned char *src;
+	unsigned char       *dst;
+
+	if ((mda->reg[MDA_MODE] & MDA_MODE_ENABLE) == 0) {
+		mda_update_blank (mda);
 		return;
 	}
 
-	if ((y2 < y1) || (y2 > 13)) {
-		y2 = 13;
+	if ((mda->w == 0) || (mda->h == 0)) {
+		mda_update_blank (mda);
+		return;
 	}
 
-	y1 = (255 * y1 + 6) / 13;
-	y2 = (255 * y2 + 6) / 13;
+	if (mda_set_buf_size (mda, MDA_CW * mda->w, mda->ch * mda->h)) {
+		return;
+	}
 
-	trm_old_set_crs (&mda->trm, y1, y2, 1);
+	src = mda->mem;
+	ofs = (2 * mda_get_start (mda)) & 0x0ffe;
+
+	dst = mda->buf;
+
+	for (y = 0; y < mda->h; y++) {
+		for (x = 0; x < mda->w; x++) {
+			mda_draw_char (mda, dst + 3 * MDA_CW * x, src[ofs], src[ofs + 1]);
+
+			ofs = (ofs + 2) & 0x0ffe;
+		}
+
+		dst += 3 * (MDA_CW * mda->w) * mda->ch;
+	}
+
+	mda_draw_cursor (mda);
 }
 
-void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
 
-	if (mda->mem->data[addr] == val) {
-		return;
-	}
-
-	mda->mem->data[addr] = val;
-
-	if (addr & 1) {
-		c = mda->mem->data[addr - 1];
-		a = val;
-	}
-	else {
-		c = val;
-		a = mda->mem->data[addr + 1];
-	}
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	trm_old_set_col (&mda->trm, a & 0x0f, (a >> 4) & 0x0f);
-	trm_old_set_chr (&mda->trm, x, y, c);
-}
-
-void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
-{
-	unsigned      x, y;
-	unsigned char c, a;
-
-	if (addr & 1) {
-		mda_mem_set_uint8 (mda, addr, val & 0xff);
-		mda_mem_set_uint8 (mda, addr + 1, (val >> 8) & 0xff);
-		return;
-	}
-
-	c = val & 0xff;
-	a = (val >> 8) & 0xff;
-
-	if ((mda->mem->data[addr] == c) && (mda->mem->data[addr] == a)) {
-		return;
-	}
-
-	mda->mem->data[addr] = c;
-	mda->mem->data[addr + 1] = a;
-
-	if (addr >= 4000) {
-		return;
-	}
-
-	x = (addr >> 1) % 80;
-	y = (addr >> 1) / 80;
-
-	trm_old_set_col (&mda->trm, a & 0x0f, (a >> 4) & 0x0f);
-	trm_old_set_chr (&mda->trm, x, y, c);
-}
-
-static
-void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
-{
-	if (reg > 15) {
-		return;
-	}
-
-	mda->crtc_reg[reg] = val;
-
-	switch (reg) {
-		case 0x0a:
-		case 0x0b:
-			mda_set_crs (mda, mda->crtc_reg[0x0a], mda->crtc_reg[0x0b]);
-			break;
-
-		case 0x0e:
-			mda_set_pos (mda, (val << 8) | (mda->crtc_reg[0x0f] & 0xff));
-			break;
-
-		case 0x0f:
-			mda_set_pos (mda, (mda->crtc_reg[0x0e] << 8) | val);
-			break;
-	}
-}
-
+/*
+ * Get a CRTC register
+ */
 static
 unsigned char mda_crtc_get_reg (mda_t *mda, unsigned reg)
 {
@@ -397,51 +367,143 @@ unsigned char mda_crtc_get_reg (mda_t *mda, unsigned reg)
 		return (0xff);
 	}
 
-	return (mda->crtc_reg[reg]);
+	return (mda->reg_crt[reg]);
 }
 
-void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
+/*
+ * Set a CRTC register
+ */
+static
+void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
 {
-	mda->reg->data[addr] = val;
-
-	switch (addr) {
-		case 0x01:
-			mda_crtc_set_reg (mda, mda->reg->data[0], val);
-			break;
+	if (reg > 15) {
+		return;
 	}
+
+	if (mda->reg_crt[reg] == val) {
+		return;
+	}
+
+	mda->reg_crt[reg] = val;
+
+	mda->ch = (mda->reg_crt[MDA_CRTC_MS] & 0x1f) + 1;
+	mda->w = mda->reg_crt[MDA_CRTC_HD];
+	mda->h = mda->reg_crt[MDA_CRTC_VD];
+
+	mda->hsync = (MDA_IFREQ * MDA_CW * mda->reg_crt[MDA_CRTC_HS]) / MDA_PFREQ;
+	mda->vsync = (MDA_IFREQ * mda->ch * mda->reg_crt[MDA_CRTC_VS]) / MDA_HFREQ;
+
+	mda->update_state |= 1;
 }
 
-void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
+
+/*
+ * Get the CRTC index register
+ */
+static
+unsigned char mda_get_crtc_index (mda_t *mda)
 {
-	mda_reg_set_uint8 (mda, addr, val & 0xff);
-	mda_reg_set_uint8 (mda, addr + 1, val >> 8);
+	return (mda->reg[MDA_CRTC_INDEX]);
 }
 
+/*
+ * Get the CRTC data register
+ */
+static
+unsigned char mda_get_crtc_data (mda_t *mda)
+{
+	return (mda_crtc_get_reg (mda, mda->reg[MDA_CRTC_INDEX]));
+}
+
+/*
+ * Get the mode control register
+ */
+static
+unsigned char mda_get_mode (mda_t *mda)
+{
+	return (mda->reg[MDA_MODE]);
+}
+
+/*
+ * Get the status register
+ */
+static
+unsigned char mda_get_status (mda_t *mda)
+{
+	unsigned char val;
+
+	val = mda->reg[MDA_STATUS];
+
+	if ((mda->video.dotclk[0] % (MDA_IFREQ / MDA_VFREQ)) < mda->vsync) {
+		val &= ~MDA_STATUS_VSYNC;
+	}
+	else {
+		val |= MDA_STATUS_VSYNC;
+	}
+
+	if ((mda->video.dotclk[0] % (MDA_IFREQ / MDA_HFREQ)) < mda->hsync) {
+		val |= MDA_STATUS_HSYNC;
+	}
+	else {
+		val &= ~MDA_STATUS_HSYNC;
+	}
+
+	return (val);
+}
+
+/*
+ * Set the CRTC index register
+ */
+static
+void mda_set_crtc_index (mda_t *mda, unsigned char val)
+{
+	mda->reg[MDA_CRTC_INDEX] = val;
+}
+
+/*
+ * Set the CRTC data register
+ */
+static
+void mda_set_crtc_data (mda_t *mda, unsigned char val)
+{
+	mda->reg[MDA_CRTC_DATA] = val;
+
+	mda_crtc_set_reg (mda, mda->reg[MDA_CRTC_INDEX], val);
+}
+
+/*
+ * Set the mode register
+ */
+static
+void mda_set_mode (mda_t *mda, unsigned char val)
+{
+	mda->reg[MDA_MODE] = val;
+
+	mda->update_state |= 1;
+}
+
+/*
+ * Get an MDA register
+ */
+static
 unsigned char mda_reg_get_uint8 (mda_t *mda, unsigned long addr)
 {
-	static unsigned cnt = 0;
-
 	switch (addr) {
-		case 0x00:
-			return (mda->reg->data[0]);
+	case MDA_CRTC_INDEX:
+		return (mda_get_crtc_index (mda));
 
-		case 0x01:
-			return (mda_crtc_get_reg (mda, mda->reg->data[0]));
+	case MDA_CRTC_DATA:
+		return (mda_get_crtc_data (mda));
 
-		case 0x06:
-			cnt += 1;
-			if ((cnt & 7) == 0) {
-				cnt = 0;
-				mda->reg->data[6] ^= 0x01;
-			}
-			mda->reg->data[6] ^= (cnt & 1) ? 0x08 : 0x00;
-			return (mda->reg->data[6]);
+	case MDA_STATUS:
+		return (mda_get_status (mda));
 
-		default:
-			return (0xff);
+	default:
+		return (0xff);
 	}
 }
 
+static
 unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr)
 {
 	unsigned short ret;
@@ -450,4 +512,271 @@ unsigned short mda_reg_get_uint16 (mda_t *mda, unsigned long addr)
 	ret |= mda_reg_get_uint8 (mda, addr + 1) << 8;
 
 	return (ret);
+}
+
+/*
+ * Set an MDA register
+ */
+static
+void mda_reg_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
+{
+	switch (addr) {
+	case MDA_CRTC_INDEX:
+		mda_set_crtc_index (mda, val);
+		break;
+
+	case MDA_CRTC_DATA:
+		mda_set_crtc_data (mda, val);
+		break;
+
+	case MDA_MODE:
+		mda_set_mode (mda, val);
+		break;
+	}
+}
+
+static
+void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
+{
+	mda_reg_set_uint8 (mda, addr + 0, val & 0xff);
+	mda_reg_set_uint8 (mda, addr + 1, (val >> 8) & 0xff);
+}
+
+
+static
+void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
+{
+	if (mda->mem[addr] == val) {
+		return;
+	}
+
+	mda->mem[addr] = val;
+
+	mda->update_state |= 1;
+}
+
+static
+void mda_mem_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
+{
+	mda_mem_set_uint8 (mda, addr + 0, val & 0xff);
+
+	if ((addr + 1) < mda->memblk->size) {
+		mda_mem_set_uint8 (mda, addr + 1, (val >> 8) & 0xff);
+	}
+}
+
+
+static
+void mda_del (mda_t *mda)
+{
+	if (mda != NULL) {
+		mem_blk_del (mda->memblk);
+		mem_blk_del (mda->regblk);
+		free (mda);
+	}
+}
+
+static
+int mda_set_msg (mda_t *mda, const char *msg, const char *val)
+{
+	return (1);
+}
+
+static
+void mda_set_terminal (mda_t *mda, terminal_t *trm)
+{
+	mda->term = trm;
+
+	if (mda->term != NULL) {
+		trm_open (mda->term, 720, 350);
+	}
+}
+
+static
+mem_blk_t *mda_get_mem (mda_t *mda)
+{
+	return (mda->memblk);
+}
+
+static
+mem_blk_t *mda_get_reg (mda_t *mda)
+{
+	return (mda->regblk);
+}
+
+static
+void mda_print_info (mda_t *mda, FILE *fp)
+{
+	unsigned i;
+	unsigned pos, ofs;
+
+	fprintf (fp, "DEV: MDA\n");
+
+	pos = mda_get_cursor (mda);
+	ofs = mda_get_start (mda);
+
+	fprintf (fp, "MDA: OFS=%04X  POS=%04X\n",
+		 ofs, pos
+	);
+
+	fprintf (fp, "REG: CRTC=%02X  MODE=%02X  STATUS=%02X\n",
+		mda->reg[MDA_CRTC_INDEX], mda_get_mode (mda),
+		mda_get_status (mda)
+	);
+
+	fprintf (fp, "CRTC=[%02X", mda->reg_crt[0]);
+
+	for (i = 1; i < 18; i++) {
+		if ((i & 7) == 0) {
+			fputs ("-", fp);
+		}
+		else {
+			fputs (" ", fp);
+		}
+		fprintf (fp, "%02X", mda->reg_crt[i]);
+	}
+	fputs ("]\n", fp);
+
+	fflush (fp);
+}
+
+static
+int mda_screenshot (mda_t *mda, FILE *fp)
+{
+	mda_update (mda);
+
+	if ((mda->buf_w == 0) || (mda->buf_h == 0)) {
+		return (1);
+	}
+
+	fprintf (fp, "P6\n%u %u\n255 ", mda->buf_w, mda->buf_h);
+	fwrite (mda->buf, 1, 3 * mda->buf_w * mda->buf_h, fp);
+
+	return (0);
+}
+
+/*
+ * Force a screen update
+ */
+static
+void mda_redraw (mda_t *mda)
+{
+	mda->update_state |= 1;
+}
+
+static
+void mda_clock (mda_t *mda, unsigned cnt)
+{
+	mda->video.dotclk[0] %= (MDA_IFREQ / MDA_VFREQ);
+
+	if (mda->video.dotclk[0] < mda->vsync) {
+		mda->update_state &= ~2;
+		return;
+	}
+
+	if ((mda->update_state & 3) != 1) {
+		if (mda->term != NULL) {
+			trm_update (mda->term);
+		}
+		return;
+	}
+
+	/* vertical retrace started */
+
+	if (mda->term != NULL) {
+		mda_update (mda);
+
+		trm_set_size (mda->term, mda->buf_w, mda->buf_h);
+		trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
+		trm_update (mda->term);
+	}
+
+	mda->update_state = 2;
+}
+
+mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
+{
+	unsigned i;
+	mda_t    *mda;
+
+	mda = malloc (sizeof (mda_t));
+	if (mda == NULL) {
+		return (NULL);
+	}
+
+	pce_video_init (&mda->video);
+
+	mda->video.ext = mda;
+	mda->video.del = (void *) mda_del;
+	mda->video.set_msg = (void *) mda_set_msg;
+	mda->video.set_terminal = (void *) mda_set_terminal;
+	mda->video.get_mem = (void *) mda_get_mem;
+	mda->video.get_reg = (void *) mda_get_reg;
+	mda->video.print_info = (void *) mda_print_info;
+	mda->video.screenshot = (void *) mda_screenshot;
+	mda->video.redraw = (void *) mda_redraw;
+	mda->video.clock = (void *) mda_clock;
+
+	if (size < 4096) {
+		size = 4096;
+	}
+
+	mda->memblk = mem_blk_new (mem, size, 1);
+	mda->memblk->ext = mda;
+	mda->memblk->set_uint8 = (void *) mda_mem_set_uint8;
+	mda->memblk->set_uint16 = (void *) mda_mem_set_uint16;
+	mda->mem = mda->memblk->data;
+	mem_blk_clear (mda->memblk, 0x00);
+
+	mda->regblk = mem_blk_new (io, 16, 1);
+	mda->regblk->ext = mda;
+	mda->regblk->set_uint8 = (void *) mda_reg_set_uint8;
+	mda->regblk->set_uint16 = (void *) mda_reg_set_uint16;
+	mda->regblk->get_uint8 = (void *) mda_reg_get_uint8;
+	mda->regblk->get_uint16 = (void *) mda_reg_get_uint16;
+	mda->reg = mda->regblk->data;
+	mem_blk_clear (mda->regblk, 0x00);
+
+	mda->term = NULL;
+
+	for (i = 0; i < 18; i++) {
+		mda->reg_crt[i] = 0;
+	}
+
+	mda->font = mda_font_8x14;
+
+	mda->w = 0;
+	mda->h = 0;
+	mda->ch = 0;
+	mda->hsync = 0;
+	mda->vsync = 0;
+
+	mda->bufmax = 0;
+	mda->buf = NULL;
+
+	mda->update_state = 0;
+
+	return (mda);
+}
+
+video_t *mda_new_ini (ini_sct_t *sct)
+{
+	unsigned long io, addr, size;
+	mda_t         *mda;
+
+	ini_get_uint32 (sct, "io", &io, 0x3b4);
+	ini_get_uint32 (sct, "address", &addr, 0xb0000);
+	ini_get_uint32 (sct, "size", &size, 4096);
+
+	pce_log_tag (MSG_INF,
+		"VIDEO:", "MDA io=0x%04lx addr=0x%05lx size=0x%05lx\n",
+		io, addr, size
+	);
+
+	mda = mda_new (io, addr, size);
+	if (mda == NULL) {
+		return (NULL);
+	}
+
+	return (&mda->video);
 }
