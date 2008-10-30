@@ -75,15 +75,6 @@ extern unsigned   par_speed;
 #include <libini/libini.h>
 
 #include <terminal/terminal.h>
-#include <terminal/null.h>
-
-#ifdef PCE_X11_USE
-#include <terminal/x11.h>
-#endif
-
-#ifdef PCE_SDL_USE
-#include <terminal/sdl.h>
-#endif
 
 #include <devices/memory.h>
 #include <devices/nvram.h>

@@ -95,16 +95,38 @@ section pc {
 		hma = 1
 	}
 
-	# Multiple "terminal" sections may be present
+	# Multiple "terminal" sections may be present. The first
+	# one will be used unless a terminal type is specified
+	# on the command line.
 	section terminal {
 		driver = "sdl"
 
+		# The initial scale factors
+		scale_x = 2
+		scale_y = 2
+
 		# Define a border around the image
 		border = 0
+
+		# The mouse speed
+		mouse_mul_x = 2
+		mouse_div_x = 1
+		mouse_mul_y = 2
+		mouse_div_y = 1
 	}
 
 	section terminal {
 		driver = "x11"
+
+		# The initial scale factors
+		scale_x = 1
+		scale_y = 1
+
+		# The mouse speed
+		mouse_mul_x = 2
+		mouse_div_x = 1
+		mouse_mul_y = 2
+		mouse_div_y = 1
 	}
 
 	section terminal {

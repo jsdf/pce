@@ -30,6 +30,8 @@
 
 #include <terminal/keys.h>
 
+#include <libini/libini.h>
+
 
 /*!***************************************************************************
  * @short The terminal structure
@@ -86,6 +88,11 @@ typedef struct {
 	/* picture index for screenshots */
 	unsigned      pict_index;
 } terminal_t;
+
+
+terminal_t *null_new (ini_sct_t *ini);
+terminal_t *xt_new (ini_sct_t *ini);
+terminal_t *sdl_new (ini_sct_t *ini);
 
 
 /*!***************************************************************************

@@ -25,6 +25,7 @@
 #include "main.h"
 
 #include <lib/iniram.h>
+#include <lib/initerm.h>
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -324,59 +325,9 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
-	const char *driver;
-	ini_sct_t  *sct;
-
-	pc->trm = NULL;
-
-	sct = ini_next_sct (ini, NULL, "terminal");
-	ini_get_string (sct, "driver", &driver, "null");
-
-	if (par_terminal != NULL) {
-		while ((sct != NULL) && (strcmp (par_terminal, driver) != 0)) {
-			sct = ini_next_sct (ini, sct, "terminal");
-			ini_get_string (sct, "driver", &driver, "null");
-		}
-
-		if (sct == NULL) {
-			driver = par_terminal;
-		}
-	}
-
-	pce_log_tag (MSG_INF, "TERM:", "driver=%s\n", driver);
-
-	if (strcmp (driver, "x11") == 0) {
-#ifdef PCE_X11_USE
-		pc->trm = xt_new (sct);
-		if (pc->trm == NULL) {
-			pce_log (MSG_ERR, "*** setting up x11 terminal failed\n");
-		}
-#else
-		pce_log (MSG_ERR, "*** terminal driver 'x11' not supported\n");
-#endif
-	}
-	else if (strcmp (driver, "sdl") == 0) {
-#ifdef PCE_SDL_USE
-		pc->trm = sdl_new (sct);
-		if (pc->trm == NULL) {
-			pce_log (MSG_ERR, "*** setting up sdl terminal failed\n");
-		}
-#else
-		pce_log (MSG_ERR, "*** terminal driver 'sdl' not supported\n");
-#endif
-	}
-	else if (strcmp (driver, "null") == 0) {
-		pc->trm = null_new (sct);
-		if (pc->trm == NULL) {
-			pce_log (MSG_ERR, "*** setting up null terminal failed\n");
-		}
-	}
-	else {
-		pce_log (MSG_ERR, "*** unknown terminal driver: %s\n", driver);
-	}
+	pc->trm = ini_get_terminal (ini, par_terminal);
 
 	if (pc->trm == NULL) {
-		pce_log (MSG_ERR, "*** no terminal found\n");
 		return;
 	}
 
