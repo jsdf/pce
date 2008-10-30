@@ -18,7 +18,7 @@ subdir += bios pceutils
 endif
 
 
-FILES := ems hook ibmpc int13 main mouse msg util xms
+FILES := ems hook ibmpc int13 keyboard main mouse msg util xms
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -144,6 +144,7 @@ int13.o:	int13.c $(SDP)
 ems.o:		ems.c $(SDP)
 hook.o:		hook.c $(SDP)
 ibmpc.o:	ibmpc.c $(SDP)
+keyboard.o:	keyboard.c $(SDP)
 main.o:		main.c $(SDP)
 mouse.o:	mouse.c $(SDP)
 msg.o:		msg.c $(SDP)

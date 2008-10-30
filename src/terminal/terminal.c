@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/terminal.c                                    *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/terminal.c                                      *
+ * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,7 +35,7 @@ void trm_init (terminal_t *trm)
 	trm->set_msg = NULL;
 	trm->get_msgul = NULL;
 
-	trm->key_ext = NULL;
+	trm->set_key_ext = NULL;
 	trm->set_key = NULL;
 
 	trm->mse_ext = NULL;
@@ -74,10 +73,10 @@ void trm_set_msg_fct (terminal_t *trm, void *ext, void *set, void *getul)
 	trm->get_msgul = getul;
 }
 
-void trm_set_key_fct (terminal_t *trm, void *ext, void *set)
+void trm_set_key_fct (terminal_t *trm, void *ext, void *fct)
 {
-	trm->key_ext = ext;
-	trm->set_key = set;
+	trm->set_key_ext = ext;
+	trm->set_key = fct;
 }
 
 int trm_set_msg (terminal_t *trm, const char *msg, const char *val)
@@ -174,5 +173,12 @@ void trm_check (terminal_t *trm)
 {
 	if (trm->check != NULL) {
 		trm->check (trm->ext);
+	}
+}
+
+void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
+{
+	if (trm->set_key != NULL) {
+		trm->set_key (trm->set_key_ext, event, key);
 	}
 }

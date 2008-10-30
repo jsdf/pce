@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/ibmpc.c                                     *
- * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1999-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/ibmpc.c                                       *
+ * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -380,7 +380,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	trm_set_key_fct (pc->trm, pc, pc_set_keycode);
+	trm_set_key_fct (pc->trm, pc, pc_set_key);
 	trm_set_msg_fct (pc->trm, pc, pc_set_msg, pc_get_msgul);
 }
 
@@ -1164,28 +1164,4 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 	pc->ppi_port_b = val;
 
 	e8253_set_gate (&pc->pit, 2, val & 0x01);
-}
-
-void pc_set_keycode (ibmpc_t *pc, unsigned char val)
-{
-	if (pc->key_j > 255) {
-		return;
-	}
-
-	pc->key_buf[pc->key_j] = val;
-	pc->key_j += 1;
-
-#if 0
-	if (((e8259_get_isr (&pc->pic) | e8259_get_irr (&pc->pic)) & 0x01) == 0) {
-		pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
-		pc->key_i += 1;
-
-		if (pc->key_i == pc->key_j) {
-			pc->key_i = 0;
-			pc->key_j = 0;
-		}
-
-		e8259_set_irq1 (&pc->pic, 1);
-	}
-#endif
 }

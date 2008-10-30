@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/ibmpc.h                                     *
- * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/ibmpc.h                                       *
+ * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -143,8 +143,6 @@ void pc_set_bootdrive (ibmpc_t *pc, unsigned drv);
 unsigned pc_get_bootdrive (ibmpc_t *pc);
 
 void pc_break (ibmpc_t *pc, unsigned char val);
-
-void pc_set_keycode (ibmpc_t *pc, unsigned char val);
 
 
 #endif

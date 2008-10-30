@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/sdl.c                                         *
- * Created:       2003-09-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/sdl.c                                           *
+ * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,7 @@
 #include <SDL.h>
 
 #include <terminal/terminal.h>
+#include <terminal/keys.h>
 #include <terminal/font.h>
 #include <terminal/sdl.h>
 
@@ -35,6 +36,121 @@
 #define PCESDL_UPDATE_NONE  0
 #define PCESDL_UPDATE_NOW   1
 #define PCESDL_UPDATE_DELAY 2
+
+
+typedef struct {
+	SDLKey    sdlkey;
+	pce_key_t pcekey;
+} sdl_keymap_t;
+
+
+static sdl_keymap_t keymap[] = {
+	{ SDLK_ESCAPE,       PCE_KEY_ESC },
+	{ SDLK_F1,           PCE_KEY_F1 },
+	{ SDLK_F2,           PCE_KEY_F2 },
+	{ SDLK_F3,           PCE_KEY_F3 },
+	{ SDLK_F4,           PCE_KEY_F4 },
+	{ SDLK_F5,           PCE_KEY_F5 },
+	{ SDLK_F6,           PCE_KEY_F6 },
+	{ SDLK_F7,           PCE_KEY_F7 },
+	{ SDLK_F8,           PCE_KEY_F8 },
+	{ SDLK_F9,           PCE_KEY_F9 },
+	{ SDLK_F10,          PCE_KEY_F10 },
+	{ SDLK_F11,          PCE_KEY_F11 },
+	{ SDLK_F12,          PCE_KEY_F12 },
+
+	{ SDLK_BACKQUOTE,    PCE_KEY_BACKQUOTE },
+	{ SDLK_1,            PCE_KEY_1 },
+	{ SDLK_2,            PCE_KEY_2 },
+	{ SDLK_3,            PCE_KEY_3 },
+	{ SDLK_4,            PCE_KEY_4 },
+	{ SDLK_5,            PCE_KEY_5 },
+	{ SDLK_6,            PCE_KEY_6 },
+	{ SDLK_7,            PCE_KEY_7 },
+	{ SDLK_8,            PCE_KEY_8 },
+	{ SDLK_9,            PCE_KEY_9 },
+	{ SDLK_0,            PCE_KEY_0 },
+	{ SDLK_MINUS,        PCE_KEY_MINUS },
+	{ SDLK_EQUALS,       PCE_KEY_EQUAL },
+	{ SDLK_BACKSPACE,    PCE_KEY_BACKSPACE },
+
+	{ SDLK_TAB,          PCE_KEY_TAB },
+	{ SDLK_q,            PCE_KEY_Q },
+	{ SDLK_w,            PCE_KEY_W },
+	{ SDLK_e,            PCE_KEY_E },
+	{ SDLK_r,            PCE_KEY_R },
+	{ SDLK_t,            PCE_KEY_T },
+	{ SDLK_y,            PCE_KEY_Y },
+	{ SDLK_u,            PCE_KEY_U },
+	{ SDLK_i,            PCE_KEY_I },
+	{ SDLK_o,            PCE_KEY_O },
+	{ SDLK_p,            PCE_KEY_P },
+	{ SDLK_LEFTBRACKET,  PCE_KEY_LBRACKET },
+	{ SDLK_RIGHTBRACKET, PCE_KEY_RBRACKET },
+	{ SDLK_RETURN,       PCE_KEY_RETURN },
+
+	{ SDLK_CAPSLOCK,     PCE_KEY_CAPSLOCK },
+	{ SDLK_a,            PCE_KEY_A },
+	{ SDLK_s,            PCE_KEY_S },
+	{ SDLK_d,            PCE_KEY_D },
+	{ SDLK_f,            PCE_KEY_F },
+	{ SDLK_g,            PCE_KEY_G },
+	{ SDLK_h,            PCE_KEY_H },
+	{ SDLK_j,            PCE_KEY_J },
+	{ SDLK_k,            PCE_KEY_K },
+	{ SDLK_l,            PCE_KEY_L },
+	{ SDLK_SEMICOLON,    PCE_KEY_SEMICOLON },
+	{ SDLK_QUOTE,        PCE_KEY_QUOTE },
+	{ SDLK_BACKSLASH,    PCE_KEY_BACKSLASH },
+
+	{ SDLK_LSHIFT,       PCE_KEY_LSHIFT },
+	{ SDLK_LESS,         PCE_KEY_LESS },
+	{ SDLK_z,            PCE_KEY_Z },
+	{ SDLK_x,            PCE_KEY_X },
+	{ SDLK_c,            PCE_KEY_C },
+	{ SDLK_v,            PCE_KEY_V },
+	{ SDLK_b,            PCE_KEY_B },
+	{ SDLK_n,            PCE_KEY_N },
+	{ SDLK_m,            PCE_KEY_M },
+	{ SDLK_COMMA,        PCE_KEY_COMMA },
+	{ SDLK_PERIOD,       PCE_KEY_PERIOD },
+	{ SDLK_SLASH,        PCE_KEY_SLASH },
+	{ SDLK_RSHIFT,       PCE_KEY_RSHIFT },
+
+	{ SDLK_LCTRL,        PCE_KEY_LCTRL },
+	{ SDLK_LALT,         PCE_KEY_LALT },
+	{ SDLK_SPACE,        PCE_KEY_SPACE },
+	{ SDLK_RCTRL,        PCE_KEY_RCTRL },
+
+	{ SDLK_NUMLOCK,      PCE_KEY_NUMLOCK },
+	{ SDLK_KP_DIVIDE,    PCE_KEY_KP_SLASH },
+	{ SDLK_KP_MULTIPLY,  PCE_KEY_KP_STAR },
+	{ SDLK_KP_MINUS,     PCE_KEY_KP_MINUS },
+	{ SDLK_KP7,          PCE_KEY_KP_7 },
+	{ SDLK_KP8,          PCE_KEY_KP_8 },
+	{ SDLK_KP9,          PCE_KEY_KP_9 },
+	{ SDLK_KP_PLUS,      PCE_KEY_KP_PLUS },
+	{ SDLK_KP4,          PCE_KEY_KP_4 },
+	{ SDLK_KP5,          PCE_KEY_KP_5 },
+	{ SDLK_KP6,          PCE_KEY_KP_6 },
+	{ SDLK_KP1,          PCE_KEY_KP_1 },
+	{ SDLK_KP2,          PCE_KEY_KP_2 },
+	{ SDLK_KP3,          PCE_KEY_KP_3 },
+	{ SDLK_KP_ENTER,     PCE_KEY_KP_ENTER },
+	{ SDLK_KP0,          PCE_KEY_KP_0 },
+	{ SDLK_KP_PERIOD,    PCE_KEY_KP_PERIOD },
+	{ SDLK_INSERT,       PCE_KEY_INS },
+	{ SDLK_HOME,         PCE_KEY_HOME },
+	{ SDLK_PAGEUP,       PCE_KEY_PAGEUP },
+	{ SDLK_DELETE,       PCE_KEY_DEL },
+	{ SDLK_END,          PCE_KEY_END },
+	{ SDLK_PAGEDOWN,     PCE_KEY_PAGEDN },
+	{ SDLK_UP,           PCE_KEY_UP },
+	{ SDLK_LEFT,         PCE_KEY_LEFT },
+	{ SDLK_DOWN,         PCE_KEY_DOWN },
+	{ SDLK_RIGHT,        PCE_KEY_RIGHT },
+	{ 0,                 PCE_KEY_NONE }
+};
 
 
 static
@@ -348,6 +464,53 @@ void sdl_del (sdl_t *sdl)
 	}
 
 	SDL_Quit();
+}
+
+static
+unsigned sdl_map_key (SDLKey key)
+{
+	unsigned i;
+
+	i = 0;
+	while (keymap[i].pcekey != PCE_KEY_NONE) {
+		if (keymap[i].sdlkey == key) {
+			return (keymap[i].pcekey);
+		}
+
+		i += 1;
+	}
+
+	return (PCE_KEY_NONE);
+}
+
+static
+void sdl_magic (sdl_t *sdl, SDLKey key)
+{
+	if (key == SDLK_f) {
+		if (sdl->scr != NULL) {
+			SDL_WM_ToggleFullScreen (sdl->scr);
+		}
+	}
+	else if (key == SDLK_i) {
+		trm_set_msg (&sdl->trm, "emu.idle.toggle", "");
+	}
+	else if (key == SDLK_p) {
+		trm_set_msg (&sdl->trm, "emu.pause.toggle", "");
+	}
+	else if (key == SDLK_q) {
+		sdl_grab_mouse (sdl, 0);
+		trm_set_msg (&sdl->trm, "emu.exit", "1");
+	}
+	else if (key == SDLK_r) {
+		trm_set_msg (&sdl->trm, "video.redraw", "1");
+	}
+	else if (key == SDLK_s) {
+		sdl_grab_mouse (sdl, 0);
+		trm_set_msg (&sdl->trm, "emu.stop", "1");
+	}
+	else if (key == SDLK_t) {
+		trm_set_msg (&sdl->trm, "emu.realtime.toggle", "");
+	}
 }
 
 static
@@ -719,158 +882,79 @@ void sdl_set_rct (sdl_t *sdl, unsigned x, unsigned y, unsigned w, unsigned h)
 }
 
 static
-void sdl_send_key_code (sdl_t *sdl, unsigned long code)
+void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 {
-	if (sdl->trm.set_key == NULL) {
+	SDLMod    mod;
+	pce_key_t pcekey;
+
+	if ((sdl->magic & 0x03) == 0x03) {
+		sdl_magic (sdl, key);
 		return;
 	}
 
-	while (code != 0) {
-		sdl->trm.set_key (sdl->trm.key_ext, code & 0xff);
-		code = code >> 8;
+	if (key == SDLK_LCTRL) {
+		sdl->magic |= 0x01;
 	}
-}
-
-static
-unsigned long sdl_get_key_code (sdl_t *sdl, SDLKey key, int make)
-{
-	unsigned long ret, tmp, msk;
-
-	msk = make ? 0x00 : 0x80;
-
-	switch (key) {
-		case SDLK_ESCAPE:       ret = 0x01; break;
-		case SDLK_1:            ret = 0x02; break;
-		case SDLK_2:            ret = 0x03; break;
-		case SDLK_3:            ret = 0x04; break;
-		case SDLK_4:            ret = 0x05; break;
-		case SDLK_5:            ret = 0x06; break;
-		case SDLK_6:            ret = 0x07; break;
-		case SDLK_7:            ret = 0x08; break;
-		case SDLK_8:            ret = 0x09; break;
-		case SDLK_9:            ret = 0x0a; break;
-		case SDLK_0:            ret = 0x0b; break;
-		case SDLK_MINUS:        ret = 0x0c; break;
-		case SDLK_EQUALS:       ret = 0x0d; break;
-		case SDLK_BACKSPACE:    ret = 0x0e; break;
-		case SDLK_TAB:          ret = 0x0f; break;
-		case SDLK_q:            ret = 0x10; break;
-		case SDLK_w:            ret = 0x11; break;
-		case SDLK_e:            ret = 0x12; break;
-		case SDLK_r:            ret = 0x13; break;
-		case SDLK_t:            ret = 0x14; break;
-		case SDLK_y:            ret = 0x15; break;
-		case SDLK_u:            ret = 0x16; break;
-		case SDLK_i:            ret = 0x17; break;
-		case SDLK_o:            ret = 0x18; break;
-		case SDLK_p:            ret = 0x19; break;
-		case SDLK_LEFTBRACKET:  ret = 0x1a; break;
-		case SDLK_RIGHTBRACKET: ret = 0x1b; break;
-		case SDLK_RETURN:       ret = 0x1c; break;
-		case SDLK_RCTRL:
-		case SDLK_LCTRL:        ret = 0x1d; break;
-		case SDLK_a:            ret = 0x1e; break;
-		case SDLK_s:            ret = 0x1f; break;
-		case SDLK_d:            ret = 0x20; break;
-		case SDLK_f:            ret = 0x21; break;
-		case SDLK_g:            ret = 0x22; break;
-		case SDLK_h:            ret = 0x23; break;
-		case SDLK_j:            ret = 0x24; break;
-		case SDLK_k:            ret = 0x25; break;
-		case SDLK_l:            ret = 0x26; break;
-		case SDLK_SEMICOLON:    ret = 0x27; break;
-		case SDLK_QUOTE:        ret = 0x28; break;
-		case SDLK_BACKQUOTE:    ret = 0x29; break;
-		case SDLK_LSHIFT:       ret = 0x2a; break;
-		case SDLK_BACKSLASH:    ret = 0x2b; break;
-		case SDLK_z:            ret = 0x2c; break;
-		case SDLK_x:            ret = 0x2d; break;
-		case SDLK_c:            ret = 0x2e; break;
-		case SDLK_v:            ret = 0x2f; break;
-		case SDLK_b:            ret = 0x30; break;
-		case SDLK_n:            ret = 0x31; break;
-		case SDLK_m:            ret = 0x32; break;
-		case SDLK_COMMA:        ret = 0x33; break;
-		case SDLK_PERIOD:       ret = 0x34; break;
-		case SDLK_SLASH:        ret = 0x35; break;
-		case SDLK_RSHIFT:       ret = 0x36; break;
-		case SDLK_KP_MULTIPLY:  ret = 0x37; break;
-		case SDLK_LALT:         ret = 0x38; break;
-		case SDLK_SPACE:        ret = 0x39; break;
-		case SDLK_CAPSLOCK:     ret = 0xba3aU; break;
-		case SDLK_F1:           ret = 0x3b; break;
-		case SDLK_F2:           ret = 0x3c; break;
-		case SDLK_F3:           ret = 0x3d; break;
-		case SDLK_F4:           ret = 0x3e; break;
-		case SDLK_F5:           ret = 0x3f; break;
-		case SDLK_F6:           ret = 0x40; break;
-		case SDLK_F7:           ret = 0x41; break;
-		case SDLK_F8:           ret = 0x42; break;
-		case SDLK_F9:           ret = 0x43; break;
-		case SDLK_F10:          ret = 0x44; break;
-		case SDLK_F11:          ret = 0x57; break;
-		case SDLK_F12:          ret = 0x58; break;
-
-		case SDLK_NUMLOCK:      ret = 0x45; break;
-		case SDLK_SCROLLOCK:    ret = 0x46; break;
-
-		case SDLK_HOME:         ret = 0x47; break;
-		case SDLK_UP:           ret = 0x48; break;
-		case SDLK_PAGEUP:       ret = 0x49; break;
-		case SDLK_KP_MINUS:     ret = 0x4a; break;
-		case SDLK_LEFT:         ret = 0x4b; break;
-		case SDLK_KP5:          ret = 0x4c; break;
-		case SDLK_RIGHT:        ret = 0x4d; break;
-		case SDLK_KP_PLUS:      ret = 0x4e; break;
-		case SDLK_END:          ret = 0x4f; break;
-		case SDLK_DOWN:         ret = 0x50; break;
-		case SDLK_PAGEDOWN:     ret = 0x51; break;
-		case SDLK_KP0:          ret = 0x52; break;
-		case SDLK_DELETE:       ret = 0x53; break;
-
-		case SDLK_KP_DIVIDE:    ret = 0x35e0; break;
-		default:                ret = 0x00; break;
+	else if (key == SDLK_LALT) {
+		sdl->magic |= 0x02;
 	}
 
-	if (ret == 0) {
-		fprintf (stderr, "sdl: keysym=%04x\n", (unsigned) key);
+	if ((sdl->magic & 0x03) == 0x03) {
+		sdl_grab_mouse (sdl, 0);
 	}
 
-	tmp = ret;
-	while (tmp != 0) {
-		ret |= msk;
-		tmp = tmp >> 8;
-		msk = msk << 8;
-	}
-
-	return (ret);
-}
-
-static
-void sdl_magic (sdl_t *sdl, SDLKey key)
-{
-	if (key == SDLK_c) {
-		trm_set_msg (&sdl->trm, "video.screenshot", "");
-	}
-	else if (key == SDLK_i) {
-		trm_set_msg (&sdl->trm, "emu.idle.toggle", "");
-	}
-	else if (key == SDLK_p) {
-		trm_set_msg (&sdl->trm, "emu.pause.toggle", "");
-	}
-	else if (key == SDLK_q) {
+	if (key == SDLK_PAUSE) {
 		sdl_grab_mouse (sdl, 0);
 		trm_set_msg (&sdl->trm, "emu.exit", "1");
+		return;
 	}
-	else if (key == SDLK_r) {
-		trm_set_msg (&sdl->trm, "video.redraw", "1");
-	}
-	else if (key == SDLK_s) {
+
+	mod = SDL_GetModState();
+
+	if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
 		sdl_grab_mouse (sdl, 0);
 		trm_set_msg (&sdl->trm, "emu.stop", "1");
+		return;
 	}
-	else if (key == SDLK_t) {
-		trm_set_msg (&sdl->trm, "emu.realtime.toggle", "");
+
+	pcekey = sdl_map_key (key);
+
+	if (pcekey == PCE_KEY_NONE) {
+		fprintf (stderr, "sdl: key = %04x\n", (unsigned) key);
+		return;
+	}
+
+	trm_set_key (&sdl->trm, PCE_KEY_EVENT_DOWN, pcekey);
+
+	if (key == SDLK_NUMLOCK) {
+		trm_set_key (&sdl->trm, PCE_KEY_EVENT_UP, pcekey);
+	}
+}
+
+static
+void sdl_event_keyup (sdl_t *sdl, SDLKey key)
+{
+	pce_key_t pcekey;
+
+	if (key == SDLK_LCTRL) {
+		sdl->magic &= ~0x01;
+	}
+	else if (key == SDLK_LALT) {
+		sdl->magic &= ~0x02;
+	}
+
+	if ((sdl->magic & 0x03) == 0x03) {
+		return;
+	}
+
+	pcekey = sdl_map_key (key);
+
+	if (pcekey != PCE_KEY_NONE) {
+		if (key == SDLK_NUMLOCK) {
+			trm_set_key (&sdl->trm, 1, pcekey);
+		}
+
+		trm_set_key (&sdl->trm, 2, pcekey);
 	}
 }
 
@@ -892,72 +976,12 @@ void sdl_check (sdl_t *sdl)
 
 	while (SDL_PollEvent (&evt)) {
 		switch (evt.type) {
-			case SDL_KEYDOWN: {
-				SDLMod mod;
-				SDLKey key;
-
-				mod = SDL_GetModState();
-				key = evt.key.keysym.sym;
-
-				if ((sdl->magic & 0x03) == 0x03) {
-					sdl_magic (sdl, key);
-					break;
-				}
-
-				if (key == SDLK_LCTRL) {
-					sdl->magic |= 0x01;
-				}
-				else if (key == SDLK_LALT) {
-					sdl->magic |= 0x02;
-				}
-
-				if ((sdl->magic & 0x03) == 0x03) {
-					sdl_grab_mouse (sdl, 0);
-				}
-
-				if (key == SDLK_PAUSE) {
-					sdl_grab_mouse (sdl, 0);
-					trm_set_msg (&sdl->trm, "emu.exit", "1");
-					return;
-				}
-				else if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
-					sdl_grab_mouse (sdl, 0);
-					trm_set_msg (&sdl->trm, "emu.stop", "1");
-					return;
-				}
-				else {
-					unsigned long code;
-
-					code = sdl_get_key_code (sdl, evt.key.keysym.sym, 1);
-					if (code != 0) {
-						sdl_send_key_code (sdl, code);
-					}
-				}
-			}
+		case SDL_KEYDOWN:
+			sdl_event_keydown (sdl, evt.key.keysym.sym);
 			break;
 
-			case SDL_KEYUP: {
-				unsigned long code;
-				SDLKey        key;
-
-				key = evt.key.keysym.sym;
-
-				if (key == SDLK_LCTRL) {
-					sdl->magic &= ~0x01;
-				}
-				else if (key == SDLK_LALT) {
-					sdl->magic &= ~0x02;
-				}
-
-				if ((sdl->magic & 0x03) == 0x03) {
-					break;
-				}
-
-				code = sdl_get_key_code (sdl, evt.key.keysym.sym, 0);
-				if (code != 0) {
-					sdl_send_key_code (sdl, code);
-				}
-			}
+		case SDL_KEYUP:
+			sdl_event_keyup (sdl, evt.key.keysym.sym);
 			break;
 
 			case SDL_MOUSEBUTTONDOWN:

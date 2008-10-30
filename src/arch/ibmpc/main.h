@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/main.h                                      *
- * Created:       2001-05-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/main.h                                        *
+ * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -112,6 +112,7 @@ extern unsigned   par_speed;
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
+#include "keyboard.h"
 #include "msg.h"
 
 

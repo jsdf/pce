@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/x11.c                                         *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/x11.c                                           *
+ * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,6 +38,129 @@
 
 #include <terminal/terminal.h>
 #include <terminal/x11.h>
+
+
+typedef struct {
+	KeySym    sym;
+	pce_key_t key;
+} xt_keymap_t;
+
+
+static xt_keymap_t keymap[] = {
+	{ XK_Escape,      PCE_KEY_ESC },
+	{ XK_F1,          PCE_KEY_F1 },
+	{ XK_F2,          PCE_KEY_F2 },
+	{ XK_F3,          PCE_KEY_F3 },
+	{ XK_F4,          PCE_KEY_F4 },
+	{ XK_F5,          PCE_KEY_F5 },
+	{ XK_F6,          PCE_KEY_F6 },
+	{ XK_F7,          PCE_KEY_F7 },
+	{ XK_F8,          PCE_KEY_F8 },
+	{ XK_F9,          PCE_KEY_F9 },
+	{ XK_F10,         PCE_KEY_F10 },
+	{ XK_F11,         PCE_KEY_F11 },
+	{ XK_F12,         PCE_KEY_F12 },
+
+	{ XK_Print,       PCE_KEY_PRTSCN },
+	{ XK_Scroll_Lock, PCE_KEY_SCRLK },
+	{ XK_Pause,       PCE_KEY_PAUSE },
+
+	{ XK_grave,       PCE_KEY_BACKQUOTE },
+	{ XK_1,           PCE_KEY_1 },
+	{ XK_2,           PCE_KEY_2 },
+	{ XK_3,           PCE_KEY_3 },
+	{ XK_4,           PCE_KEY_4 },
+	{ XK_5,           PCE_KEY_5 },
+	{ XK_6,           PCE_KEY_6 },
+	{ XK_7,           PCE_KEY_7 },
+	{ XK_8,           PCE_KEY_8 },
+	{ XK_9,           PCE_KEY_9 },
+	{ XK_0,           PCE_KEY_0 },
+	{ XK_minus,       PCE_KEY_MINUS },
+	{ XK_plus,        PCE_KEY_EQUAL },
+	{ XK_BackSpace,   PCE_KEY_BACKSPACE },
+
+	{ XK_Tab,         PCE_KEY_TAB },
+	{ XK_q,           PCE_KEY_Q },
+	{ XK_w,           PCE_KEY_W },
+	{ XK_e,           PCE_KEY_E },
+	{ XK_r,           PCE_KEY_R },
+	{ XK_t,           PCE_KEY_T },
+	{ XK_y,           PCE_KEY_Y },
+	{ XK_u,           PCE_KEY_U },
+	{ XK_i,           PCE_KEY_I },
+	{ XK_o,           PCE_KEY_O },
+	{ XK_p,           PCE_KEY_P },
+	{ XK_parenleft,   PCE_KEY_LBRACKET },
+	{ XK_parenright,  PCE_KEY_RBRACKET },
+	{ XK_Return,      PCE_KEY_RETURN },
+
+	{ XK_Caps_Lock,   PCE_KEY_CAPSLOCK },
+	{ XK_a,           PCE_KEY_A },
+	{ XK_s,           PCE_KEY_S },
+	{ XK_d,           PCE_KEY_D },
+	{ XK_f,           PCE_KEY_F },
+	{ XK_g,           PCE_KEY_G },
+	{ XK_h,           PCE_KEY_H },
+	{ XK_j,           PCE_KEY_J },
+	{ XK_k,           PCE_KEY_K },
+	{ XK_l,           PCE_KEY_L },
+	{ XK_semicolon,   PCE_KEY_SEMICOLON },
+	{ XK_apostrophe,  PCE_KEY_QUOTE },
+	{ XK_backslash,   PCE_KEY_BACKSLASH },
+
+	{ XK_Shift_L,     PCE_KEY_LSHIFT },
+	{ XK_less,        PCE_KEY_LESS },
+	{ XK_z,           PCE_KEY_Z },
+	{ XK_x,           PCE_KEY_X },
+	{ XK_c,           PCE_KEY_C },
+	{ XK_v,           PCE_KEY_V },
+	{ XK_b,           PCE_KEY_B },
+	{ XK_n,           PCE_KEY_N },
+	{ XK_m,           PCE_KEY_M },
+	{ XK_comma,       PCE_KEY_COMMA },
+	{ XK_period,      PCE_KEY_PERIOD },
+	{ XK_slash,       PCE_KEY_SLASH },
+	{ XK_Shift_R,     PCE_KEY_RSHIFT },
+
+	{ XK_Control_L,   PCE_KEY_LCTRL },
+	{ XK_Alt_L,       PCE_KEY_LALT },
+	{ XK_Meta_L,      PCE_KEY_LALT },
+	{ XK_space,       PCE_KEY_SPACE },
+	{ XK_Alt_R,       PCE_KEY_RALT },
+	{ XK_Meta_R,      PCE_KEY_RALT },
+	{ XK_Control_R,   PCE_KEY_RCTRL },
+
+	{ XK_Num_Lock,    PCE_KEY_NUMLOCK },
+	{ XK_KP_Divide,   PCE_KEY_KP_SLASH },
+	{ XK_KP_Multiply, PCE_KEY_KP_STAR },
+	{ XK_KP_Subtract, PCE_KEY_KP_MINUS },
+	{ XK_KP_7,        PCE_KEY_KP_7 },
+	{ XK_KP_8,        PCE_KEY_KP_8 },
+	{ XK_KP_9,        PCE_KEY_KP_9 },
+	{ XK_KP_Add,      PCE_KEY_KP_PLUS },
+	{ XK_KP_4,        PCE_KEY_KP_4 },
+	{ XK_KP_5,        PCE_KEY_KP_5 },
+	{ XK_KP_Begin,    PCE_KEY_KP_5 },
+	{ XK_KP_6,        PCE_KEY_KP_6 },
+	{ XK_KP_1,        PCE_KEY_KP_1 },
+	{ XK_KP_2,        PCE_KEY_KP_2 },
+	{ XK_KP_3,        PCE_KEY_KP_3 },
+	{ XK_KP_Enter,    PCE_KEY_KP_ENTER },
+	{ XK_KP_0,        PCE_KEY_KP_0 },
+	{ XK_KP_Decimal,  PCE_KEY_KP_PERIOD },
+	{ XK_Insert,      PCE_KEY_INS },
+	{ XK_Home,        PCE_KEY_HOME },
+	{ XK_Prior,       PCE_KEY_PAGEUP },
+	{ XK_Delete,      PCE_KEY_DEL },
+	{ XK_End,         PCE_KEY_END },
+	{ XK_Next,        PCE_KEY_PAGEDN },
+	{ XK_Up,          PCE_KEY_UP },
+	{ XK_Left,        PCE_KEY_LEFT },
+	{ XK_Down,        PCE_KEY_DOWN },
+	{ XK_Right,       PCE_KEY_RIGHT },
+	{ PCE_KEY_NONE,   0 }
+};
 
 
 static
@@ -616,175 +739,82 @@ void xt_update (xterm_t *xt, int x, int y, int w, int h)
 }
 
 
-#define key_table1_n (sizeof (key_table1) / sizeof (key_table1[0]))
-#define key_table2_n (sizeof (key_table2) / sizeof (key_table2[0]))
-
 static
-unsigned char key_table1[] = {
-	0x39, 0x02,
-#ifdef KBUK             /* double quotes, hash symbol */
-	0x03, 0x2b,
-#else
-	0x28, 0x04,
-#endif
-	0x05, 0x06, 0x08, 0x28,
-	0x0a, 0x0b, 0x09, 0x0d, 0x33, 0x0c, 0x34, 0x35,
-	0x0b, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-	0x09, 0x0a, 0x27, 0x27, 0x33, 0x0d, 0x34, 0x35,
-#ifdef KBUK             /* at symbol */
-	0x28,
-#else
-	0x03,
-#endif
-	0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22,
-	0x23, 0x17, 0x24, 0x25, 0x26, 0x32, 0x31, 0x18,
-	0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11,
-	0x2d, 0x15, 0x2c, 0x1a,
-#ifdef KBUK             /* backslash */
-	0x56,
-#else
-	0x2b,
-#endif
-	0x1b, 0x07, 0x0c,
-	0x29, 0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22,
-	0x23, 0x17, 0x24, 0x25, 0x26, 0x32, 0x31, 0x18,
-	0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11,
-	0x2d, 0x15, 0x2c, 0x1a,
-#ifdef KBUK             /* vertical bar */
-	0x56,
-#else
-	0x2b,
-#endif
-
-	0x1b,
-
-#ifdef KBUK             /* tilde */
-	0x2b,
-#else
-	0x29,
-#endif
-	0
-};
-
-static struct {
-	KeySym        key;
-	unsigned long code;
-} key_table2[] = {
-		{ XK_BackSpace,     0x0e },
-		{ XK_Tab,           0x0f },
-		{ XK_Return,        0x1c },
-		{ XK_Escape,        0x01 },
-		{ XK_Delete,        0x53e0 },
-
-		{ XK_Home,          0x47e0 },
-		{ XK_Left,          0x4be0 },
-		{ XK_Up,            0x48e0 },
-		{ XK_Right,         0x4de0 },
-		{ XK_Down,          0x50e0 },
-		{ XK_Prior,         0x49e0 },
-		{ XK_Next,          0x51e0 },
-		{ XK_End,           0x4fe0 },
-		{ XK_Insert,        0x52e0 },
-		{ XK_Print,         0x37e0 },
-		{ XK_Num_Lock,      0x45 },
-
-		{ XK_KP_Enter,      0x1ce0 },
-		{ XK_KP_Multiply,   0x37 },
-		{ XK_KP_Add,        0x4e },
-		{ XK_KP_Subtract,   0x4a },
-		{ XK_KP_Divide,     0x36e0 },
-		{ XK_KP_Decimal,    0x53 },
-
-		{ XK_KP_Insert,     0x52 },
-		{ XK_KP_Begin,      0x4c },
-
-		{ XK_KP_0,          0x52 },
-		{ XK_KP_1,          0x4f },
-		{ XK_KP_2,          0x50 },
-		{ XK_KP_3,          0x51 },
-		{ XK_KP_4,          0x4b },
-		{ XK_KP_5,          0x4c },
-		{ XK_KP_6,          0x4d },
-		{ XK_KP_7,          0x47 },
-		{ XK_KP_8,          0x48 },
-		{ XK_KP_9,          0x49 },
-
-		{ XK_F1,            0x3b },
-		{ XK_F2,            0x3c },
-		{ XK_F3,            0x3d },
-		{ XK_F4,            0x3e },
-		{ XK_F5,            0x3f },
-		{ XK_F6,            0x40 },
-		{ XK_F7,            0x41 },
-		{ XK_F8,            0x42 },
-		{ XK_F9,            0x43 },
-		{ XK_F10,           0x44 },
-		{ XK_F11,           0x57 },
-		{ XK_F12,           0x58 },
-
-		{ XK_Shift_L,       0x2a },
-		{ XK_Shift_R,       0x36 },
-		{ XK_Control_L,     0x1d },
-		{ XK_Control_R,     0x1de0 },
-		{ XK_Meta_L,        0x38 },
-		{ XK_Alt_L,         0x38 },
-		{ XK_Meta_R,        0x38e0 },
-		{ XK_Alt_R,         0x38e0 },
-
-		{ XK_Scroll_Lock,   0x46 },
-		{ XK_Caps_Lock,     0xba3a }
-};
-
-static
-void xt_send_key_code (xterm_t *xt, unsigned long code)
+pce_key_t xt_key_map (xterm_t *xt, KeySym sym)
 {
-	if (xt->trm.set_key == NULL) {
+	xt_keymap_t *map;
+
+	map = keymap;
+
+	while (map->key != PCE_KEY_NONE) {
+		if (map->sym == sym) {
+			return (map->key);
+		}
+
+		map += 1;
+	}
+
+	return (PCE_KEY_NONE);
+}
+
+static
+void xt_key_send (xterm_t *xt, KeySym sym, int press)
+{
+	pce_key_t key;
+
+	key = xt_key_map (xt, sym);
+
+	fprintf (stderr, "xt: map %u -> %u\n", (unsigned) sym, (unsigned) key);
+
+	if (key == PCE_KEY_NONE) {
 		return;
 	}
 
-	while (code != 0) {
-		xt->trm.set_key (xt->trm.key_ext, code & 0xff);
-		code = code >> 8;
+	if (press) {
+		trm_set_key (&xt->trm, PCE_KEY_EVENT_DOWN, key);
+	}
+	else {
+		trm_set_key (&xt->trm, PCE_KEY_EVENT_UP, key);
 	}
 }
 
 static
-unsigned long xt_get_key_code (xterm_t *xt, KeySym key, int make)
+void xt_event_keydown (xterm_t *xt, XEvent *evt)
 {
-	unsigned      i;
-	unsigned long ret, tmp, msk;
+	KeySym sym;
 
-	msk = make ? 0x00 : 0x80;
+	sym = XLookupKeysym (&evt->xkey, 0);
 
-	if ((key >= 32) && (key < (32 + key_table1_n))) {
-		return (key_table1[key - 32] | msk);
+	if ((sym == XK_grave) && (evt->xkey.state & Mod1Mask)) {
+		trm_set_msg (&xt->trm, "emu.exit", "1");
 	}
-
-	for (i = 0; i < key_table2_n; i++) {
-		if (key_table2[i].key == key) {
-			tmp = key_table2[i].code;
-			ret = key_table2[i].code;
-
-			while (tmp != 0) {
-				ret |= msk;
-				tmp = tmp >> 8;
-				msk = msk << 8;
-			}
-
-			return (ret);
-		}
+	else if ((sym == XK_grave) && (evt->xkey.state & ControlMask)) {
+		trm_set_msg (&xt->trm, "emu.stop", "1");
 	}
+	else if (sym == XK_Pause) {
+		trm_set_msg (&xt->trm, "emu.exit", "1");
+	}
+	else if ((sym == XK_Print) && (evt->xkey.state == 0)) {
+		trm_set_msg (&xt->trm, "video.screenshot", "");
+	}
+	else {
+		xt_key_send (xt, sym, 1);
+	}
+}
 
-	fprintf (stderr, "unmatched key: %04X\n", (unsigned) key);
+static
+void xt_event_keyup (xterm_t *xt, XEvent *evt)
+{
+	KeySym sym;
 
-	return (0);
+	sym = XLookupKeysym (&evt->xkey, 0);
+
+	xt_key_send (xt, sym, 0);
 }
 
 void xt_check (xterm_t *xt)
 {
 	XEvent          event;
-	KeySym          key;
-	unsigned long   code;
 	static unsigned cnt = 0;
 
 	cnt += 1;
@@ -817,29 +847,11 @@ void xt_check (xterm_t *xt)
 				break;
 
 			case KeyPress:
-				key = XLookupKeysym (&event.xkey, 0);
-				if ((key == XK_grave) && (event.xkey.state & Mod1Mask)) {
-					trm_set_msg (&xt->trm, "emu.exit", "1");
-				}
-				else if ((key == XK_grave) && (event.xkey.state & ControlMask)) {
-					trm_set_msg (&xt->trm, "emu.stop", "1");
-				}
-				else if (key == XK_Pause) {
-					trm_set_msg (&xt->trm, "emu.exit", "1");
-				}
-				else if ((key == XK_Print) && (event.xkey.state == 0)) {
-					trm_set_msg (&xt->trm, "video.screenshot", "");
-				}
-				else {
-					code = xt_get_key_code (xt, key, 1);
-					xt_send_key_code (xt, code);
-				}
+				xt_event_keydown (xt, &event);
 				break;
 
 			case KeyRelease:
-				key = XLookupKeysym (&event.xkey, 0);
-				code = xt_get_key_code (xt, key, 0);
-				xt_send_key_code (xt, code);
+				xt_event_keyup (xt, &event);
 				break;
 
 			case ButtonPress:

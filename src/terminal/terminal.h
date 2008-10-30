@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/terminal/terminal.h                                    *
- * Created:       2003-04-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-20 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/terminal/terminal.h                                      *
+ * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +27,8 @@
 
 
 #include <stdio.h>
+
+#include <terminal/keys.h>
 
 
 #define TERM_MODE_TEXT  0
@@ -55,8 +56,8 @@ typedef struct {
 	int  (*set_msg) (void *ext, const char *msg, const char *val);
 	int  (*get_msgul) (void *ext, const char *msg, unsigned long *val);
 
-	void *key_ext;
-	void (*set_key) (void *ext, unsigned char val);
+	void *set_key_ext;
+	void (*set_key) (void *ext, unsigned event, pce_key_t key);
 
 	void *mse_ext;
 	void (*set_mse) (void *ext, int dx, int dy, unsigned b);
@@ -85,7 +86,7 @@ void trm_free (terminal_t *trm);
 void trm_del (terminal_t *trm);
 
 void trm_set_msg_fct (terminal_t *trm, void *ext, void *set, void *getul);
-void trm_set_key_fct (terminal_t *trm, void *ext, void *set);
+void trm_set_key_fct (terminal_t *trm, void *ext, void *fct);
 
 int trm_set_msg (terminal_t *trm, const char *msg, const char *val);
 int trm_get_msgul (terminal_t *trm, const char *msg, unsigned long *val);
@@ -117,6 +118,9 @@ void trm_set_pxl (terminal_t *trm, unsigned x, unsigned y);
 void trm_set_rct (terminal_t *trm, unsigned x, unsigned y, unsigned w, unsigned h);
 
 void trm_check (terminal_t *trm);
+
+
+void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key);
 
 
 #endif

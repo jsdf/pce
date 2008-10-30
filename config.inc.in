@@ -132,8 +132,11 @@ PCE_BLK_HDR := devices/block/block.h \
 	devices/block/blkram.h \
 	devices/block/blkraw.h
 
-PCE_TERM_OBJ := $(pcedst)/terminal/terminal.a
-PCE_TERM_HDR := terminal/terminal.h \
+PCE_TERM_HDR := \
+	terminal/keys.h \
 	terminal/scrmap.h \
 	terminal/null.h \
-	terminal/font.h
+	terminal/font.h \
+	terminal/terminal.h
+
+PCE_TERM_OBJ := $(pcedst)/terminal/terminal.a
