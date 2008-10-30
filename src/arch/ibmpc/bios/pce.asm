@@ -35,7 +35,6 @@ init:
 
 
 msg_init	db "PC BIOS version ", PCE_VERSION_STR
-		db " (", PCE_CFG_DATE, " ", PCE_CFG_TIME, ")"
 		db 13, 10, 13, 10, 0
 
 msg_memchk1	db "Memory size:    ", 0
@@ -43,9 +42,6 @@ msg_memchk2	db "KB", 13, 0
 
 msg_serial	db "Serial ports:   ", 0
 msg_parallel	db "Parallel ports: ", 0
-msg_video	db "Video adapter:  ", 0
-msg_mda		db "MDA", 0
-msg_cga		db "CGA", 0
 
 msg_rom1	db "ROM[", 0
 msg_rom2	db "]:", 0
@@ -70,8 +66,9 @@ start:
 
 	sti
 
-	call	init_rom1
 	call	init_video
+	call	init_rom1
+	call	init_banner
 	call	init_mem
 	call	init_misc
 	call	init_keyboard
@@ -261,6 +258,9 @@ init_dma:
 	ret
 
 
+;-----------------------------------------------------------------------------
+; Initialize the video mode
+;-----------------------------------------------------------------------------
 init_video:
 	push	ax
 	push	si
@@ -274,36 +274,34 @@ init_video:
 	cmp	al, 0x20
 	je	.cga
 
-	xor	ax, ax
-	jmp	.prtmsg
+	jmp	.done
 
 .cga:
 	mov	ax, 0x0003
 	int	0x10
-	mov	ax, msg_cga
-	jmp	.prtmsg
+	jmp	.done
 
 .mda:
 	mov	ax, 0x0007
 	int	0x10
-	mov	ax, msg_mda
+	jmp	.done
 
-.prtmsg:
+.done:
+	pop	si
+	pop	ax
+	ret
+
+
+;-----------------------------------------------------------------------------
+; Print the startup message
+;-----------------------------------------------------------------------------
+init_banner:
+	push	ax
+	push	si
+
 	mov	si, msg_init
 	call	prt_string
 
-	or	ax, ax
-	jz	.done
-
-	mov	si, msg_video
-	call	prt_string
-
-	mov	si, ax
-	call	prt_string
-
-	call	prt_nl
-
-.done:
 	pop	si
 	pop	ax
 	ret
