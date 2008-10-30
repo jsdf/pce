@@ -92,13 +92,11 @@ HDR_EXT	:= \
 	$(PCE_TERM_HDR)
 
 ifeq "$(PCE_X11_USE)" "1"
-	HDR_EXT += terminal/x11.h
 	CC_FLG_EXTRA += $(PCE_X11_CCF)
 	LD_FLG_EXTRA += $(PCE_X11_LDF)
 endif
 
 ifeq "$(PCE_SDL_USE)" "1"
-	HDR_EXT += terminal/sdl.h
 	CC_FLG_EXTRA += $(PCE_SDL_CCF)
 	LD_FLG_EXTRA += $(PCE_SDL_LDF)
 endif

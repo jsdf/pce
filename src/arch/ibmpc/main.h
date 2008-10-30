@@ -77,14 +77,6 @@ extern unsigned   par_speed;
 #include <terminal/terminal.h>
 #include <terminal/null.h>
 
-#ifdef PCE_X11_USE
-#include <terminal/x11.h>
-#endif
-
-#ifdef PCE_SDL_USE
-#include <terminal/sdl.h>
-#endif
-
 #include <devices/memory.h>
 #include <devices/nvram.h>
 #include <devices/parport.h>

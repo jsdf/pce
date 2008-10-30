@@ -97,33 +97,6 @@ section pc {
 
 	# Multiple "terminal" sections may be present
 	section terminal {
-		driver = "sdl"
-
-		# Load a font. This must be a PSF font as used by
-		# console-tools
-		#font = "font.psf"
-
-		# Enable delayed update and set the update delay
-		# in milliseconds
-		update_delay = 50
-
-		# Update strategy in text modes (delay or now)
-		update_text = "delay"
-
-		# Update strategy in graphic modes (delay or now)
-		update_graph = "delay"
-	}
-
-	section terminal {
-		driver = "x11"
-
-		# Set the font. Any X11 font may be used, but proportional
-		# fonts look ugly.
-		font = "vga"
-		#font = "-*-courier-regular-r-*-*-12-*-*-*-*-*-*-*"
-	}
-
-	section terminal {
 		driver = "null"
 	}
 
