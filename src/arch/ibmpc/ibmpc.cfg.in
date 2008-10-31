@@ -143,11 +143,10 @@ section pc {
 	section video {
 		device = "cga"
 
+		# Don't change these unless you know what you're doing
 		io = 0x3d4
-		membase = 0xb8000
-		
-		# Don't change this
-		memsize = 16384
+		address = 0xb8000
+		size = 16384
 
 		# Select the built in CGA font
 		#   0 = thick font (default)
@@ -158,21 +157,19 @@ section pc {
 	section video {
 		device = "hgc"
 
+		# Don't change these unless you know what you're doing
 		io = 0x3b4
-		membase = 0xb0000
-		
-		# Only 32768 or 65536 makes sense.
-		memsize = 65536
+		address = 0xb0000
+		size = 65536
 	}
 
 	section video {
 		device = "mda"
 
+		# Don't change these unless you know what you're doing
 		io = 0x3b4
-		membase = 0xb0000
-		
-		# Don't change this
-		memsize = 4096
+		address = 0xb0000
+		size = 4096
 	}
 
 	section serial {
