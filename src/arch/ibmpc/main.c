@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/main.c                                      *
- * Created:       1999-04-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/main.c                                        *
+ * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -100,6 +100,12 @@ void sig_segv (int s)
 	pce_set_fd_interactive (0, 1);
 
 	exit (1);
+}
+
+static
+void pc_atexit (void)
+{
+	pce_set_fd_interactive (0, 1);
 }
 
 static
@@ -1709,6 +1715,8 @@ int main (int argc, char *argv[])
 	if (sct == NULL) {
 		sct = par_cfg;
 	}
+
+	atexit (pc_atexit);
 
 	pc = pc_new (sct);
 	par_pc = pc;
