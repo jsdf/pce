@@ -389,7 +389,7 @@ int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 {
-	pc->video = ega_new (pc->trm, sct);
+	pc->video = ega_new_ini (sct);
 	if (pc->video == NULL) {
 		return (1);
 	}

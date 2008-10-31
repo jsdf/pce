@@ -138,23 +138,6 @@ section pc {
 	# line.
 	section video {
 		device = "ega"
-
-		# The default width and height that are used for modes
-		# that are not specified.
-		w = 640
-		h = 400
-
-		mode_80x25_w = 640
-		mode_80x25_h = 400
-
-		mode_320x200_w = 640
-		mode_320x200_h = 480
-
-		mode_640x200_w = 640
-		mode_640x200_h = 480
-
-		mode_640x350_w = 640
-		mode_640x350_h = 480
 	}
 
 	section video {

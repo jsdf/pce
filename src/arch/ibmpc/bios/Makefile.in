@@ -28,7 +28,7 @@ BIOS_SDP := Makefile $(HDR) $(HDR_EXT)
 BIOS_BDP := Makefile $(BIOS_OBJ)
 
 EGA_OBJ := ega.bin
-EGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc $(HDR) $(HDR_EXT)
+EGA_SDP := Makefile fnt8x8.inc fnt8x14.inc $(HDR) $(HDR_EXT)
 EGA_BDP := Makefile $(EGA_OBJ)
 
 VGA_OBJ := vga.bin

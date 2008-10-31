@@ -22,85 +22,65 @@
 /* $Id$ */
 
 
-#ifndef PCE_IBMPC_EGA_H
-#define PCE_IBMPC_EGA_H 1
+#ifndef PCE_VIDEO_EGA_H
+#define PCE_VIDEO_EGA_H 1
 
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
-typedef struct ega_t {
-	video_t       vid;
+typedef struct ega_s {
+	video_t       video;
 
-	mem_blk_t     *mem;
-	mem_blk_t     *reg;
+	mem_blk_t     *memblk;
+	unsigned char *mem;
 
-	unsigned char *data;
+	mem_blk_t     *regblk;
+	unsigned char *reg;
 
-	unsigned long base;
-	unsigned long size;
+	unsigned char reg_seq[5];
+	unsigned char reg_grc[9];
+	unsigned char reg_atc[22];
+	unsigned char reg_crt[25];
 
-	unsigned char crtc_reg[24];
-	unsigned char ts_reg[5];
-	unsigned char gdc_reg[9];
-	unsigned char atc_reg[21];
-
-	int           atc_index;
+	char          atc_flipflop;
 
 	unsigned char latch[4];
 
-	unsigned long clkcnt;
+	/* the switch settings */
+	unsigned char switches;
 
-	void          (*update) (struct ega_t *ega);
-	int           (*screenshot) (struct ega_t *ega, FILE *fp);
-	void          (*set_latches) (struct ega_t *ega, unsigned long addr, unsigned char val[4]);
-	void          (*set_uint8) (struct ega_t *ega, unsigned long addr, unsigned char val);
-	unsigned char (*get_uint8) (struct ega_t *ega, unsigned long addr);
+	/* the monitor type, derived from the switches */
+	unsigned      monitor;
 
-	unsigned      crtc_pos;
-	unsigned      crtc_ofs;
+	terminal_t    *term;
 
-	int           crs_on;
+	/* these are derived from the crtc registers */
+	unsigned long clk_ht;
+	unsigned long clk_hd;
+	unsigned long clk_vt;
+	unsigned long clk_vd;
 
-	unsigned      mode;
-	unsigned      mode_w;
-	unsigned      mode_h;
+	unsigned      buf_w;
+	unsigned      buf_h;
+	unsigned long bufmax;
+	unsigned char *buf;
 
-	char          dirty;
-
-	terminal_t    *trmnew;
-	term_old_t    trm;
-	unsigned long trmclk;
+	unsigned char update_state;
 } ega_t;
 
 
-video_t *ega_new (terminal_t *trm, ini_sct_t *sct);
+void ega_init (ega_t *ega, unsigned long io, unsigned long addr);
+
+void ega_free (ega_t *ega);
+
+ega_t *ega_new (unsigned long io, unsigned long addr);
 
 void ega_del (ega_t *ega);
 
-void ega_prt_state (ega_t *ega, FILE *fp);
-
-int ega_dump (ega_t *ega, FILE *fp);
-
-mem_blk_t *ega_get_mem (ega_t *cga);
-mem_blk_t *ega_get_reg (ega_t *cga);
-
-int ega_screenshot (ega_t *ega, FILE *fp, unsigned mode);
-
-void ega_mem_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val);
-void ega_mem_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val);
-unsigned char ega_mem_get_uint8 (ega_t *ega, unsigned long addr);
-unsigned short ega_mem_get_uint16 (ega_t *ega, unsigned long addr);
-
-void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val);
-void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val);
-unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr);
-unsigned short ega_reg_get_uint16 (ega_t *ega, unsigned long addr);
-
-void ega_clock (ega_t *ega, unsigned long cnt);
+video_t *ega_new_ini (ini_sct_t *sct);
 
 
 #endif
