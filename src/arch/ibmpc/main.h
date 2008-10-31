@@ -83,6 +83,7 @@ extern unsigned   par_speed;
 
 #include <devices/video/video.h>
 #include <devices/video/mda.h>
+#include <devices/video/plantronics.h>
 #include <devices/video/hgc.h>
 #include <devices/video/cga.h>
 #include <devices/video/ega.h>

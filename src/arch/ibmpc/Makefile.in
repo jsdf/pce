@@ -32,6 +32,7 @@ OBJ_EXT	:= \
 	$(pcedst)/devices/video/ega.o \
 	$(pcedst)/devices/video/hgc.o \
 	$(pcedst)/devices/video/mda.o \
+	$(pcedst)/devices/video/plantronics.o \
 	$(pcedst)/devices/video/video.o \
 	$(pcedst)/devices/device.o \
 	$(pcedst)/devices/memory.o \
@@ -70,6 +71,7 @@ HDR_EXT	:= \
 	devices/video/ega.h \
 	devices/video/hgc.h \
 	devices/video/mda.h \
+	devices/video/plantronics.h \
 	devices/video/video.h \
 	devices/device.h \
 	devices/memory.h \

@@ -172,6 +172,15 @@ section pc {
 		size = 4096
 	}
 
+	section video {
+		device = "plantronics"
+
+		# Don't change these unless you know what you're doing
+		io = 0x3d4
+		address = 0xb8000
+		size = 16384
+	}
+
 	section serial {
 		address = 0x3f8
 		irq = 4
