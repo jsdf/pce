@@ -1414,20 +1414,26 @@ int_10_init_mode_cs:
 
 ; initialize a text mode
 int_10_00_text_mode:
+	push	bx
+
 	cmp	byte [0x0088], 0x09
 	je	.ecd
 
 	call	int_10_init_mode_cs
+	mov	bl, 0x00		; character map
 	call	int_10_1102		; load 8x8 font
 	jmp	.cga
 
 .ecd:
 	mov	si, di
 	call	int_10_init_mode_cs
+	mov	bl, 0x00
 	call	int_10_1101		; load 8x14 font
 
 .cga:
 	call	ega_clear_text_screen
+
+	pop	bx
 	ret
 
 
@@ -2666,6 +2672,7 @@ int_10_11:
 
 	cmp	al, 0x30
 	je	int_10_1130
+
 	ret
 
 
@@ -2687,6 +2694,8 @@ int_10_1100:
 	push	bp
 	push	es
 
+	jcxz	.done
+
 	call	plane_2_enter
 
 	push	es
@@ -2701,9 +2710,9 @@ int_10_1100:
 	shl	di, cl			; first character offset
 
 	mov	ah, bl			; map number
-	mov	al, 0
-	mov	cl, 6
-	shl	ah, cl
+	ror	ah, 1
+	ror	ah, 1
+	and	ax, 0xc000
 	add	di, ax			; map offset
 
 	mov	bl, 32
@@ -2723,6 +2732,7 @@ int_10_1100:
 
 	call	plane_2_leave
 
+.done:
 	pop	es
 	pop	bp
 	pop	di
