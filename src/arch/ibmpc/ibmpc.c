@@ -751,9 +751,6 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->cfg = ini;
 
-	pc->key_i = 0;
-	pc->key_j = 0;
-
 	pc->bootdrive = 128;
 
 	ini_get_bool (ini, "rtc", &pc->support_rtc, 1);
@@ -771,6 +768,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	ini_get_ram (pc->mem, ini, &pc->ram);
 	ini_get_rom (pc->mem, ini);
+
+	pc_kbd_init (pc);
 
 	pc_setup_nvram (pc, ini);
 	pc_setup_cpu (pc, ini);
@@ -797,6 +796,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pce_load_mem_ini (pc->mem, ini);
 
 	pc_clock_reset (pc);
+
+	pc_kbd_clear (pc);
 
 	return (pc);
 }
@@ -918,7 +919,6 @@ void pc_clock_delay (ibmpc_t *pc)
 
 	if (vclk < rclk) {
 		pc->clk2[0] = 0;
-		pc->clk2[1] = 0;
 		pc->rclk[0] = rclk - vclk;
 		return;
 	}
@@ -993,16 +993,7 @@ void pc_clock (ibmpc_t *pc)
 				}
 			}
 
-			if (pc->key_i < pc->key_j) {
-				pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
-				e8259_set_irq1 (&pc->pic, 1);
-				pc->key_i += 1;
-
-				if (pc->key_i == pc->key_j) {
-					pc->key_i = 0;
-					pc->key_j = 0;
-				}
-			}
+			pc_kbd_clock (pc, clk2[0]);
 
 			pc_clock_delay (pc);
 		}

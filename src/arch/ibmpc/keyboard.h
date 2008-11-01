@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/keyboard.h                                    *
  * Created:     2007-11-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2007-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,6 +37,15 @@ void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key);
  * This function is deprecated.
  *****************************************************************************/
 void pc_set_keycode (ibmpc_t *pc, unsigned char val);
+
+/*!***************************************************************************
+ * @short Clear the emulator keyboard buffer
+ *****************************************************************************/
+void pc_kbd_clear (ibmpc_t *pc);
+
+void pc_kbd_init (ibmpc_t *pc);
+
+void pc_kbd_clock (ibmpc_t *pc, unsigned long cnt);
 
 
 #endif
