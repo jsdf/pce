@@ -15,7 +15,7 @@ OBJ := basic.bin bios.bin ega.bin pce.bin vga.bin
 LST := basic.lst bios.lst ega.lst pce.lst vga.lst
 HDR :=
 MAN :=
-BIN := ega.rom ibmpc.rom vga.rom
+BIN := pce-ega.rom pce-bios.rom pce-vga.rom
 
 HDR_EXT	:= $(topdir)/src/arch/ibmpc/pce.inc
 
@@ -64,15 +64,15 @@ cmp:
 	bdiff -E -b 65536 -i $(srcdir)/ibmpc.cmp -i ibmpc.rom > ibmpc.diff
 
 
-ega.rom: $(EGA_BDP)
+pce-ega.rom: $(EGA_BDP)
 	$(QP)echo "  CAT    $@"
 	$(QR)cat ega.bin > $@
 
-vga.rom: $(VGA_BDP)
+pce-vga.rom: $(VGA_BDP)
 	$(QP)echo "  CAT    $@"
 	$(QR)cat vga.bin > $@
 
-ibmpc.rom: $(BIOS_BDP)
+pce-bios.rom: $(BIOS_BDP)
 	$(QP)echo "  CAT    $@"
 	$(QR)cat pce.bin basic.bin bios.bin > $@
 

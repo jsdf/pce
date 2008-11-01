@@ -22,6 +22,7 @@ section pc {
 		#clock = 4772728
 	}
 
+
 	# Multiple "ram" sections may be present
 	section ram {
 		# The linear base address
@@ -37,10 +38,11 @@ section pc {
 		#sizem = 1
 	}
 
+
 	# Multiple "rom" sections may be present
 	section rom {
 		# The file from which the rom code is loaded
-		file = "PCE_DIR_DATA/pce/ibmpc.rom"
+		file = "PCE_DIR_DATA/pce/pce-bios.rom"
 
 		# The linear base address
 		address = 0xf0000
@@ -49,13 +51,20 @@ section pc {
 		size = 65536
 	}
 
+	section rom {
+		file = "PCE_DIR_DATA/pce/pce-ega.rom"
+		address = 0xc0000
+		size = 16384
+	}
+
+
 	# "load" sections are processed after all the "ram" and "rom"
 	# sections. It is possible to overwrite read-only blocks, too.
-	section load {
-		# Intel hex file
-		format = "ihex"
-		file = "ibmpc.ihex"
-	}
+	#section load {
+	#	# Intel hex file
+	#	format = "ihex"
+	#	file = "ibmpc.ihex"
+	#}
 
 	#section load {
 	#	# Motorola S-Record file
@@ -63,11 +72,12 @@ section pc {
 	#	file = "ibmpc.srec"
 	#}
 
-	section load {
-		format = "binary"
-		file = "rom.bin"
-		address = 0xf0000
-	}
+	#section load {
+	#	format = "binary"
+	#	file = "rom.bin"
+	#	address = 0xf0000
+	#}
+
 
 	# 8253 PIT
 	section pit {
