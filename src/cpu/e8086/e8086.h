@@ -72,8 +72,7 @@
 #define E86_PREFIX_REPN 0x0008
 #define E86_PREFIX_LOCK 0x0010
 
-#define E86_PQ_SIZE 6
-#define E86_PQ_FILL 6
+#define E86_PQ_MAX 16
 
 
 struct e8086_t;
@@ -123,8 +122,10 @@ typedef struct e8086_t {
 
 	unsigned short   cur_ip;
 
+	unsigned         pq_size;
+	unsigned         pq_fill;
 	unsigned         pq_cnt;
-	unsigned char    pq[E86_PQ_FILL + 2];
+	unsigned char    pq[E86_PQ_MAX];
 
 	unsigned         prefix;
 
@@ -336,6 +337,12 @@ void e86_enable_86 (e8086_t *c);
 void e86_enable_186 (e8086_t *c);
 void e86_enable_286 (e8086_t *c);
 void e86_enable_v30 (e8086_t *c);
+
+/*!***************************************************************************
+ * @short Set the prefetch queue size
+ * @param size The emulated prefetch queue size
+ *****************************************************************************/
+void e86_set_pq_size (e8086_t *c, unsigned size);
 
 void e86_set_addr_mask (e8086_t *c, unsigned long msk);
 unsigned long e86_get_addr_mask (e8086_t *c);

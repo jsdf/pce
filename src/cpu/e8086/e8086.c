@@ -74,6 +74,9 @@ void e86_init (e8086_t *c)
 	c->op_undef = NULL;
 	c->op_int = NULL;
 
+	c->pq_size = 4;
+	c->pq_fill = 6;
+
 	c->irq = 0;
 
 	for (i = 0; i < 256; i++) {
@@ -120,6 +123,8 @@ void e86_enable_86 (e8086_t *c)
 	for (i = 0; i < 256; i++) {
 		c->op[i] = e86_opcodes[i];
 	}
+
+	e86_set_pq_size (c, 6);
 }
 
 void e86_enable_v30 (e8086_t *c)
@@ -127,6 +132,17 @@ void e86_enable_v30 (e8086_t *c)
 	e86_enable_86 (c);
 
 	c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
+}
+
+void e86_set_pq_size (e8086_t *c, unsigned size)
+{
+	if (size > E86_PQ_MAX) {
+		size = E86_PQ_MAX;
+	}
+
+	c->pq_size = size;
+	c->pq_fill = (size < 6) ? 6 : size;
+	c->pq_cnt = 0;
 }
 
 void e86_set_addr_mask (e8086_t *c, unsigned long msk)
