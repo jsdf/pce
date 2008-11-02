@@ -8,7 +8,7 @@ section pc {
 	rtc = 1
 
 	section cpu {
-		# 8086, 8088, V20, V30, 80186, 80188
+		# 8086, 8088, 8086+, 8088+, 80186, 80188
 		model = "80186"
 
 		# This sets the CPU speed with respect to the emulated

@@ -80,28 +80,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		return (0);
 	}
 	else if (msg_is_message ("emu.cpu.model", msg)) {
-		if (strcmp (val, "8086") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_8086);
-		}
-		else if (strcmp (val, "8088") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_8088);
-		}
-		else if (strcmp (val, "v20") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_V20);
-		}
-		else if (strcmp (val, "v30") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_V30);
-		}
-		else if (strcmp (val, "80186") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_80186);
-		}
-		else if (strcmp (val, "80188") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_80188);
-		}
-		else if (strcmp (val, "80286") == 0) {
-			pc_set_cpu_model (pc, PCE_CPU_80286);
-		}
-		else {
+		if (pc_set_cpu_model (pc, val)) {
 			return (1);
 		}
 

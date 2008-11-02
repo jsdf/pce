@@ -46,14 +46,28 @@ Write log messages to the file specified instead of stdout.
 \
 .TP
 .BI "-p, --cpu " model
-Select the CPU model to be emulated. Possible values are
-.BR 8086 ", "
-.BR 8088 ", "
-.BR 80186 ", "
-.BR 80188 ", "
-.BR v20 " and "
-.BR v30 "."
-This overrides the cpu model specified in the config file.
+Select the CPU model to be emulated, overriding the config file.
+Possible values for \fImodel\fR are:
+.RS
+.TP
+.B 8086
+Intel 8086
+.TP
+.B 8088
+Intel 8088
+.TP
+.B 8086+
+Behaves like an 8086 but with 80186 instructions enabled
+.TP
+.B 8088+
+Behaves like an 8088 but with 80186 instructions enabled
+.TP
+.B 80186
+Intel 80186
+.TP
+.B 80188
+Intel 8018
+.RE
 \
 .TP
 .B "-q, --quiet"

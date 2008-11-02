@@ -26,14 +26,6 @@
 #define PCE_IBMPC_H 1
 
 
-#define PCE_CPU_8086  0
-#define PCE_CPU_8088  1
-#define PCE_CPU_V30   2
-#define PCE_CPU_V20   3
-#define PCE_CPU_80186 4
-#define PCE_CPU_80188 5
-#define PCE_CPU_80286 6
-
 #define PCE_IBMPC_CLK0 14318184
 #define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
 #define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
@@ -76,8 +68,6 @@ typedef struct ibmpc_t {
 	ini_sct_t          *cfg;
 
 	bp_set_t           bps;
-
-	unsigned           cpu_model;
 
 	unsigned           bootdrive;
 
@@ -127,7 +117,10 @@ void pc_clock (ibmpc_t *pc);
 
 void pc_screenshot (ibmpc_t *pc, const char *fname);
 
-int pc_set_cpu_model (ibmpc_t *pc, unsigned model);
+/*!***************************************************************************
+ * @short Set the specific CPU model to be emulated
+ *****************************************************************************/
+int pc_set_cpu_model (ibmpc_t *pc, const char *str);
 
 /*!***************************************************************************
  * @short Set the emulated cpu clock frequency as a multiple of 4.77 MHz

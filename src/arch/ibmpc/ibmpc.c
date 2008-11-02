@@ -88,10 +88,7 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 
 	sct = ini_next_sct (ini, NULL, "cpu");
 
-	ini_get_string (sct, "model", &model,
-		(par_cpu != NULL) ? par_cpu : "8086"
-	);
-
+	ini_get_string (sct, "model", &model, "8088");
 	ini_get_uint16 (sct, "speed", &speed, 1);
 
 	if (par_speed > 0) {
@@ -111,31 +108,9 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 		model, clk / 1000000.0, speed
 	);
 
-	pc->cpu = e86_new ();
-	pc->cpu_model = PCE_CPU_8086;
+	pc->cpu = e86_new();
 
-	if (strcmp (model, "8086") == 0) {
-		pc_set_cpu_model (pc, PCE_CPU_8086);
-	}
-	else if (strcmp (model, "8088") == 0) {
-		pc_set_cpu_model (pc, PCE_CPU_8088);
-	}
-	else if ((strcmp (model, "v20") == 0) || (strcmp (model, "V20") == 0)) {
-		pc_set_cpu_model (pc, PCE_CPU_V20);
-	}
-	else if ((strcmp (model, "v30") == 0) || (strcmp (model, "V30") == 0)) {
-		pc_set_cpu_model (pc, PCE_CPU_V30);
-	}
-	else if ((strcmp (model, "80186") == 0) || (strcmp (model, "186") == 0)) {
-		pc_set_cpu_model (pc, PCE_CPU_80186);
-	}
-	else if ((strcmp (model, "80188") == 0) || (strcmp (model, "188") == 0)) {
-		pc_set_cpu_model (pc, PCE_CPU_80188);
-	}
-	else if ((strcmp (model, "80286") == 0) || (strcmp (model, "286") == 0)) {
-		pc_set_cpu_model (pc, PCE_CPU_80286);
-	}
-	else {
+	if (pc_set_cpu_model (pc, model)) {
 		pce_log (MSG_ERR, "*** unknown cpu model (%s)\n", model);
 	}
 
@@ -1021,33 +996,46 @@ void pc_screenshot (ibmpc_t *pc, const char *fname)
 	fclose (fp);
 }
 
-int pc_set_cpu_model (ibmpc_t *pc, unsigned model)
+int pc_set_cpu_model (ibmpc_t *pc, const char *str)
 {
-	switch (model) {
-		case PCE_CPU_8086:
-		case PCE_CPU_8088:
-			e86_enable_86 (pc->cpu);
-			break;
-
-		case PCE_CPU_V20:
-		case PCE_CPU_V30:
-			e86_enable_v30 (pc->cpu);
-			break;
-
-		case PCE_CPU_80186:
-		case PCE_CPU_80188:
-			e86_enable_186 (pc->cpu);
-			break;
-
-		case PCE_CPU_80286:
-			e86_enable_286 (pc->cpu);
-			break;
-
-		default:
-			return (1);
+	if (strcmp (str, "8086") == 0) {
+		e86_enable_86 (pc->cpu);
 	}
-
-	pc->cpu_model = model;
+	else if (strcmp (str, "8088") == 0) {
+		e86_enable_86 (pc->cpu);
+		e86_set_pq_size (pc->cpu, 4);
+	}
+	else if (strcmp (str, "v30") == 0) {
+		e86_enable_v30 (pc->cpu);
+	}
+	else if (strcmp (str, "v20") == 0) {
+		e86_enable_v30 (pc->cpu);
+		e86_set_pq_size (pc->cpu, 4);
+	}
+	else if (strcmp (str, "8086+") == 0) {
+		e86_enable_186 (pc->cpu);
+		e86_set_options (pc->cpu, E86_CPU_MASK_SHIFT, 0);
+		e86_set_options (pc->cpu, E86_CPU_PUSH_FIRST, 0);
+	}
+	else if (strcmp (str, "8088+") == 0) {
+		e86_enable_186 (pc->cpu);
+		e86_set_pq_size (pc->cpu, 4);
+		e86_set_options (pc->cpu, E86_CPU_MASK_SHIFT, 0);
+		e86_set_options (pc->cpu, E86_CPU_PUSH_FIRST, 0);
+	}
+	else if (strcmp (str, "80186") == 0) {
+		e86_enable_186 (pc->cpu);
+	}
+	else if (strcmp (str, "80188") == 0) {
+		e86_enable_186 (pc->cpu);
+		e86_set_pq_size (pc->cpu, 4);
+	}
+	else if (strcmp (str, "80286") == 0) {
+		e86_enable_286 (pc->cpu);
+	}
+	else {
+		return (1);
+	}
 
 	return (0);
 }

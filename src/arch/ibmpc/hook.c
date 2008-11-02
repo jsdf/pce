@@ -217,9 +217,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_SET_CPU:
-		if (pc_set_cpu_model (pc, e86_get_ax (pc->cpu))) {
-			pce_log (MSG_ERR, "can't set cpu model to %u\n", e86_get_ax (pc->cpu));
-		}
+		/* not supported anymore */
 		break;
 
 	case PCEH_SET_AMSK:
@@ -256,7 +254,8 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_GET_CPU:
-		e86_set_ax (pc->cpu, pc->cpu_model);
+		/* not supported anymore */
+		e86_set_ax (pc->cpu, 0);
 		break;
 
 	case PCEH_GET_AMSK:
