@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e8086/e8086.h                                      *
- * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e8086/e8086.h                                        *
+ * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,14 @@
 
 
 #include <stdio.h>
+
+
+/* CPU options */
+#define E86_CPU_REP_BUG    0x01         /* enable rep/seg bug */
+#define E86_CPU_MASK_SHIFT 0x02         /* mask shift count */
+#define E86_CPU_PUSH_FIRST 0x04         /* push sp before decrementing it */
+#define E86_CPU_INT6       0x08         /* throw illegal opcode exception */
+#define E86_CPU_FLAGS286   0x10         /* Allow clearing flags 12-15 */
 
 
 /* CPU flags */
@@ -343,6 +351,13 @@ void e86_enable_v30 (e8086_t *c);
  * @param size The emulated prefetch queue size
  *****************************************************************************/
 void e86_set_pq_size (e8086_t *c, unsigned size);
+
+/*!***************************************************************************
+ * @short Set CPU options
+ * @param opt A bit mask indicating the desired options
+ * @param set If true, the options in opt are set otherwise they are reset
+ *****************************************************************************/
+void e86_set_options (e8086_t *c, unsigned opt, int set);
 
 void e86_set_addr_mask (e8086_t *c, unsigned long msk);
 unsigned long e86_get_addr_mask (e8086_t *c);

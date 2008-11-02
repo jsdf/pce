@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e8086/internal.h                                   *
- * Created:       2003-04-10 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2005 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e8086/internal.h                                     *
+ * Created:     2003-04-10 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,13 +27,6 @@
 
 
 #include "e8086.h"
-
-
-#define E86_CPU_REP_BUG    0x01         /* enable rep/seg bug */
-#define E86_CPU_MASK_SHIFT 0x02         /* mask shift count */
-#define E86_CPU_PUSH_FIRST 0x04         /* push sp before decrementing it */
-#define E86_CPU_INT6       0x08         /* throw illegal opcode exception */
-#define E86_CPU_FLAGS286   0x10         /* Allow clearing flags 12-15 */
 
 
 #define e86_mk_uint16(lo, hi) \

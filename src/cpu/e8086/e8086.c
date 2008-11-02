@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e8086/e8086.c                                      *
- * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e8086/e8086.c                                        *
+ * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -143,6 +143,16 @@ void e86_set_pq_size (e8086_t *c, unsigned size)
 	c->pq_size = size;
 	c->pq_fill = (size < 6) ? 6 : size;
 	c->pq_cnt = 0;
+}
+
+void e86_set_options (e8086_t *c, unsigned opt, int set)
+{
+	if (set) {
+		c->cpu |= opt;
+	}
+	else {
+		c->cpu &= ~opt;
+	}
 }
 
 void e86_set_addr_mask (e8086_t *c, unsigned long msk)
