@@ -93,6 +93,8 @@ BDP	:= Makefile $(OBJ) $(OBJ_EXT)
 CLN := $(BIN) $(OBJ) pce-simarm.cfg
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) Makefile.in simarm.cfg.in
+
 
 include $(reldir)/rules.inc
 

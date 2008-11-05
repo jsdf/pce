@@ -33,6 +33,8 @@ BDP := Makefile $(OBJ) $(OBJ_EXT)
 CLN := $(OBJ) $(BIN) $(MANT)
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) $(MAN1) Makefile.in
+
 
 include $(reldir)/rules.inc
 

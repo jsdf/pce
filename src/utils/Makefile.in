@@ -12,5 +12,7 @@ include $(reldir)/config.inc
 
 DCL := Makefile
 
+DIST := Makefile.in
+
 
 include $(reldir)/rules.inc

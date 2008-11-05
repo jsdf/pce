@@ -12,15 +12,17 @@ include $(reldir)/config.inc
 
 SRC := read.c scanner.c section.c value.c write.c
 OBJ := read.o scanner.o section.o value.o write.o
-HDR := libini.h
+HDR := libini.h scanner.h
 MAN :=
 BIN := libini.a
 
-SDP := Makefile $(HDR) scanner.h
+SDP := Makefile $(HDR)
 BDP := Makefile $(OBJ)
 
 CLN := $(OBJ) $(BIN)
 DCL := Makefile
+
+DIST := $(SRC) $(HDR) Makefile.in
 
 
 include $(reldir)/rules.inc

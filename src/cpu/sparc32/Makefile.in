@@ -25,6 +25,8 @@ BDP := Makefile $(OBJ) $(OBJ_EXT)
 CLN := $(BIN) $(OBJ)
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) Makefile.in
+
 
 include $(reldir)/rules.inc
 

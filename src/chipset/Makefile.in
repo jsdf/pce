@@ -6,6 +6,8 @@ topdir := @top_srcdir@
 subdir := 82xx clock ppc405
 reldir := ../..
 
+DIST := Makefile.in
+
 
 include $(reldir)/config.inc
 

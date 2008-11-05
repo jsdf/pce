@@ -14,11 +14,13 @@ FILES := cga ega hgc mda plantronics vga video
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
-HDR := $(foreach f,$(FILES),$(f).h)
+HDR := $(foreach f,$(FILES),$(f).h) cga_font.h hgc_font.h mda_font.h
 SDP := Makefile
 
 CLN := $(OBJ) $(BIN)
 DCL := Makefile
+
+DIST := $(SRC) $(HDR) Makefile.in
 
 
 include $(reldir)/rules.inc

@@ -38,6 +38,8 @@ VGA_BDP := Makefile $(VGA_OBJ)
 CLN := $(OBJ) $(BIN) $(LST)
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc Makefile.in
+
 
 include $(reldir)/rules.inc
 
@@ -55,8 +57,17 @@ all: $(TARGET)
 install:
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)
 	$(QR)for f in $(BIN) ; do \
-		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
+		test x$(V) != x1 && echo "  CP     $$f" ; \
 		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir) ; \
+	done
+
+
+dist:
+	$(QR)for f in $(BIN) ; do \
+		test -f "$$f" || continue ; \
+		test x$(V) != x1 && echo "  CP     $$f" ; \
+		mkdir -p "$(distbase)/contrib/rom/ibmpc" ; \
+		cp -p "$$f" "$(distbase)/contrib/rom/ibmpc" ; \
 	done
 
 

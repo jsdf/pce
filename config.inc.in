@@ -113,6 +113,14 @@ PCE_VERSION_MIC := @PCE_VERSION_MIC@
 PCE_VERSION_STR := @PCE_VERSION_STR@
 
 
+ifeq "$(distdir)" ""
+	distdir := $(PWD)/pce-$(PCE_VERSION_STR)
+endif
+ifeq "$(distbase)" ""
+	distbase := $(distdir)
+endif
+
+
 ifneq "$(reldir)" "$(topdir)"
 CC_FLG	+= -I$(topdir)/src
 endif

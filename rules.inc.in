@@ -107,6 +107,34 @@ endif
 
 #-----------------------------------------------------------------------------
 
+dist: dist-rec dist-default
+dist-default:
+ifneq "$(DIST)" ""
+	$(QP)echo "  MKDIR  $(distdir)"
+	$(QR)mkdir -p "$(distdir)"
+	$(QR)for f in $(DIST) ; do \
+		if test -f "$$f" ; then \
+			src=$$f ; \
+		elif test -f "$(srcdir)/$$f" ; then \
+			src=$(srcdir)/$$f ; \
+		else \
+			continue ; \
+		fi ; \
+		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
+		cp -p "$$src" "$(distdir)" ; \
+	done
+endif
+
+dist-rec:
+ifneq "$(subdir)" ""
+	$(QR)for dir in $(subdir); do \
+		$(MAKE) -C $$dir $(MAKE_FLG) \
+		distbase=$(distbase) distdir=$(distdir)/$$dir dist || exit 1 ; \
+	done
+endif
+
+#-----------------------------------------------------------------------------
+
 %.o: %.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(CC_FLG) $(CC_FLG_EXTRA) -o $@ $<

@@ -27,6 +27,8 @@ BDP := Makefile $(OBJ) $(OBJ_EXT)
 CLN := $(OBJ) $(BIN)
 DCL := Makefile
 
+DIST := $(SRC) Makefile.in
+
 
 include $(reldir)/rules.inc
 
@@ -37,10 +39,19 @@ all: $(BIN)
 install:
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datdir)/pceutils
 	$(QR)for f in $(BIN) ; do \
-		if test x$(V) != x1 ; then echo "  CP     $$f" ; fi ; \
+		test x$(V) != x1 && echo "  CP     $$f" ; \
 		$(INSTALL) -m 644 $$f $(DESTDIR)$(datdir)/pceutils ; \
 	done
 
+
+dist:
+	$(QR)for f in $(BIN) ; do \
+		test -f "$$f" || continue ; \
+		test x$(V) != x1 && echo "  CP     $$f" ; \
+		mkdir -p "$(distbase)/contrib/pceutils" ; \
+		cp -p "$$f" "$(distbase)/contrib/pceutils" ; \
+	done
+	
 
 %.com: %.asm
 	$(QP)echo "  NASM   $@"

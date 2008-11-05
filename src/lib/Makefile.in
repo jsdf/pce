@@ -29,11 +29,20 @@ BDP := Makefile $(OBJ)
 CLN := $(OBJ)
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) Makefile.in
+
 
 include $(reldir)/rules.inc
 
 
 all: $(OBJ)
+
+
+dist:
+	$(QP)echo "  MKDIR  stdint"
+	$(QR)mkdir -p "$(distdir)/stdint"
+	$(QP)echo "  CP     stdint.h"
+	$(QR)cp -p "$(srcdir)/stdint/stdint.h" "$(distdir)/stdint"
 
 
 brkpt.o:	brkpt.c brkpt.h cmd.h $(SDP)
