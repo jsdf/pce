@@ -862,11 +862,7 @@ int_12:
 	iret
 
 int_13:
-	push	bp
-	mov	bp, sp
-	push	word [bp + 6]			; flags
-	popf
-	pop	bp
+	sti
 	pceh	PCEH_INT, 0x13
 	retf	2
 
@@ -875,11 +871,7 @@ int_14:
 	iret
 
 int_15:
-	push	bp
-	mov	bp, sp
-	push	word [bp + 6]			; flags
-	popf
-	pop	bp
+	sti
 	pceh	PCEH_INT, 0x15
 	retf	2
 
