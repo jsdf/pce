@@ -134,7 +134,7 @@ install: pce-ibmpc pce-ibmpc.cfg install-bin install-man
 
 pce-ibmpc: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA) -lm
 
 
 pce-ibmpc.cfg: ibmpc.cfg.in
