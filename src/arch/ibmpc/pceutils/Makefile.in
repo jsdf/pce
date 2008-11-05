@@ -10,7 +10,7 @@ reldir := ../../../..
 include $(reldir)/config.inc
 
 
-BASECOM := pceboot pcecpu pceexit pceint28 pcemsg pcestop pcetime pcever
+BASECOM := pceboot pceexit pceint28 pcemsg pcestop pcetime pcever
 BASESYS := pceemm pcehimem
 
 SRC := $(foreach f,$(BASECOM) $(BASESYS),$(f).asm)
@@ -52,7 +52,6 @@ install:
 
 
 pceboot.com:	pceboot.asm $(SDP)
-pcecpu.com:	pcecpu.asm $(SDP)
 pceemm.sys:	pceemm.asm $(SDP)
 pceexit.com:	pceexit.asm $(SDP)
 pcehimem.sys:	pcehimem.asm $(SDP)
