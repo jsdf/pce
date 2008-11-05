@@ -3,10 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/config.inc.in                                          *
-;* Created:       2003-09-03 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2004-06-23 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2004 by Hampa Hug <hampa@hampa.ch>                *
+;* File name:   src/config.inc.in                                            *
+;* Created:     2003-09-03 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -31,7 +30,6 @@
 %define PCE_VERSION_MIN @PCE_VERSION_MIN@
 %define PCE_VERSION_MIC @PCE_VERSION_MIC@
 %define PCE_VERSION_STR "@PCE_VERSION_STR@"
-%define PCE_VERSION_REL @PCE_VERSION_REL@
 
 %define PCE_CFG_DATE "@PCE_CFG_DATE@"
 %define PCE_CFG_TIME "@PCE_CFG_TIME@"

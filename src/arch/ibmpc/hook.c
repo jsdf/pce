@@ -274,7 +274,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
 	case PCEH_GET_VERS:
 		e86_set_ax (pc->cpu, (PCE_VERSION_MAJ << 8) | PCE_VERSION_MIN);
-		e86_set_dx (pc->cpu, (PCE_VERSION_MIC << 8) | PCE_VERSION_REL);
+		e86_set_dx (pc->cpu, (PCE_VERSION_MIC << 8));
 		break;
 
 	case PCEH_XMS:

@@ -3,9 +3,9 @@
 #*****************************************************************************
 
 #*****************************************************************************
-#* File name:     configure.in                                               *
-#* Created:       2002-05-20 by Hampa Hug <hampa@hampa.ch>                   *
-#* Copyright:     (C) 2002-2007 Hampa Hug <hampa@hampa.ch>                   *
+#* File name:   configure.in                                                 *
+#* Created:     2002-05-20 by Hampa Hug <hampa@hampa.ch>                     *
+#* Copyright:   (C) 2002-2008 Hampa Hug <hampa@hampa.ch>                     *
 #*****************************************************************************
 
 #*****************************************************************************
@@ -38,26 +38,10 @@ if test ! -r "$srcdir/version" ; then
 	exit 1
 fi
 
-oldifs=$IFS
-IFS="$IFS."
 read p PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC dstr r < "$srcdir/version"
-IFS=$oldifs
-
-AC_ARG_ENABLE(release,
-  AC_HELP_STRING([--enable-release], [Build a release [[no]]]),
-  [
-	if test "$enableval" = "yes" ; then
-		dstr=""
-	fi
-  ]
-)
 
 if test "x$dstr" != "x" ; then
-	PCE_VERSION_REL=0
-	if test "x$dstr" = "xcvs" ; then
-		dstr=`date +%Y%m%d`
-		PCE_VERSION_STR="cvs-$dstr"
-	elif test "x$dstr" = "xsvn" ; then
+	if test "x$dstr" = "xsvn" ; then
 		tmp=svninfo.$$.tmp
 		svn info "$srcdir" > "$tmp" 2> /dev/null
 
@@ -79,25 +63,22 @@ if test "x$dstr" != "x" ; then
 
 		test -n "$rev" && rev="-r$rev"
 		date=$(echo "$date" | sed -e "s/-//g")
-		PCE_VERSION_STR="$date$rev"
+		PCE_VERSION_STR="svn-$date$rev"
 	else
 		PCE_VERSION_STR="$dstr"
 	fi
 else
-	PCE_VERSION_REL=1
 	PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 fi
 AC_SUBST(PCE_VERSION_MAJ)
 AC_SUBST(PCE_VERSION_MIN)
 AC_SUBST(PCE_VERSION_MIC)
 AC_SUBST(PCE_VERSION_STR)
-AC_SUBST(PCE_VERSION_REL)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MAJ, $PCE_VERSION_MAJ)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIN, $PCE_VERSION_MIN)
 AC_DEFINE_UNQUOTED(PCE_VERSION_MIC, $PCE_VERSION_MIC)
 AC_DEFINE_UNQUOTED(PCE_VERSION_STR, "$PCE_VERSION_STR")
-AC_DEFINE_UNQUOTED(PCE_VERSION_REL, $PCE_VERSION_REL)
-AC_MSG_RESULT([$PCE_VERSION_STR])
+AC_MSG_RESULT([$PCE_VERSION_STR ($PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC)])
 
 
 #-----------------------------------------------------------------------------

@@ -67,7 +67,6 @@
 #undef PCE_VERSION_MIN
 #undef PCE_VERSION_MIC
 #undef PCE_VERSION_STR
-#undef PCE_VERSION_REL
 
 #undef PCE_CFG_DATE
 #undef PCE_CFG_TIME
