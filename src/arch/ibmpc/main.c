@@ -88,11 +88,25 @@ void prt_version (void)
 	fflush (stdout);
 }
 
+static
 void sig_int (int s)
 {
-	/* hmm... */
+	fprintf (stderr, "pce-ibmpc: sigint\n");
+	fflush (stderr);
+
+	pc->brk = PCE_BRK_ABORT;
 }
 
+static
+void sig_term (int s)
+{
+	fprintf (stderr, "pce-ibmpc: sigterm\n");
+	fflush (stderr);
+
+	pc->brk = PCE_BRK_ABORT;
+}
+
+static
 void sig_segv (int s)
 {
 	fprintf (stderr, "pce-ibmpc: segmentation fault\n");
@@ -1746,8 +1760,9 @@ int main (int argc, char *argv[])
 
 	e86_reset (pc->cpu);
 
-	signal (SIGINT, &sig_int);
-	signal (SIGSEGV, &sig_segv);
+	signal (SIGINT, sig_int);
+	signal (SIGTERM, sig_term);
+	signal (SIGSEGV, sig_segv);
 
 	pce_console_init (stdin, stdout);
 	cmd_init (pc, cmd_get_sym, cmd_set_sym);
