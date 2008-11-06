@@ -87,5 +87,8 @@
 #undef PCE_ENABLE_TUN
 #undef PCE_ENABLE_SERPORT
 
+/* directory separator */
+#define PCE_DIR_SEP '/'
+
 
 #endif

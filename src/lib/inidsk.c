@@ -26,6 +26,7 @@
 
 #include <lib/inidsk.h>
 #include <lib/log.h>
+#include <lib/path.h>
 
 #include <devices/block/blkcow.h>
 #include <devices/block/blkdosem.h>
@@ -41,6 +42,7 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 	unsigned drv;
 	char     buf[16];
 	disk_t   *dsk;
+	char     *path;
 
 	i = 0;
 	while ((i < 16) && (str[i] != 0)) {
@@ -61,10 +63,15 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 	drv = strtoul (buf, NULL, 0);
 	str = str + i + 1;
 
-	dsk = dsk_auto_open (str, 0, 0);
+	path = pce_path_get (str);
+
+	dsk = dsk_auto_open (path, 0, 0);
 	if (dsk == NULL) {
+		free (path);
 		return (1);
 	}
+
+	free (path);
 
 	dsk_set_drive (dsk, drv);
 
@@ -156,6 +163,7 @@ disk_t *ini_get_disk_part (ini_sct_t *sct,
 	unsigned long start;
 	unsigned long blk_i, blk_n;
 	const char    *fname;
+	char          *path;
 
 	dsk = dsk_part_open (c, h, s, ro);
 
@@ -176,10 +184,15 @@ disk_t *ini_get_disk_part (ini_sct_t *sct,
 			return (NULL);
 		}
 
-		if (dsk_part_add_partition (dsk, fname, start, blk_i, blk_n, ro)) {
+		path = pce_path_get (fname);
+
+		if (dsk_part_add_partition (dsk, path, start, blk_i, blk_n, ro)) {
+			free (path);
 			dsk_del (dsk);
 			return (NULL);
 		}
+
+		free (path);
 	}
 
 	return (dsk);
@@ -194,6 +207,7 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	int           ro;
 	int           optional;
 	const char    *type, *fname;
+	char          *path;
 
 	ini_get_uint16 (sct, "drive", &drive, 0);
 	ini_get_string (sct, "type", &type, "auto");
@@ -226,23 +240,25 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	ini_get_bool (sct, "readonly", &ro, 0);
 	ini_get_bool (sct, "optional", &optional, 0);
 
+	path = pce_path_get (fname);
+
 	if (strcmp (type, "ram") == 0) {
-		dsk = dsk_ram_open (fname, n, c, h, s, ro);
+		dsk = dsk_ram_open (path, n, c, h, s, ro);
 	}
 	else if (strcmp (type, "image") == 0) {
-		dsk = dsk_img_open (fname, n, c, h, s, ofs, ro);
+		dsk = dsk_img_open (path, n, c, h, s, ofs, ro);
 	}
 	else if (strcmp (type, "dosemu") == 0) {
-		dsk = dsk_dosemu_open (fname, ro);
+		dsk = dsk_dosemu_open (path, ro);
 	}
 	else if (strcmp (type, "pce") == 0) {
-		dsk = dsk_pce_open (fname, ro);
+		dsk = dsk_pce_open (path, ro);
 	}
 	else if (strcmp (type, "partition") == 0) {
 		dsk = ini_get_disk_part (sct, c, h, s, ro);
 	}
 	else if (strcmp (type, "auto") == 0) {
-		dsk = dsk_auto_open (fname, ofs, ro);
+		dsk = dsk_auto_open (path, ofs, ro);
 	}
 	else {
 		dsk = NULL;
@@ -250,6 +266,8 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 
 	if (dsk == NULL) {
 		*ret = NULL;
+
+		free (path);
 
 		if (optional == 0) {
 			pce_log (MSG_ERR, "*** loading drive 0x%02x failed\n", drive);
@@ -262,15 +280,17 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	dsk_set_drive (dsk, drive);
 
 	pce_log_tag (MSG_INF,
-		"DISK:", "drive=%u type=%s blocks=%lu chs=%lu/%lu/%lu%sfile=%s\n",
+		"DISK:", "drive=%u type=%s blocks=%lu chs=%lu/%lu/%lu %s file=%s\n",
 		drive, type,
 		(unsigned long) dsk->blocks,
 		(unsigned long) dsk->c,
 		(unsigned long) dsk->h,
 		(unsigned long) dsk->s,
-		(ro ? " ro " : " "),
-		(fname != NULL) ? fname : "<>"
+		(ro ? "ro" : "rw"),
+		(path != NULL) ? path : "<>"
 	);
+
+	free (path);
 
 	ini_get_vchs (sct, dsk);
 

@@ -1,4 +1,4 @@
-.TH PCE-IBMPC 1 "2008-10-28" "HH" "pce"
+.TH PCE-IBMPC 1 "2008-11-06" "HH" "pce"
 \
 .SH NAME
 pce-ibmpc \- IBM PC 5150 emulator
@@ -21,6 +21,32 @@ Reasonable values are 128 and 0 (the first floppy disk).
 .TP
 .BI "-c, --config " file
 Set the config file name.
+\
+.TP
+.BI "-d, --path " string
+Add a directory to the search path.
+
+The search path is used if an input file (such as a ROM
+image or a disk image) is specified with a relative file
+name. In that case the file is searched for in all
+directories of the search path. The current directory
+is always implicitly added to the end of the search path.
+
+The directory name can be prefixed by one of these characters:
+.RS
+.TP
+.B +
+Add the directory to the end of the search path
+.TP
+.B -
+Add the directory to the beginning of the search path
+.TP
+.B =
+Clear the search path before adding the directory
+.RE
+
+.IP
+The default is to add the directory to the end of the search path.
 \
 .TP
 .BI "-g, --video " string
@@ -66,7 +92,7 @@ Behaves like an 8088 but with 80186 instructions enabled
 Intel 80186
 .TP
 .B 80188
-Intel 8018
+Intel 80188
 .RE
 \
 .TP

@@ -7,6 +7,19 @@ section pc {
 	# Enable access to the RTC
 	rtc = 1
 
+	# Add a directory to the end of the file search path.
+	#
+	# The search path is used if an input file is specified with
+	# a relative file name. In that case the file is searched for
+	# in all directories of the search path. The current directory
+	# is always implicitly added to the end of the search path.
+	#
+	# If the first character of the string is a "-", the directory
+	# is added to the beginning of the search path.
+	path = "PCE_DIR_DATA"
+	path = "PCE_DIR_DATA/rom"
+	path = "-."
+
 	section cpu {
 		# 8086, 8088, 8086+, 8088+, 80186, 80188
 		model = "80186"
@@ -42,7 +55,7 @@ section pc {
 	# Multiple "rom" sections may be present
 	section rom {
 		# The file from which the rom code is loaded
-		file = "PCE_DIR_DATA/pce/pce-bios.rom"
+		file = "pce-bios.rom"
 
 		# The linear base address
 		address = 0xf0000
@@ -52,7 +65,7 @@ section pc {
 	}
 
 	section rom {
-		file = "PCE_DIR_DATA/pce/pce-ega.rom"
+		file = "pce-ega.rom"
 		address = 0xc0000
 		size = 16384
 	}

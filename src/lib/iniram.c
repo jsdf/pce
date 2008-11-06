@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/iniram.c                                           *
- * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/iniram.c                                             *
+ * Created:     2005-07-24 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 #include <lib/iniram.h>
 #include <lib/load.h>
 #include <lib/log.h>
+#include <lib/path.h>
 #include <libini/libini.h>
 
 
@@ -33,6 +34,7 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 	ini_sct_t     *sct;
 	mem_blk_t     *ram;
 	const char    *fname;
+	char          *path;
 	unsigned long base, size;
 
 	if (addr0 != NULL) {
@@ -56,13 +58,16 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
+		path = pce_path_get (fname);
+
 		pce_log_tag (MSG_INF, "RAM:", "addr=0x%08lx size=%lu file=%s\n",
-			base, size, (fname == NULL) ? "<none>" : fname
+			base, size, (path == NULL) ? "<none>" : path
 		);
 
 		ram = mem_blk_new (base, size, 1);
 		if (ram == NULL) {
 			pce_log (MSG_ERR, "*** memory block creation failed\n");
+			free (path);
 			return (1);
 		}
 
@@ -74,12 +79,17 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 			*addr0 = ram;
 		}
 
-		if (fname != NULL) {
-			if (pce_load_blk_bin (ram, fname)) {
-				pce_log (MSG_ERR, "*** loading ram failed (%s)\n", fname);
+		if (path != NULL) {
+			if (pce_load_blk_bin (ram, path)) {
+				pce_log (MSG_ERR,
+					"*** loading ram failed (%s)\n", path
+				);
+				free (path);
 				return (1);
 			}
 		}
+
+		free (path);
 	}
 
 	return (0);
@@ -90,6 +100,7 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	mem_blk_t     *rom;
 	const char    *fname;
+	char          *path;
 	unsigned long base, size;
 
 	sct = NULL;
@@ -109,13 +120,16 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
+		path = pce_path_get (fname);
+
 		pce_log_tag (MSG_INF, "ROM:", "addr=0x%08lx size=%lu file=%s\n",
-			base, size, (fname != NULL) ? fname : "<none>"
+			base, size, (path != NULL) ? path : "<none>"
 		);
 
 		rom = mem_blk_new (base, size, 1);
 		if (rom == NULL) {
 			pce_log (MSG_ERR, "*** memory block creation failed\n");
+			free (path);
 			return (1);
 		}
 
@@ -123,12 +137,17 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 		mem_blk_set_readonly (rom, 1);
 		mem_add_blk (mem, rom, 1);
 
-		if (fname != NULL) {
-			if (pce_load_blk_bin (rom, fname)) {
-				pce_log (MSG_ERR, "*** loading rom failed (%s)\n", fname);
+		if (path != NULL) {
+			if (pce_load_blk_bin (rom, path)) {
+				pce_log (MSG_ERR,
+					"*** loading rom failed (%s)\n", path
+				);
+				free (path);
 				return (1);
 			}
 		}
+
+		free (path);
 	}
 
 	return (0);

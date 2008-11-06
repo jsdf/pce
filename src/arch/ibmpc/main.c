@@ -60,6 +60,7 @@ void prt_help (void)
 		"usage: pce-ibmpc [options]\n"
 		"  -b, --boot int         Set boot drive [128]\n"
 		"  -c, --config string    Set the config file\n"
+		"  -d, --path string      Add a directory to the search path\n"
 		"  -g, --video string     Set video device\n"
 		"  -l, --log string       Set the log file\n"
 		"  -p, --cpu string       Set the cpu model\n"
@@ -1628,6 +1629,14 @@ int main (int argc, char *argv[])
 			}
 			cfg = argv[i];
 		}
+		else if (str_isarg (argv[i], "d", "path")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
+
+			pce_path_set (argv[i]);
+		}
 		else if (str_isarg (argv[i], "l", "log")) {
 			i += 1;
 			if (i >= argc) {
@@ -1721,6 +1730,8 @@ int main (int argc, char *argv[])
 	}
 
 	atexit (pc_atexit);
+
+	pce_path_ini (sct);
 
 	pc = pc_new (sct);
 	par_pc = pc;

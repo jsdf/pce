@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/load.c                                             *
- * Created:       2004-08-02 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/load.c                                               *
+ * Created:     2004-08-02 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,6 +32,7 @@
 #include <lib/ihex.h>
 #include <lib/srec.h>
 #include <lib/load.h>
+#include <lib/path.h>
 
 
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
@@ -142,6 +143,7 @@ int pce_load_mem_ini (memory_t *mem, ini_sct_t *ini)
 	int           r;
 	const char    *fmt;
 	const char    *fname;
+	char          *path;
 	unsigned long addr;
 	ini_sct_t     *sct;
 
@@ -156,12 +158,16 @@ int pce_load_mem_ini (memory_t *mem, ini_sct_t *ini)
 		}
 
 		if (fname != NULL) {
-			if (pce_load_mem (mem, fname, fmt, addr)) {
+			path = pce_path_get (fname);
+
+			if (pce_load_mem (mem, path, fmt, addr)) {
 				r = 1;
 				pce_log (MSG_ERR, "*** loading failed (%s)\n",
-					fname
+					path
 				);
 			}
+
+			free (path);
 		}
 	}
 

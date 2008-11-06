@@ -63,6 +63,7 @@ extern unsigned   par_speed;
 #include <lib/load.h>
 #include <lib/monitor.h>
 #include <lib/msg.h>
+#include <lib/path.h>
 #include <lib/sysdep.h>
 
 #include <cpu/e8086/e8086.h>

@@ -44,6 +44,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/log.o \
 	$(pcedst)/lib/monitor.o \
 	$(pcedst)/lib/msg.o \
+	$(pcedst)/lib/path.o \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/sysdep.o \
 	$(PCE_BLK_OBJ) \
@@ -73,6 +74,7 @@ HDR_EXT	:= \
 	lib/log.h \
 	lib/monitor.h \
 	lib/msg.h \
+	lib/path.h \
 	lib/srec.h \
 	lib/sysdep.h \
 	$(PCE_BLK_HDR) \
