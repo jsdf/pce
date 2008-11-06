@@ -422,17 +422,9 @@ void xt_set_window_size (xterm_t *xt, unsigned w, unsigned h)
 {
 	XSizeHints size;
 
-	if (xt->wdw != None) {
-		if ((xt->wdw_w == w) && (xt->wdw_h == h)) {
-			return;
-		}
-
-		xt_image_free (xt);
+	if ((xt->wdw_w == w) && (xt->wdw_h == h)) {
+		return;
 	}
-
-	XResizeWindow (xt->display, xt->wdw, w, h);
-
-	xt_image_alloc (xt, w, h);
 
 	size.flags = PMinSize | PMaxSize;
 	size.max_width = w;
@@ -442,8 +434,13 @@ void xt_set_window_size (xterm_t *xt, unsigned w, unsigned h)
 
 	XSetWMNormalHints (xt->display, xt->wdw, &size);
 
+	XResizeWindow (xt->display, xt->wdw, w, h);
+
 	xt->wdw_w = w;
 	xt->wdw_h = h;
+
+	xt_image_free (xt);
+	xt_image_alloc (xt, w, h);
 }
 
 /*
