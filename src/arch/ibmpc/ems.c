@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/ems.c                                       *
- * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/ems.c                                         *
+ * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -120,6 +120,25 @@ void ems_del (ems_t *ems)
 mem_blk_t *ems_get_mem (ems_t *ems)
 {
 	return (ems->mem);
+}
+
+void ems_reset (ems_t *ems)
+{
+	unsigned i;
+
+	pce_log (MSG_DEB, "reset ems\n");
+
+	for (i = 1; i < 256; i++) {
+		ems_blk_del (ems->blk[i]);
+		ems->blk[i] = NULL;
+	}
+
+	for (i = 0; i < 4; i++) {
+		ems->map_blk[i] = NULL;
+		ems->map_page[i] = 0;
+	}
+
+	ems->pages_used = 0;
 }
 
 void ems_prt_state (ems_t *ems)

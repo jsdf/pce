@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/ems.h                                            *
- * Created:       2003-10-18 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/ibmpc/ems.h                                              *
+ * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -55,6 +55,8 @@ ems_t *ems_new (ini_sct_t *sct);
 void ems_del (ems_t *ems);
 
 mem_blk_t *ems_get_mem (ems_t *ems);
+
+void ems_reset (ems_t *ems);
 
 void ems_prt_state (ems_t *xms);
 

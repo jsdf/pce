@@ -215,6 +215,20 @@ void pc_kbd_init (ibmpc_t *pc)
 	pc->ppi_port_a[1] = 0;
 }
 
+void pc_kbd_reset (ibmpc_t *pc)
+{
+	pc_keymap_t *map;
+
+	pc_kbd_init (pc);
+
+	map = keymap;
+
+	while (map->pcekey != PCE_KEY_NONE) {
+		map->isdown = 0;
+		map += 1;
+	}
+}
+
 void pc_kbd_clock (ibmpc_t *pc, unsigned long cnt)
 {
 	if (pc->key_i < pc->key_j) {

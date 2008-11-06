@@ -856,9 +856,19 @@ void pc_del (ibmpc_t *pc)
 
 void pc_reset (ibmpc_t *pc)
 {
-	pce_log (MSG_DEB, "ibmpc: reset\n");
+	pce_log (MSG_DEB, "reset pc\n");
 
 	e86_reset (pc->cpu);
+
+	pc_kbd_reset (pc);
+
+	if (pc->xms != NULL) {
+		xms_reset (pc->xms);
+	}
+
+	if (pc->ems != NULL) {
+		ems_reset (pc->ems);
+	}
 }
 
 void pc_clock_reset (ibmpc_t *pc)

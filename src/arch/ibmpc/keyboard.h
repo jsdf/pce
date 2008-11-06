@@ -45,6 +45,8 @@ void pc_kbd_clear (ibmpc_t *pc);
 
 void pc_kbd_init (ibmpc_t *pc);
 
+void pc_kbd_reset (ibmpc_t *pc);
+
 void pc_kbd_clock (ibmpc_t *pc, unsigned long cnt);
 
 

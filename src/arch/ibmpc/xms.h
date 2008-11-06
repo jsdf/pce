@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/ibmpc/xms.h                                            *
- * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/ibmpc/xms.h                                              *
+ * Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -67,6 +67,8 @@ void xms_del (xms_t *xms);
 
 mem_blk_t *xms_get_umb_mem (xms_t *xms);
 mem_blk_t *xms_get_hma_mem (xms_t *xms);
+
+void xms_reset (xms_t *xms);
 
 void xms_prt_state (xms_t *xms);
 

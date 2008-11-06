@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/xms.c                                       *
- * Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/xms.c                                         *
+ * Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -79,7 +79,7 @@ xms_t *xms_new (ini_sct_t *sct)
 	ini_get_bool (sct, "hma", &hma, 0);
 
 	umb_size = umb_size / 16;
-	umb_segm = (umb_segm + 15) & ~0x0f;
+	umb_segm = (umb_segm + 15) & ~0x0fUL;
 
 	xms = malloc (sizeof (xms_t));
 	if (xms == NULL) {
@@ -152,6 +152,33 @@ mem_blk_t *xms_get_umb_mem (xms_t *xms)
 mem_blk_t *xms_get_hma_mem (xms_t *xms)
 {
 	return (xms->hma);
+}
+
+void xms_reset (xms_t *xms)
+{
+	unsigned i;
+
+	pce_log (MSG_DEB, "reset xms\n");
+
+	for (i = 0; i < xms->emb_cnt; i++) {
+		emb_del (xms->emb[i]);
+	}
+
+	if (xms->umbmem != NULL) {
+		mem_blk_clear (xms->umbmem, 0x00);
+	}
+
+	if (xms->hma != NULL) {
+		mem_blk_clear (xms->hma, 0);
+	}
+
+	xms->emb_cnt = 0;
+	xms->emb_used = 0;
+
+	xms->umb_cnt = 0;
+	xms->umb_used = 0;
+
+	xms->hma_alloc = 0;
 }
 
 void xms_prt_state (xms_t *xms)
@@ -320,6 +347,7 @@ int xms_alloc_emb (xms_t *xms, unsigned long size, unsigned *handle)
 	return (0);
 }
 
+static
 int xms_free_emb (xms_t *xms, unsigned handle)
 {
 	if ((handle == 0) || (handle > xms->emb_cnt)) {
@@ -358,6 +386,7 @@ int xms_alloc_umb (xms_t *xms, unsigned short size, unsigned *idx)
 	return (1);
 }
 
+static
 int xms_free_umb (xms_t *xms, unsigned short segm)
 {
 	unsigned i;
@@ -432,7 +461,7 @@ void xms_02 (xms_t *xms, e8086_t *cpu)
 /* 03: global enable a20 */
 void xms_03 (xms_t *xms, e8086_t *cpu)
 {
-	e86_set_addr_mask (cpu, ~0);
+	e86_set_addr_mask (cpu, ~0UL);
 	e86_set_ax (cpu, 0x0001);
 	e86_set_bl (cpu, 0x00);
 }
@@ -448,7 +477,7 @@ void xms_04 (xms_t *xms, e8086_t *cpu)
 /* 05: local enable a20 */
 void xms_05 (xms_t *xms, e8086_t *cpu)
 {
-	e86_set_addr_mask (cpu, ~0);
+	e86_set_addr_mask (cpu, ~0UL);
 	e86_set_ax (cpu, 0x0001);
 	e86_set_bl (cpu, 0x00);
 }
