@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e8086/opcodes.c                                    *
- * Created:       1996-04-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e8086/opcodes.c                                      *
+ * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1340,15 +1339,24 @@ unsigned op_58 (e8086_t *c)
 static
 unsigned op_66 (e8086_t *c)
 {
+	unsigned short cs, ip;
+
 	if (c->pq[1] != 0x66) {
 		return (op_ud (c));
 	}
+
+	cs = e86_get_cs (c);
+	ip = e86_get_ip (c);
 
 	if (c->op_hook != NULL) {
 		c->op_hook (c->op_ext, c->pq[2], c->pq[3]);
 	}
 
 	e86_set_clk (c, 16);
+
+	if ((e86_get_cs (c) != cs) || (e86_get_ip (c) != ip)) {
+		return (0);
+	}
 
 	return (4);
 }
