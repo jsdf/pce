@@ -598,7 +598,7 @@ void xt_event_keydown (xterm_t *xt, XEvent *evt)
 	if (sym == XK_Control_L) {
 		xt->magic |= 0x01;
 	}
-	else if (sym == XK_Alt_L) {
+	else if ((sym == XK_Alt_L) || (sym == XK_Meta_L)) {
 		xt->magic |= 0x02;
 	}
 
@@ -631,7 +631,7 @@ void xt_event_keyup (xterm_t *xt, XEvent *evt)
 	if (sym == XK_Control_L) {
 		xt->magic &= ~0x01;
 	}
-	else if (sym == XK_Alt_L) {
+	else if ((sym == XK_Alt_L) || (sym == XK_Meta_L)) {
 		xt->magic &= ~0x02;
 	}
 
