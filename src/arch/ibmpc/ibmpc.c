@@ -985,6 +985,10 @@ void pc_clock (ibmpc_t *pc)
 				}
 			}
 
+			if (pc->mse != NULL) {
+				mse_clock (pc->mse, clk2[0]);
+			}
+
 			pc_kbd_clock (pc, clk2[0]);
 
 			pc_clock_delay (pc);

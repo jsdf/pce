@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/ibmpc/mouse.c                                     *
- * Created:       2003-08-25 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/arch/ibmpc/mouse.c                                       *
+ * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,6 +52,8 @@ void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
 	mse->rts = 0;
 
 	mse->accu_ok = 0;
+
+	mse->reset_cntr = 0;
 }
 
 mouse_t *mse_new (unsigned long base, ini_sct_t *sct)
@@ -191,19 +193,12 @@ void mse_uart_setup (mouse_t *mse, unsigned char val)
 	dtr = e8250_get_dtr (&mse->uart);
 	rts = e8250_get_rts (&mse->uart);
 
-	if (rts != dtr) {
-		e8250_get_inp_all (&mse->uart);
-	}
-	else if (dtr == 0) {
-		e8250_get_inp_all (&mse->uart);
-	}
-	else if ((mse->dtr == 0) || (mse->rts == 0)) {
-		e8250_get_inp_all (&mse->uart);
+	e8250_get_inp_all (&mse->uart);
 
-		/* this should not be necessary */
-		e8250_get_uint8 (&mse->uart, 0);
-
-		mse_receive (mse, 'M');
+	if (rts && dtr) {
+		if ((mse->dtr == 0) || (mse->rts == 0)) {
+			mse->reset_cntr = PCE_IBMPC_CLK2 / 1000;
+		}
 	}
 
 	mse->dtr = dtr;
@@ -225,4 +220,20 @@ void mse_uart_out (mouse_t *mse, unsigned char val)
 /* 8250 input buffer is not full */
 void mse_uart_inp (mouse_t *mse, unsigned char val)
 {
+}
+
+void mse_clock (mouse_t *mse, unsigned long cnt)
+{
+	if (mse->reset_cntr > 0) {
+		if (cnt >= mse->reset_cntr) {
+			mse->reset_cntr = 0;
+			mse_receive (mse, 'M');
+			pce_log (MSG_DEB, "reset mouse\n");
+		}
+		else {
+			mse->reset_cntr -= cnt;
+		}
+	}
+
+	e8250_clock (&mse->uart, cnt);
 }
