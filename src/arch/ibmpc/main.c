@@ -26,6 +26,10 @@
 
 #include <signal.h>
 
+#ifdef PCE_SDL_USE
+#include <SDL.h>
+#endif
+
 
 static void prt_state_cpu (e8086_t *c);
 
