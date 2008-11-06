@@ -43,15 +43,39 @@ void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
 	e8250_set_dsr (&mse->uart, 1);
 	e8250_set_cts (&mse->uart, 1);
 
-	ini_get_sint16 (sct, "speed_x_mul", &mse->fct_x[0], 1);
-	ini_get_sint16 (sct, "speed_x_div", &mse->fct_x[1], 1);
-	ini_get_sint16 (sct, "speed_y_mul", &mse->fct_y[0], 1);
-	ini_get_sint16 (sct, "speed_y_div", &mse->fct_y[1], 1);
+	if (ini_get_sint16 (sct, "speed_mul_x", &mse->scale_x[0], 1)) {
+		ini_get_sint16 (sct, "speed_x_mul", &mse->scale_x[0], 1);
+	}
+
+	if (ini_get_sint16 (sct, "speed_div_x", &mse->scale_x[1], 1)) {
+		ini_get_sint16 (sct, "speed_x_div", &mse->scale_x[1], 1);
+	}
+
+	if (ini_get_sint16 (sct, "speed_mul_y", &mse->scale_y[0], 1)) {
+		ini_get_sint16 (sct, "speed_y_mul", &mse->scale_y[0], 1);
+	}
+
+	if (ini_get_sint16 (sct, "speed_div_y", &mse->scale_y[1], 1)) {
+		ini_get_sint16 (sct, "speed_y_div", &mse->scale_y[1], 1);
+	}
+
+	if (mse->scale_x[1] == 0) {
+		mse->scale_x[1] = 1;
+	}
+
+	if (mse->scale_y[1] == 0) {
+		mse->scale_y[1] = 1;
+	}
+
+	mse->scale_x[2] = 0;
+	mse->scale_y[2] = 0;
 
 	mse->dtr = 0;
 	mse->rts = 0;
 
-	mse->accu_ok = 0;
+	mse->dx = 0;
+	mse->dy = 0;
+	mse->button = 0;
 
 	mse->reset_cntr = 0;
 }
@@ -96,34 +120,30 @@ void mse_receive (mouse_t *mse, unsigned char val)
 }
 
 static
-void mse_accu_check (mouse_t *mse)
+void mse_send_packet (mouse_t *mse)
 {
 	unsigned char val;
 	int           dx, dy;
 	unsigned char x, y;
 
-	if (mse->accu_ok == 0) {
-		return;
-	}
-
-	if (mse->accu_dx < -127) {
+	if (mse->dx < -127) {
 		dx = -127;
 	}
-	else if (mse->accu_dx > 127) {
+	else if (mse->dx > 127) {
 		dx = 127;
 	}
 	else {
-		dx = mse->accu_dx;
+		dx = mse->dx;
 	}
 
-	if (mse->accu_dy < -127) {
+	if (mse->dy < -127) {
 		dy = -127;
 	}
-	else if (mse->accu_dy > 127) {
+	else if (mse->dy > 127) {
 		dy = 127;
 	}
 	else {
-		dy = mse->accu_dy;
+		dy = mse->dy;
 	}
 
 	if (dx < 0) {
@@ -143,8 +163,8 @@ void mse_accu_check (mouse_t *mse)
 	}
 
 	val = 0x40;
-	val |= (mse->accu_b & 0x01) ? 0x20 : 0x00;
-	val |= (mse->accu_b & 0x02) ? 0x10 : 0x00;
+	val |= (mse->button & 0x01) ? 0x20 : 0x00;
+	val |= (mse->button & 0x02) ? 0x10 : 0x00;
 	val |= (y >> 4) & 0x0c;
 	val |= (x >> 6) & 0x03;
 
@@ -152,36 +172,35 @@ void mse_accu_check (mouse_t *mse)
 	mse_receive (mse, x & 0x3f);
 	mse_receive (mse, y & 0x3f);
 
-	mse->accu_dx -= dx;
-	mse->accu_dy -= dy;
-
-	mse->accu_ok = ((mse->accu_dx != 0) || (mse->accu_dy != 0));
+	mse->dx -= dx;
+	mse->dy -= dy;
 }
 
 void mse_set (mouse_t *mse, int dx, int dy, unsigned but)
 {
-	dx = (mse->fct_x[0] * dx) / mse->fct_x[1];
-	dy = (mse->fct_y[0] * dy) / mse->fct_y[1];
+	int tx, ty;
 
-	if (mse->accu_ok) {
-		if (mse->accu_b != but) {
-			mse_accu_check (mse);
+	dx = mse->scale_x[0] * dx + mse->scale_x[2];
+	tx = dx;
+	dx = dx / mse->scale_x[1];
+	mse->scale_x[2] = tx - mse->scale_x[1] * dx;
+
+	dy = mse->scale_y[0] * dy + mse->scale_y[2];
+	ty = dy;
+	dy = dy / mse->scale_y[1];
+	mse->scale_y[2] = ty - mse->scale_y[1] * dy;
+
+	mse->dx += dx;
+	mse->dy += dy;
+
+	if (mse->button != but) {
+		mse->button = but;
+		mse_send_packet (mse);
+	}
+	else if ((mse->dx != 0) || (mse->dy != 0)) {
+		if (e8250_inp_empty (&mse->uart)) {
+			mse_send_packet (mse);
 		}
-
-		mse->accu_ok = 1;
-		mse->accu_dx += dx;
-		mse->accu_dy += dy;
-		mse->accu_b = but;
-	}
-	else {
-		mse->accu_ok = 1;
-		mse->accu_dx = dx;
-		mse->accu_dy = dy;
-		mse->accu_b = but;
-	}
-
-	if (e8250_inp_empty (&mse->uart)) {
-		mse_accu_check (mse);
 	}
 }
 
@@ -197,6 +216,10 @@ void mse_uart_setup (mouse_t *mse, unsigned char val)
 
 	if (rts && dtr) {
 		if ((mse->dtr == 0) || (mse->rts == 0)) {
+			mse->dx = 0;
+			mse->dy = 0;
+			mse->scale_x[2] = 0;
+			mse->scale_y[2] = 0;
 			mse->reset_cntr = PCE_IBMPC_CLK2 / 1000;
 		}
 	}

@@ -226,10 +226,10 @@ section pc {
 		irq = 3
 
 		# The mouse speed
-		speed_x_mul = 3
-		speed_x_div = 2
-		speed_y_mul = 3
-		speed_y_div = 2
+		speed_mul_x = 3
+		speed_div_x = 2
+		speed_mul_y = 3
+		speed_div_y = 2
 	}
 
 	# Up to 4 parallel ports can be defined

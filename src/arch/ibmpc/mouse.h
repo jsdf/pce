@@ -33,13 +33,12 @@ typedef struct {
 	int           dtr;
 	int           rts;
 
-	char          accu_ok;
-	int           accu_dx;
-	int           accu_dy;
-	unsigned      accu_b;
+	int           dx;
+	int           dy;
+	unsigned      button;
 
-	int           fct_x[2];
-	int           fct_y[2];
+	int           scale_x[3];
+	int           scale_y[3];
 
 	unsigned long reset_cntr;
 } mouse_t;
