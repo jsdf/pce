@@ -62,6 +62,10 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
+	else if (msg_is_message ("emu.reset", msg)) {
+		pc_reset (pc);
+		return (0);
+	}
 	else if (msg_is_message ("emu.pause.toggle", msg)) {
 		pc->pause = !pc->pause;
 

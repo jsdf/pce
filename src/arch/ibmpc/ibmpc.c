@@ -854,6 +854,13 @@ void pc_del (ibmpc_t *pc)
 	free (pc);
 }
 
+void pc_reset (ibmpc_t *pc)
+{
+	pce_log (MSG_DEB, "ibmpc: reset\n");
+
+	e86_reset (pc->cpu);
+}
+
 void pc_clock_reset (ibmpc_t *pc)
 {
 	unsigned i;

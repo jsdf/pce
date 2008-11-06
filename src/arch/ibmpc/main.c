@@ -1756,10 +1756,6 @@ int main (int argc, char *argv[])
 	pc->cpu->op_stat = pce_op_stat;
 #endif
 
-	pc_set_bootdrive (pc, par_boot);
-
-	e86_reset (pc->cpu);
-
 	signal (SIGINT, sig_int);
 	signal (SIGTERM, sig_term);
 	signal (SIGSEGV, sig_segv);
@@ -1770,6 +1766,9 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
 	mon_set_msg_fct (&par_mon, pc_set_msg, pc_get_msg, par_pc);
+
+	pc_set_bootdrive (pc, par_boot);
+	pc_reset (pc);
 
 	if (nomon) {
 		while (pc->brk != PCE_BRK_ABORT) {

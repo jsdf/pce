@@ -262,7 +262,7 @@ void sdl_magic (sdl_t *sdl, SDLKey key)
 		trm_set_msg_emu (&sdl->trm, "emu.exit", "1");
 	}
 	else if (key == SDLK_r) {
-		trm_set_msg_emu (&sdl->trm, "video.redraw", "1");
+		trm_set_msg_emu (&sdl->trm, "emu.reset", "1");
 	}
 	else if (key == SDLK_s) {
 		sdl_grab_mouse (sdl, 0);

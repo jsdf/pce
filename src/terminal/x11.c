@@ -553,7 +553,7 @@ void xt_magic (xterm_t *xt, KeySym key)
 		trm_set_msg_emu (&xt->trm, "emu.exit", "1");
 	}
 	else if (key == XK_r) {
-		trm_set_msg_emu (&xt->trm, "video.redraw", "1");
+		trm_set_msg_emu (&xt->trm, "emu.reset", "1");
 	}
 	else if (key == XK_s) {
 		xt_grab_mouse (xt, 0);
