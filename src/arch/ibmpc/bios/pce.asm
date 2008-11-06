@@ -351,6 +351,16 @@ check_rom:
 
 ; start rom at ES:0000
 start_rom:
+	push	ax
+	push	cx
+	push	dx
+	push	bx
+	push	bp
+	push	si
+	push	di
+	push	es
+	push	ds
+
 	push	cs
 	mov	ax, .romret
 	push	ax
@@ -360,19 +370,23 @@ start_rom:
 	retf
 
 .romret:
+	pop	ds
+	pop	es
+	pop	di
+	pop	si
+	pop	bp
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
 	ret
 
 
 ; initialize rom extensions in the range [C000..C7FF]
 init_rom1:
 	push	ax
-	push	cx
 	push	dx
-	push	bx
-	push	si
-	push	di
 	push	es
-	push	ds
 
 	mov	dx, 0xc000
 
@@ -381,8 +395,8 @@ init_rom1:
 	cmp	word [es:0x0000], 0xaa55	; rom id
 	jne	.norom
 
-	;call	check_rom
-	;or	ah, ah
+	call	check_rom			; calculate checksum
+	or	ah, ah
 	;jnz	.norom
 
 	mov	ah, [es:0x0002]			; rom size / 512
@@ -396,11 +410,15 @@ init_rom1:
 
 	add	dx, ax
 
-.romok:
-	push	dx
-	call	start_rom
-	pop	dx
+	mov	ax, es
+	cmp	ax, 0xc000			; this is the EGA/VGA rom
+	jne	.romok
 
+	test	byte [0x0010], 0x30
+	jnz	.skiprom			; no EGA/VGA card
+
+.romok:
+	call	start_rom
 	jmp	.skiprom
 
 .norom:
@@ -410,13 +428,8 @@ init_rom1:
 	cmp	dx, 0xc800
 	jb	.next
 
-	pop	ds
 	pop	es
-	pop	di
-	pop	si
-	pop	bx
 	pop	dx
-	pop	cx
 	pop	ax
 	ret
 
