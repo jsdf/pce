@@ -21,8 +21,9 @@ section pc {
 	path = "-."
 
 	section cpu {
-		# 8086, 8088, 8086+, 8088+, 80186, 80188
-		model = "80186"
+		# The CPU model.
+		# Recognized models are: 8086, 8088, 8086+, 8088+, 80186, 80188
+		model = "8088"
 
 		# This sets the CPU speed with respect to the emulated
 		# system clock. A value of 1 emulates a 4.77MHz CPU.
@@ -36,7 +37,7 @@ section pc {
 	}
 
 
-	# Multiple "ram" sections may be present
+	# Multiple "ram" sections may be present but they must not overlap.
 	section ram {
 		# The linear base address
 		address = 0x00000
@@ -91,12 +92,6 @@ section pc {
 	#	address = 0xf0000
 	#}
 
-
-	# 8253 PIT
-	section pit {
-		# Don't change this
-		address = 0x40
-	}
 
 	section ems {
 		# The EMS size in KB
@@ -160,10 +155,12 @@ section pc {
 	# used unless a video adapter type is specified on the command
 	# line.
 	section video {
+		# IBM EGA
 		device = "ega"
 	}
 
 	section video {
+		# IBM CGA
 		device = "cga"
 
 		# Don't change these unless you know what you're doing
@@ -178,6 +175,7 @@ section pc {
 	}
 
 	section video {
+		# Hercules Graphics Card
 		device = "hgc"
 
 		# Don't change these unless you know what you're doing
@@ -187,6 +185,7 @@ section pc {
 	}
 
 	section video {
+		# IBM MDA
 		device = "mda"
 
 		# Don't change these unless you know what you're doing
@@ -196,6 +195,7 @@ section pc {
 	}
 
 	section video {
+		# Plantronics Colorplus
 		device = "plantronics"
 
 		# Don't change these unless you know what you're doing
@@ -204,8 +204,9 @@ section pc {
 		size = 16384
 	}
 
+	# Up to 4 serial ports can be defined
 	section serial {
-		address = 0x3f8
+		address = 0x3f8		# COM1
 		irq = 4
 
 		# Valid values for uart are: "8250", "16450"
@@ -220,32 +221,42 @@ section pc {
 	}
 
 	section mouse {
-		address = 0x2f8
+		# These are the same as for a serial port
+		address = 0x2f8		# COM2
 		irq = 3
+
+		# The mouse speed
 		speed_x_mul = 3
 		speed_x_div = 2
 		speed_y_mul = 3
 		speed_y_div = 2
 	}
 
+	# Up to 4 parallel ports can be defined
 	section parport {
 		address = 0x378
+
+		# Output is written to this file
 		file = "parport.out"
 	}
 
 
 	# Disk types are:
 	# "image"  A raw image file. "c", "h" and "s" must be specified.
-	# "dosemu" A DOSEMU style hard disk image file
-	# "pce"    A PCE style disk image file
+	# "dosemu" A DOSEMU style hard disk image file.
+	# "pce"    A PCE style disk image file.
 	# "ram"    A RAM disk. If a file name is specified, the contents
 	#          of that file are loaded into the RAM disk (but the file
 	#          is never altered).
-	# "partition"  A partitioned disk that is patched together from
-	#              multiple raw images.
+	# "partition"
+	#          A partitioned disk that is patched together from
+	#          multiple raw images.
 	# "auto"   Try to autodetect the image file format. This works for
 	#          DOSEMU and PCE disk images as well as raw images starting
 	#          with a DOS boot sector.
+	#
+	# The drive number is the number used by the BIOS, so 128 is the
+	# first hard disk, 0 is the first floppy disk.
 	#
 	# The c, h, s parameters determine the actual image file layout, the
 	# visible_c, visible_h, visible_s parameters determine the disk size
@@ -253,6 +264,9 @@ section pc {
 	#
 	# If optional is set to 1 no error will be reported if the disk
 	# can't be opened.
+	#
+	# If a COW (copy on write) file is specified, changes to the disk
+	# image are written to that file and the image is not touched.
 
 	section disk {
 		drive = 0
@@ -279,9 +293,10 @@ section pc {
 
 	section disk {
 		drive = 128
-		type = "dosemu"
+		type = "auto"
 		file = "pce_80.img"
 		readonly = 1
+		cow = "pce_80.cow"
 	}
 
 	section disk {
