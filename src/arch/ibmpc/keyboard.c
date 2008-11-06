@@ -129,6 +129,7 @@ static pc_keymap_t keymap[] = {
 	{ PCE_KEY_DOWN,      1, { 0x50 }, 1, { 0xd0 }, 0 },
 	{ PCE_KEY_KP_3,      1, { 0x51 }, 1, { 0xd1 }, 0 },
 	{ PCE_KEY_PAGEDN,    1, { 0x51 }, 1, { 0xd1 }, 0 },
+	{ PCE_KEY_KP_ENTER,  1, { 0x1c }, 1, { 0x9c }, 0 },
 	{ PCE_KEY_KP_0,      1, { 0x52 }, 1, { 0xd2 }, 0 },
 	{ PCE_KEY_INS,       1, { 0x52 }, 1, { 0xd2 }, 0 },
 	{ PCE_KEY_KP_PERIOD, 1, { 0x53 }, 1, { 0xd3 }, 0 },
