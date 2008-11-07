@@ -1,8 +1,10 @@
-0.1.8
+0.1.8	2008-11-07	r863
 
-	* Removed the VT100 terminal.
 	* A complete rewrite of the terminal code.
+	* Removed the VT100 terminal.
 	* Improved video device emulation.
+	* Emulated time is now synchronized with real time.
+	* Lots of small changes and bugfixes.
 
 0.1.7	2006-07-24	r663
 
