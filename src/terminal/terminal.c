@@ -86,6 +86,10 @@ void trm_free (terminal_t *trm)
 
 void trm_del (terminal_t *trm)
 {
+	if (trm == NULL) {
+		return;
+	}
+
 	trm_free (trm);
 
 	if (trm->del != NULL) {

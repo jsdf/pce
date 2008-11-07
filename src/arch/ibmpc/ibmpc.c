@@ -532,7 +532,9 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
 	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
-	trm_set_mouse_fct (pc->trm, pc->mse, mse_set);
+	if (pc->trm != NULL) {
+		trm_set_mouse_fct (pc->trm, pc->mse, mse_set);
+	}
 }
 
 static
@@ -977,7 +979,9 @@ void pc_clock (ibmpc_t *pc)
 
 			pc->clk_div[1] &= 1023;
 
-			trm_check (pc->trm);
+			if (pc->trm != NULL) {
+				trm_check (pc->trm);
+			}
 
 			for (i = 0; i < 4; i++) {
 				if (pc->serport[i] != NULL) {
