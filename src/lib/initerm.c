@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/initerm.c                                          *
- * Created:       2008-10-21 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2008 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/lib/initerm.c                                            *
+ * Created:     2008-10-21 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,31 @@
 #include <terminal/terminal.h>
 
 
+/*
+ * Check if a terminal type is recognized
+ */
+static
+int trm_is_valid (const char *str)
+{
+	if (strcmp (str, "null") == 0) {
+		return (1);
+	}
+
+#ifdef PCE_X11_USE
+	if (strcmp (str, "x11") == 0) {
+		return (1);
+	}
+#endif
+
+#ifdef PCE_SDL_USE
+	if (strcmp (str, "sdl") == 0) {
+		return (1);
+	}
+#endif
+
+	return (0);
+}
+
 terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 {
 	unsigned   scale, scale_x, scale_y;
@@ -50,8 +75,16 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 			ini_get_string (sct, "driver", &driver, "null");
 		}
 
+		driver = def;
+	}
+	else {
+		while ((sct != NULL) && (trm_is_valid (driver) == 0)) {
+			sct = ini_next_sct (ini, sct, "terminal");
+			ini_get_string (sct, "driver", &driver, "null");
+		}
+
 		if (sct == NULL) {
-			driver = def;
+			driver = "null";
 		}
 	}
 
