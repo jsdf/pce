@@ -68,10 +68,8 @@
 #define MDA_MODE_BLINK   0x20
 
 /* CRTC status register */
-#define MDA_STATUS_HSYNC 0x01
-#define MDA_STATUS_LIGHT 0x02
-#define MDA_STATUS_VIDEO 0x08
-#define MDA_STATUS_VSYNC 0x80
+#define MDA_STATUS_HSYNC 0x01		/* horizontal sync */
+#define MDA_STATUS_VIDEO 0x08		/* video signal */
 
 
 #include "mda_font.h"
@@ -149,6 +147,37 @@ int mda_get_position (mda_t *mda, unsigned *x, unsigned *y)
 	*y = (pos - ofs) / mda->w;
 
 	return (0);
+}
+
+/*
+ * Set the timing values from the CRTC registers
+ */
+static
+void mda_set_timing (mda_t *mda)
+{
+	mda->ch = (mda->reg_crt[MDA_CRTC_MS] & 0x1f) + 1;
+	mda->w = mda->reg_crt[MDA_CRTC_HD];
+	mda->h = mda->reg_crt[MDA_CRTC_VD];
+
+	mda->clk_ht = MDA_CW * (mda->reg_crt[MDA_CRTC_HT] + 1);
+	mda->clk_hs = MDA_CW * mda->reg_crt[MDA_CRTC_HS];
+
+	mda->clk_vt = mda->ch * (mda->reg_crt[MDA_CRTC_VT] + 1) * mda->clk_ht;
+	mda->clk_vs = mda->ch * mda->reg_crt[MDA_CRTC_VS] * mda->clk_ht;
+}
+
+/*
+ * Get the dot clock
+ */
+static
+unsigned long mda_get_dotclock (mda_t *mda)
+{
+	unsigned long long clk;
+
+	clk = mda->video.dotclk[0];
+	clk = (MDA_PFREQ * clk) / MDA_IFREQ;
+
+	return (clk);
 }
 
 /*
@@ -386,12 +415,7 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
 
 	mda->reg_crt[reg] = val;
 
-	mda->ch = (mda->reg_crt[MDA_CRTC_MS] & 0x1f) + 1;
-	mda->w = mda->reg_crt[MDA_CRTC_HD];
-	mda->h = mda->reg_crt[MDA_CRTC_VD];
-
-	mda->hsync = (MDA_IFREQ * MDA_CW * mda->reg_crt[MDA_CRTC_HS]) / MDA_PFREQ;
-	mda->vsync = (MDA_IFREQ * mda->ch * mda->reg_crt[MDA_CRTC_VS]) / MDA_HFREQ;
+	mda_set_timing (mda);
 
 	mda->update_state |= 1;
 }
@@ -430,22 +454,27 @@ unsigned char mda_get_mode (mda_t *mda)
 static
 unsigned char mda_get_status (mda_t *mda)
 {
-	unsigned char val;
+	unsigned char val, vid;
+	unsigned long clk;
 
-	val = mda->reg[MDA_STATUS];
+	clk = mda_get_dotclock (mda);
 
-	if ((mda->video.dotclk[0] % (MDA_IFREQ / MDA_VFREQ)) < mda->vsync) {
-		val &= ~MDA_STATUS_VSYNC;
-	}
-	else {
-		val |= MDA_STATUS_VSYNC;
-	}
+	/* simulate the video signal */
+	mda->reg[MDA_STATUS] ^= MDA_STATUS_VIDEO;
 
-	if ((mda->video.dotclk[0] % (MDA_IFREQ / MDA_HFREQ)) < mda->hsync) {
-		val |= MDA_STATUS_HSYNC;
-	}
-	else {
-		val &= ~MDA_STATUS_HSYNC;
+	val = mda->reg[MDA_STATUS] & ~MDA_STATUS_VIDEO;
+	vid = mda->reg[MDA_STATUS] & MDA_STATUS_VIDEO;
+
+	val |= MDA_STATUS_HSYNC;
+
+	if (mda->clk_ht > 0) {
+		if ((clk % mda->clk_ht) < mda->clk_hs) {
+			val &= ~MDA_STATUS_HSYNC;
+
+			if (clk < mda->clk_vs) {
+				val |= vid;
+			}
+		}
 	}
 
 	return (val);
@@ -667,21 +696,26 @@ void mda_redraw (mda_t *mda)
 static
 void mda_clock (mda_t *mda, unsigned cnt)
 {
-	mda->video.dotclk[0] %= (MDA_IFREQ / MDA_VFREQ);
+	unsigned long clk;
 
-	if (mda->video.dotclk[0] < mda->vsync) {
-		mda->update_state &= ~2;
+	clk = mda_get_dotclock (mda);
+
+	if (clk < mda->clk_vt) {
 		return;
 	}
 
-	if ((mda->update_state & 3) != 1) {
+	mda->video.dotclk[0] = 0;
+	mda->video.dotclk[1] = 0;
+	mda->video.dotclk[2] = 0;
+
+	if ((mda->update_state & 1) == 0) {
 		if (mda->term != NULL) {
 			trm_update (mda->term);
 		}
 		return;
 	}
 
-	/* vertical retrace started */
+	mda->update_state &= ~1;
 
 	if (mda->term != NULL) {
 		mda_update (mda);
@@ -690,8 +724,6 @@ void mda_clock (mda_t *mda, unsigned cnt)
 		trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
 		trm_update (mda->term);
 	}
-
-	mda->update_state = 2;
 }
 
 mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
@@ -748,8 +780,11 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 	mda->w = 0;
 	mda->h = 0;
 	mda->ch = 0;
-	mda->hsync = 0;
-	mda->vsync = 0;
+
+	mda->clk_ht = 0;
+	mda->clk_vt = 0;
+	mda->clk_hs = 0;
+	mda->clk_vs = 0;
 
 	mda->bufmax = 0;
 	mda->buf = NULL;

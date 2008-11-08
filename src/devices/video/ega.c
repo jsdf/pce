@@ -1520,26 +1520,22 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 
 	clk = ega_get_dotclock (ega);
 
-	if (clk < ega->clk_vd) {
-		ega->update_state &= ~2;
+	if (clk < ega->clk_vt) {
 		return;
 	}
 
-	if (clk > ega->clk_vt) {
-		ega->video.dotclk[0] = 0;
-		ega->video.dotclk[1] = 0;
-		ega->video.dotclk[2] = 0;
-		return;
-	}
+	ega->video.dotclk[0] = 0;
+	ega->video.dotclk[1] = 0;
+	ega->video.dotclk[2] = 0;
 
-	if ((ega->update_state & 3) != 1) {
+	if ((ega->update_state & 1) == 0) {
 		if (ega->term != NULL) {
 			trm_update (ega->term);
 		}
 		return;
 	}
 
-	/* vertical retrace started */
+	ega->update_state &= ~1;
 
 	if (ega->term != NULL) {
 		ega_update (ega);
@@ -1548,8 +1544,6 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		trm_set_lines (ega->term, ega->buf, 0, ega->buf_h);
 		trm_update (ega->term);
 	}
-
-	ega->update_state = 2;
 }
 
 void ega_free (ega_t *ega)

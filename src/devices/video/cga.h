@@ -61,8 +61,11 @@ typedef struct cga_s {
 	unsigned      w;
 	unsigned      h;
 	unsigned      ch;
-	unsigned long hsync;
-	unsigned long vsync;
+
+	unsigned long clk_ht;
+	unsigned long clk_vt;
+	unsigned long clk_hs;
+	unsigned long clk_vs;
 
 	unsigned      buf_w;
 	unsigned      buf_h;

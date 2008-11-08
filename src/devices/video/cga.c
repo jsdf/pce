@@ -63,7 +63,7 @@
 #define CGA_CRTC_LH      16
 #define CGA_CRTC_LL      17
 
-#define CGA_MODE_T80     0x01
+#define CGA_MODE_CS      0x01		/* clock select */
 #define CGA_MODE_G320    0x02
 #define CGA_MODE_CBURST  0x04
 #define CGA_MODE_ENABLE  0x08
@@ -74,9 +74,9 @@
 #define CGA_CSEL_INT     0x10
 #define CGA_CSEL_PAL     0x20
 
-#define CGA_STATUS_SYNC  0x01
+#define CGA_STATUS_SYNC  0x01		/* -display enable */
 #define CGA_STATUS_PEN   0x02
-#define CGA_STATUS_VSYNC 0x08
+#define CGA_STATUS_VSYNC 0x08		/* vertical sync */
 
 
 #include "cga_font.h"
@@ -186,6 +186,41 @@ void cga_set_palette (cga_t *cga)
 		cga->pal[2] += 8;
 		cga->pal[3] += 8;
 	}
+}
+
+/*
+ * Set the timing values from the CRTC registers
+ */
+static
+void cga_set_timing (cga_t *cga)
+{
+	cga->ch = (cga->reg_crt[CGA_CRTC_MS] & 0x1f) + 1;
+	cga->w = cga->reg_crt[CGA_CRTC_HD];
+	cga->h = cga->reg_crt[CGA_CRTC_VD];
+
+	cga->clk_ht = 8 * (cga->reg_crt[CGA_CRTC_HT] + 1);
+	cga->clk_hs = 8 * cga->reg_crt[CGA_CRTC_HS];
+
+	cga->clk_vt = cga->ch * (cga->reg_crt[CGA_CRTC_VT] + 1) * cga->clk_ht;
+	cga->clk_vs = cga->ch * cga->reg_crt[CGA_CRTC_VS] * cga->clk_ht;
+}
+
+/*
+ * Get the dot clock
+ */
+static
+unsigned long cga_get_dotclock (cga_t *cga)
+{
+	unsigned long long clk;
+
+	clk = cga->video.dotclk[0];
+	clk = (CGA_PFREQ * clk) / CGA_IFREQ;
+
+	if ((cga->reg[CGA_MODE] & CGA_MODE_CS) == 0) {
+		clk >>= 1;
+	}
+
+	return (clk);
 }
 
 /*
@@ -661,12 +696,7 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
 
 	cga->reg_crt[reg] = val;
 
-	cga->ch = (cga->reg_crt[CGA_CRTC_MS] & 0x1f) + 1;
-	cga->w = cga->reg_crt[CGA_CRTC_HD];
-	cga->h = cga->reg_crt[CGA_CRTC_VD];
-
-	cga->hsync = (CGA_IFREQ * 8 * cga->reg_crt[CGA_CRTC_HS]) / CGA_PFREQ;
-	cga->vsync = (CGA_IFREQ * cga->ch * cga->reg_crt[CGA_CRTC_VS]) / CGA_HFREQ;
+	cga_set_timing (cga);
 
 	cga->update_state |= 1;
 }
@@ -697,18 +727,22 @@ static
 unsigned char cga_get_status (cga_t *cga)
 {
 	unsigned char val;
+	unsigned long clk;
+
+	clk = cga_get_dotclock (cga);
 
 	val = cga->reg[CGA_STATUS];
 
-	if ((cga->video.dotclk[0] % (CGA_IFREQ / CGA_VFREQ)) < cga->vsync) {
-		val &= ~(CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
-	}
-	else {
-		val |= (CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
-	}
+	val |= (CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
 
-	if ((cga->video.dotclk[0] % (CGA_IFREQ / CGA_HFREQ)) >= cga->hsync) {
-		val |= CGA_STATUS_SYNC;
+	if (clk < cga->clk_vs) {
+		val &= ~CGA_STATUS_VSYNC;
+
+		if (cga->clk_ht > 0) {
+			if ((clk % cga->clk_ht) < cga->clk_hs) {
+				val &= ~CGA_STATUS_SYNC;
+			}
+		}
 	}
 
 	return (val);
@@ -743,6 +777,7 @@ void cga_set_mode (cga_t *cga, unsigned char val)
 	cga->reg[CGA_MODE] = val;
 
 	cga_set_palette (cga);
+	cga_set_timing (cga);
 
 	cga->update_state |= 1;
 }
@@ -934,35 +969,34 @@ void cga_redraw (cga_t *cga)
 static
 void cga_clock (cga_t *cga, unsigned long cnt)
 {
-	cga->video.dotclk[0] %= (CGA_IFREQ / CGA_VFREQ);
+	unsigned long clk;
 
-	if ((cga->w == 0) || (cga->h == 0)) {
+	clk = cga_get_dotclock (cga);
+
+	if (clk < cga->clk_vt) {
 		return;
 	}
 
-	if (cga->video.dotclk[0] < cga->vsync) {
-		cga->update_state &= ~2;
-		return;
-	}
+	cga->video.dotclk[0] = 0;
+	cga->video.dotclk[1] = 0;
+	cga->video.dotclk[2] = 0;
 
-	if ((cga->update_state & 3) != 1) {
+	if ((cga->update_state & 1) == 0) {
 		if (cga->term != NULL) {
 			trm_update (cga->term);
 		}
 		return;
 	}
 
-	/* vertical retrace started */
+	cga->update_state &= ~1;
 
 	if (cga->term != NULL) {
-		cga->update (cga);
+		cga_update (cga);
 
 		trm_set_size (cga->term, cga->buf_w, cga->buf_h);
 		trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
 		trm_update (cga->term);
 	}
-
-	cga->update_state = 2;
 }
 
 void cga_free (cga_t *cga)
@@ -1036,8 +1070,11 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 	cga->w = 0;
 	cga->h = 0;
 	cga->ch = 0;
-	cga->hsync = 0;
-	cga->vsync = 0;
+
+	cga->clk_ht = 0;
+	cga->clk_vt = 0;
+	cga->clk_hs = 0;
+	cga->clk_vs = 0;
 
 	cga->bufmax = 0;
 	cga->buf = NULL;

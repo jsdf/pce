@@ -71,10 +71,10 @@
 #define HGC_MODE_PAGE1   0x80
 
 /* CRTC status register */
-#define HGC_STATUS_HSYNC 0x01
+#define HGC_STATUS_HSYNC 0x01		/* horizontal sync */
 #define HGC_STATUS_LIGHT 0x02
 #define HGC_STATUS_VIDEO 0x08
-#define HGC_STATUS_VSYNC 0x80
+#define HGC_STATUS_VSYNC 0x80		/* -vertical sync */
 
 /* configuration switch register */
 #define HGC_CONFIG_GRAPH 0x01
@@ -173,6 +173,43 @@ unsigned char *hgc_get_page (hgc_t *hgc)
 	}
 
 	return (val);
+}
+
+/*
+ * Set the timing values from the CRTC registers
+ */
+static
+void hgc_set_timing (hgc_t *hgc)
+{
+	hgc->ch = (hgc->reg_crt[HGC_CRTC_MS] & 0x1f) + 1;
+	hgc->w = hgc->reg_crt[HGC_CRTC_HD];
+	hgc->h = hgc->reg_crt[HGC_CRTC_VD];
+
+	if (hgc->reg[HGC_MODE] & HGC_MODE_GRAPH) {
+		hgc->clk_ht = 16 * (hgc->reg_crt[HGC_CRTC_HT] + 1);
+		hgc->clk_hs = 16 * hgc->reg_crt[HGC_CRTC_HS];
+	}
+	else {
+		hgc->clk_ht = HGC_CW * (hgc->reg_crt[HGC_CRTC_HT] + 1);
+		hgc->clk_hs = HGC_CW * hgc->reg_crt[HGC_CRTC_HS];
+	}
+
+	hgc->clk_vt = hgc->ch * (hgc->reg_crt[HGC_CRTC_VT] + 1) * hgc->clk_ht;
+	hgc->clk_vs = hgc->ch * hgc->reg_crt[HGC_CRTC_VS] * hgc->clk_ht;
+}
+
+/*
+ * Get the dot clock
+ */
+static
+unsigned long hgc_get_dotclock (hgc_t *hgc)
+{
+	unsigned long long clk;
+
+	clk = hgc->video.dotclk[0];
+	clk = (HGC_PFREQ * clk) / HGC_IFREQ;
+
+	return (clk);
 }
 
 /*
@@ -468,12 +505,7 @@ void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
 
 	hgc->reg_crt[reg] = val;
 
-	hgc->ch = (hgc->reg_crt[HGC_CRTC_MS] & 0x1f) + 1;
-	hgc->w = hgc->reg_crt[HGC_CRTC_HD];
-	hgc->h = hgc->reg_crt[HGC_CRTC_VD];
-
-	hgc->hsync = (HGC_IFREQ * HGC_CW * hgc->reg_crt[HGC_CRTC_HS]) / HGC_PFREQ;
-	hgc->vsync = (HGC_IFREQ * hgc->ch * hgc->reg_crt[HGC_CRTC_VS]) / HGC_HFREQ;
+	hgc_set_timing (hgc);
 
 	hgc->update_state |= 1;
 }
@@ -521,22 +553,32 @@ unsigned char hgc_get_mode (hgc_t *hgc)
 static
 unsigned char hgc_get_status (hgc_t *hgc)
 {
-	unsigned char val;
+	unsigned char val, vid;
+	unsigned long clk;
 
-	val = hgc->reg[HGC_STATUS];
+	clk = hgc_get_dotclock (hgc);
 
-	if ((hgc->video.dotclk[0] % (HGC_IFREQ / HGC_VFREQ)) < hgc->vsync) {
-		val &= ~HGC_STATUS_VSYNC;
-	}
-	else {
+	/* simulate the video signal */
+	hgc->reg[HGC_STATUS] ^= HGC_STATUS_VIDEO;
+
+	val = hgc->reg[HGC_STATUS] & ~HGC_STATUS_VIDEO;
+	vid = hgc->reg[HGC_STATUS] & HGC_STATUS_VIDEO;
+
+	val |= HGC_STATUS_HSYNC;
+	val &= ~HGC_STATUS_VSYNC;
+
+	if (clk < hgc->clk_vs) {
 		val |= HGC_STATUS_VSYNC;
 	}
 
-	if ((hgc->video.dotclk[0] % (HGC_IFREQ / HGC_HFREQ)) < hgc->hsync) {
-		val |= HGC_STATUS_HSYNC;
-	}
-	else {
-		val &= ~HGC_STATUS_HSYNC;
+	if (hgc->clk_ht > 0) {
+		if ((clk % hgc->clk_ht) < hgc->clk_hs) {
+			val &= ~HGC_STATUS_HSYNC;
+
+			if (clk < hgc->clk_vs) {
+				val |= vid;
+			}
+		}
 	}
 
 	return (val);
@@ -598,6 +640,8 @@ void hgc_set_mode (hgc_t *hgc, unsigned char val)
 	}
 
 	hgc->reg[HGC_MODE] = val;
+
+	hgc_set_timing (hgc);
 
 	hgc->update_state |= 1;
 }
@@ -794,21 +838,26 @@ void hgc_redraw (hgc_t *hgc)
 static
 void hgc_clock (hgc_t *hgc, unsigned cnt)
 {
-	hgc->video.dotclk[0] %= (HGC_IFREQ / HGC_VFREQ);
+	unsigned long clk;
 
-	if (hgc->video.dotclk[0] < hgc->vsync) {
-		hgc->update_state &= ~2;
+	clk = hgc_get_dotclock (hgc);
+
+	if (clk < hgc->clk_vt) {
 		return;
 	}
 
-	if ((hgc->update_state & 3) != 1) {
+	hgc->video.dotclk[0] = 0;
+	hgc->video.dotclk[1] = 0;
+	hgc->video.dotclk[2] = 0;
+
+	if ((hgc->update_state & 1) == 0) {
 		if (hgc->term != NULL) {
 			trm_update (hgc->term);
 		}
 		return;
 	}
 
-	/* vertical retrace started */
+	hgc->update_state &= ~1;
 
 	if (hgc->term != NULL) {
 		hgc_update (hgc);
@@ -817,8 +866,6 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 		trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
 		trm_update (hgc->term);
 	}
-
-	hgc->update_state = 2;
 }
 
 hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
@@ -862,8 +909,6 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 	hgc->reg = hgc->regblk->data;
 	mem_blk_clear (hgc->regblk, 0x00);
 
-	hgc->reg[HGC_CONFIG] = HGC_CONFIG_GRAPH;
-
 	hgc->term = NULL;
 
 	for (i = 0; i < 18; i++) {
@@ -875,8 +920,11 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 	hgc->w = 0;
 	hgc->h = 0;
 	hgc->ch = 0;
-	hgc->hsync = 0;
-	hgc->vsync = 0;
+
+	hgc->clk_ht = 0;
+	hgc->clk_vt = 0;
+	hgc->clk_hs = 0;
+	hgc->clk_vs = 0;
 
 	hgc->bufmax = 0;
 	hgc->buf = NULL;
