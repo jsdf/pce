@@ -259,6 +259,7 @@ void sdl_magic (sdl_t *sdl, SDLKey key)
 	}
 	else if (key == SDLK_q) {
 		sdl_grab_mouse (sdl, 0);
+		sdl_set_fullscreen (sdl, 0);
 		trm_set_msg_emu (&sdl->trm, "emu.exit", "1");
 	}
 	else if (key == SDLK_r) {
@@ -266,6 +267,7 @@ void sdl_magic (sdl_t *sdl, SDLKey key)
 	}
 	else if (key == SDLK_s) {
 		sdl_grab_mouse (sdl, 0);
+		sdl_set_fullscreen (sdl, 0);
 		trm_set_msg_emu (&sdl->trm, "emu.stop", "1");
 	}
 	else if (key == SDLK_1) {
@@ -377,6 +379,7 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 
 	if (key == SDLK_PAUSE) {
 		sdl_grab_mouse (sdl, 0);
+		sdl_set_fullscreen (sdl, 0);
 		trm_set_msg_emu (&sdl->trm, "emu.exit", "1");
 		return;
 	}
@@ -385,6 +388,7 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 
 	if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
 		sdl_grab_mouse (sdl, 0);
+		sdl_set_fullscreen (sdl, 0);
 		trm_set_msg_emu (&sdl->trm, "emu.stop", "1");
 		return;
 	}

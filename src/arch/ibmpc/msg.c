@@ -81,10 +81,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-
-	pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
-
-	if (msg_is_message ("emu.config.save", msg)) {
+	else if (msg_is_message ("emu.config.save", msg)) {
 		if (ini_write (pc->cfg, val)) {
 			return (1);
 		}

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/monitor.c                                          *
- * Created:       2006-12-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/monitor.c                                            *
+ * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -290,6 +290,11 @@ int mon_run (monitor_t *mon)
 
 	while (mon->terminate == 0) {
 		mon_prt_prompt (mon);
+
+		if (mon->setmsg != NULL) {
+			mon->setmsg (mon->msgext, "term.release", "1");
+			mon->setmsg (mon->msgext, "term.fullscreen", "0");
+		}
 
 		cmd_get (&cmd);
 
