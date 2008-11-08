@@ -46,6 +46,8 @@ typedef struct {
 
 	unsigned char *font;
 
+	unsigned char rgb[16][3];
+
 	/* these are derived from the crtc registers */
 	unsigned      w;
 	unsigned      h;

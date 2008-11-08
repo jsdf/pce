@@ -76,25 +76,51 @@
 
 
 static
-unsigned char mda_rgb[16][3] = {
-	{ 0x00, 0x00, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0x00, 0xaa, 0x00 },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa },
-	{ 0xaa, 0xff, 0xaa }
-};
+void mda_set_color (mda_t *mda, unsigned i1, unsigned i2, unsigned r, unsigned g, unsigned b)
+{
+	unsigned i;
 
+	if ((i1 > 16) || (i2 > 16)) {
+		return;
+	}
+
+	r &= 0xff;
+	g &= 0xff;
+	b &= 0xff;
+
+	for (i = i1; i <= i2; i++) {
+		mda->rgb[i][0] = r;
+		mda->rgb[i][1] = g;
+		mda->rgb[i][2] = b;
+	}
+}
+
+/*
+ * Map a color name to background/normal/bright RGB values
+ */
+static
+void mda_get_color (const char *name,
+	unsigned long *back, unsigned long *normal, unsigned long *bright)
+{
+	*back = 0x000000;
+
+	if (strcmp (name, "amber") == 0) {
+		*normal = 0xe89050;
+		*bright = 0xfff0c8;
+	}
+	else if (strcmp (name, "green") == 0) {
+		*normal = 0x55aa55;
+		*bright = 0xaaffaa;
+	}
+	else if (strcmp (name, "gray") == 0) {
+		*normal = 0xaaaaaa;
+		*bright = 0xffffff;
+	}
+	else {
+		*normal = 0xe89050;
+		*bright = 0xfff0c8;
+	}
+}
 
 /*
  * Get CRTC start offset
@@ -242,7 +268,7 @@ void mda_draw_cursor (mda_t *mda)
 		c2 = mda->ch - 1;
 	}
 
-	col = mda_rgb[src[2 * (mda->w * y + x) + 1] & 0x0f];
+	col = mda->rgb[src[2 * (mda->w * y + x) + 1] & 0x0f];
 	dst = mda->buf + 3 * MDA_CW * (mda->w * (mda->ch * y + c1) + x);
 
 	for (j = c1; j <= c2; j++) {
@@ -271,8 +297,8 @@ void mda_draw_char (mda_t *mda, unsigned char *buf, unsigned char c, unsigned ch
 		a &= 0x7f;
 	}
 
-	fg = mda_rgb[a & 0x0f];
-	bg = mda_rgb[(a >> 4) & 0x0f];
+	fg = mda->rgb[a & 0x0f];
+	bg = mda->rgb[(a >> 4) & 0x0f];
 
 	dst = buf;
 
@@ -777,6 +803,10 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 
 	mda->font = mda_font_8x14;
 
+	mda_set_color (mda, 0, 0, 0x00, 0x00, 0x00);
+	mda_set_color (mda, 1, 7, 0x00, 0xaa, 0x00);
+	mda_set_color (mda, 8, 15, 0xaa, 0xff, 0xaa);
+
 	mda->w = 0;
 	mda->h = 0;
 	mda->ch = 0;
@@ -797,6 +827,8 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 video_t *mda_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, addr, size;
+	unsigned long col0, col1, col2;
+	const char    *col;
 	mda_t         *mda;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
@@ -808,10 +840,22 @@ video_t *mda_new_ini (ini_sct_t *sct)
 		io, addr, size
 	);
 
+	ini_get_string (sct, "color", &col, "green");
+
+	mda_get_color (col, &col0, &col1, &col2);
+
+	ini_get_uint32 (sct, "color_background", &col0, col0);
+	ini_get_uint32 (sct, "color_normal", &col1, col1);
+	ini_get_uint32 (sct, "color_bright", &col2, col2);
+
 	mda = mda_new (io, addr, size);
 	if (mda == NULL) {
 		return (NULL);
 	}
+
+	mda_set_color (mda, 0, 0, col0 >> 16, col0 >> 8, col0);
+	mda_set_color (mda, 1, 7, col1 >> 16, col1 >> 8, col1);
+	mda_set_color (mda, 8, 15, col2 >> 16, col2 >> 8, col2);
 
 	return (&mda->video);
 }

@@ -192,6 +192,15 @@ section pc {
 		io = 0x3b4
 		address = 0xb0000
 		size = 4096
+
+		# Set the monitor color.
+		# Valid values are "amber", "green" and "gray".
+		color = "green"
+
+		#color_background = 0x000000
+		#color_normal = 0x55aa55
+		#color_bright = 0xaaffaa
+		#color_graphics = 0xaaffaa
 	}
 
 	section video {
