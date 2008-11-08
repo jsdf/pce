@@ -413,12 +413,13 @@ void hgc_update_text (hgc_t *hgc)
 static
 void hgc_update_graph (hgc_t *hgc)
 {
-	unsigned      x, y, cx, cy;
-	unsigned      w, h;
-	unsigned      addr;
-	unsigned char val;
-	unsigned char *mem, *src;
-	unsigned char *dst;
+	unsigned            x, y, cx, cy;
+	unsigned            w, h;
+	unsigned            addr;
+	unsigned char       val;
+	const unsigned char *col;
+	const unsigned char *mem, *src;
+	unsigned char       *dst;
 
 	w = 2 * hgc->w;
 	h = hgc->ch * hgc->h;
@@ -440,16 +441,11 @@ void hgc_update_graph (hgc_t *hgc)
 			val = src[(addr + x) & 0x1fff];
 
 			for (cx = 0; cx < 8; cx++) {
-				if (val & 0x80) {
-					dst[0] = hgc->rgb[16][0];
-					dst[1] = hgc->rgb[16][1];
-					dst[2] = hgc->rgb[16][2];
-				}
-				else {
-					dst[0] = hgc->rgb[0][0];
-					dst[1] = hgc->rgb[0][1];
-					dst[2] = hgc->rgb[0][2];
-				}
+				col = (val & 0x80) ? hgc->rgb[16] : hgc->rgb[0];
+
+				dst[0] = col[0];
+				dst[1] = col[1];
+				dst[2] = col[2];
 
 				dst += 3;
 				val <<= 1;
