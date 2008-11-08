@@ -85,25 +85,51 @@
 
 
 static
-unsigned char hgc_rgb[16][3] = {
-	{ 0x00, 0x00, 0x00 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xe8, 0x90, 0x50 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 },
-	{ 0xff, 0xf0, 0xc8 }
-};
+void hgc_set_color (hgc_t *hgc, unsigned i1, unsigned i2, unsigned r, unsigned g, unsigned b)
+{
+	unsigned i;
 
+	if ((i1 > 16) || (i2 > 16)) {
+		return;
+	}
+
+	r &= 0xff;
+	g &= 0xff;
+	b &= 0xff;
+
+	for (i = i1; i <= i2; i++) {
+		hgc->rgb[i][0] = r;
+		hgc->rgb[i][1] = g;
+		hgc->rgb[i][2] = b;
+	}
+}
+
+/*
+ * Map a color name to background/normal/bright RGB values
+ */
+static
+void hgc_get_color (const char *name,
+	unsigned long *back, unsigned long *normal, unsigned long *bright)
+{
+	*back = 0x000000;
+
+	if (strcmp (name, "amber") == 0) {
+		*normal = 0xe89050;
+		*bright = 0xfff0c8;
+	}
+	else if (strcmp (name, "green") == 0) {
+		*normal = 0x55aa55;
+		*bright = 0xaaffaa;
+	}
+	else if (strcmp (name, "gray") == 0) {
+		*normal = 0xaaaaaa;
+		*bright = 0xffffff;
+	}
+	else {
+		*normal = 0xe89050;
+		*bright = 0xfff0c8;
+	}
+}
 
 /*
  * Get CRTC start offset
@@ -274,7 +300,7 @@ void hgc_text_draw_cursor (hgc_t *hgc)
 		c2 = hgc->ch - 1;
 	}
 
-	col = hgc_rgb[src[2 * (hgc->w * y + x) + 1] & 0x0f];
+	col = hgc->rgb[src[2 * (hgc->w * y + x) + 1] & 0x0f];
 	dst = hgc->buf + 3 * HGC_CW * (hgc->w * (hgc->ch * y + c1) + x);
 
 	for (j = c1; j <= c2; j++) {
@@ -304,8 +330,8 @@ void hgc_text_draw_char (hgc_t *hgc,
 		a &= 0x7f;
 	}
 
-	fg = hgc_rgb[a & 0x0f];
-	bg = hgc_rgb[(a >> 4) & 0x0f];
+	fg = hgc->rgb[a & 0x0f];
+	bg = hgc->rgb[(a >> 4) & 0x0f];
 
 	dst = buf;
 
@@ -415,14 +441,14 @@ void hgc_update_graph (hgc_t *hgc)
 
 			for (cx = 0; cx < 8; cx++) {
 				if (val & 0x80) {
-					dst[0] = hgc_rgb[15][0];
-					dst[1] = hgc_rgb[15][1];
-					dst[2] = hgc_rgb[15][2];
+					dst[0] = hgc->rgb[16][0];
+					dst[1] = hgc->rgb[16][1];
+					dst[2] = hgc->rgb[16][2];
 				}
 				else {
-					dst[0] = hgc_rgb[0][0];
-					dst[1] = hgc_rgb[0][1];
-					dst[2] = hgc_rgb[0][2];
+					dst[0] = hgc->rgb[0][0];
+					dst[1] = hgc->rgb[0][1];
+					dst[2] = hgc->rgb[0][2];
 				}
 
 				dst += 3;
@@ -934,6 +960,11 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 
 	hgc->font = hgc_font_8x14;
 
+	hgc_set_color (hgc, 0, 0, 0x00, 0x00, 0x00);
+	hgc_set_color (hgc, 1, 7, 0xe8, 0x90, 0x50);
+	hgc_set_color (hgc, 8, 15, 0xff, 0xf0, 0xc8);
+	hgc_set_color (hgc, 16, 16, 0xff, 0xf0, 0xc8);
+
 	hgc->w = 0;
 	hgc->h = 0;
 	hgc->ch = 0;
@@ -954,16 +985,32 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 video_t *hgc_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, mem, size;
+	unsigned long col0, col1, col2, col3;
+	const char    *col;
 	hgc_t         *hgc;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
 	ini_get_uint32 (sct, "address", &mem, 0xb0000);
 	ini_get_uint32 (sct, "size", &size, 65536);
 
+	ini_get_string (sct, "color", &col, "amber");
+
+	hgc_get_color (col, &col0, &col1, &col2);
+
+	ini_get_uint32 (sct, "color_background", &col0, col0);
+	ini_get_uint32 (sct, "color_normal", &col1, col1);
+	ini_get_uint32 (sct, "color_bright", &col2, col2);
+	ini_get_uint32 (sct, "color_graphics", &col3, col2);
+
 	hgc = hgc_new (io, mem, size);
 	if (hgc == NULL) {
 		return (NULL);
 	}
+
+	hgc_set_color (hgc, 0, 0, col0 >> 16, col0 >> 8, col0);
+	hgc_set_color (hgc, 1, 7, col1 >> 16, col1 >> 8, col1);
+	hgc_set_color (hgc, 8, 15, col2 >> 16, col2 >> 8, col2);
+	hgc_set_color (hgc, 16, 16, col3 >> 16, col3 >> 8, col3);
 
 	return (&hgc->video);
 }
