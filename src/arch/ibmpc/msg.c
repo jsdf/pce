@@ -40,6 +40,14 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		val = "";
 	}
 
+	if (msg_is_prefix ("term", msg)) {
+		if (pc->trm != NULL) {
+			return (trm_set_msg_trm (pc->trm, msg, val));
+		}
+
+		return (1);
+	}
+
 	if (msg_is_message ("emu.stop", msg)) {
 		pc->brk = PCE_BRK_STOP;
 		return (0);

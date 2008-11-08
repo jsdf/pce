@@ -26,7 +26,17 @@
 #define PCE_LIB_MSG_H 1
 
 
+/*!***************************************************************************
+ * @short  Check a message
+ * @return True if val is of the form "[rest.]msg"
+ *****************************************************************************/
 int msg_is_message (const char *msg, const char *val);
+
+/*!***************************************************************************
+ * @short  Check a message for a prefix
+ * @return True if val is of the form "pre.rest".
+ *****************************************************************************/
+int msg_is_prefix (const char *pre, const char *val);
 
 int msg_get_ulng (const char *str, unsigned long *val);
 int msg_get_slng (const char *str, long *val);

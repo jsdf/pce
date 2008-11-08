@@ -48,6 +48,20 @@ int msg_is_message (const char *msg, const char *val)
 	return (0);
 }
 
+int msg_is_prefix (const char *pre, const char *val)
+{
+	while ((*pre != 0) && (*pre == *val)) {
+		pre += 1;
+		val += 1;
+	}
+
+	if ((*pre != 0) || (*val != '.')) {
+		return (0);
+	}
+
+	return (1);
+}
+
 int msg_get_ulng (const char *str, unsigned long *val)
 {
 	unsigned long tmp;
