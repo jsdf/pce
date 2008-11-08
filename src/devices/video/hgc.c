@@ -387,37 +387,54 @@ void hgc_update_text (hgc_t *hgc)
 static
 void hgc_update_graph (hgc_t *hgc)
 {
-	unsigned      x, y;
+	unsigned      x, y, cx, cy;
 	unsigned      w, h;
+	unsigned      addr;
+	unsigned char val;
 	unsigned char *mem, *src;
 	unsigned char *dst;
 
-	w = 16 * hgc->w;
-	h = 4 * hgc->h;
+	w = 2 * hgc->w;
+	h = hgc->ch * hgc->h;
 
-	if (hgc_set_buf_size (hgc, w, h)) {
+	if (hgc_set_buf_size (hgc, 8 * w, h)) {
 		return;
 	}
 
 	mem = hgc_get_page (hgc);
 	dst = hgc->buf;
 
+	cy = 0;
+	addr = 0;
+
 	for (y = 0; y < h; y++) {
-		src = mem + (y % 4) * 8192 + (y / 4) * (2 * hgc->w);
+		src = mem + (cy & 3) * 0x2000;
 
 		for (x = 0; x < w; x++) {
-			if (src[x >> 3] & (0x80 >> (x & 7))) {
-				dst[0] = hgc_rgb[15][0];
-				dst[1] = hgc_rgb[15][1];
-				dst[2] = hgc_rgb[15][2];
-			}
-			else {
-				dst[0] = hgc_rgb[0][0];
-				dst[1] = hgc_rgb[0][1];
-				dst[2] = hgc_rgb[0][2];
-			}
+			val = src[(addr + x) & 0x1fff];
 
-			dst += 3;
+			for (cx = 0; cx < 8; cx++) {
+				if (val & 0x80) {
+					dst[0] = hgc_rgb[15][0];
+					dst[1] = hgc_rgb[15][1];
+					dst[2] = hgc_rgb[15][2];
+				}
+				else {
+					dst[0] = hgc_rgb[0][0];
+					dst[1] = hgc_rgb[0][1];
+					dst[2] = hgc_rgb[0][2];
+				}
+
+				dst += 3;
+				val <<= 1;
+			}
+		}
+
+		cy += 1;
+
+		if (cy >= hgc->ch) {
+			cy = 0;
+			addr = (addr + 2 * hgc->w) & 0x1fff;
 		}
 	}
 }
