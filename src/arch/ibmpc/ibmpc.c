@@ -761,6 +761,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	if (pc->trm != NULL) {
 		trm_open (pc->trm, 640, 480);
+		trm_set_msg_trm (pc->trm, "term.title", "pce-ibmpc");
 	}
 
 	pc_setup_disks (pc, ini);

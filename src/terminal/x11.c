@@ -203,6 +203,24 @@ void xt_grab_mouse (xterm_t *xt, int grab)
 		XUngrabPointer (xt->display, CurrentTime);
 		XUndefineCursor (xt->display, xt->wdw);
 	}
+
+	XFlush (xt->display);
+}
+
+static
+void xt_set_window_title (xterm_t *xt, const char *str)
+{
+	XTextProperty name;
+
+	if (XStringListToTextProperty ((char **) &str, 1, &name) == 0) {
+		return;
+	}
+
+	XSetWMName (xt->display, xt->wdw, &name);
+
+	XFree (name.value);
+
+	XFlush (xt->display);
 }
 
 /*
@@ -775,12 +793,17 @@ void xt_check (xterm_t *xt)
 static
 int xt_set_msg_trm (xterm_t *xt, const char *msg, const char *val)
 {
+	if (val == NULL) {
+		val = "";
+	}
+
 	if (strcmp (msg, "term.release") == 0) {
 		xt_grab_mouse (xt, 0);
 		return (0);
 	}
-	else if (strcmp (msg, "term.set_title") == 0) {
-		return (1);
+	else if (strcmp (msg, "term.title") == 0) {
+		xt_set_window_title (xt, val);
+		return (0);
 	}
 
 	return (1);
@@ -814,13 +837,11 @@ int xt_init_pointer (xterm_t *xt)
 static
 int xt_open_window (xterm_t *xt, unsigned w, unsigned h)
 {
-	char          *name = "pce";
-	char          *progname = "pce";
-	XSizeHints    size;
-	XWMHints      wm;
-	XClassHint    cls;
-	XTextProperty windowName;
-	unsigned      fx, fy;
+	char        *argv0 = "pce";
+	XSizeHints  size;
+	XWMHints    wm;
+	XClassHint  cls;
+	unsigned    fx, fy;
 
 	if ((w == 0) || (h == 0)) {
 		w = 640;
@@ -834,10 +855,6 @@ int xt_open_window (xterm_t *xt, unsigned w, unsigned h)
 
 	xt->wdw_w = w;
 	xt->wdw_h = h;
-
-	if (XStringListToTextProperty (&name, 1, &windowName) == 0) {
-		return (1);
-	}
 
 	xt->wdw = XCreateSimpleWindow (xt->display,
 		RootWindow (xt->display, xt->screen),
@@ -854,17 +871,19 @@ int xt_open_window (xterm_t *xt, unsigned w, unsigned h)
 	size.max_height = xt->wdw_h;
 	size.min_height = xt->wdw_h;
 
+	wm.flags = StateHint | IconPixmapHint | InputHint;
 	wm.initial_state = NormalState;
 	wm.input = True;
 	wm.icon_pixmap = None;
-	wm.flags = StateHint | IconPixmapHint | InputHint;
 
 	cls.res_name = "pce";
 	cls.res_class = "PCE";
 
-	XSetWMProperties (xt->display, xt->wdw, &windowName, NULL,
-		&progname, 1, &size, &wm, &cls
+	XSetWMProperties (xt->display, xt->wdw, NULL, NULL, &argv0, 1,
+		&size, &wm, &cls
 	);
+
+	xt_set_window_title (xt, "pce");
 
 	XSelectInput (xt->display, xt->wdw,
 		ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |

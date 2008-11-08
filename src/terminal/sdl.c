@@ -556,7 +556,7 @@ int sdl_set_msg_trm (sdl_t *sdl, const char *msg, const char *val)
 		sdl_grab_mouse (sdl, 0);
 		return (0);
 	}
-	else if (strcmp (msg, "term.set_title") == 0) {
+	else if (strcmp (msg, "term.title") == 0) {
 		SDL_WM_SetCaption (val, val);
 		return (0);
 	}
