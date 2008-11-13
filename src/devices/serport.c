@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/serport.c                                      *
- * Created:       2003-09-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/serport.c                                        *
+ * Created:     2003-09-04 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <lib/log.h>
 
 #include "serport.h"
 
@@ -352,11 +354,27 @@ int ser_line_setup (serport_t *ser)
 	else if (ser->bps < ((19200 + 38400) / 2)) {
 		spd = B19200;
 	}
+#ifdef B38400
 	else if (ser->bps < ((38400 + 57600) / 2)) {
-		spd = B19200;
+		spd = B38400;
 	}
-	else {
+#endif
+#ifdef B57600
+	else if (ser->bps < ((57600 + 115200) / 2)) {
+		spd = B57600;
+	}
+#endif
+#ifdef B115200
+	else if (ser->bps < ((115200 + 230400) / 2)) {
 		spd = B115200;
+	}
+#endif
+	else {
+		pce_log (MSG_ERR,
+			"serport: can't set speed to %lu\n", ser->bps
+		);
+
+		spd = B9600;
 	}
 
 	cfsetispeed (&tio, spd);
