@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/memory.h                                       *
- * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/memory.h                                         *
+ * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -94,6 +94,8 @@ typedef struct {
 	mem_set_uint8_f  set_uint8;
 	mem_set_uint16_f set_uint16;
 	mem_set_uint32_f set_uint32;
+
+	unsigned long    defval;
 } memory_t;
 
 
@@ -254,6 +256,13 @@ void mem_del (memory_t *mem);
 void mem_set_fct (memory_t *mem, void *ext,
 	void *g8, void *g16, void *g32, void *s8, void *s16, void *s32
 );
+
+/*!***************************************************************************
+ * @short Set the default value
+ * @param mem The memory structure
+ * @param val The default value
+ *****************************************************************************/
+void mem_set_default (memory_t *mem, unsigned char val);
 
 /*!***************************************************************************
  * @short Print memory state information

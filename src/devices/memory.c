@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/memory.c                                       *
- * Created:       2000-04-23 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/memory.c                                         *
+ * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -470,6 +470,8 @@ void mem_init (memory_t *mem)
 	mem->set_uint8 = NULL;
 	mem->set_uint16 = NULL;
 	mem->set_uint32 = NULL;
+
+	mem->defval = 0xffffffff;
 }
 
 memory_t *mem_new (void)
@@ -521,6 +523,17 @@ void mem_set_fct (memory_t *mem, void *ext,
 	mem->set_uint8 = s8;
 	mem->set_uint16 = s16;
 	mem->set_uint32 = s32;
+}
+
+void mem_set_default (memory_t *mem, unsigned char val)
+{
+	unsigned long tmp;
+
+	tmp = val & 0xff;
+	tmp = (tmp << 8) | tmp;
+	tmp = (tmp << 16) | tmp;
+
+	mem->defval = tmp;
 }
 
 void mem_prt_state (memory_t *mem, FILE *fp)
@@ -632,7 +645,7 @@ unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
 		return (mem->get_uint8 (mem->ext, addr));
 	}
 
-	return (0);
+	return (mem->defval & 0xff);
 }
 
 unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
@@ -665,7 +678,7 @@ unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
 		return (mem->get_uint16 (mem->ext, addr));
 	}
 
-	return (0);
+	return (mem->defval & 0xffff);
 }
 
 unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
@@ -698,7 +711,7 @@ unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
 		return (mem->get_uint16 (mem->ext, addr));
 	}
 
-	return (0);
+	return (mem->defval & 0xffff);
 }
 
 unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
@@ -735,7 +748,7 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
 		return (mem->get_uint32 (mem->ext, addr));
 	}
 
-	return (0);
+	return (mem->defval);
 }
 
 unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr)
@@ -772,7 +785,7 @@ unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr)
 		return (mem->get_uint32 (mem->ext, addr));
 	}
 
-	return (0);
+	return (mem->defval);
 }
 
 void mem_set_uint8_rw (memory_t *mem, unsigned long addr, unsigned char val)
