@@ -696,6 +696,68 @@ void ems_4e (ems_t *ems, e8086_t *cpu)
 	}
 }
 
+/* 51: reallocate pages */
+static
+void ems_51 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned      i;
+	unsigned      handle;
+	unsigned      cnt;
+	unsigned char *data;
+	ems_block_t   *blk;
+
+	handle = e86_get_dx (cpu);
+	cnt = e86_get_bx (cpu);
+
+	if ((handle > 255) || (ems->blk[handle] == NULL)) {
+		e86_set_ah (cpu, 0x83);
+		return;
+	}
+
+	blk = ems->blk[handle];
+
+	if (cnt > ems->pages_max) {
+		e86_set_ah (cpu, 0x87);
+		return;
+	}
+
+	if ((ems->pages_used - blk->pages + cnt) > ems->pages_max) {
+		e86_set_ah (cpu, 0x88);
+		return;
+	}
+
+	if (cnt > 0) {
+		data = realloc (blk->data, 16384UL * cnt);
+
+		if (data == NULL) {
+			e86_set_ah (cpu, 0x88);
+			return;
+		}
+	}
+	else {
+		free (blk->data);
+		data = NULL;
+	}
+
+	ems->pages_used -= blk->pages;
+	ems->pages_used += cnt;
+
+	blk->data = data;
+	blk->pages = cnt;
+
+	for (i = 0; i < 4; i++) {
+		if (ems->map_blk[i] == blk) {
+			if (ems->map_page[i] >= blk->pages) {
+				ems->map_blk[i] = NULL;
+				ems->map_page[i] = 0;
+			}
+		}
+	}
+
+	e86_set_ah (cpu, 0x00);
+	e86_set_bx (cpu, cnt);
+}
+
 void ems_handler (ems_t *ems, e8086_t *cpu)
 {
 	if (ems == NULL) {
@@ -753,6 +815,10 @@ void ems_handler (ems_t *ems, e8086_t *cpu)
 
 	case 0x4e:
 		ems_4e (ems, cpu);
+		break;
+
+	case 0x51:
+		ems_51 (ems, cpu);
 		break;
 
 	default:
