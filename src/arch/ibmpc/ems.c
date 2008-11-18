@@ -31,6 +31,7 @@
 static
 ems_block_t *ems_blk_new (unsigned handle, unsigned pages)
 {
+	unsigned    i;
 	ems_block_t *blk;
 
 	blk = malloc (sizeof (ems_block_t));
@@ -48,6 +49,10 @@ ems_block_t *ems_blk_new (unsigned handle, unsigned pages)
 	}
 
 	blk->map_saved = 0;
+
+	for (i = 0; i < 8; i++) {
+		blk->name[i] = 0;
+	}
 
 	return (blk);
 }
@@ -758,6 +763,89 @@ void ems_51 (ems_t *ems, e8086_t *cpu)
 	e86_set_bx (cpu, cnt);
 }
 
+/* 5300: get handle name */
+static
+void ems_5300 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned       i;
+	unsigned       handle;
+	unsigned       seg, ofs;
+	unsigned char *str;
+
+	handle = e86_get_dx (cpu);
+
+	if ((handle > 255) || (ems->blk[handle] == NULL)) {
+		e86_set_ah (cpu, 0x83);
+		return;
+	}
+
+	seg = e86_get_es (cpu);
+	ofs = e86_get_di (cpu);
+
+	str = ems->blk[handle]->name;
+
+	for (i = 0; i < 8; i++) {
+		e86_set_mem8 (cpu, seg, (ofs + i) & 0xffff, str[i]);
+	}
+
+	e86_set_ah (cpu, 0x00);
+}
+
+/* 5301: set handle name */
+static
+void ems_5301 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned       i;
+	unsigned       handle;
+	unsigned       seg, ofs;
+	unsigned char *str;
+
+	handle = e86_get_dx (cpu);
+
+	if ((handle > 255) || (ems->blk[handle] == NULL)) {
+		e86_set_ah (cpu, 0x83);
+		return;
+	}
+
+	seg = e86_get_es (cpu);
+	ofs = e86_get_si (cpu);
+
+	str = ems->blk[handle]->name;
+
+	/* should check if the name already exists */
+
+	for (i = 0; i < 8; i++) {
+		str[i] = e86_get_mem8 (cpu, seg, (ofs + i) & 0xffff);
+	}
+
+	e86_set_ah (cpu, 0x00);
+}
+
+/* 53: get/set handle name */
+static
+void ems_53 (ems_t *ems, e8086_t *cpu)
+{
+	switch (e86_get_al (cpu)) {
+	case 0x00:
+		ems_5300 (ems, cpu);
+		break;
+
+	case 0x01:
+		ems_5301 (ems, cpu);
+		break;
+
+	default:
+		pce_log (MSG_MSG, "ems: unknown subfunction: AX=%04X\n",
+			e86_get_ax (cpu)
+		);
+
+		/* invalid subfunction */
+		e86_set_ah (cpu, 0x8f);
+
+		break;
+	}
+}
+
 void ems_handler (ems_t *ems, e8086_t *cpu)
 {
 	if (ems == NULL) {
@@ -819,6 +907,10 @@ void ems_handler (ems_t *ems, e8086_t *cpu)
 
 	case 0x51:
 		ems_51 (ems, cpu);
+		break;
+
+	case 0x53:
+		ems_53 (ems, cpu);
 		break;
 
 	default:

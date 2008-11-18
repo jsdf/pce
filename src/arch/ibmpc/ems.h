@@ -34,6 +34,8 @@ typedef struct ems_block_t {
 	int            map_saved;
 	unsigned short map_blk[4];
 	unsigned       map_page[4];
+
+	unsigned char  name[8];
 } ems_block_t;
 
 
