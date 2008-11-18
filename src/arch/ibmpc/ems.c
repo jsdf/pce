@@ -569,6 +569,133 @@ void ems_4d (ems_t *ems, e8086_t *cpu)
 	e86_set_bx (cpu, n);
 }
 
+/* 4e00: get page map */
+static
+void ems_4e00 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned       i;
+	unsigned       seg, ofs;
+	unsigned short handle;
+	unsigned       page;
+
+	seg = e86_get_es (cpu);
+	ofs = e86_get_di (cpu);
+
+	for (i = 0; i < 4; i++) {
+		ems_get_page_map (ems, i, &handle, &page);
+
+		e86_set_mem16 (cpu, seg, ofs, handle);
+		e86_set_mem16 (cpu, seg, ofs + 2, page);
+
+		ofs += 4;
+	}
+
+	e86_set_ah (cpu, 0x00);
+}
+
+/* 4e01: set page map */
+static
+void ems_4e01 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned       i;
+	unsigned       seg, ofs;
+	unsigned short handle;
+	unsigned       page;
+
+	seg = e86_get_es (cpu);
+	ofs = e86_get_si (cpu);
+
+	for (i = 0; i < 4; i++) {
+		handle = e86_get_mem16 (cpu, seg, ofs);
+		page = e86_get_mem16 (cpu, seg, ofs + 2);
+
+		if (ems_set_page_map (ems, i, handle, page)) {
+			e86_set_ah (cpu, 0xa3);
+			return;
+		}
+	}
+
+	e86_set_ah (cpu, 0x00);
+}
+
+/* 4e02: get and set page map */
+static
+void ems_4e02 (ems_t *ems, e8086_t *cpu)
+{
+	unsigned       i;
+	unsigned       sseg, sofs;
+	unsigned       dseg, dofs;
+	unsigned short handle;
+	unsigned       page;
+
+	dseg = e86_get_es (cpu);
+	dofs = e86_get_di (cpu);
+
+	for (i = 0; i < 4; i++) {
+		ems_get_page_map (ems, i, &handle, &page);
+
+		e86_set_mem16 (cpu, dseg, dofs, handle);
+		e86_set_mem16 (cpu, dseg, dofs + 2, page);
+
+		dofs += 4;
+	}
+
+	sseg = e86_get_ds (cpu);
+	sofs = e86_get_si (cpu);
+
+	for (i = 0; i < 4; i++) {
+		handle = e86_get_mem16 (cpu, sseg, sofs);
+		page = e86_get_mem16 (cpu, sseg, sofs + 2);
+
+		if (ems_set_page_map (ems, i, handle, page)) {
+			e86_set_ah (cpu, 0xa3);
+			return;
+		}
+	}
+
+	e86_set_ah (cpu, 0x00);
+}
+
+/* 4e03: get size of page map save array */
+static
+void ems_4e03 (ems_t *ems, e8086_t *cpu)
+{
+	e86_set_ax (cpu, 0x0010);
+}
+
+/* 4e: get/set page map */
+static
+void ems_4e (ems_t *ems, e8086_t *cpu)
+{
+	switch (e86_get_al (cpu)) {
+	case 0x00:
+		ems_4e00 (ems, cpu);
+		break;
+
+	case 0x01:
+		ems_4e01 (ems, cpu);
+		break;
+
+	case 0x02:
+		ems_4e02 (ems, cpu);
+		break;
+
+	case 0x03:
+		ems_4e03 (ems, cpu);
+		break;
+
+	default:
+		pce_log (MSG_MSG, "ems: unknown subfunction: AX=%04X\n",
+			e86_get_ax (cpu)
+		);
+
+		/* invalid subfunction */
+		e86_set_ah (cpu, 0x8f);
+
+		break;
+	}
+}
+
 void ems_handler (ems_t *ems, e8086_t *cpu)
 {
 	if (ems == NULL) {
@@ -622,6 +749,10 @@ void ems_handler (ems_t *ems, e8086_t *cpu)
 
 	case 0x4d:
 		ems_4d (ems, cpu);
+		break;
+
+	case 0x4e:
+		ems_4e (ems, cpu);
 		break;
 
 	default:
