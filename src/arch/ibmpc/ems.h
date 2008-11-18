@@ -27,13 +27,13 @@
 
 
 typedef struct ems_block_t {
-	unsigned short     handle;
-	unsigned           pages;
-	unsigned char      *data;
+	unsigned short handle;
+	unsigned       pages;
+	unsigned char  *data;
 
-	int                map_saved;
-	struct ems_block_t *map_blk[4];
-	unsigned           map_page[4];
+	int            map_saved;
+	unsigned short map_blk[4];
+	unsigned       map_page[4];
 } ems_block_t;
 
 

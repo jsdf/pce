@@ -249,6 +249,60 @@ void ems_set_uint16 (ems_t *ems, unsigned long addr, unsigned short val)
 }
 
 
+/*
+ * Get the page map for a page in the page frame
+ */
+static
+int ems_get_page_map (ems_t *ems, unsigned idx, unsigned short *handle, unsigned *page)
+{
+	if (idx > 3) {
+		return (1);
+	}
+
+	if (ems->map_blk[idx] == NULL) {
+		*handle = 0;
+		*page = 0xffff;
+	}
+	else {
+		*handle = ems->map_blk[idx]->handle;
+		*page = ems->map_page[idx];
+	}
+
+	return (0);
+}
+
+/*
+ * Map a page into the page frame
+ */
+static
+int ems_set_page_map (ems_t *ems, unsigned idx, unsigned short handle, unsigned page)
+{
+	if (idx > 3) {
+		return (1);
+	}
+
+	ems->map_blk[idx] = NULL;
+	ems->map_page[idx] = 0;
+
+	if ((handle == 0) || (page == 0xffff)) {
+		return (0);
+	}
+
+	if ((handle > 255) || (ems->blk[handle] == NULL)) {
+		return (1);
+	}
+
+	if (page >= ems->blk[handle]->pages) {
+		return (1);
+	}
+
+	ems->map_blk[idx] = ems->blk[handle];
+	ems->map_page[idx] = page;
+
+	return (0);
+}
+
+
 /* 40: get status */
 static
 void ems_40 (ems_t *ems, e8086_t *cpu)
@@ -417,8 +471,7 @@ void ems_47 (ems_t *ems, e8086_t *cpu)
 	}
 
 	for (i = 0; i < 4; i++) {
-		blk->map_blk[i] = ems->map_blk[i];
-		blk->map_page[i] = ems->map_page[i];
+		ems_get_page_map (ems, i, blk->map_blk + i, blk->map_page + i);
 	}
 
 	blk->map_saved = 1;
@@ -449,8 +502,7 @@ void ems_48 (ems_t *ems, e8086_t *cpu)
 	}
 
 	for (i = 0; i < 4; i++) {
-		ems->map_blk[i] = blk->map_blk[i];
-		ems->map_page[i] = blk->map_page[i];
+		ems_set_page_map (ems, i, blk->map_blk[i], blk->map_page[i]);
 	}
 
 	blk->map_saved = 0;
