@@ -25,11 +25,15 @@
 #include "main.h"
 
 
+/*
+ * Allocate a new EMS block
+ */
+static
 ems_block_t *ems_blk_new (unsigned handle, unsigned pages)
 {
 	ems_block_t *blk;
 
-	blk = (ems_block_t *) malloc (sizeof (ems_block_t));
+	blk = malloc (sizeof (ems_block_t));
 	if (blk == NULL) {
 		return (NULL);
 	}
@@ -37,7 +41,7 @@ ems_block_t *ems_blk_new (unsigned handle, unsigned pages)
 	blk->handle = handle;
 	blk->pages = pages;
 
-	blk->data = (unsigned char *) malloc (16384UL * pages);
+	blk->data = malloc (16384UL * pages);
 	if (blk->data == NULL) {
 		free (blk);
 		return (NULL);
@@ -48,6 +52,7 @@ ems_block_t *ems_blk_new (unsigned handle, unsigned pages)
 	return (blk);
 }
 
+static
 void ems_blk_del (ems_block_t *blk)
 {
 	if (blk != NULL) {
@@ -245,12 +250,14 @@ void ems_set_uint16 (ems_t *ems, unsigned long addr, unsigned short val)
 
 
 /* 40: get status */
+static
 void ems_40 (ems_t *ems, e8086_t *cpu)
 {
 	e86_set_ah (cpu, 0x00);
 }
 
 /* 41: get page frame address */
+static
 void ems_41 (ems_t *ems, e8086_t *cpu)
 {
 	e86_set_ah (cpu, 0x00);
@@ -258,6 +265,7 @@ void ems_41 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 42: get page count */
+static
 void ems_42 (ems_t *ems, e8086_t *cpu)
 {
 	e86_set_ah (cpu, 0x00);
@@ -266,6 +274,7 @@ void ems_42 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 43: allocate pages */
+static
 void ems_43 (ems_t *ems, e8086_t *cpu)
 {
 	unsigned i;
@@ -302,6 +311,7 @@ void ems_43 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 44: map a page */
+static
 void ems_44 (ems_t *ems, e8086_t *cpu)
 {
 	unsigned fpage, spage, handle;
@@ -339,6 +349,7 @@ void ems_44 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 45: deallocate pages */
+static
 void ems_45 (ems_t *ems, e8086_t *cpu)
 {
 	unsigned    i;
@@ -376,6 +387,7 @@ void ems_45 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 46: get version */
+static
 void ems_46 (ems_t *ems, e8086_t *cpu)
 {
 	e86_set_ah (cpu, 0x00);
@@ -383,6 +395,7 @@ void ems_46 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 47: save page map */
+static
 void ems_47 (ems_t *ems, e8086_t *cpu)
 {
 	unsigned    i;
@@ -414,6 +427,7 @@ void ems_47 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 48: restore page map */
+static
 void ems_48 (ems_t *ems, e8086_t *cpu)
 {
 	unsigned    i;
@@ -445,6 +459,7 @@ void ems_48 (ems_t *ems, e8086_t *cpu)
 }
 
 /* 4b: get handle count */
+static
 void ems_4b (ems_t *ems, e8086_t *cpu)
 {
 	unsigned i, n;
@@ -462,6 +477,7 @@ void ems_4b (ems_t *ems, e8086_t *cpu)
 }
 
 /* 4c: get handle page count */
+static
 void ems_4c (ems_t *ems, e8086_t *cpu)
 {
 	unsigned handle;
@@ -478,6 +494,7 @@ void ems_4c (ems_t *ems, e8086_t *cpu)
 }
 
 /* 4d: get all handles page count */
+static
 void ems_4d (ems_t *ems, e8086_t *cpu)
 {
 	unsigned       i, n;
@@ -507,57 +524,59 @@ void ems_handler (ems_t *ems, e8086_t *cpu)
 	}
 
 	switch (e86_get_ah (cpu)) {
-		case 0x40:
-			ems_40 (ems, cpu);
-			break;
+	case 0x40:
+		ems_40 (ems, cpu);
+		break;
 
-		case 0x41:
-			ems_41 (ems, cpu);
-			break;
+	case 0x41:
+		ems_41 (ems, cpu);
+		break;
 
-		case 0x42:
-			ems_42 (ems, cpu);
-			break;
+	case 0x42:
+		ems_42 (ems, cpu);
+		break;
 
-		case 0x43:
-			ems_43 (ems, cpu);
-			break;
+	case 0x43:
+		ems_43 (ems, cpu);
+		break;
 
-		case 0x44:
-			ems_44 (ems, cpu);
-			break;
+	case 0x44:
+		ems_44 (ems, cpu);
+		break;
 
-		case 0x45:
-			ems_45 (ems, cpu);
-			break;
+	case 0x45:
+		ems_45 (ems, cpu);
+		break;
 
-		case 0x46:
-			ems_46 (ems, cpu);
-			break;
+	case 0x46:
+		ems_46 (ems, cpu);
+		break;
 
-		case 0x47:
-			ems_47 (ems, cpu);
-			break;
+	case 0x47:
+		ems_47 (ems, cpu);
+		break;
 
-		case 0x48:
-			ems_48 (ems, cpu);
-			break;
+	case 0x48:
+		ems_48 (ems, cpu);
+		break;
 
-		case 0x4b:
-			ems_4b (ems, cpu);
-			break;
+	case 0x4b:
+		ems_4b (ems, cpu);
+		break;
 
-		case 0x4c:
-			ems_4c (ems, cpu);
-			break;
+	case 0x4c:
+		ems_4c (ems, cpu);
+		break;
 
-		case 0x4d:
-			ems_4d (ems, cpu);
-			break;
+	case 0x4d:
+		ems_4d (ems, cpu);
+		break;
 
-		default:
-			pce_log (MSG_MSG, "ems:\tunknown function: AH=%02X\n", e86_get_ah (cpu));
-			e86_set_ah (cpu, 0x84);
-			break;
+	default:
+		pce_log (MSG_MSG, "ems: unknown function: AX=%04X\n",
+			e86_get_ax (cpu)
+		);
+		e86_set_ah (cpu, 0x84);
+		break;
 	}
 }

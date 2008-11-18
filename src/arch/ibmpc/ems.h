@@ -22,8 +22,8 @@
 /* $Id$ */
 
 
-#ifndef PCE_EMS_H
-#define PCE_EMS_H 1
+#ifndef PCE_IBMPC_EMS_H
+#define PCE_IBMPC_EMS_H 1
 
 
 typedef struct ems_block_t {
