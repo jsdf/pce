@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include <lib/log.h>
+#include <lib/msg.h>
 
 #include <devices/video/hgc.h>
 
@@ -83,6 +84,19 @@
 
 #include "hgc_font.h"
 
+
+/*
+ * Set the blink frequency
+ */
+static
+void hgc_set_blink_rate (hgc_t *hgc, unsigned freq)
+{
+	hgc->blink_on = 1;
+	hgc->blink_cnt = freq;
+	hgc->blink_freq = freq;
+
+	hgc->update_state |= 1;
+}
 
 static
 void hgc_set_color (hgc_t *hgc, unsigned i1, unsigned i2, unsigned r, unsigned g, unsigned b)
@@ -278,6 +292,10 @@ void hgc_text_draw_cursor (hgc_t *hgc)
 	const unsigned char *col;
 	unsigned char       *dst;
 
+	if (hgc->blink_on == 0) {
+		return;
+	}
+
 	if ((hgc->reg_crt[HGC_CRTC_CS] & 0x60) == 0x20) {
 		/* cursor off */
 		return;
@@ -321,32 +339,50 @@ void hgc_text_draw_char (hgc_t *hgc,
 	unsigned char *buf, unsigned char c, unsigned char a)
 {
 	unsigned            i, j;
-	unsigned            map;
+	int                 elg, blk;
+	unsigned            ull;
+	unsigned            val;
 	unsigned char       *dst;
+	const unsigned char *fnt;
 	const unsigned char *fg, *bg;
 
+	blk = 0;
+
 	if (hgc->reg[HGC_MODE] & HGC_MODE_BLINK) {
-		/* blinking is not supported */
+		if (a & 0x80) {
+			blk = !hgc->blink_on;
+		}
+
 		a &= 0x7f;
 	}
+
+	ull = ((a & 0x07) == 1) ? 13 : 0xffff;
+	elg = ((c >= 0xc0) && (c <= 0xdf));
 
 	fg = hgc->rgb[a & 0x0f];
 	bg = hgc->rgb[(a >> 4) & 0x0f];
 
+	fnt = hgc->font + 14 * c;
+
 	dst = buf;
 
 	for (j = 0; j < hgc->ch; j++) {
-		map = hgc->font[14 * c + (j % 14)];
-
-		if ((c >= 0xc0) && (c <= 0xdf)) {
-			map = (map << 1) | (map & 1);
+		if (blk) {
+			val = 0x000;
+		}
+		else if (j == ull) {
+			val = 0x1ff;
 		}
 		else {
-			map = map << 1;
+			val = fnt[j % 14] << 1;
+
+			if (elg) {
+				val |= (val >> 1) & 1;
+			}
 		}
 
 		for (i = 0; i < HGC_CW; i++) {
-			if (map & (0x100 >> i)) {
+			if (val & 0x100) {
 				dst[3 * i + 0] = fg[0];
 				dst[3 * i + 1] = fg[1];
 				dst[3 * i + 2] = fg[2];
@@ -356,19 +392,11 @@ void hgc_text_draw_char (hgc_t *hgc,
 				dst[3 * i + 1] = bg[1];
 				dst[3 * i + 2] = bg[2];
 			}
+
+			val <<= 1;
 		}
 
 		dst += (3 * HGC_CW * hgc->w);
-	}
-
-	/* underline */
-	if (((a & 0x07) == 1) && (hgc->ch >= 13)) {
-		dst = buf + 3 * 13 * (HGC_CW * hgc->w);
-		for (i = 0; i < HGC_CW; i++) {
-			dst[3 * i + 0] = fg[0];
-			dst[3 * i + 1] = fg[1];
-			dst[3 * i + 2] = fg[2];
-		}
 	}
 }
 
@@ -792,6 +820,18 @@ void hgc_del (hgc_t *hgc)
 static
 int hgc_set_msg (hgc_t *hgc, const char *msg, const char *val)
 {
+	if (msg_is_message ("emu.video.blink", msg)) {
+		unsigned freq;
+
+		if (msg_get_uint (val, &freq)) {
+			return (1);
+		}
+
+		hgc_set_blink_rate (hgc, freq);
+
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -868,10 +908,27 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 {
 	unsigned long clk;
 
+	if (hgc->clk_vt < 50000) {
+		return;
+	}
+
 	clk = hgc_get_dotclock (hgc);
 
 	if (clk < hgc->clk_vt) {
 		return;
+	}
+
+	if (hgc->blink_cnt > 0) {
+		hgc->blink_cnt -= 1;
+
+		if (hgc->blink_cnt == 0) {
+			hgc->blink_cnt = hgc->blink_freq;
+			hgc->blink_on = !hgc->blink_on;
+
+			if ((hgc->reg[HGC_MODE] & HGC_MODE_GRAPH) == 0) {
+				hgc->update_state |= 1;
+			}
+		}
 	}
 
 	hgc->video.dotclk[0] = 0;
@@ -949,6 +1006,10 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 	hgc_set_color (hgc, 8, 15, 0xff, 0xf0, 0xc8);
 	hgc_set_color (hgc, 16, 16, 0xff, 0xf0, 0xc8);
 
+	hgc->blink_on = 1;
+	hgc->blink_cnt = 0;
+	hgc->blink_freq = 16;
+
 	hgc->w = 0;
 	hgc->h = 0;
 	hgc->ch = 0;
@@ -971,11 +1032,14 @@ video_t *hgc_new_ini (ini_sct_t *sct)
 	unsigned long io, mem, size;
 	unsigned long col0, col1, col2, col3;
 	const char    *col;
+	unsigned      blink;
 	hgc_t         *hgc;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
 	ini_get_uint32 (sct, "address", &mem, 0xb0000);
 	ini_get_uint32 (sct, "size", &size, 65536);
+
+	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	ini_get_string (sct, "color", &col, "amber");
 
@@ -995,6 +1059,8 @@ video_t *hgc_new_ini (ini_sct_t *sct)
 	hgc_set_color (hgc, 1, 7, col1 >> 16, col1 >> 8, col1);
 	hgc_set_color (hgc, 8, 15, col2 >> 16, col2 >> 8, col2);
 	hgc_set_color (hgc, 16, 16, col3 >> 16, col3 >> 8, col3);
+
+	hgc_set_blink_rate (hgc, blink);
 
 	return (&hgc->video);
 }
