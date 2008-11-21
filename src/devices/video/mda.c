@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #include <lib/log.h>
-#include <lib/hexdump.h>
+#include <lib/msg.h>
 
 #include "mda.h"
 
@@ -74,6 +74,19 @@
 
 #include "mda_font.h"
 
+
+/*
+ * Set the blink frequency
+ */
+static
+void mda_set_blink_rate (mda_t *mda, unsigned freq)
+{
+	mda->blink_on = 1;
+	mda->blink_cnt = freq;
+	mda->blink_freq = freq;
+
+	mda->update_state |= 1;
+}
 
 static
 void mda_set_color (mda_t *mda, unsigned i1, unsigned i2, unsigned r, unsigned g, unsigned b)
@@ -246,6 +259,10 @@ void mda_draw_cursor (mda_t *mda)
 	const unsigned char *col;
 	unsigned char       *dst;
 
+	if (mda->blink_on == 0) {
+		return;
+	}
+
 	if ((mda->reg_crt[MDA_CRTC_CS] & 0x60) == 0x20) {
 		/* cursor off */
 		return;
@@ -288,32 +305,50 @@ static
 void mda_draw_char (mda_t *mda, unsigned char *buf, unsigned char c, unsigned char a)
 {
 	unsigned            i, j;
-	unsigned            map;
+	int                 elg, blk;
+	unsigned            ull;
+	unsigned            val;
 	unsigned char       *dst;
+	const unsigned char *fnt;
 	const unsigned char *fg, *bg;
 
+	blk = 0;
+
 	if (mda->reg[MDA_MODE] & MDA_MODE_BLINK) {
-		/* blinking is not supported */
+		if (a & 0x80) {
+			blk = !mda->blink_on;
+		}
+
 		a &= 0x7f;
 	}
+
+	ull = ((a & 0x07) == 1) ? 13 : 0xffff;
+	elg = ((c >= 0xc0) && (c <= 0xdf));
 
 	fg = mda->rgb[a & 0x0f];
 	bg = mda->rgb[(a >> 4) & 0x0f];
 
+	fnt = mda->font + 14 * c;
+
 	dst = buf;
 
 	for (j = 0; j < mda->ch; j++) {
-		map = mda->font[14 * c + (j % 14)];
-
-		if ((c >= 0xc0) && (c <= 0xdf)) {
-			map = (map << 1) | (map & 1);
+		if (blk) {
+			val = 0x000;
+		}
+		else if (j == ull) {
+			val = 0x1ff;
 		}
 		else {
-			map = map << 1;
+			val = fnt[j % 14] << 1;
+
+			if (elg) {
+				val |= (val >> 1) & 1;
+			}
 		}
 
 		for (i = 0; i < MDA_CW; i++) {
-			if (map & (0x100 >> i)) {
+			if (val & 0x100) {
 				dst[3 * i + 0] = fg[0];
 				dst[3 * i + 1] = fg[1];
 				dst[3 * i + 2] = fg[2];
@@ -323,19 +358,11 @@ void mda_draw_char (mda_t *mda, unsigned char *buf, unsigned char c, unsigned ch
 				dst[3 * i + 1] = bg[1];
 				dst[3 * i + 2] = bg[2];
 			}
+
+			val <<= 1;
 		}
 
 		dst += (3 * MDA_CW * mda->w);
-	}
-
-	/* underline */
-	if (((a & 0x07) == 1) && (mda->ch >= 13)) {
-		dst = buf + 3 * 13 * (MDA_CW * mda->w);
-		for (i = 0; i < MDA_CW; i++) {
-			dst[3 * i + 0] = fg[0];
-			dst[3 * i + 1] = fg[1];
-			dst[3 * i + 2] = fg[2];
-		}
 	}
 }
 
@@ -634,6 +661,18 @@ void mda_del (mda_t *mda)
 static
 int mda_set_msg (mda_t *mda, const char *msg, const char *val)
 {
+	if (msg_is_message ("emu.video.blink", msg)) {
+		unsigned freq;
+
+		if (msg_get_uint (val, &freq)) {
+			return (1);
+		}
+
+		mda_set_blink_rate (mda, freq);
+
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -709,10 +748,24 @@ void mda_clock (mda_t *mda, unsigned cnt)
 {
 	unsigned long clk;
 
+	if (mda->clk_vt < 50000) {
+		return;
+	}
+
 	clk = mda_get_dotclock (mda);
 
 	if (clk < mda->clk_vt) {
 		return;
+	}
+
+	if (mda->blink_cnt > 0) {
+		mda->blink_cnt -= 1;
+
+		if (mda->blink_cnt == 0) {
+			mda->blink_cnt = mda->blink_freq;
+			mda->blink_on = !mda->blink_on;
+			mda->update_state |= 1;
+		}
 	}
 
 	mda->video.dotclk[0] = 0;
@@ -813,11 +866,14 @@ video_t *mda_new_ini (ini_sct_t *sct)
 	unsigned long io, addr, size;
 	unsigned long col0, col1, col2;
 	const char    *col;
+	unsigned      blink;
 	mda_t         *mda;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
 	ini_get_uint32 (sct, "address", &addr, 0xb0000);
 	ini_get_uint32 (sct, "size", &size, 4096);
+
+	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	pce_log_tag (MSG_INF,
 		"VIDEO:", "MDA io=0x%04lx addr=0x%05lx size=0x%05lx\n",
@@ -840,6 +896,8 @@ video_t *mda_new_ini (ini_sct_t *sct)
 	mda_set_color (mda, 0, 0, col0 >> 16, col0 >> 8, col0);
 	mda_set_color (mda, 1, 7, col1 >> 16, col1 >> 8, col1);
 	mda_set_color (mda, 8, 15, col2 >> 16, col2 >> 8, col2);
+
+	mda_set_blink_rate (mda, blink);
 
 	return (&mda->video);
 }

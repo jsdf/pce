@@ -210,6 +210,10 @@ section pc {
 		#color_normal = 0x55aa55
 		#color_bright = 0xaaffaa
 		#color_graphics = 0xaaffaa
+
+		# The blink frequency for blinking characters and the
+		# cursor. Setting this to 0 will turn off blinking.
+		blink = 16
 	}
 
 	section video {

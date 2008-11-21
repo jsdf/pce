@@ -48,6 +48,10 @@ typedef struct {
 
 	unsigned char rgb[16][3];
 
+	char          blink_on;
+	unsigned      blink_cnt;
+	unsigned      blink_freq;
+
 	/* these are derived from the crtc registers */
 	unsigned      w;
 	unsigned      h;
