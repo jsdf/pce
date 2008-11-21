@@ -25,6 +25,10 @@
 #include "main.h"
 
 
+/* 10 bits at 31250 bps */
+#define PC_KBD_DELAY (PCE_IBMPC_CLK2 / (31250 / 10))
+
+
 typedef struct {
 	pce_key_t      pcekey;
 
@@ -140,26 +144,117 @@ static pc_keymap_t keymap[] = {
 	{ PCE_KEY_NONE,      0, { 0x00 }, 0, { 0x00 }, 0 }
 };
 
+
+void pc_kbd_init (pc_kbd_t *kbd)
+{
+	kbd->delay = PC_KBD_DELAY;
+
+	kbd->key = 0;
+	kbd->key_valid = 0;
+
+	kbd->enable = 0;
+	kbd->clk = 0;
+
+	kbd->key_i = 0;
+	kbd->key_j = 0;
+
+	kbd->irq_ext = NULL;
+	kbd->irq = NULL;
+}
+
+void pc_kbd_set_irq_fct (pc_kbd_t *kbd, void *ext, void *fct)
+{
+	kbd->irq_ext = ext;
+	kbd->irq = fct;
+}
+
+static
+void pc_kbd_set_irq (pc_kbd_t *kbd, unsigned char val)
+{
+	if (kbd->irq != NULL) {
+		kbd->irq (kbd->irq_ext, val);
+	}
+}
+
+void pc_kbd_reset (pc_kbd_t *kbd)
+{
+	pc_keymap_t *map;
+
+	pc_log_deb (NULL, "reset keyboard\n");
+
+	map = keymap;
+
+	while (map->pcekey != PCE_KEY_NONE) {
+		map->isdown = 0;
+		map += 1;
+	}
+
+	kbd->delay = PC_KBD_DELAY;
+	kbd->key = 0x55;
+
+	kbd->key_i = 0;
+	kbd->key_j = 1;
+	kbd->key_buf[0] = 0xaa;
+}
+
+void pc_kbd_set_clk (pc_kbd_t *kbd, unsigned char val)
+{
+	val = (val != 0);
+
+	if (kbd->clk == val) {
+		return;
+	}
+
+	kbd->clk = val;
+
+	if (val) {
+		pc_kbd_reset (kbd);
+	}
+}
+
+void pc_kbd_set_enable (pc_kbd_t *kbd, unsigned char val)
+{
+	val = (val != 0);
+
+	if (kbd->enable == val) {
+		return;
+	}
+
+	kbd->enable = val;
+
+	if (val) {
+		kbd->delay = PC_KBD_DELAY;
+	}
+	else {
+		kbd->key = 0x00;
+		kbd->key_valid = 0;
+		pc_kbd_set_irq (kbd, 0);
+	}
+}
+
 /*
  * write a key code sequence into the key buffer
  */
 static
-void pc_kbd_set_sequence (ibmpc_t *pc, unsigned char *buf, unsigned cnt)
+void pc_kbd_set_sequence (pc_kbd_t *kbd, unsigned char *buf, unsigned cnt)
 {
 	unsigned i;
-
-	if ((pc->key_j + cnt) > 256) {
-		pce_log (MSG_ERR, "keyboard buffer overflow\n");
-		return;
-	}
+	unsigned next;
 
 	for (i = 0; i < cnt; i++) {
-		pc->key_buf[pc->key_j] = buf[i];
-		pc->key_j += 1;
+		next = (kbd->key_j + 1) % PC_KBD_BUF;
+
+		if (next == kbd->key_i) {
+			pce_log (MSG_ERR, "keyboard buffer overflow\n");
+			return;
+		}
+
+		kbd->key_buf[kbd->key_j] = buf[i];
+		kbd->key_j = next;
 	}
 }
 
-void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key)
+void pc_kbd_set_key (pc_kbd_t *kbd, unsigned event, unsigned key)
 {
 	pc_keymap_t *map;
 
@@ -180,78 +275,53 @@ void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key)
 	switch (event) {
 	case 1:
 		map->isdown = 1;
-		pc_kbd_set_sequence (pc, map->down, map->down_cnt);
+		pc_kbd_set_sequence (kbd, map->down, map->down_cnt);
 		break;
 
 	case 2:
 		if (map->isdown) {
 			map->isdown = 0;
-			pc_kbd_set_sequence (pc, map->up, map->up_cnt);
+			pc_kbd_set_sequence (kbd, map->up, map->up_cnt);
 		}
 		break;
 	}
 }
 
-void pc_set_keycode (ibmpc_t *pc, unsigned char val)
+void pc_kbd_set_keycode (pc_kbd_t *kbd, unsigned char val)
 {
-	if (pc->key_j > 255) {
+	pc_kbd_set_sequence (kbd, &val, 1);
+}
+
+unsigned char pc_kbd_get_key (pc_kbd_t *kbd)
+{
+	return (kbd->key);
+}
+
+void pc_kbd_clock (pc_kbd_t *kbd, unsigned long cnt)
+{
+	if (kbd->key_i == kbd->key_j) {
 		return;
 	}
 
-	pc->key_buf[pc->key_j] = val;
-	pc->key_j += 1;
-}
-
-void pc_kbd_clear (ibmpc_t *pc)
-{
-	pc->key_i = 0;
-	pc->key_j = 0;
-}
-
-void pc_kbd_init (ibmpc_t *pc)
-{
-	pc->key_i = 0;
-	pc->key_j = 0;
-	pc->ppi_port_a[1] = 0;
-}
-
-void pc_kbd_reset (ibmpc_t *pc)
-{
-	pc_keymap_t *map;
-
-	pc_log_deb (pc, "reset keyboard\n");
-
-	pc_kbd_init (pc);
-
-	map = keymap;
-
-	while (map->pcekey != PCE_KEY_NONE) {
-		map->isdown = 0;
-		map += 1;
+	if ((kbd->clk == 0) || (kbd->enable == 0)) {
+		return;
 	}
-}
 
-void pc_kbd_clock (ibmpc_t *pc, unsigned long cnt)
-{
-	if (pc->key_i < pc->key_j) {
-		if ((pc->ppi_port_b & 0x40) == 0) {
-			/* keyboard clk is low */
-			return;
-		}
-
-		if (e8259_get_irr (&pc->pic) & 0x02) {
-			return;
-		}
-
-		pc->ppi_port_a[1] = pc->key_buf[pc->key_i];
-
-		e8259_set_irq1 (&pc->pic, 1);
-
-		pc->key_i += 1;
-
-		if (pc->key_i == pc->key_j) {
-			pc->key_i = 0;
-			pc->key_j = 0;
-		}
+	if (kbd->key_valid) {
+		return;
 	}
+
+	if (kbd->delay > cnt) {
+		kbd->delay -= cnt;
+		return;
+	}
+
+	kbd->delay = PC_KBD_DELAY;
+
+	kbd->key = kbd->key_buf[kbd->key_i];
+	kbd->key_valid = 1;
+
+	kbd->key_i = (kbd->key_i + 1) % PC_KBD_BUF;
+
+	pc_kbd_set_irq (kbd, 1);
 }

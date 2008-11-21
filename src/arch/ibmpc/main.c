@@ -995,15 +995,15 @@ void do_key (cmd_t *cmd)
 
 	while (1) {
 		if (cmd_match (cmd, "cad")) {
-			pc_set_keycode (pc, 0x38);
-			pc_set_keycode (pc, 0x1d);
-			pc_set_keycode (pc, 0x53);
-			pc_set_keycode (pc, 0xd3);
-			pc_set_keycode (pc, 0x9d);
-			pc_set_keycode (pc, 0xb8);
+			pc_kbd_set_keycode (&pc->kbd, 0x38);
+			pc_kbd_set_keycode (&pc->kbd, 0x1d);
+			pc_kbd_set_keycode (&pc->kbd, 0x53);
+			pc_kbd_set_keycode (&pc->kbd, 0xd3);
+			pc_kbd_set_keycode (&pc->kbd, 0x9d);
+			pc_kbd_set_keycode (&pc->kbd, 0xb8);
 		}
 		else if (cmd_match_uint16 (cmd, &c)) {
-			pc_set_keycode (pc, c);
+			pc_kbd_set_keycode (&pc->kbd, c);
 		}
 		else {
 			break;

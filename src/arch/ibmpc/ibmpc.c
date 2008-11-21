@@ -34,9 +34,9 @@
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
-unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
-unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
-void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
+static unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
+static unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
+static void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
 
 
 static
@@ -298,6 +298,14 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
+void pc_setup_kbd (ibmpc_t *pc, ini_sct_t *ini)
+{
+	pc_kbd_init (&pc->kbd);
+
+	pc_kbd_set_irq_fct (&pc->kbd, &pc->pic, e8259_set_irq1);
+}
+
+static
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
 	pc->trm = ini_get_terminal (ini, par_terminal);
@@ -306,7 +314,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	trm_set_key_fct (pc->trm, pc, pc_set_key);
+	trm_set_key_fct (pc->trm, &pc->kbd, pc_kbd_set_key);
 	trm_set_msg_fct (pc->trm, pc, pc_set_msg);
 }
 
@@ -746,14 +754,13 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	ini_get_ram (pc->mem, ini, &pc->ram);
 	ini_get_rom (pc->mem, ini);
 
-	pc_kbd_init (pc);
-
 	pc_setup_nvram (pc, ini);
 	pc_setup_cpu (pc, ini);
 	pc_setup_dma (pc, ini);
 	pc_setup_pic (pc, ini);
 	pc_setup_pit (pc, ini);
 	pc_setup_ppi (pc, ini);
+	pc_setup_kbd (pc, ini);
 
 	pc_setup_terminal (pc, ini);
 
@@ -774,8 +781,6 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pce_load_mem_ini (pc->mem, ini);
 
 	pc_clock_reset (pc);
-
-	pc_kbd_clear (pc);
 
 	return (pc);
 }
@@ -880,7 +885,7 @@ void pc_reset (ibmpc_t *pc)
 
 	e86_reset (pc->cpu);
 
-	pc_kbd_reset (pc);
+	pc_kbd_reset (&pc->kbd);
 
 	if (pc->xms != NULL) {
 		xms_reset (pc->xms);
@@ -985,6 +990,8 @@ void pc_clock (ibmpc_t *pc)
 
 		pc->clk_div[0] &= 7;
 
+		pc_kbd_clock (&pc->kbd, clk2[0]);
+
 		e8237_clock (&pc->dma, 1);
 		e8259_clock (&pc->pic);
 
@@ -1010,8 +1017,6 @@ void pc_clock (ibmpc_t *pc)
 			if (pc->mse != NULL) {
 				mse_clock (pc->mse, clk2[0]);
 			}
-
-			pc_kbd_clock (pc, clk2[0]);
 
 			pc_clock_delay (pc);
 		}
@@ -1133,22 +1138,20 @@ void pc_break (ibmpc_t *pc, unsigned char val)
 	}
 }
 
+static
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
-	unsigned char val;
-
 	if (pc->ppi_port_b & 0x80) {
 		return (pc->ppi_port_a[0]);
 	}
 	else {
-		val = pc->ppi_port_a[1];
+		pc->ppi_port_a[1] = pc_kbd_get_key (&pc->kbd);
 
-		pc->ppi_port_a[1] = 0x00;
-
-		return (val);
+		return (pc->ppi_port_a[1]);
 	}
 }
 
+static
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 {
 	if (pc->ppi_port_b & 0x04) {
@@ -1159,20 +1162,13 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 	}
 }
 
+static
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 {
-	unsigned char old;
-
-	old = pc->ppi_port_b;
-
 	pc->ppi_port_b = val;
 
-	if ((old ^ val) & 0x40) {
-		if ((val & 0x40) == 0) {
-			pc_kbd_reset (pc);
-			pc_set_keycode (pc, 0xaa);
-		}
-	}
+	pc_kbd_set_clk (&pc->kbd, val & 0x40);
+	pc_kbd_set_enable (&pc->kbd, (val & 0x80) == 0);
 
 	e8253_set_gate (&pc->pit, 2, val & 0x01);
 }

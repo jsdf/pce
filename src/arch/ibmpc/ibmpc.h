@@ -48,14 +48,11 @@ typedef struct ibmpc_t {
 	e8253_t            pit;
 	e8255_t            ppi;
 	e8259_t            pic;
+	pc_kbd_t           kbd;
 
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;
 	unsigned char      ppi_port_c[2];
-
-	unsigned           key_i;
-	unsigned           key_j;
-	unsigned char      key_buf[256];
 
 	ems_t              *ems;
 	xms_t              *xms;

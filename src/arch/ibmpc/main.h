@@ -100,12 +100,12 @@ extern unsigned   par_speed;
 
 #include "util.h"
 #include "int13.h"
+#include "keyboard.h"
 #include "mouse.h"
 #include "ems.h"
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
-#include "keyboard.h"
 #include "msg.h"
 
 
