@@ -219,6 +219,8 @@ void pc_kbd_reset (ibmpc_t *pc)
 {
 	pc_keymap_t *map;
 
+	pc_log_deb (pc, "reset keyboard\n");
+
 	pc_kbd_init (pc);
 
 	map = keymap;

@@ -158,7 +158,7 @@ void xms_reset (xms_t *xms)
 {
 	unsigned i;
 
-	pce_log (MSG_DEB, "reset xms\n");
+	pc_log_deb (NULL, "reset xms\n");
 
 	for (i = 0; i < xms->emb_cnt; i++) {
 		emb_del (xms->emb[i]);

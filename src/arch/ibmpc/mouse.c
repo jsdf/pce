@@ -251,7 +251,7 @@ void mse_clock (mouse_t *mse, unsigned long cnt)
 		if (cnt >= mse->reset_cntr) {
 			mse->reset_cntr = 0;
 			mse_receive (mse, 'M');
-			pce_log (MSG_DEB, "reset mouse\n");
+			pc_log_deb (NULL, "reset mouse\n");
 		}
 		else {
 			mse->reset_cntr -= cnt;

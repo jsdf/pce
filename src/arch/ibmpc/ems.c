@@ -136,7 +136,7 @@ void ems_reset (ems_t *ems)
 {
 	unsigned i;
 
-	pce_log (MSG_DEB, "reset ems\n");
+	pc_log_deb (NULL, "reset ems\n");
 
 	for (i = 1; i < 256; i++) {
 		ems_blk_del (ems->blk[i]);

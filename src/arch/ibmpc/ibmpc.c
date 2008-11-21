@@ -857,9 +857,26 @@ void pc_del (ibmpc_t *pc)
 	free (pc);
 }
 
+void pc_log_deb (ibmpc_t *pc, const char *msg, ...)
+{
+	va_list va;
+
+	if (pc == NULL) {
+		pc = par_pc;
+	}
+
+	pce_log (MSG_DEB, "[%04X:%04X] ",
+		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu)
+	);
+
+	va_start (va, msg);
+	pce_log_va (MSG_DEB, msg, va);
+	va_end (va);
+}
+
 void pc_reset (ibmpc_t *pc)
 {
-	pce_log (MSG_DEB, "reset pc\n");
+	pc_log_deb (pc, "reset pc\n");
 
 	e86_reset (pc->cpu);
 
