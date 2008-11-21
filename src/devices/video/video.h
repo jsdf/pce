@@ -43,8 +43,6 @@ typedef struct {
 
 	void      (*print_info) (void *ext, FILE *fp);
 
-	int       (*screenshot) (void *ext, FILE *fp, unsigned mode);
-
 	void      (*redraw) (void *ext);
 	void      (*clock) (void *ext, unsigned long cnt);
 
@@ -78,8 +76,6 @@ mem_blk_t *pce_video_get_mem (video_t *vid);
 mem_blk_t *pce_video_get_reg (video_t *vid);
 
 void pce_video_print_info (video_t *vid, FILE *fp);
-
-int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode);
 
 void pce_video_redraw (video_t *vid);
 

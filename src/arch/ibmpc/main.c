@@ -1306,47 +1306,6 @@ void do_s (cmd_t *cmd)
 }
 
 static
-void do_screenshot (cmd_t *cmd)
-{
-	char     fname[256];
-	unsigned mode;
-	FILE     *fp;
-
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
-		return;
-	}
-
-	if (cmd_match (cmd, "t")) {
-		mode = 1;
-	}
-	else if (cmd_match (cmd, "g")) {
-		mode = 2;
-	}
-	else {
-		if (!cmd_match_eol (cmd)) {
-			return;
-		}
-
-		mode = 0;
-	}
-
-	fp = fopen (fname, "wb");
-	if (fp == NULL) {
-		pce_printf ("can't open file (%s)\n", fname);
-		return;
-	}
-
-	if (pce_video_screenshot (pc->video, fp, mode)) {
-		fclose (fp);
-		pce_printf ("screenshot failed\n");
-		return;
-	}
-
-	fclose (fp);
-}
-
-static
 void do_t (cmd_t *cmd)
 {
 	unsigned long i, n;
@@ -1517,9 +1476,6 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "r")) {
 		do_r (cmd, pc);
-	}
-	else if (cmd_match (cmd, "screenshot")) {
-		do_screenshot (cmd);
 	}
 	else if (cmd_match (cmd, "s")) {
 		do_s (cmd);

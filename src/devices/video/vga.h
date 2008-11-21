@@ -69,7 +69,6 @@ typedef struct vga_t {
 	unsigned char latch[4];
 
 	void          (*update) (struct vga_t *vga);
-	int           (*screenshot) (struct vga_t *vga, FILE *fp);
 	void          (*set_latches) (struct vga_t *vga, unsigned long addr, unsigned char val[4]);
 	void          (*set_uint8) (struct vga_t *vga, unsigned long addr, unsigned char val);
 	unsigned char (*get_uint8) (struct vga_t *vga, unsigned long addr);
@@ -101,8 +100,6 @@ int vga_dump (vga_t *vga, FILE *fp);
 
 mem_blk_t *vga_get_mem (vga_t *cga);
 mem_blk_t *vga_get_reg (vga_t *cga);
-
-int vga_screenshot (vga_t *vga, FILE *fp, unsigned mode);
 
 void vga_mem_set_uint8 (vga_t *vga, unsigned long addr, unsigned char val);
 void vga_mem_set_uint16 (vga_t *vga, unsigned long addr, unsigned short val);

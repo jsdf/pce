@@ -1023,27 +1023,6 @@ void pc_clock (ibmpc_t *pc)
 	}
 }
 
-void pc_screenshot (ibmpc_t *pc, const char *fname)
-{
-	static unsigned i = 0;
-	char            tmp[256];
-	FILE            *fp;
-
-	if (fname == NULL) {
-		sprintf (tmp, "snap%04u.dat", i++);
-		fname = tmp;
-	}
-
-	fp = fopen (fname, "wb");
-	if (fp == NULL) {
-		return;
-	}
-
-	pce_video_screenshot (pc->video, fp, 0);
-
-	fclose (fp);
-}
-
 int pc_set_cpu_model (ibmpc_t *pc, const char *str)
 {
 	if (strcmp (str, "8086") == 0) {

@@ -63,7 +63,6 @@
 
 
 static void vga_update_cga_txt (vga_t *vga);
-static int vga_screenshot_cga_txt (vga_t *vga, FILE *fp);
 static void vga_set_latches_cga_txt (vga_t *cga, unsigned long addr, unsigned char val[4]);
 
 static void vga_set_uint8_odd_even (vga_t *vga, unsigned long addr, unsigned char val);
@@ -143,7 +142,6 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 	vga->size = 0x08000;
 
 	vga->update = &vga_update_cga_txt;
-	vga->screenshot = &vga_screenshot_cga_txt;
 	vga->set_latches = &vga_set_latches_cga_txt;
 	vga->set_uint8 = &vga_set_uint8_odd_even;
 	vga->get_uint8 = &vga_get_uint8_odd_even;
@@ -155,7 +153,6 @@ video_t *vga_new (terminal_t *trm, ini_sct_t *sct)
 	vga->vid.get_mem = (void *) vga_get_mem;
 	vga->vid.get_reg = (void *) vga_get_reg;
 	vga->vid.print_info = (void *) vga_prt_state;
-	vga->vid.screenshot = (void *) vga_screenshot;
 	vga->vid.clock = (void *) vga_clock;
 
 	memset (vga->crtc_reg, 0xff, 24 * sizeof (unsigned char));
@@ -354,34 +351,6 @@ void vga_get_rgb_atc (vga_t *vga, unsigned idx, unsigned char rgb[3])
  *****************************************************************************/
 
 static
-int vga_screenshot_cga_txt (vga_t *vga, FILE *fp)
-{
-	unsigned i;
-	unsigned x, y;
-	unsigned rofs;
-
-	i = (vga->crtc_ofs << 1) & 0xfffe;
-
-	if (vga->reg->data[0x1c] & 0x20) {
-		i |= 1;
-	}
-
-	rofs = 4 * vga->crtc_reg[0x13];
-
-	for (y = 0; y < vga->mode_h; y++) {
-		for (x = 0; x < vga->mode_w; x++) {
-			fputc (vga->data[(i + 2 * x) & 0xffff], fp);
-		}
-
-		i = (i + rofs) & 0xffff;
-
-		fputs ("\n", fp);
-	}
-
-	return (0);
-}
-
-static
 void vga_update_cga_txt (vga_t *vga)
 {
 	unsigned i, j;
@@ -467,52 +436,6 @@ void vga_set_latches_cga_txt (vga_t *vga, unsigned long addr, unsigned char val[
 /*****************************************************************************
  * CGA 4 color graphic mode
  *****************************************************************************/
-
-static
-int vga_screenshot_cga4 (vga_t *vga, FILE *fp)
-{
-	unsigned      i, x, y, w;
-	unsigned      idx;
-	unsigned char rgb[3];
-	unsigned long addr, rofs;
-	unsigned char msk;
-
-	fprintf (fp, "P6\n%u %u\n255 ", vga->mode_w, vga->mode_h);
-
-	addr = vga->crtc_ofs;
-	rofs = 2 * vga->crtc_reg[0x13];
-
-	w = vga->mode_w / 4;
-
-	for (y = 0; y < vga->mode_h; y++) {
-		for (x = 0; x < w; x++) {
-			msk = 0x80;
-
-			for (i = 0; i < 4; i++) {
-				idx = (vga->data[addr + x + 0x00000] & (msk >> 1)) ? 0x01 : 0x00;
-				idx |= (vga->data[addr + x + 0x10000] & msk) ? 0x02 : 0x00;
-				idx |= (vga->data[addr + x + 0x20000] & msk) ? 0x04 : 0x00;
-				idx |= (vga->data[addr + x + 0x30000] & msk) ? 0x08 : 0x00;
-
-				idx &= vga->atc_reg[0x12];
-
-				vga_get_rgb_atc (vga, idx, rgb);
-				fwrite (rgb, 1, 3, fp);
-
-				msk = msk >> 2;
-			}
-		}
-
-		if (addr & 0x2000) {
-			addr = (addr + rofs) & 0x1fff;
-		}
-		else {
-			addr |= 0x2000;
-		}
-	}
-
-	return (0);
-}
 
 static
 void vga_update_cga4 (vga_t *vga)
@@ -649,57 +572,6 @@ void vga_set_latches_cga4 (vga_t *vga, unsigned long addr, unsigned char latch[4
 /*****************************************************************************
  * EGA 16 color graphic modes and CGA 2 color graphic mode
  *****************************************************************************/
-
-static
-int vga_screenshot_ega16 (vga_t *vga, FILE *fp)
-{
-	unsigned      i, x, y, w;
-	unsigned      idx;
-	unsigned char rgb[3];
-	unsigned long addr, rofs;
-	unsigned char msk;
-
-	fprintf (fp, "P6\n%u %u\n255 ", vga->mode_w, vga->mode_h);
-
-	addr = vga->crtc_ofs;
-	rofs = 2 * vga->crtc_reg[0x13];
-
-	w = vga->mode_w / 8;
-
-	for (y = 0; y < vga->mode_h; y++) {
-		for (x = 0; x < w; x++) {
-			msk = 0x80;
-
-			for (i = 0; i < 8; i++) {
-				idx = (vga->data[addr + x + 0x00000] & msk) ? 0x01 : 0x00;
-				idx |= (vga->data[addr + x + 0x10000] & msk) ? 0x02 : 0x00;
-				idx |= (vga->data[addr + x + 0x20000] & msk) ? 0x04 : 0x00;
-				idx |= (vga->data[addr + x + 0x30000] & msk) ? 0x08 : 0x00;
-
-				idx &= vga->atc_reg[0x12];
-
-				vga_get_rgb_atc (vga, idx, rgb);
-				fwrite (rgb, 1, 3, fp);
-
-				msk = msk >> 1;
-			}
-		}
-
-		if (vga->crtc_reg[0x17] & 0x01) {
-			if (addr & 0x2000) {
-				addr = (addr + rofs) & 0x1fff;
-			}
-			else {
-				addr |= 0x2000;
-			}
-		}
-		else {
-			addr = (addr + rofs) & 0xffff;
-		}
-	}
-
-	return (0);
-}
 
 static
 void vga_update_ega16 (vga_t *vga)
@@ -845,12 +717,6 @@ void vga_set_latches_ega16 (vga_t *vga, unsigned long addr, unsigned char latch[
 /*****************************************************************************
  * VGA 256 color graphic modes
  *****************************************************************************/
-
-static
-int vga_screenshot_vga256 (vga_t *vga, FILE *fp)
-{
-	return (1);
-}
 
 static
 void vga_update_vga256 (vga_t *vga)
@@ -1150,11 +1016,6 @@ unsigned char vga_get_uint8_gdc (vga_t *vga, unsigned long addr)
 }
 
 
-int vga_screenshot (vga_t *vga, FILE *fp, unsigned mode)
-{
-	return (vga->screenshot (vga, fp));
-}
-
 int vga_eval_mode (vga_t *vga)
 {
 	if (vga->gdc_reg[0x05] & 0x40) {
@@ -1176,26 +1037,22 @@ int vga_eval_mode (vga_t *vga)
 	if ((vga->atc_reg[0x10] & 0x01) || (vga->gdc_reg[0x06] & 0x01)) {
 		if (vga->gdc_reg[0x05] & 0x40) {
 			vga->update = &vga_update_vga256;
-			vga->screenshot = &vga_screenshot_vga256;
 			vga->set_latches = &vga_set_latches_vga256;
 			pce_log (MSG_DEB, "vga: crt mode vga256\n");
 		}
 		else if (vga->gdc_reg[0x05] & 0x20) {
 			vga->update = &vga_update_cga4;
-			vga->screenshot = &vga_screenshot_cga4;
 			vga->set_latches = &vga_set_latches_cga4;
 			pce_log (MSG_DEB, "vga: crt mode cga4\n");
 		}
 		else {
 			vga->update = &vga_update_ega16;
-			vga->screenshot = &vga_screenshot_ega16;
 			vga->set_latches = &vga_set_latches_ega16;
 			pce_log (MSG_DEB, "vga: crt mode ega16\n");
 		}
 	}
 	else {
 		vga->update = &vga_update_cga_txt;
-		vga->screenshot = &vga_screenshot_cga_txt;
 		vga->set_latches = &vga_set_latches_cga_txt;
 		pce_log (MSG_DEB, "vga: crt mode txt\n");
 	}

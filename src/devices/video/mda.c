@@ -695,21 +695,6 @@ void mda_print_info (mda_t *mda, FILE *fp)
 	fflush (fp);
 }
 
-static
-int mda_screenshot (mda_t *mda, FILE *fp)
-{
-	mda_update (mda);
-
-	if ((mda->buf_w == 0) || (mda->buf_h == 0)) {
-		return (1);
-	}
-
-	fprintf (fp, "P6\n%u %u\n255 ", mda->buf_w, mda->buf_h);
-	fwrite (mda->buf, 1, 3 * mda->buf_w * mda->buf_h, fp);
-
-	return (0);
-}
-
 /*
  * Force a screen update
  */
@@ -771,7 +756,6 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 	mda->video.get_mem = (void *) mda_get_mem;
 	mda->video.get_reg = (void *) mda_get_reg;
 	mda->video.print_info = (void *) mda_print_info;
-	mda->video.screenshot = (void *) mda_screenshot;
 	mda->video.redraw = (void *) mda_redraw;
 	mda->video.clock = (void *) mda_clock;
 

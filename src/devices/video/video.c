@@ -42,7 +42,6 @@ void pce_video_init (video_t *vid)
 	vid->get_mem = NULL;
 	vid->get_reg = NULL;
 	vid->print_info = NULL;
-	vid->screenshot = NULL;
 	vid->redraw = NULL;
 	vid->clock = NULL;
 }
@@ -93,15 +92,6 @@ void pce_video_print_info (video_t *vid, FILE *fp)
 	if (vid->print_info != NULL) {
 		vid->print_info (vid->ext, fp);
 	}
-}
-
-int pce_video_screenshot (video_t *vid, FILE *fp, unsigned mode)
-{
-	if (vid->screenshot != NULL) {
-		return (vid->screenshot (vid->ext, fp, mode));
-	}
-
-	return (1);
 }
 
 void pce_video_redraw (video_t *vid)

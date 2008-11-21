@@ -119,8 +119,6 @@ void pc_clock_discontinuity (ibmpc_t *pc);
  *****************************************************************************/
 void pc_clock (ibmpc_t *pc);
 
-void pc_screenshot (ibmpc_t *pc, const char *fname);
-
 /*!***************************************************************************
  * @short Set the specific CPU model to be emulated
  *****************************************************************************/

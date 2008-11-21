@@ -854,17 +854,6 @@ void hgc_print_info (hgc_t *hgc, FILE *fp)
 	fflush (fp);
 }
 
-static
-int hgc_screenshot (hgc_t *hgc, FILE *fp)
-{
-	hgc_update (hgc);
-
-	fprintf (fp, "P6\n%u %u\n255 ", hgc->buf_w, hgc->buf_h);
-	fwrite (hgc->buf, 1, 3 * hgc->buf_w * hgc->buf_h, fp);
-
-	return (0);
-}
-
 /*
  * Force a screen update
  */
@@ -926,7 +915,6 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 	hgc->video.get_mem = (void *) hgc_get_mem;
 	hgc->video.get_reg = (void *) hgc_get_reg;
 	hgc->video.print_info = (void *) hgc_print_info;
-	hgc->video.screenshot = (void *) hgc_screenshot;
 	hgc->video.redraw = (void *) hgc_redraw;
 	hgc->video.clock = (void *) hgc_clock;
 
