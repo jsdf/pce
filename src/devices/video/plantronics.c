@@ -328,11 +328,13 @@ cga_t *pla_new (unsigned long io, unsigned long addr, unsigned long size)
 video_t *pla_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, addr, size;
+	unsigned      blink;
 	cga_t         *pla;
 
 	ini_get_uint32 (sct, "io", &io, 0x3d4);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
 	ini_get_uint32 (sct, "size", &size, 32768);
+	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	if (size < 32768) {
 		size = 32768;
@@ -347,6 +349,8 @@ video_t *pla_new_ini (ini_sct_t *sct)
 	if (pla == NULL) {
 		return (NULL);
 	}
+
+	cga_set_blink_rate (pla, blink);
 
 	return (&pla->video);
 }

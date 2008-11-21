@@ -53,9 +53,11 @@ mda.o:		mda.c mda.h mda_font.h video.h $(SDP) \
 		terminal/terminal.h \
 		lib/log.h lib/msg.h
 
-plantronics.o:	plantronics.c plantronics.h cga.h video.h devices/memory.h \
-		libini/libini.h terminal/terminal.h lib/log.h \
-		$(SDP)
+plantronics.o:	plantronics.c plantronics.h cga.h video.h $(SDP) \
+		devices/memory.h \
+		libini/libini.h \
+		terminal/terminal.h \
+		lib/log.h
 
 vga.o:		vga.c vga.h video.h devices/memory.h \
 		libini/libini.h \
