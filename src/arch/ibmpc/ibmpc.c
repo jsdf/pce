@@ -1135,11 +1135,17 @@ void pc_break (ibmpc_t *pc, unsigned char val)
 
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
+	unsigned char val;
+
 	if (pc->ppi_port_b & 0x80) {
 		return (pc->ppi_port_a[0]);
 	}
 	else {
-		return (pc->ppi_port_a[1]);
+		val = pc->ppi_port_a[1];
+
+		pc->ppi_port_a[1] = 0x00;
+
+		return (val);
 	}
 }
 
@@ -1155,7 +1161,18 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 
 void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 {
+	unsigned char old;
+
+	old = pc->ppi_port_b;
+
 	pc->ppi_port_b = val;
+
+	if ((old ^ val) & 0x40) {
+		if ((val & 0x40) == 0) {
+			pc_kbd_reset (pc);
+			pc_set_keycode (pc, 0xaa);
+		}
+	}
 
 	e8253_set_gate (&pc->pit, 2, val & 0x01);
 }

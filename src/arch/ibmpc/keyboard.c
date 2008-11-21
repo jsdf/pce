@@ -234,6 +234,11 @@ void pc_kbd_reset (ibmpc_t *pc)
 void pc_kbd_clock (ibmpc_t *pc, unsigned long cnt)
 {
 	if (pc->key_i < pc->key_j) {
+		if ((pc->ppi_port_b & 0x40) == 0) {
+			/* keyboard clk is low */
+			return;
+		}
+
 		if (e8259_get_irr (&pc->pic) & 0x02) {
 			return;
 		}
