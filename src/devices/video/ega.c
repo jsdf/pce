@@ -406,15 +406,18 @@ static
 const unsigned char *ega_get_font (ega_t *ega, unsigned chr, unsigned atr)
 {
 	const unsigned char *fnt;
+	unsigned            ofs;
 
-	fnt = ega->mem + 0x20000 + 32 * chr;
+	ofs = ega->reg_seq[EGA_SEQ_CMAPSEL];
 
 	if (atr & 0x08) {
-		fnt += (ega->reg_seq[EGA_SEQ_CMAPSEL] & 0x0c) << 11;
+		ofs = (ofs >> 2) & 0x03;
 	}
 	else {
-		fnt += (ega->reg_seq[EGA_SEQ_CMAPSEL] & 3) << 13;
+		ofs = ofs & 0x03;
 	}
+
+	fnt = ega->mem + 0x20000 + (16384 * ofs) + (32 * (chr & 0xff));
 
 	return (fnt);
 }
