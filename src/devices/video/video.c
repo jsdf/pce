@@ -54,11 +54,13 @@ void pce_video_del (video_t *vid)
 	}
 }
 
-void pce_video_set_msg (video_t *vid, const char *msg, const char *val)
+int pce_video_set_msg (video_t *vid, const char *msg, const char *val)
 {
 	if (vid->set_msg != NULL) {
-		vid->set_msg (vid->ext, msg, val);
+		return (vid->set_msg (vid->ext, msg, val));
 	}
+
+	return (1);
 }
 
 void pce_video_set_terminal (video_t *vid, void *trm)

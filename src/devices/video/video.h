@@ -67,7 +67,10 @@ typedef struct {
 void pce_video_init (video_t *vid);
 void pce_video_del (video_t *vid);
 
-void pce_video_set_msg (video_t *vid, const char *msg, const char *val);
+/*!***************************************************************************
+ * @short Send a message to a video device
+ *****************************************************************************/
+int pce_video_set_msg (video_t *vid, const char *msg, const char *val);
 
 void pce_video_set_terminal (video_t *vid, void *trm);
 

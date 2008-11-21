@@ -25,39 +25,21 @@
 #include "main.h"
 
 
-int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
+static
+int pc_set_msg_pc (ibmpc_t *pc, const char *msg, const char *val)
 {
-	/* a hack, for debugging only */
-	if (pc == NULL) {
-		pc = par_pc;
-	}
-
-	if (msg == NULL) {
-		msg = "";
-	}
-
-	if (val == NULL) {
-		val = "";
-	}
-
-	if (msg_is_prefix ("term", msg)) {
-		if (pc->trm != NULL) {
-			return (trm_set_msg_trm (pc->trm, msg, val));
-		}
-
-		return (1);
-	}
-
 	if (msg_is_message ("emu.stop", msg)) {
 		pc->brk = PCE_BRK_STOP;
 		return (0);
 	}
-	else if (msg_is_message ("emu.exit", msg)) {
+
+	if (msg_is_message ("emu.exit", msg)) {
 		pc->brk = PCE_BRK_ABORT;
 		mon_set_terminate (&par_mon, 1);
 		return (0);
 	}
-	else if (msg_is_message ("emu.pause", msg)) {
+
+	if (msg_is_message ("emu.pause", msg)) {
 		int v;
 
 		if (msg_get_bool (val, &v)) {
@@ -70,32 +52,37 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.reset", msg)) {
-		pc_reset (pc);
-		return (0);
-	}
-	else if (msg_is_message ("emu.pause.toggle", msg)) {
+
+	if (msg_is_message ("emu.pause.toggle", msg)) {
 		pc->pause = !pc->pause;
 
 		pc_clock_discontinuity (pc);
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.config.save", msg)) {
+
+	if (msg_is_message ("emu.reset", msg)) {
+		pc_reset (pc);
+		return (0);
+	}
+
+	if (msg_is_message ("emu.config.save", msg)) {
 		if (ini_write (pc->cfg, val)) {
 			return (1);
 		}
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.cpu.model", msg)) {
+
+	if (msg_is_message ("emu.cpu.model", msg)) {
 		if (pc_set_cpu_model (pc, val)) {
 			return (1);
 		}
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.cpu.clock", msg)) {
+
+	if (msg_is_message ("emu.cpu.clock", msg)) {
 		unsigned long v;
 
 		if (msg_get_ulng (val, &v)) {
@@ -106,7 +93,8 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.cpu.speed", msg)) {
+
+	if (msg_is_message ("emu.cpu.speed", msg)) {
 		unsigned f;
 
 		if (msg_get_uint (val, &f)) {
@@ -117,7 +105,8 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.cpu.speed.step", msg)) {
+
+	if (msg_is_message ("emu.cpu.speed.step", msg)) {
 		int v;
 
 		if (msg_get_sint (val, &v)) {
@@ -134,20 +123,8 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.video.redraw", msg)) {
-		pce_video_redraw (pc->video);
-		return (0);
-	}
-	else if (msg_is_message ("emu.video.screenshot", msg)) {
-		if (strcmp (val, "") == 0) {
-			pc_screenshot (pc, NULL);
-		}
-		else {
-			pc_screenshot (pc, val);
-		}
-		return (0);
-	}
-	else if (msg_is_message ("emu.disk.boot", msg)) {
+
+	if (msg_is_message ("emu.disk.boot", msg)) {
 		unsigned v;
 
 		if (msg_get_uint (val, &v)) {
@@ -158,7 +135,8 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.disk.commit", msg)) {
+
+	if (msg_is_message ("emu.disk.commit", msg)) {
 		if (strcmp (val, "") == 0) {
 			if (dsks_commit (pc->dsk)) {
 				pce_log (MSG_ERR, "commit failed for at least one disk\n");
@@ -180,7 +158,8 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.disk.eject", msg)) {
+
+	if (msg_is_message ("emu.disk.eject", msg)) {
 		unsigned d;
 		disk_t   *dsk;
 
@@ -199,12 +178,47 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.disk.insert", msg)) {
+
+	if (msg_is_message ("emu.disk.insert", msg)) {
 		if (dsk_insert (pc->dsk, val, 1)) {
 			return (1);
 		}
 
 		return (0);
+	}
+
+	return (1);
+}
+
+int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
+{
+	/* a hack, for debugging only */
+	if (pc == NULL) {
+		pc = par_pc;
+	}
+
+	if (msg == NULL) {
+		return (1);
+	}
+
+	if (val == NULL) {
+		val = "";
+	}
+
+	if (pc_set_msg_pc (pc, msg, val) == 0) {
+		return (0);
+	}
+
+	if (pc->trm != NULL) {
+		if (trm_set_msg_trm (pc->trm, msg, val) == 0) {
+			return (0);
+		}
+	}
+
+	if (pc->video != NULL) {
+		if (pce_video_set_msg (pc->video, msg, val) == 0) {
+			return (0);
+		}
 	}
 
 	pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
