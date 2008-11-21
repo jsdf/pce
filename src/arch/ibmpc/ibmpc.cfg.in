@@ -172,6 +172,10 @@ section pc {
 		#   0 = thick font (default)
 		#   1 = thin font
 		font = 0
+
+		# The blink frequency for blinking characters and the
+		# cursor. Setting this to 0 will turn off blinking.
+		blink = 16
 	}
 
 	section video {

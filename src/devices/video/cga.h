@@ -57,6 +57,10 @@ typedef struct cga_s {
 	char          comp_tab_ok;
 	unsigned char *comp_tab;
 
+	char          blink_on;
+	unsigned      blink_cnt;
+	unsigned      blink_freq;
+
 	/* these are derived from the crtc registers */
 	unsigned      w;
 	unsigned      h;
@@ -79,6 +83,7 @@ typedef struct cga_s {
 extern unsigned char cga_rgb[16][3];
 
 
+void cga_set_blink_rate (cga_t *cga, unsigned freq);
 unsigned cga_get_start (cga_t *cga);
 unsigned cga_get_cursor (cga_t *cga);
 int cga_get_position (cga_t *cga, unsigned *x, unsigned *y);

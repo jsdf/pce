@@ -26,6 +26,7 @@
 #include <math.h>
 
 #include <lib/log.h>
+#include <lib/msg.h>
 
 #include <devices/video/cga.h>
 
@@ -101,6 +102,18 @@ unsigned char cga_rgb[16][3] = {
 	{ 0xff, 0xff, 0xff }
 };
 
+
+/*
+ * Set the blink frequency
+ */
+void cga_set_blink_rate (cga_t *cga, unsigned freq)
+{
+	cga->blink_on = 1;
+	cga->blink_cnt = freq;
+	cga->blink_freq = freq;
+
+	cga->update_state |= 1;
+}
 
 /*
  * Get CRTC start offset
@@ -261,6 +274,10 @@ void cga_mode0_update_cursor (cga_t *cga)
 	const unsigned char *col;
 	unsigned char       *dst;
 
+	if (cga->blink_on == 0) {
+		return;
+	}
+
 	if ((cga->reg_crt[CGA_CRTC_CS] & 0x60) == 0x20) {
 		/* cursor off */
 		return;
@@ -302,28 +319,38 @@ void cga_mode0_update_char (cga_t *cga,
 	unsigned char *dst, unsigned char c, unsigned char a)
 {
 	unsigned            i, j;
+	int                 blk;
+	unsigned char       val;
 	const unsigned char *fnt;
 	const unsigned char *fg, *bg;
 
-	if (cga->reg[CGA_MODE] & CGA_MODE_BLINK) {
-		/* blinking is not supported */
+	blk = 0;
 
-		if ((cga->reg[CGA_CSEL] & CGA_CSEL_INT) == 0) {
-			a |= 0x80;
-		}
-		else {
-			a &= 0x7f;
+	if (cga->reg[CGA_MODE] & CGA_MODE_BLINK) {
+		if (a & 0x80) {
+			blk = !cga->blink_on;
+
+			if ((cga->reg[CGA_CSEL] & CGA_CSEL_INT) == 0) {
+				a &= 0x7f;
+			}
 		}
 	}
 
 	fg = cga_rgb[a & 0x0f];
 	bg = cga_rgb[(a >> 4) & 0x0f];
 
+	fnt = cga->font + 8 * c;
+
 	for (j = 0; j < cga->ch; j++) {
-		fnt = cga->font + 8 * c + (j & 7);
+		if (blk) {
+			val = 0x00;
+		}
+		else {
+			val = fnt[j & 7];
+		}
 
 		for (i = 0; i < 8; i++) {
-			if (*fnt & (0x80 >> i)) {
+			if (val & 0x80) {
 				dst[3 * i + 0] = fg[0];
 				dst[3 * i + 1] = fg[1];
 				dst[3 * i + 2] = fg[2];
@@ -333,6 +360,8 @@ void cga_mode0_update_char (cga_t *cga,
 				dst[3 * i + 1] = bg[1];
 				dst[3 * i + 2] = bg[2];
 			}
+
+			val <<= 1;
 		}
 
 		dst += (3 * 8 * cga->w);
@@ -899,6 +928,18 @@ void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 static
 int cga_set_msg (cga_t *cga, const char *msg, const char *val)
 {
+	if (msg_is_message ("emu.video.blink", msg)) {
+		unsigned freq;
+
+		if (msg_get_uint (val, &freq)) {
+			return (1);
+		}
+
+		cga_set_blink_rate (cga, freq);
+
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -971,10 +1012,27 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 {
 	unsigned long clk;
 
+	if (cga->clk_vt < 50000) {
+		return;
+	}
+
 	clk = cga_get_dotclock (cga);
 
 	if (clk < cga->clk_vt) {
 		return;
+	}
+
+	if (cga->blink_cnt > 0) {
+		cga->blink_cnt -= 1;
+
+		if (cga->blink_cnt == 0) {
+			cga->blink_cnt = cga->blink_freq;
+			cga->blink_on = !cga->blink_on;
+
+			if ((cga->reg[CGA_MODE] & CGA_MODE_G320) == 0) {
+				cga->update_state |= 1;
+			}
+		}
 	}
 
 	cga->video.dotclk[0] = 0;
@@ -1067,6 +1125,10 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 	cga->comp_tab_ok = 0;
 	cga->comp_tab = NULL;
 
+	cga->blink_on = 1;
+	cga->blink_cnt = 0;
+	cga->blink_freq = 16;
+
 	cga->w = 0;
 	cga->h = 0;
 	cga->ch = 0;
@@ -1100,12 +1162,14 @@ video_t *cga_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, addr, size;
 	unsigned      font;
+	unsigned      blink;
 	cga_t         *cga;
 
 	ini_get_uint32 (sct, "io", &io, 0x3d4);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
 	ini_get_uint32 (sct, "size", &size, 16384);
 	ini_get_uint16 (sct, "font", &font, 0);
+	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	pce_log_tag (MSG_INF,
 		"VIDEO:", "CGA io=0x%04lx addr=0x%05lx size=0x%05lx font=%u\n",
@@ -1123,6 +1187,8 @@ video_t *cga_new_ini (ini_sct_t *sct)
 	else {
 		cga->font = cga_font_thin;
 	}
+
+	cga_set_blink_rate (cga, blink);
 
 	return (&cga->video);
 }
