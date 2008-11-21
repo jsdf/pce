@@ -34,6 +34,8 @@
 typedef struct ega_s {
 	video_t       video;
 
+	terminal_t    *term;
+
 	mem_blk_t     *memblk;
 	unsigned char *mem;
 
@@ -55,7 +57,9 @@ typedef struct ega_s {
 	/* the monitor type, derived from the switches */
 	unsigned      monitor;
 
-	terminal_t    *term;
+	char          blink_on;
+	unsigned      blink_cnt;
+	unsigned      blink_freq;
 
 	/* these are derived from the crtc registers */
 	unsigned long clk_ht;

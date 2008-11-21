@@ -35,11 +35,11 @@ cga.o:		cga.c cga.h cga_font.h video.h $(SDP) \
 		terminal/terminal.h \
 		lib/log.h lib/msg.h
 
-ega.o:		ega.c ega.h video.h devices/memory.h \
+ega.o:		ega.c ega.h video.h $(SDP) \
+		devices/memory.h \
 		libini/libini.h \
 		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
+		lib/log.h lib/msg.h
 
 hgc.o:		hgc.c hgc.h hgc_font.h video.h $(SDP) \
 		devices/memory.h \

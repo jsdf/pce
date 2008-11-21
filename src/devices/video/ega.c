@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include <lib/log.h>
+#include <lib/msg.h>
 
 #include <devices/video/ega.h>
 
@@ -167,6 +168,19 @@ void ega_set_switches (ega_t *ega, unsigned val)
 	ega->switches = val;
 
 	ega->monitor = mon[val & 0x0f];
+}
+
+/*
+ * Set the blink frequency
+ */
+static
+void ega_set_blink_rate (ega_t *ega, unsigned freq)
+{
+	ega->blink_on = 1;
+	ega->blink_cnt = freq;
+	ega->blink_freq = freq;
+
+	ega->update_state |= 1;
 }
 
 /*
@@ -457,14 +471,20 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 	unsigned cw, unsigned ch, unsigned c, unsigned a, int crs)
 {
 	unsigned            x, y;
-	unsigned            map, msk;
+	unsigned            val;
 	unsigned            c1, c2;
 	unsigned            ull;
-	int                 incrs, elg;
+	int                 incrs, elg, blk;
 	unsigned char       fg[3], bg[3];
 	const unsigned char *fnt;
 
+	blk = 0;
+
 	if (ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_EB) {
+		if (a & 0x80) {
+			blk = !ega->blink_on;
+		}
+
 		a &= 0x7f;
 	}
 
@@ -473,7 +493,7 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 
 	c1 = ega->reg_crt[EGA_CRT_CS] & 0x1f;
 	c2 = ega->reg_crt[EGA_CRT_CE] & 0x1f;
-
+	crs = (crs && ega->blink_on);
 	incrs = (c2 < c1);
 
 	elg = 0;
@@ -495,11 +515,18 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 	fnt = ega_get_font (ega, c, a);
 
 	for (y = 0; y < ch; y++) {
-		map = fnt[y] << 1;
-		msk = 0x100;
+		if (blk) {
+			val = 0;
+		}
+		else if (y == ull) {
+			val = 0xffff;
+		}
+		else {
+			val = fnt[y] << 1;
 
-		if (elg) {
-			map |= (map >> 1) & 1;
+			if (elg) {
+				val |= (val >> 1) & 1;
+			}
 		}
 
 		if (crs) {
@@ -512,16 +539,12 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 			}
 
 			if (incrs) {
-				map = 0xffff;
+				val = 0xffff;
 			}
 		}
 
-		if (y == ull) {
-			map = 0xffff;
-		}
-
 		for (x = 0; x < cw; x++) {
-			if (map & msk) {
+			if (val & 0x100) {
 				dst[3 * x + 0] = fg[0];
 				dst[3 * x + 1] = fg[1];
 				dst[3 * x + 2] = fg[2];
@@ -532,7 +555,7 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 				dst[3 * x + 2] = bg[2];
 			}
 
-			msk >>= 1;
+			val <<= 1;
 		}
 
 		dst += 3 * w;
@@ -1443,6 +1466,18 @@ void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
 static
 int ega_set_msg (ega_t *ega, const char *msg, const char *val)
 {
+	if (msg_is_message ("emu.video.blink", msg)) {
+		unsigned freq;
+
+		if (msg_get_uint (val, &freq)) {
+			return (1);
+		}
+
+		ega_set_blink_rate (ega, freq);
+
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -1521,10 +1556,27 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 {
 	unsigned long clk;
 
+	if (ega->clk_vt < 50000) {
+		return;
+	}
+
 	clk = ega_get_dotclock (ega);
 
 	if (clk < ega->clk_vt) {
 		return;
+	}
+
+	if (ega->blink_cnt > 0) {
+		ega->blink_cnt -= 1;
+
+		if (ega->blink_cnt == 0) {
+			ega->blink_cnt = ega->blink_freq;
+			ega->blink_on = !ega->blink_on;
+
+			if ((ega->reg_grc[EGA_GRC_MISC] & EGA_GRC_MISC_GM) == 0) {
+				ega->update_state |= 1;
+			}
+		}
 	}
 
 	ega->video.dotclk[0] = 0;
@@ -1579,6 +1631,8 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 	ega->video.redraw = (void *) ega_redraw;
 	ega->video.clock = (void *) ega_clock;
 
+	ega->term = NULL;
+
 	ega->mem = malloc (256UL * 1024UL);
 	if (ega->mem == NULL) {
 		return;
@@ -1602,8 +1656,6 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 	ega->regblk->get_uint16 = (void *) ega_reg_get_uint16;
 	ega->reg = ega->regblk->data;
 	mem_blk_clear (ega->regblk, 0x00);
-
-	ega->term = NULL;
 
 	for (i = 0; i < 5; i++) {
 		ega->reg_seq[i] = 0;
@@ -1629,6 +1681,10 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 
 	ega->switches = 0x09;
 	ega->monitor = EGA_MONITOR_ECD;
+
+	ega->blink_on = 1;
+	ega->blink_cnt = 0;
+	ega->blink_freq = 16;
 
 	ega->clk_ht = 0;
 	ega->clk_hd = 0;
@@ -1659,11 +1715,13 @@ video_t *ega_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, addr;
 	unsigned      switches;
+	unsigned      blink;
 	ega_t         *ega;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b0);
 	ini_get_uint32 (sct, "address", &addr, 0xa0000);
 	ini_get_uint16 (sct, "switches", &switches, 0x09);
+	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	pce_log_tag (MSG_INF,
 		"VIDEO:", "EGA io=0x%04lx addr=0x%05lx switches=%02X\n",
@@ -1676,6 +1734,7 @@ video_t *ega_new_ini (ini_sct_t *sct)
 	}
 
 	ega_set_switches (ega, switches);
+	ega_set_blink_rate (ega, blink);
 
 	return (&ega->video);
 }
