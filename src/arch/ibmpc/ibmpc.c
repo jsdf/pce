@@ -254,16 +254,18 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	mem_blk_t     *blk;
 	unsigned long addr;
-	unsigned      ram;
+	unsigned long  ram;
 
 	sct = ini_next_sct (ini, NULL, "ppi");
 
 	if (pc->ram != NULL) {
-		ram = mem_blk_get_size (pc->ram) / 32;
+		ram = mem_blk_get_size (pc->ram);
 	}
 	else {
-		ram = 1;
+		ram = 65536;
 	}
+
+	ram = (ram < 65536) ? 0 : ((ram - 65536) / 32768);
 
 	ini_get_uint32 (sct, "address", &addr, 0x0060);
 
@@ -1134,10 +1136,10 @@ static
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 {
 	if (pc->ppi_port_b & 0x04) {
-		return (pc->ppi_port_c[1]);
+		return (pc->ppi_port_c[0]);
 	}
 	else {
-		return (pc->ppi_port_c[0]);
+		return (pc->ppi_port_c[1]);
 	}
 }
 
