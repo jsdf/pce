@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/82xx/e8253.c                                   *
- * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/chipset/82xx/e8253.c                                     *
+ * Created:     2001-05-04 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -360,6 +360,9 @@ void cnt_set_control (e8253_counter_t *cnt, unsigned char val)
 	cnt->cr_wr = rw;
 	cnt->ol_rd = 0;
 	cnt->cnt_rd = rw;
+
+	cnt->cr[0] = 0;
+	cnt->cr[1] = 0;
 
 	cnt->counting = 0;
 
