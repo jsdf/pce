@@ -199,11 +199,22 @@ init_pic:
 
 
 init_pit:
-	mov	al, 0x34
+	mov	al, 0x36			; channel 0 mode 3
 	out	0x43, al
 	mov	al, 0
 	out	0x40, al
 	out	0x40, al
+
+	mov	al, 0x54			; channel 1 mode 2
+	out	0x43, al
+	mov	al, 0x12
+	out	0x41, al
+
+	mov	al, 0xb6			; channel 2 mode 3
+	out	0x43, al
+	mov	al, 0x00
+	out	0x42, al
+	out	0x42, al
 	ret
 
 
