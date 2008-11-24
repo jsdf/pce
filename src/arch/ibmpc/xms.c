@@ -68,7 +68,7 @@ xms_t *xms_new (ini_sct_t *sct)
 	xms_t         *xms;
 
 	ini_get_uint32 (sct, "xms_size", &emb_size, 0);
-	emb_size *= 1024UL;
+
 	if (emb_size >= 64UL * 1024UL * 1024UL) {
 		emb_size = 64UL * 1024UL * 1024UL - 1;
 	}

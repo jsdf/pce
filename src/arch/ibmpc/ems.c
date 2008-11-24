@@ -74,8 +74,14 @@ ems_t *ems_new (ini_sct_t *sct)
 	unsigned      segm;
 	ems_t         *ems;
 
-	ini_get_uint32 (sct, "size", &pages, 0);
-	pages = (pages + 15) / 16;
+	if (ini_get_uint32 (sct, "sizek", &pages, 0) == 0) {
+		pages *= 1024;
+	}
+	else {
+		ini_get_uint32 (sct, "size", &pages, 0);
+	}
+
+	pages = (pages + 16383) / 16384;
 
 	ini_get_uint16 (sct, "segment", &segm, 0xe000);
 

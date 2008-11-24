@@ -94,19 +94,19 @@ section pc {
 
 
 	section ems {
-		# The EMS size in KB
-		size = 8192
+		# The EMS size in bytes
+		size = 8192K
 
 		# The page frame segment
 		segment = 0xe000
 	}
 
 	section xms {
-		# The maximum XMS memory used in KB
-		xms_size = 32768
+		# The maximum XMS memory used in bytes
+		xms_size = 32M
 
 		# Define one UMB
-		umb_size = 65536
+		umb_size = 64K
 		umb_segm = 0xd000
 
 		# Enable the HMA
