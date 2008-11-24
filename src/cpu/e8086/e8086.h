@@ -411,6 +411,8 @@ void e86_pq_fill (e8086_t *c);
 typedef struct {
 	unsigned       flags;
 
+	unsigned       seg;
+
 	unsigned short ip;
 	unsigned       dat_n;
 	unsigned char  dat[16];
