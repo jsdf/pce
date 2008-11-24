@@ -16,6 +16,7 @@ LST := basic.lst bios.lst ega.lst pce.lst vga.lst
 HDR :=
 MAN :=
 BIN := pce-ega.rom pce-bios.rom pce-vga.rom
+HEX := pce-ega.ihex pce-bios.ihex pce-bios-ega.ihex
 
 HDR_EXT	:= $(topdir)/src/arch/ibmpc/pce.inc
 
@@ -35,7 +36,7 @@ VGA_OBJ := vga.bin
 VGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc $(HDR) $(HDR_EXT)
 VGA_BDP := Makefile $(VGA_OBJ)
 
-CLN := $(OBJ) $(BIN) $(LST)
+CLN := $(OBJ) $(BIN) $(LST) $(HEX)
 DCL := Makefile
 
 DIST := $(SRC) $(HDR) fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc Makefile.in
@@ -47,7 +48,7 @@ include $(reldir)/rules.inc
 TARGET := $(BIN)
 
 ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGET += ihex
+TARGET += $(HEX)
 endif
 
 
@@ -91,27 +92,24 @@ pce-bios.rom: $(BIOS_BDP)
 	$(QR)cat pce.bin basic.bin bios.bin > $@
 
 
-# ihex is a custom utility, part of the misc-utils package
-ihex: ibmpc.ihex ibmpc-ega.ihex ega.ihex
-
-ibmpc.ihex: pce2.bin basic.bin bios.bin
+pce-bios.ihex: pce2.bin basic.bin bios.bin
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ \
-	-a 0xf0000 -i pce2.bin \
-	-a 0xf6000 -i basic.bin \
-	-a 0xfe000 -i bios.bin
+	-s 0xf000 -a 0 -i pce2.bin \
+	-s 0xf600 -a 0 -i basic.bin \
+	-s 0xfe00 -a 0 -i bios.bin
 
-ibmpc-ega.ihex: ega.bin pce2.bin basic.bin bios.bin
+pce-bios-ega.ihex: ega.bin pce2.bin basic.bin bios.bin
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ \
-	-a 0xc0000 -i ega.bin \
-	-a 0xf0000 -i pce2.bin \
-	-a 0xf6000 -i basic.bin \
-	-a 0xfe000 -i bios.bin
+	-s 0xc000 -a 0 -i ega.bin \
+	-s 0xf000 -a 0 -i pce2.bin \
+	-s 0xf600 -a 0 -i basic.bin \
+	-s 0xfe00 -a 0 -i bios.bin
 
-ega.ihex: ega.bin
+pce-ega.ihex: ega.bin
 	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ -a 0xc0000 -i ega.bin
+	$(QR)$(IHEX) -e -o $@ -s 0xc000 -a 0 -i ega.bin
 
 
 pce.bin: pce.asm $(BIOS_SDP)
