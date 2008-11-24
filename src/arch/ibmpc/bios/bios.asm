@@ -10,7 +10,8 @@
 ; $Id$
 
 
-; Patches are marked with '#### patch ####'.
+; Define this to include PCE specific patches
+%define PATCH 1
 
 
 CPU 8086
@@ -213,10 +214,13 @@ L_E0AE:
 	jmp	L_EC4C				; add up bytes from DS:E000 to DS:FFFF
 
 L_E0D1:
+%ifdef PATCH
 	; #### patch #### (bios is modifed -> incorrect checksum)
-	;jnz	halt_cpu			; Verify checksum
 	nop
 	nop
+%else
+	jnz	halt_cpu			; Verify checksum
+%endif
 
 
 ;-----------------------------------------------------------------------------
@@ -1971,9 +1975,12 @@ L_EA71:
 						; Alt-Ctrl-Del was pressed
 	mov	word [0x0072], 0x1234
 
+%ifdef PATCH
 	; #### patch #### (new entry address)
-	;jmp	0xf000:start
 	jmp	0xf000:0xfff0
+%else
+	jmp	0xf000:start
+%endif
 
 db 0x52                                 ; EA87 push dx
 db 0x4F                                 ; EA88 dec di
@@ -3627,9 +3634,12 @@ db 0xEB, 0xDC                           ; F2E0 jmp short 0xf2be
 
 L_F2E2:
 	cmp	byte [0x0049], 0x02
+%ifdef PATCH
 	; #### patch #### (don't wait for retrace)
-	;jb	L_F301
 	jmp	short L_F301
+%else
+	jb	L_F301
+%endif
 
 	cmp	byte [0x0049], 0x03
 	ja	L_F301
@@ -3772,12 +3782,14 @@ L_F381:
 	pop	ds
 
 L_F38F:
+%ifdef PATCH
 	; #### patch #### (don't wait for horizontal retrace)
-	;in	al, dx
-	;test	al, 0x01			; check if horizontal sync
 	jmp	short L_F39A
 	nop
-
+%else
+	in	al, dx
+	test	al, 0x01			; check if horizontal sync
+%endif
 	jnz	L_F38F				; wait for end of sync
 
 	cli
@@ -3846,12 +3858,14 @@ L_F3C6:
 	pop	bx
 
 L_F3D1:
+%ifdef PATCH
 	; #### patch #### (don't wait for horizontal retrace)
-	;mov	dx, [0x0063]			; crtc base
 	jmp	short L_F3E3
 	nop
 	nop
-
+%else
+	mov	dx, [0x0063]			; crtc base
+%endif
 	add	dx, byte 6			; crtc status register
 
 L_F3D8:
@@ -3905,12 +3919,14 @@ L_F3F9:
 	pop	bx
 
 L_F402:
+%ifdef PATCH
 	; #### patch #### (don't wait for horizontal retrace)
-	;mov	dx, [0x0063]			; crtc base
 	jmp	short L_F416
 	nop
 	nop
-
+%else
+	mov	dx, [0x0063]			; crtc base
+%endif
 	add	dx, byte 6			; crtc status register
 
 L_F409:
@@ -5401,13 +5417,13 @@ L_FFDA:
 	db	0xff
 
 
-	;times 0xfff0 - ($ - $$) db 0
-
 L_FFF0:
-	; #### patch #### (jump to pce init code)
-	;jmp	0xf000:start
+%ifdef PATCH
 	jmp	0xf000:0x0000
-
+%else
+	; #### patch #### (jump to pce init code)
+	jmp	0xf000:start
+%endif
 	db	"10/27/82"
 
 	db	0xff, 0xff

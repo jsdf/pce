@@ -11,7 +11,7 @@ include $(reldir)/config.inc
 
 
 SRC := basic.asm bios.asm ega.asm pce.asm vga.asm
-OBJ := basic.bin bios.bin ega.bin pce.bin vga.bin
+OBJ := basic.bin bios.bin ega.bin pce.bin pce2.bin vga.bin
 LST := basic.lst bios.lst ega.lst pce.lst vga.lst
 HDR :=
 MAN :=
@@ -49,6 +49,9 @@ TARGET := $(BIN)
 ifeq "$(PCE_HAVE_IHEX)" "1"
 TARGET += ihex
 endif
+
+
+NFLAGS += -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/
 
 
 all: $(TARGET)
@@ -113,24 +116,24 @@ ega.ihex: ega.bin
 
 pce.bin: pce.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l pce.lst -o $@ $<
 
 pce2.bin: pce.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l pce.lst -DNOFILL -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -l pce.lst -o $@ $<
 
 bios.bin: bios.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l bios.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -DPATCH -f bin -l bios.lst -o $@ $<
 
 basic.bin: basic.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l basic.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -f bin -l basic.lst -o $@ $<
 
 ega.bin: ega.asm $(EGA_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l ega.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l ega.lst -o $@ $<
 
 vga.bin: vga.asm $(VGA_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) -O2 -I$(srcdir)/ -I$(reldir)/src/ -I$(topdir)/src/arch/ibmpc/ -f bin -l vga.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l vga.lst -o $@ $<
