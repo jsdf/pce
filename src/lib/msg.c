@@ -132,6 +132,11 @@ int msg_get_bool (const char *str, int *val)
 {
 	unsigned long tmp;
 
+	if ((str == NULL) || (*str == 0)) {
+		*val = 0;
+		return (0);
+	}
+
 	if (strcmp (str, "true") == 0) {
 		*val = 1;
 		return (0);
