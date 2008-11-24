@@ -10,12 +10,12 @@ reldir := ../../../..
 include $(reldir)/config.inc
 
 
-SRC := basic.asm bios.asm ega.asm pce.asm vga.asm
-OBJ := basic.bin bios.bin ega.bin pce.bin pce2.bin vga.bin
-LST := basic.lst bios.lst ega.lst pce.lst vga.lst
+SRC := basic.asm bios.asm ega.asm pce.asm
+OBJ := basic.bin bios.bin ega.bin pce.bin pce2.bin
+LST := basic.lst bios.lst ega.lst pce.lst
 HDR :=
 MAN :=
-BIN := pce-ega.rom pce-bios.rom pce-vga.rom
+BIN := pce-ega.rom pce-bios.rom
 HEX := pce-ega.ihex pce-bios.ihex pce-bios-ega.ihex
 
 HDR_EXT	:= $(topdir)/src/arch/ibmpc/pce.inc
@@ -32,14 +32,10 @@ EGA_OBJ := ega.bin
 EGA_SDP := Makefile fnt8x8.inc fnt8x14.inc $(HDR) $(HDR_EXT)
 EGA_BDP := Makefile $(EGA_OBJ)
 
-VGA_OBJ := vga.bin
-VGA_SDP := Makefile fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc $(HDR) $(HDR_EXT)
-VGA_BDP := Makefile $(VGA_OBJ)
-
 CLN := $(OBJ) $(BIN) $(LST) $(HEX)
 DCL := Makefile
 
-DIST := $(SRC) $(HDR) fnt8x8.inc fnt8x14.inc fnt8x16.inc pal13.inc Makefile.in
+DIST := $(SRC) $(HDR) fnt8x8.inc fnt8x14.inc Makefile.in
 
 
 include $(reldir)/rules.inc
@@ -82,10 +78,6 @@ cmp:
 pce-ega.rom: $(EGA_BDP)
 	$(QP)echo "  CAT    $@"
 	$(QR)cat ega.bin > $@
-
-pce-vga.rom: $(VGA_BDP)
-	$(QP)echo "  CAT    $@"
-	$(QR)cat vga.bin > $@
 
 pce-bios.rom: $(BIOS_BDP)
 	$(QP)echo "  CAT    $@"
@@ -131,7 +123,3 @@ basic.bin: basic.asm $(BIOS_SDP)
 ega.bin: ega.asm $(EGA_SDP)
 	$(QP)echo "  NASM   $@"
 	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l ega.lst -o $@ $<
-
-vga.bin: vga.asm $(VGA_SDP)
-	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l vga.lst -o $@ $<
