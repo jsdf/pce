@@ -1583,22 +1583,17 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 	ega->video.dotclk[1] = 0;
 	ega->video.dotclk[2] = 0;
 
-	if ((ega->update_state & 1) == 0) {
-		if (ega->term != NULL) {
-			trm_update (ega->term);
+	if (ega->term != NULL) {
+		if (ega->update_state & 1) {
+			ega_update (ega);
+			trm_set_size (ega->term, ega->buf_w, ega->buf_h);
+			trm_set_lines (ega->term, ega->buf, 0, ega->buf_h);
 		}
-		return;
+
+		trm_update (ega->term);
 	}
 
 	ega->update_state &= ~1;
-
-	if (ega->term != NULL) {
-		ega_update (ega);
-
-		trm_set_size (ega->term, ega->buf_w, ega->buf_h);
-		trm_set_lines (ega->term, ega->buf, 0, ega->buf_h);
-		trm_update (ega->term);
-	}
 }
 
 void ega_free (ega_t *ega)

@@ -1039,22 +1039,17 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 	cga->video.dotclk[1] = 0;
 	cga->video.dotclk[2] = 0;
 
-	if ((cga->update_state & 1) == 0) {
-		if (cga->term != NULL) {
-			trm_update (cga->term);
+	if (cga->term != NULL) {
+		if (cga->update_state & 1) {
+			cga_update (cga);
+			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
+			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
 		}
-		return;
+
+		trm_update (cga->term);
 	}
 
 	cga->update_state &= ~1;
-
-	if (cga->term != NULL) {
-		cga_update (cga);
-
-		trm_set_size (cga->term, cga->buf_w, cga->buf_h);
-		trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
-		trm_update (cga->term);
-	}
 }
 
 void cga_free (cga_t *cga)

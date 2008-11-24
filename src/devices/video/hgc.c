@@ -935,22 +935,17 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 	hgc->video.dotclk[1] = 0;
 	hgc->video.dotclk[2] = 0;
 
-	if ((hgc->update_state & 1) == 0) {
-		if (hgc->term != NULL) {
-			trm_update (hgc->term);
+	if (hgc->term != NULL) {
+		if (hgc->update_state & 1) {
+			hgc_update (hgc);
+			trm_set_size (hgc->term, hgc->buf_w, hgc->buf_h);
+			trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
 		}
-		return;
+
+		trm_update (hgc->term);
 	}
 
 	hgc->update_state &= ~1;
-
-	if (hgc->term != NULL) {
-		hgc_update (hgc);
-
-		trm_set_size (hgc->term, hgc->buf_w, hgc->buf_h);
-		trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
-		trm_update (hgc->term);
-	}
 }
 
 hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)

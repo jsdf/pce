@@ -772,22 +772,17 @@ void mda_clock (mda_t *mda, unsigned cnt)
 	mda->video.dotclk[1] = 0;
 	mda->video.dotclk[2] = 0;
 
-	if ((mda->update_state & 1) == 0) {
-		if (mda->term != NULL) {
-			trm_update (mda->term);
+	if (mda->term != NULL) {
+		if (mda->update_state & 1) {
+			mda_update (mda);
+			trm_set_size (mda->term, mda->buf_w, mda->buf_h);
+			trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
 		}
-		return;
+
+		trm_update (mda->term);
 	}
 
 	mda->update_state &= ~1;
-
-	if (mda->term != NULL) {
-		mda_update (mda);
-
-		trm_set_size (mda->term, mda->buf_w, mda->buf_h);
-		trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
-		trm_update (mda->term);
-	}
 }
 
 mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
