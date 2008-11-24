@@ -738,8 +738,17 @@ void mda_print_info (mda_t *mda, FILE *fp)
  * Force a screen update
  */
 static
-void mda_redraw (mda_t *mda)
+void mda_redraw (mda_t *mda, int now)
 {
+	if (now) {
+		if (mda->term != NULL) {
+			mda_update (mda);
+			trm_set_size (mda->term, mda->buf_w, mda->buf_h);
+			trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
+			trm_update (mda->term);
+		}
+	}
+
 	mda->update_state |= 1;
 }
 

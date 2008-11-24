@@ -898,8 +898,17 @@ void hgc_print_info (hgc_t *hgc, FILE *fp)
  * Force a screen update
  */
 static
-void hgc_redraw (hgc_t *hgc)
+void hgc_redraw (hgc_t *hgc, int now)
 {
+	if (now) {
+		if (hgc->term != NULL) {
+			hgc_update (hgc);
+			trm_set_size (hgc->term, hgc->buf_w, hgc->buf_h);
+			trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
+			trm_update (hgc->term);
+		}
+	}
+
 	hgc->update_state |= 1;
 }
 

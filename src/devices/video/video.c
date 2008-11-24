@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <lib/msg.h>
+
 #include "video.h"
 
 
@@ -55,6 +57,18 @@ void pce_video_del (video_t *vid)
 
 int pce_video_set_msg (video_t *vid, const char *msg, const char *val)
 {
+	if (msg_is_message ("emu.video.redraw", msg)) {
+		int v;
+
+		if (msg_get_bool (val, &v)) {
+			return (1);
+		}
+
+		pce_video_redraw (vid, v);
+
+		return (0);
+	}
+
 	if (vid->set_msg != NULL) {
 		return (vid->set_msg (vid->ext, msg, val));
 	}
@@ -94,10 +108,10 @@ void pce_video_print_info (video_t *vid, FILE *fp)
 	}
 }
 
-void pce_video_redraw (video_t *vid)
+void pce_video_redraw (video_t *vid, int now)
 {
 	if (vid->redraw != NULL) {
-		vid->redraw (vid->ext);
+		vid->redraw (vid->ext, now);
 	}
 }
 

@@ -1002,8 +1002,18 @@ void cga_print_info (cga_t *cga, FILE *fp)
  * Force a screen update
  */
 static
-void cga_redraw (cga_t *cga)
+void cga_redraw (cga_t *cga, int now)
 {
+	if (now) {
+		if (cga->term != NULL) {
+			cga->update (cga);
+
+			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
+			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
+			trm_update (cga->term);
+		}
+	}
+
 	cga->update_state |= 1;
 }
 

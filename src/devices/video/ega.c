@@ -1546,8 +1546,17 @@ void ega_print_info (ega_t *ega, FILE *fp)
  * Force a screen update
  */
 static
-void ega_redraw (ega_t *ega)
+void ega_redraw (ega_t *ega, int now)
 {
+	if (now) {
+		if (ega->term != NULL) {
+			ega_update (ega);
+			trm_set_size (ega->term, ega->buf_w, ega->buf_h);
+			trm_set_lines (ega->term, ega->buf, 0, ega->buf_h);
+			trm_update (ega->term);
+		}
+	}
+
 	ega->update_state |= 1;
 }
 

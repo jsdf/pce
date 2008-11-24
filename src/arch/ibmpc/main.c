@@ -918,6 +918,8 @@ void do_h (cmd_t *cmd)
 			"emu.disk.commit      [drive]\n"
 			"emu.disk.eject       <drive>\n"
 			"emu.disk.insert      <drive>:<fname>\n"
+			"emu.video.blink      <blink-rate>\n"
+			"emu.video.redraw     <now>\n"
 		);
 
 		return;

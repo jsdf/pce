@@ -65,4 +65,4 @@ vga.o:		vga.c vga.h video.h devices/memory.h \
 		lib/log.h \
 		lib/hexdump.h $(SDP)
 
-video.o:	video.c video.h devices/memory.h $(SDP)
+video.o:	video.c video.h $(SDP) devices/memory.h lib/msg.h
