@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/libini/read.c                                          *
- * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/libini/read.c                                            *
+ * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -220,6 +220,7 @@ int parse_number (scanner_t *scn, ini_val_t *val, int neg)
 		i += 1;
 	}
 
+
 	if (str[i] != 0) {
 		return (1);
 	}
@@ -269,6 +270,68 @@ int parse_number (scanner_t *scn, ini_val_t *val, int neg)
 }
 
 static
+int parse_number_suffix (scanner_t *scn, ini_val_t *val, int neg)
+{
+	const char    *str;
+	unsigned long mul;
+
+	if (parse_number (scn, val, neg)) {
+		return (1);
+	}
+
+	if (scn_tid (scn) != INI_TOK_IDENT) {
+		return (0);
+	}
+
+	str = scn_str (scn);
+
+	if ((str[0] == 0) || (str[1] != 0)) {
+		return (0);
+	}
+
+	switch (str[0]) {
+	case 'k':
+	case 'K':
+		mul = 1024;
+		break;
+
+	case 'm':
+	case 'M':
+		mul = 1024UL * 1024UL;
+		break;
+
+	case 'g':
+	case 'G':
+		mul = 1024UL * 1024UL * 1024UL;
+		break;
+
+	default:
+		return (0);
+	}
+
+	switch (val->type) {
+	case INI_VAL_U32:
+		val->val.u32 *= mul;
+		break;
+
+	case INI_VAL_S32:
+		val->val.u32 *= (long) mul;
+		break;
+
+	case INI_VAL_DBL:
+		val->val.dbl *= (double) mul;
+		break;
+
+	default:
+		return (1);
+	}
+
+	ini_scn_scan (scn);
+
+	return (0);
+}
+
+static
 int parse_value (scanner_t *scn, ini_sct_t *sct)
 {
 	ini_val_t *val;
@@ -289,7 +352,7 @@ int parse_value (scanner_t *scn, ini_sct_t *sct)
 	if (scn_chr (scn, '-')) {
 		ini_scn_scan (scn);
 
-		if (parse_number (scn, val, 1)) {
+		if (parse_number_suffix (scn, val, 1)) {
 			return (1);
 		}
 
@@ -298,7 +361,7 @@ int parse_value (scanner_t *scn, ini_sct_t *sct)
 	else if (scn_chr (scn, '+')) {
 		ini_scn_scan (scn);
 
-		if (parse_number (scn, val, 0)) {
+		if (parse_number_suffix (scn, val, 0)) {
 			return (1);
 		}
 
@@ -312,7 +375,7 @@ int parse_value (scanner_t *scn, ini_sct_t *sct)
 	}
 
 	if (scn_tid (scn) == INI_TOK_DIGIT) {
-		if (parse_number (scn, val, 0)) {
+		if (parse_number_suffix (scn, val, 0)) {
 			return (1);
 		}
 
