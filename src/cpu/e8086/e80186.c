@@ -530,6 +530,7 @@ void e86_enable_186 (e8086_t *c)
 
 	c->cpu &= ~E86_CPU_REP_BUG;
 	c->cpu |= E86_CPU_MASK_SHIFT;
+	c->cpu |= E86_CPU_INT6;
 
 	c->op[0x60] = &op_60;
 	c->op[0x61] = &op_61;
