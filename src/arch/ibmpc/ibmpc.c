@@ -408,7 +408,7 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
 {
-	pc->video = vga_new (pc->trm, sct);
+	pc->video = vga_new_ini (sct);
 	if (pc->video == NULL) {
 		return (1);
 	}

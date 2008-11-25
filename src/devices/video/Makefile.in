@@ -59,10 +59,10 @@ plantronics.o:	plantronics.c plantronics.h cga.h video.h $(SDP) \
 		terminal/terminal.h \
 		lib/log.h
 
-vga.o:		vga.c vga.h video.h devices/memory.h \
+vga.o:		vga.c vga.h video.h $(SDP) \
+		devices/memory.h \
 		libini/libini.h \
 		terminal/terminal.h \
-		lib/log.h \
-		lib/hexdump.h $(SDP)
+		lib/log.h lib/msg.h
 
 video.o:	video.c video.h $(SDP) devices/memory.h lib/msg.h

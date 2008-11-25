@@ -22,96 +22,71 @@
 /* $Id$ */
 
 
-#ifndef PCE_IBMPC_VGA_H
-#define PCE_IBMPC_VGA_H 1
+#ifndef PCE_VIDEO_VGA_H
+#define PCE_VIDEO_VGA_H 1
 
 
 #include <libini/libini.h>
 #include <terminal/terminal.h>
-#include <terminal/term-old.h>
 #include <devices/video/video.h>
 
 
-typedef struct vga_t {
-	video_t       vid;
+typedef struct vga_s {
+	video_t       video;
 
-	mem_blk_t     *mem;
-	mem_blk_t     *reg;
+	terminal_t    *term;
 
-	unsigned char *data;
+	mem_blk_t     *memblk;
+	unsigned char *mem;
 
-	unsigned long base;
-	unsigned long size;
+	mem_blk_t     *regblk;
+	unsigned char *reg;
 
-	unsigned      mode_80x25_w;
-	unsigned      mode_80x25_h;
-	unsigned      mode_320x200_w;
-	unsigned      mode_320x200_h;
-	unsigned      mode_640x200_w;
-	unsigned      mode_640x200_h;
-	unsigned      mode_640x350_w;
-	unsigned      mode_640x350_h;
-	unsigned      mode_640x480_w;
-	unsigned      mode_640x480_h;
+	unsigned char reg_seq[5];
+	unsigned char reg_grc[9];
+	unsigned char reg_atc[21];
+	unsigned char reg_crt[25];
+	unsigned char reg_dac[768];
 
-	unsigned char crtc_reg[24];
-	unsigned char ts_reg[5];
-	unsigned char gdc_reg[9];
-	unsigned char atc_reg[21];
-	unsigned char dac_reg[768];
+	char          atc_flipflop;
 
-	int           atc_index;
-
-	unsigned      dac_idx;
-	unsigned char dac_col_msk;
+	unsigned      dac_addr_read;
+	unsigned      dac_addr_write;
 	unsigned char dac_state;
 
 	unsigned char latch[4];
 
-	void          (*update) (struct vga_t *vga);
-	void          (*set_latches) (struct vga_t *vga, unsigned long addr, unsigned char val[4]);
-	void          (*set_uint8) (struct vga_t *vga, unsigned long addr, unsigned char val);
-	unsigned char (*get_uint8) (struct vga_t *vga, unsigned long addr);
+	/* the switch settings */
+	unsigned char switches;
 
-	unsigned      crtc_pos;
-	unsigned      crtc_ofs;
+	char          blink_on;
+	unsigned      blink_cnt;
+	unsigned      blink_freq;
 
-	int           crs_on;
+	/* these are derived from the crtc registers */
+	unsigned long clk_ht;
+	unsigned long clk_hd;
+	unsigned long clk_vt;
+	unsigned long clk_vd;
 
-	unsigned      mode;
-	unsigned      mode_w;
-	unsigned      mode_h;
+	unsigned      buf_w;
+	unsigned      buf_h;
+	unsigned long bufmax;
+	unsigned char *buf;
 
-	char          dirty;
-
-	terminal_t    *trmnew;
-	term_old_t    trm;
-	unsigned long trmclk;
+	unsigned char update_state;
 } vga_t;
 
 
-video_t *vga_new (terminal_t *trm, ini_sct_t *sct);
+void vga_init (vga_t *vga, unsigned long io, unsigned long addr);
+
+void vga_free (vga_t *vga);
+
+vga_t *vga_new (unsigned long io, unsigned long addr);
 
 void vga_del (vga_t *vga);
 
-void vga_prt_state (vga_t *vga, FILE *fp);
-
-int vga_dump (vga_t *vga, FILE *fp);
-
-mem_blk_t *vga_get_mem (vga_t *cga);
-mem_blk_t *vga_get_reg (vga_t *cga);
-
-void vga_mem_set_uint8 (vga_t *vga, unsigned long addr, unsigned char val);
-void vga_mem_set_uint16 (vga_t *vga, unsigned long addr, unsigned short val);
-unsigned char vga_mem_get_uint8 (vga_t *vga, unsigned long addr);
-unsigned short vga_mem_get_uint16 (vga_t *vga, unsigned long addr);
-
-void vga_reg_set_uint8 (vga_t *vga, unsigned long addr, unsigned char val);
-void vga_reg_set_uint16 (vga_t *vga, unsigned long addr, unsigned short val);
-unsigned char vga_reg_get_uint8 (vga_t *vga, unsigned long addr);
-unsigned short vga_reg_get_uint16 (vga_t *vga, unsigned long addr);
-
-void vga_clock (vga_t *vga, unsigned long cnt);
+video_t *vga_new_ini (ini_sct_t *sct);
 
 
 #endif

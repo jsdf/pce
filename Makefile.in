@@ -9,6 +9,13 @@ reldir := .
 include $(reldir)/config.inc
 
 
+ROMBIN := et4000.rom \
+	genoa.rom \
+	ibmega.rom \
+	pce-bios.rom \
+	pce-ega.rom \
+	t9000b.rom
+
 DCL := Makefile config.inc config.log config.status configure rules.inc
 
 DIST := AUTHORS \
@@ -35,7 +42,7 @@ all:
 
 
 install:
-	$(QR)for f in pce-bios.rom pce-ega.rom ibmega.rom genoa.rom ; do \
+	$(QR)for f $(ROMBIN) ; do \
 		src=$(srcdir)/contrib/rom/ibmpc/$$f ; \
 		dst=$(DESTDIR)$(datdir)/$$f ; \
 		test -f "$$dst" && continue ; \
