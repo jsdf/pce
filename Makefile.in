@@ -42,7 +42,7 @@ all:
 
 
 install:
-	$(QR)for f $(ROMBIN) ; do \
+	$(QR)for f in $(ROMBIN) ; do \
 		src=$(srcdir)/contrib/rom/ibmpc/$$f ; \
 		dst=$(DESTDIR)$(datdir)/$$f ; \
 		test -f "$$dst" && continue ; \
