@@ -291,6 +291,18 @@ section pc {
 	}
 
 
+	# The cassette interface
+	section cassette {
+		file = "cas1.cas"
+
+		# The initial cassette mode (load or save). The default
+		# is "load"
+		mode = "load"
+
+		# The initial tape file position. The default is 0.
+		position = 0
+	}
+
 	# Disk types are:
 	# "image"  A raw image file. "c", "h" and "s" must be specified.
 	# "dosemu" A DOSEMU style hard disk image file.

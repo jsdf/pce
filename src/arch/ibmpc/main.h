@@ -99,6 +99,7 @@ extern unsigned   par_speed;
 #include <devices/block/blkraw.h>
 
 #include "util.h"
+#include "cassette.h"
 #include "int13.h"
 #include "keyboard.h"
 #include "mouse.h"

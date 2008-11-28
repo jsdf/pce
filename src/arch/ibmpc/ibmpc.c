@@ -34,9 +34,84 @@
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
-static unsigned char pc_ppi_get_port_a (ibmpc_t *pc);
-static unsigned char pc_ppi_get_port_c (ibmpc_t *pc);
-static void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val);
+
+static
+unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
+{
+	if (pc->ppi_port_b & 0x80) {
+		return (pc->ppi_port_a[0]);
+	}
+	else {
+		pc->ppi_port_a[1] = pc_kbd_get_key (&pc->kbd);
+
+		return (pc->ppi_port_a[1]);
+	}
+}
+
+static
+unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
+{
+	if (pc_cas_get_inp (&pc->cas)) {
+		pc->ppi_port_c[0] |= 0x10;
+		pc->ppi_port_c[1] |= 0x10;
+	}
+	else {
+		pc->ppi_port_c[0] &= ~0x10;
+		pc->ppi_port_c[1] &= ~0x10;
+	}
+
+	if (pc->ppi_port_b & 0x04) {
+		return (pc->ppi_port_c[0]);
+	}
+	else {
+		return (pc->ppi_port_c[1]);
+	}
+}
+
+static
+void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
+{
+	unsigned char old;
+
+	old = pc->ppi_port_b;
+	pc->ppi_port_b = val;
+
+	pc_kbd_set_clk (&pc->kbd, val & 0x40);
+	pc_kbd_set_enable (&pc->kbd, (val & 0x80) == 0);
+
+	e8253_set_gate (&pc->pit, 2, val & 0x01);
+
+	if ((old ^ val) & 0x08) {
+		/* cassette motor change */
+
+		pc_cas_set_motor (&pc->cas, (val & 0x08) == 0);
+
+		if (val & 0x08) {
+			/* motor off: restore clock */
+			pc->cpu_clk[0] = pc->saved_clk;
+		}
+		else {
+			/* motor on: set clock to 4.77 MHz */
+			pc->saved_clk = pc->cpu_clk[0];
+			pc->cpu_clk[0] = PCE_IBMPC_CLK1;
+		}
+	}
+}
+
+static
+void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
+{
+	if (val) {
+		pc->ppi_port_c[0] |= 0x20;
+		pc->ppi_port_c[1] |= 0x20;
+	}
+	else {
+		pc->ppi_port_c[0] &= ~0x20;
+		pc->ppi_port_c[1] &= ~0x20;
+	}
+
+	pc_cas_set_out (&pc->cas, val);
+}
 
 
 static
@@ -144,6 +219,7 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	pc->speed[1] = speed;
 	pc->cpu_clk[1] = clk;
 
+	pc->saved_clk = clk;
 }
 
 static
@@ -246,6 +322,7 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 
 	e8253_set_out_fct (&pc->pit, 0, &pc->pic, e8259_set_irq0);
 	e8253_set_out_fct (&pc->pit, 1, &pc->dma, e8237_set_dreq0);
+	e8253_set_out_fct (&pc->pit, 2, pc, pc_set_timer2_out);
 }
 
 static
@@ -282,7 +359,7 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->ppi_port_a[0] = 0x30 | 0x0c;
 	pc->ppi_port_a[1] = 0;
-	pc->ppi_port_b = 0;
+	pc->ppi_port_b = 0x08;
 	pc->ppi_port_c[0] = (ram & 0x0f);
 	pc->ppi_port_c[1] = (ram >> 4) & 0x01;
 
@@ -305,6 +382,44 @@ void pc_setup_kbd (ibmpc_t *pc, ini_sct_t *ini)
 	pc_kbd_init (&pc->kbd);
 
 	pc_kbd_set_irq_fct (&pc->kbd, &pc->pic, e8259_set_irq1);
+}
+
+static
+void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
+{
+	const char    *fname;
+	const char    *mode;
+	unsigned long pos;
+	ini_sct_t     *sct;
+
+	sct = ini_next_sct (ini, NULL, "cassette");
+
+	ini_get_string (sct, "file", &fname, NULL);
+	ini_get_string (sct, "mode", &mode, "load");
+	ini_get_uint32 (sct, "position", &pos, 0);
+
+	pce_log_tag (MSG_INF, "CASSETTE:", "file=%s mode=%s pos=%lu\n",
+		(fname != NULL) ? fname : "<none>",
+		mode, pos
+	);
+
+	pc_cas_init (&pc->cas);
+
+	if (pc_cas_set_fname (&pc->cas, fname)) {
+		pce_log (MSG_ERR, "*** opening file failed (%s)\n", fname);
+	}
+
+	if (strcmp (mode, "load") == 0) {
+		pc_cas_set_mode (&pc->cas, 0);
+	}
+	else if (strcmp (mode, "save") == 0) {
+		pc_cas_set_mode (&pc->cas, 1);
+	}
+	else {
+		pce_log (MSG_ERR, "*** unknown cassette mode (%s)\n", mode);
+	}
+
+	pc_cas_set_position (&pc->cas, pos);
 }
 
 static
@@ -763,6 +878,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_pit (pc, ini);
 	pc_setup_ppi (pc, ini);
 	pc_setup_kbd (pc, ini);
+	pc_setup_cassette (pc, ini);
 
 	pc_setup_terminal (pc, ini);
 
@@ -993,6 +1109,7 @@ void pc_clock (ibmpc_t *pc)
 		pc->clk_div[0] &= 7;
 
 		pc_kbd_clock (&pc->kbd, clk2[0]);
+		pc_cas_clock (&pc->cas, clk2[0]);
 
 		e8237_clock (&pc->dma, 1);
 		e8259_clock (&pc->pic);
@@ -1092,6 +1209,7 @@ void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk)
 	}
 
 	pc->cpu_clk[0] = clk;
+	pc->saved_clk = clk;
 
 	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz\n",
 		pc->cpu_clk[0] / 1000000.0
@@ -1117,39 +1235,4 @@ void pc_break (ibmpc_t *pc, unsigned char val)
 	if ((val == PCE_BRK_STOP) || (val == PCE_BRK_ABORT)) {
 		pc->brk = val;
 	}
-}
-
-static
-unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
-{
-	if (pc->ppi_port_b & 0x80) {
-		return (pc->ppi_port_a[0]);
-	}
-	else {
-		pc->ppi_port_a[1] = pc_kbd_get_key (&pc->kbd);
-
-		return (pc->ppi_port_a[1]);
-	}
-}
-
-static
-unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
-{
-	if (pc->ppi_port_b & 0x04) {
-		return (pc->ppi_port_c[0]);
-	}
-	else {
-		return (pc->ppi_port_c[1]);
-	}
-}
-
-static
-void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
-{
-	pc->ppi_port_b = val;
-
-	pc_kbd_set_clk (&pc->kbd, val & 0x40);
-	pc_kbd_set_enable (&pc->kbd, (val & 0x80) == 0);
-
-	e8253_set_gate (&pc->pit, 2, val & 0x01);
 }

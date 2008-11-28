@@ -49,6 +49,7 @@ typedef struct ibmpc_t {
 	e8255_t            ppi;
 	e8259_t            pic;
 	pc_kbd_t           kbd;
+	pc_cassette_t      cas;
 
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;
@@ -85,6 +86,9 @@ typedef struct ibmpc_t {
 
 	/* cpu clock frequency (current, default) */
 	unsigned long      cpu_clk[2];
+
+	/* saved clock during cassette i/o */
+	unsigned long      saved_clk;
 
 	unsigned long      clk_div[4];
 

@@ -26,8 +26,90 @@
 
 
 static
+int pc_set_msg_cassette (ibmpc_t *pc, const char *msg, const char *val)
+{
+	if (msg_is_message ("emu.tape.load", msg)) {
+		unsigned long v;
+
+		pc_cas_set_mode (&pc->cas, 0);
+
+		if (*val != 0) {
+			if (msg_get_ulng (val, &v)) {
+				return (1);
+			}
+
+			if (pc_cas_set_position (&pc->cas, v)) {
+				return (1);
+			}
+		}
+
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	if (msg_is_message ("emu.tape.save", msg)) {
+		unsigned long v;
+
+		pc_cas_set_mode (&pc->cas, 1);
+
+		if (*val != 0) {
+			if (msg_get_ulng (val, &v)) {
+				return (1);
+			}
+
+			if (pc_cas_set_position (&pc->cas, v)) {
+				return (1);
+			}
+		}
+
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	if (msg_is_message ("emu.tape.file", msg)) {
+		if (*val == 0) {
+			val = NULL;
+		}
+
+		if (pc_cas_set_fname (&pc->cas, val)) {
+			return (1);
+		}
+
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	if (msg_is_message ("emu.tape.rewind", msg)) {
+		pc_cas_rewind (&pc->cas);
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	if (msg_is_message ("emu.tape.append", msg)) {
+		pc_cas_append (&pc->cas);
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	if (msg_is_message ("emu.tape.state", msg)) {
+		pc_cas_print_state (&pc->cas);
+
+		return (0);
+	}
+
+	return (-1);
+}
+
+static
 int pc_set_msg_pc (ibmpc_t *pc, const char *msg, const char *val)
 {
+	int r;
+
 	if (msg_is_message ("emu.stop", msg)) {
 		pc->brk = PCE_BRK_STOP;
 		return (0);
@@ -122,6 +204,11 @@ int pc_set_msg_pc (ibmpc_t *pc, const char *msg, const char *val)
 		pc_set_speed (pc, v);
 
 		return (0);
+	}
+
+	r = pc_set_msg_cassette (pc, msg, val);
+	if (r >= 0) {
+		return (r);
 	}
 
 	if (msg_is_message ("emu.disk.boot", msg)) {

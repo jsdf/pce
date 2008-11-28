@@ -65,6 +65,7 @@ void pc_int_15 (ibmpc_t *pc)
 		break;
 
 	default:
+		e86_set_ah (pc->cpu, 0x86);
 		e86_set_cf (pc->cpu, 1);
 		break;
 	}

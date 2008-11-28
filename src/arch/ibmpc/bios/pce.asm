@@ -895,9 +895,13 @@ int_14:
 	iret
 
 int_15:
+	cmp	ah, 3
+	jbe	.cassette
 	sti
 	pceh	PCEH_INT, 0x15
 	retf	2
+.cassette:
+	jmp	0xf000:0xf859			; bios int 15
 
 int_17:
 	pceh	PCEH_INT, 0x17
@@ -951,6 +955,7 @@ int_19:
 	jmp	0x0000:0x7c00
 
 .fail:
+	int	0x18
 	iret
 
 
