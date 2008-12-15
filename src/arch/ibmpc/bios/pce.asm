@@ -33,6 +33,19 @@ section .text
 init:
 	jmp	start
 
+	set_pos	4
+pce_ext:
+	db	"PCEX"				; marker
+	dw	pce_ext_end - pce_ext
+	dw	0
+
+	set_pos	12
+	jmp	start
+
+	set_pos	16
+	jmp	int_19
+pce_ext_end:
+
 
 msg_init	db "PC BIOS version ", PCE_VERSION_STR
 		db 13, 10, 13, 10, 0
@@ -932,26 +945,29 @@ int_1f:
 
 
 int_19:
-						; get boot drive in AL
-	pceh	PCEH_GET_BOOT
+	xor	ax, ax
+	mov	ds, ax
+	mov	es, ax
+
+	mov	word [4 * 0x13 + 0], int_13
+	mov	word [4 * 0x13 + 2], cs
+
+	mov	word [4 * 0x1a + 0], int_1a
+	mov	word [4 * 0x1a + 2], cs
+
+	pceh	PCEH_GET_BOOT			; get boot drive in AL
 	mov	dl, al
 
-	xor	bx, bx
-	mov	es, bx
-	mov	bx, 0x7c00
-
 	mov	ax, 0x0201
+	mov	bx, 0x7c00
 	mov	cx, 0x0001
 	mov	dh, 0x00
 	int	0x13
 	jc	.fail
 
-	cmp	[es:0x7dfe], word 0xaa55
+	;cmp	[bx + 0x1fe], word 0xaa55
 	;jne	.fail
 
-	xor	ax, ax
-	mov	ds, ax
-	mov	es, ax
 	jmp	0x0000:0x7c00
 
 .fail:

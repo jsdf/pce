@@ -3,8 +3,8 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/arch/ibmpc/bios/bios.asm                               *
-;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   src/arch/ibmpc/bios/bios.asm                                 *
+;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ; $Id$
@@ -5418,12 +5418,8 @@ L_FFDA:
 
 
 L_FFF0:
-%ifdef PATCH
-	jmp	0xf000:0x0000
-%else
-	; #### patch #### (jump to pce init code)
 	jmp	0xf000:start
-%endif
+
 	db	"10/27/82"
 
 	db	0xff, 0xff

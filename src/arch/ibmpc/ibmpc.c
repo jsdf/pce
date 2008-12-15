@@ -997,9 +997,38 @@ void pc_log_deb (ibmpc_t *pc, const char *msg, ...)
 	va_end (va);
 }
 
+void pc_patch_bios (ibmpc_t *pc)
+{
+	/* check "PCEX" marker */
+	if (e86_get_mem16 (pc->cpu, 0xf000, 0x0004) != 0x4350) {
+		return;
+	}
+
+	if (e86_get_mem16 (pc->cpu, 0xf000, 0x0006) != 0x5845) {
+		return;
+	}
+
+	if (e86_get_mem8 (pc->cpu, 0xf000, 0xfff0) != 0xea) {
+		return;
+	}
+
+	if (e86_get_mem16 (pc->cpu, 0xf000, 0xfff3) != 0xf000) {
+		return;
+	}
+
+	pc_log_deb (pc, "patching the bios\n");
+
+	mem_set_uint8_rw (pc->mem, 0xffff1, 0x0c);
+	mem_set_uint8_rw (pc->mem, 0xffff2, 0x00);
+}
+
 void pc_reset (ibmpc_t *pc)
 {
 	pc_log_deb (pc, "reset pc\n");
+
+	if (par_patch_bios) {
+		pc_patch_bios (pc);
+	}
 
 	e86_reset (pc->cpu);
 
