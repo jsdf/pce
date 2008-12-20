@@ -2005,6 +2005,8 @@ void vga_init (vga_t *vga, unsigned long io, unsigned long addr)
 
 	vga->bufmax = 0;
 	vga->buf = NULL;
+	vga->buf_w = 0;
+	vga->buf_h = 0;
 
 	vga->update_state = 0;
 }
