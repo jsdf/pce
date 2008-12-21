@@ -34,8 +34,8 @@
 #define E86_CPU_MASK_SHIFT 0x02         /* mask shift count */
 #define E86_CPU_PUSH_FIRST 0x04         /* push sp before decrementing it */
 #define E86_CPU_INT6       0x08         /* throw illegal opcode exception */
-#define E86_CPU_FLAGS286   0x10         /* Allow clearing flags 12-15 */
-
+#define E86_CPU_INT7       0x10		/* throw escape opcode exception */
+#define E86_CPU_FLAGS286   0x20         /* Allow clearing flags 12-15 */
 
 /* CPU flags */
 #define E86_FLG_C 0x0001

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e8086/e80286r.c                                    *
- * Created:       2003-10-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e8086/e80286r.c                                      *
+ * Created:     2003-10-07 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +27,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+
+#define E286_MSW_PE 0x0001
+#define E286_MSW_MP 0x0002
+#define E286_MSW_EM 0x0004
+#define E286_MSW_TS 0x0008
 
 
 /* OP 0F 01 00: SGDT mem */
@@ -82,6 +87,13 @@ unsigned op_0f_01_06 (e8086_t *c)
 
 	e86_get_ea_ptr (c, c->pq + 2);
 	val = e86_get_ea16 (c);
+
+	if (val & E286_MSW_EM) {
+		c->cpu |= E86_CPU_INT7;
+	}
+	else {
+		c->cpu &= ~E86_CPU_INT7;
+	}
 
 	e86_set_clk_ea (c, 3, 6);
 

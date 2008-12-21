@@ -3702,6 +3702,12 @@ unsigned op_d7 (e8086_t *c)
 static
 unsigned op_d8 (e8086_t *c)
 {
+	if (c->cpu & E86_CPU_INT7) {
+		e86_trap (c, 7);
+		e86_set_clk (c, 50);
+		return (0);
+	}
+
 	e86_get_ea_ptr (c, c->pq + 1);
 	e86_set_clk (c, 2);
 
