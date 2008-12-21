@@ -254,10 +254,14 @@ int ser_line_setup (serport_t *ser)
 	tio.c_lflag &= ~ICANON;       /* Canonical mode */
 	tio.c_lflag &= ~ECHO;         /* Enable echo */
 	tio.c_lflag &= ~ECHOE;        /* Enable echo */
+#ifdef ECHOPRT
 	tio.c_lflag &= ~ECHOPRT;      /* Enable echo */
+#endif
 	tio.c_lflag &= ~ECHOK;        /* Enable echo */
 	tio.c_lflag &= ~ECHONL;       /* Enable echo */
+#ifdef ECHOCTL
 	tio.c_lflag &= ~ECHOCTL;      /* Enable echo */
+#endif
 	tio.c_lflag &= ~ISIG;         /* Enable signals on special characters */
 	tio.c_lflag |= NOFLSH;        /* Don't flush queues on special characters */
 
