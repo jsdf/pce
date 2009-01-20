@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/arch/simarm/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

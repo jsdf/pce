@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e6502/opcodes.c                                    *
- * Created:       2004-05-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-06-13 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/cpu/e6502/opcodes.c                                      *
+ * Created:     2004-05-03 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include "e6502.h"

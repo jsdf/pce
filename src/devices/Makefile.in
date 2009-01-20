@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/devices/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

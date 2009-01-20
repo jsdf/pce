@@ -7,8 +7,6 @@
  * Created:     2008-10-29 by Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
-/* $Id$ */
-
 
 #ifndef PCE_VIDEO_MDA_FONT_H
 #define PCE_VIDEO_MDA_FONT_H 1

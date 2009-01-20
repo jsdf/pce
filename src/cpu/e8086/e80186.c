@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/e8086/e80186.c                                           *
  * Created:     2003-08-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include "e8086.h"

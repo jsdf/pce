@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/device.c                                       *
- * Created:       2005-12-08 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-12-09 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/devices/device.c                                         *
+ * Created:     2005-12-08 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdlib.h>

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/82xx/e8253.h                                   *
- * Created:       2001-05-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/chipset/82xx/e8253.h                                     *
+ * Created:     2001-05-04 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 /* PIT 8253 / 8254 */

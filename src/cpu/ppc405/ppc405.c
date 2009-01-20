@@ -3,10 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/ppc405/ppc405.c                                    *
- * Created:       2003-11-07 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                       *
+ * File name:   src/cpu/ppc405/ppc405.c                                      *
+ * Created:     2003-11-07 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,8 +24,6 @@
  * This software was developed at the Computer Engineering and Networks      *
  * Laboratory (TIK), Swiss Federal Institute of Technology (ETH) Zurich.     *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdio.h>

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/plantronics.c                              *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
  *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
  *****************************************************************************/
 
@@ -19,8 +19,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdio.h>

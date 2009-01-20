@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/keys.h                                          *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2008 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_TERMINAL_KEYS_H

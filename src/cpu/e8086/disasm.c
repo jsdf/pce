@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/disasm.c                                       *
  * Created:     2002-05-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2002-2008 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <string.h>

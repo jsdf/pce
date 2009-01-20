@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/arch/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

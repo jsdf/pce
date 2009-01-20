@@ -7,8 +7,6 @@
 ;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
-; $Id$
-
 
 ; Define this to include PCE specific patches
 %define PATCH 1

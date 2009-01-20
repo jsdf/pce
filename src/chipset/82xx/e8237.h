@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/chipset/e8237.h                                        *
- * Created:       2003-09-11 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-02-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2003-2004 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/chipset/82xx/e8237.h                                     *
+ * Created:     2003-09-11 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id: e8250.h,v 1.4 2003/09/06 13:52:51 hampa Exp $ */
 
 
 /* DMAC 8237A */

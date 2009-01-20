@@ -3,11 +3,10 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/arch/sim405/sercons.h                                  *
- * Created:       2004-06-01 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-01-04 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                       *
+ * File name:   src/arch/sim405/sercons.h                                    *
+ * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,8 +24,6 @@
  * This software was developed at the Computer Engineering and Networks      *
  * Laboratory (TIK), Swiss Federal Institute of Technology (ETH) Zurich.     *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_SIM405_SERCONS_H

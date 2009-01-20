@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/arch/ibmpc/bios/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

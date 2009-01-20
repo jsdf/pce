@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/block/blkraw.h                                 *
- * Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 1996-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/block/blkraw.h                                   *
+ * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_DEVICES_BLOCK_BLKIMG_H

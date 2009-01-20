@@ -1,8 +1,6 @@
 # sims32.cfg
 # Example config file
 
-# $Id$
-
 section sims32 {
 	section sparc32 {
 		model = "sparc32"

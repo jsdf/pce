@@ -3,9 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     pcever.asm                                                 *
-;* Created:       2003-10-13 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003-2008 Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   pcever.asm                                                   *
+;* Created:     2003-10-13 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -18,8 +18,6 @@
 ;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
 ;* Public License for more details.                                          *
 ;*****************************************************************************
-
-; $Id$
 
 
 %include "pce.inc"

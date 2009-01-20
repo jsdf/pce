@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.h                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2008 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_MEMORY_H

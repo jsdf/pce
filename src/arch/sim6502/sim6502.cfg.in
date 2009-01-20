@@ -1,8 +1,6 @@
 # sim6502.cfg
 # Example config file
 
-# $Id$
-
 section sim6502 {
 	# Multiple "ram" sections may be present
 	section ram {

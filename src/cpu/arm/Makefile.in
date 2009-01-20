@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/cpu/arm/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

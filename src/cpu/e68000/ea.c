@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/e68000/ea.c                                        *
- * Created:       2006-05-17 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/cpu/e68000/ea.c                                          *
+ * Created:     2006-05-17 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdio.h>

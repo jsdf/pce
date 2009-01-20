@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/clock/ds1743.h                                 *
- * Created:       2006-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/devices/clock/ds1743.h                                   *
+ * Created:     2006-12-15 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_DEVICES_CLOCK_DS1743_H

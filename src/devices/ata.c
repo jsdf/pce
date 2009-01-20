@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/devices/ata.c                                          *
- * Created:       2004-12-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/devices/ata.c                                            *
+ * Created:     2004-12-03 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdio.h>

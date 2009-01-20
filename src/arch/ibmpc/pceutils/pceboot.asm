@@ -3,10 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     pceboot.asm                                                *
-;* Created:       2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
-;* Last modified: 2003-09-01 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2003 by Hampa Hug <hampa@hampa.ch>                     *
+;* File name:   pceboot.asm                                                  *
+;* Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -20,7 +19,6 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id$
 
 ; pceboot drive [r]
 

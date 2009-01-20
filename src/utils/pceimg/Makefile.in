@@ -1,5 +1,4 @@
-# Makefile
-# $Id$
+# src/utils/pceimg/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@

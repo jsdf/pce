@@ -3,11 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/arch/ibmpc/bios/basic.asm                              *
-;* Created:       2003-04-14 by Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   src/arch/ibmpc/bios/basic.asm                                *
+;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
-
-; $Id$
 
 
 section .text

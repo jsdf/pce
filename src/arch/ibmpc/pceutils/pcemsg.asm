@@ -3,9 +3,9 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:     src/arch/ibmpc/pceutils/pcemsg.asm                         *
-;* Created:       2004-09-17 by Hampa Hug <hampa@hampa.ch>                   *
-;* Copyright:     (C) 2004-2008 Hampa Hug <hampa@hampa.ch>                   *
+;* File name:   src/arch/ibmpc/pceutils/pcemsg.asm                           *
+;* Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -19,7 +19,6 @@
 ;* Public License for more details.                                          *
 ;*****************************************************************************
 
-; $Id$
 
 ; pcemsg [msg [val]]
 ; send a message to the emulation core

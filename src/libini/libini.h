@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/libini/libini.h                                        *
- * Created:       2001-08-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/libini/libini.h                                          *
+ * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef LIBINI_H

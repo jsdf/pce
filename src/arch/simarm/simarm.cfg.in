@@ -1,8 +1,6 @@
 # simarm.cfg
 # Example config file
 
-# $Id$
-
 section simarm {
 	section cpu {
 		# This has no effect yet

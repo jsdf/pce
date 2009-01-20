@@ -1,8 +1,6 @@
 # sim405.cfg
 # Example config file
 
-# $Id$
-
 section sim405 {
 	section powerpc {
 		model = "ppc405"

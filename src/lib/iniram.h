@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/iniram.h                                           *
- * Created:       2005-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2006-07-24 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2006 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/iniram.h                                             *
+ * Created:     2005-07-24 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef PCE_LIB_INIRAM_H

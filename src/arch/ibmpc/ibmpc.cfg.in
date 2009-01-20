@@ -1,8 +1,6 @@
 # pce.cfg
 # Example config file
 
-# $Id$
-
 section pc {
 	# Enable access to the RTC
 	rtc = 1

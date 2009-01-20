@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/srec.c                                             *
- * Created:       2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2005-03-28 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/lib/srec.c                                               *
+ * Created:     2005-03-28 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdlib.h>
@@ -41,8 +38,8 @@ typedef struct {
 
 
 static unsigned srec_asize[16] = {
- 2, 2, 3, 4, 2, 2, 2, 4,
- 3, 2, 2, 2, 2, 2, 2, 2
+	2, 2, 3, 4, 2, 2, 2, 4,
+	3, 2, 2, 2, 2, 2, 2, 2
 };
 
 

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     scanner.h                                                  *
- * Created:       2001-03-05 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-01-03 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2001-2004 by Hampa Hug <hampa@hampa.ch>                *
+ * File name:   src/libini/scanner.h                                         *
+ * Created:     2001-03-05 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #ifndef LIBINI_SCANNER_H

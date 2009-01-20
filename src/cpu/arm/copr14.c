@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/cpu/arm/copr14.c                                       *
- * Created:       2007-02-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2007 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/cpu/arm/copr14.c                                         *
+ * Created:     2007-02-16 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include "arm.h"

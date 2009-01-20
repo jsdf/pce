@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/iniata.c                                           *
- * Created:       2006-12-16 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2006-2007 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/lib/iniata.c                                             *
+ * Created:     2006-12-16 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdlib.h>

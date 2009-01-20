@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/msg.c                                                *
  * Created:     2005-12-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <stdio.h>

@@ -3,10 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/lib/tun.c                                              *
- * Created:       2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Last modified: 2004-12-15 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2004 Hampa Hug <hampa@hampa.ch>                        *
+ * File name:   src/lib/tun.c                                                *
+ * Created:     2004-12-15 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <config.h>
@@ -40,7 +37,8 @@
 #include <linux/if_tun.h>
 
 
-/* Flags: IFF_TUN   - TUN device (no Ethernet headers)
+/*
+ * Flags: IFF_TUN   - TUN device (no Ethernet headers)
  *        IFF_TAP   - TAP device
  *
  *        IFF_NO_PI - Do not provide packet information

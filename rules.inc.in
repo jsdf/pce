@@ -1,5 +1,4 @@
 # Makefile include file
-# $Id$
 
 
 VPATH = $(srcdir) $(topdir)/src

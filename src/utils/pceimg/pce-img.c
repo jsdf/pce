@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:     src/utils/pceimg/pce-img.c                                 *
- * Created:       2005-11-29 by Hampa Hug <hampa@hampa.ch>                   *
- * Copyright:     (C) 2005-2008 Hampa Hug <hampa@hampa.ch>                   *
+ * File name:   src/utils/pceimg/pce-img.c                                   *
+ * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -18,8 +18,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
  * Public License for more details.                                          *
  *****************************************************************************/
-
-/* $Id$ */
 
 
 #include <config.h>

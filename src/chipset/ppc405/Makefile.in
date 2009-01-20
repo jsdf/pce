@@ -1,5 +1,4 @@
-# Makefile
-# $Id: Makefile.in 341 2004-01-02 12:04:48Z hampa $
+# src/chipset/ppc405/Makefile
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
