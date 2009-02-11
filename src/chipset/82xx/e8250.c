@@ -544,9 +544,9 @@ int e8250_set_out (e8250_t *uart, unsigned char val)
 }
 
 /*
- * Remove a byte from the output queue
+ * Get a byte from the output queue and optionally remove it
  */
-int e8250_get_out (e8250_t *uart, unsigned char *val)
+int e8250_get_out (e8250_t *uart, unsigned char *val, int remove)
 {
 	if (uart->out_i == uart->out_j) {
 		return (1);
@@ -554,9 +554,11 @@ int e8250_get_out (e8250_t *uart, unsigned char *val)
 
 	*val = uart->out[uart->out_i];
 
-	uart->out_i += 1;
-	if (uart->out_i >= uart->out_n) {
-		uart->out_i = 0;
+	if (remove) {
+		uart->out_i += 1;
+		if (uart->out_i >= uart->out_n) {
+			uart->out_i = 0;
+		}
 	}
 
 	return (0);
@@ -582,7 +584,7 @@ int e8250_out_empty (e8250_t *uart)
 
 int e8250_send (e8250_t *uart, unsigned char *val)
 {
-	return (e8250_get_out (uart, val));
+	return (e8250_get_out (uart, val, 1));
 }
 
 int e8250_receive (e8250_t *uart, unsigned char val)

@@ -478,7 +478,7 @@ void ser_process_output (serport_t *ser)
 			break;
 		}
 
-		if (e8250_get_out (&ser->uart, &c)) {
+		if (e8250_get_out (&ser->uart, &c, 1)) {
 			break;
 		}
 
@@ -576,7 +576,7 @@ void ser_process_output (serport_t *ser)
 	ser->check_out = 0;
 
 	while (1) {
-		if (e8250_get_out (&ser->uart, &c)) {
+		if (e8250_get_out (&ser->uart, &c, 1)) {
 			break;
 		}
 

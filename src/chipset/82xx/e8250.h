@@ -380,12 +380,13 @@ int e8250_inp_empty (e8250_t *uart);
 
 
 /*!***************************************************************************
- * @short  Remove a byte to the output queue
- * @param  uart The UART structure
- * @retval val  The byte
+ * @short  Get a byte from the output queue
+ * @param  uart   The UART structure
+ * @retval val    The byte
+ * @param  remove If true, remove the byte from the output queue
  * @return Nonzero on error (queue empty)
  *****************************************************************************/
-int e8250_get_out (e8250_t *uart, unsigned char *val);
+int e8250_get_out (e8250_t *uart, unsigned char *val, int remove);
 
 /*!***************************************************************************
  * @short  Clear the output queue

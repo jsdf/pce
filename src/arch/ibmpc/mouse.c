@@ -232,7 +232,7 @@ void mse_uart_out (mouse_t *mse, unsigned char val)
 	unsigned char c;
 
 	while (1) {
-		if (e8250_get_out (&mse->uart, &c)) {
+		if (e8250_get_out (&mse->uart, &c, 1)) {
 			break;
 		}
 	}
