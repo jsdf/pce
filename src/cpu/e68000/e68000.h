@@ -241,6 +241,16 @@ uint32_t e68_get_mem32 (e68000_t *c, uint32_t addr)
 	}
 #endif
 
+#if 1
+	/*
+	 * This is an exremely ugly hack to make System 6 boot and should
+	 * be removed as soon as possible.
+	 */
+	if (addr == 10) {
+		return (0);
+	}
+#endif
+
 	addr &= 0x00ffffff;
 
 	if ((addr + 3) < c->ram_cnt) {
