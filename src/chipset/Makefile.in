@@ -9,9 +9,9 @@ reldir := ../..
 include $(reldir)/config.inc
 
 
-SRC := e6522.c
-OBJ := e6522.o
-HDR := e6522.h
+SRC := e6522.c e8530.c
+OBJ := e6522.o e8530.o
+HDR := e6522.h e8530.h
 BIN :=
 
 SDP := Makefile
@@ -30,3 +30,4 @@ all: $(OBJ)
 
 
 e6522.o:	e6522.c e6522.h $(SDP)
+e8530.o:	e8530.c e8530.h $(SDP)
