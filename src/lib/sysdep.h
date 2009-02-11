@@ -41,11 +41,18 @@ unsigned long pce_get_interval_us (unsigned long *val);
 void pce_set_fd_interactive (int fd, int interactive);
 
 /*!***************************************************************************
- * @short Check if a file descriptor is readable
+ * @short Check if a file descriptor is readable without blocking
  * @param fd The file descriptor
  * @param t  Wait at most t milliseconds for fd to become readable
  *****************************************************************************/
 int pce_fd_readable (int fd, int t);
+
+/*!***************************************************************************
+ * @short Check if a file descriptor is writeable without blocking
+ * @param fd The file descriptor
+ * @param t  Wait at most t milliseconds for fd to become writeable
+ *****************************************************************************/
+int pce_fd_writeable (int fd, int t);
 
 
 void pce_start (unsigned *brk);
