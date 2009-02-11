@@ -8,12 +8,14 @@ reldir := .
 include $(reldir)/config.inc
 
 
-ROMBIN := et4000.rom \
-	genoa.rom \
-	ibmega.rom \
-	pce-bios.rom \
-	pce-ega.rom \
-	t9000b.rom
+ROMBIN := ibmpc/et4000.rom \
+	ibmpc/genoa.rom \
+	ibmpc/ibmega.rom \
+	ibmpc/pce-bios.rom \
+	ibmpc/pce-ega.rom \
+	ibmpc/t9000b.rom \
+	macplus/macplus-pcex.rom \
+	macplus/macplus.rom
 
 DCL := Makefile config.inc config.log config.status configure rules.inc
 
@@ -42,8 +44,8 @@ all:
 
 install:
 	$(QR)for f in $(ROMBIN) ; do \
-		src=$(srcdir)/contrib/rom/ibmpc/$$f ; \
-		dst=$(DESTDIR)$(datdir)/$$f ; \
+		src=$(srcdir)/contrib/rom/$$f ; \
+		dst=$(DESTDIR)$(datdir)/`basename $$f` ; \
 		test -f "$$dst" && continue ; \
 		test -f "$$src" || continue ; \
 		test x$(V) != x1 && echo "  CP     $$f" ; \

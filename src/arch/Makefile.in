@@ -13,6 +13,10 @@ ifeq "$(PCE_BUILD_IBMPC)" "1"
 subdir += ibmpc
 endif
 
+ifeq "$(PCE_BUILD_MACPLUS)" "1"
+subdir += macplus
+endif
+
 ifeq "$(PCE_BUILD_SIM405)" "1"
 subdir += sim405
 endif

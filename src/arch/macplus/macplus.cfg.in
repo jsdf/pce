@@ -1,0 +1,140 @@
+# macplus.cfg
+#
+# Example config file
+
+section macplus {
+	# Add a directory to the end of the file search path.
+	#
+	# The search path is used if an input file is specified with
+	# a relative file name. In that case the file is searched for
+	# in all directories of the search path. The current directory
+	# is always implicitly added to the end of the search path.
+	#
+	# If the first character of the string is a "-", the directory
+	# is added to the beginning of the search path.
+	path = "PCE_DIR_DATA"
+	path = "PCE_DIR_DATA/rom"
+	path = "-."
+
+	section cpu {
+		model = "68000"
+
+		# The CPU speed multiplier
+		# A value of 0 means "all out"
+		speed = 0
+	}
+
+	# Multiple "ram" sections may be present
+	section ram {
+		# The base address
+		address = 0x00000000
+
+		# The size in KB
+		sizek = 4096
+
+		# The RAM image that is used to initialize the RAM
+		#file = "ram.bin"
+	}
+
+	# Multiple "rom" sections may be present
+	section rom {
+		# The file from which the rom code is loaded
+		file = "macplus.rom"
+
+		# The base address
+		address = 0x00400000
+
+		# The rom size
+		#size = 262144
+		sizek = 256
+	}
+
+	section rom {
+		# This is the PCE extension ROM
+
+		file = "macplus-pcex.rom"
+
+		address = 0x00f80000
+		sizek = 256
+	}
+
+	# load sections are processed after the emulator is set up.
+	#section load {
+	#	format = "srec"
+	#	file = "macplus.srec"
+	#}
+
+	section terminal {
+		driver = "sdl"
+		scale = 2
+	}
+
+	section terminal {
+		driver = "x11"
+		scale = 1
+	}
+
+	section keyboard {
+		model = 0
+		intl = 0
+	}
+
+	section rtc {
+		file = "pram.dat"
+		realtime = 1
+	}
+
+	section scsi {
+		#address = 0x580000
+		#size = 0x1000
+
+		section device {
+			id = 6
+			drive = 128
+		}
+	}
+
+	section serial {
+		port = 0
+		file = "sera.out"
+		#device = "/dev/ttyS0"
+	}
+
+	section serial {
+		port = 1
+		file = "serb.out"
+		#device = "/dev/ttyS1"
+	}
+
+	section video {
+		#address = 0x0fa700
+		realtime = 1
+	}
+
+	section disk {
+		drive = 1
+		type = "auto"
+		file = "disk1.img"
+		optional = 1
+	}
+
+	section disk {
+		drive = 2
+		type = "auto"
+		file = "disk2.img"
+		optional = 1
+	}
+
+	section disk {
+		drive = 3
+		type = "auto"
+		file = "disk3.img"
+		optional = 1
+	}
+
+	section disk {
+		drive = 128
+		type = auto
+		file = "hd1.img"
+	}
+}

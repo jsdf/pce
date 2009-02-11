@@ -309,6 +309,7 @@ AC_SUBST(PCE_LARGE_FILE)
 
 
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
+if test -d "$srcdir/src/arch/macplus"; then have_macplus=1; else have_macplus=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
 if test -d "$srcdir/src/arch/sim68k"; then have_sim68k=1; else have_sim68k=0; fi
@@ -347,6 +348,34 @@ fi
 AC_SUBST(PCE_BUILD_IBMPC)
 if test $PCE_BUILD_IBMPC -eq 1 ; then
 	AC_DEFINE(PCE_BUILD_IBMPC)
+fi
+
+
+AC_MSG_CHECKING([whether to build the Mac Plus emulator])
+if test "x$have_macplus$have_e68000" != "x11" ; then
+	PCE_BUILD_MACPLUS=0
+	AC_MSG_RESULT([no (no source)])
+else
+	AC_ARG_ENABLE(macplus,
+	  AC_HELP_STRING([--enable-macplus], [Enable the Mac Plus emulator]),
+	  [
+	  	if test "x$enableval" = "xyes" ; then
+	  		PCE_BUILD_MACPLUS=1
+	  		AC_MSG_RESULT([yes (forced)])
+	  	else
+	  		PCE_BUILD_MACPLUS=0
+	  		AC_MSG_RESULT([no (forced)])
+	  	fi
+	  ],
+	  [
+	  	PCE_BUILD_MACPLUS=1
+		AC_MSG_RESULT([yes (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_MACPLUS)
+if test $PCE_BUILD_MACPLUS -eq 1 ; then
+	AC_DEFINE(PCE_BUILD_MACPLUS)
 fi
 
 
@@ -525,6 +554,9 @@ AC_MSG_CHECKING([whether to build the 68000 core])
 if test "x$have_e68000" != "x1" ; then
 	PCE_BUILD_68000=0
 	AC_MSG_RESULT([no (no source)])
+elif test "x$PCE_BUILD_MACPLUS" = "x1" ; then
+	PCE_BUILD_68000=1
+	AC_MSG_RESULT([yes (required by Mac Plus)])
 elif test "x$PCE_BUILD_SIM68K" = "x1" ; then
 	PCE_BUILD_68000=1
 	AC_MSG_RESULT([yes (required by sim68k)])
@@ -772,6 +804,13 @@ if test "x$PCE_BUILD_IBMPC" = "x1" ; then
 	emu1="$emu1 ibmpc"
 else
 	emu2="$emu2 ibmpc"
+fi
+
+if test "x$PCE_BUILD_MACPLUS" = "x1" ; then
+	extra="$extra src/arch/macplus/Makefile"
+	emu1="$emu1 macplus"
+else
+	emu2="$emu2 macplus"
 fi
 
 if test "x$PCE_BUILD_SIM405" = "x1" ; then
