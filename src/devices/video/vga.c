@@ -664,9 +664,11 @@ void vga_update_graphics (vga_t *vga)
 	m256 = ((vga->reg_grc[VGA_GRC_MODE] & VGA_GRC_MODE_C256) != 0);
 	mcga = ((vga->reg_grc[VGA_GRC_MODE] & VGA_GRC_MODE_SR) != 0);
 
-
 	addr = vga_get_start (vga);
 	rofs = 2 * vga->reg_crt[VGA_CRT_OFS];
+
+	msk = 0;
+	bit = 0;
 
 	row0 = 0;
 	row1 = 0;

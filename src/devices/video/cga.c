@@ -589,6 +589,8 @@ void cga_mode2c_update (cga_t *cga)
 	h = 2 * cga->h;
 	w = 2 * cga->w;
 
+	pat = 0;
+
 	for (y = 0; y < h; y++) {
 		src = mem[y & 1];
 

@@ -660,6 +660,14 @@ void ega_update_graphics (ega_t *ega)
 	row = 0;
 	y = 0;
 
+	buf[0] = 0;
+	buf[1] = 0;
+	buf[2] = 0;
+	buf[3] = 0;
+
+	msk = 0;
+	bit = 0;
+
 	while (y < h) {
 		dst = ega->buf + 3UL * y * w;
 
