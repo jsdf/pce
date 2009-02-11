@@ -5,11 +5,28 @@ topdir := @top_srcdir@
 subdir := 82xx clock ppc405
 reldir := ../..
 
-DIST := Makefile.in
-
 
 include $(reldir)/config.inc
 
+
+SRC := e6522.c
+OBJ := e6522.o
+HDR := e6522.h
+BIN :=
+
+SDP := Makefile
+BDP := Makefile $(OBJ) $(OBJ_EXT)
+
+CLN := $(OBJ) $(BIN)
 DCL := Makefile
 
+DIST := $(SRC) $(HDR) Makefile.in
+
+
 include $(reldir)/rules.inc
+
+
+all: $(OBJ)
+
+
+e6522.o:	e6522.c e6522.h $(SDP)
