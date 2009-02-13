@@ -25,10 +25,6 @@ ifeq "$(PCE_BUILD_SIM6502)" "1"
 subdir += sim6502
 endif
 
-ifeq "$(PCE_BUILD_SIM68K)" "1"
-subdir += sim68k
-endif
-
 ifeq "$(PCE_BUILD_SIMARM)" "1"
 subdir += simarm
 endif
