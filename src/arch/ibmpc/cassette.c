@@ -71,6 +71,8 @@ void pc_cas_set_mode (pc_cassette_t *cas, int save)
 
 	if (cas->fp != NULL) {
 		fflush (cas->fp);
+
+		pc_cas_set_position (cas, cas->position);
 	}
 }
 
@@ -166,6 +168,8 @@ void pc_cas_set_motor (pc_cassette_t *cas, unsigned char val)
 
 	if (cas->fp != NULL) {
 		fflush (cas->fp);
+
+		pc_cas_set_position (cas, cas->position);
 	}
 }
 
