@@ -138,6 +138,18 @@ void e8530_set_irq (e8530_t *scc, unsigned char val)
 }
 
 static
+void e8530_set_rts (e8530_t *scc, unsigned chn, unsigned char val)
+{
+	e8530_chn_t *c;
+
+	c = &scc->chn[chn];
+
+	if (c->set_rts != NULL) {
+		c->set_rts (c->set_rts_ext, val != 0);
+	}
+}
+
+static
 void e8530_set_int_cond (e8530_t *scc, unsigned chn, unsigned char cond)
 {
 	e8530_chn_t *c0, *c;
@@ -641,9 +653,7 @@ void e8530_set_wr5 (e8530_t *scc, unsigned chn, unsigned char val)
 	c->wr[5] = val;
 
 	if ((old ^ val) & 0x02) {
-		if (c->set_rts != NULL) {
-			c->set_rts (c->set_rts_ext, (val & 0x02) != 0);
-		}
+		e8530_set_rts (scc, chn, (val & 0x02) != 0);
 	}
 
 	e8530_set_params (scc, chn);
@@ -1096,6 +1106,11 @@ void e8530_reset (e8530_t *scc)
 
 	e8530_reset_channel (scc, 0);
 	e8530_reset_channel (scc, 1);
+
+	e8530_set_rts (scc, 0, 0);
+	e8530_set_rts (scc, 1, 0);
+
+	e8530_set_irq (scc, 0);
 }
 
 void e8530_clock (e8530_t *scc, unsigned n)
