@@ -62,6 +62,30 @@ int mac_addr_map (macplus_t *sim, unsigned long *addr)
 {
 	unsigned long val;
 
+	/* repeated RAM images */
+	if (*addr < 0x400000) {
+		if (sim->ram == NULL) {
+			return (0);
+		}
+
+		val = mem_blk_get_size (sim->ram);
+
+		if (val == 0) {
+			return (0);
+		}
+
+		val = *addr % val;
+
+		if (*addr == val) {
+			return (0);
+		}
+
+		*addr = val;
+
+		return (1);
+	}
+
+	/* repeated ROM images */
 	if ((*addr >= 0x400000) && (*addr < 0x580000)) {
 		val = 0x400000 + (*addr & 0x3ffff);
 
