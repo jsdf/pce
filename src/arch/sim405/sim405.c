@@ -626,6 +626,10 @@ int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
 		val = "";
 	}
 
+	if (msg_is_prefix ("term", msg)) {
+		return (1);
+	}
+
 	if (msg_is_message ("emu.break", msg)) {
 		if (strcmp (val, "stop") == 0) {
 			sim->brk = PCE_BRK_STOP;

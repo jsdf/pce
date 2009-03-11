@@ -491,6 +491,10 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 		val = "";
 	}
 
+	if (msg_is_prefix ("term", msg)) {
+		return (1);
+	}
+
 	if (msg_is_message ("emu.stop", msg)) {
 		sim->brk = PCE_BRK_STOP;
 		return (0);
