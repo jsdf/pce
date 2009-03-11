@@ -1,0 +1,39 @@
+# src/drivers/char/Makefile
+
+srcdir := @srcdir@
+topdir := @top_srcdir@
+subdir :=
+reldir := ../../..
+
+
+include $(reldir)/config.inc
+
+
+ALLFILES := char char-null char-stdio
+
+FILES := char char-null char-stdio
+
+ALLSRC := $(foreach f,$(ALLFILES),$(f).c)
+ALLOBJ := $(foreach f,$(ALLFILES),$(f).o)
+ALLHDR := $(foreach f,$(ALLFILES),$(f).h)
+
+SRC := $(foreach f,$(FILES),$(f).c)
+OBJ := $(foreach f,$(FILES),$(f).o)
+HDR := $(foreach f,$(FILES),$(f).h)
+SDP := Makefile
+
+CLN := $(ALLOBJ) $(BIN)
+DCL := Makefile
+
+DIST := $(ALLSRC) $(ALLHDR) Makefile.in
+
+
+include $(reldir)/rules.inc
+
+
+all: $(BIN) $(OBJ)
+
+
+char.o:		char.c char.h $(SDP)
+char-null.o:	char-null.c char-null.h char.h $(SDP)
+char-stdio.o:	char-stdio.c char-stdio.h char.h $(SDP)

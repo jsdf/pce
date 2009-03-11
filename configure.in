@@ -868,6 +868,10 @@ else
 fi
 
 
+char1=" null stdio"
+char2=""
+
+
 option1=""
 option2=""
 
@@ -900,6 +904,8 @@ AC_OUTPUT(
   src/devices/block/Makefile
   src/devices/clock/Makefile
   src/devices/video/Makefile
+  src/drivers/Makefile
+  src/drivers/char/Makefile
   src/lib/Makefile
   src/libini/Makefile
   src/terminal/Makefile
@@ -916,22 +922,24 @@ AC_OUTPUT(
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
 
-echo "  CC:                    $CC $CFLAGS"
-echo "  LD:                    $CC $LDFLAGS"
-echo ""
-echo "  prefix:                $prefix"
-echo ""
-echo "  Emulators built:      $emu1"
-echo "  Emulators not built:  $emu2"
-echo "  CPU cores built:      $core1"
-echo "  CPU cores not built:  $core2"
-echo "  Terminals built:      $term1"
-echo "  Terminals not built:  $term2"
-echo "  Enabled options:      $option1"
-echo "  Disabled options:     $option2"
+echo "  CC:                     $CC $CFLAGS"
+echo "  LD:                     $CC $LDFLAGS"
+echo
+echo "  prefix:                 $prefix"
+echo
+echo "  Emulators built:       $emu1"
+echo "  Emulators not built:   $emu2"
+echo "  CPU cores built:       $core1"
+echo "  CPU cores not built:   $core2"
+echo "  Terminals built:       $term1"
+echo "  Terminals not built:   $term2"
+echo "  Char drivers built:    $char1"
+echo "  Char drivers not built:$char2"
+echo "  Enabled options:       $option1"
+echo "  Disabled options:      $option2"
 
 if test "x$PCE_HAVE_NASM" = "x0" ; then
-	echo "  Build PC BIOS:         no"
+	echo "  Build PC BIOS:          no"
 else
-	echo "  Build PC BIOS:         yes"
+	echo "  Build PC BIOS:          yes"
 fi

@@ -2,7 +2,7 @@
 
 srcdir := @srcdir@
 topdir := @top_srcdir@
-subdir := lib libini cpu chipset devices terminal arch utils
+subdir := lib libini cpu chipset devices drivers terminal arch utils
 reldir := ..
 
 

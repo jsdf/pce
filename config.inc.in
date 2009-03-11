@@ -161,3 +161,9 @@ ifeq "$(PCE_SDL_USE)" "1"
 	PCE_TERM_HDR += terminal/sdl.h
 	PCE_TERM_OBJ +=	$(pcedst)/terminal/sdl.o
 endif
+
+PCE_CHAR_OBJ := $(pcedst)/drivers/char/char.o
+PCE_CHAR_OBJ += $(pcedst)/drivers/char/char-null.o
+PCE_CHAR_OBJ += $(pcedst)/drivers/char/char-stdio.o
+PCE_CHAR_HDR := drivers/char/char.h
+PCE_CHAR_LIB :=
