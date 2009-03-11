@@ -72,13 +72,14 @@ void prt_version (void)
 	fputs (
 		"pce-simarm version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
 	fflush (stdout);
 }
 
+static
 void sig_int (int s)
 {
 	signal (s, sig_int);
@@ -86,9 +87,10 @@ void sig_int (int s)
 	par_sig_int = 1;
 }
 
-void sig_segv (int s)
+static
+void sig_terminate (int s)
 {
-	fprintf (stderr, "pce-simarm: segmentation fault\n");
+	fprintf (stderr, "pce-simarm: signal %d\n", s);
 
 	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
 		sarm_prt_state_cpu (par_sim->cpu, stderr);
@@ -262,7 +264,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce-simarm version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -279,7 +281,8 @@ int main (int argc, char *argv[])
 	par_sim = sarm_new (sct);
 
 	signal (SIGINT, sig_int);
-	signal (SIGSEGV, sig_segv);
+	signal (SIGTERM, sig_terminate);
+	signal (SIGSEGV, sig_terminate);
 
 #ifdef SIGPIPE
 	signal (SIGPIPE, SIG_IGN);
