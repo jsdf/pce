@@ -69,13 +69,14 @@ void prt_version (void)
 	fputs (
 		"pce-sim405 version " PCE_VERSION_STR
 		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
 	fflush (stdout);
 }
 
+static
 void sig_int (int s)
 {
 	signal (SIGINT, sig_int);
@@ -83,9 +84,10 @@ void sig_int (int s)
 	par_sig_int = 1;
 }
 
-void sig_segv (int s)
+static
+void sig_terminate (int s)
 {
-	fprintf (stderr, "pce-sim405: segmentation fault\n");
+	fprintf (stderr, "pce-sim405: signal %d\n", s);
 
 	if ((par_sim != NULL) && (par_sim->ppc != NULL)) {
 		fprintf (stderr, "  PC=%08lX\n",
@@ -227,7 +229,7 @@ int main (int argc, char *argv[])
 	pce_log (MSG_INF,
 		"pce-sim405 version " PCE_VERSION_STR
 		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
@@ -244,7 +246,8 @@ int main (int argc, char *argv[])
 	par_sim = s405_new (sct);
 
 	signal (SIGINT, sig_int);
-	signal (SIGSEGV, sig_segv);
+	signal (SIGTERM, sig_terminate);
+	signal (SIGSEGV, sig_terminate);
 
 #ifdef SIGPIPE
 	signal (SIGPIPE, SIG_IGN);
