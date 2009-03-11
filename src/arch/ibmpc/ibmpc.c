@@ -720,7 +720,8 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
-	const char    *fname, *dname;
+	const char    *driver;
+	const char    *log;
 	const char    *chip;
 	ini_sct_t     *sct;
 
@@ -743,32 +744,38 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 		}
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
-		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_string (sct, "device", &dname, NULL);
+		ini_get_string (sct, "driver", &driver, NULL);
+		ini_get_string (sct, "log", &log, NULL);
 
 		pce_log_tag (MSG_INF,
-			"SERPORT:", "COM%u addr=0x%04lx irq=%u uart=%s file=%s dev=%s\n",
+			"SERPORT:", "COM%u addr=0x%04lx irq=%u uart=%s driver=%s\n",
 			i + 1, addr, irq, chip,
-			(fname == NULL) ? "<none>" : fname,
-			(dname == NULL) ? "<none>" : dname
+			(driver == NULL) ? "<none>" : driver
 		);
 
 		pc->serport[i] = ser_new (addr, 0);
 		if (pc->serport[i] == NULL) {
 			pce_log (MSG_ERR, "*** serial port setup failed [%04X/%u -> %s]\n",
-				addr, irq, (fname == NULL) ? "<none>" : fname
+				addr, irq, (driver == NULL) ? "<none>" : driver
 			);
 		}
 		else {
-			if (fname != NULL) {
-				if (ser_set_fname (pc->serport[i], fname)) {
-					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+			if (driver != NULL) {
+				if (ser_set_driver (pc->serport[i], driver)) {
+					pce_log (MSG_ERR,
+						"*** can't open driver (%s)\n",
+						driver
+					);
 				}
+
 			}
 
-			if (dname != NULL) {
-				if (ser_set_dname (pc->serport[i], dname)) {
-					pce_log (MSG_ERR, "*** can't open device (%s)\n", dname);
+			if (log != NULL) {
+				if (ser_set_log (pc->serport[i], log)) {
+					pce_log (MSG_ERR,
+						"*** can't open log file (%s)\n",
+						log
+					);
 				}
 			}
 

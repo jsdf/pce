@@ -85,7 +85,6 @@
 #undef PCE_SDL_USE
 
 #undef PCE_ENABLE_TUN
-#undef PCE_ENABLE_SERPORT
 
 #undef PCE_ENABLE_CHAR_TIOS
 

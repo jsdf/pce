@@ -260,12 +260,13 @@ section pc {
 		# Valid values for uart are: "8250", "16450"
 		uart = "8250"
 
-		# An output file
-		file = "serport.out"
+		# Not all character drivers are supported on
+		# all platforms.
+		#driver = "null"
+		driver = "stdio:file=com1.out"
+		#driver = "tios:file=/dev/ttyS0"
 
-		# If support for host serial port emulation is compiled in
-		# this tty device will be connected to the serial port.
-		device = "/dev/ttyS0"
+		log = "com1.log"
 	}
 
 	section mouse {

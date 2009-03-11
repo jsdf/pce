@@ -748,39 +748,6 @@ if test "x$PCE_ENABLE_TUN" = "x1" ; then
 fi
 
 
-# Don't know how to autodetect this properly.
-AC_MSG_CHECKING([whether to enable serial port emulation])
-AC_ARG_ENABLE(serport,
-  AC_HELP_STRING([--enable-serport], [Enable serial port emulation]),
-  [
-  	if test "x$enableval" = "xyes" ; then
-  		PCE_ENABLE_SERPORT=1
-  		AC_MSG_RESULT([yes])
-  	else
-  		PCE_ENABLE_SERPORT=0
-  		AC_MSG_RESULT([no])
-  	fi
-  ],
-  [
-  	h1=$ac_cv_header_termios_h
-  	h2=$ac_cv_header_sys_ioctl_h
-  	h3=$ac_cv_header_sys_poll_h
-  	h4=$ac_cv_header_unistd_h
-  	if test "x$h1" = "xyes" -a "x$h2" = "xyes" -a "x$h3" = "xyes" -a "x$h4" = "xyes" ; then
-  		PCE_ENABLE_SERPORT=1
-  		AC_MSG_RESULT([yes (guess)])
-  	else
-	  	PCE_ENABLE_SERPORT=0
-		AC_MSG_RESULT([no (guess)])
-	fi
-  ]
-)
-AC_SUBST(PCE_ENABLE_SERPORT)
-if test "x$PCE_ENABLE_SERPORT" = "x1" ; then
-	AC_DEFINE(PCE_ENABLE_SERPORT)
-fi
-
-
 eval "pce_etcdir=$sysconfdir"
 eval "pce_etcdir=$pce_etcdir"
 
@@ -918,12 +885,6 @@ fi
 
 option1=""
 option2=""
-
-if test "x$PCE_ENABLE_SERPORT" = "x1" ; then
-	option1="$option1 serport"
-else
-	option2="$option2 serport"
-fi
 
 if test "x$PCE_ENABLE_TUN" = "x1" ; then
 	option1="$option1 tun"

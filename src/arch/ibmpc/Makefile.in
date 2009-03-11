@@ -23,6 +23,8 @@ SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
 HDR := $(foreach f,$(FILES),$(f).h)
 
+LIB := $(PCE_CHAR_LIB)
+
 OBJ_EXT	:= \
 	$(pcedst)/cpu/e8086/e8086.a \
 	$(pcedst)/chipset/82xx/chipset.a \
@@ -55,6 +57,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/sysdep.o \
 	$(pcedst)/libini/libini.a \
 	$(PCE_BLK_OBJ) \
+	$(PCE_CHAR_OBJ) \
 	$(PCE_TERM_OBJ)
 
 HDR_EXT	:= \
@@ -94,6 +97,7 @@ HDR_EXT	:= \
 	lib/path.h \
 	lib/sysdep.h \
 	libini/libini.h \
+	$(PCE_CHAR_HDR) \
 	$(PCE_TERM_HDR)
 
 ifeq "$(PCE_X11_USE)" "1"
@@ -137,7 +141,7 @@ install: pce-ibmpc pce-ibmpc.cfg install-bin install-man
 
 pce-ibmpc: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA) -lm
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LIB) $(LD_FLG_EXTRA) -lm
 
 
 pce-ibmpc.cfg: ibmpc.cfg.in

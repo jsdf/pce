@@ -35,6 +35,8 @@ SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
 HDR := $(foreach f,$(FILES),$(f).h)
 
+LIB := $(PCE_CHAR_LIB)
+
 OBJ_EXT := \
 	$(pcedst)/cpu/e68000/e68000.a \
 	$(pcedst)/chipset/82xx/e8250.o \
@@ -60,6 +62,7 @@ OBJ_EXT := \
 	$(pcedst)/lib/sysdep.o \
 	$(pcedst)/libini/libini.a \
 	$(PCE_BLK_OBJ) \
+	$(PCE_CHAR_OBJ) \
 	$(PCE_TERM_OBJ)
 
 
@@ -89,6 +92,7 @@ HDR_EXT := \
 	lib/sysdep.h \
 	libini/libini.h \
 	$(PCE_BLK_HDR) \
+	$(PCE_CHAR_HDR) \
 	$(PCE_TERM_HDR)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -133,7 +137,7 @@ install: install-bin pce-macplus.cfg
 
 pce-macplus: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LIB) $(LD_FLG_EXTRA)
 
 
 pce-macplus.cfg: macplus.cfg.in

@@ -21,7 +21,9 @@ SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
 HDR := $(foreach f,$(FILES),$(f).h)
 
-OBJ_EXT	:= \
+LIB := $(PCE_CHAR_LIB)
+
+OBJ_EXT := \
 	$(pcedst)/cpu/sparc32/sparc32.a \
 	$(pcedst)/chipset/82xx/e8250.o \
 	$(pcedst)/devices/device.o \
@@ -39,10 +41,11 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/path.o \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/sysdep.o \
-	$(pcedst)/libini/libini.a
+	$(pcedst)/libini/libini.a \
+	$(PCE_CHAR_OBJ)
 
 
-HDR_EXT	:= \
+HDR_EXT := \
 	$(pcedst)/config.h \
 	cpu/sparc32/sparc32.h \
 	chipset/82xx/e8250.h \
@@ -61,7 +64,8 @@ HDR_EXT	:= \
 	lib/path.h \
 	lib/srec.h \
 	lib/sysdep.h \
-	libini/libini.h
+	libini/libini.h \
+	$(PCE_CHAR_HDR)
 
 MAN1	:=
 
@@ -91,7 +95,7 @@ install: install-bin pce-sims32.cfg
 
 pce-sims32: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LIB) $(LD_FLG_EXTRA)
 
 
 pce-sims32.cfg: sims32.cfg.in

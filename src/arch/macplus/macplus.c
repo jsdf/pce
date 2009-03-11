@@ -507,8 +507,7 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
 	unsigned   port;
-	const char *fname;
-	const char *dname;
+	const char *driver;
 
 	mac_ser_init (&sim->ser[0]);
 	mac_ser_set_scc (&sim->ser[0], &sim->scc, 0);
@@ -521,13 +520,11 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 	while (sct != NULL) {
 		ini_get_uint16 (sct, "port", &port, 0);
 
-		ini_get_string (sct, "file", &fname, NULL);
-		ini_get_string (sct, "device", &dname, NULL);
+		ini_get_string (sct, "driver", &driver, NULL);
 
-		pce_log_tag (MSG_INF, "SERIAL:", "port=%u file=%s device=%s\n",
+		pce_log_tag (MSG_INF, "SERIAL:", "port=%u driver=%s\n",
 			port,
-			(fname != NULL) ? fname : "<none>",
-			(dname != NULL) ? dname : "<none>"
+			(driver != NULL) ? driver : "<none>"
 		);
 
 		sct = ini_next_sct (ini, sct, "serial");
@@ -537,15 +534,9 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 			continue;
 		}
 
-		if (fname != NULL) {
-			if (mac_ser_set_fname (&sim->ser[port], fname)) {
-				pce_log (MSG_ERR, "*** bad file name (%s)\n", fname);
-			}
-		}
-
-		if (dname != NULL) {
-			if (mac_ser_set_dname (&sim->ser[port], dname)) {
-				pce_log (MSG_ERR, "*** bad device name (%s)\n", dname);
+		if (driver != NULL) {
+			if (mac_ser_set_driver (&sim->ser[port], driver)) {
+				pce_log (MSG_ERR, "*** can't open driver (%s)\n", driver);
 			}
 		}
 	}

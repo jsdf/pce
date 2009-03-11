@@ -65,15 +65,16 @@ section simarm {
 		address = 0xc0030000
 		irq = 2
 
-		fifo = 64
-
 		# Up to multichar characters are sent or received
 		# without any transmission delay. For a real serial port
 		# this value is 1 but larger values can speed up
 		# transmission.
-		multichar = 128
+		multichar = 1
 
-		# The file that output is written to
-		file = "current/uart0.out"
+		# Not all character drivers are supported on
+		# all platforms.
+		#driver = "null"
+		driver = "stdio:file=uart0.out"
+		#driver = "tios:file=/dev/ttyS0"
 	}
 }

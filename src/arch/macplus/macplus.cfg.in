@@ -96,14 +96,17 @@ section macplus {
 
 	section serial {
 		port = 0
-		file = "sera.out"
-		#device = "/dev/ttyS0"
+
+		# Not all character drivers are supported on
+		# all platforms.
+		#driver = "null"
+		driver = "stdio:file=ser_a.out"
+		#driver = "tios:file=/dev/ttyS0"
 	}
 
 	section serial {
 		port = 1
-		file = "serb.out"
-		#device = "/dev/ttyS1"
+		driver = "stdio:file=ser_b.out"
 	}
 
 	section video {

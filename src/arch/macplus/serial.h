@@ -24,6 +24,12 @@
 #define PCE_MACPLUS_SERIAL_H 1
 
 
+#include <drivers/char/char.h>
+
+
+#define MAC_SER_BUF 256
+
+
 typedef struct {
 	e8530_t       *scc;
 
@@ -37,11 +43,15 @@ typedef struct {
 	int           dtr;
 	int           rts;
 
-	FILE          *fp;
-	int           fp_close;
+	unsigned      inp_idx;
+	unsigned      inp_cnt;
+	unsigned char inp_buf[MAC_SER_BUF];
 
-	int           fd;
-	int           fd_close;
+	unsigned      out_idx;
+	unsigned      out_cnt;
+	unsigned char out_buf[MAC_SER_BUF];
+
+	char_drv_t    *cdrv;
 } mac_ser_t;
 
 
@@ -50,11 +60,7 @@ void mac_ser_free (mac_ser_t *ser);
 
 void mac_ser_set_scc (mac_ser_t *ser, e8530_t *scc, unsigned chn);
 
-int mac_ser_set_fp (mac_ser_t *ser, FILE *fp, int close);
-int mac_ser_set_fname (mac_ser_t *ser, const char *fname);
-
-int mac_ser_set_fd (mac_ser_t *ser, int fd, int close);
-int mac_ser_set_dname (mac_ser_t *ser, const char *dname);
+int mac_ser_set_driver (mac_ser_t *ser, const char *name);
 
 void mac_ser_clock (mac_ser_t *ser, unsigned n);
 

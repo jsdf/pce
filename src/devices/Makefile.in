@@ -44,6 +44,6 @@ pci.o:		pci.c pci.h memory.h $(SDP)
 pci-ata.o:	pci-ata.c pci-ata.h pci.h ata.h devices/block/block.h $(SDP)
 
 serport.o:	serport.c serport.h device.h memory.h chipset/82xx/e8250.h \
-		lib/log.h $(SDP)
+		$(SDP)
 
 slip.o:		slip.c slip.h lib/tun.h $(SDP)

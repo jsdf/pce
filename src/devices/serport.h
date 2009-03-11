@@ -21,9 +21,7 @@
 
 
 /*
- * UART 8250 based serial port. This is very limited. Data sent out over
- * the wires by the UART are written to a file. No data is ever
- * received unless ser_receive() is called.
+ * UART 8250 based serial port.
  */
 
 #ifndef PCE_DEVICES_SERPORT_H
@@ -34,16 +32,18 @@
 
 #include <chipset/82xx/e8250.h>
 
-#include <devices/device.h>
 #include <devices/memory.h>
+
+#include <drivers/char/char.h>
+
+
+#define PCE_SERPORT_BUF 256
 
 
 /*!***************************************************************************
  * @short The serial port context
  *****************************************************************************/
-typedef struct serport_s {
-	device_t      device;
-
+typedef struct {
 	/* the 8250 I/O ports. size is (8 << addr_shift). */
 	mem_blk_t     port;
 
@@ -63,14 +63,18 @@ typedef struct serport_s {
 	int           dtr;
 	int           rts;
 
+	unsigned      out_idx;
+	unsigned      out_cnt;
+	unsigned char out_buf[PCE_SERPORT_BUF];
+
+	unsigned      inp_idx;
+	unsigned      inp_cnt;
+	unsigned char inp_buf[PCE_SERPORT_BUF];
+
 	int           check_out;
 	int           check_inp;
 
-	FILE          *fp;
-	int           fp_close;
-
-	int           fd;
-	int           fd_close;
+	char_drv_t    *cdrv;
 } serport_t;
 
 
@@ -101,16 +105,12 @@ void ser_free (serport_t *ser);
  *****************************************************************************/
 void ser_del (serport_t *ser);
 
-device_t *ser_get_device (serport_t *ser);
-
 mem_blk_t *ser_get_reg (serport_t *ser);
 e8250_t *ser_get_uart (serport_t *ser);
 
-int ser_set_fp (serport_t *ser, FILE *fp, int close);
-int ser_set_fname (serport_t *ser, const char *fname);
+int ser_set_driver (serport_t *ser, const char *name);
 
-int ser_set_fd (serport_t *ser, int fd, int close);
-int ser_set_dname (serport_t *ser, const char *dname);
+int ser_set_log (serport_t *ser, const char *fname);
 
 /*!***************************************************************************
  * @short Receive a byte from the outside

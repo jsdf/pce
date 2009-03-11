@@ -21,6 +21,8 @@ SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
 HDR := $(foreach f,$(FILES),$(f).h)
 
+LIB := $(PCE_CHAR_LIB)
+
 OBJ_EXT	:= \
 	$(pcedst)/cpu/arm/arm.a \
 	$(pcedst)/chipset/82xx/e8250.o \
@@ -47,6 +49,7 @@ OBJ_EXT	:= \
 	$(pcedst)/lib/srec.o \
 	$(pcedst)/lib/sysdep.o \
 	$(PCE_BLK_OBJ) \
+	$(PCE_CHAR_OBJ) \
 	$(pcedst)/libini/libini.a
 
 
@@ -77,6 +80,7 @@ HDR_EXT	:= \
 	lib/srec.h \
 	lib/sysdep.h \
 	$(PCE_BLK_HDR) \
+	$(PCE_CHAR_HDR) \
 	libini/libini.h
 
 MAN1	:=
@@ -111,7 +115,7 @@ install: install-bin pce-simarm.cfg
 
 pce-simarm: $(OBJ) $(OBJ_EXT)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LD_FLG_EXTRA)
+	$(QR)$(LD) $(LD_FLG) -o $@ $(OBJ) $(OBJ_EXT) $(LIB) $(LD_FLG_EXTRA)
 
 
 pce-simarm.cfg: simarm.cfg.in

@@ -155,7 +155,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      irq;
 	unsigned      multichar;
-	const char    *fname;
+	const char    *driver;
 	const char    *chip;
 	ini_sct_t     *sct;
 	serport_t     *ser;
@@ -172,12 +172,12 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 		ini_get_uint16 (sct, "irq", &irq, 2);
 		ini_get_uint16 (sct, "multichar", &multichar, 1);
 		ini_get_string (sct, "uart", &chip, "8250");
-		ini_get_string (sct, "file", &fname, NULL);
+		ini_get_string (sct, "driver", &driver, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u file=%s\n",
+			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u driver=%s\n",
 			i, addr, irq, chip, multichar,
-			(fname == NULL) ? "<none>" : fname
+			(driver == NULL) ? "<none>" : driver
 		);
 
 		ser = ser_new (addr, 2);
@@ -185,7 +185,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 		if (ser == NULL) {
 			pce_log (MSG_ERR,
 				"*** serial port setup failed [%08lX/%u -> %s]\n",
-				addr, irq, (fname == NULL) ? "<none>" : fname
+				addr, irq, (driver == NULL) ? "<none>" : driver
 			);
 		}
 		else {
@@ -193,16 +193,13 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 
 			uart = ser_get_uart (ser);
 
-			if (fname != NULL) {
-				if (ser_set_fname (ser, fname)) {
+			if (driver != NULL) {
+				if (ser_set_driver (ser, driver)) {
 					pce_log (MSG_ERR,
-						"*** can't open file (%s)\n",
-						fname
+						"*** can't open driver (%s)\n",
+						driver
 					);
 				}
-			}
-			else {
-				ser_set_fp (ser, stdout, 0);
 			}
 
 			e8250_set_buf_size (uart, 256, 256);

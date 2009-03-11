@@ -84,7 +84,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      irq;
 	unsigned      multichar;
-	const char    *fname;
+	const char    *driver;
 	const char    *chip;
 	ini_sct_t     *sct;
 
@@ -102,37 +102,33 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			break;
 		}
 
-		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
-			ini_get_uint32 (sct, "io", &addr, defbase[i]);
-		}
+		ini_get_uint32 (sct, "address", &addr, defbase[i]);
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_uint16 (sct, "multichar", &multichar, 1);
-		ini_get_string (sct, "file", &fname, NULL);
+		ini_get_string (sct, "driver", &driver, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u file=%s\n",
+			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u driver=%s\n",
 			i, addr, irq, chip, multichar,
-			(fname == NULL) ? "<none>" : fname
+			(driver == NULL) ? "<none>" : driver
 		);
 
 		sim->serport[i] = ser_new (addr, 0);
+
 		if (sim->serport[i] == NULL) {
 			pce_log (MSG_ERR,
 				"*** serial port setup failed [%08lX/%u -> %s]\n",
-				addr, irq, (fname == NULL) ? "<none>" : fname
+				addr, irq, (driver == NULL) ? "<none>" : driver
 			);
 		}
 		else {
 			e8250_t *uart;
 
-			if (fname != NULL) {
-				if (ser_set_fname (sim->serport[i], fname)) {
-					pce_log (MSG_ERR, "*** can't open file (%s)\n", fname);
+			if (driver != NULL) {
+				if (ser_set_driver (sim->serport[i], driver)) {
+					pce_log (MSG_ERR, "*** can't open driver (%s)\n", driver);
 				}
-			}
-			else {
-				ser_set_fp (sim->serport[i], stdout, 0);
 			}
 
 			uart = &sim->serport[i]->uart;
