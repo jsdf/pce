@@ -1129,10 +1129,8 @@ void pc_clock (ibmpc_t *pc)
 	pc->clk_div[0] += clk2[0];
 
 	if (pc->clk_div[0] >= 8) {
-		pc->clk_div[1] += pc->clk_div[0];
-
 		clk2[0] = pc->clk_div[0] & ~7UL;
-
+		pc->clk_div[1] += clk2[0];
 		pc->clk_div[0] &= 7;
 
 		pc_kbd_clock (&pc->kbd, clk2[0]);
@@ -1147,7 +1145,6 @@ void pc_clock (ibmpc_t *pc)
 			unsigned i;
 
 			clk2[0] = pc->clk_div[1] & ~1023UL;
-
 			pc->clk_div[1] &= 1023;
 
 			if (pc->trm != NULL) {
