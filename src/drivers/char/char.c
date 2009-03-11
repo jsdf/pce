@@ -36,6 +36,9 @@ struct chr_drv_list {
 struct chr_drv_list drvtab[] = {
 	{ "null", chr_null_open },
 	{ "stdio", chr_stdio_open },
+#ifdef PCE_ENABLE_CHAR_TIOS
+	{ "tios", chr_tios_open },
+#endif
 	{ NULL, NULL }
 };
 

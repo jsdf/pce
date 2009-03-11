@@ -9,9 +9,13 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
-ALLFILES := char char-null char-stdio
+ALLFILES := char char-null char-stdio char-tios
 
 FILES := char char-null char-stdio
+
+ifeq "$(PCE_ENABLE_CHAR_TIOS)" "1"
+FILES += char-tios
+endif
 
 ALLSRC := $(foreach f,$(ALLFILES),$(f).c)
 ALLOBJ := $(foreach f,$(ALLFILES),$(f).o)
@@ -37,3 +41,4 @@ all: $(BIN) $(OBJ)
 char.o:		char.c char.h $(SDP)
 char-null.o:	char-null.c char-null.h char.h $(SDP)
 char-stdio.o:	char-stdio.c char-stdio.h char.h $(SDP)
+char-tios.o:	char-tios.c char-tios.h char.h $(SDP)

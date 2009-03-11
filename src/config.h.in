@@ -45,15 +45,17 @@
 
 #undef HAVE_FCNTL_H
 #undef HAVE_INTTYPES_H
+#undef HAVE_LINUX_IF_TUN_H
 #undef HAVE_LIMITS_H
 #undef HAVE_STDINT_H
-#undef HAVE_TERMIOS_H
-#undef HAVE_UNISTD_H
-#undef HAVE_LINUX_IF_TUN_H
 #undef HAVE_SYS_IOCTL_H
 #undef HAVE_SYS_POLL_H
 #undef HAVE_SYS_SOCKET_H
+#undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TIME_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_TERMIOS_H
+#undef HAVE_UNISTD_H
 
 #undef HAVE_FSEEKO
 #undef HAVE_USLEEP
@@ -84,6 +86,8 @@
 
 #undef PCE_ENABLE_TUN
 #undef PCE_ENABLE_SERPORT
+
+#undef PCE_ENABLE_CHAR_TIOS
 
 /* directory separator */
 #define PCE_DIR_SEP '/'
