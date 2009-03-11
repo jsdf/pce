@@ -31,6 +31,8 @@ void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
 	e8250_set_send_fct (&mse->uart, mse, mse_uart_out);
 	e8250_set_recv_fct (&mse->uart, mse, mse_uart_inp);
 
+	e8250_set_multichar (&mse->uart, 64, 64);
+
 	mem_blk_init (&mse->port, base, 8, 0);
 	mse->port.ext = &mse->uart;
 	mse->port.get_uint8 = (mem_get_uint8_f) &e8250_get_uint8;

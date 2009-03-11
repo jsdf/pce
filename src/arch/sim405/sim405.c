@@ -83,8 +83,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
-	unsigned      rate_cnt;
-	unsigned long rate_clk;
+	unsigned      multichar;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
@@ -108,13 +107,12 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 		}
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
-		ini_get_uint16 (sct, "rate_chars", &rate_cnt, 16);
-		ini_get_uint32 (sct, "rate_clocks", &rate_clk, 16384);
+		ini_get_uint16 (sct, "multichar", &multichar, 1);
 		ini_get_string (sct, "file", &fname, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s rate=%u/%lu file=%s\n",
-			i, addr, irq, chip, rate_cnt, rate_clk,
+			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u file=%s\n",
+			i, addr, irq, chip, multichar,
 			(fname == NULL) ? "<none>" : fname
 		);
 
@@ -140,7 +138,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			uart = &sim->serport[i]->uart;
 
 			e8250_set_buf_size (uart, 256, 256);
-			e8250_set_rate (uart, rate_cnt, rate_clk);
+			e8250_set_multichar (uart, multichar, multichar);
 
 			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
@@ -582,26 +580,44 @@ void s405_reset (sim405_t *sim)
 
 void s405_clock (sim405_t *sim, unsigned n)
 {
-	if (sim->clk_div[0] >= 4096) {
+	unsigned long clk;
+
+	if (sim->clk_div[0] >= 256) {
+		clk = sim->clk_div[0] & ~255UL;
+		sim->clk_div[1] += clk;
+		sim->clk_div[0] &= 255;
+
 		if (sim->serport[0] != NULL) {
-			ser_clock (sim->serport[0], 4096);
+			e8250_clock (&sim->serport[0]->uart, clk / 4);
 		}
 
 		if (sim->serport[1] != NULL) {
-			ser_clock (sim->serport[1], 4096);
+			e8250_clock (&sim->serport[1]->uart, clk / 4);
 		}
 
-		if (sim->slip != NULL) {
-			slip_clock (sim->slip, 4096);
-		}
 
-		sim->clk_div[1] += sim->clk_div[0];
-		sim->clk_div[0] &= 4095;
+		if (sim->clk_div[1] >= 4096) {
+			clk = sim->clk_div[1] & ~4095UL;
+			sim->clk_div[2] += clk;
+			sim->clk_div[1] &= 4095UL;
 
-		if (sim->clk_div[1] >= 16384) {
-			scon_check (sim);
+			if (sim->serport[0] != NULL) {
+				ser_clock (sim->serport[0], clk);
+			}
 
-			sim->clk_div[1] &= 16383;
+			if (sim->serport[1] != NULL) {
+				ser_clock (sim->serport[1], clk);
+			}
+
+			if (sim->slip != NULL) {
+				slip_clock (sim->slip, clk);
+			}
+
+			if (sim->clk_div[2] >= 16384) {
+				scon_check (sim);
+
+				sim->clk_div[2] &= 16383;
+			}
 		}
 	}
 

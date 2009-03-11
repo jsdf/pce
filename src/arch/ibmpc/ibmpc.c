@@ -1099,6 +1099,7 @@ void pc_clock_delay (ibmpc_t *pc)
 
 void pc_clock (ibmpc_t *pc)
 {
+	unsigned      i;
 	unsigned long n;
 	unsigned long clk2[2];
 
@@ -1141,9 +1142,13 @@ void pc_clock (ibmpc_t *pc)
 
 		pce_video_clock1 (pc->video, 0);
 
-		if (pc->clk_div[1] >= 1024) {
-			unsigned i;
+		for (i = 0; i < 4; i++) {
+			if (pc->serport[i] != NULL) {
+				e8250_clock (&pc->serport[i]->uart, clk2[0]);
+			}
+		}
 
+		if (pc->clk_div[1] >= 1024) {
 			clk2[0] = pc->clk_div[1] & ~1023UL;
 			pc->clk_div[1] &= 1023;
 

@@ -62,11 +62,11 @@ section sim405 {
 		address = 0xef600300
 		irq = 0
 		
-		# Rate control
-		# Transmission is delayed by rate_clocks clocks every
-		# rate_chars characters
-		rate_chars = 128
-		rate_clocks = 16384
+		# Up to multichar characters are sent or received
+		# without any transmission delay. For a real serial port
+		# this value is 1 but larger values can speed up
+		# transmission.
+		multichar = 128
 
 		# The file that output is written to
 		file = "current/uart0.out"

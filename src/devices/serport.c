@@ -101,6 +101,8 @@ void ser_init (serport_t *ser, unsigned long base, unsigned shift)
 	e8250_set_setup_fct (&ser->uart, ser, ser_uart_check_setup);
 	e8250_set_check_fct (&ser->uart, ser, ser_uart_check_status);
 
+	e8250_set_multichar (&ser->uart, 1, 1);
+
 	mem_blk_init (&ser->port, base, 8 << shift, 0);
 	ser->port.ext = ser;
 	ser->port.get_uint8 = (void *) ser_get_uint8;
@@ -660,6 +662,4 @@ void ser_clock (serport_t *ser, unsigned n)
 	if (ser->check_inp) {
 		ser_process_input (ser);
 	}
-
-	e8250_clock (&ser->uart, n);
 }

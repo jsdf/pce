@@ -206,7 +206,7 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 			}
 
 			e8250_set_buf_size (uart, 256, 256);
-			e8250_set_rate (uart, multichar, 16384);
+			e8250_set_multichar (uart, multichar, multichar);
 
 			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR,
@@ -446,27 +446,40 @@ void sarm_reset (simarm_t *sim)
 
 void sarm_clock (simarm_t *sim, unsigned n)
 {
-	if (sim->clk_div[0] >= 256) {
-		tmr_clock (sim->timer, 256);
+	unsigned long clk;
 
-		sim->clk_div[1] += sim->clk_div[0];
+	if (sim->clk_div[0] >= 256) {
+		clk = sim->clk_div[0] & ~255UL;
+		sim->clk_div[1] += clk;
 		sim->clk_div[0] &= 255;
 
+		if (sim->serport[0] != NULL) {
+			e8250_clock (&sim->serport[0]->uart, clk / 4);
+		}
+
+		if (sim->serport[1] != NULL) {
+			e8250_clock (&sim->serport[1]->uart, clk / 4);
+		}
+
+		tmr_clock (sim->timer, clk);
+
 		if (sim->clk_div[1] >= 4096) {
+			clk = sim->clk_div[1] & ~4095UL;
+			sim->clk_div[2] += clk;
+			sim->clk_div[1] &= 4095;
+
 			if (sim->serport[0] != NULL) {
-				ser_clock (sim->serport[0], 4096);
+				ser_clock (sim->serport[0], clk);
 			}
 
 			if (sim->serport[1] != NULL) {
-				ser_clock (sim->serport[1], 4096);
+				ser_clock (sim->serport[1], clk);
 			}
+
 
 			if (sim->slip != NULL) {
-				slip_clock (sim->slip, 4096);
+				slip_clock (sim->slip, clk);
 			}
-
-			sim->clk_div[2] += sim->clk_div[1];
-			sim->clk_div[1] &= 4095;
 
 			if (sim->clk_div[2] >= 16384) {
 				scon_check (sim);

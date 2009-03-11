@@ -125,8 +125,17 @@ typedef struct {
 	unsigned char  msr;
 	unsigned char  scratch;
 
-	unsigned       rate_cnt[2];
-	unsigned long  rate_clk[2];
+	/* (input clock) / (bit clock) */
+	unsigned       bit_clk_div;
+
+	unsigned       char_clk_cnt;
+	unsigned       char_clk_div;
+
+	unsigned       read_char_cnt;
+	unsigned       read_char_max;
+
+	unsigned       write_char_cnt;
+	unsigned       write_char_max;
 
 	/* enables or disables the scratch register */
 	unsigned char  have_scratch;
@@ -261,14 +270,13 @@ void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out);
 
 /*!***************************************************************************
  * @short Set the transmission rate
- * @param uart The UART structure
- * @param cnt  The character count
- * @param clk  The clock cycle count
- *
- * Transmission is stopped for clk clock cycles every cnt characters.
  *****************************************************************************/
-void e8250_set_rate (e8250_t *uart, unsigned cnt, unsigned long clk);
+void e8250_set_multichar (e8250_t *uart, unsigned read_max, unsigned write_max);
 
+/*!***************************************************************************
+ * @short Set the bit clock divisor
+ *****************************************************************************/
+void e8250_set_bit_clk_div (e8250_t *uart, unsigned div);
 
 /*!***************************************************************************
  * @short  Get the rate divisor
