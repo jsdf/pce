@@ -67,9 +67,11 @@ section simarm {
 
 		fifo = 64
 
-		# Rate control
-		# Transmission is delayed by rate_clocks clocks every
-		# rate_chars characters
+		# Up to multichar characters are sent or received
+		# without any transmission delay. For a real serial port
+		# this value is 1 but larger values can speed up
+		# transmission.
+		multichar = 128
 
 		# The file that output is written to
 		file = "current/uart0.out"

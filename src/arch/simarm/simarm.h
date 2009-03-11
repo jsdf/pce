@@ -92,8 +92,6 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 typedef struct simarm_s {
 	arm_t              *cpu;
 
-	dev_list_t         dev;
-
 	memory_t           *mem;
 	mem_blk_t          *ram;
 	nvram_t            *nvr;
@@ -101,7 +99,8 @@ typedef struct simarm_s {
 	ixp_intc_t         *intc;
 	ixp_timer_t        *timer;
 
-	serport_t          *console;
+	serport_t          *serport[2];
+	unsigned           sercons;
 
 	disks_t            *dsks;
 

@@ -154,30 +154,29 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
-	unsigned      fifo;
-	unsigned      rate_cnt;
-	unsigned long rate_clk;
+	unsigned      multichar;
 	const char    *fname;
 	const char    *chip;
 	ini_sct_t     *sct;
 	serport_t     *ser;
+	e8250_t       *uart;
+
+	sim->serport[0] = NULL;
+	sim->serport[1] = NULL;
 
 	i = 0;
 	sct = NULL;
-	while ((sct = ini_next_sct (ini, sct, "serial")) != NULL) {
-		if (ini_get_uint32 (sct, "address", &addr, 0xc0030000)) {
-			ini_get_uint32 (sct, "io", &addr, 0xc0030000);
-		}
+
+	while ((i < 2) && (sct = ini_next_sct (ini, sct, "serial")) != NULL) {
+		ini_get_uint32 (sct, "address", &addr, 0xc0030000);
 		ini_get_uint16 (sct, "irq", &irq, 2);
-		ini_get_uint16 (sct, "fifo", &fifo, 16);
-		ini_get_uint16 (sct, "rate_chars", &rate_cnt, 16);
-		ini_get_uint32 (sct, "rate_clocks", &rate_clk, 16384);
+		ini_get_uint16 (sct, "multichar", &multichar, 1);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_string (sct, "file", &fname, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s rate=%u/%lu file=%s\n",
-			i, addr, irq, chip, rate_cnt, rate_clk,
+			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u file=%s\n",
+			i, addr, irq, chip, multichar,
 			(fname == NULL) ? "<none>" : fname
 		);
 
@@ -190,6 +189,10 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 			);
 		}
 		else {
+			sim->serport[i] = ser;
+
+			uart = ser_get_uart (ser);
+
 			if (fname != NULL) {
 				if (ser_set_fname (ser, fname)) {
 					pce_log (MSG_ERR,
@@ -202,22 +205,20 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 				ser_set_fp (ser, stdout, 0);
 			}
 
-			e8250_set_buf_size (ser_get_uart (ser), fifo, fifo);
-			e8250_set_rate (ser_get_uart (ser), rate_cnt, rate_clk);
+			e8250_set_buf_size (uart, 256, 256);
+			e8250_set_rate (uart, multichar, 16384);
 
-			if (e8250_set_chip_str (ser_get_uart (ser), chip)) {
+			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR,
 					"*** unknown UART chip (%s)\n", chip
 				);
 			}
 
-			e8250_set_irq_fct (ser_get_uart (ser),
+			e8250_set_irq_fct (uart,
 				sim->intc, ict_get_irq_f (sim->intc, irq)
 			);
 
 			mem_add_blk (sim->mem, ser_get_reg (ser), 0);
-
-			dev_lst_add (&sim->dev, ser_get_device (ser));
 
 			i += 1;
 		}
@@ -227,35 +228,34 @@ void sarm_setup_serport (simarm_t *sim, ini_sct_t *ini)
 static
 void sarm_setup_console (simarm_t *sim, ini_sct_t *ini)
 {
-	unsigned  seridx;
+	unsigned  ser;
 	ini_sct_t *sct;
 
-	/* default */
-	sim->console = dev_lst_get_ext (&sim->dev, "uart", 0);
-
 	sct = ini_next_sct (ini, NULL, "console");
+
 	if (sct == NULL) {
+		ser = 0;
+	}
+	else {
+		ini_get_uint16 (sct, "serial", &ser, 0);
+	}
+
+	pce_log_tag (MSG_INF, "CONSOLE:", "serport=%u\n", ser);
+
+	if ((ser >= 2) || (sim->serport[ser] == NULL)) {
+		pce_log (MSG_ERR, "*** no serial port (%u)\n", ser);
 		return;
 	}
 
-	ini_get_uint16 (sct, "serial", &seridx, 0);
-
-	pce_log_tag (MSG_INF, "CONSOLE:", "serport=%u\n", seridx);
-
-	sim->console = dev_lst_get_ext (&sim->dev, "uart", seridx);
-
-	if (sim->console == NULL) {
-		pce_log (MSG_ERR, "*** no serial port (%u)\n", seridx);
-	}
+	sim->sercons = ser;
 }
 
 static
 void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
-	unsigned   seridx;
+	unsigned   ser;
 	const char *name;
-	device_t   *ser;
 	e8250_t    *uart;
 
 	sct = ini_next_sct (ini, NULL, "slip");
@@ -263,16 +263,15 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 		return;
 	}
 
-	ini_get_uint16 (sct, "serial", &seridx, 0);
+	ini_get_uint16 (sct, "serial", &ser, 0);
 	ini_get_string (sct, "interface", &name, "tun0");
 
 	pce_log_tag (MSG_INF, "SLIP:", "serport=%u interface=%s\n",
-		seridx, name
+		ser, name
 	);
 
-	ser = dev_lst_get (&sim->dev, "uart", seridx);
-	if (ser == NULL) {
-		pce_log (MSG_ERR, "*** no serial port (%u)\n", seridx);
+	if ((ser >= 2) || (sim->serport[ser] == NULL)) {
+		pce_log (MSG_ERR, "*** no serial port (%u)\n", ser);
 		return;
 	}
 
@@ -281,7 +280,7 @@ void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
 		return;
 	}
 
-	uart = ser_get_uart (ser->ext);
+	uart = ser_get_uart (sim->serport[ser]);
 
 	e8250_set_send_fct (uart, sim->slip, slip_uart_check_out);
 	e8250_set_recv_fct (uart, sim->slip, slip_uart_check_inp);
@@ -363,6 +362,8 @@ simarm_t *sarm_new (ini_sct_t *ini)
 	sim->brk = 0;
 	sim->clk_cnt = 0;
 
+	sim->sercons = 0;
+
 	for (i = 0; i < 4; i++) {
 		sim->clk_div[i] = 0;
 	}
@@ -370,8 +371,6 @@ simarm_t *sarm_new (ini_sct_t *ini)
 	sim->cfg = ini;
 
 	bps_init (&sim->bps);
-
-	dev_lst_init (&sim->dev);
 
 	sim->mem = mem_new();
 
@@ -406,14 +405,15 @@ void sarm_del (simarm_t *sim)
 
 	slip_del (sim->slip);
 
+	ser_del (sim->serport[1]);
+	ser_del (sim->serport[0]);
+
 	tmr_del (sim->timer);
 	ict_del (sim->intc);
 
 	arm_del (sim->cpu);
 
 	mem_del (sim->mem);
-
-	dev_lst_free (&sim->dev);
 
 	bps_free (&sim->bps);
 
@@ -434,8 +434,8 @@ void sarm_break (simarm_t *sim, unsigned char val)
 
 void sarm_set_keycode (simarm_t *sim, unsigned char val)
 {
-	if (sim->console != NULL) {
-		ser_receive (sim->console, val);
+	if (sim->serport[sim->sercons] != NULL) {
+		ser_receive (sim->serport[sim->sercons], val);
 	}
 }
 
@@ -453,7 +453,13 @@ void sarm_clock (simarm_t *sim, unsigned n)
 		sim->clk_div[0] &= 255;
 
 		if (sim->clk_div[1] >= 4096) {
-			dev_lst_clock (&sim->dev, 4096);
+			if (sim->serport[0] != NULL) {
+				ser_clock (sim->serport[0], 4096);
+			}
+
+			if (sim->serport[1] != NULL) {
+				ser_clock (sim->serport[1], 4096);
+			}
 
 			if (sim->slip != NULL) {
 				slip_clock (sim->slip, 4096);
