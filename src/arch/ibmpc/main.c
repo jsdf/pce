@@ -405,7 +405,10 @@ void prt_state_pic (e8259_t *pic)
 static
 void prt_state_uart (e8250_t *uart, unsigned base)
 {
-	char p;
+	char          p;
+	unsigned char msr;
+
+	msr = e8250_get_msr (uart);
 
 	switch (e8250_get_parity (uart)) {
 	case E8250_PARITY_N:
@@ -436,13 +439,17 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 	pce_prt_sep ("8250-UART");
 
 	pce_printf (
-		"IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d\n"
+		"IO=%04X  %lu %u%c%u  DTR=%d  RTS=%d   DSR=%d  CTS=%d  DCD=%d  RI=%d\n"
 		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
 		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
 		base,
 		e8250_get_bps (uart), e8250_get_databits (uart), p,
 		e8250_get_stopbits (uart),
 		e8250_get_dtr (uart), e8250_get_rts (uart),
+		(msr & E8250_MSR_DSR) != 0,
+		(msr & E8250_MSR_CTS) != 0,
+		(msr & E8250_MSR_DCD) != 0,
+		(msr & E8250_MSR_RI) != 0,
 		uart->txd[0], uart->txd[1] ? '*' : ' ',
 		uart->rxd[0], uart->rxd[1] ? '*' : ' ',
 		uart->scratch, uart->divisor,
