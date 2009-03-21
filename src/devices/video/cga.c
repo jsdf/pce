@@ -979,6 +979,12 @@ void cga_print_info (cga_t *cga, FILE *fp)
 		(cga->reg[CGA_CSEL] >> 5) & 1
 	);
 
+	fprintf (fp, "CLK: CLK=%lu  HT=%lu HS=%lu  VT=%lu VS=%lu\n",
+		cga_get_dotclock (cga),
+		cga->clk_ht, cga->clk_hs,
+		cga->clk_vt, cga->clk_vs
+	);
+
 	fprintf (fp,
 		"REG: MODE=%02X  CSEL=%02X  STATUS=%02X"
 		"  PAL=[%02X %02X %02X %02X]\n",
