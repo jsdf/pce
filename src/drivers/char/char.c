@@ -537,12 +537,25 @@ unsigned chr_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 
 int chr_get_ctl (char_drv_t *cdrv, unsigned *ctl)
 {
-	if ((cdrv == NULL) || (cdrv->get_ctl == NULL)) {
+	if (cdrv == NULL) {
 		return (1);
 	}
 
-	if (cdrv->get_ctl (cdrv, ctl)) {
-		return (1);
+	if (cdrv->get_ctl == NULL) {
+		*ctl = PCE_CHAR_CD;
+
+		if (cdrv->ctl_out & PCE_CHAR_DTR) {
+			*ctl |= PCE_CHAR_DSR;
+		}
+
+		if (cdrv->ctl_out & PCE_CHAR_RTS) {
+			*ctl |= PCE_CHAR_CTS;
+		}
+	}
+	else {
+		if (cdrv->get_ctl (cdrv, ctl)) {
+			return (1);
+		}
 	}
 
 	chr_log_ctl (cdrv, cdrv->ctl_inp, *ctl);
@@ -567,7 +580,7 @@ int chr_set_ctl (char_drv_t *cdrv, unsigned ctl)
 	cdrv->ctl_out = ctl;
 
 	if (cdrv->set_ctl == NULL) {
-		return (1);
+		return (0);
 	}
 
 	return (cdrv->set_ctl (cdrv, ctl));
