@@ -23,6 +23,8 @@
 #include "main.h"
 
 
+#define SONY_DRIVES      3
+
 /* sony variable offsets */
 #define SONY_TRACK       0	/* current track */
 #define SONY_WPROT       2	/* FF = write protected, 00 = writeable */
@@ -91,7 +93,7 @@ unsigned long mac_sony_get_vars (macplus_t *sim, unsigned drive)
 
 	ret = e68_get_mem32 (sim->cpu, 0x0134);
 
-	if ((drive >= 1) && (drive <= 4)) {
+	if ((drive >= 1) && (drive <= SONY_DRIVES)) {
 		ret += 8 + 66 * drive;
 	}
 
@@ -277,7 +279,7 @@ void mac_sony_check (macplus_t *sim)
 		sim->sony.delay -= 1;
 
 		if (sim->sony.delay == 0) {
-			for (i = 0; i < 4; i++) {
+			for (i = 0; i < SONY_DRIVES; i++) {
 				vars = mac_sony_get_vars (sim, i + 1);
 
 				e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x01);
@@ -287,7 +289,7 @@ void mac_sony_check (macplus_t *sim)
 
 	check = 0;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < SONY_DRIVES; i++) {
 		dsk = dsks_get_disk (sim->dsks, i + 1);
 
 		if (dsk != NULL) {
@@ -337,7 +339,7 @@ void mac_sony_insert (macplus_t *sim, unsigned drive)
 	unsigned long vars;
 	disk_t        *dsk;
 
-	if ((drive < 1) || (drive > 4)) {
+	if ((drive < 1) || (drive > SONY_DRIVES)) {
 		return;
 	}
 
@@ -582,7 +584,7 @@ void mac_sony_prime (macplus_t *sim)
 	iotrap = e68_get_mem16 (sim->cpu, pblk + PB_IOTRAP);
 	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
 
-	if ((vref < 1) || (vref > 4)) {
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
 		mac_sony_return (sim, nsDrvErr, 0);
 		return;
 	}
@@ -688,7 +690,7 @@ void mac_sony_control (macplus_t *sim)
 	mac_log_deb ("sony: control (%04X) %02X\n", cscode, vref);
 #endif
 
-	if ((vref < 1) || (vref > 4)) {
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
 		mac_sony_return (sim, 0xffc8, 0);
 		return;
 	}
@@ -772,7 +774,7 @@ void mac_sony_status (macplus_t *sim)
 	mac_log_deb ("sony: status cs=%04X vref=%04X)\n", cscode, vref);
 #endif
 
-	if ((vref < 1) || (vref > 4)) {
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
 		mac_sony_return (sim, 0xffc8, 0);
 		return;
 	}
