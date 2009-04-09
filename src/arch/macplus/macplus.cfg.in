@@ -91,6 +91,11 @@ section macplus {
 		section device {
 			id = 6
 			drive = 128
+
+			# The vendor and product strings are returned by
+			# the SCSI Inquiry command.
+			#vendor = "PCE     "
+			#product = "PCEDISK         "
 		}
 	}
 

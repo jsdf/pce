@@ -609,6 +609,7 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 	mem_blk_t     *blk;
 	unsigned long addr, size;
 	unsigned      id, drive;
+	const char    *vendor, *product;
 
 	sct = ini_next_sct (ini, NULL, "scsi");
 
@@ -641,10 +642,17 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 	while (sctdev != NULL) {
 		ini_get_uint16 (sctdev, "id", &id, 0);
 		ini_get_uint16 (sctdev, "drive", &drive, 0);
+		ini_get_string (sctdev, "vendor", &vendor, "PCE");
+		ini_get_string (sctdev, "product", &product, "PCEDISK");
 
-		pce_log_tag (MSG_INF, "SCSI:", "id=%u drive=%u\n", id, drive);
+		pce_log_tag (MSG_INF,
+			"SCSI:", "id=%u drive=%u vendor=\"%s\" product=\"%s\"\n",
+			id, drive, vendor, product
+		);
 
 		mac_scsi_set_drive (&sim->scsi, id, drive);
+		mac_scsi_set_drive_vendor (&sim->scsi, id, vendor);
+		mac_scsi_set_drive_product (&sim->scsi, id, product);
 
 		sctdev = ini_next_sct (sct, sctdev, "device");
 	}

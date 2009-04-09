@@ -107,7 +107,7 @@ void mac_scsi_init (mac_scsi_t *scsi)
 	scsi->cmd_finish = NULL;
 
 	for (i = 0; i < 8; i++) {
-		scsi->drive[i] = 0xffff;
+		scsi->dev[i].valid = 0;
 	}
 
 	scsi->dsks = NULL;
@@ -125,7 +125,47 @@ void mac_scsi_set_disks (mac_scsi_t *scsi, disks_t *dsks)
 
 void mac_scsi_set_drive (mac_scsi_t *scsi, unsigned id, unsigned drive)
 {
-	scsi->drive[id & 7] = drive;
+	id &= 7;
+
+	scsi->dev[id].valid = 1;
+	scsi->dev[id].drive = drive;
+
+	memcpy (scsi->dev[id].vendor, "PCE     ", 8);
+	memcpy (scsi->dev[id].product, "PCEDISK         ", 16);
+}
+
+void mac_scsi_set_drive_vendor (mac_scsi_t *scsi, unsigned id, const char *vendor)
+{
+	unsigned      i;
+	unsigned char *dst;
+
+	dst = scsi->dev[id & 7].vendor;
+
+	for (i = 0; i < 8; i++) {
+		if (*vendor == 0) {
+			dst[i] = ' ';
+		}
+		else {
+			dst[i] = *(vendor++);
+		}
+	}
+}
+
+void mac_scsi_set_drive_product (mac_scsi_t *scsi, unsigned id, const char *product)
+{
+	unsigned      i;
+	unsigned char *dst;
+
+	dst = scsi->dev[id & 7].product;
+
+	for (i = 0; i < 16; i++) {
+		if (*product == 0) {
+			dst[i] = ' ';
+		}
+		else {
+			dst[i] = *(product++);
+		}
+	}
 }
 
 static
@@ -300,18 +340,32 @@ void mac_scsi_select (mac_scsi_t *scsi, unsigned char msk)
 }
 
 static
+mac_scsi_dev_t *mac_scsi_get_device (mac_scsi_t *scsi)
+{
+	unsigned id;
+
+	id = scsi->sel_drv & 7;
+
+	if (scsi->dev[id].valid) {
+		return (&scsi->dev[id]);
+	}
+
+	return (NULL);
+}
+
+static
 disk_t *mac_scsi_get_disk (mac_scsi_t *scsi)
 {
-	unsigned drive;
-	disk_t   *dsk;
+	mac_scsi_dev_t *dev;
+	disk_t         *dsk;
 
-	drive = scsi->drive[scsi->sel_drv & 7];
+	dev = &scsi->dev[scsi->sel_drv & 7];
 
-	if (drive == 0xffff) {
+	if ((dev->valid == 0) || (dev->drive == 0xffff)) {
 		return (NULL);
 	}
 
-	dsk = dsks_get_disk (scsi->dsks, drive);
+	dsk = dsks_get_disk (scsi->dsks, dev->drive);
 
 	return (dsk);
 }
@@ -578,29 +632,16 @@ void mac_scsi_cmd_verify10 (mac_scsi_t *scsi)
 static
 void mac_scsi_cmd_inquiry (mac_scsi_t *scsi)
 {
+	mac_scsi_dev_t *dev;
+
+	dev = mac_scsi_get_device (scsi);
+
 	memset (scsi->buf, 0, 256);
 
-	memcpy (scsi->buf + 8, "PCE     ", 8);
-	memcpy (scsi->buf + 16, "PCEDISK         ", 16);
-	memcpy (scsi->buf + 32, "018 ", 4);
-
-#if 0
-	memcpy (scsi->buf + 8, " SEAGATE", 8);
-	memcpy (scsi->buf + 16, "          ST225N", 16);
-
-	memcpy (scsi->buf + 8, "SEAGATE ", 8);
-	memcpy (scsi->buf + 16, "ST250N          ", 16);
-
-	memcpy (scsi->buf + 8, "RODIME  ", 8);
-	memcpy (scsi->buf + 16, "RO632           ", 16);
-
-	memcpy (scsi->buf + 8, "QUANTUM ", 8);
-	memcpy (scsi->buf + 16, "Q280            ", 16);
-	memcpy (scsi->buf + 16, "Q250            ", 16);
-
-	memcpy (scsi->buf + 8, "CONNER  ", 8);
-	memcpy (scsi->buf + 16, "CP3045-40mb-3.5 ", 16);
-#endif
+	if (dev != NULL) {
+		memcpy (scsi->buf + 8, dev->vendor, 8);
+		memcpy (scsi->buf + 16, dev->product, 16);
+	}
 
 	scsi->buf[4] = 32;
 
@@ -624,7 +665,7 @@ void mac_scsi_cmd_mode_sense (mac_scsi_t *scsi)
 {
 	disk_t *dsk;
 
-	dsk = dsks_get_disk (scsi->dsks, scsi->drive[scsi->sel_drv]);
+	dsk = mac_scsi_get_disk (scsi);
 
 	if (dsk == NULL) {
 		mac_scsi_set_phase_status (scsi, 0x02);

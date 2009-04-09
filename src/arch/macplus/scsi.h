@@ -24,6 +24,17 @@
 #define PCE_MACPLUS_SCSI_H 1
 
 
+typedef struct {
+	int           valid;
+
+	/* the PCE drive number */
+	unsigned      drive;
+
+	unsigned char vendor[8];
+	unsigned char product[16];
+} mac_scsi_dev_t;
+
+
 typedef struct mac_scsi_s {
 	unsigned      phase;
 
@@ -50,12 +61,12 @@ typedef struct mac_scsi_s {
 
 	unsigned      sel_drv;
 
-	unsigned      drive[8];
-
 	void          (*cmd_start) (struct mac_scsi_s *scsi);
 	void          (*cmd_finish) (struct mac_scsi_s *scsi);
 
-	disks_t       *dsks;
+	mac_scsi_dev_t dev[8];
+
+	disks_t        *dsks;
 } mac_scsi_t;
 
 
@@ -64,6 +75,8 @@ void mac_scsi_free (mac_scsi_t *scsi);
 
 void mac_scsi_set_disks (mac_scsi_t *scsi, disks_t *dsks);
 void mac_scsi_set_drive (mac_scsi_t *scsi, unsigned id, unsigned drive);
+void mac_scsi_set_drive_vendor (mac_scsi_t *scsi, unsigned id, const char *vendor);
+void mac_scsi_set_drive_product (mac_scsi_t *scsi, unsigned id, const char *product);
 
 unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr);
 unsigned short mac_scsi_get_uint16 (void *ext, unsigned long addr);
