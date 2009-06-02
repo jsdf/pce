@@ -603,7 +603,7 @@ void ega_update_text (ega_t *ega)
 	src = ega->mem;
 	dst = ega->buf;
 
-	addr = ega_get_start (ega);
+	addr = ega->next_addr;
 	rofs = 2 * ega->reg_crt[EGA_CRT_OFS];
 	cpos = ega_get_cursor (ega);
 
@@ -675,7 +675,7 @@ void ega_update_graphics (ega_t *ega)
 	src = ega->mem;
 	dst = ega->buf;
 
-	addr = ega_get_start (ega);
+	addr = ega->next_addr;
 	rofs = 2 * ega->reg_crt[EGA_CRT_OFS];
 
 	row = 0;
@@ -690,7 +690,7 @@ void ega_update_graphics (ega_t *ega)
 
 		rptr = addr;
 
-		hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
+		hpp = ega->last_hpp;
 
 		ptr = ega_get_crtc_addr (ega, rptr, row);
 
@@ -1558,9 +1558,11 @@ void ega_print_info (ega_t *ega, FILE *fp)
 {
 	fprintf (fp, "DEV: EGA\n");
 
-	fprintf (fp, "EGA: OFS=%04X  POS=%04X\n",
+	fprintf (fp, "EGA: ADDR=%04X  ROFS=%04X  CURS=%04X  LCMP=%04X\n",
 		ega_get_start (ega),
-		ega_get_cursor (ega)
+		2 * ega->reg_crt[EGA_CRT_OFS],
+		ega_get_cursor (ega),
+		ega_get_line_compare (ega)
 	);
 
 	fprintf (fp, "MOUT=%02X  ST0=%02X  ST1=%02X\n",
@@ -1598,6 +1600,7 @@ void ega_redraw (ega_t *ega, int now)
 static
 void ega_clock (ega_t *ega, unsigned long cnt)
 {
+	unsigned      addr;
 	unsigned long clk;
 
 	if (ega->clk_vt < 50000) {
@@ -1606,7 +1609,19 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 
 	clk = ega_get_dotclock (ega);
 
-	if (clk < ega->clk_vt) {
+	if (clk < ega->clk_vd) {
+		ega->last_hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
+		ega->update_state |= 2;
+		return;
+	}
+
+	if (clk >= ega->clk_vt) {
+		ega->video.dotclk[0] = 0;
+		ega->video.dotclk[1] = 0;
+		ega->video.dotclk[2] = 0;
+	}
+
+	if ((ega->update_state & 2) == 0) {
 		return;
 	}
 
@@ -1623,10 +1638,6 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		}
 	}
 
-	ega->video.dotclk[0] = 0;
-	ega->video.dotclk[1] = 0;
-	ega->video.dotclk[2] = 0;
-
 	if (ega->term != NULL) {
 		if (ega->update_state & 1) {
 			ega_update (ega);
@@ -1637,7 +1648,14 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		trm_update (ega->term);
 	}
 
-	ega->update_state &= ~1;
+	ega->update_state &= ~3;
+
+	addr = ega_get_start (ega);
+
+	if (ega->next_addr != addr) {
+		ega->next_addr = addr;
+		ega->update_state |= 1;
+	}
 }
 
 void ega_free (ega_t *ega)
