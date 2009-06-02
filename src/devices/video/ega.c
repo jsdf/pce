@@ -1493,7 +1493,7 @@ void ega_set_terminal (ega_t *ega, terminal_t *trm)
 	ega->term = trm;
 
 	if (ega->term != NULL) {
-		trm_open (ega->term, 640, 350);
+		trm_open (ega->term, 640, 400);
 	}
 }
 
