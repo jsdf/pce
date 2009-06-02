@@ -55,6 +55,7 @@
 
 #define VGA_ATC_MODE      16		/* attribute mode control register */
 #define VGA_ATC_CPE       18		/* color plane enable register */
+#define VGA_ATC_HPP       19            /* horizontal pel panning register */
 #define VGA_ATC_CS        20		/* color select register */
 
 #define VGA_SEQ_RESET     0		/* reset register */
@@ -641,8 +642,8 @@ void vga_update_graphics (vga_t *vga)
 {
 	unsigned            x, y, w, h;
 	unsigned            row0, row1, col, cw, ch, dsr;
-	unsigned            addr, rptr, rofs;
-	unsigned            lcmp;
+	unsigned            addr, rptr, rofs, ptr;
+	unsigned            lcmp, hpp;
 	unsigned            msk, bit;
 	unsigned            idx;
 	unsigned char       buf[4];
@@ -711,22 +712,40 @@ void vga_update_graphics (vga_t *vga)
 		col = 0;
 		x = 0;
 
+		hpp = vga->reg_atc[VGA_ATC_HPP] & 0x0f;
+
+		ptr = vga_get_crtc_addr (vga, rptr, row1);
+
+		buf[0] = src[ptr + 0x00000];
+		buf[1] = src[ptr + 0x10000];
+		buf[2] = src[ptr + 0x20000];
+		buf[3] = src[ptr + 0x30000];
+
+		msk = 0x80 >> (hpp & 7);
+
+		if (m256) {
+			bit = (hpp >> 1) & 3;
+		}
+		else if (mcga) {
+			bit = (2 * hpp) & 6;
+		}
+
+		col = hpp;
+
 		while (x < w) {
-			if (col == 0) {
-				unsigned p;
+			if (col >= cw) {
+				rptr = (rptr + 1) & 0xffff;
 
-				p = vga_get_crtc_addr (vga, rptr, row1);
+				ptr = vga_get_crtc_addr (vga, rptr, row1);
 
-				buf[0] = src[p + 0x00000];
-				buf[1] = src[p + 0x10000];
-				buf[2] = src[p + 0x20000];
-				buf[3] = src[p + 0x30000];
+				buf[0] = src[ptr + 0x00000];
+				buf[1] = src[ptr + 0x10000];
+				buf[2] = src[ptr + 0x20000];
+				buf[3] = src[ptr + 0x30000];
 
 				msk = 0x80;
 				bit = 0;
-				col = cw;
-
-				rptr = (rptr + 1) & 0xffff;
+				col = 0;
 			}
 
 			if (m256) {
@@ -760,7 +779,7 @@ void vga_update_graphics (vga_t *vga)
 			vga_get_palette (vga, idx, dst, dst + 1, dst + 2);
 
 			dst += 3;
-			col -= 1;
+			col += 1;
 			x += 1;
 		}
 
