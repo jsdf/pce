@@ -64,6 +64,7 @@
 
 #define EGA_ATC_MODE      16		/* attribute mode control register */
 #define EGA_ATC_CPE       18		/* color plane enable register */
+#define EGA_ATC_HPP       19            /* horizontal pel panning register */
 
 #define EGA_SEQ_RESET     0		/* reset register */
 #define EGA_SEQ_CLOCK     1		/* clocking mode register */
@@ -652,8 +653,8 @@ void ega_update_graphics (ega_t *ega)
 {
 	unsigned            x, y, w, h;
 	unsigned            row, col, cw, ch;
-	unsigned            lcmp;
-	unsigned            addr, rptr, rofs;
+	unsigned            lcmp, hpp;
+	unsigned            addr, rptr, rofs, ptr;
 	unsigned            msk, bit;
 	unsigned            idx;
 	unsigned char       buf[4];
@@ -680,14 +681,6 @@ void ega_update_graphics (ega_t *ega)
 	row = 0;
 	y = 0;
 
-	buf[0] = 0;
-	buf[1] = 0;
-	buf[2] = 0;
-	buf[3] = 0;
-
-	msk = 0;
-	bit = 0;
-
 	while (y < h) {
 		if (y == lcmp) {
 			addr = 0;
@@ -697,23 +690,35 @@ void ega_update_graphics (ega_t *ega)
 
 		rptr = addr;
 
-		col = 0;
+		hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
+
+		ptr = ega_get_crtc_addr (ega, rptr, row);
+
+		buf[0] = src[ptr + 0x00000];
+		buf[1] = src[ptr + 0x10000];
+		buf[2] = src[ptr + 0x20000];
+		buf[3] = src[ptr + 0x30000];
+
+		msk = 0x80 >> (hpp & 7);
+		bit = (2 * hpp) & 6;
+		col = hpp;
+
+		rptr = (rptr + 1) & 0xffff;
+
 		x = 0;
 
 		while (x < w) {
-			if (col == 0) {
-				unsigned p;
+			if (col >= cw) {
+				ptr = ega_get_crtc_addr (ega, rptr, row);
 
-				p = ega_get_crtc_addr (ega, rptr, row);
-
-				buf[0] = src[p + 0x00000];
-				buf[1] = src[p + 0x10000];
-				buf[2] = src[p + 0x20000];
-				buf[3] = src[p + 0x30000];
+				buf[0] = src[ptr + 0x00000];
+				buf[1] = src[ptr + 0x10000];
+				buf[2] = src[ptr + 0x20000];
+				buf[3] = src[ptr + 0x30000];
 
 				msk = 0x80;
 				bit = 0;
-				col = cw;
+				col = 0;
 
 				rptr = (rptr + 1) & 0xffff;
 			}
@@ -741,7 +746,7 @@ void ega_update_graphics (ega_t *ega)
 			ega_get_palette (ega, idx, dst, dst + 1, dst + 2);
 
 			dst += 3;
-			col -= 1;
+			col += 1;
 			x += 1;
 		}
 
