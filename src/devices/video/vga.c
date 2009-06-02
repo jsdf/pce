@@ -94,7 +94,7 @@
 #define VGA_CRT_OFS       19		/* offset */
 #define VGA_CRT_ULL       20		/* underline location */
 #define VGA_CRT_MODE      23		/* crt mode control */
-
+#define VGA_CRT_LC        24            /* line compare */
 
 #define VGA_STATUS0_SS    0x10		/* switch sense */
 #define VGA_STATUS0_CI    0x80		/* crt interrupt */
@@ -253,6 +253,27 @@ unsigned vga_get_cursor (vga_t *vga)
 
 	val = vga->reg_crt[VGA_CRT_CLH];
 	val = (val << 8) | vga->reg_crt[VGA_CRT_CLL];
+
+	return (val);
+}
+
+/*
+ * Get the line compare register
+ */
+static
+unsigned vga_get_line_compare (const vga_t *vga)
+{
+	unsigned val;
+
+	val = vga->reg_crt[VGA_CRT_LC];
+
+	if (vga->reg_crt[VGA_CRT_OF] & 0x10) {
+		val += 256;
+	}
+
+	if (vga->reg_crt[VGA_CRT_MS] & 0x40) {
+		val += 512;
+	}
 
 	return (val);
 }
@@ -621,6 +642,7 @@ void vga_update_graphics (vga_t *vga)
 	unsigned            x, y, w, h;
 	unsigned            row0, row1, col, cw, ch, dsr;
 	unsigned            addr, rptr, rofs;
+	unsigned            lcmp;
 	unsigned            msk, bit;
 	unsigned            idx;
 	unsigned char       buf[4];
@@ -633,11 +655,14 @@ void vga_update_graphics (vga_t *vga)
 	cw = vga_get_cw (vga);
 	ch = vga_get_ch (vga);
 
+	lcmp = vga_get_line_compare (vga);
+
 	dsr = (vga->reg_crt[VGA_CRT_MS] & VGA_CRT_MS_DSC) ? 2 : 1;
 
 	if ((dsr == 2) && ((h & 1) == 0)) {
 		dsr = 1;
 		h >>= 1;
+		lcmp >>= 1;
 	}
 
 	if (vga->reg_grc[VGA_GRC_MODE] & VGA_GRC_MODE_C256) {
@@ -675,6 +700,10 @@ void vga_update_graphics (vga_t *vga)
 	y = 0;
 
 	while (y < h) {
+		if (y == lcmp) {
+			addr = 0;
+		}
+
 		dst = vga->buf + 3UL * y * w;
 
 		rptr = addr;
@@ -753,8 +782,6 @@ void vga_update_graphics (vga_t *vga)
 			}
 
 		}
-
-		/* todo: check line compare */
 
 		y += 1;
 	}
@@ -1818,9 +1845,11 @@ void vga_print_info (vga_t *vga, FILE *fp)
 {
 	fprintf (fp, "DEV: VGA\n");
 
-	fprintf (fp, "VGA: OFS=%04X  POS=%04X\n",
+	fprintf (fp, "VGA: ADDR=%04X  LOFS=%04X  CURS=%04X  LCMP=%04X\n",
 		vga_get_start (vga),
-		vga_get_cursor (vga)
+		2 * vga->reg_crt[VGA_CRT_OFS],
+		vga_get_cursor (vga),
+		vga_get_line_compare (vga)
 	);
 
 	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
