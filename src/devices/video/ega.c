@@ -102,7 +102,7 @@
 #define EGA_CRT_OFS       19		/* offset */
 #define EGA_CRT_ULL       20		/* underline location */
 #define EGA_CRT_MODE      23		/* crt mode control */
-
+#define EGA_CRT_LC        24            /* line compare */
 
 #define EGA_STATUS0_SS    0x10		/* switch sense */
 #define EGA_STATUS0_CI    0x80		/* crt interrupt */
@@ -257,6 +257,23 @@ unsigned ega_get_cursor (ega_t *ega)
 
 	val = ega->reg_crt[EGA_CRT_CLH];
 	val = (val << 8) | ega->reg_crt[EGA_CRT_CLL];
+
+	return (val);
+}
+
+/*
+ * Get the line compare register
+ */
+static
+unsigned ega_get_line_compare (const ega_t *ega)
+{
+	unsigned val;
+
+	val = ega->reg_crt[EGA_CRT_LC];
+
+	if (ega->reg_crt[EGA_CRT_OF] & 0x10) {
+		val += 256;
+	}
 
 	return (val);
 }
@@ -635,6 +652,7 @@ void ega_update_graphics (ega_t *ega)
 {
 	unsigned            x, y, w, h;
 	unsigned            row, col, cw, ch;
+	unsigned            lcmp;
 	unsigned            addr, rptr, rofs;
 	unsigned            msk, bit;
 	unsigned            idx;
@@ -646,6 +664,8 @@ void ega_update_graphics (ega_t *ega)
 	h = ega_get_h (ega);
 	cw = ega_get_cw (ega);
 	ch = ega_get_ch (ega);
+
+	lcmp = ega_get_line_compare (ega);
 
 	if (ega_set_buf_size (ega, w, h)) {
 		return;
@@ -669,6 +689,10 @@ void ega_update_graphics (ega_t *ega)
 	bit = 0;
 
 	while (y < h) {
+		if (y == lcmp) {
+			addr = 0;
+		}
+
 		dst = ega->buf + 3UL * y * w;
 
 		rptr = addr;
