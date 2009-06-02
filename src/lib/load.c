@@ -42,7 +42,10 @@ int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
 		return (1);
 	}
 
-	fread (blk->data, 1, blk->size, fp);
+	if (fread (blk->data, 1, blk->size, fp) != blk->size) {
+		fclose (fp);
+		return (1);
+	}
 
 	fclose (fp);
 
