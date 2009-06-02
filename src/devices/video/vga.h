@@ -46,6 +46,8 @@ typedef struct vga_s {
 	unsigned char reg_crt[25];
 	unsigned char reg_dac[768];
 
+	unsigned      next_addr;
+
 	char          atc_flipflop;
 
 	unsigned      dac_addr_read;

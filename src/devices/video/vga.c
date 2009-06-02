@@ -585,7 +585,7 @@ void vga_update_text (vga_t *vga)
 	src = vga->mem;
 	dst = vga->buf;
 
-	addr = vga_get_start (vga);
+	addr = vga->next_addr;
 	rofs = 2 * vga->reg_crt[VGA_CRT_OFS];
 	cpos = vga_get_cursor (vga);
 
@@ -690,7 +690,7 @@ void vga_update_graphics (vga_t *vga)
 	m256 = ((vga->reg_grc[VGA_GRC_MODE] & VGA_GRC_MODE_C256) != 0);
 	mcga = ((vga->reg_grc[VGA_GRC_MODE] & VGA_GRC_MODE_SR) != 0);
 
-	addr = vga_get_start (vga);
+	addr = vga->next_addr;
 	rofs = 2 * vga->reg_crt[VGA_CRT_OFS];
 
 	msk = 0;
@@ -1912,6 +1912,7 @@ void vga_redraw (vga_t *vga, int now)
 static
 void vga_clock (vga_t *vga, unsigned long cnt)
 {
+	unsigned      addr;
 	unsigned long clk;
 
 	if (vga->clk_vt < 50000) {
@@ -1920,7 +1921,18 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 
 	clk = vga_get_dotclock (vga);
 
-	if (clk < vga->clk_vt) {
+	if (clk < vga->clk_vd) {
+		vga->update_state |= 2;
+		return;
+	}
+
+	if (clk >= vga->clk_vt) {
+		vga->video.dotclk[0] = 0;
+		vga->video.dotclk[1] = 0;
+		vga->video.dotclk[2] = 0;
+	}
+
+	if ((vga->update_state & 2) == 0) {
 		return;
 	}
 
@@ -1937,10 +1949,6 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		}
 	}
 
-	vga->video.dotclk[0] = 0;
-	vga->video.dotclk[1] = 0;
-	vga->video.dotclk[2] = 0;
-
 	if (vga->term != NULL) {
 		if (vga->update_state & 1) {
 			vga_update (vga);
@@ -1951,7 +1959,14 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		trm_update (vga->term);
 	}
 
-	vga->update_state &= ~1;
+	vga->update_state &= ~3;
+
+	addr = vga_get_start (vga);
+
+	if (vga->next_addr != addr) {
+		vga->next_addr = addr;
+		vga->update_state |= 1;
+	}
 }
 
 void vga_free (vga_t *vga)
@@ -2039,6 +2054,8 @@ void vga_init (vga_t *vga, unsigned long io, unsigned long addr)
 	vga->dac_addr_read = 0;
 	vga->dac_addr_write = 0;
 	vga->dac_state = 0;
+
+	vga->next_addr = 0;
 
 	vga->switches = 0x09;
 
