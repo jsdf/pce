@@ -1057,7 +1057,7 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 
 	if (cga->term != NULL) {
 		if (cga->update_state & 1) {
-			cga_update (cga);
+			cga->update (cga);
 			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
 			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
 		}
