@@ -21,6 +21,8 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ata.h"
 

@@ -80,19 +80,6 @@ AC_MSG_RESULT([$PCE_VERSION_STR ($PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_
 
 
 #-----------------------------------------------------------------------------
-# build time
-
-AC_MSG_CHECKING([build time])
-PCE_CFG_DATE=`date +%Y-%m-%d`
-PCE_CFG_TIME=`date +%T`
-AC_SUBST(PCE_CFG_DATE)
-AC_SUBST(PCE_CFG_TIME)
-AC_DEFINE_UNQUOTED(PCE_CFG_DATE, "$PCE_CFG_DATE")
-AC_DEFINE_UNQUOTED(PCE_CFG_TIME, "$PCE_CFG_TIME")
-AC_MSG_RESULT([$PCE_CFG_DATE $PCE_CFG_TIME])
-
-
-#-----------------------------------------------------------------------------
 # host
 
 AC_CANONICAL_HOST
@@ -166,7 +153,6 @@ case "$INSTALL" in
 	;;
 esac
 AC_PATH_PROG(AR, ar, ar)
-AC_PATH_PROG(GZ, gzip, gzip)
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 
@@ -277,13 +263,13 @@ if test "x$PCE_SDL_USE" != "x0" ; then
 	AC_ARG_ENABLE(static-sdl,
 	  AC_HELP_STRING([--enable-static-sdl], [Link to static SDL [[no]]]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_SDL_LDF=`sdl-config --static-libs`
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_SDL_LDF=`sdl-config --libs`
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_SDL_LDF=`sdl-config --static-libs`
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_SDL_LDF=`sdl-config --libs`
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
   		PCE_SDL_LDF=`sdl-config --libs`
@@ -322,32 +308,26 @@ if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
 if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
 if test -d "$srcdir/src/arch/sims32"; then have_sims32=1; else have_sims32=0; fi
-if test -d "$srcdir/src/cpu/e8086"; then have_e8086=1; else have_e8086=0; fi
-if test -d "$srcdir/src/cpu/e6502"; then have_e6502=1; else have_e6502=0; fi
-if test -d "$srcdir/src/cpu/e68000"; then have_e68000=1; else have_e68000=0; fi
-if test -d "$srcdir/src/cpu/arm"; then have_arm=1; else have_arm=0; fi
-if test -d "$srcdir/src/cpu/ppc405"; then have_ppc405=1; else have_ppc405=0; fi
-if test -d "$srcdir/src/cpu/sparc32"; then have_sparc32=1; else have_sparc32=0; fi
 
 
 AC_MSG_CHECKING([whether to build the IBM PC emulator])
-if test "x$have_ibmpc$have_e8086" != "x11" ; then
+if test "x$have_ibmpc" != "x1" ; then
 	PCE_BUILD_IBMPC=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(ibmpc,
 	  AC_HELP_STRING([--enable-ibmpc], [Enable the IBM PC emulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_IBMPC=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_IBMPC=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_IBMPC=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_IBMPC=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
-	  	PCE_BUILD_IBMPC=1
+		PCE_BUILD_IBMPC=1
 		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
@@ -359,23 +339,23 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the Mac Plus emulator])
-if test "x$have_macplus$have_e68000" != "x11" ; then
+if test "x$have_macplus" != "x1" ; then
 	PCE_BUILD_MACPLUS=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(macplus,
 	  AC_HELP_STRING([--enable-macplus], [Enable the Mac Plus emulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_MACPLUS=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_MACPLUS=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_MACPLUS=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_MACPLUS=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
-	  	PCE_BUILD_MACPLUS=1
+		PCE_BUILD_MACPLUS=1
 		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
@@ -387,20 +367,20 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the PPC405 simulator])
-if test "x$have_sim405$have_ppc405" != "x11" ; then
+if test "x$have_sim405" != "x1" ; then
 	PCE_BUILD_SIM405=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(sim405,
 	  AC_HELP_STRING([--enable-sim405], [Enable the PPC405 simulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_SIM405=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_SIM405=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_SIM405=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_SIM405=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
 	  	PCE_BUILD_SIM405=1
@@ -415,23 +395,23 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the 6502 simulator])
-if test "x$have_sim6502$have_e6502" != "x11" ; then
+if test "x$have_sim6502" != "x1" ; then
 	PCE_BUILD_SIM6502=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(sim6502,
 	  AC_HELP_STRING([--enable-sim6502], [Enable the 6502 simulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_SIM6502=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_SIM6502=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_SIM6502=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_SIM6502=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
-	  	PCE_BUILD_SIM6502=1
+		PCE_BUILD_SIM6502=1
 		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
@@ -443,23 +423,23 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the sparc32 simulator])
-if test "x$have_sims32$have_sparc32" != "x11" ; then
+if test "x$have_sims32" != "x1" ; then
 	PCE_BUILD_SIMS32=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(sims32,
 	  AC_HELP_STRING([--enable-sims32], [Enable the sparc32 simulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_SIMS32=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_SIMS32=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_SIMS32=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_SIMS32=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
-	  	PCE_BUILD_SIMS32=1
+		PCE_BUILD_SIMS32=1
 		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
@@ -471,23 +451,23 @@ fi
 
 
 AC_MSG_CHECKING([whether to build the arm simulator])
-if test "x$have_simarm$have_arm" != "x11" ; then
+if test "x$have_simarm" != "x1" ; then
 	PCE_BUILD_SIMARM=0
 	AC_MSG_RESULT([no (no source)])
 else
 	AC_ARG_ENABLE(simarm,
 	  AC_HELP_STRING([--enable-simarm], [Enable the arm simulator]),
 	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_SIMARM=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_SIMARM=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_SIMARM=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_SIMARM=0
+			AC_MSG_RESULT([no (forced)])
+		fi
 	  ],
 	  [
-	  	PCE_BUILD_SIMARM=1
+		PCE_BUILD_SIMARM=1
 		AC_MSG_RESULT([yes (default)])
 	  ]
 	)
@@ -495,192 +475,6 @@ fi
 AC_SUBST(PCE_BUILD_SIMARM)
 if test "x$PCE_BUILD_SIMARM" = "x1" ; then
 	AC_DEFINE(PCE_BUILD_SIMARM)
-fi
-
-
-AC_MSG_CHECKING([whether to build the 6502 core])
-if test "x$have_e6502" != "x1" ; then
-	PCE_BUILD_6502=0
-	AC_MSG_RESULT([no (no source)])
-elif test "x$PCE_BUILD_SIM6502" = "x1" ; then
-	PCE_BUILD_6502=1
-	AC_MSG_RESULT([yes (required by sim6502)])
-else
-	AC_ARG_ENABLE(6502,
-	  AC_HELP_STRING([--enable-6502], [Enable the 6502 core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_6502=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_6502=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_6502=0
-		AC_MSG_RESULT([no (default)])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_6502)
-if test "x$PCE_BUILD_6502" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_6502)
-fi
-
-
-AC_MSG_CHECKING([whether to build the 68000 core])
-if test "x$have_e68000" != "x1" ; then
-	PCE_BUILD_68000=0
-	AC_MSG_RESULT([no (no source)])
-elif test "x$PCE_BUILD_MACPLUS" = "x1" ; then
-	PCE_BUILD_68000=1
-	AC_MSG_RESULT([yes (required by Mac Plus)])
-else
-	AC_ARG_ENABLE(68000,
-	  AC_HELP_STRING([--enable-68000], [Enable the 68000 core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_68000=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_68000=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_68000=0
-		AC_MSG_RESULT([no (default)])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_68000)
-if test "x$PCE_BUILD_68000" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_68000)
-fi
-
-
-AC_MSG_CHECKING([whether to build the 8086 core])
-if test "x$have_e8086" != "x1" ; then
-	PCE_BUILD_8086=0
-	AC_MSG_RESULT([no (no source)])
-elif test $PCE_BUILD_IBMPC -eq 1 ; then
-	PCE_BUILD_8086=1
-	AC_MSG_RESULT([yes (required by ibmpc)])
-else
-	AC_ARG_ENABLE(8086,
-	  AC_HELP_STRING([--enable-8086], [Enable the 8086 core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_8086=1
-	  		AC_MSG_RESULT([yes])
-	  	else
-	  		PCE_BUILD_8086=0
-	  		AC_MSG_RESULT([no])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_8086=1
-		AC_MSG_RESULT([yes])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_8086)
-if test "x$PCE_BUILD_8086" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_8086)
-fi
-
-
-AC_MSG_CHECKING([whether to build the arm core])
-if test "x$have_arm" = "x0" ; then
-	PCE_BUILD_ARM=0
-	AC_MSG_RESULT([no (no source)])
-elif test "x$PCE_BUILD_SIMARM" = "x1" ; then
-	PCE_BUILD_ARM=1
-	AC_MSG_RESULT([yes (required by simarm)])
-else
-	AC_ARG_ENABLE(arm,
-	  AC_HELP_STRING([--enable-arm], [Enable the arm core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_ARM=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_ARM=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_ARM=0
-		AC_MSG_RESULT([no (default)])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_ARM)
-if test "x$PCE_BUILD_ARM" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_ARM)
-fi
-
-
-AC_MSG_CHECKING([whether to build the ppc405 core])
-if test "x$have_ppc405" = "x0" ; then
-	PCE_BUILD_PPC405=0
-	AC_MSG_RESULT([no (no source)])
-elif test "x$PCE_BUILD_SIM405" = "x1" ; then
-	PCE_BUILD_PPC405=1
-	AC_MSG_RESULT([yes (required by sim405)])
-else
-	AC_ARG_ENABLE(ppc405,
-	  AC_HELP_STRING([--enable-ppc405], [Enable the PowerPC 405 core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_PPC405=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_PPC405=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_PPC405=0
-		AC_MSG_RESULT([no (default)])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_PPC405)
-if test "x$PCE_BUILD_PPC405" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_PPC405)
-fi
-
-
-AC_MSG_CHECKING([whether to build the sparc32 core])
-if test "x$have_sparc32" = "x0" ; then
-	PCE_BUILD_SPARC32=0
-	AC_MSG_RESULT([no (no source)])
-elif test "x$PCE_BUILD_SIMS32" = "x1" ; then
-	PCE_BUILD_SPARC32=1
-	AC_MSG_RESULT([yes (required by sims32)])
-else
-	AC_ARG_ENABLE(sparc32,
-	  AC_HELP_STRING([--enable-sparc32], [Enable the sparc32 core]),
-	  [
-	  	if test "x$enableval" = "xyes" ; then
-	  		PCE_BUILD_SPARC32=1
-	  		AC_MSG_RESULT([yes (forced)])
-	  	else
-	  		PCE_BUILD_SPARC32=0
-	  		AC_MSG_RESULT([no (forced)])
-	  	fi
-	  ],
-	  [
-	  	PCE_BUILD_SPARC32=0
-		AC_MSG_RESULT([no (default)])
-	  ]
-	)
-fi
-AC_SUBST(PCE_BUILD_SPARC32)
-if test "x$PCE_BUILD_SPARC32" = "x1" ; then
-	AC_DEFINE(PCE_BUILD_SPARC32)
 fi
 
 
@@ -720,24 +514,24 @@ AC_MSG_CHECKING([whether to enable tun])
 AC_ARG_ENABLE(tun,
   AC_HELP_STRING([--enable-tun], [Enable tun networking]),
   [
-  	if test "x$enableval" = "xyes" ; then
-  		PCE_ENABLE_TUN=1
-  		AC_MSG_RESULT([yes])
-  	else
-  		PCE_ENABLE_TUN=0
-  		AC_MSG_RESULT([no])
-  	fi
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_TUN=1
+		AC_MSG_RESULT([yes])
+	else
+		PCE_ENABLE_TUN=0
+		AC_MSG_RESULT([no])
+ 	fi
   ],
   [
-  	h1=$ac_cv_header_linux_if_tun_h
-  	h2=$ac_cv_header_sys_ioctl_h
-  	h3=$ac_cv_header_sys_poll_h
-  	h4=$ac_cv_header_sys_socket_h
-  	if test "x$h1" = "xyes" -a "x$h2" = "xyes" -a "x$h3" = "xyes" -a "x$h4" = "xyes" ; then
-  		PCE_ENABLE_TUN=1
-  		AC_MSG_RESULT([yes (guess)])
-  	else
-	  	PCE_ENABLE_TUN=0
+	h1=$ac_cv_header_linux_if_tun_h
+	h2=$ac_cv_header_sys_ioctl_h
+	h3=$ac_cv_header_sys_poll_h
+	h4=$ac_cv_header_sys_socket_h
+	if test "x$h1" = "xyes" -a "x$h2" = "xyes" -a "x$h3" = "xyes" -a "x$h4" = "xyes" ; then
+		PCE_ENABLE_TUN=1
+		AC_MSG_RESULT([yes (guess)])
+	else
+		PCE_ENABLE_TUN=0
 		AC_MSG_RESULT([no (guess)])
 	fi
   ]
@@ -765,96 +559,43 @@ AC_DEFINE_UNQUOTED(PCE_DIR_DATA, "$pce_datdir")
 
 dnl --------------------------------------------------------------------------
 
-extra=""
-core1=""
-core2=""
 emu1=""
 emu2=""
 
 if test "x$PCE_BUILD_IBMPC" = "x1" ; then
-	extra="$extra src/arch/ibmpc/Makefile"
-	extra="$extra src/arch/ibmpc/bios/Makefile"
-	extra="$extra src/arch/ibmpc/pceutils/Makefile"
 	emu1="$emu1 ibmpc"
 else
 	emu2="$emu2 ibmpc"
 fi
 
 if test "x$PCE_BUILD_MACPLUS" = "x1" ; then
-	extra="$extra src/arch/macplus/Makefile"
 	emu1="$emu1 macplus"
 else
 	emu2="$emu2 macplus"
 fi
 
 if test "x$PCE_BUILD_SIM405" = "x1" ; then
-	extra="$extra src/arch/sim405/Makefile"
 	emu1="$emu1 sim405"
 else
 	emu2="$emu2 sim405"
 fi
 
 if test "x$PCE_BUILD_SIM6502" = "x1" ; then
-	extra="$extra src/arch/sim6502/Makefile"
 	emu1="$emu1 sim6502"
 else
 	emu2="$emu2 sim6502"
 fi
 
 if test "x$PCE_BUILD_SIMARM" = "x1" ; then
-	extra="$extra src/arch/simarm/Makefile"
 	emu1="$emu1 simarm"
 else
 	emu2="$emu2 simarm"
 fi
 
 if test "x$PCE_BUILD_SIMS32" = "x1" ; then
-	extra="$extra src/arch/sims32/Makefile"
 	emu1="$emu1 sims32"
 else
 	emu2="$emu2 sims32"
-fi
-
-if test "x$PCE_BUILD_6502" = "x1" ; then
-	extra="$extra src/cpu/e6502/Makefile"
-	core1="$core1 6502"
-else
-	core2="$core2 6502"
-fi
-
-if test "x$PCE_BUILD_68000" = "x1" ; then
-	extra="$extra src/cpu/e68000/Makefile"
-	core1="$core1 68000"
-else
-	core2="$core2 68000"
-fi
-
-if test "x$PCE_BUILD_8086" = "x1" ; then
-	extra="$extra src/cpu/e8086/Makefile"
-	core1="$core1 8086"
-else
-	core2="$core2 8086"
-fi
-
-if test "x$PCE_BUILD_ARM" = "x1" ; then
-	extra="$extra src/cpu/arm/Makefile"
-	core1="$core1 arm"
-else
-	core2="$core2 arm"
-fi
-
-if test "x$PCE_BUILD_PPC405" = "x1" ; then
-	extra="$extra src/cpu/ppc405/Makefile"
-	core1="$core1 ppc405"
-else
-	core2="$core2 ppc405"
-fi
-
-if test "x$PCE_BUILD_SPARC32" = "x1" ; then
-	extra="$extra src/cpu/sparc32/Makefile"
-	core1="$core1 sparc32"
-else
-	core2="$core2 sparc32"
 fi
 
 
@@ -893,32 +634,7 @@ else
 fi
 
 
-AC_OUTPUT(
-  Makefile
-  config.inc
-  rules.inc
-  src/Makefile
-  src/arch/Makefile
-  src/chipset/Makefile
-  src/chipset/82xx/Makefile
-  src/chipset/clock/Makefile
-  src/chipset/ppc405/Makefile
-  src/cpu/Makefile
-  src/cpu/e8086/Makefile
-  src/devices/Makefile
-  src/devices/block/Makefile
-  src/devices/clock/Makefile
-  src/devices/video/Makefile
-  src/drivers/Makefile
-  src/drivers/char/Makefile
-  src/lib/Makefile
-  src/libini/Makefile
-  src/terminal/Makefile
-  src/utils/Makefile
-  src/utils/pceimg/Makefile
-  src/config.inc
-  $extra
-)
+AC_OUTPUT(Makefile Makefile.inc src/config.inc)
 
 
 #-----------------------------------------------------------------------------
@@ -934,8 +650,6 @@ echo "  prefix:                 $prefix"
 echo
 echo "  Emulators built:       $emu1"
 echo "  Emulators not built:   $emu2"
-echo "  CPU cores built:       $core1"
-echo "  CPU cores not built:   $core2"
 echo "  Terminals built:       $term1"
 echo "  Terminals not built:   $term2"
 echo "  Char drivers built:    $char1"

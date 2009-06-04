@@ -88,8 +88,8 @@ void prt_version (void)
 {
 	fputs (
 		"pce-img version " PCE_VERSION_STR
-		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
+		"\n\n"
+		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 

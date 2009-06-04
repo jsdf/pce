@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <lib/log.h>
-
 #include "nvram.h"
 
 

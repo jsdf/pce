@@ -24,7 +24,6 @@
 #define PCE_DEVICES_ATA_H 1
 
 
-#include <libini/libini.h>
 #include <devices/memory.h>
 #include <devices/block/block.h>
 

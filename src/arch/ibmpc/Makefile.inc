@@ -1,0 +1,104 @@
+# src/arch/ibmpc/Makefile.inc
+
+rel := src/arch/ibmpc
+
+DIRS += $(rel)
+DIST += $(rel)/Makefile.inc
+
+# ----------------------------------------------------------------------
+
+PCE_IBMPC_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_IBMPC_LDFLAGS := $(LDFLAGS_DEFAULT)
+
+ifeq "$(PCE_X11_USE)" "1"
+	PCE_IBMPC_CFLAGS += $(PCE_X11_CCF)
+	PCE_IBMPC_LDFLAGS += $(PCE_X11_LDF)
+endif
+
+ifeq "$(PCE_SDL_USE)" "1"
+	PCE_IBMPC_CFLAGS += $(PCE_SDL_CCF)
+	PCE_IBMPC_LDFLAGS += $(PCE_SDL_LDF)
+endif
+
+$(rel)/%.o: $(rel)/%.c
+	$(QP)echo "  CC     $@"
+	$(QR)$(CC) -c $(PCE_IBMPC_CFLAGS) -o $@ $<
+
+# ----------------------------------------------------------------------
+
+PCE_IBMPC_BAS  := cassette ems hook ibmpc int13 keyboard main mouse msg util xms
+PCE_IBMPC_SRC  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).c)
+PCE_IBMPC_OBJ  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).o)
+PCE_IBMPC_HDR  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).h)
+PCE_IBMPC_MAN1 := $(rel)/pce-ibmpc.1
+PCE_IBMPC_ETC  := $(rel)/pce-ibmpc.cfg
+PCE_IBMPC_BIN  := $(rel)/pce-ibmpc
+
+PCE_IBMPC_OBJ_EXT := \
+	src/cpu/e8086/e8086.a \
+	src/chipset/82xx/e8237.o \
+	src/chipset/82xx/e8250.o \
+	src/chipset/82xx/e8253.o \
+	src/chipset/82xx/e8255.o \
+	src/chipset/82xx/e8259.o \
+	src/devices/video/cga.o \
+	src/devices/video/ega.o \
+	src/devices/video/hgc.o \
+	src/devices/video/mda.o \
+	src/devices/video/plantronics.o \
+	src/devices/video/vga.o \
+	src/devices/video/video.o \
+	src/devices/video/wy700.o \
+	src/devices/device.o \
+	src/devices/memory.o \
+	src/devices/nvram.o \
+	src/devices/parport.o \
+	src/devices/serport.o \
+	src/drivers/char/char.a \
+	src/lib/brkpt.o \
+	src/lib/cmd.o \
+	src/lib/console.o \
+	src/lib/hexdump.o \
+	src/lib/inidsk.o \
+	src/lib/iniram.o \
+	src/lib/initerm.o \
+	src/lib/ihex.o \
+	src/lib/srec.o \
+	src/lib/load.o \
+	src/lib/log.o \
+	src/lib/monitor.o \
+	src/lib/msg.o \
+	src/lib/path.o \
+	src/lib/sysdep.o \
+	src/libini/libini.a \
+	$(DEV_BLK_OBJ) \
+	$(DRV_TRM_OBJ)
+
+ifeq "$(PCE_BUILD_IBMPC)" "1"
+BIN  += $(PCE_IBMPC_BIN)
+ETC  += $(PCE_IBMPC_ETC)
+MAN1 += $(PCE_IBMPC_MAN1)
+endif
+
+CLN  += $(PCE_IBMPC_BIN) $(PCE_IBMPC_OBJ) $(PCE_IBMPC_ETC)
+DIST += $(PCE_IBMPC_SRC) $(PCE_IBMPC_HDR) $(PCE_IBMPC_MAN1)
+DIST += $(rel)/ibmpc.cfg.in $(rel)/pce.inc
+
+$(rel)/int13.o:		$(rel)/int13.c
+$(rel)/ems.o:		$(rel)/ems.c
+$(rel)/hook.o:		$(rel)/hook.c
+$(rel)/ibmpc.o:		$(rel)/ibmpc.c
+$(rel)/keyboard.o:	$(rel)/keyboard.c
+$(rel)/main.o:		$(rel)/main.c
+$(rel)/mouse.o:		$(rel)/mouse.c
+$(rel)/msg.o:		$(rel)/msg.c
+$(rel)/util.o:		$(rel)/util.c
+$(rel)/xms.o:		$(rel)/xms.c
+
+$(rel)/pce-ibmpc: $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)
+	$(QP)echo "  LD     $@"
+	$(QR)$(LD) $(PCE_IBMPC_LDFLAGS) -o $@ $(PCE_IBMPC_OBJ) $(PCE_IBMPC_OBJ_EXT) -lm
+
+$(rel)/pce-ibmpc.cfg: $(rel)/ibmpc.cfg.in
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

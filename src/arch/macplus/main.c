@@ -73,7 +73,7 @@ void prt_version (void)
 {
 	fputs (
 		"pce-macplus version " PCE_VERSION_STR
-		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"\n\n"
 		"Copyright (C) 2007-2009 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
@@ -289,8 +289,7 @@ int main (int argc, char *argv[])
 	}
 
 	pce_log (MSG_INF,
-		"pce-macplus version " PCE_VERSION_STR
-		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"pce-macplus version " PCE_VERSION_STR "\n"
 		"Copyright (C) 2007-2009 Hampa Hug <hampa@hampa.ch>\n"
 	);
 

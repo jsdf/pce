@@ -81,6 +81,8 @@
 
 #undef PCE_DIR_ETC
 
+#undef PCE_BUILD_IBMPC
+
 #undef PCE_X11_USE
 #undef PCE_SDL_USE
 

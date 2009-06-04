@@ -83,7 +83,7 @@ void prt_version (void)
 {
 	fputs (
 		"pce-ibmpc version " PCE_VERSION_STR
-		" (" PCE_CFG_DATE " " PCE_CFG_TIME ")\n\n"
+		"\n\n"
 		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
@@ -1701,8 +1701,7 @@ int main (int argc, char *argv[])
 	}
 
 	pce_log (MSG_MSG,
-		"pce-ibmpc version " PCE_VERSION_STR
-		" (compiled " PCE_CFG_DATE " " PCE_CFG_TIME ")\n"
+		"pce-ibmpc version " PCE_VERSION_STR "\n"
 		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
 	);
 

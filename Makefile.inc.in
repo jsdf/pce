@@ -1,0 +1,187 @@
+# Makefile.inc
+
+etcdir      = @sysconfdir@/pce
+datarootdir = @datarootdir@
+datadir     = @datadir@/pce
+
+CC      = @CC@
+LD      = @CC@
+NASM    = @NASM@
+IHEX    = @IHEX@
+AR      = @AR@
+LN_S    = @LN_S@
+INSTALL = @INSTALL@
+
+CFLAGS         = @CFLAGS@
+CFLAGS_DEFAULT = $(CFLAGS) -Isrc
+
+LDFLAGS         = @LDFLAGS@
+LDFLAGS_DEFAULT = $(LDFLAGS)
+
+ifneq "$(srcdir)" "."
+CFLAGS_DEFAULT += -I$(srcdir)/src
+endif
+
+PCE_VERSION_MAJ := @PCE_VERSION_MAJ@
+PCE_VERSION_MIN := @PCE_VERSION_MIN@
+PCE_VERSION_MIC := @PCE_VERSION_MIC@
+PCE_VERSION_STR := @PCE_VERSION_STR@
+
+PCE_HAVE_NASM := @PCE_HAVE_NASM@
+PCE_HAVE_IHEX := @PCE_HAVE_IHEX@
+
+PCE_X11_USE := @PCE_X11_USE@
+PCE_X11_CCF := @PCE_X11_CCF@
+PCE_X11_LDF := @PCE_X11_LDF@
+
+PCE_SDL_USE := @PCE_SDL_USE@
+PCE_SDL_CCF := @PCE_SDL_CCF@
+PCE_SDL_LDF := @PCE_SDL_LDF@
+
+PCE_HAVE_STDINT_H   := @PCE_HAVE_STDINT_H@
+PCE_HAVE_INTTYPES_H := @PCE_HAVE_INTTYPES_H@
+
+PCE_LARGE_FILE := @PCE_LARGE_FILE@
+
+PCE_HOST_LINUX := @PCE_HOST_LINUX@
+PCE_HOST_SUNOS := @PCE_HOST_SUNOS@
+
+PCE_HOST_IA32  := @PCE_HOST_IA32@
+PCE_HOST_PPC   := @PCE_HOST_PPC@
+PCE_HOST_SPARC := @PCE_HOST_SPARC@
+
+ifeq "$(PCE_HOST_IA32)" "1"
+CFLAGS_DEFAULT += -DPCE_HOST_IA32
+endif
+
+ifeq "$(PCE_HOST_PPC)" "1"
+CFLAGS_DEFAULT += -DPCE_HOST_PPC
+endif
+
+ifeq "$(PCE_HOST_SPARC)" "1"
+CFLAGS_DEFAULT += -DPCE_HOST_SPARC
+endif
+
+PCE_BUILD_IBMPC   := @PCE_BUILD_IBMPC@
+PCE_BUILD_MACPLUS := @PCE_BUILD_MACPLUS@
+PCE_BUILD_SIM405  := @PCE_BUILD_SIM405@
+PCE_BUILD_SIM6502 := @PCE_BUILD_SIM6502@
+PCE_BUILD_SIMARM  := @PCE_BUILD_SIMARM@
+PCE_BUILD_SIMS32  := @PCE_BUILD_SIMS32@
+
+PCE_ENABLE_TUN := @PCE_ENABLE_TUN@
+
+PCE_ENABLE_CHAR_TIOS := @PCE_ENABLE_CHAR_TIOS@
+
+distdir     := pce-$(PCE_VERSION_STR)
+
+# ----------------------------------------------------------------------
+
+DCL += Makefile Makefile.inc configure config.log config.status
+
+DIST += AUTHORS COPYING ChangeLog INSTALL \
+	Makefile.dep Makefile.in Makefile.inc.in \
+	NEWS README TODO autogen.sh config.guess config.sub \
+	configure configure.in gendep install-sh
+
+ROMBIN := ibmpc/et4000.rom \
+	ibmpc/genoa.rom \
+	ibmpc/ibmega.rom \
+	ibmpc/pce-bios.rom \
+	ibmpc/pce-ega.rom \
+	ibmpc/t9000b.rom \
+	macplus/macplus-pcex.rom \
+	macplus/macplus.rom
+
+# ----------------------------------------------------------------------
+
+include $(srcdir)/Makefile.dep
+
+include $(srcdir)/src/Makefile.inc
+include $(srcdir)/src/cpu/Makefile.inc
+include $(srcdir)/src/cpu/arm/Makefile.inc
+include $(srcdir)/src/cpu/e6502/Makefile.inc
+include $(srcdir)/src/cpu/e68000/Makefile.inc
+include $(srcdir)/src/cpu/e8086/Makefile.inc
+include $(srcdir)/src/cpu/ppc405/Makefile.inc
+include $(srcdir)/src/cpu/sparc32/Makefile.inc
+include $(srcdir)/src/chipset/82xx/Makefile.inc
+include $(srcdir)/src/chipset/clock/Makefile.inc
+include $(srcdir)/src/chipset/ppc405/Makefile.inc
+include $(srcdir)/src/chipset/Makefile.inc
+include $(srcdir)/src/devices/block/Makefile.inc
+include $(srcdir)/src/devices/clock/Makefile.inc
+include $(srcdir)/src/devices/video/Makefile.inc
+include $(srcdir)/src/devices/Makefile.inc
+include $(srcdir)/src/libini/Makefile.inc
+include $(srcdir)/src/lib/Makefile.inc
+include $(srcdir)/src/drivers/Makefile.inc
+include $(srcdir)/src/drivers/char/Makefile.inc
+include $(srcdir)/src/terminal/Makefile.inc
+include $(srcdir)/src/arch/Makefile.inc
+include $(srcdir)/src/arch/ibmpc/Makefile.inc
+include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
+include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc
+include $(srcdir)/src/arch/macplus/Makefile.inc
+include $(srcdir)/src/arch/sim405/Makefile.inc
+include $(srcdir)/src/arch/sim6502/Makefile.inc
+include $(srcdir)/src/arch/simarm/Makefile.inc
+include $(srcdir)/src/arch/sims32/Makefile.inc
+include $(srcdir)/src/utils/Makefile.inc
+include $(srcdir)/src/utils/pceimg/Makefile.inc
+
+TARGETS += $(BIN) $(ETC) $(SHARE)
+
+# ----------------------------------------------------------------------
+
+%: %.sh
+	$(QP)echo "  SED    $@"
+	$(QR)rm -f $@
+	$(QR)sed -e "s/%PCE_VERSION_STR/$(PCE_VERSION_STR)/g" < $< > $@
+	$(QR)chmod a+x $@
+
+install-extra:
+ifneq "$(ROMBIN)" ""
+	$(QR)for f in $(ROMBIN) ; do \
+		src=$(srcdir)/contrib/rom/$$f ; \
+		dst=$(DESTDIR)$(datadir)/`basename $$f` ; \
+		test -f "$$dst" && continue ; \
+		test -f "$$src" || continue ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)" ; \
+		$(INSTALL) -m 644 "$$src" "$$dst" ; \
+	done
+endif
+ifneq "$(PCEUTILS_BIN)" ""
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/pceutils
+	$(QR)for f in $(PCEUTILS_BIN) ; do \
+		dst=$(DESTDIR)$(datadir)/pceutils/`basename "$$f"` ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -m 644 "$$f" "$$dst" ; \
+	done
+endif
+
+
+dist-extra:
+ifneq "$(PCEUTILS_BIN)" ""
+	$(QR)for f in $(PCEUTILS_BIN) ; do \
+		test -f "$$f" || continue ; \
+		dst=contrib/pceutils/`basename "$$f"` ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		mkdir -p "$(distdir)/contrib/pceutils" ; \
+		cp -p "$$f" "$(distdir)/$$dst" ; \
+	done
+endif
+	$(QR)for f in $(BIOS_ROM) $(BIOS_HEX) $(EGA_ROM) $(EGA_HEX) \
+		$(BIOS_REL)/pce-bios-ega.ihex ; do \
+		test -f "$$f" || continue ; \
+		dst=contrib/rom/ibmpc/`basename "$$f"` ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		mkdir -p "$(distdir)/contrib/rom/ibmpc" ; \
+		cp -p "$$f" "$(distdir)/$$dst" ; \
+	done
+
+dist-version:
+	$(QP)echo "  GEN    version"
+	$(QR)echo "pce  $(PCE_VERSION_MAJ) $(PCE_VERSION_MIN) $(PCE_VERSION_MIC)  $(PCE_VERSION_STR)" \
+		> "$(distdir)/version"
