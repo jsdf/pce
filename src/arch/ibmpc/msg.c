@@ -22,6 +22,8 @@
 
 #include "main.h"
 
+#include <lib/inidsk.h>
+
 
 static
 int pc_set_msg_cassette (ibmpc_t *pc, const char *msg, const char *val)

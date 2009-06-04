@@ -28,6 +28,9 @@
 #include <SDL.h>
 #endif
 
+#include <lib/hexdump.h>
+#include <lib/path.h>
+
 
 static void prt_state_cpu (e8086_t *c);
 

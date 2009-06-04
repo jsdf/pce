@@ -55,14 +55,8 @@ extern int        par_patch_bios;
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/log.h>
-#include <lib/hexdump.h>
-#include <lib/inidsk.h>
-#include <lib/iniram.h>
-#include <lib/ihex.h>
-#include <lib/load.h>
 #include <lib/monitor.h>
 #include <lib/msg.h>
-#include <lib/path.h>
 #include <lib/sysdep.h>
 
 #include <cpu/e8086/e8086.h>
@@ -82,20 +76,8 @@ extern int        par_patch_bios;
 #include <devices/serport.h>
 
 #include <devices/video/video.h>
-#include <devices/video/mda.h>
-#include <devices/video/plantronics.h>
-#include <devices/video/hgc.h>
-#include <devices/video/cga.h>
-#include <devices/video/ega.h>
-#include <devices/video/vga.h>
 
 #include <devices/block/block.h>
-#include <devices/block/blkcow.h>
-#include <devices/block/blkdosem.h>
-#include <devices/block/blkpart.h>
-#include <devices/block/blkpce.h>
-#include <devices/block/blkram.h>
-#include <devices/block/blkraw.h>
 
 #include "util.h"
 #include "cassette.h"

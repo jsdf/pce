@@ -29,7 +29,17 @@
 #include <sys/time.h>
 #endif
 
+#include <devices/video/mda.h>
+#include <devices/video/hgc.h>
+#include <devices/video/cga.h>
+#include <devices/video/ega.h>
+#include <devices/video/vga.h>
+#include <devices/video/plantronics.h>
 #include <devices/video/wy700.h>
+
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/load.h>
 
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
