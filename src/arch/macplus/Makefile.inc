@@ -5,6 +5,8 @@ rel := src/arch/macplus
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
+DIST += $(rel)/pcex/Makefile $(rel)/pcex/pcex.S
+
 # ----------------------------------------------------------------------
 
 PCE_MACPLUS_CFLAGS := $(CFLAGS_DEFAULT)
