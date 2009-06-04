@@ -246,6 +246,20 @@ section pc {
 		# Plantronics Colorplus
 		device = "plantronics"
 
+		blink = 16
+
+		# Don't change these unless you know what you're doing
+		io = 0x3d4
+		address = 0xb8000
+		size = 16384
+	}
+
+	section video {
+		# Wyse 700
+		device = "wy700"
+
+		blink = 16
+
 		# Don't change these unless you know what you're doing
 		io = 0x3d4
 		address = 0xb8000

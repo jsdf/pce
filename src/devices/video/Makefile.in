@@ -9,7 +9,7 @@ reldir := ../../..
 include $(reldir)/config.inc
 
 
-FILES := cga ega hgc mda plantronics vga video
+FILES := cga ega hgc mda plantronics vga video wy700
 
 SRC := $(foreach f,$(FILES),$(f).c)
 OBJ := $(foreach f,$(FILES),$(f).o)
@@ -65,3 +65,10 @@ vga.o:		vga.c vga.h video.h $(SDP) \
 		lib/log.h lib/msg.h
 
 video.o:	video.c video.h $(SDP) devices/memory.h lib/msg.h
+
+
+wy700.o:	wy700.c wy700.h cga.h video.h $(SDP) \
+		devices/memory.h \
+		libini/libini.h \
+		terminal/terminal.h \
+		lib/log.h

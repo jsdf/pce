@@ -29,6 +29,8 @@
 #include <sys/time.h>
 #endif
 
+#include <devices/video/wy700.h>
+
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
@@ -468,6 +470,23 @@ int pc_setup_plantronics (ibmpc_t *pc, ini_sct_t *sct)
 }
 
 static
+int pc_setup_wy700 (ibmpc_t *pc, ini_sct_t *sct)
+{
+	pc->video = wy700_new_ini (sct);
+	if (pc->video == NULL) {
+		return (1);
+	}
+
+	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
+
+	pc->ppi_port_a[0] &= ~0x30;
+	pc->ppi_port_a[0] |= 0x20;
+
+	return (0);
+}
+
+static
 int pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 {
 	pc->video = hgc_new_ini (sct);
@@ -576,6 +595,9 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 	}
 	else if (strcmp (dev, "plantronics") == 0) {
 		pc_setup_plantronics (pc, sct);
+	}
+	else if ((strcmp (dev, "wyse") == 0) || (strcmp (dev, "wy700") == 0)) {
+		pc_setup_wy700 (pc, sct);
 	}
 	else {
 		pce_log (MSG_ERR, "*** unknown video device (%s)\n", dev);
