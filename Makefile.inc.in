@@ -89,7 +89,9 @@ ROMBIN := ibmpc/et4000.rom \
 	ibmpc/ibmega.rom \
 	ibmpc/pce-bios.rom \
 	ibmpc/pce-ega.rom \
+	ibmpc/pce.rom \
 	ibmpc/t9000b.rom \
+	ibmpc/t9000b-pce.rom \
 	macplus/macplus-pcex.rom \
 	macplus/macplus.rom
 

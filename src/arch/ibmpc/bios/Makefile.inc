@@ -11,10 +11,10 @@ NFLAGS := -Isrc/ -I$(srcdir)/src/arch/ibmpc/ -I$(srcdir)/src/arch/ibmpc/bios/
 
 BIOS_BAS  := pce basic bios
 BIOS_SRC := $(foreach f,$(BIOS_BAS),$(rel)/$(f).asm)
-BIOS_OBJ := $(foreach f,$(BIOS_BAS) pce2,$(rel)/$(f).bin)
-BIOS_LST := $(foreach f,$(BIOS_BAS) pce2,$(rel)/$(f).lst)
-BIOS_ROM := $(rel)/pce-bios.rom
-BIOS_HEX := $(rel)/pce-bios.ihex
+BIOS_OBJ := $(foreach f,$(BIOS_BAS),$(rel)/$(f).bin)
+BIOS_LST := $(foreach f,$(BIOS_BAS),$(rel)/$(f).lst)
+BIOS_ROM := $(rel)/pce.rom $(rel)/pce-bios.rom
+BIOS_HEX := $(rel)/pce.ihex $(rel)/pce-bios.ihex
 BIOS_SDP := src/arch/ibmpc/pce.inc
 BIOS_REL := $(rel)
 
@@ -32,13 +32,13 @@ endif
 endif
 endif
 
+$(rel)/pce.rom: $(rel)/pce.asm $(BIOS_SDP)
+	$(QP)echo "  NASM   $@"
+	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -o $@ $<
+
 $(rel)/pce.bin: $(rel)/pce.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
 	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l $(BIOS_REL)/pce.lst -o $@ $<
-
-$(rel)/pce2.bin: $(rel)/pce.asm $(BIOS_SDP)
-	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -l $(BIOS_REL)/pce2.lst -o $@ $<
 
 $(rel)/bios.bin: $(rel)/bios.asm $(BIOS_SDP)
 	$(QP)echo "  NASM   $@"
@@ -52,10 +52,15 @@ $(rel)/pce-bios.rom: $(BIOS_OBJ)
 	$(QP)echo "  CAT    $@"
 	$(QR)cat $(BIOS_REL)/pce.bin $(BIOS_REL)/basic.bin $(BIOS_REL)/bios.bin > $@
 
+$(rel)/pce.ihex: $(rel)/pce.rom
+	$(QP)echo "  IHEX   $@"
+	$(QR)$(IHEX) -e -o $@ \
+	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.rom
+
 $(rel)/pce-bios.ihex: $(BIOS_OBJ)
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ \
-	-s 0xf000 -a 0 -i $(BIOS_REL)/pce2.bin \
+	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.bin \
 	-s 0xf600 -a 0 -i $(BIOS_REL)/basic.bin \
 	-s 0xfe00 -a 0 -i $(BIOS_REL)/bios.bin
 
@@ -109,10 +114,10 @@ endif
 endif
 endif
 
-$(rel)/pce-bios-ega.ihex: $(rel)/ega.bin $(rel)/pce2.bin $(rel)/basic.bin $(rel)/bios.bin
+$(rel)/pce-bios-ega.ihex: $(rel)/ega.bin $(rel)/pce.bin $(rel)/basic.bin $(rel)/bios.bin
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ \
 	-s 0xc000 -a 0 -i $(BIOS_REL)/ega.bin \
-	-s 0xf000 -a 0 -i $(BIOS_REL)/pce2.bin \
+	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.bin \
 	-s 0xf600 -a 0 -i $(BIOS_REL)/basic.bin \
 	-s 0xfe00 -a 0 -i $(BIOS_REL)/bios.bin
