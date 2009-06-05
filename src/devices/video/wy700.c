@@ -42,6 +42,102 @@
 
 
 /*
+ * Update graphics 640 * 400 * 2
+ */
+static
+void wy700_update_640x400 (cga_t *wy)
+{
+	unsigned            i, x, y;
+	unsigned            val;
+	unsigned            addr;
+	unsigned char       *dst;
+	const unsigned char *src;
+
+	if (cga_set_buf_size (wy, 640, 400)) {
+		return;
+	}
+
+	dst = wy->buf;
+
+	addr = 0;
+
+	for (y = 0; y < 400; y++) {
+		src = wy->mem + addr;
+
+		addr += 80;
+
+		for (x = 0; x < (640 / 8); x++) {
+			val = src[x];
+
+			for (i = 0; i < 8; i++) {
+				if (val & 0x80) {
+					dst[0] = 0xff;
+					dst[1] = 0xff;
+					dst[2] = 0xff;
+				}
+				else {
+					dst[0] = 0x00;
+					dst[1] = 0x00;
+					dst[2] = 0x00;
+				}
+
+				val <<= 1;
+
+				dst += 3;
+			}
+		}
+	}
+}
+
+/*
+ * Update graphics 1280 * 400 * 2
+ */
+static
+void wy700_update_1280x400 (cga_t *wy)
+{
+	unsigned            i, x, y;
+	unsigned            val;
+	unsigned            addr;
+	unsigned char       *dst;
+	const unsigned char *src;
+
+	if (cga_set_buf_size (wy, 1280, 400)) {
+		return;
+	}
+
+	dst = wy->buf;
+
+	addr = 0;
+
+	for (y = 0; y < 400; y++) {
+		src = wy->mem + addr;
+
+		addr += 160;
+
+		for (x = 0; x < (1280 / 8); x++) {
+			val = src[x];
+
+			for (i = 0; i < 8; i++) {
+				if (val & 0x80) {
+					dst[0] = 0xff;
+					dst[1] = 0xff;
+					dst[2] = 0xff;
+				}
+				else {
+					dst[0] = 0x00;
+					dst[1] = 0x00;
+					dst[2] = 0x00;
+				}
+
+				val <<= 1;
+
+				dst += 3;
+			}
+		}
+	}
+}
+
+/*
  * Update graphics 1280 * 800 * 2
  */
 static
@@ -101,7 +197,24 @@ void wy700_update (cga_t *wy)
 	ctl = wy->reg[WY700_CONTROL];
 
 	if (ctl & 0x08) {
-		wy700_update_1280x800 (wy);
+		switch (ctl & 0xf0) {
+		case 0xc0:
+			wy700_update_1280x800 (wy);
+			break;
+
+		case 0xa0:
+			wy700_update_1280x400 (wy);
+			break;
+
+		case 0x80:
+			wy700_update_640x400 (wy);
+			break;
+
+		default:
+			fprintf (stderr, "WY700: unknown mode (%02X)\n", ctl);
+			break;
+		}
+
 		return;
 	}
 
@@ -141,9 +254,16 @@ unsigned char wy700_reg_get_uint8 (cga_t *wy, unsigned long addr)
 	}
 }
 
+static
+unsigned short wy700_reg_get_uint16 (cga_t *wy, unsigned long addr)
+{
+	return (wy700_reg_get_uint8 (wy, addr));
+}
+
 /*
  * Set a Wyse 700 register
  */
+static
 void wy700_reg_set_uint8 (cga_t *wy, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
@@ -170,6 +290,11 @@ void wy700_reg_set_uint8 (cga_t *wy, unsigned long addr, unsigned char val)
 		cga_reg_set_uint8 (wy, addr, val);
 		break;
 	}
+}
+
+void wy700_reg_set_uint16 (cga_t *wy, unsigned long addr, unsigned short val)
+{
+	wy700_reg_set_uint8 (wy, addr, val & 0xff);
 }
 
 static
@@ -266,9 +391,9 @@ void wy700_print_info (cga_t *wy, FILE *fp)
 
 	fprintf (fp,
 		"REG: CTL=%02X  BANK OFS=%02X  BANK BAS=%02X\n",
+		wy->reg[WY700_CONTROL],
 		wy->reg[WY700_BANK_OFS],
-		wy->reg[WY700_BANK_BASE],
-		wy->reg[WY700_CONTROL]
+		wy->reg[WY700_BANK_BASE]
 	);
 
 	fprintf (fp, "CRTC=[%02X", wy->reg_crt[0]);
@@ -295,9 +420,9 @@ void wy700_init (cga_t *wy, unsigned long io, unsigned long addr, unsigned long 
 	wy->update = wy700_update;
 
 	wy->regblk->set_uint8 = (void *) wy700_reg_set_uint8;
-	wy->regblk->set_uint16 = NULL;
+	wy->regblk->set_uint16 = (void *) wy700_reg_set_uint16;
 	wy->regblk->get_uint8 = (void *) wy700_reg_get_uint8;
-	wy->regblk->get_uint16 = NULL;
+	wy->regblk->get_uint16 = (void *) wy700_reg_get_uint16;
 
 	wy->memblk->set_uint8 = (void *) wy700_mem_set_uint8;
 	wy->memblk->set_uint16 = (void *) wy700_mem_set_uint16;
