@@ -33,6 +33,7 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 	mem_blk_t     *ram;
 	const char    *fname;
 	char          *path;
+	unsigned      val;
 	unsigned long base, size;
 
 	if (addr0 != NULL) {
@@ -56,6 +57,8 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
+		ini_get_uint16 (sct, "default", &val, 0);
+
 		path = pce_path_get (fname);
 
 		pce_log_tag (MSG_INF, "RAM:", "addr=0x%08lx size=%lu file=%s\n",
@@ -69,7 +72,7 @@ int ini_get_ram (memory_t *mem, ini_sct_t *ini, mem_blk_t **addr0)
 			return (1);
 		}
 
-		mem_blk_clear (ram, 0x00);
+		mem_blk_clear (ram, val);
 		mem_blk_set_readonly (ram, 0);
 		mem_add_blk (mem, ram, 1);
 
@@ -99,6 +102,7 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 	mem_blk_t     *rom;
 	const char    *fname;
 	char          *path;
+	unsigned      val;
 	unsigned long base, size;
 
 	sct = NULL;
@@ -118,6 +122,8 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 			ini_get_uint32 (sct, "size", &size, 65536);
 		}
 
+		ini_get_uint16 (sct, "default", &val, 0);
+
 		path = pce_path_get (fname);
 
 		pce_log_tag (MSG_INF, "ROM:", "addr=0x%08lx size=%lu file=%s\n",
@@ -131,7 +137,7 @@ int ini_get_rom (memory_t *mem, ini_sct_t *ini)
 			return (1);
 		}
 
-		mem_blk_clear (rom, 0x00);
+		mem_blk_clear (rom, val);
 		mem_blk_set_readonly (rom, 1);
 		mem_add_blk (mem, rom, 1);
 

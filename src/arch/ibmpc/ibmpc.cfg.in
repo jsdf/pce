@@ -48,6 +48,9 @@ section pc {
 
 		# The size in MB
 		#sizem = 1
+
+		# The memory block is initialized with this value
+		default = 0x00
 	}
 
 
@@ -61,6 +64,9 @@ section pc {
 
 		# The rom size in bytes
 		size = 65536
+
+		# The memory block is initialized with this value
+		default = 0xff
 	}
 
 	# The VGA ROM
