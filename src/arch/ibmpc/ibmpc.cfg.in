@@ -172,6 +172,14 @@ section pc {
 		# IBM EGA
 		device = "ega"
 
+		# The EGA switches select the connected monitor
+		#switches = 0x06	# EGA with CGA monitor (40*25)
+		#switches = 0x07	# EGA with CGA monitor (80*25)
+		#switches = 0x08	# EGA with EGA monitor (CGA mode)
+		switches = 0x09		# EGA with EGA monitor (EGA mode)
+		#switches = 0x0a	# EGA with MDA monitor
+		#switches = 0x0b	# EGA with MDA monitor
+
 		# The blink frequency for blinking characters and the
 		# cursor. Setting this to 0 will turn off blinking.
 		blink = 16
@@ -388,7 +396,7 @@ section pc {
 			file = "p0.img"
 			readonly = 0
 		}
-		
+
 		section partition {
 			block_start = 63
 			block_count = 8257473
