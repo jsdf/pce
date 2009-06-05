@@ -69,19 +69,6 @@ section pc {
 		default = 0xff
 	}
 
-	# The VGA ROM
-	section rom {
-		file = "t9000b.rom"
-		address = 0xc0000
-		size = 32768
-	}
-
-	# The EGA ROM
-	#section rom {
-	#	file = "pce-ega.rom"
-	#	address = 0xc0000
-	#	size = 16384
-	#}
 
 	# "load" sections are processed after all the "ram" and "rom"
 	# sections. It is possible to overwrite read-only blocks, too.
@@ -165,6 +152,9 @@ section pc {
 	# Multiple "video" sections may be present. The first one will be
 	# used unless a video adapter type is specified on the command
 	# line.
+	# Video sections may contain "rom", "ram" and "load" subsections
+	# to load ROMs only if a specific video adapter is selected.
+	#
 	section video {
 		# IBM VGA
 		device = "vga"
@@ -172,6 +162,14 @@ section pc {
 		# The blink frequency for blinking characters and the
 		# cursor. Setting this to 0 will turn off blinking.
 		blink = 16
+
+		section rom {
+			# VGA ROM
+			address = 0xc0000
+			size    = 32768
+			default = 0xff
+			file    = "t9000b.rom"
+		}
 	}
 
 	section video {
@@ -189,6 +187,14 @@ section pc {
 		# The blink frequency for blinking characters and the
 		# cursor. Setting this to 0 will turn off blinking.
 		blink = 16
+
+		section rom {
+			# EGA ROM
+			address = 0xc0000
+			size    = 16384
+			default = 0xff
+			file    = "ibmega.rom"
+		}
 	}
 
 	section video {

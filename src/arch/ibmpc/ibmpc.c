@@ -618,6 +618,10 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	if (pc->video != NULL) {
+		ini_get_ram (pc->mem, sct, &pc->ram);
+		ini_get_rom (pc->mem, sct);
+		pce_load_mem_ini (pc->mem, sct);
+
 		if (pc->trm != NULL) {
 			pce_video_set_terminal (pc->video, pc->trm);
 		}
