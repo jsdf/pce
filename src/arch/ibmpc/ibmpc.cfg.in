@@ -57,7 +57,7 @@ section pc {
 	# Multiple "rom" sections may be present
 	section rom {
 		# The file from which the rom code is loaded
-		file = "pce-bios.rom"
+		#file = "pce-bios.rom"
 
 		# The linear base address
 		address = 0xf0000
@@ -72,6 +72,27 @@ section pc {
 
 	# "load" sections are processed after all the "ram" and "rom"
 	# sections. It is possible to overwrite read-only blocks, too.
+	section load {
+		# The main BIOS
+		format = "binary"
+		address = 0xfe000
+		file = "ibm1982.rom"
+	}
+
+	section load {
+		# The ROM BASIC
+		format = "binary"
+		address = 0xf6000
+		file = "basic-1.10.rom"
+	}
+
+	section load {
+		# The PCE ROM extension
+		format = "binary"
+		address = 0xf0000
+		file = "pce.rom"
+	}
+
 	#section load {
 	#	# Intel hex file
 	#	format = "ihex"
@@ -82,12 +103,6 @@ section pc {
 	#	# Motorola S-Record file
 	#	format = "srec"
 	#	file = "ibmpc.srec"
-	#}
-
-	#section load {
-	#	format = "binary"
-	#	file = "rom.bin"
-	#	address = 0xf0000
 	#}
 
 

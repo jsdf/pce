@@ -9,94 +9,63 @@ NFLAGS := -Isrc/ -I$(srcdir)/src/arch/ibmpc/ -I$(srcdir)/src/arch/ibmpc/bios/
 
 # ----------------------------------------------------------------------
 
-BIOS_BAS  := pce basic bios
-BIOS_SRC := $(foreach f,$(BIOS_BAS),$(rel)/$(f).asm)
-BIOS_OBJ := $(foreach f,$(BIOS_BAS),$(rel)/$(f).bin)
-BIOS_LST := $(foreach f,$(BIOS_BAS),$(rel)/$(f).lst)
-BIOS_ROM := $(rel)/pce.rom $(rel)/pce-bios.rom
-BIOS_HEX := $(rel)/pce.ihex $(rel)/pce-bios.ihex
-BIOS_SDP := src/arch/ibmpc/pce.inc
-BIOS_REL := $(rel)
+PCE_BIOS_BAS := pce
+PCE_BIOS_SRC := $(foreach f,$(PCE_BIOS_BAS),$(rel)/$(f).asm)
+PCE_BIOS_LST := $(foreach f,$(PCE_BIOS_BAS),$(rel)/$(f).lst)
+PCE_BIOS_ROM := $(rel)/pce.rom
+PCE_BIOS_HEX := $(rel)/pce.ihex
+PCE_BIOS_SDP := src/arch/ibmpc/pce.inc
+PCE_BIOS_REL := $(rel)
 
-CLN  += $(BIOS_ROM) $(BIOS_HEX) $(BIOS_OBJ) $(BIOS_LST)
-DIST += $(BIOS_SRC)
+CLN  += $(PCE_BIOS_ROM) $(PCE_BIOS_HEX) $(PCE_BIOS_OBJ) $(PCE_BIOS_LST)
+DIST += $(PCE_BIOS_SRC)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS += $(BIOS_ROM)
-SHARE   += $(BIOS_ROM)
+TARGETS += $(PCE_BIOS_ROM)
+SHARE   += $(PCE_BIOS_ROM)
 ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGETS += $(BIOS_HEX)
-SHARE   += $(BIOS_HEX)
+TARGETS += $(PCE_BIOS_HEX)
 endif
 endif
 endif
 
-$(rel)/pce.rom: $(rel)/pce.asm $(BIOS_SDP)
+$(rel)/pce.rom: $(rel)/pce.asm $(PCE_BIOS_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -o $@ $<
-
-$(rel)/pce.bin: $(rel)/pce.asm $(BIOS_SDP)
-	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l $(BIOS_REL)/pce.lst -o $@ $<
-
-$(rel)/bios.bin: $(rel)/bios.asm $(BIOS_SDP)
-	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -DPATCH -f bin -l $(BIOS_REL)/bios.lst -o $@ $<
-
-$(rel)/basic.bin: $(rel)/basic.asm $(BIOS_SDP)
-	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -f bin -l $(BIOS_REL)/basic.lst -o $@ $<
-
-$(rel)/pce-bios.rom: $(BIOS_OBJ)
-	$(QP)echo "  CAT    $@"
-	$(QR)cat $(BIOS_REL)/pce.bin $(BIOS_REL)/basic.bin $(BIOS_REL)/bios.bin > $@
+	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -l $(PCE_BIOS_REL)/pce.lst -o $@ $<
 
 $(rel)/pce.ihex: $(rel)/pce.rom
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ \
-	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.rom
-
-$(rel)/pce-bios.ihex: $(BIOS_OBJ)
-	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ \
-	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.bin \
-	-s 0xf600 -a 0 -i $(BIOS_REL)/basic.bin \
-	-s 0xfe00 -a 0 -i $(BIOS_REL)/bios.bin
+	-s 0xf000 -a 0 -i $(PCE_BIOS_REL)/pce.rom
 
 # ----------------------------------------------------------------------
 
-EGA_BAS := ega
-EGA_SRC := $(foreach f,$(EGA_BAS),$(rel)/$(f).asm)
-EGA_HDR := $(rel)/fnt8x14.inc $(rel)/fnt8x8.inc
-EGA_OBJ := $(foreach f,$(EGA_BAS),$(rel)/$(f).bin)
-EGA_LST := $(foreach f,$(EGA_BAS),$(rel)/$(f).lst)
-EGA_ROM := $(rel)/pce-ega.rom
-EGA_HEX := $(rel)/pce-ega.ihex
-EGA_SDP := $(EGA_HDR) src/arch/ibmpc/pce.inc
+PCE_EGA_BAS := ega
+PCE_EGA_SRC := $(foreach f,$(PCE_EGA_BAS),$(rel)/$(f).asm)
+PCE_EGA_HDR := $(rel)/fnt8x14.inc $(rel)/fnt8x8.inc
+PCE_EGA_LST := $(foreach f,$(PCE_EGA_BAS),$(rel)/$(f).lst)
+PCE_EGA_ROM := $(rel)/pce-ega.rom
+PCE_EGA_HEX := $(rel)/pce-ega.ihex
+PCE_EGA_SDP := $(PCE_EGA_HDR) src/arch/ibmpc/pce.inc
 
-CLN  += $(EGA_ROM) $(EGA_HEX) $(EGA_OBJ) $(EGA_LST)
-DIST += $(EGA_SRC) $(EGA_HDR)
+CLN  += $(PCE_EGA_ROM) $(PCE_EGA_HEX) $(PCE_EGA_OBJ) $(PCE_EGA_LST)
+DIST += $(PCE_EGA_SRC) $(PCE_EGA_HDR)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS += $(EGA_ROM)
-SHARE   += $(EGA_ROM)
+TARGETS += $(PCE_EGA_ROM)
+SHARE   += $(PCE_EGA_ROM)
 ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGETS += $(EGA_HEX)
-SHARE   += $(EGA_HEX)
+TARGETS += $(PCE_EGA_HEX)
 endif
 endif
 endif
 
-$(rel)/ega.bin: $(rel)/ega.asm $(EGA_SDP)
+$(rel)/pce-ega.rom: $(rel)/ega.asm $(PCE_EGA_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l $(BIOS_REL)/ega.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l $(PCE_BIOS_REL)/pce-ega.lst -o $@ $<
 
-$(rel)/pce-ega.rom: $(EGA_OBJ)
-	$(QP)echo "  CAT    $@"
-	$(QR)cat $(EGA_OBJ) > $@
-
-$(rel)/pce-ega.ihex: $(EGA_OBJ)
+$(rel)/pce-ega.ihex: $(rel)/pce-ega.rom
 	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ -s 0xc000 -a 0 -i $(BIOS_REL)/ega.bin
+	$(QR)$(IHEX) -e -o $@ -s 0xc000 -a 0 -i $(PCE_BIOS_REL)/pce-ega.rom

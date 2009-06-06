@@ -84,10 +84,12 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	NEWS README TODO autogen.sh config.guess config.sub \
 	configure configure.in gendep install-sh
 
-ROMBIN := ibmpc/et4000.rom \
+ROMBIN := \
+	ibmpc/basic-1.10.rom \
+	ibmpc/et4000.rom \
 	ibmpc/genoa.rom \
+	ibmpc/ibm1982.rom \
 	ibmpc/ibmega.rom \
-	ibmpc/pce-bios.rom \
 	ibmpc/pce-ega.rom \
 	ibmpc/pce.rom \
 	ibmpc/t9000b.rom \
@@ -174,7 +176,7 @@ ifneq "$(PCEUTILS_BIN)" ""
 		cp -p "$$f" "$(distdir)/$$dst" ; \
 	done
 endif
-	$(QR)for f in $(BIOS_ROM) $(BIOS_HEX) $(EGA_ROM) ; do \
+	$(QR)for f in $(PCE_BIOS_ROM) $(PCE_EGA_ROM) ; do \
 		test -f "$$f" || continue ; \
 		dst=contrib/rom/ibmpc/`basename "$$f"` ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
