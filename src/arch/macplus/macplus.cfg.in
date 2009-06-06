@@ -12,8 +12,7 @@ section macplus {
 	#
 	# If the first character of the string is a "-", the directory
 	# is added to the beginning of the search path.
-	path = "PCE_DIR_DATA"
-	path = "PCE_DIR_DATA/rom"
+	path = "PCE_DIR_DATA/macplus"
 	path = "-."
 
 	section cpu {

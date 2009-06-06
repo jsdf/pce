@@ -84,18 +84,20 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	NEWS README TODO autogen.sh config.guess config.sub \
 	configure configure.in gendep install-sh
 
-ROMBIN := \
-	ibmpc/basic-1.10.rom \
-	ibmpc/et4000.rom \
-	ibmpc/genoa.rom \
-	ibmpc/ibm1982.rom \
-	ibmpc/ibmega.rom \
-	ibmpc/pce-ega.rom \
-	ibmpc/pce.rom \
-	ibmpc/t9000b.rom \
-	ibmpc/t9000b-pce.rom \
-	macplus/macplus-pcex.rom \
-	macplus/macplus.rom
+ROMBIN_IBMPC := \
+	rom/ibmpc/basic-1.10.rom \
+	rom/ibmpc/et4000.rom \
+	rom/ibmpc/genoa.rom \
+	rom/ibmpc/ibm1982.rom \
+	rom/ibmpc/ibmega.rom \
+	rom/ibmpc/pce-ega.rom \
+	rom/ibmpc/pce.rom \
+	rom/ibmpc/t9000b.rom \
+	rom/ibmpc/t9000b-pce.rom
+
+ROMBIN_MACPLUS := \
+	rom/macplus/macplus-pcex.rom \
+	rom/macplus/macplus.rom
 
 # ----------------------------------------------------------------------
 
@@ -145,23 +147,52 @@ TARGETS += $(BIN) $(ETC) $(SHARE)
 	$(QR)chmod a+x $@
 
 install-extra:
-ifneq "$(ROMBIN)" ""
-	$(QR)for f in $(ROMBIN) ; do \
-		src=$(srcdir)/contrib/rom/$$f ; \
-		dst=$(DESTDIR)$(datadir)/`basename $$f` ; \
-		test -f "$$dst" && continue ; \
-		test -f "$$src" || continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
+ifneq "$(SHARE_IBMPC)" ""
+	$(QP)echo "  MKDIR  $(DESTDIR)$(datadir)/ibmpc"
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/ibmpc
+	$(QR)for f in $(SHARE_IBMPC) ; do \
+		dst=$(DESTDIR)$(datadir)/ibmpc/`basename "$$f"` ; \
+		if test x$(V) != x1 ; then echo "  CP     $$dst" ; fi ; \
+		$(INSTALL) -m 644 "$$f" "$$dst" ; \
+	done
+endif
+ifneq "$(SHARE_MACPLUS)" ""
+	$(QP)echo "  MKDIR  $(DESTDIR)$(datadir)/macplus"
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/macplus
+	$(QR)for f in $(SHARE_MACPLUS) ; do \
+		dst=$(DESTDIR)$(datadir)/macplus/`basename "$$f"` ; \
+		if test x$(V) != x1 ; then echo "  CP     $$dst" ; fi ; \
+		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
 ifneq "$(PCEUTILS_BIN)" ""
-	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/pceutils
+	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/ibmpc/pceutils
 	$(QR)for f in $(PCEUTILS_BIN) ; do \
-		dst=$(DESTDIR)$(datadir)/pceutils/`basename "$$f"` ; \
+		dst=$(DESTDIR)$(datadir)/ibmpc/pceutils/`basename "$$f"` ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
+	done
+endif
+ifneq "$(ROMBIN_IBMPC)" ""
+	$(QR)for f in $(ROMBIN_IBMPC) ; do \
+		src=$(srcdir)/contrib/$$f ; \
+		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$f` ; \
+		test -f "$$dst" && continue ; \
+		test -f "$$src" || continue ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/ibmpc" ; \
+		$(INSTALL) -m 644 "$$src" "$$dst" ; \
+	done
+endif
+ifneq "$(ROMBIN_MACPLUS)" ""
+	$(QR)for f in $(ROMBIN_MACPLUS) ; do \
+		src=$(srcdir)/contrib/$$f ; \
+		dst=$(DESTDIR)$(datadir)/macplus/`basename $$f` ; \
+		test -f "$$dst" && continue ; \
+		test -f "$$src" || continue ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/macplus" ; \
+		$(INSTALL) -m 644 "$$src" "$$dst" ; \
 	done
 endif
 

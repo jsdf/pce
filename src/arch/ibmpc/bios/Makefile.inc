@@ -22,8 +22,8 @@ DIST += $(PCE_BIOS_SRC)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS += $(PCE_BIOS_ROM)
-SHARE   += $(PCE_BIOS_ROM)
+TARGETS     += $(PCE_BIOS_ROM)
+SHARE_IBMPC += $(PCE_BIOS_ROM)
 ifeq "$(PCE_HAVE_IHEX)" "1"
 TARGETS += $(PCE_BIOS_HEX)
 endif
@@ -54,8 +54,8 @@ DIST += $(PCE_EGA_SRC) $(PCE_EGA_HDR)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS += $(PCE_EGA_ROM)
-SHARE   += $(PCE_EGA_ROM)
+TARGETS     += $(PCE_EGA_ROM)
+SHARE_IBMPC += $(PCE_EGA_ROM)
 ifeq "$(PCE_HAVE_IHEX)" "1"
 TARGETS += $(PCE_EGA_HEX)
 endif
