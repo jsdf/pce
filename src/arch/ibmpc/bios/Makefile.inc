@@ -100,24 +100,3 @@ $(rel)/pce-ega.rom: $(EGA_OBJ)
 $(rel)/pce-ega.ihex: $(EGA_OBJ)
 	$(QP)echo "  IHEX   $@"
 	$(QR)$(IHEX) -e -o $@ -s 0xc000 -a 0 -i $(BIOS_REL)/ega.bin
-
-# ----------------------------------------------------------------------
-
-CLN += $(rel)/pce-bios-ega.ihex
-
-ifeq "$(PCE_BUILD_IBMPC)" "1"
-ifeq "$(PCE_HAVE_NASM)" "1"
-ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGETS += $(rel)/pce-bios-ega.ihex
-SHARE   += $(rel)/pce-bios-ega.ihex
-endif
-endif
-endif
-
-$(rel)/pce-bios-ega.ihex: $(rel)/ega.bin $(rel)/pce.bin $(rel)/basic.bin $(rel)/bios.bin
-	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ \
-	-s 0xc000 -a 0 -i $(BIOS_REL)/ega.bin \
-	-s 0xf000 -a 0 -i $(BIOS_REL)/pce.bin \
-	-s 0xf600 -a 0 -i $(BIOS_REL)/basic.bin \
-	-s 0xfe00 -a 0 -i $(BIOS_REL)/bios.bin

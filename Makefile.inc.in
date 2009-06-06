@@ -174,8 +174,7 @@ ifneq "$(PCEUTILS_BIN)" ""
 		cp -p "$$f" "$(distdir)/$$dst" ; \
 	done
 endif
-	$(QR)for f in $(BIOS_ROM) $(BIOS_HEX) $(EGA_ROM) $(EGA_HEX) \
-		$(BIOS_REL)/pce-bios-ega.ihex ; do \
+	$(QR)for f in $(BIOS_ROM) $(BIOS_HEX) $(EGA_ROM) ; do \
 		test -f "$$f" || continue ; \
 		dst=contrib/rom/ibmpc/`basename "$$f"` ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
