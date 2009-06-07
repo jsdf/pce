@@ -7,8 +7,9 @@ DIST += $(rel)/Makefile.inc
 
 # ----------------------------------------------------------------------
 
-PCE_SIM6502_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_SIM6502_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_SIM6502_LDFLAGS := $(LDFLAGS_DEFAULT)
+PCE_SIM6502_LIBS    := $(LIBS)
 
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
@@ -57,7 +58,7 @@ $(rel)/sim6502.o:	$(rel)/sim6502.c
 
 $(rel)/pce-sim6502: $(PCE_SIM6502_OBJ_EXT) $(PCE_SIM6502_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_SIM6502_LDFLAGS) -o $@ $(PCE_SIM6502_OBJ) $(PCE_SIM6502_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_SIM6502_LDFLAGS) -o $@ $(PCE_SIM6502_OBJ) $(PCE_SIM6502_OBJ_EXT) $(PCE_SIM6502_LIBS) -lm
 
 $(rel)/pce-sim6502.cfg: $(rel)/sim6502.cfg.in
 	$(QP)echo "  SED    $@"

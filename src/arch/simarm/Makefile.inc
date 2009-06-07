@@ -7,8 +7,9 @@ DIST += $(rel)/Makefile.inc
 
 # ----------------------------------------------------------------------
 
-PCE_SIMARM_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_SIMARM_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_SIMARM_LDFLAGS := $(LDFLAGS_DEFAULT)
+PCE_SIMARM_LIBS    := $(LIBS)
 
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
@@ -77,7 +78,7 @@ $(rel)/timer.o:		$(rel)/timer.c
 
 $(rel)/pce-simarm: $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_SIMARM_LDFLAGS) -o $@ $(PCE_SIMARM_OBJ) $(PCE_SIMARM_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_SIMARM_LDFLAGS) -o $@ $(PCE_SIMARM_OBJ) $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_LIBS) -lm
 
 $(rel)/pce-simarm.cfg: $(rel)/simarm.cfg.in
 	$(QP)echo "  SED    $@"

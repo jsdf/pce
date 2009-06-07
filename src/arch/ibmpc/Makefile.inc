@@ -7,17 +7,18 @@ DIST += $(rel)/Makefile.inc
 
 # ----------------------------------------------------------------------
 
-PCE_IBMPC_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_IBMPC_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_IBMPC_LDFLAGS := $(LDFLAGS_DEFAULT)
-
-ifeq "$(PCE_X11_USE)" "1"
-	PCE_IBMPC_CFLAGS += $(PCE_X11_CCF)
-	PCE_IBMPC_LDFLAGS += $(PCE_X11_LDF)
-endif
+PCE_IBMPC_LIBS    := $(LIBS)
 
 ifeq "$(PCE_SDL_USE)" "1"
 	PCE_IBMPC_CFLAGS += $(PCE_SDL_CCF)
-	PCE_IBMPC_LDFLAGS += $(PCE_SDL_LDF)
+	PCE_IBMPC_LIBS += $(PCE_SDL_LDF)
+endif
+
+ifeq "$(PCE_X11_USE)" "1"
+	PCE_IBMPC_CFLAGS += $(PCE_X11_CCF)
+	PCE_IBMPC_LIBS += $(PCE_X11_LDF)
 endif
 
 $(rel)/%.o: $(rel)/%.c
@@ -97,7 +98,7 @@ $(rel)/xms.o:		$(rel)/xms.c
 
 $(rel)/pce-ibmpc: $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_IBMPC_LDFLAGS) -o $@ $(PCE_IBMPC_OBJ) $(PCE_IBMPC_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_IBMPC_LDFLAGS) -o $@ $(PCE_IBMPC_OBJ) $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_LIBS) -lm
 
 $(rel)/pce-ibmpc.cfg: $(rel)/ibmpc.cfg.in
 	$(QP)echo "  SED    $@"

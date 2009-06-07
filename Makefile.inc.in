@@ -18,6 +18,8 @@ CFLAGS_DEFAULT = $(CFLAGS) -Isrc
 LDFLAGS         = @LDFLAGS@
 LDFLAGS_DEFAULT = $(LDFLAGS)
 
+LIBS            = @LIBS@
+
 ifneq "$(srcdir)" "."
 CFLAGS_DEFAULT += -I$(srcdir)/src
 endif

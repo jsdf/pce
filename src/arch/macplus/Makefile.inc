@@ -9,17 +9,18 @@ DIST += $(rel)/pcex/Makefile $(rel)/pcex/pcex.S
 
 # ----------------------------------------------------------------------
 
-PCE_MACPLUS_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_MACPLUS_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_MACPLUS_LDFLAGS := $(LDFLAGS_DEFAULT)
-
-ifeq "$(PCE_X11_USE)" "1"
-	PCE_MACPLUS_CFLAGS += $(PCE_X11_CCF)
-	PCE_MACPLUS_LDFLAGS += $(PCE_X11_LDF)
-endif
+PCE_MACPLUS_LIBS    := $(LIBS)
 
 ifeq "$(PCE_SDL_USE)" "1"
 	PCE_MACPLUS_CFLAGS += $(PCE_SDL_CCF)
-	PCE_MACPLUS_LDFLAGS += $(PCE_SDL_LDF)
+	PCE_MACPLUS_LIBS += $(PCE_SDL_LDF)
+endif
+
+ifeq "$(PCE_X11_USE)" "1"
+	PCE_MACPLUS_CFLAGS += $(PCE_X11_CCF)
+	PCE_MACPLUS_LIBS += $(PCE_X11_LDF)
 endif
 
 $(rel)/%.o: $(rel)/%.c
@@ -105,7 +106,7 @@ $(rel)/video.o:		$(rel)/video.c
 
 $(rel)/pce-macplus: $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm
 
 $(rel)/pce-macplus.cfg: $(rel)/macplus.cfg.in
 	$(QP)echo "  SED    $@"

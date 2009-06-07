@@ -7,8 +7,9 @@ DIST += $(rel)/Makefile.inc
 
 # ----------------------------------------------------------------------
 
-PCE_SIM405_CFLAGS := $(CFLAGS_DEFAULT)
+PCE_SIM405_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_SIM405_LDFLAGS := $(LDFLAGS_DEFAULT)
+PCE_SIM405_LIBS    := $(LIBS)
 
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
@@ -79,7 +80,7 @@ $(rel)/sercons.o:	$(rel)/sercons.c
 
 $(rel)/pce-sim405: $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_SIM405_LDFLAGS) -o $@ $(PCE_SIM405_OBJ) $(PCE_SIM405_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_SIM405_LDFLAGS) -o $@ $(PCE_SIM405_OBJ) $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_LIBS) -lm
 
 $(rel)/pce-sim405.cfg: $(rel)/sim405.cfg.in
 	$(QP)echo "  SED    $@"

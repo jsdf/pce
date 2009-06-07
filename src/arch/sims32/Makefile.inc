@@ -9,6 +9,7 @@ DIST += $(rel)/Makefile.inc
 
 PCE_SIMS32_CFLAGS := $(CFLAGS_DEFAULT)
 PCE_SIMS32_LDFLAGS := $(LDFLAGS_DEFAULT)
+PCE_SIMS32_LIBS    := $(LIBS)
 
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
@@ -62,7 +63,7 @@ $(rel)/sims32.o:	$(rel)/sims32.c
 
 $(rel)/pce-sims32: $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QR)$(LD) $(PCE_SIMS32_LDFLAGS) -o $@ $(PCE_SIMS32_OBJ) $(PCE_SIMS32_OBJ_EXT) -lm
+	$(QR)$(LD) $(PCE_SIMS32_LDFLAGS) -o $@ $(PCE_SIMS32_OBJ) $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_LIBS) -lm
 
 $(rel)/pce-sims32.cfg: $(rel)/sims32.cfg.in
 	$(QP)echo "  SED    $@"
