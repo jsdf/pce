@@ -72,6 +72,7 @@
 #undef PCE_CFG_TIME
 
 #undef PCE_HOST_LINUX
+#undef PCE_HOST_WINDOWS
 #undef PCE_HOST_SUNOS
 #undef PCE_HOST_NETBSD
 

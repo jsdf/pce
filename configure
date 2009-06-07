@@ -683,6 +683,7 @@ PCE_HOST_PPC
 PCE_HOST_IA32
 PCE_HOST_NETBSD
 PCE_HOST_SUNOS
+PCE_HOST_WINDOWS
 PCE_HOST_LINUX
 host_os
 host_vendor
@@ -2046,7 +2047,9 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 { $as_echo "$as_me:$LINENO: checking host OS" >&5
 $as_echo_n "checking host OS... " >&6; }
 PCE_HOST_LINUX=0
+PCE_HOST_WINDOWS=0
 PCE_HOST_SUNOS=0
+PCE_HOST_NETBSD=0
 case "$host_os" in
 [Ll]inux*)
 	PCE_HOST_LINUX=1
@@ -2056,6 +2059,15 @@ _ACEOF
 
 	{ $as_echo "$as_me:$LINENO: result: Linux" >&5
 $as_echo "Linux" >&6; }
+	;;
+mingw*)
+	PCE_HOST_WINDOWS=1
+	cat >>confdefs.h <<\_ACEOF
+#define PCE_HOST_WINDOWS 1
+_ACEOF
+
+	{ $as_echo "$as_me:$LINENO: result: Windows" >&5
+$as_echo "Windows" >&6; }
 	;;
 SunOS*)
 	PCE_HOST_SUNOS=1
@@ -2080,6 +2092,7 @@ $as_echo "NetBSD" >&6; }
 $as_echo "unknown ($host_os)" >&6; }
 	;;
 esac
+
 
 
 
