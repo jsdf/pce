@@ -23,6 +23,10 @@ ifeq "$(PCE_X11_USE)" "1"
 	PCE_MACPLUS_LIBS += $(PCE_X11_LDF)
 endif
 
+ifeq "$(PCE_HOST_WINDOWS)" "1"
+	PCE_IBMPC_LIBS += -mconsole
+endif
+
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(PCE_MACPLUS_CFLAGS) -o $@ $<
