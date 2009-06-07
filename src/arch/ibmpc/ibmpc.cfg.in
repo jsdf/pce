@@ -314,10 +314,10 @@ section pc {
 		# Not all character drivers are supported on
 		# all platforms.
 		#driver = "null"
-		driver = "stdio:file=com1.out"
+		driver = "stdio:file=serport1.out"
 		#driver = "tios:file=/dev/ttyS0"
 
-		log = "com1.log"
+		#log = "serport1.log"
 	}
 
 	section mouse {
@@ -337,7 +337,7 @@ section pc {
 		address = 0x378
 
 		# Output is written to this file
-		file = "parport.out"
+		file = "parport1.out"
 	}
 
 
@@ -434,6 +434,7 @@ section pc {
 		file     = "drv_81.img"
 		#cow      = "pce_80.cow"
 		readonly = 0
+		optional = 1
 	}
 
 	#section disk {
