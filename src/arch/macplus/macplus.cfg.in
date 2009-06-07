@@ -12,59 +12,83 @@ section macplus {
 	#
 	# If the first character of the string is a "-", the directory
 	# is added to the beginning of the search path.
+	path = "rom"
 	path = "PCE_DIR_DATA/macplus"
 	path = "-."
 
 	section cpu {
+		# The CPU model. Currently only "68000" is supported.
 		model = "68000"
 
-		# The CPU speed multiplier
-		# A value of 0 means "all out"
+		# The CPU speed multiplier. A value of 1 emulates a
+		# 7.8336 MHz CPU. A value of 0 means "all out".
 		speed = 0
 	}
 
-	# Multiple "ram" sections may be present
+	# Multiple "ram" sections may be present.
 	section ram {
 		# The base address
-		address = 0x00000000
+		address = 0x000000
 
 		# The size in KB
 		sizek = 4096
 
 		# The RAM image that is used to initialize the RAM
 		#file = "ram.bin"
+
+		# The memory block is initialized with this value.
+		default = 0x00
 	}
 
-	# Multiple "rom" sections may be present
+	# Multiple "rom" sections may be present.
 	section rom {
 		# The file from which the rom code is loaded
 		file = "macplus.rom"
 
 		# The base address
-		address = 0x00400000
+		address = 0x400000
 
 		# The rom size
 		#size = 262144
 		sizek = 256
+
+		# The memory block is initialized with this value.
+		default = 0xff
 	}
 
 	section rom {
-		# This is the PCE extension ROM
+		# This is the PCE extension ROM.
 
 		file = "macplus-pcex.rom"
 
-		address = 0x00f80000
+		address = 0xf80000
 		sizek = 256
+
+		# The memory block is initialized with this value.
+		default = 0xff
 	}
 
-	# load sections are processed after the emulator is set up.
+	# All "load" sections are processed after all the "ram" and "rom"
+	# sections. It is possible to overwrite read-only blocks, too.
 	#section load {
 	#	format = "srec"
 	#	file = "macplus.srec"
 	#}
 
+	#section load {
+	#	format = "binary"
+	#	address = 0x400000
+	#	file = "macplus.bin"
+	#}
+
+	# Multiple "terminal" sections may be present. The first
+	# one will be used unless a terminal type is specified
+	# on the command line.
 	section terminal {
 		driver = "sdl"
+
+		# The terminal scale factor. Only integral values are
+		# allowed.
 		scale = 2
 	}
 
@@ -74,21 +98,31 @@ section macplus {
 	}
 
 	section keyboard {
+		# The model number and international flag are returned
+		# by the keyboard but MacOS seems to ignore them.
 		model = 0
-		intl = 0
+		intl  = 0
 	}
 
 	section rtc {
+		# On startup the parameter RAM is loaded from this file. On
+		# shutdown it is written back.
 		file = "pram.dat"
+
 		realtime = 1
 	}
 
 	section scsi {
+		# Don't change these.
 		#address = 0x580000
 		#size = 0x1000
 
 		section device {
+			# The SCSI ID
 			id = 6
+
+			# The drive number. This number is used to identify
+			# a "disk" section. The number itself is meaningless.
 			drive = 128
 
 			# The vendor and product strings are returned by
@@ -96,9 +130,21 @@ section macplus {
 			#vendor = "PCE     "
 			#product = "PCEDISK         "
 		}
+
+		section device {
+			id    = 4
+			drive = 129
+		}
+
+		section device {
+			id    = 2
+			drive = 130
+		}
 	}
 
 	section serial {
+		# The port number. Use 0 for the modem port and 1 for
+		# the printer port.
 		port = 0
 
 		# Not all character drivers are supported on
@@ -119,29 +165,43 @@ section macplus {
 	}
 
 	section disk {
-		drive = 1
-		type = "auto"
-		file = "disk1.img"
+		drive    = 1
+		type     = "auto"
+		file     = "disk1.img"
 		optional = 1
 	}
 
 	section disk {
-		drive = 2
-		type = "auto"
-		file = "disk2.img"
+		drive    = 2
+		type     = "auto"
+		file     = "disk2.img"
 		optional = 1
 	}
 
 	section disk {
-		drive = 3
-		type = "auto"
-		file = "disk3.img"
+		drive    = 3
+		type     = "auto"
+		file     = "disk3.img"
 		optional = 1
 	}
 
 	section disk {
 		drive = 128
-		type = auto
-		file = "hd1.img"
+		type  = auto
+		file  = "hd1.img"
+	}
+
+	section disk {
+		drive    = 129
+		type     = auto
+		file     = "hd2.img"
+		optional = 1
+	}
+
+	section disk {
+		drive    = 130
+		type     = auto
+		file     = "hd3.img"
+		optional = 1
 	}
 }
