@@ -14,6 +14,7 @@ section pc {
 	#
 	# If the first character of the string is a "-", the directory
 	# is added to the beginning of the search path.
+	path = "rom"
 	path = "PCE_DIR_DATA/ibmpc"
 	path = "-."
 
@@ -73,35 +74,35 @@ section pc {
 	# sections. It is possible to overwrite read-only blocks, too.
 	section load {
 		# The main BIOS
-		format = "binary"
+		format  = "binary"
 		address = 0xfe000
-		file = "ibm1982.rom"
+		file    = "ibm1982.rom"
 	}
 
 	section load {
 		# The ROM BASIC
-		format = "binary"
+		format  = "binary"
 		address = 0xf6000
-		file = "basic-1.10.rom"
+		file    = "basic-1.10.rom"
 	}
 
 	section load {
 		# The PCE ROM extension
-		format = "binary"
+		format  = "binary"
 		address = 0xf0000
-		file = "pce.rom"
+		file    = "pce.rom"
 	}
 
 	#section load {
 	#	# Intel hex file
 	#	format = "ihex"
-	#	file = "ibmpc.ihex"
+	#	file   = "ibmpc.ihex"
 	#}
 
 	#section load {
 	#	# Motorola S-Record file
 	#	format = "srec"
-	#	file = "ibmpc.srec"
+	#	file   = "ibmpc.srec"
 	#}
 
 
@@ -132,16 +133,18 @@ section pc {
 		driver = "sdl"
 
 		# The initial scale factors
-		scale_x = 2
-		scale_y = 2
+		scale_x = 1
+		scale_y = 1
 
 		# Define a border around the image
 		border = 0
 
-		# The mouse speed
-		mouse_mul_x = 2
+		# The mouse speed. The host mouse speed is multiplied
+		# by (mouse_mul_x / mouse_div_x) and
+		# (mouse_mul_y / mouse_div_y)
+		mouse_mul_x = 1
 		mouse_div_x = 1
-		mouse_mul_y = 2
+		mouse_mul_y = 1
 		mouse_div_y = 1
 	}
 
@@ -153,9 +156,9 @@ section pc {
 		scale_y = 1
 
 		# The mouse speed
-		mouse_mul_x = 2
+		mouse_mul_x = 1
 		mouse_div_x = 1
-		mouse_mul_y = 2
+		mouse_mul_y = 1
 		mouse_div_y = 1
 	}
 
@@ -377,57 +380,94 @@ section pc {
 	# If a COW (copy on write) file is specified, changes to the disk
 	# image are written to that file and the image is not touched.
 
+	# The first floppy drive
 	section disk {
-		drive = 0
+		drive    = 0
 		optional = 1
-		type = "image"
-		file = "pce_00.img"
-		offset = 0
-		c = 80
-		h = 2
-		s = 18
+		type     = "auto"
+		file     = "drv_00.img"
 	}
 
+	# The second floppy drive
 	section disk {
-		drive = 1
-		type = "ram"
-		c = 83
-		h = 2
-		s = 18
-
-		visible_c = 80
-		visible_h = 2
-		visible_s = 18
+		drive    = 1
+		optional = 1
+		type     = "auto"
+		file     = "drv_01.img"
 	}
 
+	#section disk {
+	#	drive    = 0
+	#	optional = 1
+	#	type     = "image"
+	#	file     = "drv_00.img"
+	#	offset   = 0
+	#	c        = 80
+	#	h        = 2
+	#	s        = 18
+	#}
+
+	#section disk {
+	#	drive     = 0
+	#	type      = "ram"
+	#	c         = 83
+	#	h         = 2
+	#	s         = 18
+	#	visible_c = 80
+	#	visible_h = 2
+	#	visible_s = 18
+	#}
+
+	# The first harddisk
 	section disk {
-		drive = 128
-		type = "auto"
-		file = "pce_80.img"
-		readonly = 1
-		cow = "pce_80.cow"
+		drive    = 128
+		type     = "auto"
+		file     = "drv_80.img"
+		#cow      = "pce_80.cow"
+		readonly = 0
 	}
 
+	# The second harddisk
 	section disk {
-		drive = 129
-                type = "partition"
+		drive    = 129
+		type     = "auto"
+		file     = "drv_81.img"
+		#cow      = "pce_80.cow"
+		readonly = 0
+	}
 
-                c = 1024
-                h = 128
-                s = 63
+	#section disk {
+	#	drive    = 128
+	#	type     = "image"
+	#	offset   = 128
+	#	file     = "drv_80.img"
+	#	cow      = "pce_80.cow"
+	#	c        = 512
+	#	h        = 16
+	#	s        = 17
+	#	readonly = 0
+	#}
 
-		section partition {
-			block_start = 0
-			block_count = 63
-			file = "p0.img"
-			readonly = 0
-		}
-
-		section partition {
-			block_start = 63
-			block_count = 8257473
-			file = "/dev/hda1"
-			readonly = 1
-		}
-        }
+	#section disk {
+	#	drive = 128
+	#	type = "partition"
+	#
+	#	c = 1024
+	#	h = 128
+	#	s = 63
+	#
+	#	section partition {
+	#		block_start = 0
+	#		block_count = 63
+	#		file = "p0.img"
+	#		readonly = 0
+	#	}
+	#
+	#	section partition {
+	#		block_start = 63
+	#		block_count = 8257473
+	#		file = "/dev/hda1"
+	#		readonly = 1
+	#	}
+	#}
 }
