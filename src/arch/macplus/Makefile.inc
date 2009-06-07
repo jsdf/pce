@@ -24,7 +24,7 @@ ifeq "$(PCE_X11_USE)" "1"
 endif
 
 ifeq "$(PCE_HOST_WINDOWS)" "1"
-	PCE_IBMPC_LIBS += -mconsole
+	PCE_MACPLUS_LIBS += -mconsole
 endif
 
 $(rel)/%.o: $(rel)/%.c
