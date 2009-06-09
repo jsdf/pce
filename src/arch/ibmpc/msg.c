@@ -54,12 +54,17 @@ int pc_set_msg_cassette (ibmpc_t *pc, const char *msg, const char *val)
 		pc_cas_set_mode (&pc->cas, 1);
 
 		if (*val != 0) {
-			if (msg_get_ulng (val, &v)) {
-				return (1);
+			if (strcmp (val, "end") == 0) {
+				pc_cas_append (&pc->cas);
 			}
+			else {
+				if (msg_get_ulng (val, &v)) {
+					return (1);
+				}
 
-			if (pc_cas_set_position (&pc->cas, v)) {
-				return (1);
+				if (pc_cas_set_position (&pc->cas, v)) {
+					return (1);
+				}
 			}
 		}
 

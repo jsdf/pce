@@ -400,6 +400,7 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 	const char    *fname;
 	const char    *mode;
 	unsigned long pos;
+	int           append;
 	ini_sct_t     *sct;
 
 	sct = ini_next_sct (ini, NULL, "cassette");
@@ -407,10 +408,11 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_string (sct, "file", &fname, NULL);
 	ini_get_string (sct, "mode", &mode, "load");
 	ini_get_uint32 (sct, "position", &pos, 0);
+	ini_get_bool (sct, "append", &append, 0);
 
-	pce_log_tag (MSG_INF, "CASSETTE:", "file=%s mode=%s pos=%lu\n",
+	pce_log_tag (MSG_INF, "CASSETTE:", "file=%s mode=%s pos=%lu append=%d\n",
 		(fname != NULL) ? fname : "<none>",
-		mode, pos
+		mode, pos, append
 	);
 
 	pc_cas_init (&pc->cas);
@@ -429,7 +431,12 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 		pce_log (MSG_ERR, "*** unknown cassette mode (%s)\n", mode);
 	}
 
-	pc_cas_set_position (&pc->cas, pos);
+	if (append) {
+		pc_cas_append (&pc->cas);
+	}
+	else {
+		pc_cas_set_position (&pc->cas, pos);
+	}
 }
 
 static

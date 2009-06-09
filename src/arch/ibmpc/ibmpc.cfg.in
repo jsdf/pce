@@ -351,6 +351,10 @@ section pc {
 
 		# The initial tape file position. The default is 0.
 		position = 0
+
+		# If append is true then the file position is set to the
+		# end of the file instead of to "position".
+		append = 0
 	}
 
 	# Disk types are:
