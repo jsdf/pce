@@ -611,7 +611,7 @@ void ems_4e01 (ems_t *ems, e8086_t *cpu)
 	unsigned short handle;
 	unsigned       page;
 
-	seg = e86_get_es (cpu);
+	seg = e86_get_ds (cpu);
 	ofs = e86_get_si (cpu);
 
 	for (i = 0; i < 4; i++) {
@@ -622,6 +622,8 @@ void ems_4e01 (ems_t *ems, e8086_t *cpu)
 			e86_set_ah (cpu, 0xa3);
 			return;
 		}
+
+		ofs += 4;
 	}
 
 	e86_set_ah (cpu, 0x00);
@@ -660,6 +662,8 @@ void ems_4e02 (ems_t *ems, e8086_t *cpu)
 			e86_set_ah (cpu, 0xa3);
 			return;
 		}
+
+		sofs += 4;
 	}
 
 	e86_set_ah (cpu, 0x00);
