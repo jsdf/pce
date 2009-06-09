@@ -150,8 +150,9 @@ void pc_cas_set_motor (pc_cassette_t *cas, unsigned char val)
 		return;
 	}
 
-	pc_log_deb (NULL, "cassette motor %s at %lu\n",
-		val ? "on " : "off", cas->position
+	pce_printf ("cassette at %lu motor %s\n",
+		cas->position,
+		val ? "on " : "off"
 	);
 
 	cas->motor = val;
@@ -177,14 +178,23 @@ static
 void pc_cas_read_bit (pc_cassette_t *cas)
 {
 	int val;
+	int eof;
 
 	if (cas->inp_cnt == 0) {
 		if (cas->fp == NULL) {
 			return;
 		}
 
+		eof = feof (cas->fp);
+
 		val = fgetc (cas->fp);
 		if (val == EOF) {
+			if (feof (cas->fp) && !eof) {
+				pce_printf ("cassette at %lu EOF\n",
+					cas->position
+				);
+			}
+
 			return;
 		}
 
@@ -266,9 +276,9 @@ void pc_cas_set_out (pc_cassette_t *cas, unsigned char val)
 
 void pc_cas_print_state (pc_cassette_t *cas)
 {
-	pce_printf ("cassette %s at %lu\n",
-		cas->save ? "saving" : "loading",
-		cas->position
+	pce_printf ("cassette at %lu %s\n",
+		cas->position,
+		cas->save ? "saving" : "loading"
 	);
 }
 
