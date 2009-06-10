@@ -31,6 +31,9 @@ typedef struct {
 
 	unsigned long position;
 
+	unsigned long position_save;
+	unsigned long position_load;
+
 	unsigned char data_out;
 	unsigned char data_inp;
 

@@ -34,6 +34,9 @@ void pc_cas_init (pc_cassette_t *cas)
 
 	cas->position = 0;
 
+	cas->position_save = 0;
+	cas->position_load = 0;
+
 	cas->data_out = 0;
 	cas->data_inp = 0;
 
@@ -67,7 +70,22 @@ int pc_cas_get_mode (pc_cassette_t *cas)
 
 void pc_cas_set_mode (pc_cassette_t *cas, int save)
 {
-	cas->save = (save != 0);
+	save = (save != 0);
+
+	if (cas->save == save) {
+		return;
+	}
+
+	if (cas->save) {
+		cas->position_save = cas->position;
+		cas->position = cas->position_load;
+	}
+	else {
+		cas->position_load = cas->position;
+		cas->position = cas->position_save;
+	}
+
+	cas->save = save;
 
 	if (cas->fp != NULL) {
 		fflush (cas->fp);
@@ -123,6 +141,9 @@ int pc_cas_set_fname (pc_cassette_t *cas, const char *fname)
 
 	cas->position = 0;
 
+	cas->position_save = 0;
+	cas->position_load = 0;
+
 	if (fname == NULL) {
 		return (0);
 	}
@@ -138,6 +159,14 @@ int pc_cas_set_fname (pc_cassette_t *cas, const char *fname)
 	}
 
 	cas->close = 1;
+
+	pc_cas_append (cas);
+
+	cas->position_save = cas->position;
+
+	if (cas->save == 0) {
+		pc_cas_set_position (cas, 0);
+	}
 
 	return (0);
 }
