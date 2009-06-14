@@ -366,6 +366,8 @@ void e86_reset (e8086_t *c)
 
 	c->instructions = 0;
 
+	c->addr_mask = 0xfffff;
+
 	for (i = 0; i < 8; i++) {
 		c->dreg[i] = 0;
 	}
