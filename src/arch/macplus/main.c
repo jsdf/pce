@@ -20,8 +20,8 @@
  *****************************************************************************/
 
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "main.h"
+
 #include <stdarg.h>
 #include <time.h>
 
@@ -31,8 +31,6 @@
 #ifdef PCE_SDL_USE
 #include <SDL.h>
 #endif
-
-#include "main.h"
 
 
 const char *par_cpu = NULL;
