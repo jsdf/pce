@@ -26,7 +26,7 @@ LIBPCE_BAS := \
 ifeq "$(PCE_ENABLE_TUN)" "1"
 LIBPCE_BAS += tun
 else
-DIST += tun.c tun.h
+DIST += $(rel)/tun.c $(rel)/tun.h
 endif
 
 LIBPCE_SRC := $(foreach f,$(LIBPCE_BAS),$(rel)/$(f).c)
