@@ -1872,12 +1872,14 @@ fi
 
 read p PCE_VERSION_MAJ PCE_VERSION_MIN PCE_VERSION_MIC dstr r < "$srcdir/version"
 
-if test "x$dstr" != "x" ; then
-	if test "x$dstr" = "xsvn" ; then
+PCE_VERSION_STR=$dstr
+
+if test "x$dstr" = "xscm" ; then
+	if test -d "$srcdir/.svn" ; then
 		tmp=svninfo.$$.tmp
 		svn info "$srcdir" > "$tmp" 2> /dev/null
 
-		date=$(date "+%Y-%m-%d")
+		date=`date "+%Y-%m-%d"`
 		rev=""
 
 		while read a b c d e ; do
@@ -1894,12 +1896,17 @@ if test "x$dstr" != "x" ; then
 		rm -f "$tmp"
 
 		test -n "$rev" && rev="-r$rev"
-		date=$(echo "$date" | sed -e "s/-//g")
+		date=`echo "$date" | sed -e "s/-//g"`
 		PCE_VERSION_STR="svn-$date$rev"
-	else
-		PCE_VERSION_STR="$dstr"
+	elif test -d "$srcdir/.git" ; then
+		tmp=gitlog.$$.tmp
+		( cd "$srcdir" && git log -1 --date=iso --pretty="format:%h %cd" HEAD ) > "$tmp" 2> /dev/null
+		read hash date time rest < "$tmp"
+		rm -f "$tmp"
+		date=`echo "$date" | sed -e "s/-//g"`
+		PCE_VERSION_STR="git-$date-$hash"
 	fi
-else
+elif test "x$dstr" = "x" ; then
 	PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
 fi
 
