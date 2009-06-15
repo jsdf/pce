@@ -901,7 +901,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->cfg = ini;
 
-	pc->bootdrive = 128;
+	ini_get_uint16 (ini, "boot", &pc->bootdrive, 128);
 
 	ini_get_bool (ini, "rtc", &pc->support_rtc, 1);
 

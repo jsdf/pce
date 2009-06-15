@@ -2,6 +2,10 @@
 # Example config file
 
 section pc {
+	# The boot drive. Use 0 for the first floppy drive and 128
+	# for the first harddrive.
+	boot = 128
+
 	# Enable access to the RTC
 	rtc = 1
 

@@ -47,6 +47,7 @@ ibmpc_t                   *par_pc = NULL;
 
 ini_sct_t                 *par_cfg = NULL;
 
+static int                par_have_boot = 0;
 static unsigned           par_boot = 128;
 
 static unsigned           pce_last_int = 0;
@@ -1676,6 +1677,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
+			par_have_boot = 1;
 			par_boot = (unsigned) strtoul (argv[i], NULL, 0);
 		}
 		else if (str_isarg (argv[i], "r", "run")) {
@@ -1754,7 +1756,10 @@ int main (int argc, char *argv[])
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
 	mon_set_msg_fct (&par_mon, pc_set_msg, pc_get_msg, par_pc);
 
-	pc_set_bootdrive (pc, par_boot);
+	if (par_have_boot) {
+		pc_set_bootdrive (pc, par_boot);
+	}
+
 	pc_reset (pc);
 
 	if (nomon) {
