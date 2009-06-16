@@ -1,4 +1,4 @@
-# macplus.cfg
+# pce-macplus.cfg
 #
 # Example config file
 
@@ -89,12 +89,30 @@ section macplus {
 
 		# The terminal scale factor. Only integral values are
 		# allowed.
-		scale = 2
+		scale = 1
+
+		# Define a border around the image
+		border = 0
+
+		# The mouse speed. The host mouse speed is multiplied
+		# by (mouse_mul_x / mouse_div_x) and
+		# (mouse_mul_y / mouse_div_y)
+		mouse_mul_x = 1
+		mouse_div_x = 1
+		mouse_mul_y = 1
+		mouse_div_y = 1
 	}
 
 	section terminal {
 		driver = "x11"
-		scale = 1
+
+		scale  = 1
+
+		# The mouse speed
+		mouse_mul_x = 1
+		mouse_div_x = 1
+		mouse_mul_y = 1
+		mouse_div_y = 1
 	}
 
 	section keyboard {
