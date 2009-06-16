@@ -1,4 +1,4 @@
-# pce.cfg
+# pce-ibmpc.cfg
 # Example config file
 
 section pc {
@@ -24,8 +24,8 @@ section pc {
 
 	section cpu {
 		# The CPU model.
-		# Recognized models are: 8086, 8088, 8086+, 8088+, 80186, 80188
-		model = "8088"
+		# Recognized models are: 8086, 8088, 80186, 80188
+		model = "80186"
 
 		# This sets the CPU speed with respect to the emulated
 		# system clock. A value of 1 emulates a 4.77MHz CPU.
@@ -137,8 +137,9 @@ section pc {
 		driver = "sdl"
 
 		# The initial scale factors
-		scale_x = 1
-		scale_y = 1
+		scale   = 1
+		#scale_x = 1
+		#scale_y = 1
 
 		# Define a border around the image
 		border = 0
@@ -155,9 +156,8 @@ section pc {
 	section terminal {
 		driver = "x11"
 
-		# The initial scale factors
-		scale_x = 1
-		scale_y = 1
+		# The initial scale factor
+		scale = 1
 
 		# The mouse speed
 		mouse_mul_x = 1
@@ -310,7 +310,7 @@ section pc {
 	# Up to 4 serial ports can be defined
 	section serial {
 		address = 0x3f8		# COM1
-		irq = 4
+		irq     = 4
 
 		# Valid values for uart are: "8250", "16450"
 		uart = "8250"
@@ -329,21 +329,28 @@ section pc {
 		address = 0x2f8		# COM2
 		irq = 3
 
-		# The mouse speed
-		speed_mul_x = 3
-		speed_div_x = 2
-		speed_mul_y = 3
-		speed_div_y = 2
+		# The mouse speed. This is independant of the
+		# terminal mouse speed.
+		speed_mul_x = 1
+		speed_div_x = 1
+		speed_mul_y = 1
+		speed_div_y = 1
 	}
 
 	# Up to 4 parallel ports can be defined
 	section parport {
-		address = 0x378
+		address = 0x378		# LPT1
 
 		# Output is written to this file
 		file = "parport1.out"
 	}
 
+	section parport {
+		address = 0x278		# LPT2
+
+		# Output is written to this file
+		file = "parport2.out"
+	}
 
 	# The cassette interface
 	section cassette {
