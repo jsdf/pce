@@ -20,11 +20,20 @@
  *****************************************************************************/
 
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <terminal/terminal.h>
+
+
+#define TRM_ESC_ESC  1
+#define TRM_ESC_OK   2
+#define TRM_ESC_ALT  4
+#define TRM_ESC_CTRL 8
+#define TRM_ESC_KEYS (TRM_ESC_ALT | TRM_ESC_CTRL)
 
 
 void trm_init (terminal_t *trm, void *ext)
@@ -46,6 +55,8 @@ void trm_init (terminal_t *trm, void *ext)
 	trm->check = NULL;
 
 	trm->is_open = 0;
+
+	trm->escape = 0;
 
 	trm->w = 0;
 	trm->h = 0;
@@ -391,11 +402,173 @@ int trm_set_msg_emu (terminal_t *trm, const char *msg, const char *val)
 	return (1);
 }
 
-void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
+static
+int trm_set_key_magic (terminal_t *trm, pce_key_t key)
 {
+	switch (key) {
+	case PCE_KEY_0:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "0");
+		return (0);
+
+	case PCE_KEY_1:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "1");
+		return (0);
+
+	case PCE_KEY_2:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "2");
+		return (0);
+
+	case PCE_KEY_3:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "3");
+		return (0);
+
+	case PCE_KEY_4:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "4");
+		return (0);
+
+	case PCE_KEY_5:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "5");
+		return (0);
+
+	case PCE_KEY_6:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "6");
+		return (0);
+
+	case PCE_KEY_7:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "7");
+		return (0);
+
+	case PCE_KEY_8:
+		trm_set_msg_emu (trm, "emu.cpu.speed", "8");
+		return (0);
+
+
+	case PCE_KEY_F:
+		trm_set_msg_trm (trm, "term.fullscreen.toggle", "");
+		return (0);
+
+	case PCE_KEY_G:
+		trm_set_msg_trm (trm, "term.grab", "");
+		return (0);
+
+	case PCE_KEY_M:
+		trm_set_msg_trm (trm, "term.release", "");
+		trm_set_msg_trm (trm, "term.fullscreen", "0");
+		trm_set_msg_emu (trm, "emu.stop", "1");
+		return (0);
+
+	case PCE_KEY_P:
+		trm_set_msg_emu (trm, "emu.pause.toggle", "");
+		return (0);
+
+	case PCE_KEY_Q:
+		trm_set_msg_trm (trm, "term.release", "");
+		trm_set_msg_trm (trm, "term.fullscreen", "0");
+		trm_set_msg_emu (trm, "emu.exit", "1");
+		return (0);
+
+	case PCE_KEY_R:
+		trm_set_msg_emu (trm, "emu.reset", "1");
+		return (0);
+
+	case PCE_KEY_S:
+		trm_screenshot (trm, NULL);
+		return (0);
+
+	case PCE_KEY_UP:
+	case PCE_KEY_KP_8:
+		trm_set_scale (trm, trm->scale_x + 1, trm->scale_y + 1);
+		return (0);
+
+	case PCE_KEY_DOWN:
+	case PCE_KEY_KP_2:
+		if ((trm->scale_x > 1) && (trm->scale_y > 1)) {
+			trm_set_scale (trm, trm->scale_x - 1, trm->scale_y - 1);
+		}
+		return (0);
+
+	case PCE_KEY_LEFT:
+	case PCE_KEY_KP_4:
+		trm_set_msg_emu (trm, "emu.cpu.speed.step", "-1");
+		return (0);
+
+	case PCE_KEY_RIGHT:
+	case PCE_KEY_KP_6:
+		trm_set_msg_emu (trm, "emu.cpu.speed.step", "+1");
+		return (0);
+
+	default:
+		return (1);
+	}
+
+	return (1);
+}
+
+static
+void trm_set_key_emu (terminal_t *trm, unsigned event, pce_key_t key)
+{
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		if (trm_set_key_magic (trm, key) == 0) {
+			return;
+		}
+	}
+
 	if (trm->set_key != NULL) {
 		trm->set_key (trm->set_key_ext, event, key);
 	}
+}
+
+void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
+{
+	if (event == PCE_KEY_EVENT_DOWN) {
+		if (key == PCE_KEY_ESC) {
+			trm->escape ^= TRM_ESC_ESC;
+		}
+
+		if (trm->escape & TRM_ESC_ESC) {
+			if (key != PCE_KEY_ESC) {
+				trm_set_key_emu (trm, PCE_KEY_EVENT_MAGIC, key);
+			}
+			return;
+		}
+
+		if (key == PCE_KEY_LALT) {
+			trm->escape |= TRM_ESC_ALT;
+		}
+		else if (key == PCE_KEY_LCTRL) {
+			trm->escape |= TRM_ESC_CTRL;
+		}
+		else if (key == PCE_KEY_PAUSE) {
+			trm_set_msg_trm (trm, "term.release", "");
+			trm_set_msg_trm (trm, "term.fullscreen", "0");
+			trm_set_msg_emu (trm, "emu.exit", "1");
+			return;
+		}
+
+		if ((trm->escape & TRM_ESC_KEYS) == TRM_ESC_KEYS) {
+			trm_set_msg_trm (trm, "term.release", "");
+			trm->escape &= ~TRM_ESC_KEYS;
+		}
+	}
+	else if (event == PCE_KEY_EVENT_UP) {
+		if (trm->escape & TRM_ESC_ESC) {
+			if (key == PCE_KEY_ESC) {
+				return;
+			}
+			else {
+				trm->escape &= ~TRM_ESC_ESC;
+			}
+		}
+
+		if (key == PCE_KEY_LALT) {
+			trm->escape &= ~TRM_ESC_ALT;
+		}
+		else if (key == PCE_KEY_LCTRL) {
+			trm->escape &= ~TRM_ESC_CTRL;
+		}
+	}
+
+	trm_set_key_emu (trm, event, key);
 }
 
 void trm_set_mouse (terminal_t *trm, int dx, int dy, unsigned but)

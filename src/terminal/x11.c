@@ -546,58 +546,6 @@ void xt_key_send (xterm_t *xt, KeySym sym, int press)
 	}
 }
 
-/*
- * Handle magic keys
- */
-static
-void xt_magic (xterm_t *xt, KeySym key)
-{
-	if (key == XK_c) {
-		trm_screenshot (&xt->trm, NULL);
-	}
-	else if (key == XK_f) {
-		fprintf (stderr, "xt: full screen not yet supported\n");
-	}
-	else if (key == XK_g) {
-		xt_grab_mouse (xt, 1);
-	}
-	else if (key == XK_p) {
-		trm_set_msg_emu (&xt->trm, "emu.pause.toggle", "");
-	}
-	else if (key == XK_q) {
-		xt_grab_mouse (xt, 0);
-		trm_set_msg_emu (&xt->trm, "emu.exit", "1");
-	}
-	else if (key == XK_r) {
-		trm_set_msg_emu (&xt->trm, "emu.reset", "1");
-	}
-	else if (key == XK_s) {
-		xt_grab_mouse (xt, 0);
-		trm_set_msg_emu (&xt->trm, "emu.stop", "1");
-	}
-	else if (key == XK_1) {
-		trm_set_scale (&xt->trm, 1, 1);
-	}
-	else if (key == XK_2) {
-		trm_set_scale (&xt->trm, 2, 2);
-	}
-	else if (key == XK_3) {
-		trm_set_scale (&xt->trm, 3, 3);
-	}
-	else if (key == XK_4) {
-		trm_set_scale (&xt->trm, 4, 4);
-	}
-	else if (key == XK_0) {
-		trm_set_msg_emu (&xt->trm, "emu.cpu.speed", "0");
-	}
-	else if (key == XK_minus) {
-		trm_set_msg_emu (&xt->trm, "emu.cpu.speed.step", "-1");
-	}
-	else if (key == XK_equal) {
-		trm_set_msg_emu (&xt->trm, "emu.cpu.speed.step", "+1");
-	}
-}
-
 static
 void xt_event_keydown (xterm_t *xt, XEvent *evt)
 {
@@ -605,62 +553,25 @@ void xt_event_keydown (xterm_t *xt, XEvent *evt)
 
 	sym = XLookupKeysym (&evt->xkey, 0);
 
-	if ((xt->magic & 0x03) == 0x03) {
-		xt_magic (xt, sym);
-		xt->magic |= 0x04;
-		return;
-	}
-
-	if (sym == XK_Control_L) {
-		xt->magic |= 0x01;
-	}
-	else if ((sym == XK_Alt_L) || (sym == XK_Meta_L)) {
-		xt->magic |= 0x02;
-	}
-
 	if ((sym == XK_grave) && (evt->xkey.state & ControlMask)) {
 		xt_grab_mouse (xt, 0);
 		trm_set_msg_emu (&xt->trm, "emu.stop", "1");
-	}
-	else if (sym == XK_Pause) {
-		xt_grab_mouse (xt, 0);
-		trm_set_msg_emu (&xt->trm, "emu.exit", "1");
+		return;
 	}
 	else if ((sym == XK_Print) && (evt->xkey.state == 0)) {
 		trm_screenshot (&xt->trm, NULL);
+		return;
 	}
-	else {
-		xt_key_send (xt, sym, 1);
-	}
+
+	xt_key_send (xt, sym, 1);
 }
 
 static
 void xt_event_keyup (xterm_t *xt, XEvent *evt)
 {
-	unsigned magic;
-	KeySym   sym;
+	KeySym sym;
 
 	sym = XLookupKeysym (&evt->xkey, 0);
-
-	magic = xt->magic;
-
-	if (sym == XK_Control_L) {
-		xt->magic &= ~0x01;
-	}
-	else if ((sym == XK_Alt_L) || (sym == XK_Meta_L)) {
-		xt->magic &= ~0x02;
-	}
-
-	if ((xt->magic & 0x03) == 0x03) {
-		return;
-	}
-	else if ((magic & 0x03) == 0x03) {
-		xt->magic &= ~0x04;
-
-		if ((magic & 0x04) == 0) {
-			xt_grab_mouse (xt, 0);
-		}
-	}
 
 	xt_key_send (xt, sym, 0);
 }
@@ -903,7 +814,6 @@ int xt_open (xterm_t *xt, unsigned w, unsigned h)
 	xt->mse_x = 0;
 	xt->mse_y = 0;
 
-	xt->magic = 0;
 	xt->grab = 0;
 
 	xt->display = XOpenDisplay (NULL);
@@ -980,7 +890,6 @@ void xt_init (xterm_t *xt, ini_sct_t *ini)
 	xt->mse_x = 0;
 	xt->mse_y = 0;
 
-	xt->magic = 0;
 	xt->grab = 0;
 }
 

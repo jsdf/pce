@@ -60,6 +60,8 @@ typedef struct {
 
 	int           is_open;
 
+	unsigned      escape;
+
 	/* terminal buffer size */
 	unsigned      w;
 	unsigned      h;

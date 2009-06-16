@@ -23,9 +23,6 @@
 #include "main.h"
 
 
-#define MAC_KBD_ESCAPE PCE_KEY_ESC
-
-
 static mac_kbd_map_t key_map_us[] = {
 	{ PCE_KEY_BACKQUOTE,  1, { 0x65 }, 1, { 0xe5 } },
 	{ PCE_KEY_1,          1, { 0x25 }, 1, { 0xa5 } },
@@ -306,8 +303,6 @@ void mac_kbd_init (mac_kbd_t *kbd)
 
 	kbd->model = 0;
 
-	kbd->escape = 0;
-
 	kbd->keypad_mode = 0;
 
 	kbd->keymap = key_map_us;
@@ -380,121 +375,52 @@ void mac_kbd_set_sequence (mac_kbd_t *kbd, unsigned char *buf, unsigned cnt)
 }
 
 static
-int mac_kbd_escape (mac_kbd_t *kbd, unsigned event, pce_key_t key)
+int mac_kbd_magic (mac_kbd_t *kbd, pce_key_t key)
 {
-	if (event == 1) {
-		switch (key) {
-		case PCE_KEY_ESC:
-			break;
+	switch (key) {
+	case PCE_KEY_F1:
+		mac_set_msg (kbd->sim_ext, "mac.insert", "1");
+		break;
 
-		case PCE_KEY_F1:
-			mac_set_msg (kbd->sim_ext, "mac.insert", "1");
-			break;
+	case PCE_KEY_F2:
+		mac_set_msg (kbd->sim_ext, "mac.insert", "2");
+		break;
 
-		case PCE_KEY_F2:
-			mac_set_msg (kbd->sim_ext, "mac.insert", "2");
-			break;
-
-		case PCE_KEY_F3:
-			mac_set_msg (kbd->sim_ext, "mac.insert", "3");
-			break;
-
-		case PCE_KEY_F4:
-			mac_set_msg (kbd->sim_ext, "mac.insert", "4");
-			break;
+	case PCE_KEY_F3:
+		mac_set_msg (kbd->sim_ext, "mac.insert", "3");
+		break;
 
 
-		case PCE_KEY_0:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "0");
-			break;
-
-		case PCE_KEY_1:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "1");
-			break;
-
-		case PCE_KEY_2:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "2");
-			break;
-
-		case PCE_KEY_3:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "3");
-			break;
-
-		case PCE_KEY_4:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "4");
-			break;
-
-		case PCE_KEY_5:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "5");
-			break;
-
-		case PCE_KEY_6:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "6");
-			break;
-
-		case PCE_KEY_7:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "7");
-			break;
-
-		case PCE_KEY_8:
-			mac_set_msg (kbd->sim_ext, "emu.cpu.speed", "8");
-			break;
-
-
-		case PCE_KEY_R:
-			mac_set_msg (kbd->sim_ext, "emu.reset", "1");
-			break;
-
-		case PCE_KEY_X:
-			mac_set_msg (kbd->sim_ext, "emu.exit", "1");
-			break;
-
-
-		case PCE_KEY_KP_5:
-			if (kbd->keypad_mode) {
-				mac_log_deb ("keypad mode: motion\n");
-				mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
-				kbd->keypad_mode = 0;
-			}
-			else {
-				mac_log_deb ("keypad mode: keypad\n");
-				mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
-				kbd->keypad_mode = 1;
-			}
-			break;
-
-		case PCE_KEY_I:
-			if (kbd->set_intr != NULL) {
-				kbd->set_intr (kbd->set_intr_ext, 7, 1);
-				kbd->set_intr (kbd->set_intr_ext, 7, 0);
-			}
-			break;
-
-		case PCE_KEY_K:
-			mac_log_deb ("keypad mode: keypad\n");
-			mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
-			break;
-
-		case PCE_KEY_M:
+	case PCE_KEY_K:
+	case PCE_KEY_KP_5:
+		if (kbd->keypad_mode) {
 			mac_log_deb ("keypad mode: motion\n");
 			mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
-			break;
-
-		case PCE_KEY_T:
-			mac_set_msg (kbd->sim_ext, "emu.accurate", "1");
-			break;
-
-		default:
-			mac_log_deb ("unknown escape: %04x\n", (unsigned) key);
-			break;
+			kbd->keypad_mode = 0;
 		}
-	}
-	else if (event == 2) {
-		if (key == MAC_KBD_ESCAPE) {
-			return (0);
+		else {
+			mac_log_deb ("keypad mode: keypad\n");
+			mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
+			kbd->keypad_mode = 1;
 		}
+		break;
 
-		kbd->escape = 0;
+	case PCE_KEY_I:
+		if (kbd->set_intr != NULL) {
+			kbd->set_intr (kbd->set_intr_ext, 7, 1);
+			kbd->set_intr (kbd->set_intr_ext, 7, 0);
+		}
+		break;
+
+	case PCE_KEY_T:
+		mac_set_msg (kbd->sim_ext, "emu.accurate", "1");
+		break;
+
+	default:
+		pce_log (MSG_INF, "unhandled magic key (%u)\n",
+			(unsigned) key
+		);
+		break;
 	}
 
 	return (0);
@@ -508,16 +434,9 @@ void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key)
 	mac_log_deb ("kbd: set key: %u %u\n", event, (unsigned) key);
 #endif
 
-	if (kbd->escape) {
-		if (mac_kbd_escape (kbd, event, key) == 0) {
-			return;
-		}
-	}
-	else {
-		if ((event == 1) && (key == MAC_KBD_ESCAPE)) {
-			kbd->escape = 1;
-			return;
-		}
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		mac_kbd_magic (kbd, key);
+		return;
 	}
 
 	if (key == PCE_KEY_F1) {
@@ -543,11 +462,11 @@ void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key)
 	}
 
 	switch (event) {
-	case 1:
+	case PCE_KEY_EVENT_DOWN:
 		mac_kbd_set_sequence (kbd, map->down, map->down_cnt);
 		break;
 
-	case 2:
+	case PCE_KEY_EVENT_UP:
 		mac_kbd_set_sequence (kbd, map->up, map->up_cnt);
 		break;
 	}

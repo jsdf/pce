@@ -141,8 +141,10 @@ typedef enum {
 } pce_key_t;
 
 
-#define PCE_KEY_EVENT_DOWN 1
-#define PCE_KEY_EVENT_UP   2
+#define PCE_KEY_EVENT_DOWN  1
+#define PCE_KEY_EVENT_UP    2
+#define PCE_KEY_EVENT_MAGIC 3
+
 
 typedef struct {
 	unsigned short event;

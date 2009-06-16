@@ -50,8 +50,6 @@ typedef struct {
 
 	unsigned      border[4];
 
-	unsigned char magic;
-
 	char          grab;
 } sdl_t;
 

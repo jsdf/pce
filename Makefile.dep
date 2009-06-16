@@ -1993,6 +1993,7 @@ src/terminal/term-old.o: src/terminal/term-old.c \
 	src/terminal/terminal.h
 
 src/terminal/terminal.o: src/terminal/terminal.c \
+	src/config.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h

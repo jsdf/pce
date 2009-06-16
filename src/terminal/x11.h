@@ -68,8 +68,6 @@ typedef struct {
 	int           mse_x;
 	int           mse_y;
 
-	unsigned      magic;
-
 	int           grab;
 } xterm_t;
 

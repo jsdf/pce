@@ -50,8 +50,6 @@ typedef struct {
 
 	unsigned      model;
 
-	char          escape;
-
 	char          keypad_mode;
 
 	mac_kbd_map_t *keymap;

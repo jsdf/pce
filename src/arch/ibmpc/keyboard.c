@@ -256,6 +256,14 @@ void pc_kbd_set_key (pc_kbd_t *kbd, unsigned event, unsigned key)
 {
 	pc_keymap_t *map;
 
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		pce_log (MSG_INF, "unhandled magic key (%u)\n",
+			(unsigned) key
+		);
+
+		return;
+	}
+
 	map = keymap;
 
 	while (map->pcekey != PCE_KEY_NONE) {
@@ -271,12 +279,12 @@ void pc_kbd_set_key (pc_kbd_t *kbd, unsigned event, unsigned key)
 	}
 
 	switch (event) {
-	case 1:
+	case PCE_KEY_EVENT_DOWN:
 		map->isdown = 1;
 		pc_kbd_set_sequence (kbd, map->down, map->down_cnt);
 		break;
 
-	case 2:
+	case PCE_KEY_EVENT_UP:
 		if (map->isdown) {
 			map->isdown = 0;
 			pc_kbd_set_sequence (kbd, map->up, map->up_cnt);

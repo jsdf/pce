@@ -241,57 +241,6 @@ unsigned sdl_map_key (SDLKey key)
 }
 
 static
-void sdl_magic (sdl_t *sdl, SDLKey key)
-{
-	if (key == SDLK_c) {
-		trm_screenshot (&sdl->trm, NULL);
-	}
-	else if (key == SDLK_f) {
-		sdl_set_fullscreen (sdl, !sdl->fullscreen);
-	}
-	else if (key == SDLK_g) {
-		sdl_grab_mouse (sdl, 1);
-	}
-	else if (key == SDLK_p) {
-		trm_set_msg_emu (&sdl->trm, "emu.pause.toggle", "");
-	}
-	else if (key == SDLK_q) {
-		sdl_grab_mouse (sdl, 0);
-		sdl_set_fullscreen (sdl, 0);
-		trm_set_msg_emu (&sdl->trm, "emu.exit", "1");
-	}
-	else if (key == SDLK_r) {
-		trm_set_msg_emu (&sdl->trm, "emu.reset", "1");
-	}
-	else if (key == SDLK_s) {
-		sdl_grab_mouse (sdl, 0);
-		sdl_set_fullscreen (sdl, 0);
-		trm_set_msg_emu (&sdl->trm, "emu.stop", "1");
-	}
-	else if (key == SDLK_1) {
-		trm_set_scale (&sdl->trm, 1, 1);
-	}
-	else if (key == SDLK_2) {
-		trm_set_scale (&sdl->trm, 2, 2);
-	}
-	else if (key == SDLK_3) {
-		trm_set_scale (&sdl->trm, 3, 3);
-	}
-	else if (key == SDLK_4) {
-		trm_set_scale (&sdl->trm, 4, 4);
-	}
-	else if (key == SDLK_0) {
-		trm_set_msg_emu (&sdl->trm, "emu.cpu.speed", "0");
-	}
-	else if (key == SDLK_MINUS) {
-		trm_set_msg_emu (&sdl->trm, "emu.cpu.speed.step", "-1");
-	}
-	else if (key == SDLK_EQUALS) {
-		trm_set_msg_emu (&sdl->trm, "emu.cpu.speed.step", "+1");
-	}
-}
-
-static
 void sdl_update (sdl_t *sdl)
 {
 	SDL_Surface         *s;
@@ -362,26 +311,6 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 	SDLMod    mod;
 	pce_key_t pcekey;
 
-	if ((sdl->magic & 0x03) == 0x03) {
-		sdl_magic (sdl, key);
-		sdl->magic |= 0x04;
-		return;
-	}
-
-	if (key == SDLK_LCTRL) {
-		sdl->magic |= 0x01;
-	}
-	else if (key == SDLK_LALT) {
-		sdl->magic |= 0x02;
-	}
-
-	if (key == SDLK_PAUSE) {
-		sdl_grab_mouse (sdl, 0);
-		sdl_set_fullscreen (sdl, 0);
-		trm_set_msg_emu (&sdl->trm, "emu.exit", "1");
-		return;
-	}
-
 	mod = SDL_GetModState();
 
 	if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
@@ -402,38 +331,17 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 		return;
 	}
 
-	trm_set_key (&sdl->trm, 1, pcekey);
+	trm_set_key (&sdl->trm, PCE_KEY_EVENT_DOWN, pcekey);
 
 	if (key == SDLK_NUMLOCK) {
-		trm_set_key (&sdl->trm, 2, pcekey);
+		trm_set_key (&sdl->trm, PCE_KEY_EVENT_UP, pcekey);
 	}
 }
 
 static
 void sdl_event_keyup (sdl_t *sdl, SDLKey key)
 {
-	unsigned  magic;
 	pce_key_t pcekey;
-
-	magic = sdl->magic;
-
-	if (key == SDLK_LCTRL) {
-		sdl->magic &= ~0x01;
-	}
-	else if (key == SDLK_LALT) {
-		sdl->magic &= ~0x02;
-	}
-
-	if ((sdl->magic & 0x03) == 0x03) {
-		return;
-	}
-	else if ((magic & 0x03) == 0x03) {
-		sdl->magic &= ~0x04;
-
-		if ((magic & 0x04) == 0) {
-			sdl_grab_mouse (sdl, 0);
-		}
-	}
 
 	pcekey = sdl_map_key (key);
 
@@ -671,7 +579,6 @@ void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 	sdl->border[2] = sdl->border[0];
 	sdl->border[3] = sdl->border[0];
 
-	sdl->magic = 0;
 	sdl->grab = 0;
 
 	sdl->dsp_bpp = 0;
