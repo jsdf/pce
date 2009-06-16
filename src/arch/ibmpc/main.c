@@ -931,28 +931,55 @@ void do_g (cmd_t *cmd, ibmpc_t *pc)
 }
 
 static
+void do_hm (cmd_t *cmd)
+{
+		pce_puts (
+			"emu.config.save      <filename>\n"
+			"emu.exit\n"
+			"emu.stop\n"
+			"emu.pause            \"0\" | \"1\"\n"
+			"emu.pause.toggle\n"
+			"emu.reset\n"
+			"\n"
+			"emu.com1.driver      <driver>\n"
+			"emu.com2.driver      <driver>\n"
+			"emu.com3.driver      <driver>\n"
+			"emu.com4.driver      <driver>\n"
+			"\n"
+			"emu.cpu.clock        <frequency>\n"
+			"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
+			"emu.cpu.speed        <factor>\n"
+			"emu.cpu.speed.step   <adjustment>\n"
+			"\n"
+			"emu.disk.boot        <bootdrive>\n"
+			"emu.disk.commit      [<drive>]\n"
+			"emu.disk.eject       <drive>\n"
+			"emu.disk.insert      <drive>:<fname>\n"
+			"\n"
+			"emu.tape.append\n"
+			"emu.tape.file        <filename>\n"
+			"emu.tape.load        [<position> | \"end\"]\n"
+			"emu.tape.rewind\n"
+			"emu.tape.save        [<position> | \"end\"]\n"
+			"emu.tape.state\n"
+			"\n"
+			"emu.term.fullscreen  \"0\" | \"1\"\n"
+			"emu.term.fullscreen.toggle\n"
+			"emu.term.grab\n"
+			"emu.term.release\n"
+			"emu.term.screenshot  [<filename>]\n"
+			"emu.term.title       <title>\n"
+			"\n"
+			"emu.video.blink      <blink-rate>\n"
+			"emu.video.redraw     [\"now\"]\n"
+		);
+}
+
+static
 void do_h (cmd_t *cmd)
 {
 	if (cmd_match (cmd, "m")) {
-		pce_puts (
-			"emu.stop\n"
-			"emu.exit\n"
-			"emu.pause            <0|1>\n"
-			"emu.pause.toggle\n"
-			"emu.reset\n"
-			"emu.config.save      <fname>\n"
-			"emu.cpu.model        <8086|8088|80186|80188>\n"
-			"emu.cpu.clock        <frequency>\n"
-			"emu.cpu.speed        <factor>\n"
-			"emu.cpu.speed.step   <adjustment>\n"
-			"emu.disk.boot        <bootdrive>\n"
-			"emu.disk.commit      [drive]\n"
-			"emu.disk.eject       <drive>\n"
-			"emu.disk.insert      <drive>:<fname>\n"
-			"emu.video.blink      <blink-rate>\n"
-			"emu.video.redraw     <now>\n"
-		);
-
+		do_hm (cmd);
 		return;
 	}
 
@@ -969,6 +996,8 @@ void do_h (cmd_t *cmd)
 		"gb [addr...]              run with breakpoints\n"
 		"g far                     run until CS changes\n"
 		"g                         run\n"
+		"h                         print help summary\n"
+		"hm                        print help on messages\n"
 		"i [b|w] port              input a byte or word from a port\n"
 		"m[g|s] [msg [val]]        send a message\n"
 		"o [b|w] port val          output a byte or word to a port\n"
