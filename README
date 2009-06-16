@@ -90,26 +90,5 @@ The 'g' command starts the simulation. It can be interrupted by
 pressing Ctrl-`.
 
 
-Terminal Keys
-==============================================================================
-
-While the emulator is running, the following magic keys are recognized:
-
-Alt-Ctrl	Release the mouse grab
-Alt-Ctrl-c	Take a screenshot
-Alt-Ctrl-g	Grab the mouse
-Alt-Ctrl-p	Pause the emulator. Press again to resume.
-Alt-Ctrl-q	Quit
-Alt-Ctrl-r	Reset the emulated machine
-Alt-Ctrl-s	Stop and fall back to the monitor
-Alt-Ctrl-[1-4]	Set the terminal size to 1x, 2x, 3x or 4x
-Alt-Ctrl-0	Reset the CPU speed to what it was at startup
-Alt-Ctrl--	Slow down the emulated CPU
-Alt-Ctrl-=	Speed up the emulated CPU
-Ctrl-`		Stop and fall back to the monitor
-PrtScn		Take a screenshot
-Pause		Quit
-
-
 have fun
 Hampa Hug <hampa@hampa.ch>

@@ -1,0 +1,55 @@
+PCE Terminal Keys
+==============================================================================
+
+Key combinations starting with ESC are key sequences (press ESC, release ESC,
+then press the second key).
+
+
+Generic Terminal Keys
+==============================================================================
+
+These keys apply to both PCE/ibmpc and PCE/macplus.
+
+ESC ESC		Send a single ESC to the emulated machine.
+ESC [1-8]	Set the CPU speed multiplier to [1-8].
+ESC g		Grab the mouse.
+ESC m		Stop and fall back to the monitor.
+ESC p		Pause the emulator. Press again to resume.
+ESC q		Quit
+ESC r		Reset the emulated machine.
+ESC s		Take a screenshot.
+ESC up		Increase the terminal scale factor.
+ESC down	Decrease the terminal scale factor.
+ESC left	Slow down the emulated CPU.
+ESC right	Speed up the emulated CPU.
+
+Alt-Ctrl	Release the mouse grab.
+
+Ctrl-`		Stop and fall back to the monitor.
+PrtScn		Take a screenshot.
+Pause		Quit
+
+
+PCE/ibmpc Terminal Keys
+==============================================================================
+
+ESC 0		Reset the CPU speed to what it was at startup.
+
+
+PCE/macplus Terminal Keys
+==============================================================================
+
+ESC 0		Set the CPU speed multiplier to 0 (all out).
+ESC i		Simulate pressing the programmer's key on a real mac.
+ESC F1		Re-insert the first floppy disk (after moving a floppy to the
+		trash, this simulates re-inserting it. At the moment only the
+		same disk image can be re-inserted.
+ESC F2		Re-insert the second floppy disk.
+ESC F3		Re-insert the third floppy disk.
+ESC k		Switch the keypad between normal keypad mode and cursor
+		movement mode.
+ESC KP5		Toggle the keypad mode.
+Ctrl		Command key
+Alt		Option key
+F1		Command key
+F2		Option key

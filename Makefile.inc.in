@@ -88,6 +88,8 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	NEWS README TODO autogen.sh config.guess config.sub \
 	configure configure.in gendep install-sh
 
+DIST += doc/keys.txt
+
 ROMBIN_IBMPC := \
 	rom/ibmpc/basic-1.10.rom \
 	rom/ibmpc/et4000.rom \
