@@ -575,11 +575,12 @@ void pc_run (ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	while (pc->brk == 0) {
-		pc_clock (pc);
-		pc_clock (pc);
-
-		while (pc->pause) {
-			pce_usleep (250000UL);
+		if (pc->pause == 0) {
+			pc_clock (pc);
+			pc_clock (pc);
+		}
+		else {
+			pce_usleep (100000);
 			trm_check (pc->trm);
 		}
 	}
