@@ -50,6 +50,7 @@ ini_sct_t                 *par_cfg = NULL;
 static int                par_have_boot = 0;
 static unsigned           par_boot = 128;
 
+static unsigned           pce_cur_int = 0;
 static unsigned           pce_last_int = 0;
 
 static ibmpc_t            *pc;
@@ -135,6 +136,17 @@ static
 int cmd_get_sym (ibmpc_t *pc, const char *sym, unsigned long *val)
 {
 	if (e86_get_reg (pc->cpu, sym, val) == 0) {
+		return (0);
+	}
+
+	if (strcmp (sym, "intv") == 0) {
+		if (pce_cur_int < 256) {
+			*val = pce_cur_int;
+		}
+		else {
+			*val = pce_last_int + 256;
+		}
+
 		return (0);
 	}
 
@@ -479,10 +491,12 @@ void prt_state_cpu (e8086_t *c)
 	);
 
 	pce_printf (
-		"AX=%04X  BX=%04X  CX=%04X  DX=%04X  SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X\n",
+		"AX=%04X  BX=%04X  CX=%04X  DX=%04X  "
+		"SP=%04X  BP=%04X  SI=%04X  DI=%04X INT=%02X%c\n",
 		e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
 		e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
-		pce_last_int
+		pce_last_int,
+		(pce_last_int == pce_cur_int) ? '*' : ' '
 	);
 
 	pce_printf ("CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
@@ -560,6 +574,8 @@ void pc_exec (ibmpc_t *pc)
 {
 	unsigned long long old;
 
+	pce_cur_int = 0xffffffff;
+
 	old = e86_get_opcnt (pc->cpu);
 
 	while (e86_get_opcnt (pc->cpu) == old) {
@@ -585,6 +601,8 @@ void pc_run (ibmpc_t *pc)
 		}
 	}
 
+	pce_cur_int = 0xffffffff;
+
 	pce_stop();
 }
 
@@ -606,6 +624,7 @@ void pce_op_int (void *ext, unsigned char n)
 
 	pc = ext;
 
+	pce_cur_int = n;
 	pce_last_int = n;
 
 	if (n == 0x19) {
