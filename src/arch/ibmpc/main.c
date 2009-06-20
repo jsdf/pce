@@ -474,21 +474,30 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 }
 
 static
+void prt_state_time (e8086_t *c)
+{
+	double cpi;
+
+	pce_prt_sep ("TIME");
+
+	if (c->instructions > 0) {
+		cpi = (double) c->clocks / (double) c->instructions;
+	}
+	else {
+		cpi = 0.0;
+	}
+
+	pce_printf ("CLK=%llu + %lu\n", c->clocks, c->delay);
+	pce_printf ("OPS=%llu\n", c->instructions);
+	pce_printf ("CPI=%.4f\n", cpi);
+}
+
+static
 void prt_state_cpu (e8086_t *c)
 {
-	double      cpi, mips;
 	static char ft[2] = { '-', '+' };
 
 	pce_prt_sep ("8086");
-
-	cpi = (c->instructions > 0) ? ((double) c->clocks / (double) c->instructions) : 1.0;
-	mips = (c->clocks > 0) ? (4.77 * (double) c->instructions / (double) c->clocks) : 0.0;
-
-	pce_printf ("CLK=%llu  OP=%llu  DLY=%lu  CPI=%.4f  MIPS=%.4f\n",
-		c->clocks, c->instructions,
-		c->delay,
-		cpi, mips
-	);
 
 	pce_printf (
 		"AX=%04X  BX=%04X  CX=%04X  DX=%04X  "
@@ -527,6 +536,7 @@ void prt_state_pc (ibmpc_t *pc)
 	prt_state_pit (&pc->pit);
 	prt_state_pic (&pc->pic);
 	prt_state_dma (&pc->dma);
+	prt_state_time (pc->cpu);
 	prt_state_cpu (pc->cpu);
 }
 
@@ -1026,7 +1036,7 @@ void do_h (cmd_t *cmd)
 		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
 		"q                         quit\n"
 		"r [reg val]               set a register\n"
-		"s [what]                  print status (pc|cpu|mem|pit|ppi|pic|uart|video|xms)\n"
+		"s [what]                  print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
@@ -1343,6 +1353,9 @@ void do_s (cmd_t *cmd)
 		}
 		else if (cmd_match (cmd, "cpu")) {
 			prt_state_cpu (pc->cpu);
+		}
+		else if (cmd_match (cmd, "time")) {
+			prt_state_time (pc->cpu);
 		}
 		else if (cmd_match (cmd, "pit")) {
 			prt_state_pit (&pc->pit);
