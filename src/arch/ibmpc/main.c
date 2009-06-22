@@ -519,6 +519,10 @@ void prt_state_cpu (e8086_t *c)
 		ft[e86_get_zf (c)], ft[e86_get_af (c)],
 		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
 	);
+
+	if (c->halt) {
+		pce_printf ("HALT=1\n");
+	}
 }
 
 static
@@ -590,6 +594,10 @@ void pc_exec (ibmpc_t *pc)
 
 	while (e86_get_opcnt (pc->cpu) == old) {
 		pc_clock (pc);
+
+		if (pc->brk) {
+			break;
+		}
 	}
 }
 

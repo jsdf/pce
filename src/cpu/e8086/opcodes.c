@@ -3948,6 +3948,8 @@ unsigned op_f3 (e8086_t *c)
 static
 unsigned op_f4 (e8086_t *c)
 {
+	c->halt = 1;
+
 	e86_set_clk (c, 2);
 
 	return (1);

@@ -77,6 +77,8 @@ void e86_init (e8086_t *c)
 
 	c->irq = 0;
 
+	c->halt = 0;
+
 	for (i = 0; i < 256; i++) {
 		c->op[i] = e86_opcodes[i];
 	}
@@ -328,6 +330,7 @@ void e86_irq (e8086_t *cpu, unsigned char val)
 int e86_interrupt (e8086_t *cpu, unsigned n)
 {
 	if (e86_get_if (cpu)) {
+		cpu->halt = 0;
 		e86_trap (cpu, n);
 		return (0);
 	}
@@ -384,6 +387,8 @@ void e86_reset (e8086_t *c)
 
 	c->irq = 0;
 
+	c->halt = 0;
+
 	c->prefix = 0;
 }
 
@@ -391,6 +396,11 @@ void e86_execute (e8086_t *c)
 {
 	unsigned cnt, op;
 	int      tf;
+
+	if (c->halt) {
+		e86_set_clk (c, 2);
+		return;
+	}
 
 	c->prefix = 0;
 

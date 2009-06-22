@@ -137,6 +137,8 @@ typedef struct e8086_t {
 
 	unsigned short   seg_override;
 
+	int              halt;
+
 	int              irq;
 
 	e86_opcode_f     op[256];
