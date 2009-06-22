@@ -109,6 +109,7 @@
 #define VGA_STATUS1_DE    0x01		/* display enable */
 #define VGA_STATUS1_VR    0x08
 
+#define VGA_ATC_MODE_G    0x01		/* graphics / alpha-numeric mode */
 #define VGA_ATC_MODE_ME   0x02		/* mono emulation */
 #define VGA_ATC_MODE_ELG  0x04		/* enable line graphics */
 #define VGA_ATC_MODE_EB   0x08		/* enable blinking */
@@ -644,6 +645,7 @@ void vga_update_graphics (vga_t *vga)
 	unsigned            row0, row1, col, cw, ch, dsr;
 	unsigned            addr, rptr, rofs, ptr;
 	unsigned            lcmp, hpp;
+	unsigned char       blink1, blink2;
 	unsigned            msk, bit;
 	unsigned            idx;
 	unsigned char       buf[4];
@@ -684,6 +686,15 @@ void vga_update_graphics (vga_t *vga)
 		return;
 	}
 
+	if (vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_EB) {
+		blink1 = 0xff;
+		blink2 = vga->blink_on ? 0xff : 0x00;
+	}
+	else {
+		blink1 = 0x00;
+		blink2 = 0x00;
+	}
+
 	src = vga->mem;
 	dst = vga->buf;
 
@@ -719,7 +730,7 @@ void vga_update_graphics (vga_t *vga)
 		buf[0] = src[ptr + 0x00000];
 		buf[1] = src[ptr + 0x10000];
 		buf[2] = src[ptr + 0x20000];
-		buf[3] = src[ptr + 0x30000];
+		buf[3] = (src[ptr + 0x30000] ^ blink1) | blink2;
 
 		msk = 0x80 >> (hpp & 7);
 
@@ -741,7 +752,7 @@ void vga_update_graphics (vga_t *vga)
 				buf[0] = src[ptr + 0x00000];
 				buf[1] = src[ptr + 0x10000];
 				buf[2] = src[ptr + 0x20000];
-				buf[3] = src[ptr + 0x30000];
+				buf[3] = (src[ptr + 0x30000] ^ blink1) | blink2;
 
 				msk = 0x80;
 				bit = 0;
@@ -1943,7 +1954,10 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 			vga->blink_cnt = vga->blink_freq;
 			vga->blink_on = !vga->blink_on;
 
-			if ((vga->reg_grc[VGA_GRC_MISC] & VGA_GRC_MISC_GM) == 0) {
+			if ((vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_G) == 0) {
+				vga->update_state |= 1;
+			}
+			else if (vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_EB) {
 				vga->update_state |= 1;
 			}
 		}
