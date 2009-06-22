@@ -117,6 +117,7 @@
 #define EGA_STATUS1_DE    0x01		/* display enable */
 #define EGA_STATUS1_VR    0x08
 
+#define EGA_ATC_MODE_G    0x01		/* graphics / alpha-numeric mode */
 #define EGA_ATC_MODE_ME   0x02		/* mono emulation */
 #define EGA_ATC_MODE_ELG  0x04		/* enable line graphics */
 #define EGA_ATC_MODE_EB   0x08		/* enable blinking */
@@ -655,6 +656,7 @@ void ega_update_graphics (ega_t *ega)
 	unsigned            row, col, cw, ch;
 	unsigned            lcmp, hpp;
 	unsigned            addr, rptr, rofs, ptr;
+	unsigned char       blink1, blink2;
 	unsigned            msk, bit;
 	unsigned            idx;
 	unsigned char       buf[4];
@@ -670,6 +672,15 @@ void ega_update_graphics (ega_t *ega)
 
 	if (ega_set_buf_size (ega, w, h)) {
 		return;
+	}
+
+	if (ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_EB) {
+		blink1 = 0xff;
+		blink2 = ega->blink_on ? 0xff : 0x00;
+	}
+	else {
+		blink1 = 0x00;
+		blink2 = 0x00;
 	}
 
 	src = ega->mem;
@@ -697,7 +708,7 @@ void ega_update_graphics (ega_t *ega)
 		buf[0] = src[ptr + 0x00000];
 		buf[1] = src[ptr + 0x10000];
 		buf[2] = src[ptr + 0x20000];
-		buf[3] = src[ptr + 0x30000];
+		buf[3] = (src[ptr + 0x30000] ^ blink1) | blink2;
 
 		msk = 0x80 >> (hpp & 7);
 		bit = (2 * hpp) & 6;
@@ -714,7 +725,7 @@ void ega_update_graphics (ega_t *ega)
 				buf[0] = src[ptr + 0x00000];
 				buf[1] = src[ptr + 0x10000];
 				buf[2] = src[ptr + 0x20000];
-				buf[3] = src[ptr + 0x30000];
+				buf[3] = (src[ptr + 0x30000] ^ blink1) | blink2;
 
 				msk = 0x80;
 				bit = 0;
@@ -1632,7 +1643,10 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 			ega->blink_cnt = ega->blink_freq;
 			ega->blink_on = !ega->blink_on;
 
-			if ((ega->reg_grc[EGA_GRC_MISC] & EGA_GRC_MISC_GM) == 0) {
+			if ((ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_G) == 0) {
+				ega->update_state |= 1;
+			}
+			else if (ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_EB) {
 				ega->update_state |= 1;
 			}
 		}
