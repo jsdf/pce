@@ -117,26 +117,45 @@ int pc_set_msg_emu_disk_boot (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_disk_commit (ibmpc_t *pc, const char *msg, const char *val)
 {
-	unsigned d;
+	int      r;
+	unsigned drv;
 
-	if (strcmp (val, "") == 0) {
+	if (strcmp (val, "all") == 0) {
+		pce_log (MSG_INF, "commiting all drives\n");
+
 		if (dsks_commit (pc->dsk)) {
-			pce_log (MSG_ERR, "commit failed for at least one disk\n");
-			return (1);
-		}
-	}
-	else {
-		if (msg_get_uint (val, &d)) {
+			pce_log (MSG_ERR,
+				"*** commit failed for at least one disk\n"
+			);
 			return (1);
 		}
 
-		if (dsks_set_msg (pc->dsk, d, "commit", NULL)) {
-			pce_log (MSG_ERR, "commit failed (%s)\n", val);
+		return (0);
+	}
+
+	r = 0;
+
+	while (*val != 0) {
+		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
+			pce_log (MSG_ERR, "*** commit error: bad drive (%s)\n",
+				val
+			);
+
 			return (1);
+		}
+
+		pce_log (MSG_INF, "commiting drive %u\n", drv);
+
+		if (dsks_set_msg (pc->dsk, drv, "commit", NULL)) {
+			pce_log (MSG_ERR, "*** commit error for drive %u\n",
+				drv
+			);
+
+			r = 1;
 		}
 	}
 
-	return (0);
+	return (r);
 }
 
 static
