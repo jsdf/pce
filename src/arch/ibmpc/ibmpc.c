@@ -40,6 +40,7 @@
 #include <lib/inidsk.h>
 #include <lib/iniram.h>
 #include <lib/load.h>
+#include <lib/string.h>
 
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
@@ -1066,6 +1067,33 @@ void pc_log_deb (ibmpc_t *pc, const char *msg, ...)
 	va_start (va, msg);
 	pce_log_va (MSG_DEB, msg, va);
 	va_end (va);
+}
+
+int pc_set_serport_driver (ibmpc_t *pc, unsigned port, const char *driver)
+{
+	if ((port >= 4) || (pc->serport[port] == NULL)) {
+		return (1);
+	}
+
+	if (ser_set_driver (pc->serport[port], driver)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname)
+{
+	int  r;
+	char *driver;
+
+	driver = str_cat_alloc ("stdio:file=", fname);
+
+	r = pc_set_serport_driver (pc, port, driver);
+
+	free (driver);
+
+	return (r);
 }
 
 void pc_patch_bios (ibmpc_t *pc)

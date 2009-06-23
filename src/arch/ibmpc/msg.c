@@ -213,6 +213,38 @@ int pc_set_msg_emu_reset (ibmpc_t *pc, const char *msg, const char *val)
 }
 
 static
+int pc_set_msg_emu_serport_driver (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned idx;
+
+	if (msg_get_prefix_uint (&val, &idx, ":", " \t")) {
+		return (1);
+	}
+
+	if (pc_set_serport_driver (pc, idx, val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_serport_file (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned idx;
+
+	if (msg_get_prefix_uint (&val, &idx, ":", " \t")) {
+		return (1);
+	}
+
+	if (pc_set_serport_file (pc, idx, val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pc_set_msg_emu_stop (ibmpc_t *pc, const char *msg, const char *val)
 {
 	pc->brk = PCE_BRK_STOP;
@@ -354,6 +386,8 @@ static pc_msg_list_t set_msg_list[] = {
 	{ "emu.pause", pc_set_msg_emu_pause },
 	{ "emu.pause.toggle", pc_set_msg_emu_pause_toggle },
 	{ "emu.reset", pc_set_msg_emu_reset },
+	{ "emu.serport.driver", pc_set_msg_emu_serport_driver },
+	{ "emu.serport.file", pc_set_msg_emu_serport_file },
 	{ "emu.stop", pc_set_msg_emu_stop },
 	{ "emu.tape.append", pc_set_msg_emu_tape_append },
 	{ "emu.tape.file", pc_set_msg_emu_tape_file },

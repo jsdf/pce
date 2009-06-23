@@ -156,6 +156,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/lib/log.h \
 	src/lib/monitor.h \
 	src/lib/msg.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \

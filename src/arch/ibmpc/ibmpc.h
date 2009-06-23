@@ -101,6 +101,9 @@ void pc_del (ibmpc_t *pc);
 
 void pc_log_deb (ibmpc_t *pc, const char *msg, ...);
 
+int pc_set_serport_driver (ibmpc_t *pc, unsigned port, const char *driver);
+int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname);
+
 /*!***************************************************************************
  * @short Reset the PC
  *****************************************************************************/
