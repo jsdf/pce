@@ -157,17 +157,17 @@ int msg_get_bool (const char *str, int *val)
 int msg_get_prefix_ulng (const char **str, unsigned long *val, const char *sep, const char *trim)
 {
 	int        r;
-	char       *pre;
+	char       *pre1, *pre2;
 	const char *tmp;
 
 	tmp = *str;
 
-	pre = str_extract_alloc (tmp, sep, &tmp);
-	pre = str_trim (pre, " ", " ");
+	pre1 = str_extract_alloc (tmp, sep, &tmp);
+	pre2 = str_trim (pre1, " \t", " \t");
 
-	r = msg_get_ulng (pre, val);
+	r = msg_get_ulng (pre2, val);
 
-	free (pre);
+	free (pre1);
 
 	if (r) {
 		return (1);
@@ -194,17 +194,17 @@ int msg_get_prefix_uint (const char **str, unsigned *val, const char *sep, const
 int msg_get_prefix_slng (const char **str, long *val, const char *sep, const char *trim)
 {
 	int        r;
-	char       *pre;
+	char       *pre1, *pre2;
 	const char *tmp;
 
 	tmp = *str;
 
-	pre = str_extract_alloc (tmp, sep, &tmp);
-	pre = str_trim (pre, " ", " ");
+	pre1 = str_extract_alloc (tmp, sep, &tmp);
+	pre2 = str_trim (pre1, " \t", " \t");
 
-	r = msg_get_slng (pre, val);
+	r = msg_get_slng (pre2, val);
 
-	free (pre);
+	free (pre1);
 
 	if (r) {
 		return (1);
@@ -231,17 +231,17 @@ int msg_get_prefix_sint (const char **str, int *val, const char *sep, const char
 int msg_get_prefix_bool (const char **str, int *val, const char *sep, const char *trim)
 {
 	int        r;
-	char       *pre;
+	char       *pre1, *pre2;
 	const char *tmp;
 
 	tmp = *str;
 
-	pre = str_extract_alloc (tmp, sep, &tmp);
-	pre = str_trim (pre, " ", " ");
+	pre1 = str_extract_alloc (tmp, sep, &tmp);
+	pre2 = str_trim (pre1, " \t", " \t");
 
-	r = msg_get_bool (pre, val);
+	r = msg_get_bool (pre2, val);
 
-	free (pre);
+	free (pre1);
 
 	if (r) {
 		return (1);
