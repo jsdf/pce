@@ -74,6 +74,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/lib/monitor.o \
 	src/lib/msg.o \
 	src/lib/path.o \
+	src/lib/string.o \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
 	$(DEV_BLK_OBJ) \

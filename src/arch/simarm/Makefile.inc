@@ -50,6 +50,7 @@ PCE_SIMARM_OBJ_EXT := \
 	src/lib/msg.o \
 	src/lib/path.o \
 	src/lib/srec.o \
+	src/lib/string.o \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
 	$(DEV_BLK_OBJ)

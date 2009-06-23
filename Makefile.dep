@@ -1934,7 +1934,8 @@ src/lib/monitor.o: src/lib/monitor.c \
 	src/lib/monitor.h
 
 src/lib/msg.o: src/lib/msg.c \
-	src/lib/msg.h
+	src/lib/msg.h \
+	src/lib/string.h
 
 src/lib/path.o: src/lib/path.c \
 	src/config.h \

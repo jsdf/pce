@@ -24,7 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "msg.h"
+#include <lib/msg.h>
+#include <lib/string.h>
 
 
 int msg_is_message (const char *msg, const char *val)
@@ -149,6 +150,104 @@ int msg_get_bool (const char *str, int *val)
 	}
 
 	*val = (tmp != 0);
+
+	return (0);
+}
+
+int msg_get_prefix_ulng (const char **str, unsigned long *val, const char *sep, const char *trim)
+{
+	int        r;
+	char       *pre;
+	const char *tmp;
+
+	tmp = *str;
+
+	pre = str_extract_alloc (tmp, sep, &tmp);
+	pre = str_trim (pre, " ", " ");
+
+	r = msg_get_ulng (pre, val);
+
+	free (pre);
+
+	if (r) {
+		return (1);
+	}
+
+	*str = str_ltrim (tmp, trim);
+
+	return (0);
+}
+
+int msg_get_prefix_uint (const char **str, unsigned *val, const char *sep, const char *trim)
+{
+	unsigned long tmp;
+
+	if (msg_get_prefix_ulng (str, &tmp, sep, trim)) {
+		return (1);
+	}
+
+	*val = tmp;
+
+	return (0);
+}
+
+int msg_get_prefix_slng (const char **str, long *val, const char *sep, const char *trim)
+{
+	int        r;
+	char       *pre;
+	const char *tmp;
+
+	tmp = *str;
+
+	pre = str_extract_alloc (tmp, sep, &tmp);
+	pre = str_trim (pre, " ", " ");
+
+	r = msg_get_slng (pre, val);
+
+	free (pre);
+
+	if (r) {
+		return (1);
+	}
+
+	*str = str_ltrim (tmp, trim);
+
+	return (0);
+}
+
+int msg_get_prefix_sint (const char **str, int *val, const char *sep, const char *trim)
+{
+	long tmp;
+
+	if (msg_get_prefix_slng (str, &tmp, sep, trim)) {
+		return (1);
+	}
+
+	*val = tmp;
+
+	return (0);
+}
+
+int msg_get_prefix_bool (const char **str, int *val, const char *sep, const char *trim)
+{
+	int        r;
+	char       *pre;
+	const char *tmp;
+
+	tmp = *str;
+
+	pre = str_extract_alloc (tmp, sep, &tmp);
+	pre = str_trim (pre, " ", " ");
+
+	r = msg_get_bool (pre, val);
+
+	free (pre);
+
+	if (r) {
+		return (1);
+	}
+
+	*str = str_ltrim (tmp, trim);
 
 	return (0);
 }

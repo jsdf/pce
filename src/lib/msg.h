@@ -42,5 +42,11 @@ int msg_get_uint (const char *str, unsigned *val);
 int msg_get_sint (const char *str, int *val);
 int msg_get_bool (const char *str, int *val);
 
+int msg_get_prefix_ulng (const char **str, unsigned long *val, const char *sep, const char *trim);
+int msg_get_prefix_uint (const char **str, unsigned *val, const char *sep, const char *trim);
+int msg_get_prefix_slng (const char **str, long *val, const char *sep, const char *trim);
+int msg_get_prefix_sint (const char **str, int *val, const char *sep, const char *trim);
+int msg_get_prefix_bool (const char **str, int *val, const char *sep, const char *trim);
+
 
 #endif
