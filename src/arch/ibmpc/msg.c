@@ -161,21 +161,34 @@ int pc_set_msg_emu_disk_commit (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_disk_eject (ibmpc_t *pc, const char *msg, const char *val)
 {
-	unsigned d;
+	unsigned drv;
 	disk_t   *dsk;
 
-	if (msg_get_uint (val, &d)) {
-		return (1);
+	while (*val != 0) {
+		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
+			pce_log (MSG_ERR,
+				"*** disk eject error: bad drive (%s)\n",
+				val
+			);
+
+			return (1);
+		}
+
+		dsk = dsks_get_disk (pc->dsk, drv);
+
+		if (dsk == NULL) {
+			pce_log (MSG_ERR,
+				"*** disk eject error: no such disk (%lu)\n", drv
+			);
+		}
+		else {
+			pce_log (MSG_INF, "ejecting drive %lu\n", drv);
+
+			dsks_rmv_disk (pc->dsk, dsk);
+
+			dsk_del (dsk);
+		}
 	}
-
-	dsk = dsks_get_disk (pc->dsk, d);
-	if (dsk == NULL) {
-		return (1);
-	}
-
-	dsks_rmv_disk (pc->dsk, dsk);
-
-	dsk_del (dsk);
 
 	return (0);
 }
