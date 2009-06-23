@@ -25,270 +25,326 @@
 #include <lib/inidsk.h>
 
 
+typedef struct {
+	const char *msg;
+
+	int (*set_msg) (ibmpc_t *pc, const char *msg, const char *val);
+} pc_msg_list_t;
+
+
 static
-int pc_set_msg_cassette (ibmpc_t *pc, const char *msg, const char *val)
+int pc_set_msg_emu_config_save (ibmpc_t *pc, const char *msg, const char *val)
 {
-	if (msg_is_message ("emu.tape.load", msg)) {
-		unsigned long v;
-
-		pc_cas_set_mode (&pc->cas, 0);
-
-		if (*val != 0) {
-			if (strcmp (val, "end") == 0) {
-				pc_cas_append (&pc->cas);
-			}
-			else {
-				if (msg_get_ulng (val, &v)) {
-					return (1);
-				}
-
-				if (pc_cas_set_position (&pc->cas, v)) {
-					return (1);
-				}
-			}
-		}
-
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
+	if (ini_write (pc->cfg, val)) {
+		return (1);
 	}
 
-	if (msg_is_message ("emu.tape.save", msg)) {
-		unsigned long v;
-
-		pc_cas_set_mode (&pc->cas, 1);
-
-		if (*val != 0) {
-			if (strcmp (val, "end") == 0) {
-				pc_cas_append (&pc->cas);
-			}
-			else {
-				if (msg_get_ulng (val, &v)) {
-					return (1);
-				}
-
-				if (pc_cas_set_position (&pc->cas, v)) {
-					return (1);
-				}
-			}
-		}
-
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.tape.file", msg)) {
-		if (*val == 0) {
-			val = NULL;
-		}
-
-		if (pc_cas_set_fname (&pc->cas, val)) {
-			return (1);
-		}
-
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.tape.rewind", msg)) {
-		pc_cas_rewind (&pc->cas);
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.tape.append", msg)) {
-		pc_cas_append (&pc->cas);
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.tape.state", msg)) {
-		pc_cas_print_state (&pc->cas);
-
-		return (0);
-	}
-
-	return (-1);
+	return (0);
 }
 
 static
-int pc_set_msg_pc (ibmpc_t *pc, const char *msg, const char *val)
+int pc_set_msg_emu_cpu_clock (ibmpc_t *pc, const char *msg, const char *val)
 {
-	int r;
+	unsigned long v;
 
-	if (msg_is_message ("emu.stop", msg)) {
-		pc->brk = PCE_BRK_STOP;
-		return (0);
+	if (msg_get_ulng (val, &v)) {
+		return (1);
 	}
 
-	if (msg_is_message ("emu.exit", msg)) {
-		pc->brk = PCE_BRK_ABORT;
-		mon_set_terminate (&par_mon, 1);
-		return (0);
+	pc_set_cpu_clock (pc, v);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_cpu_model (ibmpc_t *pc, const char *msg, const char *val)
+{
+	if (pc_set_cpu_model (pc, val)) {
+		return (1);
 	}
 
-	if (msg_is_message ("emu.pause", msg)) {
-		int v;
+	return (0);
+}
 
-		if (msg_get_bool (val, &v)) {
+static
+int pc_set_msg_emu_cpu_speed (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned f;
+
+	if (msg_get_uint (val, &f)) {
+		return (1);
+	}
+
+	pc_set_speed (pc, f);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_cpu_speed_step (ibmpc_t *pc, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_sint (val, &v)) {
+		return (1);
+	}
+
+	v += (int) pc->speed[0];
+
+	if (v <= 0) {
+		v = 1;
+	}
+
+	pc_set_speed (pc, v);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_disk_boot (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned v;
+
+	if (msg_get_uint (val, &v)) {
+		return (1);
+	}
+
+	pc->bootdrive = v;
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_disk_commit (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned d;
+
+	if (strcmp (val, "") == 0) {
+		if (dsks_commit (pc->dsk)) {
+			pce_log (MSG_ERR, "commit failed for at least one disk\n");
 			return (1);
 		}
-
-		pc->pause = v;
-
-		pc_clock_discontinuity (pc);
-
-		return (0);
 	}
-
-	if (msg_is_message ("emu.pause.toggle", msg)) {
-		pc->pause = !pc->pause;
-
-		pc_clock_discontinuity (pc);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.reset", msg)) {
-		pc_reset (pc);
-		return (0);
-	}
-
-	if (msg_is_message ("emu.config.save", msg)) {
-		if (ini_write (pc->cfg, val)) {
-			return (1);
-		}
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.cpu.model", msg)) {
-		if (pc_set_cpu_model (pc, val)) {
-			return (1);
-		}
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.cpu.clock", msg)) {
-		unsigned long v;
-
-		if (msg_get_ulng (val, &v)) {
-			return (1);
-		}
-
-		pc_set_cpu_clock (pc, v);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.cpu.speed", msg)) {
-		unsigned f;
-
-		if (msg_get_uint (val, &f)) {
-			return (1);
-		}
-
-		pc_set_speed (pc, f);
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.cpu.speed.step", msg)) {
-		int v;
-
-		if (msg_get_sint (val, &v)) {
-			return (1);
-		}
-
-		v += (int) pc->speed[0];
-
-		if (v <= 0) {
-			v = 1;
-		}
-
-		pc_set_speed (pc, v);
-
-		return (0);
-	}
-
-	r = pc_set_msg_cassette (pc, msg, val);
-	if (r >= 0) {
-		return (r);
-	}
-
-	if (msg_is_message ("emu.disk.boot", msg)) {
-		unsigned v;
-
-		if (msg_get_uint (val, &v)) {
-			return (1);
-		}
-
-		pc->bootdrive = v;
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.disk.commit", msg)) {
-		if (strcmp (val, "") == 0) {
-			if (dsks_commit (pc->dsk)) {
-				pce_log (MSG_ERR, "commit failed for at least one disk\n");
-				return (1);
-			}
-		}
-		else {
-			unsigned d;
-
-			if (msg_get_uint (val, &d)) {
-				return (1);
-			}
-
-			if (dsks_set_msg (pc->dsk, d, "commit", NULL)) {
-				pce_log (MSG_ERR, "commit failed (%s)\n", val);
-				return (1);
-			}
-		}
-
-		return (0);
-	}
-
-	if (msg_is_message ("emu.disk.eject", msg)) {
-		unsigned d;
-		disk_t   *dsk;
-
+	else {
 		if (msg_get_uint (val, &d)) {
 			return (1);
 		}
 
-		dsk = dsks_get_disk (pc->dsk, d);
-		if (dsk == NULL) {
+		if (dsks_set_msg (pc->dsk, d, "commit", NULL)) {
+			pce_log (MSG_ERR, "commit failed (%s)\n", val);
 			return (1);
 		}
-
-		dsks_rmv_disk (pc->dsk, dsk);
-
-		dsk_del (dsk);
-
-		return (0);
 	}
 
-	if (msg_is_message ("emu.disk.insert", msg)) {
-		if (dsk_insert (pc->dsk, val, 1)) {
-			return (1);
-		}
-
-		return (0);
-	}
-
-	return (1);
+	return (0);
 }
+
+static
+int pc_set_msg_emu_disk_eject (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned d;
+	disk_t   *dsk;
+
+	if (msg_get_uint (val, &d)) {
+		return (1);
+	}
+
+	dsk = dsks_get_disk (pc->dsk, d);
+	if (dsk == NULL) {
+		return (1);
+	}
+
+	dsks_rmv_disk (pc->dsk, dsk);
+
+	dsk_del (dsk);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_disk_insert (ibmpc_t *pc, const char *msg, const char *val)
+{
+	if (dsk_insert (pc->dsk, val, 1)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_exit (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc->brk = PCE_BRK_ABORT;
+	mon_set_terminate (&par_mon, 1);
+	return (0);
+}
+
+static
+int pc_set_msg_emu_pause (ibmpc_t *pc, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	pc->pause = v;
+
+	pc_clock_discontinuity (pc);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_pause_toggle (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc->pause = !pc->pause;
+
+	pc_clock_discontinuity (pc);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_reset (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc_reset (pc);
+	return (0);
+}
+
+static
+int pc_set_msg_emu_stop (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc->brk = PCE_BRK_STOP;
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_append (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc_cas_append (&pc->cas);
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_file (ibmpc_t *pc, const char *msg, const char *val)
+{
+	if (*val == 0) {
+		val = NULL;
+	}
+
+	if (pc_cas_set_fname (&pc->cas, val)) {
+		return (1);
+	}
+
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_load (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned long v;
+
+	pc_cas_set_mode (&pc->cas, 0);
+
+	if (*val != 0) {
+		if (strcmp (val, "end") == 0) {
+			pc_cas_append (&pc->cas);
+		}
+		else {
+			if (msg_get_ulng (val, &v)) {
+				return (1);
+			}
+
+			if (pc_cas_set_position (&pc->cas, v)) {
+				return (1);
+			}
+		}
+	}
+
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_rewind (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc_cas_rewind (&pc->cas);
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_save (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned long v;
+
+	pc_cas_set_mode (&pc->cas, 1);
+
+	if (*val != 0) {
+		if (strcmp (val, "end") == 0) {
+			pc_cas_append (&pc->cas);
+		}
+		else {
+			if (msg_get_ulng (val, &v)) {
+				return (1);
+			}
+
+			if (pc_cas_set_position (&pc->cas, v)) {
+				return (1);
+			}
+		}
+	}
+
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_tape_state (ibmpc_t *pc, const char *msg, const char *val)
+{
+	pc_cas_print_state (&pc->cas);
+
+	return (0);
+}
+
+
+static pc_msg_list_t set_msg_list[] = {
+	{ "emu.config.save", pc_set_msg_emu_config_save },
+	{ "emu.cpu.clock", pc_set_msg_emu_cpu_clock },
+	{ "emu.cpu.model", pc_set_msg_emu_cpu_model },
+	{ "emu.cpu.speed", pc_set_msg_emu_cpu_speed },
+	{ "emu.cpu.speed.step", pc_set_msg_emu_cpu_speed_step },
+	{ "emu.disk.boot", pc_set_msg_emu_disk_boot },
+	{ "emu.disk.commit", pc_set_msg_emu_disk_commit },
+	{ "emu.disk.eject", pc_set_msg_emu_disk_eject },
+	{ "emu.disk.insert", pc_set_msg_emu_disk_insert },
+	{ "emu.exit", pc_set_msg_emu_exit },
+	{ "emu.pause", pc_set_msg_emu_pause },
+	{ "emu.pause.toggle", pc_set_msg_emu_pause_toggle },
+	{ "emu.reset", pc_set_msg_emu_reset },
+	{ "emu.stop", pc_set_msg_emu_stop },
+	{ "emu.tape.append", pc_set_msg_emu_tape_append },
+	{ "emu.tape.file", pc_set_msg_emu_tape_file },
+	{ "emu.tape.load", pc_set_msg_emu_tape_load },
+	{ "emu.tape.rewind", pc_set_msg_emu_tape_rewind },
+	{ "emu.tape.save", pc_set_msg_emu_tape_save },
+	{ "emu.tape.state", pc_set_msg_emu_tape_state },
+	{ NULL, NULL }
+};
+
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 {
+	pc_msg_list_t *lst;
+
 	/* a hack, for debugging only */
 	if (pc == NULL) {
 		pc = par_pc;
@@ -302,8 +358,14 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		val = "";
 	}
 
-	if (pc_set_msg_pc (pc, msg, val) == 0) {
-		return (0);
+	lst = set_msg_list;
+
+	while (lst->msg != NULL) {
+		if (msg_is_message (lst->msg, msg)) {
+			return (lst->set_msg (pc, msg, val));
+		}
+
+		lst += 1;
 	}
 
 	if (pc->trm != NULL) {
@@ -323,6 +385,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 	return (1);
 }
 
+
 static
 int pc_copy_msg (char *dst, const char *src, unsigned max)
 {
@@ -339,9 +402,7 @@ int pc_copy_msg (char *dst, const char *src, unsigned max)
 
 int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max)
 {
-	const char    *str;
-	char          buf[256];
-	unsigned long tmp;
+	const char *str;
 
 	if ((msg == NULL) || (val == NULL)) {
 		return (1);
@@ -350,42 +411,6 @@ int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max)
 	if (strcmp (msg, "emu.config.get_string") == 0) {
 		ini_get_string (pc->cfg, val, &str, "");
 		return (pc_copy_msg (val, str, max));
-	}
-
-	if (pc_get_msgul (pc, msg, &tmp) == 0) {
-		sprintf (buf, "%lu", tmp);
-		return (pc_copy_msg (val, buf, max));
-	}
-
-	return (1);
-}
-
-int pc_set_msgul (ibmpc_t *pc, const char *msg, unsigned long val)
-{
-	char buf[256];
-
-	sprintf (buf, "%lu", val);
-
-	return (pc_set_msg (pc, msg, buf));
-}
-
-int pc_get_msgul (ibmpc_t *pc, const char *msg, unsigned long *val)
-{
-	if ((msg == NULL) || (val == NULL)) {
-		return (1);
-	}
-
-	if (msg_is_message ("emu.cpu.speed", msg)) {
-		*val = pc->speed[0];
-		return (0);
-	}
-	if (msg_is_message ("emu.cpu.clock", msg)) {
-		*val = pc->cpu_clk[0];
-		return (0);
-	}
-	else if (msg_is_message ("emu.pause", msg) == 0) {
-		*val = (pc->pause != 0);
-		return (0);
 	}
 
 	return (1);
