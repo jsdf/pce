@@ -341,15 +341,13 @@ section pc {
 	section parport {
 		address = 0x378		# LPT1
 
-		# Output is written to this file
-		file = "parport1.out"
+		driver = "stdio:file=parport1.out"
 	}
 
 	section parport {
 		address = 0x278		# LPT2
 
-		# Output is written to this file
-		file = "parport2.out"
+		driver = "stdio:file=parport2.out"
 	}
 
 	# The cassette interface

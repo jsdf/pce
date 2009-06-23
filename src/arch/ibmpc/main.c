@@ -1154,15 +1154,15 @@ static
 void do_par (cmd_t *cmd)
 {
 	unsigned short port;
-	char           fname[256];
+	char           driver[256];
 
 	if (!cmd_match_uint16 (cmd, &port)) {
 		cmd_error (cmd, "need a port number");
 		return;
 	}
 
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
+	if (!cmd_match_str (cmd, driver, 256)) {
+		cmd_error (cmd, "need a driver name");
 		return;
 	}
 
@@ -1175,8 +1175,8 @@ void do_par (cmd_t *cmd)
 		return;
 	}
 
-	if (parport_set_fname (pc->parport[port], fname)) {
-		pce_printf ("setting new file failed\n");
+	if (parport_set_driver (pc->parport[port], driver)) {
+		pce_printf ("setting new driver failed\n");
 		return;
 	}
 }

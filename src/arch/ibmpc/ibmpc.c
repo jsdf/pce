@@ -708,7 +708,7 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 {
 	unsigned        i;
 	unsigned long   addr;
-	const char      *fname;
+	const char      *driver;
 	ini_sct_t       *sct;
 	static unsigned defbase[4] = { 0x378, 0x278, 0x3bc, 0x2bc };
 
@@ -723,31 +723,30 @@ void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 			break;
 		}
 
-		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
-			ini_get_uint32 (sct, "io", &addr, defbase[i]);
-		}
-		ini_get_string (sct, "file", &fname, NULL);
+		ini_get_uint32 (sct, "address", &addr, defbase[i]);
+		ini_get_string (sct, "driver", &driver, NULL);
 
 		pce_log_tag (MSG_INF,
-			"PARPORT:", "LPT%u addr=0x%04lx file=%s\n",
-			i + 1, addr, (fname == NULL) ? "<none>" : fname
+			"PARPORT:", "LPT%u addr=0x%04lx driver=%s\n",
+			i + 1, addr, (driver == NULL) ? "<none>" : driver
 		);
 
 		pc->parport[i] = parport_new (addr);
+
 		if (pc->parport[i] == NULL) {
 			pce_log (MSG_ERR,
-				"*** parport setup failed [%04X -> %s]\n",
-				addr, (fname == NULL) ? "<none>" : fname
+				"*** parport %u setup failed\n", i + 1
 			);
 		}
 		else {
-			if (fname != NULL) {
-				if (parport_set_fname (pc->parport[i], fname)) {
+			if (driver != NULL) {
+				if (parport_set_driver (pc->parport[i], driver)) {
 					pce_log (MSG_ERR,
-						"*** can't open file (%s)\n",
-						fname
+						"*** can't open driver (%s)\n",
+						driver
 					);
 				}
+
 			}
 
 			mem_add_blk (pc->prt, parport_get_reg (pc->parport[i]), 0);

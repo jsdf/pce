@@ -1737,7 +1737,8 @@ src/devices/nvram.o: src/devices/nvram.c \
 
 src/devices/parport.o: src/devices/parport.c \
 	src/devices/memory.h \
-	src/devices/parport.h
+	src/devices/parport.h \
+	src/drivers/char/char.h
 
 src/devices/pci-ata.o: src/devices/pci-ata.c \
 	src/config.h \

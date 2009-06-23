@@ -26,7 +26,9 @@
 
 #include <stdio.h>
 
-#include "memory.h"
+#include <devices/memory.h>
+
+#include <drivers/char/char.h>
 
 
 #define PARPORT_STR 0x01
@@ -46,8 +48,7 @@ typedef struct {
 	unsigned char control;
 	unsigned char data;
 
-	FILE          *fp;
-	int           close;
+	char_drv_t    *cdrv;
 } parport_t;
 
 
@@ -58,8 +59,7 @@ void parport_del (parport_t *par);
 
 mem_blk_t *parport_get_reg (parport_t *par);
 
-void parport_set_fp (parport_t *par, FILE *fp, int close);
-int parport_set_fname (parport_t *par, const char *fname);
+int parport_set_driver (parport_t *par, const char *name);
 
 void parport_set_control (parport_t *par, unsigned char val);
 

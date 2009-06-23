@@ -42,15 +42,14 @@ void parport_init (parport_t *par, unsigned long base)
 	par->control = 0;
 	par->data = 0;
 
-	par->fp = NULL;
-	par->close = 0;
+	par->cdrv = NULL;
 }
 
 parport_t *parport_new (unsigned long base)
 {
 	parport_t *par;
 
-	par = (parport_t *) malloc (sizeof (parport_t));
+	par = malloc (sizeof (parport_t));
 	if (par == NULL) {
 		return (NULL);
 	}
@@ -62,9 +61,7 @@ parport_t *parport_new (unsigned long base)
 
 void parport_free (parport_t *par)
 {
-	if (par->close) {
-		fclose (par->fp);
-	}
+	chr_close (par->cdrv);
 
 	mem_blk_free (&par->port);
 }
@@ -82,34 +79,24 @@ mem_blk_t *parport_get_reg (parport_t *par)
 	return (&par->port);
 }
 
-void parport_set_fp (parport_t *par, FILE *fp, int close)
+int parport_set_driver (parport_t *par, const char *name)
 {
-	if (par->close) {
-		fclose (par->fp);
+	if (par->cdrv != NULL) {
+		chr_close (par->cdrv);
 	}
 
-	par->fp = fp;
+	par->cdrv = chr_open (name);
 
-	if (fp == NULL) {
-		par->close = 0;
+	if (par->cdrv == NULL) {
 		par->status &= ~(PARPORT_BSY | PARPORT_OFF | PARPORT_ERR);
 	}
 	else {
-		par->close = close;
 		par->status |= (PARPORT_BSY | PARPORT_OFF | PARPORT_ERR);
 	}
-}
 
-int parport_set_fname (parport_t *par, const char *fname)
-{
-	FILE *fp;
-
-	fp = fopen (fname, "wb");
-	if (fp == NULL) {
+	if (par->cdrv == NULL) {
 		return (1);
 	}
-
-	parport_set_fp (par, fp, 1);
 
 	return (0);
 }
@@ -119,28 +106,26 @@ void parport_set_control (parport_t *par, unsigned char val)
 	par->control = val;
 
 	if (val & PARPORT_STR) {
-		if (par->fp != NULL) {
-			fputc (par->data, par->fp);
-			par->status |= PARPORT_BSY;
-			par->status &= ~(PARPORT_ACK);
-			fflush (par->fp);
-		}
+		chr_write (par->cdrv, &par->data, 1);
+
+		par->status |= PARPORT_BSY;
+		par->status &= ~PARPORT_ACK;
 	}
 }
 
 void parport_set_uint8 (parport_t *par, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
-		case 0x00:
-			par->data = val;
-			break;
+	case 0x00:
+		par->data = val;
+		break;
 
-		case 0x01:
-			break;
+	case 0x01:
+		break;
 
-		case 0x02:
-			parport_set_control (par, val);
-			break;
+	case 0x02:
+		parport_set_control (par, val);
+		break;
 	}
 }
 
@@ -152,17 +137,17 @@ void parport_set_uint16 (parport_t *par, unsigned long addr, unsigned short val)
 unsigned char parport_get_uint8 (parport_t *par, unsigned long addr)
 {
 	switch (addr) {
-		case 0x00:
-			return (par->data);
+	case 0x00:
+		return (par->data);
 
-		case 0x01:
-			return (par->status);
+	case 0x01:
+		return (par->status);
 
-		case 0x02:
-			return (par->control);
+	case 0x02:
+		return (par->control);
 
-		default:
-			return (0xff);
+	default:
+		return (0xff);
 	}
 }
 
