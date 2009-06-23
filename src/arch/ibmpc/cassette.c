@@ -63,6 +63,29 @@ void pc_cas_free (pc_cassette_t *cas)
 	}
 }
 
+pc_cassette_t *pc_cas_new (void)
+{
+	pc_cassette_t *cas;
+
+	cas = malloc (sizeof (pc_cassette_t));
+
+	if (cas == NULL) {
+		return (NULL);
+	}
+
+	pc_cas_init (cas);
+
+	return (cas);
+}
+
+void pc_cas_del (pc_cassette_t *cas)
+{
+	if (cas != NULL) {
+		pc_cas_free (cas);
+		free (cas);
+	}
+}
+
 int pc_cas_get_mode (pc_cassette_t *cas)
 {
 	return (cas->save);

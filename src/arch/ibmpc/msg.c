@@ -222,8 +222,12 @@ int pc_set_msg_emu_stop (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_tape_append (ibmpc_t *pc, const char *msg, const char *val)
 {
-	pc_cas_append (&pc->cas);
-	pc_cas_print_state (&pc->cas);
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
+	pc_cas_append (pc->cas);
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }
@@ -231,15 +235,19 @@ int pc_set_msg_emu_tape_append (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_tape_file (ibmpc_t *pc, const char *msg, const char *val)
 {
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
 	if (*val == 0) {
 		val = NULL;
 	}
 
-	if (pc_cas_set_fname (&pc->cas, val)) {
+	if (pc_cas_set_fname (pc->cas, val)) {
 		return (1);
 	}
 
-	pc_cas_print_state (&pc->cas);
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }
@@ -249,24 +257,28 @@ int pc_set_msg_emu_tape_load (ibmpc_t *pc, const char *msg, const char *val)
 {
 	unsigned long v;
 
-	pc_cas_set_mode (&pc->cas, 0);
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
+	pc_cas_set_mode (pc->cas, 0);
 
 	if (*val != 0) {
 		if (strcmp (val, "end") == 0) {
-			pc_cas_append (&pc->cas);
+			pc_cas_append (pc->cas);
 		}
 		else {
 			if (msg_get_ulng (val, &v)) {
 				return (1);
 			}
 
-			if (pc_cas_set_position (&pc->cas, v)) {
+			if (pc_cas_set_position (pc->cas, v)) {
 				return (1);
 			}
 		}
 	}
 
-	pc_cas_print_state (&pc->cas);
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }
@@ -274,8 +286,12 @@ int pc_set_msg_emu_tape_load (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_tape_rewind (ibmpc_t *pc, const char *msg, const char *val)
 {
-	pc_cas_rewind (&pc->cas);
-	pc_cas_print_state (&pc->cas);
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
+	pc_cas_rewind (pc->cas);
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }
@@ -285,24 +301,28 @@ int pc_set_msg_emu_tape_save (ibmpc_t *pc, const char *msg, const char *val)
 {
 	unsigned long v;
 
-	pc_cas_set_mode (&pc->cas, 1);
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
+	pc_cas_set_mode (pc->cas, 1);
 
 	if (*val != 0) {
 		if (strcmp (val, "end") == 0) {
-			pc_cas_append (&pc->cas);
+			pc_cas_append (pc->cas);
 		}
 		else {
 			if (msg_get_ulng (val, &v)) {
 				return (1);
 			}
 
-			if (pc_cas_set_position (&pc->cas, v)) {
+			if (pc_cas_set_position (pc->cas, v)) {
 				return (1);
 			}
 		}
 	}
 
-	pc_cas_print_state (&pc->cas);
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }
@@ -310,7 +330,11 @@ int pc_set_msg_emu_tape_save (ibmpc_t *pc, const char *msg, const char *val)
 static
 int pc_set_msg_emu_tape_state (ibmpc_t *pc, const char *msg, const char *val)
 {
-	pc_cas_print_state (&pc->cas);
+	if (pc->cas == NULL) {
+		return (1);
+	}
+
+	pc_cas_print_state (pc->cas);
 
 	return (0);
 }

@@ -57,6 +57,9 @@ typedef struct {
 void pc_cas_init (pc_cassette_t *cas);
 void pc_cas_free (pc_cassette_t *cas);
 
+pc_cassette_t *pc_cas_new (void);
+void pc_cas_del (pc_cassette_t *cas);
+
 /*!***************************************************************************
  * @short Get the cassette mode
  * @return True if in save mode, false if in load mode

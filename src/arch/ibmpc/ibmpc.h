@@ -47,7 +47,7 @@ typedef struct ibmpc_t {
 	e8255_t            ppi;
 	e8259_t            pic;
 	pc_kbd_t           kbd;
-	pc_cassette_t      cas;
+	pc_cassette_t      *cas;
 
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;

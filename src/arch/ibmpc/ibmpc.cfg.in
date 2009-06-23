@@ -352,6 +352,8 @@ section pc {
 
 	# The cassette interface
 	section cassette {
+		enable = 1
+
 		file = "cas1.cas"
 
 		# The initial cassette mode (load or save). The default
