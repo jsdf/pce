@@ -1096,6 +1096,33 @@ int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname)
 	return (r);
 }
 
+int pc_set_parport_driver (ibmpc_t *pc, unsigned port, const char *driver)
+{
+	if ((port >= 4) || (pc->parport[port] == NULL)) {
+		return (1);
+	}
+
+	if (parport_set_driver (pc->parport[port], driver)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+int pc_set_parport_file (ibmpc_t *pc, unsigned port, const char *fname)
+{
+	int  r;
+	char *driver;
+
+	driver = str_cat_alloc ("stdio:file=", fname);
+
+	r = pc_set_parport_driver (pc, port, driver);
+
+	free (driver);
+
+	return (r);
+}
+
 void pc_patch_bios (ibmpc_t *pc)
 {
 	/* check "PCEX" marker */

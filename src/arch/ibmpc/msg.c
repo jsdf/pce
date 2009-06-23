@@ -180,6 +180,38 @@ int pc_set_msg_emu_exit (ibmpc_t *pc, const char *msg, const char *val)
 }
 
 static
+int pc_set_msg_emu_parport_driver (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned idx;
+
+	if (msg_get_prefix_uint (&val, &idx, ":", " \t")) {
+		return (1);
+	}
+
+	if (pc_set_parport_driver (pc, idx, val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pc_set_msg_emu_parport_file (ibmpc_t *pc, const char *msg, const char *val)
+{
+	unsigned idx;
+
+	if (msg_get_prefix_uint (&val, &idx, ":", " \t")) {
+		return (1);
+	}
+
+	if (pc_set_parport_file (pc, idx, val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pc_set_msg_emu_pause (ibmpc_t *pc, const char *msg, const char *val)
 {
 	int v;
@@ -383,6 +415,8 @@ static pc_msg_list_t set_msg_list[] = {
 	{ "emu.disk.eject", pc_set_msg_emu_disk_eject },
 	{ "emu.disk.insert", pc_set_msg_emu_disk_insert },
 	{ "emu.exit", pc_set_msg_emu_exit },
+	{ "emu.parport.driver", pc_set_msg_emu_parport_driver },
+	{ "emu.parport.file", pc_set_msg_emu_parport_file },
 	{ "emu.pause", pc_set_msg_emu_pause },
 	{ "emu.pause.toggle", pc_set_msg_emu_pause_toggle },
 	{ "emu.reset", pc_set_msg_emu_reset },

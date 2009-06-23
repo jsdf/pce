@@ -989,6 +989,9 @@ void do_hm (cmd_t *cmd)
 			"emu.disk.eject       <drive>\n"
 			"emu.disk.insert      <drive>:<fname>\n"
 			"\n"
+			"emu.parport.driver   <driver>\n"
+			"emu.parport.file     <filename>\n"
+			"\n"
 			"emu.serport.driver   <driver>\n"
 			"emu.serport.file     <filename>\n"
 			"\n"
@@ -1037,7 +1040,6 @@ void do_h (cmd_t *cmd)
 		"i [b|w] port              input a byte or word from a port\n"
 		"m[g|s] [msg [val]]        send a message\n"
 		"o [b|w] port val          output a byte or word to a port\n"
-		"par i fname               set parport output file\n"
 		"pq [c|f|s]                prefetch queue clear/fill/status\n"
 		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
 		"q                         quit\n"
@@ -1145,37 +1147,6 @@ void do_o (cmd_t *cmd)
 	}
 	else {
 		e86_set_prt8 (pc->cpu, port, val);
-	}
-}
-
-static
-void do_par (cmd_t *cmd)
-{
-	unsigned short port;
-	char           driver[256];
-
-	if (!cmd_match_uint16 (cmd, &port)) {
-		cmd_error (cmd, "need a port number");
-		return;
-	}
-
-	if (!cmd_match_str (cmd, driver, 256)) {
-		cmd_error (cmd, "need a driver name");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if ((port >= 4) || (pc->parport[port] == NULL)) {
-		pce_printf ("no parallel port %u\n", (unsigned) port);
-		return;
-	}
-
-	if (parport_set_driver (pc->parport[port], driver)) {
-		pce_printf ("setting new driver failed\n");
-		return;
 	}
 }
 
@@ -1562,9 +1533,6 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "key")) {
 		do_key (cmd);
-	}
-	else if (cmd_match (cmd, "par")) {
-		do_par (cmd);
 	}
 	else if (cmd_match (cmd, "o")) {
 		do_o (cmd);
