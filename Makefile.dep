@@ -1944,6 +1944,10 @@ src/lib/path.o: src/lib/path.c \
 src/lib/srec.o: src/lib/srec.c \
 	src/lib/srec.h
 
+src/lib/string.o: src/lib/string.c \
+	src/config.h \
+	src/lib/string.h
+
 src/lib/sysdep.o: src/lib/sysdep.c \
 	src/config.h \
 	src/lib/sysdep.h

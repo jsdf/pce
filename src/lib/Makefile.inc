@@ -21,6 +21,7 @@ LIBPCE_BAS := \
 	msg \
 	path \
 	srec \
+	string \
 	sysdep
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -52,4 +53,5 @@ $(rel)/msg.o:		$(rel)/msg.c
 $(rel)/path.o:		$(rel)/path.c
 $(rel)/tun.o:		$(rel)/tun.c
 $(rel)/srec.o:		$(rel)/srec.c
+$(rel)/string.o:	$(rel)/string.c
 $(rel)/sysdep.o:	$(rel)/sysdep.c
