@@ -153,16 +153,26 @@ init_int:
 	push	es
 	push	ds
 
-	mov	ax, 0xf000
+	cld
+
+	mov	ax, cs
 	mov	ds, ax
 	mov	si, inttab
-
 	xor	di, di
 	mov	es, di
+	mov	cx, 32
 
-	mov	cx, 32 * 2
-	cld
-	rep	movsw
+.next:
+	movsw					; offset
+	lodsw
+
+	or	ax, ax
+	jnz	.seg_ok
+	mov	ax, cs
+
+.seg_ok:
+	stosw
+	loop	.next
 
 
 %ifdef INIT_ALL_INTERRUPTS
@@ -171,7 +181,7 @@ init_int:
 .next:
 	mov	ax, int_default
 	stosw
-	mov	ax, 0xf000
+	mov	ax, cs
 	stosw
 	loop	.next
 %else
@@ -807,38 +817,38 @@ prt_uint16:
 ;-----------------------------------------------------------------------------
 
 inttab:
-	dw	int_00, 0xf000
-	dw	int_01, 0xf000
+	dw	int_00, 0x0000
+	dw	int_01, 0x0000
 	dw	0xe2c3, 0xf000			;int_02, 0xf000
-	dw	int_03, 0xf000
-	dw	int_04, 0xf000
+	dw	int_03, 0x0000
+	dw	int_04, 0x0000
 	dw	0xff54, 0xf000			;int_05, 0xf000
-	dw	int_06, 0xf000
-	dw	int_07, 0xf000
+	dw	int_06, 0x0000
+	dw	int_07, 0x0000
 	dw	0xfea5, 0xf000			;int_08, 0xf000
 	dw	0xe987, 0xf000			;int_09, 0xf000
-	dw	int_0a, 0xf000
-	dw	int_0b, 0xf000
-	dw	int_0c, 0xf000
-	dw	int_0d, 0xf000
-	dw	int_0e, 0xf000
-	dw	int_0f, 0xf000
+	dw	int_0a, 0x0000
+	dw	int_0b, 0x0000
+	dw	int_0c, 0x0000
+	dw	int_0d, 0x0000
+	dw	int_0e, 0x0000
+	dw	int_0f, 0x0000
 	dw	0xf065, 0xf000			;0xf065, 0xf000
 	dw	0xf84d, 0xf000			;int_11, 0xf000
 	dw	0xf841, 0xf000			;int_12, 0xf000
-	dw	int_13, 0xf000
+	dw	int_13, 0x0000
 	dw	0xe739, 0xf000			;int_14, 0xf000
-	dw	int_15, 0xf000			;0xf859, 0xf000
+	dw	int_15, 0x0000			;0xf859, 0xf000
 	dw	0xe82e, 0xf000			;int_16, 0xf000
 	dw	0xefd2, 0xf000			;int_17, 0xf000
 	dw	0x0000, 0xf600
-	dw	int_19, 0xf000			;0xe6f2, 0xf000
-	dw	int_1a, 0xf000			;0xfe6e, 0xf000
-	dw	int_1b, 0xf000
-	dw	int_default, 0xf000
+	dw	int_19, 0x0000			;0xe6f2, 0xf000
+	dw	int_1a, 0x0000			;0xfe6e, 0xf000
+	dw	int_1b, 0x0000
+	dw	int_default, 0x0000
 	dw	0xf0a4, 0xf000			;int_1d, 0xf000
 	dw	0xefc7, 0xf000			;int_1e, 0xf000
-	dw	int_1f, 0xf000
+	dw	int_1f, 0x0000
 
 
 int_default:

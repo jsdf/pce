@@ -638,7 +638,8 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 static
 void pce_op_int (void *ext, unsigned char n)
 {
-	ibmpc_t *pc;
+	unsigned seg;
+	ibmpc_t  *pc;
 
 	pc = ext;
 
@@ -646,19 +647,16 @@ void pce_op_int (void *ext, unsigned char n)
 	pce_last_int = n;
 
 	if (n == 0x19) {
-		/* check "PCEX" marker */
-		if (e86_get_mem16 (pc->cpu, 0xf000, 0x0004) != 0x4350) {
+		seg = pc_get_pcex_seg (pc);
+
+		if (seg == 0) {
 			return;
 		}
 
-		if (e86_get_mem16 (pc->cpu, 0xf000, 0x0006) != 0x5845) {
-			return;
-		}
-
-		pc_log_deb (NULL, "patching int 19\n");
+		pc_log_deb (NULL, "patching int 19 (0x%04x)\n", seg);
 
 		e86_set_mem16 (pc->cpu, 0, 4 * 0x19 + 0, 0x0010);
-		e86_set_mem16 (pc->cpu, 0, 4 * 0x19 + 2, 0xf000);
+		e86_set_mem16 (pc->cpu, 0, 4 * 0x19 + 2, seg);
 	}
 }
 

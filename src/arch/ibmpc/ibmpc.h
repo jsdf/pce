@@ -107,6 +107,8 @@ int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname);
 int pc_set_parport_driver (ibmpc_t *pc, unsigned port, const char *driver);
 int pc_set_parport_file (ibmpc_t *pc, unsigned port, const char *fname);
 
+unsigned pc_get_pcex_seg (ibmpc_t *pc);
+
 /*!***************************************************************************
  * @short Reset the PC
  *****************************************************************************/

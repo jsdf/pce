@@ -1123,16 +1123,32 @@ int pc_set_parport_file (ibmpc_t *pc, unsigned port, const char *fname)
 	return (r);
 }
 
-void pc_patch_bios (ibmpc_t *pc)
+/*
+ * Get the segment address of the PCE ROM extension
+ */
+unsigned pc_get_pcex_seg (ibmpc_t *pc)
 {
-	/* check "PCEX" marker */
-	if (e86_get_mem16 (pc->cpu, 0xf000, 0x0004) != 0x4350) {
-		return;
+	unsigned i;
+	unsigned seg;
+	unsigned v1, v2;
+
+	for (i = 0; i < 16; i++) {
+		seg = 0xf000 + i * 0x0100;
+
+		v1 = e86_get_mem16 (pc->cpu, seg, 0x0004);
+		v2 = e86_get_mem16 (pc->cpu, seg, 0x0006);
+
+		if ((v1 == 0x4350) && (v2 == 0x5845)) {
+			return (seg);
+		}
 	}
 
-	if (e86_get_mem16 (pc->cpu, 0xf000, 0x0006) != 0x5845) {
-		return;
-	}
+	return (0);
+}
+
+void pc_patch_bios (ibmpc_t *pc)
+{
+	unsigned seg;
 
 	if (e86_get_mem8 (pc->cpu, 0xf000, 0xfff0) != 0xea) {
 		return;
@@ -1142,10 +1158,18 @@ void pc_patch_bios (ibmpc_t *pc)
 		return;
 	}
 
-	pc_log_deb (pc, "patching the bios\n");
+	seg = pc_get_pcex_seg (pc);
+
+	if (seg == 0) {
+		return;
+	}
+
+	pc_log_deb (pc, "patching the bios (0x%04x)\n", seg);
 
 	mem_set_uint8_rw (pc->mem, 0xffff1, 0x0c);
 	mem_set_uint8_rw (pc->mem, 0xffff2, 0x00);
+	mem_set_uint8_rw (pc->mem, 0xffff3, seg & 0xff);
+	mem_set_uint8_rw (pc->mem, 0xffff4, (seg >> 8) & 0xff);
 }
 
 void pc_reset (ibmpc_t *pc)
