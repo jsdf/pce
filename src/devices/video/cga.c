@@ -210,10 +210,10 @@ void cga_set_timing (cga_t *cga)
 	cga->h = cga->reg_crt[CGA_CRTC_VD];
 
 	cga->clk_ht = 8 * (cga->reg_crt[CGA_CRTC_HT] + 1);
-	cga->clk_hs = 8 * cga->reg_crt[CGA_CRTC_HS];
+	cga->clk_hd = 8 * cga->reg_crt[CGA_CRTC_HD];
 
 	cga->clk_vt = cga->ch * (cga->reg_crt[CGA_CRTC_VT] + 1) * cga->clk_ht;
-	cga->clk_vs = cga->ch * cga->reg_crt[CGA_CRTC_VS] * cga->clk_ht;
+	cga->clk_vd = cga->ch * cga->reg_crt[CGA_CRTC_VD] * cga->clk_ht;
 }
 
 /*
@@ -764,11 +764,11 @@ unsigned char cga_get_status (cga_t *cga)
 
 	val |= (CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
 
-	if (clk < cga->clk_vs) {
+	if (clk < cga->clk_vd) {
 		val &= ~CGA_STATUS_VSYNC;
 
 		if (cga->clk_ht > 0) {
-			if ((clk % cga->clk_ht) < cga->clk_hs) {
+			if ((clk % cga->clk_ht) < cga->clk_hd) {
 				val &= ~CGA_STATUS_SYNC;
 			}
 		}
@@ -979,10 +979,10 @@ void cga_print_info (cga_t *cga, FILE *fp)
 		(cga->reg[CGA_CSEL] >> 5) & 1
 	);
 
-	fprintf (fp, "CLK: CLK=%lu  HT=%lu HS=%lu  VT=%lu VS=%lu\n",
+	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
 		cga_get_dotclock (cga),
-		cga->clk_ht, cga->clk_hs,
-		cga->clk_vt, cga->clk_vs
+		cga->clk_ht, cga->clk_hd,
+		cga->clk_vt, cga->clk_vd
 	);
 
 	fprintf (fp,
@@ -1146,8 +1146,8 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 
 	cga->clk_ht = 0;
 	cga->clk_vt = 0;
-	cga->clk_hs = 0;
-	cga->clk_vs = 0;
+	cga->clk_hd = 0;
+	cga->clk_vd = 0;
 
 	cga->bufmax = 0;
 	cga->buf = NULL;

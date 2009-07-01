@@ -57,8 +57,8 @@ typedef struct {
 
 	unsigned long clk_ht;
 	unsigned long clk_vt;
-	unsigned long clk_hs;
-	unsigned long clk_vs;
+	unsigned long clk_hd;
+	unsigned long clk_vd;
 
 	unsigned      buf_w;
 	unsigned      buf_h;

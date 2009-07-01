@@ -1576,6 +1576,12 @@ void ega_print_info (ega_t *ega, FILE *fp)
 		ega_get_line_compare (ega)
 	);
 
+	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
+		ega_get_dotclock (ega),
+		ega->clk_ht, ega->clk_hd,
+		ega->clk_vt, ega->clk_vd
+	);
+
 	fprintf (fp, "MOUT=%02X  ST0=%02X  ST1=%02X\n",
 		ega->reg[EGA_MOUT],
 		ega->reg[EGA_STATUS0],

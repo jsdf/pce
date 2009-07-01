@@ -197,10 +197,10 @@ void mda_set_timing (mda_t *mda)
 	mda->h = mda->reg_crt[MDA_CRTC_VD];
 
 	mda->clk_ht = MDA_CW * (mda->reg_crt[MDA_CRTC_HT] + 1);
-	mda->clk_hs = MDA_CW * mda->reg_crt[MDA_CRTC_HS];
+	mda->clk_hd = MDA_CW * mda->reg_crt[MDA_CRTC_HD];
 
 	mda->clk_vt = mda->ch * (mda->reg_crt[MDA_CRTC_VT] + 1) * mda->clk_ht;
-	mda->clk_vs = mda->ch * mda->reg_crt[MDA_CRTC_VS] * mda->clk_ht;
+	mda->clk_vd = mda->ch * mda->reg_crt[MDA_CRTC_VD] * mda->clk_ht;
 }
 
 /*
@@ -519,10 +519,10 @@ unsigned char mda_get_status (mda_t *mda)
 	val |= MDA_STATUS_HSYNC;
 
 	if (mda->clk_ht > 0) {
-		if ((clk % mda->clk_ht) < mda->clk_hs) {
+		if ((clk % mda->clk_ht) < mda->clk_hd) {
 			val &= ~MDA_STATUS_HSYNC;
 
-			if (clk < mda->clk_vs) {
+			if (clk < mda->clk_vd) {
 				val |= vid;
 			}
 		}
@@ -711,6 +711,12 @@ void mda_print_info (mda_t *mda, FILE *fp)
 		 ofs, pos
 	);
 
+	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
+		mda_get_dotclock (mda),
+		mda->clk_ht, mda->clk_hd,
+		mda->clk_vt, mda->clk_vd
+	);
+
 	fprintf (fp, "REG: CRTC=%02X  MODE=%02X  STATUS=%02X\n",
 		mda->reg[MDA_CRTC_INDEX], mda_get_mode (mda),
 		mda_get_status (mda)
@@ -852,8 +858,8 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 
 	mda->clk_ht = 0;
 	mda->clk_vt = 0;
-	mda->clk_hs = 0;
-	mda->clk_vs = 0;
+	mda->clk_hd = 0;
+	mda->clk_vd = 0;
 
 	mda->bufmax = 0;
 	mda->buf = NULL;

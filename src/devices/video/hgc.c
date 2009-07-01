@@ -225,15 +225,15 @@ void hgc_set_timing (hgc_t *hgc)
 
 	if (hgc->reg[HGC_MODE] & HGC_MODE_GRAPH) {
 		hgc->clk_ht = 16 * (hgc->reg_crt[HGC_CRTC_HT] + 1);
-		hgc->clk_hs = 16 * hgc->reg_crt[HGC_CRTC_HS];
+		hgc->clk_hd = 16 * hgc->reg_crt[HGC_CRTC_HD];
 	}
 	else {
 		hgc->clk_ht = HGC_CW * (hgc->reg_crt[HGC_CRTC_HT] + 1);
-		hgc->clk_hs = HGC_CW * hgc->reg_crt[HGC_CRTC_HS];
+		hgc->clk_hd = HGC_CW * hgc->reg_crt[HGC_CRTC_HD];
 	}
 
 	hgc->clk_vt = hgc->ch * (hgc->reg_crt[HGC_CRTC_VT] + 1) * hgc->clk_ht;
-	hgc->clk_vs = hgc->ch * hgc->reg_crt[HGC_CRTC_VS] * hgc->clk_ht;
+	hgc->clk_vd = hgc->ch * hgc->reg_crt[HGC_CRTC_VD] * hgc->clk_ht;
 }
 
 /*
@@ -632,15 +632,15 @@ unsigned char hgc_get_status (hgc_t *hgc)
 	val |= HGC_STATUS_HSYNC;
 	val &= ~HGC_STATUS_VSYNC;
 
-	if (clk < hgc->clk_vs) {
+	if (clk < hgc->clk_vd) {
 		val |= HGC_STATUS_VSYNC;
 	}
 
 	if (hgc->clk_ht > 0) {
-		if ((clk % hgc->clk_ht) < hgc->clk_hs) {
+		if ((clk % hgc->clk_ht) < hgc->clk_hd) {
 			val &= ~HGC_STATUS_HSYNC;
 
-			if (clk < hgc->clk_vs) {
+			if (clk < hgc->clk_vd) {
 				val |= vid;
 			}
 		}
@@ -871,6 +871,12 @@ void hgc_print_info (hgc_t *hgc, FILE *fp)
 		ofs, pos
 	);
 
+	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
+		hgc_get_dotclock (hgc),
+		hgc->clk_ht, hgc->clk_hd,
+		hgc->clk_vt, hgc->clk_vd
+	);
+
 	fprintf (fp, "REG: CRTC=%02X  MODE=%02X  STATUS=%02X  CONF=%02X\n",
 		hgc->reg[HGC_CRTC_INDEX], hgc_get_mode (hgc),
 		hgc_get_status (hgc), hgc_get_config (hgc)
@@ -1018,8 +1024,8 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 
 	hgc->clk_ht = 0;
 	hgc->clk_vt = 0;
-	hgc->clk_hs = 0;
-	hgc->clk_vs = 0;
+	hgc->clk_hd = 0;
+	hgc->clk_vd = 0;
 
 	hgc->bufmax = 0;
 	hgc->buf = NULL;
