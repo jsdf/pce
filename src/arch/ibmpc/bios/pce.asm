@@ -87,6 +87,7 @@ start:
 	call	init_parport
 	call	init_time
 	call	init_biosdata
+	call	init_rom2
 
 	call	prt_nl
 
@@ -404,22 +405,20 @@ start_rom:
 	ret
 
 
-; initialize rom extensions in the range [C000..C7FF]
-init_rom1:
+; initialize rom extensions in the range [BX:0000..DX:0000]
+init_rom_range:
 	push	ax
-	push	dx
+	push	bx
 	push	es
 
-	mov	dx, 0xc000
-
 .next:
-	mov	es, dx
+	mov	es, bx
 	cmp	word [es:0x0000], 0xaa55	; rom id
 	jne	.norom
 
 	call	check_rom			; calculate checksum
 	or	ah, ah
-	;jnz	.norom
+	jnz	.norom
 
 	mov	ah, [es:0x0002]			; rom size / 512
 	mov	al, 0
@@ -430,29 +429,53 @@ init_rom1:
 	and	ax, 0xff80			; round up to 2K
 	jz	.norom
 
-	add	dx, ax
+	add	bx, ax
 
-	mov	ax, es
-	cmp	ax, 0xc000			; this is the EGA/VGA rom
-	jne	.romok
-
-	test	byte [0x0010], 0x30
-	jnz	.skiprom			; no EGA/VGA card
-
-.romok:
 	call	start_rom
 	jmp	.skiprom
 
 .norom:
-	add	dx, 0x0080			; 2KB
+	add	bx, 0x0080			; 2KB
 
 .skiprom:
-	cmp	dx, 0xc800
+	cmp	bx, dx
 	jb	.next
 
 	pop	es
-	pop	dx
+	pop	bx
 	pop	ax
+	ret
+
+
+;-----------------------------------------------------------------------------
+; Initialize rom extensions in the range [C000..C7FF]
+;-----------------------------------------------------------------------------
+init_rom1:
+	push	dx
+	push	bx
+
+	mov	bx, 0xc000
+	mov	dx, 0xc800
+	call	init_rom_range
+
+	pop	bx
+	pop	dx
+	ret
+
+
+;-----------------------------------------------------------------------------
+; Initialize rom extensions in the range [C800..DFFF]
+;-----------------------------------------------------------------------------
+init_rom2:
+	push	dx
+	push	bx
+
+	mov	bx, 0xc800
+	mov	dx, 0xe000
+	call	init_rom_range
+
+	pop	bx
+	pop	dx
 	ret
 
 
