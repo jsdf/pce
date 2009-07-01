@@ -69,6 +69,9 @@
 #define MDA_STATUS_HSYNC 0x01		/* horizontal sync */
 #define MDA_STATUS_VIDEO 0x08		/* video signal */
 
+#define MDA_UPDATE_DIRTY   1
+#define MDA_UPDATE_RETRACE 2
+
 
 #include "mda_font.h"
 
@@ -83,7 +86,7 @@ void mda_set_blink_rate (mda_t *mda, unsigned freq)
 	mda->blink_cnt = freq;
 	mda->blink_freq = freq;
 
-	mda->update_state |= 1;
+	mda->update_state |= MDA_UPDATE_DIRTY;
 }
 
 static
@@ -468,7 +471,7 @@ void mda_crtc_set_reg (mda_t *mda, unsigned reg, unsigned char val)
 
 	mda_set_timing (mda);
 
-	mda->update_state |= 1;
+	mda->update_state |= MDA_UPDATE_DIRTY;
 }
 
 
@@ -559,7 +562,7 @@ void mda_set_mode (mda_t *mda, unsigned char val)
 {
 	mda->reg[MDA_MODE] = val;
 
-	mda->update_state |= 1;
+	mda->update_state |= MDA_UPDATE_DIRTY;
 }
 
 /*
@@ -632,7 +635,7 @@ void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 
 	mda->mem[addr] = val;
 
-	mda->update_state |= 1;
+	mda->update_state |= MDA_UPDATE_DIRTY;
 }
 
 static
@@ -753,7 +756,7 @@ void mda_redraw (mda_t *mda, int now)
 		}
 	}
 
-	mda->update_state |= 1;
+	mda->update_state |= MDA_UPDATE_DIRTY;
 }
 
 static
@@ -767,7 +770,18 @@ void mda_clock (mda_t *mda, unsigned cnt)
 
 	clk = mda_get_dotclock (mda);
 
-	if (clk < mda->clk_vt) {
+	if (clk < mda->clk_vd) {
+		mda->update_state &= ~MDA_UPDATE_RETRACE;
+		return;
+	}
+
+	if (clk >= mda->clk_vt) {
+		mda->video.dotclk[0] = 0;
+		mda->video.dotclk[1] = 0;
+		mda->video.dotclk[2] = 0;
+	}
+
+	if (mda->update_state & MDA_UPDATE_RETRACE) {
 		return;
 	}
 
@@ -777,16 +791,12 @@ void mda_clock (mda_t *mda, unsigned cnt)
 		if (mda->blink_cnt == 0) {
 			mda->blink_cnt = mda->blink_freq;
 			mda->blink_on = !mda->blink_on;
-			mda->update_state |= 1;
+			mda->update_state |= MDA_UPDATE_DIRTY;
 		}
 	}
 
-	mda->video.dotclk[0] = 0;
-	mda->video.dotclk[1] = 0;
-	mda->video.dotclk[2] = 0;
-
 	if (mda->term != NULL) {
-		if (mda->update_state & 1) {
+		if (mda->update_state & MDA_UPDATE_DIRTY) {
 			mda_update (mda);
 			trm_set_size (mda->term, mda->buf_w, mda->buf_h);
 			trm_set_lines (mda->term, mda->buf, 0, mda->buf_h);
@@ -795,7 +805,7 @@ void mda_clock (mda_t *mda, unsigned cnt)
 		trm_update (mda->term);
 	}
 
-	mda->update_state &= ~1;
+	mda->update_state = MDA_UPDATE_RETRACE;
 }
 
 mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)

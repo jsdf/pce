@@ -147,6 +147,9 @@
 #define EGA_CRT_MODE_CMS0 0x01
 #define EGA_CRT_MODE_WB   0x40		/* byte/word mode */
 
+#define EGA_UPDATE_DIRTY   1
+#define EGA_UPDATE_RETRACE 2
+
 
 /*
  * Set the configuration switches
@@ -180,7 +183,7 @@ void ega_set_blink_rate (ega_t *ega, unsigned freq)
 	ega->blink_cnt = freq;
 	ega->blink_freq = freq;
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 /*
@@ -399,7 +402,7 @@ void ega_set_timing (ega_t *ega)
 	ega->clk_vd = v;
 
 	if (d) {
-		ega->update_state |= 1;
+		ega->update_state |= EGA_UPDATE_DIRTY;
 	}
 }
 
@@ -1081,7 +1084,7 @@ void ega_mem_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 		ega->mem[addr + 0x30000] = col[3];
 	}
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 static
@@ -1112,7 +1115,7 @@ void ega_atc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
 	ega->reg_atc[reg] = val;
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 
@@ -1137,7 +1140,7 @@ void ega_seq_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
 	case EGA_SEQ_CLOCK: /* 1 */
 		ega->reg_seq[EGA_SEQ_CLOCK] = val;
-		ega->update_state |= 1;
+		ega->update_state |= EGA_UPDATE_DIRTY;
 		break;
 
 	case EGA_SEQ_MAPMASK: /* 2 */
@@ -1146,7 +1149,7 @@ void ega_seq_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
 	case EGA_SEQ_CMAPSEL: /* 3 */
 		ega->reg_seq[EGA_SEQ_CMAPSEL] = val;
-		ega->update_state |= 1;
+		ega->update_state |= EGA_UPDATE_DIRTY;
 		break;
 
 	case EGA_SEQ_MODE: /* 4 */
@@ -1173,7 +1176,7 @@ void ega_grc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 	ega->reg_grc[reg] = val;
 
 	if (reg == EGA_GRC_MODE) {
-		ega->update_state |= 1;
+		ega->update_state |= EGA_UPDATE_DIRTY;
 	}
 }
 
@@ -1209,7 +1212,7 @@ void ega_crtc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 
 	ega_set_timing (ega);
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 
@@ -1429,7 +1432,7 @@ void ega_set_misc_out (ega_t *ega, unsigned char val)
 {
 	ega->reg[EGA_MOUT] = val;
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 /*
@@ -1611,7 +1614,7 @@ void ega_redraw (ega_t *ega, int now)
 		}
 	}
 
-	ega->update_state |= 1;
+	ega->update_state |= EGA_UPDATE_DIRTY;
 }
 
 static
@@ -1628,7 +1631,7 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 
 	if (clk < ega->clk_vd) {
 		ega->last_hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
-		ega->update_state |= 2;
+		ega->update_state &= ~EGA_UPDATE_RETRACE;
 		return;
 	}
 
@@ -1638,7 +1641,7 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		ega->video.dotclk[2] = 0;
 	}
 
-	if ((ega->update_state & 2) == 0) {
+	if (ega->update_state & EGA_UPDATE_RETRACE) {
 		return;
 	}
 
@@ -1650,16 +1653,16 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 			ega->blink_on = !ega->blink_on;
 
 			if ((ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_G) == 0) {
-				ega->update_state |= 1;
+				ega->update_state |= EGA_UPDATE_DIRTY;
 			}
 			else if (ega->reg_atc[EGA_ATC_MODE] & EGA_ATC_MODE_EB) {
-				ega->update_state |= 1;
+				ega->update_state |= EGA_UPDATE_DIRTY;
 			}
 		}
 	}
 
 	if (ega->term != NULL) {
-		if (ega->update_state & 1) {
+		if (ega->update_state & EGA_UPDATE_DIRTY) {
 			ega_update (ega);
 			trm_set_size (ega->term, ega->buf_w, ega->buf_h);
 			trm_set_lines (ega->term, ega->buf, 0, ega->buf_h);
@@ -1668,13 +1671,13 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		trm_update (ega->term);
 	}
 
-	ega->update_state &= ~3;
+	ega->update_state = EGA_UPDATE_RETRACE;
 
 	addr = ega_get_start (ega);
 
 	if (ega->next_addr != addr) {
 		ega->next_addr = addr;
-		ega->update_state |= 1;
+		ega->update_state |= EGA_UPDATE_DIRTY;
 	}
 }
 

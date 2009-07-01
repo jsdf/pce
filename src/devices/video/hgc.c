@@ -79,6 +79,9 @@
 #define HGC_CONFIG_GRAPH 0x01
 #define HGC_CONFIG_PAGE1 0x02
 
+#define HGC_UPDATE_DIRTY   1
+#define HGC_UPDATE_RETRACE 2
+
 
 #include "hgc_font.h"
 
@@ -93,7 +96,7 @@ void hgc_set_blink_rate (hgc_t *hgc, unsigned freq)
 	hgc->blink_cnt = freq;
 	hgc->blink_freq = freq;
 
-	hgc->update_state |= 1;
+	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
 
 static
@@ -572,7 +575,7 @@ void hgc_crtc_set_reg (hgc_t *hgc, unsigned reg, unsigned char val)
 
 	hgc_set_timing (hgc);
 
-	hgc->update_state |= 1;
+	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
 
 
@@ -708,7 +711,7 @@ void hgc_set_mode (hgc_t *hgc, unsigned char val)
 
 	hgc_set_timing (hgc);
 
-	hgc->update_state |= 1;
+	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
 
 /*
@@ -791,7 +794,7 @@ void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 
 	hgc->mem[addr] = val;
 
-	hgc->update_state |= 1;
+	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
 
 static
@@ -913,7 +916,7 @@ void hgc_redraw (hgc_t *hgc, int now)
 		}
 	}
 
-	hgc->update_state |= 1;
+	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
 
 static
@@ -927,7 +930,18 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 
 	clk = hgc_get_dotclock (hgc);
 
-	if (clk < hgc->clk_vt) {
+	if (clk < hgc->clk_vd) {
+		hgc->update_state &= ~HGC_UPDATE_RETRACE;
+		return;
+	}
+
+	if (clk >= hgc->clk_vt) {
+		hgc->video.dotclk[0] = 0;
+		hgc->video.dotclk[1] = 0;
+		hgc->video.dotclk[2] = 0;
+	}
+
+	if (hgc->update_state & HGC_UPDATE_RETRACE) {
 		return;
 	}
 
@@ -939,17 +953,13 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 			hgc->blink_on = !hgc->blink_on;
 
 			if ((hgc->reg[HGC_MODE] & HGC_MODE_GRAPH) == 0) {
-				hgc->update_state |= 1;
+				hgc->update_state |= HGC_UPDATE_DIRTY;
 			}
 		}
 	}
 
-	hgc->video.dotclk[0] = 0;
-	hgc->video.dotclk[1] = 0;
-	hgc->video.dotclk[2] = 0;
-
 	if (hgc->term != NULL) {
-		if (hgc->update_state & 1) {
+		if (hgc->update_state & HGC_UPDATE_DIRTY) {
 			hgc_update (hgc);
 			trm_set_size (hgc->term, hgc->buf_w, hgc->buf_h);
 			trm_set_lines (hgc->term, hgc->buf, 0, hgc->buf_h);
@@ -958,7 +968,7 @@ void hgc_clock (hgc_t *hgc, unsigned cnt)
 		trm_update (hgc->term);
 	}
 
-	hgc->update_state &= ~1;
+	hgc->update_state = HGC_UPDATE_RETRACE;
 }
 
 hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)

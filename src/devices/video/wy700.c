@@ -40,6 +40,8 @@
 #define WY700_BANK_BASE   10
 #define WY700_CONTROL     11
 
+#define WY700_UPDATE_DIRTY 1
+
 
 /*
  * Update graphics 640 * 400 * 2
@@ -236,7 +238,7 @@ void wy700_set_control (cga_t *wy, unsigned char val)
 
 	wy->reg[WY700_CONTROL] = val;
 
-	wy->update_state |= 1;
+	wy->update_state |= WY700_UPDATE_DIRTY;
 }
 
 /*
@@ -352,7 +354,7 @@ void wy700_mem_set_uint8 (cga_t *wy, unsigned long addr, unsigned char val)
 
 	wy->mem[addr] = val;
 
-	wy->update_state |= 1;
+	wy->update_state |= WY700_UPDATE_DIRTY;
 }
 
 static

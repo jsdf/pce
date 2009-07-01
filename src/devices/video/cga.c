@@ -77,6 +77,9 @@
 #define CGA_STATUS_PEN   0x02
 #define CGA_STATUS_VSYNC 0x08		/* vertical sync */
 
+#define CGA_UPDATE_DIRTY   1
+#define CGA_UPDATE_RETRACE 2
+
 
 #include "cga_font.h"
 
@@ -110,7 +113,7 @@ void cga_set_blink_rate (cga_t *cga, unsigned freq)
 	cga->blink_cnt = freq;
 	cga->blink_freq = freq;
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 /*
@@ -727,7 +730,7 @@ void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
 
 	cga_set_timing (cga);
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 
@@ -808,7 +811,7 @@ void cga_set_mode (cga_t *cga, unsigned char val)
 	cga_set_palette (cga);
 	cga_set_timing (cga);
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 /*
@@ -821,7 +824,7 @@ void cga_set_color_select (cga_t *cga, unsigned char val)
 
 	cga_set_palette (cga);
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 /*
@@ -911,7 +914,7 @@ void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 
 	cga->mem[addr] = val;
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 static
@@ -1020,7 +1023,7 @@ void cga_redraw (cga_t *cga, int now)
 		}
 	}
 
-	cga->update_state |= 1;
+	cga->update_state |= CGA_UPDATE_DIRTY;
 }
 
 static
@@ -1034,7 +1037,18 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 
 	clk = cga_get_dotclock (cga);
 
-	if (clk < cga->clk_vt) {
+	if (clk < cga->clk_vd) {
+		cga->update_state &= ~CGA_UPDATE_RETRACE;
+		return;
+	}
+
+	if (clk >= cga->clk_vt) {
+		cga->video.dotclk[0] = 0;
+		cga->video.dotclk[1] = 0;
+		cga->video.dotclk[2] = 0;
+	}
+
+	if (cga->update_state & CGA_UPDATE_RETRACE) {
 		return;
 	}
 
@@ -1046,17 +1060,13 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 			cga->blink_on = !cga->blink_on;
 
 			if ((cga->reg[CGA_MODE] & CGA_MODE_G320) == 0) {
-				cga->update_state |= 1;
+				cga->update_state |= CGA_UPDATE_DIRTY;
 			}
 		}
 	}
 
-	cga->video.dotclk[0] = 0;
-	cga->video.dotclk[1] = 0;
-	cga->video.dotclk[2] = 0;
-
 	if (cga->term != NULL) {
-		if (cga->update_state & 1) {
+		if (cga->update_state & CGA_UPDATE_DIRTY) {
 			cga->update (cga);
 			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
 			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
@@ -1065,7 +1075,7 @@ void cga_clock (cga_t *cga, unsigned long cnt)
 		trm_update (cga->term);
 	}
 
-	cga->update_state &= ~1;
+	cga->update_state = CGA_UPDATE_RETRACE;
 }
 
 void cga_free (cga_t *cga)

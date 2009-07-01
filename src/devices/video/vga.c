@@ -157,6 +157,9 @@
 #define VGA_CRT_MODE_CMS0 0x01
 #define VGA_CRT_MODE_WB   0x40		/* byte/word mode */
 
+#define VGA_UPDATE_DIRTY   1
+#define VGA_UPDATE_RETRACE 2
+
 
 /*
  * Set the configuration switches
@@ -371,7 +374,7 @@ void vga_set_timing (vga_t *vga)
 	vga->clk_vd = v;
 
 	if (d) {
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 	}
 }
 
@@ -1149,7 +1152,7 @@ void vga_mem_set_uint8 (vga_t *vga, unsigned long addr, unsigned char val)
 		vga->mem[addr + 0x30000] = col[3];
 	}
 
-	vga->update_state |= 1;
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 static
@@ -1193,7 +1196,7 @@ void vga_atc_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 
 	vga->reg_atc[reg] = val;
 
-	vga->update_state |= 1;
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 
@@ -1231,7 +1234,7 @@ void vga_seq_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 
 	case VGA_SEQ_CLOCK: /* 1 */
 		vga->reg_seq[VGA_SEQ_CLOCK] = val;
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 		break;
 
 	case VGA_SEQ_MAPMASK: /* 2 */
@@ -1240,7 +1243,7 @@ void vga_seq_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 
 	case VGA_SEQ_CMAPSEL: /* 3 */
 		vga->reg_seq[VGA_SEQ_CMAPSEL] = val;
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 		break;
 
 	case VGA_SEQ_MODE: /* 4 */
@@ -1280,7 +1283,7 @@ void vga_grc_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 	vga->reg_grc[reg] = val;
 
 	if (reg == VGA_GRC_MODE) {
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 	}
 }
 
@@ -1329,7 +1332,7 @@ void vga_crtc_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 
 	vga_set_timing (vga);
 
-	vga->update_state |= 1;
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 
@@ -1631,7 +1634,7 @@ void vga_set_dac_data (vga_t *vga, unsigned char val)
 
 	if (vga->reg_dac[vga->dac_addr_write] != val) {
 		vga->reg_dac[vga->dac_addr_write] = val;
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 	}
 
 	vga->dac_addr_write += 1;
@@ -1725,7 +1728,7 @@ void vga_set_misc_out (vga_t *vga, unsigned char val)
 {
 	vga->reg[VGA_MOUT] = val;
 
-	vga->update_state |= 1;
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 /*
@@ -1917,7 +1920,7 @@ void vga_redraw (vga_t *vga, int now)
 		}
 	}
 
-	vga->update_state |= 1;
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 static
@@ -1933,7 +1936,7 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 	clk = vga_get_dotclock (vga);
 
 	if (clk < vga->clk_vd) {
-		vga->update_state |= 2;
+		vga->update_state &= ~VGA_UPDATE_RETRACE;
 		return;
 	}
 
@@ -1943,7 +1946,7 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		vga->video.dotclk[2] = 0;
 	}
 
-	if ((vga->update_state & 2) == 0) {
+	if (vga->update_state & VGA_UPDATE_RETRACE) {
 		return;
 	}
 
@@ -1955,16 +1958,16 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 			vga->blink_on = !vga->blink_on;
 
 			if ((vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_G) == 0) {
-				vga->update_state |= 1;
+				vga->update_state |= VGA_UPDATE_DIRTY;
 			}
 			else if (vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_EB) {
-				vga->update_state |= 1;
+				vga->update_state |= VGA_UPDATE_DIRTY;
 			}
 		}
 	}
 
 	if (vga->term != NULL) {
-		if (vga->update_state & 1) {
+		if (vga->update_state & VGA_UPDATE_DIRTY) {
 			vga_update (vga);
 			trm_set_size (vga->term, vga->buf_w, vga->buf_h);
 			trm_set_lines (vga->term, vga->buf, 0, vga->buf_h);
@@ -1973,13 +1976,13 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		trm_update (vga->term);
 	}
 
-	vga->update_state &= ~3;
+	vga->update_state = VGA_UPDATE_RETRACE;
 
 	addr = vga_get_start (vga);
 
 	if (vga->next_addr != addr) {
 		vga->next_addr = addr;
-		vga->update_state |= 1;
+		vga->update_state |= VGA_UPDATE_DIRTY;
 	}
 }
 

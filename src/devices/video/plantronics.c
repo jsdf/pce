@@ -44,6 +44,8 @@
 #define PLA_SPECIAL_EXT1  0x20
 #define PLA_SPECIAL_PLANE 0x40
 
+#define PLA_UPDATE_DIRTY 1
+
 
 /*
  * Update mode 3 (graphics 320 * 200 * 16)
@@ -199,7 +201,7 @@ void pla_set_special (cga_t *pla, unsigned char val)
 {
 	pla->reg[PLA_SPECIAL] = val;
 
-	pla->update_state |= 1;
+	pla->update_state |= PLA_UPDATE_DIRTY;
 }
 
 /*
