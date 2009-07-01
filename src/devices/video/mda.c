@@ -76,6 +76,9 @@
 #include "mda_font.h"
 
 
+static void mda_clock (mda_t *mda, unsigned long cnt);
+
+
 /*
  * Set the blink frequency
  */
@@ -511,6 +514,8 @@ unsigned char mda_get_status (mda_t *mda)
 	unsigned char val, vid;
 	unsigned long clk;
 
+	mda_clock (mda, 0);
+
 	clk = mda_get_dotclock (mda);
 
 	/* simulate the video signal */
@@ -760,7 +765,7 @@ void mda_redraw (mda_t *mda, int now)
 }
 
 static
-void mda_clock (mda_t *mda, unsigned cnt)
+void mda_clock (mda_t *mda, unsigned long cnt)
 {
 	unsigned long clk;
 

@@ -84,6 +84,9 @@
 #include "cga_font.h"
 
 
+static void cga_clock (cga_t *cga, unsigned long cnt);
+
+
 unsigned char cga_rgb[16][3] = {
 	{ 0x00, 0x00, 0x00 },
 	{ 0x00, 0x00, 0xaa },
@@ -760,6 +763,8 @@ unsigned char cga_get_status (cga_t *cga)
 {
 	unsigned char val;
 	unsigned long clk;
+
+	cga_clock (cga, 0);
 
 	clk = cga_get_dotclock (cga);
 

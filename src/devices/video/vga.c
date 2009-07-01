@@ -161,6 +161,9 @@
 #define VGA_UPDATE_RETRACE 2
 
 
+static void vga_clock (vga_t *vga, unsigned long cnt);
+
+
 /*
  * Set the configuration switches
  */
@@ -1495,6 +1498,8 @@ unsigned char vga_get_input_status_1 (vga_t *vga)
 {
 	unsigned char val;
 	unsigned long clk;
+
+	vga_clock (vga, 0);
 
 	vga->atc_flipflop = 0;
 

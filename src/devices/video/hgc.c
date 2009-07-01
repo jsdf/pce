@@ -86,6 +86,9 @@
 #include "hgc_font.h"
 
 
+static void hgc_clock (hgc_t *hgc, unsigned long cnt);
+
+
 /*
  * Set the blink frequency
  */
@@ -624,6 +627,8 @@ unsigned char hgc_get_status (hgc_t *hgc)
 	unsigned char val, vid;
 	unsigned long clk;
 
+	hgc_clock (hgc, 0);
+
 	clk = hgc_get_dotclock (hgc);
 
 	/* simulate the video signal */
@@ -920,7 +925,7 @@ void hgc_redraw (hgc_t *hgc, int now)
 }
 
 static
-void hgc_clock (hgc_t *hgc, unsigned cnt)
+void hgc_clock (hgc_t *hgc, unsigned long cnt)
 {
 	unsigned long clk;
 

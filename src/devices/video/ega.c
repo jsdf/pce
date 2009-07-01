@@ -151,6 +151,9 @@
 #define EGA_UPDATE_RETRACE 2
 
 
+static void ega_clock (ega_t *ega, unsigned long cnt);
+
+
 /*
  * Set the configuration switches
  */
@@ -1271,6 +1274,8 @@ unsigned char ega_get_input_status_1 (ega_t *ega)
 {
 	unsigned char val;
 	unsigned long clk;
+
+	ega_clock (ega, 0);
 
 	ega->atc_flipflop = 0;
 
