@@ -113,6 +113,7 @@
 #define VGA_ATC_MODE_ME   0x02		/* mono emulation */
 #define VGA_ATC_MODE_ELG  0x04		/* enable line graphics */
 #define VGA_ATC_MODE_EB   0x08		/* enable blinking */
+#define VGA_ATC_MODE_PP   0x20		/* pel panning compatibility */
 #define VGA_ATC_MODE_PS   0x80		/* P5, P4 select */
 
 #define VGA_SEQ_RESET_ASR 0x01		/* asynchronous reset */
@@ -701,6 +702,8 @@ void vga_update_graphics (vga_t *vga)
 		blink2 = 0x00;
 	}
 
+	hpp = vga->reg_atc[VGA_ATC_HPP] & 0x0f;
+
 	src = vga->mem;
 	dst = vga->buf;
 
@@ -720,6 +723,10 @@ void vga_update_graphics (vga_t *vga)
 	while (y < h) {
 		if (y == lcmp) {
 			addr = 0;
+
+			if (vga->reg_atc[VGA_ATC_MODE] & VGA_ATC_MODE_PP) {
+				hpp = 0;
+			}
 		}
 
 		dst = vga->buf + 3UL * y * w;
@@ -728,8 +735,6 @@ void vga_update_graphics (vga_t *vga)
 
 		col = 0;
 		x = 0;
-
-		hpp = vga->reg_atc[VGA_ATC_HPP] & 0x0f;
 
 		ptr = vga_get_crtc_addr (vga, rptr, row1);
 
