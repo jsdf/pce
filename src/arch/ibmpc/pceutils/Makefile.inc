@@ -32,7 +32,8 @@ DIST += $(PCEUTILS_SRC)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS += $(PCEUTILS_BIN)
+TARGETS        += $(PCEUTILS_BIN)
+SHARE_PCEUTILS := $(PCEUTILS_BIN)
 endif
 endif
 

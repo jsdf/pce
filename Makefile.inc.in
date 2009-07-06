@@ -171,9 +171,9 @@ ifneq "$(SHARE_MACPLUS)" ""
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
-ifneq "$(PCEUTILS_BIN)" ""
+ifneq "$(SHARE_PCEUTILS)" ""
 	$(QR)$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/ibmpc/pceutils
-	$(QR)for f in $(PCEUTILS_BIN) ; do \
+	$(QR)for f in $(SHARE_PCEUTILS) ; do \
 		dst=$(DESTDIR)$(datadir)/ibmpc/pceutils/`basename "$$f"` ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
@@ -204,7 +204,7 @@ endif
 
 
 dist-extra:
-ifneq "$(PCEUTILS_BIN)" ""
+ifneq "$(SHARE_PCEUTILS)" ""
 	$(QR)for f in $(PCEUTILS_BIN) ; do \
 		test -f "$$f" || continue ; \
 		dst=contrib/pceutils/`basename "$$f"` ; \
