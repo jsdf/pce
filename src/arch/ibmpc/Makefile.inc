@@ -16,9 +16,9 @@ ifeq "$(PCE_SDL_USE)" "1"
 	PCE_IBMPC_LIBS += $(PCE_SDL_LDF)
 endif
 
-ifeq "$(PCE_X11_USE)" "1"
-	PCE_IBMPC_CFLAGS += $(PCE_X11_CCF)
-	PCE_IBMPC_LIBS += $(PCE_X11_LDF)
+ifeq "$(PCE_ENABLE_X11)" "1"
+	PCE_IBMPC_CFLAGS += $(PCE_X11_CFLAGS)
+	PCE_IBMPC_LIBS += $(PCE_X11_LIBS)
 endif
 
 ifeq "$(PCE_HOST_WINDOWS)" "1"

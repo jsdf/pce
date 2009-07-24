@@ -84,7 +84,8 @@
 
 #undef PCE_BUILD_IBMPC
 
-#undef PCE_X11_USE
+#undef PCE_ENABLE_X11
+
 #undef PCE_SDL_USE
 
 #undef PCE_ENABLE_READLINE

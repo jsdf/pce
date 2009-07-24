@@ -654,9 +654,9 @@ PCE_LARGE_FILE
 PCE_SDL_LDF
 PCE_SDL_CCF
 PCE_SDL_USE
-PCE_X11_LDF
-PCE_X11_CCF
-PCE_X11_USE
+PCE_X11_LIBS
+PCE_X11_CFLAGS
+PCE_ENABLE_X11
 XMKMF
 PCE_HAVE_INTTYPES_H
 PCE_HAVE_STDINT_H
@@ -5022,23 +5022,23 @@ $as_echo "libraries $x_libraries, headers $x_includes" >&6; }
 fi
 
 if test "x$no_x" = "xyes" ; then
-	PCE_X11_USE=0
-	PCE_X11_CCF=""
-	PCE_X11_LDF=""
+	PCE_ENABLE_X11=0
+	PCE_X11_CFLAGS=""
+	PCE_X11_LIBS=""
 else
-	PCE_X11_USE=1
+	PCE_ENABLE_X11=1
 	if test -n "$x_includes" ; then
-		PCE_X11_CCF="-I$x_includes"
+		PCE_X11_CFLAGS="-I$x_includes"
 	else
-		PCE_X11_CCF=""
+		PCE_X11_CFLAGS=""
 	fi
 	if test -n "$x_libraries" ; then
-		PCE_X11_LDF="-L$x_libraries -lX11"
+		PCE_X11_LIBS="-L$x_libraries -lX11"
 	else
-		PCE_X11_LDF="-lX11"
+		PCE_X11_LIBS="-lX11"
 	fi
 	cat >>confdefs.h <<\_ACEOF
-#define PCE_X11_USE 1
+#define PCE_ENABLE_X11 1
 _ACEOF
 
 fi
@@ -5796,7 +5796,7 @@ fi
 term1=" null"
 term2=""
 
-if test "x$PCE_X11_USE" = "x1" ; then
+if test "x$PCE_ENABLE_X11" = "x1" ; then
 	term1="$term1 x11"
 else
 	term2="$term2 x11"

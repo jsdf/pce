@@ -8,7 +8,7 @@ DIST += $(rel)/Makefile.inc
 DRV_TRM_BAS  := font keys null term-old terminal
 DRV_TRM_NBAS :=
 
-ifeq "$(PCE_X11_USE)" "1"
+ifeq "$(PCE_ENABLE_X11)" "1"
 DRV_TRM_BAS += x11
 else
 DRV_TRM_NBAS += x11
@@ -33,7 +33,7 @@ DIST += $(DRV_TRM_SRC) $(DRV_TRM_HDR) $(DRV_TRM_NSRC) $(DRV_TRM_NHDR)
 
 $(rel)/x11.o:	$(rel)/x11.c
 	$(QP)echo "  CC     $@"
-	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_X11_CCF) -o $@ $<
+	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_X11_CFLAGS) -o $@ $<
 
 $(rel)/sdl.o:	$(rel)/sdl.c
 	$(QP)echo "  CC     $@"

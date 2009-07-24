@@ -39,7 +39,7 @@ int trm_is_valid (const char *str)
 		return (1);
 	}
 
-#ifdef PCE_X11_USE
+#ifdef PCE_ENABLE_X11
 	if (strcmp (str, "x11") == 0) {
 		return (1);
 	}
@@ -89,7 +89,7 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 	pce_log_tag (MSG_INF, "TERM:", "driver=%s\n", driver);
 
 	if (strcmp (driver, "x11") == 0) {
-#ifdef PCE_X11_USE
+#ifdef PCE_ENABLE_X11
 		trm = xt_new (sct);
 
 		if (trm == NULL) {
