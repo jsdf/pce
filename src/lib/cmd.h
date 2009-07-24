@@ -33,7 +33,7 @@ typedef struct {
 } cmd_t;
 
 
-void cmd_get (cmd_t *cmd);
+void cmd_get (cmd_t *cmd, const char *prompt);
 void cmd_set_str (cmd_t *cmd, const char *str);
 void cmd_rewind (cmd_t *cmd);
 const char *cmd_get_str (cmd_t *cmd);

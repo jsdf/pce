@@ -87,6 +87,8 @@
 #undef PCE_X11_USE
 #undef PCE_SDL_USE
 
+#undef PCE_ENABLE_READLINE
+
 #undef PCE_ENABLE_TUN
 
 #undef PCE_ENABLE_CHAR_TIOS

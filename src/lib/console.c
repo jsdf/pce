@@ -26,7 +26,13 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#ifdef PCE_ENABLE_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif
 
 
 static FILE *pce_fp_inp = NULL;
@@ -96,31 +102,58 @@ int pce_set_redir_out (const char *fname, const char *mode)
 	return (0);
 }
 
-void pce_gets (char *str, unsigned max)
+int pce_gets (const char *prompt, char *str, unsigned max)
 {
 	str[0] = 0;
-
-	if (pce_fp_inp == NULL) {
-		pce_fp_inp = stdin;
-	}
 
 	if (pce_redir_inp != NULL) {
 		fgets (str, max, pce_redir_inp);
 
 		if (str[0] != 0) {
 			pce_puts (str);
-			return;
+			return (0);
 		}
 
 		fclose (pce_redir_inp);
 		pce_redir_inp = NULL;
 	}
 
+#ifdef PCE_ENABLE_READLINE
+	{
+		char *tmp;
+
+		tmp = readline (prompt);
+
+		if (tmp == NULL) {
+			return (1);
+		}
+		else if (strlen (tmp) < max) {
+			strcpy (str, tmp);
+		}
+
+		if (*str != 0) {
+			add_history (str);
+		}
+
+		free (tmp);
+	}
+#else
+	if (pce_fp_inp == NULL) {
+		pce_fp_inp = stdin;
+	}
+
+	if (prompt != NULL) {
+		pce_puts (prompt);
+	}
+
 	fgets (str, max, pce_fp_inp);
+#endif
 
 	if (pce_redir_out != NULL) {
 		fputs (str, pce_redir_out);
 	}
+
+	return (0);
 }
 
 void pce_puts (const char *str)
@@ -194,6 +227,10 @@ void pce_console_init (FILE *inp, FILE *out)
 {
 	pce_fp_inp = inp;
 	pce_fp_out = out;
+
+#ifdef PCE_ENABLE_READLINE
+	using_history();
+#endif
 }
 
 void pce_console_done (void)

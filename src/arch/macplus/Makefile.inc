@@ -27,6 +27,10 @@ ifeq "$(PCE_HOST_WINDOWS)" "1"
 	PCE_MACPLUS_LIBS += -mconsole
 endif
 
+ifeq "$(PCE_ENABLE_READLINE)" "1"
+	PCE_MACPLUS_LIBS += $(PCE_READLINE_LIBS)
+endif
+
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(PCE_MACPLUS_CFLAGS) -o $@ $<

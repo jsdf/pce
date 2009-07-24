@@ -11,6 +11,10 @@ PCE_SIMS32_CFLAGS := $(CFLAGS_DEFAULT)
 PCE_SIMS32_LDFLAGS := $(LDFLAGS_DEFAULT)
 PCE_SIMS32_LIBS    := $(LIBS)
 
+ifeq "$(PCE_ENABLE_READLINE)" "1"
+	PCE_SIMS32_LIBS += $(PCE_READLINE_LIBS)
+endif
+
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(PCE_SIMS32_CFLAGS) -o $@ $<

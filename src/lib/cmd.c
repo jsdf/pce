@@ -104,9 +104,13 @@ char *str_rtrim (char *str)
 	return (str);
 }
 
-void cmd_get (cmd_t *cmd)
+void cmd_get (cmd_t *cmd, const char *prompt)
 {
-	pce_gets (cmd->str, PCE_CMD_MAX);
+	if (prompt == NULL) {
+		prompt = "-";
+	}
+
+	pce_gets (prompt, cmd->str, PCE_CMD_MAX);
 
 	str_ltrim (cmd->str);
 	str_rtrim (cmd->str);

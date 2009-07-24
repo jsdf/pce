@@ -37,7 +37,7 @@ FILE *pce_get_fp_out (void);
 int pce_set_redir_inp (const char *fname);
 int pce_set_redir_out (const char *fname, const char *mode);
 
-void pce_gets (char *str, unsigned max);
+int pce_gets (const char *prompt, char *str, unsigned max);
 void pce_puts (const char *str);
 void pce_printf (const char *msg, ...);
 void pce_vprintf (const char *msg, va_list va);

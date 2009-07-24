@@ -558,6 +558,48 @@ if test "x$PCE_ENABLE_TUN" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to enable readline])
+AC_ARG_ENABLE(readline,
+  AC_HELP_STRING([--enable-readline], [Enable readline]),
+  [
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_READLINE=1
+		PCE_READLINE_LIBS="-lreadline -lhistory -lncurses"
+		AC_MSG_RESULT([yes])
+	else
+		PCE_ENABLE_READLINE=0
+		PCE_READLINE_LIBS=""
+		AC_MSG_RESULT([no])
+	fi
+  ],
+  [
+	AC_MSG_RESULT([maybe])
+	AC_CHECK_LIB(ncurses, initscr, ok=1, ok=0)
+	if test "x$ok" = "x1" ; then
+		AC_CHECK_LIB(readline, rl_bind_key, ok=1, ok=0, -lncurses)
+	fi
+	if test "x$ok" = "x1" ; then
+		AC_CHECK_LIB(history, add_history, ok=1, ok=0)
+	fi
+	AC_MSG_CHECKING([whether to enable readline])
+	if test "x$ok" = "x1" ; then
+		PCE_ENABLE_READLINE=1
+		PCE_READLINE_LIBS="-lreadline -lhistory -lncurses"
+		AC_MSG_RESULT([yes (guess)])
+	else
+		PCE_ENABLE_READLINE=0
+		PCE_READLINE_LIBS=""
+		AC_MSG_RESULT([no (guess)])
+	fi
+  ]
+)
+AC_SUBST(PCE_ENABLE_READLINE)
+AC_SUBST(PCE_READLINE_LIBS)
+if test "x$PCE_ENABLE_READLINE" = "x1" ; then
+	AC_DEFINE(PCE_ENABLE_READLINE)
+fi
+
+
 eval "pce_etcdir=$sysconfdir"
 eval "pce_etcdir=$pce_etcdir"
 
@@ -642,6 +684,12 @@ fi
 
 option1=""
 option2=""
+
+if test "x$PCE_ENABLE_READLINE" = "x1" ; then
+	option1="$option1 readline"
+else
+	option2="$option2 readline"
+fi
 
 if test "x$PCE_ENABLE_TUN" = "x1" ; then
 	option1="$option1 tun"

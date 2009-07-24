@@ -115,17 +115,6 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 #endif
 
 static
-void mon_prt_prompt (monitor_t *mon)
-{
-	if (mon->prompt != NULL) {
-		pce_puts (mon->prompt);
-	}
-	else {
-		pce_puts ("-");
-	}
-}
-
-static
 void mon_cmd_ms (monitor_t *mon, cmd_t *cmd)
 {
 	char msg[256];
@@ -287,14 +276,12 @@ int mon_run (monitor_t *mon)
 	cmd_t cmd;
 
 	while (mon->terminate == 0) {
-		mon_prt_prompt (mon);
-
 		if (mon->setmsg != NULL) {
 			mon->setmsg (mon->msgext, "term.release", "1");
 			mon->setmsg (mon->msgext, "term.fullscreen", "0");
 		}
 
-		cmd_get (&cmd);
+		cmd_get (&cmd, mon->prompt);
 
 		if (mon->docmd != NULL) {
 			r = mon->docmd (mon->cmdext, &cmd);

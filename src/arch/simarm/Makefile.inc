@@ -11,6 +11,10 @@ PCE_SIMARM_CFLAGS  := $(CFLAGS_DEFAULT)
 PCE_SIMARM_LDFLAGS := $(LDFLAGS_DEFAULT)
 PCE_SIMARM_LIBS    := $(LIBS)
 
+ifeq "$(PCE_ENABLE_READLINE)" "1"
+	PCE_SIMARM_LIBS += $(PCE_READLINE_LIBS)
+endif
+
 $(rel)/%.o: $(rel)/%.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(PCE_SIMARM_CFLAGS) -o $@ $<
