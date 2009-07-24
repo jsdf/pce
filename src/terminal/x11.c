@@ -117,11 +117,14 @@ static xt_keymap_t keymap[] = {
 	{ XK_Shift_R,     PCE_KEY_RSHIFT },
 
 	{ XK_Control_L,   PCE_KEY_LCTRL },
+	{ XK_Super_L,     PCE_KEY_LSUPER },
 	{ XK_Alt_L,       PCE_KEY_LALT },
 	{ XK_Meta_L,      PCE_KEY_LALT },
 	{ XK_space,       PCE_KEY_SPACE },
 	{ XK_Alt_R,       PCE_KEY_RALT },
 	{ XK_Meta_R,      PCE_KEY_RALT },
+	{ XK_Super_R,     PCE_KEY_RSUPER },
+	{ XK_Menu,        PCE_KEY_MENU },
 	{ XK_Control_R,   PCE_KEY_RCTRL },
 
 	{ XK_Num_Lock,    PCE_KEY_NUMLOCK },

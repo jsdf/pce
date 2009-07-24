@@ -114,8 +114,12 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_RSHIFT,       PCE_KEY_RSHIFT },
 
 	{ SDLK_LCTRL,        PCE_KEY_LCTRL },
+	{ SDLK_LSUPER,       PCE_KEY_LSUPER },
 	{ SDLK_LALT,         PCE_KEY_LALT },
 	{ SDLK_SPACE,        PCE_KEY_SPACE },
+	{ SDLK_RALT,         PCE_KEY_RALT },
+	{ SDLK_RSUPER,       PCE_KEY_RSUPER },
+	{ SDLK_MENU,         PCE_KEY_MENU },
 	{ SDLK_RCTRL,        PCE_KEY_RCTRL },
 
 	{ SDLK_NUMLOCK,      PCE_KEY_NUMLOCK },
