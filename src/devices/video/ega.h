@@ -45,8 +45,8 @@ typedef struct ega_s {
 	unsigned char reg_atc[22];
 	unsigned char reg_crt[25];
 
-	unsigned      next_addr;
-	unsigned      last_hpp;
+	unsigned      latch_addr;
+	unsigned      latch_hpp;
 
 	char          atc_flipflop;
 

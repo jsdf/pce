@@ -610,7 +610,7 @@ void ega_update_text (ega_t *ega)
 	src = ega->mem;
 	dst = ega->buf;
 
-	addr = ega->next_addr;
+	addr = ega->latch_addr;
 	rofs = 2 * ega->reg_crt[EGA_CRT_OFS];
 	cpos = ega_get_cursor (ega);
 
@@ -689,10 +689,12 @@ void ega_update_graphics (ega_t *ega)
 		blink2 = 0x00;
 	}
 
+	hpp = ega->latch_hpp;
+
 	src = ega->mem;
 	dst = ega->buf;
 
-	addr = ega->next_addr;
+	addr = ega->latch_addr;
 	rofs = 2 * ega->reg_crt[EGA_CRT_OFS];
 
 	row = 0;
@@ -706,8 +708,6 @@ void ega_update_graphics (ega_t *ega)
 		dst = ega->buf + 3UL * y * w;
 
 		rptr = addr;
-
-		hpp = ega->last_hpp;
 
 		ptr = ega_get_crtc_addr (ega, rptr, row);
 
@@ -1635,7 +1635,6 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 	clk = ega_get_dotclock (ega);
 
 	if (clk < ega->clk_vd) {
-		ega->last_hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
 		ega->update_state &= ~EGA_UPDATE_RETRACE;
 		return;
 	}
@@ -1644,6 +1643,8 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		ega->video.dotclk[0] = 0;
 		ega->video.dotclk[1] = 0;
 		ega->video.dotclk[2] = 0;
+
+		ega->latch_hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
 	}
 
 	if (ega->update_state & EGA_UPDATE_RETRACE) {
@@ -1680,8 +1681,8 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 
 	addr = ega_get_start (ega);
 
-	if (ega->next_addr != addr) {
-		ega->next_addr = addr;
+	if (ega->latch_addr != addr) {
+		ega->latch_addr = addr;
 		ega->update_state |= EGA_UPDATE_DIRTY;
 	}
 }
@@ -1761,6 +1762,9 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 	for (i = 0; i < 4; i++) {
 		ega->latch[i] = 0;
 	}
+
+	ega->latch_addr = 0;
+	ega->latch_hpp = 0;
 
 	ega->atc_flipflop = 0;
 
