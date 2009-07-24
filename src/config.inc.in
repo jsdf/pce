@@ -29,8 +29,5 @@
 %define PCE_VERSION_MIC @PCE_VERSION_MIC@
 %define PCE_VERSION_STR "@PCE_VERSION_STR@"
 
-%define PCE_CFG_DATE "@PCE_CFG_DATE@"
-%define PCE_CFG_TIME "@PCE_CFG_TIME@"
-
 
 %endif

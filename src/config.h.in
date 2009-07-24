@@ -68,9 +68,6 @@
 #undef PCE_VERSION_MIC
 #undef PCE_VERSION_STR
 
-#undef PCE_CFG_DATE
-#undef PCE_CFG_TIME
-
 #undef PCE_HOST_LINUX
 #undef PCE_HOST_WINDOWS
 #undef PCE_HOST_SUNOS
