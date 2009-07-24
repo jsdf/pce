@@ -1,8 +1,14 @@
 PCE Terminal Keys
 ==============================================================================
 
-Key combinations starting with ESC are key sequences (press ESC, release ESC,
-then press the second key).
+The terminal recognizes one key as a special escape key. By default this is
+the ESC key, but any other key can be configured as escape key. Below, <ESC>
+refers to this escape key.
+
+Key combinations starting with <ESC> are key sequences (press <ESC>,
+release <ESC>, then press the second key). This is true even if <ESC> is
+a key that is normally used in combination with other keys, such as Shift
+or Ctrl.
 
 
 Generic Terminal Keys
@@ -10,18 +16,18 @@ Generic Terminal Keys
 
 These keys apply to both PCE/ibmpc and PCE/macplus.
 
-ESC ESC		Send a single ESC to the emulated machine.
-ESC [1-8]	Set the CPU speed multiplier to [1-8].
-ESC g		Grab the mouse.
-ESC m		Stop and fall back to the monitor.
-ESC p		Pause the emulator. Press again to resume.
-ESC q		Quit
-ESC r		Reset the emulated machine.
-ESC s		Take a screenshot.
-ESC up		Increase the terminal scale factor.
-ESC down	Decrease the terminal scale factor.
-ESC left	Slow down the emulated CPU.
-ESC right	Speed up the emulated CPU.
+<ESC> <ESC>	Send a single <ESC> to the emulated machine.
+<ESC> [1-8]	Set the CPU speed multiplier to [1-8].
+<ESC> g		Grab the mouse.
+<ESC> m		Stop and fall back to the monitor.
+<ESC> p		Pause the emulator. Press again to resume.
+<ESC> q		Quit
+<ESC> r		Reset the emulated machine.
+<ESC> s		Take a screenshot.
+<ESC> up	Increase the terminal scale factor.
+<ESC> down	Decrease the terminal scale factor.
+<ESC> left	Slow down the emulated CPU.
+<ESC> right	Speed up the emulated CPU.
 
 Alt-Ctrl	Release the mouse grab.
 
@@ -33,23 +39,140 @@ Pause		Quit
 PCE/ibmpc Terminal Keys
 ==============================================================================
 
-ESC 0		Reset the CPU speed to what it was at startup.
+<ESC> 0		Reset the CPU speed to what it was at startup.
 
 
 PCE/macplus Terminal Keys
 ==============================================================================
 
-ESC 0		Set the CPU speed multiplier to 0 (all out).
-ESC i		Simulate pressing the programmer's key on a real mac.
-ESC F1		Re-insert the first floppy disk (after moving a floppy to the
+<ESC> 0		Set the CPU speed multiplier to 0 (all out).
+<ESC> i		Simulate pressing the programmer's key on a real mac.
+<ESC> F1	Re-insert the first floppy disk (after moving a floppy to the
 		trash, this simulates re-inserting it. At the moment only the
 		same disk image can be re-inserted.
-ESC F2		Re-insert the second floppy disk.
-ESC F3		Re-insert the third floppy disk.
-ESC k		Switch the keypad between normal keypad mode and cursor
+<ESC> F2	Re-insert the second floppy disk.
+<ESC> F3	Re-insert the third floppy disk.
+<ESC> k		Switch the keypad between normal keypad mode and cursor
 		movement mode.
-ESC KP5		Toggle the keypad mode.
+<ESC> KP5	Toggle the keypad mode.
 Ctrl		Command key
 Alt		Option key
 F1		Command key
 F2		Option key
+
+
+List of key names
+==============================================================================
+
+ESC
+F1
+F2
+F3
+F4
+F5
+F6
+F7
+F8
+F9
+F10
+F11
+F12
+PrintScreen	PrtScn
+ScrollLock	ScrLk
+Pause
+
+Backquote	`
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+Minus		-
+Equal		=
+Backspace
+
+Tab
+q
+w
+e
+r
+t
+y
+u
+I
+o
+p
+LeftBracket	[
+RightBracket	]
+Return
+
+CapsLock
+a
+s
+d
+f
+g
+h
+j
+k
+l
+Semicolon	;
+Quote
+Apostrophe	'
+Backslash	\
+
+ShiftLeft	Shift
+Less		<
+z
+x
+c
+v
+b
+n
+m
+Comma		,
+Period		.
+Slash		/
+
+CtrlLeft	Ctrl
+SuperLeft	StartLeft	WindowsLeft
+AltLeft		Alt
+Space
+AltRight
+SuperRight	StartRight	WindowsRight
+Menu
+CtrlRight
+
+NumLock
+KP_Slash
+KP_Star
+KP_Minus
+KP_7
+KP_8
+KP_9
+KP_Plus
+KP_4
+KP_5
+KP_6
+KP_1
+KP_2
+KP_3
+KP_Enter
+KP_0
+KP_Period
+
+Insert
+Home
+PageUp
+Delete
+End
+PageDown
+Up
+Left
+Down
+Right

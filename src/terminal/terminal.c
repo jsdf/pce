@@ -56,6 +56,7 @@ void trm_init (terminal_t *trm, void *ext)
 
 	trm->is_open = 0;
 
+	trm->escape_key = PCE_KEY_ESC;
 	trm->escape = 0;
 
 	trm->w = 0;
@@ -402,6 +403,26 @@ int trm_set_msg_emu (terminal_t *trm, const char *msg, const char *val)
 	return (1);
 }
 
+int trm_set_escape_str (terminal_t *trm, const char *str)
+{
+	pce_key_t key;
+
+	key = pce_key_from_string (str);
+
+	if (key == PCE_KEY_NONE) {
+		return (1);
+	}
+
+	trm->escape_key = key;
+
+	return (0);
+}
+
+void trm_set_escape_key (terminal_t *trm, pce_key_t key)
+{
+	trm->escape_key = key;
+}
+
 static
 int trm_set_key_magic (terminal_t *trm, pce_key_t key)
 {
@@ -521,12 +542,12 @@ void trm_set_key_emu (terminal_t *trm, unsigned event, pce_key_t key)
 void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 {
 	if (event == PCE_KEY_EVENT_DOWN) {
-		if (key == PCE_KEY_ESC) {
+		if (key == trm->escape_key) {
 			trm->escape ^= TRM_ESC_ESC;
 		}
 
 		if (trm->escape & TRM_ESC_ESC) {
-			if (key != PCE_KEY_ESC) {
+			if (key != trm->escape_key) {
 				trm_set_key_emu (trm, PCE_KEY_EVENT_MAGIC, key);
 			}
 			return;
@@ -552,7 +573,7 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 	}
 	else if (event == PCE_KEY_EVENT_UP) {
 		if (trm->escape & TRM_ESC_ESC) {
-			if (key == PCE_KEY_ESC) {
+			if (key == trm->escape_key) {
 				return;
 			}
 			else {

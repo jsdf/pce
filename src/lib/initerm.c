@@ -59,6 +59,7 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 	unsigned   scale, scale_x, scale_y;
 	int        mouse_x[2], mouse_y[2];
 	const char *driver;
+	const char *esc;
 	ini_sct_t  *sct;
 	terminal_t *trm;
 
@@ -86,7 +87,12 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 		}
 	}
 
-	pce_log_tag (MSG_INF, "TERM:", "driver=%s\n", driver);
+	ini_get_string (sct, "escape", &esc, NULL);
+
+	pce_log_tag (MSG_INF, "TERM:", "driver=%s  ESC=%s\n",
+		driver,
+		(esc != NULL) ? esc : "ESC"
+	);
 
 	if (strcmp (driver, "x11") == 0) {
 #ifdef PCE_ENABLE_X11
@@ -124,6 +130,10 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 	if (trm == NULL) {
 		pce_log (MSG_ERR, "*** no terminal found\n");
 		return (NULL);
+	}
+
+	if (esc != NULL) {
+		trm_set_escape_str (trm, esc);
 	}
 
 	ini_get_uint16 (sct, "scale", &scale, 1);

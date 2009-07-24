@@ -60,6 +60,7 @@ typedef struct {
 
 	int           is_open;
 
+	pce_key_t     escape_key;
 	unsigned      escape;
 
 	/* terminal buffer size */
@@ -211,6 +212,16 @@ void trm_check (terminal_t *trm);
  * @short Send a message to the emulator core
  *****************************************************************************/
 int trm_set_msg_emu (terminal_t *trm, const char *msg, const char *val);
+
+/*!***************************************************************************
+ * @short Set the terminal escape key
+ *****************************************************************************/
+int trm_set_escape_str (terminal_t *trm, const char *str);
+
+/*!***************************************************************************
+ * @short Set the terminal escape key
+ *****************************************************************************/
+void trm_set_escape_key (terminal_t *trm, pce_key_t key);
 
 /*!***************************************************************************
  * @short Send a key event to the emulator core

@@ -87,6 +87,11 @@ section macplus {
 	section terminal {
 		driver = "sdl"
 
+		# The terminal escape key. The default is "ESC".
+		#escape = "ESC"
+		#escape = "F12"
+		#escape = "Menu"
+
 		# The terminal scale factor. Only integral values are
 		# allowed.
 		scale = 1
@@ -105,6 +110,11 @@ section macplus {
 
 	section terminal {
 		driver = "x11"
+
+		# The terminal escape key. The default is "ESC".
+		#escape = "ESC"
+		#escape = "F12"
+		#escape = "Menu"
 
 		scale  = 1
 
