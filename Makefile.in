@@ -26,6 +26,9 @@ endif
 all: all2
 
 
+AR     := @AR@
+RANLIB := @RANLIB@
+
 BIN   :=
 BINS  :=
 ETC   :=
@@ -203,6 +206,8 @@ dist-extra:
 	$(QP)echo "  AR     $@"
 	$(QR)rm -f $@
 	$(QR)$(AR) -rc $@ $^
+	$(QP)echo "  RANLIB $@"
+	$(QR)$(RANLIB) $@
 
 %.1.ps: %.1
 	$(QP)echo "  MAN    $@"

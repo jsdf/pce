@@ -168,6 +168,7 @@ case "$INSTALL" in
 	;;
 esac
 AC_PATH_PROG(AR, ar, ar)
+AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 

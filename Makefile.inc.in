@@ -8,7 +8,6 @@ CC      = @CC@
 LD      = @CC@
 NASM    = @NASM@
 IHEX    = @IHEX@
-AR      = @AR@
 LN_S    = @LN_S@
 INSTALL = @INSTALL@
 
