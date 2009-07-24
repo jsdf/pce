@@ -24,7 +24,7 @@
 
 #include <signal.h>
 
-#ifdef PCE_SDL_USE
+#ifdef PCE_ENABLE_SDL
 #include <SDL.h>
 #endif
 

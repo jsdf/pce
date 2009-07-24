@@ -257,49 +257,48 @@ AC_ARG_WITH(sdl,
   AC_HELP_STRING([--with-sdl], [Build the SDL terminal]),
   [
 	if test "x$withval" = "xno" ; then
-		PCE_SDL_USE=0
+		PCE_ENABLE_SDL=0
 		AC_MSG_RESULT([no (forced)])
 	else
-		PCE_SDL_USE=1
+		PCE_ENABLE_SDL=1
 		AC_MSG_RESULT([yes (forced)])
 	fi
   ],
   [
 	if sdl-config --version > /dev/null 2>&1 ; then
-		PCE_SDL_USE=1
+		PCE_ENABLE_SDL=1
 		AC_MSG_RESULT([yes (detected)])
 	else
-		PCE_SDL_USE=0
+		PCE_ENABLE_SDL=0
 		AC_MSG_RESULT([no (detected)])
 	fi
   ]
 )
-if test "x$PCE_SDL_USE" != "x0" ; then
+if test "x$PCE_ENABLE_SDL" != "x0" ; then
 	AC_MSG_CHECKING([for static SDL])
 	AC_ARG_ENABLE(static-sdl,
 	  AC_HELP_STRING([--enable-static-sdl], [Link to static SDL [[no]]]),
 	  [
 		if test "x$enableval" = "xyes" ; then
-			PCE_SDL_LDF=`sdl-config --static-libs`
+			PCE_SDL_LIBS=`sdl-config --static-libs`
 			AC_MSG_RESULT([yes (forced)])
 		else
-			PCE_SDL_LDF=`sdl-config --libs`
+			PCE_SDL_LIBS=`sdl-config --libs`
 			AC_MSG_RESULT([no (forced)])
 		fi
 	  ],
 	  [
-  		PCE_SDL_LDF=`sdl-config --libs`
+  		PCE_SDL_LIBS=`sdl-config --libs`
 		AC_MSG_RESULT([no (default)])
 	  ]
 	)
 
-	PCE_SDL_CCF=`sdl-config --cflags`
-	AC_DEFINE(PCE_SDL_USE)
+	PCE_SDL_CFLAGS=`sdl-config --cflags`
+	AC_DEFINE(PCE_ENABLE_SDL)
 fi
-AC_SUBST(PCE_SDL_USE)
-AC_SUBST(PCE_SDL_CCF)
-AC_SUBST(PCE_SDL_LDF)
-
+AC_SUBST(PCE_ENABLE_SDL)
+AC_SUBST(PCE_SDL_CFLAGS)
+AC_SUBST(PCE_SDL_LIBS)
 
 
 #-----------------------------------------------------------------------------
@@ -666,7 +665,7 @@ else
 	term2="$term2 x11"
 fi
 
-if test "x$PCE_SDL_USE" = "x1" ; then
+if test "x$PCE_ENABLE_SDL" = "x1" ; then
 	term1="$term1 sdl"
 else
 	term2="$term2 sdl"

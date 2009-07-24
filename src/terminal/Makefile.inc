@@ -14,7 +14,7 @@ else
 DRV_TRM_NBAS += x11
 endif
 
-ifeq "$(PCE_SDL_USE)" "1"
+ifeq "$(PCE_ENABLE_SDL)" "1"
 DRV_TRM_BAS += sdl
 else
 DRV_TRM_NBAS += sdl
@@ -37,7 +37,7 @@ $(rel)/x11.o:	$(rel)/x11.c
 
 $(rel)/sdl.o:	$(rel)/sdl.c
 	$(QP)echo "  CC     $@"
-	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_SDL_CCF) -o $@ $<
+	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_SDL_CFLAGS) -o $@ $<
 
 $(rel)/font.o:		$(rel)/font.c
 $(rel)/keys.o:		$(rel)/keys.c

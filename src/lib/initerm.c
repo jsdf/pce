@@ -45,7 +45,7 @@ int trm_is_valid (const char *str)
 	}
 #endif
 
-#ifdef PCE_SDL_USE
+#ifdef PCE_ENABLE_SDL
 	if (strcmp (str, "sdl") == 0) {
 		return (1);
 	}
@@ -100,7 +100,7 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 #endif
 	}
 	else if (strcmp (driver, "sdl") == 0) {
-#ifdef PCE_SDL_USE
+#ifdef PCE_ENABLE_SDL
 		trm = sdl_new (sct);
 
 		if (trm == NULL) {

@@ -651,9 +651,9 @@ PCE_BUILD_SIM405
 PCE_BUILD_MACPLUS
 PCE_BUILD_IBMPC
 PCE_LARGE_FILE
-PCE_SDL_LDF
-PCE_SDL_CCF
-PCE_SDL_USE
+PCE_SDL_LIBS
+PCE_SDL_CFLAGS
+PCE_ENABLE_SDL
 PCE_X11_LIBS
 PCE_X11_CFLAGS
 PCE_ENABLE_X11
@@ -5054,11 +5054,11 @@ $as_echo_n "checking for SDL... " >&6; }
 if test "${with_sdl+set}" = set; then
   withval=$with_sdl;
 	if test "x$withval" = "xno" ; then
-		PCE_SDL_USE=0
+		PCE_ENABLE_SDL=0
 		{ $as_echo "$as_me:$LINENO: result: no (forced)" >&5
 $as_echo "no (forced)" >&6; }
 	else
-		PCE_SDL_USE=1
+		PCE_ENABLE_SDL=1
 		{ $as_echo "$as_me:$LINENO: result: yes (forced)" >&5
 $as_echo "yes (forced)" >&6; }
 	fi
@@ -5066,11 +5066,11 @@ $as_echo "yes (forced)" >&6; }
 else
 
 	if sdl-config --version > /dev/null 2>&1 ; then
-		PCE_SDL_USE=1
+		PCE_ENABLE_SDL=1
 		{ $as_echo "$as_me:$LINENO: result: yes (detected)" >&5
 $as_echo "yes (detected)" >&6; }
 	else
-		PCE_SDL_USE=0
+		PCE_ENABLE_SDL=0
 		{ $as_echo "$as_me:$LINENO: result: no (detected)" >&5
 $as_echo "no (detected)" >&6; }
 	fi
@@ -5078,25 +5078,25 @@ $as_echo "no (detected)" >&6; }
 
 fi
 
-if test "x$PCE_SDL_USE" != "x0" ; then
+if test "x$PCE_ENABLE_SDL" != "x0" ; then
 	{ $as_echo "$as_me:$LINENO: checking for static SDL" >&5
 $as_echo_n "checking for static SDL... " >&6; }
 	# Check whether --enable-static-sdl was given.
 if test "${enable_static_sdl+set}" = set; then
   enableval=$enable_static_sdl;
 		if test "x$enableval" = "xyes" ; then
-			PCE_SDL_LDF=`sdl-config --static-libs`
+			PCE_SDL_LIBS=`sdl-config --static-libs`
 			{ $as_echo "$as_me:$LINENO: result: yes (forced)" >&5
 $as_echo "yes (forced)" >&6; }
 		else
-			PCE_SDL_LDF=`sdl-config --libs`
+			PCE_SDL_LIBS=`sdl-config --libs`
 			{ $as_echo "$as_me:$LINENO: result: no (forced)" >&5
 $as_echo "no (forced)" >&6; }
 		fi
 
 else
 
-  		PCE_SDL_LDF=`sdl-config --libs`
+  		PCE_SDL_LIBS=`sdl-config --libs`
 		{ $as_echo "$as_me:$LINENO: result: no (default)" >&5
 $as_echo "no (default)" >&6; }
 
@@ -5104,13 +5104,12 @@ $as_echo "no (default)" >&6; }
 fi
 
 
-	PCE_SDL_CCF=`sdl-config --cflags`
+	PCE_SDL_CFLAGS=`sdl-config --cflags`
 	cat >>confdefs.h <<\_ACEOF
-#define PCE_SDL_USE 1
+#define PCE_ENABLE_SDL 1
 _ACEOF
 
 fi
-
 
 
 
@@ -5802,7 +5801,7 @@ else
 	term2="$term2 x11"
 fi
 
-if test "x$PCE_SDL_USE" = "x1" ; then
+if test "x$PCE_ENABLE_SDL" = "x1" ; then
 	term1="$term1 sdl"
 else
 	term2="$term2 sdl"

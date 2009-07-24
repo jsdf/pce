@@ -86,7 +86,7 @@
 
 #undef PCE_ENABLE_X11
 
-#undef PCE_SDL_USE
+#undef PCE_ENABLE_SDL
 
 #undef PCE_ENABLE_READLINE
 
