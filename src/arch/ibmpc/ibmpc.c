@@ -704,7 +704,10 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      irq;
 
+	pc->mse = NULL;
+
 	sct = ini_next_sct (ini, NULL, "mouse");
+
 	if (sct == NULL) {
 		return;
 	}
