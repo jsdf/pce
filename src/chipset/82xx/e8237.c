@@ -322,6 +322,10 @@ void e8237_init (e8237_t *dma)
 	dma->priority = 0;
 
 	dma->hreq_val = 0;
+	dma->hlda_val = 0;
+
+	dma->hreq_ext = NULL;
+	dma->hreq = NULL;
 }
 
 e8237_t *e8237_new (void)
