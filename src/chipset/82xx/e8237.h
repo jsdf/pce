@@ -52,74 +52,66 @@
 #define E8237_STATE_MASK 0x10
 
 
-typedef void (*e8237_signal_f) (void *ext, unsigned char val);
-
-typedef void (*e8237_mem_write) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*e8237_io_write) (void *ext, unsigned char val);
-
-typedef unsigned char (*e8237_mem_read) (void *ext, unsigned long addr);
-typedef unsigned char (*e8237_io_read) (void *ext);
-
-
 struct e8237_s;
 
 
 typedef struct {
-	struct e8237_s  *dma;
+	struct e8237_s *dma;
 
-	unsigned short  base_addr;
-	unsigned short  base_cnt;
+	unsigned short base_addr;
+	unsigned short base_cnt;
 
-	unsigned short  cur_addr;
-	unsigned short  cur_cnt;
+	unsigned short cur_addr;
+	unsigned short cur_cnt;
 
-	unsigned short  mode;
-	unsigned short  state;
+	unsigned short mode;
+	unsigned short state;
 
-	unsigned char   dack_val;
-	unsigned char   tc_val;
+	unsigned char  dack_val;
+	unsigned char  tc_val;
 
-	struct e8237_s  *cascade;
+	struct e8237_s *cascade;
 
-	void            *dack_ext;
-	e8237_signal_f  dack;
+	void           *dack_ext;
+	void           (*dack) (void *ext, unsigned char val);
 
-	void            *tc_ext;
-	e8237_signal_f  tc;
+	void           *tc_ext;
+	void           (*tc) (void *ext, unsigned char val);
 
-	void            *memwr_ext;
-	e8237_mem_write memwr;
+	void           *memwr_ext;
+	void           (*memwr) (void *ext, unsigned long addr, unsigned char val);
 
-	void            *memrd_ext;
-	e8237_mem_read  memrd;
+	void           *memrd_ext;
+	unsigned char  (*memrd) (void *ext, unsigned long addr);
 
-	void            *iowr_ext;
-	e8237_io_write  iowr;
+	void           *iowr_ext;
+	void           (*iowr) (void *ext, unsigned char val);
 
-	void            *iord_ext;
-	e8237_io_read   iord;
+	void           *iord_ext;
+	unsigned char  (*iord) (void *ext);
 } e8237_chn_t;
 
 
 typedef struct e8237_s {
-	e8237_chn_t    chn[4];
+	e8237_chn_t   chn[4];
 
-	unsigned char  check;
+	unsigned char check;
 
-	unsigned char  cmd;
-	unsigned char  flipflop;
-	unsigned       priority;
+	unsigned char cmd;
+	unsigned char flipflop;
+	unsigned      priority;
 
-	unsigned char  hreq_val;
-	unsigned char  hlda_val;
+	unsigned char hreq_val;
+	unsigned char hlda_val;
 
-	void           *hreq_ext;
-	e8237_signal_f hreq;
+	void          *hreq_ext;
+	void          (*hreq) (void *ext, unsigned char val);
 } e8237_t;
 
 
 void e8237_init (e8237_t *dma);
 e8237_t *e8237_new (void);
+
 void e8237_free (e8237_t *dma);
 void e8237_del (e8237_t *dma);
 

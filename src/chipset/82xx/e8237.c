@@ -238,40 +238,39 @@ int e8237_chn_transfer (e8237_chn_t *chn)
 	}
 
 	switch (chn->mode & E8237_MODE_TYPE) {
-		case E8237_MODE_READ:
-			if (chn->memrd != NULL) {
-				val = chn->memrd (chn->memrd_ext, chn->cur_addr);
-			}
-			else {
-				val = 0;
-			}
+	case E8237_MODE_READ:
+		if (chn->memrd != NULL) {
+			val = chn->memrd (chn->memrd_ext, chn->cur_addr);
+		}
+		else {
+			val = 0;
+		}
 
-			if (chn->iowr != NULL) {
-				chn->iowr (chn->iowr_ext, val);
-			}
-			break;
+		if (chn->iowr != NULL) {
+			chn->iowr (chn->iowr_ext, val);
+		}
+		break;
 
-		case E8237_MODE_WRITE:
-			if (chn->iord != NULL) {
-				val = chn->iord (chn->iord_ext);
-			}
-			else {
-				val = 0;
-			}
+	case E8237_MODE_WRITE:
+		if (chn->iord != NULL) {
+			val = chn->iord (chn->iord_ext);
+		}
+		else {
+			val = 0;
+		}
 
-			if (chn->memwr != NULL) {
-				chn->memwr (chn->memwr_ext, chn->cur_addr, val);
-			}
-			break;
-
+		if (chn->memwr != NULL) {
+			chn->memwr (chn->memwr_ext, chn->cur_addr, val);
+		}
+		break;
 	}
 
-	chn->cur_addr += (chn->mode & E8237_MODE_ADDRDEC) ? 0xffffU : 0x0001U;
-	chn->cur_addr &= 0xffffU;
+	chn->cur_addr += (chn->mode & E8237_MODE_ADDRDEC) ? 0xffff : 0x0001;
+	chn->cur_addr &= 0xffff;
 
-	chn->cur_cnt = (chn->cur_cnt - 1) & 0xffffU;
+	chn->cur_cnt = (chn->cur_cnt - 1) & 0xffff;
 
-	if (chn->cur_cnt == 0xffffU) {
+	if (chn->cur_cnt == 0xffff) {
 		e8237_chn_tc (chn);
 		return (1);
 	}
@@ -524,75 +523,75 @@ void e8237_set_hreq (e8237_t *dma, unsigned char val)
 void e8237_set_uint8 (e8237_t *dma, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
-		case 0x00:
-			e8237_chn_set_addr (&dma->chn[0], val, &dma->flipflop);
-			break;
+	case 0x00:
+		e8237_chn_set_addr (&dma->chn[0], val, &dma->flipflop);
+		break;
 
-		case 0x01:
-			e8237_chn_set_cnt (&dma->chn[0], val, &dma->flipflop);
-			break;
+	case 0x01:
+		e8237_chn_set_cnt (&dma->chn[0], val, &dma->flipflop);
+		break;
 
-		case 0x02:
-			e8237_chn_set_addr (&dma->chn[1], val, &dma->flipflop);
-			break;
+	case 0x02:
+		e8237_chn_set_addr (&dma->chn[1], val, &dma->flipflop);
+		break;
 
-		case 0x03:
-			e8237_chn_set_cnt (&dma->chn[1], val, &dma->flipflop);
-			break;
+	case 0x03:
+		e8237_chn_set_cnt (&dma->chn[1], val, &dma->flipflop);
+		break;
 
-		case 0x04:
-			e8237_chn_set_addr (&dma->chn[2], val, &dma->flipflop);
-			break;
+	case 0x04:
+		e8237_chn_set_addr (&dma->chn[2], val, &dma->flipflop);
+		break;
 
-		case 0x05:
-			e8237_chn_set_cnt (&dma->chn[2], val, &dma->flipflop);
-			break;
+	case 0x05:
+		e8237_chn_set_cnt (&dma->chn[2], val, &dma->flipflop);
+		break;
 
-		case 0x06:
-			e8237_chn_set_addr (&dma->chn[3], val, &dma->flipflop);
-			break;
+	case 0x06:
+		e8237_chn_set_addr (&dma->chn[3], val, &dma->flipflop);
+		break;
 
-		case 0x07:
-			e8237_chn_set_cnt (&dma->chn[3], val, &dma->flipflop);
-			break;
+	case 0x07:
+		e8237_chn_set_cnt (&dma->chn[3], val, &dma->flipflop);
+		break;
 
-		case 0x08:
-			e8237_set_command (dma, val);
-			break;
+	case 0x08:
+		e8237_set_command (dma, val);
+		break;
 
-		case 0x09:
-			e8237_chn_set_sreq (&dma->chn[val & 0x03], val);
-			break;
+	case 0x09:
+		e8237_chn_set_sreq (&dma->chn[val & 0x03], val);
+		break;
 
-		case 0x0a:
-			e8237_chn_set_mask (&dma->chn[val & 0x03], (val & 0x04) != 0);
-			break;
+	case 0x0a:
+		e8237_chn_set_mask (&dma->chn[val & 0x03], (val & 0x04) != 0);
+		break;
 
-		case 0x0b:
-			e8237_chn_set_mode (&dma->chn[val & 0x03], val);
-			break;
+	case 0x0b:
+		e8237_chn_set_mode (&dma->chn[val & 0x03], val);
+		break;
 
-		case 0x0c:
-			dma->flipflop = 0;
-			break;
+	case 0x0c:
+		dma->flipflop = 0;
+		break;
 
-		case 0x0d:
-			e8237_reset (dma);
-			break;
+	case 0x0d:
+		e8237_reset (dma);
+		break;
 
-		case 0x0e:
-			e8237_chn_set_mask (&dma->chn[0], 0);
-			e8237_chn_set_mask (&dma->chn[1], 0);
-			e8237_chn_set_mask (&dma->chn[2], 0);
-			e8237_chn_set_mask (&dma->chn[3], 0);
-			break;
+	case 0x0e:
+		e8237_chn_set_mask (&dma->chn[0], 0);
+		e8237_chn_set_mask (&dma->chn[1], 0);
+		e8237_chn_set_mask (&dma->chn[2], 0);
+		e8237_chn_set_mask (&dma->chn[3], 0);
+		break;
 
-		case 0x0f:
-			e8237_chn_set_mask (&dma->chn[0], (val & 0x01) != 0);
-			e8237_chn_set_mask (&dma->chn[1], (val & 0x02) != 0);
-			e8237_chn_set_mask (&dma->chn[2], (val & 0x04) != 0);
-			e8237_chn_set_mask (&dma->chn[3], (val & 0x08) != 0);
-			break;
+	case 0x0f:
+		e8237_chn_set_mask (&dma->chn[0], (val & 0x01) != 0);
+		e8237_chn_set_mask (&dma->chn[1], (val & 0x02) != 0);
+		e8237_chn_set_mask (&dma->chn[2], (val & 0x04) != 0);
+		e8237_chn_set_mask (&dma->chn[3], (val & 0x08) != 0);
+		break;
 	}
 }
 
@@ -607,35 +606,35 @@ void e8237_set_uint32 (e8237_t *dma, unsigned long addr, unsigned long val)
 unsigned char e8237_get_uint8 (e8237_t *dma, unsigned long addr)
 {
 	switch (addr) {
-		case 0x00:
-			return (e8237_chn_get_addr (&dma->chn[0], &dma->flipflop));
+	case 0x00:
+		return (e8237_chn_get_addr (&dma->chn[0], &dma->flipflop));
 
-		case 0x01:
-			return (e8237_chn_get_cnt (&dma->chn[0], &dma->flipflop));
+	case 0x01:
+		return (e8237_chn_get_cnt (&dma->chn[0], &dma->flipflop));
 
-		case 0x02:
-			return (e8237_chn_get_addr (&dma->chn[1], &dma->flipflop));
+	case 0x02:
+		return (e8237_chn_get_addr (&dma->chn[1], &dma->flipflop));
 
-		case 0x03:
-			return (e8237_chn_get_cnt (&dma->chn[1], &dma->flipflop));
+	case 0x03:
+		return (e8237_chn_get_cnt (&dma->chn[1], &dma->flipflop));
 
-		case 0x04:
-			return (e8237_chn_get_addr (&dma->chn[2], &dma->flipflop));
+	case 0x04:
+		return (e8237_chn_get_addr (&dma->chn[2], &dma->flipflop));
 
-		case 0x05:
-			return (e8237_chn_get_cnt (&dma->chn[2], &dma->flipflop));
+	case 0x05:
+		return (e8237_chn_get_cnt (&dma->chn[2], &dma->flipflop));
 
-		case 0x06:
-			return (e8237_chn_get_addr (&dma->chn[3], &dma->flipflop));
+	case 0x06:
+		return (e8237_chn_get_addr (&dma->chn[3], &dma->flipflop));
 
-		case 0x07:
-			return (e8237_chn_get_cnt (&dma->chn[3], &dma->flipflop));
+	case 0x07:
+		return (e8237_chn_get_cnt (&dma->chn[3], &dma->flipflop));
 
-		case 0x08:
-			return (e8237_get_status (dma));
+	case 0x08:
+		return (e8237_get_status (dma));
 
-		case 0x0f:
-			return (e8237_get_temporary (dma));
+	case 0x0f:
+		return (e8237_get_temporary (dma));
 	}
 
 	return (0xff);
@@ -643,12 +642,12 @@ unsigned char e8237_get_uint8 (e8237_t *dma, unsigned long addr)
 
 unsigned short e8237_get_uint16 (e8237_t *dma, unsigned long addr)
 {
-	return (0xffffU);
+	return (0xffff);
 }
 
 unsigned long e8237_get_uint32 (e8237_t *dma, unsigned long addr)
 {
-	return (0xffffffffUL);
+	return (0xffffffff);
 }
 
 void e8237_clock (e8237_t *dma, unsigned n)
