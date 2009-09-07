@@ -1851,6 +1851,11 @@ src/drivers/char/char-posix.o: src/drivers/char/char-posix.c \
 	src/drivers/char/char-posix.h \
 	src/drivers/char/char.h
 
+src/drivers/char/char-pty.o: src/drivers/char/char-pty.c \
+	src/config.h \
+	src/drivers/char/char-pty.h \
+	src/drivers/char/char.h
+
 src/drivers/char/char-stdio.o: src/drivers/char/char-stdio.c \
 	src/drivers/char/char-stdio.h \
 	src/drivers/char/char.h

@@ -91,6 +91,7 @@
 #undef PCE_ENABLE_TUN
 
 #undef PCE_ENABLE_CHAR_POSIX
+#undef PCE_ENABLE_CHAR_PTY
 #undef PCE_ENABLE_CHAR_TIOS
 
 /* directory separator */

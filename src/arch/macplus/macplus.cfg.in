@@ -179,6 +179,7 @@ section macplus {
 		# all platforms.
 		#driver = "null"
 		#driver = "posix:file=ser_a.out" 
+		#driver = "pty:symlink=ser_a"
 		driver = "stdio:file=ser_a.out"
 		#driver = "tios:file=/dev/ttyS0"
 	}

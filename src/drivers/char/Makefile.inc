@@ -14,6 +14,12 @@ else
 DRV_CHR_NBAS += char-posix
 endif
 
+ifeq "$(PCE_ENABLE_CHAR_PTY)" "1"
+DRV_CHR_BAS += char-pty
+else
+DRV_CHR_NBAS += char-pty
+endif
+
 ifeq "$(PCE_ENABLE_CHAR_TIOS)" "1"
 DRV_CHR_BAS += char-tios
 else
@@ -34,6 +40,7 @@ DIST += $(DRV_CHR_SRC) $(DRV_CHR_HDR) $(DRV_CHR_NSRC) $(DRV_CHR_NHDR)
 $(rel)/char.o:		$(rel)/char.c
 $(rel)/char-null.o:	$(rel)/char-null.c
 $(rel)/char-posix.o:	$(rel)/char-posix.c
+$(rel)/char-pty.o:	$(rel)/char-pty.c
 $(rel)/char-stdio.o:	$(rel)/char-stdio.c
 $(rel)/char-tios.o:	$(rel)/char-tios.c
 
