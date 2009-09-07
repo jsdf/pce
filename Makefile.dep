@@ -1847,6 +1847,10 @@ src/drivers/char/char-null.o: src/drivers/char/char-null.c \
 	src/drivers/char/char-null.h \
 	src/drivers/char/char.h
 
+src/drivers/char/char-posix.o: src/drivers/char/char-posix.c \
+	src/drivers/char/char-posix.h \
+	src/drivers/char/char.h
+
 src/drivers/char/char-stdio.o: src/drivers/char/char-stdio.c \
 	src/drivers/char/char-stdio.h \
 	src/drivers/char/char.h

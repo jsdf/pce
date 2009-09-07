@@ -89,6 +89,7 @@ unsigned long chr_get_option_uint (const char *str, const char *name, unsigned i
 
 char_drv_t *chr_open (const char *name);
 char_drv_t *chr_null_open (const char *name);
+char_drv_t *chr_posix_open (const char *name);
 char_drv_t *chr_stdio_open (const char *name);
 char_drv_t *chr_tios_open (const char *name);
 

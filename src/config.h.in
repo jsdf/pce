@@ -47,6 +47,7 @@
 #undef HAVE_INTTYPES_H
 #undef HAVE_LINUX_IF_TUN_H
 #undef HAVE_LIMITS_H
+#undef HAVE_POLL_H
 #undef HAVE_STDINT_H
 #undef HAVE_SYS_IOCTL_H
 #undef HAVE_SYS_POLL_H
@@ -89,6 +90,7 @@
 
 #undef PCE_ENABLE_TUN
 
+#undef PCE_ENABLE_CHAR_POSIX
 #undef PCE_ENABLE_CHAR_TIOS
 
 /* directory separator */

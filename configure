@@ -597,6 +597,7 @@ PCE_READLINE_LIBS
 PCE_ENABLE_READLINE
 PCE_ENABLE_TUN
 PCE_ENABLE_CHAR_TIOS
+PCE_ENABLE_CHAR_POSIX
 PCE_BUILD_SIMARM
 PCE_BUILD_SIMS32
 PCE_BUILD_SIM6502
@@ -704,6 +705,7 @@ enable_sim405
 enable_sim6502
 enable_sims32
 enable_simarm
+enable_char_posix
 enable_char_termios
 enable_tun
 enable_readline
@@ -1342,6 +1344,7 @@ Optional Features:
   --enable-sim6502        Enable the 6502 simulator
   --enable-sims32         Enable the sparc32 simulator
   --enable-simarm         Enable the arm simulator
+  --enable-char-posix     Enable the posix file character driver
   --enable-char-termios   Enable the termios character driver
   --enable-tun            Enable tun networking
   --enable-readline       Enable readline
@@ -3947,6 +3950,7 @@ for ac_header in \
 	fcntl.h \
 	linux/if_tun.h \
 	limits.h \
+	poll.h \
 	sys/ioctl.h \
 	sys/poll.h \
 	sys/socket.h \
@@ -4614,6 +4618,46 @@ if test "x$PCE_BUILD_SIMARM" = "x1" ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the posix file character driver" >&5
+$as_echo_n "checking whether to enable the posix file character driver... " >&6; }
+# Check whether --enable-char-posix was given.
+if test "${enable_char_posix+set}" = set; then :
+  enableval=$enable_char_posix;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_POSIX=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_CHAR_POSIX=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+else
+
+	PCE_ENABLE_CHAR_POSIX=1
+	test "x$ac_cv_header_fcntl_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
+	test "x$ac_cv_header_poll_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
+	test "x$ac_cv_header_sys_stat_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
+	test "x$ac_cv_header_unistd_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
+	if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_CHAR_POSIX 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the termios character driver" >&5
 $as_echo_n "checking whether to enable the termios character driver... " >&6; }
 # Check whether --enable-char-termios was given.
@@ -4954,11 +4998,18 @@ fi
 char1=" null stdio"
 char2=""
 
+if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
+	char1="$char1 posix"
+else
+	char2="$char2 posix"
+fi
+
 if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 	char1="$char1 termios"
 else
 	char2="$char2 termios"
 fi
+
 
 option1=""
 option2=""
