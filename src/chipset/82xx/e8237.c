@@ -663,6 +663,8 @@ void e8237_clock (e8237_t *dma, unsigned n)
 		return;
 	}
 
+	dma->check = 0;
+
 	j = dma->priority;
 
 	for (i = 0; i < 4; i++) {
@@ -670,6 +672,8 @@ void e8237_clock (e8237_t *dma, unsigned n)
 
 		if (chn->state & (E8237_STATE_DREQ | E8237_STATE_SREQ)) {
 			if ((chn->state & E8237_STATE_MASK) == 0) {
+				dma->check = 1;
+
 				e8237_set_hreq (dma, 1);
 
 				if (dma->hlda_val == 0) {
@@ -689,8 +693,6 @@ void e8237_clock (e8237_t *dma, unsigned n)
 				else {
 					dma->priority = j;
 				}
-
-				return;
 			}
 		}
 
@@ -698,6 +700,4 @@ void e8237_clock (e8237_t *dma, unsigned n)
 	}
 
 	e8237_set_hreq (dma, 0);
-
-	dma->check = 0;
 }
