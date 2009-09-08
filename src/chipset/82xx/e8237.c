@@ -211,6 +211,7 @@ void e8237_chn_tc (e8237_chn_t *chn)
 	}
 
 	e8237_chn_set_tc (chn, 1);
+	e8237_chn_set_tc (chn, 0);
 }
 
 static
