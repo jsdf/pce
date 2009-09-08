@@ -306,43 +306,58 @@ const char *chr_get_option_name (const char *str)
 static
 char *chr_option_dup (const char *str)
 {
-	unsigned i;
+	unsigned i, j, n;
 	char     *ret;
 
-	i = 0;
-	while (str[i] != 0) {
-		if (str[i] == ':') {
-			if (str[i + 1] == ':') {
-				i += 2;
+	n = 0;
+	while (str[n] != 0) {
+		if (str[n] == ':') {
+			if (str[n + 1] == ':') {
+				n += 2;
 			}
 			else {
 				break;
 			}
 		}
 		else {
-			i += 1;
+			n += 1;
 		}
 	}
 
-	while (i > 0) {
-		if (str[i - 1] == ' ') {
-			i -= 1;
+	while (n > 0) {
+		if (str[n - 1] == ' ') {
+			n -= 1;
 		}
-		else if (str[i - 1] == '\t') {
-			i -= 1;
+		else if (str[n - 1] == '\t') {
+			n -= 1;
 		}
 		else {
 			break;
 		}
 	}
 
-	ret = malloc (i + 1);
+	ret = malloc (n + 1);
 	if (ret == NULL) {
 		return (NULL);
 	}
 
-	memcpy (ret, str, i);
-	ret[i] = 0;
+	i = 0;
+	j = 0;
+
+	while (i < n) {
+		if ((str[i] == ':') && (str[i + 1] == ':')) {
+			ret[j] = ':';
+			i += 2;
+		}
+		else {
+			ret[j] = str[i];
+			i += 1;
+		}
+
+		j += 1;
+	}
+
+	ret[j] = 0;
 
 	return (ret);
 }
