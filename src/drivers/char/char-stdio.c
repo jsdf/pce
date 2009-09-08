@@ -71,7 +71,7 @@ unsigned chr_stdio_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 
 	cnt = fwrite (buf, 1, cnt, drv->fp);
 
-	if ((drv->fp == stdout) || (drv->fp == stderr)) {
+	if (drv->flush) {
 		fflush (drv->fp);
 	}
 
@@ -90,6 +90,7 @@ int chr_stdio_init (char_stdio_t *drv, const char *name)
 	drv->fp = NULL;
 
 	drv->fname = chr_get_option (name, "file", 1);
+	drv->flush = chr_get_option_bool (name, "flush", 0xffff, 1);
 
 	if (drv->fname != NULL) {
 		if (strcmp (drv->fname, "-") == 0) {

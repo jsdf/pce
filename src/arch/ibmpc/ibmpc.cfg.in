@@ -330,7 +330,7 @@ section pc {
 		#driver = "null"
 		#driver = "posix:file=serport1.out" 
 		#driver = "pty:symlink=com1"
-		driver = "stdio:file=serport1.out"
+		driver = "stdio:file=serport1.out:flush=1"
 		#driver = "tios:file=/dev/ttyS0"
 
 		#log = "serport1.log"
