@@ -179,7 +179,4 @@ void pce_start (unsigned *brk)
 void pce_stop (void)
 {
 	pce_set_fd_interactive (0, 1);
-
-	/* reset terminal colors */
-	fputs ("\x1b[0;37;40m", stdout);
 }
