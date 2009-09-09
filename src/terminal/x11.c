@@ -709,7 +709,20 @@ int xt_set_msg_trm (xterm_t *xt, const char *msg, const char *val)
 		val = "";
 	}
 
-	if (strcmp (msg, "term.grab") == 0) {
+	if (strcmp (msg, "term.fullscreen") == 0) {
+		int v;
+
+		v = strtol (val, NULL, 0);
+
+		/* xt_set_fullscreen (xt, v != 0); */
+
+		return (0);
+	}
+	else if (strcmp (msg, "term.fullscreen.toggle") == 0) {
+		/* xt_set_fullscreen (xt, !xt->fullscreen); */
+		return (0);
+	}
+	else if (strcmp (msg, "term.grab") == 0) {
 		xt_grab_mouse (xt, 1);
 		return (0);
 	}
