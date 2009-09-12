@@ -37,11 +37,11 @@ void e8250_init (e8250_t *uart)
 
 	uart->inp_i = 0;
 	uart->inp_j = 0;
-	uart->inp_n = 8;
+	uart->inp_n = 9;
 
 	uart->out_i = 0;
 	uart->out_j = 0;
-	uart->out_n = 8;
+	uart->out_n = 9;
 
 	uart->txd[0] = 0;
 	uart->txd[1] = 0;
@@ -193,6 +193,9 @@ void e8250_set_check_fct (e8250_t *uart, void *ext, void *fct)
 
 void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
 {
+	inp += 1;
+	out += 1;
+
 	uart->inp_i = 0;
 	uart->inp_j = 0;
 	uart->inp_n = (inp <= E8250_BUF_MAX) ? inp : E8250_BUF_MAX;
