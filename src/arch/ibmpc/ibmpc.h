@@ -147,7 +147,5 @@ void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk);
 void pc_set_bootdrive (ibmpc_t *pc, unsigned drv);
 unsigned pc_get_bootdrive (ibmpc_t *pc);
 
-void pc_break (ibmpc_t *pc, unsigned char val);
-
 
 #endif

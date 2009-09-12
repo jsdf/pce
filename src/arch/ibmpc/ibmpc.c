@@ -1412,14 +1412,3 @@ unsigned pc_get_bootdrive (ibmpc_t *pc)
 {
 	return (pc->bootdrive);
 }
-
-void pc_break (ibmpc_t *pc, unsigned char val)
-{
-	if (pc == NULL) {
-		pc = par_pc;
-	}
-
-	if ((val == PCE_BRK_STOP) || (val == PCE_BRK_ABORT)) {
-		pc->brk = val;
-	}
-}
