@@ -68,6 +68,10 @@
 	} \
 	} while (0)
 
+#define e68_check_68010(c) \
+	if (!((c)->flags & E68_FLAG_68010)) \
+		return e68_op_undefined (c)
+
 
 static unsigned e68_op_undefined (e68000_t *c)
 {
@@ -969,6 +973,120 @@ static unsigned op0c80 (e68000_t *c)
 	return (c->ircnt);
 }
 
+/* 0E00: MOVES.B Rn, <EA> / MOVES.B <EA>, Rn*/
+static unsigned op0e00 (e68000_t *c)
+{
+	unsigned reg;
+	uint8_t  v;
+
+	e68_check_68010 (c);
+
+	e68_ifetch (c, 1);
+
+	reg = (c->ir[1] >> 12) & 15;
+
+	if (c->ir[1] & 0x0800) {
+		if (reg & 8) {
+			v = e68_get_areg32 (c, reg & 7) & 0xff;
+		}
+		else {
+			v = e68_get_dreg8 (c, reg & 7);
+		}
+
+		e68_set_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, v);
+	}
+	else {
+		e68_get_ea8 (c, 1, e68_ir_ea1 (c), 0x1fc, &v);
+
+		if (reg & 8) {
+			e68_set_areg32 (c, reg & 7, e68_exts8 (v));
+		}
+		else {
+			e68_set_dreg8 (c, reg & 7, v);
+		}
+	}
+
+	e68_set_clk (c, 4);
+
+	return (c->ircnt);
+}
+
+/* 0E40: MOVES.W Rn, <EA> / MOVES.W <EA>, Rn*/
+static unsigned op0e40 (e68000_t *c)
+{
+	unsigned reg;
+	uint16_t v;
+
+	e68_check_68010 (c);
+
+	e68_ifetch (c, 1);
+
+	reg = (c->ir[1] >> 12) & 15;
+
+	if (c->ir[1] & 0x0800) {
+		if (reg & 8) {
+			v = e68_get_areg16 (c, reg & 7);
+		}
+		else {
+			v = e68_get_dreg16 (c, reg & 7);
+		}
+
+		e68_set_ea16 (c, 1, e68_ir_ea1 (c), 0x1fc, v);
+	}
+	else {
+		e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x1fc, &v);
+
+		if (reg & 8) {
+			e68_set_areg16 (c, reg & 7, v);
+		}
+		else {
+			e68_set_dreg16 (c, reg & 7, v);
+		}
+	}
+
+	e68_set_clk (c, 4);
+
+	return (c->ircnt);
+}
+
+/* 0E80: MOVES.L Rn, <EA> / MOVES.W <EA>, Rn*/
+static unsigned op0e80 (e68000_t *c)
+{
+	unsigned reg;
+	uint32_t v;
+
+	e68_check_68010 (c);
+
+	e68_ifetch (c, 1);
+
+	reg = (c->ir[1] >> 12) & 15;
+
+	if (c->ir[1] & 0x0800) {
+		if (reg & 8) {
+			v = e68_get_areg32 (c, reg & 7);
+		}
+		else {
+			v = e68_get_dreg32 (c, reg & 7);
+		}
+
+		e68_set_ea32 (c, 1, e68_ir_ea1 (c), 0x1fc, v);
+	}
+	else {
+		e68_get_ea32 (c, 1, e68_ir_ea1 (c), 0x1fc, &v);
+
+		if (reg & 8) {
+			e68_set_areg32 (c, reg & 7, v);
+		}
+		else {
+			e68_set_dreg32 (c, reg & 7, v);
+		}
+	}
+
+	e68_set_clk (c, 4);
+
+	return (c->ircnt);
+}
+
 /* 1000: MOVE.B <EA>, <EA> */
 static unsigned op1000 (e68000_t *c)
 {
@@ -1108,6 +1226,13 @@ static unsigned op40c0 (e68000_t *c)
 {
 	uint16_t s;
 
+	if (c->flags & E68_FLAG_68010) {
+		if (c->supervisor == 0) {
+			e68_exception_privilege (c);
+			return (0);
+		}
+	}
+
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
 
 	s = e68_get_sr (c) & E68_SR_MASK;
@@ -1200,6 +1325,23 @@ static unsigned op4280 (e68000_t *c)
 	e68_set_cc (c, E68_SR_N | E68_SR_V | E68_SR_C, 0);
 	e68_set_cc (c, E68_SR_Z, 1);
 	e68_set_clk (c, 6);
+
+	return (c->ircnt);
+}
+
+/* 42C0: MOVE.W CCR, <EA> */
+static unsigned op42c0 (e68000_t *c)
+{
+	uint16_t s;
+
+	e68_check_68010 (c);
+
+	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fd, &s);
+
+	s = e68_get_sr (c) & E68_CCR_MASK;
+
+	e68_set_ea16 (c, 0, 0, 0, s);
+	e68_set_clk (c, 4);
 
 	return (c->ircnt);
 }
@@ -2064,7 +2206,7 @@ static unsigned op4e72 (e68000_t *c)
 static unsigned op4e73 (e68000_t *c)
 {
 	uint32_t sp, pc;
-	uint16_t sr;
+	uint16_t sr, fmt;
 
 	if (c->supervisor == 0) {
 		e68_exception_privilege (c);
@@ -2074,11 +2216,52 @@ static unsigned op4e73 (e68000_t *c)
 	sp = e68_get_ssp (c);
 	sr = e68_get_mem16 (c, sp);
 	pc = e68_get_mem32 (c, sp + 2);
+
+	if (c->flags & E68_FLAG_68010) {
+		fmt = e68_get_mem16 (c, sp + 6);
+
+		switch ((fmt >> 12) & 0x0f) {
+		case 0:
+		case 8:
+			break;
+
+		default:
+			e68_exception_format (c);
+			return (0);
+		}
+	}
+
 	e68_set_sr (c, sr);
 	e68_set_pc (c, pc);
-	e68_set_ssp (c, sp + 6);
+
+	if (c->flags & E68_FLAG_68010) {
+		e68_set_ssp (c, sp + 8);
+	}
+	else {
+		e68_set_ssp (c, sp + 6);
+	}
 
 	e68_set_clk (c, 20);
+
+	return (0);
+}
+
+/* 4E74: RTD */
+static unsigned op4e74 (e68000_t *c)
+{
+	uint32_t sp, im;
+
+	e68_check_68010 (c);
+
+	e68_ifetch (c, 1);
+
+	im = e68_exts16 (c->ir[1]);
+	sp = e68_get_areg32 (c, 7);
+
+	e68_set_pc (c, e68_get_mem32 (c, sp));
+	e68_set_areg32 (c, 7, sp + 4 + im);
+
+	e68_set_clk (c, 16);
 
 	return (0);
 }
@@ -2128,6 +2311,110 @@ static unsigned op4e77 (e68000_t *c)
 	return (0);
 }
 
+/* 4E7A: MOVEC Rc, Rx */
+static unsigned op4e7a (e68000_t *c)
+{
+	unsigned cr, rx;
+	uint32_t val;
+
+	e68_check_68010 (c);
+
+	if (c->supervisor == 0) {
+		e68_exception_privilege (c);
+		return (0);
+	}
+
+	e68_ifetch (c, 1);
+
+	cr = c->ir[1] & 0x0fff;
+	rx = (c->ir[1] >> 12) & 0x0f;
+
+	switch (cr) {
+	case 0x000:
+		val = e68_get_sfc (c);
+		break;
+
+	case 0x001:
+		val = e68_get_dfc (c);
+		break;
+
+	case 0x800:
+		val = e68_get_usp (c);
+		break;
+
+	case 0x801:
+		val = e68_get_vbr (c);
+		break;
+
+	default:
+		e68_exception_illegal (c);
+		return (0);
+	}
+
+	if (rx & 8) {
+		e68_set_areg32 (c, rx & 7, val);
+	}
+	else {
+		e68_set_dreg32 (c, rx & 7, val);
+	}
+
+	e68_set_clk (c, 12);
+
+	return (2);
+}
+
+/* 4E7B: MOVEC Rx, Rc */
+static unsigned op4e7b (e68000_t *c)
+{
+	unsigned cr, rx;
+	uint32_t val;
+
+	e68_check_68010 (c);
+
+	if (c->supervisor == 0) {
+		e68_exception_privilege (c);
+		return (0);
+	}
+
+	e68_ifetch (c, 1);
+
+	cr = c->ir[1] & 0x0fff;
+	rx = (c->ir[1] >> 12) & 0x0f;
+
+	if (rx & 8) {
+		val = e68_get_areg32 (c, rx & 7);
+	}
+	else {
+		val = e68_get_dreg32 (c, rx & 7);
+	}
+
+	switch (cr) {
+	case 0x000:
+		e68_set_sfc (c, val);
+		break;
+
+	case 0x001:
+		e68_set_dfc (c, val);
+		break;
+
+	case 0x800:
+		e68_set_usp (c, val);
+		break;
+
+	case 0x801:
+		e68_set_vbr (c, val);
+		break;
+
+	default:
+		e68_exception_illegal (c);
+		return (0);
+	}
+
+	e68_set_clk (c, 10);
+
+	return (2);
+}
+
 /* 4E40: misc */
 static unsigned op4e40 (e68000_t *c)
 {
@@ -2144,6 +2431,9 @@ static unsigned op4e40 (e68000_t *c)
 	case 0x4e73:
 		return (op4e73 (c));
 
+	case 0x4e74:
+		return (op4e74 (c));
+
 	case 0x4e75:
 		return (op4e75 (c));
 
@@ -2152,6 +2442,12 @@ static unsigned op4e40 (e68000_t *c)
 
 	case 0x4e77:
 		return (op4e77 (c));
+
+	case 0x4e7a:
+		return (op4e7a (c));
+
+	case 0x4e7b:
+		return (op4e7b (c));
 
 	default:
 		switch ((c->ir[0] >> 3) & 7) {
@@ -5148,7 +5444,7 @@ e68_opcode_f e68_opcodes[1024] = {
 	op0800, op0840, op0880, op08c0, op0100, op0140, op0180, op01c0, /* 0800 */
 	op0a00, op0a40, op0a80,   NULL, op0100, op0140, op0180, op01c0, /* 0A00 */
 	op0c00, op0c40, op0c80,   NULL, op0100, op0140, op0180, op01c0, /* 0C00 */
-	  NULL,   NULL,   NULL,   NULL, op0100, op0140, op0180, op01c0, /* 0E00 */
+	op0e00, op0e40, op0e80,   NULL, op0100, op0140, op0180, op01c0, /* 0E00 */
 	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1000 */
 	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1200 */
 	op1000,   NULL, op1000, op1000, op1000, op1000, op1000, op1000, /* 1400 */
@@ -5174,7 +5470,7 @@ e68_opcode_f e68_opcodes[1024] = {
 	op3000, op3040, op3000, op3000, op3000, op3000, op3000, op3000, /* 3C00 */
 	op3000, op3040, op3000, op3000, op3000, op3000, op3000, op3000, /* 3E00 */
 	op4000, op4040, op4080, op40c0,   NULL,   NULL, op4180, op41c0, /* 4000 */
-	op4200, op4240, op4280,   NULL,   NULL,   NULL, op4180, op41c0, /* 4200 */
+	op4200, op4240, op4280, op42c0,   NULL,   NULL, op4180, op41c0, /* 4200 */
 	op4400, op4440, op4480, op44c0,   NULL,   NULL, op4180, op41c0, /* 4400 */
 	op4600, op4640, op4680, op46c0,   NULL,   NULL, op4180, op41c0, /* 4600 */
 	op4800, op4840, op4880, op48c0,   NULL,   NULL, op4180, op41c0, /* 4800 */

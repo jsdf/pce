@@ -58,10 +58,16 @@ struct e68000_s;
 #define e68_get_ssp(c) (((c)->supervisor ? (c)->areg[7] : (c)->ssp) & 0xffffffff)
 #define e68_get_sr(c) ((c)->sr & 0xffff)
 #define e68_get_ccr(c) ((c)->sr & 0xff)
+#define e68_get_vbr(c) ((c)->vbr & 0xffffffff)
+#define e68_get_sfc(c) ((c)->sfc & 0x00000003)
+#define e68_get_dfc(c) ((c)->dfc & 0x00000003)
 #define e68_get_ipl(c) ((c)->int_ipl)
 #define e68_get_iml(c) (((c)->sr >> 8) & 7)
 
 #define e68_set_pc(c, v) do { (c)->pc = (v) & 0xffffffff; } while (0)
+#define e68_set_vbr(c, v) do { (c)->vbr = (v) & 0xffffffff; } while (0)
+#define e68_set_sfc(c, v) do { (c)->sfc = (v) & 0x00000003; } while (0)
+#define e68_set_dfc(c, v) do { (c)->dfc = (v) & 0x00000003; } while (0)
 
 #define e68_get_sr_c(c) (((c)->sr & E68_SR_C) != 0)
 #define e68_get_sr_v(c) (((c)->sr & E68_SR_V) != 0)
@@ -124,6 +130,11 @@ typedef struct e68000_s {
 
 	uint32_t           usp;
 	uint32_t           ssp;
+
+	uint32_t           vbr;
+
+	uint32_t           sfc;
+	uint32_t           dfc;
 
 	uint32_t           last_pc;
 	uint16_t           last_trap_a;
@@ -362,7 +373,13 @@ void e68_set_reset_fct (e68000_t *c, void *ext, void *fct);
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 
+void e68_set_flags (e68000_t *c, unsigned flags, int set);
+
 void e68_set_address_check (e68000_t *c, int check);
+
+void e68_set_68000 (e68000_t *c);
+
+void e68_set_68010 (e68000_t *c);
 
 /*!***************************************************************************
  * @short Get the number of executed instructions
@@ -437,6 +454,8 @@ void e68_exception_axxx (e68000_t *c);
 
 void e68_exception_fxxx (e68000_t *c);
 
+void e68_exception_format (e68000_t *c);
+
 void e68_exception_avec (e68000_t *c, unsigned level);
 
 void e68_exception_trap (e68000_t *c, unsigned n);
@@ -474,6 +493,7 @@ void e68_clock (e68000_t *c, unsigned long n);
 #define E68_DFLAG_RTE    0x0008
 #define E68_DFLAG_RTS    0x0010
 #define E68_DFLAG_DEP_CC 0x0020
+#define E68_DFLAG_68010  0x0040
 
 typedef struct {
 	unsigned flags;

@@ -91,6 +91,11 @@ void e68_init (e68000_t *c)
 	e68_set_ssp (c, 0);
 	e68_set_pc (c, 0);
 
+	e68_set_vbr (c, 0);
+
+	e68_set_sfc (c, 0);
+	e68_set_dfc (c, 0);
+
 	c->last_pc = 0;
 	c->last_trap_a = 0;
 	c->last_trap_f = 0;
@@ -160,6 +165,16 @@ void e68_set_hook_fct (e68000_t *c, void *ext, void *fct)
 	c->hook = fct;
 }
 
+void e68_set_flags (e68000_t *c, unsigned flags, int set)
+{
+	if (set) {
+		c->flags |= flags;
+	}
+	else {
+		c->flags &= ~flags;
+	}
+}
+
 void e68_set_address_check (e68000_t *c, int check)
 {
 	if (check) {
@@ -168,6 +183,16 @@ void e68_set_address_check (e68000_t *c, int check)
 	else {
 		c->flags |= E68_FLAG_NOADDR;
 	}
+}
+
+void e68_set_68000 (e68000_t *c)
+{
+	c->flags = 0;
+}
+
+void e68_set_68010 (e68000_t *c)
+{
+	c->flags = E68_FLAG_68010;
 }
 
 unsigned long long e68_get_opcnt (e68000_t *c)
@@ -462,15 +487,18 @@ void e68_set_sr (e68000_t *c, unsigned short val)
 }
 
 static
-void e68_exception (e68000_t *c, unsigned n, const char *name)
+void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 {
 	uint16_t sr1, sr2;
+	uint32_t addr;
 
-	c->excptn = n;
+	vct &= 0xff;
+
+	c->excptn = vct;
 	c->excpts = name;
 
 	if (c->log_exception != NULL) {
-		c->log_exception (c->log_ext, n);
+		c->log_exception (c->log_ext, vct);
 	}
 
 	sr1 = e68_get_sr (c);
@@ -479,10 +507,16 @@ void e68_exception (e68000_t *c, unsigned n, const char *name)
 	sr2 |= E68_SR_S;
 	e68_set_sr (c, sr2);
 
+	if (c->flags & E68_FLAG_68010) {
+		e68_push16 (c, ((fmt & 15) << 12) | (vct << 2));
+	}
+
 	e68_push32 (c, e68_get_pc (c));
 	e68_push16 (c, sr1);
 
-	e68_set_pc (c, e68_get_mem32 (c, 4 * (n & 0xff)));
+	addr = (e68_get_vbr (c) + (vct << 2)) & 0xffffffff;
+
+	e68_set_pc (c, e68_get_mem32 (c, addr));
 }
 
 void e68_exception_reset (e68000_t *c)
@@ -507,7 +541,7 @@ void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 {
 	uint16_t val;
 
-	e68_exception (c, 3, "ADDR");
+	e68_exception (c, 3, 8, "ADDR");
 
 	e68_push16 (c, c->ir[0]);
 	e68_push32 (c, addr);
@@ -533,62 +567,68 @@ void e68_exception_illegal (e68000_t *c)
 		c->log_undef (c->log_ext, c->ir[0]);
 	}
 
-	e68_exception (c, 4, "ILLG");
+	e68_exception (c, 4, 0, "ILLG");
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_divzero (e68000_t *c)
 {
-	e68_exception (c, 5, "DIVZ");
+	e68_exception (c, 5, 0, "DIVZ");
 	e68_set_clk (c, 66);
 }
 
 void e68_exception_check (e68000_t *c)
 {
-	e68_exception (c, 6, "CHK");
+	e68_exception (c, 6, 0, "CHK");
 	e68_set_clk (c, 68);
 }
 
 void e68_exception_overflow (e68000_t *c)
 {
-	e68_exception (c, 7, "OFLW");
+	e68_exception (c, 7, 0, "OFLW");
 	e68_set_clk (c, 68);
 }
 
 void e68_exception_privilege (e68000_t *c)
 {
-	e68_exception (c, 8, "PRIV");
+	e68_exception (c, 8, 0, "PRIV");
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_axxx (e68000_t *c)
 {
-	e68_exception (c, 10, "AXXX");
+	e68_exception (c, 10, 0, "AXXX");
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_fxxx (e68000_t *c)
 {
-	e68_exception (c, 11, "FXXX");
+	e68_exception (c, 11, 0, "FXXX");
+	e68_set_clk (c, 62);
+}
+
+void e68_exception_format (e68000_t *c)
+{
+	e68_exception (c, 14, 0, "FRMT");
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_avec (e68000_t *c, unsigned level)
 {
-	e68_exception (c, 24 + level, "AVEC");
+	e68_exception (c, 24 + level, 0, "AVEC");
 	e68_set_iml (c, level & 7);
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_trap (e68000_t *c, unsigned n)
 {
-	e68_exception (c, 32 + n, "TRAP");
+	e68_exception (c, 32 + n, 0, "TRAP");
 	e68_set_clk (c, 62);
 }
 
 void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect)
 {
-	e68_exception (c, vect, "INTR");
+	e68_exception (c, vect, 0, "INTR");
 	e68_set_iml (c, level & 7);
 	e68_set_clk (c, 62);
 }
@@ -641,6 +681,11 @@ void e68_reset (e68000_t *c)
 
 	e68_set_usp (c, 0);
 	e68_set_ssp (c, 0);
+
+	e68_set_vbr (c, 0);
+
+	e68_set_sfc (c, 0);
+	e68_set_dfc (c, 0);
 
 	c->halt = 0;
 

@@ -41,6 +41,7 @@
 
 
 #define E68_FLAG_NOADDR 1
+#define E68_FLAG_68010  2
 
 
 void e68_set_sr (e68000_t *c, unsigned short val);
