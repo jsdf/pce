@@ -185,7 +185,16 @@ void e68_cc_set_subx_32 (e68000_t *c, uint32_t d, uint32_t s1, uint32_t s2);
 #define E68_EA_TYPE_REG 1
 #define E68_EA_TYPE_MEM 2
 
-int e68_ea_get_ptr (e68000_t *c, unsigned ea, unsigned mask, unsigned size);
+typedef int (*e68_get_ea_ptr_f) (e68000_t *c, unsigned ea, unsigned mask, unsigned size);
+
+e68_get_ea_ptr_f e68_ea_tab[64];
+
+static inline
+int e68_ea_get_ptr (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	return (e68_ea_tab[ea] (c, ea, mask, size));
+}
+
 int e68_ea_get_val8 (e68000_t *c, uint8_t *val);
 int e68_ea_get_val16 (e68000_t *c, uint16_t *val);
 int e68_ea_get_val32 (e68000_t *c, uint32_t *val);

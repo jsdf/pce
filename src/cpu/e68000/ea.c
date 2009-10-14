@@ -45,173 +45,376 @@
 */
 
 
-int e68_ea_get_ptr (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+/* Dx */
+static
+int e68_ea_000_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 {
-	unsigned msk;
-	unsigned mod, reg;
-	uint32_t idx;
-	uint16_t *ir1;
-
-	ir1 = &c->ir[c->ircnt];
-
-	mod = (ea >> 3) & 7;
-	reg = ea & 7;
-
-	switch (mod) {
-	case 0x00: /* Dx */
-		c->ea_typ = E68_EA_TYPE_REG;
-		c->ea_val = reg;
-		msk = 0x0001;
-		break;
-
-	case 0x01: /* Ax */
-		c->ea_typ = E68_EA_TYPE_REG;
-		c->ea_val = reg + 8;
-		msk = 0x0002;
-		break;
-
-	case 0x02: /* (Ax) */
-		c->ea_typ = E68_EA_TYPE_MEM;
-		c->ea_val = e68_get_areg32 (c, reg);
-		msk = 0x0004;
-		break;
-
-	case 0x03: /* (Ax)+ */
-		if ((reg == 7) && (size == 8)) {
-			size = 16;
-		}
-		c->ea_typ = E68_EA_TYPE_MEM;
-		c->ea_val = e68_get_areg32 (c, reg);
-		e68_set_areg32 (c, reg, c->ea_val + size / 8);
-		msk = 0x0008;
-		break;
-
-	case 0x04: /* -(Ax) */
-		if ((reg == 7) && (size == 8)) {
-			size = 16;
-		}
-		c->ea_typ = E68_EA_TYPE_MEM;
-		c->ea_val = e68_get_areg32 (c, reg) - size / 8;
-		e68_set_areg32 (c, reg, c->ea_val);
-		e68_set_clk (c, 2);
-		msk = 0x0010;
-		break;
-
-	case 0x05: /* XXXX(Ax) */
-		e68_ifetch_next (c);
-		c->ea_typ = E68_EA_TYPE_MEM;
-		c->ea_val = e68_get_areg32 (c, reg) + e68_exts16 (ir1[0]);
-		e68_set_clk (c, 4);
-		msk = 0x0020;
-		break;
-
-	case 0x06: /* XX(Ax, Rx.S) */
-		e68_ifetch_next (c);
-		c->ea_typ = E68_EA_TYPE_MEM;
-		c->ea_val = e68_get_areg32 (c, reg) + e68_exts8 (ir1[0]);
-
-		if (ir1[0] & 0x8000) {
-			idx = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
-		}
-		else {
-			idx = e68_get_dreg32 (c, (ir1[0] >> 12) & 7);
-		}
-
-		if ((ir1[0] & 0x0800) == 0) {
-			idx = e68_exts16 (idx);
-		}
-
-		c->ea_val += idx;
-
-		e68_set_clk (c, 6);
-		msk = 0x0040;
-		break;
-
-	case 0x07:
-		switch (reg) {
-		case 0x00: /* XXXX */
-			e68_ifetch_next (c);
-			c->ea_typ = E68_EA_TYPE_MEM;
-			c->ea_val = e68_exts16 (ir1[0]);
-			e68_set_clk (c, 4);
-			msk = 0x080;
-			break;
-
-		case 0x01: /* XXXXXXXX */
-			e68_ifetch_next (c);
-			e68_ifetch_next (c);
-			c->ea_typ = E68_EA_TYPE_MEM;
-			c->ea_val = ((uint32_t) ir1[0] << 16) | ir1[1];
-			e68_set_clk (c, 8);
-			msk = 0x0100;
-			break;
-
-		case 0x02: /* XXXX(PC) */
-			c->ea_val = e68_get_pc (c) + 2 * c->ircnt;
-			e68_ifetch_next (c);
-			c->ea_val += e68_exts16 (ir1[0]);
-			c->ea_typ = E68_EA_TYPE_MEM;
-			e68_set_clk (c, 4);
-			msk = 0x0200;
-			break;
-
-		case 0x03: /* XX(PC, Rx.S) */
-			c->ea_val = e68_get_pc (c) + 2 * c->ircnt;
-			e68_ifetch_next (c);
-			c->ea_val += e68_exts8 (ir1[0]);
-			c->ea_typ = E68_EA_TYPE_MEM;
-
-			if (ir1[0] & 0x8000) {
-				idx = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
-			}
-			else {
-				idx = e68_get_dreg32 (c, (ir1[0] >> 12) & 7);
-			}
-
-			if ((ir1[0] & 0x0800) == 0) {
-				idx = e68_exts16 (idx);
-			}
-
-			c->ea_val += idx;
-
-			e68_set_clk (c, 6);
-			msk = 0x0400;
-			break;
-
-		case 0x04: /* #XXXX */
-			if (size == 32) {
-				e68_ifetch_next (c);
-				e68_ifetch_next (c);
-				c->ea_val = ((uint32_t) ir1[0] << 16) | ir1[1];
-				e68_set_clk (c, 8);
-			}
-			else {
-				e68_ifetch_next (c);
-				c->ea_val = ir1[0] & ((size == 8) ? 0xff : 0xffff);
-				e68_set_clk (c, 4);
-			}
-			c->ea_typ = E68_EA_TYPE_IMM;
-			msk = 0x0800;
-			break;
-
-		default:
-			e68_exception_illegal (c);
-			return (1);
-		}
-		break;
-
-	default:
+	if ((mask & 0x0001) == 0) {
 		e68_exception_illegal (c);
 		return (1);
 	}
 
-	if ((msk & mask) == 0) {
+	c->ea_typ = E68_EA_TYPE_REG;
+	c->ea_val = ea & 7;
+
+	return (0);
+}
+
+/* Ax */
+static
+int e68_ea_001_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	if ((mask & 0x0002) == 0) {
 		e68_exception_illegal (c);
 		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_REG;
+	c->ea_val = (ea & 7) + 8;
+
+	return (0);
+}
+
+/* (Ax) */
+static
+int e68_ea_010_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	if ((mask & 0x0004) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_areg32 (c, ea & 7);
+
+	return (0);
+}
+
+/* (Ax)+ */
+static
+int e68_ea_011_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	unsigned reg;
+
+	if ((mask & 0x0008) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	reg = ea & 7;
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_areg32 (c, reg);
+
+	e68_set_areg32 (c, reg, c->ea_val + (size >> 3));
+
+	return (0);
+}
+
+/* (A7)+ */
+static
+int e68_ea_011_111 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	if ((mask & 0x0008) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	if (size == 8) {
+		size = 16;
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_areg32 (c, 7);
+
+	e68_set_areg32 (c, 7, c->ea_val + (size >> 3));
+
+	return (0);
+}
+
+/* -(Ax) */
+static
+int e68_ea_100_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	unsigned reg;
+
+	if ((mask & 0x0010) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	reg = ea & 7;
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_areg32 (c, reg) - (size >> 3);
+
+	e68_set_areg32 (c, reg, c->ea_val);
+	e68_set_clk (c, 2);
+
+	return (0);
+}
+
+/* -(A7) */
+static
+int e68_ea_100_111 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	if ((mask & 0x0010) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	if (size == 8) {
+		size = 16;
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_areg32 (c, 7) - (size >> 3);
+
+	e68_set_areg32 (c, 7, c->ea_val);
+	e68_set_clk (c, 2);
+
+	return (0);
+}
+
+/* XXXX(Ax) */
+static
+int e68_ea_101_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+
+	if ((mask & 0x0020) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+
+	c->ea_val = e68_get_areg32 (c, ea & 7) + e68_exts16 (ir1[0]);
+
+	e68_set_clk (c, 4);
+
+	return (0);
+}
+
+/* XX(Ax, Rx.S) */
+static
+int e68_ea_110_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+	uint32_t idx;
+
+	if ((mask & 0x0040) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+
+	c->ea_val = e68_get_areg32 (c, ea & 7) + e68_exts8 (ir1[0]);
+
+	if (ir1[0] & 0x8000) {
+		idx = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
+	}
+	else {
+		idx = e68_get_dreg32 (c, (ir1[0] >> 12) & 7);
+	}
+
+	if ((ir1[0] & 0x0800) == 0) {
+		idx = e68_exts16 (idx);
+	}
+
+	c->ea_val += idx;
+
+	e68_set_clk (c, 6);
+
+	return (0);
+}
+
+/* XXXX */
+static
+int e68_ea_111_000 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+
+	if ((mask & 0x0080) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+
+	c->ea_val = e68_exts16 (ir1[0]);
+
+	e68_set_clk (c, 4);
+
+	return (0);
+}
+
+/* XXXXXXXX */
+static
+int e68_ea_111_001 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+
+	if ((mask & 0x0100) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+	e68_ifetch_next (c);
+
+	c->ea_val = ((uint32_t) ir1[0] << 16) | ir1[1];
+
+	e68_set_clk (c, 8);
+
+	return (0);
+}
+
+/* XXXX(PC) */
+static
+int e68_ea_111_010 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+
+	if ((mask & 0x0200) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+	c->ea_val = e68_get_pc (c) + 2 * c->ircnt;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+
+	c->ea_val += e68_exts16 (ir1[0]);
+
+	e68_set_clk (c, 4);
+
+	return (0);
+}
+
+/* XX(PC, Rx.S) */
+static
+int e68_ea_111_011 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+	uint32_t idx;
+
+	if ((mask & 0x0400) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_MEM;
+
+	c->ea_val = e68_get_pc (c) + 2 * c->ircnt;
+
+	ir1 = &c->ir[c->ircnt];
+	e68_ifetch_next (c);
+
+	c->ea_val += e68_exts8 (ir1[0]);
+
+	if (ir1[0] & 0x8000) {
+		idx = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
+	}
+	else {
+		idx = e68_get_dreg32 (c, (ir1[0] >> 12) & 7);
+	}
+
+	if ((ir1[0] & 0x0800) == 0) {
+		idx = e68_exts16 (idx);
+	}
+
+	c->ea_val += idx;
+
+	e68_set_clk (c, 6);
+
+	return (0);
+}
+
+/* #XXXX */
+static
+int e68_ea_111_100 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	uint16_t *ir1;
+
+	if ((mask & 0x0800) == 0) {
+		e68_exception_illegal (c);
+		return (1);
+	}
+
+	c->ea_typ = E68_EA_TYPE_IMM;
+
+	ir1 = &c->ir[c->ircnt];
+
+	if (size == 32) {
+		e68_ifetch_next (c);
+		e68_ifetch_next (c);
+		c->ea_val = ((uint32_t) ir1[0] << 16) | ir1[1];
+		e68_set_clk (c, 8);
+	}
+	else if (size == 16) {
+		e68_ifetch_next (c);
+		c->ea_val = ir1[0];
+		e68_set_clk (c, 4);
+	}
+	else {
+		e68_ifetch_next (c);
+		c->ea_val = ir1[0] & 0xff;
+		e68_set_clk (c, 4);
 	}
 
 	return (0);
 }
+
+static
+int e68_ea_111_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
+{
+	e68_exception_illegal (c);
+
+	return (1);
+}
+
+e68_get_ea_ptr_f e68_ea_tab[64] = {
+	e68_ea_000_xxx, e68_ea_000_xxx, e68_ea_000_xxx, e68_ea_000_xxx,
+	e68_ea_000_xxx, e68_ea_000_xxx, e68_ea_000_xxx, e68_ea_000_xxx,
+
+	e68_ea_001_xxx, e68_ea_001_xxx, e68_ea_001_xxx, e68_ea_001_xxx,
+	e68_ea_001_xxx, e68_ea_001_xxx, e68_ea_001_xxx, e68_ea_001_xxx,
+
+	e68_ea_010_xxx, e68_ea_010_xxx, e68_ea_010_xxx, e68_ea_010_xxx,
+	e68_ea_010_xxx, e68_ea_010_xxx, e68_ea_010_xxx, e68_ea_010_xxx,
+
+	e68_ea_011_xxx, e68_ea_011_xxx, e68_ea_011_xxx, e68_ea_011_xxx,
+	e68_ea_011_xxx, e68_ea_011_xxx, e68_ea_011_xxx, e68_ea_011_111,
+
+	e68_ea_100_xxx, e68_ea_100_xxx, e68_ea_100_xxx, e68_ea_100_xxx,
+	e68_ea_100_xxx, e68_ea_100_xxx, e68_ea_100_xxx, e68_ea_100_111,
+
+	e68_ea_101_xxx, e68_ea_101_xxx, e68_ea_101_xxx, e68_ea_101_xxx,
+	e68_ea_101_xxx, e68_ea_101_xxx, e68_ea_101_xxx, e68_ea_101_xxx,
+
+	e68_ea_110_xxx, e68_ea_110_xxx, e68_ea_110_xxx, e68_ea_110_xxx,
+	e68_ea_110_xxx, e68_ea_110_xxx, e68_ea_110_xxx, e68_ea_110_xxx,
+
+	e68_ea_111_000, e68_ea_111_001, e68_ea_111_010, e68_ea_111_011,
+	e68_ea_111_100, e68_ea_111_xxx, e68_ea_111_xxx, e68_ea_111_xxx,
+};
+
 
 int e68_ea_get_val8 (e68000_t *c, uint8_t *val)
 {
@@ -262,8 +465,8 @@ int e68_ea_get_val16 (e68000_t *c, uint16_t *val)
 		return (0);
 
 	case E68_EA_TYPE_MEM:
-		if ((c->flags & E68_FLAG_NOADDR) == 0) {
-			if (c->ea_val & 1) {
+		if (c->ea_val & 1) {
+			if ((c->flags & E68_FLAG_NOADDR) == 0) {
 				e68_exception_address (c, c->ea_val, 1, 0);
 				return (1);
 			}
@@ -300,8 +503,8 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val)
 		return (0);
 
 	case E68_EA_TYPE_MEM:
-		if ((c->flags & E68_FLAG_NOADDR) == 0) {
-			if (c->ea_val & 1) {
+		if (c->ea_val & 1) {
+			if ((c->flags & E68_FLAG_NOADDR) == 0) {
 				e68_exception_address (c, c->ea_val, 1, 0);
 				return (1);
 			}
@@ -366,8 +569,8 @@ int e68_ea_set_val16 (e68000_t *c, uint16_t val)
 		return (0);
 
 	case E68_EA_TYPE_MEM:
-		if ((c->flags & E68_FLAG_NOADDR) == 0) {
-			if (c->ea_val & 1) {
+		if (c->ea_val & 1) {
+			if ((c->flags & E68_FLAG_NOADDR) == 0) {
 				e68_exception_address (c, c->ea_val, 1, 1);
 				return (1);
 			}
@@ -404,8 +607,8 @@ int e68_ea_set_val32 (e68000_t *c, uint32_t val)
 		return (0);
 
 	case E68_EA_TYPE_MEM:
-		if ((c->flags & E68_FLAG_NOADDR) == 0) {
-			if (c->ea_val & 1) {
+		if (c->ea_val & 1) {
+			if ((c->flags & E68_FLAG_NOADDR) == 0) {
 				e68_exception_address (c, c->ea_val, 1, 1);
 				return (1);
 			}
