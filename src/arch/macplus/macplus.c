@@ -410,6 +410,10 @@ void mac_setup_cpu (macplus_t *sim, ini_sct_t *ini)
 		return;
 	}
 
+	if (mac_set_cpu_model (sim, model)) {
+		pce_log (MSG_ERR, "*** unknown cpu model (%s)\n", model);
+	}
+
 	e68_set_mem_fct (sim->cpu, sim->mem,
 		&mem_get_uint8,
 		&mem_get_uint16_be,
@@ -887,6 +891,21 @@ int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val)
 	}
 
 	return (trm_set_msg_trm (sim->trm, msg, val));
+}
+
+int mac_set_cpu_model (macplus_t *sim, const char *model)
+{
+	if (strcmp (model, "68000") == 0) {
+		e68_set_68000 (sim->cpu);
+	}
+	else if (strcmp (model, "68010") == 0) {
+		e68_set_68010 (sim->cpu);
+	}
+	else {
+		return (1);
+	}
+
+	return (0);
 }
 
 void mac_reset (macplus_t *sim)

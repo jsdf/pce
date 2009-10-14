@@ -121,6 +121,8 @@ void mac_set_speed (macplus_t *sim, unsigned factor);
 
 int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val);
 
+int mac_set_cpu_model (macplus_t *sim, const char *model);
+
 /*****************************************************************************
  * @short Reset the simulator
  *****************************************************************************/

@@ -17,7 +17,7 @@ section macplus {
 	path = "-."
 
 	section cpu {
-		# The CPU model. Currently only "68000" is supported.
+		# The CPU model. Valid models are "68000" and "68010".
 		model = "68000"
 
 		# The CPU speed multiplier. A value of 1 emulates a
