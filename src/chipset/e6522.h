@@ -69,6 +69,10 @@ typedef struct {
 	void           (*set_orb) (void *ext, unsigned char val);
 	unsigned char  set_orb_val;
 
+	void           *set_cb2_ext;
+	void           (*set_cb2) (void *ext, unsigned char val);
+	unsigned char  set_cb2_val;
+
 	void           *set_shift_out_ext;
 	void           (*set_shift_out) (void *ext, unsigned char val);
 
@@ -83,6 +87,7 @@ void e6522_free (e6522_t *via);
 
 void e6522_set_ora_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_orb_fct (e6522_t *via, void *ext, void *fct);
+void e6522_set_cb2_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_shift_out_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_irq_fct (e6522_t *via, void *ext, void *fct);
 

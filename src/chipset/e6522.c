@@ -82,6 +82,10 @@ void e6522_init (e6522_t *via, unsigned addr_shift)
 	via->set_orb = NULL;
 	via->set_orb_val = 0;
 
+	via->set_cb2_ext = NULL;
+	via->set_cb2 = NULL;
+	via->set_cb2_val = 0;
+
 	via->set_shift_out_ext = NULL;
 	via->set_shift_out = NULL;
 
@@ -104,6 +108,12 @@ void e6522_set_orb_fct (e6522_t *via, void *ext, void *fct)
 {
 	via->set_orb_ext = ext;
 	via->set_orb = fct;
+}
+
+void e6522_set_cb2_fct (e6522_t *via, void *ext, void *fct)
+{
+	via->set_cb2_ext = ext;
+	via->set_cb2 = fct;
 }
 
 void e6522_set_shift_out_fct (e6522_t *via, void *ext, void *fct)
@@ -142,6 +152,54 @@ void e6522_set_orb_out (e6522_t *via)
 
 	if (via->set_orb != NULL) {
 		via->set_orb (via->set_orb_ext, val);
+	}
+}
+
+/*
+ * Set the CB2 output according to the VIA's state
+ */
+static
+void e6522_set_cb2_out (e6522_t *via)
+{
+	unsigned char val;
+
+	if ((via->acr & 0x1c) != 0) {
+		/* shift register enabled */
+
+		if (via->acr & 0x10) {
+			val = ((via->shift & 1) != 0);
+		}
+		else {
+			/* shift register input */
+			val = 1;
+		}
+	}
+	else if ((via->pcr & 0x80) == 0) {
+		/* CB2 is input */
+		val = 1;
+	}
+	else if ((via->pcr & 0x60) == 0x60) {
+		/* manual output mode (1) */
+		val = 1;
+	}
+	else if ((via->pcr & 0x60) == 0x40) {
+		/* manual output mode (0) */
+		val = 0;
+	}
+	else {
+		/* not implemented */
+		val = 1;
+	}
+
+
+	if (val == via->set_cb2_val) {
+		return;
+	}
+
+	via->set_cb2_val = val;
+
+	if (via->set_cb2 != NULL) {
+		via->set_cb2 (via->set_cb2_ext, val);
 	}
 }
 
@@ -395,12 +453,16 @@ static
 void e6522_set_acr (e6522_t *via, unsigned char val)
 {
 	via->acr = val;
+
+	e6522_set_cb2_out (via);
 }
 
 static
 void e6522_set_pcr (e6522_t *via, unsigned char val)
 {
 	via->pcr = val;
+
+	e6522_set_cb2_out (via);
 }
 
 
@@ -465,6 +527,11 @@ void e6522_set_cb2_inp (e6522_t *via, unsigned char val)
 	val = (val != 0);
 
 	via->cb2_inp = val;
+
+	if ((via->acr & 0x1c) != 0) {
+		/* shift register enabled */
+		return;
+	}
 
 	if (via->pcr & 0x80) {
 		/* CB2 is output */
