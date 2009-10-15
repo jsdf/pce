@@ -293,7 +293,7 @@ void mac_kbd_init (mac_kbd_t *kbd)
 	kbd->set_intr_ext = NULL;
 	kbd->set_intr = NULL;
 
-	kbd->delay = 0;
+	kbd->data = 0;
 	kbd->timeout = 0;
 
 	kbd->send_byte = 0;
@@ -341,7 +341,7 @@ int mac_kbd_set_model (mac_kbd_t *kbd, unsigned model, int intl)
 }
 
 static
-void mac_kbd_set_data (mac_kbd_t *kbd, unsigned char val)
+void mac_kbd_set_data_out (mac_kbd_t *kbd, unsigned char val)
 {
 	if (kbd->set_data != NULL) {
 		kbd->set_data (kbd->set_data_ext, val);
@@ -500,21 +500,20 @@ void mac_kbd_set_uint8 (mac_kbd_t *kbd, unsigned char val)
 		mac_log_deb ("kbd: unknown command (%02X)\n", val);
 		break;
 	}
+}
 
-	/* should wait for data line to go high */
-	kbd->delay = 2 * 4096;
+void mac_kbd_set_data (mac_kbd_t *kbd, unsigned char val)
+{
+	kbd->data = val;
 }
 
 void mac_kbd_clock (mac_kbd_t *kbd, unsigned cnt)
 {
 	unsigned char val;
 
-	if (cnt < kbd->delay) {
-		kbd->delay -= cnt;
+	if (kbd->data == 0) {
 		return;
 	}
-
-	kbd->delay = 0;
 
 	if (kbd->send_byte == 0) {
 		return;
@@ -527,7 +526,7 @@ void mac_kbd_clock (mac_kbd_t *kbd, unsigned cnt)
 		mac_log_deb ("kbd: send response (%02X)\n", val);
 #endif
 
-		mac_kbd_set_data (kbd, val);
+		mac_kbd_set_data_out (kbd, val);
 
 		kbd->buf_i = (kbd->buf_i + 1) % MAC_KBD_BUFSIZE;
 		kbd->buf_n -= 1;
@@ -540,7 +539,7 @@ void mac_kbd_clock (mac_kbd_t *kbd, unsigned cnt)
 			kbd->timeout -= cnt;
 		}
 		else {
-			mac_kbd_set_data (kbd, 0x7b);
+			mac_kbd_set_data_out (kbd, 0x7b);
 			kbd->send_byte = 0;
 		}
 	}

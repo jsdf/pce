@@ -598,6 +598,7 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 	mac_kbd_set_intr_fct (&sim->kbd, sim, mac_interrupt);
 
 	e6522_set_shift_out_fct (&sim->via, &sim->kbd, mac_kbd_set_uint8);
+	e6522_set_cb2_fct (&sim->via, &sim->kbd, mac_kbd_set_data);
 }
 
 static

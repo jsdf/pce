@@ -43,7 +43,7 @@ typedef struct {
 	unsigned      buf_n;
 	unsigned char buf[MAC_KBD_BUFSIZE];
 
-	unsigned      delay;
+	unsigned char data;
 	unsigned long timeout;
 
 	int           send_byte;
@@ -75,6 +75,8 @@ int mac_kbd_set_model (mac_kbd_t *kbd, unsigned model, int intl);
 void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key);
 
 void mac_kbd_set_uint8 (mac_kbd_t *kbd, unsigned char val);
+
+void mac_kbd_set_data (mac_kbd_t *kbd, unsigned char val);
 
 void mac_kbd_clock (mac_kbd_t *kbd, unsigned cnt);
 
