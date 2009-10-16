@@ -186,7 +186,7 @@ section macplus {
 		# Not all character drivers are supported on
 		# all platforms.
 		#driver = "null"
-		#driver = "posix:file=ser_a.out" 
+		#driver = "posix:file=ser_a.out"
 		#driver = "pty:symlink=ser_a"
 		driver = "stdio:file=ser_a.out:flush=1"
 		#driver = "tios:file=/dev/ttyS0"
