@@ -402,6 +402,26 @@ if test $PCE_BUILD_MACPLUS -eq 1 ; then
 fi
 
 
+AC_MSG_CHECKING([whether to build the Mac Plus ROM])
+AC_ARG_ENABLE(macplus-rom,
+	AC_HELP_STRING([--enable-macplus-rom], [Build the Mac Plus ROM from source]),
+	[
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_MACPLUS_ROM=1
+			AC_MSG_RESULT([yes])
+		else
+			PCE_BUILD_MACPLUS_ROM=0
+			AC_MSG_RESULT([no])
+		fi
+	],
+	[
+		PCE_BUILD_MACPLUS_ROM=0
+		AC_MSG_RESULT([no (default)])
+	]
+)
+AC_SUBST(PCE_BUILD_MACPLUS_ROM)
+
+
 AC_MSG_CHECKING([whether to build the PPC405 simulator])
 if test "x$have_sim405" != "x1" ; then
 	PCE_BUILD_SIM405=0
@@ -743,6 +763,12 @@ if test "x$PCE_BUILD_IBMPC_ROM" = "x1" ; then
 	romext1="$romext1 ibmpc"
 else
 	romext2="$romext2 ibmpc"
+fi
+
+if test "x$PCE_BUILD_MACPLUS_ROM" = "x1" ; then
+	romext1="$romext1 macplus"
+else
+	romext2="$romext2 macplus"
 fi
 
 

@@ -73,6 +73,7 @@ PCE_BUILD_SIMARM  := @PCE_BUILD_SIMARM@
 PCE_BUILD_SIMS32  := @PCE_BUILD_SIMS32@
 
 PCE_BUILD_IBMPC_ROM   := @PCE_BUILD_IBMPC_ROM@
+PCE_BUILD_MACPLUS_ROM := @PCE_BUILD_MACPLUS_ROM@
 
 PCE_ENABLE_READLINE := @PCE_ENABLE_READLINE@
 PCE_READLINE_LIBS   := @PCE_READLINE_LIBS@
@@ -106,7 +107,6 @@ ROMBIN_IBMPC := \
 	rom/ibmpc/t9000b-pce.rom
 
 ROMBIN_MACPLUS := \
-	rom/macplus/macplus-pcex.rom \
 	rom/macplus/macplus.rom
 
 # ----------------------------------------------------------------------
@@ -139,6 +139,7 @@ include $(srcdir)/src/arch/ibmpc/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc
 include $(srcdir)/src/arch/macplus/Makefile.inc
+include $(srcdir)/src/arch/macplus/pcex/Makefile.inc
 include $(srcdir)/src/arch/sim405/Makefile.inc
 include $(srcdir)/src/arch/sim6502/Makefile.inc
 include $(srcdir)/src/arch/simarm/Makefile.inc

@@ -603,6 +603,7 @@ PCE_BUILD_SIMARM
 PCE_BUILD_SIMS32
 PCE_BUILD_SIM6502
 PCE_BUILD_SIM405
+PCE_BUILD_MACPLUS_ROM
 PCE_BUILD_MACPLUS
 PCE_BUILD_IBMPC_ROM
 PCE_BUILD_IBMPC
@@ -704,6 +705,7 @@ enable_largefile
 enable_ibmpc
 enable_ibmpc_rom
 enable_macplus
+enable_macplus_rom
 enable_sim405
 enable_sim6502
 enable_sims32
@@ -1345,6 +1347,7 @@ Optional Features:
   --enable-ibmpc          Enable the IBM PC emulator
   --enable-ibmpc-rom      Build the IBM PC ROM from source
   --enable-macplus        Enable the Mac Plus emulator
+  --enable-macplus-rom    Build the Mac Plus ROM from source
   --enable-sim405         Enable the PPC405 simulator
   --enable-sim6502        Enable the 6502 simulator
   --enable-sims32         Enable the sparc32 simulator
@@ -4503,6 +4506,33 @@ if test $PCE_BUILD_MACPLUS -eq 1 ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the Mac Plus ROM" >&5
+$as_echo_n "checking whether to build the Mac Plus ROM... " >&6; }
+# Check whether --enable-macplus-rom was given.
+if test "${enable_macplus_rom+set}" = set; then :
+  enableval=$enable_macplus_rom;
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_MACPLUS_ROM=1
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		else
+			PCE_BUILD_MACPLUS_ROM=0
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		fi
+
+else
+
+		PCE_BUILD_MACPLUS_ROM=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (default)" >&5
+$as_echo "no (default)" >&6; }
+
+
+fi
+
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the PPC405 simulator" >&5
 $as_echo_n "checking whether to build the PPC405 simulator... " >&6; }
 if test "x$have_sim405" != "x1" ; then
@@ -5058,6 +5088,12 @@ if test "x$PCE_BUILD_IBMPC_ROM" = "x1" ; then
 	romext1="$romext1 ibmpc"
 else
 	romext2="$romext2 ibmpc"
+fi
+
+if test "x$PCE_BUILD_MACPLUS_ROM" = "x1" ; then
+	romext1="$romext1 macplus"
+else
+	romext2="$romext2 macplus"
 fi
 
 
