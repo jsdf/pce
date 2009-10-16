@@ -397,7 +397,7 @@ void mac_sony_open (macplus_t *sim)
 
 	sim->sony.open = 1;
 
-	mac_sony_return (sim, 0x0000, 1);
+	mac_sony_check (sim);
 }
 
 static

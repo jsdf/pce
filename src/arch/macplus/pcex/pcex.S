@@ -84,9 +84,14 @@ sony_driver:
 
 /* sony - open */
 sony_open:
-	illegal
+	bsr.s	1f			/* set up data structures */
+
+	illegal				/* signal the emulator */
 	.word	MAC_HOOK_SONY_OPEN
 
+	rts
+
+1:
 	movem.l	%d2/%a0-%a2, -(%a7)
 
 	move.l	#0x00000310, %d0
