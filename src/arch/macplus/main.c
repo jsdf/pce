@@ -36,7 +36,8 @@
 const char *par_cpu = NULL;
 const char *par_terminal = NULL;
 
-unsigned   par_disk_delay = 30;
+unsigned   par_disk_delay_valid = 0;
+unsigned   par_disk_delay[SONY_DRIVES];
 
 macplus_t  *par_sim = NULL;
 
@@ -50,16 +51,17 @@ void prt_help (void)
 {
 	fputs (
 		"usage: pce-macplus [options]\n"
-		"  -b, --boot-disk-delay int  Set the boot disk delay [30]\n"
-		"  -c, --config string        Set the config file\n"
-		"  -d, --path string          Add a directory to the search path\n"
-		"  -l, --log string           Set the log file [none]\n"
-		"  -p, --cpu string           Set the cpu model [68000]\n"
-		"  -q, --quiet                Quiet operation [no]\n"
-		"  -r, --run                  Start running immediately [no]\n"
-		"  -R, --no-monitor           Never stop running [no]\n"
-		"  -t, --terminal string      Set the terminal type\n"
-		"  -v, --verbose              Verbose operation [no]\n",
+		"  -b, --disk-delay-1 delay      Set the disk delay for drive 1 [30]\n"
+		"  -B, --disk-delay drive delay  Set the disk delay [30]\n"
+		"  -c, --config string           Set the config file\n"
+		"  -d, --path string             Add a directory to the search path\n"
+		"  -l, --log string              Set the log file [none]\n"
+		"  -p, --cpu string              Set the cpu model [68000]\n"
+		"  -q, --quiet                   Quiet operation [no]\n"
+		"  -r, --run                     Start running immediately [no]\n"
+		"  -R, --no-monitor              Never stop running [no]\n"
+		"  -t, --terminal string         Set the terminal type\n"
+		"  -v, --verbose                 Verbose operation [no]\n",
 		stdout
 	);
 
@@ -220,13 +222,39 @@ int main (int argc, char *argv[])
 
 	i = 1;
 	while (i < argc) {
-		if (str_isarg (argv[i], "b", "boot-disk-delay")) {
+		if (str_isarg (argv[i], "b", "disk-delay-1")) {
 			i += 1;
 			if (i >= argc) {
+				fprintf (stderr, "%s: missing delay\n", argv[0]);
 				return (1);
 			}
 
-			par_disk_delay = (unsigned) strtoul (argv[i], NULL, 0);
+			par_disk_delay_valid |= 1;
+			par_disk_delay[0] = (unsigned) strtoul (argv[i], NULL, 0);
+		}
+		else if (str_isarg (argv[i], "B", "disk-delay")) {
+			unsigned drive;
+
+			if ((i + 2) >= argc) {
+				fprintf (stderr, "%s: missing delay\n", argv[0]);
+				return (1);
+			}
+
+			drive = strtoul (argv[i + 1], NULL, 0);
+
+			if ((drive < 1) || (drive >= SONY_DRIVES)) {
+				fprintf (stderr, "%s: bad drive number (%u)\n",
+					argv[0], drive
+				);
+				return (1);
+			}
+
+			drive -= 1;
+
+			par_disk_delay_valid |= 1U << drive;
+			par_disk_delay[drive] = (unsigned) strtoul (argv[i + 2], NULL, 0);
+
+			i += 2;
 		}
 		else if (str_isarg (argv[i], "c", "config")) {
 			i += 1;

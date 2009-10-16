@@ -115,7 +115,8 @@ extern int        par_verbose;
 
 extern const char *par_terminal;
 
-extern unsigned   par_disk_delay;
+extern unsigned   par_disk_delay_valid;
+extern unsigned   par_disk_delay[SONY_DRIVES];
 
 extern monitor_t  par_mon;
 

@@ -24,17 +24,22 @@
 #define PCE_MACPLUS_SONY_H 1
 
 
+#define SONY_DRIVES 3
+
+
 typedef struct {
-	char               open;
-	char               patched;
-	unsigned long      delay;
+	char          open;
+	char          patched;
 
-	unsigned long      check;
-	unsigned long      icon[2];
+	unsigned      delay_val[SONY_DRIVES];
+	unsigned      delay_cnt[SONY_DRIVES];
 
-	unsigned long      pcex_addr;
-	unsigned long      sony_addr;
-	unsigned char      patch_buf[64];
+	unsigned long check;
+	unsigned long icon[2];
+
+	unsigned long pcex_addr;
+	unsigned long sony_addr;
+	unsigned char patch_buf[64];
 } mac_sony_t;
 
 
@@ -42,6 +47,8 @@ void mac_sony_init (mac_sony_t *sony);
 void mac_sony_free (mac_sony_t *sony);
 
 void mac_sony_patch (macplus_t *sim);
+
+void mac_sony_set_delay (macplus_t *sim, unsigned drive, unsigned delay);
 
 void mac_sony_insert (macplus_t *sim, unsigned drive);
 

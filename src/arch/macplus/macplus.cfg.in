@@ -148,6 +148,23 @@ section macplus {
 		realtime = 1
 	}
 
+	section sony {
+		# The floppy disk insertion delay. Set this to:
+		#   - 0 to never automatically insert the disk
+		#   - 1 to have the disk inserted immediately on startup.
+		#     The System will then either boot from the disk or
+		#     eject it.
+		#   - any other value to delay insertion by this many
+		#     (emulated) seconds.
+		insert_delay = 15
+
+		# The insertion delay can be set for each floppy disk
+		# drive individually.
+		#insert_delay_1 = 1
+		#insert_delay_2 = 15
+		#insert_delay_3 = 15
+	}
+
 	section scsi {
 		# Don't change these.
 		#address = 0x580000

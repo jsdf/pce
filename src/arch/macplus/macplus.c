@@ -679,19 +679,32 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 static
 void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 {
+	unsigned  i;
+	char      var[32];
+	unsigned  def, val;
 	ini_sct_t *sct;
 
 	sct = ini_next_sct (ini, NULL, "sony");
 
+	ini_get_uint16 (sct, "insert_delay", &def, 30);
+
 	mac_sony_init (&sim->sony);
 
-	sim->sony.delay = par_disk_delay;
+	for (i = 0; i < SONY_DRIVES; i++) {
+		if (par_disk_delay_valid & (1U << i)) {
+			val = par_disk_delay[i];
+		}
+		else {
+			sprintf (var, "insert_delay_%u", i + 1);
+			ini_get_uint16 (sct, var, &val, def);
+		}
 
-	if (sim->sony.delay == 0) {
-		sim->sony.delay = 1;
+		mac_sony_set_delay (sim, i, val);
+
+		pce_log_tag (MSG_INF, "SONY:", "drive=%u delay=%lu\n",
+			i + 1, val
+		);
 	}
-
-	pce_log_tag (MSG_INF, "SONY:", "delay=%lu\n", sim->sony.delay);
 }
 
 static

@@ -23,8 +23,6 @@
 #include "main.h"
 
 
-#define SONY_DRIVES      3
-
 /* sony variable offsets */
 #define SONY_TRACK       0	/* current track */
 #define SONY_WPROT       2	/* FF = write protected, 00 = writeable */
@@ -73,12 +71,18 @@
 
 void mac_sony_init (mac_sony_t *sony)
 {
+	unsigned i;
+
 	sony->open = 0;
 	sony->patched = 0;
-	sony->delay = 0;
 	sony->check = 0;
 	sony->icon[0] = 0;
 	sony->icon[1] = 0;
+
+	for (i = 0; i < SONY_DRIVES; i++) {
+		sony->delay_val[i] = 0;
+		sony->delay_cnt[i] = 0;
+	}
 }
 
 void mac_sony_free (mac_sony_t *sony)
@@ -261,6 +265,39 @@ void mac_sony_patch (macplus_t *sim)
 	mac_sony_patch_rom (sim, sony, pcex);
 }
 
+void mac_sony_set_delay (macplus_t *sim, unsigned drive, unsigned delay)
+{
+	if (drive < SONY_DRIVES) {
+		sim->sony.delay_val[drive] = delay;
+		sim->sony.delay_cnt[drive] = delay;
+	}
+}
+
+void mac_sony_insert (macplus_t *sim, unsigned drive)
+{
+	unsigned long vars;
+	disk_t        *dsk;
+
+	if ((drive < 1) || (drive > SONY_DRIVES)) {
+		return;
+	}
+
+	dsk = dsks_get_disk (sim->dsks, drive);
+	if (dsk == NULL) {
+		return;
+	}
+
+	vars = mac_sony_get_vars (sim, drive);
+
+	if (e68_get_mem8 (sim->cpu, vars + SONY_DISKINPLACE) == 0x00) {
+		pce_log_tag (MSG_INF, "SONY:", "insert drive %u\n", drive);
+		e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x01);
+	}
+}
+
+/*
+ * Check if disks need to be inserted.
+ */
 void mac_sony_check (macplus_t *sim)
 {
 	int           check;
@@ -273,21 +310,17 @@ void mac_sony_check (macplus_t *sim)
 		return;
 	}
 
-	if (sim->sony.delay > 0) {
-		sim->sony.delay -= 1;
-
-		if (sim->sony.delay == 0) {
-			for (i = 0; i < SONY_DRIVES; i++) {
-				vars = mac_sony_get_vars (sim, i + 1);
-
-				e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x01);
-			}
-		}
-	}
-
 	check = 0;
 
 	for (i = 0; i < SONY_DRIVES; i++) {
+		if (sim->sony.delay_cnt[i] > 0) {
+			sim->sony.delay_cnt[i] -= 1;
+
+			if (sim->sony.delay_cnt[i] == 0) {
+				mac_sony_insert (sim, i + 1);
+			}
+		}
+
 		dsk = dsks_get_disk (sim->dsks, i + 1);
 
 		if (dsk != NULL) {
@@ -329,27 +362,6 @@ void mac_sony_check (macplus_t *sim)
 		e68_set_areg32 (sim->cpu, 7, a7 - 4);
 
 		e68_set_pc (sim->cpu, sim->sony.check);
-	}
-}
-
-void mac_sony_insert (macplus_t *sim, unsigned drive)
-{
-	unsigned long vars;
-	disk_t        *dsk;
-
-	if ((drive < 1) || (drive > SONY_DRIVES)) {
-		return;
-	}
-
-	dsk = dsks_get_disk (sim->dsks, drive);
-	if (dsk == NULL) {
-		return;
-	}
-
-	vars = mac_sony_get_vars (sim, drive);
-
-	if (e68_get_mem8 (sim->cpu, vars + SONY_DISKINPLACE) == 0x00) {
-		e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x01);
 	}
 }
 
@@ -706,7 +718,7 @@ void mac_sony_control (macplus_t *sim)
 		break;
 
 	case 7: /* eject disk */
-		mac_log_deb ("sony: eject drive %u\n", vref);
+		pce_log_tag (MSG_INF, "SONY:", "eject drive %u\n", vref);
 		sony = mac_sony_get_vars (sim, vref);
 		e68_set_mem8 (sim->cpu, sony + SONY_DISKINPLACE, 0x00);
 		e68_set_mem8 (sim->cpu, sony + SONY_WPROT, 0x00);
@@ -851,13 +863,13 @@ int mac_sony_hook (macplus_t *sim, unsigned val)
 
 void mac_sony_reset (macplus_t *sim)
 {
+	unsigned i;
+
 	mac_sony_unpatch_rom (sim);
 
 	sim->sony.open = 0;
 
-	sim->sony.delay = par_disk_delay;
-
-	if (sim->sony.delay == 0) {
-		sim->sony.delay = 1;
+	for (i = 0; i < SONY_DRIVES; i++) {
+		sim->sony.delay_cnt[i] = sim->sony.delay_val[i];
 	}
 }

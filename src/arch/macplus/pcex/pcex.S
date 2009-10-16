@@ -185,6 +185,9 @@ sony_close:
 	rts
 
 
+/*
+ * Generate disk insertion events for newly inserted disks
+ */
 sony_check:
 	move.w	%sr, -(%a7)
 	movem.l	%d0-%d7/%a0-%a6, -(%a7)
