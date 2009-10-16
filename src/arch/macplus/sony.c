@@ -668,6 +668,8 @@ void mac_sony_get_disk_icon (macplus_t *sim, unsigned drive)
 		switch (dsk_get_block_cnt (dsk)) {
 		case 800:
 		case 1600:
+		case 1440:
+		case 2880:
 			addr = addr1;
 			break;
 
