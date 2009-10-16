@@ -84,6 +84,8 @@ void mac_interrupt_osi (void *ext, unsigned char val)
 {
 	macplus_t *sim = ext;
 
+	mac_sony_check (sim);
+
 	if (val) {
 		e6522_set_ca2_inp (&sim->via, 0);
 		e6522_set_ca2_inp (&sim->via, 1);
@@ -1019,7 +1021,6 @@ void mac_clock (macplus_t *sim, unsigned n)
 
 	mac_video_clock (sim->video, sim->clk_div[2]);
 	mac_rtc_clock (&sim->rtc, sim->clk_div[2]);
-	mac_sony_clock (sim, sim->clk_div[2]);
 
 	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);
 	mac_ser_clock (&sim->ser[1], sim->clk_div[2]);

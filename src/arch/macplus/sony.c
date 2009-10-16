@@ -76,7 +76,6 @@ void mac_sony_init (mac_sony_t *sony)
 	sony->open = 0;
 	sony->patched = 0;
 	sony->delay = 0;
-	sony->clock = 0;
 	sony->check = 0;
 	sony->icon[0] = 0;
 	sony->icon[1] = 0;
@@ -262,7 +261,6 @@ void mac_sony_patch (macplus_t *sim)
 	mac_sony_patch_rom (sim, sony, pcex);
 }
 
-static
 void mac_sony_check (macplus_t *sim)
 {
 	int           check;
@@ -861,16 +859,5 @@ void mac_sony_reset (macplus_t *sim)
 
 	if (sim->sony.delay == 0) {
 		sim->sony.delay = 1;
-	}
-}
-
-void mac_sony_clock (macplus_t *sim, unsigned long n)
-{
-	sim->sony.clock += n;
-
-	if (sim->sony.clock >= MAC_CPU_CLOCK) {
-		sim->sony.clock -= MAC_CPU_CLOCK;
-
-		mac_sony_check (sim);
 	}
 }

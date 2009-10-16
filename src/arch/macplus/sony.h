@@ -28,7 +28,7 @@ typedef struct {
 	char               open;
 	char               patched;
 	unsigned long      delay;
-	unsigned long      clock;
+
 	unsigned long      check;
 	unsigned long      icon[2];
 
@@ -45,11 +45,11 @@ void mac_sony_patch (macplus_t *sim);
 
 void mac_sony_insert (macplus_t *sim, unsigned drive);
 
+void mac_sony_check (macplus_t *sim);
+
 int mac_sony_hook (macplus_t *sim, unsigned val);
 
 void mac_sony_reset (macplus_t *sim);
-
-void mac_sony_clock (macplus_t *sim, unsigned long n);
 
 
 #endif
