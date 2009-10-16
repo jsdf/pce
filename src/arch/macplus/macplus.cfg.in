@@ -16,6 +16,14 @@ section macplus {
 	path = "PCE_DIR_DATA/macplus"
 	path = "-."
 
+	# Enable or disable the startup memory test.
+	#
+	# If memtest is set to 0, memory location 0x02ae (ROMBase) is
+	# initialized with 0x00400000 before the emulation starts. If
+	# the Macintosh Plus ROM finds this value it assumes a restart
+	# and skips the lengthy memory test.
+	memtest = 1
+
 	section cpu {
 		# The CPU model. Valid models are "68000" and "68010".
 		model = "68000"

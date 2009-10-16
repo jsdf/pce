@@ -348,6 +348,8 @@ void mac_scc_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 static
 void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 {
+	int memtest;
+
 	sim->mem = mem_new();
 
 	mem_set_fct (sim->mem, sim,
@@ -389,6 +391,15 @@ void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, sim->rom_ovl, 0);
 
 	sim->overlay = 1;
+
+	ini_get_bool (ini, "memtest", &memtest, 1);
+
+	if (memtest == 0) {
+		if (mem_blk_get_size (sim->ram) >= (0x02a4 + 4)) {
+			pce_log_tag (MSG_INF, "RAM:", "disabling memory test\n");
+			mem_blk_set_uint32_be (sim->ram, 0x02ae, 0x00400000);
+		}
+	}
 }
 
 static
