@@ -3,7 +3,7 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:   src/arch/ibmpc/bios/pce.asm                                  *
+;* File name:   src/arch/ibmpc/bios/pcex.asm                                 *
 ;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
 ;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
@@ -45,7 +45,7 @@ pce_ext:
 pce_ext_end:
 
 
-msg_init	db "PC BIOS version ", PCE_VERSION_STR
+msg_init	db "PCE IBM PC BIOS extension"
 		db 13, 10, 13, 10, 0
 
 msg_memchk1	db "Memory size:    ", 0

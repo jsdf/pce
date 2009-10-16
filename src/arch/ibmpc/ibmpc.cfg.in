@@ -94,7 +94,7 @@ section pc {
 		# The PCE ROM extension
 		format  = "binary"
 		address = 0xf0000
-		file    = "pce.rom"
+		file    = "ibmpc-pcex.rom"
 	}
 
 	#section load {

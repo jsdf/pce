@@ -604,6 +604,7 @@ PCE_BUILD_SIMS32
 PCE_BUILD_SIM6502
 PCE_BUILD_SIM405
 PCE_BUILD_MACPLUS
+PCE_BUILD_IBMPC_ROM
 PCE_BUILD_IBMPC
 PCE_LARGE_FILE
 PCE_SDL_LIBS
@@ -701,6 +702,7 @@ with_sdl
 enable_static_sdl
 enable_largefile
 enable_ibmpc
+enable_ibmpc_rom
 enable_macplus
 enable_sim405
 enable_sim6502
@@ -1341,6 +1343,7 @@ Optional Features:
   --enable-static-sdl     Link to static SDL [no]
   --disable-largefile     Disable large file support
   --enable-ibmpc          Enable the IBM PC emulator
+  --enable-ibmpc-rom      Build the IBM PC ROM from source
   --enable-macplus        Enable the Mac Plus emulator
   --enable-sim405         Enable the PPC405 simulator
   --enable-sim6502        Enable the 6502 simulator
@@ -4436,6 +4439,33 @@ if test $PCE_BUILD_IBMPC -eq 1 ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the IBM PC ROM" >&5
+$as_echo_n "checking whether to build the IBM PC ROM... " >&6; }
+# Check whether --enable-ibmpc-rom was given.
+if test "${enable_ibmpc_rom+set}" = set; then :
+  enableval=$enable_ibmpc_rom;
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_IBMPC_ROM=1
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		else
+			PCE_BUILD_IBMPC_ROM=0
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		fi
+
+else
+
+		PCE_BUILD_IBMPC_ROM=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (default)" >&5
+$as_echo "no (default)" >&6; }
+
+
+fi
+
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the Mac Plus emulator" >&5
 $as_echo_n "checking whether to build the Mac Plus emulator... " >&6; }
 if test "x$have_macplus" != "x1" ; then
@@ -5018,6 +5048,16 @@ if test "x$PCE_BUILD_SIMS32" = "x1" ; then
 	emu1="$emu1 sims32"
 else
 	emu2="$emu2 sims32"
+fi
+
+
+romext1=""
+romext2=""
+
+if test "x$PCE_BUILD_IBMPC_ROM" = "x1" ; then
+	romext1="$romext1 ibmpc"
+else
+	romext2="$romext2 ibmpc"
 fi
 
 
@@ -6350,15 +6390,11 @@ echo "  prefix:                 $prefix"
 echo
 echo "  Emulators built:       $emu1"
 echo "  Emulators not built:   $emu2"
+echo "  ROMs built:            $romext1"
+echo "  ROMs not built:        $romext2"
 echo "  Terminals built:       $term1"
 echo "  Terminals not built:   $term2"
 echo "  Char drivers built:    $char1"
 echo "  Char drivers not built:$char2"
 echo "  Enabled options:       $option1"
 echo "  Disabled options:      $option2"
-
-if test "x$PCE_HAVE_NASM" = "x0" ; then
-	echo "  Build PC BIOS:          no"
-else
-	echo "  Build PC BIOS:          yes"
-fi

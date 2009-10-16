@@ -9,63 +9,61 @@ NFLAGS := -Isrc/ -I$(srcdir)/src/arch/ibmpc/ -I$(srcdir)/src/arch/ibmpc/bios/
 
 # ----------------------------------------------------------------------
 
-PCE_BIOS_BAS := pce
-PCE_BIOS_SRC := $(foreach f,$(PCE_BIOS_BAS),$(rel)/$(f).asm)
-PCE_BIOS_LST := $(foreach f,$(PCE_BIOS_BAS),$(rel)/$(f).lst)
-PCE_BIOS_ROM := $(rel)/pce.rom
-PCE_BIOS_HEX := $(rel)/pce.ihex
-PCE_BIOS_SDP := src/arch/ibmpc/pce.inc
-PCE_BIOS_REL := $(rel)
+PCE_IBMPC_PCEX_BAS := pcex
+PCE_IBMPC_PCEX_SRC := $(rel)/pcex.asm
+PCE_IBMPC_PCEX_ROM := $(rel)/pcex.rom
+PCE_IBMPC_PCEX_BIN := $(rel)/ibmpc-pcex.rom
+PCE_IBMPC_PCEX_SDP := src/arch/ibmpc/pce.inc
+PCE_IBMPC_PCEX_REL := $(rel)
 
-CLN  += $(PCE_BIOS_ROM) $(PCE_BIOS_HEX) $(PCE_BIOS_OBJ) $(PCE_BIOS_LST)
-DIST += $(PCE_BIOS_SRC)
+CLN  += $(PCE_IBMPC_PCEX_BIN) $(PCE_IBMPC_PCEX_OBJ)
+DIST += $(PCE_IBMPC_PCEX_SRC) $(PCE_IBMPC_PCEX_ROM)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
-ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS     += $(PCE_BIOS_ROM)
-SHARE_IBMPC += $(PCE_BIOS_ROM)
-ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGETS += $(PCE_BIOS_HEX)
-endif
-endif
+TARGETS     += $(PCE_IBMPC_PCEX_BIN)
+SHARE_IBMPC += $(PCE_IBMPC_PCEX_BIN)
 endif
 
-$(rel)/pce.rom: $(rel)/pce.asm $(PCE_BIOS_SDP)
+ifeq "$(PCE_BUILD_IBMPC_ROM)" "1"
+
+$(rel)/ibmpc-pcex.rom: $(rel)/pcex.asm $(PCE_IBMPC_PCEX_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -l $(PCE_BIOS_REL)/pce.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -DNOFILL -O6 -f bin -o $@ $<
 
-$(rel)/pce.ihex: $(rel)/pce.rom
-	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ \
-	-s 0xf000 -a 0 -i $(PCE_BIOS_REL)/pce.rom
+else
+
+$(rel)/ibmpc-pcex.rom: $(rel)/pcex.rom
+	$(QP)echo "  CAT    $@"
+	$(QR)cat $< > $@
+
+endif
 
 # ----------------------------------------------------------------------
 
-PCE_EGA_BAS := ega
-PCE_EGA_SRC := $(foreach f,$(PCE_EGA_BAS),$(rel)/$(f).asm)
-PCE_EGA_HDR := $(rel)/fnt8x14.inc $(rel)/fnt8x8.inc
-PCE_EGA_LST := $(foreach f,$(PCE_EGA_BAS),$(rel)/$(f).lst)
-PCE_EGA_ROM := $(rel)/pce-ega.rom
-PCE_EGA_HEX := $(rel)/pce-ega.ihex
-PCE_EGA_SDP := $(PCE_EGA_HDR) src/arch/ibmpc/pce.inc
+PCE_IBMPC_EGA_SRC := $(rel)/ega.asm
+PCE_IBMPC_EGA_HDR := $(rel)/fnt8x14.inc $(rel)/fnt8x8.inc
+PCE_IBMPC_EGA_ROM := $(rel)/ega.rom
+PCE_IBMPC_EGA_BIN := $(rel)/ibmpc-ega.rom
+PCE_IBMPC_EGA_SDP := $(PCE_IBMPC_EGA_HDR) src/arch/ibmpc/pce.inc
 
-CLN  += $(PCE_EGA_ROM) $(PCE_EGA_HEX) $(PCE_EGA_OBJ) $(PCE_EGA_LST)
-DIST += $(PCE_EGA_SRC) $(PCE_EGA_HDR)
+CLN  += $(PCE_IBMPC_EGA_BIN) $(PCE_IBMPC_EGA_OBJ)
+DIST += $(PCE_IBMPC_EGA_SRC) $(PCE_IBMPC_EGA_HDR) $(PCE_IBMPC_EGA_ROM)
 
 ifeq "$(PCE_BUILD_IBMPC)" "1"
-ifeq "$(PCE_HAVE_NASM)" "1"
-TARGETS     += $(PCE_EGA_ROM)
-SHARE_IBMPC += $(PCE_EGA_ROM)
-ifeq "$(PCE_HAVE_IHEX)" "1"
-TARGETS += $(PCE_EGA_HEX)
-endif
-endif
+TARGETS     += $(PCE_IBMPC_EGA_BIN)
+SHARE_IBMPC += $(PCE_IBMPC_EGA_BIN)
 endif
 
-$(rel)/pce-ega.rom: $(rel)/ega.asm $(PCE_EGA_SDP)
+ifeq "$(PCE_BUILD_IBMPC_ROM)" "1"
+
+$(rel)/ibmpc-ega.rom: $(rel)/ega.asm $(PCE_IBMPC_EGA_SDP)
 	$(QP)echo "  NASM   $@"
-	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -l $(PCE_BIOS_REL)/pce-ega.lst -o $@ $<
+	$(QR)$(NASM) $(NFLAGS) -O6 -f bin -o $@ $<
 
-$(rel)/pce-ega.ihex: $(rel)/pce-ega.rom
-	$(QP)echo "  IHEX   $@"
-	$(QR)$(IHEX) -e -o $@ -s 0xc000 -a 0 -i $(PCE_BIOS_REL)/pce-ega.rom
+else
+
+$(rel)/ibmpc-ega.rom: $(rel)/ega.rom
+	$(QP)echo "  CAT    $@"
+	$(QR)cat $< > $@
+
+endif

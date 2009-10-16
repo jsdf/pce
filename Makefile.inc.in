@@ -72,6 +72,8 @@ PCE_BUILD_SIM6502 := @PCE_BUILD_SIM6502@
 PCE_BUILD_SIMARM  := @PCE_BUILD_SIMARM@
 PCE_BUILD_SIMS32  := @PCE_BUILD_SIMS32@
 
+PCE_BUILD_IBMPC_ROM   := @PCE_BUILD_IBMPC_ROM@
+
 PCE_ENABLE_READLINE := @PCE_ENABLE_READLINE@
 PCE_READLINE_LIBS   := @PCE_READLINE_LIBS@
 
@@ -100,8 +102,6 @@ ROMBIN_IBMPC := \
 	rom/ibmpc/genoa.rom \
 	rom/ibmpc/ibm1982.rom \
 	rom/ibmpc/ibmega.rom \
-	rom/ibmpc/pce-ega.rom \
-	rom/ibmpc/pce.rom \
 	rom/ibmpc/t9000b.rom \
 	rom/ibmpc/t9000b-pce.rom
 
