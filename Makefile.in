@@ -176,13 +176,13 @@ endif
 
 dist-contrib:
 	$(QR)if test -d "$(srcdir)/contrib" ; then \
-		( cd "$(srcdir)/contrib" && find . -type f -print ) |\
+		( cd "$(srcdir)" && find contrib/ -type f -print ) |\
 		while read src ; do \
-			test -f "$(distdir)/contrib/$$src" && continue ; \
+			test -f "$(distdir)/$$src" && continue ; \
 			test x$(V) != x1 && echo "  CP     $$src" ; \
-			dir=`dirname "$(distdir)/contrib/$$src"` ; \
-			mkdir -p "$$dir" ; \
-			cp -p "$(srcdir)/contrib/$$src" "$$dir" ; \
+			dir=`dirname "$(distdir)/$$src"` ; \
+			test -d "$$dir" || mkdir -p "$$dir" ; \
+			cp -p "$(srcdir)/$$src" "$$dir" ; \
 		done ; \
 	fi
 
