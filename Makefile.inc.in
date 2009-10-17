@@ -97,18 +97,6 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 
 DIST += doc/keys.txt
 
-ROMBIN_IBMPC := \
-	rom/ibmpc/basic-1.10.rom \
-	rom/ibmpc/et4000.rom \
-	rom/ibmpc/genoa.rom \
-	rom/ibmpc/ibm1982.rom \
-	rom/ibmpc/ibmega.rom \
-	rom/ibmpc/t9000b.rom \
-	rom/ibmpc/t9000b-pce.rom
-
-ROMBIN_MACPLUS := \
-	rom/macplus/macplus.rom
-
 # ----------------------------------------------------------------------
 
 include $(srcdir)/Makefile.dep
@@ -184,28 +172,22 @@ ifneq "$(SHARE_PCEUTILS)" ""
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
-ifneq "$(ROMBIN_IBMPC)" ""
-	$(QR)for f in $(ROMBIN_IBMPC) ; do \
-		src=$(srcdir)/contrib/$$f ; \
-		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$f` ; \
-		test -f "$$dst" && continue ; \
+	$(QR)for src in $(srcdir)/contrib/rom/ibmpc/* ; do \
 		test -f "$$src" || continue ; \
+		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$src` ; \
+		test -f "$$dst" && continue ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
 		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/ibmpc" ; \
 		$(INSTALL) -m 644 "$$src" "$$dst" ; \
 	done
-endif
-ifneq "$(ROMBIN_MACPLUS)" ""
-	$(QR)for f in $(ROMBIN_MACPLUS) ; do \
-		src=$(srcdir)/contrib/$$f ; \
-		dst=$(DESTDIR)$(datadir)/macplus/`basename $$f` ; \
-		test -f "$$dst" && continue ; \
+	$(QR)for src in $(srcdir)/contrib/rom/macplus/* ; do \
 		test -f "$$src" || continue ; \
+		dst=$(DESTDIR)$(datadir)/macplus/`basename $$src` ; \
+		test -f "$$dst" && continue ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
 		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/macplus" ; \
 		$(INSTALL) -m 644 "$$src" "$$dst" ; \
 	done
-endif
 
 
 dist-extra:
