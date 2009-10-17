@@ -200,13 +200,7 @@ ifneq "$(SHARE_PCEUTILS)" ""
 		cp -p "$$f" "$(distdir)/$$dst" ; \
 	done
 endif
-	$(QR)for f in $(PCE_BIOS_ROM) $(PCE_EGA_ROM) ; do \
-		test -f "$$f" || continue ; \
-		dst=contrib/rom/ibmpc/`basename "$$f"` ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		mkdir -p "$(distdir)/contrib/rom/ibmpc" ; \
-		cp -p "$$f" "$(distdir)/$$dst" ; \
-	done
+
 
 dist-version:
 	$(QP)echo "  GEN    version"
