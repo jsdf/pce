@@ -412,10 +412,6 @@ int mac_kbd_magic (mac_kbd_t *kbd, pce_key_t key)
 		}
 		break;
 
-	case PCE_KEY_T:
-		mac_set_msg (kbd->sim_ext, "emu.accurate", "1");
-		break;
-
 	default:
 		pce_log (MSG_INF, "unhandled magic key (%u)\n",
 			(unsigned) key

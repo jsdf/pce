@@ -119,11 +119,6 @@ int mac_set_msg (macplus_t *sim, const char *msg, const char *val)
 
 		return (0);
 	}
-	else if (msg_is_message ("emu.accurate", msg)) {
-		mac_set_speed_accurate (sim);
-
-		return (0);
-	}
 	else if (msg_is_message ("emu.cpu.model", msg)) {
 		if (mac_set_cpu_model (sim, val)) {
 			pce_log (MSG_ERR, "unknown CPU model (%s)\n", val);

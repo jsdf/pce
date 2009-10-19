@@ -115,8 +115,6 @@ void mac_del (macplus_t *sim);
  *****************************************************************************/
 unsigned long long mac_get_clkcnt (macplus_t *sim);
 
-void mac_set_speed_accurate (macplus_t *sim);
-
 void mac_set_speed (macplus_t *sim, unsigned factor);
 
 int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val);

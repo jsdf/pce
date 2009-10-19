@@ -877,16 +877,6 @@ unsigned long long mac_get_clkcnt (macplus_t *sim)
 	return (sim->clk_cnt);
 }
 
-void mac_set_speed_accurate (macplus_t *sim)
-{
-	mac_log_deb ("speed = accurate\n");
-
-	mac_rtc_set_realtime (&sim->rtc, 0);
-	mac_video_set_realtime (sim->video, 0);
-	sim->via_clk_div = 10;
-	sim->speed_factor = 0;
-}
-
 void mac_set_speed (macplus_t *sim, unsigned factor)
 {
 	mac_log_deb ("speed = %u\n", factor);
