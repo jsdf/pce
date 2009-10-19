@@ -132,6 +132,15 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 
 
 static
+void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
+{
+	pc->mem = mem_new();
+
+	ini_get_ram (pc->mem, ini, &pc->ram);
+	ini_get_rom (pc->mem, ini);
+}
+
+static
 void pc_setup_nvram (ibmpc_t *pc, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
@@ -939,11 +948,9 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	bps_init (&pc->bps);
 
-	pc->mem = mem_new();
-	pc->prt = mem_new();
+	pc_setup_mem (pc, ini);
 
-	ini_get_ram (pc->mem, ini, &pc->ram);
-	ini_get_rom (pc->mem, ini);
+	pc->prt = mem_new();
 
 	pc_setup_nvram (pc, ini);
 	pc_setup_cpu (pc, ini);
