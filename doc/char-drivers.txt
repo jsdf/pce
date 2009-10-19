@@ -1,0 +1,92 @@
+Character drivers
+=================
+
+The syntax of a character driver specification is:
+
+<driver>:<option1>=<value1>:<option2>=<value2>...
+
+White space around option names and values is ignored. If a value contains
+a colon, it must be escaped by repeating it.
+
+
+The following is a list of character drivers and their options:
+
+null:
+	log=<filename>
+		Set the log file name.
+
+posix:
+	The "read" and "write" options are used only if "file" is not
+	set.
+
+	file=<filename>
+		Set the input and output file name.
+
+	file=-
+		Read input from stdin, write output to stdout.
+
+	file=--
+		Read input from stdin, write output to stderr.
+
+	read=<filename>
+		Set the input file name.
+
+	read=-
+		Read input from stdin.
+
+	write=<filename>
+		Set the output file name.
+
+	write=-
+		Write output to stdout.
+
+	write=--
+		Write output to stderr.
+
+	log=<filename>
+		Set the log file name.
+
+
+pty:
+	symlink=<filename>
+		Create a symlink pointing to the new pseudo terminal device.
+
+	log=<filename>
+		Set the log file name.
+
+
+stdio:
+	Output is written to a file. No input is ever provided.
+
+	file=<filename>
+		Set the output file name.
+
+	file=-
+		Use standard output as output.
+
+	flush=[0|1]
+		If true, flush the output file whenever data is written.
+
+	log=<filename>
+		Set the log file name.
+
+
+tcp:
+	connect=[0|1]
+		If true, initiate a connection to the host and port
+		specified in the host and port options. Otherwise
+		wait for connections to the port specified in the
+		port option.
+
+	host=<hostname>
+		Set the host name to connect to if connect is true.
+
+	port=<port>
+		Set the TCP port number.
+
+tios:
+	file=<filename>
+		The character device to connect to
+
+	log=<filename>
+		Set the log file name
