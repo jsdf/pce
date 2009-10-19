@@ -189,7 +189,14 @@ void mac_video_clock (mac_video_t *mv, unsigned long n)
 	unsigned long us;
 
 	if (mv->realtime) {
+		old = mv->realclk;
+
 		us = pce_get_interval_us (&mv->realclk);
+
+		if (us < 100) {
+			mv->realclk = old;
+			return;
+		}
 
 		if (us > (4 * 16625)) {
 			/* discontinuity */
