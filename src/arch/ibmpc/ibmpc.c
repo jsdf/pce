@@ -47,6 +47,42 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
 
 static
+unsigned char pc_get_port8 (ibmpc_t *pc, unsigned long addr)
+{
+#ifdef DEBUG_PORTS
+	pc_log_deb (pc, "get port 8 %04lX\n", addr);
+#endif
+
+	return (0xff);
+}
+
+static
+unsigned short pc_get_port16 (ibmpc_t *pc, unsigned long addr)
+{
+#ifdef DEBUG_PORTS
+	pc_log_deb (pc, "get port 16 %04lX\n", addr);
+#endif
+
+	return (0xffff);
+}
+
+static
+void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
+{
+#ifdef DEBUG_PORTS
+	pc_log_deb (pc, "set port 8 %04lX <- %02X\n", addr, val);
+#endif
+}
+
+static
+void pc_set_port16 (ibmpc_t *pc, unsigned long addr, unsigned short val)
+{
+#ifdef DEBUG_PORTS
+	pc_log_deb (pc, "set port 16 %04lX <- %04X\n", addr, val);
+#endif
+}
+
+static
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
 	if (pc->ppi_port_b & 0x80) {
@@ -138,6 +174,17 @@ void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
 
 	ini_get_ram (pc->mem, ini, &pc->ram);
 	ini_get_rom (pc->mem, ini);
+}
+
+static
+void pc_setup_ports (ibmpc_t *pc, ini_sct_t *ini)
+{
+	pc->prt = mem_new();
+
+	mem_set_fct (pc->prt, pc,
+		pc_get_port8, pc_get_port16, NULL,
+		pc_set_port8, pc_set_port16, NULL
+	);
 }
 
 static
@@ -949,8 +996,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	bps_init (&pc->bps);
 
 	pc_setup_mem (pc, ini);
-
-	pc->prt = mem_new();
+	pc_setup_ports (pc, ini);
 
 	pc_setup_nvram (pc, ini);
 	pc_setup_cpu (pc, ini);
