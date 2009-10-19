@@ -1860,6 +1860,10 @@ src/drivers/char/char-stdio.o: src/drivers/char/char-stdio.c \
 	src/drivers/char/char-stdio.h \
 	src/drivers/char/char.h
 
+src/drivers/char/char-tcp.o: src/drivers/char/char-tcp.c \
+	src/drivers/char/char-tcp.h \
+	src/drivers/char/char.h
+
 src/drivers/char/char-tios.o: src/drivers/char/char-tios.c \
 	src/drivers/char/char-tios.h \
 	src/drivers/char/char.h

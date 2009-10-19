@@ -43,6 +43,9 @@ struct chr_drv_list drvtab[] = {
 	{ "pty", chr_pty_open },
 #endif
 	{ "stdio", chr_stdio_open },
+#ifdef PCE_ENABLE_CHAR_TCP
+	{ "tcp", chr_tcp_open },
+#endif
 #ifdef PCE_ENABLE_CHAR_TIOS
 	{ "tios", chr_tios_open },
 #endif

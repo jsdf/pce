@@ -194,9 +194,13 @@ AC_SUBST(PCE_HAVE_IHEX)
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
+	arpa/inet.h \
 	fcntl.h \
 	linux/if_tun.h \
+	linux/tcp.h \
 	limits.h \
+	netdb.h \
+	netinet/in.h \
 	poll.h \
 	sys/ioctl.h \
 	sys/poll.h \
@@ -593,6 +597,39 @@ if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to enable the TCP character driver])
+AC_ARG_ENABLE(char-tcp,
+  AC_HELP_STRING([--enable-char-tcp], [Enable the TCP character driver]),
+  [
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_TCP=1
+		AC_MSG_RESULT([yes])
+	else
+		PCE_ENABLE_CHAR_TCP=0
+		AC_MSG_RESULT([no])
+	fi
+  ],[
+	PCE_ENABLE_CHAR_TCP=1
+	test "x$ac_cv_header_arpa_inet_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	test "x$ac_cv_header_fcntl_h" = "xyes" || PCE_ENABLE_CHAR_TIOS=0
+	test "x$ac_cv_header_netinet_in_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	test "x$ac_cv_header_netdb_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	test "x$ac_cv_header_sys_socket_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	test "x$ac_cv_header_poll_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	test "x$ac_cv_header_unistd_h" = "xyes" || PCE_ENABLE_CHAR_TCP=0
+	if test "x$PCE_ENABLE_CHAR_TCP" = "x1" ; then
+		AC_MSG_RESULT([yes (guess)])
+	else
+		AC_MSG_RESULT([no (guess)])
+	fi
+  ]
+)
+AC_SUBST(PCE_ENABLE_CHAR_TCP)
+if test "x$PCE_ENABLE_CHAR_TCP" = "x1" ; then
+	AC_DEFINE(PCE_ENABLE_CHAR_TCP)
+fi
+
+
 AC_MSG_CHECKING([whether to enable the termios character driver])
 AC_ARG_ENABLE(char-termios,
   AC_HELP_STRING([--enable-char-termios], [Enable the termios character driver]),
@@ -801,6 +838,12 @@ if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
 	char1="$char1 pty"
 else
 	char2="$char2 pty"
+fi
+
+if test "x$PCE_ENABLE_CHAR_TCP" = "x1" ; then
+	char1="$char1 tcp"
+else
+	char2="$char2 tcp"
 fi
 
 if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
