@@ -138,6 +138,10 @@ section macplus {
 		# by the keyboard but MacOS seems to ignore them.
 		model = 0
 		intl  = 0
+
+		# If keypad_motion is set to 1, host keypad keys are mapped
+		# to Macintosh motion keys.
+		keypad_motion = 0
 	}
 
 	section rtc {

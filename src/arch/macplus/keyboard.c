@@ -204,21 +204,20 @@ static mac_kbd_map_t key_map_intl[] = {
 	{ PCE_KEY_NONE,       0, { 0x00 }, 0, { 0x00 } }
 };
 
-/* keypad to keypad, motion keys to keypad */
+/* keypad to motion, motion keys to keypad */
 static mac_kbd_map_t key_fix_keypad1[] = {
-	{ PCE_KEY_KP_7,       2, { 0x79, 0x33 }, 2, { 0x79, 0xb3 } },
-	{ PCE_KEY_KP_8,       2, { 0x79, 0x37 }, 2, { 0x79, 0xb7 } },
-	{ PCE_KEY_KP_9,       2, { 0x79, 0x39 }, 2, { 0x79, 0xb9 } },
-	{ PCE_KEY_KP_PLUS,    3, { 0x71, 0x79, 0x0d }, 3, { 0x79, 0x8d, 0xf1 } },
-	{ PCE_KEY_KP_4,       2, { 0x79, 0x2d }, 2, { 0x79, 0xad } },
-	{ PCE_KEY_KP_5,       2, { 0x79, 0x2f }, 2, { 0x79, 0xaf } },
-	{ PCE_KEY_KP_6,       2, { 0x79, 0x31 }, 2, { 0x79, 0xb1 } },
-	{ PCE_KEY_KP_1,       2, { 0x79, 0x27 }, 2, { 0x79, 0xa7 } },
-	{ PCE_KEY_KP_2,       2, { 0x79, 0x29 }, 2, { 0x79, 0xa9 } },
-	{ PCE_KEY_KP_3,       2, { 0x79, 0x2b }, 2, { 0x79, 0xab } },
-	{ PCE_KEY_KP_ENTER,   2, { 0x79, 0x19 }, 2, { 0x79, 0x99 } },
-	{ PCE_KEY_KP_0,       2, { 0x79, 0x25 }, 2, { 0x79, 0xa5 } },
-	{ PCE_KEY_KP_PERIOD,  2, { 0x79, 0x03 }, 2, { 0x79, 0x83 } },
+	{ PCE_KEY_KP_7,       2, { 0x79, 0x67 }, 2, { 0x79, 0xe7 } },
+	{ PCE_KEY_KP_8,       2, { 0x79, 0x1b }, 2, { 0x79, 0x9b } },
+	{ PCE_KEY_KP_9,       2, { 0x79, 0x69 }, 2, { 0x79, 0xe9 } },
+	{ PCE_KEY_KP_4,       2, { 0x79, 0x0d }, 2, { 0x79, 0x8d } },
+	{ PCE_KEY_KP_5,       2, { 0x79, 0x19 }, 2, { 0x79, 0x99 } },
+	{ PCE_KEY_KP_6,       2, { 0x79, 0x05 }, 2, { 0x79, 0x85 } },
+	{ PCE_KEY_KP_1,       2, { 0x79, 0x6f }, 2, { 0x79, 0xef } },
+	{ PCE_KEY_KP_2,       2, { 0x79, 0x11 }, 2, { 0x79, 0x91 } },
+	{ PCE_KEY_KP_3,       2, { 0x79, 0x73 }, 2, { 0x79, 0xf3 } },
+	{ PCE_KEY_KP_0,       2, { 0x79, 0x65 }, 2, { 0x79, 0x65 } },
+	{ PCE_KEY_KP_PERIOD,  2, { 0x79, 0x6b }, 2, { 0x79, 0xeb } },
+	{ PCE_KEY_KP_ENTER,   1, { 0x49 }, 1, { 0xc9 } },
 
 	{ PCE_KEY_HOME,       2, { 0x79, 0x33 }, 2, { 0x79, 0xb3 } },
 	{ PCE_KEY_UP,         2, { 0x79, 0x37 }, 2, { 0x79, 0xb7 } },
@@ -239,16 +238,15 @@ static mac_kbd_map_t key_fix_keypad2[] = {
 	{ PCE_KEY_KP_7,       2, { 0x79, 0x33 }, 2, { 0x79, 0xb3 } },
 	{ PCE_KEY_KP_8,       2, { 0x79, 0x37 }, 2, { 0x79, 0xb7 } },
 	{ PCE_KEY_KP_9,       2, { 0x79, 0x39 }, 2, { 0x79, 0xb9 } },
-	{ PCE_KEY_KP_PLUS,    3, { 0x71, 0x79, 0x0d }, 3, { 0x79, 0x8d, 0xf1 } },
 	{ PCE_KEY_KP_4,       2, { 0x79, 0x2d }, 2, { 0x79, 0xad } },
 	{ PCE_KEY_KP_5,       2, { 0x79, 0x2f }, 2, { 0x79, 0xaf } },
 	{ PCE_KEY_KP_6,       2, { 0x79, 0x31 }, 2, { 0x79, 0xb1 } },
 	{ PCE_KEY_KP_1,       2, { 0x79, 0x27 }, 2, { 0x79, 0xa7 } },
 	{ PCE_KEY_KP_2,       2, { 0x79, 0x29 }, 2, { 0x79, 0xa9 } },
 	{ PCE_KEY_KP_3,       2, { 0x79, 0x2b }, 2, { 0x79, 0xab } },
-	{ PCE_KEY_KP_ENTER,   2, { 0x79, 0x19 }, 2, { 0x79, 0x99 } },
 	{ PCE_KEY_KP_0,       2, { 0x79, 0x25 }, 2, { 0x79, 0xa5 } },
 	{ PCE_KEY_KP_PERIOD,  2, { 0x79, 0x03 }, 2, { 0x79, 0x83 } },
+	{ PCE_KEY_KP_ENTER,   2, { 0x79, 0x19 }, 2, { 0x79, 0x99 } },
 
 	{ PCE_KEY_HOME,       2, { 0x79, 0x67 }, 2, { 0x79, 0xe7 } },
 	{ PCE_KEY_UP,         2, { 0x79, 0x1b }, 2, { 0x79, 0x9b } },
@@ -340,6 +338,18 @@ int mac_kbd_set_model (mac_kbd_t *kbd, unsigned model, int intl)
 	return (0);
 }
 
+void mac_kbd_set_keypad_mode (mac_kbd_t *kbd, int motion)
+{
+	if (motion) {
+		mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
+		kbd->keypad_mode = 0;
+	}
+	else {
+		mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
+		kbd->keypad_mode = 1;
+	}
+}
+
 static
 void mac_kbd_set_data_out (mac_kbd_t *kbd, unsigned char val)
 {
@@ -395,12 +405,12 @@ int mac_kbd_magic (mac_kbd_t *kbd, pce_key_t key)
 	case PCE_KEY_KP_5:
 		if (kbd->keypad_mode) {
 			mac_log_deb ("keypad mode: motion\n");
-			mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
+			mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
 			kbd->keypad_mode = 0;
 		}
 		else {
 			mac_log_deb ("keypad mode: keypad\n");
-			mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
+			mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
 			kbd->keypad_mode = 1;
 		}
 		break;
@@ -453,7 +463,15 @@ void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key)
 	}
 
 	if (map->pcekey == PCE_KEY_NONE) {
-		mac_log_deb ("ignoring pce key: %04x\n", (unsigned) key);
+		const char *str;
+
+		str = pce_key_to_string (key);
+
+		pce_log (MSG_INF, "ignoring pce key: %04x (%s)\n",
+			(unsigned) key,
+			(str != NULL) ? str : "<none>"
+		);
+
 		return;
 	}
 

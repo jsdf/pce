@@ -594,19 +594,24 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t *sct;
 	unsigned  model;
-	unsigned  intl;
+	int       intl, motion;
 
 	sct = ini_next_sct (ini, NULL, "keyboard");
 
 	ini_get_uint16 (sct, "model", &model, 1);
-	ini_get_uint16 (sct, "intl", &intl, 0);
+	ini_get_bool (sct, "intl", &intl, 0);
+	ini_get_bool (sct, "keypad_motion", &motion, 0);
 
-	pce_log_tag (MSG_INF, "KEYBOARD:", "model=%u international=%u\n",
-		model, intl
+	pce_log_tag (MSG_INF,
+		"KEYBOARD:", "model=%u international=%d keypad=%s\n",
+		model,
+		intl,
+		motion ? "motion" : "keypad"
 	);
 
 	mac_kbd_init (&sim->kbd);
 	mac_kbd_set_model (&sim->kbd, model, intl);
+	mac_kbd_set_keypad_mode (&sim->kbd, motion);
 	mac_kbd_set_data_fct (&sim->kbd, &sim->via, e6522_set_shift_inp);
 	mac_kbd_set_intr_fct (&sim->kbd, sim, mac_interrupt);
 
