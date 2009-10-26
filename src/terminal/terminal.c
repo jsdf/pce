@@ -573,12 +573,10 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 	}
 	else if (event == PCE_KEY_EVENT_UP) {
 		if (trm->escape & TRM_ESC_ESC) {
-			if (key == trm->escape_key) {
-				return;
-			}
-			else {
+			if (key != trm->escape_key) {
 				trm->escape &= ~TRM_ESC_ESC;
 			}
+			return;
 		}
 
 		if (key == PCE_KEY_LALT) {
@@ -586,6 +584,9 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 		}
 		else if (key == PCE_KEY_LCTRL) {
 			trm->escape &= ~TRM_ESC_CTRL;
+		}
+		else if (key == PCE_KEY_PAUSE) {
+			return;
 		}
 	}
 
