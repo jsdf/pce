@@ -162,12 +162,12 @@ int mac_set_msg (macplus_t *sim, const char *msg, const char *val)
 			return (1);
 		}
 
-		sim->pause = v;
+		mac_set_pause (sim, v);
 
 		return (0);
 	}
 	else if (msg_is_message ("emu.pause.toggle", msg)) {
-		sim->pause = !sim->pause;
+		mac_set_pause (sim, !sim->pause);
 		return (0);
 	}
 	else if (msg_is_message ("emu.reset", msg)) {

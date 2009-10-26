@@ -158,7 +158,7 @@ void mac_set_mouse (void *ext, int dx, int dy, unsigned but)
 
 	if (sim->pause) {
 		if (but) {
-			sim->pause = 0;
+			mac_set_pause (sim, 0);
 		}
 
 		return;
@@ -443,9 +443,6 @@ void mac_setup_cpu (macplus_t *sim, ini_sct_t *ini)
 	e68_set_address_check (sim->cpu, 0);
 
 	sim->speed_factor = speed;
-	sim->rt_clk = 0;
-	sim->rt_us = 0;
-	pce_get_interval_us (&sim->rt_us);
 }
 
 static
@@ -817,6 +814,8 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	pce_load_mem_ini (sim->mem, ini);
 
 	trm_set_msg_trm (sim->trm, "term.title", "pce-macplus");
+
+	mac_clock_discontinuity (sim);
 }
 
 macplus_t *mac_new (ini_sct_t *ini)
@@ -882,6 +881,22 @@ unsigned long long mac_get_clkcnt (macplus_t *sim)
 	return (sim->clk_cnt);
 }
 
+void mac_clock_discontinuity (macplus_t *sim)
+{
+	sim->sync_clk = 0;
+	sim->sync_us = 0;
+	pce_get_interval_us (&sim->sync_us);
+}
+
+void mac_set_pause (macplus_t *sim, int pause)
+{
+	sim->pause = (pause != 0);
+
+	if (sim->pause == 0) {
+		mac_clock_discontinuity (sim);
+	}
+}
+
 void mac_set_speed (macplus_t *sim, unsigned factor)
 {
 	mac_log_deb ("speed = %u\n", factor);
@@ -904,6 +919,8 @@ void mac_set_speed (macplus_t *sim, unsigned factor)
 	}
 
 	sim->speed_factor = factor;
+
+	mac_clock_discontinuity (sim);
 }
 
 int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val)
@@ -960,6 +977,8 @@ void mac_reset (macplus_t *sim)
 	e8530_reset (&sim->scc);
 	e68_reset (sim->cpu);
 
+	mac_clock_discontinuity (sim);
+
 	sim->reset = 0;
 }
 
@@ -967,22 +986,34 @@ static
 void mac_realtime_sync (macplus_t *sim, unsigned long n)
 {
 	unsigned long fct;
-	unsigned long us1, us2;
+	unsigned long us1, us2, sl;
 
-	sim->rt_clk += n;
+	sim->sync_clk += n;
 
-	fct = sim->speed_factor * (MAC_CPU_CLOCK / 100);
+	fct = (sim->speed_factor * MAC_CPU_CLOCK) / MAC_CPU_SYNC;
 
-	if (sim->rt_clk >= fct) {
-		sim->rt_clk -= fct;
+	if (sim->sync_clk >= fct) {
+		sim->sync_clk -= fct;
 
-		us1 = pce_get_interval_us (&sim->rt_us);
-		us2 = (1000000 / 100);
+		us1 = pce_get_interval_us (&sim->sync_us);
+		us2 = (1000000 / MAC_CPU_SYNC);
 
 		if (us1 < us2) {
-			pce_usleep (us2 - us1);
+			sim->sync_sleep += us2 - us1;
+		}
+		else {
+			sim->sync_sleep -= us1 - us2;
+		}
 
-			pce_get_interval_us (&sim->rt_us);
+		if (sim->sync_sleep >= (1000000 / MAC_CPU_SYNC)) {
+			pce_usleep (1000000 / MAC_CPU_SYNC);
+			sl = pce_get_interval_us (&sim->sync_us);
+			sim->sync_sleep -= sl;
+		}
+
+		if (sim->sync_sleep < -1000000) {
+			mac_log_deb ("system too slow, skipping 1 second\n");
+			sim->sync_sleep += 1000000;
 		}
 	}
 }

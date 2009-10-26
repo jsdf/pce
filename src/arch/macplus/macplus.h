@@ -83,8 +83,10 @@ struct macplus_s {
 	unsigned           brk;
 
 	unsigned           speed_factor;
-	unsigned long      rt_clk;
-	unsigned long      rt_us;
+
+	unsigned long      sync_clk;
+	unsigned long      sync_us;
+	long               sync_sleep;
 
 	unsigned long      via_clk_div;
 
@@ -114,6 +116,10 @@ void mac_del (macplus_t *sim);
  *         last initialization
  *****************************************************************************/
 unsigned long long mac_get_clkcnt (macplus_t *sim);
+
+void mac_clock_discontinuity (macplus_t *sim);
+
+void mac_set_pause (macplus_t *sim, int pause);
 
 void mac_set_speed (macplus_t *sim, unsigned factor);
 
