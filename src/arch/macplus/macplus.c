@@ -1044,6 +1044,9 @@ void mac_clock (macplus_t *sim, unsigned n)
 		return;
 	}
 
+	mac_ser_clock (&sim->ser[0], (10 * sim->clk_div[1]) / sim->via_clk_div);
+	mac_ser_clock (&sim->ser[1], (10 * sim->clk_div[1]) / sim->via_clk_div);
+
 	mac_check_mouse (sim);
 	mac_kbd_clock (&sim->kbd, sim->clk_div[1]);
 
@@ -1060,9 +1063,6 @@ void mac_clock (macplus_t *sim, unsigned n)
 
 	mac_video_clock (sim->video, sim->clk_div[2]);
 	mac_rtc_clock (&sim->rtc, sim->clk_div[2]);
-
-	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);
-	mac_ser_clock (&sim->ser[1], sim->clk_div[2]);
 
 	if (sim->speed_factor > 0) {
 		mac_realtime_sync (sim, sim->clk_div[2]);

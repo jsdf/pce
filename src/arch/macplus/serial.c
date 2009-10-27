@@ -30,6 +30,8 @@ void mac_ser_init (mac_ser_t *ser)
 	ser->scc = NULL;
 	ser->chn = 0;
 
+	ser->clk = 0;
+
 	ser->bps = 0;
 	ser->bpc = 0;
 	ser->stop = 0;
@@ -239,4 +241,9 @@ void mac_ser_clock (mac_ser_t *ser, unsigned n)
 	mac_ser_process_output (ser);
 	mac_ser_process_input (ser);
 	mac_ser_status_check (ser);
+
+	/* 3.672 MHz = (15/32 * 7.8336 MHz */
+	ser->clk += 15UL * n;
+	e8530_clock (ser->scc, ser->clk / 32);
+	ser->clk &= 31;
 }

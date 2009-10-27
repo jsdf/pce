@@ -35,6 +35,8 @@ typedef struct {
 
 	unsigned      chn;
 
+	unsigned long clk;
+
 	unsigned long bps;
 	unsigned      parity;
 	unsigned      bpc;
