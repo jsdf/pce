@@ -39,6 +39,18 @@ void e8530_init_chn (e8530_t *scc, unsigned chn)
 
 	c = &scc->chn[chn];
 
+	c->txd_empty = 1;
+	c->rxd_empty = 1;
+
+	c->char_clk_cnt = 0;
+	c->char_clk_div = 16384;
+
+	c->read_char_cnt = 0;
+	c->read_char_max = 1;
+
+	c->write_char_cnt = 0;
+	c->write_char_max = 1;
+
 	c->rtxc = 0;
 
 	c->tx_i = 0;
@@ -114,6 +126,19 @@ void e8530_set_comm_fct (e8530_t *scc, unsigned chn, void *ext, void *fct)
 		scc->chn[chn].set_comm_ext = ext;
 		scc->chn[chn].set_comm = fct;
 	}
+}
+
+void e8530_set_multichar (e8530_t *scc, unsigned chn, unsigned read_max, unsigned write_max)
+{
+	if (chn > 1) {
+		return;
+	}
+
+	scc->chn[chn].read_char_cnt = 0;
+	scc->chn[chn].read_char_max = (read_max < 1) ? 1 : read_max;
+
+	scc->chn[chn].write_char_cnt = 0;
+	scc->chn[chn].write_char_max = (write_max < 1) ? 1 : write_max;
 }
 
 void e8530_set_clock (e8530_t *scc, unsigned long pclk, unsigned long rtxca, unsigned long rtxcb)
@@ -222,6 +247,92 @@ void e8530_clr_int_cond (e8530_t *scc, unsigned chn, unsigned char cond)
 	e8530_set_irq (scc, c0->rr[3] != 0);
 }
 
+/*
+ * Move a character from the input queue to RxD and adjust interrupt
+ * conditions.
+ */
+static
+void e8530_check_rxd (e8530_t *scc, unsigned chn)
+{
+	e8530_chn_t *c;
+
+	c = &scc->chn[chn];
+
+	if (c->rx_i == c->rx_j) {
+		return;
+	}
+
+	if (c->read_char_cnt == 0) {
+		return;
+	}
+
+	if (c->rxd_empty == 0) {
+		/* should overwrite old character */
+		return;
+	}
+
+	c->read_char_cnt -= 1;
+
+	c->rr[8] = c->rxbuf[c->rx_j];
+	c->rx_j = (c->rx_j + 1) % E8530_BUF_MAX;
+
+	if (c->set_inp != NULL) {
+		c->set_inp (c->set_inp_ext, 1);
+	}
+
+	c->rr[0] |= 0x01;
+	c->rxd_empty = 0;
+
+	e8530_set_int_cond (scc, chn, 0x04);
+}
+
+/*
+ * Move a character from TxD to the output queue and adjust interrupt
+ * conditions.
+ */
+static
+void e8530_check_txd (e8530_t *scc, unsigned chn)
+{
+	e8530_chn_t   *c;
+	unsigned char val;
+
+	c = &scc->chn[chn];
+
+	if (c->write_char_cnt == 0) {
+		return;
+	}
+
+	if (((c->tx_i + 1) % E8530_BUF_MAX) == c->tx_j) {
+		return;
+	}
+
+	if (c->txd_empty) {
+		/* tx underrun */
+		c->rr[0] |= 0x40;
+		return;
+	}
+
+	c->write_char_cnt -= 1;
+
+	val = c->wr[8];
+
+	c->txbuf[c->tx_i] = val;
+	c->tx_i = (c->tx_i + 1) % E8530_BUF_MAX;
+
+	if (c->set_out != NULL) {
+		c->set_out (c->set_out_ext, val);
+	}
+
+	c->rr[0] |= 0x04;
+	c->txd_empty = 1;
+
+	e8530_set_int_cond (scc, chn, 0x02);
+
+#if DEBUG_SCC
+	fprintf (stderr, "SCC %c: send %02X\n", scc_get_chn (chn), val);
+#endif
+}
+
 
 static
 unsigned e8530_get_clock_mode (e8530_t *scc, unsigned chn)
@@ -313,7 +424,7 @@ unsigned e8530_get_stop_bits (e8530_t *scc, unsigned chn)
 static
 void e8530_set_params (e8530_t *scc, unsigned chn)
 {
-	unsigned long bps, clk, mul;
+	unsigned long bps, clk, mul, div;
 	e8530_chn_t   *c;
 
 	c = &scc->chn[chn];
@@ -339,12 +450,19 @@ void e8530_set_params (e8530_t *scc, unsigned chn)
 			clk = c->rtxc;
 		}
 
-		bps = (c->wr[13] << 8) | c->wr[12];
-		bps = clk / (2 * mul * (bps + 2));
+		div = (c->wr[13] << 8) | c->wr[12];
+		div = 2 * mul * (div + 2);
 
-		bps = bps;
+		c->char_clk_div = (c->bpc + c->stop + 1) * div;
+
+		if (c->parity != 0) {
+			c->char_clk_div += div;
+		}
+
+		bps = clk / div;
 	}
 	else {
+		c->char_clk_div = 16384;
 		bps = 0;
 	}
 
@@ -480,30 +598,20 @@ static
 unsigned char e8530_get_rr8 (e8530_t *scc, unsigned chn)
 {
 	e8530_chn_t *c;
+	unsigned char val;
 
 	c = &scc->chn[chn];
 
-	if (c->rx_i != c->rx_j) {
-		c->rr[8] = c->rxbuf[c->rx_j];
-		c->rx_j = (c->rx_j + 1) % E8530_BUF_MAX;
-	}
+	val = c->rr[8];
 
-	if (c->set_inp != NULL) {
-		c->set_inp (c->set_inp_ext, 1);
-	}
+	c->rr[0] &= ~0x01;
+	c->rxd_empty = 1;
 
-	if (c->rx_i != c->rx_j) {
-		e8530_set_int_cond (scc, chn, 0x04);
+	e8530_clr_int_cond (scc, chn, 0x04);
 
-		c->rr[0] |= 0x01;
-	}
-	else {
-		e8530_clr_int_cond (scc, chn, 0x04);
+	e8530_check_rxd (scc, chn);
 
-		c->rr[0] &= ~0x01;
-	}
-
-	return (c->rr[8]);
+	return (val);
 }
 
 static
@@ -671,25 +779,12 @@ void e8530_set_wr8 (e8530_t *scc, unsigned chn, unsigned char val)
 
 	c->wr[8] = val;
 
-	if (((c->tx_i + 1) % E8530_BUF_MAX) != c->tx_j) {
-		c->txbuf[c->tx_i] = val;
-		c->tx_i = (c->tx_i + 1) % E8530_BUF_MAX;
-	}
+	c->rr[0] &= ~0x04;
+	c->txd_empty = 0;
 
-	if (c->set_out != NULL) {
-		c->set_out (c->set_out_ext, val);
-	}
+	e8530_clr_int_cond (scc, chn, 0x02);
 
-	if (((c->tx_i + 1) % E8530_BUF_MAX) == c->tx_j) {
-		e8530_clr_int_cond (scc, chn, 0x02);
-		c->rr[0] &= ~0x04;
-	}
-	else {
-		e8530_set_int_cond (scc, chn, 0x02);
-		c->rr[0] |= 0x04;
-	}
-
-	scc->chn[chn].rr[0] |= 0x40;
+	e8530_check_txd (scc, chn);
 
 #if DEBUG_SCC
 	fprintf (stderr, "SCC %c: send %02X\n", scc_get_chn (chn), val);
@@ -989,10 +1084,6 @@ void e8530_receive (e8530_t *scc, unsigned chn, unsigned char val)
 		c->rxbuf[c->rx_i] = val;
 		c->rx_i = (c->rx_i + 1) % E8530_BUF_MAX;
 	}
-
-	e8530_set_int_cond (scc, chn, 0x04);
-
-	c->rr[0] |= 0x01;
 }
 
 void e8530_receive_a (e8530_t *scc, unsigned char val)
@@ -1019,10 +1110,6 @@ unsigned char e8530_send (e8530_t *scc, unsigned chn)
 
 	val = c->txbuf[c->tx_j];
 	c->tx_j = (c->tx_j + 1) % E8530_BUF_MAX;
-
-	e8530_set_int_cond (scc, chn, 0x02);
-
-	c->rr[0] |= 0x04;
 
 	return (val);
 }
@@ -1113,6 +1200,36 @@ void e8530_reset (e8530_t *scc)
 	e8530_set_irq (scc, 0);
 }
 
+static inline
+void e8530_chn_clock (e8530_t *scc, unsigned chn, unsigned n)
+{
+	e8530_chn_t *c;
+
+	c = &scc->chn[chn];
+
+	if (n < c->char_clk_cnt) {
+		c->char_clk_cnt -= n;
+		return;
+	}
+	else {
+		n -= c->char_clk_cnt;
+	}
+
+	if (n > c->char_clk_div) {
+		n = n % c->char_clk_div;
+	}
+
+	c->char_clk_cnt = c->char_clk_div - n;
+
+	c->read_char_cnt = c->read_char_max;
+	c->write_char_cnt = c->write_char_max;
+
+	e8530_check_rxd (scc, chn);
+	e8530_check_txd (scc, chn);
+}
+
 void e8530_clock (e8530_t *scc, unsigned n)
 {
+	e8530_chn_clock (scc, 0, n);
+	e8530_chn_clock (scc, 1, n);
 }

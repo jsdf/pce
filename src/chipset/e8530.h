@@ -37,10 +37,22 @@ typedef struct {
 	unsigned char rr0_latch_msk;
 	unsigned char rr0_latch_val;
 
+	unsigned char txd_empty;
+	unsigned char rxd_empty;
+
 	unsigned long bps;
 	unsigned      parity;
 	unsigned      bpc;
 	unsigned      stop;
+
+	unsigned      char_clk_cnt;
+	unsigned      char_clk_div;
+
+	unsigned      read_char_cnt;
+	unsigned      read_char_max;
+
+	unsigned      write_char_cnt;
+	unsigned      write_char_max;
 
 	unsigned long rtxc;
 
@@ -88,6 +100,8 @@ void e8530_set_inp_fct (e8530_t *scc, unsigned chn, void *ext, void *fct);
 void e8530_set_out_fct (e8530_t *scc, unsigned chn, void *ext, void *fct);
 void e8530_set_rts_fct (e8530_t *scc, unsigned chn, void *ext, void *fct);
 void e8530_set_comm_fct (e8530_t *scc, unsigned chn, void *ext, void *fct);
+
+void e8530_set_multichar (e8530_t *scc, unsigned chn, unsigned read_max, unsigned write_max);
 
 void e8530_set_clock (e8530_t *scc, unsigned long pclk, unsigned long rtxca, unsigned long rtxcb);
 
