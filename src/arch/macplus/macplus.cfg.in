@@ -204,6 +204,12 @@ section macplus {
 		# the printer port.
 		port = 0
 
+		# Up to multichar characters are sent or received
+		# without any transmission delay. For a real serial port
+		# this value is 1 but larger values can speed up
+		# transmission.
+		multichar = 1
+
 		# Not all character drivers are supported on
 		# all platforms.
 		#driver = "null"

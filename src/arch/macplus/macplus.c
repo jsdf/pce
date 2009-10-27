@@ -521,6 +521,7 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
 	unsigned   port;
+	unsigned   multichar;
 	const char *driver;
 
 	mac_ser_init (&sim->ser[0]);
@@ -533,11 +534,11 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 
 	while (sct != NULL) {
 		ini_get_uint16 (sct, "port", &port, 0);
-
+		ini_get_uint16 (sct, "multichar", &multichar, 1);
 		ini_get_string (sct, "driver", &driver, NULL);
 
-		pce_log_tag (MSG_INF, "SERIAL:", "port=%u driver=%s\n",
-			port,
+		pce_log_tag (MSG_INF, "SERIAL:", "port=%u multichar=%u driver=%s\n",
+			port, multichar,
 			(driver != NULL) ? driver : "<none>"
 		);
 
@@ -547,6 +548,8 @@ void mac_setup_serial (macplus_t *sim, ini_sct_t *ini)
 			pce_log (MSG_ERR, "*** bad port number (%u)\n", port);
 			continue;
 		}
+
+		e8530_set_multichar (&sim->scc, port, multichar, multichar);
 
 		if (driver != NULL) {
 			if (mac_ser_set_driver (&sim->ser[port], driver)) {
