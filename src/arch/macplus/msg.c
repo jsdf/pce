@@ -232,6 +232,26 @@ int mac_set_msg_emu_reset (macplus_t *sim, const char *msg, const char *val)
 }
 
 static
+int mac_set_msg_emu_serport_driver (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned idx;
+
+	if (msg_get_prefix_uint (&val, &idx, ":", " \t")) {
+		return (1);
+	}
+
+	if (idx > 1) {
+		return (1);
+	}
+
+	if (mac_ser_set_driver (&sim->ser[idx], val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int mac_set_msg_emu_stop (macplus_t *sim, const char *msg, const char *val)
 {
 	mac_set_msg_trm (sim, "term.release", "1");
@@ -276,6 +296,7 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.realtime", mac_set_msg_emu_realtime },
 	{ "emu.realtime.toggle", mac_set_msg_emu_realtime_toggle },
 	{ "emu.reset", mac_set_msg_emu_reset },
+	{ "emu.serport.driver", mac_set_msg_emu_serport_driver },
 	{ "emu.stop", mac_set_msg_emu_stop },
 	{ "mac.insert", mac_set_msg_mac_insert },
 	{ NULL, NULL }
