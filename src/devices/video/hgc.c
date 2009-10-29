@@ -838,7 +838,7 @@ int hgc_set_msg (hgc_t *hgc, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

@@ -679,7 +679,7 @@ int mda_set_msg (mda_t *mda, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

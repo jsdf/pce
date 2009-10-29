@@ -71,7 +71,7 @@ int pce_video_set_msg (video_t *vid, const char *msg, const char *val)
 		return (vid->set_msg (vid->ext, msg, val));
 	}
 
-	return (1);
+	return (-1);
 }
 
 void pce_video_set_terminal (video_t *vid, void *trm)

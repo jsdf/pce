@@ -1532,7 +1532,7 @@ int ega_set_msg (ega_t *ega, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

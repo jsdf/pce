@@ -1843,7 +1843,7 @@ int vga_set_msg (vga_t *vga, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

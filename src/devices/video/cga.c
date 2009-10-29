@@ -948,7 +948,7 @@ int cga_set_msg (cga_t *cga, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static
