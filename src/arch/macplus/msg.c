@@ -23,180 +23,298 @@
 #include "main.h"
 
 
+typedef struct {
+	const char *msg;
+
+	int (*set_msg) (macplus_t *sim, const char *msg, const char *val);
+} mac_msg_list_t;
+
+
+static
+int mac_set_msg_emu_cpu_model (macplus_t *sim, const char *msg, const char *val)
+{
+	if (mac_set_cpu_model (sim, val)) {
+		pce_log (MSG_ERR, "unknown CPU model (%s)\n", val);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_cpu_speed (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned f;
+
+	if (msg_get_uint (val, &f)) {
+		return (1);
+	}
+
+	mac_set_speed (sim, f);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_cpu_speed_step (macplus_t *sim, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_sint (val, &v)) {
+		return (1);
+	}
+
+	v += (int) sim->speed_factor;
+
+	if (v <= 0) {
+		v = 1;
+	}
+
+	mac_set_speed (sim, v);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_disk_commit (macplus_t *sim, const char *msg, const char *val)
+{
+	int      r;
+	unsigned drv;
+
+	if (strcmp (val, "all") == 0) {
+		pce_log (MSG_INF, "commiting all drives\n");
+
+		if (dsks_commit (sim->dsks)) {
+			pce_log (MSG_ERR,
+				"*** commit failed for at least one disk\n"
+			);
+			return (1);
+		}
+
+		return (0);
+	}
+
+	r = 0;
+
+	while (*val != 0) {
+		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
+			pce_log (MSG_ERR, "*** commit error: bad drive (%s)\n",
+				val
+			);
+
+			return (1);
+		}
+
+		pce_log (MSG_INF, "commiting drive %u\n", drv);
+
+		if (dsks_set_msg (sim->dsks, drv, "commit", NULL)) {
+			pce_log (MSG_ERR, "*** commit error for drive %u\n",
+				drv
+			);
+
+			r = 1;
+		}
+	}
+
+	return (r);
+}
+
+static
+int mac_set_msg_emu_disk_eject (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+	disk_t   *dsk;
+
+	while (*val != 0) {
+		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
+			pce_log (MSG_ERR,
+				"*** disk eject error: bad drive (%s)\n",
+				val
+			);
+
+			return (1);
+		}
+
+		dsk = dsks_get_disk (sim->dsks, drv);
+
+		if (dsk == NULL) {
+			pce_log (MSG_ERR,
+				"*** disk eject error: no such disk (%lu)\n", drv
+			);
+		}
+		else {
+			pce_log (MSG_INF, "ejecting drive %lu\n", drv);
+
+			dsks_rmv_disk (sim->dsks, dsk);
+
+			dsk_del (dsk);
+		}
+	}
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_disk_insert (macplus_t *sim, const char *msg, const char *val)
+{
+	if (dsk_insert (sim->dsks, val, 1)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_exit (macplus_t *sim, const char *msg, const char *val)
+{
+	sim->brk = PCE_BRK_ABORT;
+
+	mon_set_terminate (&par_mon, 1);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_pause (macplus_t *sim, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	mac_set_pause (sim, v);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_pause_toggle (macplus_t *sim, const char *msg, const char *val)
+{
+	mac_set_pause (sim, !sim->pause);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_realtime (macplus_t *sim, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	mac_set_speed (sim, v ? 1 : 0);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_realtime_toggle (macplus_t *sim, const char *msg, const char *val)
+{
+	if (sim->speed_factor > 0) {
+		mac_set_speed (sim, 0);
+	}
+	else {
+		mac_set_speed (sim, 1);
+	}
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_reset (macplus_t *sim, const char *msg, const char *val)
+{
+	mac_reset (sim);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_stop (macplus_t *sim, const char *msg, const char *val)
+{
+	mac_set_msg_trm (sim, "term.release", "1");
+
+	sim->brk = PCE_BRK_STOP;
+
+	return (0);
+}
+
+static
+int mac_set_msg_mac_insert (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+
+	if (strcmp (val, "") == 0) {
+		mac_sony_insert (sim, 1);
+		mac_sony_insert (sim, 2);
+		mac_sony_insert (sim, 3);
+	}
+	else {
+		if (msg_get_uint (val, &drv)) {
+			return (1);
+		}
+
+		mac_sony_insert (sim, drv);
+	}
+
+	return (0);
+}
+
+
+static mac_msg_list_t set_msg_list[] = {
+	{ "emu.cpu.model", mac_set_msg_emu_cpu_model },
+	{ "emu.cpu.speed", mac_set_msg_emu_cpu_speed },
+	{ "emu.cpu.speed.step", mac_set_msg_emu_cpu_speed_step },
+	{ "emu.disk.commit", mac_set_msg_emu_disk_commit },
+	{ "emu.disk.eject", mac_set_msg_emu_disk_eject },
+	{ "emu.disk.insert", mac_set_msg_emu_disk_insert },
+	{ "emu.exit", mac_set_msg_emu_exit },
+	{ "emu.pause", mac_set_msg_emu_pause },
+	{ "emu.pause.toggle", mac_set_msg_emu_pause_toggle },
+	{ "emu.realtime", mac_set_msg_emu_realtime },
+	{ "emu.realtime.toggle", mac_set_msg_emu_realtime_toggle },
+	{ "emu.reset", mac_set_msg_emu_reset },
+	{ "emu.stop", mac_set_msg_emu_stop },
+	{ "mac.insert", mac_set_msg_mac_insert },
+	{ NULL, NULL }
+};
+
+
 int mac_set_msg (macplus_t *sim, const char *msg, const char *val)
 {
+	int            r;
+	mac_msg_list_t *lst;
+
 	/* a hack, for debugging only */
 	if (sim == NULL) {
 		sim = par_sim;
 	}
 
 	if (msg == NULL) {
-		msg = "";
+		return (1);
 	}
 
 	if (val == NULL) {
 		val = "";
 	}
 
-	if (msg_is_message ("emu.stop", msg)) {
-		mac_set_msg_trm (sim, "term.release", "1");
-		sim->brk = PCE_BRK_STOP;
-		return (0);
-	}
-	else if (msg_is_message ("emu.exit", msg)) {
-		sim->brk = PCE_BRK_ABORT;
-		mon_set_terminate (&par_mon, 1);
-		return (0);
-	}
-	else if (msg_is_message ("emu.disk.commit", msg)) {
-		if (strcmp (val, "") == 0) {
-			if (dsks_commit (sim->dsks)) {
-				pce_log (MSG_ERR,
-					"commit failed for at least one disk\n"
-				);
-				return (1);
-			}
-		}
-		else {
-			unsigned d;
+	lst = set_msg_list;
 
-			if (msg_get_uint (val, &d)) {
-				return (1);
-			}
-
-			if (dsks_set_msg (sim->dsks, d, "commit", NULL)) {
-				pce_log (MSG_ERR, "commit failed (%s)\n", val);
-				return (1);
-			}
+	while (lst->msg != NULL) {
+		if (msg_is_message (lst->msg, msg)) {
+			return (lst->set_msg (sim, msg, val));
 		}
 
-		return (0);
-	}
-	else if (msg_is_message ("emu.disk.eject", msg)) {
-		unsigned d;
-		disk_t   *dsk;
-
-		if (msg_get_uint (val, &d)) {
-			return (1);
-		}
-
-		dsk = dsks_get_disk (sim->dsks, d);
-		if (dsk == NULL) {
-			return (1);
-		}
-
-		dsks_rmv_disk (sim->dsks, dsk);
-
-		dsk_del (dsk);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.disk.insert", msg)) {
-		if (dsk_insert (sim->dsks, val, 1)) {
-			return (1);
-		}
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.realtime", msg)) {
-		int v;
-
-		if (msg_get_bool (val, &v)) {
-			return (1);
-		}
-
-		mac_set_speed (sim, v ? 1 : 0);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.realtime.toggle", msg)) {
-		if (sim->speed_factor > 0) {
-			mac_set_speed (sim, 0);
-		}
-		else {
-			mac_set_speed (sim, 1);
-		}
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.cpu.model", msg)) {
-		if (mac_set_cpu_model (sim, val)) {
-			pce_log (MSG_ERR, "unknown CPU model (%s)\n", val);
-			return (1);
-		}
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.cpu.speed", msg)) {
-		unsigned f;
-
-		if (msg_get_uint (val, &f)) {
-			return (1);
-		}
-
-		mac_set_speed (sim, f);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.cpu.speed.step", msg)) {
-		int v;
-
-		if (msg_get_sint (val, &v)) {
-			return (1);
-		}
-
-		v += (int) sim->speed_factor;
-
-		if (v <= 0) {
-			v = 1;
-		}
-
-		mac_set_speed (sim, v);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.pause", msg)) {
-		int v;
-
-		if (msg_get_bool (val, &v)) {
-			return (1);
-		}
-
-		mac_set_pause (sim, v);
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.pause.toggle", msg)) {
-		mac_set_pause (sim, !sim->pause);
-		return (0);
-	}
-	else if (msg_is_message ("emu.reset", msg)) {
-		mac_reset (sim);
-		return (0);
-	}
-	else if (msg_is_message ("mac.insert", msg)) {
-		unsigned drv;
-
-		if (strcmp (val, "") == 0) {
-			mac_sony_insert (sim, 1);
-			mac_sony_insert (sim, 2);
-			mac_sony_insert (sim, 3);
-			mac_sony_insert (sim, 4);
-		}
-		else {
-			if (msg_get_uint (val, &drv)) {
-				return (1);
-			}
-
-			mac_sony_insert (sim, drv);
-		}
-
-		return (0);
+		lst += 1;
 	}
 
 	if (sim->trm != NULL) {
-		if (trm_set_msg_trm (sim->trm, msg, val) == 0) {
-			return (0);
+		r = trm_set_msg_trm (sim->trm, msg, val);
+
+		if (r >= 0) {
+			return (r);
 		}
 	}
 
