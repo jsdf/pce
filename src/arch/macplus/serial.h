@@ -64,6 +64,8 @@ void mac_ser_set_scc (mac_ser_t *ser, e8530_t *scc, unsigned chn);
 
 int mac_ser_set_driver (mac_ser_t *ser, const char *name);
 
+int mac_ser_set_file (mac_ser_t *ser, const char *fname);
+
 void mac_ser_clock (mac_ser_t *ser, unsigned n);
 
 

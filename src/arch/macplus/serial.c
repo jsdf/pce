@@ -210,6 +210,20 @@ int mac_ser_set_driver (mac_ser_t *ser, const char *name)
 	return (0);
 }
 
+int mac_ser_set_file (mac_ser_t *ser, const char *fname)
+{
+	int  r;
+	char *driver;
+
+	driver = str_cat_alloc ("stdio:file=", fname);
+
+	r = mac_ser_set_driver (ser, driver);
+
+	free (driver);
+
+	return (r);
+}
+
 static
 void mac_ser_set_inp (void *ext, unsigned char val)
 {

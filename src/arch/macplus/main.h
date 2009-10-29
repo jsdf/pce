@@ -89,6 +89,7 @@ typedef struct macplus_s macplus_t;
 #include <lib/inidsk.h>
 #include <lib/iniram.h>
 #include <lib/initerm.h>
+#include <lib/string.h>
 #include <lib/sysdep.h>
 
 #include <cpu/e68000/e68000.h>

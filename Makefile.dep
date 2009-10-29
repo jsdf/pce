@@ -458,6 +458,7 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -497,6 +498,7 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -536,6 +538,7 @@ src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -575,6 +578,7 @@ src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -614,6 +618,7 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -653,6 +658,7 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -692,6 +698,7 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -731,6 +738,7 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -770,6 +778,7 @@ src/arch/macplus/rtc.o: src/arch/macplus/rtc.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -809,6 +818,7 @@ src/arch/macplus/scsi.o: src/arch/macplus/scsi.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -848,6 +858,7 @@ src/arch/macplus/serial.o: src/arch/macplus/serial.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -887,6 +898,7 @@ src/arch/macplus/sony.o: src/arch/macplus/sony.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -926,6 +938,7 @@ src/arch/macplus/traps.o: src/arch/macplus/traps.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
@@ -965,6 +978,7 @@ src/arch/macplus/video.o: src/arch/macplus/video.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/path.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
