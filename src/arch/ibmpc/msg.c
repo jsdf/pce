@@ -467,6 +467,7 @@ static pc_msg_list_t set_msg_list[] = {
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 {
+	int           r;
 	pc_msg_list_t *lst;
 
 	/* a hack, for debugging only */
@@ -493,14 +494,18 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 	}
 
 	if (pc->trm != NULL) {
-		if (trm_set_msg_trm (pc->trm, msg, val) == 0) {
-			return (0);
+		r = trm_set_msg_trm (pc->trm, msg, val);
+
+		if (r >= 0) {
+			return (r);
 		}
 	}
 
 	if (pc->video != NULL) {
-		if (pce_video_set_msg (pc->video, msg, val) == 0) {
-			return (0);
+		r = pce_video_set_msg (pc->video, msg, val);
+
+		if (r >= 0) {
+			return (r);
 		}
 	}
 
