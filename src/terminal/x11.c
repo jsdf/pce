@@ -735,7 +735,7 @@ int xt_set_msg_trm (xterm_t *xt, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

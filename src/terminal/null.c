@@ -55,7 +55,7 @@ int null_close (null_t *nt)
 static
 int null_set_msg_trm (null_t *nt, const char *msg, const char *val)
 {
-	return (1);
+	return (-1);
 }
 
 static

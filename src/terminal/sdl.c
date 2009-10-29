@@ -500,7 +500,7 @@ int sdl_set_msg_trm (sdl_t *sdl, const char *msg, const char *val)
 		return (0);
 	}
 
-	return (1);
+	return (-1);
 }
 
 static

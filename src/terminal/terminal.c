@@ -197,7 +197,7 @@ int trm_set_msg_trm (terminal_t *trm, const char *msg, const char *val)
 		return (trm->set_msg_trm (trm->ext, msg, val));
 	}
 
-	return (1);
+	return (-1);
 }
 
 void trm_set_mouse_scale (terminal_t *trm, int mul_x, int div_x, int mul_y, int div_y)
