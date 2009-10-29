@@ -25,9 +25,6 @@
 
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val);
-int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max);
-
-//int pc_get_msgul (ibmpc_t *pc, const char *msg, unsigned long *val);
 
 
 #endif

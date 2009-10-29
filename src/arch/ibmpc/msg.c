@@ -513,34 +513,3 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 
 	return (1);
 }
-
-
-static
-int pc_copy_msg (char *dst, const char *src, unsigned max)
-{
-	dst[0] = 0;
-
-	if ((strlen (src) + 1) > max) {
-		return (1);
-	}
-
-	strcpy (dst, src);
-
-	return (0);
-}
-
-int pc_get_msg (ibmpc_t *pc, const char *msg, char *val, unsigned max)
-{
-	const char *str;
-
-	if ((msg == NULL) || (val == NULL)) {
-		return (1);
-	}
-
-	if (strcmp (msg, "emu.config.get_string") == 0) {
-		ini_get_string (pc->cfg, val, &str, "");
-		return (pc_copy_msg (val, str, max));
-	}
-
-	return (1);
-}

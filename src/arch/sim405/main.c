@@ -258,7 +258,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&mon);
 	mon_set_cmd_fct (&mon, ppc_do_cmd, par_sim);
-	mon_set_msg_fct (&mon, s405_set_msg, NULL, par_sim);
+	mon_set_msg_fct (&mon, s405_set_msg, par_sim);
 
 	s405_reset (par_sim);
 

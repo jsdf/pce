@@ -293,7 +293,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
-	mon_set_msg_fct (&par_mon, sarm_set_msg, NULL, par_sim);
+	mon_set_msg_fct (&par_mon, sarm_set_msg, par_sim);
 
 	sarm_reset (par_sim);
 

@@ -347,7 +347,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, mac_cmd, par_sim);
-	mon_set_msg_fct (&par_mon, mac_set_msg, NULL, par_sim);
+	mon_set_msg_fct (&par_mon, mac_set_msg, par_sim);
 
 	mac_reset (par_sim);
 

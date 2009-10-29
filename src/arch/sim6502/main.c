@@ -909,7 +909,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, s6502_do_cmd, par_sim);
-	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
+	mon_set_msg_fct (&par_mon, NULL, par_sim);
 
 	s6502_reset (par_sim);
 

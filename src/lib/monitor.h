@@ -33,7 +33,6 @@ typedef struct {
 
 	void *msgext;
 	int  (*setmsg) (void *ext, const char *msg, const char *val);
-	int  (*getmsg) (void *ext, const char *msg, char *val, unsigned max);
 
 	char       terminate;
 
@@ -48,7 +47,7 @@ monitor_t *mon_new (void);
 void mon_del (monitor_t *mon);
 
 void mon_set_cmd_fct (monitor_t *mon, void *fct, void *ext);
-void mon_set_msg_fct (monitor_t *mon, void *set, void *get, void *ext);
+void mon_set_msg_fct (monitor_t *mon, void *fct, void *ext);
 
 void mon_set_terminate (monitor_t *mon, int val);
 

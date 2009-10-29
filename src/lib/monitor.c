@@ -37,7 +37,6 @@ void mon_init (monitor_t *mon)
 
 	mon->msgext = NULL;
 	mon->setmsg = NULL;
-	mon->getmsg = NULL;
 
 	mon->terminate = 0;
 	mon->prompt = NULL;
@@ -75,11 +74,10 @@ void mon_set_cmd_fct (monitor_t *mon, void *fct, void *ext)
 	mon->docmd = fct;
 }
 
-void mon_set_msg_fct (monitor_t *mon, void *set, void *get, void *ext)
+void mon_set_msg_fct (monitor_t *mon, void *fct, void *ext)
 {
 	mon->msgext = ext;
-	mon->setmsg = set;
-	mon->getmsg = get;
+	mon->setmsg = fct;
 }
 
 void mon_set_terminate (monitor_t *mon, int val)
@@ -115,7 +113,7 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 #endif
 
 static
-void mon_cmd_ms (monitor_t *mon, cmd_t *cmd)
+void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
 	char msg[256];
 	char val[256];
@@ -139,50 +137,6 @@ void mon_cmd_ms (monitor_t *mon, cmd_t *cmd)
 	}
 	else {
 		pce_puts ("monitor: no set message function\n");
-	}
-}
-
-static
-void mon_cmd_mg (monitor_t *mon, cmd_t *cmd)
-{
-	char msg[256];
-	char val[256];
-
-	if (!cmd_match_str (cmd, msg, 256)) {
-		strcpy (msg, "");
-	}
-
-	if (!cmd_match_str (cmd, val, 256)) {
-		strcpy (val, "");
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (mon->getmsg != NULL) {
-		if (mon->getmsg (mon->msgext, msg, val, 256)) {
-			printf ("error\n");
-		}
-
-		pce_printf ("%s\n", val);
-	}
-	else {
-		pce_puts ("monitor: no get message function\n");
-	}
-}
-
-static
-void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
-{
-	if (cmd_match (cmd, "s")) {
-		mon_cmd_ms (mon, cmd);
-	}
-	else if (cmd_match (cmd, "g")) {
-		mon_cmd_mg (mon, cmd);
-	}
-	else {
-		mon_cmd_ms (mon, cmd);
 	}
 }
 

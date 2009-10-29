@@ -1036,7 +1036,7 @@ void do_h (cmd_t *cmd)
 		"h                         print help summary\n"
 		"hm                        print help on messages\n"
 		"i [b|w] port              input a byte or word from a port\n"
-		"m[g|s] [msg [val]]        send a message\n"
+		"m msg [val]               send a message\n"
 		"o [b|w] port val          output a byte or word to a port\n"
 		"pq [c|f|s]                prefetch queue clear/fill/status\n"
 		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
@@ -1788,7 +1788,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
-	mon_set_msg_fct (&par_mon, pc_set_msg, pc_get_msg, par_pc);
+	mon_set_msg_fct (&par_mon, pc_set_msg, par_pc);
 
 	if (par_have_boot) {
 		pc_set_bootdrive (pc, par_boot);

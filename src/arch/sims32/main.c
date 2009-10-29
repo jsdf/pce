@@ -277,7 +277,7 @@ int main (int argc, char *argv[])
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, ss32_do_cmd, par_sim);
-	mon_set_msg_fct (&par_mon, NULL, NULL, par_sim);
+	mon_set_msg_fct (&par_mon, NULL, par_sim);
 
 	ss32_reset (par_sim);
 
