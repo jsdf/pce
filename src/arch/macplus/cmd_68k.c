@@ -352,6 +352,8 @@ void mac_run (macplus_t *sim)
 {
 	pce_start (&sim->brk);
 
+	mac_clock_discontinuity (sim);
+
 	while (1) {
 		mac_clock (par_sim, 0);
 		mac_clock (par_sim, 0);
@@ -723,6 +725,8 @@ void mac_cmd_g_b (cmd_t *cmd, macplus_t *sim)
 
 	pce_start (&sim->brk);
 
+	mac_clock_discontinuity (sim);
+
 	while (1) {
 		mac_exec (sim);
 
@@ -753,6 +757,8 @@ void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 	sim->cpu->excptn = 256;
 
 	pce_start (&sim->brk);
+
+	mac_clock_discontinuity (sim);
 
 	while (1) {
 		mac_exec (sim);
