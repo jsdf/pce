@@ -40,12 +40,12 @@ section simarm {
 	# load sections are processed after all ram and rom sections.
 	section load {
 		format = "ihex"
-		file = "simarm.ihex"
+		file   = "simarm.ihex"
 	}
 
 	section load {
-		format = "binary"
-		file = "rom.bin"
+		format  = "binary"
+		file    = "rom.bin"
 		address = 0xffff0000
 	}
 
@@ -57,13 +57,13 @@ section simarm {
 	# timer
 	section timer {
 		address = 0xc0020000
-		scale = 5
+		scale   = 5
 	}
 
 	# serial port
 	section serial {
 		address = 0xc0030000
-		irq = 2
+		irq     = 2
 
 		# Up to multichar characters are sent or received
 		# without any transmission delay. For a real serial port
@@ -76,5 +76,9 @@ section simarm {
 		#driver = "null"
 		driver = "stdio:file=uart0.out"
 		#driver = "tios:file=/dev/ttyS0"
+	}
+
+	section console {
+		serial = 0
 	}
 }
