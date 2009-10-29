@@ -1,0 +1,192 @@
+PCE Messages
+==============================================================================
+
+Messages are used to control the emulator. They can be sent using the "m"
+command in the monitor, for example
+
+-m emu.disk.eject 0
+
+will eject the first floppy disk. Message prefixes can be omitted, as long
+as the message name is unambiguous (except where noted). The following
+commands are equivalent:
+
+-m emu.disk.eject 0
+-m disk.eject 0
+-m eject 0
+
+A message has at most one parameter. If the parameter contains spaces, it
+must be enclosed in double quotes in the monitor, like this:
+
+-m term.screenshot "my screenshot.ppm"
+
+
+PCE/ibmpc Messages
+==============================================================================
+
+emu.exit
+	Terminate the emulator immediately.
+
+emu.stop
+	Fall back to the monitor.
+
+emu.pause "0" | "1"
+	Resume or pause the emulator.
+
+emu.pause.toggle
+	Resume or pause the emulator.
+
+emu.reset
+	Reset the emulated machine.
+
+emu.config.save <filename>
+	Save the current configuration to <filename>.
+
+emu.cpu.clock <frequency>
+	Set the emulated CPU clock frequency in Herz.
+
+emu.cpu.model <model>
+	Set the emulated CPU model. Valid models are "8086", "8088",
+	"80186" and "80188".
+
+emu.cpu.speed <factor>
+	Set the emulated CPU clock frequency to a multiple of 4.77 MHz.
+
+emu.cpu.speed.step <adjustment>
+	Add <adjustment> to the CPU clock frequency multiplier.
+
+emu.disk.boot <bootdrive>
+	Set the boot drive.
+
+emu.disk.commit (<drive> [":" <drive> ...]) | "all"
+	Commit changes to drives that have copy-on-write enabled.
+
+emu.disk.eject <drive> [":" <drive> ...]
+	Eject the disk in drive <drive>.
+
+emu.disk.insert <drive>:<fname>
+	Insert a new disk. <drive> is a drive number as specified
+	in the config file. The disk image type is "auto". If a disk
+	is already inserted in <drive> it is ejected first.
+
+emu.parport.driver <port>":"<driver>
+	Attach a parallel port to a new character driver. The driver
+	string has the same format as in the config file.
+
+emu.parport.file <port>":"<filename>
+	This is equivalent to
+	emu.parport.driver <port>:stdio:file=<filename>.
+
+emu.serport.driver <port>":"<driver>
+	Attach a serial port to a new character driver. The driver
+	string has the same format as in the config file.
+
+emu.serport.file <port>":"<filename>
+	This is equivalent to
+	emu.serport.driver <port>:stdio:file=<filename>.
+
+emu.tape.append
+	Move the read or write position to the end of the cassette file.
+
+emu.tape.file <filename>
+	Set a new cassette file.
+
+emu.tape.load [<position> | "end"]
+	Switch to load mode. If <position> is given, move the load
+	position to <position>. If "end" is specified, move the load
+	position to the end of the cassette file.
+
+emu.tape.rewind
+	Move the read or write position to the beginning of the cassette
+	file.
+
+emu.tape.save [<position> | "end"]
+	Switch to save mode. If <position> is given, move the save
+	position to <position>. If "end" is specified, move the save
+	position to the end of the cassette file.
+
+emu.tape.state
+	Print the cassette state. Prints the current mode (load/save)
+	and the current position.
+
+emu.video.blink <blink-rate>
+	Set the cursor blink rate. The number specified is the number
+	of screen refreshes for which the cursor is visible/invisible.
+
+emu.video.redraw ["0" | "1"]
+	Force a redraw of the screen. If the parameter is "1", redraw
+	immediately, otherwise schedule a forced redraw at the next
+	vertical retrace.
+
+
+PCE/macplus Messages
+==============================================================================
+
+emu.cpu.model <model>
+	Set the emulated CPU model. Valid models are "68000" and "68010".
+
+emu.cpu.speed <speed>
+	Set the emulated CPU clock frequency to a multiple of 7.8336MHz.
+
+emu.cpu.speed.step <step>
+	Add <step> to the CPU clock frequency multiplier.
+
+emu.disk.commit (<drive> [":" <drive> ...]) | "all"
+	Commit changes to drives that have copy-on-write enabled.
+
+emu.disk.eject <drive> [":" <drive> ...]
+	Eject the disk in drive <drive>.
+
+emu.disk.insert <drive>:<fname>
+	Insert a new disk. <drive> is a drive number as specified
+	in the config file. The disk image type is "auto". If a disk
+	is already inserted in <drive> it is ejected first.
+
+emu.exit
+	Terminate the emulator immediately.
+
+emu.pause "0" | "1"
+	Pause or resume the emulation.
+
+emu.pause.toggle
+	Pause or resume the emulation.
+
+emu.reset
+	Reset the emulated machine.
+
+emu.serport.driver <port>":"<driver>
+	Attach a serial port to a new character driver. The driver
+	string has the same format as in the config file.
+
+emu.serport.file <port>":"<filename>
+	This is equivalent to
+	emu.serport.driver <port>:stdio:file=<filename>.
+
+emu.stop
+	Fall back to the monitor.
+
+mac.insert [<drive>]
+	Simulate re-inserting a disk that has been dragged to the trash.
+
+
+Terminal messages
+==============================================================================
+
+Terminal messages may not be abbreviated.
+
+term.fullscreen "0" | "1"
+	Leave or enter fullscreen mode.
+
+term.fullscreen.toggle
+	Toggle fullscreen mode.
+
+term.grab
+	Grab the mouse.
+
+term.release
+	Release the mouse.
+
+term.screenshot [<filename>]
+	Write a screen shot to <filename> in PNM format.
+
+term.title <title>
+	Set the terminal window title.
