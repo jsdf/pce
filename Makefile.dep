@@ -1870,6 +1870,12 @@ src/drivers/char/char-pty.o: src/drivers/char/char-pty.c \
 	src/drivers/char/char-pty.h \
 	src/drivers/char/char.h
 
+src/drivers/char/char-slip.o: src/drivers/char/char-slip.c \
+	src/config.h \
+	src/drivers/char/char-slip.h \
+	src/drivers/char/char.h \
+	src/lib/tun.h
+
 src/drivers/char/char-stdio.o: src/drivers/char/char-stdio.c \
 	src/drivers/char/char-stdio.h \
 	src/drivers/char/char.h

@@ -50,6 +50,10 @@ PCE_SIMS32_OBJ_EXT := \
 	src/lib/sysdep.o \
 	src/libini/libini.a
 
+ifeq "$(PCE_ENABLE_TUN)" "1"
+PCE_SIMS32_OBJ_EXT += src/lib/tun.o
+endif
+
 ifeq "$(PCE_BUILD_SIMS32)" "1"
 BIN  += $(PCE_SIMS32_BIN)
 ETC  += $(PCE_SIMS32_ETC)

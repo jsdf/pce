@@ -55,6 +55,13 @@ pty:
 		Set the log file name.
 
 
+slip:
+	For this driver to work, tun/tap support must be enabled.
+
+	if=<name>
+		Set the tun/tap interface name, for example "tun0".
+
+
 stdio:
 	Output is written to a file. No input is ever provided.
 

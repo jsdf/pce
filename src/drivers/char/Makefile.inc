@@ -20,6 +20,12 @@ else
 DRV_CHR_NBAS += char-pty
 endif
 
+ifeq "$(PCE_ENABLE_CHAR_SLIP)" "1"
+DRV_CHR_BAS += char-slip
+else
+DRV_CHR_NBAS += char-slip
+endif
+
 ifeq "$(PCE_ENABLE_CHAR_TCP)" "1"
 DRV_CHR_BAS += char-tcp
 else
@@ -47,6 +53,7 @@ $(rel)/char.o:		$(rel)/char.c
 $(rel)/char-null.o:	$(rel)/char-null.c
 $(rel)/char-posix.o:	$(rel)/char-posix.c
 $(rel)/char-pty.o:	$(rel)/char-pty.c
+$(rel)/char-slip.o:	$(rel)/char-slip.c
 $(rel)/char-stdio.o:	$(rel)/char-stdio.c
 $(rel)/char-tcp.o:	$(rel)/char-tcp.c
 $(rel)/char-tios.o:	$(rel)/char-tios.c

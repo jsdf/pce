@@ -84,6 +84,10 @@ PCE_IBMPC_OBJ_EXT := \
 	$(DEV_BLK_OBJ) \
 	$(DRV_TRM_OBJ)
 
+ifeq "$(PCE_ENABLE_TUN)" "1"
+PCE_IBMPC_OBJ_EXT += src/lib/tun.o
+endif
+
 ifeq "$(PCE_BUILD_IBMPC)" "1"
 BIN  += $(PCE_IBMPC_BIN)
 ETC  += $(PCE_IBMPC_ETC)

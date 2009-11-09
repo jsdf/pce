@@ -595,11 +595,12 @@ PCE_DIR_DATA
 PCE_DIR_ETC
 PCE_READLINE_LIBS
 PCE_ENABLE_READLINE
-PCE_ENABLE_TUN
 PCE_ENABLE_CHAR_TIOS
 PCE_ENABLE_CHAR_TCP
+PCE_ENABLE_CHAR_SLIP
 PCE_ENABLE_CHAR_PTY
 PCE_ENABLE_CHAR_POSIX
+PCE_ENABLE_TUN
 PCE_BUILD_SIMARM
 PCE_BUILD_SIMS32
 PCE_BUILD_SIM6502
@@ -711,11 +712,12 @@ enable_sim405
 enable_sim6502
 enable_sims32
 enable_simarm
+enable_tun
 enable_char_posix
 enable_char_pty
+enable_char_slip
 enable_char_tcp
 enable_char_termios
-enable_tun
 enable_readline
 '
       ac_precious_vars='build_alias
@@ -1354,11 +1356,12 @@ Optional Features:
   --enable-sim6502        Enable the 6502 simulator
   --enable-sims32         Enable the sparc32 simulator
   --enable-simarm         Enable the arm simulator
+  --enable-tun            Enable tun networking
   --enable-char-posix     Enable the posix file character driver
   --enable-char-pty       Enable the pty character driver
+  --enable-char-slip      Enable the SLIP character driver
   --enable-char-tcp       Enable the TCP character driver
   --enable-char-termios   Enable the termios character driver
-  --enable-tun            Enable tun networking
   --enable-readline       Enable readline
 
 Optional Packages:
@@ -4688,6 +4691,47 @@ if test "x$PCE_BUILD_SIMARM" = "x1" ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable tun" >&5
+$as_echo_n "checking whether to enable tun... " >&6; }
+# Check whether --enable-tun was given.
+if test "${enable_tun+set}" = set; then :
+  enableval=$enable_tun;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_TUN=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_TUN=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+ 	fi
+
+else
+
+	h1=$ac_cv_header_linux_if_tun_h
+	h2=$ac_cv_header_sys_ioctl_h
+	h3=$ac_cv_header_sys_poll_h
+	h4=$ac_cv_header_sys_socket_h
+	if test "x$h1" = "xyes" -a "x$h2" = "xyes" -a "x$h3" = "xyes" -a "x$h4" = "xyes" ; then
+		PCE_ENABLE_TUN=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+		PCE_ENABLE_TUN=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_TUN" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_TUN 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the posix file character driver" >&5
 $as_echo_n "checking whether to enable the posix file character driver... " >&6; }
 # Check whether --enable-char-posix was given.
@@ -4763,6 +4807,43 @@ fi
 
 if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
 	$as_echo "#define PCE_ENABLE_CHAR_PTY 1" >>confdefs.h
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the SLIP character driver" >&5
+$as_echo_n "checking whether to enable the SLIP character driver... " >&6; }
+# Check whether --enable-char-slip was given.
+if test "${enable_char_slip+set}" = set; then :
+  enableval=$enable_char_slip;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_SLIP=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_CHAR_SLIP=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+else
+
+  	if test "x$PCE_ENABLE_TUN" = "x1" ; then
+	  	PCE_ENABLE_CHAR_SLIP=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+	  	PCE_ENABLE_CHAR_SLIP=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_CHAR_SLIP" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_CHAR_SLIP 1" >>confdefs.h
 
 fi
 
@@ -4847,48 +4928,6 @@ fi
 
 if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 	$as_echo "#define PCE_ENABLE_CHAR_TIOS 1" >>confdefs.h
-
-fi
-
-
-# Don't know how to autodetect this properly.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable tun" >&5
-$as_echo_n "checking whether to enable tun... " >&6; }
-# Check whether --enable-tun was given.
-if test "${enable_tun+set}" = set; then :
-  enableval=$enable_tun;
-	if test "x$enableval" = "xyes" ; then
-		PCE_ENABLE_TUN=1
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	else
-		PCE_ENABLE_TUN=0
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
- 	fi
-
-else
-
-	h1=$ac_cv_header_linux_if_tun_h
-	h2=$ac_cv_header_sys_ioctl_h
-	h3=$ac_cv_header_sys_poll_h
-	h4=$ac_cv_header_sys_socket_h
-	if test "x$h1" = "xyes" -a "x$h2" = "xyes" -a "x$h3" = "xyes" -a "x$h4" = "xyes" ; then
-		PCE_ENABLE_TUN=1
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
-$as_echo "yes (guess)" >&6; }
-	else
-		PCE_ENABLE_TUN=0
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
-$as_echo "no (guess)" >&6; }
-	fi
-
-
-fi
-
-
-if test "x$PCE_ENABLE_TUN" = "x1" ; then
-	$as_echo "#define PCE_ENABLE_TUN 1" >>confdefs.h
 
 fi
 
@@ -5176,6 +5215,12 @@ if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
 	char1="$char1 pty"
 else
 	char2="$char2 pty"
+fi
+
+if test "x$PCE_ENABLE_CHAR_SLIP" = "x1" ; then
+	char1="$char1 slip"
+else
+	char2="$char2 slip"
 fi
 
 if test "x$PCE_ENABLE_CHAR_TCP" = "x1" ; then
