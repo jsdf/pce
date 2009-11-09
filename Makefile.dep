@@ -1865,6 +1865,12 @@ src/drivers/char/char-posix.o: src/drivers/char/char-posix.c \
 	src/drivers/char/char-posix.h \
 	src/drivers/char/char.h
 
+src/drivers/char/char-ppp.o: src/drivers/char/char-ppp.c \
+	src/config.h \
+	src/drivers/char/char-ppp.h \
+	src/drivers/char/char.h \
+	src/lib/tun.h
+
 src/drivers/char/char-pty.o: src/drivers/char/char-pty.c \
 	src/config.h \
 	src/drivers/char/char-pty.h \

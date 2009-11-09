@@ -599,6 +599,7 @@ PCE_ENABLE_CHAR_TIOS
 PCE_ENABLE_CHAR_TCP
 PCE_ENABLE_CHAR_SLIP
 PCE_ENABLE_CHAR_PTY
+PCE_ENABLE_CHAR_PPP
 PCE_ENABLE_CHAR_POSIX
 PCE_ENABLE_TUN
 PCE_BUILD_SIMARM
@@ -714,6 +715,7 @@ enable_sims32
 enable_simarm
 enable_tun
 enable_char_posix
+enable_char_ppp
 enable_char_pty
 enable_char_slip
 enable_char_tcp
@@ -1358,6 +1360,7 @@ Optional Features:
   --enable-simarm         Enable the arm simulator
   --enable-tun            Enable tun networking
   --enable-char-posix     Enable the posix file character driver
+  --enable-char-ppp       Enable the PPP character driver
   --enable-char-pty       Enable the pty character driver
   --enable-char-slip      Enable the SLIP character driver
   --enable-char-tcp       Enable the TCP character driver
@@ -4772,6 +4775,43 @@ if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the PPP character driver" >&5
+$as_echo_n "checking whether to enable the PPP character driver... " >&6; }
+# Check whether --enable-char-ppp was given.
+if test "${enable_char_ppp+set}" = set; then :
+  enableval=$enable_char_ppp;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_PPP=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_CHAR_PPP=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+else
+
+  	if test "x$PCE_ENABLE_TUN" = "x1" ; then
+	  	PCE_ENABLE_CHAR_PPP=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+	  	PCE_ENABLE_CHAR_PPP=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_CHAR_PPP" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_CHAR_PPP 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the pty character driver" >&5
 $as_echo_n "checking whether to enable the pty character driver... " >&6; }
 # Check whether --enable-char-pty was given.
@@ -5209,6 +5249,12 @@ if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
 	char1="$char1 posix"
 else
 	char2="$char2 posix"
+fi
+
+if test "x$PCE_ENABLE_CHAR_PPP" = "x1" ; then
+	char1="$char1 ppp"
+else
+	char2="$char2 ppp"
 fi
 
 if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then

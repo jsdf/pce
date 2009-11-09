@@ -39,6 +39,9 @@ struct chr_drv_list drvtab[] = {
 	{ "posix", chr_posix_open },
 	{ "sercon", chr_posix_open },
 #endif
+#ifdef PCE_ENABLE_CHAR_PPP
+	{ "ppp", chr_ppp_open },
+#endif
 #ifdef PCE_ENABLE_CHAR_PTY
 	{ "pty", chr_pty_open },
 #endif

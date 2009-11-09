@@ -47,6 +47,19 @@ posix:
 		Set the log file name.
 
 
+ppp:
+	For this driver to work, tun/tap support must be enabled.
+
+	if=<name>
+		Set the tun/tap interface name, for example "tun0".
+
+	host-ip=<ip-addr>
+		Set the host side IP address.
+
+	guest-ip=<ip-addr>
+		Set the guest side IP address.
+
+
 pty:
 	symlink=<filename>
 		Create a symlink pointing to the new pseudo terminal device.

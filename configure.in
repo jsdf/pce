@@ -600,6 +600,33 @@ if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to enable the PPP character driver])
+AC_ARG_ENABLE(char-ppp,
+  AC_HELP_STRING([--enable-char-ppp], [Enable the PPP character driver]),
+  [
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_PPP=1
+		AC_MSG_RESULT([yes])
+	else
+		PCE_ENABLE_CHAR_PPP=0
+		AC_MSG_RESULT([no])
+	fi
+  ],[
+  	if test "x$PCE_ENABLE_TUN" = "x1" ; then
+	  	PCE_ENABLE_CHAR_PPP=1
+		AC_MSG_RESULT([yes (guess)])
+	else
+	  	PCE_ENABLE_CHAR_PPP=0
+		AC_MSG_RESULT([no (guess)])
+	fi
+  ]
+)
+AC_SUBST(PCE_ENABLE_CHAR_PPP)
+if test "x$PCE_ENABLE_CHAR_PPP" = "x1" ; then
+	AC_DEFINE(PCE_ENABLE_CHAR_PPP)
+fi
+
+
 AC_MSG_CHECKING([whether to enable the pty character driver])
 AC_ARG_ENABLE(char-pty,
   AC_HELP_STRING([--enable-char-pty], [Enable the pty character driver]),
@@ -858,6 +885,12 @@ if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
 	char1="$char1 posix"
 else
 	char2="$char2 posix"
+fi
+
+if test "x$PCE_ENABLE_CHAR_PPP" = "x1" ; then
+	char1="$char1 ppp"
+else
+	char2="$char2 ppp"
 fi
 
 if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
