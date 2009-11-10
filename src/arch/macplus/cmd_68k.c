@@ -864,6 +864,7 @@ void mac_cmd_h (cmd_t *cmd, macplus_t *sim)
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [[-]addr [cnt]]         disassemble\n"
 		"v [expr...]               evaluate expressions\n"
+		"w name addr cnt           save memory to file\n"
 	);
 }
 
@@ -1166,6 +1167,51 @@ void mac_cmd_u (cmd_t *cmd, macplus_t *sim)
 	saddr = addr;
 }
 
+static
+void mac_cmd_w (cmd_t *cmd, macplus_t *sim)
+{
+	unsigned long addr, cnt;
+	char           fname[256];
+	unsigned char  v;
+	FILE           *fp;
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &addr)) {
+		cmd_error (cmd, "address expected");
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &cnt)) {
+		cmd_error (cmd, "byte count expected");
+		return;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	fp = fopen (fname, "wb");
+
+	if (fp == NULL) {
+		pce_printf ("can't open file (%s)\n", fname);
+		return;
+	}
+
+	while (cnt > 0) {
+		v = e68_get_mem8 (sim->cpu, addr);
+		fputc (v, fp);
+
+		addr += 1;
+		cnt -= 1;
+	}
+
+	fclose (fp);
+}
+
 int mac_cmd (macplus_t *sim, cmd_t *cmd)
 {
 	if (sim->trm != NULL) {
@@ -1219,6 +1265,9 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "u")) {
 		mac_cmd_u (cmd, sim);
+	}
+	else if (cmd_match (cmd, "w")) {
+		mac_cmd_w (cmd, sim);
 	}
 	else {
 		return (1);
