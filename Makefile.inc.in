@@ -98,7 +98,7 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	NEWS README TODO autogen.sh config.guess config.sub \
 	configure configure.in gendep install-sh
 
-DIST += doc/keys.txt
+DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt
 
 # ----------------------------------------------------------------------
 
