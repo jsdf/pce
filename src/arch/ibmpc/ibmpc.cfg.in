@@ -366,10 +366,32 @@ section pc {
 	section cassette {
 		enable = 1
 
+		# The cassette data file. The file will be created if
+		# it does not exist.
 		file = "cas1.cas"
 
+		# The data format.
+		#
+		# pcm = 1: Read and write cassette data as 8 bit
+		#   signed PCM at 44100 HZ.
+		#
+		# pcm = 0: Read and write cassette data as binary.
+		#
+		# If pcm is not defined, PCM mode is set if the
+		# file name ends with ".pcm", binary mode otherwise.
+		#pcm = 1
+
+		# PCM filtering
+		#
+		# filter = 1: Apply a low-pass filter to the PCM data
+		#   written to the cassette file.
+		#
+		# filter = 0: The PCM data written to the cassette
+		#   file is a square wave.
+		filter = 1
+
 		# The initial cassette mode (load or save). The default
-		# is "load"
+		# is "load".
 		mode = "load"
 
 		# The initial tape file position. The default is 0.

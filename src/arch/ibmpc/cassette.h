@@ -25,7 +25,17 @@
 
 
 typedef struct {
+	long a[3];
+	long b[3];
+	long x[3];
+	long y[3];
+} pc_cas_iir2_t;
+
+
+typedef struct {
 	char          save;
+	char          pcm;
+	char          filter;
 
 	unsigned char motor;
 
@@ -37,19 +47,28 @@ typedef struct {
 	unsigned char data_out;
 	unsigned char data_inp;
 
+	int           pcm_out_vol;
+	long          pcm_out_val;
+
+	pc_cas_iir2_t pcm_out_iir;
+	pc_cas_iir2_t pcm_inp_iir;
+
+	unsigned      cas_out_cnt;
+	unsigned char cas_out_buf;
+
+	unsigned      cas_inp_cnt;
+	unsigned char cas_inp_buf;
+	unsigned char cas_inp_bit;
+
 	unsigned long clk;
+
+	unsigned long clk_pcm;
 
 	unsigned long clk_out;
 	unsigned long clk_inp;
 
-	unsigned      out_cnt;
-	unsigned char out_buf;
-
-	unsigned      inp_cnt;
-	unsigned char inp_buf;
-	unsigned char inp_bit;
-
 	char          close;
+	char          *fname;
 	FILE          *fp;
 } pc_cassette_t;
 
@@ -61,7 +80,13 @@ pc_cassette_t *pc_cas_new (void);
 void pc_cas_del (pc_cassette_t *cas);
 
 /*!***************************************************************************
- * @short Get the cassette mode
+ * @short  Set the cassette file
+ * @return True on error, false otherwise
+ *****************************************************************************/
+int pc_cas_set_fname (pc_cassette_t *cas, const char *fname);
+
+/*!***************************************************************************
+ * @short  Get the cassette mode
  * @return True if in save mode, false if in load mode
  *****************************************************************************/
 int pc_cas_get_mode (pc_cassette_t *cas);
@@ -71,6 +96,30 @@ int pc_cas_get_mode (pc_cassette_t *cas);
  * @param save If true set save mode, otherwise set load mode
  *****************************************************************************/
 void pc_cas_set_mode (pc_cassette_t *cas, int save);
+
+/*!***************************************************************************
+ * @short  Get the cassette pcm mode
+ * @return True if in pcm mode, false if in binary mode
+ *****************************************************************************/
+int pc_cas_get_pcm (pc_cassette_t *cas);
+
+/*!***************************************************************************
+ * @short Set the cassette pcm mode
+ * @param pcm If true set pcm mode, otherwise set binary mode
+ *****************************************************************************/
+void pc_cas_set_pcm (pc_cassette_t *cas, int pcm);
+
+/*!***************************************************************************
+ * @short  Get the cassette pcm filter mode
+ * @return True if in filtered pcm mode, false if in raw pcm mode
+ *****************************************************************************/
+int pc_cas_get_filter (pc_cassette_t *cas);
+
+/*!***************************************************************************
+ * @short Set the cassette pcm filter mode
+ * @param pcm If true set filtered pcm mode, otherwise set raw pcm mode
+ *****************************************************************************/
+void pc_cas_set_filter (pc_cassette_t *cas, int filter);
 
 /*!***************************************************************************
  * @short Rewind the cassette
@@ -91,8 +140,6 @@ unsigned long pc_cas_get_position (pc_cassette_t *cas);
  * @short Set the current load/save position
  *****************************************************************************/
 int pc_cas_set_position (pc_cassette_t *cas, unsigned long pos);
-
-int pc_cas_set_fname (pc_cassette_t *cas, const char *fname);
 
 void pc_cas_set_motor (pc_cassette_t *cas, unsigned char val);
 

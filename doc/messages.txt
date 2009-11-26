@@ -88,12 +88,22 @@ emu.tape.append
 	Move the read or write position to the end of the cassette file.
 
 emu.tape.file <filename>
-	Set a new cassette file.
+	Set a new cassette file. If the file name ends with ".pcm" or
+	".raw" then PCM mode is automatically enabled. If the file
+	name ends with ".cas" then binary mode is automatically
+	disabled. In all other cases the current PCM mode is not
+	changed.
+
+emu.tape.filter "0" | "1"
+	Disable or enable PCM output filtering.
 
 emu.tape.load [<position> | "end"]
 	Switch to load mode. If <position> is given, move the load
 	position to <position>. If "end" is specified, move the load
 	position to the end of the cassette file.
+
+emu.tape.pcm "0" | "1"
+	Disable or enable PCM mode.
 
 emu.tape.rewind
 	Move the read or write position to the beginning of the cassette
