@@ -209,3 +209,6 @@ dist-version:
 	$(QP)echo "  GEN    version"
 	$(QR)echo "pce  $(PCE_VERSION_MAJ) $(PCE_VERSION_MIN) $(PCE_VERSION_MIC)  $(PCE_VERSION_STR)" \
 		> "$(distdir)/version"
+
+release:
+	$(MAKE) PCE_VERSION_STR=$(PCE_VERSION_MAJ).$(PCE_VERSION_MIN).$(PCE_VERSION_MIC) dist
