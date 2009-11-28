@@ -20,123 +20,131 @@
 ;*****************************************************************************
 
 
+; pcever
+; Print the PCE version
+
+
 %include "pce.inc"
 
 
 section .text
 
-  org     0x100
+	org	0x100
 
-  jmp     start
-
-
-msg_vers  db "PCE version ", 0
-msg_rel   db " (release)", 0
-msg_dev   db " (dev)", 0
+	jmp	start
 
 
-; print a 16 bit unsigned integer in ax
+msg_vers	db "PCE version ", 0
+msg_rel		db " (release)", 0
+msg_dev		db " (dev)", 0
+
+
+; print the 16 bit unsigned integer in ax
 prt_uint16:
-  push    ax
-  push    cx
-  push    dx
-  push    bx
+	push	ax
+	push	cx
+	push	dx
+	push	bx
 
-  mov     bx, 10
-  xor     cx, cx
+	mov	bx, 10
+	xor	cx, cx
 
 .next1:
-  xor     dx, dx
+	xor	dx, dx
 
-  div     bx
-  add     dl, '0'
-  push    dx
-  inc     cx
+	div	bx
+	add	dl, '0'
+	push	dx
+	inc	cx
 
-  or      ax, ax
-  jnz     .next1
+	or	ax, ax
+	jnz	.next1
 
 .next2:
-  pop     ax
-  mov     ah, 0x0e
-  xor     bx, bx
-  int     0x10
-  loop    .next2
+	pop	ax
+	mov	ah, 0x0e
+	xor	bx, bx
+	int	0x10
+	loop	.next2
 
-  pop     bx
-  pop     dx
-  pop     cx
-  pop     ax
-  ret
+	pop	bx
+	pop	dx
+	pop	cx
+	pop	ax
+	ret
 
+
+; print the character in al
 prt_char:
-  push    ax
-  push    bx
+	push	ax
+	push	bx
 
-  mov     ah, 0x0e
-  xor     bx, bx
-  int     0x10
+	mov	ah, 0x0e
+	xor	bx, bx
+	int	0x10
 
-  pop     bx
-  pop     ax
-  ret
+	pop	bx
+	pop	ax
+	ret
 
+
+; print the string at ds:di
 prt_string:
-  push    ax
-  push    si
+	push	ax
+	push	si
 
 .next:
-  mov     ah, 0x0e
-  lodsb
-  or      al, al
-  jz      .done
-  int     0x10
-  jmp     .next
+	mov	ah, 0x0e
+	lodsb
+	or	al, al
+	jz	.done
+	int	0x10
+	jmp	.next
 
 .done:
-  pop     si
-  pop     ax
-  ret
+	pop	si
+	pop	ax
+	ret
 
 
 start:
-  mov     ax, cs
-  mov     ds, ax
+	mov	ax, cs
+	mov	ds, ax
 
-  mov     si, msg_vers
-  call    prt_string
+	mov	si, msg_vers
+	call	prt_string
 
-  pceh    PCEH_GET_VERS
-  mov     cx, ax
+	pceh	PCEH_GET_VERS
+	mov	cx, ax
 
-  mov     ah, 0
-  mov     al, ch
-  call    prt_uint16
+	mov	ah, 0
+	mov	al, ch
+	call	prt_uint16
 
-  mov     al, '.'
-  call    prt_char
+	mov	al, '.'
+	call	prt_char
 
-  mov     al, cl
-  call    prt_uint16
+	mov	al, cl
+	call	prt_uint16
 
-  mov     al, '.'
-  call    prt_char
+	mov	al, '.'
+	call	prt_char
 
-  mov     al, dh
-  call    prt_uint16
+	mov	al, dh
+	call	prt_uint16
 
-  mov     si, msg_rel
-  or      dl, dl
-  jnz     .release
-  mov     si, msg_dev
+	mov	si, msg_rel
+	or	dl, dl
+	jnz	.release
+	mov	si, msg_dev
 
 .release:
-  call    prt_string
+	call	prt_string
 
-  mov     al, 0x0d
-  call    prt_char
-  mov     al, 0x0a
-  call    prt_char
+	mov	al, 0x0d
+	call	prt_char
+	mov	al, 0x0a
+	call	prt_char
 
-  mov     ax, 0x4c00
-  int     0x21
+	mov	ax, 0x4c00
+	int	0x21

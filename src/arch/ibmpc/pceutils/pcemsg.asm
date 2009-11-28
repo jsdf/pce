@@ -3,7 +3,7 @@
 ;*****************************************************************************
 
 ;*****************************************************************************
-;* File name:   src/arch/ibmpc/pceutils/pcemsg.asm                           *
+;* File name:   pcemsg.asm                                                   *
 ;* Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
 ;* Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
@@ -29,115 +29,115 @@
 
 section .text
 
-  org     0x100
+	org	0x100
 
-  jmp     start
+	jmp	start
 
 
-msg_error db "error", 0x0d, 0x0a, 0x00
+msg_error	db "error", 0x0d, 0x0a, 0x00
 
 
 ; print string ds:si
 prt_string:
-  push    ax
-  push    si
+	push	ax
+	push	si
 
 .next:
-  mov     ah, 0x0e
-  lodsb
-  or      al, al
-  jz      .done
-  int     0x10
-  jmp     .next
+	mov	ah, 0x0e
+	lodsb
+	or	al, al
+	jz	.done
+	int	0x10
+	jmp	.next
 
 .done:
-  pop     si
-  pop     ax
-  ret
+	pop	si
+	pop	ax
+	ret
 
 
 ; get message string from ds:si to es:di
 get_msg_str:
-  jcxz    .done
+	jcxz	.done
 
 .skip:
-  cmp     byte [si], 32
-  ja      .start
-  inc     si
-  loop    .skip
+	cmp	byte [si], 32
+	ja	.start
+	inc	si
+	loop	.skip
 
-  jmp     .done
+	jmp	.done
 
 .start:
-  cmp     byte [si], '"'
-  je      .quote
+	cmp	byte [si], '"'
+	je	.quote
 
 .next:
-  cmp     byte [si], 32
-  jbe     .done
-  movsb
-  loop    .next
+	cmp	byte [si], 32
+	jbe	.done
+	movsb
+	loop	.next
 
-  jmp     .done
+	jmp	.done
 
 .quote:
-  inc     si
-  dec     cx
+	inc	si
+	dec	cx
 
 .next_quote:
-  jcxz    .done
-  lodsb
-  dec     cx
-  cmp     al, '"'
-  je      .done
-  stosb
-  jmp     .next_quote
+	jcxz	.done
+	lodsb
+	dec	cx
+	cmp	al, '"'
+	je	.done
+	stosb
+	jmp	.next_quote
 
-  stosb
-  loop    .next_quote
+	stosb
+	loop	.next_quote
 
 .done:
-  mov     al, 0x00
-  stosb
+	mov	al, 0x00
+	stosb
 
-  ret
+	ret
 
 
 start:
-  mov     ax, cs
-  mov     ds, ax
-  mov     es, ax
+	mov	ax, cs
+	mov	ds, ax
+	mov	es, ax
 
-  mov     si, 0x0080                    ; SI points to parameters
+	mov	si, 0x0080		; SI points to parameters
 
-  lodsb
-  mov     ah, 0
-  mov     cx, ax                        ; parameter size in CX
+	lodsb
+	mov	ah, 0
+	mov	cx, ax			; parameter size in CX
 
-  mov     di, buffer
+	mov	di, buffer
 
-  push    di
-  call    get_msg_str
+	push	di
+	call	get_msg_str
 
-  push    di
-  call    get_msg_str
+	push	di
+	call	get_msg_str
 
-  pop     di
-  pop     si
-  pceh    PCEH_MSG
-  jc      error
+	pop	di
+	pop	si
+	pceh	PCEH_MSG
+	jc	error
 
-  mov     al, 0x00
-  jmp     done
+	mov	al, 0x00
+	jmp	done
 
 error:
-  mov     si, msg_error
-  call    prt_string
+	mov	si, msg_error
+	call	prt_string
 
-  mov     al, 0x01
+	mov	al, 0x01
 
 done:
-  mov     ah, 0x4c
-  int     0x21
+	mov	ah, 0x4c
+	int	0x21
 
 buffer:

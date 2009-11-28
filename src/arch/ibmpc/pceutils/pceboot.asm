@@ -21,6 +21,7 @@
 
 
 ; pceboot drive [r]
+; set the boot drive and optionally reboot
 
 
 %include "pce.inc"
@@ -28,74 +29,72 @@
 
 section .text
 
-  org     0x100
-
-;  jmp     start
+	org	0x100
 
 start:
-  mov     ax, cs
-  mov     ds, ax
+	mov	ax, cs
+	mov	ds, ax
 
-  mov     si, 0x0080                    ; SI points to parameters
+	mov	si, 0x0080		; SI points to parameters
 
-  lodsb
-  mov     ah, 0
-  mov     cx, ax                        ; parameter size in CX
+	lodsb
+	mov	ah, 0
+	mov	cx, ax			; parameter size in CX
 
-  jcxz    done
+	jcxz	done
 
-  xor     dx, dx                        ; init drive number
+	xor	dx, dx			; init drive number
 
 skipspace1:
-  cmp     byte [si], ' '
-  jne     nextdigit
-  inc     si
-  loop    skipspace1
+	cmp	byte [si], ' '
+	jne	nextdigit
+	inc	si
+	loop	skipspace1
 
-  jmp     done
+	jmp	done
 
 nextdigit:
-  mov     al, [si]
-  cmp     al, '0'
-  jb      digitdone
-  cmp     al, '9'
-  ja      digitdone
+	mov	al, [si]
+	cmp	al, '0'
+	jb	digitdone
+	cmp	al, '9'
+	ja	digitdone
 
-  inc     si
+	inc	si
 
-  mov     dh, dl
-  shl     dl, 1
-  shl     dl, 1
-  shl     dl, 1
-  add     dl, dh
-  add     dl, dh
-  sub     al, '0'
-  add     dl, al
-  loop    nextdigit
+	mov	dh, dl
+	shl	dl, 1
+	shl	dl, 1
+	shl	dl, 1
+	add	dl, dh
+	add	dl, dh
+	sub	al, '0'
+	add	dl, al
+	loop	nextdigit
 
 digitdone:
-  mov     al, dl
-  pceh    PCEH_SET_BOOT
+	mov	al, dl
+	pceh	PCEH_SET_BOOT
 
 skipspace2:
-  jcxz    done
+	jcxz	done
 
-  lodsb
-  dec     cx
+	lodsb
+	dec	cx
 
-  cmp     al, ' '
-  je      skipspace2
+	cmp	al, ' '
+	je	skipspace2
 
-  cmp     al, 'r'
-  je      reboot
-  cmp     al, 'R'
-  je      reboot
+	cmp	al, 'r'
+	je	reboot
+	cmp	al, 'R'
+	je	reboot
 
-  jmp     done
+	jmp	done
 
 reboot:
-  jmp     0xffff:0x0000
+	jmp	0xffff:0x0000
 
 done:
-  mov     ax, 0x4c00
-  int     0x21
+	mov	ax, 0x4c00
+	int	0x21

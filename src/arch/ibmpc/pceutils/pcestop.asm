@@ -20,17 +20,19 @@
 ;*****************************************************************************
 
 
+; pcestop
+; Fall back to the monitor
+
+
 %include "pce.inc"
 
 
 section text
 
-  org     0x100
-
-;  jmp     start
+	org	0x100
 
 start:
-  pceh    PCEH_STOP
+	pceh	PCEH_STOP
 
-  mov     ax, 0x4c00
-  int     0x21
+	mov	ax, 0x4c00
+	int	0x21
