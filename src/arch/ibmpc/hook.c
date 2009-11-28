@@ -127,6 +127,32 @@ void pc_int_1a (ibmpc_t *pc)
 }
 
 static
+void pc_hook_version (ibmpc_t *pc)
+{
+	unsigned short es, di;
+	const char     *str;
+
+	es = e86_get_es (pc->cpu);
+	di = e86_get_di (pc->cpu);
+	str = PCE_VERSION_STR;
+
+	e86_set_ax (pc->cpu, (PCE_VERSION_MAJ << 8) | PCE_VERSION_MIN);
+	e86_set_dx (pc->cpu, (PCE_VERSION_MIC << 8));
+
+	if ((es == 0) && (di == 0)) {
+		return;
+	}
+
+	while (*str != 0) {
+		e86_set_mem8 (pc->cpu, es, di, *str);
+		di = (di + 1) & 0xffff;
+		str += 1;
+	}
+
+	e86_set_mem8 (pc->cpu, es, di, 0);
+}
+
+static
 void pc_hook_msg (ibmpc_t *pc)
 {
 	unsigned       i, p;
@@ -272,8 +298,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 		break;
 
 	case PCEH_GET_VERS:
-		e86_set_ax (pc->cpu, (PCE_VERSION_MAJ << 8) | PCE_VERSION_MIN);
-		e86_set_dx (pc->cpu, (PCE_VERSION_MIC << 8));
+		pc_hook_version (pc);
 		break;
 
 	case PCEH_XMS:
