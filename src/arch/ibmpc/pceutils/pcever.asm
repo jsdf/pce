@@ -34,9 +34,9 @@ section .text
 	jmp	start
 
 
-msg_vers	db "PCE version ", 0
-msg_rel		db " (release)", 0
-msg_dev		db " (dev)", 0
+str1	db "PCE version ", 0
+str2	db " (", 0
+str3	db ")", 0x0d, 0x0a, 0
 
 
 ; print the 16 bit unsigned integer in ax
@@ -110,11 +110,20 @@ prt_string:
 start:
 	mov	ax, cs
 	mov	ds, ax
+	mov	es, ax
 
-	mov	si, msg_vers
+	mov	si, str1
 	call	prt_string
 
+	mov	di, vers
 	pceh	PCEH_GET_VERS
+
+	mov	si, vers
+	call	prt_string
+
+	mov	si, str2
+	call	prt_string
+
 	mov	cx, ax
 
 	mov	ah, 0
@@ -133,18 +142,10 @@ start:
 	mov	al, dh
 	call	prt_uint16
 
-	mov	si, msg_rel
-	or	dl, dl
-	jnz	.release
-	mov	si, msg_dev
-
-.release:
+	mov	si, str3
 	call	prt_string
-
-	mov	al, 0x0d
-	call	prt_char
-	mov	al, 0x0a
-	call	prt_char
 
 	mov	ax, 0x4c00
 	int	0x21
+
+vers:
