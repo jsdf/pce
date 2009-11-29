@@ -1,3 +1,29 @@
+0.2.0	2009-11-30
+
+	* Add a Macintosh Plus emulator.
+	* Add emulation of the IBM PC cassette interface.
+	* Serial and parallel ports are now connected to generic character
+	  drivers.
+	* Add VGA emulation. The emulated VGA card is a plain IBM VGA without
+	  extras.
+	* Add Wyse-700 emulation.
+	* Support HGC character height in graphics mode. This supports
+	  odd HGC graphic modes like 640*300 that are sometimes used
+	  by games.
+	* The MDA and HGC screen colors can now be configured.
+	* Support blinking cursor and characters. The blink rate can
+	  be set in the config file.
+	* Fix a bug in the 80186 emulation that lead some programs
+	  to detect the CPU as an 80286.
+	* The PC BIOS is now patched at runtime which means that a completely
+	  unmodified PC or XT BIOS should work.
+	* Remove the half disassembled BIOS source. A binary BIOS ROM image
+	  is now required.
+	* All config file options that specify a number now accept the
+	  suffixes "K", "M" and "G" to multiply the number by 1024, 1048576
+	  and 1073741824, respectively.
+	* The monitor interface now works under Windows.
+
 0.1.8	2008-11-07	r863
 
 	* A complete rewrite of the terminal code.
