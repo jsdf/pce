@@ -1,0 +1,62 @@
+PCE/ibmpc - IBM PC Emulator
+==============================================================================
+
+PCE/ibmpc is an IBM PC emulator. It emulates most (but see below) of the
+hardware of an IBM PC 5150. The emulation is complete enough to boot DOS and
+run most DOS applications.
+
+Emulated parts:
+
+Part		Status
+
+CPU		An 8086/80186 emulator. The specific CPU model can be set
+		to 8088, 8086, 80188 or 80186 at run time.
+
+BIOS		An unmodified BIOS from an IBM PC or PC/XT is needed.
+
+8237 DMAC	Supported, but not particularily useful yet
+
+8250 UART	Supported
+
+8253 PIT	Only counting modes 0, 2 and 3 are supported at this time
+
+8255 PPI	Supported
+
+8259 PIC	Supported
+
+Sound		Not yet supported
+
+Video		Supported video cards are: MDA, CGA, Plantronics ColorPlus,
+		Wyse 700, HGC, EGA, VGA
+
+EMS		Supported, with a custom DOS driver.
+
+XMS		Supported, with a custom DOS driver.
+
+Disks		Only supported through INT 13h at the moment.
+
+Sound		Not yet supported.
+
+Mouse		A Microsoft serial mouse is emulated.
+
+Parallel Port	Partially supported. Output is written to a file.
+
+Serial Port	Supported.
+
+
+Configuration
+==============================================================================
+
+PCE/ibmpc is configured by means of a config file. A documented example config
+file is installed in $(prefix)/etc/pce-ibmpc.cfg.
+
+
+Running PCE/ibmpc
+==============================================================================
+
+After starting the emulator, pce is in command mode (unless the -r
+option was used). Type 'h' to get a short summary of the available
+commands.
+
+The 'g' command starts the simulation. It can be interrupted by
+pressing Ctrl-`.
