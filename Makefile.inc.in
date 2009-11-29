@@ -99,6 +99,7 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	configure configure.in gendep install-sh
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt
+DIST += doc/monitor.txt
 
 # ----------------------------------------------------------------------
 

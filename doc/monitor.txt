@@ -1,0 +1,253 @@
+The PCE monitor interface
+==============================================================================
+
+Generic monitor commands
+==============================================================================
+
+These commands are available in both PCE/ibmpc and PCE/macplus. Addresses
+in PCE/ibmpc take the form <expr>[:<expr>], in PCE/macplus they are a
+single expression.
+
+b c [index]
+	Clear a breakpoint. If no breakpoint index is specified, clear all
+	breakpoints.
+
+b l
+	List all breakpoints.
+
+b s s addr [pass [reset]]
+	Set an address breakpoint [pass=1 reset=0]. The breakpoint triggers
+	after <addr> has been reached <pass> times. If <reset> is 0 then
+	the breakpoint is cleared after triggering, otherwise it is reset with
+	the original values of <addr>, <pass> and <reset>.
+
+b s x expr [pass [reset]]
+	Set an expression breakpoint [pass=1 reset=0]. The breakpoint triggers
+	after <expr> evaluates to true (non-zero) <pass> times. Note that
+	<expr> is a string and will not be evaluated until the emulator is
+	run with breakpoints enabled (gb, see below). If <expr> contains
+	whitespace, it must be enclosed in double quotes.
+
+c [cnt]
+	Clock the emulated machine <cnt> times. The default is 1.
+
+d [addr [cnt]]
+	Display <cnt> bytes of memory at address <addr>.
+
+e addr [val | string...]
+	Enter bytes into memory.
+
+g b [addr...]
+	Run with breakpoints. If one or more addresses are given, address
+	breakpoints are set at those addresses with pass=1 and reset=0.
+	Otherwise only breakpoints set by bss or bsx are used.
+
+g
+	Run without breakpoints.
+
+h
+	Print help summary.
+
+m msg [val]
+	Send a message to the emulation core. Refer to doc/messages.txt
+	for a list of valid messages.
+
+p [cnt]
+	Execute cnt instructions, without trace in calls. The default is 1.
+
+q
+	Quit.
+
+r [reg [val]]
+	Set a register or print a register value.
+
+t [cnt]
+	Execute cnt instructions. The default is 1.
+
+u [addr [cnt]]
+	Disassemble <cnt> bytes at <addr>.
+
+v [expr...]
+	Evaluate expressions. If no expression is given, print a list of
+	all user-defined variables.
+
+w <filename> addr cnt
+	Save <cnt> bytes of memory at address <addr> to file <filename>.
+
+
+PCE/ibmpc monitor commands
+==============================================================================
+
+g far
+	Run until CS changes.
+
+h m
+	Print help on messages.
+
+i [b|w] <port>
+	Input a byte or word from a port.
+
+o [b|w] <port> <val>
+	Output a byte or word to a port.
+
+pq c
+	Clear the prefetch queue.
+
+pq f
+	Fill the prefetch queue.
+
+pq s
+	Print prefetch queue status.
+
+s [what]
+	Print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms).
+
+
+PCE/macplus monitor commands
+==============================================================================
+
+copy src dst cnt
+	Copy <cnt> bytes of memory from address <src> to address <dst>.
+
+f addr size [val...]
+	Find bytes in memory
+
+g e [exception]
+	Run until exception"
+
+halt [val]
+	Set halt state [2]
+
+reset
+	Reset the emulated machine.
+
+rte
+	Execute to next rte.
+
+s [what]
+	Print status (cpu|mem|scc|via).
+
+
+Expressions
+==============================================================================
+
+Expressions can be used in commands wherever a numerical value is expected.
+All expressions are evaluated using 32 bit unsigned arithmetic.
+
+%<ident>	Variables defined by the emulation core (e.g. CPU registers,
+		see below)
+$<ident>	User defined variables
+const		A hexadecimal constant
+(<expr>)	Force priority
+
+!x		Logical negation
+~x		Binary negation
++x		Positive sign (ignored)
+-x		Arithmetic negation
+
+x * y		Multiplication
+x / y		Division
+x % y		Modulo
+
+x + y		Addition
+x - y		Subtractions
+
+x << y		Shift left
+x >> y		Shift right
+
+x < y		Less than
+x > y		Greater than
+x <= y		Less than or equal
+x >= y		Greater than or equal
+
+x == y		Equal
+x != y		Not equal
+
+x & y		Binary and
+
+x ^ y		Binary exclusive or
+
+x | y		Binary or
+
+x && y		Logical and
+
+x || y		Logical or
+
+x ? y : z	If .. then .. else
+
+x = y		Assignment
+x += y		Assignemnt with addition
+x -= y		Assignment with subtraction
+x *= y		Assignment with multiplication
+x /= y		Assignment with division
+x <<= y		Assignment with shift left
+x >>= y		Assignment with shift right
+x |= y		Assignment with binary or
+x &= y		Assignment with bianry and
+x ^= y		Assignment with binary exclusive or
+
+x, y		Expression sequence
+
+
+PCE/ibmpc symbols
+==============================================================================
+
+%intv					If an interrupt occured before the
+					current instruction, %intv contains
+					the number of that interrupt. Otherwise
+					%intv contains the number of the last
+					interrupt plus 256.
+
+%ax	%ah	%al			Data registers
+%bx	%bh	%bl
+%cx	%ch	%cl
+%dx	%dh	%dl
+%sp					The stack pointer
+%bp
+%si
+%di
+
+%cs					Segment registers
+%ds
+%es
+%ss
+
+%ip					The instruction pointer
+%flags					The flag register
+
+
+PCE/macplus symbols
+==============================================================================
+
+%d0	%d0.b	%d0.w	%d0.l		Data registers
+%d1	%d1.b	%d1.w	%d1.l
+%d2	%d2.b	%d2.w	%d2.l
+%d3	%d3.b	%d3.w	%d3.l
+%d4	%d4.b	%d4.w	%d4.l
+%d5	%d5.b	%d5.w	%d5.l
+%d6	%d6.b	%d6.w	%d6.l
+%d7	%d7.b	%d7.w	%d7.l
+
+%a0	%a0.b	%a0.w	%a0.l		Address registers
+%a1	%a1.b	%a1.w	%a1.l
+%a2	%a2.b	%a2.w	%a2.l
+%a3	%a3.b	%a3.w	%a3.l
+%a4	%a4.b	%a4.w	%a4.l
+%a5	%a5.b	%a5.w	%a5.l
+%a6	%a6.b	%a6.w	%a6.l
+%a7	%a7.b	%a7.w	%a7.l
+
+%sp					The stack pointer
+%usp					The user stack pointer
+%ssp					The supervisor stack pointer
+
+%sr					The status register
+%ccr					The condition code register
+
+%pc					The current PC
+%lpc					The last PC
+
+%op0					The word at (PC)
+%op1					The word at (PC + 2)
+%op2					The word at (PC + 4)
+%op3					The word at (PC + 6)
