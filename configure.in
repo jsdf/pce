@@ -587,7 +587,7 @@ AC_ARG_ENABLE(char-posix,
 	test "x$ac_cv_header_poll_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
 	test "x$ac_cv_header_sys_stat_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
 	test "x$ac_cv_header_unistd_h" = "xyes" || PCE_ENABLE_CHAR_POSIX=0
-	if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
+	if test "x$PCE_ENABLE_CHAR_POSIX" = "x1" ; then
 		AC_MSG_RESULT([yes (guess)])
 	else
 		AC_MSG_RESULT([no (guess)])
