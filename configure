@@ -1349,29 +1349,29 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-static-sdl     Link to static SDL [no]
-  --disable-largefile     Disable large file support
-  --enable-ibmpc          Enable the IBM PC emulator
-  --enable-ibmpc-rom      Build the IBM PC ROM from source
-  --enable-macplus        Enable the Mac Plus emulator
-  --enable-macplus-rom    Build the Mac Plus ROM from source
-  --enable-sim405         Enable the PPC405 simulator
-  --enable-sim6502        Enable the 6502 simulator
-  --enable-sims32         Enable the sparc32 simulator
-  --enable-simarm         Enable the arm simulator
-  --enable-tun            Enable tun networking
-  --enable-char-posix     Enable the posix file character driver
-  --enable-char-ppp       Enable the PPP character driver
-  --enable-char-pty       Enable the pty character driver
-  --enable-char-slip      Enable the SLIP character driver
-  --enable-char-tcp       Enable the TCP character driver
-  --enable-char-termios   Enable the termios character driver
-  --enable-readline       Enable readline
+  --disable-largefile     Disable large file support [no]
+  --enable-ibmpc          Enable the IBM PC emulator [yes]
+  --enable-ibmpc-rom      Build the IBM PC ROM from source [no]
+  --enable-macplus        Enable the Mac Plus emulator [yes]
+  --enable-macplus-rom    Build the Mac Plus ROM from source [no]
+  --enable-sim405         Enable the PPC405 simulator [yes]
+  --enable-sim6502        Enable the 6502 simulator [yes]
+  --enable-sims32         Enable the sparc32 simulator [yes]
+  --enable-simarm         Enable the arm simulator [yes]
+  --enable-tun            Enable tun networking [guessed]
+  --enable-char-posix     Enable the posix file character driver [guessed]
+  --enable-char-ppp       Enable the PPP character driver [guessed]
+  --enable-char-pty       Enable the pty character driver [guessed]
+  --enable-char-slip      Enable the SLIP character driver [guessed]
+  --enable-char-tcp       Enable the TCP character driver [guessed]
+  --enable-char-termios   Enable the termios character driver [guessed]
+  --enable-readline       Enable readline [guessed]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-x                use the X Window System
-  --with-sdl              Build the SDL terminal
+  --with-sdl              Build the SDL terminal [detected]
 
 Some influential environment variables:
   CC          C compiler command
