@@ -103,6 +103,30 @@ void mac_set_reset (void *ext, unsigned char val)
 }
 
 static
+void mac_set_vbuf (macplus_t *sim, unsigned long addr)
+{
+	unsigned char *vbuf;
+	mem_blk_t     *blk;
+
+	if (addr < mem_blk_get_size (sim->ram)) {
+		vbuf = mem_blk_get_data (sim->ram) + addr;
+	}
+	else {
+		blk = mem_get_blk (sim->mem, addr);
+
+		if (blk == NULL) {
+			mac_video_set_vbuf (sim->video, NULL);
+			return;
+		}
+
+		vbuf = mem_blk_get_data (blk);
+		vbuf += mem_blk_get_addr (blk) - sim->vbuf1;
+	}
+
+	mac_video_set_vbuf (sim->video, vbuf);
+}
+
+static
 void mac_check_mouse (macplus_t *sim)
 {
 	if ((sim->mouse_delta_x <= -2) || (sim->mouse_delta_x >= 2)) {
@@ -223,20 +247,18 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 	}
 
 	if ((old ^ val) & 0x40) {
-		unsigned char *vbuf;
-
-		vbuf = mem_blk_get_data (sim->ram);
+		unsigned long addr;
 
 		if (val & 0x40) {
 			mac_log_deb ("main video buffer\n");
-			vbuf += sim->vbuf1;
+			addr = sim->vbuf1;
 		}
 		else {
 			mac_log_deb ("alternate video buffer\n");
-			vbuf += sim->vbuf2;
+			addr = sim->vbuf2;
 		}
 
-		mac_video_set_vbuf (sim->video, vbuf);
+		mac_set_vbuf (sim, addr);
 	}
 
 	if ((old ^ val) & 0x08) {
@@ -729,7 +751,7 @@ void mac_setup_terminal (macplus_t *sim, ini_sct_t *ini)
 static
 void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 {
-	unsigned long addr;
+	unsigned long addr1, addr2;
 	ini_sct_t     *sct;
 	int           realtime;
 
@@ -739,29 +761,34 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 
 	sct = ini_next_sct (ini, NULL, "video");
 
-	addr = mem_blk_get_size (sim->ram);
-	addr = (addr < 0x5900) ? 0 : (addr - 0x5900);
+	addr1 = mem_blk_get_size (sim->ram);
+	addr1 = (addr1 < 0x5900) ? 0 : (addr1 - 0x5900);
 
-	if (sct != NULL) {
-		ini_get_uint32 (sct, "address", &addr, addr);
-		ini_get_bool (sct, "realtime", &realtime, 1);
-	}
+	ini_get_uint32 (sct, "address", &addr2, addr1);
+	ini_get_bool (sct, "realtime", &realtime, 1);
 
 	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX realtime=%d\n",
-		addr, realtime
+		addr2, realtime
 	);
 
-	sim->vbuf1 = addr;
-	sim->vbuf2 = addr - 0x8000;
+	sim->vbuf1 = addr2;
+
+	if ((addr1 == addr2) && (addr2 >= 0x8000)) {
+		sim->vbuf2 = addr2 - 0x8000;
+	}
+	else {
+		sim->vbuf2 = addr2;
+	}
 
 	sim->video = mac_video_new();
+
 	if (sim->video == NULL) {
 		return;
 	}
 
 	mac_video_set_vbi_fct (sim->video, sim, mac_interrupt_vbi);
 
-	mac_video_set_vbuf (sim->video, mem_blk_get_data (sim->ram) + sim->vbuf1);
+	mac_set_vbuf (sim, sim->vbuf1);
 
 	mac_video_set_realtime (sim->video, realtime);
 
