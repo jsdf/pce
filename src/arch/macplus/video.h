@@ -27,15 +27,17 @@
 #include <terminal/terminal.h>
 
 
-#define MAC_VIDEO_W       512
-#define MAC_VIDEO_H       342
-#define MAC_VIDEO_BUFSIZE ((MAC_VIDEO_W / 8) * MAC_VIDEO_H)
-
-
 typedef struct {
 	const unsigned char *vbuf;
 
-	unsigned char       vcmp[MAC_VIDEO_BUFSIZE];
+	unsigned            w;
+	unsigned            h;
+
+	unsigned            cmp_cnt;
+
+	unsigned char       *vcmp;
+
+	unsigned char       *rgb;
 
 	unsigned long       clk;
 	unsigned long       clkacc;
@@ -51,8 +53,8 @@ typedef struct {
 } mac_video_t;
 
 
-void mac_video_init (mac_video_t *mv);
-mac_video_t *mac_video_new (void);
+int mac_video_init (mac_video_t *mv, unsigned w, unsigned h);
+mac_video_t *mac_video_new (unsigned w, unsigned h);
 
 void mac_video_free (mac_video_t *mv);
 void mac_video_del (mac_video_t *mv);

@@ -34,10 +34,27 @@
 #define MAC_VIDEO_VB2 130240
 
 
-void mac_video_init (mac_video_t *mv)
+int mac_video_init (mac_video_t *mv, unsigned w, unsigned h)
 {
 	mv->vbuf = NULL;
 	mv->trm = NULL;
+
+	mv->w = w;
+	mv->h = h;
+
+	mv->cmp_cnt = 8;
+
+	mv->vcmp = malloc ((unsigned long) ((mv->w + 7) / 8) * mv->h);
+
+	if (mv->vcmp == NULL) {
+		return (1);
+	}
+
+	mv->rgb = malloc (3UL * (unsigned long) w * mv->cmp_cnt);
+
+	if (mv->rgb == NULL) {
+		return (1);
+	}
 
 	mv->clk = 0;
 	mv->clkacc = 0;
@@ -48,18 +65,24 @@ void mac_video_init (mac_video_t *mv)
 	mv->vbi_val = 0;
 	mv->vbi_ext = NULL;
 	mv->set_vbi = NULL;
+
+	return (0);
 }
 
-mac_video_t *mac_video_new (void)
+mac_video_t *mac_video_new (unsigned w, unsigned h)
 {
 	mac_video_t *mv;
 
 	mv = malloc (sizeof (mac_video_t));
+
 	if (mv == NULL) {
 		return (NULL);
 	}
 
-	mac_video_init (mv);
+	if (mac_video_init (mv, w, h)) {
+		free (mv);
+		return (NULL);
+	}
 
 	return (mv);
 }
@@ -97,7 +120,7 @@ void mac_video_set_terminal (mac_video_t *mv, terminal_t *trm)
 	mv->trm = trm;
 
 	if (mv->trm != NULL) {
-		trm_open (mv->trm, 512, 342);
+		trm_open (mv->trm, mv->w, mv->h);
 	}
 }
 
@@ -122,8 +145,7 @@ void mac_video_update (mac_video_t *mv)
 	unsigned            i, j;
 	unsigned            k, n;
 	const unsigned char *src;
-	unsigned char       *dst;
-	unsigned char       rgb[512 * 8 * 3];
+	unsigned char       *dst, *rgb;
 
 	if (mv->trm == NULL) {
 		return;
@@ -133,19 +155,21 @@ void mac_video_update (mac_video_t *mv)
 		return;
 	}
 
-	trm_set_size (mv->trm, MAC_VIDEO_W, MAC_VIDEO_H);
+	trm_set_size (mv->trm, mv->w, mv->h);
 
 	src = mv->vbuf;
 	dst = mv->vcmp;
+	rgb = mv->rgb;
 
 	y = 0;
-	while (y < MAC_VIDEO_H) {
-		n = MAC_VIDEO_H - y;
-		if (n > 8) {
-			n = 8;
+	while (y < mv->h) {
+		n = mv->h - y;
+
+		if (n > mv->cmp_cnt) {
+			n = mv->cmp_cnt;
 		}
 
-		k = n * (MAC_VIDEO_W / 8);
+		k = n * ((mv->w + 7) / 8);
 
 		if (memcmp (dst, src, k) != 0) {
 			memcpy (dst, src, k);

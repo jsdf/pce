@@ -752,6 +752,7 @@ static
 void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 {
 	unsigned long addr1, addr2;
+	unsigned      w, h;
 	ini_sct_t     *sct;
 	int           realtime;
 
@@ -766,9 +767,11 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 
 	ini_get_uint32 (sct, "address", &addr2, addr1);
 	ini_get_bool (sct, "realtime", &realtime, 1);
+	ini_get_uint16 (sct, "width", &w, 512);
+	ini_get_uint16 (sct, "height", &h, 342);
 
-	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX realtime=%d\n",
-		addr2, realtime
+	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX w=%u h=%u realtime=%d\n",
+		addr2, w, h, realtime
 	);
 
 	sim->vbuf1 = addr2;
@@ -780,7 +783,7 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 		sim->vbuf2 = addr2;
 	}
 
-	sim->video = mac_video_new();
+	sim->video = mac_video_new (w, h);
 
 	if (sim->video == NULL) {
 		return;
