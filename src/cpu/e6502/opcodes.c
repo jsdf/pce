@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/opcodes.c                                      *
  * Created:     2004-05-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -851,7 +851,14 @@ static void op_66 (e6502_t *c)
 /* OP 68: PLA */
 static void op_68 (e6502_t *c)
 {
-	e6502_set_a (c, e6502_pull (c));
+	unsigned char val;
+
+	val = e6502_pull (c);
+
+	e6502_set_a (c, val);
+	e6502_set_nf (c, val & 0x80);
+	e6502_set_zf (c, (val & 0xff) == 0);
+
 	e6502_set_clk (c, 1, 4);
 }
 
