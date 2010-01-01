@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.c                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -253,11 +253,13 @@ void e6502_execute (e6502_t *c)
 	if (c->nmi_pnd) {
 		c->nmi_pnd = 0;
 		e6502_trap (c, 0xfffaU);
+		c->inscnt += 1;
 		return;
 	}
 
 	if ((c->irq_val != 0) && (e6502_get_if (c) == 0)) {
 		e6502_trap (c, 0xfffeU);
+		c->inscnt += 1;
 		return;
 	}
 
