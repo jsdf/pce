@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.h                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -41,9 +41,6 @@
 struct e6502_t;
 
 
-typedef unsigned char (*e6502_get_uint8_f) (void *ext, unsigned long addr);
-typedef void (*e6502_set_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-
 typedef void (*e6502_opcode_f) (struct e6502_t *c);
 
 
@@ -65,9 +62,11 @@ typedef struct e6502_t {
 	unsigned char      nmi_val;
 	unsigned char      nmi_pnd;
 
-	void               *mem;
-	e6502_get_uint8_f  mem_get_uint8;
-	e6502_set_uint8_f  mem_set_uint8;
+	void               *mem_rd_ext;
+	void               *mem_wr_ext;
+
+	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
+	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
 
 	unsigned char      *ram;
 	unsigned short     ram_lo;
@@ -131,7 +130,7 @@ unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 		return (c->ram[addr]);
 	}
 
-	return (c->mem_get_uint8 (c->mem, addr));
+	return (c->get_uint8 (c->mem_rd_ext, addr));
 }
 
 static inline
@@ -141,7 +140,7 @@ void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 		c->ram[addr] = val;
 	}
 	else {
-		c->mem_set_uint8 (c->mem, addr, val);
+		c->set_uint8 (c->mem_wr_ext, addr, val);
 	}
 }
 
@@ -180,6 +179,8 @@ void e6502_set_ram (e6502_t *c, unsigned char *ram,
 	unsigned short lo, unsigned short hi
 );
 
+void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8);
+void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8);
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
 
 

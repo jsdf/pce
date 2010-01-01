@@ -47,9 +47,11 @@ void e6502_init (e6502_t *c)
 	c->nmi_val = 0;
 	c->nmi_pnd = 0;
 
-	c->mem = NULL;
-	c->mem_get_uint8 = &e6502_get_mem_uint8;
-	c->mem_set_uint8 = &e6502_set_mem_uint8;
+	c->mem_rd_ext = NULL;
+	c->mem_wr_ext = NULL;
+
+	c->get_uint8 = e6502_get_mem_uint8;
+	c->set_uint8 = e6502_set_mem_uint8;
 
 	c->ram = NULL;
 	c->ram_lo = 0xffffU;
@@ -102,11 +104,25 @@ void e6502_set_ram (e6502_t *c, unsigned char *ram, unsigned short lo, unsigned 
 	c->ram_hi = hi;
 }
 
+void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8)
+{
+	c->mem_rd_ext = ext;
+	c->get_uint8 = get8;
+}
+
+void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8)
+{
+	c->mem_wr_ext = ext;
+	c->set_uint8 = set8;
+}
+
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8)
 {
-	c->mem = mem;
-	c->mem_get_uint8 = (e6502_get_uint8_f) get8;
-	c->mem_set_uint8 = (e6502_set_uint8_f) set8;
+	c->mem_rd_ext = mem;
+	c->mem_wr_ext = mem;
+
+	c->get_uint8 = get8;
+	c->set_uint8 = set8;
 }
 
 static
