@@ -274,9 +274,9 @@ unsigned char e6502_op_lsr (e6502_t *c, unsigned char s)
 {
 	unsigned char d;
 
-	d = (s & 0xff) >> 1;
+	d = (s >> 1) & 0x7f;
 
-	e6502_set_nf (c, d & 0x80);
+	e6502_set_nf (c, 0);
 	e6502_set_zf (c, d == 0);
 	e6502_set_cf (c, s & 0x01);
 
@@ -316,7 +316,7 @@ unsigned char e6502_op_ror (e6502_t *c, unsigned char s)
 {
 	unsigned char d;
 
-	d = ((s & 0xff) >> 1) | (e6502_get_cf (c) ? 0x80 : 0x00);
+	d = ((s >> 1) & 0x7f) | (e6502_get_cf (c) ? 0x80 : 0x00);
 
 	e6502_set_nf (c, d & 0x80);
 	e6502_set_zf (c, d == 0);
