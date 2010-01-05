@@ -70,7 +70,7 @@ void e6502_trap (e6502_t *c, unsigned short addr)
 	e6502_set_if (c, 1);
 
 	e6502_set_pc (c, e6502_get_mem16 (c, addr));
-	e6502_set_clk (c, 0, 8);
+	e6502_set_clk (c, 0, 7);
 }
 
 
