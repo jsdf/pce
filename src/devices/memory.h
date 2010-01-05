@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.h                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -282,6 +282,12 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del);
  * @param blk The memory block
  *****************************************************************************/
 void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk);
+
+/*!***************************************************************************
+ * @short Remove all memory blocks and delete marked blocks
+ * @param mem The memory structure
+ *****************************************************************************/
+void mem_rmv_all (memory_t *mem);
 
 /*!***************************************************************************
  * @short Get a memory block containing an address

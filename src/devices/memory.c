@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.c                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -591,6 +591,20 @@ void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk)
 	}
 
 	mem->cnt = j;
+	mem->last = NULL;
+}
+
+void mem_rmv_all (memory_t *mem)
+{
+	unsigned i;
+
+	for (i = 0; i < mem->cnt; i++) {
+		if (mem->lst[i].del) {
+			mem_blk_del (mem->lst[i].blk);
+		}
+	}
+
+	mem->cnt = 0;
 	mem->last = NULL;
 }
 
