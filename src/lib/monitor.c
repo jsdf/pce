@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/monitor.c                                            *
  * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -259,6 +259,9 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, ">")) {
 				mon_cmd_redir_out (mon, &cmd);
+			}
+			else {
+				cmd_error (&cmd, "unknown command");
 			}
 		}
 	};
