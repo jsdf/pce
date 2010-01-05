@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/ea.c                                           *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -91,6 +91,7 @@ unsigned short e6502_get_ea_zpg_x (e6502_t *c)
 	e6502_get_inst1 (c);
 
 	c->ea = (c->inst[1] + e6502_get_x (c)) & 0xff;
+	c->ea_page = 0;
 
 	return (c->ea);
 }
@@ -100,6 +101,7 @@ unsigned short e6502_get_ea_zpg_y (e6502_t *c)
 	e6502_get_inst1 (c);
 
 	c->ea = (c->inst[1] + e6502_get_y (c)) & 0xff;
+	c->ea_page = 0;
 
 	return (c->ea);
 }
