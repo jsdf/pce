@@ -94,7 +94,7 @@ typedef struct e6502_t {
 #define e6502_get_p(c) ((c)->p)
 #define e6502_get_s(c) ((c)->s)
 
-#define e6502_set_pc(c, v) do { (c)->pc = (v) & 0xffffU; } while (0)
+#define e6502_set_pc(c, v) do { (c)->pc = (v) & 0xffff; } while (0)
 #define e6502_set_a(c, v) do { (c)->a = (v) & 0xff; } while (0)
 #define e6502_set_x(c, v) do { (c)->x = (v) & 0xff; } while (0)
 #define e6502_set_y(c, v) do { (c)->y = (v) & 0xff; } while (0)
@@ -145,12 +145,12 @@ void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 }
 
 #define e6502_get_mem16(c, addr) ( \
-	(e6502_get_mem8 ((c), (addr) & 0xffffU) & 0xff) | \
-	((e6502_get_mem8 ((c), ((addr) + 1) & 0xffffU) & 0xff) << 8) )
+	(e6502_get_mem8 ((c), (addr) & 0xffff) & 0xff) | \
+	((e6502_get_mem8 ((c), ((addr) + 1) & 0xffff) & 0xff) << 8) )
 
 #define e6502_set_mem16(c, addr, v) do { \
-	e6502_set_mem8 ((c), (addr) & 0xffffU, (v) & 0xff); \
-	e6502_set_mem8 ((c), ((addr) + 1) & 0xffffU, ((v) >> 8) & 0xff); \
+	e6502_set_mem8 ((c), (addr) & 0xffff, (v) & 0xff); \
+	e6502_set_mem8 ((c), ((addr) + 1) & 0xffff, ((v) >> 8) & 0xff); \
 	} while (0)
 
 

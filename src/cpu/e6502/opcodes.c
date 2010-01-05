@@ -93,7 +93,7 @@ void e6502_op_adc (e6502_t *c, unsigned char s2)
 		e6502_set_nf (c, d & 0x80);
 		e6502_set_vf (c, ~(s1 ^ s2) & (s1 ^ d) & 0x80);
 
-		if ((d & 0xfff0U) > 0x90) {
+		if ((d & 0xfff0) > 0x90) {
 			d += 0x60;
 		}
 
@@ -149,9 +149,9 @@ void e6502_op_bcc (e6502_t *c, int cond)
 
 	if (cond) {
 		addr1 = e6502_get_pc (c);
-		addr2 = (addr1 + 2 + e6502_mk_sint16 (c->inst[1])) & 0xffffU;
+		addr2 = (addr1 + 2 + e6502_mk_sint16 (c->inst[1])) & 0xffff;
 		e6502_set_pc (c, addr2);
-		e6502_set_clk (c, 0, ((addr1 ^ addr2) & 0xff00U) ? 4 : 3);
+		e6502_set_clk (c, 0, ((addr1 ^ addr2) & 0xff00) ? 4 : 3);
 	}
 	else {
 		e6502_set_clk (c, 2, 2);
@@ -353,7 +353,7 @@ void e6502_op_sbc (e6502_t *c, unsigned char s2)
 	e6502_set_nf (c, d & 0x80);
 	e6502_set_zf (c, (d & 0xff) == 0);
 	e6502_set_vf (c, (s1 ^ s2) & (s1 ^ d) & 0x80);
-	e6502_set_cf (c, (d & 0xff00U) == 0);
+	e6502_set_cf (c, (d & 0xff00) == 0);
 
 	e6502_set_a (c, d);
 }
@@ -384,7 +384,7 @@ static void op_00 (e6502_t *c)
 	e6502_push (c, e6502_get_p (c) | E6502_FLG_B);
 
 	e6502_set_if (c, 1);
-	e6502_set_pc (c, e6502_get_mem16 (c, 0xfffeU));
+	e6502_set_pc (c, e6502_get_mem16 (c, 0xfffe));
 
 	e6502_set_clk (c, 0, 7);
 }

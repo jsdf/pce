@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/internal.h                                     *
  * Created:     2004-05-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,24 +28,24 @@
 
 
 #define e6502_set_clk(cpu, cnt, clk) do { \
-	(cpu)->pc = ((cpu)->pc + (cnt)) & 0xffffU; \
+	(cpu)->pc = ((cpu)->pc + (cnt)) & 0xffff; \
 	(cpu)->delay += (clk); \
 	} while (0)
 
 #define e6502_get_inst1(c) do { \
-	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
+	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffff); \
 	} while (0)
 
 #define e6502_get_inst2(c) do { \
-	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffffU); \
-	(c)->inst[2] = e6502_get_mem8 (c, (c->pc + 2) & 0xffffU); \
+	(c)->inst[1] = e6502_get_mem8 (c, (c->pc + 1) & 0xffff); \
+	(c)->inst[2] = e6502_get_mem8 (c, (c->pc + 2) & 0xffff); \
 	} while (0)
 
 #define e6502_mk_uint16(lo, hi) \
 	((((hi) & 0xff) << 8) + ((lo) & 0xff))
 
 #define e6502_mk_sint16(lo) \
-	(((lo) & 0x80) ? ((lo) | 0xff00U) : ((lo) & 0xff))
+	(((lo) & 0x80) ? ((lo) | 0xff00) : ((lo) & 0xff))
 
 
 #define e6502_get_idx_ind_x(c) e6502_get_mem8 (c, e6502_get_ea_idx_ind_x (c))

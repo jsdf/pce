@@ -54,7 +54,7 @@ void e6502_init (e6502_t *c)
 	c->set_uint8 = e6502_set_mem_uint8;
 
 	c->ram = NULL;
-	c->ram_lo = 0xffffU;
+	c->ram_lo = 0xffff;
 	c->ram_hi = 0;
 
 	c->op_ext = NULL;
@@ -261,20 +261,20 @@ void e6502_reset (e6502_t *c)
 	e6502_set_y (c, 0x00);
 	e6502_set_s (c, 0x00);
 	e6502_set_p (c, E6502_FLG_R | E6502_FLG_I);
-	e6502_set_pc (c, e6502_get_mem16 (c, 0xfffcU));
+	e6502_set_pc (c, e6502_get_mem16 (c, 0xfffc));
 }
 
 void e6502_execute (e6502_t *c)
 {
 	if (c->nmi_pnd) {
 		c->nmi_pnd = 0;
-		e6502_trap (c, 0xfffaU);
+		e6502_trap (c, 0xfffa);
 		c->inscnt += 1;
 		return;
 	}
 
 	if ((c->irq_val != 0) && (e6502_get_if (c) == 0)) {
-		e6502_trap (c, 0xfffeU);
+		e6502_trap (c, 0xfffe);
 		c->inscnt += 1;
 		return;
 	}

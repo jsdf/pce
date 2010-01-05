@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/disasm.c                                       *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -379,7 +379,7 @@ void e6502_disasm (e6502_disasm_t *op, unsigned char *src, unsigned short pc)
 
 	case E6502_MODE_BRA:
 		sprintf (op->arg1, "%04X",
-			(unsigned) ((op->pc + 2 + e6502_mk_sint16 (src[1])) & 0xffffU)
+			(unsigned) ((op->pc + 2 + e6502_mk_sint16 (src[1])) & 0xffff)
 		);
 		break;
 
@@ -403,7 +403,7 @@ void e6502_disasm_mem (e6502_t *c, e6502_disasm_t *op, unsigned short pc)
 	unsigned char src[4];
 
 	for (i = 0; i < 4; i++) {
-		src[i] = e6502_get_mem8 (c, (pc + i) & 0xffffU);
+		src[i] = e6502_get_mem8 (c, (pc + i) & 0xffff);
 	}
 
 	e6502_disasm (op, src, pc);

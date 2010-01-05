@@ -74,9 +74,9 @@ unsigned short e6502_get_ea_ind_idx_y (e6502_t *c)
 	e6502_get_inst1 (c);
 
 	tmp = e6502_get_mem16 (c, c->inst[1]);
-	c->ea = (tmp + e6502_get_y (c)) & 0xffffU;
+	c->ea = (tmp + e6502_get_y (c)) & 0xffff;
 
-	if ((tmp ^ c->ea) & 0xff00U) {
+	if ((tmp ^ c->ea) & 0xff00) {
 		c->ea_page = 1;
 	}
 	else {
@@ -113,9 +113,9 @@ unsigned short e6502_get_ea_abs_y (e6502_t *c)
 	e6502_get_inst2 (c);
 
 	tmp = e6502_mk_uint16 (c->inst[1], c->inst[2]);
-	c->ea = (tmp + e6502_get_y (c)) & 0xffffU;
+	c->ea = (tmp + e6502_get_y (c)) & 0xffff;
 
-	if ((tmp ^ c->ea) & 0xff00U) {
+	if ((tmp ^ c->ea) & 0xff00) {
 		c->ea_page = 1;
 	}
 	else {
@@ -132,9 +132,9 @@ unsigned short e6502_get_ea_abs_x (e6502_t *c)
 	e6502_get_inst2 (c);
 
 	tmp = e6502_mk_uint16 (c->inst[1], c->inst[2]);
-	c->ea = (tmp + e6502_get_x (c)) & 0xffffU;
+	c->ea = (tmp + e6502_get_x (c)) & 0xffff;
 
-	if ((tmp ^ c->ea) & 0xff00U) {
+	if ((tmp ^ c->ea) & 0xff00) {
 		c->ea_page = 1;
 	}
 	else {
