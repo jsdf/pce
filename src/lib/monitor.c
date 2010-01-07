@@ -260,7 +260,7 @@ int mon_run (monitor_t *mon)
 			else if (cmd_match (&cmd, ">")) {
 				mon_cmd_redir_out (mon, &cmd);
 			}
-			else {
+			else if (!cmd_match_eol (&cmd)) {
 				cmd_error (&cmd, "unknown command");
 			}
 		}
