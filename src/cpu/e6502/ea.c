@@ -39,9 +39,17 @@ unsigned char e6502_get_imm (e6502_t *c)
 
 unsigned short e6502_get_ea_idx_ind_x (e6502_t *c)
 {
+	unsigned ial, adl, adh;
+
 	e6502_get_inst1 (c);
 
-	c->ea = (e6502_get_x (c) + e6502_get_mem8 (c, c->inst[1])) & 0xff;
+	ial = c->inst[1];
+	ial = (ial + e6502_get_x (c)) & 0xff;
+
+	adl = e6502_get_mem8 (c, ial);
+	adh = e6502_get_mem8 (c, (ial + 1) & 0xff);
+
+	c->ea = (adh << 8) | adl;
 	c->ea_page = 0;
 
 	return (c->ea);
