@@ -879,14 +879,17 @@ static void op_6a (e6502_t *c)
 /* OP 6C: JMP [xxxx] */
 static void op_6c (e6502_t *c)
 {
-	unsigned short addr;
+	unsigned ial, iah, adl, adh;
 
 	e6502_get_inst2 (c);
 
-	addr = e6502_mk_uint16 (c->inst[1], c->inst[2]);
-	addr = e6502_get_mem16 (c, addr);
+	ial = c->inst[1];
+	iah = (unsigned) c->inst[2] << 8;
 
-	e6502_set_pc (c, addr);
+	adl = e6502_get_mem8 (c, iah | ial);
+	adh = e6502_get_mem8 (c, iah | ((ial + 1) & 0xff));
+
+	e6502_set_pc (c, (adh << 8) | adl);
 	e6502_set_clk (c, 0, 5);
 }
 
