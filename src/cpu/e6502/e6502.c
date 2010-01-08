@@ -29,10 +29,6 @@
 #include <stdarg.h>
 
 
-static unsigned char e6502_get_mem_uint8 (void *mem, unsigned long addr);
-static void e6502_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val);
-
-
 void e6502_init (e6502_t *c)
 {
 	unsigned i;
@@ -50,8 +46,8 @@ void e6502_init (e6502_t *c)
 	c->mem_rd_ext = NULL;
 	c->mem_wr_ext = NULL;
 
-	c->get_uint8 = e6502_get_mem_uint8;
-	c->set_uint8 = e6502_set_mem_uint8;
+	c->get_uint8 = NULL;
+	c->set_uint8 = NULL;
 
 	c->ram = NULL;
 	c->ram_lo = 0xffff;
@@ -123,17 +119,6 @@ void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8)
 
 	c->get_uint8 = get8;
 	c->set_uint8 = set8;
-}
-
-static
-unsigned char e6502_get_mem_uint8 (void *mem, unsigned long addr)
-{
-	return (0xaa);
-}
-
-static
-void e6502_set_mem_uint8 (void *mem, unsigned long addr, unsigned char val)
-{
 }
 
 int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val)
