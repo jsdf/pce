@@ -77,19 +77,27 @@ unsigned short e6502_get_ea_abs (e6502_t *c)
 
 unsigned short e6502_get_ea_ind_idx_y (e6502_t *c)
 {
-	unsigned short tmp;
+	unsigned ial, adl, adh;
 
 	e6502_get_inst1 (c);
 
-	tmp = e6502_get_mem16 (c, c->inst[1]);
-	c->ea = (tmp + e6502_get_y (c)) & 0xffff;
+	ial = c->inst[1];
 
-	if ((tmp ^ c->ea) & 0xff00) {
-		c->ea_page = 1;
-	}
-	else {
+	adl = e6502_get_mem8 (c, ial);
+	adh = e6502_get_mem8 (c, (ial + 1) & 0xff);
+
+	adl += e6502_get_y (c);
+
+	if (adl < 0x100) {
 		c->ea_page = 0;
 	}
+	else {
+		c->ea_page = 1;
+		adl = adl & 0xff;
+		adh = (adh + 1) & 0xff;
+	}
+
+	c->ea = (adh << 8) | adl;
 
 	return (c->ea);
 }
