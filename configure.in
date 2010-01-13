@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:   configure.in                                                 *
 #* Created:     2002-05-20 by Hampa Hug <hampa@hampa.ch>                     *
-#* Copyright:   (C) 2002-2009 Hampa Hug <hampa@hampa.ch>                     *
+#* Copyright:   (C) 2002-2010 Hampa Hug <hampa@hampa.ch>                     *
 #*****************************************************************************
 
 #*****************************************************************************
@@ -232,6 +232,11 @@ AC_SUBST(PCE_HAVE_INTTYPES_H)
 
 AC_FUNC_FSEEKO
 AC_CHECK_FUNCS(sleep nanosleep usleep gettimeofday)
+
+AC_SEARCH_LIBS(socket, socket)
+AC_SEARCH_LIBS(accept, socket)
+AC_SEARCH_LIBS(gethostbyname, nsl resolv socket)
+AC_SEARCH_LIBS(inet_aton, nsl resolv socket)
 
 AC_PATH_X
 if test "x$no_x" = "xyes" ; then
