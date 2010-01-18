@@ -43,7 +43,6 @@ PCE_SIMARM_OBJ_EXT := \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
-	src/lib/hexdump.o \
 	src/lib/ihex.o \
 	src/lib/iniata.o \
 	src/lib/inidsk.o \

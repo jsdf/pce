@@ -1909,9 +1909,6 @@ src/lib/console.o: src/lib/console.c \
 	src/config.h \
 	src/lib/console.h
 
-src/lib/hexdump.o: src/lib/hexdump.c \
-	src/lib/hexdump.h
-
 src/lib/ihex.o: src/lib/ihex.c \
 	src/lib/ihex.h
 
