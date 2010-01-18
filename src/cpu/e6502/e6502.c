@@ -49,9 +49,10 @@ void e6502_init (e6502_t *c)
 	c->get_uint8 = NULL;
 	c->set_uint8 = NULL;
 
-	c->ram = NULL;
-	c->ram_lo = 0xffff;
-	c->ram_hi = 0;
+	for (i = 0; i < 64; i++) {
+		c->mem_map_rd[i] = NULL;
+		c->mem_map_wr[i] = NULL;
+	}
 
 	c->op_ext = NULL;
 	c->op_hook = NULL;
@@ -93,11 +94,30 @@ void e6502_del (e6502_t *c)
 	}
 }
 
-void e6502_set_ram (e6502_t *c, unsigned char *ram, unsigned short lo, unsigned short hi)
+void e6502_set_mem_map_rd (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p)
 {
-	c->ram = ram;
-	c->ram_lo = lo;
-	c->ram_hi = hi;
+	while (addr1 < addr2) {
+		c->mem_map_rd[(addr1 >> 10) & 0x3f] = p;
+
+		if (p != NULL) {
+			p += 1024;
+		}
+
+		addr1 += 1024;
+	}
+}
+
+void e6502_set_mem_map_wr (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p)
+{
+	while (addr1 < addr2) {
+		c->mem_map_wr[(addr1 >> 10) & 0x3f] = p;
+
+		if (p != NULL) {
+			p += 1024;
+		}
+
+		addr1 += 1024;
+	}
 }
 
 void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8)

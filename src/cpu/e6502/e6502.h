@@ -72,9 +72,8 @@ typedef struct e6502_t {
 	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
 	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
 
-	unsigned char      *ram;
-	unsigned short     ram_lo;
-	unsigned short     ram_hi;
+	unsigned char      *mem_map_rd[64];
+	unsigned char      *mem_map_wr[64];
 
 	void               *op_ext;
 	void               (*op_hook) (void *ext, unsigned char op);
@@ -132,8 +131,12 @@ typedef struct e6502_t {
 static inline
 unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 {
-	if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
-		return (c->ram[addr]);
+	const unsigned char *p;
+
+	p = c->mem_map_rd[(addr >> 10) & 0x3f];
+
+	if (p != NULL) {
+		return (p[addr & 0x3ff]);
 	}
 
 	return (c->get_uint8 (c->mem_rd_ext, addr));
@@ -142,8 +145,12 @@ unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 static inline
 void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 {
-	if ((addr >= c->ram_lo) && (addr <= c->ram_hi)) {
-		c->ram[addr] = val;
+	unsigned char *p;
+
+	p = c->mem_map_wr[(addr >> 10) & 0x3f];
+
+	if (p != NULL) {
+		p[addr & 0x3ff] = val;
 	}
 	else {
 		c->set_uint8 (c->mem_wr_ext, addr, val);
@@ -181,9 +188,8 @@ void e6502_free (e6502_t *c);
 void e6502_del (e6502_t *c);
 
 
-void e6502_set_ram (e6502_t *c, unsigned char *ram,
-	unsigned short lo, unsigned short hi
-);
+void e6502_set_mem_map_rd (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p);
+void e6502_set_mem_map_wr (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p);
 
 void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8);
 void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8);

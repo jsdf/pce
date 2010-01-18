@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim6502/sim6502.c                                   *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,12 +38,6 @@ void s6502_setup_cpu (sim6502_t *sim, ini_sct_t *ini)
 	sim->cpu = e6502_new();
 
 	e6502_set_mem_f (sim->cpu, sim->mem, &mem_get_uint8, &mem_set_uint8);
-
-	if (sim->ram != NULL) {
-		e6502_set_ram (sim->cpu, mem_blk_get_data (sim->ram), 0,
-			mem_blk_get_size (sim->ram) - 1
-		);
-	}
 }
 
 static
