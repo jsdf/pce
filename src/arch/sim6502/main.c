@@ -66,7 +66,7 @@ void prt_version (void)
 	fputs (
 		"pce sim6502 version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -875,7 +875,7 @@ int main (int argc, char *argv[])
 
 	pce_log (MSG_INF,
 		"pce sim6502 version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.c                                        *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -86,7 +86,7 @@ void prt_version (void)
 	fputs (
 		"pce-ibmpc version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -1738,7 +1738,7 @@ int main (int argc, char *argv[])
 
 	pce_log (MSG_MSG,
 		"pce-ibmpc version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2008 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	if (argc < 2) {

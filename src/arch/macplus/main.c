@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/main.c                                      *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -74,7 +74,7 @@ void prt_version (void)
 	fputs (
 		"pce-macplus version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2007-2009 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2007-2010 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -316,7 +316,7 @@ int main (int argc, char *argv[])
 
 	pce_log (MSG_INF,
 		"pce-macplus version " PCE_VERSION_STR "\n"
-		"Copyright (C) 2007-2009 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 2007-2010 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	ini = pce_load_config (cfg);
