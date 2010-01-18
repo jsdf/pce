@@ -28,7 +28,6 @@
 #include <SDL.h>
 #endif
 
-#include <lib/hexdump.h>
 #include <lib/path.h>
 
 
@@ -723,49 +722,6 @@ void do_c (cmd_t *cmd)
 }
 
 static
-void do_dump (cmd_t *cmd)
-{
-	FILE *fp;
-	char what[256];
-	char fname[256];
-
-	if (!cmd_match_str (cmd, what, 256)) {
-		cmd_error (cmd, "don't know what to dump");
-		return;
-	}
-
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	fp = fopen (fname, "wb");
-	if (fp == NULL) {
-		pce_printf ("dump: can't open file (%s)\n", fname);
-		return;
-	}
-
-	if (strcmp (what, "ram") == 0) {
-		fprintf (fp, "# RAM dump\n\n");
-		pce_dump_hex (fp, pc->ram->data, pc->ram->size, 0, 16, "", 1);
-	}
-	else if (strcmp (what, "config") == 0) {
-		if (ini_write_fp (par_cfg, fp)) {
-			pce_printf ("dumping configuration failed\n");
-		}
-	}
-	else {
-		pce_printf ("dump: don't know what to dump (%s)\n", what);
-	}
-
-	fclose (fp);
-}
-
-static
 void do_d (cmd_t *cmd)
 {
 	unsigned              i, j;
@@ -1029,7 +985,6 @@ void do_h (cmd_t *cmd)
 		"c [cnt]                   clock [1]\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val|string...]    enter bytes into memory\n"
-		"dump what fname           dump to file (ram|video)\n"
 		"gb [addr...]              run with breakpoints\n"
 		"g far                     run until CS changes\n"
 		"g                         run\n"
@@ -1510,9 +1465,6 @@ int pc_do_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd);
-	}
-	else if (cmd_match (cmd, "dump")) {
-		do_dump (cmd);
 	}
 	else if (cmd_match (cmd, "d")) {
 		do_d (cmd);
