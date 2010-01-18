@@ -262,20 +262,9 @@ void e6502_execute (e6502_t *c)
 {
 	unsigned short pc;
 
+	c->check_irq = (e6502_get_if (c) == 0);
+
 	pc = e6502_get_pc (c);
-
-	if (c->nmi_pnd) {
-		c->nmi_pnd = 0;
-		e6502_trap (c, 0xfffa);
-		c->inscnt += 1;
-		return;
-	}
-
-	if ((c->irq_val != 0) && (e6502_get_if (c) == 0)) {
-		e6502_trap (c, 0xfffe);
-		c->inscnt += 1;
-		return;
-	}
 
 	c->inst[0] = e6502_get_mem8 (c, pc);
 
@@ -283,11 +272,17 @@ void e6502_execute (e6502_t *c)
 		c->op_stat (c->op_ext, c->inst[0]);
 	}
 
-	if (c->op_stat != NULL) {
-		c->op_stat (c->op_ext, c->inst[0]);
-	}
-
 	c->op[c->inst[0]] (c);
+
+	if (c->nmi_pnd) {
+		c->nmi_pnd = 0;
+		e6502_trap (c, 0xfffa);
+	}
+	else if (c->check_irq) {
+		if (c->irq_val != 0) {
+			e6502_trap (c, 0xfffe);
+		}
+	}
 
 	e6502_set_lpc (c, pc);
 

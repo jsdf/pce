@@ -678,6 +678,8 @@ static void op_40 (e6502_t *c)
 	e6502_set_rf (c, 1);
 	e6502_set_bf (c, 0);
 	e6502_set_clk (c, 0, 6);
+
+	c->check_irq = (e6502_get_if (c) == 0);
 }
 
 /* OP 41: EOR [[xx + X]] */

@@ -54,6 +54,8 @@ typedef struct e6502_t {
 	unsigned char      s;
 	unsigned char      p;
 
+	char               check_irq;
+
 	unsigned short     lpc;
 
 	unsigned short     ea;
