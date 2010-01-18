@@ -54,6 +54,8 @@ typedef struct e6502_t {
 	unsigned char      s;
 	unsigned char      p;
 
+	unsigned short     lpc;
+
 	unsigned short     ea;
 	char               ea_page;
 
@@ -88,6 +90,7 @@ typedef struct e6502_t {
 
 
 #define e6502_get_pc(c) ((c)->pc)
+#define e6502_get_lpc(c) ((c)->lpc)
 #define e6502_get_a(c) ((c)->a)
 #define e6502_get_x(c) ((c)->x)
 #define e6502_get_y(c) ((c)->y)
@@ -95,6 +98,7 @@ typedef struct e6502_t {
 #define e6502_get_s(c) ((c)->s)
 
 #define e6502_set_pc(c, v) do { (c)->pc = (v) & 0xffff; } while (0)
+#define e6502_set_lpc(c, v) do { (c)->lpc = (v) & 0xffff; } while (0)
 #define e6502_set_a(c, v) do { (c)->a = (v) & 0xff; } while (0)
 #define e6502_set_x(c, v) do { (c)->x = (v) & 0xff; } while (0)
 #define e6502_set_y(c, v) do { (c)->y = (v) & 0xff; } while (0)

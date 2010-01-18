@@ -147,6 +147,10 @@ int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val)
 		*val = e6502_get_pc (c);
 		return (0);
 	}
+	else if (strcmp (reg, "lpc") == 0) {
+		*val = e6502_get_lpc (c);
+		return (0);
+	}
 	else if (strcmp (reg, "s") == 0) {
 		*val = e6502_get_s (c);
 		return (0);
@@ -179,6 +183,10 @@ int e6502_set_reg (e6502_t *c, const char *reg, unsigned long val)
 	}
 	else if (strcmp (reg, "pc") == 0) {
 		e6502_set_pc (c, val);
+		return (0);
+	}
+	else if (strcmp (reg, "lpc") == 0) {
+		e6502_set_lpc (c, val);
 		return (0);
 	}
 	else if (strcmp (reg, "s") == 0) {
@@ -247,10 +255,15 @@ void e6502_reset (e6502_t *c)
 	e6502_set_s (c, 0x00);
 	e6502_set_p (c, E6502_FLG_R | E6502_FLG_I);
 	e6502_set_pc (c, e6502_get_mem16 (c, 0xfffc));
+	e6502_set_lpc (c, 0);
 }
 
 void e6502_execute (e6502_t *c)
 {
+	unsigned short pc;
+
+	pc = e6502_get_pc (c);
+
 	if (c->nmi_pnd) {
 		c->nmi_pnd = 0;
 		e6502_trap (c, 0xfffa);
@@ -264,7 +277,7 @@ void e6502_execute (e6502_t *c)
 		return;
 	}
 
-	c->inst[0] = e6502_get_mem8 (c, c->pc);
+	c->inst[0] = e6502_get_mem8 (c, pc);
 
 	if (c->op_stat != NULL) {
 		c->op_stat (c->op_ext, c->inst[0]);
@@ -275,6 +288,8 @@ void e6502_execute (e6502_t *c)
 	}
 
 	c->op[c->inst[0]] (c);
+
+	e6502_set_lpc (c, pc);
 
 	c->inscnt += 1;
 }
