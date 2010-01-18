@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim6502/sim6502.h                                   *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,11 +52,6 @@ typedef unsigned short (*get_uint16_f) (void *ext);
 
 
 struct sim6502_s;
-
-
-void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-	unsigned long addr, unsigned cols, char *prefix, int ascii
-);
 
 
 #include <devices/memory.h>

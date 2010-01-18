@@ -35,7 +35,6 @@ PCE_SIM6502_OBJ_EXT := \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
-	src/lib/hexdump.o \
 	src/lib/ihex.o \
 	src/lib/iniram.o \
 	src/lib/load.o \
