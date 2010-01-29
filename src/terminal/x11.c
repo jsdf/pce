@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/x11.c                                           *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -137,7 +137,6 @@ static xt_keymap_t keymap[] = {
 	{ XK_KP_Add,      PCE_KEY_KP_PLUS },
 	{ XK_KP_4,        PCE_KEY_KP_4 },
 	{ XK_KP_5,        PCE_KEY_KP_5 },
-	{ XK_KP_Begin,    PCE_KEY_KP_5 },
 	{ XK_KP_6,        PCE_KEY_KP_6 },
 	{ XK_KP_1,        PCE_KEY_KP_1 },
 	{ XK_KP_2,        PCE_KEY_KP_2 },
@@ -145,6 +144,17 @@ static xt_keymap_t keymap[] = {
 	{ XK_KP_Enter,    PCE_KEY_KP_ENTER },
 	{ XK_KP_0,        PCE_KEY_KP_0 },
 	{ XK_KP_Decimal,  PCE_KEY_KP_PERIOD },
+	{ XK_KP_Home,     PCE_KEY_KP_7 },
+	{ XK_KP_Up,       PCE_KEY_KP_8 },
+	{ XK_KP_Prior,    PCE_KEY_KP_9 },
+	{ XK_KP_Left,     PCE_KEY_KP_4 },
+	{ XK_KP_Begin,    PCE_KEY_KP_5 },
+	{ XK_KP_Right,    PCE_KEY_KP_6 },
+	{ XK_KP_End,      PCE_KEY_KP_1 },
+	{ XK_KP_Down,     PCE_KEY_KP_2 },
+	{ XK_KP_Next,     PCE_KEY_KP_3 },
+	{ XK_KP_Insert,   PCE_KEY_KP_0 },
+	{ XK_KP_Delete,   PCE_KEY_KP_PERIOD },
 	{ XK_Insert,      PCE_KEY_INS },
 	{ XK_Home,        PCE_KEY_HOME },
 	{ XK_Prior,       PCE_KEY_PAGEUP },
