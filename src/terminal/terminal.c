@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/terminal.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -172,6 +172,7 @@ int trm_screenshot (terminal_t *trm, const char *fname)
 	}
 
 	fp = fopen (fname, "wb");
+
 	if (fp == NULL) {
 		return (1);
 	}
@@ -179,7 +180,11 @@ int trm_screenshot (terminal_t *trm, const char *fname)
 	cnt = 3 * (unsigned long) trm->w * (unsigned long) trm->h;
 
 	fprintf (fp, "P6\n%u %u\n%u\x0a", trm->w, trm->h, 255);
-	fwrite (trm->buf, 1, cnt, fp);
+
+	if (fwrite (trm->buf, 1, cnt, fp) != cnt) {
+		fclose (fp);
+		return (1);
+	}
 
 	fclose (fp);
 
