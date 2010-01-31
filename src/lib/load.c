@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/load.c                                               *
  * Created:     2004-08-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,14 +35,16 @@
 
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname)
 {
-	FILE *fp;
+	size_t r;
+	FILE   *fp;
 
 	fp = fopen (fname, "rb");
+
 	if (fp == NULL) {
 		return (1);
 	}
 
-	fread (blk->data, 1, blk->size, fp);
+	r = fread (blk->data, 1, blk->size, fp);
 
 	fclose (fp);
 
