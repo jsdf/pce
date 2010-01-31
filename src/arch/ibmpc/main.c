@@ -216,7 +216,7 @@ void disasm_str (char *dst, e86_disasm_t *op)
 	}
 
 	if (op->arg_n == 1) {
-		dst_i += sprintf (dst + dst_i, op->arg1);
+		dst_i += sprintf (dst + dst_i, "%s", op->arg1);
 	}
 	else if (op->arg_n == 2) {
 		dst_i += sprintf (dst + dst_i, "%s, %s", op->arg1, op->arg2);
