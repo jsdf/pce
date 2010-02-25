@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-slip.c                                 *
  * Created:     2009-03-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,7 @@
 #include <lib/tun.h>
 #endif
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-slip.h>
 
@@ -252,7 +253,7 @@ int chr_slip_init (char_slip_t *drv, const char *name)
 	drv->tun_name = NULL;
 	drv->tun_fd = -1;
 
-	drv->tun_name = chr_get_option (name, "if", 1);
+	drv->tun_name = drv_get_option (name, "if");
 
 	if (drv->tun_name == NULL) {
 		return (1);

@@ -63,6 +63,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/nvram.o \
 	src/devices/parport.o \
 	src/devices/serport.o \
+	src/drivers/options.o \
 	src/drivers/char/char.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \

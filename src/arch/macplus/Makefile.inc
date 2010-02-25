@@ -67,6 +67,7 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/chipset/e8530.o \
 	src/devices/device.o \
 	src/devices/memory.o \
+	src/drivers/options.o \
 	src/drivers/char/char.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \

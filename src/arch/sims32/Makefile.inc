@@ -35,6 +35,7 @@ PCE_SIMS32_OBJ_EXT := \
 	src/devices/device.o \
 	src/devices/memory.o \
 	src/devices/serport.o \
+	src/drivers/options.o \
 	src/drivers/char/char.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \

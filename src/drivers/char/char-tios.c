@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-tios.c                                 *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-tios.h>
 
@@ -380,7 +381,7 @@ int chr_tios_init (char_tios_t *drv, const char *name)
 
 	drv->fd = -1;
 
-	drv->fname = chr_get_option (name, "file", 1);
+	drv->fname = drv_get_option (name, "file");
 
 	if (drv->fname != NULL) {
 		drv->fd = open (drv->fname, O_RDWR | O_NOCTTY);

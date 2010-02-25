@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-stdio.c                                *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-stdio.h>
 
@@ -89,8 +90,8 @@ int chr_stdio_init (char_stdio_t *drv, const char *name)
 
 	drv->fp = NULL;
 
-	drv->fname = chr_get_option (name, "file", 1);
-	drv->flush = chr_get_option_bool (name, "flush", 0xffff, 1);
+	drv->fname = drv_get_option (name, "file");
+	drv->flush = drv_get_option_bool (name, "flush", 1);
 
 	if (drv->fname != NULL) {
 		if (strcmp (drv->fname, "-") == 0) {

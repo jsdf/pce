@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-pty.c                                  *
  * Created:     2009-03-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <poll.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-pty.h>
 
@@ -183,7 +184,7 @@ int chr_pty_init (char_pty_t *drv, const char *name)
 
 	drv->ptsname = NULL;
 
-	drv->symlink = chr_get_option (name, "symlink", 1);
+	drv->symlink = drv_get_option (name, "symlink");
 
 	drv->fd = posix_openpt (O_RDWR | O_NOCTTY);
 

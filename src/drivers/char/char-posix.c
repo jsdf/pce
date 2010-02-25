@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-posix.c                                *
  * Created:     2009-03-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-posix.h>
 
@@ -164,11 +165,11 @@ int chr_posix_init (char_posix_t *drv, const char *name)
 	drv->fd_read = -1;
 	drv->fd_write = -1;
 
-	drv->name = chr_get_option (name, "file", 1);
+	drv->name = drv_get_option (name, "file");
 
 	if (drv->name == NULL) {
-		drv->name_read = chr_get_option (name, "read", 1);
-		drv->name_write = chr_get_option (name, "write", 2);
+		drv->name_read = drv_get_option (name, "read");
+		drv->name_write = drv_get_option (name, "write");
 	}
 
 	if (drv->name != NULL) {

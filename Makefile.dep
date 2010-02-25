@@ -1862,40 +1862,52 @@ src/drivers/char/char-null.o: src/drivers/char/char-null.c \
 
 src/drivers/char/char-posix.o: src/drivers/char/char-posix.c \
 	src/drivers/char/char-posix.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
 
 src/drivers/char/char-ppp.o: src/drivers/char/char-ppp.c \
 	src/config.h \
 	src/drivers/char/char-ppp.h \
 	src/drivers/char/char.h \
+	src/drivers/options.h \
 	src/lib/tun.h
 
 src/drivers/char/char-pty.o: src/drivers/char/char-pty.c \
 	src/config.h \
 	src/drivers/char/char-pty.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
 
 src/drivers/char/char-slip.o: src/drivers/char/char-slip.c \
 	src/config.h \
 	src/drivers/char/char-slip.h \
 	src/drivers/char/char.h \
+	src/drivers/options.h \
 	src/lib/tun.h
 
 src/drivers/char/char-stdio.o: src/drivers/char/char-stdio.c \
 	src/drivers/char/char-stdio.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
 
 src/drivers/char/char-tcp.o: src/drivers/char/char-tcp.c \
 	src/drivers/char/char-tcp.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
 
 src/drivers/char/char-tios.o: src/drivers/char/char-tios.c \
 	src/drivers/char/char-tios.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
 
 src/drivers/char/char.o: src/drivers/char/char.c \
 	src/config.h \
-	src/drivers/char/char.h
+	src/drivers/char/char.h \
+	src/drivers/options.h
+
+src/drivers/options.o: src/drivers/options.c \
+	src/config.h \
+	src/drivers/options.h
 
 src/lib/brkpt.o: src/lib/brkpt.c \
 	src/lib/brkpt.h \

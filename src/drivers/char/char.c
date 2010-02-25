@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.c                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 
 
@@ -225,272 +226,6 @@ int chr_set_log (char_drv_t *cdrv, const char *fname)
 	return (0);
 }
 
-
-static
-const char *chr_skip_option (const char *str)
-{
-	while (*str != 0) {
-		if (*str == ':') {
-			if (*(str + 1) == ':') {
-				str += 2;
-			}
-			else {
-				return (str + 1);
-			}
-		}
-		else {
-			str += 1;
-		}
-	}
-
-	return (NULL);
-}
-
-static
-const char *chr_skip_space (const char *str)
-{
-	while (1) {
-		if (*str == ' ') {
-			str += 1;
-		}
-		else if (*str == '\t') {
-			str += 1;
-		}
-		else {
-			return (str);
-		}
-	}
-}
-
-static
-const char *chr_get_option_value (const char *str, const char *name)
-{
-	while (*name != 0) {
-		if (*str != *name) {
-			return (NULL);
-		}
-
-		str += 1;
-		name += 1;
-	}
-
-	if (*str == '=') {
-		str = chr_skip_space (str + 1);
-
-		return (str);
-	}
-
-	return (NULL);
-}
-
-static
-const char *chr_get_option_name (const char *str)
-{
-	unsigned i;
-
-	str = chr_skip_space (str);
-
-	i = 0;
-
-	while (str[i] != 0) {
-		if (str[i] == '=') {
-			return (str);
-		}
-		else if (str[i] == ':') {
-			if (str[i + 1] == ':') {
-				i += 2;
-			}
-			else {
-				return (NULL);
-			}
-		}
-		else {
-			i += 1;
-		}
-	}
-
-	return (NULL);
-}
-
-static
-char *chr_option_dup (const char *str)
-{
-	unsigned i, j, n;
-	char     *ret;
-
-	n = 0;
-	while (str[n] != 0) {
-		if (str[n] == ':') {
-			if (str[n + 1] == ':') {
-				n += 2;
-			}
-			else {
-				break;
-			}
-		}
-		else {
-			n += 1;
-		}
-	}
-
-	while (n > 0) {
-		if (str[n - 1] == ' ') {
-			n -= 1;
-		}
-		else if (str[n - 1] == '\t') {
-			n -= 1;
-		}
-		else {
-			break;
-		}
-	}
-
-	ret = malloc (n + 1);
-	if (ret == NULL) {
-		return (NULL);
-	}
-
-	i = 0;
-	j = 0;
-
-	while (i < n) {
-		if ((str[i] == ':') && (str[i + 1] == ':')) {
-			ret[j] = ':';
-			i += 2;
-		}
-		else {
-			ret[j] = str[i];
-			i += 1;
-		}
-
-		j += 1;
-	}
-
-	ret[j] = 0;
-
-	return (ret);
-}
-
-char *chr_get_named_option (const char *str, const char *name)
-{
-	const char *val;
-
-	while (str != NULL) {
-		val = chr_get_option_value (str, name);
-
-		if (val != NULL) {
-			return (chr_option_dup (val));
-		}
-
-		str = chr_skip_option (str);
-	}
-
-	return (NULL);
-}
-
-char *chr_get_indexed_option (const char *str, unsigned idx)
-{
-	while (str != NULL) {
-		if (chr_get_option_name (str) == NULL) {
-			if (idx == 0) {
-				str = chr_skip_space (str);
-
-				return (chr_option_dup (str));
-			}
-
-			idx -= 1;
-		}
-
-		str = chr_skip_option (str);
-	}
-
-	return (NULL);
-}
-
-char *chr_get_option (const char *str, const char *name, unsigned idx)
-{
-	char *ret;
-
-	if (name != NULL) {
-		ret = chr_get_named_option (str, name);
-
-		if (ret != NULL) {
-			return (ret);
-		}
-	}
-
-	if (idx != 0xffff) {
-		ret = chr_get_indexed_option (str, idx);
-
-		if (ret != NULL) {
-			return (ret);
-		}
-	}
-
-	return (NULL);
-}
-
-int chr_get_option_bool (const char *str, const char *name, unsigned idx, int def)
-{
-	int  r;
-	char *s;
-
-	s = chr_get_option (str, name, idx);
-
-	if (s == NULL) {
-		return (def);
-	}
-
-	r = def;
-
-	if (strcmp (s, "1") == 0) {
-		r = 1;
-	}
-	else if (strcmp (s, "true") == 0) {
-		r = 1;
-	}
-	else if (strcmp (s, "yes") == 0) {
-		r = 1;
-	}
-	else if (strcmp (s, "0") == 0) {
-		r = 0;
-	}
-	else if (strcmp (s, "false") == 0) {
-		r = 0;
-	}
-	else if (strcmp (s, "no") == 0) {
-		r = 0;
-	}
-
-	free (s);
-
-	return (r);
-}
-
-unsigned long chr_get_option_uint (const char *str, const char *name, unsigned idx, unsigned long def)
-{
-	unsigned long val;
-	char          *end;
-	char          *s;
-
-	s = chr_get_option (str, name, idx);
-
-	if (s == NULL) {
-		return (def);
-	}
-
-	val = strtoul (s, &end, 0);
-
-	if ((end != NULL) && (*end != 0)) {
-		free (s);
-		return (def);
-	}
-
-	free (s);
-
-	return (val);
-}
-
 void chr_init (char_drv_t *cdrv, void *ext)
 {
 	cdrv->ext = ext;
@@ -672,7 +407,7 @@ char_drv_t *chr_open_cdrv (char_drv_t *cdrv, const char *name)
 		return (NULL);
 	}
 
-	str = chr_get_option (name, "log", 0xffff);
+	str = drv_get_option (name, "log");
 
 	if (str != NULL) {
 		chr_set_log (cdrv, str);

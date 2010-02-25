@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-tcp.c                                  *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-tcp.h>
 
@@ -350,9 +351,9 @@ int chr_tcp_init (char_tcp_t *drv, const char *name)
 	drv->listen_fd = -1;
 	drv->fd = -1;
 
-	drv->host = chr_get_option (name, "host", 1);
-	drv->connect = chr_get_option_bool (name, "connect", 0xffff, 0);
-	drv->port = chr_get_option_uint (name, "port", 2, 5555);
+	drv->host = drv_get_option (name, "host");
+	drv->connect = drv_get_option_bool (name, "connect", 0);
+	drv->port = drv_get_option_uint (name, "port", 5555);
 
 	if (drv->host != NULL) {
 		str = tcp_host_resolve (drv->host);

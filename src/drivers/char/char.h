@@ -83,10 +83,6 @@ int chr_set_params (char_drv_t *cdrv, unsigned long bps, unsigned bpc, unsigned 
 
 int chr_set_log (char_drv_t *cdrv, const char *fname);
 
-char *chr_get_option (const char *str, const char *name, unsigned idx);
-int chr_get_option_bool (const char *str, const char *name, unsigned idx, int def);
-unsigned long chr_get_option_uint (const char *str, const char *name, unsigned idx, unsigned long def);
-
 char_drv_t *chr_open (const char *name);
 char_drv_t *chr_null_open (const char *name);
 char_drv_t *chr_posix_open (const char *name);

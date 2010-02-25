@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-ppp.c                                  *
  * Created:     2009-10-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,7 @@
 #include <lib/tun.h>
 #endif
 
+#include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-ppp.h>
 
@@ -66,7 +67,7 @@ int chr_ppp_get_option_ip (const char *str, const char *name, unsigned char *val
 	unsigned i, j;
 	char     *s;
 
-	s = chr_get_option (str, name, 0xffff);
+	s = drv_get_option (str, name);
 
 	if (s == NULL) {
 		return (1);
@@ -1542,7 +1543,7 @@ int chr_ppp_init (char_ppp_t *drv, const char *name)
 	drv->tun_name = NULL;
 	drv->tun_fd = -1;
 
-	drv->tun_name = chr_get_option (name, "if", 1);
+	drv->tun_name = drv_get_option (name, "if");
 
 	if (drv->tun_name == NULL) {
 		return (1);
