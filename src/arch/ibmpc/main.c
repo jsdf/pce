@@ -933,7 +933,6 @@ void do_hm (cmd_t *cmd)
 			"emu.pause.toggle\n"
 			"emu.reset\n"
 			"\n"
-			"emu.cpu.clock        <frequency>\n"
 			"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
 			"emu.cpu.speed        <factor>\n"
 			"emu.cpu.speed.step   <adjustment>\n"

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.c                                       *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1451,20 +1451,6 @@ void pc_set_speed (ibmpc_t *pc, unsigned factor)
 
 	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz (%uX)\n",
 		pc->cpu_clk[0] / 1000000.0, pc->speed[0]
-	);
-}
-
-void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk)
-{
-	if (clk == 0) {
-		clk = pc->cpu_clk[1];
-	}
-
-	pc->cpu_clk[0] = clk;
-	pc->saved_clk = clk;
-
-	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz\n",
-		pc->cpu_clk[0] / 1000000.0
 	);
 }
 

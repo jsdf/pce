@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/msg.c                                         *
  * Created:     2004-09-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,20 +38,6 @@ int pc_set_msg_emu_config_save (ibmpc_t *pc, const char *msg, const char *val)
 	if (ini_write (pc->cfg, val)) {
 		return (1);
 	}
-
-	return (0);
-}
-
-static
-int pc_set_msg_emu_cpu_clock (ibmpc_t *pc, const char *msg, const char *val)
-{
-	unsigned long v;
-
-	if (msg_get_ulng (val, &v)) {
-		return (1);
-	}
-
-	pc_set_cpu_clock (pc, v);
 
 	return (0);
 }
@@ -478,7 +464,6 @@ int pc_set_msg_emu_tape_state (ibmpc_t *pc, const char *msg, const char *val)
 
 static pc_msg_list_t set_msg_list[] = {
 	{ "emu.config.save", pc_set_msg_emu_config_save },
-	{ "emu.cpu.clock", pc_set_msg_emu_cpu_clock },
 	{ "emu.cpu.model", pc_set_msg_emu_cpu_model },
 	{ "emu.cpu.speed", pc_set_msg_emu_cpu_speed },
 	{ "emu.cpu.speed.step", pc_set_msg_emu_cpu_speed_step },

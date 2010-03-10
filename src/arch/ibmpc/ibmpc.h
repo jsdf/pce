@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.h                                       *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -138,11 +138,6 @@ int pc_set_cpu_model (ibmpc_t *pc, const char *str);
  * @short Set the emulated cpu clock frequency as a multiple of 4.77 MHz
  *****************************************************************************/
 void pc_set_speed (ibmpc_t *pc, unsigned factor);
-
-/*!***************************************************************************
- * @short Set the emulated cpu clock frequency
- *****************************************************************************/
-void pc_set_cpu_clock (ibmpc_t *pc, unsigned long clk);
 
 void pc_set_bootdrive (ibmpc_t *pc, unsigned drv);
 unsigned pc_get_bootdrive (ibmpc_t *pc);

@@ -41,9 +41,6 @@ emu.reset
 emu.config.save <filename>
 	Save the current configuration to <filename>.
 
-emu.cpu.clock <frequency>
-	Set the emulated CPU clock frequency in Herz.
-
 emu.cpu.model <model>
 	Set the emulated CPU model. Valid models are "8086", "8088",
 	"80186" and "80188".
