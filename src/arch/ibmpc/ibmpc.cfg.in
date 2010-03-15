@@ -32,10 +32,6 @@ section pc {
 		# A higher value emulates a faster CPU but also takes up
 		# more host CPU time.
 		speed = 8
-
-		# The emulated CPU clock can also be specified directly
-		# in Herz. Setting clock overrides the speed parameter.
-		#clock = 4772728
 	}
 
 

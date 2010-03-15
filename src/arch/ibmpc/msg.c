@@ -75,7 +75,7 @@ int pc_set_msg_emu_cpu_speed_step (ibmpc_t *pc, const char *msg, const char *val
 		return (1);
 	}
 
-	v += (int) pc->speed[0];
+	v += (int) pc->speed_current;
 
 	if (v <= 0) {
 		v = 1;

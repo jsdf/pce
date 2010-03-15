@@ -73,22 +73,18 @@ typedef struct ibmpc_t {
 	unsigned           fd_cnt;
 	unsigned           hd_cnt;
 
-	/* the 1.19 MHz system clock */
-	unsigned long      clk2[2];
+	unsigned long      sync_clock2_sim;
+	unsigned long      sync_clock2_real;
+	unsigned long      sync_interval;
 
-	/* the 1.19 MHz real time clock */
-	unsigned long      rclk[2];
-
-	/* cpu speed factor (current, default) */
-	unsigned           speed[2];
-
-	/* cpu clock frequency (current, default) */
-	unsigned long      cpu_clk[2];
-
-	/* saved clock during cassette i/o */
-	unsigned long      saved_clk;
+	/* cpu speed factor */
+	unsigned           speed_current;
+	unsigned           speed_default;
+	unsigned           speed_saved;
 
 	unsigned long      clk_div[4];
+
+	unsigned long      clock2;
 
 	unsigned           brk;
 	char               pause;
@@ -113,6 +109,8 @@ unsigned pc_get_pcex_seg (ibmpc_t *pc);
  * @short Reset the PC
  *****************************************************************************/
 void pc_reset (ibmpc_t *pc);
+
+unsigned long pc_get_clock2 (ibmpc_t *pc);
 
 /*!***************************************************************************
  * @short Reset the clock counters

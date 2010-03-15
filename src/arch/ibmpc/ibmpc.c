@@ -138,12 +138,12 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 
 			if (val & 0x08) {
 				/* motor off: restore clock */
-				pc->cpu_clk[0] = pc->saved_clk;
+				pc->speed_current = pc->speed_saved;
 			}
 			else {
 				/* motor on: set clock to 4.77 MHz */
-				pc->saved_clk = pc->cpu_clk[0];
-				pc->cpu_clk[0] = PCE_IBMPC_CLK1;
+				pc->speed_saved = pc->speed_current;
+				pc->speed_current = 1;
 			}
 		}
 	}
@@ -165,7 +165,6 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 		pc_cas_set_out (pc->cas, val);
 	}
 }
-
 
 static
 void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
@@ -232,7 +231,6 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	const char    *model;
 	unsigned      speed;
-	unsigned long clk;
 
 	sct = ini_next_sct (ini, NULL, "cpu");
 
@@ -246,14 +244,12 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 		speed = 1;
 	}
 
-	ini_get_uint32 (sct, "clock", &clk, speed * PCE_IBMPC_CLK1);
-
 	if (par_cpu != NULL) {
 		model = par_cpu;
 	}
 
-	pce_log_tag (MSG_INF, "CPU:", "model=%s clock=%.6f MHz (%uX)\n",
-		model, clk / 1000000.0, speed
+	pce_log_tag (MSG_INF, "CPU:", "model=%s speed=%uX\n",
+		model, speed
 	);
 
 	pc->cpu = e86_new();
@@ -286,13 +282,9 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	pc->cpu->op_ext = pc;
 	pc->cpu->op_hook = &pc_e86_hook;
 
-	pc->speed[0] = speed;
-	pc->cpu_clk[0] = clk;
-
-	pc->speed[1] = speed;
-	pc->cpu_clk[1] = clk;
-
-	pc->saved_clk = clk;
+	pc->speed_current = speed;
+	pc->speed_default = speed;
+	pc->speed_saved = speed;
 }
 
 static
@@ -1261,6 +1253,15 @@ void pc_reset (ibmpc_t *pc)
 	}
 }
 
+/*
+ * Get the 1.19 MHz system clock
+ */
+unsigned long pc_get_clock2 (ibmpc_t *pc)
+{
+	return (pc->clock2);
+}
+
+
 void pc_clock_reset (ibmpc_t *pc)
 {
 	unsigned i;
@@ -1269,18 +1270,18 @@ void pc_clock_reset (ibmpc_t *pc)
 		pc->clk_div[i] = 0;
 	}
 
-	pc->clk2[0] = 0;
-	pc->clk2[1] = 0;
+	pc->sync_clock2_sim = 0;
+	pc->sync_clock2_real = 0;
 
-	pc->rclk[0] = 0;
+	pce_get_interval_us (&pc->sync_interval);
 
-	pce_get_interval_us (&pc->rclk[1]);
+	pc->clock2 = 0;
 }
 
 void pc_clock_discontinuity (ibmpc_t *pc)
 {
-	pc->rclk[0] = pc->clk2[0];
-	pce_get_interval_us (&pc->rclk[1]);
+	pc->sync_clock2_real = pc->sync_clock2_sim;
+	pce_get_interval_us (&pc->sync_interval);
 }
 
 /*
@@ -1293,22 +1294,22 @@ void pc_clock_delay (ibmpc_t *pc)
 	unsigned long rclk;
 	unsigned long us;
 
-	vclk = pc->clk2[0];
+	vclk = pc->sync_clock2_sim;
 
-	rclk = pce_get_interval_us (&pc->rclk[1]);
+	rclk = pce_get_interval_us (&pc->sync_interval);
 	rclk = (PCE_IBMPC_CLK2 * (unsigned long long) rclk) / 1000000;
-	rclk += pc->rclk[0];
+	rclk += pc->sync_clock2_real;
 
 	if (vclk < rclk) {
-		pc->clk2[0] = 0;
-		pc->rclk[0] = rclk - vclk;
+		pc->sync_clock2_sim = 0;
+		pc->sync_clock2_real = rclk - vclk;
 		return;
 	}
 
 	vclk -= rclk;
 
-	pc->clk2[0] = vclk;
-	pc->rclk[0] = 0;
+	pc->sync_clock2_sim = vclk;
+	pc->sync_clock2_real = 0;
 
 	us = (1000000 * (unsigned long long) vclk) / PCE_IBMPC_CLK2;
 
@@ -1320,44 +1321,27 @@ void pc_clock_delay (ibmpc_t *pc)
 void pc_clock (ibmpc_t *pc)
 {
 	unsigned      i;
-	unsigned long n;
-	unsigned long clk2[2];
+	unsigned long clk;
 
-	n = e86_get_delay (pc->cpu);
+	pc->sync_clock2_sim += 1;
 
-	if (n > 1024) {
-		n = 1024;
-	}
+	pc->clock2 += 1;
 
-	e86_clock (pc->cpu, n);
+	pce_video_clock0 (pc->video, 1, 1);
 
-	/* convert n from cpu clock to 1.19 MHz system clock */
-	clk2[0] = PCE_IBMPC_CLK2 * n + pc->clk2[1];
-	clk2[1] = clk2[0] % pc->cpu_clk[0];
-	clk2[0] = clk2[0] / pc->cpu_clk[0];
+	e8253_clock (&pc->pit, 1);
 
-	pc->clk2[0] += clk2[0];
-	pc->clk2[1] = clk2[1];
-
-	if (clk2[0] == 0) {
-		return;
-	}
-
-	pce_video_clock0 (pc->video, clk2[0], 1);
-
-	e8253_clock (&pc->pit, clk2[0]);
-
-	pc->clk_div[0] += clk2[0];
+	pc->clk_div[0] += 1;
 
 	if (pc->clk_div[0] >= 8) {
-		clk2[0] = pc->clk_div[0] & ~7UL;
-		pc->clk_div[1] += clk2[0];
+		clk = pc->clk_div[0] & ~7UL;
+		pc->clk_div[1] += clk;
 		pc->clk_div[0] &= 7;
 
-		pc_kbd_clock (&pc->kbd, clk2[0]);
+		pc_kbd_clock (&pc->kbd, clk);
 
 		if (pc->cas != NULL) {
-			pc_cas_clock (pc->cas, clk2[0]);
+			pc_cas_clock (pc->cas, clk);
 		}
 
 		e8237_clock (&pc->dma, 1);
@@ -1367,12 +1351,12 @@ void pc_clock (ibmpc_t *pc)
 
 		for (i = 0; i < 4; i++) {
 			if (pc->serport[i] != NULL) {
-				e8250_clock (&pc->serport[i]->uart, clk2[0]);
+				e8250_clock (&pc->serport[i]->uart, clk);
 			}
 		}
 
 		if (pc->clk_div[1] >= 1024) {
-			clk2[0] = pc->clk_div[1] & ~1023UL;
+			clk = pc->clk_div[1] & ~1023UL;
 			pc->clk_div[1] &= 1023;
 
 			if (pc->trm != NULL) {
@@ -1381,17 +1365,19 @@ void pc_clock (ibmpc_t *pc)
 
 			for (i = 0; i < 4; i++) {
 				if (pc->serport[i] != NULL) {
-					ser_clock (pc->serport[i], clk2[0]);
+					ser_clock (pc->serport[i], clk);
 				}
 			}
 
 			if (pc->mse != NULL) {
-				mse_clock (pc->mse, clk2[0]);
+				mse_clock (pc->mse, clk);
 			}
 
 			pc_clock_delay (pc);
 		}
 	}
+
+	e86_clock (pc->cpu, 4 * pc->speed_current);
 }
 
 int pc_set_cpu_model (ibmpc_t *pc, const char *str)
@@ -1441,17 +1427,13 @@ int pc_set_cpu_model (ibmpc_t *pc, const char *str)
 void pc_set_speed (ibmpc_t *pc, unsigned factor)
 {
 	if (factor == 0) {
-		pc->speed[0] = pc->speed[1];
-		pc->cpu_clk[0] = pc->cpu_clk[1];
+		pc->speed_current = pc->speed_default;
 	}
 	else {
-		pc->speed[0] = factor;
-		pc->cpu_clk[0] = factor * PCE_IBMPC_CLK1;
+		pc->speed_current = factor;
 	}
 
-	pce_log_tag (MSG_INF, "CPU:", "setting clock to %.6f MHz (%uX)\n",
-		pc->cpu_clk[0] / 1000000.0, pc->speed[0]
-	);
+	pce_log_tag (MSG_INF, "CPU:", "setting speed to %uX\n", pc->speed_current);
 }
 
 void pc_set_bootdrive (ibmpc_t *pc, unsigned drv)
