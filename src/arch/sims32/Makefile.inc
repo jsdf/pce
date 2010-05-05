@@ -27,7 +27,7 @@ PCE_SIMS32_OBJ := $(foreach f,$(PCE_SIMS32_BAS),$(rel)/$(f).o)
 PCE_SIMS32_HDR := $(foreach f,$(PCE_SIMS32_BAS),$(rel)/$(f).h)
 #PCE_SIMS32_MAN1 := $(rel)/pce-sims32.1
 PCE_SIMS32_ETC := $(rel)/pce-sims32.cfg
-PCE_SIMS32_BIN := $(rel)/pce-sims32
+PCE_SIMS32_BIN := $(rel)/pce-sims32$(EXEEXT)
 
 PCE_SIMS32_OBJ_EXT := \
 	src/chipset/82xx/e8250.o \
@@ -69,7 +69,7 @@ $(rel)/main.o:		$(rel)/main.c
 $(rel)/sercons.o:	$(rel)/sercons.c
 $(rel)/sims32.o:	$(rel)/sims32.c
 
-$(rel)/pce-sims32: $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_OBJ)
+$(rel)/pce-sims32$(EXEEXT): $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIMS32_LDFLAGS) -o $@ $(PCE_SIMS32_OBJ) $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_LIBS) -lm
 

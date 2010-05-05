@@ -27,7 +27,7 @@ PCE_SIMARM_OBJ := $(foreach f,$(PCE_SIMARM_BAS),$(rel)/$(f).o)
 PCE_SIMARM_HDR := $(foreach f,$(PCE_SIMARM_BAS),$(rel)/$(f).h)
 #PCE_SIMARM_MAN1 := $(rel)/pce-simarm.1
 PCE_SIMARM_ETC := $(rel)/pce-simarm.cfg
-PCE_SIMARM_BIN := $(rel)/pce-simarm
+PCE_SIMARM_BIN := $(rel)/pce-simarm$(EXEEXT)
 
 PCE_SIMARM_OBJ_EXT := \
 	src/cpu/arm/arm.a \
@@ -81,7 +81,7 @@ $(rel)/sercons.o:	$(rel)/sercons.c
 $(rel)/simarm.o:	$(rel)/simarm.c
 $(rel)/timer.o:		$(rel)/timer.c
 
-$(rel)/pce-simarm: $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_OBJ)
+$(rel)/pce-simarm$(EXEEXT): $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIMARM_LDFLAGS) -o $@ $(PCE_SIMARM_OBJ) $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_LIBS) -lm
 

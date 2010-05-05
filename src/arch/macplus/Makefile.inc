@@ -58,7 +58,7 @@ PCE_MACPLUS_OBJ  := $(foreach f,$(PCE_MACPLUS_BAS),$(rel)/$(f).o)
 PCE_MACPLUS_HDR  := $(foreach f,$(PCE_MACPLUS_BAS),$(rel)/$(f).h)
 #PCE_MACPLUS_MAN1 := $(rel)/pce-macplus.1
 PCE_MACPLUS_ETC  := $(rel)/pce-macplus.cfg
-PCE_MACPLUS_BIN  := $(rel)/pce-macplus
+PCE_MACPLUS_BIN  := $(rel)/pce-macplus$(EXEEXT)
 
 PCE_MACPLUS_OBJ_EXT := \
 	src/cpu/e68000/e68000.a \
@@ -117,7 +117,7 @@ $(rel)/sony.o:		$(rel)/sony.c
 $(rel)/traps.o:		$(rel)/traps.c
 $(rel)/video.o:		$(rel)/video.c
 
-$(rel)/pce-macplus: $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
+$(rel)/pce-macplus$(EXEEXT): $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm
 

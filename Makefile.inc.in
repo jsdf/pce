@@ -17,7 +17,9 @@ CFLAGS_DEFAULT = $(CFLAGS) -Isrc
 LDFLAGS         = @LDFLAGS@
 LDFLAGS_DEFAULT = $(LDFLAGS)
 
-LIBS            = @LIBS@
+EXEEXT := @EXEEXT@
+
+LIBS := @LIBS@
 
 ifneq "$(srcdir)" "."
 CFLAGS_DEFAULT += -I$(srcdir)/src

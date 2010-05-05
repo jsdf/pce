@@ -41,7 +41,7 @@ PCE_IBMPC_OBJ  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).o)
 PCE_IBMPC_HDR  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).h)
 PCE_IBMPC_MAN1 := $(rel)/pce-ibmpc.1
 PCE_IBMPC_ETC  := $(rel)/pce-ibmpc.cfg
-PCE_IBMPC_BIN  := $(rel)/pce-ibmpc
+PCE_IBMPC_BIN  := $(rel)/pce-ibmpc$(EXEEXT)
 
 PCE_IBMPC_OBJ_EXT := \
 	src/cpu/e8086/e8086.a \
@@ -109,7 +109,7 @@ $(rel)/msg.o:		$(rel)/msg.c
 $(rel)/util.o:		$(rel)/util.c
 $(rel)/xms.o:		$(rel)/xms.c
 
-$(rel)/pce-ibmpc: $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)
+$(rel)/pce-ibmpc$(EXEEXT): $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_IBMPC_LDFLAGS) -o $@ $(PCE_IBMPC_OBJ) $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_LIBS) -lm
 

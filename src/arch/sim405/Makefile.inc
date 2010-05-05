@@ -27,7 +27,7 @@ PCE_SIM405_OBJ := $(foreach f,$(PCE_SIM405_BAS),$(rel)/$(f).o)
 PCE_SIM405_HDR := $(foreach f,$(PCE_SIM405_BAS),$(rel)/$(f).h)
 #PCE_SIM405_MAN1 := $(rel)/pce-sim405.1
 PCE_SIM405_ETC := $(rel)/pce-sim405.cfg
-PCE_SIM405_BIN := $(rel)/pce-sim405
+PCE_SIM405_BIN := $(rel)/pce-sim405$(EXEEXT)
 
 PCE_SIM405_OBJ_EXT := \
 	src/cpu/ppc405/ppc405.a \
@@ -83,7 +83,7 @@ $(rel)/main.o:		$(rel)/main.c
 $(rel)/pci.o:		$(rel)/pci.c
 $(rel)/sercons.o:	$(rel)/sercons.c
 
-$(rel)/pce-sim405: $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_OBJ)
+$(rel)/pce-sim405$(EXEEXT): $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIM405_LDFLAGS) -o $@ $(PCE_SIM405_OBJ) $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_LIBS) -lm
 
