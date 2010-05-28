@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/nvram.c                                          *
  * Created:     2003-12-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -117,6 +117,8 @@ int nvr_set_file (nvram_t *nvr, FILE *fp, int close)
 
 		return (1);
 	}
+
+	mem_blk_clear (nvr->mem, 0x00);
 
 	fread (nvr->mem->data, 1, nvr->mem->size, nvr->fp);
 
