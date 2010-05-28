@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/sdl.c                                           *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -562,6 +562,8 @@ int sdl_close (sdl_t *sdl)
 static
 void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 {
+	int fs;
+
 	trm_init (&sdl->trm, sdl);
 
 	sdl->trm.del = (void *) sdl_del;
@@ -576,7 +578,8 @@ void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 	sdl->wdw_w = 0;
 	sdl->wdw_h = 0;
 
-	sdl->fullscreen = 0;
+	ini_get_bool (sct, "fullscreen", &fs, 0);
+	sdl->fullscreen = (fs != 0);
 
 	ini_get_uint16 (sct, "border", &sdl->border[0], 0);
 	sdl->border[1] = sdl->border[0];

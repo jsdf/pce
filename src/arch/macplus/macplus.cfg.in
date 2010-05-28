@@ -107,6 +107,9 @@ section macplus {
 		# Define a border around the image
 		border = 0
 
+		# Start in fullscreen mode.
+		fullscreen = 0
+
 		# The mouse speed. The host mouse speed is multiplied
 		# by (mouse_mul_x / mouse_div_x) and
 		# (mouse_mul_y / mouse_div_y)
