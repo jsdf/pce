@@ -592,7 +592,7 @@ void pc_exec (ibmpc_t *pc)
 	old = e86_get_opcnt (pc->cpu);
 
 	while (e86_get_opcnt (pc->cpu) == old) {
-		pc_clock (pc);
+		pc_clock (pc, 1);
 
 		if (pc->brk) {
 			break;
@@ -609,8 +609,7 @@ void pc_run (ibmpc_t *pc)
 
 	while (pc->brk == 0) {
 		if (pc->pause == 0) {
-			pc_clock (pc);
-			pc_clock (pc);
+			pc_clock (pc, 4 * pc->speed_current);
 		}
 		else {
 			pce_usleep (100000);
@@ -714,7 +713,7 @@ void do_c (cmd_t *cmd)
 	pc_clock_discontinuity (pc);
 
 	while (cnt > 0) {
-		pc_clock (pc);
+		pc_clock (pc, 1);
 		cnt -= 1;
 	}
 
@@ -1189,7 +1188,7 @@ void do_p (cmd_t *cmd)
 		ofs = e86_get_ip (pc->cpu);
 
 		while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
-			pc_clock (pc);
+			pc_clock (pc, 1);
 
 			if (pc_check_break (pc)) {
 				brk = 1;
@@ -1205,7 +1204,7 @@ void do_p (cmd_t *cmd)
 			unsigned short ofs2 = ofs + op.dat_n;
 
 			while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
-				pc_clock (pc);
+				pc_clock (pc, 1);
 
 				if (pc_check_break (pc)) {
 					brk = 1;

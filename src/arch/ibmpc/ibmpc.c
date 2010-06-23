@@ -1275,6 +1275,7 @@ void pc_clock_reset (ibmpc_t *pc)
 
 	pce_get_interval_us (&pc->sync_interval);
 
+	pc->clock1 = 0;
 	pc->clock2 = 0;
 }
 
@@ -1318,10 +1319,23 @@ void pc_clock_delay (ibmpc_t *pc)
 	}
 }
 
-void pc_clock (ibmpc_t *pc)
+void pc_clock (ibmpc_t *pc, unsigned long cnt)
 {
 	unsigned      i;
+	unsigned long spd;
 	unsigned long clk;
+
+	e86_clock (pc->cpu, cnt);
+
+	pc->clock1 += cnt;
+
+	spd = 4 * pc->speed_current;
+
+	if (pc->clock1 < spd) {
+		return;
+	}
+
+	pc->clock1 -= spd;
 
 	pc->sync_clock2_sim += 1;
 
@@ -1376,8 +1390,6 @@ void pc_clock (ibmpc_t *pc)
 			pc_clock_delay (pc);
 		}
 	}
-
-	e86_clock (pc->cpu, 4 * pc->speed_current);
 }
 
 int pc_set_cpu_model (ibmpc_t *pc, const char *str)

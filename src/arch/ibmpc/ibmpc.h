@@ -84,6 +84,7 @@ typedef struct ibmpc_t {
 
 	unsigned long      clk_div[4];
 
+	unsigned long      clock1;
 	unsigned long      clock2;
 
 	unsigned           brk;
@@ -125,7 +126,7 @@ void pc_clock_discontinuity (ibmpc_t *pc);
 /*!***************************************************************************
  * @short Clock the pc
  *****************************************************************************/
-void pc_clock (ibmpc_t *pc);
+void pc_clock (ibmpc_t *pc, unsigned long cnt);
 
 /*!***************************************************************************
  * @short Set the specific CPU model to be emulated
