@@ -20,6 +20,8 @@
  *****************************************************************************/
 
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,6 +36,9 @@ typedef struct {
 	SDLKey    sdlkey;
 	pce_key_t pcekey;
 } sdl_keymap_t;
+
+
+static int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force);
 
 
 static sdl_keymap_t keymap[] = {
@@ -180,16 +185,36 @@ void sdl_set_fullscreen (sdl_t *sdl, int val)
 	}
 
 	sdl->fullscreen = (val != 0);
+
+#ifdef PCE_HOST_WINDOWS
+	/*
+	 * SDL under windows does not support toggling full screen mode
+	 * after a surface has been created. Setting the window size
+	 * to the current size will free and then reallocate the
+	 * surface.
+	 */
+	sdl_set_window_size (sdl, sdl->wdw_w, sdl->wdw_h, 1);
+
+	/* Invalidate the entire terminal to force an update. */
+	sdl->trm.update_x = 0;
+	sdl->trm.update_y = 0;
+	sdl->trm.update_w = sdl->trm.w;
+	sdl->trm.update_h = sdl->trm.h;
+
+	trm_update (&sdl->trm);
+#endif
 }
 
 static
-int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h)
+int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force)
 {
 	unsigned long flags;
 
 	if (sdl->scr != NULL) {
-		if ((sdl->wdw_w == w) && (sdl->wdw_h == h)) {
-			return (0);
+		if (force == 0) {
+			if ((sdl->wdw_w == w) && (sdl->wdw_h == h)) {
+				return (0);
+			}
 		}
 
 		SDL_FreeSurface (sdl->scr);
@@ -267,7 +292,7 @@ void sdl_update (sdl_t *sdl)
 	bx = sdl->border[0] + sdl->border[2];
 	by = sdl->border[1] + sdl->border[3];
 
-	if (sdl_set_window_size (sdl, dw + bx, dh + by)) {
+	if (sdl_set_window_size (sdl, dw + bx, dh + by, 0)) {
 		return;
 	}
 
@@ -538,7 +563,7 @@ int sdl_open (sdl_t *sdl, unsigned w, unsigned h)
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_EventState (SDL_MOUSEMOTION, SDL_ENABLE);
 
-	sdl_set_window_size (sdl, fx * w + bx, fy * h + bx);
+	sdl_set_window_size (sdl, fx * w + bx, fy * h + bx, 0);
 
 	return (0);
 }
