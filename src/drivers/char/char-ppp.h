@@ -76,12 +76,12 @@ typedef struct char_ppp_s {
 	unsigned       ser_out_idx;
 	unsigned       ser_out_cnt;
 	unsigned       ser_out_max;
-	unsigned char  ser_out[PPP_MAX_MTU];
+	unsigned char  ser_out[PPP_MAX_MTU + 6];
 
 	unsigned       ser_inp_cnt;
 	unsigned       ser_inp_max;
 	int            ser_inp_esc;
-	unsigned char  ser_inp[PPP_MAX_MTU];
+	unsigned char  ser_inp[PPP_MAX_MTU + 6];
 
 	ppp_packet_t   *ser_pk_hd;
 	ppp_packet_t   *ser_pk_tl;

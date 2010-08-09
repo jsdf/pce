@@ -210,16 +210,16 @@ void ppp_send (char_ppp_t *drv, ppp_packet_t *pk, unsigned proto)
 
 	pk->idx = 0;
 
-	if ((pk->cnt + 2) > pk->max) {
-		return;
-	}
-
-	if ((pk->cnt + 2) > drv->mru_send) {
+	if ((pk->cnt - 4) > drv->mru_send) {
 		fprintf (stderr, "ppp: truncate packet (%u -> %u)\n",
-			pk->cnt, drv->mru_send
+			pk->cnt - 4, drv->mru_send
 		);
 
-		pk->cnt = drv->mru_send - 2;
+		pk->cnt = drv->mru_send + 4;
+	}
+
+	if ((pk->cnt + 2) > pk->max) {
+		return;
 	}
 
 	crc = ppp_crc16 (drv, pk->data, pk->cnt);
@@ -1571,11 +1571,11 @@ int chr_ppp_init (char_ppp_t *drv, const char *name)
 
 	drv->ser_out_idx = 0;
 	drv->ser_out_cnt = 0;
-	drv->ser_out_max = PPP_MAX_MTU;
+	drv->ser_out_max = PPP_MAX_MTU + 6;
 
 	drv->ser_inp_cnt = 0;
 	drv->ser_inp_esc = 0;
-	drv->ser_inp_max = PPP_MAX_MTU;
+	drv->ser_inp_max = PPP_MAX_MTU + 6;
 
 	drv->ser_pk_hd = NULL;
 	drv->ser_pk_tl = NULL;
