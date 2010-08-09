@@ -50,8 +50,9 @@
 #define PPP_PROTO_IPCP 0x8021
 #define PPP_PROTO_LCP  0xc021
 
-#define LCP_OPT_MRU  1
-#define LCP_OPT_ACCM 2
+#define LCP_OPT_MRU   1
+#define LCP_OPT_ACCM  2
+#define LCP_OPT_MAGIC 5
 
 #define IPCP_OPT_ADDR 3
 
@@ -580,6 +581,9 @@ void lcp_reset (ppp_cp_t *cp)
 	cp->drv->mru_send = 1500;
 	cp->drv->mru_recv = 1500;
 
+	cp->drv->magic_send = 0;
+	cp->drv->magic_recv = 0;
+
 	ipcp_reset (&cp->drv->ipcp);
 }
 
@@ -631,6 +635,9 @@ unsigned lcp_options_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		else if ((type == LCP_OPT_ACCM) && (length >= 6)) {
 			;
 		}
+		else if ((type == LCP_OPT_MAGIC) && (length >= 6)) {
+			;
+		}
 		else {
 			for (k = 0; k < length; k++) {
 				buf[j++] = buf[i + k];
@@ -679,7 +686,19 @@ unsigned lcp_options_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		else if (type == LCP_OPT_ACCM) {
 			;
 		}
-		else {
+		else if (type == LCP_OPT_MAGIC) {
+			if (ppp_get_uint32_be (buf, i + 2) == 0) {
+				/* negotiated magic must not be 0 */
+				nak = 1;
+			}
+		}
+
+		if (nak) {
+#ifdef DEBUG_PPP
+			fprintf (stderr, "lcp: option nak (type=%u, n=%u)\n",
+				type, length
+			);
+#endif
 			for (k = 0; k < length; k++) {
 				buf[j++] = buf[i + k];
 			}
@@ -712,6 +731,9 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		}
 		else if (type == LCP_OPT_ACCM) {
 			cp->drv->accm_send = ppp_get_uint32_be (buf, i + 2);
+		}
+		else if (type == LCP_OPT_MAGIC) {
+			cp->drv->magic_recv = ppp_get_uint32_be (buf, i + 2);
 		}
 
 		i += length;
@@ -1230,6 +1252,26 @@ void cp_timeout (ppp_cp_t *cp)
 }
 
 static
+void cp_echoreq (ppp_cp_t *cp, unsigned char *buf, unsigned cnt, unsigned id)
+{
+	if (cp->state != PPP_STATE_OPENED) {
+		return;
+	}
+
+	if (cnt < 4) {
+		return;
+	}
+
+	/* magic */
+	buf[0] = 0;
+	buf[1] = 0;
+	buf[2] = 0;
+	buf[3] = 0;
+
+	cp_send_echo_reply (cp, buf, cnt, id);
+}
+
+static
 void cp_recv (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
 	unsigned char  code;
@@ -1270,9 +1312,7 @@ void cp_recv (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		break;
 
 	case 9: /* echo request */
-		if (cp->state == PPP_STATE_OPENED) {
-			cp_send_echo_reply (cp, buf + 4, cnt - 4, id);
-		}
+		cp_echoreq (cp, buf + 4, cnt - 4, id);
 		break;
 
 	case 11: /* discard request */
@@ -1574,6 +1614,9 @@ int chr_ppp_init (char_ppp_t *drv, const char *name)
 		drv->ip_remote[2] = 0;
 		drv->ip_remote[3] = 2;
 	}
+
+	drv->magic_send = 0;
+	drv->magic_recv = 0;
 
 	drv->ser_out_idx = 0;
 	drv->ser_out_cnt = 0;

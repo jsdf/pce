@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-ppp.h                                  *
  * Created:     2009-10-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -100,6 +100,9 @@ typedef struct char_ppp_s {
 
 	unsigned char  ip_local[4];
 	unsigned char  ip_remote[4];
+
+	unsigned long  magic_send;
+	unsigned long  magic_recv;
 
 	unsigned char  lcp_send_id;
 	unsigned       lcp_counter;
