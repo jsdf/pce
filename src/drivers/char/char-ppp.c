@@ -577,7 +577,7 @@ void lcp_reset (ppp_cp_t *cp)
 		cp->opt_state[i] = 0;
 	}
 
-	cp->drv->mru_send = 2048;
+	cp->drv->mru_send = 1500;
 	cp->drv->mru_recv = 1500;
 
 	ipcp_reset (&cp->drv->ipcp);
@@ -594,8 +594,8 @@ void lcp_send_config_request (ppp_cp_t *cp)
 	if (cp->opt_state[LCP_OPT_MRU] == 0) {
 		buf[i++] = LCP_OPT_MRU;
 		buf[i++] = 4;
-		buf[i++] = (cp->drv->mru_send >> 8) & 0xff;
-		buf[i++] = cp->drv->mru_send & 0xff;
+		buf[i++] = (cp->drv->mru_recv >> 8) & 0xff;
+		buf[i++] = cp->drv->mru_recv & 0xff;
 	}
 
 	if (cp->opt_state[LCP_OPT_ACCM] == 0) {
@@ -663,11 +663,17 @@ unsigned lcp_options_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		if (type == LCP_OPT_MRU) {
 			val = (buf[i + 2] << 8) | buf[i + 3];
 
-			if ((val < 580) || (val > 2048)) {
+			if (val < 580) {
+#ifdef DEBUG_PPP
+				fprintf (stderr,
+					"lcp: send option nak: peer mru=%u, suggest=%u\n",
+					val, 580
+				);
+#endif
 				buf[j++] = type;
 				buf[j++] = 4;
-				buf[j++] = (2048 >> 8) & 0xff;
-				buf[j++] = 2048 & 0xff;
+				buf[j++] = (580 >> 8) & 0xff;
+				buf[j++] = 580 & 0xff;
 			}
 		}
 		else if (type == LCP_OPT_ACCM) {
@@ -697,7 +703,7 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		type = buf[i];
 		length = buf[i + 1];
 
-		if (type == 1) {
+		if (type == LCP_OPT_MRU) {
 			cp->drv->mru_send = (buf[i + 2] << 8) | buf[i + 3];
 
 			if (cp->drv->mru_send < 580) {
@@ -731,7 +737,7 @@ void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		}
 
 		if ((type == LCP_OPT_MRU) && (length >= 4)) {
-			cp->drv->mru_send = 1500;
+			cp->drv->mru_recv = 1500;
 			cp->opt_state[LCP_OPT_MRU] = 1;
 		}
 		else if ((type == LCP_OPT_ACCM) && (length >= 6)) {
@@ -764,15 +770,18 @@ void lcp_config_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 			val = (buf[i + 2] << 8) | buf[i + 3];
 
 #ifdef DEBUG_PPP
-			fprintf (stderr, "lcp: mtu nack (%u)\n", val);
+			fprintf (stderr,
+				"lcp: recv option nak: host mru=%u, suggest=%u\n",
+				cp->drv->mru_recv, val
+			);
 #endif
 
-			if ((val >= 580) && (val <= 2048)) {
-				cp->drv->mru_send = val;
+			if ((val >= 580) && (val <= PPP_MAX_MTU)) {
+				cp->drv->mru_recv = val;
 				cp->opt_state[LCP_OPT_MRU] = 0;
 			}
 			else {
-				cp->drv->mru_send = 1500;
+				cp->drv->mru_recv = 1500;
 				cp->opt_state[LCP_OPT_MRU] = 1;
 			}
 		}
