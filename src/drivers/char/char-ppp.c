@@ -267,6 +267,12 @@ void ppp_send (char_ppp_t *drv, ppp_packet_t *pk, unsigned proto)
 	}
 
 	drv->ser_pk_tl = pk;
+
+#ifdef DEBUG_PPP
+	fprintf (stderr, "ppp: send packet (n=%u, addr=%02X, ctrl=%02X, proto=%04X, crc=%04X)\n",
+		pk->cnt, 0xff, 0x03, proto, crc
+	);
+#endif
 }
 
 
@@ -639,6 +645,11 @@ unsigned lcp_options_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 			;
 		}
 		else {
+#ifdef DEBUG_PPP
+			fprintf (stderr, "lcp: send option reject (type=%u, n=%u)\n",
+				type, length
+			);
+#endif
 			for (k = 0; k < length; k++) {
 				buf[j++] = buf[i + k];
 			}
@@ -695,7 +706,7 @@ unsigned lcp_options_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 
 		if (nak) {
 #ifdef DEBUG_PPP
-			fprintf (stderr, "lcp: option nak (type=%u, n=%u)\n",
+			fprintf (stderr, "lcp: send option nak (type=%u, n=%u)\n",
 				type, length
 			);
 #endif
@@ -739,6 +750,12 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		i += length;
 	}
 
+#ifdef DEBUG_PPP
+	fprintf (stderr, "lcp: peer mru:   %u\n", cp->drv->mru_send);
+	fprintf (stderr, "lcp: peer accm:  0x%08lx\n", cp->drv->accm_send);
+	fprintf (stderr, "lcp: peer magic: 0x%08lx\n", cp->drv->magic_recv);
+#endif
+
 	return (cnt);
 }
 
@@ -757,6 +774,13 @@ void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 		if ((length < 2) || ((i + length) > cnt)) {
 			return;
 		}
+
+#ifdef DEBUG_PPP
+		fprintf (stderr,
+			"lcp: recv option rej: type=%u, n=%u\n",
+			type, length
+		);
+#endif
 
 		if ((type == LCP_OPT_MRU) && (length >= 4)) {
 			cp->drv->mru_recv = 1500;
@@ -825,6 +849,11 @@ void lcp_config_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 static
 void lcp_config_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
+#ifdef DEBUG_PPP
+	fprintf (stderr, "lcp: host mru:   %u\n", cp->drv->mru_recv);
+	fprintf (stderr, "lcp: host accm:  0x%08lx\n", cp->drv->accm_recv);
+	fprintf (stderr, "lcp: host magic: 0x%08lx\n", 0UL);
+#endif
 }
 
 static
@@ -1362,6 +1391,9 @@ void ppp_recv (char_ppp_t *drv, unsigned char *buf, unsigned cnt)
 	}
 
 	if (cnt < 6) {
+#ifdef DEBUG_PPP
+		fprintf (stderr, "ppp: recv short packet (n=%u)\n", cnt);
+#endif
 		return;
 	}
 
@@ -1370,7 +1402,19 @@ void ppp_recv (char_ppp_t *drv, unsigned char *buf, unsigned cnt)
 	prot = (buf[2] << 8) | buf[3];
 	crc1 = (buf[cnt - 1] << 8) | buf[cnt - 2];
 
+#ifdef DEBUG_PPP
+	fprintf (stderr,
+		"ppp: recv packet (n=%u, addr=%02X, ctrl=%02X, proto=%04X, crc=%04X)\n",
+		cnt, addr, ctrl, prot, crc1
+	);
+#endif
+
 	if ((addr != 0xff) || (ctrl != 0x03)) {
+#ifdef DEBUG_PPP
+		fprintf (stderr, "ppp: recv unknown addr/ctrl (%02X / %02X)\n",
+			addr, ctrl
+		);
+#endif
 		return;
 	}
 
@@ -1378,7 +1422,7 @@ void ppp_recv (char_ppp_t *drv, unsigned char *buf, unsigned cnt)
 
 	if (crc1 != crc2) {
 #ifdef DEBUG_PPP
-		fprintf (stderr, "ppp: bad crc (%04X / %04X)\n", crc1, crc2);
+		fprintf (stderr, "ppp: recv bad crc (%04X / %04X)\n", crc1, crc2);
 #endif
 		return;
 	}
@@ -1403,6 +1447,9 @@ void ppp_recv (char_ppp_t *drv, unsigned char *buf, unsigned cnt)
 		break;
 
 	default:
+#ifdef DEBUG_PPP
+		fprintf (stderr, "ppp: unknown protocol (%04X)\n", prot);
+#endif
 		cp_send_protocol_reject (&drv->lcp, buf + 4, cnt - 4, prot);
 		break;
 	}
@@ -1536,6 +1583,9 @@ unsigned chr_ppp_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 
 		if (val == 0x7e) {
 			if (drv->ser_inp_esc) {
+#ifdef DEBUG_PPP
+				fprintf (stderr, "ppp: escape at end of packet\n");
+#endif
 				drv->ser_inp_cnt = 0;
 				drv->ser_inp_esc = 0;
 				continue;
@@ -1568,6 +1618,9 @@ unsigned chr_ppp_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 		}
 
 		if (drv->ser_inp_cnt >= drv->ser_inp_max) {
+#ifdef DEBUG_PPP
+			fprintf (stderr, "ppp: buffer overflow\n");
+#endif
 			drv->ser_inp_cnt = 0;
 		}
 
