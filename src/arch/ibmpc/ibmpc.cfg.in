@@ -324,6 +324,13 @@ section pc {
 		# Valid values for uart are: "8250", "16450"
 		uart = "8250"
 
+		# Read and/or write up to multichar characters per character time,
+		# in essence multiplying the port speed by multichar. Most programs
+		# can't handle values greater than 1.
+		multichar = 1
+		#multichar_read = 1
+		#multichar_write = 1
+
 		# Not all character drivers are supported on
 		# all platforms.
 		#driver = "null"

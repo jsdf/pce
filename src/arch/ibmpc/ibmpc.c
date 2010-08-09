@@ -849,6 +849,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
+	unsigned      multi, multi_read, multi_write;
 	const char    *driver;
 	const char    *log;
 	const char    *chip;
@@ -871,18 +872,29 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 		if (ini_get_uint32 (sct, "address", &addr, defbase[i])) {
 			ini_get_uint32 (sct, "io", &addr, defbase[i]);
 		}
+
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
+		ini_get_uint16 (sct, "multichar", &multi, 1);
+		ini_get_uint16 (sct, "multichar_read", &multi_read, multi);
+		ini_get_uint16 (sct, "multichar_write", &multi_write, multi);
 		ini_get_string (sct, "driver", &driver, NULL);
 		ini_get_string (sct, "log", &log, NULL);
 
 		pce_log_tag (MSG_INF,
-			"SERPORT:", "COM%u addr=0x%04lx irq=%u uart=%s driver=%s\n",
-			i + 1, addr, irq, chip,
-			(driver == NULL) ? "<none>" : driver
+			"SERPORT:", "COM%u addr=0x%04lx irq=%u multichar=r=%u/w=%u uart=%s\n",
+			i + 1, addr, irq, multi_read, multi_write, chip
 		);
 
+		if (driver != NULL) {
+			pce_log_tag (MSG_INF,
+				"SERPORT:", "COM%u driver=%s\n",
+				i + 1, driver
+			);
+		}
+
 		pc->serport[i] = ser_new (addr, 0);
+
 		if (pc->serport[i] == NULL) {
 			pce_log (MSG_ERR, "*** serial port setup failed [%04X/%u -> %s]\n",
 				addr, irq, (driver == NULL) ? "<none>" : driver
@@ -911,6 +923,8 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 			if (e8250_set_chip_str (&pc->serport[i]->uart, chip)) {
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
 			}
+
+			e8250_set_multichar (&pc->serport[i]->uart, multi_read, multi_write);
 
 			e8250_set_irq_fct (&pc->serport[i]->uart,
 				&pc->pic, e8259_get_irq_f (&pc->pic, irq)
