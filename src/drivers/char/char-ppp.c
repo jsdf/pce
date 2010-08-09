@@ -226,6 +226,9 @@ void ppp_packet_free (char_ppp_t *drv, ppp_packet_t *pk)
 	free (pk);
 }
 
+/*
+ * Add the PPP header and CRC to a packet and add it to the output queue.
+ */
 static
 void ppp_send (char_ppp_t *drv, ppp_packet_t *pk, unsigned proto)
 {
@@ -622,6 +625,15 @@ void lcp_send_config_request (ppp_cp_t *cp)
 	cp->counter = 4;
 }
 
+/*
+ * Filter rejected options received in a config request from the peer.
+ *
+ * Options in buf are examined and the ones that are not to be rejected
+ * are removed. The new size of buf is returned.
+ *
+ * If no options in buf are to be rejected buf is not touched and 0
+ * is returned.
+ */
 static
 unsigned lcp_options_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
@@ -661,6 +673,12 @@ unsigned lcp_options_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 	return (j);
 }
 
+/*
+ * Filter refused options received in a config request from the peer.
+ *
+ * This function is called after rejected options have already been
+ * filtered out.
+ */
 static
 unsigned lcp_options_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
@@ -721,6 +739,13 @@ unsigned lcp_options_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 	return (j);
 }
 
+/*
+ * Filter ack options received in a config request from the peer.
+ *
+ * By the time this function is called rejected and refused
+ * options have already been filtered out, so no options are actually
+ * filtered here.
+ */
 static
 unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
@@ -759,6 +784,9 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 	return (cnt);
 }
 
+/*
+ * Handle options in a config reject received from the peer.
+ */
 static
 void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
@@ -795,6 +823,9 @@ void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 	}
 }
 
+/*
+ * Handle options in a config nak received from the peer.
+ */
 static
 void lcp_config_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
@@ -846,6 +877,9 @@ void lcp_config_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 	}
 }
 
+/*
+ * Handle options in a config ack received from the peer.
+ */
 static
 void lcp_config_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
