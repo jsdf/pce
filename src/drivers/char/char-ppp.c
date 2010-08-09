@@ -110,6 +110,35 @@ int chr_ppp_get_option_ip (const char *str, const char *name, unsigned char *val
 }
 
 static
+unsigned long ppp_get_uint32_be (const void *buf, unsigned i)
+{
+	unsigned long       v;
+	const unsigned char *tmp;
+
+	tmp = (const unsigned char *) buf + i;
+
+	v = tmp[0] & 0xff;
+	v = (v << 8) | (tmp[1] & 0xff);
+	v = (v << 8) | (tmp[2] & 0xff);
+	v = (v << 8) | (tmp[3] & 0xff);
+
+	return (v);
+}
+
+static
+void ppp_set_uint32_be (void *buf, unsigned i, unsigned long v)
+{
+	unsigned char *tmp;
+
+	tmp = (unsigned char *) buf + i;
+
+	tmp[0] = (v >> 24) & 0xff;
+	tmp[1] = (v >> 16) & 0xff;
+	tmp[2] = (v >> 8) & 0xff;
+	tmp[3] = v & 0xff;
+}
+
+static
 const unsigned short *ppp_crc16_get_tab (char_ppp_t *drv)
 {
 	unsigned       i, j;
@@ -541,10 +570,8 @@ void lcp_reset (ppp_cp_t *cp)
 
 	cp->state = PPP_STATE_STOPPED;
 
-	for (i = 0; i < 32; i++) {
-		cp->drv->accm_send[i] = 1;
-		cp->drv->accm_recv[i] = 0;
-	}
+	cp->drv->accm_send = 0xffffffff;
+	cp->drv->accm_recv = 0x00000000;
 
 	for (i = 0; i < 32; i++) {
 		cp->opt_state[i] = 0;
@@ -554,37 +581,6 @@ void lcp_reset (ppp_cp_t *cp)
 	cp->drv->mru_recv = 1500;
 
 	ipcp_reset (&cp->drv->ipcp);
-}
-
-static
-void lcp_accm_decode (const unsigned char *accm, unsigned char *dst)
-{
-	unsigned i;
-
-	for (i = 0; i < 32; i++) {
-		if (accm[3 - (i >> 3)]) {
-			dst[i] = 1;
-		}
-		else {
-			dst[i] = 0;
-		}
-	}
-}
-
-static
-void lcp_accm_encode (unsigned char *accm, const unsigned char *src)
-{
-	unsigned i;
-
-	for (i = 0; i < 4; i++) {
-		accm[i] = 0;
-	}
-
-	for (i = 0; i < 32; i++) {
-		if (src[i]) {
-			accm[3 - (i >> 3)] |= (1 << (i & 7));
-		}
-	}
 }
 
 static
@@ -606,7 +602,7 @@ void lcp_send_config_request (ppp_cp_t *cp)
 		buf[i++] = LCP_OPT_ACCM;
 		buf[i++] = 6;
 
-		lcp_accm_encode (buf + i, cp->drv->accm_recv);
+		ppp_set_uint32_be (buf, i, cp->drv->accm_recv);
 
 		i += 4;
 	}
@@ -708,8 +704,8 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 				cp->drv->mru_send = 580;
 			}
 		}
-		else if (type == 2) {
-			lcp_accm_decode (buf + i + 2, cp->drv->accm_send);
+		else if (type == LCP_OPT_ACCM) {
+			cp->drv->accm_send = ppp_get_uint32_be (buf, i + 2);
 		}
 
 		i += length;
@@ -721,7 +717,7 @@ unsigned lcp_options_ack (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 static
 void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 {
-	unsigned      i, k;
+	unsigned      i;
 	unsigned char type, length;
 
 	i = 0;
@@ -738,12 +734,8 @@ void lcp_config_rej (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 			cp->drv->mru_send = 1500;
 			cp->opt_state[LCP_OPT_MRU] = 1;
 		}
-
-		if ((type == LCP_OPT_ACCM) && (length >= 6)) {
-			for (k = 0; k < 32; k++) {
-				cp->drv->accm_recv[k] = 1;
-			}
-
+		else if ((type == LCP_OPT_ACCM) && (length >= 6)) {
+			cp->drv->accm_recv = 0xffffffff;
 			cp->opt_state[LCP_OPT_ACCM] = 1;
 		}
 
@@ -784,10 +776,14 @@ void lcp_config_nak (ppp_cp_t *cp, unsigned char *buf, unsigned cnt)
 				cp->opt_state[LCP_OPT_MRU] = 1;
 			}
 		}
-
-		if ((type == LCP_OPT_ACCM) && (length >= 6)) {
-			lcp_accm_decode (buf + i + 2, cp->drv->accm_recv);
-
+		else if ((type == LCP_OPT_ACCM) && (length >= 6)) {
+#ifdef DEBUG_PPP
+			fprintf (stderr,
+				"lcp: recv option nak: host accm=0x%08lx, suggest=0x%08lx\n",
+				cp->drv->accm_recv, ppp_get_uint32_be (buf, i + 2)
+			);
+#endif
+			cp->drv->accm_recv = ppp_get_uint32_be (buf, i + 2);
 			cp->opt_state[LCP_OPT_ACCM] = 0;
 		}
 
@@ -1430,7 +1426,7 @@ unsigned chr_ppp_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 					esc = 1;
 				}
 			}
-			else if ((v < 0x20) && (drv->accm_send[v] != 0)) {
+			else if ((v < 0x20) && (drv->accm_send & (1UL << v))) {
 				esc = 1;
 			}
 
@@ -1515,11 +1511,12 @@ unsigned chr_ppp_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 			drv->ser_inp_esc = 0;
 			val ^= 0x20;
 		}
-#if 0
-		else if ((val < 0x20) && (drv->accm_recv[val] != 0)) {
+		else if ((val < 0x20) && (drv->accm_recv & (1UL << val))) {
+#ifdef DEBUG_PPP
+			fprintf (stderr, "ppp: missing escape (%02X)\n", val);
+#endif
 			continue;
 		}
-#endif
 
 		if (drv->ser_inp_cnt >= drv->ser_inp_max) {
 			drv->ser_inp_cnt = 0;

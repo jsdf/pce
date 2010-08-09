@@ -92,8 +92,8 @@ typedef struct char_ppp_s {
 	ppp_cp_t       lcp;
 	ppp_cp_t       ipcp;
 
-	unsigned char  accm_send[32];
-	unsigned char  accm_recv[32];
+	unsigned long  accm_send;
+	unsigned long  accm_recv;
 
 	unsigned       mru_send;
 	unsigned       mru_recv;
