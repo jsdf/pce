@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/pci.c                                        *
  * Created:     2004-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -33,61 +33,6 @@
 /* #define DEBUG_PCI_IXP 1 */
 
 
-unsigned char pci_ixp_get_cfg8 (pci_ixp_t *ixp, unsigned long addr)
-{
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: get cfg8 %08lX\n", addr);
-#endif
-
-	return (0);
-}
-
-unsigned short pci_ixp_get_cfg16 (pci_ixp_t *ixp, unsigned long addr)
-{
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: get cfg16 %08lX\n", addr);
-#endif
-
-	return (0);
-}
-
-unsigned long pci_ixp_get_cfg32 (pci_ixp_t *ixp, unsigned long addr)
-{
-	unsigned long val;
-
-	val = pci_dev_get_cfg32 (&ixp->dev, addr);
-
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: get cfg32 %08lX -> %08lX\n", addr, val);
-#endif
-
-	return (val);
-}
-
-void pci_ixp_set_cfg8 (pci_ixp_t *ixp, unsigned long addr, unsigned char val)
-{
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %02X\n", addr, val);
-#endif
-}
-
-void pci_ixp_set_cfg16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
-{
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %04X\n", addr, val);
-#endif
-}
-
-void pci_ixp_set_cfg32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
-{
-#ifdef DEBUG_PCI_IXP
-	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %08lX)\n", addr, val);
-#endif
-
-	pci_dev_set_cfg32 (&ixp->dev, addr, val);
-}
-
-
 static
 unsigned pci_ixp_get_device (unsigned long addr)
 {
@@ -106,6 +51,67 @@ unsigned pci_ixp_get_device (unsigned long addr)
 	}
 
 	return (i);
+}
+
+
+static
+unsigned char pci_ixp_get_cfg8 (pci_ixp_t *ixp, unsigned long addr)
+{
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: get cfg8 %08lX\n", addr);
+#endif
+
+	return (0);
+}
+
+static
+unsigned short pci_ixp_get_cfg16 (pci_ixp_t *ixp, unsigned long addr)
+{
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: get cfg16 %08lX\n", addr);
+#endif
+
+	return (0);
+}
+
+static
+unsigned long pci_ixp_get_cfg32 (pci_ixp_t *ixp, unsigned long addr)
+{
+	unsigned long val;
+
+	val = pci_dev_get_cfg32 (&ixp->dev, addr);
+
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: get cfg32 %08lX -> %08lX\n", addr, val);
+#endif
+
+	return (val);
+}
+
+static
+void pci_ixp_set_cfg8 (pci_ixp_t *ixp, unsigned long addr, unsigned char val)
+{
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %02X\n", addr, val);
+#endif
+}
+
+static
+void pci_ixp_set_cfg16 (pci_ixp_t *ixp, unsigned long addr, unsigned short val)
+{
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %04X\n", addr, val);
+#endif
+}
+
+static
+void pci_ixp_set_cfg32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
+{
+#ifdef DEBUG_PCI_IXP
+	pce_log (MSG_DEB, "pci-ixp: set cfg32 %08lX <- %08lX)\n", addr, val);
+#endif
+
+	pci_dev_set_cfg32 (&ixp->dev, addr, val);
 }
 
 
@@ -341,131 +347,6 @@ void pci_bus_set_csr32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 }
 
 
-void pci_ixp_init (pci_ixp_t *ixp)
-{
-	ixp->bigendian = 0;
-
-	mem_init (&ixp->asio);
-
-	mem_blk_init (&ixp->pci_io, 0xd8000000UL, 0x02000000UL, 0);
-	ixp->pci_io.ext = ixp;
-	ixp->pci_io.get_uint8 = (mem_get_uint8_f) pci_bus_get_io8;
-	ixp->pci_io.set_uint8 = (mem_set_uint8_f) pci_bus_set_io8;
-	ixp->pci_io.get_uint16 = (mem_get_uint16_f) pci_bus_get_io16;
-	ixp->pci_io.set_uint16 = (mem_set_uint16_f) pci_bus_set_io16;
-	ixp->pci_io.get_uint32 = (mem_get_uint32_f) pci_bus_get_io32;
-	ixp->pci_io.set_uint32 = (mem_set_uint32_f) pci_bus_set_io32;
-
-	mem_blk_init (&ixp->pci_cfg, 0xda000000UL, 0x02000000UL, 0);
-	ixp->pci_cfg.ext = ixp;
-	ixp->pci_cfg.get_uint8 = (mem_get_uint8_f) pci_bus_get_cfg8;
-	ixp->pci_cfg.set_uint8 = (mem_set_uint8_f) pci_bus_set_cfg8;
-	ixp->pci_cfg.get_uint16 = (mem_get_uint16_f) pci_bus_get_cfg16;
-	ixp->pci_cfg.set_uint16 = (mem_set_uint16_f) pci_bus_set_cfg16;
-	ixp->pci_cfg.get_uint32 = (mem_get_uint32_f) pci_bus_get_cfg32;
-	ixp->pci_cfg.set_uint32 = (mem_set_uint32_f) pci_bus_set_cfg32;
-
-	mem_blk_init (&ixp->pci_special, 0xdc000000UL, 0x02000000UL, 0);
-	ixp->pci_special.ext = ixp;
-	ixp->pci_special.get_uint8 = (mem_get_uint8_f) pci_bus_get_io8;
-	ixp->pci_special.set_uint8 = (mem_set_uint8_f) pci_bus_set_io8;
-	ixp->pci_special.get_uint16 = (mem_get_uint16_f) pci_bus_get_io16;
-	ixp->pci_special.set_uint16 = (mem_set_uint16_f) pci_bus_set_io16;
-	ixp->pci_special.get_uint32 = (mem_get_uint32_f) pci_bus_get_io32;
-	ixp->pci_special.set_uint32 = (mem_set_uint32_f) pci_bus_set_io32;
-
-	mem_blk_init (&ixp->pci_pcicfg, 0xde000000UL, 0x01000000UL, 0);
-	ixp->pci_pcicfg.ext = ixp;
-	ixp->pci_pcicfg.get_uint8 = (mem_get_uint8_f) pci_ixp_get_cfg8;
-	ixp->pci_pcicfg.set_uint8 = (mem_set_uint8_f) pci_ixp_set_cfg8;
-	ixp->pci_pcicfg.get_uint16 = (mem_get_uint16_f) pci_ixp_get_cfg16;
-	ixp->pci_pcicfg.set_uint16 = (mem_set_uint16_f) pci_ixp_set_cfg16;
-	ixp->pci_pcicfg.get_uint32 = (mem_get_uint32_f) pci_ixp_get_cfg32;
-	ixp->pci_pcicfg.set_uint32 = (mem_set_uint32_f) pci_ixp_set_cfg32;
-
-	mem_blk_init (&ixp->pci_csr, 0xdf000000UL, 0x01000000UL, 0);
-	ixp->pci_csr.ext = ixp;
-	ixp->pci_csr.get_uint8 = (mem_get_uint8_f) pci_bus_get_csr8;
-	ixp->pci_csr.set_uint8 = (mem_set_uint8_f) pci_bus_set_csr8;
-	ixp->pci_csr.get_uint16 = (mem_get_uint16_f) pci_bus_get_csr16;
-	ixp->pci_csr.set_uint16 = (mem_set_uint16_f) pci_bus_set_csr16;
-	ixp->pci_csr.get_uint32 = (mem_get_uint32_f) pci_bus_get_csr32;
-	ixp->pci_csr.set_uint32 = (mem_set_uint32_f) pci_bus_set_csr32;
-
-	mem_blk_init (&ixp->pci_mem, 0xe0000000UL, 0x20000000UL, 0);
-	ixp->pci_mem.ext = ixp;
-	ixp->pci_mem.get_uint8 = (mem_get_uint8_f) pci_bus_get_io8;
-	ixp->pci_mem.set_uint8 = (mem_set_uint8_f) pci_bus_set_io8;
-	ixp->pci_mem.get_uint16 = (mem_get_uint16_f) pci_bus_get_io16;
-	ixp->pci_mem.set_uint16 = (mem_set_uint16_f) pci_bus_set_io16;
-	ixp->pci_mem.get_uint32 = (mem_get_uint32_f) pci_bus_get_io32;
-	ixp->pci_mem.set_uint32 = (mem_set_uint32_f) pci_bus_set_io32;
-
-	pci_init (&ixp->bus);
-
-	pci_dev_init (&ixp->dev);
-
-	ixp->dev.ext = ixp;
-	ixp->dev.cfg_ext = ixp;
-	ixp->dev.get_cfg8 = (mem_get_uint8_f) pci_ixp_get_cfg8;
-	ixp->dev.set_cfg8 = (mem_set_uint8_f) pci_ixp_set_cfg8;
-	ixp->dev.get_cfg16 = (mem_get_uint16_f) pci_ixp_get_cfg16;
-	ixp->dev.set_cfg16 = (mem_set_uint16_f) pci_ixp_set_cfg16;
-	ixp->dev.get_cfg32 = (mem_get_uint32_f) pci_ixp_get_cfg32;
-	ixp->dev.set_cfg32 = (mem_set_uint32_f) pci_ixp_set_cfg32;
-
-	buf_set_uint16_le (ixp->dev.config, 0x00, PCIID_VENDOR_INTEL);
-	buf_set_uint16_le (ixp->dev.config, 0x02, PCIID_INTEL_IXP2400);
-	buf_set_uint32_le (ixp->dev.config, 0x04, 0x00000001);
-	buf_set_uint32_le (ixp->dev.config, 0x08, 0x0b400101);
-	buf_set_uint32_le (ixp->dev.config, 0x0c, 0x00000000);
-	buf_set_uint32_le (ixp->dev.config, 0x3c, 0x04010100);
-
-	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x01, 32, 1);
-	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x04, 16, 1);
-	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x0c, 16, 1);
-	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x3c, 32, 1);
-
-	pci_set_device (&ixp->bus, &ixp->dev, 0);
-}
-
-void pci_ixp_free (pci_ixp_t *ixp)
-{
-	mem_blk_free (&ixp->pci_mem);
-	mem_blk_free (&ixp->pci_csr);
-	mem_blk_free (&ixp->pci_pcicfg);
-	mem_blk_free (&ixp->pci_special);
-	mem_blk_free (&ixp->pci_cfg);
-	mem_blk_free (&ixp->pci_io);
-	mem_free (&ixp->asio);
-
-	pci_dev_free (&ixp->dev);
-
-	pci_free (&ixp->bus);
-}
-
-pci_ixp_t *pci_ixp_new (void)
-{
-	pci_ixp_t *ixp;
-
-	ixp = malloc (sizeof (pci_ixp_t));
-	if (ixp == NULL) {
-		return (NULL);
-	}
-
-	pci_ixp_init (ixp);
-
-	return (ixp);
-}
-
-void pci_ixp_del (pci_ixp_t *ixp)
-{
-	if (ixp != NULL) {
-		pci_ixp_free (ixp);
-		free (ixp);
-	}
-}
-
 void pci_ixp_set_endian (pci_ixp_t *ixp, int big)
 {
 	ixp->bigendian = (big != 0);
@@ -510,4 +391,136 @@ mem_blk_t *pci_ixp_get_mem_csr (pci_ixp_t *ixp)
 mem_blk_t *pci_ixp_get_mem_mem (pci_ixp_t *ixp)
 {
 	return (&ixp->pci_mem);
+}
+
+
+void pci_ixp_init (pci_ixp_t *ixp)
+{
+	ixp->bigendian = 0;
+
+	ixp->pci_control = 0;
+	ixp->pci_addr_ext = 0;
+
+	ixp->xscale_int_enable = 0;
+
+	mem_init (&ixp->asio);
+
+	mem_blk_init (&ixp->pci_io, 0xd8000000, 0x02000000, 0);
+	ixp->pci_io.ext = ixp;
+	ixp->pci_io.get_uint8 = (void *) pci_bus_get_io8;
+	ixp->pci_io.set_uint8 = (void *) pci_bus_set_io8;
+	ixp->pci_io.get_uint16 = (void *) pci_bus_get_io16;
+	ixp->pci_io.set_uint16 = (void *) pci_bus_set_io16;
+	ixp->pci_io.get_uint32 = (void *) pci_bus_get_io32;
+	ixp->pci_io.set_uint32 = (void *) pci_bus_set_io32;
+
+	mem_blk_init (&ixp->pci_cfg, 0xda000000, 0x02000000, 0);
+	ixp->pci_cfg.ext = ixp;
+	ixp->pci_cfg.get_uint8 = (void *) pci_bus_get_cfg8;
+	ixp->pci_cfg.set_uint8 = (void *) pci_bus_set_cfg8;
+	ixp->pci_cfg.get_uint16 = (void *) pci_bus_get_cfg16;
+	ixp->pci_cfg.set_uint16 = (void *) pci_bus_set_cfg16;
+	ixp->pci_cfg.get_uint32 = (void *) pci_bus_get_cfg32;
+	ixp->pci_cfg.set_uint32 = (void *) pci_bus_set_cfg32;
+
+	mem_blk_init (&ixp->pci_special, 0xdc000000, 0x02000000, 0);
+	ixp->pci_special.ext = ixp;
+	ixp->pci_special.get_uint8 = (void *) pci_bus_get_io8;
+	ixp->pci_special.set_uint8 = (void *) pci_bus_set_io8;
+	ixp->pci_special.get_uint16 = (void *) pci_bus_get_io16;
+	ixp->pci_special.set_uint16 = (void *) pci_bus_set_io16;
+	ixp->pci_special.get_uint32 = (void *) pci_bus_get_io32;
+	ixp->pci_special.set_uint32 = (void *) pci_bus_set_io32;
+
+	mem_blk_init (&ixp->pci_pcicfg, 0xde000000, 0x01000000, 0);
+	ixp->pci_pcicfg.ext = ixp;
+	ixp->pci_pcicfg.get_uint8 = (void *) pci_ixp_get_cfg8;
+	ixp->pci_pcicfg.set_uint8 = (void *) pci_ixp_set_cfg8;
+	ixp->pci_pcicfg.get_uint16 = (void *) pci_ixp_get_cfg16;
+	ixp->pci_pcicfg.set_uint16 = (void *) pci_ixp_set_cfg16;
+	ixp->pci_pcicfg.get_uint32 = (void *) pci_ixp_get_cfg32;
+	ixp->pci_pcicfg.set_uint32 = (void *) pci_ixp_set_cfg32;
+
+	mem_blk_init (&ixp->pci_csr, 0xdf000000, 0x01000000, 0);
+	ixp->pci_csr.ext = ixp;
+	ixp->pci_csr.get_uint8 = (void *) pci_bus_get_csr8;
+	ixp->pci_csr.set_uint8 = (void *) pci_bus_set_csr8;
+	ixp->pci_csr.get_uint16 = (void *) pci_bus_get_csr16;
+	ixp->pci_csr.set_uint16 = (void *) pci_bus_set_csr16;
+	ixp->pci_csr.get_uint32 = (void *) pci_bus_get_csr32;
+	ixp->pci_csr.set_uint32 = (void *) pci_bus_set_csr32;
+
+	mem_blk_init (&ixp->pci_mem, 0xe0000000, 0x20000000, 0);
+	ixp->pci_mem.ext = ixp;
+	ixp->pci_mem.get_uint8 = (void *) pci_bus_get_io8;
+	ixp->pci_mem.set_uint8 = (void *) pci_bus_set_io8;
+	ixp->pci_mem.get_uint16 = (void *) pci_bus_get_io16;
+	ixp->pci_mem.set_uint16 = (void *) pci_bus_set_io16;
+	ixp->pci_mem.get_uint32 = (void *) pci_bus_get_io32;
+	ixp->pci_mem.set_uint32 = (void *) pci_bus_set_io32;
+
+	pci_init (&ixp->bus);
+
+	pci_dev_init (&ixp->dev);
+
+	ixp->dev.ext = ixp;
+	ixp->dev.cfg_ext = ixp;
+	ixp->dev.get_cfg8 = (void *) pci_ixp_get_cfg8;
+	ixp->dev.set_cfg8 = (void *) pci_ixp_set_cfg8;
+	ixp->dev.get_cfg16 = (void *) pci_ixp_get_cfg16;
+	ixp->dev.set_cfg16 = (void *) pci_ixp_set_cfg16;
+	ixp->dev.get_cfg32 = (void *) pci_ixp_get_cfg32;
+	ixp->dev.set_cfg32 = (void *) pci_ixp_set_cfg32;
+
+	buf_set_uint16_le (ixp->dev.config, 0x00, PCIID_VENDOR_INTEL);
+	buf_set_uint16_le (ixp->dev.config, 0x02, PCIID_INTEL_IXP2400);
+	buf_set_uint32_le (ixp->dev.config, 0x04, 0x00000001);
+	buf_set_uint32_le (ixp->dev.config, 0x08, 0x0b400101);
+	buf_set_uint32_le (ixp->dev.config, 0x0c, 0x00000000);
+	buf_set_uint32_le (ixp->dev.config, 0x3c, 0x04010100);
+
+	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x01, 32, 1);
+	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x04, 16, 1);
+	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x0c, 16, 1);
+	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x3c, 32, 1);
+
+	pci_set_device (&ixp->bus, &ixp->dev, 0);
+}
+
+void pci_ixp_free (pci_ixp_t *ixp)
+{
+	mem_blk_free (&ixp->pci_mem);
+	mem_blk_free (&ixp->pci_csr);
+	mem_blk_free (&ixp->pci_pcicfg);
+	mem_blk_free (&ixp->pci_special);
+	mem_blk_free (&ixp->pci_cfg);
+	mem_blk_free (&ixp->pci_io);
+	mem_free (&ixp->asio);
+
+	pci_dev_free (&ixp->dev);
+
+	pci_free (&ixp->bus);
+}
+
+pci_ixp_t *pci_ixp_new (void)
+{
+	pci_ixp_t *ixp;
+
+	ixp = malloc (sizeof (pci_ixp_t));
+
+	if (ixp == NULL) {
+		return (NULL);
+	}
+
+	pci_ixp_init (ixp);
+
+	return (ixp);
+}
+
+void pci_ixp_del (pci_ixp_t *ixp)
+{
+	if (ixp != NULL) {
+		pci_ixp_free (ixp);
+		free (ixp);
+	}
 }
