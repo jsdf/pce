@@ -20,7 +20,7 @@ section simarm {
 
 		# The size in bytes
 		size = 0x04000000
-		
+
 		# The RAM image that is used to initialize the RAM (optional)
 		file = "linux.bin"
 	}
@@ -80,5 +80,9 @@ section simarm {
 
 	section console {
 		serial = 0
+	}
+
+	section pci {
+		irq = 15
 	}
 }

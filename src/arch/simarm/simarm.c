@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/simarm.c                                     *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -302,9 +302,20 @@ void sarm_setup_disks (simarm_t *sim, ini_sct_t *ini)
 static
 void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 {
+	unsigned  irq;
+	ini_sct_t *sct;
+
+	sct = ini_next_sct (ini, NULL, "pci");
+
+	ini_get_uint16 (sct, "irq", &irq, 15);
+
+	pce_log_tag (MSG_INF, "PCI:", "irq=%u\n", irq);
+
 	sim->pci = pci_ixp_new();
 
 	pci_ixp_set_endian (sim->pci, sim->bigendian);
+
+	pci_ixp_set_irq_fct (sim->pci, sim->intc, ict_get_irq_f (sim->intc, irq));
 
 	mem_add_blk (sim->mem, pci_ixp_get_mem_io (sim->pci), 0);
 	mem_add_blk (sim->mem, pci_ixp_get_mem_cfg (sim->pci), 0);
@@ -312,35 +323,49 @@ void sarm_setup_pci (simarm_t *sim, ini_sct_t *ini)
 	mem_add_blk (sim->mem, pci_ixp_get_mem_pcicfg (sim->pci), 0);
 	mem_add_blk (sim->mem, pci_ixp_get_mem_csr (sim->pci), 0);
 	mem_add_blk (sim->mem, pci_ixp_get_mem_mem (sim->pci), 0);
-
-	pce_log_tag (MSG_INF, "PCI:", "initialized\n");
 }
 
 static
 void sarm_setup_ata (simarm_t *sim, ini_sct_t *ini)
 {
-	unsigned  pcidev, pciirq;
+	unsigned  dev, irq;
 	ini_sct_t *sct;
 
 	pci_ata_init (&sim->pciata);
 
 	sct = ini_next_sct (ini, NULL, "pci_ata");
+
 	if (sct == NULL) {
 		return;
 	}
 
-	ini_get_uint16 (sct, "pci_device", &pcidev, 1);
-	ini_get_uint16 (sct, "pci_irq", &pciirq, 31);
+	ini_get_uint16 (sct, "pci_device", &dev, 1);
+	ini_get_uint16 (sct, "pci_irq", &irq, 255);
 
-	pce_log_tag (MSG_INF, "PCI-ATA:", "pcidev=%u irq=%u\n",
-		pcidev, pciirq
-	);
+	pce_log_tag (MSG_INF, "PCI-ATA:", "device=%u\n", dev);
+
+	if (irq < 32) {
+		pce_log_tag (MSG_INF, "PCI-ATA:", "irq=%u\n", irq);
+	}
 
 	pci_ixp_add_device (sim->pci, &sim->pciata.pci);
-	pci_set_device (&sim->pci->bus, &sim->pciata.pci, pcidev);
-	pci_dev_set_intr_fct (&sim->pciata.pci, 0,
-		sim->intc, ict_get_irq_f (sim->intc, pciirq)
-	);
+	pci_set_device (&sim->pci->bus, &sim->pciata.pci, dev);
+
+	/*
+	 * If an irq is specified, the ATA PCI interrupt is connected
+	 * directly to the interrupt controller instead of PCI INT A.
+	 * This is a hack and should not be used.
+	 */
+	if (irq < 32) {
+		pci_dev_set_intr_fct (&sim->pciata.pci, 0,
+			sim->intc, ict_get_irq_f (sim->intc, irq)
+		);
+	}
+	else {
+		pci_dev_set_intr_fct (&sim->pciata.pci, 0,
+			sim->pci, pci_ixp_set_int_a
+		);
+	}
 
 	ini_get_pci_ata (&sim->pciata, sim->dsks, sct);
 }

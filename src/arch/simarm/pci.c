@@ -53,6 +53,21 @@ unsigned pci_ixp_get_device (unsigned long addr)
 	return (i);
 }
 
+static
+void pci_ixp_set_irq (pci_ixp_t *ixp)
+{
+	int a, b;
+
+	if (ixp->set_irq == NULL) {
+		return;
+	}
+
+	a = (ixp->xscale_int_status & ixp->xscale_int_enable & 0x04000000) != 0;
+	b = (ixp->xscale_int_status & ixp->xscale_int_enable & 0x08000000) != 0;
+
+	ixp->set_irq (ixp->set_irq_ext, a || b);
+}
+
 
 static
 unsigned char pci_ixp_get_cfg8 (pci_ixp_t *ixp, unsigned long addr)
@@ -303,6 +318,9 @@ unsigned long pci_bus_get_csr32 (pci_ixp_t *ixp, unsigned long addr)
 	case 0x140:
 		return (ixp->pci_addr_ext);
 
+	case 0x158:
+		return (ixp->xscale_int_status);
+
 	case 0x15c:
 		return (ixp->xscale_int_enable);
 	}
@@ -336,8 +354,12 @@ void pci_bus_set_csr32 (pci_ixp_t *ixp, unsigned long addr, unsigned long val)
 		ixp->pci_addr_ext = val;
 		break;
 
-	case 0x15c:
+	case 0x158: /* xscale interrupt status */
+		break;
+
+	case 0x15c: /* xscale interrupt enable */
 		ixp->xscale_int_enable = val;
+		pci_ixp_set_irq (ixp);
 		break;
 
 	default:
@@ -352,6 +374,12 @@ void pci_ixp_set_endian (pci_ixp_t *ixp, int big)
 	ixp->bigendian = (big != 0);
 }
 
+void pci_ixp_set_irq_fct (pci_ixp_t *ixp, void *ext, void *fct)
+{
+	ixp->set_irq_ext = ext;
+	ixp->set_irq = fct;
+}
+
 void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev)
 {
 	unsigned i;
@@ -361,6 +389,30 @@ void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev)
 			mem_add_blk (&ixp->asio, dev->reg[i], 0);
 		}
 	}
+}
+
+void pci_ixp_set_int_a (pci_ixp_t *ixp, unsigned char val)
+{
+	if (val) {
+		ixp->xscale_int_status |= 0x04000000UL;
+	}
+	else {
+		ixp->xscale_int_status &= ~0x04000000UL;
+	}
+
+	pci_ixp_set_irq (ixp);
+}
+
+void pci_ixp_set_int_b (pci_ixp_t *ixp, unsigned char val)
+{
+	if (val) {
+		ixp->xscale_int_status |= 0x08000000UL;
+	}
+	else {
+		ixp->xscale_int_status &= ~0x08000000UL;
+	}
+
+	pci_ixp_set_irq (ixp);
 }
 
 mem_blk_t *pci_ixp_get_mem_io (pci_ixp_t *ixp)
@@ -401,6 +453,7 @@ void pci_ixp_init (pci_ixp_t *ixp)
 	ixp->pci_control = 0;
 	ixp->pci_addr_ext = 0;
 
+	ixp->xscale_int_status = 0;
 	ixp->xscale_int_enable = 0;
 
 	mem_init (&ixp->asio);
@@ -485,6 +538,9 @@ void pci_ixp_init (pci_ixp_t *ixp)
 	pci_dev_set_cfg_mask (&ixp->dev, 8 * 0x3c, 32, 1);
 
 	pci_set_device (&ixp->bus, &ixp->dev, 0);
+
+	ixp->set_irq_ext = NULL;
+	ixp->set_irq = NULL;
 }
 
 void pci_ixp_free (pci_ixp_t *ixp)

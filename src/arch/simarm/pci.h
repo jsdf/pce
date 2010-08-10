@@ -52,13 +52,22 @@ typedef struct {
 
 	uint32_t  pci_control;
 	uint32_t  pci_addr_ext;
+	uint32_t  xscale_int_status;
 	uint32_t  xscale_int_enable;
+
+	void      *set_irq_ext;
+	void      (*set_irq) (void *ext, unsigned char val);
 } pci_ixp_t;
 
 
 void pci_ixp_set_endian (pci_ixp_t *ixp, int big);
 
+void pci_ixp_set_irq_fct (pci_ixp_t *ixp, void *ext, void *fct);
+
 void pci_ixp_add_device (pci_ixp_t *ixp, pci_dev_t *dev);
+
+void pci_ixp_set_int_a (pci_ixp_t *ixp, unsigned char val);
+void pci_ixp_set_int_b (pci_ixp_t *ixp, unsigned char val);
 
 mem_blk_t *pci_ixp_get_mem_io (pci_ixp_t *ixp);
 mem_blk_t *pci_ixp_get_mem_cfg (pci_ixp_t *ixp);
