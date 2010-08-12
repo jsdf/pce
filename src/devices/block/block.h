@@ -129,6 +129,11 @@ int dsk_get_readonly (disk_t *dsk);
 void dsk_set_readonly (disk_t *dsk, int v);
 
 /*!***************************************************************************
+ * @short Set the disk geometry
+ *****************************************************************************/
+int dsk_set_geometry (disk_t *dsk, uint32_t n, uint32_t c, uint32_t h, uint32_t s);
+
+/*!***************************************************************************
  * @short Set the visible geometry
  *****************************************************************************/
 void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s);

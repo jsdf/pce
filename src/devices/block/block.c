@@ -330,6 +330,21 @@ void dsk_set_readonly (disk_t *dsk, int v)
 	dsk->readonly = (v != 0);
 }
 
+int dsk_set_geometry (disk_t *dsk, uint32_t n, uint32_t c, uint32_t h, uint32_t s)
+{
+	if (dsk_adjust_chs (&n, &c, &h, &s)) {
+		return (1);
+	}
+
+	dsk->blocks = n;
+
+	dsk->c = c;
+	dsk->h = h;
+	dsk->s = s;
+
+	return (0);
+}
+
 void dsk_set_visible_chs (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s)
 {
 	dsk->visible_c = c;
