@@ -157,10 +157,8 @@ void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v)
 }
 
 
-int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
+int dsk_set_pos (FILE *fp, uint64_t ofs)
 {
-	size_t r;
-
 #ifdef HAVE_FSEEKO
 	if (fseeko (fp, ofs, SEEK_SET)) {
 		return (1);
@@ -174,6 +172,17 @@ int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
 		return (1);
 	}
 #endif
+
+	return (0);
+}
+
+int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt)
+{
+	size_t r;
+
+	if (dsk_set_pos (fp, ofs)) {
+		return (1);
+	}
 
 	r = fread (buf, 1, cnt, fp);
 
@@ -188,19 +197,9 @@ int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt)
 {
 	size_t r;
 
-#ifdef HAVE_FSEEKO
-	if (fseeko (fp, ofs, SEEK_SET)) {
+	if (dsk_set_pos (fp, ofs)) {
 		return (1);
 	}
-#else
-	if (ofs > (uint64_t) LONG_MAX) {
-		return (1);
-	}
-
-	if (fseek (fp, (long) ofs, SEEK_SET)) {
-		return (1);
-	}
-#endif
 
 	r = fwrite (buf, 1, cnt, fp);
 

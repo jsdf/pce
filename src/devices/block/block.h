@@ -96,6 +96,7 @@ uint32_t dsk_get_uint32_le (const void *buf, unsigned i);
 void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v);
 
 
+int dsk_set_pos (FILE *fp, uint64_t ofs);
 int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_get_filesize (FILE *fp, uint64_t *cnt);
