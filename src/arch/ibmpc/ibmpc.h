@@ -67,6 +67,8 @@ typedef struct ibmpc_t {
 
 	unsigned           bootdrive;
 
+	unsigned long      dma_page[4];
+
 	/* allow int 1a to get real time */
 	int                support_rtc;
 

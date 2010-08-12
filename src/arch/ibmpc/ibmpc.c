@@ -72,6 +72,20 @@ void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 #ifdef DEBUG_PORTS
 	pc_log_deb (pc, "set port 8 %04lX <- %02X\n", addr, val);
 #endif
+
+	switch (addr) {
+	case 0x0081:
+		pc->dma_page[2] = (unsigned long) (val & 0x0f) << 16;
+		break;
+
+	case 0x0082:
+		pc->dma_page[3] = (unsigned long) (val & 0x0f) << 16;
+		break;
+
+	case 0x0083:
+		pc->dma_page[1] = (unsigned long) (val & 0x0f) << 16;
+		break;
+	}
 }
 
 static
@@ -299,6 +313,11 @@ void pc_setup_dma (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint32 (sct, "address", &addr, 0);
 
 	pce_log_tag (MSG_INF, "DMAC:", "addr=0x%08x size=0x%04x\n", addr, 16);
+
+	pc->dma_page[0] = 0;
+	pc->dma_page[1] = 0;
+	pc->dma_page[2] = 0;
+	pc->dma_page[3] = 0;
 
 	e8237_init (&pc->dma);
 
