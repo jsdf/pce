@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -327,6 +327,21 @@ void e86_irq (e8086_t *cpu, unsigned char val)
 	cpu->irq = (val != 0);
 }
 
+static
+void e86_irq_ack (e8086_t *c)
+{
+	unsigned char irq;
+
+	c->irq = 0;
+	c->halt = 0;
+
+	if (c->inta != NULL) {
+		irq = c->inta (c->inta_ext);
+
+		e86_trap (c, irq);
+	}
+}
+
 int e86_interrupt (e8086_t *cpu, unsigned n)
 {
 	if (e86_get_if (cpu)) {
@@ -399,6 +414,11 @@ void e86_execute (e8086_t *c)
 
 	if (c->halt) {
 		e86_set_clk (c, 2);
+
+		if (c->irq && e86_get_if (c)) {
+			e86_irq_ack (c);
+		}
+
 		return;
 	}
 
@@ -439,15 +459,7 @@ void e86_execute (e8086_t *c)
 		e86_trap (c, 1);
 	}
 	else if (c->irq && e86_get_if (c)) {
-		c->irq = 0;
-
-		if (c->inta != NULL) {
-			unsigned char irq;
-
-			irq = c->inta (c->inta_ext);
-
-			e86_trap (c, irq);
-		}
+		e86_irq_ack (c);
 	}
 }
 
