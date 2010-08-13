@@ -332,6 +332,10 @@ int main (int argc, char *argv[])
 
 	atexit (mac_atexit);
 
+#ifdef PCE_ENABLE_SDL
+	SDL_Init (0);
+#endif
+
 	pce_path_ini (sct);
 
 	signal (SIGINT, &sig_int);
@@ -371,6 +375,10 @@ int main (int argc, char *argv[])
 	}
 
 	mac_del (par_sim);
+
+#ifdef PCE_ENABLE_SDL
+	SDL_Quit();
+#endif
 
 	mon_free (&par_mon);
 	pce_console_done();

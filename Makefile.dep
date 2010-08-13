@@ -2034,6 +2034,7 @@ src/terminal/null.o: src/terminal/null.c \
 	src/terminal/terminal.h
 
 src/terminal/sdl.o: src/terminal/sdl.c \
+	src/config.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/sdl.h \

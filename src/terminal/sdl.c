@@ -550,8 +550,10 @@ int sdl_open (sdl_t *sdl, unsigned w, unsigned h)
 	bx = sdl->border[0] + sdl->border[2];
 	by = sdl->border[1] + sdl->border[3];
 
-	if (SDL_Init (SDL_INIT_VIDEO) < 0) {
-		return (1);
+	if (SDL_WasInit (SDL_INIT_VIDEO) == 0) {
+		if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0) {
+			return (1);
+		}
 	}
 
 	inf = SDL_GetVideoInfo();
@@ -578,8 +580,6 @@ int sdl_close (sdl_t *sdl)
 
 		sdl->scr = NULL;
 	}
-
-	SDL_Quit();
 
 	return (0);
 }

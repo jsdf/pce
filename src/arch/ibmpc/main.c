@@ -1718,6 +1718,10 @@ int main (int argc, char *argv[])
 
 	atexit (pc_atexit);
 
+#ifdef PCE_ENABLE_SDL
+	SDL_Init (0);
+#endif
+
 	pce_path_ini (sct);
 
 	pc = pc_new (sct);
@@ -1766,6 +1770,10 @@ int main (int argc, char *argv[])
 	}
 
 	pc_del (pc);
+
+#ifdef PCE_ENABLE_SDL
+	SDL_Quit();
+#endif
 
 	mon_free (&par_mon);
 	pce_console_done();
