@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/xms.c                                         *
  * Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -89,23 +89,29 @@ xms_t *xms_new (ini_sct_t *sct)
 	xms->emb_used = 0;
 	xms->emb_max = emb_size;
 
+	xms->umb_segm = 0;
+	xms->umb_used = 0;
+	xms->umb_size = 0;
+
+	xms->umbmem = NULL;
+	xms->umb = NULL;
+	xms->umb_cnt = 0;
+
 	if (umb_size > 0) {
 		xms->umbmem = mem_blk_new (16UL * umb_segm, 16UL * umb_size, 1);
 		xms->umbmem->ext = xms;
 		mem_blk_clear (xms->umbmem, 0x00);
-	}
-	else {
-		xms->umbmem = NULL;
-	}
 
-	xms->umb_used = 0;
-	xms->umb_max = umb_size;
+		xms->umb_segm = umb_segm;
+		xms->umb_size = umb_size;
 
-	xms->umb_cnt = 1;
-	xms->umb = malloc (sizeof (xms_umb_t));
-	xms->umb[0].segm = umb_segm;
-	xms->umb[0].size = umb_size;
-	xms->umb[0].alloc = 0;
+		xms->umb = malloc (sizeof (xms_umb_t));
+
+		xms->umb_cnt = 1;
+		xms->umb[0].segm = umb_segm;
+		xms->umb[0].size = umb_size;
+		xms->umb[0].alloc = 0;
+	}
 
 	if (hma) {
 		xms->hma = mem_blk_new (0x100000, 65536 - 16, 1);
@@ -162,8 +168,15 @@ void xms_reset (xms_t *xms)
 		emb_del (xms->emb[i]);
 	}
 
-	if (xms->umbmem != NULL) {
+	if (xms->umb_size > 0) {
 		mem_blk_clear (xms->umbmem, 0x00);
+
+		xms->umb_used = 0;
+
+		xms->umb_cnt = 1;
+		xms->umb[0].segm = xms->umb_segm;
+		xms->umb[0].size = xms->umb_size;
+		xms->umb[0].alloc = 0;
 	}
 
 	if (xms->hma != NULL) {
@@ -172,9 +185,6 @@ void xms_reset (xms_t *xms)
 
 	xms->emb_cnt = 0;
 	xms->emb_used = 0;
-
-	xms->umb_cnt = 0;
-	xms->umb_used = 0;
 
 	xms->hma_alloc = 0;
 }
@@ -188,7 +198,7 @@ void xms_prt_state (xms_t *xms)
 
 	pce_printf ("XMS: EMB: %luK/%luK  UMB: %luK/%luK  HMA: %luK/%luK\n",
 		xms->emb_used / 1024, xms->emb_max / 1024,
-		xms->umb_used / 64, xms->umb_max / 64,
+		xms->umb_used / 64, xms->umb_size / 64,
 		hma / 1024, hma / 1024
 	);
 
@@ -203,7 +213,7 @@ void xms_prt_state (xms_t *xms)
 	}
 
 	pce_printf ("UMB: blk=%u used=%lu max=%lu\n",
-		xms->umb_cnt, 16 * xms->umb_used, 16 * xms->umb_max
+		xms->umb_cnt, 16 * xms->umb_used, 16 * xms->umb_size
 	);
 
 	for (i = 0; i < xms->umb_cnt; i++) {
@@ -375,6 +385,8 @@ int xms_alloc_umb (xms_t *xms, unsigned short size, unsigned *idx)
 
 			xms->umb[i].alloc = 1;
 
+			xms->umb_used += xms->umb[i].size;
+
 			*idx = i;
 
 			return (0);
@@ -396,6 +408,9 @@ int xms_free_umb (xms_t *xms, unsigned short segm)
 			}
 
 			xms->umb[i].alloc = 0;
+
+			xms->umb_used -= xms->umb[i].size;
+
 			umb_fix (xms);
 
 			return (0);
@@ -856,7 +871,7 @@ void xms_info (xms_t *xms, e8086_t *cpu)
 			flags |= 0x0002;
 		}
 
-		e86_set_cx (cpu, xms->umb_max);
+		e86_set_cx (cpu, xms->umb_size);
 		e86_set_dx (cpu, xms->emb_max / 1024UL);
 	}
 

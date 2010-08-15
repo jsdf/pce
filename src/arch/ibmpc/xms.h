@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/xms.h                                         *
  * Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -42,20 +42,21 @@ typedef struct xms_umb_t {
 
 
 typedef struct {
-	unsigned      emb_cnt;
-	xms_emb_t     **emb;
-	unsigned long emb_used;
-	unsigned long emb_max;
+	unsigned       emb_cnt;
+	xms_emb_t      **emb;
+	unsigned long  emb_used;
+	unsigned long  emb_max;
 
-	unsigned      umb_cnt;
-	xms_umb_t     *umb;
-	unsigned long umb_used;
-	unsigned long umb_max;
+	unsigned       umb_cnt;
+	xms_umb_t      *umb;
+	unsigned short umb_segm;
+	unsigned short umb_used;
+	unsigned short umb_size;
 
-	mem_blk_t     *umbmem;
+	mem_blk_t      *umbmem;
 
-	mem_blk_t     *hma;
-	int           hma_alloc;
+	mem_blk_t      *hma;
+	int            hma_alloc;
 } xms_t;
 
 
