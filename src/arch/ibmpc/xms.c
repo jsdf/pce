@@ -288,29 +288,33 @@ int umb_split (xms_t *xms, unsigned idx, unsigned short size)
 	return (0);
 }
 
-void umb_fix (xms_t *xms)
+static
+void umb_join (xms_t *xms)
 {
-	unsigned i, j;
+	unsigned i, j, k;
 
-	i = 1;
-	j = 1;
+	i = 0;
+	j = 0;
 
 	while (i < xms->umb_cnt) {
-		if ((xms->umb[i - 1].alloc == 0) && (xms->umb[i].alloc == 0)) {
-			xms->umb[i - 1].size += xms->umb[i].size;
+		k = i + 1;
+
+		if (xms->umb[i].alloc == 0) {
+			while ((k < xms->umb_cnt) && (xms->umb[k].alloc == 0)) {
+				xms->umb[i].size += xms->umb[k].size;
+				k += 1;
+			}
 		}
-		else if (i != j) {
+
+		if (i != j) {
 			xms->umb[j] = xms->umb[i];
-			j += 1;
 		}
 
-		i += 1;
+		j += 1;
+		i = k;
 	}
 
-	if (j < xms->umb_cnt) {
-		xms->umb_cnt = j;
-		xms->umb = (xms_umb_t *) realloc (xms->umb, xms->umb_cnt * sizeof (xms_umb_t));
-	}
+	xms->umb_cnt = j;
 }
 
 unsigned short umb_get_max (xms_t *xms)
@@ -411,7 +415,7 @@ int xms_free_umb (xms_t *xms, unsigned short segm)
 
 			xms->umb_used -= xms->umb[i].size;
 
-			umb_fix (xms);
+			umb_join (xms);
 
 			return (0);
 		}
