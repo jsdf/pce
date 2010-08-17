@@ -427,7 +427,7 @@ disk_t *dsk_fdimg_open_fp (FILE *fp, uint64_t ofs, int ro)
 		return (dsk_img_open_fp (fp, 0, 40, 2, 8, ofs, ro));
 
 	case 400UL * 1024UL:
-		return (dsk_img_open_fp (fp, 0, 80, 1, 10, ofs, ro));
+		return (dsk_img_open_fp (fp, 0, 40, 2, 10, ofs, ro));
 
 	case 360UL * 1024UL:
 		return (dsk_img_open_fp (fp, 0, 40, 2, 9, ofs, ro));
