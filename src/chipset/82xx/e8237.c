@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8237.c                                     *
  * Created:     2003-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -354,22 +354,6 @@ void e8237_del (e8237_t *dma)
 	}
 }
 
-void e8237_reset (e8237_t *dma)
-{
-	e8237_chn_reset (&dma->chn[0]);
-	e8237_chn_reset (&dma->chn[1]);
-	e8237_chn_reset (&dma->chn[2]);
-	e8237_chn_reset (&dma->chn[3]);
-
-	dma->check = 0;
-
-	dma->cmd = 0;
-	dma->flipflop = 0;
-	dma->priority = 0;
-
-	e8237_set_hreq (dma, 0);
-}
-
 
 unsigned char e8237_get_command (e8237_t *dma)
 {
@@ -649,6 +633,22 @@ unsigned short e8237_get_uint16 (e8237_t *dma, unsigned long addr)
 unsigned long e8237_get_uint32 (e8237_t *dma, unsigned long addr)
 {
 	return (0xffffffff);
+}
+
+void e8237_reset (e8237_t *dma)
+{
+	e8237_chn_reset (&dma->chn[0]);
+	e8237_chn_reset (&dma->chn[1]);
+	e8237_chn_reset (&dma->chn[2]);
+	e8237_chn_reset (&dma->chn[3]);
+
+	dma->check = 0;
+
+	dma->cmd = 0;
+	dma->flipflop = 0;
+	dma->priority = 0;
+
+	e8237_set_hreq (dma, 0);
 }
 
 void e8237_clock (e8237_t *dma, unsigned n)

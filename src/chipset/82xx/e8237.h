@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8237.h                                     *
  * Created:     2003-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,8 +115,6 @@ e8237_t *e8237_new (void);
 void e8237_free (e8237_t *dma);
 void e8237_del (e8237_t *dma);
 
-void e8237_reset (e8237_t *dma);
-
 unsigned char e8237_get_command (e8237_t *dma);
 unsigned char e8237_get_priority (e8237_t *dma);
 unsigned char e8237_get_mode (e8237_t *dma, unsigned i);
@@ -143,6 +141,11 @@ unsigned long e8237_get_uint32 (e8237_t *dma, unsigned long addr);
 void e8237_set_uint8 (e8237_t *dma, unsigned long addr, unsigned char val);
 void e8237_set_uint16 (e8237_t *dma, unsigned long addr, unsigned short val);
 void e8237_set_uint32 (e8237_t *dma, unsigned long addr, unsigned long val);
+
+/*****************************************************************************
+ * @short Reset a 8237 DMAC
+ *****************************************************************************/
+void e8237_reset (e8237_t *dma);
 
 void e8237_clock (e8237_t *dma, unsigned n);
 

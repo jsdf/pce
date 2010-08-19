@@ -1275,6 +1275,8 @@ void pc_reset (ibmpc_t *pc)
 
 	e86_reset (pc->cpu);
 
+	e8237_reset (&pc->dma);
+
 	pc_kbd_reset (&pc->kbd);
 
 	if (pc->xms != NULL) {
