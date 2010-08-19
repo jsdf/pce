@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8253.h                                     *
  * Created:     2001-05-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -119,6 +119,11 @@ unsigned long e8253_get_uint32 (e8253_t *pit, unsigned long addr);
 void e8253_set_uint8 (e8253_t *pit, unsigned long addr, unsigned char val);
 void e8253_set_uint16 (e8253_t *pit, unsigned long addr, unsigned short val);
 void e8253_set_uint32 (e8253_t *pit, unsigned long addr, unsigned long val);
+
+/*!***************************************************************************
+ * @short Reset a PIT
+ *****************************************************************************/
+void e8253_reset (e8253_t *pit);
 
 void e8253_clock (e8253_t *pit, unsigned n);
 
