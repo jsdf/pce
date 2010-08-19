@@ -338,6 +338,8 @@ void e86_irq_ack (e8086_t *c)
 	if (c->inta != NULL) {
 		irq = c->inta (c->inta_ext);
 
+		e86_set_clk (c, 61);
+
 		e86_trap (c, irq);
 	}
 }
