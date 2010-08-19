@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/e8086/e80186.c                                           *
  * Created:     2003-08-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -522,9 +522,9 @@ unsigned op_c9 (e8086_t *c)
 	return (1);
 }
 
-void e86_enable_186 (e8086_t *c)
+void e86_set_80186 (e8086_t *c)
 {
-	e86_enable_86 (c);
+	e86_set_8086 (c);
 
 	c->cpu &= ~E86_CPU_REP_BUG;
 	c->cpu |= E86_CPU_MASK_SHIFT;
@@ -545,4 +545,13 @@ void e86_enable_186 (e8086_t *c)
 	c->op[0xc1] = &op_c1;
 	c->op[0xc8] = &op_c8;
 	c->op[0xc9] = &op_c9;
+}
+
+void e86_set_80188 (e8086_t *c)
+{
+	e86_set_80186 (c);
+
+	c->cpu |= E86_CPU_8BIT;
+
+	e86_set_pq_size (c, 4);
 }

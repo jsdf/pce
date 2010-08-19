@@ -1432,43 +1432,25 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 int pc_set_cpu_model (ibmpc_t *pc, const char *str)
 {
 	if (strcmp (str, "8086") == 0) {
-		e86_enable_86 (pc->cpu);
+		e86_set_8086 (pc->cpu);
 	}
 	else if (strcmp (str, "8088") == 0) {
-		e86_enable_86 (pc->cpu);
-		e86_set_pq_size (pc->cpu, 4);
-		e86_set_options (pc->cpu, E86_CPU_8BIT, 1);
-	}
-	else if (strcmp (str, "v30") == 0) {
-		e86_enable_v30 (pc->cpu);
-	}
-	else if (strcmp (str, "v20") == 0) {
-		e86_enable_v30 (pc->cpu);
-		e86_set_pq_size (pc->cpu, 4);
-		e86_set_options (pc->cpu, E86_CPU_8BIT, 1);
-	}
-	else if (strcmp (str, "8086+") == 0) {
-		e86_enable_186 (pc->cpu);
-		e86_set_options (pc->cpu, E86_CPU_MASK_SHIFT, 0);
-		e86_set_options (pc->cpu, E86_CPU_PUSH_FIRST, 0);
-	}
-	else if (strcmp (str, "8088+") == 0) {
-		e86_enable_186 (pc->cpu);
-		e86_set_pq_size (pc->cpu, 4);
-		e86_set_options (pc->cpu, E86_CPU_MASK_SHIFT, 0);
-		e86_set_options (pc->cpu, E86_CPU_PUSH_FIRST, 0);
-		e86_set_options (pc->cpu, E86_CPU_8BIT, 1);
+		e86_set_8088 (pc->cpu);
 	}
 	else if (strcmp (str, "80186") == 0) {
-		e86_enable_186 (pc->cpu);
+		e86_set_80186 (pc->cpu);
 	}
 	else if (strcmp (str, "80188") == 0) {
-		e86_enable_186 (pc->cpu);
-		e86_set_pq_size (pc->cpu, 4);
-		e86_set_options (pc->cpu, E86_CPU_8BIT, 1);
+		e86_set_80188 (pc->cpu);
+	}
+	else if (strcmp (str, "v30") == 0) {
+		e86_set_v30 (pc->cpu);
+	}
+	else if (strcmp (str, "v20") == 0) {
+		e86_set_v20 (pc->cpu);
 	}
 	else if (strcmp (str, "80286") == 0) {
-		e86_enable_286 (pc->cpu);
+		e86_set_80286 (pc->cpu);
 	}
 	else {
 		return (1);

@@ -350,10 +350,13 @@ void e86_free (e8086_t *c);
 e8086_t *e86_new (void);
 void e86_del (e8086_t *c);
 
-void e86_enable_86 (e8086_t *c);
-void e86_enable_186 (e8086_t *c);
-void e86_enable_286 (e8086_t *c);
-void e86_enable_v30 (e8086_t *c);
+void e86_set_8086 (e8086_t *c);
+void e86_set_8088 (e8086_t *c);
+void e86_set_80186 (e8086_t *c);
+void e86_set_80188 (e8086_t *c);
+void e86_set_80286 (e8086_t *c);
+void e86_set_v30 (e8086_t *c);
+void e86_set_v20 (e8086_t *c);
 
 /*!***************************************************************************
  * @short Set the prefetch queue size

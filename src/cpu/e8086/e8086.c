@@ -114,7 +114,7 @@ void e86_del (e8086_t *c)
 	}
 }
 
-void e86_enable_86 (e8086_t *c)
+void e86_set_8086 (e8086_t *c)
 {
 	unsigned i;
 
@@ -127,9 +127,25 @@ void e86_enable_86 (e8086_t *c)
 	e86_set_pq_size (c, 6);
 }
 
-void e86_enable_v30 (e8086_t *c)
+void e86_set_8088 (e8086_t *c)
 {
-	e86_enable_86 (c);
+	e86_set_8086 (c);
+
+	c->cpu |= E86_CPU_8BIT;
+
+	e86_set_pq_size (c, 4);
+}
+
+void e86_set_v30 (e8086_t *c)
+{
+	e86_set_8086 (c);
+
+	c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
+}
+
+void e86_set_v20 (e8086_t *c)
+{
+	e86_set_8088 (c);
 
 	c->cpu &= ~(E86_CPU_REP_BUG | E86_CPU_MASK_SHIFT);
 }
