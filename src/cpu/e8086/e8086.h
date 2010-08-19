@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.h                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,7 @@
 #define E86_CPU_INT6       0x08         /* throw illegal opcode exception */
 #define E86_CPU_INT7       0x10		/* throw escape opcode exception */
 #define E86_CPU_FLAGS286   0x20         /* Allow clearing flags 12-15 */
+#define E86_CPU_8BIT       0x40		/* 16 bit accesses take more time */
 
 /* CPU flags */
 #define E86_FLG_C 0x0001
@@ -298,6 +299,10 @@ unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs
 {
 	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
+	if ((c->cpu & E86_CPU_8BIT) || (addr & 1)) {
+		c->delay += 4;
+	}
+
 	if ((addr + 1) < c->ram_cnt) {
 		return (c->ram[addr] + (c->ram[addr + 1] << 8));
 	}
@@ -310,6 +315,10 @@ static inline
 void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
 {
 	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
+
+	if ((c->cpu & E86_CPU_8BIT) || (addr & 1)) {
+		c->delay += 4;
+	}
 
 	if ((addr + 1) < c->ram_cnt) {
 		c->ram[addr] = val & 0xff;
