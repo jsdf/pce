@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8259.h                                     *
  * Created:     2003-04-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -183,6 +183,11 @@ void e8259_set_uint32 (e8259_t *pic, unsigned long addr, unsigned long val);
 unsigned char e8259_get_uint8 (e8259_t *pic, unsigned long addr);
 unsigned short e8259_get_uint16 (e8259_t *pic, unsigned long addr);
 unsigned long e8259_get_uint32 (e8259_t *pic, unsigned long addr);
+
+/*!***************************************************************************
+ * @short Reset a PIC 8259
+ *****************************************************************************/
+void e8259_reset (e8259_t *pic);
 
 void e8259_clock (e8259_t *pic);
 

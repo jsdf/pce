@@ -1277,6 +1277,7 @@ void pc_reset (ibmpc_t *pc)
 
 	e8237_reset (&pc->dma);
 	e8253_reset (&pc->pit);
+	e8259_reset (&pc->pic);
 
 	pc_kbd_reset (&pc->kbd);
 
