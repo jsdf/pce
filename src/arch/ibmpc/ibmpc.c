@@ -664,9 +664,12 @@ static
 int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
 {
 	pc->video = vga_new_ini (sct);
+
 	if (pc->video == NULL) {
 		return (1);
 	}
+
+	vga_set_irq_fct (pc->video->ext, &pc->pic, e8259_set_irq2);
 
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/vga.h                                      *
  * Created:     2004-03-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -76,8 +76,14 @@ typedef struct vga_s {
 	unsigned char *buf;
 
 	unsigned char update_state;
+
+	void          *set_irq_ext;
+	void          (*set_irq) (void *ext, unsigned char val);
+	unsigned char set_irq_val;
 } vga_t;
 
+
+void vga_set_irq_fct (vga_t *ega, void *ext, void *fct);
 
 void vga_init (vga_t *vga, unsigned long io, unsigned long addr);
 

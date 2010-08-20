@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/vga.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -152,6 +152,9 @@
 
 #define VGA_CRT_VRE_PR    0x80		/* protect register 0-7 */
 
+#define VGA_CRT_VRE_CVI   0x10		/* clear vertical interrupt */
+#define VGA_CRT_VRE_EVI   0x20		/* enable vertical interrupt */
+
 #define VGA_CRT_ULL_CB4   0x20		/* count by 4 */
 #define VGA_CRT_ULL_DW    0x40		/* double word mode */
 
@@ -164,6 +167,29 @@
 
 static void vga_clock (vga_t *vga, unsigned long cnt);
 
+
+static
+void vga_set_irq (vga_t *vga, unsigned char val)
+{
+	val = (val != 0);
+
+	if (vga->set_irq_val == val) {
+		return;
+	}
+
+	if (val) {
+		vga->reg[VGA_STATUS0] |= VGA_STATUS0_CI;
+	}
+	else {
+		vga->reg[VGA_STATUS0] &= ~VGA_STATUS0_CI;
+	}
+
+	vga->set_irq_val = val;
+
+	if (vga->set_irq != NULL) {
+		vga->set_irq (vga->set_irq_ext, val);
+	}
+}
 
 /*
  * Set the configuration switches
@@ -1332,6 +1358,12 @@ void vga_crtc_set_reg (vga_t *vga, unsigned reg, unsigned char val)
 		}
 	}
 
+	if (reg == VGA_CRT_VRE) {
+		if ((val & VGA_CRT_VRE_CVI) == 0) {
+			vga_set_irq (vga, 0);
+		}
+	}
+
 	if (vga->reg_crt[reg] == val) {
 		return;
 	}
@@ -1996,6 +2028,17 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		vga->latch_addr = addr;
 		vga->update_state |= VGA_UPDATE_DIRTY;
 	}
+
+	if ((vga->reg_crt[VGA_CRT_VRE] & VGA_CRT_VRE_EVI) == 0) {
+		/* vertical retrace interrupt enabled */
+		vga_set_irq (vga, 1);
+	}
+}
+
+void vga_set_irq_fct (vga_t *vga, void *ext, void *fct)
+{
+	vga->set_irq_ext = ext;
+	vga->set_irq = fct;
 }
 
 void vga_free (vga_t *vga)
@@ -2106,6 +2149,10 @@ void vga_init (vga_t *vga, unsigned long io, unsigned long addr)
 	vga->buf_h = 0;
 
 	vga->update_state = 0;
+
+	vga->set_irq_ext = NULL;
+	vga->set_irq = NULL;
+	vga->set_irq_val = 0;
 }
 
 vga_t *vga_new (unsigned long io, unsigned long addr)
