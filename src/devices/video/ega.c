@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/ega.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -144,6 +144,9 @@
 #define EGA_GRC_MISC_OE   0x02		/* odd/even mode */
 #define EGA_GRC_MISC_MM   0x0c		/* memory map */
 
+#define EGA_CRT_VRE_CVI   0x10		/* clear vertical interrupt */
+#define EGA_CRT_VRE_EVI   0x20		/* enable vertical interrupt */
+
 #define EGA_CRT_MODE_CMS0 0x01
 #define EGA_CRT_MODE_WB   0x40		/* byte/word mode */
 
@@ -153,6 +156,29 @@
 
 static void ega_clock (ega_t *ega, unsigned long cnt);
 
+
+static
+void ega_set_irq (ega_t *ega, unsigned char val)
+{
+	val = (val != 0);
+
+	if (ega->set_irq_val == val) {
+		return;
+	}
+
+	if (val) {
+		ega->reg[EGA_STATUS0] |= EGA_STATUS0_CI;
+	}
+	else {
+		ega->reg[EGA_STATUS0] &= ~EGA_STATUS0_CI;
+	}
+
+	ega->set_irq_val = val;
+
+	if (ega->set_irq != NULL) {
+		ega->set_irq (ega->set_irq_ext, val);
+	}
+}
 
 /*
  * Set the configuration switches
@@ -1211,6 +1237,12 @@ void ega_crtc_set_reg (ega_t *ega, unsigned reg, unsigned char val)
 		return;
 	}
 
+	if (reg == EGA_CRT_VRE) {
+		if ((val & EGA_CRT_VRE_CVI) == 0) {
+			ega_set_irq (ega, 0);
+		}
+	}
+
 	ega->reg_crt[reg] = val;
 
 	ega_set_timing (ega);
@@ -1685,6 +1717,17 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		ega->latch_addr = addr;
 		ega->update_state |= EGA_UPDATE_DIRTY;
 	}
+
+	if ((ega->reg_crt[EGA_CRT_VRE] & EGA_CRT_VRE_EVI) == 0) {
+		/* vertical retrace interrupt enabled */
+		ega_set_irq (ega, 1);
+	}
+}
+
+void ega_set_irq_fct (ega_t *ega, void *ext, void *fct)
+{
+	ega->set_irq_ext = ext;
+	ega->set_irq = fct;
 }
 
 void ega_free (ega_t *ega)
@@ -1784,6 +1827,10 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 	ega->buf = NULL;
 
 	ega->update_state = 0;
+
+	ega->set_irq_ext = NULL;
+	ega->set_irq = NULL;
+	ega->set_irq_val = 0;
 }
 
 ega_t *ega_new (unsigned long io, unsigned long addr)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/ega.h                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -74,8 +74,14 @@ typedef struct ega_s {
 	unsigned char *buf;
 
 	unsigned char update_state;
+
+	void          *set_irq_ext;
+	void          (*set_irq) (void *ext, unsigned char val);
+	unsigned char set_irq_val;
 } ega_t;
 
+
+void ega_set_irq_fct (ega_t *ega, void *ext, void *fct);
 
 void ega_init (ega_t *ega, unsigned long io, unsigned long addr);
 
