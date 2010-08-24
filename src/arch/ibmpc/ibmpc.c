@@ -1347,6 +1347,12 @@ void pc_clock_delay (ibmpc_t *pc)
 	if (vclk < rclk) {
 		pc->sync_clock2_sim = 0;
 		pc->sync_clock2_real = rclk - vclk;
+
+		if (pc->sync_clock2_real > PCE_IBMPC_CLK2) {
+			pc->sync_clock2_real = 0;
+			pce_log (MSG_INF, "host system too slow, skipping 1 second.\n");
+		}
+
 		return;
 	}
 
