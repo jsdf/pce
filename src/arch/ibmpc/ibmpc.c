@@ -1421,6 +1421,7 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 		if (pc->clk_div[1] >= 1024) {
 			clk = pc->clk_div[1] & ~1023UL;
 			pc->clk_div[1] &= 1023;
+			pc->clk_div[2] += clk;
 
 			if (pc->trm != NULL) {
 				trm_check (pc->trm);
@@ -1436,7 +1437,10 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 				mse_clock (pc->mse, clk);
 			}
 
-			pc_clock_delay (pc);
+			if (pc->clk_div[2] >= 16384) {
+				pc->clk_div[2] &= 16383;
+				pc_clock_delay (pc);
+			}
 		}
 	}
 }
