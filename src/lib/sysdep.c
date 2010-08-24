@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.c                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -55,17 +55,16 @@ int pce_usleep (unsigned long usec)
 	t.tv_nsec = 1000 * (usec % 1000000);
 
 	return (nanosleep (&t, NULL));
-#elif defined(HAVE_USLEEP) && defined (HAVE_SLEEP)
-	unsigned long sec;
+#elif defined(HAVE_USLEEP)
+	unsigned long n;
 
-	sec = usec / 1000000;
-	usec = usec % 1000000;
-
-	while (sec > 0) {
-		sec = sleep (sec);
+	while (usec > 0) {
+		n = (usec < 500000) ? usec : 500000;
+		usleep (n);
+		usec -= n;
 	}
 
-	return (usleep (usec));
+	return (0);
 #else
 	return (-1);
 #endif
