@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   pcex.S                                                       *
  * Created:     2007-12-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -126,7 +126,7 @@ sony_open:
 	moveq	#1, %d2
 
 1:
-	move.w	#0x0000, SONY_TRACK(%a2)	/* track */
+	move.w	#0x0000, (%a2)		/* track */
 	move.b	#0x00, SONY_WPROT(%a2)	/* write protected */
 	move.b	#0x00, 3(%a2)		/* disk in place */
 	move.b	#0x01, 4(%a2)		/* installed */
