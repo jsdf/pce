@@ -101,9 +101,11 @@ unsigned chr_pty_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 		return (0);
 	}
 
+#if UINT_MAX > SSIZE_MAX
 	if (cnt > SSIZE_MAX) {
 		cnt = SSIZE_MAX;
 	}
+#endif
 
 	r = read (drv->fd, buf, cnt);
 
@@ -130,9 +132,11 @@ unsigned chr_pty_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 		return (0);
 	}
 
+#if UINT_MAX > SSIZE_MAX
 	if (cnt > SSIZE_MAX) {
 		cnt = SSIZE_MAX;
 	}
+#endif
 
 	r = write (drv->fd, buf, cnt);
 
