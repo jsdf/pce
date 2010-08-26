@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/config.h.in                                              *
  * Created:     2002-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2002-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -54,6 +54,7 @@
 #undef HAVE_SYS_IOCTL_H
 #undef HAVE_SYS_POLL_H
 #undef HAVE_SYS_SOCKET_H
+#undef HAVE_SYS_SOUNDCARD_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_SYS_TYPES_H
 
@@ -95,6 +96,8 @@
 #undef PCE_ENABLE_CHAR_SLIP
 #undef PCE_ENABLE_CHAR_TCP
 #undef PCE_ENABLE_CHAR_TIOS
+
+#undef PCE_ENABLE_SOUND_OSS
 
 /* directory separator */
 #define PCE_DIR_SEP '/'

@@ -598,6 +598,7 @@ PCE_DIR_DATA
 PCE_DIR_ETC
 PCE_READLINE_LIBS
 PCE_ENABLE_READLINE
+PCE_ENABLE_SOUND_OSS
 PCE_ENABLE_CHAR_TIOS
 PCE_ENABLE_CHAR_TCP
 PCE_ENABLE_CHAR_SLIP
@@ -723,6 +724,7 @@ enable_char_pty
 enable_char_slip
 enable_char_tcp
 enable_char_termios
+enable_sound_oss
 enable_readline
 '
       ac_precious_vars='build_alias
@@ -1369,6 +1371,7 @@ Optional Features:
   --enable-char-slip      Enable the SLIP character driver [guessed]
   --enable-char-tcp       Enable the TCP character driver [guessed]
   --enable-char-termios   Enable the termios character driver [guessed]
+  --enable-sound-oss      Enable the OSS sound driver driver [guessed]
   --enable-readline       Enable readline [guessed]
 
 Optional Packages:
@@ -4009,6 +4012,7 @@ for ac_header in \
 	sys/ioctl.h \
 	sys/poll.h \
 	sys/socket.h \
+	sys/soundcard.h \
 	sys/stat.h \
 	sys/time.h \
 	sys/types.h \
@@ -5228,6 +5232,45 @@ if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the OSS sound driver" >&5
+$as_echo_n "checking whether to enable the OSS sound driver... " >&6; }
+# Check whether --enable-sound-oss was given.
+if test "${enable_sound_oss+set}" = set; then :
+  enableval=$enable_sound_oss;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_SOUND_OSS=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_SOUND_OSS=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+else
+
+	PCE_ENABLE_SOUND_OSS=1
+	test "x$ac_cv_header_fcntl_h" = "xyes" || PCE_ENABLE_SOUND_OSS=0
+	test "x$ac_cv_header_sys_ioctl_h" = "xyes" || PCE_ENABLE_SOUND_OSS=0
+	test "x$ac_cv_header_sys_soundcard_h" = "xyes" || PCE_ENABLE_SOUND_OSS=0
+	if test "x$PCE_ENABLE_SOUND_OSS" = "x1" ; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_SOUND_OSS" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_SOUND_OSS 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable readline" >&5
 $as_echo_n "checking whether to enable readline... " >&6; }
 # Check whether --enable-readline was given.
@@ -5540,6 +5583,12 @@ fi
 
 sound1=" null wav"
 sound2=""
+
+if test "x$PCE_ENABLE_SOUND_OSS" = "x1" ; then
+	sound1="$sound1 oss"
+else
+	sound2="$sound2 oss"
+fi
 
 
 option1=""

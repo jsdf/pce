@@ -32,3 +32,10 @@ null:
 
 wav:
 	This is another name for the null sound driver.
+
+
+oss:
+	The OSS sound driver.
+
+	dev=<filename>
+		Set the OSS device.

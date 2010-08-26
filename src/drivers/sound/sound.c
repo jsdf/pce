@@ -43,6 +43,10 @@ static
 struct snd_drv_list drvtab[] = {
 	{ "null", snd_null_open },
 	{ "wav", snd_null_open },
+
+#ifdef PCE_ENABLE_SOUND_OSS
+	{ "oss", snd_oss_open },
+#endif
 	{ NULL, NULL }
 };
 

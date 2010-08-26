@@ -89,6 +89,8 @@ PCE_ENABLE_CHAR_SLIP   := @PCE_ENABLE_CHAR_SLIP@
 PCE_ENABLE_CHAR_TCP    := @PCE_ENABLE_CHAR_TCP@
 PCE_ENABLE_CHAR_TIOS   := @PCE_ENABLE_CHAR_TIOS@
 
+PCE_ENABLE_SOUND_OSS := @PCE_ENABLE_SOUND_OSS@
+
 distdir     := pce-$(PCE_VERSION_STR)
 
 # ----------------------------------------------------------------------

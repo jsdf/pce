@@ -8,6 +8,12 @@ DIST += $(rel)/Makefile.inc
 DRV_SND_BAS  := sound sound-null sound-wav
 DRV_SND_NBAS :=
 
+ifeq "$(PCE_ENABLE_SOUND_OSS)" "1"
+DRV_SND_BAS += sound-oss
+else
+DRV_SND_NBAS += sound-oss
+endif
+
 DRV_SND_SRC  := $(foreach f,$(DRV_SND_BAS),$(rel)/$(f).c)
 DRV_SND_NSRC := $(foreach f,$(DRV_SND_NBAS),$(rel)/$(f).c)
 DRV_SND_OBJ  := $(foreach f,$(DRV_SND_BAS),$(rel)/$(f).o)
@@ -21,6 +27,7 @@ DIST += $(DRV_SND_SRC) $(DRV_SND_HDR) $(DRV_SND_NSRC) $(DRV_SND_NHDR)
 
 $(rel)/sound.o:		$(rel)/sound.c
 $(rel)/sound-null.o:	$(rel)/sound-null.c
+$(rel)/sound-oss.o:	$(rel)/sound-oss.c
 $(rel)/sound-wav.o:	$(rel)/sound-wav.c
 
 $(rel)/sound.a: $(DRV_SND_OBJ)
