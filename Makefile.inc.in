@@ -127,6 +127,7 @@ include $(srcdir)/src/libini/Makefile.inc
 include $(srcdir)/src/lib/Makefile.inc
 include $(srcdir)/src/drivers/Makefile.inc
 include $(srcdir)/src/drivers/char/Makefile.inc
+include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/terminal/Makefile.inc
 include $(srcdir)/src/arch/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/Makefile.inc

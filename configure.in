@@ -923,6 +923,10 @@ else
 fi
 
 
+sound1=" null wav"
+sound2=""
+
+
 option1=""
 option2=""
 
@@ -953,13 +957,15 @@ echo "  LD:                     $CC $LDFLAGS"
 echo
 echo "  prefix:                 $prefix"
 echo
-echo "  Emulators built:       $emu1"
-echo "  Emulators not built:   $emu2"
-echo "  ROMs built:            $romext1"
-echo "  ROMs not built:        $romext2"
-echo "  Terminals built:       $term1"
-echo "  Terminals not built:   $term2"
-echo "  Char drivers built:    $char1"
-echo "  Char drivers not built:$char2"
-echo "  Enabled options:       $option1"
-echo "  Disabled options:      $option2"
+echo "  Emulators built:        $emu1"
+echo "  Emulators not built:    $emu2"
+echo "  ROMs built:             $romext1"
+echo "  ROMs not built:         $romext2"
+echo "  Terminals built:        $term1"
+echo "  Terminals not built:    $term2"
+echo "  Char drivers built:     $char1"
+echo "  Char drivers not built: $char2"
+echo "  Sound drivers built:    $sound1"
+echo "  Sound drivers not built:$sound2"
+echo "  Enabled options:        $option1"
+echo "  Disabled options:       $option2"

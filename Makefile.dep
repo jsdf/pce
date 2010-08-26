@@ -1909,6 +1909,21 @@ src/drivers/options.o: src/drivers/options.c \
 	src/config.h \
 	src/drivers/options.h
 
+src/drivers/sound/sound-null.o: src/drivers/sound/sound-null.c \
+	src/drivers/sound/sound-null.h \
+	src/drivers/sound/sound.h
+
+src/drivers/sound/sound-wav.o: src/drivers/sound/sound-wav.c \
+	src/drivers/options.h \
+	src/drivers/sound/sound-wav.h \
+	src/drivers/sound/sound.h
+
+src/drivers/sound/sound.o: src/drivers/sound/sound.c \
+	src/config.h \
+	src/drivers/options.h \
+	src/drivers/sound/sound-wav.h \
+	src/drivers/sound/sound.h
+
 src/lib/brkpt.o: src/lib/brkpt.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h
