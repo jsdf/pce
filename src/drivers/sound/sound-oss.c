@@ -34,6 +34,10 @@
 #include <drivers/sound/sound.h>
 #include <drivers/sound/sound-oss.h>
 
+#ifndef DEBUG_SND_OSS
+#define DEBUG_SND_OSS 0
+#endif
+
 
 static
 void snd_oss_close (sound_drv_t *sdrv)
@@ -84,6 +88,9 @@ int snd_oss_write (sound_drv_t *sdrv, const uint16_t *buf, unsigned cnt)
 	r = write (drv->fd, bbuf, bcnt);
 
 	if (r != (ssize_t) bcnt) {
+#if DEBUG_SND_OSS >= 1
+		fprintf (stderr, "snd-oss: buffer overrun\n");
+#endif
 		return (1);
 	}
 
@@ -171,7 +178,7 @@ int snd_oss_init (sound_oss_t *drv, const char *name)
 		return (1);
 	}
 
-	drv->fd = open (drv->dev, O_WRONLY, 0);
+	drv->fd = open (drv->dev, O_WRONLY | O_NDELAY, 0);
 
 	if (drv->fd < 0) {
 		return (1);

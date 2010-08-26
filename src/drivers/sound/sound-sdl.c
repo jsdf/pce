@@ -47,7 +47,7 @@ sound_sdl_buf_t *snd_sdl_buf_new (sound_sdl_t *drv, unsigned size)
 		drv->free = drv->free->next;
 	}
 	else {
-		if (drv->buf_cnt > 16) {
+		if (drv->buf_cnt > 32) {
 			return (NULL);
 		}
 
@@ -132,19 +132,15 @@ int snd_sdl_write (sound_drv_t *sdrv, const uint16_t *buf, unsigned cnt)
 	scnt = (unsigned long) sdrv->channels * (unsigned long) cnt;
 	bcnt = 2 * scnt;
 
-	while (1) {
-		SDL_LockAudio();
-		bbuf = snd_sdl_buf_new (drv, bcnt);
-		SDL_UnlockAudio();
+	SDL_LockAudio();
+	bbuf = snd_sdl_buf_new (drv, bcnt);
+	SDL_UnlockAudio();
 
-		if (bbuf != NULL) {
-			break;
-		}
-
+	if (bbuf == NULL) {
 #if DEBUG_SND_SDL >= 1
 		fprintf (stderr, "snd-sdl: buffer overrun\n");
 #endif
-		SDL_Delay (5);
+		return (1);
 	}
 
 	sign = (sdrv->sample_sign != drv->sign);
