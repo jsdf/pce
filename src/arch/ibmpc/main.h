@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.h                                        *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -85,6 +85,7 @@ extern int        par_patch_bios;
 #include "keyboard.h"
 #include "mouse.h"
 #include "ems.h"
+#include "speaker.h"
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"

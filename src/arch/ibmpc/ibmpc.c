@@ -144,6 +144,10 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 
 	e8253_set_gate (&pc->pit, 2, val & 0x01);
 
+	if ((old ^ val) & 0x02) {
+		pc_speaker_set_msk (&pc->spk, val & 0x02);
+	}
+
 	if ((old ^ val) & 0x08) {
 		/* cassette motor change */
 
@@ -178,6 +182,8 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 	if (pc->cas != NULL) {
 		pc_cas_set_out (pc->cas, val);
 	}
+
+	pc_speaker_set_out (&pc->spk, val);
 }
 
 static
@@ -540,6 +546,48 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	pc_cas_set_filter (pc->cas, filter);
+}
+
+static
+void pc_setup_speaker (ibmpc_t *pc, ini_sct_t *ini)
+{
+	const char    *driver;
+	unsigned      volume;
+	unsigned long srate;
+	unsigned long lowpass;
+	ini_sct_t     *sct;
+
+	pc_speaker_init (&pc->spk);
+	pc_speaker_set_clk_fct (&pc->spk, pc, pc_get_clock2);
+
+	sct = ini_next_sct (ini, NULL, "speaker");
+
+	if (sct == NULL) {
+		return;
+	}
+
+	ini_get_string (sct, "driver", &driver, NULL);
+	ini_get_uint16 (sct, "volume", &volume, 500);
+	ini_get_uint32 (sct, "sample_rate", &srate, 44100);
+	ini_get_uint32 (sct, "lowpass", &lowpass, 0);
+
+	pce_log_tag (MSG_INF, "SPEAKER:", "volume=%u srate=%lu lowpass=%lu driver=%s\n",
+		volume, srate, lowpass,
+		(driver != NULL) ? driver : "<none>"
+	);
+
+	if (driver != NULL) {
+		if (pc_speaker_set_driver (&pc->spk, driver, srate)) {
+			pce_log (MSG_ERR,
+				"*** setting sound driver failed (%s)\n",
+				driver
+			);
+		}
+	}
+
+	pc_speaker_set_lowpass (&pc->spk, lowpass);
+
+	pc_speaker_set_volume (&pc->spk, volume);
 }
 
 static
@@ -1049,6 +1097,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_ppi (pc, ini);
 	pc_setup_kbd (pc, ini);
 	pc_setup_cassette (pc, ini);
+	pc_setup_speaker (pc, ini);
 
 	pc_setup_terminal (pc, ini);
 
@@ -1135,6 +1184,7 @@ void pc_del (ibmpc_t *pc)
 
 	trm_del (pc->trm);
 
+	pc_speaker_free (&pc->spk);
 	pc_cas_del (pc->cas);
 	e8237_free (&pc->dma);
 	e8255_free (&pc->ppi);
@@ -1426,6 +1476,8 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 			if (pc->trm != NULL) {
 				trm_check (pc->trm);
 			}
+
+			pc_speaker_clock (&pc->spk, clk);
 
 			for (i = 0; i < 4; i++) {
 				if (pc->serport[i] != NULL) {

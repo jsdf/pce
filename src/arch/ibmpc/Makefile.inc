@@ -35,7 +35,7 @@ $(rel)/%.o: $(rel)/%.c
 
 # ----------------------------------------------------------------------
 
-PCE_IBMPC_BAS  := cassette ems hook ibmpc int13 keyboard main mouse msg util xms
+PCE_IBMPC_BAS  := cassette ems hook ibmpc int13 keyboard main mouse msg speaker util xms
 PCE_IBMPC_SRC  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).c)
 PCE_IBMPC_OBJ  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).o)
 PCE_IBMPC_HDR  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).h)
@@ -65,6 +65,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/serport.o \
 	src/drivers/options.o \
 	src/drivers/char/char.a \
+	src/drivers/sound/sound.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
@@ -106,6 +107,7 @@ $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/main.o:		$(rel)/main.c
 $(rel)/mouse.o:		$(rel)/mouse.c
 $(rel)/msg.o:		$(rel)/msg.c
+$(rel)/speaker.o:	$(rel)/speaker.c
 $(rel)/util.o:		$(rel)/util.c
 $(rel)/xms.o:		$(rel)/xms.c
 

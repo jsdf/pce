@@ -316,6 +316,25 @@ section pc {
 		size = 16384
 	}
 
+	section speaker {
+		# The speaker volume in the range [0...1000]
+		volume = 500
+
+		# Apply a low-pass filter with the specified cut-off
+		# frequency in Herz. This is separate from the low-pass
+		# filter in the sound driver. If the frequency is 0,
+		# the filter is disabled.
+		lowpass = 8000
+
+		# The sample rate at which sound is sent to the sound driver.
+		sample_rate = 44100
+
+		#driver = "null"
+		#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
+		#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
+		driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
+	}
+
 	# Up to 4 serial ports can be defined
 	section serial {
 		address = 0x3f8		# COM1
