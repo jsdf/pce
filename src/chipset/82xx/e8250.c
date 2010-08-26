@@ -43,10 +43,8 @@ void e8250_init (e8250_t *uart)
 	uart->out_j = 0;
 	uart->out_n = 9;
 
-	uart->txd[0] = 0;
-	uart->txd[1] = 0;
-	uart->rxd[0] = 0;
-	uart->txd[1] = 0;
+	uart->txd = 0;
+	uart->rxd = 0;
 
 	uart->ier = 0;
 	uart->iir = E8250_IIR_PND;
@@ -61,13 +59,16 @@ void e8250_init (e8250_t *uart)
 
 	uart->bit_clk_div = 10;
 
-	uart->char_clk_cnt = 0;
-	uart->char_clk_div = 128;
+	uart->clocking = 0;
 
-	uart->read_char_cnt = 0;
+	uart->read_clk_cnt = 0;
+	uart->read_clk_div = 128;
+	uart->read_char_cnt = 1;
 	uart->read_char_max = 1;
 
-	uart->write_char_cnt = 0;
+	uart->write_clk_cnt = 0;
+	uart->write_clk_div = 128;
+	uart->write_char_cnt = 1;
 	uart->write_char_max = 1;
 
 	uart->have_scratch = 1;
@@ -207,10 +208,7 @@ void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
 
 void e8250_set_multichar (e8250_t *uart, unsigned read_max, unsigned write_max)
 {
-	uart->read_char_cnt = 0;
 	uart->read_char_max = read_max;
-
-	uart->write_char_cnt = 0;
 	uart->write_char_max = write_max;
 }
 
@@ -265,21 +263,25 @@ void e8250_set_int_cond (e8250_t *uart)
 static
 void e8250_check_rxd (e8250_t *uart)
 {
-	if (uart->rxd[1]) {
-		return;
-	}
-
 	if (uart->read_char_cnt == 0) {
 		return;
 	}
 
-	if (e8250_get_inp (uart, &uart->rxd[0])) {
+	if (uart->lsr & E8250_LSR_RRD) {
+		return;
+	}
+
+	if (e8250_get_inp (uart, &uart->rxd)) {
 		return;
 	}
 
 	uart->read_char_cnt -= 1;
 
-	uart->rxd[1] = 1;
+	if (uart->read_clk_cnt == 0) {
+		uart->clocking = 1;
+		uart->read_clk_cnt = uart->read_clk_div;
+	}
+
 	uart->lsr |= E8250_LSR_RRD;
 
 	/* receive queue is not full */
@@ -297,26 +299,32 @@ void e8250_check_rxd (e8250_t *uart)
 static
 void e8250_check_txd (e8250_t *uart)
 {
-	if (uart->txd[1] == 0) {
-		return;
-	}
-
 	if (uart->write_char_cnt == 0) {
 		return;
 	}
 
+	if (uart->lsr & E8250_LSR_TBE) {
+		uart->lsr |= E8250_LSR_TXE;
+		return;
+	}
+
 	if (uart->mcr & E8250_MCR_LOOP) {
-		e8250_set_inp (uart, uart->txd[0]);
+		e8250_set_inp (uart, uart->txd);
 	}
 	else {
-		if (e8250_set_out (uart, uart->txd[0])) {
+		if (e8250_set_out (uart, uart->txd)) {
 			return;
 		}
 	}
 
 	uart->write_char_cnt -= 1;
 
-	uart->txd[1] = 0;
+	if (uart->write_clk_cnt == 0) {
+		uart->clocking = 1;
+		uart->write_clk_cnt = uart->write_clk_div;
+	}
+
+	uart->lsr &= ~E8250_LSR_TXE;
 	uart->lsr |= E8250_LSR_TBE;
 
 	uart->tbe_ack = 0;
@@ -631,7 +639,7 @@ unsigned char e8250_get_div_hi (e8250_t *uart)
 
 unsigned char e8250_get_rxd (e8250_t *uart)
 {
-	return (uart->rxd[0]);
+	return (uart->rxd);
 }
 
 unsigned char e8250_get_ier (e8250_t *uart)
@@ -674,9 +682,7 @@ unsigned char e8250_read_rxd (e8250_t *uart)
 {
 	unsigned char val;
 
-	val = uart->rxd[0];
-
-	uart->rxd[1] = 0;
+	val = uart->rxd;
 
 	uart->lsr &= ~E8250_LSR_RRD;
 
@@ -739,7 +745,8 @@ void e8250_set_char_clk (e8250_t *uart)
 		val *= uart->divisor;
 	}
 
-	uart->char_clk_div = val;
+	uart->read_clk_div = val;
+	uart->write_clk_div = val;
 }
 
 static
@@ -769,8 +776,14 @@ void e8250_write_div_hi (e8250_t *uart, unsigned char val)
 static
 void e8250_write_txd (e8250_t *uart, unsigned char val)
 {
-	uart->txd[0] = val;
-	uart->txd[1] = 1;
+	if ((uart->lsr & E8250_LSR_TBE) == 0) {
+		fprintf (stderr,
+			"e8250: overwrite txd  txd=%02X lsr=%02X iir=%02X val=%02X\n",
+			uart->txd, uart->lsr, uart->iir, val
+		);
+	}
+
+	uart->txd = val;
 
 	uart->lsr &= ~E8250_LSR_TBE;
 
@@ -969,15 +982,31 @@ void e8250_set_uint32 (e8250_t *uart, unsigned long addr, unsigned long val)
 
 void e8250_clock (e8250_t *uart, unsigned clk)
 {
-	if (clk < uart->char_clk_cnt) {
-		uart->char_clk_cnt -= clk;
+	if (uart->clocking == 0) {
 		return;
 	}
 
-	uart->char_clk_cnt = uart->char_clk_div;
-	uart->read_char_cnt = uart->read_char_max;
-	uart->write_char_cnt = uart->write_char_max;
+	if (uart->read_clk_cnt > 0) {
+		if (clk < uart->read_clk_cnt) {
+			uart->read_clk_cnt -= clk;
+		}
+		else {
+			uart->read_clk_cnt = 0;
+			uart->read_char_cnt = uart->read_char_max;
+			e8250_check_rxd (uart);
+		}
+	}
 
-	e8250_check_rxd (uart);
-	e8250_check_txd (uart);
+	if (uart->write_clk_cnt > 0) {
+		if (clk < uart->write_clk_cnt) {
+			uart->write_clk_cnt -= clk;
+		}
+		else {
+			uart->write_clk_cnt = 0;
+			uart->write_char_cnt = uart->write_char_max;
+			e8250_check_txd (uart);
+		}
+	}
+
+	uart->clocking = ((uart->read_clk_cnt > 0) || (uart->write_clk_cnt > 0));
 }

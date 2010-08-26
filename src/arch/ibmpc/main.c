@@ -421,8 +421,9 @@ static
 void prt_state_uart (e8250_t *uart, unsigned base)
 {
 	char          p;
-	unsigned char msr;
+	unsigned char lsr, msr;
 
+	lsr = e8250_get_lsr (uart);
 	msr = e8250_get_msr (uart);
 
 	switch (e8250_get_parity (uart)) {
@@ -465,10 +466,10 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 		(msr & E8250_MSR_CTS) != 0,
 		(msr & E8250_MSR_DCD) != 0,
 		(msr & E8250_MSR_RI) != 0,
-		uart->txd[0], uart->txd[1] ? '*' : ' ',
-		uart->rxd[0], uart->rxd[1] ? '*' : ' ',
+		uart->txd, (lsr & E8250_LSR_TBE) ? ' ' : '*',
+		uart->rxd, (lsr & E8250_LSR_RRD) ? '*' : ' ',
 		uart->scratch, uart->divisor,
-		uart->ier, uart->iir, uart->lcr, uart->lsr, uart->mcr, uart->msr
+		uart->ier, uart->iir, uart->lcr, lsr, uart->mcr, msr
 	);
 }
 

@@ -115,8 +115,8 @@ typedef struct {
 	unsigned       out_n;
 	unsigned char  out[E8250_BUF_MAX];
 
-	unsigned char  txd[2];
-	unsigned char  rxd[2];
+	unsigned char  txd;
+	unsigned char  rxd;
 	unsigned char  ier;
 	unsigned char  iir;
 	unsigned char  lcr;
@@ -130,12 +130,15 @@ typedef struct {
 	/* (input clock) / (bit clock) */
 	unsigned       bit_clk_div;
 
-	unsigned       char_clk_cnt;
-	unsigned       char_clk_div;
+	char           clocking;
 
+	unsigned       read_clk_cnt;
+	unsigned       read_clk_div;
 	unsigned       read_char_cnt;
 	unsigned       read_char_max;
 
+	unsigned       write_clk_cnt;
+	unsigned       write_clk_div;
 	unsigned       write_char_cnt;
 	unsigned       write_char_max;
 
