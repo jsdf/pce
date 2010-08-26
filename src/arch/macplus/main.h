@@ -41,9 +41,6 @@
 
 #define MAC_CPU_CLOCK 7833600
 
-/* The CPU is synchronized with real time MAC_CPU_SYNC times per seconds */
-#define MAC_CPU_SYNC 250
-
 
 #define MAC_HOOK_NOP    0
 #define MAC_HOOK_STOP   1

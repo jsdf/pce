@@ -23,6 +23,16 @@
 #include "main.h"
 
 
+/* The CPU is synchronized with real time MAC_CPU_SYNC times per seconds */
+#define MAC_CPU_SYNC 250
+
+#ifdef PCE_HOST_WINDOWS
+#define MAC_CPU_SLEEP 20000
+#else
+#define MAC_CPU_SLEEP 10000
+#endif
+
+
 static
 void mac_interrupt_check (macplus_t *sim)
 {
@@ -871,6 +881,7 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	sim->brk = 0;
 
 	sim->speed_factor = 1;
+	sim->speed_clock_extra = 0;
 
 	sim->clk_cnt = 0;
 
@@ -971,6 +982,8 @@ void mac_clock_discontinuity (macplus_t *sim)
 	sim->sync_clk = 0;
 	sim->sync_us = 0;
 	pce_get_interval_us (&sim->sync_us);
+
+	sim->speed_clock_extra = 0;
 }
 
 void mac_set_pause (macplus_t *sim, int pause)
@@ -984,15 +997,12 @@ void mac_set_pause (macplus_t *sim, int pause)
 
 void mac_set_speed (macplus_t *sim, unsigned factor)
 {
-	if (factor == 0) {
-		factor = 1;
-	}
-
 	mac_log_deb ("speed = %u\n", factor);
 
 	mac_rtc_set_realtime (&sim->rtc, (factor != 1));
 
 	sim->speed_factor = factor;
+	sim->speed_clock_extra = 0;
 
 	mac_clock_discontinuity (sim);
 }
@@ -1071,12 +1081,22 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 
 		if (us1 < us2) {
 			sim->sync_sleep += us2 - us1;
+
+			if (sim->sync_sleep > 0) {
+				sim->speed_clock_extra += 1;
+			}
 		}
 		else {
 			sim->sync_sleep -= us1 - us2;
+
+			if (sim->sync_sleep < 0) {
+				if (sim->speed_clock_extra > 0) {
+					sim->speed_clock_extra -= 1;
+				}
+			}
 		}
 
-		if (sim->sync_sleep >= (1000000 / MAC_CPU_SYNC)) {
+		if (sim->sync_sleep >= MAC_CPU_SLEEP) {
 			pce_usleep (sim->sync_sleep);
 		}
 
@@ -1089,7 +1109,7 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 
 void mac_clock (macplus_t *sim, unsigned n)
 {
-	unsigned long viaclk;
+	unsigned long viaclk, clkdiv, cpuclk;
 
 	if (n == 0) {
 		n = sim->cpu->delay;
@@ -1098,15 +1118,26 @@ void mac_clock (macplus_t *sim, unsigned n)
 		}
 	}
 
-	e68_clock (sim->cpu, n);
+	if (sim->speed_factor == 0) {
+		cpuclk = n + sim->speed_clock_extra;
+		clkdiv = 1;
+	}
+	else {
+		cpuclk = n;
+		clkdiv = sim->speed_factor;
+	}
+
+	e68_clock (sim->cpu, cpuclk);
+
+	mac_sound_clock (&sim->sound, cpuclk);
 
 	sim->clk_cnt += n;
 
 	sim->clk_div[0] += n;
 
-	while (sim->clk_div[0] >= sim->speed_factor) {
+	while (sim->clk_div[0] >= clkdiv) {
 		sim->clk_div[1] += 1;
-		sim->clk_div[0] -= sim->speed_factor;
+		sim->clk_div[0] -= clkdiv;
 	}
 
 	if (sim->clk_div[1] < 10) {
@@ -1124,7 +1155,6 @@ void mac_clock (macplus_t *sim, unsigned n)
 		return;
 	}
 
-	mac_sound_clock (&sim->sound, sim->speed_factor * sim->clk_div[2]);
 	mac_video_clock (sim->video, sim->clk_div[2]);
 
 	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);

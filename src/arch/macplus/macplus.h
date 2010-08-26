@@ -84,6 +84,7 @@ struct macplus_s {
 	unsigned           brk;
 
 	unsigned           speed_factor;
+	unsigned long      speed_clock_extra;
 
 	unsigned long      sync_clk;
 	unsigned long      sync_us;

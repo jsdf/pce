@@ -29,8 +29,10 @@ section macplus {
 		model = "68000"
 
 		# The CPU speed multiplier. A value of 1 emulates a
-		# 7.8336 MHz CPU.
-		speed = 4
+		# 7.8336 MHz CPU. A higher value emulates a faster CPU
+		# but also takes up more host CPU time. A value of 0
+		# dynamically adjusts the CPU speed.
+		speed = 0
 	}
 
 	# Multiple "ram" sections may be present.
