@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.c                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,6 +57,8 @@ void e8250_init (e8250_t *uart)
 	uart->mcr = 0;
 	uart->msr = 0; /* E8250_MSR_DCD | E8250_MSR_DSR | E8250_MSR_CTS; */
 
+	uart->tbe_ack = 1;
+
 	uart->bit_clk_div = 10;
 
 	uart->char_clk_cnt = 0;
@@ -69,8 +71,6 @@ void e8250_init (e8250_t *uart)
 	uart->write_char_max = 1;
 
 	uart->have_scratch = 1;
-
-	uart->ipr = 0;
 
 	uart->scratch = 0;
 
@@ -231,39 +231,31 @@ void e8250_set_irq (e8250_t *uart, unsigned char val)
 }
 
 static
-void e8250_set_int_cond (e8250_t *uart, unsigned char c)
+void e8250_set_int_cond (e8250_t *uart)
 {
-	unsigned char val;
+	unsigned char ier;
 
-	uart->ipr |= c;
+	ier = uart->ier;
 
-	val = uart->ipr & uart->ier;
+	uart->iir = E8250_IIR_PND;
 
-	if ((val & E8250_IER_RRD) && (uart->iir < E8250_IIR_RRD)) {
-		uart->iir = E8250_IIR_RRD;
-	}
-	else if ((val & E8250_IER_TBE) && (uart->iir < E8250_IIR_TBE)) {
-		uart->iir = E8250_IIR_TBE;
-	}
-
-	if (uart->mcr & E8250_MCR_OUT2) {
-		e8250_set_irq (uart, (uart->iir & E8250_IIR_PND) == 0);
-	}
-}
-
-static
-void e8250_clr_int_cond (e8250_t *uart, unsigned char c)
-{
-	uart->ipr &= ~c;
-
-	if ((c & E8250_IER_RRD) && (uart->iir == E8250_IIR_RRD)) {
-		uart->iir = E8250_IIR_PND;
-	}
-	if ((c & E8250_IER_TBE) && (uart->iir == E8250_IIR_TBE)) {
-		uart->iir = E8250_IIR_PND;
+	if (uart->iir < E8250_IIR_RRD) {
+		if (uart->ier & E8250_IER_RRD) {
+			if (uart->lsr & E8250_LSR_RRD) {
+				uart->iir = E8250_IIR_RRD;
+			}
+		}
 	}
 
-	e8250_set_int_cond (uart, 0);
+	if (uart->iir < E8250_IIR_TBE) {
+		if (uart->ier & E8250_IER_TBE) {
+			if ((uart->lsr & E8250_LSR_TBE) && (uart->tbe_ack == 0)) {
+				uart->iir = E8250_IIR_TBE;
+			}
+		}
+	}
+
+	e8250_set_irq (uart, (uart->iir & E8250_IIR_PND) == 0);
 }
 
 /*
@@ -295,7 +287,7 @@ void e8250_check_rxd (e8250_t *uart)
 		uart->recv (uart->recv_ext, 1);
 	}
 
-	e8250_set_int_cond (uart, E8250_IER_RRD);
+	e8250_set_int_cond (uart);
 }
 
 /*
@@ -327,6 +319,8 @@ void e8250_check_txd (e8250_t *uart)
 	uart->txd[1] = 0;
 	uart->lsr |= E8250_LSR_TBE;
 
+	uart->tbe_ack = 0;
+
 	if (uart->mcr & E8250_MCR_LOOP) {
 		e8250_check_rxd (uart);
 	}
@@ -336,7 +330,7 @@ void e8250_check_txd (e8250_t *uart)
 		}
 	}
 
-	e8250_set_int_cond (uart, E8250_IER_TBE);
+	e8250_set_int_cond (uart);
 }
 
 unsigned short e8250_get_divisor (e8250_t *uart)
@@ -685,7 +679,8 @@ unsigned char e8250_read_rxd (e8250_t *uart)
 	uart->rxd[1] = 0;
 
 	uart->lsr &= ~E8250_LSR_RRD;
-	e8250_clr_int_cond (uart, E8250_IER_RRD);
+
+	e8250_set_int_cond (uart);
 
 	e8250_check_rxd (uart);
 
@@ -699,7 +694,10 @@ unsigned char e8250_read_iir (e8250_t *uart)
 
 	val = uart->iir;
 
-	e8250_clr_int_cond (uart, E8250_IER_TBE);
+	if (val == E8250_IIR_TBE) {
+		uart->tbe_ack = 1;
+		e8250_set_int_cond (uart);
+	}
 
 	return (val);
 }
@@ -775,7 +773,8 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
 	uart->txd[1] = 1;
 
 	uart->lsr &= ~E8250_LSR_TBE;
-	e8250_clr_int_cond (uart, E8250_IER_TBE);
+
+	e8250_set_int_cond (uart);
 
 	e8250_check_txd (uart);
 }
@@ -783,14 +782,11 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
 static
 void e8250_write_ier (e8250_t *uart, unsigned char val)
 {
-	unsigned char i;
-
 	uart->ier = val & 0x0f;
 
-	i = (uart->lsr & E8250_LSR_RRD) ? E8250_IER_RRD : 0;
-	i |= (uart->lsr & E8250_LSR_TBE) ? E8250_IER_TBE : 0;
+	uart->tbe_ack = 0;
 
-	e8250_set_int_cond (uart, i);
+	e8250_set_int_cond (uart);
 }
 
 static

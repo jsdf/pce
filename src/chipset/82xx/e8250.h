@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.h                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -125,6 +125,8 @@ typedef struct {
 	unsigned char  msr;
 	unsigned char  scratch;
 
+	char           tbe_ack;
+
 	/* (input clock) / (bit clock) */
 	unsigned       bit_clk_div;
 
@@ -139,9 +141,6 @@ typedef struct {
 
 	/* enables or disables the scratch register */
 	unsigned char  have_scratch;
-
-	/* records pending interrupts */
-	unsigned char  ipr;
 
 	unsigned short divisor;
 
