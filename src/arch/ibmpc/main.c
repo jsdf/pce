@@ -1677,7 +1677,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
-			par_speed = (unsigned) strtoul (argv[i], NULL, 0);
+			par_speed = (unsigned) strtoul (argv[i], NULL, 0) + 1;
 		}
 		else {
 			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);

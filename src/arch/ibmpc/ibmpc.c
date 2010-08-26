@@ -262,13 +262,10 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	sct = ini_next_sct (ini, NULL, "cpu");
 
 	ini_get_string (sct, "model", &model, "8088");
-	ini_get_uint16 (sct, "speed", &speed, 1);
+	ini_get_uint16 (sct, "speed", &speed, 0);
 
 	if (par_speed > 0) {
-		speed = par_speed;
-	}
-	else if (speed == 0) {
-		speed = 1;
+		speed = par_speed - 1;
 	}
 
 	if (par_cpu != NULL) {
