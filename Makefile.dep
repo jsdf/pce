@@ -1918,6 +1918,11 @@ src/drivers/sound/sound-oss.o: src/drivers/sound/sound-oss.c \
 	src/drivers/sound/sound-oss.h \
 	src/drivers/sound/sound.h
 
+src/drivers/sound/sound-sdl.o: src/drivers/sound/sound-sdl.c \
+	src/drivers/options.h \
+	src/drivers/sound/sound-sdl.h \
+	src/drivers/sound/sound.h
+
 src/drivers/sound/sound-wav.o: src/drivers/sound/sound-wav.c \
 	src/drivers/options.h \
 	src/drivers/sound/sound-wav.h \

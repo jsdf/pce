@@ -39,3 +39,7 @@ oss:
 
 	dev=<filename>
 		Set the OSS device.
+
+
+sdl:
+	The SDL sound driver.

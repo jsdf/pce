@@ -962,6 +962,12 @@ else
 	sound2="$sound2 oss"
 fi
 
+if test "x$PCE_ENABLE_SDL" = "x1" ; then
+	sound1="$sound1 sdl"
+else
+	sound2="$sound2 sdl"
+fi
+
 
 option1=""
 option2=""

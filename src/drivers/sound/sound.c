@@ -47,6 +47,11 @@ struct snd_drv_list drvtab[] = {
 #ifdef PCE_ENABLE_SOUND_OSS
 	{ "oss", snd_oss_open },
 #endif
+
+#ifdef PCE_ENABLE_SDL
+	{ "sdl", snd_sdl_open },
+#endif
+
 	{ NULL, NULL }
 };
 
