@@ -50,6 +50,7 @@ PCE_MACPLUS_BAS := \
 	scsi \
 	serial \
 	sony \
+	sound \
 	traps \
 	video
 
@@ -69,6 +70,7 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/devices/memory.o \
 	src/drivers/options.o \
 	src/drivers/char/char.a \
+	src/drivers/sound/sound.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
@@ -114,6 +116,7 @@ $(rel)/rtc.o:		$(rel)/rtc.c
 $(rel)/scsi.o:		$(rel)/scsi.c
 $(rel)/serial.o:	$(rel)/serial.c
 $(rel)/sony.o:		$(rel)/sony.c
+$(rel)/sound.o:		$(rel)/sound.c
 $(rel)/traps.o:		$(rel)/traps.c
 $(rel)/video.o:		$(rel)/video.c
 

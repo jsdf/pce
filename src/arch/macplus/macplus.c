@@ -77,6 +77,8 @@ void mac_interrupt_vbi (void *ext, unsigned char val)
 	if (val) {
 		e6522_set_ca1_inp (&sim->via, 0);
 		e6522_set_ca1_inp (&sim->via, 1);
+
+		mac_sound_vbl (&sim->sound);
 	}
 }
 
@@ -274,11 +276,12 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 			mac_log_deb ("alternate sound buffer\n");
 			sbuf += sim->sbuf2;
 		}
+
+		mac_sound_set_sbuf (&sim->sound, sbuf);
 	}
 
 	if ((old ^ val) & 0x07) {
-		/* sound volume */
-		;
+		mac_sound_set_volume (&sim->sound, val & 7);
 	}
 }
 
@@ -302,8 +305,7 @@ void mac_set_via_port_b (void *ext, unsigned char val)
 	mac_rtc_set_uint8 (&sim->rtc, val);
 
 	if ((old ^ val) & 0x80) {
-		/* sound enable */
-		;
+		mac_sound_set_enable (&sim->sound, (val & 0x80) == 0);
 	}
 }
 
@@ -735,6 +737,55 @@ void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 }
 
 static
+void mac_setup_sound (macplus_t *sim, ini_sct_t *ini)
+{
+	unsigned long addr;
+	unsigned long freq;
+	const char    *driver;
+	ini_sct_t     *sct;
+
+	mac_sound_init (&sim->sound);
+
+	if (sim->ram == NULL) {
+		return;
+	}
+
+	sct = ini_next_sct (ini, NULL, "sound");
+
+	if (sct == NULL) {
+		return;
+	}
+
+	addr = mem_blk_get_size (sim->ram);
+	addr = (addr < 0x300) ? 0 : (addr - 0x300);
+
+	ini_get_uint32 (sct, "address", &addr, addr);
+	ini_get_uint32 (sct, "lowpass", &freq, 6000);
+	ini_get_string (sct, "driver", &driver, NULL);
+
+	pce_log_tag (MSG_INF, "SOUND:", "addr=0x%06lX lowpass=%lu driver=%s\n",
+		addr, freq,
+		(driver != NULL) ? driver : "<none>"
+	);
+
+	sim->sbuf1 = addr;
+	sim->sbuf2 = addr - 0x5c00;
+
+	mac_sound_set_sbuf (&sim->sound, mem_blk_get_data (sim->ram) + sim->sbuf1);
+
+	mac_sound_set_lowpass (&sim->sound, freq);
+
+	if (driver != NULL) {
+		if (mac_sound_set_driver (&sim->sound, driver)) {
+			pce_log (MSG_ERR,
+				"*** setting sound driver failed (%s)\n",
+				driver
+			);
+		}
+	}
+}
+
+static
 void mac_setup_terminal (macplus_t *sim, ini_sct_t *ini)
 {
 	sim->trm = ini_get_terminal (ini, par_terminal);
@@ -840,6 +891,7 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	mac_iwm_init (sim);
 	mac_setup_scsi (sim, ini);
 	mac_setup_sony (sim, ini);
+	mac_setup_sound (sim, ini);
 	mac_setup_terminal (sim, ini);
 	mac_setup_video (sim, ini);
 
@@ -880,6 +932,7 @@ void mac_free (macplus_t *sim)
 
 	mac_video_del (sim->video);
 	trm_del (sim->trm);
+	mac_sound_free (&sim->sound);
 	mac_sony_free (&sim->sony);
 	mac_scsi_free (&sim->scsi);
 	mac_iwm_free (sim);
@@ -1071,6 +1124,7 @@ void mac_clock (macplus_t *sim, unsigned n)
 		return;
 	}
 
+	mac_sound_clock (&sim->sound, sim->speed_factor * sim->clk_div[2]);
 	mac_video_clock (sim->video, sim->clk_div[2]);
 
 	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);

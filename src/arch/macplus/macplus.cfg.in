@@ -136,6 +136,19 @@ section macplus {
 		mouse_div_y = 1
 	}
 
+	section sound {
+		# Apply a low-pass filter with the specified cut-off
+		# frequency in Herz. This is separate from the low-pass
+		# filter in the sound driver. If the frequency is 0,
+		# the filter is disabled.
+		lowpass = 8000
+
+		#driver = "null"
+		#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
+		#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
+		driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
+	}
+
 	section keyboard {
 		# The model number and international flag are returned
 		# by the keyboard but MacOS seems to ignore them.
@@ -229,6 +242,19 @@ section macplus {
 
 	section video {
 		#address = 0x0fa700
+	}
+
+	section sound {
+		# Apply a low-pass filter with the specified cut-off
+		# frequency in Herz. This is separate from the low-pass
+		# filter in the sound driver. If the frequency is 0,
+		# the filter is disabled.
+		lowpass = 8000
+
+		#driver = "null"
+		#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
+		#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
+		driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
 	}
 
 	section disk {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/main.h                                      *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -109,6 +109,7 @@ typedef struct macplus_s macplus_t;
 #include "scsi.h"
 #include "serial.h"
 #include "sony.h"
+#include "sound.h"
 #include "traps.h"
 #include "video.h"
 #include "macplus.h"

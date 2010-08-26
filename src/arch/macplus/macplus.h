@@ -46,6 +46,7 @@ struct macplus_s {
 	mac_kbd_t          kbd;
 	mac_scsi_t         scsi;
 	mac_sony_t         sony;
+	mac_sound_t        sound;
 	mac_video_t        *video;
 	terminal_t         *trm;
 	disks_t            *dsks;
