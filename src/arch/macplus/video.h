@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.h                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -40,10 +40,6 @@ typedef struct {
 	unsigned char       *rgb;
 
 	unsigned long       clk;
-	unsigned long       clkacc;
-	unsigned long       realclk;
-
-	int                 realtime;
 
 	terminal_t          *trm;
 
@@ -60,8 +56,6 @@ void mac_video_free (mac_video_t *mv);
 void mac_video_del (mac_video_t *mv);
 
 void mac_video_set_vbi_fct (mac_video_t *mv, void *ext, void *fct);
-
-void mac_video_set_realtime (mac_video_t *mv, int realtime);
 
 void mac_video_set_vbuf (mac_video_t *mv, const unsigned char *vbuf);
 void mac_video_set_terminal (mac_video_t *mv, terminal_t *trm);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -754,7 +754,6 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 	unsigned long addr1, addr2;
 	unsigned      w, h;
 	ini_sct_t     *sct;
-	int           realtime;
 
 	if (sim->ram == NULL) {
 		return;
@@ -766,12 +765,11 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 	addr1 = (addr1 < 0x5900) ? 0 : (addr1 - 0x5900);
 
 	ini_get_uint32 (sct, "address", &addr2, addr1);
-	ini_get_bool (sct, "realtime", &realtime, 1);
 	ini_get_uint16 (sct, "width", &w, 512);
 	ini_get_uint16 (sct, "height", &h, 342);
 
-	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX w=%u h=%u realtime=%d\n",
-		addr2, w, h, realtime
+	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX w=%u h=%u\n",
+		addr2, w, h
 	);
 
 	sim->vbuf1 = addr2;
@@ -793,8 +791,6 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 
 	mac_set_vbuf (sim, sim->vbuf1);
 
-	mac_video_set_realtime (sim->video, realtime);
-
 	if (sim->trm != NULL) {
 		mac_video_set_terminal (sim->video, sim->trm);
 
@@ -804,6 +800,8 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 
 void mac_init (macplus_t *sim, ini_sct_t *ini)
 {
+	unsigned i;
+
 	sim->trm = NULL;
 	sim->video = NULL;
 
@@ -821,12 +819,13 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	sim->pause = 0;
 	sim->brk = 0;
 
-	sim->speed_factor = 0;
-	sim->via_clk_div = 10;
+	sim->speed_factor = 1;
 
 	sim->clk_cnt = 0;
-	sim->clk_div[0] = 0;
-	sim->clk_div[1] = 0;
+
+	for (i = 0; i < 4; i++) {
+		sim->clk_div[i] = 0;
+	}
 
 	bps_init (&sim->bps);
 
@@ -932,24 +931,13 @@ void mac_set_pause (macplus_t *sim, int pause)
 
 void mac_set_speed (macplus_t *sim, unsigned factor)
 {
+	if (factor == 0) {
+		factor = 1;
+	}
+
 	mac_log_deb ("speed = %u\n", factor);
 
-	if (factor == 0) {
-		mac_rtc_set_realtime (&sim->rtc, 1);
-		mac_video_set_realtime (sim->video, 1);
-		sim->via_clk_div = 10;
-		sim->via_clk_div = 40;
-	}
-	else if (factor == 1) {
-		mac_rtc_set_realtime (&sim->rtc, 0);
-		mac_video_set_realtime (sim->video, 0);
-		sim->via_clk_div = 10;
-	}
-	else {
-		mac_rtc_set_realtime (&sim->rtc, 1);
-		mac_video_set_realtime (sim->video, 1);
-		sim->via_clk_div = 10 * factor;
-	}
+	mac_rtc_set_realtime (&sim->rtc, (factor != 1));
 
 	sim->speed_factor = factor;
 
@@ -1018,15 +1006,12 @@ void mac_reset (macplus_t *sim)
 static
 void mac_realtime_sync (macplus_t *sim, unsigned long n)
 {
-	unsigned long fct;
-	unsigned long us1, us2, sl;
+	unsigned long us1, us2;
 
 	sim->sync_clk += n;
 
-	fct = (sim->speed_factor * MAC_CPU_CLOCK) / MAC_CPU_SYNC;
-
-	if (sim->sync_clk >= fct) {
-		sim->sync_clk -= fct;
+	if (sim->sync_clk >= (MAC_CPU_CLOCK / MAC_CPU_SYNC)) {
+		sim->sync_clk -= (MAC_CPU_CLOCK / MAC_CPU_SYNC);
 
 		us1 = pce_get_interval_us (&sim->sync_us);
 		us2 = (1000000 / MAC_CPU_SYNC);
@@ -1039,9 +1024,7 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 		}
 
 		if (sim->sync_sleep >= (1000000 / MAC_CPU_SYNC)) {
-			pce_usleep (1000000 / MAC_CPU_SYNC);
-			sl = pce_get_interval_us (&sim->sync_us);
-			sim->sync_sleep -= sl;
+			pce_usleep (sim->sync_sleep);
 		}
 
 		if (sim->sync_sleep < -1000000) {
@@ -1053,6 +1036,8 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 
 void mac_clock (macplus_t *sim, unsigned n)
 {
+	unsigned long viaclk;
+
 	if (n == 0) {
 		n = sim->cpu->delay;
 		if (n == 0) {
@@ -1066,27 +1051,37 @@ void mac_clock (macplus_t *sim, unsigned n)
 
 	sim->clk_div[0] += n;
 
-	while (sim->clk_div[0] >= sim->via_clk_div) {
-		e6522_clock (&sim->via, 1);
-		sim->clk_div[0] -= sim->via_clk_div;
+	while (sim->clk_div[0] >= sim->speed_factor) {
+		sim->clk_div[1] += 1;
+		sim->clk_div[0] -= sim->speed_factor;
 	}
 
-	sim->clk_div[1] += n;
-
-	if (sim->clk_div[1] < 4096) {
+	if (sim->clk_div[1] < 10) {
 		return;
 	}
 
-	mac_ser_clock (&sim->ser[0], (10 * sim->clk_div[1]) / sim->via_clk_div);
-	mac_ser_clock (&sim->ser[1], (10 * sim->clk_div[1]) / sim->via_clk_div);
+	viaclk = sim->clk_div[1] / 10;
 
-	mac_check_mouse (sim);
-	mac_kbd_clock (&sim->kbd, sim->clk_div[1]);
+	e6522_clock (&sim->via, viaclk);
 
-	sim->clk_div[2] += sim->clk_div[1];
-	sim->clk_div[1] = 0;
+	sim->clk_div[1] -= 10 * viaclk;
+	sim->clk_div[2] += 10 * viaclk;
 
-	if (sim->clk_div[2] < 4 * 4096) {
+	if (sim->clk_div[2] < 256) {
+		return;
+	}
+
+	mac_video_clock (sim->video, sim->clk_div[2]);
+
+	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);
+	mac_ser_clock (&sim->ser[1], sim->clk_div[2]);
+
+	mac_kbd_clock (&sim->kbd, sim->clk_div[2]);
+
+	sim->clk_div[3] += sim->clk_div[2];
+	sim->clk_div[2] = 0;
+
+	if (sim->clk_div[3] < 8192) {
 		return;
 	}
 
@@ -1094,12 +1089,11 @@ void mac_clock (macplus_t *sim, unsigned n)
 		trm_check (sim->trm);
 	}
 
-	mac_video_clock (sim->video, sim->clk_div[2]);
-	mac_rtc_clock (&sim->rtc, sim->clk_div[2]);
+	mac_check_mouse (sim);
 
-	if (sim->speed_factor > 0) {
-		mac_realtime_sync (sim, sim->clk_div[2]);
-	}
+	mac_rtc_clock (&sim->rtc, sim->clk_div[3]);
 
-	sim->clk_div[2] = 0;
+	mac_realtime_sync (sim, sim->clk_div[3]);
+
+	sim->clk_div[3] = 0;
 }

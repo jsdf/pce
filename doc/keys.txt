@@ -45,10 +45,9 @@ PCE/ibmpc Terminal Keys
 PCE/macplus Terminal Keys
 ==============================================================================
 
-<ESC> 0		Set the CPU speed multiplier to 0 (all out).
 <ESC> i		Simulate pressing the programmer's key on a real mac.
 <ESC> F1	Re-insert the first floppy disk (after moving a floppy to the
-		trash, this simulates re-inserting it. At the moment only the
+		trash, this simulates re-inserting it). At the moment only the
 		same disk image can be re-inserted.
 <ESC> F2	Re-insert the second floppy disk.
 <ESC> F3	Re-insert the third floppy disk.

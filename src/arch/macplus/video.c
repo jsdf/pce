@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.c                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,7 +30,7 @@
 /* #define MAC_VIDEO_VB1 ((342 * (512 + 192) * 7833600) / MAC_VIDEO_PFREQ) */
 #define MAC_VIDEO_VB1 120384
 
-/* #define MAC_VIDEO_VB1 (((342 + 28) * (512 + 192) * 7833600) / MAC_VIDEO_PFREQ) */
+/* #define MAC_VIDEO_VB2 (((342 + 28) * (512 + 192) * 7833600) / MAC_VIDEO_PFREQ) */
 #define MAC_VIDEO_VB2 130240
 
 
@@ -57,10 +57,6 @@ int mac_video_init (mac_video_t *mv, unsigned w, unsigned h)
 	}
 
 	mv->clk = 0;
-	mv->clkacc = 0;
-	mv->realclk = 0;
-
-	mv->realtime = 0;
 
 	mv->vbi_val = 0;
 	mv->vbi_ext = NULL;
@@ -103,11 +99,6 @@ void mac_video_set_vbi_fct (mac_video_t *mv, void *ext, void *fct)
 {
 	mv->vbi_ext = ext;
 	mv->set_vbi = fct;
-}
-
-void mac_video_set_realtime (mac_video_t *mv, int realtime)
-{
-	mv->realtime = (realtime != 0);
 }
 
 void mac_video_set_vbuf (mac_video_t *mv, const unsigned char *vbuf)
@@ -210,29 +201,6 @@ void mac_video_redraw (mac_video_t *mv)
 void mac_video_clock (mac_video_t *mv, unsigned long n)
 {
 	unsigned long old;
-	unsigned long us;
-
-	if (mv->realtime) {
-		old = mv->realclk;
-
-		us = pce_get_interval_us (&mv->realclk);
-
-		if (us < 100) {
-			mv->realclk = old;
-			return;
-		}
-
-		if (us > (4 * 16625)) {
-			/* discontinuity */
-#ifdef DEBUG_VIDEO
-			mac_log_deb ("video: discontinuity\n");
-#endif
-			us = 4 * 16625;
-		}
-
-		/* n = 7.8336 * us */
-		n = (32086 * us) / 4096;
-	}
 
 	old = mv->clk;
 
@@ -251,15 +219,6 @@ void mac_video_clock (mac_video_t *mv, unsigned long n)
 	if (mv->clk >= MAC_VIDEO_VB2) {
 		mac_video_set_vbi (mv, 0);
 
-		mv->clkacc += (mv->clk - MAC_VIDEO_VB2);
-
-		if (mv->clkacc < (MAC_VIDEO_VB2 / 4)) {
-			mv->clk = mv->clkacc;
-		}
-		else {
-			mv->clk = MAC_VIDEO_VB2 / 4;
-		}
-
-		mv->clkacc -= mv->clk;
+		mv->clk -= MAC_VIDEO_VB2;
 	}
 }
