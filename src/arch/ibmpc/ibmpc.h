@@ -82,8 +82,8 @@ typedef struct ibmpc_t {
 
 	/* cpu speed factor */
 	unsigned           speed_current;
-	unsigned           speed_default;
 	unsigned           speed_saved;
+	unsigned long      speed_clock_extra;
 
 	unsigned long      clk_div[4];
 

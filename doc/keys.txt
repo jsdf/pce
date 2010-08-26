@@ -17,6 +17,7 @@ Generic Terminal Keys
 These keys apply to both PCE/ibmpc and PCE/macplus.
 
 <ESC> <ESC>	Send a single <ESC> to the emulated machine.
+<ESC> 0		Set the CPU speed to dynamic.
 <ESC> [1-8]	Set the CPU speed multiplier to [1-8].
 <ESC> g		Grab the mouse.
 <ESC> m		Stop and fall back to the monitor.
@@ -38,8 +39,6 @@ Pause		Quit
 
 PCE/ibmpc Terminal Keys
 ==============================================================================
-
-<ESC> 0		Reset the CPU speed to what it was at startup.
 
 
 PCE/macplus Terminal Keys

@@ -43,6 +43,13 @@
 #include <lib/string.h>
 
 
+#ifdef PCE_HOST_WINDOWS
+#define PCE_IBMPC_SLEEP 20000
+#else
+#define PCE_IBMPC_SLEEP 10000
+#endif
+
+
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
 
@@ -303,8 +310,8 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	pc->cpu->op_hook = &pc_e86_hook;
 
 	pc->speed_current = speed;
-	pc->speed_default = speed;
 	pc->speed_saved = speed;
+	pc->speed_clock_extra = 0;
 }
 
 static
@@ -1368,6 +1375,8 @@ void pc_clock_reset (ibmpc_t *pc)
 
 	pce_get_interval_us (&pc->sync_interval);
 
+	pc->speed_clock_extra = 0;
+
 	pc->clock1 = 0;
 	pc->clock2 = 0;
 }
@@ -1376,6 +1385,8 @@ void pc_clock_discontinuity (ibmpc_t *pc)
 {
 	pc->sync_clock2_real = pc->sync_clock2_sim;
 	pce_get_interval_us (&pc->sync_interval);
+
+	pc->speed_clock_extra = 0;
 }
 
 /*
@@ -1398,12 +1409,19 @@ void pc_clock_delay (ibmpc_t *pc)
 		pc->sync_clock2_sim = 0;
 		pc->sync_clock2_real = rclk - vclk;
 
+		if (pc->speed_clock_extra > 0) {
+			pc->speed_clock_extra -= 1;
+		}
+
 		if (pc->sync_clock2_real > PCE_IBMPC_CLK2) {
 			pc->sync_clock2_real = 0;
 			pce_log (MSG_INF, "host system too slow, skipping 1 second.\n");
 		}
 
 		return;
+	}
+	else {
+		pc->speed_clock_extra += 1;
 	}
 
 	vclk -= rclk;
@@ -1413,7 +1431,7 @@ void pc_clock_delay (ibmpc_t *pc)
 
 	us = (1000000 * (unsigned long long) vclk) / PCE_IBMPC_CLK2;
 
-	if (us > 10000) {
+	if (us > PCE_IBMPC_SLEEP) {
 		pce_usleep (us);
 	}
 }
@@ -1424,11 +1442,20 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 	unsigned long spd;
 	unsigned long clk;
 
-	e86_clock (pc->cpu, cnt);
+	if (cnt == 0) {
+		cnt = 4;
+	}
+
+	if (pc->speed_current == 0) {
+		e86_clock (pc->cpu, cnt + pc->speed_clock_extra);
+		spd = 4;
+	}
+	else {
+		e86_clock (pc->cpu, cnt);
+		spd = 4 * pc->speed_current;
+	}
 
 	pc->clock1 += cnt;
-
-	spd = 4 * pc->speed_current;
 
 	if (pc->clock1 < spd) {
 		return;
@@ -1529,12 +1556,8 @@ int pc_set_cpu_model (ibmpc_t *pc, const char *str)
 
 void pc_set_speed (ibmpc_t *pc, unsigned factor)
 {
-	if (factor == 0) {
-		pc->speed_current = pc->speed_default;
-	}
-	else {
-		pc->speed_current = factor;
-	}
+	pc->speed_current = factor;
+	pc->speed_clock_extra = 0;
 
 	pce_log_tag (MSG_INF, "CPU:", "setting speed to %uX\n", pc->speed_current);
 }

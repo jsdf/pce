@@ -30,8 +30,9 @@ section pc {
 		# This sets the CPU speed with respect to the emulated
 		# system clock. A value of 1 emulates a 4.77MHz CPU.
 		# A higher value emulates a faster CPU but also takes up
-		# more host CPU time.
-		speed = 8
+		# more host CPU time. A value of 0 dynamically adjusts
+		# the CPU speed.
+		speed = 0
 	}
 
 
