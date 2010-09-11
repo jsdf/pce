@@ -193,7 +193,7 @@ void e8237_chn_set_sreq (e8237_chn_t *chn, unsigned char val)
 		}
 	}
 	else {
-		chn->state &= ~E8237_STATE_SREQ;
+		chn->state &= ~(E8237_STATE_PREQ | E8237_STATE_SREQ);
 	}
 }
 
@@ -222,7 +222,7 @@ unsigned char e8237_chn_get_status (e8237_chn_t *chn)
 	ret = (chn->state & E8237_STATE_PREQ) ? 0x10 : 0x00;
 	ret |= (chn->state & E8237_STATE_TC) ? 0x01 : 0x00;
 
-	chn->state &= ~(E8237_STATE_PREQ | E8237_STATE_TC);
+	chn->state &= ~E8237_STATE_TC;
 
 	return (ret);
 }
@@ -303,7 +303,7 @@ void e8237_chn_set_dreq (e8237_chn_t *chn, unsigned char val)
 		}
 	}
 	else {
-		chn->state &= ~E8237_STATE_DREQ;
+		chn->state &= ~(E8237_STATE_PREQ | E8237_STATE_DREQ);
 		e8237_chn_set_dack (chn, 0);
 	}
 }
