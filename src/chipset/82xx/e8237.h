@@ -115,6 +115,9 @@ e8237_t *e8237_new (void);
 void e8237_free (e8237_t *dma);
 void e8237_del (e8237_t *dma);
 
+void e8237_set_dack_fct (e8237_t *dma, unsigned chn, void *ext, void *fct);
+void e8237_set_tc_fct (e8237_t *dma, unsigned chn, void *ext, void *fct);
+
 unsigned char e8237_get_command (e8237_t *dma);
 unsigned char e8237_get_priority (e8237_t *dma);
 unsigned char e8237_get_mode (e8237_t *dma, unsigned i);

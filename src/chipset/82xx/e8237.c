@@ -365,6 +365,23 @@ void e8237_del (e8237_t *dma)
 }
 
 
+void e8237_set_dack_fct (e8237_t *dma, unsigned chn, void *ext, void *fct)
+{
+	if (chn < 4) {
+		dma->chn[chn].dack_ext = ext;
+		dma->chn[chn].dack = fct;
+	}
+}
+
+void e8237_set_tc_fct (e8237_t *dma, unsigned chn, void *ext, void *fct)
+{
+	if (chn < 4) {
+		dma->chn[chn].tc_ext = ext;
+		dma->chn[chn].tc = fct;
+	}
+}
+
+
 unsigned char e8237_get_command (e8237_t *dma)
 {
 	return (dma->cmd);
