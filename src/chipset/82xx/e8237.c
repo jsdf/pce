@@ -264,6 +264,16 @@ int e8237_chn_transfer (e8237_chn_t *chn)
 			chn->memwr (chn->memwr_ext, chn->cur_addr, val);
 		}
 		break;
+
+	case E8237_MODE_VERIFY:
+		if (chn->iord != NULL) {
+			chn->iord (chn->iord_ext);
+		}
+
+		if (chn->memrd != NULL) {
+			chn->memrd (chn->memrd_ext, chn->cur_addr);
+		}
+		break;
 	}
 
 	chn->cur_addr += (chn->mode & E8237_MODE_ADDRDEC) ? 0xffff : 0x0001;
