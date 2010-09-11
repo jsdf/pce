@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.c                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -217,6 +217,27 @@ unsigned char *hgc_get_page (hgc_t *hgc)
 	}
 
 	return (val);
+}
+
+/*
+ * Map or unmap page 1
+ */
+static
+void hgc_adjust_page1 (hgc_t *hgc)
+{
+	unsigned long size;
+
+	if ((hgc->reg[HGC_CONFIG] & HGC_CONFIG_PAGE1) == 0) {
+		size = 32768;
+	}
+	else if ((hgc->reg[HGC_MODE] & HGC_MODE_PAGE1) == 0) {
+		size = 32768;
+	}
+	else {
+		size = 65536;
+	}
+
+	mem_blk_set_size (hgc->memblk, size);
 }
 
 /*
@@ -684,6 +705,8 @@ static
 void hgc_set_config (hgc_t *hgc, unsigned char val)
 {
 	hgc->reg[HGC_CONFIG] = val;
+
+	hgc_adjust_page1 (hgc);
 }
 
 /*
@@ -704,10 +727,6 @@ void hgc_set_mode (hgc_t *hgc, unsigned char val)
 		val &= ~HGC_MODE_PAGE1;
 	}
 
-	if (mem_blk_get_size (hgc->memblk) < 65536) {
-		val &= ~HGC_MODE_PAGE1;
-	}
-
 	if (hgc->reg[HGC_MODE] == val) {
 		return;
 	}
@@ -715,6 +734,8 @@ void hgc_set_mode (hgc_t *hgc, unsigned char val)
 	hgc->reg[HGC_MODE] = val;
 
 	hgc_set_timing (hgc);
+
+	hgc_adjust_page1 (hgc);
 
 	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
@@ -976,7 +997,7 @@ void hgc_clock (hgc_t *hgc, unsigned long cnt)
 	hgc->update_state = HGC_UPDATE_RETRACE;
 }
 
-hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
+hgc_t *hgc_new (unsigned long io, unsigned long mem)
 {
 	unsigned i;
 	hgc_t    *hgc;
@@ -998,14 +1019,13 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 	hgc->video.redraw = (void *) hgc_redraw;
 	hgc->video.clock = (void *) hgc_clock;
 
-	size = (size <= 32768) ? 32768UL : 65536UL;
-
-	hgc->memblk = mem_blk_new (mem, size, 1);
+	hgc->memblk = mem_blk_new (mem, 65536, 1);
 	hgc->memblk->ext = hgc;
 	hgc->memblk->set_uint8 = (void *) hgc_mem_set_uint8;
 	hgc->memblk->set_uint16 = (void *) hgc_mem_set_uint16;
 	hgc->mem = hgc->memblk->data;
 	mem_blk_clear (hgc->memblk, 0x00);
+	mem_blk_set_size (hgc->memblk, 32768);
 
 	hgc->regblk = mem_blk_new (io, 16, 1);
 	hgc->regblk->ext = hgc;
@@ -1052,7 +1072,7 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size)
 
 video_t *hgc_new_ini (ini_sct_t *sct)
 {
-	unsigned long io, mem, size;
+	unsigned long io, mem;
 	unsigned long col0, col1, col2, col3;
 	const char    *col;
 	unsigned      blink;
@@ -1060,7 +1080,6 @@ video_t *hgc_new_ini (ini_sct_t *sct)
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
 	ini_get_uint32 (sct, "address", &mem, 0xb0000);
-	ini_get_uint32 (sct, "size", &size, 65536);
 
 	ini_get_uint16 (sct, "blink", &blink, 0);
 
@@ -1073,7 +1092,8 @@ video_t *hgc_new_ini (ini_sct_t *sct)
 	ini_get_uint32 (sct, "color_bright", &col2, col2);
 	ini_get_uint32 (sct, "color_graphics", &col3, col2);
 
-	hgc = hgc_new (io, mem, size);
+	hgc = hgc_new (io, mem);
+
 	if (hgc == NULL) {
 		return (NULL);
 	}

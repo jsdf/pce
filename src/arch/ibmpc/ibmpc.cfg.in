@@ -254,7 +254,6 @@ section pc {
 		# Don't change these unless you know what you're doing
 		io = 0x3b4
 		address = 0xb0000
-		size = 65536
 
 		# Set the monitor color.
 		# Valid values are "amber", "green" and "gray".

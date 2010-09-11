@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.h                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -69,7 +69,7 @@ typedef struct {
 } hgc_t;
 
 
-hgc_t *hgc_new (unsigned long io, unsigned long mem, unsigned long size);
+hgc_t *hgc_new (unsigned long io, unsigned long mem);
 
 video_t *hgc_new_ini (ini_sct_t *sct);
 
