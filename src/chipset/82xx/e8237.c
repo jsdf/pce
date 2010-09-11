@@ -651,18 +651,11 @@ void e8237_reset (e8237_t *dma)
 	e8237_set_hreq (dma, 0);
 }
 
-void e8237_clock (e8237_t *dma, unsigned n)
+static
+void e8237_check (e8237_t *dma)
 {
 	unsigned    i, j;
 	e8237_chn_t *chn;
-
-	if (dma->check == 0) {
-		return;
-	}
-
-	if (dma->cmd & E8237_CMD_DISABLE) {
-		return;
-	}
 
 	dma->check = 0;
 
@@ -701,4 +694,21 @@ void e8237_clock (e8237_t *dma, unsigned n)
 	}
 
 	e8237_set_hreq (dma, 0);
+}
+
+void e8237_clock (e8237_t *dma, unsigned n)
+{
+	if (dma->cmd & E8237_CMD_DISABLE) {
+		return;
+	}
+
+	while (n > 0) {
+		if (dma->check == 0) {
+			return;
+		}
+
+		e8237_check (dma);
+
+		n -= 1;
+	}
 }
