@@ -695,13 +695,27 @@ int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 {
+	int      enable_irq;
+	unsigned irq;
+
 	pc->video = ega_new_ini (sct);
 
 	if (pc->video == NULL) {
 		return (1);
 	}
 
-	ega_set_irq_fct (pc->video->ext, &pc->pic, e8259_set_irq2);
+	ini_get_bool (sct, "enable_irq", &enable_irq, 0);
+	ini_get_uint16 (sct, "irq", &irq, 2);
+
+	pce_log_tag (MSG_INF, "VIDEO:", "EGA irq=%u (%s)\n",
+		irq, enable_irq ? "enabled" : "disabled"
+	);
+
+	if (enable_irq) {
+		ega_set_irq_fct (pc->video->ext,
+			&pc->pic, e8259_get_irq_f (&pc->pic, irq)
+		);
+	}
 
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
@@ -715,13 +729,27 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 static
 int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
 {
+	int      enable_irq;
+	unsigned irq;
+
 	pc->video = vga_new_ini (sct);
 
 	if (pc->video == NULL) {
 		return (1);
 	}
 
-	vga_set_irq_fct (pc->video->ext, &pc->pic, e8259_set_irq2);
+	ini_get_bool (sct, "enable_irq", &enable_irq, 0);
+	ini_get_uint16 (sct, "irq", &irq, 2);
+
+	pce_log_tag (MSG_INF, "VIDEO:", "VGA irq=%u (%s)\n",
+		irq, enable_irq ? "enabled" : "disabled"
+	);
+
+	if (enable_irq) {
+		vga_set_irq_fct (pc->video->ext,
+			&pc->pic, e8259_get_irq_f (&pc->pic, irq)
+		);
+	}
 
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);

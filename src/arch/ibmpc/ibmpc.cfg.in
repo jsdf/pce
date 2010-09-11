@@ -194,6 +194,10 @@ section pc {
 		# cursor. Setting this to 0 will turn off blinking.
 		blink = 16
 
+		# Enable or disable the vertical retrace interrupt.
+		enable_irq = 0
+		irq        = 2
+
 		section rom {
 			# VGA ROM
 			address = 0xc0000
@@ -218,6 +222,10 @@ section pc {
 		# The blink frequency for blinking characters and the
 		# cursor. Setting this to 0 will turn off blinking.
 		blink = 16
+
+		# Enable or disable the vertical retrace interrupt.
+		enable_irq = 0
+		irq        = 2
 
 		section rom {
 			# EGA ROM
