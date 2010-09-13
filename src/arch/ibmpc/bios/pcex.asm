@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:   src/arch/ibmpc/bios/pcex.asm                                 *
 ;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -240,22 +240,53 @@ init_pit:
 	ret
 
 
+;-----------------------------------------------------------------------------
+; Initialize the video 8255 PPI
+;-----------------------------------------------------------------------------
 init_ppi:
 	push	ax
+	push	cx
+
 	mov	al, 0x99
 	out	0x63, al			; set up ppi ports
+
+	cmp	byte [cs:0xfffe], 0xfe		; check if pc/xt
+	je	.xt
 
 	mov	al, 0xfc
 	out	0x61, al
 
-	in	al, 0x60			; get config word
-	mov	ah, 0x00
+	in	al, 0x60			; get sw1
+	xor	ah, ah
 
 	mov	[0x0010], ax			; equipment word
 
 	mov	al, 0x7c
 	out	0x61, al
+	jmp	.done
 
+.xt:
+	mov	al, 0xfc
+	out	0x61, al
+
+	in	al, 0x62			; get sw high
+	mov	ah, al
+
+	mov	al, 0x74
+	out	0x61, al
+
+	in	al, 0x62			; get sw low
+	and	al, 0x0f
+
+	mov	cl, 4
+	shl	ah, cl
+	or	al, ah
+	xor	ah, ah
+
+	mov	[0x0010], ax
+
+.done:
+	pop	cx
 	pop	ax
 	ret
 
