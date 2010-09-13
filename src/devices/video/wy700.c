@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/wy700.c                                    *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
  *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
  *****************************************************************************/
 
@@ -22,6 +22,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <lib/log.h>
 

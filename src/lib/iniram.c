@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/iniram.c                                             *
  * Created:     2005-07-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -19,6 +19,8 @@
  * Public License for more details.                                          *
  *****************************************************************************/
 
+
+#include <stdlib.h>
 
 #include <lib/iniram.h>
 #include <lib/load.h>

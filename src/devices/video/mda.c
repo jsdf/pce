@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.c                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,8 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <lib/log.h>
 #include <lib/msg.h>

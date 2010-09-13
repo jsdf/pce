@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/initerm.c                                            *
  * Created:     2008-10-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,8 @@
 
 
 #include <config.h>
+
+#include <string.h>
 
 #include <lib/initerm.h>
 #include <lib/log.h>
