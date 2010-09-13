@@ -70,6 +70,9 @@ typedef struct ibmpc_t {
 
 	unsigned long      dma_page[4];
 
+	unsigned char      timer1_out;
+	unsigned char      dack0;
+
 	/* allow int 1a to get real time */
 	int                support_rtc;
 

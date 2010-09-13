@@ -175,6 +175,28 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 }
 
 static
+void pc_set_dack0 (ibmpc_t *pc, unsigned char val)
+{
+	pc->dack0 = (val != 0);
+
+	if (pc->dack0) {
+		e8237_set_dreq0 (&pc->dma, 0);
+	}
+}
+
+static
+void pc_set_timer1_out (ibmpc_t *pc, unsigned char val)
+{
+	if (pc->dack0 == 0) {
+		if ((pc->timer1_out == 0) && (val != 0)) {
+			e8237_set_dreq0 (&pc->dma, 1);
+		}
+	}
+
+	pc->timer1_out = (val != 0);
+}
+
+static
 void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 {
 	if (val) {
@@ -329,6 +351,8 @@ void pc_setup_dma (ibmpc_t *pc, ini_sct_t *ini)
 	pc->dma_page[2] = 0;
 	pc->dma_page[3] = 0;
 
+	pc->dack0 = 0;
+
 	e8237_init (&pc->dma);
 
 	blk = mem_blk_new (addr, 16, 0);
@@ -347,6 +371,8 @@ void pc_setup_dma (ibmpc_t *pc, ini_sct_t *ini)
 	/* This is a hack. HLDA should be connected to the CPU core. Instead,
 	 * this will keep it permanently at high. */
 	e8237_set_hlda (&pc->dma, 1);
+
+	e8237_set_dack_fct (&pc->dma, 0, pc, pc_set_dack0);
 }
 
 static
@@ -396,6 +422,8 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 		addr, 4
 	);
 
+	pc->timer1_out = 0;
+
 	e8253_init (&pc->pit);
 
 	blk = mem_blk_new (addr, 4, 0);
@@ -415,7 +443,7 @@ void pc_setup_pit (ibmpc_t *pc, ini_sct_t *ini)
 	e8253_set_gate (&pc->pit, 2, 1);
 
 	e8253_set_out_fct (&pc->pit, 0, &pc->pic, e8259_set_irq0);
-	e8253_set_out_fct (&pc->pit, 1, &pc->dma, e8237_set_dreq0);
+	e8253_set_out_fct (&pc->pit, 1, pc, pc_set_timer1_out);
 	e8253_set_out_fct (&pc->pit, 2, pc, pc_set_timer2_out);
 }
 
