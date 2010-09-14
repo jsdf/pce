@@ -119,22 +119,32 @@ unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 static
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 {
-	if (pc->cas != NULL) {
-		if (pc_cas_get_inp (pc->cas)) {
-			pc->ppi_port_c[0] |= 0x10;
-			pc->ppi_port_c[1] |= 0x10;
+	if (pc->model == PCE_IBMPC_5160) {
+		if (pc->ppi_port_b & 0x08) {
+			return (pc->ppi_port_c[1]);
 		}
 		else {
-			pc->ppi_port_c[0] &= ~0x10;
-			pc->ppi_port_c[1] &= ~0x10;
+			return (pc->ppi_port_c[0]);
 		}
 	}
-
-	if (pc->ppi_port_b & 0x04) {
-		return (pc->ppi_port_c[0]);
-	}
 	else {
-		return (pc->ppi_port_c[1]);
+		if (pc->cas != NULL) {
+			if (pc_cas_get_inp (pc->cas)) {
+				pc->ppi_port_c[0] |= 0x10;
+				pc->ppi_port_c[1] |= 0x10;
+			}
+			else {
+				pc->ppi_port_c[0] &= ~0x10;
+				pc->ppi_port_c[1] &= ~0x10;
+			}
+		}
+
+		if (pc->ppi_port_b & 0x04) {
+			return (pc->ppi_port_c[0]);
+		}
+		else {
+			return (pc->ppi_port_c[1]);
+		}
 	}
 }
 
@@ -155,20 +165,22 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 		pc_speaker_set_msk (&pc->spk, val & 0x02);
 	}
 
-	if ((old ^ val) & 0x08) {
-		/* cassette motor change */
+	if (pc->model == PCE_IBMPC_5150) {
+		if ((old ^ val) & 0x08) {
+			/* cassette motor change */
 
-		if (pc->cas != NULL) {
-			pc_cas_set_motor (pc->cas, (val & 0x08) == 0);
+			if (pc->cas != NULL) {
+				pc_cas_set_motor (pc->cas, (val & 0x08) == 0);
 
-			if (val & 0x08) {
-				/* motor off: restore clock */
-				pc->speed_current = pc->speed_saved;
-			}
-			else {
-				/* motor on: set clock to 4.77 MHz */
-				pc->speed_saved = pc->speed_current;
-				pc->speed_current = 1;
+				if (val & 0x08) {
+					/* motor off: restore clock */
+					pc->speed_current = pc->speed_saved;
+				}
+				else {
+					/* motor on: set clock to 4.77 MHz */
+					pc->speed_saved = pc->speed_current;
+					pc->speed_current = 1;
+				}
 			}
 		}
 	}
@@ -199,17 +211,20 @@ void pc_set_timer1_out (ibmpc_t *pc, unsigned char val)
 static
 void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 {
-	if (val) {
-		pc->ppi_port_c[0] |= 0x20;
-		pc->ppi_port_c[1] |= 0x20;
-	}
-	else {
-		pc->ppi_port_c[0] &= ~0x20;
-		pc->ppi_port_c[1] &= ~0x20;
-	}
+	if (pc->model == PCE_IBMPC_5150) {
+		if (val) {
+			pc->ppi_port_c[0] |= 0x20;
+			pc->ppi_port_c[1] |= 0x20;
+		}
+		else {
+			pc->ppi_port_c[0] &= ~0x20;
+			pc->ppi_port_c[1] &= ~0x20;
+		}
 
-	if (pc->cas != NULL) {
-		pc_cas_set_out (pc->cas, val);
+
+		if (pc->cas != NULL) {
+			pc_cas_set_out (pc->cas, val);
+		}
 	}
 
 	pc_speaker_set_out (&pc->spk, val);
@@ -223,6 +238,10 @@ void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
 		pc->ppi_port_a[0] &= ~0x30;
 		pc->ppi_port_a[0] |= (mode & 0x03) << 4;
 	}
+	else if (pc->model == PCE_IBMPC_5160) {
+		pc->ppi_port_c[1] &= ~0x03;
+		pc->ppi_port_c[1] |= mode & 0x03;
+	}
 }
 
 static
@@ -234,6 +253,13 @@ void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
 		if (cnt > 0) {
 			pc->ppi_port_a[0] |= 0x01;
 			pc->ppi_port_a[0] |= ((cnt - 1) & 3) << 6;
+		}
+	}
+	else if (pc->model == PCE_IBMPC_5160) {
+		pc->ppi_port_c[1] &= ~0x0c;
+
+		if (cnt > 0) {
+			pc->ppi_port_c[1] |= ((cnt - 1) & 3) << 2;
 		}
 	}
 }
@@ -254,6 +280,20 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 
 		pc->ppi_port_c[0] |= cnt & 0x0f;
 		pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+	}
+	else if (pc->model == PCE_IBMPC_5160) {
+		cnt = cnt >> 16;
+
+		if (cnt > 0) {
+			cnt -= 1;
+
+			if (cnt > 3) {
+				cnt = 3;
+			}
+		}
+
+		pc->ppi_port_c[0] &= 0xf3;
+		pc->ppi_port_c[0] |= (cnt << 2) & 0x0c;
 	}
 }
 
@@ -285,6 +325,9 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	if (strcmp (model, "5150") == 0) {
 		pc->model = PCE_IBMPC_5150;
 	}
+	else if (strcmp (model, "5160") == 0) {
+		pc->model = PCE_IBMPC_5160;
+	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
 		pc->model = PCE_IBMPC_5150;
@@ -295,6 +338,10 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	pc->ppi_port_b = 0x08;
 	pc->ppi_port_c[0] = 0;
 	pc->ppi_port_c[1] = 0;
+
+	if (pc->model == PCE_IBMPC_5160) {
+		pc->ppi_port_c[0] |= 0x01;
+	}
 }
 
 static

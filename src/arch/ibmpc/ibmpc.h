@@ -29,6 +29,7 @@
 #define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
 
 #define PCE_IBMPC_5150 0
+#define PCE_IBMPC_5160 1
 
 
 typedef struct ibmpc_t {

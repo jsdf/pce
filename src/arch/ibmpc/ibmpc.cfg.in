@@ -16,8 +16,8 @@ section pc {
 	path = "-."
 
 	section system {
-		# The specific model to emulate. The only possible value
-		# is 5150.
+		# The specific model to emulate. Possible values are
+		# 5150 and 5160.
 		model = "5150"
 
 		# The boot drive. Use 0 for the first floppy disk drive
