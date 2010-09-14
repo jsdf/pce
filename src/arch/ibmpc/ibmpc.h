@@ -28,6 +28,8 @@
 #define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
 #define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
 
+#define PCE_IBMPC_5150 0
+
 
 typedef struct ibmpc_t {
 	e8086_t            *cpu;
@@ -49,6 +51,8 @@ typedef struct ibmpc_t {
 	pc_kbd_t           kbd;
 	pc_cassette_t      *cas;
 	pc_speaker_t       spk;
+
+	unsigned           model;
 
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;

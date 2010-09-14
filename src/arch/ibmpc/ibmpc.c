@@ -219,7 +219,8 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
-	ini_sct_t *sct;
+	const char *model;
+	ini_sct_t  *sct;
 
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
@@ -233,8 +234,19 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 		sct = ini;
 	}
 
+	ini_get_string (sct, "model", &model, "5150");
 	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
+
+	pce_log_tag (MSG_INF, "SYSTEM:", "model=%s\n", model);
+
+	if (strcmp (model, "5150") == 0) {
+		pc->model = PCE_IBMPC_5150;
+	}
+	else {
+		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
+		pc->model = PCE_IBMPC_5150;
+	}
 }
 
 static
@@ -538,6 +550,10 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 
 	pc->cas = NULL;
+
+	if (pc->model != PCE_IBMPC_5150) {
+		return;
+	}
 
 	sct = ini_next_sct (ini, NULL, "cassette");
 
