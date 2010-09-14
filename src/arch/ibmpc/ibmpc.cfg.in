@@ -2,13 +2,6 @@
 # Example config file
 
 section pc {
-	# The boot drive. Use 0 for the first floppy drive and 128
-	# for the first harddrive.
-	boot = 128
-
-	# Enable access to the RTC
-	rtc = 1
-
 	# Add a directory to the end of the file search path.
 	#
 	# The search path is used if an input file is specified with
@@ -21,6 +14,15 @@ section pc {
 	path = "rom"
 	path = "PCE_DIR_DATA/ibmpc"
 	path = "-."
+
+	section system {
+		# The boot drive. Use 0 for the first floppy disk drive
+		# and 128 for the first hard disk.
+		boot = 128
+
+		# Enable read access to the host's RTC.
+		rtc = 1
+	}
 
 	section cpu {
 		# The CPU model.

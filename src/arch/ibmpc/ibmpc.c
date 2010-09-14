@@ -215,6 +215,28 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 	pc_speaker_set_out (&pc->spk, val);
 }
 
+
+static
+void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
+{
+	ini_sct_t *sct;
+
+	pc->fd_cnt = 0;
+	pc->hd_cnt = 0;
+
+	pc->brk = 0;
+	pc->pause = 0;
+
+	sct = ini_next_sct (ini, NULL, "system");
+
+	if (sct == NULL) {
+		sct = ini;
+	}
+
+	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
+	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
+}
+
 static
 void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
 {
@@ -1134,17 +1156,9 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->cfg = ini;
 
-	ini_get_uint16 (ini, "boot", &pc->bootdrive, 128);
-
-	ini_get_bool (ini, "rtc", &pc->support_rtc, 1);
-
-	pc->fd_cnt = 0;
-	pc->hd_cnt = 0;
-
-	pc->brk = 0;
-	pc->pause = 0;
-
 	bps_init (&pc->bps);
+
+	pc_setup_system (pc, ini);
 
 	pc_setup_mem (pc, ini);
 	pc_setup_ports (pc, ini);
