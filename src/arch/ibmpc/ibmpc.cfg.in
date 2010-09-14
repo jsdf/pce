@@ -26,6 +26,17 @@ section pc {
 
 		# Enable read access to the host's RTC.
 		rtc = 1
+
+		# Patch the main BIOS before the emulator starts running.
+		# If this option is set, the main BIOS is patched to use
+		# a custom initialization routine.
+		patch_bios_init = 1
+
+		# Patch BIOS interrupt 0x19
+		# If this option is set, custom code is executed whenever
+		# int 0x19 is called. This custom code enables the PCE
+		# int 0x13 handler.
+		patch_bios_int19 = 1
 	}
 
 	section cpu {

@@ -38,7 +38,6 @@ const char                *par_terminal = NULL;
 const char                *par_video = NULL;
 const char                *par_cpu = NULL;
 unsigned                  par_speed = 0;
-int                       par_patch_bios = 1;
 
 monitor_t                 par_mon;
 
@@ -67,7 +66,7 @@ void prt_help (void)
 		"  -g, --video string     Set video device\n"
 		"  -l, --log string       Set the log file\n"
 		"  -p, --cpu string       Set the cpu model\n"
-		"  -P, --no-patch         Don't patch the bios\n"
+		"  -P, --patch-bios int   Select BIOS patches [none]\n"
 		"  -q, --quiet            Quiet operation [no]\n"
 		"  -r, --run              Start running immediately\n"
 		"  -R, --no-monitor       Never stop running\n"
@@ -646,6 +645,10 @@ void pce_op_int (void *ext, unsigned char n)
 	pce_last_int = n;
 
 	if (n == 0x19) {
+		if (pc->patch_bios_int19 == 0) {
+			return;
+		}
+
 		seg = pc_get_pcex_seg (pc);
 
 		if (seg == 0) {
@@ -1652,9 +1655,6 @@ int main (int argc, char *argv[])
 			}
 
 			par_cpu = argv[i];
-		}
-		else if (str_isarg (argv[i], "P", "no-patch")) {
-			par_patch_bios = 0;
 		}
 		else if (str_isarg (argv[i], "b", "boot")) {
 			i += 1;

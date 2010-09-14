@@ -78,6 +78,9 @@ typedef struct ibmpc_t {
 	unsigned char      timer1_out;
 	unsigned char      dack0;
 
+	char               patch_bios_init;
+	char               patch_bios_int19;
+
 	/* allow int 1a to get real time */
 	int                support_rtc;
 

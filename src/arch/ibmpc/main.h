@@ -48,7 +48,6 @@ extern const char *par_terminal;
 extern const char *par_video;
 extern const char *par_cpu;
 extern unsigned   par_speed;
-extern int        par_patch_bios;
 
 
 #include <lib/brkpt.h>

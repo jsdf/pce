@@ -301,6 +301,7 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
+	int        patch_init, patch_int19;
 	const char *model;
 	ini_sct_t  *sct;
 
@@ -319,8 +320,13 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_string (sct, "model", &model, "5150");
 	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
+	ini_get_bool (sct, "patch_bios_init", &patch_init, 1);
+	ini_get_bool (sct, "patch_bios_int19", &patch_int19, 1);
 
-	pce_log_tag (MSG_INF, "SYSTEM:", "model=%s\n", model);
+	pce_log_tag (MSG_INF, "SYSTEM:",
+		"model=%s patch-init=%d patch-int19=%d\n",
+		model, patch_init, patch_int19
+	);
 
 	if (strcmp (model, "5150") == 0) {
 		pc->model = PCE_IBMPC_5150;
@@ -332,6 +338,9 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
 		pc->model = PCE_IBMPC_5150;
 	}
+
+	pc->patch_bios_init = patch_init != 0;
+	pc->patch_bios_int19 = patch_int19 != 0;
 
 	pc->ppi_port_a[0] = 0x30 | 0x0c;
 	pc->ppi_port_a[1] = 0;
@@ -1467,6 +1476,10 @@ void pc_patch_bios (ibmpc_t *pc)
 {
 	unsigned seg;
 
+	if (pc->patch_bios_init == 0) {
+		return;
+	}
+
 	if (e86_get_mem8 (pc->cpu, 0xf000, 0xfff0) != 0xea) {
 		return;
 	}
@@ -1493,9 +1506,7 @@ void pc_reset (ibmpc_t *pc)
 {
 	pc_log_deb (pc, "reset pc\n");
 
-	if (par_patch_bios) {
-		pc_patch_bios (pc);
-	}
+	pc_patch_bios (pc);
 
 	e86_reset (pc->cpu);
 
