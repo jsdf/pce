@@ -217,6 +217,48 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 
 
 static
+void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
+{
+	if (pc->model == PCE_IBMPC_5150) {
+		pc->ppi_port_a[0] &= ~0x30;
+		pc->ppi_port_a[0] |= (mode & 0x03) << 4;
+	}
+}
+
+static
+void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
+{
+	if (pc->model == PCE_IBMPC_5150) {
+		pc->ppi_port_a[0] &= ~0xc1;
+
+		if (cnt > 0) {
+			pc->ppi_port_a[0] |= 0x01;
+			pc->ppi_port_a[0] |= ((cnt - 1) & 3) << 6;
+		}
+	}
+}
+
+static
+void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
+{
+	if (pc->model == PCE_IBMPC_5150) {
+		if (cnt < 65536) {
+			cnt = 0;
+		}
+		else {
+			cnt = (cnt - 65536) / 32768;
+		}
+
+		pc->ppi_port_c[0] &= 0xf0;
+		pc->ppi_port_c[1] &= 0xfe;
+
+		pc->ppi_port_c[0] |= cnt & 0x0f;
+		pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+	}
+}
+
+
+static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
 	const char *model;
@@ -247,15 +289,33 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
 		pc->model = PCE_IBMPC_5150;
 	}
+
+	pc->ppi_port_a[0] = 0x30 | 0x0c;
+	pc->ppi_port_a[1] = 0;
+	pc->ppi_port_b = 0x08;
+	pc->ppi_port_c[0] = 0;
+	pc->ppi_port_c[1] = 0;
 }
 
 static
 void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
 {
+	unsigned long ram;
+
 	pc->mem = mem_new();
 
 	ini_get_ram (pc->mem, ini, &pc->ram);
 	ini_get_rom (pc->mem, ini);
+
+	if (pc->ram != NULL) {
+		ram = mem_blk_get_size (pc->ram);
+	}
+	else {
+		ram = 65536;
+	}
+
+	pc_set_ram_size (pc, ram);
+
 }
 
 static
@@ -487,18 +547,8 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	mem_blk_t     *blk;
 	unsigned long addr;
-	unsigned long  ram;
 
 	sct = ini_next_sct (ini, NULL, "ppi");
-
-	if (pc->ram != NULL) {
-		ram = mem_blk_get_size (pc->ram);
-	}
-	else {
-		ram = 65536;
-	}
-
-	ram = (ram < 65536) ? 0 : ((ram - 65536) / 32768);
 
 	ini_get_uint32 (sct, "address", &addr, 0x0060);
 
@@ -512,12 +562,6 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 	pc->ppi.port[1].write = (void *) pc_ppi_set_port_b;
 	pc->ppi.port[2].read_ext = pc;
 	pc->ppi.port[2].read = (void *) pc_ppi_get_port_c;
-
-	pc->ppi_port_a[0] = 0x30 | 0x0c;
-	pc->ppi_port_a[1] = 0;
-	pc->ppi_port_b = 0x08;
-	pc->ppi_port_c[0] = (ram & 0x0f);
-	pc->ppi_port_c[1] = (ram >> 4) & 0x01;
 
 	blk = mem_blk_new (addr, 4, 0);
 	if (blk == NULL) {
@@ -684,8 +728,7 @@ int pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x30;
+	pc_set_video_mode (pc, 3);
 
 	return (0);
 }
@@ -701,8 +744,7 @@ int pc_setup_plantronics (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x20;
+	pc_set_video_mode (pc, 2);
 
 	return (0);
 }
@@ -718,8 +760,7 @@ int pc_setup_wy700 (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x20;
+	pc_set_video_mode (pc, 2);
 
 	return (0);
 }
@@ -735,8 +776,7 @@ int pc_setup_hgc (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x30;
+	pc_set_video_mode (pc, 3);
 
 	return (0);
 }
@@ -752,8 +792,7 @@ int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x20;
+	pc_set_video_mode (pc, 2);
 
 	return (0);
 }
@@ -786,8 +825,7 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x00;
+	pc_set_video_mode (pc, 0);
 
 	return (0);
 }
@@ -820,8 +858,7 @@ int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc->ppi_port_a[0] &= ~0x30;
-	pc->ppi_port_a[0] |= 0x00;
+	pc_set_video_mode (pc, 0);
 
 	return (0);
 }
@@ -912,20 +949,14 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 		dsks_add_disk (pc->dsk, dsk);
 
 		if (dsk_get_drive (dsk) < 0x80) {
-			/* if floppy disk increase number of floppy disks in config word */
-			if (pc->ppi_port_a[0] & 0x01) {
-				pc->ppi_port_a[0] = (pc->ppi_port_a[0] + 0x40) & 0xff;
-			}
-			else {
-				pc->ppi_port_a[0] |= 0x01;
-			}
-
 			pc->fd_cnt += 1;
 		}
 		else {
 			pc->hd_cnt += 1;
 		}
 	}
+
+	pc_set_floppy_count (pc, pc->fd_cnt);
 }
 
 static
