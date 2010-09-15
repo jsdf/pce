@@ -33,7 +33,6 @@
 #endif
 
 
-const char *par_cpu = NULL;
 const char *par_terminal = NULL;
 
 unsigned   par_disk_delay_valid = 0;
@@ -44,6 +43,8 @@ macplus_t  *par_sim = NULL;
 unsigned   par_sig_int = 0;
 
 monitor_t  par_mon;
+
+static ini_strings_t par_ini_str;
 
 
 static
@@ -220,6 +221,8 @@ int main (int argc, char *argv[])
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
 
+	ini_str_init (&par_ini_str);
+
 	i = 1;
 	while (i < argc) {
 		if (str_isarg (argv[i], "b", "disk-delay-1")) {
@@ -284,7 +287,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
-			par_cpu = argv[i];
+			ini_str_add (&par_ini_str, "cpu.model = \"", argv[i], "\"\n");
 		}
 		else if (str_isarg (argv[i], "q", "quiet")) {
 			pce_log_set_level (stderr, MSG_ERR);
@@ -328,6 +331,10 @@ int main (int argc, char *argv[])
 	sct = ini_next_sct (ini, NULL, "macplus");
 	if (sct == NULL) {
 		sct = ini;
+	}
+
+	if (ini_str_eval (&par_ini_str, sct, 1)) {
+		return (1);
 	}
 
 	atexit (mac_atexit);
