@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <lib/getopt.h>
+
 #ifdef PCE_ENABLE_SDL
 #include <SDL.h>
 #endif
@@ -47,30 +49,40 @@ monitor_t  par_mon;
 static ini_strings_t par_ini_str;
 
 
+static pce_option_t opts[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
+	{ 'b', 1, "disk-delay-1", "delay", "Set the disk delay for drive 1 [30]" },
+	{ 'B', 2, "disk-delay", "drive delay", "Set the disk delay [30]" },
+	{ 'c', 1, "config", "string", "Set the config file name [none]" },
+	{ 'd', 1, "path", "string", "Add a directory to the search path" },
+	{ 'i', 1, "ini-string", "string", "Add an ini string" },
+	{ 'l', 1, "log", "string", "Set the log file name [none]" },
+	{ 'p', 1, "cpu", "string", "Set the CPU model" },
+	{ 'q', 0, "quiet", NULL, "Set the log level to error [no]" },
+	{ 'r', 0, "run", NULL, "Start running immediately [no]" },
+	{ 'R', 0, "no-monitor", NULL, "Never stop running [no]" },
+	{ 's', 1, "speed", "int", "Set the CPU speed" },
+	{ 't', 1, "terminal", "string", "Set the terminal device" },
+	{ 'v', 0, "verbose", NULL, "Set the log level to debug [no]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
+	{  -1, 0, NULL, NULL, NULL }
+};
+
+
 static
-void prt_help (void)
+void print_help (void)
 {
-	fputs (
-		"usage: pce-macplus [options]\n"
-		"  -b, --disk-delay-1 delay      Set the disk delay for drive 1 [30]\n"
-		"  -B, --disk-delay drive delay  Set the disk delay [30]\n"
-		"  -c, --config string           Set the config file\n"
-		"  -d, --path string             Add a directory to the search path\n"
-		"  -l, --log string              Set the log file [none]\n"
-		"  -p, --cpu string              Set the cpu model [68000]\n"
-		"  -q, --quiet                   Quiet operation [no]\n"
-		"  -r, --run                     Start running immediately [no]\n"
-		"  -R, --no-monitor              Never stop running [no]\n"
-		"  -t, --terminal string         Set the terminal type\n"
-		"  -v, --verbose                 Verbose operation [no]\n",
-		stdout
+	pce_getopt_help (
+		"pce-macplus: Macintosh Plus emulator",
+		"usage: pce-macplus [options]",
+		opts
 	);
 
 	fflush (stdout);
 }
 
 static
-void prt_version (void)
+void print_version (void)
 {
 	fputs (
 		"pce-macplus version " PCE_VERSION_STR
@@ -170,49 +182,14 @@ ini_sct_t *pce_load_config (const char *fname)
 	return (NULL);
 }
 
-static
-int str_isarg (const char *str, const char *arg1, const char *arg2)
-{
-	if (*str != '-') {
-		return (0);
-	}
-
-	if (arg1 != NULL) {
-		if (str[0] == '-') {
-			if (strcmp (str + 1, arg1) == 0) {
-				return (1);
-			}
-		}
-	}
-
-	if (arg2 != NULL) {
-		if ((str[0] == '-') && (str[1] == '-')) {
-			if (strcmp (str + 2, arg2) == 0) {
-				return (1);
-			}
-		}
-	}
-
-	return (0);
-}
-
 int main (int argc, char *argv[])
 {
-	int       i;
+	int       r;
+	char      **optarg;
 	int       run, nomon;
+	unsigned  drive;
 	char      *cfg;
 	ini_sct_t *ini, *sct;
-
-	if (argc == 2) {
-		if (str_isarg (argv[1], "?", "help")) {
-			prt_help();
-			return (0);
-		}
-		else if (str_isarg (argv[1], "V", "version")) {
-			prt_version();
-			return (0);
-		}
-	}
 
 	cfg = NULL;
 	run = 0;
@@ -223,27 +200,33 @@ int main (int argc, char *argv[])
 
 	ini_str_init (&par_ini_str);
 
-	i = 1;
-	while (i < argc) {
-		if (str_isarg (argv[i], "b", "disk-delay-1")) {
-			i += 1;
-			if (i >= argc) {
-				fprintf (stderr, "%s: missing delay\n", argv[0]);
-				return (1);
-			}
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts);
 
-			par_disk_delay_valid |= 1;
-			par_disk_delay[0] = (unsigned) strtoul (argv[i], NULL, 0);
+		if (r == GETOPT_DONE) {
+			break;
 		}
-		else if (str_isarg (argv[i], "B", "disk-delay")) {
-			unsigned drive;
 
-			if ((i + 2) >= argc) {
-				fprintf (stderr, "%s: missing delay\n", argv[0]);
-				return (1);
-			}
+		if (r < 0) {
+			return (1);
+		}
 
-			drive = strtoul (argv[i + 1], NULL, 0);
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 'b':
+			par_disk_delay_valid |= 1;
+			par_disk_delay[0] = (unsigned) strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'B':
+			drive = strtoul (optarg[0], NULL, 0);
 
 			if ((drive < 1) || (drive >= SONY_DRIVES)) {
 				fprintf (stderr, "%s: bad drive number (%u)\n",
@@ -255,66 +238,66 @@ int main (int argc, char *argv[])
 			drive -= 1;
 
 			par_disk_delay_valid |= 1U << drive;
-			par_disk_delay[drive] = (unsigned) strtoul (argv[i + 2], NULL, 0);
+			par_disk_delay[drive] = (unsigned) strtoul (optarg[1], NULL, 0);
+			break;
 
-			i += 2;
-		}
-		else if (str_isarg (argv[i], "c", "config")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			cfg = argv[i];
-		}
-		else if (str_isarg (argv[i], "d", "path")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
+		case 'c':
+			cfg = optarg[0];
+			break;
 
-			pce_path_set (argv[i]);
-		}
-		else if (str_isarg (argv[i], "l", "log")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			pce_log_add_fname (argv[i], MSG_DEB);
-		}
-		else if (str_isarg (argv[i], "p", "cpu")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
+		case 'd':
+			pce_path_set (optarg[0]);
+			break;
 
-			ini_str_add (&par_ini_str, "cpu.model = \"", argv[i], "\"\n");
-		}
-		else if (str_isarg (argv[i], "q", "quiet")) {
+		case 'i':
+			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
+			break;
+
+		case 'l':
+			pce_log_add_fname (optarg[0], MSG_DEB);
+			break;
+
+		case 'p':
+			ini_str_add (&par_ini_str, "cpu.model = \"",
+				optarg[0], "\"\n"
+			);
+			break;
+
+		case 'q':
 			pce_log_set_level (stderr, MSG_ERR);
-		}
-		else if (str_isarg (argv[i], "r", "run")) {
-			run = 1;
-		}
-		else if (str_isarg (argv[i], "R", "no-monitor")) {
-			nomon = 1;
-		}
-		else if (str_isarg (argv[i], "t", "terminal")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
+			break;
 
-			par_terminal = argv[i];
-		}
-		else if (str_isarg (argv[i], "v", "verbose")) {
+		case 'r':
+			run = 1;
+			break;
+
+		case 'R':
+			nomon = 1;
+			break;
+
+		case 's':
+			ini_str_add (&par_ini_str, "cpu.speed = ",
+				optarg[0], "\n"
+			);
+			break;
+
+		case 't':
+			par_terminal = optarg[0];
+			break;
+
+		case 'v':
 			pce_log_set_level (stderr, MSG_DEB);
-		}
-		else {
-			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
+			break;
+
+		case 0:
+			fprintf (stderr, "%s: unknown option (%s)\n",
+				argv[0], optarg[0]
+			);
+			return (1);
+
+		default:
 			return (1);
 		}
-
-		i += 1;
 	}
 
 	pce_log (MSG_INF,

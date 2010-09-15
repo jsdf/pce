@@ -74,6 +74,7 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
+	src/lib/getopt.o \
 	src/lib/inidsk.o \
 	src/lib/iniram.o \
 	src/lib/initerm.o \

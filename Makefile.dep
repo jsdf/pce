@@ -723,6 +723,7 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
+	src/lib/getopt.h \
 	src/lib/inidsk.h \
 	src/lib/iniram.h \
 	src/lib/initerm.h \
