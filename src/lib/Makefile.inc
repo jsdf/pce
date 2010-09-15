@@ -9,6 +9,7 @@ LIBPCE_BAS := \
 	brkpt \
 	cmd \
 	console \
+	getopt \
 	ihex \
 	iniata \
 	inidsk \
@@ -40,6 +41,7 @@ DIST += $(LIBPCE_SRC) $(LIBPCE_HDR)
 $(rel)/brkpt.o:		$(rel)/brkpt.c
 $(rel)/cmd.o:		$(rel)/cmd.c
 $(rel)/console.o:	$(rel)/console.c
+$(rel)/getopt.o:	$(rel)/getopt.c
 $(rel)/ihex.o:		$(rel)/ihex.c
 $(rel)/iniata.o:	$(rel)/iniata.c
 $(rel)/inidsk.o:	$(rel)/inidsk.c
