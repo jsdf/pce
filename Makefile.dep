@@ -2276,7 +2276,9 @@ src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/config.h \
 	src/devices/block/blkcow.h \
 	src/devices/block/blkdosem.h \
+	src/devices/block/blkfdc.h \
 	src/devices/block/blkpce.h \
 	src/devices/block/blkraw.h \
 	src/devices/block/block.h \
+	src/devices/block/pfdc.h \
 	src/utils/pceimg/pce-img.h

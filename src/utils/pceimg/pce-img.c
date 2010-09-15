@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pceimg/pce-img.c                                   *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 
 #include <devices/block/block.h>
 #include <devices/block/blkcow.h>
+#include <devices/block/blkfdc.h>
 #include <devices/block/blkraw.h>
 #include <devices/block/blkpce.h>
 #include <devices/block/blkdosem.h>
@@ -40,6 +41,7 @@
 #define DSK_RAW    1
 #define DSK_PCE    2
 #define DSK_DOSEMU 3
+#define DSK_PFDC   4
 
 
 static const char *argv0 = NULL;
@@ -76,7 +78,7 @@ void prt_help (void)
 		"  -w, --cow string        Set the COW file name [none]\n"
 		"\n"
 		"file names: <format>:<name>\n"
-		"formats:    raw, pce, dosemu\n",
+		"formats:    raw, pce, dosemu, pfdc\n",
 		stdout
 	);
 
@@ -153,6 +155,10 @@ unsigned pce_get_disk_type (const char *str)
 		return (DSK_DOSEMU);
 	}
 
+	if (strcmp (buf, "pfdc") == 0) {
+		return (DSK_PFDC);
+	}
+
 	return (DSK_NONE);
 }
 
@@ -209,6 +215,9 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));
+
+	case DSK_PFDC:
+		return (1);
 	}
 
 	return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
@@ -233,6 +242,9 @@ disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_open (name, ro));
+
+	case DSK_PFDC:
+		return (dsk_fdc_open_pfdc (name, c, h, s, ro));
 	}
 
 	return (dsk_auto_open (name, ofs, ro));
