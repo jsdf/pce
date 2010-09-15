@@ -232,6 +232,10 @@ int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 			if (ini_eval (scn, sct, val)) {
 				return (1);
 			}
+
+			if (val->type == INI_VAL_NONE) {
+				return (1);
+			}
 		}
 		else if (strcmp (buf, "if") == 0) {
 			if (parse_if (scn, sct, buf)) {

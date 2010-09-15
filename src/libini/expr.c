@@ -1072,9 +1072,5 @@ int ini_eval (scanner_t *scn, ini_sct_t *sct, ini_val_t *val)
 		return (1);
 	}
 
-	if (val->type == INI_VAL_NONE) {
-		return (1);
-	}
-
 	return (0);
 }
