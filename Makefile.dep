@@ -279,6 +279,7 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
+	src/lib/getopt.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
 	src/lib/msg.h \

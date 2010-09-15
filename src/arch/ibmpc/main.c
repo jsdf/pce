@@ -28,6 +28,7 @@
 #include <SDL.h>
 #endif
 
+#include <lib/getopt.h>
 #include <lib/path.h>
 
 
@@ -51,31 +52,40 @@ static ibmpc_t            *pc;
 static ini_strings_t      par_ini_str;
 
 
+static pce_option_t opts[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
+	{ 'b', 1, "boot", "int", "Set the boot drive" },
+	{ 'c', 1, "config", "string", "Set the config file name [none]" },
+	{ 'd', 1, "path", "string", "Add a directory to the search path" },
+	{ 'g', 1, "video", "string", "Set the video device" },
+	{ 'i', 1, "ini-string", "string", "Add an ini string" },
+	{ 'l', 1, "log", "string", "Set the log file name [none]" },
+	{ 'p', 1, "cpu", "string", "Set the CPU model" },
+	{ 'q', 0, "quiet", NULL, "Set the log level to error [no]" },
+	{ 'r', 0, "run", NULL, "Start running immediately [no]" },
+	{ 'R', 0, "no-monitor", NULL, "Never stop running [no]" },
+	{ 's', 1, "speed", "int", "Set the CPU speed" },
+	{ 't', 1, "terminal", "string", "Set the terminal device" },
+	{ 'v', 0, "verbose", NULL, "Set the log level to debug [no]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
+	{  -1, 0, NULL, NULL, NULL }
+};
+
+
 static
-void prt_help (void)
+void print_help (void)
 {
-	fputs (
-		"usage: pce-ibmpc [options]\n"
-		"  -b, --boot int         Set boot drive [128]\n"
-		"  -c, --config string    Set the config file\n"
-		"  -d, --path string      Add a directory to the search path\n"
-		"  -g, --video string     Set video device\n"
-		"  -l, --log string       Set the log file\n"
-		"  -p, --cpu string       Set the cpu model\n"
-		"  -P, --patch-bios int   Select BIOS patches [none]\n"
-		"  -q, --quiet            Quiet operation [no]\n"
-		"  -r, --run              Start running immediately\n"
-		"  -R, --no-monitor       Never stop running\n"
-		"  -t, --terminal string  Set terminal\n"
-		"  -v, --verbose          Verbose operation [no]\n",
-		stdout
+	pce_getopt_help (
+		"pce-ibmpc: IBM PC 5150 emulator",
+		"usage: pce-ibmpc [options]",
+		opts
 	);
 
 	fflush (stdout);
 }
 
 static
-void prt_version (void)
+void print_version (void)
 {
 	fputs (
 		"pce-ibmpc version " PCE_VERSION_STR
@@ -1575,21 +1585,11 @@ int pce_default_config (const char *argv0)
 
 int main (int argc, char *argv[])
 {
-	int       i;
+	int        r;
+	char       **optarg;
 	int       run, nomon;
 	char      *cfg;
 	ini_sct_t *sct;
-
-	if (argc == 2) {
-		if (str_isarg (argv[1], "?", "help")) {
-			prt_help();
-			return (0);
-		}
-		else if (str_isarg (argv[1], NULL, "version")) {
-			prt_version();
-			return (0);
-		}
-	}
 
 	cfg = NULL;
 	run = 0;
@@ -1600,95 +1600,91 @@ int main (int argc, char *argv[])
 
 	ini_str_init (&par_ini_str);
 
-	i = 1;
-	while (i < argc) {
-		if (str_isarg (argv[i], "v", "verbose")) {
-			pce_log_set_level (stderr, MSG_DEB);
-		}
-		else if (str_isarg (argv[i], "q", "quiet")) {
-			pce_log_set_level (stderr, MSG_ERR);
-		}
-		else if (str_isarg (argv[i], "c", "config")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			cfg = argv[i];
-		}
-		else if (str_isarg (argv[i], "d", "path")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts);
 
-			pce_path_set (argv[i]);
+		if (r == GETOPT_DONE) {
+			break;
 		}
-		else if (str_isarg (argv[i], "i", "ini-string")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			ini_str_add (&par_ini_str, argv[i], "\n", NULL);
-		}
-		else if (str_isarg (argv[i], "l", "log")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			pce_log_add_fname (argv[i], MSG_DEB);
-		}
-		else if (str_isarg (argv[i], "t", "terminal")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
 
-			par_terminal = argv[i];
-		}
-		else if (str_isarg (argv[i], "g", "video")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-
-			par_video = argv[i];
-		}
-		else if (str_isarg (argv[i], "p", "cpu")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-
-			ini_str_add (&par_ini_str, "cpu.model = \"", argv[i], "\"\n");
-		}
-		else if (str_isarg (argv[i], "b", "boot")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-
-			ini_str_add (&par_ini_str, "system.boot = ", argv[i], "\n");
-		}
-		else if (str_isarg (argv[i], "r", "run")) {
-			run = 1;
-		}
-		else if (str_isarg (argv[i], "R", "no-monitor")) {
-			nomon = 1;
-		}
-		else if (str_isarg (argv[i], "s", "speed")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-
-			ini_str_add (&par_ini_str, "cpu.speed = ", argv[i], "\n");
-		}
-		else {
-			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
+		if (r < 0) {
 			return (1);
 		}
 
-		i += 1;
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 'b':
+			ini_str_add (&par_ini_str, "system.boot = ", optarg[0], "\n");
+			break;
+
+		case 'c':
+			cfg = optarg[0];
+			break;
+
+		case 'd':
+			pce_path_set (optarg[0]);
+			break;
+
+		case 'g':
+			par_video = optarg[0];
+			break;
+
+		case 'i':
+			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
+			break;
+
+		case 'l':
+			pce_log_add_fname (optarg[0], MSG_DEB);
+			break;
+
+		case 'p':
+			ini_str_add (&par_ini_str, "cpu.model = \"",
+				optarg[0], "\"\n"
+			);
+			break;
+
+		case 'q':
+			pce_log_set_level (stderr, MSG_ERR);
+			break;
+
+		case 'r':
+			run = 1;
+			break;
+
+		case 'R':
+			nomon = 1;
+			break;
+
+		case 't':
+			par_terminal = optarg[0];
+			break;
+
+		case 's':
+			ini_str_add (&par_ini_str, "cpu.speed = ",
+				optarg[0], "\n"
+			);
+			break;
+
+		case 'v':
+			pce_log_set_level (stderr, MSG_DEB);
+			break;
+
+		case 0:
+			fprintf (stderr, "%s: unknown option (%s)\n",
+				argv[0], optarg[0]
+			);
+			return (1);
+
+		default:
+			return (1);
+		}
 	}
 
 	pce_log (MSG_MSG,
