@@ -1,573 +1,522 @@
 # pce-ibmpc.cfg
+#
 # Example config file
 
-section pc {
-	# Add a directory to the end of the file search path.
-	#
-	# The search path is used if an input file is specified with
-	# a relative file name. In that case the file is searched for
-	# in all directories of the search path. The current directory
-	# is always implicitly added to the end of the search path.
-	#
-	# If the first character of the string is a "-", the directory
-	# is added to the beginning of the search path.
-	path = "rom"
-	path = "PCE_DIR_DATA/ibmpc"
-	path = "-."
-
-	section system {
-		# The specific model to emulate. Possible values are
-		# 5150 and 5160.
-		model = "5150"
-
-		# The boot drive. Use 0 for the first floppy disk drive
-		# and 128 for the first hard disk.
-		boot = 128
-
-		# Enable read access to the host's RTC.
-		rtc = 1
-
-		# Patch the main BIOS before the emulator starts running.
-		# If this option is set, the main BIOS is patched to use
-		# a custom initialization routine.
-		patch_bios_init = 1
-
-		# Patch BIOS interrupt 0x19
-		# If this option is set, custom code is executed whenever
-		# int 0x19 is called. This custom code enables the PCE
-		# int 0x13 handler.
-		patch_bios_int19 = 1
-	}
-
-	section cpu {
-		# The CPU model.
-		# Recognized models are: 8086, 8088, 80186, 80188
-		model = "80186"
-
-		# This sets the CPU speed with respect to the emulated
-		# system clock. A value of 1 emulates a 4.77MHz CPU.
-		# A higher value emulates a faster CPU but also takes up
-		# more host CPU time. A value of 0 dynamically adjusts
-		# the CPU speed.
-		speed = 0
-	}
+# Add a directory to the end of the file search path.
+#
+# The search path is used if an input file is specified with
+# a relative file name. In that case the file is searched for
+# in all directories of the search path. The current directory
+# is always implicitly added to the end of the search path.
+#
+# If the first character of the string is a "-", the directory
+# is added to the beginning of the search path.
+path = "rom"
+path = "PCE_DIR_DATA/ibmpc"
+path = "-."
 
 
-	# Multiple "ram" sections may be present but they must not overlap.
-	section ram {
-		# The linear base address
-		address = 0x00000
+system {
+	# The specific model to emulate. Possible values are
+	# 5150 and 5160.
+	model = "5150"
 
-		# The size in bytes
-		size = 655360
+	# The boot drive. Use 0 for the first floppy disk drive
+	# and 128 for the first hard disk.
+	boot = 128
 
-		# The size in KB
-		#sizek = 640
+	# Enable read access to the host's RTC.
+	rtc = 1
 
-		# The size in MB
-		#sizem = 1
+	# Patch the main BIOS before the emulator starts running.
+	# If this option is set, the main BIOS is patched to use
+	# a custom initialization routine.
+	patch_bios_init = 1
 
-		# The memory block is initialized with this value
-		default = 0x00
-	}
+	# Patch BIOS interrupt 0x19
+	# If this option is set, custom code is executed whenever
+	# int 0x19 is called. This custom code enables the PCE
+	# int 0x13 handler.
+	patch_bios_int19 = 1
+}
 
 
-	# Multiple "rom" sections may be present
-	section rom {
-		# The file from which the rom code is loaded
-		#file = "pce-bios.rom"
+cpu {
+	# The CPU model.
+	# Recognized models are: 8086, 8088, 80186, 80188
+	model = "80186"
 
-		# The linear base address
-		address = 0xf0000
+	# This sets the CPU speed with respect to the emulated
+	# system clock. A value of 1 emulates a 4.77MHz CPU.
+	# A higher value emulates a faster CPU but also takes up
+	# more host CPU time. A value of 0 dynamically adjusts
+	# the CPU speed.
+	speed = 0
+}
 
-		# The rom size in bytes
-		size = 65536
 
-		# The memory block is initialized with this value
+# Multiple "ram" sections may be present but they must not overlap.
+ram {
+	# The linear base address
+	address = 0
+
+	# The memory block size
+	size = 640K
+
+	# The memory block is initialized with this value
+	default = 0x00
+}
+
+
+# Multiple "rom" sections may be present
+rom {
+	# The linear base address
+	address = 0xf0000
+
+	# The rom size in bytes
+	size = 64K
+
+	# The memory block is initialized with this value
+	default = 0xff
+
+	# The file from which the rom code is loaded
+	#file = "pce-bios.rom"
+}
+
+
+# "load" sections are processed after all the "ram" and "rom"
+# sections. It is possible to overwrite read-only blocks, too.
+load {
+	# The main BIOS
+	format  = "binary"
+	address = 0xfe000
+	file    = "ibm-pc-1982.rom"
+}
+
+load {
+	# The ROM BASIC
+	format  = "binary"
+	address = 0xf6000
+	file    = "basic-1.10.rom"
+}
+
+load {
+	# The PCE ROM extension
+	format  = "binary"
+	address = 0xf0000
+	file    = "ibmpc-pcex.rom"
+}
+
+#load {
+#	# Intel hex file
+#	format = "ihex"
+#	file   = "ibmpc.ihex"
+#}
+
+#load {
+#	# Motorola S-Record file
+#	format = "srec"
+#	file   = "ibmpc.srec"
+#}
+
+
+ems {
+	# The EMS size in bytes
+	size = 8192K
+
+	# The page frame segment
+	segment = 0xe000
+}
+
+
+xms {
+	# The maximum XMS memory used in bytes
+	xms_size = 32M
+
+	# Define one UMB
+	umb_size = 64K
+	umb_segm = 0xd000
+
+	# Enable the HMA
+	hma = 1
+}
+
+
+# Multiple "terminal" sections may be present. The first
+# one will be used unless a terminal type is specified
+# on the command line.
+terminal {
+	driver = "sdl"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The initial scale factors
+	scale   = 1
+	#scale_x = 1
+	#scale_y = 1
+
+	# Add a border around the image
+	border = 0
+
+	# Start in fullscreen mode.
+	fullscreen = 0
+
+	# The mouse speed. The host mouse speed is multiplied
+	# by (mouse_mul_x / mouse_div_x) and (mouse_mul_y / mouse_div_y)
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+terminal {
+	driver = "x11"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The initial scale factor
+	scale = 1
+
+	# The mouse speed
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+terminal {
+	driver = "null"
+}
+
+
+# Multiple "video" sections may be present. The first one will be
+# used unless a video adapter type is specified on the command
+# line.
+# Video sections may contain "rom", "ram" and "load" subsections
+# to load ROMs only if a specific video adapter is selected.
+#
+video {
+	# IBM VGA
+	device = "vga"
+
+	# The blink frequency for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
+	blink = 16
+
+	# Enable or disable the vertical retrace interrupt.
+	enable_irq = 0
+	irq        = 2
+
+	rom {
+		# VGA ROM
+		address = 0xc0000
+		size    = 32768
 		default = 0xff
+		file    = "t9000b.rom"
 	}
+}
 
+video {
+	# IBM EGA
+	device = "ega"
 
-	# "load" sections are processed after all the "ram" and "rom"
-	# sections. It is possible to overwrite read-only blocks, too.
-	section load {
-		# The main BIOS
-		format  = "binary"
-		address = 0xfe000
-		file    = "ibm1982.rom"
+	# The EGA switches select the connected monitor
+	#switches = 0x06	# EGA with CGA monitor (40*25)
+	#switches = 0x07	# EGA with CGA monitor (80*25)
+	#switches = 0x08	# EGA with EGA monitor (CGA mode)
+	switches = 0x09		# EGA with EGA monitor (EGA mode)
+	#switches = 0x0a	# EGA with MDA monitor
+	#switches = 0x0b	# EGA with MDA monitor
+
+	# The blink frequency for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
+	blink = 16
+
+	# Enable or disable the vertical retrace interrupt.
+	enable_irq = 0
+	irq        = 2
+
+	rom {
+		# EGA ROM
+		address = 0xc0000
+		size    = 16384
+		default = 0xff
+		file    = "ibmega.rom"
 	}
+}
 
-	section load {
-		# The ROM BASIC
-		format  = "binary"
-		address = 0xf6000
-		file    = "basic-1.10.rom"
-	}
+video {
+	# IBM CGA
+	device = "cga"
 
-	section load {
-		# The PCE ROM extension
-		format  = "binary"
-		address = 0xf0000
-		file    = "ibmpc-pcex.rom"
-	}
+	# Select the built in CGA font
+	#   0 = thick font (default)
+	#   1 = thin font
+	font = 0
 
-	#section load {
-	#	# Intel hex file
-	#	format = "ihex"
-	#	file   = "ibmpc.ihex"
-	#}
+	# The blink frequency for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
+	blink = 16
+}
 
-	#section load {
-	#	# Motorola S-Record file
-	#	format = "srec"
-	#	file   = "ibmpc.srec"
-	#}
+video {
+	# Hercules Graphics Card
+	device = "hgc"
+
+	# Set the monitor color.
+	# Valid values are "amber", "green" and "gray".
+	color = "amber"
+
+	#color_background = 0x000000
+	#color_normal = 0xe89050
+	#color_bright = 0xfff0c8
+	#color_graphics = 0xfff0c8
+
+	# The blink frequency for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
+	blink = 16
+}
+
+video {
+	# IBM MDA
+	device = "mda"
+
+	# Set the monitor color.
+	# Valid values are "amber", "green" and "gray".
+	color = "green"
+
+	#color_background = 0x000000
+	#color_normal = 0x55aa55
+	#color_bright = 0xaaffaa
+	#color_graphics = 0xaaffaa
+
+	# The blink frequency for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
+	blink = 16
+}
+
+video {
+	# Plantronics Colorplus
+	device = "plantronics"
+
+	blink = 16
+}
+
+video {
+	# Wyse 700
+	device = "wy700"
+
+	blink = 16
+}
 
 
-	section ems {
-		# The EMS size in bytes
-		size = 8192K
+speaker {
+	# The speaker volume in the range [0...1000]
+	volume = 500
 
-		# The page frame segment
-		segment = 0xe000
-	}
+	# Apply a low-pass filter with the specified cut-off
+	# frequency in Herz. This is separate from the low-pass
+	# filter in the sound driver. If the frequency is 0,
+	# the filter is disabled.
+	lowpass = 8000
 
-	section xms {
-		# The maximum XMS memory used in bytes
-		xms_size = 32M
+	# The sample rate at which sound is sent to the sound driver.
+	sample_rate = 44100
 
-		# Define one UMB
-		umb_size = 64K
-		umb_segm = 0xd000
+	#driver = "null"
+	#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
+	#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
+	driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
+}
 
-		# Enable the HMA
-		hma = 1
-	}
 
-	# Multiple "terminal" sections may be present. The first
-	# one will be used unless a terminal type is specified
-	# on the command line.
-	section terminal {
-		driver = "sdl"
+# Up to 4 serial ports can be defined
+serial {
+	# COM1
+	address = 0x3f8
+	irq     = 4
 
-		# The terminal escape key. The default is "ESC".
-		#escape = "ESC"
-		#escape = "F12"
-		#escape = "Menu"
+	# Valid values for uart are: "8250", "16450"
+	uart = "8250"
 
-		# The initial scale factors
-		scale   = 1
-		#scale_x = 1
-		#scale_y = 1
+	# Read and/or write up to multichar characters per character time,
+	# in essence multiplying the port speed by multichar. Most programs
+	# can't handle values greater than 1.
+	multichar = 1
+	#multichar_read = 1
+	#multichar_write = 1
 
-		# Define a border around the image
-		border = 0
+	# Not all character drivers are supported on
+	# all platforms.
+	#driver = "null"
+	#driver = "posix:file=serport1.out"
+	#driver = "pty:symlink=com1"
+	driver = "stdio:file=serport1.out:flush=1"
+	#driver = "tios:file=/dev/ttyS0"
 
-		# Start in fullscreen mode.
-		fullscreen = 0
+	# Log all traffic to this file. This is for debugging.
+	#log = "serport1.log"
+}
 
-		# The mouse speed. The host mouse speed is multiplied
-		# by (mouse_mul_x / mouse_div_x) and
-		# (mouse_mul_y / mouse_div_y)
-		mouse_mul_x = 1
-		mouse_div_x = 1
-		mouse_mul_y = 1
-		mouse_div_y = 1
-	}
 
-	section terminal {
-		driver = "x11"
+mouse {
+	# These are the same as for a serial port
+	address = 0x2f8		# COM2
+	irq = 3
 
-		# The terminal escape key. The default is "ESC".
-		#escape = "ESC"
-		#escape = "F12"
-		#escape = "Menu"
+	# The mouse speed. This is independent of the
+	# terminal mouse speed.
+	speed_mul_x = 1
+	speed_div_x = 1
+	speed_mul_y = 1
+	speed_div_y = 1
+}
 
-		# The initial scale factor
-		scale = 1
 
-		# The mouse speed
-		mouse_mul_x = 1
-		mouse_div_x = 1
-		mouse_mul_y = 1
-		mouse_div_y = 1
-	}
+# Up to 4 parallel ports can be defined
+parport {
+	# LPT1
+	address = 0x378
 
-	section terminal {
-		driver = "null"
-	}
+	driver = "stdio:file=parport1.out"
+}
 
-	# Multiple "video" sections may be present. The first one will be
-	# used unless a video adapter type is specified on the command
-	# line.
-	# Video sections may contain "rom", "ram" and "load" subsections
-	# to load ROMs only if a specific video adapter is selected.
+parport {
+	# LPT2
+	address = 0x278
+
+	driver = "stdio:file=parport2.out"
+}
+
+
+# The cassette interface
+cassette {
+	enable = 1
+
+	# The cassette data file. The file will be created if
+	# it does not exist.
+	file = "cas1.cas"
+
+	# The data format
 	#
-	section video {
-		# IBM VGA
-		device = "vga"
-
-		# The blink frequency for blinking characters and the
-		# cursor. Setting this to 0 will turn off blinking.
-		blink = 16
-
-		# Enable or disable the vertical retrace interrupt.
-		enable_irq = 0
-		irq        = 2
-
-		section rom {
-			# VGA ROM
-			address = 0xc0000
-			size    = 32768
-			default = 0xff
-			file    = "t9000b.rom"
-		}
-	}
-
-	section video {
-		# IBM EGA
-		device = "ega"
-
-		# The EGA switches select the connected monitor
-		#switches = 0x06	# EGA with CGA monitor (40*25)
-		#switches = 0x07	# EGA with CGA monitor (80*25)
-		#switches = 0x08	# EGA with EGA monitor (CGA mode)
-		switches = 0x09		# EGA with EGA monitor (EGA mode)
-		#switches = 0x0a	# EGA with MDA monitor
-		#switches = 0x0b	# EGA with MDA monitor
-
-		# The blink frequency for blinking characters and the
-		# cursor. Setting this to 0 will turn off blinking.
-		blink = 16
-
-		# Enable or disable the vertical retrace interrupt.
-		enable_irq = 0
-		irq        = 2
-
-		section rom {
-			# EGA ROM
-			address = 0xc0000
-			size    = 16384
-			default = 0xff
-			file    = "ibmega.rom"
-		}
-	}
-
-	section video {
-		# IBM CGA
-		device = "cga"
-
-		# Don't change these unless you know what you're doing
-		io = 0x3d4
-		address = 0xb8000
-		size = 16384
-
-		# Select the built in CGA font
-		#   0 = thick font (default)
-		#   1 = thin font
-		font = 0
-
-		# The blink frequency for blinking characters and the
-		# cursor. Setting this to 0 will turn off blinking.
-		blink = 16
-	}
-
-	section video {
-		# Hercules Graphics Card
-		device = "hgc"
-
-		# Don't change these unless you know what you're doing
-		io = 0x3b4
-		address = 0xb0000
-
-		# Set the monitor color.
-		# Valid values are "amber", "green" and "gray".
-		color = "amber"
-
-		#color_background = 0x000000
-		#color_normal = 0xe89050
-		#color_bright = 0xfff0c8
-		#color_graphics = 0xfff0c8
-
-		# The blink frequency for blinking characters and the
-		# cursor. Setting this to 0 will turn off blinking.
-		blink = 16
-	}
-
-	section video {
-		# IBM MDA
-		device = "mda"
-
-		# Don't change these unless you know what you're doing
-		io = 0x3b4
-		address = 0xb0000
-		size = 4096
-
-		# Set the monitor color.
-		# Valid values are "amber", "green" and "gray".
-		color = "green"
-
-		#color_background = 0x000000
-		#color_normal = 0x55aa55
-		#color_bright = 0xaaffaa
-		#color_graphics = 0xaaffaa
-
-		# The blink frequency for blinking characters and the
-		# cursor. Setting this to 0 will turn off blinking.
-		blink = 16
-	}
-
-	section video {
-		# Plantronics Colorplus
-		device = "plantronics"
-
-		blink = 16
-
-		# Don't change these unless you know what you're doing
-		io = 0x3d4
-		address = 0xb8000
-		size = 16384
-	}
-
-	section video {
-		# Wyse 700
-		device = "wy700"
-
-		blink = 16
-
-		# Don't change these unless you know what you're doing
-		io = 0x3d4
-		address = 0xb8000
-		size = 16384
-	}
-
-	section speaker {
-		# The speaker volume in the range [0...1000]
-		volume = 500
-
-		# Apply a low-pass filter with the specified cut-off
-		# frequency in Herz. This is separate from the low-pass
-		# filter in the sound driver. If the frequency is 0,
-		# the filter is disabled.
-		lowpass = 8000
-
-		# The sample rate at which sound is sent to the sound driver.
-		sample_rate = 44100
-
-		#driver = "null"
-		#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
-		#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
-		driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
-	}
-
-	# Up to 4 serial ports can be defined
-	section serial {
-		address = 0x3f8		# COM1
-		irq     = 4
-
-		# Valid values for uart are: "8250", "16450"
-		uart = "8250"
-
-		# Read and/or write up to multichar characters per character time,
-		# in essence multiplying the port speed by multichar. Most programs
-		# can't handle values greater than 1.
-		multichar = 1
-		#multichar_read = 1
-		#multichar_write = 1
-
-		# Not all character drivers are supported on
-		# all platforms.
-		#driver = "null"
-		#driver = "posix:file=serport1.out"
-		#driver = "pty:symlink=com1"
-		driver = "stdio:file=serport1.out:flush=1"
-		#driver = "tios:file=/dev/ttyS0"
-
-		#log = "serport1.log"
-	}
-
-	section mouse {
-		# These are the same as for a serial port
-		address = 0x2f8		# COM2
-		irq = 3
-
-		# The mouse speed. This is independant of the
-		# terminal mouse speed.
-		speed_mul_x = 1
-		speed_div_x = 1
-		speed_mul_y = 1
-		speed_div_y = 1
-	}
-
-	# Up to 4 parallel ports can be defined
-	section parport {
-		address = 0x378		# LPT1
-
-		driver = "stdio:file=parport1.out"
-	}
-
-	section parport {
-		address = 0x278		# LPT2
-
-		driver = "stdio:file=parport2.out"
-	}
-
-	# The cassette interface
-	section cassette {
-		enable = 1
-
-		# The cassette data file. The file will be created if
-		# it does not exist.
-		file = "cas1.cas"
-
-		# The data format.
-		#
-		# pcm = 1: Read and write cassette data as 8 bit
-		#   signed PCM at 44100 HZ.
-		#
-		# pcm = 0: Read and write cassette data as binary.
-		#
-		# If pcm is not defined, PCM mode is set if the
-		# file name ends with ".pcm", binary mode otherwise.
-		#pcm = 1
-
-		# PCM filtering
-		#
-		# filter = 1: Apply a low-pass filter to the PCM data
-		#   written to the cassette file.
-		#
-		# filter = 0: The PCM data written to the cassette
-		#   file is a square wave.
-		filter = 1
-
-		# The initial cassette mode (load or save). The default
-		# is "load".
-		mode = "load"
-
-		# The initial tape file position. The default is 0.
-		position = 0
-
-		# If append is true then the file position is set to the
-		# end of the file instead of to "position".
-		append = 0
-	}
-
-	# Disk types are:
-	# "image"  A raw image file. "c", "h" and "s" must be specified.
-	# "dosemu" A DOSEMU style hard disk image file.
-	# "pce"    A PCE style disk image file.
-	# "ram"    A RAM disk. If a file name is specified, the contents
-	#          of that file are loaded into the RAM disk (but the file
-	#          is never altered).
-	# "partition"
-	#          A partitioned disk that is patched together from
-	#          multiple raw images.
-	# "auto"   Try to autodetect the image file format. This works for
-	#          DOSEMU and PCE disk images as well as raw images starting
-	#          with a DOS boot sector.
+	# 1: Read and write cassette data as 8 bit signed PCM at
+	#    44100 HZ.
 	#
-	# The drive number is the number used by the BIOS, so 128 is the
-	# first hard disk, 0 is the first floppy disk.
+	# 0: Read and write cassette data as binary.
 	#
-	# The c, h, s parameters determine the actual image file layout, the
-	# visible_c, visible_h, visible_s parameters determine the disk size
-	# as reported by the BIOS.
+	# If pcm is not defined, PCM mode is set if the file name ends
+	# with ".pcm", binary mode otherwise.
+	#pcm = 1
+
+	# PCM filtering
 	#
-	# If optional is set to 1 no error will be reported if the disk
-	# can't be opened.
+	# 1: Apply a low-pass filter to the PCM data written to the
+	#    cassette file.
 	#
-	# If a COW (copy on write) file is specified, changes to the disk
-	# image are written to that file and the image is not touched.
+	# 0: The PCM data written to the cassette file is a
+	#    square wave.
+	filter = 1
 
-	# The first floppy drive
-	section disk {
-		drive    = 0
-		optional = 1
-		type     = "auto"
-		file     = "drv_00.img"
-	}
+	# The initial cassette mode (load or save). The default
+	# is "load".
+	mode = "load"
 
-	# The second floppy drive
-	section disk {
-		drive    = 1
-		optional = 1
-		type     = "auto"
-		file     = "drv_01.img"
-	}
+	# The initial tape file position. The default is 0.
+	position = 0
 
-	#section disk {
-	#	drive    = 0
-	#	optional = 1
-	#	type     = "image"
-	#	file     = "drv_00.img"
-	#	offset   = 0
-	#	c        = 80
-	#	h        = 2
-	#	s        = 18
-	#}
+	# If append is true then the file position is set to the
+	# end of the file instead of to "position".
+	append = 0
+}
 
-	#section disk {
-	#	drive     = 0
-	#	type      = "ram"
-	#	c         = 83
-	#	h         = 2
-	#	s         = 18
-	#	visible_c = 80
-	#	visible_h = 2
-	#	visible_s = 18
-	#}
 
-	# The first harddisk
-	section disk {
-		drive    = 128
-		type     = "auto"
-		file     = "drv_80.img"
-		#cow      = "pce_80.cow"
-		readonly = 0
-	}
+# Disk types are:
+# "image"  A raw image file. "c", "h" and "s" must be specified.
+# "dosemu" A DOSEMU style hard disk image file.
+# "pce"    A PCE style disk image file.
+# "ram"    A RAM disk. If a file name is specified, the contents
+#          of that file are loaded into the RAM disk (but the file
+#          is never altered).
+# "auto"   Try to autodetect the image file format. This works for
+#          DOSEMU and PCE disk images as well as raw images starting
+#          with a DOS boot sector.
+#
+# The drive number is the number used by the BIOS, so 128 is the
+# first hard disk, 0 is the first floppy disk.
+#
+# The c, h, s parameters determine the actual image file layout, the
+# visible_c, visible_h, visible_s parameters determine the disk size
+# as reported by the BIOS.
+#
+# If optional is set to 1 no error will be reported if the disk
+# can't be opened.
+#
+# If a COW (copy on write) file is specified, changes to the disk
+# image are written to that file and the image is not touched.
 
-	# The second harddisk
-	section disk {
-		drive    = 129
-		type     = "auto"
-		file     = "drv_81.img"
-		#cow      = "pce_80.cow"
-		readonly = 0
-		optional = 1
-	}
+# The first floppy drive
+disk {
+	drive    = 0
+	optional = 1
+	type     = "auto"
+	file     = "drv_00.img"
+}
 
-	#section disk {
-	#	drive    = 128
-	#	type     = "image"
-	#	offset   = 128
-	#	file     = "drv_80.img"
-	#	cow      = "pce_80.cow"
-	#	c        = 512
-	#	h        = 16
-	#	s        = 17
-	#	readonly = 0
-	#}
+# The second floppy drive
+disk {
+	drive    = 1
+	optional = 1
+	type     = "auto"
+	file     = "drv_01.img"
+}
 
-	#section disk {
-	#	drive = 128
-	#	type = "partition"
-	#
-	#	c = 1024
-	#	h = 128
-	#	s = 63
-	#
-	#	section partition {
-	#		block_start = 0
-	#		block_count = 63
-	#		file = "p0.img"
-	#		readonly = 0
-	#	}
-	#
-	#	section partition {
-	#		block_start = 63
-	#		block_count = 8257473
-	#		file = "/dev/hda1"
-	#		readonly = 1
-	#	}
-	#}
+#disk {
+#	drive    = 0
+#	optional = 1
+#	type     = "image"
+#	file     = "drv_00.img"
+#	offset   = 0
+#	c        = 80
+#	h        = 2
+#	s        = 18
+#}
+
+# The first harddisk
+disk {
+	drive    = 128
+	type     = "auto"
+	file     = "drv_80.img"
+	#cow      = "pce_80.cow"
+	readonly = 0
+}
+
+# The second harddisk
+disk {
+	drive    = 129
+	type     = "auto"
+	file     = "drv_81.img"
+	#cow      = "pce_80.cow"
+	readonly = 0
+	optional = 1
+}
+
+#disk {
+#	drive    = 128
+#	type     = "image"
+#	offset   = 128
+#	file     = "drv_80.img"
+#	cow      = "pce_80.cow"
+#	c        = 615
+#	h        = 4
+#	s        = 17
+#	readonly = 0
+#}
 }
