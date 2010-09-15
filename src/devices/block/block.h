@@ -40,6 +40,7 @@
 #define PCE_DISK_PCE    3
 #define PCE_DISK_DOSEMU 4
 #define PCE_DISK_COW    5
+#define PCE_DISK_FDC    6
 
 
 struct disk_s;

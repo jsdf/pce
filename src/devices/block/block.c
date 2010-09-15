@@ -25,6 +25,7 @@
 #include "blkraw.h"
 #include "blkpce.h"
 #include "blkdosem.h"
+#include "blkfdc.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -376,7 +377,20 @@ uint32_t dsk_get_block_cnt (const disk_t *dsk)
 
 disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 {
-	disk_t *dsk;
+	unsigned   i;
+	disk_t     *dsk;
+	const char *ext;
+
+	ext = "";
+
+	i = 0;
+	while (fname[i] != 0) {
+		if (fname[i] == '.') {
+			ext = fname + i;
+		}
+
+		i += 1;
+	}
 
 	dsk = dsk_pce_open (fname, ro);
 	if (dsk != NULL) {
@@ -411,6 +425,29 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 	dsk = dsk_fdimg_open (fname, ofs, ro);
 	if (dsk != NULL) {
 		return (dsk);
+	}
+
+	dsk = dsk_fdc_open_pfdc (fname, 0, 0, 0, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
+	dsk = dsk_fdc_open_imd (fname, 0, 0, 0, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
+	dsk = dsk_fdc_open_td0 (fname, 0, 0, 0, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
+	if (strcasecmp (ext, ".ana") == 0) {
+		dsk = dsk_fdc_open_anadisk (fname, 0, 0, 0, ro);
+
+		if (dsk != NULL) {
+			return (dsk);
+		}
 	}
 
 	dsk = dsk_autoimg_open (fname, ofs, ro);

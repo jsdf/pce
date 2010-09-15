@@ -1,0 +1,143 @@
+PFDC file format (Version 2)
+============================
+
+All integers are in big-endian format.
+
+
+File structure
+--------------
+
+<file header>
+[optional fill bytes]
+<chunk 0>
+<chunk 1>
+...
+<chunk n>
+<end chunk>
+<file crc>
+
+
+File header
+-----------
+
+offset	size	description
+
+0	4	Magic ("PFDC" = 0x50464443)
+4	2	Major version (2)
+6	2	Minor version (0)
+8	4	Reserved (0)
+12	4	File offset of first chunk
+
+
+Chunk format
+------------
+
+offset	size	description
+
+0	2	Chunk ID
+2	2	Chunk size (n)
+4	n	Chunk data
+4+n	4	Chunk CRC
+
+	- The size does not include the chunk ID, chunk size or chunk CRC
+	  fields.
+
+	- The chunk CRC covers the chunk ID, chunk size and chunk data.
+
+
+End chunk
+---------
+
+offset	size	description
+
+0	2	Chunk ID ('EN')
+2	2	Chunk size (0)
+4	4	Chunk CRC (0x0db6e80d)
+
+
+Sector chunk
+-------------
+
+offset	size	description
+
+0	2	Chunk ID ('SC')
+2	2	Chunk size
+
+4	1	Sector flags
+			1	CRC error in ID
+			2	CRC error in data
+			4	Deleted data address mark
+			64	Alternate sector
+			128	Compressed
+5	1	Physical cylinder
+6	1	Physical head
+7	1	Logical cylinder
+8	1	Logical head
+9	1	Logical sector number
+10	2	Sector size in bytes
+12	1	Encoding
+			0	Unknown
+			1	FM
+			2	MFM
+13	3	Data rate in bits per second, 0 if unknown
+16	n	Sector data
+16+n	4	Chunk CRC
+
+	- The physical cylinder / head / sector are the actual position
+	  of the sector on disk. The physical sector number is implied.
+
+	- The logical cylinder / head / sector number are what's recorded
+	  in the sector ID.
+
+	- The alternate sector flag indicates that this is the same
+	  physical sector as the one immediately preceding it.
+
+	- If the sector is compressed, one byte of sector data is stored.
+	  This byte should be repeated <sector size> times.
+
+	- If the sector is not compressed <sector size> bytes immediately
+	  follow the sector header.
+
+
+Comment chunk
+-------------
+
+offset	size	description
+
+0	2	Chunk ID ('CM')
+2	2	Chunk size
+4	n	Comment
+4+n	4	Chunk CRC
+
+	- Comments should be UTF-8, with lines separated by LF (0x0a).
+
+
+CRC
+---
+
+	- The algorithm used is big-endian CRC-32 with generator
+	  polynomial 0x04c11db7. The CRC value is initialized to
+	  0xffffffff.
+
+	unsigned long pfdc_crc (const unsigned char *buf, unsigned cnt)
+	{
+		unsigned      i, j;
+		unsigned long crc;
+
+		crc = 0xffffffff;
+
+		for (i = 0; i < cnt; i++) {
+			crc ^= (unsigned long) (buf[i] & 0xff) << 24;
+
+			for (j = 0; j < 8; j++) {
+				if (crc & 0x80000000) {
+					crc = (crc << 1) ^ 0x04c11db7;
+				}
+				else {
+					crc = crc << 1;
+				}
+			}
+		}
+
+		return (crc & 0xffffffff);
+	}

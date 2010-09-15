@@ -1839,6 +1839,17 @@ src/devices/block/blkdosem.o: src/devices/block/blkdosem.c \
 	src/devices/block/blkdosem.h \
 	src/devices/block/block.h
 
+src/devices/block/blkfdc.o: src/devices/block/blkfdc.c \
+	src/config.h \
+	src/devices/block/blkfdc.h \
+	src/devices/block/block.h \
+	src/devices/block/pfdc-img-ana.h \
+	src/devices/block/pfdc-img-imd.h \
+	src/devices/block/pfdc-img-pfdc.h \
+	src/devices/block/pfdc-img-raw.h \
+	src/devices/block/pfdc-img-td0.h \
+	src/devices/block/pfdc.h
+
 src/devices/block/blkpart.o: src/devices/block/blkpart.c \
 	src/config.h \
 	src/devices/block/blkpart.h \
@@ -1862,9 +1873,34 @@ src/devices/block/blkraw.o: src/devices/block/blkraw.c \
 src/devices/block/block.o: src/devices/block/block.c \
 	src/config.h \
 	src/devices/block/blkdosem.h \
+	src/devices/block/blkfdc.h \
 	src/devices/block/blkpce.h \
 	src/devices/block/blkraw.h \
-	src/devices/block/block.h
+	src/devices/block/block.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc-img-ana.o: src/devices/block/pfdc-img-ana.c \
+	src/devices/block/pfdc-img-ana.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc-img-imd.o: src/devices/block/pfdc-img-imd.c \
+	src/devices/block/pfdc-img-imd.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc-img-pfdc.o: src/devices/block/pfdc-img-pfdc.c \
+	src/devices/block/pfdc-img-pfdc.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc-img-raw.o: src/devices/block/pfdc-img-raw.c \
+	src/devices/block/pfdc-img-raw.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc-img-td0.o: src/devices/block/pfdc-img-td0.c \
+	src/devices/block/pfdc-img-td0.h \
+	src/devices/block/pfdc.h
+
+src/devices/block/pfdc.o: src/devices/block/pfdc.c \
+	src/devices/block/pfdc.h
 
 src/devices/clock/ds1743.o: src/devices/clock/ds1743.c \
 	src/chipset/clock/ds1743.h \
@@ -2100,11 +2136,13 @@ src/lib/inidsk.o: src/lib/inidsk.c \
 	src/config.h \
 	src/devices/block/blkcow.h \
 	src/devices/block/blkdosem.h \
+	src/devices/block/blkfdc.h \
 	src/devices/block/blkpart.h \
 	src/devices/block/blkpce.h \
 	src/devices/block/blkram.h \
 	src/devices/block/blkraw.h \
 	src/devices/block/block.h \
+	src/devices/block/pfdc.h \
 	src/lib/inidsk.h \
 	src/lib/log.h \
 	src/lib/path.h \

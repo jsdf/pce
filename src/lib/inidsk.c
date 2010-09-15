@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/inidsk.c                                             *
  * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,7 @@
 
 #include <devices/block/blkcow.h>
 #include <devices/block/blkdosem.h>
+#include <devices/block/blkfdc.h>
 #include <devices/block/blkpart.h>
 #include <devices/block/blkpce.h>
 #include <devices/block/blkram.h>
@@ -253,8 +254,20 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	else if (strcmp (type, "pce") == 0) {
 		dsk = dsk_pce_open (path, ro);
 	}
+	else if (strcmp (type, "pfdc") == 0) {
+		dsk = dsk_fdc_open_pfdc (path, c, h, s, ro);
+	}
 	else if (strcmp (type, "partition") == 0) {
 		dsk = ini_get_disk_part (sct, c, h, s, ro);
+	}
+	else if (strcmp (type, "anadisk") == 0) {
+		dsk = dsk_fdc_open_anadisk (path, c, h, s, ro);
+	}
+	else if (strcmp (type, "imagedisk") == 0) {
+		dsk = dsk_fdc_open_imd (path, c, h, s, ro);
+	}
+	else if (strcmp (type, "imd") == 0) {
+		dsk = dsk_fdc_open_imd (path, c, h, s, ro);
 	}
 	else if (strcmp (type, "auto") == 0) {
 		dsk = dsk_auto_open (path, ofs, ro);
