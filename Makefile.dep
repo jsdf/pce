@@ -1914,6 +1914,16 @@ src/devices/clock/ds1743.o: src/devices/clock/ds1743.c \
 src/devices/device.o: src/devices/device.c \
 	src/devices/device.h
 
+src/devices/fdc.o: src/devices/fdc.c \
+	src/chipset/82xx/e8272.h \
+	src/config.h \
+	src/devices/block/blkfdc.h \
+	src/devices/block/block.h \
+	src/devices/block/pfdc.h \
+	src/devices/device.h \
+	src/devices/fdc.h \
+	src/devices/memory.h
+
 src/devices/memory.o: src/devices/memory.c \
 	src/devices/memory.h
 

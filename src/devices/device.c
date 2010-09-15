@@ -63,6 +63,10 @@ device_t *dev_new (void *ext, const char *type)
 
 void dev_del (device_t *dev)
 {
+	if (dev == NULL) {
+		return;
+	}
+
 	if (dev->del != NULL) {
 		dev->del (dev);
 	}
