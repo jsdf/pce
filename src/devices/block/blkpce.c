@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkpce.c                                   *
  * Created:     2004-11-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -163,6 +163,8 @@ disk_t *dsk_pce_open_fp (FILE *fp, int ro)
 	}
 
 	dsk_init (&img->dsk, img, n, c, h, s);
+
+	dsk_set_type (&img->dsk, PCE_DISK_PCE);
 
 	dsk_set_readonly (&img->dsk, ro);
 

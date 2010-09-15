@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkcow.c                                   *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -473,6 +473,8 @@ disk_t *dsk_cow_new (disk_t *dsk, const char *fname)
 	}
 
 	cow->dsk = *dsk;
+
+	dsk_set_type (&cow->dsk, PCE_DISK_COW);
 
 	cow->dsk.del = dsk_cow_del;
 	cow->dsk.read = dsk_cow_read;

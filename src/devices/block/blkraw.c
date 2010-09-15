@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkraw.c                                   *
  * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -97,6 +97,8 @@ disk_t *dsk_img_open_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 	}
 
 	dsk_init (&img->dsk, img, n, c, h, s);
+
+	dsk_set_type (&img->dsk, PCE_DISK_RAW);
 
 	dsk_set_readonly (&img->dsk, ro);
 

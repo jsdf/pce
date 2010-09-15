@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/block.h                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,14 @@
 #endif
 
 
+#define PCE_DISK_NONE   0
+#define PCE_DISK_RAW    1
+#define PCE_DISK_RAM    2
+#define PCE_DISK_PCE    3
+#define PCE_DISK_DOSEMU 4
+#define PCE_DISK_COW    5
+
+
 struct disk_s;
 
 
@@ -49,6 +57,8 @@ typedef int (*dsk_set_msg_f) (struct disk_s *dsk, const char *msg, const char *v
  * @short The disk structure
  *****************************************************************************/
 typedef struct disk_s {
+	unsigned      type;
+
 	void          (*del) (struct disk_s *dsk);
 	dsk_read_f    read;
 	dsk_write_f   write;
@@ -118,6 +128,16 @@ void dsk_del (disk_t *dsk);
  * @short Set the drive number
  *****************************************************************************/
 void dsk_set_drive (disk_t *dsk, unsigned d);
+
+/*!***************************************************************************
+ * @short Get the disk type
+ *****************************************************************************/
+unsigned dsk_get_type (const disk_t *dsk);
+
+/*!***************************************************************************
+ * @short Set the disk type
+ *****************************************************************************/
+void dsk_set_type (disk_t *dsk, unsigned type);
 
 /*!***************************************************************************
  * @short Get the read-only flag

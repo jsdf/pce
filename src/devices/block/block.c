@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -281,6 +281,8 @@ int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s)
 
 void dsk_init (disk_t *dsk, void *ext, uint32_t n, uint32_t c, uint32_t h, uint32_t s)
 {
+	dsk->type = PCE_DISK_NONE;
+
 	dsk->del = NULL;
 	dsk->read = NULL;
 	dsk->write = NULL;
@@ -317,6 +319,16 @@ void dsk_del (disk_t *dsk)
 void dsk_set_drive (disk_t *dsk, unsigned d)
 {
 	dsk->drive = d;
+}
+
+unsigned dsk_get_type (const disk_t *dsk)
+{
+	return (dsk->type);
+}
+
+void dsk_set_type (disk_t *dsk, unsigned type)
+{
+	dsk->type = type;
 }
 
 int dsk_get_readonly (disk_t *dsk)
