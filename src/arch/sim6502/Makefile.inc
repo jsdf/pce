@@ -53,7 +53,7 @@ endif
 
 CLN  += $(PCE_SIM6502_BIN) $(PCE_SIM6502_OBJ) $(PCE_SIM6502_ETC)
 DIST += $(PCE_SIM6502_SRC) $(PCE_SIM6502_HDR) $(PCE_SIM6502_MAN1)
-DIST += $(rel)/sim6502.cfg.in
+DIST += $(rel)/pce-sim6502.cfg.in
 
 $(rel)/console.o:	$(rel)/console.c
 $(rel)/main.o:		$(rel)/main.c
@@ -63,6 +63,6 @@ $(rel)/pce-sim6502$(EXEEXT): $(PCE_SIM6502_OBJ_EXT) $(PCE_SIM6502_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIM6502_LDFLAGS) -o $@ $(PCE_SIM6502_OBJ) $(PCE_SIM6502_OBJ_EXT) $(PCE_SIM6502_LIBS) -lm
 
-$(rel)/pce-sim6502.cfg: $(rel)/sim6502.cfg.in
+$(rel)/pce-sim6502.cfg: $(rel)/pce-sim6502.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

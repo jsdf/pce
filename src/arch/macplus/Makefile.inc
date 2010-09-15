@@ -103,7 +103,7 @@ endif
 
 CLN  += $(PCE_MACPLUS_BIN) $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_ETC)
 DIST += $(PCE_MACPLUS_SRC) $(PCE_MACPLUS_HDR) $(PCE_MACPLUS_MAN1)
-DIST += $(rel)/macplus.cfg.in
+DIST += $(rel)/pce-macplus.cfg.in
 
 $(rel)/cmd_68k.o:	$(rel)/cmd_68k.c
 $(rel)/hook.o:		$(rel)/hook.c
@@ -125,6 +125,6 @@ $(rel)/pce-macplus$(EXEEXT): $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm
 
-$(rel)/pce-macplus.cfg: $(rel)/macplus.cfg.in
+$(rel)/pce-macplus.cfg: $(rel)/pce-macplus.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

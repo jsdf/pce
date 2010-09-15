@@ -71,7 +71,7 @@ endif
 
 CLN  += $(PCE_SIMARM_BIN) $(PCE_SIMARM_OBJ) $(PCE_SIMARM_ETC)
 DIST += $(PCE_SIMARM_SRC) $(PCE_SIMARM_HDR) $(PCE_SIMARM_MAN1)
-DIST += $(rel)/simarm.cfg.in
+DIST += $(rel)/pce-simarm.cfg.in
 
 $(rel)/cmd_arm.o:	$(rel)/cmd_arm.c
 $(rel)/intc.o:		$(rel)/intc.c
@@ -85,6 +85,6 @@ $(rel)/pce-simarm$(EXEEXT): $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIMARM_LDFLAGS) -o $@ $(PCE_SIMARM_OBJ) $(PCE_SIMARM_OBJ_EXT) $(PCE_SIMARM_LIBS) -lm
 
-$(rel)/pce-simarm.cfg: $(rel)/simarm.cfg.in
+$(rel)/pce-simarm.cfg: $(rel)/pce-simarm.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

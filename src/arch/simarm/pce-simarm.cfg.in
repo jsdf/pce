@@ -1,4 +1,5 @@
-# simarm.cfg
+# pce-simarm.cfg
+#
 # Example config file
 
 section simarm {

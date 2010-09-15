@@ -75,7 +75,7 @@ endif
 
 CLN  += $(PCE_SIM405_BIN) $(PCE_SIM405_OBJ) $(PCE_SIM405_ETC)
 DIST += $(PCE_SIM405_SRC) $(PCE_SIM405_HDR) $(PCE_SIM405_MAN1)
-DIST += $(rel)/sim405.cfg.in
+DIST += $(rel)/pce-sim405.cfg.in
 
 $(rel)/cmd_ppc.o:	$(rel)/cmd_ppc.c
 $(rel)/sim405.o:	$(rel)/sim405.c
@@ -87,6 +87,6 @@ $(rel)/pce-sim405$(EXEEXT): $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIM405_LDFLAGS) -o $@ $(PCE_SIM405_OBJ) $(PCE_SIM405_OBJ_EXT) $(PCE_SIM405_LIBS) -lm
 
-$(rel)/pce-sim405.cfg: $(rel)/sim405.cfg.in
+$(rel)/pce-sim405.cfg: $(rel)/pce-sim405.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

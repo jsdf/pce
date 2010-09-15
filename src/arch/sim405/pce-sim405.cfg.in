@@ -1,4 +1,5 @@
-# sim405.cfg
+# pce-sim405.cfg
+#
 # Example config file
 
 section sim405 {

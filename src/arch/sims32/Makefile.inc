@@ -62,7 +62,7 @@ endif
 
 CLN  += $(PCE_SIMS32_BIN) $(PCE_SIMS32_OBJ) $(PCE_SIMS32_ETC)
 DIST += $(PCE_SIMS32_SRC) $(PCE_SIMS32_HDR) $(PCE_SIMS32_MAN1)
-DIST += $(rel)/sims32.cfg.in
+DIST += $(rel)/pce-sims32.cfg.in
 
 $(rel)/cmd_s32.o:	$(rel)/cmd_s32.c
 $(rel)/main.o:		$(rel)/main.c
@@ -73,6 +73,6 @@ $(rel)/pce-sims32$(EXEEXT): $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_SIMS32_LDFLAGS) -o $@ $(PCE_SIMS32_OBJ) $(PCE_SIMS32_OBJ_EXT) $(PCE_SIMS32_LIBS) -lm
 
-$(rel)/pce-sims32.cfg: $(rel)/sims32.cfg.in
+$(rel)/pce-sims32.cfg: $(rel)/pce-sims32.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

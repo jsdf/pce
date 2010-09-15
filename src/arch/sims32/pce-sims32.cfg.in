@@ -1,4 +1,5 @@
-# sims32.cfg
+# pce-sims32.cfg
+#
 # Example config file
 
 section sims32 {

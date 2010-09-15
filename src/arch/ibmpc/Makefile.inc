@@ -98,7 +98,7 @@ endif
 
 CLN  += $(PCE_IBMPC_BIN) $(PCE_IBMPC_OBJ) $(PCE_IBMPC_ETC)
 DIST += $(PCE_IBMPC_SRC) $(PCE_IBMPC_HDR) $(PCE_IBMPC_MAN1)
-DIST += $(rel)/ibmpc.cfg.in $(rel)/pce.inc
+DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc
 
 $(rel)/int13.o:		$(rel)/int13.c
 $(rel)/ems.o:		$(rel)/ems.c
@@ -116,6 +116,6 @@ $(rel)/pce-ibmpc$(EXEEXT): $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)
 	$(QP)echo "  LD     $@"
 	$(QR)$(LD) $(PCE_IBMPC_LDFLAGS) -o $@ $(PCE_IBMPC_OBJ) $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_LIBS) -lm
 
-$(rel)/pce-ibmpc.cfg: $(rel)/ibmpc.cfg.in
+$(rel)/pce-ibmpc.cfg: $(rel)/pce-ibmpc.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

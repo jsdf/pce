@@ -1,4 +1,5 @@
-# sim6502.cfg
+# pce-sim6502.cfg
+#
 # Example config file
 
 section sim6502 {
