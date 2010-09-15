@@ -50,6 +50,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/chipset/82xx/e8253.o \
 	src/chipset/82xx/e8255.o \
 	src/chipset/82xx/e8259.o \
+	src/chipset/82xx/e8272.o \
 	src/devices/video/cga.o \
 	src/devices/video/ega.o \
 	src/devices/video/hgc.o \
@@ -59,6 +60,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/video/video.o \
 	src/devices/video/wy700.o \
 	src/devices/device.o \
+	src/devices/fdc.o \
 	src/devices/memory.o \
 	src/devices/nvram.o \
 	src/devices/parport.o \

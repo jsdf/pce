@@ -103,6 +103,20 @@ void pc_set_port16 (ibmpc_t *pc, unsigned long addr, unsigned short val)
 #endif
 }
 
+
+static
+void pc_dma2_set_mem8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
+{
+	mem_set_uint8 (pc->mem, pc->dma_page[2] + addr, val);
+}
+
+static
+unsigned char pc_dma2_get_mem8 (ibmpc_t *pc, unsigned long addr)
+{
+	return (mem_get_uint8 (pc->mem, pc->dma_page[2] + addr));
+}
+
+
 static
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
@@ -1008,6 +1022,71 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
+void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
+{
+	ini_sct_t     *sct;
+	int           accurate;
+	unsigned long addr;
+	unsigned      irq;
+	unsigned      drv[4];
+
+	pc->fdc = NULL;
+
+	sct = ini_next_sct (ini, NULL, "fdc");
+
+	if (sct == NULL) {
+		return;
+	}
+
+	ini_get_uint32 (sct, "address", &addr, 0x3f0);
+	ini_get_uint16 (sct, "irq", &irq, 6);
+	ini_get_bool (sct, "accurate", &accurate, 0);
+	ini_get_uint16 (sct, "drive0", &drv[0], 0xffff);
+	ini_get_uint16 (sct, "drive1", &drv[1], 0xffff);
+	ini_get_uint16 (sct, "drive2", &drv[2], 0xffff);
+	ini_get_uint16 (sct, "drive3", &drv[3], 0xffff);
+
+	pce_log_tag (MSG_INF, "FDC:",
+		"addr=0x%08lx irq=%u accurate=%d drv=[%u %u %u %u]\n",
+		addr, irq, accurate, drv[0], drv[1], drv[2], drv[3]
+	);
+
+	pc->fdc = dev_fdc_new (addr);
+
+	if (pc->fdc == NULL) {
+		pce_log (MSG_ERR, "*** creating fdc failed\n");
+		return;
+	}
+
+	dev_fdc_mem_add_io (pc->fdc, pc->prt);
+	dev_fdc_set_disks (pc->fdc, pc->dsk);
+
+	dev_fdc_set_drive (pc->fdc, 0, drv[0]);
+	dev_fdc_set_drive (pc->fdc, 1, drv[1]);
+	dev_fdc_set_drive (pc->fdc, 2, drv[2]);
+	dev_fdc_set_drive (pc->fdc, 3, drv[3]);
+
+	e8272_set_input_clock (&pc->fdc->e8272, PCE_IBMPC_CLK2);
+	e8272_set_accuracy (&pc->fdc->e8272, accurate != 0);
+	e8272_set_irq_fct (&pc->fdc->e8272, &pc->pic, e8259_get_irq_f (&pc->pic, irq));
+	e8272_set_dreq_fct (&pc->fdc->e8272, &pc->dma, e8237_set_dreq2);
+
+	e8237_set_tc_fct (&pc->dma, 2, &pc->fdc->e8272, e8272_set_tc);
+
+	pc->dma.chn[2].iord_ext = &pc->fdc->e8272;
+	pc->dma.chn[2].iord = (void *) e8272_read_data;
+
+	pc->dma.chn[2].iowr_ext = &pc->fdc->e8272;
+	pc->dma.chn[2].iowr = (void *) e8272_write_data;
+
+	pc->dma.chn[2].memrd_ext = pc;
+	pc->dma.chn[2].memrd = (void *) pc_dma2_get_mem8;
+
+	pc->dma.chn[2].memwr_ext = pc;
+	pc->dma.chn[2].memwr = (void *) pc_dma2_set_mem8;
+}
+
+static
 void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
@@ -1278,6 +1357,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	}
 
 	pc_setup_disks (pc, ini);
+	pc_setup_fdc (pc, ini);
 	pc_setup_mouse (pc, ini);
 	pc_setup_serport (pc, ini);
 	pc_setup_parport (pc, ini);
@@ -1346,7 +1426,7 @@ void pc_del (ibmpc_t *pc)
 	pc_del_parport (pc);
 	pc_del_serport (pc);
 	pc_del_mouse (pc);
-
+	dev_fdc_del (pc->fdc);
 	dsks_del (pc->dsk);
 
 	pce_video_del (pc->video);
@@ -1508,6 +1588,10 @@ void pc_reset (ibmpc_t *pc)
 
 	pc_kbd_reset (&pc->kbd);
 
+	if (pc->fdc != NULL) {
+		dev_fdc_reset (pc->fdc);
+	}
+
 	if (pc->xms != NULL) {
 		xms_reset (pc->xms);
 	}
@@ -1666,6 +1750,10 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 
 			if (pc->trm != NULL) {
 				trm_check (pc->trm);
+			}
+
+			if (pc->fdc != NULL) {
+				e8272_clock (&pc->fdc->e8272, clk);
 			}
 
 			pc_speaker_clock (&pc->spk, clk);

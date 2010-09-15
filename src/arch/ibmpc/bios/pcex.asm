@@ -961,9 +961,19 @@ int_12:
 	iret
 
 int_13:
+	push	ax
+	pceh	PCEH_CHECK_INT, 0x13
+	or	ax, ax
+	jz	.skip
+	pop	ax
+
 	sti
 	pceh	PCEH_INT, 0x13
 	retf	2
+
+.skip:
+	pop	ax
+	jmp	0xf000:0xec59
 
 int_14:
 	pceh	PCEH_INT, 0x14
@@ -1003,6 +1013,10 @@ int_1f:
 
 
 int_19:
+	xor	ax, ax
+	xor	dx, dx
+	int	0x13
+
 	xor	ax, ax
 	mov	ds, ax
 	mov	es, ax

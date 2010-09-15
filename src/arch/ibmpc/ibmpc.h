@@ -59,6 +59,7 @@ typedef struct ibmpc_t {
 	unsigned char      ppi_port_b;
 	unsigned char      ppi_port_c[2];
 
+	dev_fdc_t          *fdc;
 	ems_t              *ems;
 	xms_t              *xms;
 

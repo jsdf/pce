@@ -51,6 +51,8 @@
 
 #define PCEH_MSG       0x0005
 
+#define PCEH_CHECK_INT 0x0006
+
 #define PCEH_INT       0x00cd
 
 

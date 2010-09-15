@@ -62,12 +62,14 @@ extern const char *par_video;
 #include <chipset/82xx/e8253.h>
 #include <chipset/82xx/e8255.h>
 #include <chipset/82xx/e8259.h>
+#include <chipset/82xx/e8272.h>
 
 #include <libini/libini.h>
 
 #include <terminal/terminal.h>
 
 #include <devices/memory.h>
+#include <devices/fdc.h>
 #include <devices/nvram.h>
 #include <devices/parport.h>
 #include <devices/serport.h>
@@ -78,7 +80,6 @@ extern const char *par_video;
 
 #include "util.h"
 #include "cassette.h"
-#include "int13.h"
 #include "keyboard.h"
 #include "mouse.h"
 #include "ems.h"
@@ -86,6 +87,7 @@ extern const char *par_video;
 #include "xms.h"
 #include "ibmpc.h"
 #include "hook.h"
+#include "int13.h"
 #include "msg.h"
 
 

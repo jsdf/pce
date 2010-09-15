@@ -23,6 +23,26 @@
 #include "main.h"
 
 
+void dsk_int_13_check (ibmpc_t *pc)
+{
+	unsigned drv;
+
+	if (pc->fdc != NULL) {
+		drv = e86_get_dl (pc->cpu);
+
+		if (dev_fdc_get_drive (pc->fdc, drv) == 0xffff) {
+			e86_set_ax (pc->cpu, 1);
+		}
+		else {
+			e86_set_ax (pc->cpu, 0);
+		}
+
+		return;
+	}
+
+	e86_set_ax (pc->cpu, 1);
+}
+
 static
 unsigned dsks_get_hd_cnt (disks_t *dsks)
 {

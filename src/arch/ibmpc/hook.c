@@ -220,6 +220,14 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 			return;
 		}
 		break;
+
+	case (PCEH_CHECK_INT & 0xff):
+		e86_set_ax (pc->cpu, 0);
+
+		if (op2 == 0x13) {
+			dsk_int_13_check (pc);
+		}
+		return;
 	}
 
 	e86_set_cf (pc->cpu, 0);

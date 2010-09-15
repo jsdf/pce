@@ -438,6 +438,26 @@ cassette {
 }
 
 
+# The floppy disk controller
+fdc {
+	# Enable or disable accurate timing.
+	# If accurate timing is enabled, the CPU speed should be set to
+	# 1, otherwise timeout errors will occur.
+	accurate = 0
+
+	address = 0x3f0
+	irq     = 6
+
+	# Map PCE drives to FDC drives. FDC drives that have no PCE
+	# drive assigned to them will be handled by the PCE int 13
+	# handler.
+	#drive0 = 0x00
+	drive1 = 0x01
+	drive2 = 0x02
+	drive3 = 0x03
+}
+
+
 # Disk types are:
 # "image"  A raw image file. "c", "h" and "s" must be specified.
 # "dosemu" A DOSEMU style hard disk image file.

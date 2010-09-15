@@ -24,6 +24,8 @@
 #define PCE_INT13_H 1
 
 
+void dsk_int_13_check (ibmpc_t *pc);
+
 void dsk_int13 (disks_t *dsks, e8086_t *cpu);
 
 
