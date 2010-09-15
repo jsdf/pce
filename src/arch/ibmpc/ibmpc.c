@@ -436,14 +436,6 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_string (sct, "model", &model, "8088");
 	ini_get_uint16 (sct, "speed", &speed, 0);
 
-	if (par_speed > 0) {
-		speed = par_speed - 1;
-	}
-
-	if (par_cpu != NULL) {
-		model = par_cpu;
-	}
-
 	pce_log_tag (MSG_INF, "CPU:", "model=%s speed=%uX\n",
 		model, speed
 	);

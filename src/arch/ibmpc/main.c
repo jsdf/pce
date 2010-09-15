@@ -36,8 +36,6 @@ static void prt_state_cpu (e8086_t *c);
 
 const char                *par_terminal = NULL;
 const char                *par_video = NULL;
-const char                *par_cpu = NULL;
-unsigned                  par_speed = 0;
 
 monitor_t                 par_mon;
 
@@ -45,14 +43,12 @@ ibmpc_t                   *par_pc = NULL;
 
 ini_sct_t                 *par_cfg = NULL;
 
-static int                par_have_boot = 0;
-static unsigned           par_boot = 128;
-
 static unsigned           pce_cur_int = 0;
 static unsigned           pce_last_int = 0;
 
 static ibmpc_t            *pc;
 
+static ini_strings_t      par_ini_str;
 
 
 static
@@ -1602,6 +1598,8 @@ int main (int argc, char *argv[])
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
 
+	ini_str_init (&par_ini_str);
+
 	i = 1;
 	while (i < argc) {
 		if (str_isarg (argv[i], "v", "verbose")) {
@@ -1624,6 +1622,13 @@ int main (int argc, char *argv[])
 			}
 
 			pce_path_set (argv[i]);
+		}
+		else if (str_isarg (argv[i], "i", "ini-string")) {
+			i += 1;
+			if (i >= argc) {
+				return (1);
+			}
+			ini_str_add (&par_ini_str, argv[i], "\n", NULL);
 		}
 		else if (str_isarg (argv[i], "l", "log")) {
 			i += 1;
@@ -1654,7 +1659,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
-			par_cpu = argv[i];
+			ini_str_add (&par_ini_str, "cpu.model = \"", argv[i], "\"\n");
 		}
 		else if (str_isarg (argv[i], "b", "boot")) {
 			i += 1;
@@ -1662,8 +1667,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
-			par_have_boot = 1;
-			par_boot = (unsigned) strtoul (argv[i], NULL, 0);
+			ini_str_add (&par_ini_str, "system.boot = ", argv[i], "\n");
 		}
 		else if (str_isarg (argv[i], "r", "run")) {
 			run = 1;
@@ -1677,7 +1681,7 @@ int main (int argc, char *argv[])
 				return (1);
 			}
 
-			par_speed = (unsigned) strtoul (argv[i], NULL, 0) + 1;
+			ini_str_add (&par_ini_str, "cpu.speed = ", argv[i], "\n");
 		}
 		else {
 			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
@@ -1717,6 +1721,10 @@ int main (int argc, char *argv[])
 		sct = par_cfg;
 	}
 
+	if (ini_str_eval (&par_ini_str, sct, 1)) {
+		return (1);
+	}
+
 	atexit (pc_atexit);
 
 #ifdef PCE_ENABLE_SDL
@@ -1744,10 +1752,6 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_do_cmd, par_pc);
 	mon_set_msg_fct (&par_mon, pc_set_msg, par_pc);
-
-	if (par_have_boot) {
-		pc_set_bootdrive (pc, par_boot);
-	}
 
 	pc_reset (pc);
 
