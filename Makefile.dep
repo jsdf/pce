@@ -2282,3 +2282,20 @@ src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/devices/block/block.h \
 	src/devices/block/pfdc.h \
 	src/utils/pceimg/pce-img.h
+
+src/utils/pfdc/main.o: src/utils/pfdc/main.c \
+	src/config.h \
+	src/devices/block/pfdc-img-raw.h \
+	src/devices/block/pfdc.h \
+	src/lib/getopt.h \
+	src/utils/pfdc/main.h \
+	src/utils/pfdc/pfdc-img-io.h
+
+src/utils/pfdc/pfdc-img-io.o: src/utils/pfdc/pfdc-img-io.c \
+	src/devices/block/pfdc-img-ana.h \
+	src/devices/block/pfdc-img-imd.h \
+	src/devices/block/pfdc-img-pfdc.h \
+	src/devices/block/pfdc-img-raw.h \
+	src/devices/block/pfdc-img-td0.h \
+	src/devices/block/pfdc.h \
+	src/utils/pfdc/pfdc-img-io.h

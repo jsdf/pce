@@ -1,0 +1,230 @@
+.TH PFDC 1 "2010-08-22" "HH" "pce"
+\
+.SH NAME
+pfdc \- convert and modify PFDC floppy disk image files
+
+.SH SYNOPSIS
+.BI pfdc " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpfdc\fR(1) is used to modify and convert PFDC floppy disk images
+files.
+
+.SH OPTIONS
+.TP
+.BI "-a, --alternate " "alt1[-alt2]"
+Select a range of alternate sectors.
+\
+.TP
+.BI "-c, --cylinder " "cyl1[-cyl2]"
+Select a range of cylinders.
+\
+.TP
+.BI "-e, --edit " "what val"
+For all selected sectors, set sector attribute \fIwhat\fR to \fIval\fR.
+For boolean attributes, a value of 0 disables the attribute and any other
+value enables it.
+Recognized attributes are:
+.RS
+.TP
+.B crc-id
+The ID field contains a CRC error.
+.TP
+.B crc-data
+The data field contains a CRC error.
+.TP
+.B del-dam
+The sector has a deleted data address mark.
+.TP
+.B data-rate
+The data rate in bits per second.
+.TP
+.B fm
+The sector uses FM encoding.
+.TP
+.B mfm
+The sector uses MFM encoding.
+.TP
+.B size
+The sector size in bytes.
+.TP
+.B c
+The cylinder number in the sector ID.
+.TP
+.B h
+The head number in the sector ID.
+.TP
+.B s
+The sector number in the sector ID.
+.RE
+\
+.TP
+.B "-f, --info"
+Print information about the current image or the next image loaded.
+\
+.TP
+.BI "-F, --filler " val
+Set the fill byte to \fIval\fR. The fill byte is used when sectors
+are created or enlarged.
+\
+.TP
+.BI "-h, --head " "head1[-head2]"
+Select a range of heads.
+\
+.TP
+.BI "-i, --input " filename
+Load an image from \fIfilename\fR.
+\
+.TP
+.BI "-I, --input-format " format
+Set the input file format to \fIformat\fR.
+Valid formats are:
+.RS
+.TP
+.B pfdc
+The native PFDC file format.
+.TP
+.B ana
+The anadisk dump format.
+.TP
+.B imd
+The ImageDisk file format.
+.TP
+.B raw
+A raw sector dump.
+.TP
+.B td0
+The teledisk file format. Only files that don't use advanced compression
+are supported.
+.RE
+\
+.TP
+.B "-l, --list-tracks"
+List all tracks in the current image or in the next image loaded.
+\
+.TP
+.B "-L, --list-sectors"
+List all sectors in the current image or in the next image loaded.
+\
+.TP
+.BI "-m, --merge " filename
+Load an image from \fIfilename\fR and merge it with the current
+image. Sectors that are identical are discarded. Sectors that
+exist in only one image are retained. Sectors that exist in both
+images, but differ, are added as alternate sectors.
+\
+.TP
+.BI "-n, --new " size
+Create a new image of size \fIsize\fR KiB.
+\
+.TP
+.BI "-o, --output " filename
+Set the output file name. Before exiting, the current image will
+be written to this file.
+\
+.TP
+.BI "-O, --output-format " format
+Set the output file format to \fIformat\fR. See the \fI-I\fR option
+for a list of valid formats.
+\
+.TP
+.BI "-p, --operation " "name [arg...]"
+Perform an operation on the current image. Valid operations are:
+.RS
+.TP
+.BI "comment-add " text
+Add \fItext\fR to the image comment.
+.TP
+.BI "comment-load " filename
+Load the image comment from file \fIfilename\fR.
+.TP
+.B comment-print
+Print the current image comment.
+.TP
+.BI "comment-save " filename
+Save the current image comment to \fIfilename\fR.
+.TP
+.BI "comment-set " text
+Set the image comment to \fItext\fR.
+.TP
+.B delete
+Delete all selected sectors.
+.TP
+.B info
+Print information about the current image (same as \fB-f\fR).
+.TP
+.BI "load "filename"
+Load the contents of all selected sectors from \fIfilename\fR. The
+contents of the sectors are read sequentially from the file.
+.TP
+.B new
+Create all selected sectors, if they do not already exist.
+.TP
+.BI "reorder " "s1,s2,s3,..."
+Reorder the sectors on all selected tracks. Sectors that are not
+mentioned in the parameter are moved to the end of the track.
+.TP
+.BI "rotate " first
+Rotate the sectors on all selected tracks such that \fIfirst\fR is
+the first sector on the track. If \fIfirst\fR does not exist on
+a track, the next higher sector will be rotated to the start of
+the track.
+.TP
+.BI "save " filename
+Save all selected sectors to \fIfilename\fR. The contents of the
+sectors are written sequentially to the file.
+.RE
+\
+.TP
+.BI "-r, --record " "cyl1[-cyl2] head1[-head2] sect1[-sect2]"
+Select sectors. This is the same as using the \fB-c\fR, \fB-h\fR
+and \fB-s\fR options seperately.
+\
+.TP
+.BI "-s, --sector " "sect1[-sect2]"
+Select a range of logical sectors.
+\
+.TP
+.BI "-S, --real-sectors " "sect1[-sect2]"
+Select a range of physical sectors.
+\
+.TP
+.B "-v, --verbose"
+Enable verbose operation.
+\
+.TP
+.B --help
+Print usage information.
+\
+.TP
+.B --version
+Print version information.
+
+.SH EXAMPLES
+Convert an ImageDisk file to a PFDC file:
+.IP ""
+$ pfdc source.imd dest.pfdc
+.PP
+Get image information:
+.IP
+$ pfdc -f image.pfdc
+.PP
+Add sectors 10 and 11 to all tracks on side 0:
+.IP
+$ pfdc -i source.pfdc -r all 0 10-11 -p new -o dest.pfdc
+.PP
+Mark the first sector in the image as having a bad data CRC:
+.IP
+$ pfdc -i source.pfdc -r 0 0 1 -e crc-data 1 -o dest.pfdc
+.PP
+Set the image comment:
+.IP
+$ pfdc -i source.pfdc -p comment-set "Test image" -o dest.pfdc
+
+.SH SEE ALSO
+.BR pce-ibmpc "(1),"
+.BR pce-macplus "(1),"
+.BR pce-img "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>
