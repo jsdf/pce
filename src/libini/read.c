@@ -5,13 +5,13 @@
 /*****************************************************************************
  * File name:   src/libini/read.c                                            *
  * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
  * This program is free software. You can redistribute it and / or modify it *
  * under the terms of the GNU General Public License version 2 as  published *
- * by  the Free Software Foundation.                                         *
+ * by the Free Software Foundation.                                          *
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
@@ -20,487 +20,169 @@
  *****************************************************************************/
 
 
+#include <config.h>
+
+#include <stdio.h>
+#include <string.h>
+
 #include <libini/libini.h>
 #include <libini/scanner.h>
 
-#include <math.h>
 
-#define INI_TOK_STRING 256
-#define INI_TOK_IDENT  257
-#define INI_TOK_DIGIT  258
+extern int ini_eval (scanner_t *scn, ini_sct_t *sct, ini_val_t *val);
 
-
-static
-int parse_sect_body (scanner_t *scn, ini_sct_t *sct, int subsct);
+static int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf);
 
 
 static
-void ini_scn_scan (scanner_t *scn)
+void parse_error (scanner_t *scn, const char *text, int src)
 {
-	unsigned i;
-	unsigned c;
+	char       c;
+	unsigned   i;
+	const char *name;
 
-	scn_scan (scn);
-
-	while (scn_chr (scn, '#')) {
-		c = scn_get_chr (scn, 0);
-		while ((c != 10) && (c != 13)) {
-			if (c == SCN_EOF) {
-				scn->tok_id = SCN_TOK_NONE;
-				scn->tok_str[0] = 0;
-				return;
-			}
-
-			scn_rmv_chr (scn, 1);
-			c = scn_get_chr (scn, 0);
-		}
-
-		scn_scan (scn);
-	}
-
-	if (scn_chr (scn, '"')) {
-		i = 0;
-		c = scn_get_chr (scn, 0);
-
-		while ((i < SCN_TOK_MAX) && (c != '"')) {
-			scn->tok_str[i] = c;
-			i += 1;
-
-			scn_rmv_chr (scn, 1);
-			c = scn_get_chr (scn, 0);
-			if (c == SCN_EOF) {
-				scn->tok_id = SCN_TOK_NONE;
-				scn->tok_str[0] = 0;
-			}
-		}
-
-		scn_rmv_chr (scn, 1);
-
-		if (i >= SCN_TOK_MAX) {
-			scn->tok_id = SCN_TOK_NONE;
-			scn->tok_str[0] = 0;
-			return;
-		}
-		else {
-			scn->tok_id = INI_TOK_STRING;
-			scn->tok_str[i] = 0;
-			return;
-		}
-	}
-}
-
-static
-scanner_t *get_scanner (FILE *fp)
-{
-	scanner_t *scn;
-	scn_set_t   set;
-	scn_class_t *cls;
-
-	scn = scnf_new ();
-	if (scn == NULL) {
-		return (NULL);
-	}
-
-	scn->scan = &ini_scn_scan;
-
-	scn_set_clear (&set);
-	scn_set_add_el (&set, 9);
-	scn_set_add_el (&set, 10);
-	scn_set_add_el (&set, 13);
-	scn_set_add_el (&set, 32);
-	scn_set_white (scn, &set);
-
-	cls = scn_cls_new (INI_TOK_IDENT);
-	scn_set_add_els (&cls->start, 'a', 'z');
-	scn_set_add_els (&cls->start, 'A', 'Z');
-	scn_set_add_el (&cls->start, '_');
-	scn_set_copy (&cls->run, &cls->start);
-	scn_set_add_els (&cls->run, '0', '9');
-	scn_class_add (scn, cls);
-
-	cls = scn_cls_new (INI_TOK_DIGIT);
-	scn_set_add_els (&cls->start, '0', '9');
-	scn_set_copy (&cls->run, &cls->start);
-	scn_set_add_els (&cls->run, 'a', 'f');
-	scn_set_add_els (&cls->run, 'A', 'F');
-	scn_set_add_el (&cls->run, 'x');
-	scn_set_add_el (&cls->run, 'b');
-	scn_class_add (scn, cls);
-
-	scnf_set_file (scn, fp);
-
-	return (scn);
-}
-
-static
-int parse_unsigned (scanner_t *scn, ini_val_t *val, int neg)
-{
-	unsigned      i;
-	unsigned long lng;
-	unsigned long dig, base;
-	char          *str;
-
-	str = scn_str (scn);
-
-	lng = 0;
-	base = 10;
-
-	if (str[0] == '0') {
-		if (str[1] == 'b') {
-			base = 2;
-		}
-		else if (str[1] == 'x') {
-			base = 16;
-		}
-	}
-
-	i = 2;
-	while (str[i] != 0) {
-		if ((str[i] >= '0') && (str[i] <= '9')) {
-			dig = (str[i] - '0');
-		}
-		else if ((str[i] >= 'a') && (str[i] <= 'z')) {
-			dig = (str[i] - 'a' + 10);
-		}
-		else if ((str[i] >= 'A') && (str[i] <= 'Z')) {
-			dig = (str[i] - 'A' + 10);
-		}
-		else {
-			return (1);
-		}
-
-		if (dig >= base) {
-			return (1);
-		}
-
-		lng = base * lng + dig;
-
-		i += 1;
-	}
-
-	ini_scn_scan (scn);
-
-	if (neg) {
-		ini_val_set_sint32 (val, -(long)lng);
+	if (scn->file != NULL) {
+		name = scn->file->name;
 	}
 	else {
-		ini_val_set_uint32 (val, lng);
+		name = NULL;
 	}
 
-	return (0);
-}
-
-static
-int parse_number (scanner_t *scn, ini_val_t *val, int neg)
-{
-	unsigned      i;
-	unsigned long lng;
-	unsigned      dig;
-	double        dbl, tmp;
-	char          *str;
-
-	str = scn_str (scn);
-
-	if ((str[0] == '0') && ((str[1] == 'b') || (str[1] == 'x'))) {
-		return (parse_unsigned (scn, val, neg));
+	if (name == NULL) {
+		name = "<none>";
 	}
 
-	dbl = 0.0;
-	lng = 0;
+	fprintf (stderr, "%s:%lu: %s",
+		name, scn->line + 1, text
+	);
 
-	i = 0;
-	while ((str[i] >= '0') && (str[i] <= '9')) {
-		dig = (unsigned)(str[i] - '0');
+	if (src) {
+		fputs (": ", stderr);
 
-		lng = 10 * lng + dig;
-		dbl = 10.0 * dbl + (double) dig;
+		for (i = 0; i < 64; i++) {
+			c = scn_get_chr (scn, i);
 
-		i += 1;
-	}
-
-
-	if (str[i] != 0) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	if (scn_chr (scn, '.') == 0) {
-		if (neg) {
-			ini_val_set_sint32 (val, -(long)lng);
-		}
-		else {
-			ini_val_set_uint32 (val, lng);
-		}
-
-		return (0);
-	}
-
-	ini_scn_scan (scn);
-
-	if (scn_tid (scn) != INI_TOK_DIGIT) {
-		return (1);
-	}
-
-	str = scn_str (scn);
-	tmp = 10.0;
-
-	i = 0;
-	while ((str[i] >= '0') && (str[i] <= '9')) {
-		dbl += (double)(str[i] - '0') / tmp;
-		tmp *= 10.0;
-		i += 1;
-	}
-
-	if (str[i] != 0) {
-		return (1);
-	}
-
-	if (neg) {
-		dbl = -dbl;
-	}
-
-	ini_val_set_dbl (val, dbl);
-
-	ini_scn_scan (scn);
-
-	return (0);
-}
-
-static
-int parse_number_suffix (scanner_t *scn, ini_val_t *val, int neg)
-{
-	const char    *str;
-	unsigned long mul;
-
-	if (parse_number (scn, val, neg)) {
-		return (1);
-	}
-
-	if (scn_tid (scn) != INI_TOK_IDENT) {
-		return (0);
-	}
-
-	str = scn_str (scn);
-
-	if ((str[0] == 0) || (str[1] != 0)) {
-		return (0);
-	}
-
-	switch (str[0]) {
-	case 'k':
-	case 'K':
-		mul = 1024;
-		break;
-
-	case 'm':
-	case 'M':
-		mul = 1024UL * 1024UL;
-		break;
-
-	case 'g':
-	case 'G':
-		mul = 1024UL * 1024UL * 1024UL;
-		break;
-
-	default:
-		return (0);
-	}
-
-	switch (val->type) {
-	case INI_VAL_U32:
-		val->val.u32 *= mul;
-		break;
-
-	case INI_VAL_S32:
-		val->val.u32 *= (long) mul;
-		break;
-
-	case INI_VAL_DBL:
-		val->val.dbl *= (double) mul;
-		break;
-
-	default:
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	return (0);
-}
-
-static
-int parse_value (scanner_t *scn, ini_sct_t *sct)
-{
-	ini_val_t *val;
-
-	val = ini_new_val (sct, scn_str (scn));
-	if (val == NULL) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	if ((scn_chr (scn, '=') == 0) && (scn_chr (scn, ':') == 0)) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	if (scn_chr (scn, '-')) {
-		ini_scn_scan (scn);
-
-		if (parse_number_suffix (scn, val, 1)) {
-			return (1);
-		}
-
-		return (0);
-	}
-	else if (scn_chr (scn, '+')) {
-		ini_scn_scan (scn);
-
-		if (parse_number_suffix (scn, val, 0)) {
-			return (1);
-		}
-
-		return (0);
-	}
-
-	if ((scn_tid (scn) == INI_TOK_IDENT) || (scn_tid (scn) == INI_TOK_STRING)) {
-		ini_val_set_str (val, scn_str (scn));
-		ini_scn_scan (scn);
-		return (0);
-	}
-
-	if (scn_tid (scn) == INI_TOK_DIGIT) {
-		if (parse_number_suffix (scn, val, 0)) {
-			return (1);
-		}
-
-		return (0);
-	}
-
-	return (1);
-}
-
-static
-int parse_sect1 (scanner_t *scn, ini_sct_t *ini)
-{
-	ini_sct_t *sct;
-
-	ini_scn_scan (scn);
-
-	if (scn_tid (scn) != INI_TOK_IDENT) {
-		return (1);
-	}
-
-	sct = ini_new_sct (ini, scn_str (scn));
-	if (sct == NULL) {
-		return (1);
-	}
-
-	ini_sct_set_format (sct, 1, 0);
-
-	ini_scn_scan (scn);
-
-	if (scn_chr (scn, '{') == 0) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	if (parse_sect_body (scn, sct, 1)) {
-		return (1);
-	}
-
-	if (scn_chr (scn, '}') == 0) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	return (0);
-}
-
-static
-int parse_sect2 (scanner_t *scn, ini_sct_t *ini)
-{
-	int       subsct;
-	ini_sct_t *sct;
-
-	ini_scn_scan (scn);
-
-	subsct = 0;
-
-	if (scn_tid (scn) != INI_TOK_IDENT) {
-		return (1);
-	}
-
-	sct = ini_new_sct (ini, scn_str (scn));
-	if (sct == NULL) {
-		return (1);
-	}
-
-	ini_sct_set_format (sct, 2, 0);
-
-	ini_scn_scan (scn);
-
-	if (scn_chr (scn, ']') == 0) {
-		return (1);
-	}
-
-	ini_scn_scan (scn);
-
-	if (scn_chr (scn, '{')) {
-		ini_scn_scan (scn);
-		subsct = 1;
-	}
-
-	if (parse_sect_body (scn, sct, subsct)) {
-		return (1);
-	}
-
-	if (subsct) {
-		if (scn_chr (scn, '}') == 0) {
-			return (1);
-		}
-
-		ini_scn_scan (scn);
-	}
-
-	return (0);
-}
-
-static
-int parse_sect_body (scanner_t *scn, ini_sct_t *sct, int subsct)
-{
-	while (scn_tid (scn) != SCN_TOK_NONE) {
-		if (scn_tok (scn, INI_TOK_IDENT, "section")) {
-			if (subsct) {
-				if (parse_sect1 (scn, sct)) {
-					return (1);
-				}
-			}
-			else {
+			if (c == 0) {
+				fputs ("<eof>", stderr);
 				break;
 			}
-		}
-		else if (scn_tok (scn, SCN_TOK_CHAR, "[")) {
-			if (subsct) {
-				if (parse_sect2 (scn, sct)) {
-					return (1);
-				}
-			}
-			else {
+
+			if ((c == 0x0d) || (c == 0x0a)) {
+				fputs ("<nl>", stderr);
 				break;
 			}
+
+			fputc (c, stderr);
 		}
-		else if (scn_tid (scn) == INI_TOK_IDENT) {
-			if (parse_value (scn, sct)) {
+	}
+
+	fputs ("\n", stderr);
+}
+
+static
+int parse_block (scanner_t *scn, ini_sct_t *sct, ini_sct_t *sub, char *buf)
+{
+	int r, s;
+
+	if (scn_match (scn, "{") == 0) {
+		return (1);
+	}
+
+	if (sub == NULL) {
+		sub = ini_sct_new (NULL);
+
+		if (sub == NULL) {
+			return (1);
+		}
+
+		sub->parent = sct;
+
+		s = 1;
+	}
+	else {
+		s = 0;
+	}
+
+
+	r = parse_section (scn, sub, buf);
+
+	if (s) {
+		ini_sct_del (sub);
+	}
+
+	if (r) {
+		return (1);
+	}
+
+	if (scn_match (scn, "}") == 0) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
+{
+	int       done;
+	ini_sct_t *sub;
+	ini_val_t val;
+
+	ini_val_init (&val, NULL);
+
+	if (ini_eval (scn, sct, &val)) {
+		ini_val_free (&val);
+		return (1);
+	}
+
+	if ((val.type == INI_VAL_INT) && (val.val.u32 != 0)) {
+		sub = sct;
+		done = 1;
+	}
+	else {
+		sub = NULL;
+		done = 0;
+	}
+
+	ini_val_free (&val);
+
+	if (parse_block (scn, sct, sub, buf)) {
+		return (1);
+	}
+
+	while (scn_match_ident (scn, "else")) {
+		if (scn_match_ident (scn, "if")) {
+			ini_val_init (&val, NULL);
+
+			if (ini_eval (scn, sct, &val)) {
+				ini_val_free (&val);
+				return (1);
+			}
+
+			if ((val.type == INI_VAL_INT) && (val.val.u32 != 0)) {
+				sub = done ? NULL : sct;
+			}
+			else {
+				sub = NULL;
+			}
+
+			if (sub != NULL) {
+				done = 1;
+			}
+
+			ini_val_free (&val);
+
+			if (parse_block (scn, sct, sub, buf)) {
 				return (1);
 			}
 		}
 		else {
+			sub = done ? NULL : sct;
+
+			if (parse_block (scn, sct, sub, buf)) {
+				return (1);
+			}
+
 			break;
 		}
 	}
@@ -508,28 +190,134 @@ int parse_sect_body (scanner_t *scn, ini_sct_t *sct, int subsct)
 	return (0);
 }
 
-ini_sct_t *ini_read_fp (FILE *fp)
+static
+int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 {
-	scanner_t *scn;
-	ini_sct_t *sct;
+	ini_sct_t *sub;
+	ini_val_t *val;
 
-	scn = get_scanner (fp);
-	if (scn == NULL) {
-		return (NULL);
+	while (1) {
+		if (scn_match_name (scn, buf, 256) == 0) {
+			return (0);
+		}
+
+		if (strcmp (buf, "section") == 0) {
+			if (scn_match_name (scn, buf, 256) == 0) {
+				return (1);
+			}
+		}
+
+		if (scn_match (scn, "{")) {
+			sub = ini_get_sct (sct, buf, 1);
+
+			if (sub == NULL) {
+				return (1);
+			}
+
+			if (parse_section (scn, sub, buf)) {
+				return (1);
+			}
+
+			if (scn_match (scn, "}") == 0) {
+				return (1);
+			}
+		}
+		else if (scn_match (scn, "=")) {
+			val = ini_get_val (sct, buf, 1);
+
+			if (val == NULL) {
+				return (1);
+			}
+
+			if (ini_eval (scn, sct, val)) {
+				return (1);
+			}
+		}
+		else if (strcmp (buf, "if") == 0) {
+			if (parse_if (scn, sct, buf)) {
+				return (1);
+			}
+		}
+		else if (strcmp (buf, "include") == 0) {
+			if (scn_match_string (scn, buf, 256) == 0) {
+				return (1);
+			}
+
+			if (scn_add_file (scn, buf, NULL, 1)) {
+				parse_error (scn, "can't open include file:", 0);
+				parse_error (scn, buf, 0);
+				return (1);
+			}
+		}
+		else {
+			return (1);
+		}
+
+		scn_match (scn, ";");
 	}
+
+	return (1);
+}
+
+int ini_read_str (ini_sct_t *sct, const char *str)
+{
+	scanner_t scn;
+	char      buf[256];
+
+	scn_init (&scn);
+	scn_set_str (&scn, str);
+
+	if (parse_section (&scn, sct, buf)) {
+		parse_error (&scn, "parse error before", 1);
+		scn_free (&scn);
+		return (1);
+	}
+
+	if (scn_get_chr (&scn, 0) != 0) {
+		parse_error (&scn, "parse error before", 1);
+		scn_free (&scn);
+		return (1);
+	}
+
+	scn_free (&scn);
+
+	return (0);
+}
+
+ini_sct_t *ini_read_fp (FILE *fp, const char *fname)
+{
+	ini_sct_t *sct;
+	scanner_t scn;
+	char      buf[256];
 
 	sct = ini_sct_new (NULL);
+
 	if (sct == NULL) {
-		scn->del (scn);
 		return (NULL);
 	}
 
-	ini_scn_scan (scn);
+	scn_init (&scn);
 
-	if (parse_sect_body (scn, sct, 1)) {
+	if (scn_add_file (&scn, fname, fp, 0)) {
 		ini_sct_del (sct);
 		return (NULL);
 	}
+
+	if (parse_section (&scn, sct, buf)) {
+		parse_error (&scn, "parse error before", 1);
+		ini_sct_del (sct);
+		scn_free (&scn);
+		return (NULL);
+	}
+
+	if (scn_get_chr (&scn, 0) != 0) {
+		parse_error (&scn, "parse error before", 1);
+		ini_sct_del (sct);
+		scn_free (&scn);
+		return (NULL);
+	}
+
+	scn_free (&scn);
 
 	return (sct);
 }
@@ -540,11 +328,12 @@ ini_sct_t *ini_read (const char *fname)
 	ini_sct_t *sct;
 
 	fp = fopen (fname, "rb");
+
 	if (fp == NULL) {
 		return (NULL);
 	}
 
-	sct = ini_read_fp (fp);
+	sct = ini_read_fp (fp, fname);
 
 	fclose (fp);
 

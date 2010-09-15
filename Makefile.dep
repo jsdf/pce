@@ -2162,20 +2162,34 @@ src/lib/tun.o: src/lib/tun.c \
 	src/config.h \
 	src/lib/tun.h
 
+src/libini/expr.o: src/libini/expr.c \
+	src/config.h \
+	src/libini/libini.h \
+	src/libini/scanner.h
+
 src/libini/read.o: src/libini/read.c \
+	src/config.h \
 	src/libini/libini.h \
 	src/libini/scanner.h
 
 src/libini/scanner.o: src/libini/scanner.c \
+	src/config.h \
 	src/libini/scanner.h
 
 src/libini/section.o: src/libini/section.c \
+	src/config.h \
+	src/libini/libini.h
+
+src/libini/strings.o: src/libini/strings.c \
+	src/config.h \
 	src/libini/libini.h
 
 src/libini/value.o: src/libini/value.c \
+	src/config.h \
 	src/libini/libini.h
 
 src/libini/write.o: src/libini/write.c \
+	src/config.h \
 	src/libini/libini.h
 
 src/terminal/font.o: src/terminal/font.c

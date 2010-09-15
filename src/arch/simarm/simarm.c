@@ -577,7 +577,7 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 		return (0);
 	}
 	else if (msg_is_message ("emu.config.save", msg)) {
-		if (ini_write (sim->cfg, val)) {
+		if (ini_write (val, sim->cfg)) {
 			return (1);
 		}
 

@@ -5,13 +5,13 @@
 /*****************************************************************************
  * File name:   src/libini/section.c                                         *
  * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
  * This program is free software. You can redistribute it and / or modify it *
  * under the terms of the GNU General Public License version 2 as  published *
- * by  the Free Software Foundation.                                         *
+ * by the Free Software Foundation.                                          *
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
@@ -20,42 +20,130 @@
  *****************************************************************************/
 
 
+#include <config.h>
+
+#include <stdlib.h>
+#include <string.h>
+
 #include <libini/libini.h>
 
 
-void ini_sct_init (ini_sct_t *sct, const char *name)
+/*
+ * Check if c is a letter, a digit or both.
+ */
+static
+int ini_check_char (char c, int alpha, int num)
 {
-	if (name == NULL) {
-		name = "";
+	if (alpha) {
+		if ((c >= 'a') && (c <= 'z')) {
+			return (1);
+		}
+
+		if ((c >= 'A') && (c <= 'Z')) {
+			return (1);
+		}
+
+		if (c == '_') {
+			return (1);
+		}
 	}
 
-	sct->name = strdup (name);
-	sct->format = 0;
+	if (num) {
+		if ((c >= '0') && (c <= '9')) {
+			return (1);
+		}
+	}
 
-	sct->sct = NULL;
-	sct->sctcnt = 0;
-
-	sct->val = NULL;
-	sct->valcnt = 0;
+	return (0);
 }
 
-void ini_sct_free (ini_sct_t *sct)
+/*
+ * Extract the first name and index from a longer section name.
+ */
+static
+int ini_get_name_and_index (const char **str, char *name, unsigned max,
+	unsigned *idx, int *noidx, int *addnew, int *last)
 {
-	unsigned i;
+	unsigned   i;
+	const char *s;
 
-	for (i = 0; i < sct->sctcnt; i++) {
-		ini_sct_free (&sct->sct[i]);
+	s = *str;
+
+	*idx = 0;
+	*noidx = 1;
+	*addnew = 0;
+	*last = 0;
+
+	if (ini_check_char (*s, 1, 0) == 0) {
+		return (1);
 	}
 
-	free (sct->sct);
+	name[0] = *(s++);
+	i = 1;
 
-	for (i = 0; i < sct->valcnt; i++) {
-		ini_val_free (&sct->val[i]);
+	while ((*s != 0) && (i < max)) {
+		if (ini_check_char (*s, 1, 1) == 0) {
+			break;
+		}
+
+		name[i++] = *(s++);
 	}
 
-	free (sct->val);
+	if (i >= max) {
+		return (1);
+	}
 
-	free (sct->name);
+	name[i] = 0;
+
+	if (*s == 0) {
+		*str = s;
+		return (0);
+	}
+
+	if (*s == '.') {
+		*str = s + 1;
+		return (0);
+	}
+
+	if (*s != '[') {
+		return (1);
+	}
+
+	s += 1;
+
+	if (*s == '+') {
+		*addnew = 1;
+		s += 1;
+	}
+	else if (*s == '-') {
+		*last = 1;
+		s += 1;
+	}
+	else {
+		if (ini_check_char (*s, 0, 1) == 0) {
+			return (1);
+		}
+
+		while (ini_check_char (*s, 0, 1)) {
+			*idx = 10 * *idx + (*s - '0');
+			s += 1;
+		}
+	}
+
+	if (*s != ']') {
+		return (1);
+	}
+
+	s += 1 ;
+
+	if (*s == '.') {
+		s += 1 ;
+	}
+
+	*str = s;
+	*noidx = 0;
+
+	return (0);
 }
 
 ini_sct_t *ini_sct_new (const char *name)
@@ -63,77 +151,129 @@ ini_sct_t *ini_sct_new (const char *name)
 	ini_sct_t *sct;
 
 	sct = malloc (sizeof (ini_sct_t));
+
 	if (sct == NULL) {
 		return (NULL);
 	}
 
-	ini_sct_init (sct, name);
+	sct->next = NULL;
+	sct->parent = NULL;
+
+	if (name == NULL) {
+		name = "";
+	}
+
+	if (name != NULL) {
+		sct->name = strdup (name);
+	}
+	else {
+		sct->name = NULL;
+	}
+
+	sct->sub_head = NULL;
+	sct->sub_tail = NULL;
+
+	sct->val_head = NULL;
+	sct->val_tail = NULL;
 
 	return (sct);
 }
 
 void ini_sct_del (ini_sct_t *sct)
 {
+	ini_sct_t *tmp;
+
+	while (sct != NULL) {
+		tmp = sct;
+		sct = sct->next;
+
+		ini_val_del (tmp->val_head);
+		ini_sct_del (tmp->sub_head);
+
+		free (tmp->name);
+		free (tmp);
+	}
+}
+
+static
+ini_sct_t *ini_new_sct (ini_sct_t *sct, const char *name)
+{
+	ini_sct_t *sub;
+
+	sub = ini_sct_new (name);
+
+	if (sub == NULL) {
+		return (NULL);
+	}
+
 	if (sct != NULL) {
-		ini_sct_free (sct);
-		free (sct);
-	}
-}
+		sub->parent = sct;
 
-void ini_sct_set_format (ini_sct_t *sct, unsigned format, int rec)
-{
-	unsigned i;
-
-	sct->format = format;
-
-	if (rec) {
-		for (i = 0; i < sct->sctcnt; i++) {
-			ini_sct_set_format (&sct->sct[i], format, 1);
+		if (sct->sub_head == NULL) {
+			sct->sub_head = sub;
 		}
-	}
-}
+		else {
+			sct->sub_tail->next = sub;
+		}
 
-unsigned ini_sct_get_format (const ini_sct_t *sct)
-{
-	return (sct->format);
-}
-
-ini_sct_t *ini_get_sct_idx (const ini_sct_t *sct, unsigned i)
-{
-	if (i < sct->sctcnt) {
-		return (&sct->sct[i]);
+		sct->sub_tail = sub;
 	}
 
-	return (NULL);
+	return (sub);
 }
 
-ini_val_t *ini_get_val_idx (const ini_sct_t *sct, unsigned i)
+static
+ini_val_t *ini_new_val (ini_sct_t *sct, const char *name)
 {
-	if (i < sct->valcnt) {
-		return (&sct->val[i]);
+	ini_val_t *val;
+
+	val = ini_val_new (name);
+
+	if (val == NULL) {
+		return (NULL);
 	}
 
-	return (NULL);
+	if (sct != NULL) {
+		if (sct->val_head == NULL) {
+			sct->val_head = val;
+		}
+		else {
+			sct->val_tail->next = val;
+		}
+
+		sct->val_tail = val;
+	}
+
+	return (val);
 }
 
 ini_sct_t *ini_next_sct (ini_sct_t *sct, ini_sct_t *val, const char *name)
 {
-	unsigned i;
-
-	i = 0;
-
-	if (val != NULL) {
-		while ((i < sct->sctcnt) && (&sct->sct[i] != val)) {
-			i += 1;
+	if (val == NULL) {
+		if (sct == NULL) {
+			return (NULL);
 		}
-		i += 1;
+
+		val = sct->sub_head;
+	}
+	else {
+		val = val->next;
 	}
 
-	while (i < sct->sctcnt) {
-		if (strcmp (sct->sct[i].name, name) == 0) {
-			return (&sct->sct[i]);
+	if (val == NULL) {
+		return (NULL);
+	}
+
+	if (name == NULL) {
+		return (val);
+	}
+
+	while (val != NULL) {
+		if (strcmp (val->name, name) == 0) {
+			return (val);
 		}
-		i += 1;
+
+		val = val->next;
 	}
 
 	return (NULL);
@@ -141,198 +281,256 @@ ini_sct_t *ini_next_sct (ini_sct_t *sct, ini_sct_t *val, const char *name)
 
 ini_val_t *ini_next_val (ini_sct_t *sct, ini_val_t *val, const char *name)
 {
-	unsigned i;
-
-	i = 0;
-
-	if (val != NULL) {
-		while ((i < sct->valcnt) && (&sct->val[i] != val)) {
-			i += 1;
+	if (val == NULL) {
+		if (sct == NULL) {
+			return (NULL);
 		}
-		i += 1;
+
+		val = sct->val_head;
+	}
+	else {
+		val = val->next;
 	}
 
-	while (i < sct->valcnt) {
-		if (strcmp (sct->val[i].name, name) == 0) {
-			return (&sct->val[i]);
+	if (val == NULL) {
+		return (NULL);
+	}
+
+	if (name == NULL) {
+		return (NULL);
+	}
+
+	while (val != NULL) {
+		if (strcmp (val->name, name) == 0) {
+			return (val);
 		}
-		i += 1;
+
+		val = val->next;
 	}
 
 	return (NULL);
+}
+
+/*
+ * Get the last subsection of sct with name name. If there is no such
+ * subsection and add is true, add a new subsection and return it.
+ */
+static
+ini_sct_t *ini_get_last_sct (ini_sct_t *sct, const char *name, int add)
+{
+	ini_sct_t *sub, *ret;
+
+	sub = sct->sub_head;
+	ret = NULL;
+
+	while (sub != NULL) {
+		if (strcmp (sub->name, name) == 0) {
+			ret = sub;
+		}
+
+		sub = sub->next;
+	}
+
+	if ((add == 0) || (ret != NULL)) {
+		return (ret);
+	}
+
+	return (ini_new_sct (sct, name));
+}
+
+static
+ini_sct_t *ini_get_indexed_sct (ini_sct_t *sct, const char *name,
+	unsigned index, int add)
+{
+	ini_sct_t *sub;
+
+	sub = sct->sub_head;
+
+	while (sub != NULL) {
+		if (strcmp (sub->name, name) == 0) {
+			if (index == 0) {
+				return (sub);
+			}
+
+			index -= 1;
+		}
+
+		sub = sub->next;
+	}
+
+	if (add == 0) {
+		return (NULL);
+	}
+
+	while (index > 0) {
+		if (ini_new_sct (sct, name) == NULL) {
+			return (NULL);
+		}
+
+		index -= 1;
+	}
+
+	return (ini_new_sct (sct, name));
+}
+
+/*
+ * Get the last value of sct with name name. If there is no such value
+ * and add is true, add a new value and return it.
+ */
+static
+ini_val_t *ini_get_last_val (ini_sct_t *sct, const char *name, int add)
+{
+	ini_val_t *val, *ret;
+
+	val = sct->val_head;
+	ret = NULL;
+
+	while (val != NULL) {
+		if (strcmp (val->name, name) == 0) {
+			ret = val;
+		}
+
+		val = val->next;
+	}
+
+	if ((add == 0) || (ret != NULL)) {
+		return (ret);
+	}
+
+	return (ini_new_val (sct, name));
+}
+
+static
+ini_val_t *ini_get_indexed_val (ini_sct_t *sct, const char *name,
+	unsigned index, int add)
+{
+	ini_val_t *val;
+
+	val = sct->val_head;
+
+	while (val != NULL) {
+		if (strcmp (val->name, name) == 0) {
+			if (index == 0) {
+				return (val);
+			}
+
+			index -= 1;
+		}
+
+		val = val->next;
+	}
+
+	if (add == 0) {
+		return (NULL);
+	}
+
+	while (index > 0) {
+		if (ini_new_val (sct, name) == NULL) {
+			return (NULL);
+		}
+
+		index -= 1;
+	}
+
+	return (ini_new_val (sct, name));
 }
 
 ini_sct_t *ini_get_sct (ini_sct_t *sct, const char *name, int add)
 {
-	unsigned i;
+	int       simple, noidx, addnew, last;
+	unsigned  index;
+	char      name2[256];
 
-	for (i = 0; i < sct->sctcnt; i++) {
-		if (strcmp (sct->sct[i].name, name) == 0) {
-			return (&sct->sct[i]);
+	if (sct == NULL) {
+		return (NULL);
+	}
+
+	simple = 1;
+
+	while (*name != 0) {
+		if (ini_get_name_and_index (&name, name2, 256, &index, &noidx, &addnew, &last)) {
+			return (NULL);
+		}
+
+		if (*name != 0) {
+			simple = 0;
+		}
+
+		if (addnew || (simple && add && noidx)) {
+			sct = ini_new_sct (sct, name2);
+		}
+		else if (last) {
+			sct = ini_get_last_sct (sct, name2, add);
+		}
+		else {
+			sct = ini_get_indexed_sct (sct, name2, index, add);
+
+		}
+
+		if (sct == NULL) {
+			return (NULL);
 		}
 	}
 
-	if (add) {
-		return (ini_new_sct (sct, name));
-	}
-
-	return (NULL);
+	return (sct);
 }
 
 ini_val_t *ini_get_val (ini_sct_t *sct, const char *name, int add)
 {
-	unsigned i;
-
-	for (i = 0; i < sct->valcnt; i++) {
-		if (strcmp (sct->val[i].name, name) == 0) {
-			return (&sct->val[i]);
-		}
-	}
-
-	if (add) {
-		return (ini_new_val (sct, name));
-	}
-
-	return (NULL);
-}
-
-ini_sct_t *ini_new_sct (ini_sct_t *sct, const char *name)
-{
-	ini_sct_t *tmp;
-
-	tmp = realloc (sct->sct, (sct->sctcnt + 1) * sizeof (ini_sct_t));
-	if (tmp == NULL) {
-		return (NULL);
-	}
-
-	sct->sct = tmp;
-	sct->sctcnt += 1;
-
-	tmp = &sct->sct[sct->sctcnt - 1];
-
-	ini_sct_init (tmp, name);
-
-	return (tmp);
-}
-
-ini_val_t *ini_new_val (ini_sct_t *sct, const char *name)
-{
-	ini_val_t *tmp;
-
-	tmp = realloc (sct->val, (sct->valcnt + 1) * sizeof (ini_val_t));
-	if (tmp == NULL) {
-		return (NULL);
-	}
-
-	sct->val = tmp;
-	sct->valcnt += 1;
-
-	tmp = &sct->val[sct->valcnt - 1];
-
-	ini_val_init (tmp, name);
-
-	return (tmp);
-}
-
-ini_val_t *ini_find_val (const ini_sct_t *sct, const char *name)
-{
-	unsigned  i, j, k;
-	ini_sct_t *tmp;
-	ini_val_t *val;
+	int      simple, noidx, addnew, last;
+	unsigned index;
+	char     name2[256];
 
 	if (sct == NULL) {
 		return (NULL);
 	}
 
-	i = 0;
+	simple = 1;
 
-	while ((name[i] != 0) && (name[i] != '.')) {
-		i += 1;
-	}
-
-	if (i == 0) {
-		return (NULL);
-	}
-
-	if (name[i] == 0) {
-		val = sct->val;
-		for (k = 0; k < sct->valcnt; k++) {
-			if (strcmp (val->name, name) == 0) {
-				return (val);
-			}
-			val += 1;
+	while (*name != 0) {
+		if (ini_get_name_and_index (&name, name2, 256, &index, &noidx, &addnew, &last)) {
+			return (NULL);
 		}
 
-		return (NULL);
-	}
-
-	tmp = sct->sct;
-	for (k = 0; k < sct->sctcnt; k++) {
-		if (strlen (tmp->name) == i) {
-			j = 0;
-			while ((j < i) && (tmp->name[j] == name[j])) {
-				j += 1;
+		if (*name == 0) {
+			if (addnew || (simple && add && noidx)) {
+				return (ini_new_val (sct, name2));
+			}
+			else if (last) {
+				return (ini_get_last_val (sct, name2, add));
 			}
 
-			if (j == i) {
-				return (ini_find_val (tmp, name + i + 1));
-			}
+			return (ini_get_indexed_val (sct, name2, index, add));
+		}
+		else {
+			simple = 0;
 		}
 
-		tmp += 1;
+		if (addnew || (simple && add && noidx)) {
+			sct = ini_new_sct (sct, name2);
+		}
+		else if (last) {
+			sct = ini_get_last_sct (sct, name2, add);
+		}
+		else {
+			sct = ini_get_indexed_sct (sct, name2, index, add);
+		}
+
+		if (sct == NULL) {
+			return (NULL);
+		}
 	}
 
 	return (NULL);
 }
 
-ini_sct_t *ini_find_sct (ini_sct_t *sct, const char *name)
-{
-	unsigned  i, j, k;
-	ini_sct_t *tmp;
-
-	if (sct == NULL) {
-		return (NULL);
-	}
-
-	i = 0;
-
-	while ((name[i] != 0) && (name[i] != '.')) {
-		i += 1;
-	}
-
-	if (i == 0) {
-		return (NULL);
-	}
-
-	tmp = sct->sct;
-	for (k = 0; k < sct->sctcnt; k++) {
-		if (strlen (tmp->name) == i) {
-			j = 0;
-			while ((j < i) && (tmp->name[j] == name[j])) {
-				j += 1;
-			}
-
-			if (j == i) {
-				if (name[i] == 0) {
-					return (tmp);
-				}
-				else {
-					return (ini_find_sct (tmp, name + i + 1));
-				}
-			}
-		}
-
-		tmp += 1;
-	}
-
-	return (NULL);
-}
 
 int ini_set_uint32 (ini_sct_t *sct, const char *name, unsigned long v)
 {
 	ini_val_t *val;
 
 	val = ini_get_val (sct, name, 1);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -347,6 +545,7 @@ int ini_set_sint32 (ini_sct_t *sct, const char *name, long v)
 	ini_val_t *val;
 
 	val = ini_get_val (sct, name, 1);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -356,25 +555,12 @@ int ini_set_sint32 (ini_sct_t *sct, const char *name, long v)
 	return (0);
 }
 
-int ini_set_dbl (ini_sct_t *sct, const char *name, double v)
-{
-	ini_val_t *val;
-
-	val = ini_get_val (sct, name, 1);
-	if (val == NULL) {
-		return (1);
-	}
-
-	ini_val_set_dbl (val, v);
-
-	return (0);
-}
-
 int ini_set_str (ini_sct_t *sct, const char *name, const char *v)
 {
 	ini_val_t *val;
 
 	val = ini_get_val (sct, name, 1);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -390,7 +576,8 @@ int ini_get_uint32 (const ini_sct_t *sct, const char *name, unsigned long *ret, 
 
 	*ret = def;
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -408,7 +595,8 @@ int ini_get_sint32 (const ini_sct_t *sct, const char *name, long *ret, long def)
 
 	*ret = def;
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -426,7 +614,8 @@ int ini_get_uint16 (const ini_sct_t *sct, const char *name, unsigned *ret, unsig
 
 	*ret = def;
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -444,7 +633,8 @@ int ini_get_sint16 (const ini_sct_t *sct, const char *name, int *ret, int def)
 
 	*ret = def;
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}
@@ -462,30 +652,13 @@ int ini_get_bool (const ini_sct_t *sct, const char *name, int *ret, int def)
 
 	*ret = (def != 0);
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}
 
 	if (ini_val_get_bool (val, ret)) {
-		return (1);
-	}
-
-	return (0);
-}
-
-int ini_get_dbl (const ini_sct_t *sct, const char *name, double *ret, double def)
-{
-	ini_val_t *val;
-
-	*ret = def;
-
-	val = ini_find_val (sct, name);
-	if (val == NULL) {
-		return (1);
-	}
-
-	if (ini_val_get_dbl (val, ret)) {
 		return (1);
 	}
 
@@ -499,7 +672,8 @@ int ini_get_string (const ini_sct_t *sct, const char *name, const char **ret, co
 
 	*ret = def;
 
-	val = ini_find_val (sct, name);
+	val = ini_get_val ((ini_sct_t *) sct, name, 0);
+
 	if (val == NULL) {
 		return (1);
 	}

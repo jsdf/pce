@@ -35,7 +35,7 @@ typedef struct {
 static
 int pc_set_msg_emu_config_save (ibmpc_t *pc, const char *msg, const char *val)
 {
-	if (ini_write (pc->cfg, val)) {
+	if (ini_write (val, pc->cfg)) {
 		return (1);
 	}
 

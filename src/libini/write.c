@@ -5,13 +5,13 @@
 /*****************************************************************************
  * File name:   src/libini/write.c                                           *
  * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
  * This program is free software. You can redistribute it and / or modify it *
  * under the terms of the GNU General Public License version 2 as  published *
- * by  the Free Software Foundation.                                         *
+ * by the Free Software Foundation.                                          *
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
@@ -20,11 +20,12 @@
  *****************************************************************************/
 
 
+#include <config.h>
+
+#include <stdio.h>
+#include <string.h>
+
 #include <libini/libini.h>
-
-
-static
-int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent);
 
 
 static
@@ -39,21 +40,13 @@ int ini_write_indent (FILE *fp, unsigned level)
 }
 
 static
-int ini_write_val (ini_val_t *val, FILE *fp)
+int ini_write_val (FILE *fp, ini_val_t *val)
 {
 	fprintf (fp, "%s = ", val->name);
 
 	switch (val->type) {
-	case INI_VAL_U32:
+	case INI_VAL_INT:
 		fprintf (fp, "0x%lx", val->val.u32);
-		break;
-
-	case INI_VAL_S32:
-		fprintf (fp, "%ld", val->val.s32);
-		break;
-
-	case INI_VAL_DBL:
-		fprintf (fp, "%f", val->val.dbl);
 		break;
 
 	case INI_VAL_STR:
@@ -68,108 +61,76 @@ int ini_write_val (ini_val_t *val, FILE *fp)
 }
 
 static
-int ini_write_section1 (ini_sct_t *sct, FILE *fp, unsigned indent)
+int ini_write_section (FILE *fp, ini_sct_t *sct, unsigned indent)
 {
-	if (ini_write_indent (fp, indent)) {
-		return (1);
-	}
+	ini_val_t *val;
 
-	fprintf (fp, "section %s {\n", sct->name);
+	val = sct->val_head;
 
-	if (ini_write_body (sct, fp, indent + 1)) {
-		return (1);
-	}
-
-	if (ini_write_indent (fp, indent)) {
-		return (1);
-	}
-
-	fputs ("}\n", fp);
-
-	return (0);
-}
-
-static
-int ini_write_section2 (ini_sct_t *sct, FILE *fp, unsigned indent)
-{
-	int subsct;
-
-	subsct = (sct->sctcnt > 0);
-
-	if (ini_write_indent (fp, indent)) {
-		return (1);
-	}
-
-	fprintf (fp, "[%s]%s", sct->name, subsct ? " {\n" : "\n");
-
-	if (ini_write_body (sct, fp, indent + subsct)) {
-		return (1);
-	}
-
-	if (subsct) {
-		fputs ("}\n", fp);
-	}
-
-	return (0);
-}
-
-static
-int ini_write_body (ini_sct_t *sct, FILE *fp, unsigned indent)
-{
-	unsigned i;
-
-	for (i = 0; i < sct->valcnt; i++) {
+	while (val != NULL) {
 		if (ini_write_indent (fp, indent)) {
 			return (1);
 		}
 
-		if (ini_write_val (&sct->val[i], fp)) {
+		if (ini_write_val (fp, val)) {
 			return (1);
 		}
 
 		fputs ("\n", fp);
+
+		val = val->next;
 	}
 
-	for (i = 0; i < sct->sctcnt; i++) {
+	sct = sct->sub_head;
+
+	while (sct != NULL) {
 		fputs ("\n", fp);
 
-		if (sct->sct[i].format == 2) {
-			if (ini_write_section2 (&sct->sct[i], fp, indent)) {
-				return (1);
-			}
+		if (ini_write_indent (fp, indent)) {
+			return (1);
 		}
-		else {
-			if (ini_write_section1 (&sct->sct[i], fp, indent)) {
-				return (1);
-			}
+
+		fprintf (fp, "%s {\n", sct->name);
+
+		if (ini_write_section (fp, sct, indent + 1)) {
+			return (1);
 		}
+
+		if (ini_write_indent (fp, indent)) {
+			return (1);
+		}
+
+		fputs ("}\n", fp);
+
+		sct = sct->next;
 	}
 
 	return (0);
 }
 
-int ini_write_fp (ini_sct_t *sct, FILE *fp)
+int ini_write_fp (FILE *fp, ini_sct_t *sct)
 {
-	int r;
-
 	fputs ("# Generated automatically by libini\n\n", fp);
 
-	r = ini_write_body (sct, fp, 0);
+	if (ini_write_section (fp, sct, 0)) {
+		return (1);
+	}
 
-	return (r);
+	return (0);
 }
 
-int ini_write (ini_sct_t *sct, const char *fname)
+int ini_write (const char *fname, ini_sct_t *sct)
 {
 	int  r;
 	FILE *fp;
 
 	fp = fopen (fname, "wb");
+
 	if (fp == NULL) {
 		return (1);
 	}
 
-	r = ini_write_fp (sct, fp);
+	r = ini_write_fp (fp, sct);
 
 	fclose (fp);
 
