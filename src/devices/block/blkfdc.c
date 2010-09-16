@@ -432,6 +432,8 @@ int fdc_guess_geometry (disk_fdc_t *fdc)
 		return (1);
 	}
 
+	dsk_set_visible_chs (&fdc->dsk, c, h, s);
+
 	return (0);
 }
 
