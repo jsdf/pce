@@ -74,7 +74,7 @@ int pfdc_is_raw (const char *fname)
 }
 
 static
-unsigned pfdc_get_type (unsigned type, const char *fname)
+unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 {
 	unsigned   i;
 	const char *ext;
@@ -110,9 +110,11 @@ unsigned pfdc_get_type (unsigned type, const char *fname)
 		return (PFDC_FORMAT_TD0);
 	}
 
-	if (strcasecmp (ext, ".img") == 0) {
-		if (pfdc_is_raw (fname)) {
-			return (PFDC_FORMAT_RAW);
+	if (save == 0) {
+		if (strcasecmp (ext, ".img") == 0) {
+			if (pfdc_is_raw (fname)) {
+				return (PFDC_FORMAT_RAW);
+			}
 		}
 	}
 
@@ -157,7 +159,7 @@ pfdc_img_t *pfdc_img_load (const char *fname, unsigned type)
 	FILE       *fp;
 	pfdc_img_t *img;
 
-	type = pfdc_get_type (type, fname);
+	type = pfdc_get_type (type, fname, 0);
 
 	fp = fopen (fname, "rb");
 
@@ -205,7 +207,7 @@ int pfdc_img_save (const char *fname, const pfdc_img_t *img, unsigned type)
 	int  r;
 	FILE *fp;
 
-	type = pfdc_get_type (type, fname);
+	type = pfdc_get_type (type, fname, 1);
 
 	fp = fopen (fname, "wb");
 
