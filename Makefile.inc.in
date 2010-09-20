@@ -102,8 +102,9 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 	NEWS README TODO autogen.sh config.guess config.sub \
 	configure configure.in gendep install-sh
 
-DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt
-DIST += doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt
+DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
+	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
+	doc/pfdc-format.txt doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
 
