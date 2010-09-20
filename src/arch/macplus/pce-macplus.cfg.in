@@ -289,21 +289,22 @@ disk {
 }
 
 disk {
-	drive = 128
-	type  = auto
-	file  = "hd1.img"
+	drive    = 128
+	type     = "auto"
+	file     = "hd1.img"
+	optional = 0
 }
 
 disk {
 	drive    = 129
-	type     = auto
+	type     = "auto"
 	file     = "hd2.img"
 	optional = 1
 }
 
 disk {
 	drive    = 130
-	type     = auto
+	type     = "auto"
 	file     = "hd3.img"
 	optional = 1
 }
