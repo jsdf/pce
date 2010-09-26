@@ -35,7 +35,7 @@ $(rel)/%.o: $(rel)/%.c
 
 # ----------------------------------------------------------------------
 
-PCE_IBMPC_BAS  := cassette ems hook ibmpc int13 keyboard main mouse msg speaker util xms
+PCE_IBMPC_BAS  := cassette cmd ems hook ibmpc int13 keyboard main mouse msg speaker util xms
 PCE_IBMPC_SRC  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).c)
 PCE_IBMPC_OBJ  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).o)
 PCE_IBMPC_HDR  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).h)
@@ -102,10 +102,12 @@ CLN  += $(PCE_IBMPC_BIN) $(PCE_IBMPC_OBJ) $(PCE_IBMPC_ETC)
 DIST += $(PCE_IBMPC_SRC) $(PCE_IBMPC_HDR) $(PCE_IBMPC_MAN1)
 DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc
 
-$(rel)/int13.o:		$(rel)/int13.c
+$(rel)/cassette.o:	$(rel)/cassette.c
+$(rel)/cmd.o:		$(rel)/cmd.c
 $(rel)/ems.o:		$(rel)/ems.c
 $(rel)/hook.o:		$(rel)/hook.c
 $(rel)/ibmpc.o:		$(rel)/ibmpc.c
+$(rel)/int13.o:		$(rel)/int13.c
 $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/main.o:		$(rel)/main.c
 $(rel)/mouse.o:		$(rel)/mouse.c

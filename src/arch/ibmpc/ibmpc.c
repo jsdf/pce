@@ -322,6 +322,8 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
 
+	pc->current_int = 0;
+
 	pc->brk = 0;
 	pc->pause = 0;
 

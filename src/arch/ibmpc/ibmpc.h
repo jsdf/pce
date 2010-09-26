@@ -97,6 +97,8 @@ typedef struct ibmpc_t {
 	unsigned           speed_saved;
 	unsigned long      speed_clock_extra;
 
+	unsigned           current_int;
+
 	unsigned long      clk_div[4];
 
 	unsigned long      clock1;
