@@ -94,8 +94,22 @@ start:
 	push	cs
 	pop	ds
 
+	cli
+
+	mov	di, 0x0050
+	mov	es, di
+	xor	di, di
+	xor	ax, ax
+	mov	cx, 0x8000 - 0x0500
+	rep	stosw
+
+	mov	ax, 0x0030
+	mov	ss, ax
+	mov	sp, 0x0100
+
+	sti
+
 	int	0x19
-	int	0x18
 
 done:
 	jmp	done
@@ -1044,7 +1058,9 @@ int_19:
 
 .fail:
 	int	0x18
-	iret
+
+.halt:
+	jmp	.halt
 
 
 ;-----------------------------------------------------------------------------
