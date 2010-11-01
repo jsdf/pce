@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6522.c                                          *
  * Created:     2007-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -255,7 +255,7 @@ void e6522_set_ier (e6522_t *via, unsigned char val)
 		via->ier |= (val & 0x7f);
 	}
 	else {
-		via->ier &= (val & 0x7f);
+		via->ier &= (~val & 0x7f);
 	}
 
 	e6522_set_ifr (via, via->ifr);
