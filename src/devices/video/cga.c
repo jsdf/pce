@@ -414,26 +414,26 @@ static
 void cga_mode1_update (cga_t *cga)
 {
 	unsigned            i, x, y, w, h;
-	unsigned            val, idx;
+	unsigned            ofs, val, idx;
 	unsigned char       *dst;
-	const unsigned char *col;
-	const unsigned char *mem[2];
+	const unsigned char *col, *mem;
 
 	if (cga_set_buf_size (cga, 8 * cga->w, 2 * cga->h)) {
 		return;
 	}
-
-	mem[0] = cga->mem;
-	mem[1] = cga->mem + 8192;
 
 	dst = cga->buf;
 
 	w = 2 * cga->w;
 	h = 2 * cga->h;
 
+	ofs = (2 * cga_get_start (cga)) & 0x1fff;
+
 	for (y = 0; y < h; y++) {
+		mem = cga->mem + ((y & 1) << 13);
+
 		for (x = 0; x < w; x++) {
-			val = mem[y & 1][x];
+			val = mem[(ofs + x) & 0x1fff];
 
 			for (i = 0; i < 4; i++) {
 				idx = (val >> 6) & 3;
@@ -449,7 +449,9 @@ void cga_mode1_update (cga_t *cga)
 			}
 		}
 
-		mem[y & 1] += w;
+		if (y & 1) {
+			ofs = (ofs + w) & 0x1fff;
+		}
 	}
 }
 
@@ -460,26 +462,26 @@ static
 void cga_mode2_update (cga_t *cga)
 {
 	unsigned            i, x, y, w, h;
-	unsigned            val, idx;
+	unsigned            ofs, val, idx;
 	unsigned char       *dst;
-	const unsigned char *col;
-	const unsigned char *mem[2];
+	const unsigned char *col, *mem;
 
 	if (cga_set_buf_size (cga, 16 * cga->w, 2 * cga->h)) {
 		return;
 	}
-
-	mem[0] = cga->mem;
-	mem[1] = cga->mem + 8192;
 
 	dst = cga->buf;
 
 	h = 2 * cga->h;
 	w = 2 * cga->w;
 
+	ofs = (2 * cga_get_start (cga)) & 0x1fff;
+
 	for (y = 0; y < h; y++) {
+		mem = cga->mem + ((y & 1) << 13);
+
 		for (x = 0; x < w; x++) {
-			val = mem[y & 1][x];
+			val = mem[(ofs + x) & 0x1fff];
 
 			for (i = 0; i < 8; i++) {
 				idx = (val & 0x80) ? cga->pal[0] : 0;
@@ -494,7 +496,9 @@ void cga_mode2_update (cga_t *cga)
 			}
 		}
 
-		mem[y & 1] += w;
+		if (y & 1) {
+			ofs = (ofs + w) & 0x1fff;
+		}
 	}
 }
 
