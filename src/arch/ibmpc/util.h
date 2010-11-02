@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/util.h                                        *
  * Created:     2004-06-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,8 +26,6 @@
 
 int str_istail (const char *str, const char *tail);
 int str_isarg (const char *str, const char *arg1, const char *arg2);
-
-ini_sct_t *pce_load_config (const char *fname);
 
 
 #endif

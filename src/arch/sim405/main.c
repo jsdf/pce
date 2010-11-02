@@ -37,13 +37,15 @@
 #include "main.h"
 
 
-char     *par_cpu = NULL;
+char      *par_cpu = NULL;
 
-unsigned par_xlat = P405_XLAT_CPU;
+unsigned  par_xlat = P405_XLAT_CPU;
 
-sim405_t *par_sim = NULL;
+sim405_t  *par_sim = NULL;
 
-unsigned par_sig_int = 0;
+unsigned  par_sig_int = 0;
+
+ini_sct_t *par_cfg = NULL;
 
 
 static
@@ -123,19 +125,20 @@ int cmd_set_sym (sim405_t *sim, const char *sym, unsigned long val)
 }
 
 static
-ini_sct_t *pce_load_config (const char *fname)
+int pce_load_config (ini_sct_t *ini, const char *fname)
 {
-	ini_sct_t *ini;
-
-	if (fname != NULL) {
-		ini = ini_read (fname);
-		if (ini != NULL) {
-			pce_log (MSG_INF, "config:   file=%s\n", fname);
-			return (ini);
-		}
+	if (fname == NULL) {
+		return (0);
 	}
 
-	return (NULL);
+	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
+
+	if (ini_read (par_cfg, fname)) {
+		pce_log (MSG_ERR, "*** loading config file failed\n");
+		return (1);
+	}
+
+	return (0);
 }
 
 int str_isarg1 (const char *str, const char *arg)
@@ -165,7 +168,7 @@ int main (int argc, char *argv[])
 	int       i;
 	int       run;
 	char      *cfg;
-	ini_sct_t *ini, *sct;
+	ini_sct_t *sct;
 	monitor_t mon;
 
 	if (argc == 2) {
@@ -184,6 +187,12 @@ int main (int argc, char *argv[])
 
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
+
+	par_cfg = ini_sct_new (NULL);
+
+	if (par_cfg == NULL) {
+		return (1);
+	}
 
 	i = 1;
 	while (i < argc) {
@@ -231,15 +240,14 @@ int main (int argc, char *argv[])
 		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
-	ini = pce_load_config (cfg);
-	if (ini == NULL) {
-		pce_log (MSG_ERR, "loading config file failed\n");
+	if (pce_load_config (par_cfg, cfg)) {
 		return (1);
 	}
 
-	sct = ini_next_sct (ini, NULL, "sim405");
+	sct = ini_next_sct (par_cfg, NULL, "sim405");
+
 	if (sct == NULL) {
-		sct = ini;
+		sct = par_cfg;
 	}
 
 	par_sim = s405_new (sct);

@@ -277,16 +277,16 @@ int ini_read_str (ini_sct_t *sct, const char *str);
 /*!***************************************************************************
  * @short  Read an ini tree from a file
  * @param  fp A C style stream that must be open for reading
- * @return A pointer to the base section of the ini tree or NULL on error.
+ * @return True on error
  *****************************************************************************/
-ini_sct_t *ini_read_fp (FILE *fp, const char *fname);
+int ini_read_fp (ini_sct_t *sct, FILE *fp, const char *fname);
 
 /*!***************************************************************************
  * @short  Read an ini tree from a file
  * @param  fname The file name
- * @return A pointer to the base section of the ini tree or NULL on error.
+ * @return True on error
  *****************************************************************************/
-ini_sct_t *ini_read (const char *fname);
+int ini_read (ini_sct_t *sct, const char *fname);
 
 
 /*!***************************************************************************

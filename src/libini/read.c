@@ -332,58 +332,49 @@ int ini_read_str (ini_sct_t *sct, const char *str)
 	return (0);
 }
 
-ini_sct_t *ini_read_fp (FILE *fp, const char *fname)
+int ini_read_fp (ini_sct_t *sct, FILE *fp, const char *fname)
 {
-	ini_sct_t *sct;
 	scanner_t scn;
 	char      buf[256];
-
-	sct = ini_sct_new (NULL);
-
-	if (sct == NULL) {
-		return (NULL);
-	}
 
 	scn_init (&scn);
 
 	if (scn_add_file (&scn, fname, fp, 0)) {
 		ini_sct_del (sct);
-		return (NULL);
+		return (1);
 	}
 
 	if (parse_section (&scn, sct, buf)) {
 		parse_error (&scn, "parse error before", 1);
-		ini_sct_del (sct);
 		scn_free (&scn);
-		return (NULL);
+		return (1);
 	}
 
 	if (scn_get_chr (&scn, 0) != 0) {
 		parse_error (&scn, "parse error before", 1);
-		ini_sct_del (sct);
 		scn_free (&scn);
-		return (NULL);
+		return (1);
 	}
 
 	scn_free (&scn);
 
-	return (sct);
+	return (0);
 }
 
-ini_sct_t *ini_read (const char *fname)
+int ini_read (ini_sct_t *sct, const char *fname)
 {
-	FILE       *fp;
-	ini_sct_t *sct;
+	int  r;
+	FILE *fp;
 
 	fp = fopen (fname, "rb");
 
 	if (fp == NULL) {
-		return (NULL);
+		return (1);
 	}
 
-	sct = ini_read_fp (fp, fname);
+	r = ini_read_fp (sct, fp, fname);
 
 	fclose (fp);
 
-	return (sct);
+	return (r);
 }

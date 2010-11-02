@@ -52,7 +52,8 @@ static pce_option_t opts[] = {
 	{ 'c', 1, "config", "string", "Set the config file name [none]" },
 	{ 'd', 1, "path", "string", "Add a directory to the search path" },
 	{ 'g', 1, "video", "string", "Set the video device" },
-	{ 'i', 1, "ini-string", "string", "Add an ini string" },
+	{ 'i', 1, "ini-prefix", "string", "Add an ini string before the config file" },
+	{ 'I', 1, "ini-append", "string", "Add an ini string after the config file" },
 	{ 'l', 1, "log", "string", "Set the log file name [none]" },
 	{ 'p', 1, "cpu", "string", "Set the CPU model" },
 	{ 'q', 0, "quiet", NULL, "Set the log level to error [no]" },
@@ -164,10 +165,27 @@ int cmd_set_sym (ibmpc_t *pc, const char *sym, unsigned long val)
 	return (1);
 }
 
+static
+int pce_load_config (ini_sct_t *ini, const char *fname)
+{
+	if (fname == NULL) {
+		return (0);
+	}
+
+	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
+
+	if (ini_read (par_cfg, fname)) {
+		pce_log (MSG_ERR, "*** loading config file failed\n");
+		return (1);
+	}
+
+	return (0);
+}
+
 int main (int argc, char *argv[])
 {
-	int        r;
-	char       **optarg;
+	int       r;
+	char      **optarg;
 	int       run, nomon;
 	char      *cfg;
 	ini_sct_t *sct;
@@ -178,6 +196,12 @@ int main (int argc, char *argv[])
 
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
+
+	par_cfg = ini_sct_new (NULL);
+
+	if (par_cfg == NULL) {
+		return (1);
+	}
 
 	ini_str_init (&par_ini_str);
 
@@ -218,6 +242,16 @@ int main (int argc, char *argv[])
 			break;
 
 		case 'i':
+			if (ini_read_str (par_cfg, optarg[0])) {
+				fprintf (stderr,
+					"%s: error parsing ini string (%s)\n",
+					argv[0], optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		case 'I':
 			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
 			break;
 
@@ -270,14 +304,12 @@ int main (int argc, char *argv[])
 
 	pc_log_banner();
 
-	par_cfg = pce_load_config (cfg);
-
-	if (par_cfg == NULL) {
-		pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
+	if (pce_load_config (par_cfg, cfg)) {
 		return (1);
 	}
 
 	sct = ini_next_sct (par_cfg, NULL, "pc");
+
 	if (sct == NULL) {
 		sct = par_cfg;
 	}

@@ -46,6 +46,8 @@ unsigned   par_sig_int = 0;
 
 monitor_t  par_mon;
 
+ini_sct_t  *par_cfg = NULL;
+
 static ini_strings_t par_ini_str;
 
 
@@ -55,7 +57,8 @@ static pce_option_t opts[] = {
 	{ 'B', 2, "disk-delay", "drive delay", "Set the disk delay [30]" },
 	{ 'c', 1, "config", "string", "Set the config file name [none]" },
 	{ 'd', 1, "path", "string", "Add a directory to the search path" },
-	{ 'i', 1, "ini-string", "string", "Add an ini string" },
+	{ 'i', 1, "ini-prefix", "string", "Add an ini string before the config file" },
+	{ 'I', 1, "ini-append", "string", "Add an ini string after the config file" },
 	{ 'l', 1, "log", "string", "Set the log file name [none]" },
 	{ 'p', 1, "cpu", "string", "Set the CPU model" },
 	{ 'q', 0, "quiet", NULL, "Set the log level to error [no]" },
@@ -174,21 +177,20 @@ void mac_log_deb (const char *msg, ...)
 }
 
 static
-ini_sct_t *pce_load_config (const char *fname)
+int pce_load_config (ini_sct_t *ini, const char *fname)
 {
-	ini_sct_t *ini;
-
-	if (fname != NULL) {
-		ini = ini_read (fname);
-		if (ini != NULL) {
-			pce_log_tag (MSG_INF, "PCE:",
-				"using config file '%s'\n", fname
-			);
-			return (ini);
-		}
+	if (fname == NULL) {
+		return (0);
 	}
 
-	return (NULL);
+	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
+
+	if (ini_read (par_cfg, fname)) {
+		pce_log (MSG_ERR, "*** loading config file failed\n");
+		return (1);
+	}
+
+	return (0);
 }
 
 int main (int argc, char *argv[])
@@ -198,7 +200,7 @@ int main (int argc, char *argv[])
 	int       run, nomon;
 	unsigned  drive;
 	char      *cfg;
-	ini_sct_t *ini, *sct;
+	ini_sct_t *sct;
 
 	cfg = NULL;
 	run = 0;
@@ -206,6 +208,12 @@ int main (int argc, char *argv[])
 
 	pce_log_init();
 	pce_log_add_fp (stderr, 0, MSG_INF);
+
+	par_cfg = ini_sct_new (NULL);
+
+	if (par_cfg == NULL) {
+		return (1);
+	}
 
 	ini_str_init (&par_ini_str);
 
@@ -259,6 +267,16 @@ int main (int argc, char *argv[])
 			break;
 
 		case 'i':
+			if (ini_read_str (par_cfg, optarg[0])) {
+				fprintf (stderr,
+					"%s: error parsing ini string (%s)\n",
+					argv[0], optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		case 'I':
 			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
 			break;
 
@@ -311,15 +329,14 @@ int main (int argc, char *argv[])
 
 	mac_log_banner();
 
-	ini = pce_load_config (cfg);
-	if (ini == NULL) {
-		pce_log (MSG_ERR, "loading config file failed\n");
+	if (pce_load_config (par_cfg, cfg)) {
 		return (1);
 	}
 
-	sct = ini_next_sct (ini, NULL, "macplus");
+	sct = ini_next_sct (par_cfg, NULL, "macplus");
+
 	if (sct == NULL) {
-		sct = ini;
+		sct = par_cfg;
 	}
 
 	if (ini_str_eval (&par_ini_str, sct, 1)) {

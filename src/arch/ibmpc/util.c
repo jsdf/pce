@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/util.c                                        *
  * Created:     2004-06-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,8 @@
 
 
 #include "main.h"
+
+#include <string.h>
 
 
 int str_istail (const char *str, const char *tail)
@@ -65,35 +67,4 @@ int str_isarg (const char *str, const char *arg1, const char *arg2)
 	}
 
 	return (0);
-}
-
-ini_sct_t *pce_load_config (const char *fname)
-{
-	ini_sct_t *ini;
-	char      *home;
-	char      buf[1024];
-
-	if (fname != NULL) {
-		ini = ini_read (fname);
-		if (ini != NULL) {
-			pce_log_tag (MSG_INF,
-				"PCE:", "using config file \"%s\"\n", fname
-			);
-			return (ini);
-		}
-	}
-
-	home = getenv ("HOME");
-	if (home != NULL) {
-		sprintf (buf, "%s/.pce.cfg", home);
-		ini = ini_read (buf);
-		if (ini != NULL) {
-			pce_log_tag (MSG_INF,
-				"PCE:", "using config file \"%s\"\n", buf
-			);
-			return (ini);
-		}
-	}
-
-	return (NULL);
 }
