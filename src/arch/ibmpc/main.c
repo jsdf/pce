@@ -23,7 +23,6 @@
 #include "main.h"
 #include "cmd.h"
 #include "msg.h"
-#include "util.h"
 
 #include <stdarg.h>
 

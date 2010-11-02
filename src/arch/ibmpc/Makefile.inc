@@ -35,7 +35,20 @@ $(rel)/%.o: $(rel)/%.c
 
 # ----------------------------------------------------------------------
 
-PCE_IBMPC_BAS  := cassette cmd ems hook ibmpc int13 keyboard main mouse msg speaker util xms
+PCE_IBMPC_BAS  := \
+	cassette \
+	cmd \
+	ems \
+	hook \
+	ibmpc \
+	int13 \
+	keyboard \
+	main \
+	mouse \
+	msg \
+	speaker \
+	xms
+
 PCE_IBMPC_SRC  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).c)
 PCE_IBMPC_OBJ  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).o)
 PCE_IBMPC_HDR  := $(foreach f,$(PCE_IBMPC_BAS),$(rel)/$(f).h)
@@ -113,7 +126,6 @@ $(rel)/main.o:		$(rel)/main.c
 $(rel)/mouse.o:		$(rel)/mouse.c
 $(rel)/msg.o:		$(rel)/msg.c
 $(rel)/speaker.o:	$(rel)/speaker.c
-$(rel)/util.o:		$(rel)/util.c
 $(rel)/xms.o:		$(rel)/xms.c
 
 $(rel)/pce-ibmpc$(EXEEXT): $(PCE_IBMPC_OBJ_EXT) $(PCE_IBMPC_OBJ)

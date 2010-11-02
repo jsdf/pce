@@ -192,7 +192,6 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -275,10 +274,6 @@ src/arch/ibmpc/speaker.o: src/arch/ibmpc/speaker.c \
 	src/arch/ibmpc/speaker.h \
 	src/config.h \
 	src/drivers/sound/sound.h
-
-src/arch/ibmpc/util.o: src/arch/ibmpc/util.c \
-	src/arch/ibmpc/main.h \
-	src/config.h
 
 src/arch/ibmpc/xms.o: src/arch/ibmpc/xms.c \
 	src/arch/ibmpc/main.h \
