@@ -94,6 +94,15 @@ void print_version (void)
 	fflush (stdout);
 }
 
+static
+void mac_log_banner (void)
+{
+	pce_log (MSG_INF,
+		"pce-macplus version " PCE_VERSION_STR "\n"
+		"Copyright (C) 2007-2010 Hampa Hug <hampa@hampa.ch>\n"
+	);
+}
+
 void sig_int (int s)
 {
 	par_sig_int = 1;
@@ -300,10 +309,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	pce_log (MSG_INF,
-		"pce-macplus version " PCE_VERSION_STR "\n"
-		"Copyright (C) 2007-2010 Hampa Hug <hampa@hampa.ch>\n"
-	);
+	mac_log_banner();
 
 	ini = pce_load_config (cfg);
 	if (ini == NULL) {
