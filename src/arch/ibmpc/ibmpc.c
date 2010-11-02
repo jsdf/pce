@@ -21,14 +21,40 @@
 
 
 #include "main.h"
+#include "ibmpc.h"
+#include "msg.h"
 
-#include <lib/iniram.h>
-#include <lib/initerm.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 
+#include <lib/brkpt.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/initerm.h>
+#include <lib/load.h>
+#include <lib/log.h>
+#include <lib/string.h>
+#include <lib/sysdep.h>
+
+#include <chipset/82xx/e8237.h>
+#include <chipset/82xx/e8250.h>
+#include <chipset/82xx/e8253.h>
+#include <chipset/82xx/e8255.h>
+#include <chipset/82xx/e8259.h>
+#include <chipset/82xx/e8272.h>
+
+#include <cpu/e8086/e8086.h>
+
+#include <devices/block/block.h>
+#include <devices/fdc.h>
+#include <devices/memory.h>
+#include <devices/nvram.h>
+#include <devices/parport.h>
+#include <devices/serport.h>
 #include <devices/video/mda.h>
 #include <devices/video/hgc.h>
 #include <devices/video/cga.h>
@@ -37,10 +63,9 @@
 #include <devices/video/plantronics.h>
 #include <devices/video/wy700.h>
 
-#include <lib/inidsk.h>
-#include <lib/iniram.h>
-#include <lib/load.h>
-#include <lib/string.h>
+#include <libini/libini.h>
+
+#include <terminal/terminal.h>
 
 
 #ifdef PCE_HOST_WINDOWS
@@ -57,7 +82,7 @@ static
 unsigned char pc_get_port8 (ibmpc_t *pc, unsigned long addr)
 {
 #ifdef DEBUG_PORTS
-	pc_log_deb (pc, "get port 8 %04lX\n", addr);
+	pc_log_deb ("get port 8 %04lX\n", addr);
 #endif
 
 	return (0xff);
@@ -67,7 +92,7 @@ static
 unsigned short pc_get_port16 (ibmpc_t *pc, unsigned long addr)
 {
 #ifdef DEBUG_PORTS
-	pc_log_deb (pc, "get port 16 %04lX\n", addr);
+	pc_log_deb ("get port 16 %04lX\n", addr);
 #endif
 
 	return (0xffff);
@@ -77,7 +102,7 @@ static
 void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 {
 #ifdef DEBUG_PORTS
-	pc_log_deb (pc, "set port 8 %04lX <- %02X\n", addr, val);
+	pc_log_deb ("set port 8 %04lX <- %02X\n", addr, val);
 #endif
 
 	switch (addr) {
@@ -99,7 +124,7 @@ static
 void pc_set_port16 (ibmpc_t *pc, unsigned long addr, unsigned short val)
 {
 #ifdef DEBUG_PORTS
-	pc_log_deb (pc, "set port 16 %04lX <- %04X\n", addr, val);
+	pc_log_deb ("set port 16 %04lX <- %04X\n", addr, val);
 #endif
 }
 
@@ -1452,23 +1477,6 @@ void pc_del (ibmpc_t *pc)
 	free (pc);
 }
 
-void pc_log_deb (ibmpc_t *pc, const char *msg, ...)
-{
-	va_list va;
-
-	if (pc == NULL) {
-		pc = par_pc;
-	}
-
-	pce_log (MSG_DEB, "[%04X:%04X] ",
-		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu)
-	);
-
-	va_start (va, msg);
-	pce_log_va (MSG_DEB, msg, va);
-	va_end (va);
-}
-
 int pc_set_serport_driver (ibmpc_t *pc, unsigned port, const char *driver)
 {
 	if ((port >= 4) || (pc->serport[port] == NULL)) {
@@ -1568,7 +1576,7 @@ void pc_patch_bios (ibmpc_t *pc)
 		return;
 	}
 
-	pc_log_deb (pc, "patching the bios (0x%04x)\n", seg);
+	pc_log_deb ("patching the bios (0x%04x)\n", seg);
 
 	mem_set_uint8_rw (pc->mem, 0xffff1, 0x0c);
 	mem_set_uint8_rw (pc->mem, 0xffff2, 0x00);
@@ -1578,7 +1586,7 @@ void pc_patch_bios (ibmpc_t *pc)
 
 void pc_reset (ibmpc_t *pc)
 {
-	pc_log_deb (pc, "reset pc\n");
+	pc_log_deb ("reset pc\n");
 
 	pc_patch_bios (pc);
 

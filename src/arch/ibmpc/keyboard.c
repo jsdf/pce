@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/keyboard.c                                    *
  * Created:     2007-11-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,11 @@
 
 
 #include "main.h"
+#include "keyboard.h"
+
+#include <lib/log.h>
+
+#include <terminal/terminal.h>
 
 
 /* 10 bits at 31250 bps */
@@ -178,7 +183,7 @@ void pc_kbd_reset (pc_kbd_t *kbd)
 {
 	pc_keymap_t *map;
 
-	pc_log_deb (NULL, "reset keyboard\n");
+	pc_log_deb ("reset keyboard\n");
 
 	map = keymap;
 

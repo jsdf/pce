@@ -21,6 +21,15 @@
 
 
 #include "main.h"
+#include "xms.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <lib/console.h>
+#include <lib/log.h>
+
+#include <libini/libini.h>
 
 
 xms_emb_t *emb_new (unsigned long size)
@@ -162,7 +171,7 @@ void xms_reset (xms_t *xms)
 {
 	unsigned i;
 
-	pc_log_deb (NULL, "reset xms\n");
+	pc_log_deb ("reset xms\n");
 
 	for (i = 0; i < xms->emb_cnt; i++) {
 		emb_del (xms->emb[i]);

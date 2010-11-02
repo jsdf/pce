@@ -21,8 +21,21 @@
 
 
 #include "main.h"
+#include "cassette.h"
+#include "ibmpc.h"
+
+#include <string.h>
+
+#include <devices/block/block.h>
 
 #include <lib/inidsk.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
+#include <lib/msg.h>
+#include <lib/sysdep.h>
+
+
+extern monitor_t par_mon;
 
 
 typedef struct {

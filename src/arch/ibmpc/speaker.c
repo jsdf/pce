@@ -21,6 +21,11 @@
 
 
 #include "main.h"
+#include "speaker.h"
+
+#include <stdlib.h>
+
+#include <drivers/sound/sound.h>
 
 
 #ifndef DEBUG_SPEAKER
@@ -82,7 +87,7 @@ static
 void pc_speaker_on (pc_speaker_t *spk)
 {
 #if DEBUG_SPEAKER >= 1
-	pc_log_deb (NULL, "speaker on\n");
+	pc_log_deb ("speaker on\n");
 #endif
 
 	spk->playing = 1;
@@ -102,7 +107,7 @@ static
 void pc_speaker_off (pc_speaker_t *spk)
 {
 #if DEBUG_SPEAKER >= 1
-	pc_log_deb (NULL, "speaker off\n");
+	pc_log_deb ("speaker off\n");
 #endif
 
 	spk->playing = 0;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ems.c                                         *
  * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,12 @@
 
 
 #include "main.h"
+#include "ems.h"
+
+#include <stdlib.h>
+
+#include <lib/console.h>
+#include <lib/log.h>
 
 
 /*
@@ -140,7 +146,7 @@ void ems_reset (ems_t *ems)
 {
 	unsigned i;
 
-	pc_log_deb (NULL, "reset ems\n");
+	pc_log_deb ("reset ems\n");
 
 	for (i = 1; i < 256; i++) {
 		ems_blk_del (ems->blk[i]);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/hook.h                                        *
  * Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_HOOK_H
 #define PCE_HOOK_H 1
+
+
+#include "ibmpc.h"
 
 
 #define PCEH_STOP      0x0000

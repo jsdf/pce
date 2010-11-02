@@ -24,12 +24,37 @@
 #define PCE_IBMPC_H 1
 
 
-#define PCE_IBMPC_CLK0 14318184
-#define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
-#define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
+#include "cassette.h"
+#include "ems.h"
+#include "keyboard.h"
+#include "mouse.h"
+#include "speaker.h"
+#include "xms.h"
 
-#define PCE_IBMPC_5150 0
-#define PCE_IBMPC_5160 1
+#include <chipset/82xx/e8237.h>
+#include <chipset/82xx/e8250.h>
+#include <chipset/82xx/e8253.h>
+#include <chipset/82xx/e8255.h>
+#include <chipset/82xx/e8259.h>
+#include <chipset/82xx/e8272.h>
+
+#include <cpu/e8086/e8086.h>
+
+#include <devices/block/block.h>
+#include <devices/fdc.h>
+#include <devices/memory.h>
+#include <devices/nvram.h>
+#include <devices/parport.h>
+#include <devices/serport.h>
+#include <devices/video/video.h>
+
+#include <lib/brkpt.h>
+
+#include <libini/libini.h>
+
+#include <terminal/terminal.h>
+
+
 
 
 typedef struct ibmpc_t {
@@ -109,11 +134,12 @@ typedef struct ibmpc_t {
 } ibmpc_t;
 
 
+extern ibmpc_t *par_pc;
+
+
 ibmpc_t *pc_new (ini_sct_t *ini);
 
 void pc_del (ibmpc_t *pc);
-
-void pc_log_deb (ibmpc_t *pc, const char *msg, ...);
 
 int pc_set_serport_driver (ibmpc_t *pc, unsigned port, const char *driver);
 int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname);

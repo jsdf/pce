@@ -26,73 +26,20 @@
 
 #include <config.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <time.h>
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
+#define PCE_IBMPC_CLK0 14318184
+#define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
+#define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-
-struct ibmpc_t;
+#define PCE_IBMPC_5150 0
+#define PCE_IBMPC_5160 1
 
 
 extern const char *par_terminal;
 extern const char *par_video;
 
 
-#include <lib/brkpt.h>
-#include <lib/cmd.h>
-#include <lib/console.h>
-#include <lib/log.h>
-#include <lib/monitor.h>
-#include <lib/msg.h>
-#include <lib/sysdep.h>
-
-#include <cpu/e8086/e8086.h>
-#include <chipset/82xx/e8237.h>
-#include <chipset/82xx/e8250.h>
-#include <chipset/82xx/e8253.h>
-#include <chipset/82xx/e8255.h>
-#include <chipset/82xx/e8259.h>
-#include <chipset/82xx/e8272.h>
-
-#include <libini/libini.h>
-
-#include <terminal/terminal.h>
-
-#include <devices/memory.h>
-#include <devices/fdc.h>
-#include <devices/nvram.h>
-#include <devices/parport.h>
-#include <devices/serport.h>
-
-#include <devices/video/video.h>
-
-#include <devices/block/block.h>
-
-#include "util.h"
-#include "cassette.h"
-#include "keyboard.h"
-#include "mouse.h"
-#include "ems.h"
-#include "speaker.h"
-#include "xms.h"
-#include "ibmpc.h"
-#include "hook.h"
-#include "int13.h"
-#include "msg.h"
-
-
-extern monitor_t par_mon;
-extern ibmpc_t   *par_pc;
+void pc_log_deb (const char *msg, ...);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/hook.c                                        *
  * Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,18 @@
 
 
 #include "main.h"
+#include "ems.h"
+#include "hook.h"
+#include "ibmpc.h"
+#include "int13.h"
+#include "msg.h"
+#include "xms.h"
+
+#include <time.h>
+
+#include <cpu/e8086/e8086.h>
+
+#include <lib/log.h>
 
 
 static

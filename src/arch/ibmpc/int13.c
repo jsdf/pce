@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/int13.c                                       *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,13 @@
 
 
 #include "main.h"
+#include "ibmpc.h"
+#include "int13.h"
+
+#include <string.h>
+
+#include <cpu/e8086/e8086.h>
+#include <devices/block/block.h>
 
 
 void dsk_int_13_check (ibmpc_t *pc)

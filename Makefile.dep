@@ -4,58 +4,18 @@
 
 src/arch/ibmpc/cassette.o: src/arch/ibmpc/cassette.c \
 	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
-	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/lib/console.h
 
 src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -79,54 +39,20 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h
 
 src/arch/ibmpc/ems.o: src/arch/ibmpc/ems.c \
-	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/arch/ibmpc/cassette.h \
@@ -139,7 +65,6 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -161,11 +86,7 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/drivers/sound/sound.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h
@@ -173,15 +94,12 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -210,14 +128,11 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/drivers/sound/sound.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/inidsk.h \
 	src/lib/iniram.h \
 	src/lib/initerm.h \
 	src/lib/load.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
@@ -227,15 +142,12 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -257,53 +169,15 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/drivers/sound/sound.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h
 
 src/arch/ibmpc/keyboard.o: src/arch/ibmpc/keyboard.c \
-	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
-	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h
@@ -312,9 +186,7 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/cmd.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
@@ -346,7 +218,6 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/lib/getopt.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/path.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h \
@@ -354,59 +225,21 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/terminal/terminal.h
 
 src/arch/ibmpc/mouse.o: src/arch/ibmpc/mouse.c \
-	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
-	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
 	src/chipset/82xx/e8250.h \
@@ -428,7 +261,6 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/drivers/sound/sound.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/inidsk.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
@@ -439,130 +271,24 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/terminal/terminal.h
 
 src/arch/ibmpc/speaker.o: src/arch/ibmpc/speaker.c \
-	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
-	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/drivers/sound/sound.h
 
 src/arch/ibmpc/util.o: src/arch/ibmpc/util.c \
-	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
-	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
-	src/config.h \
-	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/config.h
 
 src/arch/ibmpc/xms.o: src/arch/ibmpc/xms.c \
-	src/arch/ibmpc/cassette.h \
-	src/arch/ibmpc/ems.h \
-	src/arch/ibmpc/hook.h \
-	src/arch/ibmpc/ibmpc.h \
-	src/arch/ibmpc/int13.h \
-	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/arch/ibmpc/msg.h \
-	src/arch/ibmpc/speaker.h \
-	src/arch/ibmpc/util.h \
 	src/arch/ibmpc/xms.h \
-	src/chipset/82xx/e8237.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/82xx/e8253.h \
-	src/chipset/82xx/e8255.h \
-	src/chipset/82xx/e8259.h \
-	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
-	src/devices/device.h \
-	src/devices/fdc.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/parport.h \
-	src/devices/serport.h \
-	src/devices/video/video.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/arch/macplus/cmd_68k.h \

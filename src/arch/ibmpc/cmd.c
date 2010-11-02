@@ -21,6 +21,16 @@
 
 
 #include "main.h"
+#include "ibmpc.h"
+
+#include <stdio.h>
+#include <string.h>
+
+#include <lib/brkpt.h>
+#include <lib/cmd.h>
+#include <lib/console.h>
+#include <lib/log.h>
+#include <lib/sysdep.h>
 
 
 static
@@ -522,7 +532,7 @@ void pce_op_int (void *ext, unsigned char n)
 			return;
 		}
 
-		pc_log_deb (NULL, "patching int 19 (0x%04x)\n", seg);
+		pc_log_deb ("patching int 19 (0x%04x)\n", seg);
 
 		e86_set_mem16 (pc->cpu, 0, 4 * 0x19 + 0, 0x0010);
 		e86_set_mem16 (pc->cpu, 0, 4 * 0x19 + 2, seg);

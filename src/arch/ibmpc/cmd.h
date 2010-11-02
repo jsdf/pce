@@ -24,6 +24,13 @@
 #define PCE_IBMPC_CMD_H 1
 
 
+#include "ibmpc.h"
+
+#include <cpu/e8086/e8086.h>
+
+#include <lib/cmd.h>
+
+
 void prt_state_cpu (e8086_t *c);
 
 void pc_run (ibmpc_t *pc);

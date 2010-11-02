@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/mouse.c                                       *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,13 @@
 
 
 #include "main.h"
+#include "mouse.h"
+
+#include <stdlib.h>
+
+#include <chipset/82xx/e8250.h>
+#include <devices/memory.h>
+#include <libini/libini.h>
 
 
 void mse_init (mouse_t *mse, unsigned long base, ini_sct_t *sct)
@@ -251,7 +258,7 @@ void mse_clock (mouse_t *mse, unsigned long cnt)
 		if (cnt >= mse->reset_cntr) {
 			mse->reset_cntr = 0;
 			mse_receive (mse, 'M');
-			pc_log_deb (NULL, "reset mouse\n");
+			pc_log_deb ("reset mouse\n");
 		}
 		else {
 			mse->reset_cntr -= cnt;

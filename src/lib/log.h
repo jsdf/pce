@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/log.h                                                *
  * Created:     2003-02-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 
 
 #include <stdarg.h>
+#include <stdio.h>
 
 
 #define PCE_LOG_MAX 16

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cassette.c                                    *
  * Created:     2008-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,8 +21,13 @@
 
 
 #include "main.h"
+#include "cassette.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
+
+#include <lib/console.h>
 
 
 #define CAS_CLK     1193182

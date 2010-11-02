@@ -24,6 +24,11 @@
 #define PCE_XMS_H 1
 
 
+#include <cpu/e8086/e8086.h>
+#include <devices/memory.h>
+#include <libini/libini.h>
+
+
 #define PCE_XMS_UMB_MAX 256
 
 

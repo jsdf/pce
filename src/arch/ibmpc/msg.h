@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/msg.h                                         *
  * Created:     2004-09-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_MSG_H
 #define PCE_MSG_H 1
+
+
+#include "ibmpc.h"
 
 
 int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val);

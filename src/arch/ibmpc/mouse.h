@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/mouse.h                                       *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,11 @@
 
 #ifndef PCE_MOUSE_H
 #define PCE_MOUSE_H 1
+
+
+#include <chipset/82xx/e8250.h>
+#include <devices/memory.h>
+#include <libini/libini.h>
 
 
 typedef struct {

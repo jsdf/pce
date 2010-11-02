@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/ibmpc/cassette.h                                         *
  * Created:     2008-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_IBMPC_CASSETTE_H
 #define PCE_IBMPC_CASSETTE_H 1
+
+
+#include <stdio.h>
 
 
 typedef struct {

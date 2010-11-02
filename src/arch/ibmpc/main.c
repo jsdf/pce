@@ -21,8 +21,11 @@
 
 
 #include "main.h"
-
 #include "cmd.h"
+#include "msg.h"
+#include "util.h"
+
+#include <stdarg.h>
 
 #include <signal.h>
 
@@ -30,8 +33,12 @@
 #include <SDL.h>
 #endif
 
+#include <lib/console.h>
 #include <lib/getopt.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/path.h>
+#include <lib/sysdep.h>
 
 
 const char           *par_terminal = NULL;
@@ -163,6 +170,27 @@ int cmd_set_sym (ibmpc_t *pc, const char *sym, unsigned long val)
 	}
 
 	return (1);
+}
+
+void pc_log_deb (const char *msg, ...)
+{
+	va_list        va;
+	unsigned short cs, ip;
+
+	if (par_pc == NULL) {
+		cs = 0;
+		ip = 0;
+	}
+	else {
+		cs = e86_get_cs (par_pc->cpu);
+		ip = e86_get_ip (par_pc->cpu);
+	}
+
+	pce_log (MSG_DEB, "[%04X:%04X] ", cs, ip);
+
+	va_start (va, msg);
+	pce_log_va (MSG_DEB, msg, va);
+	va_end (va);
 }
 
 static

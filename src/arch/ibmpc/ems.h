@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ems.h                                         *
  * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,11 @@
 
 #ifndef PCE_IBMPC_EMS_H
 #define PCE_IBMPC_EMS_H 1
+
+
+#include <cpu/e8086/e8086.h>
+#include <devices/memory.h>
+#include <libini/libini.h>
 
 
 typedef struct ems_block_t {
