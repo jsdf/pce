@@ -164,66 +164,6 @@ int cmd_set_sym (ibmpc_t *pc, const char *sym, unsigned long val)
 	return (1);
 }
 
-static
-int pce_load_default_config (const char *dir)
-{
-	unsigned i, j;
-	char     str[1024];
-
-	if (dir == NULL) {
-		dir = "";
-	}
-
-	if (strlen (dir) > (1024 - 16)) {
-		return (1);
-	}
-
-	i = 0;
-	j = 0;
-	while (dir[i] != 0) {
-		str[i] = dir[i];
-		if (str[i] == '/') {
-			j = i + 1;
-		}
-		i += 1;
-	}
-
-	if (j > 0) {
-		str[j] = 0;
-		if (chdir (str) != 0) {
-			return (1);
-		}
-	}
-
-	strcpy (str + j, "ibmpc.cfg");
-	par_cfg = pce_load_config (str);
-	if (par_cfg != NULL) {
-		return (0);
-	}
-
-	strcpy (str + j, "pce.cfg");
-	par_cfg = pce_load_config (str);
-	if (par_cfg != NULL) {
-		return (0);
-	}
-
-	return (1);
-}
-
-static
-int pce_default_config (const char *argv0)
-{
-	if (pce_load_default_config (NULL) == 0) {
-		return (0);
-	}
-
-	if (pce_load_default_config (argv0) == 0) {
-		return (0);
-	}
-
-	return (1);
-}
-
 int main (int argc, char *argv[])
 {
 	int        r;
@@ -330,24 +270,11 @@ int main (int argc, char *argv[])
 
 	pc_log_banner();
 
-	if (argc < 2) {
-		/* no arguments, use defaults */
-		pce_log_set_level (stderr, MSG_ERR);
-		par_terminal = "sdl";
-		par_video = "ega";
-		nomon = 1;
+	par_cfg = pce_load_config (cfg);
 
-		if (pce_default_config (argv[0])) {
-			pce_log (MSG_ERR, "loading config file failed\n");
-			return (1);
-		}
-	}
-	else {
-		par_cfg = pce_load_config (cfg);
-		if (par_cfg == NULL) {
-			pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
-			return (1);
-		}
+	if (par_cfg == NULL) {
+		pce_log (MSG_ERR, "loading config file failed (%s)\n", cfg);
+		return (1);
 	}
 
 	sct = ini_next_sct (par_cfg, NULL, "pc");
