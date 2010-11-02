@@ -122,6 +122,36 @@ int parse_block (scanner_t *scn, ini_sct_t *sct, ini_sct_t *sub, char *buf)
 }
 
 static
+int parse_assign_undef (scanner_t *scn, ini_sct_t *sct, ini_val_t *tmp, const char *name)
+{
+	ini_val_t *val;
+
+	if (ini_eval (scn, sct, tmp)) {
+		return (1);
+	}
+
+	if (tmp->type == INI_VAL_NONE) {
+		return (1);
+	}
+
+	val = ini_get_val (sct, name, 0);
+
+	if (val != NULL) {
+		return (0);
+	}
+
+	val = ini_get_val (sct, name, 1);
+
+	if (val == NULL) {
+		return (1);
+	}
+
+	ini_val_copy (val, tmp);
+
+	return (0);
+}
+
+static
 int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 {
 	int       done;
@@ -193,6 +223,7 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 static
 int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 {
+	int       r;
 	ini_sct_t *sub;
 	ini_val_t *val;
 
@@ -219,6 +250,19 @@ int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 			}
 
 			if (scn_match (scn, "}") == 0) {
+				return (1);
+			}
+		}
+		else if (scn_match (scn, "?=")) {
+			ini_val_t tmp;
+
+			ini_val_init (&tmp, NULL);
+
+			r = parse_assign_undef (scn, sct, &tmp, buf);
+
+			ini_val_free (&tmp);
+
+			if (r) {
 				return (1);
 			}
 		}
