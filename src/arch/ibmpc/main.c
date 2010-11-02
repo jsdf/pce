@@ -92,6 +92,15 @@ void print_version (void)
 }
 
 static
+void pc_log_banner (void)
+{
+	pce_log (MSG_MSG,
+		"pce-ibmpc version " PCE_VERSION_STR "\n"
+		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
+	);
+}
+
+static
 void sig_int (int s)
 {
 	fprintf (stderr, "pce-ibmpc: sigint\n");
@@ -319,10 +328,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	pce_log (MSG_MSG,
-		"pce-ibmpc version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
-	);
+	pc_log_banner();
 
 	if (argc < 2) {
 		/* no arguments, use defaults */
