@@ -675,7 +675,7 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 	}
 
 	ini_get_uint32 (sct, "address", &addr, 0x580000);
-	ini_get_uint32 (sct, "size", &size, 0x1000);
+	ini_get_uint32 (sct, "size", &size, 0x80000);
 
 	pce_log_tag (MSG_INF, "SCSI:", "addr=0x%06lx size=0x%lx\n", addr, size);
 

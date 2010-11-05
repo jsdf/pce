@@ -103,6 +103,9 @@ void mac_scsi_init (mac_scsi_t *scsi)
 
 	scsi->buf = malloc (scsi->buf_max);
 
+	scsi->addr_mask = 0xff0;
+	scsi->addr_shift = 4;
+
 	scsi->cmd_start = NULL;
 	scsi->cmd_finish = NULL;
 
@@ -891,7 +894,9 @@ unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr)
 
 	scsi = &sim->scsi;
 
-	switch (addr / 16) {
+	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
+
+	switch (addr) {
 	case 0x00: /* CSD */
 		val = scsi->csd;
 		break;
@@ -931,7 +936,7 @@ unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr)
 
 	default:
 		val = 0xff;
-		mac_log_deb ("scsi: get  8: %04lX -> %02X\n", addr / 16, val);
+		mac_log_deb ("scsi: get  8: %04lX -> %02X\n", addr, val);
 		break;
 	}
 
@@ -940,8 +945,12 @@ unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr)
 
 unsigned short mac_scsi_get_uint16 (void *ext, unsigned long addr)
 {
+	mac_scsi_t *scsi = ext;
+
+	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
+
 #ifdef DEBUG_SCSI
-	mac_log_deb ("scsi: set 16: %04lX -> %02X\n", addr / 16, 0x00);
+	mac_log_deb ("scsi: set 16: %04lX -> %02X\n", addr, 0x00);
 #endif
 
 	return (0);
@@ -1224,7 +1233,9 @@ void mac_scsi_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 
 	scsi = &sim->scsi;
 
-	switch (addr / 16) {
+	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
+
+	switch (addr) {
 	case 0x00: /* ODR */
 		mac_scsi_set_odr (scsi, val);
 		break;
@@ -1260,7 +1271,7 @@ void mac_scsi_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 		break;
 
 	default:
-		mac_log_deb ("scsi: set  8: %04lX <- %02X\n", addr / 16, val);
+		mac_log_deb ("scsi: set  8: %04lX <- %02X\n", addr, val);
 		break;
 	}
 }
@@ -1295,7 +1306,11 @@ void mac_scsi_reset (mac_scsi_t *scsi)
 
 void mac_scsi_set_uint16 (void *ext, unsigned long addr, unsigned short val)
 {
+	mac_scsi_t *scsi = ext;
+
+	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
+
 #ifdef DEBUG_SCSI
-	mac_log_deb ("scsi: set 16: %04lX <- %02X\n", addr / 16, val);
+	mac_log_deb ("scsi: set 16: %04lX <- %02X\n", addr, val);
 #endif
 }

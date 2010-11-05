@@ -61,6 +61,9 @@ typedef struct mac_scsi_s {
 
 	unsigned      sel_drv;
 
+	unsigned long addr_mask;
+	unsigned      addr_shift;
+
 	void          (*cmd_start) (struct mac_scsi_s *scsi);
 	void          (*cmd_finish) (struct mac_scsi_s *scsi);
 
