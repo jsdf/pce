@@ -726,6 +726,31 @@ void mac_scsi_cmd_mode_sense (mac_scsi_t *scsi)
 }
 
 static
+void mac_scsi_cmd_start_stop (mac_scsi_t *scsi)
+{
+	const char *str;
+
+	switch (scsi->cmd[4] & 3) {
+	case 0:
+		str = "stop motor";
+		break;
+	case 1:
+		str = "start motor";
+		break;
+	case 2:
+		str = "eject media";
+		break;
+	case 3:
+		str = "load media";
+		break;
+	}
+
+	mac_log_deb ("scsi: start/stop unit %u (%s)\n", scsi->sel_drv, str);
+
+	mac_scsi_set_phase_status (scsi, 0x00);
+}
+
+static
 void mac_scsi_cmd_read_capacity (mac_scsi_t *scsi)
 {
 	unsigned long cnt;
@@ -806,6 +831,10 @@ void mac_scsi_cmd_init (mac_scsi_t *scsi, unsigned char cmd)
 		mac_scsi_set_cmd (scsi, 6, mac_scsi_cmd_mode_sense);
 		break;
 
+	case 0x1b:
+		mac_scsi_set_cmd (scsi, 6, mac_scsi_cmd_start_stop);
+		break;
+
 	case 0x25:
 		mac_scsi_set_cmd (scsi, 10, mac_scsi_cmd_read_capacity);
 		break;
@@ -827,6 +856,7 @@ void mac_scsi_cmd_init (mac_scsi_t *scsi, unsigned char cmd)
 		break;
 
 	default:
+		mac_log_deb ("scsi: unknown command (%02X)\n", cmd);
 		mac_scsi_set_phase_status (scsi, 0x02);
 		break;
 	}
