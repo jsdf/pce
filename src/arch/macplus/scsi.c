@@ -953,7 +953,8 @@ unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr)
 		break;
 
 	case 0x06: /* IDR */
-		val = 0xff;
+	case 0x26:
+		val = mac_scsi_get_csd_dma (scsi);
 		break;
 
 	case 0x07: /* RPI */
