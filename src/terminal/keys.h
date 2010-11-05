@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/keys.h                                          *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -106,9 +106,12 @@ typedef enum {
 
 	PCE_KEY_LCTRL,
 	PCE_KEY_LSUPER,
+	PCE_KEY_LMETA,
+	PCE_KEY_MODE,
 	PCE_KEY_LALT,
 	PCE_KEY_SPACE,
 	PCE_KEY_RALT,
+	PCE_KEY_RMETA,
 	PCE_KEY_RSUPER,
 	PCE_KEY_MENU,
 	PCE_KEY_RCTRL,

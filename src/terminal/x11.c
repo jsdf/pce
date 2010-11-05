@@ -120,6 +120,7 @@ static xt_keymap_t keymap[] = {
 	{ XK_Super_L,     PCE_KEY_LSUPER },
 	{ XK_Alt_L,       PCE_KEY_LALT },
 	{ XK_Meta_L,      PCE_KEY_LALT },
+	{ XK_Mode_switch, PCE_KEY_MODE },
 	{ XK_space,       PCE_KEY_SPACE },
 	{ XK_Alt_R,       PCE_KEY_RALT },
 	{ XK_Meta_R,      PCE_KEY_RALT },

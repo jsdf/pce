@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/keys.c                                          *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -131,13 +131,17 @@ pce_key_name_t keyname[] = {
 
 	{ PCE_KEY_LCTRL, "CtrlLeft" },
 	{ PCE_KEY_LCTRL, "Ctrl" },
+	{ PCE_KEY_LMETA, "MetaLeft" },
+	{ PCE_KEY_LMETA, "Meta" },
 	{ PCE_KEY_LSUPER, "SuperLeft" },
 	{ PCE_KEY_LSUPER, "StartLeft" },
 	{ PCE_KEY_LSUPER, "WindowsLeft" },
+	{ PCE_KEY_MODE, "Mode" },
 	{ PCE_KEY_LALT, "AltLeft" },
 	{ PCE_KEY_LALT, "Alt" },
 	{ PCE_KEY_SPACE, "Space" },
 	{ PCE_KEY_RALT, "AltRight" },
+	{ PCE_KEY_RMETA, "MetaRight" },
 	{ PCE_KEY_RSUPER, "SuperRight" },
 	{ PCE_KEY_RSUPER, "StartRight" },
 	{ PCE_KEY_RSUPER, "WindowsRight" },

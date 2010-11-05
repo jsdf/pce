@@ -119,10 +119,13 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_RSHIFT,       PCE_KEY_RSHIFT },
 
 	{ SDLK_LCTRL,        PCE_KEY_LCTRL },
+	{ SDLK_LMETA,        PCE_KEY_LMETA },
 	{ SDLK_LSUPER,       PCE_KEY_LSUPER },
 	{ SDLK_LALT,         PCE_KEY_LALT },
+	{ SDLK_MODE,         PCE_KEY_MODE },
 	{ SDLK_SPACE,        PCE_KEY_SPACE },
 	{ SDLK_RALT,         PCE_KEY_RALT },
+	{ SDLK_RMETA,        PCE_KEY_RMETA },
 	{ SDLK_RSUPER,       PCE_KEY_RSUPER },
 	{ SDLK_MENU,         PCE_KEY_MENU },
 	{ SDLK_RCTRL,        PCE_KEY_RCTRL },
