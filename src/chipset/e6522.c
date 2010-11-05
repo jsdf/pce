@@ -263,11 +263,13 @@ void e6522_set_ier (e6522_t *via, unsigned char val)
 
 
 static
-unsigned char e6522_get_ora (e6522_t *via)
+unsigned char e6522_get_ora (e6522_t *via, int handshake)
 {
 	unsigned char val;
 
-	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
+	if (handshake) {
+		e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
+	}
 
 	val = via->ora & via->ddra;
 	val |= via->ira & ~via->ddra;
@@ -587,7 +589,7 @@ unsigned char e6522_get_uint8 (e6522_t *via, unsigned long addr)
 		break;
 
 	case 0x01:
-		val = e6522_get_ora (via);
+		val = e6522_get_ora (via, 1);
 		break;
 
 	case 0x02:
@@ -643,7 +645,7 @@ unsigned char e6522_get_uint8 (e6522_t *via, unsigned long addr)
 		break;
 
 	case 0x0f:
-		val = via->ora;
+		val = e6522_get_ora (via, 0);
 		break;
 
 	default:
