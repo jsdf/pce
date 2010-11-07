@@ -422,19 +422,13 @@ void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 	sim->rom_ovl = mem_blk_clone (sim->rom);
 	mem_blk_set_addr (sim->rom_ovl, 0);
 
-	mem_rmv_blk (sim->mem, sim->ram);
-	mem_add_blk (sim->mem, sim->ram_ovl, 0);
-	mem_add_blk (sim->mem, sim->rom_ovl, 0);
-
-	sim->overlay = 1;
+	sim->overlay = 0;
 
 	ini_get_bool (ini, "memtest", &memtest, 1);
 
 	if (memtest == 0) {
-		if (mem_blk_get_size (sim->ram) >= (0x02a4 + 4)) {
-			pce_log_tag (MSG_INF, "RAM:", "disabling memory test\n");
-			mem_blk_set_uint32_be (sim->ram, 0x02ae, 0x00400000);
-		}
+		pce_log_tag (MSG_INF, "RAM:", "disabling memory test\n");
+		mem_set_uint32_be (sim->mem, 0x02ae, 0x00400000);
 	}
 }
 
