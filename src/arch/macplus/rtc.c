@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/rtc.c                                       *
  * Created:     2007-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -90,10 +90,10 @@ void mac_rtc_set_defaults (mac_rtc_t *rtc)
 
 int mac_rtc_load_file (mac_rtc_t *rtc, const char *fname)
 {
-	FILE          *fp;
-	unsigned char buf[4];
+	FILE *fp;
 
 	fp = fopen (fname, "rb");
+
 	if (fp == NULL) {
 		return (1);
 	}
@@ -103,39 +103,25 @@ int mac_rtc_load_file (mac_rtc_t *rtc, const char *fname)
 		return (1);
 	}
 
-	if (fread (buf, 1, 4, fp) != 4) {
-		fclose (fp);
-		return (1);
-	}
-
 	fclose (fp);
 
 	rtc->reg_wp = 0x80;
 	rtc->reg_test = 0x00;
-
-	rtc->clock = buf_get_uint32_be (buf, 0);
 
 	return (0);
 }
 
 int mac_rtc_save_file (mac_rtc_t *rtc, const char *fname)
 {
-	FILE          *fp;
-	unsigned char buf[4];
+	FILE *fp;
 
 	fp = fopen (fname, "wb");
+
 	if (fp == NULL) {
 		return (1);
 	}
 
-	buf_set_uint32_be (buf, 0, rtc->clock);
-
 	if (fwrite (rtc->data, 1, 256, fp) != 256) {
-		fclose (fp);
-		return (1);
-	}
-
-	if (fwrite (buf, 1, 4, fp) != 4) {
 		fclose (fp);
 		return (1);
 	}
