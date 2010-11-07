@@ -351,7 +351,21 @@ unsigned char e6522_get_pcr (e6522_t *via)
 }
 
 
-static
+void e6522_set_ora (e6522_t *via, unsigned char val)
+{
+	via->ora = val;
+
+	e6522_set_ora_out (via);
+	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
+}
+
+void e6522_set_ddra (e6522_t *via, unsigned char val)
+{
+	via->ddra = val;
+
+	e6522_set_ora_out (via);
+}
+
 void e6522_set_orb (e6522_t *via, unsigned char val)
 {
 	via->orb = val;
@@ -360,30 +374,11 @@ void e6522_set_orb (e6522_t *via, unsigned char val)
 	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CB1 | E6522_IFR_CB2));
 }
 
-static
-void e6522_set_ddra (e6522_t *via, unsigned char val)
-{
-	via->ddra = val;
-
-	e6522_set_ora_out (via);
-}
-
-static
 void e6522_set_ddrb (e6522_t *via, unsigned char val)
 {
 	via->ddrb = val;
 
 	e6522_set_orb_out (via);
-}
-
-
-static
-void e6522_set_ora (e6522_t *via, unsigned char val)
-{
-	via->ora = val;
-
-	e6522_set_ora_out (via);
-	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
 }
 
 static
