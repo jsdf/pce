@@ -1678,6 +1678,13 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 		ega->video.dotclk[2] = 0;
 
 		ega->latch_hpp = ega->reg_atc[EGA_ATC_HPP] & 0x0f;
+
+		addr = ega_get_start (ega);
+
+		if (ega->latch_addr != addr) {
+			ega->latch_addr = addr;
+			ega->update_state |= EGA_UPDATE_DIRTY;
+		}
 	}
 
 	if (ega->update_state & EGA_UPDATE_RETRACE) {
@@ -1711,13 +1718,6 @@ void ega_clock (ega_t *ega, unsigned long cnt)
 	}
 
 	ega->update_state = EGA_UPDATE_RETRACE;
-
-	addr = ega_get_start (ega);
-
-	if (ega->latch_addr != addr) {
-		ega->latch_addr = addr;
-		ega->update_state |= EGA_UPDATE_DIRTY;
-	}
 
 	if ((ega->reg_crt[EGA_CRT_VRE] & EGA_CRT_VRE_EVI) == 0) {
 		/* vertical retrace interrupt enabled */
