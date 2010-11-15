@@ -1989,6 +1989,13 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 		vga->video.dotclk[2] = 0;
 
 		vga->latch_hpp = vga->reg_atc[VGA_ATC_HPP] & 0x0f;
+
+		addr = vga_get_start (vga);
+
+		if (vga->latch_addr != addr) {
+			vga->latch_addr = addr;
+			vga->update_state |= VGA_UPDATE_DIRTY;
+		}
 	}
 
 	if (vga->update_state & VGA_UPDATE_RETRACE) {
@@ -2022,13 +2029,6 @@ void vga_clock (vga_t *vga, unsigned long cnt)
 	}
 
 	vga->update_state = VGA_UPDATE_RETRACE;
-
-	addr = vga_get_start (vga);
-
-	if (vga->latch_addr != addr) {
-		vga->latch_addr = addr;
-		vga->update_state |= VGA_UPDATE_DIRTY;
-	}
 
 	if ((vga->reg_crt[VGA_CRT_VRE] & VGA_CRT_VRE_EVI) == 0) {
 		/* vertical retrace interrupt enabled */
