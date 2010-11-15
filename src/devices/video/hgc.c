@@ -231,9 +231,6 @@ void hgc_adjust_page1 (hgc_t *hgc)
 	if ((hgc->reg[HGC_CONFIG] & HGC_CONFIG_PAGE1) == 0) {
 		size = 32768;
 	}
-	else if ((hgc->reg[HGC_MODE] & HGC_MODE_PAGE1) == 0) {
-		size = 32768;
-	}
 	else {
 		size = 65536;
 	}
@@ -735,8 +732,6 @@ void hgc_set_mode (hgc_t *hgc, unsigned char val)
 	hgc->reg[HGC_MODE] = val;
 
 	hgc_set_timing (hgc);
-
-	hgc_adjust_page1 (hgc);
 
 	hgc->update_state |= HGC_UPDATE_DIRTY;
 }
