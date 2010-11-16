@@ -3323,56 +3323,49 @@ unsigned op_d0 (e8086_t *c)
 	s = e86_get_ea8 (c);
 
 	switch (xop) {
-		case 0: /* ROL r/m8, 1 */
-			d = (s << 1) | (s >> 7);
-			e86_set_cf (c, d & 1);
-			e86_set_of (c, ((s << 1) ^ s) & 0x80);
-			break;
+	case 0: /* ROL r/m8, 1 */
+		d = (s << 1) | (s >> 7);
+		e86_set_cf (c, s & 0x80);
+		break;
 
-		case 1: /* ROR r/m8, 1 */
-			d = (s >> 1) | (s << 7);
-			e86_set_cf (c, d & 0x80);
-			e86_set_of (c, ((d << 1) ^ d) & 0x01);
-			break;
+	case 1: /* ROR r/m8, 1 */
+		d = (s >> 1) | (s << 7);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 2: /* RCL r/m8, 1 */
-			d = (s << 1) | e86_get_cf (c);
-			e86_set_cf (c, d & 0x100);
-			e86_set_of (c, ((s << 1) ^ s) & 0x80);
-			break;
+	case 2: /* RCL r/m8, 1 */
+		d = (s << 1) | e86_get_cf (c);
+		e86_set_cf (c, s & 0x80);
+		break;
 
-		case 3: /* RCR r/m8, 1 */
-			d = (s >> 1) | (e86_get_cf (c) << 7);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, ((d << 1) ^ d) & 0x80);
-			break;
+	case 3: /* RCR r/m8, 1 */
+		d = (s >> 1) | (e86_get_cf (c) << 7);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 4: /* SHL r/m8, 1 */
-			d = s << 1;
-			e86_set_flg_szp_8 (c, d);
-			e86_set_cf (c, d & 0x100);
-			e86_set_of (c, ((s << 1) ^ s) & 0x80);
-			break;
+	case 4: /* SHL r/m8, 1 */
+		d = s << 1;
+		e86_set_flg_szp_8 (c, d);
+		e86_set_cf (c, s & 0x80);
+		break;
 
-		case 5: /* SHR r/m8, 1 */
-			d = s >> 1;
-			e86_set_flg_szp_8 (c, d);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, s & 0x80);
-			break;
+	case 5: /* SHR r/m8, 1 */
+		d = s >> 1;
+		e86_set_flg_szp_8 (c, d);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 7: /* SAR r/m8, 1 */
-			d = (s & 0x80) ? ((s >> 1) | 0x80) : (s >> 1);
-			e86_set_flg_szp_8 (c, d);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, 0);
-			break;
+	case 7: /* SAR r/m8, 1 */
+		d = (s >> 1) | (s & 0x80);
+		e86_set_flg_szp_8 (c, d);
+		e86_set_cf (c, s & 1);
+		break;
 
-		default:
-			d = 0; /* To avoid compiler warning */
-			op_ud (c);
-			break;
+	default:
+		return (op_ud (c));
 	}
+
+	e86_set_of (c, (d ^ s) & 0x80);
 
 	e86_set_ea8 (c, d & 0xff);
 	e86_set_clk_ea (c, 2, 15);
@@ -3393,56 +3386,49 @@ unsigned op_d1 (e8086_t *c)
 	s = e86_get_ea16 (c);
 
 	switch (xop) {
-		case 0: /* ROL r/m16, 1 */
-			d = (s << 1) | (s >> 15);
-			e86_set_cf (c, d & 1);
-			e86_set_of (c, ((s << 1) ^ s) & 0x8000);
-			break;
+	case 0: /* ROL r/m16, 1 */
+		d = (s << 1) | (s >> 15);
+		e86_set_cf (c, s & 0x8000);
+		break;
 
-		case 1: /* ROR r/m16, 1 */
-			d = (s >> 1) | (s << 15);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, ((d << 1) ^ d) & 0x8000);
-			break;
+	case 1: /* ROR r/m16, 1 */
+		d = (s >> 1) | (s << 15);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 2: /* RCL r/m16, 1 */
-			d = (s << 1) | e86_get_cf (c);
-			e86_set_cf (c, s & 0x8000);
-			e86_set_of (c, ((s << 1) ^ s) & 0x8000);
-			break;
+	case 2: /* RCL r/m16, 1 */
+		d = (s << 1) | e86_get_cf (c);
+		e86_set_cf (c, s & 0x8000);
+		break;
 
-		case 3: /* RCR r/m16, 1 */
-			d = (s >> 1) | (e86_get_cf (c) << 15);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, ((d << 1) ^ d) & 0x8000);
-			break;
+	case 3: /* RCR r/m16, 1 */
+		d = (s >> 1) | (e86_get_cf (c) << 15);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 4: /* SHL r/m16, 1 */
-			d = s << 1;
-			e86_set_flg_szp_16 (c, d);
-			e86_set_cf (c, d & 0x10000);
-			e86_set_of (c, ((s << 1) ^ s) & 0x8000);
-			break;
+	case 4: /* SHL r/m16, 1 */
+		d = s << 1;
+		e86_set_flg_szp_16 (c, d);
+		e86_set_cf (c, s & 0x8000);
+		break;
 
-		case 5: /* SHR r/m16, 1 */
-			d = s >> 1;
-			e86_set_flg_szp_16 (c, d);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, s & 0x8000);
-			break;
+	case 5: /* SHR r/m16, 1 */
+		d = s >> 1;
+		e86_set_flg_szp_16 (c, d);
+		e86_set_cf (c, s & 1);
+		break;
 
-		case 7: /* SAR r/m16, 1 */
-			d = (s & 0x8000) ? ((s >> 1) | 0x8000) : (s >> 1);
-			e86_set_flg_szp_16 (c, d);
-			e86_set_cf (c, s & 1);
-			e86_set_of (c, 0);
-			break;
+	case 7: /* SAR r/m16, 1 */
+		d = (s >> 1) | (s & 0x8000);
+		e86_set_flg_szp_16 (c, d);
+		e86_set_cf (c, s & 1);
+		break;
 
-		default:
-			d = 0; /* To avoid compiler warning */
-			op_ud (c);
-			break;
+	default:
+		return (op_ud (c));
 	}
+
+	e86_set_of (c, (d ^ s) & 0x8000);
 
 	e86_set_ea16 (c, d & 0xffff);
 	e86_set_clk_ea (c, 2, 15);
@@ -3475,66 +3461,54 @@ unsigned op_d2 (e8086_t *c)
 	}
 
 	switch (xop) {
-		case 0: /* ROL r/m8, CL */
-			d = (s << (cnt & 7)) | (s >> (8 - (cnt & 7)));
-			e86_set_cf (c, d & 1);
-			e86_set_of (c, ((d >> 7) ^ d) & 0x01);
-			break;
+	case 0: /* ROL r/m8, CL */
+		d = (s << (cnt & 7)) | (s >> (8 - (cnt & 7)));
+		e86_set_cf (c, d & 1);
+		break;
 
-		case 1: /* ROR r/m8, CL */
-			d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
-			e86_set_cf (c, d & 0x80);
-			if (cnt == 1) {
-				e86_set_of (c, (d ^ s) & 0x80);
-			}
-			break;
+	case 1: /* ROR r/m8, CL */
+		d = (s >> (cnt & 7)) | (s << (8 - (cnt & 7)));
+		e86_set_cf (c, d & 0x80);
+		break;
 
-		case 2: /* RCL r/m8, CL */
-			s |= e86_get_cf (c) << 8;
-			d = (s << (cnt % 9)) | (s >> (9 - (cnt % 9)));
-			e86_set_cf (c, d & 0x100);
-			e86_set_of (c, ((d >> 1) ^ d) & 0x80);
-			break;
+	case 2: /* RCL r/m8, CL */
+		s |= e86_get_cf (c) << 8;
+		d = (s << (cnt % 9)) | (s >> (9 - (cnt % 9)));
+		e86_set_cf (c, d & 0x100);
+		break;
 
-		case 3: /* RCR r/m8, CL */
-			s |= e86_get_cf (c) << 8;
-			d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
-			e86_set_cf (c, d & 0x100);
-			if (cnt == 1) {
-				e86_set_of (c, (d ^ s) & 0x80);
-			}
-			break;
+	case 3: /* RCR r/m8, CL */
+		s |= e86_get_cf (c) << 8;
+		d = (s >> (cnt % 9)) | (s << (9 - (cnt % 9)));
+		e86_set_cf (c, d & 0x100);
+		break;
 
-		case 4: /* SHL r/m8, CL */
-			d = (cnt > 8) ? 0 : (s << cnt);
-			e86_set_flg_szp_8 (c, d);
-			e86_set_cf (c, d & 0x100);
-			e86_set_of (c, ((d >> 1) ^ d) & 0x80);
-			break;
+	case 4: /* SHL r/m8, CL */
+		d = (cnt > 8) ? 0 : (s << cnt);
+		e86_set_flg_szp_8 (c, d);
+		e86_set_cf (c, d & 0x100);
+		break;
 
-		case 5: /* SHR r/m8, CL */
-			/* c > 0 */
-			d = (cnt > 8) ? 0 : (s >> (cnt - 1));
-			e86_set_cf (c, d & 1);
-			d = d >> 1;
-			e86_set_flg_szp_8 (c, d);
-			e86_set_of (c, ((d << 1) ^ d) & 0x80);
-			break;
+	case 5: /* SHR r/m8, CL */
+		d = (cnt > 8) ? 0 : (s >> (cnt - 1));
+		e86_set_cf (c, d & 1);
+		d = d >> 1;
+		e86_set_flg_szp_8 (c, d);
+		break;
 
-		case 7: /* SAR r/m8, CL */
-			s |= (s & 0x80) ? 0xff00 : 0x0000;
-			d = s >> ((cnt >= 8) ? 7 : (cnt - 1));
-			e86_set_cf (c, d & 1);
-			d = (d >> 1) & 0xff;
-			e86_set_flg_szp_8 (c, d);
-			e86_set_of (c, 0);
-			break;
+	case 7: /* SAR r/m8, CL */
+		s |= (s & 0x80) ? 0xff00 : 0x0000;
+		d = s >> ((cnt >= 8) ? 7 : (cnt - 1));
+		e86_set_cf (c, d & 1);
+		d = (d >> 1) & 0xff;
+		e86_set_flg_szp_8 (c, d);
+		break;
 
-		default:
-			d = 0; /* To avoid compiler warning */
-			op_ud (c);
-			break;
+	default:
+		return (op_ud (c));
 	}
+
+	e86_set_of (c, (d ^ s) & 0x80);
 
 	e86_set_ea8 (c, d & 0xff);
 	e86_set_clk_ea (c, 8 + 4 * cnt, 20 + 4 * cnt);
@@ -3567,66 +3541,54 @@ unsigned op_d3 (e8086_t *c)
 	}
 
 	switch (xop) {
-		case 0: /* ROL r/m16, CL */
-			d = (s << (cnt & 15)) | (s >> (16 - (cnt & 15)));
-			e86_set_cf (c, d & 1);
-			e86_set_of (c, ((d >> 7) ^ d) & 0x01);
-			break;
+	case 0: /* ROL r/m16, CL */
+		d = (s << (cnt & 15)) | (s >> (16 - (cnt & 15)));
+		e86_set_cf (c, d & 1);
+		break;
 
-		case 1: /* ROR r/m16, CL */
-			d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
-			e86_set_cf (c, d & 0x8000);
-			if (cnt == 1) {
-				e86_set_of (c, (d ^ s) & 0x8000);
-			}
-			break;
+	case 1: /* ROR r/m16, CL */
+		d = (s >> (cnt & 15)) | (s << (16 - (cnt & 15)));
+		e86_set_cf (c, d & 0x8000);
+		break;
 
-		case 2: /* RCL r/m16, CL */
-			s |= (unsigned long) e86_get_cf (c) << 16;
-			d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
-			e86_set_cf (c, d & 0x10000);
-			e86_set_of (c, ((d >> 1) ^ d) & 0x8000);
-			break;
+	case 2: /* RCL r/m16, CL */
+		s |= (unsigned long) e86_get_cf (c) << 16;
+		d = (s << (cnt % 17)) | (s >> (17 - (cnt % 17)));
+		e86_set_cf (c, d & 0x10000);
+		break;
 
-		case 3: /* RCR r/m16, CL */
-			s |= (unsigned long) e86_get_cf (c) << 16;
-			d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
-			e86_set_cf (c, d & 0x10000);
-			if (cnt == 1) {
-				e86_set_of (c, (d ^ s) & 0x8000);
-			}
-			break;
+	case 3: /* RCR r/m16, CL */
+		s |= (unsigned long) e86_get_cf (c) << 16;
+		d = (s >> (cnt % 17)) | (s << (17 - (cnt % 17)));
+		e86_set_cf (c, d & 0x10000);
+		break;
 
-		case 4: /* SHL r/m16, CL */
-			d = (cnt > 16) ? 0 : (s << cnt);
-			e86_set_flg_szp_16 (c, d);
-			e86_set_cf (c, d & 0x10000);
-			e86_set_of (c, ((d >> 1) ^ d) & 0x8000);
-			break;
+	case 4: /* SHL r/m16, CL */
+		d = (cnt > 16) ? 0 : (s << cnt);
+		e86_set_flg_szp_16 (c, d);
+		e86_set_cf (c, d & 0x10000);
+		break;
 
-		case 5: /* SHR r/m16, CL */
-			/* c > 0 */
-			d = (cnt > 16) ? 0 : (s >> (cnt - 1));
-			e86_set_cf (c, d & 1);
-			d = d >> 1;
-			e86_set_flg_szp_16 (c, d);
-			e86_set_of (c, ((d << 1) ^ d) & 0x80);
-			break;
+	case 5: /* SHR r/m16, CL */
+		d = (cnt > 16) ? 0 : (s >> (cnt - 1));
+		e86_set_cf (c, d & 1);
+		d = d >> 1;
+		e86_set_flg_szp_16 (c, d);
+		break;
 
-		case 7: /* SAR r/m16, CL */
-			s |= (s & 0x8000) ? 0xffff0000 : 0x00000000;
-			d = s >> ((cnt >= 16) ? 15 : (cnt - 1));
-			e86_set_cf (c, d & 1);
-			d = (d >> 1) & 0xffff;
-			e86_set_flg_szp_16 (c, d);
-			e86_set_of (c, 0);
-			break;
+	case 7: /* SAR r/m16, CL */
+		s |= (s & 0x8000) ? 0xffff0000 : 0x00000000;
+		d = s >> ((cnt >= 16) ? 15 : (cnt - 1));
+		e86_set_cf (c, d & 1);
+		d = (d >> 1) & 0xffff;
+		e86_set_flg_szp_16 (c, d);
+		break;
 
-		default:
-			d = 0; /* To avoid compiler warning */
-			op_ud (c);
-			break;
+	default:
+		return (op_ud (c));
 	}
+
+	e86_set_of (c, (d ^ s) & 0x8000);
 
 	e86_set_ea16 (c, d);
 	e86_set_clk_ea (c, 8 + 4 * cnt, 20 + 4 * cnt);
