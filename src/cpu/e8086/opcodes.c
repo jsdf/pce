@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/opcodes.c                                      *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1240,7 +1240,7 @@ unsigned op_3f (e8086_t *c)
 	unsigned ah, al;
 
 	al = e86_get_al (c);
-	ah = e86_get_al (c);
+	ah = e86_get_ah (c);
 
 	if (((al & 0x0f) > 9) || e86_get_af (c)) {
 		al -= 6;
