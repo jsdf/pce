@@ -56,6 +56,17 @@ unsigned op_ud (e8086_t *c)
 	return (e86_undefined (c));
 }
 
+static
+unsigned op_divide_error (e8086_t *c)
+{
+	e86_set_clk_ea (c, 16, 20);
+
+	e86_set_ip (c, e86_get_ip (c) + c->ea.cnt + 1);
+	e86_trap (c, 0);
+
+	return (0);
+}
+
 /* OP 00: ADD r/m8, reg8 */
 static
 unsigned op_00 (e8086_t *c)
@@ -4035,16 +4046,14 @@ unsigned op_f6_06 (e8086_t *c)
 
 	/* check for division by zero */
 	if (s == 0) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	d = e86_get_ax (c) / s;
 
 	/* check for overflow */
 	if (d & 0xff00) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	e86_set_ax (c, ((e86_get_ax (c) % s) << 8) | d);
@@ -4068,8 +4077,7 @@ unsigned op_f6_07 (e8086_t *c)
 
 	/* check for division by zero */
 	if (s2 == 0) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	sign1 = (s1 & 0x8000) != 0;
@@ -4083,16 +4091,14 @@ unsigned op_f6_07 (e8086_t *c)
 
 	if (sign1 != sign2) {
 		if (d1 > 0x80) {
-			e86_trap (c, 0);
-			return (0);
+			return (op_divide_error (c));
 		}
 
 		d1 = (~d1 + 1) & 0xff;
 	}
 	else {
 		if (d1 > 0x7f) {
-			e86_trap (c, 0);
-			return (0);
+			return (op_divide_error (c));
 		}
 	}
 
@@ -4235,8 +4241,7 @@ unsigned op_f7_06 (e8086_t *c)
 
 	/* check for division by zero */
 	if (s2 == 0) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	s1 = ((unsigned long) e86_get_dx (c) << 16) | e86_get_ax (c);
@@ -4245,8 +4250,7 @@ unsigned op_f7_06 (e8086_t *c)
 
 	/* check for overflow */
 	if (d & 0xffff0000) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	e86_set_ax (c, d);
@@ -4271,8 +4275,7 @@ unsigned op_f7_07 (e8086_t *c)
 	s2 = (s2 & 0x8000) ? (s2 | 0xffff0000) : s2;
 
 	if (s2 == 0) {
-		e86_trap (c, 0);
-		return (0);
+		return (op_divide_error (c));
 	}
 
 	sign1 = (s1 & 0x80000000) != 0;
@@ -4286,16 +4289,14 @@ unsigned op_f7_07 (e8086_t *c)
 
 	if (sign1 != sign2) {
 		if (d1 > 0x8000) {
-			e86_trap (c, 0);
-			return (0);
+			return (op_divide_error (c));
 		}
 
 		d1 = (~d1 + 1) & 0xffff;
 	}
 	else {
 		if (d1 > 0x7fff) {
-			e86_trap (c, 0);
-			return (0);
+			return (op_divide_error (c));
 		}
 	}
 
