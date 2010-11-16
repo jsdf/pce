@@ -4059,7 +4059,7 @@ static
 unsigned op_f6_07 (e8086_t *c)
 {
 	unsigned short s1, s2, d1, d2;
-	int            sign;
+	int            sign1, sign2;
 
 	e86_get_ea_ptr (c, c->pq + 1);
 
@@ -4072,22 +4072,31 @@ unsigned op_f6_07 (e8086_t *c)
 		return (0);
 	}
 
-	sign = (((s1 ^ s2) & 0x8000) != 0);
+	sign1 = (s1 & 0x8000) != 0;
+	sign2 = (s2 & 0x8000) != 0;
 
-	s1 = (s1 < 0x8000) ? s1 : ((~s1 + 1) & 0xffff);
-	s2 = (s2 < 0x8000) ? s2 : ((~s2 + 1) & 0xffff);
+	s1 = sign1 ? ((~s1 + 1) & 0xffff) : s1;
+	s2 = sign2 ? ((~s2 + 1) & 0xffff) : s2;
 
 	d1 = s1 / s2;
 	d2 = s1 % s2;
 
-	/* check for overflow */
-	if (d1 & 0xff00) {
-		e86_trap (c, 0);
-		return (0);
+	if (sign1 != sign2) {
+		if (d1 > 0x80) {
+			e86_trap (c, 0);
+			return (0);
+		}
+
+		d1 = (~d1 + 1) & 0xff;
+	}
+	else {
+		if (d1 > 0x7f) {
+			e86_trap (c, 0);
+			return (0);
+		}
 	}
 
-	if (sign) {
-		d1 = (~d1 + 1) & 0xff;
+	if (sign1) {
 		d2 = (~d2 + 1) & 0xff;
 	}
 
@@ -4253,7 +4262,7 @@ static
 unsigned op_f7_07 (e8086_t *c)
 {
 	unsigned long s1, s2, d1, d2;
-	int           sign;
+	int           sign1, sign2;
 
 	e86_get_ea_ptr (c, c->pq + 1);
 
@@ -4266,22 +4275,31 @@ unsigned op_f7_07 (e8086_t *c)
 		return (0);
 	}
 
-	sign = (((s1 ^ s2) & 0x80000000) != 0);
+	sign1 = (s1 & 0x80000000) != 0;
+	sign2 = (s2 & 0x80000000) != 0;
 
-	s1 = (s1 < 0x80000000) ? s1 : ((~s1 + 1) & 0xffffffff);
-	s2 = (s2 < 0x80000000) ? s2 : ((~s2 + 1) & 0xffffffff);
+	s1 = sign1 ? ((~s1 + 1) & 0xffffffff) : s1;
+	s2 = sign2 ? ((~s2 + 1) & 0xffffffff) : s2;
 
 	d1 = s1 / s2;
 	d2 = s1 % s2;
 
-	/* check for overflow */
-	if (d1 & 0xffff0000) {
-		e86_trap (c, 0);
-		return (0);
+	if (sign1 != sign2) {
+		if (d1 > 0x8000) {
+			e86_trap (c, 0);
+			return (0);
+		}
+
+		d1 = (~d1 + 1) & 0xffff;
+	}
+	else {
+		if (d1 > 0x7fff) {
+			e86_trap (c, 0);
+			return (0);
+		}
 	}
 
-	if (sign) {
-		d1 = (~d1 + 1) & 0xffff;
+	if (sign1) {
 		d2 = (~d2 + 1) & 0xffff;
 	}
 
