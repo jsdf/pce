@@ -4014,9 +4014,9 @@ unsigned op_f6_05 (e8086_t *c)
 
 	e86_set_ax (c, d);
 
-	d &= 0xff80;
-	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xff80) && (d != 0x0000));
-	e86_set_f (c, E86_FLG_Z, d == 0);
+	d &= 0xff00;
+
+	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xff00) && (d != 0x0000));
 
 	e86_set_clk_ea (c, (80 + 98) / 2, (86 + 104) / 2);
 
@@ -4205,9 +4205,9 @@ unsigned op_f7_05 (e8086_t *c)
 	e86_set_ax (c, d & 0xffff);
 	e86_set_dx (c, d >> 16);
 
-	d &= 0xffff8000;
-	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff8000) && (d != 0x00000000));
-	e86_set_f (c, E86_FLG_Z, d == 0);
+	d &= 0xffff0000;
+
+	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff0000) && (d != 0x00000000));
 
 	e86_set_clk_ea (c, (128 + 154) / 2, (134 + 160) / 2);
 
