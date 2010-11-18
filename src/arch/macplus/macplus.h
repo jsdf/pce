@@ -43,7 +43,7 @@ struct macplus_s {
 	e6522_t            via;
 	e8530_t            scc;
 	mac_rtc_t          rtc;
-	mac_kbd_t          kbd;
+	mac_kbd_t          *kbd;
 	mac_scsi_t         scsi;
 	mac_sony_t         sony;
 	mac_sound_t        sound;

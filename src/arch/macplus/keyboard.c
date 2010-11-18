@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/keyboard.c                                  *
  * Created:     2007-11-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -310,6 +310,29 @@ void mac_kbd_init (mac_kbd_t *kbd)
 
 void mac_kbd_free (mac_kbd_t *kbd)
 {
+}
+
+mac_kbd_t *mac_kbd_new (void)
+{
+	mac_kbd_t *kbd;
+
+	kbd = malloc (sizeof (mac_kbd_t));
+
+	if (kbd == NULL) {
+		return (NULL);
+	}
+
+	mac_kbd_init (kbd);
+
+	return (kbd);
+}
+
+void mac_kbd_del (mac_kbd_t *kbd)
+{
+	if (kbd != NULL) {
+		mac_kbd_free (kbd);
+		free (kbd);
+	}
 }
 
 void mac_kbd_set_data_fct (mac_kbd_t *kbd, void *ext, void *fct)

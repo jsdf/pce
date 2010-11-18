@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/keyboard.h                                  *
  * Created:     2007-11-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -66,6 +66,9 @@ typedef struct {
 
 void mac_kbd_init (mac_kbd_t *kbd);
 void mac_kbd_free (mac_kbd_t *kbd);
+
+mac_kbd_t *mac_kbd_new (void);
+void mac_kbd_del (mac_kbd_t *kbd);
 
 void mac_kbd_set_data_fct (mac_kbd_t *kbd, void *ext, void *fct);
 void mac_kbd_set_intr_fct (mac_kbd_t *kbd, void *ext, void *fct);

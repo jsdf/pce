@@ -223,6 +223,16 @@ void mac_set_mouse (void *ext, int dx, int dy, unsigned but)
 }
 
 static
+void mac_set_key (void *ext, unsigned event, pce_key_t key)
+{
+	macplus_t *sim = ext;
+
+	if (sim->kbd != NULL) {
+		mac_kbd_set_key (sim->kbd, event, key);
+	}
+}
+
+static
 void mac_set_rtc_data (void *ext, unsigned char val)
 {
 	macplus_t *sim = ext;
@@ -624,6 +634,8 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 	unsigned  model;
 	int       intl, motion;
 
+	sim->kbd = NULL;
+
 	sct = ini_next_sct (ini, NULL, "keyboard");
 
 	ini_get_uint16 (sct, "model", &model, 1);
@@ -637,14 +649,19 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 		motion ? "motion" : "keypad"
 	);
 
-	mac_kbd_init (&sim->kbd);
-	mac_kbd_set_model (&sim->kbd, model, intl);
-	mac_kbd_set_keypad_mode (&sim->kbd, motion);
-	mac_kbd_set_data_fct (&sim->kbd, &sim->via, e6522_set_shift_inp);
-	mac_kbd_set_intr_fct (&sim->kbd, sim, mac_interrupt);
+	sim->kbd = mac_kbd_new();
 
-	e6522_set_shift_out_fct (&sim->via, &sim->kbd, mac_kbd_set_uint8);
-	e6522_set_cb2_fct (&sim->via, &sim->kbd, mac_kbd_set_data);
+	if (sim->kbd == NULL) {
+		return;
+	}
+
+	mac_kbd_set_model (sim->kbd, model, intl);
+	mac_kbd_set_keypad_mode (sim->kbd, motion);
+	mac_kbd_set_data_fct (sim->kbd, &sim->via, e6522_set_shift_inp);
+	mac_kbd_set_intr_fct (sim->kbd, sim, mac_interrupt);
+
+	e6522_set_shift_out_fct (&sim->via, sim->kbd, mac_kbd_set_uint8);
+	e6522_set_cb2_fct (&sim->via, sim->kbd, mac_kbd_set_data);
 }
 
 static
@@ -799,7 +816,7 @@ void mac_setup_terminal (macplus_t *sim, ini_sct_t *ini)
 	}
 
 	trm_set_msg_fct (sim->trm, sim, mac_set_msg);
-	trm_set_key_fct (sim->trm, &sim->kbd, mac_kbd_set_key);
+	trm_set_key_fct (sim->trm, sim, mac_set_key);
 	trm_set_mouse_fct (sim->trm, sim, mac_set_mouse);
 }
 
@@ -942,7 +959,7 @@ void mac_free (macplus_t *sim)
 	mac_scsi_free (&sim->scsi);
 	mac_iwm_free (sim);
 	dsks_del (sim->dsks);
-	mac_kbd_free (&sim->kbd);
+	mac_kbd_del (sim->kbd);
 	mac_rtc_free (&sim->rtc);
 	mac_ser_free (&sim->ser[1]);
 	mac_ser_free (&sim->ser[0]);
@@ -1154,7 +1171,9 @@ void mac_clock (macplus_t *sim, unsigned n)
 	mac_ser_clock (&sim->ser[0], sim->clk_div[2]);
 	mac_ser_clock (&sim->ser[1], sim->clk_div[2]);
 
-	mac_kbd_clock (&sim->kbd, sim->clk_div[2]);
+	if (sim->kbd != NULL) {
+		mac_kbd_clock (sim->kbd, sim->clk_div[2]);
+	}
 
 	sim->clk_div[3] += sim->clk_div[2];
 	sim->clk_div[2] = 0;
