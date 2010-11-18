@@ -110,6 +110,8 @@ void mac_free (macplus_t *sim);
  *****************************************************************************/
 void mac_del (macplus_t *sim);
 
+void mac_interrupt (macplus_t *sim, unsigned level, int val);
+
 /*****************************************************************************
  * @short  Get the number of clock cycles
  * @return The number of clock cycles the simulation went through since the

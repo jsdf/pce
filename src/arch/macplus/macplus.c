@@ -21,6 +21,7 @@
 
 
 #include "main.h"
+#include "hotkey.h"
 
 
 /* The CPU is synchronized with real time MAC_CPU_SYNC times per seconds */
@@ -54,7 +55,6 @@ void mac_interrupt_check (macplus_t *sim)
 	e68_interrupt (sim->cpu, i, 0, 1);
 }
 
-static
 void mac_interrupt (macplus_t *sim, unsigned level, int val)
 {
 	if (val) {
@@ -226,6 +226,11 @@ static
 void mac_set_key (void *ext, unsigned event, pce_key_t key)
 {
 	macplus_t *sim = ext;
+
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		mac_set_hotkey (sim, key);
+		return;
+	}
 
 	if (sim->kbd != NULL) {
 		mac_kbd_set_key (sim->kbd, event, key);

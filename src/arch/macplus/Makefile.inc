@@ -40,6 +40,7 @@ $(rel)/%.o: $(rel)/%.c
 PCE_MACPLUS_BAS := \
 	cmd_68k \
 	hook \
+	hotkey \
 	iwm \
 	keyboard \
 	macplus \
@@ -107,6 +108,7 @@ DIST += $(rel)/pce-macplus.cfg.in
 
 $(rel)/cmd_68k.o:	$(rel)/cmd_68k.c
 $(rel)/hook.o:		$(rel)/hook.c
+$(rel)/hotkey.o:	$(rel)/hotkey.c
 $(rel)/iwm.o:		$(rel)/iwm.c
 $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/macplus.o:	$(rel)/macplus.c

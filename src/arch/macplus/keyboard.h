@@ -59,8 +59,6 @@ typedef struct {
 
 	void          *set_intr_ext;
 	void          (*set_intr) (void *ext, unsigned level, int val);
-
-	void          *sim_ext;
 } mac_kbd_t;
 
 

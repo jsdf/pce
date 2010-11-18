@@ -304,8 +304,6 @@ void mac_kbd_init (mac_kbd_t *kbd)
 	kbd->keypad_mode = 0;
 
 	kbd->keymap = key_map_us;
-
-	kbd->sim_ext = NULL;
 }
 
 void mac_kbd_free (mac_kbd_t *kbd)
@@ -407,54 +405,6 @@ void mac_kbd_set_sequence (mac_kbd_t *kbd, unsigned char *buf, unsigned cnt)
 	}
 }
 
-static
-int mac_kbd_magic (mac_kbd_t *kbd, pce_key_t key)
-{
-	switch (key) {
-	case PCE_KEY_F1:
-		mac_set_msg (kbd->sim_ext, "mac.insert", "1");
-		break;
-
-	case PCE_KEY_F2:
-		mac_set_msg (kbd->sim_ext, "mac.insert", "2");
-		break;
-
-	case PCE_KEY_F3:
-		mac_set_msg (kbd->sim_ext, "mac.insert", "3");
-		break;
-
-
-	case PCE_KEY_K:
-	case PCE_KEY_KP_5:
-		if (kbd->keypad_mode) {
-			mac_log_deb ("keypad mode: motion\n");
-			mac_kbd_fix_map (kbd->keymap, key_fix_keypad1);
-			kbd->keypad_mode = 0;
-		}
-		else {
-			mac_log_deb ("keypad mode: keypad\n");
-			mac_kbd_fix_map (kbd->keymap, key_fix_keypad2);
-			kbd->keypad_mode = 1;
-		}
-		break;
-
-	case PCE_KEY_I:
-		if (kbd->set_intr != NULL) {
-			kbd->set_intr (kbd->set_intr_ext, 7, 1);
-			kbd->set_intr (kbd->set_intr_ext, 7, 0);
-		}
-		break;
-
-	default:
-		pce_log (MSG_INF, "unhandled magic key (%u)\n",
-			(unsigned) key
-		);
-		break;
-	}
-
-	return (0);
-}
-
 void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key)
 {
 	mac_kbd_map_t *map;
@@ -462,11 +412,6 @@ void mac_kbd_set_key (mac_kbd_t *kbd, unsigned event, pce_key_t key)
 #ifdef DEBUG_KBD
 	mac_log_deb ("kbd: set key: %u %u\n", event, (unsigned) key);
 #endif
-
-	if (event == PCE_KEY_EVENT_MAGIC) {
-		mac_kbd_magic (kbd, key);
-		return;
-	}
 
 	if (key == PCE_KEY_F1) {
 		key = PCE_KEY_LCTRL;
