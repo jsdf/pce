@@ -391,15 +391,6 @@ void sdl_event_mouse_button (sdl_t *sdl)
 {
 	unsigned but, val;
 
-	if (sdl->grab == 0) {
-		sdl_grab_mouse (sdl, 1);
-		return;
-	}
-
-	if (sdl->trm.set_mouse == NULL) {
-		return;
-	}
-
 	val = 0;
 	but = SDL_GetMouseState (NULL, NULL);
 
@@ -409,6 +400,18 @@ void sdl_event_mouse_button (sdl_t *sdl)
 
 	if (but & SDL_BUTTON (3)) {
 		val |= 2;
+	}
+
+	if (sdl->grab == 0) {
+		if (but == 0) {
+			sdl_grab_mouse (sdl, 1);
+		}
+
+		return;
+	}
+
+	if (sdl->trm.set_mouse == NULL) {
+		return;
 	}
 
 	trm_set_mouse (&sdl->trm, 0, 0, val);
