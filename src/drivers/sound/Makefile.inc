@@ -5,7 +5,7 @@ rel := src/drivers/sound
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-DRV_SND_BAS  := sound sound-null sound-wav
+DRV_SND_BAS  := filter sound sound-null sound-wav
 DRV_SND_NBAS :=
 
 ifeq "$(PCE_ENABLE_SOUND_OSS)" "1"
@@ -35,6 +35,7 @@ $(rel)/sound-sdl.o:	$(rel)/sound-sdl.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_SDL_CFLAGS) -o $@ $<
 
+$(rel)/filter.o:	$(rel)/filter.c
 $(rel)/sound.o:		$(rel)/sound.c
 $(rel)/sound-null.o:	$(rel)/sound-null.c
 $(rel)/sound-oss.o:	$(rel)/sound-oss.c

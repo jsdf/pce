@@ -27,19 +27,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <drivers/sound/filter.h>
+
 
 #define SND_CHN_MAX 16
-
-
-/*!***************************************************************************
- * @short A second order IIR filter
- *****************************************************************************/
-typedef struct {
-	long a[3];
-	long b[3];
-	long x[3];
-	long y[3];
-} sound_iir2_t;
 
 
 /*!***************************************************************************
@@ -73,38 +64,6 @@ typedef struct sound_drv_t {
 		unsigned chn, unsigned long srate, int sign
 	);
 } sound_drv_t;
-
-
-/*!***************************************************************************
- * @short Initialize an IIR2 filter
- *****************************************************************************/
-void snd_iir2_init (sound_iir2_t *iir);
-
-/*!***************************************************************************
- * @short Reset an IIR2 filter
- *****************************************************************************/
-void snd_iir2_reset (sound_iir2_t *iir);
-
-/*!***************************************************************************
- * @short Initialize a low-pass IIR filter
- * @param freq   The cut-off frequency
- * @param srate  The sample rate
- *****************************************************************************/
-void snd_iir2_set_lowpass (sound_iir2_t *iir,
-	unsigned long freq, unsigned long srate
-);
-
-/*!***************************************************************************
- * @short Filter samples with an IIR2 filter
- * @param dst   The destination buffer
- * @param src   The source buffer
- * @param cnt   The sample count
- * @param ofs   The sample offset in both src and dst
- * @param sign  The sample signedness in both src and dst
- *****************************************************************************/
-void snd_iir2_filter (sound_iir2_t *iir,
-	uint16_t *dst, const uint16_t *src, unsigned cnt, unsigned ofs, int sign
-);
 
 
 /*!***************************************************************************
