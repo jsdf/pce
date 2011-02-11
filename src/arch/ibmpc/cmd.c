@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -513,6 +513,16 @@ void pce_op_int (void *ext, unsigned char n)
 
 	pc->current_int = n | 0x100;
 
+	if (pc_intlog_check (pc, n)) {
+		pce_log (MSG_DEB, "%04X:%04X: int %02X"
+			" [AX=%04X BX=%04X CX=%04X DX=%04X]\n",
+			e86_get_cs (pc->cpu), e86_get_ip (pc->cpu),
+			n,
+			e86_get_ax (pc->cpu), e86_get_bx (pc->cpu),
+			e86_get_cx (pc->cpu), e86_get_dx (pc->cpu)
+		);
+	}
+
 	if (n == 0x19) {
 		if (pc->patch_bios_int19 == 0) {
 			return;
@@ -870,6 +880,8 @@ void pc_cmd_h (cmd_t *cmd)
 		"h                         print help summary\n"
 		"hm                        print help on messages\n"
 		"i [b|w] port              input a byte or word from a port\n"
+		"log int l                 list interrupt log expressions\n"
+		"log int n [expr]          set interrupt n log expression to expr\n"
 		"m msg [val]               send a message\n"
 		"o [b|w] port val          output a byte or word to a port\n"
 		"pq [c|f|s]                prefetch queue clear/fill/status\n"
@@ -941,6 +953,69 @@ void pc_cmd_key (cmd_t *cmd, ibmpc_t *pc)
 
 	if (!cmd_match_end (cmd)) {
 		return;
+	}
+}
+
+static
+void pc_cmd_log_int_l (cmd_t *cmd, ibmpc_t *pc)
+{
+	unsigned   i;
+	const char *str;
+
+	for (i = 0; i < 256; i++) {
+		str = pc_intlog_get (pc, i);
+
+		if (str != NULL) {
+			pce_printf ("%02X: %s\n", i, str);
+		}
+	}
+}
+
+static
+void pc_cmd_log_int (cmd_t *cmd, ibmpc_t *pc)
+{
+	unsigned short n;
+	char           buf[256];
+
+	if (cmd_match_eol (cmd)) {
+		pc_cmd_log_int_l (cmd, pc);
+		return;
+	}
+
+	if (cmd_match (cmd, "l")) {
+		pc_cmd_log_int_l (cmd, pc);
+		return;
+	}
+
+	if (!cmd_match_uint16 (cmd, &n)) {
+		cmd_error (cmd, "need an interrupt number");
+		return;
+	}
+
+	if (cmd_match_eol (cmd)) {
+		pc_intlog_set (pc, n, NULL);
+		pce_printf ("%02X: <deleted>\n", n);
+		return;
+	}
+
+	if (!cmd_match_str (cmd, buf, 256)) {
+		cmd_error (cmd, "need an expression");
+		return;
+	}
+
+	pce_printf ("%02X: %s\n", n, buf);
+
+	pc_intlog_set (pc, n, buf);
+}
+
+static
+void pc_cmd_log (cmd_t *cmd, ibmpc_t *pc)
+{
+	if (cmd_match (cmd, "int")) {
+		pc_cmd_log_int (cmd, pc);
+	}
+	else {
+		cmd_error (cmd, "log what?");
 	}
 }
 
@@ -1363,6 +1438,9 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "key")) {
 		pc_cmd_key (cmd, pc);
+	}
+	else if (cmd_match (cmd, "log")) {
+		pc_cmd_log (cmd, pc);
 	}
 	else if (cmd_match (cmd, "o")) {
 		pc_cmd_o (cmd, pc);

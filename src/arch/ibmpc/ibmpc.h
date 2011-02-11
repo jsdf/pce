@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.h                                       *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -146,6 +146,10 @@ int pc_set_serport_file (ibmpc_t *pc, unsigned port, const char *fname);
 
 int pc_set_parport_driver (ibmpc_t *pc, unsigned port, const char *driver);
 int pc_set_parport_file (ibmpc_t *pc, unsigned port, const char *fname);
+
+const char *pc_intlog_get (ibmpc_t *pc, unsigned n);
+void pc_intlog_set (ibmpc_t *pc, unsigned n, const char *expr);
+int pc_intlog_check (ibmpc_t *pc, unsigned n);
 
 unsigned pc_get_pcex_seg (ibmpc_t *pc);
 

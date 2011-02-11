@@ -87,6 +87,16 @@ h m
 i [b|w] <port>
 	Input a byte or word from a port.
 
+log int l
+	List all interrupt log expressions.
+
+log int <n> [<expr>]
+	Set an interrupt log expression. Whenever interrupt <n> is triggered
+	the expression <expr> is evaluated and if it is non-zero the interrupt
+	is logged.
+	If <expr> is omitted the interrupt log expression for interrupt <n>
+	is cleared.
+
 o [b|w] <port> <val>
 	Output a byte or word to a port.
 

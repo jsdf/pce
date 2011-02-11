@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.c                                       *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -76,6 +76,9 @@
 
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
+
+
+static char *par_intlog[256];
 
 
 static
@@ -1529,6 +1532,50 @@ int pc_set_parport_file (ibmpc_t *pc, unsigned port, const char *fname)
 	free (driver);
 
 	return (r);
+}
+
+const char *pc_intlog_get (ibmpc_t *pc, unsigned n)
+{
+	return (par_intlog[n & 0xff]);
+}
+
+void pc_intlog_set (ibmpc_t *pc, unsigned n, const char *expr)
+{
+	char **str;
+
+	str = &par_intlog[n & 0xff];
+
+	free (*str);
+
+	if ((expr == NULL) || (*expr == 0)) {
+		*str = NULL;
+		return;
+	}
+
+	*str = str_copy_alloc (expr);
+}
+
+int pc_intlog_check (ibmpc_t *pc, unsigned n)
+{
+	unsigned long val;
+	const char    *str;
+	cmd_t         cmd;
+
+	str = par_intlog[n & 0xff];
+
+	if (str == NULL) {
+		return (0);
+	}
+
+	cmd_set_str (&cmd, str);
+
+	if (cmd_match_uint32 (&cmd, &val)) {
+		if (val) {
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
 /*
