@@ -2220,7 +2220,16 @@ if test "x$dstr" = "xscm" ; then
 		read hash date time rest < "$tmp"
 		rm -f "$tmp"
 		date=`echo "$date" | sed -e "s/-//g"`
-		PCE_VERSION_STR="$date-$hash"
+		dirty=`cd "$srcdir" && git describe --tags --dirty --always 2> /dev/null`
+		case "$dirty" in
+		*-dirty)
+			dirty=-mod
+			;;
+		*)
+			dirty=""
+			;;
+		esac
+		PCE_VERSION_STR="$date-$hash$dirty"
 	fi
 elif test "x$dstr" = "x" ; then
 	PCE_VERSION_STR="$PCE_VERSION_MAJ.$PCE_VERSION_MIN.$PCE_VERSION_MIC"
