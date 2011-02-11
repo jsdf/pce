@@ -27,6 +27,9 @@
 #include <stdio.h>
 
 
+#define E6502_FLAG_IOPORT 1
+
+
 /* CPU flags */
 #define E6502_FLG_N 0x80
 #define E6502_FLG_V 0x40
@@ -45,7 +48,7 @@ typedef void (*e6502_opcode_f) (struct e6502_t *c);
 
 
 typedef struct e6502_t {
-	unsigned           cpu;
+	unsigned           flags;
 
 	unsigned short     pc;
 	unsigned char      a;
@@ -72,6 +75,9 @@ typedef struct e6502_t {
 	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
 	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
 
+	void               *set_ioport_ext;
+	void               (*set_ioport) (void *ext, unsigned char val);
+
 	unsigned char      *mem_map_rd[64];
 	unsigned char      *mem_map_wr[64];
 
@@ -79,6 +85,8 @@ typedef struct e6502_t {
 	void               (*op_hook) (void *ext, unsigned char op);
 	void               (*op_stat) (void *ext, unsigned char op);
 	void               (*op_undef) (void *ext, unsigned char op);
+
+	unsigned char      ioport[3];
 
 	unsigned char      inst[4];
 
@@ -128,10 +136,18 @@ typedef struct e6502_t {
 #define e6502_set_cf(c, v) e6502_set_flag (c, E6502_FLG_C, v)
 
 
+unsigned char e6502_get_ioport_8 (e6502_t *c, unsigned long addr);
+void e6502_set_ioport_8 (e6502_t *c, unsigned long addr, unsigned char val);
+
+
 static inline
 unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 {
 	const unsigned char *p;
+
+	if ((addr < 2) && (c->flags & E6502_FLAG_IOPORT)) {
+		return (e6502_get_ioport_8 (c, addr));
+	}
 
 	p = c->mem_map_rd[(addr >> 10) & 0x3f];
 
@@ -146,6 +162,11 @@ static inline
 void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 {
 	unsigned char *p;
+
+	if ((addr < 2) && (c->flags & E6502_FLAG_IOPORT)) {
+		e6502_set_ioport_8 (c, addr, val);
+		return;
+	}
 
 	p = c->mem_map_wr[(addr >> 10) & 0x3f];
 
@@ -191,9 +212,35 @@ void e6502_del (e6502_t *c);
 void e6502_set_mem_map_rd (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p);
 void e6502_set_mem_map_wr (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p);
 
+/*****************************************************************************
+ * @short Get the CPU flags
+ *****************************************************************************/
+unsigned e6502_get_flags (e6502_t *c);
+
+/*****************************************************************************
+ * @short Set the CPU flags
+ *****************************************************************************/
+void e6502_set_flags (e6502_t *c, unsigned flags);
+
+/*****************************************************************************
+ * @short Enable or disable the 6510 I/O port
+ *****************************************************************************/
+void e6502_set_ioport (e6502_t *c, int enable);
+
 void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8);
 void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8);
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
+
+/*****************************************************************************
+ * @short Set the I/O port function
+ *****************************************************************************/
+void e6502_set_ioport_fct (e6502_t *c, void *ext, void *fct);
+
+/*****************************************************************************
+ * @short Set the I/O port input
+ *****************************************************************************/
+void e6502_set_ioport_inp (e6502_t *c, unsigned char val);
+void e6502_set_ioport_ddr (e6502_t *c, unsigned char val);
 
 
 int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val);

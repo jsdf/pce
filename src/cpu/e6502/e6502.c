@@ -33,7 +33,7 @@ void e6502_init (e6502_t *c)
 {
 	unsigned i;
 
-	c->cpu = 0;
+	c->flags = 0;
 
 	c->ea = 0;
 	c->ea_page = 0;
@@ -120,6 +120,26 @@ void e6502_set_mem_map_wr (e6502_t *c, unsigned addr1, unsigned addr2, unsigned 
 	}
 }
 
+unsigned e6502_get_flags (e6502_t *c)
+{
+	return (c->flags);
+}
+
+void e6502_set_flags (e6502_t *c, unsigned flags)
+{
+	c->flags = flags;
+}
+
+void e6502_set_ioport (e6502_t *c, int enable)
+{
+	if (enable) {
+		c->flags |= E6502_FLAG_IOPORT;
+	}
+	else {
+		c->flags &= ~E6502_FLAG_IOPORT;
+	}
+}
+
 void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8)
 {
 	c->mem_rd_ext = ext;
@@ -139,6 +159,62 @@ void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8)
 
 	c->get_uint8 = get8;
 	c->set_uint8 = set8;
+}
+
+void e6502_set_ioport_fct (e6502_t *c, void *ext, void *fct)
+{
+	c->set_ioport_ext = ext;
+	c->set_ioport = fct;
+}
+
+unsigned char e6502_get_ioport_8 (e6502_t *c, unsigned long addr)
+{
+	unsigned char val;
+
+	if (addr == 0) {
+		return (c->ioport[0]);
+	}
+
+	val = c->ioport[1] & c->ioport[0];
+	val |= c->ioport[2] & ~c->ioport[0];
+
+	return (val);
+}
+
+void e6502_set_ioport_8 (e6502_t *c, unsigned long addr, unsigned char val)
+{
+	c->ioport[addr & 1] = val & 0x3f;
+
+	if (c->set_ioport != NULL) {
+		val = c->ioport[1] & c->ioport[0];
+		val |= c->ioport[2] & ~c->ioport[0];
+
+		c->set_ioport (c->set_ioport_ext, val);
+	}
+}
+
+void e6502_set_ioport_inp (e6502_t *c, unsigned char val)
+{
+	c->ioport[2] = val & 0x3f;
+
+	if (c->set_ioport != NULL) {
+		val = c->ioport[1] & c->ioport[0];
+		val |= c->ioport[2] & ~c->ioport[0];
+
+		c->set_ioport (c->set_ioport_ext, val);
+	}
+}
+
+void e6502_set_ioport_ddr (e6502_t *c, unsigned char val)
+{
+	c->ioport[0] = val & 0x3f;
+
+	if (c->set_ioport != NULL) {
+		val = c->ioport[1] & c->ioport[0];
+		val |= c->ioport[2] & ~c->ioport[0];
+
+		c->set_ioport (c->set_ioport_ext, val);
+	}
 }
 
 int e6502_get_reg (e6502_t *c, const char *reg, unsigned long *val)
@@ -268,6 +344,9 @@ void e6502_reset (e6502_t *c)
 	c->delay = 7;
 	c->rst_val = 0;
 	c->nmi_pnd = 0;
+
+	c->ioport[0] = 0;
+	c->ioport[1] = 0;
 
 	e6502_set_a (c, 0x00);
 	e6502_set_x (c, 0x00);
