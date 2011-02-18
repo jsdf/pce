@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.c                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1015,9 +1015,9 @@ void cmd_read_track_clock (e8272_t *fdc, unsigned long cnt)
 #if E8272_DEBUG >= 1
 	fprintf (stderr,
 		"E8272: CMD=%02X D=%u  READ TRACK CONT"
-		" (pc=%u, ph=%u, c=%u, h=%u, s=%u, n=%u eot=%u)\n",
+		" (pc=%u, ph=%u, c=%u, h=%u, s=%u, n=%u eot=%u rs=%u)\n",
 		fdc->cmd[0], fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
-		fdc->cmd[2], fdc->cmd[3], fdc->cmd[4], fdc->cmd[5], fdc->cmd[6]
+		fdc->cmd[2], fdc->cmd[3], fdc->cmd[4], fdc->cmd[5], fdc->cmd[6], sct->s
 	);
 #endif
 
