@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.h                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,9 @@
 
 
 #include <stdio.h>
+
+
+#define MEM_LAST_CNT 4
 
 
 typedef unsigned char (*mem_get_uint8_f) (void *blk, unsigned long addr);
@@ -82,7 +85,7 @@ typedef struct {
 	unsigned         cnt;
 	mem_lst_t        *lst;
 
-	mem_lst_t        *last;
+	mem_lst_t        *last[MEM_LAST_CNT];
 
 	/* these functions are used if no block is found */
 	void             *ext;

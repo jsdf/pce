@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.c                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -454,12 +454,22 @@ unsigned long mem_blk_get_uint32_null (const void *ext, unsigned long addr)
 }
 
 
+static
+void mem_init_last (memory_t *mem)
+{
+	unsigned i;
+
+	for (i = 0; i < MEM_LAST_CNT; i++) {
+		mem->last[i] = NULL;
+	}
+}
+
 void mem_init (memory_t *mem)
 {
 	mem->cnt = 0;
 	mem->lst = NULL;
 
-	mem->last = NULL;
+	mem_init_last (mem);
 
 	mem->ext = NULL;
 	mem->get_uint8 = NULL;
@@ -570,7 +580,7 @@ void mem_add_blk (memory_t *mem, mem_blk_t *blk, int del)
 	lst->blk = blk;
 	lst->del = (del != 0);
 
-	mem->last = NULL;
+	mem_init_last (mem);
 }
 
 void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk)
@@ -591,7 +601,8 @@ void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk)
 	}
 
 	mem->cnt = j;
-	mem->last = NULL;
+
+	mem_init_last (mem);
 }
 
 void mem_rmv_all (memory_t *mem)
@@ -605,17 +616,21 @@ void mem_rmv_all (memory_t *mem)
 	}
 
 	mem->cnt = 0;
-	mem->last = NULL;
+
+	mem_init_last (mem);
 }
 
-mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
+static inline
+mem_blk_t *mem_get_blk_inline (memory_t *mem, unsigned long addr, unsigned last)
 {
 	unsigned  i;
 	mem_blk_t *blk;
 	mem_lst_t *lst;
 
-	if (mem->last != NULL) {
-		blk = mem->last->blk;
+	last &= (MEM_LAST_CNT - 1);
+
+	if (mem->last[last] != NULL) {
+		blk = mem->last[last]->blk;
 		if (blk->active && (addr >= blk->addr1) && (addr <= blk->addr2)) {
 			return (blk);
 		}
@@ -626,7 +641,7 @@ mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 	for (i = 0; i < mem->cnt; i++) {
 		blk = lst->blk;
 		if (blk->active && (addr >= blk->addr1) && (addr <= blk->addr2)) {
-			mem->last = lst;
+			mem->last[last] = lst;
 			return (blk);
 		}
 
@@ -636,11 +651,16 @@ mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 	return (NULL);
 }
 
+mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
+{
+	return (mem_get_blk_inline (mem, addr, 0));
+}
+
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 1);
 
 	if (blk != NULL) {
 		addr -= blk->addr1;
@@ -665,7 +685,7 @@ unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr)
 	unsigned short val;
 	mem_blk_t      *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 1);
 
 	if (blk != NULL) {
 		if ((addr + 1) > blk->addr2) {
@@ -698,7 +718,7 @@ unsigned short mem_get_uint16_le (memory_t *mem, unsigned long addr)
 	unsigned short val;
 	mem_blk_t      *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 1);
 
 	if (blk != NULL) {
 		if ((addr + 1) > blk->addr2) {
@@ -731,7 +751,7 @@ unsigned long mem_get_uint32_be (memory_t *mem, unsigned long addr)
 	unsigned long val;
 	mem_blk_t     *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 1);
 
 	if (blk != NULL) {
 		if ((addr + 3) > blk->addr2) {
@@ -768,7 +788,7 @@ unsigned long mem_get_uint32_le (memory_t *mem, unsigned long addr)
 	unsigned long val;
 	mem_blk_t     *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 1);
 
 	if (blk != NULL) {
 		if ((addr + 3) > blk->addr2) {
@@ -825,7 +845,7 @@ void mem_set_uint8 (memory_t *mem, unsigned long addr, unsigned char val)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 2);
 
 	if (blk != NULL) {
 		if (blk->readonly) {
@@ -850,7 +870,7 @@ void mem_set_uint16_be (memory_t *mem, unsigned long addr, unsigned short val)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 2);
 
 	if (blk != NULL) {
 		if ((addr + 1) > blk->addr2) {
@@ -882,7 +902,7 @@ void mem_set_uint16_le (memory_t *mem, unsigned long addr, unsigned short val)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 2);
 
 	if (blk != NULL) {
 		if ((addr + 1) > blk->addr2) {
@@ -914,7 +934,7 @@ void mem_set_uint32_be (memory_t *mem, unsigned long addr, unsigned long val)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 2);
 
 	if (blk != NULL) {
 		if ((addr + 3) > blk->addr2) {
@@ -950,7 +970,7 @@ void mem_set_uint32_le (memory_t *mem, unsigned long addr, unsigned long val)
 {
 	mem_blk_t *blk;
 
-	blk = mem_get_blk (mem, addr);
+	blk = mem_get_blk_inline (mem, addr, 2);
 
 	if (blk != NULL) {
 		if ((addr + 3) > blk->addr2) {
