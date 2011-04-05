@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/sdl.c                                           *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -571,7 +571,7 @@ int sdl_open (sdl_t *sdl, unsigned w, unsigned h)
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_EventState (SDL_MOUSEMOTION, SDL_ENABLE);
 
-	sdl_set_window_size (sdl, fx * w + bx, fy * h + bx, 0);
+	sdl_set_window_size (sdl, fx * w + bx, fy * h + by, 0);
 
 	return (0);
 }
