@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/opcodes.c                                     *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -2085,12 +2085,11 @@ static unsigned op4e40_00 (e68000_t *c)
 static unsigned op4e40_02 (e68000_t *c)
 {
 	unsigned r;
-	uint32_t s, d;
+	uint32_t s;
 
 	e68_ifetch (c, 1);
 
 	r = e68_ir_reg0 (c);
-	d = e68_get_areg32 (c, r);
 	s = e68_exts16 (c->ir[1]);
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/disasm.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -342,11 +342,8 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 static
 void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsigned size)
 {
-	uint16_t ir;
 	uint16_t val16;
 	uint32_t val32;
-
-	ir = e68_get_uint16 (src, 0);
 
 	switch (arg) {
 	case ARG_NONE:

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkcow.c                                   *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -352,10 +352,6 @@ int dsk_cow_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)
 static
 int dsk_cow_set_msg (disk_t *dsk, const char *msg, const char *val)
 {
-	disk_cow_t *cow;
-
-	cow = dsk->ext;
-
 	if (strcmp (msg, "commit") == 0) {
 		return (dsk_cow_commit (dsk));
 	}

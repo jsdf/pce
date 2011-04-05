@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/arm/disasm.c                                         *
  * Created:     2004-11-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -235,12 +235,12 @@ unsigned dasm_arg (char *dst1, char *dst2, uint32_t ir, unsigned arg)
 
 	case ARG_AMODE2:
 		{
-			int  i, p, u, w;
+			int  i, p, w;
 			char *fmt;
 
 			i = arm_get_bit (ir, 25);
 			p = arm_get_bit (ir, 24);
-			u = arm_get_bit (ir, 23);
+			/* u = arm_get_bit (ir, 23); */
 			w = arm_get_bit (ir, 21);
 
 			if (i) {

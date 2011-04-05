@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkpce.c                                   *
  * Created:     2004-11-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -103,10 +103,6 @@ int dsk_pce_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)
 static
 int dsk_pce_set_msg (disk_t *dsk, const char *msg, const char *val)
 {
-	disk_pce_t *img;
-
-	img = dsk->ext;
-
 	if (strcmp (msg, "commit") == 0) {
 		return (0);
 	}

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.c                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -231,10 +231,6 @@ void e8250_set_irq (e8250_t *uart, unsigned char val)
 static
 void e8250_set_int_cond (e8250_t *uart)
 {
-	unsigned char ier;
-
-	ier = uart->ier;
-
 	uart->iir = E8250_IIR_PND;
 
 	if (uart->iir < E8250_IIR_RRD) {

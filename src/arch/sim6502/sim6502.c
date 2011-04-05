@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim6502/sim6502.c                                   *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,10 +29,6 @@ void s6502_break (sim6502_t *sim, unsigned char val);
 static
 void s6502_setup_cpu (sim6502_t *sim, ini_sct_t *ini)
 {
-	ini_sct_t *sct;
-
-	sct = ini_next_sct (ini, NULL, "cpu");
-
 	pce_log_tag (MSG_INF, "CPU:", "model=6502\n");
 
 	sim->cpu = e6502_new();

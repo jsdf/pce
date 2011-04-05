@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-null.c                                 *
  * Created:     2009-03-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -41,9 +41,11 @@ void chr_null_close (char_drv_t *cdrv)
 static
 unsigned chr_null_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 {
+#if 0
 	char_null_t *drv;
 
 	drv = cdrv->ext;
+#endif
 
 	return (0);
 }
@@ -51,9 +53,11 @@ unsigned chr_null_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 static
 unsigned chr_null_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 {
+#if 0
 	char_null_t *drv;
 
 	drv = cdrv->ext;
+#endif
 
 	return (cnt);
 }
@@ -61,9 +65,11 @@ unsigned chr_null_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 static
 int chr_null_get_ctl (char_drv_t *cdrv, unsigned *ctl)
 {
+#if 0
 	char_null_t *drv;
 
 	drv = cdrv->ext;
+#endif
 
 	*ctl = PCE_CHAR_DSR | PCE_CHAR_CTS | PCE_CHAR_CD;
 
@@ -73,9 +79,11 @@ int chr_null_get_ctl (char_drv_t *cdrv, unsigned *ctl)
 static
 int chr_null_set_ctl (char_drv_t *cdrv, unsigned ctl)
 {
+#if 0
 	char_null_t *drv;
 
 	drv = cdrv->ext;
+#endif
 
 	return (0);
 }
@@ -83,9 +91,11 @@ int chr_null_set_ctl (char_drv_t *cdrv, unsigned ctl)
 static
 int chr_null_set_params (char_drv_t *cdrv, unsigned long bps, unsigned bpc, unsigned parity, unsigned stop)
 {
+#if 0
 	char_null_t *drv;
 
 	drv = cdrv->ext;
+#endif
 
 	return (0);
 }

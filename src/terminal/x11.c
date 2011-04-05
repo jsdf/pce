@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/terminal/x11.c                                           *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -721,11 +721,13 @@ int xt_set_msg_trm (xterm_t *xt, const char *msg, const char *val)
 	}
 
 	if (strcmp (msg, "term.fullscreen") == 0) {
+#if 0
 		int v;
 
 		v = strtol (val, NULL, 0);
 
-		/* xt_set_fullscreen (xt, v != 0); */
+		xt_set_fullscreen (xt, v != 0);
+#endif
 
 		return (0);
 	}

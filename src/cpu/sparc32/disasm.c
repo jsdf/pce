@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/sparc32/disasm.c                                     *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -504,11 +504,10 @@ static void opd211 (s32_dasm_t *da)
 /* 2 12: orcc rs1, reg_or_imm, rd */
 static void opd212 (s32_dasm_t *da)
 {
-	unsigned rd, rs1, rs2;
+	unsigned rd, rs1;
 
 	rd = s32_ir_rd (da->ir);
 	rs1 = s32_ir_rs1 (da->ir);
-	rs2 = s32_ir_rs2 (da->ir);
 
 	if ((rs1 == 0) && (rd == 0) && (s32_ir_i (da->ir) == 0)) {
 		dasm_op1 (da, "tst", ARG_RS2_OR_SIMM13);
@@ -722,12 +721,11 @@ static void opd237 (s32_dasm_t *da)
 /* 2 38: jmpl addr, rd */
 static void opd238 (s32_dasm_t *da)
 {
-	unsigned rd, rs1, rs2, i;
+	unsigned rd, rs1, i;
 	uint32_t simm13;
 
 	rd = s32_ir_rd (da->ir);
 	rs1 = s32_ir_rs1 (da->ir);
-	rs2 = s32_ir_rs2 (da->ir);
 	i = s32_ir_i (da->ir);
 	simm13 = s32_ir_simm13 (da->ir);
 

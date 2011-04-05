@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/arm/opcodes.c                                        *
  * Created:     2004-11-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -2704,12 +2704,9 @@ static
 void opc4 (arm_t *c)
 {
 	int      r;
-	unsigned cop, op, rn, rd;
+	unsigned cop;
 
 	cop = arm_get_bits (c->ir, 8, 4);
-	op = arm_get_bits (c->ir, 4, 4);
-	rn = arm_ir_rn (c->ir);
-	rd = arm_ir_rd (c->ir);
 
 	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
@@ -2736,12 +2733,9 @@ static
 void opc5 (arm_t *c)
 {
 	int      r;
-	unsigned cop, op, rn, rd;
+	unsigned cop;
 
 	cop = arm_get_bits (c->ir, 8, 4);
-	op = arm_get_bits (c->ir, 4, 4);
-	rn = arm_ir_rn (c->ir);
-	rd = arm_ir_rd (c->ir);
 
 	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
@@ -2768,14 +2762,9 @@ static
 void ope0_00 (arm_t *c)
 {
 	int      r;
-	unsigned cop, op1, op2, rd, rn, rm;
+	unsigned cop;
 
 	cop = arm_get_bits (c->ir, 8, 4);
-	op1 = arm_get_bits (c->ir, 21, 3);
-	op2 = arm_get_bits (c->ir, 5, 3);
-	rd = arm_ir_rd (c->ir);
-	rn = arm_ir_rn (c->ir);
-	rm = arm_ir_rm (c->ir);
 
 	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
@@ -2798,13 +2787,9 @@ static
 void ope0_01 (arm_t *c)
 {
 	int      r;
-	unsigned cop, op1, op2, rn, rm;
+	unsigned cop;
 
 	cop = arm_get_bits (c->ir, 8, 4);
-	op1 = arm_get_bits (c->ir, 21, 3);
-	op2 = arm_get_bits (c->ir, 5, 3);
-	rn = arm_ir_rn (c->ir);
-	rm = arm_ir_rm (c->ir);
 
 	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);
@@ -2825,13 +2810,9 @@ static
 void ope0_11 (arm_t *c)
 {
 	int      r;
-	unsigned cop, op1, op2, rn, rm;
+	unsigned cop;
 
 	cop = arm_get_bits (c->ir, 8, 4);
-	op1 = arm_get_bits (c->ir, 21, 3);
-	op2 = arm_get_bits (c->ir, 5, 3);
-	rn = arm_ir_rn (c->ir);
-	rm = arm_ir_rm (c->ir);
 
 	if (arm_copr_check (c, cop) == 0) {
 		r = c->copr[cop]->exec (c, c->copr[cop]);

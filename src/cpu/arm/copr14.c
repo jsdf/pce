@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/arm/copr14.c                                         *
  * Created:     2007-02-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -71,14 +71,14 @@ static
 int cp14_op_mrc (arm_t *c, arm_copr_t *p)
 {
 	arm_copr14_t *p14;
-	unsigned     rn, rm, op2;
+	unsigned     rn, rm;
 	uint32_t     val;
 
 	p14 = p->ext;
 
 	rn = arm_ir_rn (c->ir);
 	rm = arm_ir_rm (c->ir);
-	op2 = arm_get_bits (c->ir, 5, 3);
+	/* op2 = arm_get_bits (c->ir, 5, 3); */
 
 	switch ((rm << 4) | rn) {
 	case 0x00: /* xsc1 performance monitor control register */
@@ -111,14 +111,14 @@ static
 int cp14_op_mcr (arm_t *c, arm_copr_t *p)
 {
 	arm_copr14_t *p14;
-	unsigned     rn, rm, op2;
+	unsigned     rn, rm;
 	uint32_t     val;
 
 	p14 = p->ext;
 
 	rn = arm_ir_rn (c->ir);
 	rm = arm_ir_rm (c->ir);
-	op2 = arm_get_bits (c->ir, 5, 3);
+	/* op2 = arm_get_bits (c->ir, 5, 3); */
 
 	val = arm_get_rd (c, c->ir);
 

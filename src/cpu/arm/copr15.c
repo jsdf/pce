@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/arm/copr15.c                                         *
  * Created:     2004-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -287,10 +287,10 @@ int cp15_set_reg8 (arm_t *c, arm_copr15_t *p)
 static
 int cp15_set_reg15 (arm_t *c, arm_copr15_t *p, uint32_t val)
 {
-	unsigned rm, op2;
+	unsigned rm;
 
 	rm = arm_ir_rm (c->ir);
-	op2 = arm_get_bits (c->ir, 5, 3);
+	/* op2 = arm_get_bits (c->ir, 5, 3); */
 
 	if (rm == 1) {
 		/* xscale: coprocessor access register */

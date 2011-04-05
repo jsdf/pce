@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/rtc.c                                       *
  * Created:     2007-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -226,8 +226,6 @@ void mac_rtc_cmd1_read (mac_rtc_t *rtc)
 static
 void mac_rtc_cmd1_write (mac_rtc_t *rtc)
 {
-	unsigned char reg;
-
 #ifdef DEBUG_RTC
 	mac_log_deb ("rtc: write command 1: %02X (%02X)\n",
 		rtc->cmd1, rtc->shift
@@ -242,8 +240,6 @@ void mac_rtc_cmd1_write (mac_rtc_t *rtc)
 	if (rtc->reg_wp & 0x80) {
 		return;
 	}
-
-	reg = (rtc->cmd1 >> 2) & 0x1f;
 
 	if ((rtc->cmd1 & 0xe3) == 0x01) {
 		unsigned      bit;

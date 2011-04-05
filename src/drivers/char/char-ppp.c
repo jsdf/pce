@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-ppp.c                                  *
  * Created:     2009-10-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1513,13 +1513,11 @@ unsigned chr_ppp_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 {
 	unsigned      i, n;
 	unsigned char v;
-	unsigned char *tmp;
 	int           esc;
 	ppp_packet_t  *pk;
 	char_ppp_t    *drv;
 
 	drv = cdrv->ext;
-	tmp = buf;
 
 	if (drv->ser_pk_hd == NULL) {
 		tun_receive (drv);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/nvram.c                                          *
  * Created:     2003-12-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -94,8 +94,6 @@ void nvr_set_endian (nvram_t *nvr, int big)
 
 int nvr_set_file (nvram_t *nvr, FILE *fp, int close)
 {
-	size_t r;
-
 	if (nvr->close) {
 		fclose (nvr->fp);
 	}
@@ -122,7 +120,7 @@ int nvr_set_file (nvram_t *nvr, FILE *fp, int close)
 
 	mem_blk_clear (nvr->mem, 0x00);
 
-	r = fread (nvr->mem->data, 1, nvr->mem->size, nvr->fp);
+	(void) fread (nvr->mem->data, 1, nvr->mem->size, nvr->fp);
 
 	return (0);
 }
@@ -151,11 +149,9 @@ mem_blk_t *nvr_get_mem (nvram_t *nvr)
 static
 void nvr_write (nvram_t *nvr, unsigned long addr, unsigned long size)
 {
-	size_t r;
-
 	if (nvr->fp != NULL) {
 		if (fseek (nvr->fp, addr, SEEK_SET) == 0) {
-			r = fwrite (nvr->mem->data + addr, 1, size, nvr->fp);
+			(void) fwrite (nvr->mem->data + addr, 1, size, nvr->fp);
 			fflush (nvr->fp);
 		}
 	}

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/scsi.c                                      *
  * Created:     2007-11-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -435,11 +435,10 @@ void mac_scsi_cmd_read (mac_scsi_t *scsi, unsigned long lba, unsigned long cnt)
 static
 void mac_scsi_cmd_read6 (mac_scsi_t *scsi)
 {
-	unsigned char lun;
 	unsigned long lba;
 	unsigned long cnt;
 
-	lun = (scsi->cmd[1] >> 5) & 0x07;
+	/* lun = (scsi->cmd[1] >> 5) & 0x07; */
 
 	lba = scsi->cmd[1] & 0x1f;
 	lba = (lba << 8) | scsi->cmd[2];
@@ -456,11 +455,10 @@ void mac_scsi_cmd_read6 (mac_scsi_t *scsi)
 static
 void mac_scsi_cmd_read10 (mac_scsi_t *scsi)
 {
-	unsigned char lun;
 	unsigned long lba;
 	unsigned long cnt;
 
-	lun = (scsi->cmd[1] >> 5) & 0x07;
+	/* lun = (scsi->cmd[1] >> 5) & 0x07; */
 
 	lba = scsi->cmd[2];
 	lba = (lba << 8) | scsi->cmd[3];
@@ -514,11 +512,10 @@ void mac_scsi_cmd_write_finish (mac_scsi_t *scsi, unsigned long lba, unsigned lo
 static
 void mac_scsi_cmd_write6_finish (mac_scsi_t *scsi)
 {
-	unsigned char lun;
 	unsigned long lba;
 	unsigned long cnt;
 
-	lun = (scsi->cmd[1] >> 5) & 0x07;
+	/* lun = (scsi->cmd[1] >> 5) & 0x07; */
 
 	lba = scsi->cmd[1] & 0x1f;
 	lba = (lba << 8) | scsi->cmd[2];
@@ -560,11 +557,10 @@ void mac_scsi_cmd_write6 (mac_scsi_t *scsi)
 static
 void mac_scsi_cmd_write10_finish (mac_scsi_t *scsi)
 {
-	unsigned char lun;
 	unsigned long lba;
 	unsigned      cnt;
 
-	lun = (scsi->cmd[1] >> 5) & 0x07;
+	/* lun = (scsi->cmd[1] >> 5) & 0x07; */
 
 	lba = scsi->cmd[2];
 	lba = (lba << 8) | scsi->cmd[3];
@@ -600,7 +596,6 @@ void mac_scsi_cmd_write10 (mac_scsi_t *scsi)
 static
 void mac_scsi_cmd_verify10 (mac_scsi_t *scsi)
 {
-	unsigned char lun;
 	unsigned long lba;
 	unsigned      cnt;
 	disk_t        *dsk;
@@ -612,7 +607,7 @@ void mac_scsi_cmd_verify10 (mac_scsi_t *scsi)
 		return;
 	}
 
-	lun = (scsi->cmd[1] >> 5) & 0x07;
+	/* lun = (scsi->cmd[1] >> 5) & 0x07; */
 
 	lba = scsi->cmd[2];
 	lba = (lba << 8) | scsi->cmd[3];

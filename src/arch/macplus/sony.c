@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/sony.c                                      *
  * Created:     2007-11-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -160,8 +160,8 @@ void mac_sony_unpatch_rom (macplus_t *sim)
 {
 	unsigned      i, j;
 	unsigned long sony, pcex;
-	unsigned      sofs, dofs;
-	unsigned long sadr, dadr;
+	unsigned      sofs;
+	unsigned long sadr;
 	unsigned char *buf;
 
 	if (sim->sony.patched == 0) {
@@ -180,9 +180,6 @@ void mac_sony_unpatch_rom (macplus_t *sim)
 	for (i = 0; i < 5; i++) {
 		sofs = mem_get_uint16_be (sim->mem, sony + 8 + 2 * i);
 		sadr = sony + sofs;
-
-		dofs = mem_get_uint16_be (sim->mem, pcex + 8 + 2 * i);
-		dadr = pcex + dofs;
 
 		for (j = 0; j < 6; j++) {
 			mem_set_uint8_rw (sim->mem, sadr + j, *(buf++));
@@ -770,14 +767,12 @@ static
 void mac_sony_status (macplus_t *sim)
 {
 	unsigned long pblk;
-	unsigned long dctl;
 	unsigned      cscode, vref;
 	unsigned long src, dst;
 	unsigned      i;
 	uint16_t      val;
 
 	pblk = e68_get_areg32 (sim->cpu, 0);
-	dctl = e68_get_areg32 (sim->cpu, 1);
 
 	cscode = e68_get_mem16 (sim->cpu, pblk + PB_CSCODE);
 	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);

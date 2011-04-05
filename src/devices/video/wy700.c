@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/wy700.c                                    *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
  *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
  *****************************************************************************/
 
@@ -194,9 +194,8 @@ void wy700_update_1280x800 (cga_t *wy)
 static
 void wy700_update (cga_t *wy)
 {
-	unsigned char mode, ctl;
+	unsigned char ctl;
 
-	mode = wy->reg[CGA_MODE];
 	ctl = wy->reg[WY700_CONTROL];
 
 	if (ctl & 0x08) {

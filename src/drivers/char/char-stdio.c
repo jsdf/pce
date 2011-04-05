@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-stdio.c                                *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,10 +52,6 @@ void chr_stdio_close (char_drv_t *cdrv)
 static
 unsigned chr_stdio_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 {
-	char_stdio_t *drv;
-
-	drv = cdrv->ext;
-
 	return (0);
 }
 

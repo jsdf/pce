@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfdc/main.c                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -872,22 +872,17 @@ int pfdc_reorder_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
 	unsigned   i, j;
-	unsigned   s1, s2;
 	pfdc_sct_t *tmp;
 
 	par_cnt += 1;
 
 	for (i = 0; i < par_order_cnt; i++) {
-		s1 = i;
-		s2 = i;
-
 		if (i >= trk->sct_cnt) {
 			return (0);
 		}
 
 		for (j = i; j < trk->sct_cnt; j++) {
 			if (trk->sct[j]->s == par_order[i]) {
-				s2 = j;
 				break;
 			}
 		}
