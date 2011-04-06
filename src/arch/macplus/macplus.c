@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -141,6 +141,10 @@ void mac_set_vbuf (macplus_t *sim, unsigned long addr)
 static
 void mac_check_mouse (macplus_t *sim)
 {
+	if (sim->adb != NULL) {
+		return;
+	}
+
 	if ((sim->mouse_delta_x <= -2) || (sim->mouse_delta_x >= 2)) {
 		if (sim->dcd_a) {
 			sim->via_port_b &= ~0x10;
@@ -200,6 +204,11 @@ void mac_set_mouse (void *ext, int dx, int dy, unsigned but)
 		return;
 	}
 
+	if (sim->adb_mouse != NULL) {
+		adb_mouse_move (sim->adb_mouse, but, dx, dy);
+		return;
+	}
+
 	if ((sim->mouse_button ^ but) & ~but & 2) {
 		trm_set_msg_trm (sim->trm, "term.release", "1");
 	}
@@ -235,6 +244,25 @@ void mac_set_key (void *ext, unsigned event, pce_key_t key)
 	if (sim->kbd != NULL) {
 		mac_kbd_set_key (sim->kbd, event, key);
 	}
+
+	if (sim->adb_kbd != NULL) {
+		adb_kbd_set_key (sim->adb_kbd, event, key);
+	}
+}
+
+static
+void mac_set_adb_int (void *ext, unsigned char val)
+{
+	macplus_t *sim = ext;
+
+	if (val) {
+		sim->via_port_b &= ~0x08;
+	}
+	else {
+		sim->via_port_b |= 0x08;
+	}
+
+	e6522_set_irb_inp (&sim->via, sim->via_port_b);
 }
 
 static
@@ -270,7 +298,9 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 	sim->via_port_a = val;
 
 	if ((old ^ val) & 0x10) {
-		mac_set_overlay (sim, (val & 0x10) != 0);
+		if (sim->model & PCE_MAC_MACPLUS) {
+			mac_set_overlay (sim, (val & 0x10) != 0);
+		}
 	}
 
 	if ((old ^ val) & 0x40) {
@@ -289,20 +319,22 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 	}
 
 	if ((old ^ val) & 0x08) {
-		unsigned char *sbuf;
+		if (sim->model & PCE_MAC_MACPLUS) {
+			unsigned char *sbuf;
 
-		sbuf = mem_blk_get_data (sim->ram);
+			sbuf = mem_blk_get_data (sim->ram);
 
-		if (val & 0x08) {
-			mac_log_deb ("main sound buffer\n");
-			sbuf += sim->sbuf1;
+			if (val & 0x08) {
+				mac_log_deb ("main sound buffer\n");
+				sbuf += sim->sbuf1;
+			}
+			else {
+				mac_log_deb ("alternate sound buffer\n");
+				sbuf += sim->sbuf2;
+			}
+
+			mac_sound_set_sbuf (&sim->sound, sbuf);
 		}
-		else {
-			mac_log_deb ("alternate sound buffer\n");
-			sbuf += sim->sbuf2;
-		}
-
-		mac_sound_set_sbuf (&sim->sound, sbuf);
 	}
 
 	if ((old ^ val) & 0x07) {
@@ -331,6 +363,10 @@ void mac_set_via_port_b (void *ext, unsigned char val)
 
 	if ((old ^ val) & 0x80) {
 		mac_sound_set_enable (&sim->sound, (val & 0x80) == 0);
+	}
+
+	if (sim->adb != NULL) {
+		mac_adb_set_state (sim->adb, (val >> 4) & 3);
 	}
 }
 
@@ -397,6 +433,34 @@ void mac_scc_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 
 
 static
+void mac_setup_system (macplus_t *sim, ini_sct_t *ini)
+{
+	const char *model;
+	ini_sct_t  *sct;
+
+	sct = ini_next_sct (ini, NULL, "system");
+
+	if (sct == NULL) {
+		sct = ini;
+	}
+
+	ini_get_string (sct, "model", &model, "mac-plus");
+
+	pce_log_tag (MSG_INF, "SYSTEM:", "model=%s\n", model);
+
+	if (strcmp (model, "mac-plus") == 0) {
+		sim->model = PCE_MAC_MACPLUS;
+	}
+	else if (strcmp (model, "mac-se") == 0) {
+		sim->model = PCE_MAC_MACSE;
+	}
+	else {
+		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
+		sim->model = PCE_MAC_MACPLUS;
+	}
+}
+
+static
 void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 {
 	int memtest;
@@ -443,7 +507,13 @@ void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 
 	if (memtest == 0) {
 		pce_log_tag (MSG_INF, "RAM:", "disabling memory test\n");
-		mem_set_uint32_be (sim->mem, 0x02ae, 0x00400000);
+
+		if (sim->model & PCE_MAC_MACPLUS) {
+			mem_set_uint32_be (sim->mem, 0x02ae, 0x00400000);
+		}
+		else if (sim->model & PCE_MAC_MACSE) {
+			mem_set_uint32_be (sim->mem, 0x0cfc, 0x574c5343);
+		}
 	}
 }
 
@@ -502,20 +572,15 @@ void mac_setup_via (macplus_t *sim, ini_sct_t *ini)
 
 	pce_log_tag (MSG_INF, "VIA:", "addr=0x%06lx size=0x%lx\n", addr, size);
 
-	sim->via_port_a = 0xd8;
-	sim->via_port_b = 0x88;
-
 	e6522_init (&sim->via, 9);
 
 	e6522_set_irq_fct (&sim->via, sim, mac_interrupt_via);
-
-	e6522_set_ira_inp (&sim->via, sim->via_port_a);
-	e6522_set_irb_inp (&sim->via, sim->via_port_b);
 
 	e6522_set_ora_fct (&sim->via, sim, mac_set_via_port_a);
 	e6522_set_orb_fct (&sim->via, sim, mac_set_via_port_b);
 
 	blk = mem_blk_new (addr, size, 0);
+
 	if (blk == NULL) {
 		return;
 	}
@@ -641,6 +706,10 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 
 	sim->kbd = NULL;
 
+	if ((sim->model & PCE_MAC_MACPLUS) == 0) {
+		return;
+	}
+
 	sct = ini_next_sct (ini, NULL, "keyboard");
 
 	ini_get_uint16 (sct, "model", &model, 1);
@@ -667,6 +736,62 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 
 	e6522_set_shift_out_fct (&sim->via, sim->kbd, mac_kbd_set_uint8);
 	e6522_set_cb2_fct (&sim->via, sim->kbd, mac_kbd_set_data);
+}
+
+static
+void mac_setup_adb (macplus_t *sim, ini_sct_t *ini)
+{
+	ini_sct_t *sct;
+	int       mouse, keyboard, motion;
+
+	sim->adb = NULL;
+	sim->adb_mouse = NULL;
+	sim->adb_kbd = NULL;
+
+	if ((sim->model & PCE_MAC_MACSE) == 0) {
+		return;
+	}
+
+	sct = ini_next_sct (ini, NULL, "adb");
+
+	ini_get_bool (sct, "mouse", &mouse, 1);
+	ini_get_bool (sct, "keyboard", &keyboard, 1);
+	ini_get_bool (sct, "keypad_motion", &motion, 0);
+
+	pce_log_tag (MSG_INF, "ADB:", "enabled\n");
+
+	sim->adb = mac_adb_new();
+
+	if (sim->adb == NULL) {
+		pce_log (MSG_ERR, "*** can't create adb\n");
+		return;
+	}
+
+	adb_set_int_fct (sim->adb, sim, mac_set_adb_int);
+
+	if (mouse) {
+		pce_log_tag (MSG_INF, "ADB:", "mouse\n");
+
+		sim->adb_mouse = adb_mouse_new();
+
+		if (sim->adb_mouse != NULL) {
+			adb_add_device (sim->adb, &sim->adb_mouse->dev);
+		}
+	}
+
+	if (keyboard) {
+		pce_log_tag (MSG_INF, "ADB:",
+			"keyboard keypad_mode=%s\n",
+			motion ? "motion" : "keypad"
+		);
+
+		sim->adb_kbd = adb_kbd_new();
+
+		if (sim->adb_kbd != NULL) {
+			adb_kbd_set_keypad_mode (sim->adb_kbd, motion);
+			adb_add_device (sim->adb, &sim->adb_kbd->dev);
+		}
+	}
 }
 
 static
@@ -907,6 +1032,7 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 
 	bps_init (&sim->bps);
 
+	mac_setup_system (sim, ini);
 	mac_setup_mem (sim, ini);
 	mac_setup_cpu (sim, ini);
 	mac_setup_via (sim, ini);
@@ -914,6 +1040,7 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	mac_setup_serial (sim, ini);
 	mac_setup_rtc (sim, ini);
 	mac_setup_kbd (sim, ini);
+	mac_setup_adb (sim, ini);
 	mac_setup_disks (sim, ini);
 	mac_iwm_init (sim);
 	mac_setup_scsi (sim, ini);
@@ -964,6 +1091,7 @@ void mac_free (macplus_t *sim)
 	mac_scsi_free (&sim->scsi);
 	mac_iwm_free (sim);
 	dsks_del (sim->dsks);
+	mac_adb_del (sim->adb);
 	mac_kbd_del (sim->kbd);
 	mac_rtc_free (&sim->rtc);
 	mac_ser_free (&sim->ser[1]);
@@ -1066,15 +1194,33 @@ void mac_reset (macplus_t *sim)
 
 	sim->intr = 0;
 
-	sim->via_port_a = 0xd8;
-	sim->via_port_b = 0x88;
+	if (sim->model & PCE_MAC_MACPLUS) {
+		mac_set_overlay (sim, 1);
+	}
+	else if (sim->model & PCE_MAC_MACSE) {
+		mac_set_overlay (sim, 0);
+		if ((sim->rom != NULL) && (sim->rom->size >= 8)) {
+			e68_set_mem32 (sim->cpu, 0, mem_blk_get_uint32_be (sim->rom, 0));
+			e68_set_mem32 (sim->cpu, 4, mem_blk_get_uint32_be (sim->rom, 4));
+		}
+	}
 
-	mac_set_overlay (sim, 1);
+	e6522_reset (&sim->via);
+
+	sim->via_port_a = 0xff;
+	sim->via_port_b = 0xff;
+
+	e6522_set_ira_inp (&sim->via, sim->via_port_a);
+	e6522_set_irb_inp (&sim->via, sim->via_port_b);
 
 	mac_sony_reset (sim);
 	mac_scsi_reset (&sim->scsi);
-	e6522_reset (&sim->via);
 	e8530_reset (&sim->scc);
+
+	if (sim->adb != NULL) {
+		adb_reset (sim->adb);
+	}
+
 	e68_reset (sim->cpu);
 
 	mac_clock_discontinuity (sim);
@@ -1163,6 +1309,10 @@ void mac_clock (macplus_t *sim, unsigned n)
 	viaclk = sim->clk_div[1] / 10;
 
 	e6522_clock (&sim->via, viaclk);
+
+	if (sim->adb != NULL) {
+		mac_adb_clock (sim->adb, 10 * viaclk);
+	}
 
 	sim->clk_div[1] -= 10 * viaclk;
 	sim->clk_div[2] += 10 * viaclk;

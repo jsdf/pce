@@ -62,7 +62,7 @@ PCE_MACPLUS_SRC  := $(foreach f,$(PCE_MACPLUS_BAS),$(rel)/$(f).c)
 PCE_MACPLUS_OBJ  := $(foreach f,$(PCE_MACPLUS_BAS),$(rel)/$(f).o)
 PCE_MACPLUS_HDR  := $(foreach f,$(PCE_MACPLUS_BAS),$(rel)/$(f).h)
 #PCE_MACPLUS_MAN1 := $(rel)/pce-macplus.1
-PCE_MACPLUS_ETC  := $(rel)/pce-macplus.cfg
+PCE_MACPLUS_ETC  := $(rel)/pce-macplus.cfg $(rel)/pce-macse.cfg
 PCE_MACPLUS_BIN  := $(rel)/pce-macplus$(EXEEXT)
 
 PCE_MACPLUS_OBJ_EXT := \
@@ -107,7 +107,7 @@ endif
 
 CLN  += $(PCE_MACPLUS_BIN) $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_ETC)
 DIST += $(PCE_MACPLUS_SRC) $(PCE_MACPLUS_HDR) $(PCE_MACPLUS_MAN1)
-DIST += $(rel)/pce-macplus.cfg.in
+DIST += $(rel)/pce-macplus.cfg.in $(rel)/pce-macse.cfg.in
 
 $(rel)/adb.o:		$(rel)/adb.c
 $(rel)/adb_keyboard.o:	$(rel)/adb_keyboard.c
@@ -134,5 +134,9 @@ $(rel)/pce-macplus$(EXEEXT): $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
 	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm
 
 $(rel)/pce-macplus.cfg: $(rel)/pce-macplus.cfg.in
+	$(QP)echo "  SED    $@"
+	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@
+
+$(rel)/pce-macse.cfg: $(rel)/pce-macse.cfg.in
 	$(QP)echo "  SED    $@"
 	$(QR)sed -e "s]PCE_DIR_DATA]$(datadir)]g" < $< > $@

@@ -294,6 +294,8 @@ src/arch/ibmpc/xms.o: src/arch/ibmpc/xms.c \
 
 src/arch/macplus/adb.o: src/arch/macplus/adb.c \
 	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -339,6 +341,7 @@ src/arch/macplus/adb.o: src/arch/macplus/adb.c \
 src/arch/macplus/adb_keyboard.o: src/arch/macplus/adb_keyboard.c \
 	src/arch/macplus/adb.h \
 	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -383,6 +386,7 @@ src/arch/macplus/adb_keyboard.o: src/arch/macplus/adb_keyboard.c \
 
 src/arch/macplus/adb_mouse.o: src/arch/macplus/adb_mouse.c \
 	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
 	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
@@ -427,6 +431,9 @@ src/arch/macplus/adb_mouse.o: src/arch/macplus/adb_mouse.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -470,6 +477,9 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/hook.o: src/arch/macplus/hook.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -513,6 +523,9 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/hotkey.h \
@@ -557,6 +570,9 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -600,6 +616,9 @@ src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -643,6 +662,9 @@ src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/hotkey.h \
@@ -687,6 +709,9 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/main.o: src/arch/macplus/main.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -731,6 +756,9 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/mem.o: src/arch/macplus/mem.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -774,6 +802,9 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/msg.o: src/arch/macplus/msg.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -817,6 +848,9 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/rtc.o: src/arch/macplus/rtc.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -860,6 +894,9 @@ src/arch/macplus/rtc.o: src/arch/macplus/rtc.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/scsi.o: src/arch/macplus/scsi.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -903,6 +940,9 @@ src/arch/macplus/scsi.o: src/arch/macplus/scsi.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/serial.o: src/arch/macplus/serial.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -946,6 +986,9 @@ src/arch/macplus/serial.o: src/arch/macplus/serial.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/sony.o: src/arch/macplus/sony.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -989,6 +1032,9 @@ src/arch/macplus/sony.o: src/arch/macplus/sony.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/sound.o: src/arch/macplus/sound.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -1032,6 +1078,9 @@ src/arch/macplus/sound.o: src/arch/macplus/sound.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/traps.o: src/arch/macplus/traps.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \
@@ -1075,6 +1124,9 @@ src/arch/macplus/traps.o: src/arch/macplus/traps.c \
 	src/terminal/terminal.h
 
 src/arch/macplus/video.o: src/arch/macplus/video.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/adb_keyboard.h \
+	src/arch/macplus/adb_mouse.h \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
 	src/arch/macplus/iwm.h \

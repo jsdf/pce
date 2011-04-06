@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.h                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,10 +24,21 @@
 #define PCE_MACPLUS_MACPLUS_H 1
 
 
+#include "adb.h"
+#include "adb_keyboard.h"
+#include "adb_mouse.h"
+
+
+#define PCE_MAC_MACPLUS 1
+#define PCE_MAC_MACSE   2
+
+
 /*****************************************************************************
  * @short The macplus context struct
  *****************************************************************************/
 struct macplus_s {
+	unsigned           model;
+
 	e68000_t           *cpu;
 
 	memory_t           *mem;
@@ -44,6 +55,9 @@ struct macplus_s {
 	e8530_t            scc;
 	mac_rtc_t          rtc;
 	mac_kbd_t          *kbd;
+	mac_adb_t          *adb;
+	adb_kbd_t          *adb_kbd;
+	adb_mouse_t        *adb_mouse;
 	mac_scsi_t         scsi;
 	mac_sony_t         sony;
 	mac_sound_t        sound;

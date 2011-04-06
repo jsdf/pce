@@ -1,4 +1,4 @@
-# pce-macplus.cfg
+# pce-macse.cfg
 #
 # Example config file
 
@@ -25,7 +25,7 @@ system {
 	# The Macintosh model to emulate. Valid models are:
 	# mac-plus: A Macintosh 128K, 512K, 512Ke or Plus
 	# mac-se:   A Macintosh SE or SE-FDHD
-	model = "mac-plus"
+	model = "mac-se"
 }
 
 cpu {
@@ -56,7 +56,7 @@ ram {
 # Multiple "rom" sections may be present.
 rom {
 	# The file from which the rom code is loaded
-	file = "macplus.rom"
+	file = "macse.rom"
 
 	# The base address
 	address = 0x400000
@@ -84,13 +84,13 @@ rom {
 # sections. It is possible to overwrite read-only blocks, too.
 #load {
 #	format = "srec"
-#	file = "macplus.srec"
+#	file = "macse.srec"
 #}
 
 #load {
 #	format = "binary"
 #	address = 0x400000
-#	file = "macplus.bin"
+#	file = "macse.bin"
 #}
 
 
@@ -157,22 +157,22 @@ sound {
 }
 
 
-keyboard {
-	# The model number and international flag are returned
-	# by the keyboard but MacOS seems to ignore them.
-	model = 0
-	intl  = 0
+adb {
+	# Enable the ADB mouse
+	mouse = true
 
-	# If keypad_motion is set to 1, host keypad keys are mapped
-	# to Macintosh motion keys.
-	keypad_motion = 0
+	# Enable the ADB extended keyboard
+	keyboard = true
+
+	# Map keypad keys to motion keys
+	keypad_motion = false
 }
 
 
 rtc {
 	# On startup the parameter RAM is loaded from this file. On
 	# shutdown it is written back.
-	file = "pram-mac-plus.dat"
+	file = "pram-mac-se.dat"
 
 	realtime = 1
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hotkey.c                                    *
  * Created:     2010-11-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -49,6 +49,17 @@ int mac_set_hotkey (macplus_t *sim, pce_key_t key)
 			else {
 				mac_log_deb ("keypad mode: keypad\n");
 				mac_kbd_set_keypad_mode (sim->kbd, 0);
+			}
+		}
+
+		if (sim->adb_kbd != NULL) {
+			if (adb_kbd_get_keypad_mode (sim->adb_kbd)) {
+				mac_log_deb ("keypad mode: keypad\n");
+				adb_kbd_set_keypad_mode (sim->adb_kbd, 0);
+			}
+			else {
+				mac_log_deb ("keypad mode: motion\n");
+				adb_kbd_set_keypad_mode (sim->adb_kbd, 1);
 			}
 		}
 		break;
