@@ -39,6 +39,7 @@ $(rel)/%.o: $(rel)/%.c
 
 PCE_MACPLUS_BAS := \
 	adb \
+	adb_mouse \
 	cmd_68k \
 	hook \
 	hotkey \
@@ -108,6 +109,7 @@ DIST += $(PCE_MACPLUS_SRC) $(PCE_MACPLUS_HDR) $(PCE_MACPLUS_MAN1)
 DIST += $(rel)/pce-macplus.cfg.in
 
 $(rel)/adb.o:		$(rel)/adb.c
+$(rel)/adb_mouse.o:	$(rel)/adb_mouse.c
 $(rel)/cmd_68k.o:	$(rel)/cmd_68k.c
 $(rel)/hook.o:		$(rel)/hook.c
 $(rel)/hotkey.o:	$(rel)/hotkey.c
