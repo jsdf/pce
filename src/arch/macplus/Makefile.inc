@@ -38,6 +38,7 @@ $(rel)/%.o: $(rel)/%.c
 # ----------------------------------------------------------------------
 
 PCE_MACPLUS_BAS := \
+	adb \
 	cmd_68k \
 	hook \
 	hotkey \
@@ -106,6 +107,7 @@ CLN  += $(PCE_MACPLUS_BIN) $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_ETC)
 DIST += $(PCE_MACPLUS_SRC) $(PCE_MACPLUS_HDR) $(PCE_MACPLUS_MAN1)
 DIST += $(rel)/pce-macplus.cfg.in
 
+$(rel)/adb.o:		$(rel)/adb.c
 $(rel)/cmd_68k.o:	$(rel)/cmd_68k.c
 $(rel)/hook.o:		$(rel)/hook.c
 $(rel)/hotkey.o:	$(rel)/hotkey.c

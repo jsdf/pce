@@ -292,6 +292,50 @@ src/arch/ibmpc/xms.o: src/arch/ibmpc/xms.c \
 	src/lib/log.h \
 	src/libini/libini.h
 
+src/arch/macplus/adb.o: src/arch/macplus/adb.c \
+	src/arch/macplus/adb.h \
+	src/arch/macplus/cmd_68k.h \
+	src/arch/macplus/hook.h \
+	src/arch/macplus/iwm.h \
+	src/arch/macplus/keyboard.h \
+	src/arch/macplus/macplus.h \
+	src/arch/macplus/main.h \
+	src/arch/macplus/mem.h \
+	src/arch/macplus/msg.h \
+	src/arch/macplus/rtc.h \
+	src/arch/macplus/scsi.h \
+	src/arch/macplus/serial.h \
+	src/arch/macplus/sony.h \
+	src/arch/macplus/sound.h \
+	src/arch/macplus/traps.h \
+	src/arch/macplus/video.h \
+	src/chipset/e6522.h \
+	src/chipset/e8530.h \
+	src/config.h \
+	src/cpu/e68000/e68000.h \
+	src/devices/block/block.h \
+	src/devices/memory.h \
+	src/devices/nvram.h \
+	src/drivers/char/char.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/inidsk.h \
+	src/lib/iniram.h \
+	src/lib/initerm.h \
+	src/lib/load.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/msg.h \
+	src/lib/path.h \
+	src/lib/string.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h \
+	src/terminal/keys.h \
+	src/terminal/terminal.h
+
 src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/arch/macplus/cmd_68k.h \
 	src/arch/macplus/hook.h \
