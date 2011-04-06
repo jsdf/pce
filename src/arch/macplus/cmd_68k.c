@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -211,9 +211,9 @@ void mac_prt_state_via (macplus_t *sim)
 		via->pcr, via->acr, via->ifr, via->ier, via->irq_val
 	);
 
-	pce_printf ("DDRA=%02X DDRB=%02X  CA1=%X   T1L=%04X SHFT=%02X\n",
+	pce_printf ("DDRA=%02X DDRB=%02X  CA1=%X   T1L=%04X SHFT=%02X/%u\n",
 		via->ddra, via->ddrb, via->ca1_inp,
-		via->t1_latch, via->shift
+		via->t1_latch, via->shift_val, via->shift_cnt
 	);
 
 	pce_printf (" IRA=%02X  IRB=%02X  CA2=%X  %cT1V=%04X\n",

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6522.c                                          *
  * Created:     2007-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,7 +52,8 @@ void e6522_init (e6522_t *via, unsigned addr_shift)
 	via->ddra = 0x00;
 	via->ddrb = 0x00;
 
-	via->shift = 0x00;
+	via->shift_val = 0;
+	via->shift_cnt = 0;
 
 	via->acr = 0x00;
 	via->pcr = 0x00;
@@ -167,7 +168,7 @@ void e6522_set_cb2_out (e6522_t *via)
 		/* shift register enabled */
 
 		if (via->acr & 0x10) {
-			val = ((via->shift & 1) != 0);
+			val = ((via->shift_val & 1) != 0);
 		}
 		else {
 			/* shift register input */
@@ -262,6 +263,43 @@ void e6522_set_ier (e6522_t *via, unsigned char val)
 }
 
 
+unsigned char e6522_shift_out (e6522_t *via)
+{
+	unsigned char val;
+
+	if ((via->acr & 0x1c) != 0x1c) {
+		return (0);
+	}
+
+	val = (via->shift_val >> 7) & 1;
+
+	via->shift_val = ((via->shift_val << 1) | (via->shift_val >> 7)) & 0xff;
+	via->shift_cnt = (via->shift_cnt + 1) & 7;
+
+	if (via->shift_cnt == 0) {
+		e6522_set_ifr (via, via->ifr | E6522_IFR_SR);
+	}
+
+	return (val);
+}
+
+void e6522_shift_in (e6522_t *via, unsigned char val)
+{
+	if ((via->acr & 0x1c) != 0x0c) {
+		return;
+	}
+
+	via->shift_val = ((via->shift_val << 1) | (val != 0)) & 0xff;
+	via->shift_cnt = (via->shift_cnt + 1) & 7;
+
+	if (via->shift_cnt == 0) {
+		e6522_set_ifr (via, via->ifr | E6522_IFR_SR);
+	}
+
+	e6522_set_ifr (via, via->ifr | E6522_IFR_CB1);
+}
+
+
 static
 unsigned char e6522_get_ora (e6522_t *via, int handshake)
 {
@@ -335,7 +373,9 @@ unsigned char e6522_get_shift (e6522_t *via)
 {
 	e6522_set_ifr (via, via->ifr & ~E6522_IFR_SR);
 
-	return (via->shift);
+	via->shift_cnt = 0;
+
+	return (via->shift_val);
 }
 
 static
@@ -437,12 +477,15 @@ void e6522_set_shift (e6522_t *via, unsigned char val)
 {
 	e6522_set_ifr (via, via->ifr & ~E6522_IFR_SR);
 
-	via->shift = val;
+	via->shift_val = val;
+	via->shift_cnt = 0;
 
 	if ((via->acr & 0x1c) == 0x1c) {
 		/* shift out with external clock */
-		e6522_set_shift_out (via, via->shift);
-		e6522_set_ifr (via, via->ifr | E6522_IFR_SR);
+		if (via->set_shift_out != NULL) {
+			e6522_set_shift_out (via, via->shift_val);
+			e6522_set_ifr (via, via->ifr | E6522_IFR_SR);
+		}
 	}
 }
 
@@ -450,6 +493,11 @@ static
 void e6522_set_acr (e6522_t *via, unsigned char val)
 {
 	via->acr = val;
+
+	if ((via->acr & 0x1c) == 0) {
+		/* shift register disabled */
+		via->shift_cnt = 0;
+	}
 
 	e6522_set_cb2_out (via);
 }
@@ -560,7 +608,8 @@ void e6522_set_shift_inp (e6522_t *via, unsigned char val)
 {
 	if ((via->acr & 0x1c) == 0x0c) {
 		/* shift in with external clock */
-		via->shift = val;
+		via->shift_val = val;
+		via->shift_cnt = 0;
 		e6522_set_ifr (via, via->ifr | E6522_IFR_SR);
 	}
 }
@@ -636,7 +685,7 @@ unsigned char e6522_get_uint8 (e6522_t *via, unsigned long addr)
 		break;
 
 	case 0x0e:
-		val = via->ier;
+		val = via->ier | 0x80;
 		break;
 
 	case 0x0f:
@@ -759,6 +808,9 @@ void e6522_reset (e6522_t *via)
 
 	via->ddra = 0x00;
 	via->ddrb = 0x00;
+
+	via->shift_val = 0;
+	via->shift_cnt = 0;
 
 	via->pcr = 0x00;
 	via->acr = 0x00;

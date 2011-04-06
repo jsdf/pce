@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6522.h                                          *
  * Created:     2007-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,7 +39,8 @@ typedef struct {
 	unsigned char  ddra;
 	unsigned char  ddrb;
 
-	unsigned char  shift;
+	unsigned char  shift_val;
+	unsigned char  shift_cnt;
 
 	unsigned char  acr;
 	unsigned char  pcr;
@@ -90,6 +91,9 @@ void e6522_set_orb_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_cb2_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_shift_out_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_irq_fct (e6522_t *via, void *ext, void *fct);
+
+unsigned char e6522_shift_out (e6522_t *via);
+void e6522_shift_in (e6522_t *via, unsigned char val);
 
 void e6522_set_ca1_inp (e6522_t *via, unsigned char val);
 void e6522_set_ca2_inp (e6522_t *via, unsigned char val);
