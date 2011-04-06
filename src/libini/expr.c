@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/expr.c                                            *
  * Created:     2010-09-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -241,7 +241,7 @@ int val_lt (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) < 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) < 0);
 		return (0);
 	}
 
@@ -260,7 +260,7 @@ int val_le (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) <= 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) <= 0);
 		return (0);
 	}
 
@@ -279,7 +279,7 @@ int val_gt (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) > 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) > 0);
 		return (0);
 	}
 
@@ -298,7 +298,7 @@ int val_ge (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) >= 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) >= 0);
 		return (0);
 	}
 
@@ -317,7 +317,7 @@ int val_equ (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) == 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) == 0);
 		return (0);
 	}
 
@@ -336,7 +336,7 @@ int val_neq (ini_val_t *dst, const ini_val_t *src)
 		return (0);
 	}
 	else if (dst->type == INI_VAL_STR) {
-		dst->val.u32 = strcmp (dst->val.str, src->val.str) != 0;
+		ini_val_set_uint32 (dst, strcmp (dst->val.str, src->val.str) != 0);
 		return (0);
 	}
 
