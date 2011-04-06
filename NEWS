@@ -1,3 +1,23 @@
+head	2011-04-06
+
+	* ibmpc: Better support the PC/XT 5160.
+	* ibmpc: Add a new monitor command "log int" to log interrupt calls.
+	* ibmpc: Add FDC emulation.
+	* ibmpc: The CPU speed can now be set to 0, meaning "all out".
+	* ibmpc: Experimental sound support (speaker only).
+	* macplus: Add Macintosh SE emulation.
+	* macplus: Experimental sound support.
+	* 8086: Fix the int 0 return address.
+	* 8086: Fix overflow detection for the IDIV and DIV instructions.
+	* config: A complete rewrite of the config file parser.
+	* block: Add a new block driver which handles PCE (.pfdc),
+	  Teledisk (.td0) and ImageDisk (.imd) floppy disk image files.
+	* block: Add "pfdc", a program to manipulate floppy disk image files.
+	* cga: Support the CGA start address in graphics modes.
+	* vga: Support the vertical retrace interrupt.
+	* sdl: Fix SDL mouse grabbing.
+	* sdl: Fix entering and leaving full screen mode.
+
 0.2.0	2009-11-30
 
 	* Add a Macintosh Plus emulator.
