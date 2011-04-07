@@ -6,6 +6,7 @@ head	2011-04-06
 	* ibmpc: The CPU speed can now be set to 0, meaning "all out".
 	* ibmpc: Experimental sound support (speaker only).
 	* macplus: Add Macintosh SE emulation.
+	* macplus: Add Macintosh Classic emulation.
 	* macplus: Experimental sound support.
 	* 8086: Fix the int 0 return address.
 	* 8086: Fix overflow detection for the IDIV and DIV instructions.

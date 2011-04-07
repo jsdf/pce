@@ -454,6 +454,9 @@ void mac_setup_system (macplus_t *sim, ini_sct_t *ini)
 	else if (strcmp (model, "mac-se") == 0) {
 		sim->model = PCE_MAC_MACSE;
 	}
+	else if (strcmp (model, "mac-classic") == 0) {
+		sim->model = PCE_MAC_MACSE;
+	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
 		sim->model = PCE_MAC_MACPLUS;
@@ -672,14 +675,17 @@ void mac_setup_rtc (macplus_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t  *sct;
 	const char *fname;
-	int        realtime;
+	int        realtime, romdisk;
 
 	sct = ini_next_sct (ini, NULL, "rtc");
 
 	ini_get_string (sct, "file", &fname, "pram.dat");
 	ini_get_bool (sct, "realtime", &realtime, 1);
+	ini_get_bool (sct, "romdisk", &romdisk, 0);
 
-	pce_log_tag (MSG_INF, "RTC:", "file=%s realtime=%d\n", fname, realtime);
+	pce_log_tag (MSG_INF, "RTC:", "file=%s realtime=%d romdisk=%d\n",
+		fname, realtime, romdisk
+	);
 
 	sim->rtc_fname = strdup (fname);
 
@@ -692,6 +698,13 @@ void mac_setup_rtc (macplus_t *sim, ini_sct_t *ini)
 
 	if (mac_rtc_load_file (&sim->rtc, fname)) {
 		pce_log (MSG_ERR, "*** reading rtc file failed\n");
+	}
+
+	if (romdisk) {
+		sim->rtc.data[0x78] = 0x00;
+		sim->rtc.data[0x79] = 0x06;
+		sim->rtc.data[0x7a] = 0xff;
+		sim->rtc.data[0x7b] = 0xcb;
 	}
 
 	mac_rtc_set_current_time (&sim->rtc);
@@ -1207,7 +1220,7 @@ void mac_reset (macplus_t *sim)
 
 	e6522_reset (&sim->via);
 
-	sim->via_port_a = 0xff;
+	sim->via_port_a = 0xf7;
 	sim->via_port_b = 0xff;
 
 	e6522_set_ira_inp (&sim->via, sim->via_port_a);

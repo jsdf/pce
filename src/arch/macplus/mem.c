@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/mem.c                                       *
  * Created:     2007-11-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -87,14 +87,25 @@ int mac_addr_map (macplus_t *sim, unsigned long *addr)
 
 	/* repeated ROM images */
 	if ((*addr >= 0x400000) && (*addr < 0x580000)) {
-		val = 0x400000 + (*addr & 0x3ffff);
-
-		if (*addr != val) {
-			*addr = val;
-			return (1);
+		if (sim->rom == NULL) {
+			return (0);
 		}
 
-		return (0);
+		val = mem_blk_get_size (sim->rom);
+
+		if (val == 0) {
+			return (0);
+		}
+
+		val = 0x400000 + (*addr % val);
+
+		if (*addr == val) {
+			return (0);
+		}
+
+		*addr = val;
+
+		return (1);
 	}
 
 	return (0);
