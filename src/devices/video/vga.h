@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/vga.h                                      *
  * Created:     2004-03-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -56,9 +56,6 @@ typedef struct vga_s {
 	unsigned char dac_state;
 
 	unsigned char latch[4];
-
-	/* the switch settings */
-	unsigned char switches;
 
 	char          blink_on;
 	unsigned      blink_cnt;

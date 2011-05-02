@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/vga.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -190,15 +190,6 @@ void vga_set_irq (vga_t *vga, unsigned char val)
 	if (vga->set_irq != NULL) {
 		vga->set_irq (vga->set_irq_ext, val);
 	}
-}
-
-/*
- * Set the configuration switches
- */
-static
-void vga_set_switches (vga_t *vga, unsigned val)
-{
-	vga->switches = val;
 }
 
 /*
@@ -1500,16 +1491,51 @@ unsigned char vga_get_crtc_data (vga_t *vga)
 }
 
 /*
+ * Get the switch sense input
+ *
+ * This is reverse engineered from the IBM VGA BIOS. I have no
+ * idea how and why this works.
+ */
+static
+int vga_get_input_status_0_ss (vga_t *vga)
+{
+	const unsigned char *p;
+	unsigned char       dac[3];
+
+	static unsigned char vals[] = {
+		0x12, 0x12, 0x12, 0x10,
+		0x14, 0x14, 0x14, 0x10,
+		0x2d, 0x14, 0x14, 0x00,
+		0x14, 0x2d, 0x14, 0x00,
+		0x14, 0x14, 0x2d, 0x00,
+		0x2d, 0x2d, 0x2d, 0x00,
+		0x00, 0x00, 0x00, 0xff
+	};
+
+	dac[0] = vga->reg_dac[0] >> 2;
+	dac[1] = vga->reg_dac[1] >> 2;
+	dac[2] = vga->reg_dac[2] >> 2;
+
+	p = vals;
+
+	while (p[3] != 0xff) {
+		if ((p[0] == dac[0]) && (p[1] == dac[1]) && (p[2] == dac[2])) {
+			return (p[3] != 0);
+		}
+
+		p += 4;
+	}
+
+	return (1);
+}
+
+/*
  * Get the input status register 0
  */
 static
 unsigned char vga_get_input_status_0 (vga_t *vga)
 {
-	unsigned bit;
-
-	bit = (vga->reg[VGA_MOUT] >> 2) & 3;
-
-	if (vga->switches & (0x08 >> bit)) {
+	if (vga_get_input_status_0_ss (vga)) {
 		vga->reg[VGA_STATUS0] |= VGA_STATUS0_SS;
 	}
 	else {
@@ -2133,8 +2159,6 @@ void vga_init (vga_t *vga, unsigned long io, unsigned long addr)
 
 	vga->latch_addr = 0;
 
-	vga->switches = 0x09;
-
 	vga->blink_on = 1;
 	vga->blink_cnt = 0;
 	vga->blink_freq = 16;
@@ -2173,18 +2197,16 @@ vga_t *vga_new (unsigned long io, unsigned long addr)
 video_t *vga_new_ini (ini_sct_t *sct)
 {
 	unsigned long io, addr;
-	unsigned      switches;
 	unsigned      blink;
 	vga_t         *vga;
 
 	ini_get_uint32 (sct, "io", &io, 0x3b0);
 	ini_get_uint32 (sct, "address", &addr, 0xa0000);
-	ini_get_uint16 (sct, "switches", &switches, 0x09);
 	ini_get_uint16 (sct, "blink", &blink, 0);
 
 	pce_log_tag (MSG_INF,
-		"VIDEO:", "VGA io=0x%04lx addr=0x%05lx switches=%02X\n",
-		io, addr, switches
+		"VIDEO:", "VGA io=0x%04lx addr=0x%05lx\n",
+		io, addr
 	);
 
 	vga = vga_new (io, addr);
@@ -2192,7 +2214,6 @@ video_t *vga_new_ini (ini_sct_t *sct)
 		return (NULL);
 	}
 
-	vga_set_switches (vga, switches);
 	vga_set_blink_rate (vga, blink);
 
 	return (&vga->video);
