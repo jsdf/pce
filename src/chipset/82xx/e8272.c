@@ -1441,6 +1441,8 @@ void cmd_format_set_data (e8272_t *fdc, unsigned char val)
 		"(c=%u, h=%u, n=%u, g=%u, f=0x%02x, id=[%02x %02x %02x %02x])\n",
 		fdc->cmd[0], d, c, h, n, gpl, fill, lc, lh, ls, ln
 	);
+#else
+	(void) n;
 #endif
 
 	fdc->curdrv->ok = 0;
@@ -1733,6 +1735,9 @@ void cmd_specify (e8272_t *fdc)
 		"E8272: CMD=%02X D=*  SPECIFY (srt=%ums, hut=%ums, hlt=%ums, dma=%d)\n",
 		fdc->cmd[0], srt, hut, hlt, nd == 0
 	);
+#else
+	(void) hlt;
+	(void) hut;
 #endif
 
 	fdc->dma = (nd == 0);
