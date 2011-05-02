@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/serial.c                                    *
  * Created:     2007-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -145,7 +145,7 @@ void mac_ser_process_input (mac_ser_t *ser)
 static
 void mac_ser_status_check (mac_ser_t *ser)
 {
-	e8530_set_cts (ser->scc, ser->chn, 0);
+	e8530_set_cts (ser->scc, ser->chn, 1);
 }
 
 static
