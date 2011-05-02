@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/internal.h                                     *
  * Created:     2004-05-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,6 +57,12 @@
 #define e6502_get_abs_y(c) e6502_get_mem8 (c, e6502_get_ea_abs_y (c))
 #define e6502_get_abs_x(c) e6502_get_mem8 (c, e6502_get_ea_abs_x (c))
 #define e6502_set_ea(c, v) e6502_set_mem8 ((c), (c)->ea, (v))
+
+
+int e6502_hook_all (e6502_t *c);
+int e6502_hook_undefined (e6502_t *c);
+int e6502_hook_brk (e6502_t *c);
+
 
 unsigned char e6502_get_imm (e6502_t *c);
 unsigned short e6502_get_ea_idx_ind_x (e6502_t *c);

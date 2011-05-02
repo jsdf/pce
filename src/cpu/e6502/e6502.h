@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.h                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -81,10 +81,10 @@ typedef struct e6502_t {
 	unsigned char      *mem_map_rd[64];
 	unsigned char      *mem_map_wr[64];
 
-	void               *op_ext;
-	void               (*op_hook) (void *ext, unsigned char op);
-	void               (*op_stat) (void *ext, unsigned char op);
-	void               (*op_undef) (void *ext, unsigned char op);
+	void               *hook_ext;
+	int                (*hook_all) (void *ext, unsigned char op);
+	int                (*hook_undef) (void *ext, unsigned char op);
+	int                (*hook_brk) (void *ext, unsigned char op);
 
 	unsigned char      ioport[3];
 
@@ -231,6 +231,10 @@ void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8);
 void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8);
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
 
+void e6502_set_hook_all_fct (e6502_t *c, void *ext, void *fct);
+void e6502_set_hook_undef_fct (e6502_t *c, void *ext, void *fct);
+void e6502_set_hook_brk_fct (e6502_t *c, void *ext, void *fct);
+
 /*****************************************************************************
  * @short Set the I/O port function
  *****************************************************************************/
@@ -262,8 +266,6 @@ unsigned long long e6502_get_opcnt (e6502_t *c);
  *****************************************************************************/
 unsigned long e6502_get_delay (e6502_t *c);
 
-
-void e6502_undefined (e6502_t *c);
 
 /*****************************************************************************
  * @short Set the 6502 RST line

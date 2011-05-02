@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim6502/main.c                                      *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -338,7 +338,7 @@ void s6502_run (sim6502_t *sim)
 
 
 static
-void s6502_log_undef (void *ext, unsigned char op)
+int s6502_hook_undef (void *ext, unsigned char op)
 {
 	sim6502_t *sim;
 
@@ -350,6 +350,8 @@ void s6502_log_undef (void *ext, unsigned char op)
 	);
 
 	s6502_break (sim, PCE_BRK_STOP);
+
+	return (0);
 }
 
 
@@ -852,8 +854,7 @@ int main (int argc, char *argv[])
 
 	par_sim = s6502_new (sct);
 
-	par_sim->cpu->op_ext = par_sim;
-	par_sim->cpu->op_undef = &s6502_log_undef;
+	e6502_set_hook_undef_fct (par_sim->cpu, par_sim, s6502_hook_undef);
 
 	signal (SIGINT, &sig_int);
 	signal (SIGSEGV, &sig_segv);

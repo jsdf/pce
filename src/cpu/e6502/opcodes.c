@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/opcodes.c                                      *
  * Created:     2004-05-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -373,13 +373,20 @@ void e6502_op_setnz (e6502_t *c, unsigned char s)
 /* Handle an undefined opcode */
 static void op_ud (e6502_t *c)
 {
-	e6502_undefined (c);
+	if (e6502_hook_undefined (c)) {
+		return;
+	}
+
 	e6502_set_clk (c, 1, 1);
 }
 
 /* OP 00: BRK */
 static void op_00 (e6502_t *c)
 {
+	if (e6502_hook_brk (c)) {
+		return;
+	}
+
 	e6502_push16 (c, e6502_get_pc (c) + 2);
 	e6502_push (c, e6502_get_p (c) | E6502_FLG_B);
 

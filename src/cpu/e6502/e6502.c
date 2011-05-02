@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.c                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+
+
+/* #define E6502_ENABLE_HOOK_ALL 1 */
 
 
 void e6502_init (e6502_t *c)
@@ -54,10 +57,10 @@ void e6502_init (e6502_t *c)
 		c->mem_map_wr[i] = NULL;
 	}
 
-	c->op_ext = NULL;
-	c->op_hook = NULL;
-	c->op_stat = NULL;
-	c->op_undef = NULL;
+	c->hook_ext = NULL;
+	c->hook_all = NULL;
+	c->hook_undef = NULL;
+	c->hook_brk = NULL;
 
 	for (i = 0; i < 256; i++) {
 		c->op[i] = e6502_opcodes[i];
@@ -159,6 +162,24 @@ void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8)
 
 	c->get_uint8 = get8;
 	c->set_uint8 = set8;
+}
+
+void e6502_set_hook_all_fct (e6502_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook_all = fct;
+}
+
+void e6502_set_hook_undef_fct (e6502_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook_undef = fct;
+}
+
+void e6502_set_hook_brk_fct (e6502_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook_brk = fct;
 }
 
 void e6502_set_ioport_fct (e6502_t *c, void *ext, void *fct)
@@ -332,11 +353,31 @@ void e6502_set_nmi (e6502_t *c, unsigned char val)
 }
 
 
-void e6502_undefined (e6502_t *c)
+int e6502_hook_all (e6502_t *c)
 {
-	if (c->op_undef != NULL) {
-		c->op_undef (c->op_ext, c->inst[0]);
+	if (c->hook_all != NULL) {
+		return (c->hook_all (c->hook_ext, c->inst[0]));
 	}
+
+	return (0);
+}
+
+int e6502_hook_undefined (e6502_t *c)
+{
+	if (c->hook_undef != NULL) {
+		return (c->hook_undef (c->hook_ext, c->inst[0]));
+	}
+
+	return (0);
+}
+
+int e6502_hook_brk (e6502_t *c)
+{
+	if (c->hook_brk != NULL) {
+		return (c->hook_brk (c->hook_ext, c->inst[0]));
+	}
+
+	return (0);
 }
 
 void e6502_reset (e6502_t *c)
@@ -367,9 +408,13 @@ void e6502_execute (e6502_t *c)
 
 	c->inst[0] = e6502_get_mem8 (c, pc);
 
-	if (c->op_stat != NULL) {
-		c->op_stat (c->op_ext, c->inst[0]);
+#ifdef E6502_ENABLE_HOOK_ALL
+	if (c->hook_all != NULL) {
+		if (e6502_hook_all (c)) {
+			return;
+		}
 	}
+#endif
 
 	c->op[c->inst[0]] (c);
 
