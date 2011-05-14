@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/int13.c                                       *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,9 @@
 
 #include <cpu/e8086/e8086.h>
 #include <devices/block/block.h>
+
+
+#define INT13_MAX_BLOCKS 8
 
 
 void dsk_int_13_check (ibmpc_t *pc)
@@ -99,7 +102,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 	uint32_t       blk_i, blk_n;
 	unsigned       c, h, s;
 	unsigned long  addr;
-	unsigned char  buf[1024];
+	unsigned char  buf[512 * INT13_MAX_BLOCKS];
 	disk_t         *dsk;
 
 	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -122,7 +125,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 	}
 
 	while (blk_n > 0) {
-		n = (blk_n < 2) ? 1 : 2;
+		n = (blk_n < INT13_MAX_BLOCKS) ? blk_n : INT13_MAX_BLOCKS;
 
 		if (dsk_read_lba (dsk, buf, blk_i, n)) {
 			dsk_int13_set_status (dsks, cpu, 0x01);
@@ -152,12 +155,12 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 static
 void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 {
-	unsigned       i;
+	unsigned       i, k, n;
 	uint32_t       blk_i, blk_n;
 	unsigned       c, h, s;
 	unsigned long  addr;
 	unsigned short val;
-	unsigned char  buf[512];
+	unsigned char  buf[512 * INT13_MAX_BLOCKS];
 	disk_t         *dsk;
 
 	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -185,26 +188,30 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 	}
 
 	while (blk_n > 0) {
-		if ((addr + 512) < cpu->ram_cnt) {
-			memcpy (buf, cpu->ram + addr, 512);
-			addr += 512;
+		n = (blk_n < INT13_MAX_BLOCKS) ? blk_n : INT13_MAX_BLOCKS;
+
+		k = 512 * n;
+
+		if ((addr + k) < cpu->ram_cnt) {
+			memcpy (buf, cpu->ram + addr, k);
+			addr += k;
 		}
 		else {
-			for (i = 0; i < 256; i++) {
+			for (i = 0; i < k; i += 2) {
 				val = e86_get_mem16 (cpu, addr >> 4, addr & 0x0f);
-				buf[2 * i] = val & 0xff;
+				buf[2 * i + 0] = val & 0xff;
 				buf[2 * i + 1] = (val >> 8) & 0xff;
 				addr += 2;
 			}
 		}
 
-		if (dsk_write_lba (dsk, buf, blk_i, 1)) {
+		if (dsk_write_lba (dsk, buf, blk_i, n)) {
 			dsk_int13_set_status (dsks, cpu, 0x01);
 			return;
 		}
 
-		blk_n -= 1;
-		blk_i += 1;
+		blk_n -= n;
+		blk_i += n;
 	}
 
 	dsk_int13_set_status (dsks, cpu, 0x00);
@@ -215,7 +222,7 @@ void dsk_int13_04 (disks_t *dsks, e8086_t *cpu)
 {
 	uint32_t       blk_i, blk_n;
 	unsigned       c, h, s, n;
-	unsigned char  buf[1024];
+	unsigned char  buf[512 * INT13_MAX_BLOCKS];
 	disk_t         *dsk;
 
 	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
@@ -236,7 +243,7 @@ void dsk_int13_04 (disks_t *dsks, e8086_t *cpu)
 	}
 
 	while (blk_n > 0) {
-		n = (blk_n < 2) ? 1 : 2;
+		n = (blk_n < INT13_MAX_BLOCKS) ? blk_n : INT13_MAX_BLOCKS;
 
 		if (dsk_read_lba (dsk, buf, blk_i, n)) {
 			dsk_int13_set_status (dsks, cpu, 0x01);
