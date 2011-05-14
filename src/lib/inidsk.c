@@ -141,9 +141,9 @@ void ini_get_vchs (ini_sct_t *sct, disk_t *dsk)
 	vh = (vh == 0) ? dsk->h : vh;
 	vs = (vs == 0) ? dsk->s : vs;
 
-	if ((dsk->c != vc) || (dsk->h != vh) || (dsk->s != vs)) {
-		dsk_set_visible_chs (dsk, vc, vh, vs);
+	dsk_set_visible_chs (dsk, vc, vh, vs);
 
+	if ((dsk->c != vc) || (dsk->h != vh) || (dsk->s != vs)) {
 		pce_log_tag (MSG_INF,
 			"DISK:", "drive=%u vchs=%lu/%lu/%lu\n",
 			dsk_get_drive (dsk),
@@ -290,6 +290,10 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	}
 
 	dsk_set_drive (dsk, drive);
+
+	if ((c != 0) || (h != 0) || (s != 0)) {
+		dsk_set_geometry (dsk, dsk_get_block_cnt (dsk), c, h, s);
+	}
 
 	pce_log_tag (MSG_INF,
 		"DISK:", "drive=%u type=%s blocks=%lu chs=%lu/%lu/%lu %s file=%s\n",
