@@ -103,8 +103,11 @@ void dsk_set_uint64_be (void *buf, unsigned i, uint64_t v);
 
 uint16_t dsk_get_uint16_le (const void *buf, unsigned i);
 uint32_t dsk_get_uint32_le (const void *buf, unsigned i);
+uint64_t dsk_get_uint64_le (const void *buf, unsigned i);
 
+void dsk_set_uint16_le (void *buf, unsigned i, uint16_t v);
 void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v);
+void dsk_set_uint64_le (void *buf, unsigned i, uint64_t v);
 
 
 int dsk_set_pos (FILE *fp, uint64_t ofs);

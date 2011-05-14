@@ -145,6 +145,35 @@ uint32_t dsk_get_uint32_le (const void *buf, unsigned i)
 	return (v);
 }
 
+uint64_t dsk_get_uint64_le (const void *buf, unsigned i)
+{
+	const unsigned char *tmp;
+	uint64_t            v;
+
+	tmp = (const unsigned char *) buf + i;
+
+	v = tmp[7];
+	v = (v << 8) | tmp[6];
+	v = (v << 8) | tmp[5];
+	v = (v << 8) | tmp[4];
+	v = (v << 8) | tmp[3];
+	v = (v << 8) | tmp[2];
+	v = (v << 8) | tmp[1];
+	v = (v << 8) | tmp[0];
+
+	return (v);
+}
+
+void dsk_set_uint16_le (void *buf, unsigned i, uint16_t v)
+{
+	unsigned char *tmp;
+
+	tmp = (unsigned char *) buf + i;
+
+	tmp[0] = v & 0xff;
+	tmp[1] = (v >> 8) & 0xff;
+}
+
 void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v)
 {
 	unsigned char *tmp;
@@ -155,6 +184,22 @@ void dsk_set_uint32_le (void *buf, unsigned i, uint32_t v)
 	tmp[1] = (v >> 8) & 0xff;
 	tmp[2] = (v >> 16) & 0xff;
 	tmp[3] = (v >> 24) & 0xff;
+}
+
+void dsk_set_uint64_le (void *buf, unsigned i, uint64_t v)
+{
+	unsigned char *tmp;
+
+	tmp = (unsigned char *) buf + i;
+
+	tmp[0] = v & 0xff;
+	tmp[1] = (v >> 8) & 0xff;
+	tmp[2] = (v >> 16) & 0xff;
+	tmp[3] = (v >> 24) & 0xff;
+	tmp[4] = (v >> 32) & 0xff;
+	tmp[5] = (v >> 40) & 0xff;
+	tmp[6] = (v >> 48) & 0xff;
+	tmp[7] = (v >> 56) & 0xff;
 }
 
 
