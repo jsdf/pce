@@ -375,6 +375,89 @@ uint32_t dsk_get_block_cnt (const disk_t *dsk)
 }
 
 
+static
+int dsk_guess_geometry_mbr (disk_t *dsk)
+{
+	unsigned      i;
+	unsigned char *p;
+	unsigned char buf[512];
+	uint32_t      c, h, s;
+	uint32_t      tc1, th1, ts1;
+	uint32_t      tc2, th2, ts2;
+
+	if (dsk_read_lba (dsk, buf, 0, 1)) {
+		return (1);
+	}
+
+	if ((buf[510] != 0x55) || (buf[511] != 0xaa)) {
+		return (1);
+	}
+
+	c = 0;
+	h = 0;
+	s = 0;
+
+	for (i = 0; i < 4; i++) {
+		p = buf + 0x1be + 16 * i;
+
+		if (p[0] & 0x7f) {
+			return (1);
+		}
+
+		/* partition start */
+		tc1 = p[3] | ((p[2] & 0xc0) << 2);
+		th1 = p[1];
+		ts1 = p[2] & 0x3f;
+		h = (th1 > h) ? th1 : h;
+		s = (ts1 > s) ? ts1 : s;
+
+		/* partition end */
+		tc2 = p[7] | ((p[6] & 0xc0) << 2);
+		th2 = p[5];
+		ts2 = p[6] & 0x3f;
+		h = (th2 > h) ? th2 : h;
+		s = (ts2 > s) ? ts2 : s;
+
+		/* check if start is before end */
+		if (tc2 < tc1) {
+			return (1);
+		}
+		else if (tc2 == tc1) {
+			if (th2 < th1) {
+				return (1);
+			}
+			else if (th2 == th1) {
+				if (ts2 < ts1) {
+					return (1);
+				}
+			}
+		}
+	}
+
+	if (s == 0) {
+		return (1);
+	}
+
+	h = h + 1;
+	c = dsk->blocks / (h * s);
+
+	dsk_set_geometry (dsk, dsk->blocks, c, h, s);
+
+	return (0);
+}
+
+int dsk_guess_geometry (disk_t *dsk)
+{
+	if (dsk_guess_geometry_mbr (dsk) == 0) {
+		return (0);
+	}
+
+	dsk_set_geometry (dsk, dsk->blocks, dsk->c, dsk->h, dsk->s);
+
+	return (0);
+}
+
+
 disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 {
 	unsigned   i;
