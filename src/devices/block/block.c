@@ -255,11 +255,11 @@ int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s)
 
 	if (*c == 0) {
 		if (*s == 0) {
-			*s = 32;
+			*s = 63;
 		}
 
 		if (*h == 0) {
-			*h = 32;
+			*h = 16;
 		}
 
 		*c = *n / (*h * *s);
@@ -267,7 +267,7 @@ int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s)
 
 	if (*h == 0) {
 		if (*s == 0) {
-			*s = 32;
+			*s = 63;
 		}
 
 		*h = *n / (*c * *s);
