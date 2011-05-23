@@ -364,13 +364,19 @@ void dsk_init (disk_t *dsk, void *ext, uint32_t n, uint32_t c, uint32_t h, uint3
 
 	dsk->readonly = 0;
 
+	dsk->fname = NULL;
+
 	dsk->ext = ext;
 }
 
 void dsk_del (disk_t *dsk)
 {
-	if ((dsk != NULL) && (dsk->del != NULL)) {
-		dsk->del (dsk);
+	if (dsk != NULL) {
+		free (dsk->fname);
+
+		if (dsk->del != NULL) {
+			dsk->del (dsk);
+		}
 	}
 }
 
@@ -398,6 +404,31 @@ int dsk_get_readonly (disk_t *dsk)
 void dsk_set_readonly (disk_t *dsk, int v)
 {
 	dsk->readonly = (v != 0);
+}
+
+void dsk_set_fname (disk_t *dsk, const char *fname)
+{
+	if (dsk->fname != NULL) {
+		free (dsk->fname);
+	}
+
+	if (fname == NULL) {
+		dsk->fname = NULL;
+		return;
+	}
+
+	dsk->fname = malloc (strlen (fname) + 1);
+
+	if (dsk->fname == NULL) {
+		return;
+	}
+
+	strcpy (dsk->fname, fname);
+}
+
+const char *dsk_get_fname (const disk_t *dsk)
+{
+	return (dsk->fname);
 }
 
 int dsk_set_geometry (disk_t *dsk, uint32_t n, uint32_t c, uint32_t h, uint32_t s)

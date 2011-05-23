@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkram.c                                   *
  * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -124,6 +124,8 @@ disk_t *dsk_ram_open (const char *fname, uint32_t n, uint32_t c, uint32_t h, uin
 			free (ram);
 			return (NULL);
 		}
+
+		dsk_set_fname (&ram->dsk, fname);
 	}
 
 	return (&ram->dsk);

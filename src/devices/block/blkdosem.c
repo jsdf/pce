@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkdosem.c                                 *
  * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -155,6 +155,8 @@ disk_t *dsk_dosemu_open (const char *fname, int ro)
 		fclose (fp);
 		return (NULL);
 	}
+
+	dsk_set_fname (dsk, fname);
 
 	return (dsk);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkraw.c                                   *
  * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -137,6 +137,8 @@ disk_t *dsk_img_open (const char *fname, uint32_t n, uint32_t c, uint32_t h, uin
 		return (NULL);
 	}
 
+	dsk_set_fname (dsk, fname);
+
 	return (dsk);
 }
 
@@ -197,6 +199,8 @@ disk_t *dsk_dosimg_open (const char *fname, uint64_t ofs, int ro)
 		fclose (fp);
 		return (NULL);
 	}
+
+	dsk_set_fname (dsk, fname);
 
 	return (dsk);
 }
@@ -306,6 +310,8 @@ disk_t *dsk_mbrimg_open (const char *fname, uint64_t ofs, int ro)
 		return (NULL);
 	}
 
+	dsk_set_fname (dsk, fname);
+
 	return (dsk);
 }
 
@@ -361,6 +367,8 @@ disk_t *dsk_hfsimg_open (const char *fname, uint64_t ofs, int ro)
 		return (NULL);
 	}
 
+	dsk_set_fname (dsk, fname);
+
 	return (dsk);
 }
 
@@ -402,6 +410,8 @@ disk_t *dsk_macimg_open (const char *fname, uint64_t ofs, int ro)
 		fclose (fp);
 		return (NULL);
 	}
+
+	dsk_set_fname (dsk, fname);
 
 	return (dsk);
 }
@@ -476,6 +486,8 @@ disk_t *dsk_fdimg_open (const char *fname, uint64_t ofs, int ro)
 		return (NULL);
 	}
 
+	dsk_set_fname (dsk, fname);
+
 	return (dsk);
 }
 
@@ -540,6 +552,8 @@ disk_t *dsk_autoimg_open (const char *fname, uint64_t ofs, int ro)
 		fclose (fp);
 		return (NULL);
 	}
+
+	dsk_set_fname (dsk, fname);
 
 	return (dsk);
 }

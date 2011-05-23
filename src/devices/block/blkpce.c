@@ -201,6 +201,8 @@ disk_t *dsk_pce_open (const char *fname, int ro)
 		return (NULL);
 	}
 
+	dsk_set_fname (dsk, fname);
+
 	return (dsk);
 }
 

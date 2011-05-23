@@ -80,6 +80,8 @@ typedef struct disk_s {
 
 	char          readonly;
 
+	char          *fname;
+
 	void          *ext;
 } disk_t;
 
@@ -153,6 +155,16 @@ int dsk_get_readonly (disk_t *dsk);
  * @short Set the read-only flag
  *****************************************************************************/
 void dsk_set_readonly (disk_t *dsk, int v);
+
+/*!***************************************************************************
+ * @short Set the disk file name
+ *****************************************************************************/
+void dsk_set_fname (disk_t *dsk, const char *fname);
+
+/*!***************************************************************************
+ * @short Get the disk file name
+ *****************************************************************************/
+const char *dsk_get_fname (const disk_t *dsk);
 
 /*!***************************************************************************
  * @short Set the disk geometry

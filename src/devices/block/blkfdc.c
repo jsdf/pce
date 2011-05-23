@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/blkfdc.c                                   *
  * Created:     2010-08-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -569,6 +569,8 @@ disk_t *dsk_fdc_open (const char *fname, unsigned type,
 	if (fdc->fname != NULL) {
 		strcpy (fdc->fname, fname);
 	}
+
+	dsk_set_fname (dsk, fname);
 
 	return (dsk);
 }

@@ -477,6 +477,7 @@ disk_t *dsk_cow_new (disk_t *dsk, const char *fname)
 	cow->dsk.write = dsk_cow_write;
 	cow->dsk.get_msg = dsk_cow_get_msg;
 	cow->dsk.set_msg = dsk_cow_set_msg;
+	cow->dsk.fname = NULL;
 	cow->dsk.ext = cow;
 
 	cow->orig = dsk;
@@ -493,6 +494,8 @@ disk_t *dsk_cow_new (disk_t *dsk, const char *fname)
 		free (cow);
 		return (NULL);
 	}
+
+	dsk_set_fname (&cow->dsk, fname);
 
 	return (&cow->dsk);
 }
