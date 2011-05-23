@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,7 @@
 #include "blkpce.h"
 #include "blkdosem.h"
 #include "blkfdc.h"
+#include "blkqed.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -570,6 +571,11 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 	}
 
 	dsk = dsk_dosemu_open (fname, ro);
+	if (dsk != NULL) {
+		return (dsk);
+	}
+
+	dsk = dsk_qed_open (fname, ro);
 	if (dsk != NULL) {
 		return (dsk);
 	}

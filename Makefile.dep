@@ -1916,6 +1916,11 @@ src/devices/block/blkpce.o: src/devices/block/blkpce.c \
 	src/devices/block/blkpce.h \
 	src/devices/block/block.h
 
+src/devices/block/blkqed.o: src/devices/block/blkqed.c \
+	src/config.h \
+	src/devices/block/blkqed.h \
+	src/devices/block/block.h
+
 src/devices/block/blkram.o: src/devices/block/blkram.c \
 	src/config.h \
 	src/devices/block/blkram.h \
@@ -1931,6 +1936,7 @@ src/devices/block/block.o: src/devices/block/block.c \
 	src/devices/block/blkdosem.h \
 	src/devices/block/blkfdc.h \
 	src/devices/block/blkpce.h \
+	src/devices/block/blkqed.h \
 	src/devices/block/blkraw.h \
 	src/devices/block/block.h \
 	src/devices/block/pfdc.h
@@ -2214,6 +2220,7 @@ src/lib/inidsk.o: src/lib/inidsk.c \
 	src/devices/block/blkfdc.h \
 	src/devices/block/blkpart.h \
 	src/devices/block/blkpce.h \
+	src/devices/block/blkqed.h \
 	src/devices/block/blkram.h \
 	src/devices/block/blkraw.h \
 	src/devices/block/block.h \
