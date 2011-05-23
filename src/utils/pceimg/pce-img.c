@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pceimg/pce-img.c                                   *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,7 @@
 #include <devices/block/blkfdc.h>
 #include <devices/block/blkraw.h>
 #include <devices/block/blkpce.h>
+#include <devices/block/blkqed.h>
 #include <devices/block/blkdosem.h>
 
 
@@ -42,11 +43,14 @@
 #define DSK_PCE    2
 #define DSK_DOSEMU 3
 #define DSK_PFDC   4
+#define DSK_QED    5
 
 
-static const char *argv0 = NULL;
+static const char    *argv0 = NULL;
 
-static int        par_quiet = 0;
+static int           par_quiet = 0;
+
+static unsigned long par_min_cluster_size = 0;
 
 
 static
@@ -56,26 +60,28 @@ void prt_help (void)
 		"usage: pce-img command [options]\n"
 		"\n"
 		"create [options] [output]\n"
-		"  -q, --quiet             Be quiet\n"
-		"  -c, --cylinders int     Set number of cylinders [0]\n"
-		"  -h, --heads int         Set number of heads [0]\n"
-		"  -s, --sectors int       Set number of sectors per track [0]\n"
-		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
-		"  -m, --size int          Set disk size in megabytes [0]\n"
-		"  -f, --offset int        Set data offset [0]\n"
-		"  -o, --output string     Set the output file name [stdout]\n"
+		"  -q, --quiet                 Be quiet\n"
+		"  -c, --cylinders int         Set number of cylinders [0]\n"
+		"  -C, --min-cluster-size int  Set the minimum cluster size for QED [0]\n"
+		"  -h, --heads int             Set number of heads [0]\n"
+		"  -s, --sectors int           Set number of sectors per track [0]\n"
+		"  -g, --geometry 3 * int      Set disk geometry (c h s)\n"
+		"  -m, --size int              Set disk size in megabytes [0]\n"
+		"  -f, --offset int            Set data offset [0]\n"
+		"  -o, --output string         Set the output file name [stdout]\n"
 		"\n"
 		"convert [options] [input [output]]\n"
-		"  -q, --quiet             Be quiet\n"
-		"  -c, --cylinders int     Set number of cylinders [0]\n"
-		"  -h, --heads int         Set number of heads [0]\n"
-		"  -s, --sectors int       Set number of sectors per track [0]\n"
-		"  -g, --geometry 3 * int  Set disk geometry (c h s)\n"
-		"  -m, --size int          Set disk size in megabytes [0]\n"
-		"  -f, --offset int        Set data offset [0]\n"
-		"  -i, --input string      Set the input file name [stdin]\n"
-		"  -o, --output string     Set the output file name [stdout]\n"
-		"  -w, --cow string        Set the COW file name [none]\n"
+		"  -q, --quiet                 Be quiet\n"
+		"  -c, --cylinders int         Set number of cylinders [0]\n"
+		"  -C, --min-cluster-size int  Set the minimum cluster size for QED [0]\n"
+		"  -h, --heads int             Set number of heads [0]\n"
+		"  -s, --sectors int           Set number of sectors per track [0]\n"
+		"  -g, --geometry 3 * int      Set disk geometry (c h s)\n"
+		"  -m, --size int              Set disk size in megabytes [0]\n"
+		"  -f, --offset int            Set data offset [0]\n"
+		"  -i, --input string          Set the input file name [stdin]\n"
+		"  -o, --output string         Set the output file name [stdout]\n"
+		"  -w, --cow string            Set the COW file name [none]\n"
 		"\n"
 		"file names: <format>:<name>\n"
 		"formats:    raw, pce, dosemu, pfdc\n",
@@ -91,7 +97,7 @@ void prt_version (void)
 	fputs (
 		"pce-img version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2009 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2005-2011 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -149,6 +155,10 @@ unsigned pce_get_disk_type (const char *str)
 
 	if (strcmp (buf, "pce") == 0) {
 		return (DSK_PCE);
+	}
+
+	if (strcmp (buf, "qed") == 0) {
+		return (DSK_QED);
 	}
 
 	if (strcmp (buf, "dosemu") == 0) {
@@ -213,6 +223,9 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	case DSK_PCE:
 		return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
 
+	case DSK_QED:
+		return (dsk_qed_create (name, n, c, h, s, par_min_cluster_size));
+
 	case DSK_DOSEMU:
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));
 
@@ -239,6 +252,9 @@ disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 
 	case DSK_PCE:
 		return (dsk_pce_open (name, ro));
+
+	case DSK_QED:
+		return (dsk_qed_open (name, ro));
 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_open (name, ro));
@@ -346,6 +362,10 @@ int main_create (int argc, char **argv)
 			i += 1;
 			par_c = strtoul (argv[i], NULL, 0);
 		}
+		else if (opt_check (argc, argv, "-C", "--min-cluster-size", i, 1)) {
+			i += 1;
+			par_min_cluster_size = strtoul (argv[i], NULL, 0);
+		}
 		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
 			i += 1;
 			par_h = strtoul (argv[i], NULL, 0);
@@ -443,6 +463,10 @@ int main_convert (int argc, char **argv)
 			i += 1;
 			par_c = strtoul (argv[i], NULL, 0);
 		}
+		else if (opt_check (argc, argv, "-C", "--min-cluster-size", i, 1)) {
+			i += 1;
+			par_min_cluster_size = strtoul (argv[i], NULL, 0);
+		}
 		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
 			i += 1;
 			par_h = strtoul (argv[i], NULL, 0);
@@ -525,7 +549,12 @@ int main_convert (int argc, char **argv)
 	if (par_cow != NULL) {
 		cow = inp;
 
-		inp = dsk_cow_new (cow, par_cow);
+		inp = dsk_qed_cow_new (cow, par_cow);
+
+		if (inp == NULL) {
+			inp = dsk_cow_new (cow, par_cow);
+		}
+
 		if (inp == NULL) {
 			dsk_del (cow);
 			fprintf (stderr, "%s: can't open COW file (%s)\n",
