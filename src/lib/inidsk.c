@@ -108,10 +108,20 @@ disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 			return (NULL);
 		}
 
-		cow = dsk_cow_new (dsk, cname);
+		cow = dsk_qed_cow_new (dsk, cname);
 
 		if (cow == NULL) {
+			cow = dsk_cow_new (dsk, cname);
+		}
+
+		if (cow == NULL) {
+			pce_log_tag (MSG_ERR,
+				"DISK:", "*** cow failed (drive=%u file=%s)\n",
+				dsk_get_drive (dsk), cname
+			);
+
 			dsk_del (dsk);
+
 			return (NULL);
 		}
 		else {
