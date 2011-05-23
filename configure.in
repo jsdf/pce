@@ -241,7 +241,7 @@ AC_SUBST(PCE_HAVE_INTTYPES_H)
 # Checks for libraries
 
 AC_FUNC_FSEEKO
-AC_CHECK_FUNCS(sleep nanosleep usleep gettimeofday)
+AC_CHECK_FUNCS(ftruncate gettimeofday nanosleep sleep usleep)
 
 AC_SEARCH_LIBS(socket, socket)
 AC_SEARCH_LIBS(accept, socket)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/config.h.in                                              *
  * Created:     2002-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2002-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -59,6 +59,7 @@
 #undef HAVE_SYS_TYPES_H
 
 #undef HAVE_FSEEKO
+#undef HAVE_FTRUNCATE
 #undef HAVE_USLEEP
 #undef HAVE_NANOSLEEP
 #undef HAVE_SLEEP

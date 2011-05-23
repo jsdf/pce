@@ -114,6 +114,7 @@ int dsk_set_pos (FILE *fp, uint64_t ofs);
 int dsk_read (FILE *fp, void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_write (FILE *fp, const void *buf, uint64_t ofs, uint64_t cnt);
 int dsk_get_filesize (FILE *fp, uint64_t *cnt);
+int dsk_set_filesize (FILE *fp, uint64_t cnt);
 
 int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s);
 

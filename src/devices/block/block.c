@@ -287,6 +287,19 @@ int dsk_get_filesize (FILE *fp, uint64_t *cnt)
 	return (0);
 }
 
+int dsk_set_filesize (FILE *fp, uint64_t cnt)
+{
+	fflush (fp);
+
+#ifdef HAVE_FTRUNCATE
+	if (ftruncate (fileno (fp), cnt) == 0) {
+		return (0);
+	}
+#endif
+
+	return (1);
+}
+
 
 int dsk_adjust_chs (uint32_t *n, uint32_t *c, uint32_t *h, uint32_t *s)
 {
