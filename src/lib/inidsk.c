@@ -212,6 +212,8 @@ disk_t *ini_get_disk_part (ini_sct_t *sct,
 int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 {
 	disk_t        *dsk;
+	ini_val_t     *val;
+	FILE          *fp;
 	unsigned      drive;
 	unsigned long c, h, s, n;
 	unsigned long ofs;
@@ -222,7 +224,6 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 
 	ini_get_uint16 (sct, "drive", &drive, 0);
 	ini_get_string (sct, "type", &type, "auto");
-	ini_get_string (sct, "file", &fname, NULL);
 	ini_get_uint32 (sct, "offset", &ofs, 0);
 
 	ini_get_uint32 (sct, "c", &c, 0);
@@ -251,43 +252,69 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 	ini_get_bool (sct, "readonly", &ro, 0);
 	ini_get_bool (sct, "optional", &optional, 0);
 
-	path = pce_path_get (fname);
+	val = NULL;
+	dsk = NULL;
+	path = NULL;
 
-	if (strcmp (type, "ram") == 0) {
-		dsk = dsk_ram_open (path, n, c, h, s, ro);
-	}
-	else if (strcmp (type, "image") == 0) {
-		dsk = dsk_img_open (path, n, c, h, s, ofs, ro);
-	}
-	else if (strcmp (type, "dosemu") == 0) {
-		dsk = dsk_dosemu_open (path, ro);
-	}
-	else if (strcmp (type, "pce") == 0) {
-		dsk = dsk_pce_open (path, ro);
-	}
-	else if (strcmp (type, "qed") == 0) {
-		dsk = dsk_qed_open (path, ro);
-	}
-	else if (strcmp (type, "pfdc") == 0) {
-		dsk = dsk_fdc_open_pfdc (path, c, h, s, ro);
-	}
-	else if (strcmp (type, "partition") == 0) {
-		dsk = ini_get_disk_part (sct, c, h, s, ro);
-	}
-	else if (strcmp (type, "anadisk") == 0) {
-		dsk = dsk_fdc_open_anadisk (path, c, h, s, ro);
-	}
-	else if (strcmp (type, "imagedisk") == 0) {
-		dsk = dsk_fdc_open_imd (path, c, h, s, ro);
-	}
-	else if (strcmp (type, "imd") == 0) {
-		dsk = dsk_fdc_open_imd (path, c, h, s, ro);
-	}
-	else if (strcmp (type, "auto") == 0) {
-		dsk = dsk_auto_open (path, ofs, ro);
-	}
-	else {
-		dsk = NULL;
+	while ((val = ini_next_val (sct, val, "file")) != NULL) {
+		fname = ini_val_get_str (val);
+
+		if (fname == NULL) {
+			continue;
+		}
+
+		free (path);
+		path = pce_path_get (fname);
+
+		if (path == NULL) {
+			continue;
+		}
+
+		fp = fopen (path, "rb");
+
+		if (fp == NULL) {
+			continue;
+		}
+
+		fclose (fp);
+
+		if (strcmp (type, "ram") == 0) {
+			dsk = dsk_ram_open (path, n, c, h, s, ro);
+		}
+		else if (strcmp (type, "image") == 0) {
+			dsk = dsk_img_open (path, n, c, h, s, ofs, ro);
+		}
+		else if (strcmp (type, "dosemu") == 0) {
+			dsk = dsk_dosemu_open (path, ro);
+		}
+		else if (strcmp (type, "pce") == 0) {
+			dsk = dsk_pce_open (path, ro);
+		}
+		else if (strcmp (type, "qed") == 0) {
+			dsk = dsk_qed_open (path, ro);
+		}
+		else if (strcmp (type, "pfdc") == 0) {
+			dsk = dsk_fdc_open_pfdc (path, c, h, s, ro);
+		}
+		else if (strcmp (type, "partition") == 0) {
+			dsk = ini_get_disk_part (sct, c, h, s, ro);
+		}
+		else if (strcmp (type, "anadisk") == 0) {
+			dsk = dsk_fdc_open_anadisk (path, c, h, s, ro);
+		}
+		else if (strcmp (type, "imagedisk") == 0) {
+			dsk = dsk_fdc_open_imd (path, c, h, s, ro);
+		}
+		else if (strcmp (type, "imd") == 0) {
+			dsk = dsk_fdc_open_imd (path, c, h, s, ro);
+		}
+		else if (strcmp (type, "auto") == 0) {
+			dsk = dsk_auto_open (path, ofs, ro);
+		}
+
+		if (dsk != NULL) {
+			break;
+		}
 	}
 
 	if (dsk == NULL) {

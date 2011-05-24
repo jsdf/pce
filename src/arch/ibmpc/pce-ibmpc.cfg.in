@@ -476,6 +476,9 @@ fdc {
 # visible_c, visible_h, visible_s parameters determine the disk size
 # as reported by the BIOS.
 #
+# If multiple file names are specified, they will be tried in order
+# until one of them can be opened.
+#
 # If optional is set to 1 no error will be reported if the disk
 # can't be opened.
 #
@@ -492,6 +495,8 @@ disk {
 	optional = 1
 	type     = "auto"
 	file     = "drv_00.img"
+	file     = "fd0.img"
+	file     = "fd0.pfdc"
 }
 
 # The second floppy drive
@@ -500,6 +505,8 @@ disk {
 	optional = 1
 	type     = "auto"
 	file     = "drv_01.img"
+	file     = "fd1.img"
+	file     = "fd1.pfdc"
 }
 
 #disk {
@@ -523,7 +530,7 @@ disk {
 	optional = 1
 }
 
-# The first harddisk (2)
+# The first harddisk (alternate)
 disk {
 	drive    = 128
 	type     = "auto"
@@ -538,17 +545,8 @@ disk {
 	drive    = 129
 	type     = "auto"
 	file     = "drv_81.img"
-#	cow      = "drv_80.cow"
-	readonly = 0
-	optional = 1
-}
-
-# The second harddisk (2)
-disk {
-	drive    = 129
-	type     = "auto"
 	file     = "hd2.img"
-#	cow      = "hd2.cow"
+#	cow      = "drv_80.cow"
 	readonly = 0
 	optional = 1
 }
