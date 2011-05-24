@@ -351,11 +351,18 @@ disks_t *ini_get_disks (ini_sct_t *ini)
 	ini_sct_t *sct;
 	disk_t    *dsk;
 	disks_t   *dsks;
+	unsigned  drive;
 
 	dsks = dsks_new();
 
 	sct = NULL;
 	while ((sct = ini_next_sct (ini, sct, "disk")) != NULL) {
+		ini_get_uint16 (sct, "drive", &drive, 0);
+
+		if (dsks_get_disk (dsks, drive) != NULL) {
+			continue;
+		}
+
 		if (ini_get_disk (sct, &dsk) == 0) {
 			if (dsk != NULL) {
 				dsks_add_disk (dsks, dsk);

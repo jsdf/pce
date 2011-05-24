@@ -479,6 +479,10 @@ fdc {
 # If optional is set to 1 no error will be reported if the disk
 # can't be opened.
 #
+# If there is more than one entry for the same drive, the first
+# one that can be successfully opened will be used and all others
+# ignored.
+#
 # If a COW (copy on write) file is specified, changes to the disk
 # image are written to that file and the image is not touched.
 
@@ -514,8 +518,19 @@ disk {
 	drive    = 128
 	type     = "auto"
 	file     = "drv_80.img"
-	#cow      = "pce_80.cow"
+#	cow      = "drv_80.cow"
 	readonly = 0
+	optional = 1
+}
+
+# The first harddisk (2)
+disk {
+	drive    = 128
+	type     = "auto"
+	file     = "hd1.img"
+#	cow      = "hd1.cow"
+	readonly = 0
+	optional = 1
 }
 
 # The second harddisk
@@ -523,19 +538,17 @@ disk {
 	drive    = 129
 	type     = "auto"
 	file     = "drv_81.img"
-	#cow      = "pce_80.cow"
+#	cow      = "drv_80.cow"
 	readonly = 0
 	optional = 1
 }
 
-#disk {
-#	drive    = 128
-#	type     = "image"
-#	offset   = 128
-#	file     = "drv_80.img"
-#	cow      = "pce_80.cow"
-#	c        = 615
-#	h        = 4
-#	s        = 17
-#	readonly = 0
-#}
+# The second harddisk (2)
+disk {
+	drive    = 129
+	type     = "auto"
+	file     = "hd2.img"
+#	cow      = "hd2.cow"
+	readonly = 0
+	optional = 1
+}
