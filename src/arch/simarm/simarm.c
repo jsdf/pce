@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/simarm.c                                     *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -470,51 +470,56 @@ void sarm_clock (simarm_t *sim, unsigned n)
 {
 	unsigned long clk;
 
-	if (sim->clk_div[0] >= 256) {
-		clk = sim->clk_div[0] & ~255UL;
-		sim->clk_div[1] += clk;
-		sim->clk_div[0] &= 255;
-
-		if (sim->serport[0] != NULL) {
-			e8250_clock (&sim->serport[0]->uart, clk / 4);
-		}
-
-		if (sim->serport[1] != NULL) {
-			e8250_clock (&sim->serport[1]->uart, clk / 4);
-		}
-
-		tmr_clock (sim->timer, clk);
-
-		if (sim->clk_div[1] >= 4096) {
-			clk = sim->clk_div[1] & ~4095UL;
-			sim->clk_div[2] += clk;
-			sim->clk_div[1] &= 4095;
-
-			if (sim->serport[0] != NULL) {
-				ser_clock (sim->serport[0], clk);
-			}
-
-			if (sim->serport[1] != NULL) {
-				ser_clock (sim->serport[1], clk);
-			}
-
-
-			if (sim->slip != NULL) {
-				slip_clock (sim->slip, clk);
-			}
-
-			if (sim->clk_div[2] >= 16384) {
-				scon_check (sim);
-
-				sim->clk_div[2] &= 16383;
-			}
-		}
-	}
-
 	arm_clock (sim->cpu, n);
 
 	sim->clk_cnt += n;
 	sim->clk_div[0] += n;
+
+	if (sim->clk_div[0] < 256) {
+		return;
+	}
+
+	clk = sim->clk_div[0] & ~255UL;
+	sim->clk_div[1] += clk;
+	sim->clk_div[0] &= 255;
+
+	if (sim->serport[0] != NULL) {
+		e8250_clock (&sim->serport[0]->uart, clk / 4);
+	}
+
+	if (sim->serport[1] != NULL) {
+		e8250_clock (&sim->serport[1]->uart, clk / 4);
+	}
+
+	tmr_clock (sim->timer, clk);
+
+	if (sim->clk_div[1] < 4096) {
+		return;
+	}
+
+	clk = sim->clk_div[1] & ~4095UL;
+	sim->clk_div[2] += clk;
+	sim->clk_div[1] &= 4095;
+
+	if (sim->serport[0] != NULL) {
+		ser_clock (sim->serport[0], clk);
+	}
+
+	if (sim->serport[1] != NULL) {
+		ser_clock (sim->serport[1], clk);
+	}
+
+	if (sim->slip != NULL) {
+		slip_clock (sim->slip, clk);
+	}
+
+	if (sim->clk_div[2] < 16384) {
+		return;
+	}
+
+	sim->clk_div[2] &= 16383;
+
+	scon_check (sim);
 }
 
 int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
