@@ -880,7 +880,7 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 		return;
 	}
 
-	mem_blk_set_fct (blk, sim,
+	mem_blk_set_fct (blk, &sim->scsi,
 		mac_scsi_get_uint8, mac_scsi_get_uint16, NULL,
 		mac_scsi_set_uint8, mac_scsi_set_uint16, NULL
 	);

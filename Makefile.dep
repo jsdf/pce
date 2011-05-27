@@ -600,34 +600,11 @@ src/arch/macplus/rtc.o: src/arch/macplus/rtc.c \
 	src/config.h
 
 src/arch/macplus/scsi.o: src/arch/macplus/scsi.c \
-	src/arch/macplus/adb.h \
-	src/arch/macplus/adb_keyboard.h \
-	src/arch/macplus/adb_mouse.h \
-	src/arch/macplus/iwm.h \
-	src/arch/macplus/keyboard.h \
-	src/arch/macplus/macplus.h \
 	src/arch/macplus/main.h \
-	src/arch/macplus/rtc.h \
 	src/arch/macplus/scsi.h \
-	src/arch/macplus/serial.h \
-	src/arch/macplus/sony.h \
-	src/arch/macplus/sound.h \
-	src/arch/macplus/video.h \
-	src/chipset/e6522.h \
-	src/chipset/e8530.h \
 	src/config.h \
-	src/cpu/e68000/e68000.h \
 	src/devices/block/block.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/filter.h \
-	src/drivers/sound/sound.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/devices/memory.h
 
 src/arch/macplus/serial.o: src/arch/macplus/serial.c \
 	src/arch/macplus/main.h \

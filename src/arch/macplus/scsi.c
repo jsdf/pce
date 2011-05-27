@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "macplus.h"
 #include "scsi.h"
 
 #include <stdlib.h>
@@ -922,10 +921,7 @@ unsigned char mac_scsi_get_bsr (mac_scsi_t *scsi)
 unsigned char mac_scsi_get_uint8 (void *ext, unsigned long addr)
 {
 	unsigned char val;
-	macplus_t     *sim = ext;
-	mac_scsi_t    *scsi;
-
-	scsi = &sim->scsi;
+	mac_scsi_t    *scsi = ext;
 
 	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
 
@@ -1262,10 +1258,7 @@ void mac_scsi_set_ser (mac_scsi_t *scsi, unsigned char val)
 
 void mac_scsi_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 {
-	macplus_t  *sim = ext;
-	mac_scsi_t *scsi;
-
-	scsi = &sim->scsi;
+	mac_scsi_t *scsi = ext;
 
 	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
 
@@ -1310,6 +1303,17 @@ void mac_scsi_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 	}
 }
 
+void mac_scsi_set_uint16 (void *ext, unsigned long addr, unsigned short val)
+{
+	mac_scsi_t *scsi = ext;
+
+	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
+
+#ifdef DEBUG_SCSI
+	mac_log_deb ("scsi: set 16: %04lX <- %02X\n", addr, val);
+#endif
+}
+
 void mac_scsi_reset (mac_scsi_t *scsi)
 {
 #ifdef DEBUG_SCSI
@@ -1336,15 +1340,4 @@ void mac_scsi_reset (mac_scsi_t *scsi)
 
 	scsi->cmd_start = NULL;
 	scsi->cmd_finish = NULL;
-}
-
-void mac_scsi_set_uint16 (void *ext, unsigned long addr, unsigned short val)
-{
-	mac_scsi_t *scsi = ext;
-
-	addr = (addr & scsi->addr_mask) >> scsi->addr_shift;
-
-#ifdef DEBUG_SCSI
-	mac_log_deb ("scsi: set 16: %04lX <- %02X\n", addr, val);
-#endif
 }
