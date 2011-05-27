@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/iniata.h                                             *
  * Created:     2006-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,7 +31,7 @@
 #include <devices/block/block.h>
 
 
-int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct);
+int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct, unsigned idx);
 int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct);
 
 
