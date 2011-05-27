@@ -68,6 +68,12 @@ typedef struct {
 	unsigned      dev_cnt;
 	adb_dev_t     *dev[16];
 
+	void          *shift_in_ext;
+	void          (*shift_in) (void *ext, unsigned char val);
+
+	void          *shift_out_ext;
+	unsigned char (*shift_out) (void *ext);
+
 	unsigned char set_int_val;
 	void          *set_int_ext;
 	void          (*set_int) (void *ext, unsigned char val);
@@ -89,6 +95,10 @@ mac_adb_t *mac_adb_new (void);
 void mac_adb_del (mac_adb_t *adb);
 
 void adb_reset (mac_adb_t *adb);
+
+void adb_set_shift_in_fct (mac_adb_t *adb, void *ext, void *fct);
+
+void adb_set_shift_out_fct (mac_adb_t *adb, void *ext, void *fct);
 
 void adb_set_int_fct (mac_adb_t *adb, void *ext, void *fct);
 

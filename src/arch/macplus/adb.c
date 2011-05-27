@@ -22,7 +22,6 @@
 
 #include "main.h"
 #include "adb.h"
-#include "macplus.h"
 
 #include <stdlib.h>
 
@@ -166,6 +165,12 @@ void adb_init (mac_adb_t *adb)
 
 	adb->dev_cnt = 0;
 
+	adb->shift_in_ext = NULL;
+	adb->shift_in = NULL;
+
+	adb->shift_out_ext = NULL;
+	adb->shift_out = NULL;
+
 	adb->set_int_val = 0;
 	adb->set_int_ext = NULL;
 	adb->set_int = NULL;
@@ -205,6 +210,18 @@ void mac_adb_del (mac_adb_t *adb)
 		adb_free (adb);
 		free (adb);
 	}
+}
+
+void adb_set_shift_in_fct (mac_adb_t *adb, void *ext, void *fct)
+{
+	adb->shift_in_ext = ext;
+	adb->shift_in = fct;
+}
+
+void adb_set_shift_out_fct (mac_adb_t *adb, void *ext, void *fct)
+{
+	adb->shift_out_ext = ext;
+	adb->shift_out = fct;
 }
 
 void adb_set_int_fct (mac_adb_t *adb, void *ext, void *fct)
@@ -570,7 +587,9 @@ void mac_adb_clock (mac_adb_t *adb, unsigned cnt)
 	adb->clock = 0;
 
 	if (adb->writing) {
-		e6522_shift_in (&par_sim->via, (adb->bit_val >> 7) & 1);
+		if (adb->shift_in != NULL) {
+			adb->shift_in (adb->shift_in_ext, (adb->bit_val >> 7) & 1);
+		}
 
 		adb->bit_val <<= 1;
 		adb->bit_cnt -= 1;
@@ -579,8 +598,10 @@ void mac_adb_clock (mac_adb_t *adb, unsigned cnt)
 		adb->bit_val <<= 1;
 		adb->bit_cnt -= 1;
 
-		if (e6522_shift_out (&par_sim->via)) {
-			adb->bit_val |= 0x01;
+		if (adb->shift_out != NULL) {
+			if (adb->shift_out (adb->shift_out_ext)) {
+				adb->bit_val |= 0x01;
+			}
 		}
 
 		if (adb->bit_cnt == 0) {

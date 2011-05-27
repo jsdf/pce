@@ -815,6 +815,9 @@ void mac_setup_adb (macplus_t *sim, ini_sct_t *ini)
 		return;
 	}
 
+	adb_set_shift_in_fct (sim->adb, &sim->via, e6522_shift_in);
+	adb_set_shift_out_fct (sim->adb, &sim->via, e6522_shift_out);
+
 	adb_set_int_fct (sim->adb, sim, mac_set_adb_int);
 
 	if (mouse) {
