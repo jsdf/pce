@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/keyboard.c                                  *
  * Created:     2007-11-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,13 @@
 
 
 #include "main.h"
+#include "keyboard.h"
+
+#include <stdlib.h>
+
+#include <lib/log.h>
+
+#include <terminal/keys.h>
 
 
 static mac_kbd_map_t key_map_us[] = {

@@ -21,8 +21,14 @@
 
 
 #include "main.h"
+#include "serial.h"
 
+#include <stdlib.h>
+
+#include <chipset/e8530.h>
 #include <drivers/char/char.h>
+
+#include <lib/string.h>
 
 
 void mac_ser_init (mac_ser_t *ser)

@@ -21,7 +21,23 @@
 
 
 #include "main.h"
+#include "hook.h"
+#include "macplus.h"
+#include "sony.h"
 
+#include <string.h>
+
+#include <devices/block/block.h>
+
+#include <lib/log.h>
+
+
+#define MAC_HOOK_SONY        16
+#define MAC_HOOK_SONY_OPEN   (MAC_HOOK_SONY + 0)
+#define MAC_HOOK_SONY_PRIME  (MAC_HOOK_SONY + 1)
+#define MAC_HOOK_SONY_CTRL   (MAC_HOOK_SONY + 2)
+#define MAC_HOOK_SONY_STATUS (MAC_HOOK_SONY + 3)
+#define MAC_HOOK_SONY_CLOSE  (MAC_HOOK_SONY + 4)
 
 /* sony variable offsets */
 #define SONY_TRACK       0	/* current track */

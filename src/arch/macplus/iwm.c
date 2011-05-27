@@ -21,6 +21,8 @@
 
 
 #include "main.h"
+#include "iwm.h"
+#include "macplus.h"
 
 
 void mac_iwm_init (macplus_t *sim)

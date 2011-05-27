@@ -21,6 +21,19 @@
 
 
 #include "main.h"
+#include "cmd_68k.h"
+#include "macplus.h"
+#include "traps.h"
+
+#include <string.h>
+
+#include <cpu/e68000/e68000.h>
+
+#include <lib/brkpt.h>
+#include <lib/cmd.h>
+#include <lib/console.h>
+#include <lib/log.h>
+#include <lib/sysdep.h>
 
 
 static

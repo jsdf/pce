@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/mem.h                                       *
  * Created:     2007-11-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_MACPLUS_MEM_H
 #define PCE_MACPLUS_MEM_H 1
+
+
+#include "macplus.h"
 
 
 void mac_set_overlay (macplus_t *sim, int overlay);

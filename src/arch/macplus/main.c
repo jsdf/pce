@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/main.c                                      *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,10 @@
 
 
 #include "main.h"
+#include "cmd_68k.h"
+#include "macplus.h"
+#include "msg.h"
+#include "sony.h"
 
 #include <stdarg.h>
 #include <time.h>
@@ -28,7 +32,15 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <lib/cmd.h>
+#include <lib/console.h>
 #include <lib/getopt.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
+#include <lib/path.h>
+#include <lib/sysdep.h>
+
+#include <libini/libini.h>
 
 #ifdef PCE_ENABLE_SDL
 #include <SDL.h>

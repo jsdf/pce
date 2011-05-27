@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hook.c                                      *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,19 @@
 
 
 #include "main.h"
+#include "macplus.h"
+#include "msg.h"
+
+#include <cpu/e68000/e68000.h>
+
+#include <lib/log.h>
+
+
+#define MAC_HOOK_NOP    0
+#define MAC_HOOK_STOP   1
+#define MAC_HOOK_EXIT   2
+#define MAC_HOOK_INSERT 3
+#define MAC_HOOK_MARK   4
 
 
 /*

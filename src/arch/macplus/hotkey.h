@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hotkey.h                                    *
  * Created:     2010-11-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,11 @@
 
 #ifndef PCE_MACPLUS_HOTKEY_H
 #define PCE_MACPLUS_HOTKEY_H 1
+
+
+#include "macplus.h"
+
+#include <terminal/keys.h>
 
 
 int mac_set_hotkey (macplus_t *sim, pce_key_t key);

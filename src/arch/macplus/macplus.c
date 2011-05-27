@@ -21,7 +21,42 @@
 
 
 #include "main.h"
+#include "hook.h"
 #include "hotkey.h"
+#include "iwm.h"
+#include "keyboard.h"
+#include "macplus.h"
+#include "mem.h"
+#include "msg.h"
+#include "rtc.h"
+#include "scsi.h"
+#include "serial.h"
+#include "sony.h"
+#include "sound.h"
+#include "video.h"
+
+#include <string.h>
+
+#include <chipset/e6522.h>
+#include <chipset/e8530.h>
+
+#include <cpu/e68000/e68000.h>
+
+#include <devices/memory.h>
+#include <devices/nvram.h>
+#include <devices/block/block.h>
+
+#include <lib/brkpt.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/initerm.h>
+#include <lib/load.h>
+#include <lib/log.h>
+#include <lib/sysdep.h>
+
+#include <libini/libini.h>
+
+#include <terminal/terminal.h>
 
 
 /* The CPU is synchronized with real time MAC_CPU_SYNC times per seconds */

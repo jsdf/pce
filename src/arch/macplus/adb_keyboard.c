@@ -24,6 +24,11 @@
 #include "adb.h"
 #include "adb_keyboard.h"
 
+#include <stdlib.h>
+#include <string.h>
+
+#include <lib/log.h>
+
 
 static adb_kbd_map_t keymap_default[] = {
 	{ PCE_KEY_ESC,       0x35, 0 },

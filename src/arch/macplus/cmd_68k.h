@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.h                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,11 @@
 
 #ifndef PCE_MACPLUS_CMD_68K_H
 #define PCE_MACPLUS_CMD_68K_H 1
+
+
+#include "macplus.h"
+
+#include <lib/cmd.h>
 
 
 void mac_run (macplus_t *sim);

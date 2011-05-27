@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/keyboard.h                                  *
  * Created:     2007-11-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_MACPLUS_KEYBOARD_H
 #define PCE_MACPLUS_KEYBOARD_H 1
+
+
+#include <terminal/keys.h>
 
 
 #define MAC_KBD_BUFSIZE 256

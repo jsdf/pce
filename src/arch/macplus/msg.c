@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/msg.c                                       *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,19 @@
 
 
 #include "main.h"
+#include "macplus.h"
+#include "msg.h"
+
+#include <string.h>
+
+#include <lib/inidsk.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
+#include <lib/msg.h>
+#include <lib/sysdep.h>
+
+
+extern monitor_t par_mon;
 
 
 typedef struct {

@@ -24,6 +24,9 @@
 #define PCE_MACPLUS_SCSI_H 1
 
 
+#include <devices/block/block.h>
+
+
 typedef struct {
 	int           valid;
 

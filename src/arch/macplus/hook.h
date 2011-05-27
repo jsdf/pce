@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hook.h                                      *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,6 +22,9 @@
 
 #ifndef PCE_MACPLUS_HOOK_H
 #define PCE_MACPLUS_HOOK_H 1
+
+
+#include "macplus.h"
 
 
 void mac_hook_skip (macplus_t *sim, unsigned cnt);

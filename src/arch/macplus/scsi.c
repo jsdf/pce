@@ -21,6 +21,14 @@
 
 
 #include "main.h"
+#include "macplus.h"
+#include "scsi.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <devices/block/block.h>
+#include <devices/memory.h>
 
 
 /* ICR 1 */

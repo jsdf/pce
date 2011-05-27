@@ -24,6 +24,8 @@
 #include "adb.h"
 #include "adb_mouse.h"
 
+#include <stdlib.h>
+
 
 static
 void adb_mouse_del (adb_dev_t *dev)

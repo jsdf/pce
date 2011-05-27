@@ -22,6 +22,9 @@
 
 #include "main.h"
 #include "adb.h"
+#include "macplus.h"
+
+#include <stdlib.h>
 
 
 #ifndef DEBUG_ADB

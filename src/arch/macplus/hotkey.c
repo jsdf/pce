@@ -21,7 +21,12 @@
 
 
 #include "main.h"
+#include "hook.h"
 #include "hotkey.h"
+#include "macplus.h"
+#include "msg.h"
+
+#include <lib/log.h>
 
 
 int mac_set_hotkey (macplus_t *sim, pce_key_t key)

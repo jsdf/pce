@@ -21,7 +21,9 @@
 
 
 #include "main.h"
+#include "rtc.h"
 
+#include <stdio.h>
 #include <time.h>
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/serial.h                                    *
  * Created:     2007-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,6 +24,7 @@
 #define PCE_MACPLUS_SERIAL_H 1
 
 
+#include <chipset/e8530.h>
 #include <drivers/char/char.h>
 
 

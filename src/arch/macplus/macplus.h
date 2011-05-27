@@ -27,6 +27,27 @@
 #include "adb.h"
 #include "adb_keyboard.h"
 #include "adb_mouse.h"
+#include "iwm.h"
+#include "keyboard.h"
+#include "rtc.h"
+#include "scsi.h"
+#include "serial.h"
+#include "sony.h"
+#include "sound.h"
+#include "video.h"
+
+#include <chipset/e6522.h>
+#include <chipset/e8530.h>
+
+#include <cpu/e68000/e68000.h>
+
+#include <devices/memory.h>
+#include <devices/nvram.h>
+#include <devices/block/block.h>
+
+#include <lib/brkpt.h>
+
+#include <terminal/terminal.h>
 
 
 #define PCE_MAC_MACPLUS 1

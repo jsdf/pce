@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.c                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,10 @@
 
 
 #include "main.h"
+#include "video.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 
 #define MAC_VIDEO_PFREQ 15667200

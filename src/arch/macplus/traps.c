@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/traps.c                                     *
  * Created:     2007-11-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,9 @@
 
 
 #include "main.h"
+#include "traps.h"
+
+#include <stdlib.h>
 
 
 typedef struct {

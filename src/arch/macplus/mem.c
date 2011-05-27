@@ -21,6 +21,8 @@
 
 
 #include "main.h"
+#include "macplus.h"
+#include "mem.h"
 
 
 void mac_set_overlay (macplus_t *sim, int overlay)
