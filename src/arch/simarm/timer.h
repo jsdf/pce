@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/timer.h                                      *
  * Created:     2004-11-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -40,7 +40,7 @@ typedef struct ixp_timer_counter_s {
 	unsigned long clkdiv;
 
 	/* set to the clocking function if the counter is active */
-	void          (*clock) (struct ixp_timer_counter_s *cntr, unsigned n);
+	void          (*clock) (struct ixp_timer_counter_s *cntr, unsigned long n);
 
 	void          (*irq) (void *ext, unsigned char val);
 	void          *irq_ext;
@@ -59,9 +59,6 @@ typedef struct ixp_timer_s {
 	ixp_timer_counter_t cntr[4];
 
 	unsigned long       twde;
-
-	/* artificial timer scale */
-	unsigned            scale;
 } ixp_timer_t;
 
 
@@ -76,9 +73,7 @@ int tmr_get_active (ixp_timer_t *tmr, unsigned i);
 
 void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext);
 
-void tmr_set_scale (ixp_timer_t *tmr, unsigned scale);
-
-void tmr_clock (ixp_timer_t *tmr, unsigned n);
+void tmr_clock (ixp_timer_t *tmr, unsigned long n);
 
 
 #endif

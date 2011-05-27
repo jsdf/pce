@@ -58,7 +58,6 @@ section simarm {
 	# timer
 	section timer {
 		address = 0xc0020000
-		scale   = 5
 	}
 
 	# serial port

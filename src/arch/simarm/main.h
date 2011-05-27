@@ -56,7 +56,6 @@
 #include <devices/pci.h>
 #include <devices/slip.h>
 
-#include "timer.h"
 #include "intc.h"
 #include "pci.h"
 #include "simarm.h"

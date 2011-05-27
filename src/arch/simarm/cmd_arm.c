@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/cmd_arm.c                                    *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -274,6 +274,8 @@ void sarm_run (simarm_t *sim)
 {
 	pce_start (&sim->brk);
 
+	sarm_clock_discontinuity (sim);
+
 	while (1) {
 		sarm_clock (sim, 16);
 
@@ -377,6 +379,8 @@ void do_c (cmd_t *cmd, simarm_t *sim)
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
+
+	sarm_clock_discontinuity (sim);
 
 	while (cnt > 0) {
 		sarm_clock (sim, 1);
@@ -506,6 +510,8 @@ void do_g_b (cmd_t *cmd, simarm_t *sim)
 
 	pce_start (&sim->brk);
 
+	sarm_clock_discontinuity (sim);
+
 	while (1) {
 		sarm_exec (sim);
 
@@ -588,6 +594,8 @@ void do_p (cmd_t *cmd, simarm_t *sim)
 	}
 
 	pce_start (&sim->brk);
+
+	sarm_clock_discontinuity (sim);
 
 	while (cnt > 0) {
 		arm_dasm_mem (sim->cpu, &da, arm_get_pc (sim->cpu), ARM_XLAT_CPU);
@@ -691,6 +699,8 @@ void do_t (cmd_t *cmd, simarm_t *sim)
 	}
 
 	pce_start (&sim->brk);
+
+	sarm_clock_discontinuity (sim);
 
 	for (i = 0; i < n; i++) {
 		sarm_exec (sim);

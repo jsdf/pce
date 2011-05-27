@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/timer.c                                      *
  * Created:     2004-11-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,7 @@
 
 
 #include "main.h"
+#include "timer.h"
 
 
 #define IXP_TIMER_ACT (1UL << 7)
@@ -75,7 +76,7 @@ void ctr_set_irq (ixp_timer_counter_t *ctr, unsigned char val)
 }
 
 static
-void ctr_clock_1 (ixp_timer_counter_t *ctr, unsigned n)
+void ctr_clock_1 (ixp_timer_counter_t *ctr, unsigned long n)
 {
 	if (ctr->status == 0) {
 		ctr->status = ctr->load;
@@ -99,7 +100,7 @@ void ctr_clock_1 (ixp_timer_counter_t *ctr, unsigned n)
 }
 
 static
-void ctr_clock_16 (ixp_timer_counter_t *ctr, unsigned n)
+void ctr_clock_16 (ixp_timer_counter_t *ctr, unsigned long n)
 {
 	n += ctr->clkdiv;
 
@@ -109,7 +110,7 @@ void ctr_clock_16 (ixp_timer_counter_t *ctr, unsigned n)
 }
 
 static
-void ctr_clock_256 (ixp_timer_counter_t *ctr, unsigned n)
+void ctr_clock_256 (ixp_timer_counter_t *ctr, unsigned long n)
 {
 	n += ctr->clkdiv;
 
@@ -198,8 +199,6 @@ void tmr_init (ixp_timer_t *tmr, unsigned long base)
 	}
 
 	tmr->twde = 0;
-
-	tmr->scale = 1;
 }
 
 ixp_timer_t *tmr_new (unsigned long base)
@@ -255,11 +254,6 @@ void tmr_set_irq_f (ixp_timer_t *tmr, unsigned i, void *f, void *ext)
 		tmr->cntr[i].irq = f;
 		tmr->cntr[i].irq_ext = ext;
 	}
-}
-
-void tmr_set_scale (ixp_timer_t *tmr, unsigned scale)
-{
-	tmr->scale = scale;
 }
 
 static
@@ -343,12 +337,10 @@ void tmr_set_uint32 (ixp_timer_t *tmr, unsigned long addr, unsigned long val)
 	}
 }
 
-void tmr_clock (ixp_timer_t *tmr, unsigned n)
+void tmr_clock (ixp_timer_t *tmr, unsigned long n)
 {
 	unsigned            i;
 	ixp_timer_counter_t *c;
-
-	n *= tmr->scale;
 
 	for (i = 0; i < 4; i++) {
 		c = &tmr->cntr[i];

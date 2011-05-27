@@ -27,6 +27,7 @@
 
 
 #include "main.h"
+#include "timer.h"
 
 
 void sarm_break (simarm_t *sim, unsigned char val);
@@ -123,13 +124,11 @@ static
 void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 {
 	unsigned long addr;
-	unsigned      scale;
 	ini_sct_t     *sct;
 
 	sct = ini_next_sct (ini, NULL, "timer");
 
 	ini_get_uint32 (sct, "address", &addr, 0xc0020000);
-	ini_get_uint16 (sct, "scale", &scale, 4);
 
 	sim->timer = tmr_new (addr);
 	if (sim->timer == NULL) {
@@ -141,11 +140,11 @@ void sarm_setup_timer (simarm_t *sim, ini_sct_t *ini)
 	tmr_set_irq_f (sim->timer, 2, ict_set_irq6, sim->intc);
 	tmr_set_irq_f (sim->timer, 3, ict_set_irq7, sim->intc);
 
-	tmr_set_scale (sim->timer, scale);
-
 	mem_add_blk (sim->mem, tmr_get_io (sim->timer, 0), 0);
 
-	pce_log_tag (MSG_INF, "TIMER:", "addr=0x%08lx ts=%u\n", addr, scale);
+	sim->rclk_interval = 0;
+
+	pce_log_tag (MSG_INF, "TIMER:", "addr=0x%08lx\n", addr);
 }
 
 static
@@ -461,6 +460,11 @@ void sarm_set_keycode (simarm_t *sim, unsigned char val)
 	}
 }
 
+void sarm_clock_discontinuity (simarm_t *sim)
+{
+	pce_get_interval_us (&sim->rclk_interval);
+}
+
 void sarm_reset (simarm_t *sim)
 {
 	arm_reset (sim->cpu);
@@ -468,7 +472,7 @@ void sarm_reset (simarm_t *sim)
 
 void sarm_clock (simarm_t *sim, unsigned n)
 {
-	unsigned long clk;
+	unsigned long clk, rclk;
 
 	arm_clock (sim->cpu, n);
 
@@ -491,8 +495,6 @@ void sarm_clock (simarm_t *sim, unsigned n)
 		e8250_clock (&sim->serport[1]->uart, clk / 4);
 	}
 
-	tmr_clock (sim->timer, clk);
-
 	if (sim->clk_div[1] < 4096) {
 		return;
 	}
@@ -500,6 +502,10 @@ void sarm_clock (simarm_t *sim, unsigned n)
 	clk = sim->clk_div[1] & ~4095UL;
 	sim->clk_div[2] += clk;
 	sim->clk_div[1] &= 4095;
+
+	rclk = pce_get_interval_us (&sim->rclk_interval);
+
+	tmr_clock (sim->timer, 50 * rclk);
 
 	if (sim->serport[0] != NULL) {
 		ser_clock (sim->serport[0], clk);
@@ -569,15 +575,6 @@ int sarm_set_msg (simarm_t *sim, const char *msg, const char *val)
 				return (1);
 			}
 		}
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.timer_scale", msg)) {
-		unsigned long v;
-
-		v = strtoul (val, NULL, 0);
-
-		tmr_set_scale (sim->timer, v);
 
 		return (0);
 	}

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/simarm.h                                     *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -39,6 +39,8 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
+
+#include "timer.h"
 
 
 #define PCE_BRK_STOP  1
@@ -115,6 +117,8 @@ typedef struct simarm_s {
 
 	int                bigendian;
 
+	unsigned long      rclk_interval;
+
 	unsigned long long clk_cnt;
 	unsigned long      clk_div[4];
 
@@ -139,6 +143,8 @@ void sarm_del (simarm_t *sim);
  *         initialization
  *****************************************************************************/
 unsigned long long sarm_get_clkcnt (simarm_t *sim);
+
+void sarm_clock_discontinuity (simarm_t *sim);
 
 /*****************************************************************************
  * @short Reset the simulator
