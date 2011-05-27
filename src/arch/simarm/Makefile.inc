@@ -38,7 +38,6 @@ PCE_SIMARM_OBJ_EXT := \
 	src/devices/device.o \
 	src/devices/memory.o \
 	src/devices/serport.o \
-	src/devices/slip.o \
 	src/drivers/options.o \
 	src/drivers/char/char.a \
 	src/lib/brkpt.o \

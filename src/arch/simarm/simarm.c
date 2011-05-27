@@ -247,52 +247,6 @@ void sarm_setup_console (simarm_t *sim, ini_sct_t *ini)
 }
 
 static
-void sarm_setup_slip (simarm_t *sim, ini_sct_t *ini)
-{
-	ini_sct_t  *sct;
-	unsigned   ser;
-	const char *name;
-	e8250_t    *uart;
-
-	sct = ini_next_sct (ini, NULL, "slip");
-	if (sct == NULL) {
-		return;
-	}
-
-	ini_get_uint16 (sct, "serial", &ser, 0);
-	ini_get_string (sct, "interface", &name, "tun0");
-
-	pce_log_tag (MSG_INF, "SLIP:", "serport=%u interface=%s\n",
-		ser, name
-	);
-
-	if ((ser >= 2) || (sim->serport[ser] == NULL)) {
-		pce_log (MSG_ERR, "*** no serial port (%u)\n", ser);
-		return;
-	}
-
-	sim->slip = slip_new();
-	if (sim->slip == NULL) {
-		return;
-	}
-
-	uart = ser_get_uart (sim->serport[ser]);
-
-	e8250_set_send_fct (uart, sim->slip, slip_uart_check_out);
-	e8250_set_recv_fct (uart, sim->slip, slip_uart_check_inp);
-	e8250_set_setup_fct (uart, NULL, NULL);
-
-	slip_set_get_uint8_fct (sim->slip, uart, e8250_send);
-	slip_set_set_uint8_fct (sim->slip, uart, e8250_receive);
-
-	if (slip_set_tun (sim->slip, name)) {
-		pce_log (MSG_ERR, "*** creating tun interface failed (%s)\n",
-			name
-		);
-	}
-}
-
-static
 void sarm_setup_disks (simarm_t *sim, ini_sct_t *ini)
 {
 	sim->dsks = ini_get_disks (ini);
@@ -403,7 +357,6 @@ simarm_t *sarm_new (ini_sct_t *ini)
 	sarm_setup_timer (sim, ini);
 	sarm_setup_serport (sim, ini);
 	sarm_setup_console (sim, ini);
-	sarm_setup_slip (sim, ini);
 	sarm_setup_disks (sim, ini);
 	sarm_setup_pci (sim, ini);
 	sarm_setup_ata (sim, ini);
@@ -423,8 +376,6 @@ void sarm_del (simarm_t *sim)
 	pci_ixp_del (sim->pci);
 
 	dsks_del (sim->dsks);
-
-	slip_del (sim->slip);
 
 	ser_del (sim->serport[1]);
 	ser_del (sim->serport[0]);
@@ -513,10 +464,6 @@ void sarm_clock (simarm_t *sim, unsigned n)
 
 	if (sim->serport[1] != NULL) {
 		ser_clock (sim->serport[1], clk);
-	}
-
-	if (sim->slip != NULL) {
-		slip_clock (sim->slip, clk);
 	}
 
 	if (sim->clk_div[2] < 16384) {

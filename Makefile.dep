@@ -1416,7 +1416,6 @@ src/arch/simarm/cmd_arm.o: src/arch/simarm/cmd_arm.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1449,7 +1448,6 @@ src/arch/simarm/intc.o: src/arch/simarm/intc.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1482,7 +1480,6 @@ src/arch/simarm/main.o: src/arch/simarm/main.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1515,7 +1512,6 @@ src/arch/simarm/pci.o: src/arch/simarm/pci.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1548,7 +1544,6 @@ src/arch/simarm/sercons.o: src/arch/simarm/sercons.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1581,7 +1576,6 @@ src/arch/simarm/simarm.o: src/arch/simarm/simarm.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1614,7 +1608,6 @@ src/arch/simarm/timer.o: src/arch/simarm/timer.c \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
-	src/devices/slip.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \

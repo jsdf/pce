@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/main.h                                       *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -54,7 +54,6 @@
 
 #include <devices/memory.h>
 #include <devices/pci.h>
-#include <devices/slip.h>
 
 #include "intc.h"
 #include "pci.h"

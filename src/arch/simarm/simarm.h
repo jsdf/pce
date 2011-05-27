@@ -109,8 +109,6 @@ typedef struct simarm_s {
 	pci_ixp_t          *pci;
 	pci_ata_t          pciata;
 
-	slip_t             *slip;
-
 	ini_sct_t          *cfg;
 
 	bp_set_t           bps;
