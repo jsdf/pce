@@ -67,7 +67,8 @@ static pce_option_t opts_create[] = {
 	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
-	{ 'm', 1, "size", "int", "Set the disk size in megabytes [0]" },
+	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
+	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
@@ -81,7 +82,8 @@ static pce_option_t opts_convert[] = {
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
 	{ 'i', 1, "input", "string", "Set the input file name [stdin]" },
-	{ 'm', 1, "size", "int", "Set the disk size in megabytes [0]" },
+	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
+	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
@@ -413,6 +415,10 @@ int main_create (int argc, char **argv)
 			par_n *= 2048;
 			break;
 
+		case 'n':
+			par_n = strtoul (optarg[0], NULL, 0);
+			break;
+
 		case 'o':
 			par_out = optarg[0];
 			break;
@@ -531,6 +537,10 @@ int main_convert (int argc, char **argv)
 		case 'm':
 			par_n = strtoul (optarg[0], NULL, 0);
 			par_n *= 2048;
+			break;
+
+		case 'n':
+			par_n = strtoul (optarg[0], NULL, 0);
 			break;
 
 		case 'o':
