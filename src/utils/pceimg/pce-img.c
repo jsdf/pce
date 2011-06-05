@@ -140,6 +140,41 @@ void print_version (void)
 }
 
 
+/*
+ * Guess the image type based on the file name extension.
+ */
+static
+unsigned pce_get_disk_type_ext (const char *str)
+{
+	const char *ext;
+
+	ext = NULL;
+
+	while (*str != 0) {
+		if (*str == '.') {
+			ext = str + 1;
+		}
+
+		str += 1;
+	}
+
+	if (ext == NULL) {
+		return (DSK_NONE);
+	}
+
+	if (strcasecmp (ext, "pfdc") == 0) {
+		return (DSK_PFDC);
+	}
+	else if (strcasecmp (ext, "qed") == 0) {
+		return (DSK_QED);
+	}
+	else if (strcasecmp (ext, "raw") == 0) {
+		return (DSK_RAW);
+	}
+
+	return (DSK_NONE);
+}
+
 static
 unsigned pce_get_disk_type (const char *str)
 {
@@ -149,7 +184,7 @@ unsigned pce_get_disk_type (const char *str)
 	i = 0;
 	while (str[i] != ':') {
 		if (str[i] == 0) {
-			return (DSK_NONE);
+			return (pce_get_disk_type_ext (str));
 		}
 
 		if (i >= 256) {
