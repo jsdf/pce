@@ -37,6 +37,8 @@
 #include <devices/block/blkqed.h>
 #include <devices/block/blkdosem.h>
 
+#include <lib/getopt.h>
+
 
 #define DSK_NONE   0
 #define DSK_RAW    1
@@ -53,38 +55,69 @@ static int           par_quiet = 0;
 static unsigned long par_min_cluster_size = 0;
 
 
+static pce_option_t opts_main[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
+	{ 'V', 0, "version", NULL, "Print version information" },
+	{  -1, 0, NULL, NULL, NULL }
+};
+
+static pce_option_t opts_create[] = {
+	{ 'c', 1, "cylinders", "int", "Set the number of cylinders [0]" },
+	{ 'C', 1, "min-cluster-size", "int", "Set the minimum cluster size for QED [0]" },
+	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
+	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
+	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
+	{ 'm', 1, "size", "int", "Set the disk size in megabytes [0]" },
+	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
+	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
+	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
+	{  -1, 0, NULL, NULL, NULL }
+};
+
+static pce_option_t opts_convert[] = {
+	{ 'c', 1, "cylinders", "int", "Set the number of cylinders [0]" },
+	{ 'C', 1, "min-cluster-size", "int", "Set the minimum cluster size for QED [0]" },
+	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
+	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
+	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
+	{ 'i', 1, "input", "string", "Set the input file name [stdin]" },
+	{ 'm', 1, "size", "int", "Set the disk size in megabytes [0]" },
+	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
+	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
+	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
+	{ 'w', 1, "cow", "string", "Set the COW file name [none]" },
+	{  -1, 0, NULL, NULL, NULL }
+};
+
+
 static
-void prt_help (void)
+void print_help (void)
 {
+	pce_getopt_help (
+		"pce-img: PCE disk image utility",
+		"usage: pce-img [options] command [options]",
+		opts_main
+	);
+
+	fputs ("\n", stdout);
+
+	pce_getopt_help (
+		NULL,
+		"usage: pce-img create [options] [output]",
+		opts_create
+	);
+
+	fputs ("\n", stdout);
+
+	pce_getopt_help (
+		NULL,
+		"usage: pce-img convert [options] [input [output]]",
+		opts_convert
+	);
+
 	fputs (
-		"usage: pce-img command [options]\n"
-		"\n"
-		"create [options] [output]\n"
-		"  -q, --quiet                 Be quiet\n"
-		"  -c, --cylinders int         Set number of cylinders [0]\n"
-		"  -C, --min-cluster-size int  Set the minimum cluster size for QED [0]\n"
-		"  -h, --heads int             Set number of heads [0]\n"
-		"  -s, --sectors int           Set number of sectors per track [0]\n"
-		"  -g, --geometry 3 * int      Set disk geometry (c h s)\n"
-		"  -m, --size int              Set disk size in megabytes [0]\n"
-		"  -f, --offset int            Set data offset [0]\n"
-		"  -o, --output string         Set the output file name [stdout]\n"
-		"\n"
-		"convert [options] [input [output]]\n"
-		"  -q, --quiet                 Be quiet\n"
-		"  -c, --cylinders int         Set number of cylinders [0]\n"
-		"  -C, --min-cluster-size int  Set the minimum cluster size for QED [0]\n"
-		"  -h, --heads int             Set number of heads [0]\n"
-		"  -s, --sectors int           Set number of sectors per track [0]\n"
-		"  -g, --geometry 3 * int      Set disk geometry (c h s)\n"
-		"  -m, --size int              Set disk size in megabytes [0]\n"
-		"  -f, --offset int            Set data offset [0]\n"
-		"  -i, --input string          Set the input file name [stdin]\n"
-		"  -o, --output string         Set the output file name [stdout]\n"
-		"  -w, --cow string            Set the COW file name [none]\n"
-		"\n"
-		"file names: <format>:<name>\n"
-		"formats:    raw, pce, dosemu, pfdc\n",
+		"\nfile names: <format>:<name>\n"
+		"formats:    raw, pce, dosemu, pfdc, qed\n",
 		stdout
 	);
 
@@ -92,7 +125,7 @@ void prt_help (void)
 }
 
 static
-void prt_version (void)
+void print_version (void)
 {
 	fputs (
 		"pce-img version " PCE_VERSION_STR
@@ -104,27 +137,6 @@ void prt_version (void)
 	fflush (stdout);
 }
 
-
-static
-int opt_check (int argc, char **argv, const char *opt1, const char *opt2,
-	int i, int n)
-{
-	if ((opt1 != NULL) && (strcmp (argv[i], opt1) == 0)) {
-		;
-	}
-	else if ((opt2 != NULL) && (strcmp (argv[i], opt2) == 0)) {
-		;
-	}
-	else {
-		return (0);
-	}
-
-	if ((i + n) >= argc) {
-		return (0);
-	}
-
-	return (1);
-}
 
 static
 unsigned pce_get_disk_type (const char *str)
@@ -345,7 +357,8 @@ int dsk_copy (disk_t *dst, disk_t *src)
 static
 int main_create (int argc, char **argv)
 {
-	int      i;
+	int      r;
+	char     **optarg;
 	char     *par_out = NULL;
 	uint32_t par_c = 0;
 	uint32_t par_h = 0;
@@ -353,66 +366,80 @@ int main_create (int argc, char **argv)
 	uint32_t par_n = 0;
 	uint64_t par_ofs = 0;
 
-	i = 1;
-	while (i < argc) {
-		if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
-			par_quiet = 1;
-		}
-		else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
-			i += 1;
-			par_c = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-C", "--min-cluster-size", i, 1)) {
-			i += 1;
-			par_min_cluster_size = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
-			i += 1;
-			par_h = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
-			i += 1;
-			par_s = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
-			par_c = strtoul (argv[i + 1], NULL, 0);
-			par_h = strtoul (argv[i + 2], NULL, 0);
-			par_s = strtoul (argv[i + 3], NULL, 0);
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts_convert);
 
-			i += 3;
+		if (r == GETOPT_DONE) {
+			break;
 		}
-		else if (opt_check (argc, argv, "-f", "--offset", i, 1)) {
-			i += 1;
-			par_ofs = strtoull (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
-			i += 1;
 
-			par_n = strtoul (argv[i], NULL, 0);
-			par_n *= 2048;
-		}
-		else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
-			i += 1;
-			par_out = argv[i];
-		}
-		else if (argv[i][0] != '-') {
-			if (par_out != NULL) {
-				fprintf (stderr, "%s: unknown option (%s)\n",
-					argv0, argv[i]
-				);
-				return (1);
-			}
-
-			par_out = argv[i];
-		}
-		else {
-			fprintf (stderr, "%s: unknown option (%s)\n",
-				argv0, argv[i]
-			);
+		if (r < 0) {
 			return (1);
 		}
 
-		i += 1;
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 'c':
+			par_c = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'C':
+			par_min_cluster_size = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'f':
+			par_ofs = strtoull (optarg[0], NULL, 0);
+			break;
+
+		case 'g':
+			par_c = strtoul (optarg[0], NULL, 0);
+			par_h = strtoul (optarg[1], NULL, 0);
+			par_s = strtoul (optarg[2], NULL, 0);
+			break;
+
+		case 'h':
+			par_h = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'm':
+			par_n = strtoul (optarg[0], NULL, 0);
+			par_n *= 2048;
+			break;
+
+		case 'o':
+			par_out = optarg[0];
+			break;
+
+		case 'q':
+			par_quiet = 1;
+			break;
+
+		case 's':
+			par_s = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 0:
+			if (par_out == NULL) {
+				par_out = optarg[0];
+			}
+			else {
+				fprintf (stderr, "%s: too many file names (%s)\n",
+					argv0, optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		default:
+			return (1);
+		}
 	}
 
 	dsk_adjust_chs (&par_n, &par_c, &par_h, &par_s);
@@ -443,7 +470,8 @@ int main_create (int argc, char **argv)
 static
 int main_convert (int argc, char **argv)
 {
-	int        i;
+	int        r;
+	char       **optarg;
 	const char *par_inp = NULL;
 	const char *par_out = NULL;
 	const char *par_cow = NULL;
@@ -454,78 +482,91 @@ int main_convert (int argc, char **argv)
 	uint64_t   par_ofs = 0;
 	disk_t     *inp, *out, *cow;
 
-	i = 1;
-	while (i < argc) {
-		if (opt_check (argc, argv, "-q", "--quiet", i, 0)) {
-			par_quiet = 1;
-		}
-		else if (opt_check (argc, argv, "-c", "--cylinders", i, 1)) {
-			i += 1;
-			par_c = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-C", "--min-cluster-size", i, 1)) {
-			i += 1;
-			par_min_cluster_size = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-h", "--heads", i, 1)) {
-			i += 1;
-			par_h = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-s", "--sectors", i, 1)) {
-			i += 1;
-			par_s = strtoul (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-m", "--size", i, 1)) {
-			i += 1;
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts_convert);
 
-			par_n = strtoul (argv[i], NULL, 0);
-			par_n *= 2048;
+		if (r == GETOPT_DONE) {
+			break;
 		}
-		else if (opt_check (argc, argv, "-g", "--geometry", i, 3)) {
-			par_c = strtoul (argv[i + 1], NULL, 0);
-			par_h = strtoul (argv[i + 2], NULL, 0);
-			par_s = strtoul (argv[i + 3], NULL, 0);
 
-			i += 3;
-		}
-		else if (opt_check (argc, argv, "-f", "--offset", i, 1)) {
-			i += 1;
-			par_ofs = strtoull (argv[i], NULL, 0);
-		}
-		else if (opt_check (argc, argv, "-w", "--cow", i, 1)) {
-			i += 1;
-			par_cow = argv[i];
-		}
-		else if (opt_check (argc, argv, "-i", "--input", i, 1)) {
-			i += 1;
-			par_inp = argv[i];
-		}
-		else if (opt_check (argc, argv, "-o", "--output", i, 1)) {
-			i += 1;
-			par_out = argv[i];
-		}
-		else if (argv[i][0] != '-') {
-			if (par_inp == NULL) {
-				par_inp = argv[i];
-			}
-			else if (par_out == NULL) {
-				par_out = argv[i];
-			}
-			else {
-				fprintf (stderr, "%s: too many files (%s)\n",
-					argv0, argv[i]
-				);
-				return (1);
-			}
-		}
-		else {
-			fprintf (stderr, "%s: unknown option (%s)\n",
-				argv0, argv[i]
-			);
+		if (r < 0) {
 			return (1);
 		}
 
-		i += 1;
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 'c':
+			par_c = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'C':
+			par_min_cluster_size = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'f':
+			par_ofs = strtoull (optarg[0], NULL, 0);
+			break;
+
+		case 'g':
+			par_c = strtoul (optarg[0], NULL, 0);
+			par_h = strtoul (optarg[1], NULL, 0);
+			par_s = strtoul (optarg[2], NULL, 0);
+			break;
+
+		case 'h':
+			par_h = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'i':
+			par_inp = optarg[0];
+			break;
+
+		case 'm':
+			par_n = strtoul (optarg[0], NULL, 0);
+			par_n *= 2048;
+			break;
+
+		case 'o':
+			par_out = optarg[0];
+			break;
+
+		case 'q':
+			par_quiet = 1;
+			break;
+
+		case 's':
+			par_s = strtoul (optarg[0], NULL, 0);
+			break;
+
+		case 'w':
+			par_cow = optarg[0];
+			break;
+
+		case 0:
+			if (par_inp == NULL) {
+				par_inp = optarg[0];
+			}
+			else if (par_out == NULL) {
+				par_out = optarg[0];
+			}
+			else {
+				fprintf (stderr, "%s: too many file names (%s)\n",
+					argv0, optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		default:
+			return (1);
+		}
 	}
 
 	if (par_inp == NULL) {
@@ -608,34 +649,60 @@ int main_convert (int argc, char **argv)
 
 int main (int argc, char **argv)
 {
+	int  r;
+	char **optarg;
+
 	if (argc < 2) {
+		print_help();
 		return (1);
 	}
 
 	argv0 = argv[0];
 
-	if (argc == 2) {
-		if (opt_check (argc, argv, "-h", "--help", 1, 0)) {
-			prt_help();
-			return (0);
-		}
-		else if (opt_check (argc, argv, "-v", "--version", 1, 0)) {
-			prt_version();
-			return (0);
-		}
-	}
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts_main);
 
-	if (strcmp (argv[1], "new") == 0) {
-		return (main_create (argc - 1, argv + 1));
-	}
-	else if (strcmp (argv[1], "create") == 0) {
-		return (main_create (argc - 1, argv + 1));
-	}
-	else if (strcmp (argv[1], "conv") == 0) {
-		return (main_convert (argc - 1, argv + 1));
-	}
-	else if (strcmp (argv[1], "convert") == 0) {
-		return (main_convert (argc - 1, argv + 1));
+		if (r == GETOPT_DONE) {
+			break;
+		}
+
+		if (r < 0) {
+			return (1);
+		}
+
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 0:
+			if (strcmp (optarg[0], "new") == 0) {
+				return (main_create (argc, argv));
+			}
+			else if (strcmp (optarg[0], "create") == 0) {
+				return (main_create (argc, argv));
+			}
+			else if (strcmp (optarg[0], "conv") == 0) {
+				return (main_convert (argc, argv));
+			}
+			else if (strcmp (optarg[0], "convert") == 0) {
+				return (main_convert (argc, argv));
+			}
+			else {
+				fprintf (stderr, "%s: unknown command (%s)\n",
+					argv0, optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		default:
+			return (1);
+		}
 	}
 
 	return (1);

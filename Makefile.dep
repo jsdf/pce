@@ -1854,6 +1854,7 @@ src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/devices/block/blkraw.h \
 	src/devices/block/block.h \
 	src/devices/block/pfdc.h \
+	src/lib/getopt.h \
 	src/utils/pceimg/pce-img.h
 
 src/utils/pfdc/main.o: src/utils/pfdc/main.c \

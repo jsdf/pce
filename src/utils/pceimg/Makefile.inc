@@ -12,7 +12,7 @@ PCEIMG_HDR := $(foreach f,$(PCEIMG_BAS),$(rel)/$(f).h)
 PCEIMG_MAN1 := $(rel)/pce-img.1
 PCEIMG_BIN := $(rel)/pce-img$(EXEEXT)
 
-PCEIMG_OBJ_EXT := $(DEV_BLK_OBJ)
+PCEIMG_OBJ_EXT := $(DEV_BLK_OBJ) src/lib/getopt.o
 
 BIN  += $(PCEIMG_BIN)
 MAN1 += $(PCEIMG_MAN1)
