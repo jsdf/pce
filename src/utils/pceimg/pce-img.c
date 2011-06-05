@@ -369,12 +369,13 @@ int dsk_copy (disk_t *dst, disk_t *src)
 
 		if (par_quiet == 0) {
 			prg_i += m;
-			if (prg_i > 16384) {
-				fprintf (stdout, "block %lu of %lu (%.2f%%)\r",
+			if (prg_i >= 4096) {
+				fprintf (stdout, "[%6.2f%%] block %lu of %lu\r",
+					(100.0 * (i + 1)) / prg_n,
 					(unsigned long) i,
-					(unsigned long) prg_n,
-					(100.0 * (i + 1)) / prg_n
+					(unsigned long) prg_n
 				);
+
 				prg_i = 0;
 
 				fflush (stdout);
@@ -383,8 +384,8 @@ int dsk_copy (disk_t *dst, disk_t *src)
 	}
 
 	if (par_quiet == 0) {
-		fprintf (stdout, "block %lu of %lu (%.2f%%)\n",
-			(unsigned long) prg_n, (unsigned long) prg_n, 100.0
+		fprintf (stdout, "[%6.2f%%] block %lu of %lu\n",
+			100.0, (unsigned long) prg_n, (unsigned long) prg_n
 		);
 	}
 
