@@ -537,6 +537,44 @@ int dsk_guess_geometry_mbr (disk_t *dsk)
 }
 
 static
+int dsk_guess_geometry_dos (disk_t *dsk)
+{
+	unsigned char buf[512];
+	uint32_t      c, h, s;
+
+	if (dsk_read_lba (dsk, buf, 0, 1)) {
+		return (1);
+	}
+
+	/* boot sector id */
+	if ((buf[510] != 0x55) || (buf[511] != 0xaa)) {
+		return (1);
+	}
+
+	/* sector size */
+	if (dsk_get_uint16_le (buf, 11) != 512) {
+		return (1);
+	}
+
+	h = dsk_get_uint16_le (buf, 26);
+	s = dsk_get_uint16_le (buf, 24);
+
+	if ((h == 0) || (h > 255)) {
+		return (1);
+	}
+
+	if ((s == 0) || (s > 255)) {
+		return (1);
+	}
+
+	c = dsk->blocks / (h * s);
+
+	dsk_set_geometry (dsk, dsk->blocks, c, h, s);
+
+	return (0);
+}
+
+static
 int dsk_guess_geometry_size (disk_t *dsk)
 {
 	switch (dsk->blocks) {
@@ -590,6 +628,10 @@ int dsk_guess_geometry_size (disk_t *dsk)
 int dsk_guess_geometry (disk_t *dsk)
 {
 	if (dsk_guess_geometry_mbr (dsk) == 0) {
+		return (0);
+	}
+
+	if (dsk_guess_geometry_dos (dsk) == 0) {
 		return (0);
 	}
 
