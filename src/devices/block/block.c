@@ -536,9 +536,64 @@ int dsk_guess_geometry_mbr (disk_t *dsk)
 	return (0);
 }
 
+static
+int dsk_guess_geometry_size (disk_t *dsk)
+{
+	switch (dsk->blocks) {
+	case 160 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 40, 1, 8);
+		break;
+
+	case 180 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 40, 1, 9);
+		break;
+
+	case 320 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 40, 2, 8);
+		break;
+
+	case 360 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 40, 2, 9);
+		break;
+
+	case 400 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 40, 2, 10);
+		break;
+
+	case 720 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 80, 2, 9);
+		break;
+
+	case 800 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 80, 2, 10);
+		break;
+
+	case 1200 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 80, 2, 15);
+		break;
+
+	case 1440 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 80, 2, 18);
+		break;
+
+	case 2880 * 2:
+		dsk_set_geometry (dsk, dsk->blocks, 80, 2, 36);
+		break;
+
+	default:
+		return (1);
+	}
+
+	return (0);
+}
+
 int dsk_guess_geometry (disk_t *dsk)
 {
 	if (dsk_guess_geometry_mbr (dsk) == 0) {
+		return (0);
+	}
+
+	if (dsk_guess_geometry_size (dsk) == 0) {
 		return (0);
 	}
 
