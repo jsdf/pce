@@ -273,7 +273,7 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 		return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
 
 	case DSK_QED:
-		return (dsk_qed_create (name, n, c, h, s, par_min_cluster_size));
+		return (dsk_qed_create (name, n, par_min_cluster_size));
 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));

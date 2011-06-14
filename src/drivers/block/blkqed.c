@@ -668,7 +668,7 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 			minclst = qed->cluster_size;
 		}
 
-		if (dsk_qed_create (fname, dsk->blocks, dsk->c, dsk->h, dsk->s, minclst)) {
+		if (dsk_qed_create (fname, dsk->blocks, minclst)) {
 			return (NULL);
 		}
 	}
@@ -724,17 +724,12 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 	return (cow);
 }
 
-int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
-	uint32_t minclst)
+int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst)
 {
 	unsigned long cluster_size, table_size, table_entries, header_size;
 	unsigned long bufsize;
 	uint64_t      image_size, max_size;
 	unsigned char *buf;
-
-	if (dsk_adjust_chs (&n, &c, &h, &s)) {
-		return (1);
-	}
 
 	image_size = 512 * (uint64_t) n;
 
@@ -793,8 +788,7 @@ int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	return (0);
 }
 
-int dsk_qed_create (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
-	uint32_t minclst)
+int dsk_qed_create (const char *fname, uint32_t n, uint32_t minclst)
 {
 	int  r;
 	FILE *fp;
@@ -805,7 +799,7 @@ int dsk_qed_create (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint3
 		return (1);
 	}
 
-	r = dsk_qed_create_fp (fp, n, c, h, s, minclst);
+	r = dsk_qed_create_fp (fp, n, minclst);
 
 	fclose (fp);
 

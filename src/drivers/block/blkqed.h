@@ -74,13 +74,8 @@ disk_t *dsk_qed_open (const char *fname, int ro);
 
 disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname);
 
-int dsk_qed_create_fp (FILE *fp,
-	uint32_t n, uint32_t c, uint32_t h, uint32_t s, uint32_t minclst
-);
-
-int dsk_qed_create (const char *fname,
-	uint32_t n, uint32_t c, uint32_t h, uint32_t s, uint32_t minclst
-);
+int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst);
+int dsk_qed_create (const char *fname, uint32_t n, uint32_t minclst);
 
 int dsk_qed_probe_fp (FILE *fp);
 int dsk_qed_probe (const char *fname);
