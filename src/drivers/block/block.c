@@ -674,31 +674,6 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk_dosemu_open (fname, ro));
 	}
 
-	dsk = dsk_dosimg_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
-	dsk = dsk_mbrimg_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
-	dsk = dsk_hfsimg_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
-	dsk = dsk_macimg_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
-	dsk = dsk_fdimg_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
 	if (dsk_fdc_probe_pfdc (fname)) {
 		return (dsk_fdc_open_pfdc (fname, 0, 0, 0, ro));
 	}
@@ -719,7 +694,7 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		}
 	}
 
-	dsk = dsk_autoimg_open (fname, ofs, ro);
+	dsk = dsk_img_open (fname, ofs, ro);
 	if (dsk != NULL) {
 		return (dsk);
 	}

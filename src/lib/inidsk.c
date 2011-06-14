@@ -284,7 +284,7 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 			dsk = dsk_ram_open (path, n, c, h, s, ro);
 		}
 		else if (strcmp (type, "image") == 0) {
-			dsk = dsk_img_open (path, n, c, h, s, ofs, ro);
+			dsk = dsk_img_open (path, ofs, ro);
 		}
 		else if (strcmp (type, "dosemu") == 0) {
 			dsk = dsk_dosemu_open (path, ro);

@@ -267,7 +267,7 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 
 	switch (type) {
 	case DSK_RAW:
-		return (dsk_img_create (name, n, c, h, s, ofs));
+		return (dsk_img_create (name, n, ofs));
 
 	case DSK_PCE:
 		return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
@@ -297,7 +297,7 @@ disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 
 	switch (type) {
 	case DSK_RAW:
-		return (dsk_img_open (name, n, c, h, s, ofs, ro));
+		return (dsk_img_open (name, ofs, ro));
 
 	case DSK_PCE:
 		return (dsk_pce_open (name, ro));
