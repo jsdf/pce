@@ -58,5 +58,8 @@ int dsk_pce_create (const char *fname,
 	uint32_t ofs
 );
 
+int dsk_pce_probe_fp (FILE *fp);
+int dsk_pce_probe (const char *fname);
+
 
 #endif

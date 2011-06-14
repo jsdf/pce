@@ -257,3 +257,36 @@ int dsk_pce_create (const char *fname, uint32_t n, uint32_t c, uint32_t h, uint3
 
 	return (r);
 }
+
+int dsk_pce_probe_fp (FILE *fp)
+{
+	unsigned char buf[4];
+
+	if (dsk_read (fp, buf, 0, 4)) {
+		return (0);
+	}
+
+	if (dsk_get_uint32_be (buf, 0) != DSK_PCE_MAGIC) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int dsk_pce_probe (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (0);
+	}
+
+	r = dsk_pce_probe_fp (fp);
+
+	fclose (fp);
+
+	return (r);
+}

@@ -31,5 +31,8 @@ pfdc_img_t *pfdc_load_pfdc (FILE *fp);
 
 int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers);
 
+int pfdc_probe_pfdc_fp (FILE *fp);
+int pfdc_probe_pfdc (const char *fname);
+
 
 #endif

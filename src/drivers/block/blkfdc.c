@@ -622,3 +622,33 @@ disk_t *dsk_fdc_open_td0 (const char *fname,
 {
 	return (dsk_fdc_open (fname, BLKFDC_FORMAT_TD0, c, h, s, ro));
 }
+
+int dsk_fdc_probe_pfdc_fp (FILE *fp)
+{
+	return (pfdc_probe_pfdc_fp (fp));
+}
+
+int dsk_fdc_probe_pfdc (const char *fname)
+{
+	return (pfdc_probe_pfdc (fname));
+}
+
+int dsk_fdc_probe_imd_fp (FILE *fp)
+{
+	return (pfdc_probe_imd_fp (fp));
+}
+
+int dsk_fdc_probe_imd (const char *fname)
+{
+	return (pfdc_probe_imd (fname));
+}
+
+int dsk_fdc_probe_td0_fp (FILE *fp)
+{
+	return (pfdc_probe_td0_fp (fp));
+}
+
+int dsk_fdc_probe_td0 (const char *fname)
+{
+	return (pfdc_probe_td0 (fname));
+}

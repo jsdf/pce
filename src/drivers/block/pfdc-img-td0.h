@@ -31,5 +31,8 @@ pfdc_img_t *pfdc_load_td0 (FILE *fp);
 
 int pfdc_save_td0 (FILE *fp, const pfdc_img_t *img);
 
+int pfdc_probe_td0_fp (FILE *fp);
+int pfdc_probe_td0 (const char *fname);
+
 
 #endif

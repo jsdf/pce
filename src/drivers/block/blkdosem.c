@@ -213,3 +213,36 @@ int dsk_dosemu_create (const char *fname, uint32_t c, uint32_t h, uint32_t s,
 
 	return (r);
 }
+
+int dsk_dosemu_probe_fp (FILE *fp)
+{
+	unsigned char buf[8];
+
+	if (dsk_read (fp, buf, 0, 8)) {
+		return (0);
+	}
+
+	if (memcmp (buf, "DOSEMU\x00", 7) != 0) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int dsk_dosemu_probe (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (0);
+	}
+
+	r = dsk_dosemu_probe_fp (fp);
+
+	fclose (fp);
+
+	return (r);
+}

@@ -57,5 +57,8 @@ int dsk_dosemu_create (const char *fname,
 	uint32_t ofs
 );
 
+int dsk_dosemu_probe_fp (FILE *fp);
+int dsk_dosemu_probe (const char *fname);
+
 
 #endif

@@ -830,3 +830,50 @@ int pfdc_save_td0 (FILE *fp, const pfdc_img_t *img)
 
 	return (0);
 }
+
+int pfdc_probe_td0_fp (FILE *fp)
+{
+	unsigned char buf[16];
+
+	if (fseek (fp, 0, SEEK_SET)) {
+		return (0);
+	}
+
+	if (td0_read (fp, buf, 16)) {
+		return (0);
+	}
+
+	if ((buf[0] == 't') && (buf[1] == 'd')) {
+		;
+	}
+	else if ((buf[0] == 'T') && (buf[1] == 'D')) {
+		;
+	}
+	else {
+		return (0);
+	}
+
+	if (buf[2] != 0) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int pfdc_probe_td0 (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (0);
+	}
+
+	r = pfdc_probe_td0_fp (fp);
+
+	fclose (fp);
+
+	return (r);
+}

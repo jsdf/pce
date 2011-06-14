@@ -1131,3 +1131,40 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 
 	return (0);
 }
+
+int pfdc_probe_pfdc_fp (FILE *fp)
+{
+	unsigned char buf[16];
+
+	if (fseek (fp, 0, SEEK_SET)) {
+		return (0);
+	}
+
+	if (pfdc_read (fp, buf, 16)) {
+		return (0);
+	}
+
+	if (pfdc_get_uint32_be (buf, 0) != PFDC_MAGIC_PFDC) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int pfdc_probe_pfdc (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (0);
+	}
+
+	r = pfdc_probe_pfdc_fp (fp);
+
+	fclose (fp);
+
+	return (r);
+}

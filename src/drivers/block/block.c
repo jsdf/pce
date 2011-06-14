@@ -662,19 +662,16 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		i += 1;
 	}
 
-	dsk = dsk_pce_open (fname, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_pce_probe (fname)) {
+		return (dsk_pce_open (fname, ro));
 	}
 
-	dsk = dsk_dosemu_open (fname, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_qed_probe (fname)) {
+		return (dsk_qed_open (fname, ro));
 	}
 
-	dsk = dsk_qed_open (fname, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_dosemu_probe (fname)) {
+		return (dsk_dosemu_open (fname, ro));
 	}
 
 	dsk = dsk_dosimg_open (fname, ofs, ro);
@@ -702,19 +699,16 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk);
 	}
 
-	dsk = dsk_fdc_open_pfdc (fname, 0, 0, 0, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_fdc_probe_pfdc (fname)) {
+		return (dsk_fdc_open_pfdc (fname, 0, 0, 0, ro));
 	}
 
-	dsk = dsk_fdc_open_imd (fname, 0, 0, 0, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_fdc_probe_imd (fname)) {
+		return (dsk_fdc_open_imd (fname, 0, 0, 0, ro));
 	}
 
-	dsk = dsk_fdc_open_td0 (fname, 0, 0, 0, ro);
-	if (dsk != NULL) {
-		return (dsk);
+	if (dsk_fdc_probe_td0 (fname)) {
+		return (dsk_fdc_open_td0 (fname, 0, 0, 0, ro));
 	}
 
 	if (strcasecmp (ext, ".ana") == 0) {
