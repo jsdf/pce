@@ -24,7 +24,7 @@
 #define PCE_MACPLUS_SCSI_H 1
 
 
-#include <devices/block/block.h>
+#include <drivers/block/block.h>
 
 
 typedef struct {

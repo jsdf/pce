@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/fdc.h                                            *
  * Created:     2007-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,11 +24,12 @@
 #define PCE_DEVICES_FDC_H 1
 
 
+#include <chipset/82xx/e8272.h>
+
 #include <devices/device.h>
 #include <devices/memory.h>
-#include <devices/block/block.h>
 
-#include <chipset/82xx/e8272.h>
+#include <drivers/block/block.h>
 
 
 typedef struct {

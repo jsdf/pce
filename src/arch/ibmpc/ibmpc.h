@@ -40,13 +40,14 @@
 
 #include <cpu/e8086/e8086.h>
 
-#include <devices/block/block.h>
 #include <devices/fdc.h>
 #include <devices/memory.h>
 #include <devices/nvram.h>
 #include <devices/parport.h>
 #include <devices/serport.h>
 #include <devices/video/video.h>
+
+#include <drivers/block/block.h>
 
 #include <lib/brkpt.h>
 

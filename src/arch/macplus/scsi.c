@@ -26,8 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <devices/block/block.h>
 #include <devices/memory.h>
+
+#include <drivers/block/block.h>
 
 
 /* ICR 1 */

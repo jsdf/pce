@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/lib/iniata.h                                             *
- * Created:     2006-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/block/pfdc-img-ana.h                             *
+ * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,20 +20,16 @@
  *****************************************************************************/
 
 
-#ifndef PCE_LIB_INIATA_H
-#define PCE_LIB_INIATA_H 1
+#ifndef PFDC_IMG_ANA_H
+#define PFDC_IMG_ANA_H 1
 
 
-#include <libini/libini.h>
-
-#include <devices/ata.h>
-#include <devices/pci-ata.h>
-
-#include <drivers/block/block.h>
+#include "pfdc.h"
 
 
-int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct, unsigned idx);
-int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct);
+pfdc_img_t *pfdc_load_anadisk (FILE *fp);
+
+int pfdc_save_anadisk (FILE *fp, const pfdc_img_t *img);
 
 
 #endif

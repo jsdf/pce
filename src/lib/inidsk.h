@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/inidsk.h                                             *
  * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,7 +26,7 @@
 
 #include <libini/libini.h>
 
-#include <devices/block/block.h>
+#include <drivers/block/block.h>
 
 
 int dsk_insert (disks_t *dsks, const char *str, int eject);

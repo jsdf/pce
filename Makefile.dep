@@ -25,7 +25,6 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -33,6 +32,7 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/devices/parport.h \
 	src/devices/serport.h \
 	src/devices/video/video.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -75,7 +75,6 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -83,6 +82,7 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/devices/parport.h \
 	src/devices/serport.h \
 	src/devices/video/video.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -111,7 +111,6 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -126,6 +125,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/devices/video/vga.h \
 	src/devices/video/video.h \
 	src/devices/video/wy700.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -160,7 +160,6 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -168,6 +167,7 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/devices/parport.h \
 	src/devices/serport.h \
 	src/devices/video/video.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -205,7 +205,6 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -213,6 +212,7 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/devices/parport.h \
 	src/devices/serport.h \
 	src/devices/video/video.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -253,7 +253,6 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
-	src/devices/block/block.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
@@ -261,6 +260,7 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/devices/parport.h \
 	src/devices/serport.h \
 	src/devices/video/video.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -331,9 +331,9 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -365,9 +365,9 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -399,9 +399,9 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -430,9 +430,9 @@ src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -471,9 +471,9 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -509,9 +509,9 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -546,9 +546,9 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -577,9 +577,9 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -603,8 +603,8 @@ src/arch/macplus/scsi.o: src/arch/macplus/scsi.c \
 	src/arch/macplus/main.h \
 	src/arch/macplus/scsi.h \
 	src/config.h \
-	src/devices/block/block.h \
-	src/devices/memory.h
+	src/devices/memory.h \
+	src/drivers/block/block.h
 
 src/arch/macplus/serial.o: src/arch/macplus/serial.c \
 	src/arch/macplus/main.h \
@@ -633,9 +633,9 @@ src/arch/macplus/sony.o: src/arch/macplus/sony.c \
 	src/chipset/e8530.h \
 	src/config.h \
 	src/cpu/e68000/e68000.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
@@ -678,7 +678,6 @@ src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/config.h \
 	src/cpu/ppc405/ppc405.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/clock/ds1743.h \
 	src/devices/device.h \
 	src/devices/memory.h \
@@ -687,6 +686,7 @@ src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/devices/pci.h \
 	src/devices/serport.h \
 	src/devices/slip.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -713,7 +713,6 @@ src/arch/sim405/main.o: src/arch/sim405/main.c \
 	src/config.h \
 	src/cpu/ppc405/ppc405.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/clock/ds1743.h \
 	src/devices/device.h \
 	src/devices/memory.h \
@@ -722,6 +721,7 @@ src/arch/sim405/main.o: src/arch/sim405/main.c \
 	src/devices/pci.h \
 	src/devices/serport.h \
 	src/devices/slip.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -748,7 +748,6 @@ src/arch/sim405/pci.o: src/arch/sim405/pci.c \
 	src/config.h \
 	src/cpu/ppc405/ppc405.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/clock/ds1743.h \
 	src/devices/device.h \
 	src/devices/memory.h \
@@ -757,6 +756,7 @@ src/arch/sim405/pci.o: src/arch/sim405/pci.c \
 	src/devices/pci.h \
 	src/devices/serport.h \
 	src/devices/slip.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -783,7 +783,6 @@ src/arch/sim405/sercons.o: src/arch/sim405/sercons.c \
 	src/config.h \
 	src/cpu/ppc405/ppc405.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/clock/ds1743.h \
 	src/devices/device.h \
 	src/devices/memory.h \
@@ -792,6 +791,7 @@ src/arch/sim405/sercons.o: src/arch/sim405/sercons.c \
 	src/devices/pci.h \
 	src/devices/serport.h \
 	src/devices/slip.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -818,7 +818,6 @@ src/arch/sim405/sim405.o: src/arch/sim405/sim405.c \
 	src/config.h \
 	src/cpu/ppc405/ppc405.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/clock/ds1743.h \
 	src/devices/device.h \
 	src/devices/memory.h \
@@ -827,6 +826,7 @@ src/arch/sim405/sim405.o: src/arch/sim405/sim405.c \
 	src/devices/pci.h \
 	src/devices/serport.h \
 	src/devices/slip.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -907,12 +907,12 @@ src/arch/simarm/cmd_arm.o: src/arch/simarm/cmd_arm.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -939,12 +939,12 @@ src/arch/simarm/intc.o: src/arch/simarm/intc.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -971,12 +971,12 @@ src/arch/simarm/main.o: src/arch/simarm/main.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1003,12 +1003,12 @@ src/arch/simarm/pci.o: src/arch/simarm/pci.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1035,12 +1035,12 @@ src/arch/simarm/sercons.o: src/arch/simarm/sercons.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1067,12 +1067,12 @@ src/arch/simarm/simarm.o: src/arch/simarm/simarm.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1099,12 +1099,12 @@ src/arch/simarm/timer.o: src/arch/simarm/timer.c \
 	src/config.h \
 	src/cpu/arm/arm.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
 	src/devices/serport.h \
+	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
@@ -1372,87 +1372,8 @@ src/cpu/sparc32/sparc32.o: src/cpu/sparc32/sparc32.c \
 src/devices/ata.o: src/devices/ata.c \
 	src/config.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
-	src/devices/memory.h
-
-src/devices/block/blkcow.o: src/devices/block/blkcow.c \
-	src/config.h \
-	src/devices/block/blkcow.h \
-	src/devices/block/block.h
-
-src/devices/block/blkdosem.o: src/devices/block/blkdosem.c \
-	src/config.h \
-	src/devices/block/blkdosem.h \
-	src/devices/block/block.h
-
-src/devices/block/blkfdc.o: src/devices/block/blkfdc.c \
-	src/config.h \
-	src/devices/block/blkfdc.h \
-	src/devices/block/block.h \
-	src/devices/block/pfdc-img-ana.h \
-	src/devices/block/pfdc-img-imd.h \
-	src/devices/block/pfdc-img-pfdc.h \
-	src/devices/block/pfdc-img-raw.h \
-	src/devices/block/pfdc-img-td0.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/blkpart.o: src/devices/block/blkpart.c \
-	src/config.h \
-	src/devices/block/blkpart.h \
-	src/devices/block/block.h
-
-src/devices/block/blkpce.o: src/devices/block/blkpce.c \
-	src/config.h \
-	src/devices/block/blkpce.h \
-	src/devices/block/block.h
-
-src/devices/block/blkqed.o: src/devices/block/blkqed.c \
-	src/config.h \
-	src/devices/block/blkqed.h \
-	src/devices/block/block.h
-
-src/devices/block/blkram.o: src/devices/block/blkram.c \
-	src/config.h \
-	src/devices/block/blkram.h \
-	src/devices/block/block.h
-
-src/devices/block/blkraw.o: src/devices/block/blkraw.c \
-	src/config.h \
-	src/devices/block/blkraw.h \
-	src/devices/block/block.h
-
-src/devices/block/block.o: src/devices/block/block.c \
-	src/config.h \
-	src/devices/block/blkdosem.h \
-	src/devices/block/blkfdc.h \
-	src/devices/block/blkpce.h \
-	src/devices/block/blkqed.h \
-	src/devices/block/blkraw.h \
-	src/devices/block/block.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc-img-ana.o: src/devices/block/pfdc-img-ana.c \
-	src/devices/block/pfdc-img-ana.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc-img-imd.o: src/devices/block/pfdc-img-imd.c \
-	src/devices/block/pfdc-img-imd.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc-img-pfdc.o: src/devices/block/pfdc-img-pfdc.c \
-	src/devices/block/pfdc-img-pfdc.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc-img-raw.o: src/devices/block/pfdc-img-raw.c \
-	src/devices/block/pfdc-img-raw.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc-img-td0.o: src/devices/block/pfdc-img-td0.c \
-	src/devices/block/pfdc-img-td0.h \
-	src/devices/block/pfdc.h
-
-src/devices/block/pfdc.o: src/devices/block/pfdc.c \
-	src/devices/block/pfdc.h
+	src/devices/memory.h \
+	src/drivers/block/block.h
 
 src/devices/clock/ds1743.o: src/devices/clock/ds1743.c \
 	src/chipset/clock/ds1743.h \
@@ -1466,12 +1387,12 @@ src/devices/device.o: src/devices/device.c \
 src/devices/fdc.o: src/devices/fdc.c \
 	src/chipset/82xx/e8272.h \
 	src/config.h \
-	src/devices/block/blkfdc.h \
-	src/devices/block/block.h \
-	src/devices/block/pfdc.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
-	src/devices/memory.h
+	src/devices/memory.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/block.h \
+	src/drivers/block/pfdc.h
 
 src/devices/memory.o: src/devices/memory.c \
 	src/devices/memory.h
@@ -1488,10 +1409,10 @@ src/devices/parport.o: src/devices/parport.c \
 src/devices/pci-ata.o: src/devices/pci-ata.c \
 	src/config.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/pci-ata.h \
-	src/devices/pci.h
+	src/devices/pci.h \
+	src/drivers/block/block.h
 
 src/devices/pci.o: src/devices/pci.c \
 	src/devices/memory.h \
@@ -1586,6 +1507,85 @@ src/devices/video/wy700.o: src/devices/video/wy700.c \
 	src/libini/libini.h \
 	src/terminal/keys.h \
 	src/terminal/terminal.h
+
+src/drivers/block/blkcow.o: src/drivers/block/blkcow.c \
+	src/config.h \
+	src/drivers/block/blkcow.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkdosem.o: src/drivers/block/blkdosem.c \
+	src/config.h \
+	src/drivers/block/blkdosem.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkfdc.o: src/drivers/block/blkfdc.c \
+	src/config.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/block.h \
+	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc-img-imd.h \
+	src/drivers/block/pfdc-img-pfdc.h \
+	src/drivers/block/pfdc-img-raw.h \
+	src/drivers/block/pfdc-img-td0.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/blkpart.o: src/drivers/block/blkpart.c \
+	src/config.h \
+	src/drivers/block/blkpart.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkpce.o: src/drivers/block/blkpce.c \
+	src/config.h \
+	src/drivers/block/blkpce.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkqed.o: src/drivers/block/blkqed.c \
+	src/config.h \
+	src/drivers/block/blkqed.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkram.o: src/drivers/block/blkram.c \
+	src/config.h \
+	src/drivers/block/blkram.h \
+	src/drivers/block/block.h
+
+src/drivers/block/blkraw.o: src/drivers/block/blkraw.c \
+	src/config.h \
+	src/drivers/block/blkraw.h \
+	src/drivers/block/block.h
+
+src/drivers/block/block.o: src/drivers/block/block.c \
+	src/config.h \
+	src/drivers/block/blkdosem.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpce.h \
+	src/drivers/block/blkqed.h \
+	src/drivers/block/blkraw.h \
+	src/drivers/block/block.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc-img-ana.o: src/drivers/block/pfdc-img-ana.c \
+	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc-img-imd.o: src/drivers/block/pfdc-img-imd.c \
+	src/drivers/block/pfdc-img-imd.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc-img-pfdc.o: src/drivers/block/pfdc-img-pfdc.c \
+	src/drivers/block/pfdc-img-pfdc.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc-img-raw.o: src/drivers/block/pfdc-img-raw.c \
+	src/drivers/block/pfdc-img-raw.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc-img-td0.o: src/drivers/block/pfdc-img-td0.c \
+	src/drivers/block/pfdc-img-td0.h \
+	src/drivers/block/pfdc.h
+
+src/drivers/block/pfdc.o: src/drivers/block/pfdc.c \
+	src/drivers/block/pfdc.h
 
 src/drivers/char/char-null.o: src/drivers/char/char-null.c \
 	src/drivers/char/char-null.h \
@@ -1695,26 +1695,26 @@ src/lib/ihex.o: src/lib/ihex.c \
 src/lib/iniata.o: src/lib/iniata.c \
 	src/config.h \
 	src/devices/ata.h \
-	src/devices/block/block.h \
 	src/devices/memory.h \
 	src/devices/pci-ata.h \
 	src/devices/pci.h \
+	src/drivers/block/block.h \
 	src/lib/iniata.h \
 	src/lib/log.h \
 	src/libini/libini.h
 
 src/lib/inidsk.o: src/lib/inidsk.c \
 	src/config.h \
-	src/devices/block/blkcow.h \
-	src/devices/block/blkdosem.h \
-	src/devices/block/blkfdc.h \
-	src/devices/block/blkpart.h \
-	src/devices/block/blkpce.h \
-	src/devices/block/blkqed.h \
-	src/devices/block/blkram.h \
-	src/devices/block/blkraw.h \
-	src/devices/block/block.h \
-	src/devices/block/pfdc.h \
+	src/drivers/block/blkcow.h \
+	src/drivers/block/blkdosem.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpart.h \
+	src/drivers/block/blkpce.h \
+	src/drivers/block/blkqed.h \
+	src/drivers/block/blkram.h \
+	src/drivers/block/blkraw.h \
+	src/drivers/block/block.h \
+	src/drivers/block/pfdc.h \
 	src/lib/inidsk.h \
 	src/lib/log.h \
 	src/lib/path.h \
@@ -1846,30 +1846,30 @@ src/terminal/x11.o: src/terminal/x11.c \
 
 src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/config.h \
-	src/devices/block/blkcow.h \
-	src/devices/block/blkdosem.h \
-	src/devices/block/blkfdc.h \
-	src/devices/block/blkpce.h \
-	src/devices/block/blkqed.h \
-	src/devices/block/blkraw.h \
-	src/devices/block/block.h \
-	src/devices/block/pfdc.h \
+	src/drivers/block/blkcow.h \
+	src/drivers/block/blkdosem.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpce.h \
+	src/drivers/block/blkqed.h \
+	src/drivers/block/blkraw.h \
+	src/drivers/block/block.h \
+	src/drivers/block/pfdc.h \
 	src/lib/getopt.h \
 	src/utils/pceimg/pce-img.h
 
 src/utils/pfdc/main.o: src/utils/pfdc/main.c \
 	src/config.h \
-	src/devices/block/pfdc-img-raw.h \
-	src/devices/block/pfdc.h \
+	src/drivers/block/pfdc-img-raw.h \
+	src/drivers/block/pfdc.h \
 	src/lib/getopt.h \
 	src/utils/pfdc/main.h \
 	src/utils/pfdc/pfdc-img-io.h
 
 src/utils/pfdc/pfdc-img-io.o: src/utils/pfdc/pfdc-img-io.c \
-	src/devices/block/pfdc-img-ana.h \
-	src/devices/block/pfdc-img-imd.h \
-	src/devices/block/pfdc-img-pfdc.h \
-	src/devices/block/pfdc-img-raw.h \
-	src/devices/block/pfdc-img-td0.h \
-	src/devices/block/pfdc.h \
+	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc-img-imd.h \
+	src/drivers/block/pfdc-img-pfdc.h \
+	src/drivers/block/pfdc-img-raw.h \
+	src/drivers/block/pfdc-img-td0.h \
+	src/drivers/block/pfdc.h \
 	src/utils/pfdc/pfdc-img-io.h

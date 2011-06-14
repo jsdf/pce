@@ -43,7 +43,8 @@
 
 #include <devices/memory.h>
 #include <devices/nvram.h>
-#include <devices/block/block.h>
+
+#include <drivers/block/block.h>
 
 #include <lib/brkpt.h>
 

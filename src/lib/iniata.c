@@ -27,7 +27,8 @@
 
 #include <devices/ata.h>
 #include <devices/pci-ata.h>
-#include <devices/block/block.h>
+
+#include <drivers/block/block.h>
 
 
 int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *ini, unsigned idx)

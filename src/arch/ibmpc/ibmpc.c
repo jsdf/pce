@@ -49,7 +49,6 @@
 
 #include <cpu/e8086/e8086.h>
 
-#include <devices/block/block.h>
 #include <devices/fdc.h>
 #include <devices/memory.h>
 #include <devices/nvram.h>
@@ -62,6 +61,8 @@
 #include <devices/video/vga.h>
 #include <devices/video/plantronics.h>
 #include <devices/video/wy700.h>
+
+#include <drivers/block/block.h>
 
 #include <libini/libini.h>
 

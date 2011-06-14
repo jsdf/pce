@@ -29,13 +29,13 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <devices/block/block.h>
-#include <devices/block/blkcow.h>
-#include <devices/block/blkfdc.h>
-#include <devices/block/blkraw.h>
-#include <devices/block/blkpce.h>
-#include <devices/block/blkqed.h>
-#include <devices/block/blkdosem.h>
+#include <drivers/block/block.h>
+#include <drivers/block/blkcow.h>
+#include <drivers/block/blkfdc.h>
+#include <drivers/block/blkraw.h>
+#include <drivers/block/blkpce.h>
+#include <drivers/block/blkqed.h>
+#include <drivers/block/blkdosem.h>
 
 #include <lib/getopt.h>
 

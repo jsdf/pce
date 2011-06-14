@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfdc/pfdc-img-io.c                                 *
  * Created:     2010-08-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,11 +24,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <devices/block/pfdc-img-ana.h>
-#include <devices/block/pfdc-img-imd.h>
-#include <devices/block/pfdc-img-pfdc.h>
-#include <devices/block/pfdc-img-raw.h>
-#include <devices/block/pfdc-img-td0.h>
+#include <drivers/block/pfdc-img-ana.h>
+#include <drivers/block/pfdc-img-imd.h>
+#include <drivers/block/pfdc-img-pfdc.h>
+#include <drivers/block/pfdc-img-raw.h>
+#include <drivers/block/pfdc-img-td0.h>
 
 #include "pfdc-img-io.h"
 

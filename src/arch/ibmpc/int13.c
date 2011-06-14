@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include <cpu/e8086/e8086.h>
-#include <devices/block/block.h>
+#include <drivers/block/block.h>
 
 
 #define INT13_MAX_BLOCKS 8

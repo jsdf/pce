@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/lib/iniata.h                                             *
- * Created:     2006-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/block/blkdosem.h                                 *
+ * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,20 +20,42 @@
  *****************************************************************************/
 
 
-#ifndef PCE_LIB_INIATA_H
-#define PCE_LIB_INIATA_H 1
+#ifndef PCE_DEVICES_BLOCK_BLKDOSEMU_H
+#define PCE_DEVICES_BLOCK_BLKDOSEMU_H 1
 
 
-#include <libini/libini.h>
-
-#include <devices/ata.h>
-#include <devices/pci-ata.h>
+#include <config.h>
 
 #include <drivers/block/block.h>
 
+#include <stdio.h>
+#include <stdint.h>
 
-int ini_get_ata_chn (ata_chn_t *ata, disks_t *dsks, ini_sct_t *sct, unsigned idx);
-int ini_get_pci_ata (pci_ata_t *pciata, disks_t *dsks, ini_sct_t *sct);
+
+/*!***************************************************************************
+ * @short The image file disk structure
+ *****************************************************************************/
+typedef struct {
+	disk_t   dsk;
+
+	FILE     *fp;
+
+	uint64_t start;
+} disk_dosemu_t;
+
+
+disk_t *dsk_dosemu_open_fp (FILE *fp, int ro);
+disk_t *dsk_dosemu_open (const char *fname, int ro);
+
+int dsk_dosemu_create_fp (FILE *fp,
+	uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs
+);
+
+int dsk_dosemu_create (const char *fname,
+	uint32_t c, uint32_t h, uint32_t s,
+	uint32_t ofs
+);
 
 
 #endif

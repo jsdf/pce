@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/msg.c                                         *
  * Created:     2004-09-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-#include <devices/block/block.h>
+#include <drivers/block/block.h>
 
 #include <lib/inidsk.h>
 #include <lib/log.h>

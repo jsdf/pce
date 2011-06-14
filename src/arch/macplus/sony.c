@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include <devices/block/block.h>
+#include <drivers/block/block.h>
 
 #include <lib/log.h>
 

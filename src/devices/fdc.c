@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/fdc.c                                            *
  * Created:     2007-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,8 @@
 #include <string.h>
 
 #include <devices/fdc.h>
-#include <devices/block/blkfdc.h>
+
+#include <drivers/block/blkfdc.h>
 
 
 /*

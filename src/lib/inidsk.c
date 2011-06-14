@@ -27,14 +27,14 @@
 #include <lib/log.h>
 #include <lib/path.h>
 
-#include <devices/block/blkcow.h>
-#include <devices/block/blkdosem.h>
-#include <devices/block/blkfdc.h>
-#include <devices/block/blkpart.h>
-#include <devices/block/blkpce.h>
-#include <devices/block/blkqed.h>
-#include <devices/block/blkram.h>
-#include <devices/block/blkraw.h>
+#include <drivers/block/blkcow.h>
+#include <drivers/block/blkdosem.h>
+#include <drivers/block/blkfdc.h>
+#include <drivers/block/blkpart.h>
+#include <drivers/block/blkpce.h>
+#include <drivers/block/blkqed.h>
+#include <drivers/block/blkram.h>
+#include <drivers/block/blkraw.h>
 
 
 int dsk_insert (disks_t *dsks, const char *str, int eject)
