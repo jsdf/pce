@@ -80,7 +80,7 @@
 #define noErr      0
 #define wPrErr     -44
 #define paramErr   -50
-#define nsDrvErr   -64
+#define nsDrvErr   -56
 #define noDriveErr -64
 #define offLineErr -65
 
@@ -780,6 +780,64 @@ void mac_sony_control (macplus_t *sim)
 }
 
 static
+void mac_sony_status_format_list (macplus_t *sim)
+{
+	unsigned long pblk;
+	unsigned      vref, cnt;
+	unsigned long ptr;
+	unsigned long blk, val;
+	disk_t        *dsk;
+
+	pblk = e68_get_areg32 (sim->cpu, 0);
+	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
+
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sim, nsDrvErr, 0);
+		return;
+	}
+
+	dsk = dsks_get_disk (sim->dsks, vref);
+
+	if (dsk == NULL) {
+		mac_sony_return (sim, noDriveErr, 0);
+		return;
+	}
+
+	cnt = e68_get_mem16 (sim->cpu, pblk + PB_CSPARAM);
+
+	if (cnt < 1) {
+		mac_sony_return (sim, 0x0000, 0);
+		return;
+	}
+
+	ptr = e68_get_mem32 (sim->cpu, pblk + PB_CSPARAM + 2);
+
+	blk = dsk_get_block_cnt (dsk);
+
+	if (blk == 800) {
+		val = 0xc10a0050;
+	}
+	else if (blk == 1440) {
+		val = 0xc1090050;
+	}
+	else if (blk == 1600) {
+		val = 0xc20a0050;
+	}
+	else if (blk == 2880) {
+		val = 0xd1120050;
+	}
+	else {
+		val = 0;
+	}
+
+	e68_set_mem32 (sim->cpu, ptr, blk);
+	e68_set_mem32 (sim->cpu, ptr + 4, val);
+	e68_set_mem16 (sim->cpu, pblk + PB_CSPARAM, 1);
+
+	mac_sony_return (sim, 0x0000, 0);
+}
+
+static
 void mac_sony_status (macplus_t *sim)
 {
 	unsigned long pblk;
@@ -804,23 +862,7 @@ void mac_sony_status (macplus_t *sim)
 
 	switch (cscode) {
 	case 6: /* return format list */
-		{
-			unsigned long ptr;
-			disk_t        *dsk;
-
-			dsk = dsks_get_disk (sim->dsks, vref);
-
-			if (dsk == NULL) {
-				mac_sony_return (sim, noDriveErr, 0);
-				return;
-			}
-
-			ptr = e68_get_mem32 (sim->cpu, pblk + PB_CSPARAM + 2);
-			e68_set_mem32 (sim->cpu, ptr, dsk_get_block_cnt (dsk));
-			e68_set_mem32 (sim->cpu, ptr + 4, 0);
-			e68_set_mem16 (sim->cpu, pblk + PB_CSPARAM, 1);
-			mac_sony_return (sim, 0x0000, 0);
-		}
+		mac_sony_status_format_list (sim);
 		return;
 
 	case 8: /* drive status */
