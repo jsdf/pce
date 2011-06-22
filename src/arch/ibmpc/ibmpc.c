@@ -218,11 +218,13 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 				if (val & 0x08) {
 					/* motor off: restore clock */
 					pc->speed_current = pc->speed_saved;
+					pc->speed_clock_extra = 0;
 				}
 				else {
 					/* motor on: set clock to 4.77 MHz */
 					pc->speed_saved = pc->speed_current;
 					pc->speed_current = 1;
+					pc->speed_clock_extra = 0;
 				}
 			}
 		}
