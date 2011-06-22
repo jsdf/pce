@@ -132,9 +132,8 @@ void mac_interrupt_osi (void *ext, unsigned char val)
 {
 	macplus_t *sim = ext;
 
-	mac_sony_check (sim);
-
 	if (val) {
+		mac_sony_check (sim);
 		e6522_set_ca2_inp (&sim->via, 0);
 		e6522_set_ca2_inp (&sim->via, 1);
 	}
