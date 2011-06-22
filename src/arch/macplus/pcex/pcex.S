@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   pcex.S                                                       *
  * Created:     2007-12-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -195,14 +195,14 @@ sony_check:
 	movea.l	0x0134, %a1
 
 	lea	(8 + 66 + 3)(%a1), %a1	/* disk in place */
-	move.w	#1, %d1
+	moveq.l	#1, %d1
 
 1:
 	cmp.b	#0x01, (%a1)
 	bne.s	2f
 
 	movea.w	#7, %a0			/* Disk Inserted */
-	move.w	%d1, %d0		/* drive */
+	move.l	%d1, %d0		/* drive */
 	.word	0xa02f			/* PostEvent */
 	bra.s	3f
 
