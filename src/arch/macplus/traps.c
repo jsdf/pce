@@ -121,6 +121,7 @@ trap_list_t trap_list[] = {
 	{ 0xa059, "RmvTime" },
 	{ 0xa05a, "PrimeTime" },
 	{ 0xa05d, "SwapMMUMode" },
+	{ 0xa060, "HFSDispatch" },
 	{ 0xa061, "MaxBlock" },
 	{ 0xa062, "PurgeSpace" },
 	{ 0xa063, "MaxApplZone" },
@@ -153,7 +154,6 @@ trap_list_t trap_list[] = {
 	{ 0xa083, "SetOSDefault" },
 	{ 0xa084, "GetOSDefault" },
 	{ 0xa090, "SysEnvirons" },
-	{ 0xa260, "HFSDispatch" },
 	{ 0xa808, "InitProcMenu" },
 	{ 0xa809, "GetCVariant" },
 	{ 0xa80a, "GetWVariant" },
@@ -725,22 +725,24 @@ trap_list_t trap_list[] = {
 const char *mac_get_trap_name (unsigned trap)
 {
 	unsigned i;
-	unsigned base;
+	unsigned base, mask;
 
 	if ((trap & 0xf000) != 0xa000) {
 		return (NULL);
 	}
 
 	if (trap & 0x0800) {
-		base = trap & 0xfbff;
+		mask = 0xfbff;
 	}
 	else {
-		base = trap & 0xf8ff;
+		mask = 0xf8ff;
 	}
+
+	base = trap & 0xfbff;
 
 	i = 0;
 	while (trap_list[i].name != NULL) {
-		if (trap_list[i].trap == base) {
+		if ((trap_list[i].trap & mask) == base) {
 			return (trap_list[i].name);
 		}
 
