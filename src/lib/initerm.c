@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/initerm.c                                            *
  * Created:     2008-10-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,7 +28,7 @@
 #include <lib/log.h>
 #include <libini/libini.h>
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 
 
 /*

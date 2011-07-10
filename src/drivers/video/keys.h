@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/keys.h                                          *
+ * File name:   src/drivers/video/keys.h                                     *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,8 +20,8 @@
  *****************************************************************************/
 
 
-#ifndef PCE_TERMINAL_KEYS_H
-#define PCE_TERMINAL_KEYS_H 1
+#ifndef PCE_VIDEO_KEYS_H
+#define PCE_VIDEO_KEYS_H 1
 
 
 typedef enum {

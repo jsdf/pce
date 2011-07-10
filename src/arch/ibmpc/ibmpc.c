@@ -64,9 +64,9 @@
 
 #include <drivers/block/block.h>
 
-#include <libini/libini.h>
+#include <drivers/video/terminal.h>
 
-#include <terminal/terminal.h>
+#include <libini/libini.h>
 
 
 #ifdef PCE_HOST_WINDOWS

@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/x11.c                                           *
+ * File name:   src/drivers/video/x11.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -29,8 +29,8 @@
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 
-#include <terminal/terminal.h>
-#include <terminal/x11.h>
+#include <drivers/video/terminal.h>
+#include <drivers/video/x11.h>
 
 
 typedef struct {

@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/sdl.c                                           *
+ * File name:   src/drivers/video/sdl.c                                      *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -27,9 +27,9 @@
 
 #include <SDL.h>
 
-#include <terminal/terminal.h>
-#include <terminal/keys.h>
-#include <terminal/sdl.h>
+#include <drivers/video/terminal.h>
+#include <drivers/video/keys.h>
+#include <drivers/video/sdl.h>
 
 
 typedef struct {

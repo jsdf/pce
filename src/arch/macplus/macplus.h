@@ -46,9 +46,9 @@
 
 #include <drivers/block/block.h>
 
-#include <lib/brkpt.h>
+#include <drivers/video/terminal.h>
 
-#include <terminal/terminal.h>
+#include <lib/brkpt.h>
 
 
 #define PCE_MAC_MACPLUS 1

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/initerm.h                                            *
  * Created:     2008-10-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,7 +26,7 @@
 
 #include <libini/libini.h>
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 
 
 terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def);

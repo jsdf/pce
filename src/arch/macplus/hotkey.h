@@ -26,7 +26,7 @@
 
 #include "macplus.h"
 
-#include <terminal/keys.h>
+#include <drivers/video/keys.h>
 
 
 int mac_set_hotkey (macplus_t *sim, pce_key_t key);

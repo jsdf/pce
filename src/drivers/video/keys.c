@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/keys.c                                          *
+ * File name:   src/drivers/video/keys.c                                     *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <terminal/keys.h>
+#include <drivers/video/keys.h>
 
 
 typedef struct {

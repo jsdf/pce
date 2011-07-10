@@ -1,11 +1,11 @@
-# src/terminal/Makefile.inc
+# src/drivers/video/Makefile.inc
 
-rel := src/terminal
+rel := src/drivers/video
 
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-DRV_TRM_BAS  := font keys null term-old terminal
+DRV_TRM_BAS  := font keys null terminal
 DRV_TRM_NBAS :=
 
 ifeq "$(PCE_ENABLE_X11)" "1"

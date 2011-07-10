@@ -49,11 +49,12 @@
 
 #include <drivers/block/block.h>
 
+#include <drivers/video/terminal.h>
+
 #include <lib/brkpt.h>
 
 #include <libini/libini.h>
 
-#include <terminal/terminal.h>
 
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.h                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 #define PCE_MACPLUS_VIDEO_H 1
 
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 
 
 typedef struct {

@@ -27,7 +27,7 @@
 
 #include <lib/log.h>
 
-#include <terminal/keys.h>
+#include <drivers/video/keys.h>
 
 
 static mac_kbd_map_t key_map_us[] = {

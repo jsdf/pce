@@ -36,14 +36,14 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/ems.o: src/arch/ibmpc/ems.c \
 	src/arch/ibmpc/ems.h \
@@ -86,12 +86,12 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/arch/ibmpc/cassette.h \
@@ -129,6 +129,8 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/inidsk.h \
@@ -138,9 +140,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/lib/log.h \
 	src/lib/string.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/arch/ibmpc/cassette.h \
@@ -171,20 +171,20 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/keyboard.o: src/arch/ibmpc/keyboard.c \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
 	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/arch/ibmpc/cassette.h \
@@ -216,6 +216,8 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
@@ -224,9 +226,7 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/lib/monitor.h \
 	src/lib/path.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/mouse.o: src/arch/ibmpc/mouse.c \
 	src/arch/ibmpc/main.h \
@@ -264,6 +264,8 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/inidsk.h \
@@ -271,9 +273,7 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/ibmpc/speaker.o: src/arch/ibmpc/speaker.c \
 	src/arch/ibmpc/main.h \
@@ -302,8 +302,8 @@ src/arch/macplus/adb_keyboard.o: src/arch/macplus/adb_keyboard.c \
 	src/arch/macplus/adb_keyboard.h \
 	src/arch/macplus/main.h \
 	src/config.h \
-	src/lib/log.h \
-	src/terminal/keys.h
+	src/drivers/video/keys.h \
+	src/lib/log.h
 
 src/arch/macplus/adb_mouse.o: src/arch/macplus/adb_mouse.c \
 	src/arch/macplus/adb.h \
@@ -337,14 +337,14 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/arch/macplus/adb.h \
@@ -371,12 +371,12 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/arch/macplus/adb.h \
@@ -405,12 +405,12 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/arch/macplus/adb.h \
@@ -436,18 +436,18 @@ src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
 	src/arch/macplus/keyboard.h \
 	src/arch/macplus/main.h \
 	src/config.h \
-	src/lib/log.h \
-	src/terminal/keys.h
+	src/drivers/video/keys.h \
+	src/lib/log.h
 
 src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/arch/macplus/adb.h \
@@ -477,6 +477,8 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/inidsk.h \
@@ -485,9 +487,7 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/lib/load.h \
 	src/lib/log.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/arch/macplus/adb.h \
@@ -515,6 +515,8 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
@@ -523,9 +525,7 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/lib/monitor.h \
 	src/lib/path.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/arch/macplus/adb.h \
@@ -552,11 +552,11 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/arch/macplus/adb.h \
@@ -583,6 +583,8 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/inidsk.h \
@@ -590,9 +592,7 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/sysdep.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/rtc.o: src/arch/macplus/rtc.c \
 	src/arch/macplus/main.h \
@@ -639,12 +639,12 @@ src/arch/macplus/sony.o: src/arch/macplus/sony.c \
 	src/drivers/char/char.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/arch/macplus/sound.o: src/arch/macplus/sound.c \
 	src/arch/macplus/main.h \
@@ -662,9 +662,9 @@ src/arch/macplus/video.o: src/arch/macplus/video.c \
 	src/arch/macplus/main.h \
 	src/arch/macplus/video.h \
 	src/config.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
 
 src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/arch/sim405/cmd_ppc.h \
@@ -1435,63 +1435,63 @@ src/devices/video/cga.o: src/devices/video/cga.c \
 	src/devices/video/cga.h \
 	src/devices/video/cga_font.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/ega.o: src/devices/video/ega.c \
 	src/devices/memory.h \
 	src/devices/video/ega.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/hgc.o: src/devices/video/hgc.c \
 	src/devices/memory.h \
 	src/devices/video/hgc.h \
 	src/devices/video/hgc_font.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/mda.o: src/devices/video/mda.c \
 	src/devices/memory.h \
 	src/devices/video/mda.h \
 	src/devices/video/mda_font.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/plantronics.o: src/devices/video/plantronics.c \
 	src/devices/memory.h \
 	src/devices/video/cga.h \
 	src/devices/video/plantronics.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/vga.o: src/devices/video/vga.c \
 	src/devices/memory.h \
 	src/devices/video/vga.h \
 	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/devices/video/video.o: src/devices/video/video.c \
 	src/devices/memory.h \
@@ -1503,10 +1503,10 @@ src/devices/video/wy700.o: src/devices/video/wy700.c \
 	src/devices/video/cga.h \
 	src/devices/video/video.h \
 	src/devices/video/wy700.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/drivers/block/blkcow.o: src/drivers/block/blkcow.c \
 	src/config.h \
@@ -1674,6 +1674,36 @@ src/drivers/sound/sound.o: src/drivers/sound/sound.c \
 	src/drivers/sound/sound-wav.h \
 	src/drivers/sound/sound.h
 
+src/drivers/video/font.o: src/drivers/video/font.c
+
+src/drivers/video/keys.o: src/drivers/video/keys.c \
+	src/drivers/video/keys.h
+
+src/drivers/video/null.o: src/drivers/video/null.c \
+	src/drivers/video/keys.h \
+	src/drivers/video/null.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
+src/drivers/video/sdl.o: src/drivers/video/sdl.c \
+	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/sdl.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
+src/drivers/video/terminal.o: src/drivers/video/terminal.c \
+	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
+src/drivers/video/x11.o: src/drivers/video/x11.c \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/drivers/video/x11.h \
+	src/libini/libini.h
+
 src/lib/brkpt.o: src/lib/brkpt.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h
@@ -1730,11 +1760,11 @@ src/lib/iniram.o: src/lib/iniram.c \
 
 src/lib/initerm.o: src/lib/initerm.c \
 	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
 	src/lib/initerm.h \
 	src/lib/log.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
+	src/libini/libini.h
 
 src/lib/load.o: src/lib/load.c \
 	src/devices/memory.h \
@@ -1806,43 +1836,6 @@ src/libini/value.o: src/libini/value.c \
 src/libini/write.o: src/libini/write.c \
 	src/config.h \
 	src/libini/libini.h
-
-src/terminal/font.o: src/terminal/font.c
-
-src/terminal/keys.o: src/terminal/keys.c \
-	src/terminal/keys.h
-
-src/terminal/null.o: src/terminal/null.c \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/null.h \
-	src/terminal/terminal.h
-
-src/terminal/sdl.o: src/terminal/sdl.c \
-	src/config.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/sdl.h \
-	src/terminal/terminal.h
-
-src/terminal/term-old.o: src/terminal/term-old.c \
-	src/libini/libini.h \
-	src/terminal/font.h \
-	src/terminal/keys.h \
-	src/terminal/term-old.h \
-	src/terminal/terminal.h
-
-src/terminal/terminal.o: src/terminal/terminal.c \
-	src/config.h \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h
-
-src/terminal/x11.o: src/terminal/x11.c \
-	src/libini/libini.h \
-	src/terminal/keys.h \
-	src/terminal/terminal.h \
-	src/terminal/x11.h
 
 src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/config.h \

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/x11.h                                           *
+ * File name:   src/drivers/video/x11.h                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,8 +20,8 @@
  *****************************************************************************/
 
 
-#ifndef PCE_TERMINAL_X11_H
-#define PCE_TERMINAL_X11_H 1
+#ifndef PCE_VIDEO_X11_H
+#define PCE_VIDEO_X11_H 1
 
 
 #include <stdio.h>
@@ -32,7 +32,8 @@
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
+
 #include <libini/libini.h>
 
 

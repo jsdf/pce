@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/keyboard.c                                    *
  * Created:     2007-11-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,7 +25,7 @@
 
 #include <lib/log.h>
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 
 
 /* 10 bits at 31250 bps */

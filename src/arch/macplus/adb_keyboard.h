@@ -26,7 +26,7 @@
 
 #include "adb.h"
 
-#include <terminal/keys.h>
+#include <drivers/video/keys.h>
 
 #define ADB_KBD_BUF 256
 

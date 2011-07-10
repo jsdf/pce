@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/terminal/terminal.c                                      *
+ * File name:   src/drivers/video/terminal.c                                 *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 
 
 #define TRM_ESC_ESC  1

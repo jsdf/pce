@@ -47,6 +47,8 @@
 
 #include <drivers/block/block.h>
 
+#include <drivers/video/terminal.h>
+
 #include <lib/brkpt.h>
 #include <lib/inidsk.h>
 #include <lib/iniram.h>
@@ -56,8 +58,6 @@
 #include <lib/sysdep.h>
 
 #include <libini/libini.h>
-
-#include <terminal/terminal.h>
 
 
 /* The CPU is synchronized with real time MAC_CPU_SYNC times per seconds */

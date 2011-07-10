@@ -25,7 +25,7 @@
 
 
 #include <libini/libini.h>
-#include <terminal/terminal.h>
+#include <drivers/video/terminal.h>
 #include <devices/video/video.h>
 
 

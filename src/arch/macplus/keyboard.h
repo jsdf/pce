@@ -24,7 +24,7 @@
 #define PCE_MACPLUS_KEYBOARD_H 1
 
 
-#include <terminal/keys.h>
+#include <drivers/video/keys.h>
 
 
 #define MAC_KBD_BUFSIZE 256
