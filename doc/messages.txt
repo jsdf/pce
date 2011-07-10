@@ -148,6 +148,12 @@ emu.disk.insert <drive>:<fname>
 	in the config file. The disk image type is "auto". If a disk
 	is already inserted in <drive> it is ejected first.
 
+emu.disk.ro <drive>
+	Set the read-only flag for the disk in drive <drive>.
+
+emu.disk.rw <drive>
+	Clear the read-only flag for the disk in drive <drive>.
+
 emu.exit
 	Terminate the emulator immediately.
 

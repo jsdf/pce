@@ -178,6 +178,48 @@ int mac_set_msg_emu_disk_insert (macplus_t *sim, const char *msg, const char *va
 }
 
 static
+int mac_set_msg_emu_disk_ro (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+	disk_t   *dsk;
+
+	if (msg_get_uint (val, &drv)) {
+		return (1);
+	}
+
+	dsk = dsks_get_disk (sim->dsks, drv);
+
+	if (dsk != NULL) {
+		pce_log (MSG_INF, "setting readonly drive %lu\n", drv);
+
+		dsk_set_readonly (dsk, 1);
+	}
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_disk_rw (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+	disk_t   *dsk;
+
+	if (msg_get_uint (val, &drv)) {
+		return (1);
+	}
+
+	dsk = dsks_get_disk (sim->dsks, drv);
+
+	if (dsk != NULL) {
+		pce_log (MSG_INF, "setting read/write drive %lu\n", drv);
+
+		dsk_set_readonly (dsk, 0);
+	}
+
+	return (0);
+}
+
+static
 int mac_set_msg_emu_exit (macplus_t *sim, const char *msg, const char *val)
 {
 	sim->brk = PCE_BRK_ABORT;
@@ -323,6 +365,8 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.disk.commit", mac_set_msg_emu_disk_commit },
 	{ "emu.disk.eject", mac_set_msg_emu_disk_eject },
 	{ "emu.disk.insert", mac_set_msg_emu_disk_insert },
+	{ "emu.disk.ro", mac_set_msg_emu_disk_ro },
+	{ "emu.disk.rw", mac_set_msg_emu_disk_rw },
 	{ "emu.exit", mac_set_msg_emu_exit },
 	{ "emu.pause", mac_set_msg_emu_pause },
 	{ "emu.pause.toggle", mac_set_msg_emu_pause_toggle },
