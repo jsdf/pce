@@ -68,6 +68,8 @@ unsigned dsk_fdc_write_chs (disk_fdc_t *fdc, const void *buf, unsigned *cnt,
 
 int dsk_fdc_erase_track (disk_fdc_t *fdc, unsigned c, unsigned h);
 
+int dsk_fdc_erase_disk (disk_fdc_t *fdc);
+
 int dsk_fdc_format_sector (disk_fdc_t *fdc,
 	unsigned pc, unsigned ph, unsigned c, unsigned h, unsigned s,
 	unsigned cnt, unsigned fill

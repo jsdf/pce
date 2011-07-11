@@ -166,6 +166,25 @@ int dsk_fdc_erase_track (disk_fdc_t *fdc, unsigned c, unsigned h)
 	return (0);
 }
 
+int dsk_fdc_erase_disk (disk_fdc_t *fdc)
+{
+	if (fdc->img == NULL) {
+		return (1);
+	}
+
+	if (fdc->dsk.readonly) {
+		return (1);
+	}
+
+	pfdc_img_erase (fdc->img);
+
+	fdc->dsk.blocks = 0;
+
+	fdc->dirty = 1;
+
+	return (0);
+}
+
 int dsk_fdc_format_sector (disk_fdc_t *fdc,
 	unsigned pc, unsigned ph, unsigned c, unsigned h, unsigned s,
 	unsigned cnt, unsigned fill)
