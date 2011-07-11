@@ -115,6 +115,8 @@ void pfdc_trk_del (pfdc_trk_t *trk);
 
 int pfdc_trk_add_sector (pfdc_trk_t *trk, pfdc_sct_t *sct);
 
+pfdc_sct_t *pfdc_trk_get_sector (pfdc_trk_t *trk, unsigned idx, int phy);
+
 
 pfdc_cyl_t *pfdc_cyl_new (unsigned c);
 
@@ -146,6 +148,8 @@ pfdc_cyl_t *pfdc_img_get_cylinder (pfdc_img_t *img, unsigned c, int alloc);
 pfdc_trk_t *pfdc_img_get_track (pfdc_img_t *img, unsigned c, unsigned h, int alloc);
 
 pfdc_sct_t *pfdc_img_get_sector (pfdc_img_t *img, unsigned c, unsigned h, unsigned s, int phy);
+
+int pfdc_img_map_sector (pfdc_img_t *img, unsigned long idx, unsigned *pc, unsigned *ph, unsigned *ps);
 
 int pfdc_img_add_comment (pfdc_img_t *img, const unsigned char *buf, unsigned cnt);
 

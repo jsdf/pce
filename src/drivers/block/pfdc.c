@@ -341,6 +341,71 @@ int pfdc_trk_add_sector (pfdc_trk_t *trk, pfdc_sct_t *sct)
 	return (0);
 }
 
+pfdc_sct_t *pfdc_trk_get_sector (pfdc_trk_t *trk, unsigned idx, int phy)
+{
+	unsigned i;
+	unsigned min_sct, min_idx, min_cnt;
+
+	if (trk->sct_cnt == 0) {
+		return (NULL);
+	}
+
+	if (phy) {
+		if (idx < trk->sct_cnt) {
+			return (trk->sct[idx]);
+		}
+
+		return (NULL);
+	}
+
+	min_sct = 0;
+
+	while (1) {
+		min_idx = 0;
+		min_cnt = 0;
+
+		for (i = 0; i < trk->sct_cnt; i++) {
+			if (trk->sct[i]->s < min_sct) {
+				;
+			}
+			else if (min_cnt == 0) {
+				min_idx = i;
+				min_cnt = 1;
+			}
+			else if (trk->sct[i]->s < trk->sct[min_idx]->s) {
+				min_idx = i;
+				min_cnt = 1;
+			}
+			else if (trk->sct[i]->s == trk->sct[min_idx]->s) {
+				min_cnt += 1;
+			}
+		}
+
+		if (min_cnt == 0) {
+			return (NULL);
+		}
+
+		if (idx < min_cnt) {
+			for (i = 0; i < trk->sct_cnt; i++) {
+				if (trk->sct[i]->s == trk->sct[min_idx]->s) {
+					if (idx == 0) {
+						return (trk->sct[i]);
+					}
+
+					idx -= 1;
+				}
+			}
+		}
+		else {
+			idx -= min_cnt;
+		}
+
+		min_sct = trk->sct[min_idx]->s + 1;
+	}
+
+	return (NULL);
+}
+
 
 pfdc_cyl_t *pfdc_cyl_new (unsigned c)
 {
@@ -622,6 +687,48 @@ pfdc_sct_t *pfdc_img_get_sector (pfdc_img_t *img, unsigned c, unsigned h, unsign
 	}
 
 	return (NULL);
+}
+
+int pfdc_img_map_sector (pfdc_img_t *img, unsigned long idx, unsigned *pc, unsigned *ph, unsigned *ps)
+{
+	unsigned   i, j, k;
+	pfdc_cyl_t *cyl;
+	pfdc_trk_t *trk;
+	pfdc_sct_t *sct;
+
+	for (i = 0; i < img->cyl_cnt; i++) {
+		cyl = img->cyl[i];
+
+		for (j = 0; j < cyl->trk_cnt; j++) {
+			trk = cyl->trk[j];
+
+			if (idx < trk->sct_cnt) {
+				sct = pfdc_trk_get_sector (trk, idx, 0);
+
+				if (sct == NULL) {
+					return (1);
+				}
+
+				*pc = i;
+				*ph = j;
+				*ps = 0;
+
+				for (k = 0; k < trk->sct_cnt; k++) {
+					if (trk->sct[k] == sct) {
+						return (0);
+					}
+
+					*ps += 1;
+				}
+
+				return (1);
+			}
+
+			idx -= trk->sct_cnt;
+		}
+	}
+
+	return (1);
 }
 
 int pfdc_img_add_comment (pfdc_img_t *img, const unsigned char *buf, unsigned cnt)
