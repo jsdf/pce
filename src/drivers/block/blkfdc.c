@@ -159,6 +159,8 @@ int dsk_fdc_erase_track (disk_fdc_t *fdc, unsigned c, unsigned h)
 
 	fdc->dirty = 1;
 
+	fdc->dsk.blocks -= trk->sct_cnt;
+
 	pfdc_trk_free (trk);
 
 	return (0);
@@ -200,6 +202,8 @@ int dsk_fdc_format_sector (disk_fdc_t *fdc,
 		return (1);
 	}
 
+	fdc->dsk.blocks += 1;
+
 	return (0);
 }
 
@@ -236,22 +240,18 @@ int dsk_fdc_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 	unsigned      cnt;
 	unsigned char *tmp;
 
-	if ((i + n) > dsk->blocks) {
-		return (1);
-	}
-
 	fdc = dsk->ext;
-
-	s = (i % dsk->s) + 1;
-	h = (i / dsk->s) % dsk->h;
-	c = i / (dsk->h * dsk->s);
 
 	tmp = buf;
 
 	while (n > 0) {
+		if (pfdc_img_map_sector (fdc->img, i, &c, &h, &s)) {
+			return (1);
+		}
+
 		cnt = 512;
 
-		if (dsk_fdc_read_chs (fdc, tmp, &cnt, c, h, s, 0)) {
+		if (dsk_fdc_read_chs (fdc, tmp, &cnt, c, h, s, 1)) {
 			return (1);
 		}
 
@@ -259,20 +259,10 @@ int dsk_fdc_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 			return (1);
 		}
 
-		s += 1;
-
-		if (s > dsk->s) {
-			s = 1;
-			h += 1;
-
-			if (h >= dsk->h) {
-				h = 0;
-				c += 1;
-			}
-		}
-
-		n -= 1;
 		tmp += 512;
+
+		i += 1;
+		n -= 1;
 	}
 
 	return (0);
@@ -286,26 +276,22 @@ int dsk_fdc_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 	unsigned            cnt;
 	const unsigned char *tmp;
 
-	if ((i + n) > dsk->blocks) {
-		return (1);
-	}
-
 	if (dsk->readonly) {
 		return (1);
 	}
 
 	fdc = dsk->ext;
 
-	s = (i % dsk->s) + 1;
-	h = (i / dsk->s) % dsk->h;
-	c = i / (dsk->h * dsk->s);
-
 	tmp = buf;
 
 	while (n > 0) {
+		if (pfdc_img_map_sector (fdc->img, i, &c, &h, &s)) {
+			return (1);
+		}
+
 		cnt = 512;
 
-		if (dsk_fdc_write_chs (fdc, tmp, &cnt, c, h, s, 0)) {
+		if (dsk_fdc_write_chs (fdc, tmp, &cnt, c, h, s, 1)) {
 			return (1);
 		}
 
@@ -313,20 +299,10 @@ int dsk_fdc_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 			return (1);
 		}
 
-		s += 1;
-
-		if (s > dsk->s) {
-			s = 1;
-			h += 1;
-
-			if (h >= dsk->h) {
-				h = 0;
-				c += 1;
-			}
-		}
-
-		n -= 1;
 		tmp += 512;
+
+		i += 1;
+		n -= 1;
 	}
 
 	return (0);
@@ -394,7 +370,7 @@ int fdc_save (disk_fdc_t *fdc)
 }
 
 static
-int fdc_guess_geometry (disk_fdc_t *fdc)
+int fdc_set_geometry (disk_fdc_t *fdc)
 {
 	unsigned   c, h, s, t;
 	unsigned   cyl_cnt, trk_cnt, sct_cnt;
@@ -428,7 +404,7 @@ int fdc_guess_geometry (disk_fdc_t *fdc)
 	h = (trk_cnt + (trk_cnt / cyl_cnt / 2)) / cyl_cnt;
 	s = (sct_cnt + (sct_cnt / trk_cnt / 2)) / trk_cnt;
 
-	if (dsk_set_geometry (&fdc->dsk, 0, c, h, s)) {
+	if (dsk_set_geometry (&fdc->dsk, sct_cnt, c, h, s)) {
 		return (1);
 	}
 
@@ -499,7 +475,7 @@ disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type,
 		return (NULL);
 	}
 
-	dsk_init (&fdc->dsk, fdc, 0, c, h, s);
+	dsk_init (&fdc->dsk, fdc, 0, 0, 0, 0);
 
 	dsk_set_type (&fdc->dsk, PCE_DISK_FDC);
 
@@ -526,9 +502,7 @@ disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type,
 		return (NULL);
 	}
 
-	if ((c == 0) || (h == 0) || (s == 0)) {
-		fdc_guess_geometry (fdc);
-	}
+	fdc_set_geometry (fdc);
 
 	return (&fdc->dsk);
 }
