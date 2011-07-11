@@ -44,6 +44,10 @@ int mac_set_hotkey (macplus_t *sim, pce_key_t key)
 		mac_set_msg (sim, "mac.insert", "3");
 		break;
 
+	case PCE_KEY_F4:
+		mac_set_msg (sim, "mac.insert", "4");
+		break;
+
 	case PCE_KEY_K:
 	case PCE_KEY_KP_5:
 		if (sim->kbd != NULL) {

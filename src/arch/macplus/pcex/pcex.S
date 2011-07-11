@@ -32,7 +32,7 @@
 #define MAC_HOOK_SONY_STATUS (MAC_HOOK_SONY + 3)
 #define MAC_HOOK_SONY_CLOSE  (MAC_HOOK_SONY + 4)
 
-#define SONY_DRIVES 3
+#define SONY_DRIVES 4
 
 #define SONY_TRACK       0
 #define SONY_WPROT       2
@@ -108,7 +108,7 @@ sony_open:
 	cmpi.w	#0x0075, 0x400008	/* check if 64K ROM */
 	bcs.s	1f
 	move.l	%a0, -(%a7)
-	lea	280(%a0), %a0
+	lea	(16 + (SONY_DRIVES + 1) * 66)(%a0), %a0
 	clr.l	6(%a0)			/* tmAddr */
 	clr.l	10(%a0)			/* tmCount */
 	.word	0xa058			/* InsTime */
@@ -131,8 +131,11 @@ sony_open:
 	move.b	#0x00, 3(%a2)		/* disk in place */
 	move.b	#0x01, 4(%a2)		/* installed */
 	move.b	#0xff, 5(%a2)		/* double sided drive */
-	move.w	%d2, 12(%a2)		/* drive number */
-	move.w	#0xfffb, 14(%a2)	/* driver reference number */
+	clr.l	6(%a2)			/* qLink */
+	move.w	#3, 10(%a2)		/* qType */
+	move.w	%d2, 12(%a2)		/* dqDrive */
+	move.w	#0xfffb, 14(%a2)	/* dqRefNum */
+	clr.w	16(%a2)			/* dqFSID */
 	move.b	#0x00, 18(%a2)		/* double sided format */
 	move.b	#0xff, 19(%a2)		/* new interface */
 	move.w	#0x0000, 20(%a2)	/* drive errors */
@@ -140,7 +143,6 @@ sony_open:
 	move.w	%d2, %d0		/* drive number */
 	swap	%d0
 	move.w	#0xfffb, %d0		/* driver ref */
-
 	lea	6(%a2), %a0		/* qlink */
 	.word	0xa04e			/* AddDrive */
 

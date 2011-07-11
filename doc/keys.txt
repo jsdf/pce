@@ -50,6 +50,7 @@ PCE/macplus Terminal Keys
 		same disk image can be re-inserted.
 <ESC> F2	Re-insert the second floppy disk.
 <ESC> F3	Re-insert the third floppy disk.
+<ESC> F4	Re-insert the fourth floppy disk.
 <ESC> k		Switch the keypad between normal keypad mode and cursor
 		movement mode.
 <ESC> KP5	Toggle the keypad mode.
