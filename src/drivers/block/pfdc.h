@@ -133,6 +133,8 @@ void pfdc_img_free (pfdc_img_t *img);
 
 void pfdc_img_del (pfdc_img_t *img);
 
+void pfdc_img_erase (pfdc_img_t *img);
+
 int pfdc_img_add_cylinder (pfdc_img_t *img, pfdc_cyl_t *cyl);
 
 int pfdc_img_add_sector (pfdc_img_t *img, pfdc_sct_t *sct, unsigned c, unsigned h);

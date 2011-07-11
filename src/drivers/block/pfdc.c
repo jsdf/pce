@@ -470,6 +470,25 @@ void pfdc_img_del (pfdc_img_t *img)
 	}
 }
 
+void pfdc_img_erase (pfdc_img_t *img)
+{
+	unsigned i;
+
+	for (i = 0; i < img->cyl_cnt; i++) {
+		pfdc_cyl_del (img->cyl[i]);
+	}
+
+	free (img->cyl);
+
+	img->cyl_cnt = 0;
+	img->cyl = NULL;
+
+	free (img->comment);
+
+	img->comment_size = 0;
+	img->comment = NULL;
+}
+
 int pfdc_img_add_cylinder (pfdc_img_t *img, pfdc_cyl_t *cyl)
 {
 	pfdc_cyl_t **tmp;
