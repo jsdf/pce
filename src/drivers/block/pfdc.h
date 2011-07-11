@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/pfdc.h                                     *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +33,7 @@
 #define PFDC_ENC_UNKNOWN   0x00
 #define PFDC_ENC_FM        0x01
 #define PFDC_ENC_MFM       0x02
+#define PFDC_ENC_GCR       0x03
 
 
 typedef struct pfdc_sct_t {

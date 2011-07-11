@@ -79,6 +79,7 @@ offset	size	description
 			0	Unknown
 			1	FM
 			2	MFM
+			3	GCR
 13	3	Data rate in bits per second, 0 if unknown
 16	n	Sector data
 16+n	4	Chunk CRC

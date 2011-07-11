@@ -139,7 +139,7 @@ void print_help (void)
 		"  pfdc, ana, imd, raw, td0\n"
 		"\n"
 		"sector attributes are:\n"
-		"  crc-id, crc-data, del-dam, data-rate, fm, mfm, size, c, h, s\n",
+		"  crc-id, crc-data, del-dam, data-rate, fm, gcr, mfm, size, c, h, s\n",
 		stdout
 	);
 
@@ -152,7 +152,7 @@ void print_version (void)
 	fputs (
 		"pfdc version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2010 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2010-2011 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -389,6 +389,9 @@ const char *pfdc_enc_to_string (unsigned encoding)
 	case PFDC_ENC_MFM:
 		return ("MFM");
 
+	case PFDC_ENC_GCR:
+		return ("GCR");
+
 	default:
 		return ("UNKNOWN");
 	}
@@ -465,7 +468,7 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			print_ulong (stdout, sct->n, ssmax + 3);
 
-			printf ("%6s", pfdc_enc_to_string (sct->encoding));
+			printf (" %5s", pfdc_enc_to_string (sct->encoding));
 
 			print_ulong (stdout, sct->data_rate, drmax + 1);
 
@@ -1586,6 +1589,15 @@ int pfdc_edit_fm_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
+int pfdc_edit_gcr_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_encoding (sct, PFDC_ENC_GCR, sct->data_rate);
+	par_cnt += 1;
+	return (0);
+}
+
+static
 int pfdc_edit_mfm_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
@@ -1680,6 +1692,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "fm") == 0) {
 		fct = pfdc_edit_fm_cb;
+	}
+	else if (strcmp (what, "gcr") == 0) {
+		fct = pfdc_edit_gcr_cb;
 	}
 	else if (strcmp (what, "h") == 0) {
 		fct = pfdc_edit_h_cb;
