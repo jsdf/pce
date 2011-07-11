@@ -464,8 +464,7 @@ void dsk_fdc_del (disk_t *dsk)
 }
 
 static
-disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type,
-	unsigned c, unsigned h, unsigned s, int ro)
+disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type, int ro)
 {
 	disk_fdc_t *fdc;
 
@@ -508,8 +507,7 @@ disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type,
 }
 
 static
-disk_t *dsk_fdc_open (const char *fname, unsigned type,
-	unsigned c, unsigned h, unsigned s, unsigned ro)
+disk_t *dsk_fdc_open (const char *fname, unsigned type, int ro)
 {
 	unsigned   n;
 	disk_t     *dsk;
@@ -527,7 +525,7 @@ disk_t *dsk_fdc_open (const char *fname, unsigned type,
 		return (NULL);
 	}
 
-	dsk = dsk_fdc_open_fp (fp, type, c, h, s, ro);
+	dsk = dsk_fdc_open_fp (fp, type, ro);
 
 	if (dsk == NULL) {
 		fclose (fp);
@@ -549,52 +547,44 @@ disk_t *dsk_fdc_open (const char *fname, unsigned type,
 	return (dsk);
 }
 
-disk_t *dsk_fdc_open_pfdc_fp (FILE *fp,
-	unsigned c, unsigned h, unsigned s, int ro)
+disk_t *dsk_fdc_open_pfdc_fp (FILE *fp, int ro)
 {
-	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_PFDC, c, h, s, ro));
+	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_PFDC, ro));
 }
 
-disk_t *dsk_fdc_open_pfdc (const char *fname,
-	unsigned c, unsigned h, unsigned s, unsigned ro)
+disk_t *dsk_fdc_open_pfdc (const char *fname, int ro)
 {
-	return (dsk_fdc_open (fname, BLKFDC_FORMAT_PFDC, c, h, s, ro));
+	return (dsk_fdc_open (fname, BLKFDC_FORMAT_PFDC, ro));
 }
 
-disk_t *dsk_fdc_open_anadisk_fp (FILE *fp,
-	unsigned c, unsigned h, unsigned s, int ro)
+disk_t *dsk_fdc_open_anadisk_fp (FILE *fp, int ro)
 {
-	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_ANADISK, c, h, s, ro));
+	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_ANADISK, ro));
 }
 
-disk_t *dsk_fdc_open_anadisk (const char *fname,
-	unsigned c, unsigned h, unsigned s, unsigned ro)
+disk_t *dsk_fdc_open_anadisk (const char *fname, int ro)
 {
-	return (dsk_fdc_open (fname, BLKFDC_FORMAT_ANADISK, c, h, s, ro));
+	return (dsk_fdc_open (fname, BLKFDC_FORMAT_ANADISK, ro));
 }
 
-disk_t *dsk_fdc_open_imd_fp (FILE *fp,
-	unsigned c, unsigned h, unsigned s, int ro)
+disk_t *dsk_fdc_open_imd_fp (FILE *fp, int ro)
 {
-	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_IMD, c, h, s, ro));
+	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_IMD, ro));
 }
 
-disk_t *dsk_fdc_open_imd (const char *fname,
-	unsigned c, unsigned h, unsigned s, unsigned ro)
+disk_t *dsk_fdc_open_imd (const char *fname, int ro)
 {
-	return (dsk_fdc_open (fname, BLKFDC_FORMAT_IMD, c, h, s, ro));
+	return (dsk_fdc_open (fname, BLKFDC_FORMAT_IMD, ro));
 }
 
-disk_t *dsk_fdc_open_td0_fp (FILE *fp,
-	unsigned c, unsigned h, unsigned s, int ro)
+disk_t *dsk_fdc_open_td0_fp (FILE *fp, int ro)
 {
-	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_TD0, c, h, s, ro));
+	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_TD0, ro));
 }
 
-disk_t *dsk_fdc_open_td0 (const char *fname,
-	unsigned c, unsigned h, unsigned s, unsigned ro)
+disk_t *dsk_fdc_open_td0 (const char *fname, int ro)
 {
-	return (dsk_fdc_open (fname, BLKFDC_FORMAT_TD0, c, h, s, ro));
+	return (dsk_fdc_open (fname, BLKFDC_FORMAT_TD0, ro));
 }
 
 int dsk_fdc_probe_pfdc_fp (FILE *fp)

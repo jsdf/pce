@@ -675,19 +675,19 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 	}
 
 	if (dsk_fdc_probe_pfdc (fname)) {
-		return (dsk_fdc_open_pfdc (fname, 0, 0, 0, ro));
+		return (dsk_fdc_open_pfdc (fname, ro));
 	}
 
 	if (dsk_fdc_probe_imd (fname)) {
-		return (dsk_fdc_open_imd (fname, 0, 0, 0, ro));
+		return (dsk_fdc_open_imd (fname, ro));
 	}
 
 	if (dsk_fdc_probe_td0 (fname)) {
-		return (dsk_fdc_open_td0 (fname, 0, 0, 0, ro));
+		return (dsk_fdc_open_td0 (fname, ro));
 	}
 
 	if (strcasecmp (ext, ".ana") == 0) {
-		dsk = dsk_fdc_open_anadisk (fname, 0, 0, 0, ro);
+		dsk = dsk_fdc_open_anadisk (fname, ro);
 
 		if (dsk != NULL) {
 			return (dsk);

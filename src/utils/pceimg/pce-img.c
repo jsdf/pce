@@ -309,7 +309,7 @@ disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 		return (dsk_dosemu_open (name, ro));
 
 	case DSK_PFDC:
-		return (dsk_fdc_open_pfdc (name, c, h, s, ro));
+		return (dsk_fdc_open_pfdc (name, ro));
 	}
 
 	return (dsk_auto_open (name, ofs, ro));

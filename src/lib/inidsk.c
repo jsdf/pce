@@ -296,19 +296,19 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 			dsk = dsk_qed_open (path, ro);
 		}
 		else if (strcmp (type, "pfdc") == 0) {
-			dsk = dsk_fdc_open_pfdc (path, c, h, s, ro);
+			dsk = dsk_fdc_open_pfdc (path, ro);
 		}
 		else if (strcmp (type, "partition") == 0) {
 			dsk = ini_get_disk_part (sct, c, h, s, ro);
 		}
 		else if (strcmp (type, "anadisk") == 0) {
-			dsk = dsk_fdc_open_anadisk (path, c, h, s, ro);
+			dsk = dsk_fdc_open_anadisk (path, ro);
 		}
 		else if (strcmp (type, "imagedisk") == 0) {
-			dsk = dsk_fdc_open_imd (path, c, h, s, ro);
+			dsk = dsk_fdc_open_imd (path, ro);
 		}
 		else if (strcmp (type, "imd") == 0) {
-			dsk = dsk_fdc_open_imd (path, c, h, s, ro);
+			dsk = dsk_fdc_open_imd (path, ro);
 		}
 		else if (strcmp (type, "auto") == 0) {
 			dsk = dsk_auto_open (path, ofs, ro);
