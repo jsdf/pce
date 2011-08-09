@@ -341,7 +341,7 @@ int pfdc_trk_add_sector (pfdc_trk_t *trk, pfdc_sct_t *sct)
 	return (0);
 }
 
-pfdc_sct_t *pfdc_trk_get_sector (pfdc_trk_t *trk, unsigned idx, int phy)
+pfdc_sct_t *pfdc_trk_get_indexed_sector (pfdc_trk_t *trk, unsigned idx, int phy)
 {
 	unsigned i;
 	unsigned min_sct, min_idx, min_cnt;
@@ -703,7 +703,7 @@ int pfdc_img_map_sector (pfdc_img_t *img, unsigned long idx, unsigned *pc, unsig
 			trk = cyl->trk[j];
 
 			if (idx < trk->sct_cnt) {
-				sct = pfdc_trk_get_sector (trk, idx, 0);
+				sct = pfdc_trk_get_indexed_sector (trk, idx, 0);
 
 				if (sct == NULL) {
 					return (1);

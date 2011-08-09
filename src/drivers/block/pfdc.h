@@ -116,7 +116,7 @@ void pfdc_trk_del (pfdc_trk_t *trk);
 
 int pfdc_trk_add_sector (pfdc_trk_t *trk, pfdc_sct_t *sct);
 
-pfdc_sct_t *pfdc_trk_get_sector (pfdc_trk_t *trk, unsigned idx, int phy);
+pfdc_sct_t *pfdc_trk_get_indexed_sector (pfdc_trk_t *trk, unsigned idx, int phy);
 
 
 pfdc_cyl_t *pfdc_cyl_new (unsigned c);
