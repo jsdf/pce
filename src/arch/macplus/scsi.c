@@ -107,8 +107,7 @@ void mac_scsi_init (mac_scsi_t *scsi)
 
 	scsi->buf_i = 0;
 	scsi->buf_n = 0;
-	scsi->buf_max = 4096UL * 512UL;
-
+	scsi->buf_max = 4096;
 	scsi->buf = malloc (scsi->buf_max);
 
 	scsi->addr_mask = 0xff0;
@@ -177,6 +176,31 @@ void mac_scsi_set_drive_product (mac_scsi_t *scsi, unsigned id, const char *prod
 			dst[i] = *(product++);
 		}
 	}
+}
+
+static
+int mac_scsi_set_buf_max (mac_scsi_t *scsi, unsigned long max)
+{
+	unsigned char *tmp;
+
+	if (max <= scsi->buf_max) {
+		return (0);
+	}
+
+#ifdef DEBUG_SCSI
+	mac_log_deb ("scsi: buffer size = %lu\n", max);
+#endif
+
+	tmp = realloc (scsi->buf, max);
+
+	if (tmp == NULL) {
+		return (1);
+	}
+
+	scsi->buf = tmp;
+	scsi->buf_max = max;
+
+	return (0);
 }
 
 static
@@ -422,7 +446,7 @@ void mac_scsi_cmd_read (mac_scsi_t *scsi, unsigned long lba, unsigned long cnt)
 	mac_log_deb ("scsi: read %u blocks at %lu\n", cnt, lba);
 #endif
 
-	if ((512UL * cnt) > scsi->buf_max) {
+	if (mac_scsi_set_buf_max (scsi, 512UL * cnt)) {
 		mac_log_deb ("scsi: too many blocks (%u)\n", cnt);
 		mac_scsi_set_phase_status (scsi, 0x02);
 		return;
@@ -548,7 +572,7 @@ void mac_scsi_cmd_write6 (mac_scsi_t *scsi)
 		cnt = 256;
 	}
 
-	if ((512UL * cnt) > scsi->buf_max) {
+	if (mac_scsi_set_buf_max (scsi, 512UL * cnt)) {
 		mac_log_deb ("scsi: write block count %u\n", cnt);
 		mac_scsi_set_phase_status (scsi, 0x02);
 		return;
@@ -587,7 +611,7 @@ void mac_scsi_cmd_write10 (mac_scsi_t *scsi)
 
 	cnt = (scsi->cmd[7] << 8) | scsi->cmd[8];
 
-	if ((512UL * cnt) > scsi->buf_max) {
+	if (mac_scsi_set_buf_max (scsi, 512UL * cnt)) {
 		mac_log_deb ("scsi: write block count %u\n", cnt);
 		mac_scsi_set_phase_status (scsi, 0x02);
 		return;
