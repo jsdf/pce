@@ -1864,6 +1864,7 @@ src/utils/pfdc/main.o: src/utils/pfdc/main.c \
 
 src/utils/pfdc/pfdc-img-io.o: src/utils/pfdc/pfdc-img-io.c \
 	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc-img-dc42.h \
 	src/drivers/block/pfdc-img-imd.h \
 	src/drivers/block/pfdc-img-pfdc.h \
 	src/drivers/block/pfdc-img-raw.h \

@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <drivers/block/pfdc-img-ana.h>
+#include <drivers/block/pfdc-img-dc42.h>
 #include <drivers/block/pfdc-img-imd.h>
 #include <drivers/block/pfdc-img-pfdc.h>
 #include <drivers/block/pfdc-img-raw.h>
@@ -97,6 +98,9 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 	if (strcasecmp (ext, ".ana") == 0) {
 		return (PFDC_FORMAT_ANA);
 	}
+	else if (strcasecmp (ext, ".image") == 0) {
+		return (PFDC_FORMAT_DC42);
+	}
 	else if (strcasecmp (ext, ".ima") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
@@ -136,6 +140,10 @@ pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_ANA:
 		img = pfdc_load_anadisk (fp);
+		break;
+
+	case PFDC_FORMAT_DC42:
+		img = pfdc_load_dc42 (fp);
 		break;
 
 	case PFDC_FORMAT_IMD:
@@ -188,6 +196,9 @@ int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 
 	case PFDC_FORMAT_ANA:
 		return (pfdc_save_anadisk (fp, img));
+
+	case PFDC_FORMAT_DC42:
+		return (pfdc_save_dc42 (fp, img));
 
 	case PFDC_FORMAT_IMD:
 		return (pfdc_save_imd (fp, img));

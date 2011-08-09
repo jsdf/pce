@@ -1869,6 +1869,9 @@ int pfdc_set_format (const char *name, unsigned *val)
 	else if (strcmp (name, "ana") == 0) {
 		*val = PFDC_FORMAT_ANA;
 	}
+	else if (strcmp (name, "dc42") == 0) {
+		*val = PFDC_FORMAT_DC42;
+	}
 	else if (strcmp (name, "imd") == 0) {
 		*val = PFDC_FORMAT_IMD;
 	}

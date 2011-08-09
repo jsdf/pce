@@ -32,9 +32,10 @@
 #define PFDC_FORMAT_PFDC0 2
 #define PFDC_FORMAT_PFDC1 3
 #define PFDC_FORMAT_ANA   4
-#define PFDC_FORMAT_IMD   5
-#define PFDC_FORMAT_RAW   6
-#define PFDC_FORMAT_TD0   7
+#define PFDC_FORMAT_DC42  5
+#define PFDC_FORMAT_IMD   6
+#define PFDC_FORMAT_RAW   7
+#define PFDC_FORMAT_TD0   8
 
 
 pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type);
