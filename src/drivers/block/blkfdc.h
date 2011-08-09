@@ -99,6 +99,9 @@ disk_t *dsk_fdc_open_pfdc (const char *fname, int ro);
 disk_t *dsk_fdc_open_anadisk_fp (FILE *fp, int ro);
 disk_t *dsk_fdc_open_anadisk (const char *fname, int ro);
 
+disk_t *dsk_fdc_open_dc42_fp (FILE *fp, int ro);
+disk_t *dsk_fdc_open_dc42 (const char *fname, int ro);
+
 disk_t *dsk_fdc_open_imd_fp (FILE *fp, int ro);
 disk_t *dsk_fdc_open_imd (const char *fname, int ro);
 
@@ -107,6 +110,9 @@ disk_t *dsk_fdc_open_td0 (const char *fname, int ro);
 
 int dsk_fdc_probe_pfdc_fp (FILE *fp);
 int dsk_fdc_probe_pfdc (const char *fname);
+
+int dsk_fdc_probe_dc42_fp (FILE *fp);
+int dsk_fdc_probe_dc42 (const char *fname);
 
 int dsk_fdc_probe_imd_fp (FILE *fp);
 int dsk_fdc_probe_imd (const char *fname);

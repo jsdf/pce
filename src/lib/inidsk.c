@@ -304,6 +304,9 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		else if (strcmp (type, "anadisk") == 0) {
 			dsk = dsk_fdc_open_anadisk (path, ro);
 		}
+		else if (strcmp (type, "dc42") == 0) {
+			dsk = dsk_fdc_open_dc42 (path, ro);
+		}
 		else if (strcmp (type, "imagedisk") == 0) {
 			dsk = dsk_fdc_open_imd (path, ro);
 		}

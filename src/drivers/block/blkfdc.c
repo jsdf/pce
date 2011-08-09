@@ -28,6 +28,7 @@
 
 #include "pfdc.h"
 #include "pfdc-img-ana.h"
+#include "pfdc-img-dc42.h"
 #include "pfdc-img-imd.h"
 #include "pfdc-img-pfdc.h"
 #include "pfdc-img-raw.h"
@@ -37,8 +38,9 @@
 #define BLKFDC_FORMAT_NONE    0
 #define BLKFDC_FORMAT_PFDC    1
 #define BLKFDC_FORMAT_ANADISK 2
-#define BLKFDC_FORMAT_IMD     3
-#define BLKFDC_FORMAT_TD0     4
+#define BLKFDC_FORMAT_DC42    3
+#define BLKFDC_FORMAT_IMD     4
+#define BLKFDC_FORMAT_TD0     5
 
 
 unsigned dsk_fdc_read_chs (disk_fdc_t *fdc, void *buf, unsigned *cnt,
@@ -402,6 +404,9 @@ int fdc_load (disk_fdc_t *fdc, unsigned type)
 	else if (type == BLKFDC_FORMAT_ANADISK) {
 		fdc->img = pfdc_load_anadisk (fdc->fp);
 	}
+	else if (type == BLKFDC_FORMAT_DC42) {
+		fdc->img = pfdc_load_dc42 (fdc->fp);
+	}
 	else if (type == BLKFDC_FORMAT_IMD) {
 		fdc->img = pfdc_load_imd (fdc->fp);
 	}
@@ -440,6 +445,9 @@ int fdc_save (disk_fdc_t *fdc)
 	}
 	else if (fdc->type == BLKFDC_FORMAT_ANADISK) {
 		return (pfdc_save_anadisk (fdc->fp, fdc->img));
+	}
+	else if (fdc->type == BLKFDC_FORMAT_DC42) {
+		return (pfdc_save_dc42 (fdc->fp, fdc->img));
 	}
 	else if (fdc->type == BLKFDC_FORMAT_IMD) {
 		return (pfdc_save_imd (fdc->fp, fdc->img));
@@ -652,6 +660,16 @@ disk_t *dsk_fdc_open_anadisk (const char *fname, int ro)
 	return (dsk_fdc_open (fname, BLKFDC_FORMAT_ANADISK, ro));
 }
 
+disk_t *dsk_fdc_open_dc42_fp (FILE *fp, int ro)
+{
+	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_DC42, ro));
+}
+
+disk_t *dsk_fdc_open_dc42 (const char *fname, int ro)
+{
+	return (dsk_fdc_open (fname, BLKFDC_FORMAT_DC42, ro));
+}
+
 disk_t *dsk_fdc_open_imd_fp (FILE *fp, int ro)
 {
 	return (dsk_fdc_open_fp (fp, BLKFDC_FORMAT_IMD, ro));
@@ -680,6 +698,16 @@ int dsk_fdc_probe_pfdc_fp (FILE *fp)
 int dsk_fdc_probe_pfdc (const char *fname)
 {
 	return (pfdc_probe_pfdc (fname));
+}
+
+int dsk_fdc_probe_dc42_fp (FILE *fp)
+{
+	return (pfdc_probe_dc42_fp (fp));
+}
+
+int dsk_fdc_probe_dc42 (const char *fname)
+{
+	return (pfdc_probe_dc42 (fname));
 }
 
 int dsk_fdc_probe_imd_fp (FILE *fp)

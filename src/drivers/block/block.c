@@ -678,6 +678,10 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk_fdc_open_pfdc (fname, ro));
 	}
 
+	if (dsk_fdc_probe_dc42 (fname)) {
+		return (dsk_fdc_open_dc42 (fname, ro));
+	}
+
 	if (dsk_fdc_probe_imd (fname)) {
 		return (dsk_fdc_open_imd (fname, ro));
 	}

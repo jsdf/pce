@@ -1523,6 +1523,7 @@ src/drivers/block/blkfdc.o: src/drivers/block/blkfdc.c \
 	src/drivers/block/blkfdc.h \
 	src/drivers/block/block.h \
 	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc-img-dc42.h \
 	src/drivers/block/pfdc-img-imd.h \
 	src/drivers/block/pfdc-img-pfdc.h \
 	src/drivers/block/pfdc-img-raw.h \
