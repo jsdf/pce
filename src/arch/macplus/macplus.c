@@ -128,12 +128,37 @@ void mac_interrupt_vbi (void *ext, unsigned char val)
 	}
 }
 
+static
+void mac_interrupt_sony_check (macplus_t *sim)
+{
+	unsigned long a7;
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: check\n");
+#endif
+	if (e68_get_iml (sim->cpu) == 7) {
+#ifdef DEBUG_SONY
+		mac_log_deb ("sony: check aborted (iml=7)\n");
+#endif
+		return;
+	}
+
+	a7 = e68_get_areg32 (sim->cpu, 7);
+	e68_set_mem32 (sim->cpu, a7 - 4, e68_get_pc (sim->cpu));
+	e68_set_areg32 (sim->cpu, 7, a7 - 4);
+
+	e68_set_pc (sim->cpu, sim->sony.check_addr);
+}
+
 void mac_interrupt_osi (void *ext, unsigned char val)
 {
 	macplus_t *sim = ext;
 
 	if (val) {
-		mac_sony_check (sim);
+		if (mac_sony_check (&sim->sony)) {
+			mac_interrupt_sony_check (sim);
+		}
+
 		e6522_set_ca2_inp (&sim->via, 0);
 		e6522_set_ca2_inp (&sim->via, 1);
 	}
@@ -911,6 +936,7 @@ static
 void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 {
 	unsigned  i;
+	int       format_hd_as_dd;
 	char      var[32];
 	unsigned  def, val;
 	ini_sct_t *sct;
@@ -918,8 +944,13 @@ void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 	sct = ini_next_sct (ini, NULL, "sony");
 
 	ini_get_uint16 (sct, "insert_delay", &def, 30);
+	ini_get_bool (sct, "format_hd_as_dd", &format_hd_as_dd, 0);
 
 	mac_sony_init (&sim->sony);
+	mac_sony_set_mem (&sim->sony, sim->mem);
+	mac_sony_set_disks (&sim->sony, sim->dsks);
+
+	sim->sony.format_hd_as_dd = format_hd_as_dd;
 
 	for (i = 0; i < SONY_DRIVES; i++) {
 		if (par_disk_delay_valid & (1U << i)) {
@@ -930,7 +961,7 @@ void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 			ini_get_uint16 (sct, var, &val, def);
 		}
 
-		mac_sony_set_delay (sim, i, val);
+		mac_sony_set_delay (&sim->sony, i, val);
 
 		pce_log_tag (MSG_INF, "SONY:", "drive=%u delay=%lu\n",
 			i + 1, val
@@ -1264,7 +1295,7 @@ void mac_reset (macplus_t *sim)
 	e6522_set_ira_inp (&sim->via, sim->via_port_a);
 	e6522_set_irb_inp (&sim->via, sim->via_port_b);
 
-	mac_sony_reset (sim);
+	mac_sony_reset (&sim->sony);
 	mac_scsi_reset (&sim->scsi);
 	e8530_reset (&sim->scc);
 

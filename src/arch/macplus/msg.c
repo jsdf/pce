@@ -342,16 +342,16 @@ int mac_set_msg_mac_insert (macplus_t *sim, const char *msg, const char *val)
 	unsigned drv;
 
 	if (strcmp (val, "") == 0) {
-		mac_sony_insert (sim, 1);
-		mac_sony_insert (sim, 2);
-		mac_sony_insert (sim, 3);
+		mac_sony_insert (&sim->sony, 1);
+		mac_sony_insert (&sim->sony, 2);
+		mac_sony_insert (&sim->sony, 3);
 	}
 	else {
 		if (msg_get_uint (val, &drv)) {
 			return (1);
 		}
 
-		mac_sony_insert (sim, drv);
+		mac_sony_insert (&sim->sony, drv);
 	}
 
 	return (0);

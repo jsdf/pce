@@ -49,37 +49,44 @@ int mac_hook (void *ext, unsigned val)
 	unsigned  i;
 	macplus_t *sim = ext;
 
+	mac_hook_skip (sim, 4);
+
 	switch (val) {
 	case MAC_HOOK_NOP:
-		mac_hook_skip (sim, 4);
 		return (0);
 
 	case MAC_HOOK_STOP:
-		mac_hook_skip (sim, 4);
 		mac_set_msg (sim, "emu.stop", "1");
 		return (0);
 
 	case MAC_HOOK_EXIT:
-		mac_hook_skip (sim, 4);
 		mac_set_msg (sim, "emu.exit", "1");
 		return (0);
 
 	case MAC_HOOK_INSERT:
-		mac_hook_skip (sim, 4);
 		for (i = 0; i < 4; i++) {
-			mac_sony_insert (sim, i + 1);
+			mac_sony_insert (&sim->sony, i + 1);
 		}
 		return (0);
 
 	case MAC_HOOK_MARK:
-		mac_hook_skip (sim, 4);
 		pce_log (MSG_INF, "mark: PC=%06lX\n",
 			(unsigned long) e68_get_pc (sim->cpu)
 		);
 		return (0);
 
 	default:
-		if (mac_sony_hook (sim, val) == 0) {
+		sim->sony.d0 = e68_get_dreg32 (sim->cpu, 0);
+		sim->sony.a0 = e68_get_areg32 (sim->cpu, 0);
+		sim->sony.a1 = e68_get_areg32 (sim->cpu, 1);
+		sim->sony.pc = e68_get_pc (sim->cpu);
+
+		if (mac_sony_hook (&sim->sony, val) == 0) {
+			e68_set_dreg32 (sim->cpu, 0, sim->sony.d0);
+			e68_set_areg32 (sim->cpu, 0, sim->sony.a0);
+			e68_set_areg32 (sim->cpu, 1, sim->sony.a1);
+			e68_set_pc (sim->cpu, sim->sony.pc);
+
 			return (0);
 		}
 		break;

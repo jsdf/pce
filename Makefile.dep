@@ -615,36 +615,14 @@ src/arch/macplus/serial.o: src/arch/macplus/serial.c \
 	src/lib/string.h
 
 src/arch/macplus/sony.o: src/arch/macplus/sony.c \
-	src/arch/macplus/adb.h \
-	src/arch/macplus/adb_keyboard.h \
-	src/arch/macplus/adb_mouse.h \
-	src/arch/macplus/hook.h \
-	src/arch/macplus/iwm.h \
-	src/arch/macplus/keyboard.h \
-	src/arch/macplus/macplus.h \
 	src/arch/macplus/main.h \
-	src/arch/macplus/rtc.h \
-	src/arch/macplus/scsi.h \
-	src/arch/macplus/serial.h \
 	src/arch/macplus/sony.h \
-	src/arch/macplus/sound.h \
-	src/arch/macplus/video.h \
-	src/chipset/e6522.h \
-	src/chipset/e8530.h \
 	src/config.h \
-	src/cpu/e68000/e68000.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
+	src/drivers/block/blkfdc.h \
 	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/filter.h \
-	src/drivers/sound/sound.h \
-	src/drivers/video/keys.h \
-	src/drivers/video/terminal.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/log.h \
-	src/libini/libini.h
+	src/drivers/block/pfdc.h \
+	src/lib/log.h
 
 src/arch/macplus/sound.o: src/arch/macplus/sound.c \
 	src/arch/macplus/main.h \

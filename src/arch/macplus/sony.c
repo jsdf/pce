@@ -21,13 +21,14 @@
 
 
 #include "main.h"
-#include "hook.h"
-#include "macplus.h"
 #include "sony.h"
 
 #include <string.h>
 
+#include <devices/memory.h>
+
 #include <drivers/block/block.h>
+#include <drivers/block/blkfdc.h>
 
 #include <lib/log.h>
 
@@ -55,34 +56,58 @@
 #define SONY_DRIVEERRS   20	/* drive soft errors */
 
 /* parameter block offsets */
-#define PB_QLINK        0
-#define PB_QTYPE        4
-#define PB_IOTRAP       6
-#define PB_IOCMDADDR    8
-#define PB_IOCOMPLETION 12
-#define PB_IORESULT     16
-#define PB_IONAMEPTR    18
-#define PB_IOVREFNUM    22
-#define PB_IOREFNUM     24
-#define PB_CSCODE       26
-#define PB_CSPARAM      28
-#define PB_IOBUFFER     32
-#define PB_IOREQCOUNT   36
-#define PB_IOACTCOUNT   40
-#define PB_IOPOSMODE    44
-#define PB_IOPOSOFFSET  46
+#define qLink        0
+#define qType        4
+#define ioTrap       6
+#define ioCmdAddr    8
+#define ioCompletion 12
+#define ioResult     16
+#define ioNamePtr    18
+#define ioVRefNum    22
+#define ioRefNum     24
+#define ioVersNum    26
+#define ioPermssn    27
+#define ioMisc       28
+#define ioBuffer     32
+#define ioReqCount   36
+#define ioActCount   40
+#define ioPosMode    44
+#define ioPosOffset  46
+#define csCode       26
+#define csParam      28
 
 /* device control entry offsets */
-#define DC_CTLPOSITION  16
+#define dCtlDriver   0
+#define dCtlFlags    4
+#define dCtlQHdr     6
+#define dCtlPosition 16
+#define dCtlStorage  20
+#define dCtlRefNum   24
+#define dCtlCurTicks 26
 
-#define noQueueBit 0x0200
+/* positioning modes */
+#define fsAtMark    0
+#define fsFromStart 1
+#define fsFromMark  3
+#define rdVerify    64
 
+/* trap word flags */
+#define asyncTrpBit 0x0100
+#define noQueueBit  0x0200
+
+/* result codes */
 #define noErr      0
+#define controlErr -17
+#define statusErr  -18
+#define readErr    -19
+#define writeErr   -20
+#define abortErr   -27
 #define wPrErr     -44
 #define paramErr   -50
 #define nsDrvErr   -56
 #define noDriveErr -64
 #define offLineErr -65
+#define verErr     -84
 
 
 void mac_sony_init (mac_sony_t *sony)
@@ -91,9 +116,18 @@ void mac_sony_init (mac_sony_t *sony)
 
 	sony->open = 0;
 	sony->patched = 0;
-	sony->check = 0;
-	sony->icon[0] = 0;
-	sony->icon[1] = 0;
+
+	sony->mem = NULL;
+	sony->dsks = NULL;
+
+	sony->check_addr = 0;
+	sony->icon_addr[0] = 0;
+	sony->icon_addr[1] = 0;
+
+	sony->tag_buf = 0;
+
+	sony->format_hd_as_dd = 0;
+	sony->format_cnt = 0;
 
 	for (i = 0; i < SONY_DRIVES; i++) {
 		sony->delay_val[i] = 0;
@@ -105,12 +139,22 @@ void mac_sony_free (mac_sony_t *sony)
 {
 }
 
+void mac_sony_set_mem (mac_sony_t *sony, memory_t *mem)
+{
+	sony->mem = mem;
+}
+
+void mac_sony_set_disks (mac_sony_t *sony, disks_t *dsks)
+{
+	sony->dsks = dsks;
+}
+
 static
-unsigned long mac_sony_get_vars (macplus_t *sim, unsigned drive)
+unsigned long mac_sony_get_vars (mac_sony_t *sony, unsigned drive)
 {
 	unsigned long ret;
 
-	ret = e68_get_mem32 (sim->cpu, 0x0134);
+	ret = mem_get_uint32_be (sony->mem, 0x0134);
 
 	if ((drive >= 1) && (drive <= SONY_DRIVES)) {
 		ret += 8 + 66 * drive;
@@ -120,122 +164,119 @@ unsigned long mac_sony_get_vars (macplus_t *sim, unsigned drive)
 }
 
 static
-unsigned long mac_sony_find_pcex (macplus_t *sim, unsigned long addr)
+unsigned long mac_sony_find_pcex (mac_sony_t *sony, unsigned long addr)
 {
 	unsigned long cnt;
 
-	if (mem_get_uint32_be (sim->mem, addr) != 0x50434558) {
+	if (mem_get_uint32_be (sony->mem, addr) != 0x50434558) {
 		return (0);
 	}
 
-	cnt = mem_get_uint32_be (sim->mem, addr + 8);
+	cnt = mem_get_uint32_be (sony->mem, addr + 8);
+
 	if (cnt < 4) {
 		return (0);
 	}
 
-	sim->sony.check = addr + mem_get_uint32_be (sim->mem, addr + 16);
-	sim->sony.icon[0] = addr + mem_get_uint32_be (sim->mem, addr + 20);
-	sim->sony.icon[1] = addr + mem_get_uint32_be (sim->mem, addr + 24);
+	sony->check_addr = addr + mem_get_uint32_be (sony->mem, addr + 16);
+	sony->icon_addr[0] = addr + mem_get_uint32_be (sony->mem, addr + 20);
+	sony->icon_addr[1] = addr + mem_get_uint32_be (sony->mem, addr + 24);
 
-	addr += mem_get_uint32_be (sim->mem, addr + 12);
+	addr += mem_get_uint32_be (sony->mem, addr + 12);
 
 	return (addr);
 }
 
 static
-unsigned long mac_sony_find (macplus_t *sim, unsigned long addr, unsigned long size)
+unsigned long mac_sony_find (mac_sony_t *sony, unsigned long addr, unsigned long size)
 {
-	unsigned long sony;
+	unsigned long sony_addr;
 
 	while (size > 0) {
 		addr += 1;
 		size -= 1;
 
-		if (mem_get_uint16_be (sim->mem, addr - 1) != 0x052e) {
+		if (mem_get_uint16_be (sony->mem, addr - 1) != 0x052e) {
 			continue;
 		}
 
-		if (mem_get_uint32_be (sim->mem, addr + 1) != 0x536f6e79) {
+		if (mem_get_uint32_be (sony->mem, addr + 1) != 0x536f6e79) {
 			continue;
 		}
 
-		sony = addr - 19;
+		sony_addr = addr - 19;
 
-		if (mem_get_uint16_be (sim->mem, sony) != 0x4f00) {
+		if (mem_get_uint16_be (sony->mem, sony_addr) != 0x4f00) {
 			continue;
 		}
 
-		return (sony);
+		return (sony_addr);
 	}
 
 	return (0);
 }
 
 static
-void mac_sony_unpatch_rom (macplus_t *sim)
+void mac_sony_unpatch_rom (mac_sony_t *sony)
 {
 	unsigned      i, j;
-	unsigned long sony, pcex;
 	unsigned      sofs;
 	unsigned long sadr;
 	unsigned char *buf;
 
-	if (sim->sony.patched == 0) {
+	if (sony->patched == 0) {
 		return;
 	}
 
-	sony = sim->sony.sony_addr;
-	pcex = sim->sony.pcex_addr;
-
-	if ((sony == 0) || (pcex == 0)) {
+	if ((sony->sony_addr == 0) || (sony->pcex_addr == 0)) {
 		return;
 	}
 
-	buf = sim->sony.patch_buf;
+	buf = sony->patch_buf;
 
 	for (i = 0; i < 5; i++) {
-		sofs = mem_get_uint16_be (sim->mem, sony + 8 + 2 * i);
-		sadr = sony + sofs;
+		sofs = mem_get_uint16_be (sony->mem, sony->sony_addr + 8 + 2 * i);
+		sadr = sony->sony_addr + sofs;
 
 		for (j = 0; j < 6; j++) {
-			mem_set_uint8_rw (sim->mem, sadr + j, *(buf++));
+			mem_set_uint8_rw (sony->mem, sadr + j, *(buf++));
 		}
-
-#ifdef DEBUG_SONY
-		mac_log_deb ("sony: unpatch %u: %06lx -> %06lx\n", i, sadr, dadr);
-#endif
 	}
 
-	sim->sony.patched = 0;
+	sony->patched = 0;
 }
 
 static
-void mac_sony_patch_rom (macplus_t *sim, unsigned long sony, unsigned long pcex)
+void mac_sony_patch_rom (mac_sony_t *sony)
 {
 	unsigned      i, j;
 	unsigned      sofs, dofs;
 	unsigned long sadr, dadr;
 	unsigned char *buf;
 
-	buf = sim->sony.patch_buf;
+	if ((sony->sony_addr == 0) || (sony->pcex_addr == 0)) {
+		return;
+	}
+
+	buf = sony->patch_buf;
 
 	for (i = 0; i < 5; i++) {
-		sofs = mem_get_uint16_be (sim->mem, sony + 8 + 2 * i);
-		sadr = sony + sofs;
+		sofs = mem_get_uint16_be (sony->mem, sony->sony_addr + 8 + 2 * i);
+		sadr = sony->sony_addr + sofs;
 
-		dofs = mem_get_uint16_be (sim->mem, pcex + 8 + 2 * i);
-		dadr = pcex + dofs;
+		dofs = mem_get_uint16_be (sony->mem, sony->pcex_addr + 8 + 2 * i);
+		dadr = sony->pcex_addr + dofs;
 
 		for (j = 0; j < 6; j++) {
-			*(buf++) = mem_get_uint8 (sim->mem, sadr + j);
+			*(buf++) = mem_get_uint8 (sony->mem, sadr + j);
 		}
 
-		mem_set_uint8_rw (sim->mem, sadr + 0, 0x4e);
-		mem_set_uint8_rw (sim->mem, sadr + 1, 0xf9);
-		mem_set_uint8_rw (sim->mem, sadr + 2, (dadr >> 24) & 0xff);
-		mem_set_uint8_rw (sim->mem, sadr + 3, (dadr >> 16) & 0xff);
-		mem_set_uint8_rw (sim->mem, sadr + 4, (dadr >> 8) & 0xff);
-		mem_set_uint8_rw (sim->mem, sadr + 5, dadr & 0xff);
+		mem_set_uint8_rw (sony->mem, sadr + 0, 0x4e);
+		mem_set_uint8_rw (sony->mem, sadr + 1, 0xf9);
+		mem_set_uint8_rw (sony->mem, sadr + 2, (dadr >> 24) & 0xff);
+		mem_set_uint8_rw (sony->mem, sadr + 3, (dadr >> 16) & 0xff);
+		mem_set_uint8_rw (sony->mem, sadr + 4, (dadr >> 8) & 0xff);
+		mem_set_uint8_rw (sony->mem, sadr + 5, dadr & 0xff);
 
 #ifdef DEBUG_SONY
 		mac_log_deb ("sony: patch %u: %06lx -> %06lx\n", i, sadr, dadr);
@@ -243,50 +284,47 @@ void mac_sony_patch_rom (macplus_t *sim, unsigned long sony, unsigned long pcex)
 	}
 }
 
-void mac_sony_patch (macplus_t *sim)
+void mac_sony_patch (mac_sony_t *sony)
 {
-	unsigned long pcex;
-	unsigned long sony;
-
-	if (sim->sony.patched) {
+	if (sony->patched) {
 		return;
 	}
 
-	sim->sony.patched = 1;
-	sim->sony.pcex_addr = 0;
-	sim->sony.sony_addr = 0;
+	sony->patched = 1;
 
-	pcex = mac_sony_find_pcex (sim, 0xf80000);
-	if (pcex == 0) {
+	sony->pcex_addr = 0;
+	sony->sony_addr = 0;
+
+	sony->pcex_addr = mac_sony_find_pcex (sony, 0xf80000);
+
+	if (sony->pcex_addr == 0) {
 		pce_log_tag (MSG_ERR, "SONY:", "PCE ROM extension not found\n");
 		return;
 	}
 
-	pce_log_tag (MSG_INF, "SONY:", "PCE ROM extension at 0x%06lx\n", pcex);
+	pce_log_tag (MSG_INF, "SONY:", "PCE ROM extension at 0x%06lx\n", sony->pcex_addr);
 
-	sony = mac_sony_find (sim, 0x400000, 1024UL * 1024UL);
-	if (sony == 0) {
+	sony->sony_addr = mac_sony_find (sony, 0x400000, 1024UL * 1024UL);
+
+	if (sony->sony_addr == 0) {
 		pce_log_tag (MSG_ERR, "SONY:", "sony driver not found\n");
 		return;
 	}
 
-	pce_log_tag (MSG_INF, "SONY:", "sony driver at 0x%06lx\n", sony);
+	pce_log_tag (MSG_INF, "SONY:", "sony driver at 0x%06lx\n", sony->sony_addr);
 
-	sim->sony.pcex_addr = pcex;
-	sim->sony.sony_addr = sony;
-
-	mac_sony_patch_rom (sim, sony, pcex);
+	mac_sony_patch_rom (sony);
 }
 
-void mac_sony_set_delay (macplus_t *sim, unsigned drive, unsigned delay)
+void mac_sony_set_delay (mac_sony_t *sony, unsigned drive, unsigned delay)
 {
 	if (drive < SONY_DRIVES) {
-		sim->sony.delay_val[drive] = delay;
-		sim->sony.delay_cnt[drive] = delay;
+		sony->delay_val[drive] = delay;
+		sony->delay_cnt[drive] = delay;
 	}
 }
 
-void mac_sony_insert (macplus_t *sim, unsigned drive)
+void mac_sony_insert (mac_sony_t *sony, unsigned drive)
 {
 	unsigned long vars;
 	disk_t        *dsk;
@@ -295,159 +333,191 @@ void mac_sony_insert (macplus_t *sim, unsigned drive)
 		return;
 	}
 
-	dsk = dsks_get_disk (sim->dsks, drive);
+	dsk = dsks_get_disk (sony->dsks, drive);
+
 	if (dsk == NULL) {
 		return;
 	}
 
-	vars = mac_sony_get_vars (sim, drive);
+	vars = mac_sony_get_vars (sony, drive);
 
-	if (e68_get_mem8 (sim->cpu, vars + SONY_DISKINPLACE) == 0x00) {
+	if (mem_get_uint8 (sony->mem, vars + SONY_DISKINPLACE) == 0x00) {
 		pce_log_tag (MSG_INF, "SONY:", "insert drive %u\n", drive);
-		e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x01);
+		mem_set_uint8 (sony->mem, vars + SONY_DISKINPLACE, 0x01);
 	}
 }
 
 /*
  * Check if disks need to be inserted.
  */
-void mac_sony_check (macplus_t *sim)
+int mac_sony_check (mac_sony_t *sony)
 {
 	int           check;
 	unsigned      i;
 	unsigned long vars;
-	unsigned long a7;
 	disk_t        *dsk;
 
-	if (sim->sony.open == 0) {
-		return;
+	if (sony->open == 0) {
+		return (0);
 	}
 
 	check = 0;
 
 	for (i = 0; i < SONY_DRIVES; i++) {
-		if (sim->sony.delay_cnt[i] > 0) {
-			sim->sony.delay_cnt[i] -= 1;
+		if (sony->delay_cnt[i] > 0) {
+			sony->delay_cnt[i] -= 1;
 
-			if (sim->sony.delay_cnt[i] == 0) {
-				mac_sony_insert (sim, i + 1);
+			if (sony->delay_cnt[i] == 0) {
+				mac_sony_insert (sony, i + 1);
 			}
 		}
 
-		dsk = dsks_get_disk (sim->dsks, i + 1);
+		dsk = dsks_get_disk (sony->dsks, i + 1);
 
 		if (dsk != NULL) {
-			vars = mac_sony_get_vars (sim, i + 1);
+			vars = mac_sony_get_vars (sony, i + 1);
 
 			if (dsk_get_block_cnt (dsk) < 1600) {
-				e68_set_mem8 (sim->cpu, vars + SONY_TWOSIDEFMT, 0x00);
+				mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0x00);
 			}
 			else {
-				e68_set_mem8 (sim->cpu, vars + SONY_TWOSIDEFMT, 0xff);
+				mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0xff);
 			}
 
 			if (dsk_get_readonly (dsk)) {
-				e68_set_mem8 (sim->cpu, vars + SONY_WPROT, 0xff);
+				mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0xff);
 			}
 			else {
-				e68_set_mem8 (sim->cpu, vars + SONY_WPROT, 0x00);
+				mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0x00);
 			}
 
-			if (e68_get_mem8 (sim->cpu, vars + SONY_DISKINPLACE) == 0x01) {
+			if (mem_get_uint8 (sony->mem, vars + SONY_DISKINPLACE) == 0x01) {
 				check = 1;
 			}
 		}
 	}
 
-	if (check) {
-#ifdef DEBUG_SONY
-		mac_log_deb ("sony: check\n");
-#endif
-		if (e68_get_iml (sim->cpu) == 7) {
-#ifdef DEBUG_SONY
-			mac_log_deb ("sony: check aborted (iml=7)\n");
-#endif
-			return;
-		}
-
-		a7 = e68_get_areg32 (sim->cpu, 7);
-		e68_set_mem32 (sim->cpu, a7 - 4, e68_get_pc (sim->cpu));
-		e68_set_areg32 (sim->cpu, 7, a7 - 4);
-
-		e68_set_pc (sim->cpu, sim->sony.check);
-	}
+	return (check);
 }
 
-static
-void mac_sony_return (macplus_t *sim, unsigned res, int rts)
-{
-	unsigned long pblk;
-	unsigned      iotrap;
-
-	pblk = e68_get_areg32 (sim->cpu, 0);
-
-	if (res & 0x8000) {
-		e68_set_dreg32 (sim->cpu, 0, 0xffff0000 | res);
-	}
-	else {
-		e68_set_dreg32 (sim->cpu, 0, res);
-	}
-
-	iotrap = e68_get_mem16 (sim->cpu, pblk + PB_IOTRAP);
-
-	e68_set_mem16 (sim->cpu, pblk + PB_IORESULT, res);
-
-	if (rts || (iotrap & noQueueBit)) {
-		e68_set_mem16 (sim->cpu, pblk + PB_IORESULT, res);
-	}
-	else {
-		unsigned long val;
-
-		val = e68_get_mem32 (sim->cpu, 0x0134);
-		val = e68_get_mem32 (sim->cpu, val);
-		e68_set_areg32 (sim->cpu, 1, val);
-
-		e68_set_pc (sim->cpu, e68_get_mem32 (sim->cpu, 0x08fc));
-	}
-}
 
 static
-void mac_sony_open (macplus_t *sim)
+void mac_sony_open (mac_sony_t *sony)
 {
 #ifdef DEBUG_SONY
 	mac_log_deb ("sony: open\n");
 #endif
 
-	sim->sony.open = 1;
+	sony->open = 1;
 
-	mac_sony_check (sim);
+	if (mac_sony_check (sony)) {
+		sony->pc = sony->check_addr;
+	}
+}
+
+
+static
+unsigned long mac_sony_get_pblk (mac_sony_t *sony, unsigned ofs, unsigned size)
+{
+	if (size == 1) {
+		return (mem_get_uint8 (sony->mem, sony->a0 + ofs));
+	}
+	else if (size == 2) {
+		return (mem_get_uint16_be (sony->mem, sony->a0 + ofs));
+	}
+	else if (size == 4) {
+		return (mem_get_uint32_be (sony->mem, sony->a0 + ofs));
+	}
+
+	return (0);
 }
 
 static
-unsigned long mac_sony_get_offset (macplus_t *sim)
+void mac_sony_set_pblk (mac_sony_t *sony, unsigned ofs, unsigned size, unsigned long val)
 {
-	unsigned long pblk, dctl;
+	if (size == 1) {
+		mem_set_uint8 (sony->mem, sony->a0 + ofs, val);
+	}
+	else if (size == 2) {
+		mem_set_uint16_be (sony->mem, sony->a0 + ofs, val);
+	}
+	else if (size == 4) {
+		mem_set_uint32_be (sony->mem, sony->a0 + ofs, val);
+	}
+}
+
+static
+unsigned long mac_sony_get_dctl (mac_sony_t *sony, unsigned ofs, unsigned size)
+{
+	if (size == 1) {
+		return (mem_get_uint8 (sony->mem, sony->a1 + ofs));
+	}
+	else if (size == 2) {
+		return (mem_get_uint16_be (sony->mem, sony->a1 + ofs));
+	}
+	else if (size == 4) {
+		return (mem_get_uint32_be (sony->mem, sony->a1 + ofs));
+	}
+
+	return (0);
+}
+
+static
+void mac_sony_set_dctl (mac_sony_t *sony, unsigned ofs, unsigned size, unsigned long val)
+{
+	if (size == 1) {
+		mem_set_uint8 (sony->mem, sony->a1 + ofs, val);
+	}
+	else if (size == 2) {
+		mem_set_uint16_be (sony->mem, sony->a1 + ofs, val);
+	}
+	else if (size == 4) {
+		mem_set_uint32_be (sony->mem, sony->a1 + ofs, val);
+	}
+}
+
+static
+void mac_sony_return (mac_sony_t *sony, unsigned res, int rts)
+{
+	unsigned      trap;
+	unsigned long val;
+
+	sony->d0 = (res & 0x8000) ? (0xffff0000 | res) : 0;
+
+	trap = mac_sony_get_pblk (sony, ioTrap, 2);
+
+	mac_sony_set_pblk (sony, ioResult, 2, res);
+
+	if ((rts == 0) && ((trap & noQueueBit) == 0)) {
+		val = mem_get_uint32_be (sony->mem, 0x0134);
+		val = mem_get_uint32_be (sony->mem, val);
+
+		sony->a1 = val;
+		sony->pc = mem_get_uint32_be (sony->mem, 0x08fc);
+	}
+}
+
+
+static
+unsigned long mac_sony_get_offset (mac_sony_t *sony)
+{
+	unsigned      posmode;
 	unsigned long ofs;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-	dctl = e68_get_areg32 (sim->cpu, 1);
+	posmode = mac_sony_get_pblk (sony, ioPosMode, 2);
 
-	switch (e68_get_mem16 (sim->cpu, pblk + PB_IOPOSMODE) & 0x0f) {
-	case 0: /* at mark */
-		ofs = e68_get_mem32 (sim->cpu, dctl + DC_CTLPOSITION);
+	switch (posmode & 0x0f) {
+	case fsAtMark:
+		ofs = mac_sony_get_dctl (sony, dCtlPosition, 4);
 		break;
 
-	case 1: /* from start */
-		ofs = e68_get_mem32 (sim->cpu, pblk + PB_IOPOSOFFSET);
+	case fsFromStart:
+		ofs = mac_sony_get_pblk (sony, ioPosOffset, 4);
 		break;
 
-	case 2: /* from EOF */
-		ofs = 819200 - e68_get_mem32 (sim->cpu, pblk + PB_IOPOSOFFSET);
-		break;
-
-	case 3: /* from mark */
-		ofs = e68_get_mem32 (sim->cpu, pblk + PB_IOPOSOFFSET);
-		ofs += e68_get_mem32 (sim->cpu, dctl + DC_CTLPOSITION);
+	case fsFromMark:
+		ofs = mac_sony_get_pblk (sony, ioPosOffset, 4);
+		ofs += mac_sony_get_dctl (sony, dCtlPosition, 4);
 		break;
 
 	default:
@@ -457,222 +527,557 @@ unsigned long mac_sony_get_offset (macplus_t *sim)
 	return (ofs);
 }
 
+/*
+ * Get the disk type from a number of blocks
+ */
 static
-void mac_sony_read (macplus_t *sim, unsigned drive)
+unsigned mac_sony_get_disk_type (unsigned long blk)
 {
-	unsigned long pblk, dctl, vars;
-	unsigned long addr;
+	if (blk < ((800 + 1440) / 2)) {
+		return (0);
+	}
+	else if (blk < ((1440 + 1600) / 2)) {
+		return (2);
+	}
+	else if (blk < ((1600 + 2880) / 2)) {
+		return (1);
+	}
+	else if (blk < (2 * 2880)) {
+		return (3);
+	}
+
+	return (255);
+}
+
+static
+int mac_sony_get_chs (unsigned long blk, unsigned long lba, unsigned *c, unsigned *h, unsigned *s)
+{
+	unsigned type;
+	unsigned i, hn, sn;
+
+	type = mac_sony_get_disk_type (blk);
+
+	if ((type == 0) || (type == 1)) {
+		hn = (type == 0) ? 1 : 2;
+		sn = 12;
+		*c = 0;
+
+		for (i = 0; i < 5; i++) {
+			if (lba < (16 * hn * sn)) {
+				*s = (lba % sn);
+				*h = (lba / sn) % hn;
+				*c += lba / (sn * hn);
+				return (0);
+			}
+
+			lba -= 16 * hn * sn;
+			*c += 16;
+			sn -= 1;
+		}
+
+		return (1);
+	}
+	else if (type == 2) {
+		*s = (lba % 9) + 1;
+		*h = (lba / 9) % 2;
+		*c = lba / 18;
+	}
+	else if (type == 3) {
+		*s = (lba % 18) + 1;
+		*h = (lba / 18) % 2;
+		*c = lba / 36;
+	}
+	else {
+		mac_log_deb ("sony: chs error (blk=%lu, lba=%lu)\n", blk, lba);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int mac_sony_read_block (disk_t *dsk, void *buf, void *tag, unsigned long idx)
+{
+	unsigned c, h, s;
+	unsigned cnt;
+
+	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+		memset (tag, 0, 12);
+
+		if (dsk_read_lba (dsk, buf, idx, 1)) {
+			return (1);
+		}
+
+		return (0);
+	}
+
+	if (mac_sony_get_chs (dsk_get_block_cnt (dsk), idx, &c, &h, &s)) {
+		return (1);
+	}
+
+	dsk_fdc_read_tags (dsk->ext, tag, 12, c, h, s, 0);
+
+	cnt = 512;
+
+	if (dsk_fdc_read_chs (dsk->ext, buf, &cnt, c, h, s, 0) != PCE_BLK_FDC_OK) {
+		mac_log_deb ("sony: read error at %u/%u/%u\n", c, h, s);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int mac_sony_write_block (disk_t *dsk, const void *buf, const void *tag, unsigned long idx)
+{
+	unsigned c, h, s;
+	unsigned type;
+	unsigned cnt;
+
+	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+		if (dsk_write_lba (dsk, buf, idx, 1)) {
+			return (1);
+		}
+
+		return (0);
+	}
+
+	if (mac_sony_get_chs (dsk_get_block_cnt (dsk), idx, &c, &h, &s)) {
+		return (1);
+	}
+
+	type = mac_sony_get_disk_type (dsk_get_block_cnt (dsk));
+
+	if ((type == 0) || (type == 1)) {
+		dsk_fdc_write_tags (dsk->ext, tag, 12, c, h, s, 0);
+	}
+
+	cnt = 512;
+
+	if (dsk_fdc_write_chs (dsk->ext, buf, &cnt, c, h, s, 0) != PCE_BLK_FDC_OK) {
+		mac_log_deb ("sony: write error at %u/%u/%u\n", c, h, s);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+void mac_sony_prime_read (mac_sony_t *sony, unsigned drive)
+{
+	unsigned long addr, vars;
 	unsigned long ofs, cnt;
 	unsigned long i, n;
 	unsigned      j;
 	disk_t        *dsk;
 	unsigned char buf[512];
+	unsigned char tag[12];
 	unsigned      posmode;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-	dctl = e68_get_areg32 (sim->cpu, 1);
+	ofs = mac_sony_get_offset (sony);
+	cnt = mac_sony_get_pblk (sony, ioReqCount, 4);
+	addr = mac_sony_get_pblk (sony, ioBuffer, 4) & 0x00ffffff;
+	posmode = mac_sony_get_pblk (sony, ioPosMode, 2);
 
-	dsk = dsks_get_disk (sim->dsks, drive);
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: prime: read (drive=%u, ofs=0x%08lx, cnt=0x%04lx, addr=0x%08lx)\n",
+		drive, ofs, cnt, addr
+	);
+#endif
+
+	dsk = dsks_get_disk (sony->dsks, drive);
+
 	if (dsk == NULL) {
-		mac_sony_return (sim, offLineErr, 0);
+		mac_sony_return (sony, offLineErr, 0);
 		return;
 	}
-
-	posmode = e68_get_mem16 (sim->cpu, pblk + PB_IOPOSMODE);
 
 	if (posmode & 0x40) {
 		/* verify */
-		mac_sony_return (sim, 0x0000, 0);
+		mac_sony_return (sony, noErr, 0);
 		return;
 	}
 
-	addr = e68_get_mem32 (sim->cpu, pblk + PB_IOBUFFER) & 0x00ffffff;
-
-	ofs = mac_sony_get_offset (sim);
-	cnt = e68_get_mem32 (sim->cpu, pblk + PB_IOREQCOUNT);
-
 	if ((ofs & 511) || (cnt & 511)) {
 		mac_log_deb ("sony: non-aligned read\n");
-		mac_sony_return (sim, paramErr, 0);
+		mac_sony_return (sony, paramErr, 0);
 		return;
 	}
 
 	n = cnt / 512;
 
 	for (i = 0; i < n; i++) {
-		if (dsk_read_lba (dsk, buf, (ofs / 512) + i, 1)) {
-			mac_log_deb (
-				"sony: read drive %u %08lX + %04lX -> %08lX\n",
-				drive, ofs, cnt, addr
-			);
+		if (mac_sony_read_block (dsk, buf, tag, (ofs / 512) + i)) {
 			mac_log_deb ("sony: read error\n");
-			mac_sony_return (sim, 0xffff, 0);
+			mac_sony_return (sony, 0xffff, 0);
 			return;
 		}
 
 		for (j = 0; j < 512; j++) {
-			e68_set_mem8 (sim->cpu, addr + 512 * i + j, buf[j]);
+			mem_set_uint8 (sony->mem, addr + 512 * i + j, buf[j]);
+		}
+
+		for (j = 0; j < 12; j++) {
+			mem_set_uint8 (sony->mem, 0x2fc + j, tag[j]);
+		}
+
+		if (sony->tag_buf != 0) {
+			for (j = 0; j < 12; j++) {
+				mem_set_uint8 (sony->mem, sony->tag_buf + 12 * i + j, tag[j]);
+			}
 		}
 	}
 
-#ifdef DEBUG_SONY
-	mac_log_deb ("sony: read drive %u: %08lX + %04lX -> %08lX\n", drive, ofs, cnt, addr);
-#endif
+	vars = mac_sony_get_vars (sony, drive);
+	mem_set_uint8 (sony->mem, vars + SONY_DISKINPLACE, 0x02);
 
-	vars = mac_sony_get_vars (sim, drive);
-	e68_set_mem8 (sim->cpu, vars + SONY_DISKINPLACE, 0x02);
+	mac_sony_set_pblk (sony, ioActCount, 4, cnt);
 
-	e68_set_mem16 (sim->cpu, pblk + PB_IORESULT, 0x0000);
-	e68_set_mem32 (sim->cpu, pblk + PB_IOACTCOUNT, cnt);
+	ofs = mac_sony_get_dctl (sony, dCtlPosition, 4);
+	mac_sony_set_dctl (sony, dCtlPosition, 4, ofs + cnt);
 
-	ofs = e68_get_mem32 (sim->cpu, dctl + DC_CTLPOSITION);
-	e68_set_mem32 (sim->cpu, dctl + DC_CTLPOSITION, ofs + cnt);
-
-	mac_sony_return (sim, 0x0000, 0);
+	mac_sony_return (sony, noErr, 0);
 }
 
 static
-void mac_sony_write (macplus_t *sim, unsigned drive)
+void mac_sony_prime_write (mac_sony_t *sony, unsigned drive)
 {
-	unsigned long pblk, dctl;
 	unsigned long addr;
 	unsigned long ofs, cnt;
+	unsigned      relblk;
 	unsigned long i, n;
 	unsigned      j;
 	disk_t        *dsk;
 	unsigned char buf[512];
+	unsigned char tag[12];
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-	dctl = e68_get_areg32 (sim->cpu, 1);
+	ofs = mac_sony_get_offset (sony);
+	cnt = mac_sony_get_pblk (sony, ioReqCount, 4);
+	addr = mac_sony_get_pblk (sony, ioBuffer, 4) & 0x00ffffff;
 
-	dsk = dsks_get_disk (sim->dsks, drive);
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: prime: write (drive=%u, ofs=0x%08lx, cnt=0x%04lx, addr=0x%08lx)\n",
+		drive, ofs, cnt, addr
+	);
+#endif
+
+	dsk = dsks_get_disk (sony->dsks, drive);
+
 	if (dsk == NULL) {
-		mac_sony_return (sim, -65, 0);
+		mac_sony_return (sony, offLineErr, 0);
 		return;
 	}
 
 	if (dsk_get_readonly (dsk)) {
-		mac_sony_return (sim, -44, 0);
+		mac_sony_return (sony, wPrErr, 0);
 		return;
 	}
-
-	addr = e68_get_mem32 (sim->cpu, pblk + PB_IOBUFFER) & 0x00ffffff;
-
-	ofs = mac_sony_get_offset (sim);
-	cnt = e68_get_mem32 (sim->cpu, pblk + PB_IOREQCOUNT);
 
 	if ((cnt & 511) || (ofs & 511)) {
 		mac_log_deb ("sony: non-aligned write\n");
-		mac_sony_return (sim, -50, 0);
+		mac_sony_return (sony, paramErr, 0);
 		return;
 	}
+
+	memset (tag, 0, 12);
+
+	relblk = mem_get_uint16_be (sony->mem, 0x302);
 
 	n = cnt / 512;
 
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < 512; j++) {
-			buf[j] = e68_get_mem8 (sim->cpu, addr + 512 * i + j);
+			buf[j] = mem_get_uint8 (sony->mem, addr + 512 * i + j);
 		}
 
-		if (dsk_write_lba (dsk, buf, (ofs / 512) + i, 1)) {
+		if (sony->tag_buf != 0) {
+			for (j = 0; j < 12; j++) {
+				tag[j] = mem_get_uint8 (sony->mem, sony->tag_buf + 12 * i + j);
+				mem_set_uint8 (sony->mem, 0x2fc + j, tag[j]);
+			}
+		}
+		else {
+			mem_set_uint16_be (sony->mem, 0x302, relblk + i);
+
+			for (j = 0; j < 12; j++) {
+				tag[j] = mem_get_uint8 (sony->mem, 0x2fc + j);
+			}
+		}
+
+		if (mac_sony_write_block (dsk, buf, tag, (ofs / 512) + i)) {
 			mac_log_deb ("sony: write error\n");
-			mac_sony_return (sim, 0xffff, 0);
+			mac_sony_return (sony, 0xffff, 0);
 			return;
 		}
 	}
 
-#ifdef DEBUG_SONY
-	mac_log_deb ("sony: write drive %u: %08lX + %04lX <- %08lX\n", drive, ofs, cnt, addr);
-#endif
+	mac_sony_set_pblk (sony, ioActCount, 4, cnt);
 
-	e68_set_mem16 (sim->cpu, pblk + PB_IORESULT, 0x0000);
-	e68_set_mem32 (sim->cpu, pblk + PB_IOACTCOUNT, cnt);
+	ofs = mac_sony_get_dctl (sony, dCtlPosition, 4);
+	mac_sony_set_dctl (sony, dCtlPosition, 4, ofs + cnt);
 
-	ofs = e68_get_mem32 (sim->cpu, dctl + DC_CTLPOSITION);
-	e68_set_mem32 (sim->cpu, dctl + DC_CTLPOSITION, ofs + cnt);
-
-	mac_sony_return (sim, 0x0000, 0);
+	mac_sony_return (sony, noErr, 0);
 }
 
 static
-void mac_sony_prime (macplus_t *sim)
+void mac_sony_prime (mac_sony_t *sony)
 {
-	unsigned long pblk;
-	unsigned long sony;
-	unsigned      iotrap;
-	unsigned      vref;
+	unsigned long vars;
+	unsigned      trap, vref;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-
-	iotrap = e68_get_mem16 (sim->cpu, pblk + PB_IOTRAP);
-	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
+	trap = mac_sony_get_pblk (sony, ioTrap, 2);
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
 
 	if ((vref < 1) || (vref > SONY_DRIVES)) {
-		mac_sony_return (sim, nsDrvErr, 0);
+		mac_sony_return (sony, nsDrvErr, 0);
 		return;
 	}
 
-	sony = mac_sony_get_vars (sim, vref);
+	vars = mac_sony_get_vars (sony, vref);
 
-	if (e68_get_mem8 (sim->cpu, sony + SONY_DISKINPLACE) == 0) {
-		mac_sony_return (sim, offLineErr, 0);
+	if (mem_get_uint8 (sony->mem, vars + SONY_DISKINPLACE) == 0) {
+		mac_sony_return (sony, offLineErr, 0);
 		return;
 	}
 
-	e68_set_mem8 (sim->cpu, sony + SONY_DISKINPLACE, 0x02);
+	mem_set_uint8 (sony->mem, vars + SONY_DISKINPLACE, 0x02);
 
-	switch (iotrap & 0xff) {
+	switch (trap & 0xff) {
 	case 2: /* read */
-		mac_sony_read (sim, vref);
+		mac_sony_prime_read (sony, vref);
 		break;
 
 	case 3: /* write */
-		mac_sony_write (sim, vref);
+		mac_sony_prime_write (sony, vref);
 		break;
 
 	default:
-		mac_sony_return (sim, 0xffef, 0);
+		mac_log_deb ("sony: prime: unknown (trap=0x%04x)\n", trap);
+		mac_sony_return (sony, 0xffef, 0);
 		break;
 	}
 }
 
+
 static
-void mac_sony_format (macplus_t *sim, unsigned drive)
+int mac_sony_format (disk_t *dsk, unsigned long blk)
 {
 	unsigned long i, n;
-	disk_t        *dsk;
+	unsigned      c, h, s, hn, sn;
+	unsigned      type;
 	unsigned char buf[512];
+	pfdc_sct_t    *sct;
+	disk_fdc_t    *fdc;
 
-	dsk = dsks_get_disk (sim->dsks, drive);
-	if (dsk == NULL) {
-		mac_sony_return (sim, 0xffbf, 0);
-		return;
+	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+		n = dsk_get_block_cnt (dsk);
+
+		if (n != blk) {
+			return (1);
+		}
+
+		memset (buf, 0x00, 512);
+
+		for (i = 0; i < n; i++) {
+			dsk_write_lba (dsk, buf, i, 1);
+		}
+
+		return (0);
 	}
 
-	memset (buf, 0x00, 512);
+	fdc = dsk->ext;
 
-	n = dsk_get_block_cnt (dsk);
+	memset (buf, 0, 12);
 
-	for (i = 0; i < n; i++) {
-		dsk_write_lba (dsk, buf, i, 1);
+	type = mac_sony_get_disk_type (blk);
+
+	dsk_fdc_erase_disk (fdc);
+
+	if ((type == 0) || (type == 1)) {
+		dsk_fdc_set_encoding (fdc, PFDC_ENC_GCR, 250000);
+
+		hn = (type == 0) ? 1 : 2;
+		sn = 13;
+
+		for (c = 0; c < 80; c++) {
+			if ((c & 15) == 0) {
+				sn -= 1;
+			}
+
+			for (h = 0; h < hn; h++) {
+				for (s = 0; s < sn; s++) {
+					dsk_fdc_format_sector (fdc, c, h, c, h, s, 512, 0);
+
+					sct = pfdc_img_get_sector (fdc->img, c, h, s, 1);
+
+					if (sct != NULL) {
+						pfdc_sct_set_tags (sct, buf, 12);
+					}
+				}
+			}
+		}
+	}
+	else if ((type == 2) || (type == 3)) {
+		dsk_fdc_set_encoding (fdc, PFDC_ENC_MFM, (type == 2) ? 250000 : 500000);
+
+		sn = (type == 2) ? 9 : 18;
+
+		for (c = 0; c < 80; c++) {
+			for (h = 0; h < 2; h++) {
+				for (s = 0; s < sn; s++) {
+					dsk_fdc_format_sector (fdc, c, h, c, h, s + 1, 512, 0);
+				}
+			}
+		}
+	}
+	else {
+		return (1);
 	}
 
-	mac_sony_return (sim, 0x0000, 0);
+	mac_log_deb ("sony: formatted disk (%lu blocks)\n", dsk_get_block_cnt (dsk));
+
+	return (0);
 }
 
 static
-void mac_sony_get_disk_icon (macplus_t *sim, unsigned drive)
+void mac_sony_ctl_verify (mac_sony_t *sony)
 {
+	unsigned vref;
+	disk_t   *dsk;
+
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control: verify (drive=%u)\n", vref);
+#endif
+
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sony, nsDrvErr, 0);
+		return;
+	}
+
+	dsk = dsks_get_disk (sony->dsks, vref);
+
+	if (dsk == NULL) {
+		mac_sony_return (sony, noDriveErr, 0);
+		return;
+	}
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_ctl_eject (mac_sony_t *sony)
+{
+	unsigned      vref;
+	unsigned long vars;
+
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control eject (drive=%u)\n", vref);
+#endif
+
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sony, nsDrvErr, 0);
+		return;
+	}
+
+	vars = mac_sony_get_vars (sony, vref);
+
+	mem_set_uint8 (sony->mem, vars + SONY_DISKINPLACE, 0x00);
+	mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0x00);
+	mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0x00);
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_ctl_set_tag_buf (mac_sony_t *sony)
+{
+	unsigned long tagbuf;
+
+	tagbuf = mac_sony_get_pblk (sony, csParam, 4);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control: set tag buffer (buf=0x%08lx)\n", tagbuf);
+#endif
+
+	sony->tag_buf = tagbuf & 0x00ffffff;
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_ctl_format (mac_sony_t *sony)
+{
+	unsigned      vref, format;
+	unsigned long blk;
 	disk_t        *dsk;
-	unsigned long pblk;
+
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
+	format = mac_sony_get_pblk (sony, csParam, 2);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control format (drive=%u, format=%u)\n", vref, format);
+#endif
+
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sony, nsDrvErr, 0);
+		return;
+	}
+
+	dsk = dsks_get_disk (sony->dsks, vref);
+
+	if (dsk == NULL) {
+		mac_sony_return (sony, noDriveErr, 0);
+		return;
+	}
+
+	if (dsk->readonly) {
+		mac_sony_return (sony, wPrErr, 0);
+		return;
+	}
+
+	if ((format > 0) && (format <= sony->format_cnt)) {
+		blk = sony->format_list[2 * (format - 1)];
+	}
+	else {
+		blk = dsk_get_block_cnt (dsk);
+	}
+
+	if (mac_sony_format (dsk, blk)) {
+		mac_sony_return (sony, paramErr, 0);
+		return;
+	}
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_ctl_get_icon (mac_sony_t *sony, int which)
+{
+	unsigned      vref;
 	unsigned long addr, addr1, addr2;
+	disk_t        *dsk;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
 
-	addr1 = sim->sony.icon[0];
-	addr2 = sim->sony.icon[1];
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control: get %s icon (drive=%u)\n",
+		which ? "media" : "drive", vref
+	);
+#endif
 
-	dsk = dsks_get_disk (sim->dsks, drive);
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sony, nsDrvErr, 0);
+		return;
+	}
+
+	addr1 = sony->icon_addr[0];
+	addr2 = sony->icon_addr[1];
+
+	dsk = dsks_get_disk (sony->dsks, vref);
 
 	if (dsk == NULL) {
 		addr = addr1;
@@ -692,239 +1097,362 @@ void mac_sony_get_disk_icon (macplus_t *sim, unsigned drive)
 		}
 	}
 
-	e68_set_mem32 (sim->cpu, pblk + PB_CSPARAM, addr);
+	mac_sony_set_pblk (sony, csParam, 4, addr);
 
-	mac_sony_return (sim, 0x0000, 0);
+	mac_sony_return (sony, noErr, 0);
 }
 
 static
-void mac_sony_control (macplus_t *sim)
+void mac_sony_ctl_get_drive_info (mac_sony_t *sony)
 {
-	unsigned long pblk;
-	unsigned long sony;
-	unsigned      vref, cscode;
-	unsigned      ret;
-	disk_t        *dsk;
+	unsigned vref, val;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-
-	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
-	cscode = e68_get_mem16 (sim->cpu, pblk + PB_CSCODE);
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
 
 #ifdef DEBUG_SONY
-	mac_log_deb ("sony: control (%04X) %02X\n", cscode, vref);
+	mac_log_deb ("sony: control: get drive info (drive=%u)\n", vref);
 #endif
 
 	if ((vref < 1) || (vref > SONY_DRIVES)) {
-		mac_sony_return (sim, 0xffc8, 0);
+		mac_sony_return (sony, nsDrvErr, 0);
 		return;
 	}
 
-	ret = 0xffef;
+	val = vref - 1;
+	val = ((val << 3) & 8) | ((val >> 1) & 1);
+
+	mac_sony_set_pblk (sony, csParam, 4, (val << 8) | 0x04);
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_ctl_format_copy (mac_sony_t *sony)
+{
+	unsigned      i;
+	unsigned      vref, format, type;
+	unsigned long data, tags;
+	unsigned long idx, blk;
+	unsigned char buf[512];
+	unsigned char tag[12];
+	disk_t        *dsk;
+
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
+
+	format = mac_sony_get_pblk (sony, csParam, 2);
+	data = mac_sony_get_pblk (sony, csParam + 2, 4);
+	tags = mac_sony_get_pblk (sony, csParam + 6, 4);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: control: format/copy (drive=%u, format=%u, data=0x%08lx, tags=0x%08lx)\n",
+		vref, format, data, tags
+	);
+#endif
+
+	if ((vref < 1) || (vref > SONY_DRIVES)) {
+		mac_sony_return (sony, nsDrvErr, 0);
+		return;
+	}
+
+	dsk = dsks_get_disk (sony->dsks, vref);
+
+	if (dsk == NULL) {
+		mac_sony_return (sony, noDriveErr, 0);
+		return;
+	}
+
+	if (dsk->readonly) {
+		mac_sony_return (sony, wPrErr, 0);
+		return;
+	}
+
+	if ((format > 0) && (format <= sony->format_cnt)) {
+		blk = sony->format_list[2 * (format - 1)];
+	}
+	else {
+		mac_sony_return (sony, paramErr, 0);
+		return;
+	}
+
+	type = mac_sony_get_disk_type (blk);
+
+	if (mac_sony_format (dsk, blk)) {
+		mac_sony_return (sony, paramErr, 0);
+		return;
+	}
+
+	data &= 0x00ffffff;
+	tags &= 0x00ffffff;
+
+	memset (tag, 0, 12);
+
+	for (idx = 0; idx < blk; idx++) {
+		for (i = 0; i < 512; i++) {
+			buf[i] = mem_get_uint8 (sony->mem, data + i);
+		}
+
+		if ((type != 2) && (type != 3)) {
+			for (i = 0; i < 12; i++) {
+				tag[i] = mem_get_uint8 (sony->mem, tags + i);
+			}
+		}
+
+		if (mac_sony_write_block (dsk, buf, tag, idx)) {
+			mac_sony_return (sony, 0xffff, 0);
+			return;
+		}
+
+		data += 512;
+		tags += 12;
+	}
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_control (mac_sony_t *sony)
+{
+	unsigned cscode;
+
+	cscode = mac_sony_get_pblk (sony, csCode, 2);
 
 	switch (cscode) {
 	case 1: /* kill io */
-		mac_sony_return (sim, 0xffff, 1);
-		return;
+		mac_sony_return (sony, abortErr, 1);
+		break;
 
 	case 5: /* verify disk */
-		dsk = dsks_get_disk (sim->dsks, vref);
-		ret = (dsk == NULL) ? 0xffbf : 0x0000;
+		mac_sony_ctl_verify (sony);
 		break;
 
 	case 7: /* eject disk */
-		pce_log_tag (MSG_INF, "SONY:", "eject drive %u\n", vref);
-		sony = mac_sony_get_vars (sim, vref);
-		e68_set_mem8 (sim->cpu, sony + SONY_DISKINPLACE, 0x00);
-		e68_set_mem8 (sim->cpu, sony + SONY_WPROT, 0x00);
-		e68_set_mem8 (sim->cpu, sony + SONY_TWOSIDEFMT, 0x00);
-		ret = 0x0000;
+		mac_sony_ctl_eject (sony);
+		return;
+
+	case 8: /* set tag buffer */
+		mac_sony_ctl_set_tag_buf (sony);
 		break;
 
 	case 9: /* track cache control */
-		ret = 0xffc8;
+		mac_sony_return (sony, 0xffc8, 0);
 		break;
 
 	case 6: /* format disk */
-		mac_sony_format (sim, vref);
+		mac_sony_ctl_format (sony);
 		return;
 
 	case 21: /* get drive icon */
-		mac_sony_get_disk_icon (sim, vref);
+		mac_sony_ctl_get_icon (sony, 0);
 		return;
 
 	case 22: /* get media icon */
-		mac_sony_get_disk_icon (sim, vref);
+		mac_sony_ctl_get_icon (sony, 1);
 		return;
 
 	case 23: /* get drive info */
-		ret = 0x0000;
+		mac_sony_ctl_get_drive_info (sony);
+		return;
 
-		if (vref == 1) {
-			e68_set_mem32 (sim->cpu, pblk + PB_CSPARAM, 0x03);
-		}
-		else if (vref <= 4) {
-			e68_set_mem32 (sim->cpu, pblk + PB_CSPARAM, 0x103);
-		}
-		else {
-			ret = 0xffef;
-		}
-		break;
+	case 21315: /* FmtCopy */
+		mac_sony_ctl_format_copy (sony);
+		return;
 
 	default:
-		ret = 0xffef;
-		break;
+		mac_log_deb ("sony: control: unknown (opcode=0x%04x)\n", cscode);
+		mac_sony_return (sony, controlErr, 0);
+		return;
 	}
-
-	mac_sony_return (sim, ret, 0);
 }
 
+
 static
-void mac_sony_status_format_list (macplus_t *sim)
+void mac_sony_status_format_list (mac_sony_t *sony)
 {
-	unsigned long pblk;
-	unsigned      vref, cnt;
+	unsigned      i;
 	unsigned long ptr;
-	unsigned long blk, val;
+	unsigned      vref, cnt;
+	unsigned long blk;
+	unsigned long *list;
 	disk_t        *dsk;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
+	cnt = mac_sony_get_pblk (sony, csParam, 2);
+	ptr = mac_sony_get_pblk (sony, csParam + 2, 4);
+
+#ifdef DEBUG_SONY
+	mac_log_deb ("sony: status: get format list (drive=%u, maxfmt=%u)\n",
+		vref, cnt
+	);
+#endif
 
 	if ((vref < 1) || (vref > SONY_DRIVES)) {
-		mac_sony_return (sim, nsDrvErr, 0);
+		mac_sony_return (sony, nsDrvErr, 0);
 		return;
 	}
 
-	dsk = dsks_get_disk (sim->dsks, vref);
+	dsk = dsks_get_disk (sony->dsks, vref);
 
 	if (dsk == NULL) {
-		mac_sony_return (sim, noDriveErr, 0);
+		mac_sony_return (sony, noDriveErr, 0);
 		return;
 	}
-
-	cnt = e68_get_mem16 (sim->cpu, pblk + PB_CSPARAM);
-
-	if (cnt < 1) {
-		mac_sony_return (sim, 0x0000, 0);
-		return;
-	}
-
-	ptr = e68_get_mem32 (sim->cpu, pblk + PB_CSPARAM + 2);
 
 	blk = dsk_get_block_cnt (dsk);
 
-	if (blk == 800) {
-		val = 0xc10a0050;
-	}
-	else if (blk == 1440) {
-		val = 0xc1090050;
-	}
-	else if (blk == 1600) {
-		val = 0xc20a0050;
-	}
-	else if (blk == 2880) {
-		val = 0xd1120050;
+	list = sony->format_list;
+
+	if (dsk_get_type (dsk) == PCE_DISK_FDC) {
+		sony->format_cnt = 4;
+
+		list[0] = 800;
+		list[1] = 0x810a0050;
+		list[2] = 1600;
+		list[3] = 0x820a0050;
+		list[4] = 1440;
+		list[5] = 0x82090050;
+		list[6] = 2880;
+		list[7] = 0x92120050;
+
+		switch (mac_sony_get_disk_type (blk)) {
+		case 0:
+			list[1] |= 0x40000000;
+			break;
+
+		case 1:
+			list[3] |= 0x40000000;
+			break;
+
+		case 2:
+			list[5] |= 0x40000000;
+			break;
+
+		case 3:
+		default:
+			if (sony->format_hd_as_dd) {
+				list[7] |= 0x40000000;
+			}
+			else {
+				sony->format_cnt = 1;
+				list[0] = 2880;
+				list[1] = 0xd2120050;
+			}
+			break;
+		}
 	}
 	else {
-		val = 0;
+		sony->format_cnt = 1;
+		list[0] = blk;
+		list[1] = 0;
 	}
 
-	e68_set_mem32 (sim->cpu, ptr, blk);
-	e68_set_mem32 (sim->cpu, ptr + 4, val);
-	e68_set_mem16 (sim->cpu, pblk + PB_CSPARAM, 1);
+	if (cnt > sony->format_cnt) {
+		cnt = sony->format_cnt;
+	}
 
-	mac_sony_return (sim, 0x0000, 0);
+	for (i = 0; i < cnt; i++) {
+		mem_set_uint32_be (sony->mem, ptr + 8 * i + 0, list[2 * i + 0]);
+		mem_set_uint32_be (sony->mem, ptr + 8 * i + 4, list[2 * i + 1]);
+	}
+
+	mac_sony_set_pblk (sony, csParam, 2, cnt);
+
+	mac_sony_return (sony, noErr, 0);
 }
 
 static
-void mac_sony_status (macplus_t *sim)
+void mac_sony_status_drive_status (mac_sony_t *sony)
 {
-	unsigned long pblk;
-	unsigned      cscode, vref;
-	unsigned long src, dst;
 	unsigned      i;
-	uint16_t      val;
+	unsigned      vref, val;
+	unsigned long src;
+	disk_t        *dsk;
 
-	pblk = e68_get_areg32 (sim->cpu, 0);
-
-	cscode = e68_get_mem16 (sim->cpu, pblk + PB_CSCODE);
-	vref = e68_get_mem16 (sim->cpu, pblk + PB_IOVREFNUM);
+	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
 
 #ifdef DEBUG_SONY
-	mac_log_deb ("sony: status cs=%04X vref=%04X)\n", cscode, vref);
+	mac_log_deb ("sony: status: get drive status (drive=%u)\n", vref);
 #endif
 
 	if ((vref < 1) || (vref > SONY_DRIVES)) {
-		mac_sony_return (sim, 0xffc8, 0);
+		mac_sony_return (sony, nsDrvErr, 0);
 		return;
 	}
+
+	dsk = dsks_get_disk (sony->dsks, vref);
+
+	if (dsk == NULL) {
+		mac_sony_return (sony, noDriveErr, 0);
+		return;
+	}
+
+	src = mac_sony_get_vars (sony, vref);
+
+	for (i = 0; i < 11; i++) {
+		val = mem_get_uint16_be (sony->mem, src + 2 * i);
+		mac_sony_set_pblk (sony, csParam + 2 * i, 2, val);
+	}
+
+	mac_sony_return (sony, noErr, 0);
+}
+
+static
+void mac_sony_status (mac_sony_t *sony)
+{
+	unsigned cscode;
+
+	cscode = mac_sony_get_pblk (sony, csCode, 2);
 
 	switch (cscode) {
 	case 6: /* return format list */
-		mac_sony_status_format_list (sim);
-		return;
+		mac_sony_status_format_list (sony);
+		break;
 
 	case 8: /* drive status */
-#ifdef DEBUG_SONY
-		mac_log_deb ("sony: status DriveStatus vref=%04X)\n", vref);
-#endif
+		mac_sony_status_drive_status (sony);
+		break;
 
-		src = mac_sony_get_vars (sim, vref);
-		dst = pblk + PB_CSPARAM;
-
-		for (i = 0; i < 11; i++) {
-			val = e68_get_mem16 (sim->cpu, src + 2 * i);
-			e68_set_mem16 (sim->cpu, dst + 2 * i, val);
-		}
-
-		mac_sony_return (sim, 0x0000, 0);
-		return;
+	default:
+		mac_sony_return (sony, statusErr, 0);
+		mac_log_deb ("sony: status: unknown (cs=0x%04x)\n", cscode);
+		break;
 	}
-
-	mac_sony_return (sim, 0xffee, 0);
 }
 
-int mac_sony_hook (macplus_t *sim, unsigned val)
+int mac_sony_hook (mac_sony_t *sony, unsigned val)
 {
 	switch (val) {
 	case MAC_HOOK_SONY_OPEN:
-		mac_hook_skip (sim, 4);
-		mac_sony_open (sim);
+		mac_sony_open (sony);
 		return (0);
 
 	case MAC_HOOK_SONY_PRIME:
-		mac_hook_skip (sim, 4);
-		mac_sony_prime (sim);
+		mac_sony_prime (sony);
 		return (0);
 
 	case MAC_HOOK_SONY_CTRL:
-		mac_hook_skip (sim, 4);
-		mac_sony_control (sim);
+		mac_sony_control (sony);
 		return (0);
 
 	case MAC_HOOK_SONY_STATUS:
-		mac_hook_skip (sim, 4);
-		mac_sony_status (sim);
+		mac_sony_status (sony);
 		return (0);
 
 	case MAC_HOOK_SONY_CLOSE:
-		mac_hook_skip (sim, 4);
 		return (0);
 	}
 
 	return (1);
 }
 
-void mac_sony_reset (macplus_t *sim)
+void mac_sony_reset (mac_sony_t *sony)
 {
 	unsigned i;
 
-	mac_sony_unpatch_rom (sim);
+	mac_sony_unpatch_rom (sony);
 
-	sim->sony.open = 0;
+	sony->open = 0;
 
 	for (i = 0; i < SONY_DRIVES; i++) {
-		sim->sony.delay_cnt[i] = sim->sony.delay_val[i];
+		sony->delay_cnt[i] = sony->delay_val[i];
 	}
 }

@@ -420,7 +420,7 @@ void mac_log_exception (void *ext, unsigned tn)
 		return;
 
 	case 0x0a:
-		mac_sony_patch (sim);
+		mac_sony_patch (&sim->sony);
 		return;
 
 	case 0x19:
