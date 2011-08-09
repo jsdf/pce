@@ -55,6 +55,7 @@
 #define PFDC_CHUNK_SC 0x5343
 #define PFDC_CHUNK_EN 0x454e
 #define PFDC_CHUNK_CM 0x434d
+#define PFDC_CHUNK_TG 0x5447
 
 #define PFDC_CRC_POLY         0x04c11db7
 
@@ -420,6 +421,29 @@ int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned 
 }
 
 static
+int pfdc_load_tags_v2 (FILE *fp, pfdc_sct_t *last, unsigned size, unsigned long crc)
+{
+	unsigned      cnt;
+	unsigned char buf[256];
+
+	if (last == NULL) {
+		return (1);
+	}
+
+	cnt = (size < 256) ? size : 256;
+
+	if (pfdc_read (fp, buf, cnt)) {
+		return (1);
+	}
+
+	crc = pfdc_crc (crc, buf, cnt);
+
+	pfdc_sct_set_tags (last, buf, cnt);
+
+	return (pfdc_skip_chunk_v2 (fp, size - cnt, crc));
+}
+
+static
 int pfdc_load_comment_v2 (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long crc)
 {
 	unsigned      i, j, k, d;
@@ -547,6 +571,12 @@ int pfdc_load_chunks_v2 (FILE *fp, pfdc_img_t *img)
 
 		case PFDC_CHUNK_SC:
 			if (pfdc_load_sector_v2 (fp, img, &last, size, crc)) {
+				return (1);
+			}
+			break;
+
+		case PFDC_CHUNK_TG:
+			if (pfdc_load_tags_v2 (fp, last, size, crc)) {
 				return (1);
 			}
 			break;
@@ -831,6 +861,38 @@ int pfdc_save_alternates_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsign
 }
 
 static
+int pfdc_save_chunk_v2 (FILE *fp, unsigned ckid, unsigned size, const void *data)
+{
+	unsigned long crc;
+	unsigned char buf[4];
+
+	pfdc_set_uint16_be (buf, 0, ckid);
+	pfdc_set_uint16_be (buf, 2, size);
+
+	crc = pfdc_crc (0, buf, 4);
+
+	if (pfdc_write (fp, buf, 4)) {
+		return (1);
+	}
+
+	if (size > 0) {
+		crc = pfdc_crc (crc, data, size);
+
+		if (pfdc_write (fp, data, size)) {
+			return (1);
+		}
+	}
+
+	pfdc_set_uint32_be (buf, 0, crc);
+
+	if (pfdc_write (fp, buf, 4)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 unsigned long pfdc_sct_get_flags_v2 (const pfdc_sct_t *sct)
 {
 	unsigned long f;
@@ -858,7 +920,7 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 	unsigned      cnt;
 	unsigned char flg;
 	unsigned long crc;
-	unsigned char buf[16];
+	unsigned char buf[256];
 
 	flg = pfdc_sct_get_flags_v2 (sct);
 
@@ -920,6 +982,14 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 		return (1);
 	}
 
+	cnt = pfdc_sct_get_tags (sct, buf, 256);
+
+	if (cnt > 0) {
+		if (pfdc_save_chunk_v2 (fp, PFDC_CHUNK_TG, cnt, buf)) {
+			return (1);
+		}
+	}
+
 	return (0);
 }
 
@@ -938,38 +1008,6 @@ int pfdc_save_alternates_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsign
 		}
 
 		sct = sct->next;
-	}
-
-	return (0);
-}
-
-static
-int pfdc_save_chunk_v2 (FILE *fp, unsigned ckid, unsigned size, const void *data)
-{
-	unsigned long crc;
-	unsigned char buf[4];
-
-	pfdc_set_uint16_be (buf, 0, ckid);
-	pfdc_set_uint16_be (buf, 2, size);
-
-	crc = pfdc_crc (0, buf, 4);
-
-	if (pfdc_write (fp, buf, 4)) {
-		return (1);
-	}
-
-	if (size > 0) {
-		crc = pfdc_crc (crc, data, size);
-
-		if (pfdc_write (fp, data, size)) {
-			return (1);
-		}
-	}
-
-	pfdc_set_uint32_be (buf, 0, crc);
-
-	if (pfdc_write (fp, buf, 4)) {
-		return (1);
 	}
 
 	return (0);

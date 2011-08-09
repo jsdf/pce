@@ -113,6 +113,20 @@ offset	size	description
 	- Comments should be UTF-8, with lines separated by LF (0x0a).
 
 
+Tag chunk
+---------
+
+offset	size	description
+
+0	2	Chunk ID ('TG')
+2	2	Chunk size
+4	n	Tag data
+4+n	4	Chunk CRC
+
+	- The tag data is associated with the sector in the most recent
+	  sector chunk.
+
+
 CRC
 ---
 
