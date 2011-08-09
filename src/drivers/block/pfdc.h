@@ -35,6 +35,8 @@
 #define PFDC_ENC_MFM       0x02
 #define PFDC_ENC_GCR       0x03
 
+#define PFDC_TAGS_MAX      16
+
 
 typedef struct pfdc_sct_t {
 	struct pfdc_sct_t *next;
@@ -52,6 +54,9 @@ typedef struct pfdc_sct_t {
 	unsigned           cur_alt;
 
 	unsigned char      *data;
+
+	unsigned short     tag_cnt;
+	unsigned char      tag[PFDC_TAGS_MAX];
 } pfdc_sct_t;
 
 
@@ -106,6 +111,10 @@ int pfdc_sct_uniform (const pfdc_sct_t *sct);
 void pfdc_sct_set_flags (pfdc_sct_t *sct, unsigned long flags, int set);
 
 void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long rate);
+
+unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt);
+
+unsigned pfdc_sct_get_tags (const pfdc_sct_t *sct, void *buf, unsigned cnt);
 
 
 pfdc_trk_t *pfdc_trk_new (unsigned h);

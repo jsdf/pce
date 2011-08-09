@@ -137,6 +137,8 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 		sct->data = NULL;
 	}
 
+	sct->tag_cnt = 0;
+
 	return (sct);
 }
 
@@ -168,6 +170,12 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 	dst->data_rate = sct->data_rate;
 
 	memcpy (dst->data, sct->data, dst->n);
+
+	dst->tag_cnt = sct->tag_cnt;
+
+	if (sct->tag_cnt > 0) {
+		memcpy (dst->tag, sct->tag, sct->tag_cnt);
+	}
 
 	if (deep == 0) {
 		dst->cur_alt = 0;
@@ -281,6 +289,46 @@ void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long rate)
 
 		sct = sct->next;
 	}
+}
+
+unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt)
+{
+	unsigned            i;
+	const unsigned char *src;
+
+	src = buf;
+
+	if (cnt > PFDC_TAGS_MAX) {
+		cnt = PFDC_TAGS_MAX;
+	}
+
+	sct->tag_cnt = cnt;
+
+	for (i = 0; i < cnt; i++) {
+		sct->tag[i] = src[i];
+	}
+
+	return (cnt);
+}
+
+unsigned pfdc_sct_get_tags (const pfdc_sct_t *sct, void *buf, unsigned cnt)
+{
+	unsigned      i, n;
+	unsigned char *dst;
+
+	dst = buf;
+
+	n = (cnt < sct->tag_cnt) ? cnt : sct->tag_cnt;
+
+	for (i = 0; i < n; i++) {
+		dst[i] = sct->tag[i];
+	}
+
+	for (i = n; i < cnt; i++) {
+		dst[i] = 0;
+	}
+
+	return (n);
 }
 
 
