@@ -65,7 +65,15 @@ unsigned dsk_fdc_read_chs (disk_fdc_t *fdc, void *buf, unsigned *cnt,
 	unsigned c, unsigned h, unsigned s, int phy
 );
 
+unsigned dsk_fdc_read_tags (disk_fdc_t *fdc, void *buf, unsigned cnt,
+	unsigned c, unsigned h, unsigned s, int phy
+);
+
 unsigned dsk_fdc_write_chs (disk_fdc_t *fdc, const void *buf, unsigned *cnt,
+	unsigned c, unsigned h, unsigned s, int phy
+);
+
+unsigned dsk_fdc_write_tags (disk_fdc_t *fdc, const void *buf, unsigned cnt,
 	unsigned c, unsigned h, unsigned s, int phy
 );
 

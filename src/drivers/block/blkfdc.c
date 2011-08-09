@@ -92,6 +92,35 @@ unsigned dsk_fdc_read_chs (disk_fdc_t *fdc, void *buf, unsigned *cnt,
 	return (ret);
 }
 
+unsigned dsk_fdc_read_tags (disk_fdc_t *fdc, void *buf, unsigned cnt,
+	unsigned c, unsigned h, unsigned s, int phy)
+{
+	pfdc_sct_t *sct, *alt;
+
+	memset (buf, 0, cnt);
+
+	if (fdc->img == NULL) {
+		return (0);
+	}
+
+	sct = pfdc_img_get_sector (fdc->img, c, h, s, phy);
+
+	if (sct == NULL) {
+		return (0);
+	}
+
+	alt = pfdc_sct_get_alternate (sct, sct->cur_alt);
+
+	if (alt == NULL) {
+		sct->cur_alt = 0;
+		alt = sct;
+	}
+
+	cnt = pfdc_sct_get_tags (alt, buf, cnt);
+
+	return (cnt);
+}
+
 unsigned dsk_fdc_write_chs (disk_fdc_t *fdc, const void *buf, unsigned *cnt,
 	unsigned c, unsigned h, unsigned s, int phy)
 {
@@ -137,6 +166,32 @@ unsigned dsk_fdc_write_chs (disk_fdc_t *fdc, const void *buf, unsigned *cnt,
 	}
 
 	return (ret);
+}
+
+unsigned dsk_fdc_write_tags (disk_fdc_t *fdc, const void *buf, unsigned cnt,
+	unsigned c, unsigned h, unsigned s, int phy)
+{
+	pfdc_sct_t *sct;
+
+	if (fdc->img == NULL) {
+		return (0);
+	}
+
+	if (fdc->dsk.readonly) {
+		return (0);
+	}
+
+	sct = pfdc_img_get_sector (fdc->img, c, h, s, phy);
+
+	if (sct == NULL) {
+		return (0);
+	}
+
+	fdc->dirty = 1;
+
+	cnt = pfdc_sct_set_tags (sct, buf, cnt);
+
+	return (cnt);
 }
 
 int dsk_fdc_erase_track (disk_fdc_t *fdc, unsigned c, unsigned h)
