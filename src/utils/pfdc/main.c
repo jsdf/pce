@@ -97,7 +97,8 @@ static pce_option_t opts[] = {
 	{ 'l', 0, "list-tracks", NULL, "List tracks [no]" },
 	{ 'L', 0, "list-sectors", NULL, "List sectors [no]" },
 	{ 'm', 1, "merge", "filename", "Merge an image" },
-	{ 'n', 1, "new", "size", "Create a standard image of <size> KiB" },
+	{ 'n', 1, "new-dos", "size", "Create a standard image of <size> KiB" },
+	{ 'N', 2, "new", "type size", "Create a standard image of <size> KiB" },
 	{ 'o', 1, "output", "filename", "Set the output file name [none]" },
 	{ 'O', 1, "output-format", "format", "Set the output format [auto]" },
 	{ 'p', 1, "operation", "name [...]", "Perform an operation" },
@@ -835,38 +836,6 @@ int pfdc_new (pfdc_img_t **img)
 	}
 
 	return (0);
-}
-
-int pfdc_new_standard (pfdc_img_t **img, unsigned long size)
-{
-	unsigned c, h, s;
-
-	if (size == 0) {
-		*img = pfdc_img_new();
-
-		return (*img == NULL);
-	}
-
-	if (pfdc_get_geometry_from_size (1024 * size, &c, &h, &s)) {
-		return (1);
-	}
-
-	par_cyl_all = 0;
-	par_cyl[0] = 0;
-	par_cyl[1] = c - 1;
-
-	par_trk_all = 0;
-	par_trk[0] = 0;
-	par_trk[1] = h - 1;
-
-	par_sct_all = 0;
-	par_sct[0] = 1;
-	par_sct[1] = s;
-
-	par_rsc_all = 1;
-	par_alt_all = 1;
-
-	return (pfdc_new (img));
 }
 
 
@@ -1818,6 +1787,167 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 
 
 static
+int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
+{
+	unsigned      c, h, s;
+	unsigned      cyl_cnt, trk_cnt, sct_cnt;
+	unsigned long rate;
+	pfdc_cyl_t    *cyl;
+	pfdc_trk_t    *trk;
+	pfdc_sct_t    *sct;
+
+	pfdc_img_erase (img);
+
+	if (size == 0) {
+		return (0);
+	}
+
+	if (pfdc_get_geometry_from_size (1024 * size, &cyl_cnt, &trk_cnt, &sct_cnt)) {
+		return (1);
+	}
+
+	if (sct_cnt > 16) {
+		rate = 500000;
+	}
+	else if (sct_cnt > 12) {
+		rate = 300000;
+	}
+	else {
+		rate = 250000;
+	}
+
+	for (c = 0; c < cyl_cnt; c++) {
+		cyl = pfdc_img_get_cylinder (img, c, 1);
+
+		if (cyl == NULL) {
+			return (1);
+		}
+
+		for (h = 0; h < trk_cnt; h++) {
+			trk = pfdc_img_get_track (img, c, h, 1);
+
+			if (trk == NULL) {
+				return (1);
+			}
+
+			for (s = 0; s < sct_cnt; s++) {
+				sct = pfdc_sct_new (c, h, s + 1, 512);
+
+				if (sct == NULL) {
+					return (1);
+				}
+
+				if (pfdc_trk_add_sector (trk, sct)) {
+					pfdc_sct_del (sct);
+					return (1);
+				}
+
+				pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, rate);
+				pfdc_sct_fill (sct, par_filler);
+			}
+		}
+	}
+
+	return (0);
+}
+
+static
+int pfdc_new_mac (pfdc_img_t *img, unsigned long size)
+{
+	unsigned   c, h, s;
+	unsigned   trk_cnt, sct_cnt;
+	pfdc_cyl_t *cyl;
+	pfdc_trk_t *trk;
+	pfdc_sct_t *sct;
+
+	pfdc_img_erase (img);
+
+	if (size == 400) {
+		trk_cnt = 1;
+	}
+	else if (size == 800) {
+		trk_cnt = 2;
+	}
+	else {
+		return (1);
+	}
+
+	sct_cnt = 13;
+
+	for (c = 0; c < 80; c++) {
+		cyl = pfdc_img_get_cylinder (img, c, 1);
+
+		if (cyl == NULL) {
+			return (1);
+		}
+
+		if ((c & 15) == 0) {
+			sct_cnt -= 1;
+		}
+
+		for (h = 0; h < trk_cnt; h++) {
+			trk = pfdc_img_get_track (img, c, h, 1);
+
+			if (trk == NULL) {
+				return (1);
+			}
+
+			for (s = 0; s < sct_cnt; s++) {
+				sct = pfdc_sct_new (c, h, s, 512);
+
+				if (sct == NULL) {
+					return (1);
+				}
+
+				if (pfdc_trk_add_sector (trk, sct)) {
+					pfdc_sct_del (sct);
+					return (1);
+				}
+
+				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR, 250000);
+				pfdc_sct_fill (sct, par_filler);
+			}
+		}
+	}
+
+	return (0);
+}
+
+static
+pfdc_img_t *pfdc_new_image (const char *type, const char *size)
+{
+	int           r;
+	unsigned long n;
+	pfdc_img_t    *img;
+
+	n = strtoul (size, NULL, 0);
+
+	img = pfdc_img_new();
+
+	if (strcmp (type, "dos") == 0) {
+		r = pfdc_new_dos (img, n);
+	}
+	else if (strcmp (type, "mac") == 0) {
+		r = pfdc_new_mac (img, n);
+	}
+	else {
+		r = 1;
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: bad image type/size (%s/%s)\n",
+			arg0, type, size
+		);
+
+		pfdc_img_del (img);
+
+		return (NULL);
+	}
+
+	return (img);
+}
+
+static
 pfdc_img_t *pfdc_load_image (const char *fname)
 {
 	pfdc_img_t *img;
@@ -1892,11 +2022,10 @@ int pfdc_set_format (const char *name, unsigned *val)
 
 int main (int argc, char **argv)
 {
-	int           r;
-	char          **optarg;
-	unsigned long size;
-	pfdc_img_t    *img;
-	const char    *out;
+	int        r;
+	char       **optarg;
+	pfdc_img_t *img;
+	const char *out;
 
 	arg0 = argv[0];
 
@@ -2014,10 +2143,25 @@ int main (int argc, char **argv)
 			break;
 
 		case 'n':
-			size = strtoul (optarg[0], NULL, 0);
-
-			if (pfdc_new_standard (&img, size)) {
+			if (img != NULL) {
 				pfdc_img_del (img);
+			}
+
+			img = pfdc_new_image ("dos", optarg[0]);
+
+			if (img == NULL) {
+				return (1);
+			}
+			break;
+
+		case 'N':
+			if (img != NULL) {
+				pfdc_img_del (img);
+			}
+
+			img = pfdc_new_image (optarg[0], optarg[1]);
+
+			if (img == NULL) {
 				return (1);
 			}
 			break;
