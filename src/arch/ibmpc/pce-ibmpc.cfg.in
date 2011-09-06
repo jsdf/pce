@@ -534,8 +534,9 @@ disk {
 disk {
 	drive    = 128
 	type     = "auto"
-	file     = "hd1.img"
-#	cow      = "hd1.cow"
+	file     = "hd0.img"
+	file     = "hd0.qed"
+#	cow      = "hd0.cow"
 	readonly = 0
 	optional = 1
 }
@@ -544,9 +545,10 @@ disk {
 disk {
 	drive    = 129
 	type     = "auto"
+	file     = "hd1.img"
+	file     = "hd1.qed"
 	file     = "drv_81.img"
-	file     = "hd2.img"
-#	cow      = "drv_80.cow"
+#	cow      = "hd1.cow"
 	readonly = 0
 	optional = 1
 }
