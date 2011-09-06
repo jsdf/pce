@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/arm/mmu.c                                            *
  * Created:     2004-11-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -564,7 +564,7 @@ int arm_dload16 (arm_t *c, uint32_t addr, uint16_t *val)
 		}
 		else {
 #ifdef ARM_HOST_LE
-			*val = *(uint32_t *) p;
+			*val = *(uint16_t *) p;
 #else
 			*val = ((uint16_t) p[1] << 8) | p[0];
 #endif
