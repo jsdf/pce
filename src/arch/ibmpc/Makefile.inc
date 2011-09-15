@@ -74,6 +74,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/video/wy700.o \
 	src/devices/device.o \
 	src/devices/fdc.o \
+	src/devices/hdc.o \
 	src/devices/memory.o \
 	src/devices/nvram.o \
 	src/devices/parport.o \

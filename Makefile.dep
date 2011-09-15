@@ -27,6 +27,7 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \
@@ -77,6 +78,7 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \
@@ -113,6 +115,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \
@@ -162,6 +165,7 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \
@@ -207,6 +211,7 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \
@@ -255,6 +260,7 @@ src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
 	src/devices/fdc.h \
+	src/devices/hdc.h \
 	src/devices/memory.h \
 	src/devices/nvram.h \
 	src/devices/parport.h \

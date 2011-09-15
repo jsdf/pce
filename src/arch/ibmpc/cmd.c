@@ -552,10 +552,6 @@ void pce_op_int (void *ext, unsigned char n)
 			return;
 		}
 
-		if (e86_get_mem16 (pc->cpu, 0, 4 * 0x19 + 2) < 0xf000) {
-			return;
-		}
-
 		seg = pc_get_pcex_seg (pc);
 
 		if (seg == 0) {

@@ -41,6 +41,7 @@
 #include <cpu/e8086/e8086.h>
 
 #include <devices/fdc.h>
+#include <devices/hdc.h>
 #include <devices/memory.h>
 #include <devices/nvram.h>
 #include <devices/parport.h>
@@ -88,6 +89,7 @@ typedef struct ibmpc_t {
 	unsigned char      ppi_port_c[2];
 
 	dev_fdc_t          *fdc;
+	hdc_t              *hdc;
 	ems_t              *ems;
 	xms_t              *xms;
 

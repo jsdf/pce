@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:   src/arch/ibmpc/bios/pcex.asm                                 *
 ;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -495,6 +495,10 @@ init_rom_range:
 .skiprom:
 	cmp	bx, dx
 	jb	.next
+
+	in	al, 0x21
+	and	al, 0xfc
+	out	0x21, al
 
 	pop	es
 	pop	bx
@@ -1035,9 +1039,15 @@ int_19:
 	mov	ds, ax
 	mov	es, ax
 
+	cmp	word [4 * 0x13 + 0], 0xec59
+	jne	.noint13
+	cmp	word [4 * 0x13 + 2], 0xf000
+	jne	.noint13
+
 	mov	word [4 * 0x13 + 0], int_13
 	mov	word [4 * 0x13 + 2], cs
 
+.noint13:
 	mov	word [4 * 0x1a + 0], int_1a
 	mov	word [4 * 0x1a + 2], cs
 
