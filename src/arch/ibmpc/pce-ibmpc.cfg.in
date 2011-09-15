@@ -25,6 +25,9 @@ system {
 	# and 128 for the first hard disk.
 	boot = 128
 
+	# The number of floppy disk drives.
+	floppy_disk_drives = 2
+
 	# Enable read access to the host's RTC.
 	rtc = 1
 

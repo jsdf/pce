@@ -292,6 +292,8 @@ void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
 static
 void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
 {
+	pc->fd_cnt = cnt;
+
 	if (pc->model == PCE_IBMPC_5150) {
 		pc->ppi_port_a[0] &= ~0xc1;
 
@@ -346,6 +348,7 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
+	unsigned   fdcnt;
 	int        patch_init, patch_int19;
 	const char *model;
 	ini_sct_t  *sct;
@@ -366,13 +369,14 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 
 	ini_get_string (sct, "model", &model, "5150");
 	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
+	ini_get_uint16 (sct, "floppy_disk_drives", &fdcnt, 2);
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
 	ini_get_bool (sct, "patch_bios_init", &patch_init, 1);
 	ini_get_bool (sct, "patch_bios_int19", &patch_int19, 1);
 
 	pce_log_tag (MSG_INF, "SYSTEM:",
-		"model=%s patch-init=%d patch-int19=%d\n",
-		model, patch_init, patch_int19
+		"model=%s floppies=%u patch-init=%d patch-int19=%d\n",
+		model, fdcnt, patch_init, patch_int19
 	);
 
 	if (strcmp (model, "5150") == 0) {
@@ -398,6 +402,8 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	if (pc->model == PCE_IBMPC_5160) {
 		pc->ppi_port_c[0] |= 0x01;
 	}
+
+	pc_set_floppy_count (pc, fdcnt);
 }
 
 static
@@ -1043,15 +1049,10 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 
 		dsks_add_disk (pc->dsk, dsk);
 
-		if (dsk_get_drive (dsk) < 0x80) {
-			pc->fd_cnt += 1;
-		}
-		else {
+		if (dsk_get_drive (dsk) >= 0x80) {
 			pc->hd_cnt += 1;
 		}
 	}
-
-	pc_set_floppy_count (pc, pc->fd_cnt);
 }
 
 static
