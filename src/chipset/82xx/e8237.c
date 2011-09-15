@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8237.c                                     *
  * Created:     2003-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -645,7 +645,7 @@ unsigned char e8237_get_uint8 (e8237_t *dma, unsigned long addr)
 	case 0x08:
 		return (e8237_get_status (dma));
 
-	case 0x0f:
+	case 0x0d:
 		return (e8237_get_temporary (dma));
 	}
 
