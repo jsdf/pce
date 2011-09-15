@@ -1593,8 +1593,8 @@ unsigned pc_get_pcex_seg (ibmpc_t *pc)
 	unsigned seg;
 	unsigned v1, v2;
 
-	for (i = 0; i < 16; i++) {
-		seg = 0xf000 + i * 0x0100;
+	for (i = 0; i < 32; i++) {
+		seg = ((i < 16) ? 0xf000 : 0xc000) + (i & 15) * 0x0100;
 
 		v1 = e86_get_mem16 (pc->cpu, seg, 0x0004);
 		v2 = e86_get_mem16 (pc->cpu, seg, 0x0006);
