@@ -1372,6 +1372,13 @@ src/devices/fdc.o: src/devices/fdc.c \
 	src/drivers/block/block.h \
 	src/drivers/block/pfdc.h
 
+src/devices/hdc.o: src/devices/hdc.c \
+	src/config.h \
+	src/devices/device.h \
+	src/devices/hdc.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h
+
 src/devices/memory.o: src/devices/memory.c \
 	src/devices/memory.h
 

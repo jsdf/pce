@@ -1,0 +1,1204 @@
+/*****************************************************************************
+ * pce                                                                       *
+ *****************************************************************************/
+
+/*****************************************************************************
+ * File name:   src/devices/hdc.c                                            *
+ * Created:     2011-09-11 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ *****************************************************************************/
+
+/*****************************************************************************
+ * This program is free software. You can redistribute it and / or modify it *
+ * under the terms of the GNU General Public License version 2 as  published *
+ * by the Free Software Foundation.                                          *
+ *                                                                           *
+ * This program is distributed in the hope  that  it  will  be  useful,  but *
+ * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * Public License for more details.                                          *
+ *****************************************************************************/
+
+/* IBM XT hard disk controller */
+
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <devices/hdc.h>
+
+
+#ifndef DEBUG_HDC
+#define DEBUG_HDC 0
+#endif
+
+
+#define HDC_STATUS_REQ 0x01
+#define HDC_STATUS_INP 0x02
+#define HDC_STATUS_CMD 0x04
+#define HDC_STATUS_BSY 0x08
+#define HDC_STATUS_DRQ 0x10
+#define HDC_STATUS_INT 0x20
+
+#define HDC_MASK_DRQ 0x01
+#define HDC_MASK_IRQ 0x02
+
+
+static
+void hdc_set_irq (hdc_t *hdc, unsigned char val)
+{
+	val = (val != 0);
+
+	if (val) {
+		hdc->status |= HDC_STATUS_INT;
+	}
+	else {
+		hdc->status &= ~HDC_STATUS_INT;
+	}
+
+	if (hdc->irq_val != val) {
+		hdc->irq_val = val;
+
+		if ((hdc->mask & HDC_MASK_IRQ) == 0) {
+			return;
+		}
+
+		if (hdc->irq != NULL) {
+			hdc->irq (hdc->irq_ext, val);
+		}
+	}
+}
+
+static
+void hdc_set_dreq (hdc_t *hdc, unsigned char val)
+{
+	val = (val != 0);
+
+	if (val) {
+		hdc->status |= HDC_STATUS_DRQ;
+	}
+	else {
+		hdc->status &= ~HDC_STATUS_DRQ;
+	}
+
+	if (hdc->dreq_val != val) {
+		hdc->dreq_val = val;
+
+		if ((hdc->mask & HDC_MASK_DRQ) == 0) {
+			return;
+		}
+
+		if (hdc->dreq != NULL) {
+			hdc->dreq (hdc->dreq_ext, val);
+		}
+	}
+}
+
+static
+void hdc_request_command (hdc_t *hdc)
+{
+	hdc->status |= HDC_STATUS_REQ | HDC_STATUS_BSY | HDC_STATUS_CMD;
+	hdc->status &= ~HDC_STATUS_INP;
+}
+
+static
+void hdc_request_data (hdc_t *hdc, int inp)
+{
+	hdc->status |= HDC_STATUS_REQ | HDC_STATUS_BSY;
+	hdc->status &= ~(HDC_STATUS_INP | HDC_STATUS_CMD);
+
+	if (inp) {
+		hdc->status |= HDC_STATUS_INP;
+	}
+
+	hdc_set_dreq (hdc, 1);
+}
+
+static
+void hdc_request_status (hdc_t *hdc)
+{
+	hdc->status |= HDC_STATUS_REQ | HDC_STATUS_BSY;
+	hdc->status |= HDC_STATUS_INP | HDC_STATUS_CMD;
+
+	hdc->delay = 0;
+	hdc->cont = NULL;
+
+	hdc->set_tc = NULL;
+
+	hdc_set_dreq (hdc, 0);
+	hdc_set_irq (hdc, 1);
+}
+
+static
+void hdc_next_id (hdc_t *hdc)
+{
+	hdc_drive_t *d;
+
+	d = &hdc->drv[hdc->id.d & 1];
+
+	hdc->id.s += 1;
+
+	if (hdc->id.s >= d->max_s) {
+		hdc->id.s = 0;
+		hdc->id.h += 1;
+
+		if (hdc->id.h >= d->max_h) {
+			hdc->id.h = 0;
+			hdc->id.c += 1;
+		}
+	}
+}
+
+/* normal command termination */
+static
+void hdc_cmd_done (hdc_t *hdc)
+{
+	hdc_request_status (hdc);
+}
+
+
+/* Command 00: test drive ready */
+
+static
+void hdc_cmd_tst_rdy (hdc_t *hdc)
+{
+	unsigned d, drv;
+
+	d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  test drive ready\n",
+		hdc->cmd[0], d
+	);
+#endif
+
+	drv = hdc->drv[d].drive;
+
+	if ((drv != 0xffff) && (dsks_get_disk (hdc->dsks, drv) != NULL)) {
+		hdc->result = 0;
+	}
+	else {
+		hdc->drv[d].sense[0] = 0x04;
+		hdc->drv[d].sense[1] = hdc->cmd[1] & 0xe0;
+		hdc->drv[d].sense[2] = 0;
+		hdc->drv[d].sense[3] = 0;
+
+		hdc->result = 2;
+	}
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command 01: recalibrate */
+
+static
+void hdc_cmd_recal (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  recalibrate\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 65536;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command 03: sense */
+
+static
+void hdc_cmd_sense_cont (hdc_t *hdc)
+{
+	unsigned d;
+
+	d = (hdc->cmd[1] >> 5) & 1;
+
+	hdc->buf[0] = hdc->drv[d].sense[0];
+	hdc->buf[1] = hdc->drv[d].sense[1];
+	hdc->buf[2] = hdc->drv[d].sense[2];
+	hdc->buf[3] = hdc->drv[d].sense[3];
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 4;
+
+	hdc->result = 0;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 1);
+}
+
+static
+void hdc_cmd_sense (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  sense\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_sense_cont;
+}
+
+
+/* Command 04: format drive */
+
+static
+void hdc_cmd_fmtdrv_error (hdc_t *hdc, unsigned code)
+{
+	unsigned d;
+
+	d = hdc->id.d & 1;
+
+	fprintf (stderr, "hdc: format error (d=%u)\n", d);
+
+	hdc->result = 2;
+
+	hdc->drv[d].sense[0] = code | 0x80;
+	hdc->drv[d].sense[1] = (d << 5) | (hdc->id.h & 0x1f);
+	hdc->drv[d].sense[2] = (hdc->id.c >> 2) & 0xc0;
+	hdc->drv[d].sense[3] = hdc->id.c & 0xff;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_fmtdrv_cont (hdc_t *hdc)
+{
+	unsigned      i, d, c, h, cn, hn, sn;
+	unsigned char buf[512];
+	disk_t        *dsk;
+
+	d = hdc->id.d & 1;
+	c = hdc->id.c;
+	h = hdc->id.h;
+
+	cn = hdc->drv[d].max_c;
+	hn = hdc->drv[d].max_h;
+	sn = hdc->drv[d].max_s;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[d & 1].drive);
+
+	if (dsk == NULL) {
+		hdc_cmd_fmtdrv_error (hdc, 0x04);
+		return;
+	}
+
+	if (hdc->cmd[5] & 0x40) {
+		for (i = 0; i < 512; i++) {
+			buf[i] = hdc->buf[i];
+		}
+	}
+	else {
+		for (i = 0; i < 512; i++) {
+			buf[i] = 0x6c;
+		}
+	}
+
+#if DEBUG_HDC >= 2
+	fprintf (stderr, "HDC: CMD=%02X D=%u    format track (c=%u h=%u n=%u)\n",
+		hdc->cmd[0], d, c, h, sn
+	);
+#endif
+
+	for (i = 0; i < sn; i++) {
+		if (dsk_write_chs (dsk, buf, c, h, i + 1, 1)) {
+			hdc_cmd_fmtdrv_error (hdc, 0x03);
+			return;
+		}
+	}
+
+	hdc->delay = 8192;
+	hdc->cont = hdc_cmd_fmtdrv_cont;
+
+	h += 1;
+
+	if (h >= hn) {
+		h = 0;
+
+		c += 1;
+
+		if (c >= cn) {
+			hdc->cont = hdc_cmd_done;
+		}
+	}
+
+	hdc->id.c = c;
+	hdc->id.h = h;
+}
+
+static
+void hdc_cmd_fmtdrv (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+	hdc->id.n = hdc->cmd[4] & 0x1f;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  format drive (c=%u h=%u il=%u)\n",
+		hdc->cmd[0], hdc->id.d, hdc->id.c, hdc->id.h, hdc->id.n
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_fmtdrv_cont;
+}
+
+
+/* Command 05: verify */
+
+static
+void hdc_cmd_chk_trk (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+	hdc->id.s = hdc->cmd[2] & 0x3f;
+	hdc->id.n = hdc->cmd[4];
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  verify (chs=%u/%u/%u n=%u)\n",
+		hdc->cmd[0], hdc->id.d,
+		hdc->id.c, hdc->id.h, hdc->id.s + 1, hdc->id.n
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 65536;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command 08: read */
+
+static void hdc_cmd_read_next (hdc_t *hdc);
+
+static
+void hdc_cmd_read_tc (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 0;
+
+	hdc->result = 0;
+
+	hdc->delay = 0;
+	hdc->cont = NULL;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_read_error (hdc_t *hdc, unsigned code)
+{
+	unsigned d;
+
+	d = hdc->id.d & 1;
+
+	fprintf (stderr, "hdc: read error (d=%u)\n", d);
+
+	hdc->result = 2;
+
+	hdc->drv[d].sense[0] = code | 0x80;
+	hdc->drv[d].sense[1] = (d << 5) | (hdc->id.h & 0x1f);
+	hdc->drv[d].sense[2] = (hdc->id.s & 0x3f) | ((hdc->id.c >> 2) & 0xc0);
+	hdc->drv[d].sense[3] = hdc->id.c & 0xff;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_read_delay (hdc_t *hdc)
+{
+	hdc_set_dreq (hdc, 0);
+
+	hdc->delay = 2048;
+	hdc->cont = hdc_cmd_read_next;
+}
+
+static
+void hdc_cmd_read_next (hdc_t *hdc)
+{
+	unsigned d, c, h, s;
+	disk_t   *dsk;
+
+	if (hdc->id.n == 0) {
+		hdc_cmd_done (hdc);
+		return;
+	}
+
+	d = hdc->id.d;
+	c = hdc->id.c;
+	h = hdc->id.h;
+	s = hdc->id.s;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[d & 1].drive);
+
+	if (dsk == NULL) {
+		hdc_cmd_read_error (hdc, 0x04);
+		return;
+	}
+
+#if DEBUG_HDC >= 2
+	fprintf (stderr, "HDC: CMD=%02X D=%u    read sector (chs=%u/%u/%u)\n",
+		hdc->cmd[0], d, c, h, s + 1
+	);
+#endif
+
+	if (dsk_read_chs (dsk, hdc->buf, c, h, s + 1, 1)) {
+		hdc_cmd_read_error (hdc, 0x12);
+		return;
+	}
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 512;
+
+	hdc_next_id (hdc);
+
+	hdc->id.n -= 1;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_read_delay;
+
+	hdc_request_data (hdc, 1);
+}
+
+static
+void hdc_cmd_read (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+	hdc->id.s = hdc->cmd[2] & 0x3f;
+	hdc->id.n = hdc->cmd[4];
+
+	if (hdc->id.n == 0) {
+		hdc->id.n = 256;
+	}
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  read (chs=%u/%u/%u n=%u)\n",
+		hdc->cmd[0], hdc->id.d,
+		hdc->id.c, hdc->id.h, hdc->id.s + 1, hdc->id.n
+	);
+#endif
+
+	hdc->set_tc = hdc_cmd_read_tc;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_read_next;
+}
+
+
+/* Command 0A: write */
+
+static void hdc_cmd_write_next (hdc_t *hdc);
+
+static
+void hdc_cmd_write_tc (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 0;
+
+	hdc->result = 0;
+
+	hdc->delay = 0;
+	hdc->cont = NULL;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_write_error (hdc_t *hdc, unsigned code)
+{
+	unsigned d;
+
+	d = hdc->id.d & 1;
+
+	fprintf (stderr, "hdc: write error (d=%u)\n", d);
+
+	hdc->result = 2;
+
+	hdc->drv[d].sense[0] = code | 0x80;
+	hdc->drv[d].sense[1] = (d << 5) | (hdc->id.h & 0x1f);
+	hdc->drv[d].sense[2] = (hdc->id.s & 0x3f) | ((hdc->id.c >> 2) & 0xc0);
+	hdc->drv[d].sense[3] = hdc->id.c & 0xff;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_write_delay (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 512;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_write_next;
+
+	hdc->set_tc = hdc_cmd_write_tc;
+
+	hdc_request_data (hdc, 0);
+}
+
+static
+void hdc_cmd_write_next (hdc_t *hdc)
+{
+	unsigned d, c, h, s;
+	disk_t   *dsk;
+
+	if (hdc->id.n == 0) {
+		hdc_cmd_done (hdc);
+		return;
+	}
+
+	d = hdc->id.d & 1;
+	c = hdc->id.c;
+	h = hdc->id.h;
+	s = hdc->id.s;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[d].drive);
+
+	if (dsk == NULL) {
+		hdc_cmd_write_error (hdc, 0x04);
+		return;
+	}
+
+#if DEBUG_HDC >= 2
+	fprintf (stderr, "HDC: CMD=%02X D=%u    write sector (chs=%u/%u/%u)\n",
+		hdc->cmd[0], d, c, h, s + 1
+	);
+#endif
+
+	if (dsk_write_chs (dsk, hdc->buf, c, h, s + 1, 1)) {
+		hdc_cmd_write_error (hdc, 0x12);
+		return;
+	}
+
+	hdc_next_id (hdc);
+
+	hdc->id.n -= 1;
+
+	hdc->delay = 2048;
+	hdc->cont = hdc_cmd_write_delay;
+
+	hdc_set_dreq (hdc, 0);
+}
+
+static
+void hdc_cmd_write (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+	hdc->id.s = hdc->cmd[2] & 0x3f;
+	hdc->id.n = hdc->cmd[4];
+
+	if (hdc->id.n == 0) {
+		hdc->id.n = 256;
+	}
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  write (chs=%u/%u/%u n=%u)\n",
+		hdc->cmd[0], hdc->id.d,
+		hdc->id.c, hdc->id.h, hdc->id.s + 1, hdc->id.n
+	);
+#endif
+
+	hdc->set_tc = hdc_cmd_write_tc;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_write_delay;
+}
+
+
+/* Command 0B: seek */
+
+static
+void hdc_cmd_seek (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  seek (c=%u h=%u)\n",
+		hdc->cmd[0], hdc->id.d, hdc->id.c, hdc->id.h
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 65536;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command 0C: init drive */
+
+static
+void hdc_cmd_init_cont (hdc_t *hdc)
+{
+	unsigned d, c, h, rc, wp, ec;
+
+	d = (hdc->cmd[1] >> 5) & 1;
+	c = (hdc->buf[0] << 8) | hdc->buf[1];
+	h = hdc->buf[2];
+	rc = (hdc->buf[3] << 8) | hdc->buf[4];
+	wp = (hdc->buf[5] << 8) | hdc->buf[6];
+	ec = hdc->buf[7];
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  init (c=%u h=%u rc=%u wp=%u ecc=%u)\n",
+		hdc->cmd[0], d, c, h, rc, wp, ec
+	);
+#else
+	(void) rc; (void) wp; (void) ec;
+#endif
+
+	hdc->drv[d].max_c = c;
+	hdc->drv[d].max_h = h;
+	hdc->drv[d].max_s = 17;
+
+	hdc->result = 0;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_init (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 8;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_init_cont;
+
+	hdc_request_data (hdc, 0);
+}
+
+
+/* Command 0E: read buffer */
+
+static
+void hdc_cmd_rd_buf (hdc_t *hdc)
+{
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=*  read buffer\n",
+		hdc->cmd[0]
+	);
+#endif
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 512;
+
+	hdc->result = 0;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 1);
+}
+
+
+/* Command 0F: write buffer */
+
+static
+void hdc_cmd_wr_buf (hdc_t *hdc)
+{
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=*  write buffer\n",
+		hdc->cmd[0]
+	);
+#endif
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 512;
+
+	hdc->result = 0;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 0);
+}
+
+
+/* Command E0: ram diagnostics */
+
+static
+void hdc_cmd_ram_diag (hdc_t *hdc)
+{
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=*  ram diagnostics\n",
+		hdc->cmd[0]
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command E4: controller diagnostics */
+
+static
+void hdc_cmd_cntlr_diag (hdc_t *hdc)
+{
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=*  controller diagnostics\n",
+		hdc->cmd[0]
+	);
+#endif
+
+	hdc->result = 0;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command XX: unknown command */
+
+static
+void hdc_cmd_unknown (hdc_t *hdc)
+{
+	fprintf (stderr,
+		"HDC: CMD=%02X D=*  unknown command [%02X %02X %02X %02X %02X %02X]\n",
+		hdc->cmd[0],
+		hdc->cmd[0], hdc->cmd[1], hdc->cmd[2],
+		hdc->cmd[3], hdc->cmd[4], hdc->cmd[5]
+	);
+
+	hdc->result = 2;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+static
+unsigned char hdc_get_status (hdc_t *hdc)
+{
+	return (hdc->status);
+}
+
+static
+unsigned char hdc_get_config (hdc_t *hdc)
+{
+#if DEBUG_HDC >= 3
+	fprintf (stderr, "hdc: get config: %02X\n", hdc->config);
+#endif
+
+	return (hdc->config);
+}
+
+unsigned char hdc_read_data (hdc_t *hdc)
+{
+	unsigned char val;
+
+	if ((hdc->status & HDC_STATUS_REQ) == 0) {
+		return (0);
+	}
+
+	val = 0;
+
+	if (hdc->status & HDC_STATUS_CMD) {
+		val = hdc->result;
+
+		hdc_set_irq (hdc, 0);
+
+#if DEBUG_HDC >= 3
+		fprintf (stderr, "hdc: %02X\n", val);
+#endif
+
+		hdc->cmd_idx = 0;
+		hdc->cmd_cnt = 0;
+
+		hdc->status &= ~(HDC_STATUS_BSY | HDC_STATUS_REQ);
+	}
+	else {
+		if (hdc->buf_idx < hdc->buf_cnt) {
+			val = hdc->buf[hdc->buf_idx++];
+
+			if (hdc->buf_idx >= hdc->buf_cnt) {
+				hdc_set_dreq (hdc, 0);
+
+				if (hdc->cont != NULL) {
+					hdc->cont (hdc);
+				}
+			}
+		}
+	}
+
+	return (val);
+}
+
+
+static
+void hdc_select (hdc_t *hdc)
+{
+	if (hdc->status & HDC_STATUS_BSY) {
+		return;
+	}
+
+#if DEBUG_HDC >= 3
+	fprintf (stderr, "hdc: select\n");
+#endif
+
+	hdc_request_command (hdc);
+}
+
+static
+void hdc_set_mask (hdc_t *hdc, unsigned char val)
+{
+	hdc->mask = val;
+}
+
+static
+void hdc_set_command (hdc_t *hdc, unsigned char val)
+{
+	if (hdc->cmd_idx == 0) {
+		hdc->cmd_cnt = 6;
+	}
+
+	hdc->cmd[hdc->cmd_idx++] = val;
+
+	if (hdc->cmd_idx < hdc->cmd_cnt) {
+		return;
+	}
+
+	hdc->status &= ~HDC_STATUS_REQ;
+
+	switch (hdc->cmd[0]) {
+	case 0x00:
+		hdc_cmd_tst_rdy (hdc);
+		break;
+
+	case 0x01:
+		hdc_cmd_recal (hdc);
+		break;
+
+	case 0x03:
+		hdc_cmd_sense (hdc);
+		break;
+
+	case 0x04:
+		hdc_cmd_fmtdrv (hdc);
+		break;
+
+	case 0x05:
+		hdc_cmd_chk_trk (hdc);
+		break;
+
+	case 0x08:
+		hdc_cmd_read (hdc);
+		break;
+
+	case 0x0a:
+		hdc_cmd_write (hdc);
+		break;
+
+	case 0x0b:
+		hdc_cmd_seek (hdc);
+		break;
+
+	case 0x0c:
+		hdc_cmd_init (hdc);
+		break;
+
+	case 0x0e:
+		hdc_cmd_rd_buf (hdc);
+		break;
+
+	case 0x0f:
+		hdc_cmd_wr_buf (hdc);
+		break;
+
+	case 0xe0:
+		hdc_cmd_ram_diag (hdc);
+		break;
+
+	case 0xe4:
+		hdc_cmd_cntlr_diag (hdc);
+		break;
+
+	default:
+		hdc_cmd_unknown (hdc);
+		break;
+	}
+}
+
+void hdc_write_data (hdc_t *hdc, unsigned char val)
+{
+	if ((hdc->status & HDC_STATUS_REQ) == 0) {
+		return;
+	}
+
+	if (hdc->status & HDC_STATUS_CMD) {
+		hdc_set_command (hdc, val);
+		return;
+	}
+
+	if (hdc->buf_idx < hdc->buf_cnt) {
+		hdc->buf[hdc->buf_idx++] = val;
+	}
+
+	if (hdc->buf_idx >= hdc->buf_cnt) {
+		hdc_set_dreq (hdc, 0);
+
+		if (hdc->cont != NULL) {
+			hdc->cont (hdc);
+		}
+	}
+}
+
+static
+unsigned char hdc_get_uint8 (hdc_t *hdc, unsigned long addr)
+{
+	unsigned char val;
+
+	val = 0;
+
+	switch (addr) {
+	case 0:
+		val = hdc_read_data (hdc);
+		break;
+
+	case 1:
+		val = hdc_get_status (hdc);
+		break;
+
+	case 2:
+		val = hdc_get_config (hdc);
+		break;
+
+	default:
+		fprintf (stderr, "HDC: unknown read: %04lX\n", addr);
+		break;
+	}
+
+#if DEBUG_HDC >= 4
+	fprintf (stderr, "hdc: get %04lX -> %02X\n", addr, val);
+#endif
+
+	return (val);
+}
+
+static
+unsigned char hdc_get_uint16 (hdc_t *hdc, unsigned long addr)
+{
+	return (0);
+}
+
+static
+void hdc_set_uint8 (hdc_t *hdc, unsigned long addr, unsigned char val)
+{
+#if DEBUG_HDC >= 4
+	fprintf (stderr, "hdc: set %04lX <- %02X\n", addr, val);
+#endif
+
+	switch (addr) {
+	case 0:
+		hdc_write_data (hdc, val);
+		break;
+
+	case 1:
+		hdc_reset (hdc);
+		break;
+
+	case 2:
+		hdc_select (hdc);
+		break;
+
+	case 3:
+		hdc_set_mask (hdc, val);
+		break;
+	}
+}
+
+static
+void hdc_set_uint16 (hdc_t *hdc, unsigned long addr, unsigned val)
+{
+}
+
+void hdc_set_tc (hdc_t *hdc, unsigned char val)
+{
+	if (val == 0) {
+		return;
+	}
+
+#if DEBUG_HDC >= 3
+	fprintf (stderr, "HDC: TC\n");
+#endif
+
+	if (hdc->set_tc != NULL) {
+		hdc->set_tc (hdc);
+	}
+}
+
+hdc_t *hdc_new (unsigned long addr)
+{
+	hdc_t *hdc;
+
+	hdc = malloc (sizeof (hdc_t));
+
+	if (hdc == NULL) {
+		return (NULL);
+	}
+
+	mem_blk_init (&hdc->blk, addr, 4, 0);
+
+	mem_blk_set_fct (&hdc->blk, hdc,
+		hdc_get_uint8, hdc_get_uint16, NULL,
+		hdc_set_uint8, hdc_set_uint16, NULL
+	);
+
+	hdc->config = 0;
+
+	hdc->drv[0].drive = 0xffff;
+	hdc->drv[1].drive = 0xffff;
+
+	hdc->dsks = NULL;
+
+	hdc->delay = 0;
+
+	hdc->cont = NULL;
+	hdc->set_tc = NULL;
+
+	hdc->irq_val = 0;
+	hdc->irq_ext = NULL;
+	hdc->irq = NULL;
+
+	hdc->dreq_val = 0;
+	hdc->dreq_ext = NULL;
+	hdc->dreq = NULL;
+
+	return (hdc);
+}
+
+void hdc_del (hdc_t *hdc)
+{
+	if (hdc != NULL) {
+		mem_blk_free (&hdc->blk);
+		free (hdc);
+	}
+}
+
+void hdc_mem_add_io (hdc_t *hdc, memory_t *io)
+{
+	mem_add_blk (io, &hdc->blk, 0);
+}
+
+void hdc_mem_rmv_io (hdc_t *hdc, memory_t *io)
+{
+	mem_rmv_blk (io, &hdc->blk);
+}
+
+void hdc_set_irq_fct (hdc_t *hdc, void *ext, void *fct)
+{
+	hdc->irq = fct;
+	hdc->irq_ext = ext;
+}
+
+void hdc_set_dreq_fct (hdc_t *hdc, void *ext, void *fct)
+{
+	hdc->dreq = fct;
+	hdc->dreq_ext = ext;
+}
+
+void hdc_set_config (hdc_t *hdc, unsigned val)
+{
+	hdc->config = val;
+}
+
+void hdc_set_disks (hdc_t *hdc, disks_t *dsks)
+{
+	hdc->dsks = dsks;
+}
+
+void hdc_set_drive (hdc_t *hdc, unsigned hdcdrv, unsigned drive)
+{
+	if (hdcdrv < 2) {
+		hdc->drv[hdcdrv].drive = drive;
+	}
+}
+
+unsigned hdc_get_drive (hdc_t *hdc, unsigned hdcdrv)
+{
+	if (hdcdrv < 2) {
+		return (hdc->drv[hdcdrv].drive);
+	}
+
+	return (0xffff);
+}
+
+void hdc_reset (hdc_t *hdc)
+{
+	unsigned i;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: reset\n");
+#endif
+
+	hdc->status = 0;
+	hdc->mask = 0;
+
+	hdc->result = 0;
+
+	hdc->cmd_idx = 0;
+	hdc->cmd_cnt = 0;
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 0;
+
+	for (i = 0; i < 2; i++) {
+		hdc->drv[i].max_c = 306;
+		hdc->drv[i].max_h = 4;
+		hdc->drv[i].max_s = 17;
+
+		hdc->drv[i].sense[0] = 0;
+		hdc->drv[i].sense[1] = 0;
+		hdc->drv[i].sense[2] = 0;
+		hdc->drv[i].sense[3] = 0;
+	}
+
+	hdc->delay = 0;
+	hdc->cont = NULL;
+
+	hdc_set_irq (hdc, 0);
+}
+
+void hdc_clock (hdc_t *hdc, unsigned long cnt)
+{
+	if (hdc->delay == 0) {
+		return;
+	}
+
+	if (cnt < hdc->delay) {
+		hdc->delay -= cnt;
+		return;
+	}
+
+	hdc->delay = 0;
+
+	if (hdc->cont != NULL) {
+		hdc->cont (hdc);
+	}
+}
