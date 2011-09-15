@@ -220,7 +220,7 @@ video {
 		address = 0xc0000
 		size    = 32768
 		default = 0xff
-		file    = "t9000b.rom"
+		file    = "ibmvga.rom"
 	}
 }
 
