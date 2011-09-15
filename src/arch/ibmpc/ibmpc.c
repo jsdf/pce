@@ -1034,6 +1034,8 @@ void pc_setup_disks (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t *sct;
 	disk_t    *dsk;
 
+	pc->dsk0 = NULL;
+
 	pc->dsk = dsks_new();
 
 	sct = NULL;

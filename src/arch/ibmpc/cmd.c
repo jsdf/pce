@@ -523,7 +523,27 @@ void pce_op_int (void *ext, unsigned char n)
 		);
 	}
 
-	if (n == 0x19) {
+	if (n == 0x13) {
+		if (pc->dsk0 == NULL) {
+			return;
+		}
+
+		if ((e86_get_ah (pc->cpu) != 0x02) || (e86_get_dl (pc->cpu) == 0)) {
+			return;
+		}
+
+		dsks_add_disk (pc->dsk, pc->dsk0);
+
+		pc->dsk0 = NULL;
+	}
+	else if (n == 0x19) {
+		if ((pc->bootdrive != 0) && (pc->dsk0 == NULL)) {
+			/* If we are not booting from drive 0 then
+			 * temporarily remove it. */
+			pc->dsk0 = dsks_get_disk (pc->dsk, 0);
+			dsks_rmv_disk (pc->dsk, pc->dsk0);
+		}
+
 		if (pc->patch_bios_int19 == 0) {
 			return;
 		}

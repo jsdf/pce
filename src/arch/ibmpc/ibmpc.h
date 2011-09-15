@@ -63,6 +63,7 @@ typedef struct ibmpc_t {
 	e8086_t            *cpu;
 	video_t            *video;
 	disks_t            *dsk;
+	disk_t             *dsk0;
 	mouse_t            *mse;
 
 	memory_t           *mem;
