@@ -820,7 +820,7 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 
 	sct = &fdc->curdrv->sct[id];
 
-	if ((sct->c != c) || (sct->h != h) || (sct->s != s)) {
+	if ((sct->c != c) || ((sct->h & 1) != h) || (sct->s != s)) {
 		/* wrong cylinder */
 		return;
 	}
@@ -1304,7 +1304,7 @@ void cmd_write_clock (e8272_t *fdc, unsigned long cnt)
 
 	sct = &fdc->curdrv->sct[id];
 
-	if ((sct->c != c) || (sct->h != h) || (sct->s != s)) {
+	if ((sct->c != c) || ((sct->h & 1) != h) || (sct->s != s)) {
 		return;
 	}
 
