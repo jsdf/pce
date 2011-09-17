@@ -735,7 +735,10 @@ void cmd_read_error (e8272_t *fdc, unsigned err)
 	/* abnormal termination */
 	fdc->st[0] = (fdc->st[0] & 0x3f) | 0x40;
 
-	if (err & E8272_ERR_CRC_DATA) {
+	if (err & E8272_ERR_CRC_ID) {
+		fdc->st[1] |= E8272_ST1_DE;
+	}
+	else if (err & E8272_ERR_CRC_DATA) {
 		fdc->st[1] |= E8272_ST1_DE;
 		fdc->st[2] |= E8272_ST2_DD;
 	}
@@ -1027,6 +1030,14 @@ void cmd_read_track_clock (e8272_t *fdc, unsigned long cnt)
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
 		id, sct->s
 	);
+
+	if (err & E8272_ERR_CRC_ID) {
+		fdc->st[1] |= E8272_ST1_DE;
+	}
+	else if (err & E8272_ERR_CRC_DATA) {
+		fdc->st[1] |= E8272_ST1_DE;
+		fdc->st[2] |= E8272_ST2_DD;
+	}
 
 	fdc->buf_i = 0;
 	fdc->buf_n = bcnt;
