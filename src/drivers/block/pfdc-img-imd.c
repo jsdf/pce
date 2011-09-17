@@ -93,7 +93,7 @@ int imd_read_track (FILE *fp, pfdc_img_t *img, const unsigned char *hdr)
 	n = hdr[4];
 
 	if (sc == 0) {
-		return (1);
+		return (0);
 	}
 
 	if (n > 6) {
