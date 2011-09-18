@@ -77,6 +77,7 @@
 #define E8272_ST1_NW 0x02	/* not writeable */
 #define E8272_ST1_MA 0x01	/* missing address mark */
 
+#define E8272_ST2_CM 0x40	/* control mark */
 #define E8272_ST2_DD 0x20	/* data field crc error */
 #define E8272_ST2_WC 0x10	/* wrong cylinder */
 #define E8272_ST2_BC 0x02	/* bad cylinder (ff) */
@@ -735,19 +736,22 @@ void cmd_read_error (e8272_t *fdc, unsigned err)
 	/* abnormal termination */
 	fdc->st[0] = (fdc->st[0] & 0x3f) | 0x40;
 
-	if (err & E8272_ERR_CRC_ID) {
-		fdc->st[1] |= E8272_ST1_DE;
-	}
-	else if (err & E8272_ERR_CRC_DATA) {
-		fdc->st[1] |= E8272_ST1_DE;
-		fdc->st[2] |= E8272_ST2_DD;
-	}
-	else if (err & E8272_ERR_NO_ID) {
+	if (err & E8272_ERR_NO_ID) {
 		fdc->st[1] |= E8272_ST1_MA | E8272_ST1_ND;
+	}
+	else if (err & E8272_ERR_CRC_ID) {
+		fdc->st[1] |= E8272_ST1_DE;
 	}
 	else if (err & E8272_ERR_NO_DATA) {
 		fdc->st[1] |= E8272_ST1_MA | E8272_ST1_ND;
 		fdc->st[2] |= E8272_ST2_MD;
+	}
+	else if (err & E8272_ERR_DEL_DAM) {
+		fdc->st[2] |= E8272_ST2_CM;
+	}
+	else if (err & E8272_ERR_CRC_DATA) {
+		fdc->st[1] |= E8272_ST1_DE;
+		fdc->st[2] |= E8272_ST2_DD;
 	}
 	else {
 		fdc->st[1] |= E8272_ST1_EN | E8272_ST1_ND;
@@ -848,6 +852,20 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 	err = e8272_block_read (fdc, fdc->buf, &cnt2,
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h, id, s
 	);
+
+	if (err & E8272_ERR_CRC_ID) {
+		cmd_read_error (fdc, err);
+		cmd_read_tc (fdc);
+		return;
+	}
+
+	if (err & E8272_ERR_DEL_DAM) {
+		if ((fdc->cmd[0] & E8272_CMD0_SK)) {
+			e8272_next_id (fdc);
+			fdc->st[2] |= E8272_ST2_CM;
+			return;
+		}
+	}
 
 	fdc->buf_i = 0;
 	fdc->buf_n = cnt2;

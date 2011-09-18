@@ -87,6 +87,10 @@ unsigned dsk_fdc_read_chs (disk_fdc_t *fdc, void *buf, unsigned *cnt,
 		ret |= PCE_BLK_FDC_CRC_DATA;
 	}
 
+	if (alt->flags & PFDC_FLAG_DEL_DAM) {
+		ret |= PCE_BLK_FDC_DEL_DAM;
+	}
+
 	if (sct->next != NULL) {
 		sct->cur_alt += 1;
 	}

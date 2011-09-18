@@ -38,8 +38,9 @@
 #define PCE_BLK_FDC_NO_DATA   0x02	/* sector data not found */
 #define PCE_BLK_FDC_CRC_ID    0x04
 #define PCE_BLK_FDC_CRC_DATA  0x08	/* data crc error */
-#define PCE_BLK_FDC_DATALEN   0x10	/* sector is smaller than requested */
-#define PCE_BLK_FDC_WPROT     0x20	/* write protected */
+#define PCE_BLK_FDC_DEL_DAM   0x10	/* deleted data adress mark */
+#define PCE_BLK_FDC_DATALEN   0x20	/* sector is smaller than requested */
+#define PCE_BLK_FDC_WPROT     0x40	/* write protected */
 
 
 /*!***************************************************************************

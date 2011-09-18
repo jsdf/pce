@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.h                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,8 +30,9 @@
 #define E8272_ERR_NO_DATA  0x04
 #define E8272_ERR_CRC_ID   0x08
 #define E8272_ERR_CRC_DATA 0x10
-#define E8272_ERR_DATALEN  0x20
-#define E8272_ERR_WPROT    0x40
+#define E8272_ERR_DEL_DAM  0x20
+#define E8272_ERR_DATALEN  0x40
+#define E8272_ERR_WPROT    0x80
 
 #define E8272_MAX_SCT 128
 
