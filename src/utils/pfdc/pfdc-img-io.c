@@ -29,6 +29,7 @@
 #include <drivers/block/pfdc-img-imd.h>
 #include <drivers/block/pfdc-img-pfdc.h>
 #include <drivers/block/pfdc-img-raw.h>
+#include <drivers/block/pfdc-img-tc.h>
 #include <drivers/block/pfdc-img-td0.h>
 
 #include "pfdc-img-io.h"
@@ -110,6 +111,9 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 	else if (strcasecmp (ext, ".raw") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
+	else if (strcasecmp (ext, ".tc") == 0) {
+		return (PFDC_FORMAT_TC);
+	}
 	else if (strcasecmp (ext, ".td0") == 0) {
 		return (PFDC_FORMAT_TD0);
 	}
@@ -152,6 +156,10 @@ pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_RAW:
 		img = pfdc_load_raw (fp);
+		break;
+
+	case PFDC_FORMAT_TC:
+		img = pfdc_load_tc (fp);
 		break;
 
 	case PFDC_FORMAT_TD0:

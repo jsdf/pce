@@ -5,7 +5,7 @@ rel := src/drivers/block
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-DEV_BLK_PFDC_BAS := pfdc-img-ana pfdc-img-dc42 pfdc-img-imd pfdc-img-pfdc pfdc-img-raw pfdc-img-td0 pfdc
+DEV_BLK_PFDC_BAS := pfdc-img-ana pfdc-img-dc42 pfdc-img-imd pfdc-img-pfdc pfdc-img-raw pfdc-img-tc pfdc-img-td0 pfdc
 DEV_BLK_PFDC_SRC := $(foreach f,$(DEV_BLK_PFDC_BAS),$(rel)/$(f).c)
 DEV_BLK_PFDC_OBJ := $(foreach f,$(DEV_BLK_PFDC_BAS),$(rel)/$(f).o)
 DEV_BLK_PFDC_HDR := $(foreach f,$(DEV_BLK_PFDC_BAS),$(rel)/$(f).h)
@@ -34,6 +34,7 @@ $(rel)/pfdc-img-dc42.o:	$(rel)/pfdc-img-dc42.c
 $(rel)/pfdc-img-imd.o:	$(rel)/pfdc-img-imd.c
 $(rel)/pfdc-img-pfdc.o:	$(rel)/pfdc-img-pfdc.c
 $(rel)/pfdc-img-raw.o:	$(rel)/pfdc-img-raw.c
+$(rel)/pfdc-img-tc.o:	$(rel)/pfdc-img-tc.c
 $(rel)/pfdc-img-td0.o:	$(rel)/pfdc-img-td0.c
 $(rel)/pfdc.o:		$(rel)/pfdc.c
 

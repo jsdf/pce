@@ -2033,6 +2033,9 @@ int pfdc_set_format (const char *name, unsigned *val)
 	else if (strcmp (name, "raw") == 0) {
 		*val = PFDC_FORMAT_RAW;
 	}
+	else if (strcmp (name, "tc") == 0) {
+		*val = PFDC_FORMAT_TC;
+	}
 	else if (strcmp (name, "td0") == 0) {
 		*val = PFDC_FORMAT_TD0;
 	}
