@@ -314,15 +314,35 @@ int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, pfdc_sct_t **sct, unsigned am, u
 static
 int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 {
+	int           eot;
 	unsigned char val;
 	unsigned      cnt;
 	pfdc_sct_t    *sct;
+
+	eot = 0;
 
 	sct = NULL;
 
 	while (1) {
 		if (mfm_sync (mfm)) {
-			return (0);
+			eot = 1;
+
+			/*
+			 * If there is an IDAM without DAM at the end
+			 * of the track, start from the beginning and
+			 * if the first AM on the track is a DAM, use
+			 * it. If it is anything else, return.
+			 */
+
+			if (sct == NULL) {
+				return (0);
+			}
+
+			mfm->bit_idx = 0;
+
+			if (mfm_sync (mfm)) {
+				return (0);
+			}
 		}
 
 		cnt = 0;
@@ -339,8 +359,17 @@ int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 			continue;
 		}
 
+		if (eot && (val != 0xfb) && (val != 0xf8)) {
+			/* First AM on second pass is not a DAM */
+			return (0);
+		}
+
 		if (mfm_decode_am (mfm, img, &sct, val, c, h)) {
 			return (1);
+		}
+
+		if (eot) {
+			return (0);
 		}
 	}
 }
@@ -352,6 +381,11 @@ int mfm_load_track (mfm_t *mfm, unsigned c, unsigned h)
 	unsigned      cnt;
 	unsigned long ofs;
 	unsigned char buf[2];
+
+	mfm->bit_idx = 0;
+	mfm->bit_cnt = 0;
+
+	mfm->sync = 0;
 
 	i = 2 * c + h;
 
@@ -391,8 +425,6 @@ int mfm_load_track (mfm_t *mfm, unsigned c, unsigned h)
 	mfm->bit_idx = 0;
 	mfm->bit_cnt = 8UL * cnt;
 
-	mfm->sync = 0;
-
 	return (0);
 }
 
@@ -408,6 +440,10 @@ int tc_load_fp (FILE *fp, pfdc_img_t *img)
 		for (h = 0; h < 2; h++) {
 			if (mfm_load_track (&mfm, c, h)) {
 				return (1);
+			}
+
+			if (mfm.bit_idx >= mfm.bit_cnt) {
+				continue;
 			}
 
 			if (mfm_decode_track (&mfm, img, c, h)) {
