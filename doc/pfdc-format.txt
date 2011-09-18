@@ -67,6 +67,7 @@ offset	size	description
 			1	CRC error in ID
 			2	CRC error in data
 			4	Deleted data address mark
+			8	Missing data adress mark
 			64	Alternate sector
 			128	Compressed
 5	1	Physical cylinder

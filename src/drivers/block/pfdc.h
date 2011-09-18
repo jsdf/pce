@@ -26,9 +26,10 @@
 
 #define PFDC_MAGIC_PFDC    0x50464443
 
-#define PFDC_FLAG_CRC_ID   0x04
-#define PFDC_FLAG_CRC_DATA 0x08
-#define PFDC_FLAG_DEL_DAM  0x10
+#define PFDC_FLAG_CRC_ID   0x01
+#define PFDC_FLAG_CRC_DATA 0x02
+#define PFDC_FLAG_DEL_DAM  0x04
+#define PFDC_FLAG_NO_DAM   0x08
 
 #define PFDC_ENC_UNKNOWN   0x00
 #define PFDC_ENC_FM        0x01

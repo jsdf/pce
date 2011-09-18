@@ -140,7 +140,7 @@ void print_help (void)
 		"  pfdc, ana, imd, raw, td0\n"
 		"\n"
 		"sector attributes are:\n"
-		"  crc-id, crc-data, del-dam, data-rate, fm, gcr, mfm, size, c, h, s\n",
+		"  crc-id, crc-data, del-dam, data-rate, fm, gcr, mfm, no-dam, size, c, h, s\n",
 		stdout
 	);
 
@@ -493,6 +493,10 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 				fputs (" DEL-DAM", stdout);
 			}
 
+			if (sct->flags & PFDC_FLAG_NO_DAM) {
+				fputs (" NO-DAM", stdout);
+			}
+
 			fputs ("\n", stdout);
 
 			sct = sct->next;
@@ -584,6 +588,10 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 	if (sct_flg & PFDC_FLAG_DEL_DAM) {
 		fputs (" DEL-DAM", stdout);
+	}
+
+	if (sct_flg & PFDC_FLAG_NO_DAM) {
+		fputs (" NO-DAM", stdout);
 	}
 
 	fputs ("\n", stdout);
@@ -1498,6 +1506,11 @@ int pfdc_print_info (pfdc_img_t *img)
 		ff = 0;
 	}
 
+	if (flags & PFDC_FLAG_NO_DAM) {
+		printf (" NO-DAM");
+		ff = 0;
+	}
+
 	if (tflags & PFDC_TRK_BAD_ID) {
 		printf (" BAD-ID");
 		ff = 0;
@@ -1571,6 +1584,15 @@ int pfdc_edit_mfm_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
 	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, sct->data_rate);
+	par_cnt += 1;
+	return (0);
+}
+
+static
+int pfdc_edit_nodam_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, (*(unsigned long *) p) != 0);
 	par_cnt += 1;
 	return (0);
 }
@@ -1670,6 +1692,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "mfm") == 0) {
 		fct = pfdc_edit_mfm_cb;
+	}
+	else if (strcmp (what, "no-dam") == 0) {
+		fct = pfdc_edit_nodam_cb;
 	}
 	else if (strcmp (what, "s") == 0) {
 		fct = pfdc_edit_s_cb;

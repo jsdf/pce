@@ -49,6 +49,7 @@
 #define PFDC_FLAG2_CRC_ID     0x01
 #define PFDC_FLAG2_CRC_DATA   0x02
 #define PFDC_FLAG2_DEL_DAM    0x04
+#define PFDC_FLAG2_NO_DAM     0x08
 #define PFDC_FLAG2_ALTERNATE  0x40
 #define PFDC_FLAG2_COMPRESSED 0x80
 
@@ -301,6 +302,10 @@ void pfdc_sct_set_flags_v2 (pfdc_sct_t *sct, unsigned long flg)
 
 	if (flg & PFDC_FLAG2_DEL_DAM) {
 		sct->flags |= PFDC_FLAG_DEL_DAM;
+	}
+
+	if (flg & PFDC_FLAG2_NO_DAM) {
+		sct->flags |= PFDC_FLAG_NO_DAM;
 	}
 }
 
@@ -909,6 +914,10 @@ unsigned long pfdc_sct_get_flags_v2 (const pfdc_sct_t *sct)
 
 	if (sct->flags & PFDC_FLAG_DEL_DAM) {
 		f |= PFDC_FLAG2_DEL_DAM;
+	}
+
+	if (sct->flags & PFDC_FLAG_NO_DAM) {
+		f |= PFDC_FLAG2_NO_DAM;
 	}
 
 	return (f);
