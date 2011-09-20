@@ -181,6 +181,8 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 		dst->cur_alt = 0;
 	}
 	else {
+		dst->cur_alt = sct->cur_alt;
+
 		tmp = dst;
 		sct = sct->next;
 
@@ -194,8 +196,6 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 
 			sct = sct->next;
 		}
-
-		dst->cur_alt = sct->cur_alt;
 	}
 
 	return (dst);
