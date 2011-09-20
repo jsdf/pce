@@ -5,7 +5,7 @@
 ;*****************************************************************************
 ;* File name:   pcetime.asm                                                  *
 ;* Created:     2003-04-25 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+;* Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
 ;*****************************************************************************
 
 ;*****************************************************************************
@@ -53,7 +53,7 @@ get_bcd_2:
 ; set dos time from bios rtc time
 set_time:
 	mov	ah, 2
-	int	0x1a
+	pceh	PCEH_INT, 0x1a
 
 	mov	al, ch
 	call	get_bcd_2
@@ -78,7 +78,7 @@ set_time:
 ; set dos date from bios rtc date
 set_date:
 	mov	ah, 4
-	int	0x1a
+	pceh	PCEH_INT, 0x1a
 
 	mov	al, cl
 	call	get_bcd_2
