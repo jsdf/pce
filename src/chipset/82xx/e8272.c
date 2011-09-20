@@ -140,6 +140,8 @@ void e8272_init (e8272_t *fdc)
 
 	fdc->dma = 1;
 
+	fdc->ready_change = 0;
+
 	fdc->step_rate = 1;
 
 	fdc->accurate = 0;
@@ -1678,6 +1680,8 @@ void cmd_seek (e8272_t *fdc)
 static
 void cmd_sense_int_status_clock (e8272_t *fdc, unsigned long cnt)
 {
+	unsigned i;
+
 	if (fdc->delay_clock > 0) {
 		return;
 	}
@@ -1685,10 +1689,22 @@ void cmd_sense_int_status_clock (e8272_t *fdc, unsigned long cnt)
 	fdc->res[0] = fdc->st[0];
 	fdc->res[1] = fdc->curdrv->c;
 
-	/* reset interrupt condition */
-	fdc->st[0] &= 0x3f;
+	if (fdc->st[0] & E8272_ST0_SE) {
+		/* reset interrupt condition */
+		fdc->st[0] &= 0x3f;
+		fdc->st[0] &= ~(E8272_ST0_SE);
+	}
+	else if (fdc->ready_change) {
+		fdc->res[0] = 0xc0;
 
-	fdc->st[0] &= ~(E8272_ST0_SE);
+		for (i = 0; i < 4; i++) {
+			if (fdc->ready_change & (1 << i)) {
+				fdc->res[0] |= i;
+				fdc->ready_change &= ~(1 << i);
+				break;
+			}
+		}
+	}
 
 	e8272_set_irq (fdc, 0);
 
@@ -1872,6 +1888,8 @@ void e8272_reset (e8272_t *fdc)
 
 	fdc->buf_i = 0;
 	fdc->buf_n = 0;
+
+	fdc->ready_change = 0x0f;
 
 	fdc->delay_clock = 0;
 

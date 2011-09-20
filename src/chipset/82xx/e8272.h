@@ -80,6 +80,8 @@ typedef struct e8272_t {
 
 	char           dma;
 
+	unsigned char  ready_change;
+
 	unsigned short step_rate;
 
 	char           accurate;
