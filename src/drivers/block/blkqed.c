@@ -726,9 +726,9 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 
 int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst)
 {
-	unsigned long cluster_size, table_size, table_entries, header_size;
-	unsigned long bufsize;
-	uint64_t      image_size, max_size;
+	unsigned long i;
+	unsigned long cluster_size, table_size, header_size;
+	uint64_t      image_size, max_size, table_entries;
 	unsigned char *buf;
 
 	image_size = 512 * (uint64_t) n;
@@ -737,34 +737,32 @@ int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst)
 	table_size = 2;
 	header_size = 1;
 
-	table_entries = (cluster_size / 8) * table_size;
-	max_size = table_entries * table_entries * (uint64_t) cluster_size;
+	table_entries = (uint64_t) (cluster_size / 8) * table_size;
+	max_size = table_entries * table_entries * cluster_size;
 
 	while ((max_size < image_size) && (table_size < 16)) {
 		table_size *= 2;
-		table_entries = (cluster_size / 8) * table_size;
-		max_size = table_entries * table_entries * (uint64_t) cluster_size;
+		table_entries = (uint64_t) (cluster_size / 8) * table_size;
+		max_size = table_entries * table_entries * cluster_size;
 	}
 
 	while ((max_size < image_size) && (cluster_size < 0x8000000)) {
 		cluster_size *= 2;
-		table_entries = (cluster_size / 8) * table_size;
-		max_size = table_entries * table_entries * (uint64_t) cluster_size;
+		table_entries = (uint64_t) (cluster_size / 8) * table_size;
+		max_size = table_entries * table_entries * cluster_size;
 	}
 
 	if (max_size < image_size) {
 		return (1);
 	}
 
-	bufsize = (header_size + table_size) * cluster_size;
-
-	buf = malloc (bufsize);
+	buf = malloc (cluster_size);
 
 	if (buf == NULL) {
 		return (1);
 	}
 
-	memset (buf, 0, bufsize);
+	memset (buf, 0, cluster_size);
 
 	dsk_set_uint32_le (buf, 0, QED_MAGIC);
 	dsk_set_uint32_le (buf, 4, cluster_size);
@@ -775,12 +773,21 @@ int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst)
 	dsk_set_uint64_le (buf, 24, 0);
 	dsk_set_uint64_le (buf, 32, 0);
 
-	dsk_set_uint64_le (buf, 40, cluster_size * header_size);
+	dsk_set_uint64_le (buf, 40, (uint64_t) cluster_size * header_size);
 	dsk_set_uint64_le (buf, 48, image_size);
 
-	if (dsk_write (fp, buf, 0, bufsize)) {
+	if (dsk_write (fp, buf, 0, cluster_size)) {
 		free (buf);
 		return (1);
+	}
+
+	memset (buf, 0, cluster_size);
+
+	for (i = 1; i < (header_size + table_size); i++) {
+		if (dsk_write (fp, buf, (uint64_t) i * cluster_size, cluster_size)) {
+			free (buf);
+			return (1);
+		}
 	}
 
 	free (buf);
