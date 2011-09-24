@@ -651,11 +651,21 @@ int main_convert (int argc, char **argv)
 		}
 	}
 
-	/* geometry might be different in file header */
-	par_c = inp->c;
-	par_h = inp->h;
-	par_s = inp->s;
-	par_n = inp->blocks;
+	if (par_c == 0) {
+		par_c = inp->c;
+	}
+
+	if (par_h == 0) {
+		par_h = inp->h;
+	}
+
+	if (par_s == 0) {
+		par_s = inp->s;
+	}
+
+	if (par_n == 0) {
+		par_n = inp->blocks;
+	}
 
 	if (par_quiet == 0) {
 		fprintf (stdout, "geometry: %lu/%lu/%lu (%luM at %llu)\n",
