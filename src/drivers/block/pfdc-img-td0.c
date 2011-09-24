@@ -116,6 +116,7 @@ int td0_load_data_0 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 	}
 
 	if (td0_read (fp, sct->data, cnt)) {
+		fprintf (stderr, "td0: read error\n");
 		return (1);
 	}
 
@@ -228,6 +229,7 @@ static
 int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned dr)
 {
 	unsigned      crc1, crc2, crc3;
+	unsigned      s, n;
 	unsigned      cnt;
 	unsigned      flg;
 	unsigned char buf[8];
@@ -237,13 +239,12 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 		return (1);
 	}
 
-	if (buf[3] > 6) {
-		return (1);
-	}
+	s = buf[2];
+	n = buf[3];
 
 	flg = buf[4];
 
-	sct = pfdc_sct_new (buf[0], buf[1], buf[2], 128U << buf[3]);
+	sct = pfdc_sct_new (buf[0], buf[1], buf[2], (n <= 6) ? (128U << n) : 0);
 
 	if (sct == NULL) {
 		return (1);
@@ -281,35 +282,43 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 		return (0);
 	}
 
-	if (td0_read (fp, buf, 3)) {
-		return (1);
-	}
-
-	cnt = pfdc_get_uint16_le (buf, 0);
-
-	if (cnt == 0) {
-		return (1);
-	}
-
-	cnt -= 1;
-
-	if (buf[2] == 0) {
-		if (td0_load_data_0 (fp, sct, cnt)) {
+	if (n <= 6) {
+		if (td0_read (fp, buf, 3)) {
 			return (1);
 		}
-	}
-	else if (buf[2] == 1) {
-		if (td0_load_data_1 (fp, sct, cnt)) {
+
+		cnt = pfdc_get_uint16_le (buf, 0);
+
+		if (cnt == 0) {
+			fprintf (stderr, "td0: zero data length (%u/%u/%u)\n",
+				c, h, s
+			);
 			return (1);
 		}
-	}
-	else if (buf[2] == 2) {
-		if (td0_load_data_2 (fp, sct, cnt)) {
+
+		cnt -= 1;
+
+		if (buf[2] == 0) {
+			if (td0_load_data_0 (fp, sct, cnt)) {
+				return (1);
+			}
+		}
+		else if (buf[2] == 1) {
+			if (td0_load_data_1 (fp, sct, cnt)) {
+				return (1);
+			}
+		}
+		else if (buf[2] == 2) {
+			if (td0_load_data_2 (fp, sct, cnt)) {
+				return (1);
+			}
+		}
+		else {
+			fprintf (stderr, "td0: unknown compression (%u/%u/%u %u)\n",
+				c, h, s, buf[2]
+			);
 			return (1);
 		}
-	}
-	else {
-		return (1);
 	}
 
 	crc3 = td0_crc (crc2, sct->data, sct->n);
