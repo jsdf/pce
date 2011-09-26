@@ -384,6 +384,79 @@ void hdc_cmd_chk_trk (hdc_t *hdc)
 }
 
 
+/* Command 06: format track */
+
+static
+void hdc_cmd_fmttrk_error (hdc_t *hdc, unsigned code)
+{
+	unsigned d;
+
+	d = hdc->id.d & 1;
+
+	fprintf (stderr, "hdc: format track error (d=%u)\n", d);
+
+	hdc->result = 2;
+
+	hdc->drv[d].sense[0] = code | 0x80;
+	hdc->drv[d].sense[1] = (d << 5) | (hdc->id.h & 0x1f);
+	hdc->drv[d].sense[2] = (hdc->id.c >> 2) & 0xc0;
+	hdc->drv[d].sense[3] = hdc->id.c & 0xff;
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_fmttrk (hdc_t *hdc)
+{
+	unsigned      i, d;
+	unsigned char buf[512];
+	disk_t        *dsk;
+
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+	hdc->id.c = ((hdc->cmd[2] << 2) & 0x300) | hdc->cmd[3];
+	hdc->id.h = hdc->cmd[1] & 0x1f;
+	hdc->id.n = hdc->cmd[4] & 0x1f;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  format track (c=%u h=%u il=%u)\n",
+		hdc->cmd[0], hdc->id.d, hdc->id.c, hdc->id.h, hdc->id.n
+	);
+#endif
+
+	d = hdc->id.d & 1;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[d].drive);
+
+	if (dsk == NULL) {
+		hdc_cmd_fmttrk_error (hdc, 0x04);
+		return;
+	}
+
+	if (hdc->cmd[5] & 0x40) {
+		for (i = 0; i < 512; i++) {
+			buf[i] = hdc->buf[i];
+		}
+	}
+	else {
+		for (i = 0; i < 512; i++) {
+			buf[i] = 0x6c;
+		}
+	}
+
+	for (i = 0; i < hdc->drv[d].max_s; i++) {
+		if (dsk_write_chs (dsk, buf, hdc->id.c, hdc->id.h, i + 1, 1)) {
+			hdc_cmd_fmttrk_error (hdc, 0x03);
+			return;
+		}
+	}
+
+	hdc->result = 0;
+
+	hdc->delay = 65536;
+	hdc->cont = hdc_cmd_done;
+}
+
+
 /* Command 08: read */
 
 static void hdc_cmd_read_next (hdc_t *hdc);
@@ -905,6 +978,10 @@ void hdc_set_command (hdc_t *hdc, unsigned char val)
 
 	case 0x05:
 		hdc_cmd_chk_trk (hdc);
+		break;
+
+	case 0x06:
+		hdc_cmd_fmttrk (hdc);
 		break;
 
 	case 0x08:
