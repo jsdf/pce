@@ -563,7 +563,6 @@ void e8272_next_id (e8272_t *fdc)
 	}
 
 	fdc->curdrv->ok = 0;
-	fdc->curdrv->c = fdc->cmd[2];
 	fdc->curdrv->h = fdc->cmd[3] & 1;
 	fdc->curdrv->sct_cnt = 0;
 
