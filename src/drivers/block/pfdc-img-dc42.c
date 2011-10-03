@@ -376,7 +376,7 @@ int dc42_set_image_name (unsigned char *buf, const pfdc_img_t *img)
 
 	src = (const unsigned char *) "\x06Noname";
 
-	sct = pfdc_img_get_sector ((pfdc_img_t *) img, 0, 0, 3, 0);
+	sct = pfdc_img_get_sector ((pfdc_img_t *) img, 0, 0, 2, 0);
 
 	if (sct != NULL) {
 		if ((sct->data[0] == 'B') && (sct->data[1] == 'D')) {
