@@ -343,7 +343,24 @@ void mac_sony_insert (mac_sony_t *sony, unsigned drive)
 
 	if (mem_get_uint8 (sony->mem, vars + SONY_DISKINPLACE) == 0x00) {
 		pce_log_tag (MSG_INF, "SONY:", "insert drive %u\n", drive);
+
 		mem_set_uint8 (sony->mem, vars + SONY_DISKINPLACE, 0x01);
+
+		if (dsk_get_block_cnt (dsk) < 1600) {
+			mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0x00);
+		}
+		else {
+			mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0xff);
+		}
+
+		mem_set_uint8 (sony->mem, vars + SONY_NEWIF, 0xff);
+
+		if (dsk_get_readonly (dsk)) {
+			mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0xff);
+		}
+		else {
+			mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0x00);
+		}
 	}
 }
 
@@ -376,20 +393,6 @@ int mac_sony_check (mac_sony_t *sony)
 
 		if (dsk != NULL) {
 			vars = mac_sony_get_vars (sony, i + 1);
-
-			if (dsk_get_block_cnt (dsk) < 1600) {
-				mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0x00);
-			}
-			else {
-				mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0xff);
-			}
-
-			if (dsk_get_readonly (dsk)) {
-				mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0xff);
-			}
-			else {
-				mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0x00);
-			}
 
 			if (mem_get_uint8 (sony->mem, vars + SONY_DISKINPLACE) == 0x01) {
 				check = 1;
@@ -1013,6 +1016,7 @@ void mac_sony_ctl_format (mac_sony_t *sony)
 {
 	unsigned      vref, format;
 	unsigned long blk;
+	unsigned long vars;
 	disk_t        *dsk;
 
 	vref = mac_sony_get_pblk (sony, ioVRefNum, 2);
@@ -1050,6 +1054,10 @@ void mac_sony_ctl_format (mac_sony_t *sony)
 		mac_sony_return (sony, paramErr, 0);
 		return;
 	}
+
+	vars = mac_sony_get_vars (sony, vref);
+	mem_set_uint16_be (sony->mem, vars + 18, blk);
+	mem_set_uint16_be (sony->mem, vars + 20, blk >> 16);
 
 	mac_sony_return (sony, noErr, 0);
 }
