@@ -31,6 +31,10 @@
 #endif
 
 
+/* ADB bit cell time (100 us) */
+#define ADB_BIT_CLK (MAC_CPU_CLOCK / 10000)
+
+
 void adb_dev_reset (adb_dev_t *dev)
 {
 #if DEBUG_ADB >= 1
@@ -487,6 +491,8 @@ void mac_adb_set_state (mac_adb_t *adb, unsigned char val)
 		return;
 	}
 
+	adb->clock += ADB_BIT_CLK;
+
 	if ((val == 0) || (val == 3)) {
 		adb_finish_transaction (adb);
 	}
@@ -614,5 +620,5 @@ void mac_adb_clock (mac_adb_t *adb, unsigned cnt)
 		}
 	}
 
-	adb->clock += 783/4;
+	adb->clock += ADB_BIT_CLK;
 }
