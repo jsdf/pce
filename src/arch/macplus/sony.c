@@ -1048,6 +1048,15 @@ void mac_sony_ctl_format (mac_sony_t *sony)
 	}
 	else {
 		blk = dsk_get_block_cnt (dsk);
+
+		if (dsk_get_type (dsk) == PCE_DISK_FDC) {
+			if (format == 1) {
+				blk = 800;
+			}
+			else {
+				blk = 1600;
+			}
+		}
 	}
 
 	if (mac_sony_format (dsk, blk)) {
