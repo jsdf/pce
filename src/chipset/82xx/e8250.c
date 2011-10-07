@@ -990,6 +990,35 @@ void e8250_set_uint32 (e8250_t *uart, unsigned long addr, unsigned long val)
 	e8250_set_uint8 (uart, addr, val & 0xff);
 }
 
+void e8250_reset (e8250_t *uart)
+{
+	uart->inp_i = 0;
+	uart->inp_j = 0;
+
+	uart->out_i = 0;
+	uart->out_j = 0;
+
+	uart->txd = 0;
+	uart->rxd = 0;
+
+	uart->ier = 0;
+	uart->iir = E8250_IIR_PND;
+
+	uart->lcr = 0;
+	uart->lsr = E8250_LSR_TXE | E8250_LSR_TBE;
+
+	uart->mcr = 0;
+	uart->msr = 0;
+
+	uart->scratch = 0;
+
+	uart->tbe_ack = 1;
+
+	uart->clocking = 0;
+
+	uart->divisor = 0;
+}
+
 void e8250_clock (e8250_t *uart, unsigned clk)
 {
 	if (uart->clocking == 0) {

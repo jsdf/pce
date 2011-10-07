@@ -451,6 +451,8 @@ unsigned char e8250_get_uint8 (e8250_t *uart, unsigned long addr);
 unsigned short e8250_get_uint16 (e8250_t *uart, unsigned long addr);
 unsigned long e8250_get_uint32 (e8250_t *uart, unsigned long addr);
 
+void e8250_reset (e8250_t *uart);
+
 void e8250_clock (e8250_t *uart, unsigned clk);
 
 
