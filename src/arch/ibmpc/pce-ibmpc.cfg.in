@@ -30,6 +30,11 @@ system {
 	# and 128 for the first hard disk.
 	boot = 128
 
+	# Enable or disable the POST memory test. If this option
+	# is set to 0, 0x1234 is written to 0040:0072, simulating
+	# a restart instead of a cold start.
+	memtest = 1
+
 	# The number of floppy disk drives.
 	floppy_disk_drives = 2
 

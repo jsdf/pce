@@ -112,6 +112,8 @@ typedef struct ibmpc_t {
 	char               patch_bios_init;
 	char               patch_bios_int19;
 
+	char               memtest;
+
 	/* allow int 1a to get real time */
 	int                support_rtc;
 

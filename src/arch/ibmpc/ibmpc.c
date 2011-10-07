@@ -362,7 +362,7 @@ static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
 	unsigned   fdcnt;
-	int        patch_init, patch_int19;
+	int        patch_init, patch_int19, memtest;
 	const char *model;
 	ini_sct_t  *sct;
 
@@ -386,6 +386,7 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
 	ini_get_bool (sct, "patch_bios_init", &patch_init, 1);
 	ini_get_bool (sct, "patch_bios_int19", &patch_int19, 1);
+	ini_get_bool (sct, "memtest", &memtest, 1);
 
 	pce_log_tag (MSG_INF, "SYSTEM:",
 		"model=%s floppies=%u patch-init=%d patch-int19=%d\n",
@@ -405,6 +406,8 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->patch_bios_init = patch_init != 0;
 	pc->patch_bios_int19 = patch_int19 != 0;
+
+	pc->memtest = (memtest != 0);
 
 	pc->ppi_port_a[0] = 0x30 | 0x0c;
 	pc->ppi_port_a[1] = 0;
@@ -438,6 +441,9 @@ void pc_setup_mem (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc_set_ram_size (pc, ram);
 
+	if ((pc->ram != NULL) && (pc->memtest == 0)) {
+		mem_set_uint16_le (pc->mem, 0x0472, 0x1234);
+	}
 }
 
 static
