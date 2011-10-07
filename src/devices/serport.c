@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/serport.c                                        *
  * Created:     2003-09-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -340,4 +340,6 @@ void ser_clock (serport_t *ser, unsigned n)
 	if (ser->check_inp) {
 		ser_process_input (ser);
 	}
+
+	ser_uart_check_status (ser);
 }

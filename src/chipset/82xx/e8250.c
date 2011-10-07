@@ -233,7 +233,7 @@ void e8250_set_int_cond (e8250_t *uart)
 {
 	uart->iir = E8250_IIR_PND;
 
-	if (uart->iir < E8250_IIR_RRD) {
+	if (uart->iir == E8250_IIR_PND) {
 		if (uart->ier & E8250_IER_RRD) {
 			if (uart->lsr & E8250_LSR_RRD) {
 				uart->iir = E8250_IIR_RRD;
@@ -241,10 +241,18 @@ void e8250_set_int_cond (e8250_t *uart)
 		}
 	}
 
-	if (uart->iir < E8250_IIR_TBE) {
+	if (uart->iir == E8250_IIR_PND) {
 		if (uart->ier & E8250_IER_TBE) {
 			if ((uart->lsr & E8250_LSR_TBE) && (uart->tbe_ack == 0)) {
 				uart->iir = E8250_IIR_TBE;
+			}
+		}
+	}
+
+	if (uart->iir == E8250_IIR_PND) {
+		if (uart->ier & E8250_IER_MSR) {
+			if (uart->msr & 0x0f) {
+				uart->iir = E8250_IIR_MSR;
 			}
 		}
 	}
@@ -392,6 +400,7 @@ void e8250_set_dsr (e8250_t *uart, unsigned char val)
 
 	if ((msr ^ uart->msr) & E8250_MSR_DSR) {
 		uart->msr |= E8250_MSR_DDSR;
+		e8250_set_int_cond (uart);
 	}
 	else {
 		uart->msr &= ~E8250_MSR_DDSR;
@@ -416,6 +425,7 @@ void e8250_set_cts (e8250_t *uart, unsigned char val)
 
 	if ((msr ^ uart->msr) & E8250_MSR_CTS) {
 		uart->msr |= E8250_MSR_DCTS;
+		e8250_set_int_cond (uart);
 	}
 	else {
 		uart->msr &= ~E8250_MSR_DCTS;
@@ -440,6 +450,7 @@ void e8250_set_dcd (e8250_t *uart, unsigned char val)
 
 	if ((msr ^ uart->msr) & E8250_MSR_DCD) {
 		uart->msr |= E8250_MSR_DDCD;
+		e8250_set_int_cond (uart);
 	}
 	else {
 		uart->msr &= ~E8250_MSR_DDCD;
@@ -464,6 +475,7 @@ void e8250_set_ri (e8250_t *uart, unsigned char val)
 
 	if ((msr ^ uart->msr) & E8250_MSR_RI) {
 		uart->msr |= E8250_MSR_DRI;
+		e8250_set_int_cond (uart);
 	}
 	else {
 		uart->msr &= ~E8250_MSR_DRI;
@@ -716,6 +728,8 @@ unsigned char e8250_read_msr (e8250_t *uart)
 	val = uart->msr;
 
 	uart->msr &= 0xf0;
+
+	e8250_set_int_cond (uart);
 
 	return (val);
 }

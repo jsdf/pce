@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.h                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -45,13 +45,13 @@
 #define E8250_SCRATCH 0x07
 
 /* Interrupt Enable Register */
-#define E8250_IER_SINP 0x08
+#define E8250_IER_MSR  0x08
 #define E8250_IER_ERBK 0x04
 #define E8250_IER_TBE  0x02
 #define E8250_IER_RRD  0x01
 
 /* Interrupt Indication Register */
-#define E8250_IIR_SINP (0x00 << 1)
+#define E8250_IIR_MSR  (0x00 << 1)
 #define E8250_IIR_TBE  (0x01 << 1)
 #define E8250_IIR_RRD  (0x02 << 1)
 #define E8250_IIR_ERBK (0x03 << 1)
