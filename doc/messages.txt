@@ -157,6 +157,9 @@ emu.disk.rw <drive>
 emu.exit
 	Terminate the emulator immediately.
 
+emu.fdc.accurate "0" | "1"
+	Disable or enable the FDC accurate mode.
+
 emu.pause "0" | "1"
 	Pause or resume the emulation.
 

@@ -211,6 +211,26 @@ int pc_set_msg_emu_exit (ibmpc_t *pc, const char *msg, const char *val)
 }
 
 static
+int pc_set_msg_emu_fdc_accurate (ibmpc_t *pc, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	if (pc->fdc != NULL) {
+		pce_log (MSG_INF, "%s the FDC accurate mode\n",
+			v ? "Enabling" : "Disabling"
+		);
+
+		e8272_set_accuracy (&pc->fdc->e8272, v);
+	}
+
+	return (0);
+}
+
+static
 int pc_set_msg_emu_parport_driver (ibmpc_t *pc, const char *msg, const char *val)
 {
 	unsigned idx;
@@ -485,6 +505,7 @@ static pc_msg_list_t set_msg_list[] = {
 	{ "emu.disk.eject", pc_set_msg_emu_disk_eject },
 	{ "emu.disk.insert", pc_set_msg_emu_disk_insert },
 	{ "emu.exit", pc_set_msg_emu_exit },
+	{ "emu.fdc.accurate", pc_set_msg_emu_fdc_accurate },
 	{ "emu.parport.driver", pc_set_msg_emu_parport_driver },
 	{ "emu.parport.file", pc_set_msg_emu_parport_file },
 	{ "emu.pause", pc_set_msg_emu_pause },

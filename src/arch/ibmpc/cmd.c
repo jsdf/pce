@@ -848,6 +848,8 @@ void pc_cmd_hm (cmd_t *cmd)
 			"emu.disk.eject       <drive>\n"
 			"emu.disk.insert      <drive>:<fname>\n"
 			"\n"
+			"emu.fdc.accurate     \"0\" | \"1\"\n"
+			"\n"
 			"emu.parport.driver   <driver>\n"
 			"emu.parport.file     <filename>\n"
 			"\n"
