@@ -724,7 +724,7 @@ void hdc_cmd_seek (hdc_t *hdc)
 /* Command 0C: init drive */
 
 static
-void hdc_cmd_init_cont (hdc_t *hdc)
+void hdc_cmd_init_cont2 (hdc_t *hdc)
 {
 	unsigned d, c, h, rc, wp, ec;
 
@@ -753,15 +753,22 @@ void hdc_cmd_init_cont (hdc_t *hdc)
 }
 
 static
+void hdc_cmd_init_cont1 (hdc_t *hdc)
+{
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_init_cont2;
+
+	hdc_request_data (hdc, 0);
+}
+
+static
 void hdc_cmd_init (hdc_t *hdc)
 {
 	hdc->buf_idx = 0;
 	hdc->buf_cnt = 8;
 
-	hdc->delay = 0;
-	hdc->cont = hdc_cmd_init_cont;
-
-	hdc_request_data (hdc, 0);
+	hdc->delay = 512;
+	hdc->cont = hdc_cmd_init_cont1;
 }
 
 
