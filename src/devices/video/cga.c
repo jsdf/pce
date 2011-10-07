@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -157,8 +157,8 @@ int cga_get_position (cga_t *cga, unsigned *x, unsigned *y)
 		return (1);
 	}
 
-	pos = cga_get_cursor (cga) & 0x1fff;
-	ofs = cga_get_start (cga) & 0x1fff;
+	pos = cga_get_cursor (cga) & 0x3fff;
+	ofs = cga_get_start (cga) & 0x3fff;
 
 	if ((pos < ofs) || (pos >= (ofs + cga->w * cga->h))) {
 		return (1);
