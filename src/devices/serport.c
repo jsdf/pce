@@ -184,6 +184,31 @@ int ser_set_log (serport_t *ser, const char *fname)
 	return (chr_set_log (ser->cdrv, fname));
 }
 
+void ser_reset (serport_t *ser)
+{
+	e8250_reset (&ser->uart);
+
+	ser->bps = 2400;
+	ser->databits = 8;
+	ser->stopbits = 1;
+	ser->parity = E8250_PARITY_N;
+
+	ser->dtr = 0;
+	ser->rts = 0;
+
+	ser->inp_idx = 0;
+	ser->inp_cnt = 0;
+
+	ser->out_idx = 0;
+	ser->out_cnt = 0;
+
+	ser->check_out = 0;
+	ser->check_inp = 1;
+
+	e8250_set_dsr (&ser->uart, 1);
+	e8250_set_cts (&ser->uart, 1);
+}
+
 static
 void ser_flush_output (serport_t *ser)
 {

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/serport.h                                        *
  * Created:     2003-09-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -111,6 +111,8 @@ e8250_t *ser_get_uart (serport_t *ser);
 int ser_set_driver (serport_t *ser, const char *name);
 
 int ser_set_log (serport_t *ser, const char *fname);
+
+void ser_reset (serport_t *ser);
 
 /*!***************************************************************************
  * @short Receive a byte from the outside
