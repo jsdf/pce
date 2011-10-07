@@ -1721,6 +1721,8 @@ void pc_patch_bios (ibmpc_t *pc)
 
 void pc_reset (ibmpc_t *pc)
 {
+	unsigned i;
+
 	pc_log_deb ("reset pc\n");
 
 	pc_patch_bios (pc);
@@ -1732,6 +1734,12 @@ void pc_reset (ibmpc_t *pc)
 	e8259_reset (&pc->pic);
 
 	pc_kbd_reset (&pc->kbd);
+
+	for (i = 0; i < 4; i++) {
+		if (pc->serport[i] != NULL) {
+			ser_reset (pc->serport[i]);
+		}
+	}
 
 	if (pc->fdc != NULL) {
 		dev_fdc_reset (pc->fdc);
