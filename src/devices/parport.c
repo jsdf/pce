@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/parport.c                                        *
  * Created:     2003-04-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,7 +38,7 @@ void parport_init (parport_t *par, unsigned long base)
 	par->port.get_uint16 = (mem_get_uint16_f) &parport_get_uint16;
 	par->port.set_uint16 = (mem_set_uint16_f) &parport_set_uint16;
 
-	par->status = 0;
+	par->status = 0xdf;
 	par->control = 0;
 	par->data = 0;
 
@@ -110,6 +110,9 @@ void parport_set_control (parport_t *par, unsigned char val)
 
 		par->status |= PARPORT_BSY;
 		par->status &= ~PARPORT_ACK;
+	}
+	else {
+		par->status |= PARPORT_ACK;
 	}
 }
 
