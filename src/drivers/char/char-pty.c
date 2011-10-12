@@ -27,8 +27,9 @@
 #include <string.h>
 #include <limits.h>
 
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
 
 #include <drivers/options.h>
 #include <drivers/char/char.h>
@@ -161,6 +162,27 @@ int chr_pty_set_nonblock (int fd)
 }
 
 static
+int chr_pty_disable_echo (int fd)
+{
+	struct termios tio;
+
+	if (tcgetattr (fd, &tio)) {
+		return (1);
+	}
+
+	tio.c_iflag &= ~(IGNCR | ICRNL | INLCR);
+	tio.c_lflag &= ~(ECHO | ECHOE);
+
+	if (tcsetattr (fd, TCSANOW, &tio)) {
+		return (1);
+	}
+
+	tcflush (fd, TCIOFLUSH);
+
+	return (0);
+}
+
+static
 int chr_pty_init (char_pty_t *drv, const char *name)
 {
 	chr_init (&drv->cdrv, drv);
@@ -186,6 +208,8 @@ int chr_pty_init (char_pty_t *drv, const char *name)
 	if (chr_pty_set_nonblock (drv->fd)) {
 		return (1);
 	}
+
+	chr_pty_disable_echo (drv->fd);
 
 	if (drv->symlink != NULL) {
 		if (symlink (drv->ptsname, drv->symlink)) {

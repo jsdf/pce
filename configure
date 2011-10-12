@@ -5108,7 +5108,7 @@ else
 
 	PCE_ENABLE_CHAR_PTY=1
 	test "x$ac_cv_header_fcntl_h" = "xyes" || PCE_ENABLE_CHAR_PTY=0
-	test "x$ac_cv_header_poll_h" = "xyes" || PCE_ENABLE_CHAR_PTY=0
+	test "x$ac_cv_header_termios_h" = "xyes" || PCE_ENABLE_CHAR_PTY=0
 	test "x$ac_cv_header_unistd_h" = "xyes" || PCE_ENABLE_CHAR_PTY=0
 	if test "x$PCE_ENABLE_CHAR_PTY" = "x1" ; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
