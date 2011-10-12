@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-pty.c                                  *
  * Created:     2009-03-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,38 +29,11 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <poll.h>
 
 #include <drivers/options.h>
 #include <drivers/char/char.h>
 #include <drivers/char/char-pty.h>
 
-
-static
-int chr_pty_check_fd (int fd, int rd, int wr)
-{
-	int           r;
-	struct pollfd pfd[1];
-
-	if (fd < 0) {
-		return (0);
-	}
-
-	pfd[0].fd = fd;
-	pfd[0].events = (rd ? POLLIN : 0) | (wr ? POLLOUT : 0);
-
-	r = poll (pfd, 1, 0);
-
-	if (r < 0) {
-		return (0);
-	}
-
-	if ((pfd[0].revents & (POLLIN | POLLOUT)) == 0) {
-		return (0);
-	}
-
-	return (1);
-}
 
 static
 void chr_pty_close (char_drv_t *cdrv)
@@ -97,10 +70,6 @@ unsigned chr_pty_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 		return (0);
 	}
 
-	if (chr_pty_check_fd (drv->fd, 1, 0) == 0) {
-		return (0);
-	}
-
 #if UINT_MAX > SSIZE_MAX
 	if (cnt > SSIZE_MAX) {
 		cnt = SSIZE_MAX;
@@ -126,10 +95,6 @@ unsigned chr_pty_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 
 	if (drv->fd < 0) {
 		return (cnt);
-	}
-
-	if (chr_pty_check_fd (drv->fd, 0, 1) == 0) {
-		return (0);
 	}
 
 #if UINT_MAX > SSIZE_MAX
@@ -178,6 +143,24 @@ int chr_pty_init_pt (char_pty_t *drv, int fd)
 }
 
 static
+int chr_pty_set_nonblock (int fd)
+{
+	long fl;
+
+	fl = fcntl (fd, F_GETFD);
+
+	if (fl == -1) {
+		return (1);
+	}
+
+	if (fcntl (fd, F_SETFL, fl | O_NONBLOCK) == -1) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int chr_pty_init (char_pty_t *drv, const char *name)
 {
 	chr_init (&drv->cdrv, drv);
@@ -197,6 +180,10 @@ int chr_pty_init (char_pty_t *drv, const char *name)
 	}
 
 	if (chr_pty_init_pt (drv, drv->fd)) {
+		return (1);
+	}
+
+	if (chr_pty_set_nonblock (drv->fd)) {
 		return (1);
 	}
 
