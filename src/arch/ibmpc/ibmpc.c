@@ -938,7 +938,7 @@ int pc_setup_ega (ibmpc_t *pc, ini_sct_t *sct)
 
 	if (enable_irq) {
 		ega_set_irq_fct (pc->video->ext,
-			&pc->pic, e8259_get_irq_f (&pc->pic, irq)
+			&pc->pic, e8259_get_irq_fct (&pc->pic, irq)
 		);
 	}
 
@@ -971,7 +971,7 @@ int pc_setup_vga (ibmpc_t *pc, ini_sct_t *sct)
 
 	if (enable_irq) {
 		vga_set_irq_fct (pc->video->ext,
-			&pc->pic, e8259_get_irq_f (&pc->pic, irq)
+			&pc->pic, e8259_get_irq_fct (&pc->pic, irq)
 		);
 	}
 
@@ -1123,7 +1123,7 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 
 	e8272_set_input_clock (&pc->fdc->e8272, PCE_IBMPC_CLK2);
 	e8272_set_accuracy (&pc->fdc->e8272, accurate != 0);
-	e8272_set_irq_fct (&pc->fdc->e8272, &pc->pic, e8259_get_irq_f (&pc->pic, irq));
+	e8272_set_irq_fct (&pc->fdc->e8272, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	e8272_set_dreq_fct (&pc->fdc->e8272, &pc->dma, e8237_set_dreq2);
 
 	e8237_set_tc_fct (&pc->dma, 2, &pc->fdc->e8272, e8272_set_tc);
@@ -1184,7 +1184,7 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 
 	hdc_set_config (pc->hdc, cfg);
 
-	hdc_set_irq_fct (pc->hdc, &pc->pic, e8259_get_irq_f (&pc->pic, irq));
+	hdc_set_irq_fct (pc->hdc, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	hdc_set_dreq_fct (pc->hdc, &pc->dma, e8237_set_dreq3);
 
 	e8237_set_tc_fct (&pc->dma, 3, pc->hdc, hdc_set_tc);
@@ -1226,7 +1226,7 @@ void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->mse = mse_new (addr, sct);
 
-	e8250_set_irq_fct (&pc->mse->uart, &pc->pic, e8259_get_irq_f (&pc->pic, irq));
+	e8250_set_irq_fct (&pc->mse->uart, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 
 	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
 
@@ -1372,7 +1372,7 @@ void pc_setup_serport (ibmpc_t *pc, ini_sct_t *ini)
 			e8250_set_multichar (&pc->serport[i]->uart, multi_read, multi_write);
 
 			e8250_set_irq_fct (&pc->serport[i]->uart,
-				&pc->pic, e8259_get_irq_f (&pc->pic, irq)
+				&pc->pic, e8259_get_irq_fct (&pc->pic, irq)
 			);
 
 			mem_add_blk (pc->prt, ser_get_reg (pc->serport[i]), 0);

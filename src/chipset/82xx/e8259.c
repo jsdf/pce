@@ -95,7 +95,7 @@ void e8259_del (e8259_t *pic)
 	}
 }
 
-e8259_irq_f e8259_get_irq_f (e8259_t *pic, unsigned irq)
+e8259_irq_f e8259_get_irq_fct (e8259_t *pic, unsigned irq)
 {
 	switch (irq & 0x07) {
 	case 0:

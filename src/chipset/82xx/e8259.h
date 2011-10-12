@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8259.h                                     *
  * Created:     2003-04-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -136,7 +136,7 @@ void e8259_del (e8259_t *pic);
  *
  * The return value is a pointer to one of the e8259_set_irq?() functions.
  *****************************************************************************/
-e8259_irq_f e8259_get_irq_f (e8259_t *pic, unsigned irq);
+e8259_irq_f e8259_get_irq_fct (e8259_t *pic, unsigned irq);
 
 /*!***************************************************************************
  * @short Set the interrupt function
