@@ -189,7 +189,5 @@ unsigned long e8259_get_uint32 (e8259_t *pic, unsigned long addr);
  *****************************************************************************/
 void e8259_reset (e8259_t *pic);
 
-void e8259_clock (e8259_t *pic);
-
 
 #endif

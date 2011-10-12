@@ -1889,7 +1889,6 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 			pc_cas_clock (pc->cas, clk);
 		}
 
-		e8259_clock (&pc->pic);
 		e8237_clock (&pc->dma, clk);
 
 		pce_video_clock1 (pc->video, 0);

@@ -156,17 +156,33 @@ unsigned e8259_get_priority (e8259_t *pic, unsigned char val)
 	unsigned ret, msk;
 
 	if (val == 0) {
-		return (16);
+		return (255);
 	}
 
-	msk = (val << 8) | val;
-	ret = pic->priority & 7;
+	msk = val & 0xff;
+	msk = ((msk << 8) | msk) >> (pic->priority & 7);
+	ret = 0;
 
-	while ((msk & (1 << ret)) == 0) {
+	while ((msk & 1) == 0) {
+		msk >>= 1;
 		ret += 1;
 	}
 
 	return (ret);
+}
+
+/*
+ * Set the INT output according to the PIC internal state.
+ */
+static
+void e8259_check_int (e8259_t *pic)
+{
+	unsigned irrp, isrp;
+
+	irrp = e8259_get_priority (pic, pic->irr & ~pic->imr);
+	isrp = e8259_get_priority (pic, pic->isr & ~pic->imr);
+
+	e8259_set_int (pic, irrp < isrp);
 }
 
 /*
@@ -189,6 +205,8 @@ void e8259_set_irq (e8259_t *pic, unsigned irq, unsigned char val)
 	}
 
 	pic->irr |= msk;
+
+	e8259_check_int (pic);
 }
 
 void e8259_set_irq0 (e8259_t *pic, unsigned char val)
@@ -266,6 +284,8 @@ unsigned char e8259_inta (e8259_t *pic)
 	}
 
 	pic->irq_cnt[irrp] += 1;
+
+	e8259_check_int (pic);
 
 	return (pic->base + irrp);
 }
@@ -472,6 +492,8 @@ void e8259_set_uint8 (e8259_t *pic, unsigned long addr, unsigned char val)
 		}
 		break;
 	}
+
+	e8259_check_int (pic);
 }
 
 void e8259_set_uint16 (e8259_t *pic, unsigned long addr, unsigned short val)
@@ -531,20 +553,6 @@ void e8259_reset (e8259_t *pic)
 	pic->priority = 0;
 
 	pic->rot_on_aeoi = 0;
-}
 
-void e8259_clock (e8259_t *pic)
-{
-	unsigned irrp, isrp;
-
-	if (pic->irr == 0) {
-		return;
-	}
-
-	irrp = e8259_get_priority (pic, pic->irr & ~pic->imr);
-	isrp = e8259_get_priority (pic, pic->isr & ~pic->imr);
-
-	if (irrp < isrp) {
-		e8259_set_int (pic, 1);
-	}
+	e8259_check_int (pic);
 }
