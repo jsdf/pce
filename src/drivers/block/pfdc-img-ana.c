@@ -154,5 +154,7 @@ int pfdc_save_anadisk (FILE *fp, const pfdc_img_t *img)
 		}
 	}
 
+	fflush (fp);
+
 	return (0);
 }

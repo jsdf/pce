@@ -837,6 +837,8 @@ int pfdc_save_td0 (FILE *fp, const pfdc_img_t *img)
 		return (1);
 	}
 
+	fflush (fp);
+
 	return (0);
 }
 

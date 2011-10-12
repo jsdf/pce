@@ -512,6 +512,8 @@ int pfdc_save_imd (FILE *fp, const pfdc_img_t *img)
 		}
 	}
 
+	fflush (fp);
+
 	return (0);
 }
 

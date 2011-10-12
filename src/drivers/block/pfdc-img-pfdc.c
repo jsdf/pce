@@ -1176,6 +1176,8 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 		}
 	}
 
+	fflush (fp);
+
 	return (0);
 }
 
