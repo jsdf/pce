@@ -44,6 +44,8 @@ typedef struct {
 	unsigned long bit_cnt;
 	unsigned long bit_idx;
 
+	unsigned      index;
+
 	int           sync;
 	int           clock;
 } mfm_t;
@@ -57,89 +59,55 @@ void mfm_init (mfm_t *mfm, FILE *fp)
 	mfm->bit_idx = 0;
 	mfm->bit_cnt = 0;
 
+	mfm->index = 0;
+
 	mfm->sync = 0;
 	mfm->clock = 0;
 }
 
 static
-int mfm_read_bit (mfm_t *mfm, int *val)
+int mfm_read_bit (mfm_t *mfm)
 {
+	int           ret;
 	unsigned long i;
 	unsigned      m;
-
-	if (mfm->bit_idx >= mfm->bit_cnt) {
-		return (1);
-	}
 
 	i = mfm->bit_idx >> 3;
 	m = 0x80 >> (mfm->bit_idx & 7);
 
-	*val = (mfm->buf[i] & m) != 0;
+	ret = (mfm->buf[i] & m) != 0;
 
 	mfm->bit_idx += 1;
 
-	mfm->clock = !mfm->clock;
-
-	return (0);
-}
-
-static
-int mfm_sync (mfm_t *mfm)
-{
-	int      bit;
-	unsigned val;
-
-	val = 0;
-
-	/*
-	 * A1 = 10100001
-	 * A1 = [0] 1 [0] 0 [0] 1 [0] 0 [1] 0 [1/0] 0 [1] 0 [0] 1 [0]
-	 * A1 = 44A9 / 4489
-	 */
-
-	while (mfm_read_bit (mfm, &bit) == 0) {
-		val = (val << 1) | (bit != 0);
-
-		if ((val & 0xffff) == 0x4489) {
-			mfm->sync = 1;
-			mfm->clock = 1;
-			return (0);
-		}
+	if (mfm->bit_idx >= mfm->bit_cnt) {
+		mfm->bit_idx = 0;
+		mfm->index += 1;
 	}
 
-	return (1);
+	mfm->clock = !mfm->clock;
+
+	return (ret);
 }
 
 static
 int mfm_read_byte (mfm_t *mfm, unsigned char *val)
 {
 	unsigned i;
-	int      bit;
 
 	*val = 0;
 
-	if (mfm->sync == 0) {
-		if (mfm_sync (mfm)) {
-			return (1);
-		}
-	}
-
 	if (mfm->clock) {
-		if (mfm_read_bit (mfm, &bit)) {
-			return (1);
-		}
+		mfm_read_bit (mfm);
 	}
 
 	for (i = 0; i < 8; i++) {
-		if (mfm_read_bit (mfm, &bit)) {
-			if (i == 0) {
-				return (1);
-			}
+		*val = *val << 1;
+
+		if (mfm_read_bit (mfm)) {
+			*val |= 0x01;
 		}
 
-		*val = (*val << 1) | (bit != 0);
-
-		mfm_read_bit (mfm, &bit);
+		mfm_read_bit (mfm);
 	}
 
 	return (0);
@@ -164,6 +132,68 @@ unsigned mfm_read (mfm_t *mfm, void *buf, unsigned cnt)
 	}
 
 	return (i);
+}
+
+/*
+ * Sync with MFM bit stream
+ *
+ * A1 = 10100001
+ * A1 = [0] 1 [0] 0 [0] 1 [0] 0 [1] 0 [1/0] 0 [1] 0 [0] 1 [0]
+ * A1 = 44A9 / 4489
+ *
+ * If mfm_sync() returns successfully the stream position is the clock
+ * bit between the sync byte (0xa1) and the next byte.
+ */
+static
+int mfm_sync (mfm_t *mfm)
+{
+	unsigned val, imax;
+
+	mfm->sync = 0;
+
+	imax = mfm->index + 2;
+
+	val = 0;
+
+	while (mfm->index < imax) {
+		val = (val << 1) | (mfm_read_bit (mfm) != 0);
+
+		if ((val & 0xffff) == 0x4489) {
+			mfm->sync = 1;
+			mfm->clock = 1;
+			return (0);
+		}
+	}
+
+	return (1);
+}
+
+static
+int mfm_sync_am (mfm_t *mfm, unsigned char *am)
+{
+	unsigned      i;
+	unsigned char val;
+
+	if (mfm_sync (mfm)) {
+		return (1);
+	}
+
+	/* skip two more sync bytes */
+	for (i = 0; i < 2; i++) {
+		if (mfm_read_byte (mfm, &val)) {
+			return (1);
+		}
+
+		if (val != 0xa1) {
+			return (1);
+		}
+	}
+
+	if (mfm_read_byte (mfm, am)) {
+		return (1);
+	}
+
+	return (0);
 }
 
 static
@@ -240,11 +270,12 @@ int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned am)
 	unsigned      crc1, crc2;
 	unsigned char buf[4];
 
-	mfm_read (mfm, sct->data, sct->n);
+	if (mfm_read (mfm, sct->data, sct->n) != sct->n) {
+		return (1);
+	}
 
 	if (mfm_read (mfm, buf, 2) != 2) {
-		buf[0] = 0;
-		buf[1] = 0;
+		return (1);
 	}
 
 	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 0);
@@ -268,44 +299,47 @@ int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned am)
 }
 
 static
-int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, pfdc_sct_t **sct, unsigned am, unsigned c, unsigned h)
+int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, unsigned am, unsigned c, unsigned h)
 {
+	unsigned      index;
 	unsigned long idx;
+	unsigned char am2;
+	pfdc_sct_t    *sct;
 
+	index = mfm->index;
 	idx = mfm->bit_idx;
 
 	switch (am) {
 	case 0xfe:
-		*sct = mfm_decode_idam (mfm);
+		sct = mfm_decode_idam (mfm);
 
-		if (*sct == NULL) {
+		if (sct == NULL) {
 			return (1);
 		}
 
-		pfdc_img_add_sector (img, *sct, c, h);
+		pfdc_img_add_sector (img, sct, c, h);
+
+		if (mfm_sync_am (mfm, &am2) == 0) {
+			if ((am2 == 0xf8) || (am2 == 0xfb)) {
+				if (mfm_decode_dam (mfm, sct, am2)) {
+					return (1);
+				}
+			}
+		}
 		break;
 
 	case 0xf8:
 	case 0xfb:
-		if (*sct != NULL) {
-			if (mfm_decode_dam (mfm, *sct, am)) {
-				return (1);
-			}
-
-			*sct = NULL;
-		}
-		else {
-			fprintf (stderr, "tc: data mark without ID\n");
-		}
 		break;
 
 	default:
 		fprintf (stderr,
-			"tc: unknown address mark (c=%u, h=%u, s=%u, am=0x%02x)\n",
-			c, h, (*sct != NULL) ? (*sct)->s : 255, am
+			"tc: unknown address mark (c=%u, h=%u, am=0x%02x)\n",
+			c, h, am
 		);
 	}
 
+	mfm->index = index;
 	mfm->bit_idx = idx;
 
 	return (0);
@@ -314,64 +348,25 @@ int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, pfdc_sct_t **sct, unsigned am, u
 static
 int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 {
-	int           eot;
-	unsigned char val;
-	unsigned      cnt;
-	pfdc_sct_t    *sct;
+	unsigned char am;
 
-	eot = 0;
+	mfm->index = 0;
 
-	sct = NULL;
-
-	while (1) {
-		if (mfm_sync (mfm)) {
-			eot = 1;
-
-			/*
-			 * If there is an IDAM without DAM at the end
-			 * of the track, start from the beginning and
-			 * if the first AM on the track is a DAM, use
-			 * it. If it is anything else, return.
-			 */
-
-			if (sct == NULL) {
-				return (0);
-			}
-
-			mfm->bit_idx = 0;
-
-			if (mfm_sync (mfm)) {
-				return (0);
-			}
-		}
-
-		cnt = 0;
-
-		do {
-			cnt += 1;
-
-			if (mfm_read_byte (mfm, &val)) {
-				return (1);
-			}
-		} while (val == 0xa1);
-
-		if (cnt < 2) {
+	while (mfm->index < 1) {
+		if (mfm_sync_am (mfm, &am)) {
 			continue;
 		}
 
-		if (eot && (val != 0xfb) && (val != 0xf8)) {
-			/* First AM on second pass is not a DAM */
-			return (0);
+		if (mfm->index >= 1) {
+			break;
 		}
 
-		if (mfm_decode_am (mfm, img, &sct, val, c, h)) {
+		if (mfm_decode_am (mfm, img, am, c, h)) {
 			return (1);
 		}
-
-		if (eot) {
-			return (0);
-		}
 	}
+
+	return (0);
 }
 
 static
