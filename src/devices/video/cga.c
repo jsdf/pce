@@ -157,15 +157,17 @@ int cga_get_position (cga_t *cga, unsigned *x, unsigned *y)
 		return (1);
 	}
 
-	pos = cga_get_cursor (cga) & 0x3fff;
-	ofs = cga_get_start (cga) & 0x3fff;
+	pos = cga_get_cursor (cga);
+	ofs = cga_get_start (cga);
 
-	if ((pos < ofs) || (pos >= (ofs + cga->w * cga->h))) {
+	pos = (pos - ofs) & 0x3fff;
+
+	if (pos >= (cga->w * cga->h)) {
 		return (1);
 	}
 
-	*x = (pos - ofs) % cga->w;
-	*y = (pos - ofs) / cga->w;
+	*x = pos % cga->w;
+	*y = pos / cga->w;
 
 	return (0);
 }
