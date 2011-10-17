@@ -204,11 +204,11 @@ unsigned pce_get_disk_type (const char *str)
 
 	buf[i] = 0;
 
-	if (strcmp (buf, "raw") == 0) {
+	if ((strcmp (buf, "raw") == 0) || (strcmp (buf, "img") == 0)) {
 		return (DSK_RAW);
 	}
 
-	if (strcmp (buf, "pce") == 0) {
+	if ((strcmp (buf, "pce") == 0) || (strcmp (buf, "pimg") == 0)) {
 		return (DSK_PCE);
 	}
 
