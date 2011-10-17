@@ -162,7 +162,13 @@ unsigned pce_get_disk_type_ext (const char *str)
 		return (DSK_NONE);
 	}
 
-	if (strcasecmp (ext, "pfdc") == 0) {
+	if (strcasecmp (ext, "img") == 0) {
+		return (DSK_RAW);
+	}
+	else if (strcasecmp (ext, "pimg") == 0) {
+		return (DSK_PCE);
+	}
+	else if (strcasecmp (ext, "pfdc") == 0) {
 		return (DSK_PFDC);
 	}
 	else if (strcasecmp (ext, "qed") == 0) {
