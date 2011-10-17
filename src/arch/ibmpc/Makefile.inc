@@ -44,7 +44,6 @@ PCE_IBMPC_BAS  := \
 	int13 \
 	keyboard \
 	main \
-	mouse \
 	msg \
 	speaker \
 	xms
@@ -124,7 +123,6 @@ $(rel)/ibmpc.o:		$(rel)/ibmpc.c
 $(rel)/int13.o:		$(rel)/int13.c
 $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/main.o:		$(rel)/main.c
-$(rel)/mouse.o:		$(rel)/mouse.c
 $(rel)/msg.o:		$(rel)/msg.c
 $(rel)/speaker.o:	$(rel)/speaker.c
 $(rel)/xms.o:		$(rel)/xms.c

@@ -353,8 +353,7 @@ speaker {
 
 # Up to 4 serial ports can be defined
 serial {
-	# COM1
-	address = 0x3f8
+	address = 0x3f8			# COM1
 	irq     = 4
 
 	# Valid values for uart are: "8250", "16450"
@@ -369,6 +368,7 @@ serial {
 
 	# Not all character drivers are supported on
 	# all platforms.
+	#driver = "mouse:xmul=1:xdiv=1:ymul=1:ydiv=1"
 	#driver = "null"
 	#driver = "posix:file=serport1.out"
 	#driver = "pty:symlink=com1"
@@ -379,18 +379,12 @@ serial {
 	#log = "serport1.log"
 }
 
-
-mouse {
-	# These are the same as for a serial port
-	address = 0x2f8		# COM2
-	irq = 3
-
-	# The mouse speed. This is independent of the
-	# terminal mouse speed.
-	speed_mul_x = 1
-	speed_div_x = 1
-	speed_mul_y = 1
-	speed_div_y = 1
+serial {
+	address   = 0x2f8		# COM2
+	irq       = 3
+	uart      = "8250"
+	multichar = 16
+	driver    = "mouse"
 }
 
 

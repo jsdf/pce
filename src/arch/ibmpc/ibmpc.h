@@ -27,7 +27,6 @@
 #include "cassette.h"
 #include "ems.h"
 #include "keyboard.h"
-#include "mouse.h"
 #include "speaker.h"
 #include "xms.h"
 
@@ -65,7 +64,6 @@ typedef struct ibmpc_t {
 	video_t            *video;
 	disks_t            *dsk;
 	disk_t             *dsk0;
-	mouse_t            *mse;
 
 	memory_t           *mem;
 	mem_blk_t          *ram;

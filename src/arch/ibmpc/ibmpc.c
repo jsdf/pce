@@ -1210,39 +1210,6 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
-void pc_setup_mouse (ibmpc_t *pc, ini_sct_t *ini)
-{
-	ini_sct_t     *sct;
-	unsigned long addr;
-	unsigned      irq;
-
-	pc->mse = NULL;
-
-	sct = ini_next_sct (ini, NULL, "mouse");
-
-	if (sct == NULL) {
-		return;
-	}
-
-	if (ini_get_uint32 (sct, "address", &addr, 0x03f8)) {
-		ini_get_uint32 (sct, "io", &addr, 0x03f8);
-	}
-	ini_get_uint16 (sct, "irq", &irq, 4);
-
-	pce_log_tag (MSG_INF, "MOUSE:", "addr=0x%04lx irq=%u\n", addr, irq);
-
-	pc->mse = mse_new (addr, sct);
-
-	e8250_set_irq_fct (&pc->mse->uart, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
-
-	mem_add_blk (pc->prt, mse_get_reg (pc->mse), 0);
-
-	if (pc->trm != NULL) {
-		trm_set_mouse_fct (pc->trm, pc->mse, mse_set);
-	}
-}
-
-static
 void pc_setup_parport (ibmpc_t *pc, ini_sct_t *ini)
 {
 	unsigned        i;
@@ -1482,7 +1449,6 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_disks (pc, ini);
 	pc_setup_fdc (pc, ini);
 	pc_setup_hdc (pc, ini);
-	pc_setup_mouse (pc, ini);
 	pc_setup_serport (pc, ini);
 	pc_setup_parport (pc, ini);
 	pc_setup_ems (pc, ini);
@@ -1505,14 +1471,6 @@ void pc_del_ems (ibmpc_t *pc)
 {
 	ems_del (pc->ems);
 	pc->ems = NULL;
-}
-
-void pc_del_mouse (ibmpc_t *pc)
-{
-	if (pc->mse != NULL) {
-		mse_del (pc->mse);
-		pc->mse = NULL;
-	}
 }
 
 void pc_del_parport (ibmpc_t *pc)
@@ -1549,7 +1507,6 @@ void pc_del (ibmpc_t *pc)
 	pc_del_ems (pc);
 	pc_del_parport (pc);
 	pc_del_serport (pc);
-	pc_del_mouse (pc);
 	hdc_del (pc->hdc);
 	dev_fdc_del (pc->fdc);
 	dsks_del (pc->dsk);
@@ -1929,10 +1886,6 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 				if (pc->serport[i] != NULL) {
 					ser_clock (pc->serport[i], clk);
 				}
-			}
-
-			if (pc->mse != NULL) {
-				mse_clock (pc->mse, clk);
 			}
 
 			if (pc->clk_div[2] >= 16384) {

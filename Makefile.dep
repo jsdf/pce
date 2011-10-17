@@ -14,7 +14,6 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
@@ -64,7 +63,6 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
@@ -101,7 +99,6 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
@@ -152,7 +149,6 @@ src/arch/ibmpc/int13.o: src/arch/ibmpc/int13.c \
 	src/arch/ibmpc/int13.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
@@ -197,7 +193,6 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/msg.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
@@ -233,21 +228,12 @@ src/arch/ibmpc/main.o: src/arch/ibmpc/main.c \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
-src/arch/ibmpc/mouse.o: src/arch/ibmpc/mouse.c \
-	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
-	src/chipset/82xx/e8250.h \
-	src/config.h \
-	src/devices/memory.h \
-	src/libini/libini.h
-
 src/arch/ibmpc/msg.o: src/arch/ibmpc/msg.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/main.h \
-	src/arch/ibmpc/mouse.h \
 	src/arch/ibmpc/speaker.h \
 	src/arch/ibmpc/xms.h \
 	src/chipset/82xx/e8237.h \
