@@ -288,6 +288,12 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 	pc_speaker_set_out (&pc->spk, val);
 }
 
+static
+void pc_set_mouse (void *ext, int dx, int dy, unsigned button)
+{
+	chr_mouse_set (dx, dy, button);
+}
+
 
 static
 void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
@@ -834,6 +840,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	trm_set_key_fct (pc->trm, &pc->kbd, pc_kbd_set_key);
+	trm_set_mouse_fct (pc->trm, pc, pc_set_mouse);
 	trm_set_msg_fct (pc->trm, pc, pc_set_msg);
 }
 
