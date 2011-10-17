@@ -44,6 +44,8 @@ typedef struct {
 	unsigned      wdw_w;
 	unsigned      wdw_h;
 
+	unsigned      button;
+
 	char          fullscreen;
 
 	unsigned      dsp_bpp;

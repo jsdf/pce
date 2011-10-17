@@ -387,26 +387,30 @@ void sdl_event_keyup (sdl_t *sdl, SDLKey key)
 }
 
 static
-void sdl_event_mouse_button (sdl_t *sdl)
+void sdl_event_mouse_button (sdl_t *sdl, int down, unsigned button)
 {
-	unsigned but, val;
-
-	val = 0;
-	but = SDL_GetMouseState (NULL, NULL);
-
-	if (but & SDL_BUTTON (1)) {
-		val |= 1;
+	if (button == 0) {
+		return;
 	}
 
-	if (but & SDL_BUTTON (3)) {
-		val |= 2;
+	if (button == 2) {
+		button = 3;
+	}
+	else if (button == 3) {
+		button = 2;
 	}
 
-	if (sdl->grab == 0) {
-		if (but == 0) {
-			sdl_grab_mouse (sdl, 1);
-		}
+	button -= 1;
 
+	if (down) {
+		sdl->button |= 1U << button;
+	}
+	else {
+		sdl->button &= ~(1U << button);
+	}
+
+	if ((down == 0) && (sdl->grab == 0)) {
+		sdl_grab_mouse (sdl, 1);
 		return;
 	}
 
@@ -414,7 +418,7 @@ void sdl_event_mouse_button (sdl_t *sdl)
 		return;
 	}
 
-	trm_set_mouse (&sdl->trm, 0, 0, val);
+	trm_set_mouse (&sdl->trm, 0, 0, sdl->button);
 }
 
 static
@@ -462,8 +466,11 @@ void sdl_check (sdl_t *sdl)
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
+			sdl_event_mouse_button (sdl, 1, evt.button.button);
+			break;
+
 		case SDL_MOUSEBUTTONUP:
-			sdl_event_mouse_button (sdl);
+			sdl_event_mouse_button (sdl, 0, evt.button.button);
 			break;
 
 		case SDL_MOUSEMOTION:
@@ -608,6 +615,8 @@ void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 
 	sdl->wdw_w = 0;
 	sdl->wdw_h = 0;
+
+	sdl->button = 0;
 
 	ini_get_bool (sct, "fullscreen", &fs, 0);
 	sdl->fullscreen = (fs != 0);
