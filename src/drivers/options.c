@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/options.c                                        *
  * Created:     2009-10-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -215,6 +215,30 @@ unsigned long drv_get_option_uint (const char *str, const char *name, unsigned l
 	}
 
 	val = strtoul (s, &end, 0);
+
+	if ((end != NULL) && (*end != 0)) {
+		free (s);
+		return (def);
+	}
+
+	free (s);
+
+	return (val);
+}
+
+long drv_get_option_sint (const char *str, const char *name, long def)
+{
+	unsigned long val;
+	char          *end;
+	char          *s;
+
+	s = drv_get_option (str, name);
+
+	if (s == NULL) {
+		return (def);
+	}
+
+	val = strtol (s, &end, 0);
 
 	if ((end != NULL) && (*end != 0)) {
 		free (s);

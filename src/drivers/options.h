@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/options.h                                        *
  * Created:     2009-10-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,10 +39,16 @@ char *drv_get_option (const char *str, const char *name);
 int drv_get_option_bool (const char *str, const char *name, int def);
 
 /*!***************************************************************************
- * @short  Get a named integer driver option
+ * @short  Get a named unsigned integer driver option
  @ @return The option value
  *****************************************************************************/
 unsigned long drv_get_option_uint (const char *str, const char *name, unsigned long def);
+
+/*!***************************************************************************
+ * @short  Get a named integer driver option
+ @ @return The option value
+ *****************************************************************************/
+long drv_get_option_sint (const char *str, const char *name, long def);
 
 
 #endif
