@@ -396,11 +396,19 @@ void mac_log_opcode (void *ext, unsigned long ir)
 static
 void mac_log_undef (void *ext, unsigned long ir)
 {
-	macplus_t *sim = ext;
+	unsigned long pc;
+	macplus_t     *sim = ext;
+
+	pc = e68_get_pc (sim->cpu);
 
 	pce_log (MSG_DEB,
-		"%08lX: undefined operation [%04lX]\n",
-		(unsigned long) e68_get_pc (sim->cpu), ir
+		"%08lX: undefined operation: %04lX [%04X %04X %04X %04X %04X]\n",
+		pc, ir,
+		(unsigned) e68_get_mem16 (sim->cpu, pc),
+		(unsigned) e68_get_mem16 (sim->cpu, pc + 2),
+		(unsigned) e68_get_mem16 (sim->cpu, pc + 4),
+		(unsigned) e68_get_mem16 (sim->cpu, pc + 6),
+		(unsigned) e68_get_mem16 (sim->cpu, pc + 8)
 	);
 
 	/* mac_set_msg (sim, "emu.stop", NULL); */
