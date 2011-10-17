@@ -11,6 +11,20 @@ a colon, it must be escaped by repeating it.
 
 The following is a list of character drivers and their options:
 
+mouse:
+	A two button serial mouse.
+
+	xmul=<int>
+	ydiv=<int>
+		The horizontal mouse speed is multiplied by (xmul / xdiv).
+
+	ymul=<int>
+	ydiv=<int>
+		The vertical mouse speed is multiplied by (ymul / ydiv).
+
+	log=<filename>
+		Set the log file name.
+
 null:
 	log=<filename>
 		Set the log file name.

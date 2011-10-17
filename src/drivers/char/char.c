@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.c                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,6 +35,7 @@ struct chr_drv_list {
 };
 
 struct chr_drv_list drvtab[] = {
+	{ "mouse", chr_mouse_open },
 	{ "null", chr_null_open },
 #ifdef PCE_ENABLE_CHAR_POSIX
 	{ "posix", chr_posix_open },

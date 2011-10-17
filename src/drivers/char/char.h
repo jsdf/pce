@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.h                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -84,6 +84,7 @@ int chr_set_params (char_drv_t *cdrv, unsigned long bps, unsigned bpc, unsigned 
 int chr_set_log (char_drv_t *cdrv, const char *fname);
 
 char_drv_t *chr_open (const char *name);
+char_drv_t *chr_mouse_open (const char *name);
 char_drv_t *chr_null_open (const char *name);
 char_drv_t *chr_posix_open (const char *name);
 char_drv_t *chr_ppp_open (const char *name);
@@ -92,6 +93,8 @@ char_drv_t *chr_slip_open (const char *name);
 char_drv_t *chr_stdio_open (const char *name);
 char_drv_t *chr_tcp_open (const char *name);
 char_drv_t *chr_tios_open (const char *name);
+
+void chr_mouse_set (int dx, int dy, unsigned button);
 
 
 #endif

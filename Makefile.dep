@@ -1587,6 +1587,11 @@ src/drivers/block/pfdc-img-td0.o: src/drivers/block/pfdc-img-td0.c \
 src/drivers/block/pfdc.o: src/drivers/block/pfdc.c \
 	src/drivers/block/pfdc.h
 
+src/drivers/char/char-mouse.o: src/drivers/char/char-mouse.c \
+	src/drivers/char/char-mouse.h \
+	src/drivers/char/char.h \
+	src/drivers/options.h
+
 src/drivers/char/char-null.o: src/drivers/char/char-null.c \
 	src/drivers/char/char-null.h \
 	src/drivers/char/char.h

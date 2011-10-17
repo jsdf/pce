@@ -5,7 +5,7 @@ rel := src/drivers/char
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-DRV_CHR_BAS  := char char-null char-stdio
+DRV_CHR_BAS  := char char-mouse char-null char-stdio
 DRV_CHR_NBAS :=
 
 ifeq "$(PCE_ENABLE_CHAR_POSIX)" "1"
@@ -56,6 +56,7 @@ CLN  += $(DRV_CHR_OBJ) $(DRV_CHR_NOBJ) $(DRV_CHR_ARC)
 DIST += $(DRV_CHR_SRC) $(DRV_CHR_HDR) $(DRV_CHR_NSRC) $(DRV_CHR_NHDR)
 
 $(rel)/char.o:		$(rel)/char.c
+$(rel)/char-mouse.o:	$(rel)/char-mouse.c
 $(rel)/char-null.o:	$(rel)/char-null.c
 $(rel)/char-posix.o:	$(rel)/char-posix.c
 $(rel)/char-ppp.o:	$(rel)/char-ppp.c
