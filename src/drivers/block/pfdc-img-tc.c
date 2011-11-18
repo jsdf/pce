@@ -37,17 +37,19 @@
 
 
 typedef struct {
-	FILE          *fp;
+	FILE           *fp;
 
-	unsigned char buf[65536];
+	unsigned char  buf[65536];
 
-	unsigned long bit_cnt;
-	unsigned long bit_idx;
+	unsigned long  bit_cnt;
+	unsigned long  bit_idx;
 
-	unsigned      index;
+	unsigned       index;
 
-	int           sync;
-	int           clock;
+	unsigned short crc;
+
+	char           sync;
+	char           clock;
 } mfm_t;
 
 
@@ -61,8 +63,37 @@ void mfm_init (mfm_t *mfm, FILE *fp)
 
 	mfm->index = 0;
 
+	mfm->crc = 0;
+
 	mfm->sync = 0;
 	mfm->clock = 0;
+}
+
+static
+unsigned mfm_crc (unsigned crc, const void *buf, unsigned cnt)
+{
+	unsigned            i;
+	const unsigned char *src;
+
+	src = buf;
+
+	while (cnt > 0) {
+		crc ^= (unsigned) *src << 8;
+
+		for (i = 0; i < 8; i++) {
+			if (crc & 0x8000) {
+				crc = (crc << 1) ^ 0x1021;
+			}
+			else {
+				crc = crc << 1;
+			}
+		}
+
+		src += 1;
+		cnt -= 1;
+	}
+
+	return (crc & 0xffff);
 }
 
 static
@@ -135,19 +166,37 @@ unsigned mfm_read (mfm_t *mfm, void *buf, unsigned cnt)
 }
 
 /*
- * Sync with MFM bit stream
+ * Sync with MFM/FM bit stream.
  *
- * A1 = 10100001
- * A1 = [0] 1 [0] 0 [0] 1 [0] 0 [1] 0 [1/0] 0 [1] 0 [0] 1 [0]
- * A1 = 44A9 / 4489
+ * MFM mark:
+ *   A1 = 10100001 / 0A = 00001010
+ *   4489 = [0] 1 [0] 0 [0] 1 [0] 0 [1] 0 [0] 0 [1] 0 [0] 1
+ *
+ * FM index mark:
+ *   FC = 11111100 / D7 = 11010111
+ *   F76A = [1] 1 [1] 1 [0] 1 [1] 1 [0] 1 [1] 1 [1] 0 [1] 0
+ *
+ * FM ID address mark:
+ *   FE = 11111110 / C7 = 11000111
+ *   F57E = [1] 1 [1] 1 [0] 1 [0] 1 [0] 1 [1] 1 [1] 1 [1] 0
+ *
+ * FM data address mark: (FB / C7)
+ *   FB = 11111011 / C7 = 11000111
+ *   F56F = [1] 1 [1] 1 [0] 1 [0] 1 [0] 1 [1] 0 [1] 1 [1] 1
+ *
+ * FM deleted data address mark: (F8 / C7)
+ *   F8 = 11111000 / C7 = 11000111
+ *   F56A = [1] 1 [1] 1 [0] 1 [0] 1 [0] 1 [1] 0 [1] 0 [1] 0
  *
  * If mfm_sync() returns successfully the stream position is the clock
- * bit between the sync byte (0xa1) and the next byte.
+ * bit between the mark byte and the next byte.
  */
 static
-int mfm_sync (mfm_t *mfm)
+int mfm_sync (mfm_t *mfm, unsigned char *mark)
 {
 	unsigned val, imax;
+
+	*mark = 0;
 
 	mfm->sync = 0;
 
@@ -155,79 +204,94 @@ int mfm_sync (mfm_t *mfm)
 
 	val = 0;
 
-	while (mfm->index < imax) {
+	while (1) {
 		val = (val << 1) | (mfm_read_bit (mfm) != 0);
 
-		if ((val & 0xffff) == 0x4489) {
-			mfm->sync = 1;
-			mfm->clock = 1;
-			return (0);
+		switch (val & 0xffff) {
+		case 0x4489:
+			*mark = 0xa1;
+			break;
+
+		case 0xf76a:
+			*mark = 0xfc;
+			break;
+
+		case 0xf57e:
+			*mark = 0xfe;
+			break;
+
+		case 0xf56f:
+			*mark = 0xfb;
+			break;
+
+		case 0xf56a:
+			*mark = 0xf8;
+			break;
 		}
-	}
 
-	return (1);
-}
+		if (*mark != 0) {
+			break;
+		}
 
-static
-int mfm_sync_am (mfm_t *mfm, unsigned char *am)
-{
-	unsigned      i;
-	unsigned char val;
-
-	if (mfm_sync (mfm)) {
-		return (1);
-	}
-
-	/* skip two more sync bytes */
-	for (i = 0; i < 2; i++) {
-		if (mfm_read_byte (mfm, &val)) {
+		if (mfm->index >= imax) {
 			return (1);
 		}
-
-		if (val != 0xa1) {
-			return (1);
-		}
 	}
 
-	if (mfm_read_byte (mfm, am)) {
-		return (1);
-	}
+	mfm->sync = 1;
+	mfm->clock = 1;
 
 	return (0);
 }
 
+/*
+ * Sync with the next mark and initialize the crc.
+ */
 static
-unsigned mfm_crc (unsigned crc, const void *buf, unsigned cnt)
+int mfm_sync_mark (mfm_t *mfm, unsigned char *mark, int *fm)
 {
-	unsigned            i;
-	const unsigned char *src;
+	unsigned i;
 
-	src = buf;
+	*fm = 0;
 
-	while (cnt > 0) {
-		crc ^= (unsigned) *src << 8;
-
-		for (i = 0; i < 8; i++) {
-			if (crc & 0x8000) {
-				crc = (crc << 1) ^ 0x1021;
-			}
-			else {
-				crc = crc << 1;
-			}
-		}
-
-		src += 1;
-		cnt -= 1;
+	if (mfm_sync (mfm, mark)) {
+		return (1);
 	}
 
-	return (crc & 0xffff);
+	mfm->crc = mfm_crc (0xffff, mark, 1);
+
+	if (*mark != 0xa1) {
+		*fm = 1;
+		return (0);
+	}
+
+	/* skip two more 0xa1 mark bytes */
+	for (i = 0; i < 2; i++) {
+		if (mfm_read_byte (mfm, mark)) {
+			return (1);
+		}
+
+		mfm->crc = mfm_crc (mfm->crc, mark, 1);
+
+		if (*mark != 0xa1) {
+			return (0);
+		}
+	}
+
+	if (mfm_read_byte (mfm, mark)) {
+		return (1);
+	}
+
+	mfm->crc = mfm_crc (mfm->crc, mark, 1);
+
+	return (0);
 }
 
 static
 pfdc_sct_t *mfm_decode_idam (mfm_t *mfm)
 {
 	unsigned      c, h, s, n;
-	unsigned      crc1, crc2;
+	unsigned      crc;
 	unsigned char buf[8];
 	pfdc_sct_t    *sct;
 
@@ -235,10 +299,9 @@ pfdc_sct_t *mfm_decode_idam (mfm_t *mfm)
 		return (NULL);
 	}
 
-	crc1 = pfdc_get_uint16_be (buf, 4);
+	crc = pfdc_get_uint16_be (buf, 4);
 
-	crc2 = mfm_crc (0xffff, "\xa1\xa1\xa1\xfe", 4);
-	crc2 = mfm_crc (crc2, buf, 4);
+	mfm->crc = mfm_crc (mfm->crc, buf, 4);
 
 	c = buf[0];
 	h = buf[1];
@@ -255,7 +318,7 @@ pfdc_sct_t *mfm_decode_idam (mfm_t *mfm)
 
 	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 1);
 
-	if (crc1 != crc2) {
+	if (mfm->crc != crc) {
 		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_ID, 1);
 	}
 
@@ -265,9 +328,9 @@ pfdc_sct_t *mfm_decode_idam (mfm_t *mfm)
 }
 
 static
-int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned am)
+int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned mark)
 {
-	unsigned      crc1, crc2;
+	unsigned      crc;
 	unsigned char buf[4];
 
 	if (mfm_read (mfm, sct->data, sct->n) != sct->n) {
@@ -279,19 +342,13 @@ int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned am)
 	}
 
 	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 0);
-	pfdc_sct_set_flags (sct, PFDC_FLAG_DEL_DAM, am == 0xf8);
+	pfdc_sct_set_flags (sct, PFDC_FLAG_DEL_DAM, mark == 0xf8);
 
-	crc1 = pfdc_get_uint16_be (buf, 0);
+	crc = pfdc_get_uint16_be (buf, 0);
 
-	buf[0] = 0xa1;
-	buf[1] = 0xa1;
-	buf[2] = 0xa1;
-	buf[3] = am;
+	mfm->crc = mfm_crc (mfm->crc, sct->data, sct->n);
 
-	crc2 = mfm_crc (0xffff, buf, 4);
-	crc2 = mfm_crc (crc2, sct->data, sct->n);
-
-	if (crc1 != crc2) {
+	if (mfm->crc != crc) {
 		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_DATA, 1);
 	}
 
@@ -299,17 +356,18 @@ int mfm_decode_dam (mfm_t *mfm, pfdc_sct_t *sct, unsigned am)
 }
 
 static
-int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, unsigned am, unsigned c, unsigned h)
+int mfm_decode_mark (mfm_t *mfm, pfdc_img_t *img, unsigned mark, int fm, unsigned c, unsigned h)
 {
 	unsigned      index;
 	unsigned long idx;
-	unsigned char am2;
+	int           fm2;
+	unsigned char mark2;
 	pfdc_sct_t    *sct;
 
 	index = mfm->index;
 	idx = mfm->bit_idx;
 
-	switch (am) {
+	switch (mark) {
 	case 0xfe:
 		sct = mfm_decode_idam (mfm);
 
@@ -317,11 +375,18 @@ int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, unsigned am, unsigned c, unsigne
 			return (1);
 		}
 
+		if (fm) {
+			pfdc_sct_set_encoding (sct, PFDC_ENC_FM, 250000);
+		}
+		else {
+			pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, 250000);
+		}
+
 		pfdc_img_add_sector (img, sct, c, h);
 
-		if (mfm_sync_am (mfm, &am2) == 0) {
-			if ((am2 == 0xf8) || (am2 == 0xfb)) {
-				if (mfm_decode_dam (mfm, sct, am2)) {
+		if (mfm_sync_mark (mfm, &mark2, &fm2) == 0) {
+			if ((mark2 == 0xf8) || (mark2 == 0xfb)) {
+				if (mfm_decode_dam (mfm, sct, mark2)) {
 					return (1);
 				}
 			}
@@ -334,8 +399,8 @@ int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, unsigned am, unsigned c, unsigne
 
 	default:
 		fprintf (stderr,
-			"tc: unknown address mark (c=%u, h=%u, am=0x%02x)\n",
-			c, h, am
+			"tc: unknown address mark (c=%u, h=%u, mark=0x%02x)\n",
+			c, h, mark
 		);
 	}
 
@@ -348,12 +413,13 @@ int mfm_decode_am (mfm_t *mfm, pfdc_img_t *img, unsigned am, unsigned c, unsigne
 static
 int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 {
-	unsigned char am;
+	int           fm;
+	unsigned char mark;
 
 	mfm->index = 0;
 
 	while (mfm->index < 1) {
-		if (mfm_sync_am (mfm, &am)) {
+		if (mfm_sync_mark (mfm, &mark, &fm)) {
 			continue;
 		}
 
@@ -361,7 +427,7 @@ int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 			break;
 		}
 
-		if (mfm_decode_am (mfm, img, am, c, h)) {
+		if (mfm_decode_mark (mfm, img, mark, fm, c, h)) {
 			return (1);
 		}
 	}
