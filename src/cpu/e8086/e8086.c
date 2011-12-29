@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -428,7 +428,7 @@ void e86_reset (e8086_t *c)
 void e86_execute (e8086_t *c)
 {
 	unsigned cnt, op;
-	int      tf;
+	int      tf, irq;
 
 	if (c->halt) {
 		e86_set_clk (c, 2);
@@ -443,6 +443,8 @@ void e86_execute (e8086_t *c)
 	c->prefix = 0;
 
 	tf = e86_get_tf (c);
+
+	irq = c->irq;
 
 	c->cur_ip = c->ip;
 
@@ -471,12 +473,10 @@ void e86_execute (e8086_t *c)
 
 	c->instructions += 1;
 
-	tf &= e86_get_tf (c);
-
-	if (tf) {
+	if (tf && e86_get_tf (c)) {
 		e86_trap (c, 1);
 	}
-	else if (c->irq && e86_get_if (c)) {
+	else if (c->irq && irq && e86_get_if (c)) {
 		e86_irq_ack (c);
 	}
 }
