@@ -1105,7 +1105,7 @@ void cmd_read_track (e8272_t *fdc)
 	fdc->read_track_cnt = 0;
 	fdc->index_cnt = 0;
 
-	e8272_delay_id (fdc, 0, 0);
+	e8272_delay_index (fdc, 0);
 
 	fdc->set_clock = cmd_read_track_clock;
 	fdc->set_tc = cmd_read_track_tc;
