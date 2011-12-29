@@ -161,14 +161,14 @@ unsigned e8259_get_priority (e8259_t *pic, unsigned char val)
 
 	msk = val & 0xff;
 	msk = ((msk << 8) | msk) >> (pic->priority & 7);
-	ret = 0;
+	ret = pic->priority;
 
 	while ((msk & 1) == 0) {
 		msk >>= 1;
 		ret += 1;
 	}
 
-	return (ret);
+	return (ret & 7);
 }
 
 /*
@@ -177,12 +177,32 @@ unsigned e8259_get_priority (e8259_t *pic, unsigned char val)
 static
 void e8259_check_int (e8259_t *pic)
 {
-	unsigned irrp, isrp;
+	unsigned irr, isr, msk;
 
-	irrp = e8259_get_priority (pic, pic->irr & ~pic->imr);
-	isrp = e8259_get_priority (pic, pic->isr & ~pic->imr);
+	irr = pic->irr & ~pic->imr;
 
-	e8259_set_int (pic, irrp < isrp);
+	if (irr == 0) {
+		e8259_set_int (pic, 0);
+		return;
+	}
+
+	isr = pic->isr & ~pic->isr;
+
+	msk = 1 << pic->priority;
+
+	while (1) {
+		if (isr & msk) {
+			e8259_set_int (pic, 0);
+			return;
+		}
+
+		if (irr & msk) {
+			e8259_set_int (pic, 1);
+			return;
+		}
+
+		msk = ((msk << 1) | (msk >> 7)) & 0xff;
+	}
 }
 
 /*
