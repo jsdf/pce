@@ -224,6 +224,8 @@ void e8259_set_irq (e8259_t *pic, unsigned irq, unsigned char val)
 		return;
 	}
 
+	pic->irq_inp |= msk;
+
 	pic->irr |= msk;
 
 	e8259_check_int (pic);
