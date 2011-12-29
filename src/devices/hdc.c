@@ -47,7 +47,12 @@
 static
 void hdc_set_irq (hdc_t *hdc, unsigned char val)
 {
-	val = (val != 0);
+	if ((hdc->mask & HDC_MASK_IRQ) == 0) {
+		val = 0;
+	}
+	else {
+		val = (val != 0);
+	}
 
 	if (val) {
 		hdc->status |= HDC_STATUS_INT;
@@ -58,10 +63,6 @@ void hdc_set_irq (hdc_t *hdc, unsigned char val)
 
 	if (hdc->irq_val != val) {
 		hdc->irq_val = val;
-
-		if ((hdc->mask & HDC_MASK_IRQ) == 0) {
-			return;
-		}
 
 		if (hdc->irq != NULL) {
 			hdc->irq (hdc->irq_ext, val);
