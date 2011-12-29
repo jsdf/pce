@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.h                                        *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,8 +31,8 @@
 #define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
 #define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
 
-#define PCE_IBMPC_5150 0
-#define PCE_IBMPC_5160 1
+#define PCE_IBMPC_5150 1
+#define PCE_IBMPC_5160 2
 
 
 extern const char *par_terminal;

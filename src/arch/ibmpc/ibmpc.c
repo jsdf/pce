@@ -175,7 +175,7 @@ unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 static
 unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 {
-	if (pc->model == PCE_IBMPC_5160) {
+	if (pc->model & PCE_IBMPC_5160) {
 		if (pc->ppi_port_b & 0x08) {
 			return (pc->ppi_port_c[1]);
 		}
@@ -221,7 +221,7 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 		pc_speaker_set_msk (&pc->spk, val & 0x02);
 	}
 
-	if (pc->model == PCE_IBMPC_5150) {
+	if (pc->model & PCE_IBMPC_5150) {
 		if ((old ^ val) & 0x08) {
 			/* cassette motor change */
 
@@ -269,7 +269,7 @@ void pc_set_timer1_out (ibmpc_t *pc, unsigned char val)
 static
 void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 {
-	if (pc->model == PCE_IBMPC_5150) {
+	if (pc->model & PCE_IBMPC_5150) {
 		if (val) {
 			pc->ppi_port_c[0] |= 0x20;
 			pc->ppi_port_c[1] |= 0x20;
@@ -298,11 +298,11 @@ void pc_set_mouse (void *ext, int dx, int dy, unsigned button)
 static
 void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
 {
-	if (pc->model == PCE_IBMPC_5150) {
+	if (pc->model & PCE_IBMPC_5150) {
 		pc->ppi_port_a[0] &= ~0x30;
 		pc->ppi_port_a[0] |= (mode & 0x03) << 4;
 	}
-	else if (pc->model == PCE_IBMPC_5160) {
+	else if (pc->model & PCE_IBMPC_5160) {
 		pc->ppi_port_c[1] &= ~0x03;
 		pc->ppi_port_c[1] |= mode & 0x03;
 	}
@@ -313,7 +313,7 @@ void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
 {
 	pc->fd_cnt = cnt;
 
-	if (pc->model == PCE_IBMPC_5150) {
+	if (pc->model & PCE_IBMPC_5150) {
 		pc->ppi_port_a[0] &= ~0xc1;
 
 		if (cnt > 0) {
@@ -321,7 +321,7 @@ void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
 			pc->ppi_port_a[0] |= ((cnt - 1) & 3) << 6;
 		}
 	}
-	else if (pc->model == PCE_IBMPC_5160) {
+	else if (pc->model & PCE_IBMPC_5160) {
 		pc->ppi_port_c[1] &= ~0x0c;
 
 		if (cnt > 0) {
@@ -333,7 +333,7 @@ void pc_set_floppy_count (ibmpc_t *pc, unsigned cnt)
 static
 void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 {
-	if (pc->model == PCE_IBMPC_5150) {
+	if (pc->model & PCE_IBMPC_5150) {
 		if (cnt < 65536) {
 			cnt = 0;
 		}
@@ -347,7 +347,7 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 		pc->ppi_port_c[0] |= cnt & 0x0f;
 		pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
 	}
-	else if (pc->model == PCE_IBMPC_5160) {
+	else if (pc->model & PCE_IBMPC_5160) {
 		cnt = cnt >> 16;
 
 		if (cnt > 0) {
@@ -421,7 +421,7 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	pc->ppi_port_c[0] = 0;
 	pc->ppi_port_c[1] = 0;
 
-	if (pc->model == PCE_IBMPC_5160) {
+	if (pc->model & PCE_IBMPC_5160) {
 		pc->ppi_port_c[0] |= 0x01;
 	}
 
@@ -721,7 +721,7 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->cas = NULL;
 
-	if (pc->model != PCE_IBMPC_5150) {
+	if ((pc->model & PCE_IBMPC_5150) == 0) {
 		return;
 	}
 
