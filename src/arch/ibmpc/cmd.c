@@ -263,15 +263,20 @@ void prt_state_pic (e8259_t *pic)
 
 	pce_prt_sep ("8259A-PIC");
 
+	pce_puts ("INP=");
+	prt_uint8_bin (pic->irq_inp);
+	pce_puts ("\n");
+
 	pce_puts ("IRR=");
 	prt_uint8_bin (e8259_get_irr (pic));
+	pce_printf ("  PRIO=%u\n", pic->priority);
 
-	pce_puts ("  IMR=");
+	pce_puts ("IMR=");
 	prt_uint8_bin (e8259_get_imr (pic));
+	pce_printf ("  INTR=%d\n", pic->intr_val != 0);
 
-	pce_puts ("  ISR=");
+	pce_puts ("ISR=");
 	prt_uint8_bin (e8259_get_isr (pic));
-
 	pce_puts ("\n");
 
 	pce_printf ("ICW=[%02X %02X %02X %02X]  OCW=[%02X %02X %02X]\n",
