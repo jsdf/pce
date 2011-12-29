@@ -199,8 +199,8 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 		else {
 			for (i = 0; i < k; i += 2) {
 				val = e86_get_mem16 (cpu, addr >> 4, addr & 0x0f);
-				buf[2 * i + 0] = val & 0xff;
-				buf[2 * i + 1] = (val >> 8) & 0xff;
+				buf[i + 0] = val & 0xff;
+				buf[i + 1] = (val >> 8) & 0xff;
 				addr += 2;
 			}
 		}
