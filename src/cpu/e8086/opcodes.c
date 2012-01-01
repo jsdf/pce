@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/opcodes.c                                      *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -3763,7 +3763,7 @@ static
 unsigned op_e4 (e8086_t *c)
 {
 	e86_set_al (c, e86_get_prt8 (c, c->pq[1]));
-	e86_set_clk (c, 10);
+	e86_set_clk (c, 11);
 
 	return (2);
 }
@@ -3773,7 +3773,7 @@ static
 unsigned op_e5 (e8086_t *c)
 {
 	e86_set_ax (c, e86_get_prt16 (c, c->pq[1]));
-	e86_set_clk (c, 14);
+	e86_set_clk (c, 15);
 
 	return (2);
 }
@@ -3783,7 +3783,7 @@ static
 unsigned op_e6 (e8086_t *c)
 {
 	e86_set_prt8 (c, c->pq[1], e86_get_al (c));
-	e86_set_clk (c, 10);
+	e86_set_clk (c, 11);
 
 	return (2);
 }
@@ -3793,7 +3793,7 @@ static
 unsigned op_e7 (e8086_t *c)
 {
 	e86_set_prt16 (c, c->pq[1], e86_get_ax (c));
-	e86_set_clk (c, 10);
+	e86_set_clk (c, 11);
 
 	return (2);
 }
@@ -3851,7 +3851,7 @@ static
 unsigned op_ec (e8086_t *c)
 {
 	e86_set_al (c, e86_get_prt8 (c, e86_get_dx (c)));
-	e86_set_clk (c, 8);
+	e86_set_clk (c, 9);
 
 	return (1);
 }
@@ -3861,7 +3861,7 @@ static
 unsigned op_ed (e8086_t *c)
 {
 	e86_set_ax (c, e86_get_prt16 (c, e86_get_dx (c)));
-	e86_set_clk (c, 12);
+	e86_set_clk (c, 13);
 
 	return (1);
 }
@@ -3871,7 +3871,7 @@ static
 unsigned op_ee (e8086_t *c)
 {
 	e86_set_prt8 (c, e86_get_dx (c), e86_get_al (c));
-	e86_set_clk (c, 8);
+	e86_set_clk (c, 9);
 
 	return (1);
 }
@@ -3881,7 +3881,7 @@ static
 unsigned op_ef (e8086_t *c)
 {
 	e86_set_prt16 (c, e86_get_dx (c), e86_get_ax (c));
-	e86_set_clk (c, 8);
+	e86_set_clk (c, 9);
 
 	return (1);
 }
