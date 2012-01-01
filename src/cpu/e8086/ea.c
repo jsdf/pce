@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/ea.c                                           *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -348,6 +348,10 @@ unsigned char e86_get_ea8 (e8086_t *c)
 unsigned short e86_get_ea16 (e8086_t *c)
 {
 	if (c->ea.is_mem) {
+		if ((c->cpu & E86_CPU_8BIT) || (c->ea.ofs & 1)) {
+			c->ea.delay += 4;
+		}
+
 		return (e86_get_mem16 (c, c->ea.seg, c->ea.ofs));
 	}
 
@@ -367,6 +371,10 @@ void e86_set_ea8 (e8086_t *c, unsigned char val)
 void e86_set_ea16 (e8086_t *c, unsigned short val)
 {
 	if (c->ea.is_mem) {
+		if ((c->cpu & E86_CPU_8BIT) || (c->ea.ofs & 1)) {
+			c->ea.delay += 4;
+		}
+
 		e86_set_mem16 (c, c->ea.seg, c->ea.ofs, val);
 	}
 	else {

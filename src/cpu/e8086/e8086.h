@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.h                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -299,10 +299,6 @@ unsigned short e86_get_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs
 {
 	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
 
-	if ((c->cpu & E86_CPU_8BIT) || (addr & 1)) {
-		c->delay += 4;
-	}
-
 	if ((addr + 1) < c->ram_cnt) {
 		return (c->ram[addr] + (c->ram[addr + 1] << 8));
 	}
@@ -315,10 +311,6 @@ static inline
 void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned short val)
 {
 	unsigned long addr = e86_get_linear (seg, ofs) & c->addr_mask;
-
-	if ((c->cpu & E86_CPU_8BIT) || (addr & 1)) {
-		c->delay += 4;
-	}
 
 	if ((addr + 1) < c->ram_cnt) {
 		c->ram[addr] = val & 0xff;
