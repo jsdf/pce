@@ -180,6 +180,9 @@ emu.serport.file <port>":"<filename>
 emu.stop
 	Fall back to the monitor.
 
+emu.video.brightness <brightness>
+	Set the video brightness in the range of 0 - 1000.
+
 mac.insert [<drive>]
 	Simulate re-inserting a disk that has been dragged to the trash.
 

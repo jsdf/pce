@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/msg.c                                       *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -337,6 +337,27 @@ int mac_set_msg_emu_stop (macplus_t *sim, const char *msg, const char *val)
 }
 
 static
+int mac_set_msg_emu_video_brightness (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned br;
+
+	if (msg_get_uint (val, &br)) {
+		return (1);
+	}
+
+	if (br >= 1000) {
+		br = 255;
+	}
+	else {
+		br = (256UL * br) / 1000;
+	}
+
+	mac_video_set_brightness (sim->video, br);
+
+	return (0);
+}
+
+static
 int mac_set_msg_mac_insert (macplus_t *sim, const char *msg, const char *val)
 {
 	unsigned drv;
@@ -376,6 +397,7 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.serport.driver", mac_set_msg_emu_serport_driver },
 	{ "emu.serport.file", mac_set_msg_emu_serport_file },
 	{ "emu.stop", mac_set_msg_emu_stop },
+	{ "emu.video.brightness", mac_set_msg_emu_video_brightness },
 	{ "mac.insert", mac_set_msg_mac_insert },
 	{ NULL, NULL }
 };
