@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/hdc.h                                            *
  * Created:     2011-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,6 +58,8 @@ typedef struct hdc_t {
 	unsigned short buf_cnt;
 	unsigned char  buf[516];
 
+	unsigned char  config_params[64];
+
 	hdc_drive_t    drv[2];
 
 	struct {
@@ -105,6 +107,15 @@ void hdc_set_disks (hdc_t *hdc, disks_t *dsks);
 void hdc_set_drive (hdc_t *hdc, unsigned hdcdrv, unsigned drive);
 
 unsigned hdc_get_drive (hdc_t *hdc, unsigned hdcdrv);
+
+/*!***************************************************************************
+ * @short Set the configuration parameters ID
+ * @param id   An array of 8 bytes that will be returned as the first 8 bytes
+ *             by the get configuration parameters command.
+ * @param cnt  The number of bytes in id. If cnt < 8 then the remaining bytes
+ *             will be set to 0.
+ *****************************************************************************/
+void hdc_set_config_id (hdc_t *hdc, const unsigned char *id, unsigned cnt);
 
 void hdc_reset (hdc_t *hdc);
 

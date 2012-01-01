@@ -3,8 +3,7 @@
 # Example config file
 
 
-cfg.hdc      = false
-cfg.hdc_bios = "ibm-hdc-1985.rom"
+cfg.hdc = false
 
 
 # Add a directory to the end of the file search path.
@@ -464,6 +463,7 @@ fdc {
 	accurate = 0
 }
 
+
 if (cfg.hdc) {
 	rom {
 		address = 0xc8000
@@ -475,7 +475,9 @@ if (cfg.hdc) {
 		# The hard disk BIOS
 		format  = "binary"
 		address = 0xc8000
-		file    = cfg.hdc_bios
+		file    = "ibm-hdc-1985-10-28.rom"
+	#	file    = "sms-hdc-1986.rom"
+	#	file    = "dtc-hdc-1988-05-31.rom"
 	}
 
 	# The XT hard disk controller
@@ -487,16 +489,59 @@ if (cfg.hdc) {
 		drive0  = 0x80
 		drive1  = 0x81
 
-		# The configuration switches. These depend on the BIOS used.
-		# For the 1985-10-28 IBM BIOS the values are:
-		# bits 0-1: Drive 1 type
+		# IBM BIOS (1985-10-28)
+		#
+		# Configuration switches:
+		#   bits 0-1: Drive 1 type
+		#   bits 2-3: Drive 0 type
+		#   bits 4-7: Unused
+		#
+		# Drive types:
 		#   0: 306/4/17
 		#   1: 612/4/17
 		#   2: 615/4/17
 		#   3: 306/8/17
-		# bits 2-3: Drive 0 type (same as for drive 1)
-		# bits 4-7: Unused
-		switches = 0x00;
+		#
+		switches  = 0x00
+
+		# SMS BIOS (1986)
+		#
+		# Configuration switches:
+		#   bits 0-3: Drive type (for both drives)
+		#   bits 4-7: Unused
+		#
+		# Drive types:
+		#   0: 918/15/17     8: 640/4/17
+		#   1: 612/ 4/17     9: 512/8/17
+		#   2: 987/ 7/17    10: 612/2/17
+		#   3: 697/ 5/17    11: 612/2/17
+		#   4: 306/ 4/17    12: 615/4/17
+		#   5: 977/ 5/17    13: 612/4/17
+		#   6: 733/ 5/17    14: 612/2/17
+		#   7: 640/ 6/17    15: 306/4/17
+		#
+		#switches  = 0x0f
+
+		# DTC 5150X CXD21A BIOS (1988-05-31)
+		#
+		# Configuration switches:
+		#   bits 0-1: Drive 1 type (bits 0-1)
+		#   bits 2-3: Drive 0 type (bits 0-1)
+		#   bits 4-5: Drive 1 type (bits 2-3)
+		#   bits 6-7: Drive 0 type (bits 2-3)
+		#
+		# Drive types:
+		#   0: 615/ 4/17     8:  977/ 5/17
+		#   1: 733/ 5/17     9:  820/ 6/17
+		#   2: 615/ 4/17    10:  612/ 4/17
+		#   3: 306/ 4/17    11: 1024/ 5/17
+		#   4: 987/ 5/17    12: 1024/ 8/17
+		#   5: 987/ 7/17    13: 1024/ 9/17
+		#   6: 615/ 4/17    14:  918/15/17
+		#   7: 615/ 6/17    15: user type
+		#
+		#switches  = 0xff
+		#config_id = "DTCCXD01"
 	}
 }
 

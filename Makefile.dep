@@ -1369,7 +1369,8 @@ src/devices/hdc.o: src/devices/hdc.c \
 	src/devices/device.h \
 	src/devices/hdc.h \
 	src/devices/memory.h \
-	src/drivers/block/block.h
+	src/drivers/block/block.h \
+	src/lib/log.h
 
 src/devices/memory.o: src/devices/memory.c \
 	src/devices/memory.h

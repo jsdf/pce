@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/hdc.c                                            *
  * Created:     2011-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,9 @@
 #include <string.h>
 
 #include <devices/hdc.h>
+#include <devices/memory.h>
+
+#include <lib/log.h>
 
 
 #ifndef DEBUG_HDC
@@ -731,7 +734,8 @@ void hdc_cmd_seek (hdc_t *hdc)
 static
 void hdc_cmd_init_cont2 (hdc_t *hdc)
 {
-	unsigned d, c, h, rc, wp, ec;
+	unsigned      d, c, h, rc, wp, ec;
+	unsigned long size;
 
 	d = (hdc->cmd[1] >> 5) & 1;
 	c = (hdc->buf[0] << 8) | hdc->buf[1];
@@ -740,12 +744,18 @@ void hdc_cmd_init_cont2 (hdc_t *hdc)
 	wp = (hdc->buf[5] << 8) | hdc->buf[6];
 	ec = hdc->buf[7];
 
+	size = ((unsigned long) c * (unsigned long) h * 17UL) / 2;
+
+	pce_log_tag (MSG_INF,
+		"HDC:",
+		"init drive %u (c=%u h=%u s=17 rc=%u wp=%u ecc=%u size=%luK)\n",
+		d, c, h, rc, wp, ec, size
+	);
+
 #if DEBUG_HDC >= 1
 	fprintf (stderr, "HDC: CMD=%02X D=%u  init (c=%u h=%u rc=%u wp=%u ecc=%u)\n",
 		hdc->cmd[0], d, c, h, rc, wp, ec
 	);
-#else
-	(void) rc; (void) wp; (void) ec;
 #endif
 
 	hdc->drv[d].max_c = c;
@@ -858,6 +868,208 @@ void hdc_cmd_cntlr_diag (hdc_t *hdc)
 
 	hdc->delay = 4096;
 	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command FB: get drive geometry */
+
+static
+void hdc_cmd_getgeo_cont (hdc_t *hdc)
+{
+	unsigned c, h, s;
+	disk_t   *dsk;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[hdc->id.d].drive);
+
+	if (dsk == NULL) {
+		c = 0;
+		h = 0;
+		s = 0;
+	}
+	else {
+		c = dsk->c - 1;
+		h = dsk->h - 1;
+		s = dsk->s;
+	}
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  get drive geometry (c=%u h=%u s=%u)\n",
+		hdc->cmd[0], hdc->id.d, c + 1, h + 1, s
+	);
+#endif
+
+	hdc->buf[0] = c & 0xff;
+	hdc->buf[1] = ((c >> 2) & 0xc0) | (s & 0x3f);
+	hdc->buf[2] = h;
+	hdc->buf[3] = 0x00;
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 4;
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 1);
+}
+
+static
+void hdc_cmd_getgeo (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_getgeo_cont;
+}
+
+
+/* Command FC: unknown */
+
+static
+void hdc_cmd_fc (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  cmd_fc\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command FD: unknown */
+
+static
+void hdc_cmd_fd (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  cmd_fd\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command FE: set config parameters */
+
+static
+void hdc_cmd_fe_cont (hdc_t *hdc)
+{
+	unsigned i;
+
+	fprintf (stderr, "config:");
+
+	for (i = 0; i < 64; i++) {
+		if ((i & 7) == 0) {
+			fprintf (stderr, "\n");
+		}
+
+		fprintf (stderr, " %02X", hdc->buf[i]);
+	}
+
+	fprintf (stderr, "\n");
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_fe (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  set config parameters\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 64;
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_fe_cont;
+
+	hdc_request_data (hdc, 0);
+}
+
+
+/* Command FF: get config parameters */
+
+static
+void hdc_cmd_ff_cont (hdc_t *hdc)
+{
+	unsigned c, h;
+	disk_t   *dsk;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[hdc->id.d].drive);
+
+	if (dsk == NULL) {
+		c = 0;
+		h = 0;
+	}
+	else {
+		c = dsk->c;
+		h = dsk->h;
+	}
+
+	memcpy (hdc->buf, hdc->config_params, 64);
+
+	buf_set_uint16_le (hdc->buf, 8, c);
+	buf_set_uint8 (hdc->buf, 10, h);
+	buf_set_uint16_le (hdc->buf, 11, c);
+	buf_set_uint16_le (hdc->buf, 13, c);
+	buf_set_uint8 (hdc->buf, 15, 5);
+	buf_set_uint8 (hdc->buf, 22, 17);
+
+	buf_set_uint8 (hdc->buf, 24, 0x80);
+	buf_set_uint8 (hdc->buf, 25, 0x00);
+	buf_set_uint8 (hdc->buf, 26, 0xff);
+	buf_set_uint8 (hdc->buf, 27, 0xff);
+	buf_set_uint8 (hdc->buf, 28, 0xff);
+	buf_set_uint8 (hdc->buf, 29, 0xff);
+	buf_set_uint8 (hdc->buf, 30, 0xff);
+	buf_set_uint8 (hdc->buf, 31, 0xff);
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 64;
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 1);
+}
+
+static
+void hdc_cmd_ff (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  get config parameters\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_ff_cont;
 }
 
 
@@ -1030,6 +1242,26 @@ void hdc_set_command (hdc_t *hdc, unsigned char val)
 		hdc_cmd_cntlr_diag (hdc);
 		break;
 
+	case 0xfb:
+		hdc_cmd_getgeo (hdc);
+		break;
+
+	case 0xfc:
+		hdc_cmd_fc (hdc);
+		break;
+
+	case 0xfd:
+		hdc_cmd_fd (hdc);
+		break;
+
+	case 0xfe:
+		hdc_cmd_fe (hdc);
+		break;
+
+	case 0xff:
+		hdc_cmd_ff (hdc);
+		break;
+
 	default:
 		hdc_cmd_unknown (hdc);
 		break;
@@ -1163,6 +1395,8 @@ hdc_t *hdc_new (unsigned long addr)
 
 	hdc->config = 0;
 
+	memset (hdc->config_params, 0, 64);
+
 	hdc->drv[0].drive = 0xffff;
 	hdc->drv[1].drive = 0xffff;
 
@@ -1238,6 +1472,21 @@ unsigned hdc_get_drive (hdc_t *hdc, unsigned hdcdrv)
 	}
 
 	return (0xffff);
+}
+
+void hdc_set_config_id (hdc_t *hdc, const unsigned char *id, unsigned cnt)
+{
+	unsigned i;
+
+	memset (hdc->config_params, 0, 64);
+
+	if (cnt > 8) {
+		cnt = 8;
+	}
+
+	for (i = 0; i < cnt; i++) {
+		hdc->config_params[i] = id[i];
+	}
 }
 
 void hdc_reset (hdc_t *hdc)
