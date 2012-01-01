@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.c                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -46,6 +46,8 @@ int mac_video_init (mac_video_t *mv, unsigned w, unsigned h)
 	mv->w = w;
 	mv->h = h;
 
+	mv->force = 0;
+
 	mv->cmp_cnt = 8;
 
 	mv->vcmp = malloc ((unsigned long) ((mv->w + 7) / 8) * mv->h);
@@ -59,6 +61,16 @@ int mac_video_init (mac_video_t *mv, unsigned w, unsigned h)
 	if (mv->rgb == NULL) {
 		return (1);
 	}
+
+	mv->brightness = 255;
+
+	mv->col0[0] = 0;
+	mv->col0[1] = 0;
+	mv->col0[2] = 0;
+
+	mv->col1[0] = 0xff;
+	mv->col1[1] = 0xff;
+	mv->col1[2] = 0xff;
 
 	mv->clk = 0;
 
@@ -119,6 +131,30 @@ void mac_video_set_terminal (mac_video_t *mv, terminal_t *trm)
 	}
 }
 
+void mac_video_set_color (mac_video_t *mv, unsigned long col0, unsigned long col1)
+{
+	unsigned i;
+
+	for (i = 0; i < 3; i++) {
+		mv->col0[i] = (col0 >> (8 * (2 - i))) & 0xff;
+		mv->col1[i] = (col1 >> (8 * (2 - i))) & 0xff;
+	}
+
+	mv->force = 1;
+}
+
+void mac_video_set_brightness (mac_video_t *mv, unsigned val)
+{
+	if (val > 255) {
+		val = 255;
+	}
+
+	if (mv->brightness != val) {
+		mv->force = 1;
+		mv->brightness = val;
+	}
+}
+
 static
 void mac_video_set_vbi (mac_video_t *mv, unsigned char val)
 {
@@ -141,6 +177,7 @@ void mac_video_update (mac_video_t *mv)
 	unsigned            k, n;
 	const unsigned char *src;
 	unsigned char       *dst, *rgb;
+	unsigned char       col0[3], col1[3];
 
 	if (mv->trm == NULL) {
 		return;
@@ -148,6 +185,11 @@ void mac_video_update (mac_video_t *mv)
 
 	if (mv->vbuf == NULL) {
 		return;
+	}
+
+	for (i = 0; i < 3; i++) {
+		col0[i] = (mv->brightness * mv->col0[i]) / 255;
+		col1[i] = (mv->brightness * mv->col1[i]) / 255;
 	}
 
 	trm_set_size (mv->trm, mv->w, mv->h);
@@ -166,20 +208,20 @@ void mac_video_update (mac_video_t *mv)
 
 		k = n * ((mv->w + 7) / 8);
 
-		if (memcmp (dst, src, k) != 0) {
+		if (mv->force || (memcmp (dst, src, k) != 0)) {
 			memcpy (dst, src, k);
 
 			j = 0;
 			for (i = 0; i < (8 * k); i++) {
 				if (dst[i >> 3] & (0x80 >> (i & 7))) {
-					rgb[j + 0] = 0;
-					rgb[j + 1] = 0;
-					rgb[j + 2] = 0;
+					rgb[j + 0] = col0[0];
+					rgb[j + 1] = col0[1];
+					rgb[j + 2] = col0[2];
 				}
 				else {
-					rgb[j + 0] = 0xff;
-					rgb[j + 1] = 0xff;
-					rgb[j + 2] = 0xff;
+					rgb[j + 0] = col1[0];
+					rgb[j + 1] = col1[1];
+					rgb[j + 2] = col1[2];
 				}
 
 				j += 3;
@@ -193,6 +235,8 @@ void mac_video_update (mac_video_t *mv)
 
 		y += n;
 	}
+
+	mv->force = 0;
 
 	trm_update (mv->trm);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1036,7 +1036,9 @@ static
 void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 {
 	unsigned long addr1, addr2;
-	unsigned      w, h;
+	unsigned      w, h, i;
+	unsigned      bright;
+	unsigned long col0, col1;
 	ini_sct_t     *sct;
 
 	if (sim->ram == NULL) {
@@ -1051,9 +1053,12 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 	ini_get_uint32 (sct, "address", &addr2, addr1);
 	ini_get_uint16 (sct, "width", &w, 512);
 	ini_get_uint16 (sct, "height", &h, 342);
+	ini_get_uint32 (sct, "color0", &col0, 0);
+	ini_get_uint32 (sct, "color1", &col1, 0xffffff);
+	ini_get_uint16 (sct, "brightness", &bright, 1000);
 
-	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX w=%u h=%u\n",
-		addr2, w, h
+	pce_log_tag (MSG_INF, "VIDEO:", "addr=0x%06lX w=%u h=%u bright=%u%%\n",
+		addr2, w, h, bright / 10
 	);
 
 	sim->vbuf1 = addr2;
@@ -1079,6 +1084,13 @@ void mac_setup_video (macplus_t *sim, ini_sct_t *ini)
 		mac_video_set_terminal (sim->video, sim->trm);
 
 		trm_open (sim->trm, 512, 342);
+	}
+
+	mac_video_set_color (sim->video, col0, col1);
+	mac_video_set_brightness (sim->video, (255UL * bright + 500) / 1000);
+
+	for (i = 0; i < (w / 8) * h; i++) {
+		mem_set_uint8 (sim->mem, sim->vbuf1 + i, 0xff);
 	}
 }
 

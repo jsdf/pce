@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/video.h                                     *
  * Created:     2007-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,11 +33,17 @@ typedef struct {
 	unsigned            w;
 	unsigned            h;
 
+	char                force;
+
 	unsigned            cmp_cnt;
 
 	unsigned char       *vcmp;
 
 	unsigned char       *rgb;
+
+	unsigned            brightness;
+	unsigned char       col0[3];
+	unsigned char       col1[3];
 
 	unsigned long       clk;
 
@@ -59,6 +65,19 @@ void mac_video_set_vbi_fct (mac_video_t *mv, void *ext, void *fct);
 
 void mac_video_set_vbuf (mac_video_t *mv, const unsigned char *vbuf);
 void mac_video_set_terminal (mac_video_t *mv, terminal_t *trm);
+
+/*****************************************************************************
+ * @short Set the video color
+ * @param col0 The background color
+ * @param col1 The foreground color
+ *****************************************************************************/
+void mac_video_set_color (mac_video_t *mv, unsigned long col0, unsigned long col1);
+
+/*****************************************************************************
+ * @short Set the video brightness
+ * @param val The brightness in the range 0 - 255.
+ *****************************************************************************/
+void mac_video_set_brightness (mac_video_t *mv, unsigned val);
 
 void mac_video_redraw (mac_video_t *mv);
 

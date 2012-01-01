@@ -253,6 +253,15 @@ serial {
 
 video {
 	#address = 0x0fa700
+
+	# The background color
+	color0 = 0x000000
+
+	# The foreground color
+	color1 = 0xffffff
+
+	# Brightness in the range 0 - 1000.
+	brightness = 1000
 }
 
 
