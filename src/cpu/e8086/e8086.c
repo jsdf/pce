@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,7 +36,7 @@ static void e86_set_mem_uint16 (void *mem, unsigned long addr, unsigned short va
 
 
 static char *dreg16[8] = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
-static char *dreg8[8] = { "ah", "al", "bh", "bl", "ch", "cl", "dh", "dl" };
+static char *dreg8[8] = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh" };
 static char *sreg[4] = { "es", "cs", "ss", "ds" };
 
 
