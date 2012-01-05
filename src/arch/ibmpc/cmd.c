@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -903,6 +903,7 @@ void pc_cmd_h (cmd_t *cmd)
 		"h                         print help summary\n"
 		"hm                        print help on messages\n"
 		"i [b|w] port              input a byte or word from a port\n"
+		"key [[+|-]key...]         simulate pressing or releasing keys\n"
 		"log int l                 list interrupt log expressions\n"
 		"log int n [expr]          set interrupt n log expression to expr\n"
 		"m msg [val]               send a message\n"
@@ -955,22 +956,36 @@ void pc_cmd_i (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_key (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned short c;
+	unsigned       i;
+	unsigned       event;
+	pce_key_t      key;
+	char           str[256];
 
-	while (1) {
-		if (cmd_match (cmd, "cad")) {
-			pc_kbd_set_keycode (&pc->kbd, 0x38);
-			pc_kbd_set_keycode (&pc->kbd, 0x1d);
-			pc_kbd_set_keycode (&pc->kbd, 0x53);
-			pc_kbd_set_keycode (&pc->kbd, 0xd3);
-			pc_kbd_set_keycode (&pc->kbd, 0x9d);
-			pc_kbd_set_keycode (&pc->kbd, 0xb8);
+	while (cmd_match_str (cmd, str, 256)) {
+		i = 0;
+
+		event = PCE_KEY_EVENT_DOWN;
+
+		if (str[0] == '+') {
+			i += 1;
 		}
-		else if (cmd_match_uint16 (cmd, &c)) {
-			pc_kbd_set_keycode (&pc->kbd, c);
+		else if (str[0] == '-') {
+			i += 1;
+			event = PCE_KEY_EVENT_UP;
+		}
+
+		key = pce_key_from_string (str + i);
+
+		if (key == PCE_KEY_NONE) {
+			pce_printf ("unknown key: %s\n", str);
 		}
 		else {
-			break;
+			pce_printf ("key: %s%s\n",
+				(event == PCE_KEY_EVENT_DOWN) ? "+" : "-",
+				str + i
+			);
+
+			pc_kbd_set_key (&pc->kbd, event, key);
 		}
 	}
 

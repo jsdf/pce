@@ -87,6 +87,10 @@ h m
 i [b|w] <port>
 	Input a byte or word from a port.
 
+key [[+|-]<key>...]
+	Simulate pressing (+) or releasing (-) a key. Key names are
+	documented in doc/keys.txt.
+
 log int l
 	List all interrupt log expressions.
 
