@@ -915,7 +915,7 @@ void pc_cmd_h (cmd_t *cmd)
 		"r [reg val]               set a register\n"
 		"s [what]                  print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt]]            disassemble\n"
+		"u [addr [cnt [mode]]]     disassemble\n"
 		"v [expr...]               evaluate expressions\n"
 		"w name addr cnt           save memory to file\n"
 	);
@@ -1358,8 +1358,7 @@ void pc_cmd_t (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_u (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned              i;
-	unsigned short        seg, ofs, cnt;
+	unsigned short        seg, ofs, cnt, mode;
 	static unsigned int   first = 1;
 	static unsigned short sseg = 0;
 	static unsigned short sofs = 0;
@@ -1375,22 +1374,32 @@ void pc_cmd_u (cmd_t *cmd, ibmpc_t *pc)
 	seg = sseg;
 	ofs = sofs;
 	cnt = 16;
+	mode = 0;
 
 	if (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
 		cmd_match_uint16 (cmd, &cnt);
 	}
 
+	cmd_match_uint16 (cmd, &mode);
+
 	if (!cmd_match_end (cmd)) {
 		return;
 	}
 
-	for (i = 0; i < cnt; i++) {
+	while (cnt > 0) {
 		e86_disasm_mem (pc->cpu, &op, seg, ofs);
 		disasm_str (str, &op);
 
 		pce_printf ("%04X:%04X  %s\n", seg, ofs, str);
 
 		ofs = (ofs + op.dat_n) & 0xffff;
+
+		if (mode == 0) {
+			cnt -= 1;
+		}
+		else {
+			cnt = (cnt < op.dat_n) ? 0 : (cnt - op.dat_n);
+		}
 	}
 
 	sseg = seg;
