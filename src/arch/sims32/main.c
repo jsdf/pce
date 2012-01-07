@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sims32/main.c                                       *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -69,7 +69,7 @@ void prt_version (void)
 	fputs (
 		"pce sims32 version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -254,7 +254,7 @@ int main (int argc, char *argv[])
 
 	pce_log (MSG_INF,
 		"pce sims32 version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2010 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	if (pce_load_config (par_cfg, cfg)) {

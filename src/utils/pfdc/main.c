@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfdc/main.c                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -153,7 +153,7 @@ void print_version (void)
 	fputs (
 		"pfdc version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2010-2011 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2010-2012 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 

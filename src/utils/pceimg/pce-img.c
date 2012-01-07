@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pceimg/pce-img.c                                   *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -132,7 +132,7 @@ void print_version (void)
 	fputs (
 		"pce-img version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2005-2011 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2005-2012 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
