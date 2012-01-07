@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/console.c                                            *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -124,6 +124,10 @@ int pce_gets (const char *prompt, char *str, unsigned max)
 	{
 		char *tmp;
 
+		if (pce_redir_out != NULL) {
+			fputs (prompt, pce_redir_out);
+		}
+
 		tmp = readline (prompt);
 
 		if (tmp == NULL) {
@@ -155,6 +159,7 @@ int pce_gets (const char *prompt, char *str, unsigned max)
 
 	if (pce_redir_out != NULL) {
 		fputs (str, pce_redir_out);
+		putc ('\n', pce_redir_out);
 	}
 
 	return (0);
