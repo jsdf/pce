@@ -520,11 +520,12 @@ void pce_op_int (void *ext, unsigned char n)
 
 	if (pc_intlog_check (pc, n)) {
 		pce_log (MSG_DEB, "%04X:%04X: int %02X"
-			" [AX=%04X BX=%04X CX=%04X DX=%04X]\n",
-			e86_get_cs (pc->cpu), e86_get_ip (pc->cpu),
+			" [AX=%04X BX=%04X CX=%04X DX=%04X DS=%04X ES=%04X]\n",
+			e86_get_cs (pc->cpu), e86_get_cur_ip (pc->cpu),
 			n,
 			e86_get_ax (pc->cpu), e86_get_bx (pc->cpu),
-			e86_get_cx (pc->cpu), e86_get_dx (pc->cpu)
+			e86_get_cx (pc->cpu), e86_get_dx (pc->cpu),
+			e86_get_ds (pc->cpu), e86_get_es (pc->cpu)
 		);
 	}
 

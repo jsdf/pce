@@ -238,6 +238,7 @@ typedef struct e8086_t {
 
 
 #define e86_get_ip(cpu) ((cpu)->ip)
+#define e86_get_cur_ip(cpu) ((cpu)->cur_ip)
 #define e86_set_ip(cpu, val) do { (cpu)->ip = (val) & 0xffff; } while (0)
 
 
