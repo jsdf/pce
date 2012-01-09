@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/cmd_arm.c                                    *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -391,109 +391,6 @@ void do_c (cmd_t *cmd, simarm_t *sim)
 }
 
 static
-void do_d (cmd_t *cmd, simarm_t *sim)
-{
-	unsigned long        i, j;
-	unsigned long        cnt;
-	unsigned long        addr1, addr2;
-	static int           first = 1;
-	static unsigned long saddr = 0;
-	unsigned long        p, p1, p2;
-	char                 buf[256];
-
-	if (first) {
-		first = 0;
-		saddr = arm_get_pc (sim->cpu);
-	}
-
-	addr1 = saddr;
-	cnt = 256;
-
-	if (cmd_match_uint32 (cmd, &addr1)) {
-		cmd_match_uint32 (cmd, &cnt);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	addr2 = (addr1 + cnt - 1) & 0xffffffffUL;
-	if (addr2 < addr1) {
-		addr2 = 0xffffffffUL;
-		cnt = addr2 - addr1 + 1;
-	}
-
-	saddr = addr1 + cnt;
-
-	p1 = addr1 / 16;
-	p2 = addr2 / 16 + 1;
-
-	for (p = p1; p < p2; p++) {
-		j = 16 * p;
-
-		sprintf (buf,
-			"%08lX  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-			j
-		);
-
-		for (i = 0; i < 16; i++) {
-			if ((j >= addr1) && (j <= addr2)) {
-				uint8_t  val;
-				unsigned val1, val2;
-
-				if (arm_get_mem8 (sim->cpu, j, par_xlat, &val)) {
-					val = 0xff;
-				}
-
-				val1 = (val >> 4) & 0x0f;
-				val2 = val & 0x0f;
-
-				buf[10 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-				buf[10 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
-
-				if ((val >= 32) && (val <= 127)) {
-					buf[59 + i] = val;
-				}
-				else {
-					buf[59 + i] = '.';
-				}
-			}
-			else {
-				buf[10 + 3 * i] = ' ';
-				buf[10 + 3 * i + 1] = ' ';
-				buf[59 + i] = ' ';
-			}
-
-			j += 1;
-		}
-
-		fputs (buf, stdout);
-	}
-}
-
-static
-void do_e (cmd_t *cmd, simarm_t *sim)
-{
-	unsigned long  addr;
-	unsigned short val;
-
-	addr = 0;
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "need an address");
-		return;
-	}
-
-	while (cmd_match_uint16 (cmd, &val)) {
-		if (arm_set_mem8 (sim->cpu, addr, par_xlat, val)) {
-			printf ("translation fault: %08lx <- %02x\n", addr, (unsigned) val);
-		}
-
-		addr += 1;
-	}
-}
-
-static
 void do_g_b (cmd_t *cmd, simarm_t *sim)
 {
 	unsigned long addr;
@@ -541,14 +438,15 @@ void do_g (cmd_t *cmd, simarm_t *sim)
 static
 void do_h (cmd_t *cmd, simarm_t *sim)
 {
-	fputs (
+	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
 		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
-		"e addr [val...]           enter bytes into memory\n"
+		"e addr [val|string...]    enter bytes into memory\n"
+		"f addr cnt [val...]       find bytes in memory\n"
 		"gb [addr...]              run with breakpoints\n"
 		"g                         run\n"
 		"key [val...]              send keycodes to the serial console\n"
@@ -559,9 +457,10 @@ void do_h (cmd_t *cmd, simarm_t *sim)
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
 		"v [expr...]               evaluate expressions\n"
+		"w name addr cnt           save memory to file\n"
 		"x [c|r|v]                 set the translation mode (cpu, real, virtual)\n"
-		"xx [addr...]              translate a virtual address\n",
-		stdout
+		"xx [addr...]              translate a virtual address\n"
+		"y src dst cnt             copy memory\n"
 	);
 }
 
@@ -833,12 +732,6 @@ int sarm_do_cmd (simarm_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);
-	}
-	else if (cmd_match (cmd, "d")) {
-		do_d (cmd, sim);
-	}
-	else if (cmd_match (cmd, "e")) {
-		do_e (cmd, sim);
 	}
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
