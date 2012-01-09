@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/pfdc-img-tc.c                              *
  * Created:     2011-09-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -399,8 +399,10 @@ int mfm_decode_mark (mfm_t *mfm, pfdc_img_t *img, unsigned mark, int fm, unsigne
 
 	default:
 		fprintf (stderr,
-			"tc: unknown address mark (c=%u, h=%u, mark=0x%02x)\n",
-			c, h, mark
+			"tc: unknown mark 0x%02x"
+			" (%s, c=%u, h=%u, bit=%lu/%lu)\n",
+			mark, fm ? "fm" : "mfm", c, h,
+			mfm->bit_idx, mfm->bit_cnt
 		);
 	}
 
@@ -413,22 +415,35 @@ int mfm_decode_mark (mfm_t *mfm, pfdc_img_t *img, unsigned mark, int fm, unsigne
 static
 int mfm_decode_track (mfm_t *mfm, pfdc_img_t *img, unsigned c, unsigned h)
 {
+	unsigned      i;
 	int           fm;
 	unsigned char mark;
 
-	mfm->index = 0;
+	for (i = 0; i < 2; i++) {
+		mfm->index = 0;
+		mfm->bit_idx = 0;
 
-	while (mfm->index < 1) {
-		if (mfm_sync_mark (mfm, &mark, &fm)) {
-			continue;
+		while (mfm->index < 1) {
+			if (mfm_sync_mark (mfm, &mark, &fm)) {
+				continue;
+			}
+
+			if (((i == 0) && fm) || ((i == 1) && !fm)) {
+				continue;
+			}
+
+			if (mfm->index >= 1) {
+				break;
+			}
+
+			if (mfm_decode_mark (mfm, img, mark, fm, c, h)) {
+				return (1);
+			}
 		}
 
-		if (mfm->index >= 1) {
+		if (pfdc_img_get_sector (img, c, h, 0, 1) != NULL) {
+			/* There were MFM sectors, skip FM. */
 			break;
-		}
-
-		if (mfm_decode_mark (mfm, img, mark, fm, c, h)) {
-			return (1);
 		}
 	}
 
