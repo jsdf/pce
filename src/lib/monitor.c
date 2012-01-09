@@ -191,6 +191,98 @@ int mon_match_address (monitor_t *mon, cmd_t *cmd, unsigned long *addr, unsigned
 	return (1);
 }
 
+/*
+ * d - dump memory
+ */
+static
+void mon_cmd_d (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned       i, j;
+	unsigned long  addr, addr2, cnt;
+	unsigned short ofs;
+	unsigned long  p1, p2, o1;
+	unsigned char  val, val1, val2;
+	char           str1[64], str2[32];
+
+	addr = mon->last_addr;
+	ofs = mon->last_ofs;
+	cnt = 256;
+
+	if (mon_match_address (mon, cmd, &addr, NULL, &ofs)) {
+		cmd_match_uint32 (cmd, &cnt);
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	if (cnt == 0) {
+		return;
+	}
+
+	addr2 = (addr + cnt - 1) & 0xffffffff;
+
+	if (addr2 < addr) {
+		addr2 = 0xffffffff;
+		cnt = addr2 - addr + 1;
+	}
+
+	p1 = addr & 0xfffffff0;
+	p2 = (addr2 + 16) & 0xfffffff0;
+	o1 = ofs & 0xfff0;
+
+	while (p1 != p2) {
+		i = p1 & 15;
+		j = 3 * i;
+
+		if (i == 0) {
+			if (mon->memory_mode == 0) {
+				pce_printf ("%08lX", p1);
+			}
+			else {
+				pce_printf ("%04lX:%04lX", (p1 - o1) >> 4, o1);
+			}
+		}
+
+		str1[j] = (i == 8) ? '-' : ' ';
+
+		if ((p1 < addr) || (p1 > addr2)) {
+			str1[j + 1] = ' ';
+			str1[j + 2] = ' ';
+			str2[i] = ' ';
+		}
+		else {
+			val = mon_get_mem8 (mon, p1);
+
+			val1 = (val >> 4) & 0x0f;
+			val2 = val & 0x0f;
+
+			str1[j + 1] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
+			str1[j + 2] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
+
+			if ((val >= 32) && (val <= 127)) {
+				str2[i] = val;
+			}
+			else {
+				str2[i] = '.';
+			}
+		}
+
+		if (((p1 + 1) & 15) == 0) {
+			str1[j + 3] = 0;
+			str2[i + 1] = 0;
+
+			pce_printf (" %s  %s\n", str1, str2);
+		}
+
+		p1 = (p1 + 1) & 0xffffffff;
+		o1 = (o1 + 1) & 0xffff;
+	}
+
+	mon->last_addr = (addr + cnt) & 0xffffffff;
+	mon->last_ofs = (ofs + cnt) & 0xffff;
+}
+
 static
 void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
@@ -324,7 +416,10 @@ int mon_run (monitor_t *mon)
 		}
 
 		if (r != 0) {
-			if (cmd_match (&cmd, "m")) {
+			if (cmd_match (&cmd, "d")) {
+				mon_cmd_d (mon, &cmd);
+			}
+			else if (cmd_match (&cmd, "m")) {
 				mon_cmd_m (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "q")) {
