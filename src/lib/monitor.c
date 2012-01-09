@@ -505,6 +505,55 @@ void mon_cmd_v (cmd_t *cmd)
 	}
 }
 
+/*
+ * w - write memory to disk
+ */
+static
+void mon_cmd_w (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned long addr, cnt;
+	char          fname[256];
+	unsigned char v;
+	FILE          *fp;
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
+
+	if (!mon_match_address (mon, cmd, &addr, NULL, NULL)) {
+		cmd_error (cmd, "need an address");
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &cnt)) {
+		cmd_error (cmd, "need a byte count");
+		return;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	fp = fopen (fname, "wb");
+
+	if (fp == NULL) {
+		pce_printf ("can't open file (%s)\n", fname);
+		return;
+	}
+
+	while (cnt > 0) {
+		v = mon_get_mem8 (mon, addr);
+
+		fputc (v, fp);
+
+		addr += 1;
+		cnt -= 1;
+	}
+
+	fclose (fp);
+}
+
 
 int mon_run (monitor_t *mon)
 {
@@ -544,6 +593,9 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, "v")) {
 				mon_cmd_v (&cmd);
+			}
+			else if (cmd_match (&cmd, "w")) {
+				mon_cmd_w (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "<")) {
 				mon_cmd_redir_inp (mon, &cmd);
