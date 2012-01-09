@@ -519,7 +519,7 @@ void pce_op_int (void *ext, unsigned char n)
 	pc->current_int = n | 0x100;
 
 	if (pc_intlog_check (pc, n)) {
-		pce_log (MSG_DEB, "%04X:%04X: int %02X"
+		pce_printf ("%04X:%04X: int %02X"
 			" [AX=%04X BX=%04X CX=%04X DX=%04X DS=%04X ES=%04X]\n",
 			e86_get_cs (pc->cpu), e86_get_cur_ip (pc->cpu),
 			n,
