@@ -158,6 +158,26 @@ void prt_state (simarm_t *sim, FILE *fp, const char *str)
 }
 
 static
+unsigned char sarm_get_mem8 (simarm_t *sim, unsigned long addr)
+{
+	unsigned char val;
+
+	if (arm_get_mem8 (sim->cpu, addr, par_xlat, &val)) {
+		val = 0xff;
+	}
+
+	return (val);
+}
+
+static
+void sarm_set_mem8 (simarm_t *sim, unsigned long addr, unsigned char val)
+{
+	if (arm_set_mem8 (sim->cpu, addr, par_xlat, val)) {
+		; /* TLB miss */
+	}
+}
+
+static
 int pce_load_config (ini_sct_t *ini, const char *fname)
 {
 	if (fname == NULL) {
@@ -299,6 +319,9 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, sarm_set_msg, par_sim);
+	mon_set_get_mem_fct (&par_mon, par_sim, sarm_get_mem8);
+	mon_set_set_mem_fct (&par_mon, par_sim, sarm_set_mem8);
+	mon_set_memory_mode (&par_mon, 0);
 
 	sarm_reset (par_sim);
 

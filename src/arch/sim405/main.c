@@ -125,6 +125,26 @@ int cmd_set_sym (sim405_t *sim, const char *sym, unsigned long val)
 }
 
 static
+unsigned char s405_get_mem8 (sim405_t *sim, unsigned long addr)
+{
+	unsigned char val;
+
+	if (p405_get_xlat8 (sim->ppc, addr, par_xlat, &val)) {
+		val = 0xff;
+	}
+
+	return (val);
+}
+
+static
+void s405_set_mem8 (sim405_t *sim, unsigned long addr, unsigned char val)
+{
+	if (p405_set_xlat8 (sim->ppc, addr, par_xlat, val)) {
+		; /* TLB miss */
+	}
+}
+
+static
 int pce_load_config (ini_sct_t *ini, const char *fname)
 {
 	if (fname == NULL) {
@@ -267,6 +287,9 @@ int main (int argc, char *argv[])
 	mon_init (&mon);
 	mon_set_cmd_fct (&mon, ppc_do_cmd, par_sim);
 	mon_set_msg_fct (&mon, s405_set_msg, par_sim);
+	mon_set_get_mem_fct (&mon, par_sim, s405_get_mem8);
+	mon_set_set_mem_fct (&mon, par_sim, s405_set_mem8);
+	mon_set_memory_mode (&mon, 0);
 
 	s405_reset (par_sim);
 

@@ -869,6 +869,9 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, s6502_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, NULL, par_sim);
+	mon_set_get_mem_fct (&par_mon, par_sim->mem, mem_get_uint8);
+	mon_set_set_mem_fct (&par_mon, par_sim->mem, mem_set_uint8);
+	mon_set_memory_mode (&par_mon, 0);
 
 	s6502_reset (par_sim);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/monitor.c                                            *
  * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,6 +37,19 @@ void mon_init (monitor_t *mon)
 
 	mon->msgext = NULL;
 	mon->setmsg = NULL;
+
+	mon->get_mem8_ext = NULL;
+	mon->get_mem8 = NULL;
+
+	mon->set_mem8_ext = NULL;
+	mon->set_mem8 = NULL;
+
+	mon->memory_mode = 0;
+
+	mon->default_seg = 0;
+
+	mon->last_addr = 0;
+	mon->last_ofs = 0;
 
 	mon->terminate = 0;
 	mon->prompt = NULL;
@@ -80,6 +93,23 @@ void mon_set_msg_fct (monitor_t *mon, void *fct, void *ext)
 	mon->setmsg = fct;
 }
 
+void mon_set_get_mem_fct (monitor_t *mon, void *ext, void *fct)
+{
+	mon->get_mem8_ext = ext;
+	mon->get_mem8 = fct;
+}
+
+void mon_set_set_mem_fct (monitor_t *mon, void *ext, void *fct)
+{
+	mon->set_mem8_ext = ext;
+	mon->set_mem8 = fct;
+}
+
+void mon_set_memory_mode (monitor_t *mon, unsigned mode)
+{
+	mon->memory_mode = mode;
+}
+
 void mon_set_terminate (monitor_t *mon, int val)
 {
 	mon->terminate = (val != 0);
@@ -88,6 +118,24 @@ void mon_set_terminate (monitor_t *mon, int val)
 void mon_set_prompt (monitor_t *mon, const char *str)
 {
 	mon->prompt = str;
+}
+
+static
+unsigned char mon_get_mem8 (monitor_t *mon, unsigned long addr)
+{
+	if (mon->get_mem8 != NULL) {
+		return (mon->get_mem8 (mon->get_mem8_ext, addr));
+	}
+
+	return (0);
+}
+
+static
+void mon_set_mem8 (monitor_t *mon, unsigned long addr, unsigned char val)
+{
+	if (mon->set_mem8 != NULL) {
+		mon->set_mem8 (mon->set_mem8_ext, addr, val);
+	}
 }
 
 #if 0
@@ -111,6 +159,37 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 	return (1);
 }
 #endif
+
+static
+int mon_match_address (monitor_t *mon, cmd_t *cmd, unsigned long *addr, unsigned short *seg, unsigned short *ofs)
+{
+	unsigned short tseg, tofs;
+
+	if (mon->memory_mode == 0) {
+		return (cmd_match_uint32 (cmd, addr));
+	}
+	else {
+		tseg = mon->default_seg;
+
+		if (!cmd_match_uint16_16 (cmd, &tseg, &tofs)) {
+			return (0);
+		}
+
+		mon->default_seg = tseg;
+
+		*addr = ((unsigned long) tseg << 4) + tofs;
+
+		if (seg != NULL) {
+			*seg = tseg;
+		}
+
+		if (ofs != NULL) {
+			*ofs = tofs;
+		}
+	}
+
+	return (1);
+}
 
 static
 void mon_cmd_m (monitor_t *mon, cmd_t *cmd)

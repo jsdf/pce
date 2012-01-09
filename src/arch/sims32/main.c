@@ -118,6 +118,26 @@ int cmd_set_sym (sims32_t *sim, const char *sym, unsigned long val)
 	return (1);
 }
 
+static
+unsigned char ss32_get_mem8 (sims32_t *sim, unsigned long addr)
+{
+	unsigned char val;
+
+	if (s32_get_mem8 (sim->cpu, addr, sim->cpu->asi_data, par_xlat, &val)) {
+		val = 0xff;
+	}
+
+	return (val);
+}
+
+static
+void ss32_set_mem8 (sims32_t *sim, unsigned long addr, unsigned char val)
+{
+	if (s32_set_mem8 (sim->cpu, addr, sim->cpu->asi_data, par_xlat, val)) {
+		; /* TLB miss */
+	}
+}
+
 void prt_state (sims32_t *sim, FILE *fp, const char *str)
 {
 	cmd_t cmd;
@@ -283,6 +303,9 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, ss32_do_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, NULL, par_sim);
+	mon_set_get_mem_fct (&par_mon, par_sim, ss32_get_mem8);
+	mon_set_set_mem_fct (&par_mon, par_sim, ss32_set_mem8);
+	mon_set_memory_mode (&par_mon, 0);
 
 	ss32_reset (par_sim);
 

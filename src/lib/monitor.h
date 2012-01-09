@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/monitor.h                                            *
  * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,9 +34,22 @@ typedef struct {
 	void *msgext;
 	int  (*setmsg) (void *ext, const char *msg, const char *val);
 
-	char       terminate;
+	void          *get_mem8_ext;
+	unsigned char (*get_mem8) (void *ext, unsigned long addr);
 
-	const char *prompt;
+	void *set_mem8_ext;
+	void (*set_mem8) (void *ext, unsigned long addr, unsigned char val);
+
+	unsigned       memory_mode;
+
+	unsigned short default_seg;
+
+	unsigned long  last_addr;
+	unsigned short last_ofs;
+
+	char           terminate;
+
+	const char     *prompt;
 } monitor_t;
 
 
@@ -48,6 +61,11 @@ void mon_del (monitor_t *mon);
 
 void mon_set_cmd_fct (monitor_t *mon, void *fct, void *ext);
 void mon_set_msg_fct (monitor_t *mon, void *fct, void *ext);
+
+void mon_set_get_mem_fct (monitor_t *mon, void *ext, void *fct);
+void mon_set_set_mem_fct (monitor_t *mon, void *ext, void *fct);
+
+void mon_set_memory_mode (monitor_t *mon, unsigned mode);
 
 void mon_set_terminate (monitor_t *mon, int val);
 

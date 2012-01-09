@@ -369,6 +369,9 @@ int main (int argc, char *argv[])
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_cmd, par_pc);
 	mon_set_msg_fct (&par_mon, pc_set_msg, par_pc);
+	mon_set_get_mem_fct (&par_mon, par_pc->mem, mem_get_uint8);
+	mon_set_set_mem_fct (&par_mon, par_pc->mem, mem_set_uint8);
+	mon_set_memory_mode (&par_mon, 1);
 
 	pc_reset (par_pc);
 
