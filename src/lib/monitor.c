@@ -554,6 +554,56 @@ void mon_cmd_w (monitor_t *mon, cmd_t *cmd)
 	fclose (fp);
 }
 
+/*
+ * y - copy memory
+ */
+static
+void mon_cmd_y (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned long i;
+	unsigned long src, dst, cnt;
+	unsigned char val;
+
+	if (!mon_match_address (mon, cmd, &src, NULL, NULL)) {
+		cmd_error (cmd, "need a source address");
+		return;
+	}
+
+	if (!mon_match_address (mon, cmd, &dst, NULL, NULL)) {
+		cmd_error (cmd, "need a destination address");
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &cnt)) {
+		cmd_error (cmd, "need a byte count");
+		return;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	if (cnt == 0) {
+		return;
+	}
+
+	if (src >= dst) {
+		for (i = 0; i < cnt; i++) {
+			val = mon_get_mem8 (mon, src + i);
+			mon_set_mem8 (mon, dst + i, val);
+		}
+	}
+	else {
+		src += cnt - 1;
+		dst += cnt - 1;
+
+		for (i = 0; i < cnt; i++) {
+			val = mon_get_mem8 (mon, src - i);
+			mon_set_mem8 (mon, dst - i, val);
+		}
+	}
+}
+
 
 int mon_run (monitor_t *mon)
 {
@@ -596,6 +646,9 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, "w")) {
 				mon_cmd_w (mon, &cmd);
+			}
+			else if (cmd_match (&cmd, "y")) {
+				mon_cmd_y (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "<")) {
 				mon_cmd_redir_inp (mon, &cmd);
