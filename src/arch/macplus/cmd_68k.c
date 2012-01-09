@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -490,243 +490,6 @@ void mac_cmd_c (cmd_t *cmd, macplus_t *sim)
 }
 
 /*
- * copy - copy memory
- */
-static
-void mac_cmd_copy (cmd_t *cmd, macplus_t *sim)
-{
-	unsigned long src, dst, cnt;
-	unsigned char val;
-
-	if (!cmd_match_uint32 (cmd, &src)) {
-		cmd_error (cmd, "need a source address");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &dst)) {
-		cmd_error (cmd, "need a destination address");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &cnt)) {
-		cmd_error (cmd, "need a byte count");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if (cnt == 0) {
-		return;
-	}
-
-	if (src >= dst) {
-		while (cnt > 0) {
-			val = e68_get_mem8 (sim->cpu, src);
-			e68_set_mem8 (sim->cpu, dst, val);
-
-			src += 1;
-			dst += 1;
-			cnt -= 1;
-		}
-	}
-	else {
-		src += cnt - 1;
-		dst += cnt - 1;
-
-		while (cnt > 0) {
-			val = e68_get_mem8 (sim->cpu, src);
-			e68_set_mem8 (sim->cpu, dst, val);
-
-			src -= 1;
-			dst -= 1;
-			cnt -= 1;
-		}
-	}
-}
-
-/*
- * d - memory dump
- */
-static
-void mac_cmd_d (cmd_t *cmd, macplus_t *sim)
-{
-	unsigned long        i, j;
-	unsigned long        cnt;
-	unsigned long        addr1, addr2;
-	static int           first = 1;
-	static unsigned long saddr = 0;
-	unsigned long        p, p1, p2;
-	char                 buf[256];
-
-	if (first) {
-		first = 0;
-		saddr = e68_get_pc (sim->cpu);
-	}
-
-	addr1 = saddr;
-	cnt = 256;
-
-	if (cmd_match_uint32 (cmd, &addr1)) {
-		cmd_match_uint32 (cmd, &cnt);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	addr2 = (addr1 + cnt - 1) & 0xffffffff;
-	if (addr2 < addr1) {
-		addr2 = 0xffffffff;
-		cnt = addr2 - addr1 + 1;
-	}
-
-	saddr = addr1 + cnt;
-
-	p1 = addr1 / 16;
-	p2 = addr2 / 16 + 1;
-
-	for (p = p1; p < p2; p++) {
-		j = 16 * p;
-
-		sprintf (buf,
-			"%08lX  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-			j
-		);
-
-		for (i = 0; i < 16; i++) {
-			if ((j >= addr1) && (j <= addr2)) {
-				uint8_t  val;
-				unsigned val1, val2;
-
-				val = e68_get_mem8 (sim->cpu, j);
-
-				val1 = (val >> 4) & 0x0f;
-				val2 = val & 0x0f;
-
-				buf[10 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-				buf[10 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
-
-				if ((val >= 32) && (val <= 127)) {
-					buf[59 + i] = val;
-				}
-				else {
-					buf[59 + i] = '.';
-				}
-			}
-			else {
-				buf[10 + 3 * i] = ' ';
-				buf[10 + 3 * i + 1] = ' ';
-				buf[59 + i] = ' ';
-			}
-
-			j += 1;
-		}
-
-		pce_puts (buf);
-	}
-}
-
-/*
- * e - enter bytes into memory
- */
-static
-void mac_cmd_e (cmd_t *cmd, macplus_t *sim)
-{
-	unsigned       i;
-	unsigned long  addr;
-	unsigned short val;
-	char           buf[256];
-
-	addr = 0;
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "need an address");
-		return;
-	}
-
-	while (1) {
-		if (cmd_match_uint16 (cmd, &val)) {
-			mem_set_uint8_rw (sim->mem, addr, val);
-			addr += 1;
-		}
-		else if (cmd_match_str (cmd, buf, 256)) {
-			i = 0;
-			while (buf[i] != 0) {
-				mem_set_uint8_rw (sim->mem, addr, buf[i]);
-				addr += 1;
-				i += 1;
-			}
-		}
-		else {
-			break;
-		}
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-}
-
-/*
- * f - find
- */
-static
-void mac_cmd_f (cmd_t *cmd, macplus_t *sim)
-{
-	unsigned long  addr, size;
-	unsigned short val;
-	unsigned       i;
-	unsigned       cnt;
-	unsigned char  buf[256];
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "need an address");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &size)) {
-		cmd_error (cmd, "need a size");
-		return;
-	}
-
-	cnt = 0;
-	while ((cnt < 256) && cmd_match_uint16 (cmd, &val)) {
-		buf[cnt] = val;
-		cnt += 1;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	if ((cnt == 0) || (cnt > size)) {
-		return;
-	}
-
-	size = size - cnt + 1;
-
-	while (size > 0) {
-		i = 0;
-		while (i < cnt) {
-			if (mem_get_uint8 (sim->mem, addr + i) != buf[i]) {
-				break;
-			}
-
-			i += 1;
-		}
-
-		if (i >= cnt) {
-			pce_printf ("%06lX\n", addr);
-		}
-
-		addr += 1;
-		size -= 1;
-	}
-}
-
-/*
  * gb - run with breakpoints
  */
 static
@@ -866,11 +629,10 @@ void mac_cmd_h (cmd_t *cmd, macplus_t *sim)
 		"bl                        list breakpoints\n"
 		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"copy src dst cnt          copy memory\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
-		"e addr [val...]           enter bytes into memory\n"
-		"f addr size [val...]      find bytes in memory\n"
+		"e addr [val|string...]    enter bytes into memory\n"
+		"f addr cnt [val...]       find bytes in memory\n"
 		"g b [addr..]              run with breakpoints at addr\n"
 		"g e [exception]           run until exception\n"
 		"g                         run\n"
@@ -886,6 +648,7 @@ void mac_cmd_h (cmd_t *cmd, macplus_t *sim)
 		"u [[-]addr [cnt]]         disassemble\n"
 		"v [expr...]               evaluate expressions\n"
 		"w name addr cnt           save memory to file\n"
+		"y src dst cnt             copy memory\n"
 	);
 }
 
@@ -1188,51 +951,6 @@ void mac_cmd_u (cmd_t *cmd, macplus_t *sim)
 	saddr = addr;
 }
 
-static
-void mac_cmd_w (cmd_t *cmd, macplus_t *sim)
-{
-	unsigned long addr, cnt;
-	char           fname[256];
-	unsigned char  v;
-	FILE           *fp;
-
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &addr)) {
-		cmd_error (cmd, "address expected");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &cnt)) {
-		cmd_error (cmd, "byte count expected");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	fp = fopen (fname, "wb");
-
-	if (fp == NULL) {
-		pce_printf ("can't open file (%s)\n", fname);
-		return;
-	}
-
-	while (cnt > 0) {
-		v = e68_get_mem8 (sim->cpu, addr);
-		fputc (v, fp);
-
-		addr += 1;
-		cnt -= 1;
-	}
-
-	fclose (fp);
-}
-
 int mac_cmd (macplus_t *sim, cmd_t *cmd)
 {
 	if (sim->trm != NULL) {
@@ -1242,20 +960,8 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	if (cmd_match (cmd, "b")) {
 		cmd_do_b (cmd, &sim->bps, 0);
 	}
-	else if (cmd_match (cmd, "copy")) {
-		mac_cmd_copy (cmd, sim);
-	}
 	else if (cmd_match (cmd, "c")) {
 		mac_cmd_c (cmd, sim);
-	}
-	else if (cmd_match (cmd, "d")) {
-		mac_cmd_d (cmd, sim);
-	}
-	else if (cmd_match (cmd, "e")) {
-		mac_cmd_e (cmd, sim);
-	}
-	else if (cmd_match (cmd, "f")) {
-		mac_cmd_f (cmd, sim);
 	}
 	else if (cmd_match (cmd, "g")) {
 		mac_cmd_g (cmd, sim);
@@ -1286,9 +992,6 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "u")) {
 		mac_cmd_u (cmd, sim);
-	}
-	else if (cmd_match (cmd, "w")) {
-		mac_cmd_w (cmd, sim);
 	}
 	else {
 		return (1);
