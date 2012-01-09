@@ -377,103 +377,6 @@ void do_c (cmd_t *cmd, sim6502_t *sim)
 }
 
 static
-void do_d (cmd_t *cmd, sim6502_t *sim)
-{
-	unsigned short        i, j;
-	unsigned short        cnt;
-	unsigned short        addr1, addr2;
-	static int            first = 1;
-	static unsigned short saddr = 0;
-	unsigned short        p, p1, p2;
-	char                  buf[256];
-
-	if (first) {
-		first = 0;
-		saddr = e6502_get_pc (sim->cpu);
-	}
-
-	addr1 = saddr;
-	cnt = 256;
-
-	if (cmd_match_uint16 (cmd, &addr1)) {
-		cmd_match_uint16 (cmd, &cnt);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	addr2 = (addr1 + cnt - 1) & 0xffffU;
-	if (addr2 < addr1) {
-		addr2 = 0xffffU;
-		cnt = addr2 - addr1 + 1;
-	}
-
-	saddr = addr1 + cnt;
-
-	p1 = addr1 / 16;
-	p2 = addr2 / 16 + 1;
-
-	for (p = p1; p < p2; p++) {
-		j = 16 * p;
-
-		sprintf (buf,
-			"%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-			j
-		);
-
-		for (i = 0; i < 16; i++) {
-			if ((j >= addr1) && (j <= addr2)) {
-				unsigned char val;
-				unsigned      val1, val2;
-
-				val = e6502_get_mem8 (sim->cpu, j);
-				val1 = (val >> 4) & 0x0f;
-				val2 = val & 0x0f;
-
-				buf[6 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-				buf[6 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
-
-				if ((val >= 32) && (val <= 127)) {
-					buf[55 + i] = val;
-				}
-				else {
-					buf[55 + i] = '.';
-				}
-			}
-			else {
-				buf[6 + 3 * i] = ' ';
-				buf[6 + 3 * i + 1] = ' ';
-				buf[55 + i] = ' ';
-			}
-
-			j += 1;
-		}
-
-		fputs (buf, stdout);
-	}
-}
-
-static
-void do_e (cmd_t *cmd, sim6502_t *sim)
-{
-	unsigned short addr, val;
-
-	addr = 0;
-
-	if (!cmd_match_uint16 (cmd, &addr)) {
-		cmd_error (cmd, "need an address");
-		return;
-	}
-
-	while (cmd_match_uint16 (cmd, &val)) {
-		e6502_set_mem8 (sim->cpu, addr, val);
-
-		addr += 1;
-	}
-}
-
-static
 void do_g_b (cmd_t *cmd, sim6502_t *sim)
 {
 	unsigned short addr;
@@ -519,14 +422,15 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 static
 void do_h (cmd_t *cmd, sim6502_t *sim)
 {
-	fputs (
+	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
 		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
-		"e addr [val...]           enter bytes into memory\n"
+		"e addr [val|string...]    enter bytes into memory\n"
+		"f addr cnt [val...]       find bytes in memory\n"
 		"gb [addr...]              run with breakpoints\n"
 		"g                         run\n"
 		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
@@ -535,8 +439,9 @@ void do_h (cmd_t *cmd, sim6502_t *sim)
 		"s [what]                  print status (cpu|mem)\n"
 		"t [cnt]                   execute cnt instructions [1]\n"
 		"u [addr [cnt]]            disassemble\n"
-		"v [expr...]               evaluate expressions\n",
-		stdout
+		"v [expr...]               evaluate expressions\n"
+		"w name addr cnt           save memory to file\n"
+		"y src dst cnt             copy memory\n"
 	);
 }
 
@@ -699,12 +604,6 @@ int s6502_do_cmd (sim6502_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);
-	}
-	else if (cmd_match (cmd, "d")) {
-		do_d (cmd, sim);
-	}
-	else if (cmd_match (cmd, "e")) {
-		do_e (cmd, sim);
 	}
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
