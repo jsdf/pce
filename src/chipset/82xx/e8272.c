@@ -866,7 +866,7 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h, id, s
 	);
 
-	if (err & E8272_ERR_CRC_ID) {
+	if (err & (E8272_ERR_CRC_ID | E8272_ERR_NO_DATA)) {
 		cmd_read_error (fdc, err);
 		cmd_read_tc (fdc);
 		return;

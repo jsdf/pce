@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkfdc.c                                   *
  * Created:     2010-08-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -79,6 +79,10 @@ unsigned dsk_fdc_read_chs (disk_fdc_t *fdc, void *buf, unsigned *cnt,
 		memcpy (buf, alt->data, *cnt);
 	}
 
+	if (alt->flags & PFDC_FLAG_NO_DAM) {
+		ret |= PCE_BLK_FDC_NO_DATA;
+	}
+
 	if (alt->flags & PFDC_FLAG_CRC_ID) {
 		ret |= PCE_BLK_FDC_CRC_ID;
 	}
@@ -149,6 +153,10 @@ unsigned dsk_fdc_write_chs (disk_fdc_t *fdc, const void *buf, unsigned *cnt,
 	if (sct == NULL) {
 		*cnt = 0;
 		return (PCE_BLK_FDC_NO_ID);
+	}
+
+	if (sct->flags & PFDC_FLAG_NO_DAM) {
+		return (PCE_BLK_FDC_NO_DATA);
 	}
 
 	fdc->dirty = 1;
