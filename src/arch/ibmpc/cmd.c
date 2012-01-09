@@ -634,128 +634,6 @@ void pc_cmd_c (cmd_t *cmd, ibmpc_t *pc)
 }
 
 static
-void pc_cmd_d (cmd_t *cmd, ibmpc_t *pc)
-{
-	unsigned              i, j;
-	unsigned short        cnt;
-	unsigned short        seg, ofs1, ofs2;
-	static int            first = 1;
-	static unsigned short sseg = 0;
-	static unsigned short sofs = 0;
-	unsigned short        p, p1, p2;
-	char                  buf[256];
-
-	if (first) {
-		first = 0;
-		sseg = e86_get_ds (pc->cpu);
-		sofs = 0;
-	}
-
-	seg = sseg;
-	ofs1 = sofs;
-	cnt = 256;
-
-	if (cmd_match_uint16_16 (cmd, &seg, &ofs1)) {
-		cmd_match_uint16 (cmd, &cnt);
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	ofs2 = (ofs1 + cnt - 1) & 0xffff;
-	if (ofs2 < ofs1) {
-		ofs2 = 0xffff;
-		cnt = ofs2 - ofs1 + 1;
-	}
-
-	sseg = seg;
-	sofs = ofs1 + cnt;
-
-	p1 = ofs1 / 16;
-	p2 = ofs2 / 16 + 1;
-
-	for (p = p1; p < p2; p++) {
-		j = 16 * p;
-
-		sprintf (buf,
-			"%04X:%04X  xx xx xx xx xx xx xx xx-xx xx xx xx xx xx xx xx  xxxxxxxxxxxxxxxx\n",
-			seg, j
-		);
-
-		for (i = 0; i < 16; i++) {
-			if ((j >= ofs1) && (j <= ofs2)) {
-				unsigned val, val1, val2;
-
-				val = e86_get_mem8 (pc->cpu, seg, j);
-				val1 = (val >> 4) & 0x0f;
-				val2 = val & 0x0f;
-
-				buf[11 + 3 * i + 0] = (val1 < 10) ? ('0' + val1) : ('A' + val1 - 10);
-				buf[11 + 3 * i + 1] = (val2 < 10) ? ('0' + val2) : ('A' + val2 - 10);
-
-				if ((val >= 32) && (val <= 127)) {
-					buf[60 + i] = val;
-				}
-				else {
-					buf[60 + i] = '.';
-				}
-			}
-			else {
-				buf[11 + 3 * i] = ' ';
-				buf[11 + 3 * i + 1] = ' ';
-				buf[60 + i] = ' ';
-			}
-
-			j += 1;
-		}
-
-		pce_puts (buf);
-	}
-}
-
-static
-void pc_cmd_e (cmd_t *cmd, ibmpc_t *pc)
-{
-	unsigned       i;
-	unsigned short seg, ofs;
-	unsigned long  addr;
-	unsigned short val;
-	char           buf[256];
-
-	seg = 0;
-	ofs = 0;
-
-	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		cmd_error (cmd, "need an address");
-	}
-
-	addr = (seg << 4) + ofs;
-
-	while (1) {
-		if (cmd_match_uint16 (cmd, &val)) {
-			mem_set_uint8 (pc->mem, addr, val);
-			addr += 1;
-		}
-		else if (cmd_match_str (cmd, buf, 256)) {
-			i = 0;
-			while (buf[i] != 0) {
-				mem_set_uint8 (pc->mem, addr, buf[i]);
-				addr += 1;
-				i += 1;
-			}
-		}
-		else {
-			break;
-		}
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-}
-
-static
 void pc_cmd_g_b (cmd_t *cmd, ibmpc_t *pc)
 {
 	unsigned short seg, ofs;
@@ -898,6 +776,7 @@ void pc_cmd_h (cmd_t *cmd)
 		"c [cnt]                   clock [1]\n"
 		"d [addr [cnt]]            dump memory\n"
 		"e addr [val|string...]    enter bytes into memory\n"
+		"f addr cnt [val...]       find bytes in memory\n"
 		"gb [addr...]              run with breakpoints\n"
 		"g far                     run until CS changes\n"
 		"g                         run\n"
@@ -918,6 +797,7 @@ void pc_cmd_h (cmd_t *cmd)
 		"u [addr [cnt [mode]]]     disassemble\n"
 		"v [expr...]               evaluate expressions\n"
 		"w name addr cnt           save memory to file\n"
+		"y src dst cnt             copy memory\n"
 	);
 }
 
@@ -1406,54 +1286,6 @@ void pc_cmd_u (cmd_t *cmd, ibmpc_t *pc)
 	sofs = ofs;
 }
 
-static
-void pc_cmd_w (cmd_t *cmd, ibmpc_t *pc)
-{
-	unsigned short seg, ofs;
-	unsigned long  cnt;
-	char           fname[256];
-	unsigned char  v;
-	FILE           *fp;
-
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
-		return;
-	}
-
-	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		cmd_error (cmd, "address expected");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &cnt)) {
-		cmd_error (cmd, "byte count expected");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	fp = fopen (fname, "wb");
-	if (fp == NULL) {
-		pce_printf ("can't open file (%s)\n", fname);
-		return;
-	}
-
-	while (cnt > 0) {
-		v = e86_get_mem8 (pc->cpu, seg, ofs);
-		fputc (v, fp);
-
-		ofs += 1;
-		seg += ofs >> 4;
-		ofs &= 0x000f;
-
-		cnt -= 1;
-	}
-
-	fclose (fp);
-}
-
 int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 {
 	if (pc->trm != NULL) {
@@ -1468,12 +1300,6 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "c")) {
 		pc_cmd_c (cmd, pc);
-	}
-	else if (cmd_match (cmd, "d")) {
-		pc_cmd_d (cmd, pc);
-	}
-	else if (cmd_match (cmd, "e")) {
-		pc_cmd_e (cmd, pc);
 	}
 	else if (cmd_match (cmd, "g")) {
 		pc_cmd_g (cmd, pc);
@@ -1510,9 +1336,6 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "u")) {
 		pc_cmd_u (cmd, pc);
-	}
-	else if (cmd_match (cmd, "w")) {
-		pc_cmd_w (cmd, pc);
 	}
 	else {
 		return (1);
