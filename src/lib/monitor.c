@@ -283,6 +283,43 @@ void mon_cmd_d (monitor_t *mon, cmd_t *cmd)
 	mon->last_ofs = (ofs + cnt) & 0xffff;
 }
 
+/*
+ * e - enter bytes into memory
+ */
+static
+void mon_cmd_e (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned       i;
+	unsigned long  addr;
+	unsigned short val;
+	char           str[256];
+
+	if (!mon_match_address (mon, cmd, &addr, NULL, NULL)) {
+		cmd_error (cmd, "need an address");
+		return;
+	}
+
+	while (1) {
+		if (cmd_match_uint16 (cmd, &val)) {
+			mon_set_mem8 (mon, addr, val);
+			addr += 1;
+		}
+		else if (cmd_match_str (cmd, str, 256)) {
+			i = 0;
+			while (str[i] != 0) {
+				mon_set_mem8 (mon, addr, str[i]);
+				addr += 1;
+				i += 1;
+			}
+		}
+		else {
+			break;
+		}
+	}
+
+	cmd_match_end (cmd);
+}
+
 static
 void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
@@ -418,6 +455,9 @@ int mon_run (monitor_t *mon)
 		if (r != 0) {
 			if (cmd_match (&cmd, "d")) {
 				mon_cmd_d (mon, &cmd);
+			}
+			else if (cmd_match (&cmd, "e")) {
+				mon_cmd_e (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "m")) {
 				mon_cmd_m (mon, &cmd);
