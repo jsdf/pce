@@ -320,6 +320,80 @@ void mon_cmd_e (monitor_t *mon, cmd_t *cmd)
 	cmd_match_end (cmd);
 }
 
+/*
+ * f - find bytes in memory
+ */
+static
+void mon_cmd_f (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned       i, n;
+	unsigned short seg, ofs;
+	unsigned long  addr, cnt;
+	unsigned short val;
+	unsigned char  buf[256];
+	char           str[256];
+
+	if (!mon_match_address (mon, cmd, &addr, &seg, &ofs)) {
+		cmd_error (cmd, "need an address");
+		return;
+	}
+
+	if (!cmd_match_uint32 (cmd, &cnt)) {
+		cmd_error (cmd, "need a byte count");
+		return;
+	}
+
+	n = 0;
+
+	while (n < 256) {
+		if (cmd_match_uint16 (cmd, &val)) {
+			buf[n++] = val;
+		}
+		else if (cmd_match_str (cmd, str, 256)) {
+			i = 0;
+			while ((n < 256) && (str[i] != 0)) {
+				buf[n++] = str[i++];
+			}
+		}
+		else {
+			break;
+		}
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	cnt = (cnt < n) ? 0 : (cnt - n);
+
+	while (cnt > 0) {
+		for (i = 0; i < n; i++) {
+			if (mon_get_mem8 (mon, addr + i) != buf[i]) {
+				break;
+			}
+		}
+
+		if (i >= n) {
+			if (mon->memory_mode == 0) {
+				pce_printf ("%08lX\n", addr);
+			}
+			else {
+				pce_printf ("%04X:%04X\n", seg, ofs);
+			}
+		}
+
+		ofs = (ofs + 1) & 0xffff;
+
+		if (ofs == 0) {
+			seg += 0x1000;
+		}
+
+		addr += 1;
+
+		cnt -= 1;
+	}
+}
+
 static
 void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
@@ -458,6 +532,9 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, "e")) {
 				mon_cmd_e (mon, &cmd);
+			}
+			else if (cmd_match (&cmd, "f")) {
+				mon_cmd_f (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "m")) {
 				mon_cmd_m (mon, &cmd);
