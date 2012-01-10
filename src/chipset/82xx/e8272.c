@@ -751,7 +751,7 @@ void cmd_read_error (e8272_t *fdc, unsigned err)
 		fdc->st[1] |= E8272_ST1_DE;
 	}
 	else if (err & E8272_ERR_NO_DATA) {
-		fdc->st[1] |= E8272_ST1_MA | E8272_ST1_ND;
+		fdc->st[1] |= E8272_ST1_MA;
 		fdc->st[2] |= E8272_ST2_MD;
 	}
 	else if (err & E8272_ERR_DEL_DAM) {
