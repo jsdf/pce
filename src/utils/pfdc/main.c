@@ -611,7 +611,7 @@ int pfdc_delete_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
 	unsigned   i, j, a;
-	pfdc_sct_t *sct, *tmp;
+	pfdc_sct_t *sct, *new, *tmp;
 
 	j = 0;
 
@@ -619,42 +619,35 @@ int pfdc_delete_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 		a = 0;
 
 		sct = trk->sct[i];
+		new = NULL;
 
-		while ((sct != NULL) && pfdc_sel_match (c, h, sct->s, i, a)) {
+		trk->sct[j] = NULL;
+
+		while (sct != NULL) {
 			tmp = sct;
 			sct = tmp->next;
 			tmp->next = NULL;
 
-			pfdc_sct_del (tmp);
+			if (pfdc_sel_match (c, h, tmp->s, i, a)) {
+				pfdc_sct_del (tmp);
+				par_cnt += 1;
+			}
+			else {
+				if (new == NULL) {
+					trk->sct[j] = tmp;
+				}
+				else {
+					new->next = tmp;
+				}
 
-			par_cnt += 1;
+				new = tmp;
+			}
 
 			a += 1;
 		}
 
-		trk->sct[i] = sct;
-
-		if (sct != NULL) {
-			while (sct->next != NULL) {
-				if (pfdc_sel_match (c, h, sct->s, i, a + 1) == 0) {
-					tmp = sct->next;
-					sct->next = tmp->next;
-					tmp->next = NULL;
-
-					pfdc_sct_del (tmp);
-
-					par_cnt += 1;
-				}
-				else {
-					sct = sct->next;
-				}
-
-				a += 1;
-			}
-		}
-
-		if (trk->sct[i] != NULL) {
-			trk->sct[j++] = trk->sct[i];
+		if (trk->sct[j] != NULL) {
+			j += 1;
 		}
 	}
 
