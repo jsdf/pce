@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfdc/pfdc-img-io.c                                 *
  * Created:     2010-08-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <drivers/block/pfdc-img-ana.h>
+#include <drivers/block/pfdc-img-cp2.h>
 #include <drivers/block/pfdc-img-dc42.h>
 #include <drivers/block/pfdc-img-imd.h>
 #include <drivers/block/pfdc-img-pfdc.h>
@@ -99,6 +100,9 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 	if (strcasecmp (ext, ".ana") == 0) {
 		return (PFDC_FORMAT_ANA);
 	}
+	else if (strcasecmp (ext, ".cp2") == 0) {
+		return (PFDC_FORMAT_CP2);
+	}
 	else if (strcasecmp (ext, ".image") == 0) {
 		return (PFDC_FORMAT_DC42);
 	}
@@ -144,6 +148,10 @@ pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_ANA:
 		img = pfdc_load_anadisk (fp);
+		break;
+
+	case PFDC_FORMAT_CP2:
+		img = pfdc_load_cp2 (fp);
 		break;
 
 	case PFDC_FORMAT_DC42:
@@ -204,6 +212,9 @@ int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 
 	case PFDC_FORMAT_ANA:
 		return (pfdc_save_anadisk (fp, img));
+
+	case PFDC_FORMAT_CP2:
+		return (pfdc_save_cp2 (fp, img));
 
 	case PFDC_FORMAT_DC42:
 		return (pfdc_save_dc42 (fp, img));

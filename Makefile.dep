@@ -1547,6 +1547,10 @@ src/drivers/block/pfdc-img-ana.o: src/drivers/block/pfdc-img-ana.c \
 	src/drivers/block/pfdc-img-ana.h \
 	src/drivers/block/pfdc.h
 
+src/drivers/block/pfdc-img-cp2.o: src/drivers/block/pfdc-img-cp2.c \
+	src/drivers/block/pfdc-img-cp2.h \
+	src/drivers/block/pfdc.h
+
 src/drivers/block/pfdc-img-dc42.o: src/drivers/block/pfdc-img-dc42.c \
 	src/drivers/block/pfdc-img-dc42.h \
 	src/drivers/block/pfdc.h
@@ -1852,6 +1856,7 @@ src/utils/pfdc/main.o: src/utils/pfdc/main.c \
 
 src/utils/pfdc/pfdc-img-io.o: src/utils/pfdc/pfdc-img-io.c \
 	src/drivers/block/pfdc-img-ana.h \
+	src/drivers/block/pfdc-img-cp2.h \
 	src/drivers/block/pfdc-img-dc42.h \
 	src/drivers/block/pfdc-img-imd.h \
 	src/drivers/block/pfdc-img-pfdc.h \
