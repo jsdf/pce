@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.h                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,6 +36,11 @@
 
 #define E8272_MAX_SCT 128
 
+#define E8272_DISKOP_READ   0
+#define E8272_DISKOP_WRITE  1
+#define E8272_DISKOP_FORMAT 3
+#define E8272_DISKOP_READID 4
+
 
 typedef struct {
 	unsigned char  c;
@@ -55,6 +60,24 @@ typedef struct {
 	unsigned      sct_cnt;
 	e8272_sct_t   sct[E8272_MAX_SCT];
 } e8272_drive_t;
+
+
+typedef struct {
+	unsigned char pd;
+	unsigned char pc;
+	unsigned char ph;
+	unsigned char ps;
+
+	unsigned char lc;
+	unsigned char lh;
+	unsigned char ls;
+	unsigned char ln;
+
+	void          *buf;
+	unsigned      cnt;
+
+	unsigned char fill;
+} e8272_diskop_t;
 
 
 typedef struct e8272_t {
@@ -107,37 +130,17 @@ typedef struct e8272_t {
 	void           (*set_clock) (struct e8272_t *fdc, unsigned long cnt);
 	void           (*start_cmd) (struct e8272_t *fdc);
 
-	void *blk_rd_ext;
-	unsigned (*blk_rd) (void *ext, void *buf, unsigned *cnt, unsigned d,
-		unsigned pc, unsigned ph, unsigned ps, unsigned s
-	);
-
-	void *blk_wr_ext;
-	unsigned (*blk_wr) (void *ext, const void *buf, unsigned *cnt, unsigned d,
-		unsigned pc, unsigned ph, unsigned ps, unsigned s
-	);
-
-	void *blk_fmt_ext;
-	int (*blk_fmt) (void *ext, unsigned d,
-		unsigned pc, unsigned ph, unsigned ps,
-		unsigned lc, unsigned lh, unsigned ls, unsigned ln,
-		unsigned fill
-	);
-
-	void *blk_rdid_ext;
-	int (*blk_rdid) (void *ext, unsigned d,
-		unsigned pc, unsigned ph, unsigned ps,
-		unsigned *lc, unsigned *lh, unsigned *ls, unsigned *ln
-	);
+	void           *diskop_ext;
+	unsigned       (*diskop) (void *ext, unsigned op, e8272_diskop_t *p);
 
 	/* the interrupt function */
-	void          *irq_ext;
-	unsigned char irq_val;
-	void          (*irq) (void *ext, unsigned char val);
+	void           *irq_ext;
+	unsigned char  irq_val;
+	void           (*irq) (void *ext, unsigned char val);
 
-	void          *dreq_ext;
-	unsigned char dreq_val;
-	void          (*dreq) (void *ext, unsigned char val);
+	void           *dreq_ext;
+	unsigned char  dreq_val;
+	void           (*dreq) (void *ext, unsigned char val);
 } e8272_t;
 
 
@@ -155,13 +158,7 @@ void e8272_set_irq_fct (e8272_t *fdc, void *ext, void *fct);
 void e8272_set_dreq_fct (e8272_t *fdc, void *ext, void *fct);
 
 
-void e8272_set_block_read_fct (e8272_t *fdc, void *ext, void *fct);
-
-void e8272_set_block_write_fct (e8272_t *fdc, void *ext, void *fct);
-
-void e8272_set_block_fmt_fct (e8272_t *fdc, void *ext, void *fct);
-
-void e8272_set_block_rdid_fct (e8272_t *fdc, void *ext, void *fct);
+void e8272_set_diskop_fct (e8272_t *fdc, void *ext, void *fct);
 
 
 void e8272_set_input_clock (e8272_t *fdc, unsigned long clk);

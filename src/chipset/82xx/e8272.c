@@ -161,17 +161,8 @@ void e8272_init (e8272_t *fdc)
 	fdc->set_tc = NULL;
 	fdc->set_clock = NULL;
 
-	fdc->blk_rd_ext = NULL;
-	fdc->blk_rd = NULL;
-
-	fdc->blk_wr_ext = NULL;
-	fdc->blk_wr = NULL;
-
-	fdc->blk_fmt_ext = NULL;
-	fdc->blk_fmt = NULL;
-
-	fdc->blk_rdid_ext = NULL;
-	fdc->blk_rdid = NULL;
+	fdc->diskop_ext = NULL;
+	fdc->diskop = NULL;
 
 	fdc->irq_ext = NULL;
 	fdc->irq_val = 0;
@@ -223,28 +214,10 @@ void e8272_set_dreq_fct (e8272_t *fdc, void *ext, void *fct)
 }
 
 
-void e8272_set_block_read_fct (e8272_t *fdc, void *ext, void *fct)
+void e8272_set_diskop_fct (e8272_t *fdc, void *ext, void *fct)
 {
-	fdc->blk_rd_ext = ext;
-	fdc->blk_rd = fct;
-}
-
-void e8272_set_block_write_fct (e8272_t *fdc, void *ext, void *fct)
-{
-	fdc->blk_wr_ext = ext;
-	fdc->blk_wr = fct;
-}
-
-void e8272_set_block_fmt_fct (e8272_t *fdc, void *ext, void *fct)
-{
-	fdc->blk_fmt_ext = ext;
-	fdc->blk_fmt = fct;
-}
-
-void e8272_set_block_rdid_fct (e8272_t *fdc, void *ext, void *fct)
-{
-	fdc->blk_rdid_ext = ext;
-	fdc->blk_rdid = fct;
+	fdc->diskop_ext = ext;
+	fdc->diskop = fct;
 }
 
 
@@ -292,12 +265,35 @@ void e8272_set_dreq (e8272_t *fdc, unsigned char val)
 
 
 static
-unsigned e8272_block_read (e8272_t *fdc, void *buf, unsigned *cnt, unsigned d,
-	unsigned pc, unsigned ph, unsigned ps, unsigned s)
+void e8272_diskop_init (e8272_diskop_t *p,
+	unsigned pd, unsigned pc, unsigned ph, unsigned ps,
+	unsigned lc, unsigned lh, unsigned ls, unsigned ln,
+	void *buf, unsigned cnt)
 {
-	unsigned r;
+	p->pd = pd;
+	p->pc = pc;
+	p->ph = ph;
+	p->ps = ps;
 
-	if (fdc->blk_rd == NULL) {
+	p->lc = lc;
+	p->lh = lh;
+	p->ls = ls;
+	p->ln = ln;
+
+	p->buf = buf;
+	p->cnt = cnt;
+
+	p->fill = 0;
+}
+
+static
+unsigned e8272_diskop_read (e8272_t *fdc, void *buf, unsigned *cnt,
+	unsigned pd, unsigned pc, unsigned ph, unsigned ps, unsigned s)
+{
+	unsigned       r;
+	e8272_diskop_t p;
+
+	if (fdc->diskop == NULL) {
 		return (E8272_ERR_NO_ID);
 	}
 
@@ -306,18 +302,23 @@ unsigned e8272_block_read (e8272_t *fdc, void *buf, unsigned *cnt, unsigned d,
 		return (E8272_ERR_OTHER);
 	}
 
-	r = fdc->blk_rd (fdc->blk_rd_ext, buf, cnt, d, pc, ph, ps, s);
+	e8272_diskop_init (&p, pd, pc, ph, ps, 0, 0, s, 0, buf, *cnt);
+
+	r = fdc->diskop (fdc->diskop_ext, E8272_DISKOP_READ, &p);
+
+	*cnt = p.cnt;
 
 	return (r);
 }
 
 static
-unsigned e8272_block_write (e8272_t *fdc, const void *buf, unsigned *cnt, unsigned d,
-	unsigned pc, unsigned ph, unsigned ps, unsigned s)
+unsigned e8272_diskop_write (e8272_t *fdc, void *buf, unsigned *cnt,
+	unsigned pd, unsigned pc, unsigned ph, unsigned ps, unsigned s)
 {
-	unsigned r;
+	unsigned       r;
+	e8272_diskop_t p;
 
-	if (fdc->blk_wr == NULL) {
+	if (fdc->diskop == NULL) {
 		return (E8272_ERR_NO_ID);
 	}
 
@@ -326,39 +327,56 @@ unsigned e8272_block_write (e8272_t *fdc, const void *buf, unsigned *cnt, unsign
 		return (E8272_ERR_OTHER);
 	}
 
-	r = fdc->blk_wr (fdc->blk_rd_ext, buf, cnt, d, pc, ph, ps, s);
+	e8272_diskop_init (&p, pd, pc, ph, ps, 0, 0, s, 0, buf, *cnt);
+
+	r = fdc->diskop (fdc->diskop_ext, E8272_DISKOP_WRITE, &p);
+
+	*cnt = p.cnt;
 
 	return (r);
 }
 
 static
-int e8272_block_format (e8272_t *fdc, unsigned d,
-	unsigned pc, unsigned ph, unsigned ps,
-	unsigned lc, unsigned lh, unsigned ls, unsigned ln, unsigned fill)
+int e8272_diskop_format (e8272_t *fdc,
+	unsigned pd, unsigned pc, unsigned ph, unsigned ps,
+	const unsigned char *id, unsigned fill)
 {
-	int r;
+	unsigned       r;
+	e8272_diskop_t p;
 
-	if (fdc->blk_fmt == NULL) {
+	if (fdc->diskop == NULL) {
 		return (1);
 	}
 
-	r = fdc->blk_fmt (fdc->blk_rd_ext, d, pc, ph, ps, lc, lh, ls, ln, fill);
+	e8272_diskop_init (&p, pd, pc, ph, ps, id[0], id[1], id[2], id[3], NULL, 0);
+
+	p.fill = fill;
+
+	r = fdc->diskop (fdc->diskop_ext, E8272_DISKOP_FORMAT, &p);
 
 	return (r);
 }
 
 static
-int e8272_block_rdid (e8272_t *fdc, unsigned d,
-	unsigned pc, unsigned ph, unsigned ps,
-	unsigned *lc, unsigned *lh, unsigned *ls, unsigned *ln)
+int e8272_diskop_readid (e8272_t *fdc,
+	unsigned pd, unsigned pc, unsigned ph, unsigned ps,
+	unsigned char *id)
 {
-	int r;
+	unsigned       r;
+	e8272_diskop_t p;
 
-	if (fdc->blk_rdid == NULL) {
+	if (fdc->diskop == NULL) {
 		return (1);
 	}
 
-	r = fdc->blk_rdid (fdc->blk_rdid_ext, d, pc, ph, ps, lc, lh, ls, ln);
+	e8272_diskop_init (&p, pd, pc, ph, ps, 0, 0, 0, 0, NULL, 0);
+
+	r = fdc->diskop (fdc->diskop_ext, E8272_DISKOP_READID, &p);
+
+	id[0] = p.lc;
+	id[1] = p.lh;
+	id[2] = p.ls;
+	id[3] = p.ln;
 
 	return (r);
 }
@@ -370,7 +388,7 @@ static
 void e8272_read_track (e8272_t *fdc)
 {
 	unsigned      i;
-	unsigned      lc, lh, ls, ln;
+	unsigned char id[4];
 	unsigned long ofs, cnt;
 	e8272_drive_t *drv;
 
@@ -383,14 +401,14 @@ void e8272_read_track (e8272_t *fdc)
 	drv->sct_cnt = 0;
 
 	for (i = 0; i < E8272_MAX_SCT; i++) {
-		if (e8272_block_rdid (fdc, drv->d, drv->c, drv->h, i, &lc, &lh, &ls, &ln)) {
+		if (e8272_diskop_readid (fdc, drv->d, drv->c, drv->h, i, id)) {
 			break;
 		}
 
-		drv->sct[i].c = lc;
-		drv->sct[i].h = lh;
-		drv->sct[i].s = ls;
-		drv->sct[i].n = ln;
+		drv->sct[i].c = id[0];
+		drv->sct[i].h = id[1];
+		drv->sct[i].s = id[2];
+		drv->sct[i].n = id[3];
 
 		drv->sct_cnt += 1;
 	}
@@ -862,7 +880,7 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 
 	cnt2 = cnt1;
 
-	err = e8272_block_read (fdc, fdc->buf, &cnt2,
+	err = e8272_diskop_read (fdc, fdc->buf, &cnt2,
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h, id, s
 	);
 
@@ -1057,7 +1075,7 @@ void cmd_read_track_clock (e8272_t *fdc, unsigned long cnt)
 
 	bcnt = 8192;
 
-	err = e8272_block_read (fdc, fdc->buf, &bcnt,
+	err = e8272_diskop_read (fdc, fdc->buf, &bcnt,
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
 		id, sct->s
 	);
@@ -1295,7 +1313,7 @@ void cmd_write_set_data (e8272_t *fdc, unsigned char val)
 
 	cnt = fdc->buf_n;
 
-	err = e8272_block_write (fdc, fdc->buf, &cnt,
+	err = e8272_diskop_write (fdc, fdc->buf, &cnt,
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
 		fdc->write_id, fdc->cmd[4]
 	);
@@ -1458,7 +1476,6 @@ static
 void cmd_format_set_data (e8272_t *fdc, unsigned char val)
 {
 	unsigned d, c, h, n;
-	unsigned lc, lh, ls, ln;
 	unsigned gpl, fill;
 
 	fdc->buf[fdc->buf_i++] = val;
@@ -1478,32 +1495,26 @@ void cmd_format_set_data (e8272_t *fdc, unsigned char val)
 	gpl = fdc->cmd[4];
 	fill = fdc->cmd[5];
 
-	lc = fdc->buf[0];
-	lh = fdc->buf[1];
-	ls = fdc->buf[2];
-	ln = fdc->buf[3];
-
 #if E8272_DEBUG >= 1
 	fprintf (stderr,
 		"E8272: CMD=%02X D=%u  FORMAT SECTOR "
-		"(c=%u, h=%u, n=%u, g=%u, f=0x%02x, id=[%02x %02x %02x %02x])\n",
-		fdc->cmd[0], d, c, h, n, gpl, fill, lc, lh, ls, ln
+		"(c=%u, h=%u, n=%u, sc=%u g=%u, f=0x%02x, id=[%02x %02x %02x %02x])\n",
+		fdc->cmd[0], d, c, h, n, fdc->cmd[3], gpl, fill,
+		fdc->buf[0], fdc->buf[1], fdc->buf[2], fdc->buf[3]
 	);
-#else
-	(void) n;
 #endif
 
 	fdc->curdrv->ok = 0;
 
-	if (e8272_block_format (fdc, d, c, h, fdc->format_cnt, lc, lh, ls, ln, fill)) {
+	if (e8272_diskop_format (fdc, d, c, h, fdc->format_cnt, fdc->buf, fill)) {
 		cmd_format_error (fdc, E8272_ERR_WPROT);
 		return;
 	}
 
-	fdc->res[3] = lc;
-	fdc->res[4] = lh;
-	fdc->res[5] = ls + 1;
-	fdc->res[6] = ln;
+	fdc->res[3] = fdc->buf[0];
+	fdc->res[4] = fdc->buf[1];
+	fdc->res[5] = fdc->buf[2] + 1;
+	fdc->res[6] = fdc->buf[3];
 
 	fdc->format_cnt += 1;
 
@@ -1511,7 +1522,7 @@ void cmd_format_set_data (e8272_t *fdc, unsigned char val)
 		e8272_delay_index (fdc, 0);
 	}
 	else {
-		e8272_delay_bits (fdc, 8UL * (62 + (128 << ln) + gpl), 0);
+		e8272_delay_bits (fdc, 8UL * (62 + (128 << n) + gpl), 0);
 	}
 
 	fdc->set_data = NULL;
