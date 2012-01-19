@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/sony.c                                      *
  * Created:     2007-11-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -328,6 +328,10 @@ void mac_sony_insert (mac_sony_t *sony, unsigned drive)
 {
 	unsigned long vars;
 	disk_t        *dsk;
+
+	if (sony->open == 0) {
+		return;
+	}
 
 	if ((drive < 1) || (drive > SONY_DRIVES)) {
 		return;
