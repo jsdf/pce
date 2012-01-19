@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/sdl.c                                      *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -409,8 +409,10 @@ void sdl_event_mouse_button (sdl_t *sdl, int down, unsigned button)
 		sdl->button &= ~(1U << button);
 	}
 
-	if ((down == 0) && (sdl->grab == 0)) {
-		sdl_grab_mouse (sdl, 1);
+	if (sdl->grab == 0) {
+		if (down == 0) {
+			sdl_grab_mouse (sdl, 1);
+		}
 		return;
 	}
 
