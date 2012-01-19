@@ -115,7 +115,12 @@ void sig_int (int s)
 	fprintf (stderr, "pce-ibmpc: sigint\n");
 	fflush (stderr);
 
-	par_pc->brk = PCE_BRK_ABORT;
+	if (par_pc->brk == 0) {
+		par_pc->brk = PCE_BRK_STOP;
+	}
+	else {
+		par_pc->brk = PCE_BRK_ABORT;
+	}
 }
 
 static
