@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/traps.c                                     *
  * Created:     2007-11-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -732,13 +732,13 @@ const char *mac_get_trap_name (unsigned trap)
 	}
 
 	if (trap & 0x0800) {
-		mask = 0xfbff;
+		mask = 0xf800 | 0x03ff;
 	}
 	else {
-		mask = 0xf8ff;
+		mask = 0xf800 | 0x00ff;
 	}
 
-	base = trap & 0xfbff;
+	base = trap & mask;
 
 	i = 0;
 	while (trap_list[i].name != NULL) {
