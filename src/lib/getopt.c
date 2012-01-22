@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/getopt.c                                             *
  * Created:     2009-14-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -244,7 +244,7 @@ int pce_getopt (int argc, char **argv, char ***optarg, pce_option_t *opt)
 		curopt = NULL;
 	}
 
-	if (atend) {
+	if (atend || (opt == NULL)) {
 		if (index2 >= argc) {
 			return (GETOPT_DONE);
 		}
