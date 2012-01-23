@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/pfdc.h                                     *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -127,6 +127,8 @@ void pfdc_trk_del (pfdc_trk_t *trk);
 int pfdc_trk_add_sector (pfdc_trk_t *trk, pfdc_sct_t *sct);
 
 pfdc_sct_t *pfdc_trk_get_indexed_sector (pfdc_trk_t *trk, unsigned idx, int phy);
+
+int pfdc_trk_interleave (pfdc_trk_t *trk, unsigned il);
 
 
 pfdc_cyl_t *pfdc_cyl_new (unsigned c);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/pfdc.c                                     *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -452,6 +452,53 @@ pfdc_sct_t *pfdc_trk_get_indexed_sector (pfdc_trk_t *trk, unsigned idx, int phy)
 	}
 
 	return (NULL);
+}
+
+int pfdc_trk_interleave (pfdc_trk_t *trk, unsigned il)
+{
+	unsigned   i, j, n;
+	pfdc_sct_t **sct, *tmp;
+
+	n = trk->sct_cnt;
+
+	if (n < 2) {
+		return (0);
+	}
+
+	sct = malloc (n * sizeof (pfdc_sct_t *));
+
+	if (sct == NULL) {
+		return (1);
+	}
+
+	for (i = 0; i < n; i++) {
+		tmp = trk->sct[i];
+		trk->sct[i] = NULL;
+
+		j = i;
+		while ((j > 0) && (tmp->s < sct[j - 1]->s)) {
+			sct[j] = sct[j - 1];
+			j -= 1;
+		}
+
+		sct[j] = tmp;
+	}
+
+	j = 0;
+
+	for (i = 0; i < n; i++) {
+		while (trk->sct[j] != NULL) {
+			j = (j + 1) % n;
+		}
+
+		trk->sct[j] = sct[i];
+
+		j = (j + il) % n;
+	}
+
+	free (sct);
+
+	return (0);
 }
 
 
