@@ -380,6 +380,45 @@ void print_ulong (FILE *fp, unsigned long val, unsigned w)
 	}
 }
 
+
+static
+int pfdc_interleave_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
+	unsigned c, unsigned h, void *opaque)
+{
+	unsigned *il;
+
+	par_cnt += 1;
+
+	il = opaque;
+
+	if (pfdc_trk_interleave (trk, *il)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pfdc_interleave_tracks (pfdc_img_t *img, unsigned il)
+{
+	int      r;
+
+	par_cnt = 0;
+
+	r = pfdc_for_all_tracks (img, pfdc_interleave_track_cb, &il);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: interleave %lu tracks\n", arg0, par_cnt);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: interleaving failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
 static
 const char *pfdc_enc_to_string (unsigned encoding)
 {
@@ -1775,6 +1814,12 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "comment-set") == 0) {
 		r = pfdc_set_comment (*img, optarg[0]);
+	}
+	else if (strcmp (op, "interleave") == 0) {
+		unsigned il;
+
+		il = strtoul (optarg[0], NULL, 0);
+		r = pfdc_interleave_tracks (*img, il);
 	}
 	else if (strcmp (op, "load") == 0) {
 		r = pfdc_load_sectors (*img, optarg[0]);
