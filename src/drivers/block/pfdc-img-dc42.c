@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/pfdc-img-dc42.c                            *
  * Created:     2011-07-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -80,16 +80,13 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 {
 	unsigned   c, h, s;
 	unsigned   sct_cnt;
+	pfdc_trk_t *trk;
 	pfdc_sct_t *sct;
 
 	*check = 0;
 
-	sct_cnt = 13;
-
 	for (c = 0; c < 80; c++) {
-		if ((c & 15) == 0) {
-			sct_cnt -= 1;
-		}
+		sct_cnt = 12 - (c / 16);
 
 		for (h = 0; h < hcnt; h++) {
 			for (s = 0; s < sct_cnt; s++) {
@@ -111,6 +108,12 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 				}
 
 				*check = dc42_calc_checksum (sct->data, 512, *check);
+			}
+
+			trk = pfdc_img_get_track (img, c, h, 0);
+
+			if (trk != NULL) {
+				pfdc_trk_interleave (trk, 2);
 			}
 		}
 	}
