@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/block/pfdc-img-ana.h                             *
- * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/pfdc/pfdc-img-dc42.h                             *
+ * Created:     2011-07-09 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,16 +20,19 @@
  *****************************************************************************/
 
 
-#ifndef PFDC_IMG_ANA_H
-#define PFDC_IMG_ANA_H 1
+#ifndef PFDC_IMG_DC42_H
+#define PFDC_IMG_DC42_H 1
 
 
-#include "pfdc.h"
+#include <drivers/pfdc/pfdc.h>
 
 
-pfdc_img_t *pfdc_load_anadisk (FILE *fp);
+pfdc_img_t *pfdc_load_dc42 (FILE *fp);
 
-int pfdc_save_anadisk (FILE *fp, const pfdc_img_t *img);
+int pfdc_save_dc42 (FILE *fp, const pfdc_img_t *img);
+
+int pfdc_probe_dc42_fp (FILE *fp);
+int pfdc_probe_dc42 (const char *fname);
 
 
 #endif

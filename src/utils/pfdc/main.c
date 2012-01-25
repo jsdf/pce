@@ -29,8 +29,8 @@
 #include <lib/getopt.h>
 
 #include "main.h"
-#include <drivers/block/pfdc.h>
-#include <drivers/block/pfdc-img-raw.h>
+#include <drivers/pfdc/pfdc.h>
+#include <drivers/pfdc/pfdc-img-raw.h>
 #include "pfdc-img-io.h"
 
 

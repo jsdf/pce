@@ -24,14 +24,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <drivers/block/pfdc-img-ana.h>
-#include <drivers/block/pfdc-img-cp2.h>
-#include <drivers/block/pfdc-img-dc42.h>
-#include <drivers/block/pfdc-img-imd.h>
-#include <drivers/block/pfdc-img-pfdc.h>
-#include <drivers/block/pfdc-img-raw.h>
-#include <drivers/block/pfdc-img-tc.h>
-#include <drivers/block/pfdc-img-td0.h>
+#include <drivers/pfdc/pfdc-img-ana.h>
+#include <drivers/pfdc/pfdc-img-cp2.h>
+#include <drivers/pfdc/pfdc-img-dc42.h>
+#include <drivers/pfdc/pfdc-img-imd.h>
+#include <drivers/pfdc/pfdc-img-pfdc.h>
+#include <drivers/pfdc/pfdc-img-raw.h>
+#include <drivers/pfdc/pfdc-img-tc.h>
+#include <drivers/pfdc/pfdc-img-td0.h>
 
 #include "pfdc-img-io.h"
 

@@ -12,7 +12,9 @@ PFDC_HDR := $(foreach f,$(PFDC_BAS),$(rel)/$(f).h)
 PFDC_MAN1 := $(rel)/pfdc.1
 PFDC_BIN := $(rel)/pfdc$(EXEEXT)
 
-PFDC_OBJ_EXT := $(DEV_BLK_PFDC_OBJ) src/lib/getopt.o
+PFDC_OBJ_EXT := \
+	src/drivers/pfdc/pfdc.a \
+	src/lib/getopt.o
 
 BIN  += $(PFDC_BIN)
 MAN1 += $(PFDC_MAN1)

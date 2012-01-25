@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfdc/pfdc-img-io.h                                 *
  * Created:     2010-08-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 #define PFDC_IMG_IO_H 1
 
 
-#include <drivers/block/pfdc.h>
+#include <drivers/pfdc/pfdc.h>
 
 
 #define PFDC_FORMAT_NONE  0

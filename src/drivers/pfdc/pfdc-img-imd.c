@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/block/pfdc-img-imd.c                             *
+ * File name:   src/drivers/pfdc/pfdc-img-imd.c                              *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,9 @@
 
 #include "pfdc.h"
 #include "pfdc-img-imd.h"
+
+
+#define PFDC_MAGIC_IMD 0x494d4420
 
 
 static

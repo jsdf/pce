@@ -78,9 +78,11 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/nvram.o \
 	src/devices/parport.o \
 	src/devices/serport.o \
-	src/drivers/options.o \
+	src/drivers/block/block.a \
 	src/drivers/char/char.a \
+	src/drivers/pfdc/pfdc.a \
 	src/drivers/sound/sound.a \
+	src/drivers/options.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
@@ -98,7 +100,8 @@ PCE_IBMPC_OBJ_EXT := \
 	src/lib/string.o \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
-	$(DEV_BLK_OBJ) \
+	src/drivers/block/block.a \
+	src/drivers/pfdc/pfdc.a \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"

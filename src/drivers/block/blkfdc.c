@@ -26,13 +26,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "pfdc.h"
-#include "pfdc-img-ana.h"
-#include "pfdc-img-dc42.h"
-#include "pfdc-img-imd.h"
-#include "pfdc-img-pfdc.h"
-#include "pfdc-img-raw.h"
-#include "pfdc-img-td0.h"
+#include <drivers/pfdc/pfdc.h>
+#include <drivers/pfdc/pfdc-img-ana.h>
+#include <drivers/pfdc/pfdc-img-dc42.h>
+#include <drivers/pfdc/pfdc-img-imd.h>
+#include <drivers/pfdc/pfdc-img-pfdc.h>
+#include <drivers/pfdc/pfdc-img-raw.h>
+#include <drivers/pfdc/pfdc-img-td0.h>
 
 
 #define BLKFDC_FORMAT_NONE    0

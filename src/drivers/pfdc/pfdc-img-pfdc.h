@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/block/pfdc-img-pfdc.h                            *
+ * File name:   src/drivers/pfdc/pfdc-img-pfdc.h                             *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 #define PFDC_IMG_PFDC_H 1
 
 
-#include "pfdc.h"
+#include <drivers/pfdc/pfdc.h>
 
 
 pfdc_img_t *pfdc_load_pfdc (FILE *fp);

@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/block/pfdc-img-raw.h                             *
+ * File name:   src/drivers/pfdc/pfdc-img-raw.h                              *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 #define PFDC_IMG_RAW_H 1
 
 
-#include "pfdc.h"
+#include <drivers/pfdc/pfdc.h>
 
 
 int pfdc_get_geometry_from_size (unsigned long size, unsigned *c, unsigned *h, unsigned *s);
