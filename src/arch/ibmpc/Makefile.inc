@@ -67,6 +67,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/video/ega.o \
 	src/devices/video/hgc.o \
 	src/devices/video/mda.o \
+	src/devices/video/olivetti.o \
 	src/devices/video/plantronics.o \
 	src/devices/video/vga.o \
 	src/devices/video/video.o \

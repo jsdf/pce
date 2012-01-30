@@ -121,6 +121,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/devices/video/ega.h \
 	src/devices/video/hgc.h \
 	src/devices/video/mda.h \
+	src/devices/video/olivetti.h \
 	src/devices/video/plantronics.h \
 	src/devices/video/vga.h \
 	src/devices/video/video.h \
@@ -1449,6 +1450,16 @@ src/devices/video/mda.o: src/devices/video/mda.c \
 	src/drivers/video/terminal.h \
 	src/lib/log.h \
 	src/lib/msg.h \
+	src/libini/libini.h
+
+src/devices/video/olivetti.o: src/devices/video/olivetti.c \
+	src/devices/memory.h \
+	src/devices/video/cga.h \
+	src/devices/video/olivetti.h \
+	src/devices/video/video.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/log.h \
 	src/libini/libini.h
 
 src/devices/video/plantronics.o: src/devices/video/plantronics.c \

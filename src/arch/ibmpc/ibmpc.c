@@ -60,6 +60,7 @@
 #include <devices/video/cga.h>
 #include <devices/video/ega.h>
 #include <devices/video/vga.h>
+#include <devices/video/olivetti.h>
 #include <devices/video/plantronics.h>
 #include <devices/video/wy700.h>
 
@@ -861,6 +862,23 @@ int pc_setup_mda (ibmpc_t *pc, ini_sct_t *sct)
 }
 
 static
+int pc_setup_olivetti (ibmpc_t *pc, ini_sct_t *sct)
+{
+	pc->video = m24_new_ini (sct);
+
+	if (pc->video == NULL) {
+		return (1);
+	}
+
+	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
+	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
+
+	pc_set_video_mode (pc, 2);
+
+	return (0);
+}
+
+static
 int pc_setup_plantronics (ibmpc_t *pc, ini_sct_t *sct)
 {
 	pc->video = pla_new_ini (sct);
@@ -1028,6 +1046,9 @@ void pc_setup_video (ibmpc_t *pc, ini_sct_t *ini)
 	}
 	else if (strcmp (dev, "mda") == 0) {
 		pc_setup_mda (pc, sct);
+	}
+	else if (strcmp (dev, "olivetti") == 0) {
+		pc_setup_olivetti (pc, sct);
 	}
 	else if (strcmp (dev, "plantronics") == 0) {
 		pc_setup_plantronics (pc, sct);
