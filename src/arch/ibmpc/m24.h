@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/arch/ibmpc/main.h                                        *
- * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/arch/ibmpc/m24.h                                         *
+ * Created:     2012-01-07 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,27 +20,19 @@
  *****************************************************************************/
 
 
-#ifndef PCE_IBMPC_MAIN_H
-#define PCE_IBMPC_MAIN_H 1
+#ifndef PCE_IBMPC_M24_H
+#define PCE_IBMPC_M24_H 1
 
 
-#include <config.h>
+#include "ibmpc.h"
 
 
-#define PCE_IBMPC_CLK0 14318184
-#define PCE_IBMPC_CLK1 (PCE_IBMPC_CLK0 / 3)
-#define PCE_IBMPC_CLK2 (PCE_IBMPC_CLK0 / 12)
+int m24_get_port8 (ibmpc_t *pc, unsigned long addr, unsigned char *val);
+int m24_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val);
 
-#define PCE_IBMPC_5150 1
-#define PCE_IBMPC_5160 2
-#define PCE_IBMPC_M24  4
+void m24_set_video_mode (ibmpc_t *pc, unsigned mode);
 
-
-extern const char *par_terminal;
-extern const char *par_video;
-
-
-void pc_log_deb (const char *msg, ...);
+void pc_setup_m24 (ibmpc_t *pc, ini_sct_t *ini);
 
 
 #endif

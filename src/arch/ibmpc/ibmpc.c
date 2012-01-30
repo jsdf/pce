@@ -22,6 +22,7 @@
 
 #include "main.h"
 #include "ibmpc.h"
+#include "m24.h"
 #include "msg.h"
 
 #include <stdlib.h>
@@ -87,11 +88,19 @@ static char *par_intlog[256];
 static
 unsigned char pc_get_port8 (ibmpc_t *pc, unsigned long addr)
 {
+	unsigned char val;
+
+	if (m24_get_port8 (pc, addr, &val) == 0) {
+		return (val);
+	}
+
+	val = 0xff;
+
 #ifdef DEBUG_PORTS
-	pc_log_deb ("get port 8 %04lX\n", addr);
+	pc_log_deb ("get port 8 %04lX <- %02X\n", addr, val);
 #endif
 
-	return (0xff);
+	return (val);
 }
 
 static
@@ -110,6 +119,10 @@ void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 #ifdef DEBUG_PORTS
 	pc_log_deb ("set port 8 %04lX <- %02X\n", addr, val);
 #endif
+
+	if (m24_set_port8 (pc, addr, val) == 0) {
+		return;
+	}
 
 	switch (addr) {
 	case 0x0081:
@@ -307,6 +320,8 @@ void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
 		pc->ppi_port_c[1] &= ~0x03;
 		pc->ppi_port_c[1] |= mode & 0x03;
 	}
+
+	m24_set_video_mode (pc, mode);
 }
 
 static
@@ -405,6 +420,9 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	}
 	else if (strcmp (model, "5160") == 0) {
 		pc->model = PCE_IBMPC_5160;
+	}
+	else if (strcmp (model, "m24") == 0) {
+		pc->model = PCE_IBMPC_5160 | PCE_IBMPC_M24;
 	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
@@ -701,6 +719,8 @@ void pc_setup_ppi (ibmpc_t *pc, ini_sct_t *ini)
 	);
 
 	mem_add_blk (pc->prt, blk, 1);
+
+	e8255_set_uint8 (&pc->ppi, 3, 0x99);
 }
 
 static
@@ -1447,6 +1467,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	bps_init (&pc->bps);
 
 	pc_setup_system (pc, ini);
+	pc_setup_m24 (pc, ini);
 
 	pc_setup_mem (pc, ini);
 	pc_setup_ports (pc, ini);

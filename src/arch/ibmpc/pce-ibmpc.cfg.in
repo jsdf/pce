@@ -53,6 +53,26 @@ system {
 }
 
 
+# Olivetti M24 configuration.
+# This section is only used if system.model is set to "m24".
+m24 {
+	#  0-3: RAM size
+	#  4:   NPU (0=not installed, 1=installed)
+	#  5:   serial interface (0=8250, 1=8530)
+	#  6:   ?
+	#  7:   system memory (0=RAM bank 0, 1=RAM bank 0 and 1)
+	switches0 = 0x00
+
+	# 0:   0=360K, 1=720K
+	# 1:   speed 0=800ns, 1=250ns
+	# 2:   0=ROM HDU system board, 1=ROM HDU external
+	# 3:   0=scroll cpu, 1=slow scroll
+	# 4-5: monitor (0=EGA, 1=40*25, 2=80*25, 3=mono)
+	# 6-7: MFDU (0=1 MFDU, 1=2 MFDU)
+	switches1 = 0x60
+}
+
+
 cpu {
 	# The CPU model.
 	# Recognized models are: 8086, 8088, 80186, 80188
