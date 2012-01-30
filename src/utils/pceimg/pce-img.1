@@ -1,0 +1,92 @@
+.TH PCE-IMG 1 "2012-01-30" "HH" "pce"
+\
+.SH NAME
+pce-img \- the PCE disk image utility
+
+.SH SYNOPSIS
+.BI "pce-img create" " [options] [output-file]"
+
+.BI "pce-img convert" " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpce-img\fR(1) is used to create and convert disk image files.
+
+.SH OPTIONS
+.TP
+.BI "-c, --cylinders " c
+Set the number of cylinders.
+\
+.TP
+.BI "-C, --min-cluster-size " size
+Set the minimum cluster size for QED images. The default is 0.
+\
+.TP
+.BI "-f, --offset " offset
+Set the starting offset of the disk image for formats that
+support it.
+\
+.TP
+.BI "-g, --geometry " "c h s"
+Set the disk geometry. This is the same as using the \fB-c\fR,
+\fB-h\fR and \fB-s\fR options.
+\
+.TP
+.BI "-h, --heads " h
+Set the number of heads.
+\
+.TP
+.BI "-i, --input " filename
+Set the input file name.
+\
+.TP
+.BI "-m, --megabytes " size
+Set the disk size in MiB.
+\
+.TP
+.BI "-n, --size " blocks
+Set the disk size in 512 byte blocks.
+\
+.TP
+.BI "-o, --output " filename
+Set the output file name.
+\
+.TP
+.B "-q, --quiet"
+Be quiet.
+\
+.TP
+.BI "-s, --sectors " s
+Set the number of sectors per track.
+\
+.TP
+.BI "-w, --cow " filename
+Set the COW file name.
+\
+.TP
+.B --help
+Print usage information.
+\
+.TP
+.B --version
+Print version information.
+
+.SH EXAMPLES
+Create a 1 GiB PIMG image:
+.IP
+$ pce-img create -m 1024 -o image.pimg
+.PP
+Create a 10 MB PIMG image
+.IP
+$ pce-img create -g 306 4 17 -o image.pimg
+.PP
+Convert a PIMG image to a raw image
+.IP
+$ pce-img convert source.pimg dest.img
+
+.SH SEE ALSO
+.BR pce-ibmpc "(1),"
+.BR pce-macplus "(1),"
+.BR pfdc "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>
