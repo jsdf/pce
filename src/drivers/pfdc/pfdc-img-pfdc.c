@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-pfdc.h"
 
 
@@ -101,7 +102,7 @@ unsigned long pfdc_crc (unsigned long crc, const void *buf, unsigned cnt)
 }
 
 static
-int pfdc_read (FILE *fp, void *buf, unsigned cnt)
+int pfdc2_read (FILE *fp, void *buf, unsigned cnt)
 {
 	if (fread (buf, 1, cnt, fp) != cnt) {
 		return (1);
@@ -113,7 +114,7 @@ int pfdc_read (FILE *fp, void *buf, unsigned cnt)
 }
 
 static
-int pfdc_write (FILE *fp, const void *buf, unsigned cnt)
+int pfdc2_write (FILE *fp, const void *buf, unsigned cnt)
 {
 	if (fwrite (buf, 1, cnt, fp) != cnt) {
 		return (1);
@@ -125,7 +126,7 @@ int pfdc_write (FILE *fp, const void *buf, unsigned cnt)
 }
 
 static
-int pfdc_skip (FILE *fp, unsigned long cnt)
+int pfdc2_skip (FILE *fp, unsigned long cnt)
 {
 	unsigned long n;
 	unsigned char buf[256];
@@ -352,7 +353,7 @@ int pfdc_skip_chunk_v2 (FILE *fp, unsigned cnt, unsigned long crc)
 	while (cnt > 0) {
 		n = (cnt < 256) ? cnt : 256;
 
-		if (pfdc_read (fp, buf, n)) {
+		if (pfdc2_read (fp, buf, n)) {
 			return (1);
 		}
 
@@ -361,7 +362,7 @@ int pfdc_skip_chunk_v2 (FILE *fp, unsigned cnt, unsigned long crc)
 		cnt -= n;
 	}
 
-	if (pfdc_read (fp, buf, 4)) {
+	if (pfdc2_read (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -384,7 +385,7 @@ int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned 
 		return (1);
 	}
 
-	if (pfdc_read (fp, buf, 12)) {
+	if (pfdc2_read (fp, buf, 12)) {
 		return (1);
 	}
 
@@ -428,7 +429,7 @@ int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned 
 			return (1);
 		}
 
-		if (pfdc_read (fp, buf, 1)) {
+		if (pfdc2_read (fp, buf, 1)) {
 			return (1);
 		}
 
@@ -443,7 +444,7 @@ int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned 
 			return (1);
 		}
 
-		if (pfdc_read (fp, sct->data, n)) {
+		if (pfdc2_read (fp, sct->data, n)) {
 			return (1);
 		}
 
@@ -473,7 +474,7 @@ int pfdc_load_tags_v2 (FILE *fp, pfdc_sct_t *last, unsigned size, unsigned long 
 
 	cnt = (size < 256) ? size : 256;
 
-	if (pfdc_read (fp, buf, cnt)) {
+	if (pfdc2_read (fp, buf, cnt)) {
 		return (1);
 	}
 
@@ -500,7 +501,7 @@ int pfdc_load_comment_v2 (FILE *fp, pfdc_img_t *img, unsigned size, unsigned lon
 		return (1);
 	}
 
-	if (pfdc_read (fp, buf, size)) {
+	if (pfdc2_read (fp, buf, size)) {
 		free (buf);
 		return (1);
 	}
@@ -594,7 +595,7 @@ int pfdc_load_chunks_v2 (FILE *fp, pfdc_img_t *img)
 	last = NULL;
 
 	while (1) {
-		if (pfdc_read (fp, buf, 4)) {
+		if (pfdc2_read (fp, buf, 4)) {
 			return (1);
 		}
 
@@ -651,7 +652,7 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 
 	par_file_crc = 0xffffffff;
 
-	if (pfdc_read (fp, buf, 16)) {
+	if (pfdc2_read (fp, buf, 16)) {
 		return (1);
 	}
 
@@ -679,7 +680,7 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 		return (1);
 	}
 
-	if (pfdc_skip (fp, ofs - 16)) {
+	if (pfdc2_skip (fp, ofs - 16)) {
 		return (1);
 	}
 
@@ -709,7 +710,7 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 
 		crc = par_file_crc;
 
-		if (pfdc_read (fp, buf, 4)) {
+		if (pfdc2_read (fp, buf, 4)) {
 			return (1);
 		}
 
@@ -956,21 +957,21 @@ int pfdc_save_chunk_v2 (FILE *fp, unsigned ckid, unsigned size, const void *data
 
 	crc = pfdc_crc (0, buf, 4);
 
-	if (pfdc_write (fp, buf, 4)) {
+	if (pfdc2_write (fp, buf, 4)) {
 		return (1);
 	}
 
 	if (size > 0) {
 		crc = pfdc_crc (crc, data, size);
 
-		if (pfdc_write (fp, data, size)) {
+		if (pfdc2_write (fp, data, size)) {
 			return (1);
 		}
 	}
 
 	pfdc_set_uint32_be (buf, 0, crc);
 
-	if (pfdc_write (fp, buf, 4)) {
+	if (pfdc2_write (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -1048,7 +1049,7 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 
 	crc = pfdc_crc (0, buf, 16);
 
-	if (pfdc_write (fp, buf, 16)) {
+	if (pfdc2_write (fp, buf, 16)) {
 		return (1);
 	}
 
@@ -1057,21 +1058,21 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 
 		crc = pfdc_crc (crc, buf, 1);
 
-		if (pfdc_write (fp, buf, 1)) {
+		if (pfdc2_write (fp, buf, 1)) {
 			return (1);
 		}
 	}
 	else {
 		crc = pfdc_crc (crc, sct->data, sct->n);
 
-		if (pfdc_write (fp, sct->data, sct->n)) {
+		if (pfdc2_write (fp, sct->data, sct->n)) {
 			return (1);
 		}
 	}
 
 	pfdc_set_uint32_be (buf, 0, crc);
 
-	if (pfdc_write (fp, buf, 4)) {
+	if (pfdc2_write (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -1207,7 +1208,7 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 	pfdc_set_uint32_be (buf, 8, (vers < 2) ? scnt : 0);
 	pfdc_set_uint32_be (buf, 12, 16);
 
-	if (pfdc_write (fp, buf, 16)) {
+	if (pfdc2_write (fp, buf, 16)) {
 		return (1);
 	}
 
@@ -1255,7 +1256,7 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 
 		pfdc_set_uint32_be (buf, 0, par_file_crc);
 
-		if (pfdc_write (fp, buf, 4)) {
+		if (pfdc2_write (fp, buf, 4)) {
 			return (1);
 		}
 	}

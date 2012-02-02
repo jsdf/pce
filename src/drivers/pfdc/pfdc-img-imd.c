@@ -26,6 +26,7 @@
 #include <time.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-imd.h"
 
 

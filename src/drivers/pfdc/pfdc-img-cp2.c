@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-cp2.h"
 
 
@@ -46,25 +47,11 @@ static const char *par_cp2_ver[] = {
 
 
 static
-int cp2_read (FILE *fp, unsigned long ofs, void *buf, unsigned cnt)
-{
-	if (fseek (fp, ofs, SEEK_SET) != 0) {
-		return (1);
-	}
-
-	if (fread (buf, 1, cnt, fp) != cnt) {
-		return (1);
-	}
-
-	return (0);
-}
-
-static
 int cp2_read_uint16 (FILE *fp, unsigned long ofs, unsigned *val)
 {
 	unsigned char buf[2];
 
-	if (cp2_read (fp, ofs, buf, 2)) {
+	if (pfdc_read_ofs (fp, ofs, buf, 2)) {
 		return (1);
 	}
 
@@ -79,7 +66,7 @@ int cp2_load_header (FILE *fp, unsigned long *ofs)
 	unsigned      i;
 	unsigned char buf[32];
 
-	if (cp2_read (fp, *ofs, buf, 30)) {
+	if (pfdc_read_ofs (fp, *ofs, buf, 30)) {
 		return (1);
 	}
 
@@ -257,7 +244,7 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 				return (1);
 			}
 
-			if (cp2_read (fp, ofs2 + sofs, sct->data, ssize)) {
+			if (pfdc_read_ofs (fp, ofs2 + sofs, sct->data, ssize)) {
 				return (1);
 			}
 		}
@@ -319,7 +306,7 @@ int cp2_load_segment (FILE *fp, pfdc_img_t *img, unsigned long *ofs)
 	ofs1 = 0;
 
 	while ((ofs1 + 3 + 16 * 24) <= size1) {
-		if (cp2_read (fp, *ofs + ofs1 + 2, buf, 3 + 16 * 24)) {
+		if (pfdc_read_ofs (fp, *ofs + ofs1 + 2, buf, 3 + 16 * 24)) {
 			return (1);
 		}
 

@@ -26,6 +26,7 @@
 #include <time.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-td0.h"
 
 
@@ -60,26 +61,6 @@ unsigned td0_crc (unsigned crc, const void *buf, unsigned cnt)
 }
 
 static
-int td0_read (FILE *fp, void *buf, unsigned cnt)
-{
-	if (fread (buf, 1, cnt, fp) != cnt) {
-		return (1);
-	}
-
-	return (0);
-}
-
-static
-int td0_write (FILE *fp, const void *buf, unsigned cnt)
-{
-	if (fwrite (buf, 1, cnt, fp) != cnt) {
-		return (1);
-	}
-
-	return (0);
-}
-
-static
 void td0_set_encoding (pfdc_sct_t *sct, unsigned dr)
 {
 	unsigned enc;
@@ -100,7 +81,7 @@ int td0_load_data_0 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 		return (1);
 	}
 
-	if (td0_read (fp, sct->data, cnt)) {
+	if (pfdc_read (fp, sct->data, cnt)) {
 		fprintf (stderr, "td0: read error\n");
 		return (1);
 	}
@@ -118,7 +99,7 @@ int td0_load_data_1 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 		return (1);
 	}
 
-	if (td0_read (fp, buf, 4)) {
+	if (pfdc_read (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -149,7 +130,7 @@ int td0_load_data_2 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 			return (1);
 		}
 
-		if (td0_read (fp, buf, 2)) {
+		if (pfdc_read (fp, buf, 2)) {
 			return (1);
 		}
 
@@ -166,7 +147,7 @@ int td0_load_data_2 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 				return (1);
 			}
 
-			if (td0_read (fp, sct->data + idx, rep)) {
+			if (pfdc_read (fp, sct->data + idx, rep)) {
 				return (1);
 			}
 
@@ -184,7 +165,7 @@ int td0_load_data_2 (FILE *fp, pfdc_sct_t *sct, unsigned cnt)
 				return (1);
 			}
 
-			if (td0_read (fp, buf + 2, 2)) {
+			if (pfdc_read (fp, buf + 2, 2)) {
 				return (1);
 			}
 
@@ -220,7 +201,7 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 	unsigned char buf[8];
 	pfdc_sct_t    *sct;
 
-	if (td0_read (fp, buf, 6)) {
+	if (pfdc_read (fp, buf, 6)) {
 		return (1);
 	}
 
@@ -270,7 +251,7 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 	}
 
 	if (n <= 6) {
-		if (td0_read (fp, buf, 3)) {
+		if (pfdc_read (fp, buf, 3)) {
 			return (1);
 		}
 
@@ -345,7 +326,7 @@ int td0_load_tracks (FILE *fp, pfdc_img_t *img, unsigned dr)
 	unsigned char buf[16];
 
 	while (1) {
-		if (td0_read (fp, buf, 1)) {
+		if (pfdc_read (fp, buf, 1)) {
 			return (1);
 		}
 
@@ -353,7 +334,7 @@ int td0_load_tracks (FILE *fp, pfdc_img_t *img, unsigned dr)
 			return (0);
 		}
 
-		if (td0_read (fp, buf + 1, 3)) {
+		if (pfdc_read (fp, buf + 1, 3)) {
 			return (1);
 		}
 
@@ -395,7 +376,7 @@ int td0_load_comment (FILE *fp, pfdc_img_t *img)
 	unsigned char buf[16];
 	unsigned char *cmt;
 
-	if (td0_read (fp, buf, 10)) {
+	if (pfdc_read (fp, buf, 10)) {
 		return (1);
 	}
 
@@ -411,7 +392,7 @@ int td0_load_comment (FILE *fp, pfdc_img_t *img)
 			return (1);
 		}
 
-		if (td0_read (fp, cmt, cnt)) {
+		if (pfdc_read (fp, cmt, cnt)) {
 			free (cmt);
 			return (1);
 		}
@@ -457,7 +438,7 @@ int td0_load_fp (FILE *fp, pfdc_img_t *img)
 	unsigned      crc1, crc2;
 	unsigned char buf[16];
 
-	if (td0_read (fp, buf, 12)) {
+	if (pfdc_read (fp, buf, 12)) {
 		return (1);
 	}
 
@@ -620,7 +601,7 @@ int td0_save_header (FILE *fp, const pfdc_img_t *img)
 
 	pfdc_set_uint16_le (buf, 10, crc);
 
-	if (td0_write (fp, buf, 12)) {
+	if (pfdc_write (fp, buf, 12)) {
 		return (1);
 	}
 
@@ -675,12 +656,12 @@ int td0_save_comment (FILE *fp, const pfdc_img_t *img)
 
 	pfdc_set_uint16_le (buf, 0, crc);
 
-	if (td0_write (fp, buf, 10)) {
+	if (pfdc_write (fp, buf, 10)) {
 		free (cmt);
 		return (1);
 	}
 
-	if (td0_write (fp, cmt, n)) {
+	if (pfdc_write (fp, cmt, n)) {
 		free (cmt);
 		return (1);
 	}
@@ -717,7 +698,7 @@ int td0_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 
 	buf[5] = td0_crc (0, sct->data, sct->n) & 0xff;
 
-	if (td0_write (fp, buf, 6)) {
+	if (pfdc_write (fp, buf, 6)) {
 		return (1);
 	}
 
@@ -746,7 +727,7 @@ int td0_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 		buf[5] = sct->data[0];
 		buf[6] = sct->data[1];
 
-		if (td0_write (fp, buf, 7)) {
+		if (pfdc_write (fp, buf, 7)) {
 			return (1);
 		}
 	}
@@ -754,11 +735,11 @@ int td0_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 		pfdc_set_uint16_le (buf, 0, sct->n + 1);
 		buf[2] = 0;
 
-		if (td0_write (fp, buf, 3)) {
+		if (pfdc_write (fp, buf, 3)) {
 			return (1);
 		}
 
-		if (td0_write (fp, sct->data, sct->n)) {
+		if (pfdc_write (fp, sct->data, sct->n)) {
 			return (1);
 		}
 	}
@@ -777,7 +758,7 @@ int td0_save_track (FILE *fp, const pfdc_trk_t *trk, unsigned c, unsigned h)
 	buf[2] = h;
 	buf[3] = td0_crc (0, buf, 3) & 0xff;
 
-	if (td0_write (fp, buf, 4)) {
+	if (pfdc_write (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -824,7 +805,7 @@ int pfdc_save_td0 (FILE *fp, const pfdc_img_t *img)
 	buf[2] = 0;
 	buf[3] = td0_crc (0, buf, 3) & 0xff;
 
-	if (td0_write (fp, buf, 4)) {
+	if (pfdc_write (fp, buf, 4)) {
 		return (1);
 	}
 
@@ -841,7 +822,7 @@ int pfdc_probe_td0_fp (FILE *fp)
 		return (0);
 	}
 
-	if (td0_read (fp, buf, 16)) {
+	if (pfdc_read (fp, buf, 16)) {
 		return (0);
 	}
 

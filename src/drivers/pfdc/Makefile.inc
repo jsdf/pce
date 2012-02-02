@@ -14,6 +14,7 @@ DEV_PFDC_BAS := \
 	pfdc-img-raw \
 	pfdc-img-tc \
 	pfdc-img-td0 \
+	pfdc-io \
 	pfdc
 
 DEV_PFDC_SRC := $(foreach f,$(DEV_PFDC_BAS),$(rel)/$(f).c)
@@ -32,6 +33,7 @@ $(rel)/pfdc-img-pfdc.o:	$(rel)/pfdc-img-pfdc.c
 $(rel)/pfdc-img-raw.o:	$(rel)/pfdc-img-raw.c
 $(rel)/pfdc-img-tc.o:	$(rel)/pfdc-img-tc.c
 $(rel)/pfdc-img-td0.o:	$(rel)/pfdc-img-td0.c
+$(rel)/pfdc-io.o:	$(rel)/pfdc-io.c
 $(rel)/pfdc.o:		$(rel)/pfdc.c
 
 $(rel)/pfdc.a: $(DEV_PFDC_OBJ)

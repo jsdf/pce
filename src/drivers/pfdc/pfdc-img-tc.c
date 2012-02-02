@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-tc.h"
 
 

@@ -27,31 +27,12 @@
 #include <string.h>
 
 #include "pfdc.h"
+#include "pfdc-io.h"
 #include "pfdc-img-dc42.h"
 
 
 #define DC42_MAGIC 0x0100
 
-
-static
-int dc42_read (FILE *fp, void *buf, unsigned cnt)
-{
-	if (fread (buf, 1, cnt, fp) != cnt) {
-		return (1);
-	}
-
-	return (0);
-}
-
-static
-int dc42_write (FILE *fp, const void *buf, unsigned cnt)
-{
-	if (fwrite (buf, 1, cnt, fp) != cnt) {
-		return (1);
-	}
-
-	return (0);
-}
 
 unsigned long dc42_calc_checksum (const void *buf, unsigned long cnt, unsigned long chk)
 {
@@ -104,7 +85,7 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 					return (1);
 				}
 
-				if (dc42_read (fp, sct->data, 512)) {
+				if (pfdc_read (fp, sct->data, 512)) {
 					return (1);
 				}
 
@@ -151,7 +132,7 @@ int dc42_load_mfm (FILE *fp, pfdc_img_t *img, unsigned scnt, unsigned long *chec
 					return (1);
 				}
 
-				if (dc42_read (fp, sct->data, 512)) {
+				if (pfdc_read (fp, sct->data, 512)) {
 					return (1);
 				}
 
@@ -187,7 +168,7 @@ int dc42_load_tags (FILE *fp, pfdc_img_t *img, unsigned long size, unsigned long
 					return (1);
 				}
 
-				if (dc42_read (fp, buf, 12)) {
+				if (pfdc_read (fp, buf, 12)) {
 					return (1);
 				}
 
@@ -219,7 +200,7 @@ int dc42_load_fp (FILE *fp, pfdc_img_t *img)
 	unsigned long check;
 	unsigned char buf[128];
 
-	if (dc42_read (fp, buf, 84)) {
+	if (pfdc_read (fp, buf, 84)) {
 		return (1);
 	}
 
@@ -327,7 +308,7 @@ int dc42_save_data (FILE *fp, const pfdc_img_t *img, int gcr)
 					return (1);
 				}
 
-				if (dc42_write (fp, sct->data, 512)) {
+				if (pfdc_write (fp, sct->data, 512)) {
 					return (1);
 				}
 			}
@@ -366,7 +347,7 @@ int dc42_save_tags (FILE *fp, const pfdc_img_t *img, int gcr)
 
 				pfdc_sct_get_tags (sct, buf, 12);
 
-				if (dc42_write (fp, buf, 12)) {
+				if (pfdc_write (fp, buf, 12)) {
 					return (1);
 				}
 			}
@@ -504,7 +485,7 @@ int pfdc_save_dc42 (FILE *fp, const pfdc_img_t *img)
 	pfdc_set_uint16_be (buf, 80, enc);
 	pfdc_set_uint16_be (buf, 82, 0x0100);
 
-	if (dc42_write (fp, buf, 84)) {
+	if (pfdc_write (fp, buf, 84)) {
 		return (1);
 	}
 
@@ -531,7 +512,7 @@ int pfdc_probe_dc42_fp (FILE *fp)
 		return (0);
 	}
 
-	if (dc42_read (fp, buf, 84)) {
+	if (pfdc_read (fp, buf, 84)) {
 		return (0);
 	}
 

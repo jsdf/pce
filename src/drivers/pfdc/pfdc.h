@@ -95,15 +95,6 @@ typedef struct {
 } pfdc_img_t;
 
 
-unsigned long pfdc_get_uint32_be (const void *buf, unsigned idx);
-unsigned pfdc_get_uint16_be (const void *buf, unsigned idx);
-void pfdc_set_uint16_be (void *buf, unsigned idx, unsigned val);
-void pfdc_set_uint32_be (void *buf, unsigned idx, unsigned long val);
-
-unsigned pfdc_get_uint16_le (const void *buf, unsigned idx);
-void pfdc_set_uint16_le (void *buf, unsigned idx, unsigned val);
-
-
 pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n);
 
 void pfdc_sct_del (pfdc_sct_t *sct);
