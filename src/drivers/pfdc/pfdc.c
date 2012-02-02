@@ -139,6 +139,7 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 	sct->tag_cnt = 0;
 
 	sct->have_mfm_size = 0;
+	sct->have_gcr_format = 0;
 
 	return (sct);
 }
@@ -180,6 +181,11 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 	if (sct->have_mfm_size) {
 		dst->have_mfm_size = 1;
 		dst->mfm_size = sct->mfm_size;
+	}
+
+	if (sct->have_gcr_format) {
+		dst->have_gcr_format = 1;
+		dst->gcr_format = sct->gcr_format;
 	}
 
 	if (deep == 0) {
@@ -315,6 +321,21 @@ unsigned pfdc_sct_get_mfm_size (const pfdc_sct_t *sct)
 	}
 
 	return (n);
+}
+
+void pfdc_sct_set_gcr_format (pfdc_sct_t *sct, unsigned char val)
+{
+	sct->have_gcr_format = 1;
+	sct->gcr_format = val;
+}
+
+unsigned pfdc_sct_get_gcr_format (const pfdc_sct_t *sct)
+{
+	if (sct->have_gcr_format) {
+		return (sct->gcr_format);
+	}
+
+	return (0);
 }
 
 unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt)

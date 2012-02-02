@@ -66,6 +66,9 @@ typedef struct pfdc_sct_t {
 
 	char               have_mfm_size;
 	unsigned char      mfm_size;
+
+	char               have_gcr_format;
+	unsigned char      gcr_format;
 } pfdc_sct_t;
 
 

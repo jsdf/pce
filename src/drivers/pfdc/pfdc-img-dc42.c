@@ -76,7 +76,7 @@ unsigned long dc42_calc_checksum (const void *buf, unsigned long cnt, unsigned l
  * Load the sector data for 400K and 800K disks.
  */
 static
-int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *check)
+int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *check, unsigned fmt)
 {
 	unsigned   c, h, s;
 	unsigned   sct_cnt;
@@ -96,6 +96,7 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 					return (1);
 				}
 
+				pfdc_sct_set_gcr_format (sct, fmt);
 				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR);
 
 				if (pfdc_img_add_sector (img, sct, c, h)) {
@@ -212,6 +213,7 @@ static
 int dc42_load_fp (FILE *fp, pfdc_img_t *img)
 {
 	int           r;
+	unsigned char fmt;
 	unsigned long data_size, tags_size;
 	unsigned long data_check, tags_check;
 	unsigned long check;
@@ -235,13 +237,15 @@ int dc42_load_fp (FILE *fp, pfdc_img_t *img)
 	data_check = pfdc_get_uint32_be (buf, 72);
 	tags_check = pfdc_get_uint32_be (buf, 76);
 
+	fmt = buf[81];
+
 	switch (data_size) {
 	case 400UL * 1024UL:
-		r = dc42_load_gcr (fp, img, 1, &check);
+		r = dc42_load_gcr (fp, img, 1, &check, fmt);
 		break;
 
 	case 800UL * 1024UL:
-		r = dc42_load_gcr (fp, img, 2, &check);
+		r = dc42_load_gcr (fp, img, 2, &check, fmt);
 		break;
 
 	case 720UL * 1024UL:
@@ -474,22 +478,22 @@ int pfdc_save_dc42 (FILE *fp, const pfdc_img_t *img)
 
 	switch (data_size) {
 	case 400UL * 1024UL:
-		enc = 0x00;
+		enc = 0x0002;
 		gcr = 1;
 		break;
 
 	case 800UL * 1024UL:
-		enc = 0x01;
+		enc = 0x0122;
 		gcr = 1;
 		break;
 
 	case 720UL * 1024UL:
-		enc = 0x02;
+		enc = 0x0222;
 		gcr = 0;
 		break;
 
 	case 1440UL * 1024UL:
-		enc = 0x03;
+		enc = 0x0322;
 		gcr = 0;
 		break;
 
@@ -497,7 +501,7 @@ int pfdc_save_dc42 (FILE *fp, const pfdc_img_t *img)
 		return (1);
 	}
 
-	pfdc_set_uint16_be (buf, 80, (enc << 8) | 0x22);
+	pfdc_set_uint16_be (buf, 80, enc);
 	pfdc_set_uint16_be (buf, 82, 0x0100);
 
 	if (dc42_write (fp, buf, 84)) {
