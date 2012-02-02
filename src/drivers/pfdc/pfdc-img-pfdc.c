@@ -29,18 +29,6 @@
 #include "pfdc-img-pfdc.h"
 
 
-/* version 1 sector flags */
-#define PFDC_FLAG1_ALTERNATE  0x01
-#define PFDC_FLAG1_CRC_ID     0x04
-#define PFDC_FLAG1_CRC_DATA   0x08
-#define PFDC_FLAG1_DEL_DAM    0x10
-#define PFDC_FLAG1_COMPRESSED 0x80
-#define PFDC_FLAG1_MASK       0x1d
-
-#define PFDC1_ENC_UNKNOWN     0
-#define PFDC1_ENC_FM          1
-#define PFDC1_ENC_MFM         2
-
 /* version 2 sector flags */
 #define PFDC_FLAG2_CRC_ID     0x01
 #define PFDC_FLAG2_CRC_DATA   0x02
@@ -64,6 +52,9 @@
 
 int pfdc0_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz);
 int pfdc0_save_fp (FILE *fp, const pfdc_img_t *img);
+
+int pfdc1_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz);
+int pfdc1_save_fp (FILE *fp, const pfdc_img_t *img);
 
 
 static unsigned long par_file_crc;
@@ -140,22 +131,6 @@ int pfdc2_skip (FILE *fp, unsigned long cnt)
 }
 
 static
-void pfdc_sct_set_flags_v1 (pfdc_sct_t *sct, unsigned long flg)
-{
-	if (flg & PFDC_FLAG1_CRC_ID) {
-		sct->flags |= PFDC_FLAG_CRC_ID;
-	}
-
-	if (flg & PFDC_FLAG1_CRC_DATA) {
-		sct->flags |= PFDC_FLAG_CRC_DATA;
-	}
-
-	if (flg & PFDC_FLAG1_DEL_DAM) {
-		sct->flags |= PFDC_FLAG_DEL_DAM;
-	}
-}
-
-static
 void pfdc_sct_set_old_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long dr)
 {
 	switch (enc) {
@@ -177,71 +152,6 @@ void pfdc_sct_set_old_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long dr)
 	}
 
 	pfdc_sct_set_encoding (sct, enc);
-}
-
-static
-int pfdc_load_sector_v1 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last)
-{
-	unsigned      c, h, n;
-	unsigned long f, dr;
-	unsigned char buf[32];
-	pfdc_sct_t    *sct;
-
-	if (pfdc_read (fp, buf, 16)) {
-		return (1);
-	}
-
-	if (buf[0] != 'S') {
-		return (1);
-	}
-
-	c = buf[1];
-	h = buf[2];
-	n = pfdc_get_uint16_be (buf, 6);
-
-	sct = pfdc_sct_new (buf[3], buf[4], buf[5], n);
-
-	if (sct == NULL) {
-		return (1);
-	}
-
-	f = pfdc_get_uint32_be (buf, 12);
-	dr = pfdc_get_uint32_be (buf, 8) & 0x00ffffff;
-
-	pfdc_sct_set_flags_v1 (sct, f);
-	pfdc_sct_set_old_encoding (sct, buf[8], dr);
-
-	if (f & PFDC_FLAG1_ALTERNATE) {
-		if (*last == NULL) {
-			pfdc_sct_del (sct);
-			return (1);
-		}
-
-		pfdc_sct_add_alternate (*last, sct);
-	}
-	else {
-		if (pfdc_img_add_sector (img, sct, c, h)) {
-			pfdc_sct_del (sct);
-			return (1);
-		}
-	}
-
-	if (f & PFDC_FLAG1_COMPRESSED) {
-		if (pfdc_read (fp, buf + 16, 1)) {
-			return (1);
-		}
-
-		pfdc_sct_fill (sct, buf[16]);
-	}
-	else {
-		if (pfdc_read (fp, sct->data, n)) {
-			return (1);
-		}
-	}
-
-	*last = sct;
-
-	return (0);
 }
 
 static
@@ -563,13 +473,11 @@ int pfdc_load_chunks_v2 (FILE *fp, pfdc_img_t *img)
 static
 int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 {
-	unsigned long i;
 	unsigned      vers;
 	unsigned long crc;
-	unsigned long cnt, ofs;
+	unsigned long ofs;
 	unsigned long id, sz;
 	unsigned char buf[16];
-	pfdc_sct_t    *last;
 
 	par_file_crc = 0xffffffff;
 
@@ -589,23 +497,18 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 	if (sz == 0x00000000) {
 		return (pfdc0_load_fp (fp, img, id, sz));
 	}
+	else if (sz == 0x00010000) {
+		return (pfdc1_load_fp (fp, img, id, sz));
+	}
 
 	if (vers > 2) {
 		return (1);
-	}
-
-	if (vers < 2) {
-		fprintf (stderr,
-			"pfdc: warning: loading deprecated version %u file\n",
-			vers
-		);
 	}
 
 	if (pfdc2_read (fp, buf + 8, 8)) {
 		return (1);
 	}
 
-	cnt = pfdc_get_uint32_be (buf, 8);
 	ofs = pfdc_get_uint32_be (buf, 12);
 
 	if (ofs < 16) {
@@ -616,29 +519,18 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 		return (1);
 	}
 
-	if (vers < 2) {
-		last = NULL;
-
-		for (i = 0; i < cnt; i++) {
-			if (pfdc_load_sector_v1 (fp, img, &last)) {
-				return (1);
-			}
-		}
+	if (pfdc_load_chunks_v2 (fp, img)) {
+		return (1);
 	}
-	else {
-		if (pfdc_load_chunks_v2 (fp, img)) {
-			return (1);
-		}
 
-		crc = par_file_crc;
+	crc = par_file_crc;
 
-		if (pfdc2_read (fp, buf, 4)) {
-			return (1);
-		}
+	if (pfdc2_read (fp, buf, 4)) {
+		return (1);
+	}
 
-		if (pfdc_get_uint32_be (buf, 0) != crc) {
-			return (1);
-		}
+	if (pfdc_get_uint32_be (buf, 0) != crc) {
+		return (1);
 	}
 
 	return (0);
@@ -697,102 +589,6 @@ void pfdc_get_old_encoding (const pfdc_sct_t *sct, unsigned *enc, unsigned long 
 		*dr = 0;
 		break;
 	}
-}
-
-static
-unsigned long pfdc_sct_get_flags_v1 (const pfdc_sct_t *sct)
-{
-	unsigned long f;
-
-	f = 0;
-
-	if (sct->flags & PFDC_FLAG_CRC_ID) {
-		f |= PFDC_FLAG1_CRC_ID;
-	}
-
-	if (sct->flags & PFDC_FLAG_CRC_DATA) {
-		f |= PFDC_FLAG1_CRC_DATA;
-	}
-
-	if (sct->flags & PFDC_FLAG_DEL_DAM) {
-		f |= PFDC_FLAG1_DEL_DAM;
-	}
-
-	return (f);
-}
-
-static
-int pfdc_save_sector_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h, int alt)
-{
-	unsigned long flg;
-	unsigned      enc;
-	unsigned long dr;
-	unsigned char buf[32];
-
-	flg = pfdc_sct_get_flags_v1 (sct);
-
-	if (pfdc_sct_uniform (sct) && (sct->n > 0)) {
-		flg |= PFDC_FLAG1_COMPRESSED;
-	}
-
-	if (alt) {
-		flg |= PFDC_FLAG1_ALTERNATE;
-	}
-
-	pfdc_get_old_encoding (sct, &enc, &dr);
-
-	pfdc_set_uint32_be (buf, 8, dr);
-
-	buf[0] = 'S';
-	buf[1] = c;
-	buf[2] = h;
-	buf[3] = sct->c;
-	buf[4] = sct->h;
-	buf[5] = sct->s;
-	buf[6] = (sct->n >> 8) & 0xff;
-	buf[7] = sct->n & 0xff;
-	buf[8] = enc;
-
-	pfdc_set_uint32_be (buf, 12, flg);
-
-	if (flg & PFDC_FLAG1_COMPRESSED) {
-		buf[16] = sct->data[0];
-
-		if (pfdc_write (fp, buf, 17)) {
-			return (1);
-		}
-	}
-	else {
-		if (pfdc_write (fp, buf, 16)) {
-			return (1);
-		}
-
-		if (pfdc_write (fp, sct->data, sct->n)) {
-			return (1);
-		}
-	}
-
-	return (0);
-}
-
-static
-int pfdc_save_alternates_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
-{
-	if (pfdc_save_sector_v1 (fp, sct, c, h, 0)) {
-		return (1);
-	}
-
-	sct = sct->next;
-
-	while (sct != NULL) {
-		if (pfdc_save_sector_v1 (fp, sct, c, h, 1)) {
-			return (1);
-		}
-
-		sct = sct->next;
-	}
-
-	return (0);
 }
 
 static
@@ -1046,6 +842,9 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 	if (vers == 0) {
 		return (pfdc0_save_fp (fp, img));
 	}
+	else if (vers == 1) {
+		return (pfdc1_save_fp (fp, img));
+	}
 
 	if (vers > 2) {
 		return (1);
@@ -1065,10 +864,8 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 		return (1);
 	}
 
-	if (vers >= 2) {
-		if (pfdc_save_comment_v2 (fp, img)) {
-			return (1);
-		}
+	if (pfdc_save_comment_v2 (fp, img)) {
+		return (1);
 	}
 
 	for (c = 0; c < img->cyl_cnt; c++) {
@@ -1080,33 +877,21 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 			for (s = 0; s < trk->sct_cnt; s++) {
 				sct = trk->sct[s];
 
-				if (vers == 1) {
-					if (pfdc_save_alternates_v1 (fp, sct, c, h)) {
-						return (1);
-					}
-				}
-				else if (vers == 2) {
-					if (pfdc_save_alternates_v2 (fp, sct, c, h)) {
-						return (1);
-					}
-				}
-				else {
+				if (pfdc_save_alternates_v2 (fp, sct, c, h)) {
 					return (1);
 				}
 			}
 		}
 	}
 
-	if (vers >= 2) {
-		if (pfdc_save_chunk_v2 (fp, PFDC_CHUNK_EN, 0, NULL)) {
-			return (1);
-		}
+	if (pfdc_save_chunk_v2 (fp, PFDC_CHUNK_EN, 0, NULL)) {
+		return (1);
+	}
 
-		pfdc_set_uint32_be (buf, 0, par_file_crc);
+	pfdc_set_uint32_be (buf, 0, par_file_crc);
 
-		if (pfdc2_write (fp, buf, 4)) {
-			return (1);
-		}
+	if (pfdc2_write (fp, buf, 4)) {
+		return (1);
 	}
 
 	fflush (fp);
