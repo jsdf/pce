@@ -31,10 +31,16 @@
 #define PFDC_FLAG_DEL_DAM  0x04
 #define PFDC_FLAG_NO_DAM   0x08
 
-#define PFDC_ENC_UNKNOWN   0x00
-#define PFDC_ENC_FM        0x01
-#define PFDC_ENC_MFM       0x02
-#define PFDC_ENC_GCR       0x03
+#define PFDC_ENC_MASK      0x0fff
+#define PFDC_ENC_UNKNOWN   0x0000
+#define PFDC_ENC_FM        0x0001
+#define PFDC_ENC_FM_DD     0x0001
+#define PFDC_ENC_FM_HD     0x8001
+#define PFDC_ENC_MFM       0x0002
+#define PFDC_ENC_MFM_DD    0x0002
+#define PFDC_ENC_MFM_HD    0x8002
+#define PFDC_ENC_MFM_ED    0x4002
+#define PFDC_ENC_GCR       0x0003
 
 #define PFDC_TAGS_MAX      16
 
@@ -50,7 +56,6 @@ typedef struct pfdc_sct_t {
 	unsigned long      flags;
 
 	unsigned short     encoding;
-	unsigned long      data_rate;
 
 	unsigned           cur_alt;
 
@@ -111,7 +116,7 @@ int pfdc_sct_uniform (const pfdc_sct_t *sct);
 
 void pfdc_sct_set_flags (pfdc_sct_t *sct, unsigned long flags, int set);
 
-void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long rate);
+void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc);
 
 unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt);
 

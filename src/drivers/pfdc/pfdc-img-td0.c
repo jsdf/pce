@@ -80,32 +80,17 @@ int td0_write (FILE *fp, const void *buf, unsigned cnt)
 }
 
 static
-void td0_set_datarate (pfdc_sct_t *sct, unsigned dr)
+void td0_set_encoding (pfdc_sct_t *sct, unsigned dr)
 {
-	unsigned      enc;
-	unsigned long rate;
+	unsigned enc;
 
 	enc = (dr & 0x80) ? PFDC_ENC_FM : PFDC_ENC_MFM;
 
-	switch (dr & 0x7f) {
-	case 0:
-		rate = 250000;
-		break;
-
-	case 1:
-		rate = 300000;
-		break;
-
-	case 2:
-		rate = 500000;
-		break;
-
-	default:
-		rate = 0;
-		break;
+	if ((dr & 0x7f) == 2) {
+		enc |= 0x8000;
 	}
 
-	pfdc_sct_set_encoding (sct, enc, rate);
+	pfdc_sct_set_encoding (sct, enc);
 }
 
 static
@@ -255,7 +240,7 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 		return (1);
 	}
 
-	td0_set_datarate (sct, dr);
+	td0_set_encoding (sct, dr);
 
 	if (flg & 0x02) {
 		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_DATA, 1);
@@ -542,7 +527,7 @@ int td0_save_header (FILE *fp, const pfdc_img_t *img)
 {
 	unsigned         c, h, s;
 	unsigned         cn, hn, sn;
-	unsigned long    dr;
+	unsigned         enc;
 	unsigned         dt;
 	unsigned         crc;
 	const pfdc_cyl_t *cyl;
@@ -553,7 +538,7 @@ int td0_save_header (FILE *fp, const pfdc_img_t *img)
 	cn = img->cyl_cnt;
 	hn = 0;
 	sn = 0;
-	dr = 0;
+	enc = 0;
 
 	for (c = 0; c < img->cyl_cnt; c++) {
 		cyl = img->cyl[c];
@@ -572,24 +557,33 @@ int td0_save_header (FILE *fp, const pfdc_img_t *img)
 			for (s = 0; s < trk->sct_cnt; s++) {
 				sct = trk->sct[s];
 
-				if (sct->data_rate > dr) {
-					dr = sct->data_rate;
+				if (enc == 0) {
+					enc = sct->encoding;
 				}
 			}
 		}
 	}
 
-	if (dr <= 250000) {
-		dr = 0;
-	}
-	else if (dr <= 300000) {
-		dr = 1;
-	}
-	else if (dr <= 500000) {
-		dr = 2;
-	}
-	else {
-		dr = 0;
+	switch (enc) {
+	case PFDC_ENC_FM_DD:
+		enc = 0x80;
+		break;
+
+	case PFDC_ENC_FM_HD:
+		enc = 0x82;
+		break;
+
+	case PFDC_ENC_MFM_DD:
+		enc = 0x00;
+		break;
+
+	case PFDC_ENC_MFM_HD:
+		enc = 0x02;
+		break;
+
+	default:
+		enc = 0;
+		break;
 	}
 
 	if (cn < 45) {
@@ -610,7 +604,7 @@ int td0_save_header (FILE *fp, const pfdc_img_t *img)
 	buf[2] = 0;
 	buf[3] = 0;
 	buf[4] = 21;
-	buf[5] = dr;
+	buf[5] = enc;
 	buf[6] = dt;
 	buf[7] = 0;
 	buf[8] = 0;

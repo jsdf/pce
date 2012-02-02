@@ -254,10 +254,9 @@ int dsk_fdc_erase_disk (disk_fdc_t *fdc)
 	return (0);
 }
 
-void dsk_fdc_set_encoding (disk_fdc_t *fdc, unsigned enc, unsigned long rate)
+void dsk_fdc_set_encoding (disk_fdc_t *fdc, unsigned enc)
 {
 	fdc->encoding = enc;
-	fdc->rate = rate;
 }
 
 int dsk_fdc_format_sector (disk_fdc_t *fdc,
@@ -296,7 +295,7 @@ int dsk_fdc_format_sector (disk_fdc_t *fdc,
 		return (1);
 	}
 
-	pfdc_sct_set_encoding (sct, fdc->encoding, fdc->rate);
+	pfdc_sct_set_encoding (sct, fdc->encoding);
 
 	fdc->dsk.blocks += 1;
 
@@ -592,7 +591,6 @@ disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type, int ro)
 	fdc->dirty = 0;
 
 	fdc->encoding = PFDC_ENC_MFM;
-	fdc->rate = 250000;
 
 	fdc->type = BLKFDC_FORMAT_NONE;
 	fdc->fname = NULL;

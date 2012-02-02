@@ -121,7 +121,6 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 	sct->flags = 0;
 
 	sct->encoding = PFDC_ENC_MFM;
-	sct->data_rate = 250000;
 
 	sct->cur_alt = 0;
 
@@ -167,7 +166,6 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 
 	dst->flags = sct->flags;
 	dst->encoding = sct->encoding;
-	dst->data_rate = sct->data_rate;
 
 	memcpy (dst->data, sct->data, dst->n);
 
@@ -281,12 +279,10 @@ void pfdc_sct_set_flags (pfdc_sct_t *sct, unsigned long flags, int set)
 	}
 }
 
-void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long rate)
+void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc)
 {
 	while (sct != NULL) {
 		sct->encoding = enc;
-		sct->data_rate = rate;
-
 		sct = sct->next;
 	}
 }

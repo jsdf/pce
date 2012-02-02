@@ -376,10 +376,10 @@ int mfm_decode_mark (mfm_t *mfm, pfdc_img_t *img, unsigned mark, int fm, unsigne
 		}
 
 		if (fm) {
-			pfdc_sct_set_encoding (sct, PFDC_ENC_FM, 250000);
+			pfdc_sct_set_encoding (sct, PFDC_ENC_FM_DD);
 		}
 		else {
-			pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, 250000);
+			pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_DD);
 		}
 
 		pfdc_img_add_sector (img, sct, c, h);

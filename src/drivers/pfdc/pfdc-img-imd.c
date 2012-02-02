@@ -35,45 +35,38 @@
 static
 int imd_sct_set_encoding (pfdc_sct_t *sct, unsigned val)
 {
-	unsigned      enc;
-	unsigned long dr;
+	unsigned enc;
 
 	switch (val) {
 	case 0:
-		enc = PFDC_ENC_FM;
-		dr = 500000;
+		enc = PFDC_ENC_FM_HD;
 		break;
 
 	case 1:
-		enc = PFDC_ENC_FM;
-		dr = 300000;
+		enc = PFDC_ENC_FM_DD;
 		break;
 
 	case 2:
-		enc = PFDC_ENC_FM;
-		dr = 250000;
+		enc = PFDC_ENC_FM_DD;
 		break;
 
 	case 3:
-		enc = PFDC_ENC_MFM;
-		dr = 500000;
+		enc = PFDC_ENC_MFM_HD;
 		break;
 
 	case 4:
-		enc = PFDC_ENC_MFM;
-		dr = 300000;
+		enc = PFDC_ENC_MFM_DD;
 		break;
 
 	case 5:
-		enc = PFDC_ENC_MFM;
-		dr = 250000;
+		enc = PFDC_ENC_MFM_DD;
 		break;
 
 	default:
 		return (1);
 	}
 
-	pfdc_sct_set_encoding (sct, enc, dr);
+	pfdc_sct_set_encoding (sct, enc);
 
 	return (0);
 }
@@ -340,25 +333,25 @@ int imd_save_sector_data (FILE *fp, const pfdc_sct_t *sct)
 static
 int imd_sct_get_encoding (const pfdc_sct_t *sct, unsigned char *mode)
 {
-	switch (sct->data_rate) {
-	case 250000:
+	switch (sct->encoding) {
+	case PFDC_ENC_FM_DD:
 		*mode = 2;
 		break;
 
-	case 300000:
-		*mode = 1;
+	case PFDC_ENC_FM_HD:
+		*mode = 0;
 		break;
 
-	case 500000:
-		*mode = 0;
+	case PFDC_ENC_MFM_DD:
+		*mode = 5;
+		break;
+
+	case PFDC_ENC_MFM_HD:
+		*mode = 3;
 		break;
 
 	default:
 		return (1);
-	}
-
-	if (sct->encoding != PFDC_ENC_FM) {
-		*mode += 3;
 	}
 
 	return (0);
@@ -426,7 +419,7 @@ int imd_save_track (FILE *fp, const pfdc_trk_t *trk, unsigned c, unsigned h)
 			return (1);
 		}
 
-		if (trk->sct[i]->data_rate != trk->sct[0]->data_rate) {
+		if (trk->sct[i]->encoding != trk->sct[0]->encoding) {
 			return (1);
 		}
 	}

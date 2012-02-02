@@ -96,7 +96,7 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR, 250000);
+				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR);
 
 				if (pfdc_img_add_sector (img, sct, c, h)) {
 					pfdc_sct_del (sct);
@@ -127,10 +127,12 @@ int dc42_load_gcr (FILE *fp, pfdc_img_t *img, unsigned hcnt, unsigned long *chec
 static
 int dc42_load_mfm (FILE *fp, pfdc_img_t *img, unsigned scnt, unsigned long *check)
 {
-	unsigned   c, h, s;
+	unsigned   c, h, s, enc;
 	pfdc_sct_t *sct;
 
 	*check = 0;
+
+	enc = (scnt < 14) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_HD;
 
 	for (c = 0; c < 80; c++) {
 		for (h = 0; h < 2; h++) {
@@ -141,7 +143,7 @@ int dc42_load_mfm (FILE *fp, pfdc_img_t *img, unsigned scnt, unsigned long *chec
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, 250000);
+				pfdc_sct_set_encoding (sct, enc);
 
 				if (pfdc_img_add_sector (img, sct, c, h)) {
 					pfdc_sct_del (sct);

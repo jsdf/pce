@@ -55,7 +55,6 @@ typedef struct {
 	char           dirty;
 
 	unsigned       encoding;
-	unsigned long  rate;
 
 	unsigned       type;
 	char           *fname;
@@ -83,7 +82,7 @@ int dsk_fdc_erase_track (disk_fdc_t *fdc, unsigned c, unsigned h);
 
 int dsk_fdc_erase_disk (disk_fdc_t *fdc);
 
-void dsk_fdc_set_encoding (disk_fdc_t *fdc, unsigned enc, unsigned long rate);
+void dsk_fdc_set_encoding (disk_fdc_t *fdc, unsigned enc);
 
 int dsk_fdc_format_sector (disk_fdc_t *fdc,
 	unsigned pc, unsigned ph, unsigned c, unsigned h, unsigned s,

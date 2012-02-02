@@ -901,7 +901,7 @@ int mac_sony_format (disk_t *dsk, unsigned long blk)
 	dsk_fdc_erase_disk (fdc);
 
 	if ((type == 0) || (type == 1)) {
-		dsk_fdc_set_encoding (fdc, PFDC_ENC_GCR, 250000);
+		dsk_fdc_set_encoding (fdc, PFDC_ENC_GCR);
 
 		hn = (type == 0) ? 1 : 2;
 		sn = 13;
@@ -925,7 +925,7 @@ int mac_sony_format (disk_t *dsk, unsigned long blk)
 		}
 	}
 	else if ((type == 2) || (type == 3)) {
-		dsk_fdc_set_encoding (fdc, PFDC_ENC_MFM, (type == 2) ? 250000 : 500000);
+		dsk_fdc_set_encoding (fdc, (type == 2) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_HD);
 
 		sn = (type == 2) ? 9 : 18;
 

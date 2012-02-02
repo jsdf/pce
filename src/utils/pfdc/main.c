@@ -140,7 +140,7 @@ void print_help (void)
 		"  pfdc, ana, cp2, imd, raw, td0\n"
 		"\n"
 		"sector attributes are:\n"
-		"  crc-id, crc-data, del-dam, data-rate, fm, gcr, mfm, no-dam, size, c, h, s\n",
+		"  crc-id, crc-data, del-dam, fm, fm-hd, gcr, mfm, mfm-hd, mfm-ed, no-dam, size, c, h, s\n",
 		stdout
 	);
 
@@ -423,11 +423,20 @@ static
 const char *pfdc_enc_to_string (unsigned encoding)
 {
 	switch (encoding) {
-	case PFDC_ENC_FM:
+	case PFDC_ENC_FM_DD:
 		return ("FM");
 
-	case PFDC_ENC_MFM:
+	case PFDC_ENC_FM_HD:
+		return ("FM-HD");
+
+	case PFDC_ENC_MFM_DD:
 		return ("MFM");
+
+	case PFDC_ENC_MFM_HD:
+		return ("MFM-HD");
+
+	case PFDC_ENC_MFM_ED:
+		return ("MFM-ED");
 
 	case PFDC_ENC_GCR:
 		return ("GCR");
@@ -441,13 +450,12 @@ static
 int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
-	int           alt;
-	unsigned      s;
-	unsigned      pcmax, phmax, psmax;
-	unsigned      lcmax, lhmax, lsmax;
-	unsigned      ssmax;
-	unsigned long drmax;
-	pfdc_sct_t    *sct;
+	int        alt;
+	unsigned   s;
+	unsigned   pcmax, phmax, psmax;
+	unsigned   lcmax, lhmax, lsmax;
+	unsigned   ssmax;
+	pfdc_sct_t *sct;
 
 	if ((c > 0) || (h > 0)) {
 		fputs ("\n", stdout);
@@ -463,8 +471,6 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 	ssmax = 0;
 
-	drmax = 0;
-
 	for (s = 0; s < trk->sct_cnt; s++) {
 		psmax = (s > psmax) ? s : psmax;
 
@@ -475,7 +481,7 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 			lhmax = (sct->h > lhmax) ? sct->h : lhmax;
 			lsmax = (sct->s > lsmax) ? sct->s : lsmax;
 			ssmax = (sct->n > ssmax) ? sct->n : ssmax;
-			drmax = (sct->data_rate > drmax) ? sct->data_rate : drmax;
+
 			sct = sct->next;
 		}
 	}
@@ -489,8 +495,6 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	lsmax = count_digits (lsmax);
 
 	ssmax = count_digits (ssmax);
-
-	drmax = count_digits (drmax);
 
 	for (s = 0; s < trk->sct_cnt; s++) {
 		sct = trk->sct[s];
@@ -508,9 +512,7 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			print_ulong (stdout, sct->n, ssmax + 3);
 
-			printf (" %5s", pfdc_enc_to_string (sct->encoding));
-
-			print_ulong (stdout, sct->data_rate, drmax + 1);
+			printf ("  %s", pfdc_enc_to_string (sct->encoding));
 
 			if (sct->flags || alt) {
 				fputs ("  ", stdout);
@@ -558,10 +560,13 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 {
 	unsigned long sct_flg, trk_flg;
 	unsigned      s;
+	unsigned      enc;
 	pfdc_sct_t    *sct;
 
 	sct_flg = 0;
 	trk_flg = 0;
+
+	enc = 0;
 
 	for (s = 0; s < trk->sct_cnt; s++) {
 		sct = trk->sct[s];
@@ -585,8 +590,12 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 				trk_flg |= PFDC_TRK_SIZE;
 			}
 
-			if (sct->encoding != PFDC_ENC_MFM) {
+			if ((enc != 0) && (sct->encoding != enc)) {
 				trk_flg |= PFDC_TRK_ENCODING;
+			}
+
+			if (sct->encoding != 0) {
+				enc = sct->encoding;
 			}
 
 			sct = sct->next;
@@ -1416,6 +1425,7 @@ int pfdc_print_info (pfdc_img_t *img)
 {
 	int              fc, fh, fs, ff;
 	unsigned         c, h, s;
+	unsigned         enc;
 	unsigned         tcnt[2], scnt[2], ssize[2], srng[2];
 	unsigned long    stotal, atotal;
 	unsigned long    dsize;
@@ -1427,6 +1437,8 @@ int pfdc_print_info (pfdc_img_t *img)
 	fc = 1;
 	fh = 1;
 	fs = 1;
+
+	enc = 0;
 
 	tcnt[0] = 0;
 	tcnt[1] = 0;
@@ -1496,6 +1508,14 @@ int pfdc_print_info (pfdc_img_t *img)
 					tflags |= PFDC_TRK_BAD_ID;
 				}
 
+				if ((enc != 0) && (enc != sct->encoding)) {
+					tflags |= PFDC_TRK_ENCODING;
+				}
+
+				if (sct->encoding != 0) {
+					enc = sct->encoding;
+				}
+
 				fs = 0;
 
 				stotal += 1;
@@ -1548,6 +1568,11 @@ int pfdc_print_info (pfdc_img_t *img)
 		ff = 0;
 	}
 
+	if (tflags & PFDC_TRK_ENCODING) {
+		printf (" ENCODING");
+		ff = 0;
+	}
+
 	if (ff) {
 		printf (" -");
 	}
@@ -1594,10 +1619,19 @@ int pfdc_edit_deldam_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
-int pfdc_edit_fm_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+int pfdc_edit_fm_dd_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
-	pfdc_sct_set_encoding (sct, PFDC_ENC_FM, sct->data_rate);
+	pfdc_sct_set_encoding (sct, PFDC_ENC_FM_DD);
+	par_cnt += 1;
+	return (0);
+}
+
+static
+int pfdc_edit_fm_hd_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_encoding (sct, PFDC_ENC_FM_HD);
 	par_cnt += 1;
 	return (0);
 }
@@ -1606,16 +1640,34 @@ static
 int pfdc_edit_gcr_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
-	pfdc_sct_set_encoding (sct, PFDC_ENC_GCR, sct->data_rate);
+	pfdc_sct_set_encoding (sct, PFDC_ENC_GCR);
 	par_cnt += 1;
 	return (0);
 }
 
 static
-int pfdc_edit_mfm_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+int pfdc_edit_mfm_dd_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
-	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, sct->data_rate);
+	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_DD);
+	par_cnt += 1;
+	return (0);
+}
+
+static
+int pfdc_edit_mfm_hd_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_HD);
+	par_cnt += 1;
+	return (0);
+}
+
+static
+int pfdc_edit_mfm_ed_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_ED);
 	par_cnt += 1;
 	return (0);
 }
@@ -1675,15 +1727,6 @@ int pfdc_edit_data_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
-int pfdc_edit_datarate_cb (pfdc_img_t *img, pfdc_sct_t *sct,
-	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
-{
-	sct->data_rate = *(unsigned long *) p;
-	par_cnt += 1;
-	return (0);
-}
-
-static
 int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 {
 	int           r;
@@ -1710,11 +1753,14 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	else if (strcmp (what, "del-dam") == 0) {
 		fct = pfdc_edit_deldam_cb;
 	}
-	else if (strcmp (what, "data-rate") == 0) {
-		fct = pfdc_edit_datarate_cb;
-	}
 	else if (strcmp (what, "fm") == 0) {
-		fct = pfdc_edit_fm_cb;
+		fct = pfdc_edit_fm_dd_cb;
+	}
+	else if (strcmp (what, "fm-dd") == 0) {
+		fct = pfdc_edit_fm_dd_cb;
+	}
+	else if (strcmp (what, "fm-hd") == 0) {
+		fct = pfdc_edit_fm_hd_cb;
 	}
 	else if (strcmp (what, "gcr") == 0) {
 		fct = pfdc_edit_gcr_cb;
@@ -1723,7 +1769,16 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 		fct = pfdc_edit_h_cb;
 	}
 	else if (strcmp (what, "mfm") == 0) {
-		fct = pfdc_edit_mfm_cb;
+		fct = pfdc_edit_mfm_dd_cb;
+	}
+	else if (strcmp (what, "mfm-dd") == 0) {
+		fct = pfdc_edit_mfm_dd_cb;
+	}
+	else if (strcmp (what, "mfm-hd") == 0) {
+		fct = pfdc_edit_mfm_hd_cb;
+	}
+	else if (strcmp (what, "mfm-ed") == 0) {
+		fct = pfdc_edit_mfm_ed_cb;
 	}
 	else if (strcmp (what, "no-dam") == 0) {
 		fct = pfdc_edit_nodam_cb;
@@ -1854,7 +1909,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 {
 	unsigned      c, h, s;
 	unsigned      cyl_cnt, trk_cnt, sct_cnt;
-	unsigned long rate;
+	unsigned      enc;
 	pfdc_cyl_t    *cyl;
 	pfdc_trk_t    *trk;
 	pfdc_sct_t    *sct;
@@ -1869,15 +1924,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 		return (1);
 	}
 
-	if (sct_cnt > 16) {
-		rate = 500000;
-	}
-	else if (sct_cnt > 12) {
-		rate = 300000;
-	}
-	else {
-		rate = 250000;
-	}
+	enc = (sct_cnt < 14) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_HD;
 
 	for (c = 0; c < cyl_cnt; c++) {
 		cyl = pfdc_img_get_cylinder (img, c, 1);
@@ -1905,7 +1952,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, PFDC_ENC_MFM, rate);
+				pfdc_sct_set_encoding (sct, enc);
 				pfdc_sct_fill (sct, par_filler);
 			}
 		}
@@ -1967,7 +2014,7 @@ int pfdc_new_mac (pfdc_img_t *img, unsigned long size)
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR, 250000);
+				pfdc_sct_set_encoding (sct, PFDC_ENC_GCR);
 				pfdc_sct_fill (sct, par_filler);
 			}
 		}

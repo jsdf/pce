@@ -45,6 +45,10 @@
 #define PFDC_FLAG1_COMPRESSED 0x80
 #define PFDC_FLAG1_MASK       0x1d
 
+#define PFDC1_ENC_UNKNOWN     0
+#define PFDC1_ENC_FM          1
+#define PFDC1_ENC_MFM         2
+
 /* version 2 sector flags */
 #define PFDC_FLAG2_CRC_ID     0x01
 #define PFDC_FLAG2_CRC_DATA   0x02
@@ -52,6 +56,11 @@
 #define PFDC_FLAG2_NO_DAM     0x08
 #define PFDC_FLAG2_ALTERNATE  0x40
 #define PFDC_FLAG2_COMPRESSED 0x80
+
+#define PFDC2_ENC_UNKNOWN     0
+#define PFDC2_ENC_FM          1
+#define PFDC2_ENC_MFM         2
+#define PFDC2_ENC_GCR         3
 
 #define PFDC_CHUNK_SC 0x5343
 #define PFDC_CHUNK_EN 0x454e
@@ -140,16 +149,16 @@ void pfdc_sct_set_flags_v0 (pfdc_sct_t *sct, unsigned flg, unsigned long dr)
 	unsigned enc;
 
 	if (flg & PFDC_FLAG0_FM) {
-		enc = PFDC_ENC_FM;
+		enc = (dr < 375000) ? PFDC_ENC_FM_DD : PFDC_ENC_FM_DD;
 	}
 	else if (flg & PFDC_FLAG0_MFM) {
-		enc = PFDC_ENC_MFM;
+		enc = (dr < 375000) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_DD;
 	}
 	else {
 		enc = PFDC_ENC_UNKNOWN;
 	}
 
-	pfdc_sct_set_encoding (sct, enc, dr);
+	pfdc_sct_set_encoding (sct, enc);
 
 	if (flg & PFDC_FLAG0_CRC_ID) {
 		sct->flags |= PFDC_FLAG_CRC_ID;
@@ -226,10 +235,34 @@ void pfdc_sct_set_flags_v1 (pfdc_sct_t *sct, unsigned long flg)
 }
 
 static
+void pfdc_sct_set_old_encoding (pfdc_sct_t *sct, unsigned enc, unsigned long dr)
+{
+	switch (enc) {
+	case PFDC2_ENC_FM:
+		enc = (dr < 375000) ? PFDC_ENC_FM_DD : PFDC_ENC_FM_HD;
+		break;
+
+	case PFDC2_ENC_MFM:
+		enc = (dr < 375000) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_HD;
+		break;
+
+	case PFDC2_ENC_GCR:
+		enc = PFDC_ENC_GCR;
+		break;
+
+	default:
+		enc = 0;
+		break;
+	}
+
+	pfdc_sct_set_encoding (sct, enc);
+}
+
+static
 int pfdc_load_sector_v1 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last)
 {
 	unsigned      c, h, n;
-	unsigned long f;
+	unsigned long f, dr;
 	unsigned char buf[32];
 	pfdc_sct_t    *sct;
 
@@ -252,9 +285,10 @@ int pfdc_load_sector_v1 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last)
 	}
 
 	f = pfdc_get_uint32_be (buf, 12);
+	dr = pfdc_get_uint32_be (buf, 8) & 0x00ffffff;
 
 	pfdc_sct_set_flags_v1 (sct, f);
-	pfdc_sct_set_encoding (sct, buf[8], pfdc_get_uint32_be (buf, 8) & 0x00ffffff);
+	pfdc_sct_set_old_encoding (sct, buf[8], dr);
 
 	if (f & PFDC_FLAG1_ALTERNATE) {
 		if (*last == NULL) {
@@ -342,7 +376,7 @@ static
 int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned size, unsigned long crc)
 {
 	unsigned      c, h, n;
-	unsigned long f;
+	unsigned long f, dr;
 	unsigned char buf[32];
 	pfdc_sct_t    *sct;
 
@@ -365,8 +399,10 @@ int pfdc_load_sector_v2 (FILE *fp, pfdc_img_t *img, pfdc_sct_t **last, unsigned 
 		return (1);
 	}
 
+	dr = pfdc_get_uint32_be (buf, 8) & 0x00ffffff;
+
 	pfdc_sct_set_flags_v2 (sct, f);
-	pfdc_sct_set_encoding (sct, buf[8], pfdc_get_uint32_be (buf, 8) & 0x00ffffff);
+	pfdc_sct_set_old_encoding (sct, buf[8], dr);
 
 	if (f & PFDC_FLAG2_ALTERNATE) {
 		if (*last == NULL) {
@@ -705,6 +741,42 @@ pfdc_img_t *pfdc_load_pfdc (FILE *fp)
 
 
 static
+void pfdc_get_old_encoding (const pfdc_sct_t *sct, unsigned *enc, unsigned long *dr)
+{
+	switch (sct->encoding) {
+	case PFDC_ENC_FM_DD:
+		*enc = 1;
+		*dr = 125000;
+		break;
+
+	case PFDC_ENC_FM_HD:
+		*enc = 1;
+		*dr = 250000;
+		break;
+
+	case PFDC_ENC_MFM_DD:
+		*enc = 2;
+		*dr = 250000;
+		break;
+
+	case PFDC_ENC_MFM_HD:
+		*enc = 2;
+		*dr = 500000;
+		break;
+
+	case PFDC_ENC_GCR:
+		*enc = 3;
+		*dr = 500000;
+		break;
+
+	default:
+		*enc = 0;
+		*dr = 0;
+		break;
+	}
+}
+
+static
 unsigned pfdc_sct_get_flags_v0 (const pfdc_sct_t *sct)
 {
 	unsigned f;
@@ -737,6 +809,8 @@ static
 int pfdc_save_sector_v0 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 {
 	int           compr;
+	unsigned      enc;
+	unsigned long dr;
 	unsigned char buf[16];
 
 	buf[0] = c;
@@ -748,7 +822,9 @@ int pfdc_save_sector_v0 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 	buf[6] = (sct->n >> 8) & 0xff;
 	buf[7] = sct->n & 0xff;
 
-	pfdc_set_uint32_be (buf, 8, sct->data_rate);
+	pfdc_get_old_encoding (sct, &enc, &dr);
+
+	pfdc_set_uint32_be (buf, 8, dr);
 
 	compr = pfdc_sct_uniform (sct) && (sct->n > 0);
 
@@ -799,6 +875,8 @@ static
 int pfdc_save_sector_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h, int alt)
 {
 	unsigned long flg;
+	unsigned      enc;
+	unsigned long dr;
 	unsigned char buf[32];
 
 	flg = pfdc_sct_get_flags_v1 (sct);
@@ -811,7 +889,9 @@ int pfdc_save_sector_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 		flg |= PFDC_FLAG1_ALTERNATE;
 	}
 
-	pfdc_set_uint32_be (buf, 8, sct->data_rate);
+	pfdc_get_old_encoding (sct, &enc, &dr);
+
+	pfdc_set_uint32_be (buf, 8, dr);
 
 	buf[0] = 'S';
 	buf[1] = c;
@@ -821,7 +901,7 @@ int pfdc_save_sector_v1 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 	buf[5] = sct->s;
 	buf[6] = (sct->n >> 8) & 0xff;
 	buf[7] = sct->n & 0xff;
-	buf[8] = sct->encoding;
+	buf[8] = enc;
 
 	pfdc_set_uint32_be (buf, 12, flg);
 
@@ -928,6 +1008,8 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 {
 	unsigned      cnt;
 	unsigned char flg;
+	unsigned      enc;
+	unsigned long dr;
 	unsigned long crc;
 	unsigned char buf[256];
 
@@ -950,7 +1032,9 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 	pfdc_set_uint16_be (buf, 0, PFDC_CHUNK_SC);
 	pfdc_set_uint16_be (buf, 2, cnt);
 
-	pfdc_set_uint32_be (buf, 12, sct->data_rate);
+	pfdc_get_old_encoding (sct, &enc, &dr);
+
+	pfdc_set_uint32_be (buf, 12, dr);
 
 	buf[4] = flg;
 	buf[5] = c;
@@ -960,7 +1044,7 @@ int pfdc_save_sector_v2 (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h
 	buf[9] = sct->s;
 	buf[10] = (sct->n >> 8) & 0xff;
 	buf[11] = sct->n & 0xff;
-	buf[12] = sct->encoding;
+	buf[12] = enc;
 
 	crc = pfdc_crc (0, buf, 16);
 
