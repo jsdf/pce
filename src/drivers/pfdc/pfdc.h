@@ -152,6 +152,8 @@ void pfdc_img_erase (pfdc_img_t *img);
 
 int pfdc_img_add_cylinder (pfdc_img_t *img, pfdc_cyl_t *cyl);
 
+int pfdc_img_add_track (pfdc_img_t *img, pfdc_trk_t *trk, unsigned c);
+
 int pfdc_img_add_sector (pfdc_img_t *img, pfdc_sct_t *sct, unsigned c, unsigned h);
 
 void pfdc_img_remove_sector (pfdc_img_t *img, const pfdc_sct_t *sct);

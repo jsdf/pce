@@ -675,6 +675,23 @@ int pfdc_img_add_cylinder (pfdc_img_t *img, pfdc_cyl_t *cyl)
 	return (0);
 }
 
+int pfdc_img_add_track (pfdc_img_t *img, pfdc_trk_t *trk, unsigned c)
+{
+	pfdc_cyl_t *cyl;
+
+	cyl = pfdc_img_get_cylinder (img, c, 1);
+
+	if (cyl == NULL) {
+		return (1);
+	}
+
+	if (pfdc_cyl_add_track (cyl, trk)) {
+		return (1);
+	}
+
+	return (0);
+}
+
 int pfdc_img_add_sector (pfdc_img_t *img, pfdc_sct_t *sct, unsigned c, unsigned h)
 {
 	pfdc_trk_t *trk;
