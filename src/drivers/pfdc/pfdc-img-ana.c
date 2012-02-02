@@ -32,7 +32,7 @@ static
 int ana_load_fp (FILE *fp, pfdc_img_t *img)
 {
 	unsigned      c, h;
-	unsigned      cnt1, cnt2;
+	unsigned      cnt;
 	size_t        r;
 	pfdc_sct_t    *sct;
 	unsigned char buf[8];
@@ -51,29 +51,22 @@ int ana_load_fp (FILE *fp, pfdc_img_t *img)
 		c = buf[0];
 		h = buf[1];
 
-		cnt1 = 128 << buf[5];
-		cnt2 = (buf[7] << 8) | buf[6];
+		cnt = (buf[7] << 8) | buf[6];
 
-		if (cnt2 > cnt1) {
-			return (1);
-		}
-
-		sct = pfdc_sct_new (buf[2], buf[3], buf[4], cnt1);
+		sct = pfdc_sct_new (buf[2], buf[3], buf[4], cnt);
 
 		if (sct == NULL) {
 			return (1);
 		}
+
+		pfdc_sct_set_mfm_size (sct, buf[5]);
 
 		if (pfdc_img_add_sector (img, sct, c, h)) {
 			pfdc_sct_del (sct);
 			return (1);
 		}
 
-		if (cnt2 < cnt1) {
-			pfdc_sct_fill (sct, 0);
-		}
-
-		if (fread (sct->data, 1, cnt2, fp) != cnt2) {
+		if (fread (sct->data, 1, cnt, fp) != cnt) {
 			return (1);
 		}
 	}
@@ -100,16 +93,10 @@ pfdc_img_t *pfdc_load_anadisk (FILE *fp)
 static
 int ana_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 {
-	unsigned      n, t;
+	unsigned      n;
 	unsigned char buf[8];
 
-	t = sct->n;
-	n = 0;
-
-	while (t >= 256) {
-		t >>= 1;
-		n += 1;
-	}
+	n = pfdc_sct_get_mfm_size (sct);
 
 	buf[0] = c;
 	buf[1] = h;

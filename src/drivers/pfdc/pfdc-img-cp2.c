@@ -206,7 +206,8 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 			fprintf (stderr, "cp2: %08lX: bad sector size (%02X)\n",
 				ofs1 + 3 + 16 * i, sh[7]
 			);
-			return (1);
+
+			ssize = 0;
 		}
 
 		sct = pfdc_sct_new (sh[4], sh[5], sh[6], ssize);
@@ -214,6 +215,8 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 		if (sct == NULL) {
 			return (1);
 		}
+
+		pfdc_sct_set_mfm_size (sct, sh[7]);
 
 		if (pfdc_trk_add_sector (trk, sct)) {
 			pfdc_sct_del (sct);

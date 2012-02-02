@@ -316,6 +316,8 @@ pfdc_sct_t *mfm_decode_idam (mfm_t *mfm)
 		return (NULL);
 	}
 
+	pfdc_sct_set_mfm_size (sct, buf[3]);
+
 	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 1);
 
 	if (mfm->crc != crc) {

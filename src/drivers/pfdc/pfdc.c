@@ -138,6 +138,8 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 
 	sct->tag_cnt = 0;
 
+	sct->have_mfm_size = 0;
+
 	return (sct);
 }
 
@@ -173,6 +175,11 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 
 	if (sct->tag_cnt > 0) {
 		memcpy (dst->tag, sct->tag, sct->tag_cnt);
+	}
+
+	if (sct->have_mfm_size) {
+		dst->have_mfm_size = 1;
+		dst->mfm_size = sct->mfm_size;
 	}
 
 	if (deep == 0) {
@@ -285,6 +292,29 @@ void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc)
 		sct->encoding = enc;
 		sct = sct->next;
 	}
+}
+
+void pfdc_sct_set_mfm_size (pfdc_sct_t *sct, unsigned char val)
+{
+	sct->have_mfm_size = 1;
+	sct->mfm_size = val;
+}
+
+unsigned pfdc_sct_get_mfm_size (const pfdc_sct_t *sct)
+{
+	unsigned n;
+
+	if (sct->have_mfm_size) {
+		return (sct->mfm_size);
+	}
+
+	n = 0;
+
+	while ((128 << n) < sct->n) {
+		n += 1;
+	}
+
+	return (n);
 }
 
 unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt)

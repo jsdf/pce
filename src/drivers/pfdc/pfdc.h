@@ -63,6 +63,9 @@ typedef struct pfdc_sct_t {
 
 	unsigned short     tag_cnt;
 	unsigned char      tag[PFDC_TAGS_MAX];
+
+	char               have_mfm_size;
+	unsigned char      mfm_size;
 } pfdc_sct_t;
 
 
@@ -117,6 +120,12 @@ int pfdc_sct_uniform (const pfdc_sct_t *sct);
 void pfdc_sct_set_flags (pfdc_sct_t *sct, unsigned long flags, int set);
 
 void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc);
+
+void pfdc_sct_set_mfm_size (pfdc_sct_t *sct, unsigned char val);
+unsigned pfdc_sct_get_mfm_size (const pfdc_sct_t *sct);
+
+void pfdc_sct_set_gcr_format (pfdc_sct_t *sct, unsigned char val);
+unsigned pfdc_sct_get_gcr_format (const pfdc_sct_t *sct);
 
 unsigned pfdc_sct_set_tags (pfdc_sct_t *sct, const void *buf, unsigned cnt);
 

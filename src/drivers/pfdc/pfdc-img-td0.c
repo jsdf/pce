@@ -235,6 +235,8 @@ int td0_load_sector (FILE *fp, pfdc_img_t *img, unsigned c, unsigned h, unsigned
 		return (1);
 	}
 
+	pfdc_sct_set_mfm_size (sct, buf[3]);
+
 	if (pfdc_img_add_sector (img, sct, c, h)) {
 		pfdc_sct_del (sct);
 		return (1);
@@ -693,25 +695,16 @@ int td0_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 {
 	unsigned      i;
 	int           cmpr;
-	unsigned      n, t;
 	unsigned char buf[16];
 
-	n = 0;
-	t = sct->n;
-
-	while (t > 128) {
-		n += 1;
-		t >>= 1;
-	}
-
-	if (t != 128) {
+	if (sct->n & (sct->n - 1)) {
 		return (1);
 	}
 
 	buf[0] = sct->c;
 	buf[1] = sct->h;
 	buf[2] = sct->s;
-	buf[3] = n;
+	buf[3] = pfdc_sct_get_mfm_size (sct);
 	buf[4] = 0;
 
 	if (sct->flags & PFDC_FLAG_CRC_DATA) {
@@ -726,6 +719,10 @@ int td0_save_sector (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned h)
 
 	if (td0_write (fp, buf, 6)) {
 		return (1);
+	}
+
+	if (buf[3] > 6) {
+		return (0);
 	}
 
 	cmpr = 1;

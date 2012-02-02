@@ -129,6 +129,8 @@ int imd_read_track (FILE *fp, pfdc_img_t *img, const unsigned char *hdr)
 			return (1);
 		}
 
+		pfdc_sct_set_mfm_size (sct, n);
+
 		if (pfdc_img_add_sector (img, sct, c, h)) {
 			pfdc_sct_del (sct);
 			return (1);
