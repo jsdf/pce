@@ -452,7 +452,7 @@ int fdc_save (disk_fdc_t *fdc)
 	}
 
 	if (fdc->type == BLKFDC_FORMAT_PFDC) {
-		return (pfdc_save_pfdc (fdc->fp, fdc->img, 2));
+		return (pfdc_save_pfdc (fdc->fp, fdc->img, -1));
 	}
 	else if (fdc->type == BLKFDC_FORMAT_ANADISK) {
 		return (pfdc_save_anadisk (fdc->fp, fdc->img));
