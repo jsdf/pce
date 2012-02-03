@@ -177,7 +177,6 @@ static
 int imd_load_fp (FILE *fp, pfdc_img_t *img)
 {
 	int           c;
-	int           cmt;
 	size_t        r;
 	unsigned char buf[8];
 
@@ -189,7 +188,7 @@ int imd_load_fp (FILE *fp, pfdc_img_t *img)
 		return (1);
 	}
 
-	cmt = 0;
+	pfdc_img_add_comment (img, buf, 4);
 
 	while (1) {
 		c = fgetc (fp);
@@ -212,14 +211,9 @@ int imd_load_fp (FILE *fp, pfdc_img_t *img)
 			c = 0x0a;
 		}
 
-		if ((cmt == 0) && (c == 0x0a)) {
-			cmt = 1;
-		}
-		else if (cmt) {
-			buf[0] = c;
+		buf[0] = c;
 
-			pfdc_img_add_comment (img, buf, 1);
-		}
+		pfdc_img_add_comment (img, buf, 1);
 	}
 
 	while (1) {
@@ -258,38 +252,82 @@ pfdc_img_t *pfdc_load_imd (FILE *fp)
 }
 
 
+/*
+ * Check if p constitutes a valid IMD header
+ */
+static
+int imd_check_comment (const unsigned char *p, unsigned cnt)
+{
+	if (cnt < 29) {
+		return (0);
+	}
+
+	if ((p[0] != 'I') || (p[1] != 'M') || (p[2] != 'D')) {
+		return (0);
+	}
+
+	if ((p[12] != '/') || (p[15] != '/') || (p[20] != ' ')) {
+		return (0);
+	}
+
+	return (1);
+}
+
 static
 int imd_save_header (FILE *fp, const pfdc_img_t *img)
 {
-	unsigned  i;
-	time_t    t;
-	struct tm *tm;
+	unsigned      i;
+	unsigned      cnt;
+	unsigned char *buf;
+	time_t        t;
+	struct tm     *tm;
 
-	t = time (NULL);
-
-	tm = gmtime (&t);
-
-	fprintf (fp, "IMD 1.17: %2d/%2d/%4d %02d:%02d:%02d\x0d\x0a",
-		tm->tm_mday, tm->tm_mon + 1, 1900 + tm->tm_year,
-		tm->tm_hour, tm->tm_min, tm->tm_sec
-	);
-
-	if (img->comment_size > 0) {
-		i = 0;
-		while (i < img->comment_size) {
-			if (img->comment[i] == 0x0a) {
-				fputc (0x0d, fp);
-				fputc (0x0a, fp);
-			}
-			else {
-				fputc (img->comment[i], fp);
-			}
-
-			i += 1;
-		}
+	if (pfdc_img_get_comment (img, &buf, &cnt, 1)) {
+		return (1);
 	}
 
-	fputs ("\x0d\x0a\x1a", fp);
+	i = 0;
+
+	while ((i < cnt) && (buf[i] == 0x0a)) {
+		i += 1;
+	}
+
+	if (imd_check_comment (buf + i, cnt - i)) {
+		pfdc_write (fp, buf + i, 29);
+		i += 29;
+	}
+	else {
+		t = time (NULL);
+		tm = localtime (&t);
+
+		fprintf (fp, "IMD 1.17: %2d/%2d/%4d %02d:%02d:%02d",
+			tm->tm_mday, tm->tm_mon + 1, 1900 + tm->tm_year,
+			tm->tm_hour, tm->tm_min, tm->tm_sec
+		);
+	}
+
+	fputc (0x0d, fp);
+	fputc (0x0a, fp);
+
+	while ((i < cnt) && (buf[i] == 0x0a)) {
+		i += 1;
+	}
+
+	while (i < cnt) {
+		if (buf[i] == 0x0a) {
+			fputc (0x0d, fp);
+			fputc (0x0a, fp);
+		}
+		else {
+			fputc (buf[i], fp);
+		}
+
+		i += 1;
+	}
+
+	fputc (0x1a, fp);
+
+	free (buf);
 
 	return (0);
 }
@@ -354,7 +392,8 @@ int imd_sct_get_encoding (const pfdc_sct_t *sct, unsigned char *mode)
 		break;
 
 	default:
-		return (1);
+		*mode = 5;
+		break;
 	}
 
 	return (0);
