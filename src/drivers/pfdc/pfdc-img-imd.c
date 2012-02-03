@@ -429,7 +429,7 @@ int imd_save_track (FILE *fp, const pfdc_trk_t *trk, unsigned c, unsigned h)
 {
 	unsigned      i;
 	unsigned      sc;
-	unsigned char buf[256];
+	unsigned char buf[3 * 256 + 5];
 	unsigned      bcnt;
 	int           need_cmap, need_hmap;
 	unsigned char *smap, *cmap, *hmap;
@@ -439,10 +439,6 @@ int imd_save_track (FILE *fp, const pfdc_trk_t *trk, unsigned c, unsigned h)
 
 	if (sc == 0) {
 		return (0);
-	}
-
-	if (sc > 64) {
-		return (1);
 	}
 
 	need_cmap = 0;
