@@ -311,7 +311,6 @@ int pfdc2_load_tags (FILE *fp, pfdc_sct_t *last, unsigned size, unsigned long cr
 static
 int pfdc2_load_comment (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long crc)
 {
-	unsigned      i, j, k, d;
 	unsigned char *buf;
 
 	if (size == 0) {
@@ -331,69 +330,7 @@ int pfdc2_load_comment (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long 
 
 	crc = pfdc2_crc (crc, buf, size);
 
-	i = 0;
-	j = size;
-
-	while (i < j) {
-		if ((buf[i] == 0x0d) || (buf[i] == 0x0a)) {
-			i += 1;
-		}
-		else if (buf[i] == 0x00) {
-			i += 1;
-		}
-		else {
-			break;
-		}
-	}
-
-	while (j > i) {
-		if ((buf[j - 1] == 0x0d) || (buf[j - 1] == 0x0a)) {
-			j -= 1;
-		}
-		else if (buf[j - 1] == 0x00) {
-			j += 1;
-		}
-		else {
-			break;
-		}
-	}
-
-	if (i == j) {
-		return (pfdc2_skip_chunk (fp, 0, crc));
-	}
-
-	k = i;
-	d = i;
-
-	while (k < j) {
-		if (buf[k] == 0x0d) {
-			if (((k + 1) < j) && (buf[k + 1] == 0x0a)) {
-				k += 1;
-			}
-			else {
-				buf[d++] = 0x0a;
-			}
-		}
-		else {
-			buf[d++] = buf[k];
-		}
-
-		k += 1;
-	}
-
-	j = d;
-
-	if (img->comment_size > 0) {
-		unsigned char c;
-
-		c = 0x0a;
-
-		if (pfdc_img_add_comment (img, &c, 1)) {
-			return (1);
-		}
-	}
-
-	if (pfdc_img_add_comment (img, buf + i, j - i)) {
+	if (pfdc_img_add_comment (img, buf, size)) {
 		free (buf);
 		return (1);
 	}
@@ -402,6 +339,26 @@ int pfdc2_load_comment (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long 
 
 	if (pfdc2_skip_chunk (fp, 0, crc)) {
 		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pfdc2_load_end (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long crc)
+{
+	unsigned      cnt;
+	unsigned char *buf;
+
+	if (pfdc2_skip_chunk (fp, size, crc)) {
+		return (1);
+	}
+
+	if (img->comment_size > 0) {
+		if (pfdc_img_get_comment (img, &buf, &cnt, 1) == 0) {
+			pfdc_img_set_comment (img, buf, cnt);
+			free (buf);
+		}
 	}
 
 	return (0);
@@ -429,7 +386,7 @@ int pfdc2_load_chunks (FILE *fp, pfdc_img_t *img)
 
 		switch (ckid) {
 		case PFDC2_CHUNK_EN:
-			if (pfdc2_skip_chunk (fp, size, crc)) {
+			if (pfdc2_load_end (fp, img, size, crc)) {
 				return (1);
 			}
 			return (0);
@@ -711,79 +668,23 @@ int pfdc2_save_alternates (FILE *fp, const pfdc_sct_t *sct, unsigned c, unsigned
 static
 int pfdc2_save_comment (FILE *fp, const pfdc_img_t *img)
 {
-	unsigned            i, j;
-	const unsigned char *src;
-	unsigned char       *buf;
+	int           r;
+	unsigned      cnt;
+	unsigned char *buf;
 
-	if (img->comment_size == 0) {
-		return (0);
-	}
-
-	buf = malloc (img->comment_size + 2);
-
-	if (buf == NULL) {
+	if (pfdc_img_get_comment (img, &buf, &cnt, 1)) {
 		return (1);
 	}
 
-	src = img->comment;
-
-	buf[0] = 0x0a;
-
-	i = 0;
-	j = 1;
-
-	while (i < img->comment_size) {
-		if ((src[i] == 0x0d) || (src[i] == 0x0a)) {
-			i += 1;
-		}
-		else if (src[i] == 0x00) {
-			i += 1;
-		}
-		else {
-			break;
-		}
-	}
-
-	while (i < img->comment_size) {
-		if (src[i] == 0x0d) {
-			if (((i + 1) < img->comment_size) && (src[i + 1] == 0x0a)) {
-				i += 1;
-			}
-			else {
-				buf[j++] = 0x0a;
-			}
-		}
-		else {
-			buf[j++] = src[i];
-		}
-
-		i += 1;
-	}
-
-	while (j > 1) {
-		if ((buf[j - 1] == 0x0a) || (buf[j - 1] == 0x00)) {
-			j -= 1;
-		}
-		else {
-			break;
-		}
-	}
-
-	if (j == 1) {
-		free (buf);
+	if (cnt == 0) {
 		return (0);
 	}
 
-	buf[j++] = 0x0a;
-
-	if (pfdc2_save_chunk (fp, PFDC2_CHUNK_CM, j, buf)) {
-		free (buf);
-		return (1);
-	}
+	r = pfdc2_save_chunk (fp, PFDC2_CHUNK_CM, cnt, buf);
 
 	free (buf);
 
-	return (0);
+	return (r);
 }
 
 int pfdc2_save_fp (FILE *fp, const pfdc_img_t *img)
