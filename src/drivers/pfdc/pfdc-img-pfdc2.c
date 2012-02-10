@@ -427,6 +427,8 @@ int pfdc2_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz
 	unsigned long ofs;
 	unsigned char buf[16];
 
+	fprintf (stderr, "pfdc: warning: loading deprecated version 2 file\n");
+
 	pfdc_set_uint32_be (buf, 0, id);
 	pfdc_set_uint32_be (buf, 4, sz);
 

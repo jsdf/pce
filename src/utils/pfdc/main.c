@@ -2063,7 +2063,10 @@ int pfdc_set_format (const char *name, unsigned *val)
 		*val = PFDC_FORMAT_PFDC1;
 	}
 	else if (strcmp (name, "pfdc2") == 0) {
-		*val = PFDC_FORMAT_PFDC;
+		*val = PFDC_FORMAT_PFDC2;
+	}
+	else if (strcmp (name, "pfdc4") == 0) {
+		*val = PFDC_FORMAT_PFDC4;
 	}
 	else if (strcmp (name, "ana") == 0) {
 		*val = PFDC_FORMAT_ANA;

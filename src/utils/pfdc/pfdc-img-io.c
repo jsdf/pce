@@ -142,7 +142,8 @@ pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type)
 	switch (type) {
 	case PFDC_FORMAT_PFDC0:
 	case PFDC_FORMAT_PFDC1:
-	case PFDC_FORMAT_PFDC:
+	case PFDC_FORMAT_PFDC2:
+	case PFDC_FORMAT_PFDC4:
 		img = pfdc_load_pfdc (fp);
 		break;
 
@@ -207,8 +208,11 @@ int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 	case PFDC_FORMAT_PFDC1:
 		return (pfdc_save_pfdc (fp, img, 1));
 
-	case PFDC_FORMAT_PFDC:
+	case PFDC_FORMAT_PFDC2:
 		return (pfdc_save_pfdc (fp, img, 2));
+
+	case PFDC_FORMAT_PFDC4:
+		return (pfdc_save_pfdc (fp, img, 4));
 
 	case PFDC_FORMAT_ANA:
 		return (pfdc_save_anadisk (fp, img));

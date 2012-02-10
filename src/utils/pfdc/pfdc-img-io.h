@@ -28,16 +28,18 @@
 
 
 #define PFDC_FORMAT_NONE  0
-#define PFDC_FORMAT_PFDC  1
-#define PFDC_FORMAT_PFDC0 2
-#define PFDC_FORMAT_PFDC1 3
-#define PFDC_FORMAT_ANA   4
-#define PFDC_FORMAT_CP2   5
-#define PFDC_FORMAT_DC42  6
-#define PFDC_FORMAT_IMD   7
-#define PFDC_FORMAT_RAW   8
-#define PFDC_FORMAT_TC    9
-#define PFDC_FORMAT_TD0   10
+#define PFDC_FORMAT_PFDC0 1
+#define PFDC_FORMAT_PFDC1 2
+#define PFDC_FORMAT_PFDC2 3
+#define PFDC_FORMAT_PFDC4 4
+#define PFDC_FORMAT_PFDC  4
+#define PFDC_FORMAT_ANA   5
+#define PFDC_FORMAT_CP2   6
+#define PFDC_FORMAT_DC42  7
+#define PFDC_FORMAT_IMD   8
+#define PFDC_FORMAT_RAW   9
+#define PFDC_FORMAT_TC    10
+#define PFDC_FORMAT_TD0   11
 
 
 pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type);

@@ -38,6 +38,9 @@ int pfdc1_save_fp (FILE *fp, const pfdc_img_t *img);
 int pfdc2_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz);
 int pfdc2_save_fp (FILE *fp, const pfdc_img_t *img);
 
+int pfdc4_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz);
+int pfdc4_save_fp (FILE *fp, const pfdc_img_t *img);
+
 
 static
 int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
@@ -64,6 +67,9 @@ int pfdc_load_fp (FILE *fp, pfdc_img_t *img)
 	}
 	else if (sz == 0x00020000) {
 		return (pfdc2_load_fp (fp, img, id, sz));
+	}
+	else {
+		return (pfdc4_load_fp (fp, img, id, sz));
 	}
 
 	return (1);
@@ -99,8 +105,11 @@ int pfdc_save_pfdc (FILE *fp, const pfdc_img_t *img, unsigned vers)
 	else if (vers == 2) {
 		return (pfdc2_save_fp (fp, img));
 	}
+	else if (vers == 4) {
+		return (pfdc4_save_fp (fp, img));
+	}
 	else {
-		return (pfdc2_save_fp (fp, img));
+		return (pfdc4_save_fp (fp, img));
 	}
 
 	return (0);
