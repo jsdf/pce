@@ -1153,13 +1153,18 @@ unsigned char hdc_read_data (hdc_t *hdc)
 static
 void hdc_select (hdc_t *hdc)
 {
-	if (hdc->status & HDC_STATUS_BSY) {
-		return;
-	}
-
 #if DEBUG_HDC >= 3
 	fprintf (stderr, "hdc: select\n");
 #endif
+
+	hdc->delay = 0;
+	hdc->cont = NULL;
+	hdc->set_tc = NULL;
+
+	hdc_set_dreq (hdc, 0);
+	hdc_set_irq (hdc, 0);
+
+	hdc->cmd_idx = 0;
 
 	hdc_request_command (hdc);
 }
