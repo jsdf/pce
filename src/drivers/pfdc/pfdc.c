@@ -852,82 +852,48 @@ int pfdc_img_set_comment (pfdc_img_t *img, const unsigned char *buf, unsigned cn
 	return (0);
 }
 
-int pfdc_img_get_comment (const pfdc_img_t *img, unsigned char **buf, unsigned *cnt, int clean)
+void pfdc_img_clean_comment (pfdc_img_t *img)
 {
-	unsigned            i, j;
-	const unsigned char *s;
-	unsigned char       *d;
-
-	*buf = NULL;
-	*cnt = 0;
-
-	if (img->comment_size == 0) {
-		return (0);
-	}
-
-	s = img->comment;
-	d = malloc (img->comment_size + 2);
-
-	if (d == NULL) {
-		return (1);
-	}
-
-	if (clean == 0) {
-		memcpy (d, s, img->comment_size);
-		*buf = d;
-		*cnt = img->comment_size;
-		return (0);
-	}
+	unsigned      i, j, n;
+	unsigned char *p;
 
 	i = 0;
 	j = 0;
+	n = img->comment_size;
+	p = img->comment;
 
-	d[j++] = 0x0a;
-
-	while (i < img->comment_size) {
-		if ((s[i] == 0x0d) || (s[i] == 0x0a) || (s[i] == 0x00)) {
-			i += 1;
-		}
-		else {
-			break;
-		}
+	while ((i < n) && (p[i] == 0x0a)) {
+		i += 1;
 	}
 
-	while (i < img->comment_size) {
-		if (s[i] == 0x0d) {
-			d[j++] = 0x0a;
+	while (i < n) {
+		if (p[i] == 0x0d) {
+			p[j++] = 0x0a;
 
-			if (((i + 1) < img->comment_size) && (s[i + 1] == 0x0a)) {
+			if (((i + 1) < n) && (p[i + 1] == 0x0a)) {
 				i += 1;
 			}
 		}
-		else if (s[i] == 0) {
-			;
+		else if (p[i] == 0) {
+			p[j++] = 0x0a;
 		}
 		else {
-			d[j++] = s[i];
+			p[j++] = p[i];
 		}
 
 		i += 1;
 	}
 
-	while ((j > 0) && (d[j - 1] == 0x0a)) {
+	while ((j > 0) && (p[j - 1] == 0x0a)) {
 		j -= 1;
 	}
 
-	if (j == 1) {
-		free (d);
-		*buf = NULL;
-		*cnt = 0;
-		return (0);
+	img->comment_size = j;
+
+	if (j == 0) {
+		free (img->comment);
+		img->comment = NULL;
 	}
-
-	d[j++] = 0x0a;
-
-	*buf = d;
-	*cnt = j;
-
-	return (0);
 }
 
 unsigned long pfdc_img_get_sector_count (const pfdc_img_t *img)

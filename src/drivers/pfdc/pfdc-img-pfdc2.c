@@ -311,6 +311,8 @@ int pfdc2_load_tags (FILE *fp, pfdc_sct_t *last, unsigned size, unsigned long cr
 static
 int pfdc2_load_comment (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long crc)
 {
+	int           r;
+	unsigned      i, n;
 	unsigned char *buf;
 
 	if (size == 0) {
@@ -330,36 +332,35 @@ int pfdc2_load_comment (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long 
 
 	crc = pfdc2_crc (crc, buf, size);
 
-	if (pfdc_img_add_comment (img, buf, size)) {
-		free (buf);
-		return (1);
+	i = 0;
+	n = size;
+
+	if (buf[0] == 0x0a) {
+		i += 1;
+		n -= 1;
 	}
+
+	if ((n > 0) && (buf[n - 1] == 0x0a)) {
+		n -= 1;
+	}
+
+	r = pfdc_img_add_comment (img, buf + i, n);
 
 	free (buf);
 
-	if (pfdc2_skip_chunk (fp, 0, crc)) {
-		return (1);
-	}
+	r |= pfdc2_skip_chunk (fp, 0, crc);
 
-	return (0);
+	return (r);
 }
 
 static
 int pfdc2_load_end (FILE *fp, pfdc_img_t *img, unsigned size, unsigned long crc)
 {
-	unsigned      cnt;
-	unsigned char *buf;
-
 	if (pfdc2_skip_chunk (fp, size, crc)) {
 		return (1);
 	}
 
-	if (img->comment_size > 0) {
-		if (pfdc_img_get_comment (img, &buf, &cnt, 1) == 0) {
-			pfdc_img_set_comment (img, buf, cnt);
-			free (buf);
-		}
-	}
+	pfdc_img_clean_comment (img);
 
 	return (0);
 }
@@ -669,20 +670,27 @@ static
 int pfdc2_save_comment (FILE *fp, const pfdc_img_t *img)
 {
 	int           r;
-	unsigned      cnt;
-	unsigned char *buf;
+	unsigned long crc;
+	unsigned char buf[16];
 
-	if (pfdc_img_get_comment (img, &buf, &cnt, 1)) {
-		return (1);
-	}
-
-	if (cnt == 0) {
+	if (img->comment_size == 0) {
 		return (0);
 	}
 
-	r = pfdc2_save_chunk (fp, PFDC2_CHUNK_CM, cnt, buf);
+	pfdc_set_uint16_be (buf, 0, PFDC2_CHUNK_CM);
+	pfdc_set_uint16_be (buf, 2, img->comment_size + 2);
 
-	free (buf);
+	buf[4] = 0x0a;
+
+	crc = pfdc2_crc (0, buf, 5);
+	crc = pfdc2_crc (crc, img->comment, img->comment_size);
+	crc = pfdc2_crc (crc, buf + 4, 1);
+
+	r = pfdc2_write (fp, buf, 5);
+	r |= pfdc2_write (fp, img->comment, img->comment_size);
+	r |= pfdc2_write (fp, buf + 4, 1);
+	pfdc_set_uint32_be (buf, 0, crc);
+	r |= pfdc2_write (fp, buf, 4);
 
 	return (r);
 }

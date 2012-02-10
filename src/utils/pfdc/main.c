@@ -1266,6 +1266,8 @@ int pfdc_set_comment (pfdc_img_t *img, const char *str)
 		return (1);
 	}
 
+	pfdc_img_clean_comment (img);
+
 	return (0);
 }
 
@@ -1288,6 +1290,8 @@ int pfdc_add_comment (pfdc_img_t *img, const char *str)
 	if (pfdc_img_add_comment (img, tmp, strlen (str))) {
 		return (1);
 	}
+
+	pfdc_img_clean_comment (img);
 
 	return (0);
 }
@@ -1327,8 +1331,7 @@ int pfdc_save_comment (pfdc_img_t *img, const char *fname)
 static
 int pfdc_load_comment (pfdc_img_t *img, const char *fname)
 {
-	int           c, cr;
-	unsigned      i, nl;
+	unsigned      n;
 	FILE          *fp;
 	unsigned char buf[256];
 
@@ -1340,63 +1343,19 @@ int pfdc_load_comment (pfdc_img_t *img, const char *fname)
 
 	pfdc_img_set_comment (img, NULL, 0);
 
-	cr = 0;
-	nl = 0;
-	i = 0;
-
 	while (1) {
-		c = fgetc (fp);
+		n = fread (buf, 1, 256, fp);
 
-		if (c == EOF) {
+		if (n == 0) {
 			break;
 		}
 
-		if (c == 0x0d) {
-			if (cr) {
-				nl += 1;
-			}
-
-			cr = 1;
-		}
-		else if (c == 0x0a) {
-			nl += 1;
-			cr = 0;
-		}
-		else {
-			if (cr) {
-				nl += 1;
-			}
-
-			if (i > 0) {
-				while (nl > 0) {
-					buf[i++] = 0x0a;
-					nl -= 1;
-
-					if (i >= 256) {
-						pfdc_img_add_comment (img, buf, i);
-						i = 0;
-					}
-				}
-			}
-
-			nl = 0;
-			cr = 0;
-
-			buf[i++] = c;
-
-			if (i >= 256) {
-				pfdc_img_add_comment (img, buf, i);
-				i = 0;
-			}
-		}
-	}
-
-	if (i > 0) {
-		pfdc_img_add_comment (img, buf, i);
-		i = 0;
+		pfdc_img_add_comment (img, buf, n);
 	}
 
 	fclose (fp);
+
+	pfdc_img_clean_comment (img);
 
 	if (par_verbose) {
 		fprintf (stderr, "%s: load comments from %s\n", arg0, fname);

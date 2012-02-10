@@ -178,7 +178,7 @@ int pfdc_img_add_comment (pfdc_img_t *img, const unsigned char *buf, unsigned cn
 
 int pfdc_img_set_comment (pfdc_img_t *img, const unsigned char *buf, unsigned cnt);
 
-int pfdc_img_get_comment (const pfdc_img_t *img, unsigned char **buf, unsigned *cnt, int clean);
+void pfdc_img_clean_comment (pfdc_img_t *img);
 
 unsigned long pfdc_img_get_sector_count (const pfdc_img_t *img);
 

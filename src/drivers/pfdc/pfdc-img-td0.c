@@ -419,6 +419,8 @@ int td0_load_comment (FILE *fp, pfdc_img_t *img)
 		pfdc_img_set_comment (img, cmt + i, j - i);
 
 		free (cmt);
+
+		pfdc_img_clean_comment (img);
 	}
 
 	if (crc1 != crc2) {

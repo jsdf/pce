@@ -201,20 +201,12 @@ int imd_load_fp (FILE *fp, pfdc_img_t *img)
 			break;
 		}
 
-		if (c == 0x0d) {
-			c = fgetc (fp);
-
-			if ((c != EOF) && (c != 0x0a)) {
-				ungetc (c, fp);
-			}
-
-			c = 0x0a;
-		}
-
 		buf[0] = c;
 
 		pfdc_img_add_comment (img, buf, 1);
 	}
+
+	pfdc_img_clean_comment (img);
 
 	while (1) {
 		r = fread (buf, 1, 5, fp);
@@ -276,25 +268,20 @@ int imd_check_comment (const unsigned char *p, unsigned cnt)
 static
 int imd_save_header (FILE *fp, const pfdc_img_t *img)
 {
-	unsigned      i;
-	unsigned      cnt;
-	unsigned char *buf;
-	time_t        t;
-	struct tm     *tm;
-
-	if (pfdc_img_get_comment (img, &buf, &cnt, 1)) {
-		return (1);
-	}
+	unsigned  i;
+	time_t    t;
+	struct tm *tm;
 
 	i = 0;
 
-	while ((i < cnt) && (buf[i] == 0x0a)) {
-		i += 1;
-	}
+	if (imd_check_comment (img->comment, img->comment_size)) {
+		pfdc_write (fp, img->comment, 29);
 
-	if (imd_check_comment (buf + i, cnt - i)) {
-		pfdc_write (fp, buf + i, 29);
-		i += 29;
+		i = 29;
+
+		if ((i < img->comment_size) && (img->comment[i] == 0x0a)) {
+			i += 1;
+		}
 	}
 	else {
 		t = time (NULL);
@@ -309,25 +296,19 @@ int imd_save_header (FILE *fp, const pfdc_img_t *img)
 	fputc (0x0d, fp);
 	fputc (0x0a, fp);
 
-	while ((i < cnt) && (buf[i] == 0x0a)) {
-		i += 1;
-	}
-
-	while (i < cnt) {
-		if (buf[i] == 0x0a) {
+	while (i < img->comment_size) {
+		if (img->comment[i] == 0x0a) {
 			fputc (0x0d, fp);
 			fputc (0x0a, fp);
 		}
 		else {
-			fputc (buf[i], fp);
+			fputc (img->comment[i], fp);
 		}
 
 		i += 1;
 	}
 
 	fputc (0x1a, fp);
-
-	free (buf);
 
 	return (0);
 }
