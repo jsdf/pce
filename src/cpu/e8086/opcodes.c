@@ -2552,7 +2552,9 @@ unsigned op_a4 (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		while (e86_get_cx (c) > end) {
@@ -2596,7 +2598,9 @@ unsigned op_a5 (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		while (e86_get_cx (c) > end) {
@@ -2642,7 +2646,9 @@ unsigned op_a6 (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
@@ -2698,7 +2704,9 @@ unsigned op_a7 (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
@@ -2842,7 +2850,9 @@ unsigned op_ac (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		while (e86_get_cx (c) > end) {
@@ -2876,7 +2886,9 @@ unsigned op_ad (e8086_t *c)
 		unsigned end = 0;
 
 		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			end = 1;
+			if (e86_get_cx (c) > 512) {
+				end = 1;
+			}
 		}
 
 		while (e86_get_cx (c) > end) {
