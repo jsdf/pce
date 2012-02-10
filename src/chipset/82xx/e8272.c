@@ -358,7 +358,7 @@ int e8272_diskop_format (e8272_t *fdc,
 }
 
 static
-int e8272_diskop_readid (e8272_t *fdc,
+unsigned e8272_diskop_readid (e8272_t *fdc,
 	unsigned pd, unsigned pc, unsigned ph, unsigned ps,
 	unsigned char *id)
 {

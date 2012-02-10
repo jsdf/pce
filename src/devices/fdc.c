@@ -152,7 +152,7 @@ unsigned dev_fdc_diskop_write (dev_fdc_t *fdc, e8272_diskop_t *p)
 }
 
 static
-int dev_fdc_diskop_format (dev_fdc_t *fdc, e8272_diskop_t *p)
+unsigned dev_fdc_diskop_format (dev_fdc_t *fdc, e8272_diskop_t *p)
 {
 	unsigned      cnt;
 	disk_t        *dsk;
@@ -192,7 +192,7 @@ int dev_fdc_diskop_format (dev_fdc_t *fdc, e8272_diskop_t *p)
 }
 
 static
-int dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
+unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 {
 	disk_t        *dsk;
 	unsigned char buf[512];
