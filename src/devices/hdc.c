@@ -510,6 +510,11 @@ void hdc_cmd_read_delay (hdc_t *hdc)
 {
 	hdc_set_dreq (hdc, 0);
 
+	if (hdc->id.n == 0) {
+		hdc_cmd_done (hdc);
+		return;
+	}
+
 	hdc->delay = 2048;
 	hdc->cont = hdc_cmd_read_next;
 }
@@ -519,11 +524,6 @@ void hdc_cmd_read_next (hdc_t *hdc)
 {
 	unsigned d, c, h, s;
 	disk_t   *dsk;
-
-	if (hdc->id.n == 0) {
-		hdc_cmd_done (hdc);
-		return;
-	}
 
 	d = hdc->id.d & 1;
 	c = hdc->id.c;
