@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8253.c                                     *
  * Created:     2001-05-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -280,6 +280,10 @@ void e8253_cnt_set_uint8 (e8253_counter_t *cnt, unsigned char val)
 
 	if (cnt->cr_wr == 0) {
 		cnt_new_val (cnt);
+	}
+
+	if (cnt->counting == 0) {
+		cnt->val = ((unsigned) cnt->cr[1] << 8) + cnt->cr[0];
 	}
 }
 
