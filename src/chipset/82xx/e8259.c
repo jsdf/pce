@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8259.c                                     *
  * Created:     2003-04-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -214,19 +214,18 @@ void e8259_set_irq (e8259_t *pic, unsigned irq, unsigned char val)
 
 	msk = 0x01 << (irq & 0x07);
 
-	if (val == 0) {
+	if (((pic->irq_inp & msk) != 0) == (val != 0)) {
+		return;
+	}
+
+	if (val) {
+		pic->irq_inp |= msk;
+		pic->irr |= msk;
+	}
+	else {
 		pic->irq_inp &= ~msk;
-		return;
+		pic->irr &= ~msk;
 	}
-
-	if (pic->irq_inp & msk) {
-		/* not an edge */
-		return;
-	}
-
-	pic->irq_inp |= msk;
-
-	pic->irr |= msk;
 
 	e8259_check_int (pic);
 }
