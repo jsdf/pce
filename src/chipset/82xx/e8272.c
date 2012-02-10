@@ -1701,7 +1701,7 @@ void cmd_seek (e8272_t *fdc)
 static
 void cmd_sense_int_status_clock (e8272_t *fdc, unsigned long cnt)
 {
-	unsigned i;
+	unsigned i, n;
 
 	if (fdc->delay_clock > 0) {
 		return;
@@ -1709,6 +1709,8 @@ void cmd_sense_int_status_clock (e8272_t *fdc, unsigned long cnt)
 
 	fdc->res[0] = fdc->st[0];
 	fdc->res[1] = fdc->curdrv->c;
+
+	n = 2;
 
 	if (fdc->st[0] & E8272_ST0_SE) {
 		/* reset interrupt condition */
@@ -1726,10 +1728,14 @@ void cmd_sense_int_status_clock (e8272_t *fdc, unsigned long cnt)
 			}
 		}
 	}
+	else {
+		fdc->res[0] = 0x80;
+		n = 1;
+	}
 
 	e8272_set_irq (fdc, 0);
 
-	cmd_result (fdc, 2);
+	cmd_result (fdc, n);
 }
 
 static
@@ -1896,7 +1902,7 @@ void e8272_reset (e8272_t *fdc)
 
 	fdc->msr = E8272_MSR_RQM;
 
-	fdc->st[0] = 0xc0;
+	fdc->st[0] = 0x00;
 	fdc->st[1] = 0x00;
 	fdc->st[2] = 0x00;
 	fdc->st[3] = 0x00;
