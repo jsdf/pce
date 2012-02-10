@@ -100,6 +100,7 @@ static
 void cp2_check_header (FILE *fp, const unsigned char *th, const unsigned char *sh, unsigned s)
 {
 	unsigned i;
+	unsigned sofs;
 	int      ok;
 
 	ok = 1;
@@ -108,10 +109,18 @@ void cp2_check_header (FILE *fp, const unsigned char *th, const unsigned char *s
 	ok = 0;
 #endif
 
+	sofs = (sh[9] << 8) | sh[8];
+
 	if (sh[2] & 0x96) {
 		ok = 0;
 	}
 	else if (sh[10] || sh[11] || (sh[14] & 0x7f) || sh[15]) {
+		ok = 0;
+	}
+	else if (sh[7] > 6) {
+		ok = 0;
+	}
+	else if (sofs < 0x16ad) {
 		ok = 0;
 	}
 
@@ -190,10 +199,6 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 			ssize = 128 << sh[7];
 		}
 		else {
-			fprintf (stderr, "cp2: %08lX: bad sector size (%02X)\n",
-				ofs1 + 3 + 16 * i, sh[7]
-			);
-
 			ssize = 0;
 		}
 
@@ -210,6 +215,8 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 			return (1);
 		}
 
+		sofs = (sh[9] << 8) | sh[8];
+
 		if (sh[14] & 0x32) {
 			/* unknown flags */
 			pfdc_sct_fill (sct, 0);
@@ -222,19 +229,12 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 			/* small and large sectors are not stored */
 			pfdc_sct_fill (sct, 0);
 		}
+		else if (sofs < 0x16ad) {
+			/* bad data offset */
+			pfdc_sct_fill (sct, 0);
+		}
 		else {
-			sofs = (sh[9] << 8) | sh[8];
-
-			if (sofs >= 0x16ad) {
-				sofs -= 0x16ad;
-			}
-			else {
-				fprintf (stderr,
-					"cp2: %08lX: bad data offset (0x%04lx)\n",
-					ofs1 + 3 + 16 * i, sofs
-				);
-				return (1);
-			}
+			sofs -= 0x16ad;
 
 			if ((sofs + ssize) > size2) {
 				fprintf (stderr,
