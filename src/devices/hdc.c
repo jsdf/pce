@@ -636,11 +636,6 @@ void hdc_cmd_write_next (hdc_t *hdc)
 	unsigned d, c, h, s;
 	disk_t   *dsk;
 
-	if (hdc->id.n == 0) {
-		hdc_cmd_done (hdc);
-		return;
-	}
-
 	d = hdc->id.d & 1;
 	c = hdc->id.c;
 	h = hdc->id.h;
@@ -667,6 +662,11 @@ void hdc_cmd_write_next (hdc_t *hdc)
 	hdc_next_id (hdc);
 
 	hdc->id.n -= 1;
+
+	if (hdc->id.n == 0) {
+		hdc_cmd_done (hdc);
+		return;
+	}
 
 	hdc->delay = 2048;
 	hdc->cont = hdc_cmd_write_delay;
