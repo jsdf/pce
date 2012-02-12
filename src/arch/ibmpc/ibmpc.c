@@ -1196,6 +1196,7 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 	unsigned long addr;
 	unsigned      drv[2];
 	unsigned      cfg;
+	unsigned      sectors;
 	const char    *cfg_id;
 	ini_sct_t     *sct;
 
@@ -1211,12 +1212,13 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint16 (sct, "irq", &irq, 5);
 	ini_get_uint16 (sct, "drive0", &drv[0], 0xffff);
 	ini_get_uint16 (sct, "drive1", &drv[1], 0xffff);
+	ini_get_uint16 (sct, "sectors", &sectors, 17);
 	ini_get_string (sct, "config_id", &cfg_id, "");
 	ini_get_uint16 (sct, "switches", &cfg, 0);
 
 	pce_log_tag (MSG_INF, "HDC:",
-		"addr=0x%08lx irq=%u drv=[%u %u] switches=0x%02x id=\"%s\"\n",
-		addr, irq, drv[0], drv[1], cfg, cfg_id
+		"addr=0x%08lx irq=%u drv=[%u %u] sectors=%u switches=0x%02x id=\"%s\"\n",
+		addr, irq, drv[0], drv[1], sectors, cfg, cfg_id
 	);
 
 	pc->hdc = hdc_new (addr);
@@ -1234,6 +1236,8 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 
 	hdc_set_config_id (pc->hdc, (const unsigned char *) cfg_id, strlen (cfg_id));
 	hdc_set_config (pc->hdc, cfg);
+
+	hdc_set_sectors (pc->hdc, sectors);
 
 	hdc_set_irq_fct (pc->hdc, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	hdc_set_dreq_fct (pc->hdc, &pc->dma, e8237_set_dreq3);

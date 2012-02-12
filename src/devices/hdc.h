@@ -60,6 +60,8 @@ typedef struct hdc_t {
 
 	unsigned char  config_params[64];
 
+	unsigned       sectors;
+
 	hdc_drive_t    drv[2];
 
 	struct {
@@ -101,6 +103,8 @@ void hdc_set_irq_fct (hdc_t *hdc, void *ext, void *fct);
 void hdc_set_dreq_fct (hdc_t *hdc, void *ext, void *fct);
 
 void hdc_set_config (hdc_t *hdc, unsigned val);
+
+void hdc_set_sectors (hdc_t *hdc, unsigned val);
 
 void hdc_set_disks (hdc_t *hdc, disks_t *dsks);
 

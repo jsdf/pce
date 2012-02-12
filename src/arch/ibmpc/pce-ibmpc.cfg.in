@@ -516,6 +516,11 @@ if (cfg.hdc) {
 		drive0  = 0x80
 		drive1  = 0x81
 
+		# The number of sectors per track.
+		# Most BIOSes get confused if this is anything other than
+		# 17 for MFM controllers and 26 for RLL controllers.
+		sectors = 17
+
 		# IBM BIOS (1985-10-28)
 		#
 		# Configuration switches:

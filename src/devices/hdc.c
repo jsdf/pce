@@ -734,33 +734,33 @@ void hdc_cmd_seek (hdc_t *hdc)
 static
 void hdc_cmd_init_cont2 (hdc_t *hdc)
 {
-	unsigned      d, c, h, rc, wp, ec;
+	unsigned      d, c, h, s, rc, wp, ec;
 	unsigned long size;
 
 	d = (hdc->cmd[1] >> 5) & 1;
 	c = (hdc->buf[0] << 8) | hdc->buf[1];
 	h = hdc->buf[2];
+	s = hdc->drv[d].max_s;
 	rc = (hdc->buf[3] << 8) | hdc->buf[4];
 	wp = (hdc->buf[5] << 8) | hdc->buf[6];
 	ec = hdc->buf[7];
 
-	size = ((unsigned long) c * (unsigned long) h * 17UL) / 2;
+	size = (unsigned long) c * (unsigned long) h * s;
 
 	pce_log_tag (MSG_INF,
 		"HDC:",
-		"init drive %u (c=%u h=%u s=17 rc=%u wp=%u ecc=%u size=%luK)\n",
-		d, c, h, rc, wp, ec, size
+		"init drive %u (c=%u h=%u s=%u rc=%u wp=%u ecc=%u size=%lu.%uK)\n",
+		d, c, h, s, rc, wp, ec, size / 2, (size & 1) ? 5 : 0
 	);
 
 #if DEBUG_HDC >= 1
-	fprintf (stderr, "HDC: CMD=%02X D=%u  init (c=%u h=%u rc=%u wp=%u ecc=%u)\n",
-		hdc->cmd[0], d, c, h, rc, wp, ec
+	fprintf (stderr, "HDC: CMD=%02X D=%u  init (c=%u h=%u s=%u rc=%u wp=%u ecc=%u)\n",
+		hdc->cmd[0], d, c, h, s, rc, wp, ec
 	);
 #endif
 
 	hdc->drv[d].max_c = c;
 	hdc->drv[d].max_h = h;
-	hdc->drv[d].max_s = 17;
 
 	hdc_set_result (hdc, 0, 0x00);
 
@@ -884,7 +884,7 @@ void hdc_cmd_getgeo_cont (hdc_t *hdc)
 	if (dsk == NULL) {
 		c = 0;
 		h = 0;
-		s = 0;
+		s = hdc->sectors;
 	}
 	else {
 		c = dsk->c - 1;
@@ -897,6 +897,8 @@ void hdc_cmd_getgeo_cont (hdc_t *hdc)
 		hdc->cmd[0], hdc->id.d, c + 1, h + 1, s
 	);
 #endif
+
+	hdc->drv[hdc->id.d].max_s = s;
 
 	hdc->buf[0] = c & 0xff;
 	hdc->buf[1] = ((c >> 2) & 0xc0) | (s & 0x3f);
@@ -1014,7 +1016,7 @@ void hdc_cmd_fe (hdc_t *hdc)
 static
 void hdc_cmd_ff_cont (hdc_t *hdc)
 {
-	unsigned c, h;
+	unsigned c, h, s;
 	disk_t   *dsk;
 
 	dsk = dsks_get_disk (hdc->dsks, hdc->drv[hdc->id.d].drive);
@@ -1022,11 +1024,15 @@ void hdc_cmd_ff_cont (hdc_t *hdc)
 	if (dsk == NULL) {
 		c = 0;
 		h = 0;
+		s = hdc->sectors;
 	}
 	else {
 		c = dsk->c;
 		h = dsk->h;
+		s = dsk->s;
 	}
+
+	hdc->drv[hdc->id.d].max_s = s;
 
 	memcpy (hdc->buf, hdc->config_params, 64);
 
@@ -1035,7 +1041,7 @@ void hdc_cmd_ff_cont (hdc_t *hdc)
 	buf_set_uint16_le (hdc->buf, 11, c);
 	buf_set_uint16_le (hdc->buf, 13, c);
 	buf_set_uint8 (hdc->buf, 15, 5);
-	buf_set_uint8 (hdc->buf, 22, 17);
+	buf_set_uint8 (hdc->buf, 22, s);
 
 	buf_set_uint8 (hdc->buf, 24, 0x80);
 	buf_set_uint8 (hdc->buf, 25, 0x00);
@@ -1402,6 +1408,8 @@ hdc_t *hdc_new (unsigned long addr)
 
 	memset (hdc->config_params, 0, 64);
 
+	hdc->sectors = 17;
+
 	hdc->drv[0].drive = 0xffff;
 	hdc->drv[1].drive = 0xffff;
 
@@ -1456,6 +1464,11 @@ void hdc_set_dreq_fct (hdc_t *hdc, void *ext, void *fct)
 void hdc_set_config (hdc_t *hdc, unsigned val)
 {
 	hdc->config = val;
+}
+
+void hdc_set_sectors (hdc_t *hdc, unsigned val)
+{
+	hdc->sectors = val;
 }
 
 void hdc_set_disks (hdc_t *hdc, disks_t *dsks)
@@ -1516,7 +1529,7 @@ void hdc_reset (hdc_t *hdc)
 	for (i = 0; i < 2; i++) {
 		hdc->drv[i].max_c = 306;
 		hdc->drv[i].max_h = 4;
-		hdc->drv[i].max_s = 17;
+		hdc->drv[i].max_s = hdc->sectors;
 
 		hdc->drv[i].sense[0] = 0;
 		hdc->drv[i].sense[1] = 0;
