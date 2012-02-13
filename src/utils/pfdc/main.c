@@ -131,11 +131,14 @@ void print_help (void)
 		"  comment-set text       Set the image comment\n"
 		"  delete                 Delete sectors\n"
 		"  info                   Print image information\n"
+		"  interleave n           Set the sector interleave to n\n"
 		"  load filename          Load individual sectors\n"
 		"  new                    Create new sectors\n"
 		"  reorder s1,s2,...      Reorder sectors in a track\n"
 		"  rotate first           Rotate tracks\n"
 		"  save filename          Save individual sectors\n"
+		"  tags-load filename     Load sector tags\n"
+		"  tags-save filename     Save sector tags\n"
 		"\n"
 		"file formats are:\n"
 		"  pfdc, ana, cp2, dc42, imd, raw, td0\n"
@@ -1365,6 +1368,111 @@ int pfdc_load_comment (pfdc_img_t *img, const char *fname)
 	return (0);
 }
 
+
+static
+int pfdc_load_tags_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *opaque)
+{
+	FILE          *fp;
+	unsigned char buf[12];
+
+	fp = opaque;
+
+	if (fread (buf, 1, 12, fp) != 12) {
+		return (1);
+	}
+
+	pfdc_sct_set_tags (sct, buf, 12);
+
+	par_cnt += 1;
+
+	return (0);
+}
+
+static
+int pfdc_load_tags (pfdc_img_t *img, const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		fprintf (stderr, "%s: can't open file (%s)\n", arg0, fname);
+		return (1);
+	}
+
+	par_cnt = 0;
+
+	r = pfdc_for_all_sectors (img, pfdc_load_tags_cb, fp);
+
+	fclose (fp);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: load %lu sector tags\n", arg0, par_cnt);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: loading sector tags failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
+int pfdc_save_tags_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *opaque)
+{
+	FILE          *fp;
+	unsigned char buf[12];
+
+	fp = opaque;
+
+	pfdc_sct_get_tags (sct, buf, 12);
+
+	if (fwrite (buf, 1, 12, fp) != 12) {
+		return (1);
+	}
+
+	par_cnt += 1;
+
+	return (0);
+}
+
+static
+int pfdc_save_tags (pfdc_img_t *img, const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "wb");
+
+	if (fp == NULL) {
+		fprintf (stderr, "%s: can't create file (%s)\n", arg0, fname);
+		return (1);
+	}
+
+	par_cnt = 0;
+
+	r = pfdc_for_all_sectors (img, pfdc_save_tags_cb, fp);
+
+	fclose (fp);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: save %lu sector tags to %s\n",
+			arg0, par_cnt, fname
+		);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: saving tags failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
 static
 void pfdc_print_range (const char *str1, unsigned v1, unsigned v2, const char *str2)
 {
@@ -1872,6 +1980,12 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "save") == 0) {
 		r = pfdc_save_sectors (*img, optarg[0]);
+	}
+	else if (strcmp (op, "tags-load") == 0) {
+		r = pfdc_load_tags (*img, optarg[0]);
+	}
+	else if (strcmp (op, "tags-save") == 0) {
+		r = pfdc_save_tags (*img, optarg[0]);
 	}
 	else {
 		fprintf (stderr, "%s: unknown operation (%s)\n", arg0, op);
