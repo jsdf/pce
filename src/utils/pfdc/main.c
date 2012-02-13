@@ -137,7 +137,7 @@ void print_help (void)
 		"  save filename          Save individual sectors\n"
 		"\n"
 		"file formats are:\n"
-		"  pfdc, ana, cp2, imd, raw, td0\n"
+		"  pfdc, ana, cp2, dc42, imd, raw, td0\n"
 		"\n"
 		"sector attributes are:\n"
 		"  crc-id, crc-data, del-dam, fm, fm-hd, gcr, mfm, mfm-hd, mfm-ed, no-dam, size, c, h, s\n",

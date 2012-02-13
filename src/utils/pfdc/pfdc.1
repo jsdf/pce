@@ -1,4 +1,4 @@
-.TH PFDC 1 "2012-01-12" "HH" "pce"
+.TH PFDC 1 "2012-02-12" "HH" "pce"
 \
 .SH NAME
 pfdc \- convert and modify PFDC floppy disk image files
@@ -91,6 +91,9 @@ The anadisk dump format.
 The Copy II PC / Snatchit disk image format. Support for this format
 is experimental. This format is only available as an input format.
 .TP
+.B dc42
+The Apple Disk Copy 4.2 file format.
+.TP
 .B imd
 The ImageDisk file format.
 .TP
@@ -122,8 +125,14 @@ exist in only one image are retained. Sectors that exist in both
 images, but differ, are added as alternate sectors.
 \
 .TP
-.BI "-n, --new " size
-Create a new image of size \fIsize\fR KiB.
+.BI "-n, --new-dos " size
+Create a new DOS image of size \fIsize\fR KiB. Valid sizes are
+160, 180, 200, 320, 360, 400, 640, 720, 800, 1200, 1440 and 2880.
+\
+.TP
+.BI "-N, --new " "type size"
+Create a new image of type \fItype\fR and size \fIsize\fR. Valid types
+are \fBdos\fR and \fBmac\fR. Valid sizes for mac images are 800 and 1600.
 \
 .TP
 .BI "-o, --output " filename
@@ -161,7 +170,7 @@ Delete all selected sectors.
 .B info
 Print information about the current image (same as \fB-f\fR).
 .TP
-.BI "load "filename"
+.BI "load " filename
 Load the contents of all selected sectors from \fIfilename\fR. The
 contents of the sectors are read sequentially from the file.
 .TP
