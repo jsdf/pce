@@ -47,6 +47,28 @@
 #define HDC_MASK_IRQ 0x02
 
 
+#if DEBUG_HDC >= 1
+static
+void hdc_print_hex (FILE *fp, const char *tag, const unsigned char *buf, unsigned cnt)
+{
+	unsigned i;
+
+	if (tag != NULL) {
+		fputs (tag, fp);
+	}
+
+	for (i = 0; i < cnt; i++) {
+		if ((i & 7) == 0) {
+			fputs ("\n\t", fp);
+		}
+
+		fprintf (fp, " %02X", buf[i]);
+	}
+
+	fputc ('\n', fp);
+}
+#endif
+
 static
 void hdc_set_irq (hdc_t *hdc, unsigned char val)
 {
@@ -799,6 +821,158 @@ void hdc_cmd_wr_buf (hdc_t *hdc)
 }
 
 
+/* Command 11: unknown (Adaptec) */
+
+static
+void hdc_cmd_11 (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  cmd_11\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_done;
+}
+
+
+/* Command 15: set mode (Adaptec) */
+
+static
+void hdc_cmd_set_mode_cont (hdc_t *hdc)
+{
+	unsigned      d, c, h, s, rc, wp, ec, sr;
+	unsigned long size;
+
+#if DEBUG_HDC >= 1
+	hdc_print_hex (stderr, "mode:", hdc->buf, 12);
+#endif
+
+	d = hdc->id.d;
+	c = buf_get_uint16_be (hdc->buf, 1);
+	h = buf_get_uint8 (hdc->buf, 3);
+	s = hdc->drv[d].max_s;
+	rc = buf_get_uint16_be (hdc->buf, 4);
+	wp = buf_get_uint16_be (hdc->buf, 6);
+	ec = buf_get_uint8 (hdc->buf, 8);
+	sr = buf_get_uint8 (hdc->buf, 10);
+
+	size = (unsigned long) c * (unsigned long) h * s;
+
+	pce_log_tag (MSG_INF,
+		"HDC:",
+		"set mode drive %u (c=%u h=%u s=%u rc=%u wp=%u ecc=%u sr=%u size=%lu.%uK)\n",
+		d, c, h, s, rc, wp, ec, sr, size / 2, (size & 1) ? 5 : 0
+	);
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc_cmd_done (hdc);
+}
+
+static
+void hdc_cmd_set_mode_delay (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 12;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_set_mode_cont;
+
+	hdc_request_data (hdc, 0);
+}
+
+static
+void hdc_cmd_set_mode (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  set mode\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->delay = 2048;
+	hdc->cont = hdc_cmd_set_mode_delay;
+
+	hdc_set_dreq (hdc, 0);
+}
+
+
+/* Command 1A: mode sense (Adaptec) */
+
+static
+void hdc_cmd_mode_sense_cont (hdc_t *hdc)
+{
+	unsigned c, h, s;
+	disk_t   *dsk;
+
+	dsk = dsks_get_disk (hdc->dsks, hdc->drv[hdc->id.d].drive);
+
+	if (dsk == NULL) {
+		c = 0;
+		h = 0;
+		s = hdc->sectors;
+	}
+	else {
+		c = dsk->c;
+		h = dsk->h;
+		s = dsk->s;
+	}
+
+	hdc->drv[hdc->id.d].max_c = c;
+	hdc->drv[hdc->id.d].max_h = h;
+	hdc->drv[hdc->id.d].max_s = s;
+
+#if DEBUG_HDC >= 1
+	fprintf (stderr, "HDC: CMD=%02X D=%u  mode sense (chs=%u/%u/%u ecc=8)\n",
+		hdc->cmd[0], hdc->id.d, c, h, s
+	);
+#endif
+
+	buf_set_uint8 (hdc->buf, 0, 0x02);
+	buf_set_uint16_be (hdc->buf, 1, c);
+	buf_set_uint8 (hdc->buf, 3, h);
+	buf_set_uint16_be (hdc->buf, 4, c);
+	buf_set_uint16_be (hdc->buf, 6, c);
+	buf_set_uint8 (hdc->buf, 8, 0x08);
+	buf_set_uint8 (hdc->buf, 9, 0x00);
+	buf_set_uint8 (hdc->buf, 10, 0x03);
+	buf_set_uint8 (hdc->buf, 11, 0x01);
+
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 12;
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_request_data (hdc, 1);
+}
+
+static
+void hdc_cmd_mode_sense (hdc_t *hdc)
+{
+	hdc->id.d = (hdc->cmd[1] >> 5) & 1;
+
+#if DEBUG_HDC >= 2
+	fprintf (stderr, "HDC: CMD=%02X D=%u  mode sense\n",
+		hdc->cmd[0], hdc->id.d
+	);
+#endif
+
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_mode_sense_cont;
+}
+
+
 /* Command E0: ram diagnostics */
 
 static
@@ -935,19 +1109,9 @@ void hdc_cmd_fd (hdc_t *hdc)
 static
 void hdc_cmd_fe_cont (hdc_t *hdc)
 {
-	unsigned i;
-
-	fprintf (stderr, "config:");
-
-	for (i = 0; i < 64; i++) {
-		if ((i & 7) == 0) {
-			fprintf (stderr, "\n");
-		}
-
-		fprintf (stderr, " %02X", hdc->buf[i]);
-	}
-
-	fprintf (stderr, "\n");
+#if DEBUG_HDC >= 1
+	hdc_print_hex (stderr, "config parameters:", hdc->buf, 64);
+#endif
 
 	hdc_cmd_done (hdc);
 }
@@ -1206,6 +1370,18 @@ void hdc_set_command (hdc_t *hdc, unsigned char val)
 
 	case 0x0f:
 		hdc_cmd_wr_buf (hdc);
+		break;
+
+	case 0x11:
+		hdc_cmd_11 (hdc);
+		break;
+
+	case 0x15:
+		hdc_cmd_set_mode (hdc);
+		break;
+
+	case 0x1a:
+		hdc_cmd_mode_sense (hdc);
 		break;
 
 	case 0xe0:
