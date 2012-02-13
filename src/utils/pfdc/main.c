@@ -137,6 +137,8 @@ void print_help (void)
 		"  reorder s1,s2,...      Reorder sectors in a track\n"
 		"  rotate first           Rotate tracks\n"
 		"  save filename          Save individual sectors\n"
+		"  sort                   Sort sectors on tracks\n"
+		"  sort-reverse           Sort sectors on tracks in reverse order\n"
 		"  tags-load filename     Load sector tags\n"
 		"  tags-save filename     Save sector tags\n"
 		"\n"
@@ -1024,6 +1026,62 @@ int pfdc_rotate_tracks (pfdc_img_t *img, unsigned first)
 
 	if (r) {
 		fprintf (stderr, "%s: rotating failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
+int pfdc_sort_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
+	unsigned c, unsigned h, void *opaque)
+{
+	int        v, *rev;
+	unsigned   i, j;
+	pfdc_sct_t *tmp;
+
+	par_cnt += 1;
+
+	rev = opaque;
+
+	for (i = 1; i < trk->sct_cnt; i++) {
+		j = i;
+
+		tmp = trk->sct[i];
+
+		while (j > 0) {
+			v = (tmp->s < trk->sct[j - 1]->s);
+
+			if (*rev ? v : !v) {
+				break;
+			}
+
+			trk->sct[j] = trk->sct[j - 1];
+
+			j -= 1;
+		}
+
+		trk->sct[j] = tmp;
+	}
+
+	return (0);
+}
+
+static
+int pfdc_sort_tracks (pfdc_img_t *img, int reverse)
+{
+	int r;
+
+	par_cnt = 0;
+
+	r = pfdc_for_all_tracks (img, pfdc_sort_track_cb, &reverse);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: sort %lu tracks\n", arg0, par_cnt);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: sort failed\n", arg0);
 	}
 
 	return (r);
@@ -1931,6 +1989,12 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "new") == 0) {
 		r = pfdc_new (img);
+	}
+	else if (strcmp (op, "sort") == 0) {
+		r = pfdc_sort_tracks (*img, 0);
+	}
+	else if (strcmp (op, "sort-reverse") == 0) {
+		r = pfdc_sort_tracks (*img, 1);
 	}
 
 	if (r != -1) {
