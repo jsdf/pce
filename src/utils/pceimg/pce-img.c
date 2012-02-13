@@ -37,6 +37,8 @@
 #include <drivers/block/blkqed.h>
 #include <drivers/block/blkdosem.h>
 
+#include <drivers/pfdc/pfdc-img.h>
+
 #include <lib/getopt.h>
 
 
@@ -168,14 +170,14 @@ unsigned pce_get_disk_type_ext (const char *str)
 	else if (strcasecmp (ext, "pimg") == 0) {
 		return (DSK_PCE);
 	}
-	else if (strcasecmp (ext, "pfdc") == 0) {
-		return (DSK_PFDC);
-	}
 	else if (strcasecmp (ext, "qed") == 0) {
 		return (DSK_QED);
 	}
 	else if (strcasecmp (ext, "raw") == 0) {
 		return (DSK_RAW);
+	}
+	else if (pfdc_guess_type (str) != PFDC_FORMAT_NONE) {
+		return (DSK_PFDC);
 	}
 
 	return (DSK_NONE);
@@ -285,7 +287,7 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));
 
 	case DSK_PFDC:
-		return (1);
+		return (dsk_fdc_create (name, PFDC_FORMAT_NONE, c, h, s));
 	}
 
 	return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
