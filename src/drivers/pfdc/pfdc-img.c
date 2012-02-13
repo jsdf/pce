@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pfdc/pfdc-img-io.c                                 *
- * Created:     2010-08-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/pfdc/pfdc-img.c                                  *
+ * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,67 +24,22 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <drivers/pfdc/pfdc-img-ana.h>
-#include <drivers/pfdc/pfdc-img-cp2.h>
-#include <drivers/pfdc/pfdc-img-dc42.h>
-#include <drivers/pfdc/pfdc-img-imd.h>
-#include <drivers/pfdc/pfdc-img-pfdc.h>
-#include <drivers/pfdc/pfdc-img-raw.h>
-#include <drivers/pfdc/pfdc-img-tc.h>
-#include <drivers/pfdc/pfdc-img-td0.h>
+#include "pfdc.h"
+#include "pfdc-img.h"
+#include "pfdc-img-ana.h"
+#include "pfdc-img-cp2.h"
+#include "pfdc-img-dc42.h"
+#include "pfdc-img-imd.h"
+#include "pfdc-img-pfdc.h"
+#include "pfdc-img-raw.h"
+#include "pfdc-img-tc.h"
+#include "pfdc-img-td0.h"
 
-#include "pfdc-img-io.h"
 
-
-static
-int pfdc_get_file_size (const char *fname, unsigned long *size)
-{
-	FILE *fp;
-
-	fp = fopen (fname, "rb");
-
-	if (fp == NULL) {
-		return (1);
-	}
-
-	if (fseek (fp, 0, SEEK_END) != 0) {
-		fclose (fp);
-		return (1);
-	}
-
-	*size = ftell (fp);
-
-	fclose (fp);
-
-	return (0);
-}
-
-static
-int pfdc_is_raw (const char *fname)
-{
-	unsigned long size;
-	unsigned      c, h, s;
-
-	if (pfdc_get_file_size (fname, &size)) {
-		return (0);
-	}
-
-	if (pfdc_get_geometry_from_size (size, &c, &h, &s)) {
-		return (0);
-	}
-
-	return (1);
-}
-
-static
-unsigned pfdc_get_type (unsigned type, const char *fname, int save)
+unsigned pfdc_guess_type (const char *fname)
 {
 	unsigned   i;
 	const char *ext;
-
-	if (type != PFDC_FORMAT_NONE) {
-		return (type);
-	}
 
 	ext = "";
 
@@ -98,7 +53,7 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 	}
 
 	if (strcasecmp (ext, ".ana") == 0) {
-		return (PFDC_FORMAT_ANA);
+		return (PFDC_FORMAT_ANADISK);
 	}
 	else if (strcasecmp (ext, ".cp2") == 0) {
 		return (PFDC_FORMAT_CP2);
@@ -112,6 +67,9 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 	else if (strcasecmp (ext, ".imd") == 0) {
 		return (PFDC_FORMAT_IMD);
 	}
+	else if (strcasecmp (ext, ".img") == 0) {
+		return (PFDC_FORMAT_RAW);
+	}
 	else if (strcasecmp (ext, ".raw") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
@@ -122,69 +80,56 @@ unsigned pfdc_get_type (unsigned type, const char *fname, int save)
 		return (PFDC_FORMAT_TD0);
 	}
 
-	if (save == 0) {
-		if (strcasecmp (ext, ".img") == 0) {
-			if (pfdc_is_raw (fname)) {
-				return (PFDC_FORMAT_RAW);
-			}
-		}
-	}
-
 	return (PFDC_FORMAT_PFDC);
 }
 
-pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type)
+pfdc_img_t *pfdc_load_fp (FILE *fp, unsigned type)
 {
-	pfdc_img_t *img;
-
-	img = NULL;
-
 	switch (type) {
+	case PFDC_FORMAT_ANADISK:
+		return (pfdc_load_anadisk (fp));
+
+	case PFDC_FORMAT_CP2:
+		return (pfdc_load_cp2 (fp));
+
+	case PFDC_FORMAT_DC42:
+		return (pfdc_load_dc42 (fp));
+
+	case PFDC_FORMAT_IMD:
+		return (pfdc_load_imd (fp));
+
+	case PFDC_FORMAT_PFDC:
 	case PFDC_FORMAT_PFDC0:
 	case PFDC_FORMAT_PFDC1:
 	case PFDC_FORMAT_PFDC2:
 	case PFDC_FORMAT_PFDC4:
-		img = pfdc_load_pfdc (fp);
-		break;
-
-	case PFDC_FORMAT_ANA:
-		img = pfdc_load_anadisk (fp);
-		break;
-
-	case PFDC_FORMAT_CP2:
-		img = pfdc_load_cp2 (fp);
-		break;
-
-	case PFDC_FORMAT_DC42:
-		img = pfdc_load_dc42 (fp);
-		break;
-
-	case PFDC_FORMAT_IMD:
-		img = pfdc_load_imd (fp);
-		break;
+		return (pfdc_load_pfdc (fp));
 
 	case PFDC_FORMAT_RAW:
-		img = pfdc_load_raw (fp);
-		break;
+		return (pfdc_load_raw (fp));
 
 	case PFDC_FORMAT_TC:
-		img = pfdc_load_tc (fp);
-		break;
+		return (pfdc_load_tc (fp));
 
 	case PFDC_FORMAT_TD0:
-		img = pfdc_load_td0 (fp);
-		break;
+		return (pfdc_load_td0 (fp));
 	}
 
-	return (img);
+	return (NULL);
 }
 
-pfdc_img_t *pfdc_img_load (const char *fname, unsigned type)
+pfdc_img_t *pfdc_load (const char *fname, unsigned type)
 {
 	FILE       *fp;
 	pfdc_img_t *img;
 
-	type = pfdc_get_type (type, fname, 0);
+	if (type == PFDC_FORMAT_NONE) {
+		type = pfdc_probe (fname);
+	}
+
+	if (type == PFDC_FORMAT_NONE) {
+		type = pfdc_guess_type (fname);
+	}
 
 	fp = fopen (fname, "rb");
 
@@ -192,16 +137,32 @@ pfdc_img_t *pfdc_img_load (const char *fname, unsigned type)
 		return (NULL);
 	}
 
-	img = pfdc_img_load_fp (fp, type);
+	img = pfdc_load_fp (fp, type);
 
 	fclose (fp);
 
 	return (img);
 }
 
-int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
+
+int pfdc_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 {
 	switch (type) {
+	case PFDC_FORMAT_ANADISK:
+		return (pfdc_save_anadisk (fp, img));
+
+	case PFDC_FORMAT_CP2:
+		return (pfdc_save_cp2 (fp, img));
+
+	case PFDC_FORMAT_DC42:
+		return (pfdc_save_dc42 (fp, img));
+
+	case PFDC_FORMAT_IMD:
+		return (pfdc_save_imd (fp, img));
+
+	case PFDC_FORMAT_PFDC:
+		return (pfdc_save_pfdc (fp, img, -1));
+
 	case PFDC_FORMAT_PFDC0:
 		return (pfdc_save_pfdc (fp, img, 0));
 
@@ -214,18 +175,6 @@ int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 	case PFDC_FORMAT_PFDC4:
 		return (pfdc_save_pfdc (fp, img, 4));
 
-	case PFDC_FORMAT_ANA:
-		return (pfdc_save_anadisk (fp, img));
-
-	case PFDC_FORMAT_CP2:
-		return (pfdc_save_cp2 (fp, img));
-
-	case PFDC_FORMAT_DC42:
-		return (pfdc_save_dc42 (fp, img));
-
-	case PFDC_FORMAT_IMD:
-		return (pfdc_save_imd (fp, img));
-
 	case PFDC_FORMAT_RAW:
 		return (pfdc_save_raw (fp, img));
 
@@ -236,12 +185,14 @@ int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 	return (1);
 }
 
-int pfdc_img_save (const char *fname, const pfdc_img_t *img, unsigned type)
+int pfdc_save (const char *fname, const pfdc_img_t *img, unsigned type)
 {
 	int  r;
 	FILE *fp;
 
-	type = pfdc_get_type (type, fname, 1);
+	if (type == PFDC_FORMAT_NONE) {
+		type = pfdc_guess_type (fname);
+	}
 
 	fp = fopen (fname, "wb");
 
@@ -249,7 +200,47 @@ int pfdc_img_save (const char *fname, const pfdc_img_t *img, unsigned type)
 		return (1);
 	}
 
-	r = pfdc_img_save_fp (fp, img, type);
+	r = pfdc_save_fp (fp, img, type);
+
+	fclose (fp);
+
+	return (r);
+}
+
+
+unsigned pfdc_probe_fp (FILE *fp)
+{
+	if (pfdc_probe_pfdc_fp (fp)) {
+		return (PFDC_FORMAT_PFDC);
+	}
+
+	if (pfdc_probe_td0_fp (fp)) {
+		return (PFDC_FORMAT_TD0);
+	}
+
+	if (pfdc_probe_imd_fp (fp)) {
+		return (PFDC_FORMAT_IMD);
+	}
+
+	if (pfdc_probe_dc42_fp (fp)) {
+		return (PFDC_FORMAT_DC42);
+	}
+
+	return (PFDC_FORMAT_NONE);
+}
+
+unsigned pfdc_probe (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (PFDC_FORMAT_NONE);
+	}
+
+	r = pfdc_probe_fp (fp);
 
 	fclose (fp);
 

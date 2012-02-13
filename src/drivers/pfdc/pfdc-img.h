@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pfdc/pfdc-img-io.h                                 *
- * Created:     2010-08-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/pfdc/pfdc-img.h                                  *
+ * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,35 +20,38 @@
  *****************************************************************************/
 
 
-#ifndef PFDC_IMG_IO_H
-#define PFDC_IMG_IO_H 1
+#ifndef PCE_DRV_PFDC_IMG_H
+#define PCE_DRV_PFDC_IMG_H 1
 
 
 #include <drivers/pfdc/pfdc.h>
 
 
-#define PFDC_FORMAT_NONE  0
-#define PFDC_FORMAT_PFDC0 1
-#define PFDC_FORMAT_PFDC1 2
-#define PFDC_FORMAT_PFDC2 3
-#define PFDC_FORMAT_PFDC4 4
-#define PFDC_FORMAT_PFDC  4
-#define PFDC_FORMAT_ANA   5
-#define PFDC_FORMAT_CP2   6
-#define PFDC_FORMAT_DC42  7
-#define PFDC_FORMAT_IMD   8
-#define PFDC_FORMAT_RAW   9
-#define PFDC_FORMAT_TC    10
-#define PFDC_FORMAT_TD0   11
+#define PFDC_FORMAT_NONE    0
+#define PFDC_FORMAT_ANADISK 1
+#define PFDC_FORMAT_CP2     2
+#define PFDC_FORMAT_DC42    3
+#define PFDC_FORMAT_IMD     4
+#define PFDC_FORMAT_PFDC    5
+#define PFDC_FORMAT_PFDC0   6
+#define PFDC_FORMAT_PFDC1   7
+#define PFDC_FORMAT_PFDC2   8
+#define PFDC_FORMAT_PFDC4   9
+#define PFDC_FORMAT_RAW     10
+#define PFDC_FORMAT_TC      11
+#define PFDC_FORMAT_TD0     12
 
 
-pfdc_img_t *pfdc_img_load_fp (FILE *fp, unsigned type);
+unsigned pfdc_guess_type (const char *fname);
 
-pfdc_img_t *pfdc_img_load (const char *fname, unsigned type);
+pfdc_img_t *pfdc_load_fp (FILE *fp, unsigned type);
+pfdc_img_t *pfdc_load (const char *fname, unsigned type);
 
-int pfdc_img_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type);
+int pfdc_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type);
+int pfdc_save (const char *fname, const pfdc_img_t *img, unsigned type);
 
-int pfdc_img_save (const char *fname, const pfdc_img_t *img, unsigned type);
+unsigned pfdc_probe_fp (FILE *fp);
+unsigned pfdc_probe (const char *fname);
 
 
 #endif

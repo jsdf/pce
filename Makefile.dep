@@ -1702,6 +1702,18 @@ src/drivers/pfdc/pfdc-img-td0.o: src/drivers/pfdc/pfdc-img-td0.c \
 	src/drivers/pfdc/pfdc-io.h \
 	src/drivers/pfdc/pfdc.h
 
+src/drivers/pfdc/pfdc-img.o: src/drivers/pfdc/pfdc-img.c \
+	src/drivers/pfdc/pfdc-img-ana.h \
+	src/drivers/pfdc/pfdc-img-cp2.h \
+	src/drivers/pfdc/pfdc-img-dc42.h \
+	src/drivers/pfdc/pfdc-img-imd.h \
+	src/drivers/pfdc/pfdc-img-pfdc.h \
+	src/drivers/pfdc/pfdc-img-raw.h \
+	src/drivers/pfdc/pfdc-img-tc.h \
+	src/drivers/pfdc/pfdc-img-td0.h \
+	src/drivers/pfdc/pfdc-img.h \
+	src/drivers/pfdc/pfdc.h
+
 src/drivers/pfdc/pfdc-io.o: src/drivers/pfdc/pfdc-io.c \
 	src/drivers/pfdc/pfdc-io.h
 
@@ -1921,19 +1933,7 @@ src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 src/utils/pfdc/main.o: src/utils/pfdc/main.c \
 	src/config.h \
 	src/drivers/pfdc/pfdc-img-raw.h \
+	src/drivers/pfdc/pfdc-img.h \
 	src/drivers/pfdc/pfdc.h \
 	src/lib/getopt.h \
-	src/utils/pfdc/main.h \
-	src/utils/pfdc/pfdc-img-io.h
-
-src/utils/pfdc/pfdc-img-io.o: src/utils/pfdc/pfdc-img-io.c \
-	src/drivers/pfdc/pfdc-img-ana.h \
-	src/drivers/pfdc/pfdc-img-cp2.h \
-	src/drivers/pfdc/pfdc-img-dc42.h \
-	src/drivers/pfdc/pfdc-img-imd.h \
-	src/drivers/pfdc/pfdc-img-pfdc.h \
-	src/drivers/pfdc/pfdc-img-raw.h \
-	src/drivers/pfdc/pfdc-img-tc.h \
-	src/drivers/pfdc/pfdc-img-td0.h \
-	src/drivers/pfdc/pfdc.h \
-	src/utils/pfdc/pfdc-img-io.h
+	src/utils/pfdc/main.h

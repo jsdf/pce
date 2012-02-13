@@ -29,9 +29,10 @@
 #include <lib/getopt.h>
 
 #include "main.h"
+
 #include <drivers/pfdc/pfdc.h>
 #include <drivers/pfdc/pfdc-img-raw.h>
-#include "pfdc-img-io.h"
+#include <drivers/pfdc/pfdc-img.h>
 
 
 #define PFDC_TRK_ALTERNATE (1 << 0)
@@ -1206,7 +1207,7 @@ int pfdc_merge_image (pfdc_img_t *img, const char *fname)
 	int        r;
 	pfdc_img_t *src;
 
-	src = pfdc_img_load (fname, par_fmt_inp);
+	src = pfdc_load (fname, PFDC_FORMAT_NONE);
 
 	if (src == NULL) {
 		fprintf (stderr, "%s: loading image failed (%s)\n",
@@ -2025,7 +2026,7 @@ pfdc_img_t *pfdc_load_image (const char *fname)
 		fprintf (stderr, "%s: load image from %s\n", arg0, fname);
 	}
 
-	img = pfdc_img_load (fname, par_fmt_inp);
+	img = pfdc_load (fname, par_fmt_inp);
 
 	if (img == NULL) {
 		fprintf (stderr, "%s: loading failed (%s)\n", arg0, fname);
@@ -2069,7 +2070,7 @@ int pfdc_set_format (const char *name, unsigned *val)
 		*val = PFDC_FORMAT_PFDC4;
 	}
 	else if (strcmp (name, "ana") == 0) {
-		*val = PFDC_FORMAT_ANA;
+		*val = PFDC_FORMAT_ANADISK;
 	}
 	else if (strcmp (name, "dc42") == 0) {
 		*val = PFDC_FORMAT_DC42;
@@ -2317,7 +2318,7 @@ int main (int argc, char **argv)
 			fprintf (stderr, "%s: save image to %s\n", arg0, out);
 		}
 
-		r = pfdc_img_save (out, img, par_fmt_out);
+		r = pfdc_save (out, img, par_fmt_out);
 
 		if (r) {
 			fprintf (stderr, "%s: saving failed (%s)\n",

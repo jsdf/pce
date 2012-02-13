@@ -5,7 +5,7 @@ rel := src/utils/pfdc
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-PFDC_BAS := main pfdc-img-io
+PFDC_BAS := main
 PFDC_SRC := $(foreach f,$(PFDC_BAS),$(rel)/$(f).c)
 PFDC_OBJ := $(foreach f,$(PFDC_BAS),$(rel)/$(f).o)
 PFDC_HDR := $(foreach f,$(PFDC_BAS),$(rel)/$(f).h)
@@ -22,7 +22,6 @@ CLN  += $(PFDC_BIN) $(PFDC_OBJ)
 DIST += $(PFDC_SRC) $(PFDC_HDR) $(PFDC_MAN1)
 
 $(rel)/main.o:		$(rel)/main.c
-$(rel)/pfdc-img-io.o:	$(rel)/pfdc-img-io.c
 
 $(rel)/pfdc$(EXEEXT): $(PFDC_OBJ_EXT) $(PFDC_OBJ)
 	$(QP)echo "  LD     $@"
