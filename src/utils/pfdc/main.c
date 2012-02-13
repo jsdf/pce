@@ -141,7 +141,7 @@ void print_help (void)
 		"  pfdc, ana, cp2, dc42, imd, raw, td0\n"
 		"\n"
 		"sector attributes are:\n"
-		"  crc-id, crc-data, del-dam, fm, fm-hd, gcr, mfm, mfm-hd, mfm-ed, no-dam, size, c, h, s\n",
+		"  crc-id, crc-data, del-dam, fm, fm-hd, gcr, mfm, mfm-hd, mfm-ed, no-dam, size, tags, c, h, s\n",
 		stdout
 	);
 
@@ -1687,6 +1687,25 @@ int pfdc_edit_data_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
+int pfdc_edit_tags_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	unsigned char buf[12];
+
+	if ((*(unsigned long *) p) != 0) {
+		pfdc_sct_get_tags (sct, buf, 12);
+		pfdc_sct_set_tags (sct, buf, 12);
+	}
+	else {
+		pfdc_sct_set_tags (sct, buf, 0);
+	}
+
+	par_cnt += 1;
+
+	return (0);
+}
+
+static
 int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 {
 	int           r;
@@ -1748,6 +1767,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "size") == 0) {
 		fct = pfdc_edit_size_cb;
+	}
+	else if (strcmp (what, "tags") == 0) {
+		fct = pfdc_edit_tags_cb;
 	}
 	else {
 		fprintf (stderr, "%s: unknown field (%s)\n", arg0, what);
