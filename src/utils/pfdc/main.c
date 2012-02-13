@@ -122,8 +122,7 @@ void print_help (void)
 	);
 
 	fputs (
-		"\n"
-		"operations are:\n"
+		"\noperations are:\n"
 		"  comment-add text       Add to the image comment\n"
 		"  comment-load filename  Load the image comment from a file\n"
 		"  comment-print          Print the image comment\n"
@@ -140,13 +139,21 @@ void print_help (void)
 		"  sort                   Sort sectors on tracks\n"
 		"  sort-reverse           Sort sectors on tracks in reverse order\n"
 		"  tags-load filename     Load sector tags\n"
-		"  tags-save filename     Save sector tags\n"
-		"\n"
-		"file formats are:\n"
-		"  pfdc, ana, cp2, dc42, imd, raw, td0\n"
-		"\n"
-		"sector attributes are:\n"
-		"  crc-id, crc-data, del-dam, fm, fm-hd, gcr, mfm, mfm-hd, mfm-ed, no-dam, size, tags, c, h, s\n",
+		"  tags-save filename     Save sector tags\n",
+		stdout
+	);
+
+	fputs (
+		"\nfile formats are:\n"
+		"  pfdc, ana, cp2, dc42, imd, raw, td0\n",
+		stdout
+	);
+
+	fputs (
+		"\nsector attributes are:\n"
+		"  c, crc-id, crc-data, del-dam, "
+		"fm, fm-hd, gcr, h, mfm, mfm-hd, mfm-ed, "
+		"no-dam, s, size, tags\n",
 		stdout
 	);
 
