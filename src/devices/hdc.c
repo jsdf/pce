@@ -127,8 +127,6 @@ void hdc_request_status (hdc_t *hdc)
 	hdc->delay = 0;
 	hdc->cont = NULL;
 
-	hdc->set_tc = NULL;
-
 	hdc_set_dreq (hdc, 0);
 	hdc_set_irq (hdc, 1);
 }
@@ -482,20 +480,6 @@ void hdc_cmd_fmttrk (hdc_t *hdc)
 static void hdc_cmd_read_next (hdc_t *hdc);
 
 static
-void hdc_cmd_read_tc (hdc_t *hdc)
-{
-	hdc->buf_idx = 0;
-	hdc->buf_cnt = 0;
-
-	hdc->result = 0;
-
-	hdc->delay = 0;
-	hdc->cont = NULL;
-
-	hdc_cmd_done (hdc);
-}
-
-static
 void hdc_cmd_read_error (hdc_t *hdc, unsigned code)
 {
 	fprintf (stderr, "hdc: read error (d=%u)\n", hdc->id.d);
@@ -581,8 +565,6 @@ void hdc_cmd_read (hdc_t *hdc)
 	);
 #endif
 
-	hdc->set_tc = hdc_cmd_read_tc;
-
 	hdc->delay = 4096;
 	hdc->cont = hdc_cmd_read_next;
 }
@@ -591,20 +573,6 @@ void hdc_cmd_read (hdc_t *hdc)
 /* Command 0A: write */
 
 static void hdc_cmd_write_next (hdc_t *hdc);
-
-static
-void hdc_cmd_write_tc (hdc_t *hdc)
-{
-	hdc->buf_idx = 0;
-	hdc->buf_cnt = 0;
-
-	hdc->result = 0;
-
-	hdc->delay = 0;
-	hdc->cont = NULL;
-
-	hdc_cmd_done (hdc);
-}
 
 static
 void hdc_cmd_write_error (hdc_t *hdc, unsigned code)
@@ -624,8 +592,6 @@ void hdc_cmd_write_delay (hdc_t *hdc)
 
 	hdc->delay = 0;
 	hdc->cont = hdc_cmd_write_next;
-
-	hdc->set_tc = hdc_cmd_write_tc;
 
 	hdc_request_data (hdc, 0);
 }
@@ -693,8 +659,6 @@ void hdc_cmd_write (hdc_t *hdc)
 		hdc->id.c, hdc->id.h, hdc->id.s + 1, hdc->id.n
 	);
 #endif
-
-	hdc->set_tc = hdc_cmd_write_tc;
 
 	hdc->delay = 4096;
 	hdc->cont = hdc_cmd_write_delay;
@@ -1165,7 +1129,6 @@ void hdc_select (hdc_t *hdc)
 
 	hdc->delay = 0;
 	hdc->cont = NULL;
-	hdc->set_tc = NULL;
 
 	hdc_set_dreq (hdc, 0);
 	hdc_set_irq (hdc, 0);
@@ -1372,21 +1335,6 @@ void hdc_set_uint16 (hdc_t *hdc, unsigned long addr, unsigned val)
 {
 }
 
-void hdc_set_tc (hdc_t *hdc, unsigned char val)
-{
-	if (val == 0) {
-		return;
-	}
-
-#if DEBUG_HDC >= 3
-	fprintf (stderr, "HDC: TC\n");
-#endif
-
-	if (hdc->set_tc != NULL) {
-		hdc->set_tc (hdc);
-	}
-}
-
 hdc_t *hdc_new (unsigned long addr)
 {
 	hdc_t *hdc;
@@ -1418,7 +1366,6 @@ hdc_t *hdc_new (unsigned long addr)
 	hdc->delay = 0;
 
 	hdc->cont = NULL;
-	hdc->set_tc = NULL;
 
 	hdc->irq_val = 0;
 	hdc->irq_ext = NULL;

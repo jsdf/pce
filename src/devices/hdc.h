@@ -77,7 +77,6 @@ typedef struct hdc_t {
 	unsigned long  delay;
 
 	void           (*cont) (struct hdc_t *hdc);
-	void           (*set_tc) (struct hdc_t *hdc);
 
 	unsigned char  irq_val;
 	void           *irq_ext;

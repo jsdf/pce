@@ -1242,8 +1242,6 @@ void pc_setup_hdc (ibmpc_t *pc, ini_sct_t *ini)
 	hdc_set_irq_fct (pc->hdc, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	hdc_set_dreq_fct (pc->hdc, &pc->dma, e8237_set_dreq3);
 
-	e8237_set_tc_fct (&pc->dma, 3, pc->hdc, hdc_set_tc);
-
 	pc->dma.chn[3].iord_ext = pc->hdc;
 	pc->dma.chn[3].iord = (void *) hdc_read_data;
 
