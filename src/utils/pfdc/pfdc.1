@@ -1,4 +1,4 @@
-.TH PFDC 1 "2012-02-12" "HH" "pce"
+.TH PFDC 1 "2012-02-13" "HH" "pce"
 \
 .SH NAME
 pfdc \- convert and modify PFDC floppy disk image files
@@ -27,6 +27,9 @@ value enables it.
 Recognized attributes are:
 .RS
 .TP
+.B c
+The cylinder number in the sector ID.
+.TP
 .B crc-id
 The ID field contains a CRC error.
 .TP
@@ -36,26 +39,38 @@ The data field contains a CRC error.
 .B del-dam
 The sector has a deleted data address mark.
 .TP
-.B data-rate
-The data rate in bits per second.
+.B data
+Initialize the sector data with \fIval\fR.
 .TP
 .B fm
-The sector uses FM encoding.
+The sector uses IBM single density FM encoding.
 .TP
-.B mfm
-The sector uses MFM encoding.
-.TP
-.B size
-The sector size in bytes.
-.TP
-.B c
-The cylinder number in the sector ID.
+.B gcr
+The sector uses Macintosh GCR encoding.
 .TP
 .B h
 The head number in the sector ID.
 .TP
+.B mfm
+The sector uses IBM double density MFM encoding.
+.TP
+.B mfm-hd
+The sector uses IBM high density MFM encoding.
+.TP
+.B mfm-ed
+The sector uses IBM extra high density MFM encoding.
+.TP
+.B no-dam
+The sector has a missing data address mark.
+.TP
 .B s
 The sector number in the sector ID.
+.TP
+.B size
+The sector size in bytes.
+.TP
+.B tags
+If \fIval\fR is zero, remove sector tags, otherwise add sector tags.
 .RE
 \
 .TP
@@ -170,6 +185,9 @@ Delete all selected sectors.
 .B info
 Print information about the current image (same as \fB-f\fR).
 .TP
+.BI "interleave " n
+Set the sector interleave on all selected tracks to \fIn\fR.
+.TP
 .BI "load " filename
 Load the contents of all selected sectors from \fIfilename\fR. The
 contents of the sectors are read sequentially from the file.
@@ -190,6 +208,22 @@ the track.
 .BI "save " filename
 Save all selected sectors to \fIfilename\fR. The contents of the
 sectors are written sequentially to the file.
+.TP
+.B sort
+Sort the sectors on all selected tracks in ascending order.
+.TP
+.B sort-reverse
+Sort the sectors on all selected tracks in descending order.
+.TP
+.BI "tags-load " filename
+Load the sector tags for all selected sectors from \fIfilename\fR.
+For each sector 12 bytes are read, in the order in which the
+sectors appear on the track.
+.TP
+.BI "tags-save " filename
+Save the sector tags for all selected sectors to \fIfilename\fR.
+For each sector 12 bytes are written, in the order in which the
+sectors appear on the track.
 .RE
 \
 .TP
