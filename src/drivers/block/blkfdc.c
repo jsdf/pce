@@ -589,6 +589,90 @@ disk_t *dsk_fdc_open (const char *fname, unsigned type, int ro)
 	return (dsk);
 }
 
+
+static
+int dsk_fdc_init_pfdc (pfdc_img_t *img, unsigned long c, unsigned long h, unsigned long s)
+{
+	unsigned   ci, hi, si;
+	pfdc_trk_t *trk;
+	pfdc_sct_t *sct;
+
+	if ((c > 65535) || (h > 65535) || (s > 65535)) {
+		return (1);
+	}
+
+	for (ci = 0; ci < c; ci++) {
+		for (hi = 0; hi < h; hi++) {
+			trk = pfdc_img_get_track (img, ci, hi, 1);
+
+			if (trk == NULL) {
+				return (1);
+			}
+
+			for (si = 0; si < s; si++) {
+				sct = pfdc_sct_new (ci, hi, si + 1, 512);
+
+				if (sct == NULL) {
+					return (1);
+				}
+
+				pfdc_sct_fill (sct, 0);
+				pfdc_sct_set_encoding (sct, 0);
+
+				pfdc_trk_add_sector (trk, sct);
+			}
+		}
+	}
+
+	return (0);
+}
+
+int dsk_fdc_create_fp (FILE *fp, unsigned type, uint32_t c, uint32_t h, uint32_t s)
+{
+	int        r;
+	pfdc_img_t *img;
+
+	img = pfdc_img_new();
+
+	if (img == NULL) {
+		return (1);
+	}
+
+	if (dsk_fdc_init_pfdc (img, c, h, s)) {
+		pfdc_img_del (img);
+		return (1);
+	}
+
+	r = pfdc_save_fp (fp, img, type);
+
+	pfdc_img_del (img);
+
+	return (r);
+}
+
+int dsk_fdc_create (const char *name, unsigned type, uint32_t c, uint32_t h, uint32_t s)
+{
+	int  r;
+	FILE *fp;
+
+	if (type == PFDC_FORMAT_NONE) {
+		type = pfdc_guess_type (name);
+	}
+
+	fp = fopen (name, "wb");
+
+	if (fp == NULL) {
+		return (1);
+	}
+
+	r = dsk_fdc_create_fp (fp, type, c, h, s);
+
+	fclose (fp);
+
+	return (r);
+}
+
+
 unsigned dsk_fdc_probe_fp (FILE *fp)
 {
 	return (pfdc_probe_fp (fp));

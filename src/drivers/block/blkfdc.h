@@ -99,6 +99,10 @@ disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type, int ro);
 disk_t *dsk_fdc_open (const char *fname, unsigned type, int ro);
 
 
+int dsk_fdc_create_fp (FILE *fp, unsigned type, uint32_t c, uint32_t h, uint32_t s);
+int dsk_fdc_create (const char *fname, unsigned type, uint32_t c, uint32_t h, uint32_t s);
+
+
 unsigned dsk_fdc_probe_fp (FILE *fp);
 unsigned dsk_fdc_probe (const char *fname);
 
