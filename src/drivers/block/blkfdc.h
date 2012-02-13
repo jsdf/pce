@@ -29,6 +29,7 @@
 #include <drivers/block/block.h>
 
 #include <drivers/pfdc/pfdc.h>
+#include <drivers/pfdc/pfdc-img.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -48,17 +49,16 @@
  * @short The fdc disk structure
  *****************************************************************************/
 typedef struct {
-	disk_t         dsk;
+	disk_t     dsk;
 
-	pfdc_img_t     *img;
+	pfdc_img_t *img;
 
-	char           dirty;
+	char       dirty;
 
-	unsigned       encoding;
+	unsigned   encoding;
 
-	unsigned       type;
-	char           *fname;
-	FILE           *fp;
+	unsigned   type;
+	char       *fname;
 } disk_fdc_t;
 
 
@@ -94,32 +94,13 @@ int dsk_fdc_read_id (disk_fdc_t *fdc,
 	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt
 );
 
-disk_t *dsk_fdc_open_pfdc_fp (FILE *fp, int ro);
-disk_t *dsk_fdc_open_pfdc (const char *fname, int ro);
 
-disk_t *dsk_fdc_open_anadisk_fp (FILE *fp, int ro);
-disk_t *dsk_fdc_open_anadisk (const char *fname, int ro);
+disk_t *dsk_fdc_open_fp (FILE *fp, unsigned type, int ro);
+disk_t *dsk_fdc_open (const char *fname, unsigned type, int ro);
 
-disk_t *dsk_fdc_open_dc42_fp (FILE *fp, int ro);
-disk_t *dsk_fdc_open_dc42 (const char *fname, int ro);
 
-disk_t *dsk_fdc_open_imd_fp (FILE *fp, int ro);
-disk_t *dsk_fdc_open_imd (const char *fname, int ro);
-
-disk_t *dsk_fdc_open_td0_fp (FILE *fp, int ro);
-disk_t *dsk_fdc_open_td0 (const char *fname, int ro);
-
-int dsk_fdc_probe_pfdc_fp (FILE *fp);
-int dsk_fdc_probe_pfdc (const char *fname);
-
-int dsk_fdc_probe_dc42_fp (FILE *fp);
-int dsk_fdc_probe_dc42 (const char *fname);
-
-int dsk_fdc_probe_imd_fp (FILE *fp);
-int dsk_fdc_probe_imd (const char *fname);
-
-int dsk_fdc_probe_td0_fp (FILE *fp);
-int dsk_fdc_probe_td0 (const char *fname);
+unsigned dsk_fdc_probe_fp (FILE *fp);
+unsigned dsk_fdc_probe (const char *fname);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+
+#include <drivers/pfdc/pfdc-img.h>
 
 
 uint16_t dsk_get_uint16_be (const void *buf, unsigned i)
@@ -689,20 +691,7 @@ int dsk_guess_geometry (disk_t *dsk)
 
 disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 {
-	unsigned   i;
-	disk_t     *dsk;
-	const char *ext;
-
-	ext = "";
-
-	i = 0;
-	while (fname[i] != 0) {
-		if (fname[i] == '.') {
-			ext = fname + i;
-		}
-
-		i += 1;
-	}
+	unsigned type;
 
 	if (dsk_pce_probe (fname)) {
 		return (dsk_pce_open (fname, ro));
@@ -716,36 +705,21 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk_dosemu_open (fname, ro));
 	}
 
-	if (dsk_fdc_probe_pfdc (fname)) {
-		return (dsk_fdc_open_pfdc (fname, ro));
+	type = dsk_fdc_probe (fname);
+
+	if (type != PFDC_FORMAT_NONE) {
+		return (dsk_fdc_open (fname, type, ro));
 	}
 
-	if (dsk_fdc_probe_dc42 (fname)) {
-		return (dsk_fdc_open_dc42 (fname, ro));
-	}
+	type = pfdc_guess_type (fname);
 
-	if (dsk_fdc_probe_imd (fname)) {
-		return (dsk_fdc_open_imd (fname, ro));
-	}
-
-	if (dsk_fdc_probe_td0 (fname)) {
-		return (dsk_fdc_open_td0 (fname, ro));
-	}
-
-	if (strcasecmp (ext, ".ana") == 0) {
-		dsk = dsk_fdc_open_anadisk (fname, ro);
-
-		if (dsk != NULL) {
-			return (dsk);
+	if (type != PFDC_FORMAT_NONE) {
+		if (type != PFDC_FORMAT_RAW) {
+			return (dsk_fdc_open (fname, type, ro));
 		}
 	}
 
-	dsk = dsk_img_open (fname, ofs, ro);
-	if (dsk != NULL) {
-		return (dsk);
-	}
-
-	return (NULL);
+	return (dsk_img_open (fname, ofs, ro));
 }
 
 
