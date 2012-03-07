@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.c                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -138,6 +138,28 @@ void mda_get_color (const char *name,
 	else {
 		*normal = 0xe89050;
 		*bright = 0xfff0c8;
+	}
+}
+
+/*
+ * Map an attribute to foreground and background colors
+ */
+static
+void mda_map_attribute (mda_t *mda, unsigned attr, const unsigned char **fg, const unsigned char **bg)
+{
+	if ((attr & 0x77) == 0x70) {
+		*fg = mda->rgb[0];
+		*bg = mda->rgb[7];
+
+		if (attr & 0x80) {
+			if ((mda->reg[MDA_MODE] & MDA_MODE_BLINK) == 0) {
+				*bg = mda->rgb[15];
+			}
+		}
+	}
+	else {
+		*fg = mda->rgb[attr & 0x0f];
+		*bg = mda->rgb[0];
 	}
 }
 
@@ -331,8 +353,7 @@ void mda_draw_char (mda_t *mda, unsigned char *buf, unsigned char c, unsigned ch
 	ull = ((a & 0x07) == 1) ? 13 : 0xffff;
 	elg = ((c >= 0xc0) && (c <= 0xdf));
 
-	fg = mda->rgb[a & 0x0f];
-	bg = mda->rgb[(a >> 4) & 0x0f];
+	mda_map_attribute (mda, a, &fg, &bg);
 
 	fnt = mda->font + 14 * c;
 
