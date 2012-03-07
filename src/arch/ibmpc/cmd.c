@@ -408,6 +408,13 @@ void prt_state_mem (ibmpc_t *pc)
 }
 
 static
+void prt_state_ports (ibmpc_t *pc)
+{
+	pce_prt_sep ("PC PORTS");
+	mem_prt_state (pc->prt, stdout);
+}
+
+static
 void prt_state_pc (ibmpc_t *pc)
 {
 	prt_state_video (pc->video);
@@ -1176,6 +1183,9 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 		}
 		else if (cmd_match (cmd, "mem")) {
 			prt_state_mem (pc);
+		}
+		else if (cmd_match (cmd, "ports")) {
+			prt_state_ports (pc);
 		}
 		else if (cmd_match (cmd, "uart")) {
 			unsigned short i;
