@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.c                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -147,6 +147,28 @@ void hgc_get_color (const char *name,
 	else {
 		*normal = 0xe89050;
 		*bright = 0xfff0c8;
+	}
+}
+
+/*
+ * Map an attribute to foreground and background colors
+ */
+static
+void hgc_map_attribute (hgc_t *hgc, unsigned attr, const unsigned char **fg, const unsigned char **bg)
+{
+	if ((attr & 0x77) == 0x70) {
+		*fg = hgc->rgb[0];
+		*bg = hgc->rgb[7];
+
+		if (attr & 0x80) {
+			if ((hgc->reg[HGC_MODE] & HGC_MODE_BLINK) == 0) {
+				*bg = hgc->rgb[15];
+			}
+		}
+	}
+	else {
+		*fg = hgc->rgb[attr & 0x0f];
+		*bg = hgc->rgb[0];
 	}
 }
 
@@ -382,8 +404,7 @@ void hgc_text_draw_char (hgc_t *hgc,
 	ull = ((a & 0x07) == 1) ? 13 : 0xffff;
 	elg = ((c >= 0xc0) && (c <= 0xdf));
 
-	fg = hgc->rgb[a & 0x0f];
-	bg = hgc->rgb[(a >> 4) & 0x0f];
+	hgc_map_attribute (hgc, a, &fg, &bg);
 
 	fnt = hgc->font + 14 * c;
 
