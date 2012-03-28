@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/terminal.c                                 *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -668,28 +668,59 @@ unsigned char *trm_scale_get_buf (terminal_t *trm, unsigned w, unsigned h)
 	return (trm->scale_buf);
 }
 
-const unsigned char *trm_scale (terminal_t *trm,
-	const unsigned char *src, unsigned w, unsigned h,
-	unsigned fx, unsigned fy)
+static
+void trm_scale_w1 (unsigned char *dst, const unsigned char *src, unsigned w, unsigned h, unsigned fy)
 {
-	unsigned      i, j;
-	unsigned      x, y;
-	unsigned      dw, dh;
-	unsigned char *dst, *ret;
+	unsigned i, n, y;
 
-	if ((fx == 1) && (fy == 1)) {
-		return (src);
+	n = 3 * w;
+
+	for (y = 0; y < h; y++) {
+		memcpy (dst, src, n);
+
+		dst += n;
+		src += n;
+
+		for (i = 1; i < fy; i++) {
+			memcpy (dst, dst - n, n);
+			dst += n;
+		}
 	}
+}
 
-	dw = fx * w;
-	dh = fy * h;
+static
+void trm_scale_w2 (unsigned char *dst, const unsigned char *src, unsigned w, unsigned h, unsigned fy)
+{
+	unsigned i, n, x, y;
 
-	ret = trm_scale_get_buf (trm, dw, dh);
-	if (ret == NULL) {
-		return (NULL);
+	n = 6 * w;
+
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			dst[0] = src[0];
+			dst[1] = src[1];
+			dst[2] = src[2];
+			dst[3] = src[0];
+			dst[4] = src[1];
+			dst[5] = src[2];
+
+			dst += 6;
+			src += 3;
+		}
+
+		for (i = 1; i < fy; i++) {
+			memcpy (dst, dst - n, n);
+			dst += n;
+		}
 	}
+}
 
-	dst = ret;
+static
+void trm_scale_wx (unsigned char *dst, const unsigned char *src, unsigned w, unsigned h, unsigned fx, unsigned fy)
+{
+	unsigned i, j, n, x, y;
+
+	n = 3 * fx * w;
 
 	for (y = 0; y < h; y++) {
 		for (x = 0; x < w; x++) {
@@ -700,14 +731,46 @@ const unsigned char *trm_scale (terminal_t *trm,
 
 				dst += 3;
 			}
+
 			src += 3;
 		}
 
 		for (j = 1; j < fy; j++) {
-			memcpy (dst, dst - 3 * dw, 3 * dw);
-			dst += 3 * dw;
+			memcpy (dst, dst - n, n);
+			dst += n;
 		}
 	}
+}
 
-	return (ret);
+const unsigned char *trm_scale (terminal_t *trm,
+	const unsigned char *src, unsigned w, unsigned h,
+	unsigned fx, unsigned fy)
+{
+	unsigned      dw, dh;
+	unsigned char *dst;
+
+	if ((fx == 1) && (fy == 1)) {
+		return (src);
+	}
+
+	dw = fx * w;
+	dh = fy * h;
+
+	dst = trm_scale_get_buf (trm, dw, dh);
+
+	if (dst == NULL) {
+		return (NULL);
+	}
+
+	if (fx == 1) {
+		trm_scale_w1 (dst, src, w, h, fy);
+	}
+	else if (fx == 2) {
+		trm_scale_w2 (dst, src, w, h, fy);
+	}
+	else {
+		trm_scale_wx (dst, src, w, h, fx, fy);
+	}
+
+	return (dst);
 }
