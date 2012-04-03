@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/initerm.c                                            *
  * Created:     2008-10-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,7 +58,9 @@ int trm_is_valid (const char *str)
 
 terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 {
-	unsigned   scale, scale_x, scale_y;
+	unsigned   scale;
+	unsigned   min_w, min_h;
+	unsigned   aspect_x, aspect_y;
 	int        mouse_x[2], mouse_y[2];
 	const char *driver;
 	const char *esc;
@@ -90,10 +92,25 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 	}
 
 	ini_get_string (sct, "escape", &esc, NULL);
+	ini_get_uint16 (sct, "aspect_x", &aspect_x, 4);
+	ini_get_uint16 (sct, "aspect_y", &aspect_y, 3);
+	ini_get_uint16 (sct, "min_w", &min_w, 512);
+	ini_get_uint16 (sct, "min_h", &min_h, 384);
+	ini_get_uint16 (sct, "scale", &scale, 1);
+	ini_get_sint16 (sct, "mouse_mul_x", &mouse_x[0], 1);
+	ini_get_sint16 (sct, "mouse_div_x", &mouse_x[1], 1);
+	ini_get_sint16 (sct, "mouse_mul_y", &mouse_y[0], 1);
+	ini_get_sint16 (sct, "mouse_div_y", &mouse_y[1], 1);
 
-	pce_log_tag (MSG_INF, "TERM:", "driver=%s  ESC=%s\n",
+	pce_log_tag (MSG_INF, "TERM:",
+		"driver=%s ESC=%s aspect=%u/%u min_size=%u*%u scale=%u"
+		" mouse=[%u/%u %u/%u]\n",
 		driver,
-		(esc != NULL) ? esc : "ESC"
+		(esc != NULL) ? esc : "ESC",
+		aspect_x, aspect_y,
+		min_w, min_h,
+		scale,
+		mouse_x[0], mouse_x[1], mouse_y[0], mouse_y[1]
 	);
 
 	if (strcmp (driver, "x11") == 0) {
@@ -138,17 +155,9 @@ terminal_t *ini_get_terminal (ini_sct_t *ini, const char *def)
 		trm_set_escape_str (trm, esc);
 	}
 
-	ini_get_uint16 (sct, "scale", &scale, 1);
-	ini_get_uint16 (sct, "scale_x", &scale_x, scale);
-	ini_get_uint16 (sct, "scale_y", &scale_y, scale);
-
-	trm_set_scale (trm, scale_x, scale_y);
-
-	ini_get_sint16 (sct, "mouse_mul_x", &mouse_x[0], 1);
-	ini_get_sint16 (sct, "mouse_div_x", &mouse_x[1], 1);
-	ini_get_sint16 (sct, "mouse_mul_y", &mouse_y[0], 1);
-	ini_get_sint16 (sct, "mouse_div_y", &mouse_y[1], 1);
-
+	trm_set_scale (trm, scale);
+	trm_set_min_size (trm, min_w, min_h);
+	trm_set_aspect_ratio (trm, aspect_x, aspect_y);
 	trm_set_mouse_scale (trm, mouse_x[0], mouse_x[1], mouse_y[0], mouse_y[1]);
 
 	return (trm);

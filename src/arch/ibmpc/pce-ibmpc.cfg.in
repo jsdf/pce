@@ -188,8 +188,10 @@ terminal {
 
 	# The initial scale factors
 	scale   = 1
-	#scale_x = 1
-	#scale_y = 1
+
+	# The terminal aspect ratio.
+	aspect_x = 4
+	aspect_y = 3
 
 	# Add a border around the image
 	border = 0
@@ -216,6 +218,10 @@ terminal {
 
 	# The initial scale factor
 	scale = 1
+
+	# The terminal aspect ratio.
+	aspect_x = 4
+	aspect_y = 3
 
 	# The mouse speed
 	mouse_mul_x = 1

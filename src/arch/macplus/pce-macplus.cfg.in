@@ -97,6 +97,10 @@ terminal {
 	# allowed.
 	scale = 1
 
+	# The terminal aspect ratio.
+	aspect_x = 3
+	aspect_y = 2
+
 	# Add a border around the image
 	border = 0
 
@@ -121,6 +125,10 @@ terminal {
 	#escape = "Menu"
 
 	scale  = 1
+
+	# The terminal aspect ratio.
+	aspect_x = 3
+	aspect_y = 2
 
 	# The mouse speed
 	mouse_mul_x = 1

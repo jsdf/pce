@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/terminal.h                                 *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,8 +70,13 @@ typedef struct {
 	unsigned long buf_cnt;
 	unsigned char *buf;
 
-	unsigned      scale_x;
-	unsigned      scale_y;
+	unsigned      scale;
+
+	unsigned      aspect_x;
+	unsigned      aspect_y;
+
+	unsigned      min_w;
+	unsigned      min_h;
 
 	/* mul, div, overflow */
 	int           mouse_scale_x[3];
@@ -175,9 +180,19 @@ void trm_set_mouse_scale (terminal_t *trm, int mul_x, int div_x, int mul_y, int 
 void trm_set_size (terminal_t *trm, unsigned w, unsigned h);
 
 /*!***************************************************************************
- * @short Set the terminal scale factors
+ * @short Set the minimum terminal window size
  *****************************************************************************/
-void trm_set_scale (terminal_t *trm, unsigned fx, unsigned fy);
+void trm_set_min_size (terminal_t *trm, unsigned w, unsigned h);
+
+/*!***************************************************************************
+ * @short Set the terminal scale factor
+ *****************************************************************************/
+void trm_set_scale (terminal_t *trm, unsigned v);
+
+/*!***************************************************************************
+ * @short Set the terminal aspect ratio
+ *****************************************************************************/
+void trm_set_aspect_ratio (terminal_t *trm, unsigned x, unsigned y);
 
 /*!***************************************************************************
  * @short Set a pixel in the terminal buffer

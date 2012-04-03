@@ -65,8 +65,13 @@ void trm_init (terminal_t *trm, void *ext)
 	trm->buf_cnt = 0;
 	trm->buf = NULL;
 
-	trm->scale_x = 1;
-	trm->scale_y = 1;
+	trm->scale = 1;
+
+	trm->aspect_x = 4;
+	trm->aspect_y = 3;
+
+	trm->min_w = 320;
+	trm->min_h = 240;
 
 	trm->mouse_scale_x[0] = 1;
 	trm->mouse_scale_x[1] = 1;
@@ -259,20 +264,26 @@ void trm_set_size (terminal_t *trm, unsigned w, unsigned h)
 	trm->update_h = h;
 }
 
-void trm_set_scale (terminal_t *trm, unsigned fx, unsigned fy)
+void trm_set_min_size (terminal_t *trm, unsigned w, unsigned h)
 {
-	if ((fx < 1) || (fy < 1)) {
-		fx = 1;
-		fy = 1;
-	}
+	trm->min_w = w;
+	trm->min_h = h;
+}
 
-	trm->scale_x = fx;
-	trm->scale_y = fy;
+void trm_set_scale (terminal_t *trm, unsigned v)
+{
+	trm->scale = (v < 1) ? 1 : v;
 
 	trm->update_x = 0;
 	trm->update_y = 0;
 	trm->update_w = trm->w;
 	trm->update_h = trm->h;
+}
+
+void trm_set_aspect_ratio (terminal_t *trm, unsigned x, unsigned y)
+{
+	trm->aspect_x = x;
+	trm->aspect_y = y;
 }
 
 void trm_set_pixel (terminal_t *trm, unsigned x, unsigned y, const unsigned char *col)
@@ -503,13 +514,13 @@ int trm_set_key_magic (terminal_t *trm, pce_key_t key)
 
 	case PCE_KEY_UP:
 	case PCE_KEY_KP_8:
-		trm_set_scale (trm, trm->scale_x + 1, trm->scale_y + 1);
+		trm_set_scale (trm, trm->scale + 1);
 		return (0);
 
 	case PCE_KEY_DOWN:
 	case PCE_KEY_KP_2:
-		if ((trm->scale_x > 1) && (trm->scale_y > 1)) {
-			trm_set_scale (trm, trm->scale_x - 1, trm->scale_y - 1);
+		if (trm->scale > 1) {
+			trm_set_scale (trm, trm->scale - 1);
 		}
 		return (0);
 
@@ -619,32 +630,36 @@ void trm_set_mouse (terminal_t *trm, int dx, int dy, unsigned but)
 
 void trm_get_scale (terminal_t *trm, unsigned w, unsigned h, unsigned *fx, unsigned *fy)
 {
-	unsigned x, y;
-	unsigned w2, h2;
+	unsigned long f;
+	unsigned long w2, h2;
+	unsigned long maxw, maxh;
 
-	x = 1;
-	y = 1;
+	f = 1;
 
-	w2 = w;
-	h2 = h;
-
-	while ((8 * h2) < (3 * w2)) {
-		y += 1;
-		h2 += h;
+	while (((f * w) < trm->min_w) && ((f * h) < trm->min_h)) {
+		f += 1;
 	}
 
-	while (w2 < h2) {
-		x += 1;
-		w2 += w;
-	}
+	*fx = trm->scale + f - 1;
+	*fy = trm->scale + f - 1;
 
-	if ((w2 <= 320) && (h2 <= 240)) {
-		x *= 2;
-		y *= 2;
-	}
+	if ((trm->aspect_x > 0) && (trm->aspect_y > 0)) {
+		w2 = *fx * w;
+		h2 = *fy * h;
 
-	*fx = x * trm->scale_x;
-	*fy = y * trm->scale_y;
+		maxw = (trm->aspect_x * h2) / trm->aspect_y;
+		maxh = (trm->aspect_y * w2) / trm->aspect_x;
+
+		while ((h2 + h) <= maxh) {
+			h2 += h;
+			*fy += 1;
+		}
+
+		while ((w2 + w) <= maxw) {
+			w2 += w;
+			*fx += 1;
+		}
+	}
 }
 
 static
