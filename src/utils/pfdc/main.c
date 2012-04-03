@@ -41,6 +41,8 @@
 #define PFDC_TRK_SIZE      (1 << 3)
 #define PFDC_TRK_ENCODING  (1 << 4)
 
+#define PFDC_FLAG_MFM_SIZE (1UL << 16)
+
 
 typedef int (*pfdc_trk_cb) (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque
@@ -463,12 +465,13 @@ static
 int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
-	int        alt;
-	unsigned   s;
-	unsigned   pcmax, phmax, psmax;
-	unsigned   lcmax, lhmax, lsmax;
-	unsigned   ssmax;
-	pfdc_sct_t *sct;
+	int           alt;
+	unsigned      s, mfm_size;
+	unsigned      pcmax, phmax, psmax;
+	unsigned      lcmax, lhmax, lsmax;
+	unsigned      ssmax;
+	unsigned long flags;
+	pfdc_sct_t    *sct;
 
 	if ((c > 0) || (h > 0)) {
 		fputs ("\n", stdout);
@@ -515,6 +518,8 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 		alt = (sct->next != NULL);
 
 		while (sct != NULL) {
+			flags = sct->flags;
+
 			print_ulong (stdout, c, pcmax);
 			print_ulong (stdout, h, phmax + 1);
 			print_ulong (stdout, s, psmax + 1);
@@ -527,7 +532,15 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			printf ("  %s", pfdc_enc_to_string (sct->encoding));
 
-			if (sct->flags || alt) {
+			mfm_size = pfdc_sct_get_mfm_size (sct);
+
+			if (sct->have_mfm_size) {
+				if ((mfm_size > 8) || ((128U << mfm_size) != sct->n)) {
+					flags |= PFDC_FLAG_MFM_SIZE;
+				}
+			}
+
+			if (flags || alt) {
 				fputs ("  ", stdout);
 			}
 
@@ -535,20 +548,24 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 				fputs (" ALT", stdout);
 			}
 
-			if (sct->flags & PFDC_FLAG_CRC_ID) {
+			if (flags & PFDC_FLAG_CRC_ID) {
 				fputs (" CRC-ID", stdout);
 			}
 
-			if (sct->flags & PFDC_FLAG_CRC_DATA) {
+			if (flags & PFDC_FLAG_CRC_DATA) {
 				fputs (" CRC-DATA", stdout);
 			}
 
-			if (sct->flags & PFDC_FLAG_DEL_DAM) {
+			if (flags & PFDC_FLAG_DEL_DAM) {
 				fputs (" DEL-DAM", stdout);
 			}
 
-			if (sct->flags & PFDC_FLAG_NO_DAM) {
+			if (flags & PFDC_FLAG_NO_DAM) {
 				fputs (" NO-DAM", stdout);
+			}
+
+			if (flags & PFDC_FLAG_MFM_SIZE) {
+				fprintf (stdout, " MFM-SIZE=%02X", mfm_size);
 			}
 
 			fputs ("\n", stdout);
@@ -572,7 +589,7 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
 	unsigned long sct_flg, trk_flg;
-	unsigned      s;
+	unsigned      s, mfm_size;
 	unsigned      enc;
 	pfdc_sct_t    *sct;
 
@@ -605,6 +622,14 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			if ((enc != 0) && (sct->encoding != enc)) {
 				trk_flg |= PFDC_TRK_ENCODING;
+			}
+
+			if (sct->have_mfm_size) {
+				mfm_size = pfdc_sct_get_mfm_size (sct);
+
+				if ((mfm_size > 8) || ((128U << mfm_size) != sct->n)) {
+					sct_flg |= PFDC_FLAG_MFM_SIZE;
+				}
 			}
 
 			if (sct->encoding != 0) {
@@ -653,6 +678,10 @@ int pfdc_list_track_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 	if (sct_flg & PFDC_FLAG_NO_DAM) {
 		fputs (" NO-DAM", stdout);
+	}
+
+	if (sct_flg & PFDC_FLAG_MFM_SIZE) {
+		fputs (" MFM-SIZE", stdout);
 	}
 
 	fputs ("\n", stdout);
@@ -1558,7 +1587,7 @@ int pfdc_print_info (pfdc_img_t *img)
 {
 	int              fc, fh, fs, ff;
 	unsigned         c, h, s;
-	unsigned         enc;
+	unsigned         enc, mfm_size;
 	unsigned         tcnt[2], scnt[2], ssize[2], srng[2];
 	unsigned long    stotal, atotal;
 	unsigned long    dsize;
@@ -1649,6 +1678,14 @@ int pfdc_print_info (pfdc_img_t *img)
 					enc = sct->encoding;
 				}
 
+				if (sct->have_mfm_size) {
+					mfm_size = pfdc_sct_get_mfm_size (sct);
+
+					if ((mfm_size > 8) || ((128U << mfm_size) != sct->n)) {
+						flags |= PFDC_FLAG_MFM_SIZE;
+					}
+				}
+
 				fs = 0;
 
 				stotal += 1;
@@ -1693,6 +1730,11 @@ int pfdc_print_info (pfdc_img_t *img)
 
 	if (flags & PFDC_FLAG_NO_DAM) {
 		printf (" NO-DAM");
+		ff = 0;
+	}
+
+	if (flags & PFDC_FLAG_MFM_SIZE) {
+		printf (" MFM-SIZE");
 		ff = 0;
 	}
 
@@ -1801,6 +1843,15 @@ int pfdc_edit_mfm_ed_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
 	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_ED);
+	par_cnt += 1;
+	return (0);
+}
+
+static
+int pfdc_edit_mfm_size_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	pfdc_sct_set_mfm_size (sct, *(unsigned long *)p);
 	par_cnt += 1;
 	return (0);
 }
@@ -1931,6 +1982,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "mfm-ed") == 0) {
 		fct = pfdc_edit_mfm_ed_cb;
+	}
+	else if (strcmp (what, "mfm-size") == 0) {
+		fct = pfdc_edit_mfm_size_cb;
 	}
 	else if (strcmp (what, "no-dam") == 0) {
 		fct = pfdc_edit_nodam_cb;
