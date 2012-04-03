@@ -91,7 +91,7 @@ int dsk_fdc_format_sector (disk_fdc_t *fdc,
 
 int dsk_fdc_read_id (disk_fdc_t *fdc,
 	unsigned pc, unsigned ph, unsigned ps,
-	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt
+	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id
 );
 
 

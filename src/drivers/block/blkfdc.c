@@ -291,8 +291,9 @@ int dsk_fdc_format_sector (disk_fdc_t *fdc,
 
 int dsk_fdc_read_id (disk_fdc_t *fdc,
 	unsigned pc, unsigned ph, unsigned ps,
-	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt)
+	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id)
 {
+	unsigned   mfm_size;
 	pfdc_sct_t *sct;
 
 	if (fdc->img == NULL) {
@@ -309,6 +310,15 @@ int dsk_fdc_read_id (disk_fdc_t *fdc,
 	*h = sct->h;
 	*s = sct->s;
 	*cnt = sct->n;
+	*cnt_id = sct->n;
+
+	if (sct->have_mfm_size) {
+		mfm_size = pfdc_sct_get_mfm_size (sct);
+
+		if (mfm_size <= 8) {
+			*cnt_id = 128U << mfm_size;
+		}
+	}
 
 	return (0);
 }

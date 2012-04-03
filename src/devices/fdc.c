@@ -196,7 +196,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 {
 	disk_t        *dsk;
 	unsigned char buf[512];
-	unsigned      lc, lh, ls, cnt;
+	unsigned      lc, lh, ls, cnt, cnt_id;
 
 	dsk = dsks_get_disk (fdc->dsks, fdc->drive[p->pd & 3]);
 
@@ -217,7 +217,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (0);
 	}
 
-	if (dsk_fdc_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt)) {
+	if (dsk_fdc_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt, &cnt_id)) {
 		return (E8272_ERR_NO_ID);
 	}
 
@@ -226,8 +226,8 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 	p->ls = ls;
 	p->ln = 0;
 
-	while (cnt > 128) {
-		cnt >>= 1;
+	while (cnt_id > 128) {
+		cnt_id >>= 1;
 		p->ln += 1;
 	}
 
