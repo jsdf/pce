@@ -55,6 +55,13 @@ PCE_HOST_IA32  := @PCE_HOST_IA32@
 PCE_HOST_PPC   := @PCE_HOST_PPC@
 PCE_HOST_SPARC := @PCE_HOST_SPARC@
 
+ifneq "$(PCE_HAVE_STDINT_H)" "1"
+CFLAGS_DEFAULT += -Isrc/lib/stdint
+ifneq "$(srcdir)" "."
+CFLAGS_DEFAULT += -I$(srcdir)/src/lib/stdint
+endif
+endif
+
 ifeq "$(PCE_HOST_IA32)" "1"
 CFLAGS_DEFAULT += -DPCE_HOST_IA32
 endif
