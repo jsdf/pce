@@ -581,6 +581,49 @@ int dsk_guess_geometry_mbr (disk_t *dsk)
 }
 
 static
+int dsk_guess_geometry_sun (disk_t *dsk)
+{
+	unsigned       i;
+	unsigned       c, h, s, chk;
+	unsigned char  buf[512];
+
+	if (dsk_read_lba (dsk, buf, 0, 1)) {
+		return (1);
+	}
+
+	if (dsk_get_uint16_be (buf, 508) != 0xdabe) {
+		return (1);
+	}
+
+	chk = 0;
+
+	for (i = 0; i < 512; i += 2) {
+		chk ^= buf[i] << 8;
+		chk ^= buf[i + 1];
+	}
+
+	if (chk != 0) {
+		return (1);
+	}
+
+	if (dsk_get_uint32_be (buf, 128) != 1) {
+		return (1);
+	}
+
+	if (dsk_get_uint16_be (buf, 140) > 8) {
+		return (1);
+	}
+
+	c = dsk_get_uint16_be (buf, 422);
+	h = dsk_get_uint16_be (buf, 436);
+	s = dsk_get_uint16_be (buf, 438);
+
+	dsk_set_geometry (dsk, dsk->blocks, c, h, s);
+
+	return (0);
+}
+
+static
 int dsk_guess_geometry_dos (disk_t *dsk)
 {
 	unsigned char buf[512];
@@ -676,6 +719,10 @@ int dsk_guess_geometry (disk_t *dsk)
 	}
 
 	if (dsk_guess_geometry_dos (dsk) == 0) {
+		return (0);
+	}
+
+	if (dsk_guess_geometry_sun (dsk) == 0) {
 		return (0);
 	}
 
