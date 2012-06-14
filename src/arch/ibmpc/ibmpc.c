@@ -96,6 +96,24 @@ unsigned char pc_get_port8 (ibmpc_t *pc, unsigned long addr)
 
 	val = 0xff;
 
+	switch (addr) {
+	case 0x0081:
+		val = pc->dma_page[2] >> 16;
+		break;
+
+	case 0x0082:
+		val = pc->dma_page[3] >> 16;
+		break;
+
+	case 0x0083:
+		val = pc->dma_page[1] >> 16;
+		break;
+
+	case 0x0087:
+		val = pc->dma_page[0] >> 16;
+		break;
+	}
+
 #ifdef DEBUG_PORTS
 	pc_log_deb ("get port 8 %04lX <- %02X\n", addr, val);
 #endif
@@ -135,6 +153,10 @@ void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 
 	case 0x0083:
 		pc->dma_page[1] = (unsigned long) (val & 0x0f) << 16;
+		break;
+
+	case 0x0087:
+		pc->dma_page[0] = (unsigned long) (val & 0x0f) << 16;
 		break;
 	}
 }
