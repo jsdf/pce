@@ -130,6 +130,10 @@ void sig_segv (int s)
 	fprintf (stderr, "pce-macplus: segmentation fault\n");
 	fflush (stderr);
 
+	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
+		mac_prt_state (par_sim, "cpu");
+	}
+
 	exit (1);
 }
 

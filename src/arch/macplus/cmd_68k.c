@@ -252,7 +252,6 @@ void mac_prt_state_mem (macplus_t *sim)
 	mem_prt_state (sim->mem, stdout);
 }
 
-static
 void mac_prt_state (macplus_t *sim, const char *str)
 {
 	cmd_t cmd;
