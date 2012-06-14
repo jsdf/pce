@@ -1525,6 +1525,8 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pce_load_mem_ini (pc->mem, ini);
 
+	mem_move_to_front (pc->mem, 0xfe000);
+
 	pc_clock_reset (pc);
 
 	return (pc);

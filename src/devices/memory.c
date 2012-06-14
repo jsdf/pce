@@ -620,6 +620,31 @@ void mem_rmv_all (memory_t *mem)
 	mem_init_last (mem);
 }
 
+void mem_move_to_front (memory_t *mem, unsigned long addr)
+{
+	unsigned  i;
+	mem_blk_t *blk;
+
+	blk = mem_get_blk (mem, addr);
+
+	if (blk == NULL) {
+		return;
+	}
+
+	for (i = 0; i < mem->cnt; i++) {
+		if (mem->lst[i].blk == blk) {
+			while (i > 0) {
+				mem->lst[i].blk = mem->lst[i - 1].blk;
+				i -= 1;
+			}
+
+			mem->lst[0].blk = blk;
+
+			return;
+		}
+	}
+}
+
 static inline
 mem_blk_t *mem_get_blk_inline (memory_t *mem, unsigned long addr, unsigned last)
 {

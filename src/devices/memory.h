@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.h                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -291,6 +291,13 @@ void mem_rmv_blk (memory_t *mem, const mem_blk_t *blk);
  * @param mem The memory structure
  *****************************************************************************/
 void mem_rmv_all (memory_t *mem);
+
+/*!***************************************************************************
+ * @short Move a memory block to the front of the list
+ * @param mem   The memory structure
+ * @param addr  The memory block containing this address is moved
+ *****************************************************************************/
+void mem_move_to_front (memory_t *mem, unsigned long addr);
 
 /*!***************************************************************************
  * @short Get a memory block containing an address
