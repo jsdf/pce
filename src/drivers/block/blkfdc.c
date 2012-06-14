@@ -570,7 +570,17 @@ disk_t *dsk_fdc_open (const char *fname, unsigned type, int ro)
 		return (NULL);
 	}
 
-	fp = fopen (fname, ro ? "rb" : "r+b");
+	if (ro) {
+		fp = fopen (fname, "rb");
+	}
+	else {
+		fp = fopen (fname, "r+b");
+
+		if (fp == NULL) {
+			ro = 1;
+			fp = fopen (fname, "rb");
+		}
+	}
 
 	if (fp == NULL) {
 		return (NULL);

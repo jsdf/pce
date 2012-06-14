@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkpce.c                                   *
  * Created:     2004-11-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -188,6 +188,11 @@ disk_t *dsk_pce_open (const char *fname, int ro)
 	}
 	else {
 		fp = fopen (fname, "r+b");
+
+		if (fp == NULL) {
+			fp = fopen (fname, "rb");
+			ro = 1;
+		}
 	}
 
 	if (fp == NULL) {

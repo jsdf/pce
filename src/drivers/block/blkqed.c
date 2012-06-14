@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkqed.c                                   *
  * Created:     2011-05-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -631,6 +631,11 @@ disk_t *dsk_qed_open (const char *fname, int ro)
 	}
 	else {
 		fp = fopen (fname, "r+b");
+
+		if (fp == NULL) {
+			fp = fopen (fname, "rb");
+			ro = 1;
+		}
 	}
 
 	if (fp == NULL) {

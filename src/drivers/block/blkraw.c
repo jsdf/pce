@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkraw.c                                   *
  * Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -154,6 +154,11 @@ disk_t *dsk_img_open (const char *fname, uint64_t ofs, int ro)
 	}
 	else {
 		fp = fopen (fname, "r+b");
+
+		if (fp == NULL) {
+			fp = fopen (fname, "rb");
+			ro = 1;
+		}
 	}
 
 	if (fp == NULL) {
