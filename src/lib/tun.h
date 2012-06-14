@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/tun.h                                                *
  * Created:     2004-12-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,6 +25,7 @@
 
 
 int tun_open (const char *name);
+int tap_open (const char *name);
 void tun_close (int fd);
 int tun_set_packet (int fd, const void *buf, unsigned cnt);
 int tun_get_packet (int fd, void *buf, unsigned *cnt);

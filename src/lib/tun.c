@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/tun.c                                                *
  * Created:     2004-12-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -44,19 +44,21 @@
  *        IFF_NO_PI - Do not provide packet information
  */
 
-int tun_open (const char *name)
+static
+int tuntap_open (const char *name, int tap)
 {
 	int    fd;
 	struct ifreq req;
 
 	fd = open ("/dev/net/tun", O_RDWR);
+
 	if (fd < 0) {
 		return (-1);
 	}
 
 	memset (&req, 0, sizeof (req));
 
-	req.ifr_flags = IFF_TUN | IFF_NO_PI;
+	req.ifr_flags = (tap ? IFF_TAP : IFF_TUN) | IFF_NO_PI;
 	strncpy (req.ifr_name, name, IFNAMSIZ);
 
 	if (ioctl (fd, TUNSETIFF, (void *) &req) < 0) {
@@ -65,6 +67,16 @@ int tun_open (const char *name)
 	}
 
 	return (fd);
+}
+
+int tun_open (const char *name)
+{
+	return (tuntap_open (name, 0));
+}
+
+int tap_open (const char *name)
+{
+	return (tuntap_open (name, 1));
 }
 
 void tun_close (int fd)
