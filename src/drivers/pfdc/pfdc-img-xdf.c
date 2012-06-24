@@ -127,6 +127,8 @@ int xdf_load_sector (FILE *fp, pfdc_img_t *img, const xdf_map_t *map, unsigned l
 		return (1);
 	}
 
+	pfdc_sct_set_encoding (sct, PFDC_ENC_MFM_HD);
+
 	if (pfdc_img_add_sector (img, sct, c, map->h)) {
 		return (1);
 	}

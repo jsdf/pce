@@ -99,6 +99,7 @@ int raw_load_fp (FILE *fp, pfdc_img_t *img)
 {
 	unsigned      c, h, s;
 	unsigned      cn, hn, sn;
+	unsigned      enc;
 	unsigned long size;
 	pfdc_trk_t    *trk;
 	pfdc_sct_t    *sct;
@@ -109,6 +110,16 @@ int raw_load_fp (FILE *fp, pfdc_img_t *img)
 
 	if (pfdc_get_geometry_from_size (size, &cn, &hn, &sn)) {
 		return (1);
+	}
+
+	if (sn > 27) {
+		enc = PFDC_ENC_MFM_ED;
+	}
+	else if (sn > 12) {
+		enc = PFDC_ENC_MFM_HD;
+	}
+	else {
+		enc = PFDC_ENC_MFM_DD;
 	}
 
 	for (c = 0; c < cn; c++) {
@@ -125,6 +136,8 @@ int raw_load_fp (FILE *fp, pfdc_img_t *img)
 				if (sct == NULL) {
 					return (1);
 				}
+
+				pfdc_sct_set_encoding (sct, enc);
 
 				if (pfdc_trk_add_sector (trk, sct)) {
 					pfdc_sct_del (sct);
