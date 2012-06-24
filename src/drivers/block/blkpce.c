@@ -237,9 +237,11 @@ int dsk_pce_create_fp (FILE *fp, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 		return (1);
 	}
 
-	buf[0] = 0;
-	if (dsk_write (fp, buf, ofs + 512 * (uint64_t) n - 1, 1)) {
-		return (1);
+	if (dsk_set_filesize (fp, ofs + 512 * (uint64_t) n)) {
+		buf[0] = 0;
+		if (dsk_write (fp, buf, ofs + 512 * (uint64_t) n - 1, 1)) {
+			return (1);
+		}
 	}
 
 	return (0);
