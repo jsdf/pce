@@ -35,6 +35,7 @@ void pfdc_set_uint16_le (void *buf, unsigned idx, unsigned val);
 int pfdc_read (FILE *fp, void *buf, unsigned long cnt);
 int pfdc_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt);
 int pfdc_write (FILE *fp, const void *buf, unsigned long cnt);
+int pfdc_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt);
 int pfdc_skip (FILE *fp, unsigned long cnt);
 
 
