@@ -1150,7 +1150,7 @@ static
 void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
-	int           accurate;
+	int           accurate, ignore_eot;
 	unsigned long addr;
 	unsigned      irq;
 	unsigned      drv[4];
@@ -1166,14 +1166,16 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint32 (sct, "address", &addr, 0x3f0);
 	ini_get_uint16 (sct, "irq", &irq, 6);
 	ini_get_bool (sct, "accurate", &accurate, 0);
+	ini_get_bool (sct, "ignore_eot", &ignore_eot, 0);
 	ini_get_uint16 (sct, "drive0", &drv[0], 0xffff);
 	ini_get_uint16 (sct, "drive1", &drv[1], 0xffff);
 	ini_get_uint16 (sct, "drive2", &drv[2], 0xffff);
 	ini_get_uint16 (sct, "drive3", &drv[3], 0xffff);
 
 	pce_log_tag (MSG_INF, "FDC:",
-		"addr=0x%08lx irq=%u accurate=%d drv=[%u %u %u %u]\n",
-		addr, irq, accurate, drv[0], drv[1], drv[2], drv[3]
+		"addr=0x%08lx irq=%u accurate=%d eot=%d drv=[%u %u %u %u]\n",
+		addr, irq, accurate, !ignore_eot,
+		drv[0], drv[1], drv[2], drv[3]
 	);
 
 	pc->fdc = dev_fdc_new (addr);
@@ -1193,6 +1195,7 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 
 	e8272_set_input_clock (&pc->fdc->e8272, PCE_IBMPC_CLK2);
 	e8272_set_accuracy (&pc->fdc->e8272, accurate != 0);
+	e8272_set_ignore_eot (&pc->fdc->e8272, ignore_eot != 0);
 	e8272_set_irq_fct (&pc->fdc->e8272, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	e8272_set_dreq_fct (&pc->fdc->e8272, &pc->dma, e8237_set_dreq2);
 

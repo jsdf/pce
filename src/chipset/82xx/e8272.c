@@ -145,6 +145,7 @@ void e8272_init (e8272_t *fdc)
 	fdc->step_rate = 1;
 
 	fdc->accurate = 0;
+	fdc->ignore_eot = 0;
 
 	fdc->delay_clock = 0;
 
@@ -229,6 +230,11 @@ void e8272_set_input_clock (e8272_t *fdc, unsigned long clk)
 void e8272_set_accuracy (e8272_t *fdc, int accurate)
 {
 	fdc->accurate = (accurate != 0);
+}
+
+void e8272_set_ignore_eot (e8272_t *fdc, int ignore_eot)
+{
+	fdc->ignore_eot = (ignore_eot != 0);
 }
 
 /*
@@ -561,7 +567,7 @@ void e8272_delay_next_id (e8272_t *fdc, int accurate)
 static
 void e8272_next_id (e8272_t *fdc)
 {
-	if (fdc->cmd[4] != fdc->cmd[6]) {
+	if (fdc->ignore_eot || (fdc->cmd[4] != fdc->cmd[6])) {
 		fdc->cmd[4] += 1;
 		return;
 	}

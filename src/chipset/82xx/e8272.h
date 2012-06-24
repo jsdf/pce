@@ -108,6 +108,7 @@ typedef struct e8272_t {
 	unsigned short step_rate;
 
 	char           accurate;
+	char           ignore_eot;
 
 	unsigned long  delay_clock;
 
@@ -164,6 +165,8 @@ void e8272_set_diskop_fct (e8272_t *fdc, void *ext, void *fct);
 void e8272_set_input_clock (e8272_t *fdc, unsigned long clk);
 
 void e8272_set_accuracy (e8272_t *fdc, int accurate);
+
+void e8272_set_ignore_eot (e8272_t *fdc, int ignore_eot);
 
 
 void e8272_write_data (e8272_t *fdc, unsigned char val);

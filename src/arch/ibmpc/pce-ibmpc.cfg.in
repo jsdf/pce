@@ -494,6 +494,12 @@ fdc {
 	# If accurate timing is enabled, the CPU speed should be set to
 	# 1, otherwise timeout errors will occur.
 	accurate = 0
+
+	# Ignore the end of track value.
+	# If this option is enabled, multi-track operations will no longer
+	# work, but floppy disks with more than 8 or 9 sectors per track
+	# can be used even with older BIOSes.
+	ignore_eot = 0
 }
 
 
