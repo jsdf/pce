@@ -14,6 +14,7 @@ DEV_PFDC_BAS := \
 	pfdc-img-raw \
 	pfdc-img-tc \
 	pfdc-img-td0 \
+	pfdc-img-xdf \
 	pfdc-img \
 	pfdc-io \
 	pfdc
@@ -44,6 +45,7 @@ $(rel)/pfdc-img-pfdc4.o:	$(rel)/pfdc-img-pfdc4.c
 $(rel)/pfdc-img-raw.o:		$(rel)/pfdc-img-raw.c
 $(rel)/pfdc-img-tc.o:		$(rel)/pfdc-img-tc.c
 $(rel)/pfdc-img-td0.o:		$(rel)/pfdc-img-td0.c
+$(rel)/pfdc-img-xdf.o:		$(rel)/pfdc-img-xdf.c
 $(rel)/pfdc-img.o:		$(rel)/pfdc-img.c
 $(rel)/pfdc-io.o:		$(rel)/pfdc-io.c
 $(rel)/pfdc.o:			$(rel)/pfdc.c

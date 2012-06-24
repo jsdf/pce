@@ -34,6 +34,7 @@
 #include "pfdc-img-raw.h"
 #include "pfdc-img-tc.h"
 #include "pfdc-img-td0.h"
+#include "pfdc-img-xdf.h"
 
 
 unsigned pfdc_guess_type (const char *fname)
@@ -79,6 +80,9 @@ unsigned pfdc_guess_type (const char *fname)
 	else if (strcasecmp (ext, ".td0") == 0) {
 		return (PFDC_FORMAT_TD0);
 	}
+	else if (strcasecmp (ext, ".xdf") == 0) {
+		return (PFDC_FORMAT_XDF);
+	}
 
 	return (PFDC_FORMAT_PFDC);
 }
@@ -113,6 +117,9 @@ pfdc_img_t *pfdc_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_TD0:
 		return (pfdc_load_td0 (fp));
+
+	case PFDC_FORMAT_XDF:
+		return (pfdc_load_xdf (fp));
 	}
 
 	return (NULL);
@@ -180,6 +187,9 @@ int pfdc_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 
 	case PFDC_FORMAT_TD0:
 		return (pfdc_save_td0 (fp, img));
+
+	case PFDC_FORMAT_XDF:
+		return (pfdc_save_xdf (fp, img));
 	}
 
 	return (1);

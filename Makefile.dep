@@ -1700,6 +1700,11 @@ src/drivers/pfdc/pfdc-img-td0.o: src/drivers/pfdc/pfdc-img-td0.c \
 	src/drivers/pfdc/pfdc-io.h \
 	src/drivers/pfdc/pfdc.h
 
+src/drivers/pfdc/pfdc-img-xdf.o: src/drivers/pfdc/pfdc-img-xdf.c \
+	src/drivers/pfdc/pfdc-img-xdf.h \
+	src/drivers/pfdc/pfdc-io.h \
+	src/drivers/pfdc/pfdc.h
+
 src/drivers/pfdc/pfdc-img.o: src/drivers/pfdc/pfdc-img.c \
 	src/drivers/pfdc/pfdc-img-ana.h \
 	src/drivers/pfdc/pfdc-img-cp2.h \
@@ -1709,6 +1714,7 @@ src/drivers/pfdc/pfdc-img.o: src/drivers/pfdc/pfdc-img.c \
 	src/drivers/pfdc/pfdc-img-raw.h \
 	src/drivers/pfdc/pfdc-img-tc.h \
 	src/drivers/pfdc/pfdc-img-td0.h \
+	src/drivers/pfdc/pfdc-img-xdf.h \
 	src/drivers/pfdc/pfdc-img.h \
 	src/drivers/pfdc/pfdc.h
 

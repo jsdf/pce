@@ -147,7 +147,7 @@ void print_help (void)
 
 	fputs (
 		"\nfile formats are:\n"
-		"  pfdc, ana, cp2, dc42, imd, raw, td0\n",
+		"  pfdc, ana, cp2, dc42, imd, raw, td0, xdf\n",
 		stdout
 	);
 
@@ -2347,6 +2347,9 @@ int pfdc_set_format (const char *name, unsigned *val)
 	}
 	else if (strcmp (name, "td0") == 0) {
 		*val = PFDC_FORMAT_TD0;
+	}
+	else if (strcmp (name, "xdf") == 0) {
+		*val = PFDC_FORMAT_XDF;
 	}
 	else {
 		fprintf (stderr, "%s: unknown format (%s)\n", arg0, name);
