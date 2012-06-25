@@ -72,11 +72,7 @@
 #include <libini/libini.h>
 
 
-#ifdef PCE_HOST_WINDOWS
-#define PCE_IBMPC_SLEEP 20000
-#else
-#define PCE_IBMPC_SLEEP 10000
-#endif
+#define PCE_IBMPC_SLEEP 25000
 
 
 void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
