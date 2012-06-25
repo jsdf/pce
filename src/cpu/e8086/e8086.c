@@ -473,6 +473,14 @@ void e86_execute (e8086_t *c)
 		e86_trap (c, 1);
 	}
 	else if (c->irq && irq && e86_get_if (c)) {
+		if (c->cpu & E86_CPU_REP_BUG) {
+			if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+				if (c->prefix & E86_PREFIX_SEG) {
+					c->ip = (c->ip + 1) & 0xffff;
+				}
+			}
+		}
+
 		e86_irq_ack (c);
 	}
 }

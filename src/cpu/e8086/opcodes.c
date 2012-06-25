@@ -2549,25 +2549,26 @@ unsigned op_a4 (e8086_t *c)
 	inc = e86_get_df (c) ? 0xffff : 0x0001;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			val = e86_get_mem8 (c, seg1, e86_get_si (c));
 			e86_set_mem8 (c, seg2, e86_get_di (c), val);
 
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-
-			c->instructions += 1;
-			e86_set_clk (c, 18);
 		}
+
+		e86_set_clk (c, 18);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		val = e86_get_mem8 (c, seg1, e86_get_si (c));
@@ -2595,25 +2596,26 @@ unsigned op_a5 (e8086_t *c)
 	inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			val = e86_get_mem16 (c, seg1, e86_get_si (c));
 			e86_set_mem16 (c, seg2, e86_get_di (c), val);
 
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-
-			c->instructions += 1;
-			e86_set_clk (c, 18);
 		}
+
+		e86_set_clk (c, 18);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		val = e86_get_mem16 (c, seg1, e86_get_si (c));
@@ -2643,17 +2645,7 @@ unsigned op_a6 (e8086_t *c)
 	inc = e86_get_df (c) ? 0xffff : 0x0001;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			s1 = e86_get_mem8 (c, seg1, e86_get_si (c));
 			s2 = e86_get_mem8 (c, seg2, e86_get_di (c));
 
@@ -2662,14 +2654,21 @@ unsigned op_a6 (e8086_t *c)
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
 			e86_set_flg_sub_8 (c, s1, s2);
-
-			c->instructions += 1;
-			e86_set_clk (c, 22);
-
-			if (e86_get_zf (c) != z) {
-				break;
-			}
 		}
+
+		e86_set_clk (c, 22);
+
+		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
+
+		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		s1 = e86_get_mem8 (c, seg1, e86_get_si (c));
@@ -2701,17 +2700,7 @@ unsigned op_a7 (e8086_t *c)
 	inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			s1 = e86_get_mem16 (c, seg1, e86_get_si (c));
 			s2 = e86_get_mem16 (c, seg2, e86_get_di (c));
 
@@ -2720,14 +2709,21 @@ unsigned op_a7 (e8086_t *c)
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
 			e86_set_flg_sub_16 (c, s1, s2);
-
-			c->instructions += 1;
-			e86_set_clk (c, 22);
-
-			if (e86_get_zf (c) != z) {
-				break;
-			}
 		}
+
+		e86_set_clk (c, 22);
+
+		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
+
+		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		s1 = e86_get_mem16 (c, seg1, e86_get_si (c));
@@ -2785,15 +2781,24 @@ unsigned op_aa (e8086_t *c)
 	inc = e86_get_df (c) ? 0xffff : 0x0001;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		while (e86_get_cx (c) > 0) {
+		if (e86_get_cx (c) != 0) {
 			e86_set_mem8 (c, seg, e86_get_di (c), e86_get_al (c));
 
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-
-			c->instructions += 1;
-			e86_set_clk (c, 11);
 		}
+
+		e86_set_clk (c, 11);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		e86_set_mem8 (c, seg, e86_get_di (c), e86_get_al (c));
@@ -2816,15 +2821,24 @@ unsigned op_ab (e8086_t *c)
 	inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		while (e86_get_cx (c) > 0) {
+		if (e86_get_cx (c) != 0) {
 			e86_set_mem16 (c, seg, e86_get_di (c), e86_get_ax (c));
 
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-
-			c->instructions += 1;
-			e86_set_clk (c, 11);
 		}
+
+		e86_set_clk (c, 11);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		e86_set_mem16 (c, seg, e86_get_di (c), e86_get_ax (c));
@@ -2847,21 +2861,23 @@ unsigned op_ac (e8086_t *c)
 	inc = e86_get_df (c) ? 0xffff : 0x0001;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-			c->instructions += 1;
-			e86_set_clk (c, 12);
 		}
+
+		e86_set_clk (c, 12);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		e86_set_al (c, e86_get_mem8 (c, seg, e86_get_si (c)));
@@ -2883,21 +2899,23 @@ unsigned op_ad (e8086_t *c)
 	inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		unsigned end = 0;
-
-		if ((c->cpu & E86_CPU_REP_BUG) && e86_get_if (c) && (c->prefix & E86_PREFIX_SEG)) {
-			if (e86_get_cx (c) > 512) {
-				end = 1;
-			}
-		}
-
-		while (e86_get_cx (c) > end) {
+		if (e86_get_cx (c) != 0) {
 			e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-			c->instructions += 1;
-			e86_set_clk (c, 12);
 		}
+
+		e86_set_clk (c, 12);
+
+		if (e86_get_cx (c) == 0) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		e86_set_ax (c, e86_get_mem16 (c, seg, e86_get_si (c)));
@@ -2921,9 +2939,7 @@ unsigned op_ae (e8086_t *c)
 	inc = e86_get_df (c) ? 0xffff : 0x0001;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
-
-		while (e86_get_cx (c) > 0) {
+		if (e86_get_cx (c) != 0) {
 			s1 = e86_get_al (c);
 			s2 = e86_get_mem8 (c, seg, e86_get_di (c));
 
@@ -2931,14 +2947,21 @@ unsigned op_ae (e8086_t *c)
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
 			e86_set_flg_sub_8 (c, s1, s2);
-
-			c->instructions += 1;
-			e86_set_clk (c, 15);
-
-			if (e86_get_zf (c) != z) {
-				break;
-			}
 		}
+
+		e86_set_clk (c, 15);
+
+		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
+
+		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		s1 = e86_get_al (c);
@@ -2966,9 +2989,7 @@ unsigned op_af (e8086_t *c)
 	inc = e86_get_df (c) ? 0xfffe : 0x0002;
 
 	if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
-
-		while (e86_get_cx (c) > 0) {
+		if (e86_get_cx (c) != 0) {
 			s1 = e86_get_ax (c);
 			s2 = e86_get_mem16 (c, seg, e86_get_di (c));
 
@@ -2976,14 +2997,21 @@ unsigned op_af (e8086_t *c)
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
 			e86_set_flg_sub_16 (c, s1, s2);
-
-			c->instructions += 1;
-			e86_set_clk (c, 15);
-
-			if (e86_get_zf (c) != z) {
-				break;
-			}
 		}
+
+		e86_set_clk (c, 15);
+
+		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
+
+		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
+			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			return (1);
+		}
+
+		e86_set_ip (c, c->cur_ip);
+		e86_pq_init (c);
+
+		return (0);
 	}
 	else {
 		s1 = e86_get_ax (c);
