@@ -150,7 +150,6 @@ typedef struct e8086_t {
 		unsigned short seg;
 		unsigned short ofs;
 		unsigned short cnt;
-		unsigned long  delay;
 	} ea;
 
 	unsigned long    delay;

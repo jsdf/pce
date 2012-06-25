@@ -32,7 +32,7 @@ void ea_get00 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c) + e86_get_si (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 7;
+	c->delay += 7;
 }
 
 /* EA 01: [BX + DI] */
@@ -43,7 +43,7 @@ void ea_get01 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c) + e86_get_di (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 8;
+	c->delay += 8;
 }
 
 /* EA 02: [BP + SI] */
@@ -54,7 +54,7 @@ void ea_get02 (e8086_t *c)
 	c->ea.seg = e86_get_ss (c);
 	c->ea.ofs = e86_get_bp (c) + e86_get_si (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 8;
+	c->delay += 8;
 }
 
 /* EA 03: [BP + DI] */
@@ -65,7 +65,7 @@ void ea_get03 (e8086_t *c)
 	c->ea.seg = e86_get_ss (c);
 	c->ea.ofs = e86_get_bp (c) + e86_get_di (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 7;
+	c->delay += 7;
 }
 
 /* EA 04: [SI] */
@@ -76,7 +76,7 @@ void ea_get04 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_si (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 5;
+	c->delay += 5;
 }
 
 /* EA 05: [DI] */
@@ -87,7 +87,7 @@ void ea_get05 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_di (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 5;
+	c->delay += 5;
 }
 
 /* EA 06: [XXXX] */
@@ -98,7 +98,7 @@ void ea_get06 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 6;
+	c->delay += 6;
 }
 
 /* EA 07: [BX] */
@@ -109,7 +109,7 @@ void ea_get07 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c);
 	c->ea.cnt = 1;
-	c->ea.delay += 5;
+	c->delay += 5;
 }
 
 /* EA 08: [BX + SI + XX] */
@@ -120,7 +120,7 @@ void ea_get08 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c) + e86_get_si (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 11;
+	c->delay += 11;
 }
 
 /* EA 09: [BX + DI + XX] */
@@ -131,7 +131,7 @@ void ea_get09 (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c) + e86_get_di (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 12;
+	c->delay += 12;
 }
 
 /* EA 0A: [BP + SI + XX] */
@@ -142,7 +142,7 @@ void ea_get0a (e8086_t *c)
 	c->ea.seg = e86_get_ss (c);
 	c->ea.ofs = e86_get_bp (c) + e86_get_si (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 12;
+	c->delay += 12;
 }
 
 /* EA 0B: [BP + DI + XX] */
@@ -153,7 +153,7 @@ void ea_get0b (e8086_t *c)
 	c->ea.seg = e86_get_ss (c);
 	c->ea.ofs = e86_get_bp (c) + e86_get_di (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 11;
+	c->delay += 11;
 }
 
 /* EA 0C: [SI + XX] */
@@ -164,7 +164,7 @@ void ea_get0c (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_si (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 0D: [DI + XX] */
@@ -175,7 +175,7 @@ void ea_get0d (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_di (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 0E: [BP + XX] */
@@ -186,7 +186,7 @@ void ea_get0e (e8086_t *c)
 	c->ea.seg = e86_get_ss (c);
 	c->ea.ofs = e86_get_bp (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 0F: [BX + XX] */
@@ -197,7 +197,7 @@ void ea_get0f (e8086_t *c)
 	c->ea.seg = e86_get_ds (c);
 	c->ea.ofs = e86_get_bx (c) + e86_mk_sint16 (c->ea.data[1]);
 	c->ea.cnt = 2;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 10: [BX + SI + XXXX] */
@@ -209,7 +209,7 @@ void ea_get10 (e8086_t *c)
 	c->ea.ofs = e86_get_bx (c) + e86_get_si (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 11;
+	c->delay += 11;
 }
 
 /* EA 11: [BX + DI + XXXX] */
@@ -221,7 +221,7 @@ void ea_get11 (e8086_t *c)
 	c->ea.ofs = e86_get_bx (c) + e86_get_di (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 12;
+	c->delay += 12;
 }
 
 /* EA 12: [BP + SI + XXXX] */
@@ -233,7 +233,7 @@ void ea_get12 (e8086_t *c)
 	c->ea.ofs = e86_get_bp (c) + e86_get_si (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 12;
+	c->delay += 12;
 }
 
 /* EA 13: [BP + DI + XXXX] */
@@ -245,7 +245,7 @@ void ea_get13 (e8086_t *c)
 	c->ea.ofs = e86_get_bp (c) + e86_get_di (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 11;
+	c->delay += 11;
 }
 
 /* EA 14: [SI + XXXX] */
@@ -257,7 +257,7 @@ void ea_get14 (e8086_t *c)
 	c->ea.ofs = e86_get_si (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 15: [DI + XXXX] */
@@ -269,7 +269,7 @@ void ea_get15 (e8086_t *c)
 	c->ea.ofs = e86_get_di (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 16: [BP + XXXX] */
@@ -281,7 +281,7 @@ void ea_get16 (e8086_t *c)
 	c->ea.ofs = e86_get_bp (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 17: [BX + XXXX] */
@@ -293,7 +293,7 @@ void ea_get17 (e8086_t *c)
 	c->ea.ofs = e86_get_bx (c);
 	c->ea.ofs += e86_mk_uint16 (c->ea.data[1], c->ea.data[2]);
 	c->ea.cnt = 3;
-	c->ea.delay += 9;
+	c->delay += 9;
 }
 
 /* EA 18-1F: REG */
@@ -304,7 +304,7 @@ void ea_get18 (e8086_t *c)
 	c->ea.seg = 0;
 	c->ea.ofs = c->ea.data[0] & 7;
 	c->ea.cnt = 1;
-	c->ea.delay = 0;
+	c->delay = 0;
 }
 
 e86_ea_f e86_ea[32] = {
@@ -332,7 +332,7 @@ void e86_get_ea_ptr (e8086_t *c, unsigned char *ea)
 
 	if (c->prefix & E86_PREFIX_SEG) {
 		c->ea.seg = c->seg_override;
-		c->ea.delay += 2;
+		c->delay += 2;
 	}
 }
 
@@ -349,7 +349,7 @@ unsigned short e86_get_ea16 (e8086_t *c)
 {
 	if (c->ea.is_mem) {
 		if ((c->cpu & E86_CPU_8BIT) || (c->ea.ofs & 1)) {
-			c->ea.delay += 4;
+			c->delay += 4;
 		}
 
 		return (e86_get_mem16 (c, c->ea.seg, c->ea.ofs));
@@ -372,7 +372,7 @@ void e86_set_ea16 (e8086_t *c, unsigned short val)
 {
 	if (c->ea.is_mem) {
 		if ((c->cpu & E86_CPU_8BIT) || (c->ea.ofs & 1)) {
-			c->ea.delay += 4;
+			c->delay += 4;
 		}
 
 		e86_set_mem16 (c, c->ea.seg, c->ea.ofs, val);

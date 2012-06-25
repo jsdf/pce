@@ -448,8 +448,6 @@ void e86_execute (e8086_t *c)
 
 	c->cur_ip = c->ip;
 
-	c->ea.delay = 0;
-
 	do {
 		e86_pq_fill (c);
 
@@ -468,8 +466,6 @@ void e86_execute (e8086_t *c)
 			e86_pq_adjust (c, cnt);
 		}
 	} while (c->prefix & E86_PREFIX_NEW);
-
-	c->delay += c->ea.delay;
 
 	c->instructions += 1;
 
