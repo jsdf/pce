@@ -186,7 +186,7 @@ void e8259_check_int (e8259_t *pic)
 		return;
 	}
 
-	isr = pic->isr & ~pic->isr;
+	isr = pic->isr & ~pic->imr;
 
 	msk = 1 << pic->priority;
 
