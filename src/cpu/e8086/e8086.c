@@ -319,15 +319,33 @@ int e86_set_reg (e8086_t *c, const char *reg, unsigned long val)
 
 void e86_trap (e8086_t *c, unsigned n)
 {
+	unsigned short ip;
 	unsigned short ofs;
 
 	if (c->op_int != NULL) {
 		c->op_int (c->op_ext, n);
 	}
 
+	if (c->prefix & E86_PREFIX_KEEP) {
+		ip = e86_get_cur_ip (c);
+
+		if (c->cpu & E86_CPU_REP_BUG) {
+			if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
+				if (c->prefix & E86_PREFIX_SEG) {
+					ip += 1;
+				}
+			}
+		}
+
+		c->prefix = 0;
+	}
+	else {
+		ip = e86_get_ip (c);
+	}
+
 	e86_push (c, e86_get_flags (c));
 	e86_push (c, e86_get_cs (c));
-	e86_push (c, e86_get_ip (c));
+	e86_push (c, ip);
 
 	ofs = (unsigned short) (n & 0xff) << 2;
 
@@ -440,13 +458,14 @@ void e86_execute (e8086_t *c)
 		return;
 	}
 
-	c->prefix = 0;
+	if ((c->prefix & E86_PREFIX_KEEP) == 0) {
+		c->prefix = 0;
+		c->cur_ip = c->ip;
+	}
 
 	tf = e86_get_tf (c);
 
 	irq = c->irq;
-
-	c->cur_ip = c->ip;
 
 	do {
 		e86_pq_fill (c);
@@ -473,14 +492,6 @@ void e86_execute (e8086_t *c)
 		e86_trap (c, 1);
 	}
 	else if (c->irq && irq && e86_get_if (c)) {
-		if (c->cpu & E86_CPU_REP_BUG) {
-			if (c->prefix & (E86_PREFIX_REP | E86_PREFIX_REPN)) {
-				if (c->prefix & E86_PREFIX_SEG) {
-					c->ip = (c->ip + 1) & 0xffff;
-				}
-			}
-		}
-
 		e86_irq_ack (c);
 	}
 }

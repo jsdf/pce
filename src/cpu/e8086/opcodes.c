@@ -2561,12 +2561,11 @@ unsigned op_a4 (e8086_t *c)
 		e86_set_clk (c, 18);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2608,12 +2607,11 @@ unsigned op_a5 (e8086_t *c)
 		e86_set_clk (c, 18);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2661,12 +2659,11 @@ unsigned op_a6 (e8086_t *c)
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
 		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2716,12 +2713,11 @@ unsigned op_a7 (e8086_t *c)
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
 		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2791,12 +2787,11 @@ unsigned op_aa (e8086_t *c)
 		e86_set_clk (c, 11);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2831,12 +2826,11 @@ unsigned op_ab (e8086_t *c)
 		e86_set_clk (c, 11);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2870,12 +2864,11 @@ unsigned op_ac (e8086_t *c)
 		e86_set_clk (c, 12);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2908,12 +2901,11 @@ unsigned op_ad (e8086_t *c)
 		e86_set_clk (c, 12);
 
 		if (e86_get_cx (c) == 0) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -2954,12 +2946,11 @@ unsigned op_ae (e8086_t *c)
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
 		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
@@ -3004,12 +2995,11 @@ unsigned op_af (e8086_t *c)
 		z = (c->prefix & E86_PREFIX_REP) ? 1 : 0;
 
 		if ((e86_get_cx (c) == 0) || (e86_get_zf (c) != z)) {
-			c->prefix &= ~(E86_PREFIX_REP | E86_PREFIX_REPN);
+			c->prefix &= ~E86_PREFIX_KEEP;
 			return (1);
 		}
 
-		e86_set_ip (c, c->cur_ip);
-		e86_pq_init (c);
+		c->prefix |= E86_PREFIX_KEEP;
 
 		return (0);
 	}
