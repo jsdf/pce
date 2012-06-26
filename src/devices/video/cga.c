@@ -31,7 +31,7 @@
 
 
 #define CGA_IFREQ 1193182
-#define CGA_PFREQ 14318180
+#define CGA_PFREQ 14318184
 #define CGA_HFREQ 15750
 #define CGA_VFREQ 60
 
@@ -221,7 +221,7 @@ void cga_set_timing (cga_t *cga)
 	cga->clk_ht = 8 * (cga->reg_crt[CGA_CRTC_HT] + 1);
 	cga->clk_hd = 8 * cga->reg_crt[CGA_CRTC_HD];
 
-	cga->clk_vt = cga->ch * (cga->reg_crt[CGA_CRTC_VT] + 1) * cga->clk_ht;
+	cga->clk_vt = cga->ch * (cga->reg_crt[CGA_CRTC_VT] + 7) * cga->clk_ht;
 	cga->clk_vd = cga->ch * cga->reg_crt[CGA_CRTC_VD] * cga->clk_ht;
 }
 
