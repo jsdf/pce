@@ -659,6 +659,13 @@ void trm_get_scale (terminal_t *trm, unsigned w, unsigned h, unsigned *fx, unsig
 			w2 += w;
 			*fx += 1;
 		}
+
+		if (w2 < maxw) {
+			if ((trm->aspect_y * (w2 + w - maxw)) < (trm->aspect_x * (maxw - w2))) {
+				w2 += w;
+				*fx += 1;
+			}
+		}
 	}
 }
 
