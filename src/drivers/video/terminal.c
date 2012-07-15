@@ -576,10 +576,12 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 			trm->escape |= TRM_ESC_CTRL;
 		}
 		else if (key == PCE_KEY_PAUSE) {
-			trm_set_msg_trm (trm, "term.release", "");
-			trm_set_msg_trm (trm, "term.fullscreen", "0");
-			trm_set_msg_emu (trm, "emu.exit", "1");
-			return;
+			if ((trm->escape & (TRM_ESC_ALT | TRM_ESC_CTRL)) == 0) {
+				trm_set_msg_trm (trm, "term.release", "");
+				trm_set_msg_trm (trm, "term.fullscreen", "0");
+				trm_set_msg_emu (trm, "emu.exit", "1");
+				return;
+			}
 		}
 
 		if ((trm->escape & TRM_ESC_KEYS) == TRM_ESC_KEYS) {
