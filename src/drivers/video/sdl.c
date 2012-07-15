@@ -351,7 +351,7 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 		trm_set_msg_emu (&sdl->trm, "emu.stop", "1");
 		return;
 	}
-	else if ((key == SDLK_PRINT) && ((mod && KMOD_SHIFT) == 0)) {
+	else if ((key == SDLK_PRINT) && ((mod & KMOD_SHIFT) == 0)) {
 		trm_screenshot (&sdl->trm, NULL);
 		return;
 	}
