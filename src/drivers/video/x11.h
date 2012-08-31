@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/x11.h                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,6 +35,12 @@
 #include <drivers/video/terminal.h>
 
 #include <libini/libini.h>
+
+
+typedef struct {
+	KeySym    x11key;
+	pce_key_t pcekey;
+} xt_keymap_t;
 
 
 /*!***************************************************************************
@@ -70,6 +76,11 @@ typedef struct {
 	int           mse_y;
 
 	int           grab;
+
+	char          report_keys;
+
+	unsigned      keymap_cnt;
+	xt_keymap_t   *keymap;
 } xterm_t;
 
 

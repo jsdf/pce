@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/x11.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,12 +31,6 @@
 
 #include <drivers/video/terminal.h>
 #include <drivers/video/x11.h>
-
-
-typedef struct {
-	KeySym    sym;
-	pce_key_t key;
-} xt_keymap_t;
 
 
 static xt_keymap_t keymap[] = {
@@ -166,9 +160,92 @@ static xt_keymap_t keymap[] = {
 	{ XK_Left,        PCE_KEY_LEFT },
 	{ XK_Down,        PCE_KEY_DOWN },
 	{ XK_Right,       PCE_KEY_RIGHT },
-	{ PCE_KEY_NONE,   0 }
+	{ 0,              PCE_KEY_NONE }
 };
 
+
+static
+void xt_set_keymap (xterm_t *xt, KeySym src, pce_key_t dst)
+{
+	unsigned    i;
+	xt_keymap_t *tmp;
+
+	for (i = 0; i < xt->keymap_cnt; i++) {
+		if (xt->keymap[i].x11key == src) {
+			xt->keymap[i].pcekey = dst;
+			return;
+		}
+	}
+
+	tmp = realloc (xt->keymap, (xt->keymap_cnt + 1) * sizeof (xt_keymap_t));
+
+	if (tmp == NULL) {
+		return;
+	}
+
+	tmp[xt->keymap_cnt].x11key = src;
+	tmp[xt->keymap_cnt].pcekey = dst;
+
+	xt->keymap = tmp;
+	xt->keymap_cnt += 1;
+}
+
+static
+void xt_init_keymap_default (xterm_t *xt)
+{
+	unsigned i, n;
+
+	xt->keymap_cnt = 0;
+	xt->keymap = NULL;
+
+	n = 0;
+	while (keymap[n].pcekey != PCE_KEY_NONE) {
+		n += 1;
+	}
+
+	xt->keymap = malloc (n * sizeof (xt_keymap_t));
+
+	if (xt->keymap == NULL) {
+		return;
+	}
+
+	for (i = 0; i < n; i++) {
+		xt->keymap[i] = keymap[i];
+	}
+
+	xt->keymap_cnt = n;
+}
+
+static
+void xt_init_keymap_user (xterm_t *xt, ini_sct_t *sct)
+{
+	const char    *str;
+	ini_val_t     *val;
+	unsigned long x11key;
+	pce_key_t     pcekey;
+
+	val = NULL;
+
+	while (1) {
+		val = ini_next_val (sct, val, "keymap");
+
+		if (val == NULL) {
+			break;
+		}
+
+		str = ini_val_get_str (val);
+
+		if (str == NULL) {
+			continue;
+		}
+
+		if (pce_key_get_map (str, &x11key, &pcekey)) {
+			continue;
+		}
+
+		xt_set_keymap (xt, (KeySym) x11key, pcekey);
+	}
+}
 
 static
 void xt_grab_mouse (xterm_t *xt, int grab)
@@ -514,11 +591,11 @@ pce_key_t xt_key_map (xterm_t *xt, KeySym sym)
 {
 	xt_keymap_t *map;
 
-	map = keymap;
+	map = xt->keymap;
 
-	while (map->key != PCE_KEY_NONE) {
-		if (map->sym == sym) {
-			return (map->key);
+	while (map->pcekey != PCE_KEY_NONE) {
+		if (map->x11key == sym) {
+			return (map->pcekey);
 		}
 
 		map += 1;
@@ -537,15 +614,8 @@ void xt_key_send (xterm_t *xt, KeySym sym, int press)
 
 	key = xt_key_map (xt, sym);
 
-#if 0
-	fprintf (stderr, "xt: key map %u -> %u (%s)\n",
-		(unsigned) sym, (unsigned) key,
-		pce_key_to_string (key)
-	);
-#endif
-
-	if (key == PCE_KEY_NONE) {
-		fprintf (stderr, "xt: unknown key: 0x%04x\n", (unsigned) sym);
+	if (xt->report_keys || (key == PCE_KEY_NONE)) {
+		fprintf (stderr, "x11: key = 0x%04lx\n", (unsigned long) sym);
 	}
 
 	if (key == PCE_KEY_NONE) {
@@ -897,8 +967,10 @@ int xt_close (xterm_t *xt)
 }
 
 static
-void xt_init (xterm_t *xt, ini_sct_t *ini)
+void xt_init (xterm_t *xt, ini_sct_t *sct)
 {
+	int rep;
+
 	trm_init (&xt->trm, xt);
 
 	xt->trm.del = (void *) xt_del;
@@ -924,6 +996,12 @@ void xt_init (xterm_t *xt, ini_sct_t *ini)
 	xt->mse_y = 0;
 
 	xt->grab = 0;
+
+	ini_get_bool (sct, "report_keys", &rep, 0);
+	xt->report_keys = (rep != 0);
+
+	xt_init_keymap_default (xt);
+	xt_init_keymap_user (xt, sct);
 }
 
 terminal_t *xt_new (ini_sct_t *ini)
