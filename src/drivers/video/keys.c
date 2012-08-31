@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/keys.c                                     *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -230,4 +230,42 @@ const char *pce_key_to_string (pce_key_t key)
 	}
 
 	return (NULL);
+}
+
+int pce_key_get_map (const char *map, unsigned long *src, pce_key_t *dst)
+{
+	unsigned i;
+	char     val[32];
+
+	while ((*map == ' ') || (*map == '\t')) {
+		map += 1;
+	}
+
+	i = 0;
+	while ((i < 32) && (*map != 0) && (*map != '=') && (*map != ' ')) {
+		val[i++] = *(map++);
+	}
+
+	if (i >= 32) {
+		return (1);
+	}
+
+	val[i] = 0;
+
+	while (*map == ' ') {
+		map += 1;
+	}
+
+	if (*map == '=') {
+		map += 1;
+
+		while (*map == ' ') {
+			map += 1;
+		}
+	}
+
+	*src = strtoul (val, NULL, 0);
+	*dst = pce_key_from_string (map);
+
+	return (0);
 }

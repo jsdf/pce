@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/keys.h                                     *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -188,6 +188,15 @@ pce_key_t pce_key_from_string (const char *str);
  * @return The key name or NULL
  *****************************************************************************/
 const char *pce_key_to_string (pce_key_t key);
+
+/*!***************************************************************************
+ * @short  Get a PCE key map
+ * @param  map  A string of the form "<integer> = <pce key name>"
+ * @retval src  The integer part of the mapping
+ * @retval dst  The PCE key name part of the mapping
+ * @return Non-zero on error
+ *****************************************************************************/
+int pce_key_get_map (const char *map, unsigned long *src, pce_key_t *dst);
 
 
 #endif
