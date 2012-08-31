@@ -177,6 +177,23 @@ pce_key_name_t keyname[] = {
 	{ PCE_KEY_DOWN, "Down" },
 	{ PCE_KEY_RIGHT, "Right" },
 
+	{ PCE_KEY_EXTRA1, "Extra1" },
+	{ PCE_KEY_EXTRA2, "Extra2" },
+	{ PCE_KEY_EXTRA3, "Extra3" },
+	{ PCE_KEY_EXTRA4, "Extra4" },
+	{ PCE_KEY_EXTRA5, "Extra5" },
+	{ PCE_KEY_EXTRA6, "Extra6" },
+	{ PCE_KEY_EXTRA7, "Extra7" },
+	{ PCE_KEY_EXTRA8, "Extra8" },
+	{ PCE_KEY_EXTRA9, "Extra9" },
+	{ PCE_KEY_EXTRA10, "Extra10" },
+	{ PCE_KEY_EXTRA11, "Extra11" },
+	{ PCE_KEY_EXTRA12, "Extra12" },
+	{ PCE_KEY_EXTRA13, "Extra13" },
+	{ PCE_KEY_EXTRA14, "Extra14" },
+	{ PCE_KEY_EXTRA15, "Extra15" },
+	{ PCE_KEY_EXTRA16, "Extra16" },
+
 	{ PCE_KEY_NONE, NULL }
 };
 
