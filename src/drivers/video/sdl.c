@@ -338,12 +338,9 @@ void sdl_update (sdl_t *sdl)
 }
 
 static
-void sdl_event_keydown (sdl_t *sdl, SDLKey key)
+void sdl_event_keydown (sdl_t *sdl, SDLKey key, SDLMod mod)
 {
-	SDLMod    mod;
 	pce_key_t pcekey;
-
-	mod = SDL_GetModState();
 
 	if ((key == SDLK_BACKQUOTE) && (mod & KMOD_LCTRL)) {
 		sdl_grab_mouse (sdl, 0);
@@ -351,7 +348,7 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 		trm_set_msg_emu (&sdl->trm, "emu.stop", "1");
 		return;
 	}
-	else if ((key == SDLK_PRINT) && ((mod & KMOD_SHIFT) == 0)) {
+	else if (key == SDLK_PRINT) {
 		trm_screenshot (&sdl->trm, NULL);
 		return;
 	}
@@ -371,11 +368,15 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key)
 }
 
 static
-void sdl_event_keyup (sdl_t *sdl, SDLKey key)
+void sdl_event_keyup (sdl_t *sdl, SDLKey key, SDLMod mod)
 {
 	pce_key_t pcekey;
 
 	pcekey = sdl_map_key (key);
+
+	if (key == SDLK_PRINT) {
+		return;
+	}
 
 	if (pcekey != PCE_KEY_NONE) {
 		if (key == SDLK_NUMLOCK) {
@@ -460,11 +461,11 @@ void sdl_check (sdl_t *sdl)
 	while (SDL_PollEvent (&evt) && (i < 8)) {
 		switch (evt.type) {
 		case SDL_KEYDOWN:
-			sdl_event_keydown (sdl, evt.key.keysym.sym);
+			sdl_event_keydown (sdl, evt.key.keysym.sym, evt.key.keysym.mod);
 			break;
 
 		case SDL_KEYUP:
-			sdl_event_keyup (sdl, evt.key.keysym.sym);
+			sdl_event_keyup (sdl, evt.key.keysym.sym, evt.key.keysym.mod);
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
