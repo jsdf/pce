@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/sdl.h                                      *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +33,12 @@
 #include <SDL.h>
 
 
+typedef struct {
+	SDLKey    sdlkey;
+	pce_key_t pcekey;
+} sdl_keymap_t;
+
+
 /*!***************************************************************************
  * @short The SDL terminal structure
  *****************************************************************************/
@@ -54,6 +60,11 @@ typedef struct {
 	unsigned      border[4];
 
 	char          grab;
+
+	char          report_keys;
+
+	unsigned      keymap_cnt;
+	sdl_keymap_t  *keymap;
 } sdl_t;
 
 

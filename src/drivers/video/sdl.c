@@ -32,12 +32,6 @@
 #include <drivers/video/sdl.h>
 
 
-typedef struct {
-	SDLKey    sdlkey;
-	pce_key_t pcekey;
-} sdl_keymap_t;
-
-
 static int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force);
 
 
@@ -162,6 +156,89 @@ static sdl_keymap_t keymap[] = {
 
 
 static
+void sdl_set_keymap (sdl_t *sdl, SDLKey src, pce_key_t dst)
+{
+	unsigned     i;
+	sdl_keymap_t *tmp;
+
+	for (i = 0; i < sdl->keymap_cnt; i++) {
+		if (sdl->keymap[i].sdlkey == src) {
+			sdl->keymap[i].pcekey = dst;
+			return;
+		}
+	}
+
+	tmp = realloc (sdl->keymap, (sdl->keymap_cnt + 1) * sizeof (sdl_keymap_t));
+
+	if (tmp == NULL) {
+		return;
+	}
+
+	tmp[sdl->keymap_cnt].sdlkey = src;
+	tmp[sdl->keymap_cnt].pcekey = dst;
+
+	sdl->keymap = tmp;
+	sdl->keymap_cnt += 1;
+}
+
+static
+void sdl_init_keymap_default (sdl_t *sdl)
+{
+	unsigned i, n;
+
+	sdl->keymap_cnt = 0;
+	sdl->keymap = NULL;
+
+	n = 0;
+	while (keymap[n].pcekey != PCE_KEY_NONE) {
+		n += 1;
+	}
+
+	sdl->keymap = malloc (n * sizeof (sdl_keymap_t));
+
+	if (sdl->keymap == NULL) {
+		return;
+	}
+
+	for (i = 0; i < n; i++) {
+		sdl->keymap[i] = keymap[i];
+	}
+
+	sdl->keymap_cnt = n;
+}
+
+static
+void sdl_init_keymap_user (sdl_t *sdl, ini_sct_t *sct)
+{
+	const char    *str;
+	ini_val_t     *val;
+	unsigned long sdlkey;
+	pce_key_t     pcekey;
+
+	val = NULL;
+
+	while (1) {
+		val = ini_next_val (sct, val, "keymap");
+
+		if (val == NULL) {
+			break;
+		}
+
+		str = ini_val_get_str (val);
+
+		if (str == NULL) {
+			continue;
+		}
+
+		if (pce_key_get_map (str, &sdlkey, &pcekey)) {
+			continue;
+		}
+
+		sdl_set_keymap (sdl, (SDLKey) sdlkey, pcekey);
+	}
+}
+
+static
 void sdl_grab_mouse (sdl_t *sdl, int grab)
 {
 	if (grab) {
@@ -256,17 +333,14 @@ int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force)
 }
 
 static
-unsigned sdl_map_key (SDLKey key)
+unsigned sdl_map_key (sdl_t *sdl, SDLKey key)
 {
 	unsigned i;
 
-	i = 0;
-	while (keymap[i].pcekey != PCE_KEY_NONE) {
-		if (keymap[i].sdlkey == key) {
-			return (keymap[i].pcekey);
+	for (i = 0; i < sdl->keymap_cnt; i++) {
+		if (sdl->keymap[i].sdlkey == key) {
+			return (sdl->keymap[i].pcekey);
 		}
-
-		i += 1;
 	}
 
 	return (PCE_KEY_NONE);
@@ -353,10 +427,13 @@ void sdl_event_keydown (sdl_t *sdl, SDLKey key, SDLMod mod)
 		return;
 	}
 
-	pcekey = sdl_map_key (key);
+	pcekey = sdl_map_key (sdl, key);
+
+	if (sdl->report_keys || (pcekey == PCE_KEY_NONE)) {
+		fprintf (stderr, "sdl: key = 0x%04x\n", (unsigned) key);
+	}
 
 	if (pcekey == PCE_KEY_NONE) {
-		fprintf (stderr, "sdl: key = %04x\n", (unsigned) key);
 		return;
 	}
 
@@ -372,7 +449,7 @@ void sdl_event_keyup (sdl_t *sdl, SDLKey key, SDLMod mod)
 {
 	pce_key_t pcekey;
 
-	pcekey = sdl_map_key (key);
+	pcekey = sdl_map_key (sdl, key);
 
 	if (key == SDLK_PRINT) {
 		return;
@@ -603,7 +680,7 @@ int sdl_close (sdl_t *sdl)
 static
 void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 {
-	int fs;
+	int fs, rep;
 
 	trm_init (&sdl->trm, sdl);
 
@@ -633,6 +710,12 @@ void sdl_init (sdl_t *sdl, ini_sct_t *sct)
 
 	sdl->dsp_bpp = 0;
 	sdl->scr_bpp = 0;
+
+	ini_get_bool (sct, "report_keys", &rep, 0);
+	sdl->report_keys = (rep != 0);
+
+	sdl_init_keymap_default (sdl);
+	sdl_init_keymap_user (sdl, sct);
 }
 
 terminal_t *sdl_new (ini_sct_t *sct)
