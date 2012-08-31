@@ -587,6 +587,10 @@ void xt_event_keyup (xterm_t *xt, XEvent *evt)
 
 	sym = XLookupKeysym (&evt->xkey, 0);
 
+	if ((sym == XK_Print) && (evt->xkey.state == 0)) {
+		return;
+	}
+
 	xt_key_send (xt, sym, 0);
 }
 
