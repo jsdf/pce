@@ -125,6 +125,7 @@ include $(srcdir)/src/cpu/e68000/Makefile.inc
 include $(srcdir)/src/cpu/e8086/Makefile.inc
 include $(srcdir)/src/cpu/ppc405/Makefile.inc
 include $(srcdir)/src/cpu/sparc32/Makefile.inc
+include $(srcdir)/src/chipset/80186/Makefile.inc
 include $(srcdir)/src/chipset/82xx/Makefile.inc
 include $(srcdir)/src/chipset/clock/Makefile.inc
 include $(srcdir)/src/chipset/ppc405/Makefile.inc
