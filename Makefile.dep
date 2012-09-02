@@ -1221,6 +1221,9 @@ src/chipset/80186/dma.o: src/chipset/80186/dma.c \
 src/chipset/80186/icu.o: src/chipset/80186/icu.c \
 	src/chipset/80186/icu.h
 
+src/chipset/80186/tcu.o: src/chipset/80186/tcu.c \
+	src/chipset/80186/tcu.h
+
 src/chipset/82xx/e8237.o: src/chipset/82xx/e8237.c \
 	src/chipset/82xx/e8237.h
 
