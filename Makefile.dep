@@ -1218,6 +1218,9 @@ src/arch/sims32/sims32.o: src/arch/sims32/sims32.c \
 src/chipset/80186/dma.o: src/chipset/80186/dma.c \
 	src/chipset/80186/dma.h
 
+src/chipset/80186/icu.o: src/chipset/80186/icu.c \
+	src/chipset/80186/icu.h
+
 src/chipset/82xx/e8237.o: src/chipset/82xx/e8237.c \
 	src/chipset/82xx/e8237.h
 
