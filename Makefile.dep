@@ -674,6 +674,212 @@ src/arch/macplus/video.o: src/arch/macplus/video.c \
 	src/drivers/video/terminal.h \
 	src/libini/libini.h
 
+src/arch/rc759/cmd.o: src/arch/rc759/cmd.c \
+	src/arch/rc759/fdc.h \
+	src/arch/rc759/keyboard.h \
+	src/arch/rc759/main.h \
+	src/arch/rc759/nvm.h \
+	src/arch/rc759/parport.h \
+	src/arch/rc759/rc759.h \
+	src/arch/rc759/rtc.h \
+	src/arch/rc759/speaker.h \
+	src/arch/rc759/video.h \
+	src/chipset/80186/dma.h \
+	src/chipset/80186/icu.h \
+	src/chipset/80186/tcu.h \
+	src/chipset/82xx/e8250.h \
+	src/chipset/82xx/e8255.h \
+	src/chipset/82xx/e8259.h \
+	src/chipset/wd179x.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/log.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/rc759/fdc.o: src/arch/rc759/fdc.c \
+	src/arch/rc759/fdc.h \
+	src/arch/rc759/main.h \
+	src/chipset/wd179x.h \
+	src/config.h \
+	src/drivers/block/blkfdc.h \
+	src/drivers/block/block.h \
+	src/drivers/pbit/mfm-ibm.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/pfdc/pfdc-img.h \
+	src/drivers/pfdc/pfdc.h \
+	src/lib/log.h \
+	src/lib/string.h
+
+src/arch/rc759/keyboard.o: src/arch/rc759/keyboard.c \
+	src/arch/rc759/keyboard.h \
+	src/arch/rc759/main.h \
+	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/log.h \
+	src/libini/libini.h
+
+src/arch/rc759/main.o: src/arch/rc759/main.c \
+	src/arch/rc759/cmd.h \
+	src/arch/rc759/fdc.h \
+	src/arch/rc759/keyboard.h \
+	src/arch/rc759/main.h \
+	src/arch/rc759/msg.h \
+	src/arch/rc759/nvm.h \
+	src/arch/rc759/parport.h \
+	src/arch/rc759/rc759.h \
+	src/arch/rc759/rtc.h \
+	src/arch/rc759/speaker.h \
+	src/arch/rc759/video.h \
+	src/chipset/80186/dma.h \
+	src/chipset/80186/icu.h \
+	src/chipset/80186/tcu.h \
+	src/chipset/82xx/e8250.h \
+	src/chipset/82xx/e8255.h \
+	src/chipset/82xx/e8259.h \
+	src/chipset/wd179x.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/getopt.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/path.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/rc759/msg.o: src/arch/rc759/msg.c \
+	src/arch/rc759/fdc.h \
+	src/arch/rc759/keyboard.h \
+	src/arch/rc759/main.h \
+	src/arch/rc759/nvm.h \
+	src/arch/rc759/parport.h \
+	src/arch/rc759/rc759.h \
+	src/arch/rc759/rtc.h \
+	src/arch/rc759/speaker.h \
+	src/arch/rc759/video.h \
+	src/chipset/80186/dma.h \
+	src/chipset/80186/icu.h \
+	src/chipset/80186/tcu.h \
+	src/chipset/82xx/e8250.h \
+	src/chipset/82xx/e8255.h \
+	src/chipset/82xx/e8259.h \
+	src/chipset/wd179x.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/inidsk.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/msg.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/rc759/nvm.o: src/arch/rc759/nvm.c \
+	src/arch/rc759/main.h \
+	src/arch/rc759/nvm.h \
+	src/config.h \
+	src/lib/string.h
+
+src/arch/rc759/parport.o: src/arch/rc759/parport.c \
+	src/arch/rc759/main.h \
+	src/arch/rc759/parport.h \
+	src/config.h \
+	src/drivers/char/char.h \
+	src/lib/log.h \
+	src/lib/string.h
+
+src/arch/rc759/rc759.o: src/arch/rc759/rc759.c \
+	src/arch/rc759/fdc.h \
+	src/arch/rc759/keyboard.h \
+	src/arch/rc759/main.h \
+	src/arch/rc759/msg.h \
+	src/arch/rc759/nvm.h \
+	src/arch/rc759/parport.h \
+	src/arch/rc759/rc759.h \
+	src/arch/rc759/rtc.h \
+	src/arch/rc759/speaker.h \
+	src/arch/rc759/video.h \
+	src/chipset/80186/dma.h \
+	src/chipset/80186/icu.h \
+	src/chipset/80186/tcu.h \
+	src/chipset/82xx/e8250.h \
+	src/chipset/82xx/e8255.h \
+	src/chipset/82xx/e8259.h \
+	src/chipset/wd179x.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/inidsk.h \
+	src/lib/iniram.h \
+	src/lib/initerm.h \
+	src/lib/load.h \
+	src/lib/log.h \
+	src/lib/string.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/rc759/rtc.o: src/arch/rc759/rtc.c \
+	src/arch/rc759/main.h \
+	src/arch/rc759/rtc.h \
+	src/config.h
+
+src/arch/rc759/speaker.o: src/arch/rc759/speaker.c \
+	src/arch/rc759/main.h \
+	src/arch/rc759/speaker.h \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h
+
+src/arch/rc759/video.o: src/arch/rc759/video.c \
+	src/arch/rc759/main.h \
+	src/arch/rc759/video.h \
+	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
 src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \

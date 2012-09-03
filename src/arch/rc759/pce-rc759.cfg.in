@@ -1,0 +1,248 @@
+# pce-rc759.cfg
+#
+# Example config file
+
+
+# Add a directory to the end of the file search path.
+#
+# The search path is used if an input file is specified with
+# a relative file name. In that case the file is searched for
+# in all directories of the search path. The current directory
+# is always implicitly added to the end of the search path.
+#
+# If the first character of the string is a "-", the directory
+# is added to the beginning of the search path.
+path = "rom"
+path = "PCE_DIR_DATA/rc759"
+path = "-."
+
+
+cfg.ram  ?= 256K
+cfg.prom ?= "rc759-1-2.1.rom"
+
+
+system {
+	# The CPU clock in Hz
+	#
+	# Values that correspond to real machines are 6 MHz and 8 MHz.
+	# Larger values will cause problems for the PROM.
+	clock = 6000000
+
+	# Alternate RAM size
+	#
+	# If this option is set, the PROM expects alternate RAM sizes. It
+	# has to correspond the the specific PROM used.
+	# Valid RAM sizes are:
+	#   0: 256K, 384K, 640K, 768K
+	#   1: 512K, 640K, 832K
+	alt_mem_size = 0
+
+	# The NVM backing file
+	#
+	# The NVM contents are read from and written back to this file.
+	# If the file does not exist, it is created and the NVM is
+	# initialized.
+	nvm = "nvm.dat"
+
+	# Sanitize the NVM
+	#
+	# If this option is set, a few NVM values are checked for sanity
+	# and the NVM checksum is set correctly.
+	sanitize_nvm = 1
+
+	# The local parallel port
+	parport1 = "stdio:file=parport1.out:flush=1"
+
+	# The remote parallel port
+	parport2 = "stdio:file=parport2.out:flush=1"
+}
+
+
+video {
+	# The monitor type
+	#
+	# If this option is set, a monochrome monitor is attached,
+	# a color monitor otherwise.
+	mono = 0
+
+	# The 22 KHz monitor option
+	#
+	# If this option is set, a 22 KHz monitor is attached, a
+	# 15 KHz monitor otherwise.
+	hires = 0
+
+	# The minimum screen height. If the screen has less than
+	# min_h rows, blank rows are added up to min_h.
+	min_h = 0
+}
+
+# Multiple "ram" sections may be present but they must not overlap.
+ram {
+	# The linear base address
+	address = 0
+
+	# The memory block size
+	size = cfg.ram
+
+	# The memory block is initialized with this value
+	default = 0x00
+}
+
+ram {
+	address = 0xd0000
+	size    = 32K
+}
+
+# Multiple "rom" sections may be present
+rom {
+	# The linear base address
+	address = 0xf0000
+
+	# The rom size in bytes
+	size = 64K
+
+	# The memory block is initialized with this value
+	default = 0xff
+
+	# The file from which the rom code is loaded
+	#file = "rc759-1-2.1.rom"
+}
+
+
+# "load" sections are processed after all the "ram" and "rom"
+# sections. It is possible to overwrite read-only blocks, too.
+load {
+	# The main BIOS
+	format  = "binary"
+	address = 0xf8000
+	file    = cfg.prom
+}
+
+#load {
+#	# Intel hex file
+#	format = "ihex"
+#	file   = "rc759.ihex"
+#}
+
+#load {
+#	# Motorola S-Record file
+#	format = "srec"
+#	file   = "rc759.srec"
+#}
+
+
+# Multiple "terminal" sections may be present. The first
+# one will be used unless a terminal type is specified
+# on the command line.
+terminal {
+	driver = "sdl"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The initial scale factors
+	scale   = 1
+
+	# The terminal aspect ratio.
+	aspect_x = 4
+	aspect_y = 3
+
+	min_w = 512
+	min_h = 384
+
+	# Add a border around the image
+	border = 0
+
+	# Start in fullscreen mode.
+	fullscreen = 0
+
+	# The mouse speed. The host mouse speed is multiplied
+	# by (mouse_mul_x / mouse_div_x) and (mouse_mul_y / mouse_div_y)
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+terminal {
+	driver = "x11"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The initial scale factor
+	scale = 1
+
+	# The terminal aspect ratio.
+	aspect_x = 4
+	aspect_y = 3
+
+	# The mouse speed
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+terminal {
+	driver = "null"
+}
+
+
+speaker {
+	# The speaker volume in the range [0...1000]
+	volume = 500
+
+	# Apply a low-pass filter with the specified cut-off
+	# frequency in Herz. This is separate from the low-pass
+	# filter in the sound driver. If the frequency is 0,
+	# the filter is disabled.
+	lowpass = 8000
+
+	# The sample rate at which sound is sent to the sound driver.
+	sample_rate = 44100
+
+	#driver = "null"
+	#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
+	#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
+	driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
+}
+
+
+# The floppy disk controller
+fdc {
+	# The PBIT file attached to the first floppy disk drive.
+	# If this option is not set, or the file can't be read,
+	# the disk with ID 0 is used instead.
+	file0 = "fd0.pbit"
+
+	# The PBIT file attached to the second floppy disk drive.
+	# If this option is not set, or the file can't be read,
+	# the disk with ID 1 is used instead.
+	file1 = "fd1.pbit"
+}
+
+
+# The first floppy drive
+disk {
+	drive    = 0
+	optional = 1
+	type     = "auto"
+	file     = "fd0.img"
+	file     = "fd0.pfdc"
+}
+
+# The second floppy drive
+disk {
+	drive    = 1
+	optional = 1
+	type     = "auto"
+	file     = "fd1.img"
+	file     = "fd1.pfdc"
+}

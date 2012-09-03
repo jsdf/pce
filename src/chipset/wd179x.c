@@ -667,7 +667,7 @@ void cmd_restore (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
-	fdc->delay = 500;
+	fdc->delay = 1000;
 	fdc->cont = cmd_restore_cont;
 }
 
@@ -747,7 +747,7 @@ void cmd_seek (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
-	fdc->delay = 500;
+	fdc->delay = 1000;
 	fdc->cont = cmd_seek_cont;
 }
 
@@ -817,7 +817,7 @@ void cmd_step (wd179x_t *fdc, unsigned dir)
 
 	fdc->status = WD179X_ST_BUSY;
 
-	fdc->delay = 500;
+	fdc->delay = 1000;
 	fdc->cont = cmd_step_cont;
 }
 

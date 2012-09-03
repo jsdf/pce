@@ -5,7 +5,7 @@
 #*****************************************************************************
 #* File name:   configure.in                                                 *
 #* Created:     2002-05-20 by Hampa Hug <hampa@hampa.ch>                     *
-#* Copyright:   (C) 2002-2011 Hampa Hug <hampa@hampa.ch>                     *
+#* Copyright:   (C) 2002-2012 Hampa Hug <hampa@hampa.ch>                     *
 #*****************************************************************************
 
 #*****************************************************************************
@@ -339,6 +339,7 @@ AC_SUBST(PCE_LARGE_FILE)
 
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
 if test -d "$srcdir/src/arch/macplus"; then have_macplus=1; else have_macplus=0; fi
+if test -d "$srcdir/src/arch/rc759"; then have_rc759=1; else have_rc759=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
 if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
@@ -439,6 +440,34 @@ AC_ARG_ENABLE(macplus-rom,
 	]
 )
 AC_SUBST(PCE_BUILD_MACPLUS_ROM)
+
+
+AC_MSG_CHECKING([whether to build the RC759 Piccoline])
+if test "x$have_rc759" != "x1" ; then
+	PCE_BUILD_RC759=0
+	AC_MSG_RESULT([no (no source)])
+else
+	AC_ARG_ENABLE(rc759,
+	  [AS_HELP_STRING([--enable-rc759], [Enable the RC759 Piccoline [yes]])],
+	  [
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_RC759=1
+			AC_MSG_RESULT([yes (forced)])
+		else
+			PCE_BUILD_RC759=0
+			AC_MSG_RESULT([no (forced)])
+		fi
+	  ],
+	  [
+		PCE_BUILD_RC759=1
+		AC_MSG_RESULT([yes (default)])
+	  ]
+	)
+fi
+AC_SUBST(PCE_BUILD_RC759)
+if test $PCE_BUILD_RC759 -eq 1 ; then
+	AC_DEFINE(PCE_BUILD_RC759)
+fi
 
 
 AC_MSG_CHECKING([whether to build the PPC405 simulator])
@@ -865,6 +894,12 @@ else
 	emu2="$emu2 macplus"
 fi
 
+if test "x$PCE_BUILD_RC759" = "x1" ; then
+	emu1="$emu1 rc759"
+else
+	emu2="$emu2 rc759"
+fi
+
 if test "x$PCE_BUILD_SIM405" = "x1" ; then
 	emu1="$emu1 sim405"
 else
@@ -1003,10 +1038,10 @@ AC_OUTPUT(Makefile Makefile.inc src/config.inc)
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
 
-echo "  CC:                     $CC $CFLAGS"
-echo "  LD:                     $CC $LDFLAGS"
+echo "  CC:                      $CC $CFLAGS"
+echo "  LD:                      $CC $LDFLAGS"
 echo
-echo "  prefix:                 $prefix"
+echo "  prefix:                  $prefix"
 echo
 echo "  Emulators built:        $emu1"
 echo "  Emulators not built:    $emu2"

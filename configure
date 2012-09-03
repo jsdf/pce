@@ -618,6 +618,7 @@ PCE_BUILD_SIMARM
 PCE_BUILD_SIMS32
 PCE_BUILD_SIM6502
 PCE_BUILD_SIM405
+PCE_BUILD_RC759
 PCE_BUILD_MACPLUS_ROM
 PCE_BUILD_MACPLUS
 PCE_BUILD_IBMPC_ROM
@@ -721,6 +722,7 @@ enable_ibmpc
 enable_ibmpc_rom
 enable_macplus
 enable_macplus_rom
+enable_rc759
 enable_sim405
 enable_sim6502
 enable_sims32
@@ -1368,6 +1370,7 @@ Optional Features:
   --enable-ibmpc-rom      Build the IBM PC ROM from source [no]
   --enable-macplus        Enable the Mac Plus emulator [yes]
   --enable-macplus-rom    Build the Mac Plus ROM from source [no]
+  --enable-rc759          Enable the RC759 Piccoline [yes]
   --enable-sim405         Enable the PPC405 simulator [yes]
   --enable-sim6502        Enable the 6502 simulator [yes]
   --enable-sims32         Enable the sparc32 simulator [yes]
@@ -4689,6 +4692,7 @@ fi
 
 if test -d "$srcdir/src/arch/ibmpc"; then have_ibmpc=1; else have_ibmpc=0; fi
 if test -d "$srcdir/src/arch/macplus"; then have_macplus=1; else have_macplus=0; fi
+if test -d "$srcdir/src/arch/rc759"; then have_rc759=1; else have_rc759=0; fi
 if test -d "$srcdir/src/arch/sim405"; then have_sim405=1; else have_sim405=0; fi
 if test -d "$srcdir/src/arch/sim6502"; then have_sim6502=1; else have_sim6502=0; fi
 if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
@@ -4821,6 +4825,43 @@ $as_echo "no (default)" >&6; }
 fi
 
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the RC759 Piccoline" >&5
+$as_echo_n "checking whether to build the RC759 Piccoline... " >&6; }
+if test "x$have_rc759" != "x1" ; then
+	PCE_BUILD_RC759=0
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (no source)" >&5
+$as_echo "no (no source)" >&6; }
+else
+	# Check whether --enable-rc759 was given.
+if test "${enable_rc759+set}" = set; then :
+  enableval=$enable_rc759;
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_RC759=1
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
+$as_echo "yes (forced)" >&6; }
+		else
+			PCE_BUILD_RC759=0
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
+$as_echo "no (forced)" >&6; }
+		fi
+
+else
+
+		PCE_BUILD_RC759=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (default)" >&5
+$as_echo "yes (default)" >&6; }
+
+
+fi
+
+fi
+
+if test $PCE_BUILD_RC759 -eq 1 ; then
+	$as_echo "#define PCE_BUILD_RC759 1" >>confdefs.h
+
+fi
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the PPC405 simulator" >&5
@@ -5499,6 +5540,12 @@ if test "x$PCE_BUILD_MACPLUS" = "x1" ; then
 	emu1="$emu1 macplus"
 else
 	emu2="$emu2 macplus"
+fi
+
+if test "x$PCE_BUILD_RC759" = "x1" ; then
+	emu1="$emu1 rc759"
+else
+	emu2="$emu2 rc759"
 fi
 
 if test "x$PCE_BUILD_SIM405" = "x1" ; then
@@ -6932,10 +6979,10 @@ fi
 echo ""
 echo "pce $PCE_VERSION_STR is now configured:"
 
-echo "  CC:                     $CC $CFLAGS"
-echo "  LD:                     $CC $LDFLAGS"
+echo "  CC:                      $CC $CFLAGS"
+echo "  LD:                      $CC $LDFLAGS"
 echo
-echo "  prefix:                 $prefix"
+echo "  prefix:                  $prefix"
 echo
 echo "  Emulators built:        $emu1"
 echo "  Emulators not built:    $emu2"

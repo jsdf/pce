@@ -76,6 +76,7 @@ endif
 
 PCE_BUILD_IBMPC   := @PCE_BUILD_IBMPC@
 PCE_BUILD_MACPLUS := @PCE_BUILD_MACPLUS@
+PCE_BUILD_RC759   := @PCE_BUILD_RC759@
 PCE_BUILD_SIM405  := @PCE_BUILD_SIM405@
 PCE_BUILD_SIM6502 := @PCE_BUILD_SIM6502@
 PCE_BUILD_SIMARM  := @PCE_BUILD_SIMARM@
@@ -111,7 +112,8 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
 	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
-	doc/pbit-format.txt doc/pfdc-format.txt doc/sound-drivers.txt
+	doc/pbit-format.txt doc/pfdc-format.txt doc/rc759-keymap.txt \
+	doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
 
@@ -148,6 +150,7 @@ include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc
 include $(srcdir)/src/arch/macplus/Makefile.inc
 include $(srcdir)/src/arch/macplus/pcex/Makefile.inc
+include $(srcdir)/src/arch/rc759/Makefile.inc
 include $(srcdir)/src/arch/sim405/Makefile.inc
 include $(srcdir)/src/arch/sim6502/Makefile.inc
 include $(srcdir)/src/arch/simarm/Makefile.inc
@@ -208,6 +211,14 @@ endif
 		test -f "$$dst" && continue ; \
 		test x$(V) != x1 && echo "  CP     $$dst" ; \
 		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/macplus" ; \
+		$(INSTALL) -m 644 "$$src" "$$dst" ; \
+	done
+	$(QR)for src in $(srcdir)/contrib/rom/rc759/* ; do \
+		test -f "$$src" || continue ; \
+		dst=$(DESTDIR)$(datadir)/rc759/`basename $$src` ; \
+		test -f "$$dst" && continue ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/rc759" ; \
 		$(INSTALL) -m 644 "$$src" "$$dst" ; \
 	done
 
