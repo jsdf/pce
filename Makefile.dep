@@ -1655,6 +1655,36 @@ src/drivers/options.o: src/drivers/options.c \
 	src/config.h \
 	src/drivers/options.h
 
+src/drivers/pbit/gcr-mac.o: src/drivers/pbit/gcr-mac.c \
+	src/drivers/pbit/gcr-mac.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/pfdc/pfdc.h
+
+src/drivers/pbit/mfm-ibm.o: src/drivers/pbit/mfm-ibm.c \
+	src/drivers/pbit/mfm-ibm.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/pfdc/pfdc.h
+
+src/drivers/pbit/pbit-io-pbit.o: src/drivers/pbit/pbit-io-pbit.c \
+	src/drivers/pbit/pbit-io-pbit.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h
+
+src/drivers/pbit/pbit-io-tc.o: src/drivers/pbit/pbit-io-tc.c \
+	src/drivers/pbit/pbit-io-tc.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h
+
+src/drivers/pbit/pbit-io.o: src/drivers/pbit/pbit-io.c \
+	src/drivers/pbit/pbit-io-pbit.h \
+	src/drivers/pbit/pbit-io-tc.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h
+
+src/drivers/pbit/pbit.o: src/drivers/pbit/pbit.c \
+	src/drivers/pbit/pbit.h
+
 src/drivers/pfdc/pfdc-img-ana.o: src/drivers/pfdc/pfdc-img-ana.c \
 	src/drivers/pfdc/pfdc-img-ana.h \
 	src/drivers/pfdc/pfdc.h

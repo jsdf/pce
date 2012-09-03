@@ -111,7 +111,7 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
 	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
-	doc/pfdc-format.txt doc/sound-drivers.txt
+	doc/pbit-format.txt doc/pfdc-format.txt doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
 
@@ -138,6 +138,7 @@ include $(srcdir)/src/lib/Makefile.inc
 include $(srcdir)/src/drivers/Makefile.inc
 include $(srcdir)/src/drivers/block/Makefile.inc
 include $(srcdir)/src/drivers/char/Makefile.inc
+include $(srcdir)/src/drivers/pbit/Makefile.inc
 include $(srcdir)/src/drivers/pfdc/Makefile.inc
 include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/drivers/video/Makefile.inc
