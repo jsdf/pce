@@ -1,0 +1,179 @@
+.TH PBIT 1 "2012-03-10" "HH" "pce"
+\
+.SH NAME
+pbit \- convert and modify PBIT image files
+
+.SH SYNOPSIS
+.BI pbit " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpbit\fR(1) is used to modify and convert PBIT images
+files.
+
+.SH OPTIONS
+.TP
+.BI "-c, --cylinder " "cyl1[-cyl2]"
+Select a range of cylinders.
+\
+.TP
+.BI "-e, --edit " "what val"
+For all selected tracks, set track attribute \fIwhat\fR to \fIval\fR.
+For boolean attributes, a value of 0 disables the attribute and any other
+value enables it.
+Recognized attributes are:
+.RS
+.TP
+.B clock
+The bit clock rate.
+.TP
+.B data
+Initialize the track using \fIval\fR.
+.TP
+.B size
+Set the track size in bits.
+.RE
+\
+.TP
+.B "-f, --info"
+Print information about the current image or the next image loaded.
+\
+.TP
+.BI "-h, --head " "head1[-head2]"
+Select a range of heads.
+\
+.TP
+.BI "-i, --input " filename
+Load an image from \fIfilename\fR.
+\
+.TP
+.BI "-I, --input-format " format
+Set the input file format to \fIformat\fR.
+Valid formats are:
+.RS
+.TP
+.B pbit
+The native PBIT file format.
+.TP
+.B tc
+Transcopy dump format. Support for this format is highly experimental.
+.RE
+\
+.TP
+.B "-l, --list-short"
+List all tracks in the current image or in the next image loaded.
+Using this options prints one line per track.
+\
+.TP
+.B "-L, --list-long"
+List all tracks in the current image or in the next image loaded.
+\
+.TP
+.BI "-o, --output " filename
+Set the output file name. Before exiting, the current image will
+be written to this file.
+\
+.TP
+.BI "-O, --output-format " format
+Set the output file format to \fIformat\fR. See the \fI-I\fR option
+for a list of valid formats.
+\
+.TP
+.BI "-p, --operation " "name [arg...]"
+Perform an operation on the current image. Valid operations are:
+.RS
+.TP
+.B "auto-align-gcr"
+Automatically align Macintosh GCR tracks to the index.
+.TP
+.BI "comment-add " text
+Add \fItext\fR to the image comment.
+.TP
+.BI "comment-load " filename
+Load the image comment from file \fIfilename\fR.
+.TP
+.B comment-print
+Print the current image comment.
+.TP
+.BI "comment-save " filename
+Save the current image comment to \fIfilename\fR.
+.TP
+.BI "comment-set " text
+Set the image comment to \fItext\fR.
+.TP
+.BI "decode " "type filename"
+Decode the image and save it as a pfdc sector image to \fIfilename\fR.
+Valid decode types are:
+.RS
+.TP
+.B gcr
+Apple Macintosh GCR
+.TP
+.B mfm
+IBM MFM
+.RE
+.TP
+.B delete
+Delete all selected tracks.
+.TP
+.B "double-step"
+Remove odd numbered tracks.
+.TP
+.B "double-step-even"
+Remove even numbered tracks.
+.TP
+.BI "encode " "type filename"
+Load a pfdc sector image from \fIfilename\fR and encode it.
+Valid encode types are:
+.RS
+.TP
+.B gcr
+Apple Macintosh GCR
+.TP
+.B mfm
+IBM MFM
+.RE
+.TP
+.B info
+Print information about the current image (same as \fB-f\fR).
+.TP
+.B new
+Create new tracks.
+.TP
+.BI "rotate " bits
+Rotate all selected tracks left by \fIbits\fR bits.
+.TP
+.BI "save " filename
+Save all selected tracks to \fIfilename\fR. The contents of the
+tracks are written sequentially to the file.
+.RE
+\
+.TP
+.BI "-r, --data-rate " "rate"
+Set the default data rate. The default is 500000. If \fIrate\fR is
+greater than 1000 it is assumed to be in bits per second, otherwise
+it is assumed to be in kbits per seconds.
+\
+.TP
+.BI "-t, --track " "c h"
+Select tracks. This is the same as using the \fB-c\fR and \fB-h\fR options.
+\
+.TP
+.B "-v, --verbose"
+Enable verbose operation.
+\
+.TP
+.B --help
+Print usage information.
+\
+.TP
+.B --version
+Print version information.
+
+.SH SEE ALSO
+.BR pce-ibmpc "(1),"
+.BR pce-macplus "(1),"
+.BR pce-img "(1),"
+.BR pfdc "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>

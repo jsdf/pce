@@ -1961,6 +1961,17 @@ src/libini/write.o: src/libini/write.c \
 	src/config.h \
 	src/libini/libini.h
 
+src/utils/pbit/pbit.o: src/utils/pbit/pbit.c \
+	src/config.h \
+	src/drivers/pbit/gcr-mac.h \
+	src/drivers/pbit/mfm-ibm.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/pfdc/pfdc-img-pfdc.h \
+	src/drivers/pfdc/pfdc.h \
+	src/lib/getopt.h \
+	src/utils/pbit/pbit.h
+
 src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
