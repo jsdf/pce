@@ -1254,6 +1254,9 @@ src/chipset/e8530.o: src/chipset/e8530.c \
 src/chipset/ppc405/uic.o: src/chipset/ppc405/uic.c \
 	src/chipset/ppc405/uic.h
 
+src/chipset/wd179x.o: src/chipset/wd179x.c \
+	src/chipset/wd179x.h
+
 src/cpu/arm/arm.o: src/cpu/arm/arm.c \
 	src/cpu/arm/arm.h \
 	src/cpu/arm/internal.h
