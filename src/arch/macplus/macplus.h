@@ -54,6 +54,9 @@
 #define PCE_MAC_MACPLUS 1
 #define PCE_MAC_MACSE   2
 
+#define PCE_MAC_SPEED_CNT  1
+#define PCE_MAC_SPEED_USER 0
+
 
 /*****************************************************************************
  * @short The macplus context struct
@@ -120,6 +123,7 @@ struct macplus_s {
 	unsigned           brk;
 
 	unsigned           speed_factor;
+	unsigned           speed_limit[PCE_MAC_SPEED_CNT];
 	unsigned long      speed_clock_extra;
 
 	unsigned long      sync_clk;
@@ -159,7 +163,7 @@ void mac_clock_discontinuity (macplus_t *sim);
 
 void mac_set_pause (macplus_t *sim, int pause);
 
-void mac_set_speed (macplus_t *sim, unsigned factor);
+void mac_set_speed (macplus_t *sim, unsigned idx, unsigned factor);
 
 int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val);
 

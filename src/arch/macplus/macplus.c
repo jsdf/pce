@@ -619,6 +619,7 @@ void mac_setup_cpu (macplus_t *sim, ini_sct_t *ini)
 	e68_set_address_check (sim->cpu, 0);
 
 	sim->speed_factor = speed;
+	sim->speed_limit[PCE_MAC_SPEED_USER] = speed;
 }
 
 static
@@ -1123,7 +1124,12 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	sim->brk = 0;
 
 	sim->speed_factor = 1;
+	sim->speed_limit[0] = 1;
 	sim->speed_clock_extra = 0;
+
+	for (i = 1; i < PCE_MAC_SPEED_CNT; i++) {
+		sim->speed_limit[i] = 0;
+	}
 
 	sim->clk_cnt = 0;
 
@@ -1240,16 +1246,44 @@ void mac_set_pause (macplus_t *sim, int pause)
 	}
 }
 
-void mac_set_speed (macplus_t *sim, unsigned factor)
+static
+void mac_adjust_speed (macplus_t *sim)
 {
-	mac_log_deb ("speed = %u\n", factor);
+	unsigned i, v;
 
-	mac_rtc_set_realtime (&sim->rtc, (factor != 1));
+	v = 0;
 
-	sim->speed_factor = factor;
+	for (i = 0; i < PCE_MAC_SPEED_CNT; i++) {
+		if (sim->speed_limit[i] > 0) {
+			if ((v == 0) || (sim->speed_limit[i] < v)) {
+				v = sim->speed_limit[i];
+			}
+		}
+	}
+
+	if (v == sim->speed_factor) {
+		return;
+	}
+
+	mac_log_deb ("speed: %u\n", v);
+
+	mac_rtc_set_realtime (&sim->rtc, (v != 1));
+
+	sim->speed_factor = v;
 	sim->speed_clock_extra = 0;
 
 	mac_clock_discontinuity (sim);
+}
+
+void mac_set_speed (macplus_t *sim, unsigned idx, unsigned factor)
+{
+	if (idx >= PCE_MAC_SPEED_CNT) {
+		return;
+	}
+
+	sim->speed_limit[idx] = factor;
+
+	mac_adjust_speed (sim);
 }
 
 int mac_set_msg_trm (macplus_t *sim, const char *msg, const char *val)

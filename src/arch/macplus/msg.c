@@ -63,7 +63,7 @@ int mac_set_msg_emu_cpu_speed (macplus_t *sim, const char *msg, const char *val)
 		return (1);
 	}
 
-	mac_set_speed (sim, f);
+	mac_set_speed (sim, PCE_MAC_SPEED_USER, f);
 
 	return (0);
 }
@@ -83,7 +83,7 @@ int mac_set_msg_emu_cpu_speed_step (macplus_t *sim, const char *msg, const char 
 		v = 1;
 	}
 
-	mac_set_speed (sim, v);
+	mac_set_speed (sim, PCE_MAC_SPEED_USER, v);
 
 	return (0);
 }
@@ -260,7 +260,7 @@ int mac_set_msg_emu_realtime (macplus_t *sim, const char *msg, const char *val)
 		return (1);
 	}
 
-	mac_set_speed (sim, v ? 1 : 0);
+	mac_set_speed (sim, PCE_MAC_SPEED_USER, v ? 1 : 0);
 
 	return (0);
 }
@@ -268,11 +268,11 @@ int mac_set_msg_emu_realtime (macplus_t *sim, const char *msg, const char *val)
 static
 int mac_set_msg_emu_realtime_toggle (macplus_t *sim, const char *msg, const char *val)
 {
-	if (sim->speed_factor > 0) {
-		mac_set_speed (sim, 0);
+	if (sim->speed_limit[0] > 0) {
+		mac_set_speed (sim, PCE_MAC_SPEED_USER, 0);
 	}
 	else {
-		mac_set_speed (sim, 1);
+		mac_set_speed (sim, PCE_MAC_SPEED_USER, 1);
 	}
 
 	return (0);
