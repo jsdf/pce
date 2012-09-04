@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/sony.h                                      *
  * Created:     2007-11-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,7 @@
 typedef struct {
 	char          open;
 	char          patched;
+	char          enable;
 
 	memory_t      *mem;
 	disks_t       *dsks;
@@ -62,7 +63,7 @@ typedef struct {
 } mac_sony_t;
 
 
-void mac_sony_init (mac_sony_t *sony);
+void mac_sony_init (mac_sony_t *sony, int enable);
 void mac_sony_free (mac_sony_t *sony);
 
 void mac_sony_set_mem (mac_sony_t *sony, memory_t *mem);

@@ -54,8 +54,9 @@
 #define PCE_MAC_MACPLUS 1
 #define PCE_MAC_MACSE   2
 
-#define PCE_MAC_SPEED_CNT  1
+#define PCE_MAC_SPEED_CNT  2
 #define PCE_MAC_SPEED_USER 0
+#define PCE_MAC_SPEED_IWM  1
 
 
 /*****************************************************************************
@@ -83,6 +84,7 @@ struct macplus_s {
 	mac_adb_t          *adb;
 	adb_kbd_t          *adb_kbd;
 	adb_mouse_t        *adb_mouse;
+	mac_iwm_t          iwm;
 	mac_scsi_t         scsi;
 	mac_sony_t         sony;
 	mac_sound_t        sound;
@@ -109,10 +111,6 @@ struct macplus_s {
 	long               mouse_delta_x;
 	long               mouse_delta_y;
 	unsigned           mouse_button;
-
-	unsigned char      iwm_lines;
-	unsigned char      iwm_status;
-	unsigned char      iwm_mode;
 
 	unsigned char      dcd_a;
 	unsigned char      dcd_b;

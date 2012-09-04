@@ -110,12 +110,13 @@
 #define verErr     -84
 
 
-void mac_sony_init (mac_sony_t *sony)
+void mac_sony_init (mac_sony_t *sony, int enable)
 {
 	unsigned i;
 
 	sony->open = 0;
 	sony->patched = 0;
+	sony->enable = (enable != 0);
 
 	sony->mem = NULL;
 	sony->dsks = NULL;
@@ -286,6 +287,10 @@ void mac_sony_patch_rom (mac_sony_t *sony)
 
 void mac_sony_patch (mac_sony_t *sony)
 {
+	if (sony->enable == 0) {
+		return;
+	}
+
 	if (sony->patched) {
 		return;
 	}

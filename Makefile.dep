@@ -364,6 +364,7 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -398,6 +399,7 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -432,6 +434,7 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -441,35 +444,27 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/lib/log.h \
 	src/libini/libini.h
 
-src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
-	src/arch/macplus/adb.h \
-	src/arch/macplus/adb_keyboard.h \
-	src/arch/macplus/adb_mouse.h \
+src/arch/macplus/iwm-io.o: src/arch/macplus/iwm-io.c \
+	src/arch/macplus/iwm-io.h \
 	src/arch/macplus/iwm.h \
-	src/arch/macplus/keyboard.h \
-	src/arch/macplus/macplus.h \
 	src/arch/macplus/main.h \
-	src/arch/macplus/rtc.h \
-	src/arch/macplus/scsi.h \
-	src/arch/macplus/serial.h \
-	src/arch/macplus/sony.h \
-	src/arch/macplus/sound.h \
-	src/arch/macplus/video.h \
-	src/chipset/e6522.h \
-	src/chipset/e8530.h \
 	src/config.h \
-	src/cpu/e68000/e68000.h \
-	src/devices/memory.h \
-	src/devices/nvram.h \
+	src/drivers/block/blkfdc.h \
 	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/drivers/sound/filter.h \
-	src/drivers/sound/sound.h \
-	src/drivers/video/keys.h \
-	src/drivers/video/terminal.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/libini/libini.h
+	src/drivers/pbit/gcr-mac.h \
+	src/drivers/pbit/pbit-io.h \
+	src/drivers/pbit/pbit.h \
+	src/drivers/pfdc/pfdc-img.h \
+	src/drivers/pfdc/pfdc.h
+
+src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
+	src/arch/macplus/iwm-io.h \
+	src/arch/macplus/iwm.h \
+	src/arch/macplus/main.h \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/drivers/pbit/pbit.h \
+	src/lib/console.h
 
 src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
 	src/arch/macplus/keyboard.h \
@@ -504,6 +499,7 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -542,6 +538,7 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -579,6 +576,7 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -610,6 +608,7 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
+	src/drivers/pbit/pbit.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \

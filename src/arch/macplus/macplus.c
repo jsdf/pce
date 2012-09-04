@@ -118,13 +118,21 @@ void mac_interrupt_scc (void *ext, unsigned char val)
 static
 void mac_interrupt_vbi (void *ext, unsigned char val)
 {
-	macplus_t *sim = ext;
+	unsigned      i;
+	unsigned char pbuf[370];
+	macplus_t     *sim = ext;
 
 	if (val) {
 		e6522_set_ca1_inp (&sim->via, 0);
 		e6522_set_ca1_inp (&sim->via, 1);
 
 		mac_sound_vbl (&sim->sound);
+
+		for (i = 0; i < 370; i++) {
+			pbuf[i] = mem_get_uint8 (sim->mem, sim->sbuf1 + i + 1);
+		}
+
+		mac_iwm_set_pwm (&sim->iwm, pbuf, 370);
 	}
 }
 
@@ -326,6 +334,14 @@ void mac_set_adb_int (void *ext, unsigned char val)
 }
 
 static
+void mac_set_iwm_motor (void *ext, unsigned char val)
+{
+	macplus_t *sim = ext;
+
+	mac_set_speed (sim, PCE_MAC_SPEED_IWM, val ? 4 : 0);
+}
+
+static
 void mac_set_rtc_data (void *ext, unsigned char val)
 {
 	macplus_t *sim = ext;
@@ -361,6 +377,13 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 		if (sim->model & PCE_MAC_MACPLUS) {
 			mac_set_overlay (sim, (val & 0x10) != 0);
 		}
+		else if (sim->model & PCE_MAC_MACSE) {
+			mac_iwm_set_drive_sel (&sim->iwm, (val & 0x10) != 0);
+		}
+	}
+
+	if ((old ^ val) & 0x20) {
+		mac_iwm_set_head_sel (&sim->iwm, (val & 0x20) != 0);
 	}
 
 	if ((old ^ val) & 0x40) {
@@ -885,6 +908,58 @@ void mac_setup_disks (macplus_t *sim, ini_sct_t *ini)
 }
 
 static
+void mac_setup_iwm (macplus_t *sim, ini_sct_t *ini)
+{
+	unsigned   n;
+	int        single, locked, rotate, inserted;
+	unsigned   drive, disk;
+	const char *fname;
+	ini_sct_t  *sct, *sctdev;
+
+	sct = ini_next_sct (ini, NULL, "iwm");
+
+	mac_iwm_init (&sim->iwm);
+	mac_iwm_set_motor_fct (&sim->iwm, sim, mac_set_iwm_motor);
+	mac_iwm_set_disks (&sim->iwm, sim->dsks);
+
+	pce_log_tag (MSG_INF, "IWM:", "addr=0x%06lx\n", 0xd00000UL);
+
+	sctdev = ini_next_sct (sct, NULL, "drive");
+
+	n = 0;
+
+	while (sctdev != NULL) {
+		ini_get_uint16 (sctdev, "drive", &drive, n);
+		ini_get_uint16 (sctdev, "disk", &disk, drive);
+		ini_get_string (sctdev, "file", &fname, NULL);
+		ini_get_bool (sctdev, "single_sided", &single, 0);
+		ini_get_bool (sctdev, "locked", &locked, 0);
+		ini_get_bool (sctdev, "inserted", &inserted, 0);
+		ini_get_bool (sctdev, "auto_rotate", &rotate, 0);
+
+		pce_log_tag (MSG_INF,
+			"IWM:", "drive=%u size=%uK locked=%d rotate=%d disk=%u file=%s\n",
+			drive, single ? 400 : 800, locked, rotate, disk,
+			(fname != NULL) ? fname : "<none>"
+		);
+
+		mac_iwm_set_heads (&sim->iwm, drive - 1, single ? 1 : 2);
+		mac_iwm_set_disk_id (&sim->iwm, drive - 1, disk);
+		mac_iwm_set_fname (&sim->iwm, drive - 1, fname);
+		mac_iwm_set_locked (&sim->iwm, drive - 1, locked);
+		mac_iwm_set_auto_rotate (&sim->iwm, drive - 1, rotate);
+
+		if (inserted) {
+			mac_iwm_insert (&sim->iwm, drive - 1);
+		}
+
+		n = drive + 1;
+
+		sctdev = ini_next_sct (sct, sctdev, "drive");
+	}
+}
+
+static
 void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t     *sct, *sctdev;
@@ -954,11 +1029,15 @@ void mac_setup_sony (macplus_t *sim, ini_sct_t *ini)
 	ini_get_uint16 (sct, "insert_delay", &def, 30);
 	ini_get_bool (sct, "format_hd_as_dd", &format_hd_as_dd, 0);
 
-	mac_sony_init (&sim->sony);
+	mac_sony_init (&sim->sony, sct != NULL);
 	mac_sony_set_mem (&sim->sony, sim->mem);
 	mac_sony_set_disks (&sim->sony, sim->dsks);
 
 	sim->sony.format_hd_as_dd = format_hd_as_dd;
+
+	if (sct == NULL) {
+		return;
+	}
 
 	for (i = 0; i < SONY_DRIVES; i++) {
 		if (par_disk_delay_valid & (1U << i)) {
@@ -992,10 +1071,6 @@ void mac_setup_sound (macplus_t *sim, ini_sct_t *ini)
 	}
 
 	sct = ini_next_sct (ini, NULL, "sound");
-
-	if (sct == NULL) {
-		return;
-	}
 
 	addr = mem_blk_get_size (sim->ram);
 	addr = (addr < 0x300) ? 0 : (addr - 0x300);
@@ -1149,7 +1224,7 @@ void mac_init (macplus_t *sim, ini_sct_t *ini)
 	mac_setup_kbd (sim, ini);
 	mac_setup_adb (sim, ini);
 	mac_setup_disks (sim, ini);
-	mac_iwm_init (sim);
+	mac_setup_iwm (sim, ini);
 	mac_setup_scsi (sim, ini);
 	mac_setup_sony (sim, ini);
 	mac_setup_sound (sim, ini);
@@ -1196,7 +1271,7 @@ void mac_free (macplus_t *sim)
 	mac_sound_free (&sim->sound);
 	mac_sony_free (&sim->sony);
 	mac_scsi_free (&sim->scsi);
-	mac_iwm_free (sim);
+	mac_iwm_free (&sim->iwm);
 	dsks_del (sim->dsks);
 	mac_adb_del (sim->adb);
 	mac_kbd_del (sim->kbd);
@@ -1448,6 +1523,8 @@ void mac_clock (macplus_t *sim, unsigned n)
 	if (sim->adb != NULL) {
 		mac_adb_clock (sim->adb, 10 * viaclk);
 	}
+
+	mac_iwm_clock (&sim->iwm, viaclk);
 
 	sim->clk_div[1] -= 10 * viaclk;
 	sim->clk_div[2] += 10 * viaclk;

@@ -230,6 +230,38 @@ int mac_set_msg_emu_exit (macplus_t *sim, const char *msg, const char *val)
 }
 
 static
+int mac_set_msg_emu_iwm_ro (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+
+	if (msg_get_uint (val, &drv)) {
+		return (1);
+	}
+
+	pce_log (MSG_INF, "setting readonly iwm drive %lu\n", drv);
+
+	mac_iwm_set_locked (&sim->iwm, drv, 1);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_iwm_rw (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+
+	if (msg_get_uint (val, &drv)) {
+		return (1);
+	}
+
+	pce_log (MSG_INF, "setting read/write iwm drive %lu\n", drv);
+
+	mac_iwm_set_locked (&sim->iwm, drv, 0);
+
+	return (0);
+}
+
+static
 int mac_set_msg_emu_pause (macplus_t *sim, const char *msg, const char *val)
 {
 	int v;
@@ -363,16 +395,23 @@ int mac_set_msg_mac_insert (macplus_t *sim, const char *msg, const char *val)
 	unsigned drv;
 
 	if (strcmp (val, "") == 0) {
-		mac_sony_insert (&sim->sony, 1);
-		mac_sony_insert (&sim->sony, 2);
-		mac_sony_insert (&sim->sony, 3);
+		if (sim->sony.enable) {
+			mac_sony_insert (&sim->sony, 1);
+			mac_sony_insert (&sim->sony, 2);
+			mac_sony_insert (&sim->sony, 3);
+		}
 	}
 	else {
 		if (msg_get_uint (val, &drv)) {
 			return (1);
 		}
 
-		mac_sony_insert (&sim->sony, drv);
+		if (sim->sony.enable) {
+			mac_sony_insert (&sim->sony, drv);
+		}
+		else {
+			mac_iwm_insert (&sim->iwm, (drv > 0) ? (drv - 1) : 0);
+		}
 	}
 
 	return (0);
@@ -388,6 +427,8 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.disk.insert", mac_set_msg_emu_disk_insert },
 	{ "emu.disk.ro", mac_set_msg_emu_disk_ro },
 	{ "emu.disk.rw", mac_set_msg_emu_disk_rw },
+	{ "emu.iwm.ro", mac_set_msg_emu_iwm_ro },
+	{ "emu.iwm.rw", mac_set_msg_emu_iwm_rw },
 	{ "emu.exit", mac_set_msg_emu_exit },
 	{ "emu.pause", mac_set_msg_emu_pause },
 	{ "emu.pause.toggle", mac_set_msg_emu_pause_toggle },

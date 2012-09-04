@@ -192,6 +192,8 @@ rtc {
 
 
 sony {
+	enable = 1
+
 	# The floppy disk insertion delay. Set this to:
 	# 0: never automatically insert the disk
 	# 1: have the disk inserted immediately on startup.
@@ -205,6 +207,68 @@ sony {
 	#insert_delay_1 = 1
 	#insert_delay_2 = 15
 	#insert_delay_3 = 15
+}
+
+
+iwm {
+	# Up to three IWM drives can be defined:
+	#   Drive 1: The internal drive
+	#   Drive 2: The external drive
+	#   Drive 3: The second (lower) internal drive in a Macintosh SE
+	#
+	# Each drive is associated with either a disk as defined in a
+	# "disk" section below, or with a PBIT file.
+	#
+	# The IWM drives are only accessible if the replacement Sony driver
+	# is disabled above.
+
+	drive {
+		# The IWM drive number.
+		drive        = 1
+
+		# The disk that is inserted into this drive. This
+		# corresponds to a "disk" section below.
+		disk         = 1
+
+		# The file containing the disk's contents. If this is
+		# a valid PBIT file, the disk contents are read from
+		# and written back to it and the "disk" parameter above
+		# is ignored.
+		file         = "disk1.pbit"
+
+		# Insert the disk before the emulation starts, in order
+		# to boot from it.
+		inserted     = 0
+
+		# Force the drive to be single sided.
+		single_sided = 0
+
+		# The disk is locked.
+		locked       = 0
+
+		# Automatically align the individual tracks.
+		auto_rotate  = 1
+	}
+
+	drive {
+		drive        = 2
+		disk         = 2
+		file         = "disk2.pbit"
+		inserted     = 0
+		single_sided = 0
+		locked       = 0
+		auto_rotate  = 1
+	}
+
+	drive {
+		drive        = 3
+		disk         = 3
+		file         = "disk3.pbit"
+		inserted     = 0
+		single_sided = 0
+		locked       = 0
+		auto_rotate  = 1
+	}
 }
 
 

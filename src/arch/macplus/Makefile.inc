@@ -42,6 +42,7 @@ PCE_MACPLUS_BAS := \
 	cmd_68k \
 	hook \
 	hotkey \
+	iwm-io \
 	iwm \
 	keyboard \
 	macplus \
@@ -72,6 +73,7 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/devices/memory.o \
 	src/drivers/block/block.a \
 	src/drivers/char/char.a \
+	src/drivers/pbit/pbit.a \
 	src/drivers/pfdc/pfdc.a \
 	src/drivers/sound/sound.a \
 	src/drivers/options.o \
@@ -93,7 +95,6 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
 	src/drivers/block/block.a \
-	src/drivers/pfdc/pfdc.a \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -116,6 +117,7 @@ $(rel)/adb_mouse.o:	$(rel)/adb_mouse.c
 $(rel)/cmd_68k.o:	$(rel)/cmd_68k.c
 $(rel)/hook.o:		$(rel)/hook.c
 $(rel)/hotkey.o:	$(rel)/hotkey.c
+$(rel)/iwm-io.o:	$(rel)/iwm-io.c
 $(rel)/iwm.o:		$(rel)/iwm.c
 $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/macplus.o:	$(rel)/macplus.c

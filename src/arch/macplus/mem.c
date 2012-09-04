@@ -126,7 +126,7 @@ unsigned char mac_mem_get_uint8 (void *ext, unsigned long addr)
 	}
 
 	if ((addr >= 0xc00000) && (addr < 0xe00000)) {
-		return (mac_iwm_get_uint8 (sim, addr - 0xc00000));
+		return (mac_iwm_get_uint8 (&sim->iwm, addr - 0xc00000));
 	}
 
 	if ((addr & 0xf00000) == 0xd00000) {
@@ -183,7 +183,7 @@ void mac_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 	}
 
 	if ((addr >= 0xc00000) && (addr < 0xe00000)) {
-		mac_iwm_set_uint8 (sim, addr - 0xc00000, val);
+		mac_iwm_set_uint8 (&sim->iwm, addr - 0xc00000, val);
 		return;
 	}
 
