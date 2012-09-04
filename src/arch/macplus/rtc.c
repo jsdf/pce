@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/rtc.c                                       *
  * Created:     2007-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,108 @@
 #include <stdio.h>
 #include <time.h>
 
+
+static
+unsigned long mac_rtc_hms_to_time (unsigned h, unsigned m, unsigned s)
+{
+	if ((h > 23) || (m > 59) || (s > 59)) {
+		return (0);
+	}
+
+	return (60UL * (60UL * h + m) + s);
+}
+
+static
+unsigned long mac_rtc_ymd_to_time (unsigned y, unsigned m, unsigned d)
+{
+	unsigned long t;
+	unsigned      i;
+	unsigned      *month;
+
+	static unsigned months[2][12] = {
+		{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+		{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+	};
+
+	if ((y < 1904U) || (m > 11)) {
+		return (0);
+	}
+
+	y -= 1904U;
+
+	t = (y / 4UL) * (4UL * 365UL + 1UL);
+	y = y % 4U;
+
+	t += 365UL * y + (y > 0);
+
+	month = (y == 0) ? months[1] : months[0];
+
+	for (i = 0; i < m; i++) {
+		t += month[i];
+	}
+
+	if (d >= month[m]) {
+		return (0);
+	}
+
+	t += d;
+
+	t *= (24UL * 60UL * 60UL);
+
+	return (t);
+}
+
+static
+void mac_rtc_get_uint (const char **str, unsigned *val)
+{
+	const char *s;
+	unsigned   v;
+
+	s = *str;
+	v = 0;
+
+	while ((*s < '0') || (*s > '9')) {
+		if (*s == 0) {
+			*str = s;
+			*val = 0;
+			return;
+		}
+
+		s += 1;
+	}
+
+	while ((*s >= '0') && (*s <= '9')) {
+		v = 10 * v + (*s - '0');
+		s += 1;
+	}
+
+	*str = s;
+	*val = v;
+}
+
+unsigned long mac_rtc_time_from_string (const char *str)
+{
+	unsigned      i;
+	unsigned      val[6];
+	unsigned long ret;
+
+	for (i = 0; i < 6; i++) {
+		mac_rtc_get_uint (&str, &val[i]);
+	}
+
+	if (val[1] > 0) {
+		val[1] -= 1;
+	}
+
+	if (val[2] > 0) {
+		val[2] -= 1;
+	}
+
+	ret = mac_rtc_ymd_to_time (val[0], val[1], val[2]);
+	ret += mac_rtc_hms_to_time (val[3], val[4], val[5]);
+
+	return (ret);
+}
 
 void mac_rtc_init (mac_rtc_t *rtc)
 {
@@ -48,7 +150,8 @@ void mac_rtc_init (mac_rtc_t *rtc)
 	rtc->reg_wp = 0;
 	rtc->reg_test = 0;
 
-	rtc->clock = 0x00000000;
+	rtc->clock = 0;
+	rtc->bias = 0;
 
 	mac_rtc_set_defaults (rtc);
 }
@@ -149,11 +252,6 @@ unsigned long mac_rtc_get_current_time (mac_rtc_t *rtc)
 	return (mt);
 }
 
-void mac_rtc_set_current_time (mac_rtc_t *rtc)
-{
-	rtc->clock = mac_rtc_get_current_time (rtc);
-}
-
 static
 unsigned long mac_rtc_get_timezone (mac_rtc_t *rtc)
 {
@@ -168,6 +266,32 @@ unsigned long mac_rtc_get_timezone (mac_rtc_t *rtc)
 	}
 
 	return (tz);
+}
+
+void mac_rtc_set_time (mac_rtc_t *rtc, unsigned long time, int rel)
+{
+	rtc->clock = mac_rtc_get_current_time (rtc);
+
+	if (rel) {
+		rtc->bias = time;
+	}
+	else {
+		rtc->bias = time - rtc->clock - mac_rtc_get_timezone (rtc);
+	}
+}
+
+void mac_rtc_set_time_str (mac_rtc_t *rtc, const char *str)
+{
+	unsigned long time;
+
+	if (str == NULL) {
+		mac_rtc_set_time (rtc, 0, 1);
+	}
+	else {
+		time = mac_rtc_time_from_string (str);
+
+		mac_rtc_set_time (rtc, time, 0);
+	}
 }
 
 static
@@ -406,17 +530,21 @@ void mac_rtc_clock (mac_rtc_t *rtc, unsigned long n)
 	if (rtc->realtime) {
 		rtc->clock = mac_rtc_get_current_time (rtc);
 		rtc->clock += mac_rtc_get_timezone (rtc);
-		rtc->clock &= 0xffffffff;
+		rtc->clock += rtc->bias;
 	}
 	else {
 		rtc->clkcnt += n;
 
 		if (rtc->clkcnt > MAC_CPU_CLOCK) {
 			rtc->clkcnt -= MAC_CPU_CLOCK;
-
 			rtc->clock += 1;
 		}
+
+		rtc->clock += rtc->bias;
+		rtc->bias = 0;
 	}
+
+	rtc->clock &= 0xffffffff;
 
 	if (rtc->clock != old) {
 #ifdef DEBUG_RTC

@@ -181,7 +181,9 @@ rtc {
 	# shutdown it is written back.
 	file = "pram-MODEL.dat"
 
-	realtime = 1
+	# The start time of the real time clock. If this parameter is
+	# not set, the real time clock is set to the current time.
+	#start = "1984-01-24 00:00:00"
 
 	# Set the startup disk to the ROM disk. This only works with
 	# the Macintosh Classic ROM.
