@@ -160,6 +160,14 @@ emu.exit
 emu.fdc.accurate "0" | "1"
 	Disable or enable the FDC accurate mode.
 
+emu.iwm.ro <drive>
+	Set the drive <drive> to read-only (locked). The first
+	drive is 1, if <drive> is 0, set all drives to read-only.
+
+emu.iwm.rw <drive>
+	Set the drive <drive> to read/write (unlocked). The first
+	drive is 1, if <drive> is 0, set all drives to read/write.
+
 emu.pause "0" | "1"
 	Pause or resume the emulation.
 

@@ -238,9 +238,16 @@ int mac_set_msg_emu_iwm_ro (macplus_t *sim, const char *msg, const char *val)
 		return (1);
 	}
 
-	pce_log (MSG_INF, "setting readonly iwm drive %lu\n", drv);
-
-	mac_iwm_set_locked (&sim->iwm, drv, 1);
+	if (drv == 0) {
+		pce_log (MSG_INF, "setting all iwm drives to read-only\n");
+		mac_iwm_set_locked (&sim->iwm, 0, 1);
+		mac_iwm_set_locked (&sim->iwm, 1, 1);
+		mac_iwm_set_locked (&sim->iwm, 2, 1);
+	}
+	else {
+		pce_log (MSG_INF, "setting iwm drive %lu to read-only\n", drv);
+		mac_iwm_set_locked (&sim->iwm, drv - 1, 1);
+	}
 
 	return (0);
 }
@@ -254,9 +261,16 @@ int mac_set_msg_emu_iwm_rw (macplus_t *sim, const char *msg, const char *val)
 		return (1);
 	}
 
-	pce_log (MSG_INF, "setting read/write iwm drive %lu\n", drv);
-
-	mac_iwm_set_locked (&sim->iwm, drv, 0);
+	if (drv == 0) {
+		pce_log (MSG_INF, "setting all iwm drives to read/write\n");
+		mac_iwm_set_locked (&sim->iwm, 0, 0);
+		mac_iwm_set_locked (&sim->iwm, 1, 0);
+		mac_iwm_set_locked (&sim->iwm, 2, 0);
+	}
+	else {
+		pce_log (MSG_INF, "setting iwm drive %lu to read/write\n", drv);
+		mac_iwm_set_locked (&sim->iwm, drv - 1, 0);
+	}
 
 	return (0);
 }
