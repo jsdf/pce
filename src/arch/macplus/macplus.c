@@ -374,10 +374,10 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 	sim->via_port_a = val;
 
 	if ((old ^ val) & 0x10) {
-		if (sim->model & PCE_MAC_MACPLUS) {
+		if (sim->model & PCE_MAC_PLUS) {
 			mac_set_overlay (sim, (val & 0x10) != 0);
 		}
-		else if (sim->model & PCE_MAC_MACSE) {
+		else if (sim->model & (PCE_MAC_SE | PCE_MAC_CLASSIC)) {
 			mac_iwm_set_drive_sel (&sim->iwm, (val & 0x10) != 0);
 		}
 	}
@@ -402,7 +402,7 @@ void mac_set_via_port_a (void *ext, unsigned char val)
 	}
 
 	if ((old ^ val) & 0x08) {
-		if (sim->model & PCE_MAC_MACPLUS) {
+		if (sim->model & PCE_MAC_PLUS) {
 			unsigned char *sbuf;
 
 			sbuf = mem_blk_get_data (sim->ram);
@@ -532,17 +532,17 @@ void mac_setup_system (macplus_t *sim, ini_sct_t *ini)
 	pce_log_tag (MSG_INF, "SYSTEM:", "model=%s\n", model);
 
 	if (strcmp (model, "mac-plus") == 0) {
-		sim->model = PCE_MAC_MACPLUS;
+		sim->model = PCE_MAC_PLUS;
 	}
 	else if (strcmp (model, "mac-se") == 0) {
-		sim->model = PCE_MAC_MACSE;
+		sim->model = PCE_MAC_SE;
 	}
 	else if (strcmp (model, "mac-classic") == 0) {
-		sim->model = PCE_MAC_MACSE;
+		sim->model = PCE_MAC_CLASSIC;
 	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
-		sim->model = PCE_MAC_MACPLUS;
+		sim->model = PCE_MAC_PLUS;
 	}
 }
 
@@ -594,10 +594,10 @@ void mac_setup_mem (macplus_t *sim, ini_sct_t *ini)
 	if (memtest == 0) {
 		pce_log_tag (MSG_INF, "RAM:", "disabling memory test\n");
 
-		if (sim->model & PCE_MAC_MACPLUS) {
+		if (sim->model & PCE_MAC_PLUS) {
 			mem_set_uint32_be (sim->mem, 0x02ae, 0x00400000);
 		}
-		else if (sim->model & PCE_MAC_MACSE) {
+		else if (sim->model & (PCE_MAC_SE | PCE_MAC_CLASSIC)) {
 			mem_set_uint32_be (sim->mem, 0x0cfc, 0x574c5343);
 		}
 	}
@@ -810,7 +810,7 @@ void mac_setup_kbd (macplus_t *sim, ini_sct_t *ini)
 
 	sim->kbd = NULL;
 
-	if ((sim->model & PCE_MAC_MACPLUS) == 0) {
+	if ((sim->model & PCE_MAC_PLUS) == 0) {
 		return;
 	}
 
@@ -852,7 +852,7 @@ void mac_setup_adb (macplus_t *sim, ini_sct_t *ini)
 	sim->adb_mouse = NULL;
 	sim->adb_kbd = NULL;
 
-	if ((sim->model & PCE_MAC_MACSE) == 0) {
+	if ((sim->model & (PCE_MAC_SE | PCE_MAC_CLASSIC)) == 0) {
 		return;
 	}
 
@@ -1404,10 +1404,10 @@ void mac_reset (macplus_t *sim)
 
 	sim->intr = 0;
 
-	if (sim->model & PCE_MAC_MACPLUS) {
+	if (sim->model & PCE_MAC_PLUS) {
 		mac_set_overlay (sim, 1);
 	}
-	else if (sim->model & PCE_MAC_MACSE) {
+	else {
 		mac_set_overlay (sim, 0);
 		if ((sim->rom != NULL) && (sim->rom->size >= 8)) {
 			e68_set_mem32 (sim->cpu, 0, mem_blk_get_uint32_be (sim->rom, 0));

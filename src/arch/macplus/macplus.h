@@ -51,8 +51,9 @@
 #include <lib/brkpt.h>
 
 
-#define PCE_MAC_MACPLUS 1
-#define PCE_MAC_MACSE   2
+#define PCE_MAC_PLUS    1
+#define PCE_MAC_SE      2
+#define PCE_MAC_CLASSIC 4
 
 #define PCE_MAC_SPEED_CNT  2
 #define PCE_MAC_SPEED_USER 0
