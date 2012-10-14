@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/adb_mouse.c                                 *
  * Created:     2010-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -155,6 +155,10 @@ void adb_mouse_talk_done (adb_dev_t *dev, unsigned reg)
 	mse = dev->ext;
 
 	if (reg == 0) {
+		if (mse->talking == 0) {
+			return;
+		}
+
 		mse->talking = 0;
 
 		mse->change = 0;

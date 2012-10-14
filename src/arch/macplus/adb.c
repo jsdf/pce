@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/adb.c                                       *
  * Created:     2010-11-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -301,6 +301,10 @@ void adb_set_service_request (mac_adb_t *adb, unsigned addr)
 			continue;
 		}
 
+		if ((adb->dev[i]->reg[3] & 0x2000) == 0) {
+			continue;
+		}
+
 #if DEBUG_ADB >= 1
 		mac_log_deb ("adb: service request dev %u\n",
 			adb->dev[i]->current_addr
@@ -455,7 +459,7 @@ void adb_finish_transaction (mac_adb_t *adb)
 }
 
 static
-void adb_start_transaction (mac_adb_t *adb, unsigned char cmd)
+void adb_start_transaction (mac_adb_t *adb, unsigned char cmd, int poll)
 {
 	adb_set_int (adb, 0);
 
@@ -480,7 +484,9 @@ void adb_start_transaction (mac_adb_t *adb, unsigned char cmd)
 		mac_log_deb ("adb: unknown cmd (%02X)\n", cmd);
 	}
 
-	adb_set_service_request (adb, (cmd >> 4) & 0x0f);
+	if (poll) {
+		adb_set_service_request (adb, (cmd >> 4) & 0x0f);
+	}
 }
 
 void mac_adb_set_state (mac_adb_t *adb, unsigned char val)
@@ -543,6 +549,8 @@ void mac_adb_set_state (mac_adb_t *adb, unsigned char val)
 
 		adb->bit_cnt = 0;
 		adb->bit_val = 0;
+
+		adb->scan_clock = 0;
 	}
 }
 
@@ -561,7 +569,7 @@ void adb_clock_idle (mac_adb_t *adb, unsigned cnt)
 		return;
 	}
 
-	adb_start_transaction (adb, adb->last_talk);
+	adb_start_transaction (adb, adb->last_talk, 1);
 
 	if (adb->buf_idx < adb->buf_cnt) {
 		adb->bit_cnt = 8;
@@ -612,7 +620,7 @@ void mac_adb_clock (mac_adb_t *adb, unsigned cnt)
 
 		if (adb->bit_cnt == 0) {
 			if (adb->state == 0) {
-				adb_start_transaction (adb, adb->bit_val);
+				adb_start_transaction (adb, adb->bit_val, 0);
 			}
 			else if (adb->buf_cnt < 8) {
 				adb->buf[adb->buf_cnt++] = adb->bit_val;
