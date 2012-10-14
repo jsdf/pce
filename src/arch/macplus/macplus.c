@@ -71,6 +71,45 @@
 
 
 static
+unsigned char par_classic_pwm[64] = {
+	0x00, 0x01, 0x3b, 0x02, 0x3c, 0x28, 0x36, 0x03,
+	0x3d, 0x20, 0x31, 0x29, 0x37, 0x13, 0x23, 0x04,
+	0x3e, 0x34, 0x1e, 0x21, 0x32, 0x0c, 0x0e, 0x2a,
+	0x38, 0x10, 0x1b, 0x14, 0x24, 0x17, 0x2c, 0x05,
+	0x3f, 0x3a, 0x27, 0x35, 0x1f, 0x30, 0x12, 0x22,
+	0x33, 0x1d, 0x0b, 0x0d, 0x0f, 0x1a, 0x16, 0x2b,
+	0x39, 0x26, 0x2f, 0x11, 0x1c, 0x0a, 0x19, 0x15,
+	0x25, 0x2e, 0x09, 0x18, 0x2d, 0x08, 0x07, 0x06
+};
+
+static
+void mac_classic_set_pwm (macplus_t *sim, const unsigned char *buf, unsigned cnt)
+{
+	unsigned i, v;
+
+	v = 0;
+
+	for (i = 0; i < cnt; i++) {
+		v += par_classic_pwm[buf[0] & 0x3f];
+	}
+
+	v = v / cnt;
+
+	if (v < 1) {
+		v = 1;
+	}
+	else if (v > 31) {
+		v = 31;
+	}
+
+	v = 32 + (223 * (30 - (v - 1)) + 15) / 30;
+
+	if ((sim->video != NULL) && (sim->video->brightness != v)) {
+		mac_video_set_brightness (sim->video, v);
+	}
+}
+
+static
 void mac_interrupt_check (macplus_t *sim)
 {
 	unsigned i;
@@ -132,7 +171,12 @@ void mac_interrupt_vbi (void *ext, unsigned char val)
 			pbuf[i] = mem_get_uint8 (sim->mem, sim->sbuf1 + i + 1);
 		}
 
-		mac_iwm_set_pwm (&sim->iwm, pbuf, 370);
+		if (sim->model & PCE_MAC_CLASSIC) {
+			mac_classic_set_pwm (sim, pbuf, 370);
+		}
+		else {
+			mac_iwm_set_pwm (&sim->iwm, pbuf, 370);
+		}
 	}
 }
 
