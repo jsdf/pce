@@ -26,6 +26,7 @@
 
 #include <string.h>
 
+#include <lib/console.h>
 #include <lib/inidsk.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
@@ -276,6 +277,18 @@ int mac_set_msg_emu_iwm_rw (macplus_t *sim, const char *msg, const char *val)
 }
 
 static
+int mac_set_msg_emu_iwm_status (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned i;
+
+	for (i = 0; i < 3; i++) {
+		pce_printf ("IWM drive %u: locked=%d\n", i + 1, mac_iwm_get_locked (&sim->iwm, i));
+	}
+
+	return (0);
+}
+
+static
 int mac_set_msg_emu_pause (macplus_t *sim, const char *msg, const char *val)
 {
 	int v;
@@ -443,6 +456,7 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.disk.rw", mac_set_msg_emu_disk_rw },
 	{ "emu.iwm.ro", mac_set_msg_emu_iwm_ro },
 	{ "emu.iwm.rw", mac_set_msg_emu_iwm_rw },
+	{ "emu.iwm.status", mac_set_msg_emu_iwm_status },
 	{ "emu.exit", mac_set_msg_emu_exit },
 	{ "emu.pause", mac_set_msg_emu_pause },
 	{ "emu.pause.toggle", mac_set_msg_emu_pause_toggle },

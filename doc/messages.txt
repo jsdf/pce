@@ -168,6 +168,9 @@ emu.iwm.rw <drive>
 	Set the drive <drive> to read/write (unlocked). The first
 	drive is 1, if <drive> is 0, set all drives to read/write.
 
+emu.iwm.status
+	Print status information on all IWM drives.
+
 emu.pause "0" | "1"
 	Pause or resume the emulation.
 

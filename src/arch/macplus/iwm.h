@@ -119,6 +119,7 @@ int mac_iwm_set_heads (mac_iwm_t *iwm, unsigned drive, unsigned heads);
 void mac_iwm_set_disks (mac_iwm_t *iwm, disks_t *dsks);
 void mac_iwm_set_disk_id (mac_iwm_t *iwm, unsigned drive, unsigned id);
 void mac_iwm_set_fname (mac_iwm_t *iwm, unsigned drive, const char *fname);
+int mac_iwm_get_locked (const mac_iwm_t *iwm, unsigned drive);
 void mac_iwm_set_locked (mac_iwm_t *iwm, unsigned drive, int locked);
 void mac_iwm_set_auto_rotate (mac_iwm_t *iwm, unsigned drive, int val);
 

@@ -654,6 +654,15 @@ void mac_iwm_set_fname (mac_iwm_t *iwm, unsigned drive, const char *fname)
 	iwm->drv[drive].fname = str;
 }
 
+int mac_iwm_get_locked (const mac_iwm_t *iwm, unsigned drive)
+{
+	if (drive >= MAC_IWM_DRIVES) {
+		return (1);
+	}
+
+	return (iwm->drv[drive].locked != 0);
+}
+
 void mac_iwm_set_locked (mac_iwm_t *iwm, unsigned drive, int locked)
 {
 	if (drive >= MAC_IWM_DRIVES) {

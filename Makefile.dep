@@ -615,6 +615,7 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
+	src/lib/console.h \
 	src/lib/inidsk.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
