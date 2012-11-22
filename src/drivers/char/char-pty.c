@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-pty.c                                  *
  * Created:     2009-03-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -205,10 +205,7 @@ int chr_pty_init (char_pty_t *drv, const char *name)
 		return (1);
 	}
 
-	if (chr_pty_set_nonblock (drv->fd)) {
-		return (1);
-	}
-
+	chr_pty_set_nonblock (drv->fd);
 	chr_pty_disable_echo (drv->fd);
 
 	if (drv->symlink != NULL) {
