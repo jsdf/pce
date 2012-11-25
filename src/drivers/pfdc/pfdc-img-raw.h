@@ -27,7 +27,17 @@
 #include <drivers/pfdc/pfdc.h>
 
 
-int pfdc_get_geometry_from_size (unsigned long size, unsigned *c, unsigned *h, unsigned *s);
+typedef struct {
+	unsigned long size;
+	unsigned      c;
+	unsigned      h;
+	unsigned      s;
+	unsigned      ssize;
+	unsigned      encoding;
+} pfdc_geometry_t;
+
+
+const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size);
 
 pfdc_img_t *pfdc_load_raw (FILE *fp);
 

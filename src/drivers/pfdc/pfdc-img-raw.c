@@ -28,33 +28,24 @@
 #include "pfdc-img-raw.h"
 
 
-static struct {
-	unsigned long size;
-	unsigned      c;
-	unsigned      h;
-	unsigned      s;
-} disk_sizes[] = {
-	{ 160 * 1024UL, 40, 1, 8 },
-	{ 180 * 1024UL, 40, 1, 9 },
-	{ 200 * 1024UL, 40, 1, 10 },
-	{ 320 * 1024UL, 40, 2, 8 },
-	{ 360 * 1024UL, 40, 2, 9 },
-	{ 400 * 1024UL, 40, 2, 10 },
-	{ 640 * 1024UL, 80, 2, 8 },
-	{ 720 * 1024UL, 80, 2, 9 },
-	{ 800 * 1024UL, 80, 2, 10 },
-	{ 1200 * 1024UL, 80, 2, 15 },
-	{ 1280 * 1024UL, 80, 2, 16 },
-	{ 1440 * 1024UL, 80, 2, 18 },
-	{ 1520 * 1024UL, 80, 2, 19 },
-	{ 1600 * 1024UL, 80, 2, 20 },
-	{ 1680 * 1024UL, 80, 2, 21 },
-	{ 2880 * 1024UL, 80, 2, 36 },
-	{ 0, 0, 0, 0 }
+static pfdc_geometry_t disk_sizes[] = {
+	{ 160 * 1024UL, 40, 1, 8, 512, PFDC_ENC_MFM_DD },
+	{ 180 * 1024UL, 40, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 320 * 1024UL, 40, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{ 360 * 1024UL, 40, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 640 * 1024UL, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{ 720 * 1024UL, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 1200 * 1024UL, 80, 2, 15, 512, PFDC_ENC_MFM_HD },
+	{ 1440 * 1024UL, 80, 2, 18, 512, PFDC_ENC_MFM_HD },
+	{ 2880 * 1024UL, 80, 2, 36, 512, PFDC_ENC_MFM_HD },
+	{ 1232 * 1024UL, 77, 2, 8, 1024, PFDC_ENC_MFM_HD },
+	{ 2002 * 128UL, 77, 1, 26, 128, PFDC_ENC_FM_DD },
+	{ 4004 * 128UL, 77, 2, 26, 128, PFDC_ENC_FM_DD },
+	{ 0, 0, 0, 0, 0, 0 }
 };
 
 
-int pfdc_get_geometry_from_size (unsigned long size, unsigned *c, unsigned *h, unsigned *s)
+const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size)
 {
 	unsigned i;
 
@@ -62,16 +53,13 @@ int pfdc_get_geometry_from_size (unsigned long size, unsigned *c, unsigned *h, u
 
 	while (disk_sizes[i].size != 0) {
 		if (disk_sizes[i].size == size) {
-			*c = disk_sizes[i].c;
-			*h = disk_sizes[i].h;
-			*s = disk_sizes[i].s;
-			return (0);
+			return (&disk_sizes[i]);
 		}
 
 		i += 1;
 	}
 
-	return (1);
+	return (NULL);
 }
 
 static
@@ -97,54 +85,45 @@ int raw_get_file_size (FILE *fp, unsigned long *size)
 static
 int raw_load_fp (FILE *fp, pfdc_img_t *img)
 {
-	unsigned      c, h, s;
-	unsigned      cn, hn, sn;
-	unsigned      enc;
-	unsigned long size;
-	pfdc_trk_t    *trk;
-	pfdc_sct_t    *sct;
+	unsigned              c, h, s;
+	unsigned long         size;
+	pfdc_trk_t            *trk;
+	pfdc_sct_t            *sct;
+	const pfdc_geometry_t *geo;
 
 	if (raw_get_file_size (fp, &size)) {
 		return (1);
 	}
 
-	if (pfdc_get_geometry_from_size (size, &cn, &hn, &sn)) {
+	geo = pfdc_get_geometry_from_size (size);
+
+	if (geo == NULL) {
 		return (1);
 	}
 
-	if (sn > 27) {
-		enc = PFDC_ENC_MFM_ED;
-	}
-	else if (sn > 12) {
-		enc = PFDC_ENC_MFM_HD;
-	}
-	else {
-		enc = PFDC_ENC_MFM_DD;
-	}
-
-	for (c = 0; c < cn; c++) {
-		for (h = 0; h < hn; h++) {
+	for (c = 0; c < geo->c; c++) {
+		for (h = 0; h < geo->h; h++) {
 			trk = pfdc_img_get_track (img, c, h, 1);
 
 			if (trk == NULL) {
 				return (1);
 			}
 
-			for (s = 0; s < sn; s++) {
-				sct = pfdc_sct_new (c, h, s + 1, 512);
+			for (s = 0; s < geo->s; s++) {
+				sct = pfdc_sct_new (c, h, s + 1, geo->ssize);
 
 				if (sct == NULL) {
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, enc);
+				pfdc_sct_set_encoding (sct, geo->encoding);
 
 				if (pfdc_trk_add_sector (trk, sct)) {
 					pfdc_sct_del (sct);
 					return (1);
 				}
 
-				if (fread (sct->data, 1, 512, fp) != 512) {
+				if (fread (sct->data, 1, geo->ssize, fp) != geo->ssize) {
 					return (1);
 				}
 			}

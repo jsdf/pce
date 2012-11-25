@@ -2128,12 +2128,11 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 static
 int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 {
-	unsigned      c, h, s;
-	unsigned      cyl_cnt, trk_cnt, sct_cnt;
-	unsigned      enc;
-	pfdc_cyl_t    *cyl;
-	pfdc_trk_t    *trk;
-	pfdc_sct_t    *sct;
+	unsigned              c, h, s;
+	pfdc_cyl_t            *cyl;
+	pfdc_trk_t            *trk;
+	pfdc_sct_t            *sct;
+	const pfdc_geometry_t *geo;
 
 	pfdc_img_erase (img);
 
@@ -2141,28 +2140,28 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 		return (0);
 	}
 
-	if (pfdc_get_geometry_from_size (1024 * size, &cyl_cnt, &trk_cnt, &sct_cnt)) {
+	geo = pfdc_get_geometry_from_size (1024 * size);
+
+	if (geo == NULL) {
 		return (1);
 	}
 
-	enc = (sct_cnt < 14) ? PFDC_ENC_MFM_DD : PFDC_ENC_MFM_HD;
-
-	for (c = 0; c < cyl_cnt; c++) {
+	for (c = 0; c < geo->c; c++) {
 		cyl = pfdc_img_get_cylinder (img, c, 1);
 
 		if (cyl == NULL) {
 			return (1);
 		}
 
-		for (h = 0; h < trk_cnt; h++) {
+		for (h = 0; h < geo->h; h++) {
 			trk = pfdc_img_get_track (img, c, h, 1);
 
 			if (trk == NULL) {
 				return (1);
 			}
 
-			for (s = 0; s < sct_cnt; s++) {
-				sct = pfdc_sct_new (c, h, s + 1, 512);
+			for (s = 0; s < geo->s; s++) {
+				sct = pfdc_sct_new (c, h, s + 1, geo->ssize);
 
 				if (sct == NULL) {
 					return (1);
@@ -2173,7 +2172,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 					return (1);
 				}
 
-				pfdc_sct_set_encoding (sct, enc);
+				pfdc_sct_set_encoding (sct, geo->encoding);
 				pfdc_sct_fill (sct, par_filler);
 			}
 		}
