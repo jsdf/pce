@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/keyboard.c                                  *
  * Created:     2007-11-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -87,6 +87,7 @@ static mac_kbd_map_t key_map_us[] = {
 	{ PCE_KEY_LCTRL,      1, { 0x75 }, 1, { 0xf5 } },
 	{ PCE_KEY_RCTRL,      1, { 0x75 }, 1, { 0xf5 } },
 	{ PCE_KEY_LALT,       1, { 0x6f }, 1, { 0xef } },
+	{ PCE_KEY_RALT,       1, { 0x69 }, 1, { 0xe9 } },
 	{ PCE_KEY_SPACE,      1, { 0x63 }, 1, { 0xe3 } },
 	{ PCE_KEY_NUMLOCK,    2, { 0x79, 0x0f }, 2, { 0x79, 0x8f } },
 	{ PCE_KEY_KP_SLASH,   3, { 0x71, 0x79, 0x1b }, 3, { 0x79, 0x9b, 0xf1 } },
@@ -178,6 +179,7 @@ static mac_kbd_map_t key_map_intl[] = {
 	{ PCE_KEY_LCTRL,      1, { 0x75 }, 1, { 0xf5 } },
 	{ PCE_KEY_RCTRL,      1, { 0x75 }, 1, { 0xf5 } },
 	{ PCE_KEY_LALT,       1, { 0x6f }, 1, { 0xef } },
+	{ PCE_KEY_RALT,       1, { 0x63 }, 1, { 0xe3 } },
 	{ PCE_KEY_SPACE,      1, { 0x69 }, 1, { 0xe9 } },
 	{ PCE_KEY_NUMLOCK,    2, { 0x79, 0x0f }, 2, { 0x79, 0x8f } },
 	{ PCE_KEY_KP_SLASH,   3, { 0x71, 0x79, 0x1b }, 3, { 0x79, 0x9b, 0xf1 } },
