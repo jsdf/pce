@@ -238,14 +238,16 @@ int cp2_load_track (FILE *fp, pfdc_img_t *img,
 
 			if ((sofs + ssize) > size2) {
 				fprintf (stderr,
-					"cp2: %08lX: sector data too big\n",
-					ofs1 + 3 + 16 * i
+					"cp2: %u/%u/%u: sector data too big (%u)\n",
+					th[0], th[1], i + 1, ssize
 				);
-				return (1);
-			}
 
-			if (pfdc_read_ofs (fp, ofs2 + sofs, sct->data, ssize)) {
-				return (1);
+				pfdc_sct_fill (sct, 0);
+			}
+			else {
+				if (pfdc_read_ofs (fp, ofs2 + sofs, sct->data, ssize)) {
+					return (1);
+				}
 			}
 		}
 
