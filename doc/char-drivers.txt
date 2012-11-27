@@ -118,6 +118,17 @@ tcp:
 	port=<port>
 		Set the TCP port number.
 
+	telnet=[0|1]
+		If true, will handle option negotiation for telnet
+		binary and character mode. Useful when the serial
+		line is a tty, to provide proper terminal emulation.
+
+	telnetinit=[0|1]
+		If this and "telnet" are true, initiate telnet option
+		negotiations immediately after accepting a connection.
+		Common telnet clients need this when connecting to
+		a port other than 23. Defaults to true.
+
 tios:
 	file=<filename>
 		The character device to connect to

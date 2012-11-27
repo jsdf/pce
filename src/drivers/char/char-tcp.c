@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-tcp.c                                  *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -42,6 +42,32 @@
 #endif
 
 
+#define TELNET_SE   240
+#define TELNET_NOP  241
+#define TELNET_GA   249
+#define TELNET_WILL 251
+#define TELNET_WONT 252
+#define TELNET_DO   253
+#define TELNET_DONT 254
+#define TELNET_IAC  255
+
+
+#define TELNET_OPT_BINARY            0
+#define TELNET_OPT_ECHO              1
+#define TELNET_OPT_SUPPRESS_GO_AHEAD 3
+
+
+enum {
+	CHAR_TCP_DATA,
+	CHAR_TCP_IAC,
+	CHAR_TCP_WILL,
+	CHAR_TCP_WONT,
+	CHAR_TCP_DO,
+	CHAR_TCP_DONT,
+	CHAR_TCP_OPTION
+};
+
+
 static
 unsigned tcp_get_state (int fd, int t)
 {
@@ -73,6 +99,34 @@ unsigned tcp_get_state (int fd, int t)
 	}
 
 	return (val);
+}
+
+static
+int tcp_set_nodelay (int fd, int val)
+{
+#ifdef HAVE_LINUX_TCP_H
+	val = (val != 0);
+
+	if (setsockopt (fd, TCP, TCP_NODELAY, &val, sizeof (int))) {
+		return (1);
+	}
+
+	return (0);
+#else
+	return (1);
+#endif
+}
+
+static
+int tcp_set_reuseaddr (int fd, int val)
+{
+	val = (val != 0);
+
+	if (setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof (int))) {
+		return (1);
+	}
+
+	return (0);
 }
 
 static
@@ -128,6 +182,8 @@ int tcp_listen (const char *host, unsigned short port, unsigned queue)
 		return (-1);
 	}
 
+	tcp_set_reuseaddr (fd, 1);
+
 	if (bind (fd, (struct sockaddr *) &addr, sizeof (addr)) == -1) {
 		close (fd);
 		return (-1);
@@ -160,21 +216,6 @@ int tcp_accept (int fd)
 	return (ret);
 }
 
-int tcp_nodelay (int fd, int val)
-{
-#ifdef HAVE_LINUX_TCP_H
-	val = (val != 0);
-
-	if (setsockopt (fd, 6, TCP_NODELAY, &val, sizeof (int))) {
-		return (1);
-	}
-
-	return (0);
-#else
-	return (1);
-#endif
-}
-
 static
 char *tcp_host_resolve (const char *str)
 {
@@ -196,6 +237,203 @@ char *tcp_host_resolve (const char *str)
 	return (ret);
 }
 
+
+#define telnet_do(drv, option) telnet_send_request(drv, option, TELNET_DO)
+#define telnet_dont(drv, option) telnet_send_request(drv, option, TELNET_DONT)
+#define telnet_will(drv, option) telnet_send_request(drv, option, TELNET_WILL)
+#define telnet_wont(drv, option) telnet_send_request(drv, option, TELNET_WONT)
+
+static
+void telnet_send_request (char_tcp_t *drv, unsigned char option, unsigned char verb)
+{
+	unsigned char buf[3];
+
+	buf[0] = TELNET_IAC;
+	buf[1] = verb;
+	buf[2] = option;
+
+	write(drv->fd, buf, 3);
+}
+
+static
+void telnet_process_request (char_tcp_t *drv, unsigned option)
+{
+	unsigned st;
+
+	st = drv->telnet_state;
+
+	switch (option) {
+	case TELNET_OPT_BINARY:
+		if ((st == CHAR_TCP_DO) || (st == CHAR_TCP_DONT)) {
+			/* We insist on being binary. */
+			telnet_will (drv, TELNET_OPT_BINARY);
+		}
+		else if ((st == CHAR_TCP_WILL) || (st == CHAR_TCP_WONT)) {
+			/* We insist on being binary. */
+			telnet_do (drv, TELNET_OPT_BINARY);
+		}
+		return;
+
+	case TELNET_OPT_ECHO:
+		if (st == CHAR_TCP_WILL) {
+			/* We refuse that the client performs echoing itself. */
+			telnet_dont (drv, TELNET_OPT_ECHO);
+		}
+		else if (st == CHAR_TCP_DONT) {
+			/* We insist on echoing. */
+			telnet_will (drv, TELNET_OPT_ECHO);
+		}
+		return;
+
+	case TELNET_OPT_SUPPRESS_GO_AHEAD:
+		if (st == CHAR_TCP_DONT) {
+			/* We will never send go-aheads. */
+			telnet_will (drv, TELNET_OPT_SUPPRESS_GO_AHEAD);
+		}
+		else if ((st == CHAR_TCP_WILL) || (st == CHAR_TCP_WONT)) {
+			/* The client may or may not suppress go-aheads at its own
+			 * volition. */
+			telnet_send_request (drv, TELNET_OPT_SUPPRESS_GO_AHEAD,
+				(st == CHAR_TCP_WILL) ? CHAR_TCP_DO : CHAR_TCP_DONT
+			);
+		}
+		return;
+
+	default:
+		/* unknown option, refuse it. */
+		telnet_send_request (drv, option,
+			(st == CHAR_TCP_WILL) ? TELNET_DONT : TELNET_WONT
+		);
+	}
+}
+
+static
+unsigned telnet_filter_input (char_tcp_t *drv, unsigned char *buf, unsigned cnt)
+{
+	unsigned i, j;
+
+	j = 0;
+
+	for (i = 0; i < cnt; i++) {
+		switch (drv->telnet_state) {
+		case CHAR_TCP_DATA:
+			if (buf[i] == TELNET_IAC) {
+				drv->telnet_state = CHAR_TCP_IAC;
+			}
+			else {
+				buf[j++] = buf[i];
+			}
+			break;
+
+		case CHAR_TCP_IAC:
+			switch (buf[i]) {
+			case TELNET_NOP:
+			case TELNET_GA:
+				drv->telnet_state = CHAR_TCP_DATA;
+				break;
+
+			case TELNET_WILL:
+				drv->telnet_state = CHAR_TCP_WILL;
+				break;
+
+			case TELNET_WONT:
+				drv->telnet_state = CHAR_TCP_WONT;
+				break;
+
+			case TELNET_DO:
+				drv->telnet_state = CHAR_TCP_DO;
+				break;
+
+			case TELNET_DONT:
+				drv->telnet_state = CHAR_TCP_DONT;
+				break;
+
+			case TELNET_IAC:
+				buf[j++] = buf[i];
+				drv->telnet_state = CHAR_TCP_DATA;
+				break;
+
+			default:
+				fprintf (stderr, "char-tcp: "
+					"ignoring unknown/unexptected IAC %u\n",
+					buf[i]
+				);
+				drv->telnet_state = CHAR_TCP_DATA;
+				break;
+			}
+			break;
+
+		case CHAR_TCP_WILL:
+		case CHAR_TCP_DO:
+		case CHAR_TCP_WONT:
+		case CHAR_TCP_DONT:
+			telnet_process_request (drv, buf[i]);
+			drv->telnet_state = CHAR_TCP_DATA;
+			break;
+
+		default:
+			fprintf (stderr,
+				"unknown char-tcp state %u? resetting to DATA.\n",
+				drv->telnet_state
+			);
+			drv->telnet_state = CHAR_TCP_DATA;
+		}
+	}
+
+	return (j);
+}
+
+static
+ssize_t telnet_write (char_tcp_t *drv, const void *buf, unsigned cnt)
+{
+	unsigned            i;
+	ssize_t             r;
+	const unsigned char *tmp;
+	unsigned char       iac[2];
+
+	if (cnt == 0) {
+		return (0);
+	}
+
+	tmp = buf;
+
+	i = 0;
+	while ((i < cnt) && (tmp[i] != TELNET_IAC)) {
+		i += 1;
+	}
+
+	if (i == 0) {
+		iac[0] = TELNET_IAC;
+		iac[1] = TELNET_IAC;
+
+		r = write (drv->fd, iac, 2);
+
+		if (r == 2) {
+			r = 1;
+		}
+	}
+	else {
+		r = write (drv->fd, buf, i);
+	}
+
+	return (r);
+}
+
+
+static
+void chr_tcp_init_connection (char_tcp_t *drv)
+{
+	tcp_set_nodelay (drv->fd, 1);
+
+	drv->telnet_state = CHAR_TCP_DATA;
+
+	if (drv->telnet && drv->telnetinit) {
+		/* Instruct telnet client to switch to character mode. */
+		telnet_do (drv, TELNET_OPT_BINARY);
+		telnet_will (drv, TELNET_OPT_ECHO);
+		telnet_will (drv, TELNET_OPT_SUPPRESS_GO_AHEAD);
+	}
+}
 
 static
 void chr_tcp_close (char_drv_t *cdrv)
@@ -240,7 +478,7 @@ int chr_tcp_accept (char_tcp_t *drv)
 		return (1);
 	}
 
-	tcp_nodelay (drv->fd, 1);
+	chr_tcp_init_connection (drv);
 
 	return (0);
 }
@@ -298,6 +536,10 @@ unsigned chr_tcp_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 		return (0);
 	}
 
+	if (drv->telnet) {
+		r = telnet_filter_input (drv, buf, r);
+	}
+
 	return (r);
 }
 
@@ -331,7 +573,12 @@ unsigned chr_tcp_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 	}
 #endif
 
-	r = write (drv->fd, buf, cnt);
+	if (drv->telnet) {
+		r = telnet_write (drv, buf, cnt);
+	}
+	else {
+		r = write (drv->fd, buf, cnt);
+	}
 
 	if (r <= 0) {
 		chr_tcp_shutdown (drv);
@@ -359,6 +606,9 @@ int chr_tcp_init (char_tcp_t *drv, const char *name)
 	drv->connect = drv_get_option_bool (name, "connect", 0);
 	drv->port = drv_get_option_uint (name, "port", 5555);
 
+	drv->telnet = drv_get_option_bool (name, "telnet", 0);
+	drv->telnetinit = drv_get_option_bool (name, "telnetinit", 1);
+
 	if (drv->host != NULL) {
 		str = tcp_host_resolve (drv->host);
 
@@ -377,6 +627,8 @@ int chr_tcp_init (char_tcp_t *drv, const char *name)
 		if (drv->fd < 0) {
 			return (1);
 		}
+
+		chr_tcp_init_connection (drv);
 	}
 	else {
 		drv->listen_fd = tcp_listen (NULL, drv->port, 1);

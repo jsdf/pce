@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-tcp.h                                  *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2009-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,12 +33,16 @@ typedef struct char_tcp_t {
 	char_drv_t cdrv;
 
 	int        connect;
+	int        telnet;
+	int        telnetinit;
 
 	char       *host;
 	unsigned   port;
 
 	int        listen_fd;
 	int        fd;
+
+	unsigned   telnet_state;
 } char_tcp_t;
 
 

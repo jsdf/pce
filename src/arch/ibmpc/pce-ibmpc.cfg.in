@@ -406,6 +406,7 @@ serial {
 	#driver = "pty:symlink=com1"
 	driver = "stdio:file=serport1.out:flush=1"
 	#driver = "tios:file=/dev/ttyS0"
+	#driver = "tcp:port=5555:telnet=1:telnetinit=1"
 
 	# Log all traffic to this file. This is for debugging.
 	#log = "serport1.log"
