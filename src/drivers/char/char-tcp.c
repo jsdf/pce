@@ -589,6 +589,38 @@ unsigned chr_tcp_write (char_drv_t *cdrv, const void *buf, unsigned cnt)
 }
 
 static
+int chr_tcp_get_ctl (char_drv_t *cdrv, unsigned *ctl)
+{
+	char_tcp_t *drv = cdrv->ext;
+
+	*ctl = drv->ctl | PCE_CHAR_DSR;
+
+	if (drv->fd >= 0) {
+		*ctl |= PCE_CHAR_CTS | PCE_CHAR_CD;
+	}
+	else {
+		*ctl &= ~(PCE_CHAR_CTS | PCE_CHAR_CD);
+	}
+
+	return (0);
+}
+
+static
+int chr_tcp_set_ctl (char_drv_t *cdrv, unsigned ctl)
+{
+	char_tcp_t *drv = cdrv->ext;
+
+	if ((drv->ctl ^ ctl) & ~ctl & PCE_CHAR_DTR) {
+		/* Hang Up */
+		chr_tcp_shutdown(drv);
+	}
+
+	drv->ctl = ctl;
+
+	return (0);
+}
+
+static
 int chr_tcp_init (char_tcp_t *drv, const char *name)
 {
 	char *str;
@@ -602,12 +634,20 @@ int chr_tcp_init (char_tcp_t *drv, const char *name)
 	drv->listen_fd = -1;
 	drv->fd = -1;
 
+	drv->ctl = PCE_CHAR_DSR;
+
 	drv->host = drv_get_option (name, "host");
 	drv->connect = drv_get_option_bool (name, "connect", 0);
 	drv->port = drv_get_option_uint (name, "port", 5555);
 
 	drv->telnet = drv_get_option_bool (name, "telnet", 0);
 	drv->telnetinit = drv_get_option_bool (name, "telnetinit", 1);
+	drv->usectl = drv_get_option_bool (name, "usectl", 1);
+
+	if (drv->usectl) {
+		drv->cdrv.get_ctl = chr_tcp_get_ctl;
+		drv->cdrv.set_ctl = chr_tcp_set_ctl;
+	}
 
 	if (drv->host != NULL) {
 		str = tcp_host_resolve (drv->host);

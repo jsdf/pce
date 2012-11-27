@@ -317,7 +317,7 @@ serial {
 	#driver = "pty:symlink=ser_a"
 	driver = "stdio:file=ser_a.out:flush=1"
 	#driver = "tios:file=/dev/ttyS0"
-	#driver = "tcp:port=5555:telnet=1:telnetinit=1"
+	#driver = "tcp:port=5555:telnet=1:telnetinit=1:usectl=1"
 }
 
 serial {

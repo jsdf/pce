@@ -35,12 +35,15 @@ typedef struct char_tcp_t {
 	int        connect;
 	int        telnet;
 	int        telnetinit;
+	int        usectl;
 
 	char       *host;
 	unsigned   port;
 
 	int        listen_fd;
 	int        fd;
+
+	unsigned   ctl;
 
 	unsigned   telnet_state;
 } char_tcp_t;

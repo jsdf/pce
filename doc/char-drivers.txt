@@ -129,6 +129,16 @@ tcp:
 		Common telnet clients need this when connecting to
 		a port other than 23. Defaults to true.
 
+	usectl=[0|1]
+		If true, modem status lines are properly handled in
+		both directions. Specifically, DSR is always asserted,
+		CTS and CD are only asserted when a client is
+		connected to the TCP port, and flashing DTR causes the
+		TCP connection to close. This is useful when the
+		serial line is a tty, to close the connection when
+		logged out and, conversely, to log out when the
+		connection is closed manually. Defaults to true.
+
 tios:
 	file=<filename>
 		The character device to connect to
