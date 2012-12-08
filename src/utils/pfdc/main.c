@@ -2126,7 +2126,7 @@ int pfdc_operation (pfdc_img_t **img, const char *op, int argc, char **argv)
 
 
 static
-int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
+int pfdc_new_dos (pfdc_img_t *img, unsigned long size, unsigned fill)
 {
 	unsigned              c, h, s;
 	pfdc_cyl_t            *cyl;
@@ -2173,7 +2173,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 				}
 
 				pfdc_sct_set_encoding (sct, geo->encoding);
-				pfdc_sct_fill (sct, par_filler);
+				pfdc_sct_fill (sct, fill);
 			}
 		}
 	}
@@ -2254,8 +2254,11 @@ pfdc_img_t *pfdc_new_image (const char *type, const char *size)
 
 	img = pfdc_img_new();
 
-	if (strcmp (type, "dos") == 0) {
-		r = pfdc_new_dos (img, n);
+	if (strcmp (type, "cpm") == 0) {
+		r = pfdc_new_dos (img, n, 0xe5);
+	}
+	else if (strcmp (type, "dos") == 0) {
+		r = pfdc_new_dos (img, n, 0xf6);
 	}
 	else if (strcmp (type, "mac") == 0) {
 		r = pfdc_new_mac (img, n);
