@@ -43,5 +43,8 @@ pfdc_img_t *pfdc_load_raw (FILE *fp);
 
 int pfdc_save_raw (FILE *fp, const pfdc_img_t *img);
 
+int pfdc_probe_raw_fp (FILE *fp);
+int pfdc_probe_raw (const char *fname);
+
 
 #endif

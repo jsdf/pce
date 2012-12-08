@@ -214,3 +214,38 @@ int pfdc_save_raw (FILE *fp, const pfdc_img_t *img)
 
 	return (0);
 }
+
+int pfdc_probe_raw_fp (FILE *fp)
+{
+	long size;
+
+	if (fseek (fp, 0, SEEK_END)) {
+		return (0);
+	}
+
+	size = ftell (fp);
+
+	if (pfdc_get_geometry_from_size (size, 0) == NULL) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int pfdc_probe_raw (const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (0);
+	}
+
+	r = pfdc_probe_raw_fp (fp);
+
+	fclose (fp);
+
+	return (r);
+}

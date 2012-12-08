@@ -236,6 +236,10 @@ unsigned pfdc_probe_fp (FILE *fp)
 		return (PFDC_FORMAT_DC42);
 	}
 
+	if (pfdc_probe_raw_fp (fp)) {
+		return (PFDC_FORMAT_RAW);
+	}
+
 	return (PFDC_FORMAT_NONE);
 }
 
