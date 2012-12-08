@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.c                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -157,7 +157,7 @@ void pce_set_fd_interactive (int fd, int interactive)
 	else {
 		tios = sios;
 
-		tios.c_lflag &= ~(ICANON | ECHO);
+		tios.c_lflag &= ~(ICANON | ECHO | ISIG);
 		tios.c_cc[VMIN] = 1;
 		tios.c_cc[VTIME] = 0;
 
