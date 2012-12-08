@@ -39,8 +39,8 @@ static pfdc_geometry_t disk_sizes[] = {
 	{ 1440 * 1024UL, 80, 2, 18, 512, PFDC_ENC_MFM_HD },
 	{ 2880 * 1024UL, 80, 2, 36, 512, PFDC_ENC_MFM_HD },
 	{ 1232 * 1024UL, 77, 2, 8, 1024, PFDC_ENC_MFM_HD },
-	{ 2002 * 128UL, 77, 1, 26, 128, PFDC_ENC_FM_DD },
-	{ 4004 * 128UL, 77, 2, 26, 128, PFDC_ENC_FM_DD },
+	{ 2002 * 128UL, 77, 1, 26, 128, PFDC_ENC_FM_HD },
+	{ 4004 * 128UL, 77, 2, 26, 128, PFDC_ENC_FM_HD },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
