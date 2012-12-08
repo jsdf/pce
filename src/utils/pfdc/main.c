@@ -2140,7 +2140,7 @@ int pfdc_new_dos (pfdc_img_t *img, unsigned long size)
 		return (0);
 	}
 
-	geo = pfdc_get_geometry_from_size (1024 * size);
+	geo = pfdc_get_geometry_from_size (1024 * size, 1023);
 
 	if (geo == NULL) {
 		return (1);

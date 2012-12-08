@@ -37,7 +37,7 @@ typedef struct {
 } pfdc_geometry_t;
 
 
-const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size);
+const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size, unsigned long mask);
 
 pfdc_img_t *pfdc_load_raw (FILE *fp);
 

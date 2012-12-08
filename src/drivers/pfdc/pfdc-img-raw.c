@@ -45,14 +45,15 @@ static pfdc_geometry_t disk_sizes[] = {
 };
 
 
-const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size)
+const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size, unsigned long mask)
 {
 	unsigned i;
 
-	i = 0;
+	mask = ~mask;
 
+	i = 0;
 	while (disk_sizes[i].size != 0) {
-		if (disk_sizes[i].size == size) {
+		if ((disk_sizes[i].size & mask) == (size & mask)) {
 			return (&disk_sizes[i]);
 		}
 
@@ -95,7 +96,7 @@ int raw_load_fp (FILE *fp, pfdc_img_t *img)
 		return (1);
 	}
 
-	geo = pfdc_get_geometry_from_size (size);
+	geo = pfdc_get_geometry_from_size (size, 0);
 
 	if (geo == NULL) {
 		return (1);
