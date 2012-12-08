@@ -316,6 +316,9 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		else if (strcmp (type, "pfdc") == 0) {
 			dsk = dsk_fdc_open (path, PFDC_FORMAT_PFDC, ro);
 		}
+		else if (strcmp (type, "pfdc-auto") == 0) {
+			dsk = dsk_fdc_open (path, PFDC_FORMAT_NONE, ro);
+		}
 		else if (strcmp (type, "teledisk") == 0) {
 			dsk = dsk_fdc_open (path, PFDC_FORMAT_TD0, ro);
 		}
