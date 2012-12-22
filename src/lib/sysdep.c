@@ -157,6 +157,7 @@ void pce_set_fd_interactive (int fd, int interactive)
 	else {
 		tios = sios;
 
+		tios.c_iflag &= ~(IXON | IXOFF);
 		tios.c_lflag &= ~(ICANON | ECHO | ISIG);
 		tios.c_cc[VMIN] = 1;
 		tios.c_cc[VTIME] = 0;
