@@ -364,7 +364,7 @@ void e8259_set_icw1 (e8259_t *pic, unsigned char val)
 	pic->priority = 0;
 	pic->rot_on_aeoi = 0;
 
-	pic->imr = 0xff;
+	pic->imr = 0x00;
 	pic->isr = 0x00;
 }
 
