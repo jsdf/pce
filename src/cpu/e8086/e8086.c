@@ -445,8 +445,9 @@ void e86_reset (e8086_t *c)
 
 void e86_execute (e8086_t *c)
 {
-	unsigned cnt, op;
-	int      tf, irq;
+	unsigned       cnt;
+	unsigned short flg;
+	char           irq;
 
 	if (c->halt) {
 		e86_set_clk (c, 2);
@@ -463,9 +464,10 @@ void e86_execute (e8086_t *c)
 		c->cur_ip = c->ip;
 	}
 
-	tf = e86_get_tf (c);
-
+	flg = c->flg;
 	irq = c->irq;
+
+	c->enable_int = 1;
 
 	do {
 		e86_pq_fill (c);
@@ -476,9 +478,7 @@ void e86_execute (e8086_t *c)
 			c->op_stat (c->op_ext, c->pq[0], c->pq[1]);
 		}
 
-		op = c->pq[0];
-
-		cnt = c->op[op] (c);
+		cnt = c->op[c->pq[0]] (c);
 
 		if (cnt > 0) {
 			c->ip = (c->ip + cnt) & 0xffff;
@@ -491,11 +491,13 @@ void e86_execute (e8086_t *c)
 
 	c->instructions += 1;
 
-	if (tf && e86_get_tf (c)) {
-		e86_trap (c, 1);
-	}
-	else if (c->irq && irq && e86_get_if (c)) {
-		e86_irq_ack (c);
+	if (c->enable_int) {
+		if (flg & c->flg & E86_FLG_T) {
+			e86_trap (c, 1);
+		}
+		else if (irq && c->irq && e86_get_if (c)) {
+			e86_irq_ack (c);
+		}
 	}
 }
 
