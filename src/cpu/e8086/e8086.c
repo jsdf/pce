@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -483,6 +483,9 @@ void e86_execute (e8086_t *c)
 		if (cnt > 0) {
 			c->ip = (c->ip + cnt) & 0xffff;
 			e86_pq_adjust (c, cnt);
+		}
+		else {
+			c->delay += 10;
 		}
 	} while (c->prefix & E86_PREFIX_NEW);
 
