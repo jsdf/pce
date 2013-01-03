@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim6502/main.c                                      *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -270,7 +270,7 @@ void prt_state (sim6502_t *sim, FILE *fp, const char *str)
 static
 int s6502_check_break (sim6502_t *sim)
 {
-	if (bps_check (&sim->bps, e6502_get_pc (sim->cpu), stdout)) {
+	if (bps_check (&sim->bps, 0, e6502_get_pc (sim->cpu), stdout)) {
 		return (1);
 	}
 
@@ -425,7 +425,7 @@ void do_h (cmd_t *cmd, sim6502_t *sim)
 	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -600,7 +600,7 @@ static
 int s6502_do_cmd (sim6502_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &sim->bps, 0);
+		cmd_do_b (cmd, &sim->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

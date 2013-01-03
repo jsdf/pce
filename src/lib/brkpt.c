@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/brkpt.c                                              *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,12 +70,12 @@ void bp_del (breakpoint_t *bp)
 	}
 }
 
-int bp_match (breakpoint_t *bp, unsigned long addr)
+int bp_match (breakpoint_t *bp, unsigned seg, unsigned long addr)
 {
 	int r;
 
 	if (bp->match != NULL) {
-		r = bp->match (bp, addr);
+		r = bp->match (bp, seg, addr);
 	}
 	else {
 		r = 0;
@@ -113,8 +113,10 @@ void bp_addr_del (breakpoint_t *bp)
 }
 
 static
-int bp_addr_match (breakpoint_t *bp, unsigned long addr)
+int bp_addr_match (breakpoint_t *bp, unsigned seg, unsigned long addr)
 {
+	addr += (unsigned long) seg << 4;
+
 	if (bp->addr == addr) {
 		return (1);
 	}
@@ -126,8 +128,7 @@ static
 void bp_addr_print (breakpoint_t *bp, FILE *fp)
 {
 	printf ("A  %08lX  %04X  %04X\n",
-		(unsigned long) bp->addr,
-		(unsigned) bp->pass, (unsigned) bp->reset
+		bp->addr, bp->pass, bp->reset
 	);
 }
 
@@ -144,6 +145,7 @@ breakpoint_t *bp_addr_new (unsigned long addr)
 	bp->match = bp_addr_match;
 	bp->print = bp_addr_print;
 
+	bp->seg = 0;
 	bp->addr = addr;
 
 	return (bp);
@@ -157,9 +159,9 @@ void bp_segofs_del (breakpoint_t *bp)
 }
 
 static
-int bp_segofs_match (breakpoint_t *bp, unsigned long addr)
+int bp_segofs_match (breakpoint_t *bp, unsigned seg, unsigned long addr)
 {
-	if (bp->addr == addr) {
+	if ((bp->seg == seg) && (bp->addr == addr)) {
 		return (1);
 	}
 
@@ -169,10 +171,8 @@ int bp_segofs_match (breakpoint_t *bp, unsigned long addr)
 static
 void bp_segofs_print (breakpoint_t *bp, FILE *fp)
 {
-	printf ("S  %04lX:%04lX  %04X  %04X\n",
-		(unsigned long) (bp->addr >> 16),
-		(unsigned long) (bp->addr & 0xffff),
-		(unsigned) bp->pass, (unsigned) bp->reset
+	printf ("S  %04X:%04lX  %04X  %04X\n",
+		bp->seg, bp->addr, bp->pass, bp->reset
 	);
 }
 
@@ -181,6 +181,7 @@ breakpoint_t *bp_segofs_new (unsigned short seg, unsigned short ofs)
 	breakpoint_t *bp;
 
 	bp = bp_new (BP_TYPE_SEGOFS);
+
 	if (bp == NULL) {
 		return (NULL);
 	}
@@ -189,7 +190,8 @@ breakpoint_t *bp_segofs_new (unsigned short seg, unsigned short ofs)
 	bp->match = bp_segofs_match;
 	bp->print = bp_segofs_print;
 
-	bp->addr = (seg << 16) | ofs;
+	bp->seg = seg;
+	bp->addr = ofs;
 
 	return (bp);
 }
@@ -203,7 +205,7 @@ void bp_expr_del (breakpoint_t *bp)
 }
 
 static
-int bp_expr_match (breakpoint_t *bp, unsigned long addr)
+int bp_expr_match (breakpoint_t *bp, unsigned seg, unsigned long addr)
 {
 	unsigned long val;
 	cmd_t         cmd;
@@ -342,12 +344,12 @@ void bps_list (bp_set_t *bps, FILE *fp)
 	fflush (fp);
 }
 
-breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr)
+breakpoint_t *bps_match (bp_set_t *bps, unsigned seg, unsigned long addr)
 {
 	unsigned i;
 
 	for (i = 0; i < bps->cnt; i++) {
-		if (bp_match (bps->bp[i], addr)) {
+		if (bp_match (bps->bp[i], seg, addr)) {
 			return (bps->bp[i]);
 		}
 	}
@@ -358,11 +360,11 @@ breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr)
 /*
  * Check if a breakpoint is triggered
  */
-int bps_check (bp_set_t *bps, unsigned long addr, FILE *fp)
+int bps_check (bp_set_t *bps, unsigned seg, unsigned long addr, FILE *fp)
 {
 	breakpoint_t *bp;
 
-	bp = bps_match (bps, addr);
+	bp = bps_match (bps, seg, addr);
 
 	if (bp != NULL) {
 		bp_print (bp, fp);
@@ -381,6 +383,8 @@ int bps_check (bp_set_t *bps, unsigned long addr, FILE *fp)
 static
 void cmd_do_bsa (cmd_t *cmd, bp_set_t *bps)
 {
+	int            isseg;
+	unsigned       seg;
 	unsigned long  addr;
 	unsigned short pass, reset;
 	breakpoint_t   *bp;
@@ -388,40 +392,24 @@ void cmd_do_bsa (cmd_t *cmd, bp_set_t *bps)
 	pass = 1;
 	reset = 0;
 
+	isseg = 0;
+	seg = 0;
+	addr = 0;
+
 	if (!cmd_match_uint32 (cmd, &addr)) {
 		cmd_error (cmd, "expecting address");
 		return;
 	}
 
-	cmd_match_uint16 (cmd, &pass);
-	cmd_match_uint16 (cmd, &reset);
+	if (cmd_match (cmd, ":")) {
+		seg = addr & 0xffff;
 
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
+		if (cmd_match_uint32 (cmd, &addr) == 0) {
+			cmd_error (cmd, "expecting offset");
+			return;
+		}
 
-	if (pass > 0) {
-		bp = bp_addr_new (addr);
-		bp_set_pass (bp, pass, reset);
-
-		bp_print (bp, stdout);
-
-		bps_bp_add (bps, bp);
-	}
-}
-
-static
-void cmd_do_bss (cmd_t *cmd, bp_set_t *bps)
-{
-	breakpoint_t   *bp;
-	unsigned short seg, ofs, pass, reset;
-
-	pass = 1;
-	reset = 0;
-
-	if (!cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		cmd_error (cmd, "expecting address");
-		return;
+		isseg = 1;
 	}
 
 	cmd_match_uint16 (cmd, &pass);
@@ -432,11 +420,15 @@ void cmd_do_bss (cmd_t *cmd, bp_set_t *bps)
 	}
 
 	if (pass > 0) {
-		bp = bp_segofs_new (seg, ofs);
+		if (isseg) {
+			bp = bp_segofs_new (seg, addr);
+		}
+		else {
+			bp = bp_addr_new (addr);
+		}
+
 		bp_set_pass (bp, pass, reset);
-
 		bp_print (bp, stdout);
-
 		bps_bp_add (bps, bp);
 	}
 }
@@ -474,24 +466,13 @@ void cmd_do_bsx (cmd_t *cmd, bp_set_t *bps)
 }
 
 static
-void cmd_do_bs (cmd_t *cmd, bp_set_t *bps, int defseg)
+void cmd_do_bs (cmd_t *cmd, bp_set_t *bps)
 {
-	if (cmd_match (cmd, "a")) {
-		cmd_do_bsa (cmd, bps);
-	}
-	else if (cmd_match (cmd, "s")) {
-		cmd_do_bss (cmd, bps);
-	}
-	else if (cmd_match (cmd, "x")) {
+	if (cmd_match (cmd, "x")) {
 		cmd_do_bsx (cmd, bps);
 	}
 	else {
-		if (defseg) {
-			cmd_do_bss (cmd, bps);
-		}
-		else {
-			cmd_do_bsa (cmd, bps);
-		}
+		cmd_do_bsa (cmd, bps);
 	}
 }
 
@@ -524,13 +505,13 @@ void cmd_do_bl (cmd_t *cmd, bp_set_t *bps)
 	bps_list (bps, stdout);
 }
 
-void cmd_do_b (cmd_t *cmd, bp_set_t *bps, int defseg)
+void cmd_do_b (cmd_t *cmd, bp_set_t *bps)
 {
 	if (cmd_match (cmd, "l")) {
 		cmd_do_bl (cmd, bps);
 	}
 	else if (cmd_match (cmd, "s")) {
-		cmd_do_bs (cmd, bps, defseg);
+		cmd_do_bs (cmd, bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		cmd_do_bc (cmd, bps);

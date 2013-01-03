@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/cmd_ppc.c                                    *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -384,7 +384,7 @@ void prt_state (sim405_t *sim, const char *str)
 static
 int ppc_check_break (sim405_t *sim)
 {
-	if (bps_check (&sim->bps, p405_get_pc (sim->ppc), stdout)) {
+	if (bps_check (&sim->bps, 0, p405_get_pc (sim->ppc), stdout)) {
 		return (1);
 	}
 
@@ -632,7 +632,7 @@ void do_h (cmd_t *cmd, sim405_t *sim)
 	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -1005,7 +1005,7 @@ void do_x (cmd_t *cmd, sim405_t *sim)
 int ppc_do_cmd (sim405_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &sim->bps, 0);
+		cmd_do_b (cmd, &sim->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

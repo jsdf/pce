@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/brkpt.h                                              *
  * Created:     2004-05-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,13 +37,15 @@ typedef struct breakpoint_t {
 	unsigned      type;
 
 	void          (*del) (struct breakpoint_t *bp);
-	int           (*match) (struct breakpoint_t *bp, unsigned long addr);
+	int           (*match) (struct breakpoint_t *bp, unsigned seg, unsigned long addr);
 	void          (*print) (struct breakpoint_t *bp, FILE *fp);
 
 	unsigned      pass;
 	unsigned      reset;
 
+	unsigned      seg;
 	unsigned long addr;
+
 	char          *expr;
 } breakpoint_t;
 
@@ -62,7 +64,7 @@ void bp_set_pass (breakpoint_t *bp, unsigned pass, unsigned reset);
 unsigned bp_get_pass (breakpoint_t *bp);
 
 void bp_del (breakpoint_t *bp);
-int bp_match (breakpoint_t *bp, unsigned long addr);
+int bp_match (breakpoint_t *bp, unsigned seg, unsigned long addr);
 void bp_print (breakpoint_t *bp, FILE *fp);
 
 breakpoint_t *bp_addr_new (unsigned long addr);
@@ -82,12 +84,12 @@ void bps_bp_del (bp_set_t *bps, breakpoint_t *bp);
 void bps_bp_del_all (bp_set_t *bps);
 
 void bps_list (bp_set_t *bps, FILE *fp);
-breakpoint_t *bps_match (bp_set_t *bps, unsigned long addr);
+breakpoint_t *bps_match (bp_set_t *bps, unsigned seg, unsigned long addr);
 
-int bps_check (bp_set_t *bps, unsigned long addr, FILE *fp);
+int bps_check (bp_set_t *bps, unsigned seg, unsigned long addr, FILE *fp);
 
 
-void cmd_do_b (cmd_t *cmd, bp_set_t *bps, int defseg);
+void cmd_do_b (cmd_t *cmd, bp_set_t *bps);
 
 
 #endif

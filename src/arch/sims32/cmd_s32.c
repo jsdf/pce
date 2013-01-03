@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sims32/cmd_s32.c                                    *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -147,7 +147,7 @@ void ss32_prt_state_mem (sims32_t *sim, FILE *fp)
 static
 int ss32_check_break (sims32_t *sim)
 {
-	if (bps_check (&sim->bps, s32_get_pc (sim->cpu), stdout)) {
+	if (bps_check (&sim->bps, 0, s32_get_pc (sim->cpu), stdout)) {
 		return (1);
 	}
 
@@ -326,7 +326,7 @@ void do_h (cmd_t *cmd, sims32_t *sim)
 	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -569,7 +569,7 @@ void do_u (cmd_t *cmd, sims32_t *sim)
 int ss32_do_cmd (sims32_t *sim, cmd_t *cmd)
 {
 	if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &sim->bps, 0);
+		cmd_do_b (cmd, &sim->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		do_c (cmd, sim);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -448,13 +448,11 @@ static
 int pc_check_break (ibmpc_t *pc)
 {
 	unsigned short seg, ofs;
-	unsigned long  addr;
 
 	seg = e86_get_cs (pc->cpu);
 	ofs = e86_get_ip (pc->cpu);
-	addr = (seg << 16) | ofs;
 
-	if (bps_check (&pc->bps, addr, stdout)) {
+	if (bps_check (&pc->bps, seg, ofs, stdout)) {
 		return (1);
 	}
 
@@ -643,11 +641,22 @@ void pc_cmd_c (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_g_b (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned short seg, ofs;
+	unsigned long seg, ofs;
 	breakpoint_t  *bp;
 
-	while (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		bp = bp_segofs_new (seg, ofs);
+	while (cmd_match_uint32 (cmd, &seg)) {
+		if (cmd_match (cmd, ":")) {
+			if (!cmd_match_uint32 (cmd, &ofs)) {
+				cmd_error (cmd, "expecting offset");
+				return;
+			}
+
+			bp = bp_segofs_new (seg, ofs);
+		}
+		else {
+			bp = bp_addr_new (seg);
+		}
+
 		bps_bp_add (&pc->bps, bp);
 	}
 
@@ -778,7 +787,7 @@ void pc_cmd_h (cmd_t *cmd)
 		"boot [drive]              Set the boot drive\n"
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bss addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock [1]\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -1306,7 +1315,7 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 		pc_cmd_boot (cmd, pc);
 	}
 	else if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &pc->bps, 1);
+		cmd_do_b (cmd, &pc->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		pc_cmd_c (cmd, pc);

@@ -15,7 +15,7 @@ b c [index]
 b l
 	List all breakpoints.
 
-b s s addr [pass [reset]]
+b s addr [pass [reset]]
 	Set an address breakpoint [pass=1 reset=0]. The breakpoint triggers
 	after <addr> has been reached <pass> times. If <reset> is 0 then
 	the breakpoint is cleared after triggering, otherwise it is reset with

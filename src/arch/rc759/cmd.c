@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/cmd.c                                         *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -458,13 +458,11 @@ static
 int rc759_check_break (rc759_t *sim)
 {
 	unsigned short seg, ofs;
-	unsigned long  addr;
 
 	seg = e86_get_cs (sim->cpu);
 	ofs = e86_get_ip (sim->cpu);
-	addr = (seg << 16) | ofs;
 
-	if (bps_check (&sim->bps, addr, stdout)) {
+	if (bps_check (&sim->bps, seg, ofs, stdout)) {
 		return (1);
 	}
 
@@ -578,11 +576,22 @@ void rc759_cmd_c (cmd_t *cmd, rc759_t *sim)
 static
 void rc759_cmd_g_b (cmd_t *cmd, rc759_t *sim)
 {
-	unsigned short seg, ofs;
+	unsigned long seg, ofs;
 	breakpoint_t  *bp;
 
-	while (cmd_match_uint16_16 (cmd, &seg, &ofs)) {
-		bp = bp_segofs_new (seg, ofs);
+	while (cmd_match_uint32 (cmd, &seg)) {
+		if (cmd_match (cmd, ":")) {
+			if (!cmd_match_uint32 (cmd, &ofs)) {
+				cmd_error (cmd, "expecting offset");
+				return;
+			}
+
+			bp = bp_segofs_new (seg, ofs);
+		}
+		else {
+			bp = bp_addr_new (seg);
+		}
+
 		bps_bp_add (&sim->bps, bp);
 	}
 
@@ -697,7 +706,7 @@ void rc759_cmd_h (cmd_t *cmd)
 	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bss addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock the simulation [1]\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -1257,7 +1266,7 @@ int rc759_cmd (rc759_t *sim, cmd_t *cmd)
 	}
 
 	if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &sim->bps, 1);
+		cmd_do_b (cmd, &sim->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		rc759_cmd_c (cmd, sim);

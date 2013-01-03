@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -293,7 +293,7 @@ int mac_check_break (macplus_t *sim)
 
 	pc = e68_get_pc (sim->cpu) & 0x00ffffff;
 
-	if (bps_check (&sim->bps, pc, stdout)) {
+	if (bps_check (&sim->bps, 0, pc, stdout)) {
 		return (1);
 	}
 
@@ -626,7 +626,7 @@ void mac_cmd_h (cmd_t *cmd, macplus_t *sim)
 	pce_puts (
 		"bc [index]                clear a breakpoint or all\n"
 		"bl                        list breakpoints\n"
-		"bsa addr [pass [reset]]   set an address breakpoint [pass=1 reset=0]\n"
+		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
 		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
 		"c [cnt]                   clock\n"
 		"d [addr [cnt]]            dump memory\n"
@@ -957,7 +957,7 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	}
 
 	if (cmd_match (cmd, "b")) {
-		cmd_do_b (cmd, &sim->bps, 0);
+		cmd_do_b (cmd, &sim->bps);
 	}
 	else if (cmd_match (cmd, "c")) {
 		mac_cmd_c (cmd, sim);
