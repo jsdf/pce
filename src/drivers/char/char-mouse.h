@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-mouse.h                                *
  * Created:     2011-10-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,7 +31,9 @@
 
 
 typedef struct char_mouse_t {
-	char_drv_t cdrv;
+	char_drv_t    cdrv;
+
+	unsigned      protocol;
 
 	unsigned      buf_hd;
 	unsigned      buf_tl;

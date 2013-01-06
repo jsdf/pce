@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-mouse.c                                *
  * Created:     2011-10-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,7 +29,10 @@
 #include <drivers/char/char-mouse.h>
 
 
-#define MOUSE_MAX 8
+#define MOUSE_MAX  8
+
+#define MOUSE_MS   0
+#define MOUSE_MSYS 1
 
 
 static unsigned     mouse_cnt = 0;
@@ -58,69 +61,110 @@ void chr_mouse_close (char_drv_t *cdrv)
 }
 
 static
-void chr_mouse_add_packet (char_mouse_t *drv)
+unsigned chr_mouse_get_buf_cnt (const char_mouse_t *drv)
 {
-	unsigned char val;
-	int           dx, dy;
-	unsigned char x, y;
+	unsigned cnt;
 
-	val = (drv->buf_hd - drv->buf_tl + CHAR_MOUSE_BUF) % CHAR_MOUSE_BUF;
+	cnt = (CHAR_MOUSE_BUF + drv->buf_hd - drv->buf_tl) % CHAR_MOUSE_BUF;
 
-	if ((val + 3) >= CHAR_MOUSE_BUF) {
+	return (CHAR_MOUSE_BUF - cnt);
+}
+
+static
+void chr_mouse_add_val (char_mouse_t *drv, unsigned char val)
+{
+	drv->buf[drv->buf_hd] = val;
+	drv->buf_hd = (drv->buf_hd + 1) % CHAR_MOUSE_BUF;
+}
+
+static
+unsigned chr_mouse_get_val (int *val, int min, int max)
+{
+	unsigned ret;
+	int      tmp;
+
+	tmp = *val;
+
+	if (tmp < min) {
+		tmp = min;
+	}
+	else if (tmp > max) {
+		tmp = max;
+	}
+
+	*val -= tmp;
+
+	if (tmp < 0) {
+		ret = -tmp;
+		ret = ~ret + 1;
+	}
+	else {
+		ret = tmp;
+	}
+
+	return (ret);
+}
+
+static
+void chr_mouse_add_packet_ms (char_mouse_t *drv)
+{
+	unsigned x, y, v;
+
+	if (chr_mouse_get_buf_cnt (drv) < 3) {
 		return;
 	}
 
-	dx = drv->dx;
+	x = chr_mouse_get_val (&drv->dx, -127, 127);
+	y = chr_mouse_get_val (&drv->dy, -127, 127);
 
-	if (dx < -127) {
-		dx = -127;
-	}
-	else if (dx > 127) {
-		dx = 127;
-	}
+	v = 0x40;
+	v |= (drv->button & 0x01) ? 0x20 : 0x00;
+	v |= (drv->button & 0x02) ? 0x10 : 0x00;
+	v |= (y >> 4) & 0x0c;
+	v |= (x >> 6) & 0x03;
 
-	dy = drv->dy;
+	chr_mouse_add_val (drv, v);
+	chr_mouse_add_val (drv, x & 0x3f);
+	chr_mouse_add_val (drv, y & 0x3f);
+}
 
-	if (dy < -127) {
-		dy = -127;
-	}
-	else if (dy > 127) {
-		dy = 127;
-	}
+static
+void chr_mouse_add_packet_msys (char_mouse_t *drv)
+{
+	unsigned i, v;
 
-	if (dx < 0) {
-		x = -dx;
-		x = (~x + 1) & 0xff;
-	}
-	else {
-		x = dx;
+	if (chr_mouse_get_buf_cnt (drv) < 5) {
+		return;
 	}
 
-	if (dy < 0) {
-		y = -dy;
-		y = (~y + 1) & 0xff;
+	v = 0x80;
+	v |= (drv->button & 0x01) ? 0x00 : 0x04;
+	v |= (drv->button & 0x02) ? 0x00 : 0x01;
+	v |= (drv->button & 0x04) ? 0x00 : 0x02;
+
+	chr_mouse_add_val (drv, v);
+
+	for (i = 0; i < 2; i++) {
+		v = chr_mouse_get_val (&drv->dx, -127, 127);
+		chr_mouse_add_val (drv, v);
+
+		v = chr_mouse_get_val (&drv->dy, -127, 127);
+		chr_mouse_add_val (drv, ~v + 1);
 	}
-	else {
-		y = dy;
+}
+
+static
+void chr_mouse_add_packet (char_mouse_t *drv)
+{
+	switch (drv->protocol) {
+	case MOUSE_MS:
+		chr_mouse_add_packet_ms (drv);
+		break;
+
+	case MOUSE_MSYS:
+		chr_mouse_add_packet_msys (drv);
+		break;
 	}
-
-	val = 0x40;
-	val |= (drv->button & 0x01) ? 0x20 : 0x00;
-	val |= (drv->button & 0x02) ? 0x10 : 0x00;
-	val |= (y >> 4) & 0x0c;
-	val |= (x >> 6) & 0x03;
-
-	drv->buf[drv->buf_hd] = val;
-	drv->buf_hd = (drv->buf_hd + 1) % CHAR_MOUSE_BUF;
-
-	drv->buf[drv->buf_hd] = x & 0x3f;
-	drv->buf_hd = (drv->buf_hd + 1) % CHAR_MOUSE_BUF;
-
-	drv->buf[drv->buf_hd] = y & 0x3f;
-	drv->buf_hd = (drv->buf_hd + 1) % CHAR_MOUSE_BUF;
-
-	drv->dx -= dx;
-	drv->dy -= dy;
 }
 
 static
@@ -209,16 +253,18 @@ int chr_mouse_set_ctl (char_drv_t *cdrv, unsigned ctl)
 	dtr = (ctl & PCE_CHAR_DTR) != 0;
 	rts = (ctl & PCE_CHAR_RTS) != 0;
 
-	if (rts && dtr) {
-		if ((drv->dtr == 0) || (drv->rts == 0)) {
-			drv->dx = 0;
-			drv->dy = 0;
-			drv->scale_x[2] = 0;
-			drv->scale_y[2] = 0;
+	if (drv->protocol == MOUSE_MS) {
+		if (rts && dtr) {
+			if ((drv->dtr == 0) || (drv->rts == 0)) {
+				drv->dx = 0;
+				drv->dy = 0;
+				drv->scale_x[2] = 0;
+				drv->scale_y[2] = 0;
 
-			drv->buf_hd = 1;
-			drv->buf_tl = 0;
-			drv->buf[0] = 'M';
+				drv->buf_hd = 1;
+				drv->buf_tl = 0;
+				drv->buf[0] = 'M';
+			}
 		}
 	}
 
@@ -237,6 +283,8 @@ int chr_mouse_set_params (char_drv_t *cdrv, unsigned long bps, unsigned bpc, uns
 static
 int chr_mouse_init (char_mouse_t *drv, const char *name)
 {
+	char *proto;
+
 	chr_init (&drv->cdrv, drv);
 
 	drv->cdrv.close = chr_mouse_close;
@@ -245,6 +293,8 @@ int chr_mouse_init (char_mouse_t *drv, const char *name)
 	drv->cdrv.get_ctl = chr_mouse_get_ctl;
 	drv->cdrv.set_ctl = chr_mouse_set_ctl;
 	drv->cdrv.set_params = chr_mouse_set_params;
+
+	drv->protocol = MOUSE_MS;
 
 	drv->buf_hd = 0;
 	drv->buf_tl = 0;
@@ -255,6 +305,23 @@ int chr_mouse_init (char_mouse_t *drv, const char *name)
 	drv->dx = 0;
 	drv->dy = 0;
 	drv->button = 0;
+
+	proto = drv_get_option (name, "protocol");
+
+	if (proto != NULL) {
+		if (strcmp (proto, "microsoft") == 0) {
+			drv->protocol = MOUSE_MS;
+		}
+		else if (strcmp (proto, "msys") == 0) {
+			drv->protocol = MOUSE_MSYS;
+		}
+		else {
+			free (proto);
+			return (1);
+		}
+
+		free (proto);
+	}
 
 	drv->scale_x[0] = drv_get_option_sint (name, "xmul", 1);
 	drv->scale_x[1] = drv_get_option_sint (name, "xdiv", 1);

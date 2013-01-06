@@ -12,7 +12,16 @@ a colon, it must be escaped by repeating it.
 The following is a list of character drivers and their options:
 
 mouse:
-	A two button serial mouse.
+	A serial mouse. If more than one mouse is configured, all mice
+	will report the same movements and button presses.
+
+	protocol=<proto>
+		Set the mouse protocol. Valid values are:
+
+		ms	A Microsoft two button serial mouse.
+		msys	A Mouse Systems three button serial mouse.
+
+		The default is "ms".
 
 	xmul=<int>
 	ydiv=<int>
