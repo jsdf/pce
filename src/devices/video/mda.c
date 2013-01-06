@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.c                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -197,21 +197,16 @@ unsigned mda_get_cursor (mda_t *mda)
 static
 int mda_get_position (mda_t *mda, unsigned *x, unsigned *y)
 {
-	unsigned pos, ofs;
+	unsigned pos;
 
 	if ((mda->w == 0) || (mda->h == 0)) {
 		return (1);
 	}
 
-	pos = mda_get_cursor (mda) & 0x0fff;
-	ofs = mda_get_start (mda) & 0x0fff;
+	pos = (mda_get_cursor (mda) - mda_get_start (mda)) & 0x0fff;
 
-	if ((pos < ofs) || (pos >= (ofs + mda->w * mda->h))) {
-		return (1);
-	}
-
-	*x = (pos - ofs) % mda->w;
-	*y = (pos - ofs) / mda->w;
+	*x = pos % mda->w;
+	*y = pos / mda->w;
 
 	return (0);
 }
@@ -283,6 +278,7 @@ void mda_draw_cursor (mda_t *mda)
 	unsigned            i, j;
 	unsigned            x, y;
 	unsigned            c1, c2;
+	unsigned            addr;
 	const unsigned char *src;
 	const unsigned char *col;
 	unsigned char       *dst;
@@ -313,7 +309,9 @@ void mda_draw_cursor (mda_t *mda)
 		c2 = mda->ch - 1;
 	}
 
-	col = mda->rgb[src[2 * (mda->w * y + x) + 1] & 0x0f];
+	addr = (mda_get_start (mda) + 2 * (mda->w * y + x) + 1) & 0x0fff;
+
+	col = mda->rgb[src[addr] & 0x0f];
 	dst = mda->buf + 3 * MDA_CW * (mda->w * (mda->ch * y + c1) + x);
 
 	for (j = c1; j <= c2; j++) {
@@ -655,8 +653,27 @@ void mda_reg_set_uint16 (mda_t *mda, unsigned long addr, unsigned short val)
 
 
 static
+unsigned char mda_mem_get_uint8 (mda_t *mda, unsigned long addr)
+{
+	return (mda->mem[addr & 4095]);
+}
+
+static
+unsigned short mda_mem_get_uint16 (mda_t *mda, unsigned long addr)
+{
+	unsigned short val;
+
+	val = mda_mem_get_uint8 (mda, addr);
+	val |= (unsigned) mda_mem_get_uint8 (mda, addr + 1) << 8;
+
+	return (val);
+}
+
+static
 void mda_mem_set_uint8 (mda_t *mda, unsigned long addr, unsigned char val)
 {
+	addr &= 4095;
+
 	if (mda->mem[addr] == val) {
 		return;
 	}
@@ -862,12 +879,13 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 		size = 4096;
 	}
 
-	mda->memblk = mem_blk_new (mem, size, 1);
+	mda->memblk = mem_blk_new (mem, size, 0);
 	mda->memblk->ext = mda;
 	mda->memblk->set_uint8 = (void *) mda_mem_set_uint8;
 	mda->memblk->set_uint16 = (void *) mda_mem_set_uint16;
-	mda->mem = mda->memblk->data;
-	mem_blk_clear (mda->memblk, 0x00);
+	mda->memblk->get_uint8 = (void *) mda_mem_get_uint8;
+	mda->memblk->get_uint16 = (void *) mda_mem_get_uint16;
+	memset (mda->mem, 0, sizeof (mda->mem));
 
 	mda->regblk = mem_blk_new (io, 16, 1);
 	mda->regblk->ext = mda;
@@ -917,7 +935,7 @@ video_t *mda_new_ini (ini_sct_t *sct)
 
 	ini_get_uint32 (sct, "io", &io, 0x3b4);
 	ini_get_uint32 (sct, "address", &addr, 0xb0000);
-	ini_get_uint32 (sct, "size", &size, 4096);
+	ini_get_uint32 (sct, "size", &size, 32768);
 
 	ini_get_uint16 (sct, "blink", &blink, 0);
 

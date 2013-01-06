@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.h                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,7 +33,7 @@ typedef struct {
 	video_t       video;
 
 	mem_blk_t     *memblk;
-	unsigned char *mem;
+	unsigned char mem[4096];
 
 	mem_blk_t     *regblk;
 	unsigned char *reg;
