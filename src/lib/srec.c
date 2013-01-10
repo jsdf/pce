@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/srec.c                                               *
  * Created:     2005-03-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -343,7 +343,7 @@ int srec_save (FILE *fp, unsigned long base, unsigned long size, void *ext, srec
 	unsigned i;
 	record_t rec;
 
-	while (1) {
+	while (size > 0) {
 		rec.cnt = (size < 16) ? size : 16;
 
 		if (base & 0xff000000) {
