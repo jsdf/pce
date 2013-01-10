@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/load.c                                               *
  * Created:     2004-08-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -120,8 +120,37 @@ int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base)
 
 int pce_load_mem (memory_t *mem, const char *fname, const char *fmt, unsigned long addr)
 {
+	unsigned   i;
+	const char *ext;
+
 	if (fname == NULL) {
 		return (1);
+	}
+
+	if ((fmt == NULL) || (strcmp (fmt, "auto") == 0)) {
+		i = 0;
+		ext = fname;
+
+		while (fname[i] != 0) {
+			if (fname[i] == '.') {
+				ext = fname + i + 1;
+			}
+
+			i += 1;
+		}
+
+		if ((strcasecmp (ext, "ihex") == 0) || (strcasecmp (ext, "ihx") == 0)) {
+			fmt = "ihex";
+		}
+		else if (strcasecmp (ext, "srec") == 0) {
+			fmt = "srec";
+		}
+		else if (strcasecmp (ext, "bin") == 0) {
+			fmt = "binary";
+		}
+		else {
+			return (1);
+		}
 	}
 
 	if (strcmp (fmt, "binary") == 0) {
