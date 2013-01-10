@@ -18,8 +18,11 @@ mouse:
 	protocol=<proto>
 		Set the mouse protocol. Valid values are:
 
-		ms	A Microsoft two button serial mouse.
-		msys	A Mouse Systems three button serial mouse.
+		microsoft
+			A Microsoft two button serial mouse.
+
+		msys
+			A Mouse Systems three button serial mouse.
 
 		The default is "ms".
 
