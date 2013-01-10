@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/ihex.c                                               *
  * Created:     2004-06-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -199,6 +199,20 @@ void ihex_set_record (FILE *fp, record_t *rec)
 }
 
 static
+void ihex_set_esar (FILE *fp, unsigned seg)
+{
+	record_t rec;
+
+	rec.type = IHEX_REC_ESAR;
+	rec.cnt = 2;
+	rec.addr = 0;
+	rec.data[0] = (seg >> 8) & 0xff;
+	rec.data[1] = seg & 0xff;
+
+	ihex_set_record (fp, &rec);
+}
+
+static
 void ihex_set_ulba (FILE *fp, unsigned long addr)
 {
 	record_t rec;
@@ -302,6 +316,49 @@ int ihex_load (const char *fname, void *ext, ihex_set_f set)
 	return (r);
 }
 
+
+int ihex_save (FILE *fp, unsigned seg, unsigned ofs, unsigned long size, void *ext, ihex_get_f get)
+{
+	unsigned       i;
+	unsigned       cnt;
+	unsigned short oldseg;
+	record_t       rec;
+
+	oldseg = 0;
+
+	while (size > 0) {
+		if (seg != oldseg) {
+			ihex_set_esar (fp, seg);
+			oldseg = seg;
+		}
+
+		cnt = (size < 16) ? size : 16;
+
+		if (((ofs + cnt) & 0xffff) < ofs) {
+			cnt = -ofs & 0xffff;
+		}
+
+		rec.type = 0x00;
+		rec.addr = ofs;
+		rec.cnt = cnt;
+
+		for (i = 0; i < rec.cnt; i++) {
+			rec.data[i] = get (ext, ((unsigned long) seg << 4) + ofs);
+
+			ofs = (ofs + 1) & 0xffff;
+		}
+
+		ihex_set_record (fp, &rec);
+
+		if (ofs == 0) {
+			seg += 0x1000;
+		}
+
+		size -= rec.cnt;
+	}
+
+	return (0);
+}
 
 int ihex_save_linear (FILE *fp, unsigned long base, unsigned long size, void *ext, ihex_get_f get)
 {
