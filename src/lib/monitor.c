@@ -577,6 +577,91 @@ void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 	}
 }
 
+/*
+ * save - write memory to disk
+ */
+static
+void mon_cmd_save (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned       fmt;
+	unsigned long  addr, cnt;
+	unsigned short seg, ofs;
+	char           fname[256];
+	FILE           *fp;
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
+
+	if (mon_match_format (mon, cmd, &fmt) == 0) {
+		fmt = mon_guess_format (fname);
+	}
+
+	if (fmt == 0) {
+		pce_printf ("can't guess file format (%s)\n", fname);
+		return;
+	}
+
+	fp = fopen (fname, "wb");
+
+	if (fp == NULL) {
+		pce_printf ("can't open file (%s)\n", fname);
+		return;
+	}
+
+	while (cmd_match_eol (cmd) == 0) {
+		if (!mon_match_address (mon, cmd, &addr, &seg, &ofs)) {
+			cmd_error (cmd, "need an address");
+			break;
+		}
+
+		if (!cmd_match_uint32 (cmd, &cnt)) {
+			cmd_error (cmd, "need a byte count");
+			break;
+		}
+
+		switch (fmt) {
+		case MON_FORMAT_BINARY:
+			while (cnt > 0) {
+				fputc (mon_get_mem8 (mon, addr), fp);
+
+				addr += 1;
+				cnt -= 1;
+			}
+			break;
+
+		case MON_FORMAT_IHEX:
+			if (mon->memory_mode == 0) {
+				if (ihex_save_linear (fp, addr, cnt, mon, (ihex_get_f) mon_get_mem8)) {
+					pce_printf ("saving ihex failed\n");
+				}
+			}
+			else {
+				if (ihex_save (fp, seg, ofs, cnt, mon, (ihex_get_f) mon_get_mem8)) {
+					pce_printf ("saving ihex failed\n");
+				}
+			}
+			break;
+
+		case MON_FORMAT_SREC:
+			if (srec_save (fp, addr, cnt, mon, (srec_get_f) mon_get_mem8)) {
+				pce_printf ("saving srec failed\n");
+			}
+			break;
+		}
+	}
+
+	if (fmt == MON_FORMAT_IHEX) {
+		ihex_save_done (fp);
+	}
+	else if (fmt == MON_FORMAT_SREC) {
+		srec_save_done (fp);
+	}
+
+	fclose (fp);
+}
+
 static
 void mon_cmd_redir_inp (monitor_t *mon, cmd_t *cmd)
 {
@@ -661,55 +746,6 @@ void mon_cmd_v (cmd_t *cmd)
 }
 
 /*
- * w - write memory to disk
- */
-static
-void mon_cmd_w (monitor_t *mon, cmd_t *cmd)
-{
-	unsigned long addr, cnt;
-	char          fname[256];
-	unsigned char v;
-	FILE          *fp;
-
-	if (!cmd_match_str (cmd, fname, 256)) {
-		cmd_error (cmd, "need a file name");
-		return;
-	}
-
-	if (!mon_match_address (mon, cmd, &addr, NULL, NULL)) {
-		cmd_error (cmd, "need an address");
-		return;
-	}
-
-	if (!cmd_match_uint32 (cmd, &cnt)) {
-		cmd_error (cmd, "need a byte count");
-		return;
-	}
-
-	if (!cmd_match_end (cmd)) {
-		return;
-	}
-
-	fp = fopen (fname, "wb");
-
-	if (fp == NULL) {
-		pce_printf ("can't open file (%s)\n", fname);
-		return;
-	}
-
-	while (cnt > 0) {
-		v = mon_get_mem8 (mon, addr);
-
-		fputc (v, fp);
-
-		addr += 1;
-		cnt -= 1;
-	}
-
-	fclose (fp);
-}
-
-/*
  * y - copy memory
  */
 static
@@ -778,6 +814,9 @@ int mon_run (monitor_t *mon)
 		if (cmd_match (&cmd, "load")) {
 			mon_cmd_load (mon, &cmd);
 		}
+		else if (cmd_match (&cmd, "save")) {
+			mon_cmd_save (mon, &cmd);
+		}
 		else if (mon->docmd != NULL) {
 			r = mon->docmd (mon->cmdext, &cmd);
 		}
@@ -800,9 +839,6 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, "v")) {
 				mon_cmd_v (&cmd);
-			}
-			else if (cmd_match (&cmd, "w")) {
-				mon_cmd_w (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "y")) {
 				mon_cmd_y (mon, &cmd);
