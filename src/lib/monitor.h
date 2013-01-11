@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/monitor.h                                            *
  * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,13 @@
 
 
 typedef struct {
+	const char *cmd;
+	const char *par;
+	const char *text;
+} mon_cmd_t;
+
+
+typedef struct {
 	void *cmdext;
 	int  (*docmd) (void *ext, cmd_t *cmd);
 
@@ -46,6 +53,9 @@ typedef struct {
 
 	unsigned long  last_addr;
 	unsigned short last_ofs;
+
+	unsigned       cmd_cnt;
+	mon_cmd_t      *cmd;
 
 	char           terminate;
 
@@ -70,6 +80,9 @@ void mon_set_memory_mode (monitor_t *mon, unsigned mode);
 void mon_set_terminate (monitor_t *mon, int val);
 
 void mon_set_prompt (monitor_t *mon, const char *str);
+
+int mon_cmd_add (monitor_t *mon, const mon_cmd_t *cmd, unsigned cnt);
+int mon_cmd_add_bp (monitor_t *mon);
 
 int mon_run (monitor_t *mon);
 

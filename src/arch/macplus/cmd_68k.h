@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.h                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,7 @@
 #include "macplus.h"
 
 #include <lib/cmd.h>
+#include <lib/monitor.h>
 
 
 void mac_prt_state (macplus_t *sim, const char *str);
@@ -35,7 +36,7 @@ void mac_run (macplus_t *sim);
 
 int mac_cmd (macplus_t *sim, cmd_t *cmd);
 
-void mac_cmd_init (macplus_t *sim);
+void mac_cmd_init (macplus_t *sim, monitor_t *mon);
 
 
 #endif

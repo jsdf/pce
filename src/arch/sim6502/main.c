@@ -31,6 +31,18 @@
 #include "main.h"
 
 
+static mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "", "run" },
+	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
+	{ "r", "reg [val]", "get or set a register" },
+	{ "s", "[what]", "print status (cpu|mem)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt]]", "disassemble" }
+};
+
+
 sim6502_t *par_sim = NULL;
 ini_sct_t *par_cfg = NULL;
 unsigned  par_sig_int = 0;
@@ -420,32 +432,6 @@ void do_g (cmd_t *cmd, sim6502_t *sim)
 }
 
 static
-void do_h (cmd_t *cmd, sim6502_t *sim)
-{
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g                         run\n"
-		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
-		"q                         quit\n"
-		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu|mem)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt]]            disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void do_p (cmd_t *cmd, sim6502_t *sim)
 {
 	unsigned short cnt;
@@ -608,9 +594,6 @@ int s6502_do_cmd (sim6502_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		do_h (cmd, sim);
-	}
 	else if (cmd_match (cmd, "p")) {
 		do_p (cmd, sim);
 	}
@@ -763,7 +746,6 @@ int main (int argc, char *argv[])
 #endif
 
 	pce_console_init (stdin, stdout);
-	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, s6502_do_cmd, par_sim);
@@ -771,6 +753,11 @@ int main (int argc, char *argv[])
 	mon_set_get_mem_fct (&par_mon, par_sim->mem, mem_get_uint8);
 	mon_set_set_mem_fct (&par_mon, par_sim->mem, mem_set_uint8);
 	mon_set_memory_mode (&par_mon, 0);
+
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
+
+	mon_cmd_add (&par_mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (&par_mon);
 
 	s6502_reset (par_sim);
 

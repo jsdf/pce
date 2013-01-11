@@ -286,8 +286,6 @@ int main (int argc, char *argv[])
 #endif
 
 	pce_console_init (stdin, stdout);
-	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
-	sarm_cmd_init (par_sim);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
@@ -295,6 +293,9 @@ int main (int argc, char *argv[])
 	mon_set_get_mem_fct (&par_mon, par_sim, sarm_get_mem8);
 	mon_set_set_mem_fct (&par_mon, par_sim, sarm_set_mem8);
 	mon_set_memory_mode (&par_mon, 0);
+
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
+	sarm_cmd_init (par_sim, &par_mon);
 
 	sarm_reset (par_sim);
 

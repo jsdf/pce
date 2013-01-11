@@ -36,6 +36,7 @@
 #include "timer.h"
 
 #include <cpu/arm/arm.h>
+#include <lib/monitor.h>
 
 
 void sarm_dasm_str (char *dst, arm_dasm_t *op);
@@ -50,7 +51,7 @@ void sarm_run (simarm_t *sim);
 
 int sarm_do_cmd (simarm_t *sim, cmd_t *cmd);
 
-void sarm_cmd_init (simarm_t *sim);
+void sarm_cmd_init (simarm_t *sim, monitor_t *mon);
 
 
 #endif

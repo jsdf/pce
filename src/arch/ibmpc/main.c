@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.c                                        *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -362,14 +362,11 @@ int main (int argc, char *argv[])
 
 	par_pc = pc_new (sct);
 
-	pc_cmd_init (par_pc);
-
 	signal (SIGINT, sig_int);
 	signal (SIGTERM, sig_term);
 	signal (SIGSEGV, sig_segv);
 
 	pce_console_init (stdin, stdout);
-	cmd_init (par_pc, cmd_get_sym, cmd_set_sym);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, pc_cmd, par_pc);
@@ -377,6 +374,9 @@ int main (int argc, char *argv[])
 	mon_set_get_mem_fct (&par_mon, par_pc->mem, mem_get_uint8);
 	mon_set_set_mem_fct (&par_mon, par_pc->mem, mem_set_uint8);
 	mon_set_memory_mode (&par_mon, 1);
+
+	cmd_init (par_pc, cmd_get_sym, cmd_set_sym);
+	pc_cmd_init (par_pc, &par_mon);
 
 	pc_reset (par_pc);
 

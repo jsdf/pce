@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sims32/main.c                                       *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -297,8 +297,6 @@ int main (int argc, char *argv[])
 #endif
 
 	pce_console_init (stdin, stdout);
-	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
-	ss32_cmd_init (par_sim);
 
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, ss32_do_cmd, par_sim);
@@ -306,6 +304,9 @@ int main (int argc, char *argv[])
 	mon_set_get_mem_fct (&par_mon, par_sim, ss32_get_mem8);
 	mon_set_set_mem_fct (&par_mon, par_sim, ss32_set_mem8);
 	mon_set_memory_mode (&par_mon, 0);
+
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
+	ss32_cmd_init (par_sim, &par_mon);
 
 	ss32_reset (par_sim);
 

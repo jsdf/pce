@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/main.c                                       *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -281,8 +281,6 @@ int main (int argc, char *argv[])
 #endif
 
 	pce_console_init (stdin, stdout);
-	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
-	ppc_cmd_init (par_sim);
 
 	mon_init (&mon);
 	mon_set_cmd_fct (&mon, ppc_do_cmd, par_sim);
@@ -290,6 +288,9 @@ int main (int argc, char *argv[])
 	mon_set_get_mem_fct (&mon, par_sim, s405_get_mem8);
 	mon_set_set_mem_fct (&mon, par_sim, s405_set_mem8);
 	mon_set_memory_mode (&mon, 0);
+
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
+	ppc_cmd_init (par_sim, &mon);
 
 	s405_reset (par_sim);
 

@@ -29,6 +29,23 @@
 #include "main.h"
 
 
+static mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "", "run" },
+	{ "key", "[val...]", "send keycodes to the serial console" },
+	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
+	{ "rfi", "", "execute to next rfi or rfci" },
+	{ "r", "reg [val]", "get or set a register" },
+	{ "s", "[what]", "print status (mem|ppc|spr)" },
+	{ "tlb", "l [first [count]]", "list TLB entries" },
+	{ "tlb", "s addr", "search the TLB" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt]]", "disassemble" },
+	{ "x", "[c|r|v]", "set the translation mode (cpu, real, virtual)" }
+};
+
+
 void ppc_disasm_str (char *dst, p405_disasm_t *op)
 {
 	switch (op->argn) {
@@ -627,38 +644,6 @@ void do_g (cmd_t *cmd, sim405_t *sim)
 }
 
 static
-void do_h (cmd_t *cmd, sim405_t *sim)
-{
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g                         run\n"
-		"key [val...]              send keycodes to the serial console\n"
-		"m msg [val]               send a message to the core\n"
-		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
-		"q                         quit\n"
-		"rfi                       execute to next rfi or rfci\n"
-		"r reg [val]               set a register\n"
-		"s [what]                  print status (mem|ppc|spr)\n"
-		"tlb l [first [count]]     list TLB entries\n"
-		"tlb s addr                search the TLB\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt]]            disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"x [c|r|v]                 set the translation mode (cpu, real, virtual)\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void do_key (cmd_t *cmd, sim405_t *sim)
 {
 	unsigned short c;
@@ -1013,9 +998,6 @@ int ppc_do_cmd (sim405_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		do_h (cmd, sim);
-	}
 	else if (cmd_match (cmd, "key")) {
 		do_key (cmd, sim);
 	}
@@ -1050,8 +1032,11 @@ int ppc_do_cmd (sim405_t *sim, cmd_t *cmd)
 	return (0);
 }
 
-void ppc_cmd_init (sim405_t *sim)
+void ppc_cmd_init (sim405_t *sim, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	sim->ppc->log_ext = sim;
 	sim->ppc->log_opcode = NULL;
 	sim->ppc->log_undef = &ppc_log_undef;

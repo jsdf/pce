@@ -30,7 +30,28 @@
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/sysdep.h>
+
+
+static mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock the simulation [1]" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "far", "run until CS changes" },
+	{ "g", "", "run" },
+	{ "hm", "", "print help on messages" },
+	{ "i", "[b|w] port", "input a byte or word from a port" },
+	{ "key", "[[+|-]key...]", "simulate pressing or releasing keys" },
+	{ "log", "int l", "list interrupt log expressions" },
+	{ "log", "int n [expr]", "set interrupt n log expression to expr" },
+	{ "o", "[b|w] port val", "output a byte or word to a port" },
+	{ "pq", "[c|f|s]", "prefetch queue clear/fill/status" },
+	{ "p", "[cnt]", "execute cnt instructions, without trace in calls [1]" },
+	{ "r", "[reg val]", "set a register" },
+	{ "s", "[what]", "print status (cpu|icu|mem||ppi|pic|rc759|tcu|time)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt [mode]]]", "disassemble" }
+};
 
 
 static
@@ -696,47 +717,6 @@ void rc759_cmd_hm (cmd_t *cmd)
 }
 
 static
-void rc759_cmd_h (cmd_t *cmd)
-{
-	if (cmd_match (cmd, "m")) {
-		rc759_cmd_hm (cmd);
-		return;
-	}
-
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock the simulation [1]\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g far                     run until CS changes\n"
-		"g                         run\n"
-		"h                         print help summary\n"
-		"hm                        print help on messages\n"
-		"i [b|w] port              input a byte or word from a port\n"
-		"key [[+|-]key...]         simulate pressing or releasing keys\n"
-		"log int l                 list interrupt log expressions\n"
-		"log int n [expr]          set interrupt n log expression to expr\n"
-		"m msg [val]               send a message\n"
-		"o [b|w] port val          output a byte or word to a port\n"
-		"pq [c|f|s]                prefetch queue clear/fill/status\n"
-		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
-		"q                         quit\n"
-		"r [reg val]               set a register\n"
-		"s [what]                  print status (cpu|icu|mem||ppi|pic|rc759|tcu|time)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt [mode]]]     disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void rc759_cmd_i (cmd_t *cmd, rc759_t *sim)
 {
 	int            word;
@@ -1274,8 +1254,8 @@ int rc759_cmd (rc759_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		rc759_cmd_g (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		rc759_cmd_h (cmd);
+	else if (cmd_match (cmd, "hm")) {
+		rc759_cmd_hm (cmd);
 	}
 	else if (cmd_match (cmd, "i")) {
 		rc759_cmd_i (cmd, sim);
@@ -1317,8 +1297,11 @@ int rc759_cmd (rc759_t *sim, cmd_t *cmd)
 	return (0);
 }
 
-void rc759_cmd_init (rc759_t *sim)
+void rc759_cmd_init (rc759_t *sim, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	sim->cpu->op_ext = sim;
 
 	sim->cpu->op_int = pce_op_int;

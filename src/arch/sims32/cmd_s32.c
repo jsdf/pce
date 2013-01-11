@@ -23,6 +23,20 @@
 #include "main.h"
 
 
+static mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "", "run" },
+	{ "key", "[val...]", "send keycodes to the serial console" },
+	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
+	{ "rett", "", "execute to next rett" },
+	{ "r", "reg [val]", "get or set a register" },
+	{ "s", "[what]", "print status (cpu|mem)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt]]", "disassemble" }
+};
+
+
 void ss32_dasm_str (char *dst, s32_dasm_t *op)
 {
 	switch (op->argn) {
@@ -321,34 +335,6 @@ void do_g (cmd_t *cmd, sims32_t *sim)
 }
 
 static
-void do_h (cmd_t *cmd, sims32_t *sim)
-{
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g                         run\n"
-		"key [val...]              send keycodes to the serial console\n"
-		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
-		"q                         quit\n"
-		"rett                      execute to next rett\n"
-		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu|mem)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt]]            disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void do_key (cmd_t *cmd, sims32_t *sim)
 {
 	unsigned short c;
@@ -577,9 +563,6 @@ int ss32_do_cmd (sims32_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		do_h (cmd, sim);
-	}
 	else if (cmd_match (cmd, "key")) {
 		do_key (cmd, sim);
 	}
@@ -608,8 +591,11 @@ int ss32_do_cmd (sims32_t *sim, cmd_t *cmd)
 	return (0);
 }
 
-void ss32_cmd_init (sims32_t *sim)
+void ss32_cmd_init (sims32_t *sim, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	sim->cpu->log_ext = sim;
 	sim->cpu->log_opcode = NULL;
 	sim->cpu->log_undef = &ss32_log_undef;

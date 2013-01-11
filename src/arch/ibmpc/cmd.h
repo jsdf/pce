@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.h                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,7 @@
 #include <cpu/e8086/e8086.h>
 
 #include <lib/cmd.h>
+#include <lib/monitor.h>
 
 
 void prt_state_cpu (e8086_t *c);
@@ -37,7 +38,7 @@ void pc_run (ibmpc_t *pc);
 
 int pc_cmd (ibmpc_t *pc, cmd_t *cmd);
 
-void pc_cmd_init (ibmpc_t *pc);
+void pc_cmd_init (ibmpc_t *pc, monitor_t *mon);
 
 
 #endif

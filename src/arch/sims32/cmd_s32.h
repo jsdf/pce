@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sims32/cmd_s32.h                                    *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,4 +29,4 @@ void ss32_run (sims32_t *sim);
 
 int ss32_do_cmd (sims32_t *sim, cmd_t *cmd);
 
-void ss32_cmd_init (sims32_t *sim);
+void ss32_cmd_init (sims32_t *sim, monitor_t *mon);

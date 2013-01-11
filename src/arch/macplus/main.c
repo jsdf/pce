@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/main.c                                      *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -375,15 +375,15 @@ int main (int argc, char *argv[])
 
 	par_sim = mac_new (sct);
 
-	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
-	mac_cmd_init (par_sim);
-
 	mon_init (&par_mon);
 	mon_set_cmd_fct (&par_mon, mac_cmd, par_sim);
 	mon_set_msg_fct (&par_mon, mac_set_msg, par_sim);
 	mon_set_get_mem_fct (&par_mon, par_sim->mem, mem_get_uint8);
 	mon_set_set_mem_fct (&par_mon, par_sim->mem, mem_set_uint8);
 	mon_set_memory_mode (&par_mon, 0);
+
+	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
+	mac_cmd_init (par_sim, &par_mon);
 
 	mac_reset (par_sim);
 

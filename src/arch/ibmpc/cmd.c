@@ -30,7 +30,29 @@
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/sysdep.h>
+
+
+static mon_cmd_t par_cmd[] = {
+	{ "boot", "[drive]", "set the boot drive" },
+	{ "c", "[cnt]", "clock [1]" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "far", "run until CS changes" },
+	{ "g", "", "run" },
+	{ "hm", "", "print help on messages" },
+	{ "i", "[b|w] port", "input a byte or word from a port" },
+	{ "key", "[[+|-]key...]", "simulate pressing or releasing keys" },
+	{ "log", "int l", "list interrupt log expressions" },
+	{ "log", "int n [expr]", "set interrupt n log expression to expr" },
+	{ "o", "[b|w] port val", "output a byte or word to a port" },
+	{ "pq", "[c|f|s]", "prefetch queue clear/fill/status" },
+	{ "p", "[cnt]", "execute cnt instructions, without trace in calls [1]" },
+	{ "r", "[reg val]", "set a register" },
+	{ "s", "[what]", "print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt [mode]]]", "disassemble" }
+};
 
 
 static
@@ -776,48 +798,6 @@ void pc_cmd_hm (cmd_t *cmd)
 }
 
 static
-void pc_cmd_h (cmd_t *cmd)
-{
-	if (cmd_match (cmd, "m")) {
-		pc_cmd_hm (cmd);
-		return;
-	}
-
-	pce_puts (
-		"boot [drive]              Set the boot drive\n"
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock [1]\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g far                     run until CS changes\n"
-		"g                         run\n"
-		"h                         print help summary\n"
-		"hm                        print help on messages\n"
-		"i [b|w] port              input a byte or word from a port\n"
-		"key [[+|-]key...]         simulate pressing or releasing keys\n"
-		"log int l                 list interrupt log expressions\n"
-		"log int n [expr]          set interrupt n log expression to expr\n"
-		"m msg [val]               send a message\n"
-		"o [b|w] port val          output a byte or word to a port\n"
-		"pq [c|f|s]                prefetch queue clear/fill/status\n"
-		"p [cnt]                   execute cnt instructions, without trace in calls [1]\n"
-		"q                         quit\n"
-		"r [reg val]               set a register\n"
-		"s [what]                  print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt [mode]]]     disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void pc_cmd_i (cmd_t *cmd, ibmpc_t *pc)
 {
 	int            word;
@@ -1323,8 +1303,8 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		pc_cmd_g (cmd, pc);
 	}
-	else if (cmd_match (cmd, "h")) {
-		pc_cmd_h (cmd);
+	else if (cmd_match (cmd, "hm")) {
+		pc_cmd_hm (cmd);
 	}
 	else if (cmd_match (cmd, "i")) {
 		pc_cmd_i (cmd, pc);
@@ -1363,8 +1343,11 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	return (0);
 }
 
-void pc_cmd_init (ibmpc_t *pc)
+void pc_cmd_init (ibmpc_t *pc, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	pc->cpu->op_int = &pce_op_int;
 	pc->cpu->op_undef = &pce_op_undef;
 #if 0

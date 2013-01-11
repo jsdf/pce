@@ -33,7 +33,26 @@
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/sysdep.h>
+
+
+mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock" },
+	{ "gb", "[addr..]", "run with breakpoints at addr" },
+	{ "ge", "[exception]", "run until exception" },
+	{ "g", "", "run" },
+	{ "halt", "[val]", "set halt state [2]" },
+	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
+	{ "reset", "", "reset" },
+	{ "rte", "", "execute to next rte" },
+	{ "r", "reg [val]", "get or set a register" },
+	{ "s", "[what]", "print status (cpu|mem|scc|via)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[[-]addr [cnt]]", "disassemble" }
+};
+
+unsigned par_cmd_cnt = sizeof (par_cmd) / sizeof (par_cmd[0]);
 
 
 static
@@ -618,40 +637,6 @@ void mac_cmd_halt (cmd_t *cmd, macplus_t *sim)
 }
 
 /*
- * h - help
- */
-static
-void mac_cmd_h (cmd_t *cmd, macplus_t *sim)
-{
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"g b [addr..]              run with breakpoints at addr\n"
-		"g e [exception]           run until exception\n"
-		"g                         run\n"
-		"halt [val]                set halt state [2]\n"
-		"m msg val                 send a message\n"
-		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
-		"q                         quit\n"
-		"reset                     reset\n"
-		"rte                       execute to next rte\n"
-		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu|mem|scc|via)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [[-]addr [cnt]]         disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-/*
  * p - step
  */
 static
@@ -968,9 +953,6 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "halt")) {
 		mac_cmd_halt (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		mac_cmd_h (cmd, sim);
-	}
 	else if (cmd_match (cmd, "p")) {
 		mac_cmd_p (cmd, sim);
 	}
@@ -1003,8 +985,11 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	return (0);
 }
 
-void mac_cmd_init (macplus_t *sim)
+void mac_cmd_init (macplus_t *sim, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	sim->cpu->log_ext = sim;
 	sim->cpu->log_opcode = NULL;
 	sim->cpu->log_undef = mac_log_undef;

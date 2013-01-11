@@ -34,7 +34,23 @@
 
 #include <lib/console.h>
 #include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/sysdep.h>
+
+
+static mon_cmd_t par_cmd[] = {
+	{ "c", "[cnt]", "clock" },
+	{ "gb", "[addr...]", "run with breakpoints" },
+	{ "g", "", "run" },
+	{ "key", "[val...]", "send keycodes to the serial console" },
+	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
+	{ "r", "reg [val]", "get or set a register" },
+	{ "s", "[what]", "print status (cpu|intc|mem|mmu|timer)" },
+	{ "t", "[cnt]", "execute cnt instructions [1]" },
+	{ "u", "[addr [cnt]]", "disassemble" },
+	{ "x", "[c|r|v]", "set the translation mode (cpu, real, virtual)" },
+	{ "xx", "[addr...]", "translate a virtual address" }
+};
 
 
 static const char *arm_modes[32] = {
@@ -477,35 +493,6 @@ void do_g (cmd_t *cmd, simarm_t *sim)
 }
 
 static
-void do_h (cmd_t *cmd, simarm_t *sim)
-{
-	pce_puts (
-		"bc [index]                clear a breakpoint or all\n"
-		"bl                        list breakpoints\n"
-		"bs addr [pass [reset]]    set an address breakpoint [pass=1 reset=0]\n"
-		"bsx expr [pass [reset]]   set an expression breakpoint [pass=1 reset=0]\n"
-		"c [cnt]                   clock\n"
-		"d [addr [cnt]]            dump memory\n"
-		"e addr [val|string...]    enter bytes into memory\n"
-		"f addr cnt [val...]       find bytes in memory\n"
-		"gb [addr...]              run with breakpoints\n"
-		"g                         run\n"
-		"key [val...]              send keycodes to the serial console\n"
-		"p [cnt]                   execute cnt instructions, skip calls [1]\n"
-		"q                         quit\n"
-		"r reg [val]               set a register\n"
-		"s [what]                  print status (cpu|intc|mem|mmu|timer)\n"
-		"t [cnt]                   execute cnt instructions [1]\n"
-		"u [addr [cnt]]            disassemble\n"
-		"v [expr...]               evaluate expressions\n"
-		"w name addr cnt           save memory to file\n"
-		"x [c|r|v]                 set the translation mode (cpu, real, virtual)\n"
-		"xx [addr...]              translate a virtual address\n"
-		"y src dst cnt             copy memory\n"
-	);
-}
-
-static
 void do_key (cmd_t *cmd, simarm_t *sim)
 {
 	unsigned short c;
@@ -777,9 +764,6 @@ int sarm_do_cmd (simarm_t *sim, cmd_t *cmd)
 	else if (cmd_match (cmd, "g")) {
 		do_g (cmd, sim);
 	}
-	else if (cmd_match (cmd, "h")) {
-		do_h (cmd, sim);
-	}
 	else if (cmd_match (cmd, "key")) {
 		do_key (cmd, sim);
 	}
@@ -808,8 +792,11 @@ int sarm_do_cmd (simarm_t *sim, cmd_t *cmd)
 	return (0);
 }
 
-void sarm_cmd_init (simarm_t *sim)
+void sarm_cmd_init (simarm_t *sim, monitor_t *mon)
 {
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
+	mon_cmd_add_bp (mon);
+
 	sim->cpu->log_ext = sim;
 	sim->cpu->log_opcode = NULL;
 	sim->cpu->log_undef = sarm_log_undef;

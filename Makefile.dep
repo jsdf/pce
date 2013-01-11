@@ -42,6 +42,7 @@ src/arch/ibmpc/cmd.o: src/arch/ibmpc/cmd.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
+	src/lib/monitor.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
@@ -373,6 +374,7 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
+	src/lib/monitor.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
@@ -705,6 +707,7 @@ src/arch/rc759/cmd.o: src/arch/rc759/cmd.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
+	src/lib/monitor.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
@@ -1131,6 +1134,7 @@ src/arch/simarm/cmd_arm.o: src/arch/simarm/cmd_arm.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/log.h \
+	src/lib/monitor.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
@@ -2015,7 +2019,9 @@ src/lib/log.o: src/lib/log.c \
 src/lib/monitor.o: src/lib/monitor.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
-	src/lib/monitor.h
+	src/lib/ihex.h \
+	src/lib/monitor.h \
+	src/lib/srec.h
 
 src/lib/msg.o: src/lib/msg.c \
 	src/lib/msg.h \

@@ -38,6 +38,27 @@
 #define MON_FORMAT_SREC   3
 
 
+static mon_cmd_t par_cmd[] = {
+	{ "d", "[addr [cnt]]", "dump memory" },
+	{ "e", "addr [val|string...]", "enter bytes into memory" },
+	{ "f", "addr cnt [val...]", "find bytes in memory" },
+	{ "h", "", "print help" },
+	{ "load", "name [f] [a [n]]", "read a file into memory" },
+	{ "m", "msg [val]", "send a message to the emulator core" },
+	{ "q", "", "quit" },
+	{ "save", "name [f] [a n...]", "read a file into memory" },
+	{ "v", "[expr...]", "evaluate expressions" },
+	{ "y", "src dst cnt", "copy memory" }
+};
+
+static mon_cmd_t par_cmd_bp[] = {
+	{ "bc", "[index]", "clear a breakpoint or all" },
+	{ "bl", "", "list breakpoints" },
+	{ "bs", "addr [pass [reset]]", "set an address breakpoint [pass=1 reset=0]" },
+	{ "bsx", "expr [pass [reset]]", "set an expression breakpoint [pass=1 reset=0]" }
+};
+
+
 void mon_init (monitor_t *mon)
 {
 	mon->cmdext = NULL;
@@ -59,12 +80,18 @@ void mon_init (monitor_t *mon)
 	mon->last_addr = 0;
 	mon->last_ofs = 0;
 
+	mon->cmd_cnt = 0;
+	mon->cmd = NULL;
+
 	mon->terminate = 0;
 	mon->prompt = NULL;
+
+	mon_cmd_add (mon, par_cmd, sizeof (par_cmd) / sizeof (par_cmd[0]));
 }
 
 void mon_free (monitor_t *mon)
 {
+	free (mon->cmd);
 }
 
 monitor_t *mon_new (void)
@@ -261,6 +288,48 @@ int mon_match_address (monitor_t *mon, cmd_t *cmd, unsigned long *addr, unsigned
 	}
 
 	return (1);
+}
+
+int mon_cmd_add (monitor_t *mon, const mon_cmd_t *cmd, unsigned cnt)
+{
+	unsigned  i;
+	mon_cmd_t *c;
+
+	c = realloc (mon->cmd, (mon->cmd_cnt + cnt) * sizeof (mon_cmd_t));
+
+	if (c == NULL) {
+		return (1);
+	}
+
+	mon->cmd = c;
+
+	while (cnt > 0) {
+		i = mon->cmd_cnt;
+
+		while (i > 0) {
+			if (strcmp (cmd->cmd, c[i - 1].cmd) >= 0) {
+				break;
+			}
+
+			c[i] = c[i - 1];
+
+			i -= 1;
+		}
+
+		c[i] = *cmd;
+
+		mon->cmd_cnt += 1;
+
+		cmd += 1;
+		cnt -= 1;
+	}
+
+	return (0);
+}
+
+int mon_cmd_add_bp (monitor_t *mon)
+{
+	return (mon_cmd_add (mon, par_cmd_bp, sizeof (par_cmd_bp) / sizeof (par_cmd_bp[0])));
 }
 
 /*
@@ -463,6 +532,51 @@ void mon_cmd_f (monitor_t *mon, cmd_t *cmd)
 		addr += 1;
 
 		cnt -= 1;
+	}
+}
+
+/*
+ * h - print help
+ */
+static
+void mon_cmd_h (monitor_t *mon, cmd_t *cmd)
+{
+	unsigned i, w1, w2, t;
+
+	w1 = 0;
+	w2 = 0;
+
+	for (i = 0; i < mon->cmd_cnt; i++) {
+		if ((t = strlen (mon->cmd[i].cmd)) > w1) {
+			w1 = t;
+		}
+
+		if ((t = strlen (mon->cmd[i].par)) > w2) {
+			w2 = t;
+		}
+	}
+
+	for (i = 0; i < mon->cmd_cnt; i++) {
+		pce_puts (mon->cmd[i].cmd);
+
+		t = strlen (mon->cmd[i].cmd);
+
+		while (t <= w1) {
+			pce_puts (" ");
+			t += 1;
+		}
+
+		pce_puts (mon->cmd[i].par);
+
+		t = strlen (mon->cmd[i].par);
+
+		while (t <= (w2 + 1)) {
+			pce_puts (" ");
+			t += 1;
+		}
+
+		pce_puts (mon->cmd[i].text);
+		pce_puts ("\n");
 	}
 }
 
@@ -830,6 +944,9 @@ int mon_run (monitor_t *mon)
 			}
 			else if (cmd_match (&cmd, "f")) {
 				mon_cmd_f (mon, &cmd);
+			}
+			else if (cmd_match (&cmd, "h")) {
+				mon_cmd_h (mon, &cmd);
 			}
 			else if (cmd_match (&cmd, "m")) {
 				mon_cmd_m (mon, &cmd);
