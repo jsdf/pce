@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/intc.c                                       *
  * Created:     2004-11-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,11 @@
 
 
 #include "main.h"
+#include "intc.h"
+
+#include <stdlib.h>
+
+#include <lib/log.h>
 
 
 static unsigned char ict_get_uint8 (ixp_intc_t *ic, unsigned long addr);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/pci.c                                        *
  * Created:     2004-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,10 +27,22 @@
 
 
 #include "main.h"
+#include "pci.h"
+
+#include <stdlib.h>
+
+#include <devices/memory.h>
+#include <devices/pci.h>
+
+#include <lib/log.h>
 
 
 /* #define DEBUG_PCI 1 */
 /* #define DEBUG_PCI_IXP 1 */
+
+#define sarm_br16(x) ((((x) & 0xff) << 8) | (((x) >> 8) & 0xff))
+#define sarm_br32(x) ((((x) & 0xff) << 24) | ((((x) >> 8) & 0xff) << 16) \
+ | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
 
 
 static

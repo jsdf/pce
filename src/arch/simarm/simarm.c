@@ -27,7 +27,22 @@
 
 
 #include "main.h"
+#include "intc.h"
+#include "pci.h"
+#include "sercons.h"
+#include "simarm.h"
 #include "timer.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <lib/iniata.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/load.h>
+#include <lib/log.h>
+#include <lib/msg.h>
+#include <lib/sysdep.h>
 
 
 void sarm_break (simarm_t *sim, unsigned char val);

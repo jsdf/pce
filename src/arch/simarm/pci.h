@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/pci.h                                        *
  * Created:     2004-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -28,6 +28,12 @@
 
 #ifndef PCE_SIMARM_PCI_H
 #define PCE_SIMARM_PCI_H 1
+
+
+#include <stdint.h>
+
+#include <devices/memory.h>
+#include <devices/pci.h>
 
 
 #define PCIID_INTEL_IXP2400 0x9001

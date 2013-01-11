@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/cmd_arm.h                                    *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -26,15 +26,31 @@
  *****************************************************************************/
 
 
+#ifndef PCE_SIMARM_CMD_ARM_H
+#define PCE_SIMARM_CMD_ARM_H 1
+
+
+#include <stdio.h>
+
+#include "simarm.h"
+#include "timer.h"
+
+#include <cpu/arm/arm.h>
+
+
 void sarm_dasm_str (char *dst, arm_dasm_t *op);
 void sarm_prt_state_cpu (arm_t *c, FILE *fp);
 void sarm_prt_state_mmu (arm_t *c, FILE *fp);
 void sarm_prt_state_timer (ixp_timer_t *tmr, FILE *fp);
 void sarm_prt_state_intc (simarm_t *sim, FILE *fp);
 void sarm_prt_state_mem (simarm_t *sim, FILE *fp);
+void prt_state (simarm_t *sim, FILE *fp, const char *str);
 
 void sarm_run (simarm_t *sim);
 
 int sarm_do_cmd (simarm_t *sim, cmd_t *cmd);
 
 void sarm_cmd_init (simarm_t *sim);
+
+
+#endif

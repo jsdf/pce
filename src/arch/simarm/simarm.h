@@ -30,47 +30,11 @@
 #define PCE_SIMARM_SIMARM_H 1
 
 
-#include <config.h>
-
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
+#include "intc.h"
+#include "pci.h"
 #include "timer.h"
-
-
-#define PCE_BRK_STOP  1
-#define PCE_BRK_ABORT 2
-#define PCE_BRK_SNAP  3
-
-
-typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*seta_uint16_f) (void *ext, unsigned long addr, unsigned short val);
-typedef unsigned char (*geta_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*geta_uint16_f) (void *ext, unsigned long addr);
-
-typedef void (*set_uint8_f) (void *ext, unsigned char val);
-typedef void (*set_uint16_f) (void *ext, unsigned short val);
-typedef unsigned char (*get_uint8_f) (void *ext);
-typedef unsigned short (*get_uint16_f) (void *ext);
-
-
-struct simarm_t;
-
-
-extern char *par_terminal;
-extern char *par_video;
-extern char *par_cpu;
-
-
-void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
-	unsigned long addr, unsigned cols, char *prefix, int ascii
-);
-
 
 #include <devices/memory.h>
 #include <devices/nvram.h>
@@ -82,10 +46,7 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 
 #include <libini/libini.h>
 
-#include <lib/log.h>
 #include <lib/brkpt.h>
-#include <lib/inidsk.h>
-#include <lib/load.h>
 
 
 /*****************************************************************************

@@ -1114,7 +1114,6 @@ src/arch/simarm/cmd_arm.o: src/arch/simarm/cmd_arm.c \
 	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
 	src/arch/simarm/pci.h \
-	src/arch/simarm/sercons.h \
 	src/arch/simarm/simarm.h \
 	src/arch/simarm/timer.h \
 	src/chipset/82xx/e8250.h \
@@ -1131,54 +1130,22 @@ src/arch/simarm/cmd_arm.o: src/arch/simarm/cmd_arm.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/simarm/intc.o: src/arch/simarm/intc.c \
-	src/arch/simarm/cmd_arm.h \
 	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
-	src/arch/simarm/pci.h \
-	src/arch/simarm/sercons.h \
-	src/arch/simarm/simarm.h \
-	src/arch/simarm/timer.h \
-	src/chipset/82xx/e8250.h \
 	src/config.h \
-	src/cpu/arm/arm.h \
-	src/devices/ata.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/pci-ata.h \
-	src/devices/pci.h \
-	src/devices/serport.h \
-	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h
+	src/lib/log.h
 
 src/arch/simarm/main.o: src/arch/simarm/main.c \
 	src/arch/simarm/cmd_arm.h \
 	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
 	src/arch/simarm/pci.h \
-	src/arch/simarm/sercons.h \
 	src/arch/simarm/simarm.h \
 	src/arch/simarm/timer.h \
 	src/chipset/82xx/e8250.h \
@@ -1195,50 +1162,20 @@ src/arch/simarm/main.o: src/arch/simarm/main.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/simarm/pci.o: src/arch/simarm/pci.c \
-	src/arch/simarm/cmd_arm.h \
-	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
 	src/arch/simarm/pci.h \
-	src/arch/simarm/sercons.h \
-	src/arch/simarm/simarm.h \
-	src/arch/simarm/timer.h \
-	src/chipset/82xx/e8250.h \
 	src/config.h \
-	src/cpu/arm/arm.h \
-	src/devices/ata.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/pci-ata.h \
 	src/devices/pci.h \
-	src/devices/serport.h \
-	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h
+	src/lib/log.h
 
 src/arch/simarm/sercons.o: src/arch/simarm/sercons.c \
-	src/arch/simarm/cmd_arm.h \
 	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
 	src/arch/simarm/pci.h \
@@ -1258,19 +1195,10 @@ src/arch/simarm/sercons.o: src/arch/simarm/sercons.c \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/simarm/simarm.o: src/arch/simarm/simarm.c \
-	src/arch/simarm/cmd_arm.h \
 	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
 	src/arch/simarm/pci.h \
@@ -1290,48 +1218,21 @@ src/arch/simarm/simarm.o: src/arch/simarm/simarm.c \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/iniata.h \
 	src/lib/inidsk.h \
 	src/lib/iniram.h \
 	src/lib/load.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/simarm/timer.o: src/arch/simarm/timer.c \
-	src/arch/simarm/cmd_arm.h \
-	src/arch/simarm/intc.h \
 	src/arch/simarm/main.h \
-	src/arch/simarm/pci.h \
-	src/arch/simarm/sercons.h \
-	src/arch/simarm/simarm.h \
 	src/arch/simarm/timer.h \
-	src/chipset/82xx/e8250.h \
 	src/config.h \
-	src/cpu/arm/arm.h \
-	src/devices/ata.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/pci-ata.h \
-	src/devices/pci.h \
-	src/devices/serport.h \
-	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h
+	src/lib/log.h
 
 src/arch/sims32/cmd_s32.o: src/arch/sims32/cmd_s32.c \
 	src/arch/sims32/cmd_s32.h \

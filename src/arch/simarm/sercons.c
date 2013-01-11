@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/sercons.c                                    *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -26,6 +26,10 @@
  *****************************************************************************/
 
 
+#include "main.h"
+#include "sercons.h"
+#include "simarm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +38,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 
-#include "main.h"
+#include <lib/sysdep.h>
 
 
 void scon_check (simarm_t *sim)

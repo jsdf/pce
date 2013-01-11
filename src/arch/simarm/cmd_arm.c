@@ -27,6 +27,14 @@
 
 
 #include "main.h"
+#include "cmd_arm.h"
+#include "simarm.h"
+
+#include <cpu/arm/arm.h>
+
+#include <lib/console.h>
+#include <lib/log.h>
+#include <lib/sysdep.h>
 
 
 static const char *arm_modes[32] = {
@@ -213,6 +221,39 @@ void sarm_prt_state_mem (simarm_t *sim, FILE *fp)
 {
 	pce_prt_sep ("ARM MEM");
 	mem_prt_state (sim->mem, fp);
+}
+
+void prt_state (simarm_t *sim, FILE *fp, const char *str)
+{
+	cmd_t cmd;
+
+	cmd_set_str (&cmd, str);
+
+	if (cmd_match_eol (&cmd)) {
+		return;
+	}
+
+	while (!cmd_match_eol (&cmd)) {
+		if (cmd_match (&cmd, "cpu")) {
+			sarm_prt_state_cpu (sim->cpu, fp);
+		}
+		else if (cmd_match (&cmd, "mmu")) {
+			sarm_prt_state_mmu (sim->cpu, fp);
+		}
+		else if (cmd_match (&cmd, "timer")) {
+			sarm_prt_state_timer (sim->timer, fp);
+		}
+		else if (cmd_match (&cmd, "intc")) {
+			sarm_prt_state_intc (sim, fp);
+		}
+		else if (cmd_match (&cmd, "mem")) {
+			sarm_prt_state_mem (sim, fp);
+		}
+		else {
+			printf ("unknown component (%s)\n", cmd_get_str (&cmd));
+			return;
+		}
+	}
 }
 
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/timer.h                                      *
  * Created:     2004-11-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -28,6 +28,9 @@
 
 #ifndef PCE_SIMARM_TIMER_H
 #define PCE_SIMARM_TIMER_H 1
+
+
+#include <devices/memory.h>
 
 
 typedef struct ixp_timer_counter_s {

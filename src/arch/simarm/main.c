@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/main.c                                       *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -26,15 +26,21 @@
  *****************************************************************************/
 
 
-#include <config.h>
+#include "main.h"
+#include "cmd_arm.h"
+#include "simarm.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <signal.h>
 
-#include "main.h"
+#include <lib/console.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
+#include <lib/sysdep.h>
 
 
 char      *par_cpu = NULL;
@@ -122,39 +128,6 @@ int cmd_set_sym (simarm_t *sim, const char *sym, unsigned long val)
 	}
 
 	return (1);
-}
-
-void prt_state (simarm_t *sim, FILE *fp, const char *str)
-{
-	cmd_t cmd;
-
-	cmd_set_str (&cmd, str);
-
-	if (cmd_match_eol (&cmd)) {
-		return;
-	}
-
-	while (!cmd_match_eol (&cmd)) {
-		if (cmd_match (&cmd, "cpu")) {
-			sarm_prt_state_cpu (sim->cpu, fp);
-		}
-		else if (cmd_match (&cmd, "mmu")) {
-			sarm_prt_state_mmu (sim->cpu, fp);
-		}
-		else if (cmd_match (&cmd, "timer")) {
-			sarm_prt_state_timer (sim->timer, fp);
-		}
-		else if (cmd_match (&cmd, "intc")) {
-			sarm_prt_state_intc (sim, fp);
-		}
-		else if (cmd_match (&cmd, "mem")) {
-			sarm_prt_state_mem (sim, fp);
-		}
-		else {
-			printf ("unknown component (%s)\n", cmd_get_str (&cmd));
-			return;
-		}
-	}
 }
 
 static

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/timer.c                                      *
  * Created:     2004-11-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -28,6 +28,10 @@
 
 #include "main.h"
 #include "timer.h"
+
+#include <stdlib.h>
+
+#include <lib/log.h>
 
 
 #define IXP_TIMER_ACT (1UL << 7)
