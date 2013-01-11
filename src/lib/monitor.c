@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/monitor.c                                            *
  * Created:     2006-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,9 +25,17 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "monitor.h"
-#include "cmd.h"
-#include "console.h"
+#include <lib/monitor.h>
+#include <lib/cmd.h>
+#include <lib/console.h>
+#include <lib/ihex.h>
+#include <lib/srec.h>
+
+
+#define MON_FORMAT_NONE   0
+#define MON_FORMAT_BINARY 1
+#define MON_FORMAT_IHEX   2
+#define MON_FORMAT_SREC   3
 
 
 void mon_init (monitor_t *mon)
@@ -159,6 +167,70 @@ int mon_get_msg (monitor_t *mon, const char *msg, char *val, unsigned max)
 	return (1);
 }
 #endif
+
+static
+const char *mon_get_ext (const char *src)
+{
+	const char *ext;
+
+	ext = src;
+
+	while (*src != 0) {
+		if (*src == '.') {
+			ext = src + 1;
+		}
+
+		src += 1;
+	}
+
+	return (ext);
+}
+
+static
+unsigned mon_guess_format (const char *fname)
+{
+	const char *ext;
+
+	ext = mon_get_ext (fname);
+
+	if (strcasecmp (ext, "bin") == 0) {
+		return (MON_FORMAT_BINARY);
+	}
+	else if (strcasecmp (ext, "ihex") == 0) {
+		return (MON_FORMAT_IHEX);
+	}
+	else if (strcasecmp (ext, "ihx") == 0) {
+		return (MON_FORMAT_IHEX);
+	}
+	else if (strcasecmp (ext, "hex") == 0) {
+		return (MON_FORMAT_IHEX);
+	}
+	else if (strcasecmp (ext, "srec") == 0) {
+		return (MON_FORMAT_SREC);
+	}
+
+	return (MON_FORMAT_BINARY);
+}
+
+static
+int mon_match_format (monitor_t *mon, cmd_t *cmd, unsigned *fmt)
+{
+	if (cmd_match (cmd, "bin")) {
+		*fmt = MON_FORMAT_BINARY;
+	}
+	else if (cmd_match (cmd, "ihex")) {
+		*fmt = MON_FORMAT_IHEX;
+	}
+	else if (cmd_match (cmd, "srec")) {
+		*fmt = MON_FORMAT_SREC;
+	}
+	else {
+		*fmt = MON_FORMAT_NONE;
+		return (0);
+	}
+
+	return (1);
+}
 
 static
 int mon_match_address (monitor_t *mon, cmd_t *cmd, unsigned long *addr, unsigned short *seg, unsigned short *ofs)
@@ -394,6 +466,89 @@ void mon_cmd_f (monitor_t *mon, cmd_t *cmd)
 	}
 }
 
+/*
+ * load - read memory from disk
+ */
+static
+void mon_cmd_load (monitor_t *mon, cmd_t *cmd)
+{
+	int           c;
+	unsigned      fmt;
+	unsigned long addr, cnt;
+	char          fname[256];
+	FILE          *fp;
+
+	if (!cmd_match_str (cmd, fname, 256)) {
+		cmd_error (cmd, "need a file name");
+		return;
+	}
+
+	if (mon_match_format (mon, cmd, &fmt) == 0) {
+		fmt = mon_guess_format (fname);
+	}
+
+	if (fmt == MON_FORMAT_NONE) {
+		pce_printf ("can't guess file format (%s)\n", fname);
+		return;
+	}
+
+	if (fmt == MON_FORMAT_BINARY) {
+		if (!mon_match_address (mon, cmd, &addr, NULL, NULL)) {
+			cmd_error (cmd, "need an address");
+			return;
+		}
+
+		if (!cmd_match_uint32 (cmd, &cnt)) {
+			cnt = 0;
+		}
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		pce_printf ("can't open file (%s)\n", fname);
+		return;
+	}
+
+	switch (fmt) {
+	case MON_FORMAT_BINARY:
+		while (1) {
+			if ((c = fgetc (fp)) == EOF) {
+				break;
+			}
+
+			mon_set_mem8 (mon, addr, c);
+
+			addr += 1;
+
+			if (cnt > 0) {
+				if (--cnt == 0) {
+					break;
+				}
+			}
+		}
+		break;
+
+	case MON_FORMAT_IHEX:
+		if (ihex_load_fp (fp, mon, (ihex_set_f) mon_set_mem8)) {
+			pce_printf ("loading ihex failed\n");
+		}
+		break;
+
+	case MON_FORMAT_SREC:
+		if (srec_load_fp (fp, mon, (srec_set_f) mon_set_mem8)) {
+			pce_printf ("loading srec failed\n");
+		}
+		break;
+	}
+
+	fclose (fp);
+}
+
 static
 void mon_cmd_m (monitor_t *mon, cmd_t *cmd)
 {
@@ -618,11 +773,13 @@ int mon_run (monitor_t *mon)
 
 		cmd_get (&cmd, mon->prompt);
 
-		if (mon->docmd != NULL) {
-			r = mon->docmd (mon->cmdext, &cmd);
+		r = 1;
+
+		if (cmd_match (&cmd, "load")) {
+			mon_cmd_load (mon, &cmd);
 		}
-		else {
-			r = 1;
+		else if (mon->docmd != NULL) {
+			r = mon->docmd (mon->cmdext, &cmd);
 		}
 
 		if (r != 0) {
