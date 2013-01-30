@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/terminal.c                                 *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -198,6 +198,11 @@ int trm_screenshot (terminal_t *trm, const char *fname)
 
 int trm_set_msg_trm (terminal_t *trm, const char *msg, const char *val)
 {
+	if (strcmp (msg, "term.escape") == 0) {
+		trm_set_escape_str (trm, val);
+		return (0);
+	}
+
 	if (strcmp (msg, "term.screenshot") == 0) {
 		trm_screenshot (trm, val);
 		return (0);

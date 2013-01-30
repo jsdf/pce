@@ -203,6 +203,9 @@ Terminal messages
 
 Terminal messages may not be abbreviated.
 
+term.escape <key>
+	Set the terminal escape key.
+
 term.fullscreen "0" | "1"
 	Leave or enter fullscreen mode.
 
