@@ -2088,7 +2088,7 @@ src/utils/pbit/pbit.o: src/utils/pbit/pbit.c \
 	src/lib/getopt.h \
 	src/utils/pbit/pbit.h
 
-src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
+src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
 	src/drivers/block/blkdosem.h \
@@ -2100,7 +2100,7 @@ src/utils/pceimg/pce-img.o: src/utils/pceimg/pce-img.c \
 	src/drivers/pfdc/pfdc-img.h \
 	src/drivers/pfdc/pfdc.h \
 	src/lib/getopt.h \
-	src/utils/pceimg/pce-img.h
+	src/utils/pce-img/pce-img.h
 
 src/utils/pfdc/main.o: src/utils/pfdc/main.c \
 	src/config.h \

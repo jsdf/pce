@@ -157,7 +157,7 @@ include $(srcdir)/src/arch/simarm/Makefile.inc
 include $(srcdir)/src/arch/sims32/Makefile.inc
 include $(srcdir)/src/utils/Makefile.inc
 include $(srcdir)/src/utils/pbit/Makefile.inc
-include $(srcdir)/src/utils/pceimg/Makefile.inc
+include $(srcdir)/src/utils/pce-img/Makefile.inc
 include $(srcdir)/src/utils/pfdc/Makefile.inc
 
 TARGETS += $(BIN) $(ETC) $(SHARE)

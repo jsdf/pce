@@ -1,6 +1,6 @@
-# src/utils/pceimg/Makefile.inc
+# src/utils/pce-img/Makefile.inc
 
-rel := src/utils/pceimg
+rel := src/utils/pce-img
 
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
