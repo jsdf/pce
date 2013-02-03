@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/ega.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -728,10 +728,6 @@ void ega_update_graphics (ega_t *ega)
 	y = 0;
 
 	while (y < h) {
-		if (y == lcmp) {
-			addr = 0;
-		}
-
 		dst = ega->buf + 3UL * y * w;
 
 		rptr = addr;
@@ -799,6 +795,10 @@ void ega_update_graphics (ega_t *ega)
 		if (row >= ch) {
 			row = 0;
 			addr = (addr + rofs) & 0xffff;
+		}
+
+		if (y == lcmp) {
+			addr = 0;
 		}
 
 		y += 1;
