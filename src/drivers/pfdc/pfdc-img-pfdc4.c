@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pfdc/pfdc-img-pfdc4.c                            *
  * Created:     2012-01-30 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -410,7 +410,6 @@ int pfdc4_load_fp (FILE *fp, pfdc_img_t *img, unsigned long id, unsigned long sz
 			if (pfdc4_load_data (fp, img, last, size, crc)) {
 				return (1);
 			}
-			last = NULL;
 			break;
 
 		case PFDC4_CHUNK_TAGS:
