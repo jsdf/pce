@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkqed.c                                   *
  * Created:     2011-05-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -538,6 +538,9 @@ int dsk_qed_parse_header (disk_qed_t *qed)
 	features &= ~(uint64_t) QED_F_BACKING_FORMAT_NO_PROBE;
 
 	if (features != 0) {
+		fprintf (stderr, "qed: unknown features (0x%08llx)\n",
+			(unsigned long long) features
+		);
 		return (1);
 	}
 
