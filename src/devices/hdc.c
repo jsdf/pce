@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/hdc.c                                            *
  * Created:     2011-09-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1264,7 +1264,7 @@ unsigned char hdc_read_data (hdc_t *hdc)
 		hdc->cmd_idx = 0;
 		hdc->cmd_cnt = 0;
 
-		hdc->status &= ~(HDC_STATUS_BSY | HDC_STATUS_REQ);
+		hdc->status &= ~(HDC_STATUS_BSY | HDC_STATUS_INP | HDC_STATUS_REQ);
 	}
 	else {
 		if (hdc->buf_idx < hdc->buf_cnt) {
