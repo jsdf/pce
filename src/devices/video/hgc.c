@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.c                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -504,7 +504,7 @@ void hgc_update_graph (hgc_t *hgc)
 	dst = hgc->buf;
 
 	cy = 0;
-	addr = 0;
+	addr = (hgc_get_start (hgc) << 1) & 0x7ffe;
 
 	for (y = 0; y < h; y++) {
 		src = mem + (cy & 3) * 0x2000;
