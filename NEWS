@@ -1,3 +1,16 @@
+0.2.2	2013-03-15
+
+	* ibmpc: Support XT hard disk controllers.
+	* ibmpc: Add support for the Olivetti M24.
+	* macplus: Add IWM floppy disk support.
+	* char: Add a serial mouse character device.
+	* char: Add telnet support to the tcp character device.
+	* block: Add pbit file format support.
+	* pfdc: Add support for pfdc version 4.
+	* video: Try harder to maintain the aspect ratio.
+	* video: Support user defined key maps.
+	* rc759: Add a new system emulator of the RC-759 Piccoline.
+
 0.2.1	2011-09-06
 
 	* ibmpc: Better support the PC/XT 5160.
