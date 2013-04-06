@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -581,9 +581,8 @@ void cga_make_comp_tab (cga_t *cga)
 static
 void cga_mode2c_update (cga_t *cga)
 {
-	unsigned            x, y, w, h, n;
+	unsigned            x, y, w, h, n, ofs;
 	unsigned            avgmsk, avgval, pat;
-	const unsigned char *mem[2];
 	const unsigned char *src, *col;
 	unsigned char       *dst;
 
@@ -595,26 +594,23 @@ void cga_mode2c_update (cga_t *cga)
 		return;
 	}
 
-	mem[0] = cga->mem;
-	mem[1] = cga->mem + 8192;
-
 	dst = cga->buf;
+	ofs = (2 * cga_get_start (cga)) & 0x1fff;
+	pat = 0;
 
 	h = 2 * cga->h;
 	w = 2 * cga->w;
 
-	pat = 0;
-
 	for (y = 0; y < h; y++) {
-		src = mem[y & 1];
+		src = cga->mem + ((y & 1) << 13);
 
-		avgmsk = (src[0] >> 7) & 1;
+		avgmsk = (src[ofs & 0x1fff] >> 7) & 1;
 		avgval = avgmsk;
 
 		for (x = 0; x < (8 * w); x++) {
 			if ((x & 3) == 0) {
 				if ((x & 7) == 0) {
-					pat = src[x >> 3];
+					pat = src[(ofs + (x >> 3)) & 0x1fff];
 					pat = (pat << 4) | ((pat >> 4) & 0x0f);
 				}
 				else {
@@ -628,7 +624,7 @@ void cga_mode2c_update (cga_t *cga)
 			n = x + 1;
 
 			if (n < (8 * w)) {
-				if (src[n >> 3] & (0x80 >> (n & 7))) {
+				if (src[(ofs + (n >> 3)) & 0x1fff] & (0x80 >> (n & 7))) {
 					avgmsk |= 1;
 					avgval += 1;
 				}
@@ -643,7 +639,9 @@ void cga_mode2c_update (cga_t *cga)
 			dst += 3;
 		}
 
-		mem[y & 1] += w;
+		if (y & 1) {
+			ofs = (ofs + w) & 0x1fff;
+		}
 	}
 }
 
