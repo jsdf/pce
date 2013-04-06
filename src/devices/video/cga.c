@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include <lib/log.h>
@@ -1105,6 +1106,38 @@ void cga_del (cga_t *cga)
 	}
 }
 
+static
+void cga_set_font (cga_t *cga, unsigned font)
+{
+	if (font == 0) {
+		memcpy (cga->font, cga_font_thick, 2048);
+	}
+	else {
+		memcpy (cga->font, cga_font_thin, 2048);
+	}
+}
+
+static
+int cga_load_font (cga_t *cga, const char *fname)
+{
+	FILE *fp;
+
+	fp = fopen (fname, "rb");
+
+	if (fp == NULL) {
+		return (1);
+	}
+
+	if (fread (cga->font, 1, 2048, fp) != 2048) {
+		fclose (fp);
+		return (1);
+	}
+
+	fclose (fp);
+
+	return (0);
+}
+
 void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long size)
 {
 	unsigned i;
@@ -1153,8 +1186,6 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 	cga->pal[2] = 13;
 	cga->pal[3] = 15;
 
-	cga->font = cga_font_thick;
-
 	cga->comp_tab_ok = 0;
 	cga->comp_tab = NULL;
 
@@ -1175,6 +1206,8 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 	cga->buf = NULL;
 
 	cga->update_state = 0;
+
+	cga_set_font (cga, 0);
 }
 
 cga_t *cga_new (unsigned long io, unsigned long addr, unsigned long size)
@@ -1196,6 +1229,7 @@ video_t *cga_new_ini (ini_sct_t *sct)
 	unsigned long io, addr, size;
 	unsigned      font;
 	unsigned      blink;
+	const char    *fontfile;
 	cga_t         *cga;
 
 	ini_get_uint32 (sct, "io", &io, 0x3d4);
@@ -1203,22 +1237,29 @@ video_t *cga_new_ini (ini_sct_t *sct)
 	ini_get_uint32 (sct, "size", &size, 16384);
 	ini_get_uint16 (sct, "font", &font, 0);
 	ini_get_uint16 (sct, "blink", &blink, 0);
+	ini_get_string (sct, "file", &fontfile, NULL);
 
 	pce_log_tag (MSG_INF,
-		"VIDEO:", "CGA io=0x%04lx addr=0x%05lx size=0x%05lx font=%u\n",
-		io, addr, size, font
+		"VIDEO:",
+		"CGA io=0x%04lx addr=0x%05lx size=0x%05lx font=%u file=%s\n",
+		io, addr, size, font,
+		(fontfile != NULL) ? fontfile : "<none>"
 	);
 
 	cga = cga_new (io, addr, size);
+
 	if (cga == NULL) {
 		return (NULL);
 	}
 
-	if (font == 0) {
-		cga->font = cga_font_thick;
-	}
-	else {
-		cga->font = cga_font_thin;
+	cga_set_font (cga, font);
+
+	if (fontfile != NULL) {
+		if (cga_load_font (cga, fontfile)) {
+			pce_log (MSG_ERR, "*** loading CGA font failed (%s)\n",
+				fontfile
+			);
+		}
 	}
 
 	cga_set_blink_rate (cga, blink);

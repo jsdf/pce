@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.h                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -49,7 +49,7 @@ typedef struct cga_s {
 
 	unsigned char pal[4];
 
-	unsigned char *font;
+	unsigned char font[2048];
 
 	/* composite mode color lookup table */
 	char          comp_tab_ok;
