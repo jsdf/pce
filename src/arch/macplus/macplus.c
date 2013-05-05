@@ -1422,6 +1422,9 @@ int mac_set_cpu_model (macplus_t *sim, const char *model)
 	else if (strcmp (model, "68010") == 0) {
 		e68_set_68010 (sim->cpu);
 	}
+	else if (strcmp (model, "68020") == 0) {
+		e68_set_68020 (sim->cpu);
+	}
 	else {
 		return (1);
 	}
