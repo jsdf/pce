@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8259.c                                     *
  * Created:     2003-04-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -558,6 +558,8 @@ void e8259_reset (e8259_t *pic)
 	for (i = 0; i < 3; i++) {
 		pic->ocw[i] = 0;
 	}
+
+	pic->base = 8;
 
 	pic->next_icw = 0;
 	pic->read_irr = 1;
