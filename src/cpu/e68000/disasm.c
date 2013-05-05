@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/disasm.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,6 +37,7 @@ static e68_dasm_f e68_dasm_op[1024];
 enum {
 	ARG_NONE,
 	ARG_IR,
+	ARG_IR1,
 	ARG_EA,
 	ARG_EA2,
 	ARG_DREG0,
@@ -57,12 +58,18 @@ enum {
 	ARG_IRSIMM8,
 	ARG_DIST8,
 	ARG_DIST16,
+	ARG_DIST32,
 	ARG_REGLST,
 	ARG_REVLST,
 	ARG_CCR,
 	ARG_SR,
 	ARG_USP,
-	ARG_CREG
+	ARG_CREG,
+	ARG_DQDR,
+	ARG_DHDL,
+	ARG_DL,
+	ARG_BF,
+	ARG_BF_DN
 };
 
 
@@ -220,6 +227,110 @@ unsigned dasm_next_word (e68_dasm_t *da, const uint8_t *src)
 }
 
 static
+void dasm_ea_full (e68_dasm_t *da, char *dst, const uint8_t *src)
+{
+	uint16_t ext;
+	uint32_t v;
+	char     br[16], ix[16], bd[16], od[16], scale[16];
+	int      bs, is;
+
+	ext = da->ir[1];
+
+	bs = (ext & 0x0080) != 0;
+	is = (ext & 0x0040) != 0;
+
+	if (bs) {
+		strcpy (br, "-");
+	}
+	else {
+		if ((da->ir[0] & 0x38) == 0x38) {
+			strcpy (br, "PC");
+		}
+		else {
+			sprintf (br, "A%u", da->ir[0] & 0x07);
+		}
+	}
+
+	if (is) {
+		strcpy (ix, "-");
+	}
+	else {
+		sprintf (ix, "%s%u%s",
+			(ext & 0x8000) ? "A" : "D",
+			(ext >> 12) & 7,
+			(ext & 0x0800) ? ".L" : ".W"
+		);
+	}
+
+	if (((ext >> 9) & 3) == 0) {
+		strcpy (scale, "");
+	}
+	else {
+		sprintf (scale, "*%u", 1 << ((ext >> 9) & 3));
+	}
+
+	switch ((ext >> 4) & 3) {
+	case 0:
+	case 1:
+		strcpy (bd, "-");
+		break;
+
+	case 2:
+		v = dasm_next_word (da, src);
+		sprintf (bd, "%s%s%04X",
+			(v & 0x8000) ? "-" : "",
+			hex_prefix,
+			(v & 0x8000) ? ((~v + 1) & 0xffff) : v
+		);
+		break;
+
+	case 3:
+		v = dasm_next_word (da, src);
+		v = (v << 16) | dasm_next_word (da, src);
+		sprintf (bd, "%s%s%08X",
+			(v & 0x80000000) ? "-" : "",
+			hex_prefix,
+			(v & 0x80000000) ? ((~v + 1) & 0xffffffff) : v
+		);
+		break;
+	}
+
+	switch (ext & 3) {
+	case 0:
+	case 1:
+		strcpy (od, "-");
+		break;
+	case 2:
+		v = dasm_next_word (da, src);
+		sprintf (od, "%s%s%04X",
+			(v & 0x8000) ? "-" : "",
+			hex_prefix,
+			(v & 0x8000) ? ((~v + 1) & 0xffff) : v
+		);
+		break;
+
+	case 3:
+		v = dasm_next_word (da, src);
+		v = (v << 16) | dasm_next_word (da, src);
+		sprintf (od, "%s%s%08X",
+			(v & 0x80000000) ? "-" : "",
+			hex_prefix,
+			(v & 0x80000000) ? ((~v + 1) & 0xffffffff) : v
+		);
+		break;
+	}
+
+	if (ext & 4) {
+		sprintf (dst, "([%s, %s], %s%s, %s)", br, bd, ix, scale, od);
+	}
+	else {
+		sprintf (dst, "([%s, %s, %s%s], %s)", br, bd, ix, scale, od);
+	}
+
+	da->flags |= E68_DFLAG_68020;
+}
+
+static
 void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsigned size)
 {
 	unsigned      v;
@@ -258,15 +369,25 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 
 	case 0x06: /* XX(%Ax, Rx.S) */
 		v = dasm_next_word (da, src);
-		sprintf (dst, "%s%s%02X(A%u, %s%u%s)",
-			(v & 0x80) ? "-" : "",
-			hex_prefix,
-			((v & 0x80) ? (~v + 1) : v) & 0xff,
-			ea & 7,
-			(v & 0x8000) ? "A" : "D",
-			(v >> 12) & 7,
-			(v & 0x0800) ? ".L" : ".W"
-		);
+		if (v & 0x0100) {
+			dasm_ea_full (da, dst, src);
+		}
+		else {
+			sprintf (dst, "%s%s%02X(A%u, %s%u%s*%u)",
+				(v & 0x80) ? "-" : "",
+				hex_prefix,
+				((v & 0x80) ? (~v + 1) : v) & 0xff,
+				ea & 7,
+				(v & 0x8000) ? "A" : "D",
+				(v >> 12) & 7,
+				(v & 0x0800) ? ".L" : ".W",
+				1 << ((v >> 9) & 3)
+			);
+
+			if (v & 0x0600) {
+				da->flags |= E68_DFLAG_68020;
+			}
+		}
 		break;
 
 	case 0x07:
@@ -297,14 +418,23 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 
 		case 0x03: /* XX(PC, Rx.S) */
 			v = dasm_next_word (da, src);
-			sprintf (dst, "%s%s%02X(PC, %s%u%s)",
-				(v & 0x80) ? "-" : "",
-				hex_prefix,
-				((v & 0x80) ? (~v + 1) : v) & 0xff,
-				(v & 0x8000) ? "A" : "D",
-				(v >> 12) & 7,
-				(v & 0x0800) ? ".L" : ".W"
-			);
+			if (v & 0x0100) {
+				dasm_ea_full (da, dst, src);
+			}
+			else {
+				sprintf (dst, "%s%s%02X(PC, %s%u%s*%u)",
+					(v & 0x80) ? "-" : "",
+					hex_prefix,
+					((v & 0x80) ? (~v + 1) : v) & 0xff,
+					(v & 0x8000) ? "A" : "D",
+					(v >> 12) & 7,
+					(v & 0x0800) ? ".L" : ".W",
+					1 << ((v >> 9) & 3)
+				);
+				if (v & 0x0600) {
+					da->flags |= E68_DFLAG_68020;
+				}
+			}
 			break;
 
 		case 0x04: /* #XXXX */
@@ -340,6 +470,48 @@ void dasm_ea (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned ea, unsign
 }
 
 static
+void dasm_arg_bitfield (e68_dasm_t *da, char *dst, const uint8_t *src)
+{
+	unsigned width;
+
+	da->ir[da->irn] = dasm_next_word (da, src);
+
+	dasm_ea (da, dst, src, src[1] & 0x3f, 8);
+	dst += strlen (dst);
+
+	*(dst++) = ' ';
+	*(dst++) = '{';
+
+	if ((da->ir[1] >> 11) & 1) {
+		sprintf (dst, "D%u", (da->ir[1] >> 6) & 7);
+	}
+	else {
+		sprintf (dst, "%u", (da->ir[1] >> 6) & 31);
+	}
+
+	dst += strlen (dst);
+
+	*(dst++) = ':';
+
+	width = (da->ir[1] & 31);
+
+	if (width == 0) {
+		width = 32;
+	}
+
+	if ((da->ir[1] >> 5) & 1) {
+		sprintf (dst, "D%u", width & 7);
+	}
+	else {
+		sprintf (dst, "%u", width);
+	}
+
+	dst += strlen (dst);
+
+	strcpy (dst, "}");
+}
+
+static
 void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsigned size)
 {
 	uint16_t val16;
@@ -354,6 +526,13 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		sprintf (dst, "#%s%04X",
 			hex_prefix,
 			(unsigned) e68_get_uint16 (src, 0)
+		);
+		break;
+
+	case ARG_IR1:
+		sprintf (dst, "#%s%04X",
+			hex_prefix,
+			(unsigned) e68_get_uint16 (src, 2)
 		);
 		break;
 
@@ -470,6 +649,15 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		);
 		break;
 
+	case ARG_DIST32:
+		val32 = e68_get_uint32 (src, 2 * da->irn);
+		da->irn += 2;
+		sprintf (dst, "%s%08lX",
+			hex_prefix,
+			da->pc + 2UL + val32
+		);
+		break;
+
 	case ARG_REGLST:
 		dasm_reglst (dst, e68_get_uint16 (src, 2), 0);
 		da->irn += 1;
@@ -496,6 +684,23 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		dasm_creg (da, dst, e68_get_uint16 (src, 2));
 		break;
 
+	case ARG_DQDR:
+		sprintf (dst, "D%u:D%u", da->ir[1] & 7, (da->ir[1] >> 12) & 7);
+		break;
+
+	case ARG_DHDL:
+		sprintf (dst, "D%u:D%u", da->ir[1] & 7, (da->ir[1] >> 12) & 7);
+		break;
+
+	case ARG_DL:
+	case ARG_BF_DN:
+		sprintf (dst, "D%u", (da->ir[1] >> 12) & 7);
+		break;
+
+	case ARG_BF:
+		dasm_arg_bitfield (da, dst, src);
+		break;
+
 	default:
 		dst[0] = 0;
 		break;
@@ -505,8 +710,6 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 static
 int dasm_op0 (e68_dasm_t *da, const char *op)
 {
-	da->irn = 1;
-
 	strcpy (da->op, op);
 
 	da->argn = 0;
@@ -518,8 +721,6 @@ static
 int dasm_op1 (e68_dasm_t *da, const char *op, const uint8_t *src,
 	unsigned arg1, unsigned size)
 {
-	da->irn = 1;
-
 	strcpy (da->op, op);
 
 	da->argn = 1;
@@ -532,8 +733,6 @@ static
 int dasm_op2 (e68_dasm_t *da, const char *op, const uint8_t *src,
 	unsigned arg1, unsigned arg2, unsigned size)
 {
-	da->irn = 1;
-
 	strcpy (da->op, op);
 
 	da->argn = 2;
@@ -547,8 +746,6 @@ static
 int dasm_op2r (e68_dasm_t *da, const char *op, const uint8_t *src,
 	unsigned arg1, unsigned arg2, unsigned size)
 {
-	da->irn = 1;
-
 	strcpy (da->op, op);
 
 	da->argn = 2;
@@ -586,6 +783,23 @@ static void d_0040 (e68_dasm_t *da, const uint8_t *src)
 static void d_0080 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op2 (da, "ORI.L", src, ARG_IMM32, ARG_EA, 32);
+}
+
+/* 00C0: CHK2.B <EA>, Rn */
+static void d_00c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	unsigned ir1;
+
+	ir1 = dasm_next_word (da, src);
+
+	if (ir1 & 0x0800) {
+		dasm_op2 (da, "CHK2.B", src, ARG_EA, ARG_REG_IR1_12, 8);
+	}
+	else {
+		dasm_op2 (da, "CMP2.B", src, ARG_EA, ARG_REG_IR1_12, 8);
+	}
+
+	da->flags |= E68_DFLAG_68020;
 }
 
 /* 0100: misc */
@@ -673,6 +887,23 @@ static void d_0280 (e68_dasm_t *da, const uint8_t *src)
 	dasm_op2 (da, "ANDI.L", src, ARG_IMM32, ARG_EA, 32);
 }
 
+/* 02C0: CHK2.W <EA>, Rn */
+static void d_02c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	unsigned ir1;
+
+	ir1 = dasm_next_word (da, src);
+
+	if (ir1 & 0x0800) {
+		dasm_op2 (da, "CHK2.W", src, ARG_EA, ARG_REG_IR1_12, 16);
+	}
+	else {
+		dasm_op2 (da, "CMP2.W", src, ARG_EA, ARG_REG_IR1_12, 16);
+	}
+
+	da->flags |= E68_DFLAG_68020;
+}
+
 /* 0400: SUBI.B #XX, <EA> */
 static void d_0400 (e68_dasm_t *da, const uint8_t *src)
 {
@@ -689,6 +920,23 @@ static void d_0440 (e68_dasm_t *da, const uint8_t *src)
 static void d_0480 (e68_dasm_t *da, const uint8_t *src)
 {
 	dasm_op2 (da, "SUBI.L", src, ARG_IMM32, ARG_EA, 32);
+}
+
+/* 04C0: CHK2.L <EA>, Rn */
+static void d_04c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	unsigned ir1;
+
+	ir1 = dasm_next_word (da, src);
+
+	if (ir1 & 0x0800) {
+		dasm_op2 (da, "CHK2.L", src, ARG_EA, ARG_REG_IR1_12, 32);
+	}
+	else {
+		dasm_op2 (da, "CMP2.L", src, ARG_EA, ARG_REG_IR1_12, 32);
+	}
+
+	da->flags |= E68_DFLAG_68020;
 }
 
 /* 0600: ADDI.B #XX, <EA> */
@@ -1031,6 +1279,21 @@ static void d_48c0 (e68_dasm_t *da, const uint8_t *src)
 	}
 }
 
+/* 49C0: misc */
+static void d_49c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	switch ((da->ir[0] >> 3) & 7) {
+	case 0x00:
+		dasm_op1 (da, "EXTB.L", src, ARG_DREG0, 32);
+		da->flags |= E68_DFLAG_68020;
+		break;
+
+	default:
+		d_41c0 (da, src);
+		break;
+	}
+}
+
 /* 4A00: TST.B <EA> */
 static void d_4a00 (e68_dasm_t *da, const uint8_t *src)
 {
@@ -1059,6 +1322,36 @@ static void d_4ac0 (e68_dasm_t *da, const uint8_t *src)
 	else {
 		dasm_op1 (da, "TAS", src, ARG_EA, 8);
 	}
+}
+
+/* 4C00: MULU.L <EA>, [Dh:]Dl */
+static void d_4c00 (e68_dasm_t *da, const uint8_t *src)
+{
+	da->ir[1] = dasm_next_word (da, src);
+
+	if (da->ir[1] & 0x0400) {
+		dasm_op2 (da, "MULU.L", src, ARG_EA, ARG_DHDL, 32);
+	}
+	else {
+		dasm_op2 (da, "MULU.L", src, ARG_EA, ARG_DL, 32);
+	}
+
+	da->flags |= E68_DFLAG_68020;
+}
+
+/* 4C40: DIVU[L].L <EA>, Dq:Dr */
+static void d_4c40 (e68_dasm_t *da, const uint8_t *src)
+{
+	da->ir[1] = dasm_next_word (da, src);
+
+	if (da->ir[1] & 0x0400) {
+		dasm_op2 (da, "DIVUL.L", src, ARG_EA, ARG_DQDR, 32);
+	}
+	else {
+		dasm_op2 (da, "DIVU.L", src, ARG_EA, ARG_DQDR, 32);
+	}
+
+	da->flags |= E68_DFLAG_68020;
 }
 
 /* 4C80: misc */
@@ -1239,6 +1532,11 @@ static void d_6000 (e68_dasm_t *da, const uint8_t *src)
 	if (src[1] == 0) {
 		dasm_op1 (da, op_bcc[c], src, ARG_DIST16, 0);
 		strcat (da->op, ".W");
+	}
+	else if (src[1] == 0xff) {
+		dasm_op1 (da, op_bcc[c], src, ARG_DIST32, 0);
+		strcat (da->op, ".L");
+		da->flags |= E68_DFLAG_68020;
 	}
 	else {
 		dasm_op1 (da, op_bcc[c], src, ARG_DIST8, 0);
@@ -1997,6 +2295,48 @@ static void d_e7c0 (e68_dasm_t *da, const uint8_t *src)
 	dasm_op1 (da, "ROL.W", src, ARG_EA, 16);
 }
 
+/* E8C0: BFTST <EA> {offset:width} */
+static void d_e8c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op1 (da, "BFTST", src, ARG_BF, 8);
+}
+
+/* E9C0: BFEXTU <EA> {offset:width}, Dn */
+static void d_e9c0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op2 (da, "BFEXTU", src, ARG_BF, ARG_BF_DN, 8);
+}
+
+/* EAC0: BFCHG <EA> {offset:width} */
+static void d_eac0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op1 (da, "BFCHG", src, ARG_BF, 8);
+}
+
+/* EBC0: BFEXTS <EA> {offset:width}, Dn */
+static void d_ebc0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op2 (da, "BFEXTS", src, ARG_BF, ARG_BF_DN, 8);
+}
+
+/* ECC0: BFCLR <EA> {offset:width} */
+static void d_ecc0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op1 (da, "BFCLR", src, ARG_BF, 8);
+}
+
+/* EEC0: BFSET <EA> {offset:width} */
+static void d_eec0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op1 (da, "BFSET", src, ARG_BF, 8);
+}
+
+/* EFC0: BFINS Dn, <EA> {offset:width} */
+static void d_efc0 (e68_dasm_t *da, const uint8_t *src)
+{
+	dasm_op2 (da, "BFINS", src, ARG_BF_DN, ARG_BF, 8);
+}
+
 /* F000: FXXX */
 static void d_f000 (e68_dasm_t *da, const uint8_t *src)
 {
@@ -2027,6 +2367,7 @@ void e68_dasm (e68_dasm_t *da, uint32_t pc, const unsigned char *src)
 	da->comm[0] = 0;
 
 	da->ir[0] = e68_get_uint16 (src, 0);
+	da->irn = 1;
 
 	opc = ((src[0] & 0xff) << 2) | ((src[1] & 0xc0) >> 6);
 
@@ -2056,9 +2397,9 @@ void e68_dasm_cur (e68000_t *c, e68_dasm_t *da)
 
 static
 e68_dasm_f e68_dasm_op[1024] = {
-	d_0000, d_0040, d_0080, di_und, d_0100, d_0140, d_0180, d_01c0, /* 0000 */
-	d_0200, d_0240, d_0280, di_und, d_0100, d_0140, d_0180, d_01c0, /* 0200 */
-	d_0400, d_0440, d_0480, di_und, d_0100, d_0140, d_0180, d_01c0, /* 0400 */
+	d_0000, d_0040, d_0080, d_00c0, d_0100, d_0140, d_0180, d_01c0, /* 0000 */
+	d_0200, d_0240, d_0280, d_02c0, d_0100, d_0140, d_0180, d_01c0, /* 0200 */
+	d_0400, d_0440, d_0480, d_04c0, d_0100, d_0140, d_0180, d_01c0, /* 0400 */
 	d_0600, d_0640, d_0680, di_und, d_0100, d_0140, d_0180, d_01c0, /* 0600 */
 	d_0800, d_0840, d_0880, d_08c0, d_0100, d_0140, d_0180, d_01c0, /* 0800 */
 	d_0a00, d_0a40, d_0a80, di_und, d_0100, d_0140, d_0180, d_01c0, /* 0A00 */
@@ -2092,9 +2433,9 @@ e68_dasm_f e68_dasm_op[1024] = {
 	d_4200, d_4240, d_4280, d_42c0, di_und, di_und, d_4180, d_41c0, /* 4200 */
 	d_4400, d_4440, d_4480, d_44c0, di_und, di_und, d_4180, d_41c0, /* 4400 */
 	d_4600, d_4640, d_4680, d_46c0, di_und, di_und, d_4180, d_41c0, /* 4600 */
-	d_4800, d_4840, d_4880, d_48c0, di_und, di_und, d_4180, d_41c0, /* 4800 */
+	d_4800, d_4840, d_4880, d_48c0, di_und, di_und, d_4180, d_49c0, /* 4800 */
 	d_4a00, d_4a40, d_4a80, d_4ac0, di_und, di_und, d_4180, d_41c0, /* 4A00 */
-	di_und, di_und, d_4c80, d_4cc0, di_und, di_und, d_4180, d_41c0, /* 4C00 */
+	d_4c00, d_4c40, d_4c80, d_4cc0, di_und, di_und, d_4180, d_41c0, /* 4C00 */
 	di_und, d_4e40, d_4e80, d_4ec0, di_und, di_und, d_4180, d_41c0, /* 4E00 */
 	d_5000, d_5040, d_5080, d_50c0, d_5100, d_5140, d_5180, d_50c0, /* 5000 */
 	d_5000, d_5040, d_5080, d_50c0, d_5100, d_5140, d_5180, d_50c0, /* 5200 */
@@ -2172,10 +2513,10 @@ e68_dasm_f e68_dasm_op[1024] = {
 	d_e000, d_e040, d_e080, d_e2c0, d_e100, d_e140, d_e180, d_e3c0, /* E200 */
 	d_e000, d_e040, d_e080, d_e4c0, d_e100, d_e140, d_e180, d_e5c0, /* E400 */
 	d_e000, d_e040, d_e080, d_e6c0, d_e100, d_e140, d_e180, d_e7c0, /* E600 */
-	d_e000, d_e040, d_e080, di_und, d_e100, d_e140, d_e180, di_und, /* E800 */
-	d_e000, d_e040, d_e080, di_und, d_e100, d_e140, d_e180, di_und, /* EA00 */
-	d_e000, d_e040, d_e080, di_und, d_e100, d_e140, d_e180, di_und, /* EC00 */
-	d_e000, d_e040, d_e080, di_und, d_e100, d_e140, d_e180, di_und, /* EE00 */
+	d_e000, d_e040, d_e080, d_e8c0, d_e100, d_e140, d_e180, d_e9c0, /* E800 */
+	d_e000, d_e040, d_e080, d_eac0, d_e100, d_e140, d_e180, d_ebc0, /* EA00 */
+	d_e000, d_e040, d_e080, d_ecc0, d_e100, d_e140, d_e180, di_und, /* EC00 */
+	d_e000, d_e040, d_e080, d_eec0, d_e100, d_e140, d_e180, d_efc0, /* EE00 */
 	d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, /* F000 */
 	d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000,
 	d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000, d_f000,

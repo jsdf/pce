@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -95,6 +95,9 @@ void e68_init (e68000_t *c)
 
 	e68_set_sfc (c, 0);
 	e68_set_dfc (c, 0);
+
+	c->cacr = 0;
+	c->caar = 0;
 
 	c->last_pc = 0;
 	c->last_trap_a = 0;
@@ -188,11 +191,19 @@ void e68_set_address_check (e68000_t *c, int check)
 void e68_set_68000 (e68000_t *c)
 {
 	c->flags = 0;
+	e68_set_opcodes (c);
 }
 
 void e68_set_68010 (e68000_t *c)
 {
 	c->flags = E68_FLAG_68010;
+	e68_set_opcodes (c);
+}
+
+void e68_set_68020 (e68000_t *c)
+{
+	c->flags = E68_FLAG_68010 | E68_FLAG_68020 | E68_FLAG_NOADDR;
+	e68_set_opcodes_020 (c);
 }
 
 unsigned long long e68_get_opcnt (e68000_t *c)
@@ -686,6 +697,9 @@ void e68_reset (e68000_t *c)
 
 	e68_set_sfc (c, 0);
 	e68_set_dfc (c, 0);
+
+	e68_set_cacr (c, 0);
+	e68_set_caar (c, 0);
 
 	c->halt = 0;
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/ea.c                                          *
  * Created:     2006-05-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -44,6 +44,113 @@
  * 11 800: #XXXX
 */
 
+
+static
+int e68_ea_full (e68000_t *c, unsigned ea, uint16_t *ir1, unsigned mask)
+{
+	uint16_t *ir2;
+	uint32_t ix, bd, od;
+	unsigned scale;
+	int      bs, is;
+
+	/* base register is in c->ea_val */
+
+	bs = (ir1[0] & 0x0080) != 0;
+	is = (ir1[0] & 0x0040) != 0;
+
+	if (bs) {
+		c->ea_val = 0;
+	}
+
+	scale = (ir1[0] >> 9) & 3;
+
+	if (is) {
+		ix = 0;
+	}
+	else {
+		if (ir1[0] & 0x8000) {
+			ix = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
+		}
+		else {
+			ix = e68_get_dreg32 (c, (ir1[0] >> 12) & 7);
+		}
+
+		if ((ir1[0] & 0x0800) == 0) {
+			ix = e68_exts16 (ix);
+		}
+	}
+
+	bd = 0;
+
+	switch ((ir1[0] >> 4) & 3) {
+	case 0:
+		e68_exception_illegal (c);
+		return (1);
+
+	case 1:
+		bd = 0;
+		break;
+
+	case 2:
+		e68_ifetch_next (c);
+		bd = e68_exts16 (ir1[1]);
+		break;
+
+	case 3:
+		e68_ifetch_next (c);
+		e68_ifetch_next (c);
+		bd = ((uint32_t) ir1[1] << 16) | ir1[2];
+		break;
+	}
+
+	if ((ir1[0] & 7) == 0) {
+		c->ea_val += (ix << scale) + bd;
+		return (0);
+	}
+
+	ir2 = &c->ir[c->ircnt];
+
+	od = 0;
+
+	switch (ir1[0] & 3) {
+	case 0:
+		e68_exception_illegal (c);
+		return (1);
+
+	case 1:
+		od = 0;
+		break;
+
+	case 2:
+		e68_ifetch_next (c);
+		od = e68_exts16 (ir2[0]);
+		break;
+
+	case 3:
+		e68_ifetch_next (c);
+		e68_ifetch_next (c);
+		od = ((uint32_t) ir2[0] << 16) | ir2[1];
+		break;
+	}
+
+	if (ir1[0] & 4) {
+		/* indirect postindexed */
+		if (is) {
+			e68_exception_illegal (c);
+			return (1);
+		}
+
+		c->ea_val = e68_get_mem32 (c, c->ea_val + bd);
+		c->ea_val += (ix << scale) + od;
+	}
+	else {
+		/* indirect preindexed */
+		c->ea_val = e68_get_mem32 (c, c->ea_val + bd + (ix << scale));
+		c->ea_val += od;
+	}
+
+	return (0);
+}
 
 /* Dx */
 static
@@ -205,6 +312,7 @@ int e68_ea_110_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 {
 	uint16_t *ir1;
 	uint32_t idx;
+	unsigned scale;
 
 	if ((mask & 0x0040) == 0) {
 		e68_exception_illegal (c);
@@ -216,7 +324,21 @@ int e68_ea_110_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 	ir1 = &c->ir[c->ircnt];
 	e68_ifetch_next (c);
 
-	c->ea_val = e68_get_areg32 (c, ea & 7) + e68_exts8 (ir1[0]);
+	c->ea_val = e68_get_areg32 (c, ea & 7);
+
+	if (c->flags & E68_FLAG_68020) {
+		if (ir1[0] & 0x0100) {
+			return (e68_ea_full (c, ea, ir1, mask));
+		}
+		else {
+			scale = (ir1[0] >> 9) & 3;
+		}
+	}
+	else {
+		scale = 0;
+	}
+
+	c->ea_val += e68_exts8 (ir1[0]);
 
 	if (ir1[0] & 0x8000) {
 		idx = e68_get_areg32 (c, (ir1[0] >> 12) & 7);
@@ -229,7 +351,7 @@ int e68_ea_110_xxx (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 		idx = e68_exts16 (idx);
 	}
 
-	c->ea_val += idx;
+	c->ea_val += idx << scale;
 
 	e68_set_clk (c, 6);
 
@@ -313,6 +435,7 @@ int e68_ea_111_011 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 {
 	uint16_t *ir1;
 	uint32_t idx;
+	unsigned scale;
 
 	if ((mask & 0x0400) == 0) {
 		e68_exception_illegal (c);
@@ -325,6 +448,18 @@ int e68_ea_111_011 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 
 	ir1 = &c->ir[c->ircnt];
 	e68_ifetch_next (c);
+
+	if (c->flags & E68_FLAG_68020) {
+		if (ir1[0] & 0x0100) {
+			return (e68_ea_full (c, ea, ir1, mask));
+		}
+		else {
+			scale = (ir1[0] >> 9) & 3;
+		}
+	}
+	else {
+		scale = 0;
+	}
 
 	c->ea_val += e68_exts8 (ir1[0]);
 
@@ -339,7 +474,7 @@ int e68_ea_111_011 (e68000_t *c, unsigned ea, unsigned mask, unsigned size)
 		idx = e68_exts16 (idx);
 	}
 
-	c->ea_val += idx;
+	c->ea_val += idx << scale;
 
 	e68_set_clk (c, 6);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/internal.h                                    *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -42,6 +42,7 @@
 
 #define E68_FLAG_NOADDR 1
 #define E68_FLAG_68010  2
+#define E68_FLAG_68020  4
 
 
 void e68_set_sr (e68000_t *c, unsigned short val);
@@ -205,6 +206,7 @@ int e68_ea_set_val32 (e68000_t *c, uint32_t val);
 
 
 void e68_set_opcodes (e68000_t *c);
+void e68_set_opcodes_020 (e68000_t *c);
 
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/opcodes.c                                     *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -117,6 +117,11 @@ static unsigned op0000 (e68000_t *c)
 /* 0040_3C: ORI.W #XXXX, SR */
 static unsigned op0040_3c (e68000_t *c)
 {
+	if (c->supervisor == 0) {
+		e68_exception_privilege (c);
+		return (0);
+	}
+
 	e68_ifetch (c, 1);
 
 	e68_set_sr (c, (e68_get_sr (c) | c->ir[1]) & E68_SR_MASK);
@@ -1792,6 +1797,12 @@ static unsigned op48c0 (e68000_t *c)
 	}
 }
 
+/* 49C0: misc */
+static unsigned op49c0 (e68000_t *c)
+{
+	return (c->op49c0[(c->ir[0] >> 3) & 7] (c));
+}
+
 /* 4A00: TST.B <EA> */
 static unsigned op4a00 (e68000_t *c)
 {
@@ -2337,12 +2348,26 @@ static unsigned op4e7a (e68000_t *c)
 		val = e68_get_dfc (c);
 		break;
 
+	case 0x002:
+		if (((c)->flags & E68_FLAG_68020) == 0) {
+			return (e68_op_undefined (c));
+		}
+		val = e68_get_cacr (c);
+		break;
+
 	case 0x800:
 		val = e68_get_usp (c);
 		break;
 
 	case 0x801:
 		val = e68_get_vbr (c);
+		break;
+
+	case 0x802:
+		if (((c)->flags & E68_FLAG_68020) == 0) {
+			return (e68_op_undefined (c));
+		}
+		val = e68_get_caar (c);
 		break;
 
 	default:
@@ -2396,12 +2421,26 @@ static unsigned op4e7b (e68000_t *c)
 		e68_set_dfc (c, val);
 		break;
 
+	case 0x002:
+		if (((c)->flags & E68_FLAG_68020) == 0) {
+			return (e68_op_undefined (c));
+		}
+		e68_set_cacr (c, val);
+		break;
+
 	case 0x800:
 		e68_set_usp (c, val);
 		break;
 
 	case 0x801:
 		e68_set_vbr (c, val);
+		break;
+
+	case 0x802:
+		if (((c)->flags & E68_FLAG_68020) == 0) {
+			return (e68_op_undefined (c));
+		}
+		e68_set_caar (c, val);
 		break;
 
 	default:
@@ -5472,7 +5511,7 @@ e68_opcode_f e68_opcodes[1024] = {
 	op4200, op4240, op4280, op42c0,   NULL,   NULL, op4180, op41c0, /* 4200 */
 	op4400, op4440, op4480, op44c0,   NULL,   NULL, op4180, op41c0, /* 4400 */
 	op4600, op4640, op4680, op46c0,   NULL,   NULL, op4180, op41c0, /* 4600 */
-	op4800, op4840, op4880, op48c0,   NULL,   NULL, op4180, op41c0, /* 4800 */
+	op4800, op4840, op4880, op48c0,   NULL,   NULL, op4180, op49c0, /* 4800 */
 	op4a00, op4a40, op4a80, op4ac0,   NULL,   NULL, op4180, op41c0, /* 4A00 */
 	  NULL,   NULL, op4c80, op4cc0,   NULL,   NULL, op4180, op41c0, /* 4C00 */
 	  NULL, op4e40, op4e80, op4ec0,   NULL,   NULL, op4180, op41c0, /* 4E00 */
@@ -5566,6 +5605,9 @@ e68_opcode_f e68_opcodes[1024] = {
 	opf000, opf000, opf000, opf000, opf000, opf000, opf000, opf000
 };
 
+static e68_opcode_f e68_op_49c0[8] = {
+	  NULL, op41c0, op41c0, op41c0, op41c0, op41c0, op41c0, op41c0
+};
 
 void e68_set_opcodes (e68000_t *c)
 {
@@ -5578,5 +5620,9 @@ void e68_set_opcodes (e68000_t *c)
 		else {
 			c->opcodes[i] = e68_op_undefined;
 		}
+	}
+
+	for (i = 0; i < 8; i++) {
+		c->op49c0[i] = (e68_op_49c0[i] == NULL) ? e68_op_undefined : e68_op_49c0[i];
 	}
 }

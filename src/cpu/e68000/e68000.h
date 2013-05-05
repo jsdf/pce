@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.h                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -61,6 +61,8 @@ struct e68000_s;
 #define e68_get_vbr(c) ((c)->vbr & 0xffffffff)
 #define e68_get_sfc(c) ((c)->sfc & 0x00000003)
 #define e68_get_dfc(c) ((c)->dfc & 0x00000003)
+#define e68_get_cacr(c) ((c)->vbr & 0xffffffff)
+#define e68_get_caar(c) ((c)->vbr & 0xffffffff)
 #define e68_get_ipl(c) ((c)->int_ipl)
 #define e68_get_iml(c) (((c)->sr >> 8) & 7)
 
@@ -68,6 +70,8 @@ struct e68000_s;
 #define e68_set_vbr(c, v) do { (c)->vbr = (v) & 0xffffffff; } while (0)
 #define e68_set_sfc(c, v) do { (c)->sfc = (v) & 0x00000003; } while (0)
 #define e68_set_dfc(c, v) do { (c)->dfc = (v) & 0x00000003; } while (0)
+#define e68_set_cacr(c, v) do { (c)->cacr = (v) & 0xffffffff; } while (0)
+#define e68_set_caar(c, v) do { (c)->cacr = (v) & 0xffffffff; } while (0)
 
 #define e68_get_sr_c(c) (((c)->sr & E68_SR_C) != 0)
 #define e68_get_sr_v(c) (((c)->sr & E68_SR_V) != 0)
@@ -136,6 +140,9 @@ typedef struct e68000_s {
 	uint32_t           sfc;
 	uint32_t           dfc;
 
+	uint32_t           cacr;
+	uint32_t           caar;
+
 	uint32_t           last_pc;
 	uint16_t           last_trap_a;
 	uint16_t           last_trap_f;
@@ -148,6 +155,9 @@ typedef struct e68000_s {
 
 	unsigned           ea_typ;
 	uint32_t           ea_val;
+	unsigned long      ea_bf_ofs;
+	unsigned           ea_bf_width;
+	unsigned char      ea_bf_val[5];
 
 	unsigned           int_ipl;
 	char               int_nmi;
@@ -163,6 +173,7 @@ typedef struct e68000_s {
 	unsigned long long clkcnt;
 
 	e68_opcode_f       opcodes[1024];
+	e68_opcode_f       op49c0[8];
 } e68000_t;
 
 
@@ -371,6 +382,8 @@ void e68_set_68000 (e68000_t *c);
 
 void e68_set_68010 (e68000_t *c);
 
+void e68_set_68020 (e68000_t *c);
+
 /*!***************************************************************************
  * @short Get the number of executed instructions
  *****************************************************************************/
@@ -484,6 +497,7 @@ void e68_clock (e68000_t *c, unsigned long n);
 #define E68_DFLAG_RTS    0x0010
 #define E68_DFLAG_DEP_CC 0x0020
 #define E68_DFLAG_68010  0x0040
+#define E68_DFLAG_68020  0x0080
 
 typedef struct {
 	unsigned flags;
