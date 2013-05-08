@@ -1518,6 +1518,7 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 
 	case EGA_GRC_INDEX: /* 3CE */
 		ega_set_grc_index (ega, val);
+		break;
 
 	case EGA_GRC_DATA: /* 3CF */
 		ega_set_grc_data (ega, val);
