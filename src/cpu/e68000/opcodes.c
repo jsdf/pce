@@ -2784,7 +2784,7 @@ static unsigned op5180 (e68000_t *c)
 }
 
 /* DBcc Dx, dist */
-static unsigned op_dbcc (e68000_t *c, int cond)
+unsigned e68_op_dbcc (e68000_t *c, int cond)
 {
 	unsigned reg;
 	uint16_t val;
@@ -2817,7 +2817,7 @@ static unsigned op_dbcc (e68000_t *c, int cond)
 }
 
 /* Scc <EA> */
-static unsigned op_scc (e68000_t *c, int cond)
+unsigned e68_op_scc (e68000_t *c, int cond)
 {
 	uint8_t val;
 
@@ -2833,20 +2833,20 @@ static unsigned op_scc (e68000_t *c, int cond)
 static unsigned op50c0 (e68000_t *c)
 {
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, 1));
+		return (e68_op_dbcc (c, 1));
 	}
 
-	return (op_scc (c, 1));
+	return (e68_op_scc (c, 1));
 }
 
 /* 51C0: SF <EA> / DBF Dx, dist */
 static unsigned op51c0 (e68000_t *c)
 {
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, 0));
+		return (e68_op_dbcc (c, 0));
 	}
 
-	return (op_scc (c, 0));
+	return (e68_op_scc (c, 0));
 }
 
 /* 52C0: SHI <EA> / DBHI Dx, dist */
@@ -2857,10 +2857,10 @@ static unsigned op52c0 (e68000_t *c)
 	cond = (!e68_get_sr_c (c) && !e68_get_sr_z (c));
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 53C0: SLS <EA> / DBLS Dx, dist */
@@ -2871,10 +2871,10 @@ static unsigned op53c0 (e68000_t *c)
 	cond = (e68_get_sr_c (c) || e68_get_sr_z (c));
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 54C0: SCC <EA> / DBCC Dx, dist */
@@ -2885,10 +2885,10 @@ static unsigned op54c0 (e68000_t *c)
 	cond = !e68_get_sr_c (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 55C0: SCS <EA> / DBCS Dx, dist */
@@ -2899,10 +2899,10 @@ static unsigned op55c0 (e68000_t *c)
 	cond = e68_get_sr_c (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 56C0: SNE <EA> / DBNE Dx, dist */
@@ -2913,10 +2913,10 @@ static unsigned op56c0 (e68000_t *c)
 	cond = !e68_get_sr_z (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 57C0: SEQ <EA> / DBEQ Dx, dist */
@@ -2927,10 +2927,10 @@ static unsigned op57c0 (e68000_t *c)
 	cond = e68_get_sr_z (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 58C0: SVC <EA> / DBVC Dx, dist */
@@ -2941,10 +2941,10 @@ static unsigned op58c0 (e68000_t *c)
 	cond = !e68_get_sr_v (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 59C0: SVS <EA> / DBVS Dx, dist */
@@ -2955,10 +2955,10 @@ static unsigned op59c0 (e68000_t *c)
 	cond = e68_get_sr_v (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5AC0: SPL <EA> / DBPL Dx, dist */
@@ -2969,10 +2969,10 @@ static unsigned op5ac0 (e68000_t *c)
 	cond = !e68_get_sr_n (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5BC0: SMI <EA> / DBMI Dx, dist */
@@ -2983,10 +2983,10 @@ static unsigned op5bc0 (e68000_t *c)
 	cond = e68_get_sr_n (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5CC0: SGE <EA> / DBGE Dx, dist */
@@ -2997,10 +2997,10 @@ static unsigned op5cc0 (e68000_t *c)
 	cond = (e68_get_sr_n (c) == e68_get_sr_v (c));
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5DC0: SLT <EA> / DBLT Dx, dist */
@@ -3011,10 +3011,10 @@ static unsigned op5dc0 (e68000_t *c)
 	cond = (e68_get_sr_n (c) != e68_get_sr_v (c));
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5EC0: SGT <EA> / DBGT Dx, dist */
@@ -3025,10 +3025,10 @@ static unsigned op5ec0 (e68000_t *c)
 	cond = (e68_get_sr_n (c) == e68_get_sr_v (c)) && !e68_get_sr_z (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* 5FC0: SLE <EA> / DBLE Dx, dist */
@@ -3039,10 +3039,10 @@ static unsigned op5fc0 (e68000_t *c)
 	cond = (e68_get_sr_n (c) != e68_get_sr_v (c)) || e68_get_sr_z (c);
 
 	if ((c->ir[0] & 0x38) == 0x08) {
-		return (op_dbcc (c, cond));
+		return (e68_op_dbcc (c, cond));
 	}
 
-	return (op_scc (c, cond));
+	return (e68_op_scc (c, cond));
 }
 
 /* conditional jump */

@@ -158,6 +158,9 @@ void e68_ifetch_next (e68000_t *c)
 }
 
 
+unsigned e68_op_dbcc (e68000_t *c, int cond);
+unsigned e68_op_scc (e68000_t *c, int cond);
+
 void e68_cc_set_nz_8 (e68000_t *c, uint8_t msk, uint8_t val);
 void e68_cc_set_nz_16 (e68000_t *c, uint8_t msk, uint16_t val);
 void e68_cc_set_nz_32 (e68000_t *c, uint8_t msk, uint32_t val);

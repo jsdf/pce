@@ -94,6 +94,13 @@ static const char *op_scc[16] = {
 	"SGE", "SLT", "SGT", "SLE"
 };
 
+static const char *op_trapcc[16] = {
+	 "TRAPT",  "TRAPF", "TRAPHI", "TRAPLS",
+	"TRAPCC", "TRAPCS", "TRAPNE", "TRAPEQ",
+	"TRAPVC", "TRAPVS", "TRAPPL", "TRAPMI",
+	"TRAPGE", "TRAPLT", "TRAPGT", "TRAPLE"
+};
+
 static const char *hex_prefix = "$";
 
 
@@ -1502,23 +1509,38 @@ static void d_5180 (e68_dasm_t *da, const uint8_t *src)
 /* 50C0: misc */
 static void d_50c0 (e68_dasm_t *da, const uint8_t *src)
 {
-	unsigned c;
+	unsigned c, op;
 
 	c = (da->ir[0] >> 8) & 0x0f;
+	op = da->ir[0] & 0x3f;
 
 	if (c > 1) {
 		da->flags |= E68_DFLAG_DEP_CC;
 	}
 
-	switch ((da->ir[0] >> 3) & 7) {
-	case 0x01:
+	if (op == 0x3a) {
+		/* TRAPcc.W */
+		dasm_op1 (da, op_trapcc[c], src, ARG_IMM16, 0);
+		da->flags |= E68_DFLAG_68020;
+	}
+	else if (op == 0x3b) {
+		/* TRAPcc.L */
+		dasm_op1 (da, op_trapcc[c], src, ARG_IMM32, 0);
+		da->flags |= E68_DFLAG_68020;
+	}
+	else if (op == 0x3c) {
+		/* TRAPcc */
+		dasm_op0 (da, op_trapcc[c]);
+		da->flags |= E68_DFLAG_68020;
+	}
+	else if ((op & 0x38) == 0x08) {
+		/* DBcc */
 		dasm_op2 (da, op_dbcc[c], src, ARG_DREG0, ARG_DIST16, 0);
 		da->flags |= E68_DFLAG_JUMP;
-		break;
-
-	default:
+	}
+	else {
+		/* Scc */
 		dasm_op1 (da, op_scc[c], src, ARG_EA, 8);
-		break;
 	}
 }
 

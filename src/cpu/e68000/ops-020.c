@@ -421,6 +421,149 @@ static unsigned op4c40 (e68000_t *c)
 	return (c->ircnt);
 }
 
+/* TRAPcc.X */
+unsigned e68_op_trapcc (e68000_t *c, int cond)
+{
+	switch (c->ir[0] & 7) {
+	case 2:
+		e68_set_pc (c, e68_get_pc (c) + 4);
+		break;
+
+	case 3:
+		e68_set_pc (c, e68_get_pc (c) + 6);
+		break;
+
+	case 4:
+		e68_set_pc (c, e68_get_pc (c) + 2);
+		break;
+
+	default:
+		return (e68_op_undefined (c));
+	}
+
+	if (cond) {
+		e68_exception_overflow (c);
+	}
+
+	e68_set_clk (c, 4);
+
+	return (0);
+}
+
+static
+unsigned op_scc_dbcc_trapcc (e68000_t *c, int cond)
+{
+	unsigned op;
+
+	op = c->ir[0] & 0x3f;
+
+	if ((op == 0x3a) || (op == 0x3b) || (op == 0x3c)) {
+		return (e68_op_trapcc (c, cond));
+	}
+
+	if ((op & 0x38) == 0x08) {
+		return (e68_op_dbcc (c, cond));
+	}
+
+	return (e68_op_scc (c, cond));
+}
+
+/* 50C0: ST <EA> / DBT Dx, dist */
+static unsigned op50c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, 1));
+}
+
+/* 51C0: SF <EA> / DBF Dx, dist */
+static unsigned op51c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, 0));
+}
+
+/* 52C0: SHI <EA> / DBHI Dx, dist */
+static unsigned op52c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, !e68_get_sr_c (c) && !e68_get_sr_z (c)));
+}
+
+/* 53C0: SLS <EA> / DBLS Dx, dist */
+static unsigned op53c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_c (c) || e68_get_sr_z (c)));
+}
+
+/* 54C0: SCC <EA> / DBCC Dx, dist */
+static unsigned op54c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, !e68_get_sr_c (c)));
+}
+
+/* 55C0: SCS <EA> / DBCS Dx, dist */
+static unsigned op55c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_c (c)));
+}
+
+/* 56C0: SNE <EA> / DBNE Dx, dist */
+static unsigned op56c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, !e68_get_sr_z (c)));
+}
+
+/* 57C0: SEQ <EA> / DBEQ Dx, dist */
+static unsigned op57c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_z (c)));
+}
+
+/* 58C0: SVC <EA> / DBVC Dx, dist */
+static unsigned op58c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, !e68_get_sr_v (c)));
+}
+
+/* 59C0: SVS <EA> / DBVS Dx, dist */
+static unsigned op59c0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_v (c)));
+}
+
+/* 5AC0: SPL <EA> / DBPL Dx, dist */
+static unsigned op5ac0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, !e68_get_sr_n (c)));
+}
+
+/* 5BC0: SMI <EA> / DBMI Dx, dist */
+static unsigned op5bc0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_n (c)));
+}
+
+/* 5CC0: SGE <EA> / DBGE Dx, dist */
+static unsigned op5cc0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_n (c) == e68_get_sr_v (c)));
+}
+
+/* 5DC0: SLT <EA> / DBLT Dx, dist */
+static unsigned op5dc0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, e68_get_sr_n (c) != e68_get_sr_v (c)));
+}
+
+/* 5EC0: SGT <EA> / DBGT Dx, dist */
+static unsigned op5ec0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, (e68_get_sr_n (c) == e68_get_sr_v (c)) && !e68_get_sr_z (c)));
+}
+
+/* 5FC0: SLE <EA> / DBLE Dx, dist */
+static unsigned op5fc0 (e68000_t *c)
+{
+	return (op_scc_dbcc_trapcc (c, (e68_get_sr_n (c) != e68_get_sr_v (c)) || e68_get_sr_z (c)));
+}
+
 /* conditional jump */
 static inline
 unsigned op_bcc (e68000_t *c, int cond)
@@ -950,14 +1093,14 @@ e68_opcode_f e68020_opcodes[1024] = {
 	op4a00, op4a40, op4a80,   NULL, op4100,   NULL,   NULL,   NULL, /* 4A00 */
 	op4c00, op4c40,   NULL,   NULL, op4100,   NULL,   NULL,   NULL, /* 4C00 */
 	  NULL,   NULL,   NULL,   NULL, op4100,   NULL,   NULL,   NULL, /* 4E00 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5000 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5200 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5400 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5600 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5800 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5A00 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5C00 */
-	  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL, /* 5E00 */
+	  NULL,   NULL,   NULL, op50c0,   NULL,   NULL,   NULL, op51c0, /* 5000 */
+	  NULL,   NULL,   NULL, op52c0,   NULL,   NULL,   NULL, op53c0, /* 5200 */
+	  NULL,   NULL,   NULL, op54c0,   NULL,   NULL,   NULL, op55c0, /* 5400 */
+	  NULL,   NULL,   NULL, op56c0,   NULL,   NULL,   NULL, op57c0, /* 5600 */
+	  NULL,   NULL,   NULL, op58c0,   NULL,   NULL,   NULL, op59c0, /* 5800 */
+	  NULL,   NULL,   NULL, op5ac0,   NULL,   NULL,   NULL, op5bc0, /* 5A00 */
+	  NULL,   NULL,   NULL, op5cc0,   NULL,   NULL,   NULL, op5dc0, /* 5C00 */
+	  NULL,   NULL,   NULL, op5ec0,   NULL,   NULL,   NULL, op5fc0, /* 5E00 */
 	op6000, op6000, op6000, op6000, op6100, op6100, op6100, op6100, /* 6000 */
 	op6200, op6200, op6200, op6200, op6300, op6300, op6300, op6300, /* 6200 */
 	op6400, op6400, op6400, op6400, op6500, op6500, op6500, op6500, /* 6400 */
