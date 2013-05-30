@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/traps.c                                     *
  * Created:     2007-11-22 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,7 +33,7 @@ typedef struct {
 
 
 static
-trap_list_t trap_list[] = {
+trap_list_t trap_list_1[] = {
 	{ 0xa000, "Open" },
 	{ 0xa001, "Close" },
 	{ 0xa002, "Read" },
@@ -114,13 +114,20 @@ trap_list_t trap_list[] = {
 	{ 0xa04e, "AddDrive" },
 	{ 0xa04f, "RDrvrInstall" },
 	{ 0xa050, "RelString" },
+	{ 0xa051, "ReadXPram" },
+	{ 0xa052, "WriteXPram" },
 	{ 0xa054, "UprString" },
 	{ 0xa055, "StripAddress" },
+	{ 0xa056, "LowerText" },
 	{ 0xa057, "SetAppBase" },
 	{ 0xa058, "InsTime" },
 	{ 0xa059, "RmvTime" },
 	{ 0xa05a, "PrimeTime" },
+	{ 0xa05b, "PowerOff" },
+	{ 0xa05c, "MemoryDispatch" },
 	{ 0xa05d, "SwapMMUMode" },
+	{ 0xa05e, "NMInstall" },
+	{ 0xa05f, "NMRemove" },
 	{ 0xa060, "HFSDispatch" },
 	{ 0xa061, "MaxBlock" },
 	{ 0xa062, "PurgeSpace" },
@@ -132,6 +139,8 @@ trap_list_t trap_list[] = {
 	{ 0xa068, "HClrRBit" },
 	{ 0xa069, "HGetState" },
 	{ 0xa06a, "HSetState" },
+	{ 0xa06c, "InitFS" },
+	{ 0xa06d, "InitEvents" },
 	{ 0xa06e, "SlotManager" },
 	{ 0xa06f, "SlotVInstall" },
 	{ 0xa070, "SlotVRemove" },
@@ -153,7 +162,31 @@ trap_list_t trap_list[] = {
 	{ 0xa082, "DTInstall" },
 	{ 0xa083, "SetOSDefault" },
 	{ 0xa084, "GetOSDefault" },
+	{ 0xa085, "PMgrOp" },
+	{ 0xa086, "IOPInfoAccess" },
+	{ 0xa087, "IOPMsgRequest" },
+	{ 0xa088, "IOPMoveData", },
+	{ 0xa08a, "Sleep" },
+	{ 0xa08b, "CommToolboxDispatch" },
+	{ 0xa08d, "DebugUtil" },
+	{ 0xa08f, "DeferUserFn" },
 	{ 0xa090, "SysEnvirons" },
+	{ 0xa091, "Translate24to32" },
+	{ 0xa092, "EgretDispatch" },
+	{ 0xa098, "HWPriv" },
+	{ 0x0000, NULL }
+};
+
+static
+trap_list_t trap_list_2[] = {
+	{ 0xa800, "SoundDispatch" },
+	{ 0xa801, "SndDisposeChannel" },
+	{ 0xa802, "SndAddModifier" },
+	{ 0xa803, "SndDoCommand" },
+	{ 0xa804, "SndDoImmediate" },
+	{ 0xa805, "SndPlay" },
+	{ 0xa806, "SndControl" },
+	{ 0xa807, "SndNewChannel" },
 	{ 0xa808, "InitProcMenu" },
 	{ 0xa809, "GetCVariant" },
 	{ 0xa80a, "GetWVariant" },
@@ -166,17 +199,26 @@ trap_list_t trap_list[] = {
 	{ 0xa811, "TESelView" },
 	{ 0xa812, "TEPinScroll" },
 	{ 0xa813, "TEAutoView" },
+	{ 0xa814, "SetFractEnable" },
 	{ 0xa815, "SCSIDispatch" },
 	{ 0xa816, "Pack8" },
 	{ 0xa817, "CopyMask" },
 	{ 0xa818, "FixAtan2" },
+	{ 0xa819, "XMunger" },
+	{ 0xa81a, "HOpenResFile" },
+	{ 0xa81b, "HCreateResFile" },
 	{ 0xa81c, "Count1Types" },
+	{ 0xa81d, "InvalMenuBar" },
 	{ 0xa81f, "Get1Resource" },
 	{ 0xa820, "Get1NamedResource" },
 	{ 0xa821, "MaxSizeRsrc" },
+	{ 0xa822, "ResourceDispatch" },
+	{ 0xa823, "AliasDispatch" },
 	{ 0xa826, "InsMenuItem" },
 	{ 0xa827, "HideDItem" },
 	{ 0xa828, "ShowDItem" },
+	{ 0xa829, "LayerDispatch" },
+	{ 0xa82a, "ComponentDispatch" },
 	{ 0xa82b, "Pack9" },
 	{ 0xa82c, "Pack10" },
 	{ 0xa82d, "Pack11" },
@@ -184,8 +226,10 @@ trap_list_t trap_list[] = {
 	{ 0xa82f, "Pack13" },
 	{ 0xa830, "Pack14" },
 	{ 0xa831, "Pack15" },
+	{ 0xa833, "ScrnBitMap" },
 	{ 0xa834, "SetFScaleDisable" },
 	{ 0xa835, "FontMetrics" },
+	{ 0xa836, "GetMaskTable" },
 	{ 0xa837, "MeasureText" },
 	{ 0xa838, "CalcMask" },
 	{ 0xa839, "SeedFill" },
@@ -207,6 +251,7 @@ trap_list_t trap_list[] = {
 	{ 0xa849, "FracSqrt" },
 	{ 0xa84a, "FracMul" },
 	{ 0xa84b, "FracDiv" },
+	{ 0xa84c, "UserDelay" },
 	{ 0xa84d, "FixDiv" },
 	{ 0xa84e, "GetItemCmd" },
 	{ 0xa84f, "SetItemCmd" },
@@ -214,6 +259,7 @@ trap_list_t trap_list[] = {
 	{ 0xa851, "SetCursor" },
 	{ 0xa852, "HideCursor" },
 	{ 0xa853, "ShowCursor" },
+	{ 0xa854, "FontDispatch" },
 	{ 0xa855, "ShieldCursor" },
 	{ 0xa856, "ObscureCursor" },
 	{ 0xa858, "BitAnd" },
@@ -253,8 +299,8 @@ trap_list_t trap_list[] = {
 	{ 0xa87a, "GetClip" },
 	{ 0xa87b, "ClipRect" },
 	{ 0xa87c, "BackPat" },
-	{ 0xa87d, "CloseCPort" },
 	{ 0xa87d, "ClosePort" },
+	{ 0xa87d, "CloseCPort" },
 	{ 0xa87e, "AddPt" },
 	{ 0xa87f, "SubPt" },
 	{ 0xa880, "SetPt" },
@@ -272,6 +318,7 @@ trap_list_t trap_list[] = {
 	{ 0xa88c, "StringWidth" },
 	{ 0xa88d, "CharWidth" },
 	{ 0xa88e, "SpaceExtra" },
+	{ 0xa88f, "OSDispatch" },
 	{ 0xa890, "StdLine" },
 	{ 0xa891, "LineTo" },
 	{ 0xa892, "Line" },
@@ -287,6 +334,7 @@ trap_list_t trap_list[] = {
 	{ 0xa89c, "PenMode" },
 	{ 0xa89d, "PenPat" },
 	{ 0xa89e, "PenNormal" },
+	{ 0xa89f, "Unimplemented" },
 	{ 0xa8a0, "StdRect" },
 	{ 0xa8a1, "FrameRect" },
 	{ 0xa8a2, "PaintRect" },
@@ -303,6 +351,7 @@ trap_list_t trap_list[] = {
 	{ 0xa8ad, "PtInRect" },
 	{ 0xa8ae, "EmptyRect" },
 	{ 0xa8af, "StdRRect" },
+	{ 0xa8b0, "FrameRoundRect" },
 	{ 0xa8b1, "PaintRoundRect" },
 	{ 0xa8b2, "EraseRoundRect" },
 	{ 0xa8b3, "InverRoundRect" },
@@ -341,6 +390,7 @@ trap_list_t trap_list[] = {
 	{ 0xa8d4, "EraseRgn" },
 	{ 0xa8d5, "InverRgn" },
 	{ 0xa8d6, "FillRgn" },
+	{ 0xa8d7, "BitMapToRegion" },
 	{ 0xa8d8, "NewRgn" },
 	{ 0xa8d9, "DisposRgn" },
 	{ 0xa8da, "OpenRgn" },
@@ -372,11 +422,13 @@ trap_list_t trap_list[] = {
 	{ 0xa8f4, "ClosePicture" },
 	{ 0xa8f5, "KillPicture" },
 	{ 0xa8f6, "DrawPicture" },
+	{ 0xa8f7, "Layout" },
 	{ 0xa8f8, "ScalePt" },
 	{ 0xa8f9, "MapPt" },
 	{ 0xa8fa, "MapRect" },
 	{ 0xa8fb, "MapRgn" },
 	{ 0xa8fc, "MapPoly" },
+	{ 0xa8fd, "PrGlue" },
 	{ 0xa8fe, "InitFonts" },
 	{ 0xa8ff, "GetFName" },
 	{ 0xa900, "GetFNum" },
@@ -555,7 +607,6 @@ trap_list_t trap_list[] = {
 	{ 0xa9ad, "RmveResource" },
 	{ 0xa9ae, "RmveReference" },
 	{ 0xa9af, "ResError" },
-	{ 0xa9b0, "FrameRoundRect" },
 	{ 0xa9b0, "WriteResource" },
 	{ 0xa9b1, "CreateResFile" },
 	{ 0xa9b2, "SystemEvent" },
@@ -582,6 +633,7 @@ trap_list_t trap_list[] = {
 	{ 0xa9c7, "Date2Sec" },
 	{ 0xa9c8, "SysBeep" },
 	{ 0xa9c9, "SysError" },
+	{ 0xa9ca, "PutIcon" },
 	{ 0xa9cb, "TEGetText" },
 	{ 0xa9cc, "TEInit" },
 	{ 0xa9cd, "TEDispose" },
@@ -629,12 +681,14 @@ trap_list_t trap_list[] = {
 	{ 0xa9f5, "GetAppParms" },
 	{ 0xa9f6, "GetResFileAttrs" },
 	{ 0xa9f7, "SetResFileAttrs" },
+	{ 0xa9f8, "MethodDispatch" },
 	{ 0xa9f9, "InfoScrap" },
 	{ 0xa9fa, "UnlodeScrap" },
 	{ 0xa9fb, "LodeScrap" },
 	{ 0xa9fc, "ZeroScrap" },
 	{ 0xa9fd, "GetScrap" },
 	{ 0xa9fe, "PutScrap" },
+	{ 0xa9ff, "Debugger" },
 	{ 0xaa00, "OpenCport" },
 	{ 0xaa01, "InitCport" },
 	{ 0xaa03, "NewPixMap" },
@@ -673,6 +727,7 @@ trap_list_t trap_list[] = {
 	{ 0xaa25, "DisposCIcon" },
 	{ 0xaa26, "DisposCCursor" },
 	{ 0xaa27, "GetMaxDevice" },
+	{ 0xaa28, "GetCTSeed" },
 	{ 0xaa29, "GetDeviceList" },
 	{ 0xaa2a, "GetMainDevice" },
 	{ 0xaa2b, "GetNextDevice" },
@@ -688,6 +743,7 @@ trap_list_t trap_list[] = {
 	{ 0xaa35, "InvertColor" },
 	{ 0xaa36, "RealColor" },
 	{ 0xaa37, "GetSubTable" },
+	{ 0xaa38, "UpdatePixMap" },
 	{ 0xaa39, "MakeITable" },
 	{ 0xaa3a, "AddSearch" },
 	{ 0xaa3b, "AddComp" },
@@ -709,8 +765,11 @@ trap_list_t trap_list[] = {
 	{ 0xaa4b, "NewCDialog" },
 	{ 0xaa4c, "DelSearch" },
 	{ 0xaa4d, "DelComp" },
+	{ 0xaa4e, "SetStdCProcs" },
 	{ 0xaa4f, "CalcCMask" },
 	{ 0xaa50, "SeedCFill" },
+	{ 0xaa51, "CopyDeepMask" },
+	{ 0xaa52, "HighLevelFSDispatch" },
 	{ 0xaa60, "DelMCEntries" },
 	{ 0xaa61, "GetMCInfo" },
 	{ 0xaa62, "SetMCInfo" },
@@ -718,14 +777,17 @@ trap_list_t trap_list[] = {
 	{ 0xaa64, "GetMCEntry" },
 	{ 0xaa65, "SetMCEntries" },
 	{ 0xaa66, "MenuChoice" },
+	{ 0xaa67, "ModalDialogMenuSetup" },
+	{ 0xaa68, "DialogDispatch" },
 	{ 0x0000, NULL }
 };
 
 
 const char *mac_get_trap_name (unsigned trap)
 {
-	unsigned i;
-	unsigned base, mask;
+	unsigned    i;
+	unsigned    base, mask;
+	trap_list_t *list;
 
 	if ((trap & 0xf000) != 0xa000) {
 		return (NULL);
@@ -733,17 +795,19 @@ const char *mac_get_trap_name (unsigned trap)
 
 	if (trap & 0x0800) {
 		mask = 0xf800 | 0x03ff;
+		list = trap_list_2;
 	}
 	else {
 		mask = 0xf800 | 0x00ff;
+		list = trap_list_1;
 	}
 
 	base = trap & mask;
 
 	i = 0;
-	while (trap_list[i].name != NULL) {
-		if ((trap_list[i].trap & mask) == base) {
-			return (trap_list[i].name);
+	while (list[i].name != NULL) {
+		if ((list[i].trap & mask) == base) {
+			return (list[i].name);
 		}
 
 		i += 1;
