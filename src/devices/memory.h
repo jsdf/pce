@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.h                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -305,6 +305,15 @@ void mem_move_to_front (memory_t *mem, unsigned long addr);
  * @return blk The memory block or NULL
  *****************************************************************************/
 mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr);
+
+/*!***************************************************************************
+ * @short Get a pointer to memory
+ * @param  mem  The memory structure
+ * @param  addr The pointer address
+ * @param  size The requested block size
+ * @return A pointer to a block of memory at address addr and of size size
+ *****************************************************************************/
+void *mem_get_ptr (memory_t *mem, unsigned long addr, unsigned long size);
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr);
 unsigned short mem_get_uint16_be (memory_t *mem, unsigned long addr);

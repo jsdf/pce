@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/memory.c                                         *
  * Created:     2000-04-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -679,6 +679,27 @@ mem_blk_t *mem_get_blk_inline (memory_t *mem, unsigned long addr, unsigned last)
 mem_blk_t *mem_get_blk (memory_t *mem, unsigned long addr)
 {
 	return (mem_get_blk_inline (mem, addr, 0));
+}
+
+void *mem_get_ptr (memory_t *mem, unsigned long addr, unsigned long size)
+{
+	mem_blk_t *blk;
+
+	if ((blk = mem_get_blk (mem, addr)) == NULL) {
+		return (NULL);
+	}
+
+	if (blk->data == NULL) {
+		return (NULL);
+	}
+
+	addr -= blk->addr1;
+
+	if ((blk->size - addr) < size) {
+		return (NULL);
+	}
+
+	return (blk->data + addr);
 }
 
 unsigned char mem_get_uint8 (memory_t *mem, unsigned long addr)
