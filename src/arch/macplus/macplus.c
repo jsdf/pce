@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -127,7 +127,7 @@ void mac_interrupt_check (macplus_t *sim)
 	mac_log_deb ("interrupt level %u\n", i);
 #endif
 
-	e68_interrupt (sim->cpu, i, 0, 1);
+	e68_interrupt (sim->cpu, i);
 }
 
 void mac_interrupt (macplus_t *sim, unsigned level, int val)

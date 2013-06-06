@@ -123,6 +123,10 @@ typedef struct e68000_s {
 	void               (*reset) (void *ext, unsigned char val);
 	unsigned char      reset_val;
 
+	unsigned char      inta_val;
+	void               *inta_ext;
+	unsigned           (*inta) (void *ext, unsigned level);
+
 	void               *hook_ext;
 	int                (*hook) (void *ext, unsigned val);
 
@@ -166,8 +170,6 @@ typedef struct e68000_s {
 
 	unsigned           int_ipl;
 	char               int_nmi;
-	unsigned           int_vect;
-	int                int_avec;
 
 	unsigned long      delay;
 
@@ -377,6 +379,8 @@ void e68_set_ram (e68000_t *c, unsigned char *ram, unsigned long cnt);
 
 void e68_set_reset_fct (e68000_t *c, void *ext, void *fct);
 
+void e68_set_inta_fct (e68000_t *c, void *ext, void *fct);
+
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 
 void e68_set_flags (e68000_t *c, unsigned flags, int set);
@@ -473,7 +477,7 @@ void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect);
 /*!***************************************************************************
  * @short Set the interrupt priority level input
  *****************************************************************************/
-void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec);
+void e68_interrupt (e68000_t *c, unsigned level);
 
 /*!***************************************************************************
  * @short Reset a 68000 cpu core

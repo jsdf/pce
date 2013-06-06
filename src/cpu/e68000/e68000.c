@@ -51,6 +51,10 @@ void e68_init (e68000_t *c)
 	c->reset = NULL;
 	c->reset_val = 0;
 
+	c->inta_val = 0;
+	c->inta_ext = NULL;
+	c->inta = NULL;
+
 	c->log_ext = NULL;
 	c->log_opcode = NULL;
 	c->log_undef = NULL;
@@ -67,8 +71,6 @@ void e68_init (e68000_t *c)
 
 	c->int_ipl = 0;
 	c->int_nmi = 0;
-	c->int_vect = 0;
-	c->int_avec = 0;
 
 	c->delay = 1;
 
@@ -160,6 +162,12 @@ void e68_set_reset_fct (e68000_t *c, void *ext, void *fct)
 {
 	c->reset_ext = ext;
 	c->reset = fct;
+}
+
+void e68_set_inta_fct (e68000_t *c, void *ext, void *fct)
+{
+	c->inta_ext = ext;
+	c->inta = fct;
 }
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct)
@@ -644,7 +652,7 @@ void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect)
 	e68_set_clk (c, 62);
 }
 
-void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec)
+void e68_interrupt (e68000_t *c, unsigned level)
 {
 	if (level > 0) {
 		c->halt &= ~1U;
@@ -655,8 +663,6 @@ void e68_interrupt (e68000_t *c, unsigned level, unsigned vect, int avec)
 	}
 
 	c->int_ipl = level;
-	c->int_vect = vect;
-	c->int_avec = avec;
 }
 
 static
@@ -739,16 +745,24 @@ void e68_execute (e68000_t *c)
 		c->int_nmi = 0;
 	}
 	else if (c->int_ipl > 0) {
-		unsigned iml;
+		unsigned iml, ipl, vec;
 
 		iml = e68_get_iml (c);
+		ipl = c->int_ipl;
 
-		if (iml < c->int_ipl) {
-			if (c->int_avec) {
-				e68_exception_avec (c, c->int_ipl);
+		if (iml < ipl) {
+			if (c->inta != NULL) {
+				vec = c->inta (c->inta_ext, ipl);
 			}
 			else {
-				e68_exception_intr (c, c->int_ipl, c->int_vect);
+				vec = -1;
+			}
+
+			if (vec < 256) {
+				e68_exception_intr (c, ipl, vec);
+			}
+			else {
+				e68_exception_avec (c, ipl);
 			}
 		}
 	}
