@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -89,6 +89,8 @@ typedef struct wd179x_t {
 	wd179x_drive_t drive[2];
 	wd179x_drive_t *drv;
 
+	unsigned       head;
+
 	unsigned long  delay;
 	void           (*cont) (struct wd179x_t *fdc);
 	void           (*clock) (struct wd179x_t *fdc);
@@ -137,6 +139,14 @@ unsigned char wd179x_get_data (wd179x_t *fdc);
 void wd179x_set_data (wd179x_t *fdc, unsigned char val);
 
 void wd179x_select_drive (wd179x_t *fdc, unsigned drive);
+
+/*****************************************************************************
+ * @short Select the head for subsequent I/O operations
+ *
+ * If internal is true then the head is specified in the command byte and
+ * val is ignored. If internal is false then val will be used as head.
+ *****************************************************************************/
+void wd179x_select_head (wd179x_t *fdc, unsigned val, int internal);
 
 void wd179x_set_cmd (wd179x_t *fdc, unsigned char val);
 

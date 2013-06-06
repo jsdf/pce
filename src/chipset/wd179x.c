@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.c                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -183,6 +183,8 @@ void wd179x_reset (wd179x_t *fdc)
 	wd179x_drv_reset (&fdc->drive[0]);
 	wd179x_drv_reset (&fdc->drive[1]);
 
+	fdc->head = 0;
+
 	fdc->cont = NULL;
 	fdc->clock = NULL;
 }
@@ -298,6 +300,16 @@ void wd179x_set_data (wd179x_t *fdc, unsigned char val)
 void wd179x_select_drive (wd179x_t *fdc, unsigned drive)
 {
 	fdc->drv = &fdc->drive[drive & 1];
+}
+
+void wd179x_select_head (wd179x_t *fdc, unsigned val, int internal)
+{
+	if (internal) {
+		fdc->head = 0;
+	}
+	else {
+		fdc->head = val | 0x80;
+	}
 }
 
 static
@@ -990,7 +1002,7 @@ void cmd_read_sector (wd179x_t *fdc)
 {
 	unsigned h;
 
-	h = (fdc->cmd >> 1) & 1;
+	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
 	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ SECTOR (c=%u h=%u s=%u)\n",
@@ -1178,7 +1190,7 @@ void cmd_write_sector (wd179x_t *fdc)
 {
 	unsigned h;
 
-	h = (fdc->cmd >> 1) & 1;
+	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
 	fprintf (stderr, "WD179X: D=%u CMD[%02X] WRITE SECTOR (c=%u h=%u s=%u)\n",
@@ -1280,7 +1292,7 @@ void cmd_write_track (wd179x_t *fdc)
 {
 	unsigned h;
 
-	h = (fdc->cmd >> 1) & 1;
+	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
 	fprintf (stderr, "WD179X: D=%u CMD[%02X] WRITE TRACK (c=%u h=%u)\n",
@@ -1402,7 +1414,7 @@ void cmd_read_address (wd179x_t *fdc)
 {
 	unsigned h;
 
-	h = (fdc->cmd >> 1) & 1;
+	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
 	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ ADDRESS (c=%u h=%u)\n",
