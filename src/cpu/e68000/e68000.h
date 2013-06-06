@@ -39,6 +39,11 @@ struct e68000_s;
  * 68000
  *****************************************************************************/
 
+#define E68_FLAG_NOADDR  1
+#define E68_FLAG_68010   2
+#define E68_FLAG_68020   4
+#define E68_FLAG_NORESET 8
+
 #define E68_SR_C 0x0001
 #define E68_SR_V 0x0002
 #define E68_SR_Z 0x0004

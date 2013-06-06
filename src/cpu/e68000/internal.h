@@ -40,10 +40,6 @@
 #define E68_SR_MASK (E68_CCR_MASK | E68_SR_S | E68_SR_T | E68_SR_I)
 
 
-#define E68_FLAG_NOADDR 1
-#define E68_FLAG_68010  2
-#define E68_FLAG_68020  4
-
 
 void e68_set_sr (e68000_t *c, unsigned short val);
 

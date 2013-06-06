@@ -2178,6 +2178,11 @@ static unsigned op4e70 (e68000_t *c)
 		return (0);
 	}
 
+	if (c->flags & E68_FLAG_NORESET) {
+		e68_set_clk (c, 4);
+		return (1);
+	}
+
 	e68_reset (c);
 
 	e68_set_clk (c, 132);
