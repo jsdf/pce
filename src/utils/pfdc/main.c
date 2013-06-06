@@ -147,7 +147,7 @@ void print_help (void)
 
 	fputs (
 		"\nfile formats are:\n"
-		"  pfdc, ana, cp2, dc42, imd, raw, st, td0, xdf\n",
+		"  pfdc, ana, cp2, dc42, imd, msa, raw, st, td0, xdf\n",
 		stdout
 	);
 

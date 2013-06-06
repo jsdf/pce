@@ -1822,6 +1822,11 @@ src/drivers/pfdc/pfdc-img-imd.o: src/drivers/pfdc/pfdc-img-imd.c \
 	src/drivers/pfdc/pfdc-io.h \
 	src/drivers/pfdc/pfdc.h
 
+src/drivers/pfdc/pfdc-img-msa.o: src/drivers/pfdc/pfdc-img-msa.c \
+	src/drivers/pfdc/pfdc-img-msa.h \
+	src/drivers/pfdc/pfdc-io.h \
+	src/drivers/pfdc/pfdc.h
+
 src/drivers/pfdc/pfdc-img-pfdc.o: src/drivers/pfdc/pfdc-img-pfdc.c \
 	src/drivers/pfdc/pfdc-img-pfdc.h \
 	src/drivers/pfdc/pfdc-io.h \
@@ -1867,6 +1872,7 @@ src/drivers/pfdc/pfdc-img.o: src/drivers/pfdc/pfdc-img.c \
 	src/drivers/pfdc/pfdc-img-cp2.h \
 	src/drivers/pfdc/pfdc-img-dc42.h \
 	src/drivers/pfdc/pfdc-img-imd.h \
+	src/drivers/pfdc/pfdc-img-msa.h \
 	src/drivers/pfdc/pfdc-img-pfdc.h \
 	src/drivers/pfdc/pfdc-img-raw.h \
 	src/drivers/pfdc/pfdc-img-tc.h \

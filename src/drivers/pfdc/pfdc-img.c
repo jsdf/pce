@@ -30,6 +30,7 @@
 #include "pfdc-img-cp2.h"
 #include "pfdc-img-dc42.h"
 #include "pfdc-img-imd.h"
+#include "pfdc-img-msa.h"
 #include "pfdc-img-pfdc.h"
 #include "pfdc-img-raw.h"
 #include "pfdc-img-tc.h"
@@ -71,6 +72,9 @@ unsigned pfdc_guess_type (const char *fname)
 	else if (strcasecmp (ext, ".img") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
+	else if (strcasecmp (ext, ".msa") == 0) {
+		return (PFDC_FORMAT_MSA);
+	}
 	else if (strcasecmp (ext, ".raw") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
@@ -104,6 +108,9 @@ pfdc_img_t *pfdc_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_IMD:
 		return (pfdc_load_imd (fp));
+
+	case PFDC_FORMAT_MSA:
+		return (pfdc_load_msa (fp));
 
 	case PFDC_FORMAT_PFDC:
 	case PFDC_FORMAT_PFDC0:
@@ -172,6 +179,9 @@ int pfdc_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 
 	case PFDC_FORMAT_IMD:
 		return (pfdc_save_imd (fp, img));
+
+	case PFDC_FORMAT_MSA:
+		return (pfdc_save_msa (fp, img));
 
 	case PFDC_FORMAT_PFDC:
 		return (pfdc_save_pfdc (fp, img, -1));
@@ -243,6 +253,10 @@ unsigned pfdc_probe_fp (FILE *fp)
 
 	if (pfdc_probe_dc42_fp (fp)) {
 		return (PFDC_FORMAT_DC42);
+	}
+
+	if (pfdc_probe_msa_fp (fp)) {
+		return (PFDC_FORMAT_MSA);
 	}
 
 	if (pfdc_probe_raw_fp (fp)) {

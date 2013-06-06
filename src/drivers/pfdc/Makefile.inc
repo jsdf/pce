@@ -10,6 +10,7 @@ DEV_PFDC_BAS := \
 	pfdc-img-cp2 \
 	pfdc-img-dc42 \
 	pfdc-img-imd \
+	pfdc-img-msa \
 	pfdc-img-pfdc \
 	pfdc-img-raw \
 	pfdc-img-tc \
@@ -37,6 +38,7 @@ $(rel)/pfdc-img-ana.o:		$(rel)/pfdc-img-ana.c
 $(rel)/pfdc-img-cp2.o:		$(rel)/pfdc-img-cp2.c
 $(rel)/pfdc-img-dc42.o:		$(rel)/pfdc-img-dc42.c
 $(rel)/pfdc-img-imd.o:		$(rel)/pfdc-img-imd.c
+$(rel)/pfdc-img-msa.o:		$(rel)/pfdc-img-msa.c
 $(rel)/pfdc-img-pfdc.o:		$(rel)/pfdc-img-pfdc.c
 $(rel)/pfdc-img-pfdc0.o:	$(rel)/pfdc-img-pfdc0.c
 $(rel)/pfdc-img-pfdc1.o:	$(rel)/pfdc-img-pfdc1.c
