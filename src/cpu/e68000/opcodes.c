@@ -5453,7 +5453,7 @@ static unsigned ope7c0 (e68000_t *c)
 
 	e68_get_ea16 (c, 1, e68_ir_ea1 (c), 0x01fc, &s);
 
-	d = ((s << 1) || (s >> 15)) & 0xffff;
+	d = ((s << 1) | (s >> 15)) & 0xffff;
 
 	e68_set_ea16 (c, 0, 0, 0, d);
 	e68_cc_set_nz_16 (c, E68_SR_N | E68_SR_Z | E68_SR_V, d);
