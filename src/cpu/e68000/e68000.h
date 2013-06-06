@@ -158,6 +158,7 @@ typedef struct e68000_s {
 
 	char               supervisor;
 	unsigned char      halt;
+	char               bus_error;
 
 	unsigned           ircnt;
 	uint16_t           ir[16];
@@ -411,6 +412,8 @@ unsigned long e68_get_delay (e68000_t *c);
 unsigned e68_get_halt (e68000_t *c);
 void e68_set_halt (e68000_t *c, unsigned val);
 
+void e68_set_bus_error (e68000_t *c, int val);
+
 /*!***************************************************************************
  * @short Get the last exception number
  *****************************************************************************/
@@ -449,6 +452,8 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
 
 
 void e68_exception_reset (e68000_t *c);
+
+void e68_exception_bus (e68000_t *c);
 
 void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr);
 

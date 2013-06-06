@@ -571,6 +571,12 @@ int e68_ea_get_val8 (e68000_t *c, uint8_t *val)
 	case E68_EA_TYPE_MEM:
 		*val = e68_get_mem8 (c, c->ea_val);
 		e68_set_clk (c, 4);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 
@@ -609,6 +615,12 @@ int e68_ea_get_val16 (e68000_t *c, uint16_t *val)
 
 		*val = e68_get_mem16 (c, c->ea_val);
 		e68_set_clk (c, 4);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 
@@ -647,6 +659,12 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val)
 
 		*val = e68_get_mem32 (c, c->ea_val);
 		e68_set_clk (c, 8);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 
@@ -675,6 +693,12 @@ int e68_ea_set_val8 (e68000_t *c, uint8_t val)
 	case E68_EA_TYPE_MEM:
 		e68_set_mem8 (c, c->ea_val, val);
 		e68_set_clk (c, 4);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 
@@ -713,6 +737,12 @@ int e68_ea_set_val16 (e68000_t *c, uint16_t val)
 
 		e68_set_mem16 (c, c->ea_val, val);
 		e68_set_clk (c, 4);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 
@@ -751,6 +781,12 @@ int e68_ea_set_val32 (e68000_t *c, uint32_t val)
 
 		e68_set_mem32 (c, c->ea_val, val);
 		e68_set_clk (c, 8);
+
+		if (c->bus_error) {
+			e68_exception_bus (c);
+			return (1);
+		}
+
 		return (0);
 	}
 

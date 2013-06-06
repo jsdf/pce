@@ -239,6 +239,11 @@ void e68_set_halt (e68000_t *c, unsigned val)
 	c->halt = val & 0x03;
 }
 
+void e68_set_bus_error (e68000_t *c, int val)
+{
+	c->bus_error = (val != 0);
+}
+
 unsigned e68_get_exception (e68000_t *c)
 {
 	return (c->excptn);
@@ -556,6 +561,14 @@ void e68_exception_reset (e68000_t *c)
 	e68_set_clk (c, 64);
 }
 
+void e68_exception_bus (e68000_t *c)
+{
+	c->bus_error = 1;
+
+	e68_exception (c, 2, 0, "BUSE");
+	e68_set_clk (c, 62);
+}
+
 void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 {
 	uint16_t val;
@@ -708,6 +721,7 @@ void e68_reset (e68000_t *c)
 	e68_set_caar (c, 0);
 
 	c->halt = 0;
+	c->bus_error = 0;
 
 	e68_exception_reset (c);
 
@@ -724,6 +738,8 @@ void e68_execute (e68000_t *c)
 	if (c->pc & 1) {
 		e68_exception_address (c, c->pc, 0, 0);
 	}
+
+	c->bus_error = 0;
 
 	c->ir[0] = e68_get_mem16 (c, c->pc);
 	c->ircnt = 1;
