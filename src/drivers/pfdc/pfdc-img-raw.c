@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pfdc/pfdc-img-raw.c                              *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,6 +35,10 @@ static pfdc_geometry_t disk_sizes[] = {
 	{ 360 * 1024UL, 40, 2, 9, 512, PFDC_ENC_MFM_DD },
 	{ 640 * 1024UL, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
 	{ 720 * 1024UL, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 800 * 1024UL, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 810 * 1024UL, 81, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 820 * 1024UL, 82, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 830 * 1024UL, 83, 2, 10, 512, PFDC_ENC_MFM_DD },
 	{ 1200 * 1024UL, 80, 2, 15, 512, PFDC_ENC_MFM_HD },
 	{ 1440 * 1024UL, 80, 2, 18, 512, PFDC_ENC_MFM_HD },
 	{ 2880 * 1024UL, 80, 2, 36, 512, PFDC_ENC_MFM_HD },
@@ -44,23 +48,37 @@ static pfdc_geometry_t disk_sizes[] = {
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
+static pfdc_geometry_t disk_sizes_st[] = {
+	{ 320 * 1024UL, 80, 1, 8, 512, PFDC_ENC_MFM_DD },
+	{ 360 * 1024UL, 80, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 640 * 1024UL, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{ 720 * 1024UL, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 800 * 1024UL, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 810 * 1024UL, 81, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 820 * 1024UL, 82, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 830 * 1024UL, 83, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 0, 0, 0, 0, 0, 0 }
+};
 
-const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size, unsigned long mask)
+
+const pfdc_geometry_t *pfdc_get_geometry (const pfdc_geometry_t *geo, unsigned long size, unsigned long mask)
 {
-	unsigned i;
-
 	mask = ~mask;
 
-	i = 0;
-	while (disk_sizes[i].size != 0) {
-		if ((disk_sizes[i].size & mask) == (size & mask)) {
-			return (&disk_sizes[i]);
+	while (geo->size != 0) {
+		if ((geo->size & mask) == (size & mask)) {
+			return (geo);
 		}
 
-		i += 1;
+		geo += 1;
 	}
 
 	return (NULL);
+}
+
+const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size, unsigned long mask)
+{
+	return (pfdc_get_geometry (disk_sizes, size, mask));
 }
 
 static
@@ -84,21 +102,18 @@ int raw_get_file_size (FILE *fp, unsigned long *size)
 }
 
 static
-int raw_load_fp (FILE *fp, pfdc_img_t *img)
+int raw_load_fp (FILE *fp, pfdc_img_t *img, const pfdc_geometry_t *geo)
 {
-	unsigned              c, h, s;
-	unsigned long         size;
-	pfdc_trk_t            *trk;
-	pfdc_sct_t            *sct;
-	const pfdc_geometry_t *geo;
+	unsigned      c, h, s;
+	unsigned long size;
+	pfdc_trk_t    *trk;
+	pfdc_sct_t    *sct;
 
 	if (raw_get_file_size (fp, &size)) {
 		return (1);
 	}
 
-	geo = pfdc_get_geometry_from_size (size, 0);
-
-	if (geo == NULL) {
+	if ((geo = pfdc_get_geometry (geo, size, 0)) == NULL) {
 		return (1);
 	}
 
@@ -134,6 +149,22 @@ int raw_load_fp (FILE *fp, pfdc_img_t *img)
 	return (0);
 }
 
+pfdc_img_t *pfdc_load_st (FILE *fp)
+{
+	pfdc_img_t *img;
+
+	if ((img = pfdc_img_new()) == NULL) {
+		return (NULL);
+	}
+
+	if (raw_load_fp (fp, img, disk_sizes_st)) {
+		pfdc_img_del (img);
+		return (NULL);
+	}
+
+	return (img);
+}
+
 pfdc_img_t *pfdc_load_raw (FILE *fp)
 {
 	pfdc_img_t *img;
@@ -144,7 +175,7 @@ pfdc_img_t *pfdc_load_raw (FILE *fp)
 		return (NULL);
 	}
 
-	if (raw_load_fp (fp, img)) {
+	if (raw_load_fp (fp, img, disk_sizes)) {
 		pfdc_img_del (img);
 		return (NULL);
 	}
@@ -181,6 +212,11 @@ const pfdc_sct_t *raw_get_next_sector (const pfdc_trk_t *trk, unsigned *idx)
 	*idx = sct->s + 1;
 
 	return (sct);
+}
+
+int pfdc_save_st (FILE *fp, const pfdc_img_t *img)
+{
+	return (pfdc_save_raw (fp, img));
 }
 
 int pfdc_save_raw (FILE *fp, const pfdc_img_t *img)

@@ -38,9 +38,10 @@
 #define PFDC_FORMAT_PFDC2   8
 #define PFDC_FORMAT_PFDC4   9
 #define PFDC_FORMAT_RAW     10
-#define PFDC_FORMAT_TC      11
-#define PFDC_FORMAT_TD0     12
-#define PFDC_FORMAT_XDF     13
+#define PFDC_FORMAT_ST      11
+#define PFDC_FORMAT_TC      12
+#define PFDC_FORMAT_TD0     13
+#define PFDC_FORMAT_XDF     14
 
 
 unsigned pfdc_guess_type (const char *fname);

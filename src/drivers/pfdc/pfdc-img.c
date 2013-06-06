@@ -74,6 +74,9 @@ unsigned pfdc_guess_type (const char *fname)
 	else if (strcasecmp (ext, ".raw") == 0) {
 		return (PFDC_FORMAT_RAW);
 	}
+	else if (strcasecmp (ext, ".st") == 0) {
+		return (PFDC_FORMAT_ST);
+	}
 	else if (strcasecmp (ext, ".tc") == 0) {
 		return (PFDC_FORMAT_TC);
 	}
@@ -111,6 +114,9 @@ pfdc_img_t *pfdc_load_fp (FILE *fp, unsigned type)
 
 	case PFDC_FORMAT_RAW:
 		return (pfdc_load_raw (fp));
+
+	case PFDC_FORMAT_ST:
+		return (pfdc_load_st (fp));
 
 	case PFDC_FORMAT_TC:
 		return (pfdc_load_tc (fp));
@@ -184,6 +190,9 @@ int pfdc_save_fp (FILE *fp, const pfdc_img_t *img, unsigned type)
 
 	case PFDC_FORMAT_RAW:
 		return (pfdc_save_raw (fp, img));
+
+	case PFDC_FORMAT_ST:
+		return (pfdc_save_st (fp, img));
 
 	case PFDC_FORMAT_TD0:
 		return (pfdc_save_td0 (fp, img));

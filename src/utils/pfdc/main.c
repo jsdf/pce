@@ -147,7 +147,7 @@ void print_help (void)
 
 	fputs (
 		"\nfile formats are:\n"
-		"  pfdc, ana, cp2, dc42, imd, raw, td0, xdf\n",
+		"  pfdc, ana, cp2, dc42, imd, raw, st, td0, xdf\n",
 		stdout
 	);
 
@@ -2343,6 +2343,9 @@ int pfdc_set_format (const char *name, unsigned *val)
 	}
 	else if (strcmp (name, "raw") == 0) {
 		*val = PFDC_FORMAT_RAW;
+	}
+	else if (strcmp (name, "st") == 0) {
+		*val = PFDC_FORMAT_ST;
 	}
 	else if (strcmp (name, "tc") == 0) {
 		*val = PFDC_FORMAT_TC;
