@@ -38,21 +38,29 @@
 #include "pfdc-img-xdf.h"
 
 
-unsigned pfdc_guess_type (const char *fname)
+static
+const char *pfdc_get_ext (const char *fname)
 {
-	unsigned   i;
 	const char *ext;
 
 	ext = "";
 
-	i = 0;
-	while (fname[i] != 0) {
-		if (fname[i] == '.') {
-			ext = fname + i;
+	while (*fname != 0) {
+		if (*fname == '.') {
+			ext = fname;
 		}
 
-		i += 1;
+		fname += 1;
 	}
+
+	return (ext);
+}
+
+unsigned pfdc_guess_type (const char *fname)
+{
+	const char *ext;
+
+	ext = pfdc_get_ext (fname);
 
 	if (strcasecmp (ext, ".ana") == 0) {
 		return (PFDC_FORMAT_ANADISK);
@@ -268,8 +276,8 @@ unsigned pfdc_probe_fp (FILE *fp)
 
 unsigned pfdc_probe (const char *fname)
 {
-	int  r;
-	FILE *fp;
+	unsigned ret;
+	FILE     *fp;
 
 	fp = fopen (fname, "rb");
 
@@ -277,9 +285,15 @@ unsigned pfdc_probe (const char *fname)
 		return (PFDC_FORMAT_NONE);
 	}
 
-	r = pfdc_probe_fp (fp);
+	ret = pfdc_probe_fp (fp);
 
 	fclose (fp);
 
-	return (r);
+	if (ret == PFDC_FORMAT_RAW) {
+		if (strcasecmp (pfdc_get_ext (fname), ".st") == 0) {
+			ret = PFDC_FORMAT_ST;
+		}
+	}
+
+	return (ret);
 }

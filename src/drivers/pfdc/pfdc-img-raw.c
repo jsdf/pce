@@ -29,34 +29,49 @@
 
 
 static pfdc_geometry_t disk_sizes[] = {
-	{ 160 * 1024UL, 40, 1, 8, 512, PFDC_ENC_MFM_DD },
-	{ 180 * 1024UL, 40, 1, 9, 512, PFDC_ENC_MFM_DD },
-	{ 320 * 1024UL, 40, 2, 8, 512, PFDC_ENC_MFM_DD },
-	{ 360 * 1024UL, 40, 2, 9, 512, PFDC_ENC_MFM_DD },
-	{ 640 * 1024UL, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
-	{ 720 * 1024UL, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
-	{ 800 * 1024UL, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 810 * 1024UL, 81, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 820 * 1024UL, 82, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 830 * 1024UL, 83, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 1200 * 1024UL, 80, 2, 15, 512, PFDC_ENC_MFM_HD },
-	{ 1440 * 1024UL, 80, 2, 18, 512, PFDC_ENC_MFM_HD },
-	{ 2880 * 1024UL, 80, 2, 36, 512, PFDC_ENC_MFM_HD },
-	{ 1232 * 1024UL, 77, 2, 8, 1024, PFDC_ENC_MFM_HD },
-	{ 2002 * 128UL, 77, 1, 26, 128, PFDC_ENC_FM_HD },
-	{ 4004 * 128UL, 77, 2, 26, 128, PFDC_ENC_FM_HD },
+	{  163840, 40, 1, 8, 512, PFDC_ENC_MFM_DD },
+	{  184320, 40, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{  327680, 40, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{  368640, 40, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{  655360, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{  737280, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{  819200, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 1228800, 80, 2, 15, 512, PFDC_ENC_MFM_HD },
+	{ 1474560, 80, 2, 18, 512, PFDC_ENC_MFM_HD },
+	{ 2949120, 80, 2, 36, 512, PFDC_ENC_MFM_HD },
+	{ 1261568, 77, 2, 8, 1024, PFDC_ENC_MFM_HD },
+	{  256256, 77, 1, 26, 128, PFDC_ENC_FM_HD },
+	{  512512, 77, 2, 26, 128, PFDC_ENC_FM_HD },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
 static pfdc_geometry_t disk_sizes_st[] = {
-	{ 320 * 1024UL, 80, 1, 8, 512, PFDC_ENC_MFM_DD },
-	{ 360 * 1024UL, 80, 1, 9, 512, PFDC_ENC_MFM_DD },
-	{ 640 * 1024UL, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
-	{ 720 * 1024UL, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
-	{ 800 * 1024UL, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 810 * 1024UL, 81, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 820 * 1024UL, 82, 2, 10, 512, PFDC_ENC_MFM_DD },
-	{ 830 * 1024UL, 83, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 327680, 80, 1, 8, 512, PFDC_ENC_MFM_DD },
+	{ 368640, 80, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 373248, 81, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 377856, 82, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 382464, 83, 1, 9, 512, PFDC_ENC_MFM_DD },
+	{ 409600, 80, 1, 10, 512, PFDC_ENC_MFM_DD },
+	{ 414720, 81, 1, 10, 512, PFDC_ENC_MFM_DD },
+	{ 419840, 82, 1, 10, 512, PFDC_ENC_MFM_DD },
+	{ 424960, 83, 1, 10, 512, PFDC_ENC_MFM_DD },
+	{ 450560, 80, 1, 11, 512, PFDC_ENC_MFM_DD },
+	{ 456192, 81, 1, 11, 512, PFDC_ENC_MFM_DD },
+	{ 461824, 82, 1, 11, 512, PFDC_ENC_MFM_DD },
+	{ 467456, 83, 1, 11, 512, PFDC_ENC_MFM_DD },
+	{ 655360, 80, 2, 8, 512, PFDC_ENC_MFM_DD },
+	{ 737280, 80, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 746496, 81, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 755712, 82, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 764928, 83, 2, 9, 512, PFDC_ENC_MFM_DD },
+	{ 819200, 80, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 829440, 81, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 839680, 82, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 849920, 83, 2, 10, 512, PFDC_ENC_MFM_DD },
+	{ 901120, 80, 2, 11, 512, PFDC_ENC_MFM_DD },
+	{ 912384, 81, 2, 11, 512, PFDC_ENC_MFM_DD },
+	{ 923648, 82, 2, 11, 512, PFDC_ENC_MFM_DD },
+	{ 934912, 83, 2, 11, 512, PFDC_ENC_MFM_DD },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -78,7 +93,17 @@ const pfdc_geometry_t *pfdc_get_geometry (const pfdc_geometry_t *geo, unsigned l
 
 const pfdc_geometry_t *pfdc_get_geometry_from_size (unsigned long size, unsigned long mask)
 {
-	return (pfdc_get_geometry (disk_sizes, size, mask));
+	const pfdc_geometry_t *geo;
+
+	if ((geo = pfdc_get_geometry (disk_sizes, size, mask)) != NULL) {
+		return (geo);
+	}
+
+	if ((geo = pfdc_get_geometry (disk_sizes_st, size, mask)) != NULL) {
+		return (geo);
+	}
+
+	return (NULL);
 }
 
 static
