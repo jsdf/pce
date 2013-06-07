@@ -2094,6 +2094,7 @@ src/utils/pbit/pbit.o: src/utils/pbit/pbit.c \
 	src/drivers/pbit/pbit-io.h \
 	src/drivers/pbit/pbit.h \
 	src/drivers/pfdc/pfdc-img-pfdc.h \
+	src/drivers/pfdc/pfdc-img.h \
 	src/drivers/pfdc/pfdc.h \
 	src/lib/getopt.h \
 	src/utils/pbit/pbit.h

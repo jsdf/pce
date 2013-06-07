@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pbit/pbit.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 #include "pbit.h"
 
 #include <drivers/pfdc/pfdc-img-pfdc.h>
+#include <drivers/pfdc/pfdc-img.h>
 #include <drivers/pfdc/pfdc.h>
 
 #include <drivers/pbit/pbit.h>
@@ -610,7 +611,6 @@ static
 int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
 {
 	int        r;
-	FILE       *fp;
 	pfdc_img_t *dimg;
 
 	if (strcmp (type, "gcr-raw") == 0) {
@@ -637,16 +637,7 @@ int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
 		return (1);
 	}
 
-	fp = fopen (fname, "wb");
-
-	if (fp == NULL) {
-		pfdc_img_del (dimg);
-		return (1);
-	}
-
-	r = pfdc_save_pfdc (fp, dimg, -1);
-
-	fclose (fp);
+	r = pfdc_save (fname, dimg, PFDC_FORMAT_NONE);
 
 	pfdc_img_del (dimg);
 
@@ -695,21 +686,10 @@ int pbit_double_step (pbit_img_t *img, int even)
 static
 int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
 {
-	FILE       *fp;
 	pfdc_img_t *simg;
 	pbit_img_t *dimg;
 
-	fp = fopen (fname, "rb");
-
-	if (fp == NULL) {
-		return (1);
-	}
-
-	simg = pfdc_load_pfdc (fp);
-
-	fclose (fp);
-
-	if (simg == NULL) {
+	if ((simg = pfdc_load (fname, PFDC_FORMAT_NONE)) == NULL) {
 		return (1);
 	}
 
