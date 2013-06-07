@@ -156,6 +156,8 @@ typedef struct e68000_s {
 	uint16_t           last_trap_a;
 	uint16_t           last_trap_f;
 
+	uint16_t           trace_sr;
+
 	char               supervisor;
 	unsigned char      halt;
 	char               bus_error;

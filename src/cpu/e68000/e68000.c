@@ -525,6 +525,8 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 		c->log_exception (c->log_ext, vct);
 	}
 
+	c->trace_sr = 0;
+
 	sr1 = e68_get_sr (c);
 	sr2 = sr1;
 	sr2 &= ~E68_SR_T;
@@ -624,6 +626,12 @@ void e68_exception_overflow (e68000_t *c)
 void e68_exception_privilege (e68000_t *c)
 {
 	e68_exception (c, 8, 0, "PRIV");
+	e68_set_clk (c, 62);
+}
+
+void e68_exception_trace (e68000_t *c)
+{
+	e68_exception (c, 9, 0, "TRACE");
 	e68_set_clk (c, 62);
 }
 
@@ -748,6 +756,8 @@ void e68_execute (e68000_t *c)
 		c->log_opcode (c->log_ext, c->ir[0]);
 	}
 
+	c->trace_sr = e68_get_sr (c);
+
 	opc = (c->ir[0] >> 6) & 0x3ff;
 
 	n = c->opcodes[opc] (c);
@@ -755,6 +765,10 @@ void e68_execute (e68000_t *c)
 	e68_set_pc (c, e68_get_pc (c) + 2 * n);
 
 	c->oprcnt += 1;
+
+	if (c->trace_sr & E68_SR_T) {
+		e68_exception_trace (c);
+	}
 
 	if (c->int_nmi) {
 		e68_exception_avec (c, 7);
