@@ -87,8 +87,8 @@ void wd179x_init (wd179x_t *fdc)
 
 	fdc->check = 0;
 
-	fdc->input_clock = 6000000 / 4;
-	fdc->bit_clock = 2000000;
+	fdc->input_clock = 1000000;
+	fdc->bit_clock = 1000000;
 
 	fdc->drv = &fdc->drive[0];
 
@@ -144,6 +144,11 @@ void wd179x_set_write_track_fct (wd179x_t *fdc, void *ext, void *fct)
 void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk)
 {
 	fdc->input_clock = clk;
+}
+
+void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk)
+{
+	fdc->bit_clock = clk;
 }
 
 void wd179x_reset (wd179x_t *fdc)
@@ -1537,12 +1542,12 @@ void wd179x_clock2 (wd179x_t *fdc, unsigned cnt)
 	fdc->check = 0;
 
 	if (fdc->drive[0].motor) {
-		fdc->drive[0].motor_clock += cnt * fdc->bit_clock;
+		fdc->drive[0].motor_clock += cnt * (fdc->bit_clock / 2);
 		fdc->check = 1;
 	}
 
 	if (fdc->drive[1].motor) {
-		fdc->drive[1].motor_clock += cnt * fdc->bit_clock;
+		fdc->drive[1].motor_clock += cnt * (fdc->bit_clock / 2);
 		fdc->check = 1;
 	}
 

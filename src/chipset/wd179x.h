@@ -121,6 +121,7 @@ void wd179x_set_read_track_fct (wd179x_t *fdc, void *ext, void *fct);
 void wd179x_set_write_track_fct (wd179x_t *fdc, void *ext, void *fct);
 
 void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk);
+void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk);
 
 void wd179x_reset (wd179x_t *fdc);
 
