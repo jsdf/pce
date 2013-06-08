@@ -512,7 +512,9 @@ int pbit_encode_mfm_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, pbit_encode_mfm_t *
 	}
 
 	if (dtrk->wrap) {
-		return (1);
+		fprintf (stderr, "pbit: warning: track too long (%lu)\n",
+			dtrk->idx
+		);
 	}
 
 	while (dtrk->wrap == 0) {
