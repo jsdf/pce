@@ -271,6 +271,10 @@ int mfm_decode_mark (mfm_code_t *mfm, pfdc_trk_t *trk, unsigned mark)
 			}
 		}
 
+		if (sct->flags & PFDC_FLAG_NO_DAM) {
+			pfdc_sct_set_size (sct, 0, 0);
+		}
+
 		mfm->trk->idx = pos;
 		mfm->trk->wrap = wrap;
 
