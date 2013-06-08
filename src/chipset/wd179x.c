@@ -974,9 +974,13 @@ void cmd_read_sector_idam (wd179x_t *fdc)
 		return;
 	}
 
-	if (fdc->drv->h != fdc->scan_val[1]) {
-		wd179x_scan_mark_start (fdc);
-		return;
+	if (fdc->cmd & 0x02) {
+		/* side compare enabled */
+
+		if (fdc->drv->h != fdc->scan_val[1]) {
+			wd179x_scan_mark_start (fdc);
+			return;
+		}
 	}
 
 	if (fdc->sector != fdc->scan_val[2]) {
@@ -1160,9 +1164,13 @@ void cmd_write_sector_idam (wd179x_t *fdc)
 		return;
 	}
 
-	if (fdc->drv->h != fdc->scan_val[1]) {
-		wd179x_scan_mark_start (fdc);
-		return;
+	if (fdc->cmd & 0x02) {
+		/* side compare enabled */
+
+		if (fdc->drv->h != fdc->scan_val[1]) {
+			wd179x_scan_mark_start (fdc);
+			return;
+		}
 	}
 
 	if (fdc->sector != fdc->scan_val[2]) {
