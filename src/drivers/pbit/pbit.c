@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pbit/pbit.c                                      *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -141,6 +141,32 @@ void pbit_trk_clear (pbit_trk_t *trk, unsigned val)
 		memset (trk->data, val, (trk->size + 7) / 8);
 		pbit_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
 	}
+}
+
+/*****************************************************************************
+ * Clear a track
+ *
+ * @param val  A 16 bit value that is used to initialize the track
+ *****************************************************************************/
+void pbit_trk_clear_16 (pbit_trk_t *trk, unsigned val)
+{
+	unsigned long i, n;
+	unsigned char buf[2];
+
+	if (trk->size == 0) {
+		return;
+	}
+
+	buf[0] = (val >> 8) & 0xff;
+	buf[1] = val & 0xff;
+
+	n = (trk->size + 7) / 8;
+
+	for (i = 0; i < n; i++) {
+		trk->data[i] = buf[i & 1];
+	}
+
+	pbit_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
 }
 
 /*****************************************************************************

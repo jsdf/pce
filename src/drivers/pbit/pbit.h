@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pbit/pbit.h                                      *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -54,6 +54,7 @@ pbit_trk_t *pbit_trk_new (unsigned long size, unsigned long clock);
 void pbit_trk_del (pbit_trk_t *trk);
 pbit_trk_t *pbit_trk_clone (const pbit_trk_t *trk);
 void pbit_trk_clear (pbit_trk_t *trk, unsigned val);
+void pbit_trk_clear_16 (pbit_trk_t *trk, unsigned val);
 void pbit_trk_set_clock (pbit_trk_t *trk, unsigned long clock);
 unsigned long pbit_trk_get_clock (const pbit_trk_t *trk);
 unsigned long pbit_trk_get_size (const pbit_trk_t *trk);
