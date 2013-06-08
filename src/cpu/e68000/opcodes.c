@@ -2814,6 +2814,12 @@ unsigned e68_op_dbcc (e68000_t *c, int cond)
 		return (2);
 	}
 
+	if (dist & 1) {
+		e68_set_pc (c, e68_get_pc (c) + 4);
+		e68_exception_address (c, e68_get_pc (c) + dist + 2, 0, 0);
+		return (0);
+	}
+
 	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
 	e68_set_clk (c, 10);
@@ -3068,6 +3074,12 @@ unsigned op_bcc (e68000_t *c, int cond)
 		return (c->ircnt);
 	}
 
+	if (dist & 1) {
+		e68_set_pc (c, e68_get_pc (c) + 2);
+		e68_exception_address (c, e68_get_pc (c) + dist + 2, 0, 0);
+		return (0);
+	}
+
 	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
 	e68_set_clk (c, 10);
@@ -3087,6 +3099,12 @@ static unsigned op6000 (e68000_t *c)
 		dist = e68_exts16 (c->ir[1]);
 	}
 
+	if (dist & 1) {
+		e68_set_pc (c, e68_get_pc (c) + 2);
+		e68_exception_address (c, e68_get_pc (c) + dist + 2, 0, 0);
+		return (0);
+	}
+
 	e68_set_pc (c, e68_get_pc (c) + dist + 2);
 
 	e68_set_clk (c, 10);
@@ -3104,6 +3122,12 @@ static unsigned op6100 (e68000_t *c)
 	if (dist == 0) {
 		e68_ifetch (c, 1);
 		dist = e68_exts16 (c->ir[1]);
+	}
+
+	if (dist & 1) {
+		e68_set_pc (c, e68_get_pc (c) + 2);
+		e68_exception_address (c, e68_get_pc (c) + dist + 2, 0, 0);
+		return (0);
 	}
 
 	e68_push32 (c, e68_get_pc (c) + 2 * c->ircnt);
