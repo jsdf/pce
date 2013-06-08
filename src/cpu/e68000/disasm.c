@@ -1003,7 +1003,7 @@ static void d_0a00 (e68_dasm_t *da, const uint8_t *src)
 static void d_0a40 (e68_dasm_t *da, const uint8_t *src)
 {
 	if ((da->ir[0] & 0x003f) == 0x003c) {
-		dasm_op2 (da, "EORI.W", src, ARG_IMM8, ARG_SR, 8);
+		dasm_op2 (da, "EORI.W", src, ARG_IMM16, ARG_SR, 16);
 		da->flags |= E68_DFLAG_PRIV;
 	}
 	else {
