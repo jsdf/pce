@@ -65,6 +65,7 @@ typedef struct pfdc_sct_t {
 	unsigned char      tag[PFDC_TAGS_MAX];
 
 	unsigned long      position;
+	unsigned long      time;
 
 	char               have_mfm_size;
 	unsigned char      mfm_size;

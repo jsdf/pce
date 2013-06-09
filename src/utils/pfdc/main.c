@@ -544,6 +544,10 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 				flags |= 0x80000000;
 			}
 
+			if (sct->time != 0) {
+				flags |= 0x80000000;
+			}
+
 			if (flags || alt) {
 				fputs ("  ", stdout);
 			}
@@ -574,6 +578,10 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			if (sct->position != 0xffffffff) {
 				fprintf (stdout, " POS=%-5lu", sct->position);
+			}
+
+			if (sct->time != 0) {
+				fprintf (stdout, " TIME=%lu", sct->time);
 			}
 
 			fputs ("\n", stdout);
@@ -1947,6 +1955,15 @@ int pfdc_edit_tags_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
+int pfdc_edit_time_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	sct->time = *(unsigned long *) p;
+	par_cnt += 1;
+	return (0);
+}
+
+static
 int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 {
 	int           r;
@@ -2017,6 +2034,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "tags") == 0) {
 		fct = pfdc_edit_tags_cb;
+	}
+	else if (strcmp (what, "time") == 0) {
+		fct = pfdc_edit_time_cb;
 	}
 	else {
 		fprintf (stderr, "%s: unknown field (%s)\n", arg0, what);

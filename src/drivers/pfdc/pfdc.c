@@ -65,6 +65,7 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 	sct->tag_cnt = 0;
 
 	sct->position = 0xffffffff;
+	sct->time = 0;
 
 	sct->have_mfm_size = 0;
 	sct->have_gcr_format = 0;
@@ -107,6 +108,7 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 	}
 
 	dst->position = sct->position;
+	dst->time = sct->time;
 
 	if (sct->have_mfm_size) {
 		dst->have_mfm_size = 1;
