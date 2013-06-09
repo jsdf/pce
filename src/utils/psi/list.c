@@ -183,7 +183,7 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 				flags |= 0x80000000;
 			}
 
-			if (sct->time != 0) {
+			if (sct->read_time != 0) {
 				flags |= 0x80000000;
 			}
 
@@ -219,8 +219,8 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 				fprintf (stdout, " POS=%-5lu", sct->position);
 			}
 
-			if (sct->time != 0) {
-				fprintf (stdout, " TIME=%lu", sct->time);
+			if (sct->read_time != 0) {
+				fprintf (stdout, " TIME=%lu", sct->read_time);
 			}
 
 			fputs ("\n", stdout);

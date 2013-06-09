@@ -63,7 +63,7 @@ typedef struct psi_sct_t {
 	unsigned char    tag[PSI_TAGS_MAX];
 
 	unsigned long    position;
-	unsigned long    time;
+	unsigned long    read_time;
 
 	char             have_mfm_size;
 	unsigned char    mfm_size;
@@ -117,8 +117,10 @@ void psi_sct_set_flags (psi_sct_t *sct, unsigned long flags, int set);
 void psi_sct_set_encoding (psi_sct_t *sct, unsigned enc);
 
 void psi_sct_set_position (psi_sct_t *sct, unsigned long val);
-
 unsigned long psi_sct_get_position (const psi_sct_t *sct);
+
+void psi_sct_set_read_time (psi_sct_t *sct, unsigned long val);
+unsigned long psi_sct_get_read_time (const psi_sct_t *sct);
 
 void psi_sct_set_mfm_size (psi_sct_t *sct, unsigned char val);
 unsigned psi_sct_get_mfm_size (const psi_sct_t *sct);

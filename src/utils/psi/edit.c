@@ -206,7 +206,7 @@ static
 int psi_edit_time_cb (psi_img_t *img, psi_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
-	sct->time = *(unsigned long *) p;
+	psi_sct_set_read_time (sct, *(unsigned long *) p);
 	par_cnt += 1;
 	return (0);
 }

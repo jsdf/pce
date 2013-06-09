@@ -65,7 +65,7 @@ psi_sct_t *psi_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 	sct->tag_cnt = 0;
 
 	sct->position = 0xffffffff;
-	sct->time = 0;
+	sct->read_time = 0;
 
 	sct->have_mfm_size = 0;
 	sct->have_gcr_format = 0;
@@ -108,7 +108,7 @@ psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep)
 	}
 
 	dst->position = sct->position;
-	dst->time = sct->time;
+	dst->read_time = sct->read_time;
 
 	if (sct->have_mfm_size) {
 		dst->have_mfm_size = 1;
@@ -240,6 +240,16 @@ void psi_sct_set_position (psi_sct_t *sct, unsigned long val)
 unsigned long psi_sct_get_position (const psi_sct_t *sct)
 {
 	return (sct->position);
+}
+
+void psi_sct_set_read_time (psi_sct_t *sct, unsigned long val)
+{
+	sct->read_time = val;
+}
+
+unsigned long psi_sct_get_read_time (const psi_sct_t *sct)
+{
+	return (sct->read_time);
 }
 
 void psi_sct_set_mfm_size (psi_sct_t *sct, unsigned char val)

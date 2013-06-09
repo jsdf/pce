@@ -351,7 +351,7 @@ int psi_load_time (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size,
 		return (1);
 	}
 
-	sct->time = psi_get_uint32_be (buf, 0);
+	psi_sct_set_read_time (sct, psi_get_uint32_be (buf, 0));
 
 	if (psi_skip_chunk (fp, size - 4, crc)) {
 		return (1);
@@ -840,7 +840,7 @@ int psi_save_time (FILE *fp, const psi_sct_t *sct)
 	unsigned long val;
 	unsigned char buf[4];
 
-	val = sct->time;
+	val = psi_sct_get_read_time (sct);
 
 	if ((val == 0) || (val == (8UL * sct->n))) {
 		return (0);
