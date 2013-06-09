@@ -1856,6 +1856,11 @@ src/drivers/psi/psi-img-raw.o: src/drivers/psi/psi-img-raw.c \
 	src/drivers/psi/psi-img-raw.h \
 	src/drivers/psi/psi.h
 
+src/drivers/psi/psi-img-stx.o: src/drivers/psi/psi-img-stx.c \
+	src/drivers/psi/psi-img-stx.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
+
 src/drivers/psi/psi-img-tc.o: src/drivers/psi/psi-img-tc.c \
 	src/drivers/psi/psi-img-tc.h \
 	src/drivers/psi/psi-io.h \
@@ -1880,6 +1885,7 @@ src/drivers/psi/psi-img.o: src/drivers/psi/psi-img.c \
 	src/drivers/psi/psi-img-pfdc.h \
 	src/drivers/psi/psi-img-psi.h \
 	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi-img-stx.h \
 	src/drivers/psi/psi-img-tc.h \
 	src/drivers/psi/psi-img-td0.h \
 	src/drivers/psi/psi-img-xdf.h \

@@ -34,6 +34,7 @@
 #include "psi-img-pfdc.h"
 #include "psi-img-psi.h"
 #include "psi-img-raw.h"
+#include "psi-img-stx.h"
 #include "psi-img-tc.h"
 #include "psi-img-td0.h"
 #include "psi-img-xdf.h"
@@ -96,6 +97,9 @@ unsigned psi_guess_type (const char *fname)
 	else if (strcasecmp (ext, ".st") == 0) {
 		return (PSI_FORMAT_ST);
 	}
+	else if (strcasecmp (ext, ".stx") == 0) {
+		return (PSI_FORMAT_STX);
+	}
 	else if (strcasecmp (ext, ".tc") == 0) {
 		return (PSI_FORMAT_TC);
 	}
@@ -142,6 +146,9 @@ psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 
 	case PSI_FORMAT_ST:
 		return (psi_load_st (fp));
+
+	case PSI_FORMAT_STX:
+		return (psi_load_stx (fp));
 
 	case PSI_FORMAT_TC:
 		return (psi_load_tc (fp));
@@ -225,6 +232,9 @@ int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type)
 	case PSI_FORMAT_ST:
 		return (psi_save_st (fp, img));
 
+	case PSI_FORMAT_STX:
+		return (psi_save_stx (fp, img));
+
 	case PSI_FORMAT_TD0:
 		return (psi_save_td0 (fp, img));
 
@@ -282,6 +292,10 @@ unsigned psi_probe_fp (FILE *fp)
 
 	if (psi_probe_msa_fp (fp)) {
 		return (PSI_FORMAT_MSA);
+	}
+
+	if (psi_probe_stx_fp (fp)) {
+		return (PSI_FORMAT_STX);
 	}
 
 	if (psi_probe_raw_fp (fp)) {
