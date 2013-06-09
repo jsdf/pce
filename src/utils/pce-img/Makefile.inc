@@ -15,7 +15,7 @@ PCEIMG_BIN := $(rel)/pce-img$(EXEEXT)
 PCEIMG_OBJ_EXT := \
 	src/lib/getopt.o \
 	src/drivers/block/block.a \
-	src/drivers/pfdc/pfdc.a
+	src/drivers/psi/psi.a
 
 BIN  += $(PCEIMG_BIN)
 MAN1 += $(PCEIMG_MAN1)

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm-io.c                                    *
  * Created:     2012-01-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,9 +29,9 @@
 #include <string.h>
 
 #include <drivers/block/block.h>
-#include <drivers/block/blkfdc.h>
+#include <drivers/block/blkpsi.h>
 
-#include <drivers/pfdc/pfdc.h>
+#include <drivers/psi/psi.h>
 
 #include <drivers/pbit/pbit.h>
 #include <drivers/pbit/pbit-io.h>
@@ -61,19 +61,19 @@ int iwm_drv_get_block_geo (disk_t *dsk, unsigned *cn, unsigned *hn)
 }
 
 static
-pfdc_img_t *iwm_drv_load_block (mac_iwm_drive_t *drv, disk_t *dsk)
+psi_img_t *iwm_drv_load_block (mac_iwm_drive_t *drv, disk_t *dsk)
 {
 	unsigned      c, h, s;
 	unsigned      cn, hn, sn;
 	unsigned long lba;
-	pfdc_sct_t    *sct;
-	pfdc_img_t    *img;
+	psi_sct_t     *sct;
+	psi_img_t     *img;
 
 	if (iwm_drv_get_block_geo (dsk, &cn, &hn)) {
 		return (NULL);
 	}
 
-	img = pfdc_img_new();
+	img = psi_img_new();
 
 	if (img == NULL) {
 		return (NULL);
@@ -86,17 +86,17 @@ pfdc_img_t *iwm_drv_load_block (mac_iwm_drive_t *drv, disk_t *dsk)
 
 		for (h = 0; h < hn; h++) {
 			for (s = 0; s < sn; s++) {
-				sct = pfdc_sct_new (c, h, s, 512);
+				sct = psi_sct_new (c, h, s, 512);
 
 				if (sct == NULL) {
-					pfdc_img_del (img);
+					psi_img_del (img);
 					return (NULL);
 				}
 
-				pfdc_img_add_sector (img, sct, c, h);
+				psi_img_add_sector (img, sct, c, h);
 
 				if (dsk_read_lba (dsk, sct->data, lba, 1)) {
-					pfdc_img_del (img);
+					psi_img_del (img);
 					return (NULL);
 				}
 
@@ -112,8 +112,8 @@ static
 pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 {
 	disk_t     *dsk;
-	disk_fdc_t *fdc;
-	pfdc_img_t *img, *del;
+	disk_psi_t *psi;
+	psi_img_t  *img, *del;
 	pbit_img_t *ret;
 
 	dsk = dsks_get_disk (drv->dsks, drv->diskid);
@@ -122,9 +122,9 @@ pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 		return (NULL);
 	}
 
-	if (dsk_get_type (dsk) == PCE_DISK_FDC) {
-		fdc = dsk->ext;
-		img = fdc->img;
+	if (dsk_get_type (dsk) == PCE_DISK_PSI) {
+		psi = dsk->ext;
+		img = psi->img;
 		del = NULL;
 	}
 	else {
@@ -138,7 +138,7 @@ pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 
 	ret = pbit_encode_gcr (img);
 
-	pfdc_img_del (del);
+	psi_img_del (del);
 
 	return (ret);
 }
@@ -199,14 +199,14 @@ int iwm_drv_load (mac_iwm_drive_t *drv)
 
 
 static
-int iwm_drv_save_block (mac_iwm_drive_t *drv, disk_t *dsk, pfdc_img_t *img)
+int iwm_drv_save_block (mac_iwm_drive_t *drv, disk_t *dsk, psi_img_t *img)
 {
 	unsigned      c, h, s;
 	unsigned      cn, hn, sn;
 	unsigned      cnt;
 	unsigned long lba;
 	unsigned char buf[512];
-	pfdc_sct_t    *sct;
+	psi_sct_t     *sct;
 
 	if (iwm_drv_get_block_geo (dsk, &cn, &hn)) {
 		return (1);
@@ -219,7 +219,7 @@ int iwm_drv_save_block (mac_iwm_drive_t *drv, disk_t *dsk, pfdc_img_t *img)
 
 		for (h = 0; h < hn; h++) {
 			for (s = 0; s < sn; s++) {
-				sct = pfdc_img_get_sector (img, c, h, s, 0);
+				sct = psi_img_get_sector (img, c, h, s, 0);
 
 				if (sct == NULL) {
 					memset (buf, 0, 512);
@@ -252,8 +252,8 @@ int iwm_drv_save_disk (mac_iwm_drive_t *drv)
 {
 	int        r;
 	disk_t     *dsk;
-	disk_fdc_t *fdc;
-	pfdc_img_t *img;
+	disk_psi_t *psi;
+	psi_img_t  *img;
 
 	dsk = dsks_get_disk (drv->dsks, drv->diskid);
 
@@ -267,16 +267,16 @@ int iwm_drv_save_disk (mac_iwm_drive_t *drv)
 		return (1);
 	}
 
-	if (dsk_get_type (dsk) == PCE_DISK_FDC) {
-		fdc = dsk->ext;
-		pfdc_img_del (fdc->img);
-		fdc->img = img;
-		fdc->dirty = 1;
+	if (dsk_get_type (dsk) == PCE_DISK_PSI) {
+		psi = dsk->ext;
+		psi_img_del (psi->img);
+		psi->img = img;
+		psi->dirty = 1;
 	}
 	else {
 		r = iwm_drv_save_block (drv, dsk, img);
 
-		pfdc_img_del (img);
+		psi_img_del (img);
 
 		if (r) {
 			return (1);

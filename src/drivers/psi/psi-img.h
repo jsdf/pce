@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pbit/main.h                                        *
- * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/psi/psi-img.h                                    *
+ * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,20 +20,41 @@
  *****************************************************************************/
 
 
-#ifndef PBIT_MAIN_H
-#define PBIT_MAIN_H 1
+#ifndef PCE_DRV_PSI_IMG_H
+#define PCE_DRV_PSI_IMG_H 1
 
 
-#include <drivers/pbit/pbit.h>
 #include <drivers/psi/psi.h>
 
 
-typedef int (*pbit_trk_cb) (pbit_img_t *img, pbit_trk_t *trk,
-	unsigned long c, unsigned long h, void *opaque
-);
+#define PSI_FORMAT_NONE    0
+#define PSI_FORMAT_ANADISK 1
+#define PSI_FORMAT_CP2     2
+#define PSI_FORMAT_DC42    3
+#define PSI_FORMAT_IMD     4
+#define PSI_FORMAT_MSA     5
+#define PSI_FORMAT_PFDC    6
+#define PSI_FORMAT_PFDC0   7
+#define PSI_FORMAT_PFDC1   8
+#define PSI_FORMAT_PFDC2   9
+#define PSI_FORMAT_PFDC4   10
+#define PSI_FORMAT_RAW     11
+#define PSI_FORMAT_ST      12
+#define PSI_FORMAT_TC      13
+#define PSI_FORMAT_TD0     14
+#define PSI_FORMAT_XDF     15
 
 
-int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque);
+unsigned psi_guess_type (const char *fname);
+
+psi_img_t *psi_load_fp (FILE *fp, unsigned type);
+psi_img_t *psi_load (const char *fname, unsigned type);
+
+int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type);
+int psi_save (const char *fname, const psi_img_t *img, unsigned type);
+
+unsigned psi_probe_fp (FILE *fp);
+unsigned psi_probe (const char *fname);
 
 
 #endif

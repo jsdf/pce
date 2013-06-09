@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/inidsk.c                                             *
  * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,12 +31,13 @@
 
 #include <drivers/block/blkcow.h>
 #include <drivers/block/blkdosem.h>
-#include <drivers/block/blkfdc.h>
 #include <drivers/block/blkpart.h>
 #include <drivers/block/blkpce.h>
+#include <drivers/block/blkpsi.h>
 #include <drivers/block/blkqed.h>
 #include <drivers/block/blkram.h>
 #include <drivers/block/blkraw.h>
+#include <drivers/psi/psi-img.h>
 
 
 int dsk_insert (disks_t *dsks, const char *str, int eject)
@@ -299,28 +300,28 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 			dsk = ini_get_disk_part (sct, c, h, s, ro);
 		}
 		else if (strcmp (type, "anadisk") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_ANADISK, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_ANADISK, ro);
 		}
 		else if (strcmp (type, "cp2") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_CP2, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_CP2, ro);
 		}
 		else if (strcmp (type, "dc42") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_DC42, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_DC42, ro);
 		}
 		else if (strcmp (type, "imagedisk") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_IMD, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_IMD, ro);
 		}
 		else if (strcmp (type, "imd") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_IMD, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_IMD, ro);
 		}
 		else if (strcmp (type, "pfdc") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_PFDC, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_PFDC, ro);
 		}
 		else if (strcmp (type, "pfdc-auto") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_NONE, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_NONE, ro);
 		}
 		else if (strcmp (type, "teledisk") == 0) {
-			dsk = dsk_fdc_open (path, PFDC_FORMAT_TD0, ro);
+			dsk = dsk_psi_open (path, PSI_FORMAT_TD0, ro);
 		}
 		else if (strcmp (type, "auto") == 0) {
 			dsk = dsk_auto_open (path, ofs, ro);

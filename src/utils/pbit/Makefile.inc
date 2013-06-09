@@ -15,7 +15,7 @@ PBIT_BIN := $(rel)/pbit$(EXEEXT)
 PBIT_OBJ_EXT := \
 	src/lib/getopt.o \
 	src/drivers/pbit/pbit.a \
-	src/drivers/pfdc/pfdc.a
+	src/drivers/psi/psi.a
 
 BIN  += $(PBIT_BIN)
 MAN1 += $(PBIT_MAN1)

@@ -69,7 +69,7 @@ PCE_RC759_OBJ_EXT := \
 	src/drivers/block/block.a \
 	src/drivers/char/char.a \
 	src/drivers/pbit/pbit.a \
-	src/drivers/pfdc/pfdc.a \
+	src/drivers/psi/psi.a \
 	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
@@ -90,7 +90,7 @@ PCE_RC759_OBJ_EXT := \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
 	src/drivers/block/block.a \
-	src/drivers/pfdc/pfdc.a \
+	src/drivers/psi/psi.a \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"

@@ -45,7 +45,7 @@ PCE_SIM405_OBJ_EXT := \
 	src/devices/slip.o \
 	src/drivers/block/block.a \
 	src/drivers/char/char.a \
-	src/drivers/pfdc/pfdc.a \
+	src/drivers/psi/psi.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
@@ -64,7 +64,7 @@ PCE_SIM405_OBJ_EXT := \
 	src/lib/sysdep.o \
 	src/libini/libini.a \
 	src/drivers/block/block.a \
-	src/drivers/pfdc/pfdc.a
+	src/drivers/psi/psi.a
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 PCE_SIM405_OBJ_EXT += src/lib/tun.o

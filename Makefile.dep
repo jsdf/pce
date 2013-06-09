@@ -451,13 +451,13 @@ src/arch/macplus/iwm-io.o: src/arch/macplus/iwm-io.c \
 	src/arch/macplus/iwm.h \
 	src/arch/macplus/main.h \
 	src/config.h \
-	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
 	src/drivers/pbit/gcr-mac.h \
 	src/drivers/pbit/pbit-io.h \
 	src/drivers/pbit/pbit.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h
 
 src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/arch/macplus/iwm-io.h \
@@ -650,10 +650,10 @@ src/arch/macplus/sony.o: src/arch/macplus/sony.c \
 	src/arch/macplus/sony.h \
 	src/config.h \
 	src/devices/memory.h \
-	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/log.h
 
 src/arch/macplus/sound.o: src/arch/macplus/sound.c \
@@ -716,13 +716,13 @@ src/arch/rc759/fdc.o: src/arch/rc759/fdc.c \
 	src/arch/rc759/main.h \
 	src/chipset/wd179x.h \
 	src/config.h \
-	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
 	src/drivers/pbit/mfm-ibm.h \
 	src/drivers/pbit/pbit-io.h \
 	src/drivers/pbit/pbit.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/log.h \
 	src/lib/string.h
 
@@ -1525,10 +1525,10 @@ src/devices/fdc.o: src/devices/fdc.c \
 	src/devices/device.h \
 	src/devices/fdc.h \
 	src/devices/memory.h \
-	src/drivers/block/blkfdc.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h
 
 src/devices/hdc.o: src/devices/hdc.c \
 	src/config.h \
@@ -1672,13 +1672,6 @@ src/drivers/block/blkdosem.o: src/drivers/block/blkdosem.c \
 	src/drivers/block/blkdosem.h \
 	src/drivers/block/block.h
 
-src/drivers/block/blkfdc.o: src/drivers/block/blkfdc.c \
-	src/config.h \
-	src/drivers/block/blkfdc.h \
-	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h
-
 src/drivers/block/blkpart.o: src/drivers/block/blkpart.c \
 	src/config.h \
 	src/drivers/block/blkpart.h \
@@ -1688,6 +1681,13 @@ src/drivers/block/blkpce.o: src/drivers/block/blkpce.c \
 	src/config.h \
 	src/drivers/block/blkpce.h \
 	src/drivers/block/block.h
+
+src/drivers/block/blkpsi.o: src/drivers/block/blkpsi.c \
+	src/config.h \
+	src/drivers/block/blkpsi.h \
+	src/drivers/block/block.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h
 
 src/drivers/block/blkqed.o: src/drivers/block/blkqed.c \
 	src/config.h \
@@ -1707,13 +1707,13 @@ src/drivers/block/blkraw.o: src/drivers/block/blkraw.c \
 src/drivers/block/block.o: src/drivers/block/block.c \
 	src/config.h \
 	src/drivers/block/blkdosem.h \
-	src/drivers/block/blkfdc.h \
 	src/drivers/block/blkpce.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
 	src/drivers/block/blkraw.h \
 	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h
 
 src/drivers/char/char-mouse.o: src/drivers/char/char-mouse.c \
 	src/drivers/char/char-mouse.h \
@@ -1776,13 +1776,13 @@ src/drivers/options.o: src/drivers/options.c \
 src/drivers/pbit/gcr-mac.o: src/drivers/pbit/gcr-mac.c \
 	src/drivers/pbit/gcr-mac.h \
 	src/drivers/pbit/pbit.h \
-	src/drivers/pfdc/pfdc.h
+	src/drivers/psi/psi.h
 
 src/drivers/pbit/mfm-ibm.o: src/drivers/pbit/mfm-ibm.c \
 	src/drivers/pbit/mfm-ibm.h \
 	src/drivers/pbit/pbit-io.h \
 	src/drivers/pbit/pbit.h \
-	src/drivers/pfdc/pfdc.h
+	src/drivers/psi/psi.h
 
 src/drivers/pbit/pbit-io-pbit.o: src/drivers/pbit/pbit-io-pbit.c \
 	src/drivers/pbit/pbit-io-pbit.h \
@@ -1803,89 +1803,89 @@ src/drivers/pbit/pbit-io.o: src/drivers/pbit/pbit-io.c \
 src/drivers/pbit/pbit.o: src/drivers/pbit/pbit.c \
 	src/drivers/pbit/pbit.h
 
-src/drivers/pfdc/pfdc-img-ana.o: src/drivers/pfdc/pfdc-img-ana.c \
-	src/drivers/pfdc/pfdc-img-ana.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-ana.o: src/drivers/psi/psi-img-ana.c \
+	src/drivers/psi/psi-img-ana.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-cp2.o: src/drivers/pfdc/pfdc-img-cp2.c \
-	src/drivers/pfdc/pfdc-img-cp2.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-cp2.o: src/drivers/psi/psi-img-cp2.c \
+	src/drivers/psi/psi-img-cp2.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-dc42.o: src/drivers/pfdc/pfdc-img-dc42.c \
-	src/drivers/pfdc/pfdc-img-dc42.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-dc42.o: src/drivers/psi/psi-img-dc42.c \
+	src/drivers/psi/psi-img-dc42.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-imd.o: src/drivers/pfdc/pfdc-img-imd.c \
-	src/drivers/pfdc/pfdc-img-imd.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-imd.o: src/drivers/psi/psi-img-imd.c \
+	src/drivers/psi/psi-img-imd.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-msa.o: src/drivers/pfdc/pfdc-img-msa.c \
-	src/drivers/pfdc/pfdc-img-msa.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-msa.o: src/drivers/psi/psi-img-msa.c \
+	src/drivers/psi/psi-img-msa.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-pfdc.o: src/drivers/pfdc/pfdc-img-pfdc.c \
-	src/drivers/pfdc/pfdc-img-pfdc.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-pfdc.o: src/drivers/psi/psi-img-pfdc.c \
+	src/drivers/psi/psi-img-pfdc.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-pfdc0.o: src/drivers/pfdc/pfdc-img-pfdc0.c \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-pfdc0.o: src/drivers/psi/psi-img-pfdc0.c \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-pfdc1.o: src/drivers/pfdc/pfdc-img-pfdc1.c \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-pfdc1.o: src/drivers/psi/psi-img-pfdc1.c \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-pfdc2.o: src/drivers/pfdc/pfdc-img-pfdc2.c \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-pfdc2.o: src/drivers/psi/psi-img-pfdc2.c \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-pfdc4.o: src/drivers/pfdc/pfdc-img-pfdc4.c \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-pfdc4.o: src/drivers/psi/psi-img-pfdc4.c \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-raw.o: src/drivers/pfdc/pfdc-img-raw.c \
-	src/drivers/pfdc/pfdc-img-raw.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-raw.o: src/drivers/psi/psi-img-raw.c \
+	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-tc.o: src/drivers/pfdc/pfdc-img-tc.c \
-	src/drivers/pfdc/pfdc-img-tc.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-tc.o: src/drivers/psi/psi-img-tc.c \
+	src/drivers/psi/psi-img-tc.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-td0.o: src/drivers/pfdc/pfdc-img-td0.c \
-	src/drivers/pfdc/pfdc-img-td0.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-td0.o: src/drivers/psi/psi-img-td0.c \
+	src/drivers/psi/psi-img-td0.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img-xdf.o: src/drivers/pfdc/pfdc-img-xdf.c \
-	src/drivers/pfdc/pfdc-img-xdf.h \
-	src/drivers/pfdc/pfdc-io.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img-xdf.o: src/drivers/psi/psi-img-xdf.c \
+	src/drivers/psi/psi-img-xdf.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-img.o: src/drivers/pfdc/pfdc-img.c \
-	src/drivers/pfdc/pfdc-img-ana.h \
-	src/drivers/pfdc/pfdc-img-cp2.h \
-	src/drivers/pfdc/pfdc-img-dc42.h \
-	src/drivers/pfdc/pfdc-img-imd.h \
-	src/drivers/pfdc/pfdc-img-msa.h \
-	src/drivers/pfdc/pfdc-img-pfdc.h \
-	src/drivers/pfdc/pfdc-img-raw.h \
-	src/drivers/pfdc/pfdc-img-tc.h \
-	src/drivers/pfdc/pfdc-img-td0.h \
-	src/drivers/pfdc/pfdc-img-xdf.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi-img.o: src/drivers/psi/psi-img.c \
+	src/drivers/psi/psi-img-ana.h \
+	src/drivers/psi/psi-img-cp2.h \
+	src/drivers/psi/psi-img-dc42.h \
+	src/drivers/psi/psi-img-imd.h \
+	src/drivers/psi/psi-img-msa.h \
+	src/drivers/psi/psi-img-pfdc.h \
+	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi-img-tc.h \
+	src/drivers/psi/psi-img-td0.h \
+	src/drivers/psi/psi-img-xdf.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h
 
-src/drivers/pfdc/pfdc-io.o: src/drivers/pfdc/pfdc-io.c \
-	src/drivers/pfdc/pfdc-io.h
+src/drivers/psi/psi-io.o: src/drivers/psi/psi-io.c \
+	src/drivers/psi/psi-io.h
 
-src/drivers/pfdc/pfdc.o: src/drivers/pfdc/pfdc.c \
-	src/drivers/pfdc/pfdc.h
+src/drivers/psi/psi.o: src/drivers/psi/psi.c \
+	src/drivers/psi/psi.h
 
 src/drivers/sound/filter.o: src/drivers/sound/filter.c \
 	src/config.h \
@@ -1984,15 +1984,15 @@ src/lib/inidsk.o: src/lib/inidsk.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
 	src/drivers/block/blkdosem.h \
-	src/drivers/block/blkfdc.h \
 	src/drivers/block/blkpart.h \
 	src/drivers/block/blkpce.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
 	src/drivers/block/blkram.h \
 	src/drivers/block/blkraw.h \
 	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/inidsk.h \
 	src/lib/log.h \
 	src/lib/path.h \
@@ -2093,9 +2093,8 @@ src/utils/pbit/pbit.o: src/utils/pbit/pbit.c \
 	src/drivers/pbit/mfm-ibm.h \
 	src/drivers/pbit/pbit-io.h \
 	src/drivers/pbit/pbit.h \
-	src/drivers/pfdc/pfdc-img-pfdc.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
 	src/utils/pbit/pbit.h
 
@@ -2103,20 +2102,20 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
 	src/drivers/block/blkdosem.h \
-	src/drivers/block/blkfdc.h \
 	src/drivers/block/blkpce.h \
+	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
 	src/drivers/block/blkraw.h \
 	src/drivers/block/block.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
 	src/utils/pce-img/pce-img.h
 
-src/utils/pfdc/main.o: src/utils/pfdc/main.c \
+src/utils/psi/main.o: src/utils/psi/main.c \
 	src/config.h \
-	src/drivers/pfdc/pfdc-img-raw.h \
-	src/drivers/pfdc/pfdc-img.h \
-	src/drivers/pfdc/pfdc.h \
+	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
-	src/utils/pfdc/main.h
+	src/utils/psi/main.h

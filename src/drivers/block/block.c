@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,14 +25,14 @@
 #include "blkraw.h"
 #include "blkpce.h"
 #include "blkdosem.h"
-#include "blkfdc.h"
+#include "blkpsi.h"
 #include "blkqed.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
-#include <drivers/pfdc/pfdc-img.h>
+#include <drivers/psi/psi-img.h>
 
 
 uint16_t dsk_get_uint16_be (const void *buf, unsigned i)
@@ -752,17 +752,17 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 		return (dsk_dosemu_open (fname, ro));
 	}
 
-	type = dsk_fdc_probe (fname);
+	type = dsk_psi_probe (fname);
 
-	if (type != PFDC_FORMAT_NONE) {
-		return (dsk_fdc_open (fname, type, ro));
+	if (type != PSI_FORMAT_NONE) {
+		return (dsk_psi_open (fname, type, ro));
 	}
 
-	type = pfdc_guess_type (fname);
+	type = psi_guess_type (fname);
 
-	if (type != PFDC_FORMAT_NONE) {
-		if (type != PFDC_FORMAT_RAW) {
-			return (dsk_fdc_open (fname, type, ro));
+	if (type != PSI_FORMAT_NONE) {
+		if (type != PSI_FORMAT_RAW) {
+			return (dsk_psi_open (fname, type, ro));
 		}
 	}
 

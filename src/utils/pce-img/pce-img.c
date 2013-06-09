@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pceimg/pce-img.c                                   *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,13 +31,13 @@
 
 #include <drivers/block/block.h>
 #include <drivers/block/blkcow.h>
-#include <drivers/block/blkfdc.h>
 #include <drivers/block/blkraw.h>
 #include <drivers/block/blkpce.h>
+#include <drivers/block/blkpsi.h>
 #include <drivers/block/blkqed.h>
 #include <drivers/block/blkdosem.h>
 
-#include <drivers/pfdc/pfdc-img.h>
+#include <drivers/psi/psi-img.h>
 
 #include <lib/getopt.h>
 
@@ -46,7 +46,7 @@
 #define DSK_RAW    1
 #define DSK_PCE    2
 #define DSK_DOSEMU 3
-#define DSK_PFDC   4
+#define DSK_PSI    4
 #define DSK_QED    5
 
 
@@ -121,7 +121,7 @@ void print_help (void)
 
 	fputs (
 		"\nfile names: <format>:<name>\n"
-		"formats:    raw, pce, dosemu, pfdc, qed\n",
+		"formats:    raw, pce, dosemu, psi, qed\n",
 		stdout
 	);
 
@@ -176,8 +176,8 @@ unsigned pce_get_disk_type_ext (const char *str)
 	else if (strcasecmp (ext, "raw") == 0) {
 		return (DSK_RAW);
 	}
-	else if (pfdc_guess_type (str) != PFDC_FORMAT_NONE) {
-		return (DSK_PFDC);
+	else if (psi_guess_type (str) != PSI_FORMAT_NONE) {
+		return (DSK_PSI);
 	}
 
 	return (DSK_NONE);
@@ -222,8 +222,8 @@ unsigned pce_get_disk_type (const char *str)
 		return (DSK_DOSEMU);
 	}
 
-	if (strcmp (buf, "pfdc") == 0) {
-		return (DSK_PFDC);
+	if (strcmp (buf, "psi") == 0) {
+		return (DSK_PSI);
 	}
 
 	return (DSK_NONE);
@@ -286,8 +286,8 @@ int dsk_create (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t s,
 	case DSK_DOSEMU:
 		return (dsk_dosemu_create (name, c, h, s, ofs & 0xffffffff));
 
-	case DSK_PFDC:
-		return (dsk_fdc_create (name, PFDC_FORMAT_NONE, c, h, s));
+	case DSK_PSI:
+		return (dsk_psi_create (name, PSI_FORMAT_NONE, c, h, s));
 	}
 
 	return (dsk_pce_create (name, n, c, h, s, ofs & 0xffffffff));
@@ -316,8 +316,8 @@ disk_t *dsk_open (const char *str, uint32_t n, uint32_t c, uint32_t h, uint32_t 
 	case DSK_DOSEMU:
 		return (dsk_dosemu_open (name, ro));
 
-	case DSK_PFDC:
-		return (dsk_fdc_open (name, PFDC_FORMAT_NONE, ro));
+	case DSK_PSI:
+		return (dsk_psi_open (name, PSI_FORMAT_NONE, ro));
 	}
 
 	return (dsk_auto_open (name, ofs, ro));

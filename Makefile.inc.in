@@ -141,7 +141,7 @@ include $(srcdir)/src/drivers/Makefile.inc
 include $(srcdir)/src/drivers/block/Makefile.inc
 include $(srcdir)/src/drivers/char/Makefile.inc
 include $(srcdir)/src/drivers/pbit/Makefile.inc
-include $(srcdir)/src/drivers/pfdc/Makefile.inc
+include $(srcdir)/src/drivers/psi/Makefile.inc
 include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/drivers/video/Makefile.inc
 include $(srcdir)/src/arch/Makefile.inc
@@ -158,7 +158,7 @@ include $(srcdir)/src/arch/sims32/Makefile.inc
 include $(srcdir)/src/utils/Makefile.inc
 include $(srcdir)/src/utils/pbit/Makefile.inc
 include $(srcdir)/src/utils/pce-img/Makefile.inc
-include $(srcdir)/src/utils/pfdc/Makefile.inc
+include $(srcdir)/src/utils/psi/Makefile.inc
 
 TARGETS += $(BIN) $(ETC) $(SHARE)
 

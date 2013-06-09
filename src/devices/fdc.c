@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/fdc.c                                            *
  * Created:     2007-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,7 +25,7 @@
 
 #include <devices/fdc.h>
 
-#include <drivers/block/blkfdc.h>
+#include <drivers/block/blkpsi.h>
 
 
 /*
@@ -39,13 +39,13 @@ struct {
 	unsigned v1;
 	unsigned v2;
 } errmap[] = {
-	{ PCE_BLK_FDC_NO_ID,    E8272_ERR_NO_ID },
-	{ PCE_BLK_FDC_NO_DATA,  E8272_ERR_NO_DATA },
-	{ PCE_BLK_FDC_CRC_ID,   E8272_ERR_CRC_ID },
-	{ PCE_BLK_FDC_CRC_DATA, E8272_ERR_CRC_DATA },
-	{ PCE_BLK_FDC_DEL_DAM,  E8272_ERR_DEL_DAM },
-	{ PCE_BLK_FDC_DATALEN,  E8272_ERR_DATALEN },
-	{ PCE_BLK_FDC_WPROT,    E8272_ERR_WPROT },
+	{ PCE_BLK_PSI_NO_ID,    E8272_ERR_NO_ID },
+	{ PCE_BLK_PSI_NO_DATA,  E8272_ERR_NO_DATA },
+	{ PCE_BLK_PSI_CRC_ID,   E8272_ERR_CRC_ID },
+	{ PCE_BLK_PSI_CRC_DATA, E8272_ERR_CRC_DATA },
+	{ PCE_BLK_PSI_DEL_DAM,  E8272_ERR_DEL_DAM },
+	{ PCE_BLK_PSI_DATALEN,  E8272_ERR_DATALEN },
+	{ PCE_BLK_PSI_WPROT,    E8272_ERR_WPROT },
 	{ 0, 0 }
 };
 
@@ -54,7 +54,7 @@ static void dev_fdc_del_dev (device_t *dev);
 
 
 /*
- * Map an error code from PCE_BLK_FDC_* to E8272_ERR_*.
+ * Map an error code from PCE_BLK_PSI_* to E8272_ERR_*.
  */
 static
 unsigned dev_fdc_map_error (unsigned err)
@@ -95,7 +95,7 @@ unsigned dev_fdc_diskop_read (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (E8272_ERR_NO_DATA);
 	}
 
-	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+	if (dsk_get_type (dsk) != PCE_DISK_PSI) {
 		if (p->cnt < 512) {
 			p->cnt = 0;
 			return (E8272_ERR_OTHER);
@@ -111,7 +111,7 @@ unsigned dev_fdc_diskop_read (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (0);
 	}
 
-	err = dsk_fdc_read_chs (dsk->ext, p->buf, &p->cnt, p->pc, p->ph, p->ps, 1);
+	err = dsk_psi_read_chs (dsk->ext, p->buf, &p->cnt, p->pc, p->ph, p->ps, 1);
 
 	ret = dev_fdc_map_error (err);
 
@@ -131,7 +131,7 @@ unsigned dev_fdc_diskop_write (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (E8272_ERR_NO_DATA);
 	}
 
-	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+	if (dsk_get_type (dsk) != PCE_DISK_PSI) {
 		if (p->cnt != 512) {
 			return (E8272_ERR_OTHER);
 		}
@@ -144,7 +144,7 @@ unsigned dev_fdc_diskop_write (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (0);
 	}
 
-	err = dsk_fdc_write_chs (dsk->ext, p->buf, &p->cnt, p->pc, p->ph, p->ps, 1);
+	err = dsk_psi_write_chs (dsk->ext, p->buf, &p->cnt, p->pc, p->ph, p->ps, 1);
 
 	ret = dev_fdc_map_error (err);
 
@@ -166,7 +166,7 @@ unsigned dev_fdc_diskop_format (dev_fdc_t *fdc, e8272_diskop_t *p)
 
 	cnt = 128 << p->ln;
 
-	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+	if (dsk_get_type (dsk) != PCE_DISK_PSI) {
 		if (cnt != 512) {
 			return (E8272_ERR_OTHER);
 		}
@@ -181,10 +181,10 @@ unsigned dev_fdc_diskop_format (dev_fdc_t *fdc, e8272_diskop_t *p)
 	}
 
 	if (p->ps == 0) {
-		dsk_fdc_erase_track (dsk->ext, p->pc, p->ph);
+		dsk_psi_erase_track (dsk->ext, p->pc, p->ph);
 	}
 
-	if (dsk_fdc_format_sector (dsk->ext, p->pc, p->ph, p->lc, p->lh, p->ls, cnt, p->fill)) {
+	if (dsk_psi_format_sector (dsk->ext, p->pc, p->ph, p->lc, p->lh, p->ls, cnt, p->fill)) {
 		return (E8272_ERR_OTHER);
 	}
 
@@ -204,7 +204,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (E8272_ERR_NO_ID);
 	}
 
-	if (dsk_get_type (dsk) != PCE_DISK_FDC) {
+	if (dsk_get_type (dsk) != PCE_DISK_PSI) {
 		if (dsk_read_chs (dsk, buf, p->pc, p->ph, p->ps + 1, 1)) {
 			return (E8272_ERR_NO_ID);
 		}
@@ -217,7 +217,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (0);
 	}
 
-	if (dsk_fdc_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt, &cnt_id)) {
+	if (dsk_psi_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt, &cnt_id)) {
 		return (E8272_ERR_NO_ID);
 	}
 

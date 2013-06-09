@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pbit/gcr-mac.c                                   *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <drivers/pfdc/pfdc.h>
+#include <drivers/psi/psi.h>
 
 #include "pbit.h"
 #include "gcr-mac.h"
@@ -91,7 +91,7 @@ unsigned long gcr_get_track_length (unsigned c)
 	return (0);
 }
 
-unsigned gcr_get_format (pfdc_img_t *img)
+unsigned gcr_get_format (psi_img_t *img)
 {
 	unsigned c;
 
@@ -236,12 +236,12 @@ int gcr_decode_data (pbit_trk_t *trk, unsigned char *dst)
 }
 
 static
-pfdc_sct_t *pbit_decode_gcr_sct (pbit_trk_t *trk)
+psi_sct_t *pbit_decode_gcr_sct (pbit_trk_t *trk)
 {
 	unsigned      i;
 	unsigned      lc, lh, ls, lm, ck;
 	unsigned char buf[524];
-	pfdc_sct_t    *sct;
+	psi_sct_t     *sct;
 
 	lc = gcr_decode_byte (trk, 1);
 	ls = gcr_decode_byte (trk, 1);
@@ -253,18 +253,18 @@ pfdc_sct_t *pbit_decode_gcr_sct (pbit_trk_t *trk)
 	lc = (lc & 0x3f) | ((lh & 0x1f) << 6);
 	lh = (lh >> 5) & 3;
 
-	sct = pfdc_sct_new (lc, lh, ls, 512);
+	sct = psi_sct_new (lc, lh, ls, 512);
 
 	if (sct == NULL) {
 		return (NULL);
 	}
 
-	pfdc_sct_set_encoding (sct, PFDC_ENC_GCR);
-	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 1);
-	pfdc_sct_set_gcr_format (sct, lm);
+	psi_sct_set_encoding (sct, PSI_ENC_GCR);
+	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 1);
+	psi_sct_set_gcr_format (sct, lm);
 
 	if (ck != 0) {
-		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_ID, 1);
+		psi_sct_set_flags (sct, PSI_FLAG_CRC_ID, 1);
 	}
 
 	buf[0] = 0;
@@ -295,29 +295,29 @@ pfdc_sct_t *pbit_decode_gcr_sct (pbit_trk_t *trk)
 		return (sct);
 	}
 
-	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 0);
+	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 0);
 
 	if (gcr_decode_data (trk, buf)) {
 		fprintf (stderr, "gcr: data crc error (%u/%u/%u)\n", lc, lh, ls);
-		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_DATA, 1);
+		psi_sct_set_flags (sct, PSI_FLAG_CRC_DATA, 1);
 	}
 
 	memcpy (sct->data, buf + 12, 512);
 
-	pfdc_sct_set_tags (sct, buf, 12);
+	psi_sct_set_tags (sct, buf, 12);
 
 	return (sct);
 }
 
-pfdc_trk_t *pbit_decode_gcr_trk (pbit_trk_t *trk, unsigned h)
+psi_trk_t *pbit_decode_gcr_trk (pbit_trk_t *trk, unsigned h)
 {
 	unsigned long pos;
 	char          wrap;
 	unsigned char buf[3];
-	pfdc_sct_t    *sct;
-	pfdc_trk_t    *dtrk;
+	psi_sct_t    *sct;
+	psi_trk_t    *dtrk;
 
-	dtrk = pfdc_trk_new (h);
+	dtrk = psi_trk_new (h);
 
 	if (dtrk == NULL) {
 		return (NULL);
@@ -341,7 +341,7 @@ pfdc_trk_t *pbit_decode_gcr_trk (pbit_trk_t *trk, unsigned h)
 			sct = pbit_decode_gcr_sct (trk);
 
 			if (sct != NULL) {
-				pfdc_trk_add_sector (dtrk, sct);
+				psi_trk_add_sector (dtrk, sct);
 			}
 
 			trk->idx = pos;
@@ -352,15 +352,15 @@ pfdc_trk_t *pbit_decode_gcr_trk (pbit_trk_t *trk, unsigned h)
 	return (dtrk);
 }
 
-pfdc_img_t *pbit_decode_gcr (pbit_img_t *img)
+psi_img_t *pbit_decode_gcr (pbit_img_t *img)
 {
 	unsigned long c, h;
 	pbit_cyl_t    *cyl;
 	pbit_trk_t    *trk;
-	pfdc_img_t    *dimg;
-	pfdc_trk_t    *dtrk;
+	psi_img_t     *dimg;
+	psi_trk_t     *dtrk;
 
-	dimg = pfdc_img_new();
+	dimg = psi_img_new();
 
 	if (dimg == NULL) {
 		return (NULL);
@@ -377,23 +377,23 @@ pfdc_img_t *pbit_decode_gcr (pbit_img_t *img)
 			trk = cyl->trk[h];
 
 			if (trk == NULL) {
-				dtrk = pfdc_trk_new (h);
+				dtrk = psi_trk_new (h);
 			}
 			else {
 				dtrk = pbit_decode_gcr_trk (trk, h);
 			}
 
 			if ((dtrk->sct_cnt == 0) && ((h + 1) == cyl->trk_cnt)) {
-				pfdc_trk_del (dtrk);
+				psi_trk_del (dtrk);
 				continue;
 			}
 
 			if (dtrk == NULL) {
-				pfdc_img_del (dimg);
+				psi_img_del (dimg);
 				return (NULL);
 			}
 
-			pfdc_img_add_track (dimg, dtrk, c);
+			psi_img_add_track (dimg, dtrk, c);
 		}
 	}
 
@@ -458,11 +458,11 @@ void pbit_encode_gcr_sct (pbit_trk_t *trk, unsigned char *src, unsigned c, unsig
 	pbit_trk_set_bits (trk, 0xdeaa, 16);
 }
 
-int pbit_encode_gcr_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, unsigned fmt)
+int pbit_encode_gcr_trk (pbit_trk_t *dtrk, psi_trk_t *strk, unsigned fmt)
 {
 	unsigned      i, f;
 	unsigned char buf[524];
-	pfdc_sct_t    *sct;
+	psi_sct_t    *sct;
 
 	pbit_trk_set_pos (dtrk, 0);
 
@@ -480,13 +480,13 @@ int pbit_encode_gcr_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, unsigned fmt)
 			memcpy (buf + 12, sct->data, 512);
 		}
 
-		f = pfdc_sct_get_gcr_format (sct);
+		f = psi_sct_get_gcr_format (sct);
 
 		if (f == 0) {
 			f = fmt;
 		}
 
-		pfdc_sct_get_tags (sct, buf, 12);
+		psi_sct_get_tags (sct, buf, 12);
 
 		pbit_encode_gcr_sct (dtrk, buf, sct->c, sct->h, sct->s, f);
 	}
@@ -500,13 +500,13 @@ int pbit_encode_gcr_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, unsigned fmt)
 	return (0);
 }
 
-int pbit_encode_gcr_img (pbit_img_t *dimg, pfdc_img_t *simg)
+int pbit_encode_gcr_img (pbit_img_t *dimg, psi_img_t *simg)
 {
 	unsigned long c, h;
 	unsigned long size;
 	unsigned      fmt;
-	pfdc_cyl_t    *cyl;
-	pfdc_trk_t    *trk;
+	psi_cyl_t     *cyl;
+	psi_trk_t     *trk;
 	pbit_trk_t    *dtrk;
 
 	fmt = gcr_get_format (simg);
@@ -540,7 +540,7 @@ int pbit_encode_gcr_img (pbit_img_t *dimg, pfdc_img_t *simg)
 	return (0);
 }
 
-pbit_img_t *pbit_encode_gcr (pfdc_img_t *img)
+pbit_img_t *pbit_encode_gcr (psi_img_t *img)
 {
 	pbit_img_t *dimg;
 

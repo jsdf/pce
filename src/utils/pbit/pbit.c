@@ -30,9 +30,8 @@
 
 #include "pbit.h"
 
-#include <drivers/pfdc/pfdc-img-pfdc.h>
-#include <drivers/pfdc/pfdc-img.h>
-#include <drivers/pfdc/pfdc.h>
+#include <drivers/psi/psi-img.h>
+#include <drivers/psi/psi.h>
 
 #include <drivers/pbit/pbit.h>
 #include <drivers/pbit/pbit-io.h>
@@ -611,7 +610,7 @@ static
 int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
 {
 	int        r;
-	pfdc_img_t *dimg;
+	psi_img_t *dimg;
 
 	if (strcmp (type, "gcr-raw") == 0) {
 		return (pbit_decode_gcr_raw (img, fname));
@@ -637,9 +636,9 @@ int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
 		return (1);
 	}
 
-	r = pfdc_save (fname, dimg, PFDC_FORMAT_NONE);
+	r = psi_save (fname, dimg, PSI_FORMAT_NONE);
 
-	pfdc_img_del (dimg);
+	psi_img_del (dimg);
 
 	return (r);
 }
@@ -686,10 +685,10 @@ int pbit_double_step (pbit_img_t *img, int even)
 static
 int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
 {
-	pfdc_img_t *simg;
+	psi_img_t  *simg;
 	pbit_img_t *dimg;
 
-	if ((simg = pfdc_load (fname, PFDC_FORMAT_NONE)) == NULL) {
+	if ((simg = psi_load (fname, PSI_FORMAT_NONE)) == NULL) {
 		return (1);
 	}
 
@@ -716,7 +715,7 @@ int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
 		pbit_img_set_comment (dimg, simg->comment, simg->comment_size);
 	}
 
-	pfdc_img_del (simg);
+	psi_img_del (simg);
 
 	if (dimg == NULL) {
 		return (1);

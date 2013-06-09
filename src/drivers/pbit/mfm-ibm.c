@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <drivers/pfdc/pfdc.h>
+#include <drivers/psi/psi.h>
 
 #include "pbit.h"
 #include "pbit-io.h"
@@ -176,12 +176,12 @@ int mfm_sync_mark (mfm_code_t *mfm, unsigned char *val)
 }
 
 static
-pfdc_sct_t *mfm_decode_idam (mfm_code_t *mfm)
+psi_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 {
 	unsigned      c, h, s, n;
 	unsigned      crc;
 	unsigned char buf[8];
-	pfdc_sct_t    *sct;
+	psi_sct_t     *sct;
 
 	mfm_read (mfm, buf, 6);
 
@@ -196,27 +196,27 @@ pfdc_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 
 	n = 128 << ((n < 8) ? n : 8);
 
-	sct = pfdc_sct_new (c, h, s, n);
+	sct = psi_sct_new (c, h, s, n);
 
 	if (sct == NULL) {
 		return (NULL);
 	}
 
-	pfdc_sct_set_mfm_size (sct, buf[3]);
+	psi_sct_set_mfm_size (sct, buf[3]);
 
-	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 1);
+	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 1);
 
 	if (mfm->crc != crc) {
-		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_ID, 1);
+		psi_sct_set_flags (sct, PSI_FLAG_CRC_ID, 1);
 	}
 
-	pfdc_sct_fill (sct, 0);
+	psi_sct_fill (sct, 0);
 
 	return (sct);
 }
 
 static
-int mfm_decode_dam (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned mark)
+int mfm_decode_dam (mfm_code_t *mfm, psi_sct_t *sct, unsigned mark)
 {
 	unsigned      crc;
 	unsigned char buf[4];
@@ -224,27 +224,27 @@ int mfm_decode_dam (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned mark)
 	mfm_read (mfm, sct->data, sct->n);
 	mfm_read (mfm, buf, 2);
 
-	pfdc_sct_set_flags (sct, PFDC_FLAG_NO_DAM, 0);
-	pfdc_sct_set_flags (sct, PFDC_FLAG_DEL_DAM, mark == 0xf8);
+	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 0);
+	psi_sct_set_flags (sct, PSI_FLAG_DEL_DAM, mark == 0xf8);
 
 	crc = pbit_get_uint16_be (buf, 0);
 
 	mfm->crc = mfm_crc (mfm->crc, sct->data, sct->n);
 
 	if (mfm->crc != crc) {
-		pfdc_sct_set_flags (sct, PFDC_FLAG_CRC_DATA, 1);
+		psi_sct_set_flags (sct, PSI_FLAG_CRC_DATA, 1);
 	}
 
 	return (0);
 }
 
 static
-int mfm_decode_mark (mfm_code_t *mfm, pfdc_trk_t *trk, unsigned mark)
+int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 {
 	unsigned char mark2;
 	char          wrap;
 	unsigned long pos;
-	pfdc_sct_t    *sct;
+	psi_sct_t    *sct;
 
 	switch (mark) {
 	case 0xfe: /* ID address mark */
@@ -254,7 +254,7 @@ int mfm_decode_mark (mfm_code_t *mfm, pfdc_trk_t *trk, unsigned mark)
 			return (1);
 		}
 
-		pfdc_sct_set_encoding (sct, PFDC_ENC_MFM);
+		psi_sct_set_encoding (sct, PSI_ENC_MFM);
 
 		pos = mfm->trk->idx;
 		wrap = mfm->trk->wrap;
@@ -265,20 +265,20 @@ int mfm_decode_mark (mfm_code_t *mfm, pfdc_trk_t *trk, unsigned mark)
 				wrap = mfm->trk->wrap;
 
 				if (mfm_decode_dam (mfm, sct, mark2)) {
-					pfdc_sct_del (sct);
+					psi_sct_del (sct);
 					return (1);
 				}
 			}
 		}
 
-		if (sct->flags & PFDC_FLAG_NO_DAM) {
-			pfdc_sct_set_size (sct, 0, 0);
+		if (sct->flags & PSI_FLAG_NO_DAM) {
+			psi_sct_set_size (sct, 0, 0);
 		}
 
 		mfm->trk->idx = pos;
 		mfm->trk->wrap = wrap;
 
-		pfdc_trk_add_sector (trk, sct);
+		psi_trk_add_sector (trk, sct);
 		break;
 
 	case 0xfb: /* data address mark */
@@ -295,13 +295,13 @@ int mfm_decode_mark (mfm_code_t *mfm, pfdc_trk_t *trk, unsigned mark)
 	return (0);
 }
 
-pfdc_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
+psi_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
 {
 	unsigned char mark;
-	pfdc_trk_t    *dtrk;
+	psi_trk_t     *dtrk;
 	mfm_code_t    mfm;
 
-	dtrk = pfdc_trk_new (h);
+	dtrk = psi_trk_new (h);
 
 	if (dtrk == NULL) {
 		return (NULL);
@@ -322,7 +322,7 @@ pfdc_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
 		}
 
 		if (mfm_decode_mark (&mfm, dtrk, mark)) {
-			pfdc_trk_del (dtrk);
+			psi_trk_del (dtrk);
 			return (NULL);
 		}
 	}
@@ -330,15 +330,15 @@ pfdc_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
 	return (dtrk);
 }
 
-pfdc_img_t *pbit_decode_mfm (pbit_img_t *img)
+psi_img_t *pbit_decode_mfm (pbit_img_t *img)
 {
 	unsigned long c, h;
 	pbit_cyl_t    *cyl;
 	pbit_trk_t    *trk;
-	pfdc_img_t    *dimg;
-	pfdc_trk_t    *dtrk;
+	psi_img_t     *dimg;
+	psi_trk_t     *dtrk;
 
-	dimg = pfdc_img_new();
+	dimg = psi_img_new();
 
 	if (dimg == NULL) {
 		return (NULL);
@@ -355,18 +355,18 @@ pfdc_img_t *pbit_decode_mfm (pbit_img_t *img)
 			trk = cyl->trk[h];
 
 			if (trk == NULL) {
-				dtrk = pfdc_trk_new (h);
+				dtrk = psi_trk_new (h);
 			}
 			else {
 				dtrk = pbit_decode_mfm_trk (trk, h);
 			}
 
 			if (dtrk == NULL) {
-				pfdc_img_del (dimg);
+				psi_img_del (dimg);
 				return (NULL);
 			}
 
-			pfdc_img_add_track (dimg, dtrk, c);
+			psi_img_add_track (dimg, dtrk, c);
 		}
 	}
 
@@ -428,7 +428,7 @@ void mfm_encode_mark (mfm_code_t *mfm, unsigned char mark)
 }
 
 static
-void mfm_encode_sector (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned gap3)
+void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 {
 	unsigned      i;
 	unsigned      flags;
@@ -445,11 +445,11 @@ void mfm_encode_sector (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned gap3)
 	buf[0] = sct->c;
 	buf[1] = sct->h;
 	buf[2] = sct->s;
-	buf[3] = pfdc_sct_get_mfm_size (sct);
+	buf[3] = psi_sct_get_mfm_size (sct);
 
 	mfm->crc = mfm_crc (mfm->crc, buf, 4);
 
-	if (flags & PFDC_FLAG_CRC_ID) {
+	if (flags & PSI_FLAG_CRC_ID) {
 		mfm->crc = ~mfm->crc;
 	}
 
@@ -462,7 +462,7 @@ void mfm_encode_sector (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned gap3)
 		mfm_encode_byte (mfm, 0x4e, 0xffff);
 	}
 
-	if (flags & PFDC_FLAG_NO_DAM) {
+	if (flags & PSI_FLAG_NO_DAM) {
 		return;
 	}
 
@@ -470,13 +470,13 @@ void mfm_encode_sector (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned gap3)
 		mfm_encode_byte (mfm, 0x00, 0xffff);
 	}
 
-	mfm_encode_mark (mfm, (flags & PFDC_FLAG_DEL_DAM) ? 0xf8 : 0xfb);
+	mfm_encode_mark (mfm, (flags & PSI_FLAG_DEL_DAM) ? 0xf8 : 0xfb);
 
 	mfm_encode_bytes (mfm, sct->data, sct->n);
 
 	mfm->crc = mfm_crc (mfm->crc, sct->data, sct->n);
 
-	if (flags & PFDC_FLAG_CRC_DATA) {
+	if (flags & PSI_FLAG_CRC_DATA) {
 		mfm->crc = ~mfm->crc;
 	}
 
@@ -490,10 +490,10 @@ void mfm_encode_sector (mfm_code_t *mfm, pfdc_sct_t *sct, unsigned gap3)
 	}
 }
 
-int pbit_encode_mfm_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, pbit_encode_mfm_t *par)
+int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *par)
 {
 	unsigned   i;
-	pfdc_sct_t *sct;
+	psi_sct_t  *sct;
 	mfm_code_t mfm;
 
 	mfm.trk = dtrk;
@@ -524,11 +524,11 @@ int pbit_encode_mfm_trk (pbit_trk_t *dtrk, pfdc_trk_t *strk, pbit_encode_mfm_t *
 	return (0);
 }
 
-int pbit_encode_mfm_img (pbit_img_t *dimg, pfdc_img_t *simg, pbit_encode_mfm_t *par)
+int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *par)
 {
 	unsigned long c, h;
-	pfdc_cyl_t    *cyl;
-	pfdc_trk_t    *trk;
+	psi_cyl_t     *cyl;
+	psi_trk_t     *trk;
 	pbit_trk_t    *dtrk;
 
 	for (c = 0; c < simg->cyl_cnt; c++) {
@@ -558,7 +558,7 @@ int pbit_encode_mfm_img (pbit_img_t *dimg, pfdc_img_t *simg, pbit_encode_mfm_t *
 	return (0);
 }
 
-pbit_img_t *pbit_encode_mfm (pfdc_img_t *img, pbit_encode_mfm_t *par)
+pbit_img_t *pbit_encode_mfm (psi_img_t *img, pbit_encode_mfm_t *par)
 {
 	pbit_img_t *dimg;
 
@@ -576,7 +576,7 @@ pbit_img_t *pbit_encode_mfm (pfdc_img_t *img, pbit_encode_mfm_t *par)
 	return (dimg);
 }
 
-pbit_img_t *pbit_encode_mfm_dd_300 (pfdc_img_t *img)
+pbit_img_t *pbit_encode_mfm_dd_300 (psi_img_t *img)
 {
 	pbit_encode_mfm_t par;
 
@@ -587,7 +587,7 @@ pbit_img_t *pbit_encode_mfm_dd_300 (pfdc_img_t *img)
 	return (pbit_encode_mfm (img, &par));
 }
 
-pbit_img_t *pbit_encode_mfm_hd_300 (pfdc_img_t *img)
+pbit_img_t *pbit_encode_mfm_hd_300 (psi_img_t *img)
 {
 	pbit_encode_mfm_t par;
 
@@ -598,7 +598,7 @@ pbit_img_t *pbit_encode_mfm_hd_300 (pfdc_img_t *img)
 	return (pbit_encode_mfm (img, &par));
 }
 
-pbit_img_t *pbit_encode_mfm_hd_360 (pfdc_img_t *img)
+pbit_img_t *pbit_encode_mfm_hd_360 (psi_img_t *img)
 {
 	pbit_encode_mfm_t par;
 

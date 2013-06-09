@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.h                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -40,7 +40,7 @@
 #define PCE_DISK_PCE    3
 #define PCE_DISK_DOSEMU 4
 #define PCE_DISK_COW    5
-#define PCE_DISK_FDC    6
+#define PCE_DISK_PSI    6
 #define PCE_DISK_QED    7
 
 

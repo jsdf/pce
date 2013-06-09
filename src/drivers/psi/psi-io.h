@@ -3,8 +3,8 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pbit/main.h                                        *
- * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/psi/psi-io.h                                     *
+ * Created:     2012-02-02 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
@@ -20,20 +20,24 @@
  *****************************************************************************/
 
 
-#ifndef PBIT_MAIN_H
-#define PBIT_MAIN_H 1
+#ifndef PSI_PSI_IO_H
+#define PSI_PSI_IO_H 1
 
 
-#include <drivers/pbit/pbit.h>
-#include <drivers/psi/psi.h>
+unsigned long psi_get_uint32_be (const void *buf, unsigned idx);
+unsigned psi_get_uint16_be (const void *buf, unsigned idx);
+void psi_set_uint16_be (void *buf, unsigned idx, unsigned val);
+void psi_set_uint32_be (void *buf, unsigned idx, unsigned long val);
 
+unsigned psi_get_uint16_le (const void *buf, unsigned idx);
+unsigned long psi_get_uint32_le (const void *buf, unsigned idx);
+void psi_set_uint16_le (void *buf, unsigned idx, unsigned val);
 
-typedef int (*pbit_trk_cb) (pbit_img_t *img, pbit_trk_t *trk,
-	unsigned long c, unsigned long h, void *opaque
-);
-
-
-int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque);
+int psi_read (FILE *fp, void *buf, unsigned long cnt);
+int psi_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt);
+int psi_write (FILE *fp, const void *buf, unsigned long cnt);
+int psi_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt);
+int psi_skip (FILE *fp, unsigned long cnt);
 
 
 #endif

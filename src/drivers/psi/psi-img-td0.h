@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pbit/main.h                                        *
- * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/drivers/psi/psi-img-td0.h                                *
+ * Created:     2010-09-04 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,20 +20,19 @@
  *****************************************************************************/
 
 
-#ifndef PBIT_MAIN_H
-#define PBIT_MAIN_H 1
+#ifndef PSI_IMG_TD0_H
+#define PSI_IMG_TD0_H 1
 
 
-#include <drivers/pbit/pbit.h>
 #include <drivers/psi/psi.h>
 
 
-typedef int (*pbit_trk_cb) (pbit_img_t *img, pbit_trk_t *trk,
-	unsigned long c, unsigned long h, void *opaque
-);
+psi_img_t *psi_load_td0 (FILE *fp);
 
+int psi_save_td0 (FILE *fp, const psi_img_t *img);
 
-int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque);
+int psi_probe_td0_fp (FILE *fp);
+int psi_probe_td0 (const char *fname);
 
 
 #endif
