@@ -107,6 +107,7 @@ void psi_sct_add_alternate (psi_sct_t *sct, psi_sct_t *alt);
 psi_sct_t *psi_sct_get_alternate (psi_sct_t *sct, unsigned idx);
 
 int psi_sct_set_size (psi_sct_t *sct, unsigned size, unsigned filler);
+unsigned psi_sct_get_size (const psi_sct_t *sct);
 
 void psi_sct_fill (psi_sct_t *sct, unsigned val);
 

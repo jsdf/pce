@@ -192,6 +192,11 @@ int psi_sct_set_size (psi_sct_t *sct, unsigned size, unsigned filler)
 	return (0);
 }
 
+unsigned psi_sct_get_size (const psi_sct_t *sct)
+{
+	return (sct->n);
+}
+
 void psi_sct_fill (psi_sct_t *sct, unsigned val)
 {
 	unsigned i;

@@ -138,9 +138,9 @@ void print_help (void)
 
 	fputs (
 		"\nsector attributes are:\n"
-		"  c, crc-id, crc-data, del-dam, "
-		"fm, fm-hd, gcr, h, mfm, mfm-hd, mfm-ed, "
-		"no-dam, position, s, size, tags, time\n",
+		"  c, crc-id, crc-data, del-dam, fm, fm-hd, gcr, h,\n"
+		"  mfm, mfm-hd, mfm-ed, no-dam, position, round-time,\n"
+		"  s, size, tags, time\n",
 		stdout
 	);
 

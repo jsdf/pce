@@ -166,6 +166,31 @@ int psi_edit_position_cb (psi_img_t *img, psi_sct_t *sct,
 }
 
 static
+int psi_edit_round_time_cb (psi_img_t *img, psi_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	unsigned long time1, time2, range, diff;
+
+	time1 = 8UL * psi_sct_get_size (sct);
+	time2 = psi_sct_get_read_time (sct);
+	range = *(unsigned long *) p;
+
+	if ((time1 == 0) || (time2 == 0)) {
+		return (0);
+	}
+
+	diff = (time1 < time2) ? (time2 - time1) : (time1 - time2);
+	diff = (100UL * 100UL * diff + (time1 / 2)) / time1;
+
+	if (diff < range) {
+		psi_sct_set_read_time (sct, 0);
+		par_cnt += 1;
+	}
+
+	return (0);
+}
+
+static
 int psi_edit_s_cb (psi_img_t *img, psi_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
@@ -272,6 +297,9 @@ int psi_edit_sectors (psi_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "position") == 0) {
 		fct = psi_edit_position_cb;
+	}
+	else if (strcmp (what, "round-time") == 0) {
+		fct = psi_edit_round_time_cb;
 	}
 	else if (strcmp (what, "s") == 0) {
 		fct = psi_edit_s_cb;
