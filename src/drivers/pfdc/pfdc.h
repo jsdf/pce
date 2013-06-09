@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pfdc/pfdc.h                                      *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,6 +64,8 @@ typedef struct pfdc_sct_t {
 	unsigned short     tag_cnt;
 	unsigned char      tag[PFDC_TAGS_MAX];
 
+	unsigned long      position;
+
 	char               have_mfm_size;
 	unsigned char      mfm_size;
 
@@ -114,6 +116,10 @@ int pfdc_sct_uniform (const pfdc_sct_t *sct);
 void pfdc_sct_set_flags (pfdc_sct_t *sct, unsigned long flags, int set);
 
 void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc);
+
+void pfdc_sct_set_position (pfdc_sct_t *sct, unsigned long val);
+
+unsigned long pfdc_sct_get_position (const pfdc_sct_t *sct);
 
 void pfdc_sct_set_mfm_size (pfdc_sct_t *sct, unsigned char val);
 unsigned pfdc_sct_get_mfm_size (const pfdc_sct_t *sct);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pfdc/pfdc.c                                      *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,6 +64,8 @@ pfdc_sct_t *pfdc_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 
 	sct->tag_cnt = 0;
 
+	sct->position = 0xffffffff;
+
 	sct->have_mfm_size = 0;
 	sct->have_gcr_format = 0;
 
@@ -103,6 +105,8 @@ pfdc_sct_t *pfdc_sct_clone (const pfdc_sct_t *sct, int deep)
 	if (sct->tag_cnt > 0) {
 		memcpy (dst->tag, sct->tag, sct->tag_cnt);
 	}
+
+	dst->position = sct->position;
 
 	if (sct->have_mfm_size) {
 		dst->have_mfm_size = 1;
@@ -224,6 +228,16 @@ void pfdc_sct_set_encoding (pfdc_sct_t *sct, unsigned enc)
 		sct->encoding = enc;
 		sct = sct->next;
 	}
+}
+
+void pfdc_sct_set_position (pfdc_sct_t *sct, unsigned long val)
+{
+	sct->position = val;
+}
+
+unsigned long pfdc_sct_get_position (const pfdc_sct_t *sct)
+{
+	return (sct->position);
 }
 
 void pfdc_sct_set_mfm_size (pfdc_sct_t *sct, unsigned char val)

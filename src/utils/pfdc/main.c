@@ -540,6 +540,10 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 				}
 			}
 
+			if (sct->position != 0xffffffff) {
+				flags |= 0x80000000;
+			}
+
 			if (flags || alt) {
 				fputs ("  ", stdout);
 			}
@@ -566,6 +570,10 @@ int pfdc_list_sectors_cb (pfdc_img_t *img, pfdc_trk_t *trk,
 
 			if (flags & PFDC_FLAG_MFM_SIZE) {
 				fprintf (stdout, " MFM-SIZE=%02X", mfm_size);
+			}
+
+			if (sct->position != 0xffffffff) {
+				fprintf (stdout, " POS=%-5lu", sct->position);
 			}
 
 			fputs ("\n", stdout);
@@ -1893,6 +1901,15 @@ int pfdc_edit_s_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 }
 
 static
+int pfdc_edit_position_cb (pfdc_img_t *img, pfdc_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	sct->position = (*(unsigned long *) p) & 0xffffffff;
+	par_cnt += 1;
+	return (0);
+}
+
+static
 int pfdc_edit_size_cb (pfdc_img_t *img, pfdc_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
@@ -1988,6 +2005,9 @@ int pfdc_edit_sectors (pfdc_img_t *img, const char *what, const char *val)
 	}
 	else if (strcmp (what, "no-dam") == 0) {
 		fct = pfdc_edit_nodam_cb;
+	}
+	else if (strcmp (what, "position") == 0) {
+		fct = pfdc_edit_position_cb;
 	}
 	else if (strcmp (what, "s") == 0) {
 		fct = pfdc_edit_s_cb;
