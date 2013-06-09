@@ -141,6 +141,10 @@ int psi_print_info (psi_img_t *img)
 					enc = sct->encoding;
 				}
 
+				if (psi_sct_get_read_time (sct) != 0) {
+					tflags |= PSI_TRK_TIME;
+				}
+
 				if (sct->have_mfm_size) {
 					mfm_size = psi_sct_get_mfm_size (sct);
 
@@ -176,6 +180,21 @@ int psi_print_info (psi_img_t *img)
 
 	ff = 1;
 
+	if (tflags & PSI_TRK_BAD_ID) {
+		printf (" BAD-ID");
+		ff = 0;
+	}
+
+	if (tflags & PSI_TRK_ENCODING) {
+		printf (" ENCODING");
+		ff = 0;
+	}
+
+	if (tflags & PSI_TRK_TIME) {
+		printf (" TIME");
+		ff = 0;
+	}
+
 	if (flags & PSI_FLAG_CRC_ID) {
 		printf (" CRC-ID");
 		ff = 0;
@@ -198,16 +217,6 @@ int psi_print_info (psi_img_t *img)
 
 	if (flags & PSI_FLAG_MFM_SIZE) {
 		printf (" MFM-SIZE");
-		ff = 0;
-	}
-
-	if (tflags & PSI_TRK_BAD_ID) {
-		printf (" BAD-ID");
-		ff = 0;
-	}
-
-	if (tflags & PSI_TRK_ENCODING) {
-		printf (" ENCODING");
 		ff = 0;
 	}
 

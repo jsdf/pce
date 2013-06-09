@@ -34,6 +34,7 @@
 #define PSI_TRK_RANGE     (1 << 2)
 #define PSI_TRK_SIZE      (1 << 3)
 #define PSI_TRK_ENCODING  (1 << 4)
+#define PSI_TRK_TIME      (1 << 5)
 
 #define PSI_FLAG_MFM_SIZE (1UL << 16)
 

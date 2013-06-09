@@ -278,6 +278,10 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 				trk_flg |= PSI_TRK_ENCODING;
 			}
 
+			if (psi_sct_get_read_time (sct) != 0) {
+				trk_flg |= PSI_TRK_TIME;
+			}
+
 			if (sct->have_mfm_size) {
 				mfm_size = psi_sct_get_mfm_size (sct);
 
@@ -294,7 +298,7 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 		}
 	}
 
-	printf ("%u %u %u",
+	printf ("%2u %u  %2u",
 		c, h, trk->sct_cnt
 	);
 
@@ -316,6 +320,10 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 
 	if (trk_flg & PSI_TRK_RANGE) {
 		fputs (" RANGE", stdout);
+	}
+
+	if (trk_flg & PSI_TRK_TIME) {
+		fputs (" TIME", stdout);
 	}
 
 	if (sct_flg & PSI_FLAG_CRC_ID) {
