@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pbit/mfm-ibm.c                                   *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -434,6 +434,10 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	unsigned      flags;
 	unsigned char buf[8];
 
+	if (sct->position != 0xffffffff) {
+		pbit_trk_set_pos (mfm->trk, 2 * sct->position);
+	}
+
 	flags = sct->flags;
 
 	for (i = 0; i < 12; i++) {
@@ -548,6 +552,7 @@ int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *p
 			}
 
 			pbit_trk_set_clock (dtrk, par->clock);
+			pbit_trk_clear_16 (dtrk, 0x9254);
 
 			if (pbit_encode_mfm_trk (dtrk, trk, par)) {
 				return (1);
