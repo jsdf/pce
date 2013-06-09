@@ -12,6 +12,7 @@ DEV_PSI_BAS := \
 	psi-img-imd \
 	psi-img-msa \
 	psi-img-pfdc \
+	psi-img-psi \
 	psi-img-raw \
 	psi-img-tc \
 	psi-img-td0 \
@@ -44,6 +45,7 @@ $(rel)/psi-img-pfdc0.o: $(rel)/psi-img-pfdc0.c
 $(rel)/psi-img-pfdc1.o: $(rel)/psi-img-pfdc1.c
 $(rel)/psi-img-pfdc2.o: $(rel)/psi-img-pfdc2.c
 $(rel)/psi-img-pfdc4.o: $(rel)/psi-img-pfdc4.c
+$(rel)/psi-img-psi.o:   $(rel)/psi-img-psi.c
 $(rel)/psi-img-raw.o:   $(rel)/psi-img-raw.c
 $(rel)/psi-img-tc.o:    $(rel)/psi-img-tc.c
 $(rel)/psi-img-td0.o:   $(rel)/psi-img-td0.c

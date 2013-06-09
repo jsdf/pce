@@ -112,8 +112,8 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
 	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
-	doc/pbit-format.txt doc/pfdc-format.txt doc/rc759-keymap.txt \
-	doc/sound-drivers.txt
+	doc/pbit-format.txt doc/pfdc-format.txt doc/psi-format.txt \
+	doc/rc759-keymap.txt doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
 

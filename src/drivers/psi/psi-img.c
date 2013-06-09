@@ -32,6 +32,7 @@
 #include "psi-img-imd.h"
 #include "psi-img-msa.h"
 #include "psi-img-pfdc.h"
+#include "psi-img-psi.h"
 #include "psi-img-raw.h"
 #include "psi-img-tc.h"
 #include "psi-img-td0.h"
@@ -86,6 +87,9 @@ unsigned psi_guess_type (const char *fname)
 	else if (strcasecmp (ext, ".pfdc") == 0) {
 		return (PSI_FORMAT_PFDC);
 	}
+	else if (strcasecmp (ext, ".psi") == 0) {
+		return (PSI_FORMAT_PSI);
+	}
 	else if (strcasecmp (ext, ".raw") == 0) {
 		return (PSI_FORMAT_RAW);
 	}
@@ -102,7 +106,7 @@ unsigned psi_guess_type (const char *fname)
 		return (PSI_FORMAT_XDF);
 	}
 
-	return (PSI_FORMAT_PFDC);
+	return (PSI_FORMAT_PSI);
 }
 
 psi_img_t *psi_load_fp (FILE *fp, unsigned type)
@@ -129,6 +133,9 @@ psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 	case PSI_FORMAT_PFDC2:
 	case PSI_FORMAT_PFDC4:
 		return (psi_load_pfdc (fp));
+
+	case PSI_FORMAT_PSI:
+		return (psi_load_psi (fp));
 
 	case PSI_FORMAT_RAW:
 		return (psi_load_raw (fp));
@@ -209,6 +216,9 @@ int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type)
 	case PSI_FORMAT_PFDC4:
 		return (psi_save_pfdc (fp, img, 4));
 
+	case PSI_FORMAT_PSI:
+		return (psi_save_psi (fp, img));
+
 	case PSI_FORMAT_RAW:
 		return (psi_save_raw (fp, img));
 
@@ -250,6 +260,10 @@ int psi_save (const char *fname, const psi_img_t *img, unsigned type)
 
 unsigned psi_probe_fp (FILE *fp)
 {
+	if (psi_probe_psi_fp (fp)) {
+		return (PSI_FORMAT_PSI);
+	}
+
 	if (psi_probe_pfdc_fp (fp)) {
 		return (PSI_FORMAT_PFDC);
 	}

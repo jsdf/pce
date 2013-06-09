@@ -320,6 +320,9 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		else if (strcmp (type, "pfdc-auto") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_NONE, ro);
 		}
+		else if (strcmp (type, "psi") == 0) {
+			dsk = dsk_psi_open (path, PSI_FORMAT_PSI, ro);
+		}
 		else if (strcmp (type, "teledisk") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_TD0, ro);
 		}

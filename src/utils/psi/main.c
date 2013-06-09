@@ -2381,6 +2381,9 @@ int psi_set_format (const char *name, unsigned *val)
 	else if (strcmp (name, "pfdc4") == 0) {
 		*val = PSI_FORMAT_PFDC4;
 	}
+	else if (strcmp (name, "psi") == 0) {
+		*val = PSI_FORMAT_PSI;
+	}
 	else if (strcmp (name, "raw") == 0) {
 		*val = PSI_FORMAT_RAW;
 	}
