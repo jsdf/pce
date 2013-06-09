@@ -63,6 +63,9 @@ The sector uses IBM extra high density MFM encoding.
 .B no-dam
 The sector has a missing data address mark.
 .TP
+.B position
+The sector position in data bits from the start of the track.
+.TP
 .B s
 The sector number in the sector ID.
 .TP
@@ -71,6 +74,9 @@ The sector size in bytes.
 .TP
 .B tags
 If \fIval\fR is zero, remove sector tags, otherwise add sector tags.
+.TP
+.B time
+The sector read time, in data bits.
 .RE
 \
 .TP
@@ -96,9 +102,6 @@ Set the input file format to \fIformat\fR.
 Valid formats are:
 .RS
 .TP
-.B pfdc
-The native PFDC file format.
-.TP
 .B ana
 The anadisk dump format.
 .TP
@@ -115,8 +118,18 @@ The ImageDisk file format.
 .B msa
 The Magic Shadow Archive image file format.
 .TP
+.B pfdc
+The PFDC file format. This has been superseded by PSI.
+.TP
 .B psi
 The native PCE sector image file format.
+.TP
+.B raw
+A raw sector dump.
+.TP
+.B st
+The same as raw, but the auto-detected disk geometries are the ones
+common on the Atari ST.
 .TP
 .B tc
 Transcopy dump format. Support for this format is highly experimental.
@@ -125,13 +138,6 @@ This format is only available as an input format.
 .B td0
 The teledisk file format. Only files that don't use advanced compression
 are supported.
-.TP
-.B raw
-A raw sector dump.
-.TP
-.B st
-The same as raw, but the auto-detected disk geometries are the ones
-common on the Atari ST.
 .TP
 .B xdf
 IBM XDF disk images.

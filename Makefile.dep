@@ -2117,10 +2117,83 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/lib/getopt.h \
 	src/utils/pce-img/pce-img.h
 
+src/utils/psi/comment.o: src/utils/psi/comment.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/comment.h \
+	src/utils/psi/main.h
+
+src/utils/psi/delete.o: src/utils/psi/delete.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/delete.h \
+	src/utils/psi/main.h
+
+src/utils/psi/edit.o: src/utils/psi/edit.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/edit.h \
+	src/utils/psi/main.h
+
+src/utils/psi/info.o: src/utils/psi/info.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/comment.h \
+	src/utils/psi/info.h \
+	src/utils/psi/main.h
+
+src/utils/psi/list.o: src/utils/psi/list.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/list.h \
+	src/utils/psi/main.h
+
+src/utils/psi/load.o: src/utils/psi/load.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/load.h \
+	src/utils/psi/main.h
+
 src/utils/psi/main.o: src/utils/psi/main.c \
 	src/config.h \
 	src/drivers/psi/psi-img-raw.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
-	src/utils/psi/main.h
+	src/utils/psi/comment.h \
+	src/utils/psi/delete.h \
+	src/utils/psi/edit.h \
+	src/utils/psi/info.h \
+	src/utils/psi/list.h \
+	src/utils/psi/load.h \
+	src/utils/psi/main.h \
+	src/utils/psi/merge.h \
+	src/utils/psi/new.h \
+	src/utils/psi/reorder.h \
+	src/utils/psi/save.h
+
+src/utils/psi/merge.o: src/utils/psi/merge.c \
+	src/config.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/main.h \
+	src/utils/psi/merge.h
+
+src/utils/psi/new.o: src/utils/psi/new.c \
+	src/config.h \
+	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/main.h \
+	src/utils/psi/new.h
+
+src/utils/psi/reorder.o: src/utils/psi/reorder.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/main.h \
+	src/utils/psi/reorder.h
+
+src/utils/psi/save.o: src/utils/psi/save.c \
+	src/config.h \
+	src/drivers/psi/psi.h \
+	src/utils/psi/main.h \
+	src/utils/psi/save.h
