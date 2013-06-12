@@ -104,86 +104,88 @@ typedef unsigned (*e68_opcode_f) (struct e68000_s *c);
 
 
 typedef struct e68000_s {
-	unsigned           flags;
+	unsigned       flags;
 
-	void               *mem_ext;
+	void           *mem_ext;
 
-	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
-	unsigned short     (*get_uint16) (void *ext, unsigned long addr);
-	unsigned long      (*get_uint32) (void *ext, unsigned long addr);
+	unsigned char  (*get_uint8) (void *ext, unsigned long addr);
+	unsigned short (*get_uint16) (void *ext, unsigned long addr);
+	unsigned long  (*get_uint32) (void *ext, unsigned long addr);
 
-	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
-	void               (*set_uint16) (void *ext, unsigned long addr, unsigned short val);
-	void               (*set_uint32) (void *ext, unsigned long addr, unsigned long val);
+	void           (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
+	void           (*set_uint16) (void *ext, unsigned long addr, unsigned short val);
+	void           (*set_uint32) (void *ext, unsigned long addr, unsigned long val);
 
-	unsigned char      *ram;
-	unsigned long      ram_cnt;
+	unsigned char  *ram;
+	unsigned long  ram_cnt;
 
-	void               *reset_ext;
-	void               (*reset) (void *ext, unsigned char val);
-	unsigned char      reset_val;
+	void           *reset_ext;
+	void           (*reset) (void *ext, unsigned char val);
+	unsigned char  reset_val;
 
-	unsigned char      inta_val;
-	void               *inta_ext;
-	unsigned           (*inta) (void *ext, unsigned level);
+	unsigned char  inta_val;
+	void           *inta_ext;
+	unsigned       (*inta) (void *ext, unsigned level);
 
-	void               *hook_ext;
-	int                (*hook) (void *ext, unsigned val);
+	void           *hook_ext;
+	int            (*hook) (void *ext, unsigned val);
 
-	void               *log_ext;
-	void               (*log_opcode) (void *ext, unsigned long ir);
-	void               (*log_undef) (void *ext, unsigned long ir);
-	void               (*log_exception) (void *ext, unsigned tn);
-	void               (*log_mem) (void *ext, unsigned long addr, unsigned type);
+	void           *log_ext;
+	void           (*log_opcode) (void *ext, unsigned long ir);
+	void           (*log_undef) (void *ext, unsigned long ir);
+	void           (*log_exception) (void *ext, unsigned tn);
+	void           (*log_mem) (void *ext, unsigned long addr, unsigned type);
 
-	uint32_t           dreg[8];
-	uint32_t           areg[8];
-	uint32_t           pc;
-	uint16_t           sr;
+	uint32_t       dreg[8];
+	uint32_t       areg[8];
+	uint32_t       pc;
+	uint16_t       sr;
 
-	uint32_t           usp;
-	uint32_t           ssp;
+	uint32_t       usp;
+	uint32_t       ssp;
 
-	uint32_t           vbr;
+	uint32_t       vbr;
 
-	uint32_t           sfc;
-	uint32_t           dfc;
+	uint32_t       sfc;
+	uint32_t       dfc;
 
-	uint32_t           cacr;
-	uint32_t           caar;
+	uint32_t       cacr;
+	uint32_t       caar;
 
-	uint32_t           last_pc;
-	uint16_t           last_trap_a;
-	uint16_t           last_trap_f;
+	uint32_t       last_pc;
+	uint16_t       last_trap_a;
+	uint16_t       last_trap_f;
 
-	uint16_t           trace_sr;
+	uint16_t       trace_sr;
 
-	char               supervisor;
-	unsigned char      halt;
-	char               bus_error;
+	char           supervisor;
+	unsigned char  halt;
+	char           bus_error;
 
-	unsigned           ircnt;
-	uint16_t           ir[16];
+	unsigned       ircnt;
+	uint16_t       ir[16];
 
-	unsigned           ea_typ;
-	uint32_t           ea_val;
-	unsigned long      ea_bf_ofs;
-	unsigned           ea_bf_width;
-	unsigned char      ea_bf_val[5];
+	unsigned       ea_typ;
+	uint32_t       ea_val;
+	unsigned long  ea_bf_ofs;
+	unsigned       ea_bf_width;
+	unsigned char  ea_bf_val[5];
 
-	unsigned           int_ipl;
-	char               int_nmi;
+	unsigned       int_ipl;
+	char           int_nmi;
 
-	unsigned long      delay;
+	unsigned long  delay;
 
-	unsigned           excptn;
-	const char         *excpts;
+	unsigned       except_cnt;
+	uint32_t       except_addr;
+	unsigned       except_vect;
+	const char     *except_name;
 
-	unsigned long long oprcnt;
-	unsigned long long clkcnt;
+	unsigned long  oprcnt;
+	unsigned long  clkcnt;
 
-	e68_opcode_f       opcodes[1024];
-	e68_opcode_f       op49c0[8];
+	e68_opcode_f   opcodes[1024];
+	e68_opcode_f   op49c0[8];
 } e68000_t;
 
 
@@ -399,12 +401,12 @@ void e68_set_68020 (e68000_t *c);
 /*!***************************************************************************
  * @short Get the number of executed instructions
  *****************************************************************************/
-unsigned long long e68_get_opcnt (e68000_t *c);
+unsigned long e68_get_opcnt (const e68000_t *c);
 
 /*!***************************************************************************
  * @short Get the number of clock cycles
  *****************************************************************************/
-unsigned long long e68_get_clkcnt (e68000_t *c);
+unsigned long e68_get_clkcnt (const e68000_t *c);
 
 /*!***************************************************************************
  * @short Get the previous instruction delay
@@ -417,14 +419,19 @@ void e68_set_halt (e68000_t *c, unsigned val);
 void e68_set_bus_error (e68000_t *c, int val);
 
 /*!***************************************************************************
+ * @short Get the number of exceptions
+ *****************************************************************************/
+unsigned e68_get_exception_cnt (const e68000_t *c);
+
+/*!***************************************************************************
  * @short Get the last exception number
  *****************************************************************************/
-unsigned e68_get_exception (e68000_t *c);
+unsigned e68_get_exception (const e68000_t *c);
 
 /*!***************************************************************************
  * @short Get the last exception name
  *****************************************************************************/
-const char *e68_get_exception_name (e68000_t *c);
+const char *e68_get_exception_name (const e68000_t *c);
 
 /*!***************************************************************************
  * @short Get the last PC

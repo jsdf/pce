@@ -74,8 +74,10 @@ void e68_init (e68000_t *c)
 
 	c->delay = 1;
 
-	c->excptn = 0;
-	c->excpts = "none";
+	c->except_cnt = 0;
+	c->except_addr = 0;
+	c->except_vect = 0;
+	c->except_name = "none";
 
 	c->oprcnt = 0;
 	c->clkcnt = 0;
@@ -214,12 +216,12 @@ void e68_set_68020 (e68000_t *c)
 	e68_set_opcodes_020 (c);
 }
 
-unsigned long long e68_get_opcnt (e68000_t *c)
+unsigned long e68_get_opcnt (const e68000_t *c)
 {
 	return (c->oprcnt);
 }
 
-unsigned long long e68_get_clkcnt (e68000_t *c)
+unsigned long e68_get_clkcnt (const e68000_t *c)
 {
 	return (c->clkcnt);
 }
@@ -244,14 +246,19 @@ void e68_set_bus_error (e68000_t *c, int val)
 	c->bus_error = (val != 0);
 }
 
-unsigned e68_get_exception (e68000_t *c)
+unsigned e68_get_exception_cnt (const e68000_t *c)
 {
-	return (c->excptn);
+	return (c->except_cnt);
 }
 
-const char *e68_get_exception_name (e68000_t *c)
+unsigned e68_get_exception (const e68000_t *c)
 {
-	return (c->excpts);
+	return (c->except_vect);
+}
+
+const char *e68_get_exception_name (const e68000_t *c)
+{
+	return (c->except_name);
 }
 
 unsigned long e68_get_last_pc (e68000_t *c)
@@ -518,8 +525,10 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 
 	vct &= 0xff;
 
-	c->excptn = vct;
-	c->excpts = name;
+	c->except_cnt += 1;
+	c->except_addr = e68_get_pc (c);
+	c->except_vect = vct;
+	c->except_name = name;
 
 	if (c->log_exception != NULL) {
 		c->log_exception (c->log_ext, vct);
@@ -549,8 +558,10 @@ void e68_exception_reset (e68000_t *c)
 {
 	uint16_t sr;
 
-	c->excptn = 0;
-	c->excpts = "RSET";
+	c->except_cnt += 1;
+	c->except_addr = e68_get_pc (c);
+	c->except_vect = 0;
+	c->except_name = "RSET";
 
 	sr = e68_get_sr (c);
 	sr &= ~E68_SR_T;

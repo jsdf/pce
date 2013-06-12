@@ -136,10 +136,10 @@ void mac_dasm_str (char *dst, e68_dasm_t *op)
 static
 void mac_prt_state_cpu (e68000_t *c)
 {
-	unsigned long long opcnt, clkcnt;
-	unsigned long      delay;
-	e68_dasm_t         op;
-	char               str[256];
+	unsigned long opcnt, clkcnt;
+	unsigned long delay;
+	e68_dasm_t    op;
+	char          str[256];
 
 	pce_prt_sep ("68000");
 
@@ -147,7 +147,7 @@ void mac_prt_state_cpu (e68000_t *c)
 	clkcnt = e68_get_clkcnt (c);
 	delay = e68_get_delay (c);
 
-	pce_printf ("CLK=%llx  OP=%llx  DLY=%lu  CPI=%.4f\n",
+	pce_printf ("CLK=%lx  OP=%lx  DLY=%lu  CPI=%.4f\n",
 		clkcnt, opcnt, delay,
 		(opcnt > 0) ? ((double) (clkcnt + delay) / (double) opcnt) : 1.0
 	);
@@ -327,19 +327,21 @@ int mac_check_break (macplus_t *sim)
  * Execute one instruction
  */
 static
-void mac_exec (macplus_t *sim)
+int mac_exec (macplus_t *sim)
 {
-	unsigned long long old;
+	unsigned long old;
 
 	old = e68_get_opcnt (sim->cpu);
 
 	while (e68_get_opcnt (sim->cpu) == old) {
 		mac_clock (sim, 0);
 
-		if (e68_get_halt (sim->cpu)) {
-			break;
+		if (mac_check_break (sim)) {
+			return (1);
 		}
 	}
+
+	return (0);
 }
 
 /*
@@ -351,24 +353,7 @@ int mac_exec_to (macplus_t *sim, unsigned long addr)
 	while (e68_get_pc (sim->cpu) != addr) {
 		mac_clock (sim, 0);
 
-		if (sim->brk) {
-			return (1);
-		}
-	}
-
-	return (0);
-}
-
-/*
- * Execute until the PC changes
- */
-static
-int mac_exec_off (macplus_t *sim, unsigned long addr)
-{
-	while (e68_get_pc (sim->cpu) == addr) {
-		mac_clock (sim, 0);
-
-		if (sim->brk) {
+		if (mac_check_break (sim)) {
 			return (1);
 		}
 	}
@@ -530,9 +515,7 @@ void mac_cmd_g_b (cmd_t *cmd, macplus_t *sim)
 	mac_clock_discontinuity (sim);
 
 	while (1) {
-		mac_exec (sim);
-
-		if (mac_check_break (sim)) {
+		if (mac_exec (sim)) {
 			break;
 		}
 	}
@@ -546,6 +529,7 @@ void mac_cmd_g_b (cmd_t *cmd, macplus_t *sim)
 static
 void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 {
+	unsigned       cnt;
 	unsigned short tn;
 
 	if (!cmd_match_uint16 (cmd, &tn)) {
@@ -556,7 +540,7 @@ void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 		return;
 	}
 
-	sim->cpu->excptn = 256;
+	cnt = e68_get_exception_cnt (sim->cpu);
 
 	pce_start (&sim->brk);
 
@@ -569,14 +553,16 @@ void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 			break;
 		}
 
+		if (e68_get_exception_cnt (sim->cpu) == cnt) {
+			continue;
+		}
+
 		if (tn == 0xffff) {
-			if (e68_get_exception (sim->cpu) != 256) {
-				pce_printf ("exception %02X (%s)\n",
-					e68_get_exception (sim->cpu),
-					e68_get_exception_name (sim->cpu)
-				);
-				break;
-			}
+			pce_printf ("exception %02X (%s)\n",
+				e68_get_exception (sim->cpu),
+				e68_get_exception_name (sim->cpu)
+			);
+			break;
 		}
 		else {
 			if (e68_get_exception (sim->cpu) == tn) {
@@ -642,6 +628,7 @@ void mac_cmd_halt (cmd_t *cmd, macplus_t *sim)
 static
 void mac_cmd_p (cmd_t *cmd, macplus_t *sim)
 {
+	unsigned      ecnt;
 	unsigned long cnt;
 	e68_dasm_t    da;
 
@@ -657,6 +644,8 @@ void mac_cmd_p (cmd_t *cmd, macplus_t *sim)
 		return;
 	}
 
+	ecnt = e68_get_exception_cnt (sim->cpu);
+
 	pce_start (&sim->brk);
 
 	while (cnt > 0) {
@@ -668,8 +657,14 @@ void mac_cmd_p (cmd_t *cmd, macplus_t *sim)
 			}
 		}
 		else {
-			if (mac_exec_off (sim, e68_get_pc (sim->cpu))) {
+			if (mac_exec (sim)) {
 				break;
+			}
+
+			if (e68_get_exception_cnt (sim->cpu) != ecnt) {
+				if (mac_exec_to (sim, sim->cpu->except_addr)) {
+					break;
+				}
 			}
 		}
 
