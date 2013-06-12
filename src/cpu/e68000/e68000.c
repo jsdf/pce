@@ -534,7 +534,10 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 		c->log_exception (c->log_ext, vct);
 	}
 
-	c->trace_sr = 0;
+	if ((vct != 7) && ((vct < 32) || (vct > 47))) {
+		/* disable trace exception, except after traps */
+		c->trace_sr = 0;
+	}
 
 	sr1 = e68_get_sr (c);
 	sr2 = sr1;
