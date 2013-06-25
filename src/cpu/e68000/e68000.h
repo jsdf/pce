@@ -59,6 +59,7 @@ struct e68000_s;
 #define e68_get_areg16(c, n) (((c)->areg[(n) & 7]) & 0xffff)
 #define e68_get_areg32(c, n) ((c)->areg[(n) & 7] & 0xffffffff)
 #define e68_get_pc(c) ((c)->pc & 0xffffffff)
+#define e68_get_ir_pc(c) ((c)->ir_pc & 0xffffffff)
 #define e68_get_usp(c) (((c)->supervisor ? (c)->usp : (c)->areg[7]) & 0xffffffff)
 #define e68_get_ssp(c) (((c)->supervisor ? (c)->areg[7] : (c)->ssp) & 0xffffffff)
 #define e68_get_sr(c) ((c)->sr & 0xffff)
@@ -72,6 +73,7 @@ struct e68000_s;
 #define e68_get_iml(c) (((c)->sr >> 8) & 7)
 
 #define e68_set_pc(c, v) do { (c)->pc = (v) & 0xffffffff; } while (0)
+#define e68_set_ir_pc(c, v) do { (c)->ir_pc = (v) & 0xffffffff; } while (0)
 #define e68_set_vbr(c, v) do { (c)->vbr = (v) & 0xffffffff; } while (0)
 #define e68_set_sfc(c, v) do { (c)->sfc = (v) & 0x00000003; } while (0)
 #define e68_set_dfc(c, v) do { (c)->dfc = (v) & 0x00000003; } while (0)
@@ -100,7 +102,7 @@ struct e68000_s;
 #define e68_set_sr_xc(c, v) e68_set_cc ((c), E68_SR_X | E68_SR_C, (v))
 
 
-typedef unsigned (*e68_opcode_f) (struct e68000_s *c);
+typedef void (*e68_opcode_f) (struct e68000_s *c);
 
 
 typedef struct e68000_s {
@@ -139,16 +141,14 @@ typedef struct e68000_s {
 	uint32_t       dreg[8];
 	uint32_t       areg[8];
 	uint32_t       pc;
+	uint32_t       ir_pc;
+	uint16_t       ir[3];
 	uint16_t       sr;
-
 	uint32_t       usp;
 	uint32_t       ssp;
-
 	uint32_t       vbr;
-
 	uint32_t       sfc;
 	uint32_t       dfc;
-
 	uint32_t       cacr;
 	uint32_t       caar;
 
@@ -161,9 +161,6 @@ typedef struct e68000_s {
 	char           supervisor;
 	unsigned char  halt;
 	char           bus_error;
-
-	unsigned       ircnt;
-	uint16_t       ir[16];
 
 	unsigned       ea_typ;
 	uint32_t       ea_val;

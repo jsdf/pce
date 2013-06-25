@@ -140,22 +140,81 @@ uint32_t e68_get_uint32 (const void *buf, unsigned i)
 }
 
 static inline
-void e68_ifetch (e68000_t *c, unsigned i)
+int e68_prefetch (e68000_t *c)
 {
-	c->ir[i] = e68_get_mem16 (c, c->pc + 2 * i);
-	c->ircnt = i + 1;
+	if (c->ir_pc & 1) {
+		e68_exception_address (c, c->ir_pc, 0, 0);
+		return (1);
+	}
+
+	c->ir[1] = c->ir[2];
+	c->ir[2] = e68_get_mem16 (c, c->ir_pc);
+
+	if (c->bus_error) {
+		e68_exception_bus (c);
+		return (1);
+	}
+
+	c->ir_pc += 2;
+	c->pc += 2;
+
+	return (0);
 }
 
-static inline
-void e68_ifetch_next (e68000_t *c)
-{
-	c->ir[c->ircnt] = e68_get_mem16 (c, c->pc + 2 * c->ircnt);
-	c->ircnt += 1;
-}
+
+#define e68_ir_ea1(c) ((c)->ir[0] & 0x3f)
+#define e68_ir_ea2(c) ((((c)->ir[0] >> 3) & 0x38) | (((c)->ir[0] >> 9) & 0x07))
+#define e68_ir_reg0(c) ((c)->ir[0] & 7)
+#define e68_ir_reg9(c) (((c)->ir[0] >> 9) & 7)
+
+#define e68_op_prefetch(c) if (e68_prefetch (c)) return;
+
+#define e68_op_prefetch8(c, v) do { \
+	if (e68_prefetch (c)) return; (v) = (c)->ir[1] & 0xff; \
+	} while (0)
+
+#define e68_op_prefetch16(c, v) do { \
+	if (e68_prefetch (c)) return; (v) = (c)->ir[1]; \
+	} while (0)
+
+#define e68_op_prefetch32(c, v) do { \
+	if (e68_prefetch (c)) return; (v) = (c)->ir[1]; \
+	if (e68_prefetch (c)) return; (v) = ((v) << 16) | (c)->ir[1]; \
+	} while (0)
+
+#define e68_op_get_ea8(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 8)) return; \
+	if (e68_ea_get_val8 (c, val)) return; \
+	} while (0)
+
+#define e68_op_get_ea16(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 16)) return; \
+	if (e68_ea_get_val16 (c, val)) return; \
+	} while (0)
+
+#define e68_op_get_ea32(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 32)) return; \
+	if (e68_ea_get_val32 (c, val)) return; \
+	} while (0)
+
+#define e68_op_set_ea8(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 8)) return; \
+	if (e68_ea_set_val8 (c, val)) return; \
+	} while (0)
+
+#define e68_op_set_ea16(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 16)) return; \
+	if (e68_ea_set_val16 (c, val)) return; \
+	} while (0)
+
+#define e68_op_set_ea32(c, ptr, ea, msk, val) do { \
+	if (ptr) if (e68_ea_get_ptr (c, ea, msk, 32)) return; \
+	if (e68_ea_set_val32 (c, val)) return; \
+	} while (0)
 
 
-unsigned e68_op_dbcc (e68000_t *c, int cond);
-unsigned e68_op_scc (e68000_t *c, int cond);
+void e68_op_dbcc (e68000_t *c, int cond);
+void e68_op_scc (e68000_t *c, int cond);
 
 void e68_cc_set_nz_8 (e68000_t *c, uint8_t msk, uint8_t val);
 void e68_cc_set_nz_16 (e68000_t *c, uint8_t msk, uint16_t val);

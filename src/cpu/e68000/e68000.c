@@ -67,8 +67,6 @@ void e68_init (e68000_t *c)
 	c->supervisor = 1;
 	c->halt = 2;
 
-	c->ircnt = 0;
-
 	c->int_ipl = 0;
 	c->int_nmi = 0;
 
@@ -397,6 +395,9 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 	}
 
 	if (strcmp (reg, "pc") == 0) {
+		e68_set_ir_pc (c, val);
+		e68_prefetch (c);
+		e68_prefetch (c);
 		e68_set_pc (c, val);
 		return (0);
 	}
@@ -553,33 +554,36 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 	e68_push16 (c, sr1);
 
 	addr = (e68_get_vbr (c) + (vct << 2)) & 0xffffffff;
+	addr = e68_get_mem32 (c, addr);
 
-	e68_set_pc (c, e68_get_mem32 (c, addr));
+	e68_set_ir_pc (c, addr);
+	e68_prefetch (c);
+	e68_prefetch (c);
+	e68_set_pc (c, addr);
 }
 
 void e68_exception_reset (e68000_t *c)
 {
-	uint16_t sr;
-
 	c->except_cnt += 1;
 	c->except_addr = e68_get_pc (c);
 	c->except_vect = 0;
 	c->except_name = "RSET";
 
-	sr = e68_get_sr (c);
-	sr &= ~E68_SR_T;
-	sr |= E68_SR_S;
-	e68_set_sr (c, sr);
+	e68_set_sr (c, E68_SR_S | E68_SR_I);
 
 	e68_set_areg32 (c, 7, e68_get_mem32 (c, 0));
-	e68_set_pc (c, e68_get_mem32 (c, 4));
+
+	e68_set_ir_pc (c, e68_get_mem32 (c, 4));
+	e68_prefetch (c);
+	e68_prefetch (c);
+	e68_set_pc (c, e68_get_ir_pc (c) - 4);
 
 	e68_set_clk (c, 64);
 }
 
 void e68_exception_bus (e68000_t *c)
 {
-	c->bus_error = 1;
+	c->bus_error = 0;
 
 	e68_exception (c, 2, 0, "BUSE");
 	e68_set_clk (c, 62);
@@ -752,31 +756,13 @@ void e68_reset (e68000_t *c)
 
 void e68_execute (e68000_t *c)
 {
-	unsigned opc;
-	unsigned n;
-
 	c->last_pc = e68_get_pc (c);
-
-	if (c->pc & 1) {
-		e68_exception_address (c, c->pc, 0, 0);
-	}
-
 	c->bus_error = 0;
-
-	c->ir[0] = e68_get_mem16 (c, c->pc);
-	c->ircnt = 1;
-
-	if (c->log_opcode != NULL) {
-		c->log_opcode (c->log_ext, c->ir[0]);
-	}
-
 	c->trace_sr = e68_get_sr (c);
 
-	opc = (c->ir[0] >> 6) & 0x3ff;
+	c->ir[0] = c->ir[1];
 
-	n = c->opcodes[opc] (c);
-
-	e68_set_pc (c, e68_get_pc (c) + 2 * n);
+	c->opcodes[(c->ir[0] >> 6) & 0x3ff] (c);
 
 	c->oprcnt += 1;
 
