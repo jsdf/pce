@@ -149,6 +149,8 @@ void wd179x_select_drive (wd179x_t *fdc, unsigned drive);
  *****************************************************************************/
 void wd179x_select_head (wd179x_t *fdc, unsigned val, int internal);
 
+int wd179x_flush (wd179x_t *fdc, unsigned d);
+
 void wd179x_set_cmd (wd179x_t *fdc, unsigned char val);
 
 void wd179x_clock2 (wd179x_t *fdc, unsigned cnt);

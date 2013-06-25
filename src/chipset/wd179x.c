@@ -389,6 +389,24 @@ int wd179x_read_track (wd179x_t *fdc, wd179x_drive_t *drv, unsigned h)
 	return (0);
 }
 
+int wd179x_flush (wd179x_t *fdc, unsigned d)
+{
+	wd179x_drive_t *drv;
+
+	drv = &fdc->drive[d & 1];
+
+	if (drv->trkbuf_mod) {
+		if (wd179x_write_track (fdc, drv)) {
+			return (1);
+		}
+	}
+
+	drv->trkbuf_idx = 0;
+	drv->trkbuf_cnt = 0;
+
+	return (0);
+}
+
 static
 unsigned wd179x_crc (unsigned short crc, unsigned char val)
 {
