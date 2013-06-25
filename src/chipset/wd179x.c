@@ -29,6 +29,7 @@
 
 #define WD179X_ST_NOT_READY   0x80
 #define WD179X_ST_MOTOR       0x80
+#define WD179X_ST_WPROT       0x40
 #define WD179X_ST_RECORD_TYPE 0x20
 #define WD179X_ST_RNF         0x10
 #define WD179X_ST_SEEK_ERROR  0x10
@@ -249,6 +250,18 @@ void wd179x_set_ready (wd179x_t *fdc, unsigned drive, int val)
 {
 	fdc->drive[drive & 1].ready = (val != 0);
 	fdc->check = 1;
+}
+
+void wd179x_set_wprot (wd179x_t *fdc, unsigned drive, int val)
+{
+	fdc->drive[drive & 1].wprot = (val != 0);
+
+	if (val) {
+		fdc->status |= WD179X_ST_WPROT;
+	}
+	else {
+		fdc->status &= ~WD179X_ST_WPROT;
+	}
 }
 
 void wd179x_set_motor (wd179x_t *fdc, unsigned drive, int val)
@@ -701,6 +714,19 @@ void cmd_done (wd179x_t *fdc, int irq)
 	wd179x_write_track (fdc, fdc->drv);
 }
 
+static
+void cmd_set_type1_status (wd179x_t *fdc)
+{
+	fdc->status &= ~(WD179X_ST_WPROT | WD179X_ST_SEEK_ERROR | WD179X_ST_TRACK0);
+
+	if (fdc->drv->c == 0) {
+		fdc->status |= WD179X_ST_TRACK0;
+	}
+
+	if (fdc->drv->wprot) {
+		fdc->status |= WD179X_ST_WPROT;
+	}
+}
 
 /*****************************************************************************
  * restore
@@ -715,8 +741,8 @@ void cmd_restore_done (wd179x_t *fdc)
 #endif
 
 	fdc->track = 0;
-	fdc->status &= ~WD179X_ST_SEEK_ERROR;
-	fdc->status |= WD179X_ST_TRACK0;
+
+	cmd_set_type1_status (fdc);
 
 	cmd_done (fdc, 1);
 }
@@ -773,13 +799,12 @@ void cmd_seek_done (wd179x_t *fdc)
 	);
 #endif
 
-	fdc->status &= ~WD179X_ST_SEEK_ERROR;
+	cmd_set_type1_status (fdc);
 
-	if (fdc->drv->c == 0) {
-		fdc->status |= WD179X_ST_TRACK0;
-	}
-	else {
-		fdc->status &= ~WD179X_ST_TRACK0;
+	if (fdc->cmd & 4) {
+		if (fdc->drv->c != fdc->track) {
+			fdc->status |= WD179X_ST_SEEK_ERROR;
+		}
 	}
 
 	cmd_done (fdc, 1);
@@ -882,14 +907,7 @@ void cmd_step_cont (wd179x_t *fdc)
 
 	fdc->drv->trkbuf_cnt = 0;
 
-	fdc->status &= ~WD179X_ST_SEEK_ERROR;
-
-	if (fdc->drv->c == 0) {
-		fdc->status |= WD179X_ST_TRACK0;
-	}
-	else {
-		fdc->status &= ~WD179X_ST_TRACK0;
-	}
+	cmd_set_type1_status (fdc);
 
 	cmd_done (fdc, 1);
 }
@@ -1675,9 +1693,7 @@ void cmd_force_interrupt (wd179x_t *fdc, unsigned char cmd)
 	fdc->status = WD179X_ST_BUSY;
 
 	if (busy == 0) {
-		if (fdc->drv->c == 0) {
-			fdc->status |= WD179X_ST_TRACK0;
-		}
+		cmd_set_type1_status (fdc);
 	}
 
 	cmd_done (fdc, fdc->cmd & 0x08);

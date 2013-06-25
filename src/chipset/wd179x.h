@@ -139,6 +139,7 @@ void wd179x_set_auto_motor (wd179x_t *fdc, int val);
 void wd179x_reset (wd179x_t *fdc);
 
 void wd179x_set_ready (wd179x_t *fdc, unsigned drive, int val);
+void wd179x_set_wprot (wd179x_t *fdc, unsigned drive, int val);
 void wd179x_set_motor (wd179x_t *fdc, unsigned drive, int val);
 
 unsigned char wd179x_get_status (wd179x_t *fdc);
