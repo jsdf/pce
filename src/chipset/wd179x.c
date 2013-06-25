@@ -28,6 +28,7 @@
 
 
 #define WD179X_ST_NOT_READY   0x80
+#define WD179X_ST_MOTOR       0x80
 #define WD179X_ST_RECORD_TYPE 0x20
 #define WD179X_ST_RNF         0x10
 #define WD179X_ST_SEEK_ERROR  0x10
@@ -87,6 +88,7 @@ void wd179x_init (wd179x_t *fdc)
 	wd179x_drv_init (&fdc->drive[1], 1);
 
 	fdc->check = 0;
+	fdc->auto_motor = 0;
 
 	fdc->input_clock = 1000000;
 	fdc->bit_clock = 1000000;
@@ -150,6 +152,11 @@ void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk)
 void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk)
 {
 	fdc->bit_clock = clk;
+}
+
+void wd179x_set_auto_motor (wd179x_t *fdc, int val)
+{
+	fdc->auto_motor = (val != 0);
 }
 
 void wd179x_reset (wd179x_t *fdc)
@@ -246,10 +253,24 @@ void wd179x_set_ready (wd179x_t *fdc, unsigned drive, int val)
 
 void wd179x_set_motor (wd179x_t *fdc, unsigned drive, int val)
 {
-	fdc->drive[drive & 1].motor = (val != 0);
+	if (drive >= 2) {
+		return;
+	}
+
+	val = (val != 0);
+
+	if (fdc->drive[drive].motor == val) {
+		return;
+	}
+
+#if DEBUG_WD179X >= 2
+	fprintf (stderr, "WD179X: motor %u %s\n", drive, val ? "on" : "off");
+#endif
+
+	fdc->drive[drive].motor = val;
 
 	if (val == 0) {
-		fdc->drive[drive & 1].motor_clock = 0;
+		fdc->drive[drive].motor_clock = 0;
 	}
 
 	fdc->check = 1;
@@ -259,11 +280,21 @@ unsigned char wd179x_get_status (wd179x_t *fdc)
 {
 	wd179x_set_irq (fdc, 0);
 
-	if (fdc->drv->ready) {
-		fdc->status &= ~WD179X_ST_NOT_READY;
+	if (fdc->auto_motor) {
+		if ((fdc->drive[0].motor == 0) && (fdc->drive[1].motor == 0)) {
+			fdc->status &= ~WD179X_ST_MOTOR;
+		}
+		else {
+			fdc->status |= WD179X_ST_MOTOR;
+		}
 	}
 	else {
-		fdc->status |= WD179X_ST_NOT_READY;
+		if (fdc->drv->ready) {
+			fdc->status &= ~WD179X_ST_NOT_READY;
+		}
+		else {
+			fdc->status |= WD179X_ST_NOT_READY;
+		}
 	}
 
 	return (fdc->status);
@@ -305,7 +336,8 @@ void wd179x_set_data (wd179x_t *fdc, unsigned char val)
 
 void wd179x_select_drive (wd179x_t *fdc, unsigned drive)
 {
-	fdc->drv = &fdc->drive[drive & 1];
+	fdc->sel_drv = drive & 1;
+	fdc->drv = &fdc->drive[fdc->sel_drv];
 }
 
 void wd179x_select_head (wd179x_t *fdc, unsigned val, int internal)
@@ -431,8 +463,8 @@ static
 void wd179x_move_bit (wd179x_t *fdc, wd179x_drive_t *drv)
 {
 	if (drv->motor == 0) {
-		fprintf (stderr, "-- mark -- (motor)\n");
-		//return;
+		fprintf (stderr, "WD179X: motor is off!\n");
+		return;
 	}
 
 	drv->trkbuf_idx += 1;
@@ -635,10 +667,27 @@ void wd179x_scan_mark_start (wd179x_t *fdc)
 
 
 static
+void cmd_auto_motor_off (wd179x_t *fdc)
+{
+	if (fdc->drive[0].motor) {
+		wd179x_set_motor (fdc, 0, 0);
+	}
+
+	if (fdc->drive[1].motor) {
+		wd179x_set_motor (fdc, 1, 0);
+	}
+}
+
+static
 void cmd_done (wd179x_t *fdc, int irq)
 {
 	fdc->cont = NULL;
 	fdc->clock = NULL;
+
+	if (fdc->auto_motor) {
+		fdc->delay = 2 * fdc->input_clock;
+		fdc->cont = cmd_auto_motor_off;
+	}
 
 	fdc->interrupt_enable = 1;
 	fdc->interrupt_request = 0;
@@ -702,6 +751,10 @@ void cmd_restore (wd179x_t *fdc)
 #endif
 
 	fdc->status = WD179X_ST_BUSY;
+
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
 
 	fdc->delay = 1000;
 	fdc->cont = cmd_restore_cont;
@@ -783,6 +836,10 @@ void cmd_seek (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
+
 	fdc->delay = 1000;
 	fdc->cont = cmd_seek_cont;
 }
@@ -852,6 +909,10 @@ void cmd_step (wd179x_t *fdc, unsigned dir)
 	}
 
 	fdc->status = WD179X_ST_BUSY;
+
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
 
 	fdc->delay = 1000;
 	fdc->cont = cmd_step_cont;
@@ -1039,6 +1100,10 @@ void cmd_read_sector (wd179x_t *fdc)
 #endif
 
 	fdc->status = WD179X_ST_BUSY;
+
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
 
 	wd179x_read_track (fdc, fdc->drv, h);
 
@@ -1232,6 +1297,10 @@ void cmd_write_sector (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
+
 	if (wd179x_read_track (fdc, fdc->drv, h)) {
 		fdc->status |= WD179X_ST_RNF;
 		cmd_done (fdc, 1);
@@ -1333,6 +1402,10 @@ void cmd_write_track (wd179x_t *fdc)
 #endif
 
 	fdc->status = WD179X_ST_BUSY;
+
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
 
 	wd179x_read_track (fdc, fdc->drv, h);
 
@@ -1456,6 +1529,10 @@ void cmd_read_address (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
+
 	wd179x_read_track (fdc, fdc->drv, h);
 
 	fdc->scan_max = 0;
@@ -1550,6 +1627,10 @@ void cmd_read_track (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
+	if (fdc->auto_motor) {
+		wd179x_set_motor (fdc, fdc->sel_drv, 1);
+	}
+
 	wd179x_read_track (fdc, fdc->drv, h);
 
 	fdc->drv->index_cnt = 2;
@@ -1611,6 +1692,9 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 		cmd_force_interrupt (fdc, val);
 		return;
 	}
+
+	fdc->clock = NULL;
+	fdc->cont = NULL;
 
 	if (fdc->status & WD179X_ST_BUSY) {
 		fprintf (stderr, "WD179X: CMD[%02X] SKIP COMMAND (%02X/%02X)\n",

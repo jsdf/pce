@@ -51,6 +51,7 @@ typedef struct {
 
 typedef struct wd179x_t {
 	unsigned char  check;
+	unsigned char  auto_motor;
 
 	unsigned char  cmd;
 	unsigned char  status;
@@ -89,6 +90,7 @@ typedef struct wd179x_t {
 	unsigned long  input_clock;
 	unsigned long  bit_clock;
 
+	unsigned       sel_drv;
 	wd179x_drive_t drive[2];
 	wd179x_drive_t *drv;
 
@@ -125,6 +127,14 @@ void wd179x_set_write_track_fct (wd179x_t *fdc, void *ext, void *fct);
 
 void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk);
 void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk);
+
+/*****************************************************************************
+ * @short Enable automatic motor control
+ *
+ * By default, the motor is controlled externally. If automatic motor control
+ * is enabled, the fdc takes over motor control as the 177x does.
+ *****************************************************************************/
+void wd179x_set_auto_motor (wd179x_t *fdc, int val);
 
 void wd179x_reset (wd179x_t *fdc);
 
