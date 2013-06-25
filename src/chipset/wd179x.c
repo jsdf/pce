@@ -40,6 +40,7 @@
 #define WD179X_CRC 0x1021
 
 #define WD179X_MARK_A1 0x4489
+#define WD179X_MARK_C2 0x5224
 #define WD179X_MARK_FE 0x5554
 #define WD179X_MARK_FB 0x5545
 #define WD179X_MARK_F8 0x554a
@@ -1468,6 +1469,103 @@ void cmd_read_address (wd179x_t *fdc)
 
 
 /*****************************************************************************
+ * read track
+ *****************************************************************************/
+
+static
+void wd179x_read_track_clock (wd179x_t *fdc)
+{
+	while (fdc->drv->motor_clock >= fdc->input_clock) {
+		fdc->drv->motor_clock -= fdc->input_clock;
+
+		if (fdc->drv->index_cnt > 1) {
+			wd179x_move_bit (fdc, fdc->drv);
+			continue;
+		}
+
+		if (fdc->drv->index_cnt == 0) {
+			cmd_done (fdc, 1);
+			return;
+		}
+
+		fdc->scan_buf = ((fdc->scan_buf << 1) | wd179x_get_bit (fdc)) & 0xffff;
+		fdc->scan_cnt += 1;
+
+		if (fdc->last_mark_a1 > 0) {
+			fdc->last_mark_a1 -= 1;
+		}
+
+		if (fdc->last_mark_c2 > 0) {
+			fdc->last_mark_c2 -= 1;
+		}
+
+		if (fdc->scan_buf == WD179X_MARK_A1) {
+			if (fdc->last_mark_a1 == 0) {
+				fdc->is_data_bit = 1;
+				fdc->last_mark_a1 = 16;
+
+				if (fdc->last_mark_c2 > 0) {
+					fdc->scan_cnt = 0;
+				}
+				else {
+					fdc->scan_cnt = 16;
+				}
+			}
+		}
+		else if (fdc->scan_buf == WD179X_MARK_C2) {
+			fdc->is_data_bit = 1;
+			fdc->last_mark_c2 = 16;
+			fdc->scan_cnt = 16;
+		}
+
+		if (fdc->scan_cnt < 16) {
+			continue;
+		}
+
+		fdc->scan_cnt = 0;
+
+		if (fdc->status & WD179X_ST_DRQ) {
+			fprintf (stderr, "WD179X: READ TRACK LOST DATA\n");
+			fdc->status |= WD179X_ST_LOST_DATA;
+		}
+
+		fdc->data = fdc->val & 0xff;
+
+		wd179x_set_drq (fdc, 1);
+	}
+}
+
+static
+void cmd_read_track (wd179x_t *fdc)
+{
+	unsigned h;
+
+	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
+
+#if DEBUG_WD179X >= 1
+	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ TRACK (c=%u h=%u)\n",
+		fdc->drv->d, fdc->cmd, fdc->track, h
+	);
+#endif
+
+	fdc->status = WD179X_ST_BUSY;
+
+	wd179x_read_track (fdc, fdc->drv, h);
+
+	fdc->drv->index_cnt = 2;
+
+	fdc->scan_cnt = 0;
+	fdc->scan_buf = 0;
+	fdc->last_mark_a1 = 0;
+	fdc->last_mark_c2 = 0;
+	fdc->is_data_bit = 1;
+	fdc->val = 0;
+
+	fdc->clock = wd179x_read_track_clock;
+}
+
+
+/*****************************************************************************
  * force interrupt
  *****************************************************************************/
 
@@ -1546,6 +1644,9 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	}
 	else if ((val & 0xe0) == 0xc0) {
 		cmd_read_address (fdc);
+	}
+	else if ((val & 0xf8) == 0xe0) {
+		cmd_read_track (fdc);
 	}
 	else if ((val & 0xf9) == 0xf0) {
 		cmd_write_track (fdc);

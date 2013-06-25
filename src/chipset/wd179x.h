@@ -83,6 +83,9 @@ typedef struct wd179x_t {
 	unsigned char  write_val[2];
 	unsigned short write_crc;
 
+	unsigned char  last_mark_a1;
+	unsigned char  last_mark_c2;
+
 	unsigned long  input_clock;
 	unsigned long  bit_clock;
 
