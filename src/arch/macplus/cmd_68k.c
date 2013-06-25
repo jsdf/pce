@@ -182,7 +182,7 @@ void mac_prt_state_cpu (e68000_t *c)
 		(unsigned long) e68_get_dreg32 (c, 5),
 		(unsigned long) e68_get_areg32 (c, 1),
 		(unsigned long) e68_get_areg32 (c, 5),
-		e68_get_last_pc (c)
+		e68_get_last_pc (c, 0)
 	);
 
 	pce_printf (" D2=%08lX  D6=%08lX  A2=%08lX  A6=%08lX  USP=%08lX\n",
@@ -402,7 +402,7 @@ void mac_log_undef (void *ext, unsigned long ir)
 	unsigned long pc;
 	macplus_t     *sim = ext;
 
-	pc = e68_get_pc (sim->cpu);
+	pc = e68_get_last_pc (sim->cpu, 0);
 
 	pce_log (MSG_DEB,
 		"%08lX: undefined operation: %04lX [%04X %04X %04X %04X %04X]\n",
@@ -423,7 +423,7 @@ void mac_log_exception (void *ext, unsigned tn)
 	unsigned  iw;
 	macplus_t *sim = ext;
 
-	iw = e68_get_mem16 (sim->cpu, e68_get_pc (sim->cpu));
+	iw = e68_get_mem16 (sim->cpu, e68_get_last_pc (sim->cpu, 0));
 
 	switch (tn) {
 	case 0x00:
@@ -453,7 +453,7 @@ void mac_log_exception (void *ext, unsigned tn)
 
 	pce_log (MSG_DEB,
 		"%08lX: exception %02X (%s) IW=%04X\n",
-		(unsigned long) e68_get_pc (sim->cpu),
+		(unsigned long) e68_get_last_pc (sim->cpu, 0),
 		tn, e68_get_exception_name (sim->cpu), iw
 	);
 }

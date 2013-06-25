@@ -101,7 +101,12 @@ void e68_init (e68000_t *c)
 	c->cacr = 0;
 	c->caar = 0;
 
-	c->last_pc = 0;
+	c->last_pc_idx = 0;
+
+	for (i = 0; i < E68_LAST_PC_CNT; i++) {
+		c->last_pc[i] = 0;
+	}
+
 	c->last_trap_a = 0;
 	c->last_trap_f = 0;
 }
@@ -259,9 +264,13 @@ const char *e68_get_exception_name (const e68000_t *c)
 	return (c->except_name);
 }
 
-unsigned long e68_get_last_pc (e68000_t *c)
+unsigned long e68_get_last_pc (e68000_t *c, unsigned idx)
 {
-	return (c->last_pc);
+	if (idx >= E68_LAST_PC_CNT) {
+		return (0);
+	}
+
+	return (c->last_pc[(c->last_pc_idx - idx) & (E68_LAST_PC_CNT - 1)]);
 }
 
 unsigned short e68_get_last_trap_a (e68000_t *c)
@@ -288,7 +297,7 @@ int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val)
 		return (0);
 	}
 	else if (strcmp (reg, "lpc") == 0) {
-		*val = c->last_pc;
+		*val = c->last_pc[c->last_pc_idx & (E68_LAST_PC_CNT - 1)];
 		return (0);
 	}
 	else if ((reg[0] == 'o') && (reg[1] == 'p')) {
@@ -399,10 +408,6 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 		e68_prefetch (c);
 		e68_prefetch (c);
 		e68_set_pc (c, val);
-		return (0);
-	}
-	else if (strcmp (reg, "lpc") == 0) {
-		c->last_pc = val;
 		return (0);
 	}
 	else if (strcmp (reg, "sr") == 0) {
@@ -756,7 +761,7 @@ void e68_reset (e68000_t *c)
 
 void e68_execute (e68000_t *c)
 {
-	c->last_pc = e68_get_pc (c);
+	c->last_pc[++c->last_pc_idx & (E68_LAST_PC_CNT - 1)] = e68_get_pc (c);
 	c->bus_error = 0;
 	c->trace_sr = e68_get_sr (c);
 

@@ -179,7 +179,7 @@ void mac_log_deb (const char *msg, ...)
 	unsigned long pc;
 
 	if (par_sim != NULL) {
-		pc = e68_get_pc (par_sim->cpu);
+		pc = e68_get_last_pc (par_sim->cpu, 0);
 	}
 	else {
 		pc = 0;

@@ -44,6 +44,8 @@ struct e68000_s;
 #define E68_FLAG_68020   4
 #define E68_FLAG_NORESET 8
 
+#define E68_LAST_PC_CNT 32
+
 #define E68_SR_C 0x0001
 #define E68_SR_V 0x0002
 #define E68_SR_Z 0x0004
@@ -152,7 +154,8 @@ typedef struct e68000_s {
 	uint32_t       cacr;
 	uint32_t       caar;
 
-	uint32_t       last_pc;
+	unsigned       last_pc_idx;
+	uint32_t       last_pc[E68_LAST_PC_CNT];
 	uint16_t       last_trap_a;
 	uint16_t       last_trap_f;
 
@@ -433,7 +436,7 @@ const char *e68_get_exception_name (const e68000_t *c);
 /*!***************************************************************************
  * @short Get the last PC
  *****************************************************************************/
-unsigned long e68_get_last_pc (e68000_t *pc);
+unsigned long e68_get_last_pc (e68000_t *pc, unsigned idx);
 
 /*!***************************************************************************
  * @short Get the last a-line trap number
