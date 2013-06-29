@@ -502,39 +502,35 @@ int pri_decode_mfm_raw_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsi
 
 	fp = opaque;
 
+	pri_trk_set_pos (trk, 0);
+
 	val = 0;
-	clk = 0xffff;
+	clk = 0;
 
 	outbuf = 0;
 	outcnt = 0;
-
-	pri_trk_set_pos (trk, 0);
 
 	while (trk->wrap == 0) {
 		pri_trk_get_bits (trk, &bit, 1);
 
 		val = (val << 1) | (bit & 1);
-		clk = (clk << 1) | ((clk ^ 1) & 1);
+		clk = (clk << 1) | (~clk & 1);
 
-		if ((val & 0xffff) == 0x4489) {
-			if (outcnt > 0) {
-				fputc (outbuf << (8 - outcnt), fp);
-				outbuf = 0;
-				outcnt = 0;
-			}
-
-			clk = 0xaaaa;
+		if ((clk & 1) == 0) {
+			outbuf = (outbuf << 1) | (val & 1);
+			outcnt += 1;
 		}
 
-		if ((clk & 0x8000) == 0) {
-			outbuf = (outbuf << 1) | ((val >> 15) & 1);
-			outcnt += 1;
+		if ((val & 0xffff) == 0x4489) {
+			outbuf = 0xa1;
+			outcnt = 8;
+			clk = 0;
+		}
 
-			if (outcnt >= 8) {
-				fputc (outbuf, fp);
-				outbuf = 0;
-				outcnt = 0;
-			}
+		if (outcnt >= 8) {
+			fputc (outbuf & 0xff, fp);
+			outbuf = 0;
+			outcnt = 0;
 		}
 	}
 
