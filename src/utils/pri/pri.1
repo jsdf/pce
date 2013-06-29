@@ -1,13 +1,13 @@
-.TH PBIT 1 "2012-03-10" "HH" "pce"
+.TH PRI 1 "2013-06-09" "HH" "pce"
 \
 .SH NAME
-pbit \- convert and modify PBIT image files
+pri \- convert and modify PCE raw image files
 
 .SH SYNOPSIS
-.BI pbit " [options] [input-file] [options] [output-file]"
+.BI pri " [options] [input-file] [options] [output-file]"
 
 .SH DESCRIPTION
-\fBpbit\fR(1) is used to modify and convert PBIT images
+\fBpri\fR(1) is used to modify and convert PCE raw image
 files.
 
 .SH OPTIONS
@@ -101,7 +101,7 @@ Save the current image comment to \fIfilename\fR.
 Set the image comment to \fItext\fR.
 .TP
 .BI "decode " "type filename"
-Decode the image and save it as a pfdc sector image to \fIfilename\fR.
+Decode the image and save it as a pri sector image to \fIfilename\fR.
 Valid decode types are:
 .RS
 .TP
@@ -122,7 +122,7 @@ Remove odd numbered tracks.
 Remove even numbered tracks.
 .TP
 .BI "encode " "type filename"
-Load a pfdc sector image from \fIfilename\fR and encode it.
+Load a pri sector image from \fIfilename\fR and encode it.
 Valid encode types are:
 .RS
 .TP
@@ -173,7 +173,7 @@ Print version information.
 .BR pce-ibmpc "(1),"
 .BR pce-macplus "(1),"
 .BR pce-img "(1),"
-.BR pfdc "(1)"
+.BR psi "(1)"
 
 .SH AUTHOR
 Hampa Hug <hampa@hampa.ch>

@@ -73,7 +73,7 @@ PCE_MACPLUS_OBJ_EXT := \
 	src/devices/memory.o \
 	src/drivers/block/block.a \
 	src/drivers/char/char.a \
-	src/drivers/pbit/pbit.a \
+	src/drivers/pri/pri.a \
 	src/drivers/psi/psi.a \
 	src/drivers/sound/sound.a \
 	src/drivers/options.o \

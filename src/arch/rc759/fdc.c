@@ -34,9 +34,9 @@
 
 #include <drivers/psi/psi.h>
 
-#include <drivers/pbit/pbit.h>
-#include <drivers/pbit/pbit-io.h>
-#include <drivers/pbit/mfm-ibm.h>
+#include <drivers/pri/pri.h>
+#include <drivers/pri/pri-img.h>
+#include <drivers/pri/mfm-ibm.h>
 
 #include <lib/log.h>
 #include <lib/string.h>
@@ -52,8 +52,8 @@ int rc759_read_track (void *ext, wd179x_drive_t *drv)
 {
 	unsigned long cnt;
 	rc759_fdc_t   *fdc;
-	pbit_img_t    *img;
-	pbit_trk_t    *trk;
+	pri_img_t     *img;
+	pri_trk_t     *trk;
 
 	fdc = ext;
 
@@ -63,7 +63,7 @@ int rc759_read_track (void *ext, wd179x_drive_t *drv)
 		return (1);
 	}
 
-	trk = pbit_img_get_track (img, drv->c, drv->h, 0);
+	trk = pri_img_get_track (img, drv->c, drv->h, 0);
 
 	if (trk == NULL) {
 		return (1);
@@ -87,8 +87,8 @@ int rc759_write_track (void *ext, wd179x_drive_t *drv)
 {
 	unsigned long cnt;
 	rc759_fdc_t   *fdc;
-	pbit_img_t    *img;
-	pbit_trk_t    *trk;
+	pri_img_t     *img;
+	pri_trk_t     *trk;
 
 	fdc = ext;
 
@@ -100,17 +100,17 @@ int rc759_write_track (void *ext, wd179x_drive_t *drv)
 
 	fdc->modified[drv->d & 1] = 1;
 
-	trk = pbit_img_get_track (img, drv->c, drv->h, 1);
+	trk = pri_img_get_track (img, drv->c, drv->h, 1);
 
 	if (trk == NULL) {
 		return (1);
 	}
 
-	if (pbit_trk_set_size (trk, drv->trkbuf_cnt)) {
+	if (pri_trk_set_size (trk, drv->trkbuf_cnt)) {
 		return (1);
 	}
 
-	pbit_trk_set_clock (trk, 1000000);
+	pri_trk_set_clock (trk, 1000000);
 
 	cnt = (trk->size + 7) / 8;
 
@@ -151,7 +151,7 @@ void rc759_fdc_free (rc759_fdc_t *fdc)
 	for (i = 0; i < 2; i++) {
 		rc759_fdc_save (fdc, i);
 
-		pbit_img_del (fdc->img[i]);
+		pri_img_del (fdc->img[i]);
 
 		free (fdc->fname[i]);
 	}
@@ -300,15 +300,15 @@ void rc759_fdc_set_fcr (rc759_fdc_t *fdc, unsigned char val)
 }
 
 static
-pbit_img_t *rc759_fdc_load_pbit (rc759_fdc_t *fdc, unsigned drive)
+pri_img_t *rc759_fdc_load_pri (rc759_fdc_t *fdc, unsigned drive)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
 	if (fdc->fname[drive] == NULL) {
 		return (NULL);
 	}
 
-	img = pbit_img_load (fdc->fname[drive], PBIT_FORMAT_PBIT);
+	img = pri_img_load (fdc->fname[drive], PRI_FORMAT_PBIT);
 
 	return (img);
 }
@@ -362,12 +362,12 @@ psi_img_t *rc759_fdc_load_block (rc759_fdc_t *fdc, unsigned drive, disk_t *dsk)
 }
 
 static
-pbit_img_t *rc759_fdc_load_disk (rc759_fdc_t *fdc, unsigned drive)
+pri_img_t *rc759_fdc_load_disk (rc759_fdc_t *fdc, unsigned drive)
 {
 	disk_t     *dsk;
 	disk_psi_t *dskpsi;
 	psi_img_t  *img, *del;
-	pbit_img_t *ret;
+	pri_img_t  *ret;
 
 	dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive]);
 
@@ -389,7 +389,7 @@ pbit_img_t *rc759_fdc_load_disk (rc759_fdc_t *fdc, unsigned drive)
 		return (NULL);
 	}
 
-	ret = pbit_encode_mfm_hd_360 (img);
+	ret = pri_encode_mfm_hd_360 (img);
 
 	psi_img_del (del);
 
@@ -398,7 +398,7 @@ pbit_img_t *rc759_fdc_load_disk (rc759_fdc_t *fdc, unsigned drive)
 
 int rc759_fdc_load (rc759_fdc_t *fdc, unsigned drive)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
 	wd179x_set_ready (&fdc->wd179x, drive, 0);
 
@@ -407,11 +407,11 @@ int rc759_fdc_load (rc759_fdc_t *fdc, unsigned drive)
 	fdc->use_fname[drive] = 0;
 
 	if (fdc->fname[drive] != NULL) {
-		img = rc759_fdc_load_pbit (fdc, drive);
+		img = rc759_fdc_load_pri (fdc, drive);
 
 		if (img != NULL) {
 			fdc->use_fname[drive] = 1;
-			sim_log_deb ("fdc: loading drive %u (pbit)\n", drive);
+			sim_log_deb ("fdc: loading drive %u (pri)\n", drive);
 		}
 	}
 
@@ -428,7 +428,7 @@ int rc759_fdc_load (rc759_fdc_t *fdc, unsigned drive)
 		return (1);
 	}
 
-	pbit_img_del (fdc->img[drive]);
+	pri_img_del (fdc->img[drive]);
 
 	fdc->img[drive] = img;
 
@@ -500,7 +500,7 @@ int rc759_fdc_save_disk (rc759_fdc_t *fdc, unsigned drive)
 		return (1);
 	}
 
-	img = pbit_decode_mfm (fdc->img[drive]);
+	img = pri_decode_mfm (fdc->img[drive]);
 
 	if (img == NULL) {
 		return (1);
@@ -526,13 +526,13 @@ int rc759_fdc_save_disk (rc759_fdc_t *fdc, unsigned drive)
 }
 
 static
-int rc759_fdc_save_pbit (rc759_fdc_t *fdc, unsigned drive)
+int rc759_fdc_save_pri (rc759_fdc_t *fdc, unsigned drive)
 {
 	if (fdc->fname[drive] == NULL) {
 		return (1);
 	}
 
-	if (pbit_img_save (fdc->fname[drive], fdc->img[drive], PBIT_FORMAT_NONE)) {
+	if (pri_img_save (fdc->fname[drive], fdc->img[drive], PRI_FORMAT_NONE)) {
 		return (1);
 	}
 
@@ -552,8 +552,8 @@ int rc759_fdc_save (rc759_fdc_t *fdc, unsigned drive)
 	sim_log_deb ("fdc: saving drive %u\n", drive);
 
 	if (fdc->use_fname[drive]) {
-		if (rc759_fdc_save_pbit (fdc, drive)) {
-			sim_log_deb ("fdc: saving drive %u failed (pbit)\n",
+		if (rc759_fdc_save_pri (fdc, drive)) {
+			sim_log_deb ("fdc: saving drive %u failed (pri)\n",
 				drive
 			);
 			return (1);

@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/pbit.c                                      *
+ * File name:   src/drivers/pri/pri.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -24,14 +24,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pbit.h"
+#include "pri.h"
 
 
 /*****************************************************************************
  * Clear all bits in the range i1 < i <= i2 in buf
  *****************************************************************************/
 static
-void pbit_clear_bits (unsigned char *buf, unsigned long i1, unsigned long i2)
+void pri_clear_bits (unsigned char *buf, unsigned long i1, unsigned long i2)
 {
 	unsigned char m1, m2;
 
@@ -67,11 +67,11 @@ void pbit_clear_bits (unsigned char *buf, unsigned long i1, unsigned long i2)
  *
  * @return The new track or NULL on error
  *****************************************************************************/
-pbit_trk_t *pbit_trk_new (unsigned long size, unsigned long clock)
+pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock)
 {
-	pbit_trk_t *trk;
+	pri_trk_t *trk;
 
-	trk = malloc (sizeof (pbit_trk_t));
+	trk = malloc (sizeof (pri_trk_t));
 
 	if (trk == NULL) {
 		return (NULL);
@@ -99,7 +99,7 @@ pbit_trk_t *pbit_trk_new (unsigned long size, unsigned long clock)
 /*****************************************************************************
  * Delete a track
  *****************************************************************************/
-void pbit_trk_del (pbit_trk_t *trk)
+void pri_trk_del (pri_trk_t *trk)
 {
 	if (trk != NULL) {
 		free (trk->data);
@@ -110,11 +110,11 @@ void pbit_trk_del (pbit_trk_t *trk)
 /*****************************************************************************
  * Create an exact copy of a track
  *****************************************************************************/
-pbit_trk_t *pbit_trk_clone (const pbit_trk_t *trk)
+pri_trk_t *pri_trk_clone (const pri_trk_t *trk)
 {
-	pbit_trk_t *ret;
+	pri_trk_t *ret;
 
-	ret = pbit_trk_new (trk->size, trk->clock);
+	ret = pri_trk_new (trk->size, trk->clock);
 
 	if (ret == NULL) {
 		return (NULL);
@@ -135,11 +135,11 @@ pbit_trk_t *pbit_trk_clone (const pbit_trk_t *trk)
  *
  * @param val  An 8 bit value that is used to initialize the track
  *****************************************************************************/
-void pbit_trk_clear (pbit_trk_t *trk, unsigned val)
+void pri_trk_clear (pri_trk_t *trk, unsigned val)
 {
 	if (trk->size > 0) {
 		memset (trk->data, val, (trk->size + 7) / 8);
-		pbit_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
+		pri_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
 	}
 }
 
@@ -148,7 +148,7 @@ void pbit_trk_clear (pbit_trk_t *trk, unsigned val)
  *
  * @param val  A 16 bit value that is used to initialize the track
  *****************************************************************************/
-void pbit_trk_clear_16 (pbit_trk_t *trk, unsigned val)
+void pri_trk_clear_16 (pri_trk_t *trk, unsigned val)
 {
 	unsigned long i, n;
 	unsigned char buf[2];
@@ -166,7 +166,7 @@ void pbit_trk_clear_16 (pbit_trk_t *trk, unsigned val)
 		trk->data[i] = buf[i & 1];
 	}
 
-	pbit_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
+	pri_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
 }
 
 /*****************************************************************************
@@ -174,7 +174,7 @@ void pbit_trk_clear_16 (pbit_trk_t *trk, unsigned val)
  *
  * @param clock  The bit rate in Herz
  *****************************************************************************/
-void pbit_trk_set_clock (pbit_trk_t *trk, unsigned long clock)
+void pri_trk_set_clock (pri_trk_t *trk, unsigned long clock)
 {
 	trk->clock = clock;
 }
@@ -184,7 +184,7 @@ void pbit_trk_set_clock (pbit_trk_t *trk, unsigned long clock)
  *
  * @return The bit rate in Herz
  *****************************************************************************/
-unsigned long pbit_trk_get_clock (const pbit_trk_t *trk)
+unsigned long pri_trk_get_clock (const pri_trk_t *trk)
 {
 	return (trk->clock);
 }
@@ -194,7 +194,7 @@ unsigned long pbit_trk_get_clock (const pbit_trk_t *trk)
  *
  * @return The track size in bits
  *****************************************************************************/
-unsigned long pbit_trk_get_size (const pbit_trk_t *trk)
+unsigned long pri_trk_get_size (const pri_trk_t *trk)
 {
 	return (trk->size);
 }
@@ -207,7 +207,7 @@ unsigned long pbit_trk_get_size (const pbit_trk_t *trk)
  * If the new size is greater than the old size, the new bits are
  * initialized to 0.
  *****************************************************************************/
-int pbit_trk_set_size (pbit_trk_t *trk, unsigned long size)
+int pri_trk_set_size (pri_trk_t *trk, unsigned long size)
 {
 	unsigned long i1;
 	unsigned char *tmp;
@@ -234,7 +234,7 @@ int pbit_trk_set_size (pbit_trk_t *trk, unsigned long size)
 
 	if (size > 0) {
 		i1 = (size < trk->size) ? size : trk->size;
-		pbit_clear_bits (tmp, i1, (size - 1) | 7);
+		pri_clear_bits (tmp, i1, (size - 1) | 7);
 	}
 
 	trk->size = size;
@@ -248,7 +248,7 @@ int pbit_trk_set_size (pbit_trk_t *trk, unsigned long size)
  *
  * @param  pos  The new track position in bits
  *****************************************************************************/
-void pbit_trk_set_pos (pbit_trk_t *trk, unsigned long pos)
+void pri_trk_set_pos (pri_trk_t *trk, unsigned long pos)
 {
 	if (trk->size > 0) {
 		trk->idx = pos % trk->size;
@@ -264,7 +264,7 @@ void pbit_trk_set_pos (pbit_trk_t *trk, unsigned long pos)
  *
  * @return Non-zero if the current position wrapped around
  *****************************************************************************/
-int pbit_trk_get_bits (pbit_trk_t *trk, unsigned long *val, unsigned cnt)
+int pri_trk_get_bits (pri_trk_t *trk, unsigned long *val, unsigned cnt)
 {
 	unsigned long       v;
 	unsigned char       m;
@@ -307,7 +307,7 @@ int pbit_trk_get_bits (pbit_trk_t *trk, unsigned long *val, unsigned cnt)
  *
  * @return Non-zero if the current position wrapped around
  *****************************************************************************/
-int pbit_trk_set_bits (pbit_trk_t *trk, unsigned long val, unsigned cnt)
+int pri_trk_set_bits (pri_trk_t *trk, unsigned long val, unsigned cnt)
 {
 	unsigned char m;
 	unsigned char *p;
@@ -343,7 +343,7 @@ int pbit_trk_set_bits (pbit_trk_t *trk, unsigned long val, unsigned cnt)
 	return (trk->wrap);
 }
 
-int pbit_trk_rotate (pbit_trk_t *trk, unsigned long idx)
+int pri_trk_rotate (pri_trk_t *trk, unsigned long idx)
 {
 	unsigned long i;
 	unsigned char dm, sm;
@@ -408,11 +408,11 @@ int pbit_trk_rotate (pbit_trk_t *trk, unsigned long idx)
 }
 
 
-pbit_cyl_t *pbit_cyl_new (void)
+pri_cyl_t *pri_cyl_new (void)
 {
-	pbit_cyl_t *cyl;
+	pri_cyl_t *cyl;
 
-	cyl = malloc (sizeof (pbit_cyl_t));
+	cyl = malloc (sizeof (pri_cyl_t));
 
 	if (cyl == NULL) {
 		return (NULL);
@@ -424,13 +424,13 @@ pbit_cyl_t *pbit_cyl_new (void)
 	return (cyl);
 }
 
-void pbit_cyl_del (pbit_cyl_t *cyl)
+void pri_cyl_del (pri_cyl_t *cyl)
 {
 	unsigned long i;
 
 	if (cyl != NULL) {
 		for (i = 0; i < cyl->trk_cnt; i++) {
-			pbit_trk_del (cyl->trk[i]);
+			pri_trk_del (cyl->trk[i]);
 		}
 
 		free (cyl->trk);
@@ -438,14 +438,14 @@ void pbit_cyl_del (pbit_cyl_t *cyl)
 	}
 }
 
-unsigned long pbit_cyl_get_trk_cnt (const pbit_cyl_t *cyl)
+unsigned long pri_cyl_get_trk_cnt (const pri_cyl_t *cyl)
 {
 	return (cyl->trk_cnt);
 }
 
-pbit_trk_t *pbit_cyl_get_track (pbit_cyl_t *cyl, unsigned long h, int alloc)
+pri_trk_t *pri_cyl_get_track (pri_cyl_t *cyl, unsigned long h, int alloc)
 {
-	pbit_trk_t *trk;
+	pri_trk_t *trk;
 
 	if ((h < cyl->trk_cnt) && (cyl->trk[h] != NULL)) {
 		return (cyl->trk[h]);
@@ -455,34 +455,34 @@ pbit_trk_t *pbit_cyl_get_track (pbit_cyl_t *cyl, unsigned long h, int alloc)
 		return (NULL);
 	}
 
-	trk = pbit_trk_new (0, 0);
+	trk = pri_trk_new (0, 0);
 
 	if (trk == NULL) {
 		return (NULL);
 	}
 
-	if (pbit_cyl_set_track (cyl, trk, h)) {
-		pbit_trk_del (trk);
+	if (pri_cyl_set_track (cyl, trk, h)) {
+		pri_trk_del (trk);
 		return (NULL);
 	}
 
 	return (trk);
 }
 
-int pbit_cyl_set_track (pbit_cyl_t *cyl, pbit_trk_t *trk, unsigned long h)
+int pri_cyl_set_track (pri_cyl_t *cyl, pri_trk_t *trk, unsigned long h)
 {
 	unsigned long i;
-	pbit_trk_t    **tmp;
+	pri_trk_t    **tmp;
 
 	if (h < cyl->trk_cnt) {
-		pbit_trk_del (cyl->trk[h]);
+		pri_trk_del (cyl->trk[h]);
 
 		cyl->trk[h] = trk;
 
 		return (0);
 	}
 
-	tmp = realloc (cyl->trk, (h + 1) * sizeof (pbit_trk_t *));
+	tmp = realloc (cyl->trk, (h + 1) * sizeof (pri_trk_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -500,18 +500,18 @@ int pbit_cyl_set_track (pbit_cyl_t *cyl, pbit_trk_t *trk, unsigned long h)
 	return (0);
 }
 
-int pbit_cyl_add_track (pbit_cyl_t *cyl, pbit_trk_t *trk)
+int pri_cyl_add_track (pri_cyl_t *cyl, pri_trk_t *trk)
 {
-	return (pbit_cyl_set_track (cyl, trk, cyl->trk_cnt));
+	return (pri_cyl_set_track (cyl, trk, cyl->trk_cnt));
 }
 
-int pbit_cyl_del_track (pbit_cyl_t *cyl, unsigned long h)
+int pri_cyl_del_track (pri_cyl_t *cyl, unsigned long h)
 {
 	if ((h >= cyl->trk_cnt) || (cyl->trk[h] == NULL)) {
 		return (1);
 	}
 
-	pbit_trk_del (cyl->trk[h]);
+	pri_trk_del (cyl->trk[h]);
 
 	cyl->trk[h] = NULL;
 
@@ -523,11 +523,11 @@ int pbit_cyl_del_track (pbit_cyl_t *cyl, unsigned long h)
 }
 
 
-pbit_img_t *pbit_img_new (void)
+pri_img_t *pri_img_new (void)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
-	img = malloc (sizeof (pbit_img_t));
+	img = malloc (sizeof (pri_img_t));
 
 	if (img == NULL) {
 		return (NULL);
@@ -542,13 +542,13 @@ pbit_img_t *pbit_img_new (void)
 	return (img);
 }
 
-void pbit_img_del (pbit_img_t *img)
+void pri_img_del (pri_img_t *img)
 {
 	unsigned long i;
 
 	if (img != NULL) {
 		for (i = 0; i < img->cyl_cnt; i++) {
-			pbit_cyl_del (img->cyl[i]);
+			pri_cyl_del (img->cyl[i]);
 		}
 
 		free (img->comment);
@@ -557,12 +557,12 @@ void pbit_img_del (pbit_img_t *img)
 	}
 }
 
-unsigned long pbit_img_get_cyl_cnt (const pbit_img_t *img)
+unsigned long pri_img_get_cyl_cnt (const pri_img_t *img)
 {
 	return (img->cyl_cnt);
 }
 
-unsigned long pbit_img_get_trk_cnt (const pbit_img_t *img, unsigned long c)
+unsigned long pri_img_get_trk_cnt (const pri_img_t *img, unsigned long c)
 {
 	if ((c >= img->cyl_cnt) || (img->cyl[c] == NULL)) {
 		return (0);
@@ -572,16 +572,16 @@ unsigned long pbit_img_get_trk_cnt (const pbit_img_t *img, unsigned long c)
 }
 
 static
-void pbit_img_fix_cyl (pbit_img_t *img)
+void pri_img_fix_cyl (pri_img_t *img)
 {
 	while ((img->cyl_cnt > 0) && (img->cyl[img->cyl_cnt - 1] == NULL)) {
 		img->cyl_cnt -= 1;
 	}
 }
 
-pbit_cyl_t *pbit_img_get_cylinder (pbit_img_t *img, unsigned long c, int alloc)
+pri_cyl_t *pri_img_get_cylinder (pri_img_t *img, unsigned long c, int alloc)
 {
-	pbit_cyl_t *cyl;
+	pri_cyl_t *cyl;
 
 	if ((c < img->cyl_cnt) && (img->cyl[c] != NULL)) {
 		return (img->cyl[c]);
@@ -591,23 +591,23 @@ pbit_cyl_t *pbit_img_get_cylinder (pbit_img_t *img, unsigned long c, int alloc)
 		return (NULL);
 	}
 
-	cyl = pbit_cyl_new();
+	cyl = pri_cyl_new();
 
 	if (cyl == NULL) {
 		return (NULL);
 	}
 
-	if (pbit_img_set_cylinder (img, cyl, img->cyl_cnt)) {
-		pbit_cyl_del (cyl);
+	if (pri_img_set_cylinder (img, cyl, c)) {
+		pri_cyl_del (cyl);
 		return (NULL);
 	}
 
 	return (cyl);
 }
 
-pbit_cyl_t *pbit_img_rmv_cylinder (pbit_img_t *img, unsigned long c)
+pri_cyl_t *pri_img_rmv_cylinder (pri_img_t *img, unsigned long c)
 {
-	pbit_cyl_t *cyl;
+	pri_cyl_t *cyl;
 
 	if ((c >= img->cyl_cnt) || (img->cyl[c] == NULL)) {
 		return (NULL);
@@ -617,25 +617,25 @@ pbit_cyl_t *pbit_img_rmv_cylinder (pbit_img_t *img, unsigned long c)
 
 	img->cyl[c] = NULL;
 
-	pbit_img_fix_cyl (img);
+	pri_img_fix_cyl (img);
 
 	return (cyl);
 }
 
-int pbit_img_set_cylinder (pbit_img_t *img, pbit_cyl_t *cyl, unsigned long c)
+int pri_img_set_cylinder (pri_img_t *img, pri_cyl_t *cyl, unsigned long c)
 {
 	unsigned long i;
-	pbit_cyl_t    **tmp;
+	pri_cyl_t    **tmp;
 
 	if (c < img->cyl_cnt) {
-		pbit_cyl_del (img->cyl[c]);
+		pri_cyl_del (img->cyl[c]);
 		img->cyl[c] = cyl;
-		pbit_img_fix_cyl (img);
+		pri_img_fix_cyl (img);
 
 		return (0);
 	}
 
-	tmp = realloc (img->cyl, (c + 1) * sizeof (pbit_cyl_t *));
+	tmp = realloc (img->cyl, (c + 1) * sizeof (pri_cyl_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -650,43 +650,43 @@ int pbit_img_set_cylinder (pbit_img_t *img, pbit_cyl_t *cyl, unsigned long c)
 	img->cyl = tmp;
 	img->cyl_cnt = c + 1;
 
-	pbit_img_fix_cyl (img);
+	pri_img_fix_cyl (img);
 
 	return (0);
 }
 
-int pbit_img_add_cylinder (pbit_img_t *img, pbit_cyl_t *cyl)
+int pri_img_add_cylinder (pri_img_t *img, pri_cyl_t *cyl)
 {
-	return (pbit_img_set_cylinder (img, cyl, img->cyl_cnt));
+	return (pri_img_set_cylinder (img, cyl, img->cyl_cnt));
 }
 
-int pbit_img_del_cylinder (pbit_img_t *img, unsigned long c)
+int pri_img_del_cylinder (pri_img_t *img, unsigned long c)
 {
 	if ((c >= img->cyl_cnt) || (img->cyl[c] == NULL)) {
 		return (1);
 	}
 
-	pbit_cyl_del (img->cyl[c]);
+	pri_cyl_del (img->cyl[c]);
 
 	img->cyl[c] = NULL;
 
-	pbit_img_fix_cyl (img);
+	pri_img_fix_cyl (img);
 
 	return (0);
 }
 
-pbit_trk_t *pbit_img_get_track (pbit_img_t *img, unsigned long c, unsigned long h, int alloc)
+pri_trk_t *pri_img_get_track (pri_img_t *img, unsigned long c, unsigned long h, int alloc)
 {
-	pbit_cyl_t *cyl;
-	pbit_trk_t *trk;
+	pri_cyl_t *cyl;
+	pri_trk_t *trk;
 
-	cyl = pbit_img_get_cylinder (img, c, alloc);
+	cyl = pri_img_get_cylinder (img, c, alloc);
 
 	if (cyl == NULL) {
 		return (NULL);
 	}
 
-	trk = pbit_cyl_get_track (cyl, h, alloc);
+	trk = pri_cyl_get_track (cyl, h, alloc);
 
 	if (trk == NULL) {
 		return (NULL);
@@ -695,37 +695,37 @@ pbit_trk_t *pbit_img_get_track (pbit_img_t *img, unsigned long c, unsigned long 
 	return (trk);
 }
 
-int pbit_img_set_track (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h)
+int pri_img_set_track (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h)
 {
-	pbit_cyl_t *cyl;
+	pri_cyl_t *cyl;
 
-	cyl = pbit_img_get_cylinder (img, c, 1);
+	cyl = pri_img_get_cylinder (img, c, 1);
 
 	if (cyl == NULL) {
 		return (1);
 	}
 
-	if (pbit_cyl_set_track (cyl, trk, h)) {
+	if (pri_cyl_set_track (cyl, trk, h)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int pbit_img_del_track (pbit_img_t *img, unsigned long c, unsigned long h)
+int pri_img_del_track (pri_img_t *img, unsigned long c, unsigned long h)
 {
 	if ((c >= img->cyl_cnt) || (img->cyl[c] == NULL)) {
 		return (1);
 	}
 
-	if (pbit_cyl_del_track (img->cyl[c], h)) {
+	if (pri_cyl_del_track (img->cyl[c], h)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int pbit_img_add_comment (pbit_img_t *img, const unsigned char *buf, unsigned cnt)
+int pri_img_add_comment (pri_img_t *img, const unsigned char *buf, unsigned cnt)
 {
 	unsigned char *tmp;
 
@@ -743,7 +743,7 @@ int pbit_img_add_comment (pbit_img_t *img, const unsigned char *buf, unsigned cn
 	return (0);
 }
 
-int pbit_img_set_comment (pbit_img_t *img, const unsigned char *buf, unsigned cnt)
+int pri_img_set_comment (pri_img_t *img, const unsigned char *buf, unsigned cnt)
 {
 	free (img->comment);
 
@@ -754,7 +754,7 @@ int pbit_img_set_comment (pbit_img_t *img, const unsigned char *buf, unsigned cn
 		return (0);
 	}
 
-	if (pbit_img_add_comment (img, buf, cnt)) {
+	if (pri_img_add_comment (img, buf, cnt)) {
 		return (1);
 	}
 

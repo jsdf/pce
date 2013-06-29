@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm.h                                       *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,7 +25,7 @@
 
 
 #include <drivers/block/block.h>
-#include <drivers/pbit/pbit.h>
+#include <drivers/pri/pri.h>
 
 
 #define MAC_IWM_DRIVES    3
@@ -41,7 +41,7 @@ typedef struct {
 	disks_t         *dsks;
 	unsigned        diskid;
 
-	pbit_img_t      *img;
+	pri_img_t       *img;
 
 	char            use_fname;
 	char            locked;
@@ -59,7 +59,7 @@ typedef struct {
 	unsigned        cur_cyl;
 	unsigned        cur_head;
 
-	pbit_trk_t      *cur_track;
+	pri_trk_t       *cur_track;
 	unsigned long   cur_track_pos;
 	unsigned long   cur_track_len;
 

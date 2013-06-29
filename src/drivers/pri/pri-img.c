@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/pbit-io.c                                   *
+ * File name:   src/drivers/pri/pri-io.c                                     *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pbit-io.h"
-#include "pbit-io-pbit.h"
-#include "pbit-io-tc.h"
+#include "pri-img.h"
+#include "pri-img-pbit.h"
+#include "pri-img-tc.h"
 
 
-unsigned pbit_get_uint16_be (const void *buf, unsigned idx)
+unsigned pri_get_uint16_be (const void *buf, unsigned idx)
 {
 	unsigned            val;
 	const unsigned char *tmp;
@@ -42,7 +42,7 @@ unsigned pbit_get_uint16_be (const void *buf, unsigned idx)
 	return (val);
 }
 
-unsigned pbit_get_uint16_le (const void *buf, unsigned idx)
+unsigned pri_get_uint16_le (const void *buf, unsigned idx)
 {
 	unsigned            val;
 	const unsigned char *tmp;
@@ -55,7 +55,7 @@ unsigned pbit_get_uint16_le (const void *buf, unsigned idx)
 	return (val);
 }
 
-unsigned long pbit_get_uint32_be (const void *buf, unsigned idx)
+unsigned long pri_get_uint32_be (const void *buf, unsigned idx)
 {
 	unsigned long       val;
 	const unsigned char *tmp;
@@ -70,7 +70,7 @@ unsigned long pbit_get_uint32_be (const void *buf, unsigned idx)
 	return (val);
 }
 
-unsigned long pbit_get_uint32_le (const void *buf, unsigned idx)
+unsigned long pri_get_uint32_le (const void *buf, unsigned idx)
 {
 	unsigned long       val;
 	const unsigned char *tmp;
@@ -85,7 +85,7 @@ unsigned long pbit_get_uint32_le (const void *buf, unsigned idx)
 	return (val);
 }
 
-void pbit_set_uint16_be (void *buf, unsigned idx, unsigned val)
+void pri_set_uint16_be (void *buf, unsigned idx, unsigned val)
 {
 	unsigned char *tmp;
 
@@ -95,7 +95,7 @@ void pbit_set_uint16_be (void *buf, unsigned idx, unsigned val)
 	tmp[1] = val & 0xff;
 }
 
-void pbit_set_uint16_le (void *buf, unsigned idx, unsigned val)
+void pri_set_uint16_le (void *buf, unsigned idx, unsigned val)
 {
 	unsigned char *tmp;
 
@@ -105,7 +105,7 @@ void pbit_set_uint16_le (void *buf, unsigned idx, unsigned val)
 	tmp[1] = (val >> 8) & 0xff;
 }
 
-void pbit_set_uint32_be (void *buf, unsigned idx, unsigned long val)
+void pri_set_uint32_be (void *buf, unsigned idx, unsigned long val)
 {
 	unsigned char *tmp;
 
@@ -117,7 +117,7 @@ void pbit_set_uint32_be (void *buf, unsigned idx, unsigned long val)
 	tmp[3] = val & 0xff;
 }
 
-void pbit_set_uint32_le (void *buf, unsigned idx, unsigned long val)
+void pri_set_uint32_le (void *buf, unsigned idx, unsigned long val)
 {
 	unsigned char *tmp;
 
@@ -130,7 +130,7 @@ void pbit_set_uint32_le (void *buf, unsigned idx, unsigned long val)
 }
 
 
-int pbit_read (FILE *fp, void *buf, unsigned long cnt)
+int pri_read (FILE *fp, void *buf, unsigned long cnt)
 {
 	if (fread (buf, 1, cnt, fp) != cnt) {
 		return (1);
@@ -139,7 +139,7 @@ int pbit_read (FILE *fp, void *buf, unsigned long cnt)
 	return (0);
 }
 
-int pbit_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt)
+int pri_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt)
 {
 	if (fseek (fp, ofs, SEEK_SET)) {
 		return (1);
@@ -152,7 +152,7 @@ int pbit_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt)
 	return (0);
 }
 
-int pbit_write (FILE *fp, const void *buf, unsigned long cnt)
+int pri_write (FILE *fp, const void *buf, unsigned long cnt)
 {
 	if (fwrite (buf, 1, cnt, fp) != cnt) {
 		return (1);
@@ -161,7 +161,7 @@ int pbit_write (FILE *fp, const void *buf, unsigned long cnt)
 	return (0);
 }
 
-int pbit_skip (FILE *fp, unsigned long cnt)
+int pri_skip (FILE *fp, unsigned long cnt)
 {
 	unsigned long n;
 	unsigned char buf[256];
@@ -169,7 +169,7 @@ int pbit_skip (FILE *fp, unsigned long cnt)
 	while (cnt > 0) {
 		n = (cnt < 256) ? cnt : 256;
 
-		if (pbit_read (fp, buf, n)) {
+		if (pri_read (fp, buf, n)) {
 			return (1);
 		}
 
@@ -181,12 +181,12 @@ int pbit_skip (FILE *fp, unsigned long cnt)
 
 
 static
-unsigned pbit_get_type (unsigned type, const char *fname)
+unsigned pri_get_type (unsigned type, const char *fname)
 {
 	unsigned   i;
 	const char *ext;
 
-	if (type != PBIT_FORMAT_NONE) {
+	if (type != PRI_FORMAT_NONE) {
 		return (type);
 	}
 
@@ -202,82 +202,78 @@ unsigned pbit_get_type (unsigned type, const char *fname)
 	}
 
 	if (strcasecmp (ext, ".pbit") == 0) {
-		return (PBIT_FORMAT_PBIT);
+		return (PRI_FORMAT_PBIT);
 	}
 	else if (strcasecmp (ext, ".tc") == 0) {
-		return (PBIT_FORMAT_TC);
+		return (PRI_FORMAT_TC);
 	}
 
-	return (PBIT_FORMAT_PBIT);
+	return (PRI_FORMAT_PBIT);
 }
 
 
-pbit_img_t *pbit_img_load_fp (FILE *fp, unsigned type)
+pri_img_t *pri_img_load_fp (FILE *fp, unsigned type)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
 	img = NULL;
 
 	switch (type) {
-	case PBIT_FORMAT_PBIT:
-		img = pbit_load_pbit (fp);
+	case PRI_FORMAT_PBIT:
+		img = pri_load_pbit (fp);
 		break;
 
-	case PBIT_FORMAT_TC:
-		img = pbit_load_tc (fp);
+	case PRI_FORMAT_TC:
+		img = pri_load_tc (fp);
 		break;
 	}
 
 	return (img);
 }
 
-pbit_img_t *pbit_img_load (const char *fname, unsigned type)
+pri_img_t *pri_img_load (const char *fname, unsigned type)
 {
-	FILE       *fp;
-	pbit_img_t *img;
+	FILE      *fp;
+	pri_img_t *img;
 
-	type = pbit_get_type (type, fname);
+	type = pri_get_type (type, fname);
 
-	fp = fopen (fname, "rb");
-
-	if (fp == NULL) {
+	if ((fp = fopen (fname, "rb")) == NULL) {
 		return (NULL);
 	}
 
-	img = pbit_img_load_fp (fp, type);
+	img = pri_img_load_fp (fp, type);
 
 	fclose (fp);
 
 	return (img);
 }
 
-int pbit_img_save_fp (FILE *fp, const pbit_img_t *img, unsigned type)
+int pri_img_save_fp (FILE *fp, const pri_img_t *img, unsigned type)
 {
 	switch (type) {
-	case PBIT_FORMAT_PBIT:
-		return (pbit_save_pbit (fp, img));
+	case PRI_FORMAT_PBIT:
+		return (pri_save_pbit (fp, img));
 
-	case PBIT_FORMAT_TC:
-		return (pbit_save_tc (fp, img));
+	case PRI_FORMAT_TC:
+		return (pri_save_tc (fp, img));
 	}
 
 	return (1);
 }
 
-int pbit_img_save (const char *fname, const pbit_img_t *img, unsigned type)
+int pri_img_save (const char *fname, const pri_img_t *img, unsigned type)
 {
 	int  r;
 	FILE *fp;
 
-	type = pbit_get_type (type, fname);
+	type = pri_get_type (type, fname);
 
-	fp = fopen (fname, "wb");
-
-	if (fp == NULL) {
+	if ((fp = fopen (fname, "wb")) == NULL) {
 		return (1);
 	}
 
-	r = pbit_img_save_fp (fp, img, type);
+	r = pri_img_save_fp (fp, img, type);
 
 	fclose (fp);
 

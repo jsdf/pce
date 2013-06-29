@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/mfm-ibm.c                                   *
+ * File name:   src/drivers/pri/mfm-ibm.c                                    *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -26,13 +26,13 @@
 
 #include <drivers/psi/psi.h>
 
-#include "pbit.h"
-#include "pbit-io.h"
+#include "pri.h"
+#include "pri-img.h"
 #include "mfm-ibm.h"
 
 
 typedef struct {
-	pbit_trk_t *trk;
+	pri_trk_t *trk;
 
 	char       last;
 	char       clock;
@@ -74,7 +74,7 @@ int mfm_get_bit (mfm_code_t *mfm)
 {
 	unsigned long bit;
 
-	pbit_trk_get_bits (mfm->trk, &bit, 1);
+	pri_trk_get_bits (mfm->trk, &bit, 1);
 
 	mfm->clock = !mfm->clock;
 
@@ -185,7 +185,7 @@ psi_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 
 	mfm_read (mfm, buf, 6);
 
-	crc = pbit_get_uint16_be (buf, 4);
+	crc = pri_get_uint16_be (buf, 4);
 
 	mfm->crc = mfm_crc (mfm->crc, buf, 4);
 
@@ -227,7 +227,7 @@ int mfm_decode_dam (mfm_code_t *mfm, psi_sct_t *sct, unsigned mark)
 	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 0);
 	psi_sct_set_flags (sct, PSI_FLAG_DEL_DAM, mark == 0xf8);
 
-	crc = pbit_get_uint16_be (buf, 0);
+	crc = pri_get_uint16_be (buf, 0);
 
 	mfm->crc = mfm_crc (mfm->crc, sct->data, sct->n);
 
@@ -244,7 +244,7 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 	unsigned char mark2;
 	char          wrap;
 	unsigned long pos;
-	psi_sct_t    *sct;
+	psi_sct_t     *sct;
 
 	switch (mark) {
 	case 0xfe: /* ID address mark */
@@ -295,7 +295,7 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 	return (0);
 }
 
-psi_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
+psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h)
 {
 	unsigned char mark;
 	psi_trk_t     *dtrk;
@@ -310,7 +310,7 @@ psi_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
 	mfm.trk = trk;
 	mfm.clock = 0;
 
-	pbit_trk_set_pos (trk, 0);
+	pri_trk_set_pos (trk, 0);
 
 	while (trk->wrap == 0) {
 		if (mfm_sync_mark (&mfm, &mark)) {
@@ -330,11 +330,11 @@ psi_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h)
 	return (dtrk);
 }
 
-psi_img_t *pbit_decode_mfm (pbit_img_t *img)
+psi_img_t *pri_decode_mfm (pri_img_t *img)
 {
 	unsigned long c, h;
-	pbit_cyl_t    *cyl;
-	pbit_trk_t    *trk;
+	pri_cyl_t     *cyl;
+	pri_trk_t     *trk;
 	psi_img_t     *dimg;
 	psi_trk_t     *dtrk;
 
@@ -358,7 +358,7 @@ psi_img_t *pbit_decode_mfm (pbit_img_t *img)
 				dtrk = psi_trk_new (h);
 			}
 			else {
-				dtrk = pbit_decode_mfm_trk (trk, h);
+				dtrk = pri_decode_mfm_trk (trk, h);
 			}
 
 			if (dtrk == NULL) {
@@ -400,7 +400,7 @@ void mfm_encode_byte (mfm_code_t *mfm, unsigned val, unsigned msk)
 		max = 16;
 	}
 
-	pbit_trk_set_bits (mfm->trk, buf >> (16 - max), max);
+	pri_trk_set_bits (mfm->trk, buf >> (16 - max), max);
 
 	mfm->last = buf & 1;
 }
@@ -435,7 +435,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	unsigned char buf[8];
 
 	if (sct->position != 0xffffffff) {
-		pbit_trk_set_pos (mfm->trk, 2 * sct->position);
+		pri_trk_set_pos (mfm->trk, 2 * sct->position);
 	}
 
 	flags = sct->flags;
@@ -494,7 +494,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	}
 }
 
-int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *par)
+int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_encode_mfm_t *par)
 {
 	unsigned   i;
 	psi_sct_t  *sct;
@@ -503,7 +503,7 @@ int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *p
 	mfm.trk = dtrk;
 	mfm.last = 0;
 
-	pbit_trk_set_pos (dtrk, 0);
+	pri_trk_set_pos (dtrk, 0);
 
 	for (i = 0; i < 146; i++) {
 		mfm_encode_byte (&mfm, 0x4e, 0xffff);
@@ -515,12 +515,6 @@ int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *p
 		mfm_encode_sector (&mfm, sct, par->gap3);
 	}
 
-	if (dtrk->wrap) {
-		fprintf (stderr, "pbit: warning: track too long (%lu)\n",
-			dtrk->idx
-		);
-	}
-
 	while (dtrk->wrap == 0) {
 		mfm_encode_byte (&mfm, 0x4e, 0xffff);
 	}
@@ -528,12 +522,12 @@ int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *p
 	return (0);
 }
 
-int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *par)
+int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_encode_mfm_t *par)
 {
 	unsigned long c, h;
 	psi_cyl_t     *cyl;
 	psi_trk_t     *trk;
-	pbit_trk_t    *dtrk;
+	pri_trk_t     *dtrk;
 
 	for (c = 0; c < simg->cyl_cnt; c++) {
 		cyl = simg->cyl[c];
@@ -541,20 +535,20 @@ int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *p
 		for (h = 0; h < cyl->trk_cnt; h++) {
 			trk = cyl->trk[h];
 
-			dtrk = pbit_img_get_track (dimg, c, h, 1);
+			dtrk = pri_img_get_track (dimg, c, h, 1);
 
 			if (dtrk == NULL) {
 				return (1);
 			}
 
-			if (pbit_trk_set_size (dtrk, par->track_size)) {
+			if (pri_trk_set_size (dtrk, par->track_size)) {
 				return (1);
 			}
 
-			pbit_trk_set_clock (dtrk, par->clock);
-			pbit_trk_clear_16 (dtrk, 0x9254);
+			pri_trk_set_clock (dtrk, par->clock);
+			pri_trk_clear_16 (dtrk, 0x9254);
 
-			if (pbit_encode_mfm_trk (dtrk, trk, par)) {
+			if (pri_encode_mfm_trk (dtrk, trk, par)) {
 				return (1);
 			}
 		}
@@ -563,53 +557,53 @@ int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *p
 	return (0);
 }
 
-pbit_img_t *pbit_encode_mfm (psi_img_t *img, pbit_encode_mfm_t *par)
+pri_img_t *pri_encode_mfm (psi_img_t *img, pri_encode_mfm_t *par)
 {
-	pbit_img_t *dimg;
+	pri_img_t *dimg;
 
-	dimg = pbit_img_new();
+	dimg = pri_img_new();
 
 	if (dimg == NULL) {
 		return (NULL);
 	}
 
-	if (pbit_encode_mfm_img (dimg, img, par)) {
-		pbit_img_del (dimg);
+	if (pri_encode_mfm_img (dimg, img, par)) {
+		pri_img_del (dimg);
 		return (NULL);
 	}
 
 	return (dimg);
 }
 
-pbit_img_t *pbit_encode_mfm_dd_300 (psi_img_t *img)
+pri_img_t *pri_encode_mfm_dd_300 (psi_img_t *img)
 {
-	pbit_encode_mfm_t par;
+	pri_encode_mfm_t par;
 
 	par.gap3 = 80;
 	par.clock = 500000;
 	par.track_size = 100000;
 
-	return (pbit_encode_mfm (img, &par));
+	return (pri_encode_mfm (img, &par));
 }
 
-pbit_img_t *pbit_encode_mfm_hd_300 (psi_img_t *img)
+pri_img_t *pri_encode_mfm_hd_300 (psi_img_t *img)
 {
-	pbit_encode_mfm_t par;
+	pri_encode_mfm_t par;
 
 	par.gap3 = 80;
 	par.clock = 1000000;
 	par.track_size = 200000;
 
-	return (pbit_encode_mfm (img, &par));
+	return (pri_encode_mfm (img, &par));
 }
 
-pbit_img_t *pbit_encode_mfm_hd_360 (psi_img_t *img)
+pri_img_t *pri_encode_mfm_hd_360 (psi_img_t *img)
 {
-	pbit_encode_mfm_t par;
+	pri_encode_mfm_t par;
 
 	par.gap3 = 80;
 	par.clock = 1000000;
 	par.track_size = 1000000 / 6;
 
-	return (pbit_encode_mfm (img, &par));
+	return (pri_encode_mfm (img, &par));
 }

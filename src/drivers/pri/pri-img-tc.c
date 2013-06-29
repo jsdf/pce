@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/pbit-io-tc.c                                *
+ * File name:   src/drivers/pri/pri-img-tc.c                                 *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,23 +24,23 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pbit.h"
-#include "pbit-io.h"
-#include "pbit-io-tc.h"
+#include "pri.h"
+#include "pri-img.h"
+#include "pri-img-tc.h"
 
 
 static
-int tc_load_header (FILE *fp, pbit_img_t *img, unsigned long *ofs, unsigned short *len, unsigned *c, unsigned *h)
+int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short *len, unsigned *c, unsigned *h)
 {
 	unsigned      i;
 	unsigned long val;
 	unsigned char buf[512];
 
-	if (pbit_read_ofs (fp, 0, buf, 512)) {
+	if (pri_read_ofs (fp, 0, buf, 512)) {
 		return (1);
 	}
 
-	if (pbit_get_uint16_be (buf, 0) != 0x5aa5) {
+	if (pri_get_uint16_be (buf, 0) != 0x5aa5) {
 		return (1);
 	}
 
@@ -57,25 +57,25 @@ int tc_load_header (FILE *fp, pbit_img_t *img, unsigned long *ofs, unsigned shor
 	}
 
 	if (i > 2) {
-		pbit_img_set_comment (img, buf + 2, i - 2);
+		pri_img_set_comment (img, buf + 2, i - 2);
 	}
 
-	if (pbit_read_ofs (fp, 0x0305, buf, 512)) {
+	if (pri_read_ofs (fp, 0x0305, buf, 512)) {
 		return (1);
 	}
 
 	for (i = 0; i < 256; i++) {
-		val = pbit_get_uint16_be (buf, 2 * i);
+		val = pri_get_uint16_be (buf, 2 * i);
 
 		ofs[i] = val << 8;
 	}
 
-	if (pbit_read_ofs (fp, 0x0505, buf, 512)) {
+	if (pri_read_ofs (fp, 0x0505, buf, 512)) {
 		return (1);
 	}
 
 	for (i = 0; i < 256; i++) {
-		val = pbit_get_uint16_le (buf, 2 * i);
+		val = pri_get_uint16_le (buf, 2 * i);
 
 		len[i] = val;
 	}
@@ -84,52 +84,52 @@ int tc_load_header (FILE *fp, pbit_img_t *img, unsigned long *ofs, unsigned shor
 }
 
 static
-int tc_load_track (FILE *fp, pbit_img_t *img, unsigned long c, unsigned long h, unsigned long ofs, unsigned len)
+int tc_load_track (FILE *fp, pri_img_t *img, unsigned long c, unsigned long h, unsigned long ofs, unsigned len)
 {
 	unsigned long cnt;
-	pbit_trk_t    *trk;
+	pri_trk_t    *trk;
 
-	trk = pbit_img_get_track (img, c, h, 1);
+	trk = pri_img_get_track (img, c, h, 1);
 
 	if (trk == NULL) {
 		return (1);
 	}
 
-	if (pbit_trk_set_size (trk, 8UL * len)) {
+	if (pri_trk_set_size (trk, 8UL * len)) {
 		return (1);
 	}
 
-	pbit_trk_set_clock (trk, (len < 8000) ? 250000 : 500000);
+	pri_trk_set_clock (trk, (len < 8000) ? 250000 : 500000);
 
 	cnt = (trk->size + 7) / 8;
 
-	if (pbit_read_ofs (fp, ofs, trk->data, cnt)) {
+	if (pri_read_ofs (fp, ofs, trk->data, cnt)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-pbit_img_t *pbit_load_tc (FILE *fp)
+pri_img_t *pri_load_tc (FILE *fp)
 {
 	unsigned       c, h, nc, nh, t;
 	unsigned long  ofs[256];
 	unsigned short len[256];
-	pbit_img_t     *img;
+	pri_img_t     *img;
 
-	img = pbit_img_new();
+	img = pri_img_new();
 
 	if (img == NULL) {
 		return (NULL);
 	}
 
 	if (tc_load_header (fp, img, ofs, len, &nc, &nh)) {
-		pbit_img_del (img);
+		pri_img_del (img);
 		return (NULL);
 	}
 
 	if ((nc > 99) || (nh > 2)) {
-		pbit_img_del (img);
+		pri_img_del (img);
 		return (NULL);
 	}
 
@@ -138,7 +138,7 @@ pbit_img_t *pbit_load_tc (FILE *fp)
 
 		for (h = 0; h < nh; h++) {
 			if (t > 255) {
-				pbit_img_del (img);
+				pri_img_del (img);
 				return (NULL);
 			}
 
@@ -148,7 +148,7 @@ pbit_img_t *pbit_load_tc (FILE *fp)
 			}
 
 			if (tc_load_track (fp, img, c, h, ofs[t], len[t])) {
-				pbit_img_del (img);
+				pri_img_del (img);
 				return (NULL);
 			}
 
@@ -160,18 +160,18 @@ pbit_img_t *pbit_load_tc (FILE *fp)
 }
 
 
-int pbit_save_tc (FILE *fp, const pbit_img_t *img)
+int pri_save_tc (FILE *fp, const pri_img_t *img)
 {
 	return (1);
 }
 
 
-int pbit_probe_tc_fp (FILE *fp)
+int pri_probe_tc_fp (FILE *fp)
 {
 	return (0);
 }
 
-int pbit_probe_tc (const char *fname)
+int pri_probe_tc (const char *fname)
 {
 	int  r;
 	FILE *fp;
@@ -182,7 +182,7 @@ int pbit_probe_tc (const char *fname)
 		return (0);
 	}
 
-	r = pbit_probe_tc_fp (fp);
+	r = pri_probe_tc_fp (fp);
 
 	fclose (fp);
 

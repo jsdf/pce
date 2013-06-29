@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/pbit-io-tc.h                                *
- * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * File name:   src/utils/pri/main.h                                         *
+ * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,19 +20,20 @@
  *****************************************************************************/
 
 
-#ifndef PCE_PBIT_IO_TC_H
-#define PCE_PBIT_IO_TC_H 1
+#ifndef PRI_MAIN_H
+#define PRI_MAIN_H 1
 
 
-#include <drivers/pbit/pbit.h>
+#include <drivers/pri/pri.h>
+#include <drivers/psi/psi.h>
 
 
-pbit_img_t *pbit_load_tc (FILE *fp);
+typedef int (*pri_trk_cb) (pri_img_t *img, pri_trk_t *trk,
+	unsigned long c, unsigned long h, void *opaque
+);
 
-int pbit_save_tc (FILE *fp, const pbit_img_t *img);
 
-int pbit_probe_tc_fp (FILE *fp);
-int pbit_probe_tc (const char *fname);
+int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque);
 
 
 #endif

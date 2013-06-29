@@ -365,7 +365,7 @@ src/arch/macplus/cmd_68k.o: src/arch/macplus/cmd_68k.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -401,7 +401,7 @@ src/arch/macplus/hook.o: src/arch/macplus/hook.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -436,7 +436,7 @@ src/arch/macplus/hotkey.o: src/arch/macplus/hotkey.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -453,9 +453,9 @@ src/arch/macplus/iwm-io.o: src/arch/macplus/iwm-io.c \
 	src/config.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pbit/gcr-mac.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/gcr-mac.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h
 
@@ -465,7 +465,7 @@ src/arch/macplus/iwm.o: src/arch/macplus/iwm.c \
 	src/arch/macplus/main.h \
 	src/config.h \
 	src/drivers/block/block.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/lib/console.h
 
 src/arch/macplus/keyboard.o: src/arch/macplus/keyboard.c \
@@ -501,7 +501,7 @@ src/arch/macplus/macplus.o: src/arch/macplus/macplus.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -540,7 +540,7 @@ src/arch/macplus/main.o: src/arch/macplus/main.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -578,7 +578,7 @@ src/arch/macplus/mem.o: src/arch/macplus/mem.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -610,7 +610,7 @@ src/arch/macplus/msg.o: src/arch/macplus/msg.c \
 	src/devices/nvram.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -698,7 +698,7 @@ src/arch/rc759/cmd.o: src/arch/rc759/cmd.c \
 	src/devices/memory.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -718,9 +718,9 @@ src/arch/rc759/fdc.o: src/arch/rc759/fdc.c \
 	src/config.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pbit/mfm-ibm.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/mfm-ibm.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/log.h \
@@ -759,7 +759,7 @@ src/arch/rc759/main.o: src/arch/rc759/main.c \
 	src/devices/memory.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -796,7 +796,7 @@ src/arch/rc759/msg.o: src/arch/rc759/msg.c \
 	src/devices/memory.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -847,7 +847,7 @@ src/arch/rc759/rc759.o: src/arch/rc759/rc759.c \
 	src/devices/memory.h \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
-	src/drivers/pbit/pbit.h \
+	src/drivers/pri/pri.h \
 	src/drivers/sound/filter.h \
 	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
@@ -1773,35 +1773,35 @@ src/drivers/options.o: src/drivers/options.c \
 	src/config.h \
 	src/drivers/options.h
 
-src/drivers/pbit/gcr-mac.o: src/drivers/pbit/gcr-mac.c \
-	src/drivers/pbit/gcr-mac.h \
-	src/drivers/pbit/pbit.h \
+src/drivers/pri/gcr-mac.o: src/drivers/pri/gcr-mac.c \
+	src/drivers/pri/gcr-mac.h \
+	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h
 
-src/drivers/pbit/mfm-ibm.o: src/drivers/pbit/mfm-ibm.c \
-	src/drivers/pbit/mfm-ibm.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h \
+src/drivers/pri/mfm-ibm.o: src/drivers/pri/mfm-ibm.c \
+	src/drivers/pri/mfm-ibm.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h
 
-src/drivers/pbit/pbit-io-pbit.o: src/drivers/pbit/pbit-io-pbit.c \
-	src/drivers/pbit/pbit-io-pbit.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h
+src/drivers/pri/pri-img-pbit.o: src/drivers/pri/pri-img-pbit.c \
+	src/drivers/pri/pri-img-pbit.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h
 
-src/drivers/pbit/pbit-io-tc.o: src/drivers/pbit/pbit-io-tc.c \
-	src/drivers/pbit/pbit-io-tc.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h
+src/drivers/pri/pri-img-tc.o: src/drivers/pri/pri-img-tc.c \
+	src/drivers/pri/pri-img-tc.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h
 
-src/drivers/pbit/pbit-io.o: src/drivers/pbit/pbit-io.c \
-	src/drivers/pbit/pbit-io-pbit.h \
-	src/drivers/pbit/pbit-io-tc.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h
+src/drivers/pri/pri-img.o: src/drivers/pri/pri-img.c \
+	src/drivers/pri/pri-img-pbit.h \
+	src/drivers/pri/pri-img-tc.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h
 
-src/drivers/pbit/pbit.o: src/drivers/pbit/pbit.c \
-	src/drivers/pbit/pbit.h
+src/drivers/pri/pri.o: src/drivers/pri/pri.c \
+	src/drivers/pri/pri.h
 
 src/drivers/psi/psi-img-ana.o: src/drivers/psi/psi-img-ana.c \
 	src/drivers/psi/psi-img-ana.h \
@@ -2098,17 +2098,6 @@ src/libini/write.o: src/libini/write.c \
 	src/config.h \
 	src/libini/libini.h
 
-src/utils/pbit/pbit.o: src/utils/pbit/pbit.c \
-	src/config.h \
-	src/drivers/pbit/gcr-mac.h \
-	src/drivers/pbit/mfm-ibm.h \
-	src/drivers/pbit/pbit-io.h \
-	src/drivers/pbit/pbit.h \
-	src/drivers/psi/psi-img.h \
-	src/drivers/psi/psi.h \
-	src/lib/getopt.h \
-	src/utils/pbit/pbit.h
-
 src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
@@ -2122,6 +2111,17 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
 	src/utils/pce-img/pce-img.h
+
+src/utils/pri/main.o: src/utils/pri/main.c \
+	src/config.h \
+	src/drivers/pri/gcr-mac.h \
+	src/drivers/pri/mfm-ibm.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
+	src/lib/getopt.h \
+	src/utils/pri/main.h
 
 src/utils/psi/comment.o: src/utils/psi/comment.c \
 	src/config.h \

@@ -33,9 +33,9 @@
 
 #include <drivers/psi/psi.h>
 
-#include <drivers/pbit/pbit.h>
-#include <drivers/pbit/pbit-io.h>
-#include <drivers/pbit/gcr-mac.h>
+#include <drivers/pri/pri.h>
+#include <drivers/pri/pri-img.h>
+#include <drivers/pri/gcr-mac.h>
 
 
 static
@@ -109,12 +109,12 @@ psi_img_t *iwm_drv_load_block (mac_iwm_drive_t *drv, disk_t *dsk)
 }
 
 static
-pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
+pri_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 {
 	disk_t     *dsk;
 	disk_psi_t *psi;
 	psi_img_t  *img, *del;
-	pbit_img_t *ret;
+	pri_img_t  *ret;
 
 	dsk = dsks_get_disk (drv->dsks, drv->diskid);
 
@@ -136,7 +136,7 @@ pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 		return (NULL);
 	}
 
-	ret = pbit_encode_gcr (img);
+	ret = pri_encode_gcr (img);
 
 	psi_img_del (del);
 
@@ -144,33 +144,33 @@ pbit_img_t *iwm_drv_load_disk (mac_iwm_drive_t *drv)
 }
 
 static
-pbit_img_t *iwm_drv_load_pbit (mac_iwm_drive_t *drv)
+pri_img_t *iwm_drv_load_pri (mac_iwm_drive_t *drv)
 {
-	pbit_img_t *ret;
+	pri_img_t *ret;
 
 	if (drv->fname == NULL) {
 		return (NULL);
 	}
 
-	ret = pbit_img_load (drv->fname, PBIT_FORMAT_NONE);
+	ret = pri_img_load (drv->fname, PRI_FORMAT_NONE);
 
 	return (ret);
 }
 
 int iwm_drv_load (mac_iwm_drive_t *drv)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
 	img = NULL;
 
 	drv->use_fname = 0;
 
 	if (drv->fname != NULL) {
-		img = iwm_drv_load_pbit (drv);
+		img = iwm_drv_load_pri (drv);
 
 		if (img != NULL) {
 			drv->use_fname = 1;
-			mac_log_deb ("iwm: loading drive %u (pbit)\n", drv->drive + 1);
+			mac_log_deb ("iwm: loading drive %u (pri)\n", drv->drive + 1);
 		}
 	}
 
@@ -187,7 +187,7 @@ int iwm_drv_load (mac_iwm_drive_t *drv)
 		return (1);
 	}
 
-	pbit_img_del (drv->img);
+	pri_img_del (drv->img);
 
 	drv->img = img;
 
@@ -261,7 +261,7 @@ int iwm_drv_save_disk (mac_iwm_drive_t *drv)
 		return (1);
 	}
 
-	img = pbit_decode_gcr (drv->img);
+	img = pri_decode_gcr (drv->img);
 
 	if (img == NULL) {
 		return (1);
@@ -287,13 +287,13 @@ int iwm_drv_save_disk (mac_iwm_drive_t *drv)
 }
 
 static
-int iwm_drv_save_pbit (mac_iwm_drive_t *drv)
+int iwm_drv_save_pri (mac_iwm_drive_t *drv)
 {
 	if (drv->fname == NULL) {
 		return (1);
 	}
 
-	if (pbit_img_save (drv->fname, drv->img, PBIT_FORMAT_NONE)) {
+	if (pri_img_save (drv->fname, drv->img, PRI_FORMAT_NONE)) {
 		return (1);
 	}
 
@@ -309,8 +309,8 @@ int iwm_drv_save (mac_iwm_drive_t *drv)
 	mac_log_deb ("iwm: saving drive %u\n", drv->drive + 1);
 
 	if (drv->use_fname) {
-		if (iwm_drv_save_pbit (drv)) {
-			mac_log_deb ("iwm: saving drive %u failed (pbit)\n",
+		if (iwm_drv_save_pri (drv)) {
+			mac_log_deb ("iwm: saving drive %u failed (pri)\n",
 				drv->drive + 1
 			);
 			return (1);

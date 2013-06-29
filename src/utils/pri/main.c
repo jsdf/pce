@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pbit/pbit.c                                        *
+ * File name:   src/utils/pri/pri.c                                          *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -28,15 +28,15 @@
 
 #include <lib/getopt.h>
 
-#include "pbit.h"
+#include "main.h"
 
 #include <drivers/psi/psi-img.h>
 #include <drivers/psi/psi.h>
 
-#include <drivers/pbit/pbit.h>
-#include <drivers/pbit/pbit-io.h>
-#include <drivers/pbit/gcr-mac.h>
-#include <drivers/pbit/mfm-ibm.h>
+#include <drivers/pri/pri.h>
+#include <drivers/pri/pri-img.h>
+#include <drivers/pri/gcr-mac.h>
+#include <drivers/pri/mfm-ibm.h>
 
 
 static const char    *arg0 = NULL;
@@ -46,8 +46,8 @@ static int           par_verbose = 0;
 static int           par_list = 0;
 static int           par_print_info = 0;
 
-static unsigned      par_fmt_inp = PBIT_FORMAT_NONE;
-static unsigned      par_fmt_out = PBIT_FORMAT_NONE;
+static unsigned      par_fmt_inp = PRI_FORMAT_NONE;
+static unsigned      par_fmt_out = PRI_FORMAT_NONE;
 
 static int           par_cyl_all = 1;
 static unsigned long par_cyl[2];
@@ -83,8 +83,8 @@ static
 void print_help (void)
 {
 	pce_getopt_help (
-		"pbit: convert and modify PCE PBIT image files",
-		"usage: pbit [options] [input] [options] [output]",
+		"pri: convert and modify PCE raw image files",
+		"usage: pri [options] [input] [options] [output]",
 		opts
 	);
 
@@ -114,7 +114,7 @@ void print_help (void)
 		"  gcr, mfm-dd-300, mfm-hd-300, mfm-hd-360\n"
 		"\n"
 		"file formats are:\n"
-		"  pbit, tc\n"
+		"  pri, tc\n"
 		"\n"
 		"track attributes are:\n"
 		"  clock, data, size\n",
@@ -128,9 +128,9 @@ static
 void print_version (void)
 {
 	fputs (
-		"pbit version " PCE_VERSION_STR
+		"pri version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2012 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2012-2013 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -139,7 +139,7 @@ void print_version (void)
 
 
 static
-int pbit_parse_range (const char *str, unsigned long *v1, unsigned long *v2, int *all)
+int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, int *all)
 {
 	*v1 = 0;
 	*v2 = 0;
@@ -181,7 +181,7 @@ int pbit_parse_range (const char *str, unsigned long *v1, unsigned long *v2, int
 
 
 static
-int pbit_sel_match_track (unsigned c, unsigned h)
+int pri_sel_match_track (unsigned c, unsigned h)
 {
 	if (par_cyl_all == 0) {
 		if ((c < par_cyl[0]) || (c > par_cyl[1])) {
@@ -198,11 +198,11 @@ int pbit_sel_match_track (unsigned c, unsigned h)
 	return (1);
 }
 
-int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque)
+int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque)
 {
 	unsigned long c, h;
-	pbit_cyl_t    *cyl;
-	pbit_trk_t    *trk;
+	pri_cyl_t     *cyl;
+	pri_trk_t     *trk;
 
 	for (c = 0; c < img->cyl_cnt; c++) {
 		cyl = img->cyl[c];
@@ -210,7 +210,7 @@ int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque)
 		for (h = 0; h < cyl->trk_cnt; h++) {
 			trk = cyl->trk[h];
 
-			if (pbit_sel_match_track (c, h) == 0) {
+			if (pri_sel_match_track (c, h) == 0) {
 				continue;
 			}
 
@@ -225,14 +225,14 @@ int pbit_for_all_tracks (pbit_img_t *img, pbit_trk_cb fct, void *opaque)
 
 
 static
-int pbit_align_gcr_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_align_gcr_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	unsigned      val, run;
 	unsigned long bit;
 	unsigned long syn1, syn2, syn_cnt;
 	unsigned long max1, max2, max_cnt;
 
-	pbit_trk_set_pos (trk, 0);
+	pri_trk_set_pos (trk, 0);
 
 	syn1 = 0;
 	syn2 = 0;
@@ -246,7 +246,7 @@ int pbit_align_gcr_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, 
 	run = 0;
 
 	while (1) {
-		pbit_trk_get_bits (trk, &bit, 1);
+		pri_trk_get_bits (trk, &bit, 1);
 
 		val = (val << 1) | (bit & 1);
 		run += 1;
@@ -275,20 +275,20 @@ int pbit_align_gcr_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, 
 
 	max1 = (max1 + (max2 - max1) / 2) % trk->size;
 
-	pbit_trk_rotate (trk, max1);
+	pri_trk_rotate (trk, max1);
 
 	return (0);
 }
 
 static
-int pbit_align_gcr_tracks (pbit_img_t *img)
+int pri_align_gcr_tracks (pri_img_t *img)
 {
-	return (pbit_for_all_tracks (img, pbit_align_gcr_track_cb, NULL));
+	return (pri_for_all_tracks (img, pri_align_gcr_track_cb, NULL));
 }
 
 
 static
-int pbit_comment_show (pbit_img_t *img)
+int pri_comment_show (pri_img_t *img)
 {
 	unsigned i;
 
@@ -304,7 +304,7 @@ int pbit_comment_show (pbit_img_t *img)
 }
 
 static
-int pbit_comment_add (pbit_img_t *img, const char *str)
+int pri_comment_add (pri_img_t *img, const char *str)
 {
 	unsigned char       c;
 	const unsigned char *tmp;
@@ -312,14 +312,14 @@ int pbit_comment_add (pbit_img_t *img, const char *str)
 	if (img->comment_size > 0) {
 		c = 0x0a;
 
-		if (pbit_img_add_comment (img, &c, 1)) {
+		if (pri_img_add_comment (img, &c, 1)) {
 			return (1);
 		}
 	}
 
 	tmp = (const unsigned char *) str;
 
-	if (pbit_img_add_comment (img, tmp, strlen (str))) {
+	if (pri_img_add_comment (img, tmp, strlen (str))) {
 		return (1);
 	}
 
@@ -327,18 +327,18 @@ int pbit_comment_add (pbit_img_t *img, const char *str)
 }
 
 static
-int pbit_comment_set (pbit_img_t *img, const char *str)
+int pri_comment_set (pri_img_t *img, const char *str)
 {
 	const unsigned char *tmp;
 
 	if ((str == NULL) || (*str == 0)) {
-		pbit_img_set_comment (img, NULL, 0);
+		pri_img_set_comment (img, NULL, 0);
 		return (0);
 	}
 
 	tmp = (const unsigned char *) str;
 
-	if (pbit_img_set_comment (img, tmp, strlen (str))) {
+	if (pri_img_set_comment (img, tmp, strlen (str))) {
 		return (1);
 	}
 
@@ -346,7 +346,7 @@ int pbit_comment_set (pbit_img_t *img, const char *str)
 }
 
 static
-int pbit_comment_save (pbit_img_t *img, const char *fname)
+int pri_comment_save (pri_img_t *img, const char *fname)
 {
 	unsigned cnt;
 	FILE     *fp;
@@ -378,7 +378,7 @@ int pbit_comment_save (pbit_img_t *img, const char *fname)
 }
 
 static
-int pbit_comment_load (pbit_img_t *img, const char *fname)
+int pri_comment_load (pri_img_t *img, const char *fname)
 {
 	int           c, cr;
 	unsigned      i, nl;
@@ -391,7 +391,7 @@ int pbit_comment_load (pbit_img_t *img, const char *fname)
 		return (1);
 	}
 
-	pbit_img_set_comment (img, NULL, 0);
+	pri_img_set_comment (img, NULL, 0);
 
 	cr = 0;
 	nl = 0;
@@ -426,7 +426,7 @@ int pbit_comment_load (pbit_img_t *img, const char *fname)
 					nl -= 1;
 
 					if (i >= 256) {
-						pbit_img_add_comment (img, buf, i);
+						pri_img_add_comment (img, buf, i);
 						i = 0;
 					}
 				}
@@ -438,14 +438,14 @@ int pbit_comment_load (pbit_img_t *img, const char *fname)
 			buf[i++] = c;
 
 			if (i >= 256) {
-				pbit_img_add_comment (img, buf, i);
+				pri_img_add_comment (img, buf, i);
 				i = 0;
 			}
 		}
 	}
 
 	if (i > 0) {
-		pbit_img_add_comment (img, buf, i);
+		pri_img_add_comment (img, buf, i);
 		i = 0;
 	}
 
@@ -460,7 +460,7 @@ int pbit_comment_load (pbit_img_t *img, const char *fname)
 
 
 static
-int pbit_decode_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_decode_raw_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	FILE *fp;
 
@@ -473,7 +473,7 @@ int pbit_decode_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsig
 	return (0);
 }
 
-int pbit_decode_raw (pbit_img_t *img, const char *fname)
+int pri_decode_raw (pri_img_t *img, const char *fname)
 {
 	int  r;
 	FILE *fp;
@@ -484,7 +484,7 @@ int pbit_decode_raw (pbit_img_t *img, const char *fname)
 		return (1);
 	}
 
-	r = pbit_for_all_tracks (img, pbit_decode_raw_cb, fp);
+	r = pri_for_all_tracks (img, pri_decode_raw_cb, fp);
 
 	fclose (fp);
 
@@ -493,7 +493,7 @@ int pbit_decode_raw (pbit_img_t *img, const char *fname)
 
 
 static
-int pbit_decode_mfm_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_decode_mfm_raw_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	FILE          *fp;
 	unsigned      outbuf, outcnt;
@@ -508,10 +508,10 @@ int pbit_decode_mfm_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, u
 	outbuf = 0;
 	outcnt = 0;
 
-	pbit_trk_set_pos (trk, 0);
+	pri_trk_set_pos (trk, 0);
 
 	while (trk->wrap == 0) {
-		pbit_trk_get_bits (trk, &bit, 1);
+		pri_trk_get_bits (trk, &bit, 1);
 
 		val = (val << 1) | (bit & 1);
 		clk = (clk << 1) | ((clk ^ 1) & 1);
@@ -541,7 +541,7 @@ int pbit_decode_mfm_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, u
 	return (0);
 }
 
-int pbit_decode_mfm_raw (pbit_img_t *img, const char *fname)
+int pri_decode_mfm_raw (pri_img_t *img, const char *fname)
 {
 	int  r;
 	FILE *fp;
@@ -552,7 +552,7 @@ int pbit_decode_mfm_raw (pbit_img_t *img, const char *fname)
 		return (1);
 	}
 
-	r = pbit_for_all_tracks (img, pbit_decode_mfm_raw_cb, fp);
+	r = pri_for_all_tracks (img, pri_decode_mfm_raw_cb, fp);
 
 	fclose (fp);
 
@@ -561,7 +561,7 @@ int pbit_decode_mfm_raw (pbit_img_t *img, const char *fname)
 
 
 static
-int pbit_decode_gcr_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_decode_gcr_raw_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	FILE          *fp;
 	unsigned      val;
@@ -569,12 +569,12 @@ int pbit_decode_gcr_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, u
 
 	fp = opaque;
 
-	pbit_trk_set_pos (trk, 0);
+	pri_trk_set_pos (trk, 0);
 
 	val = 0;
 
 	while (trk->wrap == 0) {
-		pbit_trk_get_bits (trk, &bit, 1);
+		pri_trk_get_bits (trk, &bit, 1);
 
 		val = (val << 1) | (bit & 1);
 
@@ -587,7 +587,7 @@ int pbit_decode_gcr_raw_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, u
 	return (0);
 }
 
-int pbit_decode_gcr_raw (pbit_img_t *img, const char *fname)
+int pri_decode_gcr_raw (pri_img_t *img, const char *fname)
 {
 	int  r;
 	FILE *fp;
@@ -598,7 +598,7 @@ int pbit_decode_gcr_raw (pbit_img_t *img, const char *fname)
 		return (1);
 	}
 
-	r = pbit_for_all_tracks (img, pbit_decode_gcr_raw_cb, fp);
+	r = pri_for_all_tracks (img, pri_decode_gcr_raw_cb, fp);
 
 	fclose (fp);
 
@@ -607,26 +607,26 @@ int pbit_decode_gcr_raw (pbit_img_t *img, const char *fname)
 
 
 static
-int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
+int pri_decode (pri_img_t *img, const char *type, const char *fname)
 {
-	int        r;
+	int       r;
 	psi_img_t *dimg;
 
 	if (strcmp (type, "gcr-raw") == 0) {
-		return (pbit_decode_gcr_raw (img, fname));
+		return (pri_decode_gcr_raw (img, fname));
 	}
 	else if (strcmp (type, "mfm-raw") == 0) {
-		return (pbit_decode_mfm_raw (img, fname));
+		return (pri_decode_mfm_raw (img, fname));
 	}
 	else if (strcmp (type, "raw") == 0) {
-		return (pbit_decode_raw (img, fname));
+		return (pri_decode_raw (img, fname));
 	}
 
 	if (strcmp (type, "gcr") == 0) {
-		dimg = pbit_decode_gcr (img);
+		dimg = pri_decode_gcr (img);
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dimg = pbit_decode_mfm (img);
+		dimg = pri_decode_mfm (img);
 	}
 	else {
 		dimg = NULL;
@@ -645,36 +645,36 @@ int pbit_decode (pbit_img_t *img, const char *type, const char *fname)
 
 
 static
-int pbit_delete_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_delete_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
-	pbit_img_del_track (img, c, h);
+	pri_img_del_track (img, c, h);
 
 	return (0);
 }
 
 static
-int pbit_delete_tracks (pbit_img_t *img)
+int pri_delete_tracks (pri_img_t *img)
 {
-	return (pbit_for_all_tracks (img, pbit_delete_track_cb, NULL));
+	return (pri_for_all_tracks (img, pri_delete_track_cb, NULL));
 }
 
 
 static
-int pbit_double_step (pbit_img_t *img, int even)
+int pri_double_step (pri_img_t *img, int even)
 {
-	unsigned   c, cn;
-	pbit_cyl_t *cyl;
+	unsigned  c, cn;
+	pri_cyl_t *cyl;
 
-	cn = pbit_img_get_cyl_cnt (img);
+	cn = pri_img_get_cyl_cnt (img);
 
 	for (c = 0; c < cn; c++) {
-		cyl = pbit_img_rmv_cylinder (img, c);
+		cyl = pri_img_rmv_cylinder (img, c);
 
 		if (((c & 1) && even) || (((c & 1) == 0) && !even)) {
-			pbit_cyl_del (cyl);
+			pri_cyl_del (cyl);
 		}
 		else {
-			pbit_img_set_cylinder (img, cyl, c / 2);
+			pri_img_set_cylinder (img, cyl, c / 2);
 		}
 	}
 
@@ -683,36 +683,36 @@ int pbit_double_step (pbit_img_t *img, int even)
 
 
 static
-int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
+int pri_encode (pri_img_t **img, const char *type, const char *fname)
 {
-	psi_img_t  *simg;
-	pbit_img_t *dimg;
+	psi_img_t *simg;
+	pri_img_t *dimg;
 
 	if ((simg = psi_load (fname, PSI_FORMAT_NONE)) == NULL) {
 		return (1);
 	}
 
 	if (strcmp (type, "gcr") == 0) {
-		dimg = pbit_encode_gcr (simg);
+		dimg = pri_encode_gcr (simg);
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dimg = pbit_encode_mfm_dd_300 (simg);
+		dimg = pri_encode_mfm_dd_300 (simg);
 	}
 	else if (strcmp (type, "mfm-dd-300") == 0) {
-		dimg = pbit_encode_mfm_dd_300 (simg);
+		dimg = pri_encode_mfm_dd_300 (simg);
 	}
 	else if (strcmp (type, "mfm-hd-300") == 0) {
-		dimg = pbit_encode_mfm_hd_300 (simg);
+		dimg = pri_encode_mfm_hd_300 (simg);
 	}
 	else if (strcmp (type, "mfm-hd-360") == 0) {
-		dimg = pbit_encode_mfm_hd_360 (simg);
+		dimg = pri_encode_mfm_hd_360 (simg);
 	}
 	else {
 		dimg = NULL;
 	}
 
 	if ((dimg != NULL) && (simg->comment_size > 0)) {
-		pbit_img_set_comment (dimg, simg->comment, simg->comment_size);
+		pri_img_set_comment (dimg, simg->comment, simg->comment_size);
 	}
 
 	psi_img_del (simg);
@@ -721,7 +721,7 @@ int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
 		return (1);
 	}
 
-	pbit_img_del (*img);
+	pri_img_del (*img);
 
 	*img = dimg;
 
@@ -730,7 +730,7 @@ int pbit_encode (pbit_img_t **img, const char *type, const char *fname)
 
 
 static
-int pbit_list_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_list_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	double rpm;
 
@@ -743,8 +743,8 @@ int pbit_list_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsig
 
 	printf ("%2lu/%lu: CLK: %lu  BITS: %lu  RPM: %.4f\n",
 		c, h,
-		pbit_trk_get_clock (trk),
-		pbit_trk_get_size (trk),
+		pri_trk_get_clock (trk),
+		pri_trk_get_size (trk),
 		rpm
 	);
 
@@ -752,17 +752,17 @@ int pbit_list_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsig
 }
 
 static
-int pbit_list_tracks (pbit_img_t *img)
+int pri_list_tracks (pri_img_t *img)
 {
-	return (pbit_for_all_tracks (img, pbit_list_track_cb, NULL));
+	return (pri_for_all_tracks (img, pri_list_track_cb, NULL));
 }
 
 
 static
-int pbit_new_tracks (pbit_img_t *img, pbit_cyl_t *cyl, unsigned c)
+int pri_new_tracks (pri_img_t *img, pri_cyl_t *cyl, unsigned c)
 {
-	unsigned   h, h0, h1;
-	pbit_trk_t *trk;
+	unsigned  h, h0, h1;
+	pri_trk_t *trk;
 
 	if (par_trk_all) {
 		h0 = 0;
@@ -774,29 +774,29 @@ int pbit_new_tracks (pbit_img_t *img, pbit_cyl_t *cyl, unsigned c)
 	}
 
 	for (h = h0; h < h1; h++) {
-		trk = pbit_img_get_track (img, c, h, 0);
+		trk = pri_img_get_track (img, c, h, 0);
 
 		if (trk != NULL) {
 			continue;
 		}
 
-		trk = pbit_img_get_track (img, c, h, 1);
+		trk = pri_img_get_track (img, c, h, 1);
 
 		if (trk == NULL) {
 			return (1);
 		}
 
-		pbit_trk_set_clock (trk, par_data_rate);
+		pri_trk_set_clock (trk, par_data_rate);
 	}
 
 	return (0);
 }
 
 static
-int pbit_new_cylinders (pbit_img_t *img)
+int pri_new_cylinders (pri_img_t *img)
 {
-	unsigned   c, c0, c1;
-	pbit_cyl_t *cyl;
+	unsigned  c, c0, c1;
+	pri_cyl_t *cyl;
 
 	if (par_cyl_all) {
 		c0 = 0;
@@ -808,13 +808,13 @@ int pbit_new_cylinders (pbit_img_t *img)
 	}
 
 	for (c = c0; c < c1; c++) {
-		cyl = pbit_img_get_cylinder (img, c, 1);
+		cyl = pri_img_get_cylinder (img, c, 1);
 
 		if (cyl == NULL) {
 			return (1);
 		}
 
-		if (pbit_new_tracks (img, cyl, c)) {
+		if (pri_new_tracks (img, cyl, c)) {
 			return (1);
 		}
 	}
@@ -823,9 +823,9 @@ int pbit_new_cylinders (pbit_img_t *img)
 }
 
 static
-int pbit_new (pbit_img_t *img)
+int pri_new (pri_img_t *img)
 {
-	if (pbit_new_cylinders (img)) {
+	if (pri_new_cylinders (img)) {
 		fprintf (stderr, "%s: creating failed\n", arg0);
 	}
 
@@ -834,7 +834,7 @@ int pbit_new (pbit_img_t *img)
 
 
 static
-void pbit_print_range (const char *str1, unsigned long v1, unsigned long v2, const char *str2)
+void pri_print_range (const char *str1, unsigned long v1, unsigned long v2, const char *str2)
 {
 	fputs (str1, stdout);
 
@@ -849,7 +849,7 @@ void pbit_print_range (const char *str1, unsigned long v1, unsigned long v2, con
 }
 
 static
-void pbit_print_range_float (const char *str1, double v1, double v2, const char *str2)
+void pri_print_range_float (const char *str1, double v1, double v2, const char *str2)
 {
 	fputs (str1, stdout);
 
@@ -864,17 +864,17 @@ void pbit_print_range_float (const char *str1, double v1, double v2, const char 
 }
 
 static
-int pbit_print_info (pbit_img_t *img)
+int pri_print_info (pri_img_t *img)
 {
 	unsigned long c, h, cn, hn, tn;
 	unsigned long h1, h2;
 	unsigned long len;
 	unsigned long clk, clk1, clk2;
 	double        rpm, rpm1, rpm2;
-	pbit_cyl_t    *cyl;
-	pbit_trk_t    *trk;
+	pri_cyl_t     *cyl;
+	pri_trk_t     *trk;
 
-	cn = pbit_img_get_cyl_cnt (img);
+	cn = pri_img_get_cyl_cnt (img);
 	tn = 0;
 
 	h1 = 0;
@@ -887,13 +887,13 @@ int pbit_print_info (pbit_img_t *img)
 	rpm2 = 0.0;
 
 	for (c = 0; c < cn; c++) {
-		cyl = pbit_img_get_cylinder (img, c, 0);
+		cyl = pri_img_get_cylinder (img, c, 0);
 
 		if (cyl == NULL) {
 			hn = 0;
 		}
 		else {
-			hn = pbit_cyl_get_trk_cnt (cyl);
+			hn = pri_cyl_get_trk_cnt (cyl);
 		}
 
 		h1 = ((c == 0) || (hn < h1)) ? hn : h1;
@@ -904,15 +904,15 @@ int pbit_print_info (pbit_img_t *img)
 		}
 
 		for (h = 0; h < hn; h++) {
-			trk = pbit_cyl_get_track (cyl, h, 0);
+			trk = pri_cyl_get_track (cyl, h, 0);
 
 			if (trk == NULL) {
 				clk = 0;
 				len = 0;
 			}
 			else {
-				clk = pbit_trk_get_clock (trk);
-				len = pbit_trk_get_size (trk);
+				clk = pri_trk_get_clock (trk);
+				len = pri_trk_get_size (trk);
 			}
 
 			if (len > 0) {
@@ -933,14 +933,14 @@ int pbit_print_info (pbit_img_t *img)
 	}
 
 	printf ("cylinders: %lu\n", cn);
-	pbit_print_range ("heads:     ", h1, h2, "\n");
+	pri_print_range ("heads:     ", h1, h2, "\n");
 	printf ("tracks:    %lu\n", tn);
-	pbit_print_range ("clock:     ", clk1, clk2, "\n");
-	pbit_print_range_float ("rpm:       ", rpm1, rpm2, "\n");
+	pri_print_range ("clock:     ", clk1, clk2, "\n");
+	pri_print_range_float ("rpm:       ", rpm1, rpm2, "\n");
 
 	if (img->comment_size > 0) {
 		fputs ("\n", stdout);
-		pbit_comment_show (img);
+		pri_comment_show (img);
 	}
 
 	return (0);
@@ -948,13 +948,13 @@ int pbit_print_info (pbit_img_t *img)
 
 
 static
-int pbit_rotate_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+int pri_rotate_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	unsigned long *idx;
 
 	idx = opaque;
 
-	if (pbit_trk_rotate (trk, *idx)) {
+	if (pri_trk_rotate (trk, *idx)) {
 		return (1);
 	}
 
@@ -962,57 +962,57 @@ int pbit_rotate_track_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, uns
 }
 
 static
-int pbit_rotate_tracks (pbit_img_t *img, unsigned long idx)
+int pri_rotate_tracks (pri_img_t *img, unsigned long idx)
 {
-	return (pbit_for_all_tracks (img, pbit_rotate_track_cb, &idx));
+	return (pri_for_all_tracks (img, pri_rotate_track_cb, &idx));
 }
 
 
 static
-int pbit_edit_clock_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *p)
+int pri_edit_clock_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *p)
 {
-	pbit_trk_set_clock (trk, *(unsigned long *) p);
+	pri_trk_set_clock (trk, *(unsigned long *) p);
 	return (0);
 }
 
 static
-int pbit_edit_data_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *p)
+int pri_edit_data_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *p)
 {
-	pbit_trk_clear (trk, *(unsigned long *) p);
+	pri_trk_clear (trk, *(unsigned long *) p);
 	return (0);
 }
 
 static
-int pbit_edit_size_cb (pbit_img_t *img, pbit_trk_t *trk, unsigned long c, unsigned long h, void *p)
+int pri_edit_size_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *p)
 {
-	pbit_trk_set_size (trk, *(unsigned long *) p);
+	pri_trk_set_size (trk, *(unsigned long *) p);
 	return (0);
 }
 
 static
-int pbit_edit_tracks (pbit_img_t *img, const char *what, const char *val)
+int pri_edit_tracks (pri_img_t *img, const char *what, const char *val)
 {
 	int           r;
 	unsigned long v;
-	pbit_trk_cb   fct;
+	pri_trk_cb    fct;
 
 	v = strtoul (val, NULL, 0);
 
 	if (strcmp (what, "clock") == 0) {
-		fct = pbit_edit_clock_cb;
+		fct = pri_edit_clock_cb;
 	}
 	else if (strcmp (what, "data") == 0) {
-		fct = pbit_edit_data_cb;
+		fct = pri_edit_data_cb;
 	}
 	else if (strcmp (what, "size") == 0) {
-		fct = pbit_edit_size_cb;
+		fct = pri_edit_size_cb;
 	}
 	else {
 		fprintf (stderr, "%s: unknown field (%s)\n", arg0, what);
 		return (1);
 	}
 
-	r = pbit_for_all_tracks (img, fct, &v);
+	r = pri_for_all_tracks (img, fct, &v);
 
 	if (r) {
 		fprintf (stderr, "%s: editing failed (%s = %lu)\n",
@@ -1025,13 +1025,13 @@ int pbit_edit_tracks (pbit_img_t *img, const char *what, const char *val)
 
 
 static
-int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
+int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 {
 	int  r;
 	char **optarg1, **optarg2;
 
 	if (*img == NULL) {
-		*img = pbit_img_new();
+		*img = pri_img_new();
 
 		if (*img == NULL) {
 			return (1);
@@ -1041,38 +1041,38 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 	r = 1;
 
 	if (strcmp (op, "auto-align-gcr") == 0) {
-		r = pbit_align_gcr_tracks (*img);
+		r = pri_align_gcr_tracks (*img);
 	}
 	else if (strcmp (op, "comment-add") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
 			return (1);
 		}
 
-		r = pbit_comment_add (*img, optarg1[0]);
+		r = pri_comment_add (*img, optarg1[0]);
 	}
 	else if (strcmp (op, "comment-load") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
 			return (1);
 		}
 
-		r = pbit_comment_load (*img, optarg1[0]);
+		r = pri_comment_load (*img, optarg1[0]);
 	}
 	else if (strcmp (op, "comment-print") == 0) {
-		r = pbit_comment_show (*img);
+		r = pri_comment_show (*img);
 	}
 	else if (strcmp (op, "comment-save") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
 			return (1);
 		}
 
-		r = pbit_comment_save (*img, optarg1[0]);
+		r = pri_comment_save (*img, optarg1[0]);
 	}
 	else if (strcmp (op, "comment-set") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
 			return (1);
 		}
 
-		r = pbit_comment_set (*img, optarg1[0]);
+		r = pri_comment_set (*img, optarg1[0]);
 	}
 	else if (strcmp (op, "decode") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
@@ -1085,19 +1085,19 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 			return (1);
 		}
 
-		r = pbit_decode (*img, optarg1[0], optarg2[0]);
+		r = pri_decode (*img, optarg1[0], optarg2[0]);
 	}
 	else if (strcmp (op, "delete") == 0) {
-		r = pbit_delete_tracks (*img);
+		r = pri_delete_tracks (*img);
 	}
 	else if (strcmp (op, "double-step") == 0) {
-		r = pbit_double_step (*img, 1);
+		r = pri_double_step (*img, 1);
 	}
 	else if (strcmp (op, "double-step-even") == 0) {
-		r = pbit_double_step (*img, 0);
+		r = pri_double_step (*img, 0);
 	}
 	else if (strcmp (op, "double-step-odd") == 0) {
-		r = pbit_double_step (*img, 1);
+		r = pri_double_step (*img, 1);
 	}
 	else if (strcmp (op, "encode") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
@@ -1110,13 +1110,13 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 			return (1);
 		}
 
-		r = pbit_encode (img, optarg1[0], optarg2[0]);
+		r = pri_encode (img, optarg1[0], optarg2[0]);
 	}
 	else if (strcmp (op, "info") == 0) {
-		r = pbit_print_info (*img);
+		r = pri_print_info (*img);
 	}
 	else if (strcmp (op, "new") == 0) {
-		r = pbit_new (*img);
+		r = pri_new (*img);
 	}
 	else if (strcmp (op, "rotate") == 0) {
 		unsigned long idx;
@@ -1128,7 +1128,7 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 
 		idx = strtoul (optarg1[0], NULL, 0);
 
-		r = pbit_rotate_tracks (*img, idx);
+		r = pri_rotate_tracks (*img, idx);
 	}
 	else if (strcmp (op, "save") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
@@ -1136,7 +1136,7 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 			return (1);
 		}
 
-		r = pbit_decode_raw (*img, optarg1[0]);
+		r = pri_decode_raw (*img, optarg1[0]);
 	}
 	else {
 		fprintf (stderr, "%s: unknown operation (%s)\n", arg0, op);
@@ -1152,15 +1152,15 @@ int pbit_operation (pbit_img_t **img, const char *op, int argc, char **argv)
 
 
 static
-pbit_img_t *pbit_load_image (const char *fname)
+pri_img_t *pri_load_image (const char *fname)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
 	if (par_verbose) {
 		fprintf (stderr, "%s: loading image from %s\n", arg0, fname);
 	}
 
-	img = pbit_img_load (fname, par_fmt_inp);
+	img = pri_img_load (fname, par_fmt_inp);
 
 	if (img == NULL) {
 		fprintf (stderr, "%s: loading failed (%s)\n", arg0, fname);
@@ -1169,29 +1169,29 @@ pbit_img_t *pbit_load_image (const char *fname)
 
 	if (par_list) {
 		par_list = 0;
-		pbit_list_tracks (img);
+		pri_list_tracks (img);
 	}
 
 	if (par_print_info) {
 		par_print_info = 0;
-		pbit_print_info (img);
+		pri_print_info (img);
 	}
 
 	return (img);
 }
 
 static
-int pbit_set_format (const char *name, unsigned *val)
+int pri_set_format (const char *name, unsigned *val)
 {
 	if (strcmp (name, "pbit") == 0) {
-		*val = PBIT_FORMAT_PBIT;
+		*val = PRI_FORMAT_PBIT;
 	}
 	else if (strcmp (name, "tc") == 0) {
-		*val = PBIT_FORMAT_TC;
+		*val = PRI_FORMAT_TC;
 	}
 	else {
 		fprintf (stderr, "%s: unknown format (%s)\n", arg0, name);
-		*val = PBIT_FORMAT_NONE;
+		*val = PRI_FORMAT_NONE;
 		return (1);
 	}
 
@@ -1202,7 +1202,7 @@ int main (int argc, char **argv)
 {
 	int        r;
 	char       **optarg;
-	pbit_img_t *img;
+	pri_img_t *img;
 	const char *out;
 
 	arg0 = argv[0];
@@ -1231,14 +1231,14 @@ int main (int argc, char **argv)
 			return (0);
 
 		case 'c':
-			if (pbit_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
+			if (pri_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
 				return (1);
 			}
 			break;
 
 		case 'e':
 			if (img != NULL) {
-				if (pbit_edit_tracks (img, optarg[0], optarg[1])) {
+				if (pri_edit_tracks (img, optarg[0], optarg[1])) {
 					return (1);
 				}
 			}
@@ -1246,7 +1246,7 @@ int main (int argc, char **argv)
 
 		case 'f':
 			if (img != NULL) {
-				pbit_print_info (img);
+				pri_print_info (img);
 			}
 			else {
 				par_print_info = 1;
@@ -1254,17 +1254,17 @@ int main (int argc, char **argv)
 			break;
 
 		case 'h':
-			if (pbit_parse_range (optarg[0], &par_trk[0], &par_trk[1], &par_trk_all)) {
+			if (pri_parse_range (optarg[0], &par_trk[0], &par_trk[1], &par_trk_all)) {
 				return (1);
 			}
 			break;
 
 		case 'i':
 			if (img != NULL) {
-				pbit_img_del (img);
+				pri_img_del (img);
 			}
 
-			img = pbit_load_image (optarg[0]);
+			img = pri_load_image (optarg[0]);
 
 			if (img == NULL) {
 				return (1);
@@ -1272,14 +1272,14 @@ int main (int argc, char **argv)
 			break;
 
 		case 'I':
-			if (pbit_set_format (optarg[0], &par_fmt_inp)) {
+			if (pri_set_format (optarg[0], &par_fmt_inp)) {
 				return (1);
 			}
 			break;
 
 		case 'l':
 			if (img != NULL) {
-				pbit_list_tracks (img);
+				pri_list_tracks (img);
 			}
 			else {
 				par_list = 1;
@@ -1291,13 +1291,13 @@ int main (int argc, char **argv)
 			break;
 
 		case 'O':
-			if (pbit_set_format (optarg[0], &par_fmt_out)) {
+			if (pri_set_format (optarg[0], &par_fmt_out)) {
 				return (1);
 			}
 			break;
 
 		case 'p':
-			if (pbit_operation (&img, optarg[0], argc, argv)) {
+			if (pri_operation (&img, optarg[0], argc, argv)) {
 				return (1);
 			}
 			break;
@@ -1311,10 +1311,10 @@ int main (int argc, char **argv)
 			break;
 
 		case 't':
-			if (pbit_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
+			if (pri_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
 				return (1);
 			}
-			if (pbit_parse_range (optarg[1], &par_trk[0], &par_trk[1], &par_trk_all)) {
+			if (pri_parse_range (optarg[1], &par_trk[0], &par_trk[1], &par_trk_all)) {
 				return (1);
 			}
 			break;
@@ -1325,7 +1325,7 @@ int main (int argc, char **argv)
 
 		case 0:
 			if (img == NULL) {
-				img = pbit_load_image (optarg[0]);
+				img = pri_load_image (optarg[0]);
 
 				if (img == NULL) {
 					return (1);
@@ -1350,7 +1350,7 @@ int main (int argc, char **argv)
 
 	if (out != NULL) {
 		if (img == NULL) {
-			img = pbit_img_new();
+			img = pri_img_new();
 		}
 
 		if (img == NULL) {
@@ -1361,7 +1361,7 @@ int main (int argc, char **argv)
 			fprintf (stderr, "%s: save image to %s\n", arg0, out);
 		}
 
-		r = pbit_img_save (out, img, par_fmt_out);
+		r = pri_img_save (out, img, par_fmt_out);
 
 		if (r) {
 			fprintf (stderr, "%s: saving failed (%s)\n",

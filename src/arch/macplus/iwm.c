@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm.c                                       *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,7 +115,7 @@ void iwm_drv_free (mac_iwm_drive_t *drv)
 		iwm_drv_save (drv);
 	}
 
-	pbit_img_del (drv->img);
+	pri_img_del (drv->img);
 }
 
 /*
@@ -147,7 +147,7 @@ void iwm_drv_write_end (mac_iwm_drive_t *drv)
 {
 	if (drv->write_cnt > drv->cur_track_len) {
 		if (drv->auto_rotate) {
-			pbit_trk_rotate (drv->cur_track, drv->cur_track_pos);
+			pri_trk_rotate (drv->cur_track, drv->cur_track_pos);
 			drv->cur_track_pos = 0;
 		}
 	}
@@ -158,30 +158,30 @@ void iwm_drv_write_end (mac_iwm_drive_t *drv)
 static
 void iwm_drv_select_track (mac_iwm_drive_t *drv, unsigned c, unsigned h)
 {
-	pbit_trk_t *trk;
+	pri_trk_t *trk;
 
 	if ((c >= drv->cylinders) || (h >= drv->heads)) {
 		return;
 	}
 
 	if (drv->img == NULL) {
-		drv->img = pbit_img_new();
+		drv->img = pri_img_new();
 	}
 
-	trk = pbit_img_get_track (drv->img, c, h, 1);
+	trk = pri_img_get_track (drv->img, c, h, 1);
 
 	if (trk == NULL) {
 		return;
 	}
 
 	if (trk->size == 0) {
-		if (pbit_trk_set_size (trk, iwm_drv_get_track_length (c))) {
+		if (pri_trk_set_size (trk, iwm_drv_get_track_length (c))) {
 			return;
 		}
 	}
 
 	if (trk->clock == 0) {
-		pbit_trk_set_clock (trk, 500000);
+		pri_trk_set_clock (trk, 500000);
 	}
 
 	drv->cur_cyl = c;

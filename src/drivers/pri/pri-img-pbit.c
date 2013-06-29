@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/pbit-io-pbit.c                              *
+ * File name:   src/drivers/pri/pri-img-pri.c                                *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,9 +24,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pbit.h"
-#include "pbit-io.h"
-#include "pbit-io-pbit.h"
+#include "pri.h"
+#include "pri-img.h"
+#include "pri-img-pbit.h"
 
 
 #define PBIT_CHUNK_PBIT 0x50424954
@@ -87,7 +87,7 @@ int pbit_skip_chunk (FILE *fp, unsigned long size, unsigned long crc)
 	while (size > 0) {
 		cnt = (size < 256) ? size : 256;
 
-		if (pbit_read (fp, buf, cnt)) {
+		if (pri_read (fp, buf, cnt)) {
 			return (1);
 		}
 
@@ -96,12 +96,12 @@ int pbit_skip_chunk (FILE *fp, unsigned long size, unsigned long crc)
 		size -= cnt;
 	}
 
-	if (pbit_read (fp, buf, 4)) {
+	if (pri_read (fp, buf, 4)) {
 		return (1);
 	}
 
-	if (pbit_get_uint32_be (buf, 0) != crc) {
-		fprintf (stderr, "pbit: crc error\n");
+	if (pri_get_uint32_be (buf, 0) != crc) {
+		fprintf (stderr, "pri: crc error\n");
 		return (1);
 	}
 
@@ -109,7 +109,7 @@ int pbit_skip_chunk (FILE *fp, unsigned long size, unsigned long crc)
 }
 
 static
-int pbit_load_header (FILE *fp, pbit_img_t *img, unsigned long size, unsigned long crc)
+int pbit_load_header (FILE *fp, pri_img_t *img, unsigned long size, unsigned long crc)
 {
 	unsigned char buf[8];
 	unsigned long vers;
@@ -118,16 +118,16 @@ int pbit_load_header (FILE *fp, pbit_img_t *img, unsigned long size, unsigned lo
 		return (1);
 	}
 
-	if (pbit_read (fp, buf, 8)) {
+	if (pri_read (fp, buf, 8)) {
 		return (1);
 	}
 
 	crc = pbit_crc (crc, buf, 8);
 
-	vers = pbit_get_uint32_be (buf, 0);
+	vers = pri_get_uint32_be (buf, 0);
 
 	if (vers != 0) {
-		fprintf (stderr, "pbit: unknown version number (%lu)\n", vers);
+		fprintf (stderr, "pri: unknown version number (%lu)\n", vers);
 		return (1);
 	}
 
@@ -139,7 +139,7 @@ int pbit_load_header (FILE *fp, pbit_img_t *img, unsigned long size, unsigned lo
 }
 
 static
-int pbit_load_comment (FILE *fp, pbit_img_t *img, unsigned size, unsigned long crc)
+int pbit_load_comment (FILE *fp, pri_img_t *img, unsigned size, unsigned long crc)
 {
 	unsigned      i, j, k, d;
 	unsigned char *buf;
@@ -154,7 +154,7 @@ int pbit_load_comment (FILE *fp, pbit_img_t *img, unsigned size, unsigned long c
 		return (1);
 	}
 
-	if (pbit_read (fp, buf, size)) {
+	if (pri_read (fp, buf, size)) {
 		free (buf);
 		return (1);
 	}
@@ -218,12 +218,12 @@ int pbit_load_comment (FILE *fp, pbit_img_t *img, unsigned size, unsigned long c
 
 		c = 0x0a;
 
-		if (pbit_img_add_comment (img, &c, 1)) {
+		if (pri_img_add_comment (img, &c, 1)) {
 			return (1);
 		}
 	}
 
-	if (pbit_img_add_comment (img, buf + i, j - i)) {
+	if (pri_img_add_comment (img, buf + i, j - i)) {
 		free (buf);
 		return (1);
 	}
@@ -238,17 +238,17 @@ int pbit_load_comment (FILE *fp, pbit_img_t *img, unsigned size, unsigned long c
 }
 
 static
-pbit_trk_t *pbit_load_track_header (FILE *fp, pbit_img_t *img, unsigned long size, unsigned long crc)
+pri_trk_t *pbit_load_track_header (FILE *fp, pri_img_t *img, unsigned long size, unsigned long crc)
 {
 	unsigned char buf[20];
 	unsigned long c, h, n, clock;
-	pbit_trk_t    *trk;
+	pri_trk_t     *trk;
 
 	if (size < 20) {
 		return (NULL);
 	}
 
-	if (pbit_read (fp, buf, 20)) {
+	if (pri_read (fp, buf, 20)) {
 		return (NULL);
 	}
 
@@ -256,23 +256,22 @@ pbit_trk_t *pbit_load_track_header (FILE *fp, pbit_img_t *img, unsigned long siz
 
 	size -= 20;
 
-	c = pbit_get_uint32_be (buf, 0);
-	h = pbit_get_uint32_be (buf, 4);
-	n = pbit_get_uint32_be (buf, 8);
-	clock = pbit_get_uint32_be (buf, 12);
-	//flags = pbit_get_uint32_be (buf, 16);
+	c = pri_get_uint32_be (buf, 0);
+	h = pri_get_uint32_be (buf, 4);
+	n = pri_get_uint32_be (buf, 8);
+	clock = pri_get_uint32_be (buf, 12);
 
-	trk = pbit_img_get_track (img, c, h, 1);
+	trk = pri_img_get_track (img, c, h, 1);
 
 	if (trk == NULL) {
 		return (NULL);
 	}
 
-	if (pbit_trk_set_size (trk, n)) {
+	if (pri_trk_set_size (trk, n)) {
 		return (NULL);
 	}
 
-	pbit_trk_set_clock (trk, clock);
+	pri_trk_set_clock (trk, clock);
 
 	if (pbit_skip_chunk (fp, size, crc)) {
 		return (NULL);
@@ -282,7 +281,7 @@ pbit_trk_t *pbit_load_track_header (FILE *fp, pbit_img_t *img, unsigned long siz
 }
 
 static
-int pbit_load_track_data (FILE *fp, pbit_img_t *img, pbit_trk_t *trk, unsigned long size, unsigned long crc)
+int pbit_load_track_data (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size, unsigned long crc)
 {
 	unsigned long cnt;
 
@@ -292,7 +291,7 @@ int pbit_load_track_data (FILE *fp, pbit_img_t *img, pbit_trk_t *trk, unsigned l
 		cnt = size;
 	}
 
-	if (pbit_read (fp, trk->data, cnt)) {
+	if (pri_read (fp, trk->data, cnt)) {
 		return (1);
 	}
 
@@ -306,28 +305,28 @@ int pbit_load_track_data (FILE *fp, pbit_img_t *img, pbit_trk_t *trk, unsigned l
 }
 
 static
-int pbit_load_image (FILE *fp, pbit_img_t *img)
+int pbit_load_image (FILE *fp, pri_img_t *img)
 {
 	unsigned long type, size;
 	unsigned long crc;
-	pbit_trk_t    *trk;
+	pri_trk_t     *trk;
 	unsigned char buf[8];
 
-	if (pbit_read (fp, buf, 4)) {
+	if (pri_read (fp, buf, 4)) {
 		return (0);
 	}
 
-	type = pbit_get_uint32_be (buf, 0);
+	type = pri_get_uint32_be (buf, 0);
 
 	if (type != PBIT_CHUNK_PBIT) {
 		return (1);
 	}
 
-	if (pbit_read (fp, buf + 4, 4)) {
+	if (pri_read (fp, buf + 4, 4)) {
 		return (1);
 	}
 
-	size = pbit_get_uint32_be (buf, 4);
+	size = pri_get_uint32_be (buf, 4);
 
 	crc = pbit_crc (0, buf, 8);
 
@@ -338,12 +337,12 @@ int pbit_load_image (FILE *fp, pbit_img_t *img)
 	trk = NULL;
 
 	while (1) {
-		if (pbit_read (fp, buf, 8)) {
+		if (pri_read (fp, buf, 8)) {
 			return (1);
 		}
 
-		type = pbit_get_uint32_be (buf, 0);
-		size = pbit_get_uint32_be (buf, 4);
+		type = pri_get_uint32_be (buf, 0);
+		size = pri_get_uint32_be (buf, 4);
 
 		crc = pbit_crc (0, buf, 8);
 
@@ -385,18 +384,18 @@ int pbit_load_image (FILE *fp, pbit_img_t *img)
 	return (1);
 }
 
-pbit_img_t *pbit_load_pbit (FILE *fp)
+pri_img_t *pri_load_pbit (FILE *fp)
 {
-	pbit_img_t *img;
+	pri_img_t *img;
 
-	img = pbit_img_new();
+	img = pri_img_new();
 
 	if (img == NULL) {
 		return (NULL);
 	}
 
 	if (pbit_load_image (fp, img)) {
-		pbit_img_del (img);
+		pri_img_del (img);
 		return (NULL);
 	}
 
@@ -405,17 +404,17 @@ pbit_img_t *pbit_load_pbit (FILE *fp)
 
 
 static
-int pbit_save_header (FILE *fp, const pbit_img_t *img)
+int pbit_save_header (FILE *fp, const pri_img_t *img)
 {
 	unsigned char buf[32];
 
-	pbit_set_uint32_be (buf, 0, PBIT_CHUNK_PBIT);
-	pbit_set_uint32_be (buf, 4, 8);
-	pbit_set_uint32_be (buf, 8, 0);
-	pbit_set_uint32_be (buf, 12, 0);
-	pbit_set_uint32_be (buf, 16, pbit_crc (0, buf, 16));
+	pri_set_uint32_be (buf, 0, PBIT_CHUNK_PBIT);
+	pri_set_uint32_be (buf, 4, 8);
+	pri_set_uint32_be (buf, 8, 0);
+	pri_set_uint32_be (buf, 12, 0);
+	pri_set_uint32_be (buf, 16, pbit_crc (0, buf, 16));
 
-	if (pbit_write (fp, buf, 20)) {
+	if (pri_write (fp, buf, 20)) {
 		return (1);
 	}
 
@@ -423,15 +422,15 @@ int pbit_save_header (FILE *fp, const pbit_img_t *img)
 }
 
 static
-int pbit_save_end (FILE *fp, const pbit_img_t *img)
+int pbit_save_end (FILE *fp, const pri_img_t *img)
 {
 	unsigned char buf[16];
 
-	pbit_set_uint32_be (buf, 0, PBIT_CHUNK_END);
-	pbit_set_uint32_be (buf, 4, 0);
-	pbit_set_uint32_be (buf, 8, pbit_crc (0, buf, 8));
+	pri_set_uint32_be (buf, 0, PBIT_CHUNK_END);
+	pri_set_uint32_be (buf, 4, 0);
+	pri_set_uint32_be (buf, 8, pbit_crc (0, buf, 8));
 
-	if (pbit_write (fp, buf, 12)) {
+	if (pri_write (fp, buf, 12)) {
 		return (1);
 	}
 
@@ -439,7 +438,7 @@ int pbit_save_end (FILE *fp, const pbit_img_t *img)
 }
 
 static
-int pbit_save_comment (FILE *fp, const pbit_img_t *img)
+int pbit_save_comment (FILE *fp, const pri_img_t *img)
 {
 	unsigned long       i, j;
 	unsigned long       crc;
@@ -508,24 +507,24 @@ int pbit_save_comment (FILE *fp, const pbit_img_t *img)
 
 	buf[j++] = 0x0a;
 
-	pbit_set_uint32_be (hdr, 0, PBIT_CHUNK_TEXT);
-	pbit_set_uint32_be (hdr, 4, j);
+	pri_set_uint32_be (hdr, 0, PBIT_CHUNK_TEXT);
+	pri_set_uint32_be (hdr, 4, j);
 
 	crc = pbit_crc (0, hdr, 8);
 
-	if (pbit_write (fp, hdr, 8)) {
+	if (pri_write (fp, hdr, 8)) {
 		return (1);
 	}
 
 	crc = pbit_crc (crc, buf, j);
 
-	if (pbit_write (fp, buf, j)) {
+	if (pri_write (fp, buf, j)) {
 		return (1);
 	}
 
-	pbit_set_uint32_be (hdr, 0, crc);
+	pri_set_uint32_be (hdr, 0, crc);
 
-	if (pbit_write (fp, hdr, 4)) {
+	if (pri_write (fp, hdr, 4)) {
 		return (1);
 	}
 
@@ -533,22 +532,22 @@ int pbit_save_comment (FILE *fp, const pbit_img_t *img)
 }
 
 static
-int pbit_save_track (FILE *fp, const pbit_trk_t *trk, unsigned long c, unsigned long h)
+int pbit_save_track (FILE *fp, const pri_trk_t *trk, unsigned long c, unsigned long h)
 {
 	unsigned long cnt;
 	unsigned char buf[32];
 	unsigned long crc;
 
-	pbit_set_uint32_be (buf, 0, PBIT_CHUNK_TRAK);
-	pbit_set_uint32_be (buf, 4, 20);
-	pbit_set_uint32_be (buf, 8, c);
-	pbit_set_uint32_be (buf, 12, h);
-	pbit_set_uint32_be (buf, 16, trk->size);
-	pbit_set_uint32_be (buf, 20, trk->clock);
-	pbit_set_uint32_be (buf, 24, 0);
-	pbit_set_uint32_be (buf, 28, pbit_crc (0, buf, 28));
+	pri_set_uint32_be (buf, 0, PBIT_CHUNK_TRAK);
+	pri_set_uint32_be (buf, 4, 20);
+	pri_set_uint32_be (buf, 8, c);
+	pri_set_uint32_be (buf, 12, h);
+	pri_set_uint32_be (buf, 16, trk->size);
+	pri_set_uint32_be (buf, 20, trk->clock);
+	pri_set_uint32_be (buf, 24, 0);
+	pri_set_uint32_be (buf, 28, pbit_crc (0, buf, 28));
 
-	if (pbit_write (fp, buf, 32)) {
+	if (pri_write (fp, buf, 32)) {
 		return (1);
 	}
 
@@ -558,35 +557,35 @@ int pbit_save_track (FILE *fp, const pbit_trk_t *trk, unsigned long c, unsigned 
 
 	cnt = (trk->size + 7) / 8;
 
-	pbit_set_uint32_be (buf, 0, PBIT_CHUNK_DATA);
-	pbit_set_uint32_be (buf, 4, cnt);
+	pri_set_uint32_be (buf, 0, PBIT_CHUNK_DATA);
+	pri_set_uint32_be (buf, 4, cnt);
 
 	crc = pbit_crc (0, buf, 8);
 
-	if (pbit_write (fp, buf, 8)) {
+	if (pri_write (fp, buf, 8)) {
 		return (1);
 	}
 
 	crc = pbit_crc (crc, trk->data, cnt);
 
-	if (pbit_write (fp, trk->data, cnt)) {
+	if (pri_write (fp, trk->data, cnt)) {
 		return (1);
 	}
 
-	pbit_set_uint32_be (buf, 0, crc);
+	pri_set_uint32_be (buf, 0, crc);
 
-	if (pbit_write (fp, buf, 4)) {
+	if (pri_write (fp, buf, 4)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int pbit_save_pbit (FILE *fp, const pbit_img_t *img)
+int pri_save_pbit (FILE *fp, const pri_img_t *img)
 {
 	unsigned long c, h;
-	pbit_cyl_t    *cyl;
-	pbit_trk_t    *trk;
+	pri_cyl_t     *cyl;
+	pri_trk_t     *trk;
 
 	if (pbit_save_header (fp, img)) {
 		return (1);
@@ -624,22 +623,22 @@ int pbit_save_pbit (FILE *fp, const pbit_img_t *img)
 }
 
 
-int pbit_probe_pbit_fp (FILE *fp)
+int pri_probe_pbit_fp (FILE *fp)
 {
 	unsigned char buf[4];
 
-	if (pbit_read (fp, buf, 4)) {
+	if (pri_read (fp, buf, 4)) {
 		return (0);
 	}
 
-	if (pbit_get_uint32_be (buf, 0) != PBIT_CHUNK_PBIT) {
+	if (pri_get_uint32_be (buf, 0) != PBIT_CHUNK_PBIT) {
 		return (0);
 	}
 
 	return (1);
 }
 
-int pbit_probe_pbit (const char *fname)
+int pri_probe_pbit (const char *fname)
 {
 	int  r;
 	FILE *fp;
@@ -650,7 +649,7 @@ int pbit_probe_pbit (const char *fname)
 		return (0);
 	}
 
-	r = pbit_probe_pbit_fp (fp);
+	r = pri_probe_pbit_fp (fp);
 
 	fclose (fp);
 

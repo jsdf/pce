@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pbit/mfm-ibm.h                                   *
+ * File name:   src/drivers/pri/gcr-mac.h                                    *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -20,31 +20,20 @@
  *****************************************************************************/
 
 
-#ifndef PCE_PBIT_MFM_IBM_H
-#define PCE_PBIT_MFM_IBM_H 1
+#ifndef PCE_PRI_GCR_MAC_H
+#define PCE_PRI_GCR_MAC_H 1
 
 
-#include <drivers/pbit/pbit.h>
+#include <drivers/pri/pri.h>
 #include <drivers/psi/psi.h>
 
 
-typedef struct {
-	unsigned long clock;
-	unsigned long track_size;
-	unsigned      gap3;
-} pbit_encode_mfm_t;
+psi_trk_t *pri_decode_gcr_trk (pri_trk_t *trk, unsigned h);
+psi_img_t *pri_decode_gcr (pri_img_t *img);
 
-
-psi_trk_t *pbit_decode_mfm_trk (pbit_trk_t *trk, unsigned h);
-psi_img_t *pbit_decode_mfm (pbit_img_t *img);
-
-int pbit_encode_mfm_trk (pbit_trk_t *dtrk, psi_trk_t *strk, pbit_encode_mfm_t *par);
-int pbit_encode_mfm_img (pbit_img_t *dimg, psi_img_t *simg, pbit_encode_mfm_t *par);
-pbit_img_t *pbit_encode_mfm (psi_img_t *img, pbit_encode_mfm_t *par);
-
-pbit_img_t *pbit_encode_mfm_dd_300 (psi_img_t *img);
-pbit_img_t *pbit_encode_mfm_hd_300 (psi_img_t *img);
-pbit_img_t *pbit_encode_mfm_hd_360 (psi_img_t *img);
+int pri_encode_gcr_trk (pri_trk_t *dtrk, psi_trk_t *strk, unsigned fmt);
+int pri_encode_gcr_img (pri_img_t *dimg, psi_img_t *simg);
+pri_img_t *pri_encode_gcr (psi_img_t *img);
 
 
 #endif

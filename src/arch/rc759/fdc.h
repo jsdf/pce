@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/fdc.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,7 +28,7 @@
 
 #include <drivers/block/block.h>
 
-#include <drivers/pbit/pbit.h>
+#include <drivers/pri/pri.h>
 
 
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct {
 
 	unsigned short diskid[2];
 
-	pbit_img_t     *img[2];
+	pri_img_t      *img[2];
 
 	char           modified[2];
 } rc759_fdc_t;
