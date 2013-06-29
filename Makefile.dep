@@ -1789,6 +1789,11 @@ src/drivers/pri/pri-img-pbit.o: src/drivers/pri/pri-img-pbit.c \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h
 
+src/drivers/pri/pri-img-pri.o: src/drivers/pri/pri-img-pri.c \
+	src/drivers/pri/pri-img-pri.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h
+
 src/drivers/pri/pri-img-tc.o: src/drivers/pri/pri-img-tc.c \
 	src/drivers/pri/pri-img-tc.h \
 	src/drivers/pri/pri-img.h \
@@ -1796,6 +1801,7 @@ src/drivers/pri/pri-img-tc.o: src/drivers/pri/pri-img-tc.c \
 
 src/drivers/pri/pri-img.o: src/drivers/pri/pri-img.c \
 	src/drivers/pri/pri-img-pbit.h \
+	src/drivers/pri/pri-img-pri.h \
 	src/drivers/pri/pri-img-tc.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h

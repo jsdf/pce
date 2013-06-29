@@ -26,6 +26,7 @@
 
 #include "pri-img.h"
 #include "pri-img-pbit.h"
+#include "pri-img-pri.h"
 #include "pri-img-tc.h"
 
 
@@ -204,11 +205,14 @@ unsigned pri_get_type (unsigned type, const char *fname)
 	if (strcasecmp (ext, ".pbit") == 0) {
 		return (PRI_FORMAT_PBIT);
 	}
+	else if (strcasecmp (ext, ".pri") == 0) {
+		return (PRI_FORMAT_PRI);
+	}
 	else if (strcasecmp (ext, ".tc") == 0) {
 		return (PRI_FORMAT_TC);
 	}
 
-	return (PRI_FORMAT_PBIT);
+	return (PRI_FORMAT_PRI);
 }
 
 
@@ -221,6 +225,10 @@ pri_img_t *pri_img_load_fp (FILE *fp, unsigned type)
 	switch (type) {
 	case PRI_FORMAT_PBIT:
 		img = pri_load_pbit (fp);
+		break;
+
+	case PRI_FORMAT_PRI:
+		img = pri_load_pri (fp);
 		break;
 
 	case PRI_FORMAT_TC:
@@ -254,6 +262,9 @@ int pri_img_save_fp (FILE *fp, const pri_img_t *img, unsigned type)
 	switch (type) {
 	case PRI_FORMAT_PBIT:
 		return (pri_save_pbit (fp, img));
+
+	case PRI_FORMAT_PRI:
+		return (pri_save_pri (fp, img));
 
 	case PRI_FORMAT_TC:
 		return (pri_save_tc (fp, img));

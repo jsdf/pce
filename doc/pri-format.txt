@@ -1,0 +1,110 @@
+PRI File Format (2013-06-29)
+========================================================================
+
+File structure
+------------------------------------------------------------------------
+
+<file header chunk>
+<chunk 0>
+<chunk 1>
+...
+<chunk n>
+<end chunk>
+
+All integers are in big-endian format.
+
+
+Chunk format
+------------------------------------------------------------------------
+
+offset	size	description
+
+0	4	Chunk ID
+4	4	Chunk size (n)
+0	n	Chunk data
+n	4	Chunk CRC
+
+	- The size does not include the chunk ID, chunk size or chunk CRC
+	  fields.
+
+	- The chunk CRC covers the chunk ID, chunk size and chunk data.
+
+
+CHUNK "PRI ": File header chunk
+------------------------------------------------------------------------
+
+0	4	Magic ('PRI ')
+4	4	Size (4)
+0	2	Version (0)
+2	2	Reserved
+4	4	CRC
+
+
+CHUNK "END ": End chunk
+------------------------------------------------------------------------
+
+0	4	Magic ('END ')
+4	4	Size (0)
+0	4	CRC (0x3d64af78)
+
+
+CHUNK "TEXT": Comments
+------------------------------------------------------------------------
+
+0	4	Magic ('TEXT')
+4	4	Size (n)
+0	n	Data
+n	4	CRC
+
+	- Comments should be UTF-8, with lines separated by LF (0x0a).
+
+
+CHUNK "TRAK": Track header
+------------------------------------------------------------------------
+
+0	4	Magic ('TRAK')
+4	4	Size (16)
+0	4	Cylinder
+4	4	Head
+8	4	Track length in bits
+12	4	Bit clock rate
+16	4	CRC
+
+
+CHUNK "DATA": Track data
+------------------------------------------------------------------------
+
+0	4	Magic ('DATA')
+4	4	Size (n)
+0	n	Track data
+n	4	CRC
+
+
+CRC
+---
+
+	- The algorithm used is big-endian CRC-32 with generator
+	  polynomial 0x1edc6f41. The CRC value is initialized to 0.
+
+	unsigned long pflux_crc (const unsigned char *buf, unsigned cnt)
+	{
+		unsigned      i, j;
+		unsigned long crc;
+
+		crc = 0;
+
+		for (i = 0; i < cnt; i++) {
+			crc ^= (unsigned long) (buf[i] & 0xff) << 24;
+
+			for (j = 0; j < 8; j++) {
+				if (crc & 0x80000000) {
+					crc = (crc << 1) ^ 0x1edc6f41;
+				}
+				else {
+					crc = crc << 1;
+				}
+			}
+		}
+
+		return (crc & 0xffffffff);
+	}

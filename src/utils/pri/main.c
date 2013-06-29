@@ -1186,6 +1186,9 @@ int pri_set_format (const char *name, unsigned *val)
 	if (strcmp (name, "pbit") == 0) {
 		*val = PRI_FORMAT_PBIT;
 	}
+	else if (strcmp (name, "pri") == 0) {
+		*val = PRI_FORMAT_PRI;
+	}
 	else if (strcmp (name, "tc") == 0) {
 		*val = PRI_FORMAT_TC;
 	}
