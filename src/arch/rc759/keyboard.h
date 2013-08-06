@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/keyboard.h                                    *
  * Created:     2012-07-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +39,10 @@ typedef struct {
 	unsigned      key_j;
 	unsigned char key_buf[RC759_KBD_BUF];
 
+	int           mouse_dx;
+	int           mouse_dy;
+	unsigned      mouse_but[2];
+
 	void          *irq_ext;
 	void          (*irq) (void *ext, unsigned char val);
 } rc759_kbd_t;
@@ -51,6 +55,8 @@ void rc759_kbd_set_irq_fct (rc759_kbd_t *kbd, void *ext, void *fct);
 void rc759_kbd_reset (rc759_kbd_t *kbd);
 
 void rc759_kbd_set_enable (rc759_kbd_t *kbd, unsigned char val);
+
+void rc759_kbd_set_mouse (rc759_kbd_t *kbd, int dx, int dy, unsigned but);
 
 void rc759_kbd_set_key (rc759_kbd_t *kbd, unsigned event, unsigned key);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/keyboard.c                                    *
  * Created:     2012-07-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -172,6 +172,11 @@ void rc759_kbd_init (rc759_kbd_t *kbd)
 	kbd->key_i = 0;
 	kbd->key_j = 0;
 
+	kbd->mouse_dx = 0;
+	kbd->mouse_dy = 0;
+	kbd->mouse_but[0] = 0;
+	kbd->mouse_but[1] = 0;
+
 	kbd->irq_ext = NULL;
 	kbd->irq = NULL;
 }
@@ -222,6 +227,10 @@ void rc759_kbd_reset (rc759_kbd_t *kbd)
 	kbd->key_buf[0] = 0xff;
 	kbd->key_buf[1] = 0xe4;
 
+	kbd->mouse_dx = 0;
+	kbd->mouse_dy = 0;
+	kbd->mouse_but[0] = kbd->mouse_but[1];
+
 	rc759_kbd_set_irq (kbd, 0);
 }
 
@@ -260,6 +269,76 @@ void rc759_kbd_set_sequence (rc759_kbd_t *kbd, unsigned char *buf, unsigned cnt)
 		kbd->key_buf[kbd->key_j] = buf[i];
 		kbd->key_j = next;
 	}
+}
+
+static
+unsigned char rc759_kbd_get_int8 (int *val)
+{
+	int           tmp;
+	unsigned char ret;
+
+	if (*val < 0) {
+		tmp = (*val < -128) ? -128 : *val;
+		ret = (~(-tmp) + 1) & 0xff;
+	}
+	else {
+		tmp = (*val > 127) ? 127 : *val;
+		ret = tmp;
+	}
+
+	*val -= tmp;
+
+	return (ret);
+}
+
+static
+void rc759_kbd_check_mouse (rc759_kbd_t *kbd)
+{
+	unsigned char buf[10];
+
+	if (kbd->key_i != kbd->key_j) {
+		return;
+	}
+
+	if ((kbd->mouse_dx == 0) && (kbd->mouse_dy == 0) && (kbd->mouse_but[0] == kbd->mouse_but[1])) {
+		return;
+	}
+
+	kbd->mouse_but[0] = kbd->mouse_but[1];
+
+	buf[0] = 0xe3;
+	buf[1] = 0x87;
+	buf[2] = 0xe3;
+	buf[3] = rc759_kbd_get_int8 (&kbd->mouse_dx);
+	buf[4] = 0xe3;
+	buf[5] = rc759_kbd_get_int8 (&kbd->mouse_dy);
+	buf[6] = 0xe3;
+	buf[7] = rc759_kbd_get_int8 (&kbd->mouse_dx);
+	buf[8] = 0xe3;
+	buf[9] = rc759_kbd_get_int8 (&kbd->mouse_dy);
+
+	if (kbd->mouse_but[1] & 1) {
+		buf[1] &= ~4;
+	}
+
+	if (kbd->mouse_but[1] & 2) {
+		buf[1] &= ~2;
+	}
+
+	if (kbd->mouse_but[1] & 4) {
+		buf[1] &= ~1;
+	}
+
+	rc759_kbd_set_sequence (kbd, buf, 10);
+}
+
+void rc759_kbd_set_mouse (rc759_kbd_t *kbd, int dx, int dy, unsigned but)
+{
+	kbd->mouse_dx += dx;
+	kbd->mouse_dy -= dy;
+	kbd->mouse_but[1] = but;
+
+	rc759_kbd_check_mouse (kbd);
 }
 
 void rc759_kbd_set_key (rc759_kbd_t *kbd, unsigned event, unsigned key)
@@ -353,6 +432,9 @@ void rc759_kbd_clock (rc759_kbd_t *kbd, unsigned cnt)
 	kbd->key_valid = 1;
 
 	kbd->key_i = (kbd->key_i + 1) % RC759_KBD_BUF;
+
+
+	rc759_kbd_check_mouse (kbd);
 
 	rc759_kbd_set_irq (kbd, 1);
 }

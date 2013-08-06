@@ -696,7 +696,11 @@ void rc759_set_ppi_port_c (rc759_t *sim, unsigned char val)
 static
 void rc759_set_mouse (void *ext, int dx, int dy, unsigned button)
 {
+	rc759_t *sim = ext;
+
 	chr_mouse_set (dx, dy, button);
+
+	rc759_kbd_set_mouse (&sim->kbd, dx, dy, button);
 }
 
 
