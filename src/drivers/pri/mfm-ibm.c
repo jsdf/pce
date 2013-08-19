@@ -32,12 +32,14 @@
 
 
 typedef struct {
-	pri_trk_t *trk;
+	pri_trk_t     *trk;
 
-	char       last;
-	char       clock;
+	char          last;
+	char          clock;
 
-	unsigned   crc;
+	unsigned      crc;
+
+	unsigned long last_gap3_start;
 } mfm_code_t;
 
 
@@ -381,6 +383,10 @@ void mfm_encode_byte (mfm_code_t *mfm, unsigned val, unsigned msk)
 	unsigned      buf;
 	unsigned long max;
 
+	if (mfm->trk->wrap) {
+		return;
+	}
+
 	buf = (mfm->last != 0);
 
 	for (i = 0; i < 8; i++) {
@@ -435,7 +441,12 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	unsigned char buf[8];
 
 	if (sct->position != 0xffffffff) {
-		pri_trk_set_pos (mfm->trk, 2 * sct->position);
+		if ((2 * sct->position) >= mfm->last_gap3_start) {
+			pri_trk_set_pos (mfm->trk, 2 * sct->position);
+		}
+		else {
+			pri_trk_set_pos (mfm->trk, mfm->last_gap3_start);
+		}
 	}
 
 	flags = sct->flags;
@@ -467,6 +478,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	}
 
 	if (flags & PSI_FLAG_NO_DAM) {
+		mfm->last_gap3_start = mfm->trk->idx;
 		return;
 	}
 
@@ -489,30 +501,89 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 
 	mfm_encode_bytes (mfm, buf, 2);
 
+	mfm->last_gap3_start = mfm->trk->idx;
+
 	for (i = 0; i < gap3; i++) {
 		mfm_encode_byte (mfm, 0x4e, 0xffff);
 	}
 }
 
-int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_encode_mfm_t *par)
+int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_mfm_t *par)
 {
-	unsigned   i;
-	psi_sct_t  *sct;
-	mfm_code_t mfm;
+	unsigned      i;
+	unsigned long bits;
+	unsigned      gap3, scnt;
+	psi_sct_t     *sct;
+	mfm_code_t    mfm;
 
 	mfm.trk = dtrk;
 	mfm.last = 0;
+	mfm.last_gap3_start = 0;
 
 	pri_trk_set_pos (dtrk, 0);
 
-	for (i = 0; i < 146; i++) {
+	gap3 = par->gap3;
+
+	if (par->auto_gap3) {
+		bits = par->gap4a + par->gap1;
+
+		if (par->enable_iam) {
+			bits += 16;
+		}
+
+		scnt = 0;
+
+		for (i = 0; i < strk->sct_cnt; i++) {
+			sct = strk->sct[i];
+
+			if ((sct->flags & PSI_FLAG_NO_DAM) == 0) {
+				scnt += 1;
+				bits += strk->sct[i]->n + 12 + 10 + 22 + 12 + 4 + 2;
+			}
+			else {
+				bits += strk->sct[i]->n + 12 + 10 + 22;
+			}
+		}
+
+		bits *= 16;
+
+		if (scnt > 0) {
+			if (bits < dtrk->size) {
+				gap3 = (dtrk->size - bits) / (16 * scnt);
+
+				if (gap3 > par->gap3) {
+					gap3 = par->gap3;
+				}
+			}
+			else {
+				pri_trk_set_size (dtrk, bits);
+			}
+		}
+	}
+
+	for (i = 0; i < par->gap4a; i++) {
+		mfm_encode_byte (&mfm, 0x4e, 0xffff);
+	}
+
+	if (par->enable_iam) {
+		for (i = 0; i < 12; i++) {
+			mfm_encode_byte (&mfm, 0x00, 0xffff);
+		}
+
+		mfm_encode_byte (&mfm, 0xc2, 0xff7f);
+		mfm_encode_byte (&mfm, 0xc2, 0xff7f);
+		mfm_encode_byte (&mfm, 0xc2, 0xff7f);
+		mfm_encode_byte (&mfm, 0xfc, 0xffff);
+	}
+
+	for (i = 0; i < par->gap1; i++) {
 		mfm_encode_byte (&mfm, 0x4e, 0xffff);
 	}
 
 	for (i = 0; i < strk->sct_cnt; i++) {
 		sct = strk->sct[i];
 
-		mfm_encode_sector (&mfm, sct, par->gap3);
+		mfm_encode_sector (&mfm, sct, gap3);
 	}
 
 	while (dtrk->wrap == 0) {
@@ -522,7 +593,7 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_encode_mfm_t *par)
 	return (0);
 }
 
-int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_encode_mfm_t *par)
+int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_mfm_t *par)
 {
 	unsigned long c, h;
 	psi_cyl_t     *cyl;
@@ -557,7 +628,7 @@ int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_encode_mfm_t *par)
 	return (0);
 }
 
-pri_img_t *pri_encode_mfm (psi_img_t *img, pri_encode_mfm_t *par)
+pri_img_t *pri_encode_mfm (psi_img_t *img, pri_mfm_t *par)
 {
 	pri_img_t *dimg;
 
@@ -575,35 +646,42 @@ pri_img_t *pri_encode_mfm (psi_img_t *img, pri_encode_mfm_t *par)
 	return (dimg);
 }
 
+void pri_mfm_init (pri_mfm_t *par, unsigned long clock, unsigned rpm)
+{
+	par->clock = clock;
+	par->track_size = 60 * clock / rpm;
+
+	par->enable_iam = 0;
+	par->auto_gap3 = 1;
+
+	par->gap4a = 96;
+	par->gap1 = 0;
+	par->gap3 = 80;
+}
+
 pri_img_t *pri_encode_mfm_dd_300 (psi_img_t *img)
 {
-	pri_encode_mfm_t par;
+	pri_mfm_t par;
 
-	par.gap3 = 80;
-	par.clock = 500000;
-	par.track_size = 100000;
+	pri_mfm_init (&par, 500000, 300);
 
 	return (pri_encode_mfm (img, &par));
 }
 
 pri_img_t *pri_encode_mfm_hd_300 (psi_img_t *img)
 {
-	pri_encode_mfm_t par;
+	pri_mfm_t par;
 
-	par.gap3 = 80;
-	par.clock = 1000000;
-	par.track_size = 200000;
+	pri_mfm_init (&par, 1000000, 300);
 
 	return (pri_encode_mfm (img, &par));
 }
 
 pri_img_t *pri_encode_mfm_hd_360 (psi_img_t *img)
 {
-	pri_encode_mfm_t par;
+	pri_mfm_t par;
 
-	par.gap3 = 80;
-	par.clock = 1000000;
-	par.track_size = 1000000 / 6;
+	pri_mfm_init (&par, 1000000, 360);
 
 	return (pri_encode_mfm (img, &par));
 }

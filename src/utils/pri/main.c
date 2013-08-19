@@ -57,6 +57,8 @@ static unsigned long par_trk[2];
 
 static unsigned long par_data_rate = 500000;
 
+static pri_mfm_t     par_mfm;
+
 
 static pce_option_t opts[] = {
 	{ '?', 0, "help", NULL, "Print usage information" },
@@ -72,6 +74,7 @@ static pce_option_t opts[] = {
 	{ 'O', 1, "output-format", "format", "Set the output format [auto]" },
 	{ 'p', 1, "operation", "name [...]", "Perform an operation" },
 	{ 'r', 1, "data-rate", "rate", "Set the data rate [500000]" },
+	{ 's', 2, "set", "par val", "Set a paramter value" },
 	{ 't', 2, "track", "c h", "Select tracks [all]" },
 	{ 'v', 0, "verbose", NULL, "Verbose operation [no]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
@@ -106,6 +109,10 @@ void print_help (void)
 		"  new                    Create new tracks\n"
 		"  rotate <bits>          Rotate tracks left\n"
 		"  save <filename>        Save raw tracks\n"
+		"\n"
+		"parameters are:\n"
+		"  mfm-auto-gap3, mfm-clock, mfm-iam, mfm-gap1, mfm-gap3, mfm-gap4a,\n"
+		"  mfm-track-size\n"
 		"\n"
 		"decode types are:\n"
 		"  raw, gcr, mfm, gcr-raw, mfm-raw\n"
@@ -692,16 +699,22 @@ int pri_encode (pri_img_t **img, const char *type, const char *fname)
 		dimg = pri_encode_gcr (simg);
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dimg = pri_encode_mfm_dd_300 (simg);
+		dimg = pri_encode_mfm (simg, &par_mfm);
 	}
 	else if (strcmp (type, "mfm-dd-300") == 0) {
-		dimg = pri_encode_mfm_dd_300 (simg);
+		par_mfm.clock = 500000;
+		par_mfm.track_size = 500000 / 5;
+		dimg = pri_encode_mfm (simg, &par_mfm);
 	}
 	else if (strcmp (type, "mfm-hd-300") == 0) {
-		dimg = pri_encode_mfm_hd_300 (simg);
+		par_mfm.clock = 1000000;
+		par_mfm.track_size = 1000000 / 5;
+		dimg = pri_encode_mfm (simg, &par_mfm);
 	}
 	else if (strcmp (type, "mfm-hd-360") == 0) {
-		dimg = pri_encode_mfm_hd_360 (simg);
+		par_mfm.clock = 1000000;
+		par_mfm.track_size = 1000000 / 6;
+		dimg = pri_encode_mfm (simg, &par_mfm);
 	}
 	else {
 		dimg = NULL;
@@ -1177,6 +1190,37 @@ pri_img_t *pri_load_image (const char *fname)
 }
 
 static
+int pri_set_parameter (const char *name, const char *val)
+{
+	if (strcmp (name, "mfm-auto-gap3") == 0) {
+		par_mfm.auto_gap3 = (strtoul (val, NULL, 0) != 0);
+	}
+	else if (strcmp (name, "mfm-clock") == 0) {
+		par_mfm.clock = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "mfm-iam") == 0) {
+		par_mfm.enable_iam = (strtoul (val, NULL, 0) != 0);
+	}
+	else if (strcmp (name, "mfm-gap1") == 0) {
+		par_mfm.gap1 = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "mfm-gap3") == 0) {
+		par_mfm.gap3 = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "mfm-gap4a") == 0) {
+		par_mfm.gap4a = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "mfm-track-size") == 0) {
+		par_mfm.track_size = strtoul (val, NULL, 0);
+	}
+	else {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pri_set_format (const char *name, unsigned *val)
 {
 	if (strcmp (name, "pbit") == 0) {
@@ -1208,6 +1252,8 @@ int main (int argc, char **argv)
 
 	img = NULL;
 	out = NULL;
+
+	pri_mfm_init (&par_mfm, 500000, 300);
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);
@@ -1306,6 +1352,12 @@ int main (int argc, char **argv)
 
 			if (par_data_rate <= 1000) {
 				par_data_rate *= 1000;
+			}
+			break;
+
+		case 's':
+			if (pri_set_parameter (optarg[0], optarg[1])) {
+				return (1);
 			}
 			break;
 
