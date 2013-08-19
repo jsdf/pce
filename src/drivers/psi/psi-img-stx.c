@@ -111,6 +111,7 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 	psi_sct_t     *sct;
 
 	if (psi_read_ofs (fp, hpos, buf, 16)) {
+		fprintf (stderr, "stx: read error (sector header)\n");
 		return (1);
 	}
 
@@ -132,8 +133,8 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 	if (0) {
 		if (status != 0) {
 			fprintf (stderr,
-				"S: [%02X %02X %02X %02X] S=%02X  T=%u  P=%u\n",
-				c, h, s, n, status, time, spos
+				"S: [%02X %02X %02X %02X] S=%02X  T=%u  P=%u  O=%lu\n",
+				c, h, s, n, status, time, spos, dofs
 			);
 		}
 	}
@@ -154,6 +155,7 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 	}
 
 	if (crc1 != crc2) {
+		/* id crc error */
 		psi_sct_set_flags (sct, PSI_FLAG_CRC_ID, 1);
 	}
 
@@ -165,6 +167,8 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 	}
 	else {
 		if (psi_read_ofs (fp, dpos + dofs, sct->data, size)) {
+			fprintf (stderr, "%u/%u/%u\n", c, h, s);
+			fprintf (stderr, "stx: read error (sector data)\n");
 			return (1);
 		}
 	}
@@ -182,6 +186,7 @@ int stx_load_track (FILE *fp, psi_img_t *img, unsigned long *ofs)
 	psi_trk_t    *trk;
 
 	if (psi_read_ofs (fp, *ofs, buf, 16)) {
+		fprintf (stderr, "stx: read error (track header)\n");
 		return (1);
 	}
 
@@ -231,6 +236,7 @@ int stx_load_fp (FILE *fp, psi_img_t *img)
 	}
 
 	if (psi_get_uint32_be (buf, 0) != STX_MAGIC) {
+		fprintf (stderr, "stx: bad magic\n");
 		return (1);
 	}
 
