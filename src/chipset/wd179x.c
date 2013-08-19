@@ -771,9 +771,11 @@ static
 void cmd_restore (wd179x_t *fdc)
 {
 #if DEBUG_WD179X >= 1
-	fprintf (stderr, "WD179X: D=%u CMD[%02X] RESTORE (%u -> 0)\n",
-		fdc->drv->d, fdc->cmd, fdc->drv->c
-	);
+	if (fdc->drv->c != 0) {
+		fprintf (stderr, "WD179X: D=%u CMD[%02X] RESTORE (%u -> 0)\n",
+			fdc->drv->d, fdc->cmd, fdc->drv->c
+		);
+	}
 #endif
 
 	fdc->status = WD179X_ST_BUSY;
@@ -1061,7 +1063,7 @@ void cmd_read_sector_idam (wd179x_t *fdc)
 		return;
 	}
 
-#if DEBUG_WD179X >= 2
+#if DEBUG_WD179X >= 3
 	fprintf (stderr, "WD179X:   IDAM [%02X %02X %02X %02X]\n",
 		fdc->scan_val[0], fdc->scan_val[1], fdc->scan_val[2], fdc->scan_val[3]
 	);
@@ -1255,7 +1257,7 @@ void cmd_write_sector_idam (wd179x_t *fdc)
 		return;
 	}
 
-#if DEBUG_WD179X >= 2
+#if DEBUG_WD179X >= 3
 	fprintf (stderr, "WD179X:   IDAM [%02X %02X %02X %02X]\n",
 		fdc->scan_val[0], fdc->scan_val[1], fdc->scan_val[2], fdc->scan_val[3]
 	);
