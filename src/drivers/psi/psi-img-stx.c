@@ -101,7 +101,30 @@ int stx_save_track_image (FILE *fp, unsigned long ofs, unsigned flag, unsigned c
 }
 
 static
-int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long dpos)
+int stx_add_alternate (FILE *fp, psi_sct_t *sct, unsigned long fpos)
+{
+	unsigned  i;
+	psi_sct_t *alt;
+
+	if ((alt = psi_sct_clone (sct, 0)) == NULL) {
+		return (1);
+	}
+
+	if (psi_read_ofs (fp, fpos, alt->data, alt->n)) {
+		return (1);
+	}
+
+	for (i = 0; i < sct->n; i++) {
+		alt->data[i] = sct->data[i] ^ ~alt->data[i];
+	}
+
+	psi_sct_add_alternate (sct, alt);
+
+	return (0);
+}
+
+static
+int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long dpos, unsigned long *fpos)
 {
 	unsigned      c, h, s, n;
 	unsigned      size, spos, status, time;
@@ -173,6 +196,16 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 		}
 	}
 
+	if (status & 0x80) {
+		/* fuzzy mask present */
+
+		if (stx_add_alternate (fp, sct, *fpos)) {
+			return (1);
+		}
+
+		*fpos += size;
+	}
+
 	return (0);
 }
 
@@ -180,46 +213,64 @@ static
 int stx_load_track (FILE *fp, psi_img_t *img, unsigned long *ofs)
 {
 	unsigned      i, c, h;
-	unsigned long cnt, fuz, dpos;
+	unsigned long tcnt, fcnt, hpos, dpos, fpos;
 	unsigned      scnt, flag;
 	unsigned char buf[16];
-	psi_trk_t    *trk;
+	psi_trk_t     *trk;
+	psi_sct_t     *sct;
 
 	if (psi_read_ofs (fp, *ofs, buf, 16)) {
 		fprintf (stderr, "stx: read error (track header)\n");
 		return (1);
 	}
 
-	cnt = psi_get_uint32_le (buf, 0);
-	fuz = psi_get_uint32_le (buf, 4);
+	tcnt = psi_get_uint32_le (buf, 0);
+	fcnt = psi_get_uint32_le (buf, 4);
 	scnt = psi_get_uint16_le (buf, 8);
 	flag = psi_get_uint16_le (buf, 10);
 	c = buf[14] & 0x7f;
 	h = (buf[14] >> 7) & 1;
 
-	if (fuz != 0) {
-		fprintf (stderr, "stx: fuz != 0\n");
-	}
-
-	dpos = *ofs + 16 + 16 * scnt;
+	hpos = *ofs + 16;
+	fpos = hpos + 16 * scnt;
+	dpos = fpos + fcnt;
 
 	if ((trk = psi_img_get_track (img, c, h, 1)) == NULL) {
 		return (1);
 	}
 
-	for (i = 0; i < scnt; i++) {
-		if (stx_load_sector (fp, trk, *ofs + 16 + 16 * i, dpos)) {
-			return (1);
+	if (flag & 1) {
+		for (i = 0; i < scnt; i++) {
+			if (stx_load_sector (fp, trk, hpos, dpos, &fpos)) {
+				return (1);
+			}
+
+			hpos += 16;
+		}
+	}
+	else {
+		for (i = 0; i < scnt; i++) {
+			if ((sct = psi_sct_new (c, h, i + 1, 512)) == NULL) {
+				return (1);
+			}
+
+			psi_trk_add_sector (trk, sct);
+
+			if (psi_read_ofs (fp, hpos, sct->data, 512)) {
+				return (1);
+			}
+
+			hpos += 512;
 		}
 	}
 
 	if (0) {
-		if (stx_save_track_image (fp, *ofs + 16 + 16 * scnt, flag, c, h)) {
+		if (stx_save_track_image (fp, dpos, flag, c, h)) {
 			return (1);
 		}
 	}
 
-	*ofs += cnt;
+	*ofs += tcnt;
 
 	return (0);
 }
