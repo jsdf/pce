@@ -1362,6 +1362,9 @@ src/chipset/e6522.o: src/chipset/e6522.c \
 src/chipset/e6850.o: src/chipset/e6850.c \
 	src/chipset/e6850.h
 
+src/chipset/e68901.o: src/chipset/e68901.c \
+	src/chipset/e68901.h
+
 src/chipset/e8530.o: src/chipset/e8530.c \
 	src/chipset/e8530.h
 
