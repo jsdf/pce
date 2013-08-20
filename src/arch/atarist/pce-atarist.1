@@ -1,0 +1,106 @@
+.TH PCE-ATARIST 1 "2013-08-19" "HH" "pce"
+\
+.SH NAME
+pce-atarist \- Atari ST emulator
+\
+.SH SYNOPSIS
+.BI pce-atarist " [options]"
+\
+.SH DESCRIPTION
+.BR pce-atarist (1)
+is an Atari ST emulator.
+\
+.SH OPTIONS
+.TP
+.BI "-c, --config " file
+Set the config file name.
+\
+.TP
+.BI "-d, --path " string
+Add a directory to the search path.
+
+The search path is used if an input file (such as a ROM
+image or a disk image) is specified with a relative file
+name. In that case the file is searched for in all
+directories of the search path. The current directory
+is always implicitly added to the end of the search path.
+
+The directory name can be prefixed by one of these characters:
+.RS
+.TP
+.B +
+Add the directory to the end of the search path
+.TP
+.B -
+Add the directory to the beginning of the search path
+.TP
+.B =
+Clear the search path before adding the directory
+.RE
+
+.IP
+The default is to add the directory to the end of the search path.
+\
+.TP
+.BI "-i, --ini-prefix " string
+Parse \fIstring\fR as if it were added to the beginning of the config
+file.
+\
+.TP
+.BI "-I, --ini-append " string
+Parse \fIstring\fR as if it were added to the end of the config file.
+\
+.TP
+.BI "-l, --log " file
+Write log messages to the file specified instead of stdout.
+\
+.TP
+.BI "-p, --cpu " model
+Select the CPU model to be emulated, overriding the config file.
+Possible values for \fImodel\fR are 68000, 68010 and 68020.
+\
+.TP
+.B "-q, --quiet"
+Don't print anything to stdout or stderr.
+\
+.TP
+.B "-r, --run"
+Start running immediately.
+\
+.TP
+.B "-R, --no-monitor"
+Start running immediately and never fall back to the monitor.
+This is useful if stdout is not visible, for example because
+the emulator was started directly from a graphical user
+interface such as X or Windows.
+\
+.TP
+.BI "-s, --speed" factor
+Set the initial speed factor. This overrides a value specified
+in the configuration file.
+\
+.TP
+.BI "-t, --terminal " string
+Set the terminal device. Possible devices are
+.BR null ", "
+.BR x11 " and "
+.BR sdl "."
+\
+.TP
+.B "-v, --verbose"
+Verbose operation. This is highly recommended.
+\
+.TP
+.B --help
+Print usage information
+\
+.TP
+.B --version
+Print version information
+\
+.SH SEE ALSO
+.BR pri "(1), "
+.BR psi (1)
+\
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>

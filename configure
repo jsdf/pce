@@ -643,6 +643,7 @@ PCE_BUILD_MACPLUS_ROM
 PCE_BUILD_MACPLUS
 PCE_BUILD_IBMPC_ROM
 PCE_BUILD_IBMPC
+PCE_BUILD_ATARIST
 PCE_LARGE_FILE
 PCE_SDL_LIBS
 PCE_SDL_CFLAGS
@@ -738,6 +739,7 @@ with_x
 with_sdl
 enable_static_sdl
 enable_largefile
+enable_atari_st
 enable_ibmpc
 enable_ibmpc_rom
 enable_macplus
@@ -1384,6 +1386,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-static-sdl     Link to static SDL [no]
   --disable-largefile     Disable large file support [no]
+  --enable-atari-st       Enable the Atari ST emulator [yes]
   --enable-ibmpc          Enable the IBM PC emulator [yes]
   --enable-ibmpc-rom      Build the IBM PC ROM from source [no]
   --enable-macplus        Enable the Mac Plus emulator [yes]
@@ -4716,6 +4719,37 @@ if test -d "$srcdir/src/arch/simarm"; then have_simarm=1; else have_simarm=0; fi
 if test -d "$srcdir/src/arch/sims32"; then have_sims32=1; else have_sims32=0; fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the Atari ST emulator" >&5
+$as_echo_n "checking whether to build the Atari ST emulator... " >&6; }
+# Check whether --enable-atari-st was given.
+if test "${enable_atari_st+set}" = set; then :
+  enableval=$enable_atari_st;
+		if test "x$enableval" = "xyes" ; then
+			PCE_BUILD_ATARIST=1
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
+$as_echo "yes (forced)" >&6; }
+		else
+			PCE_BUILD_ATARIST=0
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
+$as_echo "no (forced)" >&6; }
+		fi
+
+else
+
+		PCE_BUILD_ATARIST=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (default)" >&5
+$as_echo "yes (default)" >&6; }
+
+
+fi
+
+
+if test $PCE_BUILD_ATARIST -eq 1 ; then
+	$as_echo "#define PCE_BUILD_ATARIST 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the IBM PC emulator" >&5
 $as_echo_n "checking whether to build the IBM PC emulator... " >&6; }
 if test "x$have_ibmpc" != "x1" ; then
@@ -5546,6 +5580,12 @@ _ACEOF
 
 emu1=""
 emu2=""
+
+if test "x$PCE_BUILD_ATARIST" = "x1" ; then
+	emu1="$emu1 atarist"
+else
+	emu2="$emu2 atarist"
+fi
 
 if test "x$PCE_BUILD_IBMPC" = "x1" ; then
 	emu1="$emu1 ibmpc"

@@ -1,0 +1,233 @@
+# pce-atarist.cfg
+#
+# Example config file
+
+
+# Add a directory to the end of the file search path.
+#
+# The search path is used if an input file is specified with
+# a relative file name. In that case the file is searched for
+# in all directories of the search path. The current directory
+# is always implicitly added to the end of the search path.
+#
+# If the first character of the string is a "-", the directory
+# is added to the beginning of the search path.
+path = "rom"
+path = "PCE_DIR_DATA/atarist"
+path = "-."
+
+
+system {
+	# The ST model to emulate. Valid models are:
+	# st: An Atari ST
+	model = "st"
+
+	# The monitor type.
+	# If this is true, a mono monitor is attached, a color
+	# monitor otherwise.
+	mono = 1
+
+	# Disable the startup memory test.
+	fastboot = 1
+
+	# Only update the screen every nth frame. A value of 1
+	# skips every other frame and is a good compromise between
+	# accuracy and emulation speed.
+	frame_skip = 1
+
+	# The parallel port character device.
+	# Not all character drivers are supported on
+	# all platforms.
+	#parport = "null"
+	#parport = "posix:file=parport.out"
+	#parport = "pty:symlink=parport"
+	parport = "stdio:file=parport.out:flush=1"
+	#parport = "tios:file=/dev/ttyS0"
+	#parport = "tcp:port=5555:telnet=0:telnetinit=1:usectl=1"
+
+	# The serial port character device.
+	#serport = "null"
+	#serport = "pty:symlink=serport"
+	serport = "stdio:file=serport.out:flush=1"
+	#serport = "tios:file=/dev/ttyS0"
+	#serport = "tcp:port=5556:telnet=1:telnetinit=1:usectl=1"
+
+	# Raw MIDI data is written to this character driver.
+	midi_raw = "stdio:file=midi-raw.out:flush=1"
+
+	# MIDI data is written to this standard MIDI file.
+	midi_smf = "midi-smf.smf"
+}
+
+cpu {
+	# The CPU model. Valid models are "68000", "68010" and "68020".
+	model = "68000"
+
+	# The CPU speed multiplier. A value of 1 emulates a
+	# 8 MHz CPU. A higher value emulates a faster CPU
+	# but also takes up more host CPU time. A value of 0
+	# dynamically adjusts the CPU speed.
+	speed = 1
+}
+
+
+# Multiple "ram" sections may be present.
+ram {
+	# The base address
+	address = 0
+
+	# The memory block size
+	size = 1024K
+}
+
+
+# Multiple "rom" sections may be present.
+rom {
+	# The file from which the rom code is loaded
+	file = "tos-1.04-us.rom"
+
+	# The base address
+	address = 0xfc0000
+
+	# The rom size
+	size = 192K
+
+	# The memory block is initialized with this value.
+	default = 0xff
+}
+
+
+# All "load" sections are processed after all the "ram" and "rom"
+# sections. It is possible to overwrite read-only blocks, too.
+#load {
+#	format = "srec"
+#	file = "tos-1.04-us.srec"
+#}
+
+#load {
+#	format = "binary"
+#	address = 0xfc0000
+#	file = "tos-1.04-us.bin"
+#}
+
+
+# Multiple "terminal" sections may be present. The first
+# one will be used unless a terminal type is specified
+# on the command line.
+terminal {
+	driver = "sdl"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The terminal scale factor. Only integral values are
+	# allowed.
+	scale = 1
+
+	# Add a border around the image
+	border = 0
+
+	# Start in fullscreen mode.
+	fullscreen = 0
+
+	# The mouse speed. The host mouse speed is multiplied by
+	# (mouse_mul_x / mouse_div_x) and (mouse_mul_y / mouse_div_y)
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+terminal {
+	driver = "x11"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	scale  = 1
+
+	# The mouse speed
+	mouse_mul_x = 1
+	mouse_div_x = 1
+	mouse_mul_y = 1
+	mouse_div_y = 1
+}
+
+
+fdc {
+	# The PRI file associated with drive 0. If this file does not
+	# exist, the disk image for drive 0, configured below, is used
+	# instead.
+	file0 = "fd0.pri"
+
+	# The PRI file associated with drive 1. If this file does not
+	# exist, the disk image for drive 1, configured below, is used
+	# instead.
+	file1 = "fd1.pri"
+}
+
+# The first floppy disk
+disk {
+	drive    = 0
+	type     = "auto"
+	file     = "fd0.st"
+	file     = "fd0.img"
+	file     = "fd0.psi"
+	optional = 1
+}
+
+# The second floppy disk
+disk {
+	drive    = 1
+	type     = "auto"
+	file     = "fd1.st"
+	file     = "fd1.img"
+	file     = "fd1.psi"
+	optional = 1
+}
+
+# The first ACSI hard disk
+disk {
+	drive    = 128
+	type     = "auto"
+	file     = "hd0.img"
+	file     = "hd0.pimg"
+	file     = "hd0.qed"
+	optional = 1
+}
+
+# The second ACSI hard disk
+disk {
+	drive    = 129
+	type     = "auto"
+	file     = "hd1.img"
+	file     = "hd1.pimg"
+	file     = "hd1.qed"
+	optional = 1
+}
+
+# The third ACSI hard disk
+disk {
+	drive    = 130
+	type     = "auto"
+	file     = "hd2.img"
+	file     = "hd2.pimg"
+	file     = "hd2.qed"
+	optional = 1
+}
+
+# The fourth ACSI hard disk
+disk {
+	drive    = 131
+	type     = "auto"
+	file     = "hd3.img"
+	file     = "hd3.pimg"
+	file     = "hd3.qed"
+	optional = 1
+}

@@ -20,6 +20,46 @@ must be enclosed in double quotes in the monitor, like this:
 -m term.screenshot "my screenshot.ppm"
 
 
+PCE/atarist Messages
+==============================================================================
+
+emu.cpu.model <model>
+	Set the emulated CPU model. Valid models are "68000", "68010" and
+	"68020"
+
+emu.cpu.speed <speed>
+	Set the emulated CPU clock frequency to a multiple of 8 MHz.
+
+emu.cpu.speed.step <step>
+	Add <step> to the CPU clock frequency multiplier.
+
+emu.disk.commit (<drive> [":" <drive> ...]) | "all"
+	Commit changes to drives that have copy-on-write enabled.
+
+emu.disk.eject <drive> [":" <drive> ...]
+	Eject the disk in drive <drive>.
+
+emu.disk.insert <drive>:<fname>
+	Insert a new disk. <drive> is a drive number as specified
+	in the config file. The disk image type is "auto". If a disk
+	is already inserted in <drive> it is ejected first.
+
+emu.exit
+	Terminate the emulator immediately.
+
+emu.pause "0" | "1"
+	Resume or pause the emulator.
+
+emu.pause.toggle
+	Resume or pause the emulator.
+
+emu.reset
+	Reset the emulated machine.
+
+emu.stop
+	Fall back to the monitor.
+
+
 PCE/ibmpc Messages
 ==============================================================================
 

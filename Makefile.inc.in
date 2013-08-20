@@ -74,6 +74,7 @@ ifeq "$(PCE_HOST_SPARC)" "1"
 CFLAGS_DEFAULT += -DPCE_HOST_SPARC
 endif
 
+PCE_BUILD_ATARIST := @PCE_BUILD_ATARIST@
 PCE_BUILD_IBMPC   := @PCE_BUILD_IBMPC@
 PCE_BUILD_MACPLUS := @PCE_BUILD_MACPLUS@
 PCE_BUILD_RC759   := @PCE_BUILD_RC759@
@@ -145,6 +146,7 @@ include $(srcdir)/src/drivers/psi/Makefile.inc
 include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/drivers/video/Makefile.inc
 include $(srcdir)/src/arch/Makefile.inc
+include $(srcdir)/src/arch/atarist/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc
@@ -197,6 +199,14 @@ ifneq "$(SHARE_PCEUTILS)" ""
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
+	$(QR)for src in $(srcdir)/contrib/rom/atarist/* ; do \
+		test -f "$$src" || continue ; \
+		dst=$(DESTDIR)$(datadir)/atarist/`basename $$src` ; \
+		test -f "$$dst" && continue ; \
+		test x$(V) != x1 && echo "  CP     $$dst" ; \
+		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/atarist" ; \
+		$(INSTALL) -m 644 "$$src" "$$dst" ; \
+	done
 	$(QR)for src in $(srcdir)/contrib/rom/ibmpc/* ; do \
 		test -f "$$src" || continue ; \
 		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$src` ; \
