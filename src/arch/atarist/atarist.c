@@ -420,10 +420,10 @@ void st_setup_mfp (atari_st_t *sim, ini_sct_t *ini)
 	e68901_set_clk_div (&sim->mfp, 13);
 
 	if (sim->mono) {
-		e68901_set_inp (&sim->mfp, 0xff);
+		e68901_set_inp (&sim->mfp, 0x81);
 	}
 	else {
-		e68901_set_inp (&sim->mfp, 0x7f);
+		e68901_set_inp (&sim->mfp, 0x01);
 	}
 }
 
