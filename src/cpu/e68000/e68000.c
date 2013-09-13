@@ -591,6 +591,10 @@ void e68_exception_bus (e68000_t *c)
 	c->bus_error = 0;
 
 	e68_exception (c, 2, 0, "BUSE");
+
+	e68_push32 (c, 0);
+	e68_push32 (c, 0);
+
 	e68_set_clk (c, 62);
 }
 
