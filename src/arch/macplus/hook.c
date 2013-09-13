@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hook.c                                      *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,20 +36,10 @@
 #define MAC_HOOK_MARK   4
 
 
-/*
- * Advance the PC by cnt bytes
- */
-void mac_hook_skip (macplus_t *sim, unsigned cnt)
-{
-	e68_set_pc (sim->cpu, e68_get_pc (sim->cpu) + cnt);
-}
-
 int mac_hook (void *ext, unsigned val)
 {
 	unsigned  i;
 	macplus_t *sim = ext;
-
-	mac_hook_skip (sim, 4);
 
 	switch (val) {
 	case MAC_HOOK_NOP:
@@ -85,7 +75,7 @@ int mac_hook (void *ext, unsigned val)
 			e68_set_dreg32 (sim->cpu, 0, sim->sony.d0);
 			e68_set_areg32 (sim->cpu, 0, sim->sony.a0);
 			e68_set_areg32 (sim->cpu, 1, sim->sony.a1);
-			e68_set_pc (sim->cpu, sim->sony.pc);
+			e68_set_pc_prefetch (sim->cpu, sim->sony.pc);
 
 			return (0);
 		}

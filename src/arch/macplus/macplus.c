@@ -199,7 +199,7 @@ void mac_interrupt_sony_check (macplus_t *sim)
 	e68_set_mem32 (sim->cpu, a7 - 4, e68_get_pc (sim->cpu));
 	e68_set_areg32 (sim->cpu, 7, a7 - 4);
 
-	e68_set_pc (sim->cpu, sim->sony.check_addr);
+	e68_set_pc_prefetch (sim->cpu, sim->sony.check_addr);
 }
 
 void mac_interrupt_osi (void *ext, unsigned char val)
