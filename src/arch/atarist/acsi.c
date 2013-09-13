@@ -135,6 +135,26 @@ disk_t *st_acsi_get_disk (st_acsi_t *acsi)
 }
 
 /*
+ * CMD 00: TEST UNIT READY
+ */
+static
+void st_acsi_cmd_00 (st_acsi_t *acsi)
+{
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%02X] TEST UNIT READY\n",
+		acsi->cmd[0], acsi->cmd[4]
+	);
+#endif
+
+	if ((st_acsi_get_disk (acsi)) == NULL) {
+		st_acsi_set_result (acsi, 0x04);
+		return;
+	}
+
+	st_acsi_set_result (acsi, 0);
+}
+
+/*
  * CMD 03: REQUEST SENSE
  */
 static
@@ -363,6 +383,10 @@ static
 void st_acsi_cmd (st_acsi_t *acsi)
 {
 	switch (acsi->cmd[0] & 0x1f) {
+	case 0x00:
+		st_acsi_cmd_00 (acsi);
+		break;
+
 	case 0x03:
 		st_acsi_cmd_03 (acsi);
 		break;
