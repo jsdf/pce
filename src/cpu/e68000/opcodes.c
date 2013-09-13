@@ -1642,14 +1642,36 @@ static void op4a80 (e68000_t *c)
 	e68_op_prefetch (c);
 }
 
+/* 4AFC: ILLEGAL */
+static void op4afc (e68000_t *c)
+{
+	unsigned long pc;
+
+	if (c->hook != NULL) {
+		pc = e68_get_pc (c);
+
+		if (c->hook (c->hook_ext, c->ir[2]) == 0) {
+			if (e68_get_pc (c) == pc) {
+				e68_op_prefetch (c);
+				e68_op_prefetch (c);
+			}
+
+			e68_set_clk (c, 8);
+
+			return;
+		}
+	}
+
+	e68_exception_illegal (c);
+}
+
 /* 4AC0: TAS <EA> */
 static void op4ac0 (e68000_t *c)
 {
 	uint8_t s, d;
 
 	if (c->ir[0] == 0x4afc) {
-		/* 4AFC: ILLEGAL */
-		e68_exception_illegal (c);
+		op4afc (c);
 		return;
 	}
 
