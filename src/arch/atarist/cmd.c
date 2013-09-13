@@ -44,6 +44,7 @@ mon_cmd_t par_cmd[] = {
 	{ "ge", "[exception]", "run until exception" },
 	{ "g", "", "run" },
 	{ "halt", "[val]", "set halt state [2]" },
+	{ "hm", "", "print help on messages" },
 	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
 	{ "reset", "", "reset" },
 	{ "rte", "", "execute to next rte" },
@@ -738,6 +739,42 @@ void st_cmd_halt (cmd_t *cmd, atari_st_t *sim)
 }
 
 /*
+ * hm - help on messages
+ */
+static
+void st_cmd_hm (cmd_t *cmd)
+{
+	pce_puts (
+		"emu.exit\n"
+		"emu.stop\n"
+		"emu.pause            \"0\" | \"1\"\n"
+		"emu.pause.toggle\n"
+		"emu.reset\n"
+		"\n"
+		"emu.cpu.model        \"68000\" | \"68010\" | \"68020\"\n"
+		"emu.cpu.speed        <factor>\n"
+		"emu.cpu.speed.step   <adjustment>\n"
+			"\n"
+		"emu.disk.commit      [<drive>]\n"
+		"emu.disk.eject       <drive>\n"
+		"emu.disk.insert      <drive>:<fname>\n"
+			"\n"
+		"emu.par.driver       <driver>\n"
+		"emu.par.file         <filename>\n"
+			"\n"
+		"emu.ser.driver       <driver>\n"
+		"emu.ser.file         <filename>\n"
+			"\n"
+		"term.fullscreen      \"0\" | \"1\"\n"
+		"term.fullscreen.toggle\n"
+		"term.grab\n"
+		"term.release\n"
+		"term.screenshot      [<filename>]\n"
+		"term.title           <title>\n"
+	);
+}
+
+/*
  * p - step
  */
 static
@@ -1112,6 +1149,9 @@ int st_cmd (atari_st_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "halt")) {
 		st_cmd_halt (cmd, sim);
+	}
+	else if (cmd_match (cmd, "hm")) {
+		st_cmd_hm (cmd);
 	}
 	else if (cmd_match (cmd, "p")) {
 		st_cmd_p (cmd, sim);
