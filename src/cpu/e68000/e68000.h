@@ -459,6 +459,10 @@ int e68_get_reg (e68000_t *c, const char *reg, unsigned long *val);
  *****************************************************************************/
 int e68_set_reg (e68000_t *c, const char *reg, unsigned long val);
 
+/*!***************************************************************************
+ * @short Set the PC and prefetch
+ *****************************************************************************/
+void e68_set_pc_prefetch (e68000_t *c, unsigned long val);
 
 void e68_exception_reset (e68000_t *c);
 

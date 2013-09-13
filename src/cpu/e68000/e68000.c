@@ -404,10 +404,7 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 	}
 
 	if (strcmp (reg, "pc") == 0) {
-		e68_set_ir_pc (c, val);
-		e68_prefetch (c);
-		e68_prefetch (c);
-		e68_set_pc (c, val);
+		e68_set_pc_prefetch (c, val);
 		return (0);
 	}
 	else if (strcmp (reg, "sr") == 0) {
@@ -494,6 +491,14 @@ int e68_set_reg (e68000_t *c, const char *reg, unsigned long val)
 	return (0);
 }
 
+void e68_set_pc_prefetch (e68000_t *c, unsigned long val)
+{
+	e68_set_ir_pc (c, val);
+	e68_prefetch (c);
+	e68_prefetch (c);
+	e68_set_pc (c, val);
+}
+
 static
 void e68_set_supervisor (e68000_t *c, int supervisor)
 {
@@ -561,10 +566,7 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 	addr = (e68_get_vbr (c) + (vct << 2)) & 0xffffffff;
 	addr = e68_get_mem32 (c, addr);
 
-	e68_set_ir_pc (c, addr);
-	e68_prefetch (c);
-	e68_prefetch (c);
-	e68_set_pc (c, addr);
+	e68_set_pc_prefetch (c, addr);
 }
 
 void e68_exception_reset (e68000_t *c)
