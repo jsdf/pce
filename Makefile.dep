@@ -202,6 +202,7 @@ src/arch/atarist/msg.o: src/arch/atarist/msg.c \
 	src/lib/log.h \
 	src/lib/monitor.h \
 	src/lib/msg.h \
+	src/lib/string.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 

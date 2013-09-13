@@ -30,6 +30,7 @@
 #include <lib/log.h>
 #include <lib/monitor.h>
 #include <lib/msg.h>
+#include <lib/string.h>
 #include <lib/sysdep.h>
 
 
@@ -232,6 +233,37 @@ int st_set_msg_emu_exit (atari_st_t *sim, const char *msg, const char *val)
 }
 
 static
+int st_set_msg_emu_par_driver (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (sim->parport_drv != NULL) {
+		chr_close (sim->parport_drv);
+	}
+
+	sim->parport_drv = chr_open (val);
+
+	if (sim->parport_drv == NULL) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_par_file (atari_st_t *sim, const char *msg, const char *val)
+{
+	int  r;
+	char *driver;
+
+	driver = str_cat_alloc ("stdio:file=", val);
+
+	r = st_set_msg_emu_par_driver (sim, msg, driver);
+
+	free (driver);
+
+	return (r);
+}
+
+static
 int st_set_msg_emu_pause (atari_st_t *sim, const char *msg, const char *val)
 {
 	int v;
@@ -289,6 +321,37 @@ int st_set_msg_emu_reset (atari_st_t *sim, const char *msg, const char *val)
 }
 
 static
+int st_set_msg_emu_ser_driver (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (sim->serport_drv != NULL) {
+		chr_close (sim->serport_drv);
+	}
+
+	sim->serport_drv = chr_open (val);
+
+	if (sim->serport_drv == NULL) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_ser_file (atari_st_t *sim, const char *msg, const char *val)
+{
+	int  r;
+	char *driver;
+
+	driver = str_cat_alloc ("stdio:file=", val);
+
+	r = st_set_msg_emu_ser_driver (sim, msg, driver);
+
+	free (driver);
+
+	return (r);
+}
+
+static
 int st_set_msg_emu_stop (atari_st_t *sim, const char *msg, const char *val)
 {
 	st_set_msg_trm (sim, "term.release", "1");
@@ -307,11 +370,15 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.disk.eject", st_set_msg_emu_disk_eject },
 	{ "emu.disk.insert", st_set_msg_emu_disk_insert },
 	{ "emu.exit", st_set_msg_emu_exit },
+	{ "emu.par.driver", st_set_msg_emu_par_driver },
+	{ "emu.par.file", st_set_msg_emu_par_file },
 	{ "emu.pause", st_set_msg_emu_pause },
 	{ "emu.pause.toggle", st_set_msg_emu_pause_toggle },
 	{ "emu.realtime", st_set_msg_emu_realtime },
 	{ "emu.realtime.toggle", st_set_msg_emu_realtime_toggle },
 	{ "emu.reset", st_set_msg_emu_reset },
+	{ "emu.ser.driver", st_set_msg_emu_ser_driver },
+	{ "emu.ser.file", st_set_msg_emu_ser_file },
 	{ "emu.stop", st_set_msg_emu_stop },
 	{ NULL, NULL }
 };
