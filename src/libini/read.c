@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/read.c                                            *
  * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -80,37 +80,43 @@ void parse_error (scanner_t *scn, const char *text, int src)
 }
 
 static
-int parse_block (scanner_t *scn, ini_sct_t *sct, ini_sct_t *sub, char *buf)
+int skip_block (scanner_t *scn)
 {
-	int r, s;
+	int      c;
+	unsigned cnt;
 
+	cnt = 1;
+
+	while ((c = scn_get_chr (scn, 0)) != 0) {
+		scn_rmv_chr (scn, 1);
+
+		if (c == '{') {
+			cnt += 1;
+		}
+		else if (c == '}') {
+			cnt -= 1;
+
+			if (cnt == 0) {
+				return (0);
+			}
+		}
+	}
+
+	return (1);
+}
+
+static
+int parse_block (scanner_t *scn, ini_sct_t *sct, char *buf, int skip)
+{
 	if (scn_match (scn, "{") == 0) {
 		return (1);
 	}
 
-	if (sub == NULL) {
-		sub = ini_sct_new (NULL);
-
-		if (sub == NULL) {
-			return (1);
-		}
-
-		sub->parent = sct;
-
-		s = 1;
-	}
-	else {
-		s = 0;
+	if (skip) {
+		return (skip_block (scn));
 	}
 
-
-	r = parse_section (scn, sub, buf);
-
-	if (s) {
-		ini_sct_del (sub);
-	}
-
-	if (r) {
+	if (parse_section (scn, sct, buf)) {
 		return (1);
 	}
 
@@ -154,8 +160,7 @@ int parse_assign_undef (scanner_t *scn, ini_sct_t *sct, ini_val_t *tmp, const ch
 static
 int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 {
-	int       done;
-	ini_sct_t *sub;
+	int       done, skip;
 	ini_val_t val;
 
 	ini_val_init (&val, NULL);
@@ -166,17 +171,17 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 	}
 
 	if ((val.type == INI_VAL_INT) && (val.val.u32 != 0)) {
-		sub = sct;
+		skip = 0;
 		done = 1;
 	}
 	else {
-		sub = NULL;
+		skip = 1;
 		done = 0;
 	}
 
 	ini_val_free (&val);
 
-	if (parse_block (scn, sct, sub, buf)) {
+	if (parse_block (scn, sct, buf, skip)) {
 		return (1);
 	}
 
@@ -189,27 +194,23 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 				return (1);
 			}
 
-			if ((val.type == INI_VAL_INT) && (val.val.u32 != 0)) {
-				sub = done ? NULL : sct;
-			}
-			else {
-				sub = NULL;
-			}
+			skip = 1;
 
-			if (sub != NULL) {
-				done = 1;
+			if (done == 0) {
+				if ((val.type == INI_VAL_INT) && (val.val.u32 != 0)) {
+					skip = 0;
+					done = 1;
+				}
 			}
 
 			ini_val_free (&val);
 
-			if (parse_block (scn, sct, sub, buf)) {
+			if (parse_block (scn, sct, buf, skip)) {
 				return (1);
 			}
 		}
 		else {
-			sub = done ? NULL : sct;
-
-			if (parse_block (scn, sct, sub, buf)) {
+			if (parse_block (scn, sct, buf, done)) {
 				return (1);
 			}
 
