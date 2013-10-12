@@ -53,21 +53,20 @@ extern int           par_verbose;
 extern unsigned      par_filler;
 extern unsigned long par_cnt;
 
-extern int           par_cyl_all;
+extern char          par_cyl_all;
 extern unsigned      par_cyl[2];
 
-extern int           par_trk_all;
+extern char          par_trk_all;
 extern unsigned      par_trk[2];
 
-extern int           par_sct_all;
+extern char          par_sct_all;
 extern unsigned      par_sct[2];
 
-extern int           par_rsc_all;
+extern char          par_rsc_all;
 extern unsigned      par_rsc[2];
 
-extern int           par_alt_all;
+extern char          par_alt_all;
 extern unsigned      par_alt[2];
-
 
 int psi_parse_int_list (const char **str, unsigned *val);
 

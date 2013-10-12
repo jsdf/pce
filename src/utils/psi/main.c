@@ -48,19 +48,26 @@ int           par_verbose = 0;
 unsigned      par_filler = 0xf6;
 unsigned long par_cnt;
 
-int           par_cyl_all = 1;
+char          par_invert = 0;
+
+char          par_cyl_all = 1;
+char          par_cyl_inv = 0;
 unsigned      par_cyl[2];
 
-int           par_trk_all = 1;
+char          par_trk_all = 1;
+char          par_trk_inv = 0;
 unsigned      par_trk[2];
 
-int           par_sct_all = 1;
+char          par_sct_all = 1;
+char          par_sct_inv = 0;
 unsigned      par_sct[2];
 
-int           par_rsc_all = 1;
+char          par_rsc_all = 1;
+char          par_rsc_inv = 0;
 unsigned      par_rsc[2];
 
-int           par_alt_all = 1;
+char          par_alt_all = 1;
+char          par_alt_inv = 0;
 unsigned      par_alt[2];
 
 
@@ -95,6 +102,7 @@ static pce_option_t opts[] = {
 	{ 'S', 1, "real-sectors", "s", "Select real sectors [all]" },
 	{ 'v', 0, "verbose", NULL, "Verbose operation [no]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
+	{ 'x', 0, "invert", NULL, "Invert the selection [no]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
 
@@ -162,11 +170,17 @@ void print_version (void)
 
 
 static
-int psi_parse_range (const char *str, unsigned *v1, unsigned *v2, int *all)
+int psi_parse_range (const char *str, unsigned *v1, unsigned *v2, char *all, char *inv)
 {
 	*v1 = 0;
 	*v2 = 0;
 	*all = 0;
+	*inv = 0;
+
+	if (*str == '-') {
+		*inv = 1;
+		str += 1;
+	}
 
 	if (strcmp (str, "all") == 0) {
 		*all = 1;
@@ -230,48 +244,52 @@ int psi_parse_int_list (const char **str, unsigned *val)
 }
 
 static
+int psi_sel_compare (unsigned v, unsigned v1, unsigned v2, char all, char inv)
+{
+	int r;
+
+	r = (all || ((v >= v1) && (v <= v2)));
+
+	if (inv) {
+		r = !r;
+	}
+
+	return (r);
+}
+
+static
 int psi_sel_match_track (unsigned c, unsigned h)
 {
-	if (par_cyl_all == 0) {
-		if ((c < par_cyl[0]) || (c > par_cyl[1])) {
-			return (0);
-		}
+	if (psi_sel_compare (c, par_cyl[0], par_cyl[1], par_cyl_all, par_cyl_inv) == 0) {
+		return (par_invert);
 	}
 
-	if (par_trk_all == 0) {
-		if ((h < par_trk[0]) || (h > par_trk[1])) {
-			return (0);
-		}
+	if (psi_sel_compare (h, par_trk[0], par_trk[1], par_trk_all, par_trk_inv) == 0) {
+		return (par_invert);
 	}
 
-	return (1);
+	return (!par_invert);
 }
 
 int psi_sel_match (unsigned c, unsigned h, unsigned s, unsigned r, unsigned a)
 {
-	if (psi_sel_match_track (c, h) == 0) {
-		return (0);
+	if (psi_sel_match_track (c, h) == par_invert) {
+		return (par_invert);
 	}
 
-	if (par_sct_all == 0) {
-		if ((s < par_sct[0]) || (s > par_sct[1])) {
-			return (0);
-		}
+	if (psi_sel_compare (s, par_sct[0], par_sct[1], par_sct_all, par_sct_inv) == 0) {
+		return (par_invert);
 	}
 
-	if (par_rsc_all == 0) {
-		if ((r < par_rsc[0]) || (r > par_rsc[1])) {
-			return (0);
-		}
+	if (psi_sel_compare (r, par_rsc[0], par_rsc[1], par_rsc_all, par_rsc_inv) == 0) {
+		return (par_invert);
 	}
 
-	if (par_alt_all == 0) {
-		if ((a < par_alt[0]) || (a > par_alt[1])) {
-			return (0);
-		}
+	if (psi_sel_compare (a, par_alt[0], par_alt[1], par_alt_all, par_alt_inv) == 0) {
+		return (par_invert);
 	}
 
-	return (1);
+	return (!par_invert);
 }
 
 int psi_for_all_sectors (psi_img_t *img, psi_sct_cb fct, void *opaque)
@@ -557,13 +575,13 @@ int main (int argc, char **argv)
 			return (0);
 
 		case 'a':
-			if (psi_parse_range (optarg[0], &par_alt[0], &par_alt[1], &par_alt_all)) {
+			if (psi_parse_range (optarg[0], &par_alt[0], &par_alt[1], &par_alt_all, &par_alt_inv)) {
 				return (1);
 			}
 			break;
 
 		case 'c':
-			if (psi_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
+			if (psi_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all, &par_cyl_inv)) {
 				return (1);
 			}
 			break;
@@ -590,7 +608,7 @@ int main (int argc, char **argv)
 			break;
 
 		case 'h':
-			if (psi_parse_range (optarg[0], &par_trk[0], &par_trk[1], &par_trk_all)) {
+			if (psi_parse_range (optarg[0], &par_trk[0], &par_trk[1], &par_trk_all, &par_trk_inv)) {
 				return (1);
 			}
 			break;
@@ -687,33 +705,37 @@ int main (int argc, char **argv)
 			break;
 
 		case 'r':
-			if (psi_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all)) {
+			if (psi_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all, &par_cyl_inv)) {
 				return (1);
 			}
 
-			if (psi_parse_range (optarg[1], &par_trk[0], &par_trk[1], &par_trk_all)) {
+			if (psi_parse_range (optarg[1], &par_trk[0], &par_trk[1], &par_trk_all, &par_trk_inv)) {
 				return (1);
 			}
 
-			if (psi_parse_range (optarg[2], &par_sct[0], &par_sct[1], &par_sct_all)) {
+			if (psi_parse_range (optarg[2], &par_sct[0], &par_sct[1], &par_sct_all, &par_sct_inv)) {
 				return (1);
 			}
 			break;
 
 		case 's':
-			if (psi_parse_range (optarg[0], &par_sct[0], &par_sct[1], &par_sct_all)) {
+			if (psi_parse_range (optarg[0], &par_sct[0], &par_sct[1], &par_sct_all, &par_sct_inv)) {
 				return (1);
 			}
 			break;
 
 		case 'S':
-			if (psi_parse_range (optarg[0], &par_rsc[0], &par_rsc[1], &par_rsc_all)) {
+			if (psi_parse_range (optarg[0], &par_rsc[0], &par_rsc[1], &par_rsc_all, &par_rsc_inv)) {
 				return (1);
 			}
 			break;
 
 		case 'v':
 			par_verbose = 1;
+			break;
+
+		case 'x':
+			par_invert = !par_invert;
 			break;
 
 		case 0:
