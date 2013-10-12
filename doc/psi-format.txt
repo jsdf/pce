@@ -1,4 +1,4 @@
-PSI file format (2013-06-09)
+PSI file format (2013-10-12)
 ========================================================================
 
 File structure
@@ -111,6 +111,28 @@ offset	size	description
 4	4	Chunk size (n)
 0	n	Sector data
 n	4	Chunk CRC
+
+
+CHUNK "IBMF": IBM FM sector header
+------------------------------------------------------------------------
+
+offset	size	description
+
+0	4	Chunk ID ('IBMF')
+4	4	Chunk size (6)
+0	1	Cylinder
+1	1	Head
+2	1	Sector
+3	1	Size
+4	1	Flags
+			1	CRC error in ID field
+			2	CRC error in data field
+			4	Deleted data adress mark
+			8	Missing data adress mark
+5	1	Encoding subtype
+			0	Single density (125 KBit/s)
+			1	High density (250 KBit/s)
+6	4	Chunk CRC
 
 
 CHUNK "IBMM": IBM MFM sector header

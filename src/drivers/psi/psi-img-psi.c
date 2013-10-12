@@ -31,6 +31,7 @@
 #define PSI_CHUNK_PSI  0x50534920
 #define PSI_CHUNK_TEXT 0x54455854
 #define PSI_CHUNK_SECT 0x53454354
+#define PSI_CHUNK_IBMF 0x49424d46
 #define PSI_CHUNK_IBMM 0x49424d4d
 #define PSI_CHUNK_MACG 0x4d414347
 #define PSI_CHUNK_OFFS 0x4f464653
@@ -40,6 +41,8 @@
 
 #define PSI_FORMAT_UNK     0x0000
 #define PSI_FORMAT_IBMF    0x0100
+#define PSI_FORMAT_IBMF_DD 0x0100
+#define PSI_FORMAT_IBMF_HD 0x0101
 #define PSI_FORMAT_IBMM_DD 0x0200
 #define PSI_FORMAT_IBMM_HD 0x0201
 #define PSI_FORMAT_IBMM_ED 0x0202
@@ -50,6 +53,11 @@
 #define PSI_FLAG_COMP 0x01
 #define PSI_FLAG_ALT  0x02
 #define PSI_FLAG_CRC  0x04
+
+#define PSI_IBMF_CRC_ID   1
+#define PSI_IBMF_CRC_DATA 2
+#define PSI_IBMF_DEL_DAM  4
+#define PSI_IBMF_NO_DAM   8
 
 #define PSI_IBMM_CRC_ID   1
 #define PSI_IBMM_CRC_DATA 2
@@ -180,8 +188,12 @@ int psi_load_header (FILE *fp, unsigned long size, unsigned long crc, unsigned *
 	}
 
 	switch (psi_get_uint16_be (buf, 2)) {
-	case PSI_FORMAT_IBMF:
+	case PSI_FORMAT_IBMF_DD:
 		*enc = PSI_ENC_FM_DD;
+		break;
+
+	case PSI_FORMAT_IBMF_HD:
+		*enc = PSI_ENC_FM_HD;
 		break;
 
 	case PSI_FORMAT_IBMM_DD:
@@ -213,15 +225,62 @@ int psi_load_header (FILE *fp, unsigned long size, unsigned long crc, unsigned *
 }
 
 static
+int psi_load_fm (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size, unsigned long crc)
+{
+	unsigned char buf[8];
+
+	if ((sct == NULL) || (size < 6)) {
+		return (1);
+	}
+
+	if (psi_read_crc (fp, buf, 6, &crc)) {
+		return (1);
+	}
+
+	sct->c = buf[0];
+	sct->h = buf[1];
+	sct->s = buf[2];
+	psi_sct_set_mfm_size (sct, buf[3]);
+
+	if (buf[4] & PSI_IBMF_CRC_ID) {
+		sct->flags |= PSI_FLAG_CRC_ID;
+	}
+
+	if (buf[4] & PSI_IBMF_CRC_DATA) {
+		sct->flags |= PSI_FLAG_CRC_DATA;
+	}
+
+	if (buf[4] & PSI_IBMF_DEL_DAM) {
+		sct->flags |= PSI_FLAG_DEL_DAM;
+	}
+
+	if (buf[4] & PSI_IBMF_NO_DAM) {
+		sct->flags |= PSI_FLAG_NO_DAM;
+	}
+
+	switch (buf[5]) {
+	case 1:
+		psi_sct_set_encoding (sct, PSI_ENC_FM_HD);
+		break;
+
+	default:
+		psi_sct_set_encoding (sct, PSI_ENC_FM_DD);
+		break;
+	}
+
+	if (psi_skip_chunk (fp, size - 6, crc)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int psi_load_mfm (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size, unsigned long crc)
 {
 	unsigned char buf[8];
 
-	if (sct == NULL) {
-		return (1);
-	}
-
-	if (size < 6) {
+	if ((sct == NULL) || (size < 6)) {
 		return (1);
 	}
 
@@ -549,6 +608,12 @@ int psi_load_fp (FILE *fp, psi_img_t *img)
 			}
 			break;
 
+		case PSI_CHUNK_IBMF:
+			if (psi_load_fm (fp, img, last, size, crc)) {
+				return (1);
+			}
+			break;
+
 		case PSI_CHUNK_IBMM:
 			if (psi_load_mfm (fp, img, last, size, crc)) {
 				return (1);
@@ -680,7 +745,11 @@ int psi_save_header (FILE *fp, const psi_img_t *img, unsigned *enc)
 
 	switch (*enc) {
 	case PSI_ENC_FM_DD:
-		val = PSI_FORMAT_IBMF;
+		val = PSI_FORMAT_IBMF_DD;
+		break;
+
+	case PSI_ENC_FM_HD:
+		val = PSI_FORMAT_IBMF_HD;
 		break;
 
 	case PSI_ENC_MFM_DD:
@@ -707,6 +776,60 @@ int psi_save_header (FILE *fp, const psi_img_t *img, unsigned *enc)
 	psi_set_uint16_be (buf, 2, val);
 
 	if (psi_save_chunk (fp, PSI_CHUNK_PSI, 4, buf)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int psi_save_fm (FILE *fp, const psi_sct_t *sct, unsigned c, unsigned h, unsigned enc)
+{
+	unsigned      n;
+	int           req;
+	unsigned char buf[8];
+
+	if ((sct->encoding & PSI_ENC_MASK) != PSI_ENC_FM) {
+		return (0);
+	}
+
+	n = psi_sct_get_mfm_size (sct);
+
+	req = (sct->c != c) || (sct->h != h);
+	req |= ((n > 8) || (sct->n != (128U << n)));
+	req |= (sct->flags & (PSI_FLAG_CRC_ID | PSI_FLAG_DEL_DAM | PSI_FLAG_NO_DAM)) != 0;
+	req |= (sct->encoding != enc);
+
+	if (req == 0) {
+		return (0);
+	}
+
+	buf[0] = sct->c & 0xff;
+	buf[1] = sct->h & 0xff;
+	buf[2] = sct->s & 0xff;
+	buf[3] = n;
+	buf[4] = 0;
+
+	buf[4] |= (sct->flags & PSI_FLAG_CRC_ID) ? PSI_IBMF_CRC_ID : 0;
+	buf[4] |= (sct->flags & PSI_FLAG_CRC_DATA) ? PSI_IBMF_CRC_DATA : 0;
+	buf[4] |= (sct->flags & PSI_FLAG_DEL_DAM) ? PSI_IBMF_DEL_DAM : 0;
+	buf[4] |= (sct->flags & PSI_FLAG_NO_DAM) ? PSI_IBMF_NO_DAM : 0;
+
+	switch (sct->encoding) {
+	case PSI_ENC_FM_DD:
+		buf[5] = 0;
+		break;
+
+	case PSI_ENC_FM_HD:
+		buf[5] = 1;
+		break;
+
+	default:
+		buf[5] = 0;
+		break;
+	}
+
+	if (psi_save_chunk (fp, PSI_CHUNK_IBMF, 6, buf)) {
 		return (1);
 	}
 
@@ -883,6 +1006,10 @@ int psi_save_sector (FILE *fp, const psi_sct_t *sct, unsigned c, unsigned h, int
 	}
 
 	if (psi_save_chunk (fp, PSI_CHUNK_SECT, 8, buf)) {
+		return (1);
+	}
+
+	if (psi_save_fm (fp, sct, c, h, enc)) {
 		return (1);
 	}
 
