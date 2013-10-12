@@ -801,6 +801,20 @@ void hdc_cmd_rd_buf (hdc_t *hdc)
 /* Command 0F: write buffer */
 
 static
+void hdc_cmd_wr_buf_delay (hdc_t *hdc)
+{
+	hdc->buf_idx = 0;
+	hdc->buf_cnt = 512;
+
+	hdc->delay = 0;
+	hdc->cont = hdc_cmd_done;
+
+	hdc_set_result (hdc, 0, 0x00);
+
+	hdc_request_data (hdc, 0);
+}
+
+static
 void hdc_cmd_wr_buf (hdc_t *hdc)
 {
 #if DEBUG_HDC >= 1
@@ -809,15 +823,8 @@ void hdc_cmd_wr_buf (hdc_t *hdc)
 	);
 #endif
 
-	hdc->buf_idx = 0;
-	hdc->buf_cnt = 512;
-
-	hdc_set_result (hdc, 0, 0x00);
-
-	hdc->delay = 0;
-	hdc->cont = hdc_cmd_done;
-
-	hdc_request_data (hdc, 0);
+	hdc->delay = 4096;
+	hdc->cont = hdc_cmd_wr_buf_delay;
 }
 
 
