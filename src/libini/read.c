@@ -287,14 +287,20 @@ int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 			}
 		}
 		else if (strcmp (buf, "include") == 0) {
+			int noerr;
+
+			noerr = (scn_match (scn, "?") != 0);
+
 			if (scn_match_string (scn, buf, 256) == 0) {
 				return (1);
 			}
 
 			if (scn_add_file (scn, buf, NULL, 1)) {
-				parse_error (scn, "can't open include file:", 0);
-				parse_error (scn, buf, 0);
-				return (1);
+				if (noerr == 0) {
+					parse_error (scn, "can't open include file:", 0);
+					parse_error (scn, buf, 0);
+					return (1);
+				}
 			}
 		}
 		else {
