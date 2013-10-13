@@ -270,6 +270,11 @@ int pri_trk_get_bits (pri_trk_t *trk, unsigned long *val, unsigned cnt)
 	unsigned char       m;
 	const unsigned char *p;
 
+	if (trk->size == 0) {
+		*val = 0;
+		return (1);
+	}
+
 	p = trk->data + (trk->idx / 8);
 	m = 0x80 >> (trk->idx & 7);
 	v = 0;
@@ -311,6 +316,10 @@ int pri_trk_set_bits (pri_trk_t *trk, unsigned long val, unsigned cnt)
 {
 	unsigned char m;
 	unsigned char *p;
+
+	if (trk->size == 0) {
+		return (1);
+	}
 
 	p = trk->data + (trk->idx / 8);
 	m = 0x80 >> (trk->idx & 7);
