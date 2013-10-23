@@ -714,6 +714,21 @@ void st_kbd_cmd_13 (st_kbd_t *kbd)
 }
 
 /*
+ * 16: JOYSTICK INTERROGATE
+ */
+static
+void st_kbd_cmd_16 (st_kbd_t *kbd)
+{
+#if DEBUG_KBD >= 1
+	st_log_deb ("IKBD: JOYSTICK INTERROGATE\n");
+#endif
+
+	st_kbd_buf_put (kbd, 0xfd);
+	st_kbd_buf_put (kbd, kbd->joy[0]);
+	st_kbd_buf_put (kbd, kbd->joy[1]);
+}
+
+/*
  * 1A: DISABLE JOYSTICKS
  */
 static
@@ -870,6 +885,10 @@ void st_kbd_set_uint8 (st_kbd_t *kbd, unsigned char val)
 
 	case 0x13:
 		st_kbd_cmd_13 (kbd);
+		break;
+
+	case 0x16:
+		st_kbd_cmd_16 (kbd);
 		break;
 
 	case 0x1a:
