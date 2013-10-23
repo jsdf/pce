@@ -310,6 +310,67 @@ void st_acsi_cmd_12 (st_acsi_t *acsi)
 	acsi->result = 0;
 }
 
+static
+void st_acsi_cmd_15_cont (st_acsi_t *acsi)
+{
+	unsigned i;
+	disk_t   *dsk;
+
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%X/%02X] MODE SELECT CONT (%u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cnt
+	);
+#endif
+
+	if ((dsk = st_acsi_get_disk (acsi)) == NULL) {
+		st_acsi_set_result (acsi, 0x04);
+		return;
+	}
+
+	fputs ("mode select:\n", stderr);
+
+	for (i = 0; i < acsi->cnt; i++) {
+		fprintf (stderr, "%02X", acsi->buf[i]);
+
+		if ((i + 1) & 15) {
+			fputs (" ", stderr);
+		}
+		else {
+			fputs ("\n", stderr);
+		}
+	}
+
+	fputs ("\n", stderr);
+
+	st_acsi_set_result (acsi, 0);
+}
+
+/*
+ * CMD 15: MODE SELECT
+ */
+static
+void st_acsi_cmd_15 (st_acsi_t *acsi)
+{
+	disk_t *dsk;
+
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%X/%02X] MODE SELECT (PF=%d N=%02X)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f,
+		(acsi->cmd[1] >> 4) & 1, acsi->cmd[4]
+	);
+#endif
+
+	if ((dsk = st_acsi_get_disk (acsi)) == NULL) {
+		st_acsi_set_result (acsi, 0x04);
+		return;
+	}
+
+	acsi->buf_idx = 0;
+	acsi->buf_cnt = acsi->cmd[4];
+
+	acsi->result = 0;
+}
+
 /*
  * CMD 1A: MODE SENSE
  */
@@ -407,6 +468,10 @@ void st_acsi_cmd (st_acsi_t *acsi)
 		st_acsi_cmd_12 (acsi);
 		break;
 
+	case 0x15:
+		st_acsi_cmd_15 (acsi);
+		break;
+
 	case 0x1a:
 		st_acsi_cmd_1a (acsi);
 		break;
@@ -454,7 +519,22 @@ void st_acsi_set_data (st_acsi_t *acsi, unsigned char val)
 	acsi->buf[acsi->buf_idx++] = val;
 
 	if (acsi->buf_idx >= acsi->buf_cnt) {
-		st_acsi_cmd_0a_cont (acsi);
+		switch (acsi->cmd[0] & 0x1f) {
+		case 0x0a:
+			st_acsi_cmd_0a_cont (acsi);
+			break;
+
+		case 0x15:
+			st_acsi_cmd_15_cont (acsi);
+			break;
+
+		default:
+			st_log_deb (
+				"ACSI: data out for unknown command (%02X)\n",
+				acsi->cmd[0]
+			);
+			break;
+		}
 	}
 }
 
