@@ -969,6 +969,8 @@ void cmd_read_sector_clock (wd179x_t *fdc)
 			if (fdc->status & WD179X_ST_DRQ) {
 				fprintf (stderr, "WD179X: READ LOST DATA\n");
 				fdc->status |= WD179X_ST_LOST_DATA;
+				cmd_done (fdc, 1);
+				return;
 			}
 
 			fdc->data = fdc->val & 0xff;
