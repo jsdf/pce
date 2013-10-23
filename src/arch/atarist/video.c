@@ -636,6 +636,14 @@ void st_video_clock (st_video_t *vid, unsigned cnt)
 						st_video_update_line_2 (vid);
 					}
 				}
+				else {
+					if ((vid->mode == 0) || (vid->mode == 1)) {
+						vid->addr += 160;
+					}
+					else if (vid->mode == 2) {
+						vid->addr += 80;
+					}
+				}
 			}
 		}
 
