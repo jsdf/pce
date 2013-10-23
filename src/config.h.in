@@ -60,6 +60,7 @@
 
 #undef HAVE_FSEEKO
 #undef HAVE_FTRUNCATE
+#undef HAVE_FUTIMES
 #undef HAVE_USLEEP
 #undef HAVE_NANOSLEEP
 #undef HAVE_SLEEP
