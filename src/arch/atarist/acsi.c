@@ -565,6 +565,8 @@ void st_acsi_set_cmd (st_acsi_t *acsi, unsigned char val, int a0)
 		acsi->blk = (acsi->blk << 8) | acsi->cmd[2];
 		acsi->blk = (acsi->blk << 8) | acsi->cmd[3];
 		acsi->cnt = acsi->cmd[4];
+		acsi->buf_idx = 0;
+		acsi->buf_cnt = 0;
 
 		st_acsi_cmd (acsi);
 	}
