@@ -668,6 +668,8 @@ void st_video_clock (st_video_t *vid, unsigned cnt)
 			if (vid->frame_skip == 0) {
 				st_video_update_terminal (vid);
 			}
+
+			vid->addr = vid->base;
 		}
 
 		return;
@@ -702,7 +704,6 @@ void st_video_clock (st_video_t *vid, unsigned cnt)
 	}
 
 	vid->line = 0;
-	vid->addr = vid->base;
 	vid->src = mem_get_ptr (vid->mem, vid->addr, 32768);
 	vid->dst = vid->rgb;
 }
