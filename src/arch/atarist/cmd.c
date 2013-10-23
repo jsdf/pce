@@ -507,6 +507,12 @@ void st_log_trap_bios (atari_st_t *sim, unsigned iw)
 		);
 		break;
 
+	case 5:
+		st_log_deb ("bios_setexc (%u, %lu)\n",
+			par[1], ((unsigned long) par[2] << 16) | par[3]
+		);
+		break;
+
 	case 9:
 		st_log_deb ("bios_media_change (%u)\n", par[1]);
 		break;
