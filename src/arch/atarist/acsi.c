@@ -141,8 +141,8 @@ static
 void st_acsi_cmd_00 (st_acsi_t *acsi)
 {
 #if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] TEST UNIT READY\n",
-		acsi->cmd[0], acsi->cmd[4]
+	st_log_deb ("ACSI: CMD[%X/%02X] TEST UNIT READY\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cmd[4]
 	);
 #endif
 
@@ -161,8 +161,8 @@ static
 void st_acsi_cmd_03 (st_acsi_t *acsi)
 {
 #if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] REQUEST SENSE (N=%02X)\n",
-		acsi->cmd[0], acsi->cmd[4]
+	st_log_deb ("ACSI: CMD[%X/%02X] REQUEST SENSE (N=%02X)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cmd[4]
 	);
 #endif
 
@@ -200,8 +200,8 @@ void st_acsi_cmd_08 (st_acsi_t *acsi)
 	disk_t *dsk;
 
 #if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] READ (%lu + %u)\n",
-		acsi->cmd[0], acsi->blk, acsi->cnt
+	st_log_deb ("ACSI: CMD[%X/%02X] READ (%lu + %u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->blk, acsi->cnt
 	);
 #endif
 
@@ -227,9 +227,9 @@ void st_acsi_cmd_0a_cont (st_acsi_t *acsi)
 {
 	disk_t *dsk;
 
-#if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] WRITE CONT (%lu + %u)\n",
-		acsi->cmd[0], acsi->blk, acsi->cnt
+#if DEBUG_ACSI >= 2
+	st_log_deb ("ACSI: CMD[%X/%02X] WRITE CONT (%lu + %u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->blk, acsi->cnt
 	);
 #endif
 
@@ -256,8 +256,8 @@ void st_acsi_cmd_0a (st_acsi_t *acsi)
 	disk_t *dsk;
 
 #if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] WRITE (%lu + %u)\n",
-		acsi->cmd[0], acsi->blk, acsi->cnt
+	st_log_deb ("ACSI: CMD[%X/%02X] WRITE (%lu + %u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->blk, acsi->cnt
 	);
 #endif
 
@@ -287,7 +287,9 @@ void st_acsi_cmd_12 (st_acsi_t *acsi)
 	disk_t   *dsk;
 
 #if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%02X] INQUIRY (n=%u)\n", acsi->cmd[0], acsi->cmd[4]);
+	st_log_deb ("ACSI: CMD[%X/%02X] INQUIRY (n=%u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cmd[4]
+	);
 #endif
 
 	if ((dsk = st_acsi_get_disk (acsi)) == NULL) {
@@ -542,6 +544,10 @@ void st_acsi_set_cmd (st_acsi_t *acsi, unsigned char val, int a0)
 {
 	st_acsi_set_drq (acsi, 0);
 	st_acsi_set_irq (acsi, 0);
+
+#if DEBUG_ACSI >= 3
+	st_log_deb ("ACSI: command byte %02X\n", val);
+#endif
 
 	if (acsi->cmd_cnt >= 6) {
 		acsi->cmd_cnt = 0;
