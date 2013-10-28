@@ -147,12 +147,12 @@ void pce_set_fd_interactive (int fd, int interactive)
 	struct termios        tios;
 
 	if (sios_ok == 0) {
-		tcgetattr (fd, &sios);
+		// tcgetattr (fd, &sios);
 		sios_ok = 1;
 	}
 
 	if (interactive) {
-		tcsetattr (fd, TCSANOW, &sios);
+		// tcsetattr (fd, TCSANOW, &sios);
 	}
 	else {
 		tios = sios;
@@ -162,7 +162,7 @@ void pce_set_fd_interactive (int fd, int interactive)
 		tios.c_cc[VMIN] = 1;
 		tios.c_cc[VTIME] = 0;
 
-		tcsetattr (fd, TCSANOW, &tios);
+		// tcsetattr (fd, TCSANOW, &tios);
 	}
 #endif
 }

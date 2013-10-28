@@ -22,6 +22,7 @@
 
 #include "main.h"
 #include "ibmpc.h"
+#include "cmd.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -523,6 +524,68 @@ void pc_run (ibmpc_t *pc)
 
 	pce_stop();
 }
+
+
+/*
+ * emscripten specific main loop
+ */
+
+/*
+ * store global pointer to simulation state struct
+ * so that pc_run_emscripten_step doesn't require it as a parameter
+ */
+ibmpc_t *ibmpc_sim = NULL;
+
+/*
+ * setup and run the simulation
+ */
+void pc_run_emscripten (ibmpc_t *pc)
+{
+	ibmpc_sim = pc;
+
+	pce_start (&pc->brk);
+
+	pc_clock_discontinuity (pc);
+
+	#ifdef EMSCRIPTEN
+	emscripten_set_main_loop(pc_run_emscripten_step, 100, 1);
+	#else
+	while (!pc->brk) {
+		pc_run_emscripten_step();
+	}
+	#endif
+
+	pc->current_int &= 0xff;
+	// pce_stop();
+}
+
+/*
+ * run one iteration
+ */
+void pc_run_emscripten_step ()
+{
+
+	// for each 'emscripten step' we'll run a bunch of actual cycles
+	// to minimise overhead from emscripten's main loop management
+	int i;
+	for (i = 0; i < 10000; ++i)
+	{
+		pc_clock (ibmpc_sim, 4 * ibmpc_sim->speed_current);
+
+		if (ibmpc_sim->brk) {
+			pce_stop();
+			#ifdef EMSCRIPTEN
+			emscripten_cancel_main_loop();
+			#endif
+			return;
+		}
+	}
+}
+/*
+ * end emscripten specific main loop
+ */
+
+
 
 #if 0
 static

@@ -570,7 +570,7 @@ int pc_set_msg (ibmpc_t *pc, const char *msg, const char *val)
 		}
 	}
 
-	pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
+	// pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 
 	return (1);
 }

@@ -508,7 +508,7 @@ int mac_set_msg (macplus_t *sim, const char *msg, const char *val)
 		}
 	}
 
-	pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
+	// pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
 
 	return (1);
 }

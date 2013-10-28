@@ -40,5 +40,7 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd);
 
 void pc_cmd_init (ibmpc_t *pc, monitor_t *mon);
 
+void pc_run_emscripten (ibmpc_t *pc);
+void pc_run_emscripten_step ();
 
 #endif

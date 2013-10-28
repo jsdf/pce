@@ -31,7 +31,6 @@
 #include <drivers/video/keys.h>
 #include <drivers/video/sdl.h>
 
-
 static int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force);
 
 
@@ -401,6 +400,7 @@ void sdl_update (sdl_t *sdl)
 	if (s == NULL) {
 		return;
 	}
+
 
 	if (SDL_BlitSurface (s, NULL, sdl->scr, &dst) != 0) {
 		fprintf (stderr, "sdl: blit error\n");
