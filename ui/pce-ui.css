@@ -1,0 +1,68 @@
+* {
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+}
+.emscripten {
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+textarea.emscripten {
+  font-family: monospace;
+  width: 80%;
+  border: none;
+  background: none;
+  margin-top: 20px;
+  display: none;
+}
+div.emscripten {
+  text-align: center;
+}
+div.emscripten_border {
+  border: none;
+}
+/* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+canvas.emscripten {
+  border: 0px none;
+}
+#fullscreencontrols {
+  display: none;
+}
+
+#titlebar {
+  position: relative;
+  /*position: fixed;
+  bottom: 0;
+  left: 0;*/
+  height: 40px;
+  background-color: rgba(0,0,0,0.5);
+  color: white;
+  width: 100%;
+  box-sizing:border-box;
+  padding: 10px;
+}
+#titlebar .description {
+  position: absolute;
+  top: 0;
+  /*bottom: 50px;*/
+  right: 0;
+  width: 20%;
+  background-color: rgba(0,0,0,1);
+  padding: 10px;
+}
+
+a, a.link {
+color: #1ABC9C;
+text-decoration: underline;
+-webkit-transition: 0.25s;
+-moz-transition: 0.25s;
+-o-transition: 0.25s;
+transition: 0.25s;
+-webkit-backface-visibility: hidden;
+}
+a.hover {
+  color: #16a085;
+}
+a.visited, a.active{
+  color: #9b59b6;
+}

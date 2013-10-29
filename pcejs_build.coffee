@@ -24,7 +24,7 @@ class PCEJSBuild
     memory: 256
     prefix: 'build/'
     packagedir: 'pce-js/'
-    outputformat: 'js'
+    outputformat: 'html'
 
   configFilePath: './pcejs-build-config.json'
   
