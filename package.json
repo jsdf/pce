@@ -1,0 +1,8 @@
+{
+  "name": "jspce",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "lodash": "~1.3.1"
+  }
+}

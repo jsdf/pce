@@ -1,0 +1,7 @@
+node_modules/
+roms
+roms*/
+pcejs-build-config.json
+build/
+build-native/
+pce-js/

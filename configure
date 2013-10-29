@@ -622,6 +622,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+EMSCRIPTEN
 PCE_DIR_DATA
 PCE_DIR_ETC
 PCE_READLINE_LIBS
@@ -4607,15 +4608,17 @@ if test "x$no_x" = "xyes" ; then
 	PCE_X11_LIBS=""
 else
 	PCE_ENABLE_X11=1
-	if test -n "$x_includes" ; then
-		PCE_X11_CFLAGS="-I$x_includes"
-	else
-		PCE_X11_CFLAGS=""
-	fi
-	if test -n "$x_libraries" ; then
-		PCE_X11_LIBS="-L$x_libraries -lX11"
-	else
-		PCE_X11_LIBS="-lX11"
+	if test "x$EMSCRIPTEN" != "xyes" ; then
+		if test -n "$x_includes" ; then
+			PCE_X11_CFLAGS="-I$x_includes"
+		else
+			PCE_X11_CFLAGS=""
+		fi
+		if test -n "$x_libraries" ; then
+			PCE_X11_LIBS="-L$x_libraries -lX11"
+		else
+			PCE_X11_LIBS="-lX11"
+		fi
 	fi
 	$as_echo "#define PCE_ENABLE_X11 1" >>confdefs.h
 
@@ -4657,32 +4660,34 @@ $as_echo "no (detected)" >&6; }
 fi
 
 if test "x$PCE_ENABLE_SDL" != "x0" ; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for static SDL" >&5
+	if test "x$EMSCRIPTEN" != "xyes" ; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for static SDL" >&5
 $as_echo_n "checking for static SDL... " >&6; }
-	# Check whether --enable-static-sdl was given.
+		# Check whether --enable-static-sdl was given.
 if test "${enable_static_sdl+set}" = set; then :
   enableval=$enable_static_sdl;
-		if test "x$enableval" = "xyes" ; then
-			PCE_SDL_LIBS=`sdl-config --static-libs`
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
+			if test "x$enableval" = "xyes" ; then
+				PCE_SDL_LIBS=`sdl-config --static-libs`
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
 $as_echo "yes (forced)" >&6; }
-		else
-			PCE_SDL_LIBS=`sdl-config --libs`
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
+			else
+				PCE_SDL_LIBS=`sdl-config --libs`
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
 $as_echo "no (forced)" >&6; }
-		fi
+			fi
 
 else
 
-  		PCE_SDL_LIBS=`sdl-config --libs`
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (default)" >&5
+	  		PCE_SDL_LIBS=`sdl-config --libs`
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (default)" >&5
 $as_echo "no (default)" >&6; }
 
 
 fi
 
 
-	PCE_SDL_CFLAGS=`sdl-config --cflags`
+		PCE_SDL_CFLAGS=`sdl-config --cflags`
+	fi
 	$as_echo "#define PCE_ENABLE_SDL 1" >>confdefs.h
 
 fi
@@ -5574,6 +5579,8 @@ _ACEOF
 cat >>confdefs.h <<_ACEOF
 #define PCE_DIR_DATA "$pce_datdir"
 _ACEOF
+
+
 
 
 
@@ -7041,3 +7048,5 @@ echo "  Sound drivers built:    $sound1"
 echo "  Sound drivers not built:$sound2"
 echo "  Enabled options:        $option1"
 echo "  Disabled options:       $option2"
+echo
+echo "  EMSCRIPTEN:				$EMSCRIPTEN"

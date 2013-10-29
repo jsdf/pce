@@ -473,6 +473,67 @@ void st_run (atari_st_t *sim)
 }
 
 
+
+/*
+ * emscripten specific main loop
+ */
+
+/*
+ * store global reference to simulation state struct
+ * so that st_run_emscripten_step doesn't require it as a parameter
+ */
+atari_st_t  *atari_st_sim = NULL;
+
+/*
+ * setup and run the simulation
+ */
+void st_run_emscripten (atari_st_t *sim)
+{
+	atari_st_sim = sim;
+
+	pce_start (&sim->brk);
+
+	st_clock_discontinuity (sim);
+
+
+	#ifdef EMSCRIPTEN
+	emscripten_set_main_loop(st_run_emscripten_step, 100, 1);
+	#else
+	while (!sim->brk) {
+		st_run_emscripten_step();
+	}
+	#endif
+
+	// pce_stop();
+}
+
+
+/*
+ * run one iteration
+ */
+void st_run_emscripten_step ()
+{
+	// for each 'emscripten step' we'll run a bunch of actual cycles
+	// to minimise overhead from emscripten's main loop management
+	int i;
+	for (i = 0; i < 10000; ++i)
+	{	
+		st_clock (atari_st_sim, 0);
+		st_clock (atari_st_sim, 0);
+
+		if (atari_st_sim->brk) {
+			pce_stop();
+			#ifdef EMSCRIPTEN
+			emscripten_cancel_main_loop();
+			#endif
+			return;
+		}
+	}
+}
+/*
+ * end emscripten specific main loop
+ */
+
 static
 void st_log_trap_bios (atari_st_t *sim, unsigned iw)
 {
