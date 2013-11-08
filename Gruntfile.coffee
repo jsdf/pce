@@ -67,6 +67,9 @@ module.exports = (grunt) ->
   grunt.task.registerTask 'romdir', 'Set rom/config/data directory', (romdir) ->
     pcejs.run(this.async(), './scripts/a1-romdir.sh', [], PCEJS_ROMDIR: romdir)
 
+  grunt.task.registerTask 'env', 'Print build environment variables', ->
+    console.log(pcejs.getEnv())
+
   # Alias tasks
   grunt.registerTask('rebuild', [
     'make',

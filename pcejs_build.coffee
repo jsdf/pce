@@ -16,11 +16,17 @@ spawnRun = (done, command, args, opts) ->
     process.on('close', (code) -> done(code))
 
 class PCEJSBuild
+  archs: [
+    'macplus',
+    'ibmpc',
+    'atarist',
+  ]
   defaultConfig:
     target: 'macplus'
     emscripten: true
     asmjs: true
     optlvl: 'O2'
+    dbglvl: null
     memory: 256
     prefix: 'build/'
     packagedir: 'pce-js/'
@@ -50,11 +56,14 @@ class PCEJSBuild
 
   getEmscriptenFlags: ->
     flags = []
+    # flags.push('-s VERBOSE=1')
+    # flags.push('-s OUTLINING_LIMIT=16000')
     flags.push('-s TOTAL_MEMORY=' + @config.memory*1024*1024) if @config.memory?
     flags.push('-s ASM_JS=1') if @config.asmjs
     if @config.exportfuncs
       flags.push('-s EXPORTED_FUNCTIONS='+JSON.stringify(@config.exportfuncs)+'')
     flags.push('-'+@config.optlvl) if @config.optlvl?
+    # flags.push('-g'+(@config.dbglvl if _.isNumber(@config.dbglvl))) if @config.dbglvl?
     flags.join(' ')
 
   getEnv: ->
@@ -71,6 +80,16 @@ class PCEJSBuild
       env.PCEJS_EMFLAGS = emflags
       env.PCEJS_CFLAGS = "-Qunused-arguments -include src/include/pcedeps.h #{emflags}"
       env.PCEJS_CONFIGURE = "emconfigure ./configure"
+      
+      # don't build emulators other than active target
+      # archConfMapping =
+      #   'macplus': 'macplus'
+      #   'ibmpc': 'ibmpc'
+      #   'atarist': 'atari-st'
+      # env.PCEJS_CONFFLAGS = 
+      #   _.map _.without(@archs, @config.target), (arch) ->
+      #     '--without-'+archConfMapping[arch]
+      #   .join(' ')
     else
       env.PCEJS_CFLAGS = "-I/usr/local/opt/emscripten/system/include/emscripten/"
       env.PCEJS_CONFIGURE = "./configure"
