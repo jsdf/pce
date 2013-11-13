@@ -1755,10 +1755,10 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	else if ((val & 0xe0) == 0xc0) {
 		cmd_read_address (fdc);
 	}
-	else if ((val & 0xf8) == 0xe0) {
+	else if ((val & 0xf0) == 0xe0) {
 		cmd_read_track (fdc);
 	}
-	else if ((val & 0xf9) == 0xf0) {
+	else if ((val & 0xf1) == 0xf0) {
 		cmd_write_track (fdc);
 	}
 	else {
