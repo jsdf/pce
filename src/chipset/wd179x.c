@@ -1614,7 +1614,13 @@ void wd179x_read_track_clock (wd179x_t *fdc)
 		else if (fdc->scan_buf == WD179X_MARK_C2) {
 			fdc->is_data_bit = 1;
 			fdc->last_mark_c2 = 16;
-			fdc->scan_cnt = 16;
+
+			if (fdc->scan_cnt < 4) {
+				fdc->scan_cnt = 0;
+			}
+			else {
+				fdc->scan_cnt = 16;
+			}
 		}
 
 		if (fdc->scan_cnt < 16) {
