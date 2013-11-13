@@ -704,10 +704,6 @@ void e68_exception_intr (e68000_t *c, unsigned level, unsigned vect)
 
 void e68_interrupt (e68000_t *c, unsigned level)
 {
-	if (level > 0) {
-		c->halt &= ~1U;
-	}
-
 	if ((level == 7) && (c->int_ipl != 7)) {
 		c->int_nmi = 1;
 	}
@@ -767,21 +763,31 @@ void e68_reset (e68000_t *c)
 
 void e68_execute (e68000_t *c)
 {
-	c->last_pc[++c->last_pc_idx & (E68_LAST_PC_CNT - 1)] = e68_get_pc (c);
-	c->bus_error = 0;
-	c->trace_sr = e68_get_sr (c);
+	if (c->halt == 0) {
+		c->last_pc[++c->last_pc_idx & (E68_LAST_PC_CNT - 1)] = e68_get_pc (c);
+		c->bus_error = 0;
+		c->trace_sr = e68_get_sr (c);
 
-	c->ir[0] = c->ir[1];
+		c->ir[0] = c->ir[1];
 
-	c->opcodes[(c->ir[0] >> 6) & 0x3ff] (c);
+		c->opcodes[(c->ir[0] >> 6) & 0x3ff] (c);
 
-	c->oprcnt += 1;
+		c->oprcnt += 1;
 
-	if (c->trace_sr & E68_SR_T) {
-		e68_exception_trace (c);
+		if (c->trace_sr & E68_SR_T) {
+			e68_exception_trace (c);
+		}
+	}
+	else {
+		e68_set_clk (c, 4);
+
+		if (c->halt & ~1U) {
+			return;
+		}
 	}
 
 	if (c->int_nmi) {
+		c->halt &= ~1U;
 		e68_exception_avec (c, 7);
 		c->int_nmi = 0;
 	}
@@ -792,6 +798,8 @@ void e68_execute (e68000_t *c)
 		ipl = c->int_ipl;
 
 		if (iml < ipl) {
+			c->halt &= ~1U;
+
 			if (c->inta != NULL) {
 				vec = c->inta (c->inta_ext, ipl);
 			}
@@ -816,10 +824,6 @@ void e68_clock (e68000_t *c, unsigned long n)
 
 		c->clkcnt += c->delay;
 		c->delay = 0;
-
-		if (c->halt) {
-			return;
-		}
 
 		e68_execute (c);
 
