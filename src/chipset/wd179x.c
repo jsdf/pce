@@ -1632,6 +1632,7 @@ void wd179x_read_track_clock (wd179x_t *fdc)
 		if (fdc->status & WD179X_ST_DRQ) {
 			fprintf (stderr, "WD179X: READ TRACK LOST DATA\n");
 			fdc->status |= WD179X_ST_LOST_DATA;
+			wd179x_set_drq (fdc, 0);
 		}
 
 		fdc->data = fdc->val & 0xff;
@@ -1733,6 +1734,7 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	fdc->cmd = val;
 
 	wd179x_set_irq (fdc, 0);
+	wd179x_set_drq (fdc, 0);
 
 	fdc->interrupt_enable = 1;
 	fdc->interrupt_request = 0;
