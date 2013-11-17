@@ -214,8 +214,16 @@ int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque)
 	for (c = 0; c < img->cyl_cnt; c++) {
 		cyl = img->cyl[c];
 
+		if (cyl == NULL) {
+			continue;
+		}
+
 		for (h = 0; h < cyl->trk_cnt; h++) {
 			trk = cyl->trk[h];
+
+			if (trk == NULL) {
+				continue;
+			}
 
 			if (pri_sel_match_track (c, h) == 0) {
 				continue;
