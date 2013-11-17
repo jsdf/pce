@@ -314,7 +314,7 @@ void timer_set_cr (e68901_t *mfp, unsigned idx, unsigned char val)
 
 //	st_log_deb ("MFP: set timer %u cr: %02X\n", idx, val);
 
-	tmr->cr = val & 0x1f;
+	tmr->cr = val & 0x0f;
 
 	tmr->clk_div_set = div[val & 7];
 
