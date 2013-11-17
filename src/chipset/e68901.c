@@ -233,8 +233,6 @@ unsigned e68901_inta (e68901_t *mfp)
 
 	tmp = 1U << idx;
 
-//	fprintf (stderr, "MFP: INTA %04X(%u)\n", tmp, idx);
-
 	mfp->ipr &= ~tmp;
 
 	if (mfp->ivr & 0x08) {
@@ -312,8 +310,6 @@ void timer_set_cr (e68901_t *mfp, unsigned idx, unsigned char val)
 
 	tmr = &mfp->timer[idx & 3];
 
-//	st_log_deb ("MFP: set timer %u cr: %02X\n", idx, val);
-
 	tmr->cr = val & 0x0f;
 
 	tmr->clk_div_set = div[val & 7];
@@ -331,8 +327,9 @@ void timer_set_dr (e68901_timer_t *tmr, unsigned char val)
 {
 	tmr->dr[1] = val;
 
-	if ((tmr->cr & 15) == 0) {
+	if ((tmr->cr & 0x0f) == 0) {
 		tmr->dr[0] = val;
+		tmr->clk_val = 0;
 	}
 }
 
@@ -379,7 +376,7 @@ void timer_set_inp (e68901_t *mfp, unsigned idx, char val)
 		return;
 	}
 
-	if (tmr->cr == 8) {
+	if ((tmr->cr & 0x0f) == 8) {
 		/* event counter */
 
 		if (val) {
@@ -395,25 +392,19 @@ void timer_clock (e68901_t *mfp, unsigned idx, unsigned cnt)
 
 	tmr = &mfp->timer[idx & 3];
 
-	if ((tmr->cr & 0x0f) == 0) {
-		return;
-	}
-
 	if (tmr->clk_div == 0) {
 		return;
 	}
 
-	tmr->clk_val += cnt;
-
-	if (tmr->cr & 8) {
-		if (tmr->cr == 8) {
-			return;
-		}
-
-		if (tmr->inp == 0) {
-			return;
-		}
+	if ((tmr->cr & 0x07) == 0) {
+		return;
 	}
+
+	if ((tmr->cr & 8) && (tmr->inp == 0)) {
+		return;
+	}
+
+	tmr->clk_val += cnt;
 
 	while (tmr->clk_val >= tmr->clk_div) {
 		tmr->clk_val -= tmr->clk_div;
@@ -618,10 +609,10 @@ unsigned char e68901_get_uint8 (e68901_t *mfp, unsigned long addr)
 		break;
 
 	case MFP_REG_TACR:
-		return (mfp->timer[0].cr & 0x1f);
+		return (mfp->timer[0].cr & 0x0f);
 
 	case MFP_REG_TBCR:
-		return (mfp->timer[1].cr & 0x1f);
+		return (mfp->timer[1].cr & 0x0f);
 
 	case MFP_REG_TCDCR:
 		return (((mfp->timer[2].cr & 7) << 4) | (mfp->timer[3].cr & 7));
