@@ -161,6 +161,7 @@ static st_joymap_t joymap[] = {
 	{ PCE_KEY_KP_8, 0x01 },
 	{ PCE_KEY_KP_9, 0x09 },
 	{ PCE_KEY_KP_4, 0x04 },
+	{ PCE_KEY_KP_5, 0x80 },
 	{ PCE_KEY_KP_6, 0x08 },
 	{ PCE_KEY_KP_1, 0x06 },
 	{ PCE_KEY_KP_2, 0x02 },
@@ -427,9 +428,13 @@ void st_kbd_set_key (st_kbd_t *kbd, unsigned event, pce_key_t key)
 		if (key == PCE_KEY_KP_5) {
 			if (++kbd->keypad_joy > 2) {
 				kbd->keypad_joy = 0;
+				st_log_deb ("keypad: keyboard\n");
 			}
-
-			st_log_deb ("keypad joystick %u\n", kbd->keypad_joy);
+			else {
+				st_log_deb ("keypad: joystick %u\n",
+					(kbd->keypad_joy & 1) + 1
+				);
+			}
 		}
 		else {
 			pce_log (MSG_INF, "unhandled magic key (%u)\n",
@@ -440,8 +445,8 @@ void st_kbd_set_key (st_kbd_t *kbd, unsigned event, pce_key_t key)
 		return;
 	}
 
-	if (kbd->keypad_joy < 2) {
-		if (st_kbd_set_joy (kbd, kbd->keypad_joy, event, key) == 0) {
+	if (kbd->keypad_joy > 0) {
+		if (st_kbd_set_joy (kbd, kbd->keypad_joy & 1, event, key) == 0) {
 			return;
 		}
 	}
