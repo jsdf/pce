@@ -40,6 +40,7 @@
 
 #include <drivers/psi/psi.h>
 #include <drivers/psi/psi-img-raw.h>
+#include <drivers/psi/psi-img-stx.h>
 #include <drivers/psi/psi-img.h>
 
 
@@ -83,6 +84,7 @@ static pce_option_t opts[] = {
 	{ '?', 0, "help", NULL, "Print usage information" },
 	{ 'a', 1, "alternate", "a", "Select alternate sectors" },
 	{ 'c', 1, "cylinder", "c", "Select cylinders [all]" },
+	{ 'D', 0, "dump", NULL, "Dump extra information [no]" },
 	{ 'e', 2, "edit", "what val", "Edit selected sector attributes" },
 	{ 'f', 0, "info", NULL, "Print image information [no]" },
 	{ 'F', 1, "filler", "val", "Set the sector fill byte [0xf6]" },
@@ -584,6 +586,10 @@ int main (int argc, char **argv)
 			if (psi_parse_range (optarg[0], &par_cyl[0], &par_cyl[1], &par_cyl_all, &par_cyl_inv)) {
 				return (1);
 			}
+			break;
+
+		case 'D':
+			par_stx_dump_tracks = 1;
 			break;
 
 		case 'e':

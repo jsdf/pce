@@ -32,6 +32,9 @@
 #define STX_MAGIC 0x52535900
 
 
+char par_stx_dump_tracks = 0;
+
+
 static
 unsigned mfm_crc (unsigned crc, const void *buf, unsigned cnt)
 {
@@ -264,7 +267,7 @@ int stx_load_track (FILE *fp, psi_img_t *img, unsigned long *ofs)
 		}
 	}
 
-	if (0) {
+	if (par_stx_dump_tracks) {
 		if (stx_save_track_image (fp, dpos, flag, c, h)) {
 			return (1);
 		}
