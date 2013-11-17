@@ -87,7 +87,8 @@ void e68901_init (e68901_t *mfp, unsigned addr_shift)
 
 	mfp->gpip_xor = 0xff;
 	mfp->gpip_inp = 0;
-	mfp->irr = 0;
+	mfp->irr1 = 0;
+	mfp->irr2 = 0;
 
 	mfp->usart_timer = 0xff;
 
@@ -166,10 +167,13 @@ static
 void e68901_check_int (e68901_t *mfp)
 {
 	int            irq;
-	unsigned short tmp;
+	unsigned short tmp, inp;
 
-	mfp->ipr = (mfp->ipr | (~mfp->ipr_set & mfp->irr)) & mfp->ier;
-	mfp->ipr_set = mfp->irr & mfp->ier;
+	inp = (mfp->gpip_inp ^ mfp->gpip_xor) ^ ~mfp->gpip_aer;
+	mfp->irr1 &= 0x3f30;
+	mfp->irr1 |= (inp & 0x0f) | ((inp << 2) & 0xc0) | ((inp << 8) & 0xc000);
+	mfp->ipr |= (mfp->irr1 ^ mfp->irr2) & mfp->irr1 & mfp->ier;
+	mfp->irr2 = mfp->irr1;
 
 	if (mfp->ivr & 0x08) {
 		tmp = mfp->ipr & mfp->imr;
@@ -192,7 +196,7 @@ void e68901_check_usart_int (e68901_t *mfp)
 {
 	unsigned short irr;
 
-	irr = mfp->irr & 0xe1ff;
+	irr = mfp->irr1 & 0xe1ff;
 
 	if (mfp->rsr[0] & (MFP_RSR_OE | MFP_RSR_PE | MFP_RSR_FE)) {
 		irr |= 1U << 11;
@@ -208,8 +212,8 @@ void e68901_check_usart_int (e68901_t *mfp)
 		irr |= 1U << 10;
 	}
 
-	if (mfp->irr != irr) {
-		mfp->irr = irr;
+	if (mfp->irr1 != irr) {
+		mfp->irr1 = irr;
 
 		e68901_check_int (mfp);
 	}
@@ -253,13 +257,6 @@ void e68901_set_inp (e68901_t *mfp, unsigned char val)
 	}
 
 	mfp->gpip_inp = val;
-
-	val = (val ^ mfp->gpip_xor) ^ ~mfp->gpip_aer;
-
-	mfp->irr &= 0x3f30;
-	mfp->irr |= val & 0x0f;
-	mfp->irr |= (val << 2) & 0xc0;
-	mfp->irr |= (val << 8) & 0xc000;
 
 	e68901_check_int (mfp);
 }
@@ -692,6 +689,7 @@ void e68901_set_uint8 (e68901_t *mfp, unsigned long addr, unsigned char val)
 
 	case MFP_REG_AER:
 		mfp->gpip_aer = val;
+		e68901_check_int (mfp);
 		break;
 
 	case MFP_REG_DDR:
@@ -837,7 +835,6 @@ void e68901_reset (e68901_t *mfp)
 
 	mfp->ier = 0;
 	mfp->ipr = 0;
-	mfp->ipr_set = 0;
 	mfp->isr = 0;
 	mfp->imr = 0;
 	mfp->ivr = 0;
@@ -934,12 +931,6 @@ void e68901_clock (e68901_t *mfp, unsigned n)
 	unsigned i;
 
 	for (i = 0; i < 4; i++) {
-		if (mfp->usart_timer == i) {
-			if ((mfp->recv_clk_cnt == 0) && (mfp->send_clk_cnt == 0)) {
-				continue;
-			}
-		}
-
 		timer_clock (mfp, i, n);
 	}
 }

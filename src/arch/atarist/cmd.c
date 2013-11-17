@@ -253,8 +253,8 @@ void st_print_state_mfp (atari_st_t *sim)
 		mfp->gpip_inp, mfp->gpip_xor, mfp->gpip_val, mfp->gpip_aer, mfp->gpip_ddr
 	);
 
-	pce_printf ("INTR: IRR=%04X IER=%04X IPR=%04X IMR=%04X ISR=%04X IVR=%02X VEC=%02X IRQ=%d\n",
-		mfp->irr, mfp->ier, mfp->ipr, mfp->imr, mfp->isr, mfp->ivr, mfp->vec, mfp->irq_val
+	pce_printf ("INTR: IRR=%04X/%04X IER=%04X IPR=%04X IMR=%04X ISR=%04X IVR=%02X VEC=%02X IRQ=%d\n",
+		mfp->irr1, mfp->irr2, mfp->ier, mfp->ipr, mfp->imr, mfp->isr, mfp->ivr, mfp->vec, mfp->irq_val
 	);
 
 	pce_printf ("UART: PAR=%u%c%u UCR=%02X RSR=%02X RDR=%02X TSR=%02X TDR=%02X RCLK=%u/%u SCLK=%u/%u\n",

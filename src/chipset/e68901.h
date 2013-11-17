@@ -52,10 +52,10 @@ typedef struct {
 	unsigned char  gpip_aer;
 	unsigned char  gpip_ddr;
 
-	unsigned short irr;
+	unsigned short irr1;
+	unsigned short irr2;
 	unsigned short ier;
 	unsigned short ipr;
-	unsigned short ipr_set;
 	unsigned short isr;
 	unsigned short imr;
 	unsigned char  ivr;
