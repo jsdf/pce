@@ -672,7 +672,13 @@ unsigned short e68901_get_uint16 (e68901_t *mfp, unsigned long addr)
 
 unsigned long e68901_get_uint32 (e68901_t *mfp, unsigned long addr)
 {
-	return (e68901_get_uint8 (mfp, addr));
+	unsigned long val;
+
+	val = e68901_get_uint16 (mfp, addr);
+	val <<= 16;
+	val |= e68901_get_uint16 (mfp, addr + 2);
+
+	return (val);
 }
 
 
@@ -805,7 +811,8 @@ void e68901_set_uint16 (e68901_t *mfp, unsigned long addr, unsigned short val)
 
 void e68901_set_uint32 (e68901_t *mfp, unsigned long addr, unsigned long val)
 {
-	e68901_set_uint8 (mfp, addr, val & 0xff);
+	e68901_set_uint16 (mfp, addr, val >> 16);
+	e68901_set_uint16 (mfp, addr + 2, val);
 }
 
 int e68901_receive (e68901_t *mfp, unsigned char val)
