@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e80286r.c                                      *
  * Created:     2003-10-07 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -134,7 +134,7 @@ void e86_set_80286 (e8086_t *c)
 {
 	e86_set_80186 (c);
 
-	c->cpu |= (E86_CPU_INT6 | E86_CPU_FLAGS286);
+	c->cpu |= (E86_CPU_INT6 | E86_CPU_FLAGS286 | E86_CPU_PUSH_FIRST);
 
 	c->op[0x0f] = &op_0f;
 }
