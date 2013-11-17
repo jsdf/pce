@@ -171,7 +171,11 @@ int stx_load_sector (FILE *fp, psi_trk_t *trk, unsigned long hpos, unsigned long
 
 	psi_trk_add_sector (trk, sct);
 
-	psi_sct_set_position (sct, spos);
+	if (spos > 176) {
+		/* STX position is relative to the first byte after the ID */
+		psi_sct_set_position (sct, spos - 176);
+	}
+
 	psi_sct_set_mfm_size (sct, n);
 	psi_sct_set_read_time (sct, (time + 2) / 4);
 
