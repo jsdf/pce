@@ -1116,8 +1116,8 @@ void cmd_read_sector (wd179x_t *fdc)
 	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
-	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ SECTOR (c=%u h=%u s=%u)\n",
-		fdc->drv->d, fdc->cmd, fdc->track, h, fdc->sector
+	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ SECTOR (pc=%u c=%u h=%u s=%u)\n",
+		fdc->drv->d, fdc->cmd, fdc->drv->c, fdc->track, h, fdc->sector
 	);
 #endif
 
