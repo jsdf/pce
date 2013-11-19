@@ -8,7 +8,8 @@ echo "converting bitcode to javascript with datafiles for target: ${PCEJS_TARGET
 # fi
 
 cp ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET} ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc
-EMCC_DEBUG=2 emcc ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc -o ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} \
+# EMCC_DEBUG=2 
+emcc ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc -o ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} \
 	$PCEJS_EMFLAGS \
 	--preload-file roms
 

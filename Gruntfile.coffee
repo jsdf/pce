@@ -34,6 +34,9 @@ module.exports = (grunt) ->
   grunt.task.registerTask 'make', 'Build emulator', ->
     pcejs.run(this.async(), './scripts/20-make.sh')
 
+  grunt.task.registerTask 'remake', 'Rebuild emulator', ->
+    pcejs.run(this.async(), './scripts/21-remake.sh')
+
   grunt.task.registerTask 'clean', 'Clean source tree', (full) ->
     if full
       pcejs.run(this.async(), './scripts/a0-clean.sh')
@@ -58,6 +61,8 @@ module.exports = (grunt) ->
         'make',
         'afterbuild:'+pcejs.config.target
       ])
+      
+    pcejs.saveConfig()
 
   grunt.task.registerTask 'run', 'Run emulator', ->
     pcejs.run(this.async(), 'http-server', [packagedir])
@@ -69,12 +74,19 @@ module.exports = (grunt) ->
 
   grunt.task.registerTask 'env', 'Print build environment variables', ->
     console.log(pcejs.getEnv())
+  
+  grunt.registerTask 'rebuild', 'Build last again', (target) ->
+    pcejs.config.target = target if target
 
-  # Alias tasks
-  grunt.registerTask('rebuild', [
-    'make',
-    'afterbuild'
-  ])
+    if target is 'native'
+      grunt.task.run.apply(grunt.task, [
+        'remake'
+      ])
+    else
+      grunt.task.run.apply(grunt.task, [
+        'remake',
+        'afterbuild:'+pcejs.config.target
+      ])
 
   # Default task
   # grunt.registerTask('default', [])
