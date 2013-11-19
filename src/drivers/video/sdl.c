@@ -94,8 +94,10 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_k,            PCE_KEY_K },
 	{ SDLK_l,            PCE_KEY_L },
 	{ SDLK_SEMICOLON,    PCE_KEY_SEMICOLON },
+	{ 0x00ba,            PCE_KEY_SEMICOLON },
 	{ SDLK_QUOTE,        PCE_KEY_QUOTE },
 	{ SDLK_BACKSLASH,    PCE_KEY_BACKSLASH },
+	{ 0x00dc,            PCE_KEY_BACKSLASH },
 
 	{ SDLK_LSHIFT,       PCE_KEY_LSHIFT },
 	{ SDLK_LESS,         PCE_KEY_LESS },
