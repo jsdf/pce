@@ -41,6 +41,7 @@ int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short
 	}
 
 	if (pri_get_uint16_be (buf, 0) != 0x5aa5) {
+		fprintf (stderr, "pri/tc: bad magic\n");
 		return (1);
 	}
 
