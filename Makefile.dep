@@ -2337,6 +2337,30 @@ src/libini/write.o: src/libini/write.c \
 	src/config.h \
 	src/libini/libini.h
 
+src/utils/pce-img/commit.o: src/utils/pce-img/commit.c \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
+src/utils/pce-img/convert.o: src/utils/pce-img/convert.c \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
+src/utils/pce-img/cow.o: src/utils/pce-img/cow.c \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
+src/utils/pce-img/create.o: src/utils/pce-img/create.c \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
 src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
@@ -2349,6 +2373,7 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
+	src/lib/sysdep.h \
 	src/utils/pce-img/pce-img.h
 
 src/utils/pri/main.o: src/utils/pri/main.c \
@@ -2402,6 +2427,7 @@ src/utils/psi/load.o: src/utils/psi/load.c \
 src/utils/psi/main.o: src/utils/psi/main.c \
 	src/config.h \
 	src/drivers/psi/psi-img-raw.h \
+	src/drivers/psi/psi-img-stx.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
