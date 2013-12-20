@@ -334,11 +334,11 @@ psi_img_t *st_fdc_load_block (st_fdc_t *fdc, unsigned drive, disk_t *dsk)
 static
 pri_img_t *st_fdc_load_disk (st_fdc_t *fdc, unsigned drive)
 {
-	disk_t     *dsk;
-	disk_psi_t *dskpsi;
-	psi_img_t  *img, *del;
-	pri_img_t  *ret;
-	pri_mfm_t  par;
+	disk_t        *dsk;
+	disk_psi_t    *dskpsi;
+	psi_img_t     *img, *del;
+	pri_img_t     *ret;
+	pri_enc_mfm_t par;
 
 	dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive]);
 
@@ -360,7 +360,7 @@ pri_img_t *st_fdc_load_disk (st_fdc_t *fdc, unsigned drive)
 		return (NULL);
 	}
 
-	pri_mfm_init (&par, 500000, 300);
+	pri_encode_mfm_init (&par, 500000, 300);
 
 	par.enable_iam = 0;
 	par.auto_gap3 = 1;
@@ -489,7 +489,7 @@ int st_fdc_save_disk (st_fdc_t *fdc, unsigned drive)
 		return (1);
 	}
 
-	img = pri_decode_mfm (fdc->img[drive]);
+	img = pri_decode_mfm (fdc->img[drive], NULL);
 
 	if (img == NULL) {
 		return (1);

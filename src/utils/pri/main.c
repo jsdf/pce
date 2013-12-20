@@ -57,7 +57,8 @@ static unsigned long par_trk[2];
 
 static unsigned long par_data_rate = 500000;
 
-static pri_mfm_t     par_mfm;
+static pri_dec_mfm_t par_dec_mfm;
+static pri_enc_mfm_t par_enc_mfm;
 
 
 static pce_option_t opts[] = {
@@ -112,7 +113,7 @@ void print_help (void)
 		"\n"
 		"parameters are:\n"
 		"  mfm-auto-gap3, mfm-clock, mfm-iam, mfm-gap1, mfm-gap3, mfm-gap4a,\n"
-		"  mfm-track-size\n"
+		"  mfm-min-size, mfm-track-size\n"
 		"\n"
 		"decode types are:\n"
 		"  raw, gcr, mfm, gcr-raw, mfm-raw\n"
@@ -637,7 +638,7 @@ int pri_decode (pri_img_t *img, const char *type, const char *fname)
 		dimg = pri_decode_gcr (img);
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dimg = pri_decode_mfm (img);
+		dimg = pri_decode_mfm (img, &par_dec_mfm);
 	}
 	else {
 		dimg = NULL;
@@ -707,22 +708,22 @@ int pri_encode (pri_img_t **img, const char *type, const char *fname)
 		dimg = pri_encode_gcr (simg);
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dimg = pri_encode_mfm (simg, &par_mfm);
+		dimg = pri_encode_mfm (simg, &par_enc_mfm);
 	}
 	else if (strcmp (type, "mfm-dd-300") == 0) {
-		par_mfm.clock = 500000;
-		par_mfm.track_size = 500000 / 5;
-		dimg = pri_encode_mfm (simg, &par_mfm);
+		par_enc_mfm.clock = 500000;
+		par_enc_mfm.track_size = 500000 / 5;
+		dimg = pri_encode_mfm (simg, &par_enc_mfm);
 	}
 	else if (strcmp (type, "mfm-hd-300") == 0) {
-		par_mfm.clock = 1000000;
-		par_mfm.track_size = 1000000 / 5;
-		dimg = pri_encode_mfm (simg, &par_mfm);
+		par_enc_mfm.clock = 1000000;
+		par_enc_mfm.track_size = 1000000 / 5;
+		dimg = pri_encode_mfm (simg, &par_enc_mfm);
 	}
 	else if (strcmp (type, "mfm-hd-360") == 0) {
-		par_mfm.clock = 1000000;
-		par_mfm.track_size = 1000000 / 6;
-		dimg = pri_encode_mfm (simg, &par_mfm);
+		par_enc_mfm.clock = 1000000;
+		par_enc_mfm.track_size = 1000000 / 6;
+		dimg = pri_encode_mfm (simg, &par_enc_mfm);
 	}
 	else {
 		dimg = NULL;
@@ -1201,25 +1202,28 @@ static
 int pri_set_parameter (const char *name, const char *val)
 {
 	if (strcmp (name, "mfm-auto-gap3") == 0) {
-		par_mfm.auto_gap3 = (strtoul (val, NULL, 0) != 0);
+		par_enc_mfm.auto_gap3 = (strtoul (val, NULL, 0) != 0);
 	}
 	else if (strcmp (name, "mfm-clock") == 0) {
-		par_mfm.clock = strtoul (val, NULL, 0);
+		par_enc_mfm.clock = strtoul (val, NULL, 0);
 	}
 	else if (strcmp (name, "mfm-iam") == 0) {
-		par_mfm.enable_iam = (strtoul (val, NULL, 0) != 0);
+		par_enc_mfm.enable_iam = (strtoul (val, NULL, 0) != 0);
 	}
 	else if (strcmp (name, "mfm-gap1") == 0) {
-		par_mfm.gap1 = strtoul (val, NULL, 0);
+		par_enc_mfm.gap1 = strtoul (val, NULL, 0);
 	}
 	else if (strcmp (name, "mfm-gap3") == 0) {
-		par_mfm.gap3 = strtoul (val, NULL, 0);
+		par_enc_mfm.gap3 = strtoul (val, NULL, 0);
 	}
 	else if (strcmp (name, "mfm-gap4a") == 0) {
-		par_mfm.gap4a = strtoul (val, NULL, 0);
+		par_enc_mfm.gap4a = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "mfm-min-size") == 0) {
+		par_dec_mfm.min_sct_size = strtoul (val, NULL, 0);
 	}
 	else if (strcmp (name, "mfm-track-size") == 0) {
-		par_mfm.track_size = strtoul (val, NULL, 0);
+		par_enc_mfm.track_size = strtoul (val, NULL, 0);
 	}
 	else {
 		return (1);
@@ -1261,7 +1265,8 @@ int main (int argc, char **argv)
 	img = NULL;
 	out = NULL;
 
-	pri_mfm_init (&par_mfm, 500000, 300);
+	pri_decode_mfm_init (&par_dec_mfm);
+	pri_encode_mfm_init (&par_enc_mfm, 500000, 300);
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);

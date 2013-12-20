@@ -500,7 +500,7 @@ int rc759_fdc_save_disk (rc759_fdc_t *fdc, unsigned drive)
 		return (1);
 	}
 
-	img = pri_decode_mfm (fdc->img[drive]);
+	img = pri_decode_mfm (fdc->img[drive], NULL);
 
 	if (img == NULL) {
 		return (1);

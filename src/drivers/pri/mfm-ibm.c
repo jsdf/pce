@@ -37,6 +37,8 @@ typedef struct {
 	char          last;
 	char          clock;
 
+	unsigned      min_sct_size;
+
 	unsigned      crc;
 
 	unsigned long last_gap3_start;
@@ -262,6 +264,10 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 			psi_sct_set_position (sct, (mfm->trk->idx / 2) - 4 * 8);
 		}
 
+		if (sct->n < mfm->min_sct_size) {
+			psi_sct_set_size (sct, mfm->min_sct_size, 0);
+		}
+
 		pos = mfm->trk->idx;
 		wrap = mfm->trk->wrap;
 
@@ -301,20 +307,19 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 	return (0);
 }
 
-psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h)
+psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h, pri_dec_mfm_t *par)
 {
 	unsigned char mark;
 	psi_trk_t     *dtrk;
 	mfm_code_t    mfm;
 
-	dtrk = psi_trk_new (h);
-
-	if (dtrk == NULL) {
+	if ((dtrk = psi_trk_new (h)) == NULL) {
 		return (NULL);
 	}
 
 	mfm.trk = trk;
 	mfm.clock = 0;
+	mfm.min_sct_size = (par == NULL) ? 0 : par->min_sct_size;
 
 	pri_trk_set_pos (trk, 0);
 
@@ -336,7 +341,7 @@ psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h)
 	return (dtrk);
 }
 
-psi_img_t *pri_decode_mfm (pri_img_t *img)
+psi_img_t *pri_decode_mfm (pri_img_t *img, pri_dec_mfm_t *par)
 {
 	unsigned long c, h;
 	pri_cyl_t     *cyl;
@@ -364,7 +369,7 @@ psi_img_t *pri_decode_mfm (pri_img_t *img)
 				dtrk = psi_trk_new (h);
 			}
 			else {
-				dtrk = pri_decode_mfm_trk (trk, h);
+				dtrk = pri_decode_mfm_trk (trk, h, par);
 			}
 
 			if (dtrk == NULL) {
@@ -377,6 +382,11 @@ psi_img_t *pri_decode_mfm (pri_img_t *img)
 	}
 
 	return (dimg);
+}
+
+void pri_decode_mfm_init (pri_dec_mfm_t *par)
+{
+	par->min_sct_size = 0;
 }
 
 
@@ -512,7 +522,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	}
 }
 
-int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_mfm_t *par)
+int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 {
 	unsigned      i;
 	unsigned long bits;
@@ -597,7 +607,7 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_mfm_t *par)
 	return (0);
 }
 
-int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_mfm_t *par)
+int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_enc_mfm_t *par)
 {
 	unsigned long c, h;
 	psi_cyl_t     *cyl;
@@ -632,7 +642,7 @@ int pri_encode_mfm_img (pri_img_t *dimg, psi_img_t *simg, pri_mfm_t *par)
 	return (0);
 }
 
-pri_img_t *pri_encode_mfm (psi_img_t *img, pri_mfm_t *par)
+pri_img_t *pri_encode_mfm (psi_img_t *img, pri_enc_mfm_t *par)
 {
 	pri_img_t *dimg;
 
@@ -650,7 +660,7 @@ pri_img_t *pri_encode_mfm (psi_img_t *img, pri_mfm_t *par)
 	return (dimg);
 }
 
-void pri_mfm_init (pri_mfm_t *par, unsigned long clock, unsigned rpm)
+void pri_encode_mfm_init (pri_enc_mfm_t *par, unsigned long clock, unsigned rpm)
 {
 	par->clock = clock;
 	par->track_size = 60 * clock / rpm;
@@ -665,27 +675,27 @@ void pri_mfm_init (pri_mfm_t *par, unsigned long clock, unsigned rpm)
 
 pri_img_t *pri_encode_mfm_dd_300 (psi_img_t *img)
 {
-	pri_mfm_t par;
+	pri_enc_mfm_t par;
 
-	pri_mfm_init (&par, 500000, 300);
+	pri_encode_mfm_init (&par, 500000, 300);
 
 	return (pri_encode_mfm (img, &par));
 }
 
 pri_img_t *pri_encode_mfm_hd_300 (psi_img_t *img)
 {
-	pri_mfm_t par;
+	pri_enc_mfm_t par;
 
-	pri_mfm_init (&par, 1000000, 300);
+	pri_encode_mfm_init (&par, 1000000, 300);
 
 	return (pri_encode_mfm (img, &par));
 }
 
 pri_img_t *pri_encode_mfm_hd_360 (psi_img_t *img)
 {
-	pri_mfm_t par;
+	pri_enc_mfm_t par;
 
-	pri_mfm_init (&par, 1000000, 360);
+	pri_encode_mfm_init (&par, 1000000, 360);
 
 	return (pri_encode_mfm (img, &par));
 }
