@@ -5,7 +5,18 @@ rel := src/utils/pri
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-PRI_BAS := main
+PRI_BAS := \
+	comment \
+	decode \
+	delete \
+	edit \
+	encode \
+	info \
+	list \
+	new \
+	rotate \
+	main
+
 PRI_SRC := $(foreach f,$(PRI_BAS),$(rel)/$(f).c)
 PRI_OBJ := $(foreach f,$(PRI_BAS),$(rel)/$(f).o)
 PRI_HDR := $(foreach f,$(PRI_BAS),$(rel)/$(f).h)
@@ -22,7 +33,16 @@ MAN1 += $(PRI_MAN1)
 CLN  += $(PRI_BIN) $(PRI_OBJ)
 DIST += $(PRI_SRC) $(PRI_HDR) $(PRI_MAN1)
 
-$(rel)/main.o: $(rel)/main.c
+$(rel)/comment.o:  $(rel)/comment.c
+$(rel)/decode.o:   $(rel)/decode.c
+$(rel)/delete.o:   $(rel)/delete.c
+$(rel)/edit.o:     $(rel)/edit.c
+$(rel)/encode.o:   $(rel)/encode.c
+$(rel)/info.o:     $(rel)/info.c
+$(rel)/list.o:     $(rel)/list.c
+$(rel)/new.o:      $(rel)/new.c
+$(rel)/rotate.o:   $(rel)/rotate.c
+$(rel)/main.o:     $(rel)/main.c
 
 $(rel)/pri$(EXEEXT): $(PRI_OBJ_EXT) $(PRI_OBJ)
 	$(QP)echo "  LD     $@"

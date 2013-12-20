@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pri/main.h                                         *
- * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/utils/pri/comment.h                                      *
+ * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,36 +20,18 @@
  *****************************************************************************/
 
 
-#ifndef PRI_MAIN_H
-#define PRI_MAIN_H 1
+#ifndef PRI_COMMENT_H
+#define PRI_COMMENT_H 1
 
 
 #include <drivers/pri/pri.h>
-#include <drivers/psi/psi.h>
 
 
-extern const char    *arg0;
-
-extern int           par_verbose;
-
-extern int           par_list;
-extern int           par_print_info;
-
-extern int           par_cyl_all;
-extern unsigned long par_cyl[2];
-
-extern int           par_trk_all;
-extern unsigned long par_trk[2];
-
-extern unsigned long par_data_rate;
-
-
-typedef int (*pri_trk_cb) (pri_img_t *img, pri_trk_t *trk,
-	unsigned long c, unsigned long h, void *opaque
-);
-
-
-int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque);
+int pri_comment_add (pri_img_t *img, const char *str);
+int pri_comment_load (pri_img_t *img, const char *fname);
+int pri_comment_save (pri_img_t *img, const char *fname);
+int pri_comment_set (pri_img_t *img, const char *str);
+int pri_comment_show (pri_img_t *img);
 
 
 #endif

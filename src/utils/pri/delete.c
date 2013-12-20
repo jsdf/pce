@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pri/main.h                                         *
- * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * File name:   src/utils/pri/delete.c                                       *
+ * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,36 +20,46 @@
  *****************************************************************************/
 
 
-#ifndef PRI_MAIN_H
-#define PRI_MAIN_H 1
+#include "main.h"
+#include "delete.h"
 
+#include <stdio.h>
+#include <string.h>
 
 #include <drivers/pri/pri.h>
-#include <drivers/psi/psi.h>
 
 
-extern const char    *arg0;
+static
+int pri_delete_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	pri_img_del_track (img, c, h);
 
-extern int           par_verbose;
+	return (0);
+}
 
-extern int           par_list;
-extern int           par_print_info;
-
-extern int           par_cyl_all;
-extern unsigned long par_cyl[2];
-
-extern int           par_trk_all;
-extern unsigned long par_trk[2];
-
-extern unsigned long par_data_rate;
+int pri_delete_tracks (pri_img_t *img)
+{
+	return (pri_for_all_tracks (img, pri_delete_track_cb, NULL));
+}
 
 
-typedef int (*pri_trk_cb) (pri_img_t *img, pri_trk_t *trk,
-	unsigned long c, unsigned long h, void *opaque
-);
+int pri_double_step (pri_img_t *img, int even)
+{
+	unsigned  c, cn;
+	pri_cyl_t *cyl;
 
+	cn = pri_img_get_cyl_cnt (img);
 
-int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque);
+	for (c = 0; c < cn; c++) {
+		cyl = pri_img_rmv_cylinder (img, c);
 
+		if (((c & 1) && even) || (((c & 1) == 0) && !even)) {
+			pri_cyl_del (cyl);
+		}
+		else {
+			pri_img_set_cylinder (img, cyl, c / 2);
+		}
+	}
 
-#endif
+	return (0);
+}
