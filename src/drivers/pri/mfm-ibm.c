@@ -258,6 +258,10 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 
 		psi_sct_set_encoding (sct, PSI_ENC_MFM);
 
+		if ((mfm->trk->idx / 2) >= (4 * 8)) {
+			psi_sct_set_position (sct, (mfm->trk->idx / 2) - 4 * 8);
+		}
+
 		pos = mfm->trk->idx;
 		wrap = mfm->trk->wrap;
 
