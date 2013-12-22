@@ -1,4 +1,4 @@
-.TH PRI 1 "2013-08-19" "HH" "pce"
+.TH PRI 1 "2013-12-22" "HH" "pce"
 \
 .SH NAME
 pri \- convert and modify PCE raw image files
@@ -69,6 +69,17 @@ Using this options prints one line per track.
 .TP
 .B "-L, --list-long"
 List all tracks in the current image or in the next image loaded.
+\
+.TP
+.BI "-m, --merge " filename
+Load an image from \fIfilename\fR and copy all tracks that are not
+in the current image into the current image.
+\
+.TP
+.BI "-M --merge-overwrite " filename
+Load an image from \fIfilename\fR and copy all tracks into the
+current image. Tracks that exist in both images will be overwritten
+in the current image.
 \
 .TP
 .BI "-o, --output " filename

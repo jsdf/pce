@@ -73,6 +73,8 @@ int pri_print_info (pri_img_t *img);
 
 int pri_list_tracks (pri_img_t *img);
 
+int pri_merge_image (pri_img_t *img, const char *fname, int overwrite);
+
 int pri_decode_mfm_text (pri_img_t *img, const char *fname);
 int pri_encode_mfm_text (pri_img_t *img, const char *fname);
 

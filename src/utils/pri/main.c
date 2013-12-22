@@ -67,6 +67,8 @@ static pce_option_t opts[] = {
 	{ 'i', 1, "input", "filename", "Load an input file" },
 	{ 'I', 1, "input-format", "format", "Set the input format [auto]" },
 	{ 'l', 0, "list-short", NULL, "List tracks (short) [no]" },
+	{ 'm', 1, "merge", "filename", "Merge an image" },
+	{ 'M', 1, "merge-overwrite", "filename", "Merge an image and overwrite tracks" },
 	{ 'o', 1, "output", "filename", "Set the output file name [none]" },
 	{ 'O', 1, "output-format", "format", "Set the output format [auto]" },
 	{ 'p', 1, "operation", "name [...]", "Perform an operation" },
@@ -535,6 +537,24 @@ int main (int argc, char **argv)
 			}
 			else {
 				par_list = 1;
+			}
+			break;
+
+		case 'm':
+		case 'M':
+			if (img != NULL) {
+				if (pri_merge_image (img, optarg[0], r == 'M')) {
+					fprintf (stderr, "%s: merge failed\n", arg0);
+					return (1);
+				}
+			}
+			else {
+				img = pri_load_image (optarg[0]);
+
+				if (img == NULL) {
+					fprintf (stderr, "%s: merge failed\n", arg0);
+					return (1);
+				}
 			}
 			break;
 

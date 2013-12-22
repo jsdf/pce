@@ -13,6 +13,7 @@ PRI_BAS := \
 	encode \
 	info \
 	list \
+	merge \
 	new \
 	rotate \
 	main
@@ -40,6 +41,7 @@ $(rel)/edit.o:     $(rel)/edit.c
 $(rel)/encode.o:   $(rel)/encode.c
 $(rel)/info.o:     $(rel)/info.c
 $(rel)/list.o:     $(rel)/list.c
+$(rel)/merge.o:    $(rel)/merge.c
 $(rel)/new.o:      $(rel)/new.c
 $(rel)/rotate.o:   $(rel)/rotate.c
 $(rel)/main.o:     $(rel)/main.c

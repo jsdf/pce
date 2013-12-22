@@ -2436,6 +2436,13 @@ src/utils/pri/main.o: src/utils/pri/main.c \
 	src/lib/getopt.h \
 	src/utils/pri/main.h
 
+src/utils/pri/merge.o: src/utils/pri/merge.c \
+	src/config.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi.h \
+	src/utils/pri/main.h
+
 src/utils/pri/new.o: src/utils/pri/new.c \
 	src/config.h \
 	src/drivers/pri/pri.h \
