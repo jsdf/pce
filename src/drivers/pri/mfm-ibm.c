@@ -45,6 +45,9 @@ typedef struct {
 } mfm_code_t;
 
 
+/*
+ * Calculate the CRC for FM/MFM
+ */
 static
 unsigned mfm_crc (unsigned crc, const void *buf, unsigned cnt)
 {
@@ -73,6 +76,9 @@ unsigned mfm_crc (unsigned crc, const void *buf, unsigned cnt)
 }
 
 
+/*
+ * Get the next FM/MFM bit
+ */
 static
 int mfm_get_bit (mfm_code_t *mfm)
 {
@@ -85,6 +91,9 @@ int mfm_get_bit (mfm_code_t *mfm)
 	return (bit & 1);
 }
 
+/*
+ * Read an FM/MFM byte
+ */
 static
 unsigned char mfm_decode_byte (mfm_code_t *mfm)
 {
@@ -106,6 +115,9 @@ unsigned char mfm_decode_byte (mfm_code_t *mfm)
 	return (val);
 }
 
+/*
+ * Read FM/MFM data
+ */
 static
 void mfm_read (mfm_code_t *mfm, unsigned char *buf, unsigned cnt)
 {
@@ -117,7 +129,7 @@ void mfm_read (mfm_code_t *mfm, unsigned char *buf, unsigned cnt)
 }
 
 /*
- * Sync with MFM bit stream.
+ * Sync with an MFM bit stream.
  *
  * MFM mark:
  *   A1 = 10100001 / 0A = 00001010
@@ -162,7 +174,7 @@ int mfm_sync (mfm_code_t *mfm)
 }
 
 /*
- * Sync with the next mark and initialize the crc.
+ * Sync with the next MFM mark and initialize the CRC.
  */
 static
 int mfm_sync_mark (mfm_code_t *mfm, unsigned char *val)
@@ -179,13 +191,66 @@ int mfm_sync_mark (mfm_code_t *mfm, unsigned char *val)
 	return (0);
 }
 
+/*
+ * Sync with an FM mark and initialize the CRC.
+ *
+ * FE = 11111110 / C7 = 11000111
+ * F57E = 1 1 1 1  0 1 0 1  0 1 1 1  1 1 1 0
+ *
+ * FB = 11111011 / C7 = 11000111
+ * F56F = 1 1 1 1  0 1 0 1  0 1 1 0  1 1 1 1
+ *
+ * F8 = 11111000 / C7 = 11000111
+ * F56A = 1 1 1 1  0 1 0 1  0 1 1 0  1 0 1 0
+ */
+static
+int fm_sync_mark (mfm_code_t *mfm, unsigned char *val)
+{
+	unsigned long pos;
+	unsigned      v;
+
+	v = 0;
+
+	pos = mfm->trk->idx;
+
+	while (1) {
+		v = ((v << 1) | (mfm_get_bit (mfm) != 0)) & 0xffff;
+
+		if (v == 0xf57e) {
+			*val = 0xfe;
+			break;
+		}
+		else if (v == 0xf56f) {
+			*val = 0xfb;
+			break;
+		}
+		else if (v == 0xf56a) {
+			*val = 0xf8;
+			break;
+		}
+
+		if (mfm->trk->idx == pos) {
+			return (1);
+		}
+	}
+
+	mfm->crc = mfm_crc (0xffff, val, 1);
+
+	mfm->clock = 1;
+
+	return (0);
+}
+
 static
 psi_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 {
 	unsigned      c, h, s, n;
 	unsigned      crc;
+	unsigned long pos;
 	unsigned char buf[8];
 	psi_sct_t     *sct;
+
+	pos = mfm->trk->idx;
 
 	mfm_read (mfm, buf, 6);
 
@@ -207,7 +272,7 @@ psi_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 	}
 
 	psi_sct_set_mfm_size (sct, buf[3]);
-
+	psi_sct_set_position (sct, pos / 2);
 	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 1);
 
 	if (mfm->crc != crc) {
@@ -243,8 +308,9 @@ int mfm_decode_dam (mfm_code_t *mfm, psi_sct_t *sct, unsigned mark)
 }
 
 static
-int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
+int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark, int fm)
 {
+	int           r;
 	unsigned char mark2;
 	char          wrap;
 	unsigned long pos;
@@ -258,11 +324,7 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 			return (1);
 		}
 
-		psi_sct_set_encoding (sct, PSI_ENC_MFM);
-
-		if ((mfm->trk->idx / 2) >= (4 * 8)) {
-			psi_sct_set_position (sct, (mfm->trk->idx / 2) - 4 * 8);
-		}
+		psi_sct_set_encoding (sct, fm ? PSI_ENC_FM : PSI_ENC_MFM);
 
 		if (sct->n < mfm->min_sct_size) {
 			psi_sct_set_size (sct, mfm->min_sct_size, 0);
@@ -271,7 +333,14 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 		pos = mfm->trk->idx;
 		wrap = mfm->trk->wrap;
 
-		if (mfm_sync_mark (mfm, &mark2) == 0) {
+		if (fm) {
+			r = fm_sync_mark (mfm, &mark2);
+		}
+		else {
+			r = mfm_sync_mark (mfm, &mark2);
+		}
+
+		if (r == 0) {
 			if ((mark2 == 0xf8) || (mark2 == 0xfb)) {
 				pos = mfm->trk->idx;
 				wrap = mfm->trk->wrap;
@@ -300,7 +369,7 @@ int mfm_decode_mark (mfm_code_t *mfm, psi_trk_t *trk, unsigned mark)
 
 	default:
 		fprintf (stderr,
-			"mfm: unknown address mark (mark=0x%02x)\n", mark
+			"mfm: unknown mark (0x%02x)\n", mark
 		);
 	}
 
@@ -321,20 +390,45 @@ psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h, pri_dec_mfm_t *par)
 	mfm.clock = 0;
 	mfm.min_sct_size = (par == NULL) ? 0 : par->min_sct_size;
 
-	pri_trk_set_pos (trk, 0);
+	if (par->decode_mfm) {
+		pri_trk_set_pos (trk, 0);
 
-	while (trk->wrap == 0) {
-		if (mfm_sync_mark (&mfm, &mark)) {
-			break;
+		while (trk->wrap == 0) {
+			if (mfm_sync_mark (&mfm, &mark)) {
+				break;
+			}
+
+			if (trk->wrap) {
+				break;
+			}
+
+			if (mfm_decode_mark (&mfm, dtrk, mark, 0)) {
+				psi_trk_del (dtrk);
+				return (NULL);
+			}
 		}
 
-		if (trk->wrap) {
-			break;
+		if (dtrk->sct_cnt > 0) {
+			return (dtrk);
 		}
+	}
 
-		if (mfm_decode_mark (&mfm, dtrk, mark)) {
-			psi_trk_del (dtrk);
-			return (NULL);
+	if (par->decode_fm) {
+		pri_trk_set_pos (trk, 0);
+
+		while (trk->wrap == 0) {
+			if (fm_sync_mark (&mfm, &mark)) {
+				break;
+			}
+
+			if (trk->wrap) {
+				break;
+			}
+
+			if (mfm_decode_mark (&mfm, dtrk, mark, 1)) {
+				psi_trk_del (dtrk);
+				return (NULL);
+			}
 		}
 	}
 
@@ -386,6 +480,9 @@ psi_img_t *pri_decode_mfm (pri_img_t *img, pri_dec_mfm_t *par)
 
 void pri_decode_mfm_init (pri_dec_mfm_t *par)
 {
+	par->decode_mfm = 1;
+	par->decode_fm = 1;
+
 	par->min_sct_size = 0;
 }
 
@@ -452,11 +549,14 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 {
 	unsigned      i;
 	unsigned      flags;
+	unsigned long pos;
 	unsigned char buf[8];
 
-	if (sct->position != 0xffffffff) {
-		if ((2 * sct->position) >= mfm->last_gap3_start) {
-			pri_trk_set_pos (mfm->trk, 2 * sct->position);
+	if ((sct->position != 0xffffffff) && (sct->position >= (16 * 8))) {
+		pos = 2 * (sct->position - 16 * 8);
+
+		if (pos >= mfm->last_gap3_start) {
+			pri_trk_set_pos (mfm->trk, pos);
 		}
 		else {
 			pri_trk_set_pos (mfm->trk, mfm->last_gap3_start);

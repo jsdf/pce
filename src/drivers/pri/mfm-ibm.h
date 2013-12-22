@@ -42,6 +42,9 @@ typedef struct {
 
 
 typedef struct {
+	char          decode_mfm;
+	char          decode_fm;
+
 	unsigned      min_sct_size;
 } pri_dec_mfm_t;
 

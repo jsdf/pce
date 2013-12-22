@@ -114,7 +114,7 @@ void print_help (void)
 		"  mfm-min-size, mfm-track-size\n"
 		"\n"
 		"decode types are:\n"
-		"  raw, gcr, mfm, gcr-raw, mfm-raw\n"
+		"  fm, fm-raw, gcr, gcr-raw, mfm, mfm-fm, mfm-raw, raw\n"
 		"\n"
 		"encode types are:\n"
 		"  gcr, mfm, mfm-dd-300, mfm-hd-300, mfm-hd-360\n"

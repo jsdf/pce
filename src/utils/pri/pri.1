@@ -119,11 +119,18 @@ Decode the image and save it as a pri sector image to \fIfilename\fR.
 Valid decode types are:
 .RS
 .TP
+.B fm
+IBM FM
+.TP
 .B gcr
 Apple Macintosh GCR
 .TP
 .B mfm
 IBM MFM
+.TP
+.B mfm-fm
+IBM MFM/FM. Tracks are decoded as MFM first and if no sectors are found,
+they are decoded as FM.
 .RE
 .TP
 .B delete
@@ -192,7 +199,7 @@ Set the GAP3 length in bytes. The default is 80.
 Set the GAP4A length in bytes. The default is 96.
 .TP
 .BI "mfm-min-size " integer
-Set the minimal sector size when decoding MFM.
+Set the minimal sector size when decoding MFM/FM.
 .TP
 .BI "mfm-track-size " integer
 Set the track size in bits.
