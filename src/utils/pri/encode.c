@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "encode.h"
 
 #include <stdio.h>
 #include <string.h>

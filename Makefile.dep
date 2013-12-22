@@ -2377,54 +2377,53 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/utils/pce-img/pce-img.h
 
 src/utils/pri/comment.o: src/utils/pri/comment.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/comment.h \
 	src/utils/pri/main.h
 
 src/utils/pri/decode.o: src/utils/pri/decode.c \
+	src/config.h \
 	src/drivers/pri/gcr-mac.h \
 	src/drivers/pri/mfm-ibm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/decode.h \
 	src/utils/pri/main.h
 
 src/utils/pri/delete.o: src/utils/pri/delete.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/delete.h \
 	src/utils/pri/main.h
 
 src/utils/pri/edit.o: src/utils/pri/edit.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/edit.h \
 	src/utils/pri/main.h
 
 src/utils/pri/encode.o: src/utils/pri/encode.c \
+	src/config.h \
 	src/drivers/pri/gcr-mac.h \
 	src/drivers/pri/mfm-ibm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/encode.h \
 	src/utils/pri/main.h
 
 src/utils/pri/info.o: src/utils/pri/info.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/comment.h \
-	src/utils/pri/info.h \
 	src/utils/pri/main.h
 
 src/utils/pri/list.o: src/utils/pri/list.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/comment.h \
 	src/utils/pri/main.h
 
 src/utils/pri/main.o: src/utils/pri/main.c \
@@ -2435,28 +2434,19 @@ src/utils/pri/main.o: src/utils/pri/main.c \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
-	src/utils/pri/comment.h \
-	src/utils/pri/decode.h \
-	src/utils/pri/delete.h \
-	src/utils/pri/edit.h \
-	src/utils/pri/encode.h \
-	src/utils/pri/info.h \
-	src/utils/pri/list.h \
-	src/utils/pri/main.h \
-	src/utils/pri/new.h \
-	src/utils/pri/rotate.h
+	src/utils/pri/main.h
 
 src/utils/pri/new.o: src/utils/pri/new.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/main.h \
-	src/utils/pri/new.h
+	src/utils/pri/main.h
 
 src/utils/pri/rotate.o: src/utils/pri/rotate.c \
+	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \
-	src/utils/pri/main.h \
-	src/utils/pri/rotate.h
+	src/utils/pri/main.h
 
 src/utils/psi/comment.o: src/utils/psi/comment.c \
 	src/config.h \

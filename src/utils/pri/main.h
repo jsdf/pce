@@ -24,6 +24,8 @@
 #define PRI_MAIN_H 1
 
 
+#include <config.h>
+
 #include <drivers/pri/pri.h>
 #include <drivers/psi/psi.h>
 
@@ -50,6 +52,34 @@ typedef int (*pri_trk_cb) (pri_img_t *img, pri_trk_t *trk,
 
 
 int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque);
+
+int pri_comment_add (pri_img_t *img, const char *str);
+int pri_comment_load (pri_img_t *img, const char *fname);
+int pri_comment_save (pri_img_t *img, const char *fname);
+int pri_comment_set (pri_img_t *img, const char *str);
+int pri_comment_show (pri_img_t *img);
+
+int pri_decode_raw (pri_img_t *img, const char *fname);
+int pri_decode (pri_img_t *img, const char *type, const char *fname);
+
+int pri_delete_tracks (pri_img_t *img);
+int pri_double_step (pri_img_t *img, int even);
+
+int pri_edit_tracks (pri_img_t *img, const char *what, const char *val);
+
+int pri_encode (pri_img_t **img, const char *type, const char *fname);
+
+int pri_print_info (pri_img_t *img);
+
+int pri_list_tracks (pri_img_t *img);
+
+int pri_decode_mfm_text (pri_img_t *img, const char *fname);
+int pri_encode_mfm_text (pri_img_t *img, const char *fname);
+
+int pri_new (pri_img_t *img);
+
+int pri_align_gcr_tracks (pri_img_t *img);
+int pri_rotate_tracks (pri_img_t *img, unsigned long idx);
 
 
 #endif

@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "rotate.h"
 
 #include <stdio.h>
 #include <string.h>

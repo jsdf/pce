@@ -20,24 +20,13 @@
  *****************************************************************************/
 
 
-#include <config.h>
+#include "main.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <lib/getopt.h>
-
-#include "main.h"
-#include "comment.h"
-#include "decode.h"
-#include "delete.h"
-#include "edit.h"
-#include "encode.h"
-#include "info.h"
-#include "list.h"
-#include "new.h"
-#include "rotate.h"
 
 #include <drivers/psi/psi-img.h>
 #include <drivers/psi/psi.h>

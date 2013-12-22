@@ -19,7 +19,7 @@ PRI_BAS := \
 
 PRI_SRC := $(foreach f,$(PRI_BAS),$(rel)/$(f).c)
 PRI_OBJ := $(foreach f,$(PRI_BAS),$(rel)/$(f).o)
-PRI_HDR := $(foreach f,$(PRI_BAS),$(rel)/$(f).h)
+PRI_HDR := $(rel)/main.h
 PRI_MAN1 := $(rel)/pri.1
 PRI_BIN := $(rel)/pri$(EXEEXT)
 

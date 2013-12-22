@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "decode.h"
 
 #include <stdio.h>
 #include <string.h>

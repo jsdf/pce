@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "comment.h"
 
 #include <stdio.h>
 #include <string.h>

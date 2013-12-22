@@ -21,7 +21,6 @@
 
 
 #include "main.h"
-#include "edit.h"
 
 #include <stdio.h>
 #include <string.h>

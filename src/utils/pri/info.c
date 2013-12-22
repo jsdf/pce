@@ -21,8 +21,6 @@
 
 
 #include "main.h"
-#include "comment.h"
-#include "info.h"
 
 #include <stdio.h>
 #include <string.h>
