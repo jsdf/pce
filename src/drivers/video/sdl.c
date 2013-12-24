@@ -66,6 +66,7 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_0,            PCE_KEY_0 },
 	{ SDLK_MINUS,        PCE_KEY_MINUS },
 	{ SDLK_EQUALS,       PCE_KEY_EQUAL },
+	{ 0x00bb,            PCE_KEY_EQUAL },
 	{ SDLK_BACKSPACE,    PCE_KEY_BACKSPACE },
 
 	{ SDLK_TAB,          PCE_KEY_TAB },
