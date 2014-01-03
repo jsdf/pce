@@ -29,7 +29,7 @@ class PCEJSBuild
     dbglvl: null
     memory: 256
     prefix: 'build/'
-    packagedir: 'pce-js/'
+    packagedir: 'dist/'
     outputformat: 'html'
 
   configFilePath: './pcejs-build-config.json'

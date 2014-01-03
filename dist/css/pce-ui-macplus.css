@@ -1,0 +1,15 @@
+body {
+  background: #F0F0F0;
+  box-shadow: inset rgba(0, 0, 0, 0.16) 0 0 200px;
+  margin: 0
+}
+.container {
+  background: url(macplus.svg);
+  background-size: 100%;
+  width: 760px;
+  border-radius: 10px;
+  padding-top: 179px;
+  height: 827px;
+  margin: 0 auto;
+  color: white;
+}
