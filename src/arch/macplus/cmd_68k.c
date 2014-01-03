@@ -431,6 +431,12 @@ void mac_run_emscripten_step ()
 {
 	int mousex;
 	int mousey;
+ 	int mousehack_interval = 100;
+	SDL_GetMouseState (&mousex, &mousey);
+
+	const SDL_VideoInfo* videoinfo = SDL_GetVideoInfo();
+	int vx = videoinfo->current_w;
+	int vy = videoinfo->current_h;
 
 	// for each 'emscripten step' we'll run a bunch of actual cycles
 	// to minimise overhead from emscripten's main loop management
@@ -438,18 +444,15 @@ void mac_run_emscripten_step ()
 	for (i = 0; i < 10000; ++i) {
 		// gross hacks to set mouse position in browser
 		if (i % 100 == 0) {
-			// pce_log_deb ("sdl: mouse x=%i y=%i \n", mousex, mousey);
-
-			// pce_log (MSG_DEB,
-			// 	"mouse data: %04X %04X\n",
-			// 	(unsigned) e68_get_mem16 (macplus_sim->cpu, 0x082c),
-			// 	(unsigned) e68_get_mem16 (macplus_sim->cpu, 0x082e)
-			// );
-			SDL_GetMouseState (&mousex, &mousey);
+			mousex = mousex > vx ? vx : (mousex < 0 ? 0 : mousex);
+			mousey = mousey > vy ? vy : (mousey < 0 ? 0 : mousey);
+			// internal raw mouse coords
 			e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
 			e68_set_mem16 (macplus_sim->cpu, 0x082c, (unsigned) mousey);
+			// raw mouse coords
 			e68_set_mem16 (macplus_sim->cpu, 0x0830, (unsigned) mousey);
 			e68_set_mem16 (macplus_sim->cpu, 0x082a, (unsigned) mousex);
+			// smoothed mouse coords
 			e68_set_mem16 (macplus_sim->cpu, 0x082e, (unsigned) mousex);
 			e68_set_mem16 (macplus_sim->cpu, 0x0832, (unsigned) mousex);
 		}
