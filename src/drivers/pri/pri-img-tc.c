@@ -30,6 +30,34 @@
 
 
 static
+int tc_add_comment (pri_img_t *img, const unsigned char *buf, unsigned max)
+{
+	unsigned i;
+
+	if (*buf == 0) {
+		return (0);
+	}
+
+	i = 0;
+
+	while ((i < max) && (buf[i] != 0)) {
+		i += 1;
+	}
+
+	if (img->comment_size > 0) {
+		if (pri_img_add_comment (img, (unsigned char *) "\n", 1)) {
+			return (1);
+		}
+	}
+
+	if (pri_img_add_comment (img, buf, i)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short *len, unsigned *c, unsigned *h)
 {
 	unsigned      i;
@@ -48,17 +76,12 @@ int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short
 	*c = buf[0x0102] + 1;
 	*h = buf[0x0103];
 
-	i = 2;
-	while (i < 66) {
-		if (buf[i] == 0) {
-			break;
-		}
-
-		i += 1;
+	if (tc_add_comment (img, buf + 2, 32)) {
+		return (1);
 	}
 
-	if (i > 2) {
-		pri_img_set_comment (img, buf + 2, i - 2);
+	if (tc_add_comment (img, buf + 34, 32)) {
+		return (1);
 	}
 
 	if (pri_read_ofs (fp, 0x0305, buf, 512)) {
