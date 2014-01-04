@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -145,7 +145,38 @@ void mac_interrupt (macplus_t *sim, unsigned level, int val)
 static
 void mac_interrupt_via (void *ext, unsigned char val)
 {
-	mac_interrupt (ext, 1, val);
+	macplus_t *sim = ext;
+
+	if (val) {
+		sim->intr_scsi_via |= 1;
+	}
+	else {
+		sim->intr_scsi_via &= ~1;
+	}
+
+	mac_interrupt (ext, 1, sim->intr_scsi_via);
+}
+
+static
+void mac_interrupt_scsi (void *ext, unsigned char val)
+{
+	macplus_t *sim = ext;
+
+	if (sim->via_port_b & 0x40) {
+		val = 0;
+	}
+	else {
+		val = (val != 0);
+	}
+
+	if (val) {
+		sim->intr_scsi_via |= 2;
+	}
+	else {
+		sim->intr_scsi_via &= ~2;
+	}
+
+	mac_interrupt (sim, 1, sim->intr_scsi_via);
 }
 
 static
@@ -1025,6 +1056,10 @@ void mac_setup_scsi (macplus_t *sim, ini_sct_t *ini)
 
 	mac_scsi_init (&sim->scsi);
 
+	if (sim->model & PCE_MAC_SE) {
+		mac_scsi_set_int_fct (&sim->scsi, sim, mac_interrupt_scsi);
+	}
+
 	mac_scsi_set_disks (&sim->scsi, sim->dsks);
 
 	blk = mem_blk_new (addr, size, 0);
@@ -1450,6 +1485,7 @@ void mac_reset (macplus_t *sim)
 	sim->mouse_button = 0;
 
 	sim->intr = 0;
+	sim->intr_scsi_via = 0;
 
 	if (sim->model & PCE_MAC_PLUS) {
 		mac_set_overlay (sim, 1);

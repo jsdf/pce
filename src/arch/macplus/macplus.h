@@ -108,6 +108,7 @@ struct macplus_s {
 	unsigned long      sbuf2;
 
 	unsigned char      intr;
+	unsigned char      intr_scsi_via;
 
 	long               mouse_delta_x;
 	long               mouse_delta_y;
