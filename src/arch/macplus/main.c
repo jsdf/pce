@@ -233,6 +233,17 @@ int main (int argc, char *argv[])
 
 	ini_str_init (&par_ini_str);
 
+	int emscripten;
+	emscripten = 0;
+	#ifdef EMSCRIPTEN
+		// replace command line arg settings
+		pce_log_set_level (stderr, MSG_DEB);
+		cfg = "roms/pce-config.cfg";
+		// run = 1;
+		// nomon = 1;
+		emscripten = 1;
+	#endif
+
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);
 
@@ -342,18 +353,6 @@ int main (int argc, char *argv[])
 			return (1);
 		}
 	}
-
-	int emscripten;
-	emscripten = 0;
-	#ifdef EMSCRIPTEN
-		// replace command line arg settings
-		pce_log_set_level (stderr, MSG_DEB);
-		cfg = "roms/pce-config.cfg";
-		// run = 1;
-		// nomon = 1;
-		emscripten = 1;
-	#endif
-
 
 	mac_log_banner();
 

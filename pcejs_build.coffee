@@ -31,11 +31,11 @@ class PCEJSBuild
     prefix: 'build/'
     packagedir: 'dist/'
     outputformat: 'html'
+    emsdkpath: ''
 
   configFilePath: './pcejs-build-config.json'
   
-  constructor: (@grunt) ->
-    this.initConfig()
+  constructor: (@grunt) -> this.initConfig()
 
   initConfig: (@config = _.clone(@defaultConfig)) ->
 
@@ -63,7 +63,7 @@ class PCEJSBuild
     if @config.exportfuncs
       flags.push('-s EXPORTED_FUNCTIONS='+JSON.stringify(@config.exportfuncs)+'')
     flags.push('-'+@config.optlvl) if @config.optlvl?
-    # flags.push('-g'+(@config.dbglvl if _.isNumber(@config.dbglvl))) if @config.dbglvl?
+    flags.push('-g'+(@config.dbglvl if _.isNumber(@config.dbglvl))) if @config.dbglvl?
     flags.join(' ')
 
   getEnv: ->
@@ -76,10 +76,11 @@ class PCEJSBuild
     if @config.emscripten
       emflags = this.getEmscriptenFlags()
 
+      env.PCEJS_EMSDK_PATH = @config.emsdkpath
       env.PCEJS_EMSCRIPTEN = "yes"
       env.PCEJS_EMFLAGS = emflags
       env.PCEJS_CFLAGS = "-Qunused-arguments -include src/include/pcedeps.h #{emflags}"
-      env.PCEJS_CONFIGURE = "emconfigure ./configure"
+      env.PCEJS_CONFIGURE = "#{@config.emsdkpath}emconfigure ./configure"
       
       # don't build emulators other than active target
       # archConfMapping =

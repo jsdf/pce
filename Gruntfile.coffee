@@ -1,3 +1,6 @@
+path = require('path')
+util = require('util')
+
 PCEJSBuild = require('./pcejs_build')
 
 module.exports = (grunt) ->
@@ -9,6 +12,49 @@ module.exports = (grunt) ->
   # Project configuration.
   grunt.initConfig
     pkg: grunt.file.readJSON('package.json')
+    coffee: 
+      compile: 
+        options: 
+          join: true # concat then compile into single file
+          sourceMap: false # create sourcemaps
+          bare: false  # add global wrapper
+        files: [
+          dest: "#{packagedir}js/pce.js"
+          src: "ui/pce.coffee"
+        ]
+    less: 
+      compile: 
+        files: [
+            src: 'ui/*.less'
+            dest: "#{packagedir}css/pce.css"
+        ]
+    concat:
+      deps: 
+        options:
+          separator: ';'+grunt.util.linefeed
+        files: [
+          dest: "#{packagedir}js/pce-deps.js"
+          # order matters
+          src: [
+            'zepto.min',
+            'underscore-min',
+          ].map (filename) -> "ui/deps/#{filename}.js"
+        ]
+    watch: 
+      coffee:
+        files: ['ui/*.coffee']
+        tasks: ['coffee:compile']
+        options: spawn: false
+      less:
+        files: ['ui/*.less']
+        tasks: ['less:compile']
+        options: spawn: false
+
+  # Load plugins for less, coffeescript etc
+  grunt.loadNpmTasks('grunt-contrib-coffee')
+  grunt.loadNpmTasks('grunt-contrib-less')
+  grunt.loadNpmTasks('grunt-contrib-concat')
+  grunt.loadNpmTasks('grunt-contrib-watch')
 
   # Main tasks
   grunt.task.registerTask 'reset', 'Reset config to default', ->
@@ -87,6 +133,13 @@ module.exports = (grunt) ->
         'remake',
         'afterbuild:'+pcejs.config.target
       ])
+
+  # build ui
+  grunt.registerTask 'ui', [
+    'coffee:compile',
+    'less:compile',
+    'concat:deps',
+  ]
 
   # Default task
   # grunt.registerTask('default', [])

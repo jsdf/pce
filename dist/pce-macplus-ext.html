@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-us">
+<html lang="en-us" class="macplus">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -20,9 +20,9 @@
     <div class="container" id="pcejs"></div>
 
     <audio id="macstartup" src="macstartup.wav"  preload="auto"></audio>
-    <script type="text/javascript" src="js/zepto.min.js"></script>
-    <script type="text/javascript" src="js/underscore-min.js"></script>
-    <script type="text/javascript" src="js/pce-ui.js"></script>
+    <script type="text/javascript" src="js/pce-deps.js"></script>
+    <script type="text/javascript" src="js/pce.js"></script>
+    <script type="text/javascript">PCEJS.init();</script>
 
     <script type="text/javascript">
       $(document).bind('dependenciesLoaded', function() {
@@ -33,6 +33,7 @@
         }
       });
     </script>
+    
     <script type="text/javascript" src="pce-macplus.js"></script>
   </body>
 </html>

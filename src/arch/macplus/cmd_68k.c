@@ -432,7 +432,6 @@ void mac_run_emscripten_step ()
 	int mousex;
 	int mousey;
  	int mousehack_interval = 100;
-	SDL_GetMouseState (&mousex, &mousey);
 
 	const SDL_VideoInfo* videoinfo = SDL_GetVideoInfo();
 	int vx = videoinfo->current_w;
@@ -443,9 +442,18 @@ void mac_run_emscripten_step ()
 	int i;
 	for (i = 0; i < 10000; ++i) {
 		// gross hacks to set mouse position in browser
-		if (i % 100 == 0) {
+		if (i % mousehack_interval == 0) {
+			SDL_GetMouseState (&mousex, &mousey);
+
 			mousex = mousex > vx ? vx : (mousex < 0 ? 0 : mousex);
 			mousey = mousey > vy ? vy : (mousey < 0 ? 0 : mousey);
+
+			pce_log (MSG_INF,
+				"asdf\n"
+			);
+
+			// printf("%d\n", rand());
+
 			// internal raw mouse coords
 			e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
 			e68_set_mem16 (macplus_sim->cpu, 0x082c, (unsigned) mousey);

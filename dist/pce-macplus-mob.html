@@ -1,39 +1,11 @@
 <!doctype html>
-<html lang="en-us">
+<html lang="en-us" class="macplus mobile">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>PCE.js Classic Mac OS in the Browser</title>
     <meta name="viewport" content="width=512">
-    <link rel="stylesheet" type="text/css" href="css/pce-ui.css">
-    <link rel="stylesheet" type="text/css" href="css/pce-ui-macplus.css">
-    <style type="text/css">
-      body {
-        background: #F0F0F0;
-        box-shadow: none;
-        margin: 0;
-      }
-      #titlebar {
-        position: static;
-        height: auto;
-      }
-      #titlebar .description {
-        position: static;
-        width: auto;
-      }
-      .container {
-        background: none;
-        width: auto;
-        border-radius: 0;
-        padding: 0;
-        height: auto;
-        margin: 2em auto;
-        color: #000;
-      }
-      .small {
-        font-size: 14px;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/pce.css">
   </head>
   <body>
       <div id="titlebar">
@@ -47,9 +19,9 @@
       
     <div class="container" id="pcejs"></div>
     
-    <script type="text/javascript" src="js/zepto.min.js"></script>
-    <script type="text/javascript" src="js/underscore-min.js"></script>
-    <script type="text/javascript" src="js/pce-ui.js"></script>
+    <script type="text/javascript" src="js/pce-deps.js"></script>
+    <script type="text/javascript" src="js/pce.js"></script>
+    <script type="text/javascript">PCEJS.init();</script>
     <script type="text/javascript" src="pce-macplus.js"></script>
   </body>
 </html>

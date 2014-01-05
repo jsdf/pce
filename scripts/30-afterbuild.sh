@@ -9,9 +9,9 @@ echo "converting bitcode to javascript with datafiles for target: ${PCEJS_TARGET
 
 cp ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET} ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc
 # EMCC_DEBUG=2 
-emcc ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc -o ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} \
+${PCEJS_EMSDK_PATH}emcc ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc -o ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} \
 	$PCEJS_EMFLAGS \
-	--preload-file roms
+	--preload-file roms@/
 
 mv ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} ${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}
 mv ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.data ${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.data
