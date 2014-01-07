@@ -5,7 +5,7 @@ window.PCEJS =
   printEnabled: true
   touchCurrentFirst: null
   canvasWidth: 512
-  canvasHeight: 384
+  canvasHeight: 342
   argv: ['-c','pce-config.cfg','-r']
 
   init: (@config = {}) ->
