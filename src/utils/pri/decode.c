@@ -34,6 +34,12 @@
 #include <drivers/pri/mfm-ibm.h>
 
 
+struct pri_decode_psi_s {
+	psi_img_t     *img;
+	pri_dec_mfm_t mfm;
+};
+
+
 extern pri_dec_mfm_t par_dec_mfm;
 
 
@@ -247,11 +253,100 @@ int pri_decode_raw (pri_img_t *img, const char *fname)
 }
 
 
+static
+int pri_decode_psi_mfm_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	psi_trk_t               *dtrk;
+	struct pri_decode_psi_s *dec;
+
+	dec = opaque;
+
+	if ((dtrk = pri_decode_mfm_trk (trk, h, &dec->mfm)) == NULL) {
+		return (1);
+	}
+
+	if (psi_img_add_track (dec->img, dtrk, c)) {
+		psi_trk_del (dtrk);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pri_decode_psi_gcr_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	psi_trk_t               *dtrk;
+	struct pri_decode_psi_s *dec;
+
+	dec = opaque;
+
+	if ((dtrk = pri_decode_gcr_trk (trk, h)) == NULL) {
+		return (1);
+	}
+
+	if (psi_img_add_track (dec->img, dtrk, c)) {
+		psi_trk_del (dtrk);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pri_decode_psi (pri_img_t *img, const char *type, const char *fname)
+{
+	int                     r;
+	pri_trk_cb              fct;
+	struct pri_decode_psi_s dec;
+
+	dec.mfm = par_dec_mfm;
+
+	if (strcmp (type, "fm") == 0) {
+		dec.mfm.decode_mfm = 0;
+		dec.mfm.decode_fm = 1;
+		fct = pri_decode_psi_mfm_cb;
+	}
+	else if (strcmp (type, "gcr") == 0) {
+		fct = pri_decode_psi_gcr_cb;
+	}
+	else if (strcmp (type, "mfm") == 0) {
+		dec.mfm.decode_mfm = 1;
+		dec.mfm.decode_fm = 0;
+		fct = pri_decode_psi_mfm_cb;
+	}
+	else if (strcmp (type, "mfm-fm") == 0) {
+		dec.mfm.decode_mfm = 1;
+		dec.mfm.decode_fm = 1;
+		fct = pri_decode_psi_mfm_cb;
+	}
+	else {
+		return (1);
+	}
+
+	if ((dec.img = psi_img_new()) == NULL) {
+		return (1);
+	}
+
+	if (pri_for_all_tracks (img, fct, &dec)) {
+		psi_img_del (dec.img);
+		return (1);
+	}
+
+	if (img->comment_size > 0) {
+		psi_img_set_comment (dec.img, img->comment, img->comment_size);
+	}
+
+	r = psi_save (fname, dec.img, PSI_FORMAT_NONE);
+
+	psi_img_del (dec.img);
+
+	return (r);
+}
+
+
 int pri_decode (pri_img_t *img, const char *type, const char *fname)
 {
-	int       r;
-	psi_img_t *dimg;
-
 	if (strcmp (type, "fm-raw") == 0) {
 		return (pri_decode_fm_raw (img, fname));
 	}
@@ -264,40 +359,7 @@ int pri_decode (pri_img_t *img, const char *type, const char *fname)
 	else if (strcmp (type, "raw") == 0) {
 		return (pri_decode_raw (img, fname));
 	}
-
-	if (strcmp (type, "fm") == 0) {
-		par_dec_mfm.decode_mfm = 0;
-		par_dec_mfm.decode_fm = 1;
-		dimg = pri_decode_mfm (img, &par_dec_mfm);
-	}
-	else if (strcmp (type, "gcr") == 0) {
-		dimg = pri_decode_gcr (img);
-	}
-	else if (strcmp (type, "mfm") == 0) {
-		par_dec_mfm.decode_mfm = 1;
-		par_dec_mfm.decode_fm = 0;
-		dimg = pri_decode_mfm (img, &par_dec_mfm);
-	}
-	else if (strcmp (type, "mfm-fm") == 0) {
-		par_dec_mfm.decode_mfm = 1;
-		par_dec_mfm.decode_fm = 1;
-		dimg = pri_decode_mfm (img, &par_dec_mfm);
-	}
 	else {
-		dimg = NULL;
+		return (pri_decode_psi (img, type, fname));
 	}
-
-	if (dimg == NULL) {
-		return (1);
-	}
-
-	if (img->comment_size > 0) {
-		psi_img_set_comment (dimg, img->comment, img->comment_size);
-	}
-
-	r = psi_save (fname, dimg, PSI_FORMAT_NONE);
-
-	psi_img_del (dimg);
-
-	return (r);
 }
