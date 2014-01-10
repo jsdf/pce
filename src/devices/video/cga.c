@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,13 +37,15 @@
 #define CGA_VFREQ 60
 
 
-#define CGA_CRTC_INDEX   0
-#define CGA_CRTC_DATA    1
-#define CGA_MODE         4
-#define CGA_CSEL         5
-#define CGA_STATUS       6
-#define CGA_PEN_RESET    7
-#define CGA_PEN_SET      8
+#define CGA_CRTC_INDEX0  0
+#define CGA_CRTC_DATA0   1
+#define CGA_CRTC_INDEX   4
+#define CGA_CRTC_DATA    5
+#define CGA_MODE         8
+#define CGA_CSEL         9
+#define CGA_STATUS       10
+#define CGA_PEN_RESET    11
+#define CGA_PEN_SET      12
 
 #define CGA_CRTC_HT      0
 #define CGA_CRTC_HD      1
@@ -844,9 +846,11 @@ void cga_set_color_select (cga_t *cga, unsigned char val)
 unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
 {
 	switch (addr) {
+	case CGA_CRTC_INDEX0:
 	case CGA_CRTC_INDEX:
 		return (cga_get_crtc_index (cga));
 
+	case CGA_CRTC_DATA0:
 	case CGA_CRTC_DATA:
 		return (cga_get_crtc_data (cga));
 
@@ -876,10 +880,12 @@ unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr)
 void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
+	case CGA_CRTC_INDEX0:
 	case CGA_CRTC_INDEX:
 		cga_set_crtc_index (cga, val);
 		break;
 
+	case CGA_CRTC_DATA0:
 	case CGA_CRTC_DATA:
 		cga_set_crtc_data (cga, val);
 		break;
@@ -1230,7 +1236,7 @@ video_t *cga_new_ini (ini_sct_t *sct)
 	const char    *fontfile;
 	cga_t         *cga;
 
-	ini_get_uint32 (sct, "io", &io, 0x3d4);
+	ini_get_uint32 (sct, "io", &io, 0x3d0);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
 	ini_get_uint32 (sct, "size", &size, 16384);
 	ini_get_uint16 (sct, "font", &font, 0);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/plantronics.c                              *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2014 Hampa Hug <hampa@hampa.ch>                     *
  *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
  *****************************************************************************/
 
@@ -30,14 +30,10 @@
 #include <devices/video/plantronics.h>
 
 
-#define CGA_CRTC_INDEX    0
-#define CGA_CRTC_DATA     1
-#define CGA_MODE          4
-#define CGA_CSEL          5
-#define CGA_STATUS        6
-#define CGA_PEN_RESET     7
-#define CGA_PEN_SET       8
-#define PLA_SPECIAL       9
+#define CGA_MODE          8
+#define CGA_CSEL          9
+#define CGA_STATUS        10
+#define PLA_SPECIAL       13
 
 #define CGA_MODE_G320     0x02
 
@@ -332,7 +328,7 @@ video_t *pla_new_ini (ini_sct_t *sct)
 	unsigned      blink;
 	cga_t         *pla;
 
-	ini_get_uint32 (sct, "io", &io, 0x3d4);
+	ini_get_uint32 (sct, "io", &io, 0x3d0);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
 	ini_get_uint32 (sct, "size", &size, 32768);
 	ini_get_uint16 (sct, "blink", &blink, 0);

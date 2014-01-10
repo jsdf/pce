@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/wy700.c                                    *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2014 Hampa Hug <hampa@hampa.ch>                     *
  *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
  *****************************************************************************/
 
@@ -30,16 +30,12 @@
 #include <devices/video/wy700.h>
 
 
-#define CGA_CRTC_INDEX    0
-#define CGA_CRTC_DATA     1
-#define CGA_MODE          4
-#define CGA_CSEL          5
-#define CGA_STATUS        6
-#define CGA_PEN_RESET     7
-#define CGA_PEN_SET       8
-#define WY700_BANK_OFS    9
-#define WY700_BANK_BASE   10
-#define WY700_CONTROL     11
+#define CGA_MODE          8
+#define CGA_CSEL          9
+#define CGA_STATUS        10
+#define WY700_BANK_OFS    13
+#define WY700_BANK_BASE   14
+#define WY700_CONTROL     15
 
 #define WY700_UPDATE_DIRTY 1
 
@@ -457,7 +453,7 @@ video_t *wy700_new_ini (ini_sct_t *sct)
 	unsigned      blink;
 	cga_t         *wy;
 
-	ini_get_uint32 (sct, "io", &io, 0x3d4);
+	ini_get_uint32 (sct, "io", &io, 0x3d0);
 	ini_get_uint32 (sct, "address", &addr, 0xa0000);
 	ini_get_uint32 (sct, "size", &size, 131072);
 	ini_get_uint16 (sct, "blink", &blink, 0);

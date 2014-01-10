@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/olivetti.c                                 *
  * Created:     2011-09-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2011-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,14 +29,10 @@
 #include <devices/video/olivetti.h>
 
 
-#define CGA_CRTC_INDEX    0
-#define CGA_CRTC_DATA     1
-#define CGA_MODE          4
-#define CGA_CSEL          5
-#define CGA_STATUS        6
-#define CGA_PEN_RESET     7
-#define CGA_PEN_SET       8
-#define M24_SPECIAL       10
+#define CGA_MODE          8
+#define CGA_CSEL          9
+#define CGA_STATUS        10
+#define M24_SPECIAL       14
 
 #define CGA_MODE_G320     0x02
 #define CGA_MODE_G640     0x10
@@ -249,7 +245,7 @@ video_t *m24_new_ini (ini_sct_t *sct)
 	unsigned      blink;
 	cga_t         *m24;
 
-	ini_get_uint32 (sct, "io", &io, 0x3d4);
+	ini_get_uint32 (sct, "io", &io, 0x3d0);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
 	ini_get_uint32 (sct, "size", &size, 32768);
 	ini_get_uint16 (sct, "blink", &blink, 0);
