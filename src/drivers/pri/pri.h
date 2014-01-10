@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.h                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -59,6 +59,7 @@ void pri_trk_set_clock (pri_trk_t *trk, unsigned long clock);
 unsigned long pri_trk_get_clock (const pri_trk_t *trk);
 unsigned long pri_trk_get_size (const pri_trk_t *trk);
 int pri_trk_set_size (pri_trk_t *trk, unsigned long size);
+void pri_trk_clear_slack (pri_trk_t *trk);
 
 void pri_trk_set_pos (pri_trk_t *trk, unsigned long pos);
 int pri_trk_get_bits (pri_trk_t *trk, unsigned long *val, unsigned cnt);

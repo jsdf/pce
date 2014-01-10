@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -241,6 +241,13 @@ int pri_trk_set_size (pri_trk_t *trk, unsigned long size)
 	trk->data = tmp;
 
 	return (0);
+}
+
+void pri_trk_clear_slack (pri_trk_t *trk)
+{
+	if (trk->size & 7) {
+		trk->data[trk->size / 8] &= 0xff << (8 - (trk->size & 7));
+	}
 }
 
 /*****************************************************************************
