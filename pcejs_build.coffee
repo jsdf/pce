@@ -32,6 +32,7 @@ class PCEJSBuild
     packagedir: 'dist/'
     outputformat: 'html'
     emsdkpath: ''
+    romdir: ''
 
   configFilePath: './pcejs-build-config.json'
   
@@ -72,6 +73,7 @@ class PCEJSBuild
       PCEJS_PACKAGEDIR: path.resolve(@config.packagedir) 
       PCEJS_TARGET: @config.target
       PCEJS_OUTPUT_FORMAT: @config.outputformat
+      PCEJS_ROMDIR: @config.romdir
 
     if @config.emscripten
       emflags = this.getEmscriptenFlags()

@@ -1,11 +1,17 @@
+browserPrefixes = ['-webkit-', '-moz-', '-ms-', '']
+
 window.PCEJS =
   #  default properties
   containerSel: '#pcejs'
+  canvasId: 'canvas'
   doubleBuffer: true
   printEnabled: true
   touchCurrentFirst: null
   canvasWidth: 512
   canvasHeight: 342
+  canvasScale: 1
+  canvasOffset: 0
+  zoomControls: false
   argv: ['-c','pce-config.cfg','-r']
 
   init: (@config = {}) ->
@@ -16,25 +22,24 @@ window.PCEJS =
     @postInit()
 
   preInit: ->
+    @container = $(@containerSel)
     # include emscripten boilerplate html
-    $(@containerSel).html(@containerHTML())
+    @container.html(@containerHTML())
 
     if (@doubleBuffer)
       # double buffer front canvas
-      @frontCanvas = $('#canvas').get(0)
+      @frontCanvas = document.getElementById(@canvasId)
       @frontContext = @frontCanvas.getContext('2d')
-      @frontCanvas.width = @canvasWidth
-      @frontCanvas.height = @canvasHeight
 
       # double buffer back canvas
       @backCanvas = document.createElement('canvas')
       @backContext = @backCanvas.getContext('2d')
     else
       # single buffer canvas
-      @singleBufferCanvas = $('#canvas').get(0)
-      @singleBufferContext = @singleBufferCanvas.getContext('2d')
-      @singleBufferCanvas.width = @canvasWidth
-      @singleBufferCanvas.height = @canvasHeight
+      @frontCanvas = @backCanvas = document.getElementById(@canvasId)
+      @frontContext = @backContext = @backCanvas.getContext('2d')
+
+    @layoutFrontCanvas()
 
   moduleInit: ->
     # emscripten module object initialisation
@@ -47,7 +52,7 @@ window.PCEJS =
       postRun: []
       print: if (!@printEnabled) then (->) else console.log.bind(console)
       printErr: if (!@printEnabled) then (->) else ((text) -> console.warn(text))
-      canvas: if @doubleBuffer then @backCanvas else @singleBufferCanvas
+      canvas: @backCanvas
       canvasFront: if @doubleBuffer then @frontCanvas else null
       totalDependencies: 0
       setStatus: (text) ->
@@ -83,6 +88,9 @@ window.PCEJS =
       @module.requestFullScreen($('#pointerLock').get(0).checked,$('#resize').get(0).checked)
 
     @module.setStatus('Downloading...')
+
+    @addZoomControls() if @zoomControls
+    @addAboutLink()
 
     window.Module = @module
 
@@ -146,10 +154,37 @@ window.PCEJS =
 
     Browser.step_func() if Browser # emscripten runtime method
 
+  layoutFrontCanvas:  ->
+    @container.find('.emscripten_border').height((@canvasHeight)*@canvasScale)
+    @frontCanvas.width = @canvasWidth
+    @frontCanvas.height = @canvasHeight
+    $(@frontCanvas).css(_.reduce(browserPrefixes, (css, prefix) =>
+      css["#{prefix}transform"] = "scale(#{@canvasScale})"
+      css["#{prefix}transform-origin"] = "center top"
+      css
+    , {}))
+    
   bindTouchEventHandlers: ->
     _.each ['touchstart','touchend', 'touchmove'], (event) =>
       mainCanvas = @module.canvasFront || @module.canvas
       mainCanvas.addEventListener(event, (-> @touchToMouseEvent), true)
+
+  addAboutLink: ->
+    @container
+      .append $('<small><a href="https://github.com/jsdf/pce/">about pce.js emulator</a></small>')
+
+  addZoomControls: ->
+    @container
+      .append $('<div class="zoom-controls"></div>')
+        .append($('<label>Scale:</label>'))
+        .append _.map [1,1.5,2], (zoom) ->
+          $('<input />',  {'type': 'button', 'value': zoom+"x", 'data-scale': zoom}).get(0)
+
+    $(document).on 'click', '.zoom-controls input[type=button]', (event) =>
+      console.log $(event.target)
+      console.log $(event.target).attr('data-scale')
+      @canvasScale = parseFloat($(event.target).attr('data-scale'),10)
+      @layoutFrontCanvas()
 
   containerHTML: -> """
     <div class="emscripten" id="status">Downloading...</div>
@@ -157,7 +192,7 @@ window.PCEJS =
       <progress value="0" max="100" id="progress" hidden=1></progress>
     </div>
     <div class="emscripten_border">
-      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+      <canvas class="emscripten" id="#{@canvasId}" oncontextmenu="event.preventDefault()"></canvas>
     </div>
     <div class="emscripten" id="fullscreencontrols">
       <input type="checkbox" id="resize">Resize canvas
@@ -167,4 +202,3 @@ window.PCEJS =
     </div>
     <textarea class="emscripten" id="output" rows="8"></textarea>
     """
-

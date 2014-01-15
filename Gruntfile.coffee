@@ -1,5 +1,6 @@
 path = require('path')
 util = require('util')
+child_process = require('child_process')
 
 PCEJSBuild = require('./pcejs_build')
 
@@ -111,12 +112,17 @@ module.exports = (grunt) ->
     pcejs.saveConfig()
 
   grunt.task.registerTask 'run', 'Run emulator', ->
-    pcejs.run(this.async(), 'http-server', [packagedir])
+    done = this.async()
+    
+    pcejs.run(done, 'http-server', [packagedir])
 
+    child_process.exec('open http://localhost:8080/')
     console.log('serving emulator at http://localhost:8080/')
 
   grunt.task.registerTask 'romdir', 'Set rom/config/data directory', (romdir) ->
-    pcejs.run(this.async(), './scripts/a1-romdir.sh', [], PCEJS_ROMDIR: romdir)
+    pcejs.config.romdir = path.resolve(romdir)
+    pcejs.saveConfig()
+    # pcejs.run(this.async(), './scripts/a1-romdir.sh', [], PCEJS_ROMDIR: path.resolve(romdir))
 
   grunt.task.registerTask 'env', 'Print build environment variables', ->
     console.log(pcejs.getEnv())

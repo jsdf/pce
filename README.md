@@ -1,5 +1,16 @@
 # PCE.js
 
+PCE.js runs classic computers in the browser. It's a port of Hampa Hug's excellent [PCE](http://www.hampa.ch/pce/) emulator, put together by [James Friend](http://jamesfriend.com.au/).
+
+PCE.js currently emulates Mac Plus, IBM PC/XT and Atari ST functionally in recent versions of Chrome and Firefox.
+
+More info: 
+
+- [Demo running Mac Plus + System 7](http://jamesfriend.com.au/pce-js/) 
+- [Why port emulators to the browser?](http://jamesfriend.com.au/why-port-emulators-browser)
+
+![PCE.js Mac Plus](http://jamesfriend.com.au/sites/default/files/pcejs.png)
+
 ## How to build PCE.js
 
 Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)

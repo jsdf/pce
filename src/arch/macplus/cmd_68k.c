@@ -445,10 +445,8 @@ void mac_run_emscripten_step ()
 		if (i % mousehack_interval == 0) {
 			SDL_GetMouseState (&mousex, &mousey);
 			// clamp mouse pos to screen bounds
-			// mousex = mousex > screenw ? screenw : (mousex < 0 ? 0 : mousex);
-			// mousey = mousey > screenh ? screenh : (mousey < 0 ? 0 : mousey);
-			// 
-            pce_log_deb ("sdl: mouse x=%i y=%i \n", mousex, mousey);
+			mousex = mousex > screenw ? screenw : (mousex < 0 ? 0 : mousex);
+			mousey = mousey > screenh ? screenh : (mousey < 0 ? 0 : mousey);
  			// internal raw mouse coords
             e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
             e68_set_mem16 (macplus_sim->cpu, 0x082a, (unsigned) mousex);
