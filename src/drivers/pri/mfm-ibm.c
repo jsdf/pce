@@ -380,15 +380,22 @@ psi_trk_t *pri_decode_mfm_trk (pri_trk_t *trk, unsigned h, pri_dec_mfm_t *par)
 {
 	unsigned char mark;
 	psi_trk_t     *dtrk;
+	pri_dec_mfm_t def;
 	mfm_code_t    mfm;
 
 	if ((dtrk = psi_trk_new (h)) == NULL) {
 		return (NULL);
 	}
 
+	if (par == NULL) {
+		pri_decode_mfm_init (&def);
+
+		par = &def;
+	}
+
 	mfm.trk = trk;
 	mfm.clock = 0;
-	mfm.min_sct_size = (par == NULL) ? 0 : par->min_sct_size;
+	mfm.min_sct_size = par->min_sct_size;
 
 	if (par->decode_mfm) {
 		pri_trk_set_pos (trk, 0);
