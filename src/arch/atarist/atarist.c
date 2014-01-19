@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/atarist.c                                   *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -531,6 +531,7 @@ void st_setup_dma (atari_st_t *sim, ini_sct_t *ini)
 	st_dma_set_memory (&sim->dma, sim->mem);
 	st_dma_set_fdc (&sim->dma, &sim->fdc.wd179x);
 	st_dma_set_acsi (&sim->dma, &sim->acsi);
+	st_dma_set_address_mask (&sim->dma, mem_blk_get_size (sim->ram) - 1);
 }
 
 static

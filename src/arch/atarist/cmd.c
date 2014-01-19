@@ -300,8 +300,8 @@ void st_print_state_dma (atari_st_t *sim)
 
 	pce_prt_sep ("DMA");
 
-	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX\n",
-		dma->mode, dma->status, dma->addr
+	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX  MASK=%06lX\n",
+		dma->mode, dma->status, dma->addr, dma->mask
 	);
 }
 

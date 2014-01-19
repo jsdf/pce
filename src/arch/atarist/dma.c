@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/dma.c                                       *
  * Created:     2013-06-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,6 +37,7 @@ int st_dma_init (st_dma_t *dma)
 	dma->mode = 0;
 	dma->status = 1;
 	dma->addr = 0;
+	dma->mask = ~0UL;
 
 	dma->fifo_idx = 0;
 
@@ -60,6 +61,11 @@ void st_dma_set_fdc (st_dma_t *dma, wd179x_t *fdc)
 void st_dma_set_acsi (st_dma_t *dma, st_acsi_t *acsi)
 {
 	dma->acsi = acsi;
+}
+
+void st_dma_set_address_mask (st_dma_t *dma, unsigned long mask)
+{
+	dma->mask = mask;
 }
 
 static
@@ -91,7 +97,7 @@ void st_dma_dreq_read (st_dma_t *dma)
 		val = st_acsi_get_data (dma->acsi);
 	}
 
-#if DEBUG_DMA >= 2
+#if DEBUG_DMA >= 3
 	st_log_deb ("DMA: read %02X (bc=%u addr=%06lX)\n",
 		val, dma->byte_cnt, dma->addr
 	);
@@ -103,7 +109,7 @@ void st_dma_dreq_read (st_dma_t *dma)
 
 	if (fifo->cnt >= 16) {
 		for (i = 0; i < 16; i++) {
-			mem_set_uint8 (dma->mem, dma->addr, fifo->data[i]);
+			mem_set_uint8 (dma->mem, dma->addr & dma->mask, fifo->data[i]);
 			dma->addr += 1;
 		}
 
@@ -133,7 +139,7 @@ void st_dma_fifo_fill (st_dma_t *dma, unsigned idx)
 	fifo = &dma->fifo[idx];
 
 	for (i = 0; i < 16; i++) {
-		fifo->data[i] = mem_get_uint8 (dma->mem, dma->addr);
+		fifo->data[i] = mem_get_uint8 (dma->mem, dma->addr & dma->mask);
 		dma->addr += 1;
 	}
 
@@ -198,7 +204,7 @@ void st_dma_set_dreq (st_dma_t *dma, unsigned char val)
 		return;
 	}
 
-#if DEBUG_DMA >= 2
+#if DEBUG_DMA >= 3
 	st_log_deb ("DMA: dreq = %u\n", val);
 #endif
 
