@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-img-pri.c                                *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -191,7 +191,7 @@ int pri_load_text (FILE *fp, pri_img_t *img, unsigned long size, unsigned long c
 		n -= 1;
 	}
 
-	if ((n > 0) && (buf[n - 1] == 0x0a)) {
+	if ((n > 0) && (buf[i + n - 1] == 0x0a)) {
 		n -= 1;
 	}
 
