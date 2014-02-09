@@ -1,17 +1,37 @@
+
+# util functions
+
 browserPrefixes = ['-webkit-', '-moz-', '-ms-', '']
+
+pathGetFilenameRegex = /\/([^\/]+)$/
+pathGetFilename = (path) ->
+  matches = path.match pathGetFilenameRegex
+  if matches and matches.length
+    matches[1]
+  else
+    path
+
+# end util functions
 
 window.PCEJS =
   #  default properties
   containerSel: '#pcejs'
   canvasId: 'canvas'
   doubleBuffer: true
-  printEnabled: true
+  printEnabled: false
   touchCurrentFirst: null
   canvasWidth: 512
   canvasHeight: 342
   canvasScale: 1
   canvasOffset: 0
   zoomControls: false
+  dataFiles: [
+      'hd1.qed',
+      'mac-plus.rom',
+      'macplus-pcex.rom',
+      'pce-config.cfg',
+    ]
+
   argv: ['-c','pce-config.cfg','-r']
 
   init: (@config = {}) ->
@@ -42,12 +62,16 @@ window.PCEJS =
     @layoutFrontCanvas()
 
   moduleInit: ->
+    statusElement = $('#'+@canvasId+'-status').get(0)
+    progressElement = $('#'+@canvasId+'-progress').get(0)
+
     # emscripten module object initialisation
     # injects config and behaviour into emscripen compiled module
     @module =
       'arguments': @argv
       preRun: [
-        # @mountPersistentFS.bind(this)
+        # @mountPersistentFS.bind(this),
+        @loadDataFiles.bind(this)
       ]
       postRun: []
       print: if (!@printEnabled) then (->) else console.log.bind(console)
@@ -58,8 +82,6 @@ window.PCEJS =
       setStatus: (text) ->
         if (@setStatus.interval) then clearInterval(@setStatus.interval)
         m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/)
-        statusElement = $('#status').get(0)
-        progressElement = $('#progress').get(0)
         if (m)
           text = m[1]
           progressElement.value = parseInt(m[2])*100
@@ -84,15 +106,18 @@ window.PCEJS =
 
     @initDoubleBuffer() if @doubleBuffer
 
-    $('#gofullscreen').click ->
-      @module.requestFullScreen($('#pointerLock').get(0).checked,$('#resize').get(0).checked)
-
     @module.setStatus('Downloading...')
 
     @addZoomControls() if @zoomControls
     @addAboutLink()
 
+    @addErrorHandler()
+
     window.Module = @module
+
+  loadDataFiles: ->
+    _.each @dataFiles, (filepath) ->
+      FS.createPreloadedFile('/', pathGetFilename(filepath), filepath, true, true)
 
   mountPersistentFS: ->
     FS.mkdir('/data')
@@ -152,7 +177,7 @@ window.PCEJS =
 
     firstTouch.target.dispatchEvent(simulatedEvent)
 
-    Browser.step_func() if Browser # emscripten runtime method
+    Browser.step_func() if typeof Browser != 'undefined' # emscripten runtime method
 
   layoutFrontCanvas:  ->
     @container.find('.emscripten_border').height((@canvasHeight)*@canvasScale)
@@ -169,9 +194,12 @@ window.PCEJS =
       mainCanvas = @module.canvasFront || @module.canvas
       mainCanvas.addEventListener(event, (-> @touchToMouseEvent), true)
 
+  addErrorHandler: ->
+    window.onerror = -> Browser.step_run() if typeof Browser != 'undefined' and Browser.step_run
+
   addAboutLink: ->
     @container
-      .append $('<small><a href="https://github.com/jsdf/pce/">about pce.js emulator</a></small>')
+      .append $('<small><a href="https://github.com/jsdf/pce/blob/pcejs/README.md">about pce.js emulator</a></small>')
 
   addZoomControls: ->
     @container
@@ -187,18 +215,11 @@ window.PCEJS =
       @layoutFrontCanvas()
 
   containerHTML: -> """
-    <div class="emscripten" id="status">Downloading...</div>
+    <div class="emscripten" id="#{@canvasId}-status">Downloading...</div>
     <div class="emscripten">
-      <progress value="0" max="100" id="progress" hidden=1></progress>
+      <progress value="0" max="100" id="#{@canvasId}-progress" hidden=1></progress>
     </div>
     <div class="emscripten_border">
       <canvas class="emscripten" id="#{@canvasId}" oncontextmenu="event.preventDefault()"></canvas>
     </div>
-    <div class="emscripten" id="fullscreencontrols">
-      <input type="checkbox" id="resize">Resize canvas
-      <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
-      &nbsp&nbsp&nbsp
-      <input type="button" value="Fullscreen" id="gofullscreen">
-    </div>
-    <textarea class="emscripten" id="output" rows="8"></textarea>
     """
