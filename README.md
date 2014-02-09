@@ -11,6 +11,10 @@ More info:
 
 ![PCE.js Mac Plus](http://jamesfriend.com.au/sites/default/files/pcejs.png)
 
+## Pre-build package
+
+A pre-built package is available which includes a working system for the macplus emulator: [download](http://jamesfriend.com.au/pce-js/dist/pcejs-mac.zip)
+
 ## How to build PCE.js
 
 Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)
