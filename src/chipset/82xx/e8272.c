@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.c                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -607,17 +607,17 @@ void e8272_request_data (e8272_t *fdc, int rd)
 	}
 
 	if (fdc->dma) {
-		fdc->msr &= ~(E8272_MSR_RQM | E8272_MSR_NDM);
+		fdc->msr &= ~E8272_MSR_NDM;
 
 		e8272_set_dreq (fdc, 1);
 	}
 	else {
-		fdc->msr |= E8272_MSR_RQM | E8272_MSR_NDM;
+		fdc->msr |= E8272_MSR_NDM;
 
 		e8272_set_irq (fdc, 1);
 	}
 
-	fdc->msr |= E8272_MSR_CB;
+	fdc->msr |= E8272_MSR_RQM | E8272_MSR_CB;
 }
 
 /*
