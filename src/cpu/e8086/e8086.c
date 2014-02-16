@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -493,6 +493,7 @@ void e86_execute (e8086_t *c)
 
 	if (c->enable_int) {
 		if (flg & c->flg & E86_FLG_T) {
+			c->halt = 0;
 			e86_trap (c, 1);
 		}
 		else if (irq && c->irq && e86_get_if (c)) {
