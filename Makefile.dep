@@ -1665,6 +1665,54 @@ src/cpu/e68000/ops-020.o: src/cpu/e68000/ops-020.c \
 	src/cpu/e68000/e68000.h \
 	src/cpu/e68000/internal.h
 
+src/cpu/e8080/dis_z80.o: src/cpu/e8080/dis_z80.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/disasm.o: src/cpu/e8080/disasm.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/e8080.o: src/cpu/e8080/e8080.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/flags.o: src/cpu/e8080/flags.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_cb.o: src/cpu/e8080/op_cb.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_dd.o: src/cpu/e8080/op_dd.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_dd_cb.o: src/cpu/e8080/op_dd_cb.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_ed.o: src/cpu/e8080/op_ed.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_fd.o: src/cpu/e8080/op_fd.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_fd_cb.o: src/cpu/e8080/op_fd_cb.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/op_z80.o: src/cpu/e8080/op_z80.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
+src/cpu/e8080/opcodes.o: src/cpu/e8080/opcodes.c \
+	src/cpu/e8080/e8080.h \
+	src/cpu/e8080/internal.h
+
 src/cpu/e8086/disasm.o: src/cpu/e8086/disasm.c \
 	src/cpu/e8086/e8086.h \
 	src/cpu/e8086/internal.h

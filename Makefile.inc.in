@@ -125,6 +125,7 @@ include $(srcdir)/src/cpu/Makefile.inc
 include $(srcdir)/src/cpu/arm/Makefile.inc
 include $(srcdir)/src/cpu/e6502/Makefile.inc
 include $(srcdir)/src/cpu/e68000/Makefile.inc
+include $(srcdir)/src/cpu/e8080/Makefile.inc
 include $(srcdir)/src/cpu/e8086/Makefile.inc
 include $(srcdir)/src/cpu/ppc405/Makefile.inc
 include $(srcdir)/src/cpu/sparc32/Makefile.inc
