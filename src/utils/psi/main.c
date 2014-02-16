@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.c                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -495,6 +495,9 @@ int psi_set_format (const char *name, unsigned *val)
 {
 	if (strcmp (name, "ana") == 0) {
 		*val = PSI_FORMAT_ANADISK;
+	}
+	else if (strcmp (name, "cp2") == 0) {
+		*val = PSI_FORMAT_CP2;
 	}
 	else if (strcmp (name, "dc42") == 0) {
 		*val = PSI_FORMAT_DC42;
