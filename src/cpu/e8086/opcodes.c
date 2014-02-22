@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/opcodes.c                                      *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -3348,6 +3348,8 @@ unsigned op_cf (e8086_t *c)
 	e86_set_ip (c, e86_pop (c));
 	e86_set_cs (c, e86_pop (c));
 	c->flg = e86_pop (c);
+
+	c->enable_int = 0;
 
 	e86_pq_init (c);
 

@@ -445,9 +445,8 @@ void e86_reset (e8086_t *c)
 
 void e86_execute (e8086_t *c)
 {
-	unsigned       cnt;
-	unsigned short flg;
-	char           irq;
+	unsigned cnt;
+	char     irq;
 
 	if (c->halt) {
 		e86_set_clk (c, 2);
@@ -464,7 +463,6 @@ void e86_execute (e8086_t *c)
 		c->cur_ip = c->ip;
 	}
 
-	flg = c->flg;
 	irq = c->irq;
 
 	c->enable_int = 1;
@@ -492,7 +490,7 @@ void e86_execute (e8086_t *c)
 	c->instructions += 1;
 
 	if (c->enable_int) {
-		if (flg & c->flg & E86_FLG_T) {
+		if (c->flg & E86_FLG_T) {
 			c->halt = 0;
 			e86_trap (c, 1);
 		}
