@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/acsi.c                                      *
  * Created:     2013-06-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -134,8 +134,15 @@ disk_t *st_acsi_get_disk (st_acsi_t *acsi)
 	return (dsk);
 }
 
+static
+void st_acsi_reset_cmd (st_acsi_t *acsi)
+{
+	acsi->cmd_cnt = 0;
+	acsi->cmd_max = 0;
+}
+
 /*
- * CMD 00: TEST UNIT READY
+ * CMD 00: TEST UNIT READY(6)
  */
 static
 void st_acsi_cmd_00 (st_acsi_t *acsi)
@@ -155,7 +162,7 @@ void st_acsi_cmd_00 (st_acsi_t *acsi)
 }
 
 /*
- * CMD 03: REQUEST SENSE
+ * CMD 03: REQUEST SENSE(6)
  */
 static
 void st_acsi_cmd_03 (st_acsi_t *acsi)
@@ -177,7 +184,7 @@ void st_acsi_cmd_03 (st_acsi_t *acsi)
 }
 
 /*
- * CMD 04: FORMAT
+ * CMD 04: FORMAT(6)
  */
 static
 void st_acsi_cmd_04 (st_acsi_t *acsi)
@@ -192,7 +199,7 @@ void st_acsi_cmd_04 (st_acsi_t *acsi)
 }
 
 /*
- * CMD 08: READ
+ * CMD 08: READ(6)
  */
 static
 void st_acsi_cmd_08 (st_acsi_t *acsi)
@@ -248,7 +255,7 @@ void st_acsi_cmd_0a_cont (st_acsi_t *acsi)
 }
 
 /*
- * CMD 0A: WRITE
+ * CMD 0A: WRITE(6)
  */
 static
 void st_acsi_cmd_0a (st_acsi_t *acsi)
@@ -277,27 +284,15 @@ void st_acsi_cmd_0a (st_acsi_t *acsi)
 	acsi->result = 0;
 }
 
-/*
- * CMD 12: INQUIRY
- */
 static
-void st_acsi_cmd_12 (st_acsi_t *acsi)
+void st_acsi_cmd_inquiry (st_acsi_t *acsi, unsigned cnt)
 {
-	unsigned cnt;
-	disk_t   *dsk;
-
-#if DEBUG_ACSI >= 1
-	st_log_deb ("ACSI: CMD[%X/%02X] INQUIRY (n=%u)\n",
-		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cmd[4]
-	);
-#endif
+	disk_t *dsk;
 
 	if ((dsk = st_acsi_get_disk (acsi)) == NULL) {
 		st_acsi_set_result (acsi, 0x04);
 		return;
 	}
-
-	cnt = acsi->cmd[4];
 
 	memset (acsi->buf, 0, 256);
 	memcpy (acsi->buf + 8, "PCE     ", 8);
@@ -310,6 +305,21 @@ void st_acsi_cmd_12 (st_acsi_t *acsi)
 	acsi->buf_cnt = (cnt < 36) ? cnt : 36;
 
 	acsi->result = 0;
+}
+
+/*
+ * CMD 12: INQUIRY(6)
+ */
+static
+void st_acsi_cmd_12 (st_acsi_t *acsi)
+{
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%X/%02X] INQUIRY (n=%u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[0] & 0x1f, acsi->cmd[4]
+	);
+#endif
+
+	st_acsi_cmd_inquiry (acsi, acsi->cmd[4]);
 }
 
 static
@@ -442,6 +452,80 @@ void st_acsi_cmd_1a (st_acsi_t *acsi)
 	}
 }
 
+/*
+ * CMD 1F/12: INQUIRY(6)
+ */
+static
+void st_acsi_cmd_1f_12 (st_acsi_t *acsi)
+{
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%X/1F/%02X] INQUIRY (n=%u)\n",
+		acsi->cmd[0] >> 5, acsi->cmd[1], acsi->cmd[5]
+	);
+#endif
+
+	st_acsi_cmd_inquiry (acsi, acsi->cmd[5]);
+}
+
+/*
+ * CMD 1F/25: READ CAPACITY(10)
+ */
+static
+void st_acsi_cmd_1f_25 (st_acsi_t *acsi)
+{
+	unsigned long cnt;
+	disk_t        *dsk;
+
+#if DEBUG_ACSI >= 1
+	st_log_deb ("ACSI: CMD[%X/1F/%02X] READ CAPACITY\n",
+		acsi->cmd[0] >> 5, acsi->cmd[1]
+	);
+#endif
+
+	if ((dsk = st_acsi_get_disk (acsi)) == NULL) {
+		st_acsi_set_result (acsi, 0x04);
+		return;
+	}
+
+	cnt = dsk_get_block_cnt (dsk);
+	buf_set_uint32_be (acsi->buf, 0, cnt - 1);
+	buf_set_uint32_be (acsi->buf, 4, 512);
+
+	acsi->buf_idx = 0;
+	acsi->buf_cnt = 8;
+
+	acsi->result = 0;
+}
+
+/*
+ * CMD 1F: ICD
+ */
+static
+void st_acsi_cmd_1f (st_acsi_t *acsi)
+{
+	switch (acsi->cmd[1]) {
+	case 0x12:
+		st_acsi_cmd_1f_12 (acsi);
+		break;
+
+	case 0x25:
+		st_acsi_cmd_1f_25 (acsi);
+		break;
+
+	default:
+		st_log_deb ("ACSI: CMD[%02X] UNKNOWN [%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X]\n",
+			acsi->cmd[0],
+			acsi->cmd[0], acsi->cmd[1], acsi->cmd[2], acsi->cmd[3],
+			acsi->cmd[4], acsi->cmd[5], acsi->cmd[6], acsi->cmd[7],
+			acsi->cmd[8], acsi->cmd[9], acsi->cmd[10]
+		);
+
+		st_acsi_set_result (acsi, 0x20);
+	}
+
+	st_acsi_reset_cmd (acsi);
+}
+
 static
 void st_acsi_cmd (st_acsi_t *acsi)
 {
@@ -478,6 +562,10 @@ void st_acsi_cmd (st_acsi_t *acsi)
 		st_acsi_cmd_1a (acsi);
 		break;
 
+	case 0x1f:
+		st_acsi_cmd_1f (acsi);
+		break;
+
 	default:
 		st_log_deb ("ACSI: CMD[%02X] UNKNOWN [%02X %02X %02X %02X %02X %02X]\n",
 			acsi->cmd[0],
@@ -488,7 +576,7 @@ void st_acsi_cmd (st_acsi_t *acsi)
 		st_acsi_set_result (acsi, 0x20);
 	}
 
-	acsi->cmd_cnt = 0;
+	st_acsi_reset_cmd (acsi);
 }
 
 unsigned char st_acsi_get_data (st_acsi_t *acsi)
@@ -549,8 +637,8 @@ void st_acsi_set_cmd (st_acsi_t *acsi, unsigned char val, int a0)
 	st_log_deb ("ACSI: command byte %02X\n", val);
 #endif
 
-	if (acsi->cmd_cnt >= 6) {
-		acsi->cmd_cnt = 0;
+	if ((acsi->cmd_max > 0) && (acsi->cmd_cnt >= acsi->cmd_max)) {
+		st_acsi_reset_cmd (acsi);
 		return;
 	}
 
@@ -561,12 +649,34 @@ void st_acsi_set_cmd (st_acsi_t *acsi, unsigned char val, int a0)
 #if DEBUG_ACSI >= 1
 			st_log_deb ("ACSI: ignoring command %02X\n", val);
 #endif
-			acsi->cmd_cnt = 0;
+			st_acsi_reset_cmd (acsi);
 			return;
 		}
+
+		if ((acsi->cmd[0] & 0x1f) != 0x1f) {
+			acsi->cmd_max = 6;
+		}
+	}
+	else if ((acsi->cmd_cnt == 2) && ((acsi->cmd[0] & 0x1f) == 0x1f)) {
+		switch (acsi->cmd[1] >> 5) {
+		case 0:
+			acsi->cmd_max = 6;
+			break;
+
+		case 1:
+		case 2:
+			acsi->cmd_max = 10;
+			break;
+
+		default:
+			acsi->cmd_max = 6;
+			break;
+		}
+
+		acsi->cmd_max += 1;
 	}
 
-	if (acsi->cmd_cnt >= 6) {
+	if ((acsi->cmd_max > 0) && (acsi->cmd_cnt >= acsi->cmd_max)) {
 		acsi->blk = acsi->cmd[1];
 		acsi->blk = (acsi->blk << 8) | acsi->cmd[2];
 		acsi->blk = (acsi->blk << 8) | acsi->cmd[3];
@@ -584,6 +694,7 @@ void st_acsi_set_cmd (st_acsi_t *acsi, unsigned char val, int a0)
 void st_acsi_reset (st_acsi_t *acsi)
 {
 	acsi->cmd_cnt = 0;
+	acsi->cmd_max = 0;
 
 	acsi->buf_idx = 0;
 	acsi->buf_cnt = 0;
