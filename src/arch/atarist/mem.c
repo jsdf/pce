@@ -42,6 +42,11 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 		return (rp5c15_get_uint8 (&sim->rtc, (addr - 0xfffc20) / 2));
 	}
 
+	if ((addr & 0xfffe00) == 0xfffa00) {
+		e68_set_bus_error (sim->cpu, 1);
+		return (0);
+	}
+
 	switch (addr) {
 	case 0xf00001:
 	case 0xf00011: /* ide */
@@ -55,7 +60,6 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 	case 0xff8a3c: /* blitter */
 	case 0xff8c80: /* TT 8530 SCC */
 	case 0xff8e09: /* TT VME */
-	case 0xfffa81: /* TT parallel port data register */
 		e68_set_bus_error (sim->cpu, 1);
 		break;
 
@@ -111,11 +115,15 @@ unsigned short st_mem_get_uint16 (void *ext, unsigned long addr)
 		return (0);
 	}
 
+	if ((addr & 0xfffe00) == 0xfffa00) {
+		e68_set_bus_error (sim->cpu, 1);
+		return (0);
+	}
+
 	switch (addr) {
 	case 0xff8900: /* DMA sound */
 	case 0xff8a00: /* blitter */
 	case 0xff8c80: /* TT 8530 SCC */
-	case 0xfffa40: /* floating point coprocessor */
 		e68_set_bus_error (sim->cpu, 1);
 		break;
 
@@ -157,6 +165,11 @@ void st_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 	atari_st_t *sim = ext;
 
 	if (addr < 0xf00000) {
+		return;
+	}
+
+	if ((addr & 0xfffe00) == 0xfffa00) {
+		e68_set_bus_error (sim->cpu, 1);
 		return;
 	}
 
@@ -229,6 +242,11 @@ void st_mem_set_uint16 (void *ext, unsigned long addr, unsigned short val)
 	atari_st_t *sim = ext;
 
 	if (addr < 0xf00000) {
+		return;
+	}
+
+	if ((addr & 0xfffe00) == 0xfffa00) {
+		e68_set_bus_error (sim->cpu, 1);
 		return;
 	}
 
