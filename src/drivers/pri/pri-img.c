@@ -162,6 +162,19 @@ int pri_write (FILE *fp, const void *buf, unsigned long cnt)
 	return (0);
 }
 
+int pri_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt)
+{
+	if (fseek (fp, ofs, SEEK_SET)) {
+		return (1);
+	}
+
+	if (fwrite (buf, 1, cnt, fp) != cnt) {
+		return (1);
+	}
+
+	return (0);
+}
+
 int pri_skip (FILE *fp, unsigned long cnt)
 {
 	unsigned long n;

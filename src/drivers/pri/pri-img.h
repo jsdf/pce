@@ -49,6 +49,7 @@ void pri_set_uint32_le (void *buf, unsigned idx, unsigned long val);
 int pri_read (FILE *fp, void *buf, unsigned long cnt);
 int pri_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt);
 int pri_write (FILE *fp, const void *buf, unsigned long cnt);
+int pri_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt);
 int pri_skip (FILE *fp, unsigned long cnt);
 
 
