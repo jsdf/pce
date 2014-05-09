@@ -236,11 +236,9 @@ int main (int argc, char *argv[])
 	int emscripten;
 	emscripten = 0;
 	#ifdef EMSCRIPTEN
-		// replace command line arg settings
+		// arg defaults
 		pce_log_set_level (stderr, MSG_DEB);
-		cfg = "roms/pce-config.cfg";
-		// run = 1;
-		// nomon = 1;
+		cfg = "pce-config.cfg";
 		emscripten = 1;
 	#endif
 
