@@ -16,9 +16,9 @@ More info:
 PCE.js is available from npm as a set of [browserify](http://github.com/substack/node-browserify) compatible node packages.
 
 There is one for each emulator build:
-- [pcejs-macplus](npmjs.org/package/pcejs-macplus) - Mac Plus
-- [pcejs-ibmpc](npmjs.org/package/pcejs-ibmpc) - IBM PC/XT
-- [pcejs-atarist](npmjs.org/package/pcejs-atarist) - Atari ST
+- [pcejs-macplus](http://npmjs.org/package/pcejs-macplus) - Mac Plus
+- [pcejs-ibmpc](http://npmjs.org/package/pcejs-ibmpc) - IBM PC/XT
+- [pcejs-atarist](http://npmjs.org/package/pcejs-atarist) - Atari ST
 
 See each of the above links for install and usage instructions
 
