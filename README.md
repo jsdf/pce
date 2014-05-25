@@ -13,7 +13,7 @@ More info:
 
 ## Installing from npm
 
-PCE.js is available from npm as a [browserify](http://github.com/substack/node-browserify) compatible node packages.
+PCE.js is available from npm as a set of [browserify](http://github.com/substack/node-browserify) compatible node packages.
 
 There is one for each emulator build:
 - [pcejs-macplus](npmjs.org/package/pcejs-macplus) - Mac Plus
