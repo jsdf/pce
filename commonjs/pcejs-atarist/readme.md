@@ -84,8 +84,8 @@ browserify index.js \
 serve it up
 ```bash
 npm install -g http-server
-http-server .
 open http://localhost:8080
+http-server .
 ```
 
 done
