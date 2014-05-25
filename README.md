@@ -13,16 +13,18 @@ More info:
 
 ## Installing from npm
 
-PCE.js is available from npm as a [browserify](http://github.com/substack/node-browserify) compatible node packages.
+PCE.js is available from npm as a set of [browserify](http://github.com/substack/node-browserify) compatible node packages.
 
 There is one for each emulator build:
-- [pcejs-macplus](npmjs.org/package/pcejs-macplus) - Mac Plus
-- [pcejs-ibmpc](npmjs.org/package/pcejs-ibmpc) - IBM PC/XT
-- [pcejs-atarist](npmjs.org/package/pcejs-atarist) - Atari ST
+- [pcejs-macplus](http://npmjs.org/package/pcejs-macplus) - Mac Plus
+- [pcejs-ibmpc](http://npmjs.org/package/pcejs-ibmpc) - IBM PC/XT
+- [pcejs-atarist](http://npmjs.org/package/pcejs-atarist) - Atari ST
 
 See each of the above links for install and usage instructions
 
 ## How to build PCE.js from source
+
+**Note:** This is a bit complicated. I recommend using the npm packages listed above, unless you really want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on your website).
 
 Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)
 
