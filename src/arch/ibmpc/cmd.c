@@ -34,6 +34,8 @@
 #include <lib/monitor.h>
 #include <lib/sysdep.h>
 
+#include <emscripten.h>
+
 
 static mon_cmd_t par_cmd[] = {
 	{ "boot", "[drive]", "set the boot drive" },

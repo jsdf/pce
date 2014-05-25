@@ -22,7 +22,17 @@
     <audio id="macstartup" src="macstartup.wav"  preload="auto"></audio>
     <script type="text/javascript" src="js/pce-deps.js"></script>
     <script type="text/javascript" src="js/pce.js"></script>
-    <script type="text/javascript">PCEJS.init();</script>
+    <script type="text/javascript">
+    PCEJS.init({
+        useDom: true,
+        dataFiles: [
+          'data/macplus/hd1.qed',
+          'data/macplus/mac-plus.rom',
+          'data/macplus/macplus-pcex.rom',
+          'data/macplus/pce-config.cfg',
+        ]
+    });
+    </script>
 
     <script type="text/javascript">
       $(document).bind('dependenciesLoaded', function() {

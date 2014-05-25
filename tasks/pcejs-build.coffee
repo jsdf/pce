@@ -5,15 +5,15 @@ _ = require('lodash')
 
 # utils
 spawnRun = (done, command, args, opts) ->
-    process = child_process.spawn(command, args, opts)
+  process = child_process.spawn(command, args, opts)
 
-    process.stdout.setEncoding('utf8')
-    process.stdout.on('data', (data) -> util.print(data))
+  process.stdout.setEncoding('utf8')
+  process.stdout.on('data', (data) -> util.print(data))
 
-    process.stderr.setEncoding('utf8')
-    process.stderr.on('data', (data) -> util.error(data))
+  process.stderr.setEncoding('utf8')
+  process.stderr.on('data', (data) -> util.error(data))
 
-    process.on('close', (code) -> done(code))
+  process.on('close', (code) -> done(code))
 
 class PCEJSBuild
   archs: [
@@ -59,8 +59,10 @@ class PCEJSBuild
     flags = []
     # flags.push('-s VERBOSE=1')
     # flags.push('-s OUTLINING_LIMIT=16000')
+    flags.push('-s PRECISE_I64_MATH=0') if @config.imprecise64 is true
     flags.push('-s TOTAL_MEMORY=' + @config.memory*1024*1024) if @config.memory?
-    flags.push('-s ASM_JS=1') if @config.asmjs
+    flags.push('-s ASM_JS=1') if @config.asmjs is true
+    flags.push('-s OUTLINING_LIMIT='+@config.outlining) if @config.outlining
     if @config.exportfuncs
       flags.push('-s EXPORTED_FUNCTIONS='+JSON.stringify(@config.exportfuncs)+'')
     flags.push('-'+@config.optlvl) if @config.optlvl?

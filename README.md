@@ -11,11 +11,18 @@ More info:
 
 ![PCE.js Mac Plus](http://jamesfriend.com.au/sites/default/files/pcejs.png)
 
-## Pre-build package
+## Installing from npm
 
-A pre-built package is available which includes a working system for the macplus emulator: [download](http://jamesfriend.com.au/pce-js/dist/pcejs-mac.zip)
+PCE.js is available from npm as a [browserify](http://github.com/substack/node-browserify) compatible node packages.
 
-## How to build PCE.js
+There is one for each emulator build:
+- [pcejs-macplus](npmjs.org/package/pcejs-macplus) - Mac Plus
+- [pcejs-ibmpc](npmjs.org/package/pcejs-ibmpc) - IBM PC/XT
+- [pcejs-atarist](npmjs.org/package/pcejs-atarist) - Atari ST
+
+See each of the above links for install and usage instructions
+
+## How to build PCE.js from source
 
 Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)
 
@@ -23,26 +30,20 @@ Run `npm install` in this directory (the source root). This should install the
 required node.js modules. You might want to `npm install -g coffee-script http-server` also.
 
 Clone [my fork of Emscripten](https://github.com/jsdf/emscripten) and checkout 
-the `pcejs` branch. Add it to your `$PATH` so you can run `emcc`. Similarly you 
+the `pcejs-fastcomp` branch (now that we're using [emscripten-fastcomp](https://github.com/kripken/emscripten/wiki/LLVM-Backend), you'll want to get that working, or disable it by running your commands prefixed with EMCC_FAST_COMPILER=0). Add the path to the emscripten fork repo to your `$PATH` so you can run `emcc`. Similarly you 
 should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
 `pcejs` branch, but that's where you're reading this, right?
 
 Most of the build process involves running Grunt tasks. Run `grunt --help` for a 
 list of possiblities.
 
-Make sure you've got a directory containing a working set of files for the emulator.
-This means: a rom file, a config file, and some media (hard disk and/or floppy images).
-You can use a normal build of PCE test these out eg. one obtained from the 
-[website](http://www.hampa.ch/pce/download.html), or your package manager of 
-choice (in my case, [homebrew](http://brew.sh/)). 
-
-Your config file should be named `pce-config.cfg`. Once you've got these together 
-in a directory, run `grunt romdir:[your directory]` which will symlink the 
-directory into the source tree at `roms/`. This is necessary for when the data 
-files are packaged up for the browser.
-
 Run `grunt build:[target]` to build the emulator, where [target] is `macplus`, 
-`ibmpc` or `atarist`.
+`ibmpc` or `atarist`. This will output a `pce-[target].js` file to `dist/`.
 
-You'll find the built files at `pce-js/` and `grunt run` will serve them up for 
-your browser on `http://localhost:8080/`. That's it.
+Once the output file for the target you're interested in has been built, you can:
+- run the examples in the `example/` directory with `example/run_example.sh [target]`
+- build the npm packages in the `commonjs/[target]/` directories using their respective `prepublish.sh` scripts
+
+
+
+
