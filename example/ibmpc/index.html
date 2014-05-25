@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+    * {
+      font-family: "Helvetica Neue", Helvetica, sans-serif;
+    }
+    .pcejs {
+      padding-right: 0;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+    }
+    div.pcejs {
+      text-align: center;
+    }
+    div.pcejs-border {
+      border: none;
+    }
+    /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+    .pcejs-canvas {
+      border: 0px none;
+    }
+    .pcejs-container {
+      margin-top: 32px;
+      text-align: center;
+    }
+    
+    </style>
+  </head>
+  <body>
+    <div class="pcejs pcejs-container">
+      <div class="pcejs pcejs-loading-status">Downloading...</div>
+      <div class="pcejs-border">
+        <canvas class="pcejs pcejs-canvas" oncontextmenu="event.preventDefault()"></canvas>
+      </div>
+    </div>
+    <script type="text/javascript" src="bundle.js"></script>
+  </body>
+</html>
