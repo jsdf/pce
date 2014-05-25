@@ -24,6 +24,8 @@ See each of the above links for install and usage instructions
 
 ## How to build PCE.js from source
 
+**Note:** This is a bit complicated. I recommend using the npm packages listed above, unless you really want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on your website).
+
 Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)
 
 Run `npm install` in this directory (the source root). This should install the 
