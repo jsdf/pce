@@ -47,5 +47,9 @@ Once the output file for the target you're interested in has been built, you can
 - build the npm packages in the `commonjs/[target]/` directories using their respective `prepublish.sh` scripts
 
 
+Check out the emulators in which pce runs on:
+
+http://jamesfriend.com.au/pce-js/
+
 
 
