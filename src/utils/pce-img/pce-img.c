@@ -277,6 +277,10 @@ int dsk_create (const char *name, unsigned type)
 		return (1);
 	}
 
+	if (par_n == 0) {
+		par_n = (unsigned long) par_c * par_h * par_s;
+	}
+
 	switch (type) {
 	case DSK_RAW:
 		r = dsk_img_create (name, par_n, par_ofs);
@@ -417,7 +421,7 @@ disk_t *dsk_cow (const char *name, disk_t *dsk)
 		return (NULL);
 	}
 
-	print_disk_info (dsk, name);
+	print_disk_info (cow, name);
 
 	return (cow);
 }

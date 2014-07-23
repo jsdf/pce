@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/cow.c                                      *
  * Created:     2013-01-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,9 +39,9 @@ static pce_option_t opts_create[] = {
 	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
+	{ 'i', 1, "input", "string", "Set the input (base) file name" },
 	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
-	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
 	{ 'w', 1, "cow", "string", "Add a COW file" },
@@ -53,7 +53,7 @@ void print_help (void)
 {
 	pce_getopt_help (
 		"pce-img cow: Create COW files",
-		"usage: pce-img cow [options] [output]",
+		"usage: pce-img cow [options] [base] [cow...]",
 		opts_create
 	);
 
@@ -64,9 +64,9 @@ int main_cow (int argc, char **argv)
 {
 	int    r;
 	char   **optarg;
-	disk_t *out;
+	disk_t *inp;
 
-	out = NULL;
+	inp = NULL;
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts_create);
@@ -118,12 +118,6 @@ int main_cow (int argc, char **argv)
 			pce_set_n (optarg[0], 1);
 			break;
 
-		case 'o':
-			if ((out = dsk_open_out (optarg[0], out, 0)) == NULL) {
-				return (1);
-			}
-			break;
-
 		case 'q':
 			pce_set_quiet (1);
 			break;
@@ -133,15 +127,19 @@ int main_cow (int argc, char **argv)
 			break;
 
 		case 'w':
-			remove (optarg[0]);
-
-			if ((out = dsk_cow (optarg[0], out)) == NULL) {
+			if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
 				return (1);
 			}
 			break;
 
+		case 'i':
 		case 0:
-			if ((out = dsk_open_out (optarg[0], out, 0)) == NULL) {
+			if (inp != NULL) {
+				if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+					return (1);
+				}
+			}
+			else if ((inp = dsk_open_inp (optarg[0], inp, 1)) == NULL) {
 				return (1);
 			}
 			break;
@@ -151,8 +149,8 @@ int main_cow (int argc, char **argv)
 		}
 	}
 
-	if (out != NULL) {
-		dsk_del (out);
+	if (inp != NULL) {
+		dsk_del (inp);
 	}
 
 	return (1);
