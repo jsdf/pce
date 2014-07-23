@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/convert.c                                  *
  * Created:     2013-01-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,6 +33,7 @@
 
 
 static pce_option_t opts_convert[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
 	{ 'c', 1, "cylinders", "int", "Set the number of cylinders [0]" },
 	{ 'C', 1, "min-cluster-size", "int", "Set the minimum cluster size for QED [0]" },
 	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
