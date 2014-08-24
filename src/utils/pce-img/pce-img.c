@@ -76,13 +76,9 @@ void print_help (void)
 		"  commit   Commit changes in COW files\n"
 		"  convert  Convert images\n"
 		"  cow      Create COW files\n"
-		"  create   Create images\n",
-		stdout
-	);
-
-	fputs (
-		"\nfile names: <format>:<name>\n"
-		"formats:    raw, pce, dosemu, psi, qed\n",
+		"  create   Create images\n"
+		"\nformats:\n"
+		"  dosemu, img, pce, psi, qed\n",
 		stdout
 	);
 
@@ -94,7 +90,7 @@ void print_version (void)
 	fputs (
 		"pce-img version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2005-2013 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2005-2014 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 

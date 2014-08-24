@@ -37,6 +37,7 @@
 static pce_option_t opts_commit[] = {
 	{ '?', 0, "help", NULL, "Print usage information" },
 	{ 'i', 1, "input", "string", "Set the input file name [stdin]" },
+	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 'w', 1, "cow", "string", "Set the COW file name [none]" },
 	{  -1, 0, NULL, NULL, NULL }
@@ -85,6 +86,12 @@ int main_commit (int argc, char **argv)
 
 		case 'i':
 			if ((inp = dsk_open_inp (optarg[0], inp, 0)) == NULL) {
+				return (1);
+			}
+			break;
+
+		case 'I':
+			if (pce_set_type_inp (optarg[0])) {
 				return (1);
 			}
 			break;

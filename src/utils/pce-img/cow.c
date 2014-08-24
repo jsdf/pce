@@ -40,6 +40,7 @@ static pce_option_t opts_create[] = {
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
 	{ 'i', 1, "input", "string", "Set the input (base) file name" },
+	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
 	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
@@ -108,6 +109,12 @@ int main_cow (int argc, char **argv)
 
 		case 'h':
 			pce_set_h (optarg[0]);
+			break;
+
+		case 'I':
+			if (pce_set_type_inp (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'm':

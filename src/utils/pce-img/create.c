@@ -42,6 +42,7 @@ static pce_option_t opts_create[] = {
 	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
+	{ 'O', 1, "output-type", "string", "Set the output file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
 	{ 'w', 1, "cow", "string", "Add a COW file" },
@@ -120,6 +121,12 @@ int main_create (int argc, char **argv)
 
 		case 'o':
 			if ((out = dsk_open_out (optarg[0], out, -1)) == NULL) {
+				return (1);
+			}
+			break;
+
+		case 'O':
+			if (pce_set_type_out (optarg[0])) {
 				return (1);
 			}
 			break;
