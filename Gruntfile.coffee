@@ -103,8 +103,6 @@ module.exports = (grunt) ->
     done = this.async()
     moduleBuild(grunt, target, done)
 
-  grunt.task.registerTask 'commonjs', ['module']
-
   grunt.registerTask 'default', ->
     if pcejsBuild.config.emscripten
       tasks = [
