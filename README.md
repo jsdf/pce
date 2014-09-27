@@ -24,17 +24,21 @@ See each of the above links for install and usage instructions
 
 ## How to build PCE.js from source
 
-**Note:** This is a bit complicated. I recommend using the npm packages listed above, unless you really want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on your website).
+**Note:** This is a bit complicated. I recommend instead  just using the npm packages listed above, unless you really want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on a page).
 
-Make sure you've installed [node.js](http://nodejs.org/download/) and [Grunt](http://gruntjs.com/getting-started)
+Make sure you've installed [node.js](http://nodejs.org/download/)
 
 Run `npm install` in this directory (the source root). This should install the 
-required node.js modules. You might want to `npm install -g coffee-script http-server` also.
+required node.js pacakges. Install the required command line tools with
+```bash
+npm install -g grunt coffee-script browserify@4.x http-server
+```
 
 Clone [my fork of Emscripten](https://github.com/jsdf/emscripten) and checkout 
-the `pcejs-fastcomp` branch (now that we're using [emscripten-fastcomp](https://github.com/kripken/emscripten/wiki/LLVM-Backend), you'll want to get that working, or disable it by running your commands prefixed with EMCC_FAST_COMPILER=0). Add the path to the emscripten fork repo to your `$PATH` so you can run `emcc`. Similarly you 
-should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
-`pcejs` branch, but that's where you're reading this, right?
+the `pcejs-fastcomp` branch. Set it up according to the directions for running [emscripten-fastcomp](https://github.com/kripken/emscripten/wiki/LLVM-Backend). Add the path to the emscripten fork repo to your `$PATH` so you can run `emcc`. 
+
+Similarly you should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
+`pcejs` branch, but presumably that's where you're reading this right now.
 
 Most of the build process involves running Grunt tasks. Run `grunt --help` for a 
 list of possiblities.
