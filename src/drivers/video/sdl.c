@@ -65,6 +65,7 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_9,            PCE_KEY_9 },
 	{ SDLK_0,            PCE_KEY_0 },
 	{ SDLK_MINUS,        PCE_KEY_MINUS },
+	{ 0x00bd,            PCE_KEY_MINUS },
 	{ SDLK_EQUALS,       PCE_KEY_EQUAL },
 	{ 0x00bb,            PCE_KEY_EQUAL },
 	{ SDLK_BACKSPACE,    PCE_KEY_BACKSPACE },
@@ -123,6 +124,7 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_RALT,         PCE_KEY_RALT },
 	{ SDLK_RMETA,        PCE_KEY_RMETA },
 	{ SDLK_RSUPER,       PCE_KEY_RSUPER },
+	{ 0x0465,            PCE_KEY_RSUPER },
 	{ SDLK_MENU,         PCE_KEY_MENU },
 	{ SDLK_RCTRL,        PCE_KEY_RCTRL },
 
