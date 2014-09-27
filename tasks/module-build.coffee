@@ -1,8 +1,5 @@
 fs = require('fs')
 path = require('path')
-util = require('util')
-
-inspect = (value) -> util.inspect value, { showHidden: true, depth: null }
 
 moduleWrapperStart = """
 module.exports = function(deps, opts) {
@@ -13,6 +10,8 @@ moduleWrapperEnd = """
 return Module;
 }
 """
+
+# wraps emscripten output for a single arch in a commonjs module
 
 module.exports = (grunt, target, done) ->
   prelude = fs.readFileSync(path.resolve('commonjs/prelude.js'), encoding: 'utf8')
