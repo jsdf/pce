@@ -15,6 +15,7 @@ return Module;
 
 module.exports = (grunt, target, done) ->
   prelude = fs.readFileSync(path.resolve('commonjs/prelude.js'), encoding: 'utf8')
+  epilogue = fs.readFileSync(path.resolve('commonjs/epilogue.js'), encoding: 'utf8')
 
   outputDirPath = path.join(path.resolve('commonjs/'), "pcejs-#{target}/lib/")
   try
@@ -35,6 +36,7 @@ module.exports = (grunt, target, done) ->
   fs.createReadStream(path.resolve("dist/pce-#{target}.js"), encoding: 'utf8')
     .on 'end', ->
       grunt.log.ok("end dist/pce-#{target}.js")
+      outStream.write(epilogue)
       outStream.end(moduleWrapperEnd)
     .pipe(outStream, end: false)
 
