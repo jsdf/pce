@@ -429,33 +429,33 @@ void mac_run_emscripten (macplus_t *sim)
  */
 void mac_run_emscripten_step ()
 {
- 	int mousex;
- 	int mousey;
-  	int mousehack_interval = 100;
+	int mousex;
+	int mousey;
+	int mousehack_interval = 100;
  
- 	const SDL_VideoInfo* videoinfo = SDL_GetVideoInfo();
+	const SDL_VideoInfo* videoinfo = SDL_GetVideoInfo();
 	int screenw = videoinfo->current_w;
 	int screenh = videoinfo->current_h;
  
- 	// for each 'emscripten step' we'll run a bunch of actual cycles
- 	// to minimise overhead from emscripten's main loop management
- 	int i;
- 	for (i = 0; i < 10000; ++i) {
- 		// gross hacks to set mouse position in browser
+	// for each 'emscripten step' we'll run a bunch of actual cycles
+	// to minimise overhead from emscripten's main loop management
+	int i;
+	for (i = 0; i < 10000; ++i) {
+		// gross hacks to set mouse position in browser
 		if (i % mousehack_interval == 0) {
 			SDL_GetMouseState (&mousex, &mousey);
 			// clamp mouse pos to screen bounds
 			mousex = mousex > screenw ? screenw : (mousex < 0 ? 0 : mousex);
 			mousey = mousey > screenh ? screenh : (mousey < 0 ? 0 : mousey);
- 			// internal raw mouse coords
-            e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
-            e68_set_mem16 (macplus_sim->cpu, 0x082a, (unsigned) mousex);
+			// internal raw mouse coords
+			e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
+			e68_set_mem16 (macplus_sim->cpu, 0x082a, (unsigned) mousex);
 			// raw mouse coords
-            e68_set_mem16 (macplus_sim->cpu, 0x082c, (unsigned) mousey);
-            e68_set_mem16 (macplus_sim->cpu, 0x082e, (unsigned) mousex);
+			e68_set_mem16 (macplus_sim->cpu, 0x082c, (unsigned) mousey);
+			e68_set_mem16 (macplus_sim->cpu, 0x082e, (unsigned) mousex);
 			// smoothed mouse coords
-            e68_set_mem16 (macplus_sim->cpu, 0x0830, (unsigned) mousey);
-            e68_set_mem16 (macplus_sim->cpu, 0x0832, (unsigned) mousex);
+			e68_set_mem16 (macplus_sim->cpu, 0x0830, (unsigned) mousey);
+			e68_set_mem16 (macplus_sim->cpu, 0x0832, (unsigned) mousex);
 		}
 		//  presumably this is a very minor unrolling optimisation?
 		mac_clock (par_sim, 0);
