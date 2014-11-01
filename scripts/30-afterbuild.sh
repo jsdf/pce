@@ -1,4 +1,4 @@
-echo "converting bitcode to javascript with datafiles for target: ${PCEJS_TARGET}"
+echo "converting bitcode to javascript for target: ${PCEJS_TARGET}"
 
 # extension rom files
 if [ "${PCEJS_TARGET}" == "macplus" ]; then

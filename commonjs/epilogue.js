@@ -1,0 +1,8 @@
+// expose apis
+
+Module.FS = FS
+Module.IDBFS = IDBFS
+Module.NODEFS = NODEFS
+Module.PATH = PATH
+Module.ERRNO_CODES = ERRNO_CODES
+Module.ERRNO_MESSAGES = ERRNO_MESSAGES
