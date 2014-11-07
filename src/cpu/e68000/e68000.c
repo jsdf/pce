@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -529,10 +529,27 @@ void e68_set_sr (e68000_t *c, unsigned short val)
 }
 
 static
+void e68_double_exception (e68000_t *c, unsigned vct, const char *name)
+{
+	fprintf (stderr, "[%06lX] 68000: double exception (%u:%s)\n",
+		(unsigned long) e68_get_ir_pc (c), vct, name
+	);
+
+	c->halt = 1;
+}
+
+static
 void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 {
 	uint16_t sr1, sr2;
 	uint32_t addr;
+
+	if (c->exception) {
+		e68_double_exception (c, vct, name);
+		return;
+	}
+
+	c->exception = 1;
 
 	vct &= 0xff;
 
@@ -567,6 +584,8 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 	addr = e68_get_mem32 (c, addr);
 
 	e68_set_pc_prefetch (c, addr);
+
+	c->exception = 0;
 }
 
 void e68_exception_reset (e68000_t *c)
@@ -585,6 +604,8 @@ void e68_exception_reset (e68000_t *c)
 	e68_prefetch (c);
 	e68_set_pc (c, e68_get_ir_pc (c) - 4);
 
+	c->exception = 0;
+
 	e68_set_clk (c, 64);
 }
 
@@ -592,10 +613,19 @@ void e68_exception_bus (e68000_t *c)
 {
 	c->bus_error = 0;
 
+	if (c->exception) {
+		e68_double_exception (c, 2, "BUSE");
+		return;
+	}
+
 	e68_exception (c, 2, 0, "BUSE");
+
+	c->exception = 1;
 
 	e68_push32 (c, 0);
 	e68_push32 (c, 0);
+
+	c->exception = 0;
 
 	e68_set_clk (c, 62);
 }
@@ -604,7 +634,14 @@ void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 {
 	uint16_t val;
 
+	if (c->exception) {
+		e68_double_exception (c, 3, "ADDR");
+		return;
+	}
+
 	e68_exception (c, 3, 8, "ADDR");
+
+	c->exception = 1;
 
 	e68_push16 (c, c->ir[0]);
 	e68_push32 (c, addr);
@@ -620,6 +657,8 @@ void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 	}
 
 	e68_push16 (c, val);
+
+	c->exception = 0;
 
 	e68_set_clk (c, 64);
 }
@@ -755,6 +794,7 @@ void e68_reset (e68000_t *c)
 
 	c->halt = 0;
 	c->bus_error = 0;
+	c->exception = 0;
 
 	e68_exception_reset (c);
 

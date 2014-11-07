@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.h                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -164,6 +164,7 @@ typedef struct e68000_s {
 	char           supervisor;
 	unsigned char  halt;
 	char           bus_error;
+	char           exception;
 
 	unsigned       ea_typ;
 	uint32_t       ea_val;
