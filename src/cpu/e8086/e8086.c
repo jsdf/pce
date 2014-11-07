@@ -79,6 +79,11 @@ void e86_init (e8086_t *c)
 
 	c->halt = 0;
 
+	c->int_cnt = 0;
+	c->int_vec = 0;
+	c->int_cs = 0;
+	c->int_ip = 0;
+
 	for (i = 0; i < 256; i++) {
 		c->op[i] = e86_opcodes[i];
 	}
@@ -342,6 +347,11 @@ void e86_trap (e8086_t *c, unsigned n)
 	else {
 		ip = e86_get_ip (c);
 	}
+
+	c->int_cnt += 1;
+	c->int_vec = n;
+	c->int_cs = e86_get_cs (c);
+	c->int_ip = ip;
 
 	e86_push (c, e86_get_flags (c));
 	e86_push (c, e86_get_cs (c));

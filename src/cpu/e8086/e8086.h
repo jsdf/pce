@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.h                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -143,6 +143,11 @@ typedef struct e8086_t {
 
 	char             irq;
 	char             enable_int;
+
+	unsigned         int_cnt;
+	unsigned char    int_vec;
+	unsigned short   int_cs;
+	unsigned short   int_ip;
 
 	e86_opcode_f     op[256];
 
