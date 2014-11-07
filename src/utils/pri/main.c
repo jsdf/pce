@@ -46,10 +46,12 @@ int           par_print_info = 0;
 unsigned      par_fmt_inp = PRI_FORMAT_NONE;
 unsigned      par_fmt_out = PRI_FORMAT_NONE;
 
-int           par_cyl_all = 1;
+char          par_invert = 0;
+
+char          par_cyl_all = 1;
 unsigned long par_cyl[2];
 
-int           par_trk_all = 1;
+char          par_trk_all = 1;
 unsigned long par_trk[2];
 
 unsigned long par_data_rate = 500000;
@@ -77,6 +79,8 @@ static pce_option_t opts[] = {
 	{ 't', 2, "track", "c h", "Select tracks [all]" },
 	{ 'v', 0, "verbose", NULL, "Verbose operation [no]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
+	{ 'x', 0, "invert", NULL, "Invert the selection [no]" },
+	{ 'z', 0, "clear", NULL, "Clear the selection [yes]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
 
@@ -136,7 +140,7 @@ void print_version (void)
 	fputs (
 		"pri version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2012-2013 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2012-2014 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -145,7 +149,7 @@ void print_version (void)
 
 
 static
-int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, int *all)
+int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, char *all)
 {
 	*v1 = 0;
 	*v2 = 0;
@@ -189,19 +193,15 @@ int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, int 
 static
 int pri_sel_match_track (unsigned c, unsigned h)
 {
-	if (par_cyl_all == 0) {
-		if ((c < par_cyl[0]) || (c > par_cyl[1])) {
-			return (0);
-		}
+	if (!par_cyl_all && ((c < par_cyl[0]) || (c > par_cyl[1]))) {
+		return (par_invert);
 	}
 
-	if (par_trk_all == 0) {
-		if ((h < par_trk[0]) || (h > par_trk[1])) {
-			return (0);
-		}
+	if (!par_trk_all && ((h < par_trk[0]) || (h > par_trk[1]))) {
+		return (par_invert);
 	}
 
-	return (1);
+	return (!par_invert);
 }
 
 int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque)
@@ -599,6 +599,16 @@ int main (int argc, char **argv)
 
 		case 'v':
 			par_verbose = 1;
+			break;
+
+		case 'x':
+			par_invert = !par_invert;
+			break;
+
+		case 'z':
+			par_invert = 0;
+			par_cyl_all = 1;
+			par_trk_all = 1;
 			break;
 
 		case 0:

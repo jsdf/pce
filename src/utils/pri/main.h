@@ -37,10 +37,10 @@ extern int           par_verbose;
 extern int           par_list;
 extern int           par_print_info;
 
-extern int           par_cyl_all;
+extern char          par_cyl_all;
 extern unsigned long par_cyl[2];
 
-extern int           par_trk_all;
+extern char          par_trk_all;
 extern unsigned long par_trk[2];
 
 extern unsigned long par_data_rate;
