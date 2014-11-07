@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/pri.c                                          *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -374,7 +374,12 @@ pri_img_t *pri_load_image (const char *fname)
 		fprintf (stderr, "%s: loading image from %s\n", arg0, fname);
 	}
 
-	img = pri_img_load (fname, par_fmt_inp);
+	if (strcmp (fname, "-") == 0) {
+		img = pri_img_load_fp (stdin, par_fmt_inp);
+	}
+	else {
+		img = pri_img_load (fname, par_fmt_inp);
+	}
 
 	if (img == NULL) {
 		fprintf (stderr, "%s: loading failed (%s)\n", arg0, fname);
@@ -392,6 +397,41 @@ pri_img_t *pri_load_image (const char *fname)
 	}
 
 	return (img);
+}
+
+static
+int pri_save_image (const char *fname, pri_img_t **img)
+{
+	int r;
+
+	if (*img == NULL) {
+		*img = pri_img_new();
+	}
+
+	if (*img == NULL) {
+		return (1);
+	}
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: save image to %s\n", arg0, fname);
+	}
+
+	if (strcmp (fname, "-") == 0) {
+		r = pri_img_save_fp (stdout, *img, par_fmt_out);
+	}
+	else {
+		r = pri_img_save (fname, *img, par_fmt_out);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: saving failed (%s)\n",
+			arg0, fname
+		);
+
+		return (1);
+	}
+
+	return (0);
 }
 
 static
@@ -454,12 +494,10 @@ int main (int argc, char **argv)
 	int        r;
 	char       **optarg;
 	pri_img_t *img;
-	const char *out;
 
 	arg0 = argv[0];
 
 	img = NULL;
-	out = NULL;
 
 	pri_decode_mfm_init (&par_dec_mfm);
 	pri_encode_mfm_init (&par_enc_mfm, 500000, 300);
@@ -559,7 +597,9 @@ int main (int argc, char **argv)
 			break;
 
 		case 'o':
-			out = optarg[0];
+			if (pri_save_image (optarg[0], &img)) {
+				return (1);
+			}
 			break;
 
 		case 'O':
@@ -619,42 +659,14 @@ int main (int argc, char **argv)
 					return (1);
 				}
 			}
-			else if (out == NULL) {
-				out = optarg[0];
-			}
 			else {
-				fprintf (stderr, "%s: unknown option (%s)\n",
-					arg0, optarg[0]
-				);
-
-				return (1);
+				if (pri_save_image (optarg[0], &img)) {
+					return (1);
+				}
 			}
 			break;
 
 		default:
-			return (1);
-		}
-	}
-
-	if (out != NULL) {
-		if (img == NULL) {
-			img = pri_img_new();
-		}
-
-		if (img == NULL) {
-			return (1);
-		}
-
-		if (par_verbose) {
-			fprintf (stderr, "%s: save image to %s\n", arg0, out);
-		}
-
-		r = pri_img_save (out, img, par_fmt_out);
-
-		if (r) {
-			fprintf (stderr, "%s: saving failed (%s)\n",
-				argv[0], out
-			);
 			return (1);
 		}
 	}
