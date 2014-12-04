@@ -81,7 +81,7 @@ cp node_modules/pcejs-macplus/macplus-pcex.rom ./macplus-pcex.rom
 
 bundle it with browserify
 ```bash
-npm install -g browserify
+npm install -g browserify@4.x
 browserify index.js \
   --noparse="node_modules/pcejs-macplus/lib/pcejs-macplus.js" \
   > bundle.js

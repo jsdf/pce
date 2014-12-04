@@ -75,7 +75,7 @@ unzip atarist-system.zip
 
 bundle it with browserify
 ```bash
-npm install -g browserify
+npm install -g browserify@4.x
 browserify index.js \
   --noparse="node_modules/pcejs-atarist/lib/pcejs-atarist.js" \
   > bundle.js

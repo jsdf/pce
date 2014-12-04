@@ -82,7 +82,7 @@ cp node_modules/pcejs-ibmpc/ibmpc-pcex.rom ./ibmpc-pcex.rom
 
 bundle it with browserify
 ```bash
-npm install -g browserify
+npm install -g browserify@4.x
 browserify index.js \
   --noparse="node_modules/pcejs-ibmpc/lib/pcejs-ibmpc.js" \
   > bundle.js

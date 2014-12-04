@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "dependencies": {
     "xtend": "^3.0.0"
   },
@@ -17,7 +17,7 @@
     }
   ],
   "scripts": {
-    "prepublish": "./prepublish.sh"
+    "prepublish": "./prepublish.sh macplus"
   },
   "files": [
     "index.js",
