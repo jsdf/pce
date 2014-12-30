@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm-io.c                                    *
  * Created:     2012-01-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,7 +35,7 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
-#include <drivers/pri/gcr-mac.h>
+#include <drivers/pri/pri-enc-gcr.h>
 
 
 static

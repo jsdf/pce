@@ -36,7 +36,7 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
-#include <drivers/pri/mfm-ibm.h>
+#include <drivers/pri/pri-enc-mfm.h>
 
 #include <lib/log.h>
 #include <lib/string.h>

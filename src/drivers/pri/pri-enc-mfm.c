@@ -3,7 +3,7 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pri/mfm-ibm.c                                    *
+ * File name:   src/drivers/pri/pri-enc-mfm.c                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
@@ -28,7 +28,7 @@
 
 #include "pri.h"
 #include "pri-img.h"
-#include "mfm-ibm.h"
+#include "pri-enc-mfm.h"
 
 
 typedef struct {

@@ -94,7 +94,7 @@ src/arch/atarist/fdc.o: src/arch/atarist/fdc.c \
 	src/config.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pri/mfm-ibm.h \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
@@ -680,7 +680,7 @@ src/arch/macplus/iwm-io.o: src/arch/macplus/iwm-io.c \
 	src/config.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pri/gcr-mac.h \
+	src/drivers/pri/pri-enc-gcr.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
@@ -945,7 +945,7 @@ src/arch/rc759/fdc.o: src/arch/rc759/fdc.c \
 	src/config.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/block.h \
-	src/drivers/pri/mfm-ibm.h \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
@@ -2054,19 +2054,19 @@ src/drivers/options.o: src/drivers/options.c \
 	src/config.h \
 	src/drivers/options.h
 
-src/drivers/pri/gcr-mac.o: src/drivers/pri/gcr-mac.c \
-	src/drivers/pri/gcr-mac.h \
-	src/drivers/pri/pri.h \
-	src/drivers/psi/psi.h
-
-src/drivers/pri/mfm-ibm.o: src/drivers/pri/mfm-ibm.c \
-	src/drivers/pri/mfm-ibm.h \
+src/drivers/pri/pri-enc-fm.o: src/drivers/pri/pri-enc-fm.c \
+	src/drivers/pri/pri-enc-fm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h
 
-src/drivers/pri/pri-enc-fm.o: src/drivers/pri/pri-enc-fm.c \
-	src/drivers/pri/pri-enc-fm.h \
+src/drivers/pri/pri-enc-gcr.o: src/drivers/pri/pri-enc-gcr.c \
+	src/drivers/pri/pri-enc-gcr.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi.h
+
+src/drivers/pri/pri-enc-mfm.o: src/drivers/pri/pri-enc-mfm.c \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h
@@ -2438,9 +2438,9 @@ src/utils/pri/comment.o: src/utils/pri/comment.c \
 
 src/utils/pri/decode.o: src/utils/pri/decode.c \
 	src/config.h \
-	src/drivers/pri/gcr-mac.h \
-	src/drivers/pri/mfm-ibm.h \
 	src/drivers/pri/pri-enc-fm.h \
+	src/drivers/pri/pri-enc-gcr.h \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
@@ -2461,9 +2461,9 @@ src/utils/pri/edit.o: src/utils/pri/edit.c \
 
 src/utils/pri/encode.o: src/utils/pri/encode.c \
 	src/config.h \
-	src/drivers/pri/gcr-mac.h \
-	src/drivers/pri/mfm-ibm.h \
 	src/drivers/pri/pri-enc-fm.h \
+	src/drivers/pri/pri-enc-gcr.h \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \
@@ -2484,8 +2484,8 @@ src/utils/pri/list.o: src/utils/pri/list.c \
 
 src/utils/pri/main.o: src/utils/pri/main.c \
 	src/config.h \
-	src/drivers/pri/mfm-ibm.h \
 	src/drivers/pri/pri-enc-fm.h \
+	src/drivers/pri/pri-enc-mfm.h \
 	src/drivers/pri/pri-img.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi-img.h \

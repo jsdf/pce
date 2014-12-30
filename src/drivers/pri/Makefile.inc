@@ -6,9 +6,9 @@ DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
 DRV_PRI_BAS := \
-	gcr-mac \
-	mfm-ibm \
 	pri-enc-fm \
+	pri-enc-gcr \
+	pri-enc-mfm \
 	pri-img-pbit \
 	pri-img-pri \
 	pri-img-tc \
@@ -23,9 +23,9 @@ DRV_PRI_ARC := $(rel)/pri.a
 CLN  += $(DRV_PRI_ARC) $(DRV_PRI_OBJ)
 DIST += $(DRV_PRI_SRC) $(DRV_PRI_HDR)
 
-$(rel)/gcr-mac.o:      $(rel)/gcr-mac.c
-$(rel)/mfm-ibm.o:      $(rel)/mfm-ibm.c
 $(rel)/pri-enc-fm.o:   $(rel)/pri-enc-fm.c
+$(rel)/pri-enc-gcr.o:  $(rel)/pri-enc-gcr.c
+$(rel)/pri-enc-mfm.o:  $(rel)/pri-enc-mfm.c
 $(rel)/pri-img-pbit.o: $(rel)/pri-img-pbit.c
 $(rel)/pri-img-pri.o:  $(rel)/pri-img-pri.c
 $(rel)/pri-img-tc.o:   $(rel)/pri-img-tc.c

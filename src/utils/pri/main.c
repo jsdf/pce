@@ -34,7 +34,7 @@
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
 #include <drivers/pri/pri-enc-fm.h>
-#include <drivers/pri/mfm-ibm.h>
+#include <drivers/pri/pri-enc-mfm.h>
 
 
 const char    *arg0 = NULL;

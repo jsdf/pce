@@ -31,8 +31,8 @@
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
 #include <drivers/pri/pri-enc-fm.h>
-#include <drivers/pri/gcr-mac.h>
-#include <drivers/pri/mfm-ibm.h>
+#include <drivers/pri/pri-enc-gcr.h>
+#include <drivers/pri/pri-enc-mfm.h>
 
 
 struct pri_decode_psi_s {
