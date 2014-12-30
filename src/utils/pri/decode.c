@@ -30,6 +30,7 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
+#include <drivers/pri/pri-enc-fm.h>
 #include <drivers/pri/gcr-mac.h>
 #include <drivers/pri/mfm-ibm.h>
 
@@ -254,6 +255,42 @@ int pri_decode_raw (pri_img_t *img, const char *fname)
 
 
 static
+int pri_decode_psi_auto_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	psi_trk_t               *dtrk;
+	struct pri_decode_psi_s *dec;
+
+	dec = opaque;
+
+	if ((dtrk = pri_decode_mfm_trk (trk, h, &dec->mfm)) == NULL) {
+		return (1);
+	}
+
+	if (dtrk->sct_cnt == 0) {
+		psi_trk_del (dtrk);
+
+		if ((dtrk = pri_decode_fm_trk (trk, h)) == NULL) {
+			return (1);
+		}
+	}
+
+	if (dtrk->sct_cnt == 0) {
+		psi_trk_del (dtrk);
+
+		if ((dtrk = pri_decode_gcr_trk (trk, h)) == NULL) {
+			return (1);
+		}
+	}
+
+	if (psi_img_add_track (dec->img, dtrk, c)) {
+		psi_trk_del (dtrk);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pri_decode_psi_mfm_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	psi_trk_t               *dtrk;
@@ -262,6 +299,26 @@ int pri_decode_psi_mfm_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsi
 	dec = opaque;
 
 	if ((dtrk = pri_decode_mfm_trk (trk, h, &dec->mfm)) == NULL) {
+		return (1);
+	}
+
+	if (psi_img_add_track (dec->img, dtrk, c)) {
+		psi_trk_del (dtrk);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pri_decode_psi_fm_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	psi_trk_t               *dtrk;
+	struct pri_decode_psi_s *dec;
+
+	dec = opaque;
+
+	if ((dtrk = pri_decode_fm_trk (trk, h)) == NULL) {
 		return (1);
 	}
 
@@ -302,22 +359,16 @@ int pri_decode_psi (pri_img_t *img, const char *type, const char *fname)
 
 	dec.mfm = par_dec_mfm;
 
-	if (strcmp (type, "fm") == 0) {
-		dec.mfm.decode_mfm = 0;
-		dec.mfm.decode_fm = 1;
-		fct = pri_decode_psi_mfm_cb;
+	if ((strcmp (type, "auto") == 0) || (strcmp (type, "mfm-fm") == 0)) {
+		fct = pri_decode_psi_auto_cb;
+	}
+	else if (strcmp (type, "fm") == 0) {
+		fct = pri_decode_psi_fm_cb;
 	}
 	else if (strcmp (type, "gcr") == 0) {
 		fct = pri_decode_psi_gcr_cb;
 	}
 	else if (strcmp (type, "mfm") == 0) {
-		dec.mfm.decode_mfm = 1;
-		dec.mfm.decode_fm = 0;
-		fct = pri_decode_psi_mfm_cb;
-	}
-	else if (strcmp (type, "mfm-fm") == 0) {
-		dec.mfm.decode_mfm = 1;
-		dec.mfm.decode_fm = 1;
 		fct = pri_decode_psi_mfm_cb;
 	}
 	else {

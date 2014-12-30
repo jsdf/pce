@@ -30,12 +30,105 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
+#include <drivers/pri/pri-enc-fm.h>
 #include <drivers/pri/gcr-mac.h>
 #include <drivers/pri/mfm-ibm.h>
 
 
+extern pri_enc_fm_t  par_enc_fm;
 extern pri_enc_mfm_t par_enc_mfm;
 
+
+static
+unsigned get_encoding (const psi_trk_t *trk)
+{
+	unsigned  i;
+	psi_sct_t *sct;
+
+	for (i = 0; i < trk->sct_cnt; i++) {
+		sct = trk->sct[i];
+
+		switch (sct->encoding & PSI_ENC_MASK) {
+		case PSI_ENC_FM:
+			return (PSI_ENC_FM);
+
+		case PSI_ENC_MFM:
+			return (PSI_ENC_MFM);
+		}
+	}
+
+	return (PSI_ENC_UNKNOWN);
+}
+
+static
+int pri_encode_auto_img (pri_img_t *dimg, psi_img_t *simg)
+{
+	unsigned      enc;
+	unsigned long c, h;
+	psi_cyl_t     *cyl;
+	psi_trk_t     *trk;
+	pri_trk_t     *dtrk;
+
+	for (c = 0; c < simg->cyl_cnt; c++) {
+		cyl = simg->cyl[c];
+
+		for (h = 0; h < cyl->trk_cnt; h++) {
+			trk = cyl->trk[h];
+
+			dtrk = pri_img_get_track (dimg, c, h, 1);
+
+			if (dtrk == NULL) {
+				return (1);
+			}
+
+			enc = get_encoding (trk);
+
+			if (enc == PSI_ENC_FM) {
+				if (pri_trk_set_size (dtrk, par_enc_fm.track_size)) {
+					return (1);
+				}
+
+				pri_trk_set_clock (dtrk, par_enc_fm.clock);
+				pri_trk_clear_16 (dtrk, 0xffff);
+
+				if (pri_encode_fm_trk (dtrk, trk, &par_enc_fm)) {
+					return (1);
+				}
+			}
+			else {
+				if (pri_trk_set_size (dtrk, par_enc_mfm.track_size)) {
+					return (1);
+				}
+
+				pri_trk_set_clock (dtrk, par_enc_mfm.clock);
+				pri_trk_clear_16 (dtrk, 0x9254);
+
+				if (pri_encode_mfm_trk (dtrk, trk, &par_enc_mfm)) {
+					return (1);
+				}
+			}
+		}
+	}
+
+	return (0);
+}
+
+static
+pri_img_t *pri_encode_auto (psi_img_t *img)
+{
+	pri_img_t *dimg;
+
+	if ((dimg = pri_img_new()) == NULL) {
+		return (NULL);
+	}
+
+	if (pri_encode_auto_img (dimg, img)) {
+		pri_img_del (dimg);
+		return (NULL);
+	}
+
+	return (dimg);
+}
 
 int pri_encode (pri_img_t **img, const char *type, const char *fname)
 {
@@ -46,7 +139,18 @@ int pri_encode (pri_img_t **img, const char *type, const char *fname)
 		return (1);
 	}
 
-	if (strcmp (type, "gcr") == 0) {
+	if (strcmp (type, "auto") == 0) {
+		dimg = pri_encode_auto (simg);
+	}
+	else if (strcmp (type, "fm") == 0) {
+		dimg = pri_encode_fm (simg, &par_enc_fm);
+	}
+	else if (strcmp (type, "fm-sd-300") == 0) {
+		par_enc_fm.clock = 250000;
+		par_enc_fm.track_size = 250000 / 5;
+		dimg = pri_encode_fm (simg, &par_enc_fm);
+	}
+	else if (strcmp (type, "gcr") == 0) {
 		dimg = pri_encode_gcr (simg);
 	}
 	else if (strcmp (type, "mfm") == 0) {

@@ -33,6 +33,7 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
+#include <drivers/pri/pri-enc-fm.h>
 #include <drivers/pri/mfm-ibm.h>
 
 
@@ -55,6 +56,8 @@ char          par_trk_all = 1;
 unsigned long par_trk[2];
 
 unsigned long par_data_rate = 500000;
+
+pri_enc_fm_t  par_enc_fm;
 
 pri_dec_mfm_t par_dec_mfm;
 pri_enc_mfm_t par_enc_mfm;
@@ -116,12 +119,14 @@ void print_help (void)
 		"parameters are:\n"
 		"  mfm-auto-gap3, mfm-clock, mfm-iam, mfm-gap1, mfm-gap3, mfm-gap4a,\n"
 		"  mfm-min-size, mfm-track-size\n"
+		"  fm-auto-gap3, fm-clock, fm-iam, fm-gap1, fm-gap3, fm-gap4a,\n"
+		"  fm-track-size\n"
 		"\n"
 		"decode types are:\n"
-		"  fm, fm-raw, gcr, gcr-raw, mfm, mfm-fm, mfm-raw, raw\n"
+		"  auto, fm, fm-raw, gcr, gcr-raw, mfm, mfm-raw, raw\n"
 		"\n"
 		"encode types are:\n"
-		"  gcr, mfm, mfm-dd-300, mfm-hd-300, mfm-hd-360\n"
+		"  auto, fm, fm-sd-300, gcr, mfm, mfm-dd-300, mfm-hd-300, mfm-hd-360\n"
 		"\n"
 		"file formats are:\n"
 		"  pri, tc\n"
@@ -461,6 +466,27 @@ int pri_set_parameter (const char *name, const char *val)
 	else if (strcmp (name, "mfm-track-size") == 0) {
 		par_enc_mfm.track_size = strtoul (val, NULL, 0);
 	}
+	else if (strcmp (name, "fm-auto-gap3") == 0) {
+		par_enc_fm.auto_gap3 = (strtoul (val, NULL, 0) != 0);
+	}
+	else if (strcmp (name, "fm-clock") == 0) {
+		par_enc_fm.clock = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "fm-iam") == 0) {
+		par_enc_fm.enable_iam = (strtoul (val, NULL, 0) != 0);
+	}
+	else if (strcmp (name, "fm-gap1") == 0) {
+		par_enc_fm.gap1 = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "fm-gap3") == 0) {
+		par_enc_fm.gap3 = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "fm-gap4a") == 0) {
+		par_enc_fm.gap4a = strtoul (val, NULL, 0);
+	}
+	else if (strcmp (name, "fm-track-size") == 0) {
+		par_enc_fm.track_size = strtoul (val, NULL, 0);
+	}
 	else {
 		return (1);
 	}
@@ -498,6 +524,8 @@ int main (int argc, char **argv)
 	arg0 = argv[0];
 
 	img = NULL;
+
+	pri_encode_fm_init (&par_enc_fm, 250000, 300);
 
 	pri_decode_mfm_init (&par_dec_mfm);
 	pri_encode_mfm_init (&par_enc_mfm, 500000, 300);
