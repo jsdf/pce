@@ -48,73 +48,36 @@
 
 
 static
-int st_read_track (void *ext, wd179x_drive_t *drv)
+int st_read_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk)
 {
-	unsigned long cnt;
-	st_fdc_t      *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	st_fdc_t  *fdc;
+	pri_img_t *img;
 
 	fdc = ext;
 
-	if ((img = fdc->img[drv->d & 1]) == NULL) {
+	if ((img = fdc->img[d & 1]) == NULL) {
 		return (1);
 	}
 
-	if ((trk = pri_img_get_track (img, drv->c, drv->h, 1)) == NULL) {
+	if ((*trk = pri_img_get_track (img, c, h, 1)) == NULL) {
 		return (1);
 	}
-
-	if (pri_trk_get_size (trk) == 0) {
-		if (pri_trk_set_size (trk, 500000 / 5)) {
-			return (1);
-		}
-	}
-
-	if (pri_trk_get_clock (trk) == 0) {
-		pri_trk_set_clock (trk, 500000);
-	}
-
-	cnt = (trk->size + 7) / 8;
-
-	if (cnt > WD179X_TRKBUF_SIZE) {
-		return (1);
-	}
-
-	memcpy (drv->trkbuf, trk->data, cnt);
-
-	drv->trkbuf_cnt = trk->size;
 
 	return (0);
 }
 
 static
-int st_write_track (void *ext, wd179x_drive_t *drv)
+int st_write_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t *trk)
 {
-	unsigned long cnt;
-	st_fdc_t      *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	st_fdc_t *fdc;
 
 	fdc = ext;
 
-	if ((img = fdc->img[drv->d & 1]) == NULL) {
+	if (fdc->img[d & 1] == NULL) {
 		return (1);
 	}
 
-	fdc->modified[drv->d & 1] = 1;
-
-	if ((trk = pri_img_get_track (img, drv->c, drv->h, 1)) == NULL) {
-		return (1);
-	}
-
-	if (pri_trk_set_size (trk, drv->trkbuf_cnt)) {
-		return (1);
-	}
-
-	cnt = (trk->size + 7) / 8;
-
-	memcpy (trk->data, drv->trkbuf, cnt);
+	fdc->modified[d & 1] = 1;
 
 	return (0);
 }
@@ -145,15 +108,13 @@ void st_fdc_free (st_fdc_t *fdc)
 {
 	unsigned i;
 
-	wd179x_free (&fdc->wd179x);
-
 	for (i = 0; i < 2; i++) {
 		st_fdc_save (fdc, i);
-
 		pri_img_del (fdc->img[i]);
-
 		free (fdc->fname[i]);
 	}
+
+	wd179x_free (&fdc->wd179x);
 }
 
 void st_fdc_reset (st_fdc_t *fdc)

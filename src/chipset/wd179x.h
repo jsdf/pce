@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,9 @@
 #define PCE_CHIPSET_WD179X_H 1
 
 
+#include <drivers/pri/pri.h>
+
+
 #define WD179X_TRKBUF_SIZE 32768
 
 
@@ -40,7 +43,15 @@ typedef struct {
 	unsigned      h;
 
 	unsigned long motor_clock;
+	unsigned long bit_clock;
+	unsigned long bit_clock_base;
+
+	unsigned long fuzzy_mask;
+
 	unsigned      index_cnt;
+
+	pri_trk_t     *trk;
+	pri_evt_t     *evt;
 
 	unsigned char trkbuf_mod;
 	unsigned long trkbuf_idx;
@@ -101,10 +112,10 @@ typedef struct wd179x_t {
 	void           (*clock) (struct wd179x_t *fdc);
 
 	void           *read_track_ext;
-	int            (*read_track) (void *ext, wd179x_drive_t *drv);
+	int            (*read_track) (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk);
 
 	void           *write_track_ext;
-	int            (*write_track) (void *ext, wd179x_drive_t *drv);
+	int            (*write_track) (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t *trk);
 
 	unsigned char  irq_val;
 	void           *irq_ext;

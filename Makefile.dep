@@ -9,6 +9,7 @@ src/arch/atarist/acsi.o: src/arch/atarist/acsi.c \
 	src/config.h \
 	src/devices/memory.h \
 	src/drivers/block/block.h \
+	src/drivers/pri/pri.h \
 	src/lib/log.h
 
 src/arch/atarist/atarist.o: src/arch/atarist/atarist.c \
@@ -85,7 +86,8 @@ src/arch/atarist/dma.o: src/arch/atarist/dma.c \
 	src/chipset/wd179x.h \
 	src/config.h \
 	src/devices/memory.h \
-	src/drivers/block/block.h
+	src/drivers/block/block.h \
+	src/drivers/pri/pri.h
 
 src/arch/atarist/fdc.o: src/arch/atarist/fdc.c \
 	src/arch/atarist/fdc.h \
@@ -1599,7 +1601,8 @@ src/chipset/ppc405/uic.o: src/chipset/ppc405/uic.c \
 	src/chipset/ppc405/uic.h
 
 src/chipset/wd179x.o: src/chipset/wd179x.c \
-	src/chipset/wd179x.h
+	src/chipset/wd179x.h \
+	src/drivers/pri/pri.h
 
 src/cpu/arm/arm.o: src/cpu/arm/arm.c \
 	src/cpu/arm/arm.h \

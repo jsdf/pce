@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/fdc.c                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -48,73 +48,36 @@
 
 
 static
-int rc759_read_track (void *ext, wd179x_drive_t *drv)
+int rc759_read_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk)
 {
-	unsigned long cnt;
-	rc759_fdc_t   *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	rc759_fdc_t *fdc;
+	pri_img_t   *img;
 
 	fdc = ext;
 
-	img = fdc->img[drv->d & 1];
-
-	if (img == NULL) {
+	if ((img = fdc->img[d & 1]) == NULL) {
 		return (1);
 	}
 
-	trk = pri_img_get_track (img, drv->c, drv->h, 0);
-
-	if (trk == NULL) {
+	if ((*trk = pri_img_get_track (img, c, h, 1)) == NULL) {
 		return (1);
 	}
-
-	cnt = (trk->size + 7) / 8;
-
-	if (cnt > WD179X_TRKBUF_SIZE) {
-		return (1);
-	}
-
-	memcpy (drv->trkbuf, trk->data, cnt);
-
-	drv->trkbuf_cnt = trk->size;
 
 	return (0);
 }
 
 static
-int rc759_write_track (void *ext, wd179x_drive_t *drv)
+int rc759_write_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t *trk)
 {
-	unsigned long cnt;
-	rc759_fdc_t   *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	rc759_fdc_t *fdc;
 
 	fdc = ext;
 
-	img = fdc->img[drv->d & 1];
-
-	if (img == NULL) {
+	if (fdc->img[d & 1] == NULL) {
 		return (1);
 	}
 
-	fdc->modified[drv->d & 1] = 1;
-
-	trk = pri_img_get_track (img, drv->c, drv->h, 1);
-
-	if (trk == NULL) {
-		return (1);
-	}
-
-	if (pri_trk_set_size (trk, drv->trkbuf_cnt)) {
-		return (1);
-	}
-
-	pri_trk_set_clock (trk, 1000000);
-
-	cnt = (trk->size + 7) / 8;
-
-	memcpy (trk->data, drv->trkbuf, cnt);
+	fdc->modified[d & 1] = 1;
 
 	return (0);
 }
@@ -146,8 +109,6 @@ void rc759_fdc_free (rc759_fdc_t *fdc)
 {
 	unsigned i;
 
-	wd179x_free (&fdc->wd179x);
-
 	for (i = 0; i < 2; i++) {
 		rc759_fdc_save (fdc, i);
 
@@ -155,6 +116,8 @@ void rc759_fdc_free (rc759_fdc_t *fdc)
 
 		free (fdc->fname[i]);
 	}
+
+	wd179x_free (&fdc->wd179x);
 }
 
 void rc759_fdc_reset (rc759_fdc_t *fdc)
