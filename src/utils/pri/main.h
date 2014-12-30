@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/main.h                                         *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,12 @@
 
 #include <drivers/pri/pri.h>
 #include <drivers/psi/psi.h>
+
+
+#define PRI_TEXT_AUTO 0
+#define PRI_TEXT_RAW  1
+#define PRI_TEXT_MFM  2
+#define PRI_TEXT_FM   3
 
 
 extern const char    *arg0;
@@ -76,13 +82,13 @@ int pri_list_tracks (pri_img_t *img);
 
 int pri_merge_image (pri_img_t *img, const char *fname, int overwrite);
 
-int pri_decode_mfm_text (pri_img_t *img, const char *fname);
-int pri_encode_mfm_text (pri_img_t *img, const char *fname);
-
 int pri_new (pri_img_t *img);
 
 int pri_align_gcr_tracks (pri_img_t *img);
 int pri_rotate_tracks (pri_img_t *img, unsigned long idx);
+
+int pri_encode_text (pri_img_t *img, const char *fname);
+int pri_decode_text (pri_img_t *img, const char *fname, unsigned enc);
 
 
 #endif

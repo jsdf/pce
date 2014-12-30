@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/encode.c                                       *
  * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -134,6 +134,10 @@ int pri_encode (pri_img_t **img, const char *type, const char *fname)
 {
 	psi_img_t *simg;
 	pri_img_t *dimg;
+
+	if (strcmp (type, "text") == 0) {
+		return (pri_encode_text (*img, fname));
+	}
 
 	if ((simg = psi_load (fname, PSI_FORMAT_NONE)) == NULL) {
 		return (1);

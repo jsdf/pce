@@ -2512,6 +2512,12 @@ src/utils/pri/rotate.o: src/utils/pri/rotate.c \
 	src/drivers/psi/psi.h \
 	src/utils/pri/main.h
 
+src/utils/pri/text.o: src/utils/pri/text.c \
+	src/config.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi.h \
+	src/utils/pri/main.h
+
 src/utils/psi/comment.o: src/utils/psi/comment.c \
 	src/config.h \
 	src/drivers/psi/psi.h \

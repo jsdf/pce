@@ -407,6 +407,18 @@ int pri_decode (pri_img_t *img, const char *type, const char *fname)
 	else if (strcmp (type, "mfm-raw") == 0) {
 		return (pri_decode_mfm_raw (img, fname));
 	}
+	else if (strcmp (type, "text") == 0) {
+		return (pri_decode_text (img, fname, PRI_TEXT_AUTO));
+	}
+	else if (strcmp (type, "text-fm") == 0) {
+		return (pri_decode_text (img, fname, PRI_TEXT_FM));
+	}
+	else if (strcmp (type, "text-mfm") == 0) {
+		return (pri_decode_text (img, fname, PRI_TEXT_MFM));
+	}
+	else if (strcmp (type, "text-raw") == 0) {
+		return (pri_decode_text (img, fname, PRI_TEXT_RAW));
+	}
 	else if (strcmp (type, "raw") == 0) {
 		return (pri_decode_raw (img, fname));
 	}
