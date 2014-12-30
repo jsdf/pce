@@ -31,7 +31,10 @@
 static
 int pri_list_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
-	double rpm;
+	unsigned   i;
+	double     rpm;
+	pri_evt_t  *evt;
+	const char *str;
 
 	if ((trk->clock > 0) && (trk->size > 0)) {
 		rpm = (60.0 * trk->clock) / trk->size;
@@ -46,6 +49,35 @@ int pri_list_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned
 		pri_trk_get_size (trk),
 		rpm
 	);
+
+	if (par_list_long) {
+		evt = trk->evt;
+
+		i = 0;
+
+		while (evt != NULL) {
+			switch (evt->type) {
+			case PRI_EVENT_FUZZY:
+				str = "FUZZY";
+				break;
+
+			case PRI_EVENT_CLOCK:
+				str = "CLOCK";
+				break;
+
+			default:
+				str = "UNK";
+				break;
+			}
+
+			printf ("\t%u: EVT(%lu): %-6s %6lu  0x%08lx\n",
+				i, evt->type, str, evt->pos, evt->val
+			);
+
+			i += 1;
+			evt = evt->next;
+		}
+	}
 
 	return (0);
 }

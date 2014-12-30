@@ -35,6 +35,7 @@ extern const char    *arg0;
 extern int           par_verbose;
 
 extern int           par_list;
+extern int           par_list_long;
 extern int           par_print_info;
 
 extern char          par_cyl_all;

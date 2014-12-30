@@ -469,12 +469,64 @@ void mfm_encode_mark (mfm_code_t *mfm, unsigned char mark)
 }
 
 static
+void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
+{
+	unsigned      i, n;
+	unsigned long pos, msk;
+	psi_sct_t     *fuz, *alt;
+
+	pos = mfm->trk->idx;
+
+	mfm_encode_bytes (mfm, sct->data, sct->n);
+
+	if (sct->next == NULL) {
+		return;
+	}
+
+	if ((fuz = psi_sct_clone (sct, 0)) == NULL) {
+		return;
+	}
+
+	psi_sct_fill (fuz, 0);
+
+	alt = sct->next;
+
+	while (alt != NULL) {
+		n = (fuz->n < alt->n) ? fuz->n : alt->n;
+
+		for (i = 0; i < n; i++) {
+			fuz->data[i] |= sct->data[i] ^ alt->data[i];
+		}
+
+		alt = alt->next;
+	}
+
+	n = 8 * fuz->n;
+
+	msk = 0;
+
+	for (i = 0; i < n; i++) {
+		msk = (msk << 2) | ((fuz->data[i >> 3] >> (~i & 7)) & 1);
+		pos += 2;
+
+		if (msk & 0xc0000000) {
+			pri_trk_evt_add (mfm->trk, PRI_EVENT_FUZZY, pos - 32, msk);
+
+			msk = 0;
+		}
+	}
+
+	psi_sct_del (fuz);
+}
+
+static
 void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 {
 	unsigned      i;
 	unsigned      flags;
 	unsigned long pos;
 	unsigned char buf[8];
+	int           clock;
 
 	if ((sct->position != 0xffffffff) && (sct->position >= (16 * 8))) {
 		pos = 2 * (sct->position - 16 * 8);
@@ -526,7 +578,21 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 
 	mfm_encode_mark (mfm, (flags & PSI_FLAG_DEL_DAM) ? 0xf8 : 0xfb);
 
-	mfm_encode_bytes (mfm, sct->data, sct->n);
+	clock = 0;
+
+	if (sct->read_time > 0) {
+		unsigned long val;
+
+		val = (65536UL * 8 * sct->n) / sct->read_time;
+		pri_trk_evt_add (mfm->trk, PRI_EVENT_CLOCK, mfm->trk->idx, val);
+		clock = 1;
+	}
+
+	mfm_encode_data (mfm, sct);
+
+	if (clock) {
+		pri_trk_evt_add (mfm->trk, PRI_EVENT_CLOCK, mfm->trk->idx, 0);
+	}
 
 	mfm->crc = mfm_crc (mfm->crc, sct->data, sct->n);
 

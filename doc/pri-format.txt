@@ -70,6 +70,9 @@ CHUNK "TRAK": Track header
 12	4	Bit clock rate
 16	4	CRC
 
+The TRAK chunk starts a new track. All following chunks until the next
+TRAK chunk or until the END chunk refer to this track.
+
 
 CHUNK "DATA": Track data
 ------------------------------------------------------------------------
@@ -78,6 +81,35 @@ CHUNK "DATA": Track data
 4	4	Size (n)
 0	n	Track data
 n	4	CRC
+
+
+CHUNK "FUZZ": Fuzzy bit mask
+------------------------------------------------------------------------
+
+0	4	Magic ('FUZZ')
+4	4	Size (8*n)
+0	4	Bit offset
+4	4	Fuzzy bit mask
+...
+8*n	4	CRC
+
+The MSB of the bit mask corresponds to the bit offset specified.
+
+
+CHUNK "BCLK": Alternate bit clock
+------------------------------------------------------------------------
+
+0	4	Magic ('BCLK')
+4	4	Size (8*n)
+0	4	Bit offset
+4	4	New bit clock
+...
+8*n	4	CRC
+
+The new bit clock starting at the specified bit offset is
+(new_bit_clock / 65536) * track_bit_clock
+
+If the new bit clock is 0, the default track bit clock is restored.
 
 
 CRC

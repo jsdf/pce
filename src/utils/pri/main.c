@@ -42,6 +42,7 @@ const char    *arg0 = NULL;
 int           par_verbose = 0;
 
 int           par_list = 0;
+int           par_list_long = 0;
 int           par_print_info = 0;
 
 unsigned      par_fmt_inp = PRI_FORMAT_NONE;
@@ -72,6 +73,7 @@ static pce_option_t opts[] = {
 	{ 'i', 1, "input", "filename", "Load an input file" },
 	{ 'I', 1, "input-format", "format", "Set the input format [auto]" },
 	{ 'l', 0, "list-short", NULL, "List tracks (short) [no]" },
+	{ 'L', 0, "list-long", NULL, "List tracks (long) [no]" },
 	{ 'm', 1, "merge", "filename", "Merge an image" },
 	{ 'M', 1, "merge-overwrite", "filename", "Merge an image and overwrite tracks" },
 	{ 'o', 1, "output", "filename", "Set the output file name [none]" },
@@ -598,6 +600,8 @@ int main (int argc, char **argv)
 			break;
 
 		case 'l':
+		case 'L':
+			par_list_long = (r == 'L');
 			if (img != NULL) {
 				pri_list_tracks (img);
 			}

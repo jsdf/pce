@@ -33,7 +33,8 @@
 #define PRI_CHUNK_TEXT 0x54455854
 #define PRI_CHUNK_TRAK 0x5452414b
 #define PRI_CHUNK_DATA 0x44415441
-#define PRI_CHUNK_CLOK 0x434c4f4b
+#define PRI_CHUNK_FUZZ 0x46555a5a
+#define PRI_CHUNK_BCLK 0x42434c4b
 #define PRI_CHUNK_END  0x454e4420
 
 #define PRI_CRC_POLY   0x1edc6f41
@@ -267,6 +268,76 @@ int pri_load_data (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size,
 }
 
 static
+int pri_load_fuzz (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size, unsigned long crc)
+{
+	unsigned long i, n;
+	unsigned long pos, val;
+	unsigned char buf[8];
+
+	if (trk == NULL) {
+		return (1);
+	}
+
+	n = size / 8;
+
+	for (i = 0; i < n; i++) {
+		if (pri_read_crc (fp, buf, 8, &crc)) {
+			return (1);
+		}
+
+		size -= 8;
+
+		pos = pri_get_uint32_be (buf, 0);
+		val = pri_get_uint32_be (buf, 4);
+
+		if (pri_trk_evt_add (trk, PRI_EVENT_FUZZY, pos, val)) {
+			return (1);
+		}
+	}
+
+	if (pri_skip_chunk (fp, size, crc)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pri_load_bclk (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size, unsigned long crc)
+{
+	unsigned long i, n;
+	unsigned long pos, val;
+	unsigned char buf[8];
+
+	if (trk == NULL) {
+		return (1);
+	}
+
+	n = size / 8;
+
+	for (i = 0; i < n; i++) {
+		if (pri_read_crc (fp, buf, 8, &crc)) {
+			return (1);
+		}
+
+		size -= 8;
+
+		pos = pri_get_uint32_be (buf, 0);
+		val = pri_get_uint32_be (buf, 4);
+
+		if (pri_trk_evt_add (trk, PRI_EVENT_CLOCK, pos, val)) {
+			return (1);
+		}
+	}
+
+	if (pri_skip_chunk (fp, size, crc)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pri_load_image (FILE *fp, pri_img_t *img)
 {
 	unsigned long type, size;
@@ -329,6 +400,18 @@ int pri_load_image (FILE *fp, pri_img_t *img)
 
 		case PRI_CHUNK_DATA:
 			if (pri_load_data (fp, img, trk, size, crc)) {
+				return (1);
+			}
+			break;
+
+		case PRI_CHUNK_FUZZ:
+			if (pri_load_fuzz (fp, img, trk, size, crc)) {
+				return (1);
+			}
+			break;
+
+		case PRI_CHUNK_BCLK:
+			if (pri_load_bclk (fp, img, trk, size, crc)) {
 				return (1);
 			}
 			break;
@@ -484,6 +567,98 @@ int pri_save_data (FILE *fp, const pri_trk_t *trk)
 }
 
 static
+int pri_save_fuzz (FILE *fp, const pri_trk_t *trk)
+{
+	unsigned long cnt, crc;
+	pri_evt_t     *evt;
+	unsigned char buf[8];
+
+	cnt = pri_trk_evt_count (trk, PRI_EVENT_FUZZY);
+
+	if (cnt == 0) {
+		return (0);
+	}
+
+	crc = 0;
+
+	pri_set_uint32_be (buf, 0, PRI_CHUNK_FUZZ);
+	pri_set_uint32_be (buf, 4, 8 * cnt);
+
+	if (pri_write_crc (fp, buf, 8, &crc)) {
+		return (1);
+	}
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if (evt->type == PRI_EVENT_FUZZY) {
+			pri_set_uint32_be (buf, 0, evt->pos);
+			pri_set_uint32_be (buf, 4, evt->val);
+
+			if (pri_write_crc (fp, buf, 8, &crc)) {
+				return (1);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	pri_set_uint32_be (buf, 0, crc);
+
+	if (pri_write (fp, buf, 4)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int pri_save_bclk (FILE *fp, const pri_trk_t *trk)
+{
+	unsigned long cnt, crc;
+	pri_evt_t     *evt;
+	unsigned char buf[8];
+
+	cnt = pri_trk_evt_count (trk, PRI_EVENT_CLOCK);
+
+	if (cnt == 0) {
+		return (0);
+	}
+
+	crc = 0;
+
+	pri_set_uint32_be (buf, 0, PRI_CHUNK_BCLK);
+	pri_set_uint32_be (buf, 4, 8 * cnt);
+
+	if (pri_write_crc (fp, buf, 8, &crc)) {
+		return (1);
+	}
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if (evt->type == PRI_EVENT_CLOCK) {
+			pri_set_uint32_be (buf, 0, evt->pos);
+			pri_set_uint32_be (buf, 4, evt->val);
+
+			if (pri_write_crc (fp, buf, 8, &crc)) {
+				return (1);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	pri_set_uint32_be (buf, 0, crc);
+
+	if (pri_write (fp, buf, 4)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pri_save_track (FILE *fp, const pri_trk_t *trk, unsigned long c, unsigned long h)
 {
 	if (pri_save_trak (fp, trk, c, h)) {
@@ -491,6 +666,14 @@ int pri_save_track (FILE *fp, const pri_trk_t *trk, unsigned long c, unsigned lo
 	}
 
 	if (pri_save_data (fp, trk)) {
+		return (1);
+	}
+
+	if (pri_save_fuzz (fp, trk)) {
+		return (1);
+	}
+
+	if (pri_save_bclk (fp, trk)) {
 		return (1);
 	}
 

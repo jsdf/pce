@@ -24,13 +24,28 @@
 #define PCE_PRI_H 1
 
 
+#define PRI_EVENT_FUZZY 1
+#define PRI_EVENT_CLOCK 2
+
+
+typedef struct pri_evt_t {
+	struct pri_evt_t *next;
+	unsigned long    type;
+	unsigned long    pos;
+	unsigned long    val;
+} pri_evt_t;
+
+
 typedef struct {
 	unsigned long clock;
 
 	unsigned long size;
 	unsigned char *data;
 
+	pri_evt_t     *evt;
+
 	unsigned long idx;
+	pri_evt_t     *cur_evt;
 	char          wrap;
 } pri_trk_t;
 
@@ -53,17 +68,24 @@ typedef struct {
 pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock);
 void pri_trk_del (pri_trk_t *trk);
 pri_trk_t *pri_trk_clone (const pri_trk_t *trk);
+int pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val);
+pri_evt_t *pri_trk_evt_get (pri_trk_t *trk, unsigned long type, unsigned long pos);
+int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt);
+void pri_trk_evt_del_all (pri_trk_t *trk);
+unsigned pri_trk_evt_count (const pri_trk_t *trk, unsigned long type);
 void pri_trk_clear (pri_trk_t *trk, unsigned val);
 void pri_trk_clear_16 (pri_trk_t *trk, unsigned val);
+void pri_trk_clear_slack (pri_trk_t *trk);
 void pri_trk_set_clock (pri_trk_t *trk, unsigned long clock);
 unsigned long pri_trk_get_clock (const pri_trk_t *trk);
 unsigned long pri_trk_get_size (const pri_trk_t *trk);
 int pri_trk_set_size (pri_trk_t *trk, unsigned long size);
-void pri_trk_clear_slack (pri_trk_t *trk);
 
+unsigned long pri_trk_get_pos (const pri_trk_t *trk);
 void pri_trk_set_pos (pri_trk_t *trk, unsigned long pos);
 int pri_trk_get_bits (pri_trk_t *trk, unsigned long *val, unsigned cnt);
 int pri_trk_set_bits (pri_trk_t *trk, unsigned long val, unsigned cnt);
+int pri_trk_get_event (pri_trk_t *trk, unsigned long *type, unsigned long *val);
 int pri_trk_rotate (pri_trk_t *trk, unsigned long idx);
 
 pri_cyl_t *pri_cyl_new (void);
