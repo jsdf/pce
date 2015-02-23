@@ -5,19 +5,23 @@ set -u
 declare -a ARCHS=("macplus" "ibmpc" "atarist")
 
 pcejs_load_config () {
-  # create default config file if it doesn't already exist
   if [[ ! -f ./pcejs_build_conf.sh ]]; then
+    # no existing config file, copy from default
     cp ./scripts/pcejs_build_conf_default.sh ./pcejs_build_conf.sh
   fi
 
-  set -a
+  set -a # all sourced vars are exported
   source ./pcejs_build_conf.sh
-  set +a
+  set +a # restore default behaviour
 }
 
 pcejs_save_config () {
    (set -o posix; set) | grep "PCEJS_conf_" > ./pcejs_build_conf.sh
 }
+
+# ensure cwd is project root dir
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
 
 pcejs_load_config
 source ./scripts/pcejs_build_env.sh # initialise build env from config
@@ -121,7 +125,7 @@ case "$taskname" in
       exit 1;
     fi
 
-    ./scripts/module-build.sh "$target"
+    ./scripts/module_build.sh "$target"
     ;;
 
   *)
