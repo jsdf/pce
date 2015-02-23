@@ -10,6 +10,7 @@ macplus({
     'macplus-pcex.rom',
     'mac-plus.rom',
     'hd1.qed',
+    '800K.dsk',
     'pce-config.cfg',
   ],
 
