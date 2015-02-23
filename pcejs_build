@@ -1,0 +1,140 @@
+#!/bin/bash
+set -e
+set -u
+
+declare -a ARCHS=("macplus" "ibmpc" "atarist")
+
+pcejs_load_config () {
+  # create default config file if it doesn't already exist
+  if [[ ! -f ./pcejs_build_conf.sh ]]; then
+    cp ./scripts/pcejs_build_conf_default.sh ./pcejs_build_conf.sh
+  fi
+
+  set -a
+  source ./pcejs_build_conf.sh
+  set +a
+}
+
+pcejs_save_config () {
+   (set -o posix; set) | grep "PCEJS_conf_" > ./pcejs_build_conf.sh
+}
+
+pcejs_load_config
+source ./scripts/pcejs_build_env.sh # initialise build env from config
+
+pcejs_build=$0
+taskname=$1
+
+case "$taskname" in
+  "env") # Print build environment variables
+    (set -o posix; set) | grep "PCEJS_"
+    ;;
+
+  "configure") # Configure emulator build"
+    platform=$2
+
+    if [[ $platform == "native" ]]; then
+      export PCEJS_conf_emscripten=""
+      export PCEJS_conf_prefix="build-native/"
+    fi
+    if [[ $platform == "em" ]]; then
+      export PCEJS_conf_emscripten="yes"
+      export PCEJS_conf_prefix="build/"
+    fi
+
+    ./scripts/10-configure.sh
+
+    pcejs_save_config
+    ;;
+
+  "make") # Compile emulator source to LLVM bitcode
+    ./scripts/20-make.sh
+    ;;
+
+  "remake") # Recompile only changed files of emulator source to LLVM bitcode
+    ./scripts/21-remake.sh
+    ;;
+
+  "clean") # Clean source tree
+    cleanall=$2
+
+    if [[ -n $cleanall ]]; then
+      ./scripts/a0-clean.sh
+    else
+      make clean
+    fi
+    ;;
+
+  "afterbuild") # Convert LLVM bitcode to JS
+    target=$2
+
+    if [[ -n $target ]]; then
+      export PCEJS_conf_target=$target
+    fi
+
+    ./scripts/30-afterbuild.sh
+    ;;
+
+  "build") # Configure build and compile emulator to JS
+    target_or_platform=$2
+
+
+    if [[ $target_or_platform == "native" ]]; then
+      $pcejs_build configure native
+      $pcejs_build make
+    else
+      if [[ -n $target_or_platform ]]; then
+        export PCEJS_conf_target=$target_or_platform
+      fi
+      $pcejs_build configure em
+      $pcejs_build make
+      afterbuild "$PCEJS_conf_target"
+    fi  
+
+    pcejs_save_config
+    ;;
+
+  "rebuild") # Build last again
+    target_or_platform=$2
+
+    if [[ $target_or_platform == "native" ]]; then
+      $pcejs_build remake
+    elif [[ -n $target_or_platform ]]; then
+      export PCEJS_conf_target=$target_or_platform
+      $pcejs_build remake
+      $pcejs_build afterbuild "$PCEJS_conf_target"
+    else
+      $pcejs_build remake
+      for arch in "${ARCHS[@]}"; do
+        $pcejs_build afterbuild "$arch"
+      done
+    fi
+    ;;
+
+  "module") # Build commonjs module"
+    target=$2
+
+    if [[ -n $target ]]; then
+      echo "building commonjs module for target $target";
+    else
+      echo "target not specified";
+      exit 1;
+    fi
+
+    ./scripts/module-build.sh "$target"
+    ;;
+
+  *)
+    if [[ -n $PCEJS_conf_emscripten ]]; then
+      $pcejs_build remake
+    else
+      $pcejs_build configure em
+      $pcejs_build make
+    fi
+
+    for arch in "${ARCHS[@]}"; do
+      $pcejs_build afterbuild "$arch"
+      $pcejs_build module "$arch"
+    done
+    ;;
+esac

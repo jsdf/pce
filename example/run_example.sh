@@ -25,17 +25,17 @@ if [[ ! -e "${PCEJS_ARCH_EXAMPLE_DIR}/pce-config.cfg" ]]
     echo "http://jamesfriend.com.au/pce-js/dist/${PCEJS_ARCH}-system.zip"
     echo ""
     echo "and extract it into: "
-    echo $PCEJS_ARCH_EXAMPLE_DIR
+    echo "$PCEJS_ARCH_EXAMPLE_DIR"
     echo ""
     exit 1
 fi
 
-$PCEJS_ARCH_MODULE_DIR/prepublish.sh
+"$PCEJS_ARCH_MODULE_DIR"/prepublish.sh "$PCEJS_ARCH"
 
 NODE_PATH="$PCEJS_MODULES_DIR:$PCEJS_DIR/node_modules" \
-  $PCEJS_NODE_BIN_DIR/browserify "$PCEJS_ARCH_EXAMPLE_DIR/$PCEJS_ARCH.js" \
+  "$PCEJS_NODE_BIN_DIR/browserify" "$PCEJS_ARCH_EXAMPLE_DIR/$PCEJS_ARCH.js" \
     --noparse="$PCEJS_ARCH_MODULE_DIR/lib/pcejs-${PCEJS_ARCH}.js" \
     > "$PCEJS_ARCH_EXAMPLE_DIR/bundle.js"
 echo "bundle.js built"
 open "http://localhost:8080/"
-http-server "$PCEJS_DIR/example/$PCEJS_ARCH"
+"$PCEJS_NODE_BIN_DIR/http-server" "$PCEJS_DIR/example/$PCEJS_ARCH"
