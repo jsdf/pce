@@ -44,6 +44,12 @@ else
 DRV_CHR_NBAS += char-tios
 endif
 
+ifeq "$(PCE_ENABLE_CHAR_WINCOM)" "1"
+DRV_CHR_BAS += char-wincom
+else
+DRV_CHR_NBAS += char-wincom
+endif
+
 DRV_CHR_SRC  := $(foreach f,$(DRV_CHR_BAS),$(rel)/$(f).c)
 DRV_CHR_NSRC := $(foreach f,$(DRV_CHR_NBAS),$(rel)/$(f).c)
 DRV_CHR_OBJ  := $(foreach f,$(DRV_CHR_BAS),$(rel)/$(f).o)
@@ -65,5 +71,6 @@ $(rel)/char-slip.o:	$(rel)/char-slip.c
 $(rel)/char-stdio.o:	$(rel)/char-stdio.c
 $(rel)/char-tcp.o:	$(rel)/char-tcp.c
 $(rel)/char-tios.o:	$(rel)/char-tios.c
+$(rel)/char-wincom.o:	$(rel)/char-wincom.c
 
 $(rel)/char.a: $(DRV_CHR_OBJ)

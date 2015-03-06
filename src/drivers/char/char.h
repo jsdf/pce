@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.h                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -93,6 +93,7 @@ char_drv_t *chr_slip_open (const char *name);
 char_drv_t *chr_stdio_open (const char *name);
 char_drv_t *chr_tcp_open (const char *name);
 char_drv_t *chr_tios_open (const char *name);
+char_drv_t *chr_wincom_open (const char *name);
 
 void chr_mouse_set (int dx, int dy, unsigned button);
 

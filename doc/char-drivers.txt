@@ -157,3 +157,11 @@ tios:
 
 	log=<filename>
 		Set the log file name
+
+wincom:
+	Windows COM port support. This driver is only available under
+	Windows.
+
+	port=<port>
+		Set the windows COM port to use, for example "COM1" or
+		"COM2".

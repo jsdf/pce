@@ -627,6 +627,7 @@ PCE_DIR_ETC
 PCE_READLINE_LIBS
 PCE_ENABLE_READLINE
 PCE_ENABLE_SOUND_OSS
+PCE_ENABLE_CHAR_WINCOM
 PCE_ENABLE_CHAR_TIOS
 PCE_ENABLE_CHAR_TCP
 PCE_ENABLE_CHAR_SLIP
@@ -756,6 +757,7 @@ enable_char_pty
 enable_char_slip
 enable_char_tcp
 enable_char_termios
+enable_char_wincom
 enable_sound_oss
 enable_readline
 '
@@ -1403,6 +1405,7 @@ Optional Features:
   --enable-char-slip      Enable the SLIP character driver [guessed]
   --enable-char-tcp       Enable the TCP character driver [guessed]
   --enable-char-termios   Enable the termios character driver [guessed]
+  --enable-char-wincom    Enable the windows COM character driver [guessed]
   --enable-sound-oss      Enable the OSS sound driver driver [guessed]
   --enable-readline       Enable readline [guessed]
 
@@ -5341,6 +5344,43 @@ if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the windows COM character driver" >&5
+$as_echo_n "checking whether to enable the windows COM character driver... " >&6; }
+# Check whether --enable-char-wincom was given.
+if test "${enable_char_wincom+set}" = set; then :
+  enableval=$enable_char_wincom;
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_WINCOM=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		PCE_ENABLE_CHAR_WINCOM=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+else
+
+	if test "x$PCE_HOST_WINDOWS" = "x1" ; then
+		PCE_ENABLE_CHAR_WINCOM=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (guess)" >&5
+$as_echo "yes (guess)" >&6; }
+	else
+		PCE_ENABLE_CHAR_WINCOM=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (guess)" >&5
+$as_echo "no (guess)" >&6; }
+	fi
+
+
+fi
+
+
+if test "x$PCE_ENABLE_CHAR_WINCOM" = "x1" ; then
+	$as_echo "#define PCE_ENABLE_CHAR_WINCOM 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable the OSS sound driver" >&5
 $as_echo_n "checking whether to enable the OSS sound driver... " >&6; }
 # Check whether --enable-sound-oss was given.
@@ -5699,6 +5739,12 @@ if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 	char1="$char1 termios"
 else
 	char2="$char2 termios"
+fi
+
+if test "x$PCE_ENABLE_CHAR_WINCOM" = "x1" ; then
+	char1="$char1 wincom"
+else
+	char2="$char2 wincom"
 fi
 
 

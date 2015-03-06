@@ -2048,6 +2048,10 @@ src/drivers/char/char-tios.o: src/drivers/char/char-tios.c \
 	src/drivers/char/char.h \
 	src/drivers/options.h
 
+src/drivers/char/char-wincom.o: src/drivers/char/char-wincom.c \
+	src/drivers/char/char-wincom.h \
+	src/drivers/char/char.h
+
 src/drivers/char/char.o: src/drivers/char/char.c \
 	src/config.h \
 	src/drivers/char/char.h \

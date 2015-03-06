@@ -814,6 +814,33 @@ if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 fi
 
 
+AC_MSG_CHECKING([whether to enable the windows COM character driver])
+AC_ARG_ENABLE(char-wincom,
+  [AS_HELP_STRING([--enable-char-wincom], [Enable the windows COM character driver [guessed]])],
+  [
+	if test "x$enableval" = "xyes" ; then
+		PCE_ENABLE_CHAR_WINCOM=1
+		AC_MSG_RESULT([yes])
+	else
+		PCE_ENABLE_CHAR_WINCOM=0
+		AC_MSG_RESULT([no])
+	fi
+  ],[
+	if test "x$PCE_HOST_WINDOWS" = "x1" ; then
+		PCE_ENABLE_CHAR_WINCOM=1
+		AC_MSG_RESULT([yes (guess)])
+	else
+		PCE_ENABLE_CHAR_WINCOM=0
+		AC_MSG_RESULT([no (guess)])
+	fi
+  ]
+)
+AC_SUBST(PCE_ENABLE_CHAR_WINCOM)
+if test "x$PCE_ENABLE_CHAR_WINCOM" = "x1" ; then
+	AC_DEFINE(PCE_ENABLE_CHAR_WINCOM)
+fi
+
+
 AC_MSG_CHECKING([whether to enable the OSS sound driver])
 AC_ARG_ENABLE(sound-oss,
   [AS_HELP_STRING([--enable-sound-oss], [Enable the OSS sound driver driver [guessed]])],
@@ -1023,6 +1050,12 @@ if test "x$PCE_ENABLE_CHAR_TIOS" = "x1" ; then
 	char1="$char1 termios"
 else
 	char2="$char2 termios"
+fi
+
+if test "x$PCE_ENABLE_CHAR_WINCOM" = "x1" ; then
+	char1="$char1 wincom"
+else
+	char2="$char2 wincom"
 fi
 
 

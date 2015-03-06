@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.c                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,6 +57,10 @@ struct chr_drv_list drvtab[] = {
 #ifdef PCE_ENABLE_CHAR_TIOS
 	{ "tios", chr_tios_open },
 #endif
+#ifdef PCE_ENABLE_CHAR_WINCOM
+	{ "wincom", chr_wincom_open },
+#endif
+
 	{ NULL, NULL }
 };
 
