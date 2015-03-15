@@ -113,6 +113,7 @@ void print_help (void)
 		"  double-step            Remove odd numbered tracks\n"
 		"  double-step-even       Remove even numbered tracks\n"
 		"  encode <type> <file>   Encode tracks\n"
+		"  half-step              Duplicate all tracks\n"
 		"  info                   Print image information\n"
 		"  new                    Create new tracks\n"
 		"  rotate <bits>          Rotate tracks left\n"
@@ -149,7 +150,7 @@ void print_version (void)
 	fputs (
 		"pri version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2012-2014 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2012-2015 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -334,6 +335,9 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 		}
 
 		r = pri_encode (img, optarg1[0], optarg2[0]);
+	}
+	else if (strcmp (op, "half-step") == 0) {
+		r = pri_half_step (*img);
 	}
 	else if (strcmp (op, "info") == 0) {
 		r = pri_print_info (*img);

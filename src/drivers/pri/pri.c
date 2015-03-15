@@ -682,6 +682,35 @@ void pri_cyl_del (pri_cyl_t *cyl)
 	}
 }
 
+pri_cyl_t *pri_cyl_clone (const pri_cyl_t *cyl)
+{
+	unsigned long i;
+	pri_trk_t     *trk;
+	pri_cyl_t     *ret;
+
+	if ((ret = pri_cyl_new()) == NULL) {
+		return (NULL);
+	}
+
+	for (i = 0; i < cyl->trk_cnt; i++) {
+		if (cyl->trk[i] == NULL) {
+			continue;
+		}
+
+		if ((trk = pri_trk_clone (cyl->trk[i])) == NULL) {
+			pri_cyl_del (ret);
+			return (NULL);
+		}
+
+		if (pri_cyl_set_track (ret, trk, i)) {
+			pri_cyl_del (ret);
+			return (NULL);
+		}
+	}
+
+	return (ret);
+}
+
 unsigned long pri_cyl_get_trk_cnt (const pri_cyl_t *cyl)
 {
 	return (cyl->trk_cnt);

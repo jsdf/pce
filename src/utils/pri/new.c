@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/new.c                                          *
  * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,26 @@
 
 #include <drivers/pri/pri.h>
 
+
+int pri_half_step (pri_img_t *img)
+{
+	unsigned  c, ci, cn;
+	pri_cyl_t *cyl1, *cyl2;
+
+	cn = pri_img_get_cyl_cnt (img);
+
+	for (c = 0; c < cn; c++) {
+		ci = cn - c - 1;
+
+		cyl1 = pri_img_rmv_cylinder (img, ci);
+		cyl2 = pri_cyl_clone (cyl1);
+
+		pri_img_set_cylinder (img, cyl1, 2 * ci);
+		pri_img_set_cylinder (img, cyl2, 2 * ci + 1);
+	}
+
+	return (0);
+}
 
 static
 int pri_new_tracks (pri_img_t *img, pri_cyl_t *cyl, unsigned c)

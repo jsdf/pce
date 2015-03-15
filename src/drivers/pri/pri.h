@@ -90,6 +90,7 @@ int pri_trk_rotate (pri_trk_t *trk, unsigned long idx);
 
 pri_cyl_t *pri_cyl_new (void);
 void pri_cyl_del (pri_cyl_t *cyl);
+pri_cyl_t *pri_cyl_clone (const pri_cyl_t *cyl);
 unsigned long pri_cyl_get_trk_cnt (const pri_cyl_t *cyl);
 pri_trk_t *pri_cyl_get_track (pri_cyl_t *cyl, unsigned long idx, int alloc);
 int pri_cyl_set_track (pri_cyl_t *cyl, pri_trk_t *trk, unsigned long h);
