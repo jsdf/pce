@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-enc-mfm.c                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -531,7 +531,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	if ((sct->position != 0xffffffff) && (sct->position >= (16 * 8))) {
 		pos = 2 * (sct->position - 16 * 8);
 
-		if (pos >= mfm->last_gap3_start) {
+		if (pos > mfm->last_gap3_start) {
 			pri_trk_set_pos (mfm->trk, pos);
 		}
 		else {
@@ -660,7 +660,8 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 				}
 			}
 			else {
-				pri_trk_set_size (dtrk, bits);
+				pri_trk_set_size (dtrk, bits + 4 * 16 * scnt);
+				gap3 = 4;
 			}
 		}
 	}
