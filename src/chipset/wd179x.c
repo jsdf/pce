@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.c                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1828,9 +1828,6 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 		return;
 	}
 
-	fdc->clock = NULL;
-	fdc->cont = NULL;
-
 	if (fdc->status & WD179X_ST_BUSY) {
 		fprintf (stderr, "WD179X: CMD[%02X] SKIP COMMAND (%02X/%02X)\n",
 			val, fdc->cmd, fdc->status
@@ -1838,6 +1835,9 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 
 		return;
 	}
+
+	fdc->clock = NULL;
+	fdc->cont = NULL;
 
 	fdc->cmd = val;
 
