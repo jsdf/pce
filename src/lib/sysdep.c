@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.c                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -89,6 +89,25 @@ unsigned long pce_get_interval_us (unsigned long *val)
 #else
 	return (0);
 #endif
+}
+
+void pce_srand (unsigned val)
+{
+#ifdef HAVE_GETTIMEOFDAY
+	struct timeval tv;
+
+	if (gettimeofday (&tv, NULL) == 0) {
+		val ^= (unsigned) tv.tv_sec;
+		val ^= (unsigned) tv.tv_usec;
+	}
+	else {
+		val ^= (unsigned) time (NULL);
+	}
+#else
+	val ^= (unsigned) time (NULL);
+#endif
+
+	srand (val);
 }
 
 int pce_fd_readable (int fd, int t)
