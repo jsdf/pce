@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e68901.c                                         *
  * Created:     2011-06-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -172,7 +172,8 @@ void e68901_check_int (e68901_t *mfp)
 	inp = (mfp->gpip_inp ^ mfp->gpip_xor) ^ ~mfp->gpip_aer;
 	mfp->irr1 &= 0x3f30;
 	mfp->irr1 |= (inp & 0x0f) | ((inp << 2) & 0xc0) | ((inp << 8) & 0xc000);
-	mfp->ipr |= (mfp->irr1 ^ mfp->irr2) & mfp->irr1 & mfp->ier;
+	mfp->ipr |= (mfp->irr1 ^ mfp->irr2) & mfp->irr1;
+	mfp->ipr &= mfp->ier;
 	mfp->irr2 = mfp->irr1;
 
 	if (mfp->ivr & 0x08) {
