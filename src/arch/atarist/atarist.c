@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/atarist.c                                   *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -900,7 +900,7 @@ void st_clock (atari_st_t *sim, unsigned n)
 		trm_check (sim->trm);
 	}
 
-	if (sim->kbd.idle) {
+	if (e6850_receive_ready (&sim->acia0)) {
 		unsigned char val;
 
 		if (st_kbd_buf_get (&sim->kbd, &val) == 0) {

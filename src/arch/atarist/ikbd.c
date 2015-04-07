@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/ikbd.c                                      *
  * Created:     2013-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -173,8 +173,6 @@ static st_joymap_t joymap[] = {
 
 void st_kbd_init (st_kbd_t *kbd)
 {
-	kbd->idle = 1;
-
 	kbd->cmd_cnt = 0;
 
 	kbd->paused = 0;
@@ -928,7 +926,6 @@ void st_kbd_set_uint8 (st_kbd_t *kbd, unsigned char val)
 int st_kbd_get_uint8 (st_kbd_t *kbd, unsigned char *val)
 {
 	if (kbd->paused) {
-		kbd->idle = 1;
 		return (1);
 	}
 
@@ -936,8 +933,6 @@ int st_kbd_get_uint8 (st_kbd_t *kbd, unsigned char *val)
 		st_kbd_check_mouse (kbd);
 
 		if (st_kbd_buf_get (kbd, val)) {
-			kbd->idle = 1;
-
 			return (1);
 		}
 	}
@@ -946,15 +941,11 @@ int st_kbd_get_uint8 (st_kbd_t *kbd, unsigned char *val)
 	st_log_deb ("IKBD: send %02X\n", *val);
 #endif
 
-	kbd->idle = 0;
-
 	return (0);
 }
 
 void st_kbd_reset (st_kbd_t *kbd)
 {
-	kbd->idle = 1;
-
 	kbd->cmd_cnt = 0;
 
 	kbd->paused = 0;
