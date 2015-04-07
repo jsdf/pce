@@ -322,17 +322,41 @@ int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt)
 	return (1);
 }
 
-void pri_trk_evt_del_all (pri_trk_t *trk)
+void pri_trk_evt_del_all (pri_trk_t *trk, unsigned long type)
 {
-	pri_evt_t *evt;
+	pri_evt_t *evt, *dst1, *dst2, *tmp;
 
-	while (trk->evt != NULL) {
-		evt = trk->evt;
-		trk->evt = trk->evt->next;
+	evt = trk->evt;
 
-		free (evt);
+	dst1 = NULL;
+	dst2 = NULL;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			tmp = evt;
+			evt = evt->next;
+			free (tmp);
+
+		}
+		else {
+			if (dst1 == NULL) {
+				dst1 = evt;
+			}
+			else {
+				dst2->next = evt;
+			}
+
+			dst2 = evt;
+
+			evt = evt->next;
+		}
 	}
 
+	if (dst2 != NULL) {
+		dst2->next = NULL;
+	}
+
+	trk->evt = dst1;
 	trk->cur_evt = NULL;
 }
 

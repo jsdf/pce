@@ -1362,7 +1362,7 @@ int txt_enc_track (pri_text_t *ctx)
 	}
 
 	pri_trk_set_clock (ctx->trk, clock);
-	pri_trk_evt_del_all (ctx->trk);
+	pri_trk_evt_del_all (ctx->trk, PRI_EVENT_ALL);
 
 	ctx->bit_cnt = 0;
 	ctx->bit_max = 65536;

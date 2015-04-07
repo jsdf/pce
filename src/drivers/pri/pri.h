@@ -75,7 +75,7 @@ pri_evt_t *pri_trk_evt_get_pos (pri_trk_t *trk, unsigned long type, unsigned lon
 pri_evt_t *pri_trk_evt_get_after (pri_trk_t *trk, unsigned long type, unsigned long pos);
 pri_evt_t *pri_trk_evt_get_before (pri_trk_t *trk, unsigned long type, unsigned long pos);
 int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt);
-void pri_trk_evt_del_all (pri_trk_t *trk);
+void pri_trk_evt_del_all (pri_trk_t *trk, unsigned long type);
 unsigned pri_trk_evt_count (const pri_trk_t *trk, unsigned long type);
 void pri_trk_clear (pri_trk_t *trk, unsigned val);
 void pri_trk_clear_16 (pri_trk_t *trk, unsigned val);
