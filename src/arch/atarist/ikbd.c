@@ -178,6 +178,7 @@ void st_kbd_init (st_kbd_t *kbd)
 	kbd->paused = 0;
 	kbd->disabled = 0;
 	kbd->joy_report = 1;
+	kbd->joy_mode = 0;
 
 	kbd->mouse_dx = 0;
 	kbd->mouse_dy = 0;
@@ -378,8 +379,19 @@ int st_kbd_set_joy (st_kbd_t *kbd, unsigned idx, unsigned event, pce_key_t key)
 		return (1);
 	}
 
-	if (kbd->joy_report == 0) {
-		return (0);
+	if (kbd->joy_mode == 0) {
+		if (key == PCE_KEY_KP_0) {
+			val = 1 << idx;
+
+			if (event == PCE_KEY_EVENT_DOWN) {
+				kbd->mouse_but[1] |= val;
+			}
+			else {
+				kbd->mouse_but[1] &= ~val;
+			}
+
+			st_kbd_check_mouse (kbd);
+		}
 	}
 
 	val = kbd->joy[idx];
@@ -396,6 +408,10 @@ int st_kbd_set_joy (st_kbd_t *kbd, unsigned idx, unsigned event, pce_key_t key)
 	}
 
 	kbd->joy[idx] = val;
+
+	if (kbd->joy_report == 0) {
+		return (0);
+	}
 
 	st_kbd_buf_put (kbd, 0xfe | (idx & 1));
 	st_kbd_buf_put (kbd, val);
@@ -516,6 +532,7 @@ void st_kbd_cmd_08 (st_kbd_t *kbd)
 
 	kbd->abs_pos = 0;
 	kbd->disabled = 0;
+	kbd->joy_mode = 0;
 
 	kbd->cmd_cnt = 0;
 }
@@ -541,6 +558,7 @@ void st_kbd_cmd_09 (st_kbd_t *kbd)
 
 	kbd->abs_pos = 1;
 	kbd->disabled = 0;
+	kbd->joy_mode = 0;
 
 	kbd->cur_x = 0;
 	kbd->cur_y = 0;
@@ -563,6 +581,8 @@ void st_kbd_cmd_0b (st_kbd_t *kbd)
 	st_log_deb ("IKBD: SET MOUSE THRESHOLD: %u / %u\n", kbd->cmd[1], kbd->cmd[2]);
 #endif
 
+	kbd->joy_mode = 0;
+
 	kbd->cmd_cnt = 0;
 }
 
@@ -584,6 +604,8 @@ void st_kbd_cmd_0c (st_kbd_t *kbd)
 		kbd->scale_x, kbd->scale_y
 	);
 #endif
+
+	kbd->joy_mode = 0;
 
 	kbd->cmd_cnt = 0;
 }
@@ -655,6 +677,7 @@ void st_kbd_cmd_0f (st_kbd_t *kbd)
 #endif
 
 	kbd->y0_at_top = 0;
+	kbd->joy_mode = 0;
 	kbd->cmd_cnt = 0;
 }
 
@@ -669,6 +692,7 @@ void st_kbd_cmd_10 (st_kbd_t *kbd)
 #endif
 
 	kbd->y0_at_top = 1;
+	kbd->joy_mode = 0;
 	kbd->cmd_cnt = 0;
 }
 
@@ -717,6 +741,36 @@ void st_kbd_cmd_13 (st_kbd_t *kbd)
 }
 
 /*
+ * 14: SET JOYSTICK EVENT REPORTING
+ */
+static
+void st_kbd_cmd_14 (st_kbd_t *kbd)
+{
+#if DEBUG_KBD >= 1
+	st_log_deb ("IKBD: SET JOYSTICK EVENT REPORTING\n");
+#endif
+
+	kbd->joy_report = 1;
+	kbd->joy_mode = 1;
+	kbd->cmd_cnt = 0;
+}
+
+/*
+ * 15: SET JOYSTICK INTERROGATION MODE
+ */
+static
+void st_kbd_cmd_15 (st_kbd_t *kbd)
+{
+#if DEBUG_KBD >= 1
+	st_log_deb ("IKBD: SET JOYSTICK INTERROGATION MODE\n");
+#endif
+
+	kbd->joy_report = 0;
+	kbd->joy_mode = 1;
+	kbd->cmd_cnt = 0;
+}
+
+/*
  * 16: JOYSTICK INTERROGATE
  */
 static
@@ -729,6 +783,8 @@ void st_kbd_cmd_16 (st_kbd_t *kbd)
 	st_kbd_buf_put (kbd, 0xfd);
 	st_kbd_buf_put (kbd, kbd->joy[0]);
 	st_kbd_buf_put (kbd, kbd->joy[1]);
+
+	kbd->cmd_cnt = 0;
 }
 
 /*
@@ -741,6 +797,7 @@ void st_kbd_cmd_1a (st_kbd_t *kbd)
 	st_log_deb ("IKBD: DISABLE JOYSTICKS\n");
 #endif
 
+	kbd->joy_mode = 0;
 	kbd->cmd_cnt = 0;
 }
 
@@ -888,6 +945,14 @@ void st_kbd_set_uint8 (st_kbd_t *kbd, unsigned char val)
 
 	case 0x13:
 		st_kbd_cmd_13 (kbd);
+		break;
+
+	case 0x14:
+		st_kbd_cmd_14 (kbd);
+		break;
+
+	case 0x15:
+		st_kbd_cmd_15 (kbd);
 		break;
 
 	case 0x16:
