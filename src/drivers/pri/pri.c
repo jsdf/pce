@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -143,7 +143,7 @@ pri_trk_t *pri_trk_clone (const pri_trk_t *trk)
 	evt = trk->evt;
 
 	while (evt != NULL) {
-		if (pri_trk_evt_add (ret, evt->type, evt->pos, evt->val)) {
+		if (pri_trk_evt_add (ret, evt->type, evt->pos, evt->val) == NULL) {
 			pri_trk_del (ret);
 			return (NULL);
 		}
@@ -179,12 +179,12 @@ void pri_trk_evt_ins (pri_trk_t *trk, pri_evt_t *evt)
 	}
 }
 
-int pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val)
+pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val)
 {
 	pri_evt_t *evt;
 
 	if ((evt = malloc (sizeof (pri_evt_t))) == NULL) {
-		return (1);
+		return (NULL);
 	}
 
 	evt->next = NULL;
@@ -194,7 +194,7 @@ int pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsi
 
 	pri_trk_evt_ins (trk, evt);
 
-	return (0);
+	return (evt);
 }
 
 pri_evt_t *pri_trk_evt_get (pri_trk_t *trk, unsigned long type, unsigned long pos)

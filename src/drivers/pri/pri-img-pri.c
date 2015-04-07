@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-img-pri.c                                *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -290,7 +290,7 @@ int pri_load_fuzz (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size,
 		pos = pri_get_uint32_be (buf, 0);
 		val = pri_get_uint32_be (buf, 4);
 
-		if (pri_trk_evt_add (trk, PRI_EVENT_FUZZY, pos, val)) {
+		if (pri_trk_evt_add (trk, PRI_EVENT_FUZZY, pos, val) == NULL) {
 			return (1);
 		}
 	}
@@ -325,7 +325,7 @@ int pri_load_bclk (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size,
 		pos = pri_get_uint32_be (buf, 0);
 		val = pri_get_uint32_be (buf, 4);
 
-		if (pri_trk_evt_add (trk, PRI_EVENT_CLOCK, pos, val)) {
+		if (pri_trk_evt_add (trk, PRI_EVENT_CLOCK, pos, val) == NULL) {
 			return (1);
 		}
 	}

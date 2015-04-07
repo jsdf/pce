@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/text.c                                         *
  * Created:     2014-08-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2014 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2014-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1075,7 +1075,7 @@ int txt_enc_clock (pri_text_t *ctx)
 		val = (65536ULL * val + (old / 2)) / old;
 	}
 
-	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_CLOCK, ctx->bit_cnt, val)) {
+	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_CLOCK, ctx->bit_cnt, val) == NULL) {
 		return (1);
 	}
 
@@ -1111,7 +1111,7 @@ int txt_enc_fuzzy (pri_text_t *ctx)
 		return (1);
 	}
 
-	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_FUZZY, ctx->bit_cnt, val)) {
+	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_FUZZY, ctx->bit_cnt, val) == NULL) {
 		return (1);
 	}
 
