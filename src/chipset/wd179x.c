@@ -1097,7 +1097,9 @@ void cmd_read_sector_clock (wd179x_t *fdc)
 			fdc->interrupt_enable = 1;
 
 			if (fdc->read_crc[0] != fdc->read_crc[1]) {
-				fprintf (stderr, "WD179X: READ CRC ERROR (%02X %04X)\n",
+				fprintf (stderr,
+					"WD179X: CRC ERROR SECTOR %u/%u/%u (C=%02X R=%04X)\n",
+					fdc->track, fdc->drv->h, fdc->sector,
 					fdc->read_crc[0], fdc->read_crc[1]
 				);
 
