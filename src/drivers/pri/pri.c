@@ -197,15 +197,92 @@ pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long po
 	return (evt);
 }
 
-pri_evt_t *pri_trk_evt_get (pri_trk_t *trk, unsigned long type, unsigned long pos)
+pri_evt_t *pri_trk_evt_get_idx (pri_trk_t *trk, unsigned long type, unsigned long idx)
 {
 	pri_evt_t *evt;
 
 	evt = trk->evt;
 
 	while (evt != NULL) {
-		if ((evt->type == type) && (evt->pos >= pos)) {
-			return (evt);
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (idx == 0) {
+				return (evt);
+			}
+
+			idx -= 1;
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the first event of type <type> at <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_pos (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt;
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos == pos) {
+				return (evt);
+			}
+
+			if (evt->pos > pos) {
+				return (NULL);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the first event of type <type> at or after <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_after (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt;
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos >= pos) {
+				return (evt);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the last event of type <type> at or before <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_before (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt, *ret;
+
+	evt = trk->evt;
+	ret = NULL;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos > pos) {
+				return (ret);
+			}
+
+			ret = evt;
 		}
 
 		evt = evt->next;
@@ -269,7 +346,7 @@ unsigned pri_trk_evt_count (const pri_trk_t *trk, unsigned long type)
 	evt = trk->evt;
 
 	while (evt != NULL) {
-		if (evt->type == type) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
 			cnt += 1;
 		}
 

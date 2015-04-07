@@ -26,6 +26,7 @@
 
 #define PRI_EVENT_FUZZY 1
 #define PRI_EVENT_CLOCK 2
+#define PRI_EVENT_ALL   0xffffffff
 
 
 typedef struct pri_evt_t {
@@ -69,7 +70,10 @@ pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock);
 void pri_trk_del (pri_trk_t *trk);
 pri_trk_t *pri_trk_clone (const pri_trk_t *trk);
 pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val);
-pri_evt_t *pri_trk_evt_get (pri_trk_t *trk, unsigned long type, unsigned long pos);
+pri_evt_t *pri_trk_evt_get_idx (pri_trk_t *trk, unsigned long type, unsigned long idx);
+pri_evt_t *pri_trk_evt_get_pos (pri_trk_t *trk, unsigned long type, unsigned long pos);
+pri_evt_t *pri_trk_evt_get_after (pri_trk_t *trk, unsigned long type, unsigned long pos);
+pri_evt_t *pri_trk_evt_get_before (pri_trk_t *trk, unsigned long type, unsigned long pos);
 int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt);
 void pri_trk_evt_del_all (pri_trk_t *trk);
 unsigned pri_trk_evt_count (const pri_trk_t *trk, unsigned long type);
