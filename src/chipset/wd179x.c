@@ -1813,7 +1813,7 @@ void cmd_force_interrupt (wd179x_t *fdc, unsigned char cmd)
 	);
 #endif
 
-	wd179x_set_irq (fdc, 0);
+	/* wd179x_set_irq (fdc, 0); */
 
 	fdc->status = WD179X_ST_BUSY;
 
