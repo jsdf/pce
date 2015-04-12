@@ -990,13 +990,17 @@ void cmd_step_cont (wd179x_t *fdc)
 
 	update = (fdc->cmd & 0x10) != 0;
 
+	if ((fdc->step_dir & 3) == 0) {
+		fdc->step_dir = 2;
+	}
+
 #if DEBUG_WD179X >= 2
 	fprintf (stderr, "WD179X: D=%u CMD[%02X] STEP CONT (dir=%u upd=%d)\n",
 		fdc->drv->d, fdc->cmd, fdc->step_dir, update
 	);
 #endif
 
-	if (fdc->step_dir) {
+	if (fdc->step_dir & 1) {
 		if (update) {
 			fdc->track += 1;
 		}
@@ -1005,7 +1009,7 @@ void cmd_step_cont (wd179x_t *fdc)
 			fdc->drv->c += 1;
 		}
 	}
-	else {
+	else if (fdc->step_dir & 2) {
 		if (update) {
 			fdc->track -= 1;
 		}
@@ -1032,7 +1036,7 @@ void cmd_step (wd179x_t *fdc, unsigned dir)
 	);
 #endif
 
-	if (dir > 0) {
+	if (dir != 0) {
 		fdc->step_dir = dir;
 	}
 
@@ -1855,8 +1859,14 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	else if ((val & 0xf0) == 0x10) {
 		cmd_seek (fdc);
 	}
+	else if ((val & 0xe0) == 0x20) {
+		cmd_step (fdc, 0);
+	}
 	else if ((val & 0xe0) == 0x40) {
 		cmd_step (fdc, 1);
+	}
+	else if ((val & 0xe0) == 0x60) {
+		cmd_step (fdc, 2);
 	}
 	else if ((val & 0xe1) == 0x80) {
 		cmd_read_sector (fdc);
