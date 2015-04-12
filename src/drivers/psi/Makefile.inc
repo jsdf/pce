@@ -10,6 +10,7 @@ DEV_PSI_BAS := \
 	psi-img-cp2 \
 	psi-img-dc42 \
 	psi-img-imd \
+	psi-img-mac \
 	psi-img-msa \
 	psi-img-pfdc \
 	psi-img-psi \
@@ -40,6 +41,7 @@ $(rel)/psi-img-ana.o:   $(rel)/psi-img-ana.c
 $(rel)/psi-img-cp2.o:   $(rel)/psi-img-cp2.c
 $(rel)/psi-img-dc42.o:  $(rel)/psi-img-dc42.c
 $(rel)/psi-img-imd.o:   $(rel)/psi-img-imd.c
+$(rel)/psi-img-mac.o:   $(rel)/psi-img-mac.c
 $(rel)/psi-img-msa.o:   $(rel)/psi-img-msa.c
 $(rel)/psi-img-pfdc.o:  $(rel)/psi-img-pfdc.c
 $(rel)/psi-img-pfdc0.o: $(rel)/psi-img-pfdc0.c

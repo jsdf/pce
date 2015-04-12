@@ -2122,6 +2122,11 @@ src/drivers/psi/psi-img-imd.o: src/drivers/psi/psi-img-imd.c \
 	src/drivers/psi/psi-io.h \
 	src/drivers/psi/psi.h
 
+src/drivers/psi/psi-img-mac.o: src/drivers/psi/psi-img-mac.c \
+	src/drivers/psi/psi-img-mac.h \
+	src/drivers/psi/psi-io.h \
+	src/drivers/psi/psi.h
+
 src/drivers/psi/psi-img-msa.o: src/drivers/psi/psi-img-msa.c \
 	src/drivers/psi/psi-img-msa.h \
 	src/drivers/psi/psi-io.h \
@@ -2181,6 +2186,7 @@ src/drivers/psi/psi-img.o: src/drivers/psi/psi-img.c \
 	src/drivers/psi/psi-img-cp2.h \
 	src/drivers/psi/psi-img-dc42.h \
 	src/drivers/psi/psi-img-imd.h \
+	src/drivers/psi/psi-img-mac.h \
 	src/drivers/psi/psi-img-msa.h \
 	src/drivers/psi/psi-img-pfdc.h \
 	src/drivers/psi/psi-img-psi.h \

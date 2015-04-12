@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.c                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -480,6 +480,12 @@ int psi_set_format (const char *name, unsigned *val)
 	}
 	else if (strcmp (name, "imd") == 0) {
 		*val = PSI_FORMAT_IMD;
+	}
+	else if (strcmp (name, "mac") == 0) {
+		*val = PSI_FORMAT_MAC;
+	}
+	else if (strcmp (name, "msa") == 0) {
+		*val = PSI_FORMAT_MSA;
 	}
 	else if (strcmp (name, "pfdc") == 0) {
 		*val = PSI_FORMAT_PFDC;
