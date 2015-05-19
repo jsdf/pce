@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/pri.c                                          *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -100,6 +100,10 @@ static struct {
 	{ "comment-print", "", "Print the image comment" },
 	{ "comment-save", "filename", "Save the image comment to a file" },
 	{ "comment-set", "text", "Set the image comment" },
+	{ "event-add", "type pos val", "Add an event on selected tracks" },
+	{ "event-clear", "", "Clear all events on selected tracks" },
+	{ "event-del", "type [@]range", "Delete events by position or index" },
+	{ "event-list", "type [@]range", "List events by position or index" },
 	{ "decode", "type file", "Decode tracks" },
 	{ "delete", "", "Delete tracks" },
 	{ "double-step", "", "Remove odd numbered tracks" },
@@ -205,7 +209,6 @@ void print_version (void)
 }
 
 
-static
 int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, char *all)
 {
 	*v1 = 0;
@@ -299,7 +302,7 @@ static
 int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 {
 	int  r;
-	char **optarg1, **optarg2;
+	char **optarg1, **optarg2, **optarg3;
 
 	if (*img == NULL) {
 		*img = pri_img_new();
@@ -382,6 +385,53 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 		}
 
 		r = pri_encode (img, optarg1[0], optarg2[0]);
+	}
+	else if (strcmp (op, "event-add") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing event type\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg2, NULL) != 0) {
+			fprintf (stderr, "%s: missing event position\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg3, NULL) != 0) {
+			fprintf (stderr, "%s: missing event value\n", arg0);
+			return (1);
+		}
+
+		r = pri_event_add (*img, optarg1[0], optarg2[0], optarg3[0]);
+	}
+	else if (strcmp (op, "event-clear") == 0) {
+		r = pri_event_clear (*img);
+	}
+	else if (strcmp (op, "event-del") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing event type\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg2, NULL) != 0) {
+			fprintf (stderr, "%s: missing event range\n", arg0);
+			return (1);
+		}
+
+		r = pri_event_del (*img, optarg1[0], optarg2[0]);
+	}
+	else if (strcmp (op, "event-list") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing event type\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg2, NULL) != 0) {
+			fprintf (stderr, "%s: missing event range\n", arg0);
+			return (1);
+		}
+
+		r = pri_event_list (*img, optarg1[0], optarg2[0]);
 	}
 	else if (strcmp (op, "half-step") == 0) {
 		r = pri_half_step (*img);

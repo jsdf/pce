@@ -2483,6 +2483,12 @@ src/utils/pri/encode.o: src/utils/pri/encode.c \
 	src/drivers/psi/psi.h \
 	src/utils/pri/main.h
 
+src/utils/pri/event.o: src/utils/pri/event.c \
+	src/config.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi.h \
+	src/utils/pri/main.h
+
 src/utils/pri/info.o: src/utils/pri/info.c \
 	src/config.h \
 	src/drivers/pri/pri.h \

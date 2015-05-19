@@ -141,6 +141,25 @@ Remove odd numbered tracks.
 .B "double-step-even"
 Remove even numbered tracks.
 .TP
+.BI "event-add " "type position value"
+Add a new event of type \fItype\fR at bit position \fIposition\fR with
+value \fIvalue\fR on all selected tracks. The event type can be
+specified as a numerical value or as a type name.
+.TP
+.B "event-clear"
+Clear all events of all types from the selected tracks.
+.TP
+.BI "event-del " "type ( \fB@\fIindex1[-index2] | offset1[-offset2] | \fBall\fI)"
+Delete events from the selected tracks. The type can be specified as
+a numerical value, as a type name or as \fBall\fR. The range specifies
+a range of event indices as reported by \fBevent-list\fR, a
+range of bit offsets, or \fBall\fR.
+.TP
+.BI "event-list " "type ( \fB@\fIindex1[-index2] | offset1[-offset2] | \fBall\fI)"
+List events from the selected tracks. The type can be specified as
+a numerical value, as a type name or as \fBall\fR. The range specifies
+a range of event indices, a range of bit offsets, or \fBall\fR.
+.TP
 .BI "encode " "type filename"
 Load a psi sector image from \fIfilename\fR and encode it.
 Valid encode types are:

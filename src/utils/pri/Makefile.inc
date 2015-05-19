@@ -11,6 +11,7 @@ PRI_BAS := \
 	delete \
 	edit \
 	encode \
+	event \
 	info \
 	list \
 	merge \
@@ -40,6 +41,7 @@ $(rel)/decode.o:   $(rel)/decode.c
 $(rel)/delete.o:   $(rel)/delete.c
 $(rel)/edit.o:     $(rel)/edit.c
 $(rel)/encode.o:   $(rel)/encode.c
+$(rel)/event.o:    $(rel)/event.c
 $(rel)/info.o:     $(rel)/info.c
 $(rel)/list.o:     $(rel)/list.c
 $(rel)/merge.o:    $(rel)/merge.c

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/main.h                                         *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,6 +58,8 @@ typedef int (*pri_trk_cb) (pri_img_t *img, pri_trk_t *trk,
 );
 
 
+int pri_parse_range (const char *str, unsigned long *v1, unsigned long *v2, char *all);
+
 int pri_for_all_tracks (pri_img_t *img, pri_trk_cb fct, void *opaque);
 
 int pri_comment_add (pri_img_t *img, const char *str);
@@ -75,6 +77,11 @@ int pri_double_step (pri_img_t *img, int even);
 int pri_edit_tracks (pri_img_t *img, const char *what, const char *val);
 
 int pri_encode (pri_img_t **img, const char *type, const char *fname);
+
+int pri_event_add (pri_img_t *img, const char *type, const char *pos, const char *val);
+int pri_event_clear (pri_img_t *img);
+int pri_event_del (pri_img_t *img, const char *type, const char *range);
+int pri_event_list (pri_img_t *img, const char *type, const char *range);
 
 int pri_print_info (pri_img_t *img);
 
