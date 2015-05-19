@@ -89,6 +89,67 @@ static pce_option_t opts[] = {
 	{  -1, 0, NULL, NULL, NULL }
 };
 
+static struct {
+	const char *name;
+	const char *opts;
+	const char *desc;
+} ops[] = {
+	{ "auto-align-gcr", "", "Automatically align GCR tracks to the index" },
+	{ "comment-add", "text", "Add to the image comment" },
+	{ "comment-load", "filename", "Load the image comment from a file" },
+	{ "comment-print", "", "Print the image comment" },
+	{ "comment-save", "filename", "Save the image comment to a file" },
+	{ "comment-set", "text", "Set the image comment" },
+	{ "decode", "type file", "Decode tracks" },
+	{ "delete", "", "Delete tracks" },
+	{ "double-step", "", "Remove odd numbered tracks" },
+	{ "double-step-even", "", "Remove even numbered tracks" },
+	{ "encode", "type file", "Encode tracks" },
+	{ "half-step", "", "Duplicate all tracks" },
+	{ "info", "", "Print image information" },
+	{ "new", "", "Create new tracks" },
+	{ "rotate", "bits", "Rotate tracks left" },
+	{ "save", "filename", "Save raw tracks" },
+	{ NULL, NULL, NULL }
+};
+
+
+static
+void print_help_ops (void)
+{
+	unsigned i, n, w;
+
+	n = 0;
+
+	i = 0;
+	while (ops[i].name != NULL) {
+		w = strlen (ops[i].name) + strlen (ops[i].opts);
+
+		if (w > n) {
+			n = w;
+		}
+
+		i += 1;
+	}
+
+	n += 2;
+
+	i = 0;
+	while (ops[i].name != NULL) {
+		w = strlen (ops[i].name) + strlen (ops[i].opts);
+
+		fprintf (stdout, "  %s %s", ops[i].name, ops[i].opts);
+
+		while (w < n) {
+			fputc (' ', stdout);
+			w += 1;
+		}
+
+		fprintf (stdout, "%s\n", ops[i].desc);
+
+		i += 1;
+	}
+}
 
 static
 void print_help (void)
@@ -99,25 +160,11 @@ void print_help (void)
 		opts
 	);
 
+	fputs ("\noperations are:\n", stdout);
+
+	print_help_ops();
+
 	fputs (
-		"\n"
-		"operations are:\n"
-		"  auto-align-gcr         Automatically align GCR tracks to the index\n"
-		"  comment-add text       Add to the image comment\n"
-		"  comment-load filename  Load the image comment from a file\n"
-		"  comment-print          Print the image comment\n"
-		"  comment-save filename  Save the image comment to a file\n"
-		"  comment-set text       Set the image comment\n"
-		"  decode <type> <file>   Decode tracks\n"
-		"  delete                 Delete tracks\n"
-		"  double-step            Remove odd numbered tracks\n"
-		"  double-step-even       Remove even numbered tracks\n"
-		"  encode <type> <file>   Encode tracks\n"
-		"  half-step              Duplicate all tracks\n"
-		"  info                   Print image information\n"
-		"  new                    Create new tracks\n"
-		"  rotate <bits>          Rotate tracks left\n"
-		"  save <filename>        Save raw tracks\n"
 		"\n"
 		"parameters are:\n"
 		"  mfm-auto-gap3, mfm-clock, mfm-iam, mfm-gap1, mfm-gap3, mfm-gap4a,\n"
