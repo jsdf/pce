@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/null.c                                     *
  * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,6 +21,7 @@
 
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <drivers/video/terminal.h>
 #include <drivers/video/null.h>
@@ -55,6 +56,22 @@ int null_close (null_t *nt)
 static
 int null_set_msg_trm (null_t *nt, const char *msg, const char *val)
 {
+	if (strcmp (msg, "term.grab") == 0) {
+		return (0);
+	}
+	else if (strcmp (msg, "term.release") == 0) {
+		return (0);
+	}
+	else if (strcmp (msg, "term.title") == 0) {
+		return (0);
+	}
+	else if (strcmp (msg, "term.fullscreen.toggle") == 0) {
+		return (0);
+	}
+	else if (strcmp (msg, "term.fullscreen") == 0) {
+		return (0);
+	}
+
 	return (-1);
 }
 
