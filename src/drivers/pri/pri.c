@@ -59,6 +59,27 @@ void pri_clear_bits (unsigned char *buf, unsigned long i1, unsigned long i2)
 	}
 }
 
+pri_evt_t *pri_evt_new (unsigned long type, unsigned long pos, unsigned long val)
+{
+	pri_evt_t *evt;
+
+	if ((evt = malloc (sizeof (pri_evt_t))) == NULL) {
+		return (NULL);
+	}
+
+	evt->next = NULL;
+	evt->type = type;
+	evt->pos = pos;
+	evt->val = val;
+
+	return (evt);
+}
+
+void pri_evt_del (pri_evt_t *evt)
+{
+	free (evt);
+}
+
 /*****************************************************************************
  * Create a new track
  *
@@ -183,14 +204,9 @@ pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long po
 {
 	pri_evt_t *evt;
 
-	if ((evt = malloc (sizeof (pri_evt_t))) == NULL) {
+	if ((evt = pri_evt_new (type, pos, val)) == NULL) {
 		return (NULL);
 	}
-
-	evt->next = NULL;
-	evt->type = type;
-	evt->pos = pos;
-	evt->val = val;
 
 	pri_trk_evt_ins (trk, evt);
 
@@ -302,7 +318,7 @@ int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt)
 	if (trk->evt == evt) {
 		tmp = trk->evt;
 		trk->evt = trk->evt->next;
-		free (tmp);
+		pri_evt_del (tmp);
 		return (0);
 	}
 
@@ -315,7 +331,7 @@ int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt)
 	if (tmp->next == evt) {
 		tmp2 = tmp->next;
 		tmp->next = tmp2->next;
-		free (tmp2);
+		pri_evt_del (tmp2);
 		return (0);
 	}
 

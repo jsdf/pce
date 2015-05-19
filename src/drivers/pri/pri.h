@@ -66,6 +66,9 @@ typedef struct {
 } pri_img_t;
 
 
+pri_evt_t *pri_evt_new (unsigned long type, unsigned long pos, unsigned long val);
+void pri_evt_del (pri_evt_t *evt);
+
 pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock);
 void pri_trk_del (pri_trk_t *trk);
 pri_trk_t *pri_trk_clone (const pri_trk_t *trk);
