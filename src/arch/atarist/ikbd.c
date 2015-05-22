@@ -193,6 +193,23 @@ void st_kbd_init (st_kbd_t *kbd)
 	kbd->buf_tl = 0;
 }
 
+/*
+ * Get the number of free bytes in the keyboard buffer
+ */
+static
+unsigned st_kbd_buf_free (const st_kbd_t *kbd)
+{
+	unsigned cnt;
+
+	cnt = kbd->buf_hd - kbd->buf_tl;
+
+	if (kbd->buf_hd < kbd->buf_tl) {
+		cnt += sizeof (kbd->buf);
+	}
+
+	return (sizeof (kbd->buf) - cnt - 1);
+}
+
 int st_kbd_buf_put (st_kbd_t *kbd, unsigned char val)
 {
 	unsigned i;
@@ -261,6 +278,10 @@ void st_kbd_check_mouse (st_kbd_t *kbd)
 	}
 
 	if ((kbd->mouse_dx == 0) && (kbd->mouse_dy == 0) && (kbd->mouse_but[0] == kbd->mouse_but[1])) {
+		return;
+	}
+
+	if (st_kbd_buf_free (kbd) < 3) {
 		return;
 	}
 
