@@ -149,6 +149,7 @@ include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/drivers/video/Makefile.inc
 include $(srcdir)/src/arch/Makefile.inc
 include $(srcdir)/src/arch/atarist/Makefile.inc
+include $(srcdir)/src/arch/dos/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc

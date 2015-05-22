@@ -231,6 +231,71 @@ src/arch/atarist/video.o: src/arch/atarist/video.c \
 	src/drivers/video/terminal.h \
 	src/libini/libini.h
 
+src/arch/dos/dos.o: src/arch/dos/dos.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/dosmem.h \
+	src/arch/dos/int.h \
+	src/arch/dos/main.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/dosmem.o: src/arch/dos/dosmem.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/dosmem.h \
+	src/arch/dos/main.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/exec.o: src/arch/dos/exec.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/dosmem.h \
+	src/arch/dos/exec.h \
+	src/arch/dos/main.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/int.o: src/arch/dos/int.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/int.h \
+	src/arch/dos/int10.h \
+	src/arch/dos/int21.h \
+	src/arch/dos/main.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/int10.o: src/arch/dos/int10.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/int10.h \
+	src/arch/dos/main.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/int21.o: src/arch/dos/int21.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/dosmem.h \
+	src/arch/dos/int21.h \
+	src/arch/dos/main.h \
+	src/arch/dos/path.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
+src/arch/dos/main.o: src/arch/dos/main.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/exec.h \
+	src/arch/dos/main.h \
+	src/arch/dos/path.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h \
+	src/lib/getopt.h \
+	src/lib/sysdep.h
+
+src/arch/dos/path.o: src/arch/dos/path.c \
+	src/arch/dos/dos.h \
+	src/arch/dos/main.h \
+	src/arch/dos/path.h \
+	src/config.h \
+	src/cpu/e8086/e8086.h
+
 src/arch/ibmpc/cassette.o: src/arch/ibmpc/cassette.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/main.h \

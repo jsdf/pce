@@ -1,0 +1,45 @@
+.TH PCE-DOS 1 "2015-05-22" "HH" "pce"
+\
+.SH NAME
+pce-dos \- DOS command line emulator
+\
+.SH SYNOPSIS
+.BI pce-dos " [options] command [options]"
+\
+.SH DESCRIPTION
+\fBpce-dos\fR(1) is a simple DOS command line emulator. It can run basic DOS
+command line programs from the host command line.
+\
+.SH OPTIONS
+.TP
+.BI "-c, --command " command
+Set the DOS executable to run. The executable must be specified as a DOS
+path with the exception that slashes will be replaced by backslashes.
+\
+.TP
+.BI "-d, --drive " "letter path"
+Attach a host path to a DOS drive letter. By default, the current
+directory is attached to the C drive.
+\
+.TP
+.B "-l, --log-int "
+Enable logging of interrupts.
+\
+.TP
+.BI "-m, --memory " size
+Set the emulated memory size to \fIsize\fR KiB. The default is 640 KiB. This
+should be enough for everybody.
+\
+.TP
+.B --help
+Print usage information
+\
+.TP
+.B --version
+Print version information
+\
+.SH SEE ALSO
+.BR pce-ibmpc (1)
+\
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>
