@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/main.h                                        *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,8 @@
 extern const char *par_terminal;
 extern const char *par_video;
 
+
+void sim_stop (void);
 
 void sim_log_deb (const char *msg, ...);
 

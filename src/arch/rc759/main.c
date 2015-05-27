@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/main.c                                        *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -143,6 +143,15 @@ void sig_segv (int s)
 	pce_set_fd_interactive (0, 1);
 
 	exit (1);
+}
+
+void sim_stop (void)
+{
+	pce_prt_sep ("BREAK");
+
+	print_state_cpu (par_sim->cpu);
+
+	rc759_set_msg (par_sim, "emu.stop", NULL);
 }
 
 static
