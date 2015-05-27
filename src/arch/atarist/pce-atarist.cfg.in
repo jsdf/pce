@@ -159,6 +159,30 @@ terminal {
 	mouse_div_y = 1
 }
 
+# The AY 2149 sound generator
+psg {
+	#driver = "null"
+	#driver = "wav:wav=sound.wav:lowpass=0:wavfilter=0"
+	#driver = "oss:dev=/dev/dsp:wav=sound.wav:lowpass=0:wavfilter=0"
+	driver = "sdl:wav=sound.wav:lowpass=0:wavfilter=0"
+
+	# The output sample rate
+	sample_rate = 48000
+
+	# The AYM output file
+	aym = "sound.aym"
+
+	# The AYM resolution in microseconds
+	aym_resolution = 250
+
+	# Enable a first order highpass filter with a cut off frequency
+	# of about 15 Hz. This is used to normalize the output levels.
+	highpass = 1
+
+	# The cut off frequency of a second order lowpass filter.
+	# Set this to 0 to turn off the filter.
+	lowpass = 8000
+}
 
 fdc {
 	# The PRI file associated with drive 0. If this file does not

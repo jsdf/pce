@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/msg.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -286,6 +286,56 @@ int st_set_msg_emu_pause_toggle (atari_st_t *sim, const char *msg, const char *v
 }
 
 static
+int st_set_msg_emu_psg_aym_file (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (st_psg_set_aym (&sim->psg, val)) {
+		pce_log (MSG_ERR, "*** failed to open AYM file (%s)\n", val);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_psg_aym_res (atari_st_t *sim, const char *msg, const char *val)
+{
+	unsigned long r;
+
+	if (msg_get_ulng (val, &r)) {
+		return (1);
+	}
+
+	st_psg_set_aym_resolution (&sim->psg, r);
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_psg_driver (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (st_psg_set_driver (&sim->psg, val)) {
+		st_log_deb (MSG_ERR, "*** failed to open sound driver (%s)\n", val);
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_psg_lowpass (atari_st_t *sim, const char *msg, const char *val)
+{
+	unsigned long f;
+
+	if (msg_get_ulng (val, &f)) {
+		return (1);
+	}
+
+	st_psg_set_lowpass (&sim->psg, f);
+
+	return (0);
+}
+
+static
 int st_set_msg_emu_realtime (atari_st_t *sim, const char *msg, const char *val)
 {
 	int v;
@@ -374,6 +424,10 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.par.file", st_set_msg_emu_par_file },
 	{ "emu.pause", st_set_msg_emu_pause },
 	{ "emu.pause.toggle", st_set_msg_emu_pause_toggle },
+	{ "emu.psg.aym.file", st_set_msg_emu_psg_aym_file },
+	{ "emu.psg.aym.res", st_set_msg_emu_psg_aym_res },
+	{ "emu.psg.driver", st_set_msg_emu_psg_driver },
+	{ "emu.psg.lowpass", st_set_msg_emu_psg_lowpass },
 	{ "emu.realtime", st_set_msg_emu_realtime },
 	{ "emu.realtime.toggle", st_set_msg_emu_realtime_toggle },
 	{ "emu.reset", st_set_msg_emu_reset },

@@ -46,6 +46,7 @@
 
 #include <drivers/block/block.h>
 #include <drivers/char/char.h>
+#include <drivers/sound/sound.h>
 #include <drivers/video/terminal.h>
 #include <drivers/video/keys.h>
 
@@ -80,6 +81,7 @@ struct atari_st_s {
 	char_drv_t    *parport_drv;
 	char_drv_t    *serport_drv;
 	char_drv_t    *midi_drv;
+	sound_drv_t   *snd_drv;
 
 	unsigned long rom_addr;
 

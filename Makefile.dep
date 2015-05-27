@@ -35,6 +35,8 @@ src/arch/atarist/atarist.o: src/arch/atarist/atarist.c \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/pri/pri.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
@@ -69,6 +71,8 @@ src/arch/atarist/cmd.o: src/arch/atarist/cmd.c \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/pri/pri.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
@@ -134,6 +138,8 @@ src/arch/atarist/main.o: src/arch/atarist/main.c \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/pri/pri.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
@@ -168,6 +174,8 @@ src/arch/atarist/mem.o: src/arch/atarist/mem.c \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/pri/pri.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
@@ -196,6 +204,8 @@ src/arch/atarist/msg.o: src/arch/atarist/msg.c \
 	src/drivers/block/block.h \
 	src/drivers/char/char.h \
 	src/drivers/pri/pri.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/brkpt.h \
@@ -211,7 +221,10 @@ src/arch/atarist/msg.o: src/arch/atarist/msg.c \
 src/arch/atarist/psg.o: src/arch/atarist/psg.c \
 	src/arch/atarist/main.h \
 	src/arch/atarist/psg.h \
-	src/config.h
+	src/arch/atarist/psg_vol.h \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h
 
 src/arch/atarist/rp5c15.o: src/arch/atarist/rp5c15.c \
 	src/arch/atarist/rp5c15.h

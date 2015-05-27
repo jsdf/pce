@@ -42,6 +42,7 @@
 
 #include <drivers/block/block.h>
 #include <drivers/char/char.h>
+#include <drivers/sound/sound.h>
 #include <drivers/video/terminal.h>
 #include <drivers/video/keys.h>
 
@@ -270,7 +271,6 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 		if (sim->parport_drv == NULL) {
 			pce_log (MSG_ERR, "*** can't open driver (%s)\n", parport);
 		}
-
 	}
 
 	if (serport != NULL) {
@@ -281,7 +281,6 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 		if (sim->serport_drv == NULL) {
 			pce_log (MSG_ERR, "*** can't open driver (%s)\n", serport);
 		}
-
 	}
 }
 
@@ -463,11 +462,52 @@ void st_setup_rtc (atari_st_t *sim, ini_sct_t *ini)
 static
 void st_setup_psg (atari_st_t *sim, ini_sct_t *ini)
 {
-	pce_log_tag (MSG_INF, "PSG:", "initialized\n");
+	ini_sct_t     *sct;
+	const char    *drv, *aym;
+	int           highpass;
+	unsigned long lowpass, aymres, srate;
 
 	st_psg_init (&sim->psg);
 	st_psg_set_port_a_fct (&sim->psg, sim, st_set_port_a);
 	st_psg_set_port_b_fct (&sim->psg, sim, st_set_port_b);
+
+	if ((sct = ini_next_sct (ini, NULL, "psg")) == NULL) {
+		return;
+	}
+
+	ini_get_string (sct, "driver", &drv, NULL);
+	ini_get_string (sct, "aym", &aym, NULL);
+	ini_get_uint32 (sct, "aym_resolution", &aymres, 250);
+	ini_get_uint32 (sct, "sample_rate", &srate, 44100);
+	ini_get_uint32 (sct, "lowpass", &lowpass, 0);
+	ini_get_bool (sct, "highpass", &highpass, 1);
+
+	pce_log_tag (MSG_INF,
+		"PSG:", "driver=%s srate=%lu lowpass=%lu highpass=%d\n",
+		(drv != NULL) ? drv : "<none>",
+		srate, lowpass, highpass
+	);
+
+	st_psg_set_srate (&sim->psg, srate);
+
+	if (st_psg_set_driver (&sim->psg, drv)) {
+		pce_log (MSG_ERR, "*** can't open sound driver (%s)\n", drv);
+	}
+
+	if (aym != NULL) {
+		pce_log_tag (MSG_INF, "PSG:", "aym=%s resolution=%lu\n",
+			aym, aymres
+		);
+
+		if (st_psg_set_aym (&sim->psg, aym)) {
+			pce_log (MSG_ERR, "*** can't open aym file (%s)\n", aym);
+		}
+	}
+
+	st_psg_set_aym_resolution (&sim->psg, aymres);
+
+	st_psg_set_lowpass (&sim->psg, lowpass);
+	st_psg_set_highpass (&sim->psg, highpass);
 }
 
 static
@@ -765,6 +805,7 @@ void st_reset (atari_st_t *sim)
 	e6850_reset (&sim->acia0);
 	e6850_reset (&sim->acia1);
 	st_acsi_reset (&sim->acsi);
+	st_psg_reset (&sim->psg);
 	st_fdc_reset (&sim->fdc);
 	st_dma_reset (&sim->dma);
 	st_kbd_reset (&sim->kbd);
@@ -851,6 +892,8 @@ void st_clock (atari_st_t *sim, unsigned n)
 	e68_clock (sim->cpu, cpuclk);
 
 	st_video_clock (sim->video, n);
+
+	st_psg_clock (&sim->psg, n);
 
 	sim->clk_div[0] += n;
 
