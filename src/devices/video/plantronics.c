@@ -84,7 +84,9 @@ void pla_mode3_update (cga_t *pla)
 			val1 = mem[(y & 1) + 2][x];
 
 			for (i = 0; i < 4; i++) {
-				idx = ((val0 >> 6) & 3) | ((val1 >> 4) & 0x0c);
+				idx = ((val0 >> 7) & 1) | ((val0 >> 5) & 2);
+				idx |= ((val1 >> 5) & 4) | ((val1 >> 3) & 8);
+
 				col = cga_rgb[idx];
 
 				dst[0] = col[0];
