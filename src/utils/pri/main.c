@@ -443,16 +443,16 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 		r = pri_new (*img);
 	}
 	else if (strcmp (op, "rotate") == 0) {
-		unsigned long idx;
+		long ofs;
 
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
 			fprintf (stderr, "%s: missing start position\n", arg0);
 			return (1);
 		}
 
-		idx = strtoul (optarg1[0], NULL, 0);
+		ofs = strtol (optarg1[0], NULL, 0);
 
-		r = pri_rotate_tracks (*img, idx);
+		r = pri_rotate_tracks (*img, ofs);
 	}
 	else if (strcmp (op, "save") == 0) {
 		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {

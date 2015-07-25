@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/rotate.c                                       *
  * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -90,21 +90,71 @@ int pri_align_gcr_tracks (pri_img_t *img)
 }
 
 
+struct pri_rotate_s {
+	char          left;
+	unsigned long cnt;
+};
+
 static
 int pri_rotate_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
-	unsigned long *idx;
+	unsigned long       cnt, max;
+	struct pri_rotate_s *par;
 
-	idx = opaque;
+	par = opaque;
 
-	if (pri_trk_rotate (trk, *idx)) {
+	max = pri_trk_get_size (trk);
+
+	if (max == 0) {
+		return (0);
+	}
+
+	if (par->left) {
+		cnt = par->cnt % max;
+	}
+	else {
+		cnt = max - (par->cnt % max);
+	}
+
+	if (pri_trk_rotate (trk, cnt)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int pri_rotate_tracks (pri_img_t *img, unsigned long idx)
+int pri_rotate_tracks (pri_img_t *img, long ofs)
 {
-	return (pri_for_all_tracks (img, pri_rotate_track_cb, &idx));
+	struct pri_rotate_s par;
+
+	if (ofs < 0) {
+		par.left = 0;
+		par.cnt = -ofs;
+	}
+	else {
+		par.left = 1;
+		par.cnt = ofs;
+	}
+
+	return (pri_for_all_tracks (img, pri_rotate_track_cb, &par));
+}
+
+int pri_rotate_tracks_left (pri_img_t *img, unsigned long ofs)
+{
+	struct pri_rotate_s par;
+
+	par.left = 1;
+	par.cnt = ofs;
+
+	return (pri_for_all_tracks (img, pri_rotate_track_cb, &par));
+}
+
+int pri_rotate_tracks_right (pri_img_t *img, unsigned long ofs)
+{
+	struct pri_rotate_s par;
+
+	par.left = 0;
+	par.cnt = ofs;
+
+	return (pri_for_all_tracks (img, pri_rotate_track_cb, &par));
 }

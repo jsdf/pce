@@ -1,4 +1,4 @@
-.TH PRI 1 "2014-11-02" "HH" "pce"
+.TH PRI 1 "2015-07-22" "HH" "pce"
 \
 .SH NAME
 pri \- convert and modify PCE raw image files
@@ -187,8 +187,9 @@ Print information about the current image (same as \fB-f\fR).
 .B new
 Create new tracks.
 .TP
-.BI "rotate " bits
-Rotate all selected tracks left by \fIbits\fR bits.
+.BI "rotate " cnt
+Rotate all selected tracks left by \fIcnt\fR bits. If \fIcnt\fR
+is negative, the track is rotated right.
 .TP
 .BI "save " filename
 Save all selected tracks to \fIfilename\fR. The contents of the

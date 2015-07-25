@@ -93,7 +93,9 @@ int pri_half_step (pri_img_t *img);
 int pri_new (pri_img_t *img);
 
 int pri_align_gcr_tracks (pri_img_t *img);
-int pri_rotate_tracks (pri_img_t *img, unsigned long idx);
+int pri_rotate_tracks (pri_img_t *img, long ofs);
+int pri_rotate_tracks_left (pri_img_t *img, unsigned long ofs);
+int pri_rotate_tracks_right (pri_img_t *img, unsigned long ofs);
 
 int pri_encode_text (pri_img_t *img, const char *fname);
 int pri_decode_text (pri_img_t *img, const char *fname, unsigned enc);
