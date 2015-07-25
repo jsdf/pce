@@ -1103,6 +1103,40 @@ int txt_enc_encoding (pri_text_t *ctx)
 }
 
 static
+int txt_enc_fill (pri_text_t *ctx)
+{
+	unsigned long max;
+	unsigned long val[2];
+
+	if (txt_match_uint (ctx, 10, &max) == 0) {
+		return (1);
+	}
+
+	if (txt_match_uint (ctx, 16, val) == 0) {
+		return (1);
+	}
+
+	if (txt_match (ctx, "/", 1)) {
+		if (txt_match_uint (ctx, 16, val + 1) == 0) {
+			return (1);
+		}
+	}
+	else {
+		val[1] = 0;
+	}
+
+	max *= 16;
+
+	while (ctx->bit_cnt < max) {
+		if (txt_add_byte (ctx, val[0], val[1])) {
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+static
 int txt_enc_fuzzy (pri_text_t *ctx)
 {
 	unsigned long val;
@@ -1433,6 +1467,11 @@ int txt_encode_v2 (pri_text_t *ctx)
 		}
 		else if (txt_match (ctx, "ENCODING", 1)) {
 			if (txt_enc_encoding (ctx)) {
+				return (1);
+			}
+		}
+		else if (txt_match (ctx, "FILL", 1)) {
+			if (txt_enc_fill (ctx)) {
 				return (1);
 			}
 		}
