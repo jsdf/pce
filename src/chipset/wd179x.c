@@ -1290,7 +1290,7 @@ void cmd_write_sector_clock (wd179x_t *fdc)
 			else if (fdc->write_idx < (16 * 38)) {
 				fdc->write_val[0] = (fdc->cmd & 1) ? 0xf8 : 0xfb;
 			}
-			else if (fdc->write_idx < (fdc->write_cnt - 32)) {
+			else if (fdc->write_idx < (fdc->write_cnt - 48)) {
 				fdc->interrupt_enable = 0;
 
 				if (fdc->status & WD179X_ST_DRQ) {
@@ -1301,16 +1301,19 @@ void cmd_write_sector_clock (wd179x_t *fdc)
 
 				fdc->write_val[0] = fdc->data;
 
-				if ((fdc->write_idx + 16) < (fdc->write_cnt - 32)) {
+				if ((fdc->write_idx + 16) < (fdc->write_cnt - 48)) {
 					wd179x_set_drq (fdc, 1);
 				}
 			}
-			else if (fdc->write_idx < (fdc->write_cnt - 16)) {
+			else if (fdc->write_idx < (fdc->write_cnt - 32)) {
 				fdc->write_crc = fdc->crc;
 				fdc->write_val[0] = (fdc->write_crc >> 8) & 0xff;
 			}
-			else if (fdc->write_idx < fdc->write_cnt) {
+			else if (fdc->write_idx < (fdc->write_cnt - 16)) {
 				fdc->write_val[0] = fdc->write_crc & 0xff;
+			}
+			else if (fdc->write_idx < fdc->write_cnt) {
+				fdc->write_val[0] = 0x4e;
 			}
 			else {
 #if DEBUG_WD179X >= 2
@@ -1411,7 +1414,7 @@ void cmd_write_sector_idam (wd179x_t *fdc)
 	wd179x_set_drq (fdc, 1);
 
 	fdc->write_idx = 0;
-	fdc->write_cnt = 16 * (22 + 12 + 4 + (128U << fdc->scan_val[3]) + 2);
+	fdc->write_cnt = 16 * (22 + 12 + 4 + (128U << fdc->scan_val[3]) + 2 + 1);
 
 	fdc->clock = cmd_write_sector_clock;
 
