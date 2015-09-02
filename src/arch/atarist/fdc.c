@@ -98,6 +98,7 @@ void st_fdc_init (st_fdc_t *fdc)
 		fdc->use_fname[i] = 0;
 		fdc->fname[i] = NULL;
 		fdc->diskid[i] = 0xffff;
+		fdc->wprot[i] = 0;
 		fdc->media_change[i] = 0;
 		fdc->img[i] = NULL;
 		fdc->modified[i] = 0;
@@ -141,6 +142,17 @@ void st_fdc_set_disks (st_fdc_t *fdc, disks_t *dsks)
 void st_fdc_set_disk_id (st_fdc_t *fdc, unsigned drive, unsigned diskid)
 {
 	fdc->diskid[drive] = diskid;
+}
+
+void st_fdc_set_wprot (st_fdc_t *fdc, unsigned drive, int wprot)
+{
+	if (drive < 2) {
+		fdc->wprot[drive] = (wprot != 0);
+
+		if (fdc->media_change[drive] == 0) {
+			wd179x_set_wprot (&fdc->wd179x, drive, fdc->wprot[drive]);
+		}
+	}
 }
 
 void st_fdc_set_fname (st_fdc_t *fdc, unsigned drive, const char *fname)
@@ -543,12 +555,12 @@ void st_fdc_clock_media_change (st_fdc_t *fdc, unsigned cnt)
 	fdc->media_change_clk = 0;
 
 	if (fdc->media_change[0]) {
-		wd179x_set_wprot (&fdc->wd179x, 0, 0);
+		wd179x_set_wprot (&fdc->wd179x, 0, fdc->wprot[0]);
 		fdc->media_change[0] = 0;
 	}
 
 	if (fdc->media_change[1]) {
-		wd179x_set_wprot (&fdc->wd179x, 1, 0);
+		wd179x_set_wprot (&fdc->wd179x, 1, fdc->wprot[1]);
 		fdc->media_change[1] = 0;
 	}
 }

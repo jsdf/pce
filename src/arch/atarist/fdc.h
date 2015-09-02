@@ -40,6 +40,8 @@ typedef struct {
 
 	unsigned short diskid[2];
 
+	char           wprot[2];
+
 	unsigned char  media_change[2];
 	unsigned long  media_change_clk;
 
@@ -58,6 +60,8 @@ void st_fdc_reset (st_fdc_t *fdc);
 
 void st_fdc_set_disks (st_fdc_t *fdc, disks_t *dsks);
 void st_fdc_set_disk_id (st_fdc_t *fdc, unsigned drive, unsigned diskid);
+
+void st_fdc_set_wprot (st_fdc_t *fdc, unsigned drive, int wprot);
 
 void st_fdc_set_fname (st_fdc_t *fdc, unsigned drive, const char *fname);
 

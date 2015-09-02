@@ -233,6 +233,51 @@ int st_set_msg_emu_exit (atari_st_t *sim, const char *msg, const char *val)
 }
 
 static
+int set_fdc_ro_rw (atari_st_t *sim, const char *msg, const char *val, int wprot)
+{
+	unsigned i, drv, msk;
+
+	if ((*val == 0) || (strcmp (val, "all") == 0)) {
+		msk = 3;
+	}
+	else {
+		if (msg_get_uint (val, &drv)) {
+			return (1);
+		}
+
+		if (drv > 1) {
+			return (1);
+		}
+
+		msk = 1U << drv;
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (msk & (1U << i)) {
+			pce_log (MSG_INF,
+				"setting drive %u to %s\n",
+				i, wprot ? "RO" : "RW"
+			);
+			st_fdc_set_wprot (&sim->fdc, i, wprot);
+		}
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_fdc_ro (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (set_fdc_ro_rw (sim, msg, val, 1));
+}
+
+static
+int st_set_msg_emu_fdc_rw (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (set_fdc_ro_rw (sim, msg, val, 0));
+}
+
+static
 int st_set_msg_emu_par_driver (atari_st_t *sim, const char *msg, const char *val)
 {
 	if (sim->parport_drv != NULL) {
@@ -420,6 +465,8 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.disk.eject", st_set_msg_emu_disk_eject },
 	{ "emu.disk.insert", st_set_msg_emu_disk_insert },
 	{ "emu.exit", st_set_msg_emu_exit },
+	{ "emu.fdc.ro", st_set_msg_emu_fdc_ro },
+	{ "emu.fdc.rw", st_set_msg_emu_fdc_rw },
 	{ "emu.par.driver", st_set_msg_emu_par_driver },
 	{ "emu.par.file", st_set_msg_emu_par_file },
 	{ "emu.pause", st_set_msg_emu_pause },
