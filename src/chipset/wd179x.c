@@ -1431,6 +1431,12 @@ void cmd_write_sector (wd179x_t *fdc)
 
 	fdc->status = WD179X_ST_BUSY;
 
+	if (fdc->drv->wprot) {
+		fdc->status |= WD179X_ST_WPROT;
+		cmd_done (fdc, 1);
+		return;
+	}
+
 	if (fdc->auto_motor) {
 		wd179x_set_motor (fdc, fdc->sel_drv, 1);
 	}
@@ -1536,6 +1542,12 @@ void cmd_write_track (wd179x_t *fdc)
 #endif
 
 	fdc->status = WD179X_ST_BUSY;
+
+	if (fdc->drv->wprot) {
+		fdc->status |= WD179X_ST_WPROT;
+		cmd_done (fdc, 1);
+		return;
+	}
 
 	if (fdc->auto_motor) {
 		wd179x_set_motor (fdc, fdc->sel_drv, 1);
