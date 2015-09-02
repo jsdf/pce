@@ -1156,7 +1156,7 @@ void cmd_read_sector_dam (wd179x_t *fdc)
 		fdc->status &= ~WD179X_ST_RECORD_TYPE;
 	}
 
-	fdc->read_cnt = 128U << fdc->scan_val[3];
+	fdc->read_cnt = 128U << (fdc->scan_val[3] & 3);
 	fdc->read_cnt = 8 * fdc->read_cnt + 16;
 	fdc->clock = cmd_read_sector_clock;
 	fdc->cont = NULL;
@@ -1210,11 +1210,6 @@ void cmd_read_sector_idam (wd179x_t *fdc)
 	}
 
 	if (fdc->sector != fdc->scan_val[2]) {
-		wd179x_scan_mark_start (fdc);
-		return;
-	}
-
-	if (fdc->scan_val[3] > 3) {
 		wd179x_scan_mark_start (fdc);
 		return;
 	}
@@ -1411,15 +1406,10 @@ void cmd_write_sector_idam (wd179x_t *fdc)
 		return;
 	}
 
-	if (fdc->scan_val[3] > 3) {
-		wd179x_scan_mark_start (fdc);
-		return;
-	}
-
 	wd179x_set_drq (fdc, 1);
 
 	fdc->write_idx = 0;
-	fdc->write_cnt = 16 * (22 + 12 + 4 + (128U << fdc->scan_val[3]) + 2 + 1);
+	fdc->write_cnt = 16 * (22 + 12 + 4 + (128U << (fdc->scan_val[3] & 3)) + 2 + 1);
 
 	fdc->clock = cmd_write_sector_clock;
 
