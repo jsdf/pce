@@ -564,6 +564,11 @@ void wd179x_move_bit (wd179x_t *fdc, wd179x_drive_t *drv)
 		if (drv->trk != NULL) {
 			drv->evt = drv->trk->evt;
 		}
+
+		if ((fdc->cmd & 0xf4) == 0xd4) {
+			/* force interrupt on every index */
+			wd179x_set_irq (fdc, 1);
+		}
 	}
 
 	drv->fuzzy_mask <<= 1;
