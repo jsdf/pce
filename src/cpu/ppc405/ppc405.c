@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/ppc405.c                                      *
  * Created:     2003-11-07 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -546,7 +546,7 @@ void p405_exception_program (p405_t *c, uint32_t esr)
 
 void p405_exception_program_fpu (p405_t *c)
 {
-	p405_exception_program (c, P405_ESR_PEU);
+	p405_exception_program (c, P405_ESR_PIL);
 }
 
 void p405_exception_syscall (p405_t *c)
