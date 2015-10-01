@@ -33,8 +33,18 @@
 #include <stdarg.h>
 #include <signal.h>
 
+#include "cmd_ppc.h"
+#include "sim405.h"
+
+#include <lib/cmd.h>
+#include <lib/console.h>
 #include <lib/getopt.h>
+#include <lib/log.h>
+#include <lib/monitor.h>
 #include <lib/path.h>
+#include <lib/sysdep.h>
+
+#include <libini/libini.h>
 
 
 static pce_option_t opts[] = {

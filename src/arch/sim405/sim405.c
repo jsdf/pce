@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/sim405.c                                     *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,34 @@
 
 
 #include "main.h"
+
+#include <stdlib.h>
+
+#include "pci.h"
+#include "sercons.h"
+#include "sim405.h"
+
+#include <chipset/clock/ds1743.h>
+
+#include <chipset/82xx/e8250.h>
+
+#include <cpu/ppc405/ppc405.h>
+
+#include <devices/clock/ds1743.h>
+#include <devices/pci.h>
+#include <devices/serport.h>
+#include <devices/slip.h>
+
+#include <lib/brkpt.h>
+#include <lib/log.h>
+#include <lib/iniata.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/load.h>
+#include <lib/msg.h>
+#include <lib/sysdep.h>
+
+#include <libini/libini.h>
 
 
 static unsigned long s405_get_dcr (void *ext, unsigned long dcrn);

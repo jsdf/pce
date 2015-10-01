@@ -1194,7 +1194,6 @@ src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \
 	src/arch/sim405/pci.h \
-	src/arch/sim405/sercons.h \
 	src/arch/sim405/sim405.h \
 	src/chipset/82xx/e8250.h \
 	src/chipset/clock/ds1743.h \
@@ -1215,13 +1214,10 @@ src/arch/sim405/cmd_ppc.o: src/arch/sim405/cmd_ppc.c \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
 	src/lib/console.h \
-	src/lib/iniata.h \
 	src/lib/inidsk.h \
-	src/lib/iniram.h \
 	src/lib/load.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
@@ -1229,7 +1225,6 @@ src/arch/sim405/main.o: src/arch/sim405/main.c \
 	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \
 	src/arch/sim405/pci.h \
-	src/arch/sim405/sercons.h \
 	src/arch/sim405/sim405.h \
 	src/chipset/82xx/e8250.h \
 	src/chipset/clock/ds1743.h \
@@ -1251,57 +1246,25 @@ src/arch/sim405/main.o: src/arch/sim405/main.c \
 	src/lib/cmd.h \
 	src/lib/console.h \
 	src/lib/getopt.h \
-	src/lib/iniata.h \
 	src/lib/inidsk.h \
-	src/lib/iniram.h \
 	src/lib/load.h \
 	src/lib/log.h \
 	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/path.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/sim405/pci.o: src/arch/sim405/pci.c \
-	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \
 	src/arch/sim405/pci.h \
-	src/arch/sim405/sercons.h \
-	src/arch/sim405/sim405.h \
-	src/chipset/82xx/e8250.h \
-	src/chipset/clock/ds1743.h \
-	src/chipset/ppc405/uic.h \
 	src/config.h \
-	src/cpu/ppc405/ppc405.h \
-	src/devices/ata.h \
-	src/devices/clock/ds1743.h \
-	src/devices/device.h \
 	src/devices/memory.h \
-	src/devices/nvram.h \
-	src/devices/pci-ata.h \
 	src/devices/pci.h \
-	src/devices/serport.h \
-	src/devices/slip.h \
-	src/drivers/block/block.h \
-	src/drivers/char/char.h \
-	src/lib/brkpt.h \
-	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
-	src/lib/inidsk.h \
-	src/lib/iniram.h \
-	src/lib/load.h \
-	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
-	src/lib/sysdep.h \
-	src/libini/libini.h
+	src/lib/log.h
 
 src/arch/sim405/sercons.o: src/arch/sim405/sercons.c \
-	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \
 	src/arch/sim405/pci.h \
-	src/arch/sim405/sercons.h \
 	src/arch/sim405/sim405.h \
 	src/chipset/82xx/e8250.h \
 	src/chipset/clock/ds1743.h \
@@ -1321,19 +1284,13 @@ src/arch/sim405/sercons.o: src/arch/sim405/sercons.c \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
-	src/lib/iniata.h \
 	src/lib/inidsk.h \
-	src/lib/iniram.h \
 	src/lib/load.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
-	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h
 
 src/arch/sim405/sim405.o: src/arch/sim405/sim405.c \
-	src/arch/sim405/cmd_ppc.h \
 	src/arch/sim405/main.h \
 	src/arch/sim405/pci.h \
 	src/arch/sim405/sercons.h \
@@ -1356,13 +1313,11 @@ src/arch/sim405/sim405.o: src/arch/sim405/sim405.c \
 	src/drivers/char/char.h \
 	src/lib/brkpt.h \
 	src/lib/cmd.h \
-	src/lib/console.h \
 	src/lib/iniata.h \
 	src/lib/inidsk.h \
 	src/lib/iniram.h \
 	src/lib/load.h \
 	src/lib/log.h \
-	src/lib/monitor.h \
 	src/lib/msg.h \
 	src/lib/sysdep.h \
 	src/libini/libini.h

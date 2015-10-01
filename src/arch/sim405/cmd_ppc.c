@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/cmd_ppc.c                                    *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,19 @@
 
 
 #include "main.h"
+#include "cmd_ppc.h"
+#include "sim405.h"
+
+#include <stdio.h>
+
+#include <chipset/ppc405/uic.h>
+
+#include <cpu/ppc405/ppc405.h>
+
+#include <lib/cmd.h>
+#include <lib/console.h>
+#include <lib/monitor.h>
+#include <lib/sysdep.h>
 
 
 static mon_cmd_t par_cmd[] = {

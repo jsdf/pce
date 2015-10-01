@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/pci.c                                        *
  * Created:     2004-12-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,15 @@
 
 
 #include "main.h"
+
+#include <stdlib.h>
+
+#include "pci.h"
+
+#include <devices/memory.h>
+#include <devices/pci.h>
+
+#include <lib/log.h>
 
 
 /* #define DEBUG_PCI 1 */

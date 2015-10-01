@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/sercons.c                                    *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -26,6 +26,8 @@
  *****************************************************************************/
 
 
+#include "main.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +36,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 
-#include "main.h"
+#include "sim405.h"
+
+#include <lib/sysdep.h>
 
 
 void scon_check (sim405_t *sim)
