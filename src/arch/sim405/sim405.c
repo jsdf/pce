@@ -172,6 +172,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 				&sim->uic, p405uic_get_irq_fct (&sim->uic, irq)
 			);
 
+			p405uic_set_force_polarity (&sim->uic, irq, 1);
+
 			mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
 
 			i += 1;

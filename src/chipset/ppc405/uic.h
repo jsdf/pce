@@ -77,6 +77,9 @@ typedef struct p405_uic_s {
 	uint32_t      invert;
 	uint32_t      vr_msk;
 
+	uint32_t      force_polarity_val;
+	uint32_t      force_polarity_msk;
+
 	void          (*nint) (void *ext, unsigned char val);
 	void          *nint_ext;
 	unsigned char nint_val;
@@ -100,6 +103,14 @@ void p405uic_del (p405_uic_t *uic);
  * @param inv The inversion mask
  *****************************************************************************/
 void p405uic_set_invert (p405_uic_t *uic, unsigned long inv);
+
+/*!***************************************************************************
+ * @short Force the polarity of an irq to a specific value
+ *
+ * This is a hack for cases where the OS sets the polarity wrong for
+ * certain IRQs.
+ *****************************************************************************/
+void p405uic_set_force_polarity (p405_uic_t *uic, unsigned irq, int val);
 
 void p405uic_set_cint_fct (p405_uic_t *uic, void *ext, void *fct);
 void p405uic_set_nint_fct (p405_uic_t *uic, void *ext, void *fct);
