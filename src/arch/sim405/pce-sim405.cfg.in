@@ -2,8 +2,8 @@
 #
 # Example config file
 
-section sim405 {
-	section powerpc {
+sim405 {
+	system {
 		model = "ppc405"
 
 		# for linux 2.6
@@ -11,58 +11,62 @@ section sim405 {
 
 		# for linux 2.4 (bug in linux)
 		#uic_invert = 0x7e
+
+		# The UART input clock
+		serial_clock = 115200
 	}
 
 	# Multiple "ram" sections may be present
-	section ram {
-		# The linear base address
-		address = 0x00000000
+	ram {
+		# The base address
+		address = 0
 
 		# The size in bytes
-		size = 0x04000000
-		
+		size = 256M
+
 		# The RAM image that is used to initialize the RAM
-		file = "linux.bin"
+		#file = "linux.bin"
 	}
 
 	# Multiple "rom" sections may be present
-	section rom {
+	rom {
+		# The base address
+		address = 0xfff80000
+
+		# The rom size
+		size = 512K
+
 		# The file from which the rom code is loaded
-		file = "sim405.rom"
-
-		# The linear base address
-		address = 0xffff0000
-
-		# The rom size in bytes
-		size = 65536
+		#file = "sim405.rom"
 	}
 
 	# load sections are processed after the emulator is set up.
-	section load {
+	load {
 		format = "ihex"
-		file = "sim405.ihex"
+		file   = "sim405.ihex"
 	}
 
-	section load {
-		format = "binary"
-		file = "rom.bin"
-		address = 0xffff0000
-	}
+	#load {
+	#	format  = "binary"
+	#	file    = "sim405.bin"
+	#	address = 0xfff80000
+	#}
 
-	section device {
-		type = "ds1743"
+	# The real time clock
+	device {
+		type    = "ds1743"
 		address = 0xf0000000
-		size = 8192
-		file = "ds1743.bin"
+		size    = 8192
+		file    = "ds1743.bin"
 	}
 
 	# Up to two "serial" sections may be present. The first is
 	# UART0, the second UART1. If the base addresses are changed,
 	# linux won't find the UARTs
-	section serial {
+	serial {
 		address = 0xef600300
-		irq = 0
-		
+		irq     = 0
+
 		# Up to multichar characters are sent or received
 		# without any transmission delay. For a real serial port
 		# this value is 1 but larger values can speed up
@@ -76,41 +80,60 @@ section sim405 {
 		#driver = "tios:file=/dev/ttyS0"
 	}
 
-	section serial {
+	serial {
 		address = 0xef600400
-		irq = 1
+		irq     = 1
 
 		multichar = 1
 
 		driver = "stdio:file=uart1.out"
 	}
 
-	section sercons {
+	sercons {
 		serial = 0
 	}
 
-	section slip {
-		serial = 1
-		interface = "tun0"
-	}
+	#slip {
+	#	serial    = 1
+	#	interface = "tun0"
+	#}
 
-	section disk {
-		drive = 0
-		type = "dosemu"
-		file = "hda.img"
+	disk {
+		drive    = 128
+		type     = "auto"
+		file     = "hda.pimg"
+		file     = "hda.qed"
 		readonly = 0
+		optional = 1
 	}
 
-	section pci_ata {
+	disk {
+		drive    = 129
+		type     = "auto"
+		file     = "hdb.pimg"
+		file     = "hdb.qed"
+		readonly = 0
+		optional = 1
+	}
+
+	pci_ata {
 		pci_device = 4
 		pci_irq = 31
 
-		section device {
-			model = "PCEDISK"
-			channel = 0
-			device = 0
-			drive = 0
-			multi_count_max = 16
+		channel {
+			device {
+				device          = 0
+				disk            = 128
+				multi_count_max = 16
+				model           = "PCEDISK"
+			}
+
+			device {
+				device          = 1
+				disk            = 129
+				multi_count_max = 16
+				model           = "PCEDISK"
+			}
 		}
 	}
 }
