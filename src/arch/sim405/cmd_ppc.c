@@ -50,7 +50,7 @@ static mon_cmd_t par_cmd[] = {
 	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
 	{ "rfi", "", "execute to next rfi or rfci" },
 	{ "r", "reg [val]", "get or set a register" },
-	{ "s", "[what]", "print status (mem|ppc|spr)" },
+	{ "s", "[what]", "print status (mem|ppc|spr|uart0|uart1)" },
 	{ "tlb", "l [first [count]]", "list TLB entries" },
 	{ "tlb", "s addr", "search the TLB" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
@@ -278,9 +278,11 @@ void s405_prt_state_spr (p405_t *c)
 		(unsigned long) p405_get_pit (c, 1)
 	);
 
-	pce_printf ("SPG5=%08lX  DBC1=%08lX\n",
+	pce_printf ("SPG5=%08lX  DBC1=%08lX   TCR=%08lX   TSR=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 5),
-		(unsigned long) p405_get_dbcr0 (c)
+		(unsigned long) p405_get_dbcr0 (c),
+		(unsigned long) p405_get_tcr (c),
+		(unsigned long) p405_get_tsr (c)
 	);
 
 	pce_printf ("SPG6=%08lX  DBSR=%08lX\n",
@@ -364,6 +366,62 @@ void s405_prt_state_uic (p405_uic_t *uic)
 	pce_printf (" VR=%08lX\n", (unsigned long) p405uic_get_vr (uic));
 }
 
+static
+void s405_print_state_uart (e8250_t *uart, unsigned long base)
+{
+	char          p;
+	unsigned char lsr, msr;
+
+	lsr = e8250_get_lsr (uart);
+	msr = e8250_get_msr (uart);
+
+	switch (e8250_get_parity (uart)) {
+	case E8250_PARITY_N:
+		p = 'N';
+		break;
+
+	case E8250_PARITY_E:
+		p = 'E';
+		break;
+
+	case E8250_PARITY_O:
+		p = 'O';
+		break;
+
+	case E8250_PARITY_M:
+		p = 'M';
+		break;
+
+	case E8250_PARITY_S:
+		p = 'S';
+		break;
+
+	default:
+		p = '?';
+		break;
+	}
+
+	pce_prt_sep ("8250-UART");
+
+	pce_printf (
+		"IO=%08lX  %lu %u%c%u  DTR=%d  RTS=%d   DSR=%d  CTS=%d  DCD=%d  RI=%d\n"
+		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
+		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
+		base,
+		e8250_get_bps (uart), e8250_get_databits (uart), p,
+		e8250_get_stopbits (uart),
+		e8250_get_dtr (uart), e8250_get_rts (uart),
+		(msr & E8250_MSR_DSR) != 0,
+		(msr & E8250_MSR_CTS) != 0,
+		(msr & E8250_MSR_DCD) != 0,
+		(msr & E8250_MSR_RI) != 0,
+		uart->txd, (lsr & E8250_LSR_TBE) ? ' ' : '*',
+		uart->rxd, (lsr & E8250_LSR_RRD) ? '*' : ' ',
+		uart->scratch, uart->divisor,
+		uart->ier, uart->iir, uart->lcr, lsr, uart->mcr, msr
+	);
+}
+
 void s405_prt_state_mem (sim405_t *sim)
 {
 	FILE *fp;
@@ -397,6 +455,16 @@ void prt_state (sim405_t *sim, const char *str)
 		}
 		else if (cmd_match (&cmd, "uic")) {
 			s405_prt_state_uic (&sim->uic);
+		}
+		else if (cmd_match (&cmd, "uart0")) {
+			if (sim->serport[0] != NULL) {
+				s405_print_state_uart (&sim->serport[0]->uart, sim->serport[0]->io);
+			}
+		}
+		else if (cmd_match (&cmd, "uart1")) {
+			if (sim->serport[1] != NULL) {
+				s405_print_state_uart (&sim->serport[1]->uart, sim->serport[1]->io);
+			}
 		}
 		else if (cmd_match (&cmd, "mem")) {
 			s405_prt_state_mem (sim);
