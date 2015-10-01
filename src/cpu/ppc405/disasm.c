@@ -203,9 +203,11 @@ const char *disasm_get_spr (unsigned sprn)
 			return ("su0r");
 
 		case P405_SPRN_TBL:
+		case P405_SPRN_TBLU:
 			return ("tbl");
 
 		case P405_SPRN_TBU:
+		case P405_SPRN_TBUU:
 			return ("tbu");
 
 		case P405_SPRN_TCR:

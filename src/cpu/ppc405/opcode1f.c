@@ -1151,10 +1151,12 @@ void op_1f_153 (p405_t *c)
 		break;
 
 	case P405_SPRN_TBL:
+	case P405_SPRN_TBLU:
 		rt = p405_get_tbl (c);
 		break;
 
 	case P405_SPRN_TBU:
+	case P405_SPRN_TBUU:
 		rt = p405_get_tbu (c);
 		break;
 

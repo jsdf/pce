@@ -223,6 +223,8 @@ typedef struct {
 #define P405_SPRN_SRR2   0x3de
 #define P405_SPRN_SRR3   0x3df
 #define P405_SPRN_SU0R   0x3bc
+#define P405_SPRN_TBLU   0x10c
+#define P405_SPRN_TBUU   0x10d
 #define P405_SPRN_TBL    0x11c
 #define P405_SPRN_TBU    0x11d
 #define P405_SPRN_TCR    0x3da
