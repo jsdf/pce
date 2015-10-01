@@ -581,12 +581,17 @@ void ppc_log_undef (void *ext, unsigned long ir)
 	op1 = (ir >> 26) & 0x3f;
 	op2 = (ir >> 1) & 0x3ff;
 
+	if (op1 == 4) {
+		/* various multiply-accumulate instructions */
+		return;
+	}
+
 	pce_log (MSG_DEB,
 		"%08lX: undefined operation [%08lX] op1=%02X op2=%03X\n",
 		(unsigned long) p405_get_pc (sim->ppc), ir, op1, op2
 	);
 
-	s405_break (sim, PCE_BRK_STOP);
+	/* s405_break (sim, PCE_BRK_STOP); */
 }
 
 static
