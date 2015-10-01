@@ -67,7 +67,7 @@ void p405_init (p405_t *c)
 
 	c->pvr = P405_PVR_405GP;
 
-	c->timer_scale = 1;
+	c->timer_extra_clock = 0;
 }
 
 p405_t *p405_new (void)
@@ -131,11 +131,6 @@ void p405_set_hook_fct (p405_t *c, void *ext, void *fct)
 	c->hook = fct;
 }
 
-
-void p405_set_timer_scale (p405_t *c, unsigned scale)
-{
-	c->timer_scale = scale;
-}
 
 unsigned long long p405_get_opcnt (p405_t *c)
 {
@@ -597,6 +592,11 @@ void p405_interrupt (p405_t *c, unsigned char val)
 	c->interrupt = (val != 0);
 }
 
+void p405_add_timer_clock (p405_t *c, unsigned long cnt)
+{
+	c->timer_extra_clock += cnt;
+}
+
 void p405_reset (p405_t *c)
 {
 	unsigned i;
@@ -647,6 +647,8 @@ void p405_reset (p405_t *c)
 	c->oprcnt = 0;
 	c->clkcnt = 0;
 
+	c->timer_extra_clock = 0;
+
 	p405_tlb_init (&c->tlb);
 }
 
@@ -670,9 +672,14 @@ void p405_execute (p405_t *c)
 
 	c->oprcnt += 1;
 
-	if (c->interrupt) {
-		if (p405_get_msr (c) & P405_MSR_EE) {
+	if (p405_get_msr (c) & P405_MSR_EE) {
+		if (c->interrupt) {
 			p405_exception_external (c);
+		}
+		else if (c->tsr & P405_TSR_PIS) {
+			if (c->tcr & P405_TCR_PIE) {
+				p405_exception_pit (c);
+			}
 		}
 	}
 }
@@ -694,10 +701,7 @@ void p405_clock_tb (p405_t *c, unsigned long n)
 				c->pit[0] = 0;
 			}
 
-			/* interrupt */
-			if (p405_get_msr (c) & P405_MSR_EE) {
-				p405_exception_pit (c);
-			}
+			c->tsr |= P405_TSR_PIS;
 		}
 		else {
 			c->pit[0] -= n;
@@ -707,6 +711,8 @@ void p405_clock_tb (p405_t *c, unsigned long n)
 
 void p405_clock (p405_t *c, unsigned long n)
 {
+	unsigned long tbclk;
+
 	while (n >= c->delay) {
 #if P405_DEBUG
 		if (c->delay == 0) {
@@ -721,7 +727,10 @@ void p405_clock (p405_t *c, unsigned long n)
 
 		c->clkcnt += c->delay;
 
-		p405_clock_tb (c, c->timer_scale * c->delay);
+		tbclk = c->timer_extra_clock >> 4;
+		c->timer_extra_clock -= tbclk;
+
+		p405_clock_tb (c, c->delay + tbclk);
 
 		c->delay = 0;
 
