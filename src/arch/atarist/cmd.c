@@ -529,7 +529,6 @@ void st_run (atari_st_t *sim)
 
 	while (1) {
 		st_clock (par_sim, 0);
-		st_clock (par_sim, 0);
 
 		if (sim->brk) {
 			break;
