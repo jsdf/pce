@@ -229,6 +229,12 @@ void st_set_port_b (atari_st_t *sim, unsigned char val)
 }
 
 static
+int st_set_magic (atari_st_t *sim, pce_key_t key)
+{
+	return (1);
+}
+
+static
 void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 {
 	int        mono, fastboot;
@@ -449,6 +455,7 @@ void st_setup_kbd (atari_st_t *sim, ini_sct_t *ini)
 	pce_log_tag (MSG_INF, "IKBD:", "initialized\n");
 
 	st_kbd_init (&sim->kbd);
+	st_kbd_set_magic (&sim->kbd, sim, st_set_magic);
 }
 
 static

@@ -191,6 +191,15 @@ void st_kbd_init (st_kbd_t *kbd)
 
 	kbd->buf_hd = 0;
 	kbd->buf_tl = 0;
+
+	kbd->magic_ext = NULL;
+	kbd->magic = NULL;
+}
+
+void st_kbd_set_magic (st_kbd_t *kbd, void *ext, void *fct)
+{
+	kbd->magic_ext = ext;
+	kbd->magic = fct;
 }
 
 /*
@@ -472,6 +481,12 @@ void st_kbd_set_key (st_kbd_t *kbd, unsigned event, pce_key_t key)
 			}
 		}
 		else {
+			if (kbd->magic != NULL) {
+				if (kbd->magic (kbd->magic_ext, key) == 0) {
+					return;
+				}
+			}
+
 			pce_log (MSG_INF, "unhandled magic key (%u)\n",
 				(unsigned) key
 			);

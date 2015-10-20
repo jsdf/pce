@@ -56,10 +56,15 @@ typedef struct {
 	unsigned      buf_hd;
 	unsigned      buf_tl;
 	unsigned char buf[64];
+
+	void          *magic_ext;
+	int           (*magic) (void *ext, pce_key_t key);
 } st_kbd_t;
 
 
 void st_kbd_init (st_kbd_t *kbd);
+
+void st_kbd_set_magic (st_kbd_t *kbd, void *ext, void *fct);
 
 int st_kbd_buf_put (st_kbd_t *kbd, unsigned char val);
 int st_kbd_buf_get (st_kbd_t *kbd, unsigned char *val);
