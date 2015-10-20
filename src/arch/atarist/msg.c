@@ -23,6 +23,8 @@
 #include "main.h"
 #include "atarist.h"
 #include "msg.h"
+#include "video.h"
+#include "viking.h"
 
 #include <string.h>
 
@@ -456,6 +458,46 @@ int st_set_msg_emu_stop (atari_st_t *sim, const char *msg, const char *val)
 	return (0);
 }
 
+static
+int st_set_msg_emu_viking (atari_st_t *sim, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	if (v) {
+		sim->video_viking = 1;
+		st_video_set_terminal (sim->video, NULL);
+		st_viking_set_terminal (sim->viking, sim->trm);
+	}
+	else {
+		sim->video_viking = 0;
+		st_video_set_terminal (sim->video, sim->trm);
+		st_viking_set_terminal (sim->viking, NULL);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_viking_toggle (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (sim->video_viking) {
+		sim->video_viking = 0;
+		st_video_set_terminal (sim->video, sim->trm);
+		st_viking_set_terminal (sim->viking, NULL);
+	}
+	else {
+		sim->video_viking = 1;
+		st_video_set_terminal (sim->video, NULL);
+		st_viking_set_terminal (sim->viking, sim->trm);
+	}
+
+	return (0);
+}
+
 
 static st_msg_list_t set_msg_list[] = {
 	{ "emu.cpu.model", st_set_msg_emu_cpu_model },
@@ -481,6 +523,8 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.ser.driver", st_set_msg_emu_ser_driver },
 	{ "emu.ser.file", st_set_msg_emu_ser_file },
 	{ "emu.stop", st_set_msg_emu_stop },
+	{ "emu.viking", st_set_msg_emu_viking },
+	{ "emu.viking.toggle", st_set_msg_emu_viking_toggle },
 	{ NULL, NULL }
 };
 

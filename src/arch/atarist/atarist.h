@@ -35,6 +35,7 @@
 #include "rp5c15.h"
 #include "smf.h"
 #include "video.h"
+#include "viking.h"
 
 #include <cpu/e68000/e68000.h>
 
@@ -76,6 +77,7 @@ struct atari_st_s {
 	st_acsi_t     acsi;
 	st_dma_t      dma;
 	st_video_t    *video;
+	st_viking_t   *viking;
 	terminal_t    *trm;
 	disks_t       *dsks;
 	char_drv_t    *parport_drv;
@@ -94,6 +96,7 @@ struct atari_st_s {
 	char          fastboot;
 	char          reset;
 	char          pause;
+	char          video_viking;
 	unsigned      brk;
 
 	unsigned char psg_port_a;

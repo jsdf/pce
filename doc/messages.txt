@@ -59,6 +59,12 @@ emu.reset
 emu.stop
 	Fall back to the monitor.
 
+emu.viking "0" | "1"
+	Switch from or to the viking monochrome display.
+
+emu.viking.toggle
+	Switch from or to the viking monochrome display.
+
 
 PCE/ibmpc Messages
 ==============================================================================

@@ -30,6 +30,7 @@
 #include "rp5c15.h"
 #include "smf.h"
 #include "video.h"
+#include "viking.h"
 
 #include <string.h>
 
@@ -231,7 +232,14 @@ void st_set_port_b (atari_st_t *sim, unsigned char val)
 static
 int st_set_magic (atari_st_t *sim, pce_key_t key)
 {
-	return (1);
+	if (key == PCE_KEY_TAB) {
+		st_set_msg (sim, "emu.viking.toggle", "1");
+	}
+	else {
+		return (1);
+	}
+
+	return (0);
 }
 
 static
@@ -624,11 +632,37 @@ void st_setup_video (atari_st_t *sim, ini_sct_t *ini)
 	st_video_set_vb_fct (sim->video, sim, st_set_vb);
 	st_video_set_frame_skip (sim->video, skip);
 
-	if (sim->trm != NULL) {
-		st_video_set_terminal (sim->video, sim->trm);
+	mem_add_blk (sim->mem, &sim->video->reg, 0);
+}
+
+static
+void st_setup_viking (atari_st_t *sim, ini_sct_t *ini)
+{
+	int       viking, boot;
+	ini_sct_t *sct;
+
+	sim->video_viking = 0;
+	sim->viking = NULL;
+
+	sct = ini_next_sct (ini, NULL, "system");
+
+	ini_get_bool (sct, "viking", &viking, 0);
+	ini_get_bool (sct, "viking_boot", &boot, 0);
+
+	if (viking == 0) {
+		return;
 	}
 
-	mem_add_blk (sim->mem, &sim->video->reg, 0);
+	sim->video_viking = boot;
+
+	pce_log_tag (MSG_INF, "VIKING:", "addr=0xc00000 boot=%d\n", boot);
+
+	if ((sim->viking = st_viking_new (0xc00000)) == NULL) {
+		return;
+	}
+
+	st_viking_set_memory (sim->viking, sim->mem);
+	st_viking_set_input_clock (sim->viking, ST_CPU_CLOCK);
 }
 
 void st_init (atari_st_t *sim, ini_sct_t *ini)
@@ -675,10 +709,18 @@ void st_init (atari_st_t *sim, ini_sct_t *ini)
 	st_setup_dma (sim, ini);
 	st_setup_terminal (sim, ini);
 	st_setup_video (sim, ini);
+	st_setup_viking (sim, ini);
 
 	pce_load_mem_ini (sim->mem, ini);
 
 	if (sim->trm != NULL) {
+		if (sim->video_viking) {
+			st_viking_set_terminal (sim->viking, sim->trm);
+		}
+		else if (sim->video != NULL) {
+			st_video_set_terminal (sim->video, sim->trm);
+		}
+
 		trm_set_msg_trm (sim->trm, "term.title", "pce-atarist");
 	}
 
@@ -709,6 +751,7 @@ void st_free (atari_st_t *sim)
 	chr_close (sim->serport_drv);
 	chr_close (sim->parport_drv);
 	chr_close (sim->midi_drv);
+	st_viking_del (sim->viking);
 	st_video_del (sim->video);
 	trm_del (sim->trm);
 	st_acsi_free (&sim->acsi);
@@ -817,6 +860,10 @@ void st_reset (atari_st_t *sim)
 	st_dma_reset (&sim->dma);
 	st_kbd_reset (&sim->kbd);
 	st_video_reset (sim->video);
+
+	if (sim->viking != NULL) {
+		st_viking_reset (sim->viking);
+	}
 
 	mem_set_uint32_be (sim->mem, 0, mem_get_uint32_be (sim->mem, sim->rom_addr));
 	mem_set_uint32_be (sim->mem, 4, mem_get_uint32_be (sim->mem, sim->rom_addr + 4));
@@ -935,6 +982,10 @@ void st_clock (atari_st_t *sim, unsigned n)
 
 	if (sim->clk_div[2] < 8192) {
 		return;
+	}
+
+	if (sim->viking != NULL) {
+		st_viking_clock (sim->viking, 8192);
 	}
 
 	if (sim->ser_buf_i >= sim->ser_buf_n) {

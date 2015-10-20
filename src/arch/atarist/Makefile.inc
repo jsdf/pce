@@ -48,7 +48,8 @@ PCE_ATARIST_BAS := \
 	psg \
 	rp5c15 \
 	smf \
-	video
+	video \
+	viking
 
 PCE_ATARIST_SRC  := $(foreach f,$(PCE_ATARIST_BAS),$(rel)/$(f).c)
 PCE_ATARIST_OBJ  := $(foreach f,$(PCE_ATARIST_BAS),$(rel)/$(f).o)
@@ -121,6 +122,7 @@ $(rel)/psg.o:     $(rel)/psg.c
 $(rel)/rp5c15.o:  $(rel)/rp5c15.c
 $(rel)/smf.o:     $(rel)/smf.c
 $(rel)/video.o:   $(rel)/video.c
+$(rel)/viking.o:  $(rel)/viking.c
 
 $(rel)/pce-atarist$(EXEEXT): $(PCE_ATARIST_OBJ_EXT) $(PCE_ATARIST_OBJ)
 	$(QP)echo "  LD     $@"

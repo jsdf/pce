@@ -25,6 +25,7 @@ src/arch/atarist/atarist.o: src/arch/atarist/atarist.c \
 	src/arch/atarist/rp5c15.h \
 	src/arch/atarist/smf.h \
 	src/arch/atarist/video.h \
+	src/arch/atarist/viking.h \
 	src/chipset/e6850.h \
 	src/chipset/e68901.h \
 	src/chipset/e8530.h \
@@ -61,6 +62,7 @@ src/arch/atarist/cmd.o: src/arch/atarist/cmd.c \
 	src/arch/atarist/rp5c15.h \
 	src/arch/atarist/smf.h \
 	src/arch/atarist/video.h \
+	src/arch/atarist/viking.h \
 	src/chipset/e6850.h \
 	src/chipset/e68901.h \
 	src/chipset/e8530.h \
@@ -128,6 +130,7 @@ src/arch/atarist/main.o: src/arch/atarist/main.c \
 	src/arch/atarist/rp5c15.h \
 	src/arch/atarist/smf.h \
 	src/arch/atarist/video.h \
+	src/arch/atarist/viking.h \
 	src/chipset/e6850.h \
 	src/chipset/e68901.h \
 	src/chipset/e8530.h \
@@ -164,6 +167,7 @@ src/arch/atarist/mem.o: src/arch/atarist/mem.c \
 	src/arch/atarist/rp5c15.h \
 	src/arch/atarist/smf.h \
 	src/arch/atarist/video.h \
+	src/arch/atarist/viking.h \
 	src/chipset/e6850.h \
 	src/chipset/e68901.h \
 	src/chipset/e8530.h \
@@ -194,6 +198,7 @@ src/arch/atarist/msg.o: src/arch/atarist/msg.c \
 	src/arch/atarist/rp5c15.h \
 	src/arch/atarist/smf.h \
 	src/arch/atarist/video.h \
+	src/arch/atarist/viking.h \
 	src/chipset/e6850.h \
 	src/chipset/e68901.h \
 	src/chipset/e8530.h \
@@ -238,6 +243,15 @@ src/arch/atarist/smf.o: src/arch/atarist/smf.c \
 src/arch/atarist/video.o: src/arch/atarist/video.c \
 	src/arch/atarist/main.h \
 	src/arch/atarist/video.h \
+	src/config.h \
+	src/devices/memory.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
+src/arch/atarist/viking.o: src/arch/atarist/viking.c \
+	src/arch/atarist/main.h \
+	src/arch/atarist/viking.h \
 	src/config.h \
 	src/devices/memory.h \
 	src/drivers/video/keys.h \

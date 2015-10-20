@@ -22,18 +22,24 @@ system {
 	# st: An Atari ST
 	model = "st"
 
+	# Disable the startup memory test.
+	fastboot = 1
+
 	# The monitor type.
 	# If this is true, a mono monitor is attached, a color
 	# monitor otherwise.
 	mono = 1
 
-	# Disable the startup memory test.
-	fastboot = 1
-
 	# Only update the screen every nth frame. A value of 1
 	# skips every other frame and is a good compromise between
 	# accuracy and emulation speed.
 	frame_skip = 1
+
+	# Enable the viking monochrome card
+	viking = 0
+
+	# Start up with the viking display enabled
+	viking_boot = 0
 
 	# The parallel port character device.
 	# Not all character drivers are supported on
