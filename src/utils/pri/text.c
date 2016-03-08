@@ -246,14 +246,42 @@ void txt_flush_mfm (pri_text_t *ctx)
 }
 
 static
-int txt_decode_track_mfm (pri_text_t *ctx)
+unsigned txt_align_mfm (pri_text_t *ctx)
 {
 	unsigned long bit;
+
+	ctx->shift_cnt = 0;
+	ctx->last_val = 0;
+
+	pri_trk_set_pos (ctx->trk, 0);
+
+	while (ctx->trk->wrap == 0) {
+		pri_trk_get_bits (ctx->trk, &bit, 1);
+
+		ctx->shift = (ctx->shift << 1) | (bit & 1);
+		ctx->shift_cnt += 1;
+
+		if (ctx->shift_cnt > 16) {
+			if ((ctx->shift & 0xffff) == 0x4489) {
+				return (ctx->shift_cnt & 15);
+			}
+		}
+	}
+
+	return (0);
+}
+
+static
+int txt_decode_track_mfm (pri_text_t *ctx)
+{
+	unsigned long bit, align;
 	unsigned long type, val;
 
 	fprintf (ctx->fp, "TRACK MFM %lu %lu %lu\n\n",
 		pri_trk_get_clock (ctx->trk), ctx->c, ctx->h
 	);
+
+	align = txt_align_mfm (ctx);
 
 	ctx->shift_cnt = 0;
 	ctx->last_val = 0;
@@ -273,6 +301,14 @@ int txt_decode_track_mfm (pri_text_t *ctx)
 
 		ctx->shift = (ctx->shift << 1) | (bit & 1);
 		ctx->shift_cnt += 1;
+
+		if (align > 0) {
+			align -= 1;
+
+			if (align == 0) {
+				txt_put_bits (ctx, ctx->shift_cnt);
+			}
+		}
 
 		if (ctx->shift_cnt >= 32) {
 			txt_put_byte_mfm (ctx);
