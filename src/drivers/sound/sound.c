@@ -295,6 +295,23 @@ int snd_set_params (sound_drv_t *sdrv, unsigned chn, unsigned long srate, int si
 	return (0);
 }
 
+int snd_set_opts (sound_drv_t *sdrv, unsigned opts, int val)
+{
+	if (sdrv == NULL) {
+		return (1);
+	}
+
+	if (sdrv->set_opts == NULL) {
+		return (1);
+	}
+
+	if (sdrv->set_opts (sdrv, opts, val)) {
+		return (1);
+	}
+
+	return (0);
+}
+
 static
 sound_drv_t *snd_open_sdrv (sound_drv_t *sdrv, const char *name)
 {

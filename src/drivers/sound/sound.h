@@ -32,6 +32,8 @@
 
 #define SND_CHN_MAX 16
 
+#define SND_OPT_NONBLOCK 1
+
 
 /*!***************************************************************************
  * @short The sound driver context
@@ -63,6 +65,8 @@ typedef struct sound_drv_t {
 	int (*set_params) (struct sound_drv_t *sdrv,
 		unsigned chn, unsigned long srate, int sign
 	);
+
+	int (*set_opts) (struct sound_drv_t *sdrv, unsigned opts, int val);
 } sound_drv_t;
 
 
@@ -130,6 +134,8 @@ int snd_write (sound_drv_t *sdrv, const uint16_t *buf, unsigned cnt);
  * to snd_write().
  *****************************************************************************/
 int snd_set_params (sound_drv_t *sdrv, unsigned chn, unsigned long srate, int sign);
+
+int snd_set_opts (sound_drv_t *sdrv, unsigned opts, int val);
 
 
 sound_drv_t *snd_open (const char *name);
