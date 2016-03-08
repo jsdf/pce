@@ -209,7 +209,7 @@ int snd_oss_init (sound_oss_t *drv, const char *name)
 	drv->dev = drv_get_option (name, "dev");
 
 	if (drv->dev == NULL) {
-		return (1);
+		drv->dev = strdup ("/dev/dsp");
 	}
 
 	drv->fd = open (drv->dev, O_WRONLY | O_NDELAY, 0);
