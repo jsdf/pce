@@ -184,6 +184,28 @@ Duplicate all tracks. This is the reverse of double-step.
 .B info
 Print information about the current image (same as \fB-f\fR).
 .TP
+.BI "mfm-align-am " "what pos"
+Rotate the track such that the first address mark of type \fIwhat\fR on
+the track is at bit position \fIpos\fR. Possible values for \fIwhat\fR are:
+.RS
+.TP
+.B "all"
+All address mark types
+.TP
+.B "iam"
+Index address marks
+.TP
+.B "idam"
+ID address marks
+.TP
+.B "dam"
+Data address marks
+.PP
+Multiple types can be combined by joining them with a '+' or a '-' sign.
+For example, the type \fBall-iam\fR specifies all address mark types except
+index address marks.
+.RE
+.TP
 .B new
 Create new tracks.
 .TP

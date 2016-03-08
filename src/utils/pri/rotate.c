@@ -23,6 +23,7 @@
 #include "main.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <drivers/pri/pri.h>
@@ -87,6 +88,174 @@ int pri_align_gcr_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, uns
 int pri_align_gcr_tracks (pri_img_t *img)
 {
 	return (pri_for_all_tracks (img, pri_align_gcr_track_cb, NULL));
+}
+
+
+struct pri_mfm_align_am_s {
+	unsigned long pos;
+	unsigned long index;
+	char          iam;
+	char          idam;
+	char          dam;
+};
+
+static
+int pri_mfm_align_am_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	int                       mark;
+	unsigned long             bit, val1, val2;
+	unsigned long             ofs, pos, size;
+	unsigned long             amcnt;
+	struct pri_mfm_align_am_s *par;
+
+	par = opaque;
+
+	size = pri_trk_get_size (trk);
+
+	if (size < 64) {
+		return (0);
+	}
+
+	if ((size + par->pos) < size) {
+		pos = size + par->pos;
+	}
+	else {
+		pos = par->pos;
+	}
+
+	if (pos >= size) {
+		return (1);
+	}
+
+	amcnt = 0;
+	ofs = 0;
+
+	pri_trk_set_pos (trk, size - 64);
+
+	pri_trk_get_bits (trk, &val1, 32);
+	pri_trk_get_bits (trk, &val2, 32);
+
+	pri_trk_set_pos (trk, 0);
+
+	while (trk->wrap == 0) {
+		pri_trk_get_bits (trk, &bit, 1);
+
+		val1 = ((val1 << 1) | (val2 >> 31)) & 0xffffffff;
+		val2 = ((val2 << 1) | (bit & 1)) & 0xffffffff;
+		ofs += 1;
+
+		mark = 0;
+
+		if (par->iam) {
+			if ((val1 == 0x52245224) && (val2 == 0x52245552)) {
+				/* IAM: C2 C2 C2 FC */
+				mark = 1;
+			}
+		}
+
+		if (par->idam) {
+			if ((val1 == 0x44894489) && (val2 == 0x44895554)) {
+				/* IDAM: A1 A1 A1 FE */
+				mark = 1;
+			}
+		}
+
+		if (par->dam) {
+			if ((val1 == 0x44894489) && (val2 == 0x44895545)) {
+				/* DAM: A1 A1 A1 FB */
+				mark = 1;
+			}
+		}
+
+		if (mark) {
+			amcnt += 1;
+
+			if (amcnt < par->index) {
+				continue;
+			}
+
+			ofs = (ofs + 2 * size - pos - 64) % size;
+
+			if (ofs != 0) {
+				if (pri_trk_rotate (trk, ofs)) {
+					return (1);
+				}
+			}
+
+			return (0);
+		}
+	}
+
+	return (0);
+}
+
+static
+int is_prefix (const char **str, const char *pre)
+{
+	const char *tmp;
+
+	tmp = *str;
+
+	while (*pre != 0) {
+		if (*(tmp++) != *(pre++)) {
+			return (0);
+		}
+	}
+
+	if ((*tmp == 0) || (*tmp == '+') || (*tmp == '-') || (*tmp == ' ')) {
+		*str = tmp;
+		return (1);
+	}
+
+	return (0);
+}
+
+int pri_mfm_align_am (pri_img_t *img, const char *what, const char *idx, const char *pos)
+{
+	int                       sign;
+	struct pri_mfm_align_am_s par;
+
+	par.pos = strtoul (pos, NULL, 0);
+	par.index = strtoul (idx, NULL, 0);
+
+	par.iam = 0;
+	par.idam = 0;
+	par.dam = 0;
+
+	sign = 1;
+
+	while (*what != 0) {
+		if (*what == '+') {
+			sign = 1;
+			what += 1;
+		}
+		else if (*what == '-') {
+			sign = 0;
+			what += 1;
+		}
+		else if (*what == ' ') {
+			what += 1;
+		}
+		else if (is_prefix (&what, "all")) {
+			par.iam = sign;
+			par.idam = sign;
+			par.dam = sign;
+		}
+		else if (is_prefix (&what, "iam")) {
+			par.iam = sign;
+		}
+		else if (is_prefix (&what, "idam")) {
+			par.idam = sign;
+		}
+		else if (is_prefix (&what, "dam")) {
+			par.dam = sign;
+		}
+		else {
+			return (1);
+		}
+	}
+
+	return (pri_for_all_tracks (img, pri_mfm_align_am_cb, &par));
 }
 
 

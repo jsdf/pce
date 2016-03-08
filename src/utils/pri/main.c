@@ -111,6 +111,7 @@ static struct {
 	{ "encode", "type file", "Encode tracks" },
 	{ "half-step", "", "Duplicate all tracks" },
 	{ "info", "", "Print image information" },
+	{ "mfm-align-am", "what number pos", "Align an address mark with pos" },
 	{ "new", "", "Create new tracks" },
 	{ "rotate", "bits", "Rotate tracks left" },
 	{ "save", "filename", "Save raw tracks" },
@@ -438,6 +439,24 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "info") == 0) {
 		r = pri_print_info (*img);
+	}
+	else if (strcmp (op, "mfm-align-am") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing address mark type\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg2, NULL) != 0) {
+			fprintf (stderr, "%s: missing address mark number\n", arg0);
+			return (1);
+		}
+
+		if (pce_getopt (argc, argv, &optarg3, NULL) != 0) {
+			fprintf (stderr, "%s: missing position\n", arg0);
+			return (1);
+		}
+
+		r = pri_mfm_align_am (*img, optarg1[0], optarg2[0], optarg3[0]);
 	}
 	else if (strcmp (op, "new") == 0) {
 		r = pri_new (*img);
