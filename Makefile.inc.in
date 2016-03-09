@@ -202,38 +202,6 @@ ifneq "$(SHARE_PCEUTILS)" ""
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
-	$(QR)for src in $(srcdir)/contrib/rom/atarist/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/atarist/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/atarist" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/ibmpc/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/ibmpc" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/macplus/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/macplus/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/macplus" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/rc759/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/rc759/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/rc759" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
 
 
 dist-extra:
