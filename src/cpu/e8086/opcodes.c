@@ -3691,6 +3691,20 @@ unsigned op_d5 (e8086_t *c)
 	return (2);
 }
 
+/* OP D6: SALC */
+static
+unsigned op_d6 (e8086_t *c)
+{
+	unsigned short s1;
+
+	s1 = e86_get_cf (c);
+
+	e86_set_al (c, -s1);
+	e86_set_clk (c, 3);
+
+	return (1);
+}
+
 /* OP D7: XLAT */
 static
 unsigned op_d7 (e8086_t *c)
@@ -4660,7 +4674,7 @@ e86_opcode_f e86_opcodes[256] = {
 	&op_b8, &op_b9, &op_ba, &op_bb, &op_bc, &op_bd, &op_be, &op_bf,
 	&op_ud, &op_ud, &op_c2, &op_c3, &op_c4, &op_c5, &op_c6, &op_c7, /* C0 */
 	&op_ud, &op_ud, &op_ca, &op_cb, &op_cc, &op_cd, &op_ce, &op_cf,
-	&op_d0, &op_d1, &op_d2, &op_d3, &op_d4, &op_d5, &op_ud, &op_d7, /* D0 */
+	&op_d0, &op_d1, &op_d2, &op_d3, &op_d4, &op_d5, &op_d6, &op_d7, /* D0 */
 	&op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8,
 	&op_e0, &op_e1, &op_e2, &op_e3, &op_e4, &op_e5, &op_e6, &op_e7, /* E0 */
 	&op_e8, &op_e9, &op_ea, &op_eb, &op_ec, &op_ed, &op_ee, &op_ef,
