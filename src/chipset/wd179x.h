@@ -46,6 +46,8 @@ typedef struct {
 	unsigned long bit_clock;
 	unsigned long bit_clock_base;
 
+	unsigned long default_track_size;
+
 	unsigned long fuzzy_mask;
 
 	unsigned      index_cnt;
@@ -138,6 +140,13 @@ void wd179x_set_write_track_fct (wd179x_t *fdc, void *ext, void *fct);
 
 void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk);
 void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk);
+
+/*****************************************************************************
+ * @short Set the default track size
+ *
+ * Tracks that don't exist in the image file are initialized to this size.
+ *****************************************************************************/
+void wd179x_set_default_track_size (wd179x_t *fdc, unsigned drive, unsigned long val);
 
 /*****************************************************************************
  * @short Enable automatic motor control

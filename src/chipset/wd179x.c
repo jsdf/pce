@@ -72,6 +72,8 @@ void wd179x_drv_init (wd179x_drive_t *drv, unsigned idx)
 	drv->bit_clock = 1000000;
 	drv->bit_clock_base = 1000000;
 
+	drv->default_track_size = 100000;
+
 	drv->fuzzy_mask = 0;
 
 	drv->index_cnt = 0;
@@ -170,6 +172,15 @@ void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk)
 
 	fdc->drive[1].bit_clock_base = clk;
 	fdc->drive[1].bit_clock = clk;
+}
+
+void wd179x_set_default_track_size (wd179x_t *fdc, unsigned drive, unsigned long val)
+{
+	if (val == 0) {
+		val = 100000;
+	}
+
+	fdc->drive[drive & 1].default_track_size = val;
 }
 
 void wd179x_set_auto_motor (wd179x_t *fdc, int val)
@@ -389,7 +400,7 @@ void wd179x_init_track (wd179x_t *fdc, wd179x_drive_t *drv)
 	drv->fuzzy_mask = 0;
 
 	drv->trkbuf_idx = 0;
-	drv->trkbuf_cnt = 500000 / 5;
+	drv->trkbuf_cnt = drv->default_track_size;
 
 	memset (drv->trkbuf, 0, (drv->trkbuf_cnt + 7) / 8);
 }
