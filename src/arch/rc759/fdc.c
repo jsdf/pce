@@ -47,6 +47,9 @@
 #endif
 
 
+#define RC759_TRACK_SIZE 166666
+
+
 static
 int rc759_read_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk)
 {
@@ -90,6 +93,9 @@ void rc759_fdc_init (rc759_fdc_t *fdc)
 
 	wd179x_set_read_track_fct (&fdc->wd179x, fdc, rc759_read_track);
 	wd179x_set_write_track_fct (&fdc->wd179x, fdc, rc759_write_track);
+
+	wd179x_set_default_track_size (&fdc->wd179x, 0, RC759_TRACK_SIZE);
+	wd179x_set_default_track_size (&fdc->wd179x, 1, RC759_TRACK_SIZE);
 
 	wd179x_set_ready (&fdc->wd179x, 0, 0);
 	wd179x_set_ready (&fdc->wd179x, 1, 0);
