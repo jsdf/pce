@@ -363,6 +363,8 @@ int rc759_fdc_load (rc759_fdc_t *fdc, unsigned drive)
 {
 	pri_img_t *img;
 
+	wd179x_flush (&fdc->wd179x, drive);
+
 	wd179x_set_ready (&fdc->wd179x, drive, 0);
 
 	img = NULL;
