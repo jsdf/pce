@@ -368,18 +368,22 @@ static
 void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 {
 	if (pc->model & PCE_IBMPC_5150) {
-		if (cnt < 65536) {
-			cnt = 0;
-		}
-		else {
-			cnt = (cnt - 65536) / 32768;
-		}
-
+		pc->ppi_port_a[0] &= 0xf3;
 		pc->ppi_port_c[0] &= 0xf0;
 		pc->ppi_port_c[1] &= 0xfe;
 
-		pc->ppi_port_c[0] |= cnt & 0x0f;
-		pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+		if (cnt <= 65536) {
+			cnt = (cnt <= 16384) ? 0 : ((cnt - 16384) / 16384);
+
+			pc->ppi_port_a[0] |= (cnt & 3) << 2;
+		}
+		else {
+			cnt = (cnt - 65536) / 32768;
+
+			pc->ppi_port_a[0] |= 0x0c;
+			pc->ppi_port_c[0] |= cnt & 0x0f;
+			pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+		}
 	}
 	else if (pc->model & PCE_IBMPC_5160) {
 		cnt = cnt >> 16;
