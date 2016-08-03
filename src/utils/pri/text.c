@@ -50,6 +50,8 @@ typedef struct {
 
 	unsigned short encoding;
 
+	unsigned long  index_position;
+
 	unsigned       column;
 	char           need_nl;
 
@@ -1390,15 +1392,36 @@ int txt_enc_sync (pri_text_t *ctx)
 }
 
 static
+int txt_enc_track_finish (pri_text_t *ctx)
+{
+	if (ctx->trk == NULL) {
+		return (0);
+	}
+
+	if (pri_trk_set_size (ctx->trk, ctx->bit_cnt)) {
+		return (1);
+	}
+
+	if (ctx->index_position != 0) {
+		unsigned long cnt, max;
+
+		max = pri_trk_get_size (ctx->trk);
+
+		if (max > 0) {
+			cnt = ctx->index_position % max;
+			pri_trk_rotate (ctx->trk, cnt);
+		}
+	}
+
+	ctx->trk = NULL;
+
+	return (0);
+}
+
+static
 int txt_enc_track (pri_text_t *ctx)
 {
 	unsigned long c, h, clock;
-
-	if (ctx->trk != NULL) {
-		if (pri_trk_set_size (ctx->trk, ctx->bit_cnt)) {
-			return (1);
-		}
-	}
 
 	if (txt_match (ctx, "RAW", 1)) {
 		ctx->encoding = PRI_TEXT_RAW;
@@ -1516,6 +1539,9 @@ int txt_encode_v2 (pri_text_t *ctx)
 				return (1);
 			}
 		}
+		else if (txt_match (ctx, "INDEX", 1)) {
+			ctx->index_position = ctx->bit_cnt;
+		}
 		else if (txt_match (ctx, "RAW", 1)) {
 			if (txt_enc_raw (ctx)) {
 				return (1);
@@ -1537,21 +1563,13 @@ int txt_encode_v2 (pri_text_t *ctx)
 			}
 		}
 		else if (txt_match (ctx, "TRACK", 1)) {
+			if (txt_enc_track_finish (ctx)) {
+				return (1);
+			}
+
 			if (txt_enc_track (ctx)) {
 				return (1);
 			}
-
-			ctx->bit_cnt = 0;
-			ctx->bit_max = 65536;
-
-			if (pri_trk_set_size (ctx->trk, ctx->bit_max)) {
-				return (1);
-			}
-
-			pri_trk_set_pos (ctx->trk, 0);
-
-			ctx->last_val = 0;
-			ctx->crc = 0xffff;
 		}
 		else if (txt_match (ctx, "VERSION", 0)) {
 			break;
@@ -1567,10 +1585,8 @@ int txt_encode_v2 (pri_text_t *ctx)
 		}
 	}
 
-	if (ctx->trk != NULL) {
-		if (pri_trk_set_size (ctx->trk, ctx->bit_cnt)) {
-			return (1);
-		}
+	if (txt_enc_track_finish (ctx)) {
+		return (1);
 	}
 
 	return (0);
@@ -1582,6 +1598,7 @@ int txt_encode (pri_text_t *ctx)
 	ctx->trk = NULL;
 	ctx->last_val = 0;
 	ctx->encoding = PRI_TEXT_RAW;
+	ctx->index_position = 0;
 	ctx->bit_cnt = 0;
 	ctx->bit_max = 0;
 	ctx->crc = 0xffff;
@@ -1607,10 +1624,8 @@ int txt_encode (pri_text_t *ctx)
 		}
 	}
 
-	if (ctx->trk != NULL) {
-		if (pri_trk_set_size (ctx->trk, ctx->bit_cnt)) {
-			return (1);
-		}
+	if (txt_enc_track_finish (ctx)) {
+		return (1);
 	}
 
 	return (0);
