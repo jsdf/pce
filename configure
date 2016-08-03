@@ -644,6 +644,7 @@ PCE_BUILD_MACPLUS_ROM
 PCE_BUILD_MACPLUS
 PCE_BUILD_IBMPC_ROM
 PCE_BUILD_IBMPC
+PCE_BUILD_CPM80
 PCE_BUILD_ATARIST
 PCE_LARGE_FILE
 PCE_SDL_LIBS
@@ -741,6 +742,7 @@ with_sdl
 enable_static_sdl
 enable_largefile
 enable_atari_st
+enable_cpm80
 enable_ibmpc
 enable_ibmpc_rom
 enable_macplus
@@ -1389,6 +1391,7 @@ Optional Features:
   --enable-static-sdl     Link to static SDL [no]
   --disable-largefile     Disable large file support [no]
   --enable-atari-st       Enable the Atari ST emulator [yes]
+  --enable-cpm80          Enable the CPM-80 emulator [yes]
   --enable-ibmpc          Enable the IBM PC emulator [yes]
   --enable-ibmpc-rom      Build the IBM PC ROM from source [no]
   --enable-macplus        Enable the Mac Plus emulator [yes]
@@ -4753,6 +4756,37 @@ if test $PCE_BUILD_ATARIST -eq 1 ; then
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the CPM-80 emulator" >&5
+$as_echo_n "checking whether to build the CPM-80 emulator... " >&6; }
+# Check whether --enable-cpm80 was given.
+if test "${enable_cpm80+set}" = set; then :
+  enableval=$enable_cpm80;
+	if test "x$enableval" = "xyes" ; then
+		PCE_BUILD_CPM80=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
+$as_echo "yes (forced)" >&6; }
+	else
+		PCE_BUILD_CPM80=0
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
+$as_echo "no (forced)" >&6; }
+	fi
+
+else
+
+	PCE_BUILD_CPM80=1
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (default)" >&5
+$as_echo "yes (default)" >&6; }
+
+
+fi
+
+
+if test "x$PCE_BUILD_CPM80" = "x1" ; then
+	$as_echo "#define PCE_BUILD_CPM80 1" >>confdefs.h
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build the IBM PC emulator" >&5
 $as_echo_n "checking whether to build the IBM PC emulator... " >&6; }
 if test "x$have_ibmpc" != "x1" ; then
@@ -5625,6 +5659,12 @@ if test "x$PCE_BUILD_ATARIST" = "x1" ; then
 	emu1="$emu1 atarist"
 else
 	emu2="$emu2 atarist"
+fi
+
+if test "x$PCE_BUILD_CPM80" = "x1" ; then
+	emu1="$emu1 cpm80"
+else
+	emu2="$emu2 cpm80"
 fi
 
 if test "x$PCE_BUILD_IBMPC" = "x1" ; then

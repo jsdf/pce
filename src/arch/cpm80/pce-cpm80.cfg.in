@@ -1,0 +1,57 @@
+# pce-cpm80.cfg
+#
+# Example config file
+
+system {
+	# The machine model. Valid values are "cpm" and "plain".
+	model = "cpm"
+
+	# The CPU model. Valid values are "8080" and "Z80".
+	cpu = "8080"
+
+	# The CPU clock speed in Hz. Zero means all out.
+	#clock = 0
+
+	# The CPU clock speed in MHz. Zero means all out.
+	speed = 0
+
+	con = "sercon"
+	aux = "stdio:file=aux.out:flush=1"
+	lst = "stdio:file=lst.out:flush=1"
+}
+
+# Multiple "ram" sections may be present
+ram {
+	# The base address
+	address = 0
+
+	# The size in bytes
+	size = 65536
+
+	# The RAM image that is used to initialize the RAM
+	#file = "cpm80.ram"
+}
+
+# load sections are processed after the emulator is set up.
+#load {
+#	format = "ihex"
+#	file = "cpm80.ihex"
+#}
+
+disk {
+	drive    = 0x00
+	type     = "auto"
+	file     = "fda.img"
+	file     = "fda.psi"
+	optional = 1
+	readonly = 0
+}
+
+disk {
+	drive    = 0x01
+	type     = "auto"
+	file     = "fdb.img"
+	file     = "fdb.psi"
+	optional = 1
+	readonly = 0
+}

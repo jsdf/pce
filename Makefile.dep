@@ -258,6 +258,99 @@ src/arch/atarist/viking.o: src/arch/atarist/viking.c \
 	src/drivers/video/terminal.h \
 	src/libini/libini.h
 
+src/arch/cpm80/bios.o: src/arch/cpm80/bios.c \
+	src/arch/cpm80/bios.h \
+	src/arch/cpm80/cpm80.h \
+	src/arch/cpm80/main.h \
+	src/config.h \
+	src/cpu/e8080/e8080.h \
+	src/devices/memory.h \
+	src/drivers/block/blkpsi.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/drivers/psi/psi-img.h \
+	src/drivers/psi/psi.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/log.h \
+	src/libini/libini.h
+
+src/arch/cpm80/cmd.o: src/arch/cpm80/cmd.c \
+	src/arch/cpm80/bios.h \
+	src/arch/cpm80/cpm80.h \
+	src/arch/cpm80/main.h \
+	src/config.h \
+	src/cpu/e8080/e8080.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/cpm80/cpm80.o: src/arch/cpm80/cpm80.c \
+	src/arch/cpm80/bios.h \
+	src/arch/cpm80/cpm80.h \
+	src/arch/cpm80/main.h \
+	src/arch/cpm80/msg.h \
+	src/config.h \
+	src/cpu/e8080/e8080.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/inidsk.h \
+	src/lib/iniram.h \
+	src/lib/load.h \
+	src/lib/log.h \
+	src/lib/msg.h \
+	src/lib/path.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/cpm80/main.o: src/arch/cpm80/main.c \
+	src/arch/cpm80/cmd.h \
+	src/arch/cpm80/cpm80.h \
+	src/arch/cpm80/main.h \
+	src/arch/cpm80/msg.h \
+	src/config.h \
+	src/cpu/e8080/e8080.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/getopt.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/path.h \
+	src/lib/sysdep.h \
+	src/libini/libini.h
+
+src/arch/cpm80/msg.o: src/arch/cpm80/msg.c \
+	src/arch/cpm80/cpm80.h \
+	src/arch/cpm80/main.h \
+	src/arch/cpm80/msg.h \
+	src/config.h \
+	src/cpu/e8080/e8080.h \
+	src/devices/memory.h \
+	src/drivers/block/block.h \
+	src/drivers/char/char.h \
+	src/lib/brkpt.h \
+	src/lib/cmd.h \
+	src/lib/console.h \
+	src/lib/inidsk.h \
+	src/lib/log.h \
+	src/lib/monitor.h \
+	src/lib/msg.h \
+	src/libini/libini.h
+
 src/arch/dos/dos.o: src/arch/dos/dos.c \
 	src/arch/dos/dos.h \
 	src/arch/dos/dosmem.h \
