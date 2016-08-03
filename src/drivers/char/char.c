@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char.c                                      *
  * Created:     2009-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,14 +29,34 @@
 #include <drivers/char/char.h>
 
 
-struct chr_drv_list {
-	const char *prefix;
-	char_drv_t *(*open) (const char *name);
+struct driver_list {
+	struct driver_list *next;
+	const char         *name;
+	chr_open_f         open;
 };
 
-struct chr_drv_list drvtab[] = {
-	{ "mouse", chr_mouse_open },
-	{ "null", chr_null_open },
+struct driver_tab {
+	const char *name;
+	chr_open_f open;
+};
+
+
+char_drv_t *chr_mouse_open (const char *name);
+char_drv_t *chr_null_open (const char *name);
+char_drv_t *chr_posix_open (const char *name);
+char_drv_t *chr_ppp_open (const char *name);
+char_drv_t *chr_pty_open (const char *name);
+char_drv_t *chr_slip_open (const char *name);
+char_drv_t *chr_stdio_open (const char *name);
+char_drv_t *chr_tcp_open (const char *name);
+char_drv_t *chr_tios_open (const char *name);
+char_drv_t *chr_wincom_open (const char *name);
+
+
+static struct driver_list *drivers = NULL;
+
+
+static struct driver_tab default_drivers[] = {
 #ifdef PCE_ENABLE_CHAR_POSIX
 	{ "posix", chr_posix_open },
 	{ "sercon", chr_posix_open },
@@ -50,7 +70,6 @@ struct chr_drv_list drvtab[] = {
 #ifdef PCE_ENABLE_CHAR_SLIP
 	{ "slip", chr_slip_open },
 #endif
-	{ "stdio", chr_stdio_open },
 #ifdef PCE_ENABLE_CHAR_TCP
 	{ "tcp", chr_tcp_open },
 #endif
@@ -60,8 +79,9 @@ struct chr_drv_list drvtab[] = {
 #ifdef PCE_ENABLE_CHAR_WINCOM
 	{ "wincom", chr_wincom_open },
 #endif
-
-	{ NULL, NULL }
+	{ "stdio", chr_stdio_open },
+	{ "mouse", chr_mouse_open },
+	{ "null", chr_null_open }
 };
 
 
@@ -215,22 +235,6 @@ void chr_log_ctl (char_drv_t *cdrv, unsigned old, unsigned new)
 	chr_log_signal (cdrv, "RI", PCE_CHAR_RI, old, new);
 }
 
-int chr_set_log (char_drv_t *cdrv, const char *fname)
-{
-	if (cdrv->log_fp != NULL) {
-		chr_log_flush (cdrv);
-		fclose (cdrv->log_fp);
-	}
-
-	cdrv->log_fp = fopen (fname, "w");
-
-	if (cdrv->log_fp == NULL) {
-		return (1);
-	}
-
-	return (0);
-}
-
 void chr_init (char_drv_t *cdrv, void *ext)
 {
 	cdrv->ext = ext;
@@ -258,6 +262,71 @@ void chr_init (char_drv_t *cdrv, void *ext)
 	cdrv->set_params = NULL;
 }
 
+static
+int chr_match_name (struct driver_list *lst, const char *name)
+{
+	const char *s, *d;
+
+	s = name;
+	d = lst->name;
+
+	while ((*d != 0) && (*d == *s)) {
+		d += 1;
+		s += 1;
+	}
+
+	if ((*d == 0) && ((*s == ':') || (*s == 0))) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+char_drv_t *chr_open_cdrv (char_drv_t *cdrv, const char *name)
+{
+	char *str;
+
+	if (cdrv == NULL) {
+		return (NULL);
+	}
+
+	str = drv_get_option (name, "log");
+
+	if (str != NULL) {
+		chr_set_log (cdrv, str);
+
+		free (str);
+	}
+
+	return (cdrv);
+}
+
+char_drv_t *chr_open (const char *name)
+{
+	struct driver_list *lst;
+
+	if (drivers == NULL) {
+		/*
+		 * If no drivers have been registered yet, register the
+		 * default set.
+		 */
+		chr_register_default();
+	}
+
+	lst = drivers;
+
+	while (lst != NULL) {
+		if (chr_match_name (lst, name)) {
+			return (chr_open_cdrv (lst->open (name), name));
+		}
+
+		lst = lst->next;
+	}
+
+	return (NULL);
+}
+
 void chr_close (char_drv_t *cdrv)
 {
 	if (cdrv == NULL) {
@@ -274,6 +343,79 @@ void chr_close (char_drv_t *cdrv)
 	}
 
 	cdrv->close (cdrv);
+}
+
+int chr_register (const char *name, chr_open_f open)
+{
+	struct driver_list *lst;
+
+	if ((lst = malloc (sizeof (struct driver_list))) == NULL) {
+		return (1);
+	}
+
+	lst->next = drivers;
+	lst->name = name;
+	lst->open = open;
+
+	drivers = lst;
+
+	return (0);
+}
+
+int chr_unregister (const char *name)
+{
+	int                r;
+	struct driver_list *src, *dst, *drv, *next;
+
+	r = 1;
+
+	src = drivers;
+	dst = NULL;
+	drv = NULL;
+
+	while (src != NULL) {
+		next = src->next;
+
+		if ((name == NULL) || (strcmp (src->name, name) == 0)) {
+			free (src);
+			r = 0;
+		}
+		else {
+			if (dst != NULL) {
+				dst->next = src;
+			}
+			else {
+				drv = src;
+			}
+
+			dst = src;
+		}
+
+		src = next;
+	}
+
+	if (dst != NULL) {
+		dst->next = NULL;
+	}
+
+	drivers = drv;
+
+	return (r);
+}
+
+int chr_register_default (void)
+{
+	int      r;
+	unsigned i, n;
+
+	r = 0;
+	n = sizeof (default_drivers) / sizeof (struct driver_tab);
+
+	for (i = 0; i < n; i++) {
+		r |= chr_register (default_drivers[i].name, default_drivers[i].open);
+	}
+
+	return (r);
 }
 
 unsigned chr_read (char_drv_t *cdrv, void *buf, unsigned cnt)
@@ -403,48 +545,18 @@ int chr_set_params (char_drv_t *cdrv, unsigned long bps, unsigned bpc, unsigned 
 	return (cdrv->set_params (cdrv, bps, bpc, parity, stop));
 }
 
-static
-char_drv_t *chr_open_cdrv (char_drv_t *cdrv, const char *name)
+int chr_set_log (char_drv_t *cdrv, const char *fname)
 {
-	char *str;
-
-	if (cdrv == NULL) {
-		return (NULL);
+	if (cdrv->log_fp != NULL) {
+		chr_log_flush (cdrv);
+		fclose (cdrv->log_fp);
 	}
 
-	str = drv_get_option (name, "log");
+	cdrv->log_fp = fopen (fname, "w");
 
-	if (str != NULL) {
-		chr_set_log (cdrv, str);
-
-		free (str);
+	if (cdrv->log_fp == NULL) {
+		return (1);
 	}
 
-	return (cdrv);
-}
-
-char_drv_t *chr_open (const char *name)
-{
-	unsigned   i;
-	const char *s, *d;
-
-	i = 0;
-
-	while (drvtab[i].prefix != NULL) {
-		s = name;
-		d = drvtab[i].prefix;
-
-		while ((*d != 0) && (*d == *s)) {
-			d += 1;
-			s += 1;
-		}
-
-		if ((*d == 0) && ((*s == ':') || (*s == 0))) {
-			return (chr_open_cdrv (drvtab[i].open (name), name));
-		}
-
-		i += 1;
-	}
-
-	return (NULL);
+	return (0);
 }
