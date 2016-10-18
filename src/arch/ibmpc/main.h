@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.h                                        *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +39,8 @@
 extern const char *par_terminal;
 extern const char *par_video;
 
+
+void sim_stop (void);
 
 void pc_log_deb (const char *msg, ...);
 

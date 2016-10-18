@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.c                                        *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -145,6 +145,16 @@ void sig_segv (int s)
 	pce_set_fd_interactive (0, 1);
 
 	exit (1);
+}
+
+void sim_stop (void)
+{
+	ibmpc_t *pc = par_pc;
+
+	pce_prt_sep ("BREAK");
+	prt_state_cpu (pc->cpu);
+
+	pc_set_msg (pc, "emu.stop", NULL);
 }
 
 static
