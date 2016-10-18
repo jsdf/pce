@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -455,8 +455,9 @@ void e86_reset (e8086_t *c)
 
 void e86_execute (e8086_t *c)
 {
-	unsigned cnt;
-	char     irq;
+	unsigned       cnt;
+	unsigned short flg;
+	char           irq;
 
 	if (c->halt) {
 		e86_set_clk (c, 2);
@@ -473,6 +474,7 @@ void e86_execute (e8086_t *c)
 		c->cur_ip = c->ip;
 	}
 
+	flg = c->flg;
 	irq = c->irq;
 
 	c->enable_int = 1;
@@ -500,7 +502,7 @@ void e86_execute (e8086_t *c)
 	c->instructions += 1;
 
 	if (c->enable_int) {
-		if (c->flg & E86_FLG_T) {
+		if (flg & c->flg & E86_FLG_T) {
 			c->halt = 0;
 			e86_trap (c, 1);
 		}
