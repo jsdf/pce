@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.c                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -896,13 +896,15 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 		return;
 	}
 
-	if (err & E8272_ERR_DEL_DAM) {
+	if ((fdc->read_deleted != 0) != ((err & E8272_ERR_DEL_DAM) != 0)) {
 		if ((fdc->cmd[0] & E8272_CMD0_SK)) {
 			e8272_next_id (fdc);
 			fdc->st[2] |= E8272_ST2_CM;
 			return;
 		}
 	}
+
+	err &= ~E8272_ERR_DEL_DAM;
 
 	fdc->buf_i = 0;
 	fdc->buf_n = cnt2;
@@ -941,6 +943,39 @@ void cmd_read (e8272_t *fdc)
 	fdc->st[2] = 0;
 
 	fdc->read_error = 0;
+	fdc->read_deleted = 0;
+	fdc->index_cnt = 0;
+
+	e8272_delay_next_id (fdc, 0);
+
+	fdc->set_clock = cmd_read_clock;
+	fdc->set_tc = cmd_read_tc;
+}
+
+
+/*****************************************************************************
+ * read deleted data
+ *****************************************************************************/
+static
+void cmd_read_deleted (e8272_t *fdc)
+{
+	e8272_select_head (fdc, fdc->cmd[1] & 3, (fdc->cmd[1] >> 2) & 1);
+	e8272_read_track (fdc);
+
+#if E8272_DEBUG >= 1
+	fprintf (stderr, "E8272: CMD=%02X D=%u"
+		"  READ DELETED (pc=%u, ph=%u, c=%u, h=%u, s=%u, n=%u, eot=%u)\n",
+		fdc->cmd[0], fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
+		fdc->cmd[2], fdc->cmd[3], fdc->cmd[4], fdc->cmd[5], fdc->cmd[6]
+	);
+#endif
+
+	fdc->st[0] = 0;
+	fdc->st[1] = 0;
+	fdc->st[2] = 0;
+
+	fdc->read_error = 0;
+	fdc->read_deleted = 1;
 	fdc->index_cnt = 0;
 
 	e8272_delay_next_id (fdc, 0);
@@ -1859,6 +1894,7 @@ static struct {
 	void          (*start_cmd) (e8272_t *fdc);
 } cmd_tab[] = {
 	{ 0x1f, 0x06, 9, cmd_read },
+	{ 0x1f, 0x0c, 9, cmd_read_deleted },
 	{ 0x1f, 0x02, 9, cmd_read_track },
 	{ 0xbf, 0x0a, 2, cmd_read_id },
 	{ 0x3f, 0x05, 9, cmd_write },

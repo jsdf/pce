@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.h                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -121,6 +121,7 @@ typedef struct e8272_t {
 	unsigned short index_cnt;
 
 	char           read_error;
+	char           read_deleted;
 	unsigned short read_track_cnt;
 	unsigned short write_id;
 	unsigned short format_cnt;
