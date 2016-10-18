@@ -129,7 +129,14 @@ The PFDC file format. This has been superseded by PSI.
 The native PCE sector image file format.
 .TP
 .B raw
-A raw sector dump.
+A raw sector dump in CHS format.
+.TP
+.B raw-hcs
+A raw sector dump in HCS format.
+.TP
+.B raw-hts
+A raw sector dump in HCS format. Additionally, the order of tracks on odd
+heads is reversed.
 .TP
 .B st
 The same as raw, but the auto-detected disk geometries are the ones

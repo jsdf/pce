@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img.h                                    *
  * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -41,11 +41,14 @@
 #define PSI_FORMAT_PFDC4   11
 #define PSI_FORMAT_PSI     12
 #define PSI_FORMAT_RAW     13
-#define PSI_FORMAT_ST      14
-#define PSI_FORMAT_STX     15
-#define PSI_FORMAT_TC      16
-#define PSI_FORMAT_TD0     17
-#define PSI_FORMAT_XDF     18
+#define PSI_FORMAT_RAW_CHS PSI_FORMAT_RAW
+#define PSI_FORMAT_RAW_HCS 14
+#define PSI_FORMAT_RAW_HTS 15
+#define PSI_FORMAT_ST      16
+#define PSI_FORMAT_STX     17
+#define PSI_FORMAT_TC      18
+#define PSI_FORMAT_TD0     19
+#define PSI_FORMAT_XDF     20
 
 
 unsigned psi_guess_type (const char *fname);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img-raw.c                                *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -127,9 +127,10 @@ int raw_get_file_size (FILE *fp, unsigned long *size)
 }
 
 static
-int raw_load_fp (FILE *fp, psi_img_t *img, const psi_geometry_t *geo)
+int raw_load_fp (FILE *fp, psi_img_t *img, const psi_geometry_t *geo, int hcs)
 {
 	unsigned      c, h, s;
+	unsigned      ci, hi, ti;
 	unsigned long size;
 	psi_trk_t     *trk;
 	psi_sct_t     *sct;
@@ -144,14 +145,28 @@ int raw_load_fp (FILE *fp, psi_img_t *img, const psi_geometry_t *geo)
 
 	for (c = 0; c < geo->c; c++) {
 		for (h = 0; h < geo->h; h++) {
-			trk = psi_img_get_track (img, c, h, 1);
+			if (hcs) {
+				ti = c * geo->h + h;
+				ci = ti % geo->c;
+				hi = ti / geo->c;
+
+				if ((hcs < 0) && (hi & 1)) {
+					ci = geo->c - ci - 1;
+				}
+			}
+			else {
+				ci = c;
+				hi = h;
+			}
+
+			trk = psi_img_get_track (img, ci, hi, 1);
 
 			if (trk == NULL) {
 				return (1);
 			}
 
 			for (s = 0; s < geo->s; s++) {
-				sct = psi_sct_new (c, h, s + 1, geo->ssize);
+				sct = psi_sct_new (ci, hi, s + 1, geo->ssize);
 
 				if (sct == NULL) {
 					return (1);
@@ -174,7 +189,7 @@ int raw_load_fp (FILE *fp, psi_img_t *img, const psi_geometry_t *geo)
 	return (0);
 }
 
-psi_img_t *psi_load_st (FILE *fp)
+psi_img_t *raw_load_img (FILE *fp, const psi_geometry_t *geo, int hcs)
 {
 	psi_img_t *img;
 
@@ -182,7 +197,7 @@ psi_img_t *psi_load_st (FILE *fp)
 		return (NULL);
 	}
 
-	if (raw_load_fp (fp, img, disk_sizes_st)) {
+	if (raw_load_fp (fp, img, geo, hcs)) {
 		psi_img_del (img);
 		return (NULL);
 	}
@@ -190,22 +205,24 @@ psi_img_t *psi_load_st (FILE *fp)
 	return (img);
 }
 
+psi_img_t *psi_load_st (FILE *fp)
+{
+	return (raw_load_img (fp, disk_sizes_st, 0));
+}
+
+psi_img_t *psi_load_raw_hcs (FILE *fp)
+{
+	return (raw_load_img (fp, disk_sizes, 1));
+}
+
+psi_img_t *psi_load_raw_hts (FILE *fp)
+{
+	return (raw_load_img (fp, disk_sizes, -1));
+}
+
 psi_img_t *psi_load_raw (FILE *fp)
 {
-	psi_img_t *img;
-
-	img = psi_img_new();
-
-	if (img == NULL) {
-		return (NULL);
-	}
-
-	if (raw_load_fp (fp, img, disk_sizes)) {
-		psi_img_del (img);
-		return (NULL);
-	}
-
-	return (img);
+	return (raw_load_img (fp, disk_sizes, 0));
 }
 
 
@@ -239,9 +256,78 @@ const psi_sct_t *raw_get_next_sector (const psi_trk_t *trk, unsigned *idx)
 	return (sct);
 }
 
+static
+unsigned raw_get_head_cnt (const psi_img_t *img)
+{
+	unsigned c, hn;
+
+	hn = 0;
+
+	for (c = 0; c < img->cyl_cnt; c++) {
+		if ((img->cyl[c] != NULL) && (img->cyl[c]->trk_cnt > hn)) {
+			hn = img->cyl[c]->trk_cnt;
+		}
+	}
+
+	return (hn);
+}
+
 int psi_save_st (FILE *fp, const psi_img_t *img)
 {
 	return (psi_save_raw (fp, img));
+}
+
+static
+int psi_save_raw_hcs_hts (FILE *fp, const psi_img_t *img, int hts)
+{
+	unsigned        c, ci, h, s, hn;
+	const psi_trk_t *trk;
+	const psi_sct_t *sct;
+
+	hn = raw_get_head_cnt (img);
+
+	for (h = 0; h < hn; h++) {
+		for (c = 0; c < img->cyl_cnt; c++) {
+			if (hts && (h & 1)) {
+				ci = img->cyl_cnt - c - 1;
+			}
+			else {
+				ci = c;
+			}
+
+			trk = psi_img_get_track ((psi_img_t *) img, ci, h, 0);
+
+			if (trk == NULL) {
+				continue;
+			}
+
+			s = 0;
+
+			sct = raw_get_next_sector (trk, &s);
+
+			while (sct != NULL) {
+				if (fwrite (sct->data, 1, sct->n, fp) != sct->n) {
+					return (1);
+				}
+
+				sct = raw_get_next_sector (trk, &s);
+			}
+		}
+	}
+
+	fflush (fp);
+
+	return (0);
+}
+
+int psi_save_raw_hcs (FILE *fp, const psi_img_t *img)
+{
+	return (psi_save_raw_hcs_hts (fp, img, 0));
+}
+
+int psi_save_raw_hts (FILE *fp, const psi_img_t *img)
+{
+	return (psi_save_raw_hcs_hts (fp, img, 1));
 }
 
 int psi_save_raw (FILE *fp, const psi_img_t *img)

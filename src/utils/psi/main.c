@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.c                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -507,6 +507,15 @@ int psi_set_format (const char *name, unsigned *val)
 	}
 	else if (strcmp (name, "raw") == 0) {
 		*val = PSI_FORMAT_RAW;
+	}
+	else if (strcmp (name, "raw-chs") == 0) {
+		*val = PSI_FORMAT_RAW;
+	}
+	else if (strcmp (name, "raw-hcs") == 0) {
+		*val = PSI_FORMAT_RAW_HCS;
+	}
+	else if (strcmp (name, "raw-hts") == 0) {
+		*val = PSI_FORMAT_RAW_HTS;
 	}
 	else if (strcmp (name, "st") == 0) {
 		*val = PSI_FORMAT_ST;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img.c                                    *
  * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -148,6 +148,12 @@ psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 	case PSI_FORMAT_RAW:
 		return (psi_load_raw (fp));
 
+	case PSI_FORMAT_RAW_HCS:
+		return (psi_load_raw_hcs (fp));
+
+	case PSI_FORMAT_RAW_HTS:
+		return (psi_load_raw_hts (fp));
+
 	case PSI_FORMAT_ST:
 		return (psi_load_st (fp));
 
@@ -235,6 +241,12 @@ int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type)
 
 	case PSI_FORMAT_RAW:
 		return (psi_save_raw (fp, img));
+
+	case PSI_FORMAT_RAW_HCS:
+		return (psi_save_raw_hcs (fp, img));
+
+	case PSI_FORMAT_RAW_HTS:
+		return (psi_save_raw_hts (fp, img));
 
 	case PSI_FORMAT_ST:
 		return (psi_save_st (fp, img));
