@@ -2546,6 +2546,32 @@ src/libini/write.o: src/libini/write.c \
 	src/config.h \
 	src/libini/libini.h
 
+src/utils/aym/decode.o: src/utils/aym/decode.c \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/utils/aym/main.h
+
+src/utils/aym/encode.o: src/utils/aym/encode.c \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/utils/aym/main.h
+
+src/utils/aym/main.o: src/utils/aym/main.c \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/lib/getopt.h \
+	src/utils/aym/main.h
+
+src/utils/aym/play.o: src/utils/aym/play.c \
+	src/arch/atarist/psg.h \
+	src/config.h \
+	src/drivers/sound/filter.h \
+	src/drivers/sound/sound.h \
+	src/utils/aym/main.h
+
 src/utils/pce-img/commit.o: src/utils/pce-img/commit.c \
 	src/config.h \
 	src/drivers/block/block.h \

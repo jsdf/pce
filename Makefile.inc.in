@@ -163,6 +163,7 @@ include $(srcdir)/src/arch/sim6502/Makefile.inc
 include $(srcdir)/src/arch/simarm/Makefile.inc
 include $(srcdir)/src/arch/sims32/Makefile.inc
 include $(srcdir)/src/utils/Makefile.inc
+include $(srcdir)/src/utils/aym/Makefile.inc
 include $(srcdir)/src/utils/pce-img/Makefile.inc
 include $(srcdir)/src/utils/pri/Makefile.inc
 include $(srcdir)/src/utils/psi/Makefile.inc
