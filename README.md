@@ -74,5 +74,9 @@ Once the output file for the target you're interested in has been built, you can
   `npm run prepublish` in the respective directory.
 
 
+Check out the emulators in which pce runs on:
+
+http://jamesfriend.com.au/pce-js/
+
 
 
