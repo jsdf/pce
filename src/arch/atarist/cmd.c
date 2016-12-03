@@ -836,6 +836,8 @@ void st_cmd_hm (cmd_t *cmd)
 		"emu.disk.eject       <drive>\n"
 		"emu.disk.insert      <drive>:<fname>\n"
 		"\n"
+		"emu.midi.file        <fname>\n"
+		"\n"
 		"emu.fdc.ro           <drive>\n"
 		"emu.fdc.rw           <drive>\n"
 		"\n"

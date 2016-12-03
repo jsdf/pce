@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/msg.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -280,6 +280,12 @@ int st_set_msg_emu_fdc_rw (atari_st_t *sim, const char *msg, const char *val)
 }
 
 static
+int st_set_msg_emu_midi_file (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (st_smf_set_file (&sim->smf, val));
+}
+
+static
 int st_set_msg_emu_par_driver (atari_st_t *sim, const char *msg, const char *val)
 {
 	if (sim->parport_drv != NULL) {
@@ -509,6 +515,7 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.exit", st_set_msg_emu_exit },
 	{ "emu.fdc.ro", st_set_msg_emu_fdc_ro },
 	{ "emu.fdc.rw", st_set_msg_emu_fdc_rw },
+	{ "emu.midi.file", st_set_msg_emu_midi_file },
 	{ "emu.par.driver", st_set_msg_emu_par_driver },
 	{ "emu.par.file", st_set_msg_emu_par_file },
 	{ "emu.pause", st_set_msg_emu_pause },

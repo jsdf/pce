@@ -47,6 +47,10 @@ emu.disk.insert <drive>:<fname>
 emu.exit
 	Terminate the emulator immediately.
 
+emu.midi.file <filename>
+	Set a new MIDI output file. If <filename> is the empty string, no
+	more MIDI output is saved.
+
 emu.pause "0" | "1"
 	Resume or pause the emulator.
 
