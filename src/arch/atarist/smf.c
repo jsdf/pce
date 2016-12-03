@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/smf.c                                       *
  * Created:     2013-06-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,6 +36,8 @@
 #define SMF_CLOCK 8000000
 #define SMF_TICKS 256
 
+#define SMF_FILE_TYPE 0
+
 
 static void smf_put_meta (st_smf_t *smf, unsigned type, const void *buf, unsigned cnt);
 
@@ -51,7 +53,7 @@ int smf_write_header (st_smf_t *smf)
 
 	buf_set_uint32_be (buf, 0, SMF_CHUNK_MTHD);
 	buf_set_uint32_be (buf, 4, 6);
-	buf_set_uint16_be (buf, 8, 1);
+	buf_set_uint16_be (buf, 8, SMF_FILE_TYPE);
 	buf_set_uint16_be (buf, 10, 1);
 	buf_set_uint16_be (buf, 12, SMF_TICKS);
 
