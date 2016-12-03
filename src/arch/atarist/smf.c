@@ -35,6 +35,7 @@
 
 #define SMF_CLOCK 8000000
 #define SMF_TICKS 256
+#define SMF_TEMPO 500000
 
 #define SMF_FILE_TYPE 0
 
@@ -110,7 +111,8 @@ int smf_close (st_smf_t *smf)
 static
 int st_smf_open (st_smf_t *smf, FILE *fp)
 {
-	const char *str;
+	const char    *str;
+	unsigned char buf[4];
 
 	if (smf_close (smf)) {
 		return (1);
@@ -134,8 +136,10 @@ int st_smf_open (st_smf_t *smf, FILE *fp)
 	}
 
 	str = "Created by pce-atarist " PCE_VERSION_STR;
-
 	smf_put_meta (smf, 0x01, str, strlen (str));
+
+	buf_set_uint32_be (buf, 0, SMF_TEMPO);
+	smf_put_meta (smf, 0x51, buf + 1, 3);
 
 	return (0);
 }
