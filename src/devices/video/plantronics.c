@@ -5,8 +5,8 @@
 /*****************************************************************************
  * File name:   src/devices/video/plantronics.c                              *
  * Created:     2008-10-13 by John Elliott <jce@seasip.demon.co.uk>          *
- * Copyright:   (C) 2008-2014 Hampa Hug <hampa@hampa.ch>                     *
- *              (C) 2008 John Elliott <jce@seasip.demon.co.uk>               *
+ * Copyright:   (C) 2008-2016 Hampa Hug <hampa@hampa.ch>                     *
+ *              (C) 2008-2016 John Elliott <jce@seasip.demon.co.uk>          *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -44,6 +44,70 @@
 #define PLA_UPDATE_DIRTY 1
 
 
+static inline
+int pla_alternate_plane (const cga_t *pla)
+{
+	if ((pla->reg[CGA_MODE] & CGA_MODE_G320) == 0) {
+		return (0);
+	}
+
+	if ((pla->reg[PLA_SPECIAL] & PLA_SPECIAL_PLANE) == 0) {
+		return (0);
+	}
+
+	if ((pla->reg[PLA_SPECIAL] & (PLA_SPECIAL_EXT1 | PLA_SPECIAL_EXT2)) == 0) {
+		return (0);
+	}
+
+	return (1);
+}
+
+static
+void pla_mem_set_uint8 (cga_t *pla, unsigned long addr, unsigned char val)
+{
+	if (pla_alternate_plane (pla)) {
+		addr ^= 0x4000;
+	}
+
+	if (addr < pla->memblk->size) {
+		pla->mem[addr] = val;
+		pla->update_state |= PLA_UPDATE_DIRTY;
+	}
+}
+
+static
+unsigned char pla_mem_get_uint8 (cga_t *pla, unsigned long addr)
+{
+	if (pla_alternate_plane (pla)) {
+		addr ^= 0x4000;
+	}
+
+	if (addr < pla->memblk->size) {
+		return (pla->mem[addr]);
+	}
+
+	return (0);
+}
+
+static
+unsigned short pla_mem_get_uint16 (cga_t *pla, unsigned long addr)
+{
+	unsigned short val;
+
+	val = pla_mem_get_uint8 (pla, addr);
+	val |= (unsigned) pla_mem_get_uint8 (pla, addr + 1) << 8;
+
+	return (val);
+}
+
+static
+void pla_mem_set_uint16 (cga_t *pla, unsigned long addr, unsigned short val)
+{
+	pla_mem_set_uint8 (pla, addr, val & 0xff);
+	pla_mem_set_uint8 (pla, addr + 1, (val >> 8) & 0xff);
+}
+
+
 /*
  * Update mode 3 (graphics 320 * 200 * 16)
  */
@@ -61,15 +125,8 @@ void pla_mode3_update (cga_t *pla)
 		return;
 	}
 
-	if (pla->reg[PLA_SPECIAL] & PLA_SPECIAL_PLANE) {
-		mem[0] = pla->mem;
-		mem[2] = pla->mem + 0x4000;
-	}
-	else {
-		mem[0] = pla->mem + 0x4000;
-		mem[2] = pla->mem;
-	}
-
+	mem[0] = pla->mem;
+	mem[2] = pla->mem + 0x4000;
 	mem[1] = mem[0] + 8192;
 	mem[3] = mem[2] + 8192;
 
@@ -84,8 +141,8 @@ void pla_mode3_update (cga_t *pla)
 			val1 = mem[(y & 1) + 2][x];
 
 			for (i = 0; i < 4; i++) {
-				idx = ((val0 >> 7) & 1) | ((val0 >> 5) & 2);
-				idx |= ((val1 >> 5) & 4) | ((val1 >> 3) & 8);
+				idx = ((val1 >> 7) & 1) | ((val0 >> 5) & 2);
+				idx |= ((val0 >> 5) & 4) | ((val1 >> 3) & 8);
 
 				col = cga_rgb[idx];
 
@@ -121,15 +178,8 @@ void pla_mode4_update (cga_t *pla)
 		return;
 	}
 
-	if (pla->reg[PLA_SPECIAL] & PLA_SPECIAL_PLANE) {
-		mem[0] = pla->mem;
-		mem[2] = pla->mem + 0x4000;
-	}
-	else {
-		mem[0] = pla->mem + 0x4000;
-		mem[2] = pla->mem;
-	}
-
+	mem[0] = pla->mem;
+	mem[2] = pla->mem + 0x4000;
 	mem[1] = mem[0] + 8192;
 	mem[3] = mem[2] + 8192;
 
@@ -348,6 +398,11 @@ video_t *pla_new_ini (ini_sct_t *sct)
 	if (pla == NULL) {
 		return (NULL);
 	}
+
+	pla->memblk->set_uint8 = (void *) pla_mem_set_uint8;
+	pla->memblk->set_uint16 = (void *) pla_mem_set_uint16;
+	pla->memblk->get_uint8 = (void *) pla_mem_get_uint8;
+	pla->memblk->get_uint16 = (void *) pla_mem_get_uint16;
 
 	cga_set_blink_rate (pla, blink);
 
