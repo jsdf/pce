@@ -47,6 +47,10 @@ int smf_write_header (st_smf_t *smf)
 {
 	unsigned char buf[16];
 
+	if (smf->fp == NULL) {
+		return (1);
+	}
+
 	if (fseek (smf->fp, smf->mthd_ofs, SEEK_SET)) {
 		return (1);
 	}
@@ -86,6 +90,7 @@ int smf_close (st_smf_t *smf)
 		return (0);
 	}
 
+	/* end of track */
 	smf_put_meta (smf, 0x2f, NULL, 0);
 
 	if (smf_write_header (smf)) {
@@ -93,7 +98,11 @@ int smf_close (st_smf_t *smf)
 	}
 
 	fclose (smf->fp);
+
 	smf->fp = NULL;
+	smf->status = 0;
+	smf->buf_idx = 0;
+	smf->buf_cnt = 0;
 
 	return (0);
 }
@@ -113,12 +122,18 @@ int st_smf_open (st_smf_t *smf, FILE *fp)
 	smf->mtrk_ofs = 14;
 	smf->mtrk_size = 0;
 
+	smf->status = 0;
+	smf->buf_idx = 0;
+	smf->buf_cnt = 0;
+
+	smf->clock_inited = 0;
+
 	if (smf_write_header (smf)) {
 		smf->fp = NULL;
 		return (1);
 	}
 
-	str = "Created by pce-atarist version " PCE_VERSION_STR;
+	str = "Created by pce-atarist " PCE_VERSION_STR;
 
 	smf_put_meta (smf, 0x01, str, strlen (str));
 
@@ -126,43 +141,14 @@ int st_smf_open (st_smf_t *smf, FILE *fp)
 }
 
 static
-int smf_auto_open (st_smf_t *smf)
-{
-	unsigned i;
-	unsigned val;
-	char     str[256];
-
-	if (smf->auto_name == NULL) {
-		return (smf->fp == NULL);
-	}
-
-	i = 0;
-	while (smf->auto_name[i] != 0) {
-		str[i] = smf->auto_name[i];
-		i += 1;
-	}
-
-	str[i] = 0;
-
-	val = ++smf->auto_index;
-
-	while (i > 0) {
-		i -= 1;
-
-		if (str[i] == '#') {
-			str[i] = '0' + (val % 10);
-			val = val / 10;
-		}
-	}
-
-	return (st_smf_set_file (smf, str));
-}
-
-static
 void smf_put_varint (st_smf_t *smf, unsigned long val)
 {
 	unsigned      i;
 	unsigned char buf[16];
+
+	if (smf->fp == NULL) {
+		return;
+	}
 
 	i = 0;
 
@@ -185,18 +171,14 @@ void smf_put_event (st_smf_t *smf)
 	unsigned      i;
 	unsigned long delta;
 
+	if (smf->fp == NULL) {
+		return;
+	}
+
 	if (smf->clock_inited) {
 		delta = (smf->evt_clk - smf->clock) / (SMF_CLOCK / SMF_TICKS / 2);
 	}
 	else {
-		delta = 0;
-	}
-
-	if ((smf->fp == NULL) || (delta > (15 * 2 * SMF_TICKS))) {
-		if (smf_auto_open (smf)) {
-			return;
-		}
-
 		delta = 0;
 	}
 
@@ -226,6 +208,10 @@ void smf_put_meta (st_smf_t *smf, unsigned type, const void *buf, unsigned cnt)
 	unsigned            i;
 	const unsigned char *tmp;
 
+	if (smf->fp == NULL) {
+		return;
+	}
+
 	tmp = buf;
 
 	fputc (0, smf->fp);
@@ -247,6 +233,10 @@ void smf_put_meta (st_smf_t *smf, unsigned type, const void *buf, unsigned cnt)
 
 void st_smf_set_uint8 (st_smf_t *smf, unsigned char val, unsigned long clk)
 {
+	if (smf->fp == NULL) {
+		return;
+	}
+
 	if (smf->status == 0xf0) {
 		if (smf->buf_idx >= sizeof (smf->buf)) {
 			return;
@@ -321,12 +311,11 @@ void st_smf_init (st_smf_t *smf)
 {
 	smf->fp = NULL;
 
-	smf->auto_name = NULL;
-	smf->auto_index = 0;
-
 	smf->status = 0;
 	smf->buf_idx = 0;
 	smf->buf_cnt = 0;
+
+	smf->clock_inited = 0;
 }
 
 void st_smf_free (st_smf_t *smf)
@@ -340,6 +329,10 @@ int st_smf_set_file (st_smf_t *smf, const char *fname)
 
 	smf_close (smf);
 
+	if ((fname == NULL) || (*fname == 0)) {
+		return (0);
+	}
+
 	if ((fp = fopen (fname, "wb")) == NULL) {
 		return (1);
 	}
@@ -348,40 +341,6 @@ int st_smf_set_file (st_smf_t *smf, const char *fname)
 		fclose (fp);
 		return (1);
 	}
-
-	return (0);
-}
-
-int st_smf_set_auto (st_smf_t *smf, const char *fname)
-{
-	int      ok;
-	unsigned n;
-
-	if (smf->auto_name != NULL) {
-		free (smf->auto_name);
-		smf->auto_name = NULL;
-	}
-
-	ok = 0;
-
-	n = 0;
-	while (fname[n] != 0) {
-		if (fname[n] == '#') {
-			ok = 1;
-		}
-
-		n += 1;
-	}
-
-	if (ok == 0) {
-		return (st_smf_set_file (smf, fname));
-	}
-
-	if ((smf->auto_name = malloc (n + 1)) == NULL) {
-		return (1);
-	}
-
-	strcpy (smf->auto_name, fname);
 
 	return (0);
 }

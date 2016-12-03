@@ -394,7 +394,7 @@ void st_setup_midi (atari_st_t *sim, ini_sct_t *ini)
 	if (smf != NULL) {
 		pce_log_tag (MSG_INF, "MIDI-SMF:", "file=%s\n", smf);
 
-		if (st_smf_set_auto (&sim->smf, smf)) {
+		if (st_smf_set_file (&sim->smf, smf)) {
 			pce_log (MSG_ERR, "*** can't open smf file (%s)\n", smf);
 		}
 	}

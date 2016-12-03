@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/smf.h                                       *
  * Created:     2013-06-23 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,8 +29,6 @@
 
 typedef struct {
 	FILE          *fp;
-	char          *auto_name;
-	unsigned      auto_index;
 
 	unsigned long mthd_ofs;
 	unsigned long mtrk_ofs;
@@ -51,7 +49,6 @@ void st_smf_init (st_smf_t *smf);
 void st_smf_free (st_smf_t *smf);
 
 int st_smf_set_file (st_smf_t *smf, const char *fname);
-int st_smf_set_auto (st_smf_t *smf, const char *fname);
 
 void st_smf_set_uint8 (st_smf_t *smf, unsigned char val, unsigned long clk);
 
