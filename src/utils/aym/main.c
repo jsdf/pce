@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/aym/main.c                                         *
  * Created:     2015-05-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2015 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2015-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -43,6 +43,8 @@ static char          par_highpass = 0;
 static const char    *par_driver = "oss:lowpass=0";
 static char          par_driver_tmp[256];
 
+static unsigned long par_threshold = 0;
+
 static unsigned long par_mark = 0;
 
 
@@ -58,6 +60,7 @@ static pce_option_t opts[] = {
 	{ 'p', 0, "play", NULL, "Play an AYM file" },
 	{ 'r', 1, "srate", "rate", "Set the sample rate [48000]" },
 	{ 's', 1, "driver", "driver", "Set the sound driver [oss]" },
+	{ 't', 1, "threshold", "delay", "Set the delay threshold [0]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "wav", "file", "Save to a WAV file" },
 	{  -1, 0, NULL, NULL, NULL }
@@ -82,7 +85,7 @@ void print_version (void)
 	fputs (
 		"aym version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2015 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2015-2016 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -194,6 +197,10 @@ int main (int argc, char **argv)
 			par_driver = optarg[0];
 			break;
 
+		case 't':
+			par_threshold = strtoul (optarg[0], NULL, 0);
+			break;
+
 		case 'w':
 			op = 2;
 			sprintf (par_driver_tmp, "wav:wav=%s:wavfilter=0", optarg[0]);
@@ -219,10 +226,10 @@ int main (int argc, char **argv)
 	}
 
 	if (op == 0) {
-		r = aym_decode (inp, out, par_mark);
+		r = aym_decode (inp, out, par_threshold, par_mark);
 	}
 	else if (op == 1) {
-		r = aym_encode (inp, out);
+		r = aym_encode (inp, out, par_threshold);
 	}
 	else {
 		r = aym_play (inp, par_driver, par_lowpass, par_highpass);

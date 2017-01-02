@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/aym/decode.c                                       *
  * Created:     2015-05-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2015 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2015-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,7 +28,7 @@
 
 
 static
-int aym_decode_fp (FILE *inp, FILE *out, unsigned long mark)
+int aym_decode_fp (FILE *inp, FILE *out, unsigned long th, unsigned long mark)
 {
 	unsigned           i;
 	int                c1, c2;
@@ -90,7 +90,7 @@ int aym_decode_fp (FILE *inp, FILE *out, unsigned long mark)
 				fputs ("\n", out);
 			}
 
-			if (delay > 0) {
+			if ((delay > 0) && (delay >= th)) {
 				total += delay;
 				fprintf (out, "\n# %llu.%06llu + %llu.%06llu = %llu.%06llu\n",
 					(total - delay) / 1000000, (total - delay) % 1000000,
@@ -143,7 +143,7 @@ int aym_decode_fp (FILE *inp, FILE *out, unsigned long mark)
 	return (0);
 }
 
-int aym_decode (const char *inp, const char *out, unsigned long mark)
+int aym_decode (const char *inp, const char *out, unsigned long th, unsigned long mark)
 {
 	int  r;
 	FILE *finp, *fout;
@@ -165,7 +165,7 @@ int aym_decode (const char *inp, const char *out, unsigned long mark)
 		return (1);
 	}
 
-	r = aym_decode_fp (finp, fout, mark);
+	r = aym_decode_fp (finp, fout, th, mark);
 
 	if (fout != stdout) {
 		fclose (fout);

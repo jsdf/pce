@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/aym/encode.c                                       *
  * Created:     2015-05-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2015 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2015-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -235,7 +235,7 @@ int aym_encode_text (FILE *inp, FILE *out)
 }
 
 static
-int aym_encode_fp (FILE *inp, FILE *out)
+int aym_encode_fp (FILE *inp, FILE *out, unsigned long th)
 {
 	unsigned long long vers, delay;
 	unsigned char      buf[8];
@@ -290,9 +290,10 @@ int aym_encode_fp (FILE *inp, FILE *out)
 		else if (strcmp (str, "REG") == 0) {
 			unsigned v1, v2;
 
-			aym_write_delay (out, delay);
-
-			delay = 0;
+			if ((delay > 0) && (delay >= th)) {
+				aym_write_delay (out, delay);
+				delay = 0;
+			}
 
 			if (aym_get_byte (inp, &v1)) {
 				return (1);
@@ -319,7 +320,7 @@ int aym_encode_fp (FILE *inp, FILE *out)
 	return (0);
 }
 
-int aym_encode (const char *inp, const char *out)
+int aym_encode (const char *inp, const char *out, unsigned long th)
 {
 	int  r;
 	FILE *finp, *fout;
@@ -341,7 +342,7 @@ int aym_encode (const char *inp, const char *out)
 		return (1);
 	}
 
-	r = aym_encode_fp (finp, fout);
+	r = aym_encode_fp (finp, fout, th);
 
 	if (fout != stdout) {
 		fclose (fout);
