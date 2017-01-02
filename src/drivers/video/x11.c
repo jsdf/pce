@@ -356,6 +356,10 @@ void xt_decode_mask (unsigned long mask, unsigned *i, unsigned *n)
 	*i = 0;
 	*n = 0;
 
+	if (mask == 0) {
+		return;
+	}
+
 	while ((mask & 1) == 0) {
 		mask = mask >> 1;
 		*i += 1;
@@ -415,6 +419,15 @@ void xt_image_draw (xterm_t *xt, const unsigned char *src, unsigned x, unsigned 
 		di = bpp * x;
 
 		switch ((bpp << 1) | (xt->img->byte_order == MSBFirst)) {
+		case ((1 << 1) | 0):
+		case ((1 << 1) | 1):
+			for (i = 0; i < w; i++) {
+				dst[di] = src[1];
+				si += 3;
+				di += 1;
+			}
+			break;
+
 		case ((2 << 1) | 0):
 			for (i = 0; i < w; i++) {
 				val = xt_get_pixel (src + si, ri, rn, gi, gn, bi, bn);
