@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/int13.c                                       *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -343,12 +343,15 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
 			else if (dsk->visible_s < 17) {
 				type = 0x02;
 			}
-			else {
+			else if (dsk->visible_s < 25) {
 				type = 0x04;
 			}
-
-			e86_set_bx (cpu, type);
+			else {
+				type = 0x06;
+			}
 		}
+
+		e86_set_bx (cpu, type);
 	}
 
 	e86_set_dl (cpu, dsks_get_hd_cnt (dsks));
