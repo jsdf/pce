@@ -568,9 +568,6 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 		}
 
 		if (trm->escape & TRM_ESC_ESC) {
-			if (key != trm->escape_key) {
-				trm_set_key_emu (trm, PCE_KEY_EVENT_MAGIC, key);
-			}
 			return;
 		}
 
@@ -597,6 +594,7 @@ void trm_set_key (terminal_t *trm, unsigned event, pce_key_t key)
 	else if (event == PCE_KEY_EVENT_UP) {
 		if (trm->escape & TRM_ESC_ESC) {
 			if (key != trm->escape_key) {
+				trm_set_key_emu (trm, PCE_KEY_EVENT_MAGIC, key);
 				trm->escape &= ~TRM_ESC_ESC;
 			}
 			return;
