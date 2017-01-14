@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/e8086/e80186.c                                           *
  * Created:     2003-08-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -192,7 +192,6 @@ unsigned op_6c (e8086_t *c)
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
-			c->instructions += 1;
 			e86_set_clk (c, 8);
 		}
 	}
@@ -221,7 +220,6 @@ unsigned op_6d (e8086_t *c)
 			e86_set_di (c, e86_get_di (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
 
-			c->instructions += 1;
 			e86_set_clk (c, 8);
 		}
 	}
@@ -250,7 +248,6 @@ unsigned op_6e (e8086_t *c)
 			e86_set_prt8 (c, e86_get_dx (c), e86_get_mem8 (c, seg, e86_get_si (c)));
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-			c->instructions += 1;
 			e86_set_clk (c, 8);
 		}
 	}
@@ -278,7 +275,6 @@ unsigned op_6f (e8086_t *c)
 			e86_set_prt16 (c, e86_get_dx (c), e86_get_mem16 (c, seg, e86_get_si (c)));
 			e86_set_si (c, e86_get_si (c) + inc);
 			e86_set_cx (c, e86_get_cx (c) - 1);
-			c->instructions += 1;
 			e86_set_clk (c, 8);
 		}
 	}

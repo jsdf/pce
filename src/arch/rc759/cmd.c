@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/cmd.c                                         *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -381,25 +381,6 @@ void print_state_video (e82730_t *crt)
 	}
 }
 
-static
-void print_state_time (e8086_t *c)
-{
-	double cpi;
-
-	pce_prt_sep ("TIME");
-
-	if (c->instructions > 0) {
-		cpi = (double) c->clocks / (double) c->instructions;
-	}
-	else {
-		cpi = 0.0;
-	}
-
-	pce_printf ("CLK=%llu + %lu\n", c->clocks, c->delay);
-	pce_printf ("OPS=%llu\n", c->instructions);
-	pce_printf ("CPI=%.4f\n", cpi);
-}
-
 void print_state_cpu (e8086_t *c)
 {
 	static char ft[2] = { '-', '+' };
@@ -453,7 +434,6 @@ void print_state_rc759 (rc759_t *sim)
 	print_state_tcu (&sim->tcu);
 	print_state_pic (&sim->pic);
 	print_state_dma (&sim->dma);
-	print_state_time (sim->cpu);
 	print_state_cpu (sim->cpu);
 }
 
@@ -497,7 +477,7 @@ int rc759_check_break (rc759_t *sim)
 static
 void rc759_exec (rc759_t *sim)
 {
-	unsigned long long old;
+	unsigned old;
 
 	sim->current_int &= 0xff;
 
@@ -1144,9 +1124,6 @@ void rc759_cmd_s (cmd_t *cmd, rc759_t *sim)
 		}
 		else if (cmd_match (cmd, "tcu")) {
 			print_state_tcu (&sim->tcu);
-		}
-		else if (cmd_match (cmd, "time")) {
-			print_state_time (sim->cpu);
 		}
 		else if (cmd_match (cmd, "video")) {
 			print_state_video (&sim->crt);

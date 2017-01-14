@@ -371,25 +371,6 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 	);
 }
 
-static
-void prt_state_time (e8086_t *c)
-{
-	double cpi;
-
-	pce_prt_sep ("TIME");
-
-	if (c->instructions > 0) {
-		cpi = (double) c->clocks / (double) c->instructions;
-	}
-	else {
-		cpi = 0.0;
-	}
-
-	pce_printf ("CLK=%llu + %lu\n", c->clocks, c->delay);
-	pce_printf ("OPS=%llu\n", c->instructions);
-	pce_printf ("CPI=%.4f\n", cpi);
-}
-
 void prt_state_cpu (e8086_t *c)
 {
 	static char ft[2] = { '-', '+' };
@@ -444,7 +425,6 @@ void prt_state_pc (ibmpc_t *pc)
 	prt_state_pit (&pc->pit);
 	prt_state_pic (&pc->pic);
 	prt_state_dma (&pc->dma);
-	prt_state_time (pc->cpu);
 	prt_state_cpu (pc->cpu);
 }
 
@@ -488,7 +468,7 @@ int pc_check_break (ibmpc_t *pc)
 static
 void pc_exec (ibmpc_t *pc)
 {
-	unsigned long long old;
+	unsigned old;
 
 	pc->current_int &= 0xff;
 
@@ -1170,9 +1150,6 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 		}
 		else if (cmd_match (cmd, "cpu")) {
 			prt_state_cpu (pc->cpu);
-		}
-		else if (cmd_match (cmd, "time")) {
-			prt_state_time (pc->cpu);
 		}
 		else if (cmd_match (cmd, "pit")) {
 			prt_state_pit (&pc->pit);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.h                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -160,9 +160,8 @@ typedef struct e8086_t {
 	} ea;
 
 	unsigned long    delay;
-
-	unsigned long long clocks;
-	unsigned long long instructions;
+	unsigned long    clock;
+	unsigned         opcnt;
 } e8086_t;
 
 
@@ -341,6 +340,8 @@ void e86_set_mem16 (e8086_t *c, unsigned short seg, unsigned short ofs, unsigned
 	do { (cpu)->prt_set_uint16 ((cpu)->prt, ofs, val); } while (0)
 
 #define e86_get_delay(c) ((c)->delay)
+#define e86_get_clock(c) ((c)->clock)
+#define e86_get_opcnt(c) ((c)->opcnt)
 
 
 void e86_init (e8086_t *c);
@@ -395,10 +396,6 @@ void e86_irq (e8086_t *cpu, unsigned char val);
 int e86_interrupt (e8086_t *cpu, unsigned n);
 
 unsigned e86_undefined (e8086_t *c);
-
-unsigned long long e86_get_clock (e8086_t *c);
-
-unsigned long long e86_get_opcnt (e8086_t *c);
 
 void e86_reset (e8086_t *c);
 
