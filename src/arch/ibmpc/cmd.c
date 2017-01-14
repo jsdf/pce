@@ -373,8 +373,6 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 
 void prt_state_cpu (e8086_t *c)
 {
-	static char ft[2] = { '-', '+' };
-
 	pce_prt_sep ("8086");
 
 	pce_printf (
@@ -386,16 +384,21 @@ void prt_state_cpu (e8086_t *c)
 		(par_pc->current_int & 0x100) ? '*' : ' '
 	);
 
-	pce_printf ("CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
-		e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
-		e86_get_ip (c), c->flg
+	pce_printf ("DS=%04X  ES=%04X  SS=%04X  CS=%04X  IP=%04X  F =%04X",
+		e86_get_ds (c), e86_get_es (c), e86_get_ss (c), e86_get_cs (c),
+		e86_get_ip (c), e86_get_flags (c)
 	);
 
-	pce_printf ("  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
-		ft[e86_get_if (c)], ft[e86_get_df (c)],
-		ft[e86_get_of (c)], ft[e86_get_sf (c)],
-		ft[e86_get_zf (c)], ft[e86_get_af (c)],
-		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
+	pce_printf ("  [%c%c%c%c%c%c%c%c%c]\n",
+		e86_get_df (c) ? 'D' : '-',
+		e86_get_if (c) ? 'I' : '-',
+		e86_get_tf (c) ? 'T' : '-',
+		e86_get_of (c) ? 'O' : '-',
+		e86_get_sf (c) ? 'S' : '-',
+		e86_get_zf (c) ? 'Z' : '-',
+		e86_get_af (c) ? 'A' : '-',
+		e86_get_pf (c) ? 'P' : '-',
+		e86_get_cf (c) ? 'C' : '-'
 	);
 
 	if (c->halt) {
