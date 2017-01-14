@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -753,48 +753,48 @@ void pc_cmd_g (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_hm (cmd_t *cmd)
 {
-		pce_puts (
-			"emu.config.save      <filename>\n"
-			"emu.exit\n"
-			"emu.stop\n"
-			"emu.pause            \"0\" | \"1\"\n"
-			"emu.pause.toggle\n"
-			"emu.reset\n"
-			"\n"
-			"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
-			"emu.cpu.speed        <factor>\n"
-			"emu.cpu.speed.step   <adjustment>\n"
-			"\n"
-			"emu.disk.boot        <bootdrive>\n"
-			"emu.disk.commit      [<drive>]\n"
-			"emu.disk.eject       <drive>\n"
-			"emu.disk.insert      <drive>:<fname>\n"
-			"\n"
-			"emu.fdc.accurate     \"0\" | \"1\"\n"
-			"\n"
-			"emu.parport.driver   <driver>\n"
-			"emu.parport.file     <filename>\n"
-			"\n"
-			"emu.serport.driver   <driver>\n"
-			"emu.serport.file     <filename>\n"
-			"\n"
-			"emu.tape.append\n"
-			"emu.tape.file        <filename>\n"
-			"emu.tape.load        [<position> | \"end\"]\n"
-			"emu.tape.rewind\n"
-			"emu.tape.save        [<position> | \"end\"]\n"
-			"emu.tape.state\n"
-			"\n"
-			"emu.term.fullscreen  \"0\" | \"1\"\n"
-			"emu.term.fullscreen.toggle\n"
-			"emu.term.grab\n"
-			"emu.term.release\n"
-			"emu.term.screenshot  [<filename>]\n"
-			"emu.term.title       <title>\n"
-			"\n"
-			"emu.video.blink      <blink-rate>\n"
-			"emu.video.redraw     [\"now\"]\n"
-		);
+	pce_puts (
+		"emu.config.save      <filename>\n"
+		"emu.exit\n"
+		"emu.stop\n"
+		"emu.pause            \"0\" | \"1\"\n"
+		"emu.pause.toggle\n"
+		"emu.reset\n"
+		"\n"
+		"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
+		"emu.cpu.speed        <factor>\n"
+		"emu.cpu.speed.step   <adjustment>\n"
+		"\n"
+		"emu.disk.boot        <bootdrive>\n"
+		"emu.disk.commit      [<drive>]\n"
+		"emu.disk.eject       <drive>\n"
+		"emu.disk.insert      <drive>:<fname>\n"
+		"\n"
+		"emu.fdc.accurate     \"0\" | \"1\"\n"
+		"\n"
+		"emu.parport.driver   <driver>\n"
+		"emu.parport.file     <filename>\n"
+		"\n"
+		"emu.serport.driver   <driver>\n"
+		"emu.serport.file     <filename>\n"
+		"\n"
+		"emu.tape.append\n"
+		"emu.tape.file        <filename>\n"
+		"emu.tape.load        [<position> | \"end\"]\n"
+		"emu.tape.rewind\n"
+		"emu.tape.save        [<position> | \"end\"]\n"
+		"emu.tape.state\n"
+		"\n"
+		"emu.term.fullscreen  \"0\" | \"1\"\n"
+		"emu.term.fullscreen.toggle\n"
+		"emu.term.grab\n"
+		"emu.term.release\n"
+		"emu.term.screenshot  [<filename>]\n"
+		"emu.term.title       <title>\n"
+		"\n"
+		"emu.video.blink      <blink-rate>\n"
+		"emu.video.redraw     [\"now\"]\n"
+	);
 }
 
 static
