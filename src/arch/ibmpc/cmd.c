@@ -50,6 +50,7 @@ static mon_cmd_t par_cmd[] = {
 	{ "p", "[cnt]", "execute cnt instructions, without trace in calls [1]" },
 	{ "r", "[reg val]", "set a register" },
 	{ "s", "[what]", "print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)" },
+	{ "trace", "on|off|expr", "turn trace on or off" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
 	{ "u", "[addr [cnt [mode]]]", "disassemble" }
 };
@@ -406,6 +407,42 @@ void prt_state_cpu (e8086_t *c)
 	}
 }
 
+void pc_print_trace (e8086_t *c)
+{
+	e86_disasm_t op;
+	char         str[256];
+
+	e86_disasm_cur (c, &op);
+
+	switch (op.arg_n) {
+	case 0:
+		strcpy (str, op.op);
+		break;
+
+	case 1:
+		sprintf (str, "%-5s %s", op.op, op.arg1);
+		break;
+
+	case 2:
+		sprintf (str, "%-5s %s,%s", op.op, op.arg1, op.arg2);
+		break;
+
+	default:
+		strcpy (str, "****");
+		break;
+	}
+
+	pce_printf (
+		"AX=%04X BX=%04X CX=%04X DX=%04X "
+		"SP=%04X BP=%04X SI=%04X DI=%04X "
+		"DS=%04X ES=%04X SS=%04X F=%04X %04X:%04X %s\n",
+		e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+		e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
+		e86_get_ds (c),	e86_get_es (c), e86_get_ss (c), e86_get_flags (c),
+		e86_get_cs (c), e86_get_ip (c), str
+	);
+}
+
 static
 void prt_state_mem (ibmpc_t *pc)
 {
@@ -676,6 +713,10 @@ void pc_cmd_g_b (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	while (1) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (pc_check_break (pc)) {
@@ -702,6 +743,10 @@ void pc_cmd_g_far (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	while (1) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (e86_get_cs (pc->cpu) != seg) {
@@ -1018,7 +1063,7 @@ void pc_cmd_pq (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned       cnt;
+	unsigned       cnt, opcnt1, opcnt2;
 	unsigned short seg, ofs, seg2, ofs2;
 	unsigned long  i, n;
 	int            brk, skip;
@@ -1048,6 +1093,10 @@ void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 
 		cnt = pc->cpu->int_cnt;
 
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
 			pc_clock (pc, 1);
 
@@ -1075,7 +1124,18 @@ void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 		}
 
 		if (skip) {
+			opcnt1 = -e86_get_opcnt (pc->cpu);
+
 			while ((e86_get_cs (pc->cpu) != seg2) || (e86_get_ip (pc->cpu) != ofs2)) {
+				if (pc->trace) {
+					opcnt2 = e86_get_opcnt (pc->cpu);
+
+					if (opcnt1 != opcnt2) {
+						opcnt1 = opcnt2;
+						pc_print_trace (pc->cpu);
+					}
+				}
+
 				pc_clock (pc, 1);
 
 				if (pc_check_break (pc)) {
@@ -1201,6 +1261,30 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 }
 
 static
+void pc_cmd_trace (cmd_t *cmd, ibmpc_t *pc)
+{
+	unsigned short v;
+
+	if (cmd_match_eol (cmd)) {
+		pce_printf ("trace is %s\n", pc->trace ? "on" : "off");
+		return;
+	}
+
+	if (cmd_match (cmd, "on")) {
+		pc->trace = 1;
+	}
+	else if (cmd_match (cmd, "off")) {
+		pc->trace = 0;
+	}
+	else if (cmd_match_uint16 (cmd, &v)) {
+		pc->trace = (v != 0);
+	}
+	else {
+		cmd_error (cmd, "on or off expected\n");
+	}
+}
+
+static
 void pc_cmd_t (cmd_t *cmd, ibmpc_t *pc)
 {
 	unsigned long i, n;
@@ -1218,6 +1302,10 @@ void pc_cmd_t (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	for (i = 0; i < n; i++) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (pc_check_break (pc)) {
@@ -1325,6 +1413,9 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "s")) {
 		pc_cmd_s (cmd, pc);
+	}
+	else if (cmd_match (cmd, "trace")) {
+		pc_cmd_trace (cmd, pc);
 	}
 	else if (cmd_match (cmd, "t")) {
 		pc_cmd_t (cmd, pc);

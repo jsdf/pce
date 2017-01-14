@@ -138,6 +138,7 @@ typedef struct ibmpc_t {
 
 	unsigned           brk;
 	char               pause;
+	char               trace;
 } ibmpc_t;
 
 

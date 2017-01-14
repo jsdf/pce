@@ -417,6 +417,7 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->brk = 0;
 	pc->pause = 0;
+	pc->trace = 0;
 
 	sct = ini_next_sct (ini, NULL, "system");
 
