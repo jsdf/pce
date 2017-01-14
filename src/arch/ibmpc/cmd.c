@@ -509,11 +509,13 @@ void pc_run (ibmpc_t *pc)
 
 	pc_clock_discontinuity (pc);
 
-	while (pc->brk == 0) {
-		if (pc->pause == 0) {
+	if (pc->pause == 0) {
+		while (pc->brk == 0) {
 			pc_clock (pc, 4 * pc->speed_current);
 		}
-		else {
+	}
+	else {
+		while (pc->brk == 0) {
 			pce_usleep (100000);
 			trm_check (pc->trm);
 		}
