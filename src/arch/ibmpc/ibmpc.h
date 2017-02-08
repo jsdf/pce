@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.h                                       *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -85,7 +85,8 @@ typedef struct ibmpc_t {
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;
 	unsigned char      ppi_port_c[2];
-
+	unsigned char      switches1_val;
+	unsigned char      switches1_msk;
 	unsigned char      m24_config[2];
 
 	dev_fdc_t          *fdc;

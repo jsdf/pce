@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.c                                       *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -194,14 +194,18 @@ unsigned char pc_dma3_get_mem8 (ibmpc_t *pc, unsigned long addr)
 static
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
+	unsigned char val;
+
 	if (pc->ppi_port_b & 0x80) {
-		return (pc->ppi_port_a[0]);
+		val = pc->ppi_port_a[0] & ~pc->switches1_msk;
+		val |= pc->switches1_val & pc->switches1_msk;
 	}
 	else {
 		pc->ppi_port_a[1] = pc_kbd_get_key (&pc->kbd);
-
-		return (pc->ppi_port_a[1]);
+		val = pc->ppi_port_a[1];
 	}
+
+	return (val);
 }
 
 static
@@ -405,10 +409,13 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
-	unsigned   fdcnt;
+	unsigned   fdcnt, sw1val, sw1msk;
 	int        patch_init, patch_int19, memtest;
 	const char *model;
 	ini_sct_t  *sct;
+
+	pc->switches1_val = 0;
+	pc->switches1_msk = 0;
 
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
@@ -429,13 +436,15 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
 	ini_get_uint16 (sct, "floppy_disk_drives", &fdcnt, 2);
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
+	ini_get_uint16 (sct, "switches_1_val", &sw1val, 0);
+	ini_get_uint16 (sct, "switches_1_msk", &sw1msk, 0);
 	ini_get_bool (sct, "patch_bios_init", &patch_init, 1);
 	ini_get_bool (sct, "patch_bios_int19", &patch_int19, 1);
 	ini_get_bool (sct, "memtest", &memtest, 1);
 
 	pce_log_tag (MSG_INF, "SYSTEM:",
-		"model=%s floppies=%u patch-init=%d patch-int19=%d\n",
-		model, fdcnt, patch_init, patch_int19
+		"model=%s floppies=%u sw1=%02X/%02X patch-init=%d patch-int19=%d\n",
+		model, fdcnt, sw1val, sw1msk, patch_init, patch_int19
 	);
 
 	if (strcmp (model, "5150") == 0) {
@@ -462,6 +471,9 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	pc->ppi_port_b = 0x08;
 	pc->ppi_port_c[0] = 0;
 	pc->ppi_port_c[1] = 0;
+
+	pc->switches1_val = sw1val & sw1msk;
+	pc->switches1_msk = sw1msk;
 
 	if (pc->model & PCE_IBMPC_5160) {
 		pc->ppi_port_c[0] |= 0x01;
