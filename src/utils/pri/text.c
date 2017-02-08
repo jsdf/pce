@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/text.c                                         *
  * Created:     2014-08-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2014-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2014-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -660,6 +660,16 @@ int txt_getc (pri_text_t *ctx, unsigned idx)
 	}
 
 	return (ctx->buf[idx]);
+}
+
+static
+void txt_error (pri_text_t *ctx, const char *str)
+{
+	int c;
+
+	c = txt_getc (ctx, 0);
+
+	fprintf (stderr, "pri-text:%u: error (%s), next = %02X\n", ctx->line + 1, str, c);
 }
 
 static
@@ -1433,6 +1443,7 @@ int txt_enc_track (pri_text_t *ctx)
 		ctx->encoding = PRI_TEXT_FM;
 	}
 	else {
+		txt_error (ctx, "missing track type");
 		return (1);
 	}
 
@@ -1470,16 +1481,6 @@ int txt_enc_track (pri_text_t *ctx)
 	ctx->crc = 0xffff;
 
 	return (0);
-}
-
-static
-void txt_error (pri_text_t *ctx, const char *str)
-{
-	int c;
-
-	c = txt_getc (ctx, 0);
-
-	fprintf (stderr, "pri-text:%u: error (%s), next = %02X\n", ctx->line + 1, str, c);
 }
 
 static
@@ -1606,7 +1607,9 @@ int txt_encode (pri_text_t *ctx)
 	while (1) {
 		if (txt_match (ctx, "VERSION", 1)) {
 			if (txt_match (ctx, "2", 1)) {
-				txt_encode_v2 (ctx);
+				if (txt_encode_v2 (ctx)) {
+					return (1);
+				}
 			}
 			else {
 				txt_error (ctx, "bad version");
