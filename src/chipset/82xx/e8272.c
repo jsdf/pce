@@ -1136,6 +1136,12 @@ void cmd_read_track_clock (e8272_t *fdc, unsigned long cnt)
 		fdc->st[1] |= E8272_ST1_DE;
 	}
 
+	if (fdc->cmd[5] <= 6) {
+		if (bcnt > (128 << fdc->cmd[5])) {
+			bcnt = 128 << fdc->cmd[5];
+		}
+	}
+
 	fdc->buf_i = 0;
 	fdc->buf_n = bcnt;
 
