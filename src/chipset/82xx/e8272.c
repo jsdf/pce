@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.c                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2016 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1120,6 +1120,10 @@ void cmd_read_track_clock (e8272_t *fdc, unsigned long cnt)
 		fdc->curdrv->d, fdc->curdrv->c, fdc->curdrv->h,
 		id, sct->s
 	);
+
+	if (err & E8272_ERR_NO_DATA) {
+		return;
+	}
 
 	if (err & E8272_ERR_CRC_ID) {
 		fdc->st[1] |= E8272_ST1_DE;
