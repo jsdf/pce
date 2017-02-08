@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.c                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -887,7 +887,7 @@ mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size)
 	mda->memblk->get_uint16 = (void *) mda_mem_get_uint16;
 	memset (mda->mem, 0, sizeof (mda->mem));
 
-	mda->regblk = mem_blk_new (io, 16, 1);
+	mda->regblk = mem_blk_new (io, 8, 1);
 	mda->regblk->ext = mda;
 	mda->regblk->set_uint8 = (void *) mda_reg_set_uint8;
 	mda->regblk->set_uint16 = (void *) mda_reg_set_uint16;
