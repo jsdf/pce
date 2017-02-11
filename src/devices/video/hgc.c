@@ -1044,7 +1044,7 @@ hgc_t *hgc_new (unsigned long io, unsigned long mem)
 	mem_blk_clear (hgc->memblk, 0x00);
 	mem_blk_set_size (hgc->memblk, 32768);
 
-	hgc->regblk = mem_blk_new (io, 8, 1);
+	hgc->regblk = mem_blk_new (io, 12, 1);
 	hgc->regblk->ext = hgc;
 	hgc->regblk->set_uint8 = (void *) hgc_reg_set_uint8;
 	hgc->regblk->set_uint16 = (void *) hgc_reg_set_uint16;
