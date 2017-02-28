@@ -1,6 +1,5 @@
 #!/bin/bash
-set -e
-set -u
+set -eo pipefail
 
 declare -a ARCHS=("macplus" "ibmpc" "atarist")
 
@@ -19,19 +18,29 @@ pcejs_save_config () {
    (set -o posix; set) | grep "PCEJS_conf_" > ./pcejs_build_conf.sh
 }
 
+pcejs_print_config () {
+  (set -o posix; set) | grep "PCEJS_"
+}
+
+pcejs_init_env_from_config () {
+  # initialise build env from config
+  # should be called after changing any PCEJS_conf var
+  source ./scripts/pcejs_build_env.sh
+}
+
 # ensure cwd is project root dir
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
 
 pcejs_load_config
-source ./scripts/pcejs_build_env.sh # initialise build env from config
+pcejs_init_env_from_config
 
 pcejs_build=$0
-taskname=$1
+taskname=${1:-""}
 
 case "$taskname" in
   "env") # Print build environment variables
-    (set -o posix; set) | grep "PCEJS_"
+    pcejs_print_config
     ;;
 
   "configure") # Configure emulator build"
@@ -45,6 +54,7 @@ case "$taskname" in
       export PCEJS_conf_emscripten="yes"
       export PCEJS_conf_prefix="build/"
     fi
+    pcejs_init_env_from_config
 
     ./scripts/10-configure.sh
 
@@ -75,6 +85,7 @@ case "$taskname" in
     if [[ -n $target ]]; then
       export PCEJS_conf_target=$target
     fi
+    pcejs_init_env_from_config
 
     ./scripts/30-afterbuild.sh
     ;;
@@ -90,9 +101,10 @@ case "$taskname" in
       if [[ -n $target_or_platform ]]; then
         export PCEJS_conf_target=$target_or_platform
       fi
+      pcejs_init_env_from_config
       $pcejs_build configure em
       $pcejs_build make
-      afterbuild "$PCEJS_conf_target"
+      $pcejs_build afterbuild "$PCEJS_conf_target"
     fi  
 
     pcejs_save_config
@@ -105,6 +117,7 @@ case "$taskname" in
       $pcejs_build remake
     elif [[ -n $target_or_platform ]]; then
       export PCEJS_conf_target=$target_or_platform
+      pcejs_init_env_from_config
       $pcejs_build remake
       $pcejs_build afterbuild "$PCEJS_conf_target"
     else
@@ -129,7 +142,13 @@ case "$taskname" in
     ;;
 
   *)
-    if [[ -n $PCEJS_conf_emscripten ]]; then
+    if [[ -n "$taskname" ]]; then
+      echo "unknown task: $taskname"
+      exit 1
+    fi
+
+    echo "running default task"
+    if [[ -n $PCEJS_conf_emscripten && -d $PCEJS_PREFIX ]]; then
       $pcejs_build remake
     else
       $pcejs_build configure em

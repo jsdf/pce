@@ -1,15 +1,39 @@
+#!/bin/bash
+set -euo pipefail
+
 echo "converting bitcode to javascript for target: ${PCEJS_TARGET}"
 
-# extension rom files
-if [ "${PCEJS_TARGET}" == "macplus" ]; then
-	cp ${PCEJS_PREFIX}/share/pce/macplus/macplus-pcex.rom ${PCEJS_PACKAGEDIR}/data/macplus/macplus-pcex.rom
-elif [ "${PCEJS_TARGET}" == "ibmpc" ]; then
-	cp ${PCEJS_PREFIX}/share/pce/ibmpc/ibmpc-pcex.rom ${PCEJS_PACKAGEDIR}/data/ibmpc/ibmpc-pcex.rom
-fi
+cleanup_file() {
+  if [ -a "$1" ]; then
+    rm "$1"
+  fi
+}
 
-cp ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET} ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc
+copy_if_present() {
+  if [ -a "$1" ]; then
+    cp "$1" "$2"
+  fi
+}
+
+PCEJS_REPO_ROOT=$(git rev-parse --show-toplevel)
+
+cp "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}" "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc"
 # EMCC_DEBUG=2 
-${PCEJS_EMSDK_PATH}emcc ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc -o ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} \
-	$PCEJS_EMFLAGS
+"${PCEJS_EMSDK_PATH}/emcc" "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.bc" \
+  -o "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}" \
+  $PCEJS_EMFLAGS \
+  $PCEJS_MAKE_CFLAGS
 
-mv ${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT} ${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}
+
+cp "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}"
+
+# emscripten proxy-to-worker js
+cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.worker.js"
+copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.worker.js" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.worker.js"
+
+# emscripten mem init file
+cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.js.mem"
+copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.js.mem" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.js.mem"
+
+# extension rom files
+copy_if_present "${PCEJS_PREFIX}/share/pce/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom" "${PCEJS_PACKAGEDIR}/data/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom"
