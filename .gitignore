@@ -6,6 +6,7 @@ build-native/
 pce-js/
 /systems
 dist/
+*.sublime-workspace
 
 # old build system
 pcejs-build-config.json
@@ -41,3 +42,5 @@ example/**/*.img
 example/**/*.st
 example/**/*.psi
 example/**/*.cfg
+
+mac-plus-pram.dat

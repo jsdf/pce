@@ -1,0 +1,20 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+      "folder_exclude_patterns": [
+        "build",
+        "build-native",
+      ],
+      "file_exclude_patterns": [
+        "pcejs-*/lib/pcejs-*.js",
+        "commonjs/pcejs-*/pce-*.worker.js",
+        "example/*/pce-*.worker.js",
+        "dist/pce-*.js",
+        "example/*/bundle.js",
+        "src/arch/*/pce-*",
+      ],
+		}
+	],
+}
