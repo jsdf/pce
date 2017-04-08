@@ -6,7 +6,6 @@ build-native/
 pce-js/
 /systems
 dist/
-*.sublime-workspace
 
 # old build system
 pcejs-build-config.json
@@ -43,4 +42,21 @@ example/**/*.st
 example/**/*.psi
 example/**/*.cfg
 
+# example generated files
+example/*/bundle.js
+example/*/pce-*.js
+example/*/pce-*.js.mem
+example/*/pce-*.worker.js
+example/*/pthread-main.js
+example/*/pthread-prelude.js
+example/*/worker-prelude.js
+
+# commonjs generated files
+commonjs/pcejs-*/lib/pce-*.js.mem
+commonjs/pcejs-*/pce-*.js.mem
+commonjs/pcejs-*/pce-*.worker.js
+commonjs/pcejs-*/pthread-main.js
+
+# misc
+*.sublime-workspace
 mac-plus-pram.dat
