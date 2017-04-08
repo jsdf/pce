@@ -9,7 +9,8 @@
   "version": "0.1.0",
   "dependencies": {
     "browserify": "~4.1.5",
-    "http-server": "^0.7.4"
+    "http-server": "^0.7.4",
+    "xtend": "^4.0.0"
   },
   "licenses": [
     {

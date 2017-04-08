@@ -27,6 +27,10 @@ cp "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}" "${PCEJS_PREFIX}/bin/pce-${PCEJS_TA
 
 cp "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.${PCEJS_OUTPUT_FORMAT}"
 
+# emscripten pthread js
+cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.pthread-main.js"
+copy_if_present "${PCEJS_PREFIX}/bin/pthread-main.js" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.pthread-main.js"
+
 # emscripten proxy-to-worker js
 cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.worker.js"
 copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.worker.js" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.worker.js"
@@ -37,3 +41,4 @@ copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.js.mem" "${PCEJS_PACKAG
 
 # extension rom files
 copy_if_present "${PCEJS_PREFIX}/share/pce/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom" "${PCEJS_PACKAGEDIR}/data/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom"
+

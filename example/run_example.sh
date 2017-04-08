@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -eo pipefail
 
 copy_if_present() {
   if [ -a "$1" ]; then
@@ -14,12 +14,13 @@ if [[ -z $PCEJS_ARCH ]]
     exit 1
 fi
 
-PCEJS_WORKER=${2:-""}
+PCEJS_MODE=${2:-""}
 
 
 PCEJS_DIR=$(git rev-parse --show-toplevel)
 
 PCEJS_MODULES_DIR="$PCEJS_DIR/commonjs"
+PCEJS_DIST_DIR="$PCEJS_DIR/dist"
 PCEJS_ARCH_MODULE_DIR="$PCEJS_MODULES_DIR/pcejs-${PCEJS_ARCH}"
 PCEJS_ARCH_EXAMPLE_DIR="$PCEJS_DIR/example/$PCEJS_ARCH"
 PCEJS_NODE_BIN_DIR=$PCEJS_DIR/node_modules/.bin/
@@ -45,12 +46,19 @@ NODE_PATH="$PCEJS_MODULES_DIR:$PCEJS_DIR/node_modules" \
     > "$PCEJS_ARCH_EXAMPLE_DIR/bundle.js"
 echo "bundle.js built"
 
-if [[ -n $PCEJS_WORKER ]]; then
+if [[ $PCEJS_MODE == "worker" ]]; then
   {
     cat "${PCEJS_ARCH_EXAMPLE_DIR}/worker-prelude.js" "$PCEJS_ARCH_MODULE_DIR/pce-${PCEJS_ARCH}.worker.js" 
   } > "${PCEJS_ARCH_EXAMPLE_DIR}/pce-${PCEJS_ARCH}.worker.js"
 
   echo "built with worker"
+elif [[ $PCEJS_MODE == "threaded" ]]; then
+  {
+    cat "${PCEJS_ARCH_EXAMPLE_DIR}/pthread-prelude.js" "${PCEJS_DIST_DIR}/pce-${PCEJS_ARCH}.js"
+  } > "${PCEJS_ARCH_EXAMPLE_DIR}/bundle.js"
+  cp "$PCEJS_ARCH_MODULE_DIR/pthread-main.js" "${PCEJS_ARCH_EXAMPLE_DIR}/pthread-main.js"
+
+  echo "built with pthreads"
 fi
 
 copy_if_present "$PCEJS_ARCH_MODULE_DIR/pce-${PCEJS_ARCH}.js.mem" "${PCEJS_ARCH_EXAMPLE_DIR}/pce-${PCEJS_ARCH}.js.mem"

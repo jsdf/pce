@@ -21,6 +21,12 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
     emflags+=" -s PROXY_TO_WORKER=1"
   fi
 
+  if [[ -n $PCEJS_conf_threaded ]]; then
+    emflags+=" -s USE_PTHREADS=1"
+    emflags+=" -s PTHREAD_POOL_SIZE=1"
+    emflags+=" -s PTHREAD_HINT_NUM_CORES=2"
+  fi
+
   if [[ -n $PCEJS_conf_memory ]]; then
     memory=$((PCEJS_conf_memory*1024*1024))
     emflags+=" -s TOTAL_MEMORY=${memory}"
