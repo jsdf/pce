@@ -394,18 +394,12 @@ void mac_run (macplus_t *sim)
  * emscripten specific main loop
  */
 
-/*
- * store global reference to simulation state struct
- * so that mac_run_emscripten_step doesn't require it as a parameter
- */
-macplus_t  *macplus_sim = NULL;
 
 /*
  * setup and run the simulation
  */
 void mac_run_emscripten (macplus_t *sim)
 {
-	macplus_sim = sim;
 	int brk = 0;
 
 	pce_start (&sim->brk);
@@ -448,20 +442,20 @@ void mac_run_emscripten_step ()
 			mousex = mousex > screenw ? screenw : (mousex < 0 ? 0 : mousex);
 			mousey = mousey > screenh ? screenh : (mousey < 0 ? 0 : mousey);
 			// internal raw mouse coords
-			e68_set_mem16 (macplus_sim->cpu, 0x0828, (unsigned) mousey);
-			e68_set_mem16 (macplus_sim->cpu, 0x082a, (unsigned) mousex);
+			e68_set_mem16 (par_sim->cpu, 0x0828, (unsigned) mousey);
+			e68_set_mem16 (par_sim->cpu, 0x082a, (unsigned) mousex);
 			// raw mouse coords
-			e68_set_mem16 (macplus_sim->cpu, 0x082c, (unsigned) mousey);
-			e68_set_mem16 (macplus_sim->cpu, 0x082e, (unsigned) mousex);
+			e68_set_mem16 (par_sim->cpu, 0x082c, (unsigned) mousey);
+			e68_set_mem16 (par_sim->cpu, 0x082e, (unsigned) mousex);
 			// smoothed mouse coords
-			e68_set_mem16 (macplus_sim->cpu, 0x0830, (unsigned) mousey);
-			e68_set_mem16 (macplus_sim->cpu, 0x0832, (unsigned) mousex);
+			e68_set_mem16 (par_sim->cpu, 0x0830, (unsigned) mousey);
+			e68_set_mem16 (par_sim->cpu, 0x0832, (unsigned) mousex);
 		}
 		//  presumably this is a very minor unrolling optimisation?
 		mac_clock (par_sim, 0);
 		mac_clock (par_sim, 0);
 
-		if (macplus_sim->brk) {
+		if (par_sim->brk) {
 			pce_stop();
 			#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
@@ -469,13 +463,13 @@ void mac_run_emscripten_step ()
 			return;
 		}
 
-		while (macplus_sim->pause) {
+		while (par_sim->pause) {
 			pce_usleep (50UL * 1000UL);
-			trm_check (macplus_sim->trm);
+			trm_check (par_sim->trm);
 		}
 	}
 	// print state
-	// mac_prt_state_cpu(macplus_sim);
+	// mac_prt_state_cpu(par_sim);
 }
 /*
  * end emscripten specific main loop
