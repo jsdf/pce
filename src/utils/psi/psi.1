@@ -1,4 +1,4 @@
-.TH PSI 1 "2014-11-02" "HH" "pce"
+.TH PSI 1 "2017-04-19" "HH" "pce"
 \
 .SH NAME
 psi \- convert and modify PCE sector image files
@@ -259,6 +259,12 @@ sectors appear on the track.
 Save the sector tags for all selected sectors to \fIfilename\fR.
 For each sector 12 bytes are written, in the order in which the
 sectors appear on the track.
+.TP
+.BI "weak-load " filename
+Load the weak bit mask of all selected sectors from \fIfilename\fR.
+.TP
+.BI "weak-save " filename
+Save the weak bit mask of all selected sectors to \fIfilename\fR.
 .RE
 \
 .TP

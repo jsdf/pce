@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/load.h                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,7 @@
 
 
 int psi_load_sectors (psi_img_t *img, const char *fname);
+int psi_load_weak (psi_img_t *img, const char *fname);
 int psi_load_tags (psi_img_t *img, const char *fname);
 
 

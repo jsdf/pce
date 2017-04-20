@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi.c                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -62,6 +62,8 @@ psi_sct_t *psi_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 		sct->data = NULL;
 	}
 
+	sct->weak = NULL;
+
 	sct->tag_cnt = 0;
 
 	sct->position = 0xffffffff;
@@ -81,6 +83,7 @@ void psi_sct_del (psi_sct_t *sct)
 		tmp = sct;
 		sct = sct->next;
 
+		free (tmp->weak);
 		free (tmp->data);
 		free (tmp);
 	}
@@ -100,6 +103,15 @@ psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep)
 	dst->encoding = sct->encoding;
 
 	memcpy (dst->data, sct->data, dst->n);
+
+	if (sct->weak != NULL) {
+		if ((dst->weak = malloc (dst->n)) == NULL) {
+			psi_sct_del (dst);
+			return (NULL);
+		}
+
+		memcpy (dst->weak, sct->weak, dst->n);
+	}
 
 	dst->tag_cnt = sct->tag_cnt;
 
@@ -144,6 +156,64 @@ psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep)
 	return (dst);
 }
 
+/* allocate the weak bit mask */
+int psi_weak_alloc (psi_sct_t *sct)
+{
+	if (sct->weak != NULL) {
+		return (0);
+	}
+
+	if ((sct->weak = malloc (sct->n)) == NULL) {
+		return (1);
+	}
+
+	memset (sct->weak, 0, sct->n);
+
+	return (0);
+}
+
+/* free the weak bit mask */
+void psi_weak_free (psi_sct_t *sct)
+{
+	if (sct->weak != NULL) {
+		free (sct->weak);
+		sct->weak = NULL;
+	}
+}
+
+/* check if there are any non-zero bits in the weak bit mask */
+int psi_weak_check (const psi_sct_t *sct)
+{
+	unsigned i;
+
+	if (sct->weak == NULL) {
+		return (0);
+	}
+
+	for (i = 0; i < sct->n; i++) {
+		if (sct->weak[i] != 0) {
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+/* clean up the weak bit mask */
+void psi_weak_clean (psi_sct_t *sct)
+{
+	if (sct->weak == NULL) {
+		return;
+	}
+
+	if (psi_weak_check (sct)) {
+		return;
+	}
+
+	free (sct->weak);
+	sct->weak = NULL;
+}
+
 void psi_sct_add_alternate (psi_sct_t *sct, psi_sct_t *alt)
 {
 	while (sct->next != NULL) {
@@ -169,25 +239,36 @@ psi_sct_t *psi_sct_get_alternate (psi_sct_t *sct, unsigned idx)
 
 int psi_sct_set_size (psi_sct_t *sct, unsigned size, unsigned filler)
 {
-	unsigned char *tmp;
+	unsigned char *data, *weak;
 
 	if (size <= sct->n) {
 		sct->n = size;
 		return (0);
 	}
 
-	tmp = realloc (sct->data, size);
-
-	if (tmp == NULL) {
+	if ((data = realloc (sct->data, size)) == NULL) {
 		return (1);
 	}
 
+	sct->data = data;
+
+	if (sct->weak != NULL) {
+		if ((weak = realloc (sct->weak, size)) == NULL) {
+			return (1);
+		}
+
+		sct->weak = weak;
+	}
+
 	if (size > sct->n) {
-		memset (tmp + sct->n, filler, size - sct->n);
+		memset (sct->data + sct->n, filler, size - sct->n);
+
+		if (sct->weak != NULL) {
+			memset (sct->weak + sct->n, 0, size - sct->n);
+		}
 	}
 
 	sct->n = size;
-	sct->data = tmp;
 
 	return (0);
 }

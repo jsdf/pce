@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/list.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -193,6 +193,10 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 
 			if (alt) {
 				fputs (" ALT", stdout);
+			}
+
+			if (sct->weak != NULL) {
+				fputs (" WEAK", stdout);
 			}
 
 			if (flags & PSI_FLAG_CRC_ID) {

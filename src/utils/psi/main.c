@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.c                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2016 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -132,7 +132,9 @@ void print_help (void)
 		"  sort                   Sort sectors on tracks\n"
 		"  sort-reverse           Sort sectors on tracks in reverse order\n"
 		"  tags-load filename     Load sector tags\n"
-		"  tags-save filename     Save sector tags\n",
+		"  tags-save filename     Save sector tags\n"
+		"  weak-load filename     Load the weak bit mask\n"
+		"  weak-save filename     Save the weak bit mask\n",
 		stdout
 	);
 
@@ -159,7 +161,7 @@ void print_version (void)
 	fputs (
 		"psi version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2010-2013 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2010-2017 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -418,6 +420,12 @@ int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "tags-save") == 0) {
 		r = psi_save_tags (*img, optarg[0]);
+	}
+	else if (strcmp (op, "weak-load") == 0) {
+		r = psi_load_weak (*img, optarg[0]);
+	}
+	else if (strcmp (op, "weak-save") == 0) {
+		r = psi_save_weak (*img, optarg[0]);
 	}
 	else {
 		fprintf (stderr, "%s: unknown operation (%s)\n", arg0, op);

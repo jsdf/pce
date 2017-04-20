@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkfdc.c                                   *
  * Created:     2010-08-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,6 +29,28 @@
 #include <drivers/psi/psi.h>
 #include <drivers/psi/psi-img.h>
 
+
+static
+int dsk_psi_apply_weak (unsigned char *dst, const unsigned char *msk, unsigned cnt)
+{
+	int      r;
+	unsigned i, v;
+
+	r = 0;
+
+	for (i = 0; i < cnt; i++) {
+		if (msk[i] != 0) {
+			v = (rand() >> 4) & msk[i];
+
+			if (v) {
+				dst[i] ^= v;
+				r = 1;
+			}
+		}
+	}
+
+	return (r);
+}
 
 unsigned dsk_psi_read_chs (disk_psi_t *fdc, void *buf, unsigned *cnt,
 	unsigned c, unsigned h, unsigned s, int phy)
@@ -64,6 +86,12 @@ unsigned dsk_psi_read_chs (disk_psi_t *fdc, void *buf, unsigned *cnt,
 
 	if (*cnt > 0) {
 		memcpy (buf, alt->data, *cnt);
+
+		if (alt->weak != NULL) {
+			if (dsk_psi_apply_weak (buf, alt->weak, *cnt)) {
+				ret |= PCE_BLK_PSI_CRC_DATA;
+			}
+		}
 	}
 
 	if (alt->flags & PSI_FLAG_NO_DAM) {
@@ -157,7 +185,9 @@ unsigned dsk_psi_write_chs (disk_psi_t *fdc, const void *buf, unsigned *cnt,
 		memcpy (sct->data, buf, *cnt);
 	}
 
-	sct->flags &= ~PSI_FLAG_CRC_DATA;
+	if (sct->weak == NULL) {
+		sct->flags &= ~PSI_FLAG_CRC_DATA;
+	}
 
 	if (sct->next != NULL) {
 		psi_sct_del (sct->next);

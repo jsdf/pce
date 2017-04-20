@@ -113,6 +113,21 @@ offset	size	description
 n	4	Chunk CRC
 
 
+CHUNK "WEAK": Weak bit mask
+------------------------------------------------------------------------
+
+offset	size	description
+
+0	4	Chunk ID ('WEAK')
+4	4	Chunk size (n)
+0	n	Weak bit mask
+n	4	Chunk CRC
+
+	- The weak bit mask is the same size as the sector data. Each bit
+	  indicates whether the corresponding bit in the data field is
+	  weak.
+
+
 CHUNK "IBMF": IBM FM sector header
 ------------------------------------------------------------------------
 

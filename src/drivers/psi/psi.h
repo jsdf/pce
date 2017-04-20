@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi.h                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,6 +58,7 @@ typedef struct psi_sct_t {
 	unsigned         cur_alt;
 
 	unsigned char    *data;
+	unsigned char    *weak;
 
 	unsigned short   tag_cnt;
 	unsigned char    tag[PSI_TAGS_MAX];
@@ -101,6 +102,11 @@ psi_sct_t *psi_sct_new (unsigned c, unsigned h, unsigned s, unsigned n);
 void psi_sct_del (psi_sct_t *sct);
 
 psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep);
+
+int psi_weak_alloc (psi_sct_t *sct);
+void psi_weak_free (psi_sct_t *sct);
+int psi_weak_check (const psi_sct_t *sct);
+void psi_weak_clean (psi_sct_t *sct);
 
 void psi_sct_add_alternate (psi_sct_t *sct, psi_sct_t *alt);
 

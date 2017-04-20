@@ -234,11 +234,65 @@ psi_sct_t *mfm_decode_idam (mfm_code_t *mfm)
 	return (sct);
 }
 
+/*
+ * Look for weak bits in the data area of sct, assuming that the
+ * data area starts at the current position in trk. If weak bits are
+ * found, set the weak bit mask of sct.
+ */
+static
+int mfm_decode_weak (psi_sct_t *sct, pri_trk_t *trk)
+{
+	unsigned long ofs, val, idx;
+	pri_evt_t     *evt, *e;
+
+	evt = pri_trk_evt_get_after (trk, PRI_EVENT_FUZZY, trk->idx);
+
+	while (evt != NULL) {
+		e = evt;
+		evt = evt->next;
+
+		if (e->type != PRI_EVENT_FUZZY) {
+			continue;
+		}
+
+		ofs = e->pos - trk->idx;
+		val = e->val;
+
+		if (ofs >= (16UL * sct->n)) {
+			break;
+		}
+
+		if (psi_weak_alloc (sct)) {
+			return (1);
+		}
+
+		while (val != 0) {
+			if ((ofs & 1) == 0) {
+				idx = ofs >> 1;
+				if (val & 0x80000000) {
+					sct->weak[idx >> 3] |= 0x80 >> (idx & 7);
+				}
+			}
+
+			ofs += 1;
+			val = (val << 1) & 0xffffffff;
+		}
+	}
+
+	psi_weak_clean (sct);
+
+	return (0);
+}
+
 static
 int mfm_decode_dam (mfm_code_t *mfm, psi_sct_t *sct, unsigned mark)
 {
 	unsigned      crc;
 	unsigned char buf[4];
+
+	if (mfm_decode_weak (sct, mfm->trk)) {
+		return (1);
+	}
 
 	mfm_read (mfm, sct->data, sct->n);
 	mfm_read (mfm, buf, 2);
@@ -472,14 +526,14 @@ static
 void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
 {
 	unsigned      i, n;
-	unsigned long pos, msk;
+	unsigned long pos, msk, val;
 	psi_sct_t     *fuz, *alt;
 
 	pos = mfm->trk->idx;
 
 	mfm_encode_bytes (mfm, sct->data, sct->n);
 
-	if (sct->next == NULL) {
+	if ((sct->next == NULL) && (sct->weak == NULL)) {
 		return;
 	}
 
@@ -488,6 +542,14 @@ void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
 	}
 
 	psi_sct_fill (fuz, 0);
+
+	if (sct->weak != NULL) {
+		n = (fuz->n < sct->n) ? fuz->n : sct->n;
+
+		for (i = 0; i < n; i++) {
+			fuz->data[i] |= sct->weak[i];
+		}
+	}
 
 	alt = sct->next;
 
@@ -498,16 +560,28 @@ void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
 			fuz->data[i] |= sct->data[i] ^ alt->data[i];
 		}
 
+		if (alt->weak != NULL) {
+			for (i = 0; i < n; i++) {
+				fuz->data[i] |= alt->weak[i];
+			}
+		}
+
 		alt = alt->next;
 	}
 
 	n = 8 * fuz->n;
 
 	msk = 0;
+	val = 0;
 
 	for (i = 0; i < n; i++) {
-		msk = (msk << 2) | ((fuz->data[i >> 3] >> (~i & 7)) & 1);
+		val = (val << 1) | ((fuz->data[i >> 3] >> (~i & 7)) & 1);
+		msk = (msk << 2) | (val & 1);
 		pos += 2;
+
+		if ((val & 3) == 3) {
+			msk |= 2;
+		}
 
 		if (msk & 0xc0000000) {
 			pri_trk_evt_add (mfm->trk, PRI_EVENT_FUZZY, pos - 32, msk);
