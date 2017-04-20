@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-enc-mfm.c                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -520,7 +520,7 @@ void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
 }
 
 static
-void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
+void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3, int nopos)
 {
 	unsigned      i;
 	unsigned      flags;
@@ -528,7 +528,7 @@ void mfm_encode_sector (mfm_code_t *mfm, psi_sct_t *sct, unsigned gap3)
 	unsigned char buf[8];
 	int           clock;
 
-	if ((sct->position != 0xffffffff) && (sct->position >= (16 * 8))) {
+	if ((sct->position != 0xffffffff) && (sct->position >= (16 * 8)) && (nopos == 0)) {
 		pos = 2 * (sct->position - 16 * 8);
 
 		if (pos > mfm->last_gap3_start) {
@@ -617,6 +617,7 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 	unsigned      i;
 	unsigned long bits;
 	unsigned      gap3, scnt;
+	int           nopos;
 	psi_sct_t     *sct;
 	mfm_code_t    mfm;
 
@@ -625,6 +626,8 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 	mfm.last_gap3_start = 0;
 
 	pri_trk_set_pos (dtrk, 0);
+
+	nopos = 0;
 
 	gap3 = par->gap3;
 
@@ -662,6 +665,7 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 			else {
 				pri_trk_set_size (dtrk, bits + 4 * 16 * scnt);
 				gap3 = 4;
+				nopos = 1;
 			}
 		}
 	}
@@ -688,7 +692,7 @@ int pri_encode_mfm_trk (pri_trk_t *dtrk, psi_trk_t *strk, pri_enc_mfm_t *par)
 	for (i = 0; i < strk->sct_cnt; i++) {
 		sct = strk->sct[i];
 
-		mfm_encode_sector (&mfm, sct, gap3);
+		mfm_encode_sector (&mfm, sct, gap3, nopos);
 	}
 
 	while (dtrk->wrap == 0) {
