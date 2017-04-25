@@ -133,6 +133,7 @@ void print_help (void)
 		"  sort-reverse           Sort sectors on tracks in reverse order\n"
 		"  tags-load filename     Load sector tags\n"
 		"  tags-save filename     Save sector tags\n"
+		"  weak-auto              Convert alternate sectors to weak bit masks\n"
 		"  weak-load filename     Load the weak bit mask\n"
 		"  weak-save filename     Save the weak bit mask\n",
 		stdout
@@ -333,6 +334,58 @@ int psi_for_all_tracks (psi_img_t *img, psi_trk_cb fct, void *opaque)
 
 
 static
+int psi_auto_weak_cb (psi_img_t *img, psi_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	unsigned  i, n;
+	psi_sct_t *tmp;
+
+	if (sct->next == NULL) {
+		return (0);
+	}
+
+	if (psi_weak_alloc (sct)) {
+		return (1);
+	}
+
+	tmp = sct->next;
+
+	while (tmp != NULL) {
+		if (psi_weak_alloc (tmp)) {
+			return (1);
+		}
+
+		n = (sct->n < tmp->n) ? sct->n : tmp->n;
+
+		for (i = 0; i < n; i++) {
+			sct->weak[i] |= sct->data[i] ^ tmp->data[i];
+			sct->weak[i] |= tmp->weak[i];
+			tmp->weak[i] = sct->weak[i];
+		}
+
+		tmp = tmp->next;
+	}
+
+	psi_weak_clean (sct);
+
+	return (0);
+}
+
+int psi_auto_weak (psi_img_t *img)
+{
+	int r;
+
+	r = psi_for_all_sectors (img, psi_auto_weak_cb, NULL);
+
+	if (r) {
+		fprintf (stderr, "%s: converting failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
 int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 {
 	int  r;
@@ -365,6 +418,9 @@ int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "sort-reverse") == 0) {
 		r = psi_sort_tracks (*img, 1);
+	}
+	else if (strcmp (op, "weak-auto") == 0) {
+		r = psi_auto_weak (*img);
 	}
 
 	if (r != -1) {
