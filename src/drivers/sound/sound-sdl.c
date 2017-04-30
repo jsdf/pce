@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/sound-oss.c                                *
  * Created:     2010-08-12 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -115,6 +115,8 @@ void snd_sdl_close (sound_drv_t *sdrv)
 
 	snd_sdl_buf_free_list (drv->head);
 	snd_sdl_buf_free_list (drv->free);
+
+	snd_free (sdrv);
 
 	free (drv);
 }

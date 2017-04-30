@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/sound-null.c                               *
  * Created:     2009-10-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,6 +34,8 @@ void snd_null_close (sound_drv_t *sdrv)
 	sound_null_t *drv;
 
 	drv = sdrv->ext;
+
+	snd_free (sdrv);
 
 	free (drv);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/sound.h                                    *
  * Created:     2009-10-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -102,6 +102,8 @@ void snd_set_buf (unsigned char *dst, const uint16_t *src, unsigned long cnt,
 
 
 void snd_init (sound_drv_t *sdrv, void *ext);
+
+void snd_free (sound_drv_t *sdrv);
 
 void snd_close (sound_drv_t *sdrv);
 

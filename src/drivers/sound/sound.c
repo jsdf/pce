@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/sound.c                                    *
  * Created:     2009-10-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -170,6 +170,21 @@ void snd_init (sound_drv_t *sdrv, void *ext)
 	sdrv->set_params = NULL;
 }
 
+void snd_free (sound_drv_t *sdrv)
+{
+	if (sdrv->sbuf != NULL) {
+		free (sdrv->sbuf);
+		sdrv->sbuf = NULL;
+		sdrv->sbuf_max = 0;
+	}
+
+	if (sdrv->bbuf != NULL) {
+		free (sdrv->bbuf);
+		sdrv->bbuf = NULL;
+		sdrv->bbuf_max = 0;
+	}
+}
+
 void snd_close (sound_drv_t *sdrv)
 {
 	if (sdrv == NULL) {
@@ -181,15 +196,8 @@ void snd_close (sound_drv_t *sdrv)
 	if (sdrv->close != NULL) {
 		sdrv->close (sdrv);
 	}
-
-	if (sdrv->sbuf != NULL) {
-		free (sdrv->sbuf);
-	}
-
-	if (sdrv->bbuf != NULL) {
-		free (sdrv->bbuf);
-	}
 }
+
 
 const uint16_t *snd_filter (sound_drv_t *sdrv, const uint16_t *buf, unsigned cnt)
 {
