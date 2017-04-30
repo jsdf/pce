@@ -460,7 +460,7 @@ int psi_trk_add_sector (psi_trk_t *trk, psi_sct_t *sct)
 {
 	psi_sct_t **tmp;
 
-	tmp = realloc (trk->sct, (trk->sct_cnt + 1) * sizeof (psi_sct_t **));
+	tmp = realloc (trk->sct, (trk->sct_cnt + 1) * sizeof (psi_sct_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -630,7 +630,7 @@ int psi_cyl_add_track (psi_cyl_t *cyl, psi_trk_t *trk)
 {
 	psi_trk_t **tmp;
 
-	tmp = realloc (cyl->trk, (cyl->trk_cnt + 1) * sizeof (psi_trk_t **));
+	tmp = realloc (cyl->trk, (cyl->trk_cnt + 1) * sizeof (psi_trk_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -738,7 +738,7 @@ int psi_img_add_cylinder (psi_img_t *img, psi_cyl_t *cyl)
 {
 	psi_cyl_t **tmp;
 
-	tmp = realloc (img->cyl, (img->cyl_cnt + 1) * sizeof (psi_cyl_t **));
+	tmp = realloc (img->cyl, (img->cyl_cnt + 1) * sizeof (psi_cyl_t *));
 
 	if (tmp == NULL) {
 		return (1);
