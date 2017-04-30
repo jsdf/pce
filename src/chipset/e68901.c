@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e68901.c                                         *
  * Created:     2011-06-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -885,7 +885,7 @@ void e68901_clock_usart (e68901_t *mfp, unsigned n)
 				mfp->rsr[1] = mfp->rsr[0] & MFP_RSR_RE;
 			}
 
-			if (mfp->recv_fct == NULL) {
+			if (mfp->recv_fct != NULL) {
 				if (mfp->recv_fct (mfp->recv_ext, mfp->rdr + 1) == 0) {
 					mfp->rsr[1] |= MFP_RSR_BF;
 					mfp->recv_clk_cnt = mfp->recv_clk_max;
