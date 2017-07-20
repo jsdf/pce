@@ -134,6 +134,7 @@ void print_help (void)
 		"  tags-load filename     Load sector tags\n"
 		"  tags-save filename     Save sector tags\n"
 		"  weak-auto              Convert alternate sectors to weak bit masks\n"
+		"  weak-clear             Remove weak bit masks\n"
 		"  weak-load filename     Load the weak bit mask\n"
 		"  weak-save filename     Save the weak bit mask\n",
 		stdout
@@ -386,6 +387,29 @@ int psi_auto_weak (psi_img_t *img)
 
 
 static
+int psi_clear_weak_cb (psi_img_t *img, psi_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
+{
+	psi_weak_free (sct);
+
+	return (0);
+}
+
+int psi_clear_weak (psi_img_t *img)
+{
+	int r;
+
+	r = psi_for_all_sectors (img, psi_clear_weak_cb, NULL);
+
+	if (r) {
+		fprintf (stderr, "%s: clearing weak mask failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
 int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 {
 	int  r;
@@ -421,6 +445,9 @@ int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "weak-auto") == 0) {
 		r = psi_auto_weak (*img);
+	}
+	else if (strcmp (op, "weak-clear") == 0) {
+		r = psi_clear_weak (*img);
 	}
 
 	if (r != -1) {
