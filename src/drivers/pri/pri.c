@@ -200,6 +200,33 @@ void pri_trk_evt_ins (pri_trk_t *trk, pri_evt_t *evt)
 	}
 }
 
+int pri_trk_evt_rmv (pri_trk_t *trk, const pri_evt_t *evt)
+{
+	pri_evt_t *tmp;
+
+	if (trk->evt == NULL) {
+		return (1);
+	}
+
+	if (trk->evt == evt) {
+		trk->evt = trk->evt->next;
+		return (0);
+	}
+
+	tmp = trk->evt;
+
+	while ((tmp->next != NULL) && (tmp->next != evt)) {
+		tmp = tmp->next;
+	}
+
+	if (tmp->next == evt) {
+		tmp->next = tmp->next->next;
+		return (0);
+	}
+
+	return (1);
+}
+
 pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val)
 {
 	pri_evt_t *evt;
