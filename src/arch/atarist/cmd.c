@@ -61,7 +61,7 @@ static
 void st_dasm_str (char *dst, e68_dasm_t *op, int opcode)
 {
 	unsigned   i, n;
-	char       tmp[256];
+	char       tmp[272];
 	const char *ins;
 
 	strcpy (dst, "");
