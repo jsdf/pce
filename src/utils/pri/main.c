@@ -109,6 +109,7 @@ static struct {
 	{ "double-step", "", "Remove odd numbered tracks" },
 	{ "double-step-even", "", "Remove even numbered tracks" },
 	{ "encode", "type file", "Encode tracks" },
+	{ "half-rate", "", "Half the data rate by removing odd numbered bits" },
 	{ "half-step", "", "Duplicate all tracks" },
 	{ "info", "", "Print image information" },
 	{ "mfm-align-am", "what number pos", "Align an address mark with pos" },
@@ -433,6 +434,9 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 		}
 
 		r = pri_event_list (*img, optarg1[0], optarg2[0]);
+	}
+	else if (strcmp (op, "half-rate") == 0) {
+		r = pri_half_rate (*img);
 	}
 	else if (strcmp (op, "half-step") == 0) {
 		r = pri_half_step (*img);

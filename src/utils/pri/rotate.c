@@ -30,6 +30,48 @@
 
 
 static
+int pri_half_rate_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	unsigned long i, j, n;
+	unsigned char *buf;
+	pri_evt_t     *evt;
+
+	buf = trk->data;
+
+	j = 0;
+	n = pri_trk_get_size (trk) / 2;
+
+	for (i = 0; i < n; i++) {
+		if (buf[j >> 3] & 0x80 >> (j & 7)) {
+			buf[i >> 3] |= 0x80 >> (i & 7);
+		}
+		else {
+			buf[i >> 3] &= ~(0x80 >> (i & 7));
+		}
+
+		j += 2;
+	}
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		evt->pos >>= 1;
+		evt = evt->next;
+	}
+
+	pri_trk_set_size (trk, n);
+	pri_trk_set_clock (trk, pri_trk_get_clock (trk) / 2);
+
+	return (0);
+}
+
+int pri_half_rate (pri_img_t *img)
+{
+	return (pri_for_all_tracks (img, pri_half_rate_cb, NULL));
+}
+
+
+static
 int pri_align_gcr_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
 {
 	unsigned      val, run;
