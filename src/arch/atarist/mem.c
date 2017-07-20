@@ -141,6 +141,12 @@ unsigned short st_mem_get_uint16 (void *ext, unsigned long addr)
 	case 0xff8606:
 		return (st_dma_get_status (&sim->dma));
 
+	case 0xfffc00:
+	case 0xfffc02:
+	case 0xfffc04:
+	case 0xfffc06:
+		return (st_mem_get_uint8 (ext, addr) << 8);
+
 	default:
 		st_log_deb ("mem: get 16: %06lX -> 0000\n", addr);
 		break;
@@ -271,6 +277,13 @@ void st_mem_set_uint16 (void *ext, unsigned long addr, unsigned short val)
 
 	case 0xff8606:
 		st_dma_set_mode (&sim->dma, val);
+		break;
+
+	case 0xfffc00:
+	case 0xfffc02:
+	case 0xfffc04:
+	case 0xfffc06:
+		st_mem_set_uint8 (ext, addr, val >> 8);
 		break;
 
 	default:
