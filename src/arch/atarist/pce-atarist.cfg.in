@@ -19,7 +19,8 @@ path = "-."
 
 system {
 	# The ST model to emulate. Valid models are:
-	# st: An Atari ST
+	# st:   An Atari ST
+	# mega: An Atari Mega
 	model = "st"
 
 	# Disable the startup memory test.
@@ -29,6 +30,10 @@ system {
 	# If this is true, a mono monitor is attached, a color
 	# monitor otherwise.
 	mono = 1
+
+	# Enable the RTC.
+	# This enables a Mega compatible RTC even on plain ST machines.
+	rtc = 1
 
 	# Only update the screen every nth frame. A value of 1
 	# skips every other frame and is a good compromise between

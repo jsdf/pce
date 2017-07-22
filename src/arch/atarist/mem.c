@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/mem.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,31 +38,32 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 		return (0);
 	}
 
-	if ((addr >= 0xfffc20) && (addr < 0xfffc40)) {
-		return (rp5c15_get_uint8 (&sim->rtc, (addr - 0xfffc20) / 2));
+	if ((addr >= 0xff8900) && (addr < 0xff8930)) {
+		/* DMA sound */
+
+		if ((sim->model & PCE_ST_STE) == 0) {
+			e68_set_bus_error (sim->cpu, 1);
+		}
+
+		return (0);
 	}
 
-	if ((addr & 0xfffe00) == 0xfffa00) {
+	if ((addr >= 0xff8a00) && (addr < 0xff8a40)) {
+		/* blitter */
 		e68_set_bus_error (sim->cpu, 1);
 		return (0);
 	}
 
-	switch (addr) {
-	case 0xf00001:
-	case 0xf00011: /* ide */
-	case 0xf0001d:
-	case 0xf00039: /* ide */
-	case 0xff8282: /* F030 video */
-	case 0xff8400: /* TT palette */
-	case 0xff8901: /* dma sound */
-	case 0xff8961: /* TT clock chip */
-	case 0xff8963: /* TT clock chip */
-	case 0xff8a3c: /* blitter */
-	case 0xff8c80: /* TT 8530 SCC */
-	case 0xff8e09: /* TT VME */
-		e68_set_bus_error (sim->cpu, 1);
-		break;
+	if ((addr >= 0xfffc20) && (addr < 0xfffc40)) {
+		if (sim->model & (PCE_ST_MEGA | PCE_ST_RTC)) {
+			return (rp5c15_get_uint8 (&sim->rtc, (addr - 0xfffc20) / 2));
+		}
+		else {
+			return (0);
+		}
+	}
 
+	switch (addr) {
 	case 0xff8609:
 		return (st_dma_get_addr (&sim->dma, 0));
 
@@ -74,10 +75,6 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 
 	case 0xff860f: /* FDC density */
 		return (0);
-
-	case 0xff8781:
-		e68_set_bus_error (sim->cpu, 1);
-		break;
 
 	case 0xff8800:
 		/* YM2149 */
@@ -100,6 +97,7 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 		return (e6850_get_uint8 (&sim->acia1, 1));
 
 	default:
+		e68_set_bus_error (sim->cpu, 1);
 		st_log_deb ("mem: get  8: %06lX -> 00\n", addr);
 		break;
 	}
@@ -115,24 +113,25 @@ unsigned short st_mem_get_uint16 (void *ext, unsigned long addr)
 		return (0);
 	}
 
-	if ((addr & 0xfffe00) == 0xfffa00) {
+	if ((addr >= 0xff8900) && (addr < 0xff8930)) {
+		/* dma sound */
+
+		if ((sim->model & PCE_ST_STE) == 0) {
+			e68_set_bus_error (sim->cpu, 1);
+		}
+
+		return (0);
+	}
+
+	if ((addr >= 0xff8a00) && (addr < 0xff8a40)) {
+		/* blitter */
 		e68_set_bus_error (sim->cpu, 1);
 		return (0);
 	}
 
 	switch (addr) {
-	case 0xff8900: /* DMA sound */
-	case 0xff8a00: /* blitter */
-	case 0xff8c80: /* TT 8530 SCC */
-		e68_set_bus_error (sim->cpu, 1);
-		break;
-
 	case 0xfa0000: /* cartridge */
 	case 0xfa0002:
-		break;
-
-	case 0xff8006:
-		e68_set_bus_error (sim->cpu, 1);
 		break;
 
 	case 0xff8604:
@@ -141,6 +140,15 @@ unsigned short st_mem_get_uint16 (void *ext, unsigned long addr)
 	case 0xff8606:
 		return (st_dma_get_status (&sim->dma));
 
+	case 0xff8608:
+		return (st_dma_get_addr (&sim->dma, 0));
+
+	case 0xff860a:
+		return (st_dma_get_addr (&sim->dma, 1));
+
+	case 0xff860c:
+		return (st_dma_get_addr (&sim->dma, 2));
+
 	case 0xfffc00:
 	case 0xfffc02:
 	case 0xfffc04:
@@ -148,6 +156,7 @@ unsigned short st_mem_get_uint16 (void *ext, unsigned long addr)
 		return (st_mem_get_uint8 (ext, addr) << 8);
 
 	default:
+		e68_set_bus_error (sim->cpu, 1);
 		st_log_deb ("mem: get 16: %06lX -> 0000\n", addr);
 		break;
 	}
@@ -174,23 +183,37 @@ void st_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 		return;
 	}
 
-	if ((addr & 0xfffe00) == 0xfffa00) {
+	if ((addr >= 0xff8808) && (addr < 0xff8900)) {
+		/* psg */
+		st_log_deb ("mem: set  8: %06lX <- %02X\n", addr, val);
+		return;
+	}
+
+	if ((addr >= 0xff8900) && (addr < 0xff8930)) {
+		/* dma sound */
+
+		if ((sim->model & PCE_ST_STE) == 0) {
+			e68_set_bus_error (sim->cpu, 1);
+		}
+
+		return;
+	}
+
+	if ((addr >= 0xff8a00) && (addr < 0xff8a40)) {
+		/* blitter */
 		e68_set_bus_error (sim->cpu, 1);
 		return;
 	}
 
 	if ((addr >= 0xfffc20) && (addr < 0xfffc40)) {
-		rp5c15_set_uint8 (&sim->rtc, (addr - 0xfffc20) / 2, val);
+		if (sim->model & (PCE_ST_MEGA | PCE_ST_RTC)) {
+			rp5c15_set_uint8 (&sim->rtc, (addr - 0xfffc20) / 2, val);
+		}
+
 		return;
 	}
 
 	switch (addr) {
-	case 0xff8961: /* TT clock chip */
-	case 0xff8a3c: /* blitter */
-	case 0xff8e0d: /* vme_mask */
-		e68_set_bus_error (sim->cpu, 1);
-		break;
-
 	case 0xff8001: /* memory configuration */
 		break;
 
@@ -210,15 +233,13 @@ void st_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 		break;
 
 	case 0xff8800:
+	case 0xff8804:
 		st_psg_set_select (&sim->psg, val);
 		break;
 
 	case 0xff8802:
-		st_psg_set_data (&sim->psg, val);
-		break;
-
-	case 0xff8804:
 	case 0xff8806:
+		st_psg_set_data (&sim->psg, val);
 		break;
 
 	case 0xfffc00:
@@ -238,6 +259,7 @@ void st_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 		break;
 
 	default:
+		e68_set_bus_error (sim->cpu, 1);
 		st_log_deb ("mem: set  8: %06lX <- %02X\n", addr, val);
 		break;
 	}
@@ -251,32 +273,43 @@ void st_mem_set_uint16 (void *ext, unsigned long addr, unsigned short val)
 		return;
 	}
 
-	if ((addr & 0xfffe00) == 0xfffa00) {
+	if ((addr >= 0xff8804) && (addr < 0xff8900)) {
+		/* psg */
+		st_log_deb ("mem: set 16: %06lX <- %04X\n", addr, val);
+		return;
+	}
+
+	if ((addr >= 0xff8900) && (addr < 0xff8930)) {
+		/* dma sound */
+
+		if ((sim->model & PCE_ST_STE) == 0) {
+			e68_set_bus_error (sim->cpu, 1);
+		}
+
+		return;
+	}
+
+	if ((addr >= 0xff8a00) && (addr < 0xff8a40)) {
+		/* blitter */
 		e68_set_bus_error (sim->cpu, 1);
 		return;
 	}
 
 	switch (addr) {
-	case 0xff8800:
-		st_psg_set_select (&sim->psg, val >> 8);
-		break;
-
-	case 0xff8802:
-		st_psg_set_data (&sim->psg, val >> 8);
-		break;
-
-	case 0xff8900: /* dma sound */
-	case 0xff8400: /* TT palette */
-	case 0xfff9bc: /* ? */
-		e68_set_bus_error (sim->cpu, 1);
-		break;
-
 	case 0xff8604:
 		st_dma_set_disk (&sim->dma, val);
 		break;
 
 	case 0xff8606:
 		st_dma_set_mode (&sim->dma, val);
+		break;
+
+	case 0xff8800:
+		st_psg_set_select (&sim->psg, val >> 8);
+		break;
+
+	case 0xff8802:
+		st_psg_set_data (&sim->psg, val >> 8);
 		break;
 
 	case 0xfffc00:
@@ -287,6 +320,7 @@ void st_mem_set_uint16 (void *ext, unsigned long addr, unsigned short val)
 		break;
 
 	default:
+		e68_set_bus_error (sim->cpu, 1);
 		st_log_deb ("mem: set 16: %06lX <- %04X\n", addr, val);
 		break;
 	}

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/atarist.c                                   *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -245,7 +245,7 @@ int st_set_magic (atari_st_t *sim, pce_key_t key)
 static
 void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 {
-	int        mono, fastboot;
+	int        mono, fastboot, rtc;
 	const char *model, *parport, *serport;
 	ini_sct_t  *sct;
 
@@ -259,6 +259,7 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 	ini_get_string (sct, "model", &model, "st");
 	ini_get_bool (sct, "mono", &mono, 1);
 	ini_get_bool (sct, "fastboot", &fastboot, 0);
+	ini_get_bool (sct, "rtc", &rtc, 1);
 	ini_get_string (sct, "parport", &parport, NULL);
 	ini_get_string (sct, "serport", &serport, NULL);
 
@@ -267,9 +268,19 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 	if (strcmp (model, "st") == 0) {
 		sim->model = PCE_ST_ST;
 	}
+	else if (strcmp (model, "mega") == 0) {
+		sim->model = PCE_ST_MEGA;
+	}
+	else if (strcmp (model, "ste") == 0) {
+		sim->model = PCE_ST_STE;
+	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
 		sim->model = PCE_ST_ST;
+	}
+
+	if (rtc) {
+		sim->model |= PCE_ST_RTC;
 	}
 
 	sim->video_state = 0;

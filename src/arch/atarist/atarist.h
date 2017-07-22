@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/atarist.h                                   *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -22,9 +22,6 @@
 
 #ifndef PCE_ATARIST_ATARIST_H
 #define PCE_ATARIST_ATARIST_H 1
-
-
-#define PCE_ST_ST 1
 
 
 #include "acsi.h"
@@ -54,6 +51,12 @@
 #include <lib/brkpt.h>
 
 #include <libini/libini.h>
+
+
+#define PCE_ST_ST   0x0001
+#define PCE_ST_MEGA 0x0002
+#define PCE_ST_STE  0x0004
+#define PCE_ST_RTC  0x8000
 
 
 /*****************************************************************************
