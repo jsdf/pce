@@ -364,6 +364,11 @@ video {
 	device = "wy700"
 
 	blink = 16
+
+	# Select the text mode font:
+	#   0 = Thick font
+	#   1 = Thin font
+	font = 0
 }
 
 
