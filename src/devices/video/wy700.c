@@ -343,7 +343,7 @@ void wy700_update_mode0 (cga_t *wy)
 }
 
 /*
- * Update graphics 320 * 200 * 4
+ * Update CGA 320 * 200 * 4
  */
 static
 void wy700_update_320x200 (cga_t *wy)
@@ -389,7 +389,7 @@ void wy700_update_320x200 (cga_t *wy)
 }
 
 /*
- * Update graphics 640 * 200 * 2
+ * Update CGA 640 * 200 * 2
  */
 static
 void wy700_update_640x200 (cga_t *wy)
@@ -432,14 +432,14 @@ void wy700_update_640x200 (cga_t *wy)
 }
 
 /*
- * Update graphics 640 * 400 * 2
+ * Update native 640 * 400 * 2
  */
 static
-void wy700_update_640x400 (cga_t *wy)
+void wy700_update_640x400x2 (cga_t *wy)
 {
 	unsigned            i, x, y;
-	unsigned            val;
-	unsigned            addr;
+	unsigned            ofs;
+	unsigned char       val;
 	unsigned char       *dst;
 	const unsigned char *src;
 
@@ -448,15 +448,13 @@ void wy700_update_640x400 (cga_t *wy)
 	}
 
 	dst = wy->buf;
-
-	addr = 0;
+	ofs = 0;
 
 	for (y = 0; y < 400; y++) {
-		src = wy->mem + addr;
+		src = wy->mem + ofs;
+		ofs += 80;
 
-		addr += 80;
-
-		for (x = 0; x < (640 / 8); x++) {
+		for (x = 0; x < 80; x++) {
 			val = src[x];
 
 			for (i = 0; i < 8; i++) {
@@ -472,7 +470,6 @@ void wy700_update_640x400 (cga_t *wy)
 				}
 
 				val <<= 1;
-
 				dst += 3;
 			}
 		}
@@ -480,14 +477,56 @@ void wy700_update_640x400 (cga_t *wy)
 }
 
 /*
- * Update graphics 1280 * 400 * 2
+ * Update native 320 * 400 * 4
  */
 static
-void wy700_update_1280x400 (cga_t *wy)
+void wy700_update_320x400x4 (cga_t *wy)
 {
 	unsigned            i, x, y;
-	unsigned            val;
-	unsigned            addr;
+	unsigned            ofs;
+	unsigned char       val, col;
+	unsigned char       *dst;
+	const unsigned char *src;
+
+	if (cga_set_buf_size (wy, 320, 400)) {
+		return;
+	}
+
+	dst = wy->buf;
+	ofs = 0;
+
+	for (y = 0; y < 400; y++) {
+		src = wy->mem + ofs;
+		ofs += 80;
+
+		for (x = 0; x < 80; x++) {
+			val = src[x];
+
+			for (i = 0; i < 4; i++) {
+				col = val & 0xc0;
+				col |= col >> 2;
+				col |= col >> 4;
+
+				dst[0] = col;
+				dst[1] = col;
+				dst[2] = col;
+
+				val <<= 2;
+				dst += 3;
+			}
+		}
+	}
+}
+
+/*
+ * Update native 1280 * 400 * 2
+ */
+static
+void wy700_update_1280x400x2 (cga_t *wy)
+{
+	unsigned            i, x, y;
+	unsigned            ofs;
+	unsigned char       val;
 	unsigned char       *dst;
 	const unsigned char *src;
 
@@ -496,15 +535,13 @@ void wy700_update_1280x400 (cga_t *wy)
 	}
 
 	dst = wy->buf;
-
-	addr = 0;
+	ofs = 0;
 
 	for (y = 0; y < 400; y++) {
-		src = wy->mem + addr;
+		src = wy->mem + ofs;
+		ofs += 160;
 
-		addr += 160;
-
-		for (x = 0; x < (1280 / 8); x++) {
+		for (x = 0; x < 160; x++) {
 			val = src[x];
 
 			for (i = 0; i < 8; i++) {
@@ -520,7 +557,6 @@ void wy700_update_1280x400 (cga_t *wy)
 				}
 
 				val <<= 1;
-
 				dst += 3;
 			}
 		}
@@ -528,14 +564,56 @@ void wy700_update_1280x400 (cga_t *wy)
 }
 
 /*
- * Update graphics 1280 * 800 * 2
+ * Update native 640 * 400 * 4
  */
 static
-void wy700_update_1280x800 (cga_t *wy)
+void wy700_update_640x400x4 (cga_t *wy)
 {
 	unsigned            i, x, y;
-	unsigned            val;
-	unsigned            addr;
+	unsigned            ofs;
+	unsigned char       val, col;
+	unsigned char       *dst;
+	const unsigned char *src;
+
+	if (cga_set_buf_size (wy, 640, 400)) {
+		return;
+	}
+
+	dst = wy->buf;
+	ofs = 0;
+
+	for (y = 0; y < 400; y++) {
+		src = wy->mem + ofs;
+		ofs += 160;
+
+		for (x = 0; x < 160; x++) {
+			val = src[x];
+
+			for (i = 0; i < 4; i++) {
+				col = val & 0xc0;
+				col |= col >> 2;
+				col |= col >> 4;
+
+				dst[0] = col;
+				dst[1] = col;
+				dst[2] = col;
+
+				val <<= 2;
+				dst += 3;
+			}
+		}
+	}
+}
+
+/*
+ * Update native 1280 * 800 * 2
+ */
+static
+void wy700_update_1280x800x2 (cga_t *wy)
+{
+	unsigned            i, x, y;
+	unsigned            ofs;
+	unsigned char       val;
 	unsigned char       *dst;
 	const unsigned char *src;
 
@@ -544,18 +622,17 @@ void wy700_update_1280x800 (cga_t *wy)
 	}
 
 	dst = wy->buf;
-
-	addr = 0;
+	ofs = 0;
 
 	for (y = 0; y < 800; y++) {
-		src = wy->mem + addr;
+		src = wy->mem + ofs;
 
 		if (y & 1) {
 			src += 0x10000;
-			addr += 160;
+			ofs += 160;
 		}
 
-		for (x = 0; x < (1280 / 8); x++) {
+		for (x = 0; x < 160; x++) {
 			val = src[x];
 
 			for (i = 0; i < 8; i++) {
@@ -571,7 +648,52 @@ void wy700_update_1280x800 (cga_t *wy)
 				}
 
 				val <<= 1;
+				dst += 3;
+			}
+		}
+	}
+}
 
+/*
+ * Update native 640 * 800 * 4
+ */
+static
+void wy700_update_640x800x4 (cga_t *wy)
+{
+	unsigned            i, x, y;
+	unsigned            ofs;
+	unsigned char       val, col;
+	unsigned char       *dst;
+	const unsigned char *src;
+
+	if (cga_set_buf_size (wy, 640, 800)) {
+		return;
+	}
+
+	dst = wy->buf;
+	ofs = 0;
+
+	for (y = 0; y < 800; y++) {
+		src = wy->mem + ofs;
+
+		if (y & 1) {
+			src += 0x10000;
+			ofs += 160;
+		}
+
+		for (x = 0; x < 160; x++) {
+			val = src[x];
+
+			for (i = 0; i < 4; i++) {
+				col = val & 0xc0;
+				col |= col >> 2;
+				col |= col >> 4;
+
+				dst[0] = col;
+				dst[1] = col;
+				dst[2] = col;
+
+				val <<= 2;
 				dst += 3;
 			}
 		}
@@ -585,29 +707,41 @@ void wy700_update_native (cga_t *wy)
 
 	ctl = wy->reg[WY700_CONTROL];
 
-	if (ctl & 0x08) {
-		switch (ctl & 0xf0) {
-		case 0xc0:
-			wy700_update_1280x800 (wy);
-			break;
-
-		case 0xa0:
-			wy700_update_1280x400 (wy);
-			break;
-
-		case 0x80:
-			wy700_update_640x400 (wy);
-			break;
-
-		default:
-			fprintf (stderr, "WY700: unknown mode (%02X)\n", ctl);
-			break;
-		}
+	if ((ctl & 0x08) == 0) {
+		cga_update (wy);
 
 		return;
 	}
 
-	cga_update (wy);
+	switch ((ctl >> 4) & 7) {
+	case 0:
+		wy700_update_640x400x2 (wy);
+		break;
+
+	case 1:
+		wy700_update_320x400x4 (wy);
+		break;
+
+	case 2:
+		wy700_update_1280x400x2 (wy);
+		break;
+
+	case 3:
+		wy700_update_640x400x4 (wy);
+		break;
+
+	case 4:
+		wy700_update_1280x800x2 (wy);
+		break;
+
+	case 5:
+		wy700_update_640x800x4 (wy);
+		break;
+
+	default:
+		fprintf (stderr, "WY700: unknown mode (%02X)\n", ctl);
+		break;
+	}
 }
 
 /*
