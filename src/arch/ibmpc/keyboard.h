@@ -30,6 +30,7 @@
 typedef struct {
 	/* transmission delay in 1.19 MHz clocks */
 	unsigned long delay;
+	unsigned long timeout;
 
 	/* the shift register */
 	unsigned char key;
