@@ -129,6 +129,10 @@ void sig_term (int s)
 	fprintf (stderr, "pce-ibmpc: sigterm\n");
 	fflush (stderr);
 
+	if (par_pc->brk == PCE_BRK_ABORT) {
+		exit (1);
+	}
+
 	par_pc->brk = PCE_BRK_ABORT;
 }
 
