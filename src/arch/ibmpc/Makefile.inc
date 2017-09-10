@@ -64,15 +64,6 @@ PCE_IBMPC_OBJ_EXT := \
 	src/chipset/82xx/e8255.o \
 	src/chipset/82xx/e8259.o \
 	src/chipset/82xx/e8272.o \
-	src/devices/video/cga.o \
-	src/devices/video/ega.o \
-	src/devices/video/hgc.o \
-	src/devices/video/mda.o \
-	src/devices/video/olivetti.o \
-	src/devices/video/plantronics.o \
-	src/devices/video/vga.o \
-	src/devices/video/video.o \
-	src/devices/video/wy700.o \
 	src/devices/device.o \
 	src/devices/fdc.o \
 	src/devices/hdc.o \
@@ -104,6 +95,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/libini/libini.a \
 	src/drivers/block/block.a \
 	src/drivers/psi/psi.a \
+	$(DEV_VID_OBJ) \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
