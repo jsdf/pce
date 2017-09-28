@@ -660,7 +660,7 @@ int int21_fct_3d (dos_t *sim)
 		break;
 
 	default:
-		return (int21_ret (sim, 1, 0x0001));
+		return (int21_ret (sim, 1, 0x000c));
 	}
 
 	ds = e86_get_ds (&sim->cpu);
@@ -684,7 +684,7 @@ int int21_fct_3d (dos_t *sim)
 	if (sim->file[fd] == NULL) {
 		free (name);
 
-		return (int21_ret (sim, 1, 0x0001));
+		return (int21_ret (sim, 1, 0x0002));
 	}
 
 	free (name);
