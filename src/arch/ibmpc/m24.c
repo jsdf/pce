@@ -38,6 +38,11 @@
 #include <libini/libini.h>
 
 
+#ifndef DEBUG_RTC
+#define DEBUG_RTC 0
+#endif
+
+
 static
 unsigned char m24_rtc_get_uint8 (ibmpc_t *pc, unsigned long addr)
 {
@@ -125,6 +130,11 @@ unsigned char m24_rtc_get_uint8 (ibmpc_t *pc, unsigned long addr)
 	return (0xff);
 }
 
+static
+void m24_rtc_set_uint8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
+{
+}
+
 int m24_get_port8 (ibmpc_t *pc, unsigned long addr, unsigned char *val)
 {
 	if ((pc->model & PCE_IBMPC_M24) == 0) {
@@ -133,6 +143,9 @@ int m24_get_port8 (ibmpc_t *pc, unsigned long addr, unsigned char *val)
 
 	if ((addr >= 0x70) && (addr <= 0x7f)) {
 		*val = m24_rtc_get_uint8 (pc, addr - 0x70);
+#if DEBUG_RTC >= 1
+		pc_log_deb ("M24 RTC get port 8 %04lX -> %02X\n", addr, *val);
+#endif
 		return (0);
 	}
 
@@ -155,6 +168,18 @@ int m24_get_port8 (ibmpc_t *pc, unsigned long addr, unsigned char *val)
 
 int m24_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 {
+	if ((pc->model & PCE_IBMPC_M24) == 0) {
+		return (1);
+	}
+
+	if ((addr >= 0x70) && (addr <= 0x7f)) {
+#if DEBUG_RTC >= 1
+		pc_log_deb ("M24 RTC set port 8 %04lX <- %02X\n", addr, val);
+#endif
+		m24_rtc_set_uint8 (pc, addr - 0x70, val);
+		return (0);
+	}
+
 	return (1);
 }
 
