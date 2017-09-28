@@ -307,6 +307,48 @@ int int21_fct_09 (dos_t *sim)
 }
 
 /*
+ * 0A: Read line
+ */
+static
+int int21_fct_0a (dos_t *sim)
+{
+	int            c;
+	unsigned       cnt, max;
+	unsigned short seg, ofs;
+	FILE           *fp;
+
+	if ((fp = int21_get_fp (sim, 0)) == NULL) {
+		return (int21_ret (sim, 1, 0));
+	}
+
+	seg = e86_get_ds (&sim->cpu);
+	ofs = e86_get_dx (&sim->cpu);
+
+	max = sim_get_uint8 (sim, seg, ofs);
+	cnt = 0;
+
+	while (cnt < max) {
+		if ((c = fgetc (fp)) == EOF) {
+			break;
+		}
+
+		if ((c == 0x0d) || (c == 0x0a)) {
+			sim_set_uint8 (sim, seg, ofs + cnt + 2, 0x0d);
+			break;
+		}
+
+		sim_set_uint8 (sim, seg, ofs + cnt + 2, c);
+		cnt += 1;
+	}
+
+	sim_set_uint8 (sim, seg, ofs + 1, cnt);
+
+	int21_ret (sim, 0, 0);
+
+	return (0);
+}
+
+/*
  * 0B: Check keyboard status
  */
 static
@@ -1389,6 +1431,9 @@ int sim_int21 (dos_t *sim)
 
 	case 0x09:
 		return (int21_fct_09 (sim));
+
+	case 0x0a:
+		return (int21_fct_0a (sim));
 
 	case 0x0b:
 		return (int21_fct_0b (sim));
