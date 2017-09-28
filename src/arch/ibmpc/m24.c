@@ -76,9 +76,9 @@ unsigned char m24_rtc_get_uint8 (ibmpc_t *pc, unsigned long addr)
 		sec = tm->tm_sec;
 	}
 	else {
-		yrs = 1980;
+		yrs = 1984;
 		mon = 0;
-		day = 0;
+		day = 1;
 		hrs = 0;
 		min = 0;
 		sec = 0;
@@ -120,7 +120,7 @@ unsigned char m24_rtc_get_uint8 (ibmpc_t *pc, unsigned long addr)
 		return ((mon + 1) / 10);
 
 	case 0x0f:
-		return ((yrs < 1980) ? 0 : ((yrs - 1980) & 7));
+		return (yrs & 7);
 
 	default:
 		pc_log_deb ("m24 rtc get port 8 %04lX\n", addr + 0x70);
