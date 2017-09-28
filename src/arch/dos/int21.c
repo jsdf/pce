@@ -771,6 +771,7 @@ static
 int int21_fct_3f (dos_t *sim)
 {
 	int            c;
+	int            tty, lf;
 	unsigned       i, cnt;
 	unsigned short seg, ofs;
 	FILE           *fp;
@@ -779,18 +780,37 @@ int int21_fct_3f (dos_t *sim)
 		return (int21_ret (sim, 1, 6));
 	}
 
+	tty = isatty (fileno (fp));
+
 	cnt = e86_get_cx (&sim->cpu);
 	seg = e86_get_ds (&sim->cpu);
 	ofs = e86_get_dx (&sim->cpu);
 
+	lf = 0;
+
 	for (i = 0; i < cnt; i++) {
-		if ((c = fgetc (fp)) == EOF) {
-			break;
+		if (lf) {
+			c = 0x0a;
+			lf = 0;
+		}
+		else {
+			if ((c = fgetc (fp)) == EOF) {
+				break;
+			}
+
+			if (tty && (c == 0x0a)) {
+				c = 0x0d;
+				lf = 1;
+			}
 		}
 
 		sim_set_uint8 (sim, seg, ofs, c);
-
 		ofs = (ofs + 1) & 0xffff;
+
+		if (tty && (c == 0x0a)) {
+			i += 1;
+			break;
+		}
 	}
 
 	int21_ret (sim, 0, i);
