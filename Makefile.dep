@@ -511,6 +511,7 @@ src/arch/ibmpc/hook.o: src/arch/ibmpc/hook.c \
 src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/arch/ibmpc/cassette.h \
 	src/arch/ibmpc/ems.h \
+	src/arch/ibmpc/hook.h \
 	src/arch/ibmpc/ibmpc.h \
 	src/arch/ibmpc/keyboard.h \
 	src/arch/ibmpc/m24.h \

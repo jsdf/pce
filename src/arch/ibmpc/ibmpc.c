@@ -21,6 +21,7 @@
 
 
 #include "main.h"
+#include "hook.h"
 #include "ibmpc.h"
 #include "m24.h"
 #include "msg.h"
@@ -73,9 +74,6 @@
 
 
 #define PCE_IBMPC_SLEEP 25000
-
-
-void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
 
 
 static char *par_intlog[256];
@@ -600,7 +598,9 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	pc->cpu->op_ext = pc;
-	pc->cpu->op_hook = &pc_e86_hook;
+	pc->cpu->op_hook = pc_hook_old;
+
+	e86_set_hook_fct (pc->cpu, pc, pc_hook);
 
 	pc->speed_current = speed;
 	pc->speed_saved = speed;

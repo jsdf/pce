@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/hook.c                                        *
  * Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,22 +28,313 @@
 #include "msg.h"
 #include "xms.h"
 
+#include <string.h>
 #include <time.h>
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include <cpu/e8086/e8086.h>
+
+#include <devices/memory.h>
 
 #include <lib/log.h>
 
 
 static
-void pc_hook_log (ibmpc_t *pc, unsigned char op1, unsigned char op2)
+void pc_hook_log (ibmpc_t *pc)
 {
 	pce_log (MSG_DEB,
-		"pce: hook [%02x %02x] AX=%04X BX=%04X CX=%04X DX=%04X\n",
-		op1, op2,
+		"pce: hook AX=%04X BX=%04X CX=%04X DX=%04X DS=%04X ES=%04X\n",
 		e86_get_ax (pc->cpu), e86_get_bx (pc->cpu),
-		e86_get_cx (pc->cpu), e86_get_dx (pc->cpu)
+		e86_get_cx (pc->cpu), e86_get_dx (pc->cpu),
+		e86_get_ds (pc->cpu), e86_get_es (pc->cpu)
 	);
+}
+
+void pc_hook_set_result (ibmpc_t *pc, unsigned err)
+{
+	if ((err & 0xffff) != 0) {
+		e86_set_ax (pc->cpu, err);
+		e86_set_cf (pc->cpu, 1);
+	}
+	else {
+		e86_set_cf (pc->cpu, 0);
+	}
+}
+
+static
+int pc_hook_get_string (ibmpc_t *pc, unsigned char *dst, unsigned max, unsigned seg, unsigned ofs)
+{
+	unsigned i;
+
+	for (i = 0; i < max; i++) {
+		if ((dst[i] = e86_get_mem8 (pc->cpu, seg, ofs + i)) == 0) {
+			return (0);
+		}
+	}
+
+	return (1);
+}
+
+static
+void pc_hook_check (ibmpc_t *pc)
+{
+	e86_set_ax (pc->cpu, 0x0fce);
+	e86_set_cf (pc->cpu, 0);
+}
+
+static
+void pc_hook_get_version (ibmpc_t *pc)
+{
+	e86_set_ax (pc->cpu, (PCE_VERSION_MIC << 8) | 0);
+	e86_set_dx (pc->cpu, (PCE_VERSION_MAJ << 8) | PCE_VERSION_MIN);
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_get_version_str (ibmpc_t *pc)
+{
+	unsigned       i, n;
+	unsigned short seg, ofs, max;
+	const char     *str;
+
+	seg = e86_get_es (pc->cpu);
+	ofs = e86_get_di (pc->cpu);
+	max = e86_get_cx (pc->cpu);
+	str = PCE_VERSION_STR;
+
+	n = strlen (str) + 1;
+
+	if (n > max) {
+		pc_hook_set_result (pc, 0xffff);
+		return;
+	}
+
+	for (i = 0; i < n; i++) {
+		e86_set_mem8 (pc->cpu, seg, ofs + i, str[i]);
+	}
+
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_stop (ibmpc_t *pc)
+{
+	pc->brk = 1;
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_abort (ibmpc_t *pc)
+{
+	pc->brk = 2;
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_set_msg (ibmpc_t *pc)
+{
+	unsigned char msg[256];
+	unsigned char val[256];
+
+	if (pc_hook_get_string (pc, msg, 256, e86_get_ds (pc->cpu), e86_get_si (pc->cpu))) {
+		pc_hook_set_result (pc, 0xffff);
+		return;
+	}
+
+	if (pc_hook_get_string (pc, val, 256, e86_get_es (pc->cpu), e86_get_di (pc->cpu))) {
+		pc_hook_set_result (pc, 0xffff);
+		return;
+	}
+
+	e86_set_ax (pc->cpu, 0);
+
+	if (pc_set_msg (pc, (char *) msg, (char *) val)) {
+		pc_hook_set_result (pc, 0x0001);
+	}
+	else {
+		pc_hook_set_result (pc, 0);
+	}
+}
+
+static
+void pc_hook_get_time_unix (ibmpc_t *pc)
+{
+	unsigned long long tm;
+
+	if (pc->support_rtc == 0) {
+		pc_hook_set_result (pc, 0xffff);
+		return;
+	}
+
+	tm = (unsigned long long) time (NULL);
+
+	e86_set_ax (pc->cpu, tm & 0xffff);
+	tm >>= 16;
+	e86_set_dx (pc->cpu, tm & 0xffff);
+	tm >>= 16;
+	e86_set_cx (pc->cpu, tm & 0xffff);
+	tm >>= 16;
+	e86_set_bx (pc->cpu, tm & 0xffff);
+
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_get_calendar (ibmpc_t *pc, int local)
+{
+	unsigned  cs;
+	time_t    tm;
+	struct tm *tv;
+
+	if (pc->support_rtc == 0) {
+		pc_hook_set_result (pc, 0xffff);
+		return;
+	}
+
+#ifdef HAVE_GETTIMEOFDAY
+	{
+		struct timeval tv;
+
+		if (gettimeofday (&tv, NULL)) {
+			tm = time (NULL);
+			cs = 0;
+		}
+		else {
+			tm = tv.tv_sec;
+			cs = tv.tv_usec / 10000;
+		}
+	}
+#else
+	tm = time (NULL);
+	cs = 0;
+#endif
+
+	if (local) {
+		tv = localtime (&tm);
+	}
+	else {
+		tv = gmtime (&tm);
+	}
+
+	e86_set_ax (pc->cpu, 1900 + tv->tm_year);
+	e86_set_bh (pc->cpu, tv->tm_mon);
+	e86_set_bl (pc->cpu, tv->tm_mday - 1);
+	e86_set_ch (pc->cpu, tv->tm_hour);
+	e86_set_cl (pc->cpu, tv->tm_min);
+	e86_set_dh (pc->cpu, tv->tm_sec);
+	e86_set_dl (pc->cpu, cs);
+
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_xms (ibmpc_t *pc)
+{
+	e86_set_ax (pc->cpu, e86_get_bp (pc->cpu));
+	xms_handler (pc->xms, pc->cpu);
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_xms_info (ibmpc_t *pc)
+{
+	xms_info (pc->xms, pc->cpu);
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_ems (ibmpc_t *pc)
+{
+	e86_set_ax (pc->cpu, e86_get_bp (pc->cpu));
+	ems_handler (pc->ems, pc->cpu);
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_ems_info (ibmpc_t *pc)
+{
+	ems_info (pc->ems, pc->cpu);
+	pc_hook_set_result (pc, 0);
+}
+
+static
+void pc_hook_unknown (ibmpc_t *pc)
+{
+	pc_hook_log (pc);
+	pc_hook_set_result (pc, 0xffff);
+}
+
+int pc_hook (void *ext)
+{
+	unsigned op;
+	ibmpc_t  *pc;
+
+	pc = ext;
+
+	op = e86_get_ax (pc->cpu);
+
+	switch (op) {
+	case PCE_HOOK_CHECK:
+		pc_hook_check (pc);
+		break;
+
+	case PCE_HOOK_GET_VERSION:
+		pc_hook_get_version (pc);
+		break;
+
+	case PCE_HOOK_GET_VERSION_STR:
+		pc_hook_get_version_str (pc);
+		break;
+
+	case PCE_HOOK_STOP:
+		pc_hook_stop (pc);
+		break;
+
+	case PCE_HOOK_ABORT:
+		pc_hook_abort (pc);
+		break;
+
+	case PCE_HOOK_SET_MSG:
+		pc_hook_set_msg (pc);
+		break;
+
+	case PCE_HOOK_GET_TIME_UNIX:
+		pc_hook_get_time_unix (pc);
+		break;
+
+	case PCE_HOOK_GET_TIME_LOCAL:
+		pc_hook_get_calendar (pc, 1);
+		break;
+
+	case PCE_HOOK_GET_TIME_UTC:
+		pc_hook_get_calendar (pc, 0);
+		break;
+
+	case PCE_HOOK_XMS:
+		pc_hook_xms (pc);
+		break;
+
+	case PCE_HOOK_XMS_INFO:
+		pc_hook_xms_info (pc);
+		break;
+
+	case PCE_HOOK_EMS:
+		pc_hook_ems (pc);
+		break;
+
+	case PCE_HOOK_EMS_INFO:
+		pc_hook_ems_info (pc);
+		break;
+
+	default:
+		pc_hook_unknown (pc);
+		break;
+	}
+
+	return (0);
 }
 
 void pc_int_15 (ibmpc_t *pc)
@@ -210,7 +501,7 @@ void pc_hook_msg (ibmpc_t *pc)
 	}
 }
 
-void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
+void pc_hook_old (void *ext, unsigned char op1, unsigned char op2)
 {
 	ibmpc_t       *pc;
 	unsigned long msk;
@@ -343,7 +634,7 @@ void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2)
 
 	default:
 		e86_set_cf (pc->cpu, 1);
-		pc_hook_log (pc, op1, op2);
+		pc_hook_log (pc);
 		break;
 	}
 }
