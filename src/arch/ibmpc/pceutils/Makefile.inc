@@ -20,6 +20,7 @@ $(rel)/%.sys: $(rel)/%.asm
 
 PCEUTILS_BAS_COM := \
 	pceexit \
+	pcem24 \
 	pcemsg \
 	pcestop \
 	pcetime \
@@ -52,6 +53,7 @@ $(rel)/pceclock.sys:	$(rel)/pceclock.asm $(PCEUTILS_SDP)
 $(rel)/pceemm.sys:	$(rel)/pceemm.asm $(PCEUTILS_SDP)
 $(rel)/pceexit.com:	$(rel)/pceexit.asm $(PCEUTILS_SDP)
 $(rel)/pcehimem.sys:	$(rel)/pcehimem.asm $(PCEUTILS_SDP)
+$(rel)/pcem24.com:	$(rel)/pcem24.asm $(PCEUTILS_SDP)
 $(rel)/pcemsg.com:	$(rel)/pcemsg.asm $(PCEUTILS_SDP)
 $(rel)/pcestop.com:	$(rel)/pcestop.asm $(PCEUTILS_SDP)
 $(rel)/pcetime.com:	$(rel)/pcetime.asm $(PCEUTILS_SDP)
