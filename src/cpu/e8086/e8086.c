@@ -77,7 +77,7 @@ void e86_init (e8086_t *c)
 
 	c->irq = 0;
 
-	c->halt = 0;
+	c->state = 0;
 
 	c->int_cnt = 0;
 	c->int_vec = 0;
@@ -377,7 +377,7 @@ void e86_irq_ack (e8086_t *c)
 	unsigned char irq;
 
 	c->irq = 0;
-	c->halt = 0;
+	c->state &= E86_STATE_HALT;
 
 	if (c->inta != NULL) {
 		irq = c->inta (c->inta_ext);
@@ -391,7 +391,7 @@ void e86_irq_ack (e8086_t *c)
 int e86_interrupt (e8086_t *cpu, unsigned n)
 {
 	if (e86_get_if (cpu)) {
-		cpu->halt = 0;
+		cpu->state &= ~E86_STATE_HALT;
 		e86_trap (cpu, n);
 		return (0);
 	}
@@ -438,7 +438,7 @@ void e86_reset (e8086_t *c)
 
 	c->irq = 0;
 
-	c->halt = 0;
+	c->state = E86_STATE_RESET;
 
 	c->prefix = 0;
 }
@@ -449,14 +449,21 @@ void e86_execute (e8086_t *c)
 	unsigned short flg;
 	char           irq;
 
-	if (c->halt) {
-		e86_set_clk (c, 2);
+	if (c->state) {
+		if (c->state & E86_STATE_HALT) {
+			e86_set_clk (c, 2);
 
-		if (c->irq && e86_get_if (c)) {
-			e86_irq_ack (c);
+			if (c->irq && e86_get_if (c)) {
+				e86_irq_ack (c);
+			}
+
+			return;
+		}
+		else if (c->state & E86_STATE_RESET) {
+			e86_reset (c);
 		}
 
-		return;
+		c->state = 0;
 	}
 
 	if ((c->prefix & E86_PREFIX_KEEP) == 0) {
@@ -493,7 +500,7 @@ void e86_execute (e8086_t *c)
 
 	if (c->enable_int) {
 		if (flg & c->flg & E86_FLG_T) {
-			c->halt = 0;
+			c->state &= ~E86_STATE_HALT;
 			e86_trap (c, 1);
 		}
 		else if (irq && c->irq && e86_get_if (c)) {

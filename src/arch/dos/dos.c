@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/dos/dos.c                                           *
  * Created:     2012-12-30 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -235,7 +235,7 @@ void sim_print_state_cpu (dos_t *sim, FILE *fp)
 		e86_get_cf (c) ? 'C' : '-'
 	);
 
-	if (c->halt) {
+	if (e86_get_halt (c)) {
 		fprintf (fp, " HALT=1");
 	}
 

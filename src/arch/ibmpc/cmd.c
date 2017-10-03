@@ -402,7 +402,7 @@ void prt_state_cpu (e8086_t *c)
 		e86_get_cf (c) ? 'C' : '-'
 	);
 
-	if (c->halt) {
+	if (e86_get_halt (c)) {
 		pce_printf ("HALT=1\n");
 	}
 }

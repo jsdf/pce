@@ -408,7 +408,7 @@ void print_state_cpu (e8086_t *c)
 		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
 	);
 
-	if (c->halt) {
+	if (e86_get_halt (c)) {
 		pce_printf ("HALT=1\n");
 	}
 }

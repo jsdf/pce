@@ -82,6 +82,9 @@
 
 #define E86_PQ_MAX 16
 
+#define E86_STATE_HALT  1
+#define E86_STATE_RESET 2
+
 
 struct e8086_t;
 
@@ -139,7 +142,7 @@ typedef struct e8086_t {
 
 	unsigned short   seg_override;
 
-	int              halt;
+	unsigned char    state;
 
 	char             irq;
 	char             enable_int;
@@ -274,6 +277,10 @@ typedef struct e8086_t {
 #define e86_set_df(c, v) e86_set_f (c, E86_FLG_D, v)
 #define e86_set_if(c, v) e86_set_f (c, E86_FLG_I, v)
 #define e86_set_tf(c, v) e86_set_f (c, E86_FLG_T, v)
+
+
+#define e86_get_halt(c) (((c)->state & E86_STATE_HALT) != 0)
+#define e86_get_reset(c) (((c)->state & E86_STATE_RESET) != 0)
 
 
 #define e86_get_linear(seg, ofs) \

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/opcodes.c                                      *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2016 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -3972,7 +3972,7 @@ unsigned op_f3 (e8086_t *c)
 static
 unsigned op_f4 (e8086_t *c)
 {
-	c->halt = 1;
+	c->state |= E86_STATE_HALT;
 
 	e86_set_clk (c, 2);
 
