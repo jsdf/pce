@@ -26,6 +26,7 @@ PCEUTILS_BAS_COM := \
 	pcever
 
 PCEUTILS_BAS_SYS := \
+	pceclock \
 	pceemm \
 	pcehimem
 
@@ -47,6 +48,7 @@ endif
 endif
 
 
+$(rel)/pceclock.sys:	$(rel)/pceclock.asm $(PCEUTILS_SDP)
 $(rel)/pceemm.sys:	$(rel)/pceemm.asm $(PCEUTILS_SDP)
 $(rel)/pceexit.com:	$(rel)/pceexit.asm $(PCEUTILS_SDP)
 $(rel)/pcehimem.sys:	$(rel)/pcehimem.asm $(PCEUTILS_SDP)
