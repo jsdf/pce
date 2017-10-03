@@ -72,6 +72,9 @@ void e86_init (e8086_t *c)
 	c->op_undef = NULL;
 	c->op_int = NULL;
 
+	c->hook_ext = NULL;
+	c->hook = NULL;
+
 	c->pq_size = 4;
 	c->pq_fill = 6;
 
@@ -190,6 +193,12 @@ void e86_set_inta_fct (e8086_t *c, void *ext, void *fct)
 {
 	c->inta_ext = ext;
 	c->inta = fct;
+}
+
+void e86_set_hook_fct (e8086_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook = fct;
 }
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)
@@ -317,6 +326,15 @@ int e86_set_reg (e8086_t *c, const char *reg, unsigned long val)
 	if (strcmp (reg, "flags") == 0) {
 		e86_set_flags (c, val);
 		return (0);
+	}
+
+	return (1);
+}
+
+int e86_hook (e8086_t *c)
+{
+	if (c->hook != NULL) {
+		return (c->hook (c->hook_ext));
 	}
 
 	return (1);

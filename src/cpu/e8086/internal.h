@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/internal.h                                     *
  * Created:     2003-04-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -65,6 +65,9 @@ typedef void (*e86_ea_f) (e8086_t *c);
 
 extern e86_opcode_f e86_opcodes[256];
 extern e86_ea_f e86_ea[32];
+
+
+int e86_hook (e8086_t *c);
 
 
 void e86_get_ea_ptr (e8086_t *c, unsigned char *ea);

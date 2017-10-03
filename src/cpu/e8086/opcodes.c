@@ -3679,6 +3679,13 @@ unsigned op_d5 (e8086_t *c)
 
 	mul = c->pq[1];
 
+	if (mul == 0) {
+		if (e86_hook (c) == 0) {
+			e86_set_clk (c, 4);
+			return (2);
+		}
+	}
+
 	s1 = e86_get_ah (c);
 	s2 = e86_get_al (c);
 

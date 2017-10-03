@@ -131,6 +131,9 @@ typedef struct e8086_t {
 	void             (*op_undef) (void *ext, unsigned char op1, unsigned char op2);
 	void             (*op_int) (void *ext, unsigned char n);
 
+	void             *hook_ext;
+	int              (*hook) (void *ext);
+
 	unsigned short   cur_ip;
 
 	unsigned         pq_size;
@@ -382,6 +385,8 @@ void e86_set_addr_mask (e8086_t *c, unsigned long msk);
 unsigned long e86_get_addr_mask (e8086_t *c);
 
 void e86_set_inta_fct (e8086_t *c, void *ext, void *fct);
+
+void e86_set_hook_fct (e8086_t *c, void *ext, void *fct);
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt);
 
