@@ -1,27 +1,26 @@
-;*****************************************************************************
-;* pce                                                                       *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; pce
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* File name:   pcever.asm                                                   *
-;* Created:     2003-10-13 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; File name:    pcever.asm
+; Created:      2003-10-13 by Hampa Hug <hampa@hampa.ch>
+; Copyright:    (C) 2003-2017 Hampa Hug <hampa@hampa.ch>
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* This program is free software. You can redistribute it and / or modify it *
-;* under the terms of the GNU General Public License version 2 as  published *
-;* by the Free Software Foundation.                                          *
-;*                                                                           *
-;* This program is distributed in the hope  that  it  will  be  useful,  but *
-;* WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
-;* Public License for more details.                                          *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; This program is free software. You can redistribute it and / or modify it
+; under the terms of the GNU General Public License version 2 as  published
+; by the Free Software Foundation.
+;
+; This program is distributed in the hope  that  it  will  be  useful,  but
+; WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General
+; Public License for more details.
+;-----------------------------------------------------------------------------
 
 
-; pcever
-; Print the PCE version
+; pcever - print the PCE version
 
 
 %include "pce.inc"
@@ -34,77 +33,13 @@ section .text
 	jmp	start
 
 
-str1	db "PCE version ", 0
-str2	db " (", 0
-str3	db ")", 0x0d, 0x0a, 0
+%define PCE_USE_PRINT_CHAR    1
+%define PCE_USE_PRINT_STRING  1
+%define PCE_USE_PRINT_UINT16  1
+%define PCE_USE_HOOK_CHECK    1
+%define PCE_USE_HOOK          1
 
-
-; print the 16 bit unsigned integer in ax
-prt_uint16:
-	push	ax
-	push	cx
-	push	dx
-	push	bx
-
-	mov	bx, 10
-	xor	cx, cx
-
-.next1:
-	xor	dx, dx
-
-	div	bx
-	add	dl, '0'
-	push	dx
-	inc	cx
-
-	or	ax, ax
-	jnz	.next1
-
-.next2:
-	pop	ax
-	mov	ah, 0x0e
-	xor	bx, bx
-	int	0x10
-	loop	.next2
-
-	pop	bx
-	pop	dx
-	pop	cx
-	pop	ax
-	ret
-
-
-; print the character in al
-prt_char:
-	push	ax
-	push	bx
-
-	mov	ah, 0x0e
-	xor	bx, bx
-	int	0x10
-
-	pop	bx
-	pop	ax
-	ret
-
-
-; print the string at ds:di
-prt_string:
-	push	ax
-	push	si
-
-.next:
-	mov	ah, 0x0e
-	lodsb
-	or	al, al
-	jz	.done
-	int	0x10
-	jmp	.next
-
-.done:
-	pop	si
-	pop	ax
-	ret
+%include "pce-lib.inc"
 
 
 start:
@@ -112,40 +47,82 @@ start:
 	mov	ds, ax
 	mov	es, ax
 
-	mov	si, str1
-	call	prt_string
+	cld
 
-	mov	di, vers
-	pceh	PCEH_GET_VERS
+	call	pce_hook_check		; check for pce
+	jc	.notpce
 
-	mov	si, vers
-	call	prt_string
+	mov	di, buffer
+	mov	cx, 256
+	mov	ax, PCE_HOOK_GET_VERSION_STR
+	call	pce_hook		; get version string
+	jc	.error
 
-	mov	si, str2
-	call	prt_string
+	mov	si, msg_str1
+	call	pce_print_string
+	mov	si, buffer
+	call	pce_print_string
+	mov	si, msg_str2
+	call	pce_print_string
 
-	mov	cx, ax
+	mov	ax, PCE_HOOK_GET_VERSION
+	call	pce_hook		; get version
+	jc	.error
 
-	mov	ah, 0
-	mov	al, ch
-	call	prt_uint16
+	xchg	cx, ax
 
+	xor	ah, ah
+	mov	bx, 10			; base
+
+	mov	al, dh			; major
+	call	pce_print_uint16
 	mov	al, '.'
-	call	prt_char
-
-	mov	al, cl
-	call	prt_uint16
-
+	call	pce_print_char
+	mov	al, dl			; minor
+	call	pce_print_uint16
 	mov	al, '.'
-	call	prt_char
+	call	pce_print_char
+	mov	al, ch			; micro
+	call	pce_print_uint16
+	mov	si, msg_str3
+	call	pce_print_string
 
-	mov	al, dh
-	call	prt_uint16
+	xor	al, al
+	jmp	.exit
 
-	mov	si, str3
-	call	prt_string
+.notpce:
+	mov	si, msg_notpce
+	jmp	.done_err
 
-	mov	ax, 0x4c00
+.error:
+	mov	si, msg_error
+	;jmp	.done_err
+
+.done_err:
+	push	si
+	mov	si, msg_arg0
+	call	pce_print_string
+	pop	si
+	call	pce_print_string
+	mov	al, 0x01
+
+.exit:
+	mov	ah, 0x4c
 	int	0x21
+	int	0x20
 
-vers:
+
+section	.data
+
+msg_arg0	db "pcever: "
+msg_notpce	db "not running under PCE", 0x0d, 0x0a, 0
+msg_error	db "error", 0x0d, 0x0a, 0
+
+msg_str1	db "PCE version ", 0
+msg_str2	db " (", 0
+msg_str3	db ")", 0x0d, 0x0a, 0
+
+
+section	.bss
+
+buffer		resb	256

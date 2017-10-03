@@ -1,23 +1,23 @@
-;*****************************************************************************
-;* pce                                                                       *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; pce
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* File name:   pcehimem.asm                                                 *
-;* Created:     2003-09-02 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; File name:    pcehimem.asm
+; Created:      2003-09-02 by Hampa Hug <hampa@hampa.ch>
+; Copyright:    (C) 2003-2017 Hampa Hug <hampa@hampa.ch>
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* This program is free software. You can redistribute it and / or modify it *
-;* under the terms of the GNU General Public License version 2 as  published *
-;* by the Free Software Foundation.                                          *
-;*                                                                           *
-;* This program is distributed in the hope  that  it  will  be  useful,  but *
-;* WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
-;* Public License for more details.                                          *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; This program is free software. You can redistribute it and / or modify it
+; under the terms of the GNU General Public License version 2 as  published
+; by the Free Software Foundation.
+;
+; This program is distributed in the hope  that  it  will  be  useful,  but
+; WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General
+; Public License for more details.
+;-----------------------------------------------------------------------------
 
 
 %include "pce.inc"
@@ -36,6 +36,13 @@ reqadr:
 
 saveint2f:
 	dd	0
+
+
+%define PCE_USE_HOOK_CHECK 1
+%define PCE_USE_HOOK_STOP  0
+%define PCE_USE_HOOK       1
+
+%include "pce-lib.inc"
 
 
 ;-----------------------------------------------------------------------------
@@ -65,13 +72,11 @@ int_2f:
 ; The XMS handler
 ;-----------------------------------------------------------------------------
 xms_handler:
-	jmp	short .handler
-	nop
-	nop
-	nop
-
-.handler:
-	pceh	PCEH_XMS		; PCE hook
+	push	bp
+	xchg	bp, ax
+	mov	ax, PCE_HOOK_XMS
+	call	pce_hook		; PCE hook
+	pop	bp
 	retf
 
 
@@ -131,14 +136,22 @@ drv_init:
 	mov	si, msg_init
 	call	prt_string
 
-	pceh	PCEH_XMS_INFO		; get xms info
+	call	pce_hook_check
+	jnc	.pceok
+
+	mov	si, msg_nopce
+	call	prt_string
+	jmp	.doneerr
+
+.pceok:
+	mov	ax, PCE_HOOK_XMS_INFO
+	call	pce_hook		; get xms info
 
 	test	al, 0x01		; check if xms installed
 	jnz	.xmsok
 
 	mov	si, msg_noxms
 	call	prt_string
-
 	jmp	.doneerr
 
 .xmsok:
@@ -173,14 +186,14 @@ drv_init:
 	push	ds
 	xor	ax, ax
 	mov	ds, ax
-
+	cli
 	mov	ax, [4 * 0x002f]	; int 2f address
 	mov	[cs:saveint2f], ax
 	mov	ax, [4 * 0x002f + 2]
 	mov	[cs:saveint2f + 2], ax
-
 	mov	word [4 * 0x002f + 0], int_2f
 	mov	word [4 * 0x002f + 2], cs
+	sti
 	pop	ds
 
 	jmp	.doneok
@@ -277,6 +290,9 @@ msg_nl:
 msg_init:
 	db	"XMS: PCE XMS driver version ", PCE_VERSION_STR
 	db	0x0d, 0x0a, 0x00
+
+msg_nopce:
+	db	"XMS: Not running under PCE", 0x0d, 0x0a, 0x00
 
 msg_noxms:
 	db	"XMS: No XMS available", 0x0d, 0x0a, 0x00

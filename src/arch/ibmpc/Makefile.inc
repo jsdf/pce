@@ -110,7 +110,7 @@ endif
 
 CLN  += $(PCE_IBMPC_BIN) $(PCE_IBMPC_OBJ) $(PCE_IBMPC_ETC)
 DIST += $(PCE_IBMPC_SRC) $(PCE_IBMPC_HDR) $(PCE_IBMPC_MAN1)
-DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc
+DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc $(rel)/pce-lib.inc
 
 $(rel)/cassette.o:	$(rel)/cassette.c
 $(rel)/cmd.o:		$(rel)/cmd.c
