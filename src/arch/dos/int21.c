@@ -609,7 +609,8 @@ int int21_fct_37 (dos_t *sim)
 		int21_ret (sim, 0, 0x0000);
 	}
 	else {
-		return (1);
+		/* unsupported subfunction */
+		int21_ret (sim, 0, 0x00ff);
 	}
 
 	return (0);
@@ -1572,6 +1573,7 @@ int sim_int21 (dos_t *sim)
 	case 0x58:
 		return (int21_fct_58 (sim));
 
+	case 0x59:
 	case 0x5a:
 	case 0x60:
 	case 0x63:
