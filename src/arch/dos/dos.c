@@ -421,6 +421,8 @@ int sim_init (dos_t *sim, unsigned kb)
 
 	e86_reset (&sim->cpu);
 
+	sim->cpu.state = 0;
+
 	sim->log_int = 0;
 	sim->cur_drive = 2;
 
