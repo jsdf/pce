@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8253.h                                     *
  * Created:     2001-05-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,8 +30,9 @@
 /*!***************************************************************************
  * @short The PIT 8253 counter structure
  *****************************************************************************/
-typedef struct {
+typedef struct e8253_counter_s {
 	/* counter register */
+	unsigned short  ce;
 	unsigned char   cr[2];
 	unsigned char   cr_wr;
 
@@ -46,14 +47,16 @@ typedef struct {
 	unsigned char   bcd;
 
 	unsigned char   counting;
+	unsigned char   newval;
+	unsigned char   gate_val;
 
-	unsigned char   gate;
+	void            (*gate) (struct e8253_counter_s *cnt, unsigned char val);
+	void            (*load) (struct e8253_counter_s *cnt);
+	void            (*clock) (struct e8253_counter_s *cnt);
 
 	void            *out_ext;
 	void            (*out) (void *ext, unsigned char val);
 	unsigned char   out_val;
-
-	unsigned short val;
 } e8253_counter_t;
 
 
@@ -72,23 +75,22 @@ typedef struct {
 void e8253_init (e8253_t *pit);
 
 /*!***************************************************************************
- * @short  Create and initialize a PIT structure
- * @return The PIT structure or NULL on error
- *****************************************************************************/
-e8253_t *e8253_new (void);
-
-/*!***************************************************************************
  * @short Free the resources used by a PIT structure
  * @param pit The PIT structure
  *****************************************************************************/
 void e8253_free (e8253_t *pit);
 
 /*!***************************************************************************
+ * @short  Create and initialize a PIT structure
+ * @return The PIT structure or NULL on error
+ *****************************************************************************/
+e8253_t *e8253_new (void);
+
+/*!***************************************************************************
  * @short Delete a PIT structure
  * @param pit The PIT structure
  *****************************************************************************/
 void e8253_del (e8253_t *pit);
-
 
 /*!***************************************************************************
  * @short Set the output function for a PIT counter
@@ -98,7 +100,6 @@ void e8253_del (e8253_t *pit);
  * @param fct  The function that is called to set the counter output signal
  *****************************************************************************/
 void e8253_set_out_fct (e8253_t *pit, unsigned cntr, void *ext, void *fct);
-
 
 /*!***************************************************************************
  * @short Set gate input for a PIT counter
@@ -126,7 +127,6 @@ void e8253_set_uint32 (e8253_t *pit, unsigned long addr, unsigned long val);
 void e8253_reset (e8253_t *pit);
 
 void e8253_clock (e8253_t *pit, unsigned n);
-
 
 
 #endif

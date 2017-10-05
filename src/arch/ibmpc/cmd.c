@@ -183,12 +183,12 @@ void prt_state_pit (e8253_t *pit)
 			"G=%u O=%u R=%d\n",
 			i,
 			cnt->sr, cnt->mode, cnt->rw,
-			cnt->val,
+			cnt->ce,
 			(cnt->cr_wr & 2) ? "cr1" : "CR1", cnt->cr[1],
 			(cnt->cr_wr & 1) ? "cr0" : "CR0", cnt->cr[0],
 			(cnt->ol_rd & 2) ? "ol1" : "OL1", cnt->ol[1],
 			(cnt->ol_rd & 1) ? "ol0" : "OL0", cnt->ol[0],
-			(unsigned) cnt->gate,
+			(unsigned) cnt->gate_val,
 			(unsigned) cnt->out_val,
 			cnt->counting
 		);
