@@ -31,12 +31,10 @@ PCE_SIMS32_BIN := $(rel)/pce-sims32$(EXEEXT)
 
 PCE_SIMS32_OBJ_EXT := \
 	src/chipset/82xx/e8250.o \
-	src/cpu/sparc32/sparc32.a \
 	src/devices/device.o \
 	src/devices/memory.o \
 	src/devices/serport.o \
 	src/drivers/options.o \
-	src/drivers/char/char.a \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
@@ -48,7 +46,9 @@ PCE_SIMS32_OBJ_EXT := \
 	src/lib/path.o \
 	src/lib/srec.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a
+	$(CPU_SPARC32_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(LIBINI_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 PCE_SIMS32_OBJ_EXT += src/lib/tun.o

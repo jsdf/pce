@@ -5,7 +5,13 @@ rel := src/utils/pce-img
 DIRS += $(rel)
 DIST += $(rel)/Makefile.inc
 
-PCEIMG_BAS := commit convert cow create pce-img
+PCEIMG_BAS := \
+	commit \
+	convert \
+	cow \
+	create \
+	pce-img
+
 PCEIMG_SRC := $(foreach f,$(PCEIMG_BAS),$(rel)/$(f).c)
 PCEIMG_OBJ := $(foreach f,$(PCEIMG_BAS),$(rel)/$(f).o)
 PCEIMG_HDR := $(rel)/pce-img.h
@@ -15,8 +21,8 @@ PCEIMG_BIN := $(rel)/pce-img$(EXEEXT)
 PCEIMG_OBJ_EXT := \
 	src/lib/getopt.o \
 	src/lib/sysdep.o \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ)
 
 BIN  += $(PCEIMG_BIN)
 MAN1 += $(PCEIMG_MAN1)

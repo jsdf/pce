@@ -30,7 +30,6 @@ PCE_SIMARM_ETC := $(rel)/pce-simarm.cfg
 PCE_SIMARM_BIN := $(rel)/pce-simarm$(EXEEXT)
 
 PCE_SIMARM_OBJ_EXT := \
-	src/cpu/arm/arm.a \
 	src/chipset/82xx/e8250.o \
 	src/devices/pci.o \
 	src/devices/pci-ata.o \
@@ -38,9 +37,6 @@ PCE_SIMARM_OBJ_EXT := \
 	src/devices/device.o \
 	src/devices/memory.o \
 	src/devices/serport.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/psi/psi.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
@@ -57,9 +53,11 @@ PCE_SIMARM_OBJ_EXT := \
 	src/lib/srec.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a
+	$(CPU_ARM_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(LIBINI_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 PCE_SIMARM_OBJ_EXT += src/lib/tun.o

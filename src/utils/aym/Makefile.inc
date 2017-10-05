@@ -21,7 +21,7 @@ AYM_OBJ_EXT := \
 	src/arch/atarist/psg.o \
 	src/lib/getopt.o \
 	src/drivers/options.o \
-	src/drivers/sound/sound.a
+	$(DRV_SND_OBJ)
 
 ifeq "$(PCE_ENABLE_SDL)" "1"
 	AYM_CFLAGS += $(PCE_SDL_CFLAGS)

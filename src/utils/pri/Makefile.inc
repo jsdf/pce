@@ -28,8 +28,8 @@ PRI_BIN := $(rel)/pri$(EXEEXT)
 
 PRI_OBJ_EXT := \
 	src/lib/getopt.o \
-	src/drivers/pri/pri.a \
-	src/drivers/psi/psi.a
+	$(DRV_PSI_OBJ) \
+	$(DRV_PRI_OBJ)
 
 BIN  += $(PRI_BIN)
 MAN1 += $(PRI_MAN1)

@@ -30,7 +30,6 @@ PCE_SIM6502_ETC := $(rel)/pce-sim6502.cfg
 PCE_SIM6502_BIN := $(rel)/pce-sim6502$(EXEEXT)
 
 PCE_SIM6502_OBJ_EXT := \
-	src/cpu/e6502/e6502.a \
 	src/devices/memory.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
@@ -43,7 +42,8 @@ PCE_SIM6502_OBJ_EXT := \
 	src/lib/path.o \
 	src/lib/srec.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a
+	$(CPU_6502_OBJ) \
+	$(LIBINI_OBJ)
 
 ifeq "$(PCE_BUILD_SIM6502)" "1"
 BIN  += $(PCE_SIM6502_BIN)

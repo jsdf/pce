@@ -34,9 +34,7 @@ PCE_CPM80_ETC := $(rel)/pce-cpm80.cfg
 PCE_CPM80_BIN := $(rel)/pce-cpm80$(EXEEXT)
 
 PCE_CPM80_OBJ_EXT := \
-	src/cpu/e8080/e8080.a \
 	src/devices/memory.o \
-	src/drivers/char/char.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
@@ -53,10 +51,11 @@ PCE_CPM80_OBJ_EXT := \
 	src/lib/srec.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a \
-	src/drivers/char/char.a
+	$(CPU_8080_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(LIBINI_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 PCE_CPM80_OBJ_EXT += src/lib/tun.o

@@ -25,8 +25,8 @@ PSI_MAN1 := $(rel)/psi.1
 PSI_BIN := $(rel)/psi$(EXEEXT)
 
 PSI_OBJ_EXT := \
-	src/drivers/psi/psi.a \
-	src/lib/getopt.o
+	src/lib/getopt.o \
+	$(DRV_PSI_OBJ)
 
 BIN  += $(PSI_BIN)
 MAN1 += $(PSI_MAN1)

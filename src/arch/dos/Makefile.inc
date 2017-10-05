@@ -38,9 +38,9 @@ PCE_DOS_MAN1 := $(rel)/pce-dos.1
 PCE_DOS_BIN  := $(rel)/pce-dos$(EXEEXT)
 
 PCE_DOS_OBJ_EXT := \
-	src/cpu/e8086/e8086.a \
 	src/lib/getopt.o \
-	src/lib/sysdep.o
+	src/lib/sysdep.o \
+	$(CPU_8086_OBJ)
 
 #ifeq "$(PCE_BUILD_DOS)" "1"
 BIN  += $(PCE_DOS_BIN)

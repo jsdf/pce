@@ -57,7 +57,6 @@ PCE_IBMPC_ETC  := $(rel)/pce-ibmpc.cfg
 PCE_IBMPC_BIN  := $(rel)/pce-ibmpc$(EXEEXT)
 
 PCE_IBMPC_OBJ_EXT := \
-	src/cpu/e8086/e8086.a \
 	src/chipset/82xx/e8237.o \
 	src/chipset/82xx/e8250.o \
 	src/chipset/82xx/e8253.o \
@@ -71,10 +70,6 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/nvram.o \
 	src/devices/parport.o \
 	src/devices/serport.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/psi/psi.a \
-	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
 	src/lib/cmd.o \
@@ -92,11 +87,14 @@ PCE_IBMPC_OBJ_EXT := \
 	src/lib/path.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a \
+	$(CPU_8086_OBJ) \
 	$(DEV_VID_OBJ) \
-	$(DRV_TRM_OBJ)
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(DRV_SND_OBJ) \
+	$(DRV_TRM_OBJ) \
+	$(LIBINI_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
 PCE_IBMPC_OBJ_EXT += src/lib/tun.o
