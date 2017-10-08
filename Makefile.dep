@@ -2012,6 +2012,9 @@ src/devices/video/cga.o: src/devices/video/cga.c \
 	src/lib/msg.h \
 	src/libini/libini.h
 
+src/devices/video/cga_font.o: src/devices/video/cga_font.c \
+	src/devices/video/cga_font.h
+
 src/devices/video/ega.o: src/devices/video/ega.c \
 	src/devices/memory.h \
 	src/devices/video/ega.h \
