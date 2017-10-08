@@ -525,6 +525,7 @@ src/arch/ibmpc/ibmpc.o: src/arch/ibmpc/ibmpc.c \
 	src/chipset/82xx/e8255.h \
 	src/chipset/82xx/e8259.h \
 	src/chipset/82xx/e8272.h \
+	src/chipset/e6845.h \
 	src/config.h \
 	src/cpu/e8086/e8086.h \
 	src/devices/device.h \
@@ -1731,6 +1732,9 @@ src/chipset/clock/ds1743.o: src/chipset/clock/ds1743.c \
 src/chipset/e6522.o: src/chipset/e6522.c \
 	src/chipset/e6522.h
 
+src/chipset/e6845.o: src/chipset/e6845.c \
+	src/chipset/e6845.h
+
 src/chipset/e6850.o: src/chipset/e6850.c \
 	src/chipset/e6850.h
 
@@ -2037,6 +2041,7 @@ src/devices/video/hgc.o: src/devices/video/hgc.c \
 	src/libini/libini.h
 
 src/devices/video/mda.o: src/devices/video/mda.c \
+	src/chipset/e6845.h \
 	src/devices/memory.h \
 	src/devices/video/mda.h \
 	src/devices/video/mda_font.h \
