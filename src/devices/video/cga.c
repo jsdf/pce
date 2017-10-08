@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,72 +25,55 @@
 #include <string.h>
 #include <math.h>
 
+#include <chipset/e6845.h>
+#include <devices/memory.h>
+#include <devices/video/cga_font.h>
+#include <devices/video/cga.h>
+#include <drivers/video/terminal.h>
 #include <lib/log.h>
 #include <lib/msg.h>
-
-#include <devices/video/cga.h>
-
-
-#define CGA_IFREQ 1193182
-#define CGA_PFREQ 14318184
-#define CGA_HFREQ 15750
-#define CGA_VFREQ 60
+#include <libini/libini.h>
 
 
-#define CGA_CRTC_INDEX0  0
-#define CGA_CRTC_DATA0   1
-#define CGA_CRTC_INDEX   4
-#define CGA_CRTC_DATA    5
-#define CGA_MODE         8
-#define CGA_CSEL         9
-#define CGA_STATUS       10
-#define CGA_PEN_RESET    11
-#define CGA_PEN_SET      12
+#define CGA_IFREQ  1193182
+#define CGA_PFREQ  14318184
+#define CGA_CFREQ1 (CGA_PFREQ / 8)
+#define CGA_CFREQ2 (CGA_PFREQ / 16)
 
-#define CGA_CRTC_HT      0
-#define CGA_CRTC_HD      1
-#define CGA_CRTC_HS      2
-#define CGA_CRTC_SYN     3
-#define CGA_CRTC_VT      4
-#define CGA_CRTC_VTA     5
-#define CGA_CRTC_VD      6
-#define CGA_CRTC_VS      7
-#define CGA_CRTC_IL      8
-#define CGA_CRTC_MS      9
-#define CGA_CRTC_CS      10
-#define CGA_CRTC_CE      11
-#define CGA_CRTC_SH      12
-#define CGA_CRTC_SL      13
-#define CGA_CRTC_PH      14
-#define CGA_CRTC_PL      15
-#define CGA_CRTC_LH      16
-#define CGA_CRTC_LL      17
+#define CGA_CRTC_INDEX0   0
+#define CGA_CRTC_DATA0    1
+#define CGA_CRTC_INDEX    4
+#define CGA_CRTC_DATA     5
+#define CGA_MODE          8
+#define CGA_CSEL          9
+#define CGA_STATUS        10
+#define CGA_PEN_RESET     11
+#define CGA_PEN_SET       12
 
-#define CGA_MODE_CS      0x01		/* clock select */
-#define CGA_MODE_G320    0x02
-#define CGA_MODE_CBURST  0x04
-#define CGA_MODE_ENABLE  0x08
-#define CGA_MODE_G640    0x10
-#define CGA_MODE_BLINK   0x20
+#define CGA_MODE_CS       0x01
+#define CGA_MODE_G320     0x02
+#define CGA_MODE_CBURST   0x04
+#define CGA_MODE_ENABLE   0x08
+#define CGA_MODE_G640     0x10
+#define CGA_MODE_BLINK    0x20
 
-#define CGA_CSEL_COL     0x0f
-#define CGA_CSEL_INT     0x10
-#define CGA_CSEL_PAL     0x20
+#define CGA_CSEL_COL      0x0f
+#define CGA_CSEL_INT      0x10
+#define CGA_CSEL_PAL      0x20
 
-#define CGA_STATUS_SYNC  0x01		/* -display enable */
-#define CGA_STATUS_PEN   0x02
-#define CGA_STATUS_VSYNC 0x08		/* vertical sync */
+#define CGA_STATUS_SYNC   0x01
+#define CGA_STATUS_PEN    0x02
+#define CGA_STATUS_VSYNC  0x08
 
-#define CGA_UPDATE_DIRTY   1
-#define CGA_UPDATE_RETRACE 2
+#define CGA_COMPOSITE_NONE  0
+#define CGA_COMPOSITE_AUTO  1
+#define CGA_COMPOSITE_FORCE 2
 
 
-#include "cga_font.h"
+static void cga_del (cga_t *cga);
 
 
-static void cga_clock (cga_t *cga, unsigned long cnt);
-
-
+static
 unsigned char cga_rgb[16][3] = {
 	{ 0x00, 0x00, 0x00 },
 	{ 0x00, 0x00, 0xaa },
@@ -110,399 +93,152 @@ unsigned char cga_rgb[16][3] = {
 	{ 0xff, 0xff, 0xff }
 };
 
+static char cga_color_burst[8][8] = {
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 1, 1, 1, 1, 0 },
+	{ 1, 1, 0, 0, 0, 0, 1, 1 },
+	{ 1, 0, 0, 0, 0, 1, 1, 1 },
+	{ 0, 1, 1, 1, 1, 0, 0, 0 },
+	{ 0, 0, 1, 1, 1, 1, 0, 0 },
+	{ 1, 1, 1, 0, 0, 0, 0, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1 }
+};
 
-/*
- * Set the blink frequency
- */
-void cga_set_blink_rate (cga_t *cga, unsigned freq)
-{
-	cga->blink_on = 1;
-	cga->blink_cnt = freq;
-	cga->blink_freq = freq;
 
-	cga->update_state |= CGA_UPDATE_DIRTY;
-}
-
-/*
- * Get CRTC start offset
- */
-unsigned cga_get_start (cga_t *cga)
-{
-	unsigned val;
-
-	val = cga->reg_crt[CGA_CRTC_SH];
-	val = (val << 8) | cga->reg_crt[CGA_CRTC_SL];
-
-	return (val);
-}
-
-/*
- * Get the absolute cursor position
- */
-unsigned cga_get_cursor (cga_t *cga)
-{
-	unsigned val;
-
-	val = cga->reg_crt[CGA_CRTC_PH];
-	val = (val << 8) | cga->reg_crt[CGA_CRTC_PL];
-
-	return (val);
-}
-
-/*
- * Get the on screen cursor position
- */
-int cga_get_position (cga_t *cga, unsigned *x, unsigned *y)
-{
-	unsigned pos, ofs;
-
-	if (cga->w == 0) {
-		return (1);
-	}
-
-	pos = cga_get_cursor (cga);
-	ofs = cga_get_start (cga);
-
-	pos = (pos - ofs) & 0x3fff;
-
-	if (pos >= (cga->w * cga->h)) {
-		return (1);
-	}
-
-	*x = pos % cga->w;
-	*y = pos / cga->w;
-
-	return (0);
-}
-
-/*
- * Set the internal palette from the mode and color select registers
- */
 static
-void cga_set_palette (cga_t *cga)
+void cga_set_composite (cga_t *cga, unsigned mode)
 {
-	unsigned char mode, csel;
-
-	mode = cga->reg[CGA_MODE];
-	csel = cga->reg[CGA_CSEL];
-
-	cga->pal[0] = csel & 0x0f;
-
-	if (mode & CGA_MODE_CBURST) {
-		cga->pal[1] = 3;
-		cga->pal[2] = 4;
-		cga->pal[3] = 7;
-	}
-	else if (csel & CGA_CSEL_PAL) {
-		cga->pal[1] = 3;
-		cga->pal[2] = 5;
-		cga->pal[3] = 7;
-	}
-	else {
-		cga->pal[1] = 2;
-		cga->pal[2] = 4;
-		cga->pal[3] = 6;
-	}
-
-	if (csel & CGA_CSEL_INT) {
-		cga->pal[1] += 8;
-		cga->pal[2] += 8;
-		cga->pal[3] += 8;
-	}
+	cga->composite = mode;
+	cga->mod_cnt = 2;
 }
 
-/*
- * Set the timing values from the CRTC registers
- */
 static
-void cga_set_timing (cga_t *cga)
+void cga_set_hue (cga_t *cga, int val)
 {
-	cga->ch = (cga->reg_crt[CGA_CRTC_MS] & 0x1f) + 1;
-	cga->w = cga->reg_crt[CGA_CRTC_HD];
-	cga->h = cga->reg_crt[CGA_CRTC_VD];
+	unsigned i;
+	double   tmp;
 
-	cga->clk_ht = 8 * (cga->reg_crt[CGA_CRTC_HT] + 1);
-	cga->clk_hd = 8 * cga->reg_crt[CGA_CRTC_HD];
+	cga->hue = val;
 
-	cga->clk_vt = cga->ch * (cga->reg_crt[CGA_CRTC_VT] + 7) * cga->clk_ht;
-	cga->clk_vd = cga->ch * cga->reg_crt[CGA_CRTC_VD] * cga->clk_ht;
-}
+	tmp = (-(112.5 - 33) + cga->hue) * (M_PI / 180.0);
 
-/*
- * Get the dot clock
- */
-static
-unsigned long cga_get_dotclock (cga_t *cga)
-{
-	unsigned long long clk;
-
-	clk = cga->video.dotclk[0];
-	clk = (CGA_PFREQ * clk) / CGA_IFREQ;
-
-	if ((cga->reg[CGA_MODE] & CGA_MODE_CS) == 0) {
-		clk >>= 1;
+	for (i = 0; i < 8; i++) {
+		cga->sin_cos_tab[i + 0] = 2.0 * sin (tmp + i * (M_PI / 4.0));
+		cga->sin_cos_tab[i + 8] = 2.0 * cos (tmp + i * (M_PI / 4.0));
 	}
 
-	return (clk);
+	cga->comp_tab_ok = 0;
+	cga->mod_cnt = 2;
 }
 
-/*
- * Set the internal screen buffer size
- */
-int cga_set_buf_size (cga_t *cga, unsigned w, unsigned h)
+static
+void cga_set_saturation (cga_t *cga, int val)
 {
-	unsigned long cnt;
+	cga->saturation = (double) val / 100.0;
+	cga->comp_tab_ok = 0;
+	cga->mod_cnt = 2;
+}
+
+static
+void cga_set_brightness (cga_t *cga, int val)
+{
+	cga->brightness = (double) val / 100.0;
+	cga->comp_tab_ok = 0;
+	cga->mod_cnt = 2;
+}
+
+static
+unsigned char *cga_get_rgbi_buf (cga_t *cga, unsigned w)
+{
 	unsigned char *tmp;
 
-	cnt = 3UL * (unsigned long) w * (unsigned long) h;
-
-	if (cnt > cga->bufmax) {
-		tmp = realloc (cga->buf, cnt);
-		if (tmp == NULL) {
-			return (1);
-		}
-
-		cga->buf = tmp;
-		cga->bufmax = cnt;
+	if (w < cga->rgbi_max) {
+		return (cga->rgbi_buf);
 	}
 
-	cga->buf_w = w;
-	cga->buf_h = h;
+	if ((tmp = realloc (cga->rgbi_buf, w)) == NULL) {
+		return (NULL);
+	}
 
-	return (0);
+	cga->rgbi_max = w;
+	cga->rgbi_buf = tmp;
+
+	return (tmp);
 }
 
-/*
- * Draw the cursor in the internal buffer
- */
 static
-void cga_mode0_update_cursor (cga_t *cga)
+void cga_line_composite (cga_t *cga, unsigned char *dst, const unsigned char *src, unsigned w)
 {
-	unsigned            i, j;
-	unsigned            x, y;
-	unsigned            c1, c2;
-	const unsigned char *col;
-	unsigned char       *dst;
+	unsigned i, j, x, rgbi;
+	unsigned r, g, b;
+	double   Ys[8], Is[8], Qs[8];
+	double   R, G, B, Y, I, Q;
+	double   luma, chroma, composite;
 
-	if (cga->blink_on == 0) {
-		return;
+	rgbi = 0;
+	luma = 0.0;
+
+	R = 0.0;
+	G = 0.0;
+	B = 0.0;
+
+	for (j = 0; j < 8; j++) {
+		Ys[j] = 0.0;
+		Is[j] = 0.0;
+		Qs[j] = 0.0;
 	}
 
-	if ((cga->reg_crt[CGA_CRTC_CS] & 0x60) == 0x20) {
-		/* cursor off */
-		return;
-	}
-
-	if (cga_get_position (cga, &x, &y)) {
-		return;
-	}
-
-	c1 = cga->reg_crt[CGA_CRTC_CS] & 0x1f;
-	c2 = cga->reg_crt[CGA_CRTC_CE] & 0x1f;
-
-	if (c1 >= cga->ch) {
-		return;
-	}
-
-	if (c2 >= cga->ch) {
-		c2 = cga->ch - 1;
-	}
-
-	col = cga_rgb[cga->mem[2 * (cga->w * y + x) + 1] & 0x0f];
-	dst = cga->buf + 3 * 8 * (cga->w * (cga->ch * y + c1) + x);
-
-	for (j = c1; j <= c2; j++) {
-		for (i = 0; i < 8; i++) {
-			dst[3 * i + 0] = col[0];
-			dst[3 * i + 1] = col[1];
-			dst[3 * i + 2] = col[2];
-		}
-		dst += 3 * 8 * cga->w;
-	}
-}
-
-/*
- * Draw a character in the internal buffer
- */
-static
-void cga_mode0_update_char (cga_t *cga,
-	unsigned char *dst, unsigned char c, unsigned char a)
-{
-	unsigned            i, j;
-	int                 blk;
-	unsigned char       val;
-	const unsigned char *fnt;
-	const unsigned char *fg, *bg;
-
-	blk = 0;
-
-	if (cga->reg[CGA_MODE] & CGA_MODE_BLINK) {
-		if (a & 0x80) {
-			blk = !cga->blink_on;
-
-			if ((cga->reg[CGA_CSEL] & CGA_CSEL_INT) == 0) {
-				a &= 0x7f;
-			}
-		}
-	}
-
-	fg = cga_rgb[a & 0x0f];
-	bg = cga_rgb[(a >> 4) & 0x0f];
-
-	fnt = cga->font + 8 * c;
-
-	for (j = 0; j < cga->ch; j++) {
-		if (blk) {
-			val = 0x00;
-		}
-		else {
-			val = fnt[j & 7];
+	for (x = 0; x < (2 * w); x++) {
+		if ((x & 1) == 0) {
+			rgbi = *(src++);
+			luma = (rgbi & 8) ? 0.33 : 0;
 		}
 
-		for (i = 0; i < 8; i++) {
-			if (val & 0x80) {
-				dst[3 * i + 0] = fg[0];
-				dst[3 * i + 1] = fg[1];
-				dst[3 * i + 2] = fg[2];
-			}
-			else {
-				dst[3 * i + 0] = bg[0];
-				dst[3 * i + 1] = bg[1];
-				dst[3 * i + 2] = bg[2];
-			}
+		i = x & 7;
 
-			val <<= 1;
+		chroma = cga_color_burst[rgbi & 7][i] ? 0.66 : 0.0;
+		composite = luma + chroma;
+
+		Ys[i] = composite;
+		Is[i] = composite * cga->sin_cos_tab[i + 8];
+		Qs[i] = composite * cga->sin_cos_tab[i];
+
+		Y = Ys[i];
+		I = Is[i];
+		Q = Qs[i];
+
+		for (j = 1; j < 8; j++) {
+			Y += Ys[(i + j) & 7];
+			I += Is[(i + j) & 7];
+			Q += Qs[(i + j) & 7];
 		}
 
-		dst += (3 * 8 * cga->w);
-	}
-}
+		if (Y > 8*1.0000) Y = 8*1.0000; else if (Y < 0.0) Y = 0.0;
+		if (I > 8*0.5957) I = 8*0.5957; else if (I < -8*0.5957) I = -8*0.5957;
+		if (Q > 8*0.5226) Q = 8*0.5226; else if (Q < -8*0.5226) Q = -8*0.5226;
 
-/*
- * Update mode 0 (text 80 * 25 * 16)
- */
-static
-void cga_mode0_update (cga_t *cga)
-{
-	unsigned            x, y;
-	unsigned            ofs;
-	const unsigned char *src;
-	unsigned char       *dst;
+		Y *= cga->brightness;
+		I *= cga->saturation;
+		Q *= cga->saturation;
 
-	if (cga_set_buf_size (cga, 8 * cga->w, cga->ch * cga->h)) {
-		return;
-	}
+		R += Y + 0.9562948323208939905 * I + 0.6210251254447287141 * Q;
+		G += Y - 0.2721214740839773195 * I - 0.6473809535176157223 * Q;
+		B += Y - 1.1069899085671282160 * I + 1.7046149754988293290 * Q;
 
-	src = cga->mem;
-	ofs = (2 * cga_get_start (cga)) & 0x3ffe;
+		if (x & 1) {
+			if (R <= 0.0) r = 0; else if (R >= 16.0) r = 255; else r = 16.0 * R;
+			if (G <= 0.0) g = 0; else if (G >= 16.0) g = 255; else g = 16.0 * G;
+			if (B <= 0.0) b = 0; else if (B >= 16.0) b = 255; else b = 16.0 * B;
 
-	for (y = 0; y < cga->h; y++) {
-		dst = cga->buf + 3 * (8 * cga->w) * (cga->ch * y);
+			dst[0] = r;
+			dst[1] = g;
+			dst[2] = b;
 
-		for (x = 0; x < cga->w; x++) {
-			cga_mode0_update_char (cga,
-				dst + 3 * 8 * x, src[ofs], src[ofs + 1]
-			);
+			dst += 3;
 
-			ofs = (ofs + 2) & 0x3ffe;
-		}
-	}
-
-	cga_mode0_update_cursor (cga);
-}
-
-
-/*
- * Update mode 1 (graphics 320 * 200 * 4)
- */
-static
-void cga_mode1_update (cga_t *cga)
-{
-	unsigned            i, x, y, w, h;
-	unsigned            ofs, val, idx;
-	unsigned char       *dst;
-	const unsigned char *col, *mem;
-
-	if (cga_set_buf_size (cga, 8 * cga->w, 2 * cga->h)) {
-		return;
-	}
-
-	dst = cga->buf;
-
-	w = 2 * cga->w;
-	h = 2 * cga->h;
-
-	ofs = (2 * cga_get_start (cga)) & 0x1fff;
-
-	for (y = 0; y < h; y++) {
-		mem = cga->mem + ((y & 1) << 13);
-
-		for (x = 0; x < w; x++) {
-			val = mem[(ofs + x) & 0x1fff];
-
-			for (i = 0; i < 4; i++) {
-				idx = (val >> 6) & 3;
-				idx = cga->pal[idx];
-				col = cga_rgb[idx];
-				val = (val << 2) & 0xff;
-
-				dst[0] = col[0];
-				dst[1] = col[1];
-				dst[2] = col[2];
-
-				dst += 3;
-			}
-		}
-
-		if (y & 1) {
-			ofs = (ofs + w) & 0x1fff;
-		}
-	}
-}
-
-/*
- * Update mode 2 (graphics 640 * 200 * 2)
- */
-static
-void cga_mode2_update (cga_t *cga)
-{
-	unsigned            i, x, y, w, h;
-	unsigned            ofs, val, idx;
-	unsigned char       *dst;
-	const unsigned char *col, *mem;
-
-	if (cga_set_buf_size (cga, 16 * cga->w, 2 * cga->h)) {
-		return;
-	}
-
-	dst = cga->buf;
-
-	h = 2 * cga->h;
-	w = 2 * cga->w;
-
-	ofs = (2 * cga_get_start (cga)) & 0x1fff;
-
-	for (y = 0; y < h; y++) {
-		mem = cga->mem + ((y & 1) << 13);
-
-		for (x = 0; x < w; x++) {
-			val = mem[(ofs + x) & 0x1fff];
-
-			for (i = 0; i < 8; i++) {
-				idx = (val & 0x80) ? cga->pal[0] : 0;
-				col = cga_rgb[idx];
-				val = (val << 1) & 0xff;
-
-				dst[0] = col[0];
-				dst[1] = col[1];
-				dst[2] = col[2];
-
-				dst += 3;
-			}
-		}
-
-		if (y & 1) {
-			ofs = (ofs + w) & 0x1fff;
+			R = 0.0;
+			G = 0.0;
+			B = 0.0;
 		}
 	}
 }
@@ -527,9 +263,9 @@ void cga_make_comp_tab (cga_t *cga)
 		cga->comp_tab = malloc (5 * 16 * 3);
 	}
 
-	hue = 0.0;
-	sat = 2.0 / 3.0;
-	lum = 1.0;
+	hue = cga->hue;
+	sat = cga->saturation;
+	lum = cga->brightness;
 
 	if (cga->reg[CGA_CSEL] & CGA_CSEL_PAL) {
 		hv = 35.0;
@@ -577,190 +313,535 @@ void cga_make_comp_tab (cga_t *cga)
 	cga->comp_tab_ok = 1;
 }
 
+static
+void cga_line_blank (cga_t *cga, unsigned row)
+{
+	unsigned char *ptr;
+
+	ptr = pce_video_get_row_ptr (&cga->video, row);
+
+	memset (ptr, 0, 3 * cga->video.buf_w);
+}
+
 /*
- * Update mode 2 (graphics 640 * 200 * 2) for composite
+ * Text modes
  */
 static
-void cga_mode2c_update (cga_t *cga)
+void cga_line_mode0 (cga_t *cga, unsigned row)
 {
-	unsigned            x, y, w, h, n, ofs;
+	unsigned            i, j;
+	unsigned            hd;
+	unsigned            addr, caddr, amask;
+	unsigned char       code, attr;
+	unsigned char       val, mask, cmask;
+	unsigned char       *ptr;
+	const unsigned char *reg, *col, *fg, *bg;
+	e6845_t             *crt;
+
+	reg = cga->reg;
+	crt = &cga->crtc;
+
+	hd = e6845_get_hd (crt);
+
+	cga->video.buf_next_w = 8 * hd;
+
+	if ((8 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 8;
+	}
+
+	ptr = pce_video_get_row_ptr (&cga->video, row);
+	addr = crt->ma;
+	amask = 0x3fff;
+
+	if (cga->blink) {
+		caddr = e6845_get_cursor_address (crt) & amask;
+		cmask = e6845_get_cursor_mask (crt, 0);
+	}
+	else {
+		caddr = -1;
+		cmask = 0;
+	}
+
+	for (i = 0; i < hd; i++) {
+		code = cga->mem[(2 * addr + 0) & amask];
+		attr = cga->mem[(2 * addr + 1) & amask];
+
+		if ((attr & 0x80) && (reg[CGA_MODE] & CGA_MODE_BLINK)) {
+			if (cga->blink == 0) {
+				attr = (attr & 0x70) | ((attr >> 4) & 0x07);
+			}
+
+			attr &= 0x7f;
+		}
+
+		fg = cga_rgb[attr & 15];
+		bg = cga_rgb[(attr >> 4) & 15];
+
+		val = cga->font[8 * code + crt->ra];
+
+		if ((addr & amask) == caddr) {
+			val |= cmask;
+		}
+
+		mask = 0x80;
+
+		for (j = 0; j < 8; j++) {
+			col = (val & mask) ? fg : bg;
+
+			*(ptr++) = col[0];
+			*(ptr++) = col[1];
+			*(ptr++) = col[2];
+
+			mask >>= 1;
+		}
+
+		addr += 1;
+	}
+}
+
+/*
+ * CGA 320 * 200 * 4
+ */
+static
+void cga_line_mode1 (cga_t *cga, unsigned row)
+{
+	unsigned            i, j;
+	unsigned            hd, addr, val;
+	unsigned char       *ptr;
+	const unsigned char *col;
+
+	hd = e6845_get_hd (&cga->crtc);
+
+	cga->video.buf_next_w = 8 * hd;
+
+	if ((8 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 8;
+	}
+
+	ptr = pce_video_get_row_ptr (&cga->video, row);
+	addr = (cga->crtc.ma ^ ((cga->crtc.ra & 1) << 12)) << 1;
+
+	for (i = 0; i < hd; i++) {
+		val = cga->mem[addr & 0x3fff];
+		val = (val << 8) | cga->mem[(addr + 1) & 0x3fff];
+
+		for (j = 0; j < 8; j++) {
+			col = cga_rgb[cga->pal[(val >> 14) & 3]];
+
+			*(ptr++) = col[0];
+			*(ptr++) = col[1];
+			*(ptr++) = col[2];
+
+			val <<= 2;
+		}
+
+		addr += 2;
+	}
+}
+
+/*
+ * CGA 320 * 200 * 4 composite
+ */
+static
+void cga_line_mode1c (cga_t *cga, unsigned row)
+{
+	unsigned      i, j;
+	unsigned      hd, addr, val;
+	unsigned char col;
+	unsigned char *rgb, *dst, *ptr;
+
+	hd = e6845_get_hd (&cga->crtc);
+
+	cga->video.buf_next_w = 16 * hd;
+
+	if ((16 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 16;
+	}
+
+	rgb = cga_get_rgbi_buf (cga, 16 * hd);
+	dst = pce_video_get_row_ptr (&cga->video, row);
+
+	ptr = rgb;
+	addr = (cga->crtc.ma ^ ((cga->crtc.ra & 1) << 12)) << 1;
+
+	for (i = 0; i < hd; i++) {
+		val = cga->mem[addr & 0x3fff];
+		val = (val << 8) | cga->mem[(addr + 1) & 0x3fff];
+
+		for (j = 0; j < 8; j++) {
+			col = cga->pal[(val >> 14) & 3];
+
+			*(ptr++) = col;
+			*(ptr++) = col;
+
+			val <<= 2;
+		}
+
+		addr += 2;
+	}
+
+	cga_line_composite (cga, dst, rgb, 16 * hd);
+}
+
+/*
+ * CGA 640 * 200 * 2
+ */
+static
+void cga_line_mode2 (cga_t *cga, unsigned row)
+{
+	unsigned            i, j;
+	unsigned            hd, addr, val;
+	unsigned char       *ptr;
+	const unsigned char *fg, *bg, *col;
+
+	hd = e6845_get_hd (&cga->crtc);
+
+	cga->video.buf_next_w = 16 * hd;
+
+	if ((16 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 16;
+	}
+
+	ptr = pce_video_get_row_ptr (&cga->video, row);
+	addr = (cga->crtc.ma ^ ((cga->crtc.ra & 1) << 12)) << 1;
+
+	fg = cga_rgb[cga->reg[CGA_CSEL] & 15];
+	bg = cga_rgb[0];
+
+	for (i = 0; i < hd; i++) {
+		val = cga->mem[addr & 0x3fff];
+		val = (val << 8) | cga->mem[(addr + 1) & 0x3fff];
+
+		for (j = 0; j < 16; j++) {
+			col = (val & 0x8000) ? fg : bg;
+
+			*(ptr++) = col[0];
+			*(ptr++) = col[1];
+			*(ptr++) = col[2];
+
+			val <<= 1;
+		}
+
+		addr += 2;
+	}
+}
+
+/*
+ * CGA 640 * 200 * 2 composite
+ */
+static
+void cga_line_mode2c (cga_t *cga, unsigned row)
+{
+	unsigned      i, j;
+	unsigned      hd, addr, val;
+	unsigned char *rgb, *dst, *ptr;
+	unsigned char fg, bg;
+
+	hd = e6845_get_hd (&cga->crtc);
+
+	cga->video.buf_next_w = 16 * hd;
+
+	if ((16 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 16;
+	}
+
+	rgb = cga_get_rgbi_buf (cga, 16 * hd);
+	dst = pce_video_get_row_ptr (&cga->video, row);
+
+	ptr = rgb;
+	addr = (cga->crtc.ma ^ ((cga->crtc.ra & 1) << 12)) << 1;
+
+	fg = cga->reg[CGA_CSEL] & 15;
+	bg = 0;
+
+	for (i = 0; i < hd; i++) {
+		val = cga->mem[addr & 0x3fff];
+		val = (val << 8) | cga->mem[(addr + 1) & 0x3fff];
+
+		for (j = 0; j < 16; j++) {
+			*(ptr++) = (val & 0x8000) ? fg : bg;
+			val <<= 1;
+		}
+
+		addr += 2;
+	}
+
+	cga_line_composite (cga, dst, rgb, 16 * hd);
+}
+
+/*
+ * CGA 640 * 200 * 2 composite (auto)
+ */
+static
+void cga_line_mode2c_auto (cga_t *cga, unsigned row)
+{
+	unsigned            i;
+	unsigned            hd, addr, val;
 	unsigned            avgmsk, avgval, pat;
-	const unsigned char *src, *col;
-	unsigned char       *dst;
+	unsigned char       *ptr;
+	const unsigned char *col;
 
 	if (cga->comp_tab_ok == 0) {
 		cga_make_comp_tab (cga);
 	}
 
-	if (cga_set_buf_size (cga, 16 * cga->w, 2 * cga->h)) {
-		return;
+	hd = e6845_get_hd (&cga->crtc);
+
+	cga->video.buf_next_w = 16 * hd;
+
+	if ((16 * hd) > cga->video.buf_w) {
+		hd = cga->video.buf_w / 16;
 	}
 
-	dst = cga->buf;
-	ofs = (2 * cga_get_start (cga)) & 0x1fff;
+	ptr = pce_video_get_row_ptr (&cga->video, row);
+	addr = (cga->crtc.ma ^ ((cga->crtc.ra & 1) << 12)) << 1;
+
 	pat = 0;
+	val = 0;
+	avgmsk = (cga->mem[addr & 0x3fff] >> 7) & 1;
+	avgval = avgmsk;
 
-	h = 2 * cga->h;
-	w = 2 * cga->w;
+	for (i = 0; i < (16 * hd); i++) {
+		if ((i & 7) == 0) {
+			val = cga->mem[addr & 0x3fff];
+			pat = (val << 4) | ((val >> 4) & 0x0f);
 
-	for (y = 0; y < h; y++) {
-		src = cga->mem + ((y & 1) << 13);
+			addr += 1;
 
-		avgmsk = (src[ofs & 0x1fff] >> 7) & 1;
-		avgval = avgmsk;
+			val = val << 8;
 
-		for (x = 0; x < (8 * w); x++) {
-			if ((x & 3) == 0) {
-				if ((x & 7) == 0) {
-					pat = src[(ofs + (x >> 3)) & 0x1fff];
-					pat = (pat << 4) | ((pat >> 4) & 0x0f);
-				}
-				else {
-					pat = pat >> 4;
-				}
+			if ((i + 8) < (16 * hd)) {
+				val |= cga->mem[addr & 0x3fff];
 			}
-
-			avgval = avgval - ((avgmsk >> 3) & 1);
-			avgmsk = avgmsk << 1;
-
-			n = x + 1;
-
-			if (n < (8 * w)) {
-				if (src[(ofs + (n >> 3)) & 0x1fff] & (0x80 >> (n & 7))) {
-					avgmsk |= 1;
-					avgval += 1;
-				}
-			}
-
-			col = cga->comp_tab + 3 * (16 * avgval + (pat & 0x0f));
-
-			dst[0] = col[0];
-			dst[1] = col[1];
-			dst[2] = col[2];
-
-			dst += 3;
+		}
+		else if ((i & 3) == 0) {
+			pat = pat >> 4;
 		}
 
-		if (y & 1) {
-			ofs = (ofs + w) & 0x1fff;
+		avgval = avgval - ((avgmsk >> 3) & 1);
+		avgmsk = avgmsk << 1;
+
+		if (val & 0x4000) {
+			avgmsk |= 1;
+			avgval += 1;
 		}
+
+		col = cga->comp_tab + 3 * (16 * avgval + (pat & 0x0f));
+
+		*(ptr++) = col[0];
+		*(ptr++) = col[1];
+		*(ptr++) = col[2];
+
+		val <<= 1;
 	}
 }
 
-/*
- * Update the internal screen buffer when the screen is blank
- */
 static
-void cga_update_blank (cga_t *cga)
+void cga_hsync (cga_t *cga)
 {
-	unsigned long x, y;
-	int           fx, fy;
-	unsigned char *dst;
-
-	cga_set_buf_size (cga, 640, 200);
-
-	dst = cga->buf;
-
-	for (y = 0; y < cga->buf_h; y++) {
-		fy = (y % 16) < 8;
-
-		for (x = 0; x < cga->buf_w; x++) {
-			fx = (x % 16) < 8;
-
-			dst[0] = (fx != fy) ? 0x20 : 0x00;
-			dst[1] = dst[0];
-			dst[2] = dst[0];
-
-			dst += 3;
-		}
-	}
-}
-
-/*
- * Update the internal screen buffer
- */
-void cga_update (cga_t *cga)
-{
+	unsigned      row, max, ch;
 	unsigned char mode;
 
-	cga->buf_w = 0;
-	cga->buf_h = 0;
+	if (cga->mod_cnt == 0) {
+		return;
+	}
 
 	mode = cga->reg[CGA_MODE];
 
+	ch = (e6845_get_ml (&cga->crtc) & 0x1f) + 1;
+	row = ch * cga->crtc.crow + cga->crtc.ra;
+	max = ch * e6845_get_vd (&cga->crtc);
+
+	if (row >= max) {
+		return;
+	}
+
+	if (row >= cga->video.buf_h) {
+		return;
+	}
+
 	if ((mode & CGA_MODE_ENABLE) == 0) {
-		cga_update_blank (cga);
+		cga_line_blank (cga, row);
 	}
 	else if (mode & CGA_MODE_G320) {
 		if (mode & CGA_MODE_G640) {
-			if ((mode & CGA_MODE_CBURST) == 0) {
-				cga_mode2c_update (cga);
+			if (cga->composite == CGA_COMPOSITE_FORCE) {
+				cga_line_mode2c (cga, row);
+			}
+			else if ((cga->composite == CGA_COMPOSITE_AUTO) && ((mode & CGA_MODE_CBURST) == 0)) {
+				cga_line_mode2c_auto (cga, row);
 			}
 			else {
-				cga_mode2_update (cga);
+				cga_line_mode2 (cga, row);
 			}
 		}
 		else {
-			cga_mode1_update (cga);
+			if (cga->composite == CGA_COMPOSITE_FORCE) {
+				cga_line_mode1c (cga, row);
+			}
+			else {
+				cga_line_mode1 (cga, row);
+			}
 		}
 	}
 	else {
-		cga_mode0_update (cga);
+		cga_line_mode0 (cga, row);
 	}
 }
 
-
-/*
- * Get a CRTC register
- */
 static
-unsigned char cga_crtc_get_reg (cga_t *cga, unsigned reg)
+void cga_vsync (cga_t *cga)
 {
-	if ((reg < 12) || (reg > 17)) {
-		return (0xff);
+	video_t *vid;
+
+	vid = &cga->video;
+
+	if ((cga->term != NULL) && (vid->buf_w > 0) && (vid->buf_h > 0)) {
+		trm_set_size (cga->term, vid->buf_w, vid->buf_h);
+
+		if (cga->mod_cnt > 0) {
+			trm_set_lines (cga->term, vid->buf, 0, vid->buf_h);
+		}
+
+		trm_update (cga->term);
 	}
 
-	return (cga->reg_crt[reg]);
+	if (cga->mod_cnt > 0) {
+		cga->mod_cnt -= 1;
+	}
+
+	vid->buf_next_h = e6845_get_vdl (&cga->crtc);
+
+	if (vid->buf_next_w == 0) {
+		vid->buf_next_w = 640;
+	}
+
+	if (vid->buf_next_h == 0) {
+		vid->buf_next_h = 200;
+	}
+
+	if ((vid->buf_w != vid->buf_next_w) || (vid->buf_h != vid->buf_next_h)) {
+		pce_video_set_buf_size (vid, vid->buf_next_w, vid->buf_next_h, 3);
+		cga->mod_cnt = 1;
+	}
+
+	if (cga->blink_cnt > 0) {
+		cga->blink_cnt -= 1;
+
+		if (cga->blink_cnt == 0) {
+			cga->blink = !cga->blink;
+			cga->blink_cnt = cga->blink_rate;
+			cga->mod_cnt = 1;
+		}
+	}
+}
+
+static
+void cga_clock (cga_t *cga, unsigned long cnt)
+{
+	unsigned cclk;
+
+	if (cga->reg[CGA_MODE] & CGA_MODE_CS) {
+		cga->clock += (unsigned long) CGA_CFREQ1 * cnt;
+	}
+	else {
+		cga->clock += (unsigned long) CGA_CFREQ2 * cnt;
+	}
+
+	cclk = cga->clock / CGA_IFREQ;
+	cga->clock = cga->clock % CGA_IFREQ;
+
+	if (cclk > 0) {
+		e6845_clock (&cga->crtc, cclk);
+	}
+}
+
+static
+void cga_set_blink_rate (cga_t *cga, unsigned rate)
+{
+	cga->blink = 1;
+	cga->blink_cnt = rate;
+	cga->blink_rate = rate;
+	cga->mod_cnt = 2;
+}
+
+static
+void cga_set_font (cga_t *cga, unsigned font)
+{
+	if (font == 0) {
+		cga->font = cga_font_thick;
+	}
+	else {
+		cga->font = cga_font_thin;
+	}
+
+	cga->mod_cnt = 2;
 }
 
 /*
- * Set a CRTC register
+ * Set the internal palette from the mode and color select registers
  */
 static
-void cga_crtc_set_reg (cga_t *cga, unsigned reg, unsigned char val)
+void cga_set_palette (cga_t *cga)
 {
-	if (reg > 15) {
-		return;
+	unsigned char mode, csel;
+	unsigned char *pal;
+
+	pal = cga->pal;
+
+	mode = cga->reg[CGA_MODE];
+	csel = cga->reg[CGA_CSEL];
+
+	pal[0] = csel & 0x0f;
+
+	if (mode & CGA_MODE_CBURST) {
+		pal[1] = 3;
+		pal[2] = 4;
+		pal[3] = 7;
+	}
+	else if (csel & CGA_CSEL_PAL) {
+		pal[1] = 3;
+		pal[2] = 5;
+		pal[3] = 7;
+	}
+	else {
+		pal[1] = 2;
+		pal[2] = 4;
+		pal[3] = 6;
 	}
 
-	if (cga->reg_crt[reg] == val) {
-		return;
+	if (csel & CGA_CSEL_INT) {
+		pal[1] += 8;
+		pal[2] += 8;
+		pal[3] += 8;
 	}
-
-	cga->reg_crt[reg] = val;
-
-	cga_set_timing (cga);
-
-	cga->update_state |= CGA_UPDATE_DIRTY;
-}
-
-
-/*
- * Get the CRTC index register
- */
-static
-unsigned char cga_get_crtc_index (cga_t *cga)
-{
-	return (cga->reg[CGA_CRTC_INDEX]);
 }
 
 /*
- * Get the CRTC data register
+ * Set the mode register
  */
 static
-unsigned char cga_get_crtc_data (cga_t *cga)
+void cga_set_mode (cga_t *cga, unsigned char val)
 {
-	return (cga_crtc_get_reg (cga, cga->reg[CGA_CRTC_INDEX]));
+	if (cga->reg[CGA_MODE] != val) {
+		cga->reg[CGA_MODE] = val;
+		cga_set_palette (cga);
+		cga->mod_cnt = 2;
+	}
+}
+
+/*
+ * Set the color select register
+ */
+static
+void cga_set_color_select (cga_t *cga, unsigned char val)
+{
+	if (cga->reg[CGA_CSEL] != val) {
+		cga->reg[CGA_CSEL] = val;
+		cga->comp_tab_ok = 0;
+		cga_set_palette (cga);
+		cga->mod_cnt = 2;
+	}
 }
 
 /*
@@ -770,124 +851,86 @@ static
 unsigned char cga_get_status (cga_t *cga)
 {
 	unsigned char val;
-	unsigned long clk;
 
-	cga_clock (cga, 0);
-
-	clk = cga_get_dotclock (cga);
+	pce_video_clock1 (&cga->video, 0);
 
 	val = cga->reg[CGA_STATUS];
-
 	val |= (CGA_STATUS_VSYNC | CGA_STATUS_SYNC);
 
-	if (clk < cga->clk_vd) {
-		val &= ~CGA_STATUS_VSYNC;
-
-		if (cga->clk_ht > 0) {
-			if ((clk % cga->clk_ht) < cga->clk_hd) {
-				val &= ~CGA_STATUS_SYNC;
-			}
-		}
+	if (e6845_get_de (&cga->crtc)) {
+		val &= ~CGA_STATUS_SYNC;
 	}
+
+	if (cga->crtc.vsync_cnt == 0) {
+		val &= ~CGA_STATUS_VSYNC;
+	}
+
+	cga->reg[CGA_STATUS] = val;
 
 	return (val);
 }
 
-/*
- * Set the CRTC index register
- */
 static
-void cga_set_crtc_index (cga_t *cga, unsigned char val)
+void cga_set_pen_reset (cga_t *cga, unsigned char val)
 {
-	cga->reg[CGA_CRTC_INDEX] = val & 0x1f;
+	cga->reg[CGA_STATUS] &= ~CGA_STATUS_PEN;
 }
 
-/*
- * Set the CRTC data register
- */
 static
-void cga_set_crtc_data (cga_t *cga, unsigned char val)
+void cga_set_pen_set (cga_t *cga, unsigned char val)
 {
-	cga->reg[CGA_CRTC_DATA] = val;
-
-	cga_crtc_set_reg (cga, cga->reg[CGA_CRTC_INDEX], val);
-}
-
-/*
- * Set the mode register
- */
-static
-void cga_set_mode (cga_t *cga, unsigned char val)
-{
-	cga->reg[CGA_MODE] = val;
-
-	cga_set_palette (cga);
-	cga_set_timing (cga);
-
-	cga->update_state |= CGA_UPDATE_DIRTY;
-}
-
-/*
- * Set the color select register
- */
-static
-void cga_set_color_select (cga_t *cga, unsigned char val)
-{
-	cga->reg[CGA_CSEL] = val;
-
-	cga_set_palette (cga);
-
-	cga->update_state |= CGA_UPDATE_DIRTY;
+	pce_video_clock1 (&cga->video, 0);
+	cga->reg[CGA_STATUS] |= CGA_STATUS_PEN;
+	e6845_set_pen (&cga->crtc);
 }
 
 /*
  * Get a CGA register
  */
+static
 unsigned char cga_reg_get_uint8 (cga_t *cga, unsigned long addr)
 {
 	switch (addr) {
-	case CGA_CRTC_INDEX0:
 	case CGA_CRTC_INDEX:
-		return (cga_get_crtc_index (cga));
+	case CGA_CRTC_INDEX0:
+		return (e6845_get_index (&cga->crtc));
 
-	case CGA_CRTC_DATA0:
 	case CGA_CRTC_DATA:
-		return (cga_get_crtc_data (cga));
+	case CGA_CRTC_DATA0:
+		return (e6845_get_data (&cga->crtc));
 
 	case CGA_STATUS:
 		return (cga_get_status (cga));
+
+	default:
+		break;
 	}
 
 	return (0xff);
 }
 
+static
 unsigned short cga_reg_get_uint16 (cga_t *cga, unsigned long addr)
 {
-	unsigned short ret;
-
-	ret = cga_reg_get_uint8 (cga, addr);
-
-	if ((addr + 1) < cga->regblk->size) {
-		ret |= cga_reg_get_uint8 (cga, addr + 1) << 8;
-	}
-
-	return (ret);
+	return (0xffff);
 }
 
 /*
  * Set a CGA register
  */
+static
 void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
-	case CGA_CRTC_INDEX0:
 	case CGA_CRTC_INDEX:
-		cga_set_crtc_index (cga, val);
+	case CGA_CRTC_INDEX0:
+		e6845_set_index (&cga->crtc, val);
 		break;
 
-	case CGA_CRTC_DATA0:
 	case CGA_CRTC_DATA:
-		cga_set_crtc_data (cga, val);
+	case CGA_CRTC_DATA0:
+		e6845_set_data (&cga->crtc, val);
+		cga->mod_cnt = 2;
 		break;
 
 	case CGA_MODE:
@@ -899,68 +942,235 @@ void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 		break;
 
 	case CGA_PEN_RESET:
-		cga->reg[CGA_STATUS] &= ~CGA_STATUS_PEN;
+		cga_set_pen_reset (cga, val);
 		break;
 
 	case CGA_PEN_SET:
-		cga->reg[CGA_STATUS] |= CGA_STATUS_PEN;
+		cga_set_pen_set (cga, val);
 		break;
 
 	default:
-		cga->reg[addr] = val;
+		fprintf (stderr, "CGA: set reg (%03lX, %02X)\n\n", addr, val);
 		break;
 	}
 }
 
+static
 void cga_reg_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 {
 	cga_reg_set_uint8 (cga, addr, val & 0xff);
 
-	if ((addr + 1) < cga->regblk->size) {
-		cga_reg_set_uint8 (cga, addr + 1, val >> 8);
+	if (addr < 15) {
+		cga_reg_set_uint8 (cga, addr + 1, (val >> 8) & 0xff);
 	}
 }
 
+static
+unsigned char cga_mem_get_uint8 (cga_t *cga, unsigned long addr)
+{
+	return (cga->mem[addr & 0x3fff]);
+}
+
+static
+unsigned short cga_mem_get_uint16 (cga_t *cga, unsigned long addr)
+{
+	unsigned short val;
+
+	val = cga->mem[(addr + 1) & 0x3fff];
+	val = (val << 8) | cga->mem[addr & 0x3fff];
+
+	return (val);
+}
 
 static
 void cga_mem_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 {
-	if (cga->mem[addr] == val) {
-		return;
-	}
-
-	cga->mem[addr] = val;
-
-	cga->update_state |= CGA_UPDATE_DIRTY;
+	cga->mem[addr & 0x3fff] = val;
+	cga->mod_cnt = 2;
 }
 
 static
 void cga_mem_set_uint16 (cga_t *cga, unsigned long addr, unsigned short val)
 {
-	cga_mem_set_uint8 (cga, addr, val & 0xff);
-
-	if ((addr + 1) < cga->memblk->size) {
-		cga_mem_set_uint8 (cga, addr + 1, (val >> 8) & 0xff);
-	}
+	cga->mem[(addr + 0) & 0x3fff] = val & 0xff;
+	cga->mem[(addr + 1) & 0x3fff] = (val >> 8) & 0xff;
+	cga->mod_cnt = 2;
 }
-
 
 static
 int cga_set_msg (cga_t *cga, const char *msg, const char *val)
 {
 	if (msg_is_message ("emu.video.blink", msg)) {
-		unsigned freq;
+		unsigned v;
 
-		if (msg_get_uint (val, &freq)) {
+		if (msg_get_uint (val, &v)) {
 			return (1);
 		}
 
-		cga_set_blink_rate (cga, freq);
+		cga_set_blink_rate (cga, v);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.brightness", msg)) {
+		int v;
+
+		if (msg_get_sint (val, &v)) {
+			return (1);
+		}
+
+		cga_set_brightness (cga, v);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.composite", msg)) {
+		int      v;
+		unsigned mode;
+
+		if (strcmp (val, "auto") == 0) {
+			mode = CGA_COMPOSITE_AUTO;
+		}
+		else if (msg_get_bool (val, &v) == 0) {
+			if (v) {
+				mode = CGA_COMPOSITE_FORCE;
+			}
+			else {
+				mode = CGA_COMPOSITE_NONE;
+			}
+		}
+		else {
+			return (1);
+		}
+
+		cga_set_composite (cga, mode);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.composite.cycle", msg)) {
+		unsigned mode;
+
+		if (cga->composite == CGA_COMPOSITE_NONE) {
+			mode = CGA_COMPOSITE_AUTO;
+			fprintf (stderr, "cga: composite auto\n");
+		}
+		else if (cga->composite == CGA_COMPOSITE_AUTO) {
+			mode = CGA_COMPOSITE_FORCE;
+			fprintf (stderr, "cga: composite on\n");
+		}
+		else {
+			mode = CGA_COMPOSITE_NONE;
+			fprintf (stderr, "cga: composite off\n");
+		}
+
+		cga_set_composite (cga, mode);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.font", msg)) {
+		unsigned font;
+
+		if (msg_get_uint (val, &font)) {
+			return (1);
+		}
+
+		cga_set_font (cga, font);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.hue", msg)) {
+		int hue;
+
+		if (msg_get_sint (val, &hue)) {
+			return (1);
+		}
+
+		cga_set_hue (cga, hue);
+
+		return (0);
+	}
+	else if (msg_is_message ("emu.video.saturation", msg)) {
+		int sat;
+
+		if (msg_get_sint (val, &sat)) {
+			return (1);
+		}
+
+		cga_set_saturation (cga, sat);
 
 		return (0);
 	}
 
 	return (-1);
+}
+
+static
+void cga_print_info (cga_t *cga, FILE *fp)
+{
+	unsigned      col, row, w1, w2;
+	unsigned      ch, vt, ht, vtl, vdl;
+	unsigned      base, addr;
+	unsigned long clk1, clk2;
+	unsigned char status;
+	unsigned char *reg;
+	e6845_t       *crt;
+
+	crt = &cga->crtc;
+	reg = cga->reg;
+
+	status = cga_get_status (cga);
+
+	base = e6845_get_start_address (crt);
+	addr = crt->ma + crt->ccol;
+
+	ch = (e6845_get_ml (crt) & 0x1f) + 1;
+	row = ch * crt->crow + crt->ra;
+	col = 8 * crt->ccol;
+	vtl = e6845_get_vtl (crt);
+	vdl = e6845_get_vdl (crt);
+	ht = e6845_get_ht (crt) + 1;
+	vt = e6845_get_vt (crt) + 1;
+
+	clk1 = 8 * (e6845_get_ht (crt) + 1);
+	w1 = 8 * e6845_get_hd (crt);
+	w2 = clk1;
+
+	if ((reg[CGA_MODE] ^ CGA_MODE_CS) & (CGA_MODE_CS | CGA_MODE_G640)) {
+		clk1 *= 2;
+	}
+
+	if (reg[CGA_MODE] & CGA_MODE_G640) {
+		col *= 2;
+		w1 *= 2;
+		w2 *= 2;
+	}
+
+	clk2 = clk1 * vtl;
+
+	fprintf (fp,
+		"DEV: CGA\n"
+		"INDX[3D4]=%02X   COL=%3u/%3u  HFRQ=%9.3f  %u*%u\n"
+		"MODE[3D8]=%02X   ROW=%3u/%3u  VFRQ=%9.3f  %u*%u\n"
+		"CSEL[3D9]=%02X  CCOL=%3u/%3u   HDE=%d  HSYN=%X  BASE=%04X\n"
+		"STAT[3DA]=%02X  CROW=%3u/%3u   VDE=%d  VSYN=%X  ADDR=%04X\n"
+		"                RA=%3u/%3u\n",
+		e6845_get_index (crt), col, w2, (double) CGA_PFREQ / clk1, w1, vdl,
+		reg[CGA_MODE], row, vtl, (double) CGA_PFREQ / clk2, w2, vtl,
+		reg[CGA_CSEL], crt->ccol, ht, e6845_get_hde (crt), crt->hsync_cnt, base,
+		status, crt->crow, vt, e6845_get_vde (crt), crt->vsync_cnt, addr,
+		crt->ra, ch
+	);
+
+	fprintf (fp,
+		"HT[00]=%02X  VT[04]=%02X  IL[08]=%02X  AH[12]=%02X  LH[16]=%02X\n"
+		"HD[01]=%02X  VA[05]=%02X  ML[09]=%02X  AL[13]=%02X  LL[17]=%02X\n"
+		"HS[02]=%02X  VD[06]=%02X  CS[10]=%02X  CH[14]=%02X  ROWDSP=%u\n"
+		"SW[03]=%02X  VS[07]=%02X  CE[11]=%02X  CL[15]=%02X  ROWTOT=%u\n",
+		crt->reg[0], crt->reg[4], crt->reg[8], crt->reg[12], crt->reg[16],
+		crt->reg[1], crt->reg[5], crt->reg[9], crt->reg[13], crt->reg[17],
+		crt->reg[2], crt->reg[6], crt->reg[10], crt->reg[14], vdl,
+		crt->reg[3], crt->reg[7], crt->reg[11], crt->reg[15], vtl
+	);
+
+	fflush (fp);
 }
 
 static
@@ -986,166 +1196,8 @@ mem_blk_t *cga_get_reg (cga_t *cga)
 }
 
 static
-void cga_print_info (cga_t *cga, FILE *fp)
+void cga_init (cga_t *cga, unsigned long io, unsigned long addr)
 {
-	unsigned i;
-
-	fprintf (fp, "DEV: CGA\n");
-
-	fprintf (fp, "CGA: OFS=%04X  POS=%04X  BG=%02X  PAL=%u\n",
-		cga_get_start (cga),
-		cga_get_cursor (cga),
-		cga->reg[CGA_CSEL] & 0x0f,
-		(cga->reg[CGA_CSEL] >> 5) & 1
-	);
-
-	fprintf (fp, "CLK: CLK=%lu  HT=%lu HD=%lu  VT=%lu VD=%lu\n",
-		cga_get_dotclock (cga),
-		cga->clk_ht, cga->clk_hd,
-		cga->clk_vt, cga->clk_vd
-	);
-
-	fprintf (fp,
-		"REG: MODE=%02X  CSEL=%02X  STATUS=%02X"
-		"  PAL=[%02X %02X %02X %02X]\n",
-		cga->reg[CGA_MODE],
-		cga->reg[CGA_CSEL],
-		cga->reg[CGA_STATUS],
-		cga->pal[0], cga->pal[1], cga->pal[2], cga->pal[3]
-	);
-
-	fprintf (fp, "CRTC=[%02X", cga->reg_crt[0]);
-	for (i = 1; i < 18; i++) {
-		fputs ((i & 7) ? " " : "-", fp);
-		fprintf (fp, "%02X", cga->reg_crt[i]);
-	}
-	fputs ("]\n", fp);
-
-	fflush (fp);
-}
-
-/*
- * Force a screen update
- */
-static
-void cga_redraw (cga_t *cga, int now)
-{
-	if (now) {
-		if (cga->term != NULL) {
-			cga->update (cga);
-
-			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
-			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
-			trm_update (cga->term);
-		}
-	}
-
-	cga->update_state |= CGA_UPDATE_DIRTY;
-}
-
-static
-void cga_clock (cga_t *cga, unsigned long cnt)
-{
-	unsigned long clk;
-
-	if (cga->clk_vt < 50000) {
-		return;
-	}
-
-	clk = cga_get_dotclock (cga);
-
-	if (clk < cga->clk_vd) {
-		cga->update_state &= ~CGA_UPDATE_RETRACE;
-		return;
-	}
-
-	if (clk >= cga->clk_vt) {
-		cga->video.dotclk[0] = 0;
-		cga->video.dotclk[1] = 0;
-		cga->video.dotclk[2] = 0;
-	}
-
-	if (cga->update_state & CGA_UPDATE_RETRACE) {
-		return;
-	}
-
-	if (cga->blink_cnt > 0) {
-		cga->blink_cnt -= 1;
-
-		if (cga->blink_cnt == 0) {
-			cga->blink_cnt = cga->blink_freq;
-			cga->blink_on = !cga->blink_on;
-
-			if ((cga->reg[CGA_MODE] & CGA_MODE_G320) == 0) {
-				cga->update_state |= CGA_UPDATE_DIRTY;
-			}
-		}
-	}
-
-	if (cga->term != NULL) {
-		if (cga->update_state & CGA_UPDATE_DIRTY) {
-			cga->update (cga);
-			trm_set_size (cga->term, cga->buf_w, cga->buf_h);
-			trm_set_lines (cga->term, cga->buf, 0, cga->buf_h);
-		}
-
-		trm_update (cga->term);
-	}
-
-	cga->update_state = CGA_UPDATE_RETRACE;
-}
-
-void cga_free (cga_t *cga)
-{
-	mem_blk_del (cga->memblk);
-	mem_blk_del (cga->regblk);
-	free (cga->comp_tab);
-}
-
-void cga_del (cga_t *cga)
-{
-	if (cga != NULL) {
-		cga_free (cga);
-		free (cga);
-	}
-}
-
-static
-void cga_set_font (cga_t *cga, unsigned font)
-{
-	if (font == 0) {
-		memcpy (cga->font, cga_font_thick, 2048);
-	}
-	else {
-		memcpy (cga->font, cga_font_thin, 2048);
-	}
-}
-
-static
-int cga_load_font (cga_t *cga, const char *fname)
-{
-	FILE *fp;
-
-	fp = fopen (fname, "rb");
-
-	if (fp == NULL) {
-		return (1);
-	}
-
-	if (fread (cga->font, 1, 2048, fp) != 2048) {
-		fclose (fp);
-		return (1);
-	}
-
-	fclose (fp);
-
-	return (0);
-}
-
-void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long size)
-{
-	unsigned i;
-
 	pce_video_init (&cga->video);
 
 	cga->video.ext = cga;
@@ -1155,118 +1207,107 @@ void cga_init (cga_t *cga, unsigned long io, unsigned long addr, unsigned long s
 	cga->video.get_mem = (void *) cga_get_mem;
 	cga->video.get_reg = (void *) cga_get_reg;
 	cga->video.print_info = (void *) cga_print_info;
-	cga->video.redraw = (void *) cga_redraw;
 	cga->video.clock = (void *) cga_clock;
 
-	cga->ext = NULL;
-	cga->update = cga_update;
-
-	size = (size < 16384) ? 16384UL : size;
-
-	cga->memblk = mem_blk_new (addr, size, 1);
-	cga->memblk->ext = cga;
-	cga->memblk->set_uint8 = (void *) cga_mem_set_uint8;
-	cga->memblk->set_uint16 = (void *) &cga_mem_set_uint16;
-	cga->mem = cga->memblk->data;
+	cga->memblk = mem_blk_new (addr, 16384, 1);
+	mem_blk_set_fget (cga->memblk, cga, cga_mem_get_uint8, cga_mem_get_uint16, NULL);
+	mem_blk_set_fset (cga->memblk, cga, cga_mem_set_uint8, cga_mem_set_uint16, NULL);
 	mem_blk_clear (cga->memblk, 0x00);
+	cga->mem = mem_blk_get_data (cga->memblk);
+	mem_blk_set_size (cga->memblk, 32768);
 
 	cga->regblk = mem_blk_new (io, 16, 1);
-	cga->regblk->ext = cga;
-	cga->regblk->set_uint8 = (void *) cga_reg_set_uint8;
-	cga->regblk->set_uint16 = (void *) cga_reg_set_uint16;
-	cga->regblk->get_uint8 = (void *) cga_reg_get_uint8;
-	cga->regblk->get_uint16 = (void *) cga_reg_get_uint16;
-	cga->reg = cga->regblk->data;
+	mem_blk_set_fget (cga->regblk, cga, cga_reg_get_uint8, cga_reg_get_uint16, NULL);
+	mem_blk_set_fset (cga->regblk, cga, cga_reg_set_uint8, cga_reg_set_uint16, NULL);
 	mem_blk_clear (cga->regblk, 0x00);
+	cga->reg = mem_blk_get_data (cga->regblk);
+
+	e6845_init (&cga->crtc);
+	e6845_set_hsync_fct (&cga->crtc, cga, cga_hsync);
+	e6845_set_vsync_fct (&cga->crtc, cga, cga_vsync);
 
 	cga->term = NULL;
+	cga->font = cga_font_thick;
+	cga->clock = 0;
+	cga->mod_cnt = 0;
 
-	for (i = 0; i < 18; i++) {
-		cga->reg_crt[i] = 0;
-	}
+	cga->rgbi_max = 0;
+	cga->rgbi_buf = NULL;
 
 	cga->pal[0] = 0;
 	cga->pal[1] = 11;
 	cga->pal[2] = 13;
 	cga->pal[3] = 15;
 
+	cga->blink = 0;
+	cga->blink_cnt = 0;
+	cga->blink_rate = 16;
+
+	cga->composite = CGA_COMPOSITE_AUTO;
 	cga->comp_tab_ok = 0;
 	cga->comp_tab = NULL;
+	cga->hue = 0.0;
+	cga->saturation = 2.0 / 3.0;
+	cga->brightness = 1.0;
 
-	cga->blink_on = 1;
-	cga->blink_cnt = 0;
-	cga->blink_freq = 16;
-
-	cga->w = 0;
-	cga->h = 0;
-	cga->ch = 0;
-
-	cga->clk_ht = 0;
-	cga->clk_vt = 0;
-	cga->clk_hd = 0;
-	cga->clk_vd = 0;
-
-	cga->bufmax = 0;
-	cga->buf = NULL;
-
-	cga->update_state = 0;
-
-	cga_set_font (cga, 0);
+	cga_set_hue (cga, 0.0);
 }
 
-cga_t *cga_new (unsigned long io, unsigned long addr, unsigned long size)
+static
+void cga_free (cga_t *cga)
+{
+	e6845_free (&cga->crtc);
+
+	free (cga->rgbi_buf);
+
+	mem_blk_del (cga->memblk);
+	mem_blk_del (cga->regblk);
+}
+
+cga_t *cga_new (unsigned long io, unsigned long addr)
 {
 	cga_t *cga;
 
-	cga = malloc (sizeof (cga_t));
-	if (cga == NULL) {
+	if ((cga = malloc (sizeof (cga_t))) == NULL) {
 		return (NULL);
 	}
 
-	cga_init (cga, io, addr, size);
+	cga_init (cga, io, addr);
 
 	return (cga);
 }
 
+static
+void cga_del (cga_t *cga)
+{
+	if (cga != NULL) {
+		cga_free (cga);
+		free (cga);
+	}
+}
+
 video_t *cga_new_ini (ini_sct_t *sct)
 {
-	unsigned long io, addr, size;
-	unsigned      font;
-	unsigned      blink;
-	const char    *fontfile;
+	unsigned long io, addr;
+	unsigned      blink, font;
 	cga_t         *cga;
 
 	ini_get_uint32 (sct, "io", &io, 0x3d0);
 	ini_get_uint32 (sct, "address", &addr, 0xb8000);
-	ini_get_uint32 (sct, "size", &size, 16384);
+	ini_get_uint16 (sct, "blink", &blink, 16);
 	ini_get_uint16 (sct, "font", &font, 0);
-	ini_get_uint16 (sct, "blink", &blink, 0);
-	ini_get_string (sct, "file", &fontfile, NULL);
 
 	pce_log_tag (MSG_INF,
-		"VIDEO:",
-		"CGA io=0x%04lx addr=0x%05lx size=0x%05lx font=%u file=%s\n",
-		io, addr, size, font,
-		(fontfile != NULL) ? fontfile : "<none>"
+		"VIDEO:", "CGA io=0x%04lx addr=0x%05lx font=%u blink=%u\n",
+		io, addr, font, blink
 	);
 
-	cga = cga_new (io, addr, size);
-
-	if (cga == NULL) {
+	if ((cga = cga_new (io, addr)) == NULL) {
 		return (NULL);
 	}
 
-	cga_set_font (cga, font);
-
-	if (fontfile != NULL) {
-		if (cga_load_font (cga, fontfile)) {
-			pce_log (MSG_ERR, "*** loading CGA font failed (%s)\n",
-				fontfile
-			);
-		}
-	}
-
 	cga_set_blink_rate (cga, blink);
+	cga_set_font (cga, font);
 
 	return (&cga->video);
 }

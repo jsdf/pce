@@ -2006,6 +2006,7 @@ src/devices/slip.o: src/devices/slip.c \
 	src/lib/tun.h
 
 src/devices/video/cga.o: src/devices/video/cga.c \
+	src/chipset/e6845.h \
 	src/devices/memory.h \
 	src/devices/video/cga.h \
 	src/devices/video/cga_font.h \

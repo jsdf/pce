@@ -326,9 +326,14 @@ static
 void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key)
 {
 	if (event == PCE_KEY_EVENT_MAGIC) {
-		pce_log (MSG_INF, "unhandled magic key (%u)\n",
-			(unsigned) key
-		);
+		if (key == PCE_KEY_O) {
+			pc_set_msg (pc, "emu.video.composite.cycle", "");
+		}
+		else {
+			pce_log (MSG_INF, "unhandled magic key (%u)\n",
+				(unsigned) key
+			);
+		}
 
 		return;
 	}
