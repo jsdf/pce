@@ -349,6 +349,13 @@ video {
 	# Plantronics Colorplus
 	device = "plantronics"
 
+	# Select the text mode font:
+	#   0 = Thick font (default)
+	#   1 = Thin font
+	font = 0
+
+	# The blink rate for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
 
