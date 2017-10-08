@@ -2052,6 +2052,9 @@ src/devices/video/mda.o: src/devices/video/mda.c \
 	src/lib/msg.h \
 	src/libini/libini.h
 
+src/devices/video/mda_font.o: src/devices/video/mda_font.c \
+	src/devices/video/mda_font.h
+
 src/devices/video/olivetti.o: src/devices/video/olivetti.c \
 	src/devices/memory.h \
 	src/devices/video/cga.h \

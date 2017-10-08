@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/mda.h                                      *
  * Created:     2003-04-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,52 +24,43 @@
 #define PCE_VIDEO_MDA_H 1
 
 
-#include <libini/libini.h>
-#include <drivers/video/terminal.h>
+#include <chipset/e6845.h>
+#include <devices/memory.h>
 #include <devices/video/video.h>
+#include <drivers/video/terminal.h>
+#include <libini/libini.h>
 
 
 typedef struct {
-	video_t       video;
+	video_t             video;
+	e6845_t             crtc;
 
-	mem_blk_t     *memblk;
-	unsigned char mem[4096];
+	mem_blk_t           *memblk;
 
-	mem_blk_t     *regblk;
-	unsigned char *reg;
+	mem_blk_t           *regblk;
+	unsigned char       *reg;
 
-	terminal_t    *term;
+	terminal_t          *term;
 
-	unsigned char reg_crt[18];
+	const unsigned char *font;
 
-	unsigned char *font;
+	unsigned long       clock;
 
-	unsigned char rgb[16][3];
+	unsigned char       mod_cnt;
 
-	char          blink_on;
-	unsigned      blink_cnt;
-	unsigned      blink_freq;
+	unsigned char       rgb[16][3];
 
-	/* these are derived from the crtc registers */
-	unsigned      w;
-	unsigned      h;
-	unsigned      ch;
+	unsigned short      lfsr;
 
-	unsigned long clk_ht;
-	unsigned long clk_vt;
-	unsigned long clk_hd;
-	unsigned long clk_vd;
+	char                blink;
+	unsigned            blink_cnt;
+	unsigned            blink_rate;
 
-	unsigned      buf_w;
-	unsigned      buf_h;
-	unsigned long bufmax;
-	unsigned char *buf;
-
-	unsigned char update_state;
+	unsigned char       mem[4096];
 } mda_t;
 
 
-mda_t *mda_new (unsigned long io, unsigned long mem, unsigned long size);
+mda_t *mda_new (unsigned long io, unsigned long mem);
 
 video_t *mda_new_ini (ini_sct_t *sct);
 

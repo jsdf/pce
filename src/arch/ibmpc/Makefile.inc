@@ -63,6 +63,7 @@ PCE_IBMPC_OBJ_EXT := \
 	src/chipset/82xx/e8255.o \
 	src/chipset/82xx/e8259.o \
 	src/chipset/82xx/e8272.o \
+	src/chipset/e6845.o \
 	src/devices/device.o \
 	src/devices/fdc.o \
 	src/devices/hdc.o \

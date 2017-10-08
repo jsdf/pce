@@ -340,7 +340,7 @@ video {
 	#color_bright = 0xaaffaa
 	#color_graphics = 0xaaffaa
 
-	# The blink frequency for blinking characters and the
+	# The blink rate for blinking characters and the
 	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
