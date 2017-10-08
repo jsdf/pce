@@ -2099,15 +2099,19 @@ src/devices/video/video.o: src/devices/video/video.c \
 	src/lib/msg.h
 
 src/devices/video/wy700.o: src/devices/video/wy700.c \
+	src/chipset/e6845.h \
 	src/devices/memory.h \
-	src/devices/video/cga.h \
 	src/devices/video/video.h \
 	src/devices/video/wy700.h \
 	src/devices/video/wy700_font.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \
 	src/lib/log.h \
+	src/lib/msg.h \
 	src/libini/libini.h
+
+src/devices/video/wy700_font.o: src/devices/video/wy700_font.c \
+	src/devices/video/wy700_font.h
 
 src/drivers/block/blkcow.o: src/drivers/block/blkcow.c \
 	src/config.h \
