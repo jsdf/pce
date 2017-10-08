@@ -323,6 +323,20 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 }
 
 static
+void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key)
+{
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		pce_log (MSG_INF, "unhandled magic key (%u)\n",
+			(unsigned) key
+		);
+
+		return;
+	}
+
+	pc_kbd_set_key (&pc->kbd, event, key);
+}
+
+static
 void pc_set_mouse (void *ext, int dx, int dy, unsigned button)
 {
 	chr_mouse_set (dx, dy, button);
@@ -895,7 +909,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	trm_set_key_fct (pc->trm, &pc->kbd, pc_kbd_set_key);
+	trm_set_key_fct (pc->trm, pc, pc_set_key);
 	trm_set_mouse_fct (pc->trm, pc, pc_set_mouse);
 	trm_set_msg_fct (pc->trm, pc, pc_set_msg);
 }
