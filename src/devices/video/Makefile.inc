@@ -13,6 +13,7 @@ DEV_VID_BAS := \
 	mda \
 	mda_font \
 	olivetti \
+	olivetti_font \
 	plantronics \
 	vga \
 	video \
@@ -34,6 +35,7 @@ $(rel)/hgc.o:		$(rel)/hgc.c
 $(rel)/mda.o:		$(rel)/mda.c
 $(rel)/mda_font.o:	$(rel)/mda_font.c
 $(rel)/olivetti.o:	$(rel)/olivetti.c
+$(rel)/olivetti_font.o: $(rel)/olivetti_font.c
 $(rel)/plantronics.o:	$(rel)/plantronics.c
 $(rel)/vga.o:		$(rel)/vga.c
 $(rel)/video.o:		$(rel)/video.c

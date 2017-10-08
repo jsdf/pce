@@ -356,6 +356,11 @@ video {
 	# Olivetti M24
 	device = "olivetti"
 
+	# Set the monitor type to either color or mono.
+	mono = 0
+
+	# The blink rate for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
 
