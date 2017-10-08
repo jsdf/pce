@@ -169,10 +169,14 @@ emu.video.blink <blink-rate>
 	Set the cursor blink rate. The number specified is the number
 	of screen refreshes for which the cursor is visible/invisible.
 
-emu.video.redraw ["0" | "1"]
-	Force a redraw of the screen. If the parameter is "1", redraw
-	immediately, otherwise schedule a forced redraw at the next
-	vertical retrace.
+emu.video.composite "0" | "1" | "auto"
+	Set CGA composite mode. A value of "0" turns off composite mode
+	in all cases. A value of "1" turns on composite mode in all graphics
+	modes. A value of "auto" turns on composite mode in high resolution
+	graphics mode if the color burst is enabled.
+
+emu.video.composite.cycle
+	Cycle through the three possible values for CGA composite mode.
 
 
 PCE/macplus Messages
