@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.h                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,52 +20,42 @@
  *****************************************************************************/
 
 
-#ifndef PCE_HGC_H
-#define PCE_HGC_H 1
+#ifndef PCE_VIDEO_HGC_H
+#define PCE_VIDEO_HGC_H 1
 
 
-#include <libini/libini.h>
-#include <drivers/video/terminal.h>
+#include <chipset/e6845.h>
+#include <devices/memory.h>
 #include <devices/video/video.h>
+#include <drivers/video/terminal.h>
+#include <libini/libini.h>
 
 
 typedef struct {
-	video_t       video;
+	video_t             video;
+	e6845_t             crtc;
 
-	mem_blk_t     *memblk;
-	unsigned char *mem;
+	mem_blk_t           *memblk;
+	unsigned char       *mem;
 
-	mem_blk_t     *regblk;
-	unsigned char *reg;
+	mem_blk_t           *regblk;
+	unsigned char       *reg;
 
-	terminal_t    *term;
+	terminal_t          *term;
 
-	unsigned char reg_crt[18];
+	const unsigned char *font;
 
-	unsigned char *font;
+	unsigned long       clock;
 
-	unsigned char rgb[17][3];
+	unsigned char       mod_cnt;
 
-	char          blink_on;
-	unsigned      blink_cnt;
-	unsigned      blink_freq;
+	unsigned char       rgb[17][3];
 
-	/* these are derived from the crtc registers */
-	unsigned      w;
-	unsigned      h;
-	unsigned      ch;
+	unsigned short      lfsr;
 
-	unsigned long clk_ht;
-	unsigned long clk_vt;
-	unsigned long clk_hd;
-	unsigned long clk_vd;
-
-	unsigned      buf_w;
-	unsigned      buf_h;
-	unsigned long bufmax;
-	unsigned char *buf;
-
-	unsigned char update_state;
+	char                blink;
+	unsigned            blink_cnt;
+	unsigned            blink_rate;
 } hgc_t;
 
 

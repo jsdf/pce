@@ -2030,9 +2030,10 @@ src/devices/video/ega.o: src/devices/video/ega.c \
 	src/libini/libini.h
 
 src/devices/video/hgc.o: src/devices/video/hgc.c \
+	src/chipset/e6845.h \
 	src/devices/memory.h \
 	src/devices/video/hgc.h \
-	src/devices/video/hgc_font.h \
+	src/devices/video/mda_font.h \
 	src/devices/video/video.h \
 	src/drivers/video/keys.h \
 	src/drivers/video/terminal.h \

@@ -25,7 +25,7 @@ DEV_VID_ARC := $(rel)/video.a
 
 CLN  += $(DEV_VID_ARC) $(DEV_VID_OBJ)
 DIST += $(DEV_VID_SRC) $(DEV_VID_HDR)
-DIST += $(rel)/hgc_font.h $(rel)/wy700_font.h
+DIST += $(rel)/wy700_font.h
 
 $(rel)/cga.o:		$(rel)/cga.c
 $(rel)/cga_font.o:	$(rel)/cga_font.c
