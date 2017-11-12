@@ -240,8 +240,17 @@ psi_sct_t *pri_decode_gcr_sct (pri_trk_t *trk)
 {
 	unsigned      i;
 	unsigned      lc, lh, ls, lm, ck;
+	unsigned long pos;
 	unsigned char buf[524];
 	psi_sct_t     *sct;
+
+	pos = trk->idx;
+
+	if (pos < 24) {
+		pos += pri_trk_get_size (trk);
+	}
+
+	pos -= 24;
 
 	lc = gcr_decode_byte (trk, 1);
 	ls = gcr_decode_byte (trk, 1);
@@ -262,6 +271,7 @@ psi_sct_t *pri_decode_gcr_sct (pri_trk_t *trk)
 	psi_sct_set_encoding (sct, PSI_ENC_GCR);
 	psi_sct_set_flags (sct, PSI_FLAG_NO_DAM, 1);
 	psi_sct_set_gcr_format (sct, lm);
+	psi_sct_set_position (sct, pos);
 
 	if (ck != 0) {
 		psi_sct_set_flags (sct, PSI_FLAG_CRC_ID, 1);
