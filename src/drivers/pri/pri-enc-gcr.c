@@ -107,16 +107,29 @@ unsigned gcr_get_format (psi_img_t *img)
 static
 void gcr_fill_track (pri_trk_t *trk)
 {
-	unsigned long cnt, n;
+	unsigned      i, n;
+	unsigned long cnt;
 
 	cnt = trk->size - trk->idx;
+
+	i = 0;
 
 	while (cnt > 0) {
 		n = (cnt < 10) ? cnt : 10;
 
-		pri_trk_set_bits (trk, 0xff >> (10 - n), n);
+		if ((i == 0) && (n > 8)) {
+			n = 8;
+		}
+
+		pri_trk_set_bits (trk, 0xff, n);
 
 		cnt -= n;
+
+		i += 1;
+
+		if (i > 4) {
+			i = 0;
+		}
 	}
 
 }
@@ -419,6 +432,22 @@ psi_img_t *pri_decode_gcr (pri_img_t *img)
 
 
 static
+void pri_encode_gcr_sync_group (pri_trk_t *trk, unsigned cnt)
+{
+	unsigned i;
+
+	while (cnt > 0) {
+		pri_trk_set_bits (trk, 0xff, 8);
+
+		for (i = 0; i < 4; i++) {
+			pri_trk_set_bits (trk, 0xff, 10);
+		}
+
+		cnt -= 1;
+	}
+}
+
+static
 void pri_encode_gcr_sct (pri_trk_t *trk, unsigned char *src, unsigned c, unsigned h, unsigned s, unsigned fmt)
 {
 	unsigned      i, v;
@@ -427,9 +456,7 @@ void pri_encode_gcr_sct (pri_trk_t *trk, unsigned char *src, unsigned c, unsigne
 
 	h = (h << 5) | ((c >> 6) & 0x1f);
 
-	for (i = 0; i < 38; i++) {
-		pri_trk_set_bits (trk, 0xff, 10);
-	}
+	pri_encode_gcr_sync_group (trk, 8);
 
 	pri_trk_set_bits (trk, 0xd5aa96, 24);
 	pri_trk_set_bits (trk, gcr_enc_tab[c & 0x3f], 8);
@@ -437,11 +464,9 @@ void pri_encode_gcr_sct (pri_trk_t *trk, unsigned char *src, unsigned c, unsigne
 	pri_trk_set_bits (trk, gcr_enc_tab[h & 0x3f], 8);
 	pri_trk_set_bits (trk, gcr_enc_tab[fmt & 0x3f], 8);
 	pri_trk_set_bits (trk, gcr_enc_tab[(c ^ h ^ s ^ fmt) & 0x3f], 8);
-	pri_trk_set_bits (trk, 0xdeaa, 16);
+	pri_trk_set_bits (trk, 0xdeaaff, 24);
 
-	for (i = 0; i < 8; i++) {
-		pri_trk_set_bits (trk, 0xff, 10);
-	}
+	pri_encode_gcr_sync_group (trk, 1);
 
 	pri_trk_set_bits (trk, 0xd5aaad, 24);
 	pri_trk_set_bits (trk, gcr_enc_tab[s & 0x3f], 8);
@@ -472,7 +497,7 @@ void pri_encode_gcr_sct (pri_trk_t *trk, unsigned char *src, unsigned c, unsigne
 	pri_trk_set_bits (trk, gcr_enc_tab[p[3] & 0x3f], 8);
 	pri_trk_set_bits (trk, gcr_enc_tab[p[4] & 0x3f], 8);
 
-	pri_trk_set_bits (trk, 0xdeaa, 16);
+	pri_trk_set_bits (trk, 0xdeaaff, 24);
 }
 
 int pri_encode_gcr_trk (pri_trk_t *dtrk, psi_trk_t *strk, unsigned fmt)
@@ -482,10 +507,6 @@ int pri_encode_gcr_trk (pri_trk_t *dtrk, psi_trk_t *strk, unsigned fmt)
 	psi_sct_t     *sct;
 
 	pri_trk_set_pos (dtrk, 0);
-
-	for (i = 0; i < 32; i++) {
-		pri_trk_set_bits (dtrk, 0xff, 10);
-	}
 
 	for (i = 0; i < strk->sct_cnt; i++) {
 		sct = strk->sct[i];
