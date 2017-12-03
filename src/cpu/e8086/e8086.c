@@ -395,7 +395,7 @@ void e86_irq_ack (e8086_t *c)
 	unsigned char irq;
 
 	c->irq = 0;
-	c->state &= E86_STATE_HALT;
+	c->state &= ~E86_STATE_HALT;
 
 	if (c->inta != NULL) {
 		irq = c->inta (c->inta_ext);
