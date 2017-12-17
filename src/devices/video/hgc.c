@@ -550,7 +550,7 @@ void hgc_reg_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 static
 unsigned char hgc_mem_get_uint8 (hgc_t *hgc, unsigned long addr)
 {
-	return (hgc->mem[addr & 0x7fff]);
+	return (hgc->mem[addr & 0xffff]);
 }
 
 static
@@ -558,8 +558,8 @@ unsigned short hgc_mem_get_uint16 (hgc_t *hgc, unsigned long addr)
 {
 	unsigned short val;
 
-	val = hgc->mem[(addr + 1) & 0x7fff];
-	val = (val << 8) | hgc->mem[addr & 0x7fff];
+	val = hgc->mem[(addr + 1) & 0xffff];
+	val = (val << 8) | hgc->mem[addr & 0xffff];
 
 	return (val);
 }
@@ -567,15 +567,15 @@ unsigned short hgc_mem_get_uint16 (hgc_t *hgc, unsigned long addr)
 static
 void hgc_mem_set_uint8 (hgc_t *hgc, unsigned long addr, unsigned char val)
 {
-	hgc->mem[addr & 0x7fff] = val;
+	hgc->mem[addr & 0xffff] = val;
 	hgc->mod_cnt = 2;
 }
 
 static
 void hgc_mem_set_uint16 (hgc_t *hgc, unsigned long addr, unsigned short val)
 {
-	hgc->mem[(addr + 0) & 0x7fff] = val & 0xff;
-	hgc->mem[(addr + 1) & 0x7fff] = (val >> 8) & 0xff;
+	hgc->mem[(addr + 0) & 0xffff] = val & 0xff;
+	hgc->mem[(addr + 1) & 0xffff] = (val >> 8) & 0xff;
 	hgc->mod_cnt = 2;
 }
 
@@ -638,7 +638,7 @@ void hgc_print_info (hgc_t *hgc, FILE *fp)
 		"MODE[3B8]=%02X   ROW=%3u/%3u  VFRQ=%9.3f  %u*%u\n"
 		"    [3B9]=%02X  CCOL=%3u/%3u   HDE=%d  HSYN=%X  BASE=%04X\n"
 		"STAT[3BA]=%02X  CROW=%3u/%3u   VDE=%d  VSYN=%X  ADDR=%04X\n"
-		"CONF[3BB]=%02X    RA=%3u/%3u\n",
+		"CONF[3BF]=%02X    RA=%3u/%3u\n",
 		e6845_get_index (crt), col, w2, (double) HGC_PFREQ / clk1, w1, vdl,
 		reg[HGC_MODE], row, vtl, (double) HGC_PFREQ / clk2, w2, vtl,
 		reg[9], crt->ccol, ht, e6845_get_hde (crt), crt->hsync_cnt, base,
