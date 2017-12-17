@@ -64,6 +64,9 @@ unsigned char st_mem_get_uint8 (void *ext, unsigned long addr)
 	}
 
 	switch (addr) {
+	case 0xff8001: /* memory configuration */
+		return (sim->memcfg);
+
 	case 0xff8609:
 		return (st_dma_get_addr (&sim->dma, 0));
 
@@ -215,6 +218,7 @@ void st_mem_set_uint8 (void *ext, unsigned long addr, unsigned char val)
 
 	switch (addr) {
 	case 0xff8001: /* memory configuration */
+		sim->memcfg = val;
 		break;
 
 	case 0xff8609:

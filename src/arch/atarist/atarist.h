@@ -94,6 +94,7 @@ struct atari_st_s {
 	unsigned char int_level;
 
 	unsigned char video_state;
+	unsigned char memcfg;
 
 	char          mono;
 	char          fastboot;

@@ -284,6 +284,7 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 	}
 
 	sim->video_state = 0;
+	sim->memcfg = 0;
 
 	sim->mono = (mono != 0);
 	sim->fastboot = (fastboot != 0);
