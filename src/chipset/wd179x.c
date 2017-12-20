@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.c                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -200,9 +200,6 @@ void wd179x_reset (wd179x_t *fdc)
 	fdc->is_data_bit = 0;
 	fdc->val = 0;
 	fdc->crc = 0;
-
-	fdc->interrupt_enable = 1;
-	fdc->interrupt_request = 0;
 
 	fdc->scan_cnt = 0;
 	fdc->scan_max = 0;
@@ -826,9 +823,6 @@ void cmd_done (wd179x_t *fdc, int irq)
 		fdc->cont = cmd_auto_motor_off;
 	}
 
-	fdc->interrupt_enable = 1;
-	fdc->interrupt_request = 0;
-
 	fdc->status &= ~WD179X_ST_BUSY;
 
 	if (irq) {
@@ -1092,8 +1086,6 @@ void cmd_read_sector_clock (wd179x_t *fdc)
 		}
 
 		if (fdc->read_cnt >= 16) {
-			fdc->interrupt_enable = 0;
-
 			if (fdc->status & WD179X_ST_DRQ) {
 				fprintf (stderr, "WD179X: READ LOST DATA\n");
 				fdc->status |= WD179X_ST_LOST_DATA;
@@ -1114,7 +1106,6 @@ void cmd_read_sector_clock (wd179x_t *fdc)
 		}
 		else {
 			fdc->read_crc[1] |= fdc->val & 0xff;
-			fdc->interrupt_enable = 1;
 
 			if (fdc->read_crc[0] != fdc->read_crc[1]) {
 				fprintf (stderr,
@@ -1126,10 +1117,7 @@ void cmd_read_sector_clock (wd179x_t *fdc)
 				fdc->status |= WD179X_ST_CRC_ERROR;
 			}
 
-			if (fdc->interrupt_request) {
-				cmd_force_interrupt (fdc, fdc->interrupt_request);
-			}
-			else if ((fdc->status & WD179X_ST_CRC_ERROR) || ((fdc->cmd & 0x10) == 0)) {
+			if ((fdc->status & WD179X_ST_CRC_ERROR) || ((fdc->cmd & 0x10) == 0)) {
 				cmd_done (fdc, 1);
 			}
 			else {
@@ -1302,8 +1290,6 @@ void cmd_write_sector_clock (wd179x_t *fdc)
 				fdc->write_val[0] = (fdc->cmd & 1) ? 0xf8 : 0xfb;
 			}
 			else if (fdc->write_idx < (fdc->write_cnt - 48)) {
-				fdc->interrupt_enable = 0;
-
 				if (fdc->status & WD179X_ST_DRQ) {
 					fprintf (stderr, "WD179X: WRITE LOST DATA\n");
 					fdc->status |= WD179X_ST_LOST_DATA;
@@ -1333,12 +1319,7 @@ void cmd_write_sector_clock (wd179x_t *fdc)
 				);
 #endif
 
-				fdc->interrupt_enable = 1;
-
-				if (fdc->interrupt_request) {
-					cmd_force_interrupt (fdc, fdc->interrupt_request);
-				}
-				else if (fdc->cmd & 0x10) {
+				if (fdc->cmd & 0x10) {
 					fdc->sector += 1;
 
 					fdc->drv->index_cnt = 5;
@@ -1819,11 +1800,6 @@ void cmd_force_interrupt (wd179x_t *fdc, unsigned char cmd)
 {
 	int busy;
 
-	if (fdc->interrupt_enable == 0) {
-		fdc->interrupt_request = cmd;
-		return;
-	}
-
 	fdc->cmd = cmd;
 
 	busy = fdc->status & WD179X_ST_BUSY;
@@ -1870,9 +1846,6 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 
 	wd179x_set_irq (fdc, 0);
 	wd179x_set_drq (fdc, 0);
-
-	fdc->interrupt_enable = 1;
-	fdc->interrupt_request = 0;
 
 	if ((val & 0xf0) == 0) {
 		cmd_restore (fdc);

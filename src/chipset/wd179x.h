@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -77,9 +77,6 @@ typedef struct wd179x_t {
 	char           is_data_bit;
 	unsigned char  val;
 	unsigned short crc;
-
-	char           interrupt_enable;
-	unsigned char  interrupt_request;
 
 	unsigned       scan_cnt;
 	unsigned       scan_max;
