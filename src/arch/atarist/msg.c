@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/msg.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2016 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -490,6 +490,10 @@ int st_set_msg_emu_viking (atari_st_t *sim, const char *msg, const char *val)
 static
 int st_set_msg_emu_viking_toggle (atari_st_t *sim, const char *msg, const char *val)
 {
+	if (sim->viking == NULL) {
+		return (0);
+	}
+
 	if (sim->video_viking) {
 		sim->video_viking = 0;
 		st_video_set_terminal (sim->video, sim->trm);
