@@ -1,0 +1,212 @@
+.TH PFI 1 "2017-12-18" "HH" "pce"
+\
+.SH NAME
+pfi \- convert and modify PFI flux images
+
+.SH SYNOPSIS
+.BI pfi " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpfi\fR(1) is used to modify and convert PFI flux image files.
+
+.SH OPTIONS
+.TP
+.BI "-c, --cylinder " "cyl1[-cyl2]"
+Select a range of cylinders. To select all cylinders, specify
+\fBall\fR as parameter.
+\
+.TP
+.B "-f, --info"
+Print information about the current image or the next image loaded.
+\
+.TP
+.BI "-h, --head " "head1[-head2]"
+Select a range of heads. To select all heads, specify
+\fBall\fR as parameter.
+\
+.TP
+.BI "-i, --input " filename
+Load an image from \fIfilename\fR.
+\
+.TP
+.BI "-I, --input-format " format
+Set the file format for the next input file. If this option is not
+used, the file format is detected automatically.
+
+Valid formats are:
+.RS
+.TP
+.B pfi
+The native PFI format
+.TP
+.B scp
+Supercard Pro flux image
+.TP
+.B raw
+Kryoflux raw stream
+.RE
+\
+.TP
+.B "-l, --list-short"
+List all tracks in the current image, one line per track.
+\
+.TP
+.B "-L, --list-long"
+List all tracks in the current image, one line per revolution.
+\
+.TP
+.BI "-o, --output " filename
+Set the output file name. Before exiting, the current image will
+be written to this file.
+\
+.TP
+.BI "-O, --output-format " format
+Set the output file format. If this option is not used, the file
+format is determined by the output file name.
+
+Valid formats are:
+.RS
+.TP
+.B pfi
+The native PFI format
+.TP
+.B scp
+Supercard Pro flux image
+.RE
+\
+.TP
+.BI "-p, --operation " "name [arg...]"
+Perform an operation on the current image. Valid operations are:
+.RS
+.TP
+.BI "comment-add " text
+Add \fItext\fR to the image comment.
+.TP
+.BI "comment-load " filename
+Load the image comment from file \fIfilename\fR.
+.TP
+.B comment-print
+Print the current image comment.
+.TP
+.BI "comment-save " filename
+Save the current image comment to \fIfilename\fR.
+.TP
+.BI "comment-set " text
+Set the image comment to \fItext\fR.
+.TP
+.BI "decode " "type filename"
+Decode the image and save it to \fIfilename\fR.
+
+Valid decode types are:
+.RS
+.TP
+.B pri
+Save the decoded image as a PRI image.
+.TP
+.B pri-mac
+Save the decoded image as a PRI image. This decode type also overrides
+the bitrate set with the \fB-r\fR option with the apporpriate variable
+bitrates used by Macintosh double density disk drives.
+.RE
+.TP
+.B "delete"
+Delete the selected tracks.
+.TP
+.B "double-step"
+Remove odd numbered tracks.
+.TP
+.B "double-step-even"
+Remove even numbered tracks.
+.TP
+.BI "encode " "type filename"
+Load an image from \fIfilename\fR and encode it.
+
+Valid encode types are:
+.RS
+.TP
+.B pri
+Encode a PRI image
+.RE
+.TP
+.B "info"
+Print information about the image.
+.TP
+.BI "revolutions " "rev1[-rev2]"
+Extract revolutions \fIrev1\fR to \fIrev2\fR on all selected tracks.
+Revolutions not within the selected range are deleted.
+.TP
+.BI "scale " "factor"
+Multiply the pulse widths on all selected tracks by \fIfactor\fR. This
+has the same effect as dividing the rotational speed by \fIfactor\fR.
+.TP
+.BI "set-clock " "clock"
+Set the clock rate to \fIclock\fR.
+.TP
+.BI "set-rpm " "rpm"
+Adjust the rotational speed of all selected tracks to \fIrpm\fR
+revolutions per minute by scaling the pulse widths by a constant
+factor.
+.TP
+.BI "shift-index " "offset"
+Add \fIoffset\fR clock cycles to all index positions, thereby rotating
+the track data relative to the index.
+.RE
+\
+.TP
+.BI "-r, --data-rate " rate
+Set the bit rate that is used to decode the image. The default is
+500000 bits per second.
+\
+.TP
+.BI "-R, --revolution " rev
+Use revolution number \fIrev\fR when decoding. The first revolution is
+number 1.
+\
+.TP
+.BI "-s, --set " "par val"
+Set parameter \fIpar\fR to \fIval\fR.
+.RS
+.TP
+.B pfi-clock
+Set the clock rate that is used to encode images. The default is
+24027428.
+.TP
+.B slack1
+When extracting revolutions using the \fBrevolutions\fR operation include
+this much slack space before the first index. The value specifies a percentage
+of a complete revolution. The default is 10.
+.TP
+.B slack2
+The amount of slack space after the last index. The default is 10.
+.TP
+.BI "weak-bits " "val"
+If \fIval\fR is non-zero enable weak bit detection when decoding to PRI.
+.RE
+\
+.TP
+.BI "-t, --track " "c h"
+Select a range of tracks. This is equivalent to "\fB-c\fR \fIc\fR \fB-h\fR \fIh\fR".
+\
+.TP
+.B "-v, --verbose"
+Enable verbose operation.
+\
+.TP
+.B "-z, --clear"
+Clear the track selection.
+\
+.TP
+.B --help
+Print usage information.
+\
+.TP
+.B --version
+Print version information.
+
+.SH SEE ALSO
+.BR pce-img "(1),"
+.BR pri "(1),"
+.BR psi "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>

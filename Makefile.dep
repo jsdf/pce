@@ -2229,6 +2229,44 @@ src/drivers/options.o: src/drivers/options.c \
 	src/config.h \
 	src/drivers/options.h
 
+src/drivers/pfi/decode-bits.o: src/drivers/pfi/decode-bits.c \
+	src/drivers/pfi/decode-bits.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/pfi-io.o: src/drivers/pfi/pfi-io.c \
+	src/drivers/pfi/pfi-io.h \
+	src/drivers/pfi/pfi-kryo.h \
+	src/drivers/pfi/pfi-pfi.h \
+	src/drivers/pfi/pfi-scp.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/pfi-kryo.o: src/drivers/pfi/pfi-kryo.c \
+	src/drivers/pfi/pfi-io.h \
+	src/drivers/pfi/pfi-kryo.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/pfi-pfi.o: src/drivers/pfi/pfi-pfi.c \
+	src/drivers/pfi/pfi-io.h \
+	src/drivers/pfi/pfi-pfi.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/pfi-scp.o: src/drivers/pfi/pfi-scp.c \
+	src/drivers/pfi/pfi-io.h \
+	src/drivers/pfi/pfi-scp.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/pfi.o: src/drivers/pfi/pfi.c \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h
+
+src/drivers/pfi/track.o: src/drivers/pfi/track.c \
+	src/drivers/pfi/track.h
+
 src/drivers/pri/pri-enc-fm.o: src/drivers/pri/pri-enc-fm.c \
 	src/drivers/pri/pri-enc-fm.h \
 	src/drivers/pri/pri-img.h \
@@ -2636,6 +2674,66 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/lib/getopt.h \
 	src/lib/sysdep.h \
 	src/utils/pce-img/pce-img.h
+
+src/utils/pfi/comment.o: src/utils/pfi/comment.c \
+	src/config.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/decode.o: src/utils/pfi/decode.c \
+	src/config.h \
+	src/drivers/pfi/decode-bits.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/delete.o: src/utils/pfi/delete.c \
+	src/config.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/encode.o: src/utils/pfi/encode.c \
+	src/config.h \
+	src/drivers/pfi/decode-bits.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/drivers/pri/pri-img.h \
+	src/drivers/pri/pri.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/export.o: src/utils/pfi/export.c \
+	src/config.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/info.o: src/utils/pfi/info.c \
+	src/config.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/main.o: src/utils/pfi/main.c \
+	src/config.h \
+	src/drivers/pfi/pfi-io.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/drivers/pri/pri-enc-gcr.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi-img-psi.h \
+	src/drivers/psi/psi.h \
+	src/lib/getopt.h \
+	src/utils/pfi/main.h
+
+src/utils/pfi/track-edit.o: src/utils/pfi/track-edit.c \
+	src/config.h \
+	src/drivers/pfi/pfi.h \
+	src/drivers/pfi/track.h \
+	src/utils/pfi/main.h
 
 src/utils/pri/comment.o: src/utils/pri/comment.c \
 	src/config.h \

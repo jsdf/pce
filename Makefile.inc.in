@@ -115,7 +115,7 @@ DIST += AUTHORS COPYING ChangeLog INSTALL \
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
 	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
-	doc/pri-format.txt doc/psi-format.txt \
+	doc/pfi-format.txt doc/pri-format.txt doc/psi-format.txt \
 	doc/rc759-keymap.txt doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
@@ -144,6 +144,7 @@ include $(srcdir)/src/lib/Makefile.inc
 include $(srcdir)/src/drivers/Makefile.inc
 include $(srcdir)/src/drivers/block/Makefile.inc
 include $(srcdir)/src/drivers/char/Makefile.inc
+include $(srcdir)/src/drivers/pfi/Makefile.inc
 include $(srcdir)/src/drivers/pri/Makefile.inc
 include $(srcdir)/src/drivers/psi/Makefile.inc
 include $(srcdir)/src/drivers/sound/Makefile.inc
@@ -165,6 +166,7 @@ include $(srcdir)/src/arch/sims32/Makefile.inc
 include $(srcdir)/src/utils/Makefile.inc
 include $(srcdir)/src/utils/aym/Makefile.inc
 include $(srcdir)/src/utils/pce-img/Makefile.inc
+include $(srcdir)/src/utils/pfi/Makefile.inc
 include $(srcdir)/src/utils/pri/Makefile.inc
 include $(srcdir)/src/utils/psi/Makefile.inc
 
