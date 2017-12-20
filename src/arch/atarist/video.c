@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/video.c                                     *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -337,6 +337,9 @@ unsigned short st_video_get_uint16 (st_video_t *vid, unsigned long addr)
 	else if ((addr >= 0x0040) && (addr < 0x0060)) {
 		val = vid->palette[(addr - 64) >> 1];
 	}
+	else if (addr == 0x0060) {
+		val = vid->shift_mode << 8;
+	}
 	else {
 		st_log_deb ("video: get 16: %06lX -> %04X\n", addr, 0);
 		val = 0;
@@ -395,6 +398,9 @@ void st_video_set_uint16 (st_video_t *vid, unsigned long addr, unsigned short va
 {
 	if ((addr >= 0x0040) && (addr < 0x0060)) {
 		st_video_set_palette (vid, (addr - 64) >> 1, val);
+	}
+	else if (addr == 0x0060) {
+		st_video_set_shift_mode (vid, val >> 8);
 	}
 	else {
 		st_log_deb ("video: set 16: %06lX <- %04X\n", addr, val);
