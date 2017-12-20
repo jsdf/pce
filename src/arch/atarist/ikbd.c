@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/ikbd.c                                      *
  * Created:     2013-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -604,6 +604,23 @@ void st_kbd_cmd_09 (st_kbd_t *kbd)
 }
 
 /*
+ * 0A: SET MOUSE KEYCODE MODE
+ */
+static
+void st_kbd_cmd_0a (st_kbd_t *kbd)
+{
+	if (kbd->cmd_cnt < 3) {
+		return;
+	}
+
+#if DEBUG_KBD >= 0
+	st_log_deb ("IKBD: SET MOUSE KEYCODE MODE: %u / %u\n", kbd->cmd[1], kbd->cmd[2]);
+#endif
+
+	kbd->cmd_cnt = 0;
+}
+
+/*
  * 0B: SET MOUSE THRESHOLD
  */
 static
@@ -945,6 +962,10 @@ void st_kbd_set_uint8 (st_kbd_t *kbd, unsigned char val)
 
 	case 0x09:
 		st_kbd_cmd_09 (kbd);
+		break;
+
+	case 0x0a:
+		st_kbd_cmd_0a (kbd);
 		break;
 
 	case 0x0b:
