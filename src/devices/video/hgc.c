@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/hgc.c                                      *
  * Created:     2003-08-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -160,7 +160,7 @@ static
 void hgc_line_graph (hgc_t *hgc, unsigned row)
 {
 	unsigned            i, j;
-	unsigned            hd, val, addr;
+	unsigned            hd, val, addr, ra, ma;
 	const unsigned char *mem, *col, *fg, *bg;
 	unsigned char       *ptr;
 
@@ -172,17 +172,20 @@ void hgc_line_graph (hgc_t *hgc, unsigned row)
 		hd = hgc->video.buf_w / 16;
 	}
 
+	ra = (hgc->crtc.ra & 3) << 13;
+	ma = hgc->crtc.ma << 1;
+
 	mem = hgc->mem + ((hgc->reg[HGC_MODE] & HGC_MODE_PAGE1) ? 0x8000 : 0);
 	ptr = pce_video_get_row_ptr (&hgc->video, row);
-	addr = (hgc->crtc.ma << 1) & 0x1fff;
-	addr |= (hgc->crtc.ra & 3) << 13;
 
 	fg = hgc->rgb[16];
 	bg = hgc->rgb[0];
 
 	for (i = 0; i < hd; i++) {
-		val = mem[addr & 0x7fff];
-		val = (val << 8) | mem[(addr + 1) & 0x7fff];
+		addr = (ma & 0x1fff) | ra;
+
+		val = mem[addr];
+		val = (val << 8) | mem[addr + 1];
 
 		for (j = 0; j < 16; j++) {
 			col = (val & 0x8000) ? fg : bg;
@@ -194,7 +197,7 @@ void hgc_line_graph (hgc_t *hgc, unsigned row)
 			val <<= 1;
 		}
 
-		addr += 2;
+		ma += 2;
 	}
 }
 
