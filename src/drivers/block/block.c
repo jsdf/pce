@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -792,6 +792,21 @@ int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 	}
 
 	return (1);
+}
+
+int dsk_read_lbaz (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
+{
+	if ((i + n) <= dsk->blocks) {
+		return (dsk_read_lba (dsk, buf, i, n));
+	}
+
+	memset (buf, 0, 512 * n);
+
+	if (i < dsk->blocks) {
+		return (dsk_read_lba (dsk, buf, i, dsk->blocks - i));
+	}
+
+	return (0);
 }
 
 int dsk_read_chs (disk_t *dsk, void *buf,

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkqed.c                                   *
  * Created:     2011-05-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -144,10 +144,15 @@ int dsk_qed_read_backing_cluster (disk_qed_t *qed, uint64_t ofs)
 
 	if ((i + n) > qed->next->blocks) {
 		memset (qed->cl, 0, qed->cluster_size);
+
+		if (i >= qed->next->blocks) {
+			return (0);
+		}
+
 		n = qed->next->blocks - i;
 	}
 
-	if (dsk_read_lba (qed->next, qed->cl, i, n)) {
+	if (dsk_read_lbaz (qed->next, qed->cl, i, n)) {
 		return (1);
 	}
 
@@ -284,7 +289,7 @@ int dsk_qed_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 
 		if (ofs == 0) {
 			if (qed->next != NULL) {
-				if (dsk_read_lba (qed->next, buf, i, m)) {
+				if (dsk_read_lbaz (qed->next, buf, i, m)) {
 					return (1);
 				}
 			}

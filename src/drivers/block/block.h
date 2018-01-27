@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.h                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -215,6 +215,15 @@ int dsk_get_lba (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s, uint32_t *v);
  * @return Zero if successful
  *****************************************************************************/
 int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
+
+/*!***************************************************************************
+ * @short  Read blocks using LBA addressing with zero fill
+ * @return Zero if successful
+ *
+ * This function can read beyond the end of the block device. Blocks past
+ * the end are zero filled.
+ *****************************************************************************/
+int dsk_read_lbaz (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
 
 /*!***************************************************************************
  * @short  Read blocks using CHS addressing
