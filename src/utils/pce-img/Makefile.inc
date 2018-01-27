@@ -10,6 +10,7 @@ PCEIMG_BAS := \
 	convert \
 	cow \
 	create \
+	rebase \
 	pce-img
 
 PCEIMG_SRC := $(foreach f,$(PCEIMG_BAS),$(rel)/$(f).c)
@@ -33,6 +34,7 @@ $(rel)/commit.o:  $(rel)/commit.c
 $(rel)/convert.o: $(rel)/convert.c
 $(rel)/cow.o:     $(rel)/cow.c
 $(rel)/create.o:  $(rel)/create.c
+$(rel)/rebase.o:  $(rel)/rebase.c
 $(rel)/pce-img.o: $(rel)/pce-img.c
 
 $(rel)/pce-img$(EXEEXT): $(PCEIMG_OBJ_EXT) $(PCEIMG_OBJ)

@@ -2675,6 +2675,12 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/lib/sysdep.h \
 	src/utils/pce-img/pce-img.h
 
+src/utils/pce-img/rebase.o: src/utils/pce-img/rebase.c \
+	src/config.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
 src/utils/pfi/comment.o: src/utils/pfi/comment.c \
 	src/config.h \
 	src/drivers/pfi/pfi.h \

@@ -70,6 +70,7 @@ int main_commit (int argc, char **argv);
 int main_convert (int argc, char **argv);
 int main_cow (int argc, char **argv);
 int main_create (int argc, char **argv);
+int main_rebase (int argc, char **argv);
 
 
 #endif

@@ -80,6 +80,7 @@ void print_help (void)
 		"  convert  Convert images\n"
 		"  cow      Create COW files\n"
 		"  create   Create images\n"
+		"  rebase   Rebase images\n"
 		"\nformats:\n"
 		"  dosemu, img, pce, psi, qed\n",
 		stdout
@@ -93,7 +94,7 @@ void print_version (void)
 	fputs (
 		"pce-img version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2005-2014 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2005-2018 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -507,23 +508,23 @@ int main (int argc, char **argv)
 			return (0);
 
 		case 0:
-			if (strcmp (optarg[0], "new") == 0) {
-				return (main_create (argc, argv));
-			}
-			else if (strcmp (optarg[0], "commit") == 0) {
+			if (strcmp (optarg[0], "commit") == 0) {
 				return (main_commit (argc, argv));
 			}
-			else if (strcmp (optarg[0], "create") == 0) {
-				return (main_create (argc, argv));
-			}
-			else if (strcmp (optarg[0], "conv") == 0) {
+			else if (strcmp (optarg[0], "convert") == 0) {
 				return (main_convert (argc, argv));
 			}
 			else if (strcmp (optarg[0], "cow") == 0) {
 				return (main_cow (argc, argv));
 			}
-			else if (strcmp (optarg[0], "convert") == 0) {
-				return (main_convert (argc, argv));
+			else if (strcmp (optarg[0], "create") == 0) {
+				return (main_create (argc, argv));
+			}
+			else if (strcmp (optarg[0], "new") == 0) {
+				return (main_create (argc, argv));
+			}
+			else if (strcmp (optarg[0], "rebase") == 0) {
+				return (main_rebase (argc, argv));
 			}
 			else {
 				fprintf (stderr, "%s: unknown command (%s)\n",
