@@ -58,6 +58,8 @@ unsigned char *pce_get_buf (unsigned long size);
 
 int pce_block_is_null (const void *buf, unsigned cnt);
 
+void pce_set_disk_parameters (disk_t *dsk);
+
 int dsk_create (const char *name, unsigned type);
 disk_t *dsk_open_inp (const char *name, disk_t *dsk, int ro);
 disk_t *dsk_open_out (const char *name, disk_t *dsk, int create);

@@ -126,7 +126,7 @@ unsigned pce_get_type (const char *str)
 		return (DSK_PCE);
 	}
 
-	if (strcmp (str, "qed") == 0) {
+	if ((strcmp (str, "qed") == 0) || (strcmp (str, "cow") == 0)) {
 		return (DSK_QED);
 	}
 
@@ -286,6 +286,18 @@ int pce_file_exists (const char *name)
 	return (1);
 }
 
+void pce_set_disk_parameters (disk_t *dsk)
+{
+	if (dsk == NULL) {
+		return;
+	}
+
+	par_c = dsk->c;
+	par_h = dsk->h;
+	par_s = dsk->s;
+	par_n = dsk->blocks;
+}
+
 int dsk_create (const char *name, unsigned type)
 {
 	int r;
@@ -361,22 +373,7 @@ disk_t *dsk_open (const char *name, unsigned type, int ro)
 	}
 
 	if (dsk != NULL) {
-		if (par_c == 0) {
-			par_c = dsk->c;
-		}
-
-		if (par_h == 0) {
-			par_h = dsk->h;
-		}
-
-		if (par_s == 0) {
-			par_s = dsk->s;
-		}
-
-		if (par_n == 0) {
-			par_n = dsk->blocks;
-		}
-
+		pce_set_disk_parameters (dsk);
 		print_disk_info (dsk, name);
 	}
 
@@ -438,6 +435,7 @@ disk_t *dsk_cow (const char *name, disk_t *dsk)
 		return (NULL);
 	}
 
+	pce_set_disk_parameters (cow);
 	print_disk_info (cow, name);
 
 	return (cow);
