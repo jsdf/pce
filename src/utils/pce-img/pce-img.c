@@ -411,6 +411,39 @@ disk_t *dsk_open_out (const char *name, disk_t *dsk, int create)
 	return (dsk_open (name, par_type_out, 0));
 }
 
+disk_t *dsk_cow_create (const char *name, disk_t *dsk)
+{
+	disk_t *cow;
+
+	if (dsk == NULL) {
+		return (NULL);
+	}
+
+	if (par_n == 0) {
+		par_n = (unsigned long) par_c * par_h * par_s;
+	}
+
+	if (dsk_qed_create (name, par_n, par_min_cluster_size)) {
+		return (NULL);
+	}
+
+	cow = dsk_qed_cow_new (dsk, name);
+
+	if (cow == NULL) {
+		dsk_del (dsk);
+
+		fprintf (stderr, "%s: can't create COW file (%s)\n",
+			arg0, name
+		);
+
+		return (NULL);
+	}
+
+	print_disk_info (cow, name);
+
+	return (cow);
+}
+
 disk_t *dsk_cow (const char *name, disk_t *dsk)
 {
 	disk_t *cow;

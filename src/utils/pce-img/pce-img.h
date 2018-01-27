@@ -63,6 +63,7 @@ void pce_set_disk_parameters (disk_t *dsk);
 int dsk_create (const char *name, unsigned type);
 disk_t *dsk_open_inp (const char *name, disk_t *dsk, int ro);
 disk_t *dsk_open_out (const char *name, disk_t *dsk, int create);
+disk_t *dsk_cow_create (const char *name, disk_t *dsk);
 disk_t *dsk_cow (const char *name, disk_t *dsk);
 
 int main_commit (int argc, char **argv);
