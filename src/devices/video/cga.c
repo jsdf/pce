@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/cga.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -950,7 +950,7 @@ void cga_reg_set_uint8 (cga_t *cga, unsigned long addr, unsigned char val)
 		break;
 
 	default:
-		fprintf (stderr, "CGA: set reg (%03lX, %02X)\n\n", addr, val);
+		/* fprintf (stderr, "CGA: set reg (%03lX, %02X)\n", addr, val); */
 		break;
 	}
 }

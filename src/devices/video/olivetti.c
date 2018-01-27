@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/olivetti.c                                 *
  * Created:     2011-09-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -607,7 +607,7 @@ void m24_reg_set_uint8 (m24_t *m24, unsigned long addr, unsigned char val)
 		break;
 
 	default:
-		fprintf (stderr, "M24: set reg (%03lX, %02X)\n", addr, val);
+		/* fprintf (stderr, "M24: set reg (%03lX, %02X)\n", addr, val); */
 		break;
 	}
 }
