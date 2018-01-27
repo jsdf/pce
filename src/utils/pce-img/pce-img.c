@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/pce-img.c                                  *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -53,6 +53,9 @@ static unsigned           par_s = 0;
 static unsigned long      par_n = 0;
 static unsigned long long par_ofs = 0;
 static unsigned long      par_min_cluster_size = 0;
+
+static unsigned long      par_buf_size = 0;
+static unsigned char      *par_buf = NULL;
 
 
 static pce_option_t opts_main[] = {
@@ -234,6 +237,24 @@ int pce_set_type_out (const char *str)
 	}
 
 	return (0);
+}
+
+unsigned char *pce_get_buf (unsigned long size)
+{
+	unsigned char *ret;
+
+	if (size > par_buf_size) {
+		if ((ret = realloc (par_buf, size)) == NULL) {
+			return (NULL);
+		}
+
+		par_buf = ret;
+		par_buf_size = size;
+
+		return (ret);
+	}
+
+	return (par_buf);
 }
 
 int pce_block_is_null (const void *buf, unsigned cnt)

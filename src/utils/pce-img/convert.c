@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/convert.c                                  *
  * Created:     2013-01-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -71,13 +71,17 @@ int dsk_copy (disk_t *dst, disk_t *src)
 	uint32_t      prg_i, prg_n;
 	unsigned      k;
 	uint16_t      msk;
-	unsigned char buf[8192];
+	unsigned char *buf;
 
 	n = dsk_get_block_cnt (dst);
 	m = dsk_get_block_cnt (src);
 
 	if (m < n) {
 		n = m;
+	}
+
+	if ((buf = pce_get_buf (8192)) == NULL) {
+		return (1);
 	}
 
 	prg_i = 0;

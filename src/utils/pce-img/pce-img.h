@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/pce-img.h                                  *
  * Created:     2005-11-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -53,6 +53,8 @@ void pce_set_min_cluster_size (const char *str);
 
 int pce_set_type_inp (const char *str);
 int pce_set_type_out (const char *str);
+
+unsigned char *pce_get_buf (unsigned long size);
 
 int pce_block_is_null (const void *buf, unsigned cnt);
 
