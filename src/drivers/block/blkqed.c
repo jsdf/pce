@@ -729,8 +729,8 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 
 	dsk_qed_write_header (qed);
 
-	dsk_set_geometry (cow, dsk->blocks, dsk->c, dsk->h, dsk->s);
-	dsk_set_visible_chs (cow, dsk->visible_c, dsk->visible_h, dsk->visible_s);
+	dsk_set_geometry (cow, cow->blocks, 0, dsk->h, dsk->s);
+	dsk_set_visible_chs (cow, cow->c, cow->h, cow->s);
 
 	dsk_set_fname (cow, fname);
 
