@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pfi/pfi-scp.c                                    *
  * Created:     2014-01-30 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2014-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2014-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -196,7 +196,7 @@ int scp_load_image (FILE *fp, pfi_img_t *img)
 	t1 = buf[6];
 	t2 = buf[7];
 
-	for (t = t1; t < t2; t++) {
+	for (t = t1; t <= t2; t++) {
 		if (scp_load_track (fp, img, t >> 1, t & 1, buf[5])) {
 			return (1);
 		}
