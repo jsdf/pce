@@ -100,6 +100,28 @@ pri_evt_t *pri_evt_next (pri_evt_t *evt, unsigned long type)
 	return (NULL);
 }
 
+/*
+ * Convert the clock rate multiplication factor in an event of
+ * type PRI_EVENT_CLOCK to a real clock rate.
+ */
+unsigned long pri_evt_get_clock (pri_evt_t *evt, unsigned long base)
+{
+	unsigned long clk;
+
+	if ((evt == NULL) || (evt->type != PRI_EVENT_CLOCK)) {
+		return (base);
+	}
+
+	if (evt->val == 0) {
+		clk = base;
+	}
+	else {
+		clk = ((unsigned long long) evt->val * base + 32767) / 65536;
+	}
+
+	return (clk);
+}
+
 /*****************************************************************************
  * Create a new track
  *
