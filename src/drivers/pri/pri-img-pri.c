@@ -35,6 +35,7 @@
 #define PRI_CHUNK_DATA 0x44415441
 #define PRI_CHUNK_FUZZ 0x46555a5a
 #define PRI_CHUNK_BCLK 0x42434c4b
+#define PRI_CHUNK_WEAK 0x5745414b
 #define PRI_CHUNK_END  0x454e4420
 
 #define PRI_CRC_POLY   0x1edc6f41
@@ -338,6 +339,41 @@ int pri_load_bclk (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size,
 }
 
 static
+int pri_load_weak (FILE *fp, pri_img_t *img, pri_trk_t *trk, unsigned long size, unsigned long crc)
+{
+	unsigned long i, n;
+	unsigned long pos, val;
+	unsigned char buf[8];
+
+	if (trk == NULL) {
+		return (1);
+	}
+
+	n = size / 8;
+
+	for (i = 0; i < n; i++) {
+		if (pri_read_crc (fp, buf, 8, &crc)) {
+			return (1);
+		}
+
+		size -= 8;
+
+		pos = pri_get_uint32_be (buf, 0);
+		val = pri_get_uint32_be (buf, 4);
+
+		if (pri_trk_evt_add (trk, PRI_EVENT_WEAK, pos, val) == NULL) {
+			return (1);
+		}
+	}
+
+	if (pri_skip_chunk (fp, size, crc)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int pri_load_image (FILE *fp, pri_img_t *img)
 {
 	unsigned long type, size;
@@ -412,6 +448,12 @@ int pri_load_image (FILE *fp, pri_img_t *img)
 
 		case PRI_CHUNK_BCLK:
 			if (pri_load_bclk (fp, img, trk, size, crc)) {
+				return (1);
+			}
+			break;
+
+		case PRI_CHUNK_WEAK:
+			if (pri_load_weak (fp, img, trk, size, crc)) {
 				return (1);
 			}
 			break;
@@ -567,7 +609,7 @@ int pri_save_data (FILE *fp, const pri_trk_t *trk)
 }
 
 static
-int pri_save_fuzz (FILE *fp, const pri_trk_t *trk)
+int pri_save_weak (FILE *fp, const pri_trk_t *trk)
 {
 	unsigned long cnt, crc;
 	pri_evt_t     *evt;
@@ -581,7 +623,7 @@ int pri_save_fuzz (FILE *fp, const pri_trk_t *trk)
 
 	crc = 0;
 
-	pri_set_uint32_be (buf, 0, PRI_CHUNK_FUZZ);
+	pri_set_uint32_be (buf, 0, PRI_CHUNK_WEAK);
 	pri_set_uint32_be (buf, 4, 8 * cnt);
 
 	if (pri_write_crc (fp, buf, 8, &crc)) {
@@ -669,7 +711,7 @@ int pri_save_track (FILE *fp, const pri_trk_t *trk, unsigned long c, unsigned lo
 		return (1);
 	}
 
-	if (pri_save_fuzz (fp, trk)) {
+	if (pri_save_weak (fp, trk)) {
 		return (1);
 	}
 

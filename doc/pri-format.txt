@@ -83,13 +83,13 @@ CHUNK "DATA": Track data
 n	4	CRC
 
 
-CHUNK "FUZZ": Fuzzy bit mask
+CHUNK "WEAK": Weak bit mask
 ------------------------------------------------------------------------
 
-0	4	Magic ('FUZZ')
+0	4	Magic ('WEAK')
 4	4	Size (8*n)
 0	4	Bit offset
-4	4	Fuzzy bit mask
+4	4	Weak bit mask
 ...
 8*n	4	CRC
 
