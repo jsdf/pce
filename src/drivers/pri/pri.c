@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -78,6 +78,26 @@ pri_evt_t *pri_evt_new (unsigned long type, unsigned long pos, unsigned long val
 void pri_evt_del (pri_evt_t *evt)
 {
 	free (evt);
+}
+
+/*
+ * Get the next event of type <type> after this one.
+ */
+pri_evt_t *pri_evt_next (pri_evt_t *evt, unsigned long type)
+{
+	if (evt != NULL) {
+		evt = evt->next;
+	}
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			return (evt);
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
 }
 
 /*****************************************************************************
@@ -240,6 +260,10 @@ pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long po
 	return (evt);
 }
 
+/*
+ * Get the first event of type <type>, after skipping idx events of the same
+ * type.
+ */
 pri_evt_t *pri_trk_evt_get_idx (pri_trk_t *trk, unsigned long type, unsigned long idx)
 {
 	pri_evt_t *evt;

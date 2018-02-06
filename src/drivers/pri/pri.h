@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.h                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -68,6 +68,7 @@ typedef struct {
 
 pri_evt_t *pri_evt_new (unsigned long type, unsigned long pos, unsigned long val);
 void pri_evt_del (pri_evt_t *evt);
+pri_evt_t *pri_evt_next (pri_evt_t *evt, unsigned long type);
 
 pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock);
 void pri_trk_del (pri_trk_t *trk);
