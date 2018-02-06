@@ -25,6 +25,7 @@
 
 
 #define PRI_EVENT_FUZZY 1
+#define PRI_EVENT_WEAK  1
 #define PRI_EVENT_CLOCK 2
 #define PRI_EVENT_ALL   0xffffffff
 

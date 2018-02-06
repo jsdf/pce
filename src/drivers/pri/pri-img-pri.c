@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-img-pri.c                                *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -573,7 +573,7 @@ int pri_save_fuzz (FILE *fp, const pri_trk_t *trk)
 	pri_evt_t     *evt;
 	unsigned char buf[8];
 
-	cnt = pri_trk_evt_count (trk, PRI_EVENT_FUZZY);
+	cnt = pri_trk_evt_count (trk, PRI_EVENT_WEAK);
 
 	if (cnt == 0) {
 		return (0);
@@ -591,7 +591,7 @@ int pri_save_fuzz (FILE *fp, const pri_trk_t *trk)
 	evt = trk->evt;
 
 	while (evt != NULL) {
-		if (evt->type == PRI_EVENT_FUZZY) {
+		if (evt->type == PRI_EVENT_WEAK) {
 			pri_set_uint32_be (buf, 0, evt->pos);
 			pri_set_uint32_be (buf, 4, evt->val);
 

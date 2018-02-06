@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/list.c                                         *
  * Created:     2013-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -57,8 +57,8 @@ int pri_list_track_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned
 
 		while (evt != NULL) {
 			switch (evt->type) {
-			case PRI_EVENT_FUZZY:
-				str = "FUZZY";
+			case PRI_EVENT_WEAK:
+				str = "WEAK";
 				break;
 
 			case PRI_EVENT_CLOCK:

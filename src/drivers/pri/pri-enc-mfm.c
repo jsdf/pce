@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-enc-mfm.c                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -245,13 +245,13 @@ int mfm_decode_weak (psi_sct_t *sct, pri_trk_t *trk)
 	unsigned long ofs, val, idx;
 	pri_evt_t     *evt, *e;
 
-	evt = pri_trk_evt_get_after (trk, PRI_EVENT_FUZZY, trk->idx);
+	evt = pri_trk_evt_get_after (trk, PRI_EVENT_WEAK, trk->idx);
 
 	while (evt != NULL) {
 		e = evt;
 		evt = evt->next;
 
-		if (e->type != PRI_EVENT_FUZZY) {
+		if (e->type != PRI_EVENT_WEAK) {
 			continue;
 		}
 
@@ -584,7 +584,7 @@ void mfm_encode_data (mfm_code_t *mfm, psi_sct_t *sct)
 		}
 
 		if (msk & 0xc0000000) {
-			pri_trk_evt_add (mfm->trk, PRI_EVENT_FUZZY, pos - 32, msk);
+			pri_trk_evt_add (mfm->trk, PRI_EVENT_WEAK, pos - 32, msk);
 
 			msk = 0;
 		}
