@@ -1,4 +1,4 @@
-.TH PSI 1 "2017-04-19" "HH" "pce"
+.TH PSI 1 "2018-02-06" "HH" "pce"
 \
 .SH NAME
 psi \- convert and modify PCE sector image files
@@ -229,6 +229,14 @@ contents of the sectors are read sequentially from the file.
 .TP
 .B new
 Create all selected sectors, if they do not already exist.
+.TP
+.BI "regular " "c/h/s/n"
+Regularize the image. After this operation the image has a regular
+geometry of \fIc\fR cylinders, \fIh\fR heads and \fIs\fR sectors
+per track (numbered 1 to \fIs\fR) and a uniform sector size of
+\fIn\fR (default: 512). All sector attributes are removed. Sectors
+that don't fit within the regular geometry are removed and missing
+sectors are created.
 .TP
 .BI "reorder " "s1,s2,s3,..."
 Reorder the sectors on all selected tracks. Sectors that are not

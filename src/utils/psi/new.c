@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/new.c                                          *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -345,4 +345,106 @@ psi_img_t *psi_new_image (const char *type, const char *size)
 	}
 
 	return (img);
+}
+
+static
+psi_sct_t *psi_regular_copy (psi_img_t *src, unsigned c, unsigned h, unsigned s, unsigned n)
+{
+	unsigned  m;
+	psi_sct_t *sct, *ssct;
+
+	if ((sct = psi_sct_new (c, h, s, n)) == NULL) {
+		return (NULL);
+	}
+
+	psi_sct_fill (sct, par_filler);
+
+	if ((ssct = psi_img_get_sector (src, c, h, s, 0)) != NULL) {
+		m = (ssct->n < sct->n) ? ssct->n : sct->n;
+		memcpy (sct->data, ssct->data, m);
+	}
+
+	return (sct);
+}
+
+static
+psi_img_t *psi_regular_img (psi_img_t *src, unsigned c, unsigned h, unsigned s, unsigned n)
+{
+	unsigned  i, j, k;
+	psi_img_t *img;
+	psi_cyl_t *cyl;
+	psi_trk_t *trk;
+	psi_sct_t *sct;
+
+	img = psi_img_new();
+
+	for (i = 0; i < c; i++) {
+		cyl = psi_img_get_cylinder (img, i, 1);
+
+		for (j = 0; j < h; j++) {
+			trk = psi_cyl_get_track (cyl, j, 1);
+
+			for (k = 0; k < s; k++) {
+				sct = psi_regular_copy (src, i, j, k + 1, n);
+
+				if (sct == NULL) {
+					psi_img_del (img);
+					return (NULL);
+				}
+
+				psi_trk_add_sector (trk, sct);
+			}
+		}
+	}
+
+	return (img);
+}
+
+int psi_regular (psi_img_t **img, const char *def)
+{
+	unsigned  i;
+	unsigned  val[4];
+	psi_img_t *tmp;
+
+	val[0] = 0;
+	val[1] = 0;
+	val[2] = 0;
+	val[3] = 512;
+
+	i = 0;
+
+	while (*def != 0) {
+		if ((*def >= '0') && (*def <= '9')) {
+			val[i] = 10 * val[i] + (*def - '0');
+		}
+		else if (*def == '/') {
+			i += 1;
+
+			if (i >= 4) {
+				return (1);
+			}
+
+			val[i] = 0;
+		}
+		else {
+			return (1);
+		}
+
+		def += 1;
+	}
+
+	if ((val[0] == 0) || (val[1] == 0) || (val[2] == 0) || (val[3] == 0)) {
+		return (1);
+	}
+
+	tmp = psi_regular_img (*img, val[0], val[1], val[2], val[3]);
+
+	if (tmp == NULL) {
+		return (1);
+	}
+
+	psi_img_del (*img);
+	*img = tmp;
+
+	return (0);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.c                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -126,6 +126,7 @@ void print_help (void)
 		"  interleave n           Set the sector interleave to n\n"
 		"  load filename          Load individual sectors\n"
 		"  new                    Create new sectors\n"
+		"  regular c/h/s/n        Regularize the image\n"
 		"  reorder s1,s2,...      Reorder sectors in a track\n"
 		"  rotate first           Rotate tracks\n"
 		"  save filename          Save individual sectors\n"
@@ -163,7 +164,7 @@ void print_version (void)
 	fputs (
 		"psi version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2010-2017 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2010-2018 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -485,6 +486,9 @@ int psi_operation (psi_img_t **img, const char *op, int argc, char **argv)
 	}
 	else if (strcmp (op, "load") == 0) {
 		r = psi_load_sectors (*img, optarg[0]);
+	}
+	else if (strcmp (op, "regular") == 0) {
+		r = psi_regular (img, optarg[0]);
 	}
 	else if (strcmp (op, "reorder") == 0) {
 		r = psi_reorder_tracks (*img, optarg[0]);

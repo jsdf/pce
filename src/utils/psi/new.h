@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/new.h                                          *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,8 @@
 int psi_new (psi_img_t **img);
 
 psi_img_t *psi_new_image (const char *type, const char *size);
+
+int psi_regular (psi_img_t **img, const char *def);
 
 
 #endif
