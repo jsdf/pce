@@ -841,6 +841,77 @@ int pri_trk_rotate (pri_trk_t *trk, unsigned long idx)
 	return (0);
 }
 
+int pri_trk_get_weak_mask (pri_trk_t *trk, unsigned char **buf, unsigned long *cnt)
+{
+	unsigned long pos, val;
+	unsigned char *ptr;
+	pri_evt_t     *evt;
+
+	*cnt = (trk->size + 7) / 8;
+
+	if ((*buf = malloc (*cnt)) == NULL) {
+		return (1);
+	}
+
+	memset (*buf, 0, *cnt);
+
+	ptr = *buf;
+
+	evt = pri_trk_evt_get_idx (trk, PRI_EVENT_WEAK, 0);
+
+	while (evt != NULL) {
+		pos = evt->pos;
+		val = evt->val;
+
+		while ((val != 0) && (pos < trk->size)) {
+			if (val & 0x80000000) {
+				ptr[pos >> 3] |= 0x80 >> (pos & 7);
+			}
+
+			pos += 1;
+			val = (val << 1) & 0xffffffff;
+		}
+
+		evt = pri_evt_next (evt, PRI_EVENT_WEAK);
+	}
+
+	return (0);
+}
+
+int pri_trk_set_weak_mask (pri_trk_t *trk, const void *buf, unsigned long cnt)
+{
+	unsigned long       i, n;
+	unsigned long       val;
+	const unsigned char *ptr;
+
+	n = (trk->size + 7) / 8;
+
+	if (cnt < n) {
+		n = cnt;
+	}
+
+	pri_trk_evt_del_all (trk, PRI_EVENT_WEAK);
+
+	ptr = buf;
+	val = 0;
+
+	for (i = 0; i < n; i++) {
+		val = ((val << 8) | ptr[i]) & 0xffffffff;
+
+		if (val & 0xff000000) {
+			pri_trk_evt_add (trk, PRI_EVENT_WEAK, 8 * i - 24, val);
+			val = 0;
+		}
+	}
+
+	if (val) {
+		pri_trk_evt_add (trk, PRI_EVENT_WEAK, 8 * i - 24, val);
+		val = 0;
+	}
+
+	return (0);
+}
+
 
 pri_cyl_t *pri_cyl_new (void)
 {

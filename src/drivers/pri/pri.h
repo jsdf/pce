@@ -99,6 +99,8 @@ int pri_trk_get_bits (pri_trk_t *trk, unsigned long *val, unsigned cnt);
 int pri_trk_set_bits (pri_trk_t *trk, unsigned long val, unsigned cnt);
 int pri_trk_get_event (pri_trk_t *trk, unsigned long *type, unsigned long *val);
 int pri_trk_rotate (pri_trk_t *trk, unsigned long idx);
+int pri_trk_get_weak_mask (pri_trk_t *trk, unsigned char **buf, unsigned long *cnt);
+int pri_trk_set_weak_mask (pri_trk_t *trk, const void *buf, unsigned long cnt);
 
 pri_cyl_t *pri_cyl_new (void);
 void pri_cyl_del (pri_cyl_t *cyl);
