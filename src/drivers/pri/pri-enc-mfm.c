@@ -285,12 +285,73 @@ int mfm_decode_weak (psi_sct_t *sct, pri_trk_t *trk)
 }
 
 static
+int mfm_decode_time (psi_sct_t *sct, pri_trk_t *trk)
+{
+	unsigned long      cnt, val, pos, clk, clk0;
+	unsigned long long sum, add;
+	pri_evt_t          *evt;
+
+	pos = pri_trk_get_pos (trk);
+	clk0 = pri_trk_get_clock (trk);
+
+	evt = pri_trk_evt_get_before (trk, PRI_EVENT_CLOCK, pos);
+
+	if (evt != NULL) {
+		clk = pri_evt_get_clock (evt, clk0);
+		evt = pri_evt_next (evt, PRI_EVENT_CLOCK);
+	}
+	else {
+		clk = clk0;
+		evt = pri_trk_evt_get_after (trk, PRI_EVENT_CLOCK, pos);
+
+		if (evt == NULL) {
+			return (0);
+		}
+	}
+
+	cnt = 16UL * sct->n;
+	add = (32768ULL * clk0) / clk;
+	sum = 0;
+
+	while (cnt > 0) {
+		while ((evt != NULL) && (evt->pos == pos)) {
+			clk = pri_evt_get_clock (evt, clk0);
+			add = (32768ULL * clk0) / clk;
+
+			if ((evt = pri_evt_next (evt, PRI_EVENT_CLOCK)) == NULL) {
+				evt = pri_trk_evt_get_idx (trk, PRI_EVENT_CLOCK, 0);
+			}
+		}
+
+		sum += add;
+		pos += 1;
+		cnt -= 1;
+
+		if (pos >= trk->size) {
+			pos = 0;
+		}
+	}
+
+	val = (sum + 32767) / 65536;
+
+	if (val != (8UL * sct->n)) {
+		psi_sct_set_read_time (sct, val);
+	}
+
+	return (0);
+}
+
+static
 int mfm_decode_dam (mfm_code_t *mfm, psi_sct_t *sct, unsigned mark)
 {
 	unsigned      crc;
 	unsigned char buf[4];
 
 	if (mfm_decode_weak (sct, mfm->trk)) {
+		return (1);
+	}
+
+	if (mfm_decode_time (sct, mfm->trk)) {
 		return (1);
 	}
 
