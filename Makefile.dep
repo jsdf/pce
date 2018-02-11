@@ -2808,6 +2808,7 @@ src/utils/pri/main.o: src/utils/pri/main.c \
 	src/drivers/psi/psi-img.h \
 	src/drivers/psi/psi.h \
 	src/lib/getopt.h \
+	src/lib/sysdep.h \
 	src/utils/pri/main.h
 
 src/utils/pri/merge.o: src/utils/pri/merge.c \
@@ -2830,6 +2831,12 @@ src/utils/pri/rotate.o: src/utils/pri/rotate.c \
 	src/utils/pri/main.h
 
 src/utils/pri/text.o: src/utils/pri/text.c \
+	src/config.h \
+	src/drivers/pri/pri.h \
+	src/drivers/psi/psi.h \
+	src/utils/pri/main.h
+
+src/utils/pri/weak.o: src/utils/pri/weak.c \
 	src/config.h \
 	src/drivers/pri/pri.h \
 	src/drivers/psi/psi.h \

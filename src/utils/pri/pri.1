@@ -1,4 +1,4 @@
-.TH PRI 1 "2015-07-22" "HH" "pce"
+.TH PRI 1 "2018-02-11" "HH" "pce"
 \
 .SH NAME
 pri \- convert and modify PCE raw image files
@@ -219,6 +219,36 @@ is negative, the track is rotated right.
 .BI "save " filename
 Save all selected tracks to \fIfilename\fR. The contents of the
 tracks are written sequentially to the file.
+.TP
+.BI "weak-detect " max
+Detect weak bits. All zero bits that are preceded by at laset \fImax\fR zero
+bits are mared as weak.
+.TP
+.BI "weak-load " filename
+Load the weak bit mask of all selected tracks from \fIfilename\fR. The weak
+bit masks are of the same size as the track data.
+.TP
+.BI "weak-save " filename
+Save the weak bit mask of all selected tracks to \fIfilename\fR. The weak
+bit masks are of the same size as the track data.
+.TP
+.BI "weak-set " "val"
+Set bits that are mared as weak to \fIval\fR which can be one of the
+following:
+.RS
+.TP
+.B 0
+Set bits to 0
+.TP
+.B 1
+Set bits to 1
+.TP
+.B flip
+Invert bits
+.TP
+.B random
+Set bits to a random value
+.RE
 .RE
 \
 .TP

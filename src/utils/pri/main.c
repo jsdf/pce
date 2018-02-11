@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/utils/pri/pri.c                                          *
+ * File name:   src/utils/pri/main.c                                         *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include <lib/getopt.h>
+#include <lib/sysdep.h>
 
 #include <drivers/psi/psi-img.h>
 #include <drivers/psi/psi.h>
@@ -116,6 +117,10 @@ static struct {
 	{ "new", "", "Create new tracks" },
 	{ "rotate", "bits", "Rotate tracks left" },
 	{ "save", "filename", "Save raw tracks" },
+	{ "weak-detect", "max", "Autodetect weak bits after <max> zero bits" },
+	{ "weak-load", "file", "Load the weak bit mask" },
+	{ "weak-save", "file", "Save the weak bit mask" },
+	{ "weak-set", "val", "Set weak bits (0|1|flip|random)" },
 	{ NULL, NULL, NULL }
 };
 
@@ -203,7 +208,7 @@ void print_version (void)
 	fputs (
 		"pri version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2012-2015 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2012-2018 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -435,6 +440,59 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 
 		r = pri_event_list (*img, optarg1[0], optarg2[0]);
 	}
+	else if ((strcmp (op, "weak-detect") == 0)) {
+		unsigned long max;
+
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing weak bit detection limit\n", arg0);
+			return (1);
+		}
+
+		max = strtoul (optarg1[0], NULL, 0);
+
+		r = pri_weak_detect (*img, max);
+	}
+	else if (strcmp (op, "weak-load") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing file name\n", arg0);
+			return (1);
+		}
+
+		r = pri_weak_load (*img, optarg1[0]);
+	}
+	else if (strcmp (op, "weak-save") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing file name\n", arg0);
+			return (1);
+		}
+
+		r = pri_weak_save (*img, optarg1[0]);
+	}
+	else if (strcmp (op, "weak-set") == 0) {
+		if (pce_getopt (argc, argv, &optarg1, NULL) != 0) {
+			fprintf (stderr, "%s: missing weak bit value\n", arg0);
+			return (1);
+		}
+
+		if (strcmp (optarg1[0], "random") == 0) {
+			r = pri_weak_flip (*img, 1);
+		}
+		else if (strcmp (optarg1[0], "flip") == 0) {
+			r = pri_weak_flip (*img, 0);
+		}
+		else if (strcmp (optarg1[0], "0") == 0) {
+			r = pri_weak_set (*img, 0);
+		}
+		else if (strcmp (optarg1[0], "1") == 0) {
+			r = pri_weak_set (*img, 1);
+		}
+		else {
+			fprintf (stderr, "%s: unknown weak bit value (%s)\n",
+				arg0, optarg1[0]
+			);
+			return (1);
+		}
+	}
 	else if (strcmp (op, "half-rate") == 0) {
 		r = pri_half_rate (*img);
 	}
@@ -657,6 +715,8 @@ int main (int argc, char **argv)
 
 	pri_decode_mfm_init (&par_dec_mfm);
 	pri_encode_mfm_init (&par_enc_mfm, 500000, 300);
+
+	pce_srand (0);
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);

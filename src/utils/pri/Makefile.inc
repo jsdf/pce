@@ -18,6 +18,7 @@ PRI_BAS := \
 	new \
 	rotate \
 	text \
+	weak \
 	main
 
 PRI_SRC := $(foreach f,$(PRI_BAS),$(rel)/$(f).c)
@@ -28,6 +29,7 @@ PRI_BIN := $(rel)/pri$(EXEEXT)
 
 PRI_OBJ_EXT := \
 	src/lib/getopt.o \
+	src/lib/sysdep.o \
 	$(DRV_PSI_OBJ) \
 	$(DRV_PRI_OBJ)
 
@@ -48,6 +50,7 @@ $(rel)/merge.o:    $(rel)/merge.c
 $(rel)/new.o:      $(rel)/new.c
 $(rel)/rotate.o:   $(rel)/rotate.c
 $(rel)/text.o:     $(rel)/text.c
+$(rel)/weak.o:     $(rel)/weak.c
 $(rel)/main.o:     $(rel)/main.c
 
 $(rel)/pri$(EXEEXT): $(PRI_OBJ_EXT) $(PRI_OBJ)

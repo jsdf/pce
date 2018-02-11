@@ -153,8 +153,8 @@ void txt_put_event (pri_text_t *ctx, unsigned long type, unsigned long val)
 		ctx->need_nl = 0;
 	}
 
-	if (type == PRI_EVENT_FUZZY) {
-		fprintf (ctx->fp, "FUZZY %08lX\n", val);
+	if (type == PRI_EVENT_WEAK) {
+		fprintf (ctx->fp, "WEAK %08lX\n", val);
 	}
 	else if (type == PRI_EVENT_CLOCK) {
 		unsigned long long tmp;
@@ -1193,7 +1193,7 @@ int txt_enc_fuzzy (pri_text_t *ctx)
 		return (1);
 	}
 
-	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_FUZZY, ctx->bit_cnt, val) == NULL) {
+	if (pri_trk_evt_add (ctx->trk, PRI_EVENT_WEAK, ctx->bit_cnt, val) == NULL) {
 		return (1);
 	}
 

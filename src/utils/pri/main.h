@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pri/main.h                                         *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2015 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -101,6 +101,12 @@ int pri_rotate_tracks_right (pri_img_t *img, unsigned long ofs);
 
 int pri_encode_text (pri_img_t *img, const char *fname);
 int pri_decode_text (pri_img_t *img, const char *fname, unsigned enc);
+
+int pri_weak_detect (pri_img_t *img, unsigned long cnt);
+int pri_weak_flip (pri_img_t *img, int random);
+int pri_weak_load (pri_img_t *img, const char *fname);
+int pri_weak_set (pri_img_t *img, int val);
+int pri_weak_save (pri_img_t *img, const char *fname);
 
 
 #endif
