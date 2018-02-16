@@ -884,10 +884,10 @@ int pri_trk_set_weak_mask (pri_trk_t *trk, const void *buf, unsigned long cnt)
 	unsigned long       val;
 	const unsigned char *ptr;
 
-	n = (trk->size + 7) / 8;
+	n = pri_trk_get_size (trk);
 
-	if (cnt < n) {
-		n = cnt;
+	if ((8 * cnt) < n) {
+		n = 8 * cnt;
 	}
 
 	pri_trk_evt_del_all (trk, PRI_EVENT_WEAK);
@@ -896,17 +896,23 @@ int pri_trk_set_weak_mask (pri_trk_t *trk, const void *buf, unsigned long cnt)
 	val = 0;
 
 	for (i = 0; i < n; i++) {
-		val = ((val << 8) | ptr[i]) & 0xffffffff;
+		val = (val << 1) | ((ptr[i >> 3] >> (~i & 7)) & 1);
 
-		if (val & 0xff000000) {
-			pri_trk_evt_add (trk, PRI_EVENT_WEAK, 8 * i - 24, val);
+		if (val & 0x80000000) {
+			pri_trk_evt_add (trk, PRI_EVENT_WEAK, i - 31, val);
 			val = 0;
 		}
 	}
 
-	if (val) {
-		pri_trk_evt_add (trk, PRI_EVENT_WEAK, 8 * i - 24, val);
-		val = 0;
+	while (val != 0) {
+		val = val << 1;
+
+		if (val & 0x80000000) {
+			pri_trk_evt_add (trk, PRI_EVENT_WEAK, i - 31, val);
+			val = 0;
+		}
+
+		i += 1;
 	}
 
 	return (0);
