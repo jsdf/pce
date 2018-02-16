@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-enc-gcr.c                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -77,18 +77,20 @@ static const unsigned char gcr_dec_tab[256] = {
 };
 
 
-static
-unsigned long gcr_get_track_length (unsigned c)
+/*
+ * Get the track length in bits on cylinder <c>.
+ */
+unsigned long pri_get_mac_gcr_track_length (unsigned c)
 {
 	static unsigned long tab[5] = {
-		76262, 69902, 63540, 57190, 50838
+		76142, 69930, 63559, 57142, 50847
 	};
 
 	if (c < 80) {
 		return (tab[c / 16]);
 	}
 
-	return (0);
+	return (tab[4]);
 }
 
 unsigned gcr_get_format (psi_img_t *img)
@@ -552,7 +554,7 @@ int pri_encode_gcr_img (pri_img_t *dimg, psi_img_t *simg)
 	for (c = 0; c < simg->cyl_cnt; c++) {
 		cyl = simg->cyl[c];
 
-		size = gcr_get_track_length (c);
+		size = pri_get_mac_gcr_track_length (c);
 
 		for (h = 0; h < cyl->trk_cnt; h++) {
 			trk = cyl->trk[h];

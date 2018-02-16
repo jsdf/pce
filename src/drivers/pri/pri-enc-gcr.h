@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri-enc-gcr.h                                *
  * Created:     2012-02-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,6 +27,8 @@
 #include <drivers/pri/pri.h>
 #include <drivers/psi/psi.h>
 
+
+unsigned long pri_get_mac_gcr_track_length (unsigned c);
 
 psi_trk_t *pri_decode_gcr_trk (pri_trk_t *trk, unsigned h);
 psi_img_t *pri_decode_gcr (pri_img_t *img);
