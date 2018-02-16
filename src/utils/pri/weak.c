@@ -29,6 +29,31 @@
 #include <drivers/pri/pri.h>
 
 
+static
+int pri_weak_clean_cb (pri_img_t *img, pri_trk_t *trk, unsigned long c, unsigned long h, void *opaque)
+{
+	unsigned long cnt;
+	unsigned char *buf;
+
+	if (pri_trk_get_weak_mask (trk, &buf, &cnt)) {
+		return (1);
+	}
+
+	if (pri_trk_set_weak_mask (trk, buf, cnt)) {
+		free (buf);
+		return (1);
+	}
+
+	free (buf);
+
+	return (0);
+}
+
+int pri_weak_clean (pri_img_t *img)
+{
+	return (pri_for_all_tracks (img, pri_weak_clean_cb, NULL));
+}
+
 /*
  * Mark zero bits that are preceded by at least max zero bits as weak.
  */

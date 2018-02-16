@@ -117,6 +117,7 @@ static struct {
 	{ "new", "", "Create new tracks" },
 	{ "rotate", "bits", "Rotate tracks left" },
 	{ "save", "filename", "Save raw tracks" },
+	{ "weak-clean", "", "Clean up weak bit events" },
 	{ "weak-detect", "max", "Autodetect weak bits after <max> zero bits" },
 	{ "weak-load", "file", "Load the weak bit mask" },
 	{ "weak-save", "file", "Save the weak bit mask" },
@@ -439,6 +440,9 @@ int pri_operation (pri_img_t **img, const char *op, int argc, char **argv)
 		}
 
 		r = pri_event_list (*img, optarg1[0], optarg2[0]);
+	}
+	else if ((strcmp (op, "weak-clean") == 0)) {
+		r = pri_weak_clean (*img);
 	}
 	else if ((strcmp (op, "weak-detect") == 0)) {
 		unsigned long max;
