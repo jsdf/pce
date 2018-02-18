@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.c                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1906,9 +1906,9 @@ static struct {
 	{ 0x1f, 0x06, 9, cmd_read },
 	{ 0x1f, 0x0c, 9, cmd_read_deleted },
 	{ 0x1f, 0x02, 9, cmd_read_track },
-	{ 0xbf, 0x0a, 2, cmd_read_id },
+	{ 0x3f, 0x0a, 2, cmd_read_id },
 	{ 0x3f, 0x05, 9, cmd_write },
-	{ 0xbf, 0x0d, 6, cmd_format },
+	{ 0x3f, 0x0d, 6, cmd_format },
 	{ 0xff, 0x07, 2, cmd_recalibrate },
 	{ 0xff, 0x0f, 3, cmd_seek },
 	{ 0xff, 0x08, 1, cmd_sense_int_status },
