@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   pcex.S                                                       *
  * Created:     2007-12-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,7 +32,8 @@
 #define MAC_HOOK_SONY_STATUS (MAC_HOOK_SONY + 3)
 #define MAC_HOOK_SONY_CLOSE  (MAC_HOOK_SONY + 4)
 
-#define SONY_DRIVES 4
+#define SONY_DRIVES   8
+#define SONY_VAR_SIZE 0x0310
 
 #define SONY_TRACK       0
 #define SONY_WPROT       2
@@ -47,7 +48,6 @@
 #define SONY_TWOSIDEFMT  18
 #define SONY_NEWIF       19
 #define SONY_DRIVEERRS   20
-
 
 
 .section ".text"
@@ -94,8 +94,16 @@ sony_open:
 1:
 	movem.l	%d2/%a0-%a2, -(%a7)
 
-	move.l	#0x00000310, %d0
+	move.l	#SONY_VAR_SIZE, %d0
 	.word	0xa71e			/* NewPtr */
+
+	/*
+	 * Clear the allocated memory
+	 */
+	move.l	%a0, %a2
+	move.w	#(SONY_VAR_SIZE / 4 - 1), %d2
+1:	clr.l	(%a2)+
+	dbra	%d2, 1b
 
 	move.l	%a1, (%a0)		/* dctl */
 	move.l	%a0, 0x0134		/* SonyVars */

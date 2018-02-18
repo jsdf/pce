@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/hotkey.c                                    *
  * Created:     2010-11-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -46,6 +46,22 @@ int mac_set_hotkey (macplus_t *sim, pce_key_t key)
 
 	case PCE_KEY_F4:
 		mac_set_msg (sim, "mac.insert", "4");
+		break;
+
+	case PCE_KEY_F5:
+		mac_set_msg (sim, "mac.insert", "5");
+		break;
+
+	case PCE_KEY_F6:
+		mac_set_msg (sim, "mac.insert", "6");
+		break;
+
+	case PCE_KEY_F7:
+		mac_set_msg (sim, "mac.insert", "7");
+		break;
+
+	case PCE_KEY_F8:
+		mac_set_msg (sim, "mac.insert", "8");
 		break;
 
 	case PCE_KEY_K:
