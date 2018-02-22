@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/internal.h                                    *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -151,7 +151,7 @@ int e68_prefetch (e68000_t *c)
 	c->ir[2] = e68_get_mem16 (c, c->ir_pc);
 
 	if (c->bus_error) {
-		e68_exception_bus (c);
+		e68_exception_bus (c, c->ir_pc, 0, 0);
 		return (1);
 	}
 

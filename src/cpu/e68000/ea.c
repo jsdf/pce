@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/ea.c                                          *
  * Created:     2006-05-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -579,7 +579,7 @@ int e68_ea_get_val8 (e68000_t *c, uint8_t *val)
 		e68_set_clk (c, 4);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 0);
 			return (1);
 		}
 
@@ -623,7 +623,7 @@ int e68_ea_get_val16 (e68000_t *c, uint16_t *val)
 		e68_set_clk (c, 4);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 0);
 			return (1);
 		}
 
@@ -667,7 +667,7 @@ int e68_ea_get_val32 (e68000_t *c, uint32_t *val)
 		e68_set_clk (c, 8);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 0);
 			return (1);
 		}
 
@@ -701,7 +701,7 @@ int e68_ea_set_val8 (e68000_t *c, uint8_t val)
 		e68_set_clk (c, 4);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 1);
 			return (1);
 		}
 
@@ -745,7 +745,7 @@ int e68_ea_set_val16 (e68000_t *c, uint16_t val)
 		e68_set_clk (c, 4);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 1);
 			return (1);
 		}
 
@@ -789,7 +789,7 @@ int e68_ea_set_val32 (e68000_t *c, uint32_t val)
 		e68_set_clk (c, 8);
 
 		if (c->bus_error) {
-			e68_exception_bus (c);
+			e68_exception_bus (c, c->ea_val, 1, 1);
 			return (1);
 		}
 

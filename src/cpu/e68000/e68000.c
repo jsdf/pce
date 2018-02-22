@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -544,13 +544,6 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 	uint16_t sr1, sr2;
 	uint32_t addr;
 
-	if (c->exception) {
-		e68_double_exception (c, vct, name);
-		return;
-	}
-
-	c->exception = 1;
-
 	vct &= 0xff;
 
 	c->except_cnt += 1;
@@ -584,8 +577,6 @@ void e68_exception (e68000_t *c, unsigned vct, unsigned fmt, const char *name)
 	addr = e68_get_mem32 (c, addr);
 
 	e68_set_pc_prefetch (c, addr);
-
-	c->exception = 0;
 }
 
 void e68_exception_reset (e68000_t *c)
@@ -609,8 +600,10 @@ void e68_exception_reset (e68000_t *c)
 	e68_set_clk (c, 64);
 }
 
-void e68_exception_bus (e68000_t *c)
+void e68_exception_bus (e68000_t *c, uint32_t addr, int data, int wr)
 {
+	uint16_t val;
+
 	c->bus_error = 0;
 
 	if (c->exception) {
@@ -618,12 +611,24 @@ void e68_exception_bus (e68000_t *c)
 		return;
 	}
 
-	e68_exception (c, 2, 0, "BUSE");
+	if (c->supervisor) {
+		val = data ? 0x05 : 0x06;
+	}
+	else {
+		val = data ? 0x01 : 0x02;
+	}
+
+	if (wr == 0) {
+		val |= 0x10;
+	}
 
 	c->exception = 1;
 
-	e68_push32 (c, 0);
-	e68_push32 (c, 0);
+	e68_exception (c, 2, 0, "BUSE");
+
+	e68_push16 (c, c->ir[0]);
+	e68_push32 (c, addr);
+	e68_push16 (c, val);
 
 	c->exception = 0;
 
@@ -639,23 +644,23 @@ void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr)
 		return;
 	}
 
-	e68_exception (c, 3, 8, "ADDR");
-
-	c->exception = 1;
-
-	e68_push16 (c, c->ir[0]);
-	e68_push32 (c, addr);
-
-	val = 0;
+	if (c->supervisor) {
+		val = data ? 0x05 : 0x06;
+	}
+	else {
+		val = data ? 0x01 : 0x02;
+	}
 
 	if (wr == 0) {
 		val |= 0x10;
 	}
 
-	if (data) {
-		val |= 0x08;
-	}
+	c->exception = 1;
 
+	e68_exception (c, 3, 8, "ADDR");
+
+	e68_push16 (c, c->ir[0]);
+	e68_push32 (c, addr);
 	e68_push16 (c, val);
 
 	c->exception = 0;

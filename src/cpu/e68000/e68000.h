@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.h                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -467,7 +467,7 @@ void e68_set_pc_prefetch (e68000_t *c, unsigned long val);
 
 void e68_exception_reset (e68000_t *c);
 
-void e68_exception_bus (e68000_t *c);
+void e68_exception_bus (e68000_t *c, uint32_t addr, int data, int wr);
 
 void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr);
 
