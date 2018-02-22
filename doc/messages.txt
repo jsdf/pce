@@ -152,6 +152,11 @@ emu.tape.load [<position> | "end"]
 emu.tape.pcm "0" | "1"
 	Disable or enable PCM mode.
 
+emu.tape.read <filename>
+	This is equivalent to
+		emu.tape.file <filename>
+		emu.tape.load 0
+
 emu.tape.rewind
 	Move the read or write position to the beginning of the cassette
 	file.
@@ -164,6 +169,11 @@ emu.tape.save [<position> | "end"]
 emu.tape.state
 	Print the cassette state. Prints the current mode (load/save)
 	and the current position.
+
+emu.tape.write <filename>
+	This is equivalent to
+		emu.tape.file <filename>
+		emu.tape.save 0
 
 emu.video.blink <blink-rate>
 	Set the cursor blink rate. The number specified is the number

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -811,9 +811,11 @@ void pc_cmd_hm (cmd_t *cmd)
 		"emu.tape.append\n"
 		"emu.tape.file        <filename>\n"
 		"emu.tape.load        [<position> | \"end\"]\n"
+		"emu.tape.read        <filename>\n"
 		"emu.tape.rewind\n"
 		"emu.tape.save        [<position> | \"end\"]\n"
 		"emu.tape.state\n"
+		"emu.tape.write       <filename>\n"
 		"\n"
 		"emu.term.fullscreen  \"0\" | \"1\"\n"
 		"emu.term.fullscreen.toggle\n"
