@@ -32,6 +32,7 @@
 #define WD179X_ST_NOT_READY   0x80
 #define WD179X_ST_MOTOR       0x80
 #define WD179X_ST_WPROT       0x40
+#define WD179X_ST_SPINUP      0x20
 #define WD179X_ST_RECORD_TYPE 0x20
 #define WD179X_ST_RNF         0x10
 #define WD179X_ST_SEEK_ERROR  0x10
@@ -835,7 +836,7 @@ void cmd_done (wd179x_t *fdc, int irq)
 static
 void cmd_set_type1_status (wd179x_t *fdc)
 {
-	fdc->status &= ~(WD179X_ST_WPROT | WD179X_ST_SEEK_ERROR | WD179X_ST_TRACK0);
+	fdc->status &= ~(WD179X_ST_WPROT | WD179X_ST_SPINUP | WD179X_ST_SEEK_ERROR | WD179X_ST_TRACK0);
 
 	if (fdc->drv->c == 0) {
 		fdc->status |= WD179X_ST_TRACK0;
@@ -844,6 +845,8 @@ void cmd_set_type1_status (wd179x_t *fdc)
 	if (fdc->drv->wprot) {
 		fdc->status |= WD179X_ST_WPROT;
 	}
+
+	fdc->status |= WD179X_ST_SPINUP;
 }
 
 /*****************************************************************************
