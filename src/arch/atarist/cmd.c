@@ -51,7 +51,8 @@ mon_cmd_t par_cmd[] = {
 	{ "r", "reg [val]", "get or set a register" },
 	{ "s", "[what]", "print status (acia0|acia1|cpu|dma|mem|mfp|psg|video)" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
-	{ "u", "[[-]addr [cnt]]", "disassemble" }
+	{ "u", "[w][[-]addr [cnt]]", "disassemble" },
+	{ "uw", "[addr [cnt]]", "disassemble as constant words" }
 };
 
 unsigned par_cmd_cnt = sizeof (par_cmd) / sizeof (par_cmd[0]);
@@ -1177,6 +1178,61 @@ void st_cmd_u_to (cmd_t *cmd, atari_st_t *sim, unsigned long addr)
 }
 
 /*
+ * uw - disassemble as constant words
+ */
+static
+void st_cmd_u_w (cmd_t *cmd, atari_st_t *sim)
+{
+	unsigned             i, col;
+	unsigned long        addr, cnt;
+	e68_dasm_t           op;
+	char                 str[256];
+
+	if (cmd_match_uint32 (cmd, &addr) == 0) {
+		addr = 0;
+	}
+
+	if (cmd_match_uint32 (cmd, &cnt) == 0) {
+		cnt = 256;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	while (1) {
+		e68_dasm_mem (sim->cpu, &op, addr);
+		st_dasm_str (str, &op, 0);
+
+		pce_printf (".word 0x%04x", op.ir[0]);
+
+		for (i = 1; i < op.irn; i++) {
+			pce_printf (", 0x%04x", op.ir[i]);
+		}
+
+		col = 4 + 8 * op.irn;
+
+		while (col < 32) {
+			pce_printf ("\t");
+			col = (col + 8) & ~7;
+		}
+
+		pce_printf ("\t/* %06lX   %s */\n", addr, str);
+
+		if (op.flags & E68_DFLAG_RTS) {
+			pce_printf ("\n");
+		}
+
+		if (cnt <= (2 * op.irn)) {
+			break;
+		}
+
+		addr += 2 * op.irn;
+		cnt -= 2 * op.irn;
+	}
+}
+
+/*
  * u - disassemble
  */
 static
@@ -1188,6 +1244,11 @@ void st_cmd_u (cmd_t *cmd, atari_st_t *sim)
 	static unsigned long saddr = 0;
 	e68_dasm_t           op;
 	char                 str[256];
+
+	if (cmd_match (cmd, "w")) {
+		st_cmd_u_w (cmd, sim);
+		return;
+	}
 
 	if (first) {
 		first = 0;
