@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/msg.c                                       *
  * Created:     2007-12-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -226,6 +226,32 @@ int mac_set_msg_emu_exit (macplus_t *sim, const char *msg, const char *val)
 	sim->brk = PCE_BRK_ABORT;
 
 	mon_set_terminate (&par_mon, 1);
+
+	return (0);
+}
+
+static
+int mac_set_msg_emu_iwm_insert (macplus_t *sim, const char *msg, const char *val)
+{
+	unsigned drv;
+
+	if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
+		pce_log (MSG_ERR, "*** insert error: bad drive (%s)\n",
+			val
+		);
+
+		return (1);
+	}
+
+	if (drv == 0) {
+		pce_log (MSG_ERR, "*** insert error: bad drive (%u)\n",
+			drv
+		);
+
+		return (1);
+	}
+
+	mac_iwm_set_fname (&sim->iwm, drv - 1, val);
 
 	return (0);
 }
@@ -454,6 +480,7 @@ static mac_msg_list_t set_msg_list[] = {
 	{ "emu.disk.insert", mac_set_msg_emu_disk_insert },
 	{ "emu.disk.ro", mac_set_msg_emu_disk_ro },
 	{ "emu.disk.rw", mac_set_msg_emu_disk_rw },
+	{ "emu.iwm.insert", mac_set_msg_emu_iwm_insert },
 	{ "emu.iwm.ro", mac_set_msg_emu_iwm_ro },
 	{ "emu.iwm.rw", mac_set_msg_emu_iwm_rw },
 	{ "emu.iwm.status", mac_set_msg_emu_iwm_status },

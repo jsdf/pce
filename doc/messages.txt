@@ -224,6 +224,10 @@ emu.exit
 emu.fdc.accurate "0" | "1"
 	Disable or enable the FDC accurate mode.
 
+emu.iwm.insert <drive>":"<fname>
+	Attach a PRI image to an IWM drive. After this, the disk
+	must still be inserted using "mac.insert".
+
 emu.iwm.ro <drive>
 	Set the drive <drive> to read-only (locked). The first
 	drive is 1, if <drive> is 0, set all drives to read-only.
