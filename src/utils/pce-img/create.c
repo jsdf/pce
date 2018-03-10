@@ -90,25 +90,33 @@ int main_create (int argc, char **argv)
 			return (0);
 
 		case 'c':
-			pce_set_c (optarg[0]);
+			if (pce_set_c (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'C':
-			pce_set_min_cluster_size (optarg[0]);
+			if (pce_set_min_cluster_size (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'f':
-			pce_set_ofs (optarg[0]);
+			if (pce_set_ofs (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'g':
-			pce_set_c (optarg[0]);
-			pce_set_h (optarg[1]);
-			pce_set_s (optarg[2]);
+			if (pce_set_geo (optarg[0], optarg[1], optarg[2])) {
+				return (1);
+			}
 			break;
 
 		case 'h':
-			pce_set_h (optarg[0]);
+			if (pce_set_h (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'n':
@@ -134,7 +142,9 @@ int main_create (int argc, char **argv)
 			break;
 
 		case 's':
-			pce_set_s (optarg[0]);
+			if (pce_set_s (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'w':

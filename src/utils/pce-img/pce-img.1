@@ -12,28 +12,29 @@ pce-img \- the PCE disk image utility
 \fBpce-img\fR(1) is used to create and convert disk image files.
 
 .SH OPTIONS
+
 .TP
-.BI "-c, --cylinders " c
-Set the number of cylinders.
-\
+.BI "-c, --cylinders " cylinders
+Set the number of cylinders. If \fIcylinders\fR is \fBauto\fR then the number
+of cylinders is calculated from the image size, the number of heads
+and the number of sectors per track.
 .TP
 .BI "-C, --min-cluster-size " size
-Set the minimum cluster size for QED images. The default is 0.
-\
+Set the minimum allocation block size for \fBpbi\fR and \fBqed\fR images.
+The actual size used will not be smaller than \fIsize\fR, but it may
+be larger. The default is 0.
 .TP
 .BI "-f, --offset " offset
-Set the starting offset of the disk image for formats that
-support it.
-\
+Set the starting offset of raw disk images.
 .TP
-.BI "-g, --geometry " "c h s"
+.BI "-g, --geometry " "cylinders heads sectors"
 Set the disk geometry. This is the same as using the \fB-c\fR,
 \fB-h\fR and \fB-s\fR options.
-\
 .TP
-.BI "-h, --heads " h
-Set the number of heads.
-\
+.BI "-h, --heads " heads
+Set the number of heads. If \fIheads\fR is \fBauto\fR then the number of
+heads is calculated from the image size, the number of cylinders and
+the number of sectors per track.
 .TP
 .BI "-i, --input " filename
 Set the input file name.
@@ -89,9 +90,10 @@ Set the output file name.
 Be quiet.
 \
 .TP
-.BI "-s, --sectors " s
-Set the number of sectors per track.
-\
+.BI "-s, --sectors " sectors
+Set the number of sectors per track. If \fIsectors\fR is \fBauto\fR then
+the number of sectors per track is calculated from the image size, the
+number of cylinders and the number of heads.
 .TP
 .BI "-w, --cow " filename
 Set the COW file name.

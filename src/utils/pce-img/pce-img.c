@@ -48,9 +48,9 @@ char       par_quiet = 0;
 static unsigned           par_type_inp = 0;
 static unsigned           par_type_out = 0;
 
-static unsigned           par_c = 0;
-static unsigned           par_h = 0;
-static unsigned           par_s = 0;
+static unsigned long      par_c = 0;
+static unsigned long      par_h = 0;
+static unsigned long      par_s = 0;
 static unsigned long      par_n = 0;
 static unsigned long long par_ofs = 0;
 static unsigned long      par_min_cluster_size = 0;
@@ -234,29 +234,118 @@ int pce_set_n (const char *str)
 	return (0);
 }
 
-void pce_set_c (const char *str)
+int pce_set_c (const char *str)
 {
-	par_c = strtoul (str, NULL, 0);
+	char          *end;
+	unsigned long h, s;
+
+	if (strcmp (str, "auto") == 0) {
+		s = (par_s > 0) ? par_s : 63;
+		h = (par_h > 0) ? par_h : 16;
+
+		par_c = par_n / (h * s);
+	}
+	else {
+		par_c = strtoul (str, &end, 0);
+
+		if (*end != 0) {
+			fprintf (stderr, "%s: bad cylinder (%s)\n", arg0, str);
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
-void pce_set_h (const char *str)
+int pce_set_h (const char *str)
 {
-	par_h = strtoul (str, NULL, 0);
+	char          *end;
+	unsigned long c, s;
+
+	if (strcmp (str, "auto") == 0) {
+		s = (par_s > 0) ? par_s : 63;
+		c = (par_c > 0) ? par_c : 1024;
+
+		par_h = par_n / (c * s);
+	}
+	else {
+		par_h = strtoul (str, &end, 0);
+
+		if (*end != 0) {
+			fprintf (stderr, "%s: bad head (%s)\n", arg0, str);
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
-void pce_set_s (const char *str)
+int pce_set_s (const char *str)
 {
-	par_s = strtoul (str, NULL, 0);
+	char          *end;
+	unsigned long c, h;
+
+	if (strcmp (str, "auto") == 0) {
+		h = (par_h > 0) ? par_h : 16;
+		c = (par_c > 0) ? par_c : 1024;
+
+		par_s = par_n / (c * h);
+	}
+	else {
+		par_s = strtoul (str, &end, 0);
+
+		if (*end != 0) {
+			fprintf (stderr, "%s: bad sector (%s)\n", arg0, str);
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
-void pce_set_ofs (const char *str)
+int pce_set_geo (const char *c, const char *h, const char *s)
 {
-	par_ofs = strtoul (str, NULL, 0);
+	if (pce_set_c (c)) {
+		return (1);
+	}
+
+	if (pce_set_h (h)) {
+		return (1);
+	}
+
+	if (pce_set_s (s)) {
+		return (1);
+	}
+
+	return (0);
 }
 
-void pce_set_min_cluster_size (const char *str)
+int pce_set_ofs (const char *str)
 {
-	par_min_cluster_size = strtoul (str, NULL, 0);
+	char *end;
+
+	par_ofs = strtoul (str, &end, 0);
+
+	if (*end != 0) {
+		fprintf (stderr, "%s: bad offset (%s)\n", arg0, str);
+		return (1);
+	}
+
+	return (0);
+}
+
+int pce_set_min_cluster_size (const char *str)
+{
+	char *end;
+
+	par_min_cluster_size = strtoul (str, &end, 0);
+
+	if (*end != 0) {
+		fprintf (stderr, "%s: bad cluster size (%s)\n", arg0, str);
+		return (1);
+	}
+
+	return (0);
 }
 
 int pce_set_type_inp (const char *str)
