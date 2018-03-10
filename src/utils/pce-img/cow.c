@@ -46,6 +46,7 @@ static pce_option_t opts_create[] = {
 	{ 'o', 1, "output", "string", "Set the output (cow) file name" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Add a COW file" },
 	{  -1, 0, NULL, NULL, NULL }
 };

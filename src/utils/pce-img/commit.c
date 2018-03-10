@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/commit.c                                   *
  * Created:     2013-01-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +39,7 @@ static pce_option_t opts_commit[] = {
 	{ 'i', 1, "input", "string", "Set the input file name [none]" },
 	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Add a COW file [none]" },
 	{  -1, 0, NULL, NULL, NULL }
 };

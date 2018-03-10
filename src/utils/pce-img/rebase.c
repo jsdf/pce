@@ -48,6 +48,7 @@ static pce_option_t opts_rebase[] = {
 	{ 'O', 1, "output-type", "string", "Set the output file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Set the COW file name [none]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
