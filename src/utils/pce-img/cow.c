@@ -41,7 +41,6 @@ static pce_option_t opts_create[] = {
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
 	{ 'i', 1, "input", "string", "Set the input (base) file name" },
 	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
-	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output (cow) file name" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
@@ -130,12 +129,10 @@ int main_cow (int argc, char **argv)
 			}
 			break;
 
-		case 'm':
-			pce_set_n (optarg[0], 2048);
-			break;
-
 		case 'n':
-			pce_set_n (optarg[0], 1);
+			if (pce_set_n (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'o':

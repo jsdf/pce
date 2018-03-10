@@ -37,15 +37,49 @@ Set the number of heads.
 .TP
 .BI "-i, --input " filename
 Set the input file name.
-\
 .TP
-.BI "-m, --megabytes " size
-Set the disk size in MiB.
-\
+.BI "-I, --input-type " type
+Set the input file type. Supported input types are:
+.RS
 .TP
-.BI "-n, --size " blocks
-Set the disk size in 512 byte blocks.
-\
+.B dosemu
+DOSEMU disk image
+.TP
+.B pbi
+PCE block image
+.TP
+.B pimg
+Old PCE disk image
+.TP
+.B qed
+QEMU QED disk image
+.TP
+.B raw, img
+Raw disk image
+.RE
+.TP
+.BI "-n, --size " size
+Set the disk image size. The following suffixes to \fIsize\fR are recognized:
+.RS
+.TP
+.B B
+Bytes (1)
+.TP
+.B K
+KiB (1024)
+.TP
+.B M
+MiB (1024^2)
+.TP
+.B G
+GiB (1024^3)
+.TP
+.B T
+TiB (1024^4)
+.TP
+.B none
+Blocks (512)
+.RE
 .TP
 .BI "-o, --output " filename
 Set the output file name.
@@ -73,7 +107,7 @@ Print version information.
 .SH EXAMPLES
 Create a 1 GiB PIMG image:
 .IP
-$ pce-img create -m 1024 -o image.pimg
+$ pce-img create -n 1024M -o image.pimg
 .PP
 Create a 10 MB PIMG image
 .IP

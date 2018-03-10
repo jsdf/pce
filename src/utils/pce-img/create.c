@@ -39,7 +39,6 @@ static pce_option_t opts_create[] = {
 	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
-	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
 	{ 'O', 1, "output-type", "string", "Set the output file type [auto]" },
@@ -112,12 +111,10 @@ int main_create (int argc, char **argv)
 			pce_set_h (optarg[0]);
 			break;
 
-		case 'm':
-			pce_set_n (optarg[0], 2048);
-			break;
-
 		case 'n':
-			pce_set_n (optarg[0], 1);
+			if (pce_set_n (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'o':

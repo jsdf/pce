@@ -22,6 +22,7 @@
 
 #include "pce-img.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -187,10 +188,50 @@ void pce_set_quiet (int val)
 	par_quiet = (val != 0);
 }
 
-void pce_set_n (const char *str, unsigned long mul)
+int pce_set_n (const char *str)
 {
-	par_n = strtoul (str, NULL, 0);
-	par_n *= mul;
+	unsigned long long size;
+	char               *end;
+
+	if (strcmp (str, "auto") == 0) {
+		par_n = par_c * par_h * par_s;
+	}
+	else {
+		size = strtoull (str, &end, 0);
+
+		if (toupper (*end) == 'K') {
+			end += 1;
+			size *= 1024;
+		}
+		else if (toupper (*end) == 'M') {
+			end += 1;
+			size *= 1024Ul * 1024UL;
+		}
+		else if (toupper (*end) == 'G') {
+			end += 1;
+			size *= 1024Ul * 1024UL * 1024UL;
+		}
+		else if (toupper (*end) == 'T') {
+			end += 1;
+			size *= 1024Ul * 1024UL * 1024UL;
+			size *= 1024;
+		}
+		else if (toupper (*end) == 'B') {
+			end += 1;
+		}
+		else {
+			size *= 512;
+		}
+
+		if (*end != 0) {
+			fprintf (stderr, "%s: bad image size (%s)\n", arg0, str	);
+			return (1);
+		}
+
+		par_n = size / 512;
+	}
+
+	return (0);
 }
 
 void pce_set_c (const char *str)

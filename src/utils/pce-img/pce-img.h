@@ -44,7 +44,7 @@ extern char       par_quiet;
 void print_version (void);
 
 void pce_set_quiet (int val);
-void pce_set_n (const char *str, unsigned long mul);
+int pce_set_n (const char *str);
 void pce_set_c (const char *str);
 void pce_set_h (const char *str);
 void pce_set_s (const char *str);
