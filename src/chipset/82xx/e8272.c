@@ -859,13 +859,8 @@ void cmd_read_clock (e8272_t *fdc, unsigned long cnt)
 
 	sct = &fdc->curdrv->sct[id];
 
-	if ((sct->c != c) || (sct->h != h) || (sct->s != s)) {
+	if ((sct->c != c) || (sct->h != h) || (sct->s != s) || (sct->n != n)) {
 		/* wrong id */
-		return;
-	}
-
-	if (sct->n < n) {
-		/* sector too small */
 		return;
 	}
 
@@ -1418,13 +1413,8 @@ void cmd_write_clock (e8272_t *fdc, unsigned long cnt)
 
 	sct = &fdc->curdrv->sct[id];
 
-	if ((sct->c != c) || (sct->h != h) || (sct->s != s)) {
+	if ((sct->c != c) || (sct->h != h) || (sct->s != s) || (sct->n != n)) {
 		/* wrong id */
-		return;
-	}
-
-	if (sct->n < n) {
-		/* sector too small */
 		return;
 	}
 
