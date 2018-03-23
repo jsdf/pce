@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -367,7 +367,6 @@ int mac_exec_to (macplus_t *sim, unsigned long addr)
 void mac_run (macplus_t *sim)
 {
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -511,7 +510,6 @@ void mac_cmd_g_b (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -543,7 +541,6 @@ void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 	cnt = e68_get_exception_cnt (sim->cpu);
 
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -647,6 +644,7 @@ void mac_cmd_p (cmd_t *cmd, macplus_t *sim)
 	ecnt = e68_get_exception_cnt (sim->cpu);
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	while (cnt > 0) {
 		e68_dasm_mem (sim->cpu, &da, e68_get_pc (sim->cpu));
@@ -704,6 +702,7 @@ void mac_cmd_rte (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	while (1) {
 		mac_exec (sim);
@@ -801,6 +800,7 @@ void mac_cmd_t (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	for (i = 0; i < n; i++) {
 		mac_exec (sim);
