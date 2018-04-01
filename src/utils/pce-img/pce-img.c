@@ -31,6 +31,7 @@
 #include <drivers/block/block.h>
 #include <drivers/block/blkcow.h>
 #include <drivers/block/blkraw.h>
+#include <drivers/block/blkpbi.h>
 #include <drivers/block/blkpce.h>
 #include <drivers/block/blkpsi.h>
 #include <drivers/block/blkqed.h>
@@ -83,7 +84,7 @@ void print_help (void)
 		"  create   Create images\n"
 		"  rebase   Rebase images\n"
 		"\nformats:\n"
-		"  dosemu, img, pce, psi, qed\n",
+		"  dosemu, img, pbi, pimg, psi, qed\n",
 		stdout
 	);
 
@@ -130,6 +131,10 @@ unsigned pce_get_type (const char *str)
 
 	if ((strcmp (str, "qed") == 0) || (strcmp (str, "cow") == 0)) {
 		return (DSK_QED);
+	}
+
+	if (strcmp (str, "pbi") == 0) {
+		return (DSK_PBI);
 	}
 
 	if (strcmp (str, "dosemu") == 0) {
@@ -450,6 +455,10 @@ int dsk_create (const char *name, unsigned type)
 		r = dsk_pce_create (name, par_n, par_c, par_h, par_s, par_ofs & 0xffffffff);
 		break;
 
+	case DSK_PBI:
+		r = dsk_pbi_create (name, par_n, par_c, par_h, par_s, par_min_cluster_size);
+		break;
+
 	case DSK_QED:
 		r = dsk_qed_create (name, par_n, par_min_cluster_size);
 		break;
@@ -484,6 +493,10 @@ disk_t *dsk_open (const char *name, unsigned type, int ro)
 
 	case DSK_PCE:
 		dsk = dsk_pce_open (name, ro);
+		break;
+
+	case DSK_PBI:
+		dsk = dsk_pbi_open (name, ro);
 		break;
 
 	case DSK_QED:

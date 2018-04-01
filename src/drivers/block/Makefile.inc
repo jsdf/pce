@@ -9,6 +9,7 @@ DRV_BLK_BAS := \
 	blkcow \
 	blkdosem \
 	blkpart \
+	blkpbi \
 	blkpce \
 	blkpsi \
 	blkqed \
@@ -27,6 +28,7 @@ DIST += $(DRV_BLK_SRC) $(DRV_BLK_HDR)
 $(rel)/blkcow.o:	$(rel)/blkcow.c
 $(rel)/blkdosem.o:	$(rel)/blkdosem.c
 $(rel)/blkpart.o:	$(rel)/blkpart.c
+$(rel)/blkpbi.o:	$(rel)/blkpbi.c
 $(rel)/blkpce.o:	$(rel)/blkpce.c
 $(rel)/blkpsi.o:	$(rel)/blkpsi.c
 $(rel)/blkqed.o:	$(rel)/blkqed.c

@@ -35,6 +35,7 @@
 #define DSK_DOSEMU 3
 #define DSK_PSI    4
 #define DSK_QED    5
+#define DSK_PBI    6
 
 
 extern const char *arg0;

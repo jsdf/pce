@@ -23,6 +23,7 @@
 #include "block.h"
 
 #include "blkraw.h"
+#include "blkpbi.h"
 #include "blkpce.h"
 #include "blkdosem.h"
 #include "blkpsi.h"
@@ -739,6 +740,10 @@ int dsk_guess_geometry (disk_t *dsk)
 disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 {
 	unsigned type;
+
+	if (dsk_pbi_probe (fname)) {
+		return (dsk_pbi_open (fname, ro));
+	}
 
 	if (dsk_pce_probe (fname)) {
 		return (dsk_pce_open (fname, ro));

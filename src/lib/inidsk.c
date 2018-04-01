@@ -32,6 +32,7 @@
 #include <drivers/block/blkcow.h>
 #include <drivers/block/blkdosem.h>
 #include <drivers/block/blkpart.h>
+#include <drivers/block/blkpbi.h>
 #include <drivers/block/blkpce.h>
 #include <drivers/block/blkpsi.h>
 #include <drivers/block/blkqed.h>
@@ -289,6 +290,9 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		}
 		else if (strcmp (type, "dosemu") == 0) {
 			dsk = dsk_dosemu_open (path, ro);
+		}
+		else if (strcmp (type, "pbi") == 0) {
+			dsk = dsk_pbi_open (path, ro);
 		}
 		else if (strcmp (type, "pce") == 0) {
 			dsk = dsk_pce_open (path, ro);

@@ -42,6 +42,7 @@
 #define PCE_DISK_COW    5
 #define PCE_DISK_PSI    6
 #define PCE_DISK_QED    7
+#define PCE_DISK_PBI    8
 
 
 struct disk_s;

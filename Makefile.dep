@@ -2127,6 +2127,11 @@ src/drivers/block/blkpart.o: src/drivers/block/blkpart.c \
 	src/drivers/block/blkpart.h \
 	src/drivers/block/block.h
 
+src/drivers/block/blkpbi.o: src/drivers/block/blkpbi.c \
+	src/config.h \
+	src/drivers/block/blkpbi.h \
+	src/drivers/block/block.h
+
 src/drivers/block/blkpce.o: src/drivers/block/blkpce.c \
 	src/config.h \
 	src/drivers/block/blkpce.h \
@@ -2157,6 +2162,7 @@ src/drivers/block/blkraw.o: src/drivers/block/blkraw.c \
 src/drivers/block/block.o: src/drivers/block/block.c \
 	src/config.h \
 	src/drivers/block/blkdosem.h \
+	src/drivers/block/blkpbi.h \
 	src/drivers/block/blkpce.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
@@ -2507,6 +2513,7 @@ src/lib/inidsk.o: src/lib/inidsk.c \
 	src/drivers/block/blkcow.h \
 	src/drivers/block/blkdosem.h \
 	src/drivers/block/blkpart.h \
+	src/drivers/block/blkpbi.h \
 	src/drivers/block/blkpce.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
@@ -2663,6 +2670,7 @@ src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \
 	src/drivers/block/blkdosem.h \
+	src/drivers/block/blkpbi.h \
 	src/drivers/block/blkpce.h \
 	src/drivers/block/blkpsi.h \
 	src/drivers/block/blkqed.h \
