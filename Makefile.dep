@@ -2667,6 +2667,14 @@ src/utils/pce-img/create.o: src/utils/pce-img/create.c \
 	src/lib/getopt.h \
 	src/utils/pce-img/pce-img.h
 
+src/utils/pce-img/info.o: src/utils/pce-img/info.c \
+	src/config.h \
+	src/drivers/block/blkpbi.h \
+	src/drivers/block/blkqed.h \
+	src/drivers/block/block.h \
+	src/lib/getopt.h \
+	src/utils/pce-img/pce-img.h
+
 src/utils/pce-img/pce-img.o: src/utils/pce-img/pce-img.c \
 	src/config.h \
 	src/drivers/block/blkcow.h \

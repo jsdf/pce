@@ -10,6 +10,7 @@ PCEIMG_BAS := \
 	convert \
 	cow \
 	create \
+	info \
 	rebase \
 	pce-img
 
@@ -34,6 +35,7 @@ $(rel)/commit.o:  $(rel)/commit.c
 $(rel)/convert.o: $(rel)/convert.c
 $(rel)/cow.o:     $(rel)/cow.c
 $(rel)/create.o:  $(rel)/create.c
+$(rel)/info.o:    $(rel)/info.c
 $(rel)/rebase.o:  $(rel)/rebase.c
 $(rel)/pce-img.o: $(rel)/pce-img.c
 

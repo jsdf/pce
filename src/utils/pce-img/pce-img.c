@@ -84,6 +84,7 @@ void print_help (void)
 		"  convert  Convert images\n"
 		"  cow      Create COW files\n"
 		"  create   Create images\n"
+		"  info     Show information about images\n"
 		"  rebase   Rebase images\n"
 		"\nformats:\n"
 		"  dosemu, img, pbi, pimg, psi, qed\n",
@@ -118,6 +119,40 @@ void print_disk_info (disk_t *dsk, const char *name)
 		(unsigned long) dsk->h,
 		(unsigned long) dsk->s
 	);
+}
+
+const char *pce_get_type_name (unsigned type)
+{
+	switch (type) {
+	case PCE_DISK_NONE:
+		return ("none");
+
+	case PCE_DISK_RAW:
+		return ("raw");
+
+	case PCE_DISK_RAM:
+		return ("ram");
+
+	case PCE_DISK_PCE:
+		return ("pimg");
+
+	case PCE_DISK_DOSEMU:
+		return ("dosemu");
+
+	case PCE_DISK_COW:
+		return ("cow");
+
+	case PCE_DISK_PSI:
+		return ("psi");
+
+	case PCE_DISK_QED:
+		return ("qed");
+
+	case PCE_DISK_PBI:
+		return ("pbi");
+	}
+
+	return ("unknown");
 }
 
 static
@@ -720,6 +755,9 @@ int main (int argc, char **argv)
 			}
 			else if (strcmp (optarg[0], "create") == 0) {
 				return (main_create (argc, argv));
+			}
+			else if (strcmp (optarg[0], "info") == 0) {
+				return (main_info (argc, argv));
 			}
 			else if (strcmp (optarg[0], "new") == 0) {
 				return (main_create (argc, argv));
