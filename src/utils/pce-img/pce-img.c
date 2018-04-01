@@ -409,6 +409,24 @@ int pce_block_is_null (const void *buf, unsigned cnt)
 	return (1);
 }
 
+int pce_block_is_uniform_32 (const void *buf, unsigned cnt, unsigned long *val)
+{
+	unsigned            i;
+	const unsigned char *tmp;
+
+	tmp = buf;
+
+	for (i = 4; i < cnt; i++) {
+		if (tmp[i] != tmp[i & 3]) {
+			return (0);
+		}
+	}
+
+	*val = dsk_get_uint32_be (buf, 0);
+
+	return (1);
+}
+
 int pce_file_exists (const char *name)
 {
 	FILE *fp;

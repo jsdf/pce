@@ -59,6 +59,7 @@ int pce_set_type_out (const char *str);
 unsigned char *pce_get_buf (unsigned long size);
 
 int pce_block_is_null (const void *buf, unsigned cnt);
+int pce_block_is_uniform_32 (const void *buf, unsigned cnt, unsigned long *val);
 
 void pce_set_disk_parameters (disk_t *dsk);
 

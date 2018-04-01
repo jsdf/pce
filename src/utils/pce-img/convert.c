@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 #include <drivers/block/block.h>
+#include <drivers/block/blkpbi.h>
 
 #include <lib/getopt.h>
 
@@ -65,6 +66,101 @@ void print_help (void)
 }
 
 static
+void print_progress (FILE *fp, unsigned long i, unsigned long n, int done)
+{
+	fprintf (fp, "[%6.2f%%] block %lu of %lu\r",
+		(100.0 * (i + 1)) / n,
+		(unsigned long) i,
+		(unsigned long) n
+	);
+
+	if (done) {
+		fputc ('\n', fp);
+	}
+
+	fflush (fp);
+}
+
+static
+unsigned long get_block_count (disk_t *dst, disk_t *src)
+{
+	unsigned long c1, c2;
+
+	c1 = dsk_get_block_cnt (dst);
+	c2 = dsk_get_block_cnt (src);
+
+	return ((c1 < c2) ? c1 : c2);
+}
+
+static
+int dsk_copy_to_pbi (disk_pbi_t *dst, disk_t *src)
+{
+	unsigned char *buf;
+	unsigned long prg_i;
+	unsigned long blidx, blcnt, bl512;
+	unsigned long cnt;
+	unsigned long val;
+
+	if ((buf = pce_get_buf (dst->block_size)) == NULL) {
+		return (1);
+	}
+
+	prg_i = 0;
+	blidx = 0;
+	blcnt = get_block_count (&dst->dsk, src);
+	bl512 = dst->block_size / 512;
+
+	while (blidx < blcnt) {
+		cnt = blcnt - blidx;
+
+		if (cnt > bl512) {
+			cnt = bl512;
+		}
+
+		if (dsk_read_lba (src, buf, blidx, cnt)) {
+			fprintf (stderr, "%s: read error at block %lu+%lu\n",
+				arg0, blidx, cnt
+			);
+			return (1);
+		}
+
+		if (pce_block_is_null (buf, 512 * cnt)) {
+			;
+		}
+		else if (pce_block_is_uniform_32 (buf, 512 * cnt, &val)) {
+			if (dsk_pbi_set_uniform (dst, 512ULL * blidx, val)) {
+				return (1);
+			}
+		}
+		else {
+			if (dsk_write_lba (&dst->dsk, buf, blidx, cnt)) {
+				fprintf (stderr, "%s: write error at block %lu+%lu\n",
+					arg0, blidx, cnt
+				);
+				return (1);
+			}
+		}
+
+		blidx += cnt;
+
+		if (par_quiet == 0) {
+			prg_i += cnt;
+
+			if (prg_i >= 4096) {
+				print_progress (stdout, blidx, blcnt, 0);
+				prg_i &= 0xfff;
+			}
+		}
+	}
+
+	if (par_quiet == 0) {
+		print_progress (stdout, blcnt, blcnt, 1);
+	}
+
+	return (0);
+}
+
+static
 int dsk_copy (disk_t *dst, disk_t *src)
 {
 	uint32_t      i, n, m;
@@ -73,12 +169,11 @@ int dsk_copy (disk_t *dst, disk_t *src)
 	uint16_t      msk;
 	unsigned char *buf;
 
-	n = dsk_get_block_cnt (dst);
-	m = dsk_get_block_cnt (src);
-
-	if (m < n) {
-		n = m;
+	if (dst->type == PCE_DISK_PBI) {
+		return (dsk_copy_to_pbi (dst->ext, src));
 	}
+
+	n = get_block_count (dst, src);
 
 	if ((buf = pce_get_buf (8192)) == NULL) {
 		return (1);
@@ -123,23 +218,14 @@ int dsk_copy (disk_t *dst, disk_t *src)
 		if (par_quiet == 0) {
 			prg_i += m;
 			if (prg_i >= 4096) {
-				fprintf (stdout, "[%6.2f%%] block %lu of %lu\r",
-					(100.0 * (i + 1)) / prg_n,
-					(unsigned long) i,
-					(unsigned long) prg_n
-				);
-
-				prg_i = 0;
-
-				fflush (stdout);
+				print_progress (stdout, i, prg_n, 0);
+				prg_i &= 0xfff;
 			}
 		}
 	}
 
 	if (par_quiet == 0) {
-		fprintf (stdout, "[%6.2f%%] block %lu of %lu\n",
-			100.0, (unsigned long) prg_n, (unsigned long) prg_n
-		);
+		print_progress (stdout, prg_n, prg_n, 1);
 	}
 
 	return (0);

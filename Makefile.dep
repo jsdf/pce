@@ -2650,6 +2650,7 @@ src/utils/pce-img/commit.o: src/utils/pce-img/commit.c \
 
 src/utils/pce-img/convert.o: src/utils/pce-img/convert.c \
 	src/config.h \
+	src/drivers/block/blkpbi.h \
 	src/drivers/block/block.h \
 	src/lib/getopt.h \
 	src/utils/pce-img/pce-img.h
