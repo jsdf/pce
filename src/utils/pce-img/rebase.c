@@ -49,6 +49,7 @@ static pce_option_t opts_rebase[] = {
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Set the COW file name [none]" },
+	{ 'W', 1, "cow-type", "string", "Set the cow file type [auto]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
 
@@ -235,13 +236,13 @@ int main_rebase (int argc, char **argv)
 			break;
 
 		case 'o':
-			if ((out = dsk_cow_create (optarg[0], out)) == NULL) {
+			if ((out = pce_cow_create (out, optarg[0])) == NULL) {
 				return (1);
 			}
 			break;
 
 		case 'O':
-			if (pce_set_type_out (optarg[0])) {
+			if (pce_set_type_cow (optarg[0])) {
 				return (1);
 			}
 			break;
@@ -258,16 +259,22 @@ int main_rebase (int argc, char **argv)
 
 		case 'w':
 			if (out != NULL) {
-				if ((out = dsk_cow (optarg[0], out)) == NULL) {
+				if ((out = pce_cow_open (out, optarg[0])) == NULL) {
 					return (1);
 				}
 			}
 			else if (inp != NULL) {
-				if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+				if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
 					return (1);
 				}
 			}
 			else {
+				return (1);
+			}
+			break;
+
+		case 'W':
+			if (pce_set_type_cow (optarg[0])) {
 				return (1);
 			}
 			break;
@@ -285,7 +292,7 @@ int main_rebase (int argc, char **argv)
 				pce_set_disk_parameters (inp);
 			}
 			else {
-				if ((out = dsk_cow_create (optarg[0], out)) == NULL) {
+				if ((out = pce_cow_create (out, optarg[0])) == NULL) {
 					return (1);
 				}
 			}

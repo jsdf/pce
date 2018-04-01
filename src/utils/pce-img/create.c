@@ -126,7 +126,7 @@ int main_create (int argc, char **argv)
 			break;
 
 		case 'o':
-			if ((out = dsk_open_out (optarg[0], out, -1)) == NULL) {
+			if ((out = dsk_create_out (optarg[0], out)) == NULL) {
 				return (1);
 			}
 			break;
@@ -148,13 +148,13 @@ int main_create (int argc, char **argv)
 			break;
 
 		case 'w':
-			if ((out = dsk_cow (optarg[0], out)) == NULL) {
+			if ((out = pce_cow_create (out, optarg[0])) == NULL) {
 				return (1);
 			}
 			break;
 
 		case 0:
-			if ((out = dsk_open_out (optarg[0], out, -1)) == NULL) {
+			if ((out = dsk_create_out (optarg[0], out)) == NULL) {
 				return (1);
 			}
 			break;

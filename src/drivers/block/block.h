@@ -34,15 +34,17 @@
 #endif
 
 
-#define PCE_DISK_NONE   0
-#define PCE_DISK_RAW    1
-#define PCE_DISK_RAM    2
-#define PCE_DISK_PCE    3
-#define PCE_DISK_DOSEMU 4
-#define PCE_DISK_COW    5
-#define PCE_DISK_PSI    6
-#define PCE_DISK_QED    7
-#define PCE_DISK_PBI    8
+enum {
+	PCE_DISK_NONE,
+	PCE_DISK_RAW,
+	PCE_DISK_RAM,
+	PCE_DISK_PCE,
+	PCE_DISK_DOSEMU,
+	PCE_DISK_COW,
+	PCE_DISK_PSI,
+	PCE_DISK_QED,
+	PCE_DISK_PBI
+};
 
 
 struct disk_s;
@@ -249,6 +251,9 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
 );
 
 int dsk_commit (disk_t *dsk);
+
+disk_t *dsk_create_cow (disk_t *dsk, const char *name, unsigned long minblk);
+disk_t *dsk_open_cow (disk_t *dsk, const char *name);
 
 /*!***************************************************************************
  * @short  Get a message from a disk

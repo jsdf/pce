@@ -20,14 +20,14 @@
  *****************************************************************************/
 
 
-#include "block.h"
+#include <drivers/block/block.h>
 
-#include "blkraw.h"
-#include "blkpbi.h"
-#include "blkpce.h"
-#include "blkdosem.h"
-#include "blkpsi.h"
-#include "blkqed.h"
+#include <drivers/block/blkdosem.h>
+#include <drivers/block/blkpbi.h>
+#include <drivers/block/blkpce.h>
+#include <drivers/block/blkpsi.h>
+#include <drivers/block/blkqed.h>
+#include <drivers/block/blkraw.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -850,6 +850,36 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
 int dsk_commit (disk_t *dsk)
 {
 	return (dsk_set_msg (dsk, "commit", NULL));
+}
+
+disk_t *dsk_create_cow (disk_t *dsk, const char *name, unsigned long minblk)
+{
+	disk_t     *cow;
+	disk_pbi_t *pbi;
+
+	if ((minblk == 0) && (dsk->type == PCE_DISK_PBI)) {
+		pbi = dsk->ext;
+		minblk = pbi->block_size;
+	}
+
+	cow = dsk_pbi_cow_create (dsk, name, dsk->blocks, dsk->c, dsk->h, dsk->s, minblk);
+
+	return (cow);
+}
+
+disk_t *dsk_open_cow (disk_t *dsk, const char *name)
+{
+	disk_t *cow;
+
+	if ((cow = dsk_pbi_cow_open (dsk, name)) != NULL) {
+		return (cow);
+	}
+
+	if ((cow = dsk_qed_cow_open (dsk, name)) != NULL) {
+		return (cow);
+	}
+
+	return (NULL);
 }
 
 int dsk_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)

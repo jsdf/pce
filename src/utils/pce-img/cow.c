@@ -43,10 +43,12 @@ static pce_option_t opts_create[] = {
 	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output (cow) file name" },
+	{ 'O', 1, "output-type", "string", "Set the output file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Add a COW file" },
+	{ 'W', 1, "cow-type", "string", "Set the cow file type [auto]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
 
@@ -145,11 +147,17 @@ int main_cow (int argc, char **argv)
 
 		case 'o':
 			if (inp != NULL) {
-				if ((inp = dsk_cow_create (optarg[0], inp)) == NULL) {
+				if ((inp = pce_cow_create (inp, optarg[0])) == NULL) {
 					return (1);
 				}
 			}
 			else {
+				return (1);
+			}
+			break;
+
+		case 'O':
+			if (pce_set_type_cow (optarg[0])) {
 				return (1);
 			}
 			break;
@@ -165,7 +173,13 @@ int main_cow (int argc, char **argv)
 			break;
 
 		case 'w':
-			if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+			if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
+				return (1);
+			}
+			break;
+
+		case 'W':
+			if (pce_set_type_cow (optarg[0])) {
 				return (1);
 			}
 			break;
@@ -177,7 +191,7 @@ int main_cow (int argc, char **argv)
 				}
 			}
 			else {
-				if ((inp = dsk_cow_create (optarg[0], inp)) == NULL) {
+				if ((inp = pce_cow_create (inp, optarg[0])) == NULL) {
 					return (1);
 				}
 			}

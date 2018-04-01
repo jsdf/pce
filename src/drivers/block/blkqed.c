@@ -662,41 +662,18 @@ disk_t *dsk_qed_open (const char *fname, int ro)
 	return (dsk);
 }
 
-disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
+disk_t *dsk_qed_cow_open (disk_t *dsk, const char *fname)
 {
+	unsigned   n;
 	disk_t     *cow;
 	disk_qed_t *qed;
-	FILE       *fp;
-	uint32_t   minclst;
-	unsigned   n;
 	uint64_t   features;
 
-	fp = fopen (fname, "r+b");
-
-	if (fp == NULL) {
-		minclst = 0;
-
-		if (dsk->type == PCE_DISK_QED) {
-			qed = dsk->ext;
-			minclst = qed->cluster_size;
-		}
-
-		if (dsk_qed_create (fname, dsk->blocks, minclst)) {
-			return (NULL);
-		}
-	}
-	else {
-		fclose (fp);
-	}
-
-	cow = dsk_qed_open (fname, 0);
-
-	if (cow == NULL) {
+	if ((cow = dsk_qed_open (fname, 0)) == NULL) {
 		return (NULL);
 	}
 
 	qed = cow->ext;
-
 	qed->next = dsk;
 
 	cow->get_msg = dsk_qed_get_msg;
@@ -705,7 +682,6 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 	cow->drive = dsk->drive;
 
 	features = dsk_get_uint64_le (qed->header, 16);
-
 	features |= QED_F_BACKING_FILE;
 
 	if (dsk->type == PCE_DISK_RAW) {
@@ -733,6 +709,21 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 	dsk_set_visible_chs (cow, cow->c, cow->h, cow->s);
 
 	dsk_set_fname (cow, fname);
+
+	return (cow);
+}
+
+disk_t *dsk_qed_cow_create (disk_t *dsk, const char *fname, uint32_t n, uint32_t minblk)
+{
+	disk_t *cow;
+
+	if (dsk_qed_create (fname, n, minblk)) {
+		return (NULL);
+	}
+
+	if ((cow = dsk_qed_cow_open (dsk, fname)) == NULL) {
+		return (NULL);
+	}
 
 	return (cow);
 }

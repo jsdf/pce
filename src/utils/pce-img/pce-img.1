@@ -1,12 +1,18 @@
-.TH PCE-IMG 1 "2012-01-30" "HH" "pce"
+.TH PCE-IMG 1 "2018-02-20" "HH" "pce"
 \
 .SH NAME
 pce-img \- the PCE disk image utility
 
 .SH SYNOPSIS
-.BI "pce-img create" " [options] [output-file]"
-
-.BI "pce-img convert" " [options] [input-file] [options] [output-file]"
+.BI "pce-img commit" " [options] base [cow...]"
+.PP
+.BI "pce-img convert" " [options] source target"
+.PP
+.BI "pce-img cow" " [options] base [cow...]"
+.PP
+.BI "pce-img create" " [options] [target...]"
+.PP
+.BI "pce-img rebase" " [options] source base target
 
 .SH DESCRIPTION
 \fBpce-img\fR(1) is used to create and convert disk image files.
@@ -84,11 +90,29 @@ Blocks (512)
 .TP
 .BI "-o, --output " filename
 Set the output file name.
-\
+.TP
+.BI "-O, --output-type " type
+Set the output file type. Supported input types are:
+.RS
+.TP
+.B dosemu
+DOSEMU disk image
+.TP
+.B pbi
+PCE block image
+.TP
+.B pimg
+Old PCE disk image
+.TP
+.B qed
+QEMU QED disk image
+.TP
+.B raw, img
+Raw disk image
+.RE
 .TP
 .B "-q, --quiet"
-Be quiet.
-\
+Quiet operation.
 .TP
 .BI "-s, --sectors " sectors
 Set the number of sectors per track. If \fIsectors\fR is \fBauto\fR then
@@ -96,12 +120,21 @@ the number of sectors per track is calculated from the image size, the
 number of cylinders and the number of heads.
 .TP
 .BI "-w, --cow " filename
-Set the COW file name.
-\
+Add a COW image on top of the last input or output image.
+.TP
+.BI "-W, --cow-type " type
+Set the COW file type. Supported COW types are:
+.RS
+.TP
+.B pbi
+PCE block image
+.TP
+.B qed
+QEMU QED disk image
+.RE
 .TP
 .B --help
 Print usage information.
-\
 .TP
 .B --version
 Print version information.

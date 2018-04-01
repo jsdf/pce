@@ -102,7 +102,7 @@ int main_commit (int argc, char **argv)
 			break;
 
 		case 'w':
-			if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+			if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
 				return (1);
 			}
 			break;
@@ -114,7 +114,7 @@ int main_commit (int argc, char **argv)
 				}
 			}
 			else {
-				if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+				if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
 					return (1);
 				}
 			}

@@ -98,6 +98,20 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 	return (0);
 }
 
+static
+int file_exists (const char *name)
+{
+	FILE *fp;
+
+	if ((fp = fopen (name, "rb")) == NULL) {
+		return (0);
+	}
+
+	fclose (fp);
+
+	return (1);
+}
+
 disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 {
 	disk_t     *cow;
@@ -112,10 +126,11 @@ disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 			return (NULL);
 		}
 
-		cow = dsk_qed_cow_new (dsk, cname);
-
-		if (cow == NULL) {
-			cow = dsk_cow_new (dsk, cname);
+		if (file_exists (cname) == 0) {
+			cow = dsk_create_cow (dsk, cname, 16384);
+		}
+		else {
+			cow = dsk_open_cow (dsk, cname);
 		}
 
 		if (cow == NULL) {
@@ -282,7 +297,10 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 
 		fclose (fp);
 
-		if (strcmp (type, "ram") == 0) {
+		if (strcmp (type, "auto") == 0) {
+			dsk = dsk_auto_open (path, ofs, ro);
+		}
+		else if (strcmp (type, "ram") == 0) {
 			dsk = dsk_ram_open (path, n, c, h, s, ro);
 		}
 		else if (strcmp (type, "image") == 0) {
@@ -329,9 +347,6 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		}
 		else if (strcmp (type, "teledisk") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_TD0, ro);
-		}
-		else if (strcmp (type, "auto") == 0) {
-			dsk = dsk_auto_open (path, ofs, ro);
 		}
 
 		if (dsk != NULL) {

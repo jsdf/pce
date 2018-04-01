@@ -44,10 +44,12 @@
 
 
 const char *arg0 = NULL;
-char       par_quiet = 0;
 
-static unsigned           par_type_inp = 0;
-static unsigned           par_type_out = 0;
+char                      par_quiet = 0;
+
+static unsigned           par_type_inp = DSK_NONE;
+static unsigned           par_type_out = DSK_NONE;
+static unsigned           par_type_cow = DSK_NONE;
 
 static unsigned long      par_c = 0;
 static unsigned long      par_h = 0;
@@ -125,11 +127,11 @@ unsigned pce_get_type (const char *str)
 		return (DSK_RAW);
 	}
 
-	if ((strcmp (str, "pce") == 0) || (strcmp (str, "pimg") == 0)) {
-		return (DSK_PCE);
+	if (strcmp (str, "pimg") == 0) {
+		return (DSK_PIMG);
 	}
 
-	if ((strcmp (str, "qed") == 0) || (strcmp (str, "cow") == 0)) {
+	if (strcmp (str, "qed") == 0) {
 		return (DSK_QED);
 	}
 
@@ -175,17 +177,14 @@ unsigned pce_get_type_ext (const char *str, unsigned type)
 		return (DSK_NONE);
 	}
 
-	ret = pce_get_type (ext);
-
-	if (ret != DSK_NONE) {
-		return (ret);
+	if (strcasecmp (ext, "cow") == 0) {
+		ret = DSK_PBI;
+	}
+	else {
+		ret = pce_get_type (ext);
 	}
 
-	if (psi_guess_type (str) != PSI_FORMAT_NONE) {
-		return (DSK_PSI);
-	}
-
-	return (DSK_NONE);
+	return (ret);
 }
 
 void pce_set_quiet (int val)
@@ -358,6 +357,7 @@ int pce_set_type_inp (const char *str)
 	par_type_inp = pce_get_type (str);
 
 	if (par_type_inp == DSK_NONE) {
+		fprintf (stderr, "%s: unknown disk type (%s)\n", arg0, str);
 		return (1);
 	}
 
@@ -369,6 +369,19 @@ int pce_set_type_out (const char *str)
 	par_type_out = pce_get_type (str);
 
 	if (par_type_out == DSK_NONE) {
+		fprintf (stderr, "%s: unknown disk type (%s)\n", arg0, str);
+		return (1);
+	}
+
+	return (0);
+}
+
+int pce_set_type_cow (const char *str)
+{
+	par_type_cow = pce_get_type (str);
+
+	if (par_type_cow == DSK_NONE) {
+		fprintf (stderr, "%s: unknown disk type (%s)\n", arg0, str);
 		return (1);
 	}
 
@@ -464,12 +477,18 @@ int dsk_create (const char *name, unsigned type)
 		par_n = (unsigned long) par_c * par_h * par_s;
 	}
 
+	if (par_c == 0) {
+		if ((par_h != 0) && (par_s != 0)) {
+			par_c = par_n / (par_h * par_s);
+		}
+	}
+
 	switch (type) {
 	case DSK_RAW:
 		r = dsk_img_create (name, par_n, par_ofs);
 		break;
 
-	case DSK_PCE:
+	case DSK_PIMG:
 		r = dsk_pce_create (name, par_n, par_c, par_h, par_s, par_ofs & 0xffffffff);
 		break;
 
@@ -509,7 +528,7 @@ disk_t *dsk_open (const char *name, unsigned type, int ro)
 		dsk = dsk_img_open (name, par_ofs, ro);
 		break;
 
-	case DSK_PCE:
+	case DSK_PIMG:
 		dsk = dsk_pce_open (name, ro);
 		break;
 
@@ -534,11 +553,6 @@ disk_t *dsk_open (const char *name, unsigned type, int ro)
 		break;
 	}
 
-	if (dsk != NULL) {
-		pce_set_disk_parameters (dsk);
-		print_disk_info (dsk, name);
-	}
-
 	return (dsk);
 }
 
@@ -548,85 +562,111 @@ disk_t *dsk_open_inp (const char *name, disk_t *dsk, int ro)
 		dsk_del (dsk);
 	}
 
-	return (dsk_open (name, par_type_inp, ro));
+	if ((dsk = dsk_open (name, par_type_inp, ro)) == NULL) {
+		fprintf (stderr, "%s: can't open input file (%s)\n", arg0, name);
+		return (NULL);
+	}
+
+	pce_set_disk_parameters (dsk);
+	print_disk_info (dsk, name);
+
+	return (dsk);
 }
 
-disk_t *dsk_open_out (const char *name, disk_t *dsk, int create)
+disk_t *dsk_open_out (const char *name, disk_t *dsk)
 {
 	if (dsk != NULL) {
 		dsk_del (dsk);
 	}
 
-	if (create) {
-		if (create < 0) {
-			if (dsk_create (name, par_type_out)) {
-				return (NULL);
-			}
-		}
-		else if (pce_file_exists (name) == 0) {
-			if (dsk_create (name, par_type_out)) {
-				return (NULL);
-			}
-		}
+	if ((dsk = dsk_open (name, par_type_out, 0)) == NULL) {
+		fprintf (stderr, "%s: can't open output file (%s)\n", arg0, name);
+		return (NULL);
 	}
 
-	return (dsk_open (name, par_type_out, 0));
+	pce_set_disk_parameters (dsk);
+	print_disk_info (dsk, name);
+
+	return (dsk);
 }
 
-disk_t *dsk_cow_create (const char *name, disk_t *dsk)
+disk_t *dsk_create_out (const char *name, disk_t *dsk)
+{
+	if (dsk != NULL) {
+		dsk_del (dsk);
+	}
+
+	if (dsk_create (name, par_type_out)) {
+		fprintf (stderr, "%s: can't create output file (%s)\n", arg0, name);
+		return (NULL);
+	}
+
+	if ((dsk = dsk_open (name, par_type_out, 0)) == NULL) {
+		fprintf (stderr, "%s: can't create output file (%s)\n", arg0, name);
+		return (NULL);
+	}
+
+	dsk_set_geometry (dsk, par_n, par_c, par_h, par_s);
+	pce_set_disk_parameters (dsk);
+	print_disk_info (dsk, name);
+
+	return (dsk);
+}
+
+disk_t *pce_cow_create (disk_t *dsk, const char *name)
 {
 	disk_t *cow;
 
-	if (dsk == NULL) {
-		return (NULL);
-	}
+	switch (par_type_cow) {
+	case DSK_NONE:
+	case DSK_PBI:
+		cow = dsk_pbi_cow_create (dsk, name, par_n, par_c, par_h, par_s, par_min_cluster_size);
+		break;
 
-	if (par_n == 0) {
-		par_n = (unsigned long) par_c * par_h * par_s;
-	}
+	case DSK_QED:
+		cow = dsk_qed_cow_create (dsk, name, par_n, par_min_cluster_size);
+		break;
 
-	if (dsk_qed_create (name, par_n, par_min_cluster_size)) {
-		return (NULL);
+	default:
+		cow = NULL;
+		break;
 	}
-
-	cow = dsk_qed_cow_new (dsk, name);
 
 	if (cow == NULL) {
-		dsk_del (dsk);
-
-		fprintf (stderr, "%s: can't create COW file (%s)\n",
-			arg0, name
-		);
-
+		fprintf (stderr, "%s: can't create cow file (%s)\n", arg0, name);
 		return (NULL);
 	}
 
+	pce_set_disk_parameters (dsk);
 	print_disk_info (cow, name);
 
 	return (cow);
 }
 
-disk_t *dsk_cow (const char *name, disk_t *dsk)
+disk_t *pce_cow_open (disk_t *dsk, const char *name)
 {
 	disk_t *cow;
 
-	if (dsk == NULL) {
-		return (NULL);
+	switch (par_type_cow) {
+	case DSK_NONE:
+		cow = dsk_open_cow (dsk, name);
+		break;
+
+	case DSK_PBI:
+		cow = dsk_pbi_cow_open (dsk, name);
+		break;
+
+	case DSK_QED:
+		cow = dsk_qed_cow_open (dsk, name);
+		break;
+
+	default:
+		cow = NULL;
+		break;
 	}
 
-	cow = dsk_qed_cow_new (dsk, name);
-
 	if (cow == NULL) {
-		cow = dsk_cow_new (dsk, name);
-	}
-
-	if (cow == NULL) {
-		dsk_del (dsk);
-
-		fprintf (stderr, "%s: can't open COW file (%s)\n",
-			arg0, name
-		);
-
+		fprintf (stderr, "%s: can't open cow file (%s)\n", arg0, name);
 		return (NULL);
 	}
 

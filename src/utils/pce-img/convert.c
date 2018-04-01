@@ -309,7 +309,7 @@ int main_convert (int argc, char **argv)
 			break;
 
 		case 'o':
-			if ((out = dsk_open_out (optarg[0], out, 1)) == NULL) {
+			if ((out = dsk_create_out (optarg[0], out)) == NULL) {
 				return (1);
 			}
 			break;
@@ -332,12 +332,12 @@ int main_convert (int argc, char **argv)
 
 		case 'w':
 			if (out != NULL) {
-				if ((out = dsk_cow (optarg[0], out)) == NULL) {
+				if ((out = pce_cow_open (out, optarg[0])) == NULL) {
 					return (1);
 				}
 			}
 			else if (inp != NULL) {
-				if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+				if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
 					return (1);
 				}
 			}
@@ -353,7 +353,7 @@ int main_convert (int argc, char **argv)
 				}
 			}
 			else if (out == NULL) {
-				if ((out = dsk_open_out (optarg[0], out, 1)) == NULL) {
+				if ((out = dsk_create_out (optarg[0], out)) == NULL) {
 					return (1);
 				}
 			}
