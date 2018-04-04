@@ -20,7 +20,10 @@ path with the exception that slashes will be replaced by backslashes.
 .BI "-d, --drive " "letter path"
 Attach a host path to a DOS drive letter. By default, the current
 directory is attached to the C drive.
-\
+.TP
+.BI "-e, --setenv " string
+Add \fIstring\fR to the environment. Typically \fIstring\fR will be of the
+form name=value.
 .TP
 .B "-l, --log-int "
 Enable logging of interrupts.

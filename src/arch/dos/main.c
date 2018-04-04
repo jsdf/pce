@@ -39,6 +39,7 @@ static pce_option_t opts[] = {
 	{ '?', 0, "help", NULL, "Print usage information" },
 	{ 'c', 0, "command", NULL, "Set the DOS command" },
 	{ 'd', 2, "drive", "char string", "Attach a host path to a DOS drive" },
+	{ 'e', 1, "setenv", "string", "Add a string to the environment" },
 	{ 'l', 0, "log-int", NULL, "Log interrupts [no]" },
 	{ 'm', 1, "memory", "int", "Set the memory size in KiB [640]" },
 	{ 'V', 0, "version", NULL, "Print version information" },
@@ -49,6 +50,9 @@ static pce_option_t opts[] = {
 const char *arg0 = NULL;
 
 static const char *par_drives[26];
+
+static unsigned      par_env_cnt = 0;
+static unsigned char *par_env = NULL;
 
 
 static
@@ -129,6 +133,31 @@ int set_drive (const char *drv, const char *name)
 	return (0);
 }
 
+static
+int env_add (const char *str)
+{
+	unsigned      cnt, max;
+	unsigned char *tmp;
+
+	cnt = strlen (str);
+	max = par_env_cnt + cnt + (par_env_cnt > 0);
+
+	if ((tmp = realloc (par_env, max)) == NULL) {
+		return (1);
+	}
+
+	if (par_env_cnt > 0) {
+		tmp[par_env_cnt++] = 0;
+	}
+
+	memcpy (tmp + par_env_cnt, str, cnt);
+
+	par_env = tmp;
+	par_env_cnt = max;
+
+	return (0);
+}
+
 int main (int argc, char **argv)
 {
 	int      r;
@@ -174,6 +203,12 @@ int main (int argc, char **argv)
 			}
 			break;
 
+		case 'e':
+			if (env_add (optarg[0])) {
+				return (1);
+			}
+			break;
+
 		case 'l':
 			log_int = 1;
 			break;
@@ -213,7 +248,13 @@ int main (int argc, char **argv)
 		return (1);
 	}
 
-	if (sim_init_env (&sim, prog_dos)) {
+	if (par_env_cnt == 0) {
+		if (env_add ("PATH=C:\\")) {
+			return (1);
+		}
+	}
+
+	if (sim_init_env (&sim, prog_dos, par_env, par_env_cnt)) {
 		return (1);
 	}
 

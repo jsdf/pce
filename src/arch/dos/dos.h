@@ -72,7 +72,7 @@ void sim_print_state_cpu (dos_t *sim, FILE *fp);
 
 int sim_set_drive (dos_t *sim, unsigned drive, const char *path);
 
-int sim_init_env (dos_t *sim, const char *prog);
+int sim_init_env (dos_t *sim, const char *prog, const unsigned char *env, unsigned envcnt);
 void sim_init_psp (dos_t *sim);
 int sim_init_args (dos_t *sim, const char **argv);
 int sim_init (dos_t *sim, unsigned kb);

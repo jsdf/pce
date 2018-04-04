@@ -267,13 +267,12 @@ int sim_set_drive (dos_t *sim, unsigned drive, const char *path)
 	return (0);
 }
 
-int sim_init_env (dos_t *sim, const char *prog)
+int sim_init_env (dos_t *sim, const char *prog, const unsigned char *env, unsigned envcnt)
 {
-	unsigned i;
-	size_t   n;
+	unsigned i, n;
 	unsigned para;
 
-	n = 4 + strlen (prog);
+	n = envcnt + 4 + strlen (prog);
 
 	para = (n + 15) >> 4;
 	para += 1;
@@ -284,14 +283,20 @@ int sim_init_env (dos_t *sim, const char *prog)
 		return (1);
 	}
 
-	sim_set_uint16 (sim, sim->env, 0, 0);
-	sim_set_uint16 (sim, sim->env, 2, 0x0001);
+	for (i = 0; i < envcnt; i++) {
+		sim_set_uint8 (sim, sim->env, i, env[i]);
+	}
+
+	sim_set_uint16 (sim, sim->env, envcnt + 0, 0);
+	sim_set_uint16 (sim, sim->env, envcnt + 2, 0x0001);
 
 	i = 0;
 	while (prog[i] != 0) {
-		sim_set_uint16 (sim, sim->env, 4 + i, prog[i]);
+		sim_set_uint8 (sim, sim->env, envcnt + 4 + i, prog[i]);
 		i += 1;
 	}
+
+	sim_set_uint8 (sim, sim->env, envcnt + 4 + i, 0);
 
 	return (0);
 }
