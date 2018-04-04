@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pfi/decode.c                                       *
  * Created:     2012-01-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2017 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -51,6 +51,8 @@ struct decode_pri_s {
 
 	unsigned      rate_cnt;
 	unsigned long *rate;
+
+	unsigned long max_compare;
 };
 
 
@@ -200,7 +202,6 @@ int pfi_decode_bits (pfi_img_t *img, const char *type, unsigned long rate, const
 	return (r);
 }
 
-#if 0
 static
 unsigned long pfi_bit_diff (const unsigned char *p1, unsigned long i1, const unsigned char *p2, unsigned long i2, unsigned long cnt)
 {
@@ -238,88 +239,60 @@ unsigned long pfi_bit_diff (const unsigned char *p1, unsigned long i1, const uns
 
 	return (ret);
 }
-#endif
 
 static
-unsigned long pfi_bit_run (const unsigned char *p1, unsigned long i1, const unsigned char *p2, unsigned long i2, unsigned long max)
-{
-	unsigned long i;
-	unsigned      j1, j2;
-
-	j1 = ~i1 & 7;
-	j2 = ~i2 & 7;
-
-	p1 += i1 / 8;
-	p2 += i2 / 8;
-
-	for (i = 0; i < max; i++) {
-		if (((*p1 >> j1) ^ (*p2 >> j2)) & 1) {
-			return (i);
-		}
-
-		if (j1 == 0) {
-			p1 += 1;
-			j1 = 7;
-		}
-		else {
-			j1 -= 1;
-		}
-
-		if (j2 == 0) {
-			p2 += 1;
-			j2 = 7;
-		}
-		else {
-			j2 -= 1;
-		}
-	}
-
-	return (max);
-}
-
-static
-int pfi_dec_fold (pfi_dec_t *bit, unsigned c, unsigned h)
+int pfi_dec_fold (pfi_dec_t *bit, unsigned long max, unsigned c, unsigned h)
 {
 	unsigned      i;
-	unsigned long n, d;
-	unsigned long pos;
-	unsigned long max_run, max_pos, dist;
+	unsigned long val, pos, cnt;
+	unsigned long min_val, min_pos, min_cnt, dist;
 
-	max_run = 0;
-	max_pos = 0;
+	if ((bit->index < 256) || ((bit->cnt - bit->index) < 256)) {
+		bit->cnt = bit->index;
+		return (0);
+	}
 
-	for (i = 1; i < 128; i++) {
+	min_val = 0;
+	min_pos = bit->index;
+	min_cnt = min_pos;
+
+	for (i = 1; i < 32; i++) {
 		pos = (i & 1) ? (bit->index - i / 2) : (bit->index + i / 2);
 
-		if (pos >= bit->cnt) {
-			continue;
+		cnt = bit->cnt - pos;
+
+		if (cnt > pos) {
+			cnt = pos;
 		}
 
-		n = bit->cnt - pos;
-
-		if (n > pos) {
-			n = pos;
+		if (cnt > max) {
+			cnt = max;
 		}
 
-		d = pfi_bit_run (bit->buf, 0, bit->buf, pos, n);
+		val = pfi_bit_diff (bit->buf, 0, bit->buf, pos, cnt);
 
-		if ((d > max_run) || (i == 1)) {
-			max_run = d;
-			max_pos = pos;
+		if ((val < min_val) || (i == 1)) {
+			min_val = val;
+			min_pos = pos;
+			min_cnt = cnt;
+		}
+
+		if (val == 0) {
+			break;
 		}
 	}
 
-	dist = (max_pos < bit->index) ? (bit->index - max_pos) : (max_pos - bit->index);
+	dist = (min_pos < bit->index) ? (bit->index - min_pos) : (min_pos - bit->index);
 
-	if (max_run < (bit->index / 2)) {
+	if (par_verbose || (min_val > (min_cnt / 16))) {
 		fprintf (stderr, "track %2u/%u: %7.3f%% at %6lu %c %lu\n",
 			c, h,
-			100.0 * (double) max_run / bit->cnt,
-			max_pos, (max_pos < bit->index) ? '-' : '+', dist
+			100.0 * (double) min_val / min_cnt,
+			min_pos, (min_pos < bit->index) ? '-' : '+', dist
 		);
 	}
 
-	bit->cnt = max_pos;
+	bit->cnt = min_pos;
 
 	return (0);
 }
@@ -451,7 +424,7 @@ int pfi_decode_pri_trk_cb (pfi_img_t *img, pfi_trk_t *strk, unsigned long c, uns
 		return (1);
 	}
 
-	pfi_dec_fold (&bit, c, h);
+	pfi_dec_fold (&bit, par->max_compare, c, h);
 
 	pri_trk_set_clock (dtrk, rate);
 	pri_trk_set_size (dtrk, bit.cnt);
@@ -504,6 +477,8 @@ pri_img_t *pfi_decode_pri (pfi_img_t *img, unsigned mode, unsigned long rate)
 		par.rate_cnt = 0;
 		par.rate = NULL;
 	}
+
+	par.max_compare = 16384;
 
 	if (pfi_for_all_tracks (img, pfi_decode_pri_trk_cb, &par)) {
 		pri_img_del (par.img);
