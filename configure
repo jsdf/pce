@@ -649,6 +649,8 @@ PCE_BUILD_ATARIST
 PCE_LARGE_FILE
 PCE_SDL_LIBS
 PCE_SDL_CFLAGS
+PCE_ENABLE_SDL2
+PCE_ENABLE_SDL1
 PCE_ENABLE_SDL
 PCE_X11_LIBS
 PCE_X11_CFLAGS
@@ -739,7 +741,6 @@ ac_user_opts='
 enable_option_checking
 with_x
 with_sdl
-enable_static_sdl
 enable_largefile
 enable_atari_st
 enable_cpm80
@@ -1388,7 +1389,6 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-static-sdl     Link to static SDL [no]
   --disable-largefile     Disable large file support [no]
   --enable-atari-st       Enable the Atari ST emulator [yes]
   --enable-cpm80          Enable the CPM-80 emulator [yes]
@@ -4608,30 +4608,47 @@ fi
 
 
 
+PCE_ENABLE_SDL=0
+PCE_ENABLE_SDL1=0
+PCE_ENABLE_SDL2=0
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SDL" >&5
 $as_echo_n "checking for SDL... " >&6; }
 
 # Check whether --with-sdl was given.
 if test "${with_sdl+set}" = set; then :
   withval=$with_sdl;
-	if test "x$withval" = "xno" ; then
-		PCE_ENABLE_SDL=0
+	case "$withval" in
+	"no")
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
 $as_echo "no (forced)" >&6; }
-	else
+		;;
+	"1")
 		PCE_ENABLE_SDL=1
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
-$as_echo "yes (forced)" >&6; }
-	fi
+		PCE_ENABLE_SDL1=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 1 (forced)" >&5
+$as_echo "1 (forced)" >&6; }
+		;;
+	"2")
+		PCE_ENABLE_SDL=1
+		PCE_ENABLE_SDL2=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 2 (forced)" >&5
+$as_echo "2 (forced)" >&6; }
+		;;
+	esac
 
 else
 
-	if sdl-config --version > /dev/null 2>&1 ; then
+	if sdl2-config --version > /dev/null 2>&1 ; then
 		PCE_ENABLE_SDL=1
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (detected)" >&5
-$as_echo "yes (detected)" >&6; }
+		PCE_ENABLE_SDL2=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 2 (detected)" >&5
+$as_echo "2 (detected)" >&6; }
+	elif sdl-config --version > /dev/null 2>&1 ; then
+		PCE_ENABLE_SDL=1
+		PCE_ENABLE_SDL1=1
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 1 (detected)" >&5
+$as_echo "1 (detected)" >&6; }
 	else
-		PCE_ENABLE_SDL=0
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (detected)" >&5
 $as_echo "no (detected)" >&6; }
 	fi
@@ -4639,36 +4656,23 @@ $as_echo "no (detected)" >&6; }
 
 fi
 
-if test "x$PCE_ENABLE_SDL" != "x0" ; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for static SDL" >&5
-$as_echo_n "checking for static SDL... " >&6; }
-	# Check whether --enable-static-sdl was given.
-if test "${enable_static_sdl+set}" = set; then :
-  enableval=$enable_static_sdl;
-		if test "x$enableval" = "xyes" ; then
-			PCE_SDL_LIBS=`sdl-config --static-libs`
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (forced)" >&5
-$as_echo "yes (forced)" >&6; }
-		else
-			PCE_SDL_LIBS=`sdl-config --libs`
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (forced)" >&5
-$as_echo "no (forced)" >&6; }
-		fi
-
-else
-
-  		PCE_SDL_LIBS=`sdl-config --libs`
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (default)" >&5
-$as_echo "no (default)" >&6; }
-
-
-fi
-
-
+if test "x$PCE_ENABLE_SDL1" != "x0" ; then
 	PCE_SDL_CFLAGS=`sdl-config --cflags`
+	PCE_SDL_LIBS=`sdl-config --libs`
 	$as_echo "#define PCE_ENABLE_SDL 1" >>confdefs.h
 
+	$as_echo "#define PCE_ENABLE_SDL1 1" >>confdefs.h
+
+elif test "x$PCE_ENABLE_SDL2" != "x0" ; then
+	PCE_SDL_CFLAGS=`sdl2-config --cflags`
+	PCE_SDL_LIBS=`sdl2-config --libs`
+	$as_echo "#define PCE_ENABLE_SDL 1" >>confdefs.h
+
+	$as_echo "#define PCE_ENABLE_SDL2 1" >>confdefs.h
+
 fi
+
+
 
 
 
@@ -5712,10 +5716,16 @@ else
 	term2="$term2 x11"
 fi
 
-if test "x$PCE_ENABLE_SDL" = "x1" ; then
-	term1="$term1 sdl"
+if test "x$PCE_ENABLE_SDL1" = "x1" ; then
+	term1="$term1 sdl1"
 else
-	term2="$term2 sdl"
+	term2="$term2 sdl1"
+fi
+
+if test "x$PCE_ENABLE_SDL2" = "x1" ; then
+	term1="$term1 sdl2"
+else
+	term2="$term2 sdl2"
 fi
 
 

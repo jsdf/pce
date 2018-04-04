@@ -2467,6 +2467,13 @@ src/drivers/video/sdl.o: src/drivers/video/sdl.c \
 	src/drivers/video/terminal.h \
 	src/libini/libini.h
 
+src/drivers/video/sdl2.o: src/drivers/video/sdl2.c \
+	src/config.h \
+	src/drivers/video/keys.h \
+	src/drivers/video/sdl2.h \
+	src/drivers/video/terminal.h \
+	src/libini/libini.h
+
 src/drivers/video/terminal.o: src/drivers/video/terminal.c \
 	src/config.h \
 	src/drivers/video/keys.h \

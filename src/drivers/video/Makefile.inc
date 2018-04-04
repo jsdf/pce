@@ -14,10 +14,16 @@ else
 DRV_TRM_NBAS += x11
 endif
 
-ifeq "$(PCE_ENABLE_SDL)" "1"
+ifeq "$(PCE_ENABLE_SDL1)" "1"
 DRV_TRM_BAS += sdl
 else
 DRV_TRM_NBAS += sdl
+endif
+
+ifeq "$(PCE_ENABLE_SDL2)" "1"
+DRV_TRM_BAS += sdl2
+else
+DRV_TRM_NBAS += sdl2
 endif
 
 DRV_TRM_SRC  := $(foreach f,$(DRV_TRM_BAS),$(rel)/$(f).c)
@@ -36,6 +42,10 @@ $(rel)/x11.o:	$(rel)/x11.c
 	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_X11_CFLAGS) -o $@ $<
 
 $(rel)/sdl.o:	$(rel)/sdl.c
+	$(QP)echo "  CC     $@"
+	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_SDL_CFLAGS) -o $@ $<
+
+$(rel)/sdl2.o: $(rel)/sdl2.c
 	$(QP)echo "  CC     $@"
 	$(QR)$(CC) -c $(CFLAGS_DEFAULT) $(PCE_SDL_CFLAGS) -o $@ $<
 
