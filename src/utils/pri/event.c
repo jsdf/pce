@@ -41,8 +41,8 @@ struct pri_event_s {
 const char *pri_event_get_name (unsigned long type)
 {
 	switch (type) {
-	case PRI_EVENT_FUZZY:
-		return ("FUZZY");
+	case PRI_EVENT_WEAK:
+		return ("WEAK");
 
 	case PRI_EVENT_CLOCK:
 		return ("CLOCK");
@@ -58,7 +58,10 @@ int pri_event_get_type (const char *name, unsigned long *type)
 	}
 
 	if (strcasecmp (name, "FUZZY") == 0) {
-		*type = PRI_EVENT_FUZZY;
+		*type = PRI_EVENT_WEAK;
+	}
+	else if (strcasecmp (name, "WEAK") == 0) {
+		*type = PRI_EVENT_WEAK;
 	}
 	else if (strcasecmp (name, "CLOCK") == 0) {
 		*type = PRI_EVENT_CLOCK;
