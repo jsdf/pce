@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/main.c                                      *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -94,7 +94,7 @@ void print_version (void)
 	fputs (
 		"pce-atarist version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2011-2013 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2011-2018 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -106,7 +106,7 @@ void st_log_banner (void)
 {
 	pce_log (MSG_INF,
 		"pce-atarist version " PCE_VERSION_STR "\n"
-		"Copyright (C) 2011-2013 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 2011-2018 Hampa Hug <hampa@hampa.ch>\n"
 	);
 }
 

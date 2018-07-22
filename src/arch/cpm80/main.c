@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/cpm80/main.c                                        *
  * Created:     2012-11-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2016 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -83,7 +83,7 @@ void print_version (void)
 	fputs (
 		"pce-cpm80 version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2012-2016 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2012-2018 Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
