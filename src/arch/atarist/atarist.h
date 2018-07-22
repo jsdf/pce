@@ -106,6 +106,8 @@ struct atari_st_s {
 	unsigned char psg_port_a;
 	unsigned char psg_port_b;
 
+	unsigned char mfp_inp;
+
 	unsigned      speed_factor;
 	unsigned long speed_clock_extra;
 
@@ -164,6 +166,8 @@ void st_set_speed (atari_st_t *sim, unsigned factor);
 int st_set_msg_trm (atari_st_t *sim, const char *msg, const char *val);
 
 int st_set_cpu_model (atari_st_t *sim, const char *model);
+
+void st_set_parport_drv (atari_st_t *sim, char_drv_t *drv);
 
 /*****************************************************************************
  * @short Reset the simulation

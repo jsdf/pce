@@ -288,15 +288,18 @@ int st_set_msg_emu_midi_file (atari_st_t *sim, const char *msg, const char *val)
 static
 int st_set_msg_emu_par_driver (atari_st_t *sim, const char *msg, const char *val)
 {
-	if (sim->parport_drv != NULL) {
-		chr_close (sim->parport_drv);
+	char_drv_t *drv;
+
+	if (*val == 0) {
+		drv = NULL;
+	}
+	else {
+		if ((drv = chr_open (val)) == NULL) {
+			return (1);
+		}
 	}
 
-	sim->parport_drv = chr_open (val);
-
-	if (sim->parport_drv == NULL) {
-		return (1);
-	}
+	st_set_parport_drv (sim, drv);
 
 	return (0);
 }
@@ -306,6 +309,11 @@ int st_set_msg_emu_par_file (atari_st_t *sim, const char *msg, const char *val)
 {
 	int  r;
 	char *driver;
+
+	if (*val == 0) {
+		st_set_parport_drv (sim, NULL);
+		return (0);
+	}
 
 	driver = str_cat_alloc ("stdio:file=", val);
 

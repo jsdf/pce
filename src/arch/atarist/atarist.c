@@ -289,6 +289,8 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 	sim->mono = (mono != 0);
 	sim->fastboot = (fastboot != 0);
 
+	sim->mfp_inp = sim->mono ? 0x80 : 0x00;
+
 	if (parport != NULL) {
 		pce_log_tag (MSG_INF, "PARPORT:", "driver=%s\n", parport);
 
@@ -296,6 +298,9 @@ void st_setup_system (atari_st_t *sim, ini_sct_t *ini)
 
 		if (sim->parport_drv == NULL) {
 			pce_log (MSG_ERR, "*** can't open driver (%s)\n", parport);
+		}
+		else {
+			sim->mfp_inp |= 0x01;
 		}
 	}
 
@@ -444,12 +449,7 @@ void st_setup_mfp (atari_st_t *sim, ini_sct_t *ini)
 
 	e68901_set_clk_div (&sim->mfp, 13);
 
-	if (sim->mono) {
-		e68901_set_inp (&sim->mfp, 0x81);
-	}
-	else {
-		e68901_set_inp (&sim->mfp, 0x01);
-	}
+	e68901_set_inp (&sim->mfp, sim->mfp_inp);
 }
 
 static
@@ -848,6 +848,25 @@ int st_set_cpu_model (atari_st_t *sim, const char *model)
 	}
 
 	return (0);
+}
+
+void st_set_parport_drv (atari_st_t *sim, char_drv_t *drv)
+{
+	unsigned char val;
+
+	if (sim->parport_drv != NULL) {
+		chr_close (sim->parport_drv);
+	}
+
+	sim->parport_drv = drv;
+
+	/* adjust centronics busy */
+	val = (drv != NULL) ? (sim->mfp_inp | 0x01) : (sim->mfp_inp & 0xfe);
+
+	if (sim->mfp_inp != val) {
+		sim->mfp_inp = val;
+		e68901_set_inp (&sim->mfp, val);
+	}
 }
 
 void st_reset (atari_st_t *sim)
