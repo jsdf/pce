@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/tun.c                                                *
  * Created:     2004-12-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -59,7 +59,7 @@ int tuntap_open (const char *name, int tap)
 	memset (&req, 0, sizeof (req));
 
 	req.ifr_flags = (tap ? IFF_TAP : IFF_TUN) | IFF_NO_PI;
-	strncpy (req.ifr_name, name, IFNAMSIZ);
+	strncpy (req.ifr_name, name, IFNAMSIZ - 1);
 
 	if (ioctl (fd, TUNSETIFF, (void *) &req) < 0) {
 		close (fd);
