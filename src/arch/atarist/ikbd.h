@@ -37,6 +37,7 @@ typedef struct {
 	char          y0_at_top;
 	char          joy_report;
 	char          joy_mode;
+	unsigned char button_action;
 
 	int           mouse_dx;
 	int           mouse_dy;

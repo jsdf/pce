@@ -179,6 +179,7 @@ void st_kbd_init (st_kbd_t *kbd)
 	kbd->disabled = 0;
 	kbd->joy_report = 1;
 	kbd->joy_mode = 0;
+	kbd->button_action = 0;
 
 	kbd->mouse_dx = 0;
 	kbd->mouse_dy = 0;
@@ -282,13 +283,31 @@ void st_kbd_check_mouse (st_kbd_t *kbd)
 {
 	unsigned char val;
 
-	if (kbd->disabled || kbd->abs_pos) {
+	if (kbd->disabled) {
+		return;
+	}
+
+	if (st_kbd_buf_free (kbd) == 0) {
+		return;
+	}
+
+	if (kbd->button_action == 4) {
+		if ((kbd->mouse_but[0] ^ kbd->mouse_but[1]) & 1) {
+			st_kbd_buf_put (kbd, (kbd->mouse_but[1] & 1) ? 0x74 : 0xf4);
+		}
+		else if ((kbd->mouse_but[0] ^ kbd->mouse_but[1]) & 2) {
+			st_kbd_buf_put (kbd, (kbd->mouse_but[1] & 2) ? 0x75 : 0xf5);
+		}
+	}
+
+	if (kbd->abs_pos) {
 		return;
 	}
 
 	if ((kbd->mouse_dx == 0) && (kbd->mouse_dy == 0) && (kbd->mouse_but[0] == kbd->mouse_but[1])) {
 		return;
 	}
+
 
 	if (st_kbd_buf_free (kbd) < 3) {
 		return;
@@ -552,6 +571,8 @@ void st_kbd_cmd_07 (st_kbd_t *kbd)
 #if DEBUG_KBD >= 1
 	st_log_deb ("IKBD: SET MOUSE BUTTON ACTION: %02X\n", kbd->cmd[1]);
 #endif
+
+	kbd->button_action = kbd->cmd[1];
 
 	kbd->cmd_cnt = 0;
 }
@@ -929,6 +950,8 @@ void st_kbd_cmd_80 (st_kbd_t *kbd)
 		kbd->mouse_dx = 0;
 		kbd->mouse_dy = 0;
 
+		kbd->button_action = 0;
+
 		kbd->buf_hd = 0;
 		kbd->buf_tl = 0;
 
@@ -1091,6 +1114,7 @@ void st_kbd_reset (st_kbd_t *kbd)
 	kbd->scale_x = 1;
 	kbd->scale_y = 1;
 	kbd->button_delta = 0;
+	kbd->button_action = 0;
 
 	kbd->buf_hd = 0;
 	kbd->buf_tl = 0;
