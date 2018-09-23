@@ -30,6 +30,19 @@ function addAutoloader(module) {
   return module;
 }
 
+function addCustomAsyncInit(module) {
+  if (module.asyncInit) {
+    module.preRun = module.preRun || [];
+    module.preRun.push(function waitForCustomAsyncInit() {
+      module.addRunDependency('pcejsAsyncInit');
+
+      module.asyncInit(module, function asyncInitCallback() {
+        module.removeRunDependency('pcejsAsyncInit');
+      });
+    });
+  }
+}
+
 // inject extra behaviours
 addAutoloader(Module);
-
+addCustomAsyncInit(Module);
