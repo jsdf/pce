@@ -3,4 +3,4 @@ set -e
 
 PCEJS_DIR=$(git rev-parse --show-toplevel)
 
-"$PCEJS_DIR/commonjs/prepublish.sh" "$1"
+"$PCEJS_DIR/commonjs/prepublish.sh" "$@"

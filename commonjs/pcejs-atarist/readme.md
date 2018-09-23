@@ -69,7 +69,7 @@ add some html `index.html`
 
 add some files
 ```bash
-curl -O http://jamesfriend.com.au/pce-js/dist/atarist-system.zip
+curl -O https://jamesfriend.com.au/pce-js/dist/atarist-system.zip
 unzip atarist-system.zip
 ```
 

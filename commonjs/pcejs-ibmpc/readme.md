@@ -71,7 +71,7 @@ add some html `index.html`
 
 add some files
 ```bash
-curl -O http://jamesfriend.com.au/pce-js/dist/ibmpc-system.zip
+curl -O https://jamesfriend.com.au/pce-js/dist/ibmpc-system.zip
 unzip ibmpc-system.zip
 ```
 

@@ -70,7 +70,7 @@ add some html `index.html`
 
 add some files
 ```bash
-curl -O http://jamesfriend.com.au/pce-js/dist/macplus-system.zip
+curl -O https://jamesfriend.com.au/pce-js/dist/macplus-system.zip
 unzip macplus-system.zip
 ```
 

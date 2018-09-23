@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "dependencies": {
     "xtend": "^3.0.0"
   },
