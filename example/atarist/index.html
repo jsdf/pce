@@ -3,15 +3,18 @@
   <head>
     <style type="text/css">
     * {
-      font-family: "Helvetica Neue", Helvetica, sans-serif;
+      font-family: sans-serif;
+    }
+    p {
+      font-size: 14px;
+      margin: 8px 0;
+      color: #888;
     }
     .pcejs {
       padding-right: 0;
       margin-left: auto;
       margin-right: auto;
       display: block;
-    }
-    div.pcejs {
       text-align: center;
     }
     div.pcejs-border {
@@ -31,11 +34,12 @@
   <body>
     <div class="pcejs pcejs-container">
       <div class="pcejs pcejs-loading-status">Downloading...</div>
-      <div>press esc + &uparr; to zoom in, esc + &downarr; to zoom out</div>
       <div class="pcejs-border">
         <canvas class="pcejs pcejs-canvas" oncontextmenu="event.preventDefault()"></canvas>
       </div>
     </div>
+
+    <p class="pcejs">press esc + &uarr; to zoom in, esc + &darr; to zoom out</p>
     </script>
     <script type="text/javascript" src="bundle.js"></script>
   </body>
