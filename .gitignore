@@ -60,3 +60,9 @@ commonjs/pcejs-*/pthread-main.js
 # misc
 *.sublime-workspace
 mac-plus-pram.dat
+
+a.out
+a.out.js
+a.out.js.mem
+*.wasm
+*.wasm.map

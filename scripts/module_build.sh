@@ -53,6 +53,12 @@ copy_if_present "${input_dir}/pce-${arch}.worker.js" "${pkg_dir}/pce-${arch}.wor
 cleanup_file "${pkg_dir}/pthread-main.js"
 copy_if_present "${input_dir}/pce-${arch}.pthread-main.js" "${pkg_dir}/pthread-main.js"
 
+# wasm
+cleanup_file "${pkg_dir}/pce-${arch}.wasm"
+copy_if_present "${input_dir}/pce-${arch}.wasm" "${pkg_dir}/pce-${arch}.wasm"
+cleanup_file "${pkg_dir}/pce-${arch}.wasm.map"
+copy_if_present "${input_dir}/pce-${arch}.wasm.map" "${pkg_dir}/pce-${arch}.wasm.map"
+
 # emscripten mem init file
 cleanup_file "${pkg_dir}/pce-${arch}.js.mem"
 copy_if_present "${input_dir}/pce-${arch}.js.mem" "${pkg_dir}/pce-${arch}.js.mem"

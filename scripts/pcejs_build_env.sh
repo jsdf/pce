@@ -10,12 +10,34 @@ export PCEJS_OUTPUT_FORMAT=$PCEJS_conf_outputformat
 if [[ -n $PCEJS_conf_emscripten ]]; then
   emflags=""
 
-  emflags+=" -s MEM_INIT_METHOD=0"
+  if [[ -z $PCEJS_conf_wasm ]]; then
+    emflags+=" -s MEM_INIT_METHOD=0"
+  fi
+
+  if [[ -n $PCEJS_conf_asmjs ]]; then
+    emflags+=" -s ASM_JS=1"
+  fi
+
+  if [[ -n $PCEJS_conf_wasm && -n $PCEJS_conf_wasm ]]; then
+    emflags+=" -s BINARYEN_METHOD='native-wasm,asmjs'"
+  elif [[  -n $PCEJS_conf_wasm ]]; then
+    emflags+=" -s BINARYEN_METHOD='native-wasm'"
+  elif [[  -n $PCEJS_conf_asmjs ]]; then
+    emflags+=" -s BINARYEN_METHOD='asmjs'"
+  fi
+
+  if [[ -n $PCEJS_conf_wasm ]]; then
+    emflags+=" --source-map-base http://127.0.0.1:8080/"
+  fi
 
   # emflags+=" -s VERBOSE=1"
   if [[ -n $PCEJS_conf_imprecise64 ]]; then
     emflags+=" -s PRECISE_I64_MATH=0"
   fi
+
+  emflags+=" -s FORCE_FILESYSTEM=1"
+
+  emflags+=" --js-library libjs/library_sdl.js"
 
   if [[ -n $PCEJS_conf_worker ]]; then
     emflags+=" -s PROXY_TO_WORKER=1"
@@ -30,10 +52,6 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
   if [[ -n $PCEJS_conf_memory ]]; then
     memory=$((PCEJS_conf_memory*1024*1024))
     emflags+=" -s TOTAL_MEMORY=${memory}"
-  fi
-
-  if [[ -n $PCEJS_conf_asmjs ]]; then
-    emflags+=" -s ASM_JS=1"
   fi
 
   # emflags+=" -s OUTLINING_LIMIT=16000"
@@ -56,14 +74,27 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
   fi
 
   if [[ -n $PCEJS_conf_dbglvl ]]; then
-    pcejs_make_cflags+=" -g${PCEJS_conf_dbglvl}"
+    if [[ $PCEJS_conf_dbglvl == "p" ]]; then
+      emflags+=" --profiling"
+    else
+      pcejs_make_cflags+=" -g${PCEJS_conf_dbglvl}"
+    fi
   fi
 
-  export PCEJS_EMSDK_PATH="$PCEJS_conf_emsdkpath"
+  if [[ -n "$PCEJS_conf_emsdkpath" ]]; then
+    # explicitly set
+    export PCEJS_EMSDK_PATH="$PCEJS_conf_emsdkpath"
+  else
+    local env_emsdk_emcc=$(which emcc)
+    if [[ -n "$env_emsdk_emcc" ]]; then
+      # we probably just want this to come from the env
+      export PCEJS_EMSDK_PATH=$(dirname $env_emsdk_emcc)
+    fi
+  fi
   export PCEJS_EMSCRIPTEN="yes"
   export PCEJS_EMFLAGS="$emflags"
   export PCEJS_CFLAGS="-Qunused-arguments -include src/include/pcedeps.h $emflags"
-  export PCEJS_CONFIGURE="${PCEJS_conf_emsdkpath}/emconfigure ./configure"    
+  export PCEJS_CONFIGURE="${PCEJS_EMSDK_PATH}/emconfigure ./configure"
   export PCEJS_MAKE_CFLAGS="$pcejs_make_cflags"
 else
   export PCEJS_CFLAGS="-I/usr/local/opt/emscripten/system/include/emscripten/"

@@ -39,6 +39,12 @@ copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.worker.js" "${PCEJS_PAC
 cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.js.mem"
 copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.js.mem" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.js.mem"
 
+# wasm
+cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.wasm"
+copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.wasm" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.wasm"
+cleanup_file "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.wasm.map"
+copy_if_present "${PCEJS_PREFIX}/bin/pce-${PCEJS_TARGET}.wasm.map" "${PCEJS_PACKAGEDIR}/pce-${PCEJS_TARGET}.wasm.map"
+
 # extension rom files
 copy_if_present "${PCEJS_PREFIX}/share/pce/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom" "${PCEJS_PACKAGEDIR}/data/${PCEJS_TARGET}/${PCEJS_TARGET}-pcex.rom"
 

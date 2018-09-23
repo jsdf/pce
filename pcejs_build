@@ -12,6 +12,7 @@ pcejs_load_config () {
   set -a # all sourced vars are exported
   source ./pcejs_build_conf.sh
   set +a # restore default behaviour
+
 }
 
 pcejs_save_config () {
@@ -26,6 +27,11 @@ pcejs_init_env_from_config () {
   # initialise build env from config
   # should be called after changing any PCEJS_conf var
   source ./scripts/pcejs_build_env.sh
+  if [[ -z $PCEJS_EMSDK_PATH ]]; then
+    echo "ERROR: could't resolve emsdk path from env or config"
+    exit 1
+  fi
+  echo "using PCEJS_EMSDK_PATH=$PCEJS_EMSDK_PATH"
 }
 
 # ensure cwd is project root dir
@@ -160,14 +166,12 @@ case "$taskname" in
     ;;
 
   "default")
-    # if [[ -n $PCEJS_conf_emscripten && -d $PCEJS_PREFIX ]]; then
-    #   $pcejs_build remake
-    # else
-    #   $pcejs_build configure em
-    #   $pcejs_build make
-    # fi
-    $pcejs_build configure em
-    $pcejs_build make
+    if [[ -z $reset ]]; then
+      $pcejs_build remake
+    else
+      $pcejs_build configure em
+      $pcejs_build make
+    fi
 
     for arch in "${ARCHS[@]}"; do
       $pcejs_build afterbuild "$arch"

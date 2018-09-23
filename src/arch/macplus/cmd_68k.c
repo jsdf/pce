@@ -451,8 +451,6 @@ void mac_run_emscripten_step ()
 			e68_set_mem16 (par_sim->cpu, 0x0830, (unsigned) mousey);
 			e68_set_mem16 (par_sim->cpu, 0x0832, (unsigned) mousex);
 		}
-		//  presumably this is a very minor unrolling optimisation?
-		mac_clock (par_sim, 0);
 		mac_clock (par_sim, 0);
 
 		if (par_sim->brk) {

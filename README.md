@@ -24,20 +24,19 @@ See each of the above links for install and usage instructions
 
 ## How to build PCE.js from source
 
-**Note:** This is a bit complicated. I recommend instead  just using the npm packages listed above, unless you really want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on a page).
+**Note:** I recommend instead just using the npm packages listed above, unless you want to hack on the C source of the emulators themselves (which is not necessary if you just want to get them running on a page).
 
 Make sure you've installed [node.js](http://nodejs.org/download/)
 
 Run `npm install` in this directory (the source root). This should install the 
 required node.js tools to build the commonjs modules and run the examples.
 
-Clone [my fork of Emscripten](https://github.com/jsdf/emscripten) and checkout 
-the `pcejs-fastcomp` branch. Set it up according to the directions for running 
-[emscripten-fastcomp](http://kripken.github.io/emscripten-site/docs/building_from_source/LLVM-Backend.html). 
-~~Add the path to the emscripten fork repo to your `$PATH` so you can run `emcc`.~~
+Install the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
+
+Install and activate the latest version of the SDK, then source it, so that running `emcc -v` successfully returns current Emscripten version. Instructions for doing this are on the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) page.
+
 Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 
-doesn't already exist. Then edit this file so the `PCEJS_conf_emsdkpath` setting
-points to where you cloned the emscripten fork repo (eg. where `emcc` can be found).
+doesn't already exist. 
 
 Similarly you should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
 `pcejs` branch, but presumably that's where you're reading this right now.

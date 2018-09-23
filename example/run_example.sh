@@ -52,6 +52,8 @@ if [[ $PCEJS_MODE == "worker" ]]; then
   } > "${PCEJS_ARCH_EXAMPLE_DIR}/pce-${PCEJS_ARCH}.worker.js"
 
   echo "built with worker"
+elif [[ $PCEJS_MODE == "wasm" ]]; then
+  echo "built with wasm"
 elif [[ $PCEJS_MODE == "threaded" ]]; then
   {
     cat "${PCEJS_ARCH_EXAMPLE_DIR}/pthread-prelude.js" "${PCEJS_DIST_DIR}/pce-${PCEJS_ARCH}.js"
@@ -61,8 +63,9 @@ elif [[ $PCEJS_MODE == "threaded" ]]; then
   echo "built with pthreads"
 fi
 
+# copy over wasm too
+copy_if_present "$PCEJS_ARCH_MODULE_DIR/pce-${PCEJS_ARCH}.wasm" "${PCEJS_ARCH_EXAMPLE_DIR}/pce-${PCEJS_ARCH}.wasm"
 copy_if_present "$PCEJS_ARCH_MODULE_DIR/pce-${PCEJS_ARCH}.js.mem" "${PCEJS_ARCH_EXAMPLE_DIR}/pce-${PCEJS_ARCH}.js.mem"
 copy_if_present "$PCEJS_ARCH_MODULE_DIR/${PCEJS_ARCH}-pcex.rom" "${PCEJS_ARCH_EXAMPLE_DIR}/${PCEJS_ARCH}-pcex.rom"
-
-open "http://localhost:8080/"
-"$PCEJS_NODE_BIN_DIR/http-server" "$PCEJS_DIR/example/$PCEJS_ARCH"
+ 
+node "$PCEJS_DIR/example/webserver.js" "$PCEJS_DIR/example/$PCEJS_ARCH"
