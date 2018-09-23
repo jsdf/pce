@@ -33,7 +33,7 @@ required node.js tools to build the commonjs modules and run the examples.
 
 Clone [my fork of Emscripten](https://github.com/jsdf/emscripten) and checkout 
 the `pcejs-fastcomp` branch. Set it up according to the directions for running 
-[emscripten-fastcomp](https://github.com/kripken/emscripten/wiki/LLVM-Backend). 
+[emscripten-fastcomp](http://kripken.github.io/emscripten-site/docs/building_from_source/LLVM-Backend.html). 
 ~~Add the path to the emscripten fork repo to your `$PATH` so you can run `emcc`.~~
 Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 
 doesn't already exist. Then edit this file so the `PCEJS_conf_emsdkpath` setting
@@ -42,8 +42,8 @@ points to where you cloned the emscripten fork repo (eg. where `emcc` can be fou
 Similarly you should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
 `pcejs` branch, but presumably that's where you're reading this right now.
 
-Most of the build process involves running the `pcejs_build` bash script in the 
-root of the repo. Commands should be run like `pcejs_build [command]` or `pcejs_build [command] [arg]`
+Most of the build process involves running the `./pcejs_build` bash script in the 
+root of the repo. Commands should be run like `./pcejs_build [command]` or `pcejs_build [command] [arg]`
 
 Commands you might be interested in:
 
@@ -65,7 +65,7 @@ Other commands (used internally by build scripts)
 - afterbuild: Convert LLVM bitcode to JS
 - module: Build commonjs module (used by commonjs module prepublish scripts)
 
-Run `pcejs_build build [target]` to build the emulator, where `[target]` is `macplus`, 
+Run `./pcejs_build build [target]` to build the emulator, where `[target]` is `macplus`, 
 `ibmpc` or `atarist`. This will output a `pce-[target].js` file to `dist/`.
 
 Once the output file for the target you're interested in has been built, you can:

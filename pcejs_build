@@ -36,14 +36,19 @@ pcejs_load_config
 pcejs_init_env_from_config
 
 pcejs_build=$0
-taskname=${1:-""}
+taskname=${1:-"default"}
 
+echo "start $taskname $2"
 case "$taskname" in
   "env") # Print build environment variables
     pcejs_print_config
     ;;
 
-  "configure") # Configure emulator build"
+  "init") # Create build config file (./pcejs_build_conf.sh) if none exists
+    pcejs_save_config
+    ;;
+
+  "configure") # Run ./configure for emulator build
     platform=$2
 
     if [[ $platform == "native" ]]; then
@@ -61,7 +66,7 @@ case "$taskname" in
     pcejs_save_config
     ;;
 
-  "make") # Compile emulator source to LLVM bitcode
+  "make") # Compile emulator source to LLVM bitcode (clean and make)
     ./scripts/20-make.sh
     ;;
 
@@ -110,7 +115,7 @@ case "$taskname" in
     pcejs_save_config
     ;;
 
-  "rebuild") # Build last again
+  "rebuild") # Build last target again
     target_or_platform=$2
 
     if [[ $target_or_platform == "native" ]]; then
@@ -128,7 +133,7 @@ case "$taskname" in
     fi
     ;;
 
-  "module") # Build commonjs module"
+  "module") # Build commonjs module
     target=$2
 
     if [[ -n $target ]]; then
@@ -141,7 +146,7 @@ case "$taskname" in
     ./scripts/module_build.sh "$target"
     ;;
 
-  "example") # Build example"
+  "example") # Build example
     target=$2
 
     if [[ -n $target ]]; then
@@ -154,23 +159,26 @@ case "$taskname" in
     ./example/run_example.sh "$target"
     ;;
 
-  *)
-    if [[ -n "$taskname" ]]; then
-      echo "unknown task: $taskname"
-      exit 1
-    fi
-
-    echo "running default task"
-    if [[ -n $PCEJS_conf_emscripten && -d $PCEJS_PREFIX ]]; then
-      $pcejs_build remake
-    else
-      $pcejs_build configure em
-      $pcejs_build make
-    fi
+  "default")
+    # if [[ -n $PCEJS_conf_emscripten && -d $PCEJS_PREFIX ]]; then
+    #   $pcejs_build remake
+    # else
+    #   $pcejs_build configure em
+    #   $pcejs_build make
+    # fi
+    $pcejs_build configure em
+    $pcejs_build make
 
     for arch in "${ARCHS[@]}"; do
       $pcejs_build afterbuild "$arch"
       $pcejs_build module "$arch"
     done
     ;;
+
+  *)
+    echo "unknown task: $taskname"
+    exit 1
+    ;;
 esac
+
+echo "end $taskname $2"
