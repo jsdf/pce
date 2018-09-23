@@ -1,34 +1,50 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 PCEJS_DIR=$(git rev-parse --show-toplevel)
 
-PCEJS_ARCH=$1
-if [[ -z $PCEJS_ARCH ]]
+arch=${1:-""}
+
+SKIP_PROMPTS=${SKIP_PROMPTS:-""}
+SKIP_PROMPTS="y"
+
+if [[ -z "$SKIP_PROMPTS" ]]; then
+  SKIP_PROMPTS=${2:-""}
+fi
+if [[ -n "$SKIP_PROMPTS" ]]; then
+  echo "using defaults for all prompts"
+fi
+
+
+if [[ -z $arch ]]
   then
     echo "missing pcejs arch argument [macplus ibmpc atarist]" >&2
     exit 1
 fi
 
-echo "building pcejs-$PCEJS_ARCH package"
+echo "building pcejs-${arch} package"
 echo "do you want to update to the emulator js module output by the build system into the dist/ directory?"
 echo "otherwise any emulator js module currently in module dir will be used"
 
-if [[ -z $2 ]]; then
-  read -n 1 -r -p "y/N "
-  echo
-  UPDATE_BUILD=$REPLY
+
+UPDATE_BUILD="y"
+if [[ -n $SKIP_PROMPTS ]]; then
+  echo "using default response: $UPDATE_BUILD"
 else
-  UPDATE_BUILD=$2
+  read -n 1 -r -p "Y/n "
+  echo
+  if [[ $REPLY =~ ^[Nn]$ ]]; then
+    UPDATE_BUILD=""
+  fi
 fi
 
-if [[ $UPDATE_BUILD =~ ^[Yy]$ ]]; then  
+if [[ -n $UPDATE_BUILD ]]; then  
   (
     cd "$PCEJS_DIR"
-    ./pcejs_build module "$PCEJS_ARCH"
+    ./pcejs_build module "$arch"
   )
 else
-  if [[ ! -e "$PCEJS_DIR/commonjs/pcejs-${PCEJS_ARCH}/lib/pcejs-${PCEJS_ARCH}.js" ]]; then
+  if [[ ! -e "$PCEJS_DIR/commonjs/pcejs-${arch}/lib/pcejs-${arch}.js" ]]; then
     echo "existing emulator js module not found"
     exit 1
   else
