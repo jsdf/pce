@@ -9,7 +9,7 @@ More info:
 - [Demo running Mac Plus + System 7](https://jamesfriend.com.au/pce-js/) 
 - [Why port emulators to the browser?](https://jamesfriend.com.au/why-port-emulators-browser)
 
-![PCE.js Mac Plus](https://jamesfriend.com.au/sites/default/files/pcejs.png)
+![PCE.js Mac Plus](https://jamesfriend.com.au/files/pcejs.png)
 
 ## Installing from npm
 
