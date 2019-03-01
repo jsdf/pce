@@ -15,25 +15,15 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
   fi
 
   if [[ -n $PCEJS_conf_asmjs ]]; then
-    emflags+=" -s ASM_JS=1"
-  fi
-
-  if [[ -n $PCEJS_conf_wasm && -n $PCEJS_conf_wasm ]]; then
-    emflags+=" -s BINARYEN_METHOD='native-wasm,asmjs'"
-  elif [[  -n $PCEJS_conf_wasm ]]; then
-    emflags+=" -s BINARYEN_METHOD='native-wasm'"
-  elif [[  -n $PCEJS_conf_asmjs ]]; then
-    emflags+=" -s BINARYEN_METHOD='asmjs'"
+    emflags+=" -s WASM=0"
   fi
 
   if [[ -n $PCEJS_conf_wasm ]]; then
+    emflags+=" -s WASM=1"
     emflags+=" --source-map-base http://127.0.0.1:8080/"
   fi
 
   # emflags+=" -s VERBOSE=1"
-  if [[ -n $PCEJS_conf_imprecise64 ]]; then
-    emflags+=" -s PRECISE_I64_MATH=0"
-  fi
 
   emflags+=" -s FORCE_FILESYSTEM=1"
 
