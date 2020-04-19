@@ -87,7 +87,8 @@ void e68901_init (e68901_t *mfp, unsigned addr_shift)
 
 	mfp->gpip_xor = 0xff;
 	mfp->gpip_inp = 0;
-	mfp->irr = 0;
+	mfp->irr1 = 0;
+	mfp->irr2 = 0;
 
 	mfp->usart_timer = 0xff;
 
@@ -166,10 +167,13 @@ static
 void e68901_check_int (e68901_t *mfp)
 {
 	int            irq;
-	unsigned short tmp;
+	unsigned short tmp, inp;
 
-	mfp->ipr = (mfp->ipr | (~mfp->ipr_set & mfp->irr)) & mfp->ier;
-	mfp->ipr_set = mfp->irr & mfp->ier;
+	inp = (mfp->gpip_inp ^ mfp->gpip_xor) ^ ~mfp->gpip_aer;
+	mfp->irr1 &= 0x3f30;
+	mfp->irr1 |= (inp & 0x0f) | ((inp << 2) & 0xc0) | ((inp << 8) & 0xc000);
+	mfp->ipr |= (mfp->irr1 ^ mfp->irr2) & mfp->irr1 & mfp->ier;
+	mfp->irr2 = mfp->irr1;
 
 	if (mfp->ivr & 0x08) {
 		tmp = mfp->ipr & mfp->imr;
@@ -192,7 +196,7 @@ void e68901_check_usart_int (e68901_t *mfp)
 {
 	unsigned short irr;
 
-	irr = mfp->irr & 0xe1ff;
+	irr = mfp->irr1 & 0xe1ff;
 
 	if (mfp->rsr[0] & (MFP_RSR_OE | MFP_RSR_PE | MFP_RSR_FE)) {
 		irr |= 1U << 11;
@@ -208,8 +212,8 @@ void e68901_check_usart_int (e68901_t *mfp)
 		irr |= 1U << 10;
 	}
 
-	if (mfp->irr != irr) {
-		mfp->irr = irr;
+	if (mfp->irr1 != irr) {
+		mfp->irr1 = irr;
 
 		e68901_check_int (mfp);
 	}
@@ -233,8 +237,6 @@ unsigned e68901_inta (e68901_t *mfp)
 
 	tmp = 1U << idx;
 
-//	fprintf (stderr, "MFP: INTA %04X(%u)\n", tmp, idx);
-
 	mfp->ipr &= ~tmp;
 
 	if (mfp->ivr & 0x08) {
@@ -255,13 +257,6 @@ void e68901_set_inp (e68901_t *mfp, unsigned char val)
 	}
 
 	mfp->gpip_inp = val;
-
-	val = (val ^ mfp->gpip_xor) ^ ~mfp->gpip_aer;
-
-	mfp->irr &= 0x3f30;
-	mfp->irr |= val & 0x0f;
-	mfp->irr |= (val << 2) & 0xc0;
-	mfp->irr |= (val << 8) & 0xc000;
 
 	e68901_check_int (mfp);
 }
@@ -312,9 +307,7 @@ void timer_set_cr (e68901_t *mfp, unsigned idx, unsigned char val)
 
 	tmr = &mfp->timer[idx & 3];
 
-//	st_log_deb ("MFP: set timer %u cr: %02X\n", idx, val);
-
-	tmr->cr = val & 0x1f;
+	tmr->cr = val & 0x0f;
 
 	tmr->clk_div_set = div[val & 7];
 
@@ -331,8 +324,9 @@ void timer_set_dr (e68901_timer_t *tmr, unsigned char val)
 {
 	tmr->dr[1] = val;
 
-	if ((tmr->cr & 15) == 0) {
+	if ((tmr->cr & 0x0f) == 0) {
 		tmr->dr[0] = val;
+		tmr->clk_val = 0;
 	}
 }
 
@@ -379,7 +373,7 @@ void timer_set_inp (e68901_t *mfp, unsigned idx, char val)
 		return;
 	}
 
-	if (tmr->cr == 8) {
+	if ((tmr->cr & 0x0f) == 8) {
 		/* event counter */
 
 		if (val) {
@@ -395,25 +389,19 @@ void timer_clock (e68901_t *mfp, unsigned idx, unsigned cnt)
 
 	tmr = &mfp->timer[idx & 3];
 
-	if ((tmr->cr & 0x0f) == 0) {
-		return;
-	}
-
 	if (tmr->clk_div == 0) {
 		return;
 	}
 
-	tmr->clk_val += cnt;
-
-	if (tmr->cr & 8) {
-		if (tmr->cr == 8) {
-			return;
-		}
-
-		if (tmr->inp == 0) {
-			return;
-		}
+	if ((tmr->cr & 0x07) == 0) {
+		return;
 	}
+
+	if ((tmr->cr & 8) && (tmr->inp == 0)) {
+		return;
+	}
+
+	tmr->clk_val += cnt;
 
 	while (tmr->clk_val >= tmr->clk_div) {
 		tmr->clk_val -= tmr->clk_div;
@@ -618,10 +606,10 @@ unsigned char e68901_get_uint8 (e68901_t *mfp, unsigned long addr)
 		break;
 
 	case MFP_REG_TACR:
-		return (mfp->timer[0].cr & 0x1f);
+		return (mfp->timer[0].cr & 0x0f);
 
 	case MFP_REG_TBCR:
-		return (mfp->timer[1].cr & 0x1f);
+		return (mfp->timer[1].cr & 0x0f);
 
 	case MFP_REG_TCDCR:
 		return (((mfp->timer[2].cr & 7) << 4) | (mfp->timer[3].cr & 7));
@@ -672,7 +660,13 @@ unsigned short e68901_get_uint16 (e68901_t *mfp, unsigned long addr)
 
 unsigned long e68901_get_uint32 (e68901_t *mfp, unsigned long addr)
 {
-	return (e68901_get_uint8 (mfp, addr));
+	unsigned long val;
+
+	val = e68901_get_uint16 (mfp, addr);
+	val <<= 16;
+	val |= e68901_get_uint16 (mfp, addr + 2);
+
+	return (val);
 }
 
 
@@ -695,6 +689,7 @@ void e68901_set_uint8 (e68901_t *mfp, unsigned long addr, unsigned char val)
 
 	case MFP_REG_AER:
 		mfp->gpip_aer = val;
+		e68901_check_int (mfp);
 		break;
 
 	case MFP_REG_DDR:
@@ -805,7 +800,8 @@ void e68901_set_uint16 (e68901_t *mfp, unsigned long addr, unsigned short val)
 
 void e68901_set_uint32 (e68901_t *mfp, unsigned long addr, unsigned long val)
 {
-	e68901_set_uint8 (mfp, addr, val & 0xff);
+	e68901_set_uint16 (mfp, addr, val >> 16);
+	e68901_set_uint16 (mfp, addr + 2, val);
 }
 
 int e68901_receive (e68901_t *mfp, unsigned char val)
@@ -839,7 +835,6 @@ void e68901_reset (e68901_t *mfp)
 
 	mfp->ier = 0;
 	mfp->ipr = 0;
-	mfp->ipr_set = 0;
 	mfp->isr = 0;
 	mfp->imr = 0;
 	mfp->ivr = 0;
@@ -936,12 +931,6 @@ void e68901_clock (e68901_t *mfp, unsigned n)
 	unsigned i;
 
 	for (i = 0; i < 4; i++) {
-		if (mfp->usart_timer == i) {
-			if ((mfp->recv_clk_cnt == 0) && (mfp->send_clk_cnt == 0)) {
-				continue;
-			}
-		}
-
 		timer_clock (mfp, i, n);
 	}
 }

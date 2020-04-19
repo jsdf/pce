@@ -1116,8 +1116,8 @@ void cmd_read_sector (wd179x_t *fdc)
 	h = (fdc->head & 0x80) ? (fdc->head & 0x7f) : ((fdc->cmd >> 1) & 1);
 
 #if DEBUG_WD179X >= 1
-	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ SECTOR (c=%u h=%u s=%u)\n",
-		fdc->drv->d, fdc->cmd, fdc->track, h, fdc->sector
+	fprintf (stderr, "WD179X: D=%u CMD[%02X] READ SECTOR (pc=%u c=%u h=%u s=%u)\n",
+		fdc->drv->d, fdc->cmd, fdc->drv->c, fdc->track, h, fdc->sector
 	);
 #endif
 
@@ -1614,7 +1614,13 @@ void wd179x_read_track_clock (wd179x_t *fdc)
 		else if (fdc->scan_buf == WD179X_MARK_C2) {
 			fdc->is_data_bit = 1;
 			fdc->last_mark_c2 = 16;
-			fdc->scan_cnt = 16;
+
+			if (fdc->scan_cnt < 4) {
+				fdc->scan_cnt = 0;
+			}
+			else {
+				fdc->scan_cnt = 16;
+			}
 		}
 
 		if (fdc->scan_cnt < 16) {
@@ -1626,6 +1632,7 @@ void wd179x_read_track_clock (wd179x_t *fdc)
 		if (fdc->status & WD179X_ST_DRQ) {
 			fprintf (stderr, "WD179X: READ TRACK LOST DATA\n");
 			fdc->status |= WD179X_ST_LOST_DATA;
+			wd179x_set_drq (fdc, 0);
 		}
 
 		fdc->data = fdc->val & 0xff;
@@ -1727,6 +1734,7 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	fdc->cmd = val;
 
 	wd179x_set_irq (fdc, 0);
+	wd179x_set_drq (fdc, 0);
 
 	fdc->interrupt_enable = 1;
 	fdc->interrupt_request = 0;
@@ -1749,10 +1757,10 @@ void wd179x_set_cmd (wd179x_t *fdc, unsigned char val)
 	else if ((val & 0xe0) == 0xc0) {
 		cmd_read_address (fdc);
 	}
-	else if ((val & 0xf8) == 0xe0) {
+	else if ((val & 0xf0) == 0xe0) {
 		cmd_read_track (fdc);
 	}
-	else if ((val & 0xf9) == 0xf0) {
+	else if ((val & 0xf1) == 0xf0) {
 		cmd_write_track (fdc);
 	}
 	else {

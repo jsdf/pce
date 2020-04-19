@@ -27,6 +27,9 @@
 #include <drivers/psi/psi.h>
 
 
+extern char par_stx_dump_tracks;
+
+
 psi_img_t *psi_load_stx (FILE *fp);
 
 int psi_save_stx (FILE *fp, const psi_img_t *img);
