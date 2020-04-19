@@ -8,6 +8,8 @@
   "author": "James Friend",
   "version": "0.1.6",
   "dependencies": {
+    "pcejs-macplus": "^0.1.5",
+    "pcejs-util": "^0.1.0",
     "xtend": "^3.0.0"
   },
   "licenses": [
@@ -17,7 +19,7 @@
     }
   ],
   "scripts": {
-    "prepublish": "./prepublish.sh macplus"
+    "prepare": "./prepublish.sh macplus"
   },
   "files": [
     "index.js",

@@ -68,30 +68,34 @@ add some html `index.html`
 </html>
 ```
 
-add some files
+add a mac os disk image, rom, and pce-config.cfg config file. 
 ```bash
 curl -O https://jamesfriend.com.au/pce-js/dist/macplus-system.zip
 unzip macplus-system.zip
 ```
 
-grab the extension rom file from the npm package
+the pce-config.cfg config file should reference the disk images you've loaded (in the `autoloadFiles` array). in this example the disk image is called `hd1.qed`, but you can replace it with your own hard drive and floppy disk images in .img, .dsk or .qed format. if you change the disk image, make sure update both pce-config.cfg and the `autoloadFiles` array.
+
+copy the extension rom file from the npm package to your 
 ```bash
 cp node_modules/pcejs-macplus/macplus-pcex.rom ./macplus-pcex.rom
 ```
 
 bundle it with browserify
 ```bash
-npm install -g browserify@4.x
+npm install -g browserify
 browserify index.js \
   --noparse="node_modules/pcejs-macplus/lib/pcejs-macplus.js" \
+  --ignore-missing \
   > bundle.js
 ```
+
 
 serve it up
 ```bash
 npm install -g http-server
-open http://localhost:8080
 http-server .
 ```
 
-done
+open http://localhost:8080 to see the emulator running in the browser
+
