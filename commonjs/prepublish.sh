@@ -6,7 +6,7 @@ PCEJS_DIR=$(git rev-parse --show-toplevel)
 arch=${1:-""}
 
 SKIP_PROMPTS=${SKIP_PROMPTS:-""}
-SKIP_PROMPTS="y"
+# SKIP_PROMPTS="y"
 
 if [[ -z "$SKIP_PROMPTS" ]]; then
   SKIP_PROMPTS=${2:-""}

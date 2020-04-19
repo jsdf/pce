@@ -1,12 +1,9 @@
-var macplus = require('../');
-var utils = require('../../pcejs-util');
-
 // add a loading progress bar. not required, but good ux
-var loadingStatus = utils.loadingStatus(
+var loadingStatus = PCEJSUtil.loadingStatus(
   document.querySelector('.pcejs-loading-status')
 );
 
-macplus({
+PCEJSMacplus({
   arguments: ['-c', 'pce-config.cfg', '-r'],
   autoloadFiles: [
     'macplus-pcex.rom',
