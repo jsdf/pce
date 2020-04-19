@@ -16,14 +16,12 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
 
   if [[ -n $PCEJS_conf_wasm  ]]; then
     emflags+=" -s WASM=1'"
+    emflags+=" --source-map-base http://127.0.0.1:8080/"
   elif [[  -n $PCEJS_conf_asmjs ]]; then
     emflags+=" -s WASM=0"
     emflags+=" -s MEM_INIT_METHOD=0"
   fi
 
-  if [[ -n $PCEJS_conf_wasm ]]; then
-    emflags+=" --source-map-base http://127.0.0.1:8080/"
-  fi
 
   # emflags+=" -s VERBOSE=1"
 
