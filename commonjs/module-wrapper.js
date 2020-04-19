@@ -3,12 +3,10 @@ module.exports = function(config) {
   var Module = opts || {};
 
   // hide node/commonjs globals so environment is not detected as node
-  var process = null; 
-  var require = null; 
-
+  var process = void 0;
+  var require = void 0;
 
   // [emscripten output goes here]
-
 
   // expose stuff which emscripten defines in this scope
   Module.FS = FS;
@@ -17,4 +15,4 @@ module.exports = function(config) {
   Module.NODEFS = NODEFS;
 
   return Module;
-}
+};

@@ -1,8 +1,8 @@
 var Module = opts || {};
 
 // hide node/commonjs globals so emscripten doesn't get confused
-var process = null; 
-var require = null; 
+var process = void 0;
+var require = void 0;
 
 var pathGetFilenameRegex = /\/([^\/]+)$/;
 
@@ -18,7 +18,13 @@ function pathGetFilename(path) {
 function addAutoloader(module) {
   var loadDatafiles = function() {
     module.autoloadFiles.forEach(function(filepath) {
-      module.FS_createPreloadedFile('/', pathGetFilename(filepath), filepath, true, true);
+      module.FS_createPreloadedFile(
+        '/',
+        pathGetFilename(filepath),
+        filepath,
+        true,
+        true
+      );
     });
   };
 

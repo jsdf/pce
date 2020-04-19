@@ -33,9 +33,19 @@ required node.js tools to build the commonjs modules and run the examples.
 
 Install the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
-Install and activate the latest version of the SDK, then source it, so that running `emcc -v` successfully returns current Emscripten version. Instructions for doing this are on the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) page.
+Install and activate version 1.38.48 of the SDK
 
-Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 
+```bash
+cd ../path/to/emsdk/
+./emsdk install 1.38.48
+./emsdk activate 1.38.48
+source ./emsdk_env.sh
+
+```
+Check that running `emcc -v` successfully returns current Emscripten version.
+Detailed installation instructions are on the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) page.
+
+In the same terminal, return to the pcejs repository. Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 
 doesn't already exist. 
 
 Similarly you should be working with [my fork of PCE](https://github.com/jsdf/pce) on the 
@@ -43,6 +53,14 @@ Similarly you should be working with [my fork of PCE](https://github.com/jsdf/pc
 
 Most of the build process involves running the `./pcejs_build` bash script in the 
 root of the repo. Commands should be run like `./pcejs_build [command]` or `pcejs_build [command] [arg]`
+
+Run `./pcejs_build build [target]` to build the emulator, where `[target]` is `macplus`, 
+`ibmpc` or `atarist`. This will output a `pce-[target].js` file to `dist/`.
+
+Once the output file for the target you're interested in has been built, you can:
+- run the examples in the `example/` directory with `example/run_example.sh [target]`
+- build the npm packages in the `commonjs/[target]/` directories by running 
+  `npm run prepublish` in the respective directory.
 
 Commands you might be interested in:
 
@@ -64,13 +82,6 @@ Other commands (used internally by build scripts)
 - afterbuild: Convert LLVM bitcode to JS
 - module: Build commonjs module (used by commonjs module prepublish scripts)
 
-Run `./pcejs_build build [target]` to build the emulator, where `[target]` is `macplus`, 
-`ibmpc` or `atarist`. This will output a `pce-[target].js` file to `dist/`.
-
-Once the output file for the target you're interested in has been built, you can:
-- run the examples in the `example/` directory with `example/run_example.sh [target]`
-- build the npm packages in the `commonjs/[target]/` directories by running 
-  `npm run prepublish` in the respective directory.
 
 
 
