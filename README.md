@@ -13,7 +13,9 @@ More info:
 
 ## How to run PCE.js on your own website
 
+See [this CodePen example](https://codepen.io/jsdf/pen/gOLryXM?editors=1100).
 
+I recommend installing the [native version of PCE](http://www.hampa.ch/pce/) on your computer to create your own disk images. Alternatively, you could use [Mini vMac](https://www.gryphel.com/c/minivmac/).
 
 ## Installing from npm
 
