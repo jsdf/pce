@@ -1,4 +1,10 @@
 #!/bin/bash
+set -euo pipefail
+
+error_exit () {
+  echo "$1"
+  exit 1
+}
 
 # initialises build environment from PCEJS_conf vars
 
@@ -75,7 +81,9 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
     # explicitly set
     export PCEJS_EMSDK_PATH="$PCEJS_conf_emsdkpath"
   else
+    which emcc > /dev/null 2>&1 || error_exit "emcc not found, did you forget to run 'emsdk activate'?"
     env_emsdk_emcc=$(which emcc)
+    
     if [[ -n "$env_emsdk_emcc" ]]; then
       # we probably just want this to come from the env
       export PCEJS_EMSDK_PATH=$(dirname $env_emsdk_emcc)

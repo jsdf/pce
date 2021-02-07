@@ -1,7 +1,7 @@
 #!/bin/bash
-set -eo pipefail
+set -uo pipefail
 
-declare -a ARCHS=("macplus")
+declare -a ARCHS=("macplus" "ibmpc" "atarist")
 
 pcejs_load_config () {
   if [[ ! -f ./pcejs_build_conf.sh ]]; then
@@ -12,7 +12,6 @@ pcejs_load_config () {
   set -a # all sourced vars are exported
   source ./pcejs_build_conf.sh
   set +a # restore default behaviour
-
 }
 
 pcejs_save_config () {
@@ -31,12 +30,12 @@ pcejs_init_env_from_config () {
     echo "ERROR: could't resolve emsdk path from env or config"
     exit 1
   fi
-  echo "using PCEJS_EMSDK_PATH=$PCEJS_EMSDK_PATH"
 }
 
 # ensure cwd is project root dir
 repo_root=$(git rev-parse --show-toplevel)
 cd "$repo_root"
+
 
 pcejs_load_config
 pcejs_init_env_from_config
@@ -44,7 +43,8 @@ pcejs_init_env_from_config
 pcejs_build=$0
 taskname=${1:-"default"}
 
-echo "start $taskname $2"
+
+echo "start $taskname ${2:-""}"
 case "$taskname" in
   "env") # Print build environment variables
     pcejs_print_config
@@ -55,7 +55,7 @@ case "$taskname" in
     ;;
 
   "configure") # Run ./configure for emulator build
-    platform=$2
+    platform=${2:-""}
 
     if [[ $platform == "native" ]]; then
       export PCEJS_conf_emscripten=""
@@ -81,7 +81,7 @@ case "$taskname" in
     ;;
 
   "clean") # Clean source tree
-    cleanall=$2
+    cleanall=${2:-""}
 
     if [[ -n $cleanall ]]; then
       ./scripts/a0-clean.sh
@@ -91,7 +91,7 @@ case "$taskname" in
     ;;
 
   "afterbuild") # Convert LLVM bitcode to JS
-    target=$2
+    target=${2:-""}
 
     if [[ -n $target ]]; then
       export PCEJS_conf_target=$target
@@ -102,7 +102,7 @@ case "$taskname" in
     ;;
 
   "build") # Configure build and compile emulator to JS
-    target_or_platform=$2
+    target_or_platform=${2:-""}
 
 
     if [[ $target_or_platform == "native" ]]; then
@@ -122,7 +122,7 @@ case "$taskname" in
     ;;
 
   "rebuild") # Build last target again
-    target_or_platform=$2
+    target_or_platform=${2:-""}
 
     if [[ $target_or_platform == "native" ]]; then
       $pcejs_build remake
@@ -140,38 +140,37 @@ case "$taskname" in
     ;;
 
   "module") # Build commonjs module
-    target=$2
+    arch=${2:-""}
 
-    if [[ -n $target ]]; then
-      echo "building commonjs module for target $target";
+    echo "building commonjs module for $2"
+
+    if [[ -n $arch ]]; then
+      echo "building commonjs module for arch $arch";
+      ./scripts/module_build.sh "$arch"
     else
-      echo "target not specified";
-      exit 1;
+      for arch in "${ARCHS[@]}"; do
+      echo "building commonjs module for arch $arch";
+        ./scripts/module_build.sh "$arch"
+      done
     fi
-
-    ./scripts/module_build.sh "$target"
     ;;
 
-  "example") # Build example
-    target=$2
+  "example") # run example
+    arch=${2:-""}
 
-    if [[ -n $target ]]; then
-      echo "building example for target $target";
+    if [[ -n $arch ]]; then
+      echo "running example for arch $arch";
     else
-      echo "target not specified";
+      echo "arch not specified";
       exit 1;
     fi
 
-    ./example/run_example.sh "$target"
+    ./example/run_example.sh "$arch"
     ;;
 
   "default")
-    if [[ -z $reset ]]; then
-      $pcejs_build remake
-    else
-      $pcejs_build configure em
-      $pcejs_build make
-    fi
+    $pcejs_build configure em
+    $pcejs_build make
 
     for arch in "${ARCHS[@]}"; do
       $pcejs_build afterbuild "$arch"
@@ -185,4 +184,4 @@ case "$taskname" in
     ;;
 esac
 
-echo "end $taskname $2"
+echo "end $taskname ${2:-""}"

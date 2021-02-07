@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "dependencies": {
     "xtend": "^3.0.0"
   },
@@ -17,10 +17,11 @@
     }
   ],
   "scripts": {
-    "prepublish": "./prepublish.sh atarist"
+    "prepublish": "./prepublish.sh atarist && ./umd.sh"
   },
   "files": [
     "index.js",
+    "pcejs-atarist.umd.js",
     "lib/pcejs-atarist.js"
   ],
   "homepage": "https://github.com/jsdf/pce",

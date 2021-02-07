@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euxo pipefail
 
 copy_if_present() {
   if [ -a "$1" ]; then
@@ -22,8 +22,8 @@ PCEJS_DIR=$(git rev-parse --show-toplevel)
 PCEJS_MODULES_DIR="$PCEJS_DIR/commonjs"
 PCEJS_DIST_DIR="$PCEJS_DIR/dist"
 PCEJS_ARCH_MODULE_DIR="$PCEJS_MODULES_DIR/pcejs-${PCEJS_ARCH}"
+PCEJS_UTIL_MODULE_DIR="$PCEJS_MODULES_DIR/pcejs-util"
 PCEJS_ARCH_EXAMPLE_DIR="$PCEJS_DIR/example/$PCEJS_ARCH"
-PCEJS_NODE_BIN_DIR=$PCEJS_DIR/node_modules/.bin/
 
 if ! (ls "${PCEJS_ARCH_EXAMPLE_DIR}"/*.rom >/dev/null 2>&1); then
   echo ""
@@ -38,13 +38,19 @@ if ! (ls "${PCEJS_ARCH_EXAMPLE_DIR}"/*.rom >/dev/null 2>&1); then
   exit 1
 fi
 
-"$PCEJS_ARCH_MODULE_DIR"/prepublish.sh $1
+echo "running npm prepublish script for modules"
+pushd "$PCEJS_ARCH_MODULE_DIR"
+echo `pwd`
+npm run prepublish
+popd
+pushd "$PCEJS_UTIL_MODULE_DIR"
+echo `pwd`
+npm run prepublish
+popd
 
-NODE_PATH="$PCEJS_MODULES_DIR:$PCEJS_DIR/node_modules" \
-  "$PCEJS_NODE_BIN_DIR/browserify" "$PCEJS_ARCH_EXAMPLE_DIR/$PCEJS_ARCH.js" \
-    --noparse="$PCEJS_ARCH_MODULE_DIR/lib/pcejs-${PCEJS_ARCH}.js" \
-    > "$PCEJS_ARCH_EXAMPLE_DIR/bundle.js"
-echo "bundle.js built"
+cp "$PCEJS_ARCH_MODULE_DIR/pcejs-$PCEJS_ARCH.umd.js" "$PCEJS_ARCH_EXAMPLE_DIR/"
+cp "$PCEJS_UTIL_MODULE_DIR/pcejs-util.umd.js" "$PCEJS_ARCH_EXAMPLE_DIR/"
+echo "dependency umd bundles copied to example dir"
 
 if [[ $PCEJS_MODE == "worker" ]]; then
   {

@@ -6,9 +6,8 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "dependencies": {
-    "pcejs-util": "^0.1.0",
     "xtend": "^3.0.0"
   },
   "licenses": [
@@ -18,12 +17,12 @@
     }
   ],
   "scripts": {
-    "prepare": "./prepublish.sh macplus && ./umd.sh"
+    "prepublish": "./prepublish.sh macplus && ./umd.sh"
   },
   "files": [
     "index.js",
     "macplus-pcex.rom",
-    "PCEJSMacplus.js",
+    "pcejs-macplus.umd.js",
     "pce-macplus.wasm",
     "lib/pcejs-macplus.js"
   ],

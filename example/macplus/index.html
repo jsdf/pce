@@ -2,49 +2,80 @@
 <html>
   <head>
     <style type="text/css">
-    * {
-      font-family: sans-serif;
-    }
-    p {
-      font-size: 14px;
-      margin: 8px 0;
-      color: #888;
-    }
-    .pcejs {
-      padding-right: 0;
-      margin-left: auto;
-      margin-right: auto;
-      display: block;
-      text-align: center;
-    }
-    div.pcejs-border {
-      border: none;
-    }
-    /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-    .pcejs-canvas {
-      border: 0px none;
-    }
-    .pcejs-container {
-      margin-top: 32px;
-      text-align: center;
-    }
+      * {
+        font-family: sans-serif;
+      }
+      p {
+        font-size: 14px;
+        margin: 8px 0;
+        color: #888;
+      }
+      .pcejs {
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        text-align: center;
+      }
+      div.pcejs-border {
+        border: none;
+      }
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      .pcejs-canvas {
+        border: 0px none;
+      }
+      .pcejs-container {
+        margin-top: 32px;
+        text-align: center;
+      }
 
-    /* macplus has mouse integration, so we can hide the host mouse */
-    .pcejs-container canvas {
-      cursor: none;
-    }
-
+      /* macplus has mouse integration, so we can hide the host mouse */
+      .pcejs-container canvas {
+        cursor: none;
+      }
     </style>
   </head>
   <body>
     <div class="pcejs pcejs-container">
       <div class="pcejs pcejs-loading-status">Downloading...</div>
       <div class="pcejs-border">
-        <canvas class="pcejs pcejs-canvas" oncontextmenu="event.preventDefault()"></canvas>
+        <canvas
+          class="pcejs pcejs-canvas"
+          oncontextmenu="event.preventDefault()"
+        ></canvas>
       </div>
     </div>
 
     <p class="pcejs">press esc + &uarr; to zoom in, esc + &darr; to zoom out</p>
-    <script type="text/javascript" src="bundle.js"></script>
+    <script type="text/javascript" src="./pcejs-macplus.umd.js"></script>
+    <script type="text/javascript" src="./pcejs-util.umd.js"></script>
+    <script type="text/javascript">
+      // add a load progress bar. not required, but good ux
+      var loadingStatus = PCEJSUtil.loadingStatus(
+        document.querySelector('.pcejs-loading-status')
+      );
+
+      PCEJSMacplus({
+        arguments: ['-c', 'pce-config.cfg', '-r'],
+        autoloadFiles: [
+          'macplus-pcex.rom',
+          'mac-plus.rom',
+          'hd1.qed',
+          'dc.dsk',
+          'kidpix.dsk',
+          'pce-config.cfg',
+        ],
+
+        print: console.log.bind(console),
+
+        printErr: console.warn.bind(console),
+
+        canvas: document.querySelector('.pcejs-canvas'),
+
+        monitorRunDependencies: function (remainingDependencies) {
+          loadingStatus.update(remainingDependencies);
+        },
+      });
+    </script>
   </body>
 </html>
