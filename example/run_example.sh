@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 copy_if_present() {
   if [ -a "$1" ]; then
@@ -40,11 +40,9 @@ fi
 
 echo "running npm prepublish script for modules"
 pushd "$PCEJS_ARCH_MODULE_DIR"
-echo `pwd`
 npm run prepublish
 popd
 pushd "$PCEJS_UTIL_MODULE_DIR"
-echo `pwd`
 npm run prepublish
 popd
 
