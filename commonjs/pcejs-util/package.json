@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.1.1",
+  "version": "0.2.2",
   "licenses": [
     {
       "type": "GPL",
@@ -16,10 +16,6 @@
   "scripts": {
     "prepublish": "./umd.sh"
   },
-  "files": [
-    "index.js",
-    "pcejs-util.umd.js"
-  ],
   "homepage": "https://github.com/jsdf/pce",
   "bugs": "https://github.com/jsdf/pce/issues",
   "repository": {

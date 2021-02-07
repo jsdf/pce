@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "dependencies": {
     "xtend": "^3.0.0"
   },
@@ -19,13 +19,6 @@
   "scripts": {
     "prepublish": "./prepublish.sh macplus && ./umd.sh"
   },
-  "files": [
-    "index.js",
-    "macplus-pcex.rom",
-    "pcejs-macplus.umd.js",
-    "pce-macplus.wasm",
-    "lib/pcejs-macplus.js"
-  ],
   "homepage": "https://github.com/jsdf/pce",
   "bugs": "https://github.com/jsdf/pce/issues",
   "repository": {

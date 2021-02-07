@@ -1,0 +1,6 @@
+umd.sh
+prepublish.sh
+pthread-main.js
+pce-*.worker.js
+example/
+example-umd/

@@ -6,7 +6,7 @@
     "browserify"
   ],
   "author": "James Friend",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "dependencies": {
     "xtend": "^3.0.0"
   },
@@ -19,12 +19,6 @@
   "scripts": {
     "prepublish": "./prepublish.sh ibmpc && ./umd.sh"
   },
-  "files": [
-    "index.js",
-    "ibmpc-pcex.rom",
-    "pcejs-ibmpc.umd.js",
-    "lib/pcejs-ibmpc.js"
-  ],
   "homepage": "https://github.com/jsdf/pce",
   "bugs": {
     "url": "https://github.com/jsdf/pce/issues"
