@@ -19,7 +19,7 @@ I recommend installing the [native version of PCE](http://www.hampa.ch/pce/) on 
 
 ## Installing from npm
 
-PCE.js is available from npm as a set of [browserify](http://github.com/substack/node-browserify) compatible node packages.
+PCE.js is available from npm as a set of [browserify](http://github.com/substack/node-browserify) compatible node packages, which also include [UMD](https://www.davidbcalhoun.com/2014/what-is-amd-commonjs-and-umd/) builds which can be use with just a script tag.
 
 There is one for each emulator build:
 - [pcejs-macplus](http://npmjs.org/package/pcejs-macplus) - Mac Plus
