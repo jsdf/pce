@@ -5,6 +5,7 @@
 
 const spawn = require('child_process').spawn;
 const exec = require('child_process').execSync;
+const execFileSync = require('child_process').execFileSync;
 const http = require('http');
 const util = require('util');
 const path = require('path');
@@ -15,6 +16,45 @@ const host = `http://127.0.0.1:${port}`;
 const serveDir = path.resolve(process.argv[2] || process.cwd());
 
 const filesMimeTypesCache = {};
+
+function isPathInside(parent, child) {
+  const relative = path.relative(parent, child);
+  return (
+    relative === '' ||
+    (
+      relative &&
+      !relative.startsWith('..') &&
+      !path.isAbsolute(relative)
+    )
+  );
+}
+
+function getSafeRequestPath(reqUrl) {
+  const reqPath = reqUrl.replace(/\?.*/, '').replace(/_cb.*/, '');
+
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(reqPath);
+  } catch (e) {
+    const err = new Error('Invalid URL encoding');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const reqPathFSPath = path.resolve(serveDir, '.' + decodedPath);
+
+  if (!isPathInside(serveDir, reqPathFSPath)) {
+    const err = new Error('Path traversal is not allowed');
+    err.statusCode = 403;
+    throw err;
+  }
+
+  return {
+    reqPath: decodedPath,
+    reqPathFSPath: reqPathFSPath
+  };
+}
+
 function getMimeType(filepath) {
   if (!filesMimeTypesCache[filepath]) {
     switch (path.extname(filepath)) {
@@ -28,8 +68,9 @@ function getMimeType(filepath) {
         filesMimeTypesCache[filepath] = 'application/wasm';
         break;
       default:
-        filesMimeTypesCache[filepath] = exec(
-          `file --mime-type --brief ${filepath}`
+        filesMimeTypesCache[filepath] = execFileSync(
+          'file',
+          ['--mime-type', '--brief', filepath]
         )
           .toString()
           .trim();
@@ -39,8 +80,20 @@ function getMimeType(filepath) {
 }
 
 function handler(req, res) {
-  const reqPath = req.url.replace(/\?.*/, '').replace(/_cb.*/, '');
-  const reqPathFSPath = path.join(serveDir, reqPath);
+  let reqPath;
+  let reqPathFSPath;
+
+  try {
+    const safePath = getSafeRequestPath(req.url);
+    reqPath = safePath.reqPath;
+    reqPathFSPath = safePath.reqPathFSPath;
+  } catch (pathErr) {
+    console.log(`${pathErr.statusCode || 400} ${req.url} ${pathErr}`);
+    res.writeHead(pathErr.statusCode || 400, {'Content-Type': 'text/plain'});
+    res.write(pathErr.stack);
+    res.end();
+    return;
+  }
 
   function errRes(err, code) {
     console.log(`${code} ${req.url} ${err}`);
@@ -63,6 +116,11 @@ function handler(req, res) {
     const filepath = reqPathStat.isDirectory()
       ? path.join(reqPathFSPath, 'index.html')
       : reqPathFSPath;
+
+    if (!isPathInside(serveDir, filepath)) {
+      return errRes(new Error('Path traversal is not allowed'), 403);
+    }
+
     const mimeType = getMimeType(filepath);
     const contents = fs.readFileSync(filepath);
     console.log(`200 ${req.url} ${mimeType}`);
@@ -76,6 +134,11 @@ function handler(req, res) {
       // render directory listing
       try {
         const filepath = path.join(serveDir, reqPath);
+
+        if (!isPathInside(serveDir, filepath)) {
+          return errRes(new Error('Path traversal is not allowed'), 403);
+        }
+
         const dirlinks = ['..', ...fs.readdirSync(filepath)]
           .map((file) => {
             const fileStat = fs.lstatSync(path.join(reqPathFSPath, file));
