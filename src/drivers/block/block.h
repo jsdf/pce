@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.h                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,14 +34,19 @@
 #endif
 
 
-#define PCE_DISK_NONE   0
-#define PCE_DISK_RAW    1
-#define PCE_DISK_RAM    2
-#define PCE_DISK_PCE    3
-#define PCE_DISK_DOSEMU 4
-#define PCE_DISK_COW    5
-#define PCE_DISK_PSI    6
-#define PCE_DISK_QED    7
+enum {
+	PCE_DISK_NONE,
+	PCE_DISK_RAW,
+	PCE_DISK_RAM,
+	PCE_DISK_PCE,
+	PCE_DISK_DOSEMU,
+	PCE_DISK_COW,
+	PCE_DISK_PSI,
+	PCE_DISK_QED,
+	PCE_DISK_PBI,
+	PCE_DISK_CHD,
+	PCE_DISK_PRI
+};
 
 
 struct disk_s;
@@ -217,6 +222,15 @@ int dsk_get_lba (disk_t *dsk, uint32_t c, uint32_t h, uint32_t s, uint32_t *v);
 int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
 
 /*!***************************************************************************
+ * @short  Read blocks using LBA addressing with zero fill
+ * @return Zero if successful
+ *
+ * This function can read beyond the end of the block device. Blocks past
+ * the end are zero filled.
+ *****************************************************************************/
+int dsk_read_lbaz (disk_t *dsk, void *buf, uint32_t i, uint32_t n);
+
+/*!***************************************************************************
  * @short  Read blocks using CHS addressing
  * @return Zero if successful
  *****************************************************************************/
@@ -239,6 +253,9 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
 );
 
 int dsk_commit (disk_t *dsk);
+
+disk_t *dsk_create_cow (disk_t *dsk, const char *name, unsigned long minblk);
+disk_t *dsk_open_cow (disk_t *dsk, const char *name);
 
 /*!***************************************************************************
  * @short  Get a message from a disk

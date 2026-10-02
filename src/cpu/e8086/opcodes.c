@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/opcodes.c                                      *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -496,7 +496,7 @@ unsigned op_17 (e8086_t *c)
 	e86_set_ss (c, e86_pop (c));
 	e86_set_clk (c, 8);
 
-	c->enable_int = 0;
+	c->save_flags &= ~E86_FLG_I;
 
 	return (1);
 }
@@ -2350,7 +2350,7 @@ unsigned op_8e (e8086_t *c)
 		e86_pq_init (c);
 	}
 	else if (reg == E86_REG_SS) {
-		c->enable_int = 0;
+		c->save_flags &= ~E86_FLG_I;
 	}
 
 	return (c->ea.cnt + 1);
@@ -3297,6 +3297,13 @@ unsigned op_cb (e8086_t *c)
 static
 unsigned op_cc (e8086_t *c)
 {
+	if (c->trap != NULL) {
+		if (c->trap (c->trap_ext, 3) == 0) {
+			e86_set_clk (c, 4);
+			return (1);
+		}
+	}
+
 	e86_set_ip (c, e86_get_ip (c) + 1);
 	e86_trap (c, 3);
 
@@ -3311,6 +3318,13 @@ unsigned op_cc (e8086_t *c)
 static
 unsigned op_cd (e8086_t *c)
 {
+	if (c->trap != NULL) {
+		if (c->trap (c->trap_ext, c->pq[1]) == 0) {
+			e86_set_clk (c, 4);
+			return (2);
+		}
+	}
+
 	e86_set_ip (c, e86_get_ip (c) + 2);
 	e86_trap (c, c->pq[1]);
 
@@ -3325,20 +3339,26 @@ unsigned op_cd (e8086_t *c)
 static
 unsigned op_ce (e8086_t *c)
 {
-	if (e86_get_of (c)) {
-		e86_set_ip (c, e86_get_ip (c) + 1);
-		e86_trap (c, 4);
-
-		e86_pq_init (c);
-
-		e86_set_clk (c, 53);
-
-		return (0);
+	if (e86_get_of (c) == 0) {
+		e86_set_clk (c, 4);
+		return (1);
 	}
 
-	e86_set_clk (c, 4);
+	if (c->trap != NULL) {
+		if (c->trap (c->trap_ext, 4) == 0) {
+			e86_set_clk (c, 4);
+			return (1);
+		}
+	}
 
-	return (1);
+	e86_set_ip (c, e86_get_ip (c) + 1);
+	e86_trap (c, 4);
+
+	e86_pq_init (c);
+
+	e86_set_clk (c, 53);
+
+	return (0);
 }
 
 /* OP CF: IRET */
@@ -3677,6 +3697,13 @@ unsigned op_d5 (e8086_t *c)
 
 	mul = c->pq[1];
 
+	if (mul == 0) {
+		if (e86_hook (c) == 0) {
+			e86_set_clk (c, 4);
+			return (2);
+		}
+	}
+
 	s1 = e86_get_ah (c);
 	s2 = e86_get_al (c);
 
@@ -3687,6 +3714,20 @@ unsigned op_d5 (e8086_t *c)
 	e86_set_clk (c, 60);
 
 	return (2);
+}
+
+/* OP D6: SALC */
+static
+unsigned op_d6 (e8086_t *c)
+{
+	unsigned short s1;
+
+	s1 = e86_get_cf (c);
+
+	e86_set_al (c, -s1);
+	e86_set_clk (c, 3);
+
+	return (1);
 }
 
 /* OP D7: XLAT */
@@ -3956,7 +3997,7 @@ unsigned op_f3 (e8086_t *c)
 static
 unsigned op_f4 (e8086_t *c)
 {
-	c->halt = 1;
+	c->state |= E86_STATE_HALT;
 
 	e86_set_clk (c, 2);
 
@@ -4060,9 +4101,9 @@ unsigned op_f6_05 (e8086_t *c)
 
 	e86_set_ax (c, d);
 
-	d &= 0xff00;
+	d &= 0xff80;
 
-	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xff00) && (d != 0x0000));
+	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xff80) && (d != 0x0000));
 
 	e86_set_clk_ea (c, (80 + 98) / 2, (86 + 104) / 2);
 
@@ -4255,9 +4296,9 @@ unsigned op_f7_05 (e8086_t *c)
 	e86_set_ax (c, d & 0xffff);
 	e86_set_dx (c, d >> 16);
 
-	d &= 0xffff0000;
+	d &= 0xffff8000;
 
-	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff0000) && (d != 0x00000000));
+	e86_set_f (c, E86_FLG_C | E86_FLG_O, (d != 0xffff8000) && (d != 0x00000000));
 
 	e86_set_clk_ea (c, (128 + 154) / 2, (134 + 160) / 2);
 
@@ -4658,7 +4699,7 @@ e86_opcode_f e86_opcodes[256] = {
 	&op_b8, &op_b9, &op_ba, &op_bb, &op_bc, &op_bd, &op_be, &op_bf,
 	&op_ud, &op_ud, &op_c2, &op_c3, &op_c4, &op_c5, &op_c6, &op_c7, /* C0 */
 	&op_ud, &op_ud, &op_ca, &op_cb, &op_cc, &op_cd, &op_ce, &op_cf,
-	&op_d0, &op_d1, &op_d2, &op_d3, &op_d4, &op_d5, &op_ud, &op_d7, /* D0 */
+	&op_d0, &op_d1, &op_d2, &op_d3, &op_d4, &op_d5, &op_d6, &op_d7, /* D0 */
 	&op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8, &op_d8,
 	&op_e0, &op_e1, &op_e2, &op_e3, &op_e4, &op_e5, &op_e6, &op_e7, /* E0 */
 	&op_e8, &op_e9, &op_ea, &op_eb, &op_ec, &op_ed, &op_ee, &op_ef,

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/rc759.h                                       *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -53,11 +53,8 @@
 #include <libini/libini.h>
 
 
-#define RC759_FLAG_MEM2 1
-
-
 typedef struct rc759_t {
-	unsigned           flags;
+	unsigned           model;
 
 	memory_t           *mem;
 	mem_blk_t          *ram;
@@ -87,17 +84,28 @@ typedef struct rc759_t {
 	unsigned char      ppi_port_b;
 	unsigned char      ppi_port_c;
 
+	char               rtc_enable;
+	char               rtc_stop;
+
+	unsigned char      fastboot;
+
+	unsigned           disk_id;
+
 	unsigned           current_int;
 
-	unsigned long      cpu_clock_frq;
-	unsigned long      cpu_clock_cnt;
-	unsigned long      cpu_clock_rem8;
-	unsigned long      cpu_clock_rem1024;
-	unsigned long      cpu_clock_rem32768;
+	char               auto_speed;
+	unsigned           speed;
 
-	unsigned long      sync_clock_sim;
-	unsigned long      sync_clock_real;
-	unsigned long      sync_interval;
+	unsigned long      clock_freq;
+	unsigned long      clock_cnt;
+	unsigned long      clock_rem8;
+	unsigned long      clock_rem1024;
+	unsigned long      clock_rem65536;
+
+	unsigned long      sync_vclock;
+	unsigned long      sync_rclock;
+	unsigned long      sync_vclock_last;
+	unsigned long      sync_rclock_last;
 
 	unsigned           brk;
 	char               pause;
@@ -123,17 +131,15 @@ int rc759_intlog_check (rc759_t *sim, unsigned n);
  *****************************************************************************/
 void rc759_reset (rc759_t *sim);
 
-void rc759_set_cpu_clock (rc759_t *sim, unsigned long clk);
-
 /*!***************************************************************************
  * @short Set the emulated cpu clock frequency as a multiple of 4.77 MHz
  *****************************************************************************/
 void rc759_set_speed (rc759_t *sim, unsigned factor);
 
 /*!***************************************************************************
- * @short Get the CPU clock
+ * @short Get the clock count
  *****************************************************************************/
-unsigned long rc759_get_cpu_clock (rc759_t *sim);
+unsigned long rc759_get_clock (rc759_t *sim);
 
 /*!***************************************************************************
  * @short Reset the clock counters

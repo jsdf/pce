@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/clock/ds1743.c                                   *
  * Created:     2006-12-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -156,10 +156,6 @@ void ds1743_clk_to_ram (ds1743_t *rtc)
 
 	p = rtc->data + rtc->cnt - 8;
 
-	if (p[DS1743_CENTURY] & DS1743_R) {
-		return;
-	}
-
 	v = ds1743_int_to_bcd (rtc->year / 100);
 	p[DS1743_CENTURY] &= 0xc0;
 	p[DS1743_CENTURY] |= (v & 0x3f);
@@ -200,12 +196,8 @@ void ds1743_ram_to_clk (ds1743_t *rtc)
 
 	p = rtc->data + rtc->cnt - 8;
 
-	if (p[DS1743_CENTURY] & DS1743_W) {
-		return;
-	}
-
 	v = ds1743_bcd_to_int (p[DS1743_CENTURY] & 0x3f);
-	rtc->year = 10 * v;
+	rtc->year = 100 * v;
 
 	v = ds1743_bcd_to_int (p[DS1743_YEAR]);
 	rtc->year += v;
@@ -254,10 +246,10 @@ void ds1743_set_day (ds1743_t *rtc, unsigned dow)
 	ds1743_clk_to_ram (rtc);
 }
 
-
 unsigned char ds1743_get_uint8 (ds1743_t *rtc, unsigned long addr)
 {
 	unsigned char val;
+	unsigned char *p;
 
 	if (addr >= rtc->cnt) {
 		return (0);
@@ -267,10 +259,14 @@ unsigned char ds1743_get_uint8 (ds1743_t *rtc, unsigned long addr)
 		return (rtc->data[addr]);
 	}
 
-	ds1743_clk_to_ram (rtc);
-
 	if (rtc->cbread != NULL) {
 		rtc->cbread (rtc->cbrext, 1);
+	}
+
+	p = rtc->data + (rtc->cnt - 8);
+
+	if ((p[DS1743_CENTURY] & DS1743_R & DS1743_W) == 0) {
+		ds1743_clk_to_ram (rtc);
 	}
 
 	val = rtc->data[addr];
@@ -294,17 +290,33 @@ unsigned long ds1743_get_uint32 (ds1743_t *rtc, unsigned long addr)
 
 void ds1743_set_uint8 (ds1743_t *rtc, unsigned long addr, unsigned char val)
 {
+	unsigned char old;
+
 	if (addr >= rtc->cnt) {
 		return;
 	}
 
-	rtc->data[addr] = val;
-
 	if (addr < (rtc->cnt - 8)) {
+		rtc->data[addr] = val;
 		return;
 	}
 
-	ds1743_ram_to_clk (rtc);
+	if (addr == (rtc->cnt - 8 + DS1743_CENTURY)) {
+		old = rtc->data[addr];
+		rtc->data[addr] = val;
+
+		if ((old ^ val) & 0x40) {
+			/* R changed */
+			ds1743_clk_to_ram (rtc);
+		}
+		else if ((old ^ val) & ~val & 0x80) {
+			/* W: 1 -> 0 */
+			ds1743_ram_to_clk (rtc);
+		}
+	}
+	else {
+		rtc->data[addr] = val;
+	}
 
 	if (rtc->cbwrite != NULL) {
 		rtc->cbwrite (rtc->cbwext, 1);

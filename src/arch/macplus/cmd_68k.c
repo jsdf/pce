@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/cmd_68k.c                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -33,12 +33,23 @@
 #include <lib/cmd.h>
 #include <lib/console.h>
 #include <lib/log.h>
+#include <lib/msgdsk.h>
 #include <lib/monitor.h>
 #include <lib/sysdep.h>
 
-#include <SDL.h>
-
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
+#include <SDL.h>
+#endif
+
+/*
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
+ */
+#define MAC_EMSCRIPTEN_MAX_MS 100
+
 
 mon_cmd_t par_cmd[] = {
 	{ "c", "[cnt]", "clock" },
@@ -50,9 +61,9 @@ mon_cmd_t par_cmd[] = {
 	{ "reset", "", "reset" },
 	{ "rte", "", "execute to next rte" },
 	{ "r", "reg [val]", "get or set a register" },
-	{ "s", "[what]", "print status (cpu|mem|scc|via)" },
+	{ "s", "[what]", "print status (cpu|disks|iwm|mem|scc|via)" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
-	{ "u", "[[-]addr [cnt]]", "disassemble" }
+	{ "u", "[gas] [[-]addr [cnt]]", "disassemble" }
 };
 
 unsigned par_cmd_cnt = sizeof (par_cmd) / sizeof (par_cmd[0]);
@@ -62,7 +73,7 @@ static
 void mac_dasm_str (char *dst, e68_dasm_t *op)
 {
 	unsigned   i, n;
-	char       tmp[256];
+	char       tmp[512];
 	const char *ins;
 
 	strcpy (dst, "");
@@ -213,14 +224,25 @@ void mac_prt_state_cpu (e68000_t *c)
 static
 void mac_prt_state_scc (macplus_t *sim)
 {
-	unsigned i;
-	e8530_t  *scc;
+	unsigned    i;
+	e8530_t     *scc;
+	e8530_chn_t *chn;
+
+	static const char p[4] = { 'N', 'O', 'E', ' ' };
+	static const char *s[5] = { "0", "", "1", "1.5", "2" };
 
 	scc = &sim->scc;
 
 	pce_prt_sep ("8530-SCC");
 
-	pce_printf ("  IRQ=%u\n", scc->irq_val);
+	pce_printf ("IRQ=%u\n", scc->irq_val);
+
+	for (i = 0; i < 2; i++) {
+		chn = scc->chn + i;
+		pce_printf ("CHN%u=%u%c%u%s\n",
+			i, chn->bps, p[chn->parity & 3], chn->bpc, s[chn->stop]
+		);
+	}
 
 	for (i = 0; i < 16; i++) {
 		pce_printf (
@@ -268,6 +290,42 @@ void mac_prt_state_via (macplus_t *sim)
 }
 
 static
+void mac_print_state_iwm (macplus_t *sim)
+{
+	unsigned        i;
+	mac_iwm_drive_t *drv;
+	mac_iwm_t       *iwm;
+
+	pce_prt_sep ("IWM");
+
+	iwm = &sim->iwm;
+
+	pce_printf ("DSEL=%02X  HSEL=%02X  LINE=%02X  WR=%d\n",
+		iwm->drive_sel, iwm->head_sel, iwm->lines, iwm->writing
+	);
+
+	pce_printf ("STAT=%02X  MODE=%02X  HDSK=%02X\n",
+		iwm->status, iwm->mode, iwm->handshake
+	);
+
+	pce_printf ("SCNT=%u   SHFT=%02X  RBUF=%02X\n",
+		iwm->shift_cnt, iwm->shift, iwm->read_buf
+	);
+
+	for (i = 0; i < 2; i++) {
+		drv = &sim->iwm.drv[i];
+
+		pce_printf ("D%u: DSK=%d MOT=%d MOD=%c%c TRK=%2u/%u POS=%lu/%lu\n",
+			i + 1, drv->disk_inserted, drv->motor_on,
+			drv->dirty ? 'D' : '-',
+			drv->track_dirty ? 'T' : '-',
+			drv->cur_cyl, drv->cur_head,
+			drv->cur_track_pos, drv->cur_track_len
+		);
+	}
+}
+
+static
 void mac_prt_state_mem (macplus_t *sim)
 {
 	pce_prt_sep ("MEM");
@@ -287,6 +345,12 @@ void mac_prt_state (macplus_t *sim, const char *str)
 	while (!cmd_match_eol (&cmd)) {
 		if (cmd_match (&cmd, "cpu")) {
 			mac_prt_state_cpu (sim->cpu);
+		}
+		else if (cmd_match (&cmd, "disks")) {
+			dsks_print_info (sim->dsks);
+		}
+		else if (cmd_match (&cmd, "iwm")) {
+			mac_print_state_iwm (sim);
 		}
 		else if (cmd_match (&cmd, "mem")) {
 			mac_prt_state_mem (sim);
@@ -370,7 +434,6 @@ int mac_exec_to (macplus_t *sim, unsigned long addr)
 void mac_run (macplus_t *sim)
 {
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -390,88 +453,139 @@ void mac_run (macplus_t *sim)
 	pce_stop();
 }
 
-/*
- * emscripten specific main loop
- */
-
 
 /*
- * setup and run the simulation
+ * Browser (emscripten) main loop
+ *
+ * The main loop is driven by requestAnimationFrame. Each iteration emulates
+ * the real time that has passed since the previous one, so that every
+ * emulated video frame can be shown and no time is wasted busy waiting to
+ * stay in sync with real time.
  */
+
+static macplus_t *mac_emscripten_sim = NULL;
+
 void mac_run_emscripten (macplus_t *sim)
 {
-	int brk = 0;
+	mac_emscripten_sim = sim;
 
 	pce_start (&sim->brk);
 
 	mac_clock_discontinuity (sim);
 
-	#ifdef EMSCRIPTEN
-	emscripten_set_main_loop(mac_run_emscripten_step, 100, 1);
-	#else
-	while (!sim->brk) {
+#ifdef EMSCRIPTEN
+	emscripten_set_main_loop (mac_run_emscripten_step, 0, 1);
+#else
+	while (sim->brk == 0) {
 		mac_run_emscripten_step();
 	}
-	#endif
 
-	// pce_stop();
+	pce_stop();
+#endif
 }
 
-
+#ifdef EMSCRIPTEN
 /*
- * run one iteration
+ * Set the mouse position in the Mac's low memory globals to the absolute
+ * position of the host mouse pointer over the canvas, so that the mouse
+ * works without pointer lock.
  */
-void mac_run_emscripten_step ()
+static
+void mac_emscripten_set_mouse (macplus_t *sim)
 {
-	int mousex;
-	int mousey;
-	int mousehack_interval = 100;
- 
-	const SDL_VideoInfo* videoinfo = SDL_GetVideoInfo();
-	int screenw = videoinfo->current_w;
-	int screenh = videoinfo->current_h;
- 
-	// for each 'emscripten step' we'll run a bunch of actual cycles
-	// to minimise overhead from emscripten's main loop management
-	int i;
-	for (i = 0; i < 10000; ++i) {
-		// gross hacks to set mouse position in browser
-		if (i % mousehack_interval == 0) {
-			SDL_GetMouseState (&mousex, &mousey);
-			// clamp mouse pos to screen bounds
-			mousex = mousex > screenw ? screenw : (mousex < 0 ? 0 : mousex);
-			mousey = mousey > screenh ? screenh : (mousey < 0 ? 0 : mousey);
-			// internal raw mouse coords
-			e68_set_mem16 (par_sim->cpu, 0x0828, (unsigned) mousey);
-			e68_set_mem16 (par_sim->cpu, 0x082a, (unsigned) mousex);
-			// raw mouse coords
-			e68_set_mem16 (par_sim->cpu, 0x082c, (unsigned) mousey);
-			e68_set_mem16 (par_sim->cpu, 0x082e, (unsigned) mousex);
-			// smoothed mouse coords
-			e68_set_mem16 (par_sim->cpu, 0x0830, (unsigned) mousey);
-			e68_set_mem16 (par_sim->cpu, 0x0832, (unsigned) mousex);
-		}
-		mac_clock (par_sim, 0);
+	int                 x, y, w, h;
+	const SDL_VideoInfo *info;
 
-		if (par_sim->brk) {
+	info = SDL_GetVideoInfo();
+	w = info->current_w;
+	h = info->current_h;
+
+	SDL_GetMouseState (&x, &y);
+
+	x = (x > w) ? w : ((x < 0) ? 0 : x);
+	y = (y > h) ? h : ((y < 0) ? 0 : y);
+
+	/* MTemp */
+	e68_set_mem16 (sim->cpu, 0x0828, (unsigned) y);
+	e68_set_mem16 (sim->cpu, 0x082a, (unsigned) x);
+	/* RawMouse */
+	e68_set_mem16 (sim->cpu, 0x082c, (unsigned) y);
+	e68_set_mem16 (sim->cpu, 0x082e, (unsigned) x);
+	/* Mouse */
+	e68_set_mem16 (sim->cpu, 0x0830, (unsigned) y);
+	e68_set_mem16 (sim->cpu, 0x0832, (unsigned) x);
+}
+#endif
+
+void mac_run_emscripten_step (void)
+{
+	static long long   over = 0;
+	long long          clk;
+	unsigned long long clk0;
+	unsigned           i;
+	macplus_t          *sim;
+
+#ifdef EMSCRIPTEN
+	static double last = -1.0;
+	double        now, ms;
+
+	now = emscripten_get_now();
+
+	if ((last < 0.0) || (now < last)) {
+		last = now;
+	}
+
+	ms = now - last;
+	last = now;
+
+	if (ms > MAC_EMSCRIPTEN_MAX_MS) {
+		ms = MAC_EMSCRIPTEN_MAX_MS;
+	}
+
+	clk = (long long) (ms * (MAC_CPU_CLOCK / 1000.0));
+#else
+	/* mac_clock() keeps real time by sleeping */
+	clk = MAC_CPU_CLOCK / 25;
+#endif
+
+	sim = mac_emscripten_sim;
+
+	if (sim->pause) {
+		trm_check (sim->trm);
+		return;
+	}
+
+	/* clk_cnt counts CPU clocks, which run faster than real time by the speed factor */
+	if (sim->speed_factor > 1) {
+		clk *= sim->speed_factor;
+	}
+
+	/* the previous iteration may have run a few clocks too many */
+	clk -= over;
+	clk0 = sim->clk_cnt;
+	i = 0;
+
+	while ((long long) (sim->clk_cnt - clk0) < clk) {
+#ifdef EMSCRIPTEN
+		if ((i++ % 100) == 0) {
+			mac_emscripten_set_mouse (sim);
+		}
+#endif
+
+		mac_clock (sim, 0);
+
+		if (sim->brk) {
 			pce_stop();
-			#ifdef EMSCRIPTEN
+#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-			#endif
+#endif
 			return;
 		}
-
-		while (par_sim->pause) {
-			pce_usleep (50UL * 1000UL);
-			trm_check (par_sim->trm);
-		}
 	}
-	// print state
-	// mac_prt_state_cpu(par_sim);
+
+	over = (long long) (sim->clk_cnt - clk0) - clk;
 }
-/*
- * end emscripten specific main loop
- */
+
 
 #if 0
 static
@@ -596,7 +710,6 @@ void mac_cmd_g_b (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -628,7 +741,6 @@ void mac_cmd_g_e (cmd_t *cmd, macplus_t *sim)
 	cnt = e68_get_exception_cnt (sim->cpu);
 
 	pce_start (&sim->brk);
-
 	mac_clock_discontinuity (sim);
 
 	while (1) {
@@ -707,6 +819,45 @@ void mac_cmd_halt (cmd_t *cmd, macplus_t *sim)
 	mac_prt_state_cpu (sim->cpu);
 }
 
+static
+void mac_cmd_hm (cmd_t *cmd)
+{
+	pce_puts (
+		"emu.exit\n"
+		"emu.pause            \"0\" | \"1\"\n"
+		"emu.pause.toggle\n"
+		"emu.realtime         \"0\" | \"1\"\n"
+		"emu.realtime.toggle\n"
+		"emu.reset\n"
+		"emu.stop\n"
+		"\n"
+		"emu.cpu.model        \"68000\" | \"68010\" | \"68020\"\n"
+		"emu.cpu.speed        <factor>\n"
+		"emu.cpu.speed.step   <adjustment>\n"
+		"\n"
+		"emu.mac.insert       <drive>\n"
+		"\n"
+		"emu.ser1.driver      <driver>\n"
+		"emu.ser1.file        <filename>\n"
+		"emu.ser1.multi       <count>\n"
+		"emu.ser2.driver      <driver>\n"
+		"emu.ser2.file        <filename>\n"
+		"emu.ser2.multi       <count>\n"
+		"\n"
+		"emu.term.fullscreen  \"0\" | \"1\"\n"
+		"emu.term.fullscreen.toggle\n"
+		"emu.term.grab\n"
+		"emu.term.release\n"
+		"emu.term.screenshot  [<filename>]\n"
+		"emu.term.title       <title>\n"
+		"\n"
+		"emu.video.brightness <val>\n"
+		"\n"
+	);
+
+	msg_dsk_print_help();
+}
+
 /*
  * p - step
  */
@@ -732,6 +883,7 @@ void mac_cmd_p (cmd_t *cmd, macplus_t *sim)
 	ecnt = e68_get_exception_cnt (sim->cpu);
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	while (cnt > 0) {
 		e68_dasm_mem (sim->cpu, &da, e68_get_pc (sim->cpu));
@@ -789,6 +941,7 @@ void mac_cmd_rte (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	while (1) {
 		mac_exec (sim);
@@ -886,6 +1039,7 @@ void mac_cmd_t (cmd_t *cmd, macplus_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	mac_clock_discontinuity (sim);
 
 	for (i = 0; i < n; i++) {
 		mac_exec (sim);
@@ -970,6 +1124,76 @@ void mac_cmd_u_to (cmd_t *cmd, macplus_t *sim, unsigned long addr)
 }
 
 /*
+ * u gas - disassemble for gas
+ */
+static
+void mac_cmd_u_gas (cmd_t *cmd, macplus_t *sim)
+{
+	unsigned      i;
+	unsigned long addr1, addr2;
+	const char    *ins;
+	e68_dasm_t    op;
+
+	addr1 = 0;
+	addr2 = 0;
+
+	if (cmd_match_uint32 (cmd, &addr1)) {
+		addr2 = addr1;
+		cmd_match_uint32 (cmd, &addr2);
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	pce_printf ("\t.text\n");
+
+	while (addr1 < addr2) {
+		e68_dasm_mem (sim->cpu, &op, addr1);
+
+		pce_printf ("\tdc.w\t0x%04x", (unsigned) op.ir[0]);
+
+		for (i = 1; i < op.irn; i++) {
+			pce_printf (", 0x%04x", (unsigned) op.ir[i]);
+		}
+
+		for (i = op.irn; i < 4; i++) {
+			pce_printf ("\t");
+		}
+
+		pce_printf ("\t| %06lX  ", op.pc);
+
+		ins = mac_get_trap_name (op.ir[0]);
+
+		if (ins == NULL) {
+			ins = op.op;
+		}
+
+		pce_printf ((op.argn > 0) ? "%-8s" : "%s", ins);
+
+		if (op.argn >= 1) {
+			pce_printf ("%s", op.arg1);
+		}
+
+		if (op.argn >= 2) {
+			pce_printf (", %s", op.arg2);
+		}
+
+		if (op.argn >= 3) {
+			pce_printf (", %s", op.arg3);
+		}
+
+		pce_printf ("\n");
+
+		if (op.flags & E68_DFLAG_RTS) {
+			pce_printf ("\n");
+		}
+
+		addr1 += 2 * op.irn;
+	}
+}
+
+/*
  * u - disassemble
  */
 static
@@ -981,6 +1205,11 @@ void mac_cmd_u (cmd_t *cmd, macplus_t *sim)
 	static unsigned long saddr = 0;
 	e68_dasm_t           op;
 	char                 str[256];
+
+	if (cmd_match (cmd, "gas")) {
+		mac_cmd_u_gas (cmd, sim);
+		return;
+	}
 
 	if (first) {
 		first = 0;
@@ -1032,6 +1261,9 @@ int mac_cmd (macplus_t *sim, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "halt")) {
 		mac_cmd_halt (cmd, sim);
+	}
+	else if (cmd_match (cmd, "hm")) {
+		mac_cmd_hm (cmd);
 	}
 	else if (cmd_match (cmd, "p")) {
 		mac_cmd_p (cmd, sim);

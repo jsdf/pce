@@ -1,0 +1,320 @@
+.TH PFI 1 "2022-01-15" "HH" "pce"
+\
+.SH NAME
+pfi \- convert and modify PFI flux images
+
+.SH SYNOPSIS
+.BI pfi " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpfi\fR(1) is used to modify and convert PFI flux image files.
+
+.SH OPTIONS
+.TP
+.BI "-c, --cylinder " "cyl1[-cyl2]"
+Select a range of cylinders. To select all cylinders, specify
+\fBall\fR as parameter.
+\
+.TP
+.B "-f, --info"
+Print information about the current image or the next image loaded.
+\
+.TP
+.BI "-h, --head " "head1[-head2]"
+Select a range of heads. To select all heads, specify
+\fBall\fR as parameter.
+\
+.TP
+.BI "-i, --input " filename
+Load an image from \fIfilename\fR.
+\
+.TP
+.BI "-I, --input-format " format
+Set the file format for the next input file. If this option is not
+used, the file format is detected automatically.
+
+Valid formats are:
+.RS
+.TP
+.B a2r
+Applesauce flux image
+.TP
+.B pfi
+The native PFI format
+.TP
+.B scp
+Supercard Pro flux image
+.TP
+.B raw
+Kryoflux raw stream
+.RE
+\
+.TP
+.B "-l, --list-short"
+List all tracks in the current image, one line per track.
+\
+.TP
+.B "-L, --list-long"
+List all tracks in the current image, one line per revolution.
+\
+.TP
+.BI "-o, --output " filename
+Set the output file name. Before exiting, the current image will
+be written to this file.
+\
+.TP
+.BI "-O, --output-format " format
+Set the output file format. If this option is not used, the file
+format is determined by the output file name.
+
+Valid formats are:
+.RS
+.TP
+.B a2r
+AppleSauce flux image
+.TP
+.B pfi
+The native PFI format
+.TP
+.B scp
+Supercard Pro flux image
+.RE
+\
+.TP
+.BI "-p, --operation " "name [arg...]"
+Perform an operation on the current image. Valid operations are:
+.RS
+.TP
+.BI "comment-add " text
+Add \fItext\fR to the image comment.
+.TP
+.BI "comment-load " filename
+Load the image comment from file \fIfilename\fR.
+.TP
+.B comment-print
+Print the current image comment.
+.TP
+.BI "comment-save " filename
+Save the current image comment to \fIfilename\fR.
+.TP
+.BI "comment-set " text
+Set the image comment to \fItext\fR.
+.TP
+.BI "decode " "type filename"
+Decode the image and save it to \fIfilename\fR.
+
+Valid decode types are:
+.RS
+.TP
+.B pri
+Save the decoded image as a PRI image.
+.TP
+.B pri-mac
+This is synonymous with \fBpri-mac-500\fR.
+.TP
+.B pri-mac-490
+Save the decoded image as a PRI image. This decode type also overrides
+the bitrate set with the \fB-r\fR option with the apporpriate variable
+bitrates used by Macintosh double density disk drives at 489.6 kbit/s.
+.TP
+.B pri-mac-500
+Save the decoded image as a PRI image. This decode type also overrides
+the bitrate set with the \fB-r\fR option with the apporpriate variable
+bitrates used by Macintosh double density disk drives at 500 kbit/s.
+.TP
+.B text
+Save the decoded image in textual form.
+.RE
+.TP
+.B "delete"
+Delete the selected tracks.
+.TP
+.B "double-step"
+Remove odd numbered tracks.
+.TP
+.B "double-step-even"
+Remove even numbered tracks.
+.TP
+.BI "encode " "type filename"
+Load an image from \fIfilename\fR and encode it.
+
+Valid encode types are:
+.RS
+.TP
+.B pri
+Encode a PRI image
+.TP
+.B text
+Encode a textual representation of the image produced by decode text.
+.RE
+.TP
+.B "info"
+Print information about the image.
+.TP
+.BI "quantize " "rate"
+Quantize all pulses to \fIrate\fR. After this operation all pulses are
+an exact multiple of \fIrate\fR.
+.TP
+.BI "rectify " "rate"
+Adjust all pulse widths to even multiples of \fIrate\fR. This may change
+the track lengths.
+.TP
+.BI "revolutions " "rev1[-rev2]"
+Extract revolutions \fIrev1\fR to \fIrev2\fR on all selected tracks.
+Revolutions not within the selected range are deleted.
+.TP
+.BI "scale " "factor"
+Multiply the pulse widths on all selected tracks by \fIfactor\fR. This
+has the same effect as dividing the rotational speed by \fIfactor\fR.
+.TP
+.BI "set-clock " "clock"
+Set the PFI clock rate to \fIclock\fR Hz. The clock rate can also be
+specified in kilohertz (with a \fBk\fR suffix)
+or megahertz (with a \fBM\fR suffix).
+It can also be one of these symbolic constants:
+.RS
+.TP
+.B a2r
+8000000 Hz
+.TP
+.B kryoflux
+24027428 Hz
+.TP
+.B scp
+40000000 Hz
+.RE
+.TP
+.BI "set-rpm " "rpm"
+Adjust the rotational speed of all selected tracks to \fIrpm\fR
+revolutions per minute by scaling the pulse widths by a constant
+factor.
+.TP
+.BI "set-rpm-mac"
+This is synonymous with \fBset-rpm-mac-500\fR.
+.TP
+.BI "set-rpm-mac-490"
+Adjust the rotational speed of all selected tracks to match a
+Macintosh variable speed drive at 489.6 kbit/s.
+.TP
+.BI "set-rpm-mac-500"
+Adjust the rotational speed of all selected tracks to match a
+Macintosh variable speed drive at 500 kbit/s.
+.TP
+.BI "shift-index " "offset"
+Add \fIoffset\fR clock cycles to all index positions, thereby rotating
+the track data relative to the index.
+.TP
+.BI "shift-index-us " "us"
+Add \fIus\fR microseconds to all index positions.
+.TP
+.BI "slack " ms
+Limit the slack data before the first and after the last index to
+\fIms\fR miliseconds.
+.TP
+.BI wpcom
+Simulate write precompensation.
+.RE
+\
+.TP
+.BI "-r, --data-rate " rate
+Set the bit rate that is used to decode the image. The default is
+500000 bits per second.
+\
+.TP
+.BI "-R, --revolution " rev
+Use revolution number \fIrev\fR when decoding. The first revolution is
+number 1.
+\
+.TP
+.BI "-s, --set " "par val"
+Set parameter \fIpar\fR to \fIval\fR.
+.RS
+.TP
+.BI "clock-tolerance " val
+Set the clock tolerance in tenth of a percent. The default is 40. If
+during decoding the data rate changes by more than the tolerance, a
+clock event is recorded in the PRI file.
+.TP
+.BI "fold-max " bits
+When folding tracks, compare at most \fIbits\fR bits. The default is
+16384.
+.TP
+.BI "fold-mode " mode
+Set the track fold mode to \fImode\fR. Valid modes are:
+.RS
+.TP
+.B none
+Fold the track at the index pulse.
+.TP
+.B maxrun
+Fold the track at the bit position that results in the longest run of
+identical bits at the beginning of the two revolutions. This is the
+default mode.
+.TP
+.B mindiff
+Fold the track at the bit position that results in the fewest differences
+between the two revolutions.
+.RE
+.TP
+.B pfi-clock
+Set the clock rate that is used to encode images. The default is
+24027428.
+.TP
+.BI "pfi-fold-compare " "size"
+Set the pfi fold compare size in pulses. This specifies the number of
+pulses that are compared between two revolutions to find a better index
+position. The default is 2048.
+.TP
+.BI "pfi-fold-revolution " "revolution"
+Set the the revolution to fold. The default is to fold all revolutions.
+.TP
+.BI "pfi-fold-right " "val"
+If \fIval\fR is non-zero, instead of centering the compare interval
+on the compare positions, only values to the right of the compare
+positions are compared. The default is false.
+.TP
+.BI "pfi-fold-window " "window-size"
+Set the pfi fold window size in pulses. During track folding a better
+index position is looked for \fIwindow-size\fR/2 pulses before and after
+the current index. The default is 1024.
+.TP
+.B slack1
+When extracting revolutions using the \fBrevolutions\fR operation include
+this much slack space before the first index. The value is in miliseconds.
+The default is 10.
+.TP
+.B slack2
+The amount of slack space after the last index. The default is 10.
+.TP
+.B slack
+Set \fBslack1\fR and \fBslack2\fR to the same value.
+.TP
+.BI "weak-bits " "val"
+If \fIval\fR is non-zero enable weak bit detection when decoding to PRI.
+.RE
+.TP
+.BI "-t, --track " "c h"
+Select a range of tracks. This is equivalent to "\fB-c\fR \fIc\fR \fB-h\fR \fIh\fR".
+.TP
+.B "-v, --verbose"
+Enable verbose operation.
+.TP
+.B "-x, --invert"
+Invert the track selection.
+.TP
+.B "-z, --clear"
+Clear the track selection.
+.TP
+.B --help
+Print usage information.
+.TP
+.B --version
+Print version information.
+
+.SH SEE ALSO
+.BR pce-img "(1),"
+.BR pri "(1),"
+.BR psi "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>

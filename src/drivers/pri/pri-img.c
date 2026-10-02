@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pri/pri-io.c                                     *
+ * File name:   src/drivers/pri/pri-img.c                                    *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -25,9 +25,12 @@
 #include <string.h>
 
 #include "pri-img.h"
+#include "pri-img-mfm.h"
+#include "pri-img-moof.h"
 #include "pri-img-pbit.h"
 #include "pri-img-pri.h"
 #include "pri-img-tc.h"
+#include "pri-img-woz.h"
 
 
 unsigned pri_get_uint16_be (const void *buf, unsigned idx)
@@ -131,6 +134,15 @@ void pri_set_uint32_le (void *buf, unsigned idx, unsigned long val)
 }
 
 
+int pri_set_ofs (FILE *fp, unsigned long ofs)
+{
+	if (fseek (fp, ofs, SEEK_SET)) {
+		return (1);
+	}
+
+	return (0);
+}
+
 int pri_read (FILE *fp, void *buf, unsigned long cnt)
 {
 	if (fread (buf, 1, cnt, fp) != cnt) {
@@ -162,6 +174,19 @@ int pri_write (FILE *fp, const void *buf, unsigned long cnt)
 	return (0);
 }
 
+int pri_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt)
+{
+	if (fseek (fp, ofs, SEEK_SET)) {
+		return (1);
+	}
+
+	if (fwrite (buf, 1, cnt, fp) != cnt) {
+		return (1);
+	}
+
+	return (0);
+}
+
 int pri_skip (FILE *fp, unsigned long cnt)
 {
 	unsigned long n;
@@ -181,15 +206,10 @@ int pri_skip (FILE *fp, unsigned long cnt)
 }
 
 
-static
-unsigned pri_get_type (unsigned type, const char *fname)
+unsigned pri_guess_type (const char *fname)
 {
 	unsigned   i;
 	const char *ext;
-
-	if (type != PRI_FORMAT_NONE) {
-		return (type);
-	}
 
 	ext = "";
 
@@ -211,6 +231,31 @@ unsigned pri_get_type (unsigned type, const char *fname)
 	else if (strcasecmp (ext, ".tc") == 0) {
 		return (PRI_FORMAT_TC);
 	}
+	else if (strcasecmp (ext, ".woz") == 0) {
+		return (PRI_FORMAT_WOZ);
+	}
+	else if (strcasecmp (ext, ".moof") == 0) {
+		return (PRI_FORMAT_MOOF);
+	}
+	else if (strcasecmp (ext, ".mfm") == 0) {
+		return (PRI_FORMAT_MFM);
+	}
+
+	return (PRI_FORMAT_NONE);
+}
+
+static
+unsigned pri_get_type (unsigned type, const char *fname)
+{
+	if (type != PRI_FORMAT_NONE) {
+		return (type);
+	}
+
+	type = pri_guess_type (fname);
+
+	if (type != PRI_FORMAT_NONE) {
+		return (type);
+	}
 
 	return (PRI_FORMAT_PRI);
 }
@@ -223,6 +268,14 @@ pri_img_t *pri_img_load_fp (FILE *fp, unsigned type)
 	img = NULL;
 
 	switch (type) {
+	case PRI_FORMAT_MFM:
+		img = pri_load_mfm (fp);
+		break;
+
+	case PRI_FORMAT_MOOF:
+		img = pri_load_moof (fp);
+		break;
+
 	case PRI_FORMAT_PBIT:
 		img = pri_load_pbit (fp);
 		break;
@@ -233,6 +286,10 @@ pri_img_t *pri_img_load_fp (FILE *fp, unsigned type)
 
 	case PRI_FORMAT_TC:
 		img = pri_load_tc (fp);
+		break;
+
+	case PRI_FORMAT_WOZ:
+		img = pri_load_woz (fp);
 		break;
 	}
 
@@ -260,6 +317,12 @@ pri_img_t *pri_img_load (const char *fname, unsigned type)
 int pri_img_save_fp (FILE *fp, const pri_img_t *img, unsigned type)
 {
 	switch (type) {
+	case PRI_FORMAT_MFM:
+		return (pri_save_mfm (fp, img));
+
+	case PRI_FORMAT_MOOF:
+		return (pri_save_moof (fp, img));
+
 	case PRI_FORMAT_PBIT:
 		return (pri_save_pbit (fp, img));
 
@@ -268,6 +331,9 @@ int pri_img_save_fp (FILE *fp, const pri_img_t *img, unsigned type)
 
 	case PRI_FORMAT_TC:
 		return (pri_save_tc (fp, img));
+
+	case PRI_FORMAT_WOZ:
+		return (pri_save_woz (fp, img));
 	}
 
 	return (1);
@@ -280,7 +346,7 @@ int pri_img_save (const char *fname, const pri_img_t *img, unsigned type)
 
 	type = pri_get_type (type, fname);
 
-	if ((fp = fopen (fname, "wb")) == NULL) {
+	if ((fp = fopen (fname, "w+b")) == NULL) {
 		return (1);
 	}
 
@@ -289,4 +355,49 @@ int pri_img_save (const char *fname, const pri_img_t *img, unsigned type)
 	fclose (fp);
 
 	return (r);
+}
+
+unsigned pri_probe_fp (FILE *fp)
+{
+	if (pri_probe_pri_fp (fp)) {
+		return (PRI_FORMAT_PRI);
+	}
+
+	if (pri_probe_pbit_fp (fp)) {
+		return (PRI_FORMAT_PBIT);
+	}
+
+	if (pri_probe_tc_fp (fp)) {
+		return (PRI_FORMAT_TC);
+	}
+
+	if (pri_probe_woz_fp (fp)) {
+		return (PRI_FORMAT_WOZ);
+	}
+
+	if (pri_probe_moof_fp (fp)) {
+		return (PRI_FORMAT_MOOF);
+	}
+
+	if (pri_probe_mfm_fp (fp)) {
+		return (PRI_FORMAT_MFM);
+	}
+
+	return (PRI_FORMAT_NONE);
+}
+
+unsigned pri_probe (const char *fname)
+{
+	unsigned ret;
+	FILE     *fp;
+
+	if ((fp = fopen (fname, "rb")) == NULL) {
+		return (PRI_FORMAT_NONE);
+	}
+
+	ret = pri_probe_fp (fp);
+
+	fclose (fp);
+
+	return (ret);
 }

@@ -10,7 +10,6 @@ will eject the first floppy disk. Message prefixes can be omitted, as long
 as the message name is unambiguous (except where noted). The following
 commands are equivalent:
 
--m emu.disk.eject 0
 -m disk.eject 0
 -m eject 0
 
@@ -33,19 +32,12 @@ emu.cpu.speed <speed>
 emu.cpu.speed.step <step>
 	Add <step> to the CPU clock frequency multiplier.
 
-emu.disk.commit (<drive> [":" <drive> ...]) | "all"
-	Commit changes to drives that have copy-on-write enabled.
-
-emu.disk.eject <drive> [":" <drive> ...]
-	Eject the disk in drive <drive>.
-
-emu.disk.insert <drive>:<fname>
-	Insert a new disk. <drive> is a drive number as specified
-	in the config file. The disk image type is "auto". If a disk
-	is already inserted in <drive> it is ejected first.
-
 emu.exit
 	Terminate the emulator immediately.
+
+emu.midi.file <filename>
+	Set a new MIDI output file. If <filename> is the empty string, no
+	more MIDI output is saved.
 
 emu.pause "0" | "1"
 	Resume or pause the emulator.
@@ -58,6 +50,12 @@ emu.reset
 
 emu.stop
 	Fall back to the monitor.
+
+emu.viking "0" | "1"
+	Switch from or to the viking monochrome display.
+
+emu.viking.toggle
+	Switch from or to the viking monochrome display.
 
 
 PCE/ibmpc Messages
@@ -94,16 +92,20 @@ emu.cpu.speed.step <adjustment>
 emu.disk.boot <bootdrive>
 	Set the boot drive.
 
-emu.disk.commit (<drive> [":" <drive> ...]) | "all"
-	Commit changes to drives that have copy-on-write enabled.
+emu.fdc.accurate "0" | "1"
+	Disable or enable the FDC accurate mode.
 
-emu.disk.eject <drive> [":" <drive> ...]
-	Eject the disk in drive <drive>.
+emu.fdc.verbose <level>
+	Set the FDC verbosity level.
 
-emu.disk.insert <drive>:<fname>
-	Insert a new disk. <drive> is a drive number as specified
-	in the config file. The disk image type is "auto". If a disk
-	is already inserted in <drive> it is ejected first.
+emu.par1.file <filename>
+	Set the output file for parallel port 1.
+
+emu.par2.file <filename>
+	Set the output file for parallel port 2.
+
+emu.par3.file <filename>
+	Set the output file for parallel port 3.
 
 emu.parport.driver <port>":"<driver>
 	Attach a parallel port to a new character driver. The driver
@@ -121,48 +123,18 @@ emu.serport.file <port>":"<filename>
 	This is equivalent to
 	emu.serport.driver <port>:stdio:file=<filename>.
 
-emu.tape.append
-	Move the read or write position to the end of the cassette file.
-
-emu.tape.file <filename>
-	Set a new cassette file. If the file name ends with ".pcm" or
-	".raw" then PCM mode is automatically enabled. If the file
-	name ends with ".cas" then binary mode is automatically
-	disabled. In all other cases the current PCM mode is not
-	changed.
-
-emu.tape.filter "0" | "1"
-	Disable or enable PCM output filtering.
-
-emu.tape.load [<position> | "end"]
-	Switch to load mode. If <position> is given, move the load
-	position to <position>. If "end" is specified, move the load
-	position to the end of the cassette file.
-
-emu.tape.pcm "0" | "1"
-	Disable or enable PCM mode.
-
-emu.tape.rewind
-	Move the read or write position to the beginning of the cassette
-	file.
-
-emu.tape.save [<position> | "end"]
-	Switch to save mode. If <position> is given, move the save
-	position to <position>. If "end" is specified, move the save
-	position to the end of the cassette file.
-
-emu.tape.state
-	Print the cassette state. Prints the current mode (load/save)
-	and the current position.
-
 emu.video.blink <blink-rate>
 	Set the cursor blink rate. The number specified is the number
 	of screen refreshes for which the cursor is visible/invisible.
 
-emu.video.redraw ["0" | "1"]
-	Force a redraw of the screen. If the parameter is "1", redraw
-	immediately, otherwise schedule a forced redraw at the next
-	vertical retrace.
+emu.video.composite "0" | "1" | "auto"
+	Set CGA composite mode. A value of "0" turns off composite mode
+	in all cases. A value of "1" turns on composite mode in all graphics
+	modes. A value of "auto" turns on composite mode in high resolution
+	graphics mode if the color burst is enabled.
+
+emu.video.composite.cycle
+	Cycle through the three possible values for CGA composite mode.
 
 
 PCE/macplus Messages
@@ -177,28 +149,8 @@ emu.cpu.speed <speed>
 emu.cpu.speed.step <step>
 	Add <step> to the CPU clock frequency multiplier.
 
-emu.disk.commit (<drive> [":" <drive> ...]) | "all"
-	Commit changes to drives that have copy-on-write enabled.
-
-emu.disk.eject <drive> [":" <drive> ...]
-	Eject the disk in drive <drive>.
-
-emu.disk.insert <drive>:<fname>
-	Insert a new disk. <drive> is a drive number as specified
-	in the config file. The disk image type is "auto". If a disk
-	is already inserted in <drive> it is ejected first.
-
-emu.disk.ro <drive>
-	Set the read-only flag for the disk in drive <drive>.
-
-emu.disk.rw <drive>
-	Clear the read-only flag for the disk in drive <drive>.
-
 emu.exit
 	Terminate the emulator immediately.
-
-emu.fdc.accurate "0" | "1"
-	Disable or enable the FDC accurate mode.
 
 emu.iwm.ro <drive>
 	Set the drive <drive> to read-only (locked). The first
@@ -211,6 +163,9 @@ emu.iwm.rw <drive>
 emu.iwm.status
 	Print status information on all IWM drives.
 
+emu.mac.insert [<drive>]
+	Simulate re-inserting a disk that has been dragged to the trash.
+
 emu.pause "0" | "1"
 	Pause or resume the emulation.
 
@@ -220,22 +175,97 @@ emu.pause.toggle
 emu.reset
 	Reset the emulated machine.
 
-emu.serport.driver <port>":"<driver>
-	Attach a serial port to a new character driver. The driver
+emu.ser1.driver <driver>
+	Attach the first serial port to a new character driver. The driver
 	string has the same format as in the config file.
 
-emu.serport.file <port>":"<filename>
+emu.ser1.file <filename>
 	This is equivalent to
-	emu.serport.driver <port>:stdio:file=<filename>.
+	emu.ser1.driver "stdio:file=<filename>"
+
+emu.ser1.multi <count>
+	Set the multi char count for the first serial port.
+
+emu.ser2.driver <driver>
+emu.ser2.file <filename>
+emu.ser2.multi <count>
 
 emu.stop
 	Fall back to the monitor.
 
+emu.video.blink <rate>
+	Set the blink rate for the text mode cursor and blinking characters.
+	Higher values cause slower blinking. A value of 0 turns blinking off.
+	If <rate> is "off" or "on", turn blinking characters and the text
+	mode cursor permanently off or on.
+
 emu.video.brightness <brightness>
 	Set the video brightness in the range of 0 - 1000.
 
-mac.insert [<drive>]
-	Simulate re-inserting a disk that has been dragged to the trash.
+
+Cassette messages
+==============================================================================
+
+cas.commit
+	Write the cassette image back to disk.
+
+cas.create <filename>
+	Create a new cassette and insert it for writing.
+
+cas.open <filename>
+	Open a cassette image and insert it for writing. Also, remove the
+	read image.
+
+cas.play
+	Press play on the cassette player.
+
+cas.load <pos>
+	Move the read position to <pos>.
+
+cas.read <filename>
+	Open a cassette image and insert it for reading.
+
+cas.record
+	Press play and record on the cassette player.
+
+cas.space <duration>
+	Add <duration> seconds of silence to the end of the tape.
+
+cas.state
+	Print the cassette state.
+
+cas.stop
+	Press stop on the cassette player.
+
+cas.truncate <pos>
+	Truncate the write tape at position <pos>.
+
+cas.write <filename>
+	Open a cassette image and insert it for writing.
+
+
+Disk messages
+==============================================================================
+
+disk.commit [<id> | "all"]
+	Commit changes to drives that have copy-on-write enabled.
+
+disk.eject [<id>]
+	Eject the disk <id> and set the current disk id to <id>.
+
+disk.id <id>
+	Set the current disk id to <id>.
+
+disk.insert <fname>
+	Insert a new disk into the current drive. The disk image type
+	is "auto". If a disk already inserted in the current drive it is
+	ejected first.
+
+disk.ro <id>
+	Set the read-only flag for the disk in drive <id>.
+
+disk.rw <id>
+	Clear the read-only flag for the disk in drive <id>.
 
 
 Terminal messages

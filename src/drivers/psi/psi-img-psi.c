@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img-psi.c                                *
  * Created:     2013-05-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -37,6 +37,7 @@
 #define PSI_CHUNK_OFFS 0x4f464653
 #define PSI_CHUNK_TIME 0x54494d45
 #define PSI_CHUNK_DATA 0x44415441
+#define PSI_CHUNK_WEAK 0x5745414b
 #define PSI_CHUNK_END  0x454e4420
 
 #define PSI_FORMAT_UNK     0x0000
@@ -378,6 +379,7 @@ int psi_load_macg (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size,
 static
 int psi_load_offs (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size, unsigned long crc)
 {
+	unsigned long pos;
 	unsigned char buf[4];
 
 	if ((sct == NULL) || (size < 4)) {
@@ -388,7 +390,13 @@ int psi_load_offs (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size,
 		return (1);
 	}
 
-	psi_sct_set_position (sct, psi_get_uint32_be (buf, 0));
+	pos = psi_get_uint32_be (buf, 0);
+
+	if (pos == 0xffffffff) {
+		pos = -1;
+	}
+
+	psi_sct_set_position (sct, pos);
 
 	if (psi_skip_chunk (fp, size - 4, crc)) {
 		return (1);
@@ -496,6 +504,36 @@ int psi_load_data (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size,
 		if (psi_read_crc (fp, sct->data, size, &crc)) {
 			return (1);
 		}
+	}
+
+	if (psi_skip_chunk (fp, 0, crc)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int psi_load_weak (FILE *fp, psi_img_t *img, psi_sct_t *sct, unsigned long size, unsigned long crc)
+{
+	if (sct == NULL) {
+		return (1);
+	}
+
+	if (psi_sct_set_size (sct, size, 0)) {
+		return (1);
+	}
+
+	if (size > 0) {
+		if (psi_weak_alloc (sct)) {
+			return (1);
+		}
+
+		if (psi_read_crc (fp, sct->weak, size, &crc)) {
+			return (1);
+		}
+
+		psi_weak_clean (sct);
 	}
 
 	if (psi_skip_chunk (fp, 0, crc)) {
@@ -640,6 +678,12 @@ int psi_load_fp (FILE *fp, psi_img_t *img)
 
 		case PSI_CHUNK_DATA:
 			if (psi_load_data (fp, img, last, size, crc)) {
+				return (1);
+			}
+			break;
+
+		case PSI_CHUNK_WEAK:
+			if (psi_load_weak (fp, img, last, size, crc)) {
 				return (1);
 			}
 			break;
@@ -944,7 +988,7 @@ int psi_save_offs (FILE *fp, const psi_sct_t *sct)
 
 	pos = psi_sct_get_position (sct);
 
-	if (pos == 0xffffffff) {
+	if (!psi_sct_have_position (sct)) {
 		return (0);
 	}
 
@@ -1032,6 +1076,14 @@ int psi_save_sector (FILE *fp, const psi_sct_t *sct, unsigned c, unsigned h, int
 	if ((f & PSI_FLAG_COMP) == 0) {
 		if (sct->n > 0) {
 			if (psi_save_chunk (fp, PSI_CHUNK_DATA, sct->n, sct->data)) {
+				return (1);
+			}
+		}
+	}
+
+	if (sct->n > 0) {
+		if (psi_weak_check (sct)) {
+			if (psi_save_chunk (fp, PSI_CHUNK_WEAK, sct->n, sct->weak)) {
 				return (1);
 			}
 		}

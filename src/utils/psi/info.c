@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/info.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -113,6 +113,10 @@ int psi_print_info (psi_img_t *img)
 			for (s = 0; s < trk->sct_cnt; s++) {
 				sct = trk->sct[s];
 
+				if (psi_check_duplicate (trk, s)) {
+					tflags |= PSI_TRK_DUP;
+				}
+
 				if (fs || (sct->n < ssize[0])) {
 					ssize[0] = sct->n;
 				}
@@ -180,6 +184,11 @@ int psi_print_info (psi_img_t *img)
 
 	ff = 1;
 
+	if (tflags & PSI_TRK_DUP) {
+		printf (" DUP");
+		ff = 0;
+	}
+
 	if (tflags & PSI_TRK_BAD_ID) {
 		printf (" BAD-ID");
 		ff = 0;
@@ -228,11 +237,7 @@ int psi_print_info (psi_img_t *img)
 
 	printf ("total sectors: %lu + %lu\n", stotal, atotal);
 	printf ("data size:     %lu (%.2f KiB)\n", dsize, (double) dsize / 1024);
-
-	if (img->comment_size > 0) {
-		fputs ("\n", stdout);
-		psi_show_comment (img);
-	}
+	printf ("comment size:  %u\n", img->comment_size);
 
 	return (0);
 }

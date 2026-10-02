@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/e8086.c                                        *
  * Created:     1996-04-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1996-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1996-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -72,19 +72,30 @@ void e86_init (e8086_t *c)
 	c->op_undef = NULL;
 	c->op_int = NULL;
 
+	c->hook_ext = NULL;
+	c->hook = NULL;
+
+	c->trap_ext = NULL;
+	c->trap = NULL;
+
 	c->pq_size = 4;
 	c->pq_fill = 6;
 
 	c->irq = 0;
 
-	c->halt = 0;
+	c->state = 0;
+
+	c->int_cnt = 0;
+	c->int_vec = 0;
+	c->int_cs = 0;
+	c->int_ip = 0;
 
 	for (i = 0; i < 256; i++) {
 		c->op[i] = e86_opcodes[i];
 	}
 
-	c->clocks = 0;
-	c->instructions = 0;
+	c->clock = 0;
+	c->opcnt = 0;
 	c->delay = 0;
 }
 
@@ -185,6 +196,18 @@ void e86_set_inta_fct (e8086_t *c, void *ext, void *fct)
 {
 	c->inta_ext = ext;
 	c->inta = fct;
+}
+
+void e86_set_hook_fct (e8086_t *c, void *ext, void *fct)
+{
+	c->hook_ext = ext;
+	c->hook = fct;
+}
+
+void e86_set_trap_fct (e8086_t *c, void *ext, void *fct)
+{
+	c->trap_ext = ext;
+	c->trap = fct;
 }
 
 void e86_set_ram (e8086_t *c, unsigned char *ram, unsigned long cnt)
@@ -317,6 +340,15 @@ int e86_set_reg (e8086_t *c, const char *reg, unsigned long val)
 	return (1);
 }
 
+int e86_hook (e8086_t *c)
+{
+	if (c->hook != NULL) {
+		return (c->hook (c->hook_ext));
+	}
+
+	return (1);
+}
+
 void e86_trap (e8086_t *c, unsigned n)
 {
 	unsigned short ip;
@@ -343,6 +375,11 @@ void e86_trap (e8086_t *c, unsigned n)
 		ip = e86_get_ip (c);
 	}
 
+	c->int_cnt += 1;
+	c->int_vec = n;
+	c->int_cs = e86_get_cs (c);
+	c->int_ip = ip;
+
 	e86_push (c, e86_get_flags (c));
 	e86_push (c, e86_get_cs (c));
 	e86_push (c, ip);
@@ -352,6 +389,8 @@ void e86_trap (e8086_t *c, unsigned n)
 	e86_set_ip (c, e86_get_mem16 (c, 0, ofs));
 	e86_set_cs (c, e86_get_mem16 (c, 0, ofs + 2));
 	c->flg &= ~(E86_FLG_I | E86_FLG_T);
+
+	c->save_flags = e86_get_flags (c);
 
 	e86_pq_init (c);
 }
@@ -367,7 +406,7 @@ void e86_irq_ack (e8086_t *c)
 	unsigned char irq;
 
 	c->irq = 0;
-	c->halt = 0;
+	c->state &= ~E86_STATE_HALT;
 
 	if (c->inta != NULL) {
 		irq = c->inta (c->inta_ext);
@@ -381,7 +420,7 @@ void e86_irq_ack (e8086_t *c)
 int e86_interrupt (e8086_t *cpu, unsigned n)
 {
 	if (e86_get_if (cpu)) {
-		cpu->halt = 0;
+		cpu->state &= ~E86_STATE_HALT;
 		e86_trap (cpu, n);
 		return (0);
 	}
@@ -404,21 +443,11 @@ unsigned e86_undefined (e8086_t *c)
 	return (1);
 }
 
-unsigned long long e86_get_clock (e8086_t *c)
-{
-	return (c->clocks);
-}
-
-unsigned long long e86_get_opcnt (e8086_t *c)
-{
-	return (c->instructions);
-}
-
 void e86_reset (e8086_t *c)
 {
 	unsigned i;
 
-	c->instructions = 0;
+	c->opcnt = 0;
 
 	c->addr_mask = 0xfffff;
 
@@ -434,29 +463,44 @@ void e86_reset (e8086_t *c)
 	e86_set_ip (c, 0xfff0);
 	e86_set_flags (c, 0x0000);
 
+	c->save_flags = 0;
+
 	c->pq_cnt = 0;
 
 	c->irq = 0;
 
-	c->halt = 0;
+	c->state = 0;
 
 	c->prefix = 0;
 }
 
+void e86_reset_callback (e8086_t *c)
+{
+	e86_reset (c);
+
+	c->state = E86_STATE_RESET;
+}
+
 void e86_execute (e8086_t *c)
 {
-	unsigned       cnt;
-	unsigned short flg;
-	char           irq;
+	unsigned cnt;
+	char     irq;
 
-	if (c->halt) {
-		e86_set_clk (c, 2);
+	if (c->state) {
+		if (c->state & E86_STATE_HALT) {
+			e86_set_clk (c, 2);
 
-		if (c->irq && e86_get_if (c)) {
-			e86_irq_ack (c);
+			if (c->irq && e86_get_if (c)) {
+				e86_irq_ack (c);
+			}
+
+			return;
+		}
+		else if (c->state & E86_STATE_RESET) {
+			e86_reset (c);
 		}
 
-		return;
+		c->state = 0;
 	}
 
 	if ((c->prefix & E86_PREFIX_KEEP) == 0) {
@@ -464,10 +508,9 @@ void e86_execute (e8086_t *c)
 		c->cur_ip = c->ip;
 	}
 
-	flg = c->flg;
-	irq = c->irq;
+	c->save_flags = e86_get_flags (c);
 
-	c->enable_int = 1;
+	irq = c->irq;
 
 	do {
 		e86_pq_fill (c);
@@ -489,15 +532,14 @@ void e86_execute (e8086_t *c)
 		}
 	} while (c->prefix & E86_PREFIX_NEW);
 
-	c->instructions += 1;
+	c->opcnt += 1;
 
-	if (c->enable_int) {
-		if (flg & c->flg & E86_FLG_T) {
-			e86_trap (c, 1);
-		}
-		else if (irq && c->irq && e86_get_if (c)) {
-			e86_irq_ack (c);
-		}
+	if (c->save_flags & E86_FLG_T) {
+		c->state &= ~E86_STATE_HALT;
+		e86_trap (c, 1);
+	}
+	else if (irq && c->irq && (c->save_flags & e86_get_flags (c) & E86_FLG_I)) {
+		e86_irq_ack (c);
 	}
 }
 
@@ -505,11 +547,11 @@ void e86_clock (e8086_t *c, unsigned n)
 {
 	while (n >= c->delay) {
 		n -= c->delay;
-		c->clocks += c->delay;
+		c->clock += c->delay;
 		c->delay = 0;
 		e86_execute (c);
 	}
 
 	c->delay -= n;
-	c->clocks += n;
+	c->clock += n;
 }

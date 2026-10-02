@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/config.h.in                                              *
  * Created:     2002-12-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2002-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -28,11 +28,9 @@
 #define _GNU_SOURCE 1
 #endif
 
-
 #ifndef _NETBSD_SOURCE
 #define _NETBSD_SOURCE 1
 #endif
-
 
 #undef PCE_LARGE_FILE
 
@@ -41,7 +39,6 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 #endif
-
 
 #undef HAVE_FCNTL_H
 #undef HAVE_INTTYPES_H
@@ -55,6 +52,7 @@
 #undef HAVE_SYS_POLL_H
 #undef HAVE_SYS_SOCKET_H
 #undef HAVE_SYS_SOUNDCARD_H
+#undef HAVE_SYS_STAT_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_SYS_TYPES_H
 
@@ -65,6 +63,8 @@
 #undef HAVE_NANOSLEEP
 #undef HAVE_SLEEP
 #undef HAVE_GETTIMEOFDAY
+
+#define PCE_YEAR "2025"
 
 #undef PCE_VERSION_MAJ
 #undef PCE_VERSION_MIN
@@ -87,6 +87,8 @@
 #undef PCE_ENABLE_X11
 
 #undef PCE_ENABLE_SDL
+#undef PCE_ENABLE_SDL1
+#undef PCE_ENABLE_SDL2
 
 #undef PCE_ENABLE_READLINE
 
@@ -98,6 +100,7 @@
 #undef PCE_ENABLE_CHAR_SLIP
 #undef PCE_ENABLE_CHAR_TCP
 #undef PCE_ENABLE_CHAR_TIOS
+#undef PCE_ENABLE_CHAR_WINCOM
 
 #undef PCE_ENABLE_SOUND_OSS
 

@@ -65,36 +65,35 @@ PCE_MACPLUS_ETC  := $(rel)/pce-mac-plus.cfg $(rel)/pce-mac-se.cfg $(rel)/pce-mac
 PCE_MACPLUS_BIN  := $(rel)/pce-macplus$(EXEEXT)
 
 PCE_MACPLUS_OBJ_EXT := \
-	src/cpu/e68000/e68000.a \
 	src/chipset/82xx/e8250.o \
 	src/chipset/e6522.o \
 	src/chipset/e8530.o \
 	src/devices/device.o \
 	src/devices/memory.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/pri/pri.a \
-	src/drivers/psi/psi.a \
-	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
+	src/lib/cfg.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
 	src/lib/getopt.o \
 	src/lib/inidsk.o \
 	src/lib/iniram.o \
 	src/lib/initerm.o \
-	src/lib/ihex.o \
-	src/lib/srec.o \
-	src/lib/load.o \
 	src/lib/log.o \
 	src/lib/monitor.o \
 	src/lib/msg.o \
+	src/lib/msgdsk.o \
 	src/lib/path.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
+	$(LIBPCE_LOAD_OBJ) \
+	$(LIBINI_OBJ) \
+	$(CPU_68K_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_PRI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(DRV_SND_OBJ) \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -134,7 +133,6 @@ $(rel)/video.o:		$(rel)/video.c
 
 $(rel)/pce-macplus$(EXEEXT): $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_OBJ)
 	$(QP)echo "  LD     $@"
-	$(QP)echo "$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm"
 	$(QR)$(LD) $(PCE_MACPLUS_LDFLAGS) -o $@ $(PCE_MACPLUS_OBJ) $(PCE_MACPLUS_OBJ_EXT) $(PCE_MACPLUS_LIBS) -lm
 
 $(rel)/pce-mac-plus.cfg: $(rel)/pce-macplus.cfg.in

@@ -78,6 +78,8 @@ unzip macplus-system.zip
 the pce-config.cfg config file should reference the disk images you've loaded (in the `autoloadFiles` array). in this example the disk image is called `hd1.qed`, but you can replace it with your own hard drive and floppy disk images in .img, .dsk or .qed format. if you change the disk image, make sure update both pce-config.cfg and the `autoloadFiles` array.
 
 copy the pce rom patch file and wasm file from the npm package to your project
+(the rom patch file must come from the same version as the emulator, so use this
+one instead of the one in `macplus-system.zip`)
 ```bash
 cp node_modules/pcejs-macplus/macplus-pcex.rom ./macplus-pcex.rom
 cp node_modules/pcejs-macplus/pce-macplus.wasm ./pce-macplus.wasm

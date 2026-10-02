@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/msg.c                                                *
  * Created:     2005-12-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -123,6 +123,22 @@ int msg_get_sint (const char *str, int *val)
 	if (*val != tmp) {
 		return (1);
 	}
+
+	return (0);
+}
+
+int msg_get_double (const char *str, double *val)
+{
+	double tmp;
+	char   *end;
+
+	tmp = strtod (str, &end);
+
+	if ((end == str) || (*end != 0)) {
+		return (1);
+	}
+
+	*val = tmp;
 
 	return (0);
 }

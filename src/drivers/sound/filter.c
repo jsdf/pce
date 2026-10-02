@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/filter.c                                   *
  * Created:     2010-08-27 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -30,6 +30,30 @@
 
 #define SND_IIR_MUL 8192
 
+
+void snd_volume (uint16_t *dst, const uint16_t *src, unsigned long cnt, unsigned volume, int sign)
+{
+	unsigned long i;
+	long          val, vol;
+	unsigned      sig;
+
+	sig = sign ? 0x8000 : 0x0000;
+	vol = (long) volume;
+
+	for (i = 0; i < cnt; i++) {
+		val = (long) (src[i] ^ sig) - 32768;
+		val = (vol * val + 127) / 256 + 32768;
+
+		if (val < 0) {
+			val = 0;
+		}
+		else if (val > 65535) {
+			val = 65535;
+		}
+
+		dst[i] = (unsigned) val ^ sig;
+	}
+}
 
 void snd_iir2_init (sound_iir2_t *iir)
 {

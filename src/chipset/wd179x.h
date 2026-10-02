@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/wd179x.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -25,6 +25,9 @@
 
 #ifndef PCE_CHIPSET_WD179X_H
 #define PCE_CHIPSET_WD179X_H 1
+
+
+#include <drivers/pri/pri.h>
 
 
 #define WD179X_TRKBUF_SIZE 32768
@@ -40,7 +43,17 @@ typedef struct {
 	unsigned      h;
 
 	unsigned long motor_clock;
+	unsigned long bit_clock;
+	unsigned long bit_clock_base;
+
+	unsigned long default_track_size;
+
+	unsigned long fuzzy_mask;
+
 	unsigned      index_cnt;
+
+	pri_trk_t     *trk;
+	pri_evt_t     *evt;
 
 	unsigned char trkbuf_mod;
 	unsigned long trkbuf_idx;
@@ -50,6 +63,8 @@ typedef struct {
 
 
 typedef struct wd179x_t {
+	unsigned char  drvmsk;
+
 	unsigned char  check;
 	unsigned char  auto_motor;
 
@@ -64,9 +79,6 @@ typedef struct wd179x_t {
 	char           is_data_bit;
 	unsigned char  val;
 	unsigned short crc;
-
-	char           interrupt_enable;
-	unsigned char  interrupt_request;
 
 	unsigned       scan_cnt;
 	unsigned       scan_max;
@@ -87,6 +99,9 @@ typedef struct wd179x_t {
 	unsigned char  last_mark_a1;
 	unsigned char  last_mark_c2;
 
+	char           delay_interrupt;
+	unsigned char  delay_interrupt_command;
+
 	unsigned long  input_clock;
 	unsigned long  bit_clock;
 
@@ -101,10 +116,10 @@ typedef struct wd179x_t {
 	void           (*clock) (struct wd179x_t *fdc);
 
 	void           *read_track_ext;
-	int            (*read_track) (void *ext, wd179x_drive_t *drv);
+	int            (*read_track) (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk);
 
 	void           *write_track_ext;
-	int            (*write_track) (void *ext, wd179x_drive_t *drv);
+	int            (*write_track) (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t *trk);
 
 	unsigned char  irq_val;
 	void           *irq_ext;
@@ -127,6 +142,15 @@ void wd179x_set_write_track_fct (wd179x_t *fdc, void *ext, void *fct);
 
 void wd179x_set_input_clock (wd179x_t *fdc, unsigned long clk);
 void wd179x_set_bit_clock (wd179x_t *fdc, unsigned long clk);
+
+void wd179x_set_drive_mask (wd179x_t *fdc, unsigned drive, int present);
+
+/*****************************************************************************
+ * @short Set the default track size
+ *
+ * Tracks that don't exist in the image file are initialized to this size.
+ *****************************************************************************/
+void wd179x_set_default_track_size (wd179x_t *fdc, unsigned drive, unsigned long val);
 
 /*****************************************************************************
  * @short Enable automatic motor control

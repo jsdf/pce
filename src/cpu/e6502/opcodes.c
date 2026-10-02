@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/opcodes.c                                      *
  * Created:     2004-05-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+
+
+#define e6502_check_undef(c) \
+	do { \
+		if (((c)->flags & E6502_FLAG_UNDEF) == 0) { \
+			op_ud (c); \
+			return; \
+		} \
+	} while (0)
 
 
 unsigned char e6502_pull (e6502_t *c)
@@ -384,6 +393,7 @@ static void op_ud (e6502_t *c)
 static void op_00 (e6502_t *c)
 {
 	if (e6502_hook_brk (c)) {
+		e6502_set_clk (c, 1, 1);
 		return;
 	}
 
@@ -403,6 +413,28 @@ static void op_01 (e6502_t *c)
 	e6502_set_clk (c, 2, 6);
 }
 
+/* OP 03: SLO [[xx + X]] */
+static void op_03 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_idx_ind_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
+}
+
+/* OP 04: NOP [xx] (undefined) */
+static void op_04 (e6502_t *c)
+{
+	e6502_check_undef (c);
+	e6502_get_zpg (c);
+	e6502_set_clk (c, 2, 3);
+}
+
 /* OP 05: ORA [xx] */
 static void op_05 (e6502_t *c)
 {
@@ -417,6 +449,20 @@ static void op_06 (e6502_t *c)
 
 	tmp = e6502_op_asl (c, e6502_get_zpg (c));
 	e6502_set_ea (c, tmp);
+
+	e6502_set_clk (c, 2, 5);
+}
+
+/* OP 07: SLO [xx] (undef) */
+static void op_07 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_zpg (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
 
 	e6502_set_clk (c, 2, 5);
 }
@@ -442,6 +488,15 @@ static void op_0a (e6502_t *c)
 	e6502_set_clk (c, 1, 2);
 }
 
+/* OP 0C: NOP [xxxx] (undefined) */
+static void op_0c (e6502_t *c)
+{
+	e6502_check_undef (c);
+
+	e6502_get_abs (c);
+	e6502_set_clk (c, 3, 4);
+}
+
 /* OP 0D: ORA [xxxx] */
 static void op_0d (e6502_t *c)
 {
@@ -460,6 +515,20 @@ static void op_0e (e6502_t *c)
 	e6502_set_clk (c, 3, 6);
 }
 
+/* OP 0F: SLO [xxxx] (undef) */
+static void op_0f (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_abs (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 2, 6);
+}
+
 /* OP 10: BPL */
 static void op_10 (e6502_t *c)
 {
@@ -471,6 +540,28 @@ static void op_11 (e6502_t *c)
 {
 	e6502_op_ora (c, e6502_get_ind_idx_y (c));
 	e6502_set_clk (c, 2, 5 + c->ea_page);
+}
+
+/* OP 13: SLO [[xx] + Y] */
+static void op_13 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_ind_idx_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
+}
+
+/* OP 14: NOP [xx + X] (undefined) */
+static void op_14 (e6502_t *c)
+{
+	e6502_check_undef (c);
+	e6502_get_zpg_x (c);
+	e6502_set_clk (c, 2, 4);
 }
 
 /* OP 15: ORA [xx + X] */
@@ -491,6 +582,20 @@ static void op_16 (e6502_t *c)
 	e6502_set_clk (c, 2, 6);
 }
 
+/* OP 17: SLO [xx + X] (undef) */
+static void op_17 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_zpg_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 2, 6);
+}
+
 /* OP 18: CLC */
 static void op_18 (e6502_t *c)
 {
@@ -502,6 +607,37 @@ static void op_18 (e6502_t *c)
 static void op_19 (e6502_t *c)
 {
 	e6502_op_ora (c, e6502_get_abs_y (c));
+	e6502_set_clk (c, 3, 4 + c->ea_page);
+}
+
+/* OP 1A: NOP (undef) */
+static void op_1a (e6502_t *c)
+{
+	e6502_check_undef (c);
+
+	e6502_set_clk (c, 1, 2);
+}
+
+/* OP 1B: SLO [xxxx + Y] (undef) */
+static void op_1b (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_abs_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 3, 7);
+}
+
+/* OP 1C: NOP [xxxx + X] (undefined) */
+static void op_1c (e6502_t *c)
+{
+	e6502_check_undef (c);
+
+	e6502_get_abs_x (c);
 	e6502_set_clk (c, 3, 4 + c->ea_page);
 }
 
@@ -523,6 +659,20 @@ static void op_1e (e6502_t *c)
 	e6502_set_clk (c, 3, 7);
 }
 
+/* OP 1F: SLO [xxxx + X] (undef) */
+static void op_1f (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_abs_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_ora (c, tmp);
+
+	e6502_set_clk (c, 3, 7);
+}
+
 /* OP 20: JSR xxxx */
 static void op_20 (e6502_t *c)
 {
@@ -539,6 +689,20 @@ static void op_21 (e6502_t *c)
 {
 	e6502_op_and (c, e6502_get_idx_ind_x (c));
 	e6502_set_clk (c, 2, 6);
+}
+
+/* OP 23: RLA [[xx + X]] */
+static void op_23 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_idx_ind_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
 }
 
 /* OP 24: BIT [xx] */
@@ -562,6 +726,20 @@ static void op_26 (e6502_t *c)
 
 	tmp = e6502_op_rol (c, e6502_get_zpg (c));
 	e6502_set_ea (c, tmp);
+
+	e6502_set_clk (c, 2, 5);
+}
+
+/* OP 27: RLA [xx] (undef) */
+static void op_27 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_rol (c, e6502_get_zpg (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
 
 	e6502_set_clk (c, 2, 5);
 }
@@ -614,6 +792,20 @@ static void op_2e (e6502_t *c)
 	e6502_set_clk (c, 3, 6);
 }
 
+/* OP 2F: RLA [xxxx] (undef) */
+static void op_2f (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_rol (c, e6502_get_abs (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 6);
+}
+
 /* OP 30: BMI */
 static void op_30 (e6502_t *c)
 {
@@ -625,6 +817,20 @@ static void op_31 (e6502_t *c)
 {
 	e6502_op_and (c, e6502_get_ind_idx_y (c));
 	e6502_set_clk (c, 2, 5 + c->ea_page);
+}
+
+/* OP 33: RLA [[xx] + Y] */
+static void op_33 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_asl (c, e6502_get_ind_idx_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
 }
 
 /* OP 35: AND [xx + X] */
@@ -645,6 +851,20 @@ static void op_36 (e6502_t *c)
 	e6502_set_clk (c, 2, 6);
 }
 
+/* OP 37: RLA [xx + X] (undef) */
+static void op_37 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_rol (c, e6502_get_zpg_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 6);
+}
+
 /* OP 38: SEC */
 static void op_38 (e6502_t *c)
 {
@@ -657,6 +877,20 @@ static void op_39 (e6502_t *c)
 {
 	e6502_op_and (c, e6502_get_abs_y (c));
 	e6502_set_clk (c, 3, 4 + c->ea_page);
+}
+
+/* OP 3B: RLA [xxxx + Y] (undef) */
+static void op_3b (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_rol (c, e6502_get_abs_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 7);
 }
 
 /* OP 3D: AND [xxxx + X] */
@@ -675,6 +909,20 @@ static void op_3e (e6502_t *c)
 	e6502_set_ea (c, tmp);
 
 	e6502_set_clk (c, 3, 7);
+}
+
+/* OP 3F: RLA [xxxx + X] (undef) */
+static void op_3f (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_rol (c, e6502_get_abs_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_and (c, tmp);
+
+	e6502_set_clk (c, 2, 7);
 }
 
 /* OP 40: RTI */
@@ -696,6 +944,20 @@ static void op_41 (e6502_t *c)
 	e6502_set_clk (c, 2, 6);
 }
 
+/* OP 43: SRE [[xx + X]] (undef) */
+static void op_43 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_idx_ind_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
+}
+
 /* OP 45: EOR [xx] */
 static void op_45 (e6502_t *c)
 {
@@ -710,6 +972,20 @@ static void op_46 (e6502_t *c)
 
 	tmp = e6502_op_lsr (c, e6502_get_zpg (c));
 	e6502_set_ea (c, tmp);
+
+	e6502_set_clk (c, 2, 5);
+}
+
+/* OP 47: SRE [xx] (undef) */
+static void op_47 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_zpg (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
 
 	e6502_set_clk (c, 2, 5);
 }
@@ -761,11 +1037,45 @@ static void op_4e (e6502_t *c)
 	e6502_set_clk (c, 3, 6);
 }
 
+/* OP 4F: SRE [xxxx] (undef) */
+static void op_4f (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_abs (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 3, 6);
+}
+
+/* OP 50: BVC */
+static void op_50 (e6502_t *c)
+{
+	e6502_op_bcc (c, e6502_get_vf (c) == 0);
+}
+
 /* OP 51: EOR [[xx] + Y] */
 static void op_51 (e6502_t *c)
 {
 	e6502_op_eor (c, e6502_get_ind_idx_y (c));
 	e6502_set_clk (c, 2, 5 + c->ea_page);
+}
+
+/* OP 53: SRE [[xx] + Y] (undef) */
+static void op_53 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_ind_idx_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 2, 8);
 }
 
 /* OP 55: EOR [xx + X] */
@@ -786,11 +1096,46 @@ static void op_56 (e6502_t *c)
 	e6502_set_clk (c, 2, 6);
 }
 
+/* OP 57: SRE [xx + X] (undef) */
+static void op_57 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_zpg_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 2, 6);
+}
+
+/* OP 58: CLI */
+static void op_58 (e6502_t *c)
+{
+	e6502_set_if (c, 0);
+	e6502_set_clk (c, 1, 2);
+}
+
 /* OP 59: EOR [xxxx + Y] */
 static void op_59 (e6502_t *c)
 {
 	e6502_op_eor (c, e6502_get_abs_y (c));
 	e6502_set_clk (c, 3, 4 + c->ea_page);
+}
+
+/* OP 5B: SRE [xxxx + Y] (undef) */
+static void op_5b (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_abs_y (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 3, 7);
 }
 
 /* OP 5D: EOR [xxxx + X] */
@@ -811,17 +1156,18 @@ static void op_5e (e6502_t *c)
 	e6502_set_clk (c, 3, 7);
 }
 
-/* OP 50: BVC */
-static void op_50 (e6502_t *c)
+/* OP 5F: SRE [xxxx + X] (undef) */
+static void op_5f (e6502_t *c)
 {
-	e6502_op_bcc (c, e6502_get_vf (c) == 0);
-}
+	unsigned char tmp;
 
-/* OP 58: CLI */
-static void op_58 (e6502_t *c)
-{
-	e6502_set_if (c, 0);
-	e6502_set_clk (c, 1, 2);
+	e6502_check_undef (c);
+
+	tmp = e6502_op_lsr (c, e6502_get_abs_x (c));
+	e6502_set_ea (c, tmp);
+	e6502_op_eor (c, tmp);
+
+	e6502_set_clk (c, 3, 7);
 }
 
 /* OP 60: RTS */
@@ -983,6 +1329,13 @@ static void op_7e (e6502_t *c)
 	e6502_set_clk (c, 3, 7);
 }
 
+/* OP 80: NOP #xx */
+static void op_80 (e6502_t *c)
+{
+	e6502_get_imm (c);
+	e6502_set_clk (c, 2, 2);
+}
+
 /* OP 81: STA [[xx + X]] */
 static void op_81 (e6502_t *c)
 {
@@ -1020,6 +1373,14 @@ static void op_88 (e6502_t *c)
 {
 	e6502_set_y (c, e6502_op_dec (c, e6502_get_y (c)));
 	e6502_set_clk (c, 1, 2);
+}
+
+/* OP 89: NOP #xx (undefined) */
+static void op_89 (e6502_t *c)
+{
+	e6502_check_undef (c);
+	e6502_get_imm (c);
+	e6502_set_clk (c, 2, 2);
 }
 
 /* OP 8A: TXA */
@@ -1325,6 +1686,21 @@ static void op_c6 (e6502_t *c)
 	e6502_set_clk (c, 2, 5);
 }
 
+/* OP C7: DCM [xx] (undefined) */
+static void op_c7 (e6502_t *c)
+{
+	unsigned char tmp;
+
+	e6502_check_undef (c);
+
+	tmp = e6502_op_dec (c, e6502_get_zpg (c));
+	e6502_set_ea (c, tmp);
+
+	e6502_op_cmp (c, tmp);
+
+	e6502_set_clk (c, 2, 5);
+}
+
 /* OP C8: INY */
 static void op_c8 (e6502_t *c)
 {
@@ -1582,36 +1958,36 @@ static void op_fe (e6502_t *c)
 }
 
 e6502_opcode_f e6502_opcodes[256] = {
-	&op_00, &op_01, &op_ud, &op_ud, &op_ud, &op_05, &op_06, &op_ud, /* 00 */
-	&op_08, &op_09, &op_0a, &op_ud, &op_ud, &op_0d, &op_0e, &op_ud,
-	&op_10, &op_11, &op_ud, &op_ud, &op_ud, &op_15, &op_16, &op_ud, /* 10 */
-	&op_18, &op_19, &op_ud, &op_ud, &op_ud, &op_1d, &op_1e, &op_ud,
-	&op_20, &op_21, &op_ud, &op_ud, &op_24, &op_25, &op_26, &op_ud, /* 20 */
-	&op_28, &op_29, &op_2a, &op_ud, &op_2c, &op_2d, &op_2e, &op_ud,
-	&op_30, &op_31, &op_ud, &op_ud, &op_ud, &op_35, &op_36, &op_ud, /* 30 */
-	&op_38, &op_39, &op_ud, &op_ud, &op_ud, &op_3d, &op_3e, &op_ud,
-	&op_40, &op_41, &op_ud, &op_ud, &op_ud, &op_45, &op_46, &op_ud, /* 40 */
-	&op_48, &op_49, &op_4a, &op_ud, &op_4c, &op_4d, &op_4e, &op_ud,
-	&op_50, &op_51, &op_ud, &op_ud, &op_ud, &op_55, &op_56, &op_ud, /* 50 */
-	&op_58, &op_59, &op_ud, &op_ud, &op_ud, &op_5d, &op_5e, &op_ud,
-	&op_60, &op_61, &op_ud, &op_ud, &op_ud, &op_65, &op_66, &op_ud, /* 60 */
+	&op_00, &op_01, &op_ud, &op_03, &op_04, &op_05, &op_06, &op_07, /* 00 */
+	&op_08, &op_09, &op_0a, &op_ud, &op_0c, &op_0d, &op_0e, &op_0f,
+	&op_10, &op_11, &op_ud, &op_13, &op_14, &op_15, &op_16, &op_17, /* 10 */
+	&op_18, &op_19, &op_1a, &op_1b, &op_1c, &op_1d, &op_1e, &op_1f,
+	&op_20, &op_21, &op_ud, &op_23, &op_24, &op_25, &op_26, &op_27, /* 20 */
+	&op_28, &op_29, &op_2a, &op_ud, &op_2c, &op_2d, &op_2e, &op_2f,
+	&op_30, &op_31, &op_ud, &op_33, &op_14, &op_35, &op_36, &op_37, /* 30 */
+	&op_38, &op_39, &op_1a, &op_3b, &op_1c, &op_3d, &op_3e, &op_3f,
+	&op_40, &op_41, &op_ud, &op_43, &op_04, &op_45, &op_46, &op_47, /* 40 */
+	&op_48, &op_49, &op_4a, &op_ud, &op_4c, &op_4d, &op_4e, &op_4f,
+	&op_50, &op_51, &op_ud, &op_53, &op_14, &op_55, &op_56, &op_57, /* 50 */
+	&op_58, &op_59, &op_1a, &op_5b, &op_1c, &op_5d, &op_5e, &op_5f,
+	&op_60, &op_61, &op_ud, &op_ud, &op_04, &op_65, &op_66, &op_ud, /* 60 */
 	&op_68, &op_69, &op_6a, &op_ud, &op_6c, &op_6d, &op_6e, &op_ud,
-	&op_70, &op_71, &op_ud, &op_ud, &op_ud, &op_75, &op_76, &op_ud, /* 70 */
-	&op_78, &op_79, &op_ud, &op_ud, &op_ud, &op_7d, &op_7e, &op_ud,
-	&op_ud, &op_81, &op_ud, &op_ud, &op_84, &op_85, &op_86, &op_ud, /* 80 */
-	&op_88, &op_ud, &op_8a, &op_ud, &op_8c, &op_8d, &op_8e, &op_ud,
+	&op_70, &op_71, &op_ud, &op_ud, &op_14, &op_75, &op_76, &op_ud, /* 70 */
+	&op_78, &op_79, &op_1a, &op_ud, &op_1c, &op_7d, &op_7e, &op_ud,
+	&op_80, &op_81, &op_80, &op_ud, &op_84, &op_85, &op_86, &op_ud, /* 80 */
+	&op_88, &op_89, &op_8a, &op_ud, &op_8c, &op_8d, &op_8e, &op_ud,
 	&op_90, &op_91, &op_ud, &op_ud, &op_94, &op_95, &op_96, &op_ud, /* 90 */
 	&op_98, &op_99, &op_9a, &op_ud, &op_ud, &op_9d, &op_ud, &op_ud,
 	&op_a0, &op_a1, &op_a2, &op_ud, &op_a4, &op_a5, &op_a6, &op_ud, /* A0 */
 	&op_a8, &op_a9, &op_aa, &op_ud, &op_ac, &op_ad, &op_ae, &op_ud,
 	&op_b0, &op_b1, &op_ud, &op_ud, &op_b4, &op_b5, &op_b6, &op_ud, /* B0 */
 	&op_b8, &op_b9, &op_ba, &op_ud, &op_bc, &op_bd, &op_be, &op_ud,
-	&op_c0, &op_c1, &op_ud, &op_ud, &op_c4, &op_c5, &op_c6, &op_ud, /* C0 */
+	&op_c0, &op_c1, &op_80, &op_ud, &op_c4, &op_c5, &op_c6, &op_c7, /* C0 */
 	&op_c8, &op_c9, &op_ca, &op_ud, &op_cc, &op_cd, &op_ce, &op_ud,
-	&op_d0, &op_d1, &op_ud, &op_ud, &op_ud, &op_d5, &op_d6, &op_ud, /* D0 */
-	&op_d8, &op_d9, &op_ud, &op_ud, &op_ud, &op_dd, &op_de, &op_ud,
-	&op_e0, &op_e1, &op_ud, &op_ud, &op_e4, &op_e5, &op_e6, &op_ud, /* E0 */
+	&op_d0, &op_d1, &op_ud, &op_ud, &op_14, &op_d5, &op_d6, &op_ud, /* D0 */
+	&op_d8, &op_d9, &op_1a, &op_ud, &op_1c, &op_dd, &op_de, &op_ud,
+	&op_e0, &op_e1, &op_80, &op_ud, &op_e4, &op_e5, &op_e6, &op_ud, /* E0 */
 	&op_e8, &op_e9, &op_ea, &op_ud, &op_ec, &op_ed, &op_ee, &op_ud,
-	&op_f0, &op_f1, &op_ud, &op_ud, &op_ud, &op_f5, &op_f6, &op_ud, /* F0 */
-	&op_f8, &op_f9, &op_ud, &op_ud, &op_ud, &op_fd, &op_fe, &op_ud
+	&op_f0, &op_f1, &op_ud, &op_ud, &op_14, &op_f5, &op_f6, &op_ud, /* F0 */
+	&op_f8, &op_f9, &op_1a, &op_ud, &op_1c, &op_fd, &op_fe, &op_ud
 };

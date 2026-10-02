@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/msg.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,6 +23,8 @@
 #include "main.h"
 #include "atarist.h"
 #include "msg.h"
+#include "video.h"
+#include "viking.h"
 
 #include <string.h>
 
@@ -30,6 +32,7 @@
 #include <lib/log.h>
 #include <lib/monitor.h>
 #include <lib/msg.h>
+#include <lib/msgdsk.h>
 #include <lib/string.h>
 #include <lib/sysdep.h>
 
@@ -43,6 +46,36 @@ typedef struct {
 	int (*set_msg) (atari_st_t *sim, const char *msg, const char *val);
 } st_msg_list_t;
 
+
+static
+int st_set_msg_disk_eject (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (msg_dsk_get_disk_id (val, &sim->disk_id)) {
+		return (1);
+	}
+
+	st_fdc_eject_disk (&sim->fdc, sim->disk_id);
+
+	msg_dsk_emu_disk_eject (val, sim->dsks, &sim->disk_id);
+
+	return (0);
+}
+
+static
+int st_set_msg_disk_insert (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (dsks_get_disk (sim->dsks, sim->disk_id) != NULL) {
+		st_fdc_eject_disk (&sim->fdc, sim->disk_id);
+	}
+
+	if (msg_dsk_emu_disk_insert (val, sim->dsks, sim->disk_id)) {
+		return (1);
+	}
+
+	st_fdc_insert_disk (&sim->fdc, sim->disk_id);
+
+	return (0);
+}
 
 static
 int st_set_msg_emu_cpu_model (atari_st_t *sim, const char *msg, const char *val)
@@ -90,139 +123,6 @@ int st_set_msg_emu_cpu_speed_step (atari_st_t *sim, const char *msg, const char 
 }
 
 static
-int st_set_msg_emu_disk_commit (atari_st_t *sim, const char *msg, const char *val)
-{
-	int      r;
-	unsigned drv;
-
-	if (strcmp (val, "all") == 0) {
-		pce_log (MSG_INF, "commiting all drives\n");
-
-		st_fdc_save (&sim->fdc, 0);
-		st_fdc_save (&sim->fdc, 1);
-
-		if (dsks_commit (sim->dsks)) {
-			pce_log (MSG_ERR,
-				"*** commit failed for at least one disk\n"
-			);
-			return (1);
-		}
-
-		return (0);
-	}
-
-	r = 0;
-
-	while (*val != 0) {
-		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
-			pce_log (MSG_ERR, "*** commit error: bad drive (%s)\n",
-				val
-			);
-
-			return (1);
-		}
-
-		pce_log (MSG_INF, "commiting drive %u\n", drv);
-
-		if (drv < 2) {
-			st_fdc_save (&sim->fdc, drv);
-		}
-
-		if (dsks_set_msg (sim->dsks, drv, "commit", NULL)) {
-			pce_log (MSG_ERR, "*** commit error for drive %u\n",
-				drv
-			);
-
-			r = 1;
-		}
-	}
-
-	return (r);
-}
-
-static
-int st_set_msg_emu_disk_eject (atari_st_t *sim, const char *msg, const char *val)
-{
-	unsigned drv;
-	disk_t   *dsk;
-
-	while (*val != 0) {
-		if (msg_get_prefix_uint (&val, &drv, ":", " \t")) {
-			pce_log (MSG_ERR,
-				"*** disk eject error: bad drive (%s)\n",
-				val
-			);
-
-			return (1);
-		}
-
-		pce_log (MSG_INF, "ejecting drive %lu\n", drv);
-
-		if (drv < 2) {
-			st_fdc_save (&sim->fdc, drv);
-		}
-
-		dsk = dsks_get_disk (sim->dsks, drv);
-		dsks_rmv_disk (sim->dsks, dsk);
-		dsk_del (dsk);
-
-		if (drv < 2) {
-			st_fdc_set_fname (&sim->fdc, drv, NULL);
-			st_fdc_load (&sim->fdc, drv);
-		}
-	}
-
-	return (0);
-}
-
-static
-int st_set_msg_emu_disk_insert (atari_st_t *sim, const char *msg, const char *val)
-{
-	unsigned   i;
-	unsigned   drv;
-	const char *str, *ext;
-
-	str = val;
-
-	if (msg_get_prefix_uint (&str, &drv, ":", " \t")) {
-		pce_log (MSG_ERR,
-			"*** disk eject error: bad drive (%s)\n",
-			val
-		);
-
-		return (1);
-	}
-
-	i = 0;
-	ext = str;
-
-	while (str[i] != 0) {
-		if (str[i] == '.') {
-			ext = str + i;
-		}
-
-		i += 1;
-	}
-
-	st_fdc_save (&sim->fdc, drv);
-
-	if (strcasecmp (ext, ".pri") == 0) {
-		st_fdc_set_fname (&sim->fdc, drv, str);
-	}
-	else {
-		st_fdc_set_fname (&sim->fdc, drv, NULL);
-
-		if (dsk_insert (sim->dsks, val, 1)) {
-			return (1);
-		}
-	}
-
-	st_fdc_load (&sim->fdc, drv);
-
-	return (0);
-}
-
-static
 int st_set_msg_emu_exit (atari_st_t *sim, const char *msg, const char *val)
 {
 	sim->brk = PCE_BRK_ABORT;
@@ -233,17 +133,71 @@ int st_set_msg_emu_exit (atari_st_t *sim, const char *msg, const char *val)
 }
 
 static
+int set_fdc_ro_rw (atari_st_t *sim, const char *msg, const char *val, int wprot)
+{
+	unsigned i, drv, msk;
+
+	if ((*val == 0) || (strcmp (val, "all") == 0)) {
+		msk = 3;
+	}
+	else {
+		if (msg_get_uint (val, &drv)) {
+			return (1);
+		}
+
+		if (drv > 1) {
+			return (1);
+		}
+
+		msk = 1U << drv;
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (msk & (1U << i)) {
+			pce_log (MSG_INF,
+				"setting drive %u to %s\n",
+				i, wprot ? "RO" : "RW"
+			);
+			st_fdc_set_wprot (&sim->fdc, i, wprot);
+		}
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_fdc_ro (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (set_fdc_ro_rw (sim, msg, val, 1));
+}
+
+static
+int st_set_msg_emu_fdc_rw (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (set_fdc_ro_rw (sim, msg, val, 0));
+}
+
+static
+int st_set_msg_emu_midi_file (atari_st_t *sim, const char *msg, const char *val)
+{
+	return (st_smf_set_file (&sim->smf, val));
+}
+
+static
 int st_set_msg_emu_par_driver (atari_st_t *sim, const char *msg, const char *val)
 {
-	if (sim->parport_drv != NULL) {
-		chr_close (sim->parport_drv);
+	char_drv_t *drv;
+
+	if (*val == 0) {
+		drv = NULL;
+	}
+	else {
+		if ((drv = chr_open (val)) == NULL) {
+			return (1);
+		}
 	}
 
-	sim->parport_drv = chr_open (val);
-
-	if (sim->parport_drv == NULL) {
-		return (1);
-	}
+	st_set_parport_drv (sim, drv);
 
 	return (0);
 }
@@ -253,6 +207,11 @@ int st_set_msg_emu_par_file (atari_st_t *sim, const char *msg, const char *val)
 {
 	int  r;
 	char *driver;
+
+	if (*val == 0) {
+		st_set_parport_drv (sim, NULL);
+		return (0);
+	}
 
 	driver = str_cat_alloc ("stdio:file=", val);
 
@@ -314,7 +273,7 @@ static
 int st_set_msg_emu_psg_driver (atari_st_t *sim, const char *msg, const char *val)
 {
 	if (st_psg_set_driver (&sim->psg, val)) {
-		pce_log (MSG_ERR, "*** failed to open sound driver (%s)\n", val);
+		st_log_deb (MSG_ERR, "*** failed to open sound driver (%s)\n", val);
 		return (1);
 	}
 
@@ -411,15 +370,61 @@ int st_set_msg_emu_stop (atari_st_t *sim, const char *msg, const char *val)
 	return (0);
 }
 
+static
+int st_set_msg_emu_viking (atari_st_t *sim, const char *msg, const char *val)
+{
+	int v;
+
+	if (msg_get_bool (val, &v)) {
+		return (1);
+	}
+
+	if (v) {
+		sim->video_viking = 1;
+		st_video_set_terminal (sim->video, NULL);
+		st_viking_set_terminal (sim->viking, sim->trm);
+	}
+	else {
+		sim->video_viking = 0;
+		st_video_set_terminal (sim->video, sim->trm);
+		st_viking_set_terminal (sim->viking, NULL);
+	}
+
+	return (0);
+}
+
+static
+int st_set_msg_emu_viking_toggle (atari_st_t *sim, const char *msg, const char *val)
+{
+	if (sim->viking == NULL) {
+		return (0);
+	}
+
+	if (sim->video_viking) {
+		sim->video_viking = 0;
+		st_video_set_terminal (sim->video, sim->trm);
+		st_viking_set_terminal (sim->viking, NULL);
+	}
+	else {
+		sim->video_viking = 1;
+		st_video_set_terminal (sim->video, NULL);
+		st_viking_set_terminal (sim->viking, sim->trm);
+	}
+
+	return (0);
+}
+
 
 static st_msg_list_t set_msg_list[] = {
+	{ "disk.eject", st_set_msg_disk_eject },
+	{ "disk.insert", st_set_msg_disk_insert },
 	{ "emu.cpu.model", st_set_msg_emu_cpu_model },
 	{ "emu.cpu.speed", st_set_msg_emu_cpu_speed },
 	{ "emu.cpu.speed.step", st_set_msg_emu_cpu_speed_step },
-	{ "emu.disk.commit", st_set_msg_emu_disk_commit },
-	{ "emu.disk.eject", st_set_msg_emu_disk_eject },
-	{ "emu.disk.insert", st_set_msg_emu_disk_insert },
 	{ "emu.exit", st_set_msg_emu_exit },
+	{ "emu.fdc.ro", st_set_msg_emu_fdc_ro },
+	{ "emu.fdc.rw", st_set_msg_emu_fdc_rw },
+	{ "emu.midi.file", st_set_msg_emu_midi_file },
 	{ "emu.par.driver", st_set_msg_emu_par_driver },
 	{ "emu.par.file", st_set_msg_emu_par_file },
 	{ "emu.pause", st_set_msg_emu_pause },
@@ -434,6 +439,8 @@ static st_msg_list_t set_msg_list[] = {
 	{ "emu.ser.driver", st_set_msg_emu_ser_driver },
 	{ "emu.ser.file", st_set_msg_emu_ser_file },
 	{ "emu.stop", st_set_msg_emu_stop },
+	{ "emu.viking", st_set_msg_emu_viking },
+	{ "emu.viking.toggle", st_set_msg_emu_viking_toggle },
 	{ NULL, NULL }
 };
 
@@ -464,6 +471,10 @@ int st_set_msg (atari_st_t *sim, const char *msg, const char *val)
 		}
 
 		lst += 1;
+	}
+
+	if ((r = msg_dsk_set_msg (msg, val, sim->dsks, &sim->disk_id)) >= 0) {
+		return (r);
 	}
 
 	if (sim->trm != NULL) {

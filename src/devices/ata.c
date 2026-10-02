@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/ata.c                                            *
  * Created:     2004-12-03 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -27,7 +27,10 @@
 #include "ata.h"
 
 
-/* #define DEBUG_ATA 1 */
+#ifndef DEBUG_ATA
+#define DEBUG_ATA 0
+#endif
+
 
 #define ATA_REG_COMMAND       0x07
 #define ATA_REG_STATUS        0x07
@@ -264,6 +267,10 @@ void ata_set_irq (ata_chn_t *ata, unsigned char val)
 	val = (val != 0);
 
 	if (val != ata->irq_val) {
+#if DEBUG_ATA >= 3
+		fprintf (stderr, "ata: irq = %d\n", val);
+#endif
+
 		ata->irq_val = val;
 
 		if (ata->irq != NULL) {
@@ -363,6 +370,10 @@ void ata_cmd_abort (ata_dev_t *dev)
 static
 void ata_cmd_recalibrate (ata_dev_t *dev)
 {
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: RECALIBRATE\n");
+#endif
+
 	dev->reg_cyl_lo = 0;
 	dev->reg_cyl_hi = 0;
 	dev->reg_head &= 0xf0;
@@ -448,6 +459,12 @@ void ata_cmd_read (ata_dev_t *dev)
 		return;
 	}
 
+#if DEBUG_ATA >= 2
+		fprintf (stderr, "ata: READ (%lu, %u)\n",
+			(unsigned long) idx, dev->reg_sec_cnt
+		);
+#endif
+
 	ata_buf_reset (dev);
 
 	dev->buf_blk_i = idx;
@@ -471,6 +488,12 @@ void ata_cmd_read_multiple (ata_dev_t *dev)
 		ata_cmd_abort (dev);
 		return;
 	}
+
+#if DEBUG_ATA >= 2
+		fprintf (stderr, "ata: READ MULTIPLE (%lu, %u)\n",
+			(unsigned long) idx, dev->reg_sec_cnt
+		);
+#endif
 
 	ata_buf_reset (dev);
 
@@ -541,6 +564,12 @@ void ata_cmd_write (ata_dev_t *dev)
 		return;
 	}
 
+#if DEBUG_ATA >= 2
+		fprintf (stderr, "ata: WRITE (%lu, %u)\n",
+			(unsigned long) idx, dev->reg_sec_cnt
+		);
+#endif
+
 	ata_buf_reset (dev);
 
 	dev->buf_i = 0;
@@ -574,6 +603,12 @@ void ata_cmd_write_multiple (ata_dev_t *dev)
 		return;
 	}
 
+#if DEBUG_ATA >= 2
+		fprintf (stderr, "ata: WRITE MULTIPLE (%lu, %u)\n",
+			(unsigned long) idx, dev->reg_sec_cnt
+		);
+#endif
+
 	ata_buf_reset (dev);
 
 	dev->buf_i = 0;
@@ -603,6 +638,12 @@ void ata_cmd_set_multiple_mode (ata_dev_t *dev)
 {
 	unsigned cnt;
 
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: SET MULTIPLE MODE (%u)\n",
+			dev->reg_sec_cnt
+		);
+#endif
+
 	cnt = dev->reg_sec_cnt;
 
 	if (cnt > dev->multi_block_max) {
@@ -619,6 +660,10 @@ static
 void ata_cmd_device_diagnostic (ata_chn_t *ata)
 {
 	unsigned i;
+
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: DEVICE DIAGNOSTIC\n");
+#endif
 
 	for (i = 0; i < 2; i++) {
 		ata->dev[i].reg_cyl_lo = 0;
@@ -640,18 +685,32 @@ void ata_cmd_set_geometry (ata_dev_t *dev)
 	dev->h = (dev->reg_head & 0x0f) + 1;
 	dev->c = dsk_get_block_cnt (dev->blk) / ((uint32_t) dev->s * dev->h);
 
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: SET GEOMETRY (%u / %u / %u)\n",
+			dev->c, dev->h, dev->s
+		);
+#endif
+
 	ata_cmd_ok (dev);
 }
 
 static
 void ata_cmd_standby_immediate (ata_dev_t *dev)
 {
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: STANDBY IMMEDIATE\n");
+#endif
+
 	ata_cmd_ok (dev);
 }
 
 static
 void ata_cmd_flush_cache (ata_dev_t *dev)
 {
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: FLUSH CACHE\n");
+#endif
+
 	ata_cmd_ok (dev);
 }
 
@@ -659,6 +718,10 @@ static
 void ata_cmd_identify (ata_dev_t *dev)
 {
 	uint32_t cnt1, cnt2;
+
+#if DEBUG_ATA >= 1
+		fprintf (stderr, "ata: IDENTIFY\n");
+#endif
 
 	memset (dev->buf, 0, 512);
 
@@ -689,7 +752,7 @@ void ata_cmd_identify (ata_dev_t *dev)
 	dev->buf_mode = ATA_BUF_MODE_READ;
 	dev->callback = NULL;
 
-	dev->reg_status = ATA_STATUS_DRQ;
+	dev->reg_status = ATA_STATUS_DRQ | 0x50;
 
 	ata_set_irq (dev->chn, 1);
 }
@@ -839,7 +902,7 @@ unsigned char ata_cmd_get_uint8 (ata_chn_t *ata, unsigned long addr)
 		break;
 	}
 
-#ifdef DEBUG_ATA
+#if DEBUG_ATA >= 2
 	fprintf (stderr, "ata: get8 %08lX -> %02X\n", addr, val);
 	fflush (stderr);
 #endif
@@ -888,7 +951,7 @@ void ata_set_data16 (ata_chn_t *ata, unsigned short val)
 
 void ata_cmd_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
-#ifdef DEBUG_ATA
+#if DEBUG_ATA >= 2
 	fprintf (stderr, "ata: set8 %08lX <- %02X\n", addr, val);
 	fflush (stderr);
 #endif
@@ -960,7 +1023,7 @@ unsigned char ata_ctl_get_uint8 (ata_chn_t *ata, unsigned long addr)
 		break;
 	}
 
-#ifdef DEBUG_ATA
+#if DEBUG_ATA >= 2
 	fprintf (stderr, "ata: get ctl8 %08lX -> %02X\n", addr, val);
 	fflush (stderr);
 #endif
@@ -980,7 +1043,7 @@ unsigned long ata_ctl_get_uint32 (ata_chn_t *ata, unsigned long addr)
 
 void ata_ctl_set_uint8 (ata_chn_t *ata, unsigned long addr, unsigned char val)
 {
-#ifdef DEBUG_ATA
+#if DEBUG_ATA >= 2
 	fprintf (stderr, "ata: set ctl8 %08lX <- %02X\n", addr, val);
 	fflush (stderr);
 #endif

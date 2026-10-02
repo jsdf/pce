@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/internal.h                                    *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -151,7 +151,7 @@ int e68_prefetch (e68000_t *c)
 	c->ir[2] = e68_get_mem16 (c, c->ir_pc);
 
 	if (c->bus_error) {
-		e68_exception_bus (c);
+		e68_exception_bus (c, c->ir_pc, 0, 0);
 		return (1);
 	}
 
@@ -170,16 +170,20 @@ int e68_prefetch (e68000_t *c)
 #define e68_op_prefetch(c) if (e68_prefetch (c)) return;
 
 #define e68_op_prefetch8(c, v) do { \
-	if (e68_prefetch (c)) return; (v) = (c)->ir[1] & 0xff; \
+	if (e68_prefetch (c)) return; \
+	(v) = (c)->ir[1] & 0xff; \
 	} while (0)
 
 #define e68_op_prefetch16(c, v) do { \
-	if (e68_prefetch (c)) return; (v) = (c)->ir[1]; \
+	if (e68_prefetch (c)) return; \
+	(v) = (c)->ir[1]; \
 	} while (0)
 
 #define e68_op_prefetch32(c, v) do { \
-	if (e68_prefetch (c)) return; (v) = (c)->ir[1]; \
-	if (e68_prefetch (c)) return; (v) = ((v) << 16) | (c)->ir[1]; \
+	if (e68_prefetch (c)) return; \
+	(v) = (c)->ir[1]; \
+	if (e68_prefetch (c)) return; \
+	(v) = ((v) << 16) | (c)->ir[1]; \
 	} while (0)
 
 #define e68_op_get_ea8(c, ptr, ea, msk, val) do { \

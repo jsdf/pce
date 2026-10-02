@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/fdc.h                                         *
  * Created:     2012-07-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,12 +39,10 @@ typedef struct {
 
 	disks_t        *dsks;
 
-	char           use_fname[2];
-	char           *fname[2];
-
 	unsigned short diskid[2];
 
 	pri_img_t      *img[2];
+	char           img_del[2];
 
 	char           modified[2];
 } rc759_fdc_t;
@@ -58,9 +56,8 @@ void rc759_fdc_reset (rc759_fdc_t *fdc);
 void rc759_fdc_set_disks (rc759_fdc_t *fdc, disks_t *dsks);
 void rc759_fdc_set_disk_id (rc759_fdc_t *fdc, unsigned drive, unsigned diskid);
 
-void rc759_fdc_set_fname (rc759_fdc_t *fdc, unsigned drive, const char *fname);
-
-int rc759_fdc_insert (rc759_fdc_t *fdc, const char *str);
+int rc759_fdc_eject_disk (rc759_fdc_t *fdc, unsigned id);
+int rc759_fdc_insert_disk (rc759_fdc_t *fdc, unsigned id);
 
 unsigned char rc759_fdc_get_reserve (const rc759_fdc_t *fdc);
 void rc759_fdc_set_reserve (rc759_fdc_t *fdc, unsigned char val);

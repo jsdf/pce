@@ -11,6 +11,31 @@ More info:
 
 ![PCE.js Mac Plus](https://jamesfriend.com.au/files/pcejs.png)
 
+## Emulator version
+
+The emulators are based on [PCE](http://www.hampa.ch/pce/) 20250420-cc0c583c
+(April 2025), with these changes for the browser:
+
+- a main loop driven by `requestAnimationFrame` (`*_run_emscripten()` in
+  `src/arch/*/cmd*.c`), which emulates the real time that passed since the
+  previous browser frame instead of sleeping (sleeping busy waits in the
+  browser)
+- browser defaults in `src/arch/*/main.c` (config file `pce-config.cfg`,
+  debug logging, VGA for the IBM PC)
+- the Mac Plus mouse is set to the absolute host mouse position
+- the Atari ST uses the `sdl` sound driver for the PSG by default
+- key codes of some browser keys in `src/drivers/video/sdl.c`
+- no terminal (termios) handling in `src/lib/sysdep.c`
+- Web Audio autoplay handling in `libjs/library_sdl.js`
+- fixed callback signatures in `src/devices/serport.c` (see below)
+
+Functions that are called through a function pointer must have exactly the
+signature of the pointer, otherwise the call fails in WebAssembly with
+"function signature mismatch" (native builds tolerate this).
+
+When updating to a newer PCE version, copy its `src/` directory and build
+files over this tree and re-apply these changes.
+
 ## How to run PCE.js on your own website
 
 See [this CodePen example](https://codepen.io/jsdf/pen/gOLryXM?editors=1100).

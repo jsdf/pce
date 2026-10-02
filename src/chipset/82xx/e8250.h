@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.h                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -131,6 +131,8 @@ typedef struct {
 	unsigned       bit_clk_div;
 
 	char           clocking;
+
+	unsigned       clock_mul;
 
 	unsigned       read_clk_cnt;
 	unsigned       read_clk_div;
@@ -269,6 +271,11 @@ void e8250_set_check_fct (e8250_t *uart, void *ext, void *fct);
  * @param out  The output queue size
  *****************************************************************************/
 void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out);
+
+/*!***************************************************************************
+ * @short Set the clock multiplier
+ *****************************************************************************/
+void e8250_set_clock_mul (e8250_t *uart, unsigned mul);
 
 /*!***************************************************************************
  * @short Set the transmission rate

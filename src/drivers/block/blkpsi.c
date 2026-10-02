@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkfdc.c                                   *
  * Created:     2010-08-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,12 +15,12 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
 
-#include "blkpsi.h"
+#include <drivers/block/blkpsi.h>
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -29,6 +29,28 @@
 #include <drivers/psi/psi.h>
 #include <drivers/psi/psi-img.h>
 
+
+static
+int dsk_psi_apply_weak (unsigned char *dst, const unsigned char *msk, unsigned cnt)
+{
+	int      r;
+	unsigned i, v;
+
+	r = 0;
+
+	for (i = 0; i < cnt; i++) {
+		if (msk[i] != 0) {
+			v = (rand() >> 4) & msk[i];
+
+			if (v) {
+				dst[i] ^= v;
+				r = 1;
+			}
+		}
+	}
+
+	return (r);
+}
 
 unsigned dsk_psi_read_chs (disk_psi_t *fdc, void *buf, unsigned *cnt,
 	unsigned c, unsigned h, unsigned s, int phy)
@@ -64,6 +86,12 @@ unsigned dsk_psi_read_chs (disk_psi_t *fdc, void *buf, unsigned *cnt,
 
 	if (*cnt > 0) {
 		memcpy (buf, alt->data, *cnt);
+
+		if (alt->weak != NULL) {
+			if (dsk_psi_apply_weak (buf, alt->weak, *cnt)) {
+				ret |= PCE_BLK_PSI_CRC_DATA;
+			}
+		}
 	}
 
 	if (alt->flags & PSI_FLAG_NO_DAM) {
@@ -143,7 +171,7 @@ unsigned dsk_psi_write_chs (disk_psi_t *fdc, const void *buf, unsigned *cnt,
 	}
 
 	if (sct->flags & PSI_FLAG_NO_DAM) {
-		return (PCE_BLK_PSI_NO_DATA);
+		sct->flags &= ~PSI_FLAG_NO_DAM;
 	}
 
 	fdc->dirty = 1;
@@ -157,7 +185,9 @@ unsigned dsk_psi_write_chs (disk_psi_t *fdc, const void *buf, unsigned *cnt,
 		memcpy (sct->data, buf, *cnt);
 	}
 
-	sct->flags &= ~PSI_FLAG_CRC_DATA;
+	if (sct->weak == NULL) {
+		sct->flags &= ~PSI_FLAG_CRC_DATA;
+	}
 
 	if (sct->next != NULL) {
 		psi_sct_del (sct->next);
@@ -291,7 +321,8 @@ int dsk_psi_format_sector (disk_psi_t *fdc,
 
 int dsk_psi_read_id (disk_psi_t *fdc,
 	unsigned pc, unsigned ph, unsigned ps,
-	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id)
+	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id,
+	unsigned long *pos)
 {
 	unsigned   mfm_size;
 	psi_sct_t *sct;
@@ -311,6 +342,15 @@ int dsk_psi_read_id (disk_psi_t *fdc,
 	*s = sct->s;
 	*cnt = sct->n;
 	*cnt_id = sct->n;
+
+	if (pos != NULL) {
+		if (sct->position == (unsigned long) -1) {
+			*pos = 0;
+		}
+		else {
+			*pos = sct->position;
+		}
+	}
 
 	if (sct->have_mfm_size) {
 		mfm_size = psi_sct_get_mfm_size (sct);
@@ -404,7 +444,7 @@ int dsk_psi_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 static
 int fdc_save (disk_psi_t *fdc)
 {
-	if (fdc->fname == NULL) {
+	if (fdc->dsk.fname == NULL) {
 		return (1);
 	}
 
@@ -416,7 +456,7 @@ int fdc_save (disk_psi_t *fdc)
 		return (1);
 	}
 
-	if (psi_save (fdc->fname, fdc->img, fdc->type)) {
+	if (psi_save (fdc->dsk.fname, fdc->img, fdc->type)) {
 		return (1);
 	}
 
@@ -495,8 +535,9 @@ void dsk_psi_del (disk_t *dsk)
 	fdc = dsk->ext;
 
 	if (fdc->dirty) {
-		fprintf (stderr, "disk %u: writing back fdc image\n",
-			dsk->drive
+		fprintf (stderr, "disk %u: writing back psi image to %s\n",
+			fdc->dsk.drive,
+			(fdc->dsk.fname != NULL) ? fdc->dsk.fname : "<none>"
 		);
 
 		if (fdc_save (fdc)) {
@@ -510,7 +551,6 @@ void dsk_psi_del (disk_t *dsk)
 		psi_img_del (fdc->img);
 	}
 
-	free (fdc->fname);
 	free (fdc);
 }
 
@@ -533,11 +573,9 @@ disk_t *dsk_psi_open_fp (FILE *fp, unsigned type, int ro)
 	fdc->dsk.write = dsk_psi_write;
 	fdc->dsk.set_msg = dsk_psi_set_msg;
 
-	fdc->dirty = 0;
-	fdc->encoding = PSI_ENC_MFM;
-
 	fdc->type = type;
-	fdc->fname = NULL;
+	fdc->encoding = PSI_ENC_MFM;
+	fdc->dirty = 0;
 
 	fdc->img = psi_load_fp (fp, type);
 
@@ -553,10 +591,8 @@ disk_t *dsk_psi_open_fp (FILE *fp, unsigned type, int ro)
 
 disk_t *dsk_psi_open (const char *fname, unsigned type, int ro)
 {
-	unsigned   n;
-	disk_t     *dsk;
-	disk_psi_t *fdc;
-	FILE       *fp;
+	disk_t *dsk;
+	FILE   *fp;
 
 	if (type == PSI_FORMAT_NONE) {
 		type = psi_probe (fname);
@@ -592,16 +628,6 @@ disk_t *dsk_psi_open (const char *fname, unsigned type, int ro)
 
 	if (dsk == NULL) {
 		return (NULL);
-	}
-
-	fdc = dsk->ext;
-
-	n = strlen (fname);
-
-	fdc->fname = malloc (n + 1);
-
-	if (fdc->fname != NULL) {
-		strcpy (fdc->fname, fname);
 	}
 
 	dsk_set_fname (dsk, fname);

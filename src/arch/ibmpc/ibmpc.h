@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.h                                       *
  * Created:     2001-05-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -24,11 +24,13 @@
 #define PCE_IBMPC_H 1
 
 
-#include "cassette.h"
+#include "covox.h"
 #include "ems.h"
 #include "keyboard.h"
 #include "speaker.h"
 #include "xms.h"
+
+#include <chipset/clock/mc146818a.h>
 
 #include <chipset/82xx/e8237.h>
 #include <chipset/82xx/e8250.h>
@@ -39,6 +41,7 @@
 
 #include <cpu/e8086/e8086.h>
 
+#include <devices/cassette.h>
 #include <devices/fdc.h>
 #include <devices/hdc.h>
 #include <devices/memory.h>
@@ -54,9 +57,6 @@
 #include <lib/brkpt.h>
 
 #include <libini/libini.h>
-
-
-
 
 
 typedef struct ibmpc_t {
@@ -77,15 +77,17 @@ typedef struct ibmpc_t {
 	e8255_t            ppi;
 	e8259_t            pic;
 	pc_kbd_t           kbd;
-	pc_cassette_t      *cas;
+	cassette_t         *cas;
 	pc_speaker_t       spk;
+	pc_covox_t         *cov;
 
 	unsigned           model;
 
 	unsigned char      ppi_port_a[2];
 	unsigned char      ppi_port_b;
 	unsigned char      ppi_port_c[2];
-
+	unsigned char      switches1_val;
+	unsigned char      switches1_msk;
 	unsigned char      m24_config[2];
 
 	dev_fdc_t          *fdc;
@@ -103,6 +105,7 @@ typedef struct ibmpc_t {
 	bp_set_t           bps;
 
 	unsigned           bootdrive;
+	unsigned           disk_id;
 
 	unsigned long      dma_page[4];
 
@@ -116,6 +119,11 @@ typedef struct ibmpc_t {
 
 	/* allow int 1a to get real time */
 	int                support_rtc;
+
+	char               blink;
+	char               cga40;
+	unsigned char      fdd40;
+	char               force_keyboard_enable;
 
 	unsigned           fd_cnt;
 	unsigned           hd_cnt;
@@ -131,6 +139,8 @@ typedef struct ibmpc_t {
 
 	unsigned           current_int;
 
+	unsigned           mouse_button;
+
 	unsigned long      clk_div[4];
 
 	unsigned long      clock1;
@@ -138,6 +148,13 @@ typedef struct ibmpc_t {
 
 	unsigned           brk;
 	char               pause;
+	char               trace;
+
+	unsigned           atari_pc_turbo;
+	unsigned char      atari_pc_port34;
+	unsigned char      atari_pc_switches;
+	unsigned char      atari_pc_rtc_port;
+	mc146818a_t        *atari_pc_rtc;
 } ibmpc_t;
 
 

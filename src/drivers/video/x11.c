@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/x11.c                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -25,7 +25,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-// #include <X11/Xos.h>
+#include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 
@@ -356,6 +356,10 @@ void xt_decode_mask (unsigned long mask, unsigned *i, unsigned *n)
 	*i = 0;
 	*n = 0;
 
+	if (mask == 0) {
+		return;
+	}
+
 	while ((mask & 1) == 0) {
 		mask = mask >> 1;
 		*i += 1;
@@ -415,6 +419,15 @@ void xt_image_draw (xterm_t *xt, const unsigned char *src, unsigned x, unsigned 
 		di = bpp * x;
 
 		switch ((bpp << 1) | (xt->img->byte_order == MSBFirst)) {
+		case ((1 << 1) | 0):
+		case ((1 << 1) | 1):
+			for (i = 0; i < w; i++) {
+				dst[di] = src[1];
+				si += 3;
+				di += 1;
+			}
+			break;
+
 		case ((2 << 1) | 0):
 			for (i = 0; i < w; i++) {
 				val = xt_get_pixel (src + si, ri, rn, gi, gn, bi, bn);
@@ -679,7 +692,6 @@ void xt_event_expose (xterm_t *xt, XEvent *event)
 static
 void xt_event_button_press (xterm_t *xt, XEvent *event)
 {
-	unsigned     b;
 	XButtonEvent *evt = (XButtonEvent *) event;
 
 	if (xt->grab == 0) {
@@ -687,26 +699,35 @@ void xt_event_button_press (xterm_t *xt, XEvent *event)
 		return;
 	}
 
-	b = evt->state;
-	b = ((b & Button1Mask) ? 0x01 : 0) | ((b & Button3Mask) ? 0x02 : 0);
-	b ^= (evt->button == Button1) ? 0x01 : 0x00;
-	b ^= (evt->button == Button3) ? 0x02 : 0x00;
+	if (evt->button == Button1) {
+		xt->button |= 1;
+	}
+	else if (evt->button == Button3) {
+		xt->button |= 2;
+	}
+	else if (evt->button == Button2) {
+		xt->button |= 4;
+	}
 
-	trm_set_mouse (&xt->trm, 0, 0, b);
+	trm_set_mouse (&xt->trm, 0, 0, xt->button);
 }
 
 static
 void xt_event_button_release (xterm_t *xt, XEvent *event)
 {
-	unsigned     b;
 	XButtonEvent *evt = (XButtonEvent *) event;
 
-	b = evt->state;
-	b = ((b & Button1Mask) ? 0x01 : 0) | ((b & Button3Mask) ? 0x02 : 0);
-	b ^= (evt->button == Button1) ? 0x01 : 0x00;
-	b ^= (evt->button == Button3) ? 0x02 : 0x00;
+	if (evt->button == Button1) {
+		xt->button &= ~1U;
+	}
+	else if (evt->button == Button3) {
+		xt->button &= ~2U;
+	}
+	else if (evt->button == Button2) {
+		xt->button &= ~4U;
+	}
 
-	trm_set_mouse (&xt->trm, 0, 0, b);
+	trm_set_mouse (&xt->trm, 0, 0, xt->button);
 }
 
 static
@@ -714,7 +735,6 @@ void xt_event_motion (xterm_t *xt, XEvent *event)
 {
 	int          cx, cy;
 	int          dx, dy;
-	unsigned     b;
 	XMotionEvent *evt;
 
 	if (xt->grab == 0) {
@@ -733,10 +753,7 @@ void xt_event_motion (xterm_t *xt, XEvent *event)
 		return;
 	}
 
-	b = evt->state;
-	b = ((b & Button1Mask) ? 1 : 0) | ((b & Button2Mask) ? 2 : 0);
-
-	trm_set_mouse (&xt->trm, dx, dy, b);
+	trm_set_mouse (&xt->trm, dx, dy, xt->button);
 
 	XWarpPointer (xt->display, None, xt->root, 0, 0, 0, 0, cx, cy);
 
@@ -994,6 +1011,7 @@ void xt_init (xterm_t *xt, ini_sct_t *sct)
 
 	xt->mse_x = 0;
 	xt->mse_y = 0;
+	xt->button = 0;
 
 	xt->grab = 0;
 

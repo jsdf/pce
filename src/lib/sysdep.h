@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.h                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -37,6 +37,8 @@ int pce_usleep (unsigned long usec);
  * was called the last time with the same parameter.
  *****************************************************************************/
 unsigned long pce_get_interval_us (unsigned long *val);
+
+void pce_srand (unsigned val);
 
 void pce_set_fd_interactive (int fd, int interactive);
 

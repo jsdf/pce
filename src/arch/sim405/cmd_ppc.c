@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/cmd_ppc.c                                    *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -27,6 +27,20 @@
 
 
 #include "main.h"
+#include "cmd_ppc.h"
+#include "hook.h"
+#include "sim405.h"
+
+#include <stdio.h>
+
+#include <chipset/ppc405/uic.h>
+
+#include <cpu/ppc405/ppc405.h>
+
+#include <lib/cmd.h>
+#include <lib/console.h>
+#include <lib/monitor.h>
+#include <lib/sysdep.h>
 
 
 static mon_cmd_t par_cmd[] = {
@@ -37,7 +51,7 @@ static mon_cmd_t par_cmd[] = {
 	{ "p", "[cnt]", "execute cnt instructions, skip calls [1]" },
 	{ "rfi", "", "execute to next rfi or rfci" },
 	{ "r", "reg [val]", "get or set a register" },
-	{ "s", "[what]", "print status (mem|ppc|spr)" },
+	{ "s", "[what]", "print status (mem|ppc|spr|time|uart0|uart1|uic)" },
 	{ "tlb", "l [first [count]]", "list TLB entries" },
 	{ "tlb", "s addr", "search the TLB" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
@@ -96,15 +110,17 @@ static
 void prt_tlb_entry (p405_tlbe_t *ent, unsigned idx)
 {
 	pce_printf (
-		"%02x: %08lx -> %08lx %06lx V%c R%c W%c X%c  TID=%02x  %08lx",
+		"%02x: %08lx -> %08lx %06lx V%c E%c R%c W%c X%c  Z=%X TID=%02x  %08lx",
 		idx,
 		(unsigned long) p405_get_tlbe_epn (ent),
 		(unsigned long) p405_get_tlbe_rpn (ent),
 		(unsigned long) p405_get_tlbe_sizeb (ent),
 		p405_get_tlbe_v (ent) ? '+' : '-',
+		p405_get_tlbe_e (ent) ? '+' : '-',
 		p405_get_tlbe_v (ent) ? '+' : '-',
 		p405_get_tlbe_wr (ent) ? '+' : '-',
 		p405_get_tlbe_ex (ent) ? '+' : '-',
+		(unsigned) p405_get_tlbe_zsel (ent),
 		(unsigned) p405_get_tlbe_tid (ent),
 		(unsigned long) ent->mask
 	);
@@ -183,7 +199,7 @@ void s405_prt_state_ppc (sim405_t *sim)
 		);
 	}
 
-	p405_disasm_mem (c, &op, p405_get_pc (c), par_xlat);
+	p405_disasm_mem (c, &op, p405_get_pc (c), par_xlat | P405_XLAT_EXEC);
 	ppc_disasm_str (str, &op);
 
 	pce_printf ("%08lX  %s\n", (unsigned long) p405_get_pc (c), str);
@@ -265,9 +281,11 @@ void s405_prt_state_spr (p405_t *c)
 		(unsigned long) p405_get_pit (c, 1)
 	);
 
-	pce_printf ("SPG5=%08lX  DBC1=%08lX\n",
+	pce_printf ("SPG5=%08lX  DBC1=%08lX   TCR=%08lX   TSR=%08lX\n",
 		(unsigned long) p405_get_sprg (c, 5),
-		(unsigned long) p405_get_dbcr0 (c)
+		(unsigned long) p405_get_dbcr0 (c),
+		(unsigned long) p405_get_tcr (c),
+		(unsigned long) p405_get_tsr (c)
 	);
 
 	pce_printf ("SPG6=%08lX  DBSR=%08lX\n",
@@ -351,6 +369,117 @@ void s405_prt_state_uic (p405_uic_t *uic)
 	pce_printf (" VR=%08lX\n", (unsigned long) p405uic_get_vr (uic));
 }
 
+static
+void s405_print_state_uart (e8250_t *uart, unsigned long base)
+{
+	char          p;
+	unsigned char lsr, msr;
+
+	lsr = e8250_get_lsr (uart);
+	msr = e8250_get_msr (uart);
+
+	switch (e8250_get_parity (uart)) {
+	case E8250_PARITY_N:
+		p = 'N';
+		break;
+
+	case E8250_PARITY_E:
+		p = 'E';
+		break;
+
+	case E8250_PARITY_O:
+		p = 'O';
+		break;
+
+	case E8250_PARITY_M:
+		p = 'M';
+		break;
+
+	case E8250_PARITY_S:
+		p = 'S';
+		break;
+
+	default:
+		p = '?';
+		break;
+	}
+
+	pce_prt_sep ("8250-UART");
+
+	pce_printf (
+		"IO=%08lX  %lu %u%c%u  DTR=%d  RTS=%d   DSR=%d  CTS=%d  DCD=%d  RI=%d\n"
+		"TxD=%02X%c RxD=%02X%c SCR=%02X  DIV=%04X\n"
+		"IER=%02X  IIR=%02X  LCR=%02X  LSR=%02X  MCR=%02X  MSR=%02X\n",
+		base,
+		e8250_get_bps (uart), e8250_get_databits (uart), p,
+		e8250_get_stopbits (uart),
+		e8250_get_dtr (uart), e8250_get_rts (uart),
+		(msr & E8250_MSR_DSR) != 0,
+		(msr & E8250_MSR_CTS) != 0,
+		(msr & E8250_MSR_DCD) != 0,
+		(msr & E8250_MSR_RI) != 0,
+		uart->txd, (lsr & E8250_LSR_TBE) ? ' ' : '*',
+		uart->rxd, (lsr & E8250_LSR_RRD) ? '*' : ' ',
+		uart->scratch, uart->divisor,
+		uart->ier, uart->iir, uart->lcr, lsr, uart->mcr, msr
+	);
+}
+
+static
+void s405_print_state_time (sim405_t *sim)
+{
+	p405_t        *c;
+	unsigned long tcr, tsr, tbl, msk, rem;
+
+	c = sim->ppc;
+
+	tcr = p405_get_tcr (c);
+	tsr = p405_get_tsr (c);
+	tbl = p405_get_tbl (c);
+
+	msk = 0x100UL << ((tcr >> 22) & 0x0c);
+	rem = msk - (tbl & (msk - 1)) + ((tbl & msk) ? msk : 0);
+
+	pce_prt_sep ("TIME");
+
+	pce_printf ("TBU=%08lX TBL=%08lX\n",
+		(unsigned long) p405_get_tbu (c),
+		tbl
+	);
+
+	pce_printf ("TCR=%08lX [PIE=%d ARE=%d FIE=%d FP=%X WIE=%d]\n",
+		tcr,
+		(tcr & P405_TCR_PIE) != 0,
+		(tcr & P405_TCR_ARE) != 0,
+		(tcr & P405_TCR_FIE) != 0,
+		(unsigned) ((tcr >> 24) & 3),
+		(tcr & P405_TCR_WIE) != 0
+	);
+
+	pce_printf ("TSR=%08lX [PIS=%d FIS=%d WIS=%d]\n",
+		tsr,
+		(tsr & P405_TSR_PIS) != 0,
+		(tsr & P405_TSR_FIS) != 0,
+		(tsr & P405_TSR_WIS) != 0
+	);
+
+	pce_printf ("PIT VAL=%08lX REL=%08lX ARE=%d      PIE=%d PIS=%d\n",
+		(unsigned long) (p405_get_pit (c, 0)),
+		(unsigned long) (p405_get_pit (c, 1)),
+		(tcr & P405_TCR_ARE) != 0,
+		(tcr & P405_TCR_PIE) != 0,
+		(tsr & P405_TSR_PIS) != 0
+	);
+
+	pce_printf ("FIT REM=%08lX TBL=%08lx MSK=%06lX FIE=%d FIS=%d\n",
+		rem,
+		tbl,
+		msk,
+		(tcr & P405_TCR_FIE) != 0,
+		(tsr & P405_TSR_FIS) != 0
+	);
+}
+
 void s405_prt_state_mem (sim405_t *sim)
 {
 	FILE *fp;
@@ -384,6 +513,19 @@ void prt_state (sim405_t *sim, const char *str)
 		}
 		else if (cmd_match (&cmd, "uic")) {
 			s405_prt_state_uic (&sim->uic);
+		}
+		else if (cmd_match (&cmd, "uart0")) {
+			if (sim->serport[0] != NULL) {
+				s405_print_state_uart (&sim->serport[0]->uart, sim->serport[0]->io);
+			}
+		}
+		else if (cmd_match (&cmd, "uart1")) {
+			if (sim->serport[1] != NULL) {
+				s405_print_state_uart (&sim->serport[1]->uart, sim->serport[1]->io);
+			}
+		}
+		else if (cmd_match (&cmd, "time")) {
+			s405_print_state_time (sim);
 		}
 		else if (cmd_match (&cmd, "mem")) {
 			s405_prt_state_mem (sim);
@@ -455,6 +597,7 @@ int ppc_exec_off (sim405_t *sim, unsigned long addr)
 void ppc_run (sim405_t *sim)
 {
 	pce_start (&sim->brk);
+	s405_clock_discontinuity (sim);
 
 	while (1) {
 		s405_clock (sim, 64);
@@ -469,25 +612,79 @@ void ppc_run (sim405_t *sim)
 
 
 static
-void ppc_hook (sim405_t *sim, unsigned long ir)
+int s405_trap (sim405_t *sim, unsigned ofs)
 {
-#if 0
-	fprintf (stderr, "%08lX: hook (%lu)\n",
-		(unsigned long) p405_get_pc (sim->ppc),
-		(unsigned long) (val & 0x0000ffff)
-	);
-#endif
-}
+	int  log;
+	char *name;
 
-#if 0
-static
-void ppc_log_opcode (void *ext, unsigned long ir)
-{
-	sim405_t *sim;
+	log = 0;
 
-	sim = (sim405_t *) ext;
+	switch (ofs) {
+	case 0x0300:
+		name = "data store";
+		break;
+
+	case 0x0400:
+		name = "instruction store";
+		break;
+
+	case 0x0500:
+		name = "external interrupt";
+		break;
+
+	case 0x0700:
+		name = "program";
+		if (sim->ppc->exception_esr & P405_ESR_PIL) {
+			log = 0;
+		}
+		else if (sim->ppc->exception_esr & P405_ESR_PTR) {
+			log = 1;
+		}
+		break;
+
+	case 0x0800:
+		name = "fpu unavailable";
+		log = 1;
+		break;
+
+	case 0x0c00:
+		name = "system call";
+		break;
+
+	case 0x1000:
+		name = "PIT";
+		break;
+
+	case 0x1010:
+		name = "FIT";
+		break;
+
+	case 0x1100:
+		name = "TLB miss data";
+		break;
+
+	case 0x1200:
+		name = "TLB miss instruction";
+		break;
+
+	default:
+		name = "unknown";
+		log = 1;
+		break;
+	}
+
+	if (log) {
+		pce_log (MSG_DEB, "%08lX: ESR=%08lX DEAR=%08lX IR=%0lX OFS=%04X %s\n",
+			(unsigned long) p405_get_pc (sim->ppc),
+			(unsigned long) sim->ppc->exception_esr,
+			(unsigned long) sim->ppc->exception_dear,
+			(unsigned long) sim->ppc->ir,
+			ofs, name
+		);
+	}
+
+	return (0);
 }
-#endif
 
 static
 void ppc_log_undef (void *ext, unsigned long ir)
@@ -500,68 +697,17 @@ void ppc_log_undef (void *ext, unsigned long ir)
 	op1 = (ir >> 26) & 0x3f;
 	op2 = (ir >> 1) & 0x3ff;
 
+	if (op1 == 4) {
+		/* various multiply-accumulate instructions */
+		return;
+	}
+
 	pce_log (MSG_DEB,
 		"%08lX: undefined operation [%08lX] op1=%02X op2=%03X\n",
 		(unsigned long) p405_get_pc (sim->ppc), ir, op1, op2
 	);
 
-	s405_break (sim, PCE_BRK_STOP);
-}
-
-static
-void ppc_log_exception (void *ext, unsigned long ofs)
-{
-	sim405_t *sim;
-	char     *name;
-
-	sim = (sim405_t *) ext;
-
-	switch (ofs) {
-	case 0x0300:
-		name = "data store";
-		return;
-
-	case 0x0400:
-		name = "instruction store";
-		return;
-
-	case 0x0500:
-		name = "external interrupt";
-		return;
-
-	case 0x0700:
-		name = "program";
-		return;
-
-	case 0x0800:
-		name = "fpu unavailable";
-		break;
-
-	case 0x0c00:
-		name = "system call";
-		return;
-
-	case 0x1000:
-		name = "PIT";
-		return;
-
-	case 0x1100:
-		name = "TLB miss data";
-		return;
-		break;
-
-	case 0x1200:
-		name = "TLB miss instruction";
-		return;
-
-	default:
-		name = "unknown";
-		break;
-	}
-
-	pce_log (MSG_DEB, "%08lX: exception %x (%s)\n",
-		(unsigned long) p405_get_pc (sim->ppc), ofs, name
-	);
+	/* s405_break (sim, PCE_BRK_STOP); */
 }
 
 #if 0
@@ -616,6 +762,7 @@ void do_g_b (cmd_t *cmd, sim405_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	s405_clock_discontinuity (sim);
 
 	while (1) {
 		ppc_exec (sim);
@@ -672,9 +819,10 @@ void do_p (cmd_t *cmd, sim405_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	s405_clock_discontinuity (sim);
 
 	while (cnt > 0) {
-		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc), P405_XLAT_CPU);
+		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc), P405_XLAT_CPU | P405_XLAT_EXEC);
 
 		if (dis.flags & P405_DFLAG_CALL) {
 			if (ppc_exec_to (sim, p405_get_pc (sim->ppc) + 4)) {
@@ -720,10 +868,11 @@ void do_rfi (cmd_t *cmd, sim405_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	s405_clock_discontinuity (sim);
 
 	while (1) {
 		p405_disasm_mem (sim->ppc, &dis, p405_get_pc (sim->ppc),
-			P405_XLAT_CPU
+			P405_XLAT_CPU | P405_XLAT_EXEC
 		);
 
 		if (ppc_exec_off (sim, p405_get_pc (sim->ppc))) {
@@ -881,6 +1030,7 @@ void do_t (cmd_t *cmd, sim405_t *sim)
 	}
 
 	pce_start (&sim->brk);
+	s405_clock_discontinuity (sim);
 
 	for (i = 0; i < n; i++) {
 		ppc_exec (sim);
@@ -928,7 +1078,7 @@ void do_u (cmd_t *cmd, sim405_t *sim)
 	}
 
 	for (i = 0; i < cnt; i++) {
-		p405_disasm_mem (sim->ppc, &op, addr, par_xlat);
+		p405_disasm_mem (sim->ppc, &op, addr, par_xlat | P405_XLAT_EXEC);
 		ppc_disasm_str (str, &op);
 
 		pce_printf ("%08lX  %s\n", addr, str);
@@ -1040,8 +1190,8 @@ void ppc_cmd_init (sim405_t *sim, monitor_t *mon)
 	sim->ppc->log_ext = sim;
 	sim->ppc->log_opcode = NULL;
 	sim->ppc->log_undef = &ppc_log_undef;
-	sim->ppc->log_exception = &ppc_log_exception;
 	sim->ppc->log_mem = NULL;
 
-	p405_set_hook_fct (sim->ppc, sim, ppc_hook);
+	p405_set_hook_fct (sim->ppc, sim, s405_hook);
+	p405_set_trap_fct (sim->ppc, sim, s405_trap);
 }

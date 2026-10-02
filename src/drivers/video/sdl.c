@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/sdl.c                                      *
  * Created:     2003-09-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -21,16 +21,17 @@
 
 
 #include <config.h>
-#include <string.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <SDL.h>
 
 #include <drivers/video/terminal.h>
 #include <drivers/video/keys.h>
 #include <drivers/video/sdl.h>
+
 
 static int sdl_set_window_size (sdl_t *sdl, unsigned w, unsigned h, int force);
 
@@ -66,9 +67,9 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_9,            PCE_KEY_9 },
 	{ SDLK_0,            PCE_KEY_0 },
 	{ SDLK_MINUS,        PCE_KEY_MINUS },
-	{ 0x00bd,            PCE_KEY_MINUS },
+	{ 0x00bd,            PCE_KEY_MINUS },     /* browser */
 	{ SDLK_EQUALS,       PCE_KEY_EQUAL },
-	{ 0x00bb,            PCE_KEY_EQUAL },
+	{ 0x00bb,            PCE_KEY_EQUAL },     /* browser */
 	{ SDLK_BACKSPACE,    PCE_KEY_BACKSPACE },
 
 	{ SDLK_TAB,          PCE_KEY_TAB },
@@ -97,10 +98,10 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_k,            PCE_KEY_K },
 	{ SDLK_l,            PCE_KEY_L },
 	{ SDLK_SEMICOLON,    PCE_KEY_SEMICOLON },
-	{ 0x00ba,            PCE_KEY_SEMICOLON },
+	{ 0x00ba,            PCE_KEY_SEMICOLON }, /* browser */
 	{ SDLK_QUOTE,        PCE_KEY_QUOTE },
 	{ SDLK_BACKSLASH,    PCE_KEY_BACKSLASH },
-	{ 0x00dc,            PCE_KEY_BACKSLASH },
+	{ 0x00dc,            PCE_KEY_BACKSLASH }, /* browser */
 
 	{ SDLK_LSHIFT,       PCE_KEY_LSHIFT },
 	{ SDLK_LESS,         PCE_KEY_LESS },
@@ -125,7 +126,7 @@ static sdl_keymap_t keymap[] = {
 	{ SDLK_RALT,         PCE_KEY_RALT },
 	{ SDLK_RMETA,        PCE_KEY_RMETA },
 	{ SDLK_RSUPER,       PCE_KEY_RSUPER },
-	{ 0x0465,            PCE_KEY_RSUPER },
+	{ 0x0465,            PCE_KEY_RSUPER },    /* browser */
 	{ SDLK_MENU,         PCE_KEY_MENU },
 	{ SDLK_RCTRL,        PCE_KEY_RCTRL },
 
@@ -407,7 +408,6 @@ void sdl_update (sdl_t *sdl)
 		return;
 	}
 
-
 	if (SDL_BlitSurface (s, NULL, sdl->scr, &dst) != 0) {
 		fprintf (stderr, "sdl: blit error\n");
 	}
@@ -510,8 +510,6 @@ void sdl_event_mouse_button (sdl_t *sdl, int down, unsigned button)
 static
 void sdl_event_mouse_motion (sdl_t *sdl, int dx, int dy)
 {
-	unsigned but, val;
-
 	if (sdl->grab == 0) {
 		return;
 	}
@@ -520,18 +518,7 @@ void sdl_event_mouse_motion (sdl_t *sdl, int dx, int dy)
 		return;
 	}
 
-	val = 0;
-	but = SDL_GetMouseState (NULL, NULL);
-
-	if (but & SDL_BUTTON (1)) {
-		val |= 1;
-	}
-
-	if (but & SDL_BUTTON (3)) {
-		val |= 2;
-	}
-
-	trm_set_mouse (&sdl->trm, dx, dy, val);
+	trm_set_mouse (&sdl->trm, dx, dy, sdl->button);
 }
 
 static

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.h                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,6 +28,7 @@
 
 
 #define E6502_FLAG_IOPORT 1
+#define E6502_FLAG_UNDEF  2
 
 
 /* CPU flags */
@@ -40,6 +41,11 @@
 #define E6502_FLG_Z 0x02
 #define E6502_FLG_C 0x01
 
+#define E6502_MAP_BITS  8
+#define E6502_MAP_PAGES (1 << (16 - E6502_MAP_BITS))
+#define E6502_MAP_SIZE  (1 << E6502_MAP_BITS)
+#define E6502_MAP_MASK  ((1 << E6502_MAP_BITS) - 1)
+
 
 struct e6502_t;
 
@@ -48,53 +54,53 @@ typedef void (*e6502_opcode_f) (struct e6502_t *c);
 
 
 typedef struct e6502_t {
-	unsigned           flags;
+	unsigned       flags;
 
-	unsigned short     pc;
-	unsigned char      a;
-	unsigned char      x;
-	unsigned char      y;
-	unsigned char      s;
-	unsigned char      p;
+	unsigned short pc;
+	unsigned char  a;
+	unsigned char  x;
+	unsigned char  y;
+	unsigned char  s;
+	unsigned char  p;
 
-	char               check_irq;
+	char           check_irq;
 
-	unsigned short     lpc;
+	unsigned short lpc;
 
-	unsigned short     ea;
-	char               ea_page;
+	unsigned short ea;
+	char           ea_page;
 
-	unsigned char      rst_val;
-	unsigned char      irq_val;
-	unsigned char      nmi_val;
-	unsigned char      nmi_pnd;
+	unsigned char  rst_val;
+	unsigned char  irq_val;
+	unsigned char  nmi_val;
+	unsigned char  nmi_pnd;
 
-	void               *mem_rd_ext;
-	void               *mem_wr_ext;
+	void           *mem_rd_ext;
+	void           *mem_wr_ext;
 
-	unsigned char      (*get_uint8) (void *ext, unsigned long addr);
-	void               (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
+	unsigned char  (*get_uint8) (void *ext, unsigned long addr);
+	void           (*set_uint8) (void *ext, unsigned long addr, unsigned char val);
 
-	void               *set_ioport_ext;
-	void               (*set_ioport) (void *ext, unsigned char val);
+	void           *set_ioport_ext;
+	void           (*set_ioport) (void *ext, unsigned char val);
 
-	unsigned char      *mem_map_rd[64];
-	unsigned char      *mem_map_wr[64];
+	unsigned char  *mem_map_rd[E6502_MAP_PAGES];
+	unsigned char  *mem_map_wr[E6502_MAP_PAGES];
 
-	void               *hook_ext;
-	int                (*hook_all) (void *ext, unsigned char op);
-	int                (*hook_undef) (void *ext, unsigned char op);
-	int                (*hook_brk) (void *ext, unsigned char op);
+	void           *hook_ext;
+	int            (*hook_all) (void *ext, unsigned char op);
+	int            (*hook_undef) (void *ext, unsigned char op);
+	int            (*hook_brk) (void *ext, unsigned char op);
 
-	unsigned char      ioport[3];
+	unsigned char  ioport[3];
 
-	unsigned char      inst[4];
+	unsigned char  inst[4];
 
-	e6502_opcode_f     op[256];
+	e6502_opcode_f op[256];
 
-	unsigned long      delay;
-	unsigned long long clkcnt;
-	unsigned long long inscnt;
+	unsigned long  delay;
+	unsigned long  clkcnt;
+	unsigned long  inscnt;
 } e6502_t;
 
 
@@ -149,10 +155,8 @@ unsigned char e6502_get_mem8 (e6502_t *c, unsigned short addr)
 		return (e6502_get_ioport_8 (c, addr));
 	}
 
-	p = c->mem_map_rd[(addr >> 10) & 0x3f];
-
-	if (p != NULL) {
-		return (p[addr & 0x3ff]);
+	if ((p = c->mem_map_rd[(addr & 0xffff) >> E6502_MAP_BITS]) != NULL) {
+		return (p[addr & E6502_MAP_MASK]);
 	}
 
 	return (c->get_uint8 (c->mem_rd_ext, addr));
@@ -168,10 +172,8 @@ void e6502_set_mem8 (e6502_t *c, unsigned short addr, unsigned char val)
 		return;
 	}
 
-	p = c->mem_map_wr[(addr >> 10) & 0x3f];
-
-	if (p != NULL) {
-		p[addr & 0x3ff] = val;
+	if ((p = c->mem_map_wr[(addr & 0xffff) >> E6502_MAP_BITS]) != NULL) {
+		p[addr & E6502_MAP_MASK] = val;
 	}
 	else {
 		c->set_uint8 (c->mem_wr_ext, addr, val);
@@ -227,6 +229,11 @@ void e6502_set_flags (e6502_t *c, unsigned flags);
  *****************************************************************************/
 void e6502_set_ioport (e6502_t *c, int enable);
 
+/*****************************************************************************
+ * @short Enable or disable undefined instructions
+ *****************************************************************************/
+void e6502_set_undef (e6502_t *c, int enable);
+
 void e6502_set_mem_read_fct (e6502_t *c, void *ext, void *get8);
 void e6502_set_mem_write_fct (e6502_t *c, void *ext, void *set8);
 void e6502_set_mem_f (e6502_t *c, void *mem, void *get8, void *set8);
@@ -254,12 +261,12 @@ int e6502_set_reg (e6502_t *c, const char *reg, unsigned long val);
 /*****************************************************************************
  * @short Get the number of executed clock cycles
  *****************************************************************************/
-unsigned long long e6502_get_clock (e6502_t *c);
+unsigned long e6502_get_clock (e6502_t *c);
 
 /*****************************************************************************
  * @short Get the number of executed instructions
  *****************************************************************************/
-unsigned long long e6502_get_opcnt (e6502_t *c);
+unsigned long e6502_get_opcnt (e6502_t *c);
 
 /*****************************************************************************
  * @short Get the current delay
@@ -306,6 +313,7 @@ void e6502_clock (e6502_t *c, unsigned n);
 #define E6502_OPF_JSR 0x0002
 #define E6502_OPF_RTI 0x0004
 #define E6502_OPF_RTS 0x0008
+#define E6502_OPF_UND 0x0010
 
 typedef struct {
 	unsigned       flags;

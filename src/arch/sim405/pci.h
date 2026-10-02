@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/pci.h                                        *
  * Created:     2004-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2015 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -28,6 +28,10 @@
 
 #ifndef PCE_SIM405_PCI_H
 #define PCE_SIM405_PCI_H 1
+
+
+#include <devices/memory.h>
+#include <devices/pci.h>
 
 
 typedef struct {

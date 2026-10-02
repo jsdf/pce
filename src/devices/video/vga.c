@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/vga.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -196,11 +196,13 @@ void vga_set_irq (vga_t *vga, unsigned char val)
  * Set the blink frequency
  */
 static
-void vga_set_blink_rate (vga_t *vga, unsigned freq)
+void vga_set_blink_rate (vga_t *vga, unsigned rate, int start)
 {
-	vga->blink_on = 1;
-	vga->blink_cnt = freq;
-	vga->blink_freq = freq;
+	vga->blink_on = (start != 0);
+	vga->blink_cnt = rate;
+	vga->blink_freq = rate;
+
+	vga->update_state |= VGA_UPDATE_DIRTY;
 }
 
 /*
@@ -555,7 +557,7 @@ void vga_mode0_update_char (vga_t *vga, unsigned char *dst, unsigned w,
 
 		if (crs) {
 			if (y == c1) {
-				incrs = !incrs;
+				incrs = 1;
 			}
 
 			if (incrs) {
@@ -563,7 +565,7 @@ void vga_mode0_update_char (vga_t *vga, unsigned char *dst, unsigned w,
 			}
 
 			if (y == c2) {
-				incrs = !incrs;
+				incrs = 0;
 			}
 		}
 
@@ -1890,18 +1892,6 @@ void vga_reg_set_uint16 (vga_t *vga, unsigned long addr, unsigned short val)
 static
 int vga_set_msg (vga_t *vga, const char *msg, const char *val)
 {
-	if (msg_is_message ("emu.video.blink", msg)) {
-		unsigned freq;
-
-		if (msg_get_uint (val, &freq)) {
-			return (1);
-		}
-
-		vga_set_blink_rate (vga, freq);
-
-		return (0);
-	}
-
 	return (-1);
 }
 
@@ -2094,6 +2084,7 @@ void vga_init (vga_t *vga, unsigned long io, unsigned long addr)
 	vga->video.set_terminal = (void *) vga_set_terminal;
 	vga->video.get_mem = (void *) vga_get_mem;
 	vga->video.get_reg = (void *) vga_get_reg;
+	vga->video.set_blink_rate = (void *) vga_set_blink_rate;
 	vga->video.print_info = (void *) vga_print_info;
 	vga->video.redraw = (void *) vga_redraw;
 	vga->video.clock = (void *) vga_clock;
@@ -2214,7 +2205,7 @@ video_t *vga_new_ini (ini_sct_t *sct)
 		return (NULL);
 	}
 
-	vga_set_blink_rate (vga, blink);
+	vga_set_blink_rate (vga, blink, 1);
 
 	return (&vga->video);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/comment.c                                      *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -143,8 +143,6 @@ int psi_set_comment (psi_img_t *img, const char *str)
 int psi_show_comment (psi_img_t *img)
 {
 	unsigned i;
-
-	fputs ("comments:\n", stdout);
 
 	for (i = 0; i < img->comment_size; i++) {
 		fputc (img->comment[i], stdout);

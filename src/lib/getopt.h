@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/getopt.h                                             *
  * Created:     2009-10-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +39,8 @@ typedef struct {
 
 
 void pce_getopt_help (const char *tag, const char *usage, pce_option_t *opt);
+
+int pce_getoptarg (int argc, char **argv, char ***optarg, unsigned cnt);
 
 int pce_getopt (int argc, char **argv, char ***arg, pce_option_t *opt);
 

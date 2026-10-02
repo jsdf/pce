@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/cmd.c                                         *
  * Created:     2010-09-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -32,9 +32,20 @@
 #include <lib/console.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
+#include <lib/msgdsk.h>
 #include <lib/sysdep.h>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
+#endif
+
+/*
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
+ */
+#define PC_EMSCRIPTEN_MAX_MS 100
 
 
 static mon_cmd_t par_cmd[] = {
@@ -52,7 +63,8 @@ static mon_cmd_t par_cmd[] = {
 	{ "pq", "[c|f|s]", "prefetch queue clear/fill/status" },
 	{ "p", "[cnt]", "execute cnt instructions, without trace in calls [1]" },
 	{ "r", "[reg val]", "set a register" },
-	{ "s", "[what]", "print status (pc|cpu|mem|pit|ppi|pic|time|uart|video|xms)" },
+	{ "s", "[what]", "print status (pc|cpu|disks|ems|mem|pic|pit|ports|ppi|time|uart|video|xms)" },
+	{ "trace", "on|off|expr", "turn trace on or off" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
 	{ "u", "[addr [cnt [mode]]]", "disassemble" }
 };
@@ -185,12 +197,12 @@ void prt_state_pit (e8253_t *pit)
 			"G=%u O=%u R=%d\n",
 			i,
 			cnt->sr, cnt->mode, cnt->rw,
-			cnt->val,
+			cnt->ce,
 			(cnt->cr_wr & 2) ? "cr1" : "CR1", cnt->cr[1],
 			(cnt->cr_wr & 1) ? "cr0" : "CR0", cnt->cr[0],
 			(cnt->ol_rd & 2) ? "ol1" : "OL1", cnt->ol[1],
 			(cnt->ol_rd & 1) ? "ol0" : "OL0", cnt->ol[0],
-			(unsigned) cnt->gate,
+			(unsigned) cnt->gate_val,
 			(unsigned) cnt->out_val,
 			cnt->counting
 		);
@@ -374,29 +386,8 @@ void prt_state_uart (e8250_t *uart, unsigned base)
 	);
 }
 
-static
-void prt_state_time (e8086_t *c)
-{
-	double cpi;
-
-	pce_prt_sep ("TIME");
-
-	if (c->instructions > 0) {
-		cpi = (double) c->clocks / (double) c->instructions;
-	}
-	else {
-		cpi = 0.0;
-	}
-
-	pce_printf ("CLK=%llu + %lu\n", c->clocks, c->delay);
-	pce_printf ("OPS=%llu\n", c->instructions);
-	pce_printf ("CPI=%.4f\n", cpi);
-}
-
 void prt_state_cpu (e8086_t *c)
 {
-	static char ft[2] = { '-', '+' };
-
 	pce_prt_sep ("8086");
 
 	pce_printf (
@@ -408,21 +399,62 @@ void prt_state_cpu (e8086_t *c)
 		(par_pc->current_int & 0x100) ? '*' : ' '
 	);
 
-	pce_printf ("CS=%04X  DS=%04X  ES=%04X  SS=%04X  IP=%04X  F =%04X",
-		e86_get_cs (c), e86_get_ds (c), e86_get_es (c), e86_get_ss (c),
-		e86_get_ip (c), c->flg
+	pce_printf ("DS=%04X  ES=%04X  SS=%04X  CS=%04X  IP=%04X  F =%04X",
+		e86_get_ds (c), e86_get_es (c), e86_get_ss (c), e86_get_cs (c),
+		e86_get_ip (c), e86_get_flags (c)
 	);
 
-	pce_printf ("  I%c D%c O%c S%c Z%c A%c P%c C%c\n",
-		ft[e86_get_if (c)], ft[e86_get_df (c)],
-		ft[e86_get_of (c)], ft[e86_get_sf (c)],
-		ft[e86_get_zf (c)], ft[e86_get_af (c)],
-		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
+	pce_printf ("  [%c%c%c%c%c%c%c%c%c]\n",
+		e86_get_df (c) ? 'D' : '-',
+		e86_get_if (c) ? 'I' : '-',
+		e86_get_tf (c) ? 'T' : '-',
+		e86_get_of (c) ? 'O' : '-',
+		e86_get_sf (c) ? 'S' : '-',
+		e86_get_zf (c) ? 'Z' : '-',
+		e86_get_af (c) ? 'A' : '-',
+		e86_get_pf (c) ? 'P' : '-',
+		e86_get_cf (c) ? 'C' : '-'
 	);
 
-	if (c->halt) {
+	if (e86_get_halt (c)) {
 		pce_printf ("HALT=1\n");
 	}
+}
+
+void pc_print_trace (e8086_t *c)
+{
+	e86_disasm_t op;
+	char         str[256];
+
+	e86_disasm_cur (c, &op);
+
+	switch (op.arg_n) {
+	case 0:
+		strcpy (str, op.op);
+		break;
+
+	case 1:
+		sprintf (str, "%-5s %s", op.op, op.arg1);
+		break;
+
+	case 2:
+		sprintf (str, "%-5s %s,%s", op.op, op.arg1, op.arg2);
+		break;
+
+	default:
+		strcpy (str, "****");
+		break;
+	}
+
+	pce_printf (
+		"AX=%04X BX=%04X CX=%04X DX=%04X "
+		"SP=%04X BP=%04X SI=%04X DI=%04X "
+		"DS=%04X ES=%04X SS=%04X F=%04X %04X:%04X %s\n",
+		e86_get_ax (c), e86_get_bx (c), e86_get_cx (c), e86_get_dx (c),
+		e86_get_sp (c), e86_get_bp (c), e86_get_si (c), e86_get_di (c),
+		e86_get_ds (c),	e86_get_es (c), e86_get_ss (c), e86_get_flags (c),
+		e86_get_cs (c), e86_get_ip (c), str
+	);
 }
 
 static
@@ -447,7 +479,6 @@ void prt_state_pc (ibmpc_t *pc)
 	prt_state_pit (&pc->pit);
 	prt_state_pic (&pc->pic);
 	prt_state_dma (&pc->dma);
-	prt_state_time (pc->cpu);
 	prt_state_cpu (pc->cpu);
 }
 
@@ -491,7 +522,7 @@ int pc_check_break (ibmpc_t *pc)
 static
 void pc_exec (ibmpc_t *pc)
 {
-	unsigned long long old;
+	unsigned old;
 
 	pc->current_int &= 0xff;
 
@@ -512,11 +543,13 @@ void pc_run (ibmpc_t *pc)
 
 	pc_clock_discontinuity (pc);
 
-	while (pc->brk == 0) {
-		if (pc->pause == 0) {
+	if (pc->pause == 0) {
+		while (pc->brk == 0) {
 			pc_clock (pc, 4 * pc->speed_current);
 		}
-		else {
+	}
+	else {
+		while (pc->brk == 0) {
 			pce_usleep (100000);
 			trm_check (pc->trm);
 		}
@@ -529,65 +562,88 @@ void pc_run (ibmpc_t *pc)
 
 
 /*
- * emscripten specific main loop
+ * Browser (emscripten) main loop
+ *
+ * The main loop is driven by requestAnimationFrame. Each iteration emulates
+ * the real time that has passed since the previous one, so that every
+ * emulated video frame can be shown and no time is wasted busy waiting to
+ * stay in sync with real time.
  */
 
-/*
- * store global pointer to simulation state struct
- * so that pc_run_emscripten_step doesn't require it as a parameter
- */
-ibmpc_t *ibmpc_sim = NULL;
+static ibmpc_t *pc_emscripten_sim = NULL;
 
-/*
- * setup and run the simulation
- */
 void pc_run_emscripten (ibmpc_t *pc)
 {
-	ibmpc_sim = pc;
+	pc_emscripten_sim = pc;
 
 	pce_start (&pc->brk);
 
 	pc_clock_discontinuity (pc);
 
-	#ifdef EMSCRIPTEN
-	emscripten_set_main_loop(pc_run_emscripten_step, 100, 1);
-	#else
-	while (!pc->brk) {
+#ifdef EMSCRIPTEN
+	emscripten_set_main_loop (pc_run_emscripten_step, 0, 1);
+#else
+	while (pc->brk == 0) {
 		pc_run_emscripten_step();
 	}
-	#endif
 
 	pc->current_int &= 0xff;
-	// pce_stop();
+
+	pce_stop();
+#endif
 }
 
-/*
- * run one iteration
- */
-void pc_run_emscripten_step ()
+void pc_run_emscripten_step (void)
 {
+	unsigned long clk, clk0;
+	ibmpc_t       *pc;
 
-	// for each 'emscripten step' we'll run a bunch of actual cycles
-	// to minimise overhead from emscripten's main loop management
-	int i;
-	for (i = 0; i < 10000; ++i)
-	{
-		pc_clock (ibmpc_sim, 4 * ibmpc_sim->speed_current);
+#ifdef EMSCRIPTEN
+	static double last = -1.0;
+	double        now, ms;
 
-		if (ibmpc_sim->brk) {
+	now = emscripten_get_now();
+
+	if ((last < 0.0) || (now < last)) {
+		last = now;
+	}
+
+	ms = now - last;
+	last = now;
+
+	if (ms > PC_EMSCRIPTEN_MAX_MS) {
+		ms = PC_EMSCRIPTEN_MAX_MS;
+	}
+
+	clk = (unsigned long) (ms * (PCE_IBMPC_CLK2 / 1000.0));
+#else
+	/* pc_clock() keeps real time by sleeping */
+	clk = PCE_IBMPC_CLK2 / 25;
+#endif
+
+	pc = pc_emscripten_sim;
+
+	if (pc->pause) {
+		trm_check (pc->trm);
+		return;
+	}
+
+	/* clock2 is the system clock (PCE_IBMPC_CLK2) */
+	clk0 = pc->clock2;
+
+	while ((pc->clock2 - clk0) < clk) {
+		pc_clock (pc, 4 * pc->speed_current);
+
+		if (pc->brk) {
+			pc->current_int &= 0xff;
 			pce_stop();
-			#ifdef EMSCRIPTEN
+#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-			#endif
+#endif
 			return;
 		}
 	}
 }
-/*
- * end emscripten specific main loop
- */
-
-
 
 #if 0
 static
@@ -599,6 +655,23 @@ void pce_op_stat (void *ext, unsigned char op1, unsigned char op2)
 
 }
 #endif
+
+/*
+ * Force floppy disk drive types to 40 tracks in the BIOS data area of
+ * newer PC/XT BIOSes.
+ */
+static
+void pc_bios_set_40_track (ibmpc_t *pc, unsigned mask)
+{
+	unsigned i, v;
+
+	for (i = 0; i < 2; i++) {
+		if (mask & (1 << i)) {
+			v = e86_get_mem8 (pc->cpu, 0x40, 0x90 + i);
+			e86_set_mem8 (pc->cpu, 0x40, 0x90 + i, v & 0xfe);
+		}
+	}
+}
 
 static
 void pce_op_int (void *ext, unsigned char n)
@@ -642,11 +715,11 @@ void pce_op_int (void *ext, unsigned char n)
 			dsks_rmv_disk (pc->dsk, pc->dsk0);
 		}
 
-		if (pc->patch_bios_int19 == 0) {
-			return;
+		if (pc->fdd40) {
+			pc_bios_set_40_track (pc, pc->fdd40);
 		}
 
-		if (pc->patch_bios_init) {
+		if (pc->patch_bios_int19 == 0) {
 			return;
 		}
 
@@ -674,7 +747,9 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
 	);
 
-	pce_usleep (100000UL);
+	if (pc->brk == 0) {
+		pce_usleep (100000UL);
+	}
 
 	trm_check (pc->trm);
 }
@@ -756,6 +831,10 @@ void pc_cmd_g_b (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	while (1) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (pc_check_break (pc)) {
@@ -782,6 +861,10 @@ void pc_cmd_g_far (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	while (1) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (e86_get_cs (pc->cpu) != seg) {
@@ -818,48 +901,53 @@ void pc_cmd_g (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_hm (cmd_t *cmd)
 {
-		pce_puts (
-			"emu.config.save      <filename>\n"
-			"emu.exit\n"
-			"emu.stop\n"
-			"emu.pause            \"0\" | \"1\"\n"
-			"emu.pause.toggle\n"
-			"emu.reset\n"
-			"\n"
-			"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
-			"emu.cpu.speed        <factor>\n"
-			"emu.cpu.speed.step   <adjustment>\n"
-			"\n"
-			"emu.disk.boot        <bootdrive>\n"
-			"emu.disk.commit      [<drive>]\n"
-			"emu.disk.eject       <drive>\n"
-			"emu.disk.insert      <drive>:<fname>\n"
-			"\n"
-			"emu.fdc.accurate     \"0\" | \"1\"\n"
-			"\n"
-			"emu.parport.driver   <driver>\n"
-			"emu.parport.file     <filename>\n"
-			"\n"
-			"emu.serport.driver   <driver>\n"
-			"emu.serport.file     <filename>\n"
-			"\n"
-			"emu.tape.append\n"
-			"emu.tape.file        <filename>\n"
-			"emu.tape.load        [<position> | \"end\"]\n"
-			"emu.tape.rewind\n"
-			"emu.tape.save        [<position> | \"end\"]\n"
-			"emu.tape.state\n"
-			"\n"
-			"emu.term.fullscreen  \"0\" | \"1\"\n"
-			"emu.term.fullscreen.toggle\n"
-			"emu.term.grab\n"
-			"emu.term.release\n"
-			"emu.term.screenshot  [<filename>]\n"
-			"emu.term.title       <title>\n"
-			"\n"
-			"emu.video.blink      <blink-rate>\n"
-			"emu.video.redraw     [\"now\"]\n"
-		);
+	pce_puts (
+		"emu.config.save      <filename>\n"
+		"emu.exit\n"
+		"emu.stop\n"
+		"emu.pause            \"0\" | \"1\"\n"
+		"emu.pause.toggle\n"
+		"emu.reset\n"
+		"\n"
+		"emu.cas.commit\n"
+		"emu.cas.create       <filename>\n"
+		"emu.cas.play\n"
+		"emu.cas.load         [<pos>]\n"
+		"emu.cas.read         <filename>\n"
+		"emu.cas.record\n"
+		"emu.cas.space\n"
+		"emu.cas.state\n"
+		"emu.cas.stop\n"
+		"emu.cas.truncate\n"
+		"emu.cas.write        <filename>\n"
+		"\n"
+		"emu.cpu.model        \"8086\" | \"8088\" | \"80186\" | \"80188\"\n"
+		"emu.cpu.speed        <factor>\n"
+		"emu.cpu.speed.step   <adjustment>\n"
+		"\n"
+		"emu.disk.boot        <bootdrive>\n"
+		"emu.fdc.accurate     \"0\" | \"1\"\n"
+		"emu.fdc.verbose      <level>\n"
+		"\n"
+		"emu.parport.driver   <driver>\n"
+		"emu.parport.file     <filename>\n"
+		"\n"
+		"emu.serport.driver   <driver>\n"
+		"emu.serport.file     <filename>\n"
+		"\n"
+		"emu.term.fullscreen  \"0\" | \"1\"\n"
+		"emu.term.fullscreen.toggle\n"
+		"emu.term.grab\n"
+		"emu.term.release\n"
+		"emu.term.screenshot  [<filename>]\n"
+		"emu.term.title       <title>\n"
+		"\n"
+		"emu.video.blink      <blink-rate>\n"
+		"emu.video.redraw     [\"now\"]\n"
+		"\n"
+	);
+
+	msg_dsk_print_help();
 }
 
 static
@@ -898,22 +986,24 @@ void pc_cmd_i (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_key (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned       i;
-	unsigned       event;
-	pce_key_t      key;
-	char           str[256];
+	unsigned  i;
+	unsigned  mask;
+	pce_key_t key;
+	char      str[256];
 
 	while (cmd_match_str (cmd, str, 256)) {
 		i = 0;
 
-		event = PCE_KEY_EVENT_DOWN;
-
 		if (str[0] == '+') {
+			mask = 1;
 			i += 1;
 		}
 		else if (str[0] == '-') {
+			mask = 2;
 			i += 1;
-			event = PCE_KEY_EVENT_UP;
+		}
+		else {
+			mask = 3;
 		}
 
 		key = pce_key_from_string (str + i);
@@ -922,12 +1012,13 @@ void pc_cmd_key (cmd_t *cmd, ibmpc_t *pc)
 			pce_printf ("unknown key: %s\n", str);
 		}
 		else {
-			pce_printf ("key: %s%s\n",
-				(event == PCE_KEY_EVENT_DOWN) ? "+" : "-",
-				str + i
-			);
+			if (mask & 1) {
+				pc_kbd_set_key (&pc->kbd, PCE_KEY_EVENT_DOWN, key);
+			}
 
-			pc_kbd_set_key (&pc->kbd, event, key);
+			if (mask & 2) {
+				pc_kbd_set_key (&pc->kbd, PCE_KEY_EVENT_UP, key);
+			}
 		}
 	}
 
@@ -1098,9 +1189,10 @@ void pc_cmd_pq (cmd_t *cmd, ibmpc_t *pc)
 static
 void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 {
-	unsigned short seg, ofs;
+	unsigned       cnt, opcnt1, opcnt2;
+	unsigned short seg, ofs, seg2, ofs2;
 	unsigned long  i, n;
-	int            brk;
+	int            brk, skip;
 	e86_disasm_t   op;
 
 	n = 1;
@@ -1125,6 +1217,12 @@ void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 		seg = e86_get_cs (pc->cpu);
 		ofs = e86_get_ip (pc->cpu);
 
+		cnt = pc->cpu->int_cnt;
+
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		while ((e86_get_cs (pc->cpu) == seg) && (e86_get_ip (pc->cpu) == ofs)) {
 			pc_clock (pc, 1);
 
@@ -1138,10 +1236,32 @@ void pc_cmd_p (cmd_t *cmd, ibmpc_t *pc)
 			break;
 		}
 
-		if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
-			unsigned short ofs2 = ofs + op.dat_n;
+		skip = 0;
 
-			while ((e86_get_cs (pc->cpu) != seg) || (e86_get_ip (pc->cpu) != ofs2)) {
+		if (op.flags & (E86_DFLAGS_CALL | E86_DFLAGS_LOOP)) {
+			seg2 = seg;
+			ofs2 = ofs + op.dat_n;
+			skip = 1;
+		}
+		else if (pc->cpu->int_cnt != cnt) {
+			seg2 = pc->cpu->int_cs;
+			ofs2 = pc->cpu->int_ip;
+			skip = 1;
+		}
+
+		if (skip) {
+			opcnt1 = -e86_get_opcnt (pc->cpu);
+
+			while ((e86_get_cs (pc->cpu) != seg2) || (e86_get_ip (pc->cpu) != ofs2)) {
+				if (pc->trace) {
+					opcnt2 = e86_get_opcnt (pc->cpu);
+
+					if (opcnt1 != opcnt2) {
+						opcnt1 = opcnt2;
+						pc_print_trace (pc->cpu);
+					}
+				}
+
 				pc_clock (pc, 1);
 
 				if (pc_check_break (pc)) {
@@ -1220,23 +1340,26 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 		else if (cmd_match (cmd, "cpu")) {
 			prt_state_cpu (pc->cpu);
 		}
-		else if (cmd_match (cmd, "time")) {
-			prt_state_time (pc->cpu);
+		else if (cmd_match (cmd, "dma")) {
+			prt_state_dma (&pc->dma);
+		}
+		else if (cmd_match (cmd, "disks")) {
+			dsks_print_info (pc->dsk);
+		}
+		else if (cmd_match (cmd, "ems")) {
+			prt_state_ems (pc->ems);
+		}
+		else if (cmd_match (cmd, "mem")) {
+			prt_state_mem (pc);
+		}
+		else if (cmd_match (cmd, "pic")) {
+			prt_state_pic (&pc->pic);
 		}
 		else if (cmd_match (cmd, "pit")) {
 			prt_state_pit (&pc->pit);
 		}
 		else if (cmd_match (cmd, "ppi")) {
 			prt_state_ppi (&pc->ppi);
-		}
-		else if (cmd_match (cmd, "pic")) {
-			prt_state_pic (&pc->pic);
-		}
-		else if (cmd_match (cmd, "dma")) {
-			prt_state_dma (&pc->dma);
-		}
-		else if (cmd_match (cmd, "mem")) {
-			prt_state_mem (pc);
 		}
 		else if (cmd_match (cmd, "ports")) {
 			prt_state_ports (pc);
@@ -1256,9 +1379,6 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 		else if (cmd_match (cmd, "video")) {
 			prt_state_video (pc->video);
 		}
-		else if (cmd_match (cmd, "ems")) {
-			prt_state_ems (pc->ems);
-		}
 		else if (cmd_match (cmd, "xms")) {
 			prt_state_xms (pc->xms);
 		}
@@ -1266,6 +1386,30 @@ void pc_cmd_s (cmd_t *cmd, ibmpc_t *pc)
 			cmd_error (cmd, "unknown component (%s)\n");
 			return;
 		}
+	}
+}
+
+static
+void pc_cmd_trace (cmd_t *cmd, ibmpc_t *pc)
+{
+	unsigned short v;
+
+	if (cmd_match_eol (cmd)) {
+		pce_printf ("trace is %s\n", pc->trace ? "on" : "off");
+		return;
+	}
+
+	if (cmd_match (cmd, "on")) {
+		pc->trace = 1;
+	}
+	else if (cmd_match (cmd, "off")) {
+		pc->trace = 0;
+	}
+	else if (cmd_match_uint16 (cmd, &v)) {
+		pc->trace = (v != 0);
+	}
+	else {
+		cmd_error (cmd, "on or off expected\n");
 	}
 }
 
@@ -1287,6 +1431,10 @@ void pc_cmd_t (cmd_t *cmd, ibmpc_t *pc)
 	pc_clock_discontinuity (pc);
 
 	for (i = 0; i < n; i++) {
+		if (pc->trace) {
+			pc_print_trace (pc->cpu);
+		}
+
 		pc_exec (pc);
 
 		if (pc_check_break (pc)) {
@@ -1394,6 +1542,9 @@ int pc_cmd (ibmpc_t *pc, cmd_t *cmd)
 	}
 	else if (cmd_match (cmd, "s")) {
 		pc_cmd_s (cmd, pc);
+	}
+	else if (cmd_match (cmd, "trace")) {
+		pc_cmd_trace (cmd, pc);
 	}
 	else if (cmd_match (cmd, "t")) {
 		pc_cmd_t (cmd, pc);

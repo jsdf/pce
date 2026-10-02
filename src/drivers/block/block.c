@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/block.c                                    *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -20,13 +20,16 @@
  *****************************************************************************/
 
 
-#include "block.h"
+#include <drivers/block/block.h>
 
-#include "blkraw.h"
-#include "blkpce.h"
-#include "blkdosem.h"
-#include "blkpsi.h"
-#include "blkqed.h"
+#include <drivers/block/blkchd.h>
+#include <drivers/block/blkdosem.h>
+#include <drivers/block/blkpbi.h>
+#include <drivers/block/blkpce.h>
+#include <drivers/block/blkpri.h>
+#include <drivers/block/blkpsi.h>
+#include <drivers/block/blkqed.h>
+#include <drivers/block/blkraw.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -374,12 +377,16 @@ void dsk_init (disk_t *dsk, void *ext, uint32_t n, uint32_t c, uint32_t h, uint3
 
 void dsk_del (disk_t *dsk)
 {
+	char *tmp;
+
 	if (dsk != NULL) {
-		free (dsk->fname);
+		tmp = dsk->fname;
 
 		if (dsk->del != NULL) {
 			dsk->del (dsk);
 		}
+
+		free (tmp);
 	}
 }
 
@@ -515,6 +522,10 @@ int dsk_guess_geometry_pte (const unsigned char *p, unsigned *h, unsigned *s)
 
 	*s = v1 / v2;
 
+	if ((*s == 0) || (*s > 255)) {
+		return (1);
+	}
+
 	v1 = (long long) (l2 - s2) - (long long) h2 * *s;
 	v2 = (long long) c2 * *s;
 
@@ -524,7 +535,7 @@ int dsk_guess_geometry_pte (const unsigned char *p, unsigned *h, unsigned *s)
 
 	*h = v1 / v2;
 
-	if ((*h == 0) || (*s == 0)) {
+	if ((*h == 0) || (*h > 256)) {
 		return (1);
 	}
 
@@ -740,12 +751,20 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 {
 	unsigned type;
 
+	if (dsk_pbi_probe (fname)) {
+		return (dsk_pbi_open (fname, ro));
+	}
+
 	if (dsk_pce_probe (fname)) {
 		return (dsk_pce_open (fname, ro));
 	}
 
 	if (dsk_qed_probe (fname)) {
 		return (dsk_qed_open (fname, ro));
+	}
+
+	if (dsk_chd_probe (fname)) {
+		return (dsk_chd_open (fname, ro));
 	}
 
 	if (dsk_dosemu_probe (fname)) {
@@ -756,6 +775,12 @@ disk_t *dsk_auto_open (const char *fname, uint64_t ofs, int ro)
 
 	if (type != PSI_FORMAT_NONE) {
 		return (dsk_psi_open (fname, type, ro));
+	}
+
+	type = dsk_pri_probe (fname);
+
+	if (type != PRI_FORMAT_NONE) {
+		return (dsk_pri_open (fname, type, ro));
 	}
 
 	type = psi_guess_type (fname);
@@ -794,6 +819,21 @@ int dsk_read_lba (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 	return (1);
 }
 
+int dsk_read_lbaz (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
+{
+	if ((i + n) <= dsk->blocks) {
+		return (dsk_read_lba (dsk, buf, i, n));
+	}
+
+	memset (buf, 0, 512 * n);
+
+	if (i < dsk->blocks) {
+		return (dsk_read_lba (dsk, buf, i, dsk->blocks - i));
+	}
+
+	return (0);
+}
+
 int dsk_read_chs (disk_t *dsk, void *buf,
 	uint32_t c, uint32_t h, uint32_t s, uint32_t n)
 {
@@ -830,6 +870,36 @@ int dsk_write_chs (disk_t *dsk, const void *buf,
 int dsk_commit (disk_t *dsk)
 {
 	return (dsk_set_msg (dsk, "commit", NULL));
+}
+
+disk_t *dsk_create_cow (disk_t *dsk, const char *name, unsigned long minblk)
+{
+	disk_t     *cow;
+	disk_pbi_t *pbi;
+
+	if ((minblk == 0) && (dsk->type == PCE_DISK_PBI)) {
+		pbi = dsk->ext;
+		minblk = pbi->block_size;
+	}
+
+	cow = dsk_pbi_cow_create (dsk, name, dsk->blocks, dsk->c, dsk->h, dsk->s, minblk);
+
+	return (cow);
+}
+
+disk_t *dsk_open_cow (disk_t *dsk, const char *name)
+{
+	disk_t *cow;
+
+	if ((cow = dsk_pbi_cow_open (dsk, name)) != NULL) {
+		return (cow);
+	}
+
+	if ((cow = dsk_qed_cow_open (dsk, name)) != NULL) {
+		return (cow);
+	}
+
+	return (NULL);
 }
 
 int dsk_get_msg (disk_t *dsk, const char *msg, char *val, unsigned max)

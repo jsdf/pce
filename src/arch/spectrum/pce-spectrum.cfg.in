@@ -1,0 +1,69 @@
+# pce-spectrum.cfg
+#
+# Example config file
+
+system {
+	# The machine model. Valid values are "16K" and "48K".
+	model = "16K"
+
+	video_w = 256
+	video_h = 192
+
+	# The CPU clock speed in Hz. Zero means all out.
+	#clock = 0
+
+	# The CPU speed factor. This sets the CPU clock to a
+	# multiple of 3.5 MHz.
+	speed = 1
+
+	# Set keypad mode.
+	keypad = 0
+
+	# Load a snapshot before starting the emulation.
+	# snapshot = "snapshot.snap"
+}
+
+cassette {
+	read = "cas.pti"
+	write = "cas-new.pti"
+}
+
+speaker {
+	# The speaker volume in the range 0..1000.
+	volume = 500
+
+	# Set the low-pass filter cut-off frequency. Set to 0 to
+	# disable the filter.
+	lowpass = 0
+
+	# Set the output sample rate.
+	sample_rate = 48000
+
+	# Set the sound output driver.
+	driver = "sdl:lowpass=5000:wav=speaker.wav:wavfilter=0"
+}
+
+rom {
+	address = 0
+
+	size = 16384
+
+	#file = "spectrum.rom"
+}
+
+# Multiple "ram" sections may be present
+ram {
+	# The base address
+	address = 16384
+
+	# The size in bytes
+	size = 16K
+	#size = 48K
+}
+
+# load sections are processed after the emulator is set up.
+load {
+	format = "auto"
+	address = 0
+	file = "spectrum.rom"
+}

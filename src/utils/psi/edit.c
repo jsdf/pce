@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/edit.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -76,7 +76,7 @@ int psi_edit_deldam_cb (psi_img_t *img, psi_sct_t *sct,
 }
 
 static
-int psi_edit_fm_dd_cb (psi_img_t *img, psi_sct_t *sct,
+int psi_edit_fm_sd_cb (psi_img_t *img, psi_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
 	psi_sct_set_encoding (sct, PSI_ENC_FM_DD);
@@ -160,7 +160,7 @@ static
 int psi_edit_position_cb (psi_img_t *img, psi_sct_t *sct,
 	unsigned c, unsigned h, unsigned s, unsigned a, void *p)
 {
-	sct->position = (*(unsigned long *) p) & 0xffffffff;
+	sct->position = (*(unsigned long *) p);
 	par_cnt += 1;
 	return (0);
 }
@@ -219,7 +219,7 @@ int psi_edit_tags_cb (psi_img_t *img, psi_sct_t *sct,
 		psi_sct_set_tags (sct, buf, 12);
 	}
 	else {
-		psi_sct_set_tags (sct, buf, 0);
+		psi_sct_set_tags (sct, NULL, 0);
 	}
 
 	par_cnt += 1;
@@ -263,10 +263,10 @@ int psi_edit_sectors (psi_img_t *img, const char *what, const char *val)
 		fct = psi_edit_deldam_cb;
 	}
 	else if (strcmp (what, "fm") == 0) {
-		fct = psi_edit_fm_dd_cb;
+		fct = psi_edit_fm_sd_cb;
 	}
-	else if (strcmp (what, "fm-dd") == 0) {
-		fct = psi_edit_fm_dd_cb;
+	else if (strcmp (what, "fm-sd") == 0) {
+		fct = psi_edit_fm_sd_cb;
 	}
 	else if (strcmp (what, "fm-hd") == 0) {
 		fct = psi_edit_fm_hd_cb;

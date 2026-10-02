@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ems.c                                         *
  * Created:     2003-10-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -704,7 +704,7 @@ void ems_4e (ems_t *ems, e8086_t *cpu)
 		break;
 
 	default:
-		pce_log (MSG_MSG, "ems: unknown subfunction: AX=%04X\n",
+		pce_log_inf ("ems: unknown subfunction: AX=%04X\n",
 			e86_get_ax (cpu)
 		);
 
@@ -849,7 +849,7 @@ void ems_53 (ems_t *ems, e8086_t *cpu)
 		break;
 
 	default:
-		pce_log (MSG_MSG, "ems: unknown subfunction: AX=%04X\n",
+		pce_log_inf ("ems: unknown subfunction: AX=%04X\n",
 			e86_get_ax (cpu)
 		);
 
@@ -928,7 +928,7 @@ void ems_handler (ems_t *ems, e8086_t *cpu)
 		break;
 
 	default:
-		pce_log (MSG_MSG, "ems: unknown function: AX=%04X\n",
+		pce_log_inf ("ems: unknown function: AX=%04X\n",
 			e86_get_ax (cpu)
 		);
 		e86_set_ah (cpu, 0x84);

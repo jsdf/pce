@@ -28,7 +28,7 @@
 #include <drivers/block/block.h>
 
 
-#define SONY_DRIVES 4
+#define SONY_DRIVES 8
 
 
 typedef struct {

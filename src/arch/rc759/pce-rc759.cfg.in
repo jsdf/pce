@@ -22,20 +22,34 @@ cfg.prom ?= "rc759-1-2.1.rom"
 
 
 system {
-	# The CPU clock in Hz
+	# Set the RC759 model
 	#
-	# Values that correspond to real machines are 6 MHz and 8 MHz.
-	# Larger values will cause problems for the PROM.
-	clock = 6000000
+	# Model 1 has a system clock speed of 6 MHz and supports
+	# RAM sizes of 256K, 386K, 640K and 768K.
+	#
+	# Model 2 has a system clock speed of 8 MHz and supports
+	# RAM sizes of 512K, 640K and 832K.
+	model = 1
 
-	# Alternate RAM size
+	# Set the CPU speed
 	#
-	# If this option is set, the PROM expects alternate RAM sizes. It
-	# has to correspond the the specific PROM used.
-	# Valid RAM sizes are:
-	#   0: 256K, 384K, 640K, 768K
-	#   1: 512K, 640K, 832K
-	alt_mem_size = 0
+	# This sets the CPU clock speed as a multiple of the system
+	# clock speed. If this is set to anything other than 1, the
+	# fastboot option should also be enabled, because the POST
+	# code is CPU speed sensitive.
+	speed = 1
+
+	# Enable access to real time
+	#
+	# If this option is enabled, the emulated real time clock is
+	# initialized with the current time. Otherwise it is initialized
+	# to all zeros.
+	rtc = 1
+
+	# Fast boot
+	#
+	# If this option is set, the POST is skipped.
+	fastboot = 0
 
 	# The NVM backing file
 	#
@@ -217,15 +231,11 @@ speaker {
 
 # The floppy disk controller
 fdc {
-	# The PBIT file attached to the first floppy disk drive.
-	# If this option is not set, or the file can't be read,
-	# the disk with ID 0 is used instead.
-	file0 = "fd0.pbit"
+	# The disk id used for drive 0.
+	id0 = 0
 
-	# The PBIT file attached to the second floppy disk drive.
-	# If this option is not set, or the file can't be read,
-	# the disk with ID 1 is used instead.
-	file1 = "fd1.pbit"
+	# The disk id used for drive 1.
+	id1 = 1
 }
 
 
@@ -234,8 +244,9 @@ disk {
 	drive    = 0
 	optional = 1
 	type     = "auto"
+	file     = "fd0.pri"
 	file     = "fd0.img"
-	file     = "fd0.pfdc"
+	file     = "fd0.psi"
 }
 
 # The second floppy drive
@@ -243,6 +254,7 @@ disk {
 	drive    = 1
 	optional = 1
 	type     = "auto"
+	file     = "fd1.pri"
 	file     = "fd1.img"
-	file     = "fd1.pfdc"
+	file     = "fd1.psi"
 }

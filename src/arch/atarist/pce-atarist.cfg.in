@@ -19,21 +19,32 @@ path = "-."
 
 system {
 	# The ST model to emulate. Valid models are:
-	# st: An Atari ST
+	# st:   An Atari ST
+	# mega: An Atari Mega
 	model = "st"
+
+	# Disable the startup memory test.
+	fastboot = 1
 
 	# The monitor type.
 	# If this is true, a mono monitor is attached, a color
 	# monitor otherwise.
 	mono = 1
 
-	# Disable the startup memory test.
-	fastboot = 1
+	# Enable the RTC.
+	# This enables a Mega compatible RTC even on plain ST machines.
+	rtc = 1
 
 	# Only update the screen every nth frame. A value of 1
 	# skips every other frame and is a good compromise between
 	# accuracy and emulation speed.
 	frame_skip = 1
+
+	# Enable the viking monochrome card
+	viking = 0
+
+	# Start up with the viking display enabled
+	viking_boot = 0
 
 	# The parallel port character device.
 	# Not all character drivers are supported on
@@ -159,7 +170,6 @@ terminal {
 	mouse_div_y = 1
 }
 
-
 # The AY 2149 sound generator
 psg {
 	#driver = "null"
@@ -171,7 +181,7 @@ psg {
 	sample_rate = 48000
 
 	# The AYM output file
-	#aym = "sound.aym"
+	aym = "sound.aym"
 
 	# The AYM resolution in microseconds
 	aym_resolution = 250
@@ -186,21 +196,18 @@ psg {
 }
 
 fdc {
-	# The PRI file associated with drive 0. If this file does not
-	# exist, the disk image for drive 0, configured below, is used
-	# instead.
-	file0 = "fd0.pri"
+	# The disk id used for drive 0.
+	id0 = 0
 
-	# The PRI file associated with drive 1. If this file does not
-	# exist, the disk image for drive 1, configured below, is used
-	# instead.
-	file1 = "fd1.pri"
+	# The disk id used for drive 1.
+	id1 = 1
 }
 
 # The first floppy disk
 disk {
 	drive    = 0
 	type     = "auto"
+	file     = "fd0.pri"
 	file     = "fd0.st"
 	file     = "fd0.img"
 	file     = "fd0.psi"
@@ -211,6 +218,7 @@ disk {
 disk {
 	drive    = 1
 	type     = "auto"
+	file     = "fd1.pri"
 	file     = "fd1.st"
 	file     = "fd1.img"
 	file     = "fd1.psi"

@@ -48,7 +48,8 @@ PCE_ATARIST_BAS := \
 	psg \
 	rp5c15 \
 	smf \
-	video
+	video \
+	viking
 
 PCE_ATARIST_SRC  := $(foreach f,$(PCE_ATARIST_BAS),$(rel)/$(f).c)
 PCE_ATARIST_OBJ  := $(foreach f,$(PCE_ATARIST_BAS),$(rel)/$(f).o)
@@ -59,7 +60,6 @@ PCE_ATARIST_ETC  := $(rel)/pce-atarist.cfg
 PCE_ATARIST_BIN  := $(rel)/pce-atarist$(EXEEXT)
 
 PCE_ATARIST_OBJ_EXT := \
-	src/cpu/e68000/e68000.a \
 	src/chipset/82xx/e8250.o \
 	src/chipset/e6850.o \
 	src/chipset/e68901.o \
@@ -67,31 +67,30 @@ PCE_ATARIST_OBJ_EXT := \
 	src/chipset/wd179x.o \
 	src/devices/device.o \
 	src/devices/memory.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/pri/pri.a \
-	src/drivers/psi/psi.a \
-	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
+	src/lib/cfg.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
 	src/lib/getopt.o \
 	src/lib/inidsk.o \
 	src/lib/iniram.o \
 	src/lib/initerm.o \
-	src/lib/ihex.o \
-	src/lib/srec.o \
-	src/lib/load.o \
 	src/lib/log.o \
 	src/lib/monitor.o \
 	src/lib/msg.o \
+	src/lib/msgdsk.o \
 	src/lib/path.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a \
+	$(LIBPCE_LOAD_OBJ) \
+	$(LIBINI_OBJ) \
+	$(CPU_68K_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_PRI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(DRV_SND_OBJ) \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -121,6 +120,7 @@ $(rel)/psg.o:     $(rel)/psg.c
 $(rel)/rp5c15.o:  $(rel)/rp5c15.c
 $(rel)/smf.o:     $(rel)/smf.c
 $(rel)/video.o:   $(rel)/video.c
+$(rel)/viking.o:  $(rel)/viking.c
 
 $(rel)/pce-atarist$(EXEEXT): $(PCE_ATARIST_OBJ_EXT) $(PCE_ATARIST_OBJ)
 	$(QP)echo "  LD     $@"

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/sim405.c                                     *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -28,6 +28,38 @@
 
 #include "main.h"
 
+#include <stdlib.h>
+
+#include "hook.h"
+#include "msg.h"
+#include "pci.h"
+#include "sercons.h"
+#include "sim405.h"
+
+#include <chipset/clock/ds1743.h>
+
+#include <chipset/82xx/e8250.h>
+
+#include <cpu/ppc405/ppc405.h>
+
+#include <devices/clock/ds1743.h>
+#include <devices/pci.h>
+#include <devices/serport.h>
+#include <devices/slip.h>
+
+#include <lib/brkpt.h>
+#include <lib/log.h>
+#include <lib/iniata.h>
+#include <lib/inidsk.h>
+#include <lib/iniram.h>
+#include <lib/load.h>
+#include <lib/sysdep.h>
+
+#include <libini/libini.h>
+
+
+#define S405_CLOCK (200UL * 1000UL * 1000UL)
+
 
 static unsigned long s405_get_dcr (void *ext, unsigned long dcrn);
 static void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val);
@@ -36,24 +68,32 @@ void s405_break (sim405_t *sim, unsigned char val);
 
 
 static
-void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
+void s405_setup_system (sim405_t *sim, ini_sct_t *ini)
 {
 	ini_sct_t     *sct;
 	const char    *model;
 	unsigned long uicinv;
-	unsigned      timer_scale;
+	unsigned long serial_clock;
+	int           sync_time_base;
 
-	sct = ini_next_sct (ini, NULL, "powerpc");
+	sct = ini_next_sct (ini, NULL, "system");
+
+	if (sct == NULL) {
+		sct = ini_next_sct (ini, NULL, "powerpc");
+	}
 
 	ini_get_string (sct, "model", &model, "ppc405");
 	ini_get_uint32 (sct, "uic_invert", &uicinv, 0x0000007f);
-	ini_get_uint16 (sct, "timer_scale", &timer_scale, 8);
+	ini_get_uint32 (sct, "serial_clock", &serial_clock, 115200);
+	ini_get_bool (sct, "sync_time_base", &sync_time_base, 1);
 
-	pce_log_tag (MSG_INF, "CPU:", "model=%s uicinv=%08lX ts=%u\n",
-		model, uicinv, timer_scale
+	pce_log_tag (MSG_INF, "CPU:", "model=%s uic-inv=%08lX sync_time_base=%d\n",
+		model, uicinv, sync_time_base
 	);
 
 	sim->ppc = p405_new ();
+
+	sim->sync_time_base = (sync_time_base != 0);
 
 	p405_set_mem_fct (sim->ppc, sim->mem,
 		&mem_get_uint8,
@@ -70,11 +110,17 @@ void s405_setup_ppc (sim405_t *sim, ini_sct_t *ini)
 
 	p405_set_dcr_fct (sim->ppc, sim, &s405_get_dcr, &s405_set_dcr);
 
-	p405_set_timer_scale (sim->ppc, timer_scale);
-
 	p405uic_init (&sim->uic);
 	p405uic_set_invert (&sim->uic, uicinv);
 	p405uic_set_nint_fct (&sim->uic, sim->ppc, p405_interrupt);
+
+	if (serial_clock > 0) {
+		pce_log_tag (MSG_INF, "SERIAL:", "clock=%lu (%lu)\n",
+			serial_clock, 16 * serial_clock
+		);
+
+		sim->serial_clock = 16 * serial_clock;
+	}
 }
 
 static
@@ -83,7 +129,7 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 	unsigned      i;
 	unsigned long addr;
 	unsigned      irq;
-	unsigned      multichar;
+	unsigned      multichar, clock_mul;
 	const char    *driver;
 	const char    *chip;
 	ini_sct_t     *sct;
@@ -106,11 +152,12 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 		ini_get_uint16 (sct, "irq", &irq, defirq[i]);
 		ini_get_string (sct, "uart", &chip, "8250");
 		ini_get_uint16 (sct, "multichar", &multichar, 1);
+		ini_get_uint16 (sct, "clock_mul", &clock_mul, 1);
 		ini_get_string (sct, "driver", &driver, NULL);
 
 		pce_log_tag (MSG_INF, "UART:",
-			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u driver=%s\n",
-			i, addr, irq, chip, multichar,
+			"n=%u addr=0x%08lx irq=%u uart=%s multi=%u clock_mul=%u driver=%s\n",
+			i, addr, irq, chip, multichar, clock_mul,
 			(driver == NULL) ? "<none>" : driver
 		);
 
@@ -135,6 +182,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 
 			e8250_set_buf_size (uart, 256, 256);
 			e8250_set_multichar (uart, multichar, multichar);
+			e8250_set_clock_mul (uart, clock_mul);
+			e8250_set_bit_clk_div (uart, (S405_CLOCK / 16) / sim->serial_clock);
 
 			if (e8250_set_chip_str (uart, chip)) {
 				pce_log (MSG_ERR, "*** unknown UART chip (%s)\n", chip);
@@ -143,6 +192,8 @@ void s405_setup_serport (sim405_t *sim, ini_sct_t *ini)
 			e8250_set_irq_fct (uart,
 				&sim->uic, p405uic_get_irq_fct (&sim->uic, irq)
 			);
+
+			p405uic_set_force_polarity (&sim->uic, irq, 1);
 
 			mem_add_blk (sim->mem, ser_get_reg (sim->serport[i]), 0);
 
@@ -345,9 +396,20 @@ sim405_t *s405_new (ini_sct_t *ini)
 	sim->clk_cnt = 0;
 	sim->real_clk = clock();
 
+	sim->sync_clock_sim = 0;
+	sim->sync_clock_real = 0;
+	sim->sync_interval = 0;
+
+	sim->serial_clock = 1;
+	sim->serial_clock_count = 0;
+
+	pce_get_interval_us (&sim->sync_interval);
+
 	for (i = 0; i < 4; i++) {
 		sim->clk_div[i] = 0;
 	}
+
+	s405_hook_init (sim);
 
 	bps_init (&sim->bps);
 
@@ -358,7 +420,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	ini_get_ram (sim->mem, ini, &sim->ram);
 	ini_get_rom (sim->mem, ini);
 
-	s405_setup_ppc (sim, ini);
+	s405_setup_system (sim, ini);
 	s405_setup_serport (sim, ini);
 	s405_setup_sercons (sim, ini);
 	s405_setup_slip (sim, ini);
@@ -371,6 +433,7 @@ sim405_t *s405_new (ini_sct_t *ini)
 	sim->ocm0_isarc = 0;
 	sim->ocm0_dscntl = 0;
 	sim->ocm0_dsarc = 0;
+	sim->cpc0_cr0 = 0x00000000;
 	sim->cpc0_cr1 = 0x00000000;
 	sim->cpc0_psr = 0x00000400;
 
@@ -404,6 +467,8 @@ void s405_del (sim405_t *sim)
 
 	bps_free (&sim->bps);
 
+	s405_hook_free (sim);
+
 	free (sim);
 }
 
@@ -435,6 +500,9 @@ unsigned long s405_get_dcr (void *ext, unsigned long dcrn)
 
 	case SIM405_DCRN_OCM0_DSCNTL: /* 0x1b */
 		return (sim->ocm0_dscntl);
+
+	case SIM405_DCRN_CPC0_CR0: /* 0xb1 */
+		return (sim->cpc0_cr0);
 
 	case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
 		return (sim->cpc0_cr1);
@@ -512,6 +580,10 @@ void s405_set_dcr (void *ext, unsigned long dcrn, unsigned long val)
 		}
 		break;
 
+	case SIM405_DCRN_CPC0_CR0: /* 0xb1 */
+		sim->cpc0_cr0 = val;
+		break;
+
 	case SIM405_DCRN_CPC0_CR1: /* 0xb2 */
 		sim->cpc0_cr1 = val;
 		break;
@@ -574,23 +646,37 @@ void s405_reset (sim405_t *sim)
 	p405_reset (sim->ppc);
 }
 
+void s405_clock_discontinuity (sim405_t *sim)
+{
+	sim->sync_clock_sim = 0;
+	pce_get_interval_us (&sim->sync_interval);
+}
+
+static
+void s405_sync (sim405_t *sim)
+{
+	unsigned long vclk;
+	unsigned long rclk;
+
+	vclk = sim->sync_clock_sim;
+	sim->sync_clock_sim = 0;
+
+	rclk = pce_get_interval_us (&sim->sync_interval);
+	rclk = (S405_CLOCK * (unsigned long long) rclk) / (1 * 1000000);
+
+	if (vclk < rclk) {
+		p405_add_timer_clock (sim->ppc, rclk - vclk);
+	}
+}
+
 void s405_clock (sim405_t *sim, unsigned n)
 {
-	unsigned long clk;
+	unsigned long clk, ser;
 
 	if (sim->clk_div[0] >= 256) {
 		clk = sim->clk_div[0] & ~255UL;
 		sim->clk_div[1] += clk;
 		sim->clk_div[0] &= 255;
-
-		if (sim->serport[0] != NULL) {
-			e8250_clock (&sim->serport[0]->uart, clk / 4);
-		}
-
-		if (sim->serport[1] != NULL) {
-			e8250_clock (&sim->serport[1]->uart, clk / 4);
-		}
-
 
 		if (sim->clk_div[1] >= 4096) {
 			clk = sim->clk_div[1] & ~4095UL;
@@ -609,95 +695,37 @@ void s405_clock (sim405_t *sim, unsigned n)
 				slip_clock (sim->slip, clk);
 			}
 
-			if (sim->clk_div[2] >= 16384) {
+			if (sim->clk_div[2] >= 65536) {
 				scon_check (sim);
 
-				sim->clk_div[2] &= 16383;
+				if (sim->sync_time_base) {
+					s405_sync (sim);
+				}
+
+				sim->clk_div[2] &= 65535;
 			}
 		}
+	}
+
+	ser = sim->serial_clock_count >> 10;
+
+	if (ser > 0) {
+		if (sim->serport[0] != NULL) {
+			e8250_clock (&sim->serport[0]->uart, ser);
+		}
+
+		if (sim->serport[1] != NULL) {
+			e8250_clock (&sim->serport[1]->uart, ser);
+		}
+
+		sim->serial_clock_count -= (ser << 4);
 	}
 
 	p405_clock (sim->ppc, n);
 
 	sim->clk_cnt += n;
 	sim->clk_div[0] += n;
-}
 
-int s405_set_msg (sim405_t *sim, const char *msg, const char *val)
-{
-	/* a hack, for debugging only */
-	if (sim == NULL) {
-		sim = par_sim;
-	}
-
-	if (msg == NULL) {
-		msg = "";
-	}
-
-	if (val == NULL) {
-		val = "";
-	}
-
-	if (msg_is_prefix ("term", msg)) {
-		return (1);
-	}
-
-	if (msg_is_message ("emu.break", msg)) {
-		if (strcmp (val, "stop") == 0) {
-			sim->brk = PCE_BRK_STOP;
-			return (0);
-		}
-		else if (strcmp (val, "abort") == 0) {
-			sim->brk = PCE_BRK_ABORT;
-			return (0);
-		}
-		else if (strcmp (val, "") == 0) {
-			sim->brk = PCE_BRK_ABORT;
-			return (0);
-		}
-	}
-	else if (msg_is_message ("emu.stop", msg)) {
-		sim->brk = PCE_BRK_STOP;
-		return (0);
-	}
-	else if (msg_is_message ("emu.exit", msg)) {
-		sim->brk = PCE_BRK_ABORT;
-		return (0);
-	}
-
-	pce_log (MSG_DEB, "msg (\"%s\", \"%s\")\n", msg, val);
-
-	if (msg_is_message ("disk.commit", msg)) {
-		if (strcmp (val, "") == 0) {
-			if (dsks_commit (sim->dsks)) {
-				pce_log (MSG_ERR, "commit failed for at least one disk\n");
-				return (1);
-			}
-		}
-		else {
-			unsigned d;
-
-			d = strtoul (val, NULL, 0);
-
-			if (dsks_set_msg (sim->dsks, d, "commit", NULL)) {
-				pce_log (MSG_ERR, "commit failed (%s)\n", val);
-				return (1);
-			}
-		}
-
-		return (0);
-	}
-	else if (msg_is_message ("emu.timer_scale", msg)) {
-		unsigned long v;
-
-		v = strtoul (val, NULL, 0);
-
-		p405_set_timer_scale (sim->ppc, v);
-
-		return (0);
-	}
-
-	pce_log (MSG_INF, "unhandled message (\"%s\", \"%s\")\n", msg, val);
-
-	return (1);
+	sim->sync_clock_sim += n;
+	sim->serial_clock_count += n;
 }

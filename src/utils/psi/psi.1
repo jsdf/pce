@@ -1,10 +1,10 @@
-.TH PSI 1 "2013-06-09" "HH" "pce"
+.TH PSI 1 "2024-01-20" "HH" "pce"
 \
 .SH NAME
-psi \- convert and modify sector image files
+psi \- convert and modify PCE sector image files
 
 .SH SYNOPSIS
-.BI psi " [options] [input-file] [options] [output-file]"
+.BI psi " [options] [input-file] [options] [output-file...]"
 
 .SH DESCRIPTION
 \fBpsi\fR(1) is used to modify and convert sector images
@@ -129,7 +129,14 @@ The PFDC file format. This has been superseded by PSI.
 The native PCE sector image file format.
 .TP
 .B raw
-A raw sector dump.
+A raw sector dump in CHS format.
+.TP
+.B raw-hcs
+A raw sector dump in HCS format.
+.TP
+.B raw-hts
+A raw sector dump in HCS format. Additionally, the order of tracks on odd
+heads is reversed.
 .TP
 .B st
 The same as raw, but the auto-detected disk geometries are the ones
@@ -179,8 +186,7 @@ are \fBdos\fR and \fBmac\fR. Valid sizes for mac images are 800 and 1600.
 \
 .TP
 .BI "-o, --output " filename
-Set the output file name. Before exiting, the current image will
-be written to this file.
+Write the current image to the output file \fIfilename\fR.
 \
 .TP
 .BI "-O, --output-format " format
@@ -191,6 +197,9 @@ for a list of valid formats.
 .BI "-p, --operation " "name [arg...]"
 Perform an operation on the current image. Valid operations are:
 .RS
+.TP
+.BI "clear-position"
+Remove the sector position of all selected sectors.
 .TP
 .BI "comment-add " text
 Add \fItext\fR to the image comment.
@@ -223,6 +232,49 @@ contents of the sectors are read sequentially from the file.
 .B new
 Create all selected sectors, if they do not already exist.
 .TP
+.BI "regular " format
+Convert a disk image to a regular geometry. Sectors outside the specified
+geometry are removed and missing sectors are added.
+The format can be one of:
+.RS
+.TP
+.B ibm160
+IBM MFM 40/1/8
+.TP
+.B ibm180
+IBM MFM 40/1/9
+.TP
+.B ibm320
+IBM MFM 40/2/8
+.TP
+.B ibm360
+IBM MFM 40/2/9
+.TP
+.B ibm400
+IBM MFM 40/2/10
+.TP
+.B ibm720
+IBM MFM 80/2/9
+.TP
+.B ibm800
+IBM MFM 80/2/10
+.TP
+.B ibm1200
+IBM MFM 80/2/15
+.TP
+.B ibm1440
+IBM MFM 80/2/18
+.TP
+.B mac400
+Macintosh GCR 400K single sided
+.TP
+.B mac800
+Macintosh GCR 800K double sided
+.TP
+\fI<c>\fB/\fI<h>\fB/\fI<s>\fR
+Any regular disk geometry
+.RE
+.TP
 .BI "reorder " "s1,s2,s3,..."
 Reorder the sectors on all selected tracks. Sectors that are not
 mentioned in the parameter are moved to the end of the track.
@@ -252,6 +304,21 @@ sectors appear on the track.
 Save the sector tags for all selected sectors to \fIfilename\fR.
 For each sector 12 bytes are written, in the order in which the
 sectors appear on the track.
+.TP
+.BI "weak-auto"
+Convert alternate sectors to weak bit masks. This operation compares
+all alternates of a sector. All bits that differ in any of them are
+set in the weak bit mask. The same mask is added to all alternate
+sectors. After this operation the alternate sectors can be deleted.
+.TP
+.B "weak-clear"
+Clear the weak bit mask for all selected sectors.
+.TP
+.BI "weak-load " filename
+Load the weak bit mask of all selected sectors from \fIfilename\fR.
+.TP
+.BI "weak-save " filename
+Save the weak bit mask of all selected sectors to \fIfilename\fR.
 .RE
 \
 .TP
@@ -268,12 +335,21 @@ Select a range of logical sectors.
 Select a range of physical sectors.
 \
 .TP
+.BI "-t, --track " "cyl1[-cyl2] head1[-head2]"
+Select a range of tracks. This is equivalent to using the \fB-c\fR and
+the \fB-h\fR option.
+\
+.TP
 .B "-v, --verbose"
 Enable verbose operation.
 \
 .TP
 .B "-x, --invert"
 Invert the selection.
+\
+.TP
+.B "-z, --clear"
+Clear the selection.
 \
 .TP
 .B --help

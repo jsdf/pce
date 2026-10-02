@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/commit.c                                   *
  * Created:     2013-01-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,9 +35,12 @@
 
 
 static pce_option_t opts_commit[] = {
-	{ 'i', 1, "input", "string", "Set the input file name [stdin]" },
+	{ '?', 0, "help", NULL, "Print usage information" },
+	{ 'i', 1, "input", "string", "Set the input file name [none]" },
+	{ 'I', 1, "input-type", "string", "Set the input file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
-	{ 'w', 1, "cow", "string", "Set the COW file name [none]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
+	{ 'w', 1, "cow", "string", "Add a COW file [none]" },
 	{  -1, 0, NULL, NULL, NULL }
 };
 
@@ -47,7 +50,7 @@ void print_help (void)
 {
 	pce_getopt_help (
 		"pce-img commit: commit changes",
-		"usage: pce-img commit [options] [image]",
+		"usage: pce-img commit [options] [image] [cow...]",
 		opts_commit
 	);
 
@@ -88,19 +91,32 @@ int main_commit (int argc, char **argv)
 			}
 			break;
 
+		case 'I':
+			if (pce_set_type_inp (optarg[0])) {
+				return (1);
+			}
+			break;
+
 		case 'q':
 			pce_set_quiet (1);
 			break;
 
 		case 'w':
-			if ((inp = dsk_cow (optarg[0], inp)) == NULL) {
+			if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
 				return (1);
 			}
 			break;
 
 		case 0:
-			if ((inp = dsk_open_inp (optarg[0], inp, 0)) == NULL) {
-				return (1);
+			if (inp == NULL) {
+				if ((inp = dsk_open_inp (optarg[0], inp, 0)) == NULL) {
+					return (1);
+				}
+			}
+			else {
+				if ((inp = pce_cow_open (inp, optarg[0])) == NULL) {
+					return (1);
+				}
 			}
 			break;
 

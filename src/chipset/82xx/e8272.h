@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8272.h                                     *
  * Created:     2005-03-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -47,7 +47,7 @@ typedef struct {
 	unsigned char  h;
 	unsigned char  s;
 	unsigned short n;
-	unsigned short ofs;
+	unsigned long  ofs;
 } e8272_sct_t;
 
 
@@ -73,6 +73,8 @@ typedef struct {
 	unsigned char ls;
 	unsigned char ln;
 
+	unsigned long pos;
+
 	void          *buf;
 	unsigned      cnt;
 
@@ -85,6 +87,9 @@ typedef struct e8272_t {
 	unsigned char  msr;
 
 	unsigned char  st[4];
+
+	unsigned char  drvmsk;
+	unsigned char  single_sided;
 
 	e8272_drive_t  drv[4];
 	e8272_drive_t  *curdrv;
@@ -101,12 +106,16 @@ typedef struct e8272_t {
 	unsigned       buf_n;
 	unsigned char  buf[8192];
 
+	unsigned char  sct0;
+	unsigned       sctcnt;
+
 	char           dma;
 
 	unsigned char  ready_change;
 
 	unsigned short step_rate;
 
+	unsigned       verbose;
 	char           accurate;
 	char           ignore_eot;
 
@@ -121,6 +130,7 @@ typedef struct e8272_t {
 	unsigned short index_cnt;
 
 	char           read_error;
+	char           read_deleted;
 	unsigned short read_track_cnt;
 	unsigned short write_id;
 	unsigned short format_cnt;
@@ -164,9 +174,15 @@ void e8272_set_diskop_fct (e8272_t *fdc, void *ext, void *fct);
 
 void e8272_set_input_clock (e8272_t *fdc, unsigned long clk);
 
+void e8272_set_verbose (e8272_t *fdc, unsigned val);
+
 void e8272_set_accuracy (e8272_t *fdc, int accurate);
 
 void e8272_set_ignore_eot (e8272_t *fdc, int ignore_eot);
+
+void e8272_set_drive_mask (e8272_t *fdc, unsigned mask);
+
+void e8272_set_single_sided (e8272_t *fdc, unsigned mask);
 
 
 void e8272_write_data (e8272_t *fdc, unsigned char val);

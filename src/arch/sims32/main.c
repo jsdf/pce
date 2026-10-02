@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sims32/main.c                                       *
  * Created:     2004-09-28 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -29,6 +29,8 @@
 #include <signal.h>
 
 #include "main.h"
+
+#include <lib/cfg.h>
 
 
 char      *par_cpu = NULL;
@@ -69,7 +71,7 @@ void prt_version (void)
 	fputs (
 		"pce sims32 version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -160,23 +162,6 @@ void prt_state (sims32_t *sim, FILE *fp, const char *str)
 			return;
 		}
 	}
-}
-
-static
-int pce_load_config (ini_sct_t *ini, const char *fname)
-{
-	if (fname == NULL) {
-		return (0);
-	}
-
-	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
-
-	if (ini_read (par_cfg, fname)) {
-		pce_log (MSG_ERR, "*** loading config file failed\n");
-		return (1);
-	}
-
-	return (0);
 }
 
 int str_isarg1 (const char *str, const char *arg)
@@ -274,7 +259,7 @@ int main (int argc, char *argv[])
 
 	pce_log (MSG_INF,
 		"pce sims32 version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n"
 	);
 
 	if (pce_load_config (par_cfg, cfg)) {

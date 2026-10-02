@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.c                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -91,6 +91,25 @@ unsigned long pce_get_interval_us (unsigned long *val)
 #endif
 }
 
+void pce_srand (unsigned val)
+{
+#ifdef HAVE_GETTIMEOFDAY
+	struct timeval tv;
+
+	if (gettimeofday (&tv, NULL) == 0) {
+		val ^= (unsigned) tv.tv_sec;
+		val ^= (unsigned) tv.tv_usec;
+	}
+	else {
+		val ^= (unsigned) time (NULL);
+	}
+#else
+	val ^= (unsigned) time (NULL);
+#endif
+
+	srand (val);
+}
+
 int pce_fd_readable (int fd, int t)
 {
 #ifdef HAVE_SYS_POLL_H
@@ -141,18 +160,19 @@ int pce_fd_writeable (int fd, int t)
 
 void pce_set_fd_interactive (int fd, int interactive)
 {
-#ifdef HAVE_TERMIOS_H
+	/* there is no terminal in the browser */
+#if defined (HAVE_TERMIOS_H) && !defined (EMSCRIPTEN)
 	static int            sios_ok = 0;
 	static struct termios sios;
 	struct termios        tios;
 
 	if (sios_ok == 0) {
-		// tcgetattr (fd, &sios);
+		tcgetattr (fd, &sios);
 		sios_ok = 1;
 	}
 
 	if (interactive) {
-		// tcsetattr (fd, TCSANOW, &sios);
+		tcsetattr (fd, TCSANOW, &sios);
 	}
 	else {
 		tios = sios;
@@ -162,7 +182,7 @@ void pce_set_fd_interactive (int fd, int interactive)
 		tios.c_cc[VMIN] = 1;
 		tios.c_cc[VTIME] = 0;
 
-		// tcsetattr (fd, TCSANOW, &tios);
+		tcsetattr (fd, TCSANOW, &tios);
 	}
 #endif
 }

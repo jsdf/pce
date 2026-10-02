@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/expr.c                                            *
  * Created:     2010-09-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -65,8 +65,65 @@ int val_str_cat (ini_val_t *dst, const char *s1, const char *s2)
 }
 
 static
+int val_promote1 (ini_val_t *val)
+{
+	if (val->type == INI_VAL_NONE) {
+		ini_val_set_uint32 (val, 0);
+	}
+
+	return (0);
+}
+
+static
+int val_promote2 (ini_val_t *val1, ini_val_t *val2)
+{
+	if (val1->type == val2->type) {
+		if (val1->type == INI_VAL_NONE) {
+			ini_val_set_uint32 (val1, 0);
+			ini_val_set_uint32 (val2, 0);
+		}
+
+		return (0);
+	}
+
+	if (val1->type == INI_VAL_NONE) {
+		if (val2->type == INI_VAL_INT) {
+			ini_val_set_uint32 (val1, 0);
+		}
+		else if (val2->type == INI_VAL_STR) {
+			ini_val_set_str (val1, "");
+		}
+		else {
+			return (1);
+		}
+
+		return (0);
+	}
+
+	if (val2->type == INI_VAL_NONE) {
+		if (val1->type == INI_VAL_INT) {
+			ini_val_set_uint32 (val2, 0);
+		}
+		else if (val1->type == INI_VAL_STR) {
+			ini_val_set_str (val2, "");
+		}
+		else {
+			return (1);
+		}
+
+		return (0);
+	}
+
+	return (1);
+}
+
+static
 int val_plus (ini_val_t *val)
 {
+	if (val_promote1 (val)) {
+		return (1);
+	}
+
 	if (val->type == INI_VAL_INT) {
 		return (0);
 	}
@@ -77,6 +134,10 @@ int val_plus (ini_val_t *val)
 static
 int val_neg (ini_val_t *val)
 {
+	if (val_promote1 (val)) {
+		return (1);
+	}
+
 	if (val->type == INI_VAL_INT) {
 		val->val.u32 = (~val->val.u32 + 1) & 0xffffffff;
 		return (0);
@@ -88,6 +149,10 @@ int val_neg (ini_val_t *val)
 static
 int val_bnot (ini_val_t *val)
 {
+	if (val_promote1 (val)) {
+		return (1);
+	}
+
 	if (val->type == INI_VAL_INT) {
 		val->val.u32 = ~val->val.u32 & 0xffffffff;
 		return (0);
@@ -99,6 +164,10 @@ int val_bnot (ini_val_t *val)
 static
 int val_lnot (ini_val_t *val)
 {
+	if (val_promote1 (val)) {
+		return (1);
+	}
+
 	if (val->type == INI_VAL_INT) {
 		val->val.u32 = val->val.u32 == 0;
 		return (0);
@@ -112,9 +181,13 @@ int val_lnot (ini_val_t *val)
 }
 
 static
-int val_mul (ini_val_t *dst, const ini_val_t *src)
+int val_mul (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 * src->val.u32) & 0xffffffff;
 		return (0);
 	}
@@ -123,9 +196,13 @@ int val_mul (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_div (ini_val_t *dst, const ini_val_t *src)
+int val_div (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		if (src->val.u32 == 0) {
 			return (1);
 		}
@@ -139,9 +216,13 @@ int val_div (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_mod (ini_val_t *dst, const ini_val_t *src)
+int val_mod (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		if (src->val.u32 == 0) {
 			return (1);
 		}
@@ -155,10 +236,12 @@ int val_mod (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_add (ini_val_t *dst, const ini_val_t *src)
+int val_add (ini_val_t *dst, ini_val_t *src)
 {
 	unsigned t1, t2;
 	char     buf[32];
+
+	val_promote2 (dst, src);
 
 	t1 = dst->type;
 	t2 = src->type;
@@ -197,9 +280,13 @@ int val_add (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_sub (ini_val_t *dst, const ini_val_t *src)
+int val_sub (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 - src->val.u32) & 0xffffffff;
 		return (0);
 	}
@@ -208,9 +295,13 @@ int val_sub (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_shl (ini_val_t *dst, const ini_val_t *src)
+int val_shl (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 << (src->val.u32 & 31)) & 0xffffffff;
 		return (0);
 	}
@@ -219,9 +310,13 @@ int val_shl (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_shr (ini_val_t *dst, const ini_val_t *src)
+int val_shr (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 >> (src->val.u32 & 31)) & 0xffffffff;
 		return (0);
 	}
@@ -230,9 +325,9 @@ int val_shr (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_lt (ini_val_t *dst, const ini_val_t *src)
+int val_lt (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -249,9 +344,9 @@ int val_lt (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_le (ini_val_t *dst, const ini_val_t *src)
+int val_le (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -268,9 +363,9 @@ int val_le (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_gt (ini_val_t *dst, const ini_val_t *src)
+int val_gt (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -287,9 +382,9 @@ int val_gt (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_ge (ini_val_t *dst, const ini_val_t *src)
+int val_ge (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -306,9 +401,9 @@ int val_ge (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_equ (ini_val_t *dst, const ini_val_t *src)
+int val_equ (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -325,9 +420,9 @@ int val_equ (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_neq (ini_val_t *dst, const ini_val_t *src)
+int val_neq (ini_val_t *dst, ini_val_t *src)
 {
-	if (dst->type != src->type) {
+	if (val_promote2 (dst, src)) {
 		return (1);
 	}
 
@@ -344,9 +439,13 @@ int val_neq (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_band (ini_val_t *dst, const ini_val_t *src)
+int val_band (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = dst->val.u32 & src->val.u32;
 		return (0);
 	}
@@ -355,9 +454,13 @@ int val_band (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_bxor (ini_val_t *dst, const ini_val_t *src)
+int val_bxor (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = dst->val.u32 ^ src->val.u32;
 		return (0);
 	}
@@ -366,9 +469,13 @@ int val_bxor (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_bor (ini_val_t *dst, const ini_val_t *src)
+int val_bor (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = dst->val.u32 | src->val.u32;
 		return (0);
 	}
@@ -377,9 +484,13 @@ int val_bor (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_land (ini_val_t *dst, const ini_val_t *src)
+int val_land (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 != 0) && (src->val.u32 != 0);
 		return (0);
 	}
@@ -388,9 +499,13 @@ int val_land (ini_val_t *dst, const ini_val_t *src)
 }
 
 static
-int val_lor (ini_val_t *dst, const ini_val_t *src)
+int val_lor (ini_val_t *dst, ini_val_t *src)
 {
-	if ((dst->type == src->type) && (dst->type == INI_VAL_INT)) {
+	if (val_promote2 (dst, src)) {
+		return (1);
+	}
+
+	if (dst->type == INI_VAL_INT) {
 		dst->val.u32 = (dst->val.u32 != 0) || (src->val.u32 != 0);
 		return (0);
 	}
@@ -515,6 +630,14 @@ int ini_eval_literal (scanner_t *scn, ini_sct_t *sct, ini_val_t *val)
 			return (0);
 		}
 		else if (strcmp (str, "false") == 0) {
+			ini_val_set_uint32 (val, 0);
+			return (0);
+		}
+		else if (strcmp (str, "yes") == 0) {
+			ini_val_set_uint32 (val, 1);
+			return (0);
+		}
+		else if (strcmp (str, "no") == 0) {
 			ini_val_set_uint32 (val, 0);
 			return (0);
 		}
@@ -1035,9 +1158,15 @@ int ini_eval_cond (scanner_t *scn, ini_sct_t *sct, ini_val_t *val)
 		return (0);
 	}
 
+	val_promote1 (val);
+
 	ini_val_init (&val2, NULL);
 
 	if ((val->type == INI_VAL_INT) && (val->val.u32 != 0)) {
+		v1 = val;
+		v2 = &val2;
+	}
+	else if ((val->type == INI_VAL_STR) && (val->val.str[0] != 0)) {
 		v1 = val;
 		v2 = &val2;
 	}

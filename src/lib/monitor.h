@@ -47,6 +47,9 @@ typedef struct {
 	void *set_mem8_ext;
 	void (*set_mem8) (void *ext, unsigned long addr, unsigned char val);
 
+	void *set_mem8rw_ext;
+	void (*set_mem8rw) (void *ext, unsigned long addr, unsigned char val);
+
 	unsigned       memory_mode;
 
 	unsigned short default_seg;
@@ -57,6 +60,7 @@ typedef struct {
 	unsigned       cmd_cnt;
 	mon_cmd_t      *cmd;
 
+	char           rw;
 	char           terminate;
 
 	const char     *prompt;
@@ -74,6 +78,7 @@ void mon_set_msg_fct (monitor_t *mon, void *fct, void *ext);
 
 void mon_set_get_mem_fct (monitor_t *mon, void *ext, void *fct);
 void mon_set_set_mem_fct (monitor_t *mon, void *ext, void *fct);
+void mon_set_set_memrw_fct (monitor_t *mon, void *ext, void *fct);
 
 void mon_set_memory_mode (monitor_t *mon, unsigned mode);
 

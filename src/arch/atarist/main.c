@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/main.c                                      *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <lib/cfg.h>
 #include <lib/console.h>
 #include <lib/getopt.h>
 #include <lib/log.h>
@@ -94,7 +95,7 @@ void print_version (void)
 	fputs (
 		"pce-atarist version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 2011-2013 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 2011-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -104,9 +105,9 @@ void print_version (void)
 static
 void st_log_banner (void)
 {
-	pce_log (MSG_INF,
+	pce_log_inf (
 		"pce-atarist version " PCE_VERSION_STR "\n"
-		"Copyright (C) 2011-2013 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 2011-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n"
 	);
 }
 
@@ -204,23 +205,6 @@ void st_log_deb (const char *msg, ...)
 	va_end (va);
 }
 
-static
-int pce_load_config (ini_sct_t *ini, const char *fname)
-{
-	if (fname == NULL) {
-		return (0);
-	}
-
-	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
-
-	if (ini_read (par_cfg, fname)) {
-		pce_log (MSG_ERR, "*** loading config file failed\n");
-		return (1);
-	}
-
-	return (0);
-}
-
 int main (int argc, char *argv[])
 {
 	int       r;
@@ -244,14 +228,11 @@ int main (int argc, char *argv[])
 
 	ini_str_init (&par_ini_str);
 
-	int emscripten;
-	emscripten = 0;
-	#ifdef EMSCRIPTEN
-		// arg defaults
-		pce_log_set_level (stderr, MSG_DEB);
-		cfg = "pce-config.cfg";
-		emscripten = 1;
-	#endif
+#ifdef EMSCRIPTEN
+	/* browser defaults */
+	pce_log_set_level (stderr, MSG_DEB);
+	cfg = "pce-config.cfg";
+#endif
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);
@@ -379,6 +360,7 @@ int main (int argc, char *argv[])
 	mon_set_msg_fct (&par_mon, st_set_msg, par_sim);
 	mon_set_get_mem_fct (&par_mon, par_sim->mem, mem_get_uint8);
 	mon_set_set_mem_fct (&par_mon, par_sim->mem, mem_set_uint8);
+	mon_set_set_memrw_fct (&par_mon, par_sim->mem, mem_set_uint8_rw);
 	mon_set_memory_mode (&par_mon, 0);
 
 	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
@@ -386,10 +368,11 @@ int main (int argc, char *argv[])
 
 	st_reset (par_sim);
 
-	if (emscripten) {
-		st_run_emscripten(par_sim);
-		exit(1);
-	}
+#ifdef EMSCRIPTEN
+	/* does not return */
+	st_run_emscripten (par_sim);
+#endif
+
 	if (nomon) {
 		while (par_sim->brk != PCE_BRK_ABORT) {
 			st_run (par_sim);

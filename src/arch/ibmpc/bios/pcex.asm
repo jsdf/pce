@@ -1,23 +1,23 @@
-;*****************************************************************************
-;* pce                                                                       *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; pce
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* File name:   src/arch/ibmpc/bios/pcex.asm                                 *
-;* Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; File name:    src/arch/ibmpc/bios/pcex.asm
+; Created:      2003-04-14 by Hampa Hug <hampa@hampa.ch>
+; Copyright:    (C) 2003-2022 Hampa Hug <hampa@hampa.ch>
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* This program is free software. You can redistribute it and / or modify it *
-;* under the terms of the GNU General Public License version 2 as  published *
-;* by the Free Software Foundation.                                          *
-;*                                                                           *
-;* This program is distributed in the hope  that  it  will  be  useful,  but *
-;* WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
-;* Public License for more details.                                          *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; This program is free software. You can redistribute it and / or modify it
+; under the terms of the GNU General Public License version 2 as  published
+; by the Free Software Foundation.
+;
+; This program is distributed in the hope  that  it  will  be  useful,  but
+; WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+; Public License for more details.
+;-----------------------------------------------------------------------------
 
 
 %include "pce.inc"
@@ -48,25 +48,26 @@ pce_ext_end:
 msg_init	db "PCE IBM PC BIOS extension"
 		db 13, 10, 13, 10, 0
 
-msg_memchk1	db "Memory size:    ", 0
-msg_memchk2	db "KB", 13, 0
-
+msg_memsize	db "Memory size:    ", 0
 msg_serial	db "Serial ports:   ", 0
 msg_parallel	db "Parallel ports: ", 0
 
-msg_rom1	db "ROM[", 0
-msg_rom2	db "]:", 0
-msg_cksmok	db " checksum ok", 0
-msg_cksmbad	db " bad checksum", 0
+msg_kib		db " KiB", 13, 10, 0
 
 
 start:
 	cli
-	mov	ax, 0x0050
+	mov	ax, 0x0040
 	mov	ss, ax
-	mov	sp, 1024
+	mov	sp, 4096
+	mov	ds, ax
 
-	call	set_bios_ds
+	cld
+
+	pce	PCE_HOOK_CHECK
+	sub	ax, 0x0fce		; check if we are running under pce
+.stop:
+	jne	.stop
 
 	call	init_data
 	call	init_int
@@ -81,7 +82,6 @@ start:
 	call	init_rom1
 	call	init_banner
 	call	init_mem
-	call	init_misc
 	call	init_keyboard
 	call	init_serport
 	call	init_parport
@@ -95,18 +95,9 @@ start:
 	pop	ds
 
 	cli
-
-	mov	di, 0x0050
-	mov	es, di
-	xor	di, di
-	xor	ax, ax
-	mov	cx, 0x8000 - 0x0500
-	rep	stosw
-
 	mov	ax, 0x0030
 	mov	ss, ax
 	mov	sp, 0x0100
-
 	sti
 
 	int	0x19
@@ -116,45 +107,29 @@ done:
 
 
 ;-----------------------------------------------------------------------------
-
+; Clear the first 32K of RAM
+;-----------------------------------------------------------------------------
 init_data:
-	push	ax
-	push	cx
-	push	di
-	push	es
-
-	cld
-
-	push	ds
-	pop	es
+	pop	bp
 
 	xor	di, di
+	mov	es, di
 	xor	ax, ax
-	mov	cx, 256 / 2
-	rep	stosw
+	mov	cx, 32768 / 2
+	rep	stosw			; clear the first 32K of RAM
 
-	pop	es
-	pop	di
-	pop	cx
-	pop	ax
-	ret
+	jmp	bp
 
 
+;-----------------------------------------------------------------------------
+; Set up some extra BIOS data
+;-----------------------------------------------------------------------------
 init_biosdata:
 	push	ax
-	push	ds
 
-	mov	ax, 0x0040
-	mov	ds, ax
+	mov	byte [0x0090], 0x94	; drive 0 media state
+	mov	byte [0x0091], 0x94	; drive 1 media state
 
-	pceh	PCEH_GET_HDCNT
-	mov	[0x0075], al
-
-	; keyboard status 1
-	; (non-functional on PC, but some programs need it)
-	;mov     [0x0096], byte 0x10
-
-	pop	ds
 	pop	ax
 	ret
 
@@ -255,18 +230,34 @@ init_pit:
 
 
 ;-----------------------------------------------------------------------------
-; Initialize the video 8255 PPI
+; Initialize the 8255 PPI
 ;-----------------------------------------------------------------------------
 init_ppi:
 	push	ax
 	push	cx
+	push	es
 
 	mov	al, 0x99
 	out	0x63, al			; set up ppi ports
 
-	cmp	byte [cs:0xfffe], 0xfe		; check if pc/xt
+	pce	PCE_HOOK_GET_MODEL
+	jc	.nohook
+
+	test	al, 0x01			; check if pc
+	jnz	.pc
+	test	al, 0x02			; check if xt
+	jnz	.xt
+
+.nohook:
+	mov	ax, 0xf000
+	mov	es, ax
+	mov	al, [es:0xfffe]			; get bios model byte
+	cmp	al, 0xfe
+	je	.xt
+	cmp	al, 0xfb
 	je	.xt
 
+.pc:
 	mov	al, 0xfc
 	out	0x61, al
 
@@ -297,9 +288,10 @@ init_ppi:
 	or	al, ah
 	xor	ah, ah
 
-	mov	[0x0010], ax
+	mov	[0x0010], ax			; equipment word
 
 .done:
+	pop	es
 	pop	cx
 	pop	ax
 	ret
@@ -320,17 +312,20 @@ init_dma:
 	out	0x01, al			; count
 	out	0x01, al
 
-	mov	al, 0x58			; mode channel 0
-	out	0x0b, al
+	mov	al, 0x58
+	out	0x0b, al			; mode channel 0
 
 	mov	al, 0x41
-	out	0x0b, al
+	out	0x0b, al			; mode channel 1
 
 	inc	ax
-	out	0x0b, al
+	out	0x0b, al			; mode channel 2
 
 	inc	ax
-	out	0x0b, al
+	out	0x0b, al			; mode channel 3
+
+	xor	al, al
+	out	0x0a, al			; unmask channel 0
 
 	pop	ax
 	ret
@@ -343,26 +338,30 @@ init_video:
 	push	ax
 	push	si
 
-	mov	ax, [0x0010]
-	and	al, 0x30
+	mov	ax, [0x0010]			; configuration
+	and	ax, 0x30			; initial video mode
 
-	cmp	al, 0x30
-	je	.mda
+	sub	al, 0x10
+	jc	.done				; 00
+	jz	.cga40				; 01
 
-	cmp	al, 0x20
-	je	.cga
-
-	jmp	.done
-
-.cga:
-	mov	ax, 0x0003
-	int	0x10
-	jmp	.done
+	sub	al, 0x10
+	jz	.cga80				; 02
 
 .mda:
-	mov	ax, 0x0007
-	int	0x10
-	jmp	.done
+	mov	al, 0x07
+	jmp	.set
+
+.cga40:
+	mov	al, 0x01
+	jmp	.set
+
+.cga80:
+	mov	al, 0x03
+	;jmp	.set
+
+.set:
+	int	0x10				; set video mode
 
 .done:
 	pop	si
@@ -382,25 +381,6 @@ init_banner:
 
 	pop	si
 	pop	ax
-	ret
-
-
-init_misc:
-	xor	ax, ax
-
-	mov	[0x006c], ax
-	mov	[0x006e], ax
-	mov	[0x0070], al
-
-	mov	[0x0000], ax			; COM1
-	mov	[0x0002], ax
-	mov	[0x0004], ax
-	mov	[0x0006], ax
-	mov	[0x0008], ax			; LPT1
-	mov	[0x000a], ax
-	mov	[0x000c], ax
-	mov	[0x000e], ax
-
 	ret
 
 
@@ -538,60 +518,57 @@ init_rom2:
 	ret
 
 
+;-----------------------------------------------------------------------------
+; Initialize the RAM size
+;-----------------------------------------------------------------------------
 init_mem:
 	push	ax
 	push	cx
 	push	bx
 	push	si
-	push	es
 
-	mov	cx, 64
-	mov	bx, 0x1000
-
-.next:
-	mov	es, bx
-
+	mov	cx, 16				; start at 16 KiB
+	mov	bx, 0x0400
 	mov	ax, 0xaa55
+	xor	si, si
 
-	xchg	[es:0], al
-	xchg	[es:0], al
-	xchg	[es:0], ah
-	xchg	[es:0], ah
+	push	ds
 
-	cmp	ax, 0xaa55
+.next1:
+	mov	ds, bx
+
+.next2:
+	xchg	[si], al
+	xchg	[si], al
+	cmp	al, 0x55
 	jne	.done
 
-	xchg	[es:0 + 1023], al
-	xchg	[es:0 + 1023], al
-	xchg	[es:0 + 1023], ah
-	xchg	[es:0 + 1023], ah
-
-	cmp	ax, 0xaa55
+	xchg	[si], ah
+	xchg	[si], ah
+	cmp	ah, 0xaa
 	jne	.done
+
+	xor	si, 1023
+	jnz	.next2
 
 	inc	cx
 	add	bx, 1024 / 16
 
 	cmp	cx, 640
-	jae	.done
-
-	jmp	.next
+	jb	.next1
 
 .done:
-	mov	si, msg_memchk1
-	call	prt_string
+	pop	ds
 
+	mov	[0x0013], cx			; ram size
+
+	mov	si, msg_memsize
+	call	prt_string
 	mov	ax, cx
 	call	prt_uint16
-
-	mov	si, msg_memchk2
+	mov	si, msg_kib
 	call	prt_string
 
-	call	prt_nl
-
-	mov	[0x0013], cx
-
-	pop	es
 	pop	si
 	pop	bx
 	pop	cx
@@ -612,6 +589,9 @@ init_keyboard:
 	ret
 
 
+;-----------------------------------------------------------------------------
+; Initialize COM port addresses
+;-----------------------------------------------------------------------------
 init_serport:
 	push	ax
 	push	cx
@@ -619,34 +599,34 @@ init_serport:
 	push	bx
 	push	si
 
-						; get com info
-	pceh	PCEH_GET_COM
+	pce	PCE_HOOK_GET_COM		; get com ports
+	jnc	.ok
 
+	xor	ax, ax
+	xor	bx, bx
+	xor	cx, cx
+	xor	dx, dx
+
+.ok:
 	mov	[0x0000], ax
 	mov	[0x0002], bx
 	mov	[0x0004], cx
 	mov	[0x0006], dx
 
 	sub	ax, 1
-	cmc
-	mov	ax, 0
-	adc	ax, 0
-
+	mov	ax, 4
+	sbb	al, 0
 	sub	bx, 1
-	cmc
-	adc	ax, 0
-
+	sbb	al, 0
 	sub	cx, 1
-	cmc
-	adc	ax, 0
-
+	sbb	al, 0
 	sub	dx, 1
-	cmc
-	adc	ax, 0
+	sbb	al, 0
 
 	mov	si, msg_serial
 	call	prt_string
 	call	prt_uint16
+	call	prt_nl
 
 	mov	cl, 9
 	shl	ax, cl
@@ -656,8 +636,6 @@ init_serport:
 	or	dx, ax
 	mov	[0x0010], dx
 
-	call	prt_nl
-
 	pop	si
 	pop	bx
 	pop	dx
@@ -666,6 +644,9 @@ init_serport:
 	ret
 
 
+;-----------------------------------------------------------------------------
+; Initialize LPT port addresses
+;-----------------------------------------------------------------------------
 init_parport:
 	push	ax
 	push	cx
@@ -673,42 +654,40 @@ init_parport:
 	push	bx
 	push	si
 
-						; get lpt info
-	pceh	PCEH_GET_LPT
+	pce	PCE_HOOK_GET_LPT		; get lpt ports
+	jnc	.ok
 
+	xor	ax, ax
+	xor	bx, bx
+	xor	cx, cx
+	xor	dx, dx
+
+.ok:
 	mov	[0x0008], ax
 	mov	[0x000a], bx
 	mov	[0x000c], cx
 	mov	[0x000e], dx
 
 	sub	ax, 1
-	cmc
-	mov	ax, 0
-	adc	ax, 0
-
+	mov	ax, 4
+	sbb	al, 0
 	sub	bx, 1
-	cmc
-	adc	ax, 0
-
+	sbb	al, 0
 	sub	cx, 1
-	cmc
-	adc	ax, 0
-
+	sbb	al, 0
 	sub	dx, 1
-	cmc
-	adc	ax, 0
+	sbb	al, 0
 
 	mov	si, msg_parallel
 	call	prt_string
 	call	prt_uint16
+	call	prt_nl
 
 	mov	cl, 14
 	shl	ax, cl
 
 	and	byte [0x0011], 0x3f
 	or	word [0x0010], ax
-
-	call	prt_nl
 
 	pop	si
 	pop	bx
@@ -718,72 +697,27 @@ init_parport:
 	ret
 
 
-get_bcd:
-	push	dx
-	xor	dx, dx
-	mov	ah, al
-	and	ax, 0xf00f
-	shr	ah, 1
-	add	dl, ah
-	shr	ah, 1
-	shr	ah, 1
-	add	dl, ah
-	add	dl, al
-	xchg	ax, dx
-	pop	dx
-	ret
-
+;-----------------------------------------------------------------------------
+; Initialize BIOS time
+;-----------------------------------------------------------------------------
 init_time:
 	push	ax
 	push	dx
-	push	si
-	push	di
 
-	mov	ah, 2
-	int	0x1a
+	pce	PCE_HOOK_GET_TIME_BIOS
+	jnc	.ok
 
-						; 18 * seconds
-	mov	al, dh
-	call	get_bcd
-	mov	dx, 18
-	mul	dx
-	mov	si, ax
-	mov	di, dx
+	xor	ax, ax
+	xor	dx, dx
 
-						; 1092 * minutes
-	mov	al, cl
-	call	get_bcd
-	mov	dx, 1092
-	mul	dx
-	add	si, ax
-	adc	di, dx
-
-						; 65539 * hours
-	mov	al, ch
-	call	get_bcd
-	add	di, ax
-	mov	dx, ax
-	shl	ax, 1
-	add	ax, dx
-	add	si, ax
-	adc	di, 0
-
-	mov	[0x006c], si
-	mov	[0x006e], di
+.ok:
+	mov	[0x006c], ax
+	mov	[0x006e], dx
 	mov	[0x0070], byte 0
 
-	pop	di
-	pop	si
 	pop	dx
 	pop	ax
 	ret
-
-set_bios_ds:
-	mov	ds, [cs:.bios_ds]
-	ret
-
-.bios_ds:
-	dw	0x0040
 
 
 ; print string at CS:SI
@@ -866,14 +800,14 @@ prt_uint16:
 ;-----------------------------------------------------------------------------
 
 inttab:
-	dw	int_00, 0x0000			; 00: F000:FF47
-	dw	int_01, 0x0000			; 01: F000:FF47
+	dw	int_nn, 0x0000			; 00: F000:FF47
+	dw	int_nn, 0x0000			; 01: F000:FF47
 	dw	0xe2c3, 0xf000			; 02: F000:E2C3
-	dw	int_03, 0x0000			; 03: F000:FF47
-	dw	int_04, 0x0000			; 04: F000:FF47
+	dw	int_nn, 0x0000			; 03: F000:FF47
+	dw	int_nn, 0x0000			; 04: F000:FF47
 	dw	0xff54, 0xf000			; 05: F000:FF54
-	dw	int_06, 0x0000			; 06: F000:FF47
-	dw	int_07, 0x0000			; 07: F000:FF47
+	dw	int_nn, 0x0000			; 06: F000:FF47
+	dw	int_nn, 0x0000			; 07: F000:FF47
 	dw	0xfea5, 0xf000			; 08: F000:FEA5
 	dw	0xe987, 0xf000			; 09: F000:E987
 	dw	0xe6dd, 0xf000			; 0A: F000:E6DD
@@ -893,142 +827,38 @@ inttab:
 	dw	0x0000, 0xf600			; 18: F600:0000
 	dw	int_19, 0x0000			; 19: F000:E6F2
 	dw	int_1a, 0x0000			; 1A: F000:FE6E
-	dw	int_1b, 0x0000			; 1B: F000:FF53
+	dw	0xff53, 0xf000			; 1B: F000:FF53
 	dw	0xff53, 0xf000			; 1C: F000:FF53
 	dw	0xf0a4, 0xf000			; 1D: F000:F0A4
 	dw	0xefc7, 0xf000			; 1E: F000:EFC7
-	dw	int_1f, 0x0000			; 1F: F000:0000
+	dw	0x0000, 0xf000			; 1F: F000:0000
 
+
+;-----------------------------------------------------------------------------
 
 int_default:
+int_nn:
 	iret
-
 
 ;-----------------------------------------------------------------------------
-
-int_00:
-	pceh	PCEH_INT, 0x00
-	iret
-
-int_01:
-	pceh	PCEH_INT, 0x01
-	iret
-
-int_02:
-	pceh	PCEH_INT, 0x02
-	iret
-
-int_03:
-	pceh	PCEH_INT, 0x03
-	iret
-
-int_04:
-	pceh	PCEH_INT, 0x04
-	iret
-
-int_05:
-	pceh	PCEH_INT, 0x05
-	iret
-
-int_06:
-	pceh	PCEH_INT, 0x06
-	iret
-
-int_07:
-	pceh	PCEH_INT, 0x07
-	iret
-
-int_09:
-	pceh	PCEH_INT, 0x09
-	iret
-
-int_0a:
-	pceh	PCEH_INT, 0x0a
-	iret
-
-int_0b:
-	pceh	PCEH_INT, 0x0b
-	iret
-
-int_0c:
-	pceh	PCEH_INT, 0x0c
-	iret
-
-int_0d:
-	pceh	PCEH_INT, 0x0d
-	iret
-
-int_0e:
-	pceh	PCEH_INT, 0x0e
-	iret
-
-int_0f:
-	pceh	PCEH_INT, 0x0f
-	iret
-
-int_10:
-	pceh	PCEH_INT, 0x10
-	iret
-
-int_11:
-	pceh	PCEH_INT, 0x11
-	iret
-
-int_12:
-	pceh	PCEH_INT, 0x12
-	iret
 
 int_13:
-	push	ax
-	pceh	PCEH_CHECK_INT, 0x13
-	or	ax, ax
-	jz	.skip
-	pop	ax
-
+	pceint	0x13, .skip
 	sti
-	pceh	PCEH_INT, 0x13
 	retf	2
-
 .skip:
-	pop	ax
-	jmp	0xf000:0xec59
-
-int_14:
-	pceh	PCEH_INT, 0x14
-	iret
-
-int_15:
-	cmp	ah, 3
-	jbe	.cassette
-	sti
-	pceh	PCEH_INT, 0x15
-	retf	2
-.cassette:
-	jmp	0xf000:0xf859			; bios int 15
-
-int_17:
-	pceh	PCEH_INT, 0x17
-	iret
-
-int_1b:
-	pceh	PCEH_INT, 0x1b
-	iret
-
-int_1d:
-	pceh	PCEH_INT, 0x1d
-	iret
-
-int_1e:
-	pceh	PCEH_INT, 0x1e
-	iret
-
-int_1f:
-	pceh	PCEH_INT, 0x1f
-	iret
-
+	jmp	0xf000:0xec59			; bios int 13
 
 ;-----------------------------------------------------------------------------
 
+int_15:
+	pceint	0x15, .skip
+	sti
+	retf	2
+.skip:
+	jmp	0xf000:0xf859			; bios int 15
+
+;-----------------------------------------------------------------------------
 
 int_19:
 	xor	ax, ax
@@ -1051,9 +881,10 @@ int_19:
 	mov	word [4 * 0x1a + 0], int_1a
 	mov	word [4 * 0x1a + 2], cs
 
-	pceh	PCEH_GET_BOOT			; get boot drive in AL
-	mov	dl, al
+	pce	PCE_HOOK_GET_BOOT		; get boot drive in AL
+	jc	.fail
 
+	mov	dl, al
 	mov	ax, 0x0201
 	mov	bx, 0x7c00
 	mov	cx, 0x0001
@@ -1076,21 +907,16 @@ int_19:
 ;-----------------------------------------------------------------------------
 
 int_1a:
-	cmp	ah, 2
-	jae	.hook
-
-	jmp	0xf000:0xfe6e
-
-.hook:
 	push	bp
 	mov	bp, sp
 	push	word [bp + 6]			; flags
 	popf
 	pop	bp
 
-	pceh	PCEH_INT, 0x1a
-
+	pceint	0x1a, .skip
 	retf	2
+.skip:
+	jmp	0xf000:0xfe6e			; bios int 1a
 
 
 ;-----------------------------------------------------------------------------

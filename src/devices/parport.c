@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/parport.c                                        *
  * Created:     2003-04-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -42,6 +42,15 @@ void parport_init (parport_t *par, unsigned long base)
 	par->control = 0;
 	par->data = 0;
 
+	par->set_data_ext = NULL;
+	par->set_data = NULL;
+
+	par->set_ctrl_ext = NULL;
+	par->set_ctrl = NULL;
+
+	par->get_status_ext = NULL;
+	par->get_status = NULL;
+
 	par->cdrv = NULL;
 }
 
@@ -72,6 +81,24 @@ void parport_del (parport_t *par)
 		parport_free (par);
 		free (par);
 	}
+}
+
+void parport_set_data_fct (parport_t *par, void *ext, void *fct)
+{
+	par->set_data_ext = ext;
+	par->set_data = fct;
+}
+
+void parport_set_ctrl_fct (parport_t *par, void *ext, void *fct)
+{
+	par->set_ctrl_ext = ext;
+	par->set_ctrl = fct;
+}
+
+void parport_set_status_fct (parport_t *par, void *ext, void *fct)
+{
+	par->get_status_ext = ext;
+	par->get_status = fct;
 }
 
 mem_blk_t *parport_get_reg (parport_t *par)
@@ -120,6 +147,9 @@ void parport_set_uint8 (parport_t *par, unsigned long addr, unsigned char val)
 {
 	switch (addr) {
 	case 0x00:
+		if (par->set_data != NULL) {
+			par->set_data (par->set_data_ext, val);
+		}
 		par->data = val;
 		break;
 
@@ -127,6 +157,9 @@ void parport_set_uint8 (parport_t *par, unsigned long addr, unsigned char val)
 		break;
 
 	case 0x02:
+		if (par->set_ctrl != NULL) {
+			par->set_ctrl (par->set_ctrl_ext, val);
+		}
 		parport_set_control (par, val);
 		break;
 	}
@@ -144,6 +177,9 @@ unsigned char parport_get_uint8 (parport_t *par, unsigned long addr)
 		return (par->data);
 
 	case 0x01:
+		if (par->get_status != NULL) {
+			return (par->get_status (par->get_status_ext));
+		}
 		return (par->status);
 
 	case 0x02:

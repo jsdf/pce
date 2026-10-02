@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/cmd.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,7 @@
 #include <lib/console.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
+#include <lib/msgdsk.h>
 #include <lib/sysdep.h>
 
 
@@ -42,10 +43,10 @@
 #endif
 
 /*
- * The longest real time interval (in ms) that is emulated in one main loop
- * iteration. If more time has passed (e.g. because the browser tab was in
- * the background or the host is too slow), the emulation falls behind
- * real time instead of trying to catch up.
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
  */
 #define ST_EMSCRIPTEN_MAX_MS 100
 
@@ -61,9 +62,10 @@ mon_cmd_t par_cmd[] = {
 	{ "reset", "", "reset" },
 	{ "rte", "", "execute to next rte" },
 	{ "r", "reg [val]", "get or set a register" },
-	{ "s", "[what]", "print status (acia0|acia1|cpu|dma|mem|mfp|psg|video)" },
+	{ "s", "[what]", "print status (acia0|acia1|cpu|disks|dma|mem|mfp|psg|video)" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
-	{ "u", "[[-]addr [cnt]]", "disassemble" }
+	{ "u", "[w][[-]addr [cnt]]", "disassemble" },
+	{ "uw", "[addr [cnt]]", "disassemble as constant words" }
 };
 
 unsigned par_cmd_cnt = sizeof (par_cmd) / sizeof (par_cmd[0]);
@@ -73,7 +75,7 @@ static
 void st_dasm_str (char *dst, e68_dasm_t *op, int opcode)
 {
 	unsigned   i, n;
-	char       tmp[256];
+	char       tmp[272];
 	const char *ins;
 
 	strcpy (dst, "");
@@ -312,8 +314,8 @@ void st_print_state_dma (atari_st_t *sim)
 
 	pce_prt_sep ("DMA");
 
-	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX\n",
-		dma->mode, dma->status, dma->addr
+	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX  MASK=%06lX\n",
+		dma->mode, dma->status, dma->addr, dma->mask
 	);
 }
 
@@ -442,6 +444,9 @@ void st_print_state (atari_st_t *sim, const char *str)
 		if (cmd_match (&cmd, "cpu")) {
 			st_print_state_cpu (sim);
 		}
+		else if (cmd_match (&cmd, "disks")) {
+			dsks_print_info (sim->dsks);
+		}
 		else if (cmd_match (&cmd, "dma")) {
 			st_print_state_dma (sim);
 		}
@@ -541,7 +546,6 @@ void st_run (atari_st_t *sim)
 
 	while (1) {
 		st_clock (par_sim, 0);
-		st_clock (par_sim, 0);
 
 		if (sim->brk) {
 			break;
@@ -557,54 +561,43 @@ void st_run (atari_st_t *sim)
 }
 
 
-
 /*
- * emscripten specific main loop
- */
-
-/*
- * store global reference to simulation state struct
- * so that st_run_emscripten_step doesn't require it as a parameter
- */
-atari_st_t  *atari_st_sim = NULL;
-
-/*
- * setup and run the simulation
+ * Browser (emscripten) main loop
  *
- * In the browser the main loop is driven by requestAnimationFrame. Each
- * iteration emulates the real time that has passed since the previous one,
- * so that every emulated video frame can be shown and no time is wasted
- * busy waiting to stay in sync with real time.
+ * The main loop is driven by requestAnimationFrame. Each iteration emulates
+ * the real time that has passed since the previous one, so that every
+ * emulated video frame can be shown and no time is wasted busy waiting to
+ * stay in sync with real time.
  */
+
+static atari_st_t *st_emscripten_sim = NULL;
+
 void st_run_emscripten (atari_st_t *sim)
 {
-	atari_st_sim = sim;
+	st_emscripten_sim = sim;
 
 	pce_start (&sim->brk);
 
 	st_clock_discontinuity (sim);
 
-	#ifdef EMSCRIPTEN
-	emscripten_set_main_loop(st_run_emscripten_step, 0, 1);
-	#else
-	while (!sim->brk) {
+#ifdef EMSCRIPTEN
+	emscripten_set_main_loop (st_run_emscripten_step, 0, 1);
+#else
+	while (sim->brk == 0) {
 		st_run_emscripten_step();
 	}
-	#endif
 
-	// pce_stop();
+	pce_stop();
+#endif
 }
 
-
-/*
- * run one iteration
- */
-void st_run_emscripten_step ()
+void st_run_emscripten_step (void)
 {
 	static unsigned long clk_rem = 0;
 	unsigned long        clk;
+	atari_st_t           *sim;
 
-	#ifdef EMSCRIPTEN
+#ifdef EMSCRIPTEN
 	static double last = -1.0;
 	double        now, ms;
 
@@ -622,29 +615,34 @@ void st_run_emscripten_step ()
 	}
 
 	clk = clk_rem + (unsigned long) (ms * (ST_CPU_CLOCK / 1000));
-	#else
+#else
 	/* st_clock() keeps real time by sleeping */
 	clk = clk_rem + ST_CPU_CLOCK / 25;
-	#endif
+#endif
+
+	sim = st_emscripten_sim;
+
+	if (sim->pause) {
+		trm_check (sim->trm);
+		return;
+	}
 
 	while (clk >= 16) {
-		st_clock (atari_st_sim, 0);
+		st_clock (sim, 0);
 		clk -= 16;
 
-		if (atari_st_sim->brk) {
+		if (sim->brk) {
 			pce_stop();
-			#ifdef EMSCRIPTEN
+#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-			#endif
+#endif
 			return;
 		}
 	}
 
 	clk_rem = clk;
 }
-/*
- * end emscripten specific main loop
- */
+
 
 static
 void st_log_trap_bios (atari_st_t *sim, unsigned iw)
@@ -933,29 +931,36 @@ void st_cmd_hm (cmd_t *cmd)
 		"emu.cpu.model        \"68000\" | \"68010\" | \"68020\"\n"
 		"emu.cpu.speed        <factor>\n"
 		"emu.cpu.speed.step   <adjustment>\n"
-			"\n"
-		"emu.disk.commit      [<drive>]\n"
-		"emu.disk.eject       <drive>\n"
-		"emu.disk.insert      <drive>:<fname>\n"
-			"\n"
+		"\n"
+		"emu.midi.file        <fname>\n"
+		"\n"
+		"emu.fdc.ro           <drive>\n"
+		"emu.fdc.rw           <drive>\n"
+		"\n"
 		"emu.par.driver       <driver>\n"
 		"emu.par.file         <filename>\n"
-			"\n"
+		"\n"
 		"emu.psg.aym.file     <filename>\n"
 		"emu.psg.aym.res      <usec>\n"
 		"emu.psg.driver       <driver>\n"
 		"emu.psg.lowpass      <freq>\n"
-			"\n"
+		"\n"
 		"emu.ser.driver       <driver>\n"
 		"emu.ser.file         <filename>\n"
-			"\n"
+		"\n"
+		"emu.viking           \"0\" | \"1\"\n"
+		"emu.viking.toggle\n"
+		"\n"
 		"term.fullscreen      \"0\" | \"1\"\n"
 		"term.fullscreen.toggle\n"
 		"term.grab\n"
 		"term.release\n"
 		"term.screenshot      [<filename>]\n"
 		"term.title           <title>\n"
+		"\n"
 	);
+
+	msg_dsk_print_help();
 }
 
 /*
@@ -1271,6 +1276,61 @@ void st_cmd_u_to (cmd_t *cmd, atari_st_t *sim, unsigned long addr)
 }
 
 /*
+ * uw - disassemble as constant words
+ */
+static
+void st_cmd_u_w (cmd_t *cmd, atari_st_t *sim)
+{
+	unsigned             i, col;
+	unsigned long        addr, cnt;
+	e68_dasm_t           op;
+	char                 str[256];
+
+	if (cmd_match_uint32 (cmd, &addr) == 0) {
+		addr = 0;
+	}
+
+	if (cmd_match_uint32 (cmd, &cnt) == 0) {
+		cnt = 256;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	while (1) {
+		e68_dasm_mem (sim->cpu, &op, addr);
+		st_dasm_str (str, &op, 0);
+
+		pce_printf (".word 0x%04x", op.ir[0]);
+
+		for (i = 1; i < op.irn; i++) {
+			pce_printf (", 0x%04x", op.ir[i]);
+		}
+
+		col = 4 + 8 * op.irn;
+
+		while (col < 32) {
+			pce_printf ("\t");
+			col = (col + 8) & ~7;
+		}
+
+		pce_printf ("\t/* %06lX   %s */\n", addr, str);
+
+		if (op.flags & E68_DFLAG_RTS) {
+			pce_printf ("\n");
+		}
+
+		if (cnt <= (2 * op.irn)) {
+			break;
+		}
+
+		addr += 2 * op.irn;
+		cnt -= 2 * op.irn;
+	}
+}
+
+/*
  * u - disassemble
  */
 static
@@ -1282,6 +1342,11 @@ void st_cmd_u (cmd_t *cmd, atari_st_t *sim)
 	static unsigned long saddr = 0;
 	e68_dasm_t           op;
 	char                 str[256];
+
+	if (cmd_match (cmd, "w")) {
+		st_cmd_u_w (cmd, sim);
+		return;
+	}
 
 	if (first) {
 		first = 0;

@@ -38,8 +38,10 @@ int st_cmd (atari_st_t *sim, cmd_t *cmd);
 
 void st_cmd_init (atari_st_t *sim, monitor_t *mon);
 
-// emscripten specific run loop
+
+/* browser (emscripten) main loop */
 void st_run_emscripten (atari_st_t *sim);
-void st_run_emscripten_step ();
+void st_run_emscripten_step (void);
+
 
 #endif

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/msg.h                                                *
  * Created:     2005-12-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -40,6 +40,7 @@ int msg_get_ulng (const char *str, unsigned long *val);
 int msg_get_slng (const char *str, long *val);
 int msg_get_uint (const char *str, unsigned *val);
 int msg_get_sint (const char *str, int *val);
+int msg_get_double (const char *str, double *val);
 int msg_get_bool (const char *str, int *val);
 
 int msg_get_prefix_ulng (const char **str, unsigned long *val, const char *sep, const char *trim);

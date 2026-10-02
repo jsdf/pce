@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/serial.h                                    *
  * Created:     2007-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,8 +36,6 @@ typedef struct {
 
 	unsigned      chn;
 
-	unsigned long clk;
-
 	unsigned long bps;
 	unsigned      parity;
 	unsigned      bpc;
@@ -67,7 +65,7 @@ int mac_ser_set_driver (mac_ser_t *ser, const char *name);
 
 int mac_ser_set_file (mac_ser_t *ser, const char *fname);
 
-void mac_ser_clock (mac_ser_t *ser, unsigned n);
+void mac_ser_process (mac_ser_t *ser);
 
 
 #endif

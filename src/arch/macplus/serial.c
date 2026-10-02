@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/serial.c                                    *
  * Created:     2007-12-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,8 +35,6 @@ void mac_ser_init (mac_ser_t *ser)
 {
 	ser->scc = NULL;
 	ser->chn = 0;
-
-	ser->clk = 0;
 
 	ser->bps = 0;
 	ser->bpc = 0;
@@ -256,14 +254,9 @@ void mac_ser_set_scc (mac_ser_t *ser, e8530_t *scc, unsigned chn)
 	e8530_set_cts (ser->scc, ser->chn, 1);
 }
 
-void mac_ser_clock (mac_ser_t *ser, unsigned n)
+void mac_ser_process (mac_ser_t *ser)
 {
 	mac_ser_process_output (ser);
 	mac_ser_process_input (ser);
 	mac_ser_status_check (ser);
-
-	/* 3.672 MHz = (15/32 * 7.8336 MHz */
-	ser->clk += 15UL * n;
-	e8530_clock (ser->scc, ser->clk / 32);
-	ser->clk &= 31;
 }

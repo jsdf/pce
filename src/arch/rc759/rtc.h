@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/rtc.h                                         *
  * Created:     2012-07-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -63,6 +63,9 @@ void rc759_rtc_reset (rc759_rtc_t *rtc);
 void rc759_rtc_set_irq_fct (rc759_rtc_t *rtc, void *ext, void *fct);
 
 void rc759_rtc_set_input_clock (rc759_rtc_t *rtc, unsigned long clk);
+
+void rc759_rtc_set_time (rc759_rtc_t *rtc, unsigned h, unsigned m, unsigned s, unsigned ms);
+void rc759_rtc_set_date (rc759_rtc_t *rtc, unsigned month, unsigned day);
 
 void rc759_rtc_set_time_now (rc759_rtc_t *rtc);
 

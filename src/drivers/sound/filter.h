@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/sound/sound.h                                    *
  * Created:     2010-08-27 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -37,6 +37,16 @@ typedef struct {
 	long y[3];
 } sound_iir2_t;
 
+
+/*!***************************************************************************
+ * @short Adjust the volume
+ * @param dst     The destination buffer
+ * @param src     The source buffer
+ * @param cnt     The sample count
+ * @param volume  The volume adjustment is (volume / 256)
+ * @param sign    The sample signedness in both src and dst
+ *****************************************************************************/
+void snd_volume (uint16_t *dst, const uint16_t *src, unsigned long cnt, unsigned volume, int sign);
 
 /*!***************************************************************************
  * @short Initialize an IIR2 filter

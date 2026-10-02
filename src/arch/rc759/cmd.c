@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/cmd.c                                         *
  * Created:     2012-06-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,6 +31,7 @@
 #include <lib/console.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
+#include <lib/msgdsk.h>
 #include <lib/sysdep.h>
 
 
@@ -48,7 +49,7 @@ static mon_cmd_t par_cmd[] = {
 	{ "pq", "[c|f|s]", "prefetch queue clear/fill/status" },
 	{ "p", "[cnt]", "execute cnt instructions, without trace in calls [1]" },
 	{ "r", "[reg val]", "set a register" },
-	{ "s", "[what]", "print status (cpu|icu|mem||ppi|pic|rc759|tcu|time)" },
+	{ "s", "[what]", "print status (cpu|disks|icu|mem||ppi|pic|rc759|tcu|time)" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
 	{ "u", "[addr [cnt [mode]]]", "disassemble" }
 };
@@ -381,25 +382,6 @@ void print_state_video (e82730_t *crt)
 	}
 }
 
-static
-void print_state_time (e8086_t *c)
-{
-	double cpi;
-
-	pce_prt_sep ("TIME");
-
-	if (c->instructions > 0) {
-		cpi = (double) c->clocks / (double) c->instructions;
-	}
-	else {
-		cpi = 0.0;
-	}
-
-	pce_printf ("CLK=%llu + %lu\n", c->clocks, c->delay);
-	pce_printf ("OPS=%llu\n", c->instructions);
-	pce_printf ("CPI=%.4f\n", cpi);
-}
-
 void print_state_cpu (e8086_t *c)
 {
 	static char ft[2] = { '-', '+' };
@@ -427,7 +409,7 @@ void print_state_cpu (e8086_t *c)
 		ft[e86_get_pf (c)], ft[e86_get_cf (c)]
 	);
 
-	if (c->halt) {
+	if (e86_get_halt (c)) {
 		pce_printf ("HALT=1\n");
 	}
 }
@@ -453,7 +435,6 @@ void print_state_rc759 (rc759_t *sim)
 	print_state_tcu (&sim->tcu);
 	print_state_pic (&sim->pic);
 	print_state_dma (&sim->dma);
-	print_state_time (sim->cpu);
 	print_state_cpu (sim->cpu);
 }
 
@@ -497,7 +478,7 @@ int rc759_check_break (rc759_t *sim)
 static
 void rc759_exec (rc759_t *sim)
 {
-	unsigned long long old;
+	unsigned old;
 
 	sim->current_int &= 0xff;
 
@@ -520,7 +501,7 @@ void rc759_run (rc759_t *sim)
 
 	while (sim->brk == 0) {
 		if (sim->pause == 0) {
-			rc759_clock (sim, 8);
+			rc759_clock (sim, 1);
 		}
 		else {
 			pce_usleep (100000);
@@ -698,10 +679,6 @@ void rc759_cmd_hm (cmd_t *cmd)
 		"emu.cpu.speed        <factor>\n"
 		"emu.cpu.speed.step   <adjustment>\n"
 		"\n"
-		"emu.disk.commit      [<drive>]\n"
-		"emu.disk.eject       <drive>\n"
-		"emu.disk.insert      <drive>:<fname>\n"
-		"\n"
 		"emu.parport1.driver  <driver>\n"
 		"emu.parport1.file    <filename>\n"
 		"emu.parport2.driver  <driver>\n"
@@ -713,7 +690,10 @@ void rc759_cmd_hm (cmd_t *cmd)
 		"emu.term.release\n"
 		"emu.term.screenshot  [<filename>]\n"
 		"emu.term.title       <title>\n"
+		"\n"
 	);
+
+	msg_dsk_print_help();
 }
 
 static
@@ -1121,6 +1101,9 @@ void rc759_cmd_s (cmd_t *cmd, rc759_t *sim)
 		else if (cmd_match (cmd, "cpu")) {
 			print_state_cpu (sim->cpu);
 		}
+		else if (cmd_match (cmd, "disks")) {
+			dsks_print_info (sim->dsks);
+		}
 		else if (cmd_match (cmd, "dma")) {
 			print_state_dma (&sim->dma);
 		}
@@ -1144,9 +1127,6 @@ void rc759_cmd_s (cmd_t *cmd, rc759_t *sim)
 		}
 		else if (cmd_match (cmd, "tcu")) {
 			print_state_tcu (&sim->tcu);
-		}
-		else if (cmd_match (cmd, "time")) {
-			print_state_time (sim->cpu);
 		}
 		else if (cmd_match (cmd, "video")) {
 			print_state_video (&sim->crt);

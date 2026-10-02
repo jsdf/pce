@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/opcodes.c                                     *
  * Created:     2003-11-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -71,8 +71,21 @@ uint64_t p405_mul (uint32_t s1, uint32_t s2)
 	return (ret);
 }
 
+/*
+ * Byte reverse a 16 bit value
+ */
+uint16_t p405_br16 (uint16_t x)
+{
+	return (((x & 0xff) << 8) | ((x >> 8) & 0xff));
+}
 
-/*****************************************************************************/
+/*
+ * Byte reverse a 32 bit value
+ */
+uint32_t p405_br32 (uint32_t x)
+{
+	return (((x & 0xff) << 24) | ((x & 0xff00) << 8) | ((x >> 8) & 0xff00) | ((x >> 24) & 0xff));
+}
 
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk)
 {
@@ -147,7 +160,7 @@ void p405_op_lsw (p405_t *c, unsigned rt, unsigned ra, unsigned rb, uint32_t ea,
 	uint8_t  val;
 	uint32_t msk;
 
-	rfinal = (rt + (cnt + 3) / 4) & 0x1f;
+	rfinal = (rt + (cnt + 3) / 4 - 1) & 0x1f;
 
 	msk = 0;
 	shl = 24;
@@ -1066,14 +1079,14 @@ void op_3f (p405_t *c)
 
 static
 p405_opcode_f p405_opcodes[64] = {
-		NULL,   NULL,   NULL, &op_03,   NULL,   NULL,   NULL, &op_07,   /* 00 */
+	  NULL,   NULL,   NULL, &op_03,   NULL,   NULL,   NULL, &op_07,   /* 00 */
 	&op_08,   NULL, &op_0a, &op_0b, &op_0c, &op_0d, &op_0e, &op_0f,
 	&op_10, &op_11, &op_12,   NULL, &op_14, &op_15,   NULL, &op_17,   /* 10 */
 	&op_18, &op_19, &op_1a, &op_1b, &op_1c, &op_1d,   NULL,   NULL,
 	&op_20, &op_21, &op_22, &op_23, &op_24, &op_25, &op_26, &op_27,   /* 20 */
 	&op_28, &op_29, &op_2a, &op_2b, &op_2c, &op_2d, &op_2e, &op_2f,
 	&op_30, &op_31, &op_32, &op_33, &op_34, &op_35, &op_36, &op_37,   /* 30 */
-		NULL,   NULL,   NULL, &op_3b,   NULL,   NULL,   NULL, &op_3f
+	  NULL,   NULL,   NULL, &op_3b,   NULL,   NULL,   NULL, &op_3f
 };
 
 

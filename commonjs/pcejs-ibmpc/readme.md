@@ -75,7 +75,10 @@ curl -O https://jamesfriend.com.au/pce-js/dist/ibmpc-system.zip
 unzip ibmpc-system.zip
 ```
 
-grab the extension rom file from the npm package
+grab the extension rom file from the npm package. this replaces the one from
+`ibmpc-system.zip`, which is too old for this version of the emulator (the
+emulator and its extension rom must come from the same version, otherwise the
+system hangs while booting)
 ```bash
 cp node_modules/pcejs-ibmpc/ibmpc-pcex.rom ./ibmpc-pcex.rom
 ```

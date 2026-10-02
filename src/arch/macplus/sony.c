@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/sony.c                                      *
  * Created:     2007-11-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -358,12 +358,14 @@ void mac_sony_insert (mac_sony_t *sony, unsigned drive)
 
 		if (dsk_get_block_cnt (dsk) < 1600) {
 			mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0x00);
+			mem_set_uint8 (sony->mem, vars + SONY_SIDES, 0x00);
+			mem_set_uint8 (sony->mem, vars + SONY_NEWIF, 0x00);
 		}
 		else {
 			mem_set_uint8 (sony->mem, vars + SONY_TWOSIDEFMT, 0xff);
+			mem_set_uint8 (sony->mem, vars + SONY_SIDES, 0xff);
+			mem_set_uint8 (sony->mem, vars + SONY_NEWIF, 0xff);
 		}
-
-		mem_set_uint8 (sony->mem, vars + SONY_NEWIF, 0xff);
 
 		if (dsk_get_readonly (dsk)) {
 			mem_set_uint8 (sony->mem, vars + SONY_WPROT, 0xff);
@@ -721,7 +723,9 @@ void mac_sony_prime_read (mac_sony_t *sony, unsigned drive)
 
 	for (i = 0; i < n; i++) {
 		if (mac_sony_read_block (dsk, buf, tag, (ofs / 512) + i)) {
-			mac_log_deb ("sony: read error\n");
+			mac_log_deb ("sony: read error at block %lu\n",
+				(ofs / 512) + i
+			);
 			mac_sony_return (sony, 0xffff, 0);
 			return;
 		}
@@ -818,7 +822,9 @@ void mac_sony_prime_write (mac_sony_t *sony, unsigned drive)
 		}
 
 		if (mac_sony_write_block (dsk, buf, tag, (ofs / 512) + i)) {
-			mac_log_deb ("sony: write error\n");
+			mac_log_deb ("sony: write error at block %lu\n",
+				(ofs / 512) + i
+			);
 			mac_sony_return (sony, 0xffff, 0);
 			return;
 		}
@@ -1063,8 +1069,12 @@ void mac_sony_ctl_format (mac_sony_t *sony)
 			if (format == 1) {
 				blk = 800;
 			}
-			else {
+			else if (format == 2) {
 				blk = 1600;
+			}
+
+			if (blk == 0) {
+				blk = 800;
 			}
 		}
 	}

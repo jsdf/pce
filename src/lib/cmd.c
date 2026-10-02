@@ -304,8 +304,18 @@ int cmd_match_space (cmd_t *cmd)
 
 	i = cmd->i;
 
-	while ((cmd->str[i] != 0) && str_is_space (cmd->str[i])) {
-		i += 1;
+	while (cmd->str[i] != 0) {
+		if (str_is_space (cmd->str[i])) {
+			i += 1;
+		}
+		else if (cmd->str[i] == '#') {
+			while (cmd->str[i] != 0) {
+				i += 1;
+			}
+		}
+		else {
+			break;
+		}
 	}
 
 	r = (i > cmd->i);

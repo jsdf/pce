@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/atarist.h                                   *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -24,9 +24,6 @@
 #define PCE_ATARIST_ATARIST_H 1
 
 
-#define PCE_ST_ST 1
-
-
 #include "acsi.h"
 #include "dma.h"
 #include "fdc.h"
@@ -35,6 +32,7 @@
 #include "rp5c15.h"
 #include "smf.h"
 #include "video.h"
+#include "viking.h"
 
 #include <cpu/e68000/e68000.h>
 
@@ -46,12 +44,19 @@
 
 #include <drivers/block/block.h>
 #include <drivers/char/char.h>
+#include <drivers/sound/sound.h>
 #include <drivers/video/terminal.h>
 #include <drivers/video/keys.h>
 
 #include <lib/brkpt.h>
 
 #include <libini/libini.h>
+
+
+#define PCE_ST_ST   0x0001
+#define PCE_ST_MEGA 0x0002
+#define PCE_ST_STE  0x0004
+#define PCE_ST_RTC  0x8000
 
 
 /*****************************************************************************
@@ -75,11 +80,13 @@ struct atari_st_s {
 	st_acsi_t     acsi;
 	st_dma_t      dma;
 	st_video_t    *video;
+	st_viking_t   *viking;
 	terminal_t    *trm;
 	disks_t       *dsks;
 	char_drv_t    *parport_drv;
 	char_drv_t    *serport_drv;
 	char_drv_t    *midi_drv;
+	sound_drv_t   *snd_drv;
 
 	unsigned long rom_addr;
 
@@ -87,15 +94,21 @@ struct atari_st_s {
 	unsigned char int_level;
 
 	unsigned char video_state;
+	unsigned char memcfg;
 
 	char          mono;
 	char          fastboot;
 	char          reset;
 	char          pause;
+	char          video_viking;
 	unsigned      brk;
+
+	unsigned      disk_id;
 
 	unsigned char psg_port_a;
 	unsigned char psg_port_b;
+
+	unsigned char mfp_inp;
 
 	unsigned      speed_factor;
 	unsigned long speed_clock_extra;
@@ -155,6 +168,8 @@ void st_set_speed (atari_st_t *sim, unsigned factor);
 int st_set_msg_trm (atari_st_t *sim, const char *msg, const char *val);
 
 int st_set_cpu_model (atari_st_t *sim, const char *model);
+
+void st_set_parport_drv (atari_st_t *sim, char_drv_t *drv);
 
 /*****************************************************************************
  * @short Reset the simulation

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/int13.c                                       *
  * Created:     2003-04-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -32,6 +32,31 @@
 
 #define INT13_MAX_BLOCKS 8
 
+
+int pc_int13_check (ibmpc_t *pc)
+{
+	unsigned drv;
+
+	drv = e86_get_dl (pc->cpu);
+
+	if (drv & 0x80) {
+		if (pc->hdc == NULL) {
+			return (1);
+		}
+
+		return (0);
+	}
+
+	if (pc->fdc == NULL) {
+		return (1);
+	}
+
+	if (dev_fdc_get_drive (pc->fdc, drv) == 0xffff) {
+		return (1);
+	}
+
+	return (0);
+}
 
 void dsk_int_13_check (ibmpc_t *pc)
 {
@@ -105,8 +130,7 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 	unsigned char  buf[512 * INT13_MAX_BLOCKS];
 	disk_t         *dsk;
 
-	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, e86_get_dl (cpu))) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x01);
 		return;
 	}
@@ -142,9 +166,9 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 			addr += n;
 		}
 		else {
-			for (i = 0; i < n; i += 2) {
-				e86_set_mem16 (cpu, addr >> 4, addr & 0x0f, buf[i] | (buf[i + 1] << 8));
-				addr += 2;
+			for (i = 0; i < n; i++) {
+				e86_set_mem8 (cpu, addr >> 4, addr & 0x0f, buf[i]);
+				addr += 1;
 			}
 		}
 	}
@@ -155,16 +179,14 @@ void dsk_int13_02 (disks_t *dsks, e8086_t *cpu)
 static
 void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 {
-	unsigned       i, k, n;
-	uint32_t       blk_i, blk_n;
-	unsigned       c, h, s;
-	unsigned long  addr;
-	unsigned short val;
-	unsigned char  buf[512 * INT13_MAX_BLOCKS];
-	disk_t         *dsk;
+	unsigned      i, k, n;
+	uint32_t      blk_i, blk_n;
+	unsigned      c, h, s;
+	unsigned long addr;
+	unsigned char buf[512 * INT13_MAX_BLOCKS];
+	disk_t        *dsk;
 
-	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, e86_get_dl (cpu))) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x01);
 		return;
 	}
@@ -189,7 +211,6 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 
 	while (blk_n > 0) {
 		n = (blk_n < INT13_MAX_BLOCKS) ? blk_n : INT13_MAX_BLOCKS;
-
 		k = 512 * n;
 
 		if ((addr + k) < cpu->ram_cnt) {
@@ -197,11 +218,9 @@ void dsk_int13_03 (disks_t *dsks, e8086_t *cpu)
 			addr += k;
 		}
 		else {
-			for (i = 0; i < k; i += 2) {
-				val = e86_get_mem16 (cpu, addr >> 4, addr & 0x0f);
-				buf[i + 0] = val & 0xff;
-				buf[i + 1] = (val >> 8) & 0xff;
-				addr += 2;
+			for (i = 0; i < k; i++) {
+				buf[i] = e86_get_mem8 (cpu, addr >> 4, addr & 0x0f);
+				addr += 1;
 			}
 		}
 
@@ -225,8 +244,7 @@ void dsk_int13_04 (disks_t *dsks, e8086_t *cpu)
 	unsigned char  buf[512 * INT13_MAX_BLOCKS];
 	disk_t         *dsk;
 
-	dsk = dsks_get_disk (dsks, e86_get_dl (cpu));
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, e86_get_dl (cpu))) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x01);
 		return;
 	}
@@ -268,8 +286,7 @@ void dsk_int13_05 (disks_t *dsks, e8086_t *cpu)
 
 	d = e86_get_dl (cpu);
 
-	dsk = dsks_get_disk (dsks, d);
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, d)) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x01);
 		return;
 	}
@@ -319,13 +336,12 @@ void dsk_int13_05 (disks_t *dsks, e8086_t *cpu)
 static
 void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
 {
-	unsigned drive;
+	unsigned drive, c;
 	disk_t   *dsk;
 
 	drive = e86_get_dl (cpu);
-	dsk = dsks_get_disk (dsks, drive);
 
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, drive)) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 1);
 		return;
 	}
@@ -343,18 +359,23 @@ void dsk_int13_08 (disks_t *dsks, e8086_t *cpu)
 			else if (dsk->visible_s < 17) {
 				type = 0x02;
 			}
-			else {
+			else if (dsk->visible_s < 25) {
 				type = 0x04;
 			}
-
-			e86_set_bx (cpu, type);
+			else {
+				type = 0x06;
+			}
 		}
+
+		e86_set_bx (cpu, type);
 	}
+
+	c = (dsk->visible_c > 0) ? (dsk->visible_c - 1) : 0;
 
 	e86_set_dl (cpu, dsks_get_hd_cnt (dsks));
 	e86_set_dh (cpu, dsk->visible_h - 1);
-	e86_set_ch (cpu, dsk->visible_c - 1);
-	e86_set_cl (cpu, dsk->visible_s | (((dsk->visible_c - 1) >> 2) & 0xc0));
+	e86_set_ch (cpu, c);
+	e86_set_cl (cpu, dsk->visible_s | ((c >> 2) & 0xc0));
 
 	dsk_int13_set_status (dsks, cpu, 0x00);
 }
@@ -366,9 +387,8 @@ void dsk_int13_10 (disks_t *dsks, e8086_t *cpu)
 	disk_t   *dsk;
 
 	drive = e86_get_dl (cpu);
-	dsk = dsks_get_disk (dsks, drive);
 
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, drive)) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x20);
 		return;
 	}
@@ -384,9 +404,8 @@ void dsk_int13_15 (disks_t *dsks, e8086_t *cpu)
 	disk_t   *dsk;
 
 	drive = e86_get_dl (cpu);
-	dsk = dsks_get_disk (dsks, drive);
 
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, drive)) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x0c);
 		return;
 	}
@@ -407,9 +426,8 @@ void dsk_int13_18 (disks_t *dsks, e8086_t *cpu)
 	disk_t   *dsk;
 
 	drive = e86_get_dl (cpu);
-	dsk = dsks_get_disk (dsks, drive);
 
-	if (dsk == NULL) {
+	if ((dsk = dsks_get_disk (dsks, drive)) == NULL) {
 		dsk_int13_set_status (dsks, cpu, 0x01);
 		return;
 	}
@@ -439,51 +457,58 @@ void dsk_int13 (disks_t *dsks, e8086_t *cpu)
 	func = e86_get_ah (cpu);
 
 	switch (func) {
-		case 0x00:
-			dsk_int13_set_status (dsks, cpu, 0);
-			break;
+	case 0x00:
+		dsk_int13_set_status (dsks, cpu, 0);
+		break;
 
-		case 0x01:
-			dsk_int13_set_status (dsks, cpu, e86_get_mem8 (cpu, 0x40, 0x41));
-			break;
+	case 0x01:
+		dsk_int13_set_status (dsks, cpu, e86_get_mem8 (cpu, 0x40, 0x41));
+		break;
 
-		case 0x02:
-			dsk_int13_02 (dsks, cpu);
-			break;
+	case 0x02:
+		dsk_int13_02 (dsks, cpu);
+		break;
 
-		case 0x03:
-			dsk_int13_03 (dsks, cpu);
-			break;
+	case 0x03:
+		dsk_int13_03 (dsks, cpu);
+		break;
 
-		case 0x04:
-			dsk_int13_04 (dsks, cpu);
-			break;
+	case 0x04:
+		dsk_int13_04 (dsks, cpu);
+		break;
 
-		case 0x05:
-			dsk_int13_05 (dsks, cpu);
-			break;
+	case 0x05:
+		dsk_int13_05 (dsks, cpu);
+		break;
 
-		case 0x08:
-			dsk_int13_08 (dsks, cpu);
-			break;
+	case 0x08:
+		dsk_int13_08 (dsks, cpu);
+		break;
 
-		case 0x0c:
-			dsk_int13_set_status (dsks, cpu, 0x00);
-			break;
+	case 0x0c:
+		dsk_int13_set_status (dsks, cpu, 0x00);
+		break;
 
-		case 0x10:
-			dsk_int13_10 (dsks, cpu);
-			break;
+	case 0x10:
+		dsk_int13_10 (dsks, cpu);
+		break;
 
-		case 0x17:
-			dsk_int13_set_status (dsks, cpu, 0x00);
+#if 0
+	case 0x15:
+		dsk_int13_15 (dsks, cpu);
+		break;
+#endif
 
-		case 0x18:
-			dsk_int13_18 (dsks, cpu);
-			break;
+	case 0x17:
+		dsk_int13_set_status (dsks, cpu, 0x00);
+		break;
 
-		default:
-			dsk_int13_set_status (dsks, cpu, 0x01);
-			break;
+	case 0x18:
+		dsk_int13_18 (dsks, cpu);
+		break;
+
+	default:
+		dsk_int13_set_status (dsks, cpu, 0x01);
+		break;
 	}
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/log.c                                                *
  * Created:     2003-02-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,16 +15,18 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
+
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "log.h"
+#include <lib/log.h>
 
 
 typedef struct {
@@ -155,10 +157,17 @@ void pce_log (unsigned level, const char *msg, ...)
 void pce_log_va (unsigned level, const char *msg, va_list va)
 {
 	unsigned i;
+	va_list  tmp;
 
 	for (i = 0; i < par_log_cnt; i++) {
 		if (level <= par_log[i].level) {
-			vfprintf (par_log[i].fp, msg, va);
+#ifdef va_copy
+			va_copy (tmp, va);
+#else
+			tmp = va;
+#endif
+			vfprintf (par_log[i].fp, msg, tmp);
+			va_end (tmp);
 			fflush (par_log[i].fp);
 		}
 	}
@@ -170,6 +179,24 @@ void pce_log_deb (const char *msg, ...)
 
 	va_start (va, msg);
 	pce_log_va (MSG_DEB, msg, va);
+	va_end (va);
+}
+
+void pce_log_inf (const char *msg, ...)
+{
+	va_list va;
+
+	va_start (va, msg);
+	pce_log_va (MSG_INF, msg, va);
+	va_end (va);
+}
+
+void pce_log_err (const char *msg, ...)
+{
+	va_list va;
+
+	va_start (va, msg);
+	pce_log_va (MSG_ERR, msg, va);
 	va_end (va);
 }
 

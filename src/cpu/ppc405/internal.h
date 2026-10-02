@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/internal.h                                    *
  * Created:     2003-11-07 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -81,8 +81,13 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define P405_IR_LK 0x0001
 #define P405_IR_AA 0x0002
 
-#define P405_EXCPT_MSR (P405_MSR_WE | P405_MSR_EE | P405_MSR_PR | P405_MSR_DWE \
-	| P405_MSR_IR | P405_MSR_DR)
+#define P405_INT_EXT 1
+#define P405_INT_PIT 2
+#define P405_INT_FIT 4
+
+#define P405_EXCPT_MSR (P405_MSR_AP | P405_MSR_APE | P405_MSR_WE | P405_MSR_EE |\
+	P405_MSR_PR | P405_MSR_FP | P405_MSR_FE0 | P405_MSR_DWE | P405_MSR_FE1 |\
+	P405_MSR_IR | P405_MSR_DR)
 
 #define p405_sext(x, n) ( \
 	((x) & (1UL << ((n) - 1))) ? \
@@ -91,10 +96,6 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 	)
 
 #define p405_uext(x, n) ((x) & ((1 << (n)) - 1))
-
-#define p405_br16(x) ((((x) & 0xff) << 8) | (((x) >> 8) & 0xff))
-#define p405_br32(x) ((((x) & 0xff) << 24) | ((((x) >> 8) & 0xff) << 16) \
- | ((((x) >> 16) & 0xff) << 8) | (((x) >> 24) & 0xff))
 
 #define p405_bits(val, i, n) (((val) >> (32 - (i) - (n))) & ((1UL << (n)) - 1))
 
@@ -125,7 +126,15 @@ int p405_dstore32 (p405_t *c, uint32_t addr, uint32_t val);
 #define p405_set_clk(c, dpc, clk) do { (c)->pc += (dpc); (c)->delay += (clk); } while (0)
 
 
+typedef struct {
+	unsigned      op;
+	p405_opcode_f fct;
+} p405_opcode_list_t;
+
+
 uint64_t p405_mul (uint32_t s1, uint32_t s2);
+uint16_t p405_br16 (uint16_t x);
+uint32_t p405_br32 (uint32_t x);
 
 void p405_op_branch (p405_t *c, uint32_t dst, unsigned bo, unsigned bi, int aa, int lk);
 void p405_op_crop (p405_t *c, unsigned bt, unsigned ba, unsigned bb, unsigned booltab);
@@ -140,6 +149,7 @@ void p405_exception_program (p405_t *c, uint32_t esr);
 void p405_exception_program_fpu (p405_t *c);
 void p405_exception_syscall (p405_t *c);
 void p405_exception_pit (p405_t *c);
+void p405_exception_fit (p405_t *c);
 void p405_exception_tlb_miss_data (p405_t *c, uint32_t ea, int store);
 void p405_exception_tlb_miss_instr (p405_t *c);
 

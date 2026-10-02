@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/rtc.h                                       *
  * Created:     2007-11-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,7 +31,7 @@ typedef struct {
 	unsigned char reg_test;
 
 	unsigned long clock;
-	unsigned long bias;
+	unsigned long rtime;
 
 	int           data_out;
 	unsigned      state;
@@ -68,7 +68,8 @@ void mac_rtc_set_defaults (mac_rtc_t *rtc);
 int mac_rtc_load_file (mac_rtc_t *rtc, const char *fname);
 int mac_rtc_save_file (mac_rtc_t *rtc, const char *fname);
 
-void mac_rtc_set_time (mac_rtc_t *rtc, unsigned long time, int rel);
+void mac_rtc_set_time (mac_rtc_t *rtc, unsigned long time, int utc);
+void mac_rtc_set_time_now (mac_rtc_t *rtc);
 void mac_rtc_set_time_str (mac_rtc_t *rtc, const char *str);
 
 void mac_rtc_set_uint8 (mac_rtc_t *rtc, unsigned char val);

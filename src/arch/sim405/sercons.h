@@ -30,6 +30,9 @@
 #define PCE_SIM405_SERCONS_H 1
 
 
+#include "sim405.h"
+
+
 void scon_check (sim405_t *sim);
 
 

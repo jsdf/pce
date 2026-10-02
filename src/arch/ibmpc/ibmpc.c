@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/ibmpc.c                                       *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,13 +15,15 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
 
 #include "main.h"
+#include "hook.h"
 #include "ibmpc.h"
+#include "atari-pc.h"
 #include "m24.h"
 #include "msg.h"
 
@@ -41,6 +43,8 @@
 #include <lib/string.h>
 #include <lib/sysdep.h>
 
+#include <chipset/clock/mc146818a.h>
+
 #include <chipset/82xx/e8237.h>
 #include <chipset/82xx/e8250.h>
 #include <chipset/82xx/e8253.h>
@@ -50,6 +54,7 @@
 
 #include <cpu/e8086/e8086.h>
 
+#include <devices/cassette.h>
 #include <devices/fdc.h>
 #include <devices/hdc.h>
 #include <devices/memory.h>
@@ -67,15 +72,14 @@
 
 #include <drivers/block/block.h>
 
+#include <drivers/pti/pti-io.h>
+
 #include <drivers/video/terminal.h>
 
 #include <libini/libini.h>
 
 
-#define PCE_IBMPC_SLEEP 25000
-
-
-void pc_e86_hook (void *ext, unsigned char op1, unsigned char op2);
+#define PCE_IBMPC_SLEEP 10000
 
 
 static char *par_intlog[256];
@@ -90,9 +94,17 @@ unsigned char pc_get_port8 (ibmpc_t *pc, unsigned long addr)
 		return (val);
 	}
 
+	if (atari_pc_get_port8 (pc, addr, &val) == 0) {
+		return (val);
+	}
+
 	val = 0xff;
 
 	switch (addr) {
+	case 0x0064:
+		val = 0x00;
+		break;
+
 	case 0x0081:
 		val = pc->dma_page[2] >> 16;
 		break;
@@ -135,6 +147,10 @@ void pc_set_port8 (ibmpc_t *pc, unsigned long addr, unsigned char val)
 #endif
 
 	if (m24_set_port8 (pc, addr, val) == 0) {
+		return;
+	}
+
+	if (atari_pc_set_port8 (pc, addr, val) == 0) {
 		return;
 	}
 
@@ -194,14 +210,18 @@ unsigned char pc_dma3_get_mem8 (ibmpc_t *pc, unsigned long addr)
 static
 unsigned char pc_ppi_get_port_a (ibmpc_t *pc)
 {
+	unsigned char val;
+
 	if (pc->ppi_port_b & 0x80) {
-		return (pc->ppi_port_a[0]);
+		val = pc->ppi_port_a[0] & ~pc->switches1_msk;
+		val |= pc->switches1_val & pc->switches1_msk;
 	}
 	else {
 		pc->ppi_port_a[1] = pc_kbd_get_key (&pc->kbd);
-
-		return (pc->ppi_port_a[1]);
+		val = pc->ppi_port_a[1];
 	}
+
+	return (val);
 }
 
 static
@@ -217,13 +237,13 @@ unsigned char pc_ppi_get_port_c (ibmpc_t *pc)
 	}
 	else {
 		if (pc->cas != NULL) {
-			if (pc_cas_get_inp (pc->cas)) {
-				pc->ppi_port_c[0] |= 0x10;
-				pc->ppi_port_c[1] |= 0x10;
-			}
-			else {
+			if (cas_get_inp (pc->cas)) {
 				pc->ppi_port_c[0] &= ~0x10;
 				pc->ppi_port_c[1] &= ~0x10;
+			}
+			else {
+				pc->ppi_port_c[0] |= 0x10;
+				pc->ppi_port_c[1] |= 0x10;
 			}
 		}
 
@@ -244,6 +264,10 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 	old = pc->ppi_port_b;
 	pc->ppi_port_b = val;
 
+	if (pc->force_keyboard_enable) {
+		val |= 0x40;
+	}
+
 	pc_kbd_set_clk (&pc->kbd, val & 0x40);
 	pc_kbd_set_enable (&pc->kbd, (val & 0x80) == 0);
 
@@ -258,7 +282,7 @@ void pc_ppi_set_port_b (ibmpc_t *pc, unsigned char val)
 			/* cassette motor change */
 
 			if (pc->cas != NULL) {
-				pc_cas_set_motor (pc->cas, (val & 0x08) == 0);
+				cas_set_motor (pc->cas, (val & 0x08) == 0);
 
 				if (val & 0x08) {
 					/* motor off: restore clock */
@@ -301,19 +325,19 @@ void pc_set_timer1_out (ibmpc_t *pc, unsigned char val)
 static
 void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 {
+	if (val) {
+		pc->ppi_port_c[0] |= 0x20;
+		pc->ppi_port_c[1] |= 0x20;
+	}
+	else {
+		pc->ppi_port_c[0] &= ~0x20;
+		pc->ppi_port_c[1] &= ~0x20;
+	}
+
+
 	if (pc->model & PCE_IBMPC_5150) {
-		if (val) {
-			pc->ppi_port_c[0] |= 0x20;
-			pc->ppi_port_c[1] |= 0x20;
-		}
-		else {
-			pc->ppi_port_c[0] &= ~0x20;
-			pc->ppi_port_c[1] &= ~0x20;
-		}
-
-
 		if (pc->cas != NULL) {
-			pc_cas_set_out (pc->cas, val);
+			cas_set_out (pc->cas, !val);
 		}
 	}
 
@@ -321,11 +345,62 @@ void pc_set_timer2_out (ibmpc_t *pc, unsigned char val)
 }
 
 static
+void pc_set_key (ibmpc_t *pc, unsigned event, unsigned key)
+{
+	if (event == PCE_KEY_EVENT_MAGIC) {
+		if (key == PCE_KEY_B) {
+			pc->blink = !pc->blink;
+			pc_set_msg (pc, "emu.video.blink", pc->blink ? "on" : "off");
+		}
+		else if (key == PCE_KEY_O) {
+			pc_set_msg (pc, "emu.video.composite.cycle", "");
+		}
+		else if (key == PCE_KEY_9) {
+			pc_set_speed (pc, 2 * pc->speed_current);
+		}
+		else if (key == PCE_KEY_F9) {
+			pc_set_msg (pc, "emu.cas.play", "");
+		}
+		else if (key == PCE_KEY_F10) {
+			pc_set_msg (pc, "emu.cas.record", "");
+		}
+		else if (key == PCE_KEY_F11) {
+			pc_set_msg (pc, "emu.cas.load", "0");
+		}
+		else if (key == PCE_KEY_F12) {
+			pc_set_msg (pc, "emu.cas.stop", "");
+		}
+		else {
+			pce_log (MSG_INF, "unhandled magic key (%u)\n",
+				(unsigned) key
+			);
+		}
+
+		return;
+	}
+
+	pc_kbd_set_key (&pc->kbd, event, key);
+}
+
+static
 void pc_set_mouse (void *ext, int dx, int dy, unsigned button)
 {
+	ibmpc_t *pc = ext;
+
+	if ((pc->mouse_button ^ button) & ~button & 4) {
+		pc_set_msg (pc, "term.release", "1");
+	}
+
+	pc->mouse_button = button;
+
 	chr_mouse_set (dx, dy, button);
 }
 
+static
+int pc_trap (ibmpc_t *pc, unsigned n)
+{
+	return (1);
+}
 
 static
 void pc_set_video_mode (ibmpc_t *pc, unsigned mode)
@@ -368,18 +443,22 @@ static
 void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 {
 	if (pc->model & PCE_IBMPC_5150) {
-		if (cnt < 65536) {
-			cnt = 0;
-		}
-		else {
-			cnt = (cnt - 65536) / 32768;
-		}
-
+		pc->ppi_port_a[0] &= 0xf3;
 		pc->ppi_port_c[0] &= 0xf0;
 		pc->ppi_port_c[1] &= 0xfe;
 
-		pc->ppi_port_c[0] |= cnt & 0x0f;
-		pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+		if (cnt <= 65536) {
+			cnt = (cnt <= 16384) ? 0 : ((cnt - 16384) / 16384);
+
+			pc->ppi_port_a[0] |= (cnt & 3) << 2;
+		}
+		else {
+			cnt = (cnt - 65536) / 32768;
+
+			pc->ppi_port_a[0] |= 0x0c;
+			pc->ppi_port_c[0] |= cnt & 0x0f;
+			pc->ppi_port_c[1] |= (cnt >> 4) & 0x01;
+		}
 	}
 	else if (pc->model & PCE_IBMPC_5160) {
 		cnt = cnt >> 16;
@@ -401,10 +480,17 @@ void pc_set_ram_size (ibmpc_t *pc, unsigned long cnt)
 static
 void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 {
-	unsigned   fdcnt;
-	int        patch_init, patch_int19, memtest;
+	unsigned   fdcnt, sw1val, sw1msk, fdd40;
+	int        patch_init, patch_int19, memtest, kbden, cga40;
 	const char *model;
 	ini_sct_t  *sct;
+
+	pc->switches1_val = 0;
+	pc->switches1_msk = 0;
+
+	pc->blink = 0;
+	pc->cga40 = 0;
+	pc->force_keyboard_enable = 0;
 
 	pc->fd_cnt = 0;
 	pc->hd_cnt = 0;
@@ -413,6 +499,7 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 
 	pc->brk = 0;
 	pc->pause = 0;
+	pc->trace = 0;
 
 	sct = ini_next_sct (ini, NULL, "system");
 
@@ -424,13 +511,20 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	ini_get_uint16 (sct, "boot", &pc->bootdrive, 128);
 	ini_get_uint16 (sct, "floppy_disk_drives", &fdcnt, 2);
 	ini_get_bool (sct, "rtc", &pc->support_rtc, 1);
+	ini_get_uint16 (sct, "switches_1_val", &sw1val, 0);
+	ini_get_uint16 (sct, "switches_1_msk", &sw1msk, 0);
+	ini_get_bool (sct, "force_keyboard_enable", &kbden, 0);
+	ini_get_bool (sct, "cga40", &cga40, 0);
+	ini_get_uint16 (sct, "fdd40", &fdd40, 0);
 	ini_get_bool (sct, "patch_bios_init", &patch_init, 1);
 	ini_get_bool (sct, "patch_bios_int19", &patch_int19, 1);
 	ini_get_bool (sct, "memtest", &memtest, 1);
 
 	pce_log_tag (MSG_INF, "SYSTEM:",
-		"model=%s floppies=%u patch-init=%d patch-int19=%d\n",
-		model, fdcnt, patch_init, patch_int19
+		"model=%s floppies=%u cga40=%d fdd40=%02X sw1=%02X/%02X"
+		" patch-init=%d patch-int19=%d\n",
+		model, fdcnt, cga40, fdd40, sw1val, sw1msk,
+		patch_init, patch_int19
 	);
 
 	if (strcmp (model, "5150") == 0) {
@@ -441,6 +535,9 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	}
 	else if (strcmp (model, "m24") == 0) {
 		pc->model = PCE_IBMPC_5160 | PCE_IBMPC_M24;
+	}
+	else if (strcmp (model, "atari-pc") == 0) {
+		pc->model = PCE_IBMPC_5150 | PCE_IBMPC_ATARI;
 	}
 	else {
 		pce_log (MSG_ERR, "*** unknown model (%s)\n", model);
@@ -457,6 +554,13 @@ void pc_setup_system (ibmpc_t *pc, ini_sct_t *ini)
 	pc->ppi_port_b = 0x08;
 	pc->ppi_port_c[0] = 0;
 	pc->ppi_port_c[1] = 0;
+
+	pc->switches1_val = sw1val & sw1msk;
+	pc->switches1_msk = sw1msk;
+
+	pc->cga40 = (cga40 != 0);
+	pc->fdd40 = fdd40 & 0xff;
+	pc->force_keyboard_enable = (kbden != 0);
 
 	if (pc->model & PCE_IBMPC_5160) {
 		pc->ppi_port_c[0] |= 0x01;
@@ -583,7 +687,10 @@ void pc_setup_cpu (ibmpc_t *pc, ini_sct_t *ini)
 	}
 
 	pc->cpu->op_ext = pc;
-	pc->cpu->op_hook = &pc_e86_hook;
+	pc->cpu->op_hook = pc_hook_old;
+
+	e86_set_hook_fct (pc->cpu, pc, pc_hook);
+	e86_set_trap_fct (pc->cpu, pc, pc_trap);
 
 	pc->speed_current = speed;
 	pc->speed_saved = speed;
@@ -752,10 +859,9 @@ void pc_setup_kbd (ibmpc_t *pc, ini_sct_t *ini)
 static
 void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 {
-	const char    *fname;
-	const char    *mode;
-	unsigned long pos;
-	int           enable, append, pcm, filter;
+	int           enable;
+	const char    *read_name, *write_name;
+	unsigned long delay;
 	ini_sct_t     *sct;
 
 	pc->cas = NULL;
@@ -764,9 +870,7 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	sct = ini_next_sct (ini, NULL, "cassette");
-
-	if (sct == NULL) {
+	if ((sct = ini_next_sct (ini, NULL, "cassette")) == NULL) {
 		return;
 	}
 
@@ -776,55 +880,42 @@ void pc_setup_cassette (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	ini_get_string (sct, "file", &fname, NULL);
-	ini_get_string (sct, "mode", &mode, "load");
-	ini_get_uint32 (sct, "position", &pos, 0);
-	ini_get_bool (sct, "append", &append, 0);
-	ini_get_bool (sct, "filter", &filter, 1);
+	ini_get_string (sct, "file", &write_name, NULL);
+	ini_get_string (sct, "write", &write_name, write_name);
+	ini_get_string (sct, "read", &read_name, NULL);
+	ini_get_uint32 (sct, "motor_delay", &delay, 0);
 
-	if (ini_get_bool (sct, "pcm", &pcm, 0)) {
-		pcm = -1;
-	}
-
-	pce_log_tag (MSG_INF, "CASSETTE:",
-		"file=%s mode=%s pcm=%d filter=%d pos=%lu append=%d\n",
-		(fname != NULL) ? fname : "<none>",
-		mode, pcm, filter, pos, append
+	pce_log_tag (MSG_INF, "CASSETTE:", "read=%s write=%s motor_delay=%lu\n",
+		(read_name != NULL) ? read_name : "<none>",
+		(write_name != NULL) ? write_name : "<none>",
+		delay
 	);
 
-	pc->cas = pc_cas_new();
-
-	if (pc->cas == NULL) {
+	if ((pc->cas = cas_new()) == NULL) {
 		pce_log (MSG_ERR, "*** alloc failed\n");
 		return;
 	}
 
-	if (pc_cas_set_fname (pc->cas, fname)) {
-		pce_log (MSG_ERR, "*** opening file failed (%s)\n", fname);
+	delay = (unsigned long) (((double) delay * PCE_IBMPC_CLK2) / 1000.0);
+
+	cas_set_clock (pc->cas, PCE_IBMPC_CLK2);
+	cas_set_motor_delay (pc->cas, delay);
+
+	cas_set_auto_play (pc->cas, 1);
+
+	pti_set_default_clock (PCE_IBMPC_CLK2);
+
+	if (cas_set_read_name (pc->cas, read_name)) {
+		pce_log (MSG_ERR, "*** opening read file failed (%s)\n",
+			read_name
+		);
 	}
 
-	if (strcmp (mode, "load") == 0) {
-		pc_cas_set_mode (pc->cas, 0);
+	if (cas_set_write_name (pc->cas, write_name, 1)) {
+		pce_log (MSG_ERR, "*** opening write file failed (%s)\n",
+			write_name
+		);
 	}
-	else if (strcmp (mode, "save") == 0) {
-		pc_cas_set_mode (pc->cas, 1);
-	}
-	else {
-		pce_log (MSG_ERR, "*** unknown cassette mode (%s)\n", mode);
-	}
-
-	if (append) {
-		pc_cas_append (pc->cas);
-	}
-	else {
-		pc_cas_set_position (pc->cas, pos);
-	}
-
-	if (pcm >= 0) {
-		pc_cas_set_pcm (pc->cas, pcm);
-	}
-
-	pc_cas_set_filter (pc->cas, filter);
 }
 
 static
@@ -870,6 +961,84 @@ void pc_setup_speaker (ibmpc_t *pc, ini_sct_t *ini)
 }
 
 static
+void pc_setup_covox (ibmpc_t *pc, ini_sct_t *ini)
+{
+	const char    *driver;
+	const char    *mode;
+	unsigned      volume;
+	unsigned long srate, lowpass;
+	unsigned      port;
+	ini_sct_t     *sct;
+
+	pc->cov = NULL;
+
+	sct = ini_next_sct (ini, NULL, "covox");
+
+	if (sct == NULL) {
+		return;
+	}
+
+	ini_get_string (sct, "driver", &driver, NULL);
+	ini_get_string (sct, "mode", &mode, "covox");
+	ini_get_uint16 (sct, "parport", &port, 0);
+	ini_get_uint16 (sct, "volume", &volume, 500);
+	ini_get_uint32 (sct, "sample_rate", &srate, 44100);
+	ini_get_uint32 (sct, "lowpass", &lowpass, 0);
+
+	if (strcmp (mode, "none") == 0) {
+		return;
+	}
+
+	pce_log_tag (MSG_INF,
+		"COVOX:",
+		"parport=%u mode=%s volume=%u srate=%lu lowpass=%lu driver=%s\n",
+		port, mode, volume, srate, lowpass,
+		(driver != NULL) ? driver : "<none>"
+	);
+
+	if ((port > 3) || (pc->parport[port] == NULL)) {
+		pce_log (MSG_ERR, "*** no parallel port (%u)\n", port);
+		return;
+	}
+
+	pc->cov = pc_covox_new();
+
+	if (pc->cov == NULL) {
+		pce_log (MSG_ERR, "*** creating covox failed\n");
+		return;
+	}
+
+	pc_covox_set_clk_fct (pc->cov, pc, pc_get_clock2);
+
+	if (driver != NULL) {
+		if (pc_covox_set_driver (pc->cov, driver, srate)) {
+			pce_log (MSG_ERR,
+				"*** setting sound driver failed (%s)\n",
+				driver
+			);
+		}
+	}
+
+	if (strcmp (mode, "covox") == 0) {
+		pc_covox_set_mode (pc->cov, 0);
+	}
+	else if (strcmp (mode, "disney") == 0) {
+		pc_covox_set_mode (pc->cov, 1);
+	}
+	else {
+		pce_log (MSG_ERR, "*** unknown mode (%s)\n", mode);
+	}
+
+	pc_covox_set_lowpass (pc->cov, lowpass);
+
+	pc_covox_set_volume (pc->cov, volume);
+
+	parport_set_data_fct (pc->parport[port], pc->cov, pc_covox_set_data);
+	parport_set_ctrl_fct (pc->parport[port], pc->cov, pc_covox_set_ctrl);
+	parport_set_status_fct (pc->parport[port], pc->cov, pc_covox_get_status);
+}
+
+static
 void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 {
 	pc->trm = ini_get_terminal (ini, par_terminal);
@@ -878,7 +1047,7 @@ void pc_setup_terminal (ibmpc_t *pc, ini_sct_t *ini)
 		return;
 	}
 
-	trm_set_key_fct (pc->trm, &pc->kbd, pc_kbd_set_key);
+	trm_set_key_fct (pc->trm, pc, pc_set_key);
 	trm_set_mouse_fct (pc->trm, pc, pc_set_mouse);
 	trm_set_msg_fct (pc->trm, pc, pc_set_msg);
 }
@@ -911,7 +1080,7 @@ int pc_setup_olivetti (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc_set_video_mode (pc, 2);
+	pc_set_video_mode (pc, pc->cga40 ? 1 : 2);
 
 	return (0);
 }
@@ -927,7 +1096,7 @@ int pc_setup_plantronics (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc_set_video_mode (pc, 2);
+	pc_set_video_mode (pc, pc->cga40 ? 1 : 2);
 
 	return (0);
 }
@@ -943,7 +1112,7 @@ int pc_setup_wy700 (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc_set_video_mode (pc, 2);
+	pc_set_video_mode (pc, pc->cga40 ? 1 : 2);
 
 	return (0);
 }
@@ -975,7 +1144,7 @@ int pc_setup_cga (ibmpc_t *pc, ini_sct_t *sct)
 	mem_add_blk (pc->mem, pce_video_get_mem (pc->video), 0);
 	mem_add_blk (pc->prt, pce_video_get_reg (pc->video), 0);
 
-	pc_set_video_mode (pc, 2);
+	pc_set_video_mode (pc, pc->cga40 ? 1 : 2);
 
 	return (0);
 }
@@ -1148,7 +1317,8 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 	ini_sct_t     *sct;
 	int           accurate, ignore_eot;
 	unsigned long addr;
-	unsigned      irq;
+	unsigned      verbose;
+	unsigned      irq, ss;
 	unsigned      drv[4];
 
 	pc->fdc = NULL;
@@ -1161,17 +1331,19 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 
 	ini_get_uint32 (sct, "address", &addr, 0x3f0);
 	ini_get_uint16 (sct, "irq", &irq, 6);
+	ini_get_uint16 (sct, "verbose", &verbose, 0);
 	ini_get_bool (sct, "accurate", &accurate, 0);
 	ini_get_bool (sct, "ignore_eot", &ignore_eot, 0);
 	ini_get_uint16 (sct, "drive0", &drv[0], 0xffff);
 	ini_get_uint16 (sct, "drive1", &drv[1], 0xffff);
 	ini_get_uint16 (sct, "drive2", &drv[2], 0xffff);
 	ini_get_uint16 (sct, "drive3", &drv[3], 0xffff);
+	ini_get_uint16 (sct, "single_sided", &ss, 0);
 
 	pce_log_tag (MSG_INF, "FDC:",
-		"addr=0x%08lx irq=%u accurate=%d eot=%d drv=[%u %u %u %u]\n",
-		addr, irq, accurate, !ignore_eot,
-		drv[0], drv[1], drv[2], drv[3]
+		"addr=0x%08lx irq=%u accurate=%d eot=%d verbose=%u drv=[%u %u %u %u] ss=%02X\n",
+		addr, irq, accurate, !ignore_eot, verbose,
+		drv[0], drv[1], drv[2], drv[3], ss
 	);
 
 	pc->fdc = dev_fdc_new (addr);
@@ -1190,8 +1362,11 @@ void pc_setup_fdc (ibmpc_t *pc, ini_sct_t *ini)
 	dev_fdc_set_drive (pc->fdc, 3, drv[3]);
 
 	e8272_set_input_clock (&pc->fdc->e8272, PCE_IBMPC_CLK2);
+	e8272_set_verbose (&pc->fdc->e8272, verbose);
 	e8272_set_accuracy (&pc->fdc->e8272, accurate != 0);
 	e8272_set_ignore_eot (&pc->fdc->e8272, ignore_eot != 0);
+	e8272_set_drive_mask (&pc->fdc->e8272, (1 << pc->fd_cnt) - 1);
+	e8272_set_single_sided (&pc->fdc->e8272, ss);
 	e8272_set_irq_fct (&pc->fdc->e8272, &pc->pic, e8259_get_irq_fct (&pc->pic, irq));
 	e8272_set_dreq_fct (&pc->fdc->e8272, &pc->dma, e8237_set_dreq2);
 
@@ -1487,10 +1662,15 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 
 	pc->cfg = ini;
 
+	pc->disk_id = 0;
+
+	pc->mouse_button = 0;
+
 	bps_init (&pc->bps);
 
 	pc_setup_system (pc, ini);
 	pc_setup_m24 (pc, ini);
+	pc_setup_atari_pc (pc, ini);
 
 	pc_setup_mem (pc, ini);
 	pc_setup_ports (pc, ini);
@@ -1521,6 +1701,7 @@ ibmpc_t *pc_new (ini_sct_t *ini)
 	pc_setup_parport (pc, ini);
 	pc_setup_ems (pc, ini);
 	pc_setup_xms (pc, ini);
+	pc_setup_covox (pc, ini);
 
 	pce_load_mem_ini (pc->mem, ini);
 
@@ -1573,6 +1754,8 @@ void pc_del (ibmpc_t *pc)
 
 	bps_free (&pc->bps);
 
+	atari_pc_del (pc);
+
 	pc_del_xms (pc);
 	pc_del_ems (pc);
 	pc_del_parport (pc);
@@ -1585,8 +1768,9 @@ void pc_del (ibmpc_t *pc)
 
 	trm_del (pc->trm);
 
+	pc_covox_del (pc->cov);
 	pc_speaker_free (&pc->spk);
-	pc_cas_del (pc->cas);
+	cas_del (pc->cas);
 	e8237_free (&pc->dma);
 	e8255_free (&pc->ppi);
 	e8253_free (&pc->pit);
@@ -1852,8 +2036,8 @@ void pc_clock_delay (ibmpc_t *pc)
 			pc->speed_clock_extra -= 1;
 		}
 
-		if (pc->sync_clock2_real > PCE_IBMPC_CLK2) {
-			pc->sync_clock2_real = 0;
+		if (pc->sync_clock2_real >= (2 * PCE_IBMPC_CLK2)) {
+			pc->sync_clock2_real -= PCE_IBMPC_CLK2;
 			pce_log (MSG_INF, "host system too slow, skipping 1 second.\n");
 		}
 
@@ -1870,9 +2054,15 @@ void pc_clock_delay (ibmpc_t *pc)
 
 	us = (1000000 * (unsigned long long) vclk) / PCE_IBMPC_CLK2;
 
+#ifndef EMSCRIPTEN
+	/*
+	 * In the browser, real time is kept by the main loop
+	 * (pc_run_emscripten_step) and sleeping would busy wait.
+	 */
 	if (us > PCE_IBMPC_SLEEP) {
 		pce_usleep (us);
 	}
+#endif
 }
 
 void pc_clock (ibmpc_t *pc, unsigned long cnt)
@@ -1910,6 +2100,10 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 
 	e8253_clock (&pc->pit, 1);
 
+	if (pc->cas != NULL) {
+		cas_clock (pc->cas);
+	}
+
 	pc->clk_div[0] += 1;
 
 	if (pc->clk_div[0] >= 8) {
@@ -1918,10 +2112,6 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 		pc->clk_div[0] &= 7;
 
 		pc_kbd_clock (&pc->kbd, clk);
-
-		if (pc->cas != NULL) {
-			pc_cas_clock (pc->cas, clk);
-		}
 
 		e8237_clock (&pc->dma, clk);
 
@@ -1933,6 +2123,10 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 			}
 		}
 
+		if (pc->fdc != NULL) {
+			e8272_clock (&pc->fdc->e8272, clk);
+		}
+
 		if (pc->clk_div[1] >= 1024) {
 			clk = pc->clk_div[1] & ~1023UL;
 			pc->clk_div[1] &= 1023;
@@ -1942,8 +2136,8 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 				trm_check (pc->trm);
 			}
 
-			if (pc->fdc != NULL) {
-				e8272_clock (&pc->fdc->e8272, clk);
+			if (pc->atari_pc_rtc != NULL) {
+				mc146818a_clock (pc->atari_pc_rtc, clk);
 			}
 
 			if (pc->hdc != NULL) {
@@ -1951,6 +2145,10 @@ void pc_clock (ibmpc_t *pc, unsigned long cnt)
 			}
 
 			pc_speaker_clock (&pc->spk, clk);
+
+			if (pc->cov != NULL) {
+				pc_covox_clock (pc->cov, clk);
+			}
 
 			for (i = 0; i < 4; i++) {
 				if (pc->serport[i] != NULL) {

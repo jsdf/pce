@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8255.c                                     *
  * Created:     2003-04-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -195,6 +195,11 @@ void e8255_set_uint8 (e8255_t *ppi, unsigned long addr, unsigned char val)
 				ppi->port[1].inp = (val & 0x02) ? 0xff : 0x00;
 				ppi->port[2].inp = (val & 0x01) ? 0x0f : 0x00;
 				ppi->port[2].inp |= (val & 0x08) ? 0xf0 : 0x00;
+
+				if (ppi->group_a_mode == 2) {
+					ppi->port[0].inp = 0xff;
+					ppi->port[2].inp = (val & 1) ? 0xff : 0xf8;
+				}
 			}
 			else {
 				unsigned bit;

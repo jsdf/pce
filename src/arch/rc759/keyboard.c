@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/keyboard.c                                    *
  * Created:     2012-07-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -337,8 +337,6 @@ void rc759_kbd_set_mouse (rc759_kbd_t *kbd, int dx, int dy, unsigned but)
 	kbd->mouse_dx += dx;
 	kbd->mouse_dy -= dy;
 	kbd->mouse_but[1] = but;
-
-	rc759_kbd_check_mouse (kbd);
 }
 
 void rc759_kbd_set_key (rc759_kbd_t *kbd, unsigned event, unsigned key)
@@ -409,10 +407,6 @@ unsigned char rc759_kbd_get_key (rc759_kbd_t *kbd)
 
 void rc759_kbd_clock (rc759_kbd_t *kbd, unsigned cnt)
 {
-	if (kbd->key_i == kbd->key_j) {
-		return;
-	}
-
 	if (kbd->enable == 0) {
 		return;
 	}
@@ -423,18 +417,21 @@ void rc759_kbd_clock (rc759_kbd_t *kbd, unsigned cnt)
 	}
 
 	if (kbd->key_valid) {
+		rc759_kbd_set_irq (kbd, 1);
 		return;
 	}
 
-	kbd->delay = RC759_KBD_DELAY / 100;
+	if (kbd->key_i == kbd->key_j) {
+		rc759_kbd_check_mouse (kbd);
+		return;
+	}
+
+	kbd->delay = RC759_KBD_DELAY / 250;
 
 	kbd->key = kbd->key_buf[kbd->key_i];
 	kbd->key_valid = 1;
 
 	kbd->key_i = (kbd->key_i + 1) % RC759_KBD_BUF;
-
-
-	rc759_kbd_check_mouse (kbd);
 
 	rc759_kbd_set_irq (kbd, 1);
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/main.h                                         *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -35,6 +35,8 @@
 #define PSI_TRK_SIZE      (1 << 3)
 #define PSI_TRK_ENCODING  (1 << 4)
 #define PSI_TRK_TIME      (1 << 5)
+#define PSI_TRK_DUP       (1 << 6)
+#define PSI_TRK_WEAK      (1 << 7)
 
 #define PSI_FLAG_MFM_SIZE (1UL << 16)
 
@@ -67,6 +69,8 @@ extern unsigned      par_rsc[2];
 
 extern char          par_alt_all;
 extern unsigned      par_alt[2];
+
+int psi_check_duplicate (const psi_trk_t *trk, unsigned idx);
 
 int psi_parse_int_list (const char **str, unsigned *val);
 

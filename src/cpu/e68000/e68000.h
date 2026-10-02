@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/e68000.h                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -61,6 +61,7 @@ struct e68000_s;
 #define e68_get_areg16(c, n) (((c)->areg[(n) & 7]) & 0xffff)
 #define e68_get_areg32(c, n) ((c)->areg[(n) & 7] & 0xffffffff)
 #define e68_get_pc(c) ((c)->pc & 0xffffffff)
+#define e68_get_sp(c) ((c)->areg[7] & 0xffffffff)
 #define e68_get_ir_pc(c) ((c)->ir_pc & 0xffffffff)
 #define e68_get_usp(c) (((c)->supervisor ? (c)->usp : (c)->areg[7]) & 0xffffffff)
 #define e68_get_ssp(c) (((c)->supervisor ? (c)->areg[7] : (c)->ssp) & 0xffffffff)
@@ -134,6 +135,9 @@ typedef struct e68000_s {
 	void           *hook_ext;
 	int            (*hook) (void *ext, unsigned val);
 
+	void           *trap_ext;
+	int            (*trap) (void *ext, unsigned n);
+
 	void           *log_ext;
 	void           (*log_opcode) (void *ext, unsigned long ir);
 	void           (*log_undef) (void *ext, unsigned long ir);
@@ -164,6 +168,7 @@ typedef struct e68000_s {
 	char           supervisor;
 	unsigned char  halt;
 	char           bus_error;
+	char           exception;
 
 	unsigned       ea_typ;
 	uint32_t       ea_val;
@@ -388,6 +393,8 @@ void e68_set_inta_fct (e68000_t *c, void *ext, void *fct);
 
 void e68_set_hook_fct (e68000_t *c, void *ext, void *fct);
 
+void e68_set_trap_fct (e68000_t *c, void *ext, void *fct);
+
 void e68_set_flags (e68000_t *c, unsigned flags, int set);
 
 void e68_set_address_check (e68000_t *c, int check);
@@ -466,7 +473,7 @@ void e68_set_pc_prefetch (e68000_t *c, unsigned long val);
 
 void e68_exception_reset (e68000_t *c);
 
-void e68_exception_bus (e68000_t *c);
+void e68_exception_bus (e68000_t *c, uint32_t addr, int data, int wr);
 
 void e68_exception_address (e68000_t *c, uint32_t addr, int data, int wr);
 

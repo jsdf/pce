@@ -36,11 +36,13 @@ void prt_state_cpu (e8086_t *c);
 
 void pc_run (ibmpc_t *pc);
 
+/* browser (emscripten) main loop */
+void pc_run_emscripten (ibmpc_t *pc);
+void pc_run_emscripten_step (void);
+
 int pc_cmd (ibmpc_t *pc, cmd_t *cmd);
 
 void pc_cmd_init (ibmpc_t *pc, monitor_t *mon);
 
-void pc_run_emscripten (ibmpc_t *pc);
-void pc_run_emscripten_step ();
 
 #endif
