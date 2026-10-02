@@ -40,6 +40,9 @@ output_module_file="${pkg_dir}/lib/pcejs-${arch}.js"
 mkdir -p "$pkg_dir"
 
 {
+  # the directory of the script this module is loaded from (the umd bundle),
+  # determined while the script is executing
+  printf "var pcejsScriptDirectory = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/[?#].*\$/, '').replace(/[^\\/]*\$/, '') : '';\n"
   printf "module.exports = function(deps, opts) {\n"
   cat "$prelude_file" "$input_module_file" "$epilogue_file"
   printf "\nreturn Module;\n}"

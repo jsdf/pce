@@ -1,5 +1,14 @@
 var Module = opts || {};
 
+// load the .wasm file from the directory of the script (e.g. the umd bundle
+// in dist/ or on a CDN) instead of the directory of the page, unless the page
+// provides its own locateFile
+if (!Module.locateFile && pcejsScriptDirectory) {
+  Module.locateFile = function(path) {
+    return pcejsScriptDirectory + path;
+  };
+}
+
 // hide node/commonjs globals so emscripten doesn't get confused
 var process = void 0;
 var require = void 0;
