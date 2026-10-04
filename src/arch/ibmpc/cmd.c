@@ -733,9 +733,12 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
 	);
 
+#ifndef EMSCRIPTEN
+	/* sleeping would busy wait and freeze the page in the browser */
 	if (pc->brk == 0) {
 		pce_usleep (100000UL);
 	}
+#endif
 
 	trm_check (pc->trm);
 }
