@@ -42,14 +42,6 @@
 #include <emscripten.h>
 #endif
 
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define ST_EMSCRIPTEN_MAX_MS 100
-
 
 mon_cmd_t par_cmd[] = {
 	{ "c", "[cnt]", "clock" },
@@ -561,6 +553,8 @@ void st_run (atari_st_t *sim)
 }
 
 
+#ifdef EMSCRIPTEN
+
 /*
  * Browser (emscripten) main loop
  *
@@ -569,6 +563,14 @@ void st_run (atari_st_t *sim)
  * emulated video frame can be shown and no time is wasted busy waiting to
  * stay in sync with real time.
  */
+
+/*
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
+ */
+#define ST_EMSCRIPTEN_MAX_MS 100
 
 static atari_st_t *st_emscripten_sim = NULL;
 
@@ -580,26 +582,16 @@ void st_run_emscripten (atari_st_t *sim)
 
 	st_clock_discontinuity (sim);
 
-#ifdef EMSCRIPTEN
 	emscripten_set_main_loop (st_run_emscripten_step, 0, 1);
-#else
-	while (sim->brk == 0) {
-		st_run_emscripten_step();
-	}
-
-	pce_stop();
-#endif
 }
 
 void st_run_emscripten_step (void)
 {
 	static unsigned long clk_rem = 0;
+	static double        last = -1.0;
+	double               now, ms;
 	unsigned long        clk;
 	atari_st_t           *sim;
-
-#ifdef EMSCRIPTEN
-	static double last = -1.0;
-	double        now, ms;
 
 	now = emscripten_get_now();
 
@@ -615,10 +607,6 @@ void st_run_emscripten_step (void)
 	}
 
 	clk = clk_rem + (unsigned long) (ms * (ST_CPU_CLOCK / 1000));
-#else
-	/* st_clock() keeps real time by sleeping */
-	clk = clk_rem + ST_CPU_CLOCK / 25;
-#endif
 
 	sim = st_emscripten_sim;
 
@@ -633,15 +621,15 @@ void st_run_emscripten_step (void)
 
 		if (sim->brk) {
 			pce_stop();
-#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-#endif
 			return;
 		}
 	}
 
 	clk_rem = clk;
 }
+
+#endif
 
 
 static

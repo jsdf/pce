@@ -39,14 +39,6 @@
 #include <emscripten.h>
 #endif
 
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define PC_EMSCRIPTEN_MAX_MS 100
-
 
 static mon_cmd_t par_cmd[] = {
 	{ "boot", "[drive]", "set the boot drive" },
@@ -561,6 +553,8 @@ void pc_run (ibmpc_t *pc)
 }
 
 
+#ifdef EMSCRIPTEN
+
 /*
  * Browser (emscripten) main loop
  *
@@ -569,6 +563,14 @@ void pc_run (ibmpc_t *pc)
  * emulated video frame can be shown and no time is wasted busy waiting to
  * stay in sync with real time.
  */
+
+/*
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
+ */
+#define PC_EMSCRIPTEN_MAX_MS 100
 
 static ibmpc_t *pc_emscripten_sim = NULL;
 
@@ -580,27 +582,15 @@ void pc_run_emscripten (ibmpc_t *pc)
 
 	pc_clock_discontinuity (pc);
 
-#ifdef EMSCRIPTEN
 	emscripten_set_main_loop (pc_run_emscripten_step, 0, 1);
-#else
-	while (pc->brk == 0) {
-		pc_run_emscripten_step();
-	}
-
-	pc->current_int &= 0xff;
-
-	pce_stop();
-#endif
 }
 
 void pc_run_emscripten_step (void)
 {
-	unsigned long clk, clk0;
-	ibmpc_t       *pc;
-
-#ifdef EMSCRIPTEN
 	static double last = -1.0;
 	double        now, ms;
+	unsigned long clk, clk0;
+	ibmpc_t       *pc;
 
 	now = emscripten_get_now();
 
@@ -616,10 +606,6 @@ void pc_run_emscripten_step (void)
 	}
 
 	clk = (unsigned long) (ms * (PCE_IBMPC_CLK2 / 1000.0));
-#else
-	/* pc_clock() keeps real time by sleeping */
-	clk = PCE_IBMPC_CLK2 / 25;
-#endif
 
 	pc = pc_emscripten_sim;
 
@@ -637,13 +623,13 @@ void pc_run_emscripten_step (void)
 		if (pc->brk) {
 			pc->current_int &= 0xff;
 			pce_stop();
-#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-#endif
 			return;
 		}
 	}
 }
+
+#endif
 
 #if 0
 static

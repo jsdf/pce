@@ -42,14 +42,6 @@
 #include <SDL.h>
 #endif
 
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define MAC_EMSCRIPTEN_MAX_MS 100
-
 
 mon_cmd_t par_cmd[] = {
 	{ "c", "[cnt]", "clock" },
@@ -454,6 +446,8 @@ void mac_run (macplus_t *sim)
 }
 
 
+#ifdef EMSCRIPTEN
+
 /*
  * Browser (emscripten) main loop
  *
@@ -462,6 +456,14 @@ void mac_run (macplus_t *sim)
  * emulated video frame can be shown and no time is wasted busy waiting to
  * stay in sync with real time.
  */
+
+/*
+ * The longest real time interval (in ms) that is emulated in one browser
+ * main loop iteration. If more time has passed (e.g. because the browser
+ * tab was in the background or the host is too slow), the emulation falls
+ * behind real time instead of trying to catch up.
+ */
+#define MAC_EMSCRIPTEN_MAX_MS 100
 
 static macplus_t *mac_emscripten_sim = NULL;
 
@@ -473,18 +475,9 @@ void mac_run_emscripten (macplus_t *sim)
 
 	mac_clock_discontinuity (sim);
 
-#ifdef EMSCRIPTEN
 	emscripten_set_main_loop (mac_run_emscripten_step, 0, 1);
-#else
-	while (sim->brk == 0) {
-		mac_run_emscripten_step();
-	}
-
-	pce_stop();
-#endif
 }
 
-#ifdef EMSCRIPTEN
 /*
  * Set the mouse position in the Mac's low memory globals to the absolute
  * position of the host mouse pointer over the canvas, so that the mouse
@@ -515,19 +508,16 @@ void mac_emscripten_set_mouse (macplus_t *sim)
 	e68_set_mem16 (sim->cpu, 0x0830, (unsigned) y);
 	e68_set_mem16 (sim->cpu, 0x0832, (unsigned) x);
 }
-#endif
 
 void mac_run_emscripten_step (void)
 {
 	static long long   over = 0;
+	static double      last = -1.0;
+	double             now, ms;
 	long long          clk;
 	unsigned long long clk0;
 	unsigned           i;
 	macplus_t          *sim;
-
-#ifdef EMSCRIPTEN
-	static double last = -1.0;
-	double        now, ms;
 
 	now = emscripten_get_now();
 
@@ -543,10 +533,6 @@ void mac_run_emscripten_step (void)
 	}
 
 	clk = (long long) (ms * (MAC_CPU_CLOCK / 1000.0));
-#else
-	/* mac_clock() keeps real time by sleeping */
-	clk = MAC_CPU_CLOCK / 25;
-#endif
 
 	sim = mac_emscripten_sim;
 
@@ -566,25 +552,23 @@ void mac_run_emscripten_step (void)
 	i = 0;
 
 	while ((long long) (sim->clk_cnt - clk0) < clk) {
-#ifdef EMSCRIPTEN
 		if ((i++ % 100) == 0) {
 			mac_emscripten_set_mouse (sim);
 		}
-#endif
 
 		mac_clock (sim, 0);
 
 		if (sim->brk) {
 			pce_stop();
-#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-#endif
 			return;
 		}
 	}
 
 	over = (long long) (sim->clk_cnt - clk0) - clk;
 }
+
+#endif
 
 
 #if 0

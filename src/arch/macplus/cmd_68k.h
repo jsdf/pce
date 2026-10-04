@@ -34,9 +34,11 @@ void mac_prt_state (macplus_t *sim, const char *str);
 
 void mac_run (macplus_t *sim);
 
+#ifdef EMSCRIPTEN
 /* browser (emscripten) main loop */
 void mac_run_emscripten (macplus_t *sim);
 void mac_run_emscripten_step (void);
+#endif
 
 int mac_cmd (macplus_t *sim, cmd_t *cmd);
 
