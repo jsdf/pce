@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/list.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -104,12 +104,11 @@ static
 int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 	unsigned c, unsigned h, void *opaque)
 {
-	int           alt;
 	unsigned      s, mfm_size;
 	unsigned      pcmax, phmax, psmax;
 	unsigned      lcmax, lhmax, lsmax;
 	unsigned      ssmax;
-	unsigned long flags;
+	unsigned long flags, tflags;
 	psi_sct_t     *sct;
 
 	if ((c > 0) || (h > 0)) {
@@ -154,7 +153,15 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 	for (s = 0; s < trk->sct_cnt; s++) {
 		sct = trk->sct[s];
 
-		alt = (sct->next != NULL);
+		tflags = 0;
+
+		if (sct->next != NULL) {
+			tflags |= PSI_TRK_ALTERNATE;
+		}
+
+		if (psi_check_duplicate (trk, s)) {
+			tflags |= PSI_TRK_DUP;
+		}
 
 		while (sct != NULL) {
 			flags = sct->flags;
@@ -179,7 +186,7 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 				}
 			}
 
-			if (sct->position != 0xffffffff) {
+			if (psi_sct_have_position (sct)) {
 				flags |= 0x80000000;
 			}
 
@@ -187,12 +194,20 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 				flags |= 0x80000000;
 			}
 
-			if (flags || alt) {
+			if (flags || tflags) {
 				fputs ("  ", stdout);
 			}
 
-			if (alt) {
+			if (tflags & PSI_TRK_ALTERNATE) {
 				fputs (" ALT", stdout);
+			}
+
+			if (tflags & PSI_TRK_DUP) {
+				fputs (" DUP", stdout);
+			}
+
+			if (sct->weak != NULL) {
+				fputs (" WEAK", stdout);
 			}
 
 			if (flags & PSI_FLAG_CRC_ID) {
@@ -215,7 +230,7 @@ int psi_list_sectors_cb (psi_img_t *img, psi_trk_t *trk,
 				fprintf (stdout, " MFM-SIZE=%02X", mfm_size);
 			}
 
-			if (sct->position != 0xffffffff) {
+			if (psi_sct_have_position (sct)) {
 				fprintf (stdout, " POS=%-5lu", sct->position);
 			}
 
@@ -255,6 +270,10 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 	for (s = 0; s < trk->sct_cnt; s++) {
 		sct = trk->sct[s];
 
+		if (psi_check_duplicate (trk, s)) {
+			trk_flg |= PSI_TRK_DUP;
+		}
+
 		if (sct->next != NULL) {
 			trk_flg |= PSI_TRK_ALTERNATE;
 		}
@@ -266,8 +285,15 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 				trk_flg |= PSI_TRK_BAD_ID;
 			}
 
-			if ((sct->s < 1) || (sct->s > trk->sct_cnt)) {
-				trk_flg |= PSI_TRK_RANGE;
+			if (sct->encoding == PSI_ENC_GCR) {
+				if (sct->s >= trk->sct_cnt) {
+					trk_flg |= PSI_TRK_RANGE;
+				}
+			}
+			else {
+				if ((sct->s < 1) || (sct->s > trk->sct_cnt)) {
+					trk_flg |= PSI_TRK_RANGE;
+				}
 			}
 
 			if (sct->n != 512) {
@@ -280,6 +306,14 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 
 			if (psi_sct_get_read_time (sct) != 0) {
 				trk_flg |= PSI_TRK_TIME;
+			}
+
+			if (sct->weak != NULL) {
+				trk_flg |= PSI_TRK_WEAK;
+			}
+
+			if (sct->next != NULL) {
+				trk_flg |= PSI_TRK_ALTERNATE;
 			}
 
 			if (sct->have_mfm_size) {
@@ -298,7 +332,7 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 		}
 	}
 
-	printf ("%2u %u  %2u",
+	printf ("%2u %u %2u",
 		c, h, trk->sct_cnt
 	);
 
@@ -322,12 +356,24 @@ int psi_list_track_cb (psi_img_t *img, psi_trk_t *trk,
 		fputs (" RANGE", stdout);
 	}
 
+	if (trk_flg & PSI_TRK_DUP) {
+		fputs (" DUP", stdout);
+	}
+
 	if (trk_flg & PSI_TRK_TIME) {
 		fputs (" TIME", stdout);
 	}
 
 	if (sct_flg & PSI_FLAG_CRC_ID) {
 		fputs (" CRC-ID", stdout);
+	}
+
+	if (trk_flg & PSI_TRK_WEAK) {
+		fputs (" WEAK", stdout);
+	}
+
+	if (trk_flg & PSI_TRK_ALTERNATE) {
+		fputs (" ALT", stdout);
 	}
 
 	if (sct_flg & PSI_FLAG_CRC_DATA) {

@@ -22,8 +22,8 @@ src/arch/**/*.sys
 src/arch/**/*.rom
 config.log
 config.status
-Makefile
-Makefile.inc
+/Makefile
+/Makefile.inc
 src/arch/atarist/pce-atarist
 src/arch/ibmpc/pce-ibmpc
 src/arch/macplus/pce-macplus
@@ -32,6 +32,17 @@ src/config.inc
 src/utils/pce-img/pce-img
 src/utils/pri/pri
 src/utils/psi/psi
+src/arch/cpm80/pce-cpm80
+src/arch/dos/pce-dos
+src/arch/rc759/pce-rc759
+src/arch/sim405/pce-sim405
+src/arch/simarm/pce-simarm
+src/arch/sims32/pce-sims32
+src/arch/spectrum/pce-spectrum
+src/arch/vic20/pce-vic20
+src/utils/aym/aym
+src/utils/pfi/pfi
+src/utils/pti/pti
 
 # examples system files
 example/**/*.rom

@@ -11,6 +11,41 @@ More info:
 
 ![PCE.js Mac Plus](https://jamesfriend.com.au/files/pcejs.png)
 
+## Emulator version
+
+The emulators are based on [PCE](http://www.hampa.ch/pce/) 20250420-cc0c583c
+(April 2025), with these changes for the browser:
+
+- a main loop driven by `requestAnimationFrame` (`*_run_emscripten()` in
+  `src/arch/*/cmd*.c`, using `pce_em_*()` in `src/lib/sysdep.c`), which
+  emulates the real time that passed since the previous browser frame instead
+  of sleeping (sleeping busy waits in the browser). While the page is hidden
+  it runs from a timer instead, because browsers pause animation frames.
+- `pce_usleep()` doesn't sleep, and the realtime sync functions
+  (`*_realtime_sync()`, `pc_clock_delay()`) return early
+- browser defaults in `src/arch/*/main.c` (config file `pce-config.cfg`,
+  debug logging, VGA for the IBM PC)
+- the Mac Plus mouse is set to the absolute host mouse position
+- the Atari ST uses the `sdl` sound driver for the PSG by default
+- key codes of some browser keys in `src/drivers/video/sdl.c`
+- no terminal (termios) handling in `src/lib/sysdep.c`
+- Web Audio autoplay handling in `libjs/library_sdl.js`
+- fixed callback signatures in `src/devices/serport.c` (see below)
+
+Functions that are called through a function pointer must have exactly the
+signature of the pointer, otherwise the call fails in WebAssembly with
+"function signature mismatch" (native builds tolerate this).
+
+This branch merges upstream PCE (`git://git.hampa.ch/pce.git`). To update to
+a newer PCE version, merge its `master` branch and resolve conflicts in the
+files with these changes:
+
+```
+git remote add upstream git://git.hampa.ch/pce.git
+git fetch upstream
+git merge upstream/master
+```
+
 ## How to run PCE.js on your own website
 
 See [this CodePen example](https://codepen.io/jsdf/pen/gOLryXM?editors=1100).
@@ -53,6 +88,13 @@ source ./emsdk_env.sh
 ```
 
 Check that running `emcc -v` successfully returns current Emscripten version.
+
+Note: emscripten 1.38.48 runs its scripts with `python`, so on systems that
+only have `python3` you need a `python` -> `python3` symlink in your `PATH`.
+`./configure` also runs small test programs with node; on node 18 and newer
+these fail ("Failed to parse URL") unless node's `fetch` is disabled, e.g. by
+setting `NODE_JS = ['/usr/bin/node', '--no-experimental-fetch']` in the
+emsdk's `.emscripten` config file.
 Detailed installation instructions are on the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) page.
 
 In the same terminal, return to the pcejs repository. Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 

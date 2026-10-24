@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/pce-img/create.c                                   *
  * Created:     2013-01-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2018 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -33,16 +33,19 @@
 
 
 static pce_option_t opts_create[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
 	{ 'c', 1, "cylinders", "int", "Set the number of cylinders [0]" },
 	{ 'C', 1, "min-cluster-size", "int", "Set the minimum cluster size for QED [0]" },
 	{ 'f', 1, "offset", "int", "Set the data offset [0]" },
+	{ 'F', 0, "flat", NULL, "Create a flat pbi file [no]" },
 	{ 'g', 3, "geometry", "3*int", "Set the disk geometry (c h s)" },
 	{ 'h', 1, "heads", "int", "Set the number of heads [0]" },
-	{ 'm', 1, "megabytes", "int", "Set the disk size in megabytes [0]" },
 	{ 'n', 1, "size", "int", "Set the disk size in 512 byte blocks [0]" },
 	{ 'o', 1, "output", "string", "Set the output file name [stdout]" },
+	{ 'O', 1, "output-type", "string", "Set the output file type [auto]" },
 	{ 'q', 0, "quiet", NULL, "Be quiet [no]" },
 	{ 's', 1, "sectors", "int", "Set the number of sectors per track [0]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
 	{ 'w', 1, "cow", "string", "Add a COW file" },
 	{  -1, 0, NULL, NULL, NULL }
 };
@@ -88,37 +91,53 @@ int main_create (int argc, char **argv)
 			return (0);
 
 		case 'c':
-			pce_set_c (optarg[0]);
+			if (pce_set_c (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'C':
-			pce_set_min_cluster_size (optarg[0]);
+			if (pce_set_min_cluster_size (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'f':
-			pce_set_ofs (optarg[0]);
+			if (pce_set_ofs (optarg[0])) {
+				return (1);
+			}
+			break;
+
+		case 'F':
+			pce_set_flat (1);
 			break;
 
 		case 'g':
-			pce_set_c (optarg[0]);
-			pce_set_h (optarg[1]);
-			pce_set_s (optarg[2]);
+			if (pce_set_geo (optarg[0], optarg[1], optarg[2])) {
+				return (1);
+			}
 			break;
 
 		case 'h':
-			pce_set_h (optarg[0]);
-			break;
-
-		case 'm':
-			pce_set_n (optarg[0], 2048);
+			if (pce_set_h (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'n':
-			pce_set_n (optarg[0], 1);
+			if (pce_set_n (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'o':
-			if ((out = dsk_open_out (optarg[0], out, -1)) == NULL) {
+			if ((out = dsk_create_out (optarg[0], out)) == NULL) {
+				return (1);
+			}
+			break;
+
+		case 'O':
+			if (pce_set_type_out (optarg[0])) {
 				return (1);
 			}
 			break;
@@ -128,17 +147,19 @@ int main_create (int argc, char **argv)
 			break;
 
 		case 's':
-			pce_set_s (optarg[0]);
+			if (pce_set_s (optarg[0])) {
+				return (1);
+			}
 			break;
 
 		case 'w':
-			if ((out = dsk_cow (optarg[0], out)) == NULL) {
+			if ((out = pce_cow_create (out, optarg[0])) == NULL) {
 				return (1);
 			}
 			break;
 
 		case 0:
-			if ((out = dsk_open_out (optarg[0], out, -1)) == NULL) {
+			if ((out = dsk_create_out (optarg[0], out)) == NULL) {
 				return (1);
 			}
 			break;

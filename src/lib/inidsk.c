@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/inidsk.c                                             *
  * Created:     2004-12-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -29,14 +29,18 @@
 #include <lib/log.h>
 #include <lib/path.h>
 
+#include <drivers/block/blkchd.h>
 #include <drivers/block/blkcow.h>
 #include <drivers/block/blkdosem.h>
 #include <drivers/block/blkpart.h>
+#include <drivers/block/blkpbi.h>
 #include <drivers/block/blkpce.h>
+#include <drivers/block/blkpri.h>
 #include <drivers/block/blkpsi.h>
 #include <drivers/block/blkqed.h>
 #include <drivers/block/blkram.h>
 #include <drivers/block/blkraw.h>
+#include <drivers/pri/pri-img.h>
 #include <drivers/psi/psi-img.h>
 
 
@@ -97,6 +101,20 @@ int dsk_insert (disks_t *dsks, const char *str, int eject)
 	return (0);
 }
 
+static
+int file_exists (const char *name)
+{
+	FILE *fp;
+
+	if ((fp = fopen (name, "rb")) == NULL) {
+		return (0);
+	}
+
+	fclose (fp);
+
+	return (1);
+}
+
 disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 {
 	disk_t     *cow;
@@ -111,10 +129,11 @@ disk_t *ini_get_cow (ini_sct_t *sct, disk_t *dsk)
 			return (NULL);
 		}
 
-		cow = dsk_qed_cow_new (dsk, cname);
-
-		if (cow == NULL) {
-			cow = dsk_cow_new (dsk, cname);
+		if (file_exists (cname) == 0) {
+			cow = dsk_create_cow (dsk, cname, 16384);
+		}
+		else {
+			cow = dsk_open_cow (dsk, cname);
 		}
 
 		if (cow == NULL) {
@@ -281,7 +300,10 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 
 		fclose (fp);
 
-		if (strcmp (type, "ram") == 0) {
+		if (strcmp (type, "auto") == 0) {
+			dsk = dsk_auto_open (path, ofs, ro);
+		}
+		else if (strcmp (type, "ram") == 0) {
 			dsk = dsk_ram_open (path, n, c, h, s, ro);
 		}
 		else if (strcmp (type, "image") == 0) {
@@ -290,11 +312,17 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		else if (strcmp (type, "dosemu") == 0) {
 			dsk = dsk_dosemu_open (path, ro);
 		}
+		else if (strcmp (type, "pbi") == 0) {
+			dsk = dsk_pbi_open (path, ro);
+		}
 		else if (strcmp (type, "pce") == 0) {
 			dsk = dsk_pce_open (path, ro);
 		}
 		else if (strcmp (type, "qed") == 0) {
 			dsk = dsk_qed_open (path, ro);
+		}
+		else if (strcmp (type, "chd") == 0) {
+			dsk = dsk_chd_open (path, ro);
 		}
 		else if (strcmp (type, "partition") == 0) {
 			dsk = ini_get_disk_part (sct, c, h, s, ro);
@@ -320,14 +348,20 @@ int ini_get_disk (ini_sct_t *sct, disk_t **ret)
 		else if (strcmp (type, "pfdc-auto") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_NONE, ro);
 		}
+		else if (strcmp (type, "pri") == 0) {
+			dsk = dsk_pri_open (path, PRI_FORMAT_PRI, ro);
+		}
 		else if (strcmp (type, "psi") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_PSI, ro);
+		}
+		else if (strcmp (type, "tc") == 0) {
+			dsk = dsk_pri_open (path, PRI_FORMAT_TC, ro);
 		}
 		else if (strcmp (type, "teledisk") == 0) {
 			dsk = dsk_psi_open (path, PSI_FORMAT_TD0, ro);
 		}
-		else if (strcmp (type, "auto") == 0) {
-			dsk = dsk_auto_open (path, ofs, ro);
+		else if (strcmp (type, "woz") == 0) {
+			dsk = dsk_pri_open (path, PRI_FORMAT_WOZ, ro);
 		}
 
 		if (dsk != NULL) {

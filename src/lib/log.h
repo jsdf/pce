@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/log.h                                                *
  * Created:     2003-02-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -31,9 +31,8 @@
 #define PCE_LOG_MAX 16
 
 #define MSG_ERR 0
-#define MSG_MSG 1
-#define MSG_INF 2
-#define MSG_DEB 3
+#define MSG_INF 1
+#define MSG_DEB 2
 
 
 void pce_log_init (void);
@@ -48,7 +47,11 @@ unsigned pce_log_get_level (FILE *fp);
 
 void pce_log (unsigned level, const char *msg, ...);
 void pce_log_va (unsigned level, const char *msg, va_list va);
+
 void pce_log_deb (const char *msg, ...);
+void pce_log_inf (const char *msg, ...);
+void pce_log_err (const char *msg, ...);
+
 void pce_log_tag (unsigned level, const char *tag, const char *msg, ...);
 
 

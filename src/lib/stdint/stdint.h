@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/stdint/stdint.h                                      *
  * Created:     2005-07-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -33,6 +33,7 @@
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned long uint32_t;
+typedef unsigned long long uint64_t;
 #endif
 
 

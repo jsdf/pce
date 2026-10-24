@@ -1,7 +1,5 @@
 # Makefile
 
-EMSCRIPTEN	= @EMSCRIPTEN@
-
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
@@ -24,11 +22,6 @@ QP = @
 QR = @
 endif
 
-ifneq "$(EMSCRIPTEN)" "yes"
-ARFLAGS = -rc
-else
-ARFLAGS = rc
-endif
 
 all: all2
 
@@ -212,8 +205,7 @@ dist-extra:
 %.a:
 	$(QP)echo "  AR     $@"
 	$(QR)rm -f $@
-	$(QP)echo "$(AR) $(ARFLAGS) $@ $^"
-	$(QR)$(AR) $(ARFLAGS) $@ $^
+	$(QR)$(AR) -rc $@ $^
 	$(QP)echo "  RANLIB $@"
 	$(QR)$(RANLIB) $@
 

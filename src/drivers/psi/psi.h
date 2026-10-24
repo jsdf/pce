@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi.h                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -58,6 +58,7 @@ typedef struct psi_sct_t {
 	unsigned         cur_alt;
 
 	unsigned char    *data;
+	unsigned char    *weak;
 
 	unsigned short   tag_cnt;
 	unsigned char    tag[PSI_TAGS_MAX];
@@ -102,6 +103,11 @@ void psi_sct_del (psi_sct_t *sct);
 
 psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep);
 
+int psi_weak_alloc (psi_sct_t *sct);
+void psi_weak_free (psi_sct_t *sct);
+int psi_weak_check (const psi_sct_t *sct);
+void psi_weak_clean (psi_sct_t *sct);
+
 void psi_sct_add_alternate (psi_sct_t *sct, psi_sct_t *alt);
 
 psi_sct_t *psi_sct_get_alternate (psi_sct_t *sct, unsigned idx);
@@ -117,6 +123,8 @@ void psi_sct_set_flags (psi_sct_t *sct, unsigned long flags, int set);
 
 void psi_sct_set_encoding (psi_sct_t *sct, unsigned enc);
 
+int psi_sct_have_position (const psi_sct_t *sct);
+void psi_sct_clear_position (psi_sct_t *sct);
 void psi_sct_set_position (psi_sct_t *sct, unsigned long val);
 unsigned long psi_sct_get_position (const psi_sct_t *sct);
 
@@ -144,6 +152,8 @@ int psi_trk_add_sector (psi_trk_t *trk, psi_sct_t *sct);
 
 psi_sct_t *psi_trk_get_indexed_sector (psi_trk_t *trk, unsigned idx, int phy);
 
+void psi_trk_clear_position (psi_trk_t *trk);
+
 int psi_trk_interleave (psi_trk_t *trk, unsigned il);
 
 
@@ -157,6 +167,8 @@ int psi_cyl_add_track (psi_cyl_t *cyl, psi_trk_t *trk);
 
 psi_trk_t *psi_cyl_get_track (psi_cyl_t *cyl, unsigned h, int alloc);
 
+void psi_cyl_clear_position (psi_cyl_t *cyl);
+
 
 psi_img_t *psi_img_new (void);
 
@@ -165,6 +177,8 @@ void psi_img_free (psi_img_t *img);
 void psi_img_del (psi_img_t *img);
 
 void psi_img_erase (psi_img_t *img);
+
+int psi_img_set_track (psi_img_t *img, psi_trk_t *trk, unsigned c, unsigned h);
 
 int psi_img_add_cylinder (psi_img_t *img, psi_cyl_t *cyl);
 
@@ -187,6 +201,8 @@ int psi_img_add_comment (psi_img_t *img, const unsigned char *buf, unsigned cnt)
 int psi_img_set_comment (psi_img_t *img, const unsigned char *buf, unsigned cnt);
 
 void psi_img_clean_comment (psi_img_t *img);
+
+void psi_img_clear_position (psi_img_t *img);
 
 unsigned long psi_img_get_sector_count (const psi_img_t *img);
 

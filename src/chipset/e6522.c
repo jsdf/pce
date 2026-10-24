@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6522.c                                          *
  * Created:     2007-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -83,6 +83,10 @@ void e6522_init (e6522_t *via, unsigned addr_shift)
 	via->set_orb = NULL;
 	via->set_orb_val = 0;
 
+	via->set_ca2_ext = NULL;
+	via->set_ca2 = NULL;
+	via->set_ca2_val = 0;
+
 	via->set_cb2_ext = NULL;
 	via->set_cb2 = NULL;
 	via->set_cb2_val = 0;
@@ -109,6 +113,12 @@ void e6522_set_orb_fct (e6522_t *via, void *ext, void *fct)
 {
 	via->set_orb_ext = ext;
 	via->set_orb = fct;
+}
+
+void e6522_set_ca2_fct (e6522_t *via, void *ext, void *fct)
+{
+	via->set_ca2_ext = ext;
+	via->set_ca2 = fct;
 }
 
 void e6522_set_cb2_fct (e6522_t *via, void *ext, void *fct)
@@ -153,6 +163,43 @@ void e6522_set_orb_out (e6522_t *via)
 
 	if (via->set_orb != NULL) {
 		via->set_orb (via->set_orb_ext, val);
+	}
+}
+
+/*
+ * Set the CA2 output according to the VIA's state
+ */
+static
+void e6522_set_ca2_out (e6522_t *via)
+{
+	unsigned char val;
+
+	if ((via->pcr & 0x08) == 0) {
+		/* CA2 is input */
+		val = 1;
+	}
+	else if ((via->pcr & 0x06) == 0x06) {
+		/* manual output mode (1) */
+		val = 1;
+	}
+	else if ((via->pcr & 0x06) == 0x04) {
+		/* manual output mode (0) */
+		val = 0;
+	}
+	else {
+		/* not implemented */
+		val = 1;
+	}
+
+
+	if (val == via->set_ca2_val) {
+		return;
+	}
+
+	via->set_ca2_val = val;
+
+	if (via->set_ca2 != NULL) {
+		via->set_ca2 (via->set_ca2_ext, val);
 	}
 }
 
@@ -390,15 +437,19 @@ unsigned char e6522_get_pcr (e6522_t *via)
 	return (via->pcr);
 }
 
-
-void e6522_set_ora (e6522_t *via, unsigned char val)
+static
+void e6522_set_ora (e6522_t *via, unsigned char val, int handshake)
 {
 	via->ora = val;
 
 	e6522_set_ora_out (via);
-	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
+
+	if (handshake) {
+		e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CA1 | E6522_IFR_CA2));
+	}
 }
 
+static
 void e6522_set_ddra (e6522_t *via, unsigned char val)
 {
 	via->ddra = val;
@@ -406,6 +457,7 @@ void e6522_set_ddra (e6522_t *via, unsigned char val)
 	e6522_set_ora_out (via);
 }
 
+static
 void e6522_set_orb (e6522_t *via, unsigned char val)
 {
 	via->orb = val;
@@ -414,6 +466,7 @@ void e6522_set_orb (e6522_t *via, unsigned char val)
 	e6522_set_ifr (via, via->ifr & ~(E6522_IFR_CB1 | E6522_IFR_CB2));
 }
 
+static
 void e6522_set_ddrb (e6522_t *via, unsigned char val)
 {
 	via->ddrb = val;
@@ -434,7 +487,7 @@ void e6522_set_t1_counter_high (e6522_t *via, unsigned char val)
 	via->t1_latch &= 0x00ff;
 	via->t1_latch |= (val & 0xff) << 8;
 
-	via->t1_val = via->t1_latch;
+	via->t1_reload = 1;
 
 	if ((via->acr & 0x40) == 0) {
 		via->t1_hot = 1;
@@ -507,6 +560,7 @@ void e6522_set_pcr (e6522_t *via, unsigned char val)
 {
 	via->pcr = val;
 
+	e6522_set_ca2_out (via);
 	e6522_set_cb2_out (via);
 }
 
@@ -592,6 +646,10 @@ void e6522_set_cb2_inp (e6522_t *via, unsigned char val)
 
 void e6522_set_ira_inp (e6522_t *via, unsigned char val)
 {
+	if (via->ira == val) {
+		return;
+	}
+
 	via->ira = val;
 
 	e6522_set_ora_out (via);
@@ -599,6 +657,10 @@ void e6522_set_ira_inp (e6522_t *via, unsigned char val)
 
 void e6522_set_irb_inp (e6522_t *via, unsigned char val)
 {
+	if (via->irb == val) {
+		return;
+	}
+
 	via->irb = val;
 
 	e6522_set_orb_out (via);
@@ -729,7 +791,7 @@ void e6522_set_uint8 (e6522_t *via, unsigned long addr, unsigned char val)
 		break;
 
 	case 0x01:
-		e6522_set_ora (via, val);
+		e6522_set_ora (via, val, 1);
 		break;
 
 	case 0x02:
@@ -785,7 +847,7 @@ void e6522_set_uint8 (e6522_t *via, unsigned long addr, unsigned char val)
 		break;
 
 	case 0x0f:
-		e6522_set_ora (via, val);
+		e6522_set_ora (via, val, 0);
 		break;
 
 	}
@@ -818,13 +880,16 @@ void e6522_reset (e6522_t *via)
 	via->ifr = 0x00;
 	via->ier = 0x00;
 
+	via->t1_reload = 0;
+	via->t1_timeout = 0;
+	via->t1_hot = 0;
 	via->t1_latch = 0;
 	via->t1_val = 0;
-	via->t1_hot = 0;
 
+	via->t2_timeout = 0;
+	via->t2_hot = 0;
 	via->t2_latch = 0;
 	via->t2_val = 0;
-	via->t2_hot = 0;
 
 	e6522_set_ora_out (via);
 	e6522_set_orb_out (via);
@@ -837,67 +902,71 @@ void e6522_reset (e6522_t *via)
 }
 
 static
-void e6522_clock_t1 (e6522_t *via, unsigned long n)
+void e6522_clock_t1 (e6522_t *via)
 {
-	if ((n < via->t1_val) || (via->t1_val == 0)) {
-		via->t1_val = (via->t1_val - n) & 0xffff;
+	if (via->t1_reload) {
+		via->t1_reload = 0;
+		via->t1_timeout = 0;
+		via->t1_val = via->t1_latch;
 		return;
 	}
 
-	if (via->acr & 0x40) {
-		/* free running */
+	via->t1_val = (via->t1_val - 1) & 0xffff;
 
-		n -= via->t1_val;
+	if (via->t1_val == 0) {
+		via->t1_timeout = 1;
+	}
+	else if (via->t1_timeout) {
+		via->t1_timeout = 0;
 
-		e6522_set_ifr (via, via->ifr | E6522_IFR_T1);
+		if (via->acr & 0x40) {
+			/* free running */
 
-		if (via->t1_latch > 0) {
-			n = n % via->t1_latch;
+			e6522_set_ifr (via, via->ifr | E6522_IFR_T1);
+
+			via->t1_reload = 1;
 		}
 		else {
-			n = n & 0xffff;
-		}
+			/* one shot */
 
-		via->t1_val = (via->t1_latch - n) & 0xffff;
-	}
-	else {
-		/* one shot */
-
-		via->t1_val = (via->t1_val - n) & 0xffff;
-
-		if (via->t1_hot) {
-			via->t1_hot = 0;
-			e6522_set_ifr (via, via->ifr | E6522_IFR_T1);
+			if (via->t1_hot) {
+				via->t1_hot = 0;
+				e6522_set_ifr (via, via->ifr | E6522_IFR_T1);
+			}
 		}
 	}
 }
 
 static
-void e6522_clock_t2 (e6522_t *via, unsigned long n)
+void e6522_clock_t2 (e6522_t *via)
 {
-	if ((n < via->t2_val) || (via->t2_val == 0)) {
-		via->t2_val = (via->t2_val - n) & 0xffff;
-		return;
+	via->t2_val = (via->t2_val - 1) & 0xffff;
+
+	if (via->t2_val == 0) {
+		via->t2_timeout = 1;
 	}
+	else if (via->t2_timeout) {
+		via->t2_timeout = 0;
 
-	if (via->acr & 0x20) {
-		/* free running */
-		;
-	}
-	else {
-		/* one shot */
+		if (via->acr & 0x20) {
+			/* free running */
+			;
+		}
+		else {
+			/* one shot */
 
-		via->t2_val = (via->t2_val - n) & 0xffff;
-
-		if (via->t2_hot) {
-			via->t2_hot = 0;
-			e6522_set_ifr (via, via->ifr | E6522_IFR_T2);
+			if (via->t2_hot) {
+				via->t2_hot = 0;
+				e6522_set_ifr (via, via->ifr | E6522_IFR_T2);
+			}
 		}
 	}
 }
 
-void e6522_clock (e6522_t *via, unsigned long n)
+void e6522_clock (e6522_t *via, unsigned n)
 {
-	e6522_clock_t1 (via, n);
-	e6522_clock_t2 (via, n);
+	while (n-- > 0) {
+		e6522_clock_t1 (via);
+		e6522_clock_t2 (via);
+	}
 }

@@ -21,7 +21,7 @@ if [[ -n $PCEJS_conf_emscripten ]]; then
   fi
 
   if [[ -n $PCEJS_conf_wasm  ]]; then
-    emflags+=" -s WASM=1'"
+    emflags+=" -s WASM=1"
     emflags+=" --source-map-base http://127.0.0.1:8080/"
   elif [[  -n $PCEJS_conf_asmjs ]]; then
     emflags+=" -s WASM=0"

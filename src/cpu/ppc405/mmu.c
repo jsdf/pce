@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/mmu.c                                         *
  * Created:     2003-11-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -101,15 +101,27 @@ int p405_tlb_match_valid (p405_tlbe_t *ent, uint32_t ea, uint32_t pid)
 	return (1);
 }
 
-inline
 unsigned p405_get_tlb_index (p405_t *c, uint32_t ea)
+{
+	p405_tlbe_t *ent;
+
+	ent = p405_get_tlb_entry_ea (c, ea);
+
+	if (ent == NULL) {
+		return (P405_TLB_ENTRIES);
+	}
+
+	return (ent->idx);
+}
+
+p405_tlbe_t *p405_get_tlb_entry_ea (p405_t *c, uint32_t ea)
 {
 	p405_tlbe_t *ent, *tmp;
 
 	ent = c->tlb.first;
 
 	if (p405_tlb_match (ent, ea, c->pid)) {
-		return (ent->idx);
+		return (ent);
 	}
 
 	tmp = ent;
@@ -121,23 +133,14 @@ unsigned p405_get_tlb_index (p405_t *c, uint32_t ea)
 			ent->next = c->tlb.first;
 			c->tlb.first = ent;
 
-			return (ent->idx);
+			return (ent);
 		}
 
 		tmp = ent;
 		ent = ent->next;
 	}
 
-	return (P405_TLB_ENTRIES);
-}
-
-p405_tlbe_t *p405_get_tlb_entry_ea (p405_t *c, uint32_t ea)
-{
-	unsigned idx;
-
-	idx = p405_get_tlb_index (c, ea);
-
-	return ((idx < P405_TLB_ENTRIES) ? &c->tlb.entry[idx] : NULL);
+	return (ent);
 }
 
 p405_tlbe_t *p405_get_tlb_entry_idx (p405_t *c, unsigned idx)
@@ -205,20 +208,30 @@ void p405_tlb_invalidate_all (p405_t *c)
 
 int p405_translate (p405_t *c, uint32_t *ea, int *e, unsigned xlat)
 {
+	uint32_t    msk;
 	p405_tlbe_t *ent;
 
-	if ((xlat == P405_XLAT_VIRTUAL) || ((xlat == P405_XLAT_CPU) && p405_get_msr_dr (c))) {
-		ent = p405_get_tlb_entry_ea (c, *ea);
-		if (ent == NULL) {
-			return (1);
-		}
-
-		*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
-		*e = ent->endian;
-	}
-	else {
+	if (xlat & P405_XLAT_REAL) {
 		*e = 0;
+		return (0);
 	}
+
+	if (xlat & P405_XLAT_CPU) {
+		msk = (xlat & P405_XLAT_EXEC) ? P405_MSR_IR : P405_MSR_DR;
+
+		if ((p405_get_msr (c) & msk) == 0) {
+			*e = 0;
+			return (0);
+		}
+	}
+
+
+	if ((ent = p405_get_tlb_entry_ea (c, *ea)) == NULL) {
+		return (1);
+	}
+
+	*ea = (*ea & ~ent->mask) | (ent->tlblo & ent->mask);
+	*e = ent->endian;
 
 	return (0);
 }

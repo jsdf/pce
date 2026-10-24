@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi.c                                        *
  * Created:     2010-08-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2025 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -62,9 +62,11 @@ psi_sct_t *psi_sct_new (unsigned c, unsigned h, unsigned s, unsigned n)
 		sct->data = NULL;
 	}
 
+	sct->weak = NULL;
+
 	sct->tag_cnt = 0;
 
-	sct->position = 0xffffffff;
+	sct->position = -1;
 	sct->read_time = 0;
 
 	sct->have_mfm_size = 0;
@@ -81,6 +83,7 @@ void psi_sct_del (psi_sct_t *sct)
 		tmp = sct;
 		sct = sct->next;
 
+		free (tmp->weak);
 		free (tmp->data);
 		free (tmp);
 	}
@@ -100,6 +103,15 @@ psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep)
 	dst->encoding = sct->encoding;
 
 	memcpy (dst->data, sct->data, dst->n);
+
+	if (sct->weak != NULL) {
+		if ((dst->weak = malloc (dst->n)) == NULL) {
+			psi_sct_del (dst);
+			return (NULL);
+		}
+
+		memcpy (dst->weak, sct->weak, dst->n);
+	}
 
 	dst->tag_cnt = sct->tag_cnt;
 
@@ -144,6 +156,64 @@ psi_sct_t *psi_sct_clone (const psi_sct_t *sct, int deep)
 	return (dst);
 }
 
+/* allocate the weak bit mask */
+int psi_weak_alloc (psi_sct_t *sct)
+{
+	if (sct->weak != NULL) {
+		return (0);
+	}
+
+	if ((sct->weak = malloc (sct->n)) == NULL) {
+		return (1);
+	}
+
+	memset (sct->weak, 0, sct->n);
+
+	return (0);
+}
+
+/* free the weak bit mask */
+void psi_weak_free (psi_sct_t *sct)
+{
+	if (sct->weak != NULL) {
+		free (sct->weak);
+		sct->weak = NULL;
+	}
+}
+
+/* check if there are any non-zero bits in the weak bit mask */
+int psi_weak_check (const psi_sct_t *sct)
+{
+	unsigned i;
+
+	if (sct->weak == NULL) {
+		return (0);
+	}
+
+	for (i = 0; i < sct->n; i++) {
+		if (sct->weak[i] != 0) {
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+/* clean up the weak bit mask */
+void psi_weak_clean (psi_sct_t *sct)
+{
+	if (sct->weak == NULL) {
+		return;
+	}
+
+	if (psi_weak_check (sct)) {
+		return;
+	}
+
+	free (sct->weak);
+	sct->weak = NULL;
+}
+
 void psi_sct_add_alternate (psi_sct_t *sct, psi_sct_t *alt)
 {
 	while (sct->next != NULL) {
@@ -169,25 +239,36 @@ psi_sct_t *psi_sct_get_alternate (psi_sct_t *sct, unsigned idx)
 
 int psi_sct_set_size (psi_sct_t *sct, unsigned size, unsigned filler)
 {
-	unsigned char *tmp;
+	unsigned char *data, *weak;
 
 	if (size <= sct->n) {
 		sct->n = size;
 		return (0);
 	}
 
-	tmp = realloc (sct->data, size);
-
-	if (tmp == NULL) {
+	if ((data = realloc (sct->data, size)) == NULL) {
 		return (1);
 	}
 
+	sct->data = data;
+
+	if (sct->weak != NULL) {
+		if ((weak = realloc (sct->weak, size)) == NULL) {
+			return (1);
+		}
+
+		sct->weak = weak;
+	}
+
 	if (size > sct->n) {
-		memset (tmp + sct->n, filler, size - sct->n);
+		memset (sct->data + sct->n, filler, size - sct->n);
+
+		if (sct->weak != NULL) {
+			memset (sct->weak + sct->n, 0, size - sct->n);
+		}
 	}
 
 	sct->n = size;
-	sct->data = tmp;
 
 	return (0);
 }
@@ -235,6 +316,16 @@ void psi_sct_set_encoding (psi_sct_t *sct, unsigned enc)
 		sct->encoding = enc;
 		sct = sct->next;
 	}
+}
+
+int psi_sct_have_position (const psi_sct_t *sct)
+{
+	return (sct->position != (unsigned long) -1);
+}
+
+void psi_sct_clear_position (psi_sct_t *sct)
+{
+	sct->position = (unsigned long) -1;
 }
 
 void psi_sct_set_position (psi_sct_t *sct, unsigned long val)
@@ -300,7 +391,9 @@ unsigned psi_sct_set_tags (psi_sct_t *sct, const void *buf, unsigned cnt)
 	unsigned            i;
 	const unsigned char *src;
 
-	src = buf;
+	if ((src = buf) == NULL) {
+		cnt = 0;
+	}
 
 	if (cnt > PSI_TAGS_MAX) {
 		cnt = PSI_TAGS_MAX;
@@ -379,7 +472,7 @@ int psi_trk_add_sector (psi_trk_t *trk, psi_sct_t *sct)
 {
 	psi_sct_t **tmp;
 
-	tmp = realloc (trk->sct, (trk->sct_cnt + 1) * sizeof (psi_sct_t **));
+	tmp = realloc (trk->sct, (trk->sct_cnt + 1) * sizeof (psi_sct_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -456,6 +549,17 @@ psi_sct_t *psi_trk_get_indexed_sector (psi_trk_t *trk, unsigned idx, int phy)
 	}
 
 	return (NULL);
+}
+
+void psi_trk_clear_position (psi_trk_t *trk)
+{
+	unsigned i;
+
+	for (i = 0; i < trk->sct_cnt; i++) {
+		if (trk->sct[i] != NULL) {
+			psi_sct_clear_position (trk->sct[i]);
+		}
+	}
 }
 
 int psi_trk_interleave (psi_trk_t *trk, unsigned il)
@@ -549,7 +653,7 @@ int psi_cyl_add_track (psi_cyl_t *cyl, psi_trk_t *trk)
 {
 	psi_trk_t **tmp;
 
-	tmp = realloc (cyl->trk, (cyl->trk_cnt + 1) * sizeof (psi_trk_t **));
+	tmp = realloc (cyl->trk, (cyl->trk_cnt + 1) * sizeof (psi_trk_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -588,6 +692,17 @@ psi_trk_t *psi_cyl_get_track (psi_cyl_t *cyl, unsigned h, int alloc)
 	}
 
 	return (cyl->trk[h]);
+}
+
+void psi_cyl_clear_position (psi_cyl_t *cyl)
+{
+	unsigned i;
+
+	for (i = 0; i < cyl->trk_cnt; i++) {
+		if (cyl->trk[i] != NULL) {
+			psi_trk_clear_position (cyl->trk[i]);
+		}
+	}
 }
 
 
@@ -657,7 +772,7 @@ int psi_img_add_cylinder (psi_img_t *img, psi_cyl_t *cyl)
 {
 	psi_cyl_t **tmp;
 
-	tmp = realloc (img->cyl, (img->cyl_cnt + 1) * sizeof (psi_cyl_t **));
+	tmp = realloc (img->cyl, (img->cyl_cnt + 1) * sizeof (psi_cyl_t *));
 
 	if (tmp == NULL) {
 		return (1);
@@ -736,6 +851,29 @@ void psi_img_remove_sector (psi_img_t *img, const psi_sct_t *sct)
 			trk->sct_cnt = d;
 		}
 	}
+}
+
+int psi_img_set_track (psi_img_t *img, psi_trk_t *trk, unsigned c, unsigned h)
+{
+	psi_cyl_t *cyl;
+
+	if ((cyl = psi_img_get_cylinder (img, c, 1)) == NULL) {
+		return (1);
+	}
+
+	while (cyl->trk_cnt <= h) {
+		if (psi_cyl_add_track (cyl, NULL)) {
+			return (1);
+		}
+	}
+
+	if (cyl->trk[h] != NULL) {
+		psi_trk_del (cyl->trk[h]);
+	}
+
+	cyl->trk[h] = trk;
+
+	return (0);
 }
 
 psi_cyl_t *psi_img_get_cylinder (psi_img_t *img, unsigned c, int alloc)
@@ -926,6 +1064,18 @@ void psi_img_clean_comment (psi_img_t *img)
 		img->comment = NULL;
 	}
 }
+
+void psi_img_clear_position (psi_img_t *img)
+{
+	unsigned i;
+
+	for (i = 0; i < img->cyl_cnt; i++) {
+		if (img->cyl[i] != NULL) {
+			psi_cyl_clear_position (img->cyl[i]);
+		}
+	}
+}
+
 
 unsigned long psi_img_get_sector_count (const psi_img_t *img)
 {

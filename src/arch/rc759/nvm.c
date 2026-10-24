@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/nvm.c                                         *
  * Created:     2012-07-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -146,11 +146,11 @@ void rc759_nvm_fix_checksum (rc759_nvm_t *nvm)
 	v = 0;
 	n = (RC759_NVM_SIZE < 96) ? RC759_NVM_SIZE : 96;
 
-	for (i = 0; i < n; i++) {
+	for (i = 1; i < n; i++) {
 		v += nvm->data[i];
 	}
 
-	nvm->data[0] = (nvm->data[0] + 0xaa - v) & 0xff;
+	nvm->data[0] = (0xaa - v) & 0xff;
 }
 
 void rc759_nvm_sanitize (rc759_nvm_t *nvm)

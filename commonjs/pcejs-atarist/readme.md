@@ -73,6 +73,29 @@ curl -O https://jamesfriend.com.au/pce-js/dist/atarist-system.zip
 unzip atarist-system.zip
 ```
 
+#### sound
+The YM2149 PSG sound chip is emulated, and its output is played through the
+Web Audio API. By default the browser build uses the `sdl` sound driver, even
+if `pce-config.cfg` has no `psg` section. To configure it, add a section like
+this to `pce-config.cfg`:
+```
+psg {
+	driver = "sdl"          # "null" disables sound
+	sample_rate = 48000
+	highpass = 1
+	lowpass = 8000          # 0 disables the lowpass filter
+}
+```
+
+Browsers don't allow a page to start audio before the user has interacted with
+it, so sound starts after the first click or key press on the page. The Web
+Audio context is available as `Module.audioContext` (the object returned by
+`atarist(...)`), e.g. if you want to resume it from your own "sound on" button:
+```js
+var emulator = atarist({ /* ... */ })
+button.onclick = function () { emulator.audioContext && emulator.audioContext.resume() }
+```
+
 bundle it with browserify
 ```bash
 npm install -g browserify@4.x

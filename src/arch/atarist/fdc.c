@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/fdc.c                                       *
  * Created:     2013-06-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -30,13 +30,14 @@
 #include <chipset/wd179x.h>
 
 #include <drivers/block/block.h>
+#include <drivers/block/blkpri.h>
 #include <drivers/block/blkpsi.h>
 
 #include <drivers/psi/psi.h>
 
 #include <drivers/pri/pri.h>
 #include <drivers/pri/pri-img.h>
-#include <drivers/pri/mfm-ibm.h>
+#include <drivers/pri/pri-enc-mfm.h>
 
 #include <lib/log.h>
 #include <lib/string.h>
@@ -48,73 +49,36 @@
 
 
 static
-int st_read_track (void *ext, wd179x_drive_t *drv)
+int st_read_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t **trk)
 {
-	unsigned long cnt;
-	st_fdc_t      *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	st_fdc_t  *fdc;
+	pri_img_t *img;
 
 	fdc = ext;
 
-	if ((img = fdc->img[drv->d & 1]) == NULL) {
+	if ((img = fdc->img[d & 1]) == NULL) {
 		return (1);
 	}
 
-	if ((trk = pri_img_get_track (img, drv->c, drv->h, 1)) == NULL) {
+	if ((*trk = pri_img_get_track (img, c, h, 1)) == NULL) {
 		return (1);
 	}
-
-	if (pri_trk_get_size (trk) == 0) {
-		if (pri_trk_set_size (trk, 500000 / 5)) {
-			return (1);
-		}
-	}
-
-	if (pri_trk_get_clock (trk) == 0) {
-		pri_trk_set_clock (trk, 500000);
-	}
-
-	cnt = (trk->size + 7) / 8;
-
-	if (cnt > WD179X_TRKBUF_SIZE) {
-		return (1);
-	}
-
-	memcpy (drv->trkbuf, trk->data, cnt);
-
-	drv->trkbuf_cnt = trk->size;
 
 	return (0);
 }
 
 static
-int st_write_track (void *ext, wd179x_drive_t *drv)
+int st_write_track (void *ext, unsigned d, unsigned c, unsigned h, pri_trk_t *trk)
 {
-	unsigned long cnt;
-	st_fdc_t      *fdc;
-	pri_img_t     *img;
-	pri_trk_t     *trk;
+	st_fdc_t *fdc;
 
 	fdc = ext;
 
-	if ((img = fdc->img[drv->d & 1]) == NULL) {
+	if (fdc->img[d & 1] == NULL) {
 		return (1);
 	}
 
-	fdc->modified[drv->d & 1] = 1;
-
-	if ((trk = pri_img_get_track (img, drv->c, drv->h, 1)) == NULL) {
-		return (1);
-	}
-
-	if (pri_trk_set_size (trk, drv->trkbuf_cnt)) {
-		return (1);
-	}
-
-	cnt = (trk->size + 7) / 8;
-
-	memcpy (trk->data, drv->trkbuf, cnt);
+	fdc->modified[d & 1] = 1;
 
 	return (0);
 }
@@ -132,11 +96,11 @@ void st_fdc_init (st_fdc_t *fdc)
 	wd179x_set_ready (&fdc->wd179x, 1, 0);
 
 	for (i = 0; i < 2; i++) {
-		fdc->use_fname[i] = 0;
-		fdc->fname[i] = NULL;
 		fdc->diskid[i] = 0xffff;
+		fdc->wprot[i] = 0;
 		fdc->media_change[i] = 0;
 		fdc->img[i] = NULL;
+		fdc->img_del[i] = 0;
 		fdc->modified[i] = 0;
 	}
 }
@@ -145,15 +109,15 @@ void st_fdc_free (st_fdc_t *fdc)
 {
 	unsigned i;
 
-	wd179x_free (&fdc->wd179x);
-
 	for (i = 0; i < 2; i++) {
 		st_fdc_save (fdc, i);
 
-		pri_img_del (fdc->img[i]);
-
-		free (fdc->fname[i]);
+		if (fdc->img_del[i]) {
+			pri_img_del (fdc->img[i]);
+		}
 	}
+
+	wd179x_free (&fdc->wd179x);
 }
 
 void st_fdc_reset (st_fdc_t *fdc)
@@ -180,111 +144,94 @@ void st_fdc_set_disks (st_fdc_t *fdc, disks_t *dsks)
 void st_fdc_set_disk_id (st_fdc_t *fdc, unsigned drive, unsigned diskid)
 {
 	fdc->diskid[drive] = diskid;
+
+	wd179x_set_drive_mask (&fdc->wd179x, drive, diskid < 0xffff);
 }
 
-void st_fdc_set_fname (st_fdc_t *fdc, unsigned drive, const char *fname)
+void st_fdc_set_wprot (st_fdc_t *fdc, unsigned drive, int wprot)
 {
-	unsigned n;
-	char     *str;
+	if (drive < 2) {
+		fdc->wprot[drive] = (wprot != 0);
 
-	if (drive >= 2) {
-		return;
-	}
-
-	free (fdc->fname[drive]);
-	fdc->fname[drive] = NULL;
-	fdc->use_fname[drive] = 0;
-
-	if (fname == NULL) {
-		return;
-	}
-
-	n = strlen (fname);
-
-	str = malloc (n + 1);
-
-	if (str == NULL) {
-		return;
-	}
-
-	memcpy (str, fname, n + 1);
-
-	fdc->fname[drive] = str;
-}
-
-int st_fdc_insert (st_fdc_t *fdc, const char *str)
-{
-	unsigned i;
-	unsigned drv;
-	char     buf[16];
-
-	i = 0;
-	while ((i < 16) && (str[i] != 0)) {
-		if (str[i] == ':') {
-			buf[i] = 0;
-			break;
+		if (fdc->media_change[drive] == 0) {
+			wd179x_set_wprot (&fdc->wd179x, drive, fdc->wprot[drive]);
 		}
-
-		buf[i] = str[i];
-
-		i += 1;
 	}
+}
 
-	if ((i >= 16) || (i == 0) || (str[i] == 0)) {
+static
+int st_fdc_eject_drive (st_fdc_t *fdc, unsigned drive)
+{
+	wd179x_flush (&fdc->wd179x, drive);
+
+	if (st_fdc_save (fdc, drive)) {
 		return (1);
 	}
 
-	drv = strtoul (buf, NULL, 0);
-	str = str + i + 1;
+	wd179x_set_ready (&fdc->wd179x, drive, 0);
+	wd179x_set_wprot (&fdc->wd179x, drive, 1);
 
-	if (st_fdc_save (fdc, drv)) {
-		return (1);
+	fdc->media_change[drive] = 1;
+	fdc->media_change_clk = 8000000 / 10;
+
+	if (fdc->img_del[drive]) {
+		pri_img_del (fdc->img[drive]);
 	}
 
-	st_fdc_set_fname (fdc, drv, str);
+	fdc->img[drive] = NULL;
+	fdc->img_del[drive] = 0;
 
-	if (st_fdc_load (fdc, drv)) {
+	fdc->modified[drive] = 0;
+
+	return (0);
+}
+
+static
+int st_fdc_insert_drive (st_fdc_t *fdc, unsigned drive)
+{
+	wd179x_flush (&fdc->wd179x, drive);
+
+	if (st_fdc_load (fdc, drive)) {
 		return (1);
 	}
 
 	return (0);
 }
 
-int st_fdc_eject (st_fdc_t *fdc, const char *str)
+int st_fdc_eject_disk (st_fdc_t *fdc, unsigned id)
 {
-	unsigned drv;
+	int      r;
+	unsigned i;
 
-	drv = strtoul (str, NULL, 0);
+	r = 0;
 
-	if (st_fdc_save (fdc, drv)) {
-		return (1);
+	for (i = 0; i < 2; i++) {
+		if (fdc->diskid[i] == id) {
+			r |= st_fdc_eject_drive (fdc, i);
+		}
 	}
 
-	st_fdc_set_fname (fdc, drv, NULL);
+	return (r);
+}
 
-	if (st_fdc_load (fdc, drv)) {
-		return (1);
+int st_fdc_insert_disk (st_fdc_t *fdc, unsigned id)
+{
+	int      r;
+	unsigned i;
+
+	r = 0;
+
+	for (i = 0; i < 2; i++) {
+		if (fdc->diskid[i] == id) {
+			r |= st_fdc_insert_drive (fdc, i);
+		}
 	}
 
-	return (0);
+	return (r);
 }
 
 static
-pri_img_t *st_fdc_load_pri (st_fdc_t *fdc, unsigned drive)
-{
-	pri_img_t *img;
-
-	if (fdc->fname[drive] == NULL) {
-		return (NULL);
-	}
-
-	img = pri_img_load (fdc->fname[drive], PRI_FORMAT_NONE);
-
-	return (img);
-}
-
-static
-psi_img_t *st_fdc_load_block (st_fdc_t *fdc, unsigned drive, disk_t *dsk)
+psi_img_t *st_fdc_load_block (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
 {
 	unsigned      c, h, s;
 	unsigned      cn, hn, sn;
@@ -332,35 +279,11 @@ psi_img_t *st_fdc_load_block (st_fdc_t *fdc, unsigned drive, disk_t *dsk)
 }
 
 static
-pri_img_t *st_fdc_load_disk (st_fdc_t *fdc, unsigned drive)
+int st_fdc_load_psi (st_fdc_t *fdc, psi_img_t *img, unsigned drive)
 {
-	disk_t     *dsk;
-	disk_psi_t *dskpsi;
-	psi_img_t  *img, *del;
-	pri_img_t  *ret;
-	pri_mfm_t  par;
+	pri_enc_mfm_t par;
 
-	dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive]);
-
-	if (dsk == NULL) {
-		return (NULL);
-	}
-
-	if (dsk_get_type (dsk) == PCE_DISK_PSI) {
-		dskpsi = dsk->ext;
-		img = dskpsi->img;
-		del = NULL;
-	}
-	else {
-		img = st_fdc_load_block (fdc, drive, dsk);
-		del = img;
-	}
-
-	if (img == NULL) {
-		return (NULL);
-	}
-
-	pri_mfm_init (&par, 500000, 300);
+	pri_encode_mfm_init (&par, 500000, 300);
 
 	par.enable_iam = 0;
 	par.auto_gap3 = 1;
@@ -368,60 +291,90 @@ pri_img_t *st_fdc_load_disk (st_fdc_t *fdc, unsigned drive)
 	par.gap1 = 0;
 	par.gap3 = 80;
 
-	ret = pri_encode_mfm (img, &par);
+	fdc->img[drive] = pri_encode_mfm (img, &par);
+	fdc->img_del[drive] = (fdc->img[drive] != NULL);
 
-	psi_img_del (del);
+	return (0);
+}
 
-	return (ret);
+static
+int st_fdc_load_disk_pri (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
+{
+	disk_pri_t *pri;
+
+	pri = dsk->ext;
+
+	fdc->img[drive] = pri->img;
+	fdc->img_del[drive] = 0;
+
+	return (0);
+}
+
+static
+int st_fdc_load_disk_psi (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
+{
+	disk_psi_t *psi;
+
+	psi = dsk->ext;
+
+	if (st_fdc_load_psi (fdc, psi->img, drive)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
+int st_fdc_load_disk (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
+{
+	int       r;
+	psi_img_t *psi;
+
+	if ((psi = st_fdc_load_block (fdc, dsk, drive)) == NULL) {
+		return (1);
+	}
+
+	r = st_fdc_load_psi (fdc, psi, drive);
+
+	psi_img_del (psi);
+
+	return (r);
 }
 
 int st_fdc_load (st_fdc_t *fdc, unsigned drive)
 {
-	pri_img_t *img;
+	unsigned type;
+	disk_t   *dsk;
 
 	if (drive >= 2) {
 		return (1);
 	}
 
-	wd179x_flush (&fdc->wd179x, drive);
+	st_fdc_eject_drive (fdc, drive);
 
-	wd179x_set_ready (&fdc->wd179x, drive, 0);
-	wd179x_set_wprot (&fdc->wd179x, drive, 1);
-
-	fdc->media_change[drive] = 1;
-	fdc->media_change_clk = 8000000 / 10;
-
-	pri_img_del (fdc->img[drive]);
-
-	fdc->img[drive] = NULL;
-	fdc->use_fname[drive] = 0;
-	fdc->modified[drive] = 0;
-
-	img = NULL;
-
-	if (fdc->fname[drive] != NULL) {
-		img = st_fdc_load_pri (fdc, drive);
-
-		if (img != NULL) {
-			fdc->use_fname[drive] = 1;
-			st_log_deb ("fdc: loading drive %u (pri)\n", drive);
-		}
-	}
-
-	if (img == NULL) {
-		img = st_fdc_load_disk (fdc, drive);
-
-		if (img != NULL) {
-			st_log_deb ("fdc: loading drive %u (disk)\n", drive);
-		}
-	}
-
-	if (img == NULL) {
-		st_log_deb ("fdc: unloading drive %u\n", drive);
+	if ((dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive])) == NULL) {
 		return (1);
 	}
 
-	fdc->img[drive] = img;
+	type = dsk_get_type (dsk);
+
+	if (type == PCE_DISK_PRI) {
+		if (st_fdc_load_disk_pri (fdc, dsk, drive)) {
+			return (1);
+		}
+	}
+	else if (type == PCE_DISK_PSI) {
+		if (st_fdc_load_disk_psi (fdc, dsk, drive)) {
+			return (1);
+		}
+	}
+	else {
+		if (st_fdc_load_disk (fdc, dsk, drive)) {
+			return (1);
+		}
+	}
+
+	st_fdc_set_wprot (fdc, drive, dsk_get_readonly (dsk));
 
 	wd179x_set_ready (&fdc->wd179x, drive, 1);
 
@@ -429,7 +382,7 @@ int st_fdc_load (st_fdc_t *fdc, unsigned drive)
 }
 
 static
-int st_fdc_save_block (st_fdc_t *fdc, unsigned drive, disk_t *dsk, psi_img_t *img)
+int st_fdc_save_block (st_fdc_t *fdc, disk_t *dsk, unsigned drive, psi_img_t *img)
 {
 	unsigned      c, h, s;
 	unsigned      cn, hn, sn;
@@ -476,60 +429,56 @@ int st_fdc_save_block (st_fdc_t *fdc, unsigned drive, disk_t *dsk, psi_img_t *im
 }
 
 static
-int st_fdc_save_disk (st_fdc_t *fdc, unsigned drive)
+int st_fdc_save_disk_pri (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
 {
-	int        r;
-	disk_t     *dsk;
-	disk_psi_t *dskpsi;
-	psi_img_t  *img;
+	disk_pri_t *pri;
 
-	dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive]);
-
-	if (dsk == NULL) {
-		return (1);
-	}
-
-	img = pri_decode_mfm (fdc->img[drive]);
-
-	if (img == NULL) {
-		return (1);
-	}
-
-	if (dsk_get_type (dsk) == PCE_DISK_PSI) {
-		dskpsi = dsk->ext;
-		psi_img_del (dskpsi->img);
-		dskpsi->img = img;
-		dskpsi->dirty = 1;
-	}
-	else {
-		r = st_fdc_save_block (fdc, drive, dsk, img);
-
-		psi_img_del (img);
-
-		if (r) {
-			return (1);
-		}
-	}
+	pri = dsk->ext;
+	pri->dirty = 1;
 
 	return (0);
 }
 
 static
-int st_fdc_save_pri (st_fdc_t *fdc, unsigned drive)
+int st_fdc_save_disk_psi (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
 {
-	if (fdc->fname[drive] == NULL) {
+	disk_psi_t *psi;
+	psi_img_t  *img;
+
+	if ((img = pri_decode_mfm (fdc->img[drive], NULL)) == NULL) {
 		return (1);
 	}
 
-	if (pri_img_save (fdc->fname[drive], fdc->img[drive], PRI_FORMAT_NONE)) {
-		return (1);
-	}
+	psi = dsk->ext;
+	psi_img_del (psi->img);
+	psi->img = img;
+	psi->dirty = 1;
 
 	return (0);
 }
 
+static
+int st_fdc_save_disk (st_fdc_t *fdc, disk_t *dsk, unsigned drive)
+{
+	int       r;
+	psi_img_t *img;
+
+	if ((img = pri_decode_mfm (fdc->img[drive], NULL)) == NULL) {
+		return (1);
+	}
+
+	r = st_fdc_save_block (fdc, dsk, drive, img);
+
+	psi_img_del (img);
+
+	return (r);
+}
+
 int st_fdc_save (st_fdc_t *fdc, unsigned drive)
 {
+	unsigned type;
+	disk_t   *dsk;
+
 	if (drive >= 2) {
 		return (1);
 	}
@@ -544,21 +493,24 @@ int st_fdc_save (st_fdc_t *fdc, unsigned drive)
 		return (0);
 	}
 
-	st_log_deb ("fdc: saving drive %u\n", drive);
+	if ((dsk = dsks_get_disk (fdc->dsks, fdc->diskid[drive])) == NULL) {
+		return (1);
+	}
 
-	if (fdc->use_fname[drive]) {
-		if (st_fdc_save_pri (fdc, drive)) {
-			st_log_deb ("fdc: saving drive %u failed (pri)\n",
-				drive
-			);
+	type = dsk_get_type (dsk);
+
+	if (type == PCE_DISK_PRI) {
+		if (st_fdc_save_disk_pri (fdc, dsk, drive)) {
+			return (1);
+		}
+	}
+	else if (type == PCE_DISK_PSI) {
+		if (st_fdc_save_disk_psi (fdc, dsk, drive)) {
 			return (1);
 		}
 	}
 	else {
-		if (st_fdc_save_disk (fdc, drive)) {
-			st_log_deb ("fdc: saving drive %u failed (disk)\n",
-				drive
-			);
+		if (st_fdc_save_disk (fdc, dsk, drive)) {
 			return (1);
 		}
 	}
@@ -582,12 +534,12 @@ void st_fdc_clock_media_change (st_fdc_t *fdc, unsigned cnt)
 	fdc->media_change_clk = 0;
 
 	if (fdc->media_change[0]) {
-		wd179x_set_wprot (&fdc->wd179x, 0, 0);
+		wd179x_set_wprot (&fdc->wd179x, 0, fdc->wprot[0]);
 		fdc->media_change[0] = 0;
 	}
 
 	if (fdc->media_change[1]) {
-		wd179x_set_wprot (&fdc->wd179x, 1, 0);
+		wd179x_set_wprot (&fdc->wd179x, 1, fdc->wprot[1]);
 		fdc->media_change[1] = 0;
 	}
 }

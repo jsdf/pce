@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/opcode1f.c                                    *
  * Created:     2003-11-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -1151,11 +1151,17 @@ void op_1f_153 (p405_t *c)
 		break;
 
 	case P405_SPRN_TBL:
+	case P405_SPRN_TBLU:
 		rt = p405_get_tbl (c);
 		break;
 
 	case P405_SPRN_TBU:
+	case P405_SPRN_TBUU:
 		rt = p405_get_tbu (c);
+		break;
+
+	case P405_SPRN_TCR:
+		rt = p405_get_tcr (c);
 		break;
 
 	case P405_SPRN_XER:
@@ -1219,13 +1225,13 @@ void op_1f_173 (p405_t *c)
 	tbrn = ((tbrf & 0x1f) << 5) | ((tbrf >> 5) & 0x1f);
 
 	switch (tbrn) {
-		case P405_TBRN_TBL:
-			p405_set_rt (c, c->ir, p405_get_tbl (c));
-			break;
+	case P405_TBRN_TBL:
+		p405_set_rt (c, c->ir, p405_get_tbl (c));
+		break;
 
-		case P405_TBRN_TBU:
-			p405_set_rt (c, c->ir, p405_get_tbu (c));
-			break;
+	case P405_TBRN_TBU:
+		p405_set_rt (c, c->ir, p405_get_tbu (c));
+		break;
 	}
 
 	p405_set_clk (c, 4, 1);
@@ -1549,6 +1555,7 @@ void op_1f_1d3 (p405_t *c)
 
 	case P405_SPRN_ZPR:
 		p405_set_zpr (c, rs);
+		p405_tbuf_clear (c);
 		break;
 
 	default:
@@ -2333,7 +2340,7 @@ void op_1f_3b2 (p405_t *c)
 		p405_set_rt (c, c->ir, p405_get_tlb_entry_lo (c, ra));
 	}
 	else if (ws == 0) {
-		p405_set_rt (c, c->ir, p405_get_tlb_entry_hi (c, ra));
+		p405_set_rt (c, c->ir, p405_get_tlb_entry_hi (c, ra) & 0xfffffff0);
 		p405_set_pid (c, p405_get_tlb_entry_tid (c, ra));
 	}
 	else {
@@ -2534,277 +2541,138 @@ void op_1f (p405_t *c)
 
 
 static
-p405_opcode_f p405_opcode1f[1024] = {
-	&op_1f_000,       NULL,       NULL,       NULL, /* 000 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_008,       NULL, &op_1f_00a, &op_1f_00b,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_013, /* 010 */
-	&op_1f_014,       NULL,       NULL, &op_1f_017,
-	&op_1f_018,       NULL, &op_1f_01a,       NULL,
-	&op_1f_01c,       NULL,       NULL,       NULL,
-	&op_1f_020,       NULL,       NULL,       NULL, /* 020 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_028,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 030 */
-				NULL,       NULL, &op_1f_036, &op_1f_037,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_03c,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 040 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_04b,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_053, /* 050 */
-				NULL,       NULL, &op_1f_056, &op_1f_057,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 060 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_068,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 070 */
-				NULL,       NULL,       NULL, &op_1f_077,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_07c,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_083, /* 080 */
-				NULL,       NULL, &op_1f_086,       NULL,
-	&op_1f_088,       NULL, &op_1f_08a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_090,       NULL, &op_1f_092,       NULL, /* 090 */
-				NULL,       NULL, &op_1f_096, &op_1f_097,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_0a3, /* 0a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 0b0 */
-				NULL,       NULL,       NULL, &op_1f_0b7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 0c0 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_0c8,       NULL, &op_1f_0ca,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 0d0 */
-				NULL,       NULL,       NULL, &op_1f_0d7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 0e0 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_0e8,       NULL, &op_1f_0ea, &op_1f_0eb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 0f0 */
-				NULL,       NULL, &op_1f_0f6, &op_1f_0f7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 100 */
-				NULL,       NULL, &op_1f_106,       NULL,
-				NULL,       NULL, &op_1f_10a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 110 */
-				NULL,       NULL, &op_1f_116, &op_1f_117,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_11c,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 120 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 130 */
-				NULL,       NULL,       NULL, &op_1f_137,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_13c,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_143, /* 140 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_153, /* 150 */
-				NULL,       NULL,       NULL, &op_1f_157,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 160 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_172, &op_1f_173, /* 170 */
-				NULL,       NULL,       NULL, &op_1f_177,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 180 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 190 */
-				NULL,       NULL,       NULL, &op_1f_197,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_19c,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 1a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 1b0 */
-				NULL,       NULL,       NULL, &op_1f_1b7,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_1bc,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_1c3, /* 1c0 */
-				NULL,       NULL, &op_1f_1c6,       NULL,
-				NULL,       NULL,       NULL, &op_1f_1cb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_1d3, /* 1d0 */
-				NULL,       NULL, &op_1f_1d6,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_1dc,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 1e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_1eb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 1f0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_200,       NULL,       NULL,       NULL, /* 200 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_208,       NULL, &op_1f_20a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 210 */
-				NULL, &op_1f_215, &op_1f_216, &op_1f_217,
-	&op_1f_218,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 220 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_228,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 230 */
-				NULL,       NULL, &op_1f_236, &op_1f_237,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 240 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 250 */
-				NULL, &op_1f_255, &op_1f_256, &op_1f_257,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 260 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_268,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 270 */
-				NULL,       NULL,       NULL, &op_1f_277,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 280 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_288,       NULL, &op_1f_28a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 290 */
-				NULL, &op_1f_295, &op_1f_296, &op_1f_297,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2b0 */
-				NULL,       NULL,       NULL, &op_1f_2b7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2c0 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_2c8,       NULL, &op_1f_2ca,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2d0 */
-				NULL, &op_1f_2d5,       NULL, &op_1f_2d7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2e0 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_2e8,       NULL, &op_1f_2ea, &op_1f_2eb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 2f0 */
-				NULL,       NULL, &op_1f_2f6, &op_1f_2f7,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 300 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_30a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 310 */
-				NULL,       NULL, &op_1f_316,       NULL,
-	&op_1f_318,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 320 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 330 */
-				NULL,       NULL,       NULL,       NULL,
-	&op_1f_338,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 340 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 350 */
-				NULL,       NULL, &op_1f_356,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 360 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 370 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 380 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_392,       NULL, /* 390 */
-				NULL,       NULL, &op_1f_396,       NULL,
-				NULL,       NULL, &op_1f_39a,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 3a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_3b2,       NULL, /* 3b0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_3ba,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 3c0 */
-				NULL,       NULL, &op_1f_3c6,       NULL,
-				NULL,       NULL,       NULL, &op_1f_3cb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_1f_3d2,       NULL, /* 3d0 */
-				NULL,       NULL, &op_1f_3d6,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 3e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL, &op_1f_3eb,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL, /* 3f0 */
-				NULL,       NULL, &op_1f_3f6,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL
+p405_opcode_list_t p405_opcodes_1f[] = {
+	{ 0x000, op_1f_000 },
+	{ 0x008, op_1f_008 },
+	{ 0x00a, op_1f_00a },
+	{ 0x00b, op_1f_00b },
+	{ 0x013, op_1f_013 },
+	{ 0x014, op_1f_014 },
+	{ 0x017, op_1f_017 },
+	{ 0x018, op_1f_018 },
+	{ 0x01a, op_1f_01a },
+	{ 0x01c, op_1f_01c },
+	{ 0x020, op_1f_020 },
+	{ 0x028, op_1f_028 },
+	{ 0x036, op_1f_036 },
+	{ 0x037, op_1f_037 },
+	{ 0x03c, op_1f_03c },
+	{ 0x04b, op_1f_04b },
+	{ 0x053, op_1f_053 },
+	{ 0x056, op_1f_056 },
+	{ 0x057, op_1f_057 },
+	{ 0x068, op_1f_068 },
+	{ 0x077, op_1f_077 },
+	{ 0x07c, op_1f_07c },
+	{ 0x083, op_1f_083 },
+	{ 0x086, op_1f_086 },
+	{ 0x088, op_1f_088 },
+	{ 0x08a, op_1f_08a },
+	{ 0x090, op_1f_090 },
+	{ 0x092, op_1f_092 },
+	{ 0x096, op_1f_096 },
+	{ 0x097, op_1f_097 },
+	{ 0x0a3, op_1f_0a3 },
+	{ 0x0b7, op_1f_0b7 },
+	{ 0x0c8, op_1f_0c8 },
+	{ 0x0ca, op_1f_0ca },
+	{ 0x0d7, op_1f_0d7 },
+	{ 0x0e8, op_1f_0e8 },
+	{ 0x0ea, op_1f_0ea },
+	{ 0x0eb, op_1f_0eb },
+	{ 0x0f6, op_1f_0f6 },
+	{ 0x0f7, op_1f_0f7 },
+	{ 0x106, op_1f_106 },
+	{ 0x10a, op_1f_10a },
+	{ 0x116, op_1f_116 },
+	{ 0x117, op_1f_117 },
+	{ 0x11c, op_1f_11c },
+	{ 0x137, op_1f_137 },
+	{ 0x13c, op_1f_13c },
+	{ 0x143, op_1f_143 },
+	{ 0x153, op_1f_153 },
+	{ 0x157, op_1f_157 },
+	{ 0x172, op_1f_172 },
+	{ 0x173, op_1f_173 },
+	{ 0x177, op_1f_177 },
+	{ 0x197, op_1f_197 },
+	{ 0x19c, op_1f_19c },
+	{ 0x1b7, op_1f_1b7 },
+	{ 0x1bc, op_1f_1bc },
+	{ 0x1c3, op_1f_1c3 },
+	{ 0x1c6, op_1f_1c6 },
+	{ 0x1cb, op_1f_1cb },
+	{ 0x1d3, op_1f_1d3 },
+	{ 0x1d6, op_1f_1d6 },
+	{ 0x1dc, op_1f_1dc },
+	{ 0x1eb, op_1f_1eb },
+	{ 0x200, op_1f_200 },
+	{ 0x208, op_1f_208 },
+	{ 0x20a, op_1f_20a },
+	{ 0x215, op_1f_215 },
+	{ 0x216, op_1f_216 },
+	{ 0x217, op_1f_217 },
+	{ 0x218, op_1f_218 },
+	{ 0x228, op_1f_228 },
+	{ 0x236, op_1f_236 },
+	{ 0x237, op_1f_237 },
+	{ 0x255, op_1f_255 },
+	{ 0x256, op_1f_256 },
+	{ 0x257, op_1f_257 },
+	{ 0x268, op_1f_268 },
+	{ 0x277, op_1f_277 },
+	{ 0x288, op_1f_288 },
+	{ 0x28a, op_1f_28a },
+	{ 0x295, op_1f_295 },
+	{ 0x296, op_1f_296 },
+	{ 0x297, op_1f_297 },
+	{ 0x2b7, op_1f_2b7 },
+	{ 0x2c8, op_1f_2c8 },
+	{ 0x2ca, op_1f_2ca },
+	{ 0x2d5, op_1f_2d5 },
+	{ 0x2d7, op_1f_2d7 },
+	{ 0x2e8, op_1f_2e8 },
+	{ 0x2ea, op_1f_2ea },
+	{ 0x2eb, op_1f_2eb },
+	{ 0x2f6, op_1f_2f6 },
+	{ 0x2f7, op_1f_2f7 },
+	{ 0x30a, op_1f_30a },
+	{ 0x316, op_1f_316 },
+	{ 0x318, op_1f_318 },
+	{ 0x338, op_1f_338 },
+	{ 0x356, op_1f_356 },
+	{ 0x392, op_1f_392 },
+	{ 0x396, op_1f_396 },
+	{ 0x39a, op_1f_39a },
+	{ 0x3b2, op_1f_3b2 },
+	{ 0x3ba, op_1f_3ba },
+	{ 0x3c6, op_1f_3c6 },
+	{ 0x3cb, op_1f_3cb },
+	{ 0x3d2, op_1f_3d2 },
+	{ 0x3d6, op_1f_3d6 },
+	{ 0x3eb, op_1f_3eb },
+	{ 0x3f6, op_1f_3f6 },
+	{ 0x000, NULL}
 };
 
 void p405_set_opcode1f (p405_t *c)
 {
-	unsigned i;
+	unsigned           i;
+	p405_opcode_list_t *lst;
+	p405_opcode_f      *p;
 
-	c->opcodes.op[0x1f] = &op_1f;
+	c->opcodes.op[0x1f] = op_1f;
+
+	p = c->opcodes.op1f;
 
 	for (i = 0; i < 1024; i++) {
-		if (p405_opcode1f[i] != NULL) {
-			c->opcodes.op1f[i] = p405_opcode1f[i];
-		}
-		else {
-			c->opcodes.op1f[i] = &p405_op_undefined;
-		}
+		p[i] = p405_op_undefined;
+	}
+
+	lst = p405_opcodes_1f;
+
+	while (lst->fct != NULL) {
+		p[lst->op] = lst->fct;
+		lst += 1;
 	}
 }

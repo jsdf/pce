@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/sound.c                                     *
  * Created:     2008-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2008-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2008-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -224,15 +224,20 @@ void mac_sound_fill (mac_sound_t *ms, unsigned cnt)
 static
 void mac_sound_speaker_on (mac_sound_t *ms)
 {
-	uint16_t buf[4096];
+	unsigned i;
+	uint16_t buf[1024];
 
 #if DEBUG_SOUND >= 1
 	mac_log_deb ("sound: output on\n");
 #endif
 
-	memset (buf, 0, 8192);
+	for (i = 0; i < 1024; i++) {
+		buf[i] = 0x8000;
+	}
 
-	snd_write (ms->drv, buf, 4096);
+	for (i = 0; i < 4; i++) {
+		snd_write (ms->drv, buf, 1024);
+	}
 }
 
 static

@@ -1,23 +1,23 @@
-;*****************************************************************************
-;* pce                                                                       *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; pce
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* File name:   pcemsg.asm                                                   *
-;* Created:     2004-09-17 by Hampa Hug <hampa@hampa.ch>                     *
-;* Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; File name:    pcemsg.asm
+; Created:      2004-09-17 by Hampa Hug <hampa@hampa.ch>
+; Copyright:    (C) 2004-2020 Hampa Hug <hampa@hampa.ch>
+;-----------------------------------------------------------------------------
 
-;*****************************************************************************
-;* This program is free software. You can redistribute it and / or modify it *
-;* under the terms of the GNU General Public License version 2 as  published *
-;* by the Free Software Foundation.                                          *
-;*                                                                           *
-;* This program is distributed in the hope  that  it  will  be  useful,  but *
-;* WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
-;* Public License for more details.                                          *
-;*****************************************************************************
+;-----------------------------------------------------------------------------
+; This program is free software. You can redistribute it and / or modify it
+; under the terms of the GNU General Public License version 2 as  published
+; by the Free Software Foundation.
+;
+; This program is distributed in the hope  that  it  will  be  useful,  but
+; WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General
+; Public License for more details.
+;-----------------------------------------------------------------------------
 
 
 ; pcemsg [msg [val]]
@@ -34,73 +34,21 @@ section .text
 	jmp	start
 
 
-msg_error	db "error", 0x0d, 0x0a, 0x00
+msg_usage	db "pcemsg version ", PCE_VERSION_STR , 0x0d, 0x0a
+		db 0x0d, 0x0a
+		db "usage: pcemsg [msg [val]]", 0x0d, 0x0a
+		db 0x00
+
+msg_notpce	db "pcemsg: not running under PCE", 0x0d, 0x0a, 0x00
+msg_error	db "pcemsg: error", 0x0d, 0x0a, 0x00
 
 
-; print string ds:si
-prt_string:
-	push	ax
-	push	si
+%define PCE_USE_PRINT_STRING 1
+%define PCE_USE_PARSE_OPT    1
+%define PCE_USE_HOOK_CHECK   1
+%define PCE_USE_HOOK         1
 
-.next:
-	mov	ah, 0x0e
-	lodsb
-	or	al, al
-	jz	.done
-	int	0x10
-	jmp	.next
-
-.done:
-	pop	si
-	pop	ax
-	ret
-
-
-; get message string from ds:si to es:di
-get_msg_str:
-	jcxz	.done
-
-.skip:
-	cmp	byte [si], 32
-	ja	.start
-	inc	si
-	loop	.skip
-
-	jmp	.done
-
-.start:
-	cmp	byte [si], '"'
-	je	.quote
-
-.next:
-	cmp	byte [si], 32
-	jbe	.done
-	movsb
-	loop	.next
-
-	jmp	.done
-
-.quote:
-	inc	si
-	dec	cx
-
-.next_quote:
-	jcxz	.done
-	lodsb
-	dec	cx
-	cmp	al, '"'
-	je	.done
-	stosb
-	jmp	.next_quote
-
-	stosb
-	loop	.next_quote
-
-.done:
-	mov	al, 0x00
-	stosb
-
-	ret
+%include "pce-lib.inc"
 
 
 start:
@@ -108,36 +56,58 @@ start:
 	mov	ds, ax
 	mov	es, ax
 
-	mov	si, 0x0080		; SI points to parameters
+	cld
 
-	lodsb
-	mov	ah, 0
-	mov	cx, ax			; parameter size in CX
+	call	pce_hook_check
+	jc	.notpce
 
-	mov	di, buffer
+	mov	si, 0x0080		; parameters
 
-	push	di
-	call	get_msg_str
+	lodsb				; paramter size
+	mov	cl, al
+	xor	ch, ch
 
-	push	di
-	call	get_msg_str
+	mov	di, str_msg
+	call	pce_parse_opt
+	jc	.usage
 
-	pop	di
-	pop	si
-	pceh	PCEH_MSG
-	jc	error
+	mov	di, str_val
+	call	pce_parse_opt
 
-	mov	al, 0x00
-	jmp	done
+	mov	si, str_msg
+	mov	di, str_val
+	mov	ax, PCE_HOOK_SET_MSG
+	call	pce_hook
+	jc	.error
 
-error:
-	mov	si, msg_error
-	call	prt_string
+.done_ok:
+	xor	al, al
 
-	mov	al, 0x01
-
-done:
+.exit:
 	mov	ah, 0x4c
 	int	0x21
+	int	0x20
 
-buffer:
+.usage:
+	mov	si, msg_usage
+	call	pce_print_string
+	jmp	.done_ok
+
+.error:
+	mov	si, msg_error
+	jmp	.done_err
+
+.notpce:
+	mov	si, msg_notpce
+	;jmp	.done_err
+
+.done_err:
+	call	pce_print_string
+	mov	al, 0x01
+	jmp	.exit
+
+
+section	.bss
+
+str_msg		resb 256
+str_val		resb 256

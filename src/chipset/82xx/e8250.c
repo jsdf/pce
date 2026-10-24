@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/82xx/e8250.c                                     *
  * Created:     2003-08-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -60,6 +60,8 @@ void e8250_init (e8250_t *uart)
 	uart->bit_clk_div = 10;
 
 	uart->clocking = 0;
+
+	uart->clock_mul = 1;
 
 	uart->read_clk_cnt = 0;
 	uart->read_clk_div = 128;
@@ -204,6 +206,11 @@ void e8250_set_buf_size (e8250_t *uart, unsigned inp, unsigned out)
 	uart->out_i = 0;
 	uart->out_j = 0;
 	uart->out_n = (out <= E8250_BUF_MAX) ? out : E8250_BUF_MAX;
+}
+
+void e8250_set_clock_mul (e8250_t *uart, unsigned mul)
+{
+	uart->clock_mul = mul;
 }
 
 void e8250_set_multichar (e8250_t *uart, unsigned read_max, unsigned write_max)
@@ -805,9 +812,11 @@ void e8250_write_txd (e8250_t *uart, unsigned char val)
 static
 void e8250_write_ier (e8250_t *uart, unsigned char val)
 {
-	uart->ier = val & 0x0f;
+	if ((uart->ier ^ val) & val & E8250_IER_TBE) {
+		uart->tbe_ack = 0;
+	}
 
-	uart->tbe_ack = 0;
+	uart->ier = val & 0x0f;
 
 	e8250_set_int_cond (uart);
 }
@@ -1017,6 +1026,8 @@ void e8250_reset (e8250_t *uart)
 	uart->clocking = 0;
 
 	uart->divisor = 0;
+
+	e8250_set_irq (uart, 0);
 }
 
 void e8250_clock (e8250_t *uart, unsigned clk)
@@ -1024,6 +1035,8 @@ void e8250_clock (e8250_t *uart, unsigned clk)
 	if (uart->clocking == 0) {
 		return;
 	}
+
+	clk *= uart->clock_mul;
 
 	if (uart->read_clk_cnt > 0) {
 		if (clk < uart->read_clk_cnt) {

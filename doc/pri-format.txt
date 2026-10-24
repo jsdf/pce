@@ -1,4 +1,4 @@
-PRI File Format (2013-06-29)
+PRI File Format (2020-03-26)
 ========================================================================
 
 File structure
@@ -12,6 +12,8 @@ File structure
 <end chunk>
 
 All integers are in big-endian format.
+
+Unknown chunks should be skipped.
 
 
 Chunk format
@@ -47,6 +49,9 @@ CHUNK "END ": End chunk
 4	4	Size (0)
 0	4	CRC (0x3d64af78)
 
+	- This chunk marks the end of the file. Any data that follows
+	  should be ignored.
+
 
 CHUNK "TEXT": Comments
 ------------------------------------------------------------------------
@@ -57,6 +62,9 @@ CHUNK "TEXT": Comments
 n	4	CRC
 
 	- Comments should be UTF-8, with lines separated by LF (0x0a).
+
+	- If there are multiple TEXT chunks, their contents should be
+	  concatenated.
 
 
 CHUNK "TRAK": Track header
@@ -70,6 +78,9 @@ CHUNK "TRAK": Track header
 12	4	Bit clock rate
 16	4	CRC
 
+The TRAK chunk starts a new track. All following chunks until the next
+TRAK chunk or until the END chunk refer to this track.
+
 
 CHUNK "DATA": Track data
 ------------------------------------------------------------------------
@@ -79,6 +90,41 @@ CHUNK "DATA": Track data
 0	n	Track data
 n	4	CRC
 
+	- The most significant bit of every byte comes first.
+
+	- The DATA chunk may be shorter than the track length in the
+	  preceding TRAK chunk suggests. In that case the remainder of
+	  the track data should be set to 0.
+
+
+CHUNK "WEAK": Weak bit mask
+------------------------------------------------------------------------
+
+0	4	Magic ('WEAK')
+4	4	Size (8*n)
+0	4	Bit offset
+4	4	Weak bit mask
+...
+8*n	4	CRC
+
+	- The MSB of the bit mask corresponds to the bit offset specified.
+
+
+CHUNK "BCLK": Alternate bit clock
+------------------------------------------------------------------------
+
+0	4	Magic ('BCLK')
+4	4	Size (8*n)
+0	4	Bit offset
+4	4	New bit clock
+...
+8*n	4	CRC
+
+The new bit clock starting at the specified bit offset is
+(new_bit_clock / 65536) * track_bit_clock
+
+If the new bit clock is 0, the default track bit clock is restored.
+
 
 CRC
 ---
@@ -86,7 +132,7 @@ CRC
 	- The algorithm used is big-endian CRC-32 with generator
 	  polynomial 0x1edc6f41. The CRC value is initialized to 0.
 
-	unsigned long pflux_crc (const unsigned char *buf, unsigned cnt)
+	unsigned long pri_crc (const unsigned char *buf, unsigned cnt)
 	{
 		unsigned      i, j;
 		unsigned long crc;

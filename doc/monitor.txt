@@ -31,6 +31,9 @@ b s x expr [pass [reset]]
 c [cnt]
 	Clock the emulated machine <cnt> times. The default is 1.
 
+di name [drive] ["ro"] ["rw"]
+	Insert the disk image <name> into drive <drive>.
+
 d [addr [cnt]]
 	Display <cnt> bytes of memory at address <addr>.
 

@@ -30,6 +30,34 @@
 
 
 static
+int tc_add_comment (pri_img_t *img, const unsigned char *buf, unsigned max)
+{
+	unsigned i;
+
+	if (*buf == 0) {
+		return (0);
+	}
+
+	i = 0;
+
+	while ((i < max) && (buf[i] != 0)) {
+		i += 1;
+	}
+
+	if (img->comment_size > 0) {
+		if (pri_img_add_comment (img, (unsigned char *) "\n", 1)) {
+			return (1);
+		}
+	}
+
+	if (pri_img_add_comment (img, buf, i)) {
+		return (1);
+	}
+
+	return (0);
+}
+
+static
 int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short *len, unsigned *c, unsigned *h)
 {
 	unsigned      i;
@@ -41,23 +69,19 @@ int tc_load_header (FILE *fp, pri_img_t *img, unsigned long *ofs, unsigned short
 	}
 
 	if (pri_get_uint16_be (buf, 0) != 0x5aa5) {
+		fprintf (stderr, "pri/tc: bad magic\n");
 		return (1);
 	}
 
 	*c = buf[0x0102] + 1;
 	*h = buf[0x0103];
 
-	i = 2;
-	while (i < 66) {
-		if (buf[i] == 0) {
-			break;
-		}
-
-		i += 1;
+	if (tc_add_comment (img, buf + 2, 32)) {
+		return (1);
 	}
 
-	if (i > 2) {
-		pri_img_set_comment (img, buf + 2, i - 2);
+	if (tc_add_comment (img, buf + 34, 32)) {
+		return (1);
 	}
 
 	if (pri_read_ofs (fp, 0x0305, buf, 512)) {
@@ -162,7 +186,104 @@ pri_img_t *pri_load_tc (FILE *fp)
 
 int pri_save_tc (FILE *fp, const pri_img_t *img)
 {
-	return (1);
+	unsigned      i, c, h, nc, nh;
+	unsigned long ofs, cnt;
+	unsigned char buf[16384];
+	pri_trk_t     *trk;
+
+	nc = img->cyl_cnt;
+
+	if (nc == 0) {
+		return (1);
+	}
+	else if (nc > 128) {
+		nc = 128;
+	}
+
+	nh = 0;
+
+	for (c = 0; c < nc; c++) {
+		if (img->cyl[c] != NULL) {
+			if (img->cyl[c]->trk_cnt > nh) {
+				nh = img->cyl[c]->trk_cnt;
+			}
+		}
+	}
+
+	if (nh == 0) {
+		return (1);
+	}
+	else if (nh > 2) {
+		nh = 2;
+	}
+
+	memset (buf, 0, sizeof (buf));
+
+	buf[0] = 0x5a;
+	buf[1] = 0xa5;
+
+	for (i = 0; i < 95; i++) {
+		buf[0x42 + 2 * i + 0] = 0x20;
+		buf[0x42 + 2 * i + 1] = 0x07;
+	}
+
+	buf[0x100] = 0xff;
+	buf[0x101] = 0;
+	buf[0x102] = nc - 1;
+	buf[0x103] = nh;
+	buf[0x104] = 1;
+
+	memset (buf + 0x105, 0x11, 512);
+	memset (buf + 0x305, 0x00, 512);
+	memset (buf + 0x505, 0x33, 512);
+	memset (buf + 0x705, 0x44, 512);
+
+	ofs = 16384;
+
+	for (c = 0; c < nc; c++) {
+		for (h = 0; h < 2; h++) {
+			i = 2 * c + h;
+
+			trk = pri_img_get_track ((pri_img_t *) img, c, h, 0);
+
+			if (trk == NULL) {
+				continue;
+			}
+
+			cnt = (pri_trk_get_size (trk) + 7) / 8;
+
+			if (cnt > 65535) {
+				return (1);
+			}
+
+			if ((ofs ^ (ofs + cnt)) & ~65535UL) {
+				ofs = (ofs + 65535) & ~65535UL;
+			}
+
+			pri_set_uint16_le (buf, 0x105 + 2 * i, 0x0005);
+			pri_set_uint16_be (buf, 0x305 + 2 * i, ofs / 256);
+			pri_set_uint16_le (buf, 0x505 + 2 * i, cnt);
+
+			buf[0x705 + 2 * i + 0] = 0x08;
+			buf[0x705 + 2 * i + 1] = 0x07;
+
+			if (trk->clock < ((500000 + 250000) / 2)) {
+				buf[0x705 + 2 * i + 1] = 0x05;
+			}
+
+			if (pri_write_ofs (fp, ofs, trk->data, cnt)) {
+				return (1);
+			}
+
+			ofs = (ofs + cnt + 255) & ~255UL;
+		}
+	}
+
+	if (pri_write_ofs (fp, 0, buf, 16384)) {
+		return (1);
+	}
+
+	return (0);
 }
 
 

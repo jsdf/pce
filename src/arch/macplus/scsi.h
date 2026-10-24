@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/scsi.h                                      *
  * Created:     2007-11-13 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -70,6 +70,10 @@ typedef struct mac_scsi_s {
 	void          (*cmd_start) (struct mac_scsi_s *scsi);
 	void          (*cmd_finish) (struct mac_scsi_s *scsi);
 
+	unsigned char  set_int_val;
+	void           *set_int_ext;
+	void           (*set_int) (void *ext, unsigned char val);
+
 	mac_scsi_dev_t dev[8];
 
 	disks_t        *dsks;
@@ -78,6 +82,8 @@ typedef struct mac_scsi_s {
 
 void mac_scsi_init (mac_scsi_t *scsi);
 void mac_scsi_free (mac_scsi_t *scsi);
+
+void mac_scsi_set_int_fct (mac_scsi_t *scsi, void *ext, void *fct);
 
 void mac_scsi_set_disks (mac_scsi_t *scsi, disks_t *dsks);
 void mac_scsi_set_drive (mac_scsi_t *scsi, unsigned id, unsigned drive);

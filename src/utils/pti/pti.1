@@ -1,0 +1,234 @@
+.TH PTI 1 "2020-05-15" "HH" "pce"
+.SH NAME
+pti \- convert and modify PCE Tape images
+
+.SH SYNOPSIS
+.BI pti " [options] [input-file] [options] [output-file]"
+
+.SH DESCRIPTION
+\fBpti\fR(1) is used to modify and convert PTI tape image files.
+
+.SH OPTIONS
+.TP
+.BI "-c, --default-clock " clock
+Set the default clock used when creating new files or when loading files
+that don't specify a clock. The clock can be specified as an integer or as
+one of these:
+.RS
+.TP
+.B c16-ntsc
+The CBM C16 NTSC CPU clock (894886)
+.TP
+.B c16-pal
+The CBM C16 PAL CPU clock (886724)
+.TP
+.B c64-ntsc
+The CBM C64 NTSC CPU clock (1022727)
+.TP
+.B c64-pal
+The CBM C64 PAL CPU clock (985248)
+.TP
+.B pet
+The CBM PET CPU clock (1000000)
+.TP
+.B vic20-ntsc
+The CBM VIC-20 NTSC CPU clock (1022727)
+.TP
+.B vic20-pal
+The CBM VIC-20 PAL CPU clock (1108405)
+.TP
+.B pc-pit
+The IBM PC PIT clock (1193182)
+.TP
+.B pc-cpu
+The IBM PC CPU clock (4772728)
+.RE
+.TP
+.B "-f, --info"
+Print information about the current image or the next image loaded.
+.TP
+.BI "-i, --input " filename
+Load an image from \fIfilename\fR.
+.TP
+.BI "-I, --input-format " format
+Set the file format for the next input file. If this option is not
+used, the file format is detected automatically.
+
+Valid input formats are:
+.RS
+.TP
+.B cas
+A raw bit stream
+.TP
+.B pcm
+Raw PCM audio
+.TP
+.B pti
+PCE Tape Image
+.TP
+.B tap
+C64 tape image
+.TP
+.B txt
+A textual representation of a PTI image
+.TP
+.B wav
+WAV PCM audio
+.RE
+.TP
+.BI "-m, --cat " filename
+Load an image from \fIfilename\fR and add it to the end of the current
+image.
+.TP
+.BI "-o, --output " filename
+Save the image to \fIfilename\fR.
+.TP
+.BI "-O, --output-format " format
+Set the file format for the next output file. If this option is not used,
+the file format is determined by the output file name.
+
+Valid output formats are:
+.RS
+.TP
+.B cas
+A raw bit stream
+.TP
+.B pcm
+Raw PCM audio
+.TP
+.B pti
+PCE Tape Image
+.TP
+.B tap
+C64 tape image
+.TP
+.B txt
+A textual representation of a PTI image
+.TP
+.B wav
+WAV PCM audio
+.RE
+.TP
+.BI "-p, --operation " "name [arg...]"
+Perform an operation on the current image. Valid operations are:
+.RS
+.TP
+.BI "cat " "filename"
+Load a tape image from \fIfilename\fR and add it to the end of the
+current image.
+.TP
+.BI "comment-add " text
+Add \fItext\fR to the image comment.
+.TP
+.BI "comment-load " filename
+Load the image comment from file \fIfilename\fR.
+.TP
+.B comment-print
+Print the current image comment.
+.TP
+.BI "comment-save " filename
+Save the current image comment to \fIfilename\fR.
+.TP
+.BI "comment-set " text
+Set the image comment to \fItext\fR.
+.TP
+.BI "fix-clock " "clock"
+Set the clock rate to \fIclock\fR without adjusting the image data
+accordingly.
+.TP
+.B "info"
+Print information about the image.
+.TP
+.B "invert"
+Invert the image, turning positive levels into negative levels and
+vice versa.
+.TP
+.B "new"
+Create a new empty image.
+.TP
+.BI "scale " factor
+Scale the length of the image by \fIfactor\fR.
+.TP
+.BI "set-clock " "clock"
+Set the clock rate to \fIclock\fR and adjust the image data accordingly.
+.TP
+.BI "space-add-left " time
+Add \fItime\fR seconds of silence to the beginning of the image.
+.TP
+.BI "space-add-right " time
+Add \fItime\fR seconds of silence to the end of the image.
+.TP
+.BI "space-add " time
+Add \fItime\fR seconds of silence to both the beginning and the end of
+the image.
+.TP
+.BI "space-auto " min-time
+Convert constant levels of at least \fImin-time\fR duration to silence.
+.TP
+.BI "space-mac " time
+Limit periods of silence to at most \fItime\fR seconds.
+.TP
+.B "space-trim-left"
+Remove silence from the beginning of the image.
+.TP
+.B "space-trim-right"
+Remove silence from the end of the image.
+.TP
+.B "space-trim"
+Remove silence from both the beginning and the end of the image.
+.TP
+.BI "trim-left " time
+Remove \fItime\fR seconds from the beginning of the image.
+.TP
+.BI "trim-right " time
+Remove \fItime\fR seconds from the end of the image.
+.RE
+.TP
+.BI "-s, --set " "par val"
+Set parameter \fIpar\fR to \fIval\fR.
+.RS
+.TP
+.BI "default-clock " clock
+This sets the same parameter as the \fB-c\fR option.
+.TP
+.BI "pcm-srate " srate
+Set the sample rate used when loading and saving PCM files. The default
+is 44100.
+.TP
+.BI "wav-bits " bits
+Set the number of bits per sample when saving WAV files. The default is
+16.
+.TP
+.BI "wav-lowpass " cutoff
+Set the cut-off frequency for the lowpass filter used when saving WAV
+files. A frequency of 0 turns the filter off, which is the default.
+.TP
+.BI "wav-lowpass-order "
+Set the filter order of the lowpass filter used when saving WAV files.
+The default is 4, the maximum is 16.
+.TP
+.BI "wav-sine " enable
+If \fIenable\fR is true, then the signal written to WAV files is made
+up of a series of sine waves. If it is false, a simple square wave
+is written. The default is enabled.
+.TP
+.BI "wav-srate " srate
+Set the sample rate used when saving WAV files. The default is 48000.
+.RE
+.TP
+.B "-v, --verbose"
+Enable verbose operation.
+.TP
+.B --help
+Print usage information.
+.TP
+.B --version
+Print version information.
+
+.SH SEE ALSO
+.BR pfi "(1),"
+.BR pri "(1),"
+.BR psi "(1)"
+
+.SH AUTHOR
+Hampa Hug <hampa@hampa.ch>

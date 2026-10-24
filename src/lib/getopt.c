@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/getopt.c                                             *
  * Created:     2009-14-21 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2009-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2009-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -26,6 +26,12 @@
 #include <string.h>
 
 #include <lib/getopt.h>
+
+
+static int        atend = 0;
+static int        index1 = -1;
+static int        index2 = -1;
+static const char *curopt = NULL;
 
 
 static
@@ -224,13 +230,30 @@ pce_option_t *find_option_name2 (pce_option_t *opt, const char *name2)
 	return (NULL);
 }
 
+int pce_getoptarg (int argc, char **argv, char ***optarg, unsigned cnt)
+{
+	if (index1 < 0) {
+		atend = 0;
+		index1 = 0;
+		index2 = 1;
+		curopt = NULL;
+	}
+
+	if ((index2 + cnt) > argc) {
+		return (GETOPT_MISSING);
+	}
+
+	index1 = index2;
+	index2 += cnt;
+
+	*optarg = argv + index1;
+
+	return (0);
+}
+
 int pce_getopt (int argc, char **argv, char ***optarg, pce_option_t *opt)
 {
-	pce_option_t      *ret;
-	static int        atend = 0;
-	static int        index1 = -1;
-	static int        index2 = -1;
-	static const char *curopt = NULL;
+	pce_option_t *ret;
 
 	if ((argc == 0) && (argv == NULL)) {
 		index1 = -1;

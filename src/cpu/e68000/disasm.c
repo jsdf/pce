@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e68000/disasm.c                                      *
  * Created:     2005-07-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2005-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2005-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -643,7 +643,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 	case ARG_DIST8:
 		sprintf (dst, "%s%08lX",
 			hex_prefix,
-			da->pc + 2UL + e68_exts8 (src[1])
+			(da->pc + 2UL + e68_exts8 (src[1])) & 0xffffffff
 		);
 		break;
 
@@ -652,7 +652,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		da->irn += 1;
 		sprintf (dst, "%s%08lX",
 			hex_prefix,
-			da->pc + 2UL + e68_exts16 (val16)
+			(da->pc + 2UL + e68_exts16 (val16)) & 0xffffffff
 		);
 		break;
 
@@ -661,7 +661,7 @@ void dasm_arg (e68_dasm_t *da, char *dst, const uint8_t *src, unsigned arg, unsi
 		da->irn += 2;
 		sprintf (dst, "%s%08lX",
 			hex_prefix,
-			da->pc + 2UL + val32
+			(da->pc + 2UL + val32) & 0xffffffff
 		);
 		break;
 

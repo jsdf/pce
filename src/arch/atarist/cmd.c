@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/cmd.c                                       *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,13 +30,17 @@
 #include <lib/console.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
+#include <lib/msgdsk.h>
 #include <lib/sysdep.h>
 
 
 #ifndef DEBUG_BIOS
-#define DEBUG_BIOS 1
+#define DEBUG_BIOS 0
 #endif
+
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
+#endif
 
 
 mon_cmd_t par_cmd[] = {
@@ -50,9 +54,10 @@ mon_cmd_t par_cmd[] = {
 	{ "reset", "", "reset" },
 	{ "rte", "", "execute to next rte" },
 	{ "r", "reg [val]", "get or set a register" },
-	{ "s", "[what]", "print status (cpu|mem)" },
+	{ "s", "[what]", "print status (acia0|acia1|cpu|disks|dma|mem|mfp|psg|video)" },
 	{ "t", "[cnt]", "execute cnt instructions [1]" },
-	{ "u", "[[-]addr [cnt]]", "disassemble" }
+	{ "u", "[w][[-]addr [cnt]]", "disassemble" },
+	{ "uw", "[addr [cnt]]", "disassemble as constant words" }
 };
 
 unsigned par_cmd_cnt = sizeof (par_cmd) / sizeof (par_cmd[0]);
@@ -62,7 +67,7 @@ static
 void st_dasm_str (char *dst, e68_dasm_t *op, int opcode)
 {
 	unsigned   i, n;
-	char       tmp[256];
+	char       tmp[272];
 	const char *ins;
 
 	strcpy (dst, "");
@@ -301,8 +306,8 @@ void st_print_state_dma (atari_st_t *sim)
 
 	pce_prt_sep ("DMA");
 
-	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX\n",
-		dma->mode, dma->status, dma->addr
+	pce_printf ("MODE=%04X  STATUS=%04X  ADDR=%06lX  MASK=%06lX\n",
+		dma->mode, dma->status, dma->addr, dma->mask
 	);
 }
 
@@ -311,6 +316,75 @@ void st_print_state_mem (atari_st_t *sim)
 {
 	pce_prt_sep ("MEM");
 	mem_prt_state (sim->mem, stdout);
+}
+
+static
+void st_print_state_psg (atari_st_t *sim)
+{
+	st_psg_t *psg;
+
+	pce_prt_sep ("PSG");
+
+	psg = &sim->psg;
+
+	pce_printf ("R%02X=%02X  PA=%u\n", 0, psg->reg[0],
+		((psg->reg[1] << 8) | (psg->reg[0])) & 0x3ff
+	);
+
+	pce_printf ("R%02X=%02X\n", 1, psg->reg[1]);
+
+	pce_printf ("R%02X=%02X  PB=%u\n", 2, psg->reg[2],
+		((psg->reg[3] << 8) | (psg->reg[2])) & 0x3ff
+	);
+
+	pce_printf ("R%02X=%02X\n", 3, psg->reg[3]);
+
+	pce_printf ("R%02X=%02X  PC=%u\n", 4, psg->reg[4],
+		((psg->reg[5] << 8) | (psg->reg[4])) & 0x3ff
+	);
+
+	pce_printf ("R%02X=%02X\n", 5, psg->reg[5]);
+
+	pce_printf ("R%02X=%02X  PN=%u\n", 6, psg->reg[6],
+		psg->reg[6] & 0x1f
+	);
+
+	pce_printf ("R%02X=%02X  N=%c%c%c  T=%c%c%c\n", 7, psg->reg[7],
+		(psg->reg[7] & 8) ? 'a' : 'A',
+		(psg->reg[7] & 16) ? 'b' : 'B',
+		(psg->reg[7] & 32) ? 'c' : 'C',
+		(psg->reg[7] & 1) ? 'a' : 'A',
+		(psg->reg[7] & 2) ? 'b' : 'B',
+		(psg->reg[7] & 4) ? 'c' : 'C'
+	);
+
+	pce_printf ("R%02X=%02X  VA=%u  %c\n", 8, psg->reg[8],
+		psg->reg[8] & 0x0f,
+		(psg->reg[8] & 0x10) ? 'M' : '-'
+	);
+
+	pce_printf ("R%02X=%02X  VB=%u  %c\n", 9, psg->reg[9],
+		psg->reg[9] & 0x0f,
+		(psg->reg[9] & 0x10) ? 'M' : '-'
+	);
+
+	pce_printf ("R%02X=%02X  VC=%u  %c\n", 10, psg->reg[10],
+		psg->reg[10] & 0x0f,
+		(psg->reg[10] & 0x10) ? 'M' : '-'
+	);
+
+	pce_printf ("R%02X=%02X  PE=%u\n", 11, psg->reg[11],
+		((psg->reg[12] << 8) | (psg->reg[11])) & 0xffff
+	);
+
+	pce_printf ("R%02X=%02X\n", 12, psg->reg[12]);
+
+	pce_printf ("R%02X=%02X  ENV=%X\n", 13, psg->reg[13],
+		psg->reg[13] & 0x0f
+	);
+
+	pce_printf ("R%02X=%02X\n", 14, psg->reg[14]);
+	pce_printf ("R%02X=%02X\n", 15, psg->reg[15]);
 }
 
 static
@@ -362,6 +436,9 @@ void st_print_state (atari_st_t *sim, const char *str)
 		if (cmd_match (&cmd, "cpu")) {
 			st_print_state_cpu (sim);
 		}
+		else if (cmd_match (&cmd, "disks")) {
+			dsks_print_info (sim->dsks);
+		}
 		else if (cmd_match (&cmd, "dma")) {
 			st_print_state_dma (sim);
 		}
@@ -376,6 +453,9 @@ void st_print_state (atari_st_t *sim, const char *str)
 		}
 		else if (cmd_match (&cmd, "mfp")) {
 			st_print_state_mfp (sim);
+		}
+		else if (cmd_match (&cmd, "psg")) {
+			st_print_state_psg (sim);
 		}
 		else if (cmd_match (&cmd, "video")) {
 			st_print_state_video (sim);
@@ -458,7 +538,6 @@ void st_run (atari_st_t *sim)
 
 	while (1) {
 		st_clock (par_sim, 0);
-		st_clock (par_sim, 0);
 
 		if (sim->brk) {
 			break;
@@ -474,67 +553,68 @@ void st_run (atari_st_t *sim)
 }
 
 
+#ifdef EMSCRIPTEN
 
 /*
- * emscripten specific main loop
+ * Browser (emscripten) main loop
+ *
+ * Each iteration emulates the real time that has passed since the previous
+ * one, so that every emulated video frame can be shown and no time is
+ * wasted busy waiting to stay in sync with real time.
  */
 
-/*
- * store global reference to simulation state struct
- * so that st_run_emscripten_step doesn't require it as a parameter
- */
-atari_st_t  *atari_st_sim = NULL;
+static atari_st_t *st_emscripten_sim = NULL;
 
-/*
- * setup and run the simulation
- */
 void st_run_emscripten (atari_st_t *sim)
 {
-	atari_st_sim = sim;
+	st_emscripten_sim = sim;
 
 	pce_start (&sim->brk);
 
 	st_clock_discontinuity (sim);
 
-
-	#ifdef EMSCRIPTEN
-	emscripten_set_main_loop(st_run_emscripten_step, 100, 1);
-	#else
-	while (!sim->brk) {
-		st_run_emscripten_step();
-	}
-	#endif
-
-	// pce_stop();
+	pce_em_run (st_run_emscripten_step);
 }
 
-
-/*
- * run one iteration
- */
-void st_run_emscripten_step ()
+void st_run_emscripten_step (void)
 {
-	// for each 'emscripten step' we'll run a bunch of actual cycles
-	// to minimise overhead from emscripten's main loop management
-	int i;
-	for (i = 0; i < 10000; ++i)
-	{	
-		st_clock (atari_st_sim, 0);
-		st_clock (atari_st_sim, 0);
+	static unsigned long clk_rem = 0;
+	double               t0, ms;
+	unsigned long        clk;
+	atari_st_t           *sim;
 
-		if (atari_st_sim->brk) {
+	t0 = emscripten_get_now();
+	ms = pce_em_get_frame_ms();
+
+	sim = st_emscripten_sim;
+
+	if (sim->pause) {
+		trm_check (sim->trm);
+		return;
+	}
+
+	clk = clk_rem + (unsigned long) (ms * (ST_CPU_CLOCK / 1000.0));
+
+	while (clk >= 16) {
+		st_clock (sim, 0);
+		clk -= 16;
+
+		if (sim->brk) {
 			pce_stop();
-			#ifdef EMSCRIPTEN
 			emscripten_cancel_main_loop();
-			#endif
 			return;
 		}
 	}
-	// emscripten_pause_main_loop();
+
+	clk_rem = clk;
+
+	if (sim->speed_factor == 0) {
+		pce_em_adjust_speed (&sim->speed_clock_extra, t0, ms);
+	}
 }
-/*
- * end emscripten specific main loop
- */
+
+#endif
+
 
 static
 void st_log_trap_bios (atari_st_t *sim, unsigned iw)
@@ -823,24 +903,36 @@ void st_cmd_hm (cmd_t *cmd)
 		"emu.cpu.model        \"68000\" | \"68010\" | \"68020\"\n"
 		"emu.cpu.speed        <factor>\n"
 		"emu.cpu.speed.step   <adjustment>\n"
-			"\n"
-		"emu.disk.commit      [<drive>]\n"
-		"emu.disk.eject       <drive>\n"
-		"emu.disk.insert      <drive>:<fname>\n"
-			"\n"
+		"\n"
+		"emu.midi.file        <fname>\n"
+		"\n"
+		"emu.fdc.ro           <drive>\n"
+		"emu.fdc.rw           <drive>\n"
+		"\n"
 		"emu.par.driver       <driver>\n"
 		"emu.par.file         <filename>\n"
-			"\n"
+		"\n"
+		"emu.psg.aym.file     <filename>\n"
+		"emu.psg.aym.res      <usec>\n"
+		"emu.psg.driver       <driver>\n"
+		"emu.psg.lowpass      <freq>\n"
+		"\n"
 		"emu.ser.driver       <driver>\n"
 		"emu.ser.file         <filename>\n"
-			"\n"
+		"\n"
+		"emu.viking           \"0\" | \"1\"\n"
+		"emu.viking.toggle\n"
+		"\n"
 		"term.fullscreen      \"0\" | \"1\"\n"
 		"term.fullscreen.toggle\n"
 		"term.grab\n"
 		"term.release\n"
 		"term.screenshot      [<filename>]\n"
 		"term.title           <title>\n"
+		"\n"
 	);
+
+	msg_dsk_print_help();
 }
 
 /*
@@ -1156,6 +1248,61 @@ void st_cmd_u_to (cmd_t *cmd, atari_st_t *sim, unsigned long addr)
 }
 
 /*
+ * uw - disassemble as constant words
+ */
+static
+void st_cmd_u_w (cmd_t *cmd, atari_st_t *sim)
+{
+	unsigned             i, col;
+	unsigned long        addr, cnt;
+	e68_dasm_t           op;
+	char                 str[256];
+
+	if (cmd_match_uint32 (cmd, &addr) == 0) {
+		addr = 0;
+	}
+
+	if (cmd_match_uint32 (cmd, &cnt) == 0) {
+		cnt = 256;
+	}
+
+	if (!cmd_match_end (cmd)) {
+		return;
+	}
+
+	while (1) {
+		e68_dasm_mem (sim->cpu, &op, addr);
+		st_dasm_str (str, &op, 0);
+
+		pce_printf (".word 0x%04x", op.ir[0]);
+
+		for (i = 1; i < op.irn; i++) {
+			pce_printf (", 0x%04x", op.ir[i]);
+		}
+
+		col = 4 + 8 * op.irn;
+
+		while (col < 32) {
+			pce_printf ("\t");
+			col = (col + 8) & ~7;
+		}
+
+		pce_printf ("\t/* %06lX   %s */\n", addr, str);
+
+		if (op.flags & E68_DFLAG_RTS) {
+			pce_printf ("\n");
+		}
+
+		if (cnt <= (2 * op.irn)) {
+			break;
+		}
+
+		addr += 2 * op.irn;
+		cnt -= 2 * op.irn;
+	}
+}
+
+/*
  * u - disassemble
  */
 static
@@ -1167,6 +1314,11 @@ void st_cmd_u (cmd_t *cmd, atari_st_t *sim)
 	static unsigned long saddr = 0;
 	e68_dasm_t           op;
 	char                 str[256];
+
+	if (cmd_match (cmd, "w")) {
+		st_cmd_u_w (cmd, sim);
+		return;
+	}
 
 	if (first) {
 		first = 0;

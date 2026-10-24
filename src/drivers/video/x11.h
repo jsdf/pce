@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/video/x11.h                                      *
  * Created:     2003-04-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,7 +28,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-// #include <X11/Xos.h>
+#include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 
@@ -74,6 +74,7 @@ typedef struct {
 
 	int           mse_x;
 	int           mse_y;
+	unsigned      button;
 
 	int           grab;
 

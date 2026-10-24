@@ -1,3 +1,3 @@
 make clean
-make CFLAGS="$PCEJS_MAKE_CFLAGS"
+make CFLAGS="$PCEJS_CFLAGS $PCEJS_MAKE_CFLAGS"
 make install

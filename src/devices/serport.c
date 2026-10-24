@@ -28,8 +28,8 @@
 #include "serport.h"
 
 
-static void ser_uart_check_setup (serport_t *ser);
-static void ser_uart_check_status (serport_t *src);
+static void ser_uart_check_setup (serport_t *ser, unsigned char val);
+static void ser_uart_check_status (serport_t *src, unsigned char val);
 static void ser_uart_check_out (serport_t *ser, unsigned char val);
 static void ser_uart_check_inp (serport_t *ser, unsigned char val);
 
@@ -300,10 +300,15 @@ void ser_process_input (serport_t *ser)
 	ser->check_inp = (e8250_inp_full (&ser->uart) == 0);
 }
 
+/*
+ * The 8250 calls the setup and check functions with an additional
+ * parameter. The functions must have the same signature, or the call
+ * fails when compiled to WebAssembly.
+ */
 static
-void ser_uart_check_setup (serport_t *ser)
+void ser_uart_check_setup (serport_t *ser, unsigned char val)
 {
-	unsigned val;
+	unsigned ctl;
 
 	ser->bps = e8250_get_bps (&ser->uart);
 	ser->databits = e8250_get_databits (&ser->uart);
@@ -315,26 +320,26 @@ void ser_uart_check_setup (serport_t *ser)
 	ser->dtr = e8250_get_dtr (&ser->uart);
 	ser->rts = e8250_get_rts (&ser->uart);
 
-	val = 0;
-	val |= ser->dtr ? PCE_CHAR_DTR : 0;
-	val |= ser->rts ? PCE_CHAR_RTS : 0;
+	ctl = 0;
+	ctl |= ser->dtr ? PCE_CHAR_DTR : 0;
+	ctl |= ser->rts ? PCE_CHAR_RTS : 0;
 
-	chr_set_ctl (ser->cdrv, val);
+	chr_set_ctl (ser->cdrv, ctl);
 }
 
 static
-void ser_uart_check_status (serport_t *ser)
+void ser_uart_check_status (serport_t *ser, unsigned char val)
 {
-	unsigned val;
+	unsigned ctl;
 
-	if (chr_get_ctl (ser->cdrv, &val)) {
-		val = PCE_CHAR_DSR | PCE_CHAR_CTS | PCE_CHAR_CD;
+	if (chr_get_ctl (ser->cdrv, &ctl)) {
+		ctl = PCE_CHAR_DSR | PCE_CHAR_CTS | PCE_CHAR_CD;
 	}
 
-	e8250_set_dsr (&ser->uart, (val & PCE_CHAR_DSR) != 0);
-	e8250_set_cts (&ser->uart, (val & PCE_CHAR_CTS) != 0);
-	e8250_set_dcd (&ser->uart, (val & PCE_CHAR_CD) != 0);
-	e8250_set_ri (&ser->uart, (val & PCE_CHAR_RI) != 0);
+	e8250_set_dsr (&ser->uart, (ctl & PCE_CHAR_DSR) != 0);
+	e8250_set_cts (&ser->uart, (ctl & PCE_CHAR_CTS) != 0);
+	e8250_set_dcd (&ser->uart, (ctl & PCE_CHAR_CD) != 0);
+	e8250_set_ri (&ser->uart, (ctl & PCE_CHAR_RI) != 0);
 }
 
 /* 8250 output buffer is not empty */
@@ -366,5 +371,5 @@ void ser_clock (serport_t *ser, unsigned n)
 		ser_process_input (ser);
 	}
 
-	ser_uart_check_status (ser);
+	ser_uart_check_status (ser, 0);
 }

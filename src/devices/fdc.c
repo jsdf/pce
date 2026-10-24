@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/fdc.c                                            *
  * Created:     2007-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -197,6 +197,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 	disk_t        *dsk;
 	unsigned char buf[512];
 	unsigned      lc, lh, ls, cnt, cnt_id;
+	unsigned long pos;
 
 	dsk = dsks_get_disk (fdc->dsks, fdc->drive[p->pd & 3]);
 
@@ -217,7 +218,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 		return (0);
 	}
 
-	if (dsk_psi_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt, &cnt_id)) {
+	if (dsk_psi_read_id (dsk->ext, p->pc, p->ph, p->ps, &lc, &lh, &ls, &cnt, &cnt_id, &pos)) {
 		return (E8272_ERR_NO_ID);
 	}
 
@@ -225,6 +226,7 @@ unsigned dev_fdc_diskop_readid (dev_fdc_t *fdc, e8272_diskop_t *p)
 	p->lh = lh;
 	p->ls = ls;
 	p->ln = 0;
+	p->pos = pos;
 
 	while (cnt_id > 128) {
 		cnt_id >>= 1;

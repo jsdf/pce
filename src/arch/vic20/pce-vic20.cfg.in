@@ -1,0 +1,147 @@
+# pce-vic20.cfg
+#
+# Example config file
+
+# Set up a PAL or NTSC system.
+cfg.pal ?= 0
+
+# The memory expansion in KiB
+cfg.exp   ?= 0
+
+# Enable the 3K memory expansion.
+cfg.exp3k ?= 0
+
+path = "."
+path = "rom"
+
+system {
+	# The initial speed multiplier
+	speed = 1
+
+	# Automatically go into warp mode when the datasette motor is
+	# turned on.
+	auto_speed = 1
+
+	# Set the CPU clock according to PAL or NTSC.
+	pal = cfg.pal
+}
+
+video {
+	# Set the VIC type to PAL or NTSC.
+	pal = cfg.pal
+
+	# Display the full border.
+	border = 0
+
+	# Hue adjustment (-180..180)
+	hue = 0
+
+	# Saturation adjustment (0..200)
+	saturation = 50
+
+	# Brightness adjustment (0..200)
+	brightness = 100
+
+	# The sound output driver
+	#sound = "null"
+	#sound = "wav:wav=sound.wav:lowpass=4000:wavfilter=0"
+	#sound = "oss:dev=/dev/dsp:wav=sound.wav:lowpass=4000:wavfilter=0"
+	sound = "sdl:wav=sound.wav:lowpass=4000:wavfilter=0"
+
+	# The sound sample rate
+	sample_rate = 44100
+}
+
+keyboard {
+	# Emulate a joystick using the keypad.
+	keypad_joystick = 1
+}
+
+datasette {
+	file = "cassette.pti"
+	#file = "cassette.tap"
+
+	#read = "cassette.pti"
+
+	#write = "cassette-new.pti"
+
+	# The motor off delay in milliseconds.
+	motor_delay = 50
+}
+
+rom {
+	address = 0x8000
+	size    = 4096
+	file    = "vic20-chargen.rom"
+}
+
+rom {
+	address = 0xc000
+	size    = 16384
+
+	if (cfg.pal) {
+		file = "vic20-pal.rom"
+	}
+	else {
+		file = "vic20-ntsc.rom"
+	}
+}
+
+ram {
+	address = 0x0000
+	size    = 1024
+}
+
+ram {
+	address = 0x1000
+	size    = 4096
+}
+
+if (cfg.exp3k || (cfg.exp == 3)) {
+	ram {
+		address = 0x0400
+		size    = 3072
+	}
+}
+
+if (cfg.exp > 3) {
+	ram {
+		address = 0x2000
+		size    = 1024 * cfg.exp
+	}
+}
+
+# Multiple "terminal" sections may be present. The first
+# one will be used unless a terminal type is specified
+# on the command line.
+terminal {
+	driver = "sdl"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	# The terminal scale factor. Only integral values are
+	# allowed.
+	scale = 1
+
+	# Add a border around the image
+	border = 0
+
+	# Start in fullscreen mode.
+	fullscreen = 0
+}
+
+terminal {
+	driver = "x11"
+
+	# The terminal escape key. The default is "ESC".
+	#escape = "CtrlRight"
+	#escape = "ESC"
+	#escape = "F12"
+	#escape = "Menu"
+
+	scale  = 1
+}

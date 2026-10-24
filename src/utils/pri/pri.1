@@ -1,4 +1,4 @@
-.TH PRI 1 "2013-08-19" "HH" "pce"
+.TH PRI 1 "2025-04-15" "HH" "pce"
 \
 .SH NAME
 pri \- convert and modify PCE raw image files
@@ -29,8 +29,17 @@ The bit clock rate.
 .B data
 Initialize the track using \fIval\fR.
 .TP
+.B readonly
+Set the read-only attribute for the image.
+.TP
 .B size
 Set the track size in bits.
+.TP
+.B woz-cleaned
+Set the cleaned attribute for WOZ images.
+.TP
+.B woz-track-sync
+Set the track sync attribute for WOZ images.
 .RE
 \
 .TP
@@ -59,6 +68,12 @@ The native PCE raw image file format.
 .TP
 .B tc
 Transcopy dump format. Support for this format is highly experimental.
+.TP
+.B woz
+The Applesauce WOZ disk image format.
+.TP
+.B moof
+The Applesauce MOOF disk image format.
 .RE
 \
 .TP
@@ -69,6 +84,17 @@ Using this options prints one line per track.
 .TP
 .B "-L, --list-long"
 List all tracks in the current image or in the next image loaded.
+\
+.TP
+.BI "-m, --merge " filename
+Load an image from \fIfilename\fR and copy all tracks that are not
+in the current image into the current image.
+\
+.TP
+.BI "-M --merge-overwrite " filename
+Load an image from \fIfilename\fR and copy all tracks into the
+current image. Tracks that exist in both images will be overwritten
+in the current image.
 \
 .TP
 .BI "-o, --output " filename
@@ -84,9 +110,6 @@ for a list of valid formats.
 .BI "-p, --operation " "name [arg...]"
 Perform an operation on the current image. Valid operations are:
 .RS
-.TP
-.B "auto-align-gcr"
-Automatically align Macintosh GCR tracks to the index.
 .TP
 .BI "comment-add " text
 Add \fItext\fR to the image comment.
@@ -104,14 +127,20 @@ Save the current image comment to \fIfilename\fR.
 Set the image comment to \fItext\fR.
 .TP
 .BI "decode " "type filename"
-Decode the image and save it as a pri sector image to \fIfilename\fR.
+Decode the image and save it as a psi sector image to \fIfilename\fR.
 Valid decode types are:
 .RS
 .TP
-.B gcr
+.B auto
+Try to decode each track as ibm-mfm, ibm-fm and mac-gcr.
+.TP
+.B ibm-fm
+IBM FM
+.TP
+.B mac-gcr
 Apple Macintosh GCR
 .TP
-.B mfm
+.B ibm-mfm
 IBM MFM
 .RE
 .TP
@@ -124,30 +153,153 @@ Remove odd numbered tracks.
 .B "double-step-even"
 Remove even numbered tracks.
 .TP
+.BI "event-add " "type position value"
+Add a new event of type \fItype\fR at bit position \fIposition\fR with
+value \fIvalue\fR on all selected tracks. The event type can be
+specified as a numerical value or as a type name.
+.TP
+.B "event-clear"
+Clear all events of all types from the selected tracks.
+.TP
+.BI "event-del " "type ( \fB@\fIindex1[-index2] | offset1[-offset2] | \fBall\fI)"
+Delete events from the selected tracks. The type can be specified as
+a numerical value, as a type name or as \fBall\fR. The range specifies
+a range of event indices as reported by \fBevent-list\fR, a
+range of bit offsets, or \fBall\fR.
+.TP
+.BI "event-list " "type ( \fB@\fIindex1[-index2] | offset1[-offset2] | \fBall\fI)"
+List events from the selected tracks. The type can be specified as
+a numerical value, as a type name or as \fBall\fR. The range specifies
+a range of event indices, a range of bit offsets, or \fBall\fR.
+.TP
 .BI "encode " "type filename"
-Load a pri sector image from \fIfilename\fR and encode it.
+Load a psi sector image from \fIfilename\fR and encode it.
 Valid encode types are:
 .RS
 .TP
-.B gcr
+.B auto
+Automatically determine the encoding for each track.
+.TP
+.B ibm-fm
+IBM FM
+.TP
+.B mac-gcr
 Apple Macintosh GCR
 .TP
-.B mfm
+.B ibm-mfm
 IBM MFM
 .RE
+.TP
+.B "half-rate"
+Remove all odd-numbered bits to create a new track with half the data rate.
+.TP
+.B "half-step"
+Duplicate all tracks. This is the reverse of double-step.
 .TP
 .B info
 Print information about the current image (same as \fB-f\fR).
 .TP
+.BI "mac-align " "mode"
+Align all selected tracks on Macintosh GCR disks relative to the index.
+Possible values for \fImode\fR are:
+.RS
+.TP
+.B gap
+Align the start of the longest gap between sectors with the index.
+.TP
+.B gap-end
+Align the end of the longest gap between sectors with the index.
+.TP
+.B index
+Align the start of the first sector on a track with the index.
+.TP
+.B sector, sector-end
+Align the end of the sector before the lowest numbered sector with the index.
+.TP
+.B sector-id
+Align the start of the lowest numbered sector with the index.
+.RE
+.TP
+.BI "mfm-align-am " "what pos"
+Rotate the track such that the first address mark of type \fIwhat\fR on
+the track is at bit position \fIpos\fR. Possible values for \fIwhat\fR are:
+.RS
+.TP
+.B "all"
+All address mark types
+.TP
+.B "iam"
+Index address marks
+.TP
+.B "idam"
+ID address marks
+.TP
+.B "dam"
+Data address marks
+.PP
+Multiple types can be combined by joining them with a '+' or a '-' sign.
+For example, the type \fBall-iam\fR specifies all address mark types except
+index address marks.
+.RE
+.TP
 .B new
 Create new tracks.
 .TP
-.BI "rotate " bits
-Rotate all selected tracks left by \fIbits\fR bits.
+.BI "rotate " cnt
+Rotate all selected tracks left by \fIcnt\fR bits. If \fIcnt\fR
+is negative, the track is rotated right.
+.TP
+.BI "rotate-angle " angle
+Rotate all selected tracks left by \fIangle\fR degrees. If \fIangle\fR
+is negative, the track is rotated right.
 .TP
 .BI "save " filename
 Save all selected tracks to \fIfilename\fR. The contents of the
 tracks are written sequentially to the file.
+.TP
+.B "weak-clean"
+Clean up the weak bit events on all selected tracks.
+.TP
+.BI "weak-close " max
+If two weak bits are separated by up to \fImax\fR non-weak bits, turn all
+non-weak bits in between into weak bits.
+.TP
+.BI "weak-detect " max
+Detect weak bits. All zero bits that are preceded by at least \fImax\fR zero
+bits are mared as weak.
+.TP
+.BI "weak-expand " "left right"
+Expand runs of weak bits by adding \fIleft\fR weak bits before every weak
+bit and \fIright\fR weak bits after every weak bit.
+.TP
+.BI "weak-load " filename
+Load the weak bit mask of all selected tracks from \fIfilename\fR. The weak
+bit masks are of the same size as the track data.
+.TP
+.BI "weak-open " max
+Remove all runs of up to \fImax\fR weak bits.
+.TP
+.BI "weak-save " filename
+Save the weak bit mask of all selected tracks to \fIfilename\fR. The weak
+bit masks are of the same size as the track data.
+.TP
+.BI "weak-set " "val"
+Set bits that are marked as weak to \fIval\fR which can be one of the
+following:
+.RS
+.TP
+.B 0
+Set bits to 0
+.TP
+.B 1
+Set bits to 1
+.TP
+.B flip
+Invert bits
+.TP
+.B random
+Set bits to a random value
+.RE
 .RE
 \
 .TP
@@ -160,6 +312,13 @@ it is assumed to be in kbits per seconds.
 .BI "-s, --set " "parameter value"
 Set a parameter value. Recognized parameters are:
 .RS
+.TP
+.BI "mac-align " mode
+When decoding Macintosh GCR tracks to text, align them using \fImode\fR. The
+rotation required for the alignment is recorded in the text output and undone
+when the text is re-encoded, so this alignment is purely for readability.
+See the \fB-p mac-align\fR operation for a description of the possible values
+for \fImode\fR.
 .TP
 .BI "mfm-auto-gap3 " boolean
 Automatically set the GAP3 length. The default is true.
@@ -180,8 +339,45 @@ Set the GAP3 length in bytes. The default is 80.
 .BI "mfm-gap4a " integer
 Set the GAP4A length in bytes. The default is 96.
 .TP
+.BI "mfm-min-size " integer
+Set the minimal sector size when decoding MFM.
+.TP
+.BI "mfm-nopos " integer
+If set to a non-zero value, ignore the PSI sector positions when encoding
+MFM tracks.
+.TP
 .BI "mfm-track-size " integer
 Set the track size in bits.
+.TP
+.BI "fm-auto-gap3 " boolean
+Automatically set the GAP3 length. The default is true.
+.TP
+.BI "fm-clock " integer
+Set the FM clock rate (this is twice the data rate). The default is
+250000, suitable for single density disks.
+.TP
+.BI "fm-iam " boolean
+If false, skip the index address mark. The default is false.
+.TP
+.BI "fm-gap1 " integer
+Set the GAP1 length in bytes. The default is 26.
+.TP
+.BI "fm-gap3 " integer
+Set the GAP3 length in bytes. The default is 27.
+.TP
+.BI "fm-gap4a " integer
+Set the GAP4A length in bytes. The default is 40.
+.TP
+.BI "fm-track-size " integer
+Set the track size in bits.
+.TP
+.BI "psi-pos " boolean
+Enable or disable setting the sector position in decoded PSI files. The
+default is not to record the position.
+.TP
+.BI "text-align " boolean
+If true, bit-align the text output to the first address mark on a track.
+The default is true.
 .RE
 \
 .TP
@@ -191,6 +387,14 @@ Select tracks. This is the same as using the \fB-c\fR and \fB-h\fR options.
 .TP
 .B "-v, --verbose"
 Enable verbose operation.
+\
+.TP
+.B "-x, --invert"
+Invert the selection.
+\
+.TP
+.B "-z, --clear"
+Clear the selection.
 \
 .TP
 .B --help

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/main.c                                        *
  * Created:     1999-04-16 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 1999-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 1999-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -34,12 +34,14 @@
 #include <SDL.h>
 #endif
 
+#include <lib/cfg.h>
 #include <lib/console.h>
 #include <lib/getopt.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
 #include <lib/path.h>
 #include <lib/sysdep.h>
+
 
 const char           *par_terminal = NULL;
 const char           *par_video = NULL;
@@ -50,7 +52,8 @@ ibmpc_t              *par_pc = NULL;
 
 ini_sct_t            *par_cfg = NULL;
 
-static ini_strings_t par_ini_str;
+static ini_strings_t par_ini_str1;
+static ini_strings_t par_ini_str2;
 
 
 static pce_option_t opts[] = {
@@ -92,7 +95,7 @@ void print_version (void)
 	fputs (
 		"pce-ibmpc version " PCE_VERSION_STR
 		"\n\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n",
+		"Copyright (C) 1995-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -102,9 +105,9 @@ void print_version (void)
 static
 void pc_log_banner (void)
 {
-	pce_log (MSG_MSG,
+	pce_log_inf (
 		"pce-ibmpc version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n"
+		"Copyright (C) 1995-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n"
 	);
 }
 
@@ -128,6 +131,10 @@ void sig_term (int s)
 	fprintf (stderr, "pce-ibmpc: sigterm\n");
 	fflush (stderr);
 
+	if (par_pc->brk == PCE_BRK_ABORT) {
+		exit (1);
+	}
+
 	par_pc->brk = PCE_BRK_ABORT;
 }
 
@@ -144,6 +151,16 @@ void sig_segv (int s)
 	pce_set_fd_interactive (0, 1);
 
 	exit (1);
+}
+
+void sim_stop (void)
+{
+	ibmpc_t *pc = par_pc;
+
+	pce_prt_sep ("BREAK");
+	prt_state_cpu (pc->cpu);
+
+	pc_set_msg (pc, "emu.stop", NULL);
 }
 
 static
@@ -198,23 +215,6 @@ void pc_log_deb (const char *msg, ...)
 	va_end (va);
 }
 
-static
-int pce_load_config (ini_sct_t *ini, const char *fname)
-{
-	if (fname == NULL) {
-		return (0);
-	}
-
-	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
-
-	if (ini_read (par_cfg, fname)) {
-		pce_log (MSG_ERR, "*** loading config file failed\n");
-		return (1);
-	}
-
-	return (0);
-}
-
 int main (int argc, char *argv[])
 {
 	int       r;
@@ -236,17 +236,15 @@ int main (int argc, char *argv[])
 		return (1);
 	}
 
-	ini_str_init (&par_ini_str);
+	ini_str_init (&par_ini_str1);
+	ini_str_init (&par_ini_str2);
 
-	int emscripten;
-	emscripten = 0;
-	#ifdef EMSCRIPTEN
-		// arg defaults
-		pce_log_set_level (stderr, MSG_DEB);
-		par_video = "vga";
-		cfg = "pce-config.cfg";
-		emscripten = 1;
-	#endif
+#ifdef EMSCRIPTEN
+	/* browser defaults */
+	pce_log_set_level (stderr, MSG_DEB);
+	par_video = "vga";
+	cfg = "pce-config.cfg";
+#endif
 
 	while (1) {
 		r = pce_getopt (argc, argv, &optarg, opts);
@@ -269,7 +267,7 @@ int main (int argc, char *argv[])
 			return (0);
 
 		case 'b':
-			ini_str_add (&par_ini_str, "system.boot = ", optarg[0], "\n");
+			ini_str_add (&par_ini_str2, "system.boot = ", optarg[0], "\n");
 			break;
 
 		case 'c':
@@ -282,20 +280,15 @@ int main (int argc, char *argv[])
 
 		case 'g':
 			par_video = optarg[0];
+			ini_str_add (&par_ini_str1, "cfg.video = \"", optarg[0], "\"\n");
 			break;
 
 		case 'i':
-			if (ini_read_str (par_cfg, optarg[0])) {
-				fprintf (stderr,
-					"%s: error parsing ini string (%s)\n",
-					argv[0], optarg[0]
-				);
-				return (1);
-			}
+			ini_str_add (&par_ini_str1, optarg[0], "\n", NULL);
 			break;
 
 		case 'I':
-			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
+			ini_str_add (&par_ini_str2, optarg[0], "\n", NULL);
 			break;
 
 		case 'l':
@@ -303,7 +296,7 @@ int main (int argc, char *argv[])
 			break;
 
 		case 'p':
-			ini_str_add (&par_ini_str, "cpu.model = \"",
+			ini_str_add (&par_ini_str2, "cpu.model = \"",
 				optarg[0], "\"\n"
 			);
 			break;
@@ -322,10 +315,11 @@ int main (int argc, char *argv[])
 
 		case 't':
 			par_terminal = optarg[0];
+			ini_str_add (&par_ini_str1, "cfg.terminal = \"", optarg[0], "\"\n");
 			break;
 
 		case 's':
-			ini_str_add (&par_ini_str, "cpu.speed = ",
+			ini_str_add (&par_ini_str2, "cpu.speed = ",
 				optarg[0], "\n"
 			);
 			break;
@@ -347,6 +341,10 @@ int main (int argc, char *argv[])
 
 	pc_log_banner();
 
+	if (ini_str_eval (&par_ini_str1, par_cfg, 1)) {
+		return (1);
+	}
+
 	if (pce_load_config (par_cfg, cfg)) {
 		return (1);
 	}
@@ -357,7 +355,7 @@ int main (int argc, char *argv[])
 		sct = par_cfg;
 	}
 
-	if (ini_str_eval (&par_ini_str, sct, 1)) {
+	if (ini_str_eval (&par_ini_str2, sct, 1)) {
 		return (1);
 	}
 
@@ -382,6 +380,7 @@ int main (int argc, char *argv[])
 	mon_set_msg_fct (&par_mon, pc_set_msg, par_pc);
 	mon_set_get_mem_fct (&par_mon, par_pc->mem, mem_get_uint8);
 	mon_set_set_mem_fct (&par_mon, par_pc->mem, mem_set_uint8);
+	mon_set_set_memrw_fct (&par_mon, par_pc->mem, mem_set_uint8_rw);
 	mon_set_memory_mode (&par_mon, 1);
 
 	cmd_init (par_pc, cmd_get_sym, cmd_set_sym);
@@ -389,11 +388,11 @@ int main (int argc, char *argv[])
 
 	pc_reset (par_pc);
 
+#ifdef EMSCRIPTEN
+	/* does not return */
+	pc_run_emscripten (par_pc);
+#endif
 
-	if (emscripten || 1) {
-		pc_run_emscripten(par_pc);
-		exit(1);
-	}
 	if (nomon) {
 		while (par_pc->brk != PCE_BRK_ABORT) {
 			pc_run (par_pc);

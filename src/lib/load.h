@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/load.h                                               *
  * Created:     2004-08-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -32,6 +32,7 @@
 int pce_load_blk_bin (mem_blk_t *blk, const char *fname);
 
 int pce_load_mem_ihex (memory_t *mem, const char *fname);
+int pce_load_mem_mhex (memory_t *mem, const char *fname);
 int pce_load_mem_srec (memory_t *mem, const char *fname);
 int pce_load_mem_bin (memory_t *mem, const char *fname, unsigned long base);
 

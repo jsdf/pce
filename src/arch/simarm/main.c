@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/simarm/main.c                                       *
  * Created:     2004-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2022 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -16,7 +16,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -27,46 +27,72 @@
 
 
 #include "main.h"
-#include "cmd_arm.h"
-#include "simarm.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <string.h>
-
 #include <signal.h>
 
+#include "cmd_arm.h"
+#include "simarm.h"
+
+#include <lib/cfg.h>
+#include <lib/cmd.h>
 #include <lib/console.h>
+#include <lib/getopt.h>
 #include <lib/log.h>
 #include <lib/monitor.h>
+#include <lib/path.h>
 #include <lib/sysdep.h>
 
+#include <libini/libini.h>
 
-char      *par_cpu = NULL;
 
-unsigned  par_xlat = ARM_XLAT_CPU;
+static pce_option_t opts[] = {
+	{ '?', 0, "help", NULL, "Print usage information" },
+	{ 'c', 1, "config", "string", "Set the config file name [none]" },
+	{ 'd', 1, "path", "string", "Add a directory to the search path" },
+	{ 'i', 1, "ini-prefix", "string", "Add an ini string before the config file" },
+	{ 'I', 1, "ini-append", "string", "Add an ini string after the config file" },
+	{ 'l', 1, "log", "string", "Set the log file name [none]" },
+	{ 'q', 0, "quiet", NULL, "Set the log level to error [no]" },
+	{ 'r', 0, "run", NULL, "Start running immediately [no]" },
+	{ 'v', 0, "verbose", NULL, "Set the log level to debug [no]" },
+	{ 'V', 0, "version", NULL, "Print version information" },
+	{  -1, 0, NULL, NULL, NULL }
+};
 
-simarm_t  *par_sim = NULL;
 
-unsigned  par_sig_int = 0;
+unsigned             par_xlat = ARM_XLAT_CPU;
 
-ini_sct_t *par_cfg = NULL;
+simarm_t             *par_sim = NULL;
 
-static monitor_t par_mon;
+unsigned             par_sig_int = 0;
+
+ini_sct_t            *par_cfg = NULL;
+
+static ini_strings_t par_ini_str;
 
 
 static
-void prt_help (void)
+void print_help (void)
+{
+	pce_getopt_help (
+		"pce-simarm: ARM emulator",
+		"usage: pce-simarm [options]",
+		opts
+	);
+
+	fflush (stdout);
+}
+
+static
+void print_version (void)
 {
 	fputs (
-		"usage: pce-simarm [options]\n"
-		"  -c, --config string    Set the config file\n"
-		"  -l, --log string       Set the log file\n"
-		"  -p, --cpu string       Set the cpu model\n"
-		"  -q, --quiet            Quiet operation [no]\n"
-		"  -r, --run              Start running immediately\n"
-		"  -v, --verbose          Verbose operation [no]\n",
+		"pce-simarm version " PCE_VERSION_STR
+		"\n\n"
+		"Copyright (C) 1995-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n",
 		stdout
 	);
 
@@ -74,30 +100,41 @@ void prt_help (void)
 }
 
 static
-void prt_version (void)
+void sim_log_banner (void)
 {
-	fputs (
-		"pce-simarm version " PCE_VERSION_STR
-		"\n\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n",
-		stdout
+	pce_log_inf (
+		"pce-simarm version " PCE_VERSION_STR "\n"
+		"Copyright (C) 2004-" PCE_YEAR " Hampa Hug <hampa@hampa.ch>\n"
 	);
-
-	fflush (stdout);
 }
 
 static
 void sig_int (int s)
 {
-	signal (s, sig_int);
+	fprintf (stderr, "\npce-simarm: sigint\n");
+	fflush (stderr);
 
-	par_sig_int = 1;
+	par_sim->brk = PCE_BRK_STOP;
 }
 
 static
-void sig_terminate (int s)
+void sig_term (int s)
 {
-	fprintf (stderr, "pce-simarm: signal %d\n", s);
+	fprintf (stderr, "\npce-simarm: sigterm\n");
+	fflush (stderr);
+
+	if (par_sim->brk == PCE_BRK_ABORT) {
+		pce_set_fd_interactive (0, 1);
+		exit (1);
+	}
+
+	par_sim->brk = PCE_BRK_ABORT;
+}
+
+static
+void sig_segv (int s)
+{
+	fprintf (stderr, "pce-simarm: segmentation fault\n");
 
 	if ((par_sim != NULL) && (par_sim->cpu != NULL)) {
 		sarm_prt_state_cpu (par_sim->cpu, stderr);
@@ -131,7 +168,7 @@ int cmd_set_sym (simarm_t *sim, const char *sym, unsigned long val)
 }
 
 static
-unsigned char sarm_get_mem8 (simarm_t *sim, unsigned long addr)
+unsigned char sim_get_mem8 (simarm_t *sim, unsigned long addr)
 {
 	unsigned char val;
 
@@ -143,69 +180,21 @@ unsigned char sarm_get_mem8 (simarm_t *sim, unsigned long addr)
 }
 
 static
-void sarm_set_mem8 (simarm_t *sim, unsigned long addr, unsigned char val)
+void sim_set_mem8 (simarm_t *sim, unsigned long addr, unsigned char val)
 {
 	if (arm_set_mem8 (sim->cpu, addr, par_xlat, val)) {
 		; /* TLB miss */
 	}
 }
 
-static
-int pce_load_config (ini_sct_t *ini, const char *fname)
-{
-	if (fname == NULL) {
-		return (0);
-	}
-
-	pce_log_tag (MSG_INF, "CONFIG:", "file=\"%s\"\n", fname);
-
-	if (ini_read (par_cfg, fname)) {
-		pce_log (MSG_ERR, "*** loading config file failed\n");
-		return (1);
-	}
-
-	return (0);
-}
-
-int str_isarg1 (const char *str, const char *arg)
-{
-	if (strcmp (str, arg) == 0) {
-		return (1);
-	}
-
-	return (0);
-}
-
-int str_isarg2 (const char *str, const char *arg1, const char *arg2)
-{
-	if (strcmp (str, arg1) == 0) {
-		return (1);
-	}
-
-	if (strcmp (str, arg2) == 0) {
-		return (1);
-	}
-
-	return (0);
-}
-
 int main (int argc, char *argv[])
 {
-	int       i;
+	int       r;
+	char      **optarg;
 	int       run;
 	char      *cfg;
 	ini_sct_t *sct;
-
-	if (argc == 2) {
-		if (str_isarg1 (argv[1], "--help")) {
-			prt_help();
-			return (0);
-		}
-		else if (str_isarg1 (argv[1], "--version")) {
-			prt_version();
-			return (0);
-		}
-	}
+	monitor_t mon;
 
 	cfg = NULL;
 	run = 0;
@@ -219,51 +208,78 @@ int main (int argc, char *argv[])
 		return (1);
 	}
 
-	i = 1;
-	while (i < argc) {
-		if (str_isarg2 (argv[i], "-v", "--verbose")) {
-			pce_log_set_level (stderr, MSG_DEB);
-		}
-		else if (str_isarg2 (argv[i], "-q", "--quiet")) {
-			pce_log_set_level (stderr, MSG_ERR);
-		}
-		else if (str_isarg2 (argv[i], "-c", "--config")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			cfg = argv[i];
-		}
-		else if (str_isarg2 (argv[i], "-l", "--log")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
-			pce_log_add_fname (argv[i], MSG_DEB);
-		}
-		else if (str_isarg2 (argv[i], "-p", "--cpu")) {
-			i += 1;
-			if (i >= argc) {
-				return (1);
-			}
+	ini_str_init (&par_ini_str);
 
-			par_cpu = argv[i];
+	while (1) {
+		r = pce_getopt (argc, argv, &optarg, opts);
+
+		if (r == GETOPT_DONE) {
+			break;
 		}
-		else if (str_isarg2 (argv[i], "-r", "--run")) {
-			run = 1;
-		}
-		else {
-			printf ("%s: unknown option (%s)\n", argv[0], argv[i]);
+
+		if (r < 0) {
 			return (1);
 		}
 
-		i += 1;
+		switch (r) {
+		case '?':
+			print_help();
+			return (0);
+
+		case 'V':
+			print_version();
+			return (0);
+
+		case 'c':
+			cfg = optarg[0];
+			break;
+
+		case 'd':
+			pce_path_set (optarg[0]);
+			break;
+
+		case 'i':
+			if (ini_read_str (par_cfg, optarg[0])) {
+				fprintf (stderr,
+					"%s: error parsing ini string (%s)\n",
+					argv[0], optarg[0]
+				);
+				return (1);
+			}
+			break;
+
+		case 'I':
+			ini_str_add (&par_ini_str, optarg[0], "\n", NULL);
+			break;
+
+		case 'l':
+			pce_log_add_fname (optarg[0], MSG_DEB);
+			break;
+
+		case 'q':
+			pce_log_set_level (stderr, MSG_ERR);
+			break;
+
+		case 'r':
+			run = 1;
+			break;
+
+		case 'v':
+			pce_log_set_level (stderr, MSG_DEB);
+			break;
+
+		case 0:
+			fprintf (stderr, "%s: unknown option (%s)\n",
+				argv[0], optarg[0]
+			);
+			return (1);
+
+		default:
+			return (1);
+		}
 	}
 
-	pce_log (MSG_INF,
-		"pce-simarm version " PCE_VERSION_STR "\n"
-		"Copyright (C) 1995-2012 Hampa Hug <hampa@hampa.ch>\n"
-	);
+	sim_log_banner();
 
 	if (pce_load_config (par_cfg, cfg)) {
 		return (1);
@@ -275,11 +291,17 @@ int main (int argc, char *argv[])
 		sct = par_cfg;
 	}
 
+	if (ini_str_eval (&par_ini_str, sct, 1)) {
+		return (1);
+	}
+
+	pce_path_ini (sct);
+
 	par_sim = sarm_new (sct);
 
 	signal (SIGINT, sig_int);
-	signal (SIGTERM, sig_terminate);
-	signal (SIGSEGV, sig_terminate);
+	signal (SIGTERM, sig_term);
+	signal (SIGSEGV, sig_segv);
 
 #ifdef SIGPIPE
 	signal (SIGPIPE, SIG_IGN);
@@ -287,15 +309,15 @@ int main (int argc, char *argv[])
 
 	pce_console_init (stdin, stdout);
 
-	mon_init (&par_mon);
-	mon_set_cmd_fct (&par_mon, sarm_do_cmd, par_sim);
-	mon_set_msg_fct (&par_mon, sarm_set_msg, par_sim);
-	mon_set_get_mem_fct (&par_mon, par_sim, sarm_get_mem8);
-	mon_set_set_mem_fct (&par_mon, par_sim, sarm_set_mem8);
-	mon_set_memory_mode (&par_mon, 0);
+	mon_init (&mon);
+	mon_set_cmd_fct (&mon, sarm_do_cmd, par_sim);
+	mon_set_msg_fct (&mon, sarm_set_msg, par_sim);
+	mon_set_get_mem_fct (&mon, par_sim, sim_get_mem8);
+	mon_set_set_mem_fct (&mon, par_sim, sim_set_mem8);
+	mon_set_memory_mode (&mon, 0);
 
 	cmd_init (par_sim, cmd_get_sym, cmd_set_sym);
-	sarm_cmd_init (par_sim, &par_mon);
+	sarm_cmd_init (par_sim, &mon);
 
 	sarm_reset (par_sim);
 
@@ -306,16 +328,14 @@ int main (int argc, char *argv[])
 		}
 	}
 	else {
-		pce_log (MSG_INF, "type 'h' for help\n");
+		pce_puts ("type 'h' for help\n");
 	}
 
-	if (par_sim->brk != PCE_BRK_ABORT) {
-		mon_run (&par_mon);
-	}
+	mon_run (&mon);
 
 	sarm_del (par_sim);
 
-	mon_free (&par_mon);
+	mon_free (&mon);
 	pce_console_done();
 	pce_log_done();
 

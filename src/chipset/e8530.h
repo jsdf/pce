@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e8530.h                                          *
  * Created:     2007-11-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -39,6 +39,8 @@ typedef struct {
 
 	unsigned char txd_empty;
 	unsigned char rxd_empty;
+
+	unsigned char int_on_next_rx;
 
 	unsigned long bps;
 	unsigned      parity;
@@ -93,6 +95,9 @@ typedef struct {
 
 void e8530_init (e8530_t *scc);
 void e8530_free (e8530_t *scc);
+
+e8530_t *e8530_new (void);
+void e8530_del (e8530_t *scc);
 
 void e8530_set_irq_fct (e8530_t *scc, void *ext, void *fct);
 

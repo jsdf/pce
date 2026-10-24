@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm.c                                       *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -64,16 +64,14 @@ int iwm_drv_init (mac_iwm_drive_t *drv, unsigned drive)
 {
 	drv->drive = drive;
 
-	drv->fname = NULL;
-
 	drv->dsks = NULL;
 	drv->diskid = drive;
 
 	drv->img = NULL;
+	drv->img_del = 0;
 
-	drv->use_fname = 0;
-	drv->locked = 0;
 	drv->auto_rotate = 0;
+	drv->use_pwm = 1;
 
 	drv->cylinders = MAC_IWM_CYLINDERS;
 	drv->heads = 1;
@@ -92,6 +90,12 @@ int iwm_drv_init (mac_iwm_drive_t *drv, unsigned drive)
 	drv->cur_track_pos = 0;
 	drv->cur_track_len = 0;
 
+	drv->evt = NULL;
+
+	drv->weak_mask = 0;
+	drv->weak_run = 0;
+	drv->weak_val = 0;
+
 	drv->pwm_pos = 0;
 	drv->pwm_len = 65000;
 
@@ -103,6 +107,7 @@ int iwm_drv_init (mac_iwm_drive_t *drv, unsigned drive)
 	drv->input_clock = MAC_CPU_CLOCK / 10;
 	drv->input_clock_cnt = 0;
 
+	drv->track_dirty = 0;
 	drv->dirty = 0;
 
 	return (0);
@@ -115,24 +120,16 @@ void iwm_drv_free (mac_iwm_drive_t *drv)
 		iwm_drv_save (drv);
 	}
 
-	pri_img_del (drv->img);
+	if (drv->img_del) {
+		pri_img_del (drv->img);
+	}
 }
 
-/*
- * CLK = (0x4000000/x)*8
- * BIT = CLK/ICLK*500000
- * BIT = 8*(0x4000000/x)/ICLK*500000
- * tracks  0-15: [0x11e9 0x1135]  [74734 77788]  76261
- * tracks 16-31: [0x138a 0x12c6]  [68505 71298]  69902
- * tracks 32-47: [0x157f 0x14a7]  [62265 64813]  63539
- * tracks 48-63: [0x17e2 0x16f2]  [56046 58333]  57190
- * tracks 64-79: [0x1ade 0x19d0]  [49821 51854]  50838
-*/
 static
 unsigned long iwm_drv_get_track_length (unsigned cyl)
 {
 	static unsigned long length_tab[5] = {
-		76262, 69902, 63540, 57190, 50838
+		74640, 68240, 62200, 55980, 49760
 	};
 
 	if (cyl > 79) {
@@ -153,6 +150,35 @@ void iwm_drv_write_end (mac_iwm_drive_t *drv)
 	}
 
 	drv->write_cnt = 0;
+}
+
+static
+void iwm_drv_print_status (mac_iwm_drive_t *drv)
+{
+	char state1, state2;
+
+	if (drv->motor_on == 0) {
+		return;
+	}
+
+	state1 = drv->dirty ? '*' : ' ';
+
+	if (drv->track_dirty & 2) {
+		state2 = '+';
+	}
+	else if (drv->track_dirty & 1) {
+		state2 = '*';
+	}
+	else {
+		state2 = ' ';
+	}
+
+	pce_printf ("IWM: %cD%u %c%u/%u    \r",
+		state1,
+		drv->drive + 1,
+		state2,
+		drv->cur_cyl, drv->cur_head
+	);
 }
 
 static
@@ -192,6 +218,23 @@ void iwm_drv_select_track (mac_iwm_drive_t *drv, unsigned c, unsigned h)
 	if (drv->cur_track_pos >= drv->cur_track_len) {
 		drv->cur_track_pos = 0;
 	}
+
+	drv->read_pos = drv->cur_track_pos;
+	drv->write_pos = drv->cur_track_pos;
+
+	drv->evt = trk->evt;
+
+	while ((drv->evt != NULL) && (drv->evt->pos < drv->cur_track_pos)) {
+		drv->evt = drv->evt->next;
+	}
+
+	drv->weak_mask = 0;
+	drv->weak_run = 0;
+	drv->weak_val = 0;
+
+	drv->track_dirty = 0;
+
+	iwm_drv_print_status (drv);
 }
 
 static
@@ -356,14 +399,11 @@ int iwm_drv_get_locked (mac_iwm_drive_t *drv)
 	int    val;
 	disk_t *dsk;
 
-	val = drv->locked;
-
-	if (drv->use_fname == 0) {
-		dsk = dsks_get_disk (drv->dsks, drv->diskid);
-
-		if ((dsk != NULL) && dsk_get_readonly (dsk)) {
-			val = 1;
-		}
+	if ((dsk = dsks_get_disk (drv->dsks, drv->diskid)) != NULL){
+		val = dsk_get_readonly (dsk);
+	}
+	else {
+		val = 1;
 	}
 
 #if DEBUG_IWM >= 2
@@ -397,7 +437,7 @@ int iwm_drv_get_tacho (mac_iwm_drive_t *drv)
 	int           val;
 	unsigned long pwm;
 
-	if (drv->heads == 1) {
+	if (drv->use_pwm) {
 		pwm = 65536 - drv->pwm_val;
 
 		val = ((((120 * pwm) / 32768) * drv->pwm_pos) / drv->pwm_len) & 1;
@@ -475,11 +515,7 @@ void iwm_drv_set_step (mac_iwm_drive_t *drv)
 
 	drv->stepping = 1;
 
-	iwm_drv_select_track(drv, drv->cur_cyl, drv->cur_head);
-
-	pce_printf ("IWM: D%u Track %u    \r",
-		drv->drive + 1, drv->cur_cyl
-	);
+	iwm_drv_select_track (drv, drv->cur_cyl, drv->cur_head);
 
 #if DEBUG_IWM >= 2
 	mac_log_deb ("iwm: drive %u step to track %u\n",
@@ -534,6 +570,16 @@ void iwm_drv_set_eject (mac_iwm_drive_t *drv)
 	if (drv->dirty) {
 		iwm_drv_save (drv);
 	}
+
+	if (drv->img_del) {
+		pri_img_del (drv->img);
+	}
+
+	drv->img = NULL;
+	drv->img_del = 0;
+
+	drv->cur_track = NULL;
+	drv->evt = NULL;
 }
 
 void mac_iwm_init (mac_iwm_t *iwm)
@@ -559,6 +605,8 @@ void mac_iwm_init (mac_iwm_t *iwm)
 
 	iwm->pwm_val = 0;
 
+	iwm->rand = 1;
+
 	for (i = 0; i < MAC_IWM_DRIVES; i++) {
 		iwm_drv_init (&iwm->drv[i], i);
 	}
@@ -579,10 +627,30 @@ void mac_iwm_free (mac_iwm_t *iwm)
 	}
 }
 
+static
+int iwm_get_random (mac_iwm_t *iwm)
+{
+	if (iwm->rand & 1) {
+		iwm->rand = (iwm->rand >> 1) ^ 0x80000057;
+	}
+	else {
+		iwm->rand = iwm->rand >> 1;
+	}
+
+	return (iwm->rand & 1);
+}
+
 void mac_iwm_set_motor_fct (mac_iwm_t *iwm, void *ext, void *fct)
 {
 	iwm->set_motor_ext = ext;
 	iwm->set_motor = fct;
+}
+
+void mac_iwm_enable_pwm (mac_iwm_t *iwm, unsigned drive, int val)
+{
+	if (drive < MAC_IWM_DRIVES) {
+		iwm->drv[drive].use_pwm = (val != 0);
+	}
 }
 
 int mac_iwm_set_heads (mac_iwm_t *iwm, unsigned drive, unsigned heads)
@@ -624,52 +692,26 @@ void mac_iwm_set_disk_id (mac_iwm_t *iwm, unsigned drive, unsigned id)
 	}
 }
 
-void mac_iwm_set_fname (mac_iwm_t *iwm, unsigned drive, const char *fname)
+void mac_iwm_flush_disk (mac_iwm_t *iwm, unsigned id)
 {
-	unsigned n;
-	char     *str;
+	unsigned i;
 
-	if (drive >= MAC_IWM_DRIVES) {
-		return;
+	for (i = 0; i < MAC_IWM_DRIVES; i++) {
+		if (iwm->drv[i].diskid == id) {
+			iwm_drv_set_eject (iwm->drv + i);
+		}
 	}
-
-	free (iwm->drv[drive].fname);
-	iwm->drv[drive].fname = NULL;
-	iwm->drv[drive].use_fname = 0;
-
-	if (fname == NULL) {
-		return;
-	}
-
-	n = strlen (fname);
-
-	str = malloc (n + 1);
-
-	if (str == NULL) {
-		return;
-	}
-
-	memcpy (str, fname, n + 1);
-
-	iwm->drv[drive].fname = str;
 }
 
-int mac_iwm_get_locked (const mac_iwm_t *iwm, unsigned drive)
+void mac_iwm_insert_disk (mac_iwm_t *iwm, unsigned id)
 {
-	if (drive >= MAC_IWM_DRIVES) {
-		return (1);
+	unsigned i;
+
+	for (i = 0; i < MAC_IWM_DRIVES; i++) {
+		if (iwm->drv[i].diskid == id) {
+			mac_iwm_insert (iwm, i);
+		}
 	}
-
-	return (iwm->drv[drive].locked != 0);
-}
-
-void mac_iwm_set_locked (mac_iwm_t *iwm, unsigned drive, int locked)
-{
-	if (drive >= MAC_IWM_DRIVES) {
-		return;
-	}
-
-	iwm->drv[drive].locked = (locked != 0);
 }
 
 void mac_iwm_set_auto_rotate (mac_iwm_t *iwm, unsigned drive, int val)
@@ -1004,7 +1046,9 @@ void mac_iwm_access_uint8 (mac_iwm_t *iwm, unsigned reg)
 
 		if (iwm->writing) {
 			iwm->writing = 0;
+			iwm->curdrv->track_dirty &= ~2U;
 			iwm_drv_write_end (iwm->curdrv);
+			iwm_drv_print_status (iwm->curdrv);
 		}
 	}
 }
@@ -1085,6 +1129,9 @@ void mac_iwm_set_uint8 (mac_iwm_t *iwm, unsigned long addr, unsigned char val)
 				iwm->writing = 1;
 				iwm->shift_cnt = 0;
 				iwm->curdrv->write_cnt = 0;
+				iwm->curdrv->track_dirty |= 3;
+
+				iwm_drv_print_status (iwm->curdrv);
 #if DEBUG_IWM >= 1
 				mac_log_deb (
 					"iwm: drive %u writing track %u head %u\n",
@@ -1134,6 +1181,14 @@ void mac_iwm_read (mac_iwm_t *iwm, mac_iwm_drive_t *drv)
 	data = drv->cur_track->data;
 
 	while (drv->read_pos != drv->cur_track_pos) {
+		while ((drv->evt != NULL) && (drv->evt->pos == drv->read_pos)) {
+			if (drv->evt->type == PRI_EVENT_WEAK) {
+				drv->weak_mask |= drv->evt->val & 0xffffffff;
+			}
+
+			drv->evt = drv->evt->next;
+		}
+
 		iwm->shift = (iwm->shift << 1) | ((data[p] & m) != 0);
 
 		if (iwm->shift & 1) {
@@ -1141,11 +1196,33 @@ void mac_iwm_read (mac_iwm_t *iwm, mac_iwm_drive_t *drv)
 		}
 		else {
 			iwm->read_zero_cnt += 1;
+		}
 
-			if (iwm->read_zero_cnt >= 8) {
-				iwm->read_zero_cnt = 0;
-				iwm->shift |= 1;
+		if ((drv->weak_run != 0) || (drv->weak_mask != 0)) {
+			if (drv->weak_run > 0) {
+				iwm->shift &= ~1U;
+				iwm->shift |= drv->weak_val & 1;
+				drv->weak_val >>= 1;
+				drv->weak_run -= 1;
 			}
+			else if (drv->weak_mask & 0x80000000) {
+				iwm->shift &= ~1U;
+				iwm->shift |= iwm_get_random (iwm) & 1;
+			}
+
+			if ((drv->weak_mask & 0xf0000000) == 0x60000000) {
+				drv->weak_run = 2;
+				drv->weak_val = 1;
+				drv->weak_val <<= iwm_get_random (iwm) & 1;
+			}
+			else if ((drv->weak_mask & 0xf8000000) == 0x70000000) {
+				drv->weak_run = 3;
+				drv->weak_val = 1;
+				drv->weak_val <<= iwm_get_random (iwm) & 1;
+				drv->weak_val <<= iwm_get_random (iwm) & 1;
+			}
+
+			drv->weak_mask = (drv->weak_mask << 1) & 0xffffffff;
 		}
 
 		drv->read_pos += 1;
@@ -1154,6 +1231,7 @@ void mac_iwm_read (mac_iwm_t *iwm, mac_iwm_drive_t *drv)
 			drv->read_pos = 0;
 			p = 0;
 			m = 0x80;
+			drv->evt = drv->cur_track->evt;
 		}
 		else if (m == 1) {
 			m = 0x80;
@@ -1197,6 +1275,7 @@ void mac_iwm_write (mac_iwm_t *iwm, mac_iwm_drive_t *drv)
 				iwm->handshake &= ~0x40;
 				iwm->shift_cnt = 0;
 				iwm->writing = 0;
+				iwm->curdrv->track_dirty &= ~2U;
 
 				iwm_drv_write_end (drv);
 
@@ -1215,6 +1294,7 @@ void mac_iwm_write (mac_iwm_t *iwm, mac_iwm_drive_t *drv)
 			data[p] &= ~m;
 		}
 
+		drv->track_dirty |= 3;
 		drv->dirty = 1;
 
 		iwm->shift = (iwm->shift << 1) & 0xff;

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/speaker.h                                     *
  * Created:     2010-02-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,6 +23,8 @@
 #ifndef PCE_IBMPC_SPEAKER_H
 #define PCE_IBMPC_SPEAKER_H 1
 
+
+#include <stdint.h>
 
 #include <drivers/sound/sound.h>
 

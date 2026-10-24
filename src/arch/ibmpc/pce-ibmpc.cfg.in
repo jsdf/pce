@@ -40,6 +40,10 @@ system {
 	# Enable read access to the host's RTC.
 	rtc = 1
 
+	# When a CGA compatible video card is selected, start up
+	# in 40 column mode.
+	cga40 = 0
+
 	# Patch the main BIOS before the emulator starts running.
 	# If this option is set, the main BIOS is patched to use
 	# a custom initialization routine.
@@ -300,11 +304,7 @@ video {
 	#   1 = thin font
 	font = 0
 
-	# Load the 8*8 CGA ROM font from a binary file.
-	# This option overrides the "font" option.
-	#file = "cga.bin"
-
-	# The blink frequency for blinking characters and the
+	# The blink rate for blinking characters and the
 	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
@@ -318,11 +318,12 @@ video {
 	color = "amber"
 
 	#color_background = 0x000000
-	#color_normal = 0xe89050
-	#color_bright = 0xfff0c8
-	#color_graphics = 0xfff0c8
+	#color_dim = 0x752500
+	#color_normal = 0xca7a2a
+	#color_bright = 0xffcf7f
+	#color_graphics = 0xca7a2a
 
-	# The blink frequency for blinking characters and the
+	# The blink rate for blinking characters and the
 	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
@@ -336,11 +337,12 @@ video {
 	color = "green"
 
 	#color_background = 0x000000
-	#color_normal = 0x55aa55
-	#color_bright = 0xaaffaa
-	#color_graphics = 0xaaffaa
+	#color_dim = 0x005500
+	#color_normal = 0x00aa25
+	#color_bright = 0x55ff7a
+	#color_graphics = 0x00aa25
 
-	# The blink frequency for blinking characters and the
+	# The blink rate for blinking characters and the
 	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
@@ -349,6 +351,13 @@ video {
 	# Plantronics Colorplus
 	device = "plantronics"
 
+	# Select the text mode font:
+	#   0 = Thick font (default)
+	#   1 = Thin font
+	font = 0
+
+	# The blink rate for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
 
@@ -356,6 +365,11 @@ video {
 	# Olivetti M24
 	device = "olivetti"
 
+	# Set the monitor type to either color or mono.
+	mono = 0
+
+	# The blink rate for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
 
@@ -363,6 +377,13 @@ video {
 	# Wyse 700
 	device = "wy700"
 
+	# Select the text mode font:
+	#   0 = Thick font
+	#   1 = Thin font
+	font = 0
+
+	# The blink rate for blinking characters and the
+	# cursor. Setting this to 0 will turn off blinking.
 	blink = 16
 }
 
@@ -384,6 +405,35 @@ speaker {
 	#driver = "wav:wav=speaker.wav:lowpass=0:wavfilter=0"
 	#driver = "oss:dev=/dev/dsp:wav=speaker.wav:lowpass=0:wavfilter=0"
 	driver = "sdl:wav=speaker.wav:lowpass=0:wavfilter=0"
+}
+
+
+covox {
+	# Disable the covox DAC
+	mode = "none"
+
+	# A simple covox DAC
+	#mode = "covox"
+
+	# Disney sound source
+	#mode = "disney"
+
+	# The volume in the range [0...1000]
+	volume = 500
+
+	# Apply a low-pass filter with the specified cut-off
+	# frequency in Herz. This is separate from the low-pass
+	# filter in the sound driver. If the frequency is 0,
+	# the filter is disabled.
+	lowpass = 3000
+
+	# The sample rate at which sound is sent to the sound driver.
+	sample_rate = 44100
+
+	# The parallel port
+	parport = 1
+
+	driver = "wav:wav=covox.wav:lowpass=0:wavfilter=0"
 }
 
 
@@ -442,43 +492,26 @@ parport {
 
 
 # The cassette interface
+#
+# There are two separate tape images, one for reading and one for
+# writing. Data is read from the read image at the current position
+# and written to the end of the write tape.
+# If a separate read tape image is not specified, data will be read
+# from the write tape at the current position.
 cassette {
 	enable = 1
 
-	# The cassette data file. The file will be created if
+	# The tape image file. The file will be created if
 	# it does not exist.
-	file = "cas1.cas"
+	# Setting this is equivalent to setting a write image and
+	# not setting a read image.
+	file = "cas1.pti"
 
-	# The data format
-	#
-	# 1: Read and write cassette data as 8 bit signed PCM at
-	#    44100 HZ.
-	#
-	# 0: Read and write cassette data as binary.
-	#
-	# If pcm is not defined, PCM mode is set if the file name ends
-	# with ".pcm", binary mode otherwise.
-	#pcm = 1
+	# The read tape image.
+	#read = "cas1.pti
 
-	# PCM filtering
-	#
-	# 1: Apply a low-pass filter to the PCM data written to the
-	#    cassette file.
-	#
-	# 0: The PCM data written to the cassette file is a
-	#    square wave.
-	filter = 1
-
-	# The initial cassette mode (load or save). The default
-	# is "load".
-	mode = "load"
-
-	# The initial tape file position. The default is 0.
-	position = 0
-
-	# If append is true then the file position is set to the
-	# end of the file instead of to "position".
-	append = 0
+	# The write tape image.
+	#write = "cas1.pti"
 }
 
 
@@ -495,6 +528,11 @@ fdc {
 	drive2 = 0x02
 	drive3 = 0x03
 
+	# Set the verbosity level. A level of 0 produces no output, higher
+	# levels produce more output. Levels above 2 are insane. The highest
+	# level is 5.
+	verbose = 0
+
 	# Enable or disable accurate timing.
 	# If accurate timing is enabled, the CPU speed should be set to
 	# 1, otherwise timeout errors will occur.
@@ -505,6 +543,11 @@ fdc {
 	# work, but floppy disks with more than 8 or 9 sectors per track
 	# can be used even with older BIOSes.
 	ignore_eot = 0
+
+	# Specify single sided drives
+	# This option is a bit mask, with the least significant bit
+	# corresponding to drive 0. Set bits indicate single sided drives.
+	single_sided = 0
 }
 
 

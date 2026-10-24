@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/video.c                                     *
  * Created:     2011-03-17 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -69,6 +69,8 @@ int st_video_init (st_video_t *vid, unsigned long addr, int mono)
 
 	vid->frame_skip = 0;
 	vid->frame_skip_max = 1;
+
+	vid->trm = NULL;
 
 	vid->hb_val = 0;
 	vid->hb_ext = NULL;
@@ -306,6 +308,7 @@ unsigned char st_video_get_uint8 (st_video_t *vid, unsigned long addr)
 
 	case 0x40: /* palette */
 	case 0x5f:
+		st_log_deb ("video get palette (%06lX)\n", addr);
 		val = 0;
 		break;
 
@@ -327,8 +330,17 @@ unsigned short st_video_get_uint16 (st_video_t *vid, unsigned long addr)
 {
 	unsigned short val;
 
-	if ((addr >= 0x0040) && (addr < 0x0060)) {
+	if (addr == 0) {
+		val = (vid->base >> 16) & 0xff;
+	}
+	else if (addr == 2) {
+		val = (vid->base >> 8) & 0xff;
+	}
+	else if ((addr >= 0x0040) && (addr < 0x0060)) {
 		val = vid->palette[(addr - 64) >> 1];
+	}
+	else if (addr == 0x0060) {
+		val = vid->shift_mode << 8;
 	}
 	else {
 		st_log_deb ("video: get 16: %06lX -> %04X\n", addr, 0);
@@ -343,14 +355,8 @@ unsigned long st_video_get_uint32 (st_video_t *vid, unsigned long addr)
 {
 	unsigned long val;
 
-	if ((addr >= 0x40) && (addr < 0x60)) {
-		val = st_video_get_uint16 (vid, addr);
-		val = (val << 16) | st_video_get_uint16 (vid, addr + 2);
-	}
-	else {
-		val = 0;
-		st_log_deb ("video: get 32: %06lX -> %04X\n", addr, 0);
-	}
+	val = st_video_get_uint16 (vid, addr);
+	val = (val << 16) | st_video_get_uint16 (vid, addr + 2);
 
 	return (val);
 }
@@ -382,6 +388,10 @@ void st_video_set_uint8 (st_video_t *vid, unsigned long addr, unsigned char val)
 	case 0x60:
 		st_video_set_shift_mode (vid, val);
 		break;
+
+	default:
+		st_log_deb ("video: set 8 %06lX <- %02X\n", addr, val);
+		break;
 	}
 }
 
@@ -390,6 +400,9 @@ void st_video_set_uint16 (st_video_t *vid, unsigned long addr, unsigned short va
 {
 	if ((addr >= 0x0040) && (addr < 0x0060)) {
 		st_video_set_palette (vid, (addr - 64) >> 1, val);
+	}
+	else if (addr == 0x0060) {
+		st_video_set_shift_mode (vid, val >> 8);
 	}
 	else {
 		st_log_deb ("video: set 16: %06lX <- %04X\n", addr, val);
@@ -405,12 +418,9 @@ void st_video_set_uint32 (st_video_t *vid, unsigned long addr, unsigned long val
 		st_log_deb ("video: base = 0x%06lX\n", vid->base);
 #endif
 	}
-	else if ((addr >= 0x40) && (addr < 0x60)) {
+	else {
 		st_video_set_uint16 (vid, addr, val >> 16);
 		st_video_set_uint16 (vid, addr + 2, val);
-	}
-	else {
-		st_log_deb ("video: set 32: %06lX <- %04lX\n", addr, val);
 	}
 }
 

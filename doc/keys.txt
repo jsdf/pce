@@ -19,6 +19,7 @@ These keys apply to both PCE/ibmpc and PCE/macplus.
 <ESC> <ESC>	Send a single <ESC> to the emulated machine.
 <ESC> 0		Set the CPU speed to dynamic.
 <ESC> [1-8]	Set the CPU speed multiplier to [1-8].
+<ESC> f		Toggle between fullscreen mode and windowed mode.
 <ESC> g		Grab the mouse.
 <ESC> m		Stop and fall back to the monitor.
 <ESC> p		Pause the emulator. Press again to resume.
@@ -40,9 +41,14 @@ Pause		Quit
 PCE/atarist Terminal Keys
 ==============================================================================
 
+<ESC> Tab	Switch between the normal Atari monitor and the Viking
+		monitor.
+
 
 PCE/ibmpc Terminal Keys
 ==============================================================================
+
+<ESC> 9		Double the CPU speed
 
 
 PCE/macplus Terminal Keys

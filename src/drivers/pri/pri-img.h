@@ -3,9 +3,9 @@
  *****************************************************************************/
 
 /*****************************************************************************
- * File name:   src/drivers/pri/pri-io.h                                     *
+ * File name:   src/drivers/pri/pri-img.h                                    *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -24,6 +24,8 @@
 #define PCE_PRI_IMG_H 1
 
 
+#include <stdio.h>
+
 #include <drivers/pri/pri.h>
 
 
@@ -31,6 +33,9 @@
 #define PRI_FORMAT_PBIT 1
 #define PRI_FORMAT_PRI  2
 #define PRI_FORMAT_TC   3
+#define PRI_FORMAT_WOZ  4
+#define PRI_FORMAT_MOOF 5
+#define PRI_FORMAT_MFM  6
 
 
 unsigned pri_get_uint16_be (const void *buf, unsigned idx);
@@ -46,17 +51,23 @@ void pri_set_uint32_be (void *buf, unsigned idx, unsigned long val);
 void pri_set_uint32_le (void *buf, unsigned idx, unsigned long val);
 
 
+int pri_set_ofs (FILE *fp, unsigned long ofs);
 int pri_read (FILE *fp, void *buf, unsigned long cnt);
 int pri_read_ofs (FILE *fp, unsigned long ofs, void *buf, unsigned long cnt);
 int pri_write (FILE *fp, const void *buf, unsigned long cnt);
+int pri_write_ofs (FILE *fp, unsigned long ofs, const void *buf, unsigned long cnt);
 int pri_skip (FILE *fp, unsigned long cnt);
 
+unsigned pri_guess_type (const char *fname);
 
 pri_img_t *pri_img_load_fp (FILE *fp, unsigned type);
 pri_img_t *pri_img_load (const char *fname, unsigned type);
 
 int pri_img_save_fp (FILE *fp, const pri_img_t *img, unsigned type);
 int pri_img_save (const char *fname, const pri_img_t *img, unsigned type);
+
+unsigned pri_probe_fp (FILE *fp);
+unsigned pri_probe (const char *fname);
 
 
 #endif

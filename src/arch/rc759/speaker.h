@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/rc759/speaker.h                                     *
  * Created:     2012-07-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -36,14 +36,17 @@ typedef struct {
 	char           playing;
 
 	char           speaker_out;
+	uint16_t       speaker_val;
+	uint16_t       sample_acc;
+
+	uint16_t       val_on;
+	uint16_t       val_off;
 
 	uint16_t       timeout_val;
 	unsigned long  timeout_clk;
 
 	unsigned long  clk;
 	unsigned long  rem;
-
-	unsigned long  sample_acc;
 
 	unsigned long  srate;
 
@@ -54,10 +57,6 @@ typedef struct {
 
 	unsigned       buf_cnt;
 	uint16_t       buf[RC759_SPEAKER_BUF];
-
-	uint16_t       val_msk;
-	uint16_t       val_on;
-	uint16_t       val_off;
 
 	void           *get_clk_ext;
 	unsigned long  (*get_clk) (void *ext);
@@ -82,7 +81,7 @@ void rc759_spk_set_volume (rc759_speaker_t *spk, unsigned vol);
 
 void rc759_spk_set_out (rc759_speaker_t *spk, unsigned char val);
 
-void rc759_spk_clock (rc759_speaker_t *spk, unsigned long cnt);
+void rc759_spk_clock (rc759_speaker_t *spk, unsigned cnt);
 
 
 #endif

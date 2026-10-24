@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/xms.c                                         *
  * Created:     2003-09-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -246,22 +246,30 @@ xms_emb_t *xms_get_emb (xms_t *xms, unsigned handle)
 
 int xms_set_emb (xms_t *xms, xms_emb_t *emb, unsigned handle)
 {
+	unsigned  i, n;
+	xms_emb_t **tmp;
+
 	if (handle == 0) {
 		return (1);
 	}
 
 	if (handle > xms->emb_cnt) {
-		unsigned i;
-
 		i = xms->emb_cnt;
+		n = handle;
 
-		xms->emb_cnt = handle;
-		xms->emb = (xms_emb_t **) realloc (xms->emb, xms->emb_cnt * sizeof (xms_emb_t));
+		tmp = realloc (xms->emb, n * sizeof (xms_emb_t *));
 
-		while (i < xms->emb_cnt) {
-			xms->emb[i] = NULL;
+		if (tmp == NULL) {
+			return (1);
+		}
+
+		while (i < n) {
+			tmp[i] = NULL;
 			i += 1;
 		}
+
+		xms->emb = tmp;
+		xms->emb_cnt = n;
 	}
 
 	xms->emb[handle - 1] = emb;

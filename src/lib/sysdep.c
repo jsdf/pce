@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/sysdep.c                                             *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2012 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -43,12 +43,23 @@
 #include <termios.h>
 #endif
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 #include "sysdep.h"
 
 
 int pce_usleep (unsigned long usec)
 {
-#if defined(HAVE_NANOSLEEP)
+#if defined(EMSCRIPTEN)
+	/*
+	 * Sleeping busy waits and freezes the page in the browser. Real
+	 * time is kept by the browser main loop (pce_em_run) instead.
+	 */
+	return (0);
+#elif defined(HAVE_NANOSLEEP)
 	struct timespec t;
 
 	t.tv_sec = usec / 1000000;
@@ -90,6 +101,101 @@ unsigned long pce_get_interval_us (unsigned long *val)
 	return (0);
 #endif
 }
+
+void pce_srand (unsigned val)
+{
+#ifdef HAVE_GETTIMEOFDAY
+	struct timeval tv;
+
+	if (gettimeofday (&tv, NULL) == 0) {
+		val ^= (unsigned) tv.tv_sec;
+		val ^= (unsigned) tv.tv_usec;
+	}
+	else {
+		val ^= (unsigned) time (NULL);
+	}
+#else
+	val ^= (unsigned) time (NULL);
+#endif
+
+	srand (val);
+}
+
+#ifdef EMSCRIPTEN
+
+/* The longest real time interval (in ms) that is emulated in one iteration */
+#define PCE_EM_MAX_MS        100.0
+#define PCE_EM_MAX_MS_HIDDEN 1000.0
+
+/* The timer interval (in ms) of the main loop while the page is hidden */
+#define PCE_EM_HIDDEN_MS     10
+
+static int    pce_em_hidden = 0;
+static double pce_em_last = -1.0;
+
+static
+EM_BOOL pce_em_visibility (int type, const EmscriptenVisibilityChangeEvent *evt, void *ext)
+{
+	pce_em_hidden = evt->hidden;
+
+	if (pce_em_hidden) {
+		emscripten_set_main_loop_timing (EM_TIMING_SETTIMEOUT, PCE_EM_HIDDEN_MS);
+	}
+	else {
+		emscripten_set_main_loop_timing (EM_TIMING_RAF, 1);
+	}
+
+	return (0);
+}
+
+void pce_em_run (void (*fct) (void))
+{
+	EmscriptenVisibilityChangeEvent evt;
+
+	if (emscripten_get_visibility_status (&evt) == EMSCRIPTEN_RESULT_SUCCESS) {
+		pce_em_hidden = evt.hidden;
+	}
+
+	emscripten_set_visibilitychange_callback (NULL, 1, pce_em_visibility);
+
+	/* fps 0 uses requestAnimationFrame, otherwise a timer */
+	emscripten_set_main_loop (fct, pce_em_hidden ? (1000 / PCE_EM_HIDDEN_MS) : 0, 1);
+}
+
+double pce_em_get_frame_ms (void)
+{
+	double now, ms, max;
+
+	now = emscripten_get_now();
+
+	if ((pce_em_last < 0.0) || (now < pce_em_last)) {
+		pce_em_last = now;
+	}
+
+	ms = now - pce_em_last;
+	pce_em_last = now;
+
+	max = pce_em_hidden ? PCE_EM_MAX_MS_HIDDEN : PCE_EM_MAX_MS;
+
+	return ((ms > max) ? max : ms);
+}
+
+void pce_em_adjust_speed (unsigned long *extra, double t0, double ms)
+{
+	double used;
+
+	used = emscripten_get_now() - t0;
+
+	/* use about 3/4 of the frame time for the emulation */
+	if (used < (0.75 * ms)) {
+		*extra += 1;
+	}
+	else if ((used > ms) && (*extra > 0)) {
+		*extra -= 1;
+	}
+}
+
+#endif
 
 int pce_fd_readable (int fd, int t)
 {
@@ -141,18 +247,19 @@ int pce_fd_writeable (int fd, int t)
 
 void pce_set_fd_interactive (int fd, int interactive)
 {
-#ifdef HAVE_TERMIOS_H
+	/* there is no terminal in the browser */
+#if defined (HAVE_TERMIOS_H) && !defined (EMSCRIPTEN)
 	static int            sios_ok = 0;
 	static struct termios sios;
 	struct termios        tios;
 
 	if (sios_ok == 0) {
-		// tcgetattr (fd, &sios);
+		tcgetattr (fd, &sios);
 		sios_ok = 1;
 	}
 
 	if (interactive) {
-		// tcsetattr (fd, TCSANOW, &sios);
+		tcsetattr (fd, TCSANOW, &sios);
 	}
 	else {
 		tios = sios;
@@ -162,7 +269,7 @@ void pce_set_fd_interactive (int fd, int interactive)
 		tios.c_cc[VMIN] = 1;
 		tios.c_cc[VTIME] = 0;
 
-		// tcsetattr (fd, TCSANOW, &tios);
+		tcsetattr (fd, TCSANOW, &tios);
 	}
 #endif
 }

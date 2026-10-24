@@ -36,8 +36,9 @@ $(rel)/%.o: $(rel)/%.c
 # ----------------------------------------------------------------------
 
 PCE_IBMPC_BAS  := \
-	cassette \
+	atari-pc \
 	cmd \
+	covox \
 	ems \
 	hook \
 	ibmpc \
@@ -57,22 +58,15 @@ PCE_IBMPC_ETC  := $(rel)/pce-ibmpc.cfg
 PCE_IBMPC_BIN  := $(rel)/pce-ibmpc$(EXEEXT)
 
 PCE_IBMPC_OBJ_EXT := \
-	src/cpu/e8086/e8086.a \
+	src/chipset/clock/mc146818a.o \
 	src/chipset/82xx/e8237.o \
 	src/chipset/82xx/e8250.o \
 	src/chipset/82xx/e8253.o \
 	src/chipset/82xx/e8255.o \
 	src/chipset/82xx/e8259.o \
 	src/chipset/82xx/e8272.o \
-	src/devices/video/cga.o \
-	src/devices/video/ega.o \
-	src/devices/video/hgc.o \
-	src/devices/video/mda.o \
-	src/devices/video/olivetti.o \
-	src/devices/video/plantronics.o \
-	src/devices/video/vga.o \
-	src/devices/video/video.o \
-	src/devices/video/wy700.o \
+	src/chipset/e6845.o \
+	src/devices/cassette.o \
 	src/devices/device.o \
 	src/devices/fdc.o \
 	src/devices/hdc.o \
@@ -80,30 +74,35 @@ PCE_IBMPC_OBJ_EXT := \
 	src/devices/nvram.o \
 	src/devices/parport.o \
 	src/devices/serport.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/psi/psi.a \
-	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
+	src/lib/cfg.o \
+	src/lib/ciff.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
+	src/lib/endian.o \
 	src/lib/getopt.o \
 	src/lib/inidsk.o \
 	src/lib/iniram.o \
 	src/lib/initerm.o \
-	src/lib/ihex.o \
-	src/lib/srec.o \
-	src/lib/load.o \
 	src/lib/log.o \
 	src/lib/monitor.o \
 	src/lib/msg.o \
+	src/lib/msgdsk.o \
 	src/lib/path.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a \
+	src/lib/text.o \
+	$(LIBPCE_LOAD_OBJ) \
+	$(LIBINI_OBJ) \
+	$(CPU_8086_OBJ) \
+	$(DEV_VID_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PRI_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_PTI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(DRV_SND_OBJ) \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -118,10 +117,10 @@ endif
 
 CLN  += $(PCE_IBMPC_BIN) $(PCE_IBMPC_OBJ) $(PCE_IBMPC_ETC)
 DIST += $(PCE_IBMPC_SRC) $(PCE_IBMPC_HDR) $(PCE_IBMPC_MAN1)
-DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc
+DIST += $(rel)/pce-ibmpc.cfg.in $(rel)/pce.inc $(rel)/pce-lib.inc
 
-$(rel)/cassette.o:	$(rel)/cassette.c
 $(rel)/cmd.o:		$(rel)/cmd.c
+$(rel)/covox.o:		$(rel)/covox.c
 $(rel)/ems.o:		$(rel)/ems.c
 $(rel)/hook.o:		$(rel)/hook.c
 $(rel)/ibmpc.o:		$(rel)/ibmpc.c

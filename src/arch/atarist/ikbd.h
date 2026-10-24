@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/ikbd.h                                      *
  * Created:     2013-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -28,8 +28,6 @@
 
 
 typedef struct {
-	char          idle;
-
 	unsigned      cmd_cnt;
 	unsigned char cmd[16];
 
@@ -38,6 +36,8 @@ typedef struct {
 	char          abs_pos;
 	char          y0_at_top;
 	char          joy_report;
+	char          joy_mode;
+	unsigned char button_action;
 
 	int           mouse_dx;
 	int           mouse_dy;
@@ -57,10 +57,15 @@ typedef struct {
 	unsigned      buf_hd;
 	unsigned      buf_tl;
 	unsigned char buf[64];
+
+	void          *magic_ext;
+	int           (*magic) (void *ext, pce_key_t key);
 } st_kbd_t;
 
 
 void st_kbd_init (st_kbd_t *kbd);
+
+void st_kbd_set_magic (st_kbd_t *kbd, void *ext, void *fct);
 
 int st_kbd_buf_put (st_kbd_t *kbd, unsigned char val);
 int st_kbd_buf_get (st_kbd_t *kbd, unsigned char *val);

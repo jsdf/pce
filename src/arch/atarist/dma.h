@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/dma.h                                       *
  * Created:     2013-06-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -43,6 +43,7 @@ typedef struct {
 	unsigned char  sector_cnt;
 	char           dma_first;
 	unsigned long  addr;
+	unsigned long  mask;
 
 	unsigned       byte_cnt;
 
@@ -60,6 +61,7 @@ int st_dma_init (st_dma_t *dma);
 void st_dma_set_memory (st_dma_t *dma, memory_t *mem);
 void st_dma_set_fdc (st_dma_t *dma, wd179x_t *fdc);
 void st_dma_set_acsi (st_dma_t *dma, st_acsi_t *acsi);
+void st_dma_set_address_mask (st_dma_t *dma, unsigned long mask);
 
 void st_dma_set_dreq (st_dma_t *dma, unsigned char val);
 

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/read.c                                            *
  * Created:     2001-08-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -174,6 +174,10 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 		skip = 0;
 		done = 1;
 	}
+	else if ((val.type == INI_VAL_STR) && (val.val.str[0] != 0)) {
+		skip = 0;
+		done = 1;
+	}
 	else {
 		skip = 1;
 		done = 0;
@@ -201,6 +205,10 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 					skip = 0;
 					done = 1;
 				}
+				else if ((val.type == INI_VAL_STR) && (val.val.str[0] != 0)) {
+					skip = 0;
+					done = 1;
+				}
 			}
 
 			ini_val_free (&val);
@@ -215,6 +223,28 @@ int parse_if (scanner_t *scn, ini_sct_t *sct, char *buf)
 			}
 
 			break;
+		}
+	}
+
+	return (0);
+}
+
+static
+int parse_include (scanner_t *scn, ini_sct_t *sct, char *buf, int rel)
+{
+	int noerr;
+
+	noerr = (scn_match (scn, "?") != 0);
+
+	if (scn_match_string (scn, buf, 256) == 0) {
+		return (1);
+	}
+
+	if (scn_add_file (scn, buf, NULL, 1, rel)) {
+		if (noerr == 0) {
+			parse_error (scn, "can't open include file:", 0);
+			parse_error (scn, buf, 0);
+			return (1);
 		}
 	}
 
@@ -288,20 +318,13 @@ int parse_section (scanner_t *scn, ini_sct_t *sct, char *buf)
 			}
 		}
 		else if (strcmp (buf, "include") == 0) {
-			int noerr;
-
-			noerr = (scn_match (scn, "?") != 0);
-
-			if (scn_match_string (scn, buf, 256) == 0) {
+			if (parse_include (scn, sct, buf, 0)) {
 				return (1);
 			}
-
-			if (scn_add_file (scn, buf, NULL, 1)) {
-				if (noerr == 0) {
-					parse_error (scn, "can't open include file:", 0);
-					parse_error (scn, buf, 0);
-					return (1);
-				}
+		}
+		else if (strcmp (buf, "rinclude") == 0) {
+			if (parse_include (scn, sct, buf, 1)) {
+				return (1);
 			}
 		}
 		else {
@@ -346,7 +369,7 @@ int ini_read_fp (ini_sct_t *sct, FILE *fp, const char *fname)
 
 	scn_init (&scn);
 
-	if (scn_add_file (&scn, fname, fp, 0)) {
+	if (scn_add_file (&scn, fname, fp, 0, 0)) {
 		ini_sct_del (sct);
 		return (1);
 	}

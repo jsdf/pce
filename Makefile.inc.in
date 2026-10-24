@@ -37,9 +37,11 @@ PCE_ENABLE_X11 := @PCE_ENABLE_X11@
 PCE_X11_CFLAGS := @PCE_X11_CFLAGS@
 PCE_X11_LIBS   := @PCE_X11_LIBS@
 
-PCE_ENABLE_SDL := @PCE_ENABLE_SDL@
-PCE_SDL_CFLAGS := @PCE_SDL_CFLAGS@
-PCE_SDL_LIBS   := @PCE_SDL_LIBS@
+PCE_ENABLE_SDL  := @PCE_ENABLE_SDL@
+PCE_ENABLE_SDL1 := @PCE_ENABLE_SDL1@
+PCE_ENABLE_SDL2 := @PCE_ENABLE_SDL2@
+PCE_SDL_CFLAGS  := @PCE_SDL_CFLAGS@
+PCE_SDL_LIBS    := @PCE_SDL_LIBS@
 
 PCE_HAVE_STDINT_H   := @PCE_HAVE_STDINT_H@
 PCE_HAVE_INTTYPES_H := @PCE_HAVE_INTTYPES_H@
@@ -75,13 +77,15 @@ CFLAGS_DEFAULT += -DPCE_HOST_SPARC
 endif
 
 PCE_BUILD_ATARIST := @PCE_BUILD_ATARIST@
+PCE_BUILD_CPM80   := @PCE_BUILD_CPM80@
 PCE_BUILD_IBMPC   := @PCE_BUILD_IBMPC@
 PCE_BUILD_MACPLUS := @PCE_BUILD_MACPLUS@
 PCE_BUILD_RC759   := @PCE_BUILD_RC759@
 PCE_BUILD_SIM405  := @PCE_BUILD_SIM405@
-PCE_BUILD_SIM6502 := @PCE_BUILD_SIM6502@
 PCE_BUILD_SIMARM  := @PCE_BUILD_SIMARM@
 PCE_BUILD_SIMS32  := @PCE_BUILD_SIMS32@
+PCE_BUILD_SPECTRUM := @PCE_BUILD_SPECTRUM@
+PCE_BUILD_VIC20   := @PCE_BUILD_VIC20@
 
 PCE_BUILD_IBMPC_ROM   := @PCE_BUILD_IBMPC_ROM@
 PCE_BUILD_MACPLUS_ROM := @PCE_BUILD_MACPLUS_ROM@
@@ -97,6 +101,7 @@ PCE_ENABLE_CHAR_PTY    := @PCE_ENABLE_CHAR_PTY@
 PCE_ENABLE_CHAR_SLIP   := @PCE_ENABLE_CHAR_SLIP@
 PCE_ENABLE_CHAR_TCP    := @PCE_ENABLE_CHAR_TCP@
 PCE_ENABLE_CHAR_TIOS   := @PCE_ENABLE_CHAR_TIOS@
+PCE_ENABLE_CHAR_WINCOM := @PCE_ENABLE_CHAR_WINCOM@
 
 PCE_ENABLE_SOUND_OSS := @PCE_ENABLE_SOUND_OSS@
 
@@ -108,13 +113,13 @@ DCL += Makefile Makefile.inc configure config.log config.status
 
 DIST += AUTHORS COPYING ChangeLog INSTALL \
 	Makefile.dep Makefile.in Makefile.inc.in \
-	NEWS README TODO autogen.sh config.guess config.sub \
-	configure configure.in gendep install-sh
+	README autogen.sh config.guess config.sub \
+	configure configure.ac gendep install-sh
 
 DIST += doc/char-drivers.txt doc/keys.txt doc/messages.txt \
 	doc/monitor.txt doc/pce-ibmpc.txt doc/pce-macplus.txt \
-	doc/pri-format doc/psi-format.txt \
-	doc/rc759-keymap.txt doc/sound-drivers.txt
+	doc/pfi-format.txt doc/pri-format.txt doc/psi-format.txt \
+	doc/pti-format.txt doc/rc759-keymap.txt doc/sound-drivers.txt
 
 # ----------------------------------------------------------------------
 
@@ -125,6 +130,7 @@ include $(srcdir)/src/cpu/Makefile.inc
 include $(srcdir)/src/cpu/arm/Makefile.inc
 include $(srcdir)/src/cpu/e6502/Makefile.inc
 include $(srcdir)/src/cpu/e68000/Makefile.inc
+include $(srcdir)/src/cpu/e8080/Makefile.inc
 include $(srcdir)/src/cpu/e8086/Makefile.inc
 include $(srcdir)/src/cpu/ppc405/Makefile.inc
 include $(srcdir)/src/cpu/sparc32/Makefile.inc
@@ -141,12 +147,16 @@ include $(srcdir)/src/lib/Makefile.inc
 include $(srcdir)/src/drivers/Makefile.inc
 include $(srcdir)/src/drivers/block/Makefile.inc
 include $(srcdir)/src/drivers/char/Makefile.inc
+include $(srcdir)/src/drivers/pfi/Makefile.inc
 include $(srcdir)/src/drivers/pri/Makefile.inc
 include $(srcdir)/src/drivers/psi/Makefile.inc
+include $(srcdir)/src/drivers/pti/Makefile.inc
 include $(srcdir)/src/drivers/sound/Makefile.inc
 include $(srcdir)/src/drivers/video/Makefile.inc
 include $(srcdir)/src/arch/Makefile.inc
 include $(srcdir)/src/arch/atarist/Makefile.inc
+include $(srcdir)/src/arch/cpm80/Makefile.inc
+include $(srcdir)/src/arch/dos/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/bios/Makefile.inc
 include $(srcdir)/src/arch/ibmpc/pceutils/Makefile.inc
@@ -154,13 +164,18 @@ include $(srcdir)/src/arch/macplus/Makefile.inc
 include $(srcdir)/src/arch/macplus/pcex/Makefile.inc
 include $(srcdir)/src/arch/rc759/Makefile.inc
 include $(srcdir)/src/arch/sim405/Makefile.inc
-include $(srcdir)/src/arch/sim6502/Makefile.inc
+include $(srcdir)/src/arch/sim405/pceutils/Makefile.inc
 include $(srcdir)/src/arch/simarm/Makefile.inc
 include $(srcdir)/src/arch/sims32/Makefile.inc
+include $(srcdir)/src/arch/spectrum/Makefile.inc
+include $(srcdir)/src/arch/vic20/Makefile.inc
 include $(srcdir)/src/utils/Makefile.inc
+include $(srcdir)/src/utils/aym/Makefile.inc
 include $(srcdir)/src/utils/pce-img/Makefile.inc
+include $(srcdir)/src/utils/pfi/Makefile.inc
 include $(srcdir)/src/utils/pri/Makefile.inc
 include $(srcdir)/src/utils/psi/Makefile.inc
+include $(srcdir)/src/utils/pti/Makefile.inc
 
 TARGETS += $(BIN) $(ETC) $(SHARE)
 
@@ -199,38 +214,6 @@ ifneq "$(SHARE_PCEUTILS)" ""
 		$(INSTALL) -m 644 "$$f" "$$dst" ; \
 	done
 endif
-	$(QR)for src in $(srcdir)/contrib/rom/atarist/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/atarist/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/atarist" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/ibmpc/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/ibmpc/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/ibmpc" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/macplus/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/macplus/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/macplus" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
-	$(QR)for src in $(srcdir)/contrib/rom/rc759/* ; do \
-		test -f "$$src" || continue ; \
-		dst=$(DESTDIR)$(datadir)/rc759/`basename $$src` ; \
-		test -f "$$dst" && continue ; \
-		test x$(V) != x1 && echo "  CP     $$dst" ; \
-		$(INSTALL) -d -m 755 "$(DESTDIR)$(datadir)/rc759" ; \
-		$(INSTALL) -m 644 "$$src" "$$dst" ; \
-	done
 
 
 dist-extra:

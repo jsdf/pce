@@ -17,17 +17,17 @@ path = "PCE_DIR_DATA/macplus"
 path = "-."
 
 
-# Enable or disable the startup memory test.
-memtest = 0
-
-
 system {
 	# The Macintosh model to emulate. Valid models are:
 	# mac-plus:    A Macintosh 128K, 512K, 512Ke or Plus
 	# mac-se:      A Macintosh SE or SE-FDHD
 	# mac-classic: A Macintosh Classic
 	model = "MODEL"
+
+	# Enable or disable the startup memory test.
+	memtest = 0
 }
+
 
 cpu {
 	# The CPU model. Valid models are "68000" and "68010".
@@ -188,6 +188,10 @@ rtc {
 	# Set the startup disk to the ROM disk. This only works with
 	# the Macintosh Classic ROM.
 	romdisk = 0
+
+	# Override the system beep volume setting in the PRAM. Valid
+	# values are in the range [0, 7].
+	#volume = 4
 }
 
 
@@ -216,9 +220,6 @@ iwm {
 	#   Drive 2: The external drive
 	#   Drive 3: The second (lower) internal drive in a Macintosh SE
 	#
-	# Each drive is associated with either a disk as defined in a
-	# "disk" section below, or with a PBIT file.
-	#
 	# The IWM drives are only accessible if the replacement Sony driver
 	# is disabled above.
 
@@ -230,21 +231,12 @@ iwm {
 		# corresponds to a "disk" section below.
 		disk         = 1
 
-		# The file containing the disk's contents. If this is
-		# a valid PBIT file, the disk contents are read from
-		# and written back to it and the "disk" parameter above
-		# is ignored.
-		file         = "disk1.pbit"
-
 		# Insert the disk before the emulation starts, in order
 		# to boot from it.
 		inserted     = 0
 
 		# Force the drive to be single sided.
 		single_sided = 0
-
-		# The disk is locked.
-		locked       = 0
 
 		# Automatically align the individual tracks.
 		auto_rotate  = 1
@@ -253,20 +245,16 @@ iwm {
 	drive {
 		drive        = 2
 		disk         = 2
-		file         = "disk2.pbit"
 		inserted     = 0
 		single_sided = 0
-		locked       = 0
 		auto_rotate  = 1
 	}
 
 	drive {
 		drive        = 3
 		disk         = 3
-		file         = "disk3.pbit"
 		inserted     = 0
 		single_sided = 0
-		locked       = 0
 		auto_rotate  = 1
 	}
 }
@@ -343,6 +331,8 @@ video {
 disk {
 	drive    = 1
 	type     = "auto"
+	file     = "disk1.pri"
+	file     = "disk1.image"
 	file     = "disk1.img"
 	optional = 1
 }
@@ -350,6 +340,8 @@ disk {
 disk {
 	drive    = 2
 	type     = "auto"
+	file     = "disk2.pri"
+	file     = "disk2.image"
 	file     = "disk2.img"
 	optional = 1
 }
@@ -357,6 +349,8 @@ disk {
 disk {
 	drive    = 3
 	type     = "auto"
+	file     = "disk3.pri"
+	file     = "disk3.image"
 	file     = "disk3.img"
 	optional = 1
 }

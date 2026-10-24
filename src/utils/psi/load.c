@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/load.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -73,6 +73,55 @@ int psi_load_sectors (psi_img_t *img, const char *fname)
 
 	if (r) {
 		fprintf (stderr, "%s: loading sectors failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
+int psi_load_weak_cb (psi_img_t *img, psi_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *opaque)
+{
+	FILE *fp;
+
+	fp = opaque;
+
+	if (psi_weak_alloc (sct)) {
+		return (1);
+	}
+
+	if (fread (sct->weak, 1, sct->n, fp) != sct->n) {
+		;
+	}
+
+	par_cnt += 1;
+
+	return (0);
+}
+
+int psi_load_weak (psi_img_t *img, const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	if ((fp = fopen (fname, "rb")) == NULL) {
+		fprintf (stderr, "%s: can't open file (%s)\n", arg0, fname);
+		return (1);
+	}
+
+	par_cnt = 0;
+
+	r = psi_for_all_sectors (img, psi_load_weak_cb, fp);
+
+	fclose (fp);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: load %lu weak masks\n", arg0, par_cnt);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: loading weak masks failed\n", arg0);
 	}
 
 	return (r);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/adb_keyboard.c                              *
  * Created:     2010-11-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -103,6 +103,7 @@ static adb_kbd_map_t keymap_default[] = {
 	{ PCE_KEY_LALT,      0x37 },
 	{ PCE_KEY_SPACE,     0x31 },
 	{ PCE_KEY_RALT,      0x37 },
+	{ PCE_KEY_RSUPER,    0x3a },
 	{ PCE_KEY_RCTRL,     0x36 },
 
 	{ PCE_KEY_INS,       0x72 },

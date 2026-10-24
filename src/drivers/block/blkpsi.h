@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkpsi.h                                   *
  * Created:     2010-08-11 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,13 +15,13 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
 
-#ifndef PCE_DEVICES_BLOCK_BLKPSI_H
-#define PCE_DEVICES_BLOCK_BLKPSI_H 1
+#ifndef PCE_BLOCK_BLKPSI_H
+#define PCE_BLOCK_BLKPSI_H 1
 
 
 #include <config.h>
@@ -49,16 +49,13 @@
  * @short The fdc disk structure
  *****************************************************************************/
 typedef struct {
-	disk_t     dsk;
+	disk_t    dsk;
 
-	psi_img_t  *img;
+	psi_img_t *img;
 
-	char       dirty;
-
-	unsigned   encoding;
-
-	unsigned   type;
-	char       *fname;
+	unsigned  type;
+	unsigned  encoding;
+	char      dirty;
 } disk_psi_t;
 
 
@@ -91,7 +88,8 @@ int dsk_psi_format_sector (disk_psi_t *fdc,
 
 int dsk_psi_read_id (disk_psi_t *fdc,
 	unsigned pc, unsigned ph, unsigned ps,
-	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id
+	unsigned *c, unsigned *h, unsigned *s, unsigned *cnt, unsigned *cnt_id,
+	unsigned long *pos
 );
 
 

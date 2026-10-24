@@ -40,9 +40,13 @@ typedef struct {
 const psi_geometry_t *psi_get_geometry_from_size (unsigned long size, unsigned long mask);
 
 psi_img_t *psi_load_st (FILE *fp);
+psi_img_t *psi_load_raw_hcs (FILE *fp);
+psi_img_t *psi_load_raw_hts (FILE *fp);
 psi_img_t *psi_load_raw (FILE *fp);
 
 int psi_save_st (FILE *fp, const psi_img_t *img);
+int psi_save_raw_hcs (FILE *fp, const psi_img_t *img);
+int psi_save_raw_hts (FILE *fp, const psi_img_t *img);
 int psi_save_raw (FILE *fp, const psi_img_t *img);
 
 int psi_probe_raw_fp (FILE *fp);

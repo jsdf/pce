@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e8086/disasm.c                                       *
  * Created:     2002-05-20 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2002-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2002-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -1674,6 +1674,16 @@ static void dop_d4 (e86_disasm_t *op, unsigned char *src)
 	op->arg_n = 1;
 }
 
+/* DOP D5: AAD imm8 */
+static void dop_d5 (e86_disasm_t *op, unsigned char *src)
+{
+	strcpy (op->op, "AAD");
+	disasm_imm8 (op->arg1, src + 1);
+
+	op->dat_n = 2;
+	op->arg_n = 1;
+}
+
 /* DOP D7: XLAT */
 static
 void dop_d7 (e86_disasm_t *op, unsigned char *src)
@@ -2128,7 +2138,7 @@ e86_disasm_f dop_list[256] = {
 	&dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8, &dop_b8,
 	&dop_c0, &dop_c1, &dop_c2, &dop_c3, &dop_c4, &dop_c5, &dop_c6, &dop_c7, /* C0 */
 	&dop_c8, &dop_c9, &dop_ca, &dop_cb, &dop_cc, &dop_cd, &dop_ce, &dop_cf,
-	&dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_ud, &dop_ud, &dop_d7, /* D0 */
+	&dop_d0, &dop_d1, &dop_d2, &dop_d3, &dop_d4, &dop_d5, &dop_ud, &dop_d7, /* D0 */
 	&dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud, &dop_ud,
 	&dop_e0, &dop_e0, &dop_e0, &dop_e0, &dop_e4, &dop_e5, &dop_e6, &dop_e7, /* E0 */
 	&dop_e8, &dop_e9, &dop_ea, &dop_eb, &dop_ec, &dop_ed, &dop_ee, &dop_ef,

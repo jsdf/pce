@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/atarist/acsi.h                                      *
  * Created:     2013-06-04 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2014 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -31,7 +31,8 @@
 
 typedef struct {
 	unsigned       cmd_cnt;
-	unsigned char  cmd[8];
+	unsigned       cmd_max;
+	unsigned char  cmd[16];
 
 	unsigned char  result;
 	unsigned char  sense;

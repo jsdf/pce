@@ -58,6 +58,9 @@ void p405uic_init (p405_uic_t *uic)
 	uic->invert = 0x00000000;
 	uic->vr_msk = 0;
 
+	uic->force_polarity_val = 0;
+	uic->force_polarity_msk = 0;
+
 	uic->nint = NULL;
 	uic->nint_ext = NULL;
 	uic->nint_val = 0;
@@ -101,6 +104,27 @@ void p405uic_set_invert (p405_uic_t *uic, unsigned long inv)
 {
 	uic->invert = inv & 0xffffffff;
 	uic->levels = inv & 0xffffffff;
+}
+
+void p405uic_set_force_polarity (p405_uic_t *uic, unsigned irq, int val)
+{
+	uint32_t msk;
+
+	msk = 0x80000000UL >> (irq & 31);
+
+	if (val < 0) {
+		uic->force_polarity_msk &= ~msk;
+	}
+	else {
+		uic->force_polarity_msk |= msk;
+
+		if (val) {
+			uic->force_polarity_val |= msk;
+		}
+		else {
+			uic->force_polarity_msk &= ~msk;
+		}
+	}
 }
 
 void p405uic_set_cint_fct (p405_uic_t *uic, void *ext, void *fct)
@@ -237,6 +261,9 @@ uint32_t p405uic_get_pr (p405_uic_t *uic)
 
 void p405uic_set_pr (p405_uic_t *uic, uint32_t val)
 {
+	val &= ~uic->force_polarity_msk;
+	val |= uic->force_polarity_val & uic->force_polarity_msk;
+
 	uic->pr = val;
 	p405uic_update (uic);
 }

@@ -43,6 +43,7 @@ PCE_RC759_BAS  := \
 	msg \
 	nvm \
 	parport \
+	ports \
 	rc759 \
 	rtc \
 	speaker \
@@ -56,7 +57,6 @@ PCE_RC759_ETC  := $(rel)/pce-rc759.cfg
 PCE_RC759_BIN  := $(rel)/pce-rc759$(EXEEXT)
 
 PCE_RC759_OBJ_EXT := \
-	src/cpu/e8086/e8086.a \
 	src/chipset/80186/dma.o \
 	src/chipset/80186/icu.o \
 	src/chipset/80186/tcu.o \
@@ -66,31 +66,30 @@ PCE_RC759_OBJ_EXT := \
 	src/chipset/wd179x.o \
 	src/devices/device.o \
 	src/devices/memory.o \
-	src/drivers/block/block.a \
-	src/drivers/char/char.a \
-	src/drivers/pri/pri.a \
-	src/drivers/psi/psi.a \
-	src/drivers/sound/sound.a \
 	src/drivers/options.o \
 	src/lib/brkpt.o \
+	src/lib/cfg.o \
 	src/lib/cmd.o \
 	src/lib/console.o \
 	src/lib/getopt.o \
 	src/lib/inidsk.o \
 	src/lib/iniram.o \
 	src/lib/initerm.o \
-	src/lib/ihex.o \
-	src/lib/srec.o \
-	src/lib/load.o \
 	src/lib/log.o \
 	src/lib/monitor.o \
 	src/lib/msg.o \
+	src/lib/msgdsk.o \
 	src/lib/path.o \
 	src/lib/string.o \
 	src/lib/sysdep.o \
-	src/libini/libini.a \
-	src/drivers/block/block.a \
-	src/drivers/psi/psi.a \
+	$(LIBPCE_LOAD_OBJ) \
+	$(LIBINI_OBJ) \
+	$(CPU_8086_OBJ) \
+	$(DRV_BLK_OBJ) \
+	$(DRV_PSI_OBJ) \
+	$(DRV_PRI_OBJ) \
+	$(DRV_CHR_OBJ) \
+	$(DRV_SND_OBJ) \
 	$(DRV_TRM_OBJ)
 
 ifeq "$(PCE_ENABLE_TUN)" "1"
@@ -113,6 +112,7 @@ $(rel)/keyboard.o:	$(rel)/keyboard.c
 $(rel)/main.o:		$(rel)/main.c
 $(rel)/msg.o:		$(rel)/msg.c
 $(rel)/nvm.o:		$(rel)/nvm.c
+$(rel)/ports.o:		$(rel)/ports.c
 $(rel)/parport.o:	$(rel)/parport.c
 $(rel)/rc759.o:		$(rel)/rc759.c
 $(rel)/rtc.o:		$(rel)/rtc.c

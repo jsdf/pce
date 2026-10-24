@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/main.h                                      *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -45,16 +45,20 @@
 struct macplus_s;
 typedef struct macplus_s macplus_t;
 
+
 extern int        par_verbose;
 
 extern const char *par_terminal;
 
-extern unsigned   par_disk_delay_valid;
-extern unsigned   par_disk_delay[];
+extern unsigned   par_disk_boot;
 
 extern macplus_t  *par_sim;
 
 extern unsigned   par_sig_int;
+
+
+void sim_stop (void);
+void mac_stop (macplus_t *sim);
 
 void mac_log_deb (const char *msg, ...);
 

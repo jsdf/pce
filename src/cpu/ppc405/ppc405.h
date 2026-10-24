@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/ppc405.h                                      *
  * Created:     2003-11-07 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -47,9 +47,10 @@ struct p405_s;
 
 #define P405_TLB_ENTRIES 64
 
-#define P405_XLAT_CPU     0
-#define P405_XLAT_REAL    1
-#define P405_XLAT_VIRTUAL 2
+#define P405_XLAT_CPU     1
+#define P405_XLAT_REAL    2
+#define P405_XLAT_VIRTUAL 4
+#define P405_XLAT_EXEC    8
 
 #define P405_MMU_MODE_X 0x0000
 #define P405_MMU_MODE_R 0x0100
@@ -157,7 +158,7 @@ typedef struct {
 #define P405_ESR_PTR 0x02000000UL
 #define P405_ESR_PEU 0x01000000UL
 #define P405_ESR_DST 0x00800000UL
-#define P405_ESR_DIZ 0x00800000UL
+#define P405_ESR_DIZ 0x00400000UL
 #define P405_ESR_PFP 0x00080000UL
 #define P405_ESR_PAP 0x00040000UL
 #define P405_ESR_U0F 0x00008000UL
@@ -167,7 +168,7 @@ typedef struct {
 #define P405_TSR_WIS 0x40000000UL
 #define P405_TSR_WRS 0x30000000UL
 #define P405_TSR_PIS 0x08000000UL
-#define P405_TSR_FIT 0x04000000UL
+#define P405_TSR_FIS 0x04000000UL
 
 /* Timer Control Register fields */
 #define P405_TCR_WP  0xc0000000UL
@@ -223,6 +224,8 @@ typedef struct {
 #define P405_SPRN_SRR2   0x3de
 #define P405_SPRN_SRR3   0x3df
 #define P405_SPRN_SU0R   0x3bc
+#define P405_SPRN_TBLU   0x10c
+#define P405_SPRN_TBUU   0x10d
 #define P405_SPRN_TBL    0x11c
 #define P405_SPRN_TBU    0x11d
 #define P405_SPRN_TCR    0x3da
@@ -316,8 +319,6 @@ typedef struct {
 #define p405_set_srr(c, n, v) do { (c)->srr[(n) & 0x03] = (v); } while (0)
 #define p405_set_tbl(c, v) do { (c)->tbl = (v); } while (0)
 #define p405_set_tbu(c, v) do { (c)->tbu = (v); } while (0)
-#define p405_set_tcr(c, v) do { (c)->tcr = (v); } while (0)
-#define p405_set_tsr(c, v) do { (c)->tsr = (v); } while (0)
 #define p405_set_xer(c, v) do { (c)->xer = (v); } while (0)
 #define p405_set_xer_bits(c, bits, v) p405_set_bits ((c)->xer, bits, v)
 #define p405_set_xer_so(c, v) p405_set_xer_bits (c, P405_XER_SO, v)
@@ -362,15 +363,17 @@ typedef struct p405_s {
 	p405_get_uint32_f  get_dcr;
 	p405_set_uint32_f  set_dcr;
 
+	void               *hook_ext;
+	void               (*hook) (void *ext, unsigned long ir);
+
+	void               *trap_ext;
+	int                (*trap) (void *ext, unsigned ofs);
+
 	void *log_ext;
 	void (*log_opcode) (void *ext, unsigned long ir);
 	void (*log_undef) (void *ext, unsigned long ir);
-	void (*log_exception) (void *ext, unsigned long offs);
 	void (*log_mem) (void *ext, unsigned mode,
 		unsigned long raddr, unsigned long vaddr, unsigned long val);
-
-	void               *hook_ext;
-	void               (*hook) (void *ext, unsigned long ir);
 
 	uint32_t           pc;
 	uint32_t           gpr[32];
@@ -402,17 +405,22 @@ typedef struct p405_s {
 
 	uint32_t           ir;
 
+	uint32_t           exception_esr;
+	uint32_t           exception_dear;
+
+	uint32_t           fit_mask;
+
 	char               reserve;
 
 	unsigned char      interrupt;
 
 	p405_tlb_t         tlb;
 
-	unsigned           timer_scale;
+	unsigned long      timer_extra_clock;
 
 	unsigned long      delay;
 
-	unsigned long long oprcnt;
+	unsigned long      opcnt;
 	unsigned long long clkcnt;
 
 	p405_opcode_map_t  opcodes;
@@ -510,23 +518,22 @@ void p405_set_ram (p405_t *c, unsigned char *ram, unsigned long cnt);
 void p405_set_dcr_fct (p405_t *c, void *ext, void *get, void *set);
 
 /*!***************************************************************************
- * @short Set the hook function
+ * @short Set the hook callback function
  * @param c The cpu context
  *****************************************************************************/
 void p405_set_hook_fct (p405_t *c, void *ext, void *fct);
 
-
 /*!***************************************************************************
- * @short Set the internal timer scale
- * @param c     The cpu context
- * @param scale The timer scale. The timer runs this much faster than the cpu.
+ * @short Set the trap callback function
+ * @param c The cpu context
  *****************************************************************************/
-void p405_set_timer_scale (p405_t *c, unsigned scale);
+void p405_set_trap_fct (p405_t *c, void *ext, void *fct);
+
 
 /*!***************************************************************************
  * @short Get the number of executed instructions
  *****************************************************************************/
-unsigned long long p405_get_opcnt (p405_t *c);
+unsigned long p405_get_opcnt (p405_t *c);
 
 /*!***************************************************************************
  * @short Get the number of executed clock cycles
@@ -542,6 +549,9 @@ unsigned long p405_get_delay (p405_t *c);
 int p405_get_reg (p405_t *c, const char *reg, unsigned long *val);
 int p405_set_reg (p405_t *c, const char *reg, unsigned long val);
 
+
+void p405_set_tcr (p405_t *c, uint32_t val);
+void p405_set_tsr (p405_t *c, uint32_t val);
 
 /*!***************************************************************************
  * @short Get a byte from a physical address
@@ -583,6 +593,8 @@ void p405_undefined (p405_t *c);
  *****************************************************************************/
 void p405_interrupt (p405_t *c, unsigned char val);
 
+void p405_add_timer_clock (p405_t *c, unsigned long cnt);
+
 void p405_reset (p405_t *c);
 void p405_execute (p405_t *c);
 void p405_clock_tb (p405_t *c, unsigned long n);
@@ -604,18 +616,17 @@ typedef struct {
 	uint32_t pc;
 	uint32_t ir;
 
+	uint32_t reg;
+
 	unsigned argn;
 
-	char     op[64];
-	char     arg1[64];
-	char     arg2[64];
-	char     arg3[64];
-	char     arg4[64];
-	char     arg5[64];
+	char     op[16];
+	char     arg1[16];
+	char     arg2[16];
+	char     arg3[16];
+	char     arg4[16];
+	char     arg5[16];
 } p405_disasm_t;
-
-
-typedef void (*p405_disasm_f) (p405_disasm_t *dis);
 
 
 void p405_disasm (p405_disasm_t *dis, uint32_t pc, uint32_t ir);

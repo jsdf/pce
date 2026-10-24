@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/block/blkqed.c                                   *
  * Created:     2011-05-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -144,10 +144,15 @@ int dsk_qed_read_backing_cluster (disk_qed_t *qed, uint64_t ofs)
 
 	if ((i + n) > qed->next->blocks) {
 		memset (qed->cl, 0, qed->cluster_size);
+
+		if (i >= qed->next->blocks) {
+			return (0);
+		}
+
 		n = qed->next->blocks - i;
 	}
 
-	if (dsk_read_lba (qed->next, qed->cl, i, n)) {
+	if (dsk_read_lbaz (qed->next, qed->cl, i, n)) {
 		return (1);
 	}
 
@@ -169,6 +174,7 @@ int dsk_qed_translate (disk_qed_t *qed, uint64_t *ofs, int alloc)
 	t2idx = (*ofs / qed->cluster_size) % table_entries;
 
 	t1ofs = dsk_get_uint64_le (qed->t1 + 8 * t1idx, 0);
+	t1ofs &= ~qed->cluster_mask;
 
 	cluster_index = *ofs & qed->cluster_mask;
 
@@ -213,13 +219,12 @@ int dsk_qed_translate (disk_qed_t *qed, uint64_t *ofs, int alloc)
 		return (0);
 	}
 
-	t1ofs &= ~qed->cluster_mask;
-
 	if (dsk_qed_read_l2 (qed, t1ofs)) {
 		return (1);
 	}
 
 	t2ofs = dsk_get_uint64_le (qed->t2 + 8 * t2idx, 0);
+	t2ofs &= ~qed->cluster_mask;
 
 	if (t2ofs == 0) {
 		if (alloc == 0) {
@@ -247,8 +252,6 @@ int dsk_qed_translate (disk_qed_t *qed, uint64_t *ofs, int alloc)
 
 		return (0);
 	}
-
-	t2ofs &= ~qed->cluster_mask;
 
 	*ofs = t2ofs + cluster_index;
 
@@ -284,7 +287,7 @@ int dsk_qed_read (disk_t *dsk, void *buf, uint32_t i, uint32_t n)
 
 		if (ofs == 0) {
 			if (qed->next != NULL) {
-				if (dsk_read_lba (qed->next, buf, i, m)) {
+				if (dsk_read_lbaz (qed->next, buf, i, m)) {
 					return (1);
 				}
 			}
@@ -331,6 +334,11 @@ int dsk_qed_write (disk_t *dsk, const void *buf, uint32_t i, uint32_t n)
 		ofs = 512 * (uint64_t) i;
 
 		if (dsk_qed_translate (qed, &ofs, 1)) {
+			return (1);
+		}
+
+		if (ofs == 0) {
+			fprintf (stderr, "qed: not writing to offset 0\n");
 			return (1);
 		}
 
@@ -657,41 +665,18 @@ disk_t *dsk_qed_open (const char *fname, int ro)
 	return (dsk);
 }
 
-disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
+disk_t *dsk_qed_cow_open (disk_t *dsk, const char *fname)
 {
+	unsigned   n;
 	disk_t     *cow;
 	disk_qed_t *qed;
-	FILE       *fp;
-	uint32_t   minclst;
-	unsigned   n;
 	uint64_t   features;
 
-	fp = fopen (fname, "r+b");
-
-	if (fp == NULL) {
-		minclst = 0;
-
-		if (dsk->type == PCE_DISK_QED) {
-			qed = dsk->ext;
-			minclst = qed->cluster_size;
-		}
-
-		if (dsk_qed_create (fname, dsk->blocks, minclst)) {
-			return (NULL);
-		}
-	}
-	else {
-		fclose (fp);
-	}
-
-	cow = dsk_qed_open (fname, 0);
-
-	if (cow == NULL) {
+	if ((cow = dsk_qed_open (fname, 0)) == NULL) {
 		return (NULL);
 	}
 
 	qed = cow->ext;
-
 	qed->next = dsk;
 
 	cow->get_msg = dsk_qed_get_msg;
@@ -700,7 +685,6 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 	cow->drive = dsk->drive;
 
 	features = dsk_get_uint64_le (qed->header, 16);
-
 	features |= QED_F_BACKING_FILE;
 
 	if (dsk->type == PCE_DISK_RAW) {
@@ -724,10 +708,25 @@ disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname)
 
 	dsk_qed_write_header (qed);
 
-	dsk_set_geometry (cow, dsk->blocks, dsk->c, dsk->h, dsk->s);
-	dsk_set_visible_chs (cow, dsk->visible_c, dsk->visible_h, dsk->visible_s);
+	dsk_set_geometry (cow, cow->blocks, 0, dsk->h, dsk->s);
+	dsk_set_visible_chs (cow, cow->c, cow->h, cow->s);
 
 	dsk_set_fname (cow, fname);
+
+	return (cow);
+}
+
+disk_t *dsk_qed_cow_create (disk_t *dsk, const char *fname, uint32_t n, uint32_t minblk)
+{
+	disk_t *cow;
+
+	if (dsk_qed_create (fname, n, minblk)) {
+		return (NULL);
+	}
+
+	if ((cow = dsk_qed_cow_open (dsk, fname)) == NULL) {
+		return (NULL);
+	}
 
 	return (cow);
 }

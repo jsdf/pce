@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img.c                                    *
  * Created:     2012-02-14 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -30,6 +30,7 @@
 #include "psi-img-cp2.h"
 #include "psi-img-dc42.h"
 #include "psi-img-imd.h"
+#include "psi-img-mac.h"
 #include "psi-img-msa.h"
 #include "psi-img-pfdc.h"
 #include "psi-img-psi.h"
@@ -115,6 +116,18 @@ unsigned psi_guess_type (const char *fname)
 
 psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 {
+	int c;
+
+	if ((c = fgetc (fp)) == EOF) {
+		if (ferror (fp)) {
+			return (NULL);
+		}
+
+		return (psi_img_new());
+	}
+
+	ungetc (c, fp);
+
 	switch (type) {
 	case PSI_FORMAT_ANADISK:
 		return (psi_load_anadisk (fp));
@@ -127,6 +140,9 @@ psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 
 	case PSI_FORMAT_IMD:
 		return (psi_load_imd (fp));
+
+	case PSI_FORMAT_MAC:
+		return (psi_load_mac (fp));
 
 	case PSI_FORMAT_MSA:
 		return (psi_load_msa (fp));
@@ -143,6 +159,12 @@ psi_img_t *psi_load_fp (FILE *fp, unsigned type)
 
 	case PSI_FORMAT_RAW:
 		return (psi_load_raw (fp));
+
+	case PSI_FORMAT_RAW_HCS:
+		return (psi_load_raw_hcs (fp));
+
+	case PSI_FORMAT_RAW_HTS:
+		return (psi_load_raw_hts (fp));
 
 	case PSI_FORMAT_ST:
 		return (psi_load_st (fp));
@@ -205,6 +227,9 @@ int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type)
 	case PSI_FORMAT_IMD:
 		return (psi_save_imd (fp, img));
 
+	case PSI_FORMAT_MAC:
+		return (psi_save_raw (fp, img));
+
 	case PSI_FORMAT_MSA:
 		return (psi_save_msa (fp, img));
 
@@ -228,6 +253,12 @@ int psi_save_fp (FILE *fp, const psi_img_t *img, unsigned type)
 
 	case PSI_FORMAT_RAW:
 		return (psi_save_raw (fp, img));
+
+	case PSI_FORMAT_RAW_HCS:
+		return (psi_save_raw_hcs (fp, img));
+
+	case PSI_FORMAT_RAW_HTS:
+		return (psi_save_raw_hts (fp, img));
 
 	case PSI_FORMAT_ST:
 		return (psi_save_st (fp, img));
@@ -288,6 +319,10 @@ unsigned psi_probe_fp (FILE *fp)
 
 	if (psi_probe_dc42_fp (fp)) {
 		return (PSI_FORMAT_DC42);
+	}
+
+	if (psi_probe_mac_fp (fp)) {
+		return (PSI_FORMAT_MAC);
 	}
 
 	if (psi_probe_msa_fp (fp)) {

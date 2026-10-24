@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6850.h                                          *
  * Created:     2013-05-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2015 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -76,6 +76,7 @@ void e6850_set_uint8 (e6850_t *ucia, unsigned long addr, unsigned char val);
 void e6850_set_uint16 (e6850_t *ucia, unsigned long addr, unsigned short val);
 void e6850_set_uint32 (e6850_t *ucia, unsigned long addr, unsigned long val);
 
+int e6850_receive_ready (const e6850_t *acia);
 void e6850_receive (e6850_t *acia, unsigned char val);
 
 void e6850_reset (e6850_t *ucia);

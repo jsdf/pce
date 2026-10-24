@@ -11,6 +11,7 @@ cleanup_file() {
 
 copy_if_present() {
   if [ -a "$1" ]; then
+    mkdir -p "$(dirname "$2")"
     cp "$1" "$2"
   fi
 }

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/video/ega.c                                      *
  * Created:     2003-09-06 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2021 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -58,6 +58,8 @@
 #define EGA_MOUT          0x1c		/* miscellaneous output register */
 #define EGA_GRC_INDEX     0x1e		/* graphics controller index register */
 #define EGA_GRC_DATA      0x1f		/* graphics controller data register */
+#define EGA_CRT_INDEX0    0x20		/* crtc index register */
+#define EGA_CRT_DATA0     0x21		/* crtc data register */
 #define EGA_CRT_INDEX     0x24		/* crtc index register */
 #define EGA_CRT_DATA      0x25		/* crtc data register */
 #define EGA_STATUS1       0x2a		/* input status register 1 */
@@ -207,11 +209,11 @@ void ega_set_switches (ega_t *ega, unsigned val)
  * Set the blink frequency
  */
 static
-void ega_set_blink_rate (ega_t *ega, unsigned freq)
+void ega_set_blink_rate (ega_t *ega, unsigned rate, int start)
 {
-	ega->blink_on = 1;
-	ega->blink_cnt = freq;
-	ega->blink_freq = freq;
+	ega->blink_on = (start != 0);
+	ega->blink_cnt = rate;
+	ega->blink_freq = rate;
 
 	ega->update_state |= EGA_UPDATE_DIRTY;
 }
@@ -335,31 +337,15 @@ void ega_get_palette (ega_t *ega, unsigned idx,
 	v = ega->reg_atc[idx & 0x0f];
 
 	if (mon == EGA_MONITOR_MDA) {
-		*r = 0;
-		*g = 0;
-		*b = 0;
+		*r = ((v & 0x08) ? 0xaa : 0) + ((v & 0x10) ? 0x55 : 0);
+		*g = *r;
+		*b = *r;
 
-		if (v & 0x08) {
-			*r += 0xe8;
-			*g += 0x90;
-			*b += 0x50;
-		}
-
-		if (v & 0x10) {
-			*r += 0x17;
-			*g += 0x60;
-			*b += 0x78;
-		}
 	}
 	else if (mon == EGA_MONITOR_CGA) {
-		*r = (v & 0x04) ? 0xaa : 0x00;
-		*r += (v & 0x10) ? 0x55 : 0x00;
-
-		*g = (v & 0x02) ? 0xaa : 0x00;
-		*g += (v & 0x10) ? 0x55 : 0x00;
-
-		*b = (v & 0x01) ? 0xaa : 0x00;
-		*b += (v & 0x10) ? 0x55 : 0x00;
+		*r = ((v & 0x04) ? 0xaa : 0) + ((v & 0x10) ? 0x55 : 0);
+		*g = ((v & 0x02) ? 0xaa : 0) + ((v & 0x10) ? 0x55 : 0);
+		*b = ((v & 0x01) ? 0xaa : 0) + ((v & 0x10) ? 0x55 : 0);
 
 		if (v == 0x06) {
 			*g = 0x55;
@@ -544,7 +530,7 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 	c1 = ega->reg_crt[EGA_CRT_CS] & 0x1f;
 	c2 = ega->reg_crt[EGA_CRT_CE] & 0x1f;
 	crs = (crs && ega->blink_on);
-	incrs = (c2 < c1);
+	incrs = (c2 < c1) && (c1 < ch);
 
 	elg = 0;
 
@@ -581,11 +567,11 @@ void ega_mode0_update_char (ega_t *ega, unsigned char *dst, unsigned w,
 
 		if (crs) {
 			if (y == c1) {
-				incrs = !incrs;
+				incrs = 1;
 			}
 
 			if (y == c2) {
-				incrs = !incrs;
+				incrs = 0;
 			}
 
 			if (incrs) {
@@ -1361,9 +1347,11 @@ unsigned char ega_reg_get_uint8 (ega_t *ega, unsigned long addr)
 	case EGA_MOUT: /* 3CC */
 		return (ega_get_misc_out (ega));
 
+	case EGA_CRT_INDEX0: /* 3D0 */
 	case EGA_CRT_INDEX: /* 3D4 */
 		return (ega_get_crtc_index (ega));
 
+	case EGA_CRT_DATA0: /* 3D1 */
 	case EGA_CRT_DATA: /* 3D5 */
 		return (ega_get_crtc_data (ega));
 
@@ -1524,10 +1512,12 @@ void ega_reg_set_uint8 (ega_t *ega, unsigned long addr, unsigned char val)
 		ega_set_grc_data (ega, val);
 		break;
 
+	case EGA_CRT_INDEX0: /* 3D0 */
 	case EGA_CRT_INDEX: /* 3D4 */
 		ega_set_crtc_index (ega, val);
 		break;
 
+	case EGA_CRT_DATA0: /* 3D1 */
 	case EGA_CRT_DATA: /* 3D5 */
 		ega_set_crtc_data (ega, val);
 		break;
@@ -1554,18 +1544,6 @@ void ega_reg_set_uint16 (ega_t *ega, unsigned long addr, unsigned short val)
 static
 int ega_set_msg (ega_t *ega, const char *msg, const char *val)
 {
-	if (msg_is_message ("emu.video.blink", msg)) {
-		unsigned freq;
-
-		if (msg_get_uint (val, &freq)) {
-			return (1);
-		}
-
-		ega_set_blink_rate (ega, freq);
-
-		return (0);
-	}
-
 	return (-1);
 }
 
@@ -1758,6 +1736,7 @@ void ega_init (ega_t *ega, unsigned long io, unsigned long addr)
 	ega->video.set_terminal = (void *) ega_set_terminal;
 	ega->video.get_mem = (void *) ega_get_mem;
 	ega->video.get_reg = (void *) ega_get_reg;
+	ega->video.set_blink_rate = (void *) ega_set_blink_rate;
 	ega->video.print_info = (void *) ega_print_info;
 	ega->video.redraw = (void *) ega_redraw;
 	ega->video.clock = (void *) ega_clock;
@@ -1872,7 +1851,7 @@ video_t *ega_new_ini (ini_sct_t *sct)
 	}
 
 	ega_set_switches (ega, switches);
-	ega_set_blink_rate (ega, blink);
+	ega_set_blink_rate (ega, blink, 1);
 
 	return (&ega->video);
 }

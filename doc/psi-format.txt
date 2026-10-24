@@ -1,4 +1,4 @@
-PSI file format (2013-10-12)
+PSI file format (2020-04-12)
 ========================================================================
 
 File structure
@@ -12,6 +12,8 @@ File structure
 <end chunk>
 
 All integers are in big-endian format.
+
+Unknown chunks should be skipped.
 
 
 Chunk format
@@ -47,6 +49,8 @@ offset	size	description
 			03 00	MAC GCR
 4	4	Chunk CRC
 
+	- This must be the first chunk in the file.
+
 
 CHUNK "END ": End chunk
 ------------------------------------------------------------------------
@@ -56,6 +60,9 @@ offset	size	description
 0	4	Chunk ID ('END ')
 4	4	Chunk size (0)
 0	4	Chunk CRC (0x3d64af78)
+
+	- This must be the last chunk in the file. Any data after
+	  an 'END ' chunk should be ignored.
 
 
 CHUNK "TEXT": Comments
@@ -69,6 +76,9 @@ offset	size	description
 n	4	Chunk CRC
 
 	- Comments should be UTF-8, with lines separated by LF (0x0a).
+
+	- If there are multiple TEXT chunks, their contents should be
+	  concatenated.
 
 
 CHUNK "SECT": Sector header
@@ -111,6 +121,21 @@ offset	size	description
 4	4	Chunk size (n)
 0	n	Sector data
 n	4	Chunk CRC
+
+
+CHUNK "WEAK": Weak bit mask
+------------------------------------------------------------------------
+
+offset	size	description
+
+0	4	Chunk ID ('WEAK')
+4	4	Chunk size (n)
+0	n	Weak bit mask
+n	4	Chunk CRC
+
+	- The weak bit mask is the same size as the sector data. Each bit
+	  indicates whether the corresponding bit in the data field is
+	  weak.
 
 
 CHUNK "IBMF": IBM FM sector header
@@ -164,7 +189,7 @@ CHUNK "MACG": Macintosh GCR sector header
 offset	size	description
 
 0	4	Chunk ID ('MACG')
-4	4	Chunk size (12)
+4	4	Chunk size (18)
 0	2	Cylinder
 2	1	Head
 3	1	Sector

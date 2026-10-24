@@ -72,7 +72,8 @@ typedef struct {
 disk_t *dsk_qed_open_fp (FILE *fp, int ro);
 disk_t *dsk_qed_open (const char *fname, int ro);
 
-disk_t *dsk_qed_cow_new (disk_t *dsk, const char *fname);
+disk_t *dsk_qed_cow_open (disk_t *dsk, const char *fname);
+disk_t *dsk_qed_cow_create (disk_t *dsk, const char *fname, uint32_t n, uint32_t minblk);
 
 int dsk_qed_create_fp (FILE *fp, uint32_t n, uint32_t minclst);
 int dsk_qed_create (const char *fname, uint32_t n, uint32_t minclst);

@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/scanner.c                                         *
  * Created:     2000-12-18 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2000-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2000-2024 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -148,7 +148,7 @@ void scn_set_str (scanner_t *scn, const char *str)
 	scn->str = str;
 }
 
-int scn_add_file (scanner_t *scn, const char *fname, FILE *fp, int del)
+int scn_add_file (scanner_t *scn, const char *fname, FILE *fp, int del, int rel)
 {
 	char       *name;
 	scn_file_t *scf;
@@ -159,12 +159,14 @@ int scn_add_file (scanner_t *scn, const char *fname, FILE *fp, int del)
 		return (1);
 	}
 
-	if (scn->file == NULL) {
+	if ((scn->file == NULL) || (rel == 0)) {
 		name = scn_file_get_name (NULL, fname);
 	}
 	else {
 		name = scn_file_get_name (scn->file->name, fname);
+	}
 
+	if (scn->file != NULL) {
 		scn->file->line = scn->line;
 		scn->file->offset = scn->offset;
 	}
@@ -459,7 +461,10 @@ int scn_match_space (scanner_t *scn)
 		if (scn_is_space (c)) {
 			scn_rmv_chr (scn, 1);
 		}
-		else if (c == '#') {
+		else if ((c == ';') || (c == '#')) {
+			scn_skip_line (scn);
+		}
+		else if ((c == '/') && (scn_get_chr (scn, 1) == '/')) {
 			scn_skip_line (scn);
 		}
 		else if ((c == '/') && (scn_get_chr (scn, 1) == '*')) {

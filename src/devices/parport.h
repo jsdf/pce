@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/devices/parport.h                                        *
  * Created:     2003-04-29 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -48,6 +48,15 @@ typedef struct {
 	unsigned char control;
 	unsigned char data;
 
+	void *set_data_ext;
+	void (*set_data) (void *ext, unsigned char val);
+
+	void *set_ctrl_ext;
+	void (*set_ctrl) (void *ext, unsigned char val);
+
+	void *get_status_ext;
+	unsigned char (*get_status) (void *ext);
+
 	char_drv_t    *cdrv;
 } parport_t;
 
@@ -56,6 +65,10 @@ void parport_init (parport_t *par, unsigned long base);
 parport_t *parport_new (unsigned long base);
 void parport_free (parport_t *par);
 void parport_del (parport_t *par);
+
+void parport_set_data_fct (parport_t *par, void *ext, void *fct);
+void parport_set_ctrl_fct (parport_t *par, void *ext, void *fct);
+void parport_set_status_fct (parport_t *par, void *ext, void *fct);
 
 mem_blk_t *parport_get_reg (parport_t *par);
 

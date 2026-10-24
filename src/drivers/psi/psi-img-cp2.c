@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/psi/psi-img-cp2.c                                *
  * Created:     2010-10-26 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2010-2016 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -34,7 +34,10 @@
 #endif
 
 
-static const char par_cp2_id[16] = "SOFTWARE PIRATES";
+#define CP2_ID_SIZE 16
+
+
+static const char par_cp2_id[] = "SOFTWARE PIRATES";
 
 static const char *par_cp2_ver[] = {
 	"Release 3.02$0",
@@ -70,7 +73,7 @@ int cp2_load_header (FILE *fp, unsigned long *ofs)
 		return (1);
 	}
 
-	if (memcmp (buf, par_cp2_id, 16) != 0) {
+	if (memcmp (buf, par_cp2_id, CP2_ID_SIZE) != 0) {
 		fprintf (stderr, "cp2: not a CP2 file\n");
 		return (1);
 	}

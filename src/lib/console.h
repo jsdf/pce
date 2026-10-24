@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/lib/console.h                                            *
  * Created:     2006-06-19 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2006-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2006-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -38,9 +38,10 @@ int pce_set_redir_inp (const char *fname);
 int pce_set_redir_out (const char *fname, const char *mode);
 
 int pce_gets (const char *prompt, char *str, unsigned max);
-void pce_puts (const char *str);
-void pce_printf (const char *msg, ...);
-void pce_vprintf (const char *msg, va_list va);
+int pce_putc (int c);
+int pce_puts (const char *str);
+int pce_printf (const char *msg, ...);
+int pce_vprintf (const char *msg, va_list va);
 
 void pce_prt_sep (const char *str);
 

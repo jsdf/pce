@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/sim405/sim405.h                                     *
  * Created:     2004-06-01 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2004-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -30,9 +30,6 @@
 #define PCE_SIM405_SIM405_H 1
 
 
-#include <config.h>
-
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -41,7 +38,29 @@
 #include <limits.h>
 #endif
 
+#include "pci.h"
+
+#include <chipset/clock/ds1743.h>
+#include <chipset/ppc405/uic.h>
+
+#include <cpu/ppc405/ppc405.h>
+
 #include <devices/device.h>
+#include <devices/ata.h>
+#include <devices/clock/ds1743.h>
+#include <devices/memory.h>
+#include <devices/nvram.h>
+#include <devices/pci.h>
+#include <devices/pci-ata.h>
+#include <devices/serport.h>
+#include <devices/slip.h>
+
+#include <lib/brkpt.h>
+#include <lib/log.h>
+#include <lib/inidsk.h>
+#include <lib/load.h>
+
+#include <libini/libini.h>
 
 
 #define PCE_BRK_STOP  1
@@ -49,23 +68,7 @@
 #define PCE_BRK_SNAP  3
 
 
-typedef void (*seta_uint8_f) (void *ext, unsigned long addr, unsigned char val);
-typedef void (*seta_uint16_f) (void *ext, unsigned long addr, unsigned short val);
-typedef unsigned char (*geta_uint8_f) (void *ext, unsigned long addr);
-typedef unsigned short (*geta_uint16_f) (void *ext, unsigned long addr);
-
-typedef void (*set_uint8_f) (void *ext, unsigned char val);
-typedef void (*set_uint16_f) (void *ext, unsigned short val);
-typedef unsigned char (*get_uint8_f) (void *ext);
-typedef unsigned short (*get_uint16_f) (void *ext);
-
-
 struct sim405_t;
-
-
-extern char          *par_terminal;
-extern char          *par_video;
-extern char          *par_cpu;
 
 
 void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
@@ -73,29 +76,12 @@ void pce_dump_hex (FILE *fp, void *buf, unsigned long n,
 );
 
 
-#include <devices/memory.h>
-#include <devices/nvram.h>
-#include <devices/serport.h>
-#include <devices/ata.h>
-#include <devices/pci-ata.h>
-
-#include <chipset/ppc405/uic.h>
-
-#include <cpu/ppc405/ppc405.h>
-
-#include <libini/libini.h>
-
-#include <lib/log.h>
-#include <lib/brkpt.h>
-#include <lib/inidsk.h>
-#include <lib/load.h>
-
-
 #define SIM405_DCRN_OCM0_ISARC  0x18
 #define SIM405_DCRN_OCM0_ISCNTL 0x19
 #define SIM405_DCRN_OCM0_DSARC  0x1a
 #define SIM405_DCRN_OCM0_DSCNTL 0x1b
 
+#define SIM405_DCRN_CPC0_CR0 0xb1
 #define SIM405_DCRN_CPC0_CR1 0xb2
 #define SIM405_DCRN_CPC0_PSR 0xb4
 #define SIM405_DCRN_CPC0_PSR_PAE 0x00000400UL
@@ -143,6 +129,7 @@ typedef struct sim405_s {
 	uint32_t           ocm0_dscntl;
 	uint32_t           ocm0_dsarc;
 
+	uint32_t           cpc0_cr0;
 	uint32_t           cpc0_cr1;
 	uint32_t           cpc0_psr;
 
@@ -151,8 +138,27 @@ typedef struct sim405_s {
 
 	clock_t            real_clk;
 
+	char               sync_time_base;
+
+	unsigned long      sync_clock_sim;
+	unsigned long      sync_clock_real;
+	unsigned long      sync_interval;
+
+	unsigned long      serial_clock;
+	unsigned long      serial_clock_count;
+
+	unsigned           hook_idx;
+	unsigned           hook_cnt;
+	unsigned char      hook_buf[256];
+
+	FILE               *hook_read;
+	FILE               *hook_write;
+
 	unsigned           brk;
 } sim405_t;
+
+
+extern sim405_t *par_sim;
 
 
 /*****************************************************************************
@@ -178,6 +184,8 @@ unsigned long long s405_get_clkcnt (sim405_t *sim);
  *****************************************************************************/
 void s405_reset (sim405_t *sim);
 
+void s405_clock_discontinuity (sim405_t *sim);
+
 /*****************************************************************************
  * @short Clock the simulator
  * @param n The number of clock cycles. Must not be 0.
@@ -196,13 +204,6 @@ void s405_break (sim405_t *sim, unsigned char val);
  * Don't use.
  *****************************************************************************/
 void s405_set_keycode (sim405_t *sim, unsigned char val);
-
-/*****************************************************************************
- * @short Send a message to the emulator core
- * @param msg The message
- * @param val The message parameter
- *****************************************************************************/
-int s405_set_msg (sim405_t *sim, const char *msg, const char *val);
 
 
 #endif

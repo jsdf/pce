@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/opcode13.c                                    *
  * Created:     2003-11-10 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -221,277 +221,43 @@ void op_13 (p405_t *c)
 }
 
 
-p405_opcode_f p405_opcode13[1024] = {
-	&op_13_000,       NULL,       NULL,       NULL,   /* 000 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-	&op_13_010,       NULL,       NULL,       NULL,   /* 010 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_021,       NULL,       NULL,   /* 020 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL, &op_13_032, &op_13_033,   /* 030 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 040 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 050 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 060 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 070 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_081,       NULL,       NULL,   /* 080 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 090 */
-				NULL,       NULL, &op_13_096,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 0a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 0b0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_0c1,       NULL,       NULL,   /* 0c0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 0d0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_0e1,       NULL,       NULL,   /* 0e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 0f0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_101,       NULL,       NULL,   /* 100 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 110 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_121,       NULL,       NULL,   /* 120 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 130 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 140 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 150 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 160 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 170 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 180 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 190 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_1a1,       NULL,       NULL,   /* 1a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 1b0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL, &op_13_1c1,       NULL,       NULL,   /* 1c0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 1d0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 1e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 1f0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 200 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-	&op_13_210,       NULL,       NULL,       NULL,   /* 210 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 220 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 230 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 240 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 250 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 260 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 270 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 280 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 290 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2b0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2c0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2d0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 2f0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 300 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 310 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 320 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 330 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 340 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 350 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 360 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 370 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 380 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 390 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3a0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3b0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3c0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3d0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3e0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,   /* 3f0 */
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL,
-				NULL,       NULL,       NULL,       NULL
+static
+p405_opcode_list_t p405_opcodes_13[] = {
+	{ 0x000, op_13_000 },
+	{ 0x010, op_13_010 },
+	{ 0x021, op_13_021 },
+	{ 0x032, op_13_032 },
+	{ 0x033, op_13_033 },
+	{ 0x081, op_13_081 },
+	{ 0x096, op_13_096 },
+	{ 0x0c1, op_13_0c1 },
+	{ 0x0e1, op_13_0e1 },
+	{ 0x101, op_13_101 },
+	{ 0x121, op_13_121 },
+	{ 0x1a1, op_13_1a1 },
+	{ 0x1c1, op_13_1c1 },
+	{ 0x210, op_13_210 },
+	{ 0x000, NULL }
 };
 
 void p405_set_opcode13 (p405_t *c)
 {
-	unsigned i;
+	unsigned           i;
+	p405_opcode_list_t *lst;
+	p405_opcode_f      *p;
 
-	c->opcodes.op[0x13] = &op_13;
+	c->opcodes.op[0x13] = op_13;
+
+	p = c->opcodes.op13;
 
 	for (i = 0; i < 1024; i++) {
-		if (p405_opcode13[i] != NULL) {
-			c->opcodes.op13[i] = p405_opcode13[i];
-		}
-		else {
-			c->opcodes.op13[i] = &p405_op_undefined;
-		}
+		p[i] = p405_op_undefined;
+	}
+
+	lst = p405_opcodes_13;
+
+	while (lst->fct != NULL) {
+		p[lst->op] = lst->fct;
+		lst += 1;
 	}
 }

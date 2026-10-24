@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/utils/psi/save.c                                         *
  * Created:     2013-06-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2013 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2013-2017 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -73,6 +73,55 @@ int psi_save_sectors (psi_img_t *img, const char *fname)
 
 	if (r) {
 		fprintf (stderr, "%s: saving sectors failed\n", arg0);
+	}
+
+	return (r);
+}
+
+
+static
+int psi_save_weak_cb (psi_img_t *img, psi_sct_t *sct,
+	unsigned c, unsigned h, unsigned s, unsigned a, void *opaque)
+{
+	FILE *fp;
+
+	fp = opaque;
+
+	if (sct->weak != NULL) {
+		if (fwrite (sct->weak, 1, sct->n, fp) != sct->n) {
+			return (1);
+		}
+
+		par_cnt += 1;
+	}
+
+	return (0);
+}
+
+int psi_save_weak (psi_img_t *img, const char *fname)
+{
+	int  r;
+	FILE *fp;
+
+	if ((fp = fopen (fname, "wb")) == NULL) {
+		fprintf (stderr, "%s: can't create file (%s)\n", arg0, fname);
+		return (1);
+	}
+
+	par_cnt = 0;
+
+	r = psi_for_all_sectors (img, psi_save_weak_cb, fp);
+
+	fclose (fp);
+
+	if (par_verbose) {
+		fprintf (stderr, "%s: save %lu weak masks to %s\n",
+			arg0, par_cnt, fname
+		);
+	}
+
+	if (r) {
+		fprintf (stderr, "%s: saving weak masks failed\n", arg0);
 	}
 
 	return (r);

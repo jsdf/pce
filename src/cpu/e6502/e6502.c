@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/e6502/e6502.c                                        *
  * Created:     2004-05-02 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2004-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2004-2022 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -52,7 +52,7 @@ void e6502_init (e6502_t *c)
 	c->get_uint8 = NULL;
 	c->set_uint8 = NULL;
 
-	for (i = 0; i < 64; i++) {
+	for (i = 0; i < E6502_MAP_PAGES; i++) {
 		c->mem_map_rd[i] = NULL;
 		c->mem_map_wr[i] = NULL;
 	}
@@ -99,27 +99,33 @@ void e6502_del (e6502_t *c)
 
 void e6502_set_mem_map_rd (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p)
 {
+	addr1 &= 0xffff;
+	addr2 &= 0xffff;
+
 	while (addr1 < addr2) {
-		c->mem_map_rd[(addr1 >> 10) & 0x3f] = p;
+		c->mem_map_rd[addr1 >> E6502_MAP_BITS] = p;
 
 		if (p != NULL) {
-			p += 1024;
+			p += E6502_MAP_SIZE;
 		}
 
-		addr1 += 1024;
+		addr1 += E6502_MAP_SIZE;
 	}
 }
 
 void e6502_set_mem_map_wr (e6502_t *c, unsigned addr1, unsigned addr2, unsigned char *p)
 {
+	addr1 &= 0xffff;
+	addr2 &= 0xffff;
+
 	while (addr1 < addr2) {
-		c->mem_map_wr[(addr1 >> 10) & 0x3f] = p;
+		c->mem_map_wr[addr1 >> E6502_MAP_BITS] = p;
 
 		if (p != NULL) {
-			p += 1024;
+			p += E6502_MAP_SIZE;
 		}
 
-		addr1 += 1024;
+		addr1 += E6502_MAP_SIZE;
 	}
 }
 
@@ -140,6 +146,16 @@ void e6502_set_ioport (e6502_t *c, int enable)
 	}
 	else {
 		c->flags &= ~E6502_FLAG_IOPORT;
+	}
+}
+
+void e6502_set_undef (e6502_t *c, int enable)
+{
+	if (enable) {
+		c->flags |= E6502_FLAG_UNDEF;
+	}
+	else {
+		c->flags &= ~E6502_FLAG_UNDEF;
 	}
 }
 
@@ -314,12 +330,12 @@ int e6502_set_reg (e6502_t *c, const char *reg, unsigned long val)
 	return (1);
 }
 
-unsigned long long e6502_get_clock (e6502_t *c)
+unsigned long e6502_get_clock (e6502_t *c)
 {
 	return (c->clkcnt);
 }
 
-unsigned long long e6502_get_opcnt (e6502_t *c)
+unsigned long e6502_get_opcnt (e6502_t *c)
 {
 	return (c->inscnt);
 }

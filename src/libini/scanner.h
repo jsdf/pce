@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/libini/scanner.h                                         *
  * Created:     2001-03-05 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2001-2010 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2001-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -64,7 +64,7 @@ void scn_free (scanner_t *scn);
 
 void scn_set_str (scanner_t *scn, const char *str);
 
-int scn_add_file (scanner_t *scn, const char *fname, FILE *fp, int del);
+int scn_add_file (scanner_t *scn, const char *fname, FILE *fp, int del, int rel);
 
 char scn_get_chr (scanner_t *scn, unsigned idx);
 void scn_rmv_chr (scanner_t *scn, unsigned cnt);

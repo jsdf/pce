@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/pri/pri.c                                        *
  * Created:     2012-01-31 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2012-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2012-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -59,6 +59,69 @@ void pri_clear_bits (unsigned char *buf, unsigned long i1, unsigned long i2)
 	}
 }
 
+pri_evt_t *pri_evt_new (unsigned long type, unsigned long pos, unsigned long val)
+{
+	pri_evt_t *evt;
+
+	if ((evt = malloc (sizeof (pri_evt_t))) == NULL) {
+		return (NULL);
+	}
+
+	evt->next = NULL;
+	evt->type = type;
+	evt->pos = pos;
+	evt->val = val;
+
+	return (evt);
+}
+
+void pri_evt_del (pri_evt_t *evt)
+{
+	free (evt);
+}
+
+/*
+ * Get the next event of type <type> after this one.
+ */
+pri_evt_t *pri_evt_next (pri_evt_t *evt, unsigned long type)
+{
+	if (evt != NULL) {
+		evt = evt->next;
+	}
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			return (evt);
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Convert the clock rate multiplication factor in an event of
+ * type PRI_EVENT_CLOCK to a real clock rate.
+ */
+unsigned long pri_evt_get_clock (pri_evt_t *evt, unsigned long base)
+{
+	unsigned long clk;
+
+	if ((evt == NULL) || (evt->type != PRI_EVENT_CLOCK)) {
+		return (base);
+	}
+
+	if (evt->val == 0) {
+		clk = base;
+	}
+	else {
+		clk = ((unsigned long long) evt->val * base + 32767) / 65536;
+	}
+
+	return (clk);
+}
+
 /*****************************************************************************
  * Create a new track
  *
@@ -90,7 +153,10 @@ pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock)
 		}
 	}
 
+	trk->evt = NULL;
+
 	trk->idx = 0;
+	trk->cur_evt = NULL;
 	trk->wrap = 0;
 
 	return (trk);
@@ -101,7 +167,15 @@ pri_trk_t *pri_trk_new (unsigned long size, unsigned long clock)
  *****************************************************************************/
 void pri_trk_del (pri_trk_t *trk)
 {
+	pri_evt_t *tmp;
+
 	if (trk != NULL) {
+		while (trk->evt != NULL) {
+			tmp = trk->evt;
+			trk->evt = tmp->next;
+			free (tmp);
+		}
+
 		free (trk->data);
 		free (trk);
 	}
@@ -113,6 +187,7 @@ void pri_trk_del (pri_trk_t *trk)
 pri_trk_t *pri_trk_clone (const pri_trk_t *trk)
 {
 	pri_trk_t *ret;
+	pri_evt_t *evt;
 
 	ret = pri_trk_new (trk->size, trk->clock);
 
@@ -125,9 +200,300 @@ pri_trk_t *pri_trk_clone (const pri_trk_t *trk)
 	}
 
 	ret->idx = trk->idx;
+	ret->cur_evt = NULL;
 	ret->wrap = trk->wrap;
 
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if (pri_trk_evt_add (ret, evt->type, evt->pos, evt->val) == NULL) {
+			pri_trk_del (ret);
+			return (NULL);
+		}
+
+		evt = evt->next;
+	}
+
 	return (ret);
+}
+
+void pri_trk_evt_ins (pri_trk_t *trk, pri_evt_t *evt)
+{
+	pri_evt_t *tmp;
+
+	evt->next = NULL;
+
+	if (trk->evt == NULL) {
+		trk->evt = evt;
+	}
+	else if (evt->pos < trk->evt->pos) {
+		evt->next = trk->evt;
+		trk->evt = evt;
+	}
+	else {
+		tmp = trk->evt;
+
+		while ((tmp->next != NULL) && (evt->pos >= tmp->next->pos)) {
+			tmp = tmp->next;
+		}
+
+		evt->next = tmp->next;
+		tmp->next = evt;
+	}
+}
+
+int pri_trk_evt_rmv (pri_trk_t *trk, const pri_evt_t *evt)
+{
+	pri_evt_t *tmp;
+
+	if (trk->evt == NULL) {
+		return (1);
+	}
+
+	if (trk->evt == evt) {
+		trk->evt = trk->evt->next;
+		return (0);
+	}
+
+	tmp = trk->evt;
+
+	while ((tmp->next != NULL) && (tmp->next != evt)) {
+		tmp = tmp->next;
+	}
+
+	if (tmp->next == evt) {
+		tmp->next = tmp->next->next;
+		return (0);
+	}
+
+	return (1);
+}
+
+pri_evt_t *pri_trk_evt_add (pri_trk_t *trk, unsigned long type, unsigned long pos, unsigned long val)
+{
+	pri_evt_t *evt;
+
+	if ((evt = pri_evt_new (type, pos, val)) == NULL) {
+		return (NULL);
+	}
+
+	pri_trk_evt_ins (trk, evt);
+
+	return (evt);
+}
+
+/*
+ * Get the first event of type <type>, after skipping idx events of the same
+ * type.
+ */
+pri_evt_t *pri_trk_evt_get_idx (pri_trk_t *trk, unsigned long type, unsigned long idx)
+{
+	pri_evt_t *evt;
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (idx == 0) {
+				return (evt);
+			}
+
+			idx -= 1;
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the first event of type <type> at <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_pos (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt;
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos == pos) {
+				return (evt);
+			}
+
+			if (evt->pos > pos) {
+				return (NULL);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the first event of type <type> at or after <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_after (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt;
+
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos >= pos) {
+				return (evt);
+			}
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+/*
+ * Get the last event of type <type> at or before <pos>.
+ */
+pri_evt_t *pri_trk_evt_get_before (pri_trk_t *trk, unsigned long type, unsigned long pos)
+{
+	pri_evt_t *evt, *ret;
+
+	evt = trk->evt;
+	ret = NULL;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			if (evt->pos > pos) {
+				return (ret);
+			}
+
+			ret = evt;
+		}
+
+		evt = evt->next;
+	}
+
+	return (NULL);
+}
+
+int pri_trk_evt_del (pri_trk_t *trk, pri_evt_t *evt)
+{
+	pri_evt_t *tmp, *tmp2;
+
+	if (trk->evt == NULL) {
+		return (1);
+	}
+
+	if (trk->evt == evt) {
+		tmp = trk->evt;
+		trk->evt = trk->evt->next;
+		pri_evt_del (tmp);
+		return (0);
+	}
+
+	tmp = trk->evt;
+
+	while ((tmp->next != NULL) && (tmp->next != evt)) {
+		tmp = tmp->next;
+	}
+
+	if (tmp->next == evt) {
+		tmp2 = tmp->next;
+		tmp->next = tmp2->next;
+		pri_evt_del (tmp2);
+		return (0);
+	}
+
+	return (1);
+}
+
+void pri_trk_evt_del_all (pri_trk_t *trk, unsigned long type)
+{
+	pri_evt_t *evt, *dst1, *dst2, *tmp;
+
+	evt = trk->evt;
+
+	dst1 = NULL;
+	dst2 = NULL;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			tmp = evt;
+			evt = evt->next;
+			free (tmp);
+
+		}
+		else {
+			if (dst1 == NULL) {
+				dst1 = evt;
+			}
+			else {
+				dst2->next = evt;
+			}
+
+			dst2 = evt;
+
+			evt = evt->next;
+		}
+	}
+
+	if (dst2 != NULL) {
+		dst2->next = NULL;
+	}
+
+	trk->evt = dst1;
+	trk->cur_evt = NULL;
+}
+
+unsigned pri_trk_evt_count (const pri_trk_t *trk, unsigned long type)
+{
+	unsigned cnt;
+
+	pri_evt_t *evt;
+
+	cnt = 0;
+	evt = trk->evt;
+
+	while (evt != NULL) {
+		if ((type == PRI_EVENT_ALL) || (evt->type == type)) {
+			cnt += 1;
+		}
+
+		evt = evt->next;
+	}
+
+	return (cnt);
+}
+
+/*
+ * Add ofs to all event positions, wrapping around if necessary
+ */
+static
+void pri_trk_evt_shift (pri_trk_t *trk, unsigned long ofs)
+{
+	pri_evt_t *evt, *tmp;
+
+	evt = trk->evt;
+	trk->evt = NULL;
+
+	while (evt != NULL) {
+		if (evt->pos < trk->size) {
+			evt->pos += ofs;
+
+			while (evt->pos >= trk->size) {
+				evt->pos -= trk->size;
+			}
+		}
+
+		tmp = evt;
+		evt = evt->next;
+
+		pri_trk_evt_ins (trk, tmp);
+	}
 }
 
 /*****************************************************************************
@@ -167,6 +533,16 @@ void pri_trk_clear_16 (pri_trk_t *trk, unsigned val)
 	}
 
 	pri_clear_bits (trk->data, trk->size, (trk->size - 1) | 7);
+}
+
+/*****************************************************************************
+ * Clear the remaining bits of a track
+ *****************************************************************************/
+void pri_trk_clear_slack (pri_trk_t *trk)
+{
+	if (trk->size & 7) {
+		trk->data[trk->size / 8] &= 0xff << (8 - (trk->size & 7));
+	}
 }
 
 /*****************************************************************************
@@ -217,6 +593,7 @@ int pri_trk_set_size (pri_trk_t *trk, unsigned long size)
 	}
 
 	trk->idx = 0;
+	trk->cur_evt = trk->evt;
 	trk->wrap = 0;
 
 	if (size == 0) {
@@ -226,21 +603,27 @@ int pri_trk_set_size (pri_trk_t *trk, unsigned long size)
 		return (0);
 	}
 
-	tmp = realloc (trk->data, (size + 7) / 8);
-
-	if (tmp == NULL) {
+	if ((tmp = realloc (trk->data, (size + 7) / 8)) == NULL) {
 		return (1);
 	}
 
-	if (size > 0) {
-		i1 = (size < trk->size) ? size : trk->size;
-		pri_clear_bits (tmp, i1, (size - 1) | 7);
-	}
+	i1 = (size < trk->size) ? size : trk->size;
+	pri_clear_bits (tmp, i1, (size - 1) | 7);
 
 	trk->size = size;
 	trk->data = tmp;
 
 	return (0);
+}
+
+/*****************************************************************************
+ * Get the track position
+ *
+ * @return  The current track position
+ *****************************************************************************/
+unsigned long pri_trk_get_pos (const pri_trk_t *trk)
+{
+	return (trk->idx);
 }
 
 /*****************************************************************************
@@ -250,9 +633,17 @@ int pri_trk_set_size (pri_trk_t *trk, unsigned long size)
  *****************************************************************************/
 void pri_trk_set_pos (pri_trk_t *trk, unsigned long pos)
 {
-	if (trk->size > 0) {
-		trk->idx = pos % trk->size;
-		trk->wrap = 0;
+	if (trk->size == 0) {
+		return;
+	}
+
+	trk->idx = pos % trk->size;
+	trk->wrap = 0;
+
+	trk->cur_evt = trk->evt;
+
+	while ((trk->cur_evt != NULL) && (trk->cur_evt->pos < trk->idx)) {
+		trk->cur_evt = trk->cur_evt->next;
 	}
 }
 
@@ -352,6 +743,38 @@ int pri_trk_set_bits (pri_trk_t *trk, unsigned long val, unsigned cnt)
 	return (trk->wrap);
 }
 
+/*****************************************************************************
+ * Get an event from the current position
+ *
+ * @retval  type  The event type
+ * @retval  val   The event value
+ *
+ * @return Non-zero if there are no more events at the current position
+ *****************************************************************************/
+int pri_trk_get_event (pri_trk_t *trk, unsigned long *type, unsigned long *val)
+{
+	pri_evt_t *evt;
+
+	evt = trk->cur_evt;
+
+	while ((evt != NULL) && (evt->pos < trk->idx)) {
+		evt = evt->next;
+	}
+
+	if ((evt != NULL) && (evt->pos == trk->idx)) {
+		*type = evt->type;
+		*val = evt->val;
+
+		trk->cur_evt = evt->next;
+
+		return (0);
+	}
+
+	trk->cur_evt = evt;
+
+	return (1);
+}
+
 int pri_trk_rotate (pri_trk_t *trk, unsigned long idx)
 {
 	unsigned long i;
@@ -413,6 +836,85 @@ int pri_trk_rotate (pri_trk_t *trk, unsigned long idx)
 	free (trk->data);
 	trk->data = tmp;
 
+	pri_trk_evt_shift (trk, trk->size - idx);
+
+	return (0);
+}
+
+int pri_trk_get_weak_mask (pri_trk_t *trk, unsigned char **buf, unsigned long *cnt)
+{
+	unsigned long pos, val;
+	unsigned char *ptr;
+	pri_evt_t     *evt;
+
+	*cnt = (trk->size + 7) / 8;
+
+	if ((*buf = malloc (*cnt)) == NULL) {
+		return (1);
+	}
+
+	memset (*buf, 0, *cnt);
+
+	ptr = *buf;
+
+	evt = pri_trk_evt_get_idx (trk, PRI_EVENT_WEAK, 0);
+
+	while (evt != NULL) {
+		pos = evt->pos;
+		val = evt->val;
+
+		while ((val != 0) && (pos < trk->size)) {
+			if (val & 0x80000000) {
+				ptr[pos >> 3] |= 0x80 >> (pos & 7);
+			}
+
+			pos += 1;
+			val = (val << 1) & 0xffffffff;
+		}
+
+		evt = pri_evt_next (evt, PRI_EVENT_WEAK);
+	}
+
+	return (0);
+}
+
+int pri_trk_set_weak_mask (pri_trk_t *trk, const void *buf, unsigned long cnt)
+{
+	unsigned long       i, n;
+	unsigned long       val;
+	const unsigned char *ptr;
+
+	n = pri_trk_get_size (trk);
+
+	if ((8 * cnt) < n) {
+		n = 8 * cnt;
+	}
+
+	pri_trk_evt_del_all (trk, PRI_EVENT_WEAK);
+
+	ptr = buf;
+	val = 0;
+
+	for (i = 0; i < n; i++) {
+		val = (val << 1) | ((ptr[i >> 3] >> (~i & 7)) & 1);
+
+		if (val & 0x80000000) {
+			pri_trk_evt_add (trk, PRI_EVENT_WEAK, i - 31, val);
+			val = 0;
+		}
+	}
+
+	while (val != 0) {
+		val = val << 1;
+
+		if (val & 0x80000000) {
+			pri_trk_evt_add (trk, PRI_EVENT_WEAK, i - 31, val);
+			val = 0;
+		}
+
+		i += 1;
+	}
+
 	return (0);
 }
 
@@ -445,6 +947,35 @@ void pri_cyl_del (pri_cyl_t *cyl)
 		free (cyl->trk);
 		free (cyl);
 	}
+}
+
+pri_cyl_t *pri_cyl_clone (const pri_cyl_t *cyl)
+{
+	unsigned long i;
+	pri_trk_t     *trk;
+	pri_cyl_t     *ret;
+
+	if ((ret = pri_cyl_new()) == NULL) {
+		return (NULL);
+	}
+
+	for (i = 0; i < cyl->trk_cnt; i++) {
+		if (cyl->trk[i] == NULL) {
+			continue;
+		}
+
+		if ((trk = pri_trk_clone (cyl->trk[i])) == NULL) {
+			pri_cyl_del (ret);
+			return (NULL);
+		}
+
+		if (pri_cyl_set_track (ret, trk, i)) {
+			pri_cyl_del (ret);
+			return (NULL);
+		}
+	}
+
+	return (ret);
 }
 
 unsigned long pri_cyl_get_trk_cnt (const pri_cyl_t *cyl)
@@ -547,6 +1078,11 @@ pri_img_t *pri_img_new (void)
 
 	img->comment_size = 0;
 	img->comment = NULL;
+
+	img->readonly = 0;
+
+	img->woz_track_sync = 0;
+	img->woz_cleaned = 0;
 
 	return (img);
 }
@@ -682,6 +1218,23 @@ int pri_img_del_cylinder (pri_img_t *img, unsigned long c)
 	pri_img_fix_cyl (img);
 
 	return (0);
+}
+
+pri_trk_t *pri_img_get_track_const (const pri_img_t *img, unsigned long c, unsigned long h)
+{
+	pri_cyl_t *cyl;
+
+	if ((c >= img->cyl_cnt) || (img->cyl[c] == NULL)) {
+		return (NULL);
+	}
+
+	cyl = img->cyl[c];
+
+	if (h >= cyl->trk_cnt) {
+		return (NULL);
+	}
+
+	return (cyl->trk[h]);
 }
 
 pri_trk_t *pri_img_get_track (pri_img_t *img, unsigned long c, unsigned long h, int alloc)

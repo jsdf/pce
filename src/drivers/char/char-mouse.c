@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/drivers/char/char-mouse.c                                *
  * Created:     2011-10-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2011-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2011-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -203,6 +203,12 @@ unsigned chr_mouse_read (char_drv_t *cdrv, void *buf, unsigned cnt)
 
 	drv = cdrv->ext;
 	tmp = buf;
+
+	if (drv->protocol == MOUSE_MS) {
+		if ((drv->dtr == 0) || (drv->rts == 0)) {
+			return (0);
+		}
+	}
 
 	if (drv->buf_hd == drv->buf_tl) {
 		if ((drv->dx != 0) || (drv->dy != 0)) {

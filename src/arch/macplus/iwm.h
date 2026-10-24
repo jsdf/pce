@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/iwm.h                                       *
  * Created:     2007-11-25 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2013 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -36,16 +36,14 @@
 typedef struct {
 	unsigned        drive;
 
-	char            *fname;
-
 	disks_t         *dsks;
 	unsigned        diskid;
 
 	pri_img_t       *img;
+	char            img_del;
 
-	char            use_fname;
-	char            locked;
 	char            auto_rotate;
+	char            use_pwm;
 
 	unsigned        cylinders;
 	unsigned        heads;
@@ -63,6 +61,12 @@ typedef struct {
 	unsigned long   cur_track_pos;
 	unsigned long   cur_track_len;
 
+	pri_evt_t       *evt;
+
+	unsigned long   weak_mask;
+	unsigned        weak_run;
+	unsigned long   weak_val;
+
 	unsigned long   pwm_pos;
 	unsigned long   pwm_len;
 
@@ -76,6 +80,7 @@ typedef struct {
 
 	unsigned        pwm_val;
 
+	unsigned char   track_dirty;
 	char            dirty;
 } mac_iwm_drive_t;
 
@@ -101,6 +106,8 @@ typedef struct {
 
 	unsigned long   pwm_val;
 
+	unsigned long   rand;
+
 	mac_iwm_drive_t drv[MAC_IWM_DRIVES];
 	mac_iwm_drive_t *curdrv;
 
@@ -115,12 +122,12 @@ void mac_iwm_free (mac_iwm_t *iwm);
 
 void mac_iwm_set_motor_fct (mac_iwm_t *iwm, void *ext, void *fct);
 
+void mac_iwm_enable_pwm (mac_iwm_t *iwm, unsigned drive, int val);
 int mac_iwm_set_heads (mac_iwm_t *iwm, unsigned drive, unsigned heads);
 void mac_iwm_set_disks (mac_iwm_t *iwm, disks_t *dsks);
 void mac_iwm_set_disk_id (mac_iwm_t *iwm, unsigned drive, unsigned id);
-void mac_iwm_set_fname (mac_iwm_t *iwm, unsigned drive, const char *fname);
-int mac_iwm_get_locked (const mac_iwm_t *iwm, unsigned drive);
-void mac_iwm_set_locked (mac_iwm_t *iwm, unsigned drive, int locked);
+void mac_iwm_flush_disk (mac_iwm_t *iwm, unsigned id);
+void mac_iwm_insert_disk (mac_iwm_t *iwm, unsigned id);
 void mac_iwm_set_auto_rotate (mac_iwm_t *iwm, unsigned drive, int val);
 
 void mac_iwm_set_head_sel (mac_iwm_t *iwm, unsigned char val);

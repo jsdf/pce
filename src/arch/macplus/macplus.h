@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/macplus/macplus.h                                   *
  * Created:     2007-04-15 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2020 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -100,6 +100,7 @@ struct macplus_s {
 
 	int                overlay;
 	int                reset;
+	int                memtest;
 
 	unsigned long      vbuf1;
 	unsigned long      vbuf2;
@@ -108,10 +109,13 @@ struct macplus_s {
 	unsigned long      sbuf2;
 
 	unsigned char      intr;
+	unsigned char      intr_scsi_via;
 
 	long               mouse_delta_x;
 	long               mouse_delta_y;
 	unsigned           mouse_button;
+
+	unsigned           disk_id;
 
 	unsigned char      dcd_a;
 	unsigned char      dcd_b;
@@ -128,6 +132,8 @@ struct macplus_s {
 	unsigned long      sync_clk;
 	unsigned long      sync_us;
 	long               sync_sleep;
+
+	unsigned           ser_clk;
 
 	unsigned long long clk_cnt;
 	unsigned long      clk_div[4];

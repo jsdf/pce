@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/cpu/ppc405/disasm.c                                      *
  * Created:     2003-11-08 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2003-2009 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2003-2018 Hampa Hug <hampa@hampa.ch>                     *
  * Copyright:   (C) 2003-2006 Lukas Ruf <ruf@lpr.ch>                         *
  *****************************************************************************/
 
@@ -34,9 +34,19 @@
 #include "internal.h"
 
 
-static p405_disasm_f p405_opd13[1024];
-static p405_disasm_f p405_opd1f[1024];
-static p405_disasm_f p405_dis[64];
+typedef void (*p405_disasm_f) (p405_disasm_t *dis);
+
+typedef struct {
+	unsigned      op;
+	p405_disasm_f fct;
+} p405_disasm_list_t;
+
+
+static void p405_disasm_init (void);
+
+static p405_disasm_f p405_op13[1024];
+static p405_disasm_f p405_op1f[1024];
+static p405_disasm_f p405_op[64];
 
 
 #define ARG_NONE   0
@@ -62,6 +72,8 @@ static p405_disasm_f p405_dis[64];
 #define OPF_RC 0x0002
 
 
+static char p405_disasm_inited = 0;
+
 static
 char *p405_cr_name[2][4] = {
 	{ "lt", "gt", "eq", "so" },
@@ -73,155 +85,157 @@ static
 const char *disasm_get_spr (unsigned sprn)
 {
 	switch (sprn) {
-		case P405_SPRN_CCR0:
-			return ("ccr0");
+	case P405_SPRN_CCR0:
+		return ("ccr0");
 
-		case P405_SPRN_CTR:
-			return ("ctr");
+	case P405_SPRN_CTR:
+		return ("ctr");
 
-		case P405_SPRN_DAC1:
-			return ("dac1");
+	case P405_SPRN_DAC1:
+		return ("dac1");
 
-		case P405_SPRN_DAC2:
-			return ("dac2");
+	case P405_SPRN_DAC2:
+		return ("dac2");
 
-		case P405_SPRN_DBCR0:
-			return ("dbcr0");
+	case P405_SPRN_DBCR0:
+		return ("dbcr0");
 
-		case P405_SPRN_DBCR1:
-			return ("dbcr1");
+	case P405_SPRN_DBCR1:
+		return ("dbcr1");
 
-		case P405_SPRN_DBSR:
-			return ("dbsr");
+	case P405_SPRN_DBSR:
+		return ("dbsr");
 
-		case P405_SPRN_DCCR:
-			return ("dccr");
+	case P405_SPRN_DCCR:
+		return ("dccr");
 
-		case P405_SPRN_DCWR:
-			return ("dcwr");
+	case P405_SPRN_DCWR:
+		return ("dcwr");
 
-		case P405_SPRN_DVC1:
-			return ("dvc1");
+	case P405_SPRN_DVC1:
+		return ("dvc1");
 
-		case P405_SPRN_DVC2:
-			return ("dvc2");
+	case P405_SPRN_DVC2:
+		return ("dvc2");
 
-		case P405_SPRN_DEAR:
-			return ("dear");
+	case P405_SPRN_DEAR:
+		return ("dear");
 
-		case P405_SPRN_ESR:
-			return ("esr");
+	case P405_SPRN_ESR:
+		return ("esr");
 
-		case P405_SPRN_EVPR:
-			return ("evpr");
+	case P405_SPRN_EVPR:
+		return ("evpr");
 
-		case P405_SPRN_IAC1:
-			return ("iac1");
+	case P405_SPRN_IAC1:
+		return ("iac1");
 
-		case P405_SPRN_IAC2:
-			return ("iac2");
+	case P405_SPRN_IAC2:
+		return ("iac2");
 
-		case P405_SPRN_IAC3:
-			return ("iac3");
+	case P405_SPRN_IAC3:
+		return ("iac3");
 
-		case P405_SPRN_IAC4:
-			return ("iac4");
+	case P405_SPRN_IAC4:
+		return ("iac4");
 
-		case P405_SPRN_ICCR:
-			return ("iccr");
+	case P405_SPRN_ICCR:
+		return ("iccr");
 
-		case P405_SPRN_ICDBDR:
-			return ("icdbdr");
+	case P405_SPRN_ICDBDR:
+		return ("icdbdr");
 
-		case P405_SPRN_LR:
-			return ("lr");
+	case P405_SPRN_LR:
+		return ("lr");
 
-		case P405_SPRN_PID:
-			return ("pid");
+	case P405_SPRN_PID:
+		return ("pid");
 
-		case P405_SPRN_PIT:
-			return ("pit");
+	case P405_SPRN_PIT:
+		return ("pit");
 
-		case P405_SPRN_PVR:
-			return ("pvr");
+	case P405_SPRN_PVR:
+		return ("pvr");
 
-		case P405_SPRN_SGR:
-			return ("sgr");
+	case P405_SPRN_SGR:
+		return ("sgr");
 
-		case P405_SPRN_SLER:
-			return ("sler");
+	case P405_SPRN_SLER:
+		return ("sler");
 
-		case P405_SPRN_SPRG0:
-			return ("sprg0");
+	case P405_SPRN_SPRG0:
+		return ("sprg0");
 
-		case P405_SPRN_SPRG1:
-			return ("sprg1");
+	case P405_SPRN_SPRG1:
+		return ("sprg1");
 
-		case P405_SPRN_SPRG2:
-			return ("sprg2");
+	case P405_SPRN_SPRG2:
+		return ("sprg2");
 
-		case P405_SPRN_SPRG3:
-			return ("sprg3");
+	case P405_SPRN_SPRG3:
+		return ("sprg3");
 
-		case P405_SPRN_SPRG4:
-			return ("sprg4");
+	case P405_SPRN_SPRG4:
+		return ("sprg4");
 
-		case P405_SPRN_SPRG5:
-			return ("sprg5");
+	case P405_SPRN_SPRG5:
+		return ("sprg5");
 
-		case P405_SPRN_SPRG6:
-			return ("sprg6");
+	case P405_SPRN_SPRG6:
+		return ("sprg6");
 
-		case P405_SPRN_SPRG7:
-			return ("sprg7");
+	case P405_SPRN_SPRG7:
+		return ("sprg7");
 
-		case P405_SPRN_SPRG4R:
-			return ("sprg4r");
+	case P405_SPRN_SPRG4R:
+		return ("sprg4r");
 
-		case P405_SPRN_SPRG5R:
-			return ("sprg5r");
+	case P405_SPRN_SPRG5R:
+		return ("sprg5r");
 
-		case P405_SPRN_SPRG6R:
-			return ("sprg6r");
+	case P405_SPRN_SPRG6R:
+		return ("sprg6r");
 
-		case P405_SPRN_SPRG7R:
-			return ("sprg7r");
+	case P405_SPRN_SPRG7R:
+		return ("sprg7r");
 
-		case P405_SPRN_SRR0:
-			return ("srr0");
+	case P405_SPRN_SRR0:
+		return ("srr0");
 
-		case P405_SPRN_SRR1:
-			return ("srr1");
+	case P405_SPRN_SRR1:
+		return ("srr1");
 
-		case P405_SPRN_SRR2:
-			return ("srr2");
+	case P405_SPRN_SRR2:
+		return ("srr2");
 
-		case P405_SPRN_SRR3:
-			return ("srr3");
+	case P405_SPRN_SRR3:
+		return ("srr3");
 
-		case P405_SPRN_SU0R:
-			return ("su0r");
+	case P405_SPRN_SU0R:
+		return ("su0r");
 
-		case P405_SPRN_TBL:
-			return ("tbl");
+	case P405_SPRN_TBL:
+	case P405_SPRN_TBLU:
+		return ("tbl");
 
-		case P405_SPRN_TBU:
-			return ("tbu");
+	case P405_SPRN_TBU:
+	case P405_SPRN_TBUU:
+		return ("tbu");
 
-		case P405_SPRN_TCR:
-			return ("tcr");
+	case P405_SPRN_TCR:
+		return ("tcr");
 
-		case P405_SPRN_TSR:
-			return ("tsr");
+	case P405_SPRN_TSR:
+		return ("tsr");
 
-		case P405_SPRN_USPRG0:
-			return ("usprg0");
+	case P405_SPRN_USPRG0:
+		return ("usprg0");
 
-		case P405_SPRN_XER:
-			return ("XER");
+	case P405_SPRN_XER:
+		return ("xer");
 
-		case P405_SPRN_ZPR:
-			return ("ZPR");
+	case P405_SPRN_ZPR:
+		return ("zpr");
 	}
 
 	return (NULL);
@@ -236,88 +250,130 @@ void disasm_dw (p405_disasm_t *dis, uint32_t val)
 }
 
 static
-void disasm_arg (char *dst, uint32_t ir, unsigned arg, uint32_t par)
+void disasm_arg_reg (p405_disasm_t *dis, char *dst, unsigned r)
+{
+	r &= 0x1f;
+
+	*(dst++) = 'r';
+
+	if (r > 9) {
+		*(dst++) = '0' + (r / 10);
+	}
+
+	*(dst++) = '0' + (r % 10);
+
+	*dst = 0;
+
+	dis->reg |= 1UL << r;
+}
+
+static
+void disasm_arg_imm32 (char *dst, unsigned long val)
+{
+	unsigned i, tmp;
+
+	dst += 8;
+	*dst = 0;
+
+	for (i = 0; i < 8; i++) {
+		tmp = val & 0x0f;
+		val = val >> 4;
+
+		if (tmp < 10) {
+			tmp += '0';
+		}
+		else {
+			tmp = tmp - 10 + 'a';
+		}
+
+		*(--dst) = tmp;
+	}
+}
+
+static
+void disasm_arg (p405_disasm_t *dis, char *dst, uint32_t ir, unsigned arg, uint32_t par)
 {
 	switch (arg) {
-		case ARG_NONE:
-			dst[0] = 0;
-			break;
+	case ARG_NONE:
+		dst[0] = 0;
+		break;
 
-		case ARG_RA:
-			sprintf (dst, "r%d", p405_get_ir_ra (ir));
-			break;
+	case ARG_RA:
+		disasm_arg_reg (dis, dst, p405_get_ir_ra (ir));
+		break;
 
-		case ARG_RB:
-			sprintf (dst, "r%d", p405_get_ir_rb (ir));
-			break;
+	case ARG_RB:
+		disasm_arg_reg (dis, dst, p405_get_ir_rb (ir));
+		break;
 
-		case ARG_RS:
-			sprintf (dst, "r%d", p405_get_ir_rs (ir));
-			break;
+	case ARG_RS:
+		disasm_arg_reg (dis, dst, p405_get_ir_rs (ir));
+		break;
 
-		case ARG_RT:
-			sprintf (dst, "r%d", p405_get_ir_rt (ir));
-			break;
+	case ARG_RT:
+		disasm_arg_reg (dis, dst, p405_get_ir_rt (ir));
+		break;
 
-		case ARG_RA0:
-			if (p405_get_ir_ra (ir) == 0) {
-				strcpy (dst, "0");
+	case ARG_RA0:
+		if (p405_get_ir_ra (ir) == 0) {
+			dst[0] = '0';
+			dst[1] = 0;
+		}
+		else {
+			disasm_arg_reg (dis, dst, p405_get_ir_ra (ir));
+		}
+		break;
+
+	case ARG_SIMM16:
+		disasm_arg_imm32 (dst, p405_sext (ir, 16));
+		break;
+
+	case ARG_UIMM16:
+		disasm_arg_imm32 (dst, p405_uext (ir, 16));
+		break;
+
+	case ARG_IMM16S:
+		disasm_arg_imm32 (dst, (ir & 0xffff) << 16);
+		break;
+
+	case ARG_UINT3:
+		sprintf (dst, "%x", (unsigned) (par & 0x07));
+		break;
+
+	case ARG_UINT5:
+		sprintf (dst, "%02x", (unsigned) (par & 0x1f));
+		break;
+
+	case ARG_UINT8:
+		sprintf (dst, "%02x", (unsigned) (par & 0xff));
+		break;
+
+	case ARG_UINT16:
+		sprintf (dst, "%04x", (unsigned) (par & 0xffffU));
+		break;
+
+	case ARG_UINT32:
+		disasm_arg_imm32 (dst, par & 0xffffffff);
+		break;
+
+	case ARG_CRBIT:
+		sprintf (dst, "%s[%u]", p405_cr_name[0][par & 0x03], (unsigned) par / 4);
+		break;
+
+	case ARG_SPRN: {
+			const char *spr = disasm_get_spr (par);
+			if (spr != NULL) {
+				strcpy (dst, spr);
 			}
 			else {
-				sprintf (dst, "r%d", p405_get_ir_ra (ir));
+				sprintf (dst, "%03x", par);
 			}
-			break;
+		}
+		break;
 
-		case ARG_SIMM16:
-			sprintf (dst, "%08lx", (unsigned long) p405_sext (ir, 16));
-			break;
-
-		case ARG_UIMM16:
-			sprintf (dst, "%08lx", (unsigned long) p405_uext (ir, 16));
-			break;
-
-		case ARG_IMM16S:
-			sprintf (dst, "%08lx", (unsigned long) ((ir & 0xffffUL) << 16));
-			break;
-
-		case ARG_UINT3:
-			sprintf (dst, "%x", (unsigned) (par & 0x07));
-			break;
-
-		case ARG_UINT5:
-			sprintf (dst, "%02x", (unsigned) (par & 0x1f));
-			break;
-
-		case ARG_UINT8:
-			sprintf (dst, "%02x", (unsigned) (par & 0xff));
-			break;
-
-		case ARG_UINT16:
-			sprintf (dst, "%04x", (unsigned) (par & 0xffffU));
-			break;
-
-		case ARG_UINT32:
-			sprintf (dst, "%08lx", (unsigned long) (par & 0xffffffffUL));
-			break;
-
-		case ARG_CRBIT:
-			sprintf (dst, "%s[%u]", p405_cr_name[0][par & 0x03], (unsigned) par / 4);
-			break;
-
-		case ARG_SPRN: {
-				const char *spr = disasm_get_spr (par);
-				if (spr != NULL) {
-					strcpy (dst, spr);
-				}
-				else {
-					sprintf (dst, "%03x", par);
-				}
-			}
-			break;
-
-		case ARG_DCRN:
-			sprintf (dst, "%03x", par);
-			break;
+	case ARG_DCRN:
+		sprintf (dst, "%03x", par);
+		break;
 	}
 }
 
@@ -357,7 +413,7 @@ int disasm_op1 (p405_disasm_t *dis, const char *op, uint32_t opf, uint32_t res,
 	}
 
 	dis->argn = 1;
-	disasm_arg (dis->arg1, dis->ir, arg1, par1);
+	disasm_arg (dis, dis->arg1, dis->ir, arg1, par1);
 
 	return (0);
 }
@@ -371,7 +427,7 @@ int disasm_op2 (p405_disasm_t *dis, const char *op, uint32_t opf, uint32_t res,
 	}
 
 	dis->argn = 2;
-	disasm_arg (dis->arg2, dis->ir, arg2, par2);
+	disasm_arg (dis, dis->arg2, dis->ir, arg2, par2);
 
 	return (0);
 }
@@ -386,7 +442,7 @@ int disasm_op3 (p405_disasm_t *dis, const char *op, uint32_t opf, uint32_t res,
 	}
 
 	dis->argn = 3;
-	disasm_arg (dis->arg3, dis->ir, arg3, par3);
+	disasm_arg (dis, dis->arg3, dis->ir, arg3, par3);
 
 	return (0);
 }
@@ -401,7 +457,7 @@ int disasm_op4 (p405_disasm_t *dis, const char *op, uint32_t opf, uint32_t res,
 	}
 
 	dis->argn = 4;
-	disasm_arg (dis->arg4, dis->ir, arg4, par4);
+	disasm_arg (dis, dis->arg4, dis->ir, arg4, par4);
 
 	return (0);
 }
@@ -416,7 +472,7 @@ int disasm_op5 (p405_disasm_t *dis, const char *op, uint32_t opf, uint32_t res,
 	}
 
 	dis->argn = 5;
-	disasm_arg (dis->arg5, dis->ir, arg5, par5);
+	disasm_arg (dis, dis->arg5, dis->ir, arg5, par5);
 
 	return (0);
 }
@@ -767,7 +823,7 @@ void opd_13 (p405_disasm_t *dis)
 
 	op2 = (dis->ir >> 1) & 0x3ff;
 
-	p405_opd13[op2] (dis);
+	p405_op13[op2] (dis);
 }
 
 /* 14: rlwimi[.] ra, rs, sh, mb, me */
@@ -1272,17 +1328,17 @@ void opd_1f_173 (p405_disasm_t *dis)
 	tbrn = ((tbrf & 0x1f) << 5) | ((tbrf >> 5) & 0x1f);
 
 	switch (tbrn) {
-		case P405_TBRN_TBL:
-			disasm_op1 (dis, "mftb", 0, 0x01, ARG_RT, 0);
-			break;
+	case P405_TBRN_TBL:
+		disasm_op1 (dis, "mftb", 0, 0x01, ARG_RT, 0);
+		break;
 
-		case P405_TBRN_TBU:
-			disasm_op1 (dis, "mftbu", 0, 0x01, ARG_RT, 0);
-			break;
+	case P405_TBRN_TBU:
+		disasm_op1 (dis, "mftbu", 0, 0x01, ARG_RT, 0);
+		break;
 
-		default:
-			disasm_op2 (dis, "mftb", 0, 0x01, ARG_RT, ARG_UINT16, 0, tbrn);
-			break;
+	default:
+		disasm_op2 (dis, "mftb", 0, 0x01, ARG_RT, ARG_UINT16, 0, tbrn);
+		break;
 	}
 }
 
@@ -1530,17 +1586,17 @@ static
 void opd_1f_3b2 (p405_disasm_t *dis)
 {
 	switch (p405_get_ir_rb (dis->ir)) {
-		case 0:
-			disasm_op2 (dis, "tlbrehi", 0, 0x01, ARG_RT, ARG_RA, 0, 0);
-			break;
+	case 0:
+		disasm_op2 (dis, "tlbrehi", 0, 0x01, ARG_RT, ARG_RA, 0, 0);
+		break;
 
-		case 1:
-			disasm_op2 (dis, "tlbrelo", 0, 0x01, ARG_RT, ARG_RA, 0, 0);
-			break;
+	case 1:
+		disasm_op2 (dis, "tlbrelo", 0, 0x01, ARG_RT, ARG_RA, 0, 0);
+		break;
 
-		default:
-			disasm_undefined (dis);
-			break;
+	default:
+		disasm_undefined (dis);
+		break;
 	}
 }
 
@@ -1563,17 +1619,17 @@ static
 void opd_1f_3d2 (p405_disasm_t *dis)
 {
 	switch (p405_get_ir_rb (dis->ir)) {
-		case 0:
-			disasm_op2 (dis, "tlbwehi", 0, 0x01, ARG_RS, ARG_RA, 0, 0);
-			break;
+	case 0:
+		disasm_op2 (dis, "tlbwehi", 0, 0x01, ARG_RS, ARG_RA, 0, 0);
+		break;
 
-		case 1:
-			disasm_op2 (dis, "tlbwelo", 0, 0x01, ARG_RS, ARG_RA, 0, 0);
-			break;
+	case 1:
+		disasm_op2 (dis, "tlbwelo", 0, 0x01, ARG_RS, ARG_RA, 0, 0);
+		break;
 
-		default:
-			disasm_undefined (dis);
-			break;
+	default:
+		disasm_undefined (dis);
+		break;
 	}
 }
 
@@ -1599,7 +1655,7 @@ void opd_1f (p405_disasm_t *dis)
 
 	op2 = (dis->ir >> 1) & 0x3ff;
 
-	p405_opd1f[op2] (dis);
+	p405_op1f[op2] (dis);
 }
 
 /* 20: lwz rt, ra0, simm16 */
@@ -1718,21 +1774,31 @@ void p405_disasm (p405_disasm_t *dis, uint32_t pc, uint32_t ir)
 {
 	unsigned op;
 
+	if (p405_disasm_inited == 0) {
+		p405_disasm_init();
+	}
+
 	dis->flags = 0;
+	dis->reg = 0;
 
 	dis->pc = pc;
 	dis->ir = ir;
 
 	op = (ir >> 26) & 0x3f;
 
-	p405_dis[op] (dis);
+	p405_op[op] (dis);
 }
 
 void p405_disasm_mem (p405_t *c, p405_disasm_t *dis, uint32_t pc, unsigned xlat)
 {
 	uint32_t ir;
 
+	if (p405_disasm_inited == 0) {
+		p405_disasm_init();
+	}
+
 	dis->flags = 0;
+	dis->reg = 0;
 
 	if (p405_get_xlat32 (c, pc, xlat, &ir)) {
 		dis->pc = pc;
@@ -1748,527 +1814,133 @@ void p405_disasm_mem (p405_t *c, p405_disasm_t *dis, uint32_t pc, unsigned xlat)
 }
 
 static
-p405_disasm_f p405_opd13[1024] = {
-	&opd_13_000,     &opd_ud,     &opd_ud,     &opd_ud, /* 000 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_13_010,     &opd_ud,     &opd_ud,     &opd_ud, /* 010 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_021,     &opd_ud,     &opd_ud, /* 020 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_13_032, &opd_13_033, /* 030 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 040 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 050 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 060 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 070 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_081,     &opd_ud,     &opd_ud, /* 080 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 090 */
-			&opd_ud,     &opd_ud, &opd_13_096,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_0c1,     &opd_ud,     &opd_ud, /* 0c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0d0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_0e1,     &opd_ud,     &opd_ud, /* 0e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0f0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_101,     &opd_ud,     &opd_ud, /* 100 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 110 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_121,     &opd_ud,     &opd_ud, /* 120 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 130 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 140 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 150 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 160 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 170 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 180 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 190 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_1a1,     &opd_ud,     &opd_ud, /* 1a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_13_1c1,     &opd_ud,     &opd_ud, /* 1c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1d0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1f0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 200 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_13_210,     &opd_ud,     &opd_ud,     &opd_ud, /* 210 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 220 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 230 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 240 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 250 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 260 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 270 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 280 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 290 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2d0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2f0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 300 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 310 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 320 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 330 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 340 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 350 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 360 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 370 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 380 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 390 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3d0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3f0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
+p405_disasm_list_t p405_op13_list[] = {
+	{ 0x000, opd_13_000 },
+	{ 0x010, opd_13_010 },
+	{ 0x021, opd_13_021 },
+	{ 0x032, opd_13_032 },
+	{ 0x033, opd_13_033 },
+	{ 0x081, opd_13_081 },
+	{ 0x096, opd_13_096 },
+	{ 0x0c1, opd_13_0c1 },
+	{ 0x0e1, opd_13_0e1 },
+	{ 0x101, opd_13_101 },
+	{ 0x121, opd_13_121 },
+	{ 0x1a1, opd_13_1a1 },
+	{ 0x1c1, opd_13_1c1 },
+	{ 0x210, opd_13_210 },
+	{ 0x000, NULL }
 };
 
 static
-p405_disasm_f p405_opd1f[1024] = {
-	&opd_1f_000,     &opd_ud,     &opd_ud,     &opd_ud, /* 000 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_008,     &opd_ud, &opd_1f_00a, &opd_1f_00b,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_013, /* 010 */
-	&opd_1f_014,     &opd_ud,     &opd_ud, &opd_1f_017,
-	&opd_1f_018,     &opd_ud, &opd_1f_01a,     &opd_ud,
-	&opd_1f_01c,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_020,     &opd_ud,     &opd_ud,     &opd_ud, /* 020 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_028,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 030 */
-			&opd_ud,     &opd_ud, &opd_1f_036, &opd_1f_037,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_03c,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 040 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_04b,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_053, /* 050 */
-			&opd_ud,     &opd_ud, &opd_1f_056, &opd_1f_057,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 060 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_068,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 070 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_077,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_07c,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_083, /* 080 */
-			&opd_ud,     &opd_ud, &opd_1f_086,     &opd_ud,
-	&opd_1f_088,     &opd_ud, &opd_1f_08a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_090,     &opd_ud, &opd_1f_092,     &opd_ud, /* 090 */
-			&opd_ud,     &opd_ud, &opd_1f_096, &opd_1f_097,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_0a3, /* 0a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0b0 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_0b7,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_0c8,     &opd_ud, &opd_1f_0ca,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0d0 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_0d7,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_0e8,     &opd_ud, &opd_1f_0ea, &opd_1f_0eb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 0f0 */
-			&opd_ud,     &opd_ud, &opd_1f_0f6, &opd_1f_0f7,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 100 */
-			&opd_ud,     &opd_ud, &opd_1f_106,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_10a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 110 */
-			&opd_ud,     &opd_ud, &opd_1f_116, &opd_1f_117,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_11c,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 120 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 130 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_137,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_13c,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_143, /* 140 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_153, /* 150 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_157,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 160 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_172, &opd_1f_173, /* 170 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_177,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 180 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 190 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_197,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_19c,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1b0 */
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1b7,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_1bc,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1c3, /* 1c0 */
-			&opd_ud,     &opd_ud, &opd_1f_1c6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1cb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1d3, /* 1d0 */
-			&opd_ud,     &opd_ud, &opd_1f_1d6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_1dc,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1eb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 1f0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_200,     &opd_ud,     &opd_ud,     &opd_ud, /* 200 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_008,     &opd_ud, &opd_1f_00a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 210 */
-			&opd_ud, &opd_1f_215, &opd_1f_216,     &opd_ud,
-	&opd_1f_218,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 220 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_028,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 230 */
-			&opd_ud,     &opd_ud, &opd_1f_236,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 240 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 250 */
-			&opd_ud, &opd_1f_255, &opd_1f_256,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 260 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_068,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 270 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 280 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_088,     &opd_ud, &opd_1f_08a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 290 */
-			&opd_ud, &opd_1f_295, &opd_1f_296,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2c0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_0c8,     &opd_ud, &opd_1f_0ca,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud, &opd_1f_2d5,     &opd_ud,     &opd_ud, /* 2d0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_0e8,     &opd_ud, &opd_1f_0ea, &opd_1f_0eb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 2f0 */
-			&opd_ud,     &opd_ud, &opd_1f_2f6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 300 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_10a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 310 */
-			&opd_ud,     &opd_ud, &opd_1f_316,     &opd_ud,
-	&opd_1f_318,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 320 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 330 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-	&opd_1f_338,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 340 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 350 */
-			&opd_ud,     &opd_ud, &opd_1f_356,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 360 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 370 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 380 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_392,     &opd_ud, /* 390 */
-			&opd_ud,     &opd_ud, &opd_1f_396,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_39a,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3a0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_3b2,     &opd_ud, /* 3b0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_3ba,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3c0 */
-			&opd_ud,     &opd_ud, &opd_1f_3c6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1cb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud, &opd_1f_3d2,     &opd_ud, /* 3d0 */
-			&opd_ud,     &opd_ud, &opd_1f_3d6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3e0 */
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud, &opd_1f_1eb,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud, /* 3f0 */
-			&opd_ud,     &opd_ud, &opd_1f_3f6,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud,
-			&opd_ud,     &opd_ud,     &opd_ud,     &opd_ud
+p405_disasm_list_t p405_op1f_list[] = {
+	{ 0x000, opd_1f_000 },
+	{ 0x008, opd_1f_008 },
+	{ 0x00a, opd_1f_00a },
+	{ 0x00b, opd_1f_00b },
+	{ 0x013, opd_1f_013 },
+	{ 0x014, opd_1f_014 },
+	{ 0x017, opd_1f_017 },
+	{ 0x018, opd_1f_018 },
+	{ 0x01a, opd_1f_01a },
+	{ 0x01c, opd_1f_01c },
+	{ 0x020, opd_1f_020 },
+	{ 0x028, opd_1f_028 },
+	{ 0x036, opd_1f_036 },
+	{ 0x037, opd_1f_037 },
+	{ 0x03c, opd_1f_03c },
+	{ 0x04b, opd_1f_04b },
+	{ 0x053, opd_1f_053 },
+	{ 0x056, opd_1f_056 },
+	{ 0x057, opd_1f_057 },
+	{ 0x068, opd_1f_068 },
+	{ 0x077, opd_1f_077 },
+	{ 0x07c, opd_1f_07c },
+	{ 0x083, opd_1f_083 },
+	{ 0x086, opd_1f_086 },
+	{ 0x088, opd_1f_088 },
+	{ 0x08a, opd_1f_08a },
+	{ 0x090, opd_1f_090 },
+	{ 0x092, opd_1f_092 },
+	{ 0x096, opd_1f_096 },
+	{ 0x097, opd_1f_097 },
+	{ 0x0a3, opd_1f_0a3 },
+	{ 0x0b7, opd_1f_0b7 },
+	{ 0x0c8, opd_1f_0c8 },
+	{ 0x0ca, opd_1f_0ca },
+	{ 0x0d7, opd_1f_0d7 },
+	{ 0x0e8, opd_1f_0e8 },
+	{ 0x0ea, opd_1f_0ea },
+	{ 0x0eb, opd_1f_0eb },
+	{ 0x0f6, opd_1f_0f6 },
+	{ 0x0f7, opd_1f_0f7 },
+	{ 0x106, opd_1f_106 },
+	{ 0x10a, opd_1f_10a },
+	{ 0x116, opd_1f_116 },
+	{ 0x117, opd_1f_117 },
+	{ 0x11c, opd_1f_11c },
+	{ 0x137, opd_1f_137 },
+	{ 0x13c, opd_1f_13c },
+	{ 0x143, opd_1f_143 },
+	{ 0x153, opd_1f_153 },
+	{ 0x157, opd_1f_157 },
+	{ 0x172, opd_1f_172 },
+	{ 0x173, opd_1f_173 },
+	{ 0x177, opd_1f_177 },
+	{ 0x197, opd_1f_197 },
+	{ 0x19c, opd_1f_19c },
+	{ 0x1b7, opd_1f_1b7 },
+	{ 0x1bc, opd_1f_1bc },
+	{ 0x1c3, opd_1f_1c3 },
+	{ 0x1c6, opd_1f_1c6 },
+	{ 0x1cb, opd_1f_1cb },
+	{ 0x1d3, opd_1f_1d3 },
+	{ 0x1d6, opd_1f_1d6 },
+	{ 0x1dc, opd_1f_1dc },
+	{ 0x1eb, opd_1f_1eb },
+	{ 0x200, opd_1f_200 },
+	{ 0x208, opd_1f_008 },
+	{ 0x20a, opd_1f_00a },
+	{ 0x215, opd_1f_215 },
+	{ 0x216, opd_1f_216 },
+	{ 0x218, opd_1f_218 },
+	{ 0x228, opd_1f_028 },
+	{ 0x236, opd_1f_236 },
+	{ 0x255, opd_1f_255 },
+	{ 0x256, opd_1f_256 },
+	{ 0x268, opd_1f_068 },
+	{ 0x288, opd_1f_088 },
+	{ 0x28a, opd_1f_08a },
+	{ 0x295, opd_1f_295 },
+	{ 0x296, opd_1f_296 },
+	{ 0x2c8, opd_1f_0c8 },
+	{ 0x2ca, opd_1f_0ca },
+	{ 0x2d5, opd_1f_2d5 },
+	{ 0x2e8, opd_1f_0e8 },
+	{ 0x2ea, opd_1f_0ea },
+	{ 0x2eb, opd_1f_0eb },
+	{ 0x2f6, opd_1f_2f6 },
+	{ 0x30a, opd_1f_10a },
+	{ 0x316, opd_1f_316 },
+	{ 0x318, opd_1f_318 },
+	{ 0x338, opd_1f_338 },
+	{ 0x356, opd_1f_356 },
+	{ 0x392, opd_1f_392 },
+	{ 0x396, opd_1f_396 },
+	{ 0x39a, opd_1f_39a },
+	{ 0x3b2, opd_1f_3b2 },
+	{ 0x3ba, opd_1f_3ba },
+	{ 0x3c6, opd_1f_3c6 },
+	{ 0x3cb, opd_1f_1cb },
+	{ 0x3d2, opd_1f_3d2 },
+	{ 0x3d6, opd_1f_3d6 },
+	{ 0x3eb, opd_1f_1eb },
+	{ 0x3f6, opd_1f_3f6 },
+	{ 0x000, NULL }
 };
 
 static
-p405_disasm_f p405_dis[64] = {
+p405_disasm_f p405_op[64] = {
 	&opd_ud, &opd_ud, &opd_ud, &opd_03, &opd_ud, &opd_ud, &opd_ud, &opd_07, /* 00 */
 	&opd_08, &opd_ud, &opd_0a, &opd_0b, &opd_0c, &opd_0d, &opd_0e, &opd_0f,
 	&opd_10, &opd_11, &opd_12, &opd_13, &opd_14, &opd_15, &opd_ud, &opd_17, /* 10 */
@@ -2278,3 +1950,31 @@ p405_disasm_f p405_dis[64] = {
 	&opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, /* 30 */
 	&opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud, &opd_ud
 };
+
+static
+void p405_disasm_init (void)
+{
+	unsigned           i;
+	p405_disasm_list_t *lst;
+
+	for (i = 0; i < 1024; i++) {
+		p405_op1f[i] = opd_ud;
+		p405_op13[i] = opd_ud;
+	}
+
+	lst = p405_op13_list;
+
+	while (lst->fct != NULL) {
+		p405_op13[lst->op] = lst->fct;
+		lst += 1;
+	}
+
+	lst = p405_op1f_list;
+
+	while (lst->fct != NULL) {
+		p405_op1f[lst->op] = lst->fct;
+		lst += 1;
+	}
+
+	p405_disasm_inited = 1;
+}

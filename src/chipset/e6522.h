@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/chipset/e6522.h                                          *
  * Created:     2007-11-09 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2007-2011 Hampa Hug <hampa@hampa.ch>                     *
+ * Copyright:   (C) 2007-2023 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -15,7 +15,7 @@
  *                                                                           *
  * This program is distributed in the hope  that  it  will  be  useful,  but *
  * WITHOUT  ANY   WARRANTY,   without   even   the   implied   warranty   of *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  General *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General *
  * Public License for more details.                                          *
  *****************************************************************************/
 
@@ -48,13 +48,16 @@ typedef struct {
 	unsigned char  ifr;
 	unsigned char  ier;
 
+	char           t1_reload;
+	char           t1_timeout;
+	char           t1_hot;
 	unsigned short t1_latch;
 	unsigned short t1_val;
-	int            t1_hot;
 
+	char           t2_timeout;
+	char           t2_hot;
 	unsigned short t2_latch;
 	unsigned short t2_val;
-	int            t2_hot;
 
 	unsigned char  ca1_inp;
 	unsigned char  ca2_inp;
@@ -69,6 +72,10 @@ typedef struct {
 	void           *set_orb_ext;
 	void           (*set_orb) (void *ext, unsigned char val);
 	unsigned char  set_orb_val;
+
+	void           *set_ca2_ext;
+	void           (*set_ca2) (void *ext, unsigned char val);
+	unsigned char  set_ca2_val;
 
 	void           *set_cb2_ext;
 	void           (*set_cb2) (void *ext, unsigned char val);
@@ -88,6 +95,7 @@ void e6522_free (e6522_t *via);
 
 void e6522_set_ora_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_orb_fct (e6522_t *via, void *ext, void *fct);
+void e6522_set_ca2_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_cb2_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_shift_out_fct (e6522_t *via, void *ext, void *fct);
 void e6522_set_irq_fct (e6522_t *via, void *ext, void *fct);
@@ -106,11 +114,6 @@ void e6522_set_irb_inp (e6522_t *via, unsigned char val);
 
 void e6522_set_shift_inp (e6522_t *via, unsigned char val);
 
-void e6522_set_ora (e6522_t *via, unsigned char val);
-void e6522_set_ddra (e6522_t *via, unsigned char val);
-void e6522_set_orb (e6522_t *via, unsigned char val);
-void e6522_set_ddrb (e6522_t *via, unsigned char val);
-
 unsigned char e6522_get_uint8 (e6522_t *via, unsigned long addr);
 unsigned short e6522_get_uint16 (e6522_t *via, unsigned long addr);
 unsigned long e6522_get_uint32 (e6522_t *via, unsigned long addr);
@@ -121,7 +124,7 @@ void e6522_set_uint32 (e6522_t *via, unsigned long addr, unsigned long val);
 
 void e6522_reset (e6522_t *via);
 
-void e6522_clock (e6522_t *via, unsigned long n);
+void e6522_clock (e6522_t *via, unsigned n);
 
 
 #endif

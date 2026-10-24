@@ -7,7 +7,7 @@ DIST += $(rel)/Makefile.inc
 
 # ----------------------------------------------------------------------
 
-MACX_CROSS := m68k-linux-
+MACX_CROSS := m68k-elf-
 
 MACX_CC := $(MACX_CROSS)gcc
 MACX_LD := $(MACX_CROSS)ld

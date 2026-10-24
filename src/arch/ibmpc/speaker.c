@@ -5,7 +5,7 @@
 /*****************************************************************************
  * File name:   src/arch/ibmpc/speaker.c                                     *
  * Created:     2010-02-24 by Hampa Hug <hampa@hampa.ch>                     *
- * Copyright:   (C) 2010 Hampa Hug <hampa@hampa.ch>                          *
+ * Copyright:   (C) 2010-2019 Hampa Hug <hampa@hampa.ch>                     *
  *****************************************************************************/
 
 /*****************************************************************************
@@ -23,6 +23,7 @@
 #include "main.h"
 #include "speaker.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <drivers/sound/sound.h>

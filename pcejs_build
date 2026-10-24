@@ -142,7 +142,7 @@ case "$taskname" in
   "module") # Build commonjs module
     arch=${2:-""}
 
-    echo "building commonjs module for $2"
+    echo "building commonjs module for ${2:-all archs}"
 
     if [[ -n $arch ]]; then
       echo "building commonjs module for arch $arch";
