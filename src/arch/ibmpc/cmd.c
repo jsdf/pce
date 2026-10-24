@@ -558,19 +558,10 @@ void pc_run (ibmpc_t *pc)
 /*
  * Browser (emscripten) main loop
  *
- * The main loop is driven by requestAnimationFrame. Each iteration emulates
- * the real time that has passed since the previous one, so that every
- * emulated video frame can be shown and no time is wasted busy waiting to
- * stay in sync with real time.
+ * Each iteration emulates the real time that has passed since the previous
+ * one, so that every emulated video frame can be shown and no time is
+ * wasted busy waiting to stay in sync with real time.
  */
-
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define PC_EMSCRIPTEN_MAX_MS 100
 
 static ibmpc_t *pc_emscripten_sim = NULL;
 
@@ -582,30 +573,17 @@ void pc_run_emscripten (ibmpc_t *pc)
 
 	pc_clock_discontinuity (pc);
 
-	emscripten_set_main_loop (pc_run_emscripten_step, 0, 1);
+	pce_em_run (pc_run_emscripten_step);
 }
 
 void pc_run_emscripten_step (void)
 {
-	static double last = -1.0;
-	double        now, ms;
+	double        t0, ms;
 	unsigned long clk, clk0;
 	ibmpc_t       *pc;
 
-	now = emscripten_get_now();
-
-	if ((last < 0.0) || (now < last)) {
-		last = now;
-	}
-
-	ms = now - last;
-	last = now;
-
-	if (ms > PC_EMSCRIPTEN_MAX_MS) {
-		ms = PC_EMSCRIPTEN_MAX_MS;
-	}
-
-	clk = (unsigned long) (ms * (PCE_IBMPC_CLK2 / 1000.0));
+	t0 = emscripten_get_now();
+	ms = pce_em_get_frame_ms();
 
 	pc = pc_emscripten_sim;
 
@@ -613,6 +591,8 @@ void pc_run_emscripten_step (void)
 		trm_check (pc->trm);
 		return;
 	}
+
+	clk = (unsigned long) (ms * (PCE_IBMPC_CLK2 / 1000.0));
 
 	/* clock2 is the system clock (PCE_IBMPC_CLK2) */
 	clk0 = pc->clock2;
@@ -626,6 +606,10 @@ void pc_run_emscripten_step (void)
 			emscripten_cancel_main_loop();
 			return;
 		}
+	}
+
+	if (pc->speed_current == 0) {
+		pce_em_adjust_speed (&pc->speed_clock_extra, t0, ms);
 	}
 }
 
@@ -733,12 +717,9 @@ void pce_op_undef (void *ext, unsigned char op1, unsigned char op2)
 		e86_get_cs (pc->cpu), e86_get_ip (pc->cpu), op1, op2
 	);
 
-#ifndef EMSCRIPTEN
-	/* sleeping would busy wait and freeze the page in the browser */
 	if (pc->brk == 0) {
 		pce_usleep (100000UL);
 	}
-#endif
 
 	trm_check (pc->trm);
 }

@@ -40,6 +40,37 @@ unsigned long pce_get_interval_us (unsigned long *val);
 
 void pce_srand (unsigned val);
 
+#ifdef EMSCRIPTEN
+/*!***************************************************************************
+ * @short Run fct as the browser main loop, does not return
+ *
+ * fct is called once per animation frame while the page is visible and
+ * from a timer while it is hidden, because browsers don't run animation
+ * frames for hidden pages.
+ *****************************************************************************/
+void pce_em_run (void (*fct) (void));
+
+/*!***************************************************************************
+ * @short Get the real time to emulate in a browser main loop iteration
+ *
+ * Returns the number of milliseconds that passed since the last call,
+ * limited to 100 ms (1000 ms while the page is hidden). If more time has
+ * passed the emulation falls behind real time instead of catching up.
+ *****************************************************************************/
+double pce_em_get_frame_ms (void);
+
+/*!***************************************************************************
+ * @short Adjust the extra CPU clocks used at maximum speed
+ * @param extra The extra clocks that are added to each CPU step
+ * @param t0    The value of emscripten_get_now() before emulating ms
+ * @param ms    The real time that was emulated
+ *
+ * This replaces the adjustment in the realtime sync functions, which
+ * relies on sleeping.
+ *****************************************************************************/
+void pce_em_adjust_speed (unsigned long *extra, double t0, double ms);
+#endif
+
 void pce_set_fd_interactive (int fd, int interactive);
 
 /*!***************************************************************************

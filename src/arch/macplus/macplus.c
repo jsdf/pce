@@ -1570,6 +1570,15 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 {
 	unsigned long us1, us2;
 
+#ifdef EMSCRIPTEN
+	/*
+	 * In the browser, real time is kept by the main loop
+	 * (mac_run_emscripten_step). Adjusting the speed here
+	 * relies on sleeping.
+	 */
+	return;
+#endif
+
 	sim->sync_clk += n;
 
 	if (sim->sync_clk >= (MAC_CPU_CLOCK / MAC_CPU_SYNC)) {
@@ -1595,15 +1604,9 @@ void mac_realtime_sync (macplus_t *sim, unsigned long n)
 			}
 		}
 
-#ifndef EMSCRIPTEN
-		/*
-		 * In the browser, real time is kept by the main loop
-		 * (mac_run_emscripten_step) and sleeping would busy wait.
-		 */
 		if (sim->sync_sleep >= MAC_CPU_SLEEP) {
 			pce_usleep (sim->sync_sleep);
 		}
-#endif
 
 		if (sim->sync_sleep < -1000000) {
 			mac_log_deb ("system too slow, skipping 1 second\n");

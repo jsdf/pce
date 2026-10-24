@@ -925,6 +925,15 @@ void st_realtime_sync (atari_st_t *sim, unsigned long n)
 {
 	unsigned long us1, us2;
 
+#ifdef EMSCRIPTEN
+	/*
+	 * In the browser, real time is kept by the main loop
+	 * (st_run_emscripten_step). Adjusting the speed here
+	 * relies on sleeping.
+	 */
+	return;
+#endif
+
 	sim->sync_clk += n;
 
 	if (sim->sync_clk >= (ST_CPU_CLOCK / ST_CPU_SYNC)) {
@@ -950,15 +959,9 @@ void st_realtime_sync (atari_st_t *sim, unsigned long n)
 			}
 		}
 
-#ifndef EMSCRIPTEN
-		/*
-		 * In the browser, real time is kept by the main loop
-		 * (st_run_emscripten_step) and sleeping would busy wait.
-		 */
 		if (sim->sync_sleep >= ST_CPU_SLEEP) {
 			pce_usleep (sim->sync_sleep);
 		}
-#endif
 
 		if (sim->sync_sleep < -1000000) {
 			st_log_deb ("system too slow, skipping 1 second\n");

@@ -451,19 +451,10 @@ void mac_run (macplus_t *sim)
 /*
  * Browser (emscripten) main loop
  *
- * The main loop is driven by requestAnimationFrame. Each iteration emulates
- * the real time that has passed since the previous one, so that every
- * emulated video frame can be shown and no time is wasted busy waiting to
- * stay in sync with real time.
+ * Each iteration emulates the real time that has passed since the previous
+ * one, so that every emulated video frame can be shown and no time is
+ * wasted busy waiting to stay in sync with real time.
  */
-
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define MAC_EMSCRIPTEN_MAX_MS 100
 
 static macplus_t *mac_emscripten_sim = NULL;
 
@@ -475,7 +466,7 @@ void mac_run_emscripten (macplus_t *sim)
 
 	mac_clock_discontinuity (sim);
 
-	emscripten_set_main_loop (mac_run_emscripten_step, 0, 1);
+	pce_em_run (mac_run_emscripten_step);
 }
 
 /*
@@ -484,11 +475,48 @@ void mac_run_emscripten (macplus_t *sim)
  * works without pointer lock.
  */
 static
-void mac_emscripten_set_mouse (macplus_t *sim)
+void mac_emscripten_set_mouse (macplus_t *sim, unsigned x, unsigned y)
 {
-	int                 x, y, w, h;
-	const SDL_VideoInfo *info;
+	/* MTemp */
+	e68_set_mem16 (sim->cpu, 0x0828, y);
+	e68_set_mem16 (sim->cpu, 0x082a, x);
+	/* RawMouse */
+	e68_set_mem16 (sim->cpu, 0x082c, y);
+	e68_set_mem16 (sim->cpu, 0x082e, x);
+	/* Mouse */
+	e68_set_mem16 (sim->cpu, 0x0830, y);
+	e68_set_mem16 (sim->cpu, 0x0832, x);
+}
 
+void mac_run_emscripten_step (void)
+{
+	static long long   over = 0;
+	double             t0, ms;
+	long long          clk;
+	unsigned long long clk0;
+	unsigned           i;
+	int                x, y, w, h;
+	const SDL_VideoInfo *info;
+	macplus_t          *sim;
+
+	t0 = emscripten_get_now();
+	ms = pce_em_get_frame_ms();
+
+	sim = mac_emscripten_sim;
+
+	if (sim->pause) {
+		trm_check (sim->trm);
+		return;
+	}
+
+	clk = (long long) (ms * (MAC_CPU_CLOCK / 1000.0));
+
+	/* clk_cnt counts CPU clocks, which run faster than real time by the speed factor */
+	if (sim->speed_factor > 1) {
+		clk *= sim->speed_factor;
+	}
+
+	/* the host mouse doesn't move while this function runs */
 	info = SDL_GetVideoInfo();
 	w = info->current_w;
 	h = info->current_h;
@@ -498,54 +526,6 @@ void mac_emscripten_set_mouse (macplus_t *sim)
 	x = (x > w) ? w : ((x < 0) ? 0 : x);
 	y = (y > h) ? h : ((y < 0) ? 0 : y);
 
-	/* MTemp */
-	e68_set_mem16 (sim->cpu, 0x0828, (unsigned) y);
-	e68_set_mem16 (sim->cpu, 0x082a, (unsigned) x);
-	/* RawMouse */
-	e68_set_mem16 (sim->cpu, 0x082c, (unsigned) y);
-	e68_set_mem16 (sim->cpu, 0x082e, (unsigned) x);
-	/* Mouse */
-	e68_set_mem16 (sim->cpu, 0x0830, (unsigned) y);
-	e68_set_mem16 (sim->cpu, 0x0832, (unsigned) x);
-}
-
-void mac_run_emscripten_step (void)
-{
-	static long long   over = 0;
-	static double      last = -1.0;
-	double             now, ms;
-	long long          clk;
-	unsigned long long clk0;
-	unsigned           i;
-	macplus_t          *sim;
-
-	now = emscripten_get_now();
-
-	if ((last < 0.0) || (now < last)) {
-		last = now;
-	}
-
-	ms = now - last;
-	last = now;
-
-	if (ms > MAC_EMSCRIPTEN_MAX_MS) {
-		ms = MAC_EMSCRIPTEN_MAX_MS;
-	}
-
-	clk = (long long) (ms * (MAC_CPU_CLOCK / 1000.0));
-
-	sim = mac_emscripten_sim;
-
-	if (sim->pause) {
-		trm_check (sim->trm);
-		return;
-	}
-
-	/* clk_cnt counts CPU clocks, which run faster than real time by the speed factor */
-	if (sim->speed_factor > 1) {
-		clk *= sim->speed_factor;
-	}
-
 	/* the previous iteration may have run a few clocks too many */
 	clk -= over;
 	clk0 = sim->clk_cnt;
@@ -553,7 +533,7 @@ void mac_run_emscripten_step (void)
 
 	while ((long long) (sim->clk_cnt - clk0) < clk) {
 		if ((i++ % 100) == 0) {
-			mac_emscripten_set_mouse (sim);
+			mac_emscripten_set_mouse (sim, x, y);
 		}
 
 		mac_clock (sim, 0);
@@ -566,6 +546,10 @@ void mac_run_emscripten_step (void)
 	}
 
 	over = (long long) (sim->clk_cnt - clk0) - clk;
+
+	if (sim->speed_factor == 0) {
+		pce_em_adjust_speed (&sim->speed_clock_extra, t0, ms);
+	}
 }
 
 #endif

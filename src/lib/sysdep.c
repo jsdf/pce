@@ -43,12 +43,23 @@
 #include <termios.h>
 #endif
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 #include "sysdep.h"
 
 
 int pce_usleep (unsigned long usec)
 {
-#if defined(HAVE_NANOSLEEP)
+#if defined(EMSCRIPTEN)
+	/*
+	 * Sleeping busy waits and freezes the page in the browser. Real
+	 * time is kept by the browser main loop (pce_em_run) instead.
+	 */
+	return (0);
+#elif defined(HAVE_NANOSLEEP)
 	struct timespec t;
 
 	t.tv_sec = usec / 1000000;
@@ -109,6 +120,82 @@ void pce_srand (unsigned val)
 
 	srand (val);
 }
+
+#ifdef EMSCRIPTEN
+
+/* The longest real time interval (in ms) that is emulated in one iteration */
+#define PCE_EM_MAX_MS        100.0
+#define PCE_EM_MAX_MS_HIDDEN 1000.0
+
+/* The timer interval (in ms) of the main loop while the page is hidden */
+#define PCE_EM_HIDDEN_MS     10
+
+static int    pce_em_hidden = 0;
+static double pce_em_last = -1.0;
+
+static
+EM_BOOL pce_em_visibility (int type, const EmscriptenVisibilityChangeEvent *evt, void *ext)
+{
+	pce_em_hidden = evt->hidden;
+
+	if (pce_em_hidden) {
+		emscripten_set_main_loop_timing (EM_TIMING_SETTIMEOUT, PCE_EM_HIDDEN_MS);
+	}
+	else {
+		emscripten_set_main_loop_timing (EM_TIMING_RAF, 1);
+	}
+
+	return (0);
+}
+
+void pce_em_run (void (*fct) (void))
+{
+	EmscriptenVisibilityChangeEvent evt;
+
+	if (emscripten_get_visibility_status (&evt) == EMSCRIPTEN_RESULT_SUCCESS) {
+		pce_em_hidden = evt.hidden;
+	}
+
+	emscripten_set_visibilitychange_callback (NULL, 1, pce_em_visibility);
+
+	/* fps 0 uses requestAnimationFrame, otherwise a timer */
+	emscripten_set_main_loop (fct, pce_em_hidden ? (1000 / PCE_EM_HIDDEN_MS) : 0, 1);
+}
+
+double pce_em_get_frame_ms (void)
+{
+	double now, ms, max;
+
+	now = emscripten_get_now();
+
+	if ((pce_em_last < 0.0) || (now < pce_em_last)) {
+		pce_em_last = now;
+	}
+
+	ms = now - pce_em_last;
+	pce_em_last = now;
+
+	max = pce_em_hidden ? PCE_EM_MAX_MS_HIDDEN : PCE_EM_MAX_MS;
+
+	return ((ms > max) ? max : ms);
+}
+
+void pce_em_adjust_speed (unsigned long *extra, double t0, double ms)
+{
+	double used;
+
+	used = emscripten_get_now() - t0;
+
+	/* use about 3/4 of the frame time for the emulation */
+	if (used < (0.75 * ms)) {
+		*extra += 1;
+	}
+	else if ((used > ms) && (*extra > 0)) {
+		*extra -= 1;
+	}
+}
+
+#endif
 
 int pce_fd_readable (int fd, int t)
 {

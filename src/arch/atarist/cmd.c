@@ -558,19 +558,10 @@ void st_run (atari_st_t *sim)
 /*
  * Browser (emscripten) main loop
  *
- * The main loop is driven by requestAnimationFrame. Each iteration emulates
- * the real time that has passed since the previous one, so that every
- * emulated video frame can be shown and no time is wasted busy waiting to
- * stay in sync with real time.
+ * Each iteration emulates the real time that has passed since the previous
+ * one, so that every emulated video frame can be shown and no time is
+ * wasted busy waiting to stay in sync with real time.
  */
-
-/*
- * The longest real time interval (in ms) that is emulated in one browser
- * main loop iteration. If more time has passed (e.g. because the browser
- * tab was in the background or the host is too slow), the emulation falls
- * behind real time instead of trying to catch up.
- */
-#define ST_EMSCRIPTEN_MAX_MS 100
 
 static atari_st_t *st_emscripten_sim = NULL;
 
@@ -582,31 +573,18 @@ void st_run_emscripten (atari_st_t *sim)
 
 	st_clock_discontinuity (sim);
 
-	emscripten_set_main_loop (st_run_emscripten_step, 0, 1);
+	pce_em_run (st_run_emscripten_step);
 }
 
 void st_run_emscripten_step (void)
 {
 	static unsigned long clk_rem = 0;
-	static double        last = -1.0;
-	double               now, ms;
+	double               t0, ms;
 	unsigned long        clk;
 	atari_st_t           *sim;
 
-	now = emscripten_get_now();
-
-	if ((last < 0.0) || (now < last)) {
-		last = now;
-	}
-
-	ms = now - last;
-	last = now;
-
-	if (ms > ST_EMSCRIPTEN_MAX_MS) {
-		ms = ST_EMSCRIPTEN_MAX_MS;
-	}
-
-	clk = clk_rem + (unsigned long) (ms * (ST_CPU_CLOCK / 1000));
+	t0 = emscripten_get_now();
+	ms = pce_em_get_frame_ms();
 
 	sim = st_emscripten_sim;
 
@@ -614,6 +592,8 @@ void st_run_emscripten_step (void)
 		trm_check (sim->trm);
 		return;
 	}
+
+	clk = clk_rem + (unsigned long) (ms * (ST_CPU_CLOCK / 1000.0));
 
 	while (clk >= 16) {
 		st_clock (sim, 0);
@@ -627,6 +607,10 @@ void st_run_emscripten_step (void)
 	}
 
 	clk_rem = clk;
+
+	if (sim->speed_factor == 0) {
+		pce_em_adjust_speed (&sim->speed_clock_extra, t0, ms);
+	}
 }
 
 #endif

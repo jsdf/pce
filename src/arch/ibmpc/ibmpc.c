@@ -2022,6 +2022,15 @@ void pc_clock_delay (ibmpc_t *pc)
 	unsigned long rclk;
 	unsigned long us;
 
+#ifdef EMSCRIPTEN
+	/*
+	 * In the browser, real time is kept by the main loop
+	 * (pc_run_emscripten_step). Adjusting the speed here
+	 * relies on sleeping.
+	 */
+	return;
+#endif
+
 	vclk = pc->sync_clock2_sim;
 
 	rclk = pce_get_interval_us (&pc->sync_interval);
@@ -2054,15 +2063,9 @@ void pc_clock_delay (ibmpc_t *pc)
 
 	us = (1000000 * (unsigned long long) vclk) / PCE_IBMPC_CLK2;
 
-#ifndef EMSCRIPTEN
-	/*
-	 * In the browser, real time is kept by the main loop
-	 * (pc_run_emscripten_step) and sleeping would busy wait.
-	 */
 	if (us > PCE_IBMPC_SLEEP) {
 		pce_usleep (us);
 	}
-#endif
 }
 
 void pc_clock (ibmpc_t *pc, unsigned long cnt)
