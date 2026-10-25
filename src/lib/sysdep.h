@@ -69,6 +69,16 @@ double pce_em_get_frame_ms (void);
  * relies on sleeping.
  *****************************************************************************/
 void pce_em_adjust_speed (unsigned long *extra, double t0, double ms);
+
+/*!***************************************************************************
+ * @short Count real time that was emulated
+ *
+ * The total is returned by pce_em_get_emulated_ms(), which is exported to
+ * JavaScript (Module._pce_em_get_emulated_ms) for tests.
+ *****************************************************************************/
+void pce_em_add_emulated_ms (double ms);
+
+double pce_em_get_emulated_ms (void);
 #endif
 
 void pce_set_fd_interactive (int fd, int interactive);

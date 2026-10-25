@@ -86,3 +86,7 @@ ser_b.out
 
 # misc
 *.sublime-workspace
+# tests
+test/.cache/
+test-results/
+playwright-report/

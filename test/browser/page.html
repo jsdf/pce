@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>pce.js test</title>
+    <style>
+      body {
+        margin: 0;
+        background: #fff;
+      }
+      /* no border or padding, or mouse coordinates will be wrong */
+      canvas {
+        display: block;
+        border: 0 none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas oncontextmenu="event.preventDefault()"></canvas>
+    <script>
+      // Test page for one emulator, served at /<arch>/ by server.js.
+      // window.emulator is the emscripten Module, window.pceLog the lines
+      // the emulator printed.
+
+      var ARCHS = {
+        macplus: {
+          global: 'PCEJSMacplus',
+          args: ['-c', 'pce-config.cfg', '-r'],
+          files: ['macplus-pcex.rom', 'mac-plus.rom', 'hd1.qed', 'pce-config.cfg'],
+        },
+        ibmpc: {
+          global: 'PCEJSIBMPC',
+          args: ['-c', 'pce-config.cfg', '-r', '-g', 'vga'],
+          files: [
+            'basic-1.10.rom',
+            'ibm-pc-1982.rom',
+            'ibm-xt-1982.rom',
+            'ibmpc-pcex.rom',
+            'ibmvga.rom',
+            'hd0.qed',
+            'pce-config.cfg',
+          ],
+        },
+        atarist: {
+          global: 'PCEJSAtariST',
+          args: ['-c', 'pce-config.cfg', '-r'],
+          files: ['tos-1.00-us.rom', 'pce-config.cfg', 'fd0.st', 'fd1.psi', 'hd0.qed'],
+        },
+      };
+
+      var arch = location.pathname.split('/')[1];
+      var config = ARCHS[arch];
+
+      window.pceLog = [];
+
+      function log(line) {
+        window.pceLog.push(String(line));
+      }
+
+      var script = document.createElement('script');
+      script.src = 'pcejs-' + arch + '.umd.js';
+      script.onload = function () {
+        window.emulator = window[config.global]({
+          arguments: config.args,
+          autoloadFiles: config.files,
+          canvas: document.querySelector('canvas'),
+          print: log,
+          printErr: log,
+        });
+      };
+      document.head.appendChild(script);
+    </script>
+  </body>
+</html>

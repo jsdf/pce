@@ -547,6 +547,8 @@ void mac_run_emscripten_step (void)
 
 	over = (long long) (sim->clk_cnt - clk0) - clk;
 
+	pce_em_add_emulated_ms (ms);
+
 	if (sim->speed_factor == 0) {
 		pce_em_adjust_speed (&sim->speed_clock_extra, t0, ms);
 	}

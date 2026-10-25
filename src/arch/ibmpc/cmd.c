@@ -608,6 +608,8 @@ void pc_run_emscripten_step (void)
 		}
 	}
 
+	pce_em_add_emulated_ms (ms);
+
 	if (pc->speed_current == 0) {
 		pce_em_adjust_speed (&pc->speed_clock_extra, t0, ms);
 	}

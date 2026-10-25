@@ -18,9 +18,16 @@
       "url": "https://raw.github.com/jsdf/pce/master/COPYING"
     }
   ],
+  "devDependencies": {
+    "@playwright/test": "1.48.2"
+  },
   "scripts": {
-    "prepublish": "./pcejs_build",
-    "clean": "./pcejs_build clean"
+    "prepublishOnly": "./pcejs_build",
+    "clean": "./pcejs_build clean",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:setup": "node test/setup.js",
+    "test:unit": "node --test 'test/unit/**/*.test.js'",
+    "test:browser": "playwright test"
   },
   "homepage": "https://github.com/jsdf/pce",
   "bugs": "https://github.com/jsdf/pce/issues",

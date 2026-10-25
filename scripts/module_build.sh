@@ -32,6 +32,7 @@ input_dir=$(resolve_path "dist/")
 commonjs_dir=$(resolve_path "commonjs/")
 pkg_dir=$(resolve_path "commonjs/pcejs-${arch}/")
 
+script_directory_file="${commonjs_dir}/script-directory.js"
 prelude_file="${commonjs_dir}/prelude.js"
 input_module_file="${input_dir}/pce-${arch}.js"
 epilogue_file="${commonjs_dir}/epilogue.js"
@@ -40,11 +41,7 @@ output_module_file="${pkg_dir}/lib/pcejs-${arch}.js"
 mkdir -p "$pkg_dir"
 
 {
-  # the directory of the umd bundle this module is loaded from, determined
-  # while the script is executing. only when the script is a pcejs umd bundle:
-  # when the module is bundled into an app with browserify or webpack, the
-  # current script is the app bundle, which usually isn't next to the .wasm
-  printf "var pcejsScriptDirectory = (function() { var src = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/[?#].*\$/, '') : ''; return /\\/pcejs-[a-z]+\\.umd(\\.min)?\\.js\$/.test(src) ? src.replace(/[^\\/]*\$/, '') : ''; })();\n"
+  cat "$script_directory_file"
   printf "module.exports = function(deps, opts) {\n"
   cat "$prelude_file" "$input_module_file" "$epilogue_file"
   printf "\nreturn Module;\n}"

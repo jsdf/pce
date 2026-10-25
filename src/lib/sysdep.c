@@ -132,6 +132,7 @@ void pce_srand (unsigned val)
 
 static int    pce_em_hidden = 0;
 static double pce_em_last = -1.0;
+static double pce_em_emulated = 0.0;
 
 static
 EM_BOOL pce_em_visibility (int type, const EmscriptenVisibilityChangeEvent *evt, void *ext)
@@ -193,6 +194,17 @@ void pce_em_adjust_speed (unsigned long *extra, double t0, double ms)
 	else if ((used > ms) && (*extra > 0)) {
 		*extra -= 1;
 	}
+}
+
+void pce_em_add_emulated_ms (double ms)
+{
+	pce_em_emulated += ms;
+}
+
+EMSCRIPTEN_KEEPALIVE
+double pce_em_get_emulated_ms (void)
+{
+	return (pce_em_emulated);
 }
 
 #endif

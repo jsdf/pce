@@ -94,7 +94,9 @@ only have `python3` you need a `python` -> `python3` symlink in your `PATH`.
 `./configure` also runs small test programs with node; on node 18 and newer
 these fail ("Failed to parse URL") unless node's `fetch` is disabled, e.g. by
 setting `NODE_JS = ['/usr/bin/node', '--no-experimental-fetch']` in the
-emsdk's `.emscripten` config file.
+emsdk's `.emscripten` config file. Newer versions of node don't have that
+option; instead preload a script that contains `delete globalThis.fetch;`:
+`NODE_JS = ['/usr/bin/node', '--require', '/path/to/nofetch.js']`.
 Detailed installation instructions are on the [Emscripten SDK](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) page.
 
 In the same terminal, return to the pcejs repository. Run `./pcejs_build env` once which will create a `pcejs_build_conf.sh` file if it 
@@ -135,3 +137,25 @@ Other commands (used internally by build scripts)
 
 
 
+
+## Tests
+
+`npm install`, then:
+
+- `npm run test:unit`: unit tests for the JavaScript that is wrapped around
+  the emscripten output (`commonjs/script-directory.js`, `prelude.js`,
+  `epilogue.js`). These don't need a build.
+- `npm run test:setup`: download the system files that the browser tests boot
+  (ROMs, disk images and configs from the `*-system.zip` files) into
+  `test/.cache/`, and install the browser that Playwright uses. Run this once.
+- `npm run test:browser`: boot each emulator in headless Chromium and check
+  that it reaches its desktop or prompt (compared with the screenshots in
+  `test/browser/__screenshots__/`), that it emulates real time both while the
+  page is visible and while it is hidden, and that it logs no errors. This
+  uses the UMD bundles in `commonjs/pcejs-*/`, so build the emulators and run
+  `./umd.sh` in each `commonjs/pcejs-*` directory first.
+- `npm test`: the unit and browser tests.
+
+If a change is supposed to alter what an emulator shows after booting, update
+the screenshots with `npm run test:browser -- --update-snapshots` and check
+them before committing.
