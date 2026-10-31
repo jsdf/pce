@@ -144,7 +144,7 @@ test.describe('prelude.js', () => {
 test.describe('epilogue.js', () => {
   const code = load('epilogue.js');
 
-  test('exposes the emscripten file system apis on the Module', () => {
+  test('exposes the emscripten file system and SDL apis on the Module', () => {
     const globals = {
       Module: {},
       FS: {},
@@ -153,6 +153,7 @@ test.describe('epilogue.js', () => {
       PATH: {},
       ERRNO_CODES: {},
       ERRNO_MESSAGES: {},
+      SDL: {},
     };
     const { Module } = run(code, globals);
 
